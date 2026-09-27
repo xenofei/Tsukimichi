@@ -19,6 +19,9 @@ public sealed class TsukimichiCommand : IDisposable
     private readonly Action toggleGlyphWindow;
     private readonly Action<string> search;
 
+    /// <summary>Invoked for <c>/tsukimichi config</c>; set once the config window exists.</summary>
+    public Action? ToggleConfigWindow { get; set; }
+
     /// <param name="commands">Dalamud command manager.</param>
     /// <param name="toggleMainWindow">Invoked for <c>/tsukimichi</c> with no arguments.</param>
     /// <param name="toggleGlyphWindow">Invoked for <c>/tsukimichi glyphs</c>.</param>
@@ -71,7 +74,19 @@ public sealed class TsukimichiCommand : IDisposable
 
                 break;
 
-            // Later tasks: "config" opens the config window.
+            case "config":
+            case "settings":
+                if (ToggleConfigWindow is { } toggleConfig)
+                {
+                    toggleConfig();
+                }
+                else
+                {
+                    toggleMainWindow();
+                }
+
+                break;
+
             default:
                 search(args);
                 break;

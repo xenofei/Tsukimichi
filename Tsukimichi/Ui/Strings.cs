@@ -8,7 +8,7 @@ namespace Tsukimichi.Ui;
 /// the panes. Voice per spec §1: calm, precise, short; labels are nouns; no exclamation marks.
 /// Members ending in <c>Format</c> are composite format strings; the argument order is documented on each.
 /// </summary>
-public static class Strings
+public static partial class Strings
 {
     // Window
     public const string MainWindowTitle = "Tsukimichi###TsukimichiMain";

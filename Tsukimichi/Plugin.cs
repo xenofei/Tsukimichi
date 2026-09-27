@@ -42,6 +42,9 @@ public sealed class Plugin : IDalamudPlugin
     private readonly GameLinks gameLinks;
     private readonly QueryRunner queryRunner;
     private readonly MainWindow mainWindow;
+    private MoonlitPane? moonlitPane;
+    private CharactersPane? charactersPane;
+    private ConfigWindow? configWindow;
 
     /// <summary>
     /// Retry hook for the "Catalog unavailable" panel: rebuilds the catalog and hands it to the session on the
@@ -244,6 +247,18 @@ public sealed class Plugin : IDalamudPlugin
             // ---- Game state (T3.2/T3.3) ----
             InitializeGameState();
             // ---- end game state ----
+
+            // UI (session-dependent surfaces)
+            var unlockReader = new Game.RewardUnlockReader(Session, DataManager, Framework, Log);
+            moonlitPane = new MoonlitPane(Session, TextureProvider, unlockReader, Paths, Log);
+            charactersPane = new CharactersPane(Session, Paths, Log, Snapshots.Load, DataManager);
+            mainWindow.AttachPanes(moonlitPane, charactersPane);
+
+            configWindow = new ConfigWindow(Settings, Session, PluginInterface, _ => ui.MarkQueryDirty());
+            windowSystem.AddWindow(configWindow);
+            PluginInterface.UiBuilder.OpenConfigUi += configWindow.Toggle;
+            command.ToggleConfigWindow = configWindow.Toggle;
+            // /UI
         }
         catch (Exception ex)
         {
@@ -257,6 +272,11 @@ public sealed class Plugin : IDalamudPlugin
     {
         // UI
         command.Dispose();
+        if (configWindow is not null)
+        {
+            PluginInterface.UiBuilder.OpenConfigUi -= configWindow.Toggle;
+        }
+
         PluginInterface.UiBuilder.OpenMainUi -= mainWindow.Toggle;
         PluginInterface.UiBuilder.Draw -= windowSystem.Draw;
         windowSystem.RemoveAllWindows();
@@ -276,6 +296,11 @@ public sealed class Plugin : IDalamudPlugin
     {
         Unwind("draw hook", () =>
         {
+            if (configWindow is not null)
+            {
+                PluginInterface.UiBuilder.OpenConfigUi -= configWindow.Toggle;
+            }
+
             if (mainWindow is not null)
             {
                 PluginInterface.UiBuilder.OpenMainUi -= mainWindow.Toggle;

@@ -51,6 +51,10 @@ public sealed class MainWindow : Window, IDisposable
     private readonly TablePane tablePane;
     private readonly DetailPane detailPane;
 
+    // Attached after the game state exists (they need the session); null until then.
+    private MoonlitPane? moonlitPane;
+    private CharactersPane? charactersPane;
+
     private Task? retryTask;
     private bool initialized;
     private DateTime? settingsDirtyAtUtc;
@@ -102,6 +106,13 @@ public sealed class MainWindow : Window, IDisposable
 
     /// <summary>The shared per-window state other panes bind to.</summary>
     public UiState Ui => ui;
+
+    /// <summary>Attaches the Moonlit and Characters panes once the session they depend on exists.</summary>
+    public void AttachPanes(MoonlitPane moonlit, CharactersPane characters)
+    {
+        moonlitPane = moonlit ?? throw new ArgumentNullException(nameof(moonlit));
+        charactersPane = characters ?? throw new ArgumentNullException(nameof(characters));
+    }
 
     public override void Draw()
     {
@@ -426,7 +437,18 @@ public sealed class MainWindow : Window, IDisposable
         {
             if (center)
             {
-                tablePane.Draw(session.ViewedSnapshot is not null);
+                switch (ui.Tab)
+                {
+                    case NavTab.Moonlit when moonlitPane is not null:
+                        moonlitPane.DrawMain(ui);
+                        break;
+                    case NavTab.Characters when charactersPane is not null:
+                        charactersPane.DrawMain(ui);
+                        break;
+                    default:
+                        tablePane.Draw(session.ViewedSnapshot is not null);
+                        break;
+                }
             }
         }
 
@@ -468,10 +490,7 @@ public sealed class MainWindow : Window, IDisposable
         DrawTabBody(tab, session, bundle);
     }
 
-    /// <summary>
-    /// Body of the active navigation tab. Moonlit and Characters are stubs until their panes land: replace the
-    /// <see cref="DrawPlaceholder"/> calls with <c>moonlitPane.Draw(...)</c> and <c>charactersPane.Draw(...)</c>.
-    /// </summary>
+    /// <summary>Left-column body of the active navigation tab.</summary>
     private void DrawTabBody(NavTab tab, SessionState session, CatalogBundle bundle)
     {
         switch (tab)
@@ -485,19 +504,18 @@ public sealed class MainWindow : Window, IDisposable
                 treePane.Draw(bundle, runner, plugin.Settings.ShowUnlisted);
                 break;
 
-            case NavTab.Moonlit:
-            case NavTab.Characters:
+            case NavTab.Moonlit when moonlitPane is not null:
+                moonlitPane.DrawLeft(ui);
+                break;
+
+            case NavTab.Characters when charactersPane is not null:
+                charactersPane.DrawLeft(ui);
+                break;
+
             default:
-                DrawPlaceholder(tab);
+                ImGui.TextDisabled(Strings.Placeholder);
                 break;
         }
-    }
-
-    /// <summary>PLACEHOLDER: stands in for the Moonlit and Characters pane bodies until those panes are merged.</summary>
-    private static void DrawPlaceholder(NavTab tab)
-    {
-        _ = tab;
-        ImGui.TextDisabled(Strings.Placeholder);
     }
 
     private void DrawStatusBar(SessionState session, CatalogBundle bundle)
