@@ -1,0 +1,41 @@
+using System.Globalization;
+
+namespace Tsukimichi.Core.Storage;
+
+/// <summary>
+/// Every file and folder Tsukimichi touches, derived from the two directories Dalamud hands the plugin
+/// (the writable config directory and the read-only plugin directory). See spec §6.
+/// </summary>
+public sealed class PluginPaths
+{
+    public PluginPaths(string configDir, string pluginDir)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(configDir);
+        ArgumentException.ThrowIfNullOrWhiteSpace(pluginDir);
+        ConfigDir = configDir;
+        PluginDir = pluginDir;
+    }
+
+    /// <summary>Writable per-plugin config directory.</summary>
+    public string ConfigDir { get; }
+
+    /// <summary>Read-only directory the plugin was loaded from; shipped data lives here.</summary>
+    public string PluginDir { get; }
+
+    public string ConfigFile => Path.Combine(ConfigDir, "config.json");
+    public string CharactersDir => Path.Combine(ConfigDir, "characters");
+    public string UserDir => Path.Combine(ConfigDir, "user");
+    public string PinsFile => Path.Combine(UserDir, "pins.json");
+    public string OverridesFile => Path.Combine(UserDir, "overrides.json");
+
+    public string UniqueRewardsFile => Path.Combine(PluginDir, "unique_quests.json");
+    public string CuratedDir => Path.Combine(PluginDir, "curated");
+    public string SystemUnlocksFile => Path.Combine(CuratedDir, CuratedData.SystemUnlocksFileName);
+    public string DutyUnlocksFile => Path.Combine(CuratedDir, CuratedData.DutyUnlocksFileName);
+    public string FestivalsFile => Path.Combine(CuratedDir, CuratedData.FestivalsFileName);
+    public string FeatureQuestsFile => Path.Combine(CuratedDir, CuratedData.FeatureQuestsFileName);
+
+    /// <summary>The snapshot file for one character, as <see cref="JsonSnapshotStore"/> names it.</summary>
+    public string SnapshotFile(ulong contentId) =>
+        Path.Combine(CharactersDir, contentId.ToString(CultureInfo.InvariantCulture) + ".json");
+}
