@@ -40,7 +40,6 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] internal static IFramework Framework { get; private set; } = null!;
     [PluginService] internal static IClientState ClientState { get; private set; } = null!;
     [PluginService] internal static IPlayerState PlayerState { get; private set; } = null!;
-    [PluginService] internal static ICondition Condition { get; private set; } = null!;
 
     internal Config.Configuration Settings { get; private set; } = null!;
     internal Core.Storage.PluginPaths Paths { get; private set; } = null!;
@@ -48,12 +47,13 @@ public sealed class Plugin : IDalamudPlugin
     internal Game.SnapshotService Snapshots { get; private set; } = null!;
     internal Game.StatePoller Poller { get; private set; } = null!;
 
-    private bool gameStateDisposed;
+    /// <summary>Read from the catalog continuation off-thread, so it must be volatile.</summary>
+    private volatile bool gameStateDisposed;
 
     /// <summary>Config, shipped data, snapshot store, session state and poller; hands the catalog to the session when built.</summary>
     private void InitializeGameState()
     {
-        Settings = Config.Configuration.Load(PluginInterface);
+        Settings = Config.Configuration.Load(PluginInterface, Log);
 
         var assemblyDir = System.IO.Path.GetDirectoryName(PluginInterface.AssemblyLocation.FullName) ?? PluginInterface.AssemblyLocation.DirectoryName ?? ".";
         // The csproj copies Data\** to <plugin>\Data; PluginPaths expects the shipped files at its plugin root.
@@ -81,7 +81,8 @@ public sealed class Plugin : IDalamudPlugin
             curated.FeatureQuests.Count,
             curated.Festivals.Count);
 
-        Snapshots = new Game.SnapshotService(new Core.Storage.JsonSnapshotStore(Paths.ConfigDir), ClientState, Framework, Log);
+        var reader = new Game.GameStateReader(Framework, PlayerState, DataManager, Log);
+        Snapshots = new Game.SnapshotService(new Core.Storage.JsonSnapshotStore(Paths.ConfigDir), ClientState, Framework, Log, reader);
         Session = new Game.SessionState(Snapshots, Paths, uniqueRewards, curated);
         if (Settings.ViewedContentId is { } viewed && !Session.ViewCharacter(viewed))
         {
@@ -91,8 +92,7 @@ public sealed class Plugin : IDalamudPlugin
 
         Session.Changed += PersistViewedCharacter;
 
-        var reader = new Game.GameStateReader(Framework, PlayerState, DataManager, Log);
-        Poller = new Game.StatePoller(Framework, ClientState, Condition, Log, reader, Snapshots, Session, Settings);
+        Poller = new Game.StatePoller(Framework, ClientState, Log, reader, Snapshots, Session, Settings);
 
         CatalogTask.ContinueWith(
             t =>
@@ -121,7 +121,7 @@ public sealed class Plugin : IDalamudPlugin
                     }
                 }).ContinueWith(static r => _ = r.Exception, TaskContinuationOptions.OnlyOnFaulted);
             },
-            CancellationToken.None,
+            catalogCts.Token,
             TaskContinuationOptions.ExecuteSynchronously,
             TaskScheduler.Default);
     }
@@ -179,17 +179,28 @@ public sealed class Plugin : IDalamudPlugin
             TaskContinuationOptions.ExecuteSynchronously,
             TaskScheduler.Default);
 
-        // UI
-        glyphDebugWindow = new GlyphDebugWindow();
-        windowSystem.AddWindow(glyphDebugWindow);
-        PluginInterface.UiBuilder.Draw += windowSystem.Draw;
+        // Dalamud does not call Dispose on a plugin whose constructor threw, so anything hooked up from here on is
+        // unwound by hand before the exception leaves.
+        try
+        {
+            // UI
+            glyphDebugWindow = new GlyphDebugWindow();
+            windowSystem.AddWindow(glyphDebugWindow);
+            PluginInterface.UiBuilder.Draw += windowSystem.Draw;
 
-        // Until the main window lands, a bare /tsukimichi toggles the glyph sheet.
-        command = new TsukimichiCommand(CommandManager, toggleMainWindow: glyphDebugWindow.Toggle, toggleGlyphWindow: glyphDebugWindow.Toggle);
-        // /UI
-        // ---- Game state (T3.2/T3.3) ----
-        InitializeGameState();
-        // ---- end game state ----
+            // Until the main window lands, a bare /tsukimichi toggles the glyph sheet.
+            command = new TsukimichiCommand(CommandManager, toggleMainWindow: glyphDebugWindow.Toggle, toggleGlyphWindow: glyphDebugWindow.Toggle);
+            // /UI
+            // ---- Game state (T3.2/T3.3) ----
+            InitializeGameState();
+            // ---- end game state ----
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Tsukimichi failed to load; unwinding partial setup");
+            AbortLoad();
+            throw;
+        }
     }
 
     public void Dispose()
@@ -203,6 +214,38 @@ public sealed class Plugin : IDalamudPlugin
         // ---- Game state dispose ----
         DisposeGameState();
         // ---- end game state dispose ----
+        StopCatalogBuild();
+        Log.Information("Tsukimichi unloaded");
+    }
+
+    /// <summary>Best-effort teardown after a failed constructor; every step is isolated so one failure cannot hide another.</summary>
+    private void AbortLoad()
+    {
+        Unwind("draw hook", () =>
+        {
+            PluginInterface.UiBuilder.Draw -= windowSystem.Draw;
+            windowSystem.RemoveAllWindows();
+        });
+        Unwind("command", () => command?.Dispose());
+        Unwind("game state", DisposeGameState);
+        Unwind("catalog build", StopCatalogBuild);
+    }
+
+    private static void Unwind(string what, Action step)
+    {
+        try
+        {
+            step();
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "Unwinding {What} failed", what);
+        }
+    }
+
+    /// <summary>Cancels the catalog build, waits briefly for it to stop and releases the token source.</summary>
+    private void StopCatalogBuild()
+    {
         catalogCts.Cancel();
         try
         {
@@ -217,6 +260,5 @@ public sealed class Plugin : IDalamudPlugin
         }
 
         catalogCts.Dispose();
-        Log.Information("Tsukimichi unloaded");
     }
 }

@@ -30,6 +30,18 @@ public sealed record SnapshotDiff(
         ArgumentNullException.ThrowIfNull(old);
         ArgumentNullException.ThrowIfNull(@new);
 
+        // Fast path for the common poll: nothing moved, so no sets are built. The list checks are order-sensitive,
+        // which is fine: a reordered-but-equal capture merely falls through to the exact comparison below.
+        if (SameMask(old.CompletedBits, @new.CompletedBits)
+            && SameSequence(old.Accepted, @new.Accepted)
+            && SameEntries(old.DailyDone, @new.DailyDone)
+            && SameEntries(old.JobLevels, @new.JobLevels)
+            && SameSequence(old.ActiveFestivals, @new.ActiveFestivals)
+            && !OtherInputsChanged(old, @new))
+        {
+            return Empty;
+        }
+
         var quests = new SortedSet<ushort>();
         DiffCompletedBits(old.CompletedBits, @new.CompletedBits, quests);
         DiffAccepted(old.Accepted, @new.Accepted, quests);
@@ -41,18 +53,7 @@ public sealed record SnapshotDiff(
         var festivals = new SortedSet<ushort>(old.ActiveFestivals);
         festivals.SymmetricExceptWith(@new.ActiveFestivals);
 
-        var other = old.ContentId != @new.ContentId
-            || old.GrandCompany != @new.GrandCompany
-            || !old.GcRanks.AsSpan().SequenceEqual(@new.GcRanks)
-            || !SameEntries(old.Tribes, @new.Tribes)
-            || old.TribeAllowance != @new.TribeAllowance
-            || old.LeveAllowance != @new.LeveAllowance
-            || !SameSet(old.UnlockedInstances, @new.UnlockedInstances)
-            || old.CurrentJob != @new.CurrentJob
-            || old.AchievementsLoaded != @new.AchievementsLoaded
-            || !SameSet(old.CompletedAchievements, @new.CompletedAchievements)
-            || old.MaxExpansion != @new.MaxExpansion
-            || old.LevelCap != @new.LevelCap;
+        var other = OtherInputsChanged(old, @new);
 
         if (quests.Count == 0 && jobs.Count == 0 && festivals.Count == 0 && !other)
         {
@@ -60,6 +61,61 @@ public sealed record SnapshotDiff(
         }
 
         return new SnapshotDiff([.. quests], [.. jobs], [.. festivals], other);
+    }
+
+    private static bool OtherInputsChanged(CharacterSnapshot old, CharacterSnapshot @new) =>
+        old.ContentId != @new.ContentId
+        || old.GrandCompany != @new.GrandCompany
+        || !old.GcRanks.AsSpan().SequenceEqual(@new.GcRanks)
+        || !SameEntries(old.Tribes, @new.Tribes)
+        || old.TribeAllowance != @new.TribeAllowance
+        || old.LeveAllowance != @new.LeveAllowance
+        || !SameSet(old.UnlockedInstances, @new.UnlockedInstances)
+        || old.CurrentJob != @new.CurrentJob
+        || old.AchievementsLoaded != @new.AchievementsLoaded
+        || !SameSet(old.CompletedAchievements, @new.CompletedAchievements)
+        || old.MaxExpansion != @new.MaxExpansion
+        || old.LevelCap != @new.LevelCap;
+
+    /// <summary>Bitmask equality where a shorter mask reads as zero-padded.</summary>
+    private static bool SameMask(byte[] a, byte[] b)
+    {
+        if (ReferenceEquals(a, b))
+        {
+            return true;
+        }
+
+        var shared = Math.Min(a.Length, b.Length);
+        if (!a.AsSpan(0, shared).SequenceEqual(b.AsSpan(0, shared)))
+        {
+            return false;
+        }
+
+        var longer = a.Length > b.Length ? a : b;
+        return !longer.AsSpan(shared).ContainsAnyExcept((byte)0);
+    }
+
+    private static bool SameSequence<T>(IReadOnlyList<T> a, IReadOnlyList<T> b)
+    {
+        if (ReferenceEquals(a, b))
+        {
+            return true;
+        }
+
+        if (a.Count != b.Count)
+        {
+            return false;
+        }
+
+        for (var i = 0; i < a.Count; i++)
+        {
+            if (!EqualityComparer<T>.Default.Equals(a[i], b[i]))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static void DiffCompletedBits(byte[] a, byte[] b, SortedSet<ushort> changed)

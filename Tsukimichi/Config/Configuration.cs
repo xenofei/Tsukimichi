@@ -1,6 +1,7 @@
 using System;
 using Dalamud.Configuration;
 using Dalamud.Plugin;
+using Dalamud.Plugin.Services;
 using Tsukimichi.Core.Query;
 
 namespace Tsukimichi.Config;
@@ -48,11 +49,27 @@ public sealed class Configuration : IPluginConfiguration
         }
     }
 
-    /// <summary>Reads the saved configuration or returns defaults when there is none or it is of another type.</summary>
-    public static Configuration Load(IDalamudPluginInterface pluginInterface)
+    /// <summary>
+    /// Reads the saved configuration or returns defaults when there is none, it is of another type, or reading it
+    /// throws (a corrupt file must not stop the plugin from loading; the failure is logged when a log is given).
+    /// </summary>
+    public static Configuration Load(IDalamudPluginInterface pluginInterface) => Load(pluginInterface, null);
+
+    /// <inheritdoc cref="Load(IDalamudPluginInterface)"/>
+    public static Configuration Load(IDalamudPluginInterface pluginInterface, IPluginLog? log)
     {
         ArgumentNullException.ThrowIfNull(pluginInterface);
-        var config = pluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
+        Configuration config;
+        try
+        {
+            config = pluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
+        }
+        catch (Exception ex)
+        {
+            log?.Warning(ex, "Could not read the saved configuration; using defaults");
+            config = new Configuration();
+        }
+
         config.Filters ??= new FilterSet();
         return config;
     }

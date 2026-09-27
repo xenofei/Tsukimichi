@@ -32,10 +32,14 @@ public sealed class GameStateReader
     private readonly IDataManager data;
     private readonly IPluginLog log;
 
+    /// <summary>Scratch bitmask reused across captures; copied out only when the capture differs from the previous one.</summary>
+    private readonly byte[] completedScratch = new byte[CompletedBitmaskBytes];
+
     private (byte RowId, int ExpIndex)[]? jobExpIndex;
     private CatalogIds? catalogIds;
     private bool measured;
     private bool festivalsWarned;
+    private bool outOfRangeLogged;
 
     public GameStateReader(IFramework framework, IPlayerState playerState, IDataManager data, IPluginLog log)
     {
@@ -59,14 +63,29 @@ public sealed class GameStateReader
     }
 
     /// <summary>
+    /// Whether <see cref="Capture"/> would succeed right now: the player is loaded and has a content id. After
+    /// <see cref="IClientState.Login"/> the content id can lag the loaded flag by a few ticks. Framework thread only.
+    /// </summary>
+    public bool IsCharacterReadable() => IsPlayerLoaded() && playerState.ContentId != 0;
+
+    /// <summary>
     /// Captures the logged-in character. Framework thread only.
     /// Completion is read per catalog quest id (plus every previous-quest and lock id the catalog references) through
     /// <see cref="QuestManager.IsQuestComplete(ushort)"/> and written into a bitmask laid out as
     /// <see cref="CharacterSnapshot.IsCompleted"/> reads it, so the snapshot never depends on the client's bit order.
+    /// Throws when the character is not fully loaded (including a content id of 0), so no snapshot is ever produced
+    /// for an unidentified character.
     /// </summary>
     /// <param name="catalog">Decides which quest and duty ids are read.</param>
     /// <param name="jobs">Category membership; not needed for the capture itself (levels are read per ClassJob row) and kept for callers that hold the bundle.</param>
-    public unsafe CharacterSnapshot Capture(QuestCatalog catalog, ClassJobCategoryLookup? jobs)
+    public CharacterSnapshot Capture(QuestCatalog catalog, ClassJobCategoryLookup? jobs) => Capture(catalog, jobs, null);
+
+    /// <summary>
+    /// As <see cref="Capture(QuestCatalog, ClassJobCategoryLookup?)"/>, but when the completion mask equals
+    /// <paramref name="previousCompleted"/> the returned snapshot shares that array instead of allocating a copy, so
+    /// an unchanged poll costs no 8 KB allocation and the diff can short-circuit on reference equality.
+    /// </summary>
+    public unsafe CharacterSnapshot Capture(QuestCatalog catalog, ClassJobCategoryLookup? jobs, byte[]? previousCompleted)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         _ = jobs;
@@ -88,18 +107,44 @@ public sealed class GameStateReader
             throw new InvalidOperationException("Player state is not loaded.");
         }
 
+        var contentId = playerState.ContentId;
+        if (contentId == 0)
+        {
+            throw new InvalidOperationException("Player content id is not available yet.");
+        }
+
         var ids = IdsFor(catalog);
         var stopwatch = measured ? null : Stopwatch.StartNew();
 
-        // Completion bits.
-        var completed = new byte[CompletedBitmaskBytes];
+        // Completion bits. The client mask is finite; ids past its end are not completable and must not be looked up,
+        // since IsQuestComplete does no bounds check of its own.
+        var completed = completedScratch;
+        Array.Clear(completed);
+        var maskBits = qm->CompletedQuests.Length * 8;
+        var outOfRange = 0;
         foreach (var questId in ids.QuestIds)
         {
+            if (questId >= maskBits)
+            {
+                outOfRange++;
+                continue;
+            }
+
             if (QuestManager.IsQuestComplete(questId))
             {
                 completed[questId >> 3] |= (byte)(1 << (questId & 7));
             }
         }
+
+        if (outOfRange > 0 && !outOfRangeLogged)
+        {
+            outOfRangeLogged = true;
+            log.Debug("{Count} catalog quest id(s) lie beyond the client's {Bits}-bit completion mask and read as not complete", outOfRange, maskBits);
+        }
+
+        var completedBits = previousCompleted is not null && completed.AsSpan().SequenceEqual(previousCompleted)
+            ? previousCompleted
+            : (byte[])completed.Clone();
 
         // Journal.
         var normal = qm->NormalQuests;
@@ -193,11 +238,11 @@ public sealed class GameStateReader
 
         var snapshot = new CharacterSnapshot
         {
-            ContentId = playerState.ContentId,
+            ContentId = contentId,
             Name = playerState.CharacterName,
             World = playerState.HomeWorld.RowId,
             TakenUtc = DateTime.UtcNow,
-            CompletedBits = completed,
+            CompletedBits = completedBits,
             Accepted = accepted,
             DailyDone = dailyDone,
             JobLevels = jobLevels,

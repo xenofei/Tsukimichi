@@ -68,4 +68,55 @@ public sealed class SaveDebouncerTests
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => new SaveDebouncer(TimeSpan.FromSeconds(-1)));
     }
+
+    [Fact]
+    public void Failed_save_keeps_the_change_pending_and_waits_a_full_interval()
+    {
+        var d = new SaveDebouncer(TimeSpan.FromSeconds(10));
+        d.MarkDirty();
+
+        d.MarkFailed(T0);
+
+        Assert.True(d.Pending);
+        Assert.Equal(1, d.Failures);
+        Assert.Null(d.LastSavedUtc);
+        Assert.Equal(T0, d.LastAttemptUtc);
+        Assert.False(d.ShouldSave(T0.AddSeconds(1)));
+        Assert.False(d.ShouldSave(T0.AddSeconds(9.9)));
+        Assert.True(d.ShouldSave(T0.AddSeconds(10)));
+    }
+
+    [Fact]
+    public void Repeated_failures_count_until_a_save_succeeds()
+    {
+        var d = new SaveDebouncer(TimeSpan.FromSeconds(10));
+        d.MarkDirty();
+        d.MarkFailed(T0);
+        d.MarkFailed(T0.AddSeconds(10));
+        Assert.Equal(2, d.Failures);
+        Assert.True(d.ShouldSave(T0.AddSeconds(20)));
+
+        d.MarkSaved(T0.AddSeconds(20));
+
+        Assert.Equal(0, d.Failures);
+        Assert.False(d.Pending);
+        Assert.Equal(T0.AddSeconds(20), d.LastSavedUtc);
+        Assert.Equal(T0.AddSeconds(20), d.LastAttemptUtc);
+    }
+
+    [Fact]
+    public void Failure_after_a_successful_save_still_spaces_the_retry()
+    {
+        var d = new SaveDebouncer(TimeSpan.FromSeconds(10));
+        d.MarkDirty();
+        d.MarkSaved(T0);
+        d.MarkDirty();
+        Assert.True(d.ShouldSave(T0.AddSeconds(10)));
+
+        d.MarkFailed(T0.AddSeconds(10));
+
+        Assert.Equal(T0, d.LastSavedUtc);
+        Assert.False(d.ShouldSave(T0.AddSeconds(15)));
+        Assert.True(d.ShouldSave(T0.AddSeconds(20)));
+    }
 }
