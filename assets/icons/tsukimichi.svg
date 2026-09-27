@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Tsukimichi (月道, "the moon's path") — plugin icon.
+  Hand-authored geometry. A crescent moon low over a winding path that
+  narrows to a vanishing point on the horizon; three stones on the path lit
+  gold; a few stars. Colors are the spec tokens: Night #0F1424, Moon #F2D27A,
+  Silver #DDE3F0. The same shapes are re-drawn procedurally by render_icons.py.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Rounded-square tile; corners stay transparent. -->
+    <clipPath id="tile">
+      <rect x="0" y="0" width="512" height="512" rx="112" ry="112"/>
+    </clipPath>
+
+    <!-- Crescent = outer disc minus an offset disc. -->
+    <mask id="crescent" maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
+      <circle cx="172" cy="160" r="100" fill="#fff"/>
+      <circle cx="214" cy="138" r="88"  fill="#000"/>
+    </mask>
+
+    <!-- Soft halo behind the moon: alpha falls off quadratically. -->
+    <radialGradient id="halo" gradientUnits="userSpaceOnUse" cx="172" cy="160" r="175">
+      <stop offset="0"    stop-color="#F2D27A" stop-opacity="0.16"/>
+      <stop offset="0.25" stop-color="#F2D27A" stop-opacity="0.09"/>
+      <stop offset="0.5"  stop-color="#F2D27A" stop-opacity="0.04"/>
+      <stop offset="0.75" stop-color="#F2D27A" stop-opacity="0.01"/>
+      <stop offset="1"    stop-color="#F2D27A" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <g clip-path="url(#tile)">
+    <!-- Night sky -->
+    <rect x="0" y="0" width="512" height="512" fill="#0F1424"/>
+
+    <!-- Faint ground below the horizon (y = 262) -->
+    <rect x="0" y="262" width="512" height="250" fill="#DDE3F0" fill-opacity="0.04"/>
+
+    <!-- The path: two cubic edges from the vanishing point (330, 262),
+         winding in an S and widening toward the bottom edge. -->
+    <path fill="#DDE3F0" fill-opacity="0.26"
+          d="M 326,262
+             C 330,340 40,360 70,530
+             L 440,530
+             C 240,400 372,340 334,262
+             Z"/>
+
+    <!-- Crescent moon with halo -->
+    <circle cx="172" cy="160" r="175" fill="url(#halo)"/>
+    <circle cx="172" cy="160" r="100" fill="#F2D27A" mask="url(#crescent)"/>
+
+    <!-- Stars: four-point diamonds (outer radius 11, 8, 6; inner 0.38 r) -->
+    <g fill="#DDE3F0">
+      <polygon points="398,93 401,101 409,104 401,107 398,115 395,107 387,104 395,101"/>
+      <polygon points="456,178 458.1,183.9 464,186 458.1,188.1 456,194 453.9,188.1 448,186 453.9,183.9"/>
+      <polygon points="300,58 301.6,62.4 306,64 301.6,65.6 300,70 298.4,65.6 294,64 298.4,62.4"/>
+    </g>
+
+    <!-- Stones on the path (centreline at t = 0.42, 0.66, 0.88), each with a
+         two-step glow: a larger low-opacity disc and a mid disc behind it. -->
+    <g fill="#F2D27A">
+      <circle cx="275.0" cy="351.1" r="15.6" fill-opacity="0.12"/>
+      <circle cx="228.8" cy="409.3" r="26.0" fill-opacity="0.12"/>
+      <circle cx="226.7" cy="480.5" r="39.0" fill-opacity="0.12"/>
+      <circle cx="275.0" cy="351.1" r="10.2" fill-opacity="0.18"/>
+      <circle cx="228.8" cy="409.3" r="17.0" fill-opacity="0.18"/>
+      <circle cx="226.7" cy="480.5" r="25.5" fill-opacity="0.18"/>
+      <circle cx="275.0" cy="351.1" r="6"/>
+      <circle cx="228.8" cy="409.3" r="10"/>
+      <circle cx="226.7" cy="480.5" r="15"/>
+    </g>
+  </g>
+</svg>
