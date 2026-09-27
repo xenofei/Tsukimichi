@@ -1,0 +1,907 @@
+<title>Tsukimichi Smoke Test</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,700;1,9..144,500&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+  :root {
+    color-scheme: dark;
+    --night: #0F1424;
+    --night-2: #161C31;
+    --night-3: #1E2540;
+    --line: #2A3352;
+    --moon: #F2D27A;
+    --moon-ink: #F2D27A;
+    --silver: #DDE3F0;
+    --dusk: #7C86A8;
+    --eclipse: #D2789B;
+    --veil: #5B6488;
+    --text: var(--silver);
+    --text-2: var(--dusk);
+    --bg: var(--night);
+    --surface: var(--night-2);
+    --surface-2: var(--night-3);
+    --pass: var(--moon);
+    --fail: var(--eclipse);
+    --na: #8E97B8;
+    --focus: #F2D27A;
+    --shadow: 0 8px 28px rgba(0,0,0,.35);
+    --font-display: "Fraunces", "Iowan Old Style", Georgia, serif;
+    --font-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", "Cascadia Mono", Consolas, monospace;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      color-scheme: light;
+      --night: #EEF0F6;
+      --night-2: #FFFFFF;
+      --night-3: #E4E8F2;
+      --line: #C9D0E2;
+      --moon: #8A6A12;
+      --moon-ink: #7A5C0C;
+      --silver: #161B2E;
+      --dusk: #5A6484;
+      --eclipse: #9C3F66;
+      --veil: #7C86A8;
+      --na: #6B7594;
+      --focus: #8A6A12;
+      --shadow: 0 8px 28px rgba(22,27,46,.10);
+    }
+  }
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --night: #EEF0F6;
+    --night-2: #FFFFFF;
+    --night-3: #E4E8F2;
+    --line: #C9D0E2;
+    --moon: #8A6A12;
+    --moon-ink: #7A5C0C;
+    --silver: #161B2E;
+    --dusk: #5A6484;
+    --eclipse: #9C3F66;
+    --veil: #7C86A8;
+    --na: #6B7594;
+    --focus: #8A6A12;
+    --shadow: 0 8px 28px rgba(22,27,46,.10);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.5;
+    padding-block: 0 48px;
+    padding-inline: 16px;
+  }
+  a { color: var(--moon-ink); }
+  code, kbd, pre { font-family: var(--font-mono); font-size: .86em; }
+  code, kbd {
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 1px 5px;
+    white-space: nowrap;
+  }
+  kbd { border-bottom-width: 2px; }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  .wrap { max-width: 1180px; margin: 0 auto; }
+
+  header.top {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 16px 32px;
+    align-items: end;
+    padding-block: 32px 20px;
+    border-bottom: 1px solid var(--line);
+  }
+  .eyebrow {
+    font-size: .74rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--text-2);
+    margin: 0 0 6px;
+  }
+  h1 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-style: italic;
+    font-size: clamp(2rem, 4.5vw, 3rem);
+    line-height: 1.05;
+    margin: 0;
+    text-wrap: balance;
+    letter-spacing: -.01em;
+  }
+  h1 .kanji { font-style: normal; font-weight: 700; color: var(--moon); margin-left: .35em; font-size: .8em; }
+  header p.lede { margin: 10px 0 0; max-width: 62ch; color: var(--text-2); }
+  .meta { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; min-width: 300px; }
+  .meta label { display: grid; gap: 4px; font-size: .78rem; color: var(--text-2); }
+  .meta input {
+    font: inherit; font-size: .92rem; color: var(--text);
+    background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 7px 9px;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 260px minmax(0, 1fr);
+    gap: 32px;
+    padding-top: 24px;
+  }
+  aside.side { position: sticky; top: env(safe-area-inset-top, 0px); align-self: start; max-height: 100vh; overflow: auto; padding-bottom: 24px; }
+  .progress-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 16px;
+    display: grid;
+    grid-template-columns: 72px 1fr;
+    gap: 14px;
+    align-items: center;
+    box-shadow: var(--shadow);
+  }
+  .progress-card svg { width: 72px; height: 72px; display: block; }
+  .progress-num { font-family: var(--font-display); font-size: 1.9rem; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+  .progress-sub { font-size: .8rem; color: var(--text-2); margin-top: 4px; }
+  .tally { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; font-size: .78rem; font-variant-numeric: tabular-nums; }
+  .tally span::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; vertical-align: 0; }
+  .tally .t-pass::before { background: var(--pass); }
+  .tally .t-fail::before { background: var(--fail); }
+  .tally .t-na::before { background: var(--na); }
+  .tally .t-open::before { background: transparent; border: 1px solid var(--dusk); }
+
+  nav.sections { margin-top: 16px; display: grid; gap: 2px; }
+  nav.sections a {
+    display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center;
+    text-decoration: none; color: var(--text); font-size: .9rem;
+    padding: 7px 10px; border-radius: 8px;
+  }
+  nav.sections a:hover { background: var(--surface); }
+  nav.sections a .cnt { font-size: .74rem; color: var(--text-2); font-variant-numeric: tabular-nums; }
+  nav.sections a.done .cnt { color: var(--moon-ink); }
+  .side-actions { display: grid; gap: 8px; margin-top: 16px; }
+
+  button {
+    font: inherit; cursor: pointer;
+    color: var(--text); background: var(--surface); border: 1px solid var(--line);
+    border-radius: 8px; padding: 9px 14px;
+  }
+  button:hover { background: var(--surface-2); }
+  button.primary { background: var(--moon); color: #0F1424; border-color: transparent; font-weight: 700; }
+  button.primary:hover { filter: brightness(1.06); }
+  button.danger { color: var(--eclipse); }
+  button.small { padding: 5px 10px; font-size: .84rem; }
+
+  .toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 18px; }
+  .toolbar .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .toolbar .seg button { border: 0; border-radius: 0; background: transparent; padding: 7px 12px; font-size: .88rem; }
+  .toolbar .seg button[aria-pressed="true"] { background: var(--surface-2); color: var(--moon-ink); font-weight: 700; }
+
+  .prep {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; margin-bottom: 28px;
+  }
+  .prep h2 { margin: 0 0 8px; font-family: var(--font-display); font-weight: 500; font-size: 1.4rem; }
+  .prep ol { margin: 8px 0 0; padding-left: 22px; display: grid; gap: 6px; }
+  .prep details { margin-top: 10px; }
+  .prep summary { cursor: pointer; color: var(--moon-ink); }
+  .prep .paths { margin-top: 8px; display: grid; gap: 4px; font-size: .9rem; }
+
+  section.group { margin-bottom: 36px; scroll-margin-top: 12px; }
+  section.group > h2 {
+    font-family: var(--font-display); font-weight: 500; font-size: 1.6rem; margin: 0 0 4px;
+    display: flex; align-items: baseline; gap: 12px;
+  }
+  section.group > h2 .code { font-family: var(--font-mono); font-size: .8rem; color: var(--text-2); letter-spacing: .08em; }
+  section.group > p.intro { margin: 0 0 14px; color: var(--text-2); max-width: 70ch; }
+  .cards { display: grid; gap: 12px; }
+
+  article.check {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--veil);
+    border-radius: 10px;
+    padding: 14px 16px 14px 16px;
+    scroll-margin-top: 12px;
+  }
+  article.check[data-state="pass"] { border-left-color: var(--pass); }
+  article.check[data-state="fail"] { border-left-color: var(--fail); }
+  article.check[data-state="na"]   { border-left-color: var(--na); }
+  .check-head { display: grid; grid-template-columns: auto 1fr auto; gap: 10px 12px; align-items: start; }
+  .check-id { font-family: var(--font-mono); font-size: .78rem; color: var(--text-2); padding-top: 4px; min-width: 2.6em; }
+  .check-title { margin: 0; font-size: 1.05rem; font-weight: 700; line-height: 1.3; }
+  .check-title .opt { font-weight: 400; font-size: .78rem; color: var(--text-2); margin-left: 8px; }
+  .check-body { margin-top: 10px; display: grid; gap: 10px; }
+  .how ol { margin: 4px 0 0; padding-left: 22px; display: grid; gap: 5px; }
+  .label { font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--text-2); }
+  .expect {
+    border-left: 2px solid var(--moon); padding: 4px 0 4px 12px; margin: 0; color: var(--text);
+  }
+  .expect .label { display: block; margin-bottom: 2px; color: var(--moon-ink); }
+  .answer { display: grid; grid-template-columns: auto 1fr; gap: 10px 14px; align-items: start; margin-top: 4px; }
+  .segmented { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .segmented label { position: relative; }
+  .segmented input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+  .segmented span {
+    display: inline-block; padding: 7px 13px; font-size: .88rem; user-select: none; cursor: pointer;
+    border-right: 1px solid var(--line);
+  }
+  .segmented label:last-child span { border-right: 0; }
+  .segmented input:focus-visible + span { outline: 2px solid var(--focus); outline-offset: -2px; }
+  .segmented input:checked + span { font-weight: 700; }
+  .segmented input[value="pass"]:checked + span { background: color-mix(in srgb, var(--pass) 22%, transparent); color: var(--moon-ink); }
+  .segmented input[value="fail"]:checked + span { background: color-mix(in srgb, var(--fail) 22%, transparent); color: var(--eclipse); }
+  .segmented input[value="na"]:checked + span   { background: color-mix(in srgb, var(--na) 24%, transparent); }
+  textarea.notes {
+    width: 100%; min-height: 40px; resize: vertical;
+    font: inherit; font-size: .92rem; color: var(--text);
+    background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px;
+  }
+  textarea.notes::placeholder { color: var(--veil); }
+  article.check.hidden-by-filter { display: none; }
+
+  .report {
+    margin-top: 12px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px;
+    scroll-margin-top: 12px;
+  }
+  .report h2 { font-family: var(--font-display); font-weight: 500; font-size: 1.6rem; margin: 0 0 6px; }
+  .report .status { color: var(--text-2); margin: 0 0 12px; }
+  .report .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+  .report pre {
+    margin: 0; padding: 14px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
+    white-space: pre-wrap; word-break: break-word; max-height: 60vh; overflow: auto; font-size: .82rem; line-height: 1.45;
+  }
+  .toast {
+    position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
+    background: var(--surface-2); color: var(--text); border: 1px solid var(--line); border-radius: 999px;
+    padding: 9px 16px; font-size: .9rem; box-shadow: var(--shadow); opacity: 0; pointer-events: none; transition: opacity .2s;
+  }
+  .toast.show { opacity: 1; }
+  .confirm { display: none; gap: 8px; align-items: center; font-size: .9rem; }
+  .confirm.open { display: flex; }
+
+  @media (max-width: 860px) {
+    header.top { grid-template-columns: 1fr; align-items: start; }
+    .meta { min-width: 0; }
+    .layout { grid-template-columns: 1fr; gap: 20px; }
+    aside.side { position: static; max-height: none; }
+    nav.sections { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 520px) {
+    .answer { grid-template-columns: 1fr; }
+    .check-head { grid-template-columns: auto 1fr; }
+    nav.sections { grid-template-columns: 1fr; }
+  }
+  @media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <p class="eyebrow">First in-game pass · Dalamud API 15 · V1</p>
+      <h1>Tsukimichi Smoke Test<span class="kanji">月道</span></h1>
+      <p class="lede">Every check has the exact clicks to make and what should happen. Mark each one Pass, Fail, or Unknown, add notes where a yes or no is not enough, and copy the report at the end. Progress stays in this browser.</p>
+    </div>
+    <div class="meta">
+      <label>Plugin version (Settings › About)<input id="metaVersion" placeholder="0.1.0"></label>
+      <label>Character tested<input id="metaCharacter" placeholder="Michiru Tsukikage"></label>
+      <label>Dalamud version<input id="metaDalamud" placeholder="15.0.3.5"></label>
+      <label>Date<input id="metaDate" placeholder="2026-09-27"></label>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="side">
+      <div class="progress-card">
+        <svg viewBox="0 0 100 100" aria-hidden="true">
+          <defs><clipPath id="litClip"><rect id="litRect" x="100" y="0" width="0" height="100"></rect></clipPath></defs>
+          <circle cx="50" cy="50" r="44" fill="var(--surface-2)" stroke="var(--line)" stroke-width="2"></circle>
+          <circle cx="50" cy="50" r="44" fill="var(--moon)" clip-path="url(#litClip)"></circle>
+        </svg>
+        <div>
+          <div class="progress-num"><span id="pctDone">0</span>%</div>
+          <div class="progress-sub"><span id="numDone">0</span> of <span id="numTotal">0</span> answered</div>
+          <div class="tally">
+            <span class="t-pass"><b id="cPass">0</b> pass</span>
+            <span class="t-fail"><b id="cFail">0</b> fail</span>
+            <span class="t-na"><b id="cNa">0</b> unknown</span>
+            <span class="t-open"><b id="cOpen">0</b> open</span>
+          </div>
+        </div>
+      </div>
+      <nav class="sections" id="sectionNav" aria-label="Sections"></nav>
+      <div class="side-actions">
+        <button class="primary" id="btnReport">Generate report</button>
+        <button class="small" id="btnExportJson">Copy full answers as JSON</button>
+        <button class="small danger" id="btnReset">Reset all answers</button>
+        <div class="confirm" id="resetConfirm">
+          <span>Erase every answer and note?</span>
+          <button class="small danger" id="btnResetYes">Erase</button>
+          <button class="small" id="btnResetNo">Keep</button>
+        </div>
+      </div>
+    </aside>
+
+    <main>
+      <div class="prep" id="prep">
+        <h2>Before you start</h2>
+        <ol>
+          <li>Build the plugin: <code>dotnet build Tsukimichi.sln -c Debug</code> in the repo folder.</li>
+          <li>In game, type <code>/xlsettings</code> → <b>Experimental</b> → <b>Dev Plugin Locations</b> → add <code>C:\Users\devon\Desktop\Tsukimichi (Main Repo)\Tsukimichi\bin\x64\Debug</code> → <b>Save and Close</b>.</li>
+          <li>Type <code>/xlplugins</code> → <b>Dev Tools</b> tab → enable <b>Tsukimichi</b>.</li>
+          <li>Log in on your main character. For the Characters checks you will also need a second character on the account: log in on it once so a snapshot exists, then return to the main.</li>
+          <li>Keep <code>/xllog</code> handy. Any red line mentioning Tsukimichi is worth pasting into a note.</li>
+        </ol>
+        <details>
+          <summary>Paths and reference quests used below</summary>
+          <div class="paths">
+            <div>Plugin data folder: <code>%AppData%\XIVLauncher\pluginConfigs\Tsukimichi\</code> (contains <code>characters\</code>, <code>user\pins.json</code>, <code>user\overrides.json</code>, <code>exports\</code>)</div>
+            <div>Dalamud config file for the plugin: <code>%AppData%\XIVLauncher\pluginConfigs\Tsukimichi.json</code></div>
+            <div>Plugin output folder (shipped data): <code>Tsukimichi\bin\x64\Debug\Data\</code></div>
+            <div>Reference quest with a unique reward: <b>Her Last Vow</b> (rewards the <i>Most Gentlemanly</i> emote and the <i>Wind-up Gentleman</i> minion)</div>
+            <div>Reference early quest: <b>Close to Home</b> (Gridania start, row id 65621). Reference id search: <code>65576</code></div>
+            <div>Reload the plugin without restarting the game: <code>/xlplugins</code> → Dev Tools → disable, then enable Tsukimichi</div>
+          </div>
+        </details>
+      </div>
+
+      <div class="toolbar">
+        <div class="seg" role="group" aria-label="Show">
+          <button data-filter="all" aria-pressed="true">All checks</button>
+          <button data-filter="open" aria-pressed="false">Unanswered</button>
+          <button data-filter="fail" aria-pressed="false">Failed</button>
+          <button data-filter="na" aria-pressed="false">Unknown</button>
+        </div>
+        <span id="filterNote" style="color:var(--text-2);font-size:.9rem"></span>
+      </div>
+
+      <div id="checks"></div>
+
+      <div class="report" id="report" hidden>
+        <h2>Report</h2>
+        <p class="status" id="reportStatus"></p>
+        <div class="actions">
+          <button class="primary" id="btnCopy">Copy report</button>
+          <button id="btnRegen">Refresh</button>
+        </div>
+        <pre id="reportText" tabindex="0"></pre>
+      </div>
+    </main>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const SECTIONS = [
+  {
+    code: "A", id: "shell", title: "Window shell",
+    intro: "How the window opens and what it shows before anything is selected.",
+    checks: [
+      { id: "A1", title: "Toggle with the command and check the minimum size",
+        how: ["Click in the chat box, type /tsukimichi and press Enter.", "Type /tsukimichi again and press Enter.", "Open it once more, then drag the bottom-right corner of the window to make it as small as possible."],
+        expect: "The window titled Tsukimichi appears, then disappears, then reappears. It opens at about 1100 by 700 and refuses to shrink below roughly 800 by 500." },
+      { id: "A2", title: "Open from the plugin installer",
+        how: ["Close the Tsukimichi window if it is open.", "Type /xlplugins, find Tsukimichi in the Installed list (or Dev Tools tab) and click its Open button."],
+        expect: "The main window opens." },
+      { id: "A3", title: "Loading state while the catalog builds",
+        how: ["Type /xlplugins → Dev Tools, disable Tsukimichi, then enable it again.", "Within one or two seconds type /tsukimichi."],
+        expect: "The window shows only the text Loading catalog with animated dots, then switches to the full layout by itself." },
+      { id: "A4", title: "Catalog failure screen", optional: "developer build only",
+        how: ["This needs a deliberately broken build (for example throwing inside LuminaCatalogLoader). If you do not want to do that, choose Unknown."],
+        expect: "The window shows Catalog unavailable in pink-red, the exception text, and a Retry button. Retry shows Loading catalog again and then the normal window." },
+      { id: "A5", title: "Toolbar contents, left to right",
+        how: ["Look at the top row of the window."],
+        expect: "A search box with the hint text Search quests, rewards or ids; a small × button that is greyed out while the box is empty; a Filters button; a Character dropdown; and a moon glyph at the far right." },
+      { id: "A6", title: "Status bar text",
+        how: ["Look at the single line at the very bottom of the window while logged in."],
+        expect: "It reads like 5,373 quests · showing 212 of 5,373 · live · v0.1.0. When viewing a stored character it says snapshot HH:mm instead of live; before any character was ever captured it says no snapshot." },
+    ]
+  },
+  {
+    code: "B", id: "toolbar", title: "Toolbar",
+    intro: "Search, filters toggle, character switching and the sync glyph.",
+    checks: [
+      { id: "B1", title: "Search narrows after a short pause, not per keystroke",
+        how: ["Click All quests in the tree on the left so the whole catalog is listed.", "Click the search box and type the word close slowly, one letter per second, watching the table."],
+        expect: "The table only narrows a fraction of a second after you stop typing, not on every letter. The showing count in the status bar changes to match." },
+      { id: "B2", title: "Clearing search is immediate and writes nothing",
+        how: ["With text in the search box, note the modified time of the plugin config file (pluginConfigs\\Tsukimichi.json in Explorer).", "Click the × next to the search box. Then type something again and this time click the Search chip under the search box."],
+        expect: "Both ways, the full table returns instantly with no pause and the Search chip disappears. The config file modified time does not change." },
+      { id: "B3", title: "Filters button toggles the panel",
+        how: ["Click Filters once, then again."],
+        expect: "The filter panel appears above the tree in the left column, then hides. Any active filter chips under the search box stay visible in both cases. The Filters button looks highlighted while the panel is open." },
+      { id: "B4", title: "Character dropdown lists live and stored characters",
+        how: ["Requires a second character to have been logged in at least once.", "Open the Character dropdown in the toolbar.", "Choose the other (stored) character."],
+        expect: "The live character has a ● in front and no age. Stored characters read like Name@World · 3 h ago. Choosing one switches the whole window (tree counts, table glyphs, detail pane) to that character's snapshot." },
+      { id: "B5", title: "Sync glyph shows live or snapshot",
+        how: ["Hover the moon glyph at the far right of the toolbar while viewing the live character.", "Switch to a stored character with the dropdown and hover it again."],
+        expect: "Live: a full gold moon with the tooltip Live. Stored: a dark moon with a dashed ring (veiled) and the tooltip Snapshot from HH:mm." },
+      { id: "B6", title: "Logging out shows the snapshot banner",
+        how: ["Leave the Tsukimichi window open, log out to the character select screen (or title screen), and look at the window (reopen it with /tsukimichi if it closed)."],
+        expect: "A muted blue-grey banner under the toolbar reads Snapshot: Name@World, HH:mm and the sync glyph goes veiled. Log back in afterwards." },
+      { id: "B7", title: "Browse mode with no snapshot at all",
+        how: ["Type /tsukimichi config → Delete all Tsukimichi data → confirm both prompts.", "Log out to the title screen and open the window."],
+        expect: "A banner starting No character snapshot appears. In the filter panel, Hide completed, Available now and Seasonal active only are greyed out with the tooltip Needs a character snapshot. Every glyph in the table is veiled and the Next step column is greyed. Log back in afterwards so a fresh snapshot is captured." },
+    ]
+  },
+  {
+    code: "C", id: "filters", title: "Filter panel and chips",
+    intro: "Open the panel with the Filters button. Chips appear under the search box for every active filter.",
+    checks: [
+      { id: "C1", title: "Hide completed",
+        how: ["Select All quests in the tree.", "In the filter panel tick Hide completed. Then click the Hide completed chip under the search box."],
+        expect: "Completed (full moon) and foreclosed (eclipsed) rows disappear and a Hide completed chip appears. Clicking the chip unticks the filter and the rows return." },
+      { id: "C2", title: "Per-category override for Hide completed",
+        how: ["Tick Hide completed. Click Overrides… next to it, pick a category you have completed quests in (for example Seventh Umbral Era Main Scenario Quests) and set it to Off.", "Select that category in the tree, then a different category."],
+        expect: "The chosen category shows its completed quests again; other categories still hide theirs. The Hide completed chip stays." },
+      { id: "C3", title: "Available now",
+        how: ["Untick Hide completed. Tick Available now."],
+        expect: "Only rows whose glyph is first quarter (ready), silver first quarter (ready on another job) or waxing gibbous (accepted) remain." },
+      { id: "C4", title: "State checkboxes",
+        how: ["Untick Available now. Expand Advanced. Under States untick Completed. Then click the State chip."],
+        expect: "Completed rows vanish and a State chip appears. Clicking the chip re-ticks all eight states." },
+      { id: "C5", title: "Expansion filter",
+        how: ["Under Advanced tick Heavensward in Expansions."],
+        expect: "Only Heavensward quests remain (the Exp column reads HW) and the chip reads Expansion." },
+      { id: "C6", title: "Level range",
+        how: ["Clear the expansion tick. Drag the level range to 50 to 60.", "Then drag the upper end to 100."],
+        expect: "Rows outside 50 to 60 vanish and the chip reads Lv 50–60. With the maximum at 100 the upper bound is unlimited." },
+      { id: "C7", title: "Job category and Current job only",
+        how: ["Reset the level range. Under Job category choose DoH.", "Then choose Current job only."],
+        expect: "DoH lists only crafter-restricted quests. Current job only lists quests restricted to exactly your current job (and is greyed out when no snapshot exists)." },
+      { id: "C8", title: "Reward kind three-state",
+        how: ["Set the job category back to All. In Reward kinds set Mount to Only.", "Then set Mount back to Show and set Item to Hidden."],
+        expect: "Only quests that reward a mount remain; then, with Item hidden, every quest that rewards an item vanishes. The chip reads Reward kinds." },
+      { id: "C9", title: "Repeatable, Seasonal, Unlisted, Pinned toggles",
+        how: ["Reset reward kinds. Tick and untick each of Repeatable only, Seasonal active only, Include Unlisted and Pinned only in turn."],
+        expect: "Each narrows the table (Include Unlisted widens it) and each adds its own chip except Include Unlisted, which has no chip." },
+      { id: "C10", title: "Reset clears everything",
+        how: ["Set two or three filters and type something in search. Click Reset at the bottom of the panel."],
+        expect: "Every filter and the search text clear at once; all chips disappear." },
+      { id: "C11", title: "Filters survive a plugin reload",
+        how: ["Tick Hide completed and Heavensward. Wait two seconds.", "Reload the plugin (/xlplugins → Dev Tools → disable, enable). Open the window."],
+        expect: "The same filters are still active with their chips." },
+      { id: "C12", title: "Empty result explains itself",
+        how: ["Reset filters. Tick Pinned only while you have no pins (unpin any pinned quests first)."],
+        expect: "The table area reads Nothing matches, lists the responsible filter (Pinned only) as a bullet, and shows a Reset filters button. If only a combination of filters is to blame, the text says so." },
+      { id: "C13", title: "Empty node versus empty filter result",
+        how: ["Untick Pinned only. Tick Hide completed and select a small genre in the tree where every quest is completed.", "Then, in the config window, turn on Show Unlisted bucket, and select a node that has zero quests if one exists (otherwise choose Unknown for the second half)."],
+        expect: "The fully completed genre shows Nothing matches. A node with zero quests shows This node has no quests." },
+    ]
+  },
+  {
+    code: "D", id: "tree", title: "Journal tree",
+    intro: "The left column under the three tabs.",
+    checks: [
+      { id: "D1", title: "The three tabs each show their pane",
+        how: ["Click Journal, Moonlit and Characters in turn at the top of the left column."],
+        expect: "Journal shows the tree. Moonlit shows a list of reward kinds with counts. Characters shows the list of characters. No placeholder text anywhere." },
+      { id: "D2", title: "Tree order",
+        how: ["On the Journal tab read the nodes from top to bottom, expanding a section."],
+        expect: "All quests first, then each Section with its Categories and Genres in journal order, then Feature Unlocks, then Unlisted only if Show Unlisted bucket is on in the config window." },
+      { id: "D3", title: "Counts match the in-game journal",
+        how: ["Note the done/total on the node Seventh Umbral Era Main Scenario Quests (or another category you have completed quests in).", "Press J to open the game journal, Completed tab, and count the entries under the same category."],
+        expect: "Every node shows a small filling moon and done/total at its right edge; the moon's lit part matches the ratio; the done count equals the number of completed entries in the game journal for that category." },
+      { id: "D4", title: "Click, arrow and double-click behave differently",
+        how: ["Click the name of a collapsed section. Click the small arrow to its left. Double-click another collapsed node's name."],
+        expect: "Clicking the name highlights it and scopes the table to it without expanding. Clicking the arrow only expands. Double-clicking the name expands it." },
+      { id: "D5", title: "All quests and Feature Unlocks scopes",
+        how: ["Click All quests, then Feature Unlocks."],
+        expect: "All quests lists the whole catalog (unlisted quests only when Include Unlisted is on). Feature Unlocks lists only the curated feature-unlock quests (retainers, chocobo, Gold Saucer and so on)." },
+      { id: "D6", title: "Show in Journal from Moonlit clears narrowing filters",
+        how: ["Tick Hide completed and Pinned only. Go to Moonlit, right-click Most Gentlemanly (from Her Last Vow) and choose Show in Journal.", "Repeat for a reward whose quest is in the Unlisted bucket, if you can find one (Confidence column may help), with Show Unlisted bucket off in the config."],
+        expect: "The Journal tab opens scoped to that quest's genre, the Hide completed and Pinned only chips are gone, and the row is selected and visible. For an unlisted quest, Include Unlisted turns on and an Unlisted node appears selected even though the config toggle is off." },
+    ]
+  },
+  {
+    code: "E", id: "table", title: "Quest table",
+    intro: "The middle column on the Journal tab.",
+    checks: [
+      { id: "E1", title: "Columns and header operations",
+        how: ["Right-click any column header. Drag the Lv header onto the Exp header. Drag the divider between two headers."],
+        expect: "Columns are: state glyph, Name, Lv, Job, Next step, Exp, Rewards. The header menu lets you hide columns, dragging reorders them, and dividers resize them. Name and Next step stretch to fill space." },
+      { id: "E2", title: "Sorting cycles ascending, descending, journal order",
+        how: ["Confirm no header shows a sort arrow when the window is first opened.", "Click the Name header, click it again, click it a third time. Repeat with Lv, Exp, and the glyph column header."],
+        expect: "First click sorts ascending with an arrow, second descending, third removes the arrow and restores journal order. On first open there is no arrow anywhere." },
+      { id: "E3", title: "Sort survives a plugin reload",
+        how: ["Sort by Lv descending. Wait two seconds. Reload the plugin and open the window."],
+        expect: "The table is still sorted by Lv descending with the arrow showing." },
+      { id: "E4", title: "Scrolling 5,000 rows is smooth",
+        how: ["Select All quests with no filters. Scroll the table quickly from top to bottom with the mouse wheel and drag the scrollbar.", "Optional: type /xlstats and watch the plugin's frame time and allocations while idle over the table."],
+        expect: "No stutter or hitching; the frame counter shows no steady growth in allocations while idle." },
+      { id: "E5", title: "Row click and double-click",
+        how: ["Click a row. Double-click a different row."],
+        expect: "Single click shows that quest in the right-hand detail pane. Double-click also opens the in-game journal on it. If the journal opens on a different quest than the one you clicked, mark Fail and write both quest names in the notes: this is a known open question." },
+      { id: "E6", title: "Selecting from another pane always scrolls the table",
+        how: ["Select a quest with a long prerequisite path. In the detail pane's Path section click the first step, then the second, then the third.", "Click a row in the table, then go to Moonlit and use Show in Journal on any reward."],
+        expect: "Every external selection scrolls the table so the selected row is visible, every single time, not every other time. Clicking a row inside the table itself never scrolls." },
+      { id: "E7", title: "Pinned rows show a gold dot",
+        how: ["Right-click a row and choose Pin."],
+        expect: "A small gold dot appears at the left edge of the glyph column on that row." },
+      { id: "E8", title: "Reward icons with tooltips",
+        how: ["Find a quest with several rewards (Her Last Vow is a good one). Hover each icon in its Rewards cell."],
+        expect: "Up to four icons show; hovering shows the reward name and ×N for stacks." },
+      { id: "E9", title: "Context menu items",
+        how: ["Right-click a row and read the menu. Also right-click a quest whose giver has no map location (legacy row The Ultimate Weapon under Unlisted, if visible)."],
+        expect: "Items: Pin/Unpin, Flag on map, Open journal, Copy name, Show path, Link in chat, and Quest Map graph only when the Quest Map plugin is installed and loaded. Flag on map is greyed out when the giver has no map." },
+      { id: "E10", title: "Pin writes the file; browse mode disables pinning",
+        how: ["Pin a quest, wait one second, open user\\pins.json in the plugin data folder. Unpin it and check again.", "Log out to the title screen with no snapshots (only possible right after Delete all data) and right-click a row."],
+        expect: "The row id appears in the file under your character's id within a second and is removed on Unpin. In browse mode the Pin item is greyed out and nothing is written under content id 0." },
+      { id: "E11", title: "Delete all data and Forget really drop pins and overrides",
+        how: ["Pin two quests and mark one Moonlit reward Not unique (hide). Type /tsukimichi config → Delete all Tsukimichi data → confirm twice.", "Pin one quest. Open user\\pins.json.", "Later, with a second character stored: pin a quest on it, switch to your main, Characters → select it → Forget this character → Forget. Open user\\pins.json."],
+        expect: "After Delete all, pins.json and overrides.json are gone, the hidden Moonlit reward is back at once, and the new pins.json contains only the one new pin. After Forget, that character's pins are gone from the file." },
+      { id: "E12", title: "Copy name",
+        how: ["Right-click a row → Copy name. Paste into the chat box."],
+        expect: "The exact quest name is pasted." },
+      { id: "E13", title: "Show path scrolls the detail pane",
+        how: ["Select a quest deep in a chain. Scroll the detail pane to the top. Right-click the row → Show path."],
+        expect: "The detail pane scrolls to its Path section." },
+      { id: "E14", title: "Link in chat prints quest and map links",
+        how: ["Right-click a row → Link in chat. Look at the chat log. Click each link."],
+        expect: "One chat line with a clickable quest link followed by a clickable map link showing place name and coordinates. The quest link opens the journal entry; the map link opens the map at the giver." },
+    ]
+  },
+  {
+    code: "F", id: "detail", title: "Detail pane",
+    intro: "The right-hand column for the selected quest.",
+    checks: [
+      { id: "F1", title: "Header block",
+        how: ["Select a quest that is ready on another job if you have one (silver first quarter), otherwise any quest. Read the header."],
+        expect: "Quest name, a large state moon, Genre › Category, then Expansion · Lv N · Job category, then the state name in its colour plus Ready on XXX or Accepted, step N when applicable, and Pinned in gold if pinned." },
+      { id: "F2", title: "Requirements with the next step marked",
+        how: ["Select a blocked quest (new-moon glyph), for example a tribal quest above your rank or a job quest above your level."],
+        expect: "One line per requirement with a gold ✓ or pink ✗, the requirement name and a detail clause such as Trusted, needs Sworn or needs level 50, you are 30. The first failing line carries a ▶ and is drawn in gold. Without a snapshot the section says requirements need a snapshot." },
+      { id: "F3", title: "Rewards list",
+        how: ["Select Her Last Vow."],
+        expect: "Each reward shows icon, name with ×N for stacks, and its kind in blue-grey. No obtained badges are shown in this version." },
+      { id: "F4", title: "Path chain",
+        how: ["Select a quest a few steps into the main scenario, then a quest with no prerequisites (any Close to Home style opener)."],
+        expect: "A vertical chain of moons joined by a thin line runs from the first step to the selected quest; each step name is clickable and selects that quest. A quest with no prerequisites reads This quest starts its own path." },
+      { id: "F5", title: "Giver and map flag match the game",
+        how: ["Select a quest you have not completed. Read the Giver block. Click Flag map, then open the game journal for the same quest and compare its map location. Click Open journal."],
+        expect: "NPC name, Region › Place and coordinates like (12.3, 45.6). Flag map places a flag where the game journal's own map shows the giver. Open journal opens the game journal on this exact quest; if it opens on a different quest, mark Fail and note both names." },
+      { id: "F6", title: "Provenance line",
+        how: ["Read the last line of the pane for a completed quest, then for an uncompleted quest, then while logged out."],
+        expect: "Completed per client flags at HH:mm for completed quests, Evaluated from snapshot taken HH:mm otherwise, No snapshot; state unknown while there is no character." },
+      { id: "F7", title: "Live update within two seconds of completing a quest",
+        how: ["Select a quest you can finish right now and keep the window open. Turn the quest in."],
+        expect: "Within about two seconds the row's glyph becomes a full moon, the detail pane's state and provenance update, and the tree counts for its genre and category increase by one." },
+    ]
+  },
+  {
+    code: "G", id: "command", title: "Command",
+    intro: "Chat commands.",
+    checks: [
+      { id: "G1", title: "/tsukimichi toggles", how: ["Type /tsukimichi twice."], expect: "The main window toggles." },
+      { id: "G2", title: "/tsukimichi glyphs", how: ["Type /tsukimichi glyphs."], expect: "A small window titled Tsukimichi Glyphs opens showing all eight moon phases at three sizes." },
+      { id: "G3", title: "Searching by name from chat",
+        how: ["Type /tsukimichi close to home. Then type /tsukimichi the (a word matching many quests). Then type /tsukimichi zzzzqqq."],
+        expect: "The window opens with the text in its search box and chat shows up to five quest links, each with a map link when available. For many matches chat adds and N more. No match prints No quests match." },
+      { id: "G4", title: "Searching by id from chat", how: ["Type /tsukimichi search 65576."], expect: "Same as above, matching the quest whose id is 65576." },
+      { id: "G5", title: "Command before the catalog is ready",
+        how: ["Reload the plugin and immediately type /tsukimichi close to home."],
+        expect: "Chat says The catalog is still loading." },
+    ]
+  },
+  {
+    code: "H", id: "unload", title: "Unload",
+    intro: "Clean shutdown.",
+    checks: [
+      { id: "H1", title: "Unload flushes pins and settings without errors",
+        how: ["Pin a quest and change a filter, then within one second disable the plugin in /xlplugins → Dev Tools. Open /xllog and the plugin data folder."],
+        expect: "user\\pins.json and the config file contain the latest changes; the log shows Tsukimichi unloaded and no red lines from Tsukimichi." },
+    ]
+  },
+  {
+    code: "I", id: "moonlit", title: "Moonlit pane",
+    intro: "Unique rewards. Use a character that has completed Her Last Vow for the reference row.",
+    checks: [
+      { id: "I1", title: "Reward kinds with moons and counts",
+        how: ["Click the Moonlit tab. Read the left column."],
+        expect: "All first, then one line per reward kind (Emote, Mount, Minion, Orchestrion, and so on), each with a small filling moon and obtained/total. The moon's lit part matches the ratio." },
+      { id: "I2", title: "Selecting a kind filters the table",
+        how: ["Click Emote. Then click All."],
+        expect: "Only emote rows show, the selected line is highlighted; All shows every entry again." },
+      { id: "I3", title: "Table columns and frozen header",
+        how: ["Read the headers. Right-click a header, drag a divider, then scroll down."],
+        expect: "Columns: Have (moon), Reward (icon and name), Kind, Quest, State (moon), Confidence. They resize, reorder and hide; the header row stays visible while scrolling." },
+      { id: "I4", title: "Her Last Vow reference row",
+        how: ["Filter to Emote, find Most Gentlemanly. If you have a second character without the emote, switch to it with the toolbar dropdown and look again."],
+        expect: "Have shows a full moon on a character who owns the emote and a new moon on one who does not." },
+      { id: "I5", title: "Obtained state while offline",
+        how: ["Switch to a stored character (or log out) and look at the Have column for an emote row and for a job-unlock row."],
+        expect: "Emote, mount, minion, orchestrion, ornament, card, aether current and duty rows show the veiled moon and the toolbar notes that obtained states need the live character. Action, trait, job, title, achievement and system rows still show full or new from the snapshot." },
+      { id: "I6", title: "Reward icons",
+        how: ["Look at a mount row, an emote row from Her Last Vow, and a system-unlock row."],
+        expect: "Item-based rewards (mount, minion, orchestrion) show the item icon; the emote shows the emote icon; an entry with no icon shows a small moon, filled when obtained." },
+      { id: "I7", title: "Hide obtained",
+        how: ["Tick Hide obtained above the table."],
+        expect: "Full-moon rows disappear and the n / total counter next to the filter updates." },
+      { id: "I8", title: "Text filter performance",
+        how: ["Select All. Type gentle in the filter box, then a single letter, then clear it."],
+        expect: "Rows narrow by reward name, quest name or kind, case-insensitively; clearing restores every row; no stutter while typing with all rows loaded." },
+      { id: "I9", title: "Clicking a quest name reveals it in the Journal",
+        how: ["Click the quest name in any row."],
+        expect: "The Journal tab opens scoped to that quest's genre (Unlisted node for genre-less quests) and the quest is selected in the detail pane." },
+      { id: "I10", title: "Clicking a reward name stays on Moonlit",
+        how: ["Click the reward name in a row."],
+        expect: "The row is selected and the detail pane shows its quest while the Moonlit tab stays active." },
+      { id: "I11", title: "State column matches the Journal",
+        how: ["Note the State moon for a row, then find the same quest on the Journal tab. Hover the State moon."],
+        expect: "Same phase in both places; the hover shows the state name." },
+      { id: "I12", title: "Confidence badges and sources",
+        how: ["Find rows with each badge and hover them. Curated rows are system unlocks such as retainers or Gold Saucer."],
+        expect: "Shipped entries read static in silver, curated ones curated in gold, your own marks yours in pink-red; hovering shows the source, such as Quest.EmoteReward or curated/system_unlocks.json." },
+      { id: "I13", title: "Not unique (hide) writes an override",
+        how: ["Right-click a reward → Show in Journal (confirm it works). Right-click again → Not unique (hide). Open user\\overrides.json."],
+        expect: "Every row of that quest disappears, the kind counts drop, and the file contains the quest id with unique: false." },
+      { id: "I14", title: "Restore shipped verdict",
+        how: ["Right-click a row of a quest that has an override (or edit overrides.json to unique: true for a quest and reload the plugin)."],
+        expect: "Restore shipped verdict appears on rows of overridden quests and brings the hidden quest back." },
+      { id: "I15", title: "Missing reward data is handled",
+        how: ["Disable the plugin. Rename Tsukimichi\\bin\\x64\\Debug\\Data\\unique_quests.json to something else. Enable the plugin and open Moonlit. Rename the file back afterwards and reload."],
+        expect: "The pane says reward data is not shipped in this build; the Journal and everything else still work." },
+      { id: "I16", title: "Scrolling all rows is smooth",
+        how: ["Select All and scroll the table fast from top to bottom."],
+        expect: "No stutter; no visible per-frame GC spikes in the Dalamud profiler if you check it." },
+    ]
+  },
+  {
+    code: "J", id: "characters", title: "Characters pane",
+    intro: "Needs at least one stored character besides the live one for the full set.",
+    checks: [
+      { id: "J1", title: "Character list",
+        how: ["Click the Characters tab and read the left column."],
+        expect: "Every stored snapshot, newest capture first; name on the first line, World · age · n quests completed on the second; the logged-in character carries ● and reads Live instead of an age." },
+      { id: "J2", title: "World names, not numbers",
+        how: ["Read the second line of each character."],
+        expect: "A world name such as Balmung, never a number." },
+      { id: "J3", title: "Viewing a stored character persists",
+        how: ["Select a stored character. Check the Journal tab and the sync glyph. Reload the plugin and open the window."],
+        expect: "The Journal re-evaluates for that snapshot, the sync glyph goes veiled, and after the reload the same stored character is still the one being viewed." },
+      { id: "J4", title: "Selecting the live character follows live state",
+        how: ["Select the ● character again."],
+        expect: "The sync glyph returns to full gold and the status bar says live." },
+      { id: "J5", title: "Main column header",
+        how: ["Read the top of the middle column for the live character, then for a stored one."],
+        expect: "Name, world, Live · time or Snapshot taken <time> (<age>), then completed · in journal · current job." },
+      { id: "J6", title: "Levels, Grand Company, societies, allowances",
+        how: ["Read the rest of the middle column."],
+        expect: "A job levels table sorted by level descending with real job names; a Grand Company line with company and rank; an allied societies table with society, rank name and reputation; an allowances line with society and leve counts." },
+      { id: "J7", title: "Export JSON",
+        how: ["Click Export JSON…. Open the exports folder in the plugin data folder."],
+        expect: "A file named like Michiru_Tsukikage-20260927-2114.json appears, its path shows in gold under the buttons for a few seconds and in the log, and it has the same content as the stored characters\\<id>.json." },
+      { id: "J8", title: "Forget this character",
+        how: ["With the live character selected, hover Forget this character. Select a stored character and click Forget this character; click Cancel. Click it again and click Forget."],
+        expect: "Disabled with a tooltip for the live character. For a stored one: a confirm popup; Cancel keeps the file; Forget deletes characters\\<id>.json, removes it from the list and the view falls back to the live character." },
+      { id: "J9", title: "Account view for the selected quest",
+        how: ["With no quest selected, read the Account view section. Then select a quest on the Journal tab and come back.", "If possible, complete that quest on the live character while the section is open."],
+        expect: "With nothing selected it asks you to select a quest. With one selected it lists every character with a moon, state name and next-step text, without switching characters. Completing the quest live updates its row within one poll." },
+      { id: "J10", title: "A corrupt snapshot does not break anything",
+        how: ["Disable the plugin. Open a stored (not live) characters\\<id>.json in Notepad, delete half the file, save. Enable the plugin, select a quest, open Account view. Then Forget that character and log in on it again later to recapture."],
+        expect: "That character's row reads snapshot unreadable, a warning appears in /xllog, and everything else works." },
+    ]
+  },
+  {
+    code: "K", id: "config", title: "Config window",
+    intro: "Type /tsukimichi config.",
+    checks: [
+      { id: "K1", title: "Opens and resizes",
+        how: ["Type /tsukimichi config. Drag the window corner smaller and larger. Also try the Settings button for Tsukimichi in /xlplugins."],
+        expect: "A window titled Tsukimichi Settings opens from both routes; it resizes and stops at a sensible minimum size." },
+      { id: "K2", title: "Poll interval slider",
+        how: ["Drag the slider to 3.0 s and release. Check the modified time of the plugin config file. Watch the Journal after completing something, or just note the tooltip."],
+        expect: "It moves in 0.1 s steps between 0.5 and 5.0; releasing saves (file time changes) and the poller follows the new cadence without a reload." },
+      { id: "K3", title: "Chat notice checkboxes",
+        how: ["Look at Include main scenario before and after ticking Chat notice for newly available quests."],
+        expect: "Include main scenario is greyed out until the notice is on; both save on click." },
+      { id: "K4", title: "Show Unlisted bucket",
+        how: ["Tick Show Unlisted bucket, look at the Journal tree, untick it."],
+        expect: "The Unlisted node appears at the bottom of the tree and disappears again; the setting saves." },
+      { id: "K5", title: "Delete all data with double confirmation",
+        how: ["Click Delete all Tsukimichi data, then Cancel. Click it, Continue, then Cancel. Click it, Continue, Delete everything."],
+        expect: "Cancel at either step does nothing. Delete everything removes characters\\*.json, user\\pins.json and user\\overrides.json; the Characters list empties; hidden Moonlit rewards reappear; the window shows a done message." },
+      { id: "K6", title: "About section",
+        how: ["Read the About section. Compare the plugin version with the csproj Version (0.1.0.0)."],
+        expect: "Plugin version matches; the reward-data game version and generation date, the unique entry count, the four curated counts, and Catalog: 5373 quests, English (or your client language) are all shown; loading before the build finishes." },
+    ]
+  },
+];
+
+const STORE_KEY = "tsukimichi-smoke-v1";
+const ALL = SECTIONS.flatMap(s => s.checks.map(c => ({ ...c, section: s })));
+let state = { answers: {}, meta: {} };
+
+function load() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) { const parsed = JSON.parse(raw); if (parsed && typeof parsed === "object") state = { answers: parsed.answers || {}, meta: parsed.meta || {} }; }
+  } catch (e) { /* storage unavailable; run in memory */ }
+}
+function save() {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) { /* ignore */ }
+}
+
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+
+function render() {
+  const root = document.getElementById("checks");
+  const nav = document.getElementById("sectionNav");
+  root.innerHTML = SECTIONS.map(s => `
+    <section class="group" id="${s.id}">
+      <h2><span class="code">${s.code}</span>${esc(s.title)}</h2>
+      <p class="intro">${esc(s.intro)}</p>
+      <div class="cards">
+        ${s.checks.map(c => `
+          <article class="check" id="check-${c.id}" data-id="${c.id}" data-state="">
+            <div class="check-head">
+              <span class="check-id">${c.id}</span>
+              <h3 class="check-title">${esc(c.title)}${c.optional ? `<span class="opt">${esc(c.optional)}</span>` : ""}</h3>
+            </div>
+            <div class="check-body">
+              <div class="how"><span class="label">How to check</span><ol>${c.how.map(h => `<li>${esc(h)}</li>`).join("")}</ol></div>
+              <p class="expect"><span class="label">Expected</span>${esc(c.expect)}</p>
+              <div class="answer">
+                <div class="segmented" role="radiogroup" aria-label="Result for ${c.id}">
+                  <label><input type="radio" name="r-${c.id}" id="r-${c.id}-pass" value="pass"><span>Pass</span></label>
+                  <label><input type="radio" name="r-${c.id}" id="r-${c.id}-fail" value="fail"><span>Fail</span></label>
+                  <label><input type="radio" name="r-${c.id}" id="r-${c.id}-na" value="na"><span>Unknown / N/A</span></label>
+                </div>
+                <textarea class="notes" id="n-${c.id}" rows="1" placeholder="Notes: what you saw, log lines, quest names, anything that a plain pass or fail misses"></textarea>
+              </div>
+            </div>
+          </article>`).join("")}
+      </div>
+    </section>`).join("");
+  nav.innerHTML = SECTIONS.map(s => `<a href="#${s.id}" data-section="${s.id}"><span>${s.code} · ${esc(s.title)}</span><span class="cnt" id="nav-${s.id}"></span></a>`).join("");
+
+  for (const c of ALL) {
+    const a = state.answers[c.id] || {};
+    const art = document.getElementById(`check-${c.id}`);
+    if (a.s) { const r = document.getElementById(`r-${c.id}-${a.s}`); if (r) r.checked = true; }
+    art.dataset.state = a.s || "";
+    const ta = document.getElementById(`n-${c.id}`);
+    ta.value = a.n || "";
+    autosize(ta);
+    art.querySelectorAll("input[type=radio]").forEach(r => r.addEventListener("change", () => setAnswer(c.id, r.value, null)));
+    ta.addEventListener("input", () => { autosize(ta); setAnswer(c.id, null, ta.value); });
+  }
+  for (const k of ["metaVersion", "metaCharacter", "metaDalamud", "metaDate"]) {
+    const el = document.getElementById(k);
+    el.value = state.meta[k] || (k === "metaDate" ? new Date().toISOString().slice(0, 10) : "");
+    el.addEventListener("input", () => { state.meta[k] = el.value; save(); });
+  }
+  updateProgress();
+}
+
+function autosize(ta) { ta.style.height = "auto"; ta.style.height = Math.max(40, ta.scrollHeight + 2) + "px"; }
+
+function setAnswer(id, s, n) {
+  const a = state.answers[id] || {};
+  if (s !== null) a.s = s;
+  if (n !== null) a.n = n;
+  state.answers[id] = a;
+  save();
+  const art = document.getElementById(`check-${id}`);
+  art.dataset.state = a.s || "";
+  updateProgress();
+  applyFilter(currentFilter, false);
+}
+
+let wasComplete = false;
+function updateProgress() {
+  const counts = { pass: 0, fail: 0, na: 0 };
+  for (const c of ALL) { const s = (state.answers[c.id] || {}).s; if (s) counts[s]++; }
+  const done = counts.pass + counts.fail + counts.na;
+  const total = ALL.length;
+  const pct = Math.round(done / total * 100);
+  document.getElementById("pctDone").textContent = pct;
+  document.getElementById("numDone").textContent = done;
+  document.getElementById("numTotal").textContent = total;
+  document.getElementById("cPass").textContent = counts.pass;
+  document.getElementById("cFail").textContent = counts.fail;
+  document.getElementById("cNa").textContent = counts.na;
+  document.getElementById("cOpen").textContent = total - done;
+  const rect = document.getElementById("litRect");
+  const w = done / total * 100;
+  rect.setAttribute("x", String(100 - w)); rect.setAttribute("width", String(w));
+  for (const s of SECTIONS) {
+    const sd = s.checks.filter(c => (state.answers[c.id] || {}).s).length;
+    const el = document.getElementById(`nav-${s.id}`);
+    el.textContent = `${sd}/${s.checks.length}`;
+    el.parentElement.classList.toggle("done", sd === s.checks.length);
+  }
+  const complete = done === total;
+  if (complete && !wasComplete) { buildReport(); document.getElementById("report").hidden = false; toast("All checks answered. Report is ready at the bottom."); }
+  else if (!document.getElementById("report").hidden) buildReport();
+  wasComplete = complete;
+}
+
+let currentFilter = "all";
+function applyFilter(f, announce) {
+  currentFilter = f;
+  document.querySelectorAll(".toolbar .seg button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.filter === f)));
+  let shown = 0;
+  for (const c of ALL) {
+    const s = (state.answers[c.id] || {}).s || "";
+    const show = f === "all" || (f === "open" ? !s : s === f);
+    document.getElementById(`check-${c.id}`).classList.toggle("hidden-by-filter", !show);
+    if (show) shown++;
+  }
+  document.querySelectorAll("section.group").forEach(sec => {
+    const any = sec.querySelectorAll("article.check:not(.hidden-by-filter)").length > 0;
+    sec.style.display = any ? "" : "none";
+  });
+  document.getElementById("filterNote").textContent = f === "all" ? "" : `${shown} shown`;
+}
+
+function stateWord(s) { return { pass: "PASS", fail: "FAIL", na: "UNKNOWN" }[s] || "UNANSWERED"; }
+
+function buildReport() {
+  const m = state.meta;
+  const rows = ALL.map(c => ({ c, a: state.answers[c.id] || {} }));
+  const counts = { pass: 0, fail: 0, na: 0, open: 0 };
+  rows.forEach(r => counts[r.a.s || "open"]++);
+  const lines = [];
+  lines.push("# Tsukimichi smoke test report");
+  lines.push(`Date: ${m.metaDate || "(not given)"} · Plugin: ${m.metaVersion || "(not given)"} · Dalamud: ${m.metaDalamud || "(not given)"} · Character: ${m.metaCharacter || "(not given)"}`);
+  lines.push(`Result: ${counts.pass} pass · ${counts.fail} fail · ${counts.na} unknown · ${counts.open} unanswered (of ${ALL.length})`);
+  const block = (title, filter, withNotesOnly) => {
+    const items = rows.filter(r => filter(r) && (!withNotesOnly || (r.a.n || "").trim()));
+    if (!items.length) return;
+    lines.push(""); lines.push(`## ${title} (${items.length})`);
+    for (const { c, a } of items) {
+      lines.push(`- [${c.id}] ${c.title}`);
+      const n = (a.n || "").trim();
+      if (n) n.split(/\r?\n/).forEach(l => lines.push(`  ${l}`));
+    }
+  };
+  block("Failed", r => r.a.s === "fail", false);
+  block("Unknown / could not verify", r => r.a.s === "na", false);
+  block("Passed with notes", r => r.a.s === "pass", true);
+  block("Unanswered", r => !r.a.s, false);
+  const passedQuiet = rows.filter(r => r.a.s === "pass" && !(r.a.n || "").trim()).map(r => r.c.id);
+  if (passedQuiet.length) { lines.push(""); lines.push(`## Passed (${passedQuiet.length})`); lines.push(passedQuiet.join(", ")); }
+  const text = lines.join("\n");
+  document.getElementById("reportText").textContent = text;
+  document.getElementById("reportStatus").textContent = counts.open
+    ? `${counts.open} check${counts.open === 1 ? "" : "s"} still unanswered. This is a partial report; refresh it after answering the rest.`
+    : "Every check is answered. Copy this and paste it into the chat.";
+  return text;
+}
+
+function toast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(toast._h); toast._h = setTimeout(() => t.classList.remove("show"), 2600);
+}
+
+async function copyText(text, okMsg) {
+  try { await navigator.clipboard.writeText(text); toast(okMsg); }
+  catch (e) {
+    const pre = document.getElementById("reportText");
+    const range = document.createRange(); range.selectNodeContents(pre);
+    const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+    toast("Clipboard blocked here. The report text is selected; press Ctrl+C.");
+  }
+}
+
+document.getElementById("btnReport").addEventListener("click", () => {
+  buildReport(); const r = document.getElementById("report"); r.hidden = false; r.scrollIntoView({ behavior: "smooth", block: "start" });
+});
+document.getElementById("btnRegen").addEventListener("click", () => { buildReport(); toast("Report refreshed."); });
+document.getElementById("btnCopy").addEventListener("click", () => copyText(buildReport(), "Report copied. Paste it into the chat."));
+document.getElementById("btnExportJson").addEventListener("click", () => copyText(JSON.stringify({ meta: state.meta, answers: state.answers }, null, 2), "Full answers copied as JSON."));
+document.getElementById("btnReset").addEventListener("click", () => document.getElementById("resetConfirm").classList.add("open"));
+document.getElementById("btnResetNo").addEventListener("click", () => document.getElementById("resetConfirm").classList.remove("open"));
+document.getElementById("btnResetYes").addEventListener("click", () => {
+  state = { answers: {}, meta: {} }; save(); wasComplete = false;
+  document.getElementById("resetConfirm").classList.remove("open");
+  document.getElementById("report").hidden = true;
+  render(); applyFilter("all", false); toast("All answers erased.");
+});
+document.querySelectorAll(".toolbar .seg button").forEach(b => b.addEventListener("click", () => applyFilter(b.dataset.filter, true)));
+
+load();
+render();
+applyFilter("all", false);
+</script>
