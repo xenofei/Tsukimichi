@@ -39,10 +39,20 @@ public sealed class UiState
 
     public bool MoonlitHideObtained { get; set; }
 
+    /// <summary>Set by "Show path"; the detail pane scrolls to its Path section on the next frame and clears it.</summary>
+    public bool ScrollToPath { get; set; }
+
     /// <summary>Bumped by any pane that changed something affecting the query; MainWindow re-runs the query when it differs from the last run.</summary>
     public int QueryVersion { get; private set; }
 
     public void MarkQueryDirty() => QueryVersion++;
+
+    /// <summary>Select a quest and ask the detail pane to scroll to its Path section.</summary>
+    public void ShowPath(uint rowId)
+    {
+        SelectedRowId = rowId;
+        ScrollToPath = true;
+    }
 
     /// <summary>Select a quest and switch to the Journal tab scoped to its genre, used by cross-pane links.</summary>
     public void Reveal(uint rowId, QuestScope scope)
