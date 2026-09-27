@@ -1,0 +1,24 @@
+<Project Sdk="Dalamud.NET.Sdk/15.0.0">
+
+  <PropertyGroup>
+    <Version>0.1.0.0</Version>
+    <Author>Michiru Tsukikage</Author>
+    <Name>Tsukimichi</Name>
+    <Punchline>Walk the moon's path: every quest, every requirement, every unique reward.</Punchline>
+    <Description>A quest catalog for every journal type, with completed and available filters and a per-requirement breakdown of what still blocks a quest.
+Moonlit treasures collects quests with unique rewards, and per-character snapshots keep the whole account in view.</Description>
+    <RepoUrl>https://github.com/xenofei/Tsukimichi</RepoUrl>
+    <Tags>quests;journal;tracker;rewards</Tags>
+    <RootNamespace>Tsukimichi</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Tsukimichi.Core\Tsukimichi.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Data\**" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\assets\icon.png" Link="icon.png" CopyToOutputDirectory="PreserveNewest" Condition="Exists('..\assets\icon.png')" />
+  </ItemGroup>
+
+</Project>
