@@ -100,6 +100,33 @@ public class PathFinderTests
     }
 
     [Fact]
+    public void Any_join_where_every_branch_cycles_back_keeps_only_the_branch_heads()
+    {
+        // A and B each lead straight back to the target, so at their level no branch survives; each is then a
+        // one-quest branch of equal cost and the tie goes to the lowest row id.
+        var catalog = Catalog(
+            Quest(A) with { PreviousQuests = new Prereq([Target], JoinKind.Any) },
+            Quest(B) with { PreviousQuests = new Prereq([Target], JoinKind.Any) },
+            Quest(Target) with { PreviousQuests = new Prereq([B, A], JoinKind.Any) });
+
+        var path = PathFinder.PathTo(Target, catalog, States(catalog));
+
+        Assert.Equal([A, Target], path.Select(p => p.RowId));
+        Assert.Equal([1, 0], path.Select(p => p.Depth));
+    }
+
+    [Fact]
+    public void Any_join_that_only_names_itself_is_a_single_step()
+    {
+        var catalog = Catalog(Quest(Target) with { PreviousQuests = new Prereq([Target], JoinKind.Any) });
+
+        var path = PathFinder.PathTo(Target, catalog, States(catalog));
+
+        Assert.Equal([Target], path.Select(p => p.RowId));
+        Assert.Equal(1, PathFinder.RemainingCount(Target, catalog, States(catalog)));
+    }
+
+    [Fact]
     public void Self_reference_is_cut()
     {
         var catalog = Catalog(Quest(Target) with { PreviousQuests = new Prereq([Target], JoinKind.All) });

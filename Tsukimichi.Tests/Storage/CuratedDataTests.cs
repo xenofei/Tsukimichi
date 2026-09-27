@@ -192,6 +192,26 @@ public sealed class CuratedDataTests : IDisposable
     }
 
     [Fact]
+    public void Locked_file_is_warned_and_others_still_load()
+    {
+        WriteCurated("system_unlocks.json", """{ "66038": { "label": "Glamour Dresser" } }""");
+        WriteCurated("feature_quests.json", "[1]");
+        var lockedPath = tmp.File(Path.Combine("curated", "system_unlocks.json"));
+
+        using (File.Open(lockedPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+        {
+            var data = CuratedData.Load(tmp.File("curated"));
+
+            Assert.Empty(data.SystemUnlocks);
+            Assert.Single(data.FeatureQuests);
+            Assert.Single(data.Warnings);
+            Assert.Contains("system_unlocks.json", data.Warnings[0]);
+        }
+
+        Assert.Single(CuratedData.Load(tmp.File("curated")).SystemUnlocks);
+    }
+
+    [Fact]
     public void Unparseable_file_is_warned_and_others_still_load()
     {
         WriteCurated("system_unlocks.json", "{ broken");

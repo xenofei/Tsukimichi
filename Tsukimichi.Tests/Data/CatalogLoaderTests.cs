@@ -105,7 +105,7 @@ public class CatalogLoaderTests(GameDataFixture fixture, ITestOutputHelper outpu
     [GameDataFact]
     public void Close_to_home_requires_coming_to_gridania()
     {
-        var quest = Catalog.Get(65621u);
+        var quest = Catalog.GetByRowId(65621u);
         Assert.NotNull(quest);
         Assert.Equal("Close to Home", quest.Name);
         Assert.Equal("ManFst002_00085", quest.InternalId);
@@ -127,7 +127,7 @@ public class CatalogLoaderTests(GameDataFixture fixture, ITestOutputHelper outpu
     [GameDataFact]
     public void Ultimate_weapon_rewards_item_6008()
     {
-        var quest = Catalog.Get(70058u);
+        var quest = Catalog.GetByRowId(70058u);
         Assert.NotNull(quest);
         Assert.Equal("The Ultimate Weapon", quest.Name);
         var reward = Assert.Single(quest.Rewards, r => r.Kind == RewardKind.Item && r.ItemId == 6008);
@@ -141,7 +141,7 @@ public class CatalogLoaderTests(GameDataFixture fixture, ITestOutputHelper outpu
     [GameDataFact]
     public void Immortal_flames_hunt_has_grand_company_gate_and_two_locks()
     {
-        var quest = Catalog.Get(67101u);
+        var quest = Catalog.GetByRowId(67101u);
         Assert.NotNull(quest);
         Assert.Equal(3, quest.GrandCompany);
         Assert.Equal(9, quest.GrandCompanyRank);
@@ -152,7 +152,7 @@ public class CatalogLoaderTests(GameDataFixture fixture, ITestOutputHelper outpu
     [GameDataFact]
     public void Golden_rain_is_festival_48()
     {
-        var quest = Catalog.Get(67960u);
+        var quest = Catalog.GetByRowId(67960u);
         Assert.NotNull(quest);
         Assert.Equal(67960u, quest.RowId);
         Assert.Equal(48, quest.Festival);
@@ -163,7 +163,7 @@ public class CatalogLoaderTests(GameDataFixture fixture, ITestOutputHelper outpu
     [GameDataFact]
     public void Issuer_carries_npc_name_and_raw_level_coordinates()
     {
-        var issuer = Catalog.Get(65621u)!.Issuer;
+        var issuer = Catalog.GetByRowId(65621u)!.Issuer;
         Assert.NotNull(issuer);
         Assert.Equal(1001140u, issuer.NpcId);
         Assert.False(string.IsNullOrEmpty(issuer.Name));
@@ -225,12 +225,40 @@ public class CatalogLoaderTests(GameDataFixture fixture, ITestOutputHelper outpu
     }
 
     [GameDataFact]
-    public void Accept_conditions_are_read_positionally()
+    public void Accept_conditions_drop_empty_slots()
     {
-        var quest = Catalog.Get(65961u);
+        var quest = Catalog.GetByRowId(65961u);
         Assert.NotNull(quest);
-        Assert.Equal([66031u, 0u, 0u], quest.AcceptConditions);
-        Assert.Empty(Catalog.Get(65621u)!.AcceptConditions);
+        Assert.Equal([66031u], quest.AcceptConditions);
+        Assert.Empty(Catalog.GetByRowId(65621u)!.AcceptConditions);
+        Assert.All(Catalog.All, q => Assert.DoesNotContain(0u, q.AcceptConditions));
+    }
+
+    [GameDataFact]
+    public void Unlisted_quests_never_share_a_journal_node_with_listed_ones()
+    {
+        var unlisted = Catalog.All.Where(q => q.IsUnlisted).ToArray();
+        Assert.NotEmpty(unlisted);
+        Assert.All(unlisted, q => Assert.Equal(0u, q.Journal.GenreId));
+
+        // Whatever section or category ids the sheet gives them, the tree never counts them under a journal node.
+        var states = Catalog.All.ToDictionary(q => q.RowId, _ => QuestState.Ready);
+        var counts = Tsukimichi.Core.Query.TreeCounts.Compute(Catalog, states, includeUnlisted: true);
+        var listedInSection0 = Catalog.All.Count(q => !q.IsUnlisted && q.Journal.SectionId == 0);
+        Assert.Equal(listedInSection0, counts.Section(0).Total);
+        Assert.Equal(unlisted.Length, counts.Unlisted.Total);
+    }
+
+    [GameDataFact]
+    public void Currency_rewards_map_to_Other_not_Item()
+    {
+        // A currency reward is the only Other-kind reward that carries an item row, so its presence proves the
+        // mapping; Item-kind rewards must never carry the low row ids the Item sheet reserves for currencies.
+        var currencies = Catalog.All.SelectMany(q => q.Rewards).Where(r => r.Kind == RewardKind.Other && r.ItemId != 0).ToArray();
+        Assert.NotEmpty(currencies);
+        Assert.All(currencies, r => Assert.Equal(r.Id, r.ItemId));
+        Assert.All(currencies, r => Assert.False(string.IsNullOrEmpty(r.Name)));
+        Assert.DoesNotContain(Catalog.All.SelectMany(q => q.Rewards), r => r.Kind == RewardKind.Item && r.ItemId is > 0 and < 20);
     }
 
     [GameDataFact]

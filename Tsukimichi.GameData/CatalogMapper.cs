@@ -125,7 +125,8 @@ public static class CatalogMapper
 
     /// <summary>
     /// QuestAcceptAdditionCondition is keyed by quest row id and carries two quest references plus one unknown uint.
-    /// Stored positionally as [Requirement0, Requirement1, Unknown0] so the evaluator can interpret each slot; empty when no row exists.
+    /// The non-zero values are kept in slot order (Requirement0, Requirement1, Unknown0); empty when no row exists or
+    /// every slot is zero, so a quest never shows an accept condition it does not have.
     /// </summary>
     private static uint[] MapAcceptConditions(uint questRowId, ExcelSheet<QuestAcceptAdditionCondition> sheet)
     {
@@ -134,7 +135,32 @@ public static class CatalogMapper
             return [];
         }
 
-        return [row.Requirement0.RowId, row.Requirement1.RowId, row.Unknown0];
+        Span<uint> slots = [row.Requirement0.RowId, row.Requirement1.RowId, row.Unknown0];
+        var count = 0;
+        foreach (var slot in slots)
+        {
+            if (slot != 0)
+            {
+                count++;
+            }
+        }
+
+        if (count == 0)
+        {
+            return [];
+        }
+
+        var result = new uint[count];
+        var i = 0;
+        foreach (var slot in slots)
+        {
+            if (slot != 0)
+            {
+                result[i++] = slot;
+            }
+        }
+
+        return result;
     }
 
     private static Issuer? MapIssuer(in Quest quest)
@@ -222,9 +248,11 @@ public static class CatalogMapper
             rewards.Add(ItemReward(RewardKind.OptionalItem, in item, count));
         }
 
+        // Currencies (tomestones, seals, scrips) are Item rows but not collectible items; Other keeps them out of
+        // the Item reward filter while the item row still rides along in ItemId for the icon and name.
         if (quest.CurrencyReward.RowId != 0 && quest.CurrencyReward.ValueNullable is { } currency)
         {
-            rewards.Add(new RewardRef(RewardKind.Item, currency.RowId, currency.RowId, Math.Max(quest.CurrencyRewardCount, 1u), currency.Name.ExtractText(), currency.Icon));
+            rewards.Add(new RewardRef(RewardKind.Other, currency.RowId, currency.RowId, Math.Max(quest.CurrencyRewardCount, 1u), currency.Name.ExtractText(), currency.Icon));
         }
 
         if (quest.EmoteReward.RowId != 0 && quest.EmoteReward.ValueNullable is { } emote)
@@ -387,18 +415,22 @@ public static class CatalogMapper
     /// <summary>
     /// Journal genre → (section, category, genre) names plus a rank that orders genres by section, then category, then
     /// genre row id, matching the in-game journal. The quest's own SortKey fills the low 16 bits of the composite key.
-    /// Genre 0 (unlisted quests) sorts after every listed genre.
+    /// Genre 0 (unlisted quests) sorts after every listed genre and keeps whatever section and category the sheet's
+    /// row 0 names (usually none); the tree and query layers never place unlisted quests under a journal node, so a
+    /// zero there cannot be mistaken for the real section 0.
     /// </summary>
     private sealed class JournalIndex
     {
         private readonly Dictionary<uint, JournalRef> templates;
         private readonly Dictionary<uint, int> ranks;
+        private readonly JournalRef unlisted;
         private readonly int unlistedRank;
 
-        private JournalIndex(Dictionary<uint, JournalRef> templates, Dictionary<uint, int> ranks, int unlistedRank)
+        private JournalIndex(Dictionary<uint, JournalRef> templates, Dictionary<uint, int> ranks, JournalRef unlisted, int unlistedRank)
         {
             this.templates = templates;
             this.ranks = ranks;
+            this.unlisted = unlisted;
             this.unlistedRank = unlistedRank;
         }
 
@@ -407,23 +439,17 @@ public static class CatalogMapper
         public static JournalIndex Build(ExcelModule excel, Language language)
         {
             var templates = new Dictionary<uint, JournalRef>();
+            var unlisted = JournalRef.None;
             foreach (var genre in excel.GetSheet<JournalGenre>(language))
             {
+                var template = Template(in genre);
                 if (genre.RowId == 0)
                 {
+                    unlisted = template;
                     continue;
                 }
 
-                var category = genre.JournalCategory.ValueNullable;
-                var section = category?.JournalSection.ValueNullable;
-                templates[genre.RowId] = new JournalRef(
-                    category?.JournalSection.RowId ?? 0,
-                    section?.Name.ExtractText() ?? string.Empty,
-                    genre.JournalCategory.RowId,
-                    category?.Name.ExtractText() ?? string.Empty,
-                    genre.RowId,
-                    genre.Name.ExtractText(),
-                    0);
+                templates[genre.RowId] = template;
             }
 
             var ordered = templates.Values
@@ -437,7 +463,7 @@ public static class CatalogMapper
                 ranks[ordered[i].GenreId] = i;
             }
 
-            return new JournalIndex(templates, ranks, ordered.Length);
+            return new JournalIndex(templates, ranks, unlisted, ordered.Length);
         }
 
         public JournalRef Resolve(uint genreId, ushort sortKey)
@@ -447,7 +473,24 @@ public static class CatalogMapper
                 return template with { SortKey = (ranks[genreId] << SortKeyGenreShift) | sortKey };
             }
 
-            return JournalRef.None with { GenreId = genreId, SortKey = (unlistedRank << SortKeyGenreShift) | sortKey };
+            var unlistedKey = (unlistedRank << SortKeyGenreShift) | sortKey;
+            return genreId == 0
+                ? unlisted with { SortKey = unlistedKey }
+                : JournalRef.None with { GenreId = genreId, SortKey = unlistedKey };
+        }
+
+        private static JournalRef Template(in JournalGenre genre)
+        {
+            var category = genre.JournalCategory.ValueNullable;
+            var section = category?.JournalSection.ValueNullable;
+            return new JournalRef(
+                category?.JournalSection.RowId ?? 0,
+                section?.Name.ExtractText() ?? string.Empty,
+                genre.JournalCategory.RowId,
+                category?.Name.ExtractText() ?? string.Empty,
+                genre.RowId,
+                genre.Name.ExtractText(),
+                0);
         }
     }
 }

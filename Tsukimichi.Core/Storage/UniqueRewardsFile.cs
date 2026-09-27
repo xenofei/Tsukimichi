@@ -43,10 +43,12 @@ public static class UniqueRewardsFile
         var warnings = new List<string>();
         var fileName = Path.GetFileName(path);
 
-        var text = AtomicFile.Read(path);
+        var text = AtomicFile.Read(path, out var ioError);
         if (text is null)
         {
-            warnings.Add($"{fileName} not found at {path}; no unique reward data is available.");
+            warnings.Add(ioError is null
+                ? $"{fileName} not found at {path}; no unique reward data is available."
+                : $"{fileName} could not be read; no unique reward data is available: {ioError}");
             return UniqueRewardsData.Empty with { Warnings = warnings };
         }
 

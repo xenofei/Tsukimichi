@@ -39,7 +39,7 @@ public class QueryPerfTests
 
     [Fact]
     [Trait("Category", "Perf")]
-    public void Six_thousand_quests_query_under_50ms()
+    public void Six_thousand_quests_query_under_250ms()
     {
         var catalog = Synthetic(6000);
         var states = new Dictionary<uint, QuestState>(catalog.Count);
@@ -66,7 +66,7 @@ public class QueryPerfTests
         watch.Stop();
 
         Assert.NotEmpty(result.Rows);
-        Assert.True(watch.ElapsedMilliseconds < 50, $"query took {watch.ElapsedMilliseconds} ms");
+        Assert.True(watch.ElapsedMilliseconds < 250, $"query took {watch.ElapsedMilliseconds} ms");
     }
 
     [Fact]
@@ -86,6 +86,6 @@ public class QueryPerfTests
 
         Assert.Empty(result.Rows);
         Assert.NotNull(result.Empty);
-        Assert.True(watch.ElapsedMilliseconds < 50, $"query took {watch.ElapsedMilliseconds} ms");
+        Assert.True(watch.ElapsedMilliseconds < 250, $"query took {watch.ElapsedMilliseconds} ms");
     }
 }

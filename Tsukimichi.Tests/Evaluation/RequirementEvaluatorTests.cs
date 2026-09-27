@@ -397,5 +397,48 @@ public class RequirementEvaluatorTests
         Assert.Equal("rank 9", TribeRanks.Name(9));
         Assert.Equal("Order of the Twin Adder", GrandCompanies.Name(2));
         Assert.Equal("Grand Company 4", GrandCompanies.Name(4));
+        Assert.Equal("Shadowbringers", Expansions.Name(3));
+    }
+
+    [Fact]
+    public void Context_name_hooks_replace_the_static_tables_in_details()
+    {
+        var ctx = new EvalContext
+        {
+            TribeRankName = rank => $"Rang {rank}",
+            GrandCompanyName = gc => $"Compagnie {gc}",
+            ExpansionName = ex => $"Extension {ex}",
+        };
+        var quest = Quest(Target) with
+        {
+            Expansion = 3,
+            GrandCompany = 1,
+            GrandCompanyRank = 5,
+            BeastTribe = 3,
+            BeastRank = 7,
+        };
+        var snapshot = Snapshot() with
+        {
+            MaxExpansion = 2,
+            GrandCompany = 2,
+            GcRanks = [0, 0, 0, 0],
+            Tribes = new Dictionary<byte, TribeStanding> { [3] = new TribeStanding(4, 0) },
+        };
+
+        var results = Eval(quest, snapshot, ctx: ctx);
+
+        Assert.Equal("requires Extension 3", Only(results, RequirementKind.ExpansionCap).Detail);
+        Assert.Equal("requires Compagnie 1", Only(results, RequirementKind.GrandCompany).Detail);
+        Assert.Equal("needs Compagnie 1 rank 5, you are rank 0", Only(results, RequirementKind.GrandCompanyRank).Detail);
+        Assert.Equal("needs Rang 7, you are Rang 4", Only(results, RequirementKind.TribeRank).Detail);
+    }
+
+    [Fact]
+    public void Default_context_names_come_from_the_static_tables()
+    {
+        Assert.Equal(TribeRanks.Name(7), EvalContext.Default.TribeRankName(7));
+        Assert.Equal(GrandCompanies.Name(1), EvalContext.Default.GrandCompanyName(1));
+        Assert.Equal(Expansions.Name(3), EvalContext.Default.ExpansionName(3));
+        Assert.Empty(EvalContext.Default.TodaysDailyOffer);
     }
 }

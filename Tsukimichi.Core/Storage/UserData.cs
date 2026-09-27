@@ -41,13 +41,22 @@ public static class OverridesFile
 
 internal static class UserFile
 {
-    /// <summary>Reads and deserializes a user-owned file. Missing → null silently; corrupt → quarantined, warned, null.</summary>
+    /// <summary>
+    /// Reads and deserializes a user-owned file. Missing → null silently; unreadable (locked, permissions) → warned,
+    /// left in place, null; corrupt → quarantined, warned, null.
+    /// </summary>
     public static T? Load<T>(string path, IList<string>? warnings) where T : class
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
-        var text = AtomicFile.Read(path);
+        var fileName = Path.GetFileName(path);
+        var text = AtomicFile.Read(path, out var ioError);
         if (text is null)
         {
+            if (ioError is not null)
+            {
+                warnings?.Add($"{fileName} could not be read and was left in place: {ioError}");
+            }
+
             return null;
         }
 
@@ -57,8 +66,15 @@ internal static class UserFile
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException or InvalidOperationException)
         {
-            var moved = AtomicFile.Quarantine(path);
-            warnings?.Add($"{Path.GetFileName(path)} could not be read and was moved to {Path.GetFileName(moved)}: {ex.Message}");
+            if (AtomicFile.TryQuarantine(path, out var moved, out var quarantineError))
+            {
+                warnings?.Add($"{fileName} could not be read and was moved to {Path.GetFileName(moved)}: {ex.Message}");
+            }
+            else
+            {
+                warnings?.Add($"{fileName} could not be read ({ex.Message}) and could not be quarantined: {quarantineError}");
+            }
+
             return null;
         }
     }

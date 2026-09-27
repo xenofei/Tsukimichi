@@ -1,18 +1,28 @@
 using System.Runtime.InteropServices;
+using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
 
 namespace Tsukimichi.Core.Query;
 
-/// <summary>Completed count over total for one tree node; <see cref="Fraction"/> feeds the filling moon.</summary>
-public readonly record struct NodeCount(int Done, int Total)
+/// <summary>
+/// Progress for one tree node. <see cref="Total"/> leaves out <see cref="QuestState.Foreclosed"/> quests, which the
+/// character can never do, so a node whose remainder is foreclosed reads as complete; they are reported in
+/// <see cref="Foreclosed"/> instead. <see cref="Fraction"/> feeds the filling moon.
+/// </summary>
+public readonly record struct NodeCount(int Done, int Total, int Foreclosed)
 {
+    public NodeCount(int done, int total)
+        : this(done, total, 0)
+    {
+    }
+
     public float Fraction => Total == 0 ? 0f : (float)Done / Total;
 }
 
 /// <summary>
 /// Done/total per section, category and genre for the tree labels. Done counts only <see cref="QuestState.Completed"/>.
-/// Unlisted quests (genre 0) are left out of every node and the overall total unless included; they always appear in
-/// <see cref="Unlisted"/> and never get a genre entry.
+/// Unlisted quests (genre 0) never enter a section, category or genre node, whatever ids the sheet gave them; they
+/// always land in <see cref="Unlisted"/> and join <see cref="Overall"/> only when included.
 /// </summary>
 public sealed class TreeCounts
 {
@@ -46,10 +56,24 @@ public sealed class TreeCounts
 
     public NodeCount Genre(uint id) => Genres.GetValueOrDefault(id);
 
+    /// <summary>Counts from evaluator output; each quest's state is read from its <see cref="QuestEvaluation"/>.</summary>
+    public static TreeCounts Compute(QuestCatalog catalog, IReadOnlyDictionary<uint, QuestEvaluation> evaluations, bool includeUnlisted)
+    {
+        ArgumentNullException.ThrowIfNull(evaluations);
+        return Compute(catalog, new EvaluationSource(evaluations), includeUnlisted);
+    }
+
+    /// <summary>Counts from a plain state map; missing rows read as <see cref="QuestState.Unknown"/>.</summary>
     public static TreeCounts Compute(QuestCatalog catalog, IReadOnlyDictionary<uint, QuestState> states, bool includeUnlisted)
     {
-        ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(states);
+        return Compute(catalog, new StateMapSource(states), includeUnlisted);
+    }
+
+    private static TreeCounts Compute<TSource>(QuestCatalog catalog, TSource source, bool includeUnlisted)
+        where TSource : struct, IStateSource
+    {
+        ArgumentNullException.ThrowIfNull(catalog);
 
         var sections = new Dictionary<uint, NodeCount>(catalog.BySection.Count);
         var categories = new Dictionary<uint, NodeCount>(catalog.ByCategory.Count);
@@ -59,34 +83,36 @@ public sealed class TreeCounts
 
         foreach (var quest in catalog.All)
         {
-            var done = states.GetValueOrDefault(quest.RowId, QuestState.Unknown) == QuestState.Completed ? 1 : 0;
+            var state = source.StateOf(quest.RowId);
+            var done = state == QuestState.Completed ? 1 : 0;
+            var foreclosed = state == QuestState.Foreclosed ? 1 : 0;
 
             if (quest.IsUnlisted)
             {
-                unlisted = Add(unlisted, done);
-                if (!includeUnlisted)
+                unlisted = Add(unlisted, done, foreclosed);
+                if (includeUnlisted)
                 {
-                    continue;
+                    overall = Add(overall, done, foreclosed);
                 }
-            }
-            else
-            {
-                Bump(genres, quest.Journal.GenreId, done);
+
+                continue;
             }
 
-            Bump(sections, quest.Journal.SectionId, done);
-            Bump(categories, quest.Journal.CategoryId, done);
-            overall = Add(overall, done);
+            Bump(sections, quest.Journal.SectionId, done, foreclosed);
+            Bump(categories, quest.Journal.CategoryId, done, foreclosed);
+            Bump(genres, quest.Journal.GenreId, done, foreclosed);
+            overall = Add(overall, done, foreclosed);
         }
 
         return new TreeCounts(sections, categories, genres, unlisted, overall);
     }
 
-    private static NodeCount Add(NodeCount count, int done) => new(count.Done + done, count.Total + 1);
+    private static NodeCount Add(NodeCount count, int done, int foreclosed) =>
+        new(count.Done + done, count.Total + 1 - foreclosed, count.Foreclosed + foreclosed);
 
-    private static void Bump(Dictionary<uint, NodeCount> counts, uint key, int done)
+    private static void Bump(Dictionary<uint, NodeCount> counts, uint key, int done, int foreclosed)
     {
         ref var slot = ref CollectionsMarshal.GetValueRefOrAddDefault(counts, key, out _);
-        slot = Add(slot, done);
+        slot = Add(slot, done, foreclosed);
     }
 }

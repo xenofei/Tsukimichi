@@ -8,9 +8,10 @@ namespace Tsukimichi.Core.Storage;
 
 /// <summary>
 /// Stores each character as <c>characters/&lt;ContentId&gt;.json</c> under a root directory.
-/// Writes are atomic; a file that cannot be read is quarantined (see <see cref="AtomicFile.Quarantine"/>) and a warning
-/// is queued in <see cref="Warnings"/> for the caller to log once. Unknown JSON properties are ignored on read, and
-/// quest ids the catalog does not know are carried through untouched.
+/// Writes are atomic; a file that cannot be parsed is quarantined (see <see cref="AtomicFile.Quarantine"/>) and a warning
+/// is queued in <see cref="Warnings"/> for the caller to log once. A file that cannot be read at all (locked by another
+/// process, permissions, disk) is skipped with a warning and left in place. Unknown JSON properties are ignored on read,
+/// and quest ids the catalog does not know are carried through untouched.
 /// </summary>
 public sealed class JsonSnapshotStore : ISnapshotStore
 {
@@ -32,6 +33,7 @@ public sealed class JsonSnapshotStore : ISnapshotStore
 
     public void ClearWarnings() => warnings.Clear();
 
+    /// <summary>Every readable snapshot. A file that is locked or corrupt is skipped with a warning; it never aborts the listing.</summary>
     public IReadOnlyList<SnapshotSummary> List()
     {
         if (!Directory.Exists(charactersDir))
@@ -40,19 +42,26 @@ public sealed class JsonSnapshotStore : ISnapshotStore
         }
 
         var summaries = new List<SnapshotSummary>();
-        foreach (var path in Directory.EnumerateFiles(charactersDir, "*.json"))
+        try
         {
-            var stem = Path.GetFileNameWithoutExtension(path);
-            if (!ulong.TryParse(stem, NumberStyles.None, CultureInfo.InvariantCulture, out _))
+            foreach (var path in Directory.EnumerateFiles(charactersDir, "*.json"))
             {
-                continue;
-            }
+                var stem = Path.GetFileNameWithoutExtension(path);
+                if (!ulong.TryParse(stem, NumberStyles.None, CultureInfo.InvariantCulture, out _))
+                {
+                    continue;
+                }
 
-            var snapshot = ReadSnapshot(path);
-            if (snapshot is not null)
-            {
-                summaries.Add(Summarize(snapshot));
+                var snapshot = ReadSnapshot(path);
+                if (snapshot is not null)
+                {
+                    summaries.Add(Summarize(snapshot));
+                }
             }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            warnings.Add($"Could not list {charactersDir}: {ex.Message}");
         }
 
         return summaries;
@@ -86,9 +95,20 @@ public sealed class JsonSnapshotStore : ISnapshotStore
 
     private CharacterSnapshot? ReadSnapshot(string path)
     {
+        var fileName = Path.GetFileName(path);
+        var text = AtomicFile.Read(path, out var ioError);
+        if (text is null)
+        {
+            if (ioError is not null)
+            {
+                warnings.Add($"Snapshot {fileName} could not be read and was left in place: {ioError}");
+            }
+
+            return null;
+        }
+
         try
         {
-            var text = File.ReadAllText(path);
             var root = JsonNode.Parse(text, documentOptions: new JsonDocumentOptions
             {
                 CommentHandling = JsonCommentHandling.Skip,
@@ -101,8 +121,15 @@ public sealed class JsonSnapshotStore : ISnapshotStore
         }
         catch (Exception ex) when (ex is JsonException or InvalidDataException or NotSupportedException or InvalidOperationException or FormatException)
         {
-            var moved = AtomicFile.Quarantine(path);
-            warnings.Add($"Snapshot {Path.GetFileName(path)} could not be read and was moved to {Path.GetFileName(moved)}: {ex.Message}");
+            if (AtomicFile.TryQuarantine(path, out var moved, out var quarantineError))
+            {
+                warnings.Add($"Snapshot {fileName} could not be read and was moved to {Path.GetFileName(moved)}: {ex.Message}");
+            }
+            else
+            {
+                warnings.Add($"Snapshot {fileName} could not be read ({ex.Message}) and could not be quarantined: {quarantineError}");
+            }
+
             return null;
         }
     }

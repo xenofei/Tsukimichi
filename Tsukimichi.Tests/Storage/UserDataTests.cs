@@ -67,6 +67,44 @@ public sealed class UserDataTests : IDisposable
     }
 
     [Fact]
+    public void Pins_locked_file_returns_empty_with_warning_and_is_not_moved()
+    {
+        var path = tmp.File("pins.json");
+        PinsFile.Save(path, new Dictionary<ulong, List<uint>> { [1] = [66038] });
+        var warnings = new List<string>();
+
+        using (File.Open(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+        {
+            var loaded = PinsFile.Load(path, warnings);
+
+            Assert.Empty(loaded);
+            Assert.Single(warnings);
+            Assert.Contains("pins.json", warnings[0]);
+        }
+
+        Assert.True(File.Exists(path));
+        Assert.Empty(Directory.GetFiles(tmp.Path, "pins.json.corrupt-*"));
+        Assert.Equal([66038u], PinsFile.Load(path)[1]);
+    }
+
+    [Fact]
+    public void Overrides_locked_file_returns_empty_with_warning_and_is_not_moved()
+    {
+        var path = tmp.File("overrides.json");
+        OverridesFile.Save(path, new Dictionary<uint, UniqueOverride> { [66038] = new(true, "note") });
+        var warnings = new List<string>();
+
+        using (File.Open(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+        {
+            Assert.Empty(OverridesFile.Load(path, warnings));
+            Assert.Single(warnings);
+        }
+
+        Assert.True(File.Exists(path));
+        Assert.Single(OverridesFile.Load(path));
+    }
+
+    [Fact]
     public void Overrides_round_trip()
     {
         var path = tmp.File(Path.Combine("user", "overrides.json"));
