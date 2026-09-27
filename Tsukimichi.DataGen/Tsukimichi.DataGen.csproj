@@ -13,4 +13,8 @@
     <PackageReference Include="Lumina.Excel" Version="7.5.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Tsukimichi.Core\Tsukimichi.Core.csproj" />
+  </ItemGroup>
+
 </Project>
