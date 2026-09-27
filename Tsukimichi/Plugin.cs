@@ -22,6 +22,9 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] internal static IDataManager DataManager { get; private set; } = null!;
     // UI
     [PluginService] internal static ICommandManager CommandManager { get; private set; } = null!;
+    [PluginService] internal static IGameGui GameGui { get; private set; } = null!;
+    [PluginService] internal static IChatGui ChatGui { get; private set; } = null!;
+    [PluginService] internal static ITextureProvider TextureProvider { get; private set; } = null!;
     // /UI
 
     private static readonly TimeSpan DisposeWait = TimeSpan.FromSeconds(5);
@@ -35,6 +38,46 @@ public sealed class Plugin : IDalamudPlugin
     private readonly WindowSystem windowSystem = new("Tsukimichi");
     private readonly GlyphDebugWindow glyphDebugWindow;
     private readonly TsukimichiCommand command;
+    private readonly UiState ui;
+    private readonly GameLinks gameLinks;
+    private readonly QueryRunner queryRunner;
+    private readonly MainWindow mainWindow;
+
+    /// <summary>
+    /// Retry hook for the "Catalog unavailable" panel: rebuilds the catalog and hands it to the session on the
+    /// framework thread. The returned task completes when the session has been updated either way.
+    /// </summary>
+    internal async Task RetryCatalogAsync()
+    {
+        var loader = new LuminaCatalogLoader(DataManager, Log);
+        try
+        {
+            var bundle = await loader.BuildBundleAsync(DataManager.Language, catalogCts.Token).ConfigureAwait(false);
+            await Framework.RunOnFrameworkThread(() =>
+            {
+                if (!gameStateDisposed)
+                {
+                    Session.SetCatalog(bundle);
+                }
+            }).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            Log.Debug("Catalog retry cancelled");
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Catalog unavailable");
+            var message = ex.GetBaseException().Message;
+            await Framework.RunOnFrameworkThread(() =>
+            {
+                if (!gameStateDisposed)
+                {
+                    Session.SetCatalogError(message);
+                }
+            }).ConfigureAwait(false);
+        }
+    }
     // /UI
     // ---- Game state (T3.2/T3.3) ----
     [PluginService] internal static IFramework Framework { get; private set; } = null!;
@@ -186,10 +229,17 @@ public sealed class Plugin : IDalamudPlugin
             // UI
             glyphDebugWindow = new GlyphDebugWindow();
             windowSystem.AddWindow(glyphDebugWindow);
-            PluginInterface.UiBuilder.Draw += windowSystem.Draw;
 
-            // Until the main window lands, a bare /tsukimichi toggles the glyph sheet.
-            command = new TsukimichiCommand(CommandManager, toggleMainWindow: glyphDebugWindow.Toggle, toggleGlyphWindow: glyphDebugWindow.Toggle);
+            // The main window reads Session/Settings/Paths lazily; they are initialized by the game-state block below.
+            ui = new UiState();
+            gameLinks = new GameLinks(GameGui, ChatGui, DataManager, Log);
+            queryRunner = new QueryRunner(this, ui, Log);
+            mainWindow = new MainWindow(this, ui, queryRunner, gameLinks, TextureProvider, PluginInterface, Log, RetryCatalogAsync);
+            windowSystem.AddWindow(mainWindow);
+            PluginInterface.UiBuilder.Draw += windowSystem.Draw;
+            PluginInterface.UiBuilder.OpenMainUi += mainWindow.Toggle;
+
+            command = new TsukimichiCommand(CommandManager, toggleMainWindow: mainWindow.Toggle, toggleGlyphWindow: glyphDebugWindow.Toggle, search: mainWindow.SearchAndPrint);
             // /UI
             // ---- Game state (T3.2/T3.3) ----
             InitializeGameState();
@@ -207,8 +257,11 @@ public sealed class Plugin : IDalamudPlugin
     {
         // UI
         command.Dispose();
+        PluginInterface.UiBuilder.OpenMainUi -= mainWindow.Toggle;
         PluginInterface.UiBuilder.Draw -= windowSystem.Draw;
         windowSystem.RemoveAllWindows();
+        mainWindow.Dispose();
+        queryRunner.Dispose();
         // /UI
 
         // ---- Game state dispose ----
@@ -223,10 +276,17 @@ public sealed class Plugin : IDalamudPlugin
     {
         Unwind("draw hook", () =>
         {
+            if (mainWindow is not null)
+            {
+                PluginInterface.UiBuilder.OpenMainUi -= mainWindow.Toggle;
+            }
+
             PluginInterface.UiBuilder.Draw -= windowSystem.Draw;
             windowSystem.RemoveAllWindows();
         });
         Unwind("command", () => command?.Dispose());
+        Unwind("main window", () => mainWindow?.Dispose());
+        Unwind("query runner", () => queryRunner?.Dispose());
         Unwind("game state", DisposeGameState);
         Unwind("catalog build", StopCatalogBuild);
     }
