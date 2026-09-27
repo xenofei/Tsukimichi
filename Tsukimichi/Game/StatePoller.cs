@@ -284,7 +284,7 @@ public sealed class StatePoller : IDisposable
         var rows = new HashSet<uint>();
         foreach (var questId in diff.ChangedQuestIds)
         {
-            if (catalog.TryGet(questId, out var quest))
+            if (catalog.TryGetByQuestId(questId, out var quest))
             {
                 rows.Add(quest.RowId);
             }

@@ -61,7 +61,7 @@ public static class QuestEvents
 
         foreach (var questId in diff.ChangedQuestIds)
         {
-            if (!catalog.TryGet(questId, out var quest))
+            if (!catalog.TryGetByQuestId(questId, out var quest))
             {
                 continue;
             }
