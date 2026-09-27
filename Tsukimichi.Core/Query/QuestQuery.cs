@@ -295,9 +295,9 @@ public static class QuestQuery
                 ScopeKind.Section or ScopeKind.Category or ScopeKind.Genre => false,
                 _ => filters.IncludeUnlisted,
             };
-            hideCompletedEngaged = filters.HideCompletedEngaged;
-            availableOnlyEngaged = filters.AvailableOnlyEngaged;
-            levelRangeEngaged = filters.LevelRangeEngaged;
+            hideCompletedEngaged = filters.HideCompletedEngaged();
+            availableOnlyEngaged = filters.AvailableOnlyEngaged();
+            levelRangeEngaged = filters.LevelRangeEngaged();
 
             foreach (var (kind, state) in filters.RewardKinds)
             {

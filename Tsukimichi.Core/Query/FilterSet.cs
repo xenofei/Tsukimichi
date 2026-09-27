@@ -1,11 +1,12 @@
-using System.Text.Json.Serialization;
 using Tsukimichi.Core.Model;
 
 namespace Tsukimichi.Core.Query;
 
 /// <summary>
 /// Every table filter from the filter panel. Mutable so the UI binds to it directly; <see cref="Clone"/> plus value
-/// equality support dirty checks, and the shape round-trips through System.Text.Json for config storage.
+/// equality support dirty checks, and the shape round-trips through JSON for config storage. The derived checks
+/// (<see cref="IsActive"/> and the <c>*Engaged</c> members) are methods so neither System.Text.Json nor Newtonsoft
+/// (Dalamud's config serializer) writes them out.
 /// </summary>
 public sealed class FilterSet : IEquatable<FilterSet>
 {
@@ -53,43 +54,35 @@ public sealed class FilterSet : IEquatable<FilterSet>
     public bool PinnedOnly { get; set; }
 
     /// <summary>True when any narrowing filter is engaged. <see cref="IncludeUnlisted"/> widens, so it does not count.</summary>
-    [JsonIgnore]
-    public bool IsActive =>
-        HideCompletedEngaged
-        || AvailableOnlyEngaged
+    public bool IsActive() =>
+        HideCompletedEngaged()
+        || AvailableOnlyEngaged()
         || StateMask != QuestStateMask.All
         || Expansions.Count > 0
-        || LevelRangeEngaged
+        || LevelRangeEngaged()
         || ClassJobCategoryId is not null
-        || RewardKindsEngaged
+        || RewardKindsEngaged()
         || RepeatableOnly
         || SeasonalActiveOnly
         || PinnedOnly;
 
-    [JsonIgnore]
-    public bool HideCompletedEngaged => HideCompleted || PerCategoryHideCompleted.ContainsValue(true);
+    public bool HideCompletedEngaged() => HideCompleted || PerCategoryHideCompleted.ContainsValue(true);
 
-    [JsonIgnore]
-    public bool AvailableOnlyEngaged => AvailableOnly || PerCategoryAvailableOnly.ContainsValue(true);
+    public bool AvailableOnlyEngaged() => AvailableOnly || PerCategoryAvailableOnly.ContainsValue(true);
 
-    [JsonIgnore]
-    public bool LevelRangeEngaged => LevelMin > NoLevelMin || LevelMax < NoLevelMax;
+    public bool LevelRangeEngaged() => LevelMin > NoLevelMin || LevelMax < NoLevelMax;
 
-    [JsonIgnore]
-    public bool RewardKindsEngaged
+    public bool RewardKindsEngaged()
     {
-        get
+        foreach (var value in RewardKinds.Values)
         {
-            foreach (var value in RewardKinds.Values)
+            if (value != TriState.Show)
             {
-                if (value != TriState.Show)
-                {
-                    return true;
-                }
+                return true;
             }
-
-            return false;
         }
+
+        return false;
     }
 
     /// <summary>Effective hide-completed setting for a category: its override, else the global toggle.</summary>

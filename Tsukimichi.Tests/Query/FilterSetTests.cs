@@ -23,7 +23,7 @@ public class FilterSetTests
         Assert.False(filters.SeasonalActiveOnly);
         Assert.False(filters.IncludeUnlisted);
         Assert.False(filters.PinnedOnly);
-        Assert.False(filters.IsActive);
+        Assert.False(filters.IsActive());
     }
 
     [Fact]
@@ -136,7 +136,7 @@ public class FilterSetTests
         filters.Reset();
 
         Assert.Equal(new FilterSet(), filters);
-        Assert.False(filters.IsActive);
+        Assert.False(filters.IsActive());
     }
 
     [Fact]

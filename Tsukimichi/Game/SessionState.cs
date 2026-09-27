@@ -105,6 +105,12 @@ public sealed class SessionState
 
     public event Action? Changed;
 
+    /// <summary>Raised after <see cref="DeleteAllData"/> removed the stored files, so in-memory copies (pins, overrides) can drop them.</summary>
+    public event Action? DataDeleted;
+
+    /// <summary>Raised after <see cref="ForgetCharacter"/> deleted that character's snapshot, with its content id.</summary>
+    public event Action<ulong>? CharacterForgotten;
+
     /// <summary>Shows a character. Returns false when it is neither live nor stored.</summary>
     public bool ViewCharacter(ulong contentId)
     {
@@ -140,6 +146,8 @@ public sealed class SessionState
         {
             FollowLive();
         }
+
+        CharacterForgotten?.Invoke(contentId);
     }
 
     /// <summary>Removes every stored snapshot plus pins and overrides. See <see cref="ForgetCharacter"/> for the live character.</summary>
@@ -150,6 +158,7 @@ public sealed class SessionState
         DeleteIfExists(paths.OverridesFile);
         recentEvents.Clear();
         FollowLive();
+        DataDeleted?.Invoke();
     }
 
     internal void SetCatalog(CatalogBundle bundle)

@@ -25,10 +25,11 @@ namespace Tsukimichi.Ui;
 /// <para>
 /// Row arrays and every label are built once per catalog build; obtained states and the filtered index refresh only
 /// when <see cref="SessionState.Version"/>, the kind, the toggle or the filter text change. Nothing allocates per frame
-/// in the table body except tooltips on hover.
+/// in the table body except tooltips on hover. The list clipper lives as long as the pane; <see cref="Dispose"/>
+/// destroys it and unsubscribes from the session.
 /// </para>
 /// </summary>
-public sealed class MoonlitPane
+public sealed class MoonlitPane : IDisposable
 {
     private const int FilterMaxLength = 128;
 
@@ -39,10 +40,12 @@ public sealed class MoonlitPane
     private readonly IPluginLog log;
     private readonly Dictionary<uint, UniqueOverride> overrides;
 
+    private ImGuiListClipperPtr clipper;
+    private bool clipperCreated;
+
     private UniqueRewardCatalog catalog = UniqueRewardCatalog.Empty;
     private bool catalogDirty = true;
     private int catalogBuild;
-    private int overridesCheckedVersion = -1;
 
     private Row[] rows = [];
     private int rowsBuild = -1;
@@ -74,6 +77,19 @@ public sealed class MoonlitPane
         foreach (var warning in warnings)
         {
             log.Warning("Overrides: {Warning}", warning);
+        }
+
+        // "Delete all data" removes user/overrides.json; re-read it so hidden quests reappear.
+        session.DataDeleted += ReloadOverrides;
+    }
+
+    public void Dispose()
+    {
+        session.DataDeleted -= ReloadOverrides;
+        if (clipperCreated)
+        {
+            clipper.Destroy();
+            clipperCreated = false;
         }
     }
 
@@ -220,7 +236,12 @@ public sealed class MoonlitPane
         ImGui.TableSetupColumn(Strings.MoonlitColumnConfidence, ImGuiTableColumnFlags.WidthFixed, 80f * scale);
         ImGui.TableHeadersRow();
 
-        var clipper = ImGui.ImGuiListClipper();
+        if (!clipperCreated)
+        {
+            clipper = ImGui.ImGuiListClipper();
+            clipperCreated = true;
+        }
+
         clipper.Begin(visibleCount);
         while (clipper.Step())
         {
@@ -231,7 +252,6 @@ public sealed class MoonlitPane
         }
 
         clipper.End();
-        clipper.Destroy();
     }
 
     private void DrawKindRow(UiState ui, KindItem item, int index)
@@ -364,7 +384,7 @@ public sealed class MoonlitPane
     }
 
     private static void Reveal(UiState ui, QuestRecord quest) =>
-        ui.Reveal(quest.RowId, quest.IsUnlisted ? QuestScope.VirtualUnlisted : QuestScope.Genre(quest.Journal.GenreId));
+        ui.Reveal(quest.RowId, quest.IsUnlisted ? QuestScope.VirtualUnlisted : QuestScope.Genre(quest.Journal.GenreId), quest.IsUnlisted);
 
     /// <summary>Catalog, rows and obtained states, each only when its inputs changed.</summary>
     private void Refresh()
@@ -383,17 +403,6 @@ public sealed class MoonlitPane
 
     private void EnsureCatalog()
     {
-        if (overridesCheckedVersion != session.Version)
-        {
-            overridesCheckedVersion = session.Version;
-            // "Delete all data" removes the file behind our back; follow it so hidden quests reappear.
-            if (overrides.Count > 0 && !File.Exists(paths.OverridesFile))
-            {
-                overrides.Clear();
-                catalogDirty = true;
-            }
-        }
-
         if (!catalogDirty)
         {
             return;

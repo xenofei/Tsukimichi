@@ -47,6 +47,9 @@ public sealed class UiState
 
     public void MarkQueryDirty() => QueryVersion++;
 
+    /// <summary>Raised when <see cref="Filters"/> was changed by something other than the filter panel (e.g. <see cref="Reveal"/>), so the window can persist it.</summary>
+    public event Action? FiltersChanged;
+
     /// <summary>Select a quest and ask the detail pane to scroll to its Path section.</summary>
     public void ShowPath(uint rowId)
     {
@@ -54,12 +57,56 @@ public sealed class UiState
         ScrollToPath = true;
     }
 
-    /// <summary>Select a quest and switch to the Journal tab scoped to its genre, used by cross-pane links.</summary>
-    public void Reveal(uint rowId, QuestScope scope)
+    /// <summary>
+    /// Select a quest and switch to the Journal tab scoped to its genre, used by cross-pane links. The state-based
+    /// narrowing filters are cleared so the revealed row cannot be hidden by them; an unlisted quest also turns
+    /// Include Unlisted on so its virtual scope is reachable.
+    /// </summary>
+    public void Reveal(uint rowId, QuestScope scope, bool isUnlisted = false)
     {
         Tab = NavTab.Journal;
         Scope = scope;
         SelectedRowId = rowId;
+
+        var f = Filters;
+        var changed = false;
+        if (f.HideCompletedEngaged())
+        {
+            f.HideCompleted = false;
+            f.PerCategoryHideCompleted.Clear();
+            changed = true;
+        }
+
+        if (f.AvailableOnlyEngaged())
+        {
+            f.AvailableOnly = false;
+            f.PerCategoryAvailableOnly.Clear();
+            changed = true;
+        }
+
+        if (f.PinnedOnly)
+        {
+            f.PinnedOnly = false;
+            changed = true;
+        }
+
+        if (f.StateMask != QuestStateMask.All)
+        {
+            f.StateMask = QuestStateMask.All;
+            changed = true;
+        }
+
+        if (isUnlisted && !f.IncludeUnlisted)
+        {
+            f.IncludeUnlisted = true;
+            changed = true;
+        }
+
+        if (changed)
+        {
+            FiltersChanged?.Invoke();
+        }
+
         MarkQueryDirty();
     }
 }

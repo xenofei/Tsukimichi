@@ -271,7 +271,7 @@ public class QuestQueryFilterTests
         var result = Run(catalog, States(catalog, QuestState.Ready), filters);
 
         Assert.Equal(5, result.Rows.Length);
-        Assert.False(filters.IsActive);
+        Assert.False(filters.IsActive());
     }
 
     [Fact]

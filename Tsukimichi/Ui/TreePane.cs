@@ -58,7 +58,8 @@ public sealed class TreePane
         }
 
         DrawNode(featureNode);
-        if (showUnlisted)
+        // A reveal can land in the Unlisted scope while the config hides the node; show it so the selection is visible.
+        if (showUnlisted || ui.Scope == QuestScope.VirtualUnlisted)
         {
             DrawNode(unlistedNode);
         }

@@ -56,7 +56,9 @@ public sealed class CharactersPane
 
     private Detail? detail;
 
-    private readonly Dictionary<ulong, (DateTime Taken, CharacterSnapshot Snapshot)> snapshotCache = [];
+    // Snapshot is null when the file could not be read at that capture time; the failure is cached too so an
+    // unreadable file is not re-read on every session version bump.
+    private readonly Dictionary<ulong, (DateTime Taken, CharacterSnapshot? Snapshot)> snapshotCache = [];
     private readonly Dictionary<ulong, QuestEvaluation?> accountCache = [];
     private uint accountRowId;
     private int accountVersion = -1;
@@ -391,7 +393,7 @@ public sealed class CharactersPane
         return evaluation;
     }
 
-    /// <summary>The stored snapshot of a character, reloaded only when its capture time changed.</summary>
+    /// <summary>The stored snapshot of a character (or null when unreadable), reloaded only when its capture time changed.</summary>
     private CharacterSnapshot? SnapshotFor(CharacterItem item)
     {
         if (snapshotCache.TryGetValue(item.ContentId, out var cached) && cached.Taken == item.TakenUtc)
@@ -407,12 +409,6 @@ public sealed class CharactersPane
         catch (Exception ex)
         {
             log.Warning(ex, "Could not load the snapshot of character {ContentId}", item.ContentId);
-        }
-
-        if (loaded is null)
-        {
-            snapshotCache.Remove(item.ContentId);
-            return null;
         }
 
         snapshotCache[item.ContentId] = (item.TakenUtc, loaded);

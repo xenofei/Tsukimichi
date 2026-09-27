@@ -49,12 +49,16 @@ public sealed class QueryRunner : IDisposable
     private CharacterSnapshot? festivalsSnapshot;
     private HashSet<ushort> festivals = NoFestivals;
 
-    // Pins.
+    // Pins. pinsKey is the content id the pinned set was loaded for; NoPinsKey until the first Update, 0 in browse mode.
+    private const ulong NoPinsKey = ulong.MaxValue;
     private Dictionary<ulong, List<uint>>? pinsFile;
-    private ulong pinsKey = ulong.MaxValue;
+    private ulong pinsKey = NoPinsKey;
     private readonly HashSet<uint> pinned = [];
     private bool pinsDirty;
     private DateTime pinsDirtyAtUtc;
+
+    // The session whose data events are subscribed; it exists only after the plugin's game state initialized.
+    private SessionState? subscribed;
 
     // String caches for the table body.
     private readonly string?[] levelText = new string?[256];
@@ -89,16 +93,27 @@ public sealed class QueryRunner : IDisposable
 
     public bool IsPinned(uint rowId) => pinned.Contains(rowId);
 
-    /// <summary>Pins or unpins a quest for the viewed character; saved after <see cref="PinsSaveDebounce"/> and on dispose.</summary>
-    public void TogglePin(uint rowId)
+    /// <summary>False in browse mode: pins are per character, so there is nobody to pin for.</summary>
+    public bool CanPin => plugin.Session?.ViewedContentId is not null;
+
+    /// <summary>
+    /// Pins or unpins a quest for the viewed character; saved after <see cref="PinsSaveDebounce"/> and on dispose.
+    /// Returns false (and changes nothing) when <see cref="CanPin"/> is false.
+    /// </summary>
+    public bool TogglePin(uint rowId)
     {
-        if (plugin.Session is not { } session)
+        if (plugin.Session is not { } session || session.ViewedContentId is not { } key)
         {
-            return;
+            return false;
         }
 
         EnsurePins(session);
-        var list = pinsFile![pinsKey];
+        if (!pinsFile!.TryGetValue(key, out var list))
+        {
+            list = [];
+            pinsFile[key] = list;
+        }
+
         if (pinned.Remove(rowId))
         {
             list.Remove(rowId);
@@ -109,9 +124,9 @@ public sealed class QueryRunner : IDisposable
             list.Add(rowId);
         }
 
-        pinsDirty = true;
-        pinsDirtyAtUtc = DateTime.UtcNow;
+        MarkPinsDirty();
         ui.MarkQueryDirty();
+        return true;
     }
 
     /// <summary>Applies the pending search text immediately instead of waiting out the debounce (used by the chat command).</summary>
@@ -133,12 +148,19 @@ public sealed class QueryRunner : IDisposable
             return;
         }
 
+        Subscribe(session);
         EnsurePins(session);
 
         if (!string.Equals(ui.SearchText, pendingSearch, StringComparison.Ordinal))
         {
             pendingSearch = ui.SearchText;
             lastKeystrokeUtc = nowUtc;
+            if (pendingSearch.Length == 0)
+            {
+                // Clearing the search is not typing: apply it now instead of showing stale rows for the debounce.
+                appliedSearch = pendingSearch;
+                searchDirty = true;
+            }
         }
 
         if (!searchDirty && !string.Equals(pendingSearch, appliedSearch, StringComparison.Ordinal)
@@ -215,10 +237,70 @@ public sealed class QueryRunner : IDisposable
 
     public void Dispose()
     {
+        Unsubscribe();
         if (pinsDirty)
         {
             SavePins();
         }
+    }
+
+    private void Subscribe(SessionState session)
+    {
+        if (ReferenceEquals(subscribed, session))
+        {
+            return;
+        }
+
+        Unsubscribe();
+        subscribed = session;
+        session.DataDeleted += OnDataDeleted;
+        session.CharacterForgotten += OnCharacterForgotten;
+    }
+
+    private void Unsubscribe()
+    {
+        if (subscribed is not { } session)
+        {
+            return;
+        }
+
+        session.DataDeleted -= OnDataDeleted;
+        session.CharacterForgotten -= OnCharacterForgotten;
+        subscribed = null;
+    }
+
+    /// <summary>"Delete all data" removed user/pins.json: drop the in-memory copy so a later pin does not resurrect it.</summary>
+    private void OnDataDeleted()
+    {
+        pinsFile = null;
+        pinsKey = NoPinsKey;
+        pinned.Clear();
+        pinsDirty = false;
+        ui.MarkQueryDirty();
+    }
+
+    /// <summary>A forgotten character takes its pins with it; the file is rewritten without them.</summary>
+    private void OnCharacterForgotten(ulong contentId)
+    {
+        if (pinsFile is null || !pinsFile.Remove(contentId))
+        {
+            return;
+        }
+
+        if (pinsKey == contentId)
+        {
+            pinsKey = NoPinsKey;
+            pinned.Clear();
+            ui.MarkQueryDirty();
+        }
+
+        MarkPinsDirty();
+    }
+
+    private void MarkPinsDirty()
+    {
+        pinsDirty = true;
+        pinsDirtyAtUtc = DateTime.UtcNow;
     }
 
     private static string ComputeJobShort(CatalogBundle b, uint category)
@@ -334,17 +416,15 @@ public sealed class QueryRunner : IDisposable
             return;
         }
 
+        // Browse mode (key 0) has no pins and never gets an entry in the file; TogglePin creates the list on demand.
         pinsKey = key;
-        if (!pinsFile.TryGetValue(key, out var list))
-        {
-            list = [];
-            pinsFile[key] = list;
-        }
-
         pinned.Clear();
-        foreach (var rowId in list)
+        if (key != 0 && pinsFile.TryGetValue(key, out var list))
         {
-            pinned.Add(rowId);
+            foreach (var rowId in list)
+            {
+                pinned.Add(rowId);
+            }
         }
 
         ui.MarkQueryDirty();

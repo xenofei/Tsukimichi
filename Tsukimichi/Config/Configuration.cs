@@ -34,6 +34,11 @@ public sealed class Configuration : IPluginConfiguration
     /// <summary>Last table filters, restored on load.</summary>
     public FilterSet Filters { get; set; } = new();
 
+    /// <summary>Last table sort column, restored on load; <see cref="SortColumn.Journal"/> is journal order.</summary>
+    public SortColumn SortColumn { get; set; } = SortColumn.Journal;
+
+    public bool SortDescending { get; set; }
+
     /// <summary>Character the user chose to view explicitly; null follows the live character.</summary>
     public ulong? ViewedContentId { get; set; }
 

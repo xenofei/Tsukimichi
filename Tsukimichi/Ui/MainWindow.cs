@@ -58,6 +58,7 @@ public sealed class MainWindow : Window, IDisposable
     private Task? retryTask;
     private bool initialized;
     private DateTime? settingsDirtyAtUtc;
+    private SortSpec persistedSort = SortSpec.Default;
     private string searchBuffer = string.Empty;
     private NavTab drawnTab = NavTab.Journal;
 
@@ -97,6 +98,7 @@ public sealed class MainWindow : Window, IDisposable
         SizeConstraints = new WindowSizeConstraints { MinimumSize = new Vector2(MinWidth, MinHeight) };
 
         filterPanel = new FilterPanel(ui, OnFiltersChanged);
+        ui.FiltersChanged += OnFiltersChanged;
         treePane = new TreePane(ui);
         tablePane = new TablePane(ui, runner, links, textures, pluginInterface, log, filterPanel.ResetAll);
         detailPane = new DetailPane(ui, runner, links, textures);
@@ -144,6 +146,13 @@ public sealed class MainWindow : Window, IDisposable
         DrawBanners(session);
         DrawBody(session, bundle);
         DrawStatusBar(session, bundle);
+
+        // The table writes ui.Sort from ImGui's header state; persist it through the same debounce as the filters.
+        if (ui.Sort != persistedSort)
+        {
+            persistedSort = ui.Sort;
+            settingsDirtyAtUtc ??= now;
+        }
     }
 
     /// <summary>
@@ -166,7 +175,8 @@ public sealed class MainWindow : Window, IDisposable
 
         var index = SearchIndex.For(bundle.Catalog);
         var normalized = SearchIndex.Normalize(text);
-        var showUnlisted = plugin.Settings.ShowUnlisted || ui.Filters.IncludeUnlisted;
+        // Chat results mirror the table: unlisted quests only when the Include Unlisted filter is on.
+        var showUnlisted = ui.Filters.IncludeUnlisted;
         var count = 0;
         foreach (var quest in bundle.Catalog.All)
         {
@@ -196,6 +206,7 @@ public sealed class MainWindow : Window, IDisposable
     public void Dispose()
     {
         FlushSettings(DateTime.UtcNow, force: true);
+        ui.FiltersChanged -= OnFiltersChanged;
         tablePane.Dispose();
     }
 
@@ -208,6 +219,8 @@ public sealed class MainWindow : Window, IDisposable
 
         initialized = true;
         ui.Filters = plugin.Settings.Filters;
+        ui.Sort = new SortSpec(plugin.Settings.SortColumn, plugin.Settings.SortDescending);
+        persistedSort = ui.Sort;
         searchBuffer = ui.SearchText;
     }
 
@@ -228,6 +241,8 @@ public sealed class MainWindow : Window, IDisposable
         try
         {
             plugin.Settings.Filters = ui.Filters;
+            plugin.Settings.SortColumn = ui.Sort.Column;
+            plugin.Settings.SortDescending = ui.Sort.Descending;
             plugin.Settings.Save(pluginInterface);
         }
         catch (Exception ex)

@@ -107,10 +107,11 @@ public sealed class FilterPanel
 
         if (ui.SearchText.Length > 0)
         {
-            Chip(Strings.ChipSearch, ref any, () => ui.SearchText = string.Empty);
+            // The search is not persisted and QueryRunner applies an emptied search on its own, so no changed() here.
+            Chip(Strings.ChipSearch, ref any, () => ui.SearchText = string.Empty, notify: false);
         }
 
-        if (f.HideCompletedEngaged)
+        if (f.HideCompletedEngaged())
         {
             Chip(Strings.HideCompleted, ref any, () =>
             {
@@ -119,7 +120,7 @@ public sealed class FilterPanel
             });
         }
 
-        if (f.AvailableOnlyEngaged)
+        if (f.AvailableOnlyEngaged())
         {
             Chip(Strings.AvailableOnly, ref any, () =>
             {
@@ -138,7 +139,7 @@ public sealed class FilterPanel
             Chip(Strings.ChipExpansion, ref any, () => f.Expansions.Clear());
         }
 
-        if (f.LevelRangeEngaged)
+        if (f.LevelRangeEngaged())
         {
             Chip(LevelChipText(f), ref any, () =>
             {
@@ -152,7 +153,7 @@ public sealed class FilterPanel
             Chip(JobPreview(f), ref any, () => f.ClassJobCategoryId = null);
         }
 
-        if (f.RewardKindsEngaged)
+        if (f.RewardKindsEngaged())
         {
             Chip(Strings.RewardKinds, ref any, () => f.RewardKinds.Clear());
         }
@@ -186,7 +187,7 @@ public sealed class FilterPanel
         changed();
     }
 
-    private void Chip(string label, ref bool any, Action clear)
+    private void Chip(string label, ref bool any, Action clear, bool notify = true)
     {
         if (any)
         {
@@ -198,7 +199,10 @@ public sealed class FilterPanel
         if (ImGui.SmallButton(label))
         {
             clear();
-            changed();
+            if (notify)
+            {
+                changed();
+            }
         }
 
         if (ImGui.IsItemHovered())

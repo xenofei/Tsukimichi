@@ -51,7 +51,7 @@ public sealed class TablePane : IDisposable
     private bool questMapAvailable;
 
     private uint? lastSelection;
-    private bool selectionFromTable;
+    private bool tableInitialized;
 
     public TablePane(UiState ui, QueryRunner runner, GameLinks links, ITextureProvider textures, IDalamudPluginInterface pluginInterface, IPluginLog log, Action resetFilters)
     {
@@ -89,7 +89,9 @@ public sealed class TablePane : IDisposable
         var lineHeight = ImGui.GetTextLineHeight();
         var rowHeight = lineHeight + style.CellPadding.Y * 2f;
 
-        const ImGuiTableFlags flags = ImGuiTableFlags.RowBg | ImGuiTableFlags.Sortable | ImGuiTableFlags.ScrollY
+        // SortTristate lets the header cycle back to "no sort" (journal order) and stops ImGui from picking the first
+        // sortable column (the glyph) as an implicit default on the first frame.
+        const ImGuiTableFlags flags = ImGuiTableFlags.RowBg | ImGuiTableFlags.Sortable | ImGuiTableFlags.SortTristate | ImGuiTableFlags.ScrollY
             | ImGuiTableFlags.Resizable | ImGuiTableFlags.Reorderable | ImGuiTableFlags.Hideable | ImGuiTableFlags.SizingFixedFit;
 
         using var table = ImRaii.Table("##quests", 7, flags, ImGui.GetContentRegionAvail());
@@ -98,12 +100,17 @@ public sealed class TablePane : IDisposable
             return;
         }
 
-        ImGui.TableSetupColumn(Strings.ColumnGlyph, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize | ImGuiTableColumnFlags.NoHide | ImGuiTableColumnFlags.NoHeaderLabel, 26f * scale);
-        ImGui.TableSetupColumn(Strings.ColumnName, ImGuiTableColumnFlags.WidthStretch | ImGuiTableColumnFlags.NoHide, 3f);
-        ImGui.TableSetupColumn(Strings.ColumnLevel, ImGuiTableColumnFlags.WidthFixed, 34f * scale);
+        // The persisted sort is handed to ImGui only while the table initializes (ImGui ignores DefaultSort afterwards
+        // and whenever its own saved settings already carry a sort), so no column is default-sorted otherwise.
+        var initialSort = tableInitialized ? SortSpec.Default : ui.Sort;
+        tableInitialized = true;
+
+        ImGui.TableSetupColumn(Strings.ColumnGlyph, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize | ImGuiTableColumnFlags.NoHide | ImGuiTableColumnFlags.NoHeaderLabel | InitialSortFlags(initialSort, SortColumn.State), 26f * scale);
+        ImGui.TableSetupColumn(Strings.ColumnName, ImGuiTableColumnFlags.WidthStretch | ImGuiTableColumnFlags.NoHide | InitialSortFlags(initialSort, SortColumn.Name), 3f);
+        ImGui.TableSetupColumn(Strings.ColumnLevel, ImGuiTableColumnFlags.WidthFixed | InitialSortFlags(initialSort, SortColumn.Level), 34f * scale);
         ImGui.TableSetupColumn(Strings.ColumnJob, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoSort, 64f * scale);
         ImGui.TableSetupColumn(Strings.ColumnNextStep, ImGuiTableColumnFlags.WidthStretch | ImGuiTableColumnFlags.NoSort, 2f);
-        ImGui.TableSetupColumn(Strings.ColumnExpansion, ImGuiTableColumnFlags.WidthFixed, 40f * scale);
+        ImGui.TableSetupColumn(Strings.ColumnExpansion, ImGuiTableColumnFlags.WidthFixed | InitialSortFlags(initialSort, SortColumn.Expansion), 40f * scale);
         ImGui.TableSetupColumn(Strings.ColumnRewards, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoSort, 120f * scale);
         ImGui.TableSetupScrollFreeze(0, 1);
         ImGui.TableHeadersRow();
@@ -235,7 +242,7 @@ public sealed class TablePane : IDisposable
 
     private void DrawContextMenu(QuestRecord quest)
     {
-        if (ImGui.MenuItem(runner.IsPinned(quest.RowId) ? Strings.Unpin : Strings.Pin))
+        if (ImGui.MenuItem(runner.IsPinned(quest.RowId) ? Strings.Unpin : Strings.Pin, enabled: runner.CanPin))
         {
             runner.TogglePin(quest.RowId);
         }
@@ -314,6 +321,17 @@ public sealed class TablePane : IDisposable
         }
     }
 
+    /// <summary>DefaultSort (plus the direction) for the column the persisted sort names; none for every other column.</summary>
+    private static ImGuiTableColumnFlags InitialSortFlags(SortSpec initial, SortColumn column)
+    {
+        if (initial.Column != column)
+        {
+            return ImGuiTableColumnFlags.None;
+        }
+
+        return ImGuiTableColumnFlags.DefaultSort | (initial.Descending ? ImGuiTableColumnFlags.PreferSortDescending : ImGuiTableColumnFlags.PreferSortAscending);
+    }
+
     private void ApplySortSpecs()
     {
         var specs = ImGui.TableGetSortSpecs();
@@ -322,6 +340,7 @@ public sealed class TablePane : IDisposable
             return;
         }
 
+        // No specs (the third header click, or a fresh table) means journal order.
         var sort = SortSpec.Default;
         if (specs.SpecsCount > 0)
         {
@@ -354,12 +373,6 @@ public sealed class TablePane : IDisposable
         }
 
         lastSelection = ui.SelectedRowId;
-        if (selectionFromTable)
-        {
-            selectionFromTable = false;
-            return;
-        }
-
         if (lastSelection is not { } rowId)
         {
             return;
@@ -382,9 +395,9 @@ public sealed class TablePane : IDisposable
             return;
         }
 
+        // Recording the selection here keeps ScrollToExternalSelection from scrolling to a row the user just clicked.
         ui.SelectedRowId = rowId;
         lastSelection = rowId;
-        selectionFromTable = true;
     }
 
     private void RefreshQuestMapAvailability()

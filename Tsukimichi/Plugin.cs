@@ -281,6 +281,7 @@ public sealed class Plugin : IDalamudPlugin
         PluginInterface.UiBuilder.Draw -= windowSystem.Draw;
         windowSystem.RemoveAllWindows();
         mainWindow.Dispose();
+        moonlitPane?.Dispose();
         queryRunner.Dispose();
         // /UI
 
@@ -311,6 +312,7 @@ public sealed class Plugin : IDalamudPlugin
         });
         Unwind("command", () => command?.Dispose());
         Unwind("main window", () => mainWindow?.Dispose());
+        Unwind("moonlit pane", () => moonlitPane?.Dispose());
         Unwind("query runner", () => queryRunner?.Dispose());
         Unwind("game state", DisposeGameState);
         Unwind("catalog build", StopCatalogBuild);
