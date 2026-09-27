@@ -1,0 +1,221 @@
+{
+  "65781": {
+    "contentFinderConditionIds": [
+      4
+    ],
+    "note": "It's Probably Pirates (Limsa start, ManSea203) -> Sastasha; objective territory 1036 matches CFC 4."
+  },
+  "65879": {
+    "contentFinderConditionIds": [
+      56
+    ],
+    "note": "Lord of the Inferno -> the Bowl of Embers (Ifrit); objective territory matches CFC 56."
+  },
+  "65905": {
+    "contentFinderConditionIds": [
+      84
+    ],
+    "note": "An Uninvited Ascian -> the Chrysalis (2.4 MSQ); objective territory matches CFC 84."
+  },
+  "66050": {
+    "contentFinderConditionIds": [
+      1
+    ],
+    "note": "Into the Beast's Maw -> the Thousand Maws of Toto-Rak; objective territory matches CFC 1."
+  },
+  "66055": {
+    "contentFinderConditionIds": [
+      58
+    ],
+    "note": "Lady of the Vortex -> the Howling Eye (Garuda); objective territory matches CFC 58."
+  },
+  "66060": {
+    "contentFinderConditionIds": [
+      16
+    ],
+    "note": "The Ultimate Weapon (legacy pre-6.1 row ManFst503) -> the Praetorium."
+  },
+  "66196": {
+    "contentFinderConditionIds": [
+      3
+    ],
+    "note": "Into a Copper Hell -> Copperbell Mines; objective territory matches CFC 3."
+  },
+  "66211": {
+    "contentFinderConditionIds": [
+      4
+    ],
+    "note": "It's Probably Pirates (Gridania/Ul'dah start, ManFst203) -> Sastasha; name-variant of 65781."
+  },
+  "66213": {
+    "contentFinderConditionIds": [
+      2
+    ],
+    "note": "Fire in the Gloom -> the Tam-Tara Deepcroft; objective territory matches CFC 2."
+  },
+  "66233": {
+    "contentFinderConditionIds": [
+      7
+    ],
+    "note": "Hallo Halatali -> Halatali (optional side quest, Western Thanalan)."
+  },
+  "66300": {
+    "contentFinderConditionIds": [
+      9
+    ],
+    "note": "Braving New Depths -> the Sunken Temple of Qarn (optional side quest)."
+  },
+  "66337": {
+    "contentFinderConditionIds": [
+      6
+    ],
+    "note": "Skeletons in Her Closet -> Haukke Manor; objective territory matches CFC 6."
+  },
+  "66368": {
+    "contentFinderConditionIds": [
+      8
+    ],
+    "note": "The Things We Do for Cheese -> Brayflox's Longstop; objective territory matches CFC 8."
+  },
+  "66393": {
+    "contentFinderConditionIds": [
+      57
+    ],
+    "note": "Lord of Crags -> the Navel (Titan); objective territory matches CFC 57."
+  },
+  "66406": {
+    "contentFinderConditionIds": [
+      10
+    ],
+    "note": "Trauma Queen -> the Wanderer's Palace (optional side quest)."
+  },
+  "66457": {
+    "contentFinderConditionIds": [
+      12
+    ],
+    "note": "Dishonor Before Death -> Cutter's Cry (optional side quest)."
+  },
+  "66476": {
+    "contentFinderConditionIds": [
+      11
+    ],
+    "note": "Blood for Blood -> the Stone Vigil (MSQ)."
+  },
+  "66515": {
+    "contentFinderConditionIds": [
+      13
+    ],
+    "note": "Fort of Fear -> Dzemael Darkhold (optional side quest)."
+  },
+  "66550": {
+    "contentFinderConditionIds": [
+      5
+    ],
+    "note": "Going for Gold -> the Aurum Vale (optional side quest)."
+  },
+  "66572": {
+    "contentFinderConditionIds": [
+      15,
+      865
+    ],
+    "note": "Operation Archon (legacy pre-6.1 row GaiUsc901) -> Castrum Meridianum and Cape Westwind."
+  },
+  "66584": {
+    "contentFinderConditionIds": [
+      59
+    ],
+    "note": "Ifrit Bleeds, We Can Kill It -> the Bowl of Embers (Hard); Quest.InstanceContentUnlock 20004 confirms."
+  },
+  "66671": {
+    "contentFinderConditionIds": [
+      14
+    ],
+    "note": "Ghosts of Amdapor -> Amdapor Keep (optional side quest)."
+  },
+  "66693": {
+    "contentFinderConditionIds": [
+      61
+    ],
+    "note": "In for Garuda Awakening -> the Howling Eye (Hard); GaiUsd003 in the hard-mode primal chain."
+  },
+  "66694": {
+    "contentFinderConditionIds": [
+      60
+    ],
+    "note": "In a Titan Spot -> the Navel (Hard); GaiUsd004 in the hard-mode primal chain."
+  },
+  "66731": {
+    "contentFinderConditionIds": [
+      65
+    ],
+    "note": "Gale-force Warning -> the Howling Eye (Extreme); objective territory matches CFC 65."
+  },
+  "66732": {
+    "contentFinderConditionIds": [
+      64
+    ],
+    "note": "Quake Me Up Before You O'Ghomoro -> the Navel (Extreme); objective territory matches CFC 64."
+  },
+  "66733": {
+    "contentFinderConditionIds": [
+      63
+    ],
+    "note": "Ifrit Ain't Broke -> the Bowl of Embers (Extreme); objective territory matches CFC 63."
+  },
+  "70011": {
+    "contentFinderConditionIds": [
+      808
+    ],
+    "note": "The Crystal from Beyond -> Asphodelos: The First Circle (Pandaemonium raid series entry); not a relic quest."
+  },
+  "70057": {
+    "contentFinderConditionIds": [
+      15,
+      865
+    ],
+    "note": "Operation Archon (6.1 rework row XxcUsc901) -> Castrum Meridianum and the Cape Westwind quest battle."
+  },
+  "70058": {
+    "contentFinderConditionIds": [
+      16,
+      830
+    ],
+    "note": "The Ultimate Weapon (6.1 rework row XxcFst503) -> the Praetorium and the Porta Decumana; both objective territories match."
+  },
+  "70415": {
+    "contentFinderConditionIds": [
+      826
+    ],
+    "note": "For All Turali -> Ihuykatumu; objective territory 1167 matches CFC 826."
+  },
+  "70427": {
+    "contentFinderConditionIds": [
+      824
+    ],
+    "note": "The High Luminary -> Worqor Zormor; objective territory 1193 matches CFC 824."
+  },
+  "70445": {
+    "contentFinderConditionIds": [
+      829
+    ],
+    "note": "Road to the Golden City -> the Skydeep Cenote; objective territory 1194 matches CFC 829."
+  },
+  "70462": {
+    "contentFinderConditionIds": [
+      831
+    ],
+    "note": "All Aboard -> Vanguard; objective territory 1198 matches CFC 831."
+  },
+  "70481": {
+    "contentFinderConditionIds": [
+      825
+    ],
+    "note": "The Resilient Son -> Origenics; objective territory 1208 matches CFC 825."
+  },
+  "70495": {
+    "contentFinderConditionIds": [
+      827
+    ],
+    "note": "Dawntrail -> Alexandria; objective territory 1199 matches CFC 827."
+  }
+}

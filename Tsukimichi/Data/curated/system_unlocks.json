@@ -1,0 +1,327 @@
+{
+  "65688": {
+    "label": "Desynthesis",
+    "kind": "system",
+    "note": "Gone to Pieces; unlocks desynthesis for crafting classes."
+  },
+  "65698": {
+    "label": "Sightseeing Log",
+    "kind": "system",
+    "note": "A Sight to Behold; unlocks the sightseeing log."
+  },
+  "65970": {
+    "label": "Gold Saucer",
+    "kind": "system",
+    "note": "It Could Happen to You; unlocks the Manderville Gold Saucer."
+  },
+  "65972": {
+    "label": "Chocobo racing",
+    "kind": "system",
+    "note": "So You Want to Be a Jockey; unlocks Chocobo Square racing."
+  },
+  "65973": {
+    "label": "Triple Triad",
+    "kind": "system",
+    "note": "Triple Triad Trial; unlocks Triple Triad play and card collection."
+  },
+  "66174": {
+    "label": "Materia extraction",
+    "kind": "system",
+    "note": "Forging the Spirit; unlocks materia extraction."
+  },
+  "66175": {
+    "label": "Materia melding",
+    "kind": "system",
+    "note": "Waking the Spirit; unlocks materia melding."
+  },
+  "66216": {
+    "label": "Grand Company enrollment",
+    "kind": "system",
+    "note": "The Company You Keep (Twin Adder); enrolls in a Grand Company, prerequisite for FC creation, seals, and GC content."
+  },
+  "66217": {
+    "label": "Grand Company enrollment",
+    "kind": "system",
+    "note": "The Company You Keep (Maelstrom); enrolls in a Grand Company."
+  },
+  "66218": {
+    "label": "Grand Company enrollment",
+    "kind": "system",
+    "note": "The Company You Keep (Immortal Flames); enrolls in a Grand Company."
+  },
+  "66236": {
+    "label": "Chocobo companion",
+    "kind": "system",
+    "note": "My Little Chocobo (Twin Adder); grants the Chocobo Issuance and first mount."
+  },
+  "66237": {
+    "label": "Chocobo companion",
+    "kind": "system",
+    "note": "My Little Chocobo (Maelstrom); grants the Chocobo Issuance and first mount."
+  },
+  "66238": {
+    "label": "Chocobo companion",
+    "kind": "system",
+    "note": "My Little Chocobo (Immortal Flames); grants the Chocobo Issuance and first mount."
+  },
+  "66241": {
+    "label": "Relic: Zodiac weapons",
+    "kind": "system",
+    "note": "The Weaponsmith of Legend; first quest of the ARR relic chain."
+  },
+  "66640": {
+    "label": "PvP",
+    "kind": "system",
+    "note": "A Pup No Longer (Maelstrom); unlocks the Wolves' Den and PvP duties."
+  },
+  "66641": {
+    "label": "PvP",
+    "kind": "system",
+    "note": "A Pup No Longer (Twin Adder); unlocks the Wolves' Den and PvP duties."
+  },
+  "66642": {
+    "label": "PvP",
+    "kind": "system",
+    "note": "A Pup No Longer (Immortal Flames); unlocks the Wolves' Den and PvP duties."
+  },
+  "66746": {
+    "label": "Aesthetician",
+    "kind": "system",
+    "note": "Beauty Is Only Scalp Deep; unlocks the Aesthetician (Crystal Bell)."
+  },
+  "66747": {
+    "label": "Treasure hunt",
+    "kind": "system",
+    "note": "Treasures and Tribulations; unlocks treasure map deciphering."
+  },
+  "66957": {
+    "label": "Glamour (Mor Dhona legacy)",
+    "kind": "system",
+    "note": "A Self-improving Man; original 2.x glamour unlock, retained for characters that completed it before the rework."
+  },
+  "66968": {
+    "label": "Retainers",
+    "kind": "system",
+    "note": "An Ill-conceived Venture (Gridania variant, SubCts811); unlocks retainer hire. Not derivable from static sheets."
+  },
+  "66969": {
+    "label": "Retainers",
+    "kind": "system",
+    "note": "An Ill-conceived Venture (Limsa Lominsa variant, SubCts812); unlocks retainer hire."
+  },
+  "66970": {
+    "label": "Retainers",
+    "kind": "system",
+    "note": "An Ill-conceived Venture (Ul'dah variant, SubCts813); unlocks retainer hire."
+  },
+  "67087": {
+    "label": "Custom deliveries: Zhloe Aliapoh",
+    "kind": "system",
+    "note": "Arms Wide Open; SatisfactionNpc 1 QuestRequired. Also the custom delivery system unlock."
+  },
+  "67092": {
+    "label": "Palace of the Dead",
+    "kind": "system",
+    "note": "The House That Death Built; unlocks the Palace of the Dead."
+  },
+  "67096": {
+    "label": "Chocobo raising",
+    "kind": "system",
+    "note": "Bird in Hand; unlocks chocobo stabling, training and colour feeding."
+  },
+  "67099": {
+    "label": "Hunts (ARR)",
+    "kind": "system",
+    "note": "Let the Hunt Begin (Twin Adder); unlocks the Hunt board and elite marks."
+  },
+  "67100": {
+    "label": "Hunts (ARR)",
+    "kind": "system",
+    "note": "Let the Hunt Begin (Maelstrom); unlocks the Hunt board and elite marks."
+  },
+  "67101": {
+    "label": "Hunts (ARR)",
+    "kind": "system",
+    "note": "Let the Hunt Begin (Immortal Flames); unlocks the Hunt board and elite marks."
+  },
+  "67133": {
+    "label": "Flying (Heavensward entry)",
+    "kind": "system",
+    "note": "Divine Intervention; rewards Black Chocobo Whistle (first flying mount) and Aether Compass (QuestRewardOther 5). Per-zone flight in HW is aether-current gated; SB/ShB/EW/DT zones are aether-current only with no gating quest (AetherCurrent.Quest is static)."
+  },
+  "67655": {
+    "label": "Hunts (Heavensward)",
+    "kind": "system",
+    "note": "Let the Clan Hunt Begin; unlocks Clan Centurio hunts."
+  },
+  "67658": {
+    "label": "Hunts (Heavensward elite)",
+    "kind": "system",
+    "note": "Elite and Dangerous; unlocks HW elite mark bills."
+  },
+  "67747": {
+    "label": "Relic: Anima weapons",
+    "kind": "system",
+    "note": "An Unexpected Proposal; first quest of the HW Anima chain."
+  },
+  "67925": {
+    "label": "Adventurer Squadron",
+    "kind": "system",
+    "note": "Squadron and Commander (Twin Adder); unlocks the squadron barracks."
+  },
+  "67926": {
+    "label": "Adventurer Squadron",
+    "kind": "system",
+    "note": "Squadron and Commander (Maelstrom); unlocks the squadron barracks."
+  },
+  "67927": {
+    "label": "Adventurer Squadron",
+    "kind": "system",
+    "note": "Squadron and Commander (Immortal Flames); unlocks the squadron barracks."
+  },
+  "67928": {
+    "label": "Wondrous Tails",
+    "kind": "system",
+    "note": "Keeping Up with the Aliapohs; unlocks Wondrous Tails journals from Khloe Aliapoh."
+  },
+  "68541": {
+    "label": "Custom deliveries: M'naago",
+    "kind": "system",
+    "note": "None Forgotten, None Forsaken; SatisfactionNpc 2 QuestRequired."
+  },
+  "68553": {
+    "label": "Glamour (cast/dispel)",
+    "kind": "system",
+    "note": "If I Had a Glamour; unlocks glamour prisms, glamour plates and the Glamour Dresser."
+  },
+  "68614": {
+    "label": "Eureka (Forbidden Land)",
+    "kind": "system",
+    "note": "And We Shall Call It Eureka; unlocks Eureka Anemos and the Eureka relic chain."
+  },
+  "68622": {
+    "label": "Doman Enclave reconstruction",
+    "kind": "system",
+    "note": "Precious Reclamation (StmBdy501, first quest of the Doman Enclave chain); unlocks the Enclave donation system."
+  },
+  "68667": {
+    "label": "Heaven-on-High",
+    "kind": "system",
+    "note": "Knocking on Heaven's Door; unlocks Heaven-on-High."
+  },
+  "68675": {
+    "label": "Custom deliveries: Kurenai",
+    "kind": "system",
+    "note": "The Seaweed Is Always Greener; SatisfactionNpc 3 QuestRequired."
+  },
+  "68713": {
+    "label": "Custom deliveries: Adkiragh",
+    "kind": "system",
+    "note": "Between a Rock and the Hard Place; SatisfactionNpc 4 QuestRequired."
+  },
+  "68728": {
+    "label": "Blue Mage",
+    "kind": "system",
+    "note": "Out of the Blue; unlocks the Blue Mage limited job."
+  },
+  "69133": {
+    "label": "Hunts (Shadowbringers)",
+    "kind": "system",
+    "note": "Nuts to You; unlocks Clan Nutsy hunts."
+  },
+  "69208": {
+    "label": "Ishgardian Restoration",
+    "kind": "system",
+    "note": "Towards the Firmament; unlocks the Firmament and Skybuilders' content."
+  },
+  "69265": {
+    "label": "Custom deliveries: Kai-Shirr",
+    "kind": "system",
+    "note": "Oh, Beehive Yourself; SatisfactionNpc 5 QuestRequired."
+  },
+  "69370": {
+    "label": "Bozja (Resistance weapons)",
+    "kind": "system",
+    "note": "Hail to the Queen; starts the Save the Queen / Resistance weapon chain."
+  },
+  "69379": {
+    "label": "Ocean fishing",
+    "kind": "system",
+    "note": "All the Fish in the Sea; unlocks ocean fishing voyages."
+  },
+  "69425": {
+    "label": "Custom deliveries: Ehll Tou",
+    "kind": "system",
+    "note": "O Crafter, My Crafter; SatisfactionNpc 6 QuestRequired."
+  },
+  "69477": {
+    "label": "Bozjan Southern Front",
+    "kind": "system",
+    "note": "Where Eagles Nest; unlocks entry to the Bozjan Southern Front."
+  },
+  "69501": {
+    "label": "Faux Hollows",
+    "kind": "system",
+    "note": "Fantastic Mr. Faux; unlocks Faux Hollows (Painfully Ishgardian Man, Idyllshire)."
+  },
+  "69615": {
+    "label": "Custom deliveries: Charlemend",
+    "kind": "system",
+    "note": "You Can Count on It; SatisfactionNpc 7 QuestRequired."
+  },
+  "69712": {
+    "label": "Hunts (Endwalker)",
+    "kind": "system",
+    "note": "The Hunt for Specimens; unlocks Endwalker hunt bills."
+  },
+  "70059": {
+    "label": "Custom deliveries: Ameliance",
+    "kind": "system",
+    "note": "Of Mothers and Merchants; SatisfactionNpc 8 QuestRequired."
+  },
+  "70179": {
+    "label": "Island Sanctuary",
+    "kind": "system",
+    "note": "Seeking Sanctuary; unlocks Island Sanctuary."
+  },
+  "70182": {
+    "label": "Variant and Criterion dungeons",
+    "kind": "system",
+    "note": "A Key to the Past; unlocks variant dungeons (Sil'dih Subterrane) and criterion."
+  },
+  "70188": {
+    "label": "Relic: Manderville weapons",
+    "kind": "system",
+    "note": "Make It a Manderville (in-game name carries a leading icon glyph); first quest of the EW relic chain."
+  },
+  "70199": {
+    "label": "Eureka Orthos",
+    "kind": "system",
+    "note": "Delve into Myth; unlocks Eureka Orthos."
+  },
+  "70251": {
+    "label": "Custom deliveries: Anden",
+    "kind": "system",
+    "note": "That's So Anden; SatisfactionNpc 9 QuestRequired."
+  },
+  "70351": {
+    "label": "Custom deliveries: Margrat",
+    "kind": "system",
+    "note": "A Request of One's Own; SatisfactionNpc 10 QuestRequired."
+  },
+  "70775": {
+    "label": "Custom deliveries: Nitowikwe",
+    "kind": "system",
+    "note": "Laying New Tracks; SatisfactionNpc 11 QuestRequired."
+  },
+  "70996": {
+    "label": "Custom deliveries: Tiisol Ja",
+    "kind": "system",
+    "note": "Taco Time; SatisfactionNpc 12 QuestRequired."
+  },
+  "71047": {
+    "label": "Occult Crescent",
+    "kind": "system",
+    "note": "Occult Reunion (KinGkd101); unlocks the Occult Crescent field operation."
+  }
+}

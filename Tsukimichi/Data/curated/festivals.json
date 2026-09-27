@@ -1,0 +1,4 @@
+{
+  "$schema_note": "festivalId -> { name, start (ISO date), end, mogStation: bool }. Empty in V1 (DRAFT-NEEDED B).",
+  "entries": {}
+}
