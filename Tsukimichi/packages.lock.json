@@ -16,6 +16,12 @@
       },
       "tsukimichi.core": {
         "type": "Project"
+      },
+      "tsukimichi.gamedata": {
+        "type": "Project",
+        "dependencies": {
+          "Tsukimichi.Core": "[1.0.0, )"
+        }
       }
     }
   }

@@ -1,0 +1,243 @@
+using System.Diagnostics;
+using Lumina;
+using LuminaGameData = Lumina.GameData;
+using Lumina.Data;
+using Tsukimichi.Core.Model;
+using Tsukimichi.GameData;
+using Xunit.Abstractions;
+
+namespace Tsukimichi.Tests.Data;
+
+/// <summary>Runs only when TSUKIMICHI_GAME_PATH points at the game's sqpack folder; skipped otherwise.</summary>
+public sealed class GameDataFactAttribute : FactAttribute
+{
+    public const string EnvVar = "TSUKIMICHI_GAME_PATH";
+
+    public GameDataFactAttribute()
+    {
+        if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(EnvVar)))
+        {
+            Skip = $"{EnvVar} is not set";
+        }
+    }
+}
+
+/// <summary>Opens the game data and maps the catalog once per test class. Lazy so skipped runs never touch the disk.</summary>
+public sealed class GameDataFixture : IDisposable
+{
+    private readonly Lazy<(LuminaGameData Game, CatalogBundle Bundle, TimeSpan Elapsed)> built;
+
+    public GameDataFixture()
+    {
+        built = new Lazy<(LuminaGameData, CatalogBundle, TimeSpan)>(Build, LazyThreadSafetyMode.ExecutionAndPublication);
+    }
+
+    public CatalogBundle Bundle => built.Value.Bundle;
+
+    public LuminaGameData Game => built.Value.Game;
+
+    public TimeSpan MapElapsed => built.Value.Elapsed;
+
+    public void Dispose()
+    {
+        if (built.IsValueCreated)
+        {
+            built.Value.Game.Dispose();
+        }
+    }
+
+    private static (LuminaGameData, CatalogBundle, TimeSpan) Build()
+    {
+        var path = Environment.GetEnvironmentVariable(GameDataFactAttribute.EnvVar)
+                   ?? throw new InvalidOperationException($"{GameDataFactAttribute.EnvVar} is not set");
+        var game = new LuminaGameData(path, new LuminaOptions
+        {
+            DefaultExcelLanguage = Language.English,
+            PanicOnSheetChecksumMismatch = false,
+        });
+
+        var stopwatch = Stopwatch.StartNew();
+        var bundle = CatalogMapper.Map(game.Excel, Language.English);
+        return (game, bundle, stopwatch.Elapsed);
+    }
+}
+
+public class CatalogLoaderTests(GameDataFixture fixture, ITestOutputHelper output) : IClassFixture<GameDataFixture>
+{
+    private QuestCatalog Catalog => fixture.Bundle.Catalog;
+
+    [Fact]
+    public void Join_byte_maps_two_to_any_and_everything_else_to_all()
+    {
+        Assert.Equal(JoinKind.All, CatalogMapper.ToJoin(0));
+        Assert.Equal(JoinKind.All, CatalogMapper.ToJoin(1));
+        Assert.Equal(JoinKind.Any, CatalogMapper.ToJoin(2));
+    }
+
+    [Fact]
+    public void Lookup_from_membership_answers_admits_and_jobs_in()
+    {
+        var lookup = ClassJobCategoryLookup.FromMembership(
+        [
+            new KeyValuePair<uint, IEnumerable<byte>>(1, [1, 19, 43]),
+            new KeyValuePair<uint, IEnumerable<byte>>(2, []),
+        ]);
+
+        Assert.True(lookup.Admits(1, 1));
+        Assert.True(lookup.Admits(1, 43));
+        Assert.False(lookup.Admits(1, 2));
+        Assert.False(lookup.Admits(2, 1));
+        Assert.False(lookup.Admits(99, 1));
+        Assert.Equal([1, 19, 43], lookup.JobsIn(1).ToArray());
+        Assert.Empty(lookup.JobsIn(99));
+    }
+
+    [GameDataFact]
+    public void Maps_every_named_quest()
+    {
+        output.WriteLine($"CatalogMapper.Map: {Catalog.Count} quests in {fixture.MapElapsed.TotalMilliseconds:F0} ms (excludes GameData construction)");
+        Assert.Equal(5373, Catalog.Count);
+        Assert.Equal("English", fixture.Bundle.Language);
+        Assert.All(Catalog.All, q => Assert.False(string.IsNullOrWhiteSpace(q.Name)));
+        Assert.True(fixture.MapElapsed < TimeSpan.FromSeconds(10), $"mapping took {fixture.MapElapsed.TotalMilliseconds:F0} ms");
+    }
+
+    [GameDataFact]
+    public void Close_to_home_requires_coming_to_gridania()
+    {
+        var quest = Catalog.Get(65621u);
+        Assert.NotNull(quest);
+        Assert.Equal("Close to Home", quest.Name);
+        Assert.Equal("ManFst002_00085", quest.InternalId);
+        Assert.Equal([65575u], quest.PreviousQuests.QuestIds);
+
+        // The sheet stores PreviousQuestJoin = 2 for this quest (single prerequisite in slot 1), which is the "any" join.
+        Assert.Equal(JoinKind.Any, quest.PreviousQuests.Join);
+
+        Assert.Equal("Seventh Umbral Era Main Scenario Quests", quest.Journal.CategoryName);
+        Assert.Equal("Seventh Umbral Era", quest.Journal.GenreName);
+        Assert.Equal(0u, quest.Journal.SectionId);
+        Assert.Equal("Main Scenario (A Realm Reborn through Endwalker)", quest.Journal.SectionName);
+        Assert.False(quest.IsUnlisted);
+        Assert.Equal(1, quest.Level);
+        Assert.Equal(130u, quest.ClassJobCategory);
+        Assert.Contains(quest.Rewards, r => r.Kind == RewardKind.ClassJob && r.Id == 4);
+    }
+
+    [GameDataFact]
+    public void Ultimate_weapon_rewards_item_6008()
+    {
+        var quest = Catalog.Get(70058u);
+        Assert.NotNull(quest);
+        Assert.Equal("The Ultimate Weapon", quest.Name);
+        var reward = Assert.Single(quest.Rewards, r => r.Kind == RewardKind.Item && r.ItemId == 6008);
+        Assert.Equal(6008u, reward.Id);
+        Assert.Equal(1u, reward.Count);
+        Assert.NotEqual(0u, reward.Icon);
+        Assert.False(string.IsNullOrEmpty(reward.Name));
+        Assert.Equal(15000u, quest.Gil);
+    }
+
+    [GameDataFact]
+    public void Immortal_flames_hunt_has_grand_company_gate_and_two_locks()
+    {
+        var quest = Catalog.Get(67101u);
+        Assert.NotNull(quest);
+        Assert.Equal(3, quest.GrandCompany);
+        Assert.Equal(9, quest.GrandCompanyRank);
+        Assert.Equal([67099u, 67100u], quest.QuestLocks);
+        Assert.Equal("Immortal Flames", fixture.Bundle.Names.GrandCompany(quest.GrandCompany));
+    }
+
+    [GameDataFact]
+    public void Golden_rain_is_festival_48()
+    {
+        var quest = Catalog.Get(67960u);
+        Assert.NotNull(quest);
+        Assert.Equal(67960u, quest.RowId);
+        Assert.Equal(48, quest.Festival);
+        Assert.Equal(JoinKind.Any, quest.PreviousQuests.Join);
+        Assert.Equal(3, quest.PreviousQuests.QuestIds.Length);
+    }
+
+    [GameDataFact]
+    public void Issuer_carries_npc_name_and_raw_level_coordinates()
+    {
+        var issuer = Catalog.Get(65621u)!.Issuer;
+        Assert.NotNull(issuer);
+        Assert.Equal(1001140u, issuer.NpcId);
+        Assert.False(string.IsNullOrEmpty(issuer.Name));
+        Assert.Equal(183u, issuer.TerritoryId);
+        Assert.Equal(2u, issuer.MapId);
+        Assert.Equal(23.79f, issuer.X, 0.01f);
+        Assert.Equal(-8f, issuer.Y, 0.01f);
+        Assert.Equal(115.86f, issuer.Z, 0.01f);
+    }
+
+    [GameDataFact]
+    public void Journal_order_groups_sections_then_categories_then_genres()
+    {
+        var all = Catalog.All;
+        Assert.Equal(0u, all[0].Journal.SectionId);
+
+        // Within a genre, quests follow the sheet's SortKey (low 16 bits of the composite key).
+        var msq = Catalog.ByGenre[1];
+        Assert.Equal("Close to Home", msq.First(q => q.RowId == 65621).Name);
+        Assert.True(msq.Zip(msq.Skip(1)).All(p => p.First.Journal.SortKey <= p.Second.Journal.SortKey));
+
+        // Listed quests never sort after unlisted ones.
+        var lastListed = all.Select((q, i) => (q, i)).Last(p => !p.q.IsUnlisted).i;
+        var firstUnlisted = all.Select((q, i) => (q, i)).First(p => p.q.IsUnlisted).i;
+        Assert.True(lastListed < firstUnlisted);
+        Assert.Equal(180, all.Count(q => q.IsUnlisted));
+    }
+
+    [GameDataFact]
+    public void Class_job_categories_come_from_the_raw_sheet_columns()
+    {
+        var jobs = fixture.Bundle.Jobs;
+        Assert.True(jobs.Admits(142, 19), "142 (any DoW/DoM) admits PLD");
+        Assert.False(jobs.Admits(142, 8), "142 does not admit CRP");
+        Assert.True(jobs.Admits(1, 1), "1 (all) admits GLA");
+        Assert.False(jobs.Admits(0, 1), "0 admits nothing");
+        Assert.Contains((byte)19, jobs.JobsIn(142));
+        Assert.DoesNotContain((byte)8, jobs.JobsIn(142));
+        Assert.True(jobs.JobColumns >= 44, "sheet has a column per class/job including BST (43)");
+
+        // Cross-check the raw column mapping against the generated struct's named properties.
+        var typed = fixture.Game.Excel.GetSheet<Lumina.Excel.Sheets.ClassJobCategory>().GetRow(142);
+        Assert.Equal(typed.PLD, jobs.Admits(142, 19));
+        Assert.Equal(typed.CRP, jobs.Admits(142, 8));
+        Assert.Equal(typed.BLU, jobs.Admits(142, 36));
+    }
+
+    [GameDataFact]
+    public void Game_names_resolve_from_their_sheets()
+    {
+        var names = fixture.Bundle.Names;
+        Assert.Equal("A Realm Reborn", names.Expansion(0));
+        Assert.Equal("Dawntrail", names.Expansion(5));
+        Assert.Equal("Maelstrom", names.GrandCompany(1));
+        Assert.Equal("Amalj'aa", names.Tribe(1));
+        Assert.Equal("PLD", names.ClassJobAbbreviation(19));
+        Assert.Equal(string.Empty, names.Tribe(0));
+        Assert.NotEmpty(names.TribeRanks);
+    }
+
+    [GameDataFact]
+    public void Accept_conditions_are_read_positionally()
+    {
+        var quest = Catalog.Get(65961u);
+        Assert.NotNull(quest);
+        Assert.Equal([66031u, 0u, 0u], quest.AcceptConditions);
+        Assert.Empty(Catalog.Get(65621u)!.AcceptConditions);
+    }
+
+    [GameDataFact]
+    public void Cancelled_token_stops_the_build()
+    {
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+        Assert.Throws<OperationCanceledException>(() => CatalogMapper.Map(fixture.Game.Excel, Language.English, cts.Token));
+    }
+}
