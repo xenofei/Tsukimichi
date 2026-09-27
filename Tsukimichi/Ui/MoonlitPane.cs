@@ -1,0 +1,654 @@
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Numerics;
+using Dalamud.Bindings.ImGui;
+using Dalamud.Interface.Textures;
+using Dalamud.Interface.Utility;
+using Dalamud.Interface.Utility.Raii;
+using Dalamud.Plugin.Services;
+using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Query;
+using Tsukimichi.Core.Storage;
+using Tsukimichi.Core.Unique;
+using Tsukimichi.Game;
+using Tsukimichi.GameData;
+
+namespace Tsukimichi.Ui;
+
+/// <summary>
+/// Moonlit treasures (spec §7): quests whose rewards exist nowhere else. <see cref="DrawLeft"/> lists reward kinds with
+/// obtained/total and a filling moon; <see cref="DrawMain"/> is the toolbar plus the reward table. The pane owns the
+/// user's unique/not-unique overrides (<c>user/overrides.json</c>) and the merged <see cref="UniqueRewardCatalog"/>,
+/// which the detail pane can query through <see cref="Catalog"/>, <see cref="SetOverride"/> and <see cref="ClearOverride"/>.
+/// <para>
+/// Row arrays and every label are built once per catalog build; obtained states and the filtered index refresh only
+/// when <see cref="SessionState.Version"/>, the kind, the toggle or the filter text change. Nothing allocates per frame
+/// in the table body except tooltips on hover.
+/// </para>
+/// </summary>
+public sealed class MoonlitPane
+{
+    private const int FilterMaxLength = 128;
+
+    private readonly SessionState session;
+    private readonly ITextureProvider textures;
+    private readonly RewardUnlockReader unlocks;
+    private readonly PluginPaths paths;
+    private readonly IPluginLog log;
+    private readonly Dictionary<uint, UniqueOverride> overrides;
+
+    private UniqueRewardCatalog catalog = UniqueRewardCatalog.Empty;
+    private bool catalogDirty = true;
+    private int catalogBuild;
+    private int overridesCheckedVersion = -1;
+
+    private Row[] rows = [];
+    private int rowsBuild = -1;
+    private CatalogBundle? rowsBundle;
+
+    private int obtainedVersion = -1;
+    private int obtainedBuild = -1;
+    private readonly KindItem allItem = new(null, Strings.MoonlitAllKinds);
+    private KindItem[] kindItems = [];
+    private int kindsBuild = -1;
+
+    private int[] visible = [];
+    private int visibleCount;
+    private VisibleKey visibleKey;
+    private string visibleSummary = string.Empty;
+    private string filterText = string.Empty;
+    private int selectedRow = -1;
+
+    public MoonlitPane(SessionState session, ITextureProvider textures, RewardUnlockReader unlocks, PluginPaths paths, IPluginLog log)
+    {
+        this.session = session ?? throw new ArgumentNullException(nameof(session));
+        this.textures = textures ?? throw new ArgumentNullException(nameof(textures));
+        this.unlocks = unlocks ?? throw new ArgumentNullException(nameof(unlocks));
+        this.paths = paths ?? throw new ArgumentNullException(nameof(paths));
+        this.log = log ?? throw new ArgumentNullException(nameof(log));
+
+        var warnings = new List<string>();
+        overrides = OverridesFile.Load(paths.OverridesFile, warnings);
+        foreach (var warning in warnings)
+        {
+            log.Warning("Overrides: {Warning}", warning);
+        }
+    }
+
+    /// <summary>The merged unique-reward catalog, rebuilt lazily after an override change. Safe to call from any pane.</summary>
+    public UniqueRewardCatalog Catalog
+    {
+        get
+        {
+            EnsureCatalog();
+            return catalog;
+        }
+    }
+
+    /// <summary>The user's overrides by quest row id.</summary>
+    public IReadOnlyDictionary<uint, UniqueOverride> Overrides => overrides;
+
+    /// <summary>
+    /// Marks a quest unique (a note names the reward) or not unique (hidden from the Moonlit view), saves
+    /// <c>user/overrides.json</c> and schedules a catalog rebuild. Intended for the detail pane's "Mark quest unique".
+    /// </summary>
+    public void SetOverride(uint rowId, bool unique, string? note)
+    {
+        overrides[rowId] = new UniqueOverride(unique, string.IsNullOrWhiteSpace(note) ? null : note.Trim());
+        SaveOverrides();
+    }
+
+    /// <summary>Removes the user's verdict for a quest so the shipped data applies again.</summary>
+    public void ClearOverride(uint rowId)
+    {
+        if (overrides.Remove(rowId))
+        {
+            SaveOverrides();
+        }
+    }
+
+    /// <summary>Re-reads <c>user/overrides.json</c>, e.g. after the file was deleted or replaced outside the pane.</summary>
+    public void ReloadOverrides()
+    {
+        var warnings = new List<string>();
+        var loaded = OverridesFile.Load(paths.OverridesFile, warnings);
+        foreach (var warning in warnings)
+        {
+            log.Warning("Overrides: {Warning}", warning);
+        }
+
+        overrides.Clear();
+        foreach (var (rowId, verdict) in loaded)
+        {
+            overrides[rowId] = verdict;
+        }
+
+        catalogDirty = true;
+    }
+
+    /// <summary>Left column: reward kinds with obtained/total and a filling moon; "All" on top.</summary>
+    public void DrawLeft(UiState ui)
+    {
+        ArgumentNullException.ThrowIfNull(ui);
+        using var id = ImRaii.PushId("moonlitLeft");
+        Refresh();
+
+        if (rows.Length == 0)
+        {
+            ImGui.TextWrapped(Strings.MoonlitNoData);
+            return;
+        }
+
+        var line = ImGui.GetTextLineHeight();
+        var countWidth = ImGui.CalcTextSize("9999/9999").X;
+        using var table = ImRaii.Table("##moonlitKinds", 3, ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.NoPadOuterX);
+        if (!table)
+        {
+            return;
+        }
+
+        ImGui.TableSetupColumn("##moon", ImGuiTableColumnFlags.WidthFixed, line * 1.4f);
+        ImGui.TableSetupColumn("##name", ImGuiTableColumnFlags.WidthStretch);
+        ImGui.TableSetupColumn("##count", ImGuiTableColumnFlags.WidthFixed, countWidth);
+
+        DrawKindRow(ui, allItem, -1);
+        for (var i = 0; i < kindItems.Length; i++)
+        {
+            DrawKindRow(ui, kindItems[i], i);
+        }
+    }
+
+    /// <summary>Center column: toolbar (hide obtained, filter) and the reward table with a list clipper.</summary>
+    public void DrawMain(UiState ui)
+    {
+        ArgumentNullException.ThrowIfNull(ui);
+        using var id = ImRaii.PushId("moonlitMain");
+        Refresh();
+
+        var hide = ui.MoonlitHideObtained;
+        if (ImGui.Checkbox(Strings.MoonlitHideObtainedLabel, ref hide))
+        {
+            ui.MoonlitHideObtained = hide;
+        }
+
+        ImGui.SameLine();
+        ImGui.SetNextItemWidth(220f * ImGuiHelpers.GlobalScale);
+        ImGui.InputTextWithHint("##moonlitFilter", Strings.MoonlitFilterHint, ref filterText, FilterMaxLength);
+
+        RefreshVisible(ui);
+        ImGui.SameLine();
+        ImGui.TextDisabled(visibleSummary);
+        if (!session.IsLive)
+        {
+            ImGui.SameLine();
+            using (Theme.PushText(Theme.Dusk))
+            {
+                ImGui.TextUnformatted(Strings.MoonlitOfflineHint);
+            }
+        }
+
+        if (rows.Length == 0)
+        {
+            ImGui.TextWrapped(Strings.MoonlitNoData);
+            return;
+        }
+
+        if (visibleCount == 0)
+        {
+            ImGui.TextDisabled(Strings.MoonlitNothingMatches);
+            return;
+        }
+
+        const ImGuiTableFlags Flags = ImGuiTableFlags.ScrollY | ImGuiTableFlags.RowBg | ImGuiTableFlags.BordersInnerH
+                                      | ImGuiTableFlags.Resizable | ImGuiTableFlags.Reorderable | ImGuiTableFlags.Hideable;
+        using var table = ImRaii.Table("##moonlitTable", 6, Flags, new Vector2(-1f, -1f));
+        if (!table)
+        {
+            return;
+        }
+
+        var line = ImGui.GetTextLineHeight();
+        var scale = ImGuiHelpers.GlobalScale;
+        ImGui.TableSetupScrollFreeze(0, 1);
+        ImGui.TableSetupColumn(Strings.MoonlitColumnObtained, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, line * 1.6f);
+        ImGui.TableSetupColumn(Strings.MoonlitColumnReward, ImGuiTableColumnFlags.WidthStretch, 3f);
+        ImGui.TableSetupColumn(Strings.MoonlitColumnKind, ImGuiTableColumnFlags.WidthFixed, 110f * scale);
+        ImGui.TableSetupColumn(Strings.MoonlitColumnQuest, ImGuiTableColumnFlags.WidthStretch, 3f);
+        ImGui.TableSetupColumn(Strings.MoonlitColumnState, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, line * 1.6f);
+        ImGui.TableSetupColumn(Strings.MoonlitColumnConfidence, ImGuiTableColumnFlags.WidthFixed, 80f * scale);
+        ImGui.TableHeadersRow();
+
+        var clipper = ImGui.ImGuiListClipper();
+        clipper.Begin(visibleCount);
+        while (clipper.Step())
+        {
+            for (var i = clipper.DisplayStart; i < clipper.DisplayEnd; i++)
+            {
+                DrawRow(ui, rows[visible[i]], line);
+            }
+        }
+
+        clipper.End();
+        clipper.Destroy();
+    }
+
+    private void DrawKindRow(UiState ui, KindItem item, int index)
+    {
+        using var id = ImRaii.PushId(index);
+        ImGui.TableNextRow();
+        ImGui.TableNextColumn();
+        MoonGlyph.DrawFillingInline(item.Fraction, ImGui.GetTextLineHeight());
+
+        ImGui.TableNextColumn();
+        var selected = ui.MoonlitKind == item.Kind;
+        if (ImGui.Selectable(item.Name, selected, ImGuiSelectableFlags.SpanAllColumns))
+        {
+            ui.MoonlitKind = item.Kind;
+        }
+
+        ImGui.TableNextColumn();
+        ImGui.TextDisabled(item.CountText);
+    }
+
+    private void DrawRow(UiState ui, Row row, float line)
+    {
+        using var id = ImRaii.PushId(row.Index);
+        ImGui.TableNextRow();
+
+        // Obtained.
+        ImGui.TableNextColumn();
+        MoonGlyph.DrawInline(row.ObtainedGlyph, line);
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip(row.ObtainedText);
+        }
+
+        // Icon and reward name; the row's context menu hangs off the name.
+        ImGui.TableNextColumn();
+        DrawIcon(row, line);
+        ImGui.SameLine();
+        if (ImGui.Selectable(row.Name, selectedRow == row.Index))
+        {
+            selectedRow = row.Index;
+            ui.SelectedRowId = row.Entry.QuestRowId;
+        }
+
+        using (var menu = ImRaii.ContextPopupItem("ctx"))
+        {
+            if (menu)
+            {
+                DrawContextMenu(ui, row);
+            }
+        }
+
+        // Kind.
+        ImGui.TableNextColumn();
+        ImGui.TextUnformatted(row.KindName);
+
+        // Quest: click reveals it in the Journal.
+        ImGui.TableNextColumn();
+        if (row.Quest is { } quest)
+        {
+            if (ImGui.Selectable(row.QuestLabel))
+            {
+                Reveal(ui, quest);
+            }
+
+            if (ImGui.IsItemHovered())
+            {
+                ImGui.SetTooltip(Strings.MoonlitShowInJournal);
+            }
+        }
+        else
+        {
+            ImGui.TextDisabled(row.QuestName);
+        }
+
+        // Quest state for the viewed character.
+        ImGui.TableNextColumn();
+        var state = session.States.TryGetValue(row.Entry.QuestRowId, out var evaluation) ? evaluation.State : QuestState.Unknown;
+        MoonGlyph.DrawInline(state, line);
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip(Strings.MoonlitStateName(state));
+        }
+
+        // Confidence badge with the source on hover.
+        ImGui.TableNextColumn();
+        using (Theme.PushText(row.ConfidenceColor))
+        {
+            ImGui.TextUnformatted(row.ConfidenceLabel);
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip(row.SourceText);
+        }
+    }
+
+    private void DrawIcon(Row row, float size)
+    {
+        if (row.Icon != 0)
+        {
+            var wrap = textures.GetFromGameIcon(new GameIconLookup(row.Icon)).GetWrapOrEmpty();
+            ImGui.Image(wrap.Handle, new Vector2(size, size));
+        }
+        else
+        {
+            MoonGlyph.DrawFillingInline(row.Obtained == true ? 1f : 0f, size);
+        }
+    }
+
+    private void DrawContextMenu(UiState ui, Row row)
+    {
+        var rowId = row.Entry.QuestRowId;
+        if (row.Quest is { } quest && ImGui.MenuItem(Strings.MoonlitShowInJournal))
+        {
+            Reveal(ui, quest);
+        }
+
+        ImGui.Separator();
+        if (overrides.ContainsKey(rowId))
+        {
+            if (ImGui.MenuItem(Strings.MoonlitRestoreOverride))
+            {
+                ClearOverride(rowId);
+            }
+        }
+        else if (ImGui.MenuItem(Strings.MoonlitMarkNotUnique))
+        {
+            SetOverride(rowId, false, null);
+        }
+    }
+
+    private static void Reveal(UiState ui, QuestRecord quest) =>
+        ui.Reveal(quest.RowId, quest.IsUnlisted ? QuestScope.VirtualUnlisted : QuestScope.Genre(quest.Journal.GenreId));
+
+    /// <summary>Catalog, rows and obtained states, each only when its inputs changed.</summary>
+    private void Refresh()
+    {
+        EnsureCatalog();
+        if (rowsBuild != catalogBuild || !ReferenceEquals(rowsBundle, session.Bundle))
+        {
+            BuildRows();
+        }
+
+        if (obtainedVersion != session.Version || obtainedBuild != rowsBuild)
+        {
+            RefreshObtained();
+        }
+    }
+
+    private void EnsureCatalog()
+    {
+        if (overridesCheckedVersion != session.Version)
+        {
+            overridesCheckedVersion = session.Version;
+            // "Delete all data" removes the file behind our back; follow it so hidden quests reappear.
+            if (overrides.Count > 0 && !File.Exists(paths.OverridesFile))
+            {
+                overrides.Clear();
+                catalogDirty = true;
+            }
+        }
+
+        if (!catalogDirty)
+        {
+            return;
+        }
+
+        catalog = UniqueRewardCatalog.Build(session.UniqueRewards, overrides, session.Curated);
+        catalogDirty = false;
+        catalogBuild++;
+    }
+
+    private void BuildRows()
+    {
+        var bundle = session.Bundle;
+        var all = catalog.All;
+        var built = new Row[all.Count];
+        for (var i = 0; i < built.Length; i++)
+        {
+            var entry = all[i];
+            var quest = bundle?.Catalog.GetByRowId(entry.QuestRowId);
+            built[i] = new Row(i, entry, quest, FindIcon(quest, entry));
+        }
+
+        rows = built;
+        rowsBuild = catalogBuild;
+        rowsBundle = bundle;
+        selectedRow = -1;
+        obtainedVersion = -1;
+    }
+
+    /// <summary>Obtained state per row and the per-kind counts, once per session version.</summary>
+    private void RefreshObtained()
+    {
+        Span<int> obtained = stackalloc int[KindCount];
+        Span<int> total = stackalloc int[KindCount];
+        obtained.Clear();
+        total.Clear();
+
+        foreach (var row in rows)
+        {
+            row.SetObtained(unlocks.IsObtained(row.Entry));
+            var k = (int)row.Entry.Kind;
+            if ((uint)k < KindCount)
+            {
+                total[k]++;
+                if (row.Obtained == true)
+                {
+                    obtained[k]++;
+                }
+            }
+        }
+
+        var allObtained = 0;
+        var allTotal = 0;
+        var kinds = catalog.Kinds;
+        if (kindsBuild != rowsBuild)
+        {
+            kindsBuild = rowsBuild;
+            kindItems = new KindItem[kinds.Count];
+            for (var i = 0; i < kindItems.Length; i++)
+            {
+                kindItems[i] = new KindItem(kinds[i].Kind, Strings.MoonlitKindName(kinds[i].Kind));
+            }
+        }
+
+        for (var i = 0; i < kindItems.Length; i++)
+        {
+            var k = (int)kinds[i].Kind;
+            var o = (uint)k < KindCount ? obtained[k] : 0;
+            var t = (uint)k < KindCount ? total[k] : kinds[i].Count;
+            kindItems[i].SetCounts(o, t);
+            allObtained += o;
+            allTotal += t;
+        }
+
+        allItem.SetCounts(allObtained, allTotal);
+        obtainedVersion = session.Version;
+        obtainedBuild = rowsBuild;
+        visibleKey = default;
+    }
+
+    /// <summary>The filtered index array, rebuilt when the kind, the toggle, the filter text or the obtained states change.</summary>
+    private void RefreshVisible(UiState ui)
+    {
+        var key = new VisibleKey(rowsBuild, obtainedVersion, ui.MoonlitKind, ui.MoonlitHideObtained, filterText);
+        if (key == visibleKey)
+        {
+            return;
+        }
+
+        visibleKey = key;
+        if (visible.Length < rows.Length)
+        {
+            visible = new int[rows.Length];
+        }
+
+        var filter = filterText.Trim();
+        var count = 0;
+        foreach (var row in rows)
+        {
+            if (ui.MoonlitKind is { } kind && row.Entry.Kind != kind)
+            {
+                continue;
+            }
+
+            if (ui.MoonlitHideObtained && row.Obtained == true)
+            {
+                continue;
+            }
+
+            if (filter.Length != 0 && !row.Matches(filter))
+            {
+                continue;
+            }
+
+            visible[count++] = row.Index;
+        }
+
+        visibleCount = count;
+        visibleSummary = count.ToString(CultureInfo.InvariantCulture) + " / " + rows.Length.ToString(CultureInfo.InvariantCulture);
+    }
+
+    /// <summary>The reward's icon from the quest's reward list: same item, else same kind and id. Zero when unknown.</summary>
+    private static uint FindIcon(QuestRecord? quest, UniqueRewardEntry entry)
+    {
+        if (quest is null)
+        {
+            return 0;
+        }
+
+        if (entry.ItemId != 0)
+        {
+            foreach (var reward in quest.Rewards)
+            {
+                if (reward.ItemId == entry.ItemId && reward.Icon != 0)
+                {
+                    return reward.Icon;
+                }
+            }
+        }
+
+        if (entry.RewardId != 0)
+        {
+            foreach (var reward in quest.Rewards)
+            {
+                if (reward.Kind == entry.Kind && reward.Id == entry.RewardId && reward.Icon != 0)
+                {
+                    return reward.Icon;
+                }
+            }
+        }
+
+        return 0;
+    }
+
+    private void SaveOverrides()
+    {
+        try
+        {
+            OverridesFile.Save(paths.OverridesFile, overrides);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            log.Error(ex, "Could not save {Path}", paths.OverridesFile);
+        }
+
+        catalogDirty = true;
+    }
+
+    private static readonly int KindCount = Enum.GetValues<RewardKind>().Length;
+
+    private static string ConfidenceLabel(Confidence confidence) => confidence switch
+    {
+        Confidence.Static => Strings.MoonlitConfidenceStatic,
+        Confidence.Community => Strings.MoonlitConfidenceCommunity,
+        Confidence.Curated => Strings.MoonlitConfidenceCurated,
+        Confidence.UserOverride => Strings.MoonlitConfidenceUser,
+        _ => confidence.ToString(),
+    };
+
+    private static Vector4 ConfidenceColor(Confidence confidence) => confidence switch
+    {
+        Confidence.Static => Theme.Silver,
+        Confidence.Community => Theme.Dusk,
+        Confidence.Curated => Theme.Moon,
+        Confidence.UserOverride => Theme.Eclipse,
+        _ => Theme.Veil,
+    };
+
+    /// <summary>One left-column line: a kind (null for All), its name and the current counts.</summary>
+    private sealed class KindItem(RewardKind? kind, string name)
+    {
+        public RewardKind? Kind { get; } = kind;
+        public string Name { get; } = name;
+        public string CountText { get; private set; } = "0/0";
+        public float Fraction { get; private set; }
+
+        public void SetCounts(int obtained, int total)
+        {
+            CountText = obtained.ToString(CultureInfo.InvariantCulture) + "/" + total.ToString(CultureInfo.InvariantCulture);
+            Fraction = total == 0 ? 0f : (float)obtained / total;
+        }
+    }
+
+    /// <summary>One table row with every label pre-materialized; only the obtained state changes after construction.</summary>
+    private sealed class Row
+    {
+        public Row(int index, UniqueRewardEntry entry, QuestRecord? quest, uint icon)
+        {
+            Index = index;
+            Entry = entry;
+            Quest = quest;
+            Icon = icon;
+            KindName = Strings.MoonlitKindName(entry.Kind);
+            Name = string.IsNullOrWhiteSpace(entry.RewardName)
+                ? KindName + " #" + entry.RewardId.ToString(CultureInfo.InvariantCulture)
+                : entry.RewardName;
+            QuestName = quest?.Name ?? Strings.MoonlitQuestPrefix + entry.QuestRowId.ToString(CultureInfo.InvariantCulture);
+            QuestLabel = QuestName + "##q";
+            ConfidenceLabel = MoonlitPane.ConfidenceLabel(entry.Confidence);
+            ConfidenceColor = MoonlitPane.ConfidenceColor(entry.Confidence);
+            SourceText = string.IsNullOrWhiteSpace(entry.Source) ? Strings.MoonlitSourceUnknown : entry.Source;
+        }
+
+        public int Index { get; }
+        public UniqueRewardEntry Entry { get; }
+        public QuestRecord? Quest { get; }
+        public uint Icon { get; }
+        public string Name { get; }
+        public string KindName { get; }
+        public string QuestName { get; }
+        public string QuestLabel { get; }
+        public string ConfidenceLabel { get; }
+        public Vector4 ConfidenceColor { get; }
+        public string SourceText { get; }
+
+        public bool? Obtained { get; private set; }
+        public QuestState ObtainedGlyph { get; private set; } = QuestState.Unknown;
+        public string ObtainedText { get; private set; } = Strings.MoonlitObtainedUnknown;
+
+        public void SetObtained(bool? obtained)
+        {
+            Obtained = obtained;
+            (ObtainedGlyph, ObtainedText) = obtained switch
+            {
+                true => (QuestState.Completed, Strings.MoonlitObtainedYes),
+                false => (QuestState.Blocked, Strings.MoonlitObtainedNo),
+                null => (QuestState.Unknown, Strings.MoonlitObtainedUnknown),
+            };
+        }
+
+        public bool Matches(string filter) =>
+            Name.Contains(filter, StringComparison.OrdinalIgnoreCase)
+            || QuestName.Contains(filter, StringComparison.OrdinalIgnoreCase)
+            || KindName.Contains(filter, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private readonly record struct VisibleKey(int Build, int Version, RewardKind? Kind, bool HideObtained, string Filter);
+}
