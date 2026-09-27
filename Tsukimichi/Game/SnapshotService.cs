@@ -11,9 +11,10 @@ namespace Tsukimichi.Game;
 
 /// <summary>
 /// Owns the snapshot store and the login lifecycle. After <see cref="IClientState.Login"/> the character is not
-/// readable until the first <see cref="IClientState.TerritoryChanged"/> (or <see cref="LoginSettleTimeout"/>);
-/// <see cref="CharacterReady"/> tells the poller when it may capture. A character already logged in at load is ready
-/// at once. Every event here fires on the framework thread.
+/// readable at once: <see cref="CharacterReady"/> turns true on the first framework tick where the player is loaded
+/// with a content id (see <see cref="GameStateReader.IsCharacterReadable"/>), or after <see cref="LoginSettleTimeout"/>
+/// as a safety net. It tells the poller when it may capture. A character already logged in at load is ready at once.
+/// Every event here fires on the framework thread.
 /// </summary>
 public sealed class SnapshotService : IDisposable
 {
@@ -23,32 +24,47 @@ public sealed class SnapshotService : IDisposable
     private readonly IClientState clientState;
     private readonly IFramework framework;
     private readonly IPluginLog log;
+    private readonly GameStateReader? reader;
     private readonly CancellationTokenSource lifetime = new();
     private readonly List<SnapshotSummary> characters = [];
 
     private int loginGeneration;
-    private bool awaitingTerritory;
+    private bool awaitingCharacter;
     private bool disposed;
 
-    public SnapshotService(JsonSnapshotStore store, IClientState clientState, IFramework framework, IPluginLog log)
+    /// <param name="reader">
+    /// Readiness probe after login; without one, only <see cref="LoginSettleTimeout"/> marks the character ready.
+    /// </param>
+    public SnapshotService(JsonSnapshotStore store, IClientState clientState, IFramework framework, IPluginLog log, GameStateReader? reader = null)
     {
         this.store = store ?? throw new ArgumentNullException(nameof(store));
         this.clientState = clientState ?? throw new ArgumentNullException(nameof(clientState));
         this.framework = framework ?? throw new ArgumentNullException(nameof(framework));
         this.log = log ?? throw new ArgumentNullException(nameof(log));
+        this.reader = reader;
 
-        characters.AddRange(store.List());
+        try
+        {
+            characters.AddRange(store.List());
+        }
+        catch (Exception ex)
+        {
+            // A broken config directory must not keep the plugin from loading; the live character still works in memory.
+            characters.Clear();
+            log.Warning(ex, "Could not list stored snapshots; starting with none");
+        }
+
         SortCharacters();
         LogStoreWarnings();
         log.Debug("Snapshot store: {Count} character(s)", characters.Count);
 
         clientState.Login += OnLogin;
         clientState.Logout += OnLogout;
-        clientState.TerritoryChanged += OnTerritoryChanged;
+        framework.Update += OnUpdate;
 
         if (clientState.IsLoggedIn)
         {
-            // Hot load with a character in the world: its state is already populated, no need to wait for a zone.
+            // Hot load with a character in the world: its state is already populated, no need to wait.
             CharacterReady = true;
         }
     }
@@ -112,7 +128,7 @@ public sealed class SnapshotService : IDisposable
         disposed = true;
         clientState.Login -= OnLogin;
         clientState.Logout -= OnLogout;
-        clientState.TerritoryChanged -= OnTerritoryChanged;
+        framework.Update -= OnUpdate;
         lifetime.Cancel();
         lifetime.Dispose();
     }
@@ -121,16 +137,44 @@ public sealed class SnapshotService : IDisposable
     {
         var generation = ++loginGeneration;
         CharacterReady = false;
-        awaitingTerritory = true;
-        log.Debug("Login: waiting for the first territory change (or {Seconds} s)", LoginSettleTimeout.TotalSeconds);
+        awaitingCharacter = true;
+        log.Debug("Login: waiting for the character to become readable (or {Seconds} s)", LoginSettleTimeout.TotalSeconds);
 
         framework.RunOnTick(() => OnLoginTimeout(generation), delay: LoginSettleTimeout, cancellationToken: lifetime.Token)
             .ContinueWith(static t => _ = t.Exception, TaskContinuationOptions.OnlyOnFaulted);
     }
 
+    /// <summary>Cheap per-tick probe while a login is settling; a no-op otherwise.</summary>
+    private void OnUpdate(IFramework _)
+    {
+        if (!awaitingCharacter || disposed || reader is null)
+        {
+            return;
+        }
+
+        bool readable;
+        try
+        {
+            readable = reader.IsCharacterReadable();
+        }
+        catch (Exception ex)
+        {
+            // Leave it to the timeout; the poller's own backoff handles a client that keeps throwing.
+            awaitingCharacter = false;
+            log.Debug(ex, "Readiness probe failed; falling back to the login settle timeout");
+            return;
+        }
+
+        if (readable)
+        {
+            log.Debug("Character readable after login; marked ready");
+            MarkReady();
+        }
+    }
+
     private void OnLoginTimeout(int generation)
     {
-        if (disposed || generation != loginGeneration || !awaitingTerritory)
+        if (disposed || generation != loginGeneration || CharacterReady || !clientState.IsLoggedIn)
         {
             return;
         }
@@ -139,19 +183,10 @@ public sealed class SnapshotService : IDisposable
         MarkReady();
     }
 
-    private void OnTerritoryChanged(uint territory)
-    {
-        if (awaitingTerritory)
-        {
-            log.Debug("First territory change ({Territory}) after login; character marked ready", territory);
-            MarkReady();
-        }
-    }
-
     private void OnLogout(int type, int code)
     {
         loginGeneration++;
-        awaitingTerritory = false;
+        awaitingCharacter = false;
         if (CharacterReady)
         {
             try
@@ -169,7 +204,7 @@ public sealed class SnapshotService : IDisposable
 
     private void MarkReady()
     {
-        awaitingTerritory = false;
+        awaitingCharacter = false;
         CharacterReady = clientState.IsLoggedIn;
     }
 

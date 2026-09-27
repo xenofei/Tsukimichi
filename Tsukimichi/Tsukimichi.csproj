@@ -18,7 +18,8 @@ Moonlit treasures collects quests with unique rewards, and per-character snapsho
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Data\**" CopyToOutputDirectory="PreserveNewest" />
+    <!-- Shipped data files only; Data\ also holds source (LuminaCatalogLoader.cs) that must not be copied to the output. -->
+    <Content Include="Data\**" Exclude="Data\**\*.cs" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\assets\icon.png" Link="icon.png" CopyToOutputDirectory="PreserveNewest" Condition="Exists('..\assets\icon.png')" />
   </ItemGroup>
 

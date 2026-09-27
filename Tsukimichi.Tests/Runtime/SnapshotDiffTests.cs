@@ -19,6 +19,60 @@ public sealed class SnapshotDiffTests
     }
 
     [Fact]
+    public void Unchanged_pair_of_distinct_instances_takes_the_fast_path()
+    {
+        // Every collection is a fresh instance with equal content, as a poll produces them; the fast path must still
+        // recognise the pair as unchanged and hand back the shared Empty instance without building any sets.
+        var a = Fixture.Snapshot(Fixture.A, Fixture.C) with
+        {
+            Accepted = [Fixture.Accepted(Fixture.B, 2), Fixture.Accepted(Fixture.D, 1)],
+            DailyDone = new Dictionary<ushort, byte> { [100] = 1 },
+            ActiveFestivals = [4, 5],
+            UnlockedInstances = [1, 2],
+            CompletedAchievements = [7],
+            GcRanks = [0, 3, 0, 0],
+            Tribes = new Dictionary<byte, TribeStanding> { [1] = new(2, 10) },
+        };
+        var b = a with
+        {
+            CompletedBits = [.. a.CompletedBits],
+            Accepted = [.. a.Accepted],
+            DailyDone = new Dictionary<ushort, byte>(a.DailyDone),
+            JobLevels = new Dictionary<byte, short>(a.JobLevels),
+            ActiveFestivals = [.. a.ActiveFestivals],
+            UnlockedInstances = [.. a.UnlockedInstances],
+            CompletedAchievements = [.. a.CompletedAchievements],
+            GcRanks = [.. a.GcRanks],
+            Tribes = new Dictionary<byte, TribeStanding>(a.Tribes),
+        };
+
+        var diff = SnapshotDiff.Compute(a, b);
+
+        Assert.True(diff.IsEmpty);
+        Assert.Same(SnapshotDiff.Empty, diff);
+    }
+
+    [Fact]
+    public void Fast_path_treats_a_zero_padded_longer_mask_as_unchanged()
+    {
+        var a = Fixture.Snapshot(Fixture.A);
+        var b = a with { CompletedBits = [.. a.CompletedBits, 0, 0, 0] };
+
+        Assert.Same(SnapshotDiff.Empty, SnapshotDiff.Compute(a, b));
+        Assert.Same(SnapshotDiff.Empty, SnapshotDiff.Compute(b, a));
+    }
+
+    [Fact]
+    public void Fast_path_does_not_hide_a_bit_set_beyond_the_shorter_mask()
+    {
+        var a = Fixture.Snapshot(Fixture.A);
+        var b = a with { CompletedBits = [.. a.CompletedBits, 0, 0b0000_0100] };
+        var extraBit = (ushort)(((a.CompletedBits.Length + 1) << 3) | 2);
+
+        Assert.Equal(new[] { extraBit }, SnapshotDiff.Compute(a, b).ChangedQuestIds);
+    }
+
+    [Fact]
     public void Completion_bit_changes_list_quest_ids_in_ascending_order()
     {
         var a = Fixture.Snapshot(Fixture.B);
