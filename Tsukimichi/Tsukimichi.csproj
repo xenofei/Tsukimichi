@@ -14,6 +14,7 @@ Moonlit treasures collects quests with unique rewards, and per-character snapsho
 
   <ItemGroup>
     <ProjectReference Include="..\Tsukimichi.Core\Tsukimichi.Core.csproj" />
+    <ProjectReference Include="..\Tsukimichi.GameData\Tsukimichi.GameData.csproj" />
   </ItemGroup>
 
   <ItemGroup>
