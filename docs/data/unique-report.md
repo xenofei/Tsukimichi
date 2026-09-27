@@ -1,8 +1,8 @@
 # Unique reward report
 
-Generated 2026-09-27 20:05 UTC from game version `2026.09.15.0000.0000` by Tsukimichi.DataGen.
+Generated 2026-09-27 20:07 UTC from game version `2026.09.15.0000.0000` by Tsukimichi.DataGen.
 
-- Entries: **4066** across **1480** quests.
+- Entries: **4160** across **1536** quests.
 - Entries whose item is also obtainable elsewhere (source carries `;otherSource=`): **1114**. They keep confidence Static in V1; the UI shows the source.
 
 ## Counts per kind and confidence
@@ -29,8 +29,9 @@ Generated 2026-09-27 20:05 UTC from game version `2026.09.15.0000.0000` by Tsuki
 | Trait | 54 | 0 | 0 | 0 | 54 |
 | Achievement | 664 | 0 | 0 | 0 | 664 |
 | Title | 220 | 0 | 0 | 0 | 220 |
-| DutyUnlock | 148 | 0 | 0 | 0 | 148 |
-| **Total** | 4066 | 0 | 0 | 0 | 4066 |
+| DutyUnlock | 138 | 0 | 39 | 0 | 177 |
+| SystemUnlock | 0 | 0 | 65 | 0 | 65 |
+| **Total** | 4056 | 0 | 104 | 0 | 4160 |
 
 ## Examples per kind
 
@@ -311,7 +312,7 @@ Generated 2026-09-27 20:05 UTC from game version `2026.09.15.0000.0000` by Tsuki
 | 65802 The Chefsbane Cometh | Seeker of Skill | 47 | 0 | Static | `Achievement.Data;achievement=316;type=6` |
 | 65816 May the Best Armorer Win | Seeker of Skill | 47 | 0 | Static | `Achievement.Data;achievement=316;type=6` |
 
-### DutyUnlock (148)
+### DutyUnlock (177)
 
 | Quest | Reward | Reward id | Item id | Confidence | Source |
 |---|---|---:|---:|---|---|
@@ -319,16 +320,31 @@ Generated 2026-09-27 20:05 UTC from game version `2026.09.15.0000.0000` by Tsuki
 | 65594 Simply the Hest | Basic Training: Enemy Parties | 42 | 0 | Static | `Quest.InstanceContentUnlock;InstanceContent=10001` |
 | 65595 Simply the Hest | Basic Training: Enemy Parties | 42 | 0 | Static | `Quest.InstanceContentUnlock;InstanceContent=10001` |
 | 65596 Simply the Hest | Basic Training: Enemy Parties | 42 | 0 | Static | `Quest.InstanceContentUnlock;InstanceContent=10001` |
-| 66233 Hallo Halatali | Halatali | 7 | 0 | Static | `Quest.InstanceContentUnlock;InstanceContent=7` |
-| 66300 Braving New Depths | the Sunken Temple of Qarn | 9 | 0 | Static | `Quest.InstanceContentUnlock;InstanceContent=9` |
-| 66406 Trauma Queen | the Wanderer's Palace | 10 | 0 | Static | `Quest.InstanceContentUnlock;InstanceContent=10` |
-| 66457 Dishonor Before Death | Cutter's Cry | 12 | 0 | Static | `Quest.InstanceContentUnlock;InstanceContent=12` |
-| 66515 Fort of Fear | Dzemael Darkhold | 13 | 0 | Static | `Quest.InstanceContentUnlock;InstanceContent=13` |
-| 66550 Going for Gold | the Aurum Vale | 5 | 0 | Static | `Quest.InstanceContentUnlock;InstanceContent=5` |
+| 65781 It's Probably Pirates | Sastasha | 4 | 0 | Curated | `curated/duty_unlocks.json` |
+| 65879 Lord of the Inferno | the Bowl of Embers | 56 | 0 | Curated | `curated/duty_unlocks.json` |
+| 65905 An Uninvited Ascian | the Chrysalis | 84 | 0 | Curated | `curated/duty_unlocks.json` |
+| 66050 Into the Beast's Maw | the Thousand Maws of Toto-Rak | 1 | 0 | Curated | `curated/duty_unlocks.json` |
+| 66055 Lady of the Vortex | the Howling Eye | 58 | 0 | Curated | `curated/duty_unlocks.json` |
+| 66060 The Ultimate Weapon | the Praetorium | 16 | 0 | Curated | `curated/duty_unlocks.json` |
+
+### SystemUnlock (65)
+
+| Quest | Reward | Reward id | Item id | Confidence | Source |
+|---|---|---:|---:|---|---|
+| 65688 Gone to Pieces | Desynthesis | 0 | 0 | Curated | `curated/system_unlocks.json` |
+| 65698 A Sight to Behold | Sightseeing Log | 0 | 0 | Curated | `curated/system_unlocks.json` |
+| 65970 It Could Happen to You | Gold Saucer | 0 | 0 | Curated | `curated/system_unlocks.json` |
+| 65972 So You Want to Be a Jockey | Chocobo racing | 0 | 0 | Curated | `curated/system_unlocks.json` |
+| 65973 Triple Triad Trial | Triple Triad | 0 | 0 | Curated | `curated/system_unlocks.json` |
+| 66174 Forging the Spirit | Materia extraction | 0 | 0 | Curated | `curated/system_unlocks.json` |
+| 66175 Waking the Spirit | Materia melding | 0 | 0 | Curated | `curated/system_unlocks.json` |
+| 66216 The Company You Keep (Twin Adder) | Grand Company enrollment | 0 | 0 | Curated | `curated/system_unlocks.json` |
+| 66217 The Company You Keep (Maelstrom) | Grand Company enrollment | 0 | 0 | Curated | `curated/system_unlocks.json` |
+| 66218 The Company You Keep (Immortal Flames) | Grand Company enrollment | 0 | 0 | Curated | `curated/system_unlocks.json` |
 
 ## Quests with rewards but no unique classification
 
-Named quests that hand out at least one reward signal (item, emote, action, unlock or other) but produced no entry: **1618** of 2985.
+Named quests that hand out at least one reward signal (item, emote, action, unlock or other) but produced no entry: **1589** of 2985.
 Most of them only give tradable gear or consumables. The list below is restricted to the ones worth a second look: at least one reward item is untradable, or carries an ItemAction and is not sold on the market board, yet no rule claimed it.
 
 Quests to review: **2**.

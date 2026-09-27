@@ -1,6 +1,6 @@
 {
   "gameVersion": "2026.09.15.0000.0000",
-  "generatedUtc": "2026-09-27T20:05:56Z",
+  "generatedUtc": "2026-09-27T20:07:40Z",
   "entries": [
     {
       "questRowId": 65545,
@@ -480,6 +480,15 @@
       "source": "Quest.GeneralActionReward"
     },
     {
+      "questRowId": 65688,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Desynthesis",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
+    },
+    {
       "questRowId": 65691,
       "kind": "Achievement",
       "rewardId": 313,
@@ -487,6 +496,15 @@
       "rewardName": "This One Time, at Level Thirty...",
       "confidence": "Static",
       "source": "Achievement.Data;type=9"
+    },
+    {
+      "questRowId": 65698,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Sightseeing Log",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
     },
     {
       "questRowId": 65705,
@@ -903,6 +921,15 @@
       "source": "Achievement.Key;type=6"
     },
     {
+      "questRowId": 65781,
+      "kind": "DutyUnlock",
+      "rewardId": 4,
+      "itemId": 0,
+      "rewardName": "Sastasha",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json"
+    },
+    {
       "questRowId": 65782,
       "kind": "Item",
       "rewardId": 7569,
@@ -1272,6 +1299,15 @@
       "source": "Quest.Reward;untradable;otherSource=GilShopItem"
     },
     {
+      "questRowId": 65879,
+      "kind": "DutyUnlock",
+      "rewardId": 56,
+      "itemId": 0,
+      "rewardName": "the Bowl of Embers",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json"
+    },
+    {
       "questRowId": 65881,
       "kind": "ClassJob",
       "rewardId": 7,
@@ -1407,6 +1443,15 @@
       "source": "Achievement.Key;achievement=1130;type=6"
     },
     {
+      "questRowId": 65905,
+      "kind": "DutyUnlock",
+      "rewardId": 84,
+      "itemId": 0,
+      "rewardName": "the Chrysalis",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json"
+    },
+    {
       "questRowId": 65955,
       "kind": "Achievement",
       "rewardId": 1065,
@@ -1452,6 +1497,15 @@
       "source": "Achievement.Key;achievement=1063;type=6"
     },
     {
+      "questRowId": 65970,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Gold Saucer",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
+    },
+    {
       "questRowId": 65971,
       "kind": "Item",
       "rewardId": 10085,
@@ -1477,6 +1531,15 @@
       "rewardName": "Fledgling Chocobo Registration G1-F",
       "confidence": "Static",
       "source": "Quest.OptionalItemReward;untradable;otherSource=GilShopItem"
+    },
+    {
+      "questRowId": 65972,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Chocobo racing",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
     },
     {
       "questRowId": 65973,
@@ -1522,6 +1585,15 @@
       "rewardName": "Coeurl",
       "confidence": "Static",
       "source": "Quest.Reward;ItemAction=3357"
+    },
+    {
+      "questRowId": 65973,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Triple Triad",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
     },
     {
       "questRowId": 65975,
@@ -1812,6 +1884,15 @@
       "source": "Quest.Reward;untradable;otherSource=SpecialShop"
     },
     {
+      "questRowId": 66050,
+      "kind": "DutyUnlock",
+      "rewardId": 1,
+      "itemId": 0,
+      "rewardName": "the Thousand Maws of Toto-Rak",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json"
+    },
+    {
       "questRowId": 66053,
       "kind": "Achievement",
       "rewardId": 785,
@@ -1830,6 +1911,15 @@
       "source": "Achievement.Key;type=6"
     },
     {
+      "questRowId": 66055,
+      "kind": "DutyUnlock",
+      "rewardId": 58,
+      "itemId": 0,
+      "rewardName": "the Howling Eye",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json"
+    },
+    {
       "questRowId": 66058,
       "kind": "Item",
       "rewardId": 30362,
@@ -1846,6 +1936,15 @@
       "rewardName": "Warrior of Light",
       "confidence": "Static",
       "source": "Achievement.Key;type=9"
+    },
+    {
+      "questRowId": 66060,
+      "kind": "DutyUnlock",
+      "rewardId": 16,
+      "itemId": 0,
+      "rewardName": "the Praetorium",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json"
     },
     {
       "questRowId": 66064,
@@ -2199,6 +2298,15 @@
       "source": "Quest.GeneralActionReward"
     },
     {
+      "questRowId": 66174,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Materia extraction",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
+    },
+    {
       "questRowId": 66175,
       "kind": "GeneralAction",
       "rewardId": 12,
@@ -2206,6 +2314,15 @@
       "rewardName": "Materia Melding",
       "confidence": "Static",
       "source": "Quest.GeneralActionReward"
+    },
+    {
+      "questRowId": 66175,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Materia melding",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
     },
     {
       "questRowId": 66176,
@@ -2262,6 +2379,60 @@
       "source": "Quest.Reward;untradable;otherSource=GilShopItem"
     },
     {
+      "questRowId": 66196,
+      "kind": "DutyUnlock",
+      "rewardId": 3,
+      "itemId": 0,
+      "rewardName": "Copperbell Mines",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json"
+    },
+    {
+      "questRowId": 66211,
+      "kind": "DutyUnlock",
+      "rewardId": 4,
+      "itemId": 0,
+      "rewardName": "Sastasha",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json"
+    },
+    {
+      "questRowId": 66213,
+      "kind": "DutyUnlock",
+      "rewardId": 2,
+      "itemId": 0,
+      "rewardName": "the Tam-Tara Deepcroft",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json"
+    },
+    {
+      "questRowId": 66216,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Grand Company enrollment",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
+    },
+    {
+      "questRowId": 66217,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Grand Company enrollment",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
+    },
+    {
+      "questRowId": 66218,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Grand Company enrollment",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
+    },
+    {
       "questRowId": 66226,
       "kind": "Item",
       "rewardId": 3760,
@@ -2276,8 +2447,8 @@
       "rewardId": 7,
       "itemId": 0,
       "rewardName": "Halatali",
-      "confidence": "Static",
-      "source": "Quest.InstanceContentUnlock;InstanceContent=7"
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json"
     },
     {
       "questRowId": 66235,
@@ -2307,6 +2478,15 @@
       "source": "Achievement.Data;type=9"
     },
     {
+      "questRowId": 66236,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Chocobo companion",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
+    },
+    {
       "questRowId": 66237,
       "kind": "Mount",
       "rewardId": 1,
@@ -2325,6 +2505,15 @@
       "source": "Achievement.Key;type=9"
     },
     {
+      "questRowId": 66237,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Chocobo companion",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
+    },
+    {
       "questRowId": 66238,
       "kind": "Mount",
       "rewardId": 1,
@@ -2341,6 +2530,24 @@
       "rewardName": "My Little Chocobo",
       "confidence": "Static",
       "source": "Achievement.Data;type=9"
+    },
+    {
+      "questRowId": 66238,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Chocobo companion",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
+    },
+    {
+      "questRowId": 66241,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Relic: Zodiac weapons",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
     },
     {
       "questRowId": 66266,
@@ -2384,8 +2591,8 @@
       "rewardId": 9,
       "itemId": 0,
       "rewardName": "the Sunken Temple of Qarn",
-      "confidence": "Static",
-      "source": "Quest.InstanceContentUnlock;InstanceContent=9"
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json"
     },
     {
       "questRowId": 66337,
@@ -2406,6 +2613,24 @@
       "source": "Achievement.Key;type=6"
     },
     {
+      "questRowId": 66337,
+      "kind": "DutyUnlock",
+      "rewardId": 6,
+      "itemId": 0,
+      "rewardName": "Haukke Manor",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json"
+    },
+    {
+      "questRowId": 66368,
+      "kind": "DutyUnlock",
+      "rewardId": 8,
+      "itemId": 0,
+      "rewardName": "Brayflox's Longstop",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json"
+    },
+    {
       "questRowId": 66386,
       "kind": "Minion",
       "rewardId": 41,
@@ -2413,6 +2638,15 @@
       "rewardName": "goobbue sproutling",
       "confidence": "Static",
       "source": "Quest.Reward;ItemAction=853"
+    },
+    {
+      "questRowId": 66393,
+      "kind": "DutyUnlock",
+      "rewardId": 57,
+      "itemId": 0,
+      "rewardName": "the Navel",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json"
     },
     {
       "questRowId": 66404,
@@ -2429,8 +2663,8 @@
       "rewardId": 10,
       "itemId": 0,
       "rewardName": "the Wanderer's Palace",
-      "confidence": "Static",
-      "source": "Quest.InstanceContentUnlock;InstanceContent=10"
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json"
     },
     {
       "questRowId": 66446,
@@ -2447,8 +2681,8 @@
       "rewardId": 12,
       "itemId": 0,
       "rewardName": "Cutter's Cry",
-      "confidence": "Static",
-      "source": "Quest.InstanceContentUnlock;InstanceContent=12"
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json"
     },
     {
       "questRowId": 66475,
@@ -2458,6 +2692,15 @@
       "rewardName": "Level 40 Weapon Coffer",
       "confidence": "Static",
       "source": "Quest.Reward;untradable"
+    },
+    {
+      "questRowId": 66476,
+      "kind": "DutyUnlock",
+      "rewardId": 11,
+      "itemId": 0,
+      "rewardName": "the Stone Vigil",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json"
     },
     {
       "questRowId": 66488,
@@ -2474,8 +2717,8 @@
       "rewardId": 13,
       "itemId": 0,
       "rewardName": "Dzemael Darkhold",
-      "confidence": "Static",
-      "source": "Quest.InstanceContentUnlock;InstanceContent=13"
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json"
     },
     {
       "questRowId": 66538,
@@ -2501,8 +2744,8 @@
       "rewardId": 5,
       "itemId": 0,
       "rewardName": "the Aurum Vale",
-      "confidence": "Static",
-      "source": "Quest.InstanceContentUnlock;InstanceContent=5"
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json"
     },
     {
       "questRowId": 66558,
@@ -2512,6 +2755,24 @@
       "rewardName": "cactuar cutting",
       "confidence": "Static",
       "source": "Quest.Reward;ItemAction=853"
+    },
+    {
+      "questRowId": 66572,
+      "kind": "DutyUnlock",
+      "rewardId": 15,
+      "itemId": 0,
+      "rewardName": "Castrum Meridianum",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json"
+    },
+    {
+      "questRowId": 66572,
+      "kind": "DutyUnlock",
+      "rewardId": 865,
+      "itemId": 0,
+      "rewardName": "Cape Westwind",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json"
     },
     {
       "questRowId": 66573,
@@ -2528,8 +2789,8 @@
       "rewardId": 59,
       "itemId": 0,
       "rewardName": "the Bowl of Embers (Hard)",
-      "confidence": "Static",
-      "source": "Quest.InstanceContentUnlock;InstanceContent=20004"
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json"
     },
     {
       "questRowId": 66585,
@@ -3432,6 +3693,15 @@
       "source": "Quest.InstanceContentUnlock;InstanceContent=40001"
     },
     {
+      "questRowId": 66640,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "PvP",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
+    },
+    {
       "questRowId": 66641,
       "kind": "DutyUnlock",
       "rewardId": 121,
@@ -3441,6 +3711,15 @@
       "source": "Quest.InstanceContentUnlock;InstanceContent=40001"
     },
     {
+      "questRowId": 66641,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "PvP",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
+    },
+    {
       "questRowId": 66642,
       "kind": "DutyUnlock",
       "rewardId": 121,
@@ -3448,6 +3727,15 @@
       "rewardName": "",
       "confidence": "Static",
       "source": "Quest.InstanceContentUnlock;InstanceContent=40001"
+    },
+    {
+      "questRowId": 66642,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "PvP",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
     },
     {
       "questRowId": 66650,
@@ -3644,8 +3932,8 @@
       "rewardId": 14,
       "itemId": 0,
       "rewardName": "Amdapor Keep",
-      "confidence": "Static",
-      "source": "Quest.InstanceContentUnlock;InstanceContent=14"
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json"
     },
     {
       "questRowId": 66677,
@@ -3734,8 +4022,8 @@
       "rewardId": 61,
       "itemId": 0,
       "rewardName": "the Howling Eye (Hard)",
-      "confidence": "Static",
-      "source": "Quest.InstanceContentUnlock;InstanceContent=20006"
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json"
     },
     {
       "questRowId": 66694,
@@ -3743,8 +4031,8 @@
       "rewardId": 60,
       "itemId": 0,
       "rewardName": "the Navel (Hard)",
-      "confidence": "Static",
-      "source": "Quest.InstanceContentUnlock;InstanceContent=20005"
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json"
     },
     {
       "questRowId": 66695,
@@ -3909,6 +4197,33 @@
       "source": "Achievement.Key;type=9"
     },
     {
+      "questRowId": 66731,
+      "kind": "DutyUnlock",
+      "rewardId": 65,
+      "itemId": 0,
+      "rewardName": "the Howling Eye (Extreme)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json"
+    },
+    {
+      "questRowId": 66732,
+      "kind": "DutyUnlock",
+      "rewardId": 64,
+      "itemId": 0,
+      "rewardName": "the Navel (Extreme)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json"
+    },
+    {
+      "questRowId": 66733,
+      "kind": "DutyUnlock",
+      "rewardId": 63,
+      "itemId": 0,
+      "rewardName": "the Bowl of Embers (Extreme)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json"
+    },
+    {
       "questRowId": 66734,
       "kind": "Item",
       "rewardId": 7004,
@@ -3936,6 +4251,15 @@
       "source": "Quest.Reward;untradable"
     },
     {
+      "questRowId": 66746,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Aesthetician",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
+    },
+    {
       "questRowId": 66747,
       "kind": "GeneralAction",
       "rewardId": 19,
@@ -3952,6 +4276,15 @@
       "rewardName": "Dig",
       "confidence": "Static",
       "source": "Quest.GeneralActionReward"
+    },
+    {
+      "questRowId": 66747,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Treasure hunt",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
     },
     {
       "questRowId": 66751,
@@ -4458,6 +4791,15 @@
       "source": "Quest.GeneralActionReward"
     },
     {
+      "questRowId": 66957,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Glamour (Mor Dhona legacy)",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
+    },
+    {
       "questRowId": 66961,
       "kind": "Emote",
       "rewardId": 102,
@@ -4492,6 +4834,33 @@
       "rewardName": "The Ambitious Angler",
       "confidence": "Static",
       "source": "Achievement.Key;achievement=902;type=6"
+    },
+    {
+      "questRowId": 66968,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Retainers",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
+    },
+    {
+      "questRowId": 66969,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Retainers",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
+    },
+    {
+      "questRowId": 66970,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Retainers",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
     },
     {
       "questRowId": 66973,
@@ -4917,6 +5286,15 @@
       "source": "Achievement.Key;achievement=1694;type=6"
     },
     {
+      "questRowId": 67087,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Custom deliveries: Zhloe Aliapoh",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
+    },
+    {
       "questRowId": 67090,
       "kind": "Item",
       "rewardId": 22571,
@@ -5007,6 +5385,15 @@
       "source": "ContentFinderCondition.UnlockCriteria"
     },
     {
+      "questRowId": 67092,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Palace of the Dead",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
+    },
+    {
       "questRowId": 67093,
       "kind": "Title",
       "rewardId": 314,
@@ -5023,6 +5410,42 @@
       "rewardName": "the Second Coil of Bahamut (Savage) - Turn 1",
       "confidence": "Static",
       "source": "Quest.InstanceContentUnlock;InstanceContent=30012"
+    },
+    {
+      "questRowId": 67096,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Chocobo raising",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
+    },
+    {
+      "questRowId": 67099,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Hunts (ARR)",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
+    },
+    {
+      "questRowId": 67100,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Hunts (ARR)",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
+    },
+    {
+      "questRowId": 67101,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Hunts (ARR)",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
     },
     {
       "questRowId": 67105,
@@ -5122,6 +5545,15 @@
       "rewardName": "black chocobo",
       "confidence": "Static",
       "source": "Quest.Reward;ItemAction=1322"
+    },
+    {
+      "questRowId": 67133,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Flying (Heavensward entry)",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
     },
     {
       "questRowId": 67134,
@@ -7428,6 +7860,24 @@
       "source": "Achievement.Key;achievement=1166;type=6"
     },
     {
+      "questRowId": 67655,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Hunts (Heavensward)",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
+    },
+    {
+      "questRowId": 67658,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Hunts (Heavensward elite)",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
+    },
+    {
       "questRowId": 67661,
       "kind": "Item",
       "rewardId": 10333,
@@ -7903,6 +8353,15 @@
       "rewardName": "Back to School II",
       "confidence": "Static",
       "source": "Achievement.Key;type=6"
+    },
+    {
+      "questRowId": 67747,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Relic: Anima weapons",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
     },
     {
       "questRowId": 67748,
@@ -10119,6 +10578,33 @@
       "source": "Achievement.Key;achievement=1680;type=6"
     },
     {
+      "questRowId": 67925,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Adventurer Squadron",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
+    },
+    {
+      "questRowId": 67926,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Adventurer Squadron",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
+    },
+    {
+      "questRowId": 67927,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Adventurer Squadron",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
+    },
+    {
       "questRowId": 67928,
       "kind": "Other",
       "rewardId": 7,
@@ -10126,6 +10612,15 @@
       "rewardName": "Wondrous Tails",
       "confidence": "Static",
       "source": "Quest.OtherReward"
+    },
+    {
+      "questRowId": 67928,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Wondrous Tails",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
     },
     {
       "questRowId": 67931,
@@ -12729,6 +13224,15 @@
       "source": "Quest.Reward;ItemAction=25183"
     },
     {
+      "questRowId": 68541,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Custom deliveries: M'naago",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
+    },
+    {
       "questRowId": 68543,
       "kind": "DutyUnlock",
       "rewardId": 277,
@@ -12844,6 +13348,15 @@
       "rewardName": "Glamour Plate",
       "confidence": "Static",
       "source": "Quest.GeneralActionReward"
+    },
+    {
+      "questRowId": 68553,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Glamour (cast/dispel)",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
     },
     {
       "questRowId": 68558,
@@ -12963,6 +13476,15 @@
       "source": "ContentFinderCondition.UnlockCriteria"
     },
     {
+      "questRowId": 68614,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Eureka (Forbidden Land)",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
+    },
+    {
       "questRowId": 68615,
       "kind": "Minion",
       "rewardId": 280,
@@ -13051,6 +13573,15 @@
       "rewardName": "The Fan in Fanatic",
       "confidence": "Static",
       "source": "Achievement.Key;type=6"
+    },
+    {
+      "questRowId": 68622,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Doman Enclave reconstruction",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
     },
     {
       "questRowId": 68627,
@@ -14709,6 +15240,15 @@
       "source": "ContentFinderCondition.UnlockCriteria"
     },
     {
+      "questRowId": 68667,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Heaven-on-High",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
+    },
+    {
       "questRowId": 68668,
       "kind": "DutyUnlock",
       "rewardId": 543,
@@ -14869,6 +15409,15 @@
       "rewardName": "Calamatologist",
       "confidence": "Static",
       "source": "Achievement.Key;achievement=2105;type=6"
+    },
+    {
+      "questRowId": 68675,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Custom deliveries: Kurenai",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
     },
     {
       "questRowId": 68684,
@@ -15141,6 +15690,15 @@
       "source": "Achievement.Key;type=6"
     },
     {
+      "questRowId": 68713,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Custom deliveries: Adkiragh",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
+    },
+    {
       "questRowId": 68719,
       "kind": "Achievement",
       "rewardId": 2160,
@@ -15256,6 +15814,15 @@
       "rewardName": "blue mage",
       "confidence": "Static",
       "source": "ClassJob.UnlockQuest"
+    },
+    {
+      "questRowId": 68728,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Blue Mage",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
     },
     {
       "questRowId": 68730,
@@ -16923,6 +17490,15 @@
       "source": "AetherCurrent.Quest"
     },
     {
+      "questRowId": 69133,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Hunts (Shadowbringers)",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
+    },
+    {
       "questRowId": 69145,
       "kind": "Item",
       "rewardId": 26858,
@@ -17247,6 +17823,15 @@
       "source": "ContentFinderCondition.UnlockCriteria"
     },
     {
+      "questRowId": 69208,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Ishgardian Restoration",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
+    },
+    {
       "questRowId": 69209,
       "kind": "Item",
       "rewardId": 35716,
@@ -17335,6 +17920,15 @@
       "rewardName": "Second Chances",
       "confidence": "Static",
       "source": "Achievement.Key;type=6"
+    },
+    {
+      "questRowId": 69265,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Custom deliveries: Kai-Shirr",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
     },
     {
       "questRowId": 69269,
@@ -17724,6 +18318,15 @@
       "source": "Quest.Reward;ItemAction=25183"
     },
     {
+      "questRowId": 69370,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Bozja (Resistance weapons)",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
+    },
+    {
       "questRowId": 69372,
       "kind": "Achievement",
       "rewardId": 2607,
@@ -17920,6 +18523,15 @@
       "rewardName": "Ocean Fishing",
       "confidence": "Static",
       "source": "ContentFinderCondition.UnlockCriteria"
+    },
+    {
+      "questRowId": 69379,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Ocean fishing",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
     },
     {
       "questRowId": 69380,
@@ -19000,6 +19612,15 @@
       "rewardName": "Evenstar Coat",
       "confidence": "Static",
       "source": "Quest.OptionalItemReward;untradable;otherSource=SpecialShop"
+    },
+    {
+      "questRowId": 69425,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Custom deliveries: Ehll Tou",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
     },
     {
       "questRowId": 69427,
@@ -20514,6 +21135,15 @@
       "source": "Quest.Reward;QuestClassJobReward;ItemRewardType=6;otherSource=Tradable"
     },
     {
+      "questRowId": 69477,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Bozjan Southern Front",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
+    },
+    {
       "questRowId": 69487,
       "kind": "Item",
       "rewardId": 30357,
@@ -20611,6 +21241,15 @@
       "rewardName": "MGP Voucher",
       "confidence": "Static",
       "source": "Quest.Reward;untradable"
+    },
+    {
+      "questRowId": 69501,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Faux Hollows",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
     },
     {
       "questRowId": 69502,
@@ -22386,6 +23025,15 @@
       "source": "Achievement.Key;achievement=2959;type=6"
     },
     {
+      "questRowId": 69615,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Custom deliveries: Charlemend",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
+    },
+    {
       "questRowId": 69617,
       "kind": "Mount",
       "rewardId": 254,
@@ -22951,6 +23599,15 @@
       "rewardName": "Erudite Angler",
       "confidence": "Static",
       "source": "Achievement.Key;achievement=2970;type=6"
+    },
+    {
+      "questRowId": 69712,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Hunts (Endwalker)",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
     },
     {
       "questRowId": 69719,
@@ -24006,6 +24663,15 @@
       "source": "Achievement.Key;achievement=2971;type=6"
     },
     {
+      "questRowId": 70011,
+      "kind": "DutyUnlock",
+      "rewardId": 808,
+      "itemId": 0,
+      "rewardName": "Asphodelos: The First Circle",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json"
+    },
+    {
       "questRowId": 70016,
       "kind": "Other",
       "rewardId": 2,
@@ -24222,6 +24888,24 @@
       "source": "Achievement.Key;type=6"
     },
     {
+      "questRowId": 70057,
+      "kind": "DutyUnlock",
+      "rewardId": 15,
+      "itemId": 0,
+      "rewardName": "Castrum Meridianum",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json"
+    },
+    {
+      "questRowId": 70057,
+      "kind": "DutyUnlock",
+      "rewardId": 865,
+      "itemId": 0,
+      "rewardName": "Cape Westwind",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json"
+    },
+    {
       "questRowId": 70058,
       "kind": "Item",
       "rewardId": 6221,
@@ -24256,6 +24940,33 @@
       "rewardName": "Warrior of Light",
       "confidence": "Static",
       "source": "Achievement.Data;type=9"
+    },
+    {
+      "questRowId": 70058,
+      "kind": "DutyUnlock",
+      "rewardId": 16,
+      "itemId": 0,
+      "rewardName": "the Praetorium",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json"
+    },
+    {
+      "questRowId": 70058,
+      "kind": "DutyUnlock",
+      "rewardId": 830,
+      "itemId": 0,
+      "rewardName": "the Porta Decumana",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json"
+    },
+    {
+      "questRowId": 70059,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Custom deliveries: Ameliance",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
     },
     {
       "questRowId": 70061,
@@ -24564,6 +25275,15 @@
       "source": "Achievement.Key;achievement=3105;type=6"
     },
     {
+      "questRowId": 70179,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Island Sanctuary",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
+    },
+    {
       "questRowId": 70181,
       "kind": "Item",
       "rewardId": 38212,
@@ -24607,6 +25327,15 @@
       "rewardName": "Isle Farmhand's Cutoffs",
       "confidence": "Static",
       "source": "Quest.Reward;untradable;otherSource=GilShopItem"
+    },
+    {
+      "questRowId": 70182,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Variant and Criterion dungeons",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
     },
     {
       "questRowId": 70185,
@@ -24976,6 +25705,15 @@
       "rewardName": "Hamm(er)ing It Up: Manderville Milpreves",
       "confidence": "Static",
       "source": "Achievement.Key;type=24"
+    },
+    {
+      "questRowId": 70188,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Relic: Manderville weapons",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
     },
     {
       "questRowId": 70189,
@@ -25525,6 +26263,15 @@
       "rewardName": "Eureka Orthos (Floors 21-30)",
       "confidence": "Static",
       "source": "ContentFinderCondition.UnlockCriteria"
+    },
+    {
+      "questRowId": 70199,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Eureka Orthos",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
     },
     {
       "questRowId": 70200,
@@ -26884,6 +27631,15 @@
       "rewardName": "Loporrit Carat",
       "confidence": "Static",
       "source": "Quest.Reward;QuestClassJobReward;ItemRewardType=6;otherSource=Tradable"
+    },
+    {
+      "questRowId": 70251,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Custom deliveries: Anden",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
     },
     {
       "questRowId": 70253,
@@ -30684,6 +31440,15 @@
       "source": "Achievement.Key;type=6"
     },
     {
+      "questRowId": 70351,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Custom deliveries: Margrat",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
+    },
+    {
       "questRowId": 70352,
       "kind": "Item",
       "rewardId": 41596,
@@ -30900,6 +31665,15 @@
       "source": "Achievement.Key;achievement=3491;type=6"
     },
     {
+      "questRowId": 70415,
+      "kind": "DutyUnlock",
+      "rewardId": 826,
+      "itemId": 0,
+      "rewardName": "Ihuykatumu",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json"
+    },
+    {
       "questRowId": 70416,
       "kind": "Item",
       "rewardId": 43486,
@@ -30970,6 +31744,15 @@
       "rewardName": "Aether Current (Kozama'uka)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest"
+    },
+    {
+      "questRowId": 70427,
+      "kind": "DutyUnlock",
+      "rewardId": 824,
+      "itemId": 0,
+      "rewardName": "Worqor Zormor",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json"
     },
     {
       "questRowId": 70431,
@@ -31080,6 +31863,15 @@
       "source": "AetherCurrent.Quest"
     },
     {
+      "questRowId": 70445,
+      "kind": "DutyUnlock",
+      "rewardId": 829,
+      "itemId": 0,
+      "rewardName": "the Skydeep Cenote",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json"
+    },
+    {
       "questRowId": 70447,
       "kind": "Orchestrion",
       "rewardId": 0,
@@ -31150,6 +31942,15 @@
       "rewardName": "Aether Current (Shaaloani)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest"
+    },
+    {
+      "questRowId": 70462,
+      "kind": "DutyUnlock",
+      "rewardId": 831,
+      "itemId": 0,
+      "rewardName": "Vanguard",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json"
     },
     {
       "questRowId": 70467,
@@ -31242,6 +32043,15 @@
       "source": "Achievement.Key;achievement=3495;type=6"
     },
     {
+      "questRowId": 70481,
+      "kind": "DutyUnlock",
+      "rewardId": 825,
+      "itemId": 0,
+      "rewardName": "Origenics",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json"
+    },
+    {
       "questRowId": 70494,
       "kind": "Other",
       "rewardId": 2,
@@ -31285,6 +32095,15 @@
       "rewardName": "Of the New Dawn",
       "confidence": "Static",
       "source": "Achievement.Key;achievement=3496;type=6"
+    },
+    {
+      "questRowId": 70495,
+      "kind": "DutyUnlock",
+      "rewardId": 827,
+      "itemId": 0,
+      "rewardName": "Alexandria",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json"
     },
     {
       "questRowId": 70501,
@@ -32428,6 +33247,15 @@
       "rewardName": "I Wanna Be Your Pop Star",
       "confidence": "Static",
       "source": "Achievement.Key;type=6"
+    },
+    {
+      "questRowId": 70775,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Custom deliveries: Nitowikwe",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
     },
     {
       "questRowId": 70777,
@@ -35391,6 +36219,15 @@
       "source": "Quest.InstanceContentUnlock;InstanceContent=38001"
     },
     {
+      "questRowId": 70996,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Custom deliveries: Tiisol Ja",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
+    },
+    {
       "questRowId": 70997,
       "kind": "Emote",
       "rewardId": 330,
@@ -36568,6 +37405,15 @@
       "rewardName": "the Occult Crescent: North Horn",
       "confidence": "Static",
       "source": "ContentFinderCondition.UnlockCriteria"
+    },
+    {
+      "questRowId": 71047,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Occult Crescent",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json"
     },
     {
       "questRowId": 71053,

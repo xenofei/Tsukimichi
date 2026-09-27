@@ -6,3 +6,4 @@ obj/
 .idea/
 *.swp
 assets/icons/__pycache__/
+.claude/worktrees/
