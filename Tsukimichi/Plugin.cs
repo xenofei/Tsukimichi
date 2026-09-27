@@ -25,6 +25,123 @@ public sealed class Plugin : IDalamudPlugin
     /// <summary>The catalog build started at load. Faulted or cancelled when the build did not finish.</summary>
     internal Task<CatalogBundle> CatalogTask { get; }
 
+    // ---- Game state (T3.2/T3.3) ----
+    [PluginService] internal static IFramework Framework { get; private set; } = null!;
+    [PluginService] internal static IClientState ClientState { get; private set; } = null!;
+    [PluginService] internal static IPlayerState PlayerState { get; private set; } = null!;
+    [PluginService] internal static ICondition Condition { get; private set; } = null!;
+
+    internal Config.Configuration Settings { get; private set; } = null!;
+    internal Core.Storage.PluginPaths Paths { get; private set; } = null!;
+    internal Game.SessionState Session { get; private set; } = null!;
+    internal Game.SnapshotService Snapshots { get; private set; } = null!;
+    internal Game.StatePoller Poller { get; private set; } = null!;
+
+    private bool gameStateDisposed;
+
+    /// <summary>Config, shipped data, snapshot store, session state and poller; hands the catalog to the session when built.</summary>
+    private void InitializeGameState()
+    {
+        Settings = Config.Configuration.Load(PluginInterface);
+
+        var assemblyDir = System.IO.Path.GetDirectoryName(PluginInterface.AssemblyLocation.FullName) ?? PluginInterface.AssemblyLocation.DirectoryName ?? ".";
+        // The csproj copies Data\** to <plugin>\Data; PluginPaths expects the shipped files at its plugin root.
+        var dataDir = System.IO.Path.Combine(assemblyDir, "Data");
+        Paths = new Core.Storage.PluginPaths(PluginInterface.GetPluginConfigDirectory(), System.IO.Directory.Exists(dataDir) ? dataDir : assemblyDir);
+
+        var uniqueRewards = Core.Storage.UniqueRewardsFile.Load(Paths.UniqueRewardsFile);
+        foreach (var warning in uniqueRewards.Warnings)
+        {
+            Log.Warning("Unique rewards: {Warning}", warning);
+        }
+
+        var curated = Core.Storage.CuratedData.Load(Paths.CuratedDir);
+        foreach (var warning in curated.Warnings)
+        {
+            Log.Warning("Curated data: {Warning}", warning);
+        }
+
+        Log.Information(
+            "Shipped data: {Entries} unique reward entries (game {GameVersion}), {SystemUnlocks} system unlocks, {DutyUnlocks} duty unlocks, {FeatureQuests} feature quests, {Festivals} festivals",
+            uniqueRewards.Entries.Count,
+            uniqueRewards.GameVersion,
+            curated.SystemUnlocks.Count,
+            curated.DutyUnlocks.Count,
+            curated.FeatureQuests.Count,
+            curated.Festivals.Count);
+
+        Snapshots = new Game.SnapshotService(new Core.Storage.JsonSnapshotStore(Paths.ConfigDir), ClientState, Framework, Log);
+        Session = new Game.SessionState(Snapshots, Paths, uniqueRewards, curated);
+        if (Settings.ViewedContentId is { } viewed && !Session.ViewCharacter(viewed))
+        {
+            Settings.ViewedContentId = null;
+            Settings.Save(PluginInterface);
+        }
+
+        Session.Changed += PersistViewedCharacter;
+
+        var reader = new Game.GameStateReader(Framework, PlayerState, DataManager, Log);
+        Poller = new Game.StatePoller(Framework, ClientState, Condition, Log, reader, Snapshots, Session, Settings);
+
+        CatalogTask.ContinueWith(
+            t =>
+            {
+                if (t.IsCanceled || gameStateDisposed)
+                {
+                    return;
+                }
+
+                var error = t.IsFaulted ? t.Exception?.GetBaseException().Message ?? "unknown error" : null;
+                var bundle = t.IsFaulted ? null : t.Result;
+                Framework.RunOnFrameworkThread(() =>
+                {
+                    if (gameStateDisposed)
+                    {
+                        return;
+                    }
+
+                    if (bundle is not null)
+                    {
+                        Session.SetCatalog(bundle);
+                    }
+                    else
+                    {
+                        Session.SetCatalogError(error ?? "unknown error");
+                    }
+                }).ContinueWith(static r => _ = r.Exception, TaskContinuationOptions.OnlyOnFaulted);
+            },
+            CancellationToken.None,
+            TaskContinuationOptions.ExecuteSynchronously,
+            TaskScheduler.Default);
+    }
+
+    /// <summary>Remembers an explicit character choice across sessions; following the live character stores null.</summary>
+    private void PersistViewedCharacter()
+    {
+        var explicitId = Session.IsFollowingLive ? null : Session.ViewedContentId;
+        if (Settings.ViewedContentId == explicitId)
+        {
+            return;
+        }
+
+        Settings.ViewedContentId = explicitId;
+        Settings.Save(PluginInterface);
+    }
+
+    /// <summary>Poller first (unsubscribe, final save), then the snapshot service; the catalog build is cancelled by the caller.</summary>
+    private void DisposeGameState()
+    {
+        gameStateDisposed = true;
+        if (Session is not null)
+        {
+            Session.Changed -= PersistViewedCharacter;
+        }
+
+        Poller?.Dispose();
+        Snapshots?.Dispose();
+    }
+    // ---- end game state ----
+
     public Plugin()
     {
         Log.Information("Tsukimichi loaded (config directory: {Dir})", PluginInterface.GetPluginConfigDirectory());
@@ -50,10 +167,17 @@ public sealed class Plugin : IDalamudPlugin
             CancellationToken.None,
             TaskContinuationOptions.ExecuteSynchronously,
             TaskScheduler.Default);
+
+        // ---- Game state (T3.2/T3.3) ----
+        InitializeGameState();
+        // ---- end game state ----
     }
 
     public void Dispose()
     {
+        // ---- Game state dispose ----
+        DisposeGameState();
+        // ---- end game state dispose ----
         catalogCts.Cancel();
         try
         {
