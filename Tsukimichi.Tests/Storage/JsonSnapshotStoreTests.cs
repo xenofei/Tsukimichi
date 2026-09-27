@@ -280,6 +280,46 @@ public sealed class JsonSnapshotStoreTests : IDisposable
     }
 
     [Fact]
+    public void List_skips_a_locked_file_with_a_warning_and_leaves_it_in_place()
+    {
+        var store = new JsonSnapshotStore(tmp.Path);
+        store.Save(new CharacterSnapshot { ContentId = 1, Name = "Good" });
+        store.Save(new CharacterSnapshot { ContentId = 2, Name = "Locked" });
+        var lockedPath = tmp.File(Path.Combine("characters", "2.json"));
+
+        using (File.Open(lockedPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+        {
+            var list = store.List();
+
+            Assert.Single(list);
+            Assert.Equal("Good", list[0].Name);
+            Assert.Single(store.Warnings);
+            Assert.Contains("2.json", store.Warnings[0]);
+        }
+
+        Assert.True(File.Exists(lockedPath), "a locked file is not corrupt and must not be quarantined");
+        Assert.Empty(Directory.GetFiles(tmp.File("characters"), "2.json.corrupt-*"));
+    }
+
+    [Fact]
+    public void Load_returns_null_for_a_locked_file_with_a_warning()
+    {
+        var store = new JsonSnapshotStore(tmp.Path);
+        store.Save(new CharacterSnapshot { ContentId = 3, Name = "Locked" });
+        var lockedPath = tmp.File(Path.Combine("characters", "3.json"));
+
+        using (File.Open(lockedPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+        {
+            Assert.Null(store.Load(3));
+            Assert.Single(store.Warnings);
+        }
+
+        store.ClearWarnings();
+        Assert.Equal("Locked", store.Load(3)!.Name);
+        Assert.Empty(store.Warnings);
+    }
+
+    [Fact]
     public void List_ignores_files_that_are_not_named_by_content_id()
     {
         var store = new JsonSnapshotStore(tmp.Path);

@@ -1,3 +1,4 @@
+using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
 
@@ -62,6 +63,34 @@ internal static class QueryTestData
 
         return result;
     }
+
+    /// <summary>One evaluation per state entry; a next-step detail, when given, rides on an unmet Level requirement.</summary>
+    public static Dictionary<uint, QuestEvaluation> Evaluations(IReadOnlyDictionary<uint, QuestState> states, IReadOnlyDictionary<uint, string>? nextSteps = null)
+    {
+        var result = new Dictionary<uint, QuestEvaluation>(states.Count);
+        foreach (var (rowId, state) in states)
+        {
+            RequirementResult? next = null;
+            if (nextSteps is not null && nextSteps.TryGetValue(rowId, out var detail))
+            {
+                next = new RequirementResult(new LevelRequirement(50, 1), false, detail);
+            }
+
+            result[rowId] = new QuestEvaluation(state, next is null ? [] : [next], next, null, null);
+        }
+
+        return result;
+    }
+
+    public static QueryResult Run(
+        QuestCatalog catalog,
+        IReadOnlyDictionary<uint, QuestEvaluation> evaluations,
+        FilterSet? filters = null,
+        QuestScope? scope = null,
+        SortSpec? sort = null,
+        string search = "",
+        QueryContext? ctx = null) =>
+        QuestQuery.Apply(catalog, evaluations, filters ?? new FilterSet(), scope ?? QuestScope.None, sort ?? SortSpec.Default, search, ctx ?? QueryContext.Empty);
 
     public static QueryResult Run(
         QuestCatalog catalog,

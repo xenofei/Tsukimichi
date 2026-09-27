@@ -27,49 +27,85 @@ public class TreeCountsTests
         (7, QuestState.Ready));
 
     [Fact]
-    public void Counts_per_node_exclude_unlisted_by_default()
+    public void Counts_per_node_exclude_unlisted_and_foreclosed_from_totals()
     {
         var counts = TreeCounts.Compute(Catalog, AllStates, includeUnlisted: false);
 
-        Assert.Equal(new NodeCount(2, 4), counts.Sections[1]);
-        Assert.Equal(new NodeCount(1, 1), counts.Sections[2]);
-        Assert.Equal(new NodeCount(2, 3), counts.Categories[10]);
-        Assert.Equal(new NodeCount(0, 1), counts.Categories[11]);
-        Assert.Equal(new NodeCount(1, 1), counts.Categories[12]);
-        Assert.Equal(new NodeCount(1, 2), counts.Genres[100]);
-        Assert.Equal(new NodeCount(1, 1), counts.Genres[101]);
-        Assert.Equal(new NodeCount(0, 1), counts.Genres[102]);
-        Assert.Equal(new NodeCount(1, 1), counts.Genres[103]);
+        Assert.Equal(new NodeCount(2, 3, 1), counts.Sections[1]);
+        Assert.Equal(new NodeCount(1, 1, 0), counts.Sections[2]);
+        Assert.Equal(new NodeCount(2, 3, 0), counts.Categories[10]);
+        Assert.Equal(new NodeCount(0, 0, 1), counts.Categories[11]);
+        Assert.Equal(new NodeCount(1, 1, 0), counts.Categories[12]);
+        Assert.Equal(new NodeCount(1, 2, 0), counts.Genres[100]);
+        Assert.Equal(new NodeCount(1, 1, 0), counts.Genres[101]);
+        Assert.Equal(new NodeCount(0, 0, 1), counts.Genres[102]);
+        Assert.Equal(new NodeCount(1, 1, 0), counts.Genres[103]);
         Assert.False(counts.Genres.ContainsKey(0));
         Assert.False(counts.Sections.ContainsKey(0));
-        Assert.Equal(new NodeCount(3, 5), counts.Overall);
+        Assert.False(counts.Categories.ContainsKey(0));
+        Assert.Equal(new NodeCount(3, 4, 1), counts.Overall);
+    }
+
+    [Fact]
+    public void Foreclosed_only_remainder_lets_a_node_reach_100_percent()
+    {
+        // An MSQ category whose remaining quests are the other Grand Companies' choices reads as complete.
+        var catalog = QuestCatalog.Build(
+        [
+            Quest(1, "Chosen", category: 10),
+            Quest(2, "Maelstrom path", category: 10),
+            Quest(3, "Adder path", category: 10),
+        ]);
+        var states = States((1, QuestState.Completed), (2, QuestState.Foreclosed), (3, QuestState.Foreclosed));
+
+        var counts = TreeCounts.Compute(catalog, states, includeUnlisted: false);
+
+        Assert.Equal(new NodeCount(1, 1, 2), counts.Categories[10]);
+        Assert.Equal(1f, counts.Categories[10].Fraction);
     }
 
     [Fact]
     public void Unlisted_bucket_is_always_counted()
     {
         var counts = TreeCounts.Compute(Catalog, AllStates, includeUnlisted: false);
-        Assert.Equal(new NodeCount(1, 2), counts.Unlisted);
+        Assert.Equal(new NodeCount(1, 2, 0), counts.Unlisted);
     }
 
     [Fact]
-    public void Include_unlisted_adds_them_to_their_section_and_category()
+    public void Include_unlisted_adds_them_to_overall_only()
     {
         var counts = TreeCounts.Compute(Catalog, AllStates, includeUnlisted: true);
 
-        Assert.Equal(new NodeCount(2, 2), counts.Sections[2]);
-        Assert.Equal(new NodeCount(2, 2), counts.Categories[12]);
-        Assert.Equal(new NodeCount(0, 1), counts.Sections[0]);
-        Assert.Equal(new NodeCount(0, 1), counts.Categories[0]);
-        Assert.Equal(new NodeCount(4, 7), counts.Overall);
+        // Section 0 is the real MSQ section; unlisted quests must never land in a section, category or genre node.
+        Assert.Equal(new NodeCount(1, 1, 0), counts.Sections[2]);
+        Assert.Equal(new NodeCount(1, 1, 0), counts.Categories[12]);
+        Assert.False(counts.Sections.ContainsKey(0));
+        Assert.False(counts.Categories.ContainsKey(0));
         Assert.False(counts.Genres.ContainsKey(0));
+        Assert.Equal(new NodeCount(4, 6, 1), counts.Overall);
+        Assert.Equal(new NodeCount(1, 2, 0), counts.Unlisted);
     }
 
     [Fact]
-    public void Foreclosed_and_missing_states_are_not_done()
+    public void Missing_states_are_neither_done_nor_foreclosed()
     {
         var counts = TreeCounts.Compute(Catalog, new Dictionary<uint, QuestState>(), includeUnlisted: false);
-        Assert.Equal(new NodeCount(0, 5), counts.Overall);
+        Assert.Equal(new NodeCount(0, 5, 0), counts.Overall);
+    }
+
+    [Fact]
+    public void Evaluation_overload_reads_state_from_each_evaluation()
+    {
+        var evaluations = Evaluations(AllStates);
+
+        var fromEvaluations = TreeCounts.Compute(Catalog, evaluations, includeUnlisted: true);
+        var fromStates = TreeCounts.Compute(Catalog, AllStates, includeUnlisted: true);
+
+        Assert.Equal(fromStates.Overall, fromEvaluations.Overall);
+        Assert.Equal(fromStates.Unlisted, fromEvaluations.Unlisted);
+        Assert.Equal(fromStates.Sections, fromEvaluations.Sections);
+        Assert.Equal(fromStates.Categories, fromEvaluations.Categories);
+        Assert.Equal(fromStates.Genres, fromEvaluations.Genres);
     }
 
     [Fact]
@@ -77,6 +113,7 @@ public class TreeCountsTests
     {
         Assert.Equal(0f, new NodeCount(0, 0).Fraction);
         Assert.Equal(0.5f, new NodeCount(1, 2).Fraction);
+        Assert.Equal(new NodeCount(1, 2, 0), new NodeCount(1, 2));
     }
 
     [Fact]
@@ -86,6 +123,6 @@ public class TreeCountsTests
         Assert.Equal(default, counts.Section(999));
         Assert.Equal(default, counts.Category(999));
         Assert.Equal(default, counts.Genre(999));
-        Assert.Equal(new NodeCount(2, 4), counts.Section(1));
+        Assert.Equal(new NodeCount(2, 3, 1), counts.Section(1));
     }
 }

@@ -30,6 +30,28 @@ public class StateResolverTests
         Assert.Equal(QuestState.Completed, Resolve(quest, Snapshot(Target, B)).State);
     }
 
+    [Fact]
+    public void Completed_bit_on_repeatable_without_interval_is_Completed()
+    {
+        // RepeatInterval 0 means the flag never resets, so the completion bit is final (rule 1, not rule 5).
+        var quest = Quest(Target) with { IsRepeatable = true, RepeatInterval = 0 };
+
+        Assert.Equal(QuestState.Completed, Resolve(quest, Snapshot(Target)).State);
+    }
+
+    [Fact]
+    public void Completed_seasonal_quest_stays_Completed_after_the_event_ends()
+    {
+        // Rule 1 beats rule 3: the festival is inactive and even reads as past, yet the quest is done.
+        var quest = Quest(Target) with { Festival = 9 };
+        var ctx = new EvalContext { FestivalIsPast = _ => true };
+
+        var result = Resolve(quest, Snapshot(Target), ctx: ctx);
+
+        Assert.Equal(QuestState.Completed, result.State);
+        Assert.Null(result.NextStep);
+    }
+
     // Rule 2
 
     [Fact]
@@ -73,6 +95,18 @@ public class StateResolverTests
         Assert.Equal(QuestState.Foreclosed, Resolve(quest, snapshot).State);
     }
 
+    [Fact]
+    public void Completed_lock_wins_over_inactive_festival()
+    {
+        // Rule 2 beats rule 3: the reason shown is the lock, not the season, even though both would block.
+        var quest = Quest(Target) with { QuestLocks = [B], Festival = 9 };
+
+        var result = Resolve(quest, Snapshot(B));
+
+        Assert.Equal(QuestState.Foreclosed, result.State);
+        Assert.Equal(RequirementKind.Foreclosure, result.NextStep!.Req.Kind);
+    }
+
     // Rule 3
 
     [Fact]
@@ -96,12 +130,57 @@ public class StateResolverTests
     }
 
     [Fact]
-    public void FestivalIsPast_hook_overrides_the_default_heuristic()
+    public void FestivalIsPast_hook_composes_with_the_default_heuristic()
+    {
+        var earlier = Quest(A) with { Festival = 9 };
+        var quest = Quest(Target) with { Festival = 9 };
+        var catalog = Catalog(earlier, quest);
+
+        // Hook says past, nothing completed: past.
+        Assert.Equal(QuestState.Foreclosed, Resolve(quest, Snapshot(), catalog, new EvalContext { FestivalIsPast = id => id == 9 }).State);
+
+        // Hook says not past, but a quest of that festival is done: still past (OR, not override).
+        Assert.Equal(QuestState.Foreclosed, Resolve(quest, Snapshot(A), catalog, new EvalContext { FestivalIsPast = _ => false }).State);
+
+        // Neither: blocked as seasonal.
+        Assert.Equal(QuestState.Blocked, Resolve(quest, Snapshot(), catalog, new EvalContext { FestivalIsPast = _ => false }).State);
+    }
+
+    [Fact]
+    public void WithFestivalEnds_marks_a_festival_past_once_its_end_has_passed()
     {
         var quest = Quest(Target) with { Festival = 9 };
+        var now = new DateTime(2026, 9, 27, 12, 0, 0, DateTimeKind.Utc);
+        var ends = new Dictionary<ushort, DateTime?>
+        {
+            [9] = now.AddDays(-1),
+            [10] = now.AddDays(1),
+            [11] = null,
+        };
+        var ctx = EvalContext.Default.WithFestivalEnds(ends, () => now);
 
-        Assert.Equal(QuestState.Foreclosed, Resolve(quest, Snapshot(), ctx: new EvalContext { FestivalIsPast = id => id == 9 }).State);
-        Assert.Equal(QuestState.Blocked, Resolve(quest, Snapshot(), ctx: new EvalContext { FestivalIsPast = _ => false }).State);
+        Assert.Equal(QuestState.Foreclosed, Resolve(quest, Snapshot(), ctx: ctx).State);
+        Assert.Equal(QuestState.Blocked, Resolve(quest with { Festival = 10 }, Snapshot(), ctx: ctx).State);
+        Assert.Equal(QuestState.Blocked, Resolve(quest with { Festival = 11 }, Snapshot(), ctx: ctx).State);
+        Assert.Equal(QuestState.Blocked, Resolve(quest with { Festival = 12 }, Snapshot(), ctx: ctx).State);
+    }
+
+    [Fact]
+    public void WithFestivalEnds_keeps_the_default_heuristic_and_any_earlier_hook()
+    {
+        var earlier = Quest(A) with { Festival = 10 };
+        var quest = Quest(Target) with { Festival = 10 };
+        var catalog = Catalog(earlier, quest);
+        var now = new DateTime(2026, 9, 27, 12, 0, 0, DateTimeKind.Utc);
+        var ends = new Dictionary<ushort, DateTime?> { [10] = now.AddDays(1) };
+
+        // The end is in the future, but the character already completed a quest of that festival.
+        var ctx = EvalContext.Default.WithFestivalEnds(ends, () => now);
+        Assert.Equal(QuestState.Foreclosed, Resolve(quest, Snapshot(A), catalog, ctx).State);
+
+        // An earlier hook is not replaced.
+        var chained = new EvalContext { FestivalIsPast = id => id == 10 }.WithFestivalEnds(ends, () => now);
+        Assert.Equal(QuestState.Foreclosed, Resolve(quest, Snapshot(), catalog, chained).State);
     }
 
     [Fact]
@@ -160,11 +239,20 @@ public class StateResolverTests
     }
 
     [Fact]
-    public void Repeatable_with_completed_bit_is_DoneThisCycle_not_Completed()
+    public void Repeatable_with_interval_and_completed_bit_is_DoneThisCycle_not_Completed()
     {
         var quest = Quest(Target) with { IsRepeatable = true, RepeatInterval = 1 };
 
         Assert.Equal(QuestState.DoneThisCycle, Resolve(quest, Snapshot(Target)).State);
+    }
+
+    [Fact]
+    public void Repeatable_without_interval_in_DailyDone_is_DoneThisCycle()
+    {
+        var quest = Quest(Target) with { IsRepeatable = true, RepeatInterval = 0 };
+        var snapshot = Snapshot() with { DailyDone = new Dictionary<ushort, byte> { [quest.QuestId] = 1 } };
+
+        Assert.Equal(QuestState.DoneThisCycle, Resolve(quest, snapshot).State);
     }
 
     [Fact]
@@ -178,7 +266,7 @@ public class StateResolverTests
     [Fact]
     public void DoneThisCycle_wins_over_Unknown()
     {
-        var quest = Quest(Target) with { IsRepeatable = true };
+        var quest = Quest(Target) with { IsRepeatable = true, RepeatInterval = 1 };
         var ctx = new EvalContext { IsAchievementGated = _ => true };
 
         Assert.Equal(QuestState.DoneThisCycle, Resolve(quest, Snapshot(Target) with { AchievementsLoaded = false }, ctx: ctx).State);
@@ -314,6 +402,32 @@ public class StateResolverTests
         var snapshot = Snapshot() with { JobLevels = Levels((Gladiator, 50), (Conjurer, 60)) };
 
         Assert.Equal(QuestState.Blocked, Resolve(quest, snapshot).State);
+    }
+
+    [Fact]
+    public void Pinned_job_quest_is_ReadyOnOtherJob_only_on_that_job()
+    {
+        var quest = Quest(Target) with { Level = 30, ClassJobRequired = Conjurer };
+        var snapshot = Snapshot() with { JobLevels = Levels((Gladiator, 50), (Conjurer, 35), (Paladin, 90)) };
+
+        var result = Resolve(quest, snapshot);
+
+        Assert.Equal(QuestState.ReadyOnOtherJob, result.State);
+        Assert.Equal(Conjurer, result.ReadyOnJob);
+        Assert.Equal(QuestState.Blocked, Resolve(quest, snapshot with { JobLevels = Levels((Gladiator, 50), (Conjurer, 29), (Paladin, 90)) }).State);
+    }
+
+    [Fact]
+    public void Other_job_check_ignores_jobs_the_category_does_not_admit()
+    {
+        var quest = Quest(Target) with { Level = 30, ClassJobCategory = 5 };
+        var ctx = new EvalContext { ClassJobs = new Jobs((5, [Conjurer])) };
+        var snapshot = Snapshot() with { JobLevels = Levels((Gladiator, 50), (Conjurer, 35), (Paladin, 90)) };
+
+        var result = Resolve(quest, snapshot, ctx: ctx);
+
+        Assert.Equal(QuestState.ReadyOnOtherJob, result.State);
+        Assert.Equal(Conjurer, result.ReadyOnJob);
     }
 
     // Batch

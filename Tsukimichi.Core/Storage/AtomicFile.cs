@@ -26,11 +26,31 @@ public static class AtomicFile
         File.Move(tmp, full, overwrite: true);
     }
 
-    /// <summary>Reads the whole file, or returns null when it does not exist.</summary>
+    /// <summary>Reads the whole file, or returns null when it does not exist. I/O failures propagate.</summary>
     public static string? Read(string path)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
         return File.Exists(path) ? File.ReadAllText(path) : null;
+    }
+
+    /// <summary>
+    /// Reads the whole file. Returns null when the file is missing (<paramref name="error"/> null) or when it exists but
+    /// cannot be read because it is locked, inaccessible or the disk failed (<paramref name="error"/> set). Such a file
+    /// is not corrupt and must be left where it is.
+    /// </summary>
+    public static string? Read(string path, out string? error)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        error = null;
+        try
+        {
+            return File.Exists(path) ? File.ReadAllText(path) : null;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            error = ex.Message;
+            return null;
+        }
     }
 
     /// <summary>
@@ -51,5 +71,23 @@ public static class AtomicFile
 
         File.Move(path, target);
         return target;
+    }
+
+    /// <summary><see cref="Quarantine"/> that reports an I/O or access failure instead of throwing; the file then stays in place.</summary>
+    public static bool TryQuarantine(string path, out string? movedTo, out string? error, DateTime? nowUtc = null)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        try
+        {
+            movedTo = Quarantine(path, nowUtc);
+            error = null;
+            return true;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            movedTo = null;
+            error = ex.Message;
+            return false;
+        }
     }
 }

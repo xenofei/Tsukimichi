@@ -1,3 +1,4 @@
+using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
 
 namespace Tsukimichi.Core.Query;
@@ -5,6 +6,12 @@ namespace Tsukimichi.Core.Query;
 /// <summary>
 /// Produces the flat, filtered, sorted row array the table renders. Pure: no caching beyond the shared
 /// <see cref="SearchIndex"/>; the caller runs it only when a dirty flag says so.
+/// <para>
+/// Unlisted quests (no journal genre) are shown only under <see cref="QuestScope.None"/> and
+/// <see cref="QuestScope.VirtualFeature"/> when <see cref="FilterSet.IncludeUnlisted"/> is on, and always under
+/// <see cref="QuestScope.VirtualUnlisted"/>. A section, category or genre node never shows them, whatever ids the
+/// sheet gave them, because section 0 is a real journal section.
+/// </para>
 /// </summary>
 public static class QuestQuery
 {
@@ -44,6 +51,23 @@ public static class QuestQuery
         (Filter.Search, FilterNames.Search),
     ];
 
+    /// <summary>Runs the query over evaluator output; each row's state and next-step text come from its <see cref="QuestEvaluation"/>.</summary>
+    /// <param name="evaluations">Resolved evaluation per quest row id; missing rows read as <see cref="QuestState.Unknown"/> with no next step.</param>
+    /// <param name="search">Raw search text; normalized here.</param>
+    public static QueryResult Apply(
+        QuestCatalog catalog,
+        IReadOnlyDictionary<uint, QuestEvaluation> evaluations,
+        FilterSet filters,
+        QuestScope scope,
+        SortSpec sort,
+        string? search,
+        QueryContext ctx)
+    {
+        ArgumentNullException.ThrowIfNull(evaluations);
+        return Apply(catalog, new EvaluationSource(evaluations), filters, scope, sort, search, ctx);
+    }
+
+    /// <summary>Runs the query over a plain state map; next-step text comes from <see cref="QueryContext.NextStepText"/> when set.</summary>
     /// <param name="states">Resolved state per quest row id; missing rows read as <see cref="QuestState.Unknown"/>.</param>
     /// <param name="search">Raw search text; normalized here.</param>
     public static QueryResult Apply(
@@ -55,8 +79,25 @@ public static class QuestQuery
         string? search,
         QueryContext ctx)
     {
-        ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(states);
+        ArgumentNullException.ThrowIfNull(ctx);
+#pragma warning disable CS0618 // the legacy next-step map is honoured for callers that still fill it
+        var source = new StateMapSource(states, ctx.NextStepText);
+#pragma warning restore CS0618
+        return Apply(catalog, source, filters, scope, sort, search, ctx);
+    }
+
+    private static QueryResult Apply<TSource>(
+        QuestCatalog catalog,
+        TSource source,
+        FilterSet filters,
+        QuestScope scope,
+        SortSpec sort,
+        string? search,
+        QueryContext ctx)
+        where TSource : struct, IStateSource
+    {
+        ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(filters);
         ArgumentNullException.ThrowIfNull(ctx);
 
@@ -68,7 +109,7 @@ public static class QuestQuery
 
         var query = SearchIndex.Normalize(search);
         var index = query.Length == 0 ? null : ctx.SearchIndex ?? SearchIndex.For(catalog);
-        var plan = new Plan(filters, ctx, index, query, filters.IncludeUnlisted || scope.Kind == ScopeKind.VirtualUnlisted);
+        var plan = new Plan(filters, ctx, index, query, scope);
 
         var rows = new List<QuestRow>(candidates.Count);
         var totalInScope = 0;
@@ -80,17 +121,20 @@ public static class QuestQuery
             }
 
             totalInScope++;
-            var state = states.GetValueOrDefault(quest.RowId, QuestState.Unknown);
+            var state = source.StateOf(quest.RowId);
             if (plan.Passes(quest, state, Filter.None))
             {
-                var nextStep = ctx.NextStepText?.GetValueOrDefault(quest.RowId) ?? string.Empty;
-                rows.Add(new QuestRow(quest, state, nextStep));
+                rows.Add(new QuestRow(quest, state, source.NextStepOf(quest.RowId)));
             }
         }
 
         if (rows.Count == 0)
         {
-            return new QueryResult(NoRows, Diagnose(candidates, states, plan), totalInScope);
+            // A journal node holding only unlisted quests has nothing a filter could bring back.
+            var reason = totalInScope == 0 && !plan.UnlistedToggleable
+                ? EmptyReason.Scope
+                : Diagnose(candidates, source, plan);
+            return new QueryResult(NoRows, reason, totalInScope);
         }
 
         return new QueryResult(Sort(rows, sort), null, totalInScope);
@@ -135,7 +179,8 @@ public static class QuestQuery
     }
 
     /// <summary>Names each engaged filter whose removal alone would restore at least one row. Runs only on empty results.</summary>
-    private static EmptyReason Diagnose(IReadOnlyList<QuestRecord> candidates, IReadOnlyDictionary<uint, QuestState> states, Plan plan)
+    private static EmptyReason Diagnose<TSource>(IReadOnlyList<QuestRecord> candidates, TSource source, Plan plan)
+        where TSource : struct, IStateSource
     {
         List<string>? blamed = null;
         foreach (var (filter, name) in Diagnosable)
@@ -152,8 +197,7 @@ public static class QuestQuery
                     continue;
                 }
 
-                var state = states.GetValueOrDefault(quest.RowId, QuestState.Unknown);
-                if (plan.Passes(quest, state, filter))
+                if (plan.Passes(quest, source.StateOf(quest.RowId), filter))
                 {
                     (blamed ??= []).Add(name);
                     break;
@@ -238,13 +282,19 @@ public static class QuestQuery
         private readonly bool availableOnlyEngaged;
         private readonly bool levelRangeEngaged;
 
-        public Plan(FilterSet filters, QueryContext ctx, SearchIndex? index, string query, bool includeUnlisted)
+        public Plan(FilterSet filters, QueryContext ctx, SearchIndex? index, string query, QuestScope scope)
         {
             this.filters = filters;
             this.ctx = ctx;
             this.index = index;
             this.query = query;
-            IncludeUnlisted = includeUnlisted;
+            UnlistedToggleable = scope.Kind is ScopeKind.None or ScopeKind.VirtualFeature;
+            IncludeUnlisted = scope.Kind switch
+            {
+                ScopeKind.VirtualUnlisted => true,
+                ScopeKind.Section or ScopeKind.Category or ScopeKind.Genre => false,
+                _ => filters.IncludeUnlisted,
+            };
             hideCompletedEngaged = filters.HideCompletedEngaged;
             availableOnlyEngaged = filters.AvailableOnlyEngaged;
             levelRangeEngaged = filters.LevelRangeEngaged;
@@ -264,7 +314,11 @@ public static class QuestQuery
             }
         }
 
+        /// <summary>Whether unlisted quests pass under this scope.</summary>
         public bool IncludeUnlisted { get; }
+
+        /// <summary>Whether <see cref="FilterSet.IncludeUnlisted"/> has any say under this scope (it never does under a journal node).</summary>
+        public bool UnlistedToggleable { get; }
 
         public bool IsEngaged(Filter filter) => filter switch
         {
@@ -277,7 +331,7 @@ public static class QuestQuery
             Filter.RewardKinds => (hiddenRewardMask | onlyRewardMask) != 0,
             Filter.Repeatable => filters.RepeatableOnly,
             Filter.SeasonalActive => filters.SeasonalActiveOnly,
-            Filter.IncludeUnlisted => !IncludeUnlisted,
+            Filter.IncludeUnlisted => UnlistedToggleable && !IncludeUnlisted,
             Filter.Pinned => filters.PinnedOnly,
             Filter.Search => query.Length > 0,
             _ => false,

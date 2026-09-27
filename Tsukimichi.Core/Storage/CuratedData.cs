@@ -255,11 +255,17 @@ public sealed class CuratedData
         }
     }
 
+    /// <summary>Missing file → null silently; locked or inaccessible → null with one warning (the file is never moved).</summary>
     private static JsonNode? ParseRoot(string path, List<string> warnings)
     {
-        var text = AtomicFile.Read(path);
+        var text = AtomicFile.Read(path, out var ioError);
         if (text is null)
         {
+            if (ioError is not null)
+            {
+                warnings.Add($"{Path.GetFileName(path)} could not be read: {ioError}");
+            }
+
             return null;
         }
 

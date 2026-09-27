@@ -39,8 +39,10 @@ public class QuestQueryScopeAndSortTests
         Assert.Equal(new uint[] { 4, 5 }, RowIds(result));
         Assert.Equal(2, result.TotalInScope);
 
+        // Unlisted quests never appear under a journal node, whatever the include flag says.
         var withUnlisted = Run(Catalog, AllStates, new FilterSet { IncludeUnlisted = true }, scope: QuestScope.Section(2));
-        Assert.Equal(new uint[] { 4, 5, 6 }, RowIds(withUnlisted));
+        Assert.Equal(new uint[] { 4, 5 }, RowIds(withUnlisted));
+        Assert.Equal(2, withUnlisted.TotalInScope);
     }
 
     [Fact]
@@ -55,6 +57,32 @@ public class QuestQueryScopeAndSortTests
     {
         var result = Run(Catalog, AllStates, scope: QuestScope.Genre(103));
         Assert.Equal(new uint[] { 4, 5 }, RowIds(result));
+    }
+
+    [Fact]
+    public void Journal_nodes_holding_only_unlisted_quests_are_empty_scopes_even_when_included()
+    {
+        var included = new FilterSet { IncludeUnlisted = true };
+
+        var category = Run(Catalog, AllStates, included, scope: QuestScope.Category(13));
+        Assert.Empty(category.Rows);
+        Assert.Equal(0, category.TotalInScope);
+        Assert.True(category.Empty!.ScopeIsEmpty);
+        Assert.Empty(category.Empty.Filters);
+
+        var genre = Run(Catalog, AllStates, included, scope: QuestScope.Genre(0));
+        Assert.Empty(genre.Rows);
+        Assert.True(genre.Empty!.ScopeIsEmpty);
+    }
+
+    [Fact]
+    public void Scope_none_includes_unlisted_only_when_asked()
+    {
+        Assert.DoesNotContain(6u, RowIds(Run(Catalog, AllStates, scope: QuestScope.None)));
+
+        var included = Run(Catalog, AllStates, new FilterSet { IncludeUnlisted = true }, scope: QuestScope.None);
+        Assert.Contains(6u, RowIds(included));
+        Assert.Equal(6, included.TotalInScope);
     }
 
     [Fact]

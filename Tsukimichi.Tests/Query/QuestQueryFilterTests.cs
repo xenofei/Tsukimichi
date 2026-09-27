@@ -36,13 +36,39 @@ public class QuestQueryFilterTests
     [Fact]
     public void No_filters_returns_everything_in_journal_order_with_states_and_next_step()
     {
-        var ctx = QueryContext.Empty with { NextStepText = new Dictionary<uint, string> { [4] = "needs level 50" } };
-        var result = Run(Catalog, AllStates, ctx: ctx);
+        var evaluations = Evaluations(AllStates, new Dictionary<uint, string> { [4] = "needs level 50" });
+        var result = Run(Catalog, evaluations);
 
         Assert.Null(result.Empty);
         Assert.Equal(10, result.TotalInScope);
         Assert.Equal(Enumerable.Range(1, 10).Select(i => (uint)i).ToArray(), RowIds(result));
         Assert.Equal(QuestState.Blocked, result.Rows[3].State);
+        Assert.Equal("needs level 50", result.Rows[3].NextStep);
+        Assert.Equal(string.Empty, result.Rows[0].NextStep);
+    }
+
+    [Fact]
+    public void Evaluation_overload_matches_the_state_overload_row_for_row()
+    {
+        var filters = new FilterSet { HideCompleted = true };
+        var sort = new SortSpec(SortColumn.State, true);
+
+        var fromStates = Run(Catalog, AllStates, filters, sort: sort);
+        var fromEvaluations = Run(Catalog, Evaluations(AllStates), filters, sort: sort);
+
+        Assert.Equal(RowIds(fromStates), RowIds(fromEvaluations));
+        Assert.Equal(fromStates.Rows.Select(r => r.State), fromEvaluations.Rows.Select(r => r.State));
+        Assert.Equal(fromStates.TotalInScope, fromEvaluations.TotalInScope);
+    }
+
+    [Fact]
+    public void Legacy_NextStepText_still_feeds_the_state_overload()
+    {
+#pragma warning disable CS0618 // kept for callers that have not moved to the QuestEvaluation overload
+        var ctx = QueryContext.Empty with { NextStepText = new Dictionary<uint, string> { [4] = "needs level 50" } };
+#pragma warning restore CS0618
+        var result = Run(Catalog, AllStates, ctx: ctx);
+
         Assert.Equal("needs level 50", result.Rows[3].NextStep);
         Assert.Equal(string.Empty, result.Rows[0].NextStep);
     }

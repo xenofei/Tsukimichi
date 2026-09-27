@@ -75,6 +75,25 @@ public class ReversePrereqIndexTests
     }
 
     [Fact]
+    public void ResolveDependentsByQuestId_maps_quest_ids_to_rows()
+    {
+        var catalog = Chain();
+        var index = ReversePrereqIndex.Build(catalog);
+        var before = StateResolver.ResolveAll(catalog, Snapshot(), EvalContext.Default);
+
+        var byRow = StateResolver.ResolveDependents(before, [A], index, catalog, Snapshot(A), EvalContext.Default);
+        var byQuest = StateResolver.ResolveDependentsByQuestId(before, [QuestRecord.ToQuestId(A)], index, catalog, Snapshot(A), EvalContext.Default);
+
+        Assert.Equal(byRow.Count, byQuest.Count);
+        Assert.All(byRow, kv => Assert.Equal(kv.Value.State, byQuest[kv.Key].State));
+        Assert.Equal(QuestState.Foreclosed, byQuest[D].State);
+        Assert.Same(before[E], byQuest[E]);
+
+        var unknown = StateResolver.ResolveDependentsByQuestId(before, [12345], index, catalog, Snapshot(), EvalContext.Default);
+        Assert.All(before, kv => Assert.Same(kv.Value, unknown[kv.Key]));
+    }
+
+    [Fact]
     public void ResolveDependents_ignores_unknown_ids()
     {
         var catalog = Chain();

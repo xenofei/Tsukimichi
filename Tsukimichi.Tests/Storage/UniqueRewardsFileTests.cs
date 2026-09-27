@@ -108,6 +108,25 @@ public sealed class UniqueRewardsFileTests : IDisposable
     }
 
     [Fact]
+    public void Locked_file_returns_empty_with_warning_and_is_not_moved()
+    {
+        var path = tmp.File("unique_quests.json");
+        File.WriteAllText(path, """{ "gameVersion": "1", "generatedUtc": "2026-09-27T08:00:00Z", "entries": [] }""");
+
+        using (File.Open(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+        {
+            var loaded = UniqueRewardsFile.Load(path);
+
+            Assert.Empty(loaded.Entries);
+            Assert.Single(loaded.Warnings);
+            Assert.Contains("unique_quests.json", loaded.Warnings[0]);
+        }
+
+        Assert.True(File.Exists(path));
+        Assert.Empty(UniqueRewardsFile.Load(path).Warnings);
+    }
+
+    [Fact]
     public void Corrupt_file_returns_empty_with_warning_and_is_not_moved()
     {
         var path = tmp.File("unique_quests.json");

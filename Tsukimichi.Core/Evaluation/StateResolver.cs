@@ -15,10 +15,10 @@ public static class StateResolver
         ArgumentNullException.ThrowIfNull(c);
         ArgumentNullException.ThrowIfNull(ctx);
 
-        return ResolveCore(q, s, c, ctx, ctx.FestivalIsPast ?? (id => DefaultFestivalIsPast(id, s, c)));
+        return ResolveCore(q, s, c, ctx, id => FestivalIsPast(id, s, c, ctx));
     }
 
-    /// <summary>Resolves every quest in the catalog.</summary>
+    /// <summary>Resolves every quest in the catalog, keyed by row id.</summary>
     public static Dictionary<uint, QuestEvaluation> ResolveAll(QuestCatalog c, CharacterSnapshot s, EvalContext ctx)
     {
         ArgumentNullException.ThrowIfNull(c);
@@ -40,9 +40,14 @@ public static class StateResolver
     /// locks, quests sharing a changed quest's festival, and, when given, quests at changed levels or of changed festivals.
     /// Untouched rows keep their previous <see cref="QuestEvaluation"/> instance.
     /// </summary>
+    /// <param name="previousResults">Result of an earlier <see cref="ResolveAll"/> or this method, keyed by row id.</param>
+    /// <param name="changedRowIds">Quest sheet <b>row ids</b> (65536 + n) whose completion changed. Ids the catalog does not know are ignored.
+    /// Use <see cref="ResolveDependentsByQuestId"/> when the diff comes from the completion bitmask, which is indexed by quest id.</param>
+    /// <param name="changedLevels">Job levels that changed; every quest at exactly those levels is re-resolved.</param>
+    /// <param name="changedFestivals">Festivals that started or ended; every quest of those festivals is re-resolved.</param>
     public static Dictionary<uint, QuestEvaluation> ResolveDependents(
         IReadOnlyDictionary<uint, QuestEvaluation> previousResults,
-        IEnumerable<uint> changedQuestIds,
+        IEnumerable<uint> changedRowIds,
         ReversePrereqIndex index,
         QuestCatalog c,
         CharacterSnapshot s,
@@ -51,16 +56,16 @@ public static class StateResolver
         IEnumerable<ushort>? changedFestivals = null)
     {
         ArgumentNullException.ThrowIfNull(previousResults);
-        ArgumentNullException.ThrowIfNull(changedQuestIds);
+        ArgumentNullException.ThrowIfNull(changedRowIds);
         ArgumentNullException.ThrowIfNull(index);
         ArgumentNullException.ThrowIfNull(c);
         ArgumentNullException.ThrowIfNull(s);
         ArgumentNullException.ThrowIfNull(ctx);
 
         var affected = new HashSet<uint>();
-        foreach (var rowId in changedQuestIds)
+        foreach (var rowId in changedRowIds)
         {
-            if (c.Get(rowId) is not { } changed)
+            if (c.GetByRowId(rowId) is not { } changed)
             {
                 continue;
             }
@@ -98,13 +103,43 @@ public static class StateResolver
         return results;
     }
 
+    /// <summary>
+    /// <see cref="ResolveDependents"/> for a diff expressed in runtime <b>quest ids</b> (low 16 bits), as a completion
+    /// bitmask compare produces. Each id is mapped through <see cref="QuestCatalog.ByQuestId"/>; unknown ids are ignored.
+    /// </summary>
+    public static Dictionary<uint, QuestEvaluation> ResolveDependentsByQuestId(
+        IReadOnlyDictionary<uint, QuestEvaluation> previousResults,
+        IEnumerable<ushort> changedQuestIds,
+        ReversePrereqIndex index,
+        QuestCatalog c,
+        CharacterSnapshot s,
+        EvalContext ctx,
+        IEnumerable<byte>? changedLevels = null,
+        IEnumerable<ushort>? changedFestivals = null)
+    {
+        ArgumentNullException.ThrowIfNull(changedQuestIds);
+        ArgumentNullException.ThrowIfNull(c);
+
+        var rowIds = new List<uint>();
+        foreach (var questId in changedQuestIds)
+        {
+            if (c.TryGetByQuestId(questId, out var quest))
+            {
+                rowIds.Add(quest.RowId);
+            }
+        }
+
+        return ResolveDependents(previousResults, rowIds, index, c, s, ctx, changedLevels, changedFestivals);
+    }
+
     private static QuestEvaluation ResolveCore(QuestRecord q, CharacterSnapshot s, QuestCatalog c, EvalContext ctx, Func<ushort, bool> festivalIsPast)
     {
         var completed = s.IsCompleted(q.QuestId);
         var requirements = RequirementEvaluator.Evaluate(q, s, c, ctx);
 
-        // 1. Completed, unless repeatable (rule 5 owns those).
-        if (completed && !q.IsRepeatable)
+        // 1. Completed. A repeatable whose flag never resets (RepeatInterval 0) is final too; the ones that cycle
+        //    belong to rule 5.
+        if (completed && (!q.IsRepeatable || q.RepeatInterval == 0))
         {
             return new(QuestState.Completed, requirements, null, null, null);
         }
@@ -133,8 +168,8 @@ public static class StateResolver
             }
         }
 
-        // 5. Repeatable already done this cycle: daily flag, or the completion bit on a repeatable.
-        if (q.IsRepeatable && (completed || s.DailyDone.ContainsKey(q.QuestId)))
+        // 5. Repeatable already done this cycle: the daily flag, or the completion bit on a repeatable that resets.
+        if (q.IsRepeatable && ((completed && q.RepeatInterval != 0) || s.DailyDone.ContainsKey(q.QuestId)))
         {
             return new(QuestState.DoneThisCycle, requirements, null, null, null);
         }
@@ -167,7 +202,7 @@ public static class StateResolver
             return new(QuestState.Ready, requirements, null, null, null);
         }
 
-        if (onlyJobGates && FindReadyJob(q, s, c, ctx) is { } job)
+        if (onlyJobGates && FindReadyJob(q, s, ctx) is { } job)
         {
             return new(QuestState.ReadyOnOtherJob, requirements, null, job, null);
         }
@@ -175,8 +210,12 @@ public static class StateResolver
         return new(QuestState.Blocked, requirements, firstUnmet, null, null);
     }
 
-    /// <summary>Highest-level job other than the current one on which every requirement is met; ties go to the lowest job id.</summary>
-    private static byte? FindReadyJob(QuestRecord q, CharacterSnapshot s, QuestCatalog c, EvalContext ctx)
+    /// <summary>
+    /// Highest-level job other than the current one that the quest admits at the required level; ties go to the lowest
+    /// job id. Only reached when every other requirement is already met on the current job, and those do not depend on
+    /// the job, so admission plus level is the whole check.
+    /// </summary>
+    private static byte? FindReadyJob(QuestRecord q, CharacterSnapshot s, EvalContext ctx)
     {
         var candidates = CandidateJobs(q, s, ctx)
             .Where(job => job != s.CurrentJob)
@@ -186,7 +225,7 @@ public static class StateResolver
 
         foreach (var job in candidates)
         {
-            if (RequirementEvaluator.EvaluateForJob(q, s, c, ctx, job).All(r => r.Met))
+            if (RequirementEvaluator.AdmitsJob(q, ctx, job) && RequirementEvaluator.LevelOf(s, job) >= q.Level)
             {
                 return job;
             }
@@ -223,9 +262,17 @@ public static class StateResolver
         return null;
     }
 
-    /// <summary>Default heuristic: the character completed any quest of that festival, so a run of it already happened for them.</summary>
-    private static bool DefaultFestivalIsPast(ushort festival, CharacterSnapshot s, QuestCatalog c)
+    /// <summary>
+    /// A festival is past when the curated hook says so or when the character completed any quest of it (a run of it
+    /// already happened for them). The hook is checked first because the heuristic walks the catalog.
+    /// </summary>
+    private static bool FestivalIsPast(ushort festival, CharacterSnapshot s, QuestCatalog c, EvalContext ctx)
     {
+        if (ctx.FestivalIsPast is { } hook && hook(festival))
+        {
+            return true;
+        }
+
         foreach (var quest in c.All)
         {
             if (quest.Festival == festival && s.IsCompleted(quest.QuestId))
@@ -239,17 +286,12 @@ public static class StateResolver
 
     private static Func<ushort, bool> MemoizedFestivalIsPast(CharacterSnapshot s, QuestCatalog c, EvalContext ctx)
     {
-        if (ctx.FestivalIsPast is { } hook)
-        {
-            return hook;
-        }
-
         var cache = new Dictionary<ushort, bool>();
         return id =>
         {
             if (!cache.TryGetValue(id, out var past))
             {
-                past = DefaultFestivalIsPast(id, s, c);
+                past = FestivalIsPast(id, s, c, ctx);
                 cache[id] = past;
             }
 
