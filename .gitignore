@@ -1,0 +1,8 @@
+bin/
+obj/
+.vs/
+*.user
+*.suo
+.idea/
+*.swp
+assets/icons/__pycache__/
