@@ -50,6 +50,23 @@ public static partial class Strings
     public const string StatusSnapshotFormat = "snapshot {0}";
     public const string StatusNoSnapshot = "no snapshot";
 
+    // Main scenario position (status bar and Characters dashboard)
+    /// <summary>{0} = quest name.</summary>
+    public const string StatusMsqFormat = " · MSQ: {0}";
+    public const string StatusMsqComplete = " · MSQ: complete";
+    /// <summary>{0} = expansion, {1} = done, {2} = total.</summary>
+    public const string MsqProgressFormat = "{0} · {1:N0} of {2:N0} main scenario quests done";
+    /// <summary>{0} = done, {1} = total.</summary>
+    public const string MsqCompleteFormat = "Main scenario complete · {0:N0} of {1:N0}";
+    /// <summary>{0} = NPC, {1} = zone.</summary>
+    public const string MsqGiverFormat = "{0}, {1}";
+    public const string MsqClickHint = "Click to select";
+    /// <summary>{0} = expansion, {1} = quest, {2} = giver ("NPC, zone").</summary>
+    public const string CharactersMsqFormat = "MSQ: {0} · next: {1} ({2})";
+    /// <summary>{0} = expansion, {1} = quest.</summary>
+    public const string CharactersMsqNoGiverFormat = "MSQ: {0} · next: {1}";
+    public const string CharactersMsqComplete = "MSQ: complete";
+
     // Tabs
     public const string TabJournal = "Journal";
     public const string TabMoonlit = "Moonlit";

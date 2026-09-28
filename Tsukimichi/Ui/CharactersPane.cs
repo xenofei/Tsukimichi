@@ -63,6 +63,7 @@ public sealed class CharactersPane
     private readonly ITextureProvider? textures;
 
     private Dictionary<uint, string>? worldNames;
+    private readonly Dictionary<uint, string> zoneNames = [];
 
     private CharacterItem[] items = [];
     private int itemsVersion = -1;
@@ -173,6 +174,19 @@ public sealed class CharactersPane
         ImGui.TextDisabled(d.World);
         ImGui.TextDisabled(d.TakenLine);
         ImGui.TextUnformatted(d.CountsLine);
+        if (d.MsqLine.Length > 0)
+        {
+            // Independent of the journal's hide state: the first main scenario quest not yet completed.
+            ImGui.TextUnformatted(d.MsqLine);
+            if (d.MsqQuest is { } msqQuest && ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(Strings.MsqClickHint);
+                if (ImGui.IsItemClicked())
+                {
+                    ui.Reveal(msqQuest.RowId, msqQuest.IsUnlisted ? QuestScope.VirtualUnlisted : QuestScope.Genre(msqQuest.Journal.GenreId), msqQuest.IsUnlisted);
+                }
+            }
+        }
 
         Gap();
         DrawSections(d);
@@ -849,6 +863,8 @@ public sealed class CharactersPane
         var allowances = Strings.CharactersAllowancesPrefix + snapshot.TribeAllowance.ToString(CultureInfo.InvariantCulture) + Strings.CharactersTribeAllowanceSuffix
                          + snapshot.LeveAllowance.ToString(CultureInfo.InvariantCulture) + Strings.CharactersLeveAllowanceSuffix;
 
+        var (msqLine, msqQuest) = BuildMsq(bundle);
+
         return new Dashboard(
             snapshot,
             bundle,
@@ -856,6 +872,8 @@ public sealed class CharactersPane
             WorldName(snapshot.World),
             takenLine,
             countsLine,
+            msqLine,
+            msqQuest,
             BuildSections(bundle),
             BuildMoonlit(),
             BuildPinned(snapshot, bundle),
@@ -864,6 +882,73 @@ public sealed class CharactersPane
             gcLine,
             tribeRows,
             allowances);
+    }
+
+    /// <summary>"MSQ: &lt;expansion&gt; · next: &lt;quest&gt; (&lt;NPC&gt;, &lt;zone&gt;)" for the viewed character; empty without evaluations.</summary>
+    private (string Line, QuestRecord? Quest) BuildMsq(CatalogBundle? bundle)
+    {
+        if (bundle is null || session.States.Count == 0)
+        {
+            return (string.Empty, null);
+        }
+
+        MsqPosition? position;
+        try
+        {
+            position = MsqProgress.Compute(bundle.Catalog, session.States);
+        }
+        catch (Exception ex)
+        {
+            log.Warning(ex, "Main scenario position could not be computed");
+            return (string.Empty, null);
+        }
+
+        if (position is null)
+        {
+            return (string.Empty, null);
+        }
+
+        if (position.Next is not { } next)
+        {
+            return (Strings.CharactersMsqComplete, null);
+        }
+
+        var expansion = bundle.Names.Expansion(next.Expansion) is { Length: > 0 } named ? named : Expansions.Name(next.Expansion);
+        if (next.Issuer is not { } issuer)
+        {
+            return (string.Format(CultureInfo.CurrentCulture, Strings.CharactersMsqNoGiverFormat, expansion, next.Name), next);
+        }
+
+        var zone = ZoneName(issuer.MapId);
+        var giver = zone.Length > 0 ? string.Format(CultureInfo.CurrentCulture, Strings.MsqGiverFormat, issuer.Name, zone) : issuer.Name;
+        return (string.Format(CultureInfo.CurrentCulture, Strings.CharactersMsqFormat, expansion, next.Name, giver), next);
+    }
+
+    /// <summary>Place name of a map from the Map sheet; empty without game data or for an unknown id.</summary>
+    private string ZoneName(uint mapId)
+    {
+        if (mapId == 0 || data is null)
+        {
+            return string.Empty;
+        }
+
+        if (zoneNames.TryGetValue(mapId, out var known))
+        {
+            return known;
+        }
+
+        var name = string.Empty;
+        try
+        {
+            name = data.GetExcelSheet<Map>()?.GetRowOrDefault(mapId)?.PlaceName.ValueNullable?.Name.ExtractText() ?? string.Empty;
+        }
+        catch (Exception ex)
+        {
+            log.Warning(ex, "Map {MapId} could not be read for the dashboard", mapId);
+        }
+
+        zoneNames[mapId] = name;
+        return name;
     }
 
     /// <summary>All quests first, then every journal section in journal order, from the viewed character's evaluations.</summary>
@@ -1232,6 +1317,8 @@ public sealed class CharactersPane
         string World,
         string TakenLine,
         string CountsLine,
+        string MsqLine,
+        QuestRecord? MsqQuest,
         SectionRow[] Sections,
         MoonlitRow[] Moonlit,
         PinnedRow[] Pinned,
