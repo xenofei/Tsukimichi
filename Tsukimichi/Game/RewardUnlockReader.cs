@@ -8,7 +8,8 @@ using Tsukimichi.Core.Model;
 namespace Tsukimichi.Game;
 
 /// <summary>
-/// Answers "does the viewed character have this unique reward?" for the Moonlit pane.
+/// Answers "does the viewed character have this unique reward?" for the Moonlit pane and "is the live character
+/// attuned to this aether current?" for the Flight pane.
 /// <para>
 /// Kinds the client keeps an unlock flag for (emote, minion, mount, orchestrion roll, ornament, Triple Triad card,
 /// aether current, duty) are read from ClientStructs, which is only possible for the live character and only on the
@@ -66,6 +67,30 @@ public sealed class RewardUnlockReader
         return result;
     }
 
+    /// <summary>
+    /// Whether the live character is attuned to an aether current (AetherCurrent row id), for the Flight pane. Read
+    /// from <c>PlayerState</c> on the framework thread only, so it is null for stored characters, off-thread, or when
+    /// the read fails; memoized per <see cref="SessionState.Version"/> like <see cref="IsObtained"/>.
+    /// </summary>
+    public bool? IsAetherCurrentUnlocked(uint aetherCurrentId)
+    {
+        if (memoVersion != session.Version)
+        {
+            memo.Clear();
+            memoVersion = session.Version;
+        }
+
+        var key = (RewardKind.AetherCurrent, aetherCurrentId, 0u);
+        if (memo.TryGetValue(key, out var cached))
+        {
+            return cached;
+        }
+
+        var result = ReadLive(RewardKind.AetherCurrent, aetherCurrentId);
+        memo[key] = result;
+        return result;
+    }
+
     /// <summary>Whether <see cref="IsObtained"/> can currently read client flags: a live character on the framework thread.</summary>
     public bool CanReadLive => session.IsLive && framework.IsInFrameworkUpdateThread;
 
@@ -93,7 +118,7 @@ public sealed class RewardUnlockReader
             case RewardKind.AetherCurrent:
             case RewardKind.Instance:
             case RewardKind.DutyUnlock:
-                return ReadLive(entry);
+                return ReadLive(entry.Kind, entry.RewardId);
 
             default:
                 // Item, OptionalItem, ArtifactGear, Other, Barding, Hairstyle: no flag the plugin can read.
@@ -101,7 +126,7 @@ public sealed class RewardUnlockReader
         }
     }
 
-    private unsafe bool? ReadLive(UniqueRewardEntry entry)
+    private unsafe bool? ReadLive(RewardKind kind, uint id)
     {
         if (!CanReadLive)
         {
@@ -117,8 +142,7 @@ public sealed class RewardUnlockReader
                 return null;
             }
 
-            var id = entry.RewardId;
-            switch (entry.Kind)
+            switch (kind)
             {
                 case RewardKind.Emote:
                     return id <= ushort.MaxValue ? ui->IsEmoteUnlocked((ushort)id) : null;
