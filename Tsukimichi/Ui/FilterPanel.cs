@@ -77,8 +77,9 @@ public sealed class FilterPanel
         var hasSnapshot = snapshot is not null;
         var scale = ImGuiHelpers.GlobalScale;
 
-        DrawRuntimeToggle(Strings.HideCompleted, "##hideCompleted", hasSnapshot, f.HideCompleted, v => f.HideCompleted = v, f.PerCategoryHideCompleted);
-        DrawRuntimeToggle(Strings.AvailableOnly, "##availableOnly", hasSnapshot, f.AvailableOnly, v => f.AvailableOnly = v, f.PerCategoryAvailableOnly);
+        DrawRuntimeToggle(Strings.HideCompleted, Strings.HideCompletedTooltip, "##hideCompleted", hasSnapshot, f.HideCompleted, v => f.HideCompleted = v, f.PerCategoryHideCompleted);
+        DrawRuntimeToggle(Strings.AvailableOnly, Strings.AvailableOnlyTooltip, "##availableOnly", hasSnapshot, f.AvailableOnly, v => f.AvailableOnly = v, f.PerCategoryAvailableOnly);
+        DrawPinnedFirst();
 
         if (ImGui.CollapsingHeader(Strings.Advanced))
         {
@@ -88,10 +89,10 @@ public sealed class FilterPanel
             DrawLevelRange(f, scale);
             DrawJobCategory(f, snapshot, scale);
             DrawRewardKinds(f, scale);
-            Toggle(Strings.RepeatableOnly, f.RepeatableOnly, v => f.RepeatableOnly = v);
-            Toggle(Strings.SeasonalActiveOnly, f.SeasonalActiveOnly, v => f.SeasonalActiveOnly = v, hasSnapshot);
-            Toggle(Strings.IncludeUnlisted, f.IncludeUnlisted, v => f.IncludeUnlisted = v);
-            Toggle(Strings.PinnedOnly, f.PinnedOnly, v => f.PinnedOnly = v);
+            Toggle(Strings.RepeatableOnly, Strings.RepeatableOnlyTooltip, f.RepeatableOnly, v => f.RepeatableOnly = v);
+            Toggle(Strings.SeasonalActiveOnly, Strings.SeasonalActiveOnlyTooltip, f.SeasonalActiveOnly, v => f.SeasonalActiveOnly = v, hasSnapshot);
+            Toggle(Strings.IncludeUnlisted, Strings.IncludeUnlistedTooltip, f.IncludeUnlisted, v => f.IncludeUnlisted = v);
+            Toggle(Strings.PinnedOnly, Strings.PinnedOnlyTooltip, f.PinnedOnly, v => f.PinnedOnly = v);
         }
 
         if (ImGui.SmallButton(Strings.Reset))
@@ -99,7 +100,29 @@ public sealed class FilterPanel
             ResetAll();
         }
 
+        Tip(Strings.ResetTooltip);
         ImGui.Separator();
+    }
+
+    /// <summary>The sort's pinned-first flag lives beside the filters; MainWindow persists it with the sort.</summary>
+    private void DrawPinnedFirst()
+    {
+        var pinnedFirst = ui.Sort.PinnedFirst;
+        if (ImGui.Checkbox(Strings.PinnedFirst, ref pinnedFirst))
+        {
+            ui.Sort = ui.Sort with { PinnedFirst = pinnedFirst };
+            ui.MarkQueryDirty();
+        }
+
+        Tip(Strings.PinnedFirstTooltip);
+    }
+
+    private static void Tip(string text)
+    {
+        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+        {
+            ImGui.SetTooltip(text);
+        }
     }
 
     /// <summary>
@@ -215,7 +238,7 @@ public sealed class FilterPanel
         }
     }
 
-    private void DrawRuntimeToggle(string label, string popupId, bool hasSnapshot, bool value, Action<bool> set, Dictionary<uint, bool> overrides)
+    private void DrawRuntimeToggle(string label, string tooltip, string popupId, bool hasSnapshot, bool value, Action<bool> set, Dictionary<uint, bool> overrides)
     {
         using (ImRaii.Disabled(!hasSnapshot))
         {
@@ -226,10 +249,7 @@ public sealed class FilterPanel
             }
         }
 
-        if (!hasSnapshot && ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
-        {
-            ImGui.SetTooltip(Strings.NeedsSnapshot);
-        }
+        Tip(hasSnapshot ? tooltip : Strings.NeedsSnapshot);
 
         ImGui.SameLine();
         using var id = ImRaii.PushId(popupId);
@@ -240,6 +260,8 @@ public sealed class FilterPanel
                 ImGui.OpenPopup(popupId);
             }
         }
+
+        Tip(hasSnapshot ? Strings.OverridesTooltip : Strings.NeedsSnapshot);
 
         using var popup = ImRaii.Popup(popupId);
         if (!popup)
@@ -275,6 +297,7 @@ public sealed class FilterPanel
     private void DrawStates(FilterSet f)
     {
         ImGui.TextDisabled(Strings.States);
+        Tip(Strings.StatesTooltip);
         foreach (var state in StateOrder)
         {
             var mask = f.StateMask;
@@ -284,12 +307,15 @@ public sealed class FilterPanel
                 f.StateMask = on ? mask | state.ToMask() : mask & ~state.ToMask();
                 changed();
             }
+
+            Tip(Strings.StatesTooltip);
         }
     }
 
     private void DrawExpansions(FilterSet f)
     {
         ImGui.TextDisabled(Strings.Expansions);
+        Tip(Strings.ExpansionsTooltip);
         foreach (var (id, name) in expansions)
         {
             var on = f.Expansions.Contains(id);
@@ -306,6 +332,8 @@ public sealed class FilterPanel
 
                 changed();
             }
+
+            Tip(Strings.ExpansionsTooltip);
         }
     }
 
@@ -321,6 +349,8 @@ public sealed class FilterPanel
             f.LevelMax = max >= LevelCap ? FilterSet.NoLevelMax : (byte)Math.Clamp(max, 0, LevelCap);
             changed();
         }
+
+        Tip(Strings.LevelRangeTooltip);
     }
 
     private void DrawJobCategory(FilterSet f, CharacterSnapshot? snapshot, float scale)
@@ -329,6 +359,7 @@ public sealed class FilterPanel
         var currentOnly = CurrentJobCategory(snapshot);
         ImGui.SetNextItemWidth(180f * scale);
         using var combo = ImRaii.Combo("##job", JobPreview(f));
+        Tip(Strings.JobCategoryTooltip);
         if (!combo)
         {
             return;
@@ -361,6 +392,7 @@ public sealed class FilterPanel
     private void DrawRewardKinds(FilterSet f, float scale)
     {
         ImGui.TextDisabled(Strings.RewardKinds);
+        Tip(Strings.RewardKindsTooltip);
         var width = 80f * scale;
         foreach (var kind in Kinds)
         {
@@ -382,12 +414,13 @@ public sealed class FilterPanel
                 changed();
             }
 
+            Tip(Strings.RewardKindsTooltip);
             ImGui.SameLine();
             ImGui.TextUnformatted(Strings.RewardKindName(kind));
         }
     }
 
-    private void Toggle(string label, bool value, Action<bool> set, bool enabled = true)
+    private void Toggle(string label, string tooltip, bool value, Action<bool> set, bool enabled = true)
     {
         using (ImRaii.Disabled(!enabled))
         {
@@ -398,10 +431,7 @@ public sealed class FilterPanel
             }
         }
 
-        if (!enabled && ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
-        {
-            ImGui.SetTooltip(Strings.NeedsSnapshot);
-        }
+        Tip(enabled ? tooltip : Strings.NeedsSnapshot);
     }
 
     /// <summary>"States: −Completed, −Foreclosed", naming up to <see cref="MaxStateChipNames"/> excluded states then "+N"; rebuilt when the mask changes.</summary>

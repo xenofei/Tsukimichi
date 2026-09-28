@@ -92,7 +92,24 @@ public static partial class Strings
     public const string SeasonalActiveOnly = "Seasonal active only";
     public const string IncludeUnlisted = FilterNames.IncludeUnlisted;
     public const string PinnedOnly = "Pinned only";
+    public const string PinnedFirst = "Pinned first";
     public const string Reset = "Reset";
+
+    // Filter panel tooltips
+    public const string HideCompletedTooltip = "Remove Completed and Foreclosed quests from the table";
+    public const string AvailableOnlyTooltip = "Keep only quests you can pick up now: Ready, Ready on another job and Accepted";
+    public const string OverridesTooltip = "Turn this filter on or off for single categories";
+    public const string PinnedFirstTooltip = "Keep pinned quests at the top of the table whatever the sort";
+    public const string StatesTooltip = "Untick a state to hide quests in it";
+    public const string ExpansionsTooltip = "Tick expansions to keep only their quests; none ticked keeps all";
+    public const string LevelRangeTooltip = "Keep quests whose level is inside the range; drag the top to 100 for no upper bound";
+    public const string JobCategoryTooltip = "Keep quests restricted to a discipline, or to exactly the current job";
+    public const string RewardKindsTooltip = "Per reward kind: Hidden removes quests giving it, Only keeps just those";
+    public const string RepeatableOnlyTooltip = "Keep only repeatable quests such as dailies and weeklies";
+    public const string SeasonalActiveOnlyTooltip = "Keep only seasonal-event quests whose event is running right now";
+    public const string IncludeUnlistedTooltip = "Also show quests with no journal genre under All quests and Feature Unlocks";
+    public const string PinnedOnlyTooltip = "Keep only quests you pinned";
+    public const string ResetTooltip = "Clear every filter and the search";
     public const string ResetFilters = "Reset filters";
     public const string NothingMatches = "Nothing matches";
     public const string NothingMatchesHint = "Remove one of these filters:";
@@ -119,6 +136,13 @@ public static partial class Strings
     public const string ColumnNextStep = "Next step";
     public const string ColumnExpansion = "Exp";
     public const string ColumnRewards = "Rewards";
+    public const string ColumnGlyphTooltip = "Quest state as a moon phase; click to sort by state";
+    public const string ColumnNameTooltip = "Quest name; click to sort, right-click a header to hide columns";
+    public const string ColumnLevelTooltip = "Quest level; click to sort";
+    public const string ColumnJobTooltip = "Who can take it: Any, one job, or a discipline";
+    public const string ColumnNextStepTooltip = "The first unmet requirement, what to do next";
+    public const string ColumnExpansionTooltip = "Expansion the quest belongs to; click to sort";
+    public const string ColumnRewardsTooltip = "Up to four reward icons; hover one for details";
     public const string JobAny = "Any";
     public const string JobMulti = "Multi";
     public const string JobDohDol = "DoH/DoL";
@@ -137,6 +161,10 @@ public static partial class Strings
     public const string LinkInChat = "Link in chat";
     /// <summary>{0} = reward name, {1} = count.</summary>
     public const string RewardCountFormat = "{0} ×{1}";
+    /// <summary>Reward tooltip item line: {0} = item level, {1} = ItemUICategory name.</summary>
+    public const string ItemSummaryFormat = "iLv {0} · {1}";
+    /// <summary>{0} = item level.</summary>
+    public const string ItemLevelFormat = "iLv {0}";
 
     // Detail pane
     public const string SelectQuest = "Select a quest";
@@ -178,7 +206,8 @@ public static partial class Strings
     public const string ChatTag = "Tsukimichi";
 
     // Command help
-    public const string CommandHelp = "Open Tsukimichi. /tsukimichi <text> prints matching quest links; /tsukimichi glyphs shows the glyph sheet.";
+    public const string CommandHelp = "Open Tsukimichi (also /tsuki). /tsukimichi <text> prints matching quest links; config, help and glyphs open those windows.";
+    public const string CommandAliasHelp = "Short form of /tsukimichi.";
 
     // Time
     public const string JustNow = "just now";

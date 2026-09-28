@@ -219,7 +219,7 @@ public sealed class MainWindow : Window, IDisposable
 
         initialized = true;
         ui.Filters = plugin.Settings.Filters;
-        ui.Sort = new SortSpec(plugin.Settings.SortColumn, plugin.Settings.SortDescending);
+        ui.Sort = new SortSpec(plugin.Settings.SortColumn, plugin.Settings.SortDescending, plugin.Settings.PinnedFirst);
         persistedSort = ui.Sort;
         searchBuffer = ui.SearchText;
     }
@@ -243,6 +243,7 @@ public sealed class MainWindow : Window, IDisposable
             plugin.Settings.Filters = ui.Filters;
             plugin.Settings.SortColumn = ui.Sort.Column;
             plugin.Settings.SortDescending = ui.Sort.Descending;
+            plugin.Settings.PinnedFirst = ui.Sort.PinnedFirst;
             plugin.Settings.Save(pluginInterface);
         }
         catch (Exception ex)

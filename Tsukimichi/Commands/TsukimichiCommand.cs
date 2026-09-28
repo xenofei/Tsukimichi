@@ -14,6 +14,9 @@ public sealed class TsukimichiCommand : IDisposable
 {
     public const string Name = "/tsukimichi";
 
+    /// <summary>Short alias with the same handler; hidden from the help list so the command appears once.</summary>
+    public const string Alias = "/tsuki";
+
     private readonly ICommandManager commands;
     private readonly Action toggleMainWindow;
     private readonly Action toggleGlyphWindow;
@@ -21,6 +24,9 @@ public sealed class TsukimichiCommand : IDisposable
 
     /// <summary>Invoked for <c>/tsukimichi config</c>; set once the config window exists.</summary>
     public Action? ToggleConfigWindow { get; set; }
+
+    /// <summary>Invoked for <c>/tsukimichi help</c>; set once the help window exists. Falls back to the main window.</summary>
+    public Action? ToggleHelpWindow { get; set; }
 
     /// <param name="commands">Dalamud command manager.</param>
     /// <param name="toggleMainWindow">Invoked for <c>/tsukimichi</c> with no arguments.</param>
@@ -38,10 +44,16 @@ public sealed class TsukimichiCommand : IDisposable
             HelpMessage = Strings.CommandHelp,
             ShowInHelp = true,
         });
+        commands.AddHandler(Alias, new CommandInfo(OnCommand)
+        {
+            HelpMessage = Strings.CommandAliasHelp,
+            ShowInHelp = false,
+        });
     }
 
     public void Dispose()
     {
+        commands.RemoveHandler(Alias);
         commands.RemoveHandler(Name);
     }
 
@@ -79,6 +91,18 @@ public sealed class TsukimichiCommand : IDisposable
                 if (ToggleConfigWindow is { } toggleConfig)
                 {
                     toggleConfig();
+                }
+                else
+                {
+                    toggleMainWindow();
+                }
+
+                break;
+
+            case "help":
+                if (ToggleHelpWindow is { } toggleHelp)
+                {
+                    toggleHelp();
                 }
                 else
                 {

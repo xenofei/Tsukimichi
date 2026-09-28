@@ -137,7 +137,13 @@ public static class QuestQuery
             return new QueryResult(NoRows, reason, totalInScope);
         }
 
-        return new QueryResult(Sort(rows, sort), null, totalInScope);
+        var sorted = Sort(rows, sort);
+        if (sort.PinnedFirst)
+        {
+            sorted = PinnedFirst(sorted, ctx.Pinned);
+        }
+
+        return new QueryResult(sorted, null, totalInScope);
     }
 
     private static IReadOnlyList<QuestRecord> Candidates(QuestCatalog catalog, QuestScope scope, QueryContext ctx)
@@ -238,6 +244,46 @@ public static class QuestQuery
         }
 
         return sorted;
+    }
+
+    /// <summary>Stable partition: pinned rows first, then the rest, each group in the order <paramref name="rows"/> had. Returns the input when nothing moves.</summary>
+    private static QuestRow[] PinnedFirst(QuestRow[] rows, IReadOnlySet<uint> pinned)
+    {
+        if (pinned.Count == 0)
+        {
+            return rows;
+        }
+
+        var pinnedCount = 0;
+        foreach (ref readonly var row in rows.AsSpan())
+        {
+            if (pinned.Contains(row.Quest.RowId))
+            {
+                pinnedCount++;
+            }
+        }
+
+        if (pinnedCount == 0 || pinnedCount == rows.Length)
+        {
+            return rows;
+        }
+
+        var result = new QuestRow[rows.Length];
+        var nextPinned = 0;
+        var nextOther = pinnedCount;
+        foreach (ref readonly var row in rows.AsSpan())
+        {
+            if (pinned.Contains(row.Quest.RowId))
+            {
+                result[nextPinned++] = row;
+            }
+            else
+            {
+                result[nextOther++] = row;
+            }
+        }
+
+        return result;
     }
 
     private sealed class RowComparer(QuestRow[] rows, SortSpec sort) : IComparer<int>

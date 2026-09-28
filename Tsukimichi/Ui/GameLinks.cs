@@ -21,9 +21,96 @@ public sealed class GameLinks(IGameGui gameGui, IChatGui chat, IDataManager data
     /// <summary>What the Map sheet says about one map: scale, offsets and names.</summary>
     public sealed record MapInfo(uint MapId, ushort SizeFactor, short OffsetX, short OffsetY, string PlaceName, string Region);
 
+    /// <summary>What the Item sheet says about one item for the reward tooltip. <see cref="Summary"/> is "iLv N · Category", prebuilt.</summary>
+    public sealed record ItemInfo(uint ItemLevel, string Category, string Description, string Summary);
+
     private readonly Dictionary<uint, MapInfo?> maps = [];
     private readonly Dictionary<uint, string> worlds = [];
     private readonly Dictionary<uint, string> classJobCategories = [];
+    private readonly ItemInfoCache itemInfo = new();
+
+    /// <summary>Item sheet row for the reward tooltip, read once per item id; null when the id is unknown.</summary>
+    public ItemInfo? Item(uint itemId) => itemInfo.Item(itemId, data, log);
+
+    /// <summary>Description of an emote, action or general action reward, read once per reward; empty for other kinds or when the sheet has none.</summary>
+    public string RewardDescription(RewardRef reward) => itemInfo.Description(reward, data, log);
+
+    /// <summary>Lazily loaded sheet text for the reward tooltip, keyed by item id and by (kind, id) for the description-only kinds.</summary>
+    private sealed class ItemInfoCache
+    {
+        private readonly Dictionary<uint, ItemInfo?> items = [];
+        private readonly Dictionary<(RewardKind Kind, uint Id), string> descriptions = [];
+
+        public ItemInfo? Item(uint itemId, IDataManager data, IPluginLog log)
+        {
+            if (itemId == 0)
+            {
+                return null;
+            }
+
+            if (items.TryGetValue(itemId, out var cached))
+            {
+                return cached;
+            }
+
+            ItemInfo? info = null;
+            try
+            {
+                if (data.GetExcelSheet<Item>()?.GetRowOrDefault(itemId) is { } row)
+                {
+                    var level = row.LevelItem.RowId;
+                    var category = UiFormat.CleanSheetText(row.ItemUICategory.ValueNullable?.Name.ExtractText() ?? string.Empty);
+                    var description = UiFormat.CleanSheetText(row.Description.ExtractText());
+                    var summary = level > 1 && category.Length > 0
+                        ? string.Format(CultureInfo.CurrentCulture, Strings.ItemSummaryFormat, level, category)
+                        : level > 1
+                            ? string.Format(CultureInfo.CurrentCulture, Strings.ItemLevelFormat, level)
+                            : category;
+                    info = new ItemInfo(level, category, description, summary);
+                }
+            }
+            catch (Exception ex)
+            {
+                log.Warning(ex, "Item sheet lookup for {ItemId} failed", itemId);
+            }
+
+            items[itemId] = info;
+            return info;
+        }
+
+        public string Description(RewardRef reward, IDataManager data, IPluginLog log)
+        {
+            if (reward.Kind is not (RewardKind.Emote or RewardKind.Action or RewardKind.GeneralAction) || reward.Id == 0)
+            {
+                return string.Empty;
+            }
+
+            var key = (reward.Kind, reward.Id);
+            if (descriptions.TryGetValue(key, out var cached))
+            {
+                return cached;
+            }
+
+            var text = string.Empty;
+            try
+            {
+                text = reward.Kind switch
+                {
+                    RewardKind.Emote => data.GetExcelSheet<Emote>()?.GetRowOrDefault(reward.Id)?.TextCommand.ValueNullable?.Description.ExtractText(),
+                    RewardKind.Action => data.GetExcelSheet<ActionTransient>()?.GetRowOrDefault(reward.Id)?.Description.ExtractText(),
+                    _ => data.GetExcelSheet<GeneralAction>()?.GetRowOrDefault(reward.Id)?.Description.ExtractText(),
+                } ?? string.Empty;
+                text = UiFormat.CleanSheetText(text);
+            }
+            catch (Exception ex)
+            {
+                log.Warning(ex, "Description lookup for {Kind} {Id} failed", reward.Kind, reward.Id);
+            }
+
+            descriptions[key] = text;
+            return text;
+        }
+    }
 
     /// <summary>True when the issuer has a territory and map to flag.</summary>
     public bool CanFlagMap(QuestRecord quest) => quest.Issuer is { TerritoryId: > 0, MapId: > 0 };

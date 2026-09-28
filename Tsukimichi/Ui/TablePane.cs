@@ -36,6 +36,18 @@ public sealed class TablePane : IDisposable
         Rewards,
     }
 
+    /// <summary>Header tooltip per <see cref="Column"/>, in column order.</summary>
+    private static readonly string[] HeaderTooltips =
+    [
+        Strings.ColumnGlyphTooltip,
+        Strings.ColumnNameTooltip,
+        Strings.ColumnLevelTooltip,
+        Strings.ColumnJobTooltip,
+        Strings.ColumnNextStepTooltip,
+        Strings.ColumnExpansionTooltip,
+        Strings.ColumnRewardsTooltip,
+    ];
+
     private readonly UiState ui;
     private readonly QueryRunner runner;
     private readonly GameLinks links;
@@ -113,7 +125,7 @@ public sealed class TablePane : IDisposable
         ImGui.TableSetupColumn(Strings.ColumnExpansion, ImGuiTableColumnFlags.WidthFixed | InitialSortFlags(initialSort, SortColumn.Expansion), 40f * scale);
         ImGui.TableSetupColumn(Strings.ColumnRewards, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoSort, 120f * scale);
         ImGui.TableSetupScrollFreeze(0, 1);
-        ImGui.TableHeadersRow();
+        DrawHeaders();
 
         ApplySortSpecs();
         ScrollToExternalSelection(rows, rowHeight);
@@ -142,6 +154,27 @@ public sealed class TablePane : IDisposable
         {
             clipper.Destroy();
             clipperCreated = false;
+        }
+    }
+
+    /// <summary>What TableHeadersRow does, one header at a time, so each can carry a tooltip.</summary>
+    private static void DrawHeaders()
+    {
+        ImGui.TableNextRow(ImGuiTableRowFlags.Headers);
+        for (var i = 0; i < HeaderTooltips.Length; i++)
+        {
+            if (!ImGui.TableSetColumnIndex(i))
+            {
+                continue;
+            }
+
+            using var id = ImRaii.PushId(i);
+            // The glyph column keeps its name for the hide/show context menu but shows no label.
+            ImGui.TableHeader(i == (int)Column.Glyph ? string.Empty : ImGui.TableGetColumnName(i));
+            if (ImGui.IsItemHovered())
+            {
+                ImGui.SetTooltip(HeaderTooltips[i]);
+            }
         }
     }
 
@@ -234,7 +267,7 @@ public sealed class TablePane : IDisposable
             ImGui.Image(wrap.Handle, new Vector2(lineHeight, lineHeight));
             if (ImGui.IsItemHovered())
             {
-                ImGui.SetTooltip(RewardTooltip(reward));
+                RewardTooltip.Draw(reward, links, textures);
             }
 
             drawn++;
@@ -353,8 +386,8 @@ public sealed class TablePane : IDisposable
             return;
         }
 
-        // No specs (the third header click, or a fresh table) means journal order.
-        var sort = SortSpec.Default;
+        // No specs (the third header click, or a fresh table) means journal order; the pinned-first choice is not a header's to change.
+        var sort = SortSpec.Default with { PinnedFirst = ui.Sort.PinnedFirst };
         if (specs.SpecsCount > 0)
         {
             var spec = specs.Specs;
@@ -366,7 +399,7 @@ public sealed class TablePane : IDisposable
                 (short)Column.Expansion => SortColumn.Expansion,
                 _ => SortColumn.Journal,
             };
-            sort = new SortSpec(column, spec.SortDirection == ImGuiSortDirection.Descending);
+            sort = sort with { Column = column, Descending = spec.SortDirection == ImGuiSortDirection.Descending };
         }
 
         specs.SpecsDirty = false;
@@ -437,9 +470,4 @@ public sealed class TablePane : IDisposable
             log.Warning(ex, "Installed plugin list unavailable");
         }
     }
-
-    private static string RewardTooltip(RewardRef reward) =>
-        reward.Count > 1
-            ? string.Format(CultureInfo.CurrentCulture, Strings.RewardCountFormat, reward.Name, reward.Count)
-            : reward.Name;
 }

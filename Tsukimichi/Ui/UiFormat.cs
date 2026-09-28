@@ -38,4 +38,39 @@ public static class UiFormat
 
     public static string Count(int done, int total) =>
         string.Format(CultureInfo.CurrentCulture, Strings.CountFormat, done, total);
+
+    /// <summary>
+    /// Sheet text made printable: Square Enix's private-use glyphs (U+E000–U+F8FF, the font-only icons) and soft
+    /// hyphens are dropped, surrounding whitespace trimmed. Returns the input when nothing needs removing.
+    /// </summary>
+    public static string CleanSheetText(string text)
+    {
+        var needsWork = false;
+        foreach (var c in text)
+        {
+            if (IsDropped(c))
+            {
+                needsWork = true;
+                break;
+            }
+        }
+
+        if (!needsWork)
+        {
+            return text.Trim();
+        }
+
+        var buffer = new System.Text.StringBuilder(text.Length);
+        foreach (var c in text)
+        {
+            if (!IsDropped(c))
+            {
+                buffer.Append(c);
+            }
+        }
+
+        return buffer.ToString().Trim();
+    }
+
+    private static bool IsDropped(char c) => c == '­' || c is >= '' and <= '';
 }

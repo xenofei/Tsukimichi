@@ -39,6 +39,9 @@ public sealed class Configuration : IPluginConfiguration
 
     public bool SortDescending { get; set; }
 
+    /// <summary>Pinned quests sort to the top of the table whatever the sort column.</summary>
+    public bool PinnedFirst { get; set; } = true;
+
     /// <summary>Character the user chose to view explicitly; null follows the live character.</summary>
     public ulong? ViewedContentId { get; set; }
 
