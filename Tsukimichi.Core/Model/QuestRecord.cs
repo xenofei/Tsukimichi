@@ -52,7 +52,12 @@ public sealed record QuestRecord
     public uint[] AcceptConditions { get; init; } = [];
 
     public Issuer? Issuer { get; init; }
+
+    /// <summary>Journal banner artwork icon id; zero when the quest has none.</summary>
     public uint Icon { get; init; }
+
+    /// <summary>Small icon the journal shows beside special quests (seasonal events, promotions); zero for ordinary quests.</summary>
+    public uint IconSpecial { get; init; }
 
     public IReadOnlyList<RewardRef> Rewards { get; init; } = [];
     public uint ExpFactor { get; init; }

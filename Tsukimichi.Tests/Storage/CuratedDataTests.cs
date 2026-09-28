@@ -24,7 +24,82 @@ public sealed class CuratedDataTests : IDisposable
         Assert.Empty(data.DutyUnlocks);
         Assert.Empty(data.FeatureQuests);
         Assert.Empty(data.Festivals);
+        Assert.Empty(data.Chains);
         Assert.Empty(data.Warnings);
+    }
+
+    [Fact]
+    public void Chains_parse_number_and_string_genre_ids_in_order()
+    {
+        WriteCurated("chains.json",
+            """
+            {
+              "$schema_note": "ignored",
+              "chains": [
+                { "name": "Hildibrand", "genreIds": [82, "83", 83, 84], "note": "across expansions" },
+                { "name": " Omega ", "genreIds": ["22"] }
+              ]
+            }
+            """);
+
+        var data = CuratedData.Load(tmp.File("curated"));
+
+        Assert.Empty(data.Warnings);
+        Assert.Equal(2, data.Chains.Count);
+        Assert.Equal("Hildibrand", data.Chains[0].Name);
+        Assert.Equal([82u, 83u, 84u], data.Chains[0].GenreIds);
+        Assert.Equal("across expansions", data.Chains[0].Note);
+        Assert.Equal("Omega", data.Chains[1].Name);
+        Assert.Equal([22u], data.Chains[1].GenreIds);
+        Assert.Null(data.Chains[1].Note);
+    }
+
+    [Fact]
+    public void Chains_accept_a_bare_array_root()
+    {
+        WriteCurated("chains.json", """[ { "name": "Eden", "genreIds": [26] } ]""");
+
+        var data = CuratedData.Load(tmp.File("curated"));
+
+        Assert.Empty(data.Warnings);
+        Assert.Equal("Eden", Assert.Single(data.Chains).Name);
+    }
+
+    [Fact]
+    public void Chains_skip_bad_entries_with_a_warning_each()
+    {
+        WriteCurated("chains.json",
+            """
+            {
+              "chains": [
+                { "name": "Good", "genreIds": [1] },
+                { "genreIds": [2] },
+                { "name": "No ids", "genreIds": [] },
+                { "name": "Not an array", "genreIds": 5 },
+                { "name": "Zero", "genreIds": [0] },
+                { "name": "Text", "genreIds": ["abc"] },
+                42
+              ]
+            }
+            """);
+
+        var data = CuratedData.Load(tmp.File("curated"));
+
+        Assert.Equal("Good", Assert.Single(data.Chains).Name);
+        Assert.Equal(6, data.Warnings.Count);
+        Assert.All(data.Warnings, w => Assert.StartsWith("chains.json: chains[", w));
+    }
+
+    [Fact]
+    public void Chains_with_a_wrong_root_are_ignored_with_one_warning()
+    {
+        WriteCurated("chains.json", """{ "name": "Eden" }""");
+
+        var data = CuratedData.Load(tmp.File("curated"));
+
+        Assert.Empty(data.Chains);
+        var warning = Assert.Single(data.Warnings);
+        Assert.Contains("chains", warning);
     }
 
     [Fact]

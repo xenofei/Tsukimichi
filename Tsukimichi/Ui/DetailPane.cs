@@ -7,6 +7,7 @@ using Dalamud.Interface;
 using Dalamud.Interface.Textures;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
+using Tsukimichi.Core.Chains;
 using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Storage;
@@ -36,6 +37,17 @@ public sealed class DetailPane
     private const double PathHighlightSeconds = 1.5;
     private const int MinFoldedRun = 2;
     private const int NoteLength = 120;
+
+    // Header badge for QuestRecord.IconSpecial (seasonal events, promotions).
+    private const string SeasonalBadgeTooltip = "Seasonal event quest";
+    private const string SpecialBadgeTooltip = "Special";
+
+    // Chain progress line under the header.
+    private const string ChainFormat = "Chain: {0} · {1} of {2} done";
+    private const string ChainNextLabel = "· next:";
+    private const string ChainCompleteLabel = "· complete";
+    private const string ChainNextTooltip = "Select the next quest in this chain";
+    private const string ChainMoonTooltipFormat = "{0} of {1} quests done";
 
     private sealed record RequirementLine(bool Met, bool IsNext, string Label, string Detail);
 
@@ -72,6 +84,12 @@ public sealed class DetailPane
         public string HeaderLine = string.Empty;
         public string StateText = string.Empty;
         public string? StateNote;
+        public string? ChainText;
+        public string? ChainNextName;
+        public uint ChainNextRowId;
+        public int ChainDone;
+        public int ChainTotal;
+        public float ChainFraction;
         public bool HasSnapshot;
         public bool Pinned;
         public bool HasUniqueEntries;
@@ -101,6 +119,10 @@ public sealed class DetailPane
     // Quests with shipped unique-reward entries, rebuilt when the shipped data instance changes.
     private UniqueRewardsData? uniqueData;
     private readonly HashSet<uint> uniqueQuests = [];
+
+    // Named and derived chains, built once per catalog bundle.
+    private ChainCatalog chains = ChainCatalog.Empty;
+    private CatalogBundle? chainsBundle;
 
     private string noteBuffer = string.Empty;
 
@@ -218,6 +240,57 @@ public sealed class DetailPane
             using var moon = Theme.PushText(Theme.Moon);
             ImGui.TextUnformatted(Strings.Pinned);
         }
+
+        DrawChain();
+    }
+
+    /// <summary>
+    /// "Chain: name · N of M done · next: quest" with a filling moon at its left; the next quest's name selects it.
+    /// Nothing is drawn for a quest outside every chain.
+    /// </summary>
+    private void DrawChain()
+    {
+        if (model.ChainText is not { } text)
+        {
+            return;
+        }
+
+        var lineHeight = ImGui.GetTextLineHeight();
+        var size = UiMetrics.InlineGlyphSize(lineHeight);
+        MoonGlyph.DrawFillingInline(model.ChainFraction, size);
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(string.Format(CultureInfo.CurrentCulture, ChainMoonTooltipFormat, model.ChainDone, model.ChainTotal));
+        }
+
+        // The glyph box is taller than a text line; centre the text on it.
+        ImGui.SameLine();
+        ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (size - lineHeight) * 0.5f);
+        ImGui.TextUnformatted(text);
+        ImGui.SameLine();
+        if (model.ChainNextName is not { } next)
+        {
+            using var done = Theme.PushText(Theme.Moon);
+            ImGui.TextUnformatted(ChainCompleteLabel);
+            return;
+        }
+
+        ImGui.TextDisabled(ChainNextLabel);
+        ImGui.SameLine();
+        using (Theme.PushText(Theme.Moon))
+        {
+            ImGui.TextUnformatted(next);
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetMouseCursor(ImGuiMouseCursor.Hand);
+            UiMetrics.Tooltip(ChainNextTooltip);
+            if (ImGui.IsItemClicked())
+            {
+                ui.SelectedRowId = model.ChainNextRowId;
+            }
+        }
     }
 
     /// <summary>Banner image with the name overlaid; false when the quest has none or it is not loaded yet.</summary>
@@ -240,7 +313,8 @@ public sealed class DetailPane
         var pad = UiMetrics.Px(8f);
         var radius = UiMetrics.HeaderMoonRadius;
         var moonBox = radius * 2.4f;
-        var textWrap = MathF.Max(UiMetrics.Px(40f), width - pad * 3f - moonBox);
+        var badge = quest.IconSpecial != 0 ? UiMetrics.BannerBadgeSize + pad : 0f;
+        var textWrap = MathF.Max(UiMetrics.Px(40f), width - pad * 3f - moonBox - badge);
         var textHeight = ImGui.CalcTextSize(quest.Name, false, textWrap).Y;
         var stripHeight = MathF.Min(height, MathF.Max(textHeight + pad * 2f, moonBox + pad));
         var stripTop = max.Y - stripHeight;
@@ -255,8 +329,34 @@ public sealed class DetailPane
         dl.AddRectFilled(new Vector2(min.X, stripTop), max, solid);
         dl.AddText(ImGui.GetFont(), ImGui.GetFontSize(), new Vector2(min.X + pad, max.Y - pad - textHeight), Theme.SilverU32, quest.Name, textWrap);
         MoonGlyph.Draw(dl, new Vector2(max.X - pad - moonBox * 0.5f, max.Y - stripHeight * 0.5f), radius, model.State);
+        if (badge > 0f)
+        {
+            var size = UiMetrics.BannerBadgeSize;
+            var badgeMin = new Vector2(max.X - pad - moonBox - pad - size, max.Y - stripHeight * 0.5f - size * 0.5f);
+            DrawSpecialBadge(dl, quest, badgeMin, size);
+        }
+
         ImGui.Spacing();
         return true;
+    }
+
+    /// <summary>
+    /// The quest's special icon (<see cref="QuestRecord.IconSpecial"/>) drawn on the draw list at <paramref name="min"/>,
+    /// with a tooltip naming what the badge means. Nothing is drawn while the texture is still loading.
+    /// </summary>
+    private void DrawSpecialBadge(ImDrawListPtr dl, QuestRecord quest, Vector2 min, float size)
+    {
+        if (!textures.GetFromGameIcon(new GameIconLookup(quest.IconSpecial)).TryGetWrap(out var wrap, out _))
+        {
+            return;
+        }
+
+        var max = min + new Vector2(size, size);
+        dl.AddImage(wrap.Handle, min, max);
+        if (ImGui.IsMouseHoveringRect(min, max))
+        {
+            UiMetrics.Tooltip(quest.Festival != 0 ? SeasonalBadgeTooltip : SpecialBadgeTooltip);
+        }
     }
 
     /// <summary>Raised Night card with the state moon and the name, for quests without a banner.</summary>
@@ -279,7 +379,18 @@ public sealed class DetailPane
             ImGui.Dummy(new Vector2(box, box));
             MoonGlyph.Draw(dl, pos + new Vector2(box * 0.5f), radius, model.State);
             ImGui.SameLine();
-            using var wrap = ImRaii.TextWrapPos(ImGui.GetCursorPosX() + width - box - pad * 3f);
+            var badge = 0f;
+            if (quest.IconSpecial != 0)
+            {
+                var size = UiMetrics.BannerBadgeSize;
+                badge = size + pad;
+                var badgeMin = ImGui.GetCursorScreenPos() + new Vector2(0f, (box - size) * 0.5f);
+                ImGui.Dummy(new Vector2(size, box));
+                DrawSpecialBadge(dl, quest, badgeMin, size);
+                ImGui.SameLine();
+            }
+
+            using var wrap = ImRaii.TextWrapPos(ImGui.GetCursorPosX() + width - box - badge - pad * 3f);
             using var silver = Theme.PushText(Theme.Silver);
             ImGui.TextWrapped(quest.Name);
         }
@@ -706,6 +817,8 @@ public sealed class DetailPane
         model.Unlocks.Clear();
         model.UnlocksMore = null;
         model.StateNote = null;
+        model.ChainText = null;
+        model.ChainNextName = null;
         model.GiverName = null;
         model.PlaceText = null;
         model.CoordinateText = null;
@@ -767,6 +880,7 @@ public sealed class DetailPane
 
         BuildPathRows(bundle);
         BuildUnlocks(session, bundle, quest);
+        BuildChain(session, bundle, rowId);
 
         if (quest.Issuer is { } issuer)
         {
@@ -855,6 +969,32 @@ public sealed class DetailPane
         }
 
         Flush();
+    }
+
+    /// <summary>The chain line for a quest that belongs to one, with the chains rebuilt only when the bundle changes.</summary>
+    private void BuildChain(SessionState session, CatalogBundle bundle, uint rowId)
+    {
+        if (!ReferenceEquals(chainsBundle, bundle))
+        {
+            chains = ChainCatalog.Build(bundle.Catalog, session.Curated);
+            chainsBundle = bundle;
+        }
+
+        if (chains.ForQuest(rowId) is not { } chain)
+        {
+            return;
+        }
+
+        var progress = ChainCatalog.Progress(chain, session.States);
+        model.ChainDone = progress.Done;
+        model.ChainTotal = progress.Total;
+        model.ChainFraction = progress.Fraction;
+        model.ChainText = string.Format(CultureInfo.CurrentCulture, ChainFormat, chain.Name, progress.Done, progress.Total);
+        if (progress.NextRowId is { } next)
+        {
+            model.ChainNextRowId = next;
+            model.ChainNextName = bundle.Catalog.GetByRowId(next)?.Name ?? next.ToString(CultureInfo.InvariantCulture);
+        }
     }
 
     /// <summary>Quests that list the selected one among their previous quests, in catalog order, capped at <see cref="MaxUnlocks"/>.</summary>

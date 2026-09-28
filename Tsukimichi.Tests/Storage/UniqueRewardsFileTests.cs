@@ -36,6 +36,32 @@ public sealed class UniqueRewardsFileTests : IDisposable
     }
 
     [Fact]
+    public void Load_title_cases_mount_minion_ornament_and_job_names()
+    {
+        var path = tmp.File("unique_quests.json");
+        File.WriteAllText(path, """
+            {
+              "gameVersion": "x", "generatedUtc": "2026-09-27T08:00:00Z",
+              "entries": [
+                { "questRowId": 70058, "kind": "Mount", "rewardId": 6, "itemId": 6008, "rewardName": "magitek armor", "confidence": "Static", "source": "s" },
+                { "questRowId": 66038, "kind": "Minion", "rewardId": 1, "itemId": 0, "rewardName": "wind-up cid", "confidence": "Static", "source": "s" },
+                { "questRowId": 66039, "kind": "Ornament", "rewardId": 2, "itemId": 0, "rewardName": "chair of the eminent", "confidence": "Static", "source": "s" },
+                { "questRowId": 65557, "kind": "ClassJob", "rewardId": 5, "itemId": 0, "rewardName": "archer", "confidence": "Static", "source": "s" },
+                { "questRowId": 65558, "kind": "Mount", "rewardId": 7, "itemId": 0, "rewardName": "CHL P-0005", "confidence": "Static", "source": "s" },
+                { "questRowId": 65559, "kind": "Item", "rewardId": 8, "itemId": 8, "rewardName": "lowercase item", "confidence": "Static", "source": "s" }
+              ]
+            }
+            """);
+
+        var loaded = UniqueRewardsFile.Load(path);
+
+        Assert.Empty(loaded.Warnings);
+        Assert.Equal(
+            ["Magitek Armor", "Wind-up Cid", "Chair of the Eminent", "Archer", "CHL P-0005", "lowercase item"],
+            loaded.Entries.Select(e => e.RewardName));
+    }
+
+    [Fact]
     public void Write_serializes_enums_as_strings_with_spec_field_names()
     {
         var path = tmp.File("unique_quests.json");

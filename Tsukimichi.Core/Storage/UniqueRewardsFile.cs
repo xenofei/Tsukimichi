@@ -131,8 +131,15 @@ public static class UniqueRewardsFile
         reason = string.Empty;
         return entry with
         {
-            RewardName = entry.RewardName ?? string.Empty,
+            RewardName = DisplayName(entry.Kind, entry.RewardName),
             Source = entry.Source ?? string.Empty,
         };
     }
+
+    /// <summary>Mount, minion, ornament and job names come from their sheets in lower case; they are title-cased at load.</summary>
+    private static string DisplayName(RewardKind kind, string? name) => kind switch
+    {
+        RewardKind.Mount or RewardKind.Minion or RewardKind.Ornament or RewardKind.ClassJob => NameCase.Title(name),
+        _ => name ?? string.Empty,
+    };
 }
