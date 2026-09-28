@@ -59,7 +59,8 @@ public static class RequirementEvaluator
         {
             var ids = q.PreviousQuests.QuestIds;
             var join = q.PreviousQuests.Join;
-            var done = ids.Count(id => s.IsCompleted(QuestRecord.ToQuestId(id)));
+            var doneIds = ids.Where(id => s.IsCompleted(QuestRecord.ToQuestId(id))).ToArray();
+            var done = doneIds.Length;
             var met = join == JoinKind.Any ? done >= 1 : done == ids.Length;
             string detail;
             if (ids.Length == 1)
@@ -76,7 +77,7 @@ public static class RequirementEvaluator
                 }
             }
 
-            results.Add(new(new PreviousQuestsRequirement(ids, join, done), met, detail));
+            results.Add(new(new PreviousQuestsRequirement(ids, join, done, doneIds), met, detail));
         }
 
         if (q.GrandCompany != 0)

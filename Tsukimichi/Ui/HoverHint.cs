@@ -6,6 +6,7 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
+using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Ui;
 using Tsukimichi.Core.Unique;
@@ -153,7 +154,7 @@ public sealed class HoverHint
             var evaluation = session.States.GetValueOrDefault(quest.RowId);
             var state = evaluation?.State ?? QuestState.Unknown;
             var done = state == QuestState.Completed;
-            var status = done ? Strings.ItemsDone : evaluation?.NextStep?.Detail ?? Strings.StateName(state, quest);
+            var status = done ? Strings.ItemsDone : BlockerText.StatusText(evaluation, quest, session.Names, session.States);
             var line = new Line(quest.RowId, state, string.Format(CultureInfo.CurrentCulture, Strings.ItemsQuestRewardFormat, quest.Name), status, done, entry.SoldOnOnlineStore);
             if (IsUnlockable(entry.Kind))
             {

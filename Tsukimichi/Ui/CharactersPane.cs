@@ -307,7 +307,7 @@ public sealed class CharactersPane
 
     /// <summary>
     /// Job quests (V2-11): one row per leveled job with its icon, level, a filling moon over its ladder and the next
-    /// quest ("Lv N" in Moon when it can be taken now, "at Lv N" in Dusk otherwise), then one row per role the
+    /// quest ("Lv N" in Moon when it can be taken now, its decisive blocker in Dusk otherwise), then one row per role the
     /// character has a job in. The next quest's name reveals it in the Journal.
     /// </summary>
     private void DrawJobQuests(UiState ui, Dashboard d)
@@ -1162,6 +1162,7 @@ public sealed class CharactersPane
         string lacks,
         CatalogBundle bundle)
     {
+        var names = bundle.BlockerNames();
         var header = string.Format(CultureInfo.CurrentCulture, Strings.DiffOnlyFormat, has, lacks) + " · " + Strings.DiffQuestCount(entries.Count);
         var rows = new List<DiffRow>(Math.Min(entries.Count, MaxDiffRows));
         var clipboard = new StringBuilder();
@@ -1188,7 +1189,7 @@ public sealed class CharactersPane
                 quest,
                 quest.Name,
                 state,
-                lacks + ": " + Strings.StateWithReason(state, evaluation, quest),
+                lacks + ": " + BlockerText.StatusText(evaluation, quest, names, lackingStates),
                 entry.Value.ToString(CultureInfo.InvariantCulture),
                 entry.Reason));
         }
@@ -1326,9 +1327,14 @@ public sealed class CharactersPane
             }
 
             ImGui.TableNextColumn();
-            if (evaluation?.NextStep is { } next)
+            if (evaluation is not null)
             {
-                ImGui.TextUnformatted(next.Detail);
+                // The state column beside it already names the state; this is the reason alone (blocker or step).
+                var reason = BlockerText.Reason(evaluation, quest, session.Names, item.ContentId == session.ViewedContentId ? session.States : null);
+                if (reason.Length > 0)
+                {
+                    ImGui.TextUnformatted(reason);
+                }
             }
         }
     }
@@ -1638,9 +1644,25 @@ public sealed class CharactersPane
     {
         var count = string.Format(CultureInfo.InvariantCulture, Strings.JobsCountFormat, progress.Done, progress.Total);
         var next = progress.NextRowId is { } nextRowId ? derivedBundle?.Catalog.GetByRowId(nextRowId) : null;
-        var text = next is null
-            ? Strings.JobsAllDone
-            : string.Format(CultureInfo.CurrentCulture, progress.IsReadyNow ? Strings.JobsNextReadyFormat : Strings.JobsNextLaterFormat, next.Name, next.DisplayLevel);
+        string text;
+        if (next is null)
+        {
+            text = Strings.JobsAllDone;
+        }
+        else if (progress.IsReadyNow)
+        {
+            text = string.Format(CultureInfo.CurrentCulture, Strings.JobsNextReadyFormat, next.Name, next.DisplayLevel);
+        }
+        else
+        {
+            // The decisive blocker ("after MSQ: The Vault", "Lv 80 on DRG") rather than only the level, so a job quest
+            // gated by the main scenario says so; the level is the fallback when nothing else is known.
+            var blocker = session.States.TryGetValue(next.RowId, out var evaluation) ? BlockerText.For(evaluation, next, session.Names, session.States) : string.Empty;
+            text = blocker.Length > 0
+                ? string.Format(CultureInfo.CurrentCulture, Strings.JobsNextBlockedFormat, next.Name, blocker)
+                : string.Format(CultureInfo.CurrentCulture, Strings.JobsNextLaterFormat, next.Name, next.DisplayLevel);
+        }
+
         return new LadderRow(iconId, name, level, isRole, progress.Fraction, count, next, text, progress.IsReadyNow);
     }
 
@@ -1858,7 +1880,7 @@ public sealed class CharactersPane
                 quest,
                 quest?.Name ?? Strings.MoonlitQuestPrefix + rowId.ToString(CultureInfo.InvariantCulture),
                 evaluation?.State ?? QuestState.Unknown,
-                evaluation?.NextStep?.Detail ?? string.Empty));
+                quest is null ? string.Empty : BlockerText.StatusText(evaluation, quest, session.Names, session.States)));
         }
 
         return rows.ToArray();

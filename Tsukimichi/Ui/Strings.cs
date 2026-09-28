@@ -290,7 +290,6 @@ public static partial class Strings
     /// <summary>{0} = job abbreviation.</summary>
     public const string ReadyOnJobFormat = "Ready on {0}";
     /// <summary>{0} = sequence.</summary>
-    public const string AcceptedSequenceFormat = "In journal, step {0}";
     public const string Pinned = "Pinned";
 
     // Chat
@@ -342,7 +341,7 @@ public static partial class Strings
     public static string StateTooltip(QuestState state, QuestRecord? quest) => StateNames.Tooltip(state, quest);
 
     /// <summary>
-    /// The clause <see cref="StateWithReason"/> appends, on its own, for the second line of a moon's tooltip: the
+    /// The reason clause on its own, for the second line of a moon's tooltip: the
     /// decisive requirement or reason for Blocked, Locked out and Not checked; null for every other state or when
     /// the evaluation has none.
     /// </summary>
@@ -351,21 +350,10 @@ public static partial class Strings
         && evaluation?.NextStep?.Detail is { Length: > 0 } detail ? detail : null;
 
     /// <summary>
-    /// The display name followed by " · " and the decisive requirement or reason when the evaluation has one: Blocked
-    /// always names its blocker, Locked out its cause, Not checked what could not be read. Other states show the name alone.
+    /// Between a state name and its reason; the same separator <see cref="BlockerText.StatusText"/> uses, so a surface
+    /// that composes the two itself reads like the Status column.
     /// </summary>
-    public static string StateWithReason(QuestState state, QuestEvaluation? evaluation, QuestRecord? quest)
-    {
-        var name = StateName(state, quest);
-        if (state is not (QuestState.Blocked or QuestState.Foreclosed or QuestState.Unknown))
-        {
-            return name;
-        }
-
-        return evaluation?.NextStep?.Detail is { Length: > 0 } detail ? name + StateReasonSeparator + detail : name;
-    }
-
-    public const string StateReasonSeparator = " · ";
+    public const string StateReasonSeparator = BlockerText.Separator;
 
     public static string RequirementName(RequirementKind kind) => kind switch
     {

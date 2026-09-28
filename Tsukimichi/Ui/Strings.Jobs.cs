@@ -17,8 +17,10 @@ static partial class Strings
     public const string JobsColumnNext = "Next";
     /// <summary>{0} = quest name, {1} = its level; the quest can be taken now.</summary>
     public const string JobsNextReadyFormat = "next: {0} · Lv {1}";
-    /// <summary>{0} = quest name, {1} = its level; the quest is not open yet.</summary>
+    /// <summary>{0} = quest name, {1} = its level; the quest is not open yet and nothing more precise is known.</summary>
     public const string JobsNextLaterFormat = "next: {0} · at Lv {1}";
+    /// <summary>{0} = quest name, {1} = its decisive blocker (<see cref="Core.Evaluation.BlockerText"/>).</summary>
+    public const string JobsNextBlockedFormat = "next: {0} · {1}";
     public const string JobsAllDone = "all done";
     /// <summary>{0} = role name.</summary>
     public const string JobsRoleRowFormat = "{0} role quests";
@@ -50,6 +52,8 @@ static partial class Strings
     /// <summary>{0} = level reached, {1} = job name; followed by the quest link and <see cref="JobsNudgeSuffix"/>.</summary>
     public const string JobsNudgePrefixFormat = "Level {0} {1}: ";
     public const string JobsNudgeSuffix = " is available";
+    /// <summary>After the quest link when the level was reached but the quest is still blocked and no blocker could be named.</summary>
+    public const string JobsNudgeBlockedSuffix = " is not open yet";
 
     // ---- Settings › Notices ----
     public const string JobsConfigNudge = "Chat notice when a job or role quest becomes available after a level-up";

@@ -289,14 +289,14 @@ public sealed class FlightPane
             ImGui.TextDisabled(row.QuestName);
         }
 
-        // Quest state for the viewed character, and its first unmet requirement.
+        // Quest state for the viewed character, and its status line (state word first, then the decisive blocker).
         ImGui.TableNextColumn();
         var state = QuestState.Unknown;
         string nextStep = string.Empty;
         if (session.States.TryGetValue(row.Current.QuestRowId, out var evaluation))
         {
             state = evaluation.State;
-            nextStep = evaluation.NextStep?.Detail ?? string.Empty;
+            nextStep = row.Quest is { } statusQuest ? BlockerText.StatusText(evaluation, statusQuest, session.Names, session.States) : Strings.StateName(state);
         }
 
         MoonGlyph.DrawInline(state, UiMetrics.InlineGlyphSize(line));

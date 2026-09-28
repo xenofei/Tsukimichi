@@ -38,6 +38,14 @@ public sealed record QuestRecord
     /// </summary>
     public byte DisplayLevel => (byte)(Level + LevelOffset);
 
+    /// <summary>
+    /// How many steps the journal walks the quest through: the distinct non-zero <c>Quest.ToDoCompleteSeq</c> values
+    /// (the sequence each objective is active in, 1, 2, … then 255 for the last). An accepted quest's
+    /// <see cref="AcceptedQuest.Sequence"/> is its current step, 255 meaning the last one; 0 when the sheet lists no
+    /// objectives, and then only the raw sequence can be shown.
+    /// </summary>
+    public byte StepCount { get; init; }
+
     public uint ClassJobCategory { get; init; }
     public uint ClassJobCategory1 { get; init; }
     public uint ClassJobRequired { get; init; }

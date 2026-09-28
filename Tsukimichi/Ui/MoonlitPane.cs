@@ -10,6 +10,7 @@ using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using Lumina.Excel.Sheets;
 using Tsukimichi.Config;
+using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Storage;

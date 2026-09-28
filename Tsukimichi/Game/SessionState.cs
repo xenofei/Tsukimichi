@@ -50,6 +50,9 @@ public sealed class SessionState
     /// <summary>The built catalog; null while loading or after a failure.</summary>
     public CatalogBundle? Bundle { get; private set; }
 
+    /// <summary>Name lookups for <see cref="BlockerText"/> over the current bundle; <see cref="BlockerNames.Default"/> until the catalog is built.</summary>
+    public BlockerNames Names { get; private set; } = BlockerNames.Default;
+
     /// <summary>Why the catalog is unavailable, for the "Catalog unavailable" panel.</summary>
     public string? CatalogError { get; private set; }
 
@@ -234,6 +237,7 @@ public sealed class SessionState
         CatalogLoading = false;
         Index = ReversePrereqIndex.Build(bundle.Catalog);
         FeatureQuestIds = FeaturePresets.Derive(bundle.Catalog, Curated, UniqueRewards.Entries);
+        Names = bundle.BlockerNames();
         baseContext = EvalContextBuilder.Build(Curated.Festivals, bundle.Jobs, static () => DateTime.UtcNow, jobParents: bundle.JobParents());
 
         if (ViewedSnapshot is { } viewed && !IsLive)
