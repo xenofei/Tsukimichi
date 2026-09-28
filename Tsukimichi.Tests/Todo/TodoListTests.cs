@@ -334,4 +334,12 @@ public sealed class TodoListTests
         Assert.Equal("State unknown", TodoList.Hint(inputs, quest, QuestState.Unknown));
         Assert.Equal("Lv 15 · Nedrick", TodoList.Hint(inputs, quest, QuestState.Ready));
     }
+
+    [Fact]
+    public void Hint_prints_the_displayed_level()
+    {
+        var quest = Catalog.GetByRowId(FeatureA)! with { LevelOffset = 2 };
+
+        Assert.Equal("Lv 17 · Nedrick", TodoList.Hint(Inputs(), quest, QuestState.Ready));
+    }
 }

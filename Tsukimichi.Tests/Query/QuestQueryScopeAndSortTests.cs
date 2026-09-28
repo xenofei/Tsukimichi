@@ -198,4 +198,20 @@ public class QuestQueryScopeAndSortTests
         var desc = Run(catalog, States(catalog, QuestState.Ready), sort: new SortSpec(SortColumn.Level, true));
         Assert.Equal(expected, RowIds(desc));
     }
+
+    [Fact]
+    public void Level_sort_orders_by_the_displayed_level()
+    {
+        // A Lv 1 quest with offset 2 shows as Lv 3, so it sorts after a plain Lv 2 and before a Lv 4.
+        var catalog = QuestCatalog.Build(
+        [
+            Quest(1, "Shown as three", level: 1) with { LevelOffset = 2 },
+            Quest(2, "Two", level: 2),
+            Quest(3, "Four", level: 4),
+        ]);
+        var states = States(catalog, QuestState.Ready);
+
+        Assert.Equal(new uint[] { 2, 1, 3 }, RowIds(Run(catalog, states, sort: new SortSpec(SortColumn.Level, false))));
+        Assert.Equal(new uint[] { 3, 1, 2 }, RowIds(Run(catalog, states, sort: new SortSpec(SortColumn.Level, true))));
+    }
 }
