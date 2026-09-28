@@ -23,6 +23,9 @@ static partial class Strings
     /// <summary>{0} = number of further quests the hint does not list.</summary>
     public const string ItemsMoreFormat = "and {0} more";
 
+    /// <summary>Second line under a quest whose reward the FFXIV Online Store also sells; the hint takes no input, so the reason is spelled out.</summary>
+    public const string ItemsStoreOnly = "Store only: also sold on the FFXIV Online Store";
+
     // ---- Context menu ----
     /// <summary>{0} = quest name.</summary>
     public const string ItemsMenuSingleFormat = "Tsukimichi: quest reward ({0})";

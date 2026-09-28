@@ -45,6 +45,16 @@ public static class RewardTooltip
         using var wrapPos = ImRaii.TextWrapPos(ImGui.GetCursorPosX() + ImGui.GetFontSize() * WrapWidthEm);
         BoldText(reward.Name, scale);
         ImGui.TextDisabled(KindLine(reward));
+        if (links.IsStoreResell?.Invoke(reward) == true)
+        {
+            // Sold on the FFXIV Online Store as well (curated/online_store.json), so not exclusive to the quest.
+            using (Theme.PushText(Theme.Dusk))
+            {
+                ImGui.TextUnformatted(Strings.MoonlitStoreOnly);
+                ImGui.SameLine();
+                ImGui.TextUnformatted("· " + Strings.MoonlitStoreOnlyTooltip);
+            }
+        }
 
         if (reward.ItemId != 0)
         {

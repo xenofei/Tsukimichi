@@ -97,6 +97,13 @@ public sealed class Configuration : IPluginConfiguration
     /// </summary>
     public float IconScale { get; set; } = ScaleMetrics.DefaultIconScale;
 
+    // ---- 0.6.0: Moonlit store re-sells ----
+    /// <summary>
+    /// Moonlit toolbar "Hide store re-sells": drop rewards the FFXIV Online Store also sells (entry OtherSources carries
+    /// OnlineStore) from the rows and from the obtained/total counts. Off by default.
+    /// </summary>
+    public bool MoonlitHideStoreResells { get; set; }
+
     // ---- 0.5.1: motion ----
     /// <summary>
     /// Replace the hold-to-confirm arc with a text countdown (and, later, other animation with a cut). Off by default;

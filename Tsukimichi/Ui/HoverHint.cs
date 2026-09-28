@@ -154,7 +154,7 @@ public sealed class HoverHint
             var state = evaluation?.State ?? QuestState.Unknown;
             var done = state == QuestState.Completed;
             var status = done ? Strings.ItemsDone : evaluation?.NextStep?.Detail ?? Strings.StateName(state);
-            var line = new Line(quest.RowId, state, string.Format(CultureInfo.CurrentCulture, Strings.ItemsQuestRewardFormat, quest.Name), status, done);
+            var line = new Line(quest.RowId, state, string.Format(CultureInfo.CurrentCulture, Strings.ItemsQuestRewardFormat, quest.Name), status, done, entry.SoldOnOnlineStore);
             if (IsUnlockable(entry.Kind))
             {
                 line.SetObtained(unlocks.IsObtained(entry));
@@ -241,20 +241,26 @@ public sealed class HoverHint
                 ImGui.TextUnformatted(line.StatusText);
             }
 
-            if (!line.HasObtained)
+            if (line.HasObtained)
             {
-                continue;
+                ImGui.Indent(indent);
+                MoonGlyph.DrawInline(line.ObtainedGlyph, glyph);
+                ImGui.SameLine();
+                using (Theme.PushText(line.ObtainedColor))
+                {
+                    ImGui.TextUnformatted(line.ObtainedText);
+                }
+
+                ImGui.Unindent(indent);
             }
 
-            ImGui.Indent(indent);
-            MoonGlyph.DrawInline(line.ObtainedGlyph, glyph);
-            ImGui.SameLine();
-            using (Theme.PushText(line.ObtainedColor))
+            if (line.StoreResell)
             {
-                ImGui.TextUnformatted(line.ObtainedText);
+                // Also on the FFXIV Online Store (curated/online_store.json): the hint takes no input, so no tooltip; the line says why.
+                ImGui.Indent(indent);
+                ImGui.TextDisabled(Strings.ItemsStoreOnly);
+                ImGui.Unindent(indent);
             }
-
-            ImGui.Unindent(indent);
         }
 
         if (moreText.Length > 0)
@@ -295,13 +301,16 @@ public sealed class HoverHint
     }
 
     /// <summary>One quest of the hint, with its strings built once.</summary>
-    private sealed class Line(uint questRowId, QuestState state, string questText, string statusText, bool done)
+    private sealed class Line(uint questRowId, QuestState state, string questText, string statusText, bool done, bool storeResell)
     {
         public uint QuestRowId { get; } = questRowId;
         public QuestState State { get; } = state;
         public string QuestText { get; } = questText;
         public string StatusText { get; } = statusText;
         public bool Done { get; } = done;
+
+        /// <summary>The FFXIV Online Store also sells this reward (entry OtherSources carries OnlineStore).</summary>
+        public bool StoreResell { get; } = storeResell;
 
         public bool HasObtained { get; private set; }
         public QuestState ObtainedGlyph { get; private set; } = QuestState.Unknown;
