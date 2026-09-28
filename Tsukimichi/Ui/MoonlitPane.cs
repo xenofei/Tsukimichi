@@ -7,6 +7,7 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Textures;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
+using Lumina.Excel.Sheets;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Storage;
@@ -32,12 +33,34 @@ public sealed class MoonlitPane : IDisposable
 {
     private const int FilterMaxLength = 128;
 
+    /// <summary>The combo next to "Hide obtained": which rows to keep by confidence, or only the unreadable ones.</summary>
+    public enum ConfidenceFilter
+    {
+        Any,
+        Static,
+        Curated,
+        Yours,
+        UnknownObtained,
+    }
+
+    /// <summary>Combo labels in <see cref="ConfidenceFilter"/> order, as one ImGui items-separated-by-zeros string.</summary>
+    private static readonly string ConfidenceFilterItems = string.Join(
+        '\0',
+        Strings.MoonlitConfidenceAny,
+        Strings.MoonlitConfidenceStaticOnly,
+        Strings.MoonlitConfidenceCuratedOnly,
+        Strings.MoonlitConfidenceYoursOnly,
+        Strings.MoonlitConfidenceUnknownObtained) + "\0";
+
     private readonly SessionState session;
     private readonly ITextureProvider textures;
     private readonly RewardUnlockReader unlocks;
     private readonly PluginPaths paths;
     private readonly IPluginLog log;
     private readonly Dictionary<uint, UniqueOverride> overrides;
+
+    /// <summary>Session-only: which confidence (or the unreadable rows) the table shows.</summary>
+    private ConfidenceFilter confidenceFilter = ConfidenceFilter.Any;
 
     private ImGuiListClipperPtr clipper;
     private bool clipperCreated;
@@ -68,13 +91,14 @@ public sealed class MoonlitPane : IDisposable
     private string filterText = string.Empty;
     private int selectedRow = -1;
 
-    public MoonlitPane(SessionState session, ITextureProvider textures, RewardUnlockReader unlocks, PluginPaths paths, IPluginLog log)
+    public MoonlitPane(SessionState session, ITextureProvider textures, RewardUnlockReader unlocks, PluginPaths paths, IPluginLog log, IDataManager data)
     {
         this.session = session ?? throw new ArgumentNullException(nameof(session));
         this.textures = textures ?? throw new ArgumentNullException(nameof(textures));
         this.unlocks = unlocks ?? throw new ArgumentNullException(nameof(unlocks));
         this.paths = paths ?? throw new ArgumentNullException(nameof(paths));
         this.log = log ?? throw new ArgumentNullException(nameof(log));
+        Icons = new MoonlitIconResolver(data ?? throw new ArgumentNullException(nameof(data)), log);
 
         var warnings = new List<string>();
         overrides = OverridesFile.Load(paths.OverridesFile, warnings);
@@ -109,6 +133,9 @@ public sealed class MoonlitPane : IDisposable
 
     /// <summary>The user's overrides by quest row id.</summary>
     public IReadOnlyDictionary<uint, UniqueOverride> Overrides => overrides;
+
+    /// <summary>Icon lookup for reward entries (quest reward list first, then per-kind sheet fallbacks); shared with Wotsit.</summary>
+    public MoonlitIconResolver Icons { get; }
 
     /// <summary>
     /// Marks a quest unique (a note names the reward) or not unique (hidden from the Moonlit view), saves
@@ -210,6 +237,19 @@ public sealed class MoonlitPane : IDisposable
         if (ImGui.Checkbox(Strings.MoonlitHideObtainedLabel, ref hide))
         {
             ui.MoonlitHideObtained = hide;
+        }
+
+        ImGui.SameLine();
+        ImGui.SetNextItemWidth(UiMetrics.Px(150f));
+        var confidenceIndex = (int)confidenceFilter;
+        if (ImGui.Combo("##moonlitConfidence", ref confidenceIndex, ConfidenceFilterItems))
+        {
+            confidenceFilter = (ConfidenceFilter)confidenceIndex;
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.MoonlitConfidenceFilterTooltip);
         }
 
         ImGui.SameLine();
@@ -428,7 +468,8 @@ public sealed class MoonlitPane : IDisposable
         }
     }
 
-    private static void Reveal(UiState ui, QuestRecord quest) =>
+    /// <summary>Shows a quest in the Journal tab scoped to its genre (or the Unlisted bucket); also used by Wotsit picks.</summary>
+    internal static void Reveal(UiState ui, QuestRecord quest) =>
         ui.Reveal(quest.RowId, quest.IsUnlisted ? QuestScope.VirtualUnlisted : QuestScope.Genre(quest.Journal.GenreId), quest.IsUnlisted);
 
     /// <summary>Catalog, rows and obtained states, each only when its inputs changed.</summary>
@@ -467,7 +508,7 @@ public sealed class MoonlitPane : IDisposable
         {
             var entry = all[i];
             var quest = bundle?.Catalog.GetByRowId(entry.QuestRowId);
-            built[i] = new Row(i, entry, quest, FindIcon(quest, entry));
+            built[i] = new Row(i, entry, quest, Icons.Resolve(quest, entry));
         }
 
         rows = built;
@@ -541,7 +582,7 @@ public sealed class MoonlitPane : IDisposable
     /// <summary>The filtered index array, rebuilt when the kind, the toggle, the filter text or the obtained states change.</summary>
     private void RefreshVisible(UiState ui)
     {
-        var key = new VisibleKey(rowsBuild, obtainedVersion, ui.MoonlitKind, ui.MoonlitHideObtained, filterText);
+        var key = new VisibleKey(rowsBuild, obtainedVersion, ui.MoonlitKind, ui.MoonlitHideObtained, confidenceFilter, filterText);
         if (key == visibleKey)
         {
             return;
@@ -567,6 +608,11 @@ public sealed class MoonlitPane : IDisposable
                 continue;
             }
 
+            if (!PassesConfidence(confidenceFilter, row.Entry.Confidence, row.Obtained))
+            {
+                continue;
+            }
+
             if (filter.Length != 0 && !row.Matches(filter))
             {
                 continue;
@@ -579,38 +625,16 @@ public sealed class MoonlitPane : IDisposable
         visibleSummary = count.ToString(CultureInfo.InvariantCulture) + " / " + rows.Length.ToString(CultureInfo.InvariantCulture);
     }
 
-    /// <summary>The reward's icon from the quest's reward list: same item, else same kind and id. Zero when unknown.</summary>
-    private static uint FindIcon(QuestRecord? quest, UniqueRewardEntry entry)
+    /// <summary>Whether a row passes the confidence combo: a confidence match, or (Unknown obtained) an unreadable obtained state.</summary>
+    internal static bool PassesConfidence(ConfidenceFilter filter, Confidence confidence, bool? obtained) => filter switch
     {
-        if (quest is null)
-        {
-            return 0;
-        }
-
-        if (entry.ItemId != 0)
-        {
-            foreach (var reward in quest.Rewards)
-            {
-                if (reward.ItemId == entry.ItemId && reward.Icon != 0)
-                {
-                    return reward.Icon;
-                }
-            }
-        }
-
-        if (entry.RewardId != 0)
-        {
-            foreach (var reward in quest.Rewards)
-            {
-                if (reward.Kind == entry.Kind && reward.Id == entry.RewardId && reward.Icon != 0)
-                {
-                    return reward.Icon;
-                }
-            }
-        }
-
-        return 0;
-    }
+        ConfidenceFilter.Any => true,
+        ConfidenceFilter.Static => confidence == Confidence.Static,
+        ConfidenceFilter.Curated => confidence == Confidence.Curated,
+        ConfidenceFilter.Yours => confidence == Confidence.UserOverride,
+        ConfidenceFilter.UnknownObtained => obtained is null,
+        _ => true,
+    };
 
     private void SaveOverrides()
     {
@@ -720,5 +744,174 @@ public sealed class MoonlitPane : IDisposable
             || KindName.Contains(filter, StringComparison.OrdinalIgnoreCase);
     }
 
-    private readonly record struct VisibleKey(int Build, int Version, RewardKind? Kind, bool HideObtained, string Filter);
+    private readonly record struct VisibleKey(int Build, int Version, RewardKind? Kind, bool HideObtained, ConfidenceFilter Confidence, string Filter);
+}
+
+/// <summary>
+/// Icon for a unique-reward entry. The quest's own reward list is tried first (same item, else same kind and id);
+/// otherwise the kind decides: duty unlocks and instances show their ContentFinderCondition's content-type icon,
+/// jobs the 062100-series job icon, aether currents the attunement crystal (060033), traits, achievements and blue
+/// mage spells their sheet icon. Titles and system unlocks have no sheet icon and keep the veiled moon (0).
+/// Sheet lookups are memoized per (kind, id); a sheet failure logs once and reads as no icon.
+/// </summary>
+public sealed class MoonlitIconResolver(IDataManager data, IPluginLog log)
+{
+    /// <summary>The aether current attunement crystal in the 060000 icon set (verified against the shipped textures).</summary>
+    public const uint AetherCurrentIcon = 60033;
+
+    /// <summary>First job icon in the 062000 set: 062101 Gladiator … 062142 Pictomancer, offset by ClassJob row id.</summary>
+    public const uint ClassJobIconBase = 62100;
+
+    /// <summary><c>ContentFinderCondition.ContentLinkType</c> value whose <c>Content</c> is an InstanceContent row.</summary>
+    private const byte InstanceContentLink = 1;
+
+    private readonly Dictionary<(RewardKind Kind, uint Id), uint> memo = [];
+    private Dictionary<uint, uint>? contentTypeIconByCondition;
+    private Dictionary<uint, uint>? conditionByInstance;
+    private bool warned;
+
+    /// <summary>Icon id for the entry, or 0 when none is known.</summary>
+    public uint Resolve(QuestRecord? quest, UniqueRewardEntry entry)
+    {
+        ArgumentNullException.ThrowIfNull(entry);
+        var fromQuest = FromQuestRewards(quest, entry);
+        if (fromQuest != 0)
+        {
+            return fromQuest;
+        }
+
+        if (entry.RewardId == 0)
+        {
+            return 0;
+        }
+
+        var key = (entry.Kind, entry.RewardId);
+        if (memo.TryGetValue(key, out var cached))
+        {
+            return cached;
+        }
+
+        var icon = 0u;
+        try
+        {
+            icon = entry.Kind switch
+            {
+                RewardKind.DutyUnlock => ConditionIcon(entry.RewardId),
+                RewardKind.Instance => ConditionForInstance(entry.RewardId) is { } condition ? ConditionIcon(condition) : 0u,
+                RewardKind.ClassJob => data.GetExcelSheet<ClassJob>()?.GetRowOrDefault(entry.RewardId) is not null ? ClassJobIconBase + entry.RewardId : 0u,
+                RewardKind.AetherCurrent => AetherCurrentIcon,
+                RewardKind.Trait => Positive(data.GetExcelSheet<Trait>()?.GetRowOrDefault(entry.RewardId)?.Icon),
+                RewardKind.Achievement => data.GetExcelSheet<Achievement>()?.GetRowOrDefault(entry.RewardId)?.Icon ?? 0u,
+                RewardKind.BlueMageSpell => data.GetExcelSheet<AozAction>()?.GetRowOrDefault(entry.RewardId)?.Action.ValueNullable?.Icon ?? 0u,
+                _ => 0u,
+            };
+        }
+        catch (Exception ex)
+        {
+            WarnOnce(ex, entry.Kind);
+        }
+
+        memo[key] = icon;
+        return icon;
+    }
+
+    /// <summary>The reward's icon from the quest's reward list: same item, else same kind and id. Zero when unknown.</summary>
+    public static uint FromQuestRewards(QuestRecord? quest, UniqueRewardEntry entry)
+    {
+        ArgumentNullException.ThrowIfNull(entry);
+        if (quest is null)
+        {
+            return 0;
+        }
+
+        if (entry.ItemId != 0)
+        {
+            foreach (var reward in quest.Rewards)
+            {
+                if (reward.ItemId == entry.ItemId && reward.Icon != 0)
+                {
+                    return reward.Icon;
+                }
+            }
+        }
+
+        if (entry.RewardId != 0)
+        {
+            foreach (var reward in quest.Rewards)
+            {
+                if (reward.Kind == entry.Kind && reward.Id == entry.RewardId && reward.Icon != 0)
+                {
+                    return reward.Icon;
+                }
+            }
+        }
+
+        return 0;
+    }
+
+    /// <summary>Sheet icon columns typed as int: negative or missing reads as no icon.</summary>
+    private static uint Positive(int? icon) => icon is > 0 ? (uint)icon.Value : 0u;
+
+    private uint ConditionIcon(uint conditionId)
+    {
+        EnsureConditions();
+        return contentTypeIconByCondition!.GetValueOrDefault(conditionId);
+    }
+
+    private uint? ConditionForInstance(uint instanceContentId)
+    {
+        EnsureConditions();
+        return conditionByInstance!.TryGetValue(instanceContentId, out var condition) ? condition : null;
+    }
+
+    /// <summary>ContentFinderCondition read once: its ContentType icon per row, and the row per InstanceContent it links.</summary>
+    private void EnsureConditions()
+    {
+        if (contentTypeIconByCondition is not null)
+        {
+            return;
+        }
+
+        var icons = new Dictionary<uint, uint>();
+        var byInstance = new Dictionary<uint, uint>();
+        try
+        {
+            var sheet = data.GetExcelSheet<ContentFinderCondition>();
+            if (sheet is not null)
+            {
+                foreach (var row in sheet)
+                {
+                    var icon = row.ContentType.ValueNullable?.Icon ?? 0u;
+                    if (icon != 0)
+                    {
+                        icons[row.RowId] = icon;
+                    }
+
+                    if (row.ContentLinkType == InstanceContentLink && row.Content.RowId != 0)
+                    {
+                        byInstance.TryAdd(row.Content.RowId, row.RowId);
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            WarnOnce(ex, RewardKind.DutyUnlock);
+        }
+
+        contentTypeIconByCondition = icons;
+        conditionByInstance = byInstance;
+    }
+
+    private void WarnOnce(Exception ex, RewardKind kind)
+    {
+        if (warned)
+        {
+            log.Debug(ex, "Icon lookup for {Kind} failed", kind);
+            return;
+        }
+
+        warned = true;
+        log.Warning(ex, "Icon lookup for {Kind} failed; the veiled moon stands in", kind);
+    }
 }
