@@ -22,6 +22,9 @@ public sealed class FilterPanel
     private const int LevelCap = 100;
     private const int MaxStateChipNames = 3;
 
+    /// <summary>Reward-kind combo entries in display order.</summary>
+    private static readonly TriState[] RewardOptionOrder = [TriState.Hidden, TriState.Show, TriState.Only];
+
     private static readonly QuestState[] StateOrder =
     [
         QuestState.Ready,
@@ -95,7 +98,7 @@ public sealed class FilterPanel
 
         if (ImGui.CollapsingHeader(Strings.Advanced))
         {
-            using var indent = ImRaii.PushIndent(8f);
+            using var indent = ImRaii.PushIndent(UiMetrics.Px(8f));
             DrawStates(f);
             DrawExpansions(f);
             DrawLevelRange(f);
@@ -342,7 +345,8 @@ public sealed class FilterPanel
 
         any = true;
         using var id = ImRaii.PushId(label);
-        if (ImGui.SmallButton(label))
+        // The whole chip is its own close target, so it stands at least the minimum target tall.
+        if (ImGui.Button(label, new Vector2(0f, UiMetrics.MinTarget)))
         {
             clear();
             if (notify)
@@ -521,26 +525,42 @@ public sealed class FilterPanel
         foreach (var kind in Kinds)
         {
             using var id = ImRaii.PushId((int)kind);
-            var current = (int)(f.RewardKinds.TryGetValue(kind, out var v) ? v : TriState.Show);
+            var current = f.RewardKinds.TryGetValue(kind, out var v) ? v : TriState.Show;
             ImGui.SetNextItemWidth(width);
-            if (ImGui.Combo("##kind", ref current, Strings.RewardOptions))
-            {
-                var value = (TriState)current;
-                if (value == TriState.Show)
-                {
-                    f.RewardKinds.Remove(kind);
-                }
-                else
-                {
-                    f.RewardKinds[kind] = value;
-                }
-
-                changed();
-            }
-
+            DrawRewardKindCombo(f, kind, current);
             Tip(Strings.RewardKindsTooltip);
             ImGui.SameLine();
             ImGui.TextUnformatted(Strings.RewardKindName(kind));
+        }
+    }
+
+    /// <summary>One reward kind's Hidden / Show / Only choice; the popup opens from the left column, so it scales itself.</summary>
+    private void DrawRewardKindCombo(FilterSet f, RewardKind kind, TriState current)
+    {
+        using var combo = ImRaii.Combo("##kind", Strings.RewardOptionName(current));
+        if (!combo)
+        {
+            return;
+        }
+
+        UiMetrics.ApplyFontScale();
+        foreach (var option in RewardOptionOrder)
+        {
+            if (!ImGui.Selectable(Strings.RewardOptionName(option), option == current))
+            {
+                continue;
+            }
+
+            if (option == TriState.Show)
+            {
+                f.RewardKinds.Remove(kind);
+            }
+            else
+            {
+                f.RewardKinds[kind] = option;
+            }
+
+            changed();
         }
     }
 
