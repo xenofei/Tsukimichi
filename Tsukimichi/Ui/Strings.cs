@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
@@ -217,6 +218,15 @@ public static partial class Strings
     public const string ShowPath = "Show path";
     public const string QuestMapGraph = "Quest Map graph";
     public const string LinkInChat = "Link in chat";
+    public const string Report = "Report";
+    public const string ReportTooltip = "Copy a diagnostic block for this quest to the clipboard, ready to paste into a GitHub issue: versions, the quest, its state, every requirement's verdict and the inputs it was judged from. No character identifiers.";
+    public const string ReportCopied = "Copied · paste it into a GitHub issue";
+    public const string ReportClipboardFailed = "The clipboard refused the text; try again.";
+    /// <summary>{0} = quest name.</summary>
+    public const string ReportCopiedChatFormat = "Copied the diagnostic block for {0} to the clipboard; paste it into a GitHub issue.";
+    public const string ReportNoSelection = "Select a quest first, or name one: /tsuki report <quest name>";
+    /// <summary>{0} = the text given.</summary>
+    public const string ReportNoMatchFormat = "No quest matches \"{0}\".";
     /// <summary>{0} = reward name, {1} = count.</summary>
     public const string RewardCountFormat = "{0} ×{1}";
     /// <summary>Reward tooltip item line: {0} = item level, {1} = ItemUICategory name.</summary>
@@ -308,7 +318,7 @@ public static partial class Strings
     public const string ConfigItemContextMenuHint = "Right-click an item to reveal the quest that rewards it";
 
     // Command help
-    public const string CommandHelp = "Open Tsukimichi (also /tsuki). search <text> (or just <text>) prints matching quest links; zone lists quests you can start here; which lists the targeted NPC's quests; nearby and todo toggle the Nearby quests window and the todo overlay; settings (or config), help and glyphs open those windows.";
+    public const string CommandHelp = "Open Tsukimichi (also /tsuki). search <text> (or just <text>) prints matching quest links; zone lists quests you can start here; which lists the targeted NPC's quests; nearby and todo toggle the Nearby quests window and the todo overlay; report [quest name] copies a diagnostic block for the selected or named quest; settings (or config), help and glyphs open those windows.";
     public const string CommandAliasHelp = "Short form of /tsukimichi.";
 
     // Time
@@ -341,13 +351,21 @@ public static partial class Strings
     public static string StateTooltip(QuestState state, QuestRecord? quest) => StateNames.Tooltip(state, quest);
 
     /// <summary>
-    /// The reason clause on its own, for the second line of a moon's tooltip: the
-    /// decisive requirement or reason for Blocked, Locked out and Not checked; null for every other state or when
-    /// the evaluation has none.
+    /// The reason clause on its own, for the second line of a moon's tooltip: the decisive blocker from
+    /// <see cref="BlockerText.For"/> for Blocked, Locked out and Not checked, so the tooltip matches the Status
+    /// column; null for every other state, without a quest, or when the evaluation names nothing. Allocates: callers
+    /// that hover every frame cache it (<see cref="UiMetrics.StateTooltip"/>).
     /// </summary>
-    public static string? StateReason(QuestState state, QuestEvaluation? evaluation) =>
-        state is QuestState.Blocked or QuestState.Foreclosed or QuestState.Unknown
-        && evaluation?.NextStep?.Detail is { Length: > 0 } detail ? detail : null;
+    public static string? StateReason(QuestState state, QuestEvaluation? evaluation, QuestRecord? quest, BlockerNames names, IReadOnlyDictionary<uint, QuestEvaluation>? states)
+    {
+        if (evaluation is null || quest is null || state is not (QuestState.Blocked or QuestState.Foreclosed or QuestState.Unknown))
+        {
+            return null;
+        }
+
+        var reason = BlockerText.For(evaluation, quest, names, states);
+        return reason.Length > 0 ? reason : null;
+    }
 
     /// <summary>
     /// Between a state name and its reason; the same separator <see cref="BlockerText.StatusText"/> uses, so a surface

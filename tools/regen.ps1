@@ -11,7 +11,9 @@
       4. Tsukimichi.DataGen --dump-catalog: the test fixture Tsukimichi.Tests/Fixtures/catalog-<gameVersion>.json.gz
          (the previous fixture is removed, so exactly one remains).
       5. docs/data/DATA-VERSION.md: game version, generation time, curated revision (short git hash of the last
-         commit touching Tsukimichi/Data/curated, "-dirty" when that directory has uncommitted changes) and counts.
+         commit touching Tsukimichi/Data/curated, "-dirty" when that directory has uncommitted changes) and counts;
+         the same revision goes into Tsukimichi/Data/curated/VERSION.json, which the plugin shows in Settings > About
+         and in the "Report this quest" diagnostic block.
       6. dotnet test Tsukimichi.Tests (the curated invariants run without the game; with the game path they all run).
       7. git diff --stat, so the reviewed diff is the last thing on screen.
 
@@ -82,9 +84,22 @@ $data = $raw | ConvertFrom-Json
 # ConvertFrom-Json turns the ISO timestamp into a DateTime; keep the file's own text.
 $generatedUtc = [regex]::Match($raw, '"generatedUtc":\s*"([^"]+)"').Groups[1].Value
 $curated = Get-Content (Join-Path $curatedDir "feature_quests.json") -Raw | ConvertFrom-Json
-$curatedRevision = (git log -n 1 --format=%h -- $curatedDir).Trim()
-if ((git status --porcelain -- $curatedDir | Measure-Object).Count -gt 0) { $curatedRevision += "-dirty" }
+# The revision excludes VERSION.json itself, or every regeneration would point at the commit that recorded the previous one.
+$curatedVersionFile = "$curatedDir/VERSION.json"
+$curatedPathspec = @($curatedDir, ":(exclude)$curatedVersionFile")
+$curatedRevision = (git log -n 1 --format=%h -- @curatedPathspec).Trim()
+if ((git status --porcelain -- @curatedPathspec | Measure-Object).Count -gt 0) { $curatedRevision += "-dirty" }
 $fixture = (Get-ChildItem $fixturesDir -Filter "catalog-*.json.gz" | Select-Object -First 1).Name
+
+# The plugin reads the revision from VERSION.json (CuratedData.CuratedRevision) for Settings > About and the diagnostic block.
+$versionJson = @(
+    "{",
+    "  `"`$schema_note`": `"Written by tools/regen.ps1; do not edit by hand. curatedRevision is the short git hash of the last commit touching this directory (excluding this file), with -dirty appended when it had uncommitted changes.`",",
+    "  `"curatedRevision`": `"$curatedRevision`"",
+    "}"
+)
+[System.IO.File]::WriteAllText((Join-Path $root $curatedVersionFile), (($versionJson -join "`n") + "`n"), [System.Text.UTF8Encoding]::new($false))
+Write-Host "wrote:   $curatedVersionFile (curated $curatedRevision)"
 
 $byKind = $data.entries | Group-Object kind | Sort-Object Name
 $bySource = $data.entries | ForEach-Object { $_.otherSources } | Group-Object | Sort-Object -Property @{ Expression = "Count"; Descending = $true }, Name

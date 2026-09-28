@@ -289,15 +289,12 @@ static partial class Strings
     public const string ConfigVerdictsRestored = "All verdicts restored; the shipped reward data applies again.";
     public const string ConfigSectionAbout = "About";
     public const string ConfigPluginVersionPrefix = "Tsukimichi ";
-    public const string ConfigGameDataPrefix = "Reward data from game ";
-    public const string ConfigGameDataMissing = "Reward data not shipped in this build";
-    public const string ConfigGeneratedPrefix = ", generated ";
-    public const string ConfigUniqueEntriesSuffix = " unique reward entries";
     public const string ConfigCuratedPrefix = "Curated: ";
     public const string ConfigCuratedSystemSuffix = " system unlocks, ";
     public const string ConfigCuratedDutySuffix = " duty unlocks, ";
     public const string ConfigCuratedFeatureSuffix = " unlock quests, ";
     public const string ConfigCuratedFestivalSuffix = " festivals";
+    public const string ConfigDataStampTooltip = "The game version the reward data was generated from, how many entries and when, and the curated overlay's revision. The same stamp is in every diagnostic block.";
     public const string ConfigCatalogPrefix = "Catalog: ";
     public const string ConfigCatalogLoading = "Catalog: loading";
     public const string ConfigCatalogUnavailable = "Catalog unavailable: ";
@@ -525,6 +522,7 @@ static partial class Strings
             "/tsuki which",
             "/tsuki nearby",
             "/tsuki todo",
+            "/tsuki report [quest name]",
         ];
 
         public static readonly string[] CommandMeanings =
@@ -539,6 +537,7 @@ static partial class Strings
             "every quest the targeted NPC hands out, with its state",
             "open or close the Nearby quests window: what you can start in the current zone",
             "show or hide the todo overlay: pins, feature quests here, the next main scenario quest and job quests",
+            "copy a diagnostic block for the selected quest (or the named one) to the clipboard, ready to paste into a GitHub issue; the Report button in the detail pane does the same",
         ];
 
         // ---- Why my counts differ from the journal ----

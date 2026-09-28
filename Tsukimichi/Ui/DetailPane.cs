@@ -133,6 +133,10 @@ public sealed class DetailPane
     private int pathScrollFrames;
     private double pathHighlightUntil;
 
+    // "Copied · paste it into a GitHub issue" beside the Report button for a few seconds after a click.
+    private const double ReportNoteSeconds = 5.0;
+    private double reportNoteUntil;
+
     /// <param name="log">Receives the chain catalog's warnings once per rebuild; null logs nothing.</param>
     public DetailPane(UiState ui, QueryRunner runner, GameLinks links, ITextureProvider textures, IPluginLog? log = null)
     {
@@ -145,6 +149,9 @@ public sealed class DetailPane
 
     /// <summary>The user's unique-reward verdicts; null until the plugin attaches them, which hides the Moonlit section.</summary>
     public IUniqueOverrides? Overrides { get; set; }
+
+    /// <summary>Composes the "Report" diagnostic block; null until the plugin attaches it, which hides the button.</summary>
+    public DiagnosticBuilder? Diagnostics { get; set; }
 
     public void Draw(SessionState session, CatalogBundle bundle, Vector2 size)
     {
@@ -759,6 +766,7 @@ public sealed class DetailPane
         if (model.GiverName is null)
         {
             ImGui.TextDisabled(Strings.NoGiver);
+            DrawReport(quest, sameLine: false);
             return;
         }
 
@@ -835,6 +843,44 @@ public sealed class DetailPane
                     : Strings.TeleportNoAetheryte;
                 UiMetrics.Tooltip(tip);
             }
+        }
+
+        DrawReport(quest, sameLine: true);
+    }
+
+    /// <summary>
+    /// "Report" at the end of the action row (feature plan v3 T18): composes the diagnostic block for this quest on
+    /// the click only, puts it on the clipboard and shows "Copied · paste it into a GitHub issue" beside the button for
+    /// <see cref="ReportNoteSeconds"/>. Absent until the plugin attaches <see cref="Diagnostics"/>.
+    /// </summary>
+    private void DrawReport(QuestRecord quest, bool sameLine)
+    {
+        if (Diagnostics is not { } diagnostics)
+        {
+            return;
+        }
+
+        if (sameLine)
+        {
+            ImGui.SameLine();
+        }
+
+        if (ImGui.SmallButton(Strings.Report))
+        {
+            var copied = DiagnosticBuilder.TryCopy(diagnostics.Compose(quest), log ?? Plugin.Log);
+            reportNoteUntil = copied ? ImGui.GetTime() + ReportNoteSeconds : 0.0;
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.ReportTooltip);
+        }
+
+        if (ImGui.GetTime() < reportNoteUntil)
+        {
+            ImGui.SameLine();
+            using var moon = Theme.PushText(Theme.Moon);
+            ImGui.TextUnformatted(Strings.ReportCopied);
         }
     }
 

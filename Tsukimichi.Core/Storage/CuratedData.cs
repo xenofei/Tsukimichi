@@ -35,6 +35,7 @@ public sealed record OnlineStoreItem(string Name, RewardKind Kind, uint RewardId
 ///                      or  { "entries": { "1": { ... } } }
 /// chains.json          { "chains": [ { "name": "Hildibrand", "genreIds": [ 93, 94 ], "note": "..." } ] }
 /// online_store.json    { "schema": 1, "note": "...", "entries": { "22437": { "name": "Starlight Bear", "kind": "Mount", "rewardId": 99, "evidence": "https://...", "note": "..." } } }
+/// VERSION.json         { "curatedRevision": "573d225" }   (written by tools/regen.ps1; absent in a checkout that never ran it)
 /// </code>
 /// Every file must be strict JSON (no comments, no trailing commas), as the curated README requires.
 /// </summary>
@@ -46,6 +47,12 @@ public sealed class CuratedData
     public const string FestivalsFileName = "festivals.json";
     public const string ChainsFileName = "chains.json";
     public const string OnlineStoreFileName = "online_store.json";
+
+    /// <summary>Written by <c>tools/regen.ps1</c>: the overlay's revision for the About stamp and the diagnostic block.</summary>
+    public const string VersionFileName = "VERSION.json";
+
+    /// <summary>The key in <see cref="VersionFileName"/> holding the short git hash of the last commit touching the overlay.</summary>
+    public const string CuratedRevisionKey = "curatedRevision";
 
     private const string DefaultSystemKind = "system";
 
@@ -72,6 +79,7 @@ public sealed class CuratedData
         IReadOnlyDictionary<ushort, FestivalInfo> festivals,
         IReadOnlyList<CuratedChain> chains,
         IReadOnlyDictionary<uint, OnlineStoreItem> onlineStore,
+        string curatedRevision,
         IReadOnlyList<string> warnings)
     {
         SystemUnlocks = systemUnlocks;
@@ -80,6 +88,7 @@ public sealed class CuratedData
         Festivals = festivals;
         Chains = chains;
         OnlineStore = onlineStore;
+        CuratedRevision = curatedRevision;
         Warnings = warnings;
     }
 
@@ -90,6 +99,7 @@ public sealed class CuratedData
         new Dictionary<ushort, FestivalInfo>(),
         [],
         new Dictionary<uint, OnlineStoreItem>(),
+        string.Empty,
         []);
 
     public IReadOnlyDictionary<uint, SystemUnlock> SystemUnlocks { get; }
@@ -103,6 +113,12 @@ public sealed class CuratedData
     /// <summary>Rewards the Online Store also sells, by store item row id.</summary>
     public IReadOnlyDictionary<uint, OnlineStoreItem> OnlineStore { get; }
 
+    /// <summary>
+    /// Short git hash of the last commit touching the overlay, from <see cref="VersionFileName"/> ("573d225", or
+    /// "573d225-dirty" when regenerated with uncommitted changes); empty when the file is absent or has no value.
+    /// </summary>
+    public string CuratedRevision { get; }
+
     /// <summary>One line per skipped entry or unreadable file, for the caller to log once.</summary>
     public IReadOnlyList<string> Warnings { get; }
 
@@ -111,7 +127,7 @@ public sealed class CuratedData
     /// what the invariants test compares the shipped file against, so the file never feeds its own derivation.
     /// </summary>
     public CuratedData WithoutFeatureQuests() =>
-        FeatureQuests.Count == 0 ? this : new CuratedData(SystemUnlocks, DutyUnlocks, new HashSet<uint>(), Festivals, Chains, OnlineStore, Warnings);
+        FeatureQuests.Count == 0 ? this : new CuratedData(SystemUnlocks, DutyUnlocks, new HashSet<uint>(), Festivals, Chains, OnlineStore, CuratedRevision, Warnings);
 
     /// <summary>Loads every curated file under <paramref name="dir"/>. A missing directory or file yields empty collections.</summary>
     public static CuratedData Load(string dir)
@@ -306,7 +322,38 @@ public sealed class CuratedData
             onlineStore[itemId] = new OnlineStoreItem(name.Trim(), kind, rewardId, evidence.Trim(), StorageJson.ReadString(obj, "note"));
         });
 
-        return new CuratedData(systemUnlocks, dutyUnlocks, featureQuests, festivals, chains, onlineStore, warnings);
+        var curatedRevision = LoadRevision(Path.Combine(dir, VersionFileName), warnings);
+
+        return new CuratedData(systemUnlocks, dutyUnlocks, featureQuests, festivals, chains, onlineStore, curatedRevision, warnings);
+    }
+
+    /// <summary>
+    /// VERSION.json: an object with a <see cref="CuratedRevisionKey"/> string. A missing file is the normal state of a
+    /// checkout that never ran <c>tools/regen.ps1</c> and reads as an empty revision without a warning; a file without
+    /// the key, or with a blank one, is warned about.
+    /// </summary>
+    private static string LoadRevision(string path, List<string> warnings)
+    {
+        if (!File.Exists(path) || ParseRoot(path, warnings) is not { } root)
+        {
+            return string.Empty;
+        }
+
+        var fileName = Path.GetFileName(path);
+        if (root is not JsonObject obj)
+        {
+            warnings.Add($"{fileName}: root is not an object; no curated revision.");
+            return string.Empty;
+        }
+
+        var revision = StorageJson.ReadString(obj, CuratedRevisionKey);
+        if (string.IsNullOrWhiteSpace(revision))
+        {
+            warnings.Add($"{fileName}: {CuratedRevisionKey} is missing; no curated revision.");
+            return string.Empty;
+        }
+
+        return revision.Trim();
     }
 
     /// <summary>

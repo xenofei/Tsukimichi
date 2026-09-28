@@ -431,4 +431,34 @@ public sealed class CuratedDataTests : IDisposable
         Assert.Contains("system_unlocks.json", data.Warnings[0]);
         Assert.True(File.Exists(tmp.File(Path.Combine("curated", "system_unlocks.json"))));
     }
+
+    [Fact]
+    public void Version_file_gives_the_curated_revision_and_is_optional()
+    {
+        WriteCurated("feature_quests.json", "[1]");
+        Assert.Equal(string.Empty, CuratedData.Load(tmp.File("curated")).CuratedRevision);
+        Assert.Empty(CuratedData.Load(tmp.File("curated")).Warnings);
+
+        WriteCurated(CuratedData.VersionFileName, """{ "$schema_note": "written by regen", "curatedRevision": " 573d225-dirty " }""");
+        var data = CuratedData.Load(tmp.File("curated"));
+        Assert.Equal("573d225-dirty", data.CuratedRevision);
+        Assert.Empty(data.Warnings);
+        Assert.Equal("573d225-dirty", data.WithoutFeatureQuests().CuratedRevision);
+    }
+
+    [Fact]
+    public void Version_file_without_a_revision_is_warned_and_reads_empty()
+    {
+        WriteCurated(CuratedData.VersionFileName, """{ "note": "no revision" }""");
+        var missing = CuratedData.Load(tmp.File("curated"));
+        Assert.Equal(string.Empty, missing.CuratedRevision);
+        Assert.Single(missing.Warnings);
+        Assert.Contains(CuratedData.CuratedRevisionKey, missing.Warnings[0]);
+
+        WriteCurated(CuratedData.VersionFileName, "[1]");
+        var array = CuratedData.Load(tmp.File("curated"));
+        Assert.Equal(string.Empty, array.CuratedRevision);
+        Assert.Single(array.Warnings);
+        Assert.Contains(CuratedData.VersionFileName, array.Warnings[0]);
+    }
 }

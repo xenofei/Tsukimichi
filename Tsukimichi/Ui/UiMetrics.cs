@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility;
@@ -116,13 +117,31 @@ public static class UiMetrics
         }
     }
 
+    // The last reason line composed for a moon tooltip: one moon is hovered at a time, and an evaluation is an
+    // immutable record replaced on every resolve, so the pair (evaluation, quest) identifies the line.
+    private static QuestEvaluation? reasonEvaluation;
+    private static QuestRecord? reasonQuest;
+    private static string? reasonText;
+
     /// <summary>
     /// The tooltip of a state moon: <see cref="Strings.StateTooltip(QuestState, QuestRecord?)"/> (name and shape
-    /// hint), then the decisive reason under it when the evaluation has one. Call after the moon's item while it is
-    /// hovered; every string is precomposed, so nothing allocates.
+    /// hint), then the decisive blocker under it (<see cref="Strings.StateReason"/>, the same words as the Status
+    /// column) when the evaluation has one. Call after the moon's item while it is hovered. The name line is
+    /// precomposed and the reason is cached per evaluation, so a hover held over frames allocates nothing.
     /// </summary>
-    public static void StateTooltip(QuestState state, QuestEvaluation? evaluation, QuestRecord? quest) =>
-        Tooltip(Strings.StateTooltip(state, quest), Strings.StateReason(state, evaluation));
+    /// <param name="names">Name lookups for the blocker line, normally the session's.</param>
+    /// <param name="states">Every quest's evaluation for the same character when at hand; null for another character's evaluation.</param>
+    public static void StateTooltip(QuestState state, QuestEvaluation? evaluation, QuestRecord? quest, BlockerNames names, IReadOnlyDictionary<uint, QuestEvaluation>? states)
+    {
+        if (!ReferenceEquals(evaluation, reasonEvaluation) || !ReferenceEquals(quest, reasonQuest))
+        {
+            reasonEvaluation = evaluation;
+            reasonQuest = quest;
+            reasonText = Strings.StateReason(state, evaluation, quest, names, states);
+        }
+
+        Tooltip(Strings.StateTooltip(state, quest), reasonText);
+    }
 
     /// <summary>Square size vector helper.</summary>
     public static Vector2 Square(float size) => new(size, size);

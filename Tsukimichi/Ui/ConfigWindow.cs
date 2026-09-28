@@ -34,8 +34,8 @@ public sealed class ConfigWindow : Window
     private readonly Action<bool> onShowUnlistedChanged;
 
     private readonly string pluginVersionLine;
-    private readonly string gameDataLine;
-    private readonly string entriesLine;
+    private readonly string dataStampLine;
+    private readonly string? dataVersionWarning;
     private readonly string curatedLine;
 
     private CatalogBundle? aboutBundle;
@@ -62,27 +62,23 @@ public sealed class ConfigWindow : Window
     private string pollTimingLine = Strings.ConfigPollTimingNone;
     private string pollCostLine = Strings.ConfigPollCostUnknown;
 
-    public ConfigWindow(Configuration settings, SessionState session, IDalamudPluginInterface pluginInterface, Action<bool> onShowUnlistedChanged)
+    /// <param name="diagnostics">Owns the data stamp and the game-version warning the About section shows.</param>
+    public ConfigWindow(Configuration settings, SessionState session, IDalamudPluginInterface pluginInterface, DiagnosticBuilder diagnostics, Action<bool> onShowUnlistedChanged)
         : base("Tsukimichi Settings###TsukimichiConfig")
     {
         this.settings = settings ?? throw new ArgumentNullException(nameof(settings));
         this.session = session ?? throw new ArgumentNullException(nameof(session));
         this.pluginInterface = pluginInterface ?? throw new ArgumentNullException(nameof(pluginInterface));
+        ArgumentNullException.ThrowIfNull(diagnostics);
         this.onShowUnlistedChanged = onShowUnlistedChanged ?? throw new ArgumentNullException(nameof(onShowUnlistedChanged));
 
         Size = new Vector2(480f, 640f);
         SizeCondition = ImGuiCond.FirstUseEver;
         SizeConstraints = new WindowSizeConstraints { MinimumSize = new Vector2(400f, 320f) };
 
-        var version = typeof(ConfigWindow).Assembly.GetName().Version;
-        pluginVersionLine = Strings.ConfigPluginVersionPrefix + (version?.ToString() ?? "unknown");
-
-        var rewards = session.UniqueRewards;
-        gameDataLine = string.IsNullOrEmpty(rewards.GameVersion)
-            ? Strings.ConfigGameDataMissing
-            : Strings.ConfigGameDataPrefix + rewards.GameVersion
-              + (rewards.GeneratedUtc == default ? string.Empty : Strings.ConfigGeneratedPrefix + rewards.GeneratedUtc.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
-        entriesLine = rewards.Entries.Count.ToString(CultureInfo.InvariantCulture) + Strings.ConfigUniqueEntriesSuffix;
+        pluginVersionLine = Strings.ConfigPluginVersionPrefix + (diagnostics.PluginVersion.Length > 0 ? diagnostics.PluginVersion : "unknown");
+        dataStampLine = diagnostics.DataStampLine;
+        dataVersionWarning = diagnostics.VersionMismatchWarning;
 
         var curated = session.Curated;
         curatedLine = Strings.ConfigCuratedPrefix
@@ -684,8 +680,18 @@ public sealed class ConfigWindow : Window
         Header(Strings.ConfigSectionAbout);
         RefreshCatalogLine();
         ImGui.TextUnformatted(pluginVersionLine);
-        ImGui.TextUnformatted(gameDataLine);
-        ImGui.TextUnformatted(entriesLine);
+        ImGui.TextUnformatted(dataStampLine);
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.ConfigDataStampTooltip);
+        }
+
+        if (dataVersionWarning is { } warning)
+        {
+            using var eclipse = Theme.PushText(Theme.Eclipse);
+            ImGui.TextWrapped(warning);
+        }
+
         ImGui.TextUnformatted(curatedLine);
         ImGui.TextUnformatted(catalogLine);
         RefreshPollTiming();
