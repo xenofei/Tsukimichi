@@ -222,6 +222,8 @@ public class CatalogLoaderTests(GameDataFixture fixture, ITestOutputHelper outpu
         Assert.Equal("Maelstrom", names.GrandCompany(1));
         Assert.Equal("Amalj'aa", names.Tribe(1));
         Assert.Equal("PLD", names.ClassJobAbbreviation(19));
+        Assert.Equal("Paladin", names.ClassJob(19));
+        Assert.Equal("Black Mage", names.ClassJob(25));
         Assert.Equal(string.Empty, names.Tribe(0));
         Assert.NotEmpty(names.TribeRanks);
     }
@@ -264,6 +266,19 @@ public class CatalogLoaderTests(GameDataFixture fixture, ITestOutputHelper outpu
     }
 
     [GameDataFact]
+    public void Sheet_names_title_case_at_load()
+    {
+        // Mount 6 is "magitek armor" in the sheet; the same helper the unique-reward loader applies gives the display name.
+        var mount = fixture.Game.Excel.GetSheet<Lumina.Excel.Sheets.Mount>().GetRow(6);
+        Assert.Equal("magitek armor", mount.Singular.ExtractText());
+        Assert.Equal("Magitek Armor", NameCase.Title(mount.Singular.ExtractText()));
+
+        var conjurer = Catalog.GetByRowId(65558u);
+        Assert.NotNull(conjurer);
+        Assert.Equal("Conjurer", Assert.Single(conjurer.Rewards, r => r.Kind == RewardKind.ClassJob).Name);
+    }
+
+    [GameDataFact]
     public void Cancelled_token_stops_the_build()
     {
         using var cts = new CancellationTokenSource();
@@ -277,7 +292,7 @@ public class CatalogLoaderTests(GameDataFixture fixture, ITestOutputHelper outpu
         var jobs = fixture.Bundle.Jobs;
         var paladin = names.ClassJobInfo(19);
         Assert.NotNull(paladin);
-        Assert.Equal("paladin", paladin.Name, ignoreCase: true);
+        Assert.Equal("Paladin", paladin.Name);
         Assert.Equal("PLD", paladin.Abbreviation);
         Assert.Equal(1u, paladin.ParentRowId);
         Assert.Equal(66591u, paladin.UnlockQuestRowId);

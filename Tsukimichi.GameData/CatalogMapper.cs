@@ -288,7 +288,7 @@ public static class CatalogMapper
 
         if (quest.ClassJobUnlock.RowId != 0 && quest.ClassJobUnlock.ValueNullable is { } classJob)
         {
-            rewards.Add(new RewardRef(RewardKind.ClassJob, classJob.RowId, 0, 1, classJob.Name.ExtractText(), 0));
+            rewards.Add(new RewardRef(RewardKind.ClassJob, classJob.RowId, 0, 1, NameCase.Title(classJob.Name.ExtractText()), 0));
         }
 
         if (quest.OtherReward.RowId != 0 && quest.OtherReward.ValueNullable is { } other)
@@ -342,8 +342,9 @@ public static class CatalogMapper
         foreach (var job in excel.GetSheet<ClassJob>(language))
         {
             // Rows past the last real job carry an abbreviation and an exp slot but no name; they are not jobs.
+            // The sheet spells names in lower case ("paladin"); they are shown as titles everywhere.
             var abbreviation = job.Abbreviation.ExtractText();
-            var name = job.Name.ExtractText();
+            var name = NameCase.Title(job.Name.ExtractText());
             if (abbreviation.Length == 0 || name.Length == 0)
             {
                 continue;
