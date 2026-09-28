@@ -23,6 +23,9 @@ public static class MoonGlyph
     /// <summary>Radius from which shading and the highlight arc are drawn; smaller glyphs stay flat.</summary>
     public const float ShadingMinRadius = 9f;
 
+    /// <summary>Radius of an inline glyph as a fraction of its square, leaving room for rings, the notch and the glow.</summary>
+    public const float InlineRadiusFraction = 0.42f;
+
     /// <summary>Ring thickness as a fraction of the radius (never thinner than one pixel).</summary>
     private const float RingFraction = 0.07f;
 

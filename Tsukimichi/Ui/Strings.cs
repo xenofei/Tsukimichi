@@ -99,6 +99,16 @@ public static partial class Strings
     public const string PinnedFirst = "Pinned first";
     public const string Reset = "Reset";
 
+    // Display (size sliders at the bottom of the filter panel)
+    public const string Display = "Display";
+    public const string UiScale = "UI scale";
+    public const string UiScaleTooltip = "Text and layout size of this window on top of Dalamud's global scale";
+    public const string IconScale = "Icon scale";
+    public const string IconScaleTooltip = "Size of moons, reward icons and banners relative to the text";
+    public const string ScaleFormat = "%.2f×";
+    public const string ResetDisplay = "Default sizes";
+    public const string ResetDisplayTooltip = "Back to the default UI and icon scale";
+
     // Filter panel tooltips
     public const string HideCompletedTooltip = "Remove Completed and Foreclosed quests from the table";
     public const string AvailableOnlyTooltip = "Keep only quests you can pick up now: Ready, Ready on another job and Accepted";

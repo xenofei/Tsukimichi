@@ -4,7 +4,6 @@ using System.Globalization;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Textures;
-using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
 using Tsukimichi.Core.Evaluation;
@@ -25,8 +24,6 @@ public sealed class DetailPane
 {
     public const int MaxUnlocks = 8;
 
-    private const float HeaderGlyphRadius = 20f;
-    private const float PathGlyphRadius = 7f;
     private const int PathScrollFrames = 2;
     private const double PathHighlightSeconds = 1.5;
     private const int MinFoldedRun = 2;
@@ -145,7 +142,7 @@ public sealed class DetailPane
             return;
         }
 
-        var scale = ImGuiHelpers.GlobalScale;
+        var scale = UiMetrics.Scale;
         var width = ImGui.GetContentRegionAvail().X;
         DrawHeader(quest, scale);
 
@@ -185,7 +182,8 @@ public sealed class DetailPane
 
     private void DrawHeader(QuestRecord quest, float scale)
     {
-        var radius = HeaderGlyphRadius * scale;
+        _ = scale;
+        var radius = UiMetrics.HeaderMoonRadius;
         var box = radius * 2.6f;
         var pos = ImGui.GetCursorScreenPos();
         ImGui.Dummy(new Vector2(box, box));
@@ -269,7 +267,8 @@ public sealed class DetailPane
             return;
         }
 
-        var iconSize = ImGui.GetTextLineHeight() + 4f * scale;
+        _ = scale;
+        var iconSize = UiMetrics.DetailIconSize;
         foreach (var line in model.Rewards)
         {
             using (ImRaii.Group())
@@ -322,7 +321,7 @@ public sealed class DetailPane
 
             if (ImGui.IsItemHovered())
             {
-                ImGui.SetTooltip(Strings.RestoreOverrideTooltip);
+                UiMetrics.Tooltip(Strings.RestoreOverrideTooltip);
             }
 
             return;
@@ -344,7 +343,7 @@ public sealed class DetailPane
 
         if (ImGui.IsItemHovered())
         {
-            ImGui.SetTooltip(Strings.MarkUniqueTooltip);
+            UiMetrics.Tooltip(Strings.MarkUniqueTooltip);
         }
 
         using var popup = ImRaii.Popup(Strings.MarkUniquePopup);
@@ -353,7 +352,9 @@ public sealed class DetailPane
             return;
         }
 
-        ImGui.SetNextItemWidth(220f * ImGuiHelpers.GlobalScale);
+        // Opened from the detail child (own font scale 1), so the popup scales itself.
+        UiMetrics.ApplyFontScale();
+        ImGui.SetNextItemWidth(UiMetrics.Px(220f));
         ImGui.InputTextWithHint("##uniqueNote", Strings.MarkUniqueNoteHint, ref noteBuffer, NoteLength);
         if (ImGui.Button(Strings.MarkUniqueConfirm))
         {
@@ -381,7 +382,7 @@ public sealed class DetailPane
         }
 
         var dl = ImGui.GetWindowDrawList();
-        var radius = PathGlyphRadius * scale;
+        var radius = UiMetrics.PathGlyphRadius;
         var lineHeight = ImGui.GetTextLineHeight();
         var glyphBox = MathF.Max(lineHeight, radius * 2.4f);
         var previousCenter = Vector2.Zero;
@@ -417,7 +418,7 @@ public sealed class DetailPane
 
                     if (ImGui.IsItemHovered())
                     {
-                        ImGui.SetTooltip(expanded ? Strings.FoldedRunCollapseTooltip : Strings.FoldedRunExpandTooltip);
+                        UiMetrics.Tooltip(expanded ? Strings.FoldedRunCollapseTooltip : Strings.FoldedRunExpandTooltip);
                     }
 
                     previousCenter = center;
@@ -452,9 +453,10 @@ public sealed class DetailPane
     {
         var pos = ImGui.GetCursorScreenPos();
         var center = pos + new Vector2(glyphBox * 0.5f, lineHeight * 0.5f);
+        _ = scale;
         if (hasPrevious)
         {
-            dl.AddLine(previousCenter + new Vector2(0f, radius), center - new Vector2(0f, radius), Theme.DuskU32, 1f * scale);
+            dl.AddLine(previousCenter + new Vector2(0f, radius), center - new Vector2(0f, radius), Theme.DuskU32, UiMetrics.Hairline);
         }
 
         ImGui.Dummy(new Vector2(glyphBox, lineHeight));
@@ -475,8 +477,9 @@ public sealed class DetailPane
             return;
         }
 
+        _ = scale;
         var dl = ImGui.GetWindowDrawList();
-        var radius = PathGlyphRadius * scale;
+        var radius = UiMetrics.PathGlyphRadius;
         var lineHeight = ImGui.GetTextLineHeight();
         var glyphBox = MathF.Max(lineHeight, radius * 2.4f);
         foreach (var line in model.Unlocks)
@@ -537,7 +540,7 @@ public sealed class DetailPane
 
         if (!canOpen && ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
-            ImGui.SetTooltip(Strings.OpenJournalUnavailable);
+            UiMetrics.Tooltip(Strings.OpenJournalUnavailable);
         }
 
         ImGui.SameLine();
@@ -556,7 +559,7 @@ public sealed class DetailPane
 
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
-            ImGui.SetTooltip(Strings.CopyCoordinatesTooltip);
+            UiMetrics.Tooltip(Strings.CopyCoordinatesTooltip);
         }
     }
 

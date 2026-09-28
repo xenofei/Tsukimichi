@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
-using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
+using Tsukimichi.Config;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
+using Tsukimichi.Core.Ui;
 using Tsukimichi.GameData;
 
 namespace Tsukimichi.Ui;
@@ -46,6 +47,7 @@ public sealed class FilterPanel
 
     private readonly UiState ui;
     private readonly Action changed;
+    private readonly Action displayChanged;
 
     private CatalogBundle? bundle;
     private readonly List<(uint Id, string Name)> categories = [];
@@ -63,19 +65,25 @@ public sealed class FilterPanel
     private uint? jobPreviewId;
     private bool jobPreviewValid;
 
-    public FilterPanel(UiState ui, Action changed)
+    /// <param name="changed">A filter changed: the window re-runs the query and persists the filters.</param>
+    /// <param name="displayChanged">A display slider changed: the window persists the settings (no query re-run).</param>
+    public FilterPanel(UiState ui, Action changed, Action displayChanged)
     {
         this.ui = ui ?? throw new ArgumentNullException(nameof(ui));
         this.changed = changed ?? throw new ArgumentNullException(nameof(changed));
+        this.displayChanged = displayChanged ?? throw new ArgumentNullException(nameof(displayChanged));
     }
 
-    /// <summary>The panel body. <paramref name="snapshot"/> null means browse mode: runtime-only filters are disabled.</summary>
-    public void Draw(CatalogBundle current, CharacterSnapshot? snapshot)
+    /// <summary>
+    /// The panel body. <paramref name="snapshot"/> null means browse mode: runtime-only filters are disabled.
+    /// <paramref name="settings"/> receives the Display sliders' values.
+    /// </summary>
+    public void Draw(CatalogBundle current, CharacterSnapshot? snapshot, Configuration settings)
     {
+        ArgumentNullException.ThrowIfNull(settings);
         EnsureLists(current);
         var f = ui.Filters;
         var hasSnapshot = snapshot is not null;
-        var scale = ImGuiHelpers.GlobalScale;
         var start = ImGui.GetCursorScreenPos();
         var width = ImGui.GetContentRegionAvail().X;
 
@@ -88,9 +96,9 @@ public sealed class FilterPanel
             using var indent = ImRaii.PushIndent(8f);
             DrawStates(f);
             DrawExpansions(f);
-            DrawLevelRange(f, scale);
-            DrawJobCategory(f, snapshot, scale);
-            DrawRewardKinds(f, scale);
+            DrawLevelRange(f);
+            DrawJobCategory(f, snapshot);
+            DrawRewardKinds(f);
             Toggle(Strings.RepeatableOnly, Strings.RepeatableOnlyTooltip, f.RepeatableOnly, v => f.RepeatableOnly = v);
             Toggle(Strings.SeasonalActiveOnly, Strings.SeasonalActiveOnlyTooltip, f.SeasonalActiveOnly, v => f.SeasonalActiveOnly = v, hasSnapshot);
             Toggle(Strings.IncludeUnlisted, Strings.IncludeUnlistedTooltip, f.IncludeUnlisted, v => f.IncludeUnlisted = v);
@@ -104,7 +112,53 @@ public sealed class FilterPanel
 
         Tip(Strings.ResetTooltip);
         ImGui.Separator();
+        DrawDisplay(settings);
+        ImGui.Separator();
         ui.RecordSpan(UiRects.FilterPanel, start, width);
+    }
+
+    /// <summary>UI and icon scale sliders; the values take effect on the next frame and are saved with the settings.</summary>
+    private void DrawDisplay(Configuration settings)
+    {
+        ImGui.TextDisabled(Strings.Display);
+        var sliderWidth = UiMetrics.Px(150f);
+
+        var uiScale = ScaleMetrics.ClampUiScale(settings.UiScale);
+        ImGui.SetNextItemWidth(sliderWidth);
+        if (ImGui.SliderFloat("##uiScale", ref uiScale, ScaleMetrics.MinUiScale, ScaleMetrics.MaxUiScale, Strings.ScaleFormat, ImGuiSliderFlags.AlwaysClamp))
+        {
+            settings.UiScale = uiScale;
+            displayChanged();
+        }
+
+        Tip(Strings.UiScaleTooltip);
+        ImGui.SameLine();
+        ImGui.TextUnformatted(Strings.UiScale);
+
+        var iconScale = ScaleMetrics.ClampIconScale(settings.IconScale);
+        ImGui.SetNextItemWidth(sliderWidth);
+        if (ImGui.SliderFloat("##iconScale", ref iconScale, ScaleMetrics.MinIconScale, ScaleMetrics.MaxIconScale, Strings.ScaleFormat, ImGuiSliderFlags.AlwaysClamp))
+        {
+            settings.IconScale = iconScale;
+            displayChanged();
+        }
+
+        Tip(Strings.IconScaleTooltip);
+        ImGui.SameLine();
+        ImGui.TextUnformatted(Strings.IconScale);
+
+        var isDefault = settings.UiScale == ScaleMetrics.DefaultUiScale && settings.IconScale == ScaleMetrics.DefaultIconScale;
+        using (ImRaii.Disabled(isDefault))
+        {
+            if (ImGui.SmallButton(Strings.ResetDisplay))
+            {
+                settings.UiScale = ScaleMetrics.DefaultUiScale;
+                settings.IconScale = ScaleMetrics.DefaultIconScale;
+                displayChanged();
+            }
+        }
+
+        Tip(Strings.ResetDisplayTooltip);
     }
 
     /// <summary>The sort's pinned-first flag lives beside the filters; MainWindow persists it with the sort.</summary>
@@ -124,7 +178,7 @@ public sealed class FilterPanel
     {
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
-            ImGui.SetTooltip(text);
+            UiMetrics.Tooltip(text);
         }
     }
 
@@ -237,7 +291,7 @@ public sealed class FilterPanel
 
         if (ImGui.IsItemHovered())
         {
-            ImGui.SetTooltip(Strings.ChipTooltip);
+            UiMetrics.Tooltip(Strings.ChipTooltip);
         }
     }
 
@@ -272,7 +326,9 @@ public sealed class FilterPanel
             return;
         }
 
-        var width = 90f * ImGuiHelpers.GlobalScale;
+        // Opened from the left column (own font scale 1), so the popup scales itself.
+        UiMetrics.ApplyFontScale();
+        var width = UiMetrics.Px(90f);
         foreach (var (categoryId, name) in categories)
         {
             using var row = ImRaii.PushId((int)categoryId);
@@ -340,12 +396,12 @@ public sealed class FilterPanel
         }
     }
 
-    private void DrawLevelRange(FilterSet f, float scale)
+    private void DrawLevelRange(FilterSet f)
     {
         ImGui.TextDisabled(Strings.LevelRange);
         int min = f.LevelMin;
         int max = f.LevelMax == FilterSet.NoLevelMax ? LevelCap : f.LevelMax;
-        ImGui.SetNextItemWidth(180f * scale);
+        ImGui.SetNextItemWidth(UiMetrics.Px(180f));
         if (ImGui.DragIntRange2("##level", ref min, ref max, 0.5f, 0, LevelCap, Strings.LevelFormat, Strings.LevelMaxFormat, ImGuiSliderFlags.AlwaysClamp))
         {
             f.LevelMin = (byte)Math.Clamp(min, 0, LevelCap);
@@ -356,17 +412,20 @@ public sealed class FilterPanel
         Tip(Strings.LevelRangeTooltip);
     }
 
-    private void DrawJobCategory(FilterSet f, CharacterSnapshot? snapshot, float scale)
+    private void DrawJobCategory(FilterSet f, CharacterSnapshot? snapshot)
     {
         ImGui.TextDisabled(Strings.JobCategory);
         var currentOnly = CurrentJobCategory(snapshot);
-        ImGui.SetNextItemWidth(180f * scale);
+        ImGui.SetNextItemWidth(UiMetrics.Px(180f));
         using var combo = ImRaii.Combo("##job", JobPreview(f));
         Tip(Strings.JobCategoryTooltip);
         if (!combo)
         {
             return;
         }
+
+        // The combo popup opens from the left column (own font scale 1), so it scales itself.
+        UiMetrics.ApplyFontScale();
 
         foreach (var (label, id) in JobChoices)
         {
@@ -388,15 +447,15 @@ public sealed class FilterPanel
 
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
-            ImGui.SetTooltip(currentOnly is null ? Strings.NeedsSnapshot : Strings.JobCurrentOnlyTooltip);
+            UiMetrics.Tooltip(currentOnly is null ? Strings.NeedsSnapshot : Strings.JobCurrentOnlyTooltip);
         }
     }
 
-    private void DrawRewardKinds(FilterSet f, float scale)
+    private void DrawRewardKinds(FilterSet f)
     {
         ImGui.TextDisabled(Strings.RewardKinds);
         Tip(Strings.RewardKindsTooltip);
-        var width = 80f * scale;
+        var width = UiMetrics.Px(80f);
         foreach (var kind in Kinds)
         {
             using var id = ImRaii.PushId((int)kind);

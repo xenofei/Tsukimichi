@@ -4,7 +4,6 @@ using System.Globalization;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Textures;
-using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
 using Tsukimichi.Core.Model;
@@ -19,7 +18,6 @@ namespace Tsukimichi.Ui;
 /// </summary>
 public static class RewardTooltip
 {
-    public const float IconSize = 64f;
     public const float WrapWidthEm = 26f;
 
     private static readonly Dictionary<(RewardKind Kind, uint Count), string> KindLines = [];
@@ -32,8 +30,10 @@ public static class RewardTooltip
         ArgumentNullException.ThrowIfNull(textures);
 
         using var tooltip = ImRaii.Tooltip();
-        var scale = ImGuiHelpers.GlobalScale;
-        var iconSize = IconSize * scale;
+        // A tooltip has no parent window, so it applies the font scale itself.
+        UiMetrics.ApplyFontScale();
+        var scale = UiMetrics.Scale;
+        var iconSize = UiMetrics.TooltipIconSize;
         if (reward.Icon != 0)
         {
             var wrap = textures.GetFromGameIcon(new GameIconLookup(reward.Icon)).GetWrapOrEmpty();

@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.Components;
-using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin;
@@ -30,10 +29,7 @@ public sealed class MainWindow : Window, IDisposable
     public const float DefaultHeight = 700f;
     public const float MinWidth = 800f;
     public const float MinHeight = 500f;
-    public const float LeftColumnWidth = 240f;
-    public const float RightColumnWidth = 360f;
     public const int MaxChatMatches = 5;
-    public const float MinChipStripWidth = 40f;
     public const int ToolbarButtonCount = 3;
 
     private static readonly TimeSpan SettingsSaveDebounce = TimeSpan.FromSeconds(1);
@@ -105,7 +101,7 @@ public sealed class MainWindow : Window, IDisposable
         SizeCondition = ImGuiCond.FirstUseEver;
         SizeConstraints = new WindowSizeConstraints { MinimumSize = new Vector2(MinWidth, MinHeight) };
 
-        filterPanel = new FilterPanel(ui, OnFiltersChanged);
+        filterPanel = new FilterPanel(ui, OnFiltersChanged, OnDisplayChanged);
         ui.FiltersChanged += OnFiltersChanged;
         treePane = new TreePane(ui);
         tablePane = new TablePane(ui, runner, links, textures, pluginInterface, log, filterPanel.ResetAll);
@@ -158,6 +154,23 @@ public sealed class MainWindow : Window, IDisposable
         }
 
         EnsureInitialized();
+        UiMetrics.Update(plugin.Settings);
+
+        // The window's own font scale; direct children inherit it (see UiMetrics). It is reset before this Draw ends
+        // so the next Begin lays the title bar out at Dalamud's size.
+        UiMetrics.ApplyFontScale();
+        try
+        {
+            DrawContent(session);
+        }
+        finally
+        {
+            ImGui.SetWindowFontScale(1f);
+        }
+    }
+
+    private void DrawContent(SessionState session)
+    {
         var now = DateTime.UtcNow;
         FlushSettings(now, force: false);
 
@@ -266,6 +279,12 @@ public sealed class MainWindow : Window, IDisposable
         settingsDirtyAtUtc ??= DateTime.UtcNow;
     }
 
+    /// <summary>A display slider moved: the settings object already holds the value; persist it after the debounce.</summary>
+    private void OnDisplayChanged()
+    {
+        settingsDirtyAtUtc ??= DateTime.UtcNow;
+    }
+
     private void FlushSettings(DateTime nowUtc, bool force)
     {
         if (settingsDirtyAtUtc is not { } dirtyAt || (!force && nowUtc - dirtyAt < SettingsSaveDebounce))
@@ -344,15 +363,13 @@ public sealed class MainWindow : Window, IDisposable
 
     private void DrawToolbar(SessionState session)
     {
-        var scale = ImGuiHelpers.GlobalScale;
-
         if (!string.Equals(searchBuffer, ui.SearchText, StringComparison.Ordinal))
         {
             searchBuffer = ui.SearchText;
         }
 
         var toolbarMin = ImGui.GetCursorScreenPos();
-        ImGui.SetNextItemWidth(280f * scale);
+        ImGui.SetNextItemWidth(UiMetrics.SearchWidth);
         if (ImGui.InputTextWithHint("##search", Strings.SearchHint, ref searchBuffer, 200))
         {
             ui.SearchText = searchBuffer;
@@ -361,7 +378,7 @@ public sealed class MainWindow : Window, IDisposable
         ui.RecordItem(UiRects.Search);
         if (ImGui.IsItemHovered())
         {
-            ImGui.SetTooltip(Strings.SearchTooltip);
+            UiMetrics.Tooltip(Strings.SearchTooltip);
         }
 
         ImGui.SameLine();
@@ -376,7 +393,7 @@ public sealed class MainWindow : Window, IDisposable
 
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
-            ImGui.SetTooltip(Strings.ClearSearch);
+            UiMetrics.Tooltip(Strings.ClearSearch);
         }
 
         ImGui.SameLine();
@@ -391,21 +408,21 @@ public sealed class MainWindow : Window, IDisposable
         ui.RecordItem(UiRects.FiltersButton);
         if (ImGui.IsItemHovered())
         {
-            ImGui.SetTooltip(Strings.FiltersTooltip);
+            UiMetrics.Tooltip(Strings.FiltersTooltip);
         }
 
         ImGui.SameLine();
-        DrawCharacterCombo(session, scale);
+        DrawCharacterCombo(session);
 
         // Active-filter chips live on the toolbar row itself, in a fixed-height strip clipped horizontally, so toggling
         // a filter never moves the layout below. The strip stays empty when nothing is engaged.
         ImGui.SameLine();
-        var glyphSize = ImGui.GetFrameHeight();
+        var glyphSize = UiMetrics.ChipHeight;
         var spacing = ImGui.GetStyle().ItemSpacing.X;
         // Right block: sync glyph plus three square icon buttons (help, tutorial, settings).
         var rightWidth = glyphSize * (1 + ToolbarButtonCount) + spacing * ToolbarButtonCount;
         var chipsWidth = ImGui.GetContentRegionAvail().X - rightWidth - spacing;
-        if (chipsWidth > MinChipStripWidth * scale)
+        if (chipsWidth > UiMetrics.MinChipStripWidth)
         {
             using (var strip = ImRaii.Child("##chips", new Vector2(chipsWidth, glyphSize), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse))
             {
@@ -434,7 +451,7 @@ public sealed class MainWindow : Window, IDisposable
         ui.RecordItem(UiRects.Sync);
         if (ImGui.IsItemHovered())
         {
-            ImGui.SetTooltip(syncTooltip);
+            UiMetrics.Tooltip(syncTooltip);
         }
 
         var buttonSize = new Vector2(glyphSize, glyphSize);
@@ -464,17 +481,17 @@ public sealed class MainWindow : Window, IDisposable
         ui.RecordItem(rectKey);
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
-            ImGui.SetTooltip(action is null ? Strings.ActionUnavailable : tooltip);
+            UiMetrics.Tooltip(action is null ? Strings.ActionUnavailable : tooltip);
         }
     }
 
-    private void DrawCharacterCombo(SessionState session, float scale)
+    private void DrawCharacterCombo(SessionState session)
     {
-        ImGui.SetNextItemWidth(240f * scale);
+        ImGui.SetNextItemWidth(UiMetrics.CharacterComboWidth);
         using var combo = ImRaii.Combo("##character", characterPreview);
         if (ImGui.IsItemHovered())
         {
-            ImGui.SetTooltip(Strings.CharacterComboTooltip);
+            UiMetrics.Tooltip(Strings.CharacterComboTooltip);
         }
 
         if (!combo)
@@ -534,10 +551,9 @@ public sealed class MainWindow : Window, IDisposable
 
     private void DrawBody(SessionState session, CatalogBundle bundle)
     {
-        var scale = ImGuiHelpers.GlobalScale;
         var style = ImGui.GetStyle();
         var statusHeight = ImGui.GetTextLineHeightWithSpacing() + style.ItemSpacing.Y * 2f;
-        var bodyHeight = MathF.Max(120f * scale, ImGui.GetContentRegionAvail().Y - statusHeight);
+        var bodyHeight = MathF.Max(UiMetrics.MinBodyHeight, ImGui.GetContentRegionAvail().Y - statusHeight);
         var cellHeight = bodyHeight - style.CellPadding.Y * 2f;
 
         using var layout = ImRaii.Table("##layout", 3, ImGuiTableFlags.Resizable | ImGuiTableFlags.BordersInnerV | ImGuiTableFlags.NoPadOuterX, new Vector2(0f, bodyHeight));
@@ -546,9 +562,9 @@ public sealed class MainWindow : Window, IDisposable
             return;
         }
 
-        ImGui.TableSetupColumn("##left", ImGuiTableColumnFlags.WidthFixed, LeftColumnWidth * scale);
+        ImGui.TableSetupColumn("##left", ImGuiTableColumnFlags.WidthFixed, UiMetrics.LeftColumnWidth);
         ImGui.TableSetupColumn("##center", ImGuiTableColumnFlags.WidthStretch);
-        ImGui.TableSetupColumn("##right", ImGuiTableColumnFlags.WidthFixed, RightColumnWidth * scale);
+        ImGui.TableSetupColumn("##right", ImGuiTableColumnFlags.WidthFixed, UiMetrics.RightColumnWidth);
         ImGui.TableNextRow();
 
         ImGui.TableNextColumn();
@@ -624,7 +640,7 @@ public sealed class MainWindow : Window, IDisposable
             case NavTab.Journal:
                 if (ui.FilterPanelOpen)
                 {
-                    filterPanel.Draw(bundle, session.ViewedSnapshot);
+                    filterPanel.Draw(bundle, session.ViewedSnapshot, plugin.Settings);
                 }
                 else
                 {

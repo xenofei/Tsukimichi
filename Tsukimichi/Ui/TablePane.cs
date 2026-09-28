@@ -3,7 +3,6 @@ using System.Globalization;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Textures;
-using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Ipc;
@@ -24,6 +23,9 @@ public sealed class TablePane : IDisposable
     private const string QuestMapPluginName = "QuestMap";
     private const string QuestMapIpcName = "QuestMap.ShowGraphByQuestId";
     private const int MaxRewardIcons = 4;
+
+    /// <summary>Logical space left of the state moon for the pinned dot.</summary>
+    private const float GlyphColumnLead = 8f;
 
     private enum Column
     {
@@ -108,10 +110,6 @@ public sealed class TablePane : IDisposable
         }
 
         var rows = runner.Rows;
-        var scale = ImGuiHelpers.GlobalScale;
-        var style = ImGui.GetStyle();
-        var lineHeight = ImGui.GetTextLineHeight();
-        var rowHeight = lineHeight + style.CellPadding.Y * 2f;
 
         // SortTristate lets the header cycle back to "no sort" (journal order) and stops ImGui from picking the first
         // sortable column (the glyph) as an implicit default on the first frame.
@@ -124,21 +122,30 @@ public sealed class TablePane : IDisposable
             return;
         }
 
-        // ScrollY gives the table its own inner window, so this is the table's rectangle.
+        // ScrollY gives the table its own inner window, so this is the table's rectangle; that window sits inside the
+        // centre column (own font scale 1), so it scales itself before anything is measured.
         ui.RecordWindow(UiRects.Table);
+        UiMetrics.ApplyFontScale();
+        var style = ImGui.GetStyle();
+        var lineHeight = ImGui.GetTextLineHeight();
+        var rowContent = UiMetrics.RowContentHeight(lineHeight);
+        var rowHeight = rowContent + style.CellPadding.Y * 2f;
+        var glyphBox = UiMetrics.RowGlyphRadius * 2.4f;
+        var glyphColumn = UiMetrics.Px(GlyphColumnLead) + glyphBox + UiMetrics.Px(2f);
+        var rewardsColumn = UiMetrics.RowIconSize * MaxRewardIcons + UiMetrics.Px(2f) * (MaxRewardIcons - 1) + UiMetrics.Px(8f);
 
         // The persisted sort is handed to ImGui only while the table initializes (ImGui ignores DefaultSort afterwards
         // and whenever its own saved settings already carry a sort), so no column is default-sorted otherwise.
         var initialSort = tableInitialized ? SortSpec.Default : ui.Sort;
         tableInitialized = true;
 
-        ImGui.TableSetupColumn(Strings.ColumnGlyph, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize | ImGuiTableColumnFlags.NoHide | ImGuiTableColumnFlags.NoHeaderLabel | InitialSortFlags(initialSort, SortColumn.State), 26f * scale);
+        ImGui.TableSetupColumn(Strings.ColumnGlyph, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize | ImGuiTableColumnFlags.NoHide | ImGuiTableColumnFlags.NoHeaderLabel | InitialSortFlags(initialSort, SortColumn.State), glyphColumn);
         ImGui.TableSetupColumn(Strings.ColumnName, ImGuiTableColumnFlags.WidthStretch | ImGuiTableColumnFlags.NoHide | InitialSortFlags(initialSort, SortColumn.Name), 3f);
-        ImGui.TableSetupColumn(Strings.ColumnLevel, ImGuiTableColumnFlags.WidthFixed | InitialSortFlags(initialSort, SortColumn.Level), 34f * scale);
-        ImGui.TableSetupColumn(Strings.ColumnJob, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoSort, 64f * scale);
+        ImGui.TableSetupColumn(Strings.ColumnLevel, ImGuiTableColumnFlags.WidthFixed | InitialSortFlags(initialSort, SortColumn.Level), UiMetrics.Px(34f));
+        ImGui.TableSetupColumn(Strings.ColumnJob, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoSort, UiMetrics.Px(64f));
         ImGui.TableSetupColumn(Strings.ColumnNextStep, ImGuiTableColumnFlags.WidthStretch | ImGuiTableColumnFlags.NoSort, 2f);
-        ImGui.TableSetupColumn(Strings.ColumnExpansion, ImGuiTableColumnFlags.WidthFixed | InitialSortFlags(initialSort, SortColumn.Expansion), 40f * scale);
-        ImGui.TableSetupColumn(Strings.ColumnRewards, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoSort, 120f * scale);
+        ImGui.TableSetupColumn(Strings.ColumnExpansion, ImGuiTableColumnFlags.WidthFixed | InitialSortFlags(initialSort, SortColumn.Expansion), UiMetrics.Px(40f));
+        ImGui.TableSetupColumn(Strings.ColumnRewards, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoSort, rewardsColumn);
         ImGui.TableSetupScrollFreeze(0, 1);
         DrawHeaders();
 
@@ -151,16 +158,35 @@ public sealed class TablePane : IDisposable
             clipperCreated = true;
         }
 
+        // Rows can be taller than the text when icons are scaled up; the selectable fills the row and centres its label.
+        using var textAlign = ImRaii.PushStyle(ImGuiStyleVar.SelectableTextAlign, new Vector2(0f, 0.5f));
+        var layout = new RowLayout(lineHeight, rowContent, glyphBox);
         clipper.Begin(rows.Length, rowHeight);
         while (clipper.Step())
         {
             for (var i = clipper.DisplayStart; i < clipper.DisplayEnd && i < rows.Length; i++)
             {
-                DrawRow(in rows[i], hasSnapshot, lineHeight, scale);
+                DrawRow(in rows[i], hasSnapshot, in layout);
             }
         }
 
         clipper.End();
+    }
+
+    /// <summary>Per-frame row measurements, computed once per draw.</summary>
+    private readonly record struct RowLayout(float LineHeight, float RowContent, float GlyphBox)
+    {
+        /// <summary>Offset that centres a text line in the row.</summary>
+        public float TextOffset => MathF.Max(0f, (RowContent - LineHeight) * 0.5f);
+    }
+
+    /// <summary>Moves the cursor down so a text line sits in the vertical middle of a row taller than the text.</summary>
+    private static void CenterText(in RowLayout layout)
+    {
+        if (layout.TextOffset > 0.5f)
+        {
+            ImGui.SetCursorPosY(ImGui.GetCursorPosY() + layout.TextOffset);
+        }
     }
 
     public void Dispose()
@@ -187,12 +213,12 @@ public sealed class TablePane : IDisposable
             ImGui.TableHeader(HeaderLabels[i]);
             if (ImGui.IsItemHovered())
             {
-                ImGui.SetTooltip(HeaderTooltips[i]);
+                UiMetrics.Tooltip(HeaderTooltips[i]);
             }
         }
     }
 
-    private void DrawRow(in QuestRow row, bool hasSnapshot, float lineHeight, float scale)
+    private void DrawRow(in QuestRow row, bool hasSnapshot, in RowLayout layout)
     {
         var quest = row.Quest;
         using var id = ImRaii.PushId((int)quest.RowId);
@@ -201,19 +227,21 @@ public sealed class TablePane : IDisposable
         // Glyph column: pinned dot at the left edge, state moon centred in the rest.
         ImGui.TableNextColumn();
         var cell = ImGui.GetCursorScreenPos();
-        ImGui.Dummy(new Vector2(24f * scale, lineHeight));
+        var lead = UiMetrics.Px(GlyphColumnLead);
+        ImGui.Dummy(new Vector2(lead + layout.GlyphBox, layout.RowContent));
         var dl = ImGui.GetWindowDrawList();
+        var centerY = cell.Y + layout.RowContent * 0.5f;
         if (runner.IsPinned(quest.RowId))
         {
-            dl.AddCircleFilled(cell + new Vector2(3f * scale, lineHeight * 0.5f), 2.5f * scale, Theme.MoonU32);
+            dl.AddCircleFilled(cell + new Vector2(UiMetrics.Px(3f), centerY - cell.Y), UiMetrics.Px(2.5f), Theme.MoonU32);
         }
 
-        MoonGlyph.Draw(dl, cell + new Vector2(15f * scale, lineHeight * 0.5f), lineHeight * 0.42f, hasSnapshot ? row.State : QuestState.Unknown);
+        MoonGlyph.Draw(dl, new Vector2(cell.X + lead + layout.GlyphBox * 0.5f, centerY), UiMetrics.RowGlyphRadius, hasSnapshot ? row.State : QuestState.Unknown);
 
         // Name column carries the row-wide selectable and the context menu.
         ImGui.TableNextColumn();
         var selected = ui.SelectedRowId == quest.RowId;
-        if (ImGui.Selectable(quest.Name, selected, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowDoubleClick | ImGuiSelectableFlags.AllowItemOverlap))
+        if (ImGui.Selectable(quest.Name, selected, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowDoubleClick | ImGuiSelectableFlags.AllowItemOverlap, new Vector2(0f, layout.RowContent)))
         {
             SelectFromTable(quest.RowId);
             // The game journal only knows accepted and completed quests; for the rest a double-click just selects.
@@ -238,12 +266,15 @@ public sealed class TablePane : IDisposable
         }
 
         ImGui.TableNextColumn();
+        CenterText(in layout);
         ImGui.TextUnformatted(runner.LevelText(quest.Level));
 
         ImGui.TableNextColumn();
+        CenterText(in layout);
         ImGui.TextUnformatted(runner.JobShort(quest));
 
         ImGui.TableNextColumn();
+        CenterText(in layout);
         if (hasSnapshot)
         {
             ImGui.TextUnformatted(row.NextStep);
@@ -254,16 +285,19 @@ public sealed class TablePane : IDisposable
         }
 
         ImGui.TableNextColumn();
+        CenterText(in layout);
         ImGui.TextUnformatted(runner.ExpansionShort(quest.Expansion));
 
         ImGui.TableNextColumn();
-        DrawRewardIcons(quest, lineHeight, scale);
+        DrawRewardIcons(quest, in layout);
     }
 
-    private void DrawRewardIcons(QuestRecord quest, float lineHeight, float scale)
+    private void DrawRewardIcons(QuestRecord quest, in RowLayout layout)
     {
         var drawn = 0;
         var rewards = quest.Rewards;
+        var iconSize = UiMetrics.RowIconSize;
+        var iconOffset = MathF.Max(0f, (layout.RowContent - iconSize) * 0.5f);
         for (var i = 0; i < rewards.Count && drawn < MaxRewardIcons; i++)
         {
             var reward = rewards[i];
@@ -274,11 +308,15 @@ public sealed class TablePane : IDisposable
 
             if (drawn > 0)
             {
-                ImGui.SameLine(0f, 2f * scale);
+                ImGui.SameLine(0f, UiMetrics.Px(2f));
+            }
+            else if (iconOffset > 0.5f)
+            {
+                ImGui.SetCursorPosY(ImGui.GetCursorPosY() + iconOffset);
             }
 
             var wrap = textures.GetFromGameIcon(new GameIconLookup(reward.Icon)).GetWrapOrEmpty();
-            ImGui.Image(wrap.Handle, new Vector2(lineHeight, lineHeight));
+            ImGui.Image(wrap.Handle, new Vector2(iconSize, iconSize));
             if (ImGui.IsItemHovered())
             {
                 RewardTooltip.Draw(reward, links, textures);
@@ -308,7 +346,7 @@ public sealed class TablePane : IDisposable
 
         if (!canOpen && ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
-            ImGui.SetTooltip(Strings.OpenJournalUnavailable);
+            UiMetrics.Tooltip(Strings.OpenJournalUnavailable);
         }
 
         if (ImGui.MenuItem(Strings.CopyName))

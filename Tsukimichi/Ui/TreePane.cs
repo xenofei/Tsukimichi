@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
-using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
@@ -20,8 +19,6 @@ namespace Tsukimichi.Ui;
 /// </summary>
 public sealed class TreePane
 {
-    private const float MoonRadius = 6f;
-
     private sealed class Node(QuestScope scope, string id, string name, bool leaf)
     {
         public QuestScope Scope { get; } = scope;
@@ -96,7 +93,7 @@ public sealed class TreePane
 
         if (node.FoldedPath is { } path && ImGui.IsItemHovered())
         {
-            ImGui.SetTooltip(path);
+            UiMetrics.Tooltip(path);
         }
 
         DrawCountOverlay(node);
@@ -115,13 +112,12 @@ public sealed class TreePane
     /// <summary>Filling moon and done/total right-aligned on the node's line, drawn without an item so layout is untouched.</summary>
     private static void DrawCountOverlay(Node node)
     {
-        var scale = ImGuiHelpers.GlobalScale;
         var dl = ImGui.GetWindowDrawList();
         var min = ImGui.GetItemRectMin();
         var max = ImGui.GetItemRectMax();
         var textSize = ImGui.CalcTextSize(node.CountText);
-        var radius = MoonRadius * scale;
-        var pad = 6f * scale;
+        var radius = UiMetrics.TreeMoonRadius;
+        var pad = UiMetrics.Px(6f);
         var lineCenterY = (min.Y + max.Y) * 0.5f;
 
         var textPos = new Vector2(max.X - pad - textSize.X, lineCenterY - textSize.Y * 0.5f);

@@ -7,7 +7,6 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Textures;
-using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
 using Lumina.Excel.Sheets;
@@ -219,18 +218,17 @@ public sealed class CharactersPane
         }
 
         var line = ImGui.GetTextLineHeight();
-        var scale = ImGuiHelpers.GlobalScale;
         ImGui.TableSetupColumn("##moon", ImGuiTableColumnFlags.WidthFixed, line * 1.4f);
-        ImGui.TableSetupColumn(Strings.CharactersColumnSection, ImGuiTableColumnFlags.WidthFixed, 300f * scale);
-        ImGui.TableSetupColumn(Strings.CharactersColumnDone, ImGuiTableColumnFlags.WidthFixed, 90f * scale);
-        ImGui.TableSetupColumn(Strings.CharactersColumnPercent, ImGuiTableColumnFlags.WidthFixed, 50f * scale);
+        ImGui.TableSetupColumn(Strings.CharactersColumnSection, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(300f));
+        ImGui.TableSetupColumn(Strings.CharactersColumnDone, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(90f));
+        ImGui.TableSetupColumn(Strings.CharactersColumnPercent, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(50f));
         ImGui.TableHeadersRow();
 
         foreach (var row in d.Sections)
         {
             ImGui.TableNextRow();
             ImGui.TableNextColumn();
-            MoonGlyph.DrawFillingInline(row.Fraction, line);
+            MoonGlyph.DrawFillingInline(row.Fraction, UiMetrics.InlineGlyphSize(line));
             ImGui.TableNextColumn();
             if (row.Overall)
             {
@@ -276,10 +274,9 @@ public sealed class CharactersPane
         }
 
         var line = ImGui.GetTextLineHeight();
-        var scale = ImGuiHelpers.GlobalScale;
         ImGui.TableSetupColumn("##moon", ImGuiTableColumnFlags.WidthFixed, line * 1.4f);
-        ImGui.TableSetupColumn(Strings.CharactersColumnKind, ImGuiTableColumnFlags.WidthFixed, 300f * scale);
-        ImGui.TableSetupColumn(Strings.CharactersColumnObtained, ImGuiTableColumnFlags.WidthFixed, 90f * scale);
+        ImGui.TableSetupColumn(Strings.CharactersColumnKind, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(300f));
+        ImGui.TableSetupColumn(Strings.CharactersColumnObtained, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(90f));
 
         foreach (var row in d.Moonlit)
         {
@@ -287,15 +284,15 @@ public sealed class CharactersPane
             ImGui.TableNextColumn();
             if (row.AllUnknown)
             {
-                MoonGlyph.DrawInline(QuestState.Unknown, line);
+                MoonGlyph.DrawInline(QuestState.Unknown, UiMetrics.InlineGlyphSize(line));
                 if (ImGui.IsItemHovered())
                 {
-                    ImGui.SetTooltip(Strings.MoonlitObtainedUnknown);
+                    UiMetrics.Tooltip(Strings.MoonlitObtainedUnknown);
                 }
             }
             else
             {
-                MoonGlyph.DrawFillingInline(row.Fraction, line);
+                MoonGlyph.DrawFillingInline(row.Fraction, UiMetrics.InlineGlyphSize(line));
             }
 
             ImGui.TableNextColumn();
@@ -322,9 +319,8 @@ public sealed class CharactersPane
         }
 
         var line = ImGui.GetTextLineHeight();
-        var scale = ImGuiHelpers.GlobalScale;
         ImGui.TableSetupColumn("##state", ImGuiTableColumnFlags.WidthFixed, line * 1.4f);
-        ImGui.TableSetupColumn(Strings.CharactersColumnQuest, ImGuiTableColumnFlags.WidthFixed, 300f * scale);
+        ImGui.TableSetupColumn(Strings.CharactersColumnQuest, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(300f));
         ImGui.TableSetupColumn(Strings.CharactersColumnNextStep, ImGuiTableColumnFlags.WidthStretch);
 
         for (var i = 0; i < d.Pinned.Length; i++)
@@ -333,10 +329,10 @@ public sealed class CharactersPane
             using var rowId = ImRaii.PushId(i);
             ImGui.TableNextRow();
             ImGui.TableNextColumn();
-            MoonGlyph.DrawInline(row.State, line);
+            MoonGlyph.DrawInline(row.State, UiMetrics.InlineGlyphSize(line));
             if (ImGui.IsItemHovered())
             {
-                ImGui.SetTooltip(Strings.MoonlitStateName(row.State));
+                UiMetrics.Tooltip(Strings.MoonlitStateName(row.State));
             }
 
             ImGui.TableNextColumn();
@@ -349,7 +345,7 @@ public sealed class CharactersPane
 
                 if (ImGui.IsItemHovered())
                 {
-                    ImGui.SetTooltip(Strings.MoonlitShowInJournal);
+                    UiMetrics.Tooltip(Strings.MoonlitShowInJournal);
                 }
             }
             else
@@ -384,9 +380,8 @@ public sealed class CharactersPane
             return;
         }
 
-        var scale = ImGuiHelpers.GlobalScale;
-        ImGui.TableSetupColumn(Strings.CharactersColumnTime, ImGuiTableColumnFlags.WidthFixed, 50f * scale);
-        ImGui.TableSetupColumn(Strings.CharactersColumnEvent, ImGuiTableColumnFlags.WidthFixed, 110f * scale);
+        ImGui.TableSetupColumn(Strings.CharactersColumnTime, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(50f));
+        ImGui.TableSetupColumn(Strings.CharactersColumnEvent, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(110f));
         ImGui.TableSetupColumn(Strings.CharactersColumnQuest, ImGuiTableColumnFlags.WidthStretch);
 
         foreach (var row in d.Recent)
@@ -422,11 +417,10 @@ public sealed class CharactersPane
         }
 
         var line = ImGui.GetTextLineHeight();
-        var scale = ImGuiHelpers.GlobalScale;
-        var iconSize = new Vector2(line * 1.25f);
+        var iconSize = UiMetrics.Square(UiMetrics.JobIconSize);
         ImGui.TableSetupColumn("##icon", ImGuiTableColumnFlags.WidthFixed, line * 1.4f);
-        ImGui.TableSetupColumn(Strings.CharactersColumnJob, ImGuiTableColumnFlags.WidthFixed, 220f * scale);
-        ImGui.TableSetupColumn(Strings.CharactersColumnLevel, ImGuiTableColumnFlags.WidthFixed, 60f * scale);
+        ImGui.TableSetupColumn(Strings.CharactersColumnJob, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(220f));
+        ImGui.TableSetupColumn(Strings.CharactersColumnLevel, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(60f));
         ImGui.TableHeadersRow();
 
         var group = JobGroup.Other;
@@ -453,7 +447,7 @@ public sealed class CharactersPane
             ImGui.TextUnformatted(row.Name);
             if (ImGui.IsItemHovered())
             {
-                ImGui.SetTooltip(row.Abbreviation);
+                UiMetrics.Tooltip(row.Abbreviation);
             }
 
             ImGui.TableNextColumn();
@@ -493,10 +487,9 @@ public sealed class CharactersPane
             return;
         }
 
-        var scale = ImGuiHelpers.GlobalScale;
-        ImGui.TableSetupColumn(Strings.CharactersColumnTribe, ImGuiTableColumnFlags.WidthFixed, 220f * scale);
-        ImGui.TableSetupColumn(Strings.CharactersColumnRank, ImGuiTableColumnFlags.WidthFixed, 120f * scale);
-        ImGui.TableSetupColumn(Strings.CharactersColumnReputation, ImGuiTableColumnFlags.WidthFixed, 90f * scale);
+        ImGui.TableSetupColumn(Strings.CharactersColumnTribe, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(220f));
+        ImGui.TableSetupColumn(Strings.CharactersColumnRank, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(120f));
+        ImGui.TableSetupColumn(Strings.CharactersColumnReputation, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(90f));
         ImGui.TableHeadersRow();
         foreach (var (tribe, rank, value) in d.Tribes)
         {
@@ -533,7 +526,7 @@ public sealed class CharactersPane
 
         if (live && ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
-            ImGui.SetTooltip(Strings.CharactersForgetLiveHint);
+            UiMetrics.Tooltip(Strings.CharactersForgetLiveHint);
         }
     }
 
@@ -544,6 +537,9 @@ public sealed class CharactersPane
         {
             return;
         }
+
+        // Opened from the centre column, whose own font scale is 1 (it inherits the window's), so the modal scales itself.
+        UiMetrics.ApplyFontScale();
 
         ImGui.TextWrapped(forgetQuestion);
         ImGui.Spacing();
@@ -619,8 +615,8 @@ public sealed class CharactersPane
         }
 
         var line = ImGui.GetTextLineHeight();
-        ImGui.TableSetupColumn(Strings.CharactersColumnCharacter, ImGuiTableColumnFlags.WidthFixed, 200f * ImGuiHelpers.GlobalScale);
-        ImGui.TableSetupColumn(Strings.CharactersColumnState, ImGuiTableColumnFlags.WidthFixed, 170f * ImGuiHelpers.GlobalScale);
+        ImGui.TableSetupColumn(Strings.CharactersColumnCharacter, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(200f));
+        ImGui.TableSetupColumn(Strings.CharactersColumnState, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(170f));
         ImGui.TableSetupColumn(Strings.CharactersColumnNextStep, ImGuiTableColumnFlags.WidthStretch);
         ImGui.TableHeadersRow();
 
@@ -636,13 +632,13 @@ public sealed class CharactersPane
             ImGui.TableNextColumn();
             if (evaluation is null)
             {
-                MoonGlyph.DrawInline(QuestState.Unknown, line);
+                MoonGlyph.DrawInline(QuestState.Unknown, UiMetrics.InlineGlyphSize(line));
                 ImGui.SameLine();
                 ImGui.TextDisabled(Strings.CharactersSnapshotUnreadable);
             }
             else
             {
-                MoonGlyph.DrawInline(evaluation.State, line);
+                MoonGlyph.DrawInline(evaluation.State, UiMetrics.InlineGlyphSize(line));
                 ImGui.SameLine();
                 using (Theme.PushText(Theme.StateColor(evaluation.State)))
                 {

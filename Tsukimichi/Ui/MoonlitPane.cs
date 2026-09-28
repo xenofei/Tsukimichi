@@ -5,7 +5,6 @@ using System.IO;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Textures;
-using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
 using Tsukimichi.Core.Model;
@@ -214,7 +213,7 @@ public sealed class MoonlitPane : IDisposable
         }
 
         ImGui.SameLine();
-        ImGui.SetNextItemWidth(220f * ImGuiHelpers.GlobalScale);
+        ImGui.SetNextItemWidth(UiMetrics.Px(220f));
         ImGui.InputTextWithHint("##moonlitFilter", Strings.MoonlitFilterHint, ref filterText, FilterMaxLength);
 
         RefreshVisible(ui);
@@ -254,18 +253,19 @@ public sealed class MoonlitPane : IDisposable
             return;
         }
 
-        // ScrollY gives the table its own inner window, so this is the table's rectangle.
+        // ScrollY gives the table its own inner window, so this is the table's rectangle; that window sits inside the
+        // centre column (own font scale 1), so it scales itself before anything is measured.
         ui.RecordWindow(UiRects.MoonlitTable);
+        UiMetrics.ApplyFontScale();
         var line = ImGui.GetTextLineHeight();
-        var scale = ImGuiHelpers.GlobalScale;
-        var glyphColumn = MathF.Max(line * 2.4f, 44f * scale);
+        var glyphColumn = MathF.Max(UiMetrics.InlineGlyphSize(line) * 2f, UiMetrics.Px(44f));
         ImGui.TableSetupScrollFreeze(0, 1);
         ImGui.TableSetupColumn(Strings.MoonlitColumnObtained, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, glyphColumn);
         ImGui.TableSetupColumn(Strings.MoonlitColumnReward, ImGuiTableColumnFlags.WidthStretch, 3f);
-        ImGui.TableSetupColumn(Strings.MoonlitColumnKind, ImGuiTableColumnFlags.WidthFixed, 110f * scale);
+        ImGui.TableSetupColumn(Strings.MoonlitColumnKind, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(110f));
         ImGui.TableSetupColumn(Strings.MoonlitColumnQuest, ImGuiTableColumnFlags.WidthStretch, 3f);
         ImGui.TableSetupColumn(Strings.MoonlitColumnState, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, glyphColumn);
-        ImGui.TableSetupColumn(Strings.MoonlitColumnConfidence, ImGuiTableColumnFlags.WidthFixed, 80f * scale);
+        ImGui.TableSetupColumn(Strings.MoonlitColumnConfidence, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(80f));
         ImGui.TableHeadersRow();
 
         if (!clipperCreated)
@@ -295,15 +295,15 @@ public sealed class MoonlitPane : IDisposable
         {
             // Nothing readable for this kind on the viewed character (logged out, a stored snapshot, or a kind the
             // reader cannot answer): a veiled moon says so instead of a misleading empty one.
-            MoonGlyph.DrawInline(QuestState.Unknown, ImGui.GetTextLineHeight());
+            MoonGlyph.DrawInline(QuestState.Unknown, UiMetrics.InlineGlyphSize(ImGui.GetTextLineHeight()));
             if (ImGui.IsItemHovered())
             {
-                ImGui.SetTooltip(Strings.MoonlitObtainedUnknown);
+                UiMetrics.Tooltip(Strings.MoonlitObtainedUnknown);
             }
         }
         else
         {
-            MoonGlyph.DrawFillingInline(item.Fraction, ImGui.GetTextLineHeight());
+            MoonGlyph.DrawFillingInline(item.Fraction, UiMetrics.InlineGlyphSize(ImGui.GetTextLineHeight()));
         }
 
         ImGui.TableNextColumn();
@@ -324,15 +324,15 @@ public sealed class MoonlitPane : IDisposable
 
         // Obtained.
         ImGui.TableNextColumn();
-        MoonGlyph.DrawInline(row.ObtainedGlyph, line);
+        MoonGlyph.DrawInline(row.ObtainedGlyph, UiMetrics.InlineGlyphSize(line));
         if (ImGui.IsItemHovered())
         {
-            ImGui.SetTooltip(row.ObtainedText);
+            UiMetrics.Tooltip(row.ObtainedText);
         }
 
         // Icon and reward name; the row's context menu hangs off the name.
         ImGui.TableNextColumn();
-        DrawIcon(row, line);
+        DrawIcon(row, UiMetrics.RowIconSize);
         ImGui.SameLine();
         if (ImGui.Selectable(row.Name, selectedRow == row.Index))
         {
@@ -363,7 +363,7 @@ public sealed class MoonlitPane : IDisposable
 
             if (ImGui.IsItemHovered())
             {
-                ImGui.SetTooltip(Strings.MoonlitShowInJournal);
+                UiMetrics.Tooltip(Strings.MoonlitShowInJournal);
             }
         }
         else
@@ -374,10 +374,10 @@ public sealed class MoonlitPane : IDisposable
         // Quest state for the viewed character.
         ImGui.TableNextColumn();
         var state = session.States.TryGetValue(row.Entry.QuestRowId, out var evaluation) ? evaluation.State : QuestState.Unknown;
-        MoonGlyph.DrawInline(state, line);
+        MoonGlyph.DrawInline(state, UiMetrics.InlineGlyphSize(line));
         if (ImGui.IsItemHovered())
         {
-            ImGui.SetTooltip(Strings.MoonlitStateName(state));
+            UiMetrics.Tooltip(Strings.MoonlitStateName(state));
         }
 
         // Confidence badge with the source on hover.
@@ -389,7 +389,7 @@ public sealed class MoonlitPane : IDisposable
 
         if (ImGui.IsItemHovered())
         {
-            ImGui.SetTooltip(row.SourceText);
+            UiMetrics.Tooltip(row.SourceText);
         }
     }
 
