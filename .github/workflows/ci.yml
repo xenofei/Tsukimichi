@@ -1,0 +1,48 @@
+name: CI
+
+# Every push to main and every pull request builds the whole solution with warnings as errors and runs the test
+# suite. The [GameDataFact] tests skip here (no game files on the runner); the curated-data and fixture-backed
+# tests run everywhere.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Download Dalamud
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri https://goatcorp.github.io/dalamud-distrib/latest.zip -OutFile dalamud.zip
+          Expand-Archive dalamud.zip -DestinationPath "$env:RUNNER_TEMP\dalamud"
+          "DALAMUD_HOME=$env:RUNNER_TEMP\dalamud" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Build (warnings are errors)
+        run: dotnet build Tsukimichi.sln -c Release -warnaserror
+
+      - name: Test
+        run: dotnet test Tsukimichi.Tests -c Release --no-build
+
+      - name: Curated-data invariants
+        # The shipped curated JSON and the committed catalog fixture; these carry [Trait("Category", "Curated")].
+        run: dotnet test Tsukimichi.Tests -c Release --no-build --filter "Category=Curated"
+
+      - name: Release helper compiles
+        run: python -m py_compile tools/make_pluginmaster.py
