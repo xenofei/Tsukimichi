@@ -23,6 +23,8 @@ public sealed class DetailPane
 {
     private const float HeaderGlyphRadius = 20f;
     private const float PathGlyphRadius = 7f;
+    private const int PathScrollFrames = 2;
+    private const double PathHighlightSeconds = 1.5;
 
     private sealed record RequirementLine(bool Met, bool IsNext, string Label, string Detail);
 
@@ -60,6 +62,11 @@ public sealed class DetailPane
     private readonly Model model = new() { RowId = uint.MaxValue, Version = -1 };
     private bool pinnedShown;
 
+    // "Show path": the scroll is requested on two consecutive frames because ImGui clamps a scroll target against the
+    // content size measured in the previous frame, which does not yet include a freshly selected quest's sections.
+    private int pathScrollFrames;
+    private double pathHighlightUntil;
+
     public DetailPane(UiState ui, QueryRunner runner, GameLinks links, ITextureProvider textures)
     {
         this.ui = ui ?? throw new ArgumentNullException(nameof(ui));
@@ -84,6 +91,13 @@ public sealed class DetailPane
         }
 
         Refresh(session, bundle, rowId);
+        if (ui.ScrollToPath)
+        {
+            ui.ScrollToPath = false;
+            pathScrollFrames = PathScrollFrames;
+            pathHighlightUntil = ImGui.GetTime() + PathHighlightSeconds;
+        }
+
         if (model.Quest is not { } quest)
         {
             ImGui.TextDisabled(Strings.QuestNotInCatalog);
@@ -96,11 +110,11 @@ public sealed class DetailPane
         DrawRequirements();
         Section(Strings.Rewards);
         DrawRewards(scale);
-        Section(Strings.Path);
-        if (ui.ScrollToPath)
+        Section(Strings.Path, highlight: ImGui.GetTime() < pathHighlightUntil);
+        if (pathScrollFrames > 0)
         {
+            pathScrollFrames--;
             ImGui.SetScrollHereY(0f);
-            ui.ScrollToPath = false;
         }
 
         DrawPath(scale);
@@ -285,9 +299,18 @@ public sealed class DetailPane
         }
 
         ImGui.SameLine();
-        if (ImGui.SmallButton(Strings.OpenJournal))
+        var canOpen = GameLinks.CanOpenJournal(quest, model.State);
+        using (ImRaii.Disabled(!canOpen))
         {
-            links.OpenJournal(quest);
+            if (ImGui.SmallButton(Strings.OpenJournal))
+            {
+                links.OpenJournal(quest);
+            }
+        }
+
+        if (!canOpen && ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+        {
+            ImGui.SetTooltip(Strings.OpenJournalUnavailable);
         }
 
         ImGui.SameLine();
@@ -295,13 +318,33 @@ public sealed class DetailPane
         {
             links.PrintQuestLink(quest);
         }
+
+        using (ImRaii.Disabled(model.CoordinateText is null))
+        {
+            if (ImGui.SmallButton(Strings.CopyCoordinates) && links.CoordinateText(quest) is { } coordinates)
+            {
+                ImGui.SetClipboardText(coordinates);
+            }
+        }
+
+        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+        {
+            ImGui.SetTooltip(Strings.CopyCoordinatesTooltip);
+        }
     }
 
-    private static void Section(string title)
+    private static void Section(string title, bool highlight = false)
     {
         ImGui.Spacing();
-        ImGui.TextUnformatted(title);
-        ImGui.Separator();
+        using (Theme.PushText(Theme.Moon, highlight))
+        {
+            ImGui.TextUnformatted(title);
+        }
+
+        using (ImRaii.PushColor(ImGuiCol.Separator, Theme.Moon, highlight))
+        {
+            ImGui.Separator();
+        }
     }
 
     private void Refresh(SessionState session, CatalogBundle bundle, uint rowId)

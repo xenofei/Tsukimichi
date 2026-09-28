@@ -117,7 +117,12 @@ public static partial class Strings
     public const string Unpin = "Unpin";
     public const string FlagOnMap = "Flag on map";
     public const string OpenJournal = "Open journal";
+    public const string OpenJournalUnavailable = "Only quests in your journal (accepted or completed) can be opened in the game journal.";
     public const string CopyName = "Copy name";
+    public const string CopyCoordinates = "Copy coordinates";
+    public const string CopyCoordinatesTooltip = "Copy \"Place (x.x, y.y)\" to the clipboard, ready to paste into chat";
+    /// <summary>{0} = place name, {1} = x, {2} = y.</summary>
+    public const string CoordinateClipboardFormat = "{0} ({1:0.0}, {2:0.0})";
     public const string ShowPath = "Show path";
     public const string QuestMapGraph = "Quest Map graph";
     public const string LinkInChat = "Link in chat";

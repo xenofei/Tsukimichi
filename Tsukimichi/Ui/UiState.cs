@@ -39,7 +39,7 @@ public sealed class UiState
 
     public bool MoonlitHideObtained { get; set; }
 
-    /// <summary>Set by "Show path"; the detail pane scrolls to its Path section on the next frame and clears it.</summary>
+    /// <summary>Set by "Show path"; the detail pane clears it when drawn, then scrolls to and briefly highlights its Path section.</summary>
     public bool ScrollToPath { get; set; }
 
     /// <summary>Bumped by any pane that changed something affecting the query; MainWindow re-runs the query when it differs from the last run.</summary>

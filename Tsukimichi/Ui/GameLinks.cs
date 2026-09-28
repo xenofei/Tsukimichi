@@ -28,6 +28,13 @@ public sealed class GameLinks(IGameGui gameGui, IChatGui chat, IDataManager data
     /// <summary>True when the issuer has a territory and map to flag.</summary>
     public bool CanFlagMap(QuestRecord quest) => quest.Issuer is { TerritoryId: > 0, MapId: > 0 };
 
+    /// <summary>
+    /// True when the game journal can show the quest: it only holds accepted and completed quests (a repeatable done
+    /// this cycle counts as completed), so every other state has no journal page to open.
+    /// </summary>
+    public static bool CanOpenJournal(QuestRecord quest, QuestState state) =>
+        quest.QuestId != 0 && state is QuestState.Accepted or QuestState.Completed or QuestState.DoneThisCycle;
+
     /// <summary>Human-readable map coordinates of the issuer, or null without a map.</summary>
     public Vector2? MapCoordinates(QuestRecord quest)
     {
@@ -37,6 +44,17 @@ public sealed class GameLinks(IGameGui gameGui, IChatGui chat, IDataManager data
         }
 
         return new Vector2(ToMapCoordinate(issuer.X, map.OffsetX, map.SizeFactor), ToMapCoordinate(issuer.Z, map.OffsetY, map.SizeFactor));
+    }
+
+    /// <summary>"Place (x.x, y.y)" for the clipboard, or null without a map. Allocates; call on click, not per frame.</summary>
+    public string? CoordinateText(QuestRecord quest)
+    {
+        if (quest.Issuer is not { } issuer || Map(issuer.MapId) is not { } map || MapCoordinates(quest) is not { } coords)
+        {
+            return null;
+        }
+
+        return string.Format(CultureInfo.CurrentCulture, Strings.CoordinateClipboardFormat, map.PlaceName, coords.X, coords.Y);
     }
 
     /// <summary>Map link for the issuer in map coordinates, or null when the quest has no mappable issuer.</summary>

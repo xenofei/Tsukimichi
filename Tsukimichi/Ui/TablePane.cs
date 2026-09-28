@@ -169,7 +169,8 @@ public sealed class TablePane : IDisposable
         if (ImGui.Selectable(quest.Name, selected, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowDoubleClick | ImGuiSelectableFlags.AllowItemOverlap))
         {
             SelectFromTable(quest.RowId);
-            if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
+            // The game journal only knows accepted and completed quests; for the rest a double-click just selects.
+            if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left) && GameLinks.CanOpenJournal(quest, row.State))
             {
                 links.OpenJournal(quest);
             }
@@ -185,7 +186,7 @@ public sealed class TablePane : IDisposable
                     RefreshQuestMapAvailability();
                 }
 
-                DrawContextMenu(quest);
+                DrawContextMenu(quest, row.State);
             }
         }
 
@@ -240,7 +241,7 @@ public sealed class TablePane : IDisposable
         }
     }
 
-    private void DrawContextMenu(QuestRecord quest)
+    private void DrawContextMenu(QuestRecord quest, QuestState state)
     {
         if (ImGui.MenuItem(runner.IsPinned(quest.RowId) ? Strings.Unpin : Strings.Pin, enabled: runner.CanPin))
         {
@@ -252,14 +253,26 @@ public sealed class TablePane : IDisposable
             links.FlagMap(quest);
         }
 
-        if (ImGui.MenuItem(Strings.OpenJournal))
+        var canOpen = GameLinks.CanOpenJournal(quest, state);
+        if (ImGui.MenuItem(Strings.OpenJournal, enabled: canOpen))
         {
             links.OpenJournal(quest);
+        }
+
+        if (!canOpen && ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+        {
+            ImGui.SetTooltip(Strings.OpenJournalUnavailable);
         }
 
         if (ImGui.MenuItem(Strings.CopyName))
         {
             ImGui.SetClipboardText(quest.Name);
+        }
+
+        var canCopyCoordinates = links.MapCoordinates(quest) is not null;
+        if (ImGui.MenuItem(Strings.CopyCoordinates, enabled: canCopyCoordinates) && links.CoordinateText(quest) is { } coordinates)
+        {
+            ImGui.SetClipboardText(coordinates);
         }
 
         if (ImGui.MenuItem(Strings.ShowPath))
