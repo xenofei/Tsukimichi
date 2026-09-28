@@ -4,6 +4,8 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-09-28
+
 ### Added
 - Item hover hint: while the game's tooltip is up for an item that is a quest-exclusive reward, a small Tsukimichi panel beside it lists each quest that hands the item out with its state moon and "Quest reward: name", then "done" in gold for a completed quest or the next step otherwise; for mounts, minions, orchestrion rolls, cards and ornaments a second line says owned, not owned or veiled (stored character). The panel takes no input and stays clear of the game tooltip and the screen edges. On by default; a Settings checkbox turns it off.
 - Item context menu: right-clicking such an item in the inventory, armoury, saddlebag or a retainer adds "Tsukimichi: quest reward (quest)", which opens the main window on that quest; an item several quests give shows "quest rewards (N)" with one submenu line per quest. Chat item links carry no item in the menu and get no entry. On by default; a Settings checkbox turns it off.
