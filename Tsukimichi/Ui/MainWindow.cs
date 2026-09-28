@@ -178,6 +178,13 @@ public sealed class MainWindow : Window, IDisposable
         EnsureInitialized();
         UiMetrics.Update(plugin.Settings);
 
+        // Dalamud closes the window on Esc while it or one of its popups is focused; while a popup (verdict prompt,
+        // context menu) is open Esc belongs to the popup. The tour manages the flag itself while it runs.
+        if (!tourWasActive)
+        {
+            RespectCloseHotkey = !ImGui.IsPopupOpen(string.Empty, ImGuiPopupFlags.AnyPopupId | ImGuiPopupFlags.AnyPopupLevel);
+        }
+
         // Regions are re-recorded by whichever panes draw this frame; clearing first keeps hidden panes' rects
         // from lingering (the tutorial unions them for its dimmed area).
         ui.Rects.Clear();

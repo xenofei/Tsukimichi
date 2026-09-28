@@ -175,7 +175,7 @@ public sealed class GameStateReader
             {
                 dailyDone[work.QuestId] = work.Flags;
             }
-            else if (!ContainsQuest(accepted, work.QuestId))
+            else if (qm->IsQuestAccepted(work.QuestId) && !ContainsQuest(accepted, work.QuestId))
             {
                 accepted.Add(new AcceptedQuest(work.QuestId, 0));
             }

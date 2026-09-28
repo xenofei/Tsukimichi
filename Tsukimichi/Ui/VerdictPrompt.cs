@@ -112,11 +112,11 @@ internal sealed class VerdictPrompt(string popupId)
         return false;
     }
 
-    /// <summary>"Marked unique · Undo" (or "Hidden as not unique · Undo") for eight seconds after a verdict; nothing otherwise.</summary>
-    public void DrawUndo(IUniqueOverrides overrides)
+    /// <summary>"Marked unique · Undo" (or "Hidden as not unique · Undo") for eight seconds after a verdict; nothing otherwise. With <paramref name="forRowId"/> the line shows only while that quest is the one the verdict was given for.</summary>
+    public void DrawUndo(IUniqueOverrides overrides, uint? forRowId = null)
     {
         ArgumentNullException.ThrowIfNull(overrides);
-        if (undoUntil < 0.0)
+        if (undoUntil < 0.0 || (forRowId is { } only && only != undoRowId))
         {
             return;
         }

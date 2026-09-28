@@ -4,7 +4,11 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-09-28
+
 ### Added
+- Settings › Display: "Reduce motion". With it on, hold-to-confirm buttons count down in text ("Hold… (0.4 s)") instead of filling an arc.
+- Settings › Data: "Your Moonlit verdicts (N)" lists every quest you marked unique or hid as not unique, with the note and the date, a Restore button per row and "Restore all" (hold to confirm, or Shift and click).
 - Test fixtures: a real schema-v1 character snapshot (anonymised) that must round-trip through the store unchanged, and a gzipped dump of the mapped quest catalog (`Tsukimichi.DataGen --dump-catalog`) so the tree-total, feature-quest and chain tests run without the game files; one game-data test checks the dump against the live sheets and says when to regenerate it.
 
 ### Changed
@@ -18,10 +22,8 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ### Fixed
 - Allied society dailies: accepting one daily no longer turns every other tribe's dailies Blocked with "not offered today". The game never stores the day's offer (the array the plugin read holds the dailies you have already accepted), so that check is gone; a daily you have picked up now shows Accepted instead of Ready, and one you have turned in today still shows done this cycle.
-- Seasonal quests: the shipped event end dates now reach the evaluation, so a seasonal quest of an event whose known end has passed shows Foreclosed instead of staying Blocked forever; an event with no known end still shows Blocked with "seasonal event not active" until it runs. Counts and totals are unchanged in this release.
+- Seasonal quests: known event end dates now reach the evaluation, so a seasonal quest of an event whose end date is known and past shows Foreclosed instead of staying Blocked forever (no end dates ship yet; they arrive with the verified data); an event with no known end still shows Blocked with "seasonal event not active" until it runs. Counts and totals are unchanged in this release.
 - Switching characters without logging out in between no longer carries the previous character's Recent activity over, and no longer re-announces that character's newly available quests in chat for the new one.
-- Settings › Display: "Reduce motion". With it on, hold-to-confirm buttons count down in text ("Hold… (0.4 s)") instead of filling an arc.
-- Settings › Data: "Your Moonlit verdicts (N)" lists every quest you marked unique or hid as not unique, with the note and the date, a Restore button per row and "Restore all" (hold to confirm, or Shift and click).
 
 ## [0.5.0] - 2026-09-28
 

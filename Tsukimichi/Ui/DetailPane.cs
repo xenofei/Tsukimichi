@@ -549,7 +549,7 @@ public sealed class DetailPane
 
         // Begun on every path so a popup opened for one quest is not orphaned when the selection moves on.
         verdict.Draw(overrides, UiMetrics.Scale);
-        verdict.DrawUndo(overrides);
+        verdict.DrawUndo(overrides, rowId);
     }
 
     /// <summary>

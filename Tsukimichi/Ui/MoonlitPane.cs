@@ -686,6 +686,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 
         var filter = filterText.Trim();
         var count = 0;
+        var listed = 0;
         foreach (var row in rows)
         {
             if (ui.MoonlitKind is { } kind && row.Entry.Kind != kind)
@@ -717,10 +718,14 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             }
 
             visible[count++] = row.Index;
+            if (!row.Hidden)
+            {
+                listed++;
+            }
         }
 
         visibleCount = count;
-        visibleSummary = count.ToString(CultureInfo.InvariantCulture) + " / " + uniqueCount.ToString(CultureInfo.InvariantCulture);
+        visibleSummary = listed.ToString(CultureInfo.InvariantCulture) + " / " + uniqueCount.ToString(CultureInfo.InvariantCulture);
     }
 
     /// <summary>Whether a row passes the confidence combo: a confidence match, or (Unknown obtained) an unreadable obtained state.</summary>
