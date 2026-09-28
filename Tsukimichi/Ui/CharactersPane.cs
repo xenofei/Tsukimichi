@@ -10,7 +10,9 @@ using Dalamud.Interface.Textures;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
 using Lumina.Excel.Sheets;
+using Tsukimichi.Core.Chains;
 using Tsukimichi.Core.Evaluation;
+using Tsukimichi.Core.Jobs;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Runtime;
@@ -24,7 +26,8 @@ namespace Tsukimichi.Ui;
 /// <summary>
 /// Characters (spec §7, F-50..F-61, F-73). <see cref="DrawLeft"/> lists every stored snapshot (the live one marked ●)
 /// and switches the viewed character; <see cref="DrawMain"/> is a dashboard for the viewed character, top to bottom:
-/// header, completion per journal section (filling moons), the Moonlit summary, pinned quests, recent activity, jobs
+/// header, completion per journal section (filling moons), job and role quest ladders, curated story chains, the
+/// Moonlit summary, pinned quests, recent activity, jobs
 /// grouped by role with the game's job icons, Grand Company and allied societies, Export JSON and Forget (with a
 /// confirm popup), and the Account view: the state of <see cref="UiState.SelectedRowId"/> on every character,
 /// evaluated offline from their snapshots.
@@ -71,6 +74,11 @@ public sealed class CharactersPane
 
     private Dashboard? dashboard;
     private DashboardKey dashboardKey;
+
+    // Per-job ladders and named chains, built once per catalog bundle.
+    private JobLadder ladder = JobLadder.Empty;
+    private ChainCatalog chains = ChainCatalog.Empty;
+    private CatalogBundle? derivedBundle;
 
     // Snapshot is null when the file could not be read at that capture time; the failure is cached too so an
     // unreadable file is not re-read on every session version bump.
@@ -191,6 +199,10 @@ public sealed class CharactersPane
         Gap();
         DrawSections(d);
         Gap();
+        DrawJobQuests(ui, d);
+        Gap();
+        DrawChains(ui, d);
+        Gap();
         DrawMoonlitSummary(d);
         Gap();
         DrawPinned(ui, d);
@@ -260,6 +272,151 @@ public sealed class CharactersPane
             ImGui.TextUnformatted(row.Count);
             ImGui.TableNextColumn();
             ImGui.TextDisabled(row.Percent);
+        }
+    }
+
+    /// <summary>
+    /// Job quests (V2-11): one row per leveled job with its icon, level, a filling moon over its ladder and the next
+    /// quest ("Lv N" in Moon when it can be taken now, "at Lv N" in Dusk otherwise), then one row per role the
+    /// character has a job in. The next quest's name reveals it in the Journal.
+    /// </summary>
+    private void DrawJobQuests(UiState ui, Dashboard d)
+    {
+        ImGui.TextDisabled(Strings.JobsSection);
+        if (d.JobQuests.Length == 0)
+        {
+            ImGui.TextDisabled(Strings.JobsNone);
+            return;
+        }
+
+        using var table = ImRaii.Table("##jobQuests", 6, ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.RowBg | ImGuiTableFlags.BordersInnerH);
+        if (!table)
+        {
+            return;
+        }
+
+        var line = ImGui.GetTextLineHeight();
+        var iconSize = UiMetrics.Square(UiMetrics.JobIconSize);
+        ImGui.TableSetupColumn("##icon", ImGuiTableColumnFlags.WidthFixed, line * 1.4f);
+        ImGui.TableSetupColumn(Strings.JobsColumnJob, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(200f));
+        ImGui.TableSetupColumn(Strings.JobsColumnLevel, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(50f));
+        ImGui.TableSetupColumn("##moon", ImGuiTableColumnFlags.WidthFixed, line * 1.4f);
+        ImGui.TableSetupColumn(Strings.JobsColumnDone, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(60f));
+        ImGui.TableSetupColumn(Strings.JobsColumnNext, ImGuiTableColumnFlags.WidthStretch);
+        ImGui.TableHeadersRow();
+
+        for (var i = 0; i < d.JobQuests.Length; i++)
+        {
+            var row = d.JobQuests[i];
+            using var rowId = ImRaii.PushId(i);
+            ImGui.TableNextRow();
+            ImGui.TableNextColumn();
+            DrawJobIcon(row.IconId, iconSize);
+            ImGui.TableNextColumn();
+            if (row.IsRole)
+            {
+                using (Theme.PushText(Theme.Dusk))
+                {
+                    ImGui.TextUnformatted(row.Name);
+                }
+            }
+            else
+            {
+                ImGui.TextUnformatted(row.Name);
+            }
+
+            ImGui.TableNextColumn();
+            ImGui.TextUnformatted(row.Level);
+            ImGui.TableNextColumn();
+            MoonGlyph.DrawFillingInline(row.Fraction, UiMetrics.InlineGlyphSize(line));
+            ImGui.TableNextColumn();
+            ImGui.TextUnformatted(row.Count);
+            ImGui.TableNextColumn();
+            DrawNextQuest(ui, row.Next, row.NextText, row.Ready);
+        }
+    }
+
+    /// <summary>
+    /// Story chains (V2-09 on the dashboard): every curated chain with a filling moon, N of M and the next quest;
+    /// chains with nothing done yet fold under "Not started (N)" so the list stays short.
+    /// </summary>
+    private void DrawChains(UiState ui, Dashboard d)
+    {
+        ImGui.TextDisabled(Strings.JobsChainsSection);
+        if (d.Chains.Length == 0 && d.ChainsNotStarted.Length == 0)
+        {
+            ImGui.TextDisabled(Strings.JobsChainsNone);
+            return;
+        }
+
+        DrawChainTable(ui, "##chains", d.Chains);
+        if (d.ChainsNotStarted.Length == 0)
+        {
+            return;
+        }
+
+        using var node = ImRaii.TreeNode(string.Format(CultureInfo.CurrentCulture, Strings.JobsChainsNotStartedFormat, d.ChainsNotStarted.Length));
+        if (node)
+        {
+            DrawChainTable(ui, "##chainsNotStarted", d.ChainsNotStarted);
+        }
+    }
+
+    private static void DrawChainTable(UiState ui, string id, ChainRow[] rows)
+    {
+        if (rows.Length == 0)
+        {
+            return;
+        }
+
+        using var table = ImRaii.Table(id, 4, ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.RowBg | ImGuiTableFlags.BordersInnerH);
+        if (!table)
+        {
+            return;
+        }
+
+        var line = ImGui.GetTextLineHeight();
+        ImGui.TableSetupColumn("##moon", ImGuiTableColumnFlags.WidthFixed, line * 1.4f);
+        ImGui.TableSetupColumn(Strings.JobsColumnChain, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(220f));
+        ImGui.TableSetupColumn(Strings.JobsColumnDone, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(80f));
+        ImGui.TableSetupColumn(Strings.JobsColumnNext, ImGuiTableColumnFlags.WidthStretch);
+
+        for (var i = 0; i < rows.Length; i++)
+        {
+            var row = rows[i];
+            using var rowId = ImRaii.PushId(i);
+            ImGui.TableNextRow();
+            ImGui.TableNextColumn();
+            MoonGlyph.DrawFillingInline(row.Fraction, UiMetrics.InlineGlyphSize(line));
+            ImGui.TableNextColumn();
+            ImGui.TextUnformatted(row.Name);
+            ImGui.TableNextColumn();
+            ImGui.TextUnformatted(row.Count);
+            ImGui.TableNextColumn();
+            DrawNextQuest(ui, row.Next, row.NextText, ready: true);
+        }
+    }
+
+    /// <summary>A clickable "next" cell: the text in Moon when the quest is open now, Dusk otherwise; null quest means finished.</summary>
+    private static void DrawNextQuest(UiState ui, QuestRecord? next, string text, bool ready)
+    {
+        if (next is null)
+        {
+            ImGui.TextDisabled(text);
+            return;
+        }
+
+        using (Theme.PushText(ready ? Theme.Moon : Theme.Dusk))
+        {
+            if (ImGui.Selectable(text))
+            {
+                Reveal(ui, next);
+            }
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.MoonlitShowInJournal);
         }
     }
 
@@ -864,6 +1021,9 @@ public sealed class CharactersPane
                          + snapshot.LeveAllowance.ToString(CultureInfo.InvariantCulture) + Strings.CharactersLeveAllowanceSuffix;
 
         var (msqLine, msqQuest) = BuildMsq(bundle);
+        RefreshDerived(bundle);
+        var jobs = BuildJobs(snapshot, bundle);
+        var (chainRows, notStarted) = BuildChains(bundle);
 
         return new Dashboard(
             snapshot,
@@ -875,13 +1035,139 @@ public sealed class CharactersPane
             msqLine,
             msqQuest,
             BuildSections(bundle),
+            BuildJobQuests(jobs),
+            chainRows,
+            notStarted,
             BuildMoonlit(),
             BuildPinned(snapshot, bundle),
             BuildRecent(bundle),
-            BuildJobs(snapshot, bundle),
+            jobs,
             gcLine,
             tribeRows,
             allowances);
+    }
+
+    /// <summary>Ladders and chains follow the bundle; the chain warnings are logged once per rebuild.</summary>
+    private void RefreshDerived(CatalogBundle? bundle)
+    {
+        if (ReferenceEquals(derivedBundle, bundle))
+        {
+            return;
+        }
+
+        derivedBundle = bundle;
+        ladder = JobLadder.Empty;
+        chains = ChainCatalog.Empty;
+        if (bundle is null)
+        {
+            return;
+        }
+
+        try
+        {
+            ladder = bundle.BuildJobLadder();
+            chains = ChainCatalog.Build(bundle.Catalog, session.Curated);
+            foreach (var warning in chains.Warnings)
+            {
+                log.Warning("Chains: {Warning}", warning);
+            }
+        }
+        catch (Exception ex)
+        {
+            log.Warning(ex, "Job ladders or chains could not be built for the dashboard");
+        }
+    }
+
+    /// <summary>
+    /// One row per job of the job table (same order and the same class/job collapsing), then one per role those jobs
+    /// cover, in role order. Jobs without quests (none in the sheet) are skipped.
+    /// </summary>
+    private LadderRow[] BuildJobQuests(JobRow[] jobs)
+    {
+        var states = session.States;
+        if (states.Count == 0 || ladder.Jobs.Count == 0)
+        {
+            return [];
+        }
+
+        var rows = new List<LadderRow>(jobs.Length + 5);
+        var roleLevels = new SortedDictionary<JobRole, short>();
+        foreach (var job in jobs)
+        {
+            if (ladder.RoleOf(job.JobId) is { } role)
+            {
+                roleLevels[role] = Math.Max(roleLevels.GetValueOrDefault(role), job.LevelValue);
+            }
+
+            if (ladder.ForJob(job.JobId) is not { } entry)
+            {
+                continue;
+            }
+
+            rows.Add(LadderRowFor(job.IconId, job.Name, job.Level, isRole: false, ladder.Progress(entry, states, job.LevelValue)));
+        }
+
+        foreach (var (role, level) in roleLevels)
+        {
+            var quests = ladder.RoleLadder(role);
+            if (quests.Count == 0)
+            {
+                continue;
+            }
+
+            var name = string.Format(CultureInfo.CurrentCulture, Strings.JobsRoleRowFormat, Strings.JobsRoleName(role));
+            rows.Add(LadderRowFor(0, name, string.Empty, isRole: true, ladder.Progress(quests, states, level)));
+        }
+
+        return rows.ToArray();
+    }
+
+    private LadderRow LadderRowFor(uint iconId, string name, string level, bool isRole, LadderProgress progress)
+    {
+        var count = string.Format(CultureInfo.InvariantCulture, Strings.JobsCountFormat, progress.Done, progress.Total);
+        var next = progress.NextRowId is { } nextRowId ? derivedBundle?.Catalog.GetByRowId(nextRowId) : null;
+        var text = next is null
+            ? Strings.JobsAllDone
+            : string.Format(CultureInfo.CurrentCulture, progress.IsReadyNow ? Strings.JobsNextReadyFormat : Strings.JobsNextLaterFormat, next.Name, progress.NextLevel);
+        return new LadderRow(iconId, name, level, isRole, progress.Fraction, count, next, text, progress.IsReadyNow);
+    }
+
+    /// <summary>Curated chains in file order, split into those with at least one quest done and those not started.</summary>
+    private (ChainRow[] Started, ChainRow[] NotStarted) BuildChains(CatalogBundle? bundle)
+    {
+        var states = session.States;
+        if (bundle is null || states.Count == 0 || chains.Chains.Count == 0)
+        {
+            return ([], []);
+        }
+
+        var curatedNames = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var entry in session.Curated.Chains)
+        {
+            curatedNames.Add(entry.Name);
+        }
+
+        var started = new List<ChainRow>();
+        var notStarted = new List<ChainRow>();
+        foreach (var chain in chains.Chains)
+        {
+            if (!curatedNames.Contains(chain.Name))
+            {
+                continue;
+            }
+
+            var progress = ChainCatalog.Progress(chain, states);
+            var next = progress.NextRowId is { } nextRowId ? bundle.Catalog.GetByRowId(nextRowId) : null;
+            var row = new ChainRow(
+                chain.Name,
+                progress.Fraction,
+                string.Format(CultureInfo.CurrentCulture, Strings.JobsChainCountFormat, progress.Done, progress.Total),
+                next,
+                next is null ? Strings.JobsChainComplete : Strings.JobsChainNextPrefix + next.Name);
+            (progress.Done > 0 ? started : notStarted).Add(row);
+        }
+
+        return (started.ToArray(), notStarted.ToArray());
     }
 
     /// <summary>"MSQ: &lt;expansion&gt; · next: &lt;quest&gt; (&lt;NPC&gt;, &lt;zone&gt;)" for the viewed character; empty without evaluations.</summary>
@@ -1136,6 +1422,7 @@ public sealed class CharactersPane
 
             rows.Add(new JobRow(
                 GroupOf(info, bundle),
+                info.RowId,
                 info.IconId,
                 DisplayName(info.Name),
                 info.Abbreviation,
@@ -1308,7 +1595,12 @@ public sealed class CharactersPane
 
     private sealed record RecentRow(string Time, string Kind, Vector4 Color, string Quest);
 
-    private sealed record JobRow(JobGroup Group, uint IconId, string Name, string Abbreviation, string Level, short LevelValue);
+    private sealed record JobRow(JobGroup Group, uint JobId, uint IconId, string Name, string Abbreviation, string Level, short LevelValue);
+
+    /// <summary>A job's (or a role's) ladder: icon and level are empty for role rows; <paramref name="Next"/> is null once finished.</summary>
+    private sealed record LadderRow(uint IconId, string Name, string Level, bool IsRole, float Fraction, string Count, QuestRecord? Next, string NextText, bool Ready);
+
+    private sealed record ChainRow(string Name, float Fraction, string Count, QuestRecord? Next, string NextText);
 
     private sealed record Dashboard(
         CharacterSnapshot Snapshot,
@@ -1320,6 +1612,9 @@ public sealed class CharactersPane
         string MsqLine,
         QuestRecord? MsqQuest,
         SectionRow[] Sections,
+        LadderRow[] JobQuests,
+        ChainRow[] Chains,
+        ChainRow[] ChainsNotStarted,
         MoonlitRow[] Moonlit,
         PinnedRow[] Pinned,
         RecentRow[] Recent,
