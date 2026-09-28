@@ -156,6 +156,10 @@ public sealed class MainWindow : Window, IDisposable
         EnsureInitialized();
         UiMetrics.Update(plugin.Settings);
 
+        // Regions are re-recorded by whichever panes draw this frame; clearing first keeps hidden panes' rects
+        // from lingering (the tutorial unions them for its dimmed area).
+        ui.Rects.Clear();
+
         // The window's own font scale; direct children inherit it (see UiMetrics). It is reset before this Draw ends
         // so the next Begin lays the title bar out at Dalamud's size.
         UiMetrics.ApplyFontScale();
