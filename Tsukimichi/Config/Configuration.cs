@@ -41,6 +41,24 @@ public sealed class Configuration : IPluginConfiguration
     /// <summary>Register every quest and Moonlit reward with Wotsit when it is loaded (see <c>Game.WotsitIpc</c>). On by default.</summary>
     public bool WotsitIntegration { get; set; } = true;
 
+    // ---- 0.5.0: todo overlay ----
+    /// <summary>Show the small always-on todo overlay (pins, nearby feature quests, MSQ, job quests).</summary>
+    public bool TodoOverlayEnabled { get; set; } = false;
+    /// <summary>When true the overlay cannot be moved or resized and ignores clicks on its frame.</summary>
+    public bool TodoOverlayLocked { get; set; } = false;
+    /// <summary>Background opacity of the overlay, 0.2–1.0.</summary>
+    public float TodoOverlayOpacity { get; set; } = 0.85f;
+    public bool TodoShowPins { get; set; } = true;
+    public bool TodoShowNearbyFeature { get; set; } = true;
+    public bool TodoShowMsq { get; set; } = true;
+    public bool TodoShowJobQuests { get; set; } = true;
+
+    // ---- 0.5.0: item hints ----
+    /// <summary>Show a small hint near the cursor when hovering an item that is a quest-exclusive reward.</summary>
+    public bool ItemHintsEnabled { get; set; } = true;
+    /// <summary>Add a "Tsukimichi: quest reward" entry to item context menus.</summary>
+    public bool ItemContextMenuEnabled { get; set; } = true;
+
     /// <summary>Days an accepted quest sits untouched before the Stalled preset lists it; 1–90, default 7. Clamped by <see cref="StalledDaysClamped"/> when read.</summary>
     public int StalledDays { get; set; } = DefaultStalledDays;
 
