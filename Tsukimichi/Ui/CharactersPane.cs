@@ -1316,8 +1316,9 @@ public sealed class CharactersPane
                 MoonGlyph.DrawInline(evaluation.State, UiMetrics.InlineGlyphSize(line));
                 if (ImGui.IsItemHovered())
                 {
-                    // Another character's evaluation: no per-quest state map for it, so the blocker line reads the done ids it carries.
-                    UiMetrics.StateTooltip(evaluation.State, evaluation, quest, session.Names, states: null);
+                    // The viewed character has the session's state map (the same line Flight and Moonlit show); another
+                    // character's evaluation has none, so its blocker line reads the done ids it carries.
+                    UiMetrics.StateTooltip(evaluation.State, evaluation, quest, session.Names, item.ContentId == session.ViewedContentId ? session.States : null);
                 }
 
                 ImGui.SameLine();
