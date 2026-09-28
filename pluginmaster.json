@@ -3,7 +3,7 @@
     "Author": "Michiru Tsukikage",
     "Name": "Tsukimichi",
     "InternalName": "Tsukimichi",
-    "AssemblyVersion": "0.1.0.0",
+    "AssemblyVersion": "0.2.0.0",
     "Description": "A quest catalog for every journal type, with completed and available filters and a per-requirement breakdown of what still blocks a quest.\nMoonlit treasures collects quests with unique rewards, and per-character snapshots keep the whole account in view.",
     "ApplicableVersion": "any",
     "RepoUrl": "https://github.com/xenofei/Tsukimichi",
@@ -21,12 +21,13 @@
     "Punchline": "Walk the moon's path: every quest, every requirement, every unique reward.",
     "AcceptsFeedback": true,
     "IconUrl": "https://raw.githubusercontent.com/xenofei/Tsukimichi/main/assets/icon.png",
-    "DownloadLinkInstall": "https://github.com/xenofei/Tsukimichi/releases/download/v0.1.0/latest.zip",
-    "DownloadLinkTesting": "https://github.com/xenofei/Tsukimichi/releases/download/v0.1.0/latest.zip",
-    "DownloadLinkUpdate": "https://github.com/xenofei/Tsukimichi/releases/download/v0.1.0/latest.zip",
-    "LastUpdate": 1790560606,
+    "DownloadLinkInstall": "https://github.com/xenofei/Tsukimichi/releases/download/v0.2.0/latest.zip",
+    "DownloadLinkTesting": "https://github.com/xenofei/Tsukimichi/releases/download/v0.2.0/latest.zip",
+    "DownloadLinkUpdate": "https://github.com/xenofei/Tsukimichi/releases/download/v0.2.0/latest.zip",
+    "LastUpdate": 1790598342,
     "DownloadCount": 0,
     "IsHide": false,
-    "IsTestingExclusive": false
+    "IsTestingExclusive": false,
+    "Changelog": "Added\n- Help, Tutorial and Settings buttons on the main window toolbar.\n- Interactive tutorial: fourteen steps that dim the window and highlight each region, offered on first run and restartable from the toolbar, help window, settings or glyph window.\n- Help window rebuilt from cards, phase rows, numbered quick-start steps with Try-it buttons, key caps and tips, with topic search.\n- UI scale and icon scale sliders (defaults 1.15× and 1.25×) in the filter panel and settings; the window title bar keeps Dalamud's size.\n- Quest journal artwork in the detail pane header and in a tooltip on quest names.\n- Characters tab dashboard: completion by journal section, Moonlit summary, pinned quests, recent activity, job levels grouped by role with job icons and base classes hidden once the job is unlocked.\n- Reward tooltips with a large icon, item level, category and description; Copy coordinates; `/tsuki` alias; `/tsukimichi help`.\n- Pinned quests sort first (toggle in the filter panel and persisted).\n- Path section grouped by expansion with completed runs folded, plus an Unlocks next list.\n- Mark a quest unique or restore a \"not unique\" mark from the detail pane.\n- Poll timing readout in Settings › About.\n- Tooltips on every toolbar control, filter, and column header.\n- DataGen `--verify` mode that checks the reward database structure, icon files, banner artwork and cross-checks entries against xivapi.\n\nChanged\n- Filter chips moved onto the toolbar row so the layout below never shifts; the State chip names the excluded states.\n- Categories with a single genre fold into one tree leaf.\n- Open journal is available only for accepted or completed quests, since the game journal has no page for others.\n- Moon glyphs gained shading and a highlight arc at 20 px and larger.\n- Tree rows show the filling moon before the name; table rows alternate shading and carry gold or silver stripes for ready and accepted quests; requirement marks are small moons; empty states show a veiled moon with guidance.\n- Unique reward data tightened: 713 items that are not quest-exclusive (Fantasia, cordials, tickets, coffers, vendor-resold items) removed; 3,464 entries remain across 1,173 quests.\n\nFixed\n- Show path now scrolls to and highlights the Path section.\n- Moonlit kind moons drew a full moon regardless of progress.\n- Every orchestrion roll carried reward id 0 and seventeen rolls were lost to key collisions.\n- Placeholder ClassJob rows 44 and 45 appeared as \"Job 44\" and \"Job 45\" in the character page.\n- The Moonlit State column could not be reordered.\n- Forward tab switches (Journal to Moonlit or Characters) were dropped.\n- The tutorial card could fall behind the main window; Esc is now scoped to the card.\n- Display sliders in Settings desynced from the filter panel and let NaN through.\n- Settings changed just before closing the window could go unsaved."
   }
 ]
