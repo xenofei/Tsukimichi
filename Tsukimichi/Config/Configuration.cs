@@ -17,6 +17,9 @@ public sealed class Configuration : IPluginConfiguration
     public const int CurrentVersion = 1;
     public const double MinPollIntervalSeconds = 0.5;
     public const double MaxPollIntervalSeconds = 5.0;
+    public const int DefaultStalledDays = QueryContext.DefaultStalledDays;
+    public const int MinStalledDays = 1;
+    public const int MaxStalledDays = 90;
 
     public int Version { get; set; } = CurrentVersion;
 
@@ -31,6 +34,12 @@ public sealed class Configuration : IPluginConfiguration
 
     /// <summary>Show quests with no journal genre outside the Unlisted node.</summary>
     public bool ShowUnlisted { get; set; }
+
+    /// <summary>Days an accepted quest sits untouched before the Stalled preset lists it; 1–90, default 7. Clamped by <see cref="StalledDaysClamped"/> when read.</summary>
+    public int StalledDays { get; set; } = DefaultStalledDays;
+
+    /// <summary><see cref="StalledDays"/> within the allowed bounds.</summary>
+    public int StalledDaysClamped => Math.Clamp(StalledDays, MinStalledDays, MaxStalledDays);
 
     /// <summary>Last table filters, restored on load.</summary>
     public FilterSet Filters { get; set; } = new();

@@ -74,7 +74,8 @@ public static partial class Strings
     public const string PresetLevelBandTooltip = "Quests within five levels of your current job's level";
     public const string PresetStalledTooltip = "Quests that have sat in your journal for the number of days below";
     public const string StalledDaysFormat = "%d days";
-    public const string StalledDaysTooltip = "How long an accepted quest waits before Stalled lists it";
+    public const string StalledDaysLabel = "Stalled after";
+    public const string StalledDaysTooltip = "How long an accepted quest sits untouched before Stalled lists it";
 
     // Filter panel
     public const string HideCompleted = FilterNames.HideCompleted;

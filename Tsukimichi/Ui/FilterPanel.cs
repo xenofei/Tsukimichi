@@ -87,7 +87,7 @@ public sealed class FilterPanel
         var start = ImGui.GetCursorScreenPos();
         var width = ImGui.GetContentRegionAvail().X;
 
-        DrawPresets(f, hasSnapshot);
+        DrawPresets(f, hasSnapshot, settings);
         ImGui.Separator();
         DrawRuntimeToggle(Strings.HideCompleted, Strings.HideCompletedTooltip, "##hideCompleted", hasSnapshot, f.HideCompleted, v => f.HideCompleted = v, f.PerCategoryHideCompleted);
         DrawRuntimeToggle(Strings.AvailableOnly, Strings.AvailableOnlyTooltip, "##availableOnly", hasSnapshot, f.AvailableOnly, v => f.AvailableOnly = v, f.PerCategoryAvailableOnly);
@@ -167,13 +167,26 @@ public sealed class FilterPanel
     /// One-click presets as toggle chips at the head of the panel; at most one is on, and clicking the active one
     /// turns it off. Around my level and Stalled read the snapshot, so they are disabled in browse mode.
     /// </summary>
-    private void DrawPresets(FilterSet f, bool hasSnapshot)
+    private void DrawPresets(FilterSet f, bool hasSnapshot, Configuration settings)
     {
         ImGui.TextDisabled(Strings.Presets);
         var first = true;
         PresetChip(Strings.PresetFeatureQuests, Strings.PresetFeatureQuestsTooltip, Preset.FeatureQuests, f, enabled: true, ref first);
         PresetChip(Strings.PresetLevelBand, Strings.PresetLevelBandTooltip, Preset.LevelBand, f, hasSnapshot, ref first);
         PresetChip(Strings.PresetStalled, Strings.PresetStalledTooltip, Preset.Stalled, f, hasSnapshot, ref first);
+
+        // The Stalled threshold; a change re-runs the query and is saved with the settings.
+        var days = settings.StalledDaysClamped;
+        ImGui.SetNextItemWidth(UiMetrics.Px(110f));
+        if (ImGui.SliderInt("##stalledDays", ref days, Configuration.MinStalledDays, Configuration.MaxStalledDays, Strings.StalledDaysFormat, ImGuiSliderFlags.AlwaysClamp))
+        {
+            settings.StalledDays = days;
+            changed();
+        }
+
+        Tip(Strings.StalledDaysTooltip);
+        ImGui.SameLine();
+        ImGui.TextUnformatted(Strings.StalledDaysLabel);
     }
 
     private void PresetChip(string label, string tooltip, Preset preset, FilterSet f, bool enabled, ref bool first)

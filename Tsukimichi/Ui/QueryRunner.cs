@@ -40,6 +40,7 @@ public sealed class QueryRunner : IDisposable
     private string appliedSearch = string.Empty;
     private DateTime lastKeystrokeUtc;
     private bool searchDirty;
+    private long ranStalledHour;
 
     // Counts cache keys.
     private int countsVersion = -1;
@@ -186,17 +187,21 @@ public sealed class QueryRunner : IDisposable
             countsIncludeUnlisted = includeUnlisted;
         }
 
+        // The Stalled preset compares accepted times with the clock, so it is re-run once an hour even when nothing else moved.
+        var stalledHour = ui.Filters.Preset == Preset.Stalled ? nowUtc.Ticks / TimeSpan.TicksPerHour : 0L;
         var dirty = catalogChanged
             || sessionVersion != session.Version
             || queryVersion != ui.QueryVersion
             || scope != ui.Scope
             || sort != ui.Sort
             || searchDirty
+            || stalledHour != ranStalledHour
             || !filtersSnapshot.Equals(ui.Filters);
 
         if (dirty)
         {
-            Run(session, current);
+            Run(session, current, nowUtc);
+            ranStalledHour = stalledHour;
         }
 
         if (pinsDirty && nowUtc - pinsDirtyAtUtc >= PinsSaveDebounce)
@@ -343,7 +348,7 @@ public sealed class QueryRunner : IDisposable
         return hand + land == 0 ? Strings.JobDowDom : Strings.JobMulti;
     }
 
-    private void Run(SessionState session, CatalogBundle current)
+    private void Run(SessionState session, CatalogBundle current, DateTime nowUtc)
     {
         var snapshot = session.ViewedSnapshot;
         if (!ReferenceEquals(snapshot, festivalsSnapshot))
@@ -352,7 +357,14 @@ public sealed class QueryRunner : IDisposable
             festivals = snapshot is null || snapshot.ActiveFestivals.Count == 0 ? NoFestivals : new HashSet<ushort>(snapshot.ActiveFestivals);
         }
 
-        var ctx = new QueryContext(festivals, pinned, session.FeatureQuestIds, SearchIndex: SearchIndex.For(current.Catalog));
+        var ctx = new QueryContext(
+            festivals,
+            pinned,
+            session.FeatureQuestIds,
+            SearchIndex: SearchIndex.For(current.Catalog),
+            AcceptedSince: session.AcceptedSince,
+            NowUtc: nowUtc,
+            StalledDays: plugin.Settings.StalledDaysClamped);
 
         // The Feature quests preset reads best with what can be picked up now on top; the other presets keep the table's sort.
         var effectiveSort = ui.Sort with { AvailableFirst = ui.Filters.Preset == Preset.FeatureQuests };

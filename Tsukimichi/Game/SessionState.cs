@@ -8,6 +8,7 @@ using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Runtime;
 using Tsukimichi.Core.Storage;
 using Tsukimichi.GameData;
+using AcceptedSinceFile = Tsukimichi.Core.Runtime.AcceptedSince;
 
 namespace Tsukimichi.Game;
 
@@ -21,6 +22,7 @@ public sealed class SessionState
     public const int MaxRecentEvents = 100;
 
     private static readonly IReadOnlyDictionary<uint, QuestEvaluation> NoStates = new Dictionary<uint, QuestEvaluation>();
+    private static readonly IReadOnlyDictionary<ushort, DateTime> NoAcceptedSince = new Dictionary<ushort, DateTime>();
 
     private readonly SnapshotService snapshots;
     private readonly PluginPaths paths;
@@ -30,6 +32,7 @@ public sealed class SessionState
     private CharacterSnapshot? liveSnapshot;
     private IReadOnlyDictionary<uint, QuestEvaluation> liveStates = NoStates;
     private EvalContext liveContext = EvalContext.Default;
+    private IReadOnlyDictionary<ushort, DateTime> liveAcceptedSince = NoAcceptedSince;
     private bool followLive = true;
     private ulong? viewedContentId;
 
@@ -91,6 +94,13 @@ public sealed class SessionState
 
     /// <summary>Context the current <see cref="States"/> were resolved with.</summary>
     public EvalContext Context { get; private set; } = EvalContext.Default;
+
+    /// <summary>
+    /// When each of <see cref="ViewedSnapshot"/>'s accepted quests entered the journal (runtime quest id to UTC), from
+    /// the poller for the live character or the <c>.accepted.json</c> sidecar for a stored one; empty when the
+    /// character has no sidecar. Feeds the Stalled preset.
+    /// </summary>
+    public IReadOnlyDictionary<ushort, DateTime> AcceptedSince { get; private set; } = NoAcceptedSince;
 
     public UniqueRewardsData UniqueRewards { get; }
 
@@ -164,6 +174,8 @@ public sealed class SessionState
         ViewedSnapshot = snapshot;
         Context = baseContext;
         States = Bundle is { } bundle ? StateResolver.ResolveAll(bundle.Catalog, snapshot, baseContext) : NoStates;
+        // Derived data: a sidecar that cannot be read simply reads as unknown accepted times.
+        AcceptedSince = AcceptedSinceFile.Load(AcceptedSinceFile.PathFor(paths.CharactersDir, contentId));
         Bump();
         return true;
     }
@@ -175,6 +187,7 @@ public sealed class SessionState
     public void ForgetCharacter(ulong contentId)
     {
         snapshots.Delete(contentId);
+        DeleteIfExists(AcceptedSinceFile.PathFor(paths.CharactersDir, contentId));
         if (ViewedContentId == contentId && contentId != LiveContentId)
         {
             FollowLive();
@@ -187,6 +200,14 @@ public sealed class SessionState
     public void DeleteAllData()
     {
         snapshots.DeleteAll();
+        if (Directory.Exists(paths.CharactersDir))
+        {
+            foreach (var sidecar in Directory.GetFiles(paths.CharactersDir, "*" + AcceptedSinceFile.FileSuffix))
+            {
+                DeleteIfExists(sidecar);
+            }
+        }
+
         DeleteIfExists(paths.PinsFile);
         DeleteIfExists(paths.OverridesFile);
         recentEvents.Clear();
@@ -221,7 +242,8 @@ public sealed class SessionState
     }
 
     /// <summary>The poller's latest capture and evaluations. Shown when following live or when the viewed character is this one.</summary>
-    internal void SetLive(CharacterSnapshot snapshot, IReadOnlyDictionary<uint, QuestEvaluation> states, EvalContext context)
+    /// <param name="acceptedSince">The poller's accepted-time map for this character; null keeps whatever was published last.</param>
+    internal void SetLive(CharacterSnapshot snapshot, IReadOnlyDictionary<uint, QuestEvaluation> states, EvalContext context, IReadOnlyDictionary<ushort, DateTime>? acceptedSince = null)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
         ArgumentNullException.ThrowIfNull(states);
@@ -230,6 +252,7 @@ public sealed class SessionState
         liveSnapshot = snapshot;
         liveStates = states;
         liveContext = context;
+        liveAcceptedSince = acceptedSince ?? liveAcceptedSince;
         LiveContentId = snapshot.ContentId;
 
         if (followLive || ViewedContentId == snapshot.ContentId)
@@ -239,6 +262,7 @@ public sealed class SessionState
             ViewedSnapshot = snapshot;
             States = states;
             Context = context;
+            AcceptedSince = liveAcceptedSince;
         }
 
         Bump();
@@ -251,6 +275,7 @@ public sealed class SessionState
         liveSnapshot = null;
         liveStates = NoStates;
         liveContext = EvalContext.Default;
+        liveAcceptedSince = NoAcceptedSince;
         recentEvents.Clear();
         Bump();
     }
@@ -290,6 +315,9 @@ public sealed class SessionState
     /// <summary>The base context for stored characters: category lookup from the bundle, no daily offer.</summary>
     internal EvalContext BaseContext => baseContext;
 
+    /// <summary>Where the snapshots and their sidecars live, for the poller.</summary>
+    internal PluginPaths Paths => paths;
+
     private void FollowLive()
     {
         followLive = true;
@@ -299,6 +327,7 @@ public sealed class SessionState
             ViewedSnapshot = live;
             States = liveStates;
             Context = liveContext;
+            AcceptedSince = liveAcceptedSince;
         }
         else
         {
@@ -306,6 +335,7 @@ public sealed class SessionState
             ViewedSnapshot = null;
             States = NoStates;
             Context = baseContext;
+            AcceptedSince = NoAcceptedSince;
         }
 
         Bump();
