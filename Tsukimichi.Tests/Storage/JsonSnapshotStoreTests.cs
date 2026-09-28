@@ -93,6 +93,27 @@ public sealed class JsonSnapshotStoreTests : IDisposable
     }
 
     [Fact]
+    public void Accepted_class_job_round_trips_and_is_omitted_when_unknown()
+    {
+        var store = new JsonSnapshotStore(tmp.Path);
+        var snapshot = FullSnapshot() with { Accepted = [new AcceptedQuest(40, 3, 22), new AcceptedQuest(60000, 255)] };
+
+        store.Save(snapshot);
+        var loaded = store.Load(snapshot.ContentId);
+
+        Assert.NotNull(loaded);
+        Assert.Equal(snapshot.Accepted, loaded.Accepted);
+        Assert.Equal(22, loaded.Accepted[0].AcceptClassJob);
+        Assert.Equal(0, loaded.Accepted[1].AcceptClassJob);
+
+        // Additive at schema v1: 0 is not written, so a file with no acceptClassJob reads the same as before.
+        var json = JsonNode.Parse(File.ReadAllText(tmp.File(Path.Combine("characters", snapshot.ContentId + ".json"))))!.AsObject();
+        var accepted = json["accepted"]!.AsArray();
+        Assert.Equal(22, (int)accepted[0]!["acceptClassJob"]!);
+        Assert.Null(accepted[1]!["acceptClassJob"]);
+    }
+
+    [Fact]
     public void Load_returns_null_for_unknown_character_without_warning()
     {
         var store = new JsonSnapshotStore(tmp.Path);

@@ -24,6 +24,24 @@ public sealed record CatalogBundle(QuestCatalog Catalog, GameNames Names, ClassJ
 
         return JobLadder.Build(Catalog, jobs, Jobs);
     }
+
+    /// <summary>
+    /// ClassJob row id to its <c>ClassJobParent</c> row id for every row that fits a byte, for
+    /// <see cref="Core.Evaluation.EvalContext.ParentJob"/>. A class maps to itself, as the sheet has it.
+    /// </summary>
+    public Dictionary<byte, byte> JobParents()
+    {
+        var parents = new Dictionary<byte, byte>(Names.ClassJobInfos.Count);
+        foreach (var info in Names.ClassJobInfos)
+        {
+            if (info.RowId is > 0 and <= byte.MaxValue && info.ParentRowId <= byte.MaxValue)
+            {
+                parents[(byte)info.RowId] = (byte)info.ParentRowId;
+            }
+        }
+
+        return parents;
+    }
 }
 
 /// <summary>

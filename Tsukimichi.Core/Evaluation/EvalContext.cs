@@ -40,6 +40,13 @@ public sealed record EvalContext
     /// <summary>Category membership; null admits every job and takes other-job candidates from the snapshot's job levels.</summary>
     public IClassJobCategoryLookup? ClassJobs { get; init; }
 
+    /// <summary>
+    /// The base class a job grew out of (<c>ClassJob.ClassJobParent</c>): Dragoon to Lancer, Paladin to Gladiator;
+    /// a class, or a job without one, maps to itself. Null when the plugin has no sheet to answer from, in which case
+    /// a class-pinned quest admits only that class.
+    /// </summary>
+    public Func<byte, byte>? ParentJob { get; init; }
+
     /// <summary>Whether the character owns a mount; null means not checked.</summary>
     public bool? HasMount { get; init; }
 

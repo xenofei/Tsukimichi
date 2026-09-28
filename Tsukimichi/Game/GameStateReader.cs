@@ -146,7 +146,8 @@ public sealed class GameStateReader
             ? previousCompleted
             : (byte[])completed.Clone();
 
-        // Journal.
+        // Journal. QuestWork.AcceptClassJob is the ClassJob the quest was accepted on; the evaluator uses it as the
+        // client's evidence that a job may take its base class's quests.
         var normal = qm->NormalQuests;
         var daily = qm->DailyQuests;
         var accepted = new List<AcceptedQuest>(normal.Length + daily.Length);
@@ -155,7 +156,7 @@ public sealed class GameStateReader
             var work = normal[i];
             if (work.QuestId != 0)
             {
-                accepted.Add(new AcceptedQuest(work.QuestId, work.Sequence));
+                accepted.Add(new AcceptedQuest(work.QuestId, work.Sequence, work.AcceptClassJob));
             }
         }
 
