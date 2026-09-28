@@ -131,6 +131,20 @@ public sealed class FeaturePresetsTests : IDisposable
     }
 
     [Fact]
+    public void The_blue_journal_icon_marks_a_feature_quest_unless_main_scenario_or_repeatable()
+    {
+        var blue = Side(1) with { EventIconType = FeaturePresets.FeatureEventIconType };
+        var ordinary = Side(2) with { EventIconType = 3 };
+        var msq = Quest(3, "MSQ", section: 0) with { EventIconType = FeaturePresets.FeatureEventIconType };
+        var daily = Quest(4, "Daily", section: 2, repeatable: true) with { EventIconType = FeaturePresets.FeatureEventIconType };
+
+        Assert.True(FeaturePresets.IsFeatureQuest(blue, CuratedData.Empty));
+        Assert.False(FeaturePresets.IsFeatureQuest(ordinary, CuratedData.Empty));
+        Assert.False(FeaturePresets.IsFeatureQuest(msq, CuratedData.Empty));
+        Assert.False(FeaturePresets.IsFeatureQuest(daily, CuratedData.Empty));
+    }
+
+    [Fact]
     public void Derive_collects_every_feature_quest_row_id_once()
     {
         var curated = Curated(featureQuests: "[ 3 ]");
@@ -216,8 +230,8 @@ public class FeaturePresetsDataTests(GameDataFixture fixture, ITestOutputHelper 
         }
 
         // Cross-check against the sheet's EventIconType (the journal icon family) so the derivation can be judged:
-        // type 8 is the blue "+" feature icon, which also covers job quests and the raid chronicles the reward-based
-        // derivation cannot see; the sample below names a few of those.
+        // type 8 is the blue "+" feature icon, which the derivation now takes directly (it also covers job quests
+        // and the raid chronicles the reward-based rules cannot see), so the "not derived" sample below stays empty.
         var sheet = fixture.Game.Excel.GetSheet<Lumina.Excel.Sheets.Quest>();
         var byIcon = new SortedDictionary<uint, (int Total, int Msq, int Derived, int Repeatable)>();
         var missing = new List<string>();
@@ -265,14 +279,30 @@ public class FeaturePresetsDataTests(GameDataFixture fixture, ITestOutputHelper 
         }
 
         Assert.Equal(5373, catalog.Count);
-        Assert.Equal(483, ids.Count);
+        Assert.Equal(1699, ids.Count);
+        Assert.True(ids.Count >= 1600, $"expected at least 1600 feature quests, got {ids.Count}");
+        Assert.Empty(missing);
         Assert.All(ids, id => Assert.False(FeaturePresets.IsMainScenario(catalog.ByRowId[id])));
         Assert.All(ids, id => Assert.False(catalog.ByRowId[id].IsRepeatable));
 
-        // Landmarks: the MSQ dungeon unlock stays out; "Hallo Halatali" (66233, Instance reward) and
-        // "Ifrit Bleeds, We Can Kill It" (66584, hard-mode trial unlock) are in.
+        // Every listed, non-repeatable blue-icon quest outside the main scenario is in.
+        foreach (var quest in catalog.All)
+        {
+            if (quest.EventIconType == FeaturePresets.FeatureEventIconType && !quest.IsRepeatable && !FeaturePresets.IsMainScenario(quest))
+            {
+                Assert.Contains(quest.RowId, ids);
+            }
+        }
+
+        // Landmarks: the MSQ dungeon unlock and "Close to Home" (65621, an ordinary icon-3 side quest) stay out;
+        // "Hallo Halatali" (66233, Instance reward), "Ifrit Bleeds, We Can Kill It" (66584, hard-mode trial unlock)
+        // and the Crystal Tower opener "Legacy of Allag" (Chronicles of a New Era, blue icon, no unlock reward) are in.
         Assert.DoesNotContain(catalog.All.First(q => q.Name == "It's Probably Pirates" && !q.IsUnlisted).RowId, ids);
+        Assert.DoesNotContain(65621u, ids);
         Assert.Contains(66233u, ids);
         Assert.Contains(66584u, ids);
+        var chronicles = catalog.All.FirstOrDefault(q => q.Name == "Legacy of Allag" && !q.IsUnlisted)
+                         ?? catalog.All.First(q => q.Journal.GenreId == 18 && !q.IsRepeatable);
+        Assert.Contains(chronicles.RowId, ids);
     }
 }

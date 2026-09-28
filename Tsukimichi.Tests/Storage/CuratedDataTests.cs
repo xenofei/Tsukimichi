@@ -210,6 +210,28 @@ public sealed class CuratedDataTests : IDisposable
     }
 
     [Fact]
+    public void Feature_quests_accept_a_bare_array()
+    {
+        WriteCurated("feature_quests.json", "[ 66038, 66039 ]");
+
+        var data = CuratedData.Load(tmp.File("curated"));
+
+        Assert.Equal(new HashSet<uint> { 66038, 66039 }, data.FeatureQuests);
+        Assert.Empty(data.Warnings);
+    }
+
+    [Fact]
+    public void Feature_quests_accept_an_object_with_questRowIds_and_ignore_its_note()
+    {
+        WriteCurated("feature_quests.json", """{ "questRowIds": [ 66038, "66039" ], "note": "union of the unlock files" }""");
+
+        var data = CuratedData.Load(tmp.File("curated"));
+
+        Assert.Equal(new HashSet<uint> { 66038, 66039 }, data.FeatureQuests);
+        Assert.Empty(data.Warnings);
+    }
+
+    [Fact]
     public void Feature_quests_wrong_shape_is_warned_and_empty()
     {
         WriteCurated("feature_quests.json", """{ "a": 1 }""");
@@ -217,7 +239,41 @@ public sealed class CuratedDataTests : IDisposable
         var data = CuratedData.Load(tmp.File("curated"));
 
         Assert.Empty(data.FeatureQuests);
-        Assert.Single(data.Warnings);
+        var warning = Assert.Single(data.Warnings);
+        Assert.Contains("questRowIds", warning);
+    }
+
+    [Fact]
+    public void Festivals_accept_an_entries_wrapper_and_ignore_dollar_keys()
+    {
+        WriteCurated("festivals.json",
+            """
+            {
+              "$schema_note": "festivalId -> { name, start, end, mogStation }",
+              "entries": { "1": { "name": "Starlight Celebration" }, "$comment": "ignored" }
+            }
+            """);
+
+        var data = CuratedData.Load(tmp.File("curated"));
+
+        Assert.Empty(data.Warnings);
+        Assert.Equal("Starlight Celebration", Assert.Single(data.Festivals).Value.Name);
+    }
+
+    [Fact]
+    public void Shipped_curated_files_load_without_warnings()
+    {
+        var dir = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "Tsukimichi", "Data", "curated"));
+        Assert.True(Directory.Exists(dir), dir);
+
+        var data = CuratedData.Load(dir);
+
+        Assert.Empty(data.Warnings);
+        Assert.NotEmpty(data.FeatureQuests);
+        Assert.NotEmpty(data.SystemUnlocks);
+        Assert.NotEmpty(data.DutyUnlocks);
+        Assert.NotEmpty(data.Chains);
+        Assert.Empty(data.Festivals);
     }
 
     [Fact]

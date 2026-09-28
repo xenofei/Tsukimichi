@@ -35,6 +35,9 @@ public sealed class Configuration : IPluginConfiguration
     /// <summary>Show quests with no journal genre outside the Unlisted node.</summary>
     public bool ShowUnlisted { get; set; }
 
+    /// <summary>Register every quest and Moonlit reward with Wotsit when it is loaded (see <c>Game.WotsitIpc</c>). On by default.</summary>
+    public bool WotsitIntegration { get; set; } = true;
+
     /// <summary>Days an accepted quest sits untouched before the Stalled preset lists it; 1–90, default 7. Clamped by <see cref="StalledDaysClamped"/> when read.</summary>
     public int StalledDays { get; set; } = DefaultStalledDays;
 

@@ -5,15 +5,18 @@ using Tsukimichi.Core.Storage;
 namespace Tsukimichi.Core.Query;
 
 /// <summary>
-/// Which quests count as feature ("blue") quests. The mapped <see cref="QuestRecord"/> carries no flag for the blue
-/// journal icon, so the set is derived: a quest is a feature quest when curated data lists it (the feature list or a
-/// system or duty unlock entry), when the shipped unique-reward data records an unlock for it, or when its own
-/// rewards unlock something: a duty, a class or job, an action, a general action, a trait, an aether current, a blue
-/// magic spell, a system unlock, or a named <c>Quest.OtherReward</c>. Main scenario quests and repeatables are never
-/// feature quests, whatever they reward.
+/// Which quests count as feature ("blue") quests. A quest is a feature quest when the game draws it with the blue
+/// journal icon (<see cref="QuestRecord.EventIconType"/> equal to <see cref="FeatureEventIconType"/>), when curated
+/// data lists it (the feature list or a system or duty unlock entry), when the shipped unique-reward data records an
+/// unlock for it, or when its own rewards unlock something: a duty, a class or job, an action, a general action, a
+/// trait, an aether current, a blue magic spell, a system unlock, or a named <c>Quest.OtherReward</c>. Main scenario
+/// quests and repeatables are never feature quests, whatever they reward or show.
 /// </summary>
 public static class FeaturePresets
 {
+    /// <summary><c>Quest.EventIconType</c> row of the blue "+" feature quest icon.</summary>
+    public const byte FeatureEventIconType = 8;
+
     /// <summary>Journal sections holding main scenario quests: 0 (A Realm Reborn through Endwalker) and 1 (Dawntrail onward).</summary>
     public static bool IsMainScenario(QuestRecord quest)
     {
@@ -45,7 +48,8 @@ public static class FeaturePresets
             return false;
         }
 
-        if (curated.FeatureQuests.Contains(quest.RowId)
+        if (quest.EventIconType == FeatureEventIconType
+            || curated.FeatureQuests.Contains(quest.RowId)
             || curated.SystemUnlocks.ContainsKey(quest.RowId)
             || curated.DutyUnlocks.ContainsKey(quest.RowId)
             || (unlockQuests is not null && unlockQuests.Contains(quest.RowId)))

@@ -16,7 +16,7 @@ namespace Tsukimichi.Ui;
 /// <summary>
 /// Settings (spec §7): poll interval (with the measured cost of a poll under it), display scale sliders
 /// (<see cref="Configuration.UiScale"/>, <see cref="Configuration.IconScale"/>), chat notices, the Unlisted bucket,
-/// help (open it, start the tutorial, offer it on first run), data deletion with a double confirm, and an About
+/// the Wotsit integration, help (open it, start the tutorial, offer it on first run), data deletion with a double confirm, and an About
 /// section with the plugin, reward-data and catalog stamps plus the poll timing. Every change is saved as it
 /// happens; sliders save when released.
 /// </summary>
@@ -88,6 +88,9 @@ public sealed class ConfigWindow : Window
     /// <summary>Starts the interactive tutorial; set by the plugin once the overlay exists. Null hides the button.</summary>
     public Action? StartTutorial { get; set; }
 
+    /// <summary>Called with the new value after <see cref="Configuration.WotsitIntegration"/> is toggled and saved; the plugin points it at the Wotsit IPC.</summary>
+    public Action<bool>? WotsitToggled { get; set; }
+
     public override void OnOpen()
     {
         ReadSettings();
@@ -112,6 +115,8 @@ public sealed class ConfigWindow : Window
         DrawNotices();
         ImGui.Spacing();
         DrawJournal();
+        ImGui.Spacing();
+        DrawIntegrations();
         ImGui.Spacing();
         DrawHelp();
         ImGui.Spacing();
@@ -280,6 +285,23 @@ public sealed class ConfigWindow : Window
         }
 
         ImGui.TextDisabled(Strings.ConfigShowUnlistedHint);
+    }
+
+    private void DrawIntegrations()
+    {
+        Header(Strings.ConfigSectionIntegrations);
+        var wotsit = settings.WotsitIntegration;
+        if (ImGui.Checkbox(Strings.ConfigWotsitIntegration, ref wotsit))
+        {
+            settings.WotsitIntegration = wotsit;
+            Save();
+            WotsitToggled?.Invoke(wotsit);
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip(Strings.ConfigWotsitIntegrationHint);
+        }
     }
 
     private void DrawData()

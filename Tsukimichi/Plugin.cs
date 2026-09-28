@@ -271,6 +271,7 @@ public sealed class Plugin : IDalamudPlugin
             moonlitPane = new MoonlitPane(Session, TextureProvider, unlockReader, Paths, Log, DataManager);
             MoonlitPane moonlit = moonlitPane;
             wotsit = new Game.WotsitIpc(PluginInterface, Framework, Log);
+            wotsit.Enabled = Settings.WotsitIntegration;
             wotsit.Attach(() => Session.Bundle, () => moonlit.Catalog, moonlit.Icons.Resolve, quest =>
             {
                 mainWindow.IsOpen = true;
@@ -287,6 +288,8 @@ public sealed class Plugin : IDalamudPlugin
             chatNotifier = new Game.ChatNotifier(Session, Settings, Paths, gameLinks, ChatGui, Log);
 
             configWindow = new ConfigWindow(Settings, Session, PluginInterface, _ => ui.MarkQueryDirty());
+            Game.WotsitIpc wotsitIpc = wotsit;
+            configWindow.WotsitToggled = enabled => wotsitIpc.Enabled = enabled;
             windowSystem.AddWindow(configWindow);
             PluginInterface.UiBuilder.OpenConfigUi += configWindow.Toggle;
             command.ToggleConfigWindow = configWindow.Toggle;
@@ -402,6 +405,7 @@ public sealed class Plugin : IDalamudPlugin
         Unwind("main window", () => mainWindow?.Dispose());
         Unwind("wotsit ipc", () => wotsit?.Dispose());
         Unwind("moonlit pane", () => moonlitPane?.Dispose());
+        Unwind("chat notifier", () => chatNotifier?.Dispose());
         Unwind("query runner", () => queryRunner?.Dispose());
         Unwind("lifestream ipc", () => lifestream?.Dispose());
         Unwind("game state", DisposeGameState);

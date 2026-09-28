@@ -273,7 +273,7 @@ public static partial class Strings
     public const string ChatNewlyAvailablePrefix = "Now available: ";
 
     // Command help
-    public const string CommandHelp = "Open Tsukimichi (also /tsuki). /tsukimichi <text> prints matching quest links; config, help and glyphs open those windows.";
+    public const string CommandHelp = "Open Tsukimichi (also /tsuki). /tsukimichi <text> prints matching quest links; zone lists quests you can start here; which lists the targeted NPC's quests; config, help and glyphs open those windows.";
     public const string CommandAliasHelp = "Short form of /tsukimichi.";
 
     // Time

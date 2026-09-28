@@ -207,6 +207,9 @@ static partial class Strings
     public const string ConfigSectionJournal = "Journal";
     public const string ConfigShowUnlisted = "Show Unlisted bucket";
     public const string ConfigShowUnlistedHint = "Quests with no journal genre: hidden, removed or legacy entries.";
+    public const string ConfigSectionIntegrations = "Integrations";
+    public const string ConfigWotsitIntegration = "Register quests and rewards with Wotsit";
+    public const string ConfigWotsitIntegrationHint = "Every quest and Moonlit reward becomes a Wotsit search entry that reveals it in the Journal. Needs Wotsit installed.";
     public const string ConfigSectionData = "Data";
     public const string ConfigDataRetention = "Tsukimichi keeps one snapshot per character, your pins and your unique-reward overrides in its config directory. Forget a single character from the Characters tab.";
     public const string ConfigDeleteAll = "Delete all Tsukimichi data";

@@ -163,6 +163,14 @@ public class CatalogLoaderTests(GameDataFixture fixture, ITestOutputHelper outpu
     }
 
     [GameDataFact]
+    public void Event_icon_type_is_three_for_a_side_quest_and_eight_for_a_feature_quest()
+    {
+        // "Close to Home" (65621) carries the ordinary side quest icon; "Hallo Halatali" (66233) the blue "+" feature icon.
+        Assert.Equal(3, Catalog.GetByRowId(65621u)!.EventIconType);
+        Assert.Equal(8, Catalog.GetByRowId(66233u)!.EventIconType);
+    }
+
+    [GameDataFact]
     public void Issuer_carries_npc_name_and_raw_level_coordinates()
     {
         var issuer = Catalog.GetByRowId(65621u)!.Issuer;

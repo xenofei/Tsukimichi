@@ -70,8 +70,8 @@ public sealed class UiState
 
     /// <summary>
     /// Select a quest and switch to the Journal tab scoped to its genre, used by cross-pane links. The state-based
-    /// narrowing filters are cleared so the revealed row cannot be hidden by them; an unlisted quest also turns
-    /// Include Unlisted on so its virtual scope is reachable.
+    /// narrowing filters and the active preset are cleared so the revealed row cannot be hidden by them; an unlisted
+    /// quest also turns Include Unlisted on so its virtual scope is reachable.
     /// </summary>
     public void Reveal(uint rowId, QuestScope scope, bool isUnlisted = false)
     {
@@ -104,6 +104,12 @@ public sealed class UiState
         if (f.StateMask != QuestStateMask.All)
         {
             f.StateMask = QuestStateMask.All;
+            changed = true;
+        }
+
+        if (f.Preset != Preset.None)
+        {
+            f.Preset = Preset.None;
             changed = true;
         }
 

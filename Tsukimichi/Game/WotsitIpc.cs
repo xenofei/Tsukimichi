@@ -27,8 +27,8 @@ public sealed record WotsitEntry(string DisplayName, string SearchText, uint Ico
 /// and again whenever Wotsit announces itself, since a reloaded Wotsit has forgotten them.
 /// </para>
 /// <para>
-/// <see cref="Enabled"/> is always on for now; a Configuration toggle (<c>WotsitIntegration</c>) is for the
-/// coordinator to add and wire, since Configuration belongs to another stream.
+/// <see cref="Enabled"/> follows the <c>Configuration.WotsitIntegration</c> setting: the plugin sets it after
+/// construction and the settings window's checkbox flips it; turning it off unregisters everything at once.
 /// </para>
 /// </summary>
 public sealed class WotsitIpc : IDisposable
@@ -104,7 +104,7 @@ public sealed class WotsitIpc : IDisposable
         framework.Update += OnUpdate;
     }
 
-    /// <summary>Whether entries are registered at all. Always on until a settings toggle exists; turning it off unregisters.</summary>
+    /// <summary>Whether entries are registered at all (default on). Turning it off unregisters every entry now; turning it on registers them again on the next tick.</summary>
     public bool Enabled
     {
         get => enabled;

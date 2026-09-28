@@ -59,6 +59,12 @@ public sealed record QuestRecord
     /// <summary>Small icon the journal shows beside special quests (seasonal events, promotions); zero for ordinary quests.</summary>
     public uint IconSpecial { get; init; }
 
+    /// <summary>
+    /// Journal icon family from <c>Quest.EventIconType</c>: 3 is the ordinary side quest, 8 the blue "+" feature
+    /// quest (see <c>FeaturePresets.FeatureEventIconType</c>); zero when the sheet has none.
+    /// </summary>
+    public byte EventIconType { get; init; }
+
     public IReadOnlyList<RewardRef> Rewards { get; init; } = [];
     public uint ExpFactor { get; init; }
     public uint Gil { get; init; }

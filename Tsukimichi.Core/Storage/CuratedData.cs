@@ -17,12 +17,14 @@ public sealed record CuratedChain(string Name, IReadOnlyList<uint> GenreIds, str
 
 /// <summary>
 /// Hand-maintained overlays shipped in the plugin's <c>curated/</c> directory. Every file is optional and every entry
-/// is validated on its own, so one bad line never hides the rest. Shapes (object keys are row ids as strings):
+/// is validated on its own, so one bad line never hides the rest. Shapes (object keys are row ids as strings; keys
+/// starting with <c>$</c>, such as <c>$schema_note</c>, are comments and ignored everywhere):
 /// <code>
 /// system_unlocks.json  { "66038": { "label": "Glamour Dresser", "kind": "system", "note": "..." } }
 /// duty_unlocks.json    { "66038": [ 4, 5 ] }  or  { "66038": { "contentFinderConditionIds": [ 4, 5 ], "note": "..." } }
-/// feature_quests.json  [ 66038, 66039 ]
+/// feature_quests.json  [ 66038, 66039 ]  or  { "questRowIds": [ 66038, 66039 ], "note": "..." }
 /// festivals.json       { "1": { "name": "Starlight Celebration", "start": "2025-12-15T08:00:00Z", "end": "...", "mogStation": false } }
+///                      or  { "entries": { "1": { ... } } }
 /// chains.json          { "chains": [ { "name": "Hildibrand", "genreIds": [ 93, 94 ], "note": "..." } ] }
 /// </code>
 /// </summary>
@@ -35,6 +37,15 @@ public sealed class CuratedData
     public const string ChainsFileName = "chains.json";
 
     private const string DefaultSystemKind = "system";
+
+    /// <summary>Object files may wrap their entries under this key (festivals.json does); the wrapper's other keys are ignored.</summary>
+    private const string EntriesKey = "entries";
+
+    /// <summary>feature_quests.json may wrap its ids under this key.</summary>
+    private const string QuestRowIdsKey = "questRowIds";
+
+    /// <summary>Object keys starting with this are comments (<c>$schema_note</c>) and never entries.</summary>
+    private const char CommentKeyPrefix = '$';
 
     private CuratedData(
         IReadOnlyDictionary<uint, SystemUnlock> systemUnlocks,
@@ -160,7 +171,7 @@ public sealed class CuratedData
             dutyUnlocks[rowId] = new DutyUnlock(parsed, note);
         });
 
-        ForEachElement(Path.Combine(dir, FeatureQuestsFileName), warnings, (index, node, warn) =>
+        ForEachElement(Path.Combine(dir, FeatureQuestsFileName), QuestRowIdsKey, warnings, (index, node, warn) =>
         {
             if (!StorageJson.TryReadId(node, out var rowId))
             {
@@ -305,7 +316,11 @@ public sealed class CuratedData
 
     private delegate void ElementHandler(int index, JsonNode? value, Action<string> warn);
 
-    /// <summary>Visits each property of a JSON object file. Missing file → nothing; unparseable → one warning.</summary>
+    /// <summary>
+    /// Visits each property of a JSON object file. The root may instead wrap the entries under
+    /// <see cref="EntriesKey"/>; keys starting with <see cref="CommentKeyPrefix"/> are skipped silently. Missing file →
+    /// nothing; unparseable → one warning.
+    /// </summary>
     private static void ForEachEntry(string path, List<string> warnings, EntryHandler handle)
     {
         if (ParseRoot(path, warnings) is not { } root)
@@ -320,14 +335,28 @@ public sealed class CuratedData
             return;
         }
 
+        if (obj.TryGetPropertyValue(EntriesKey, out var entriesNode) && entriesNode is JsonObject entries)
+        {
+            obj = entries;
+        }
+
         foreach (var pair in obj)
         {
+            if (IsCommentKey(pair.Key))
+            {
+                continue;
+            }
+
             handle(pair.Key, pair.Value, reason => warnings.Add($"{fileName}: entry \"{pair.Key}\" skipped: {reason}"));
         }
     }
 
-    /// <summary>Visits each element of a JSON array file. Missing file → nothing; unparseable → one warning.</summary>
-    private static void ForEachElement(string path, List<string> warnings, ElementHandler handle)
+    /// <summary>
+    /// Visits each element of a JSON array file. The root may instead be an object holding the array under
+    /// <paramref name="wrapperKey"/> (its other keys, such as a note, are ignored). Missing file → nothing;
+    /// unparseable or neither shape → one warning.
+    /// </summary>
+    private static void ForEachElement(string path, string wrapperKey, List<string> warnings, ElementHandler handle)
     {
         if (ParseRoot(path, warnings) is not { } root)
         {
@@ -335,9 +364,16 @@ public sealed class CuratedData
         }
 
         var fileName = Path.GetFileName(path);
-        if (root is not JsonArray array)
+        var array = root switch
         {
-            warnings.Add($"{fileName}: root is not a JSON array; file ignored.");
+            JsonArray bare => bare,
+            JsonObject obj when obj.TryGetPropertyValue(wrapperKey, out var node) && node is JsonArray inner => inner,
+            _ => null,
+        };
+
+        if (array is null)
+        {
+            warnings.Add($"{fileName}: root must be a JSON array or an object with a \"{wrapperKey}\" array; file ignored.");
             return;
         }
 
@@ -347,6 +383,8 @@ public sealed class CuratedData
             handle(index, array[index], reason => warnings.Add($"{fileName}: element [{index}] skipped: {reason}"));
         }
     }
+
+    private static bool IsCommentKey(string key) => key.Length > 0 && key[0] == CommentKeyPrefix;
 
     /// <summary>Missing file → null silently; locked or inaccessible → null with one warning (the file is never moved).</summary>
     private static JsonNode? ParseRoot(string path, List<string> warnings)
