@@ -4,6 +4,8 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-09-28
+
 ### Added
 - Nearby quests window (`/tsuki nearby`): the quests you can start in the current zone (Ready, plus Ready on another job unless turned off), each with its state moon, level, job and Flag and Teleport buttons (Teleport hidden without Lifestream); clicking a name shows it in the Journal. "Also accepted here (N)" folds out the accepted quests whose giver stands in the zone. The list is rebuilt only when the session or the territory changes. A cog at the top right holds the window's settings, stored in `user/discovery.json`.
 - Server info bar entry "☾ N" with the count of quests you can start here; the tooltip names up to five of them and a click opens Nearby quests. Hidden at zero unless "Keep the entry visible" is on, and off entirely with "Show a count in the server info bar" unticked.
