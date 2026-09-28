@@ -43,6 +43,7 @@ public class ChainCatalogDataTests(GameDataFixture fixture, ITestOutputHelper ou
     }
 
     [GameDataFact]
+    [Trait("Category", "Curated")]
     public void Shipped_chains_resolve_every_genre_and_span_the_sheet()
     {
         var curated = CuratedData.Load(CuratedDir());

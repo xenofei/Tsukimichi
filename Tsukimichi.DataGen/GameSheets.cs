@@ -101,7 +101,7 @@ internal sealed class GameSheets
         => Data.GetSubrowExcelSheet<T>(Language.English) ?? throw new InvalidOperationException($"Subrow sheet {typeof(T).Name} is missing from the game data.");
 
     /// <summary>The game directory holds ffxivgame.ver one level above sqpack; the file is a single line like 2026.09.15.0000.0000.</summary>
-    private static string ReadGameVersion(string sqpackPath)
+    internal static string ReadGameVersion(string sqpackPath)
     {
         var full = Path.GetFullPath(sqpackPath).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
         var gameDir = Path.GetDirectoryName(full) ?? full;

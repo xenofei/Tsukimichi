@@ -4,6 +4,12 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+### Added
+- Test fixtures: a real schema-v1 character snapshot (anonymised) that must round-trip through the store unchanged, and a gzipped dump of the mapped quest catalog (`Tsukimichi.DataGen --dump-catalog`) so the tree-total, feature-quest and chain tests run without the game files; one game-data test checks the dump against the live sheets and says when to regenerate it.
+
+### Changed
+- CI: every push and pull request builds the solution with warnings as errors and runs the tests. The release workflow refuses a tag whose version differs from the plugin's, or that has no changelog section; it publishes tags with a suffix (`-rc1`) as prereleases without touching the plugin repository index, retries the index push, and can be re-run for an existing tag.
+
 ## [0.5.0] - 2026-09-28
 
 ### Added

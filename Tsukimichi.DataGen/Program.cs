@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Tsukimichi.Core.Model;
+using Tsukimichi.GameData;
 
 namespace Tsukimichi.DataGen;
 
@@ -7,6 +8,7 @@ namespace Tsukimichi.DataGen;
 /// Offline generator: local game files -> unique_quests.json plus the review reports under docs/data.
 /// Usage: Tsukimichi.DataGen --game "<sqpack path>" --out <unique_quests.json> [--curated <dir>] [--reports <dir>] [--keep-nonexclusive-items]
 ///        Tsukimichi.DataGen --verify --game "<sqpack path>" [--data <unique_quests.json>] [--report <verification-report.md>] [--no-xivapi] [--sample N] [--seed N]
+///        Tsukimichi.DataGen --dump-catalog <file.json.gz or directory> --game "<sqpack path>"
 /// </summary>
 public static class Program
 {
@@ -17,6 +19,8 @@ public static class Program
     {
         if (args.Contains("--verify"))
             return Verify(args);
+        if (args.Contains("--dump-catalog"))
+            return DumpCatalog(args);
 
         string? game = null;
         string? output = null;
@@ -182,6 +186,71 @@ public static class Program
         return code;
     }
 
+    /// <summary>
+    /// Freezes the mapped catalog to a gzipped JSON fixture the tests read in place of the game files. The path is the
+    /// file to write, or a directory that receives <c>catalog-&lt;gameVersion&gt;.json.gz</c>.
+    /// </summary>
+    private static int DumpCatalog(string[] args)
+    {
+        string? game = null;
+        string? target = null;
+
+        for (var i = 0; i < args.Length; i++)
+        {
+            switch (args[i])
+            {
+                case "--game" when i + 1 < args.Length:
+                    game = args[++i];
+                    break;
+                case "--dump-catalog" when i + 1 < args.Length:
+                    target = args[++i];
+                    break;
+                case "--help" or "-h":
+                    PrintUsage();
+                    return 0;
+                default:
+                    Console.Error.WriteLine($"Unknown or incomplete argument: {args[i]}");
+                    PrintUsage();
+                    return 2;
+            }
+        }
+
+        if (game is null || !Directory.Exists(game))
+        {
+            Console.Error.WriteLine("--dump-catalog needs --game pointing at an existing sqpack directory.");
+            PrintUsage();
+            return 2;
+        }
+        if (target is null)
+        {
+            Console.Error.WriteLine("--dump-catalog needs a file or directory path.");
+            PrintUsage();
+            return 2;
+        }
+
+        var clock = Stopwatch.StartNew();
+        var gameVersion = GameSheets.ReadGameVersion(game);
+        var path = Directory.Exists(target) || target.EndsWith(Path.DirectorySeparatorChar) || target.EndsWith(Path.AltDirectorySeparatorChar)
+            ? Path.Combine(target, CatalogFixtureFile.FileName(gameVersion))
+            : target;
+
+        Console.WriteLine($"game:    {game}");
+        Console.WriteLine($"version: {gameVersion}");
+        Console.WriteLine($"out:     {path}");
+
+        using var data = new Lumina.GameData(game, new Lumina.LuminaOptions
+        {
+            DefaultExcelLanguage = Lumina.Data.Language.English,
+            PanicOnSheetChecksumMismatch = false,
+        });
+        var bundle = CatalogMapper.Map(data.Excel, Lumina.Data.Language.English, log: line => Console.WriteLine($"  {line}"));
+        CatalogFixtureFile.Write(path, bundle, gameVersion);
+
+        var bytes = new FileInfo(path).Length;
+        Console.WriteLine($"wrote:   {path} ({bundle.Catalog.Count} quests, {bytes / 1024.0 / 1024.0:F2} MB gzipped) in {clock.Elapsed.TotalSeconds:F1} s");
+        return 0;
+    }
+
     /// <summary>Known facts the output must reproduce. A failure means the sheet layout or a rule regressed.</summary>
     private static List<string> SanityChecks(IReadOnlyList<UniqueRewardEntry> entries)
     {
@@ -221,5 +290,7 @@ public static class Program
         Console.WriteLine($"       Tsukimichi.DataGen --verify --game <sqpack path> [--data <unique_quests.json>] [--report <report.md>] [--no-xivapi] [--sample N] [--seed N]");
         Console.WriteLine($"       defaults: --data {DefaultData} --report {DefaultVerifyReport} --sample 48 --seed 20260927");
         Console.WriteLine("       a verification-notes.md next to the report is inserted after the header (hand-written findings).");
+        Console.WriteLine("       Tsukimichi.DataGen --dump-catalog <file.json.gz or directory> --game <sqpack path>");
+        Console.WriteLine("       freezes the mapped catalog for the tests (Tsukimichi.Tests/Fixtures/catalog-<gameVersion>.json.gz).");
     }
 }

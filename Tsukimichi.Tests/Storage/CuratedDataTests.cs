@@ -261,6 +261,7 @@ public sealed class CuratedDataTests : IDisposable
     }
 
     [Fact]
+    [Trait("Category", "Curated")]
     public void Shipped_curated_files_load_without_warnings()
     {
         var dir = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "Tsukimichi", "Data", "curated"));
