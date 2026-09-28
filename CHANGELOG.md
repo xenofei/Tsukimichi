@@ -4,6 +4,11 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+### Added
+- Job quests on the Characters dashboard: one row per leveled job (icon, level, filling moon over its quest ladder, done/total) with the next quest, "Lv N" in gold when it can be taken now or "at Lv N" when not; click reveals it in the Journal. A job's ladder is its base class's quests, its unlock quest (Dark Knight's "Our End" and the like) and then its own quests, from the Class & Job Quests section of the sheet; role quests get one row per role the character has a job in (tank, healer, melee, physical ranged, magical ranged), with the Shadowbringers physical DPS line on both the melee and the ranged row.
+- Story chains on the Characters dashboard: every curated chain (Hildibrand, the relic lines, the raid stories and the rest of `curated/chains.json`) with a filling moon, "N of M" and a clickable next quest; chains with nothing done yet fold under "Not started (N)".
+- Level-up nudge: when a job's level rises and the next quest of its ladder or its role's ladder is open, a chat line "Level N Job: [quest] is available" with the giver's map link, once per quest per login session. Settings › Notices: "Chat notice when a job or role quest becomes available after a level-up" (on by default).
+
 ## [0.3.0] - 2026-09-28
 
 ### Added
