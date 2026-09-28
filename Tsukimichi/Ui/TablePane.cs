@@ -134,19 +134,28 @@ public sealed class TablePane : IDisposable
         var glyphColumn = UiMetrics.Px(GlyphColumnLead) + glyphBox + UiMetrics.Px(2f);
         var rewardsColumn = UiMetrics.RowIconSize * MaxRewardIcons + UiMetrics.Px(2f) * (MaxRewardIcons - 1) + UiMetrics.Px(8f);
 
-        // The persisted sort is handed to ImGui only while the table initializes (ImGui ignores DefaultSort afterwards
-        // and whenever its own saved settings already carry a sort), so no column is default-sorted otherwise.
-        var initialSort = tableInitialized ? SortSpec.Default : ui.Sort;
-        tableInitialized = true;
-
-        ImGui.TableSetupColumn(Strings.ColumnGlyph, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize | ImGuiTableColumnFlags.NoHide | ImGuiTableColumnFlags.NoHeaderLabel | InitialSortFlags(initialSort, SortColumn.State), glyphColumn);
-        ImGui.TableSetupColumn(Strings.ColumnName, ImGuiTableColumnFlags.WidthStretch | ImGuiTableColumnFlags.NoHide | InitialSortFlags(initialSort, SortColumn.Name), 3f);
-        ImGui.TableSetupColumn(Strings.ColumnLevel, ImGuiTableColumnFlags.WidthFixed | InitialSortFlags(initialSort, SortColumn.Level), UiMetrics.Px(34f));
+        ImGui.TableSetupColumn(Strings.ColumnGlyph, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize | ImGuiTableColumnFlags.NoHide | ImGuiTableColumnFlags.NoHeaderLabel, glyphColumn);
+        ImGui.TableSetupColumn(Strings.ColumnName, ImGuiTableColumnFlags.WidthStretch | ImGuiTableColumnFlags.NoHide, 3f);
+        ImGui.TableSetupColumn(Strings.ColumnLevel, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(34f));
         ImGui.TableSetupColumn(Strings.ColumnJob, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoSort, UiMetrics.Px(64f));
         ImGui.TableSetupColumn(Strings.ColumnNextStep, ImGuiTableColumnFlags.WidthStretch | ImGuiTableColumnFlags.NoSort, 2f);
-        ImGui.TableSetupColumn(Strings.ColumnExpansion, ImGuiTableColumnFlags.WidthFixed | InitialSortFlags(initialSort, SortColumn.Expansion), UiMetrics.Px(40f));
+        ImGui.TableSetupColumn(Strings.ColumnExpansion, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(40f));
         ImGui.TableSetupColumn(Strings.ColumnRewards, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoSort, rewardsColumn);
         ImGui.TableSetupScrollFreeze(0, 1);
+
+        // The persisted sort is written straight into the column state on the table's first frame: ImGui's own saved
+        // settings (imgui.ini) would otherwise win over DefaultSort and hand their sort back through SpecsDirty.
+        if (!tableInitialized)
+        {
+            tableInitialized = true;
+            ApplyInitialSort(ui.Sort);
+        }
+
+        // The two icon-derived widths are re-asserted every frame: ImGui restores saved widths from imgui.ini (they
+        // track the font size, not IconScale) and only reads the setup width while initializing, so a changed
+        // IconScale would otherwise leave the moon and the reward icons clipped. A no-op once the widths agree.
+        ImGuiP.TableSetColumnWidth((int)Column.Glyph, glyphColumn);
+        ImGuiP.TableSetColumnWidth((int)Column.Rewards, rewardsColumn);
         DrawHeaders();
 
         ApplySortSpecs();
@@ -501,7 +510,7 @@ public sealed class TablePane : IDisposable
         if (empty.Filters.Count > 0)
         {
             ImGui.TextUnformatted(Strings.NothingMatchesHint);
-            using var indent = ImRaii.PushIndent(12f);
+            using var indent = ImRaii.PushIndent(UiMetrics.Px(12f));
             foreach (var name in empty.Filters)
             {
                 ImGui.Bullet();
@@ -520,15 +529,27 @@ public sealed class TablePane : IDisposable
         }
     }
 
-    /// <summary>DefaultSort (plus the direction) for the column the persisted sort names; none for every other column.</summary>
-    private static ImGuiTableColumnFlags InitialSortFlags(SortSpec initial, SortColumn column)
+    /// <summary>
+    /// Sets the table's sort column and direction from the persisted sort; journal order clears every column's sort
+    /// (allowed because the table is SortTristate). Called between the column setup and the header row.
+    /// </summary>
+    private static void ApplyInitialSort(SortSpec initial)
     {
-        if (initial.Column != column)
+        var column = initial.Column switch
         {
-            return ImGuiTableColumnFlags.None;
+            SortColumn.State => Column.Glyph,
+            SortColumn.Name => Column.Name,
+            SortColumn.Level => Column.Level,
+            SortColumn.Expansion => Column.Expansion,
+            _ => (Column?)null,
+        };
+        if (column is not { } index)
+        {
+            ImGuiP.TableSetColumnSortDirection((int)Column.Glyph, ImGuiSortDirection.None, appendToSortSpecs: false);
+            return;
         }
 
-        return ImGuiTableColumnFlags.DefaultSort | (initial.Descending ? ImGuiTableColumnFlags.PreferSortDescending : ImGuiTableColumnFlags.PreferSortAscending);
+        ImGuiP.TableSetColumnSortDirection((int)index, initial.Descending ? ImGuiSortDirection.Descending : ImGuiSortDirection.Ascending, appendToSortSpecs: false);
     }
 
     private void ApplySortSpecs()
