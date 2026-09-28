@@ -527,21 +527,21 @@ static partial class Strings
         [
             "Unlisted and removed quests",
             "Seasonal quests out of season",
-            "Foreclosed choices",
-            "Feature Unlocks is derived",
+            "Locked-out choices",
+            "Unlock quests is derived",
             "Repeatables count once",
         ];
 
         public static readonly string[] CountsCardBodies =
         [
             "The game's journal only lists quests that have a journal genre. Quests without one, and quests the game removed in later patches (the A Realm Reborn trim in 5.3, the Summoner rework, the Crystal Tower rewrite), sit under the Unlisted node, off by default, and never count toward a section's total. A completed one still shows Completed when Include Unlisted reveals it.",
-            "A seasonal quest of an event that is not running shows Blocked with \"seasonal event not active\", and is left out of its genre's total the way a Foreclosed quest is, so the moon can fill without it; it counts again while the event runs. An event whose end date is known and past turns its quests Foreclosed for good.",
-            "A quest locked out by a choice, such as the other two Grand Companies' quests once you have joined one, is Foreclosed and left out of the total. A category can reach a full moon with them undone, while a wiki's count per genre includes them.",
-            "Feature Unlocks is not a journal category. It gathers every quest the game draws with the blue + icon, the curated duty and system unlocks, and quests that reward a duty, job, action, trait, aether current or blue magic spell; main scenario and repeatable quests are left out. Its total matches no page of the journal and moves when the curated lists do.",
-            "A daily or weekly quest is one row and one count however many times you have turned it in. Done this cycle marks the ones already handed in today or this week; they are still counted as completed.",
+            "A seasonal quest of an event that is not running shows Blocked with \"seasonal event not active\", and is left out of its genre's total the way a locked-out quest is, so the moon can fill without it; it counts again while the event runs. An event whose end date is known and past locks its quests out for good.",
+            "A quest locked out by a choice, such as the other two Grand Companies' quests once you have joined one, is Locked out and left out of the total. A category can reach a full moon with them undone, while a wiki's count per genre includes them.",
+            "Unlock quests is not a journal category. It gathers every quest the game draws with the blue + icon, the curated duty and system unlocks, and quests that reward a duty, job, action, trait, aether current or blue magic spell; main scenario and repeatable quests are left out. Its total matches no page of the journal and moves when the curated lists do.",
+            "A daily or weekly quest is one row and one count however many times you have turned it in. Done today or Done this week marks the ones already handed in; they are still counted as completed.",
         ];
 
-        public const string CountsTip = "The State filter shows Foreclosed and seasonal quests again; the Unlisted node and Include Unlisted reveal the removed ones. Both change the counts while they are on.";
+        public const string CountsTip = "The State filter shows locked-out and seasonal quests again; the Unlisted node and Include Unlisted reveal the removed ones. Both change the counts while they are on.";
 
         // ---- Known quirks ----
         public static readonly string[] QuirkCardTitles =
