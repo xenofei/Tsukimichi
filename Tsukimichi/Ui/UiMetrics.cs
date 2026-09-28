@@ -58,7 +58,11 @@ public static class UiMetrics
 
     // Moons.
     public static float RowGlyphRadius => Icon(6f);
-    public static float TreeMoonRadius => Icon(5f);
+    /// <summary>
+    /// The tree node's filling moon: Icon(5), clamped so it never reaches more than 2 px past the node line's edges
+    /// (at IconScale 2 the unclamped moon would overhang the neighbouring rows).
+    /// </summary>
+    public static float TreeMoonRadius(float lineHeight) => MathF.Min(Icon(5f), lineHeight * 0.5f + 2f);
     public static float HeaderMoonRadius => Icon(17f);
     public static float PathGlyphRadius => Icon(6f);
     public static float RequirementMoonRadius => Icon(4.5f);
