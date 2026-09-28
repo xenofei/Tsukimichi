@@ -14,6 +14,8 @@ namespace Tsukimichi.Ui;
 /// <summary>
 /// The Journal tree: All quests, then Section → Category → Genre, then the Feature Unlocks and Unlisted virtual nodes.
 /// Each node shows a filling moon and done/total. Selecting a node scopes the table through <see cref="UiState.Scope"/>.
+/// A category with a single genre is folded into one leaf (the category's name, the genre's scope and counts), and a
+/// section whose only category folded likewise becomes a single leaf, so no node ever expands to just one child.
 /// The node list is built once per catalog; count labels are re-materialized only when the counts instance changes.
 /// </summary>
 public sealed class TreePane
@@ -27,6 +29,10 @@ public sealed class TreePane
         public string Name { get; } = name;
         public bool Leaf { get; } = leaf;
         public List<Node> Children { get; } = [];
+
+        /// <summary>Full journal path of a folded node, shown on hover; null for ordinary nodes.</summary>
+        public string? FoldedPath { get; set; }
+
         public NodeCount Count { get; set; }
         public string CountText { get; set; } = string.Empty;
     }
@@ -82,6 +88,11 @@ public sealed class TreePane
         if (ImGui.IsItemClicked() && !ImGui.IsItemToggledOpen())
         {
             Select(node.Scope);
+        }
+
+        if (node.FoldedPath is { } path && ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip(path);
         }
 
         DrawCountOverlay(node);
@@ -152,15 +163,23 @@ public sealed class TreePane
         Apply(unlistedNode, current.Unlisted);
         foreach (var section in sections)
         {
-            Apply(section, current.Section(section.Scope.Id));
-            foreach (var category in section.Children)
-            {
-                Apply(category, current.Category(category.Scope.Id));
-                foreach (var genre in category.Children)
-                {
-                    Apply(genre, current.Genre(genre.Scope.Id));
-                }
-            }
+            ApplyTree(section, current);
+        }
+    }
+
+    /// <summary>Counts come from the node's scope, not its depth, so a folded node reads its genre's numbers.</summary>
+    private static void ApplyTree(Node node, TreeCounts current)
+    {
+        var count = node.Scope.Kind switch
+        {
+            ScopeKind.Section => current.Section(node.Scope.Id),
+            ScopeKind.Category => current.Category(node.Scope.Id),
+            _ => current.Genre(node.Scope.Id),
+        };
+        Apply(node, count);
+        foreach (var child in node.Children)
+        {
+            ApplyTree(child, current);
         }
     }
 
@@ -221,5 +240,38 @@ public sealed class TreePane
                 category.Children.Add(genre);
             }
         }
+
+        for (var i = 0; i < sections.Count; i++)
+        {
+            sections[i] = Fold(sections[i]);
+        }
+    }
+
+    /// <summary>
+    /// Folds single-child chains: a category with one genre becomes a leaf named after the category but scoped to the
+    /// genre; a section left with one folded leaf becomes that leaf under the section's name. Selection still matches
+    /// because the folded node carries the genre scope the table is scoped to.
+    /// </summary>
+    private static Node Fold(Node section)
+    {
+        for (var i = 0; i < section.Children.Count; i++)
+        {
+            var category = section.Children[i];
+            if (category.Children.Count == 1)
+            {
+                var genre = category.Children[0];
+                section.Children[i] = new Node(genre.Scope, category.Id, category.Name, leaf: true)
+                {
+                    FoldedPath = string.Format(CultureInfo.CurrentCulture, Strings.FoldedPathFormat, section.Name, category.Name, genre.Name),
+                };
+            }
+        }
+
+        if (section.Children.Count == 1 && section.Children[0] is { Leaf: true } only)
+        {
+            return new Node(only.Scope, section.Id, section.Name, leaf: true) { FoldedPath = only.FoldedPath };
+        }
+
+        return section;
     }
 }

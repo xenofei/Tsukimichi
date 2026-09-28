@@ -19,6 +19,8 @@ public static partial class Strings
 
     // Toolbar
     public const string SearchHint = "Search quests, rewards or ids";
+    public const string SearchTooltip = "Matches quest names, reward names and numeric ids; applied 150 ms after you stop typing";
+    public const string CharacterComboTooltip = "Which character's progress is shown: ● is the logged-in character, the others are stored snapshots";
     public const string ClearSearch = "Clear search";
     public const string Filters = "Filters";
     public const string FiltersTooltip = "Show or hide the filter panel";
@@ -56,6 +58,8 @@ public static partial class Strings
     public const string Unlisted = "Unlisted";
     /// <summary>{0} = done, {1} = total.</summary>
     public const string CountFormat = "{0}/{1}";
+    /// <summary>Hover text of a folded tree node: {0} = section, {1} = category, {2} = genre.</summary>
+    public const string FoldedPathFormat = "{0} › {1} › {2}";
 
     // Filter panel
     public const string HideCompleted = FilterNames.HideCompleted;
@@ -96,6 +100,11 @@ public static partial class Strings
     public const string ScopeEmpty = "This node has no quests.";
     public const string ChipSearch = FilterNames.Search;
     public const string ChipState = FilterNames.State;
+    public const string ChipStatePrefix = "States: ";
+    public const string ChipStateExcludedMarker = "−";
+    public const string ChipStateSeparator = ", ";
+    /// <summary>{0} = number of excluded states beyond the named ones.</summary>
+    public const string ChipStateMoreFormat = " +{0}";
     public const string ChipExpansion = FilterNames.Expansion;
     public const string ChipRepeatable = FilterNames.Repeatable;
     public const string ChipSeasonal = FilterNames.SeasonalActive;
@@ -189,6 +198,20 @@ public static partial class Strings
         QuestState.Accepted => "Accepted",
         QuestState.Blocked => "Blocked",
         QuestState.DoneThisCycle => "Done this cycle",
+        QuestState.Completed => "Completed",
+        QuestState.Foreclosed => "Foreclosed",
+        QuestState.Unknown => "Unknown",
+        _ => state.ToString(),
+    };
+
+    /// <summary>Short state name for chips.</summary>
+    public static string StateShortName(QuestState state) => state switch
+    {
+        QuestState.Ready => "Ready",
+        QuestState.ReadyOnOtherJob => "Other job",
+        QuestState.Accepted => "Accepted",
+        QuestState.Blocked => "Blocked",
+        QuestState.DoneThisCycle => "Done cycle",
         QuestState.Completed => "Completed",
         QuestState.Foreclosed => "Foreclosed",
         QuestState.Unknown => "Unknown",

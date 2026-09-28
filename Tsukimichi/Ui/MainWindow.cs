@@ -33,6 +33,7 @@ public sealed class MainWindow : Window, IDisposable
     public const float LeftColumnWidth = 240f;
     public const float RightColumnWidth = 360f;
     public const int MaxChatMatches = 5;
+    public const float MinChipStripWidth = 40f;
 
     private static readonly TimeSpan SettingsSaveDebounce = TimeSpan.FromSeconds(1);
     private static readonly string[] LoadingDots = ["", ".", "..", "..."];
@@ -142,7 +143,6 @@ public sealed class MainWindow : Window, IDisposable
         runner.Update(now);
         RefreshToolbarStrings(session);
         DrawToolbar(session);
-        filterPanel.DrawChips();
         DrawBanners(session);
         DrawBody(session, bundle);
         DrawStatusBar(session, bundle);
@@ -320,6 +320,11 @@ public sealed class MainWindow : Window, IDisposable
             ui.SearchText = searchBuffer;
         }
 
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip(Strings.SearchTooltip);
+        }
+
         ImGui.SameLine();
         using (ImRaii.Disabled(searchBuffer.Length == 0))
         {
@@ -352,9 +357,26 @@ public sealed class MainWindow : Window, IDisposable
         ImGui.SameLine();
         DrawCharacterCombo(session, scale);
 
-        // Sync glyph, right-aligned.
+        // Active-filter chips live on the toolbar row itself, in a fixed-height strip clipped horizontally, so toggling
+        // a filter never moves the layout below. The strip stays empty when nothing is engaged.
         ImGui.SameLine();
         var glyphSize = ImGui.GetFrameHeight();
+        var spacing = ImGui.GetStyle().ItemSpacing.X;
+        var chipsWidth = ImGui.GetContentRegionAvail().X - glyphSize - spacing;
+        if (chipsWidth > MinChipStripWidth * scale)
+        {
+            using (var strip = ImRaii.Child("##chips", new Vector2(chipsWidth, glyphSize), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse))
+            {
+                if (strip)
+                {
+                    filterPanel.DrawChips();
+                }
+            }
+
+            ImGui.SameLine();
+        }
+
+        // Sync glyph, right-aligned.
         var avail = ImGui.GetContentRegionAvail().X;
         if (avail > glyphSize)
         {
@@ -372,6 +394,11 @@ public sealed class MainWindow : Window, IDisposable
     {
         ImGui.SetNextItemWidth(240f * scale);
         using var combo = ImRaii.Combo("##character", characterPreview);
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip(Strings.CharacterComboTooltip);
+        }
+
         if (!combo)
         {
             return;

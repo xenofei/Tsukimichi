@@ -19,6 +19,7 @@ namespace Tsukimichi.Ui;
 public sealed class FilterPanel
 {
     private const int LevelCap = 100;
+    private const int MaxStateChipNames = 3;
 
     private static readonly QuestState[] StateOrder =
     [
@@ -53,6 +54,8 @@ public sealed class FilterPanel
     private byte currentJobCached = byte.MaxValue;
     private uint? currentJobCategory;
 
+    private string stateChip = string.Empty;
+    private QuestStateMask stateChipMask = QuestStateMask.All;
     private string levelChip = string.Empty;
     private byte levelChipMin = byte.MaxValue;
     private byte levelChipMax;
@@ -99,11 +102,17 @@ public sealed class FilterPanel
         ImGui.Separator();
     }
 
-    /// <summary>Chips for every engaged filter; clicking one clears that filter. Draws nothing when none is engaged.</summary>
+    /// <summary>
+    /// Chips for every engaged filter on one line; clicking one clears that filter. Drawn inside the toolbar's
+    /// fixed-height strip, so it never wraps and draws nothing when none is engaged.
+    /// </summary>
     public void DrawChips()
     {
         var f = ui.Filters;
         var any = false;
+
+        // Small buttons are text-high; centre them on the toolbar's frame-high row.
+        ImGui.SetCursorPosY(ImGui.GetCursorPosY() + MathF.Max(0f, (ImGui.GetFrameHeight() - ImGui.GetTextLineHeight()) * 0.5f));
 
         if (ui.SearchText.Length > 0)
         {
@@ -131,7 +140,7 @@ public sealed class FilterPanel
 
         if (f.StateMask != QuestStateMask.All)
         {
-            Chip(Strings.ChipState, ref any, () => f.StateMask = QuestStateMask.All);
+            Chip(StateChipText(f), ref any, () => f.StateMask = QuestStateMask.All);
         }
 
         if (f.Expansions.Count > 0)
@@ -171,11 +180,6 @@ public sealed class FilterPanel
         if (f.PinnedOnly)
         {
             Chip(Strings.ChipPinned, ref any, () => f.PinnedOnly = false);
-        }
-
-        if (any)
-        {
-            ImGui.NewLine();
         }
     }
 
@@ -398,6 +402,42 @@ public sealed class FilterPanel
         {
             ImGui.SetTooltip(Strings.NeedsSnapshot);
         }
+    }
+
+    /// <summary>"States: −Completed, −Foreclosed", naming up to <see cref="MaxStateChipNames"/> excluded states then "+N"; rebuilt when the mask changes.</summary>
+    private string StateChipText(FilterSet f)
+    {
+        if (stateChipMask == f.StateMask && stateChip.Length > 0)
+        {
+            return stateChip;
+        }
+
+        stateChipMask = f.StateMask;
+        var text = Strings.ChipStatePrefix;
+        var named = 0;
+        var excluded = 0;
+        foreach (var state in StateOrder)
+        {
+            if (f.StateMask.Contains(state))
+            {
+                continue;
+            }
+
+            excluded++;
+            if (named < MaxStateChipNames)
+            {
+                text += (named > 0 ? Strings.ChipStateSeparator : string.Empty) + Strings.ChipStateExcludedMarker + Strings.StateShortName(state);
+                named++;
+            }
+        }
+
+        if (excluded > named)
+        {
+            text += string.Format(CultureInfo.CurrentCulture, Strings.ChipStateMoreFormat, excluded - named);
+        }
+
+        stateChip = text;
+        return stateChip;
     }
 
     private string LevelChipText(FilterSet f)
