@@ -4,6 +4,9 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+### Changed
+- Partial moons in the tree are visible again: a section that is only a few quests along shows a thin gold crescent instead of a dark disc, and one that is nearly done keeps a visible dark sliver until the last quest. Every state moon now sits on a slightly lighter disc with a coloured rim, so it reads at row size on dark backgrounds; Ready keeps a thin gold ring around it at small sizes where the glow used to vanish; a foreclosed quest shows a diagonal bar through its moon, so the state no longer depends on telling red from grey.
+
 ## [0.5.0] - 2026-09-28
 
 ### Added
