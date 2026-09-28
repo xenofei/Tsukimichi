@@ -207,7 +207,7 @@ internal sealed class Verifier
         var confidences = Enum.GetValues<Confidence>();
         md.Append("| Kind |");
         foreach (var c in confidences) md.Append($" {c} |");
-        md.AppendLine(" Total | With `otherSource` |");
+        md.AppendLine(" Total | With `otherSources` |");
         md.Append("|---|");
         foreach (var _ in confidences) md.Append("---:|");
         md.AppendLine("---:|---:|");
@@ -217,23 +217,28 @@ internal sealed class Verifier
             if (ofKind.Count == 0) continue;
             md.Append($"| {kind} |");
             foreach (var c in confidences) md.Append($" {ofKind.Count(e => e.Confidence == c)} |");
-            md.AppendLine($" {ofKind.Count} | {ofKind.Count(e => e.Source.Contains(";otherSource="))} |");
+            md.AppendLine($" {ofKind.Count} | {ofKind.Count(e => e.OtherSources.Count > 0)} |");
         }
         md.Append("| **Total** |");
         foreach (var c in confidences) md.Append($" {entries.Count(e => e.Confidence == c)} |");
-        md.AppendLine($" {entries.Count} | {entries.Count(e => e.Source.Contains(";otherSource="))} |");
+        md.AppendLine($" {entries.Count} | {entries.Count(e => e.OtherSources.Count > 0)} |");
         md.AppendLine();
 
-        md.AppendLine("### `otherSource` breakdown");
+        md.AppendLine("### `otherSources` breakdown");
         md.AppendLine();
-        md.AppendLine("| Kind | otherSource | Entries |");
+        md.AppendLine("| Kind | otherSources | Entries |");
         md.AppendLine("|---|---|---:|");
         foreach (var grp in entries
-                     .Where(e => e.Source.Contains(";otherSource="))
-                     .GroupBy(e => (e.Kind, Other: OtherSource(e)))
+                     .Where(e => e.OtherSources.Count > 0)
+                     .GroupBy(e => (e.Kind, Other: string.Join(",", e.OtherSources)))
                      .OrderBy(x => x.Key.Kind).ThenByDescending(x => x.Count()))
             md.AppendLine($"| {grp.Key.Kind} | {grp.Key.Other} | {grp.Count()} |");
         md.AppendLine();
+
+        // The source text's ";otherSource=" suffix is provenance only; the structured field is what the plugin reads.
+        var disagree = entries.Count(e => e.Source.Contains(";otherSource=", StringComparison.Ordinal) != e.OtherSources.Any(s => s != OtherSource.OnlineStore));
+        if (disagree > 0)
+            failures.Add($"structural: {disagree} entries whose source text and otherSources disagree about non-store sources");
     }
 
     /// <summary>
@@ -517,6 +522,21 @@ internal sealed class Verifier
         Check("The Crystal from Beyond (70011) has no DutyUnlock 808",
             asphodelos.All(e => e.QuestRowId != 70011),
             Join(entries.Where(e => e.QuestRowId == 70011)));
+
+        // curated/online_store.json (verification-report-2 row 8): Starlight Stakeout's bear is also sold on the store;
+        // an emote a quest grants directly (Bomb Dance, no item) is matched through the store item's unlock link.
+        var starlight = entries.Where(e => e is { QuestRowId: 68546, Kind: RewardKind.Mount, RewardId: 99 }).ToList();
+        Check("Starlight Stakeout (68546) -> Mount 99 Starlight bear carries OnlineStore",
+            starlight.Any(e => e.SoldOnOnlineStore),
+            Join(starlight) + (starlight.Count == 0 ? string.Empty : " otherSources=" + string.Join(",", starlight[0].OtherSources)));
+        var bombDance = entries.Where(e => e is { QuestRowId: 67079, Kind: RewardKind.Emote, RewardId: 109 }).ToList();
+        Check("Remember Me This Moonfire Faire (67079) -> Emote 109 Bomb Dance (no item) carries OnlineStore",
+            bombDance.Any(e => e.SoldOnOnlineStore),
+            Join(bombDance));
+        var store = entries.Where(e => e.SoldOnOnlineStore).ToList();
+        Check("Exactly 68 entries carry OnlineStore (25 Minion, 21 Emote, 11 Mount, 5 Barding, 4 Orchestrion, 2 Ornament)",
+            store.Count == 68,
+            string.Join(", ", store.GroupBy(e => e.Kind).OrderBy(x => x.Key).Select(x => $"{x.Key} {x.Count()}")));
 
         md.AppendLine();
         md.AppendLine("Ye Olde Faux Hollows: skipped (unsure of the expected entry).");
@@ -898,13 +918,6 @@ internal sealed class Verifier
     // Helpers
 
     private string QuestName(uint rowId) => UniqueRewardGenerator.Text(g.Quests.GetRowOrDefault(rowId)?.Name);
-
-    private static string OtherSource(UniqueRewardEntry e)
-    {
-        const string marker = ";otherSource=";
-        var idx = e.Source.IndexOf(marker, StringComparison.Ordinal);
-        return idx < 0 ? string.Empty : e.Source[(idx + marker.Length)..];
-    }
 
     private static string Describe(UniqueRewardEntry e) => $"{e.QuestRowId} {e.Kind} {e.RewardId} '{e.RewardName}'";
 

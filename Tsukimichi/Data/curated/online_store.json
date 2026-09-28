@@ -1,0 +1,482 @@
+{
+  "schema": 1,
+  "note": "Quest rewards the FFXIV Online Store (Mog Station) also sells, so they are not exclusive to the quest. Keyed by the store item's Item row id; kind and rewardId name the collectible that item unlocks (the game's Mount/Companion/Emote/Orchestrion/BuddyEquip/Ornament row id, which FFXIV Collect shares), so a reward a quest grants directly (an emote with no item) still matches. DataGen marks every unique_quests.json entry delivered as the item or granting the collectible with otherSources OnlineStore; the plugin shows those as store re-sells. Source: FFXIV Collect entries with a quest source and a Premium: Online Store source (docs/data/verification-report-2.md row 8); name is the collectible's name as FFXIV Collect lists it. Strict JSON; keep sorted by item id; every entry needs name, kind, rewardId, evidence and note.",
+  "entries": {
+    "6207": {
+      "name": "Tender lamb",
+      "kind": "Minion",
+      "rewardId": 46,
+      "evidence": "https://ffxivcollect.com/api/minions/46",
+      "note": "Heavensturn (2015) reward of quest 65823 All's Wool That Ends Wool; FFXIV Collect lists Premium: Online Store"
+    },
+    "6217": {
+      "name": "Wind-up Shantotto",
+      "kind": "Minion",
+      "rewardId": 63,
+      "evidence": "https://ffxivcollect.com/api/minions/63",
+      "note": "Final Fantasy XI Collaboration reward of quest 66823 Burgeoning Dread; FFXIV Collect lists Premium: Online Store"
+    },
+    "6986": {
+      "name": "Wind-up Edvya",
+      "kind": "Minion",
+      "rewardId": 64,
+      "evidence": "https://ffxivcollect.com/api/minions/64",
+      "note": "Little Ladies' Day (2014) reward of quest 66843 A Real Peach; FFXIV Collect lists Premium: Online Store"
+    },
+    "7550": {
+      "name": "Egg Barding",
+      "kind": "Barding",
+      "rewardId": 24,
+      "evidence": "https://ffxivcollect.com/api/bardings/24",
+      "note": "Hatching-tide (2014) reward of quest 66956 Hard-boiled; FFXIV Collect lists Premium: Online Store"
+    },
+    "10082": {
+      "name": "Paramour Barding",
+      "kind": "Barding",
+      "rewardId": 30,
+      "evidence": "https://ffxivcollect.com/api/bardings/30",
+      "note": "Valentione's Day (2015) reward of quest 66083 Now That We've Found Love; FFXIV Collect lists Premium: Online Store"
+    },
+    "12040": {
+      "name": "Bomb Dance",
+      "kind": "Emote",
+      "rewardId": 109,
+      "evidence": "https://ffxivcollect.com/api/emotes/109",
+      "note": "Moonfire Faire (2014) reward of quest 67079 Remember Me This Moonfire Faire; FFXIV Collect lists Premium: Online Store (store item unlocks the emote the quest grants directly)"
+    },
+    "12060": {
+      "name": "Wind-up Iceheart",
+      "kind": "Minion",
+      "rewardId": 145,
+      "evidence": "https://ffxivcollect.com/api/minions/145",
+      "note": "The Rising (2015) reward of quest 67670 A World Away; FFXIV Collect lists Premium: Online Store"
+    },
+    "12065": {
+      "name": "Wind-up Yugiri",
+      "kind": "Minion",
+      "rewardId": 150,
+      "evidence": "https://ffxivcollect.com/api/minions/150",
+      "note": "The Rising (2015) reward of quest 67670 A World Away; FFXIV Collect lists Premium: Online Store"
+    },
+    "13004": {
+      "name": "Huzzah",
+      "kind": "Emote",
+      "rewardId": 110,
+      "evidence": "https://ffxivcollect.com/api/emotes/110",
+      "note": "The Rising (2014) reward of quest 67082 What Blooms in the Night; FFXIV Collect lists Premium: Online Store (store item unlocks the emote the quest grants directly)"
+    },
+    "13098": {
+      "name": "Witch's broom",
+      "kind": "Mount",
+      "rewardId": 62,
+      "evidence": "https://ffxivcollect.com/api/mounts/62",
+      "note": "All Saints' Wake (2015) reward of quest 67687 Sweeping the Meadows; FFXIV Collect lists Premium: Online Store"
+    },
+    "13113": {
+      "name": "Pumpkin Butler",
+      "kind": "Minion",
+      "rewardId": 159,
+      "evidence": "https://ffxivcollect.com/api/minions/159",
+      "note": "All Saints' Wake (2015) reward of quest 67686 Joining the Circus; FFXIV Collect lists Premium: Online Store"
+    },
+    "14081": {
+      "name": "Egg Hunter Barding",
+      "kind": "Barding",
+      "rewardId": 42,
+      "evidence": "https://ffxivcollect.com/api/bardings/42",
+      "note": "Hatching-tide (2016) reward of quest 67668 Eggsaltation of a Lark; FFXIV Collect lists Premium: Online Store"
+    },
+    "15434": {
+      "name": "Dress-up Y'shtola",
+      "kind": "Minion",
+      "rewardId": 177,
+      "evidence": "https://ffxivcollect.com/api/minions/177",
+      "note": "The Rising (2016) reward of quest 67867 After the Curtain Falls; FFXIV Collect lists Premium: Online Store"
+    },
+    "15443": {
+      "name": "Wind-up Krile",
+      "kind": "Minion",
+      "rewardId": 192,
+      "evidence": "https://ffxivcollect.com/api/minions/192",
+      "note": "The Rising (2016) reward of quest 67867 After the Curtain Falls; FFXIV Collect lists Premium: Online Store"
+    },
+    "15812": {
+      "name": "Heavensward",
+      "kind": "Orchestrion",
+      "rewardId": 61,
+      "evidence": "https://ffxivcollect.com/api/orchestrions/61",
+      "note": "The Rising (2016) reward of quest 67865 A Play in Three Acts; FFXIV Collect lists Premium: Online Store"
+    },
+    "16797": {
+      "name": "Starlight Celebration",
+      "kind": "Orchestrion",
+      "rewardId": 82,
+      "evidence": "https://ffxivcollect.com/api/orchestrions/82",
+      "note": "The Starlight Celebration (2016) reward of quest 67913 I'll Be Home for Starlight; FFXIV Collect lists Premium: Online Store"
+    },
+    "17009": {
+      "name": "Eggshilaration system",
+      "kind": "Mount",
+      "rewardId": 106,
+      "evidence": "https://ffxivcollect.com/api/mounts/106",
+      "note": "Hatching-tide (2017) reward of quest 67959 Eggsistential Crisis; FFXIV Collect lists Premium: Online Store"
+    },
+    "17846": {
+      "name": "Stormblood",
+      "kind": "Orchestrion",
+      "rewardId": 150,
+      "evidence": "https://ffxivcollect.com/api/orchestrions/150",
+      "note": "The Rising (2017) reward of quest 68497 A Reoccurring Bug; FFXIV Collect lists Premium: Online Store"
+    },
+    "20532": {
+      "name": "Wind-up Lyse",
+      "kind": "Minion",
+      "rewardId": 248,
+      "evidence": "https://ffxivcollect.com/api/minions/248",
+      "note": "The Rising (2017) reward of quest 68497 A Reoccurring Bug; FFXIV Collect lists Premium: Online Store"
+    },
+    "20534": {
+      "name": "Wind-up Gosetsu",
+      "kind": "Minion",
+      "rewardId": 250,
+      "evidence": "https://ffxivcollect.com/api/minions/250",
+      "note": "The Rising (2017) reward of quest 68497 A Reoccurring Bug; FFXIV Collect lists Premium: Online Store"
+    },
+    "20640": {
+      "name": "Eureka",
+      "kind": "Emote",
+      "rewardId": 125,
+      "evidence": "https://ffxivcollect.com/api/emotes/125",
+      "note": "The Make It Rain Campaign (2016) reward of quest 67671 An Inspector's Gadget; FFXIV Collect lists Premium: Online Store (store item unlocks the emote the quest grants directly)"
+    },
+    "20641": {
+      "name": "Songbird",
+      "kind": "Emote",
+      "rewardId": 149,
+      "evidence": "https://ffxivcollect.com/api/emotes/149",
+      "note": "Little Ladies' Day (2017) reward of quest 67944 Idols Give Back; FFXIV Collect lists Premium: Online Store (store item unlocks the emote the quest grants directly)"
+    },
+    "21050": {
+      "name": "Starlight bear",
+      "kind": "Mount",
+      "rewardId": 99,
+      "evidence": "https://ffxivcollect.com/api/mounts/99",
+      "note": "The Starlight Celebration (2017) reward of quest 68546 Starlight Stakeout; FFXIV Collect lists Premium: Online Store"
+    },
+    "21307": {
+      "name": "Dote",
+      "kind": "Emote",
+      "rewardId": 146,
+      "evidence": "https://ffxivcollect.com/api/emotes/146",
+      "note": "Valentione's Day (2017) reward of quest 67955 Once More with Feeling; FFXIV Collect lists Premium: Online Store (store item unlocks the emote the quest grants directly)"
+    },
+    "21908": {
+      "name": "Broken heart (right)",
+      "kind": "Mount",
+      "rewardId": 152,
+      "evidence": "https://ffxivcollect.com/api/mounts/152",
+      "note": "Valentione's Day (2018) reward of quest 68618 Lessons in Love; FFXIV Collect lists Premium: Online Store"
+    },
+    "21909": {
+      "name": "Broken heart (left)",
+      "kind": "Mount",
+      "rewardId": 153,
+      "evidence": "https://ffxivcollect.com/api/mounts/153",
+      "note": "Valentione's Day (2018) reward of quest 68618 Lessons in Love; FFXIV Collect lists Premium: Online Store"
+    },
+    "21914": {
+      "name": "Motley egg",
+      "kind": "Minion",
+      "rewardId": 280,
+      "evidence": "https://ffxivcollect.com/api/minions/280",
+      "note": "Hatching-tide (2018) reward of quest 68615 Uneggseptable Losses; FFXIV Collect lists Premium: Online Store"
+    },
+    "22378": {
+      "name": "Cheer On: Blue",
+      "kind": "Emote",
+      "rewardId": 65,
+      "evidence": "https://ffxivcollect.com/api/emotes/65",
+      "note": "Little Ladies' Day (2018) reward of quest 68620 A Colorful Affair; FFXIV Collect lists Premium: Online Store"
+    },
+    "22379": {
+      "name": "Cheer Wave: Yellow",
+      "kind": "Emote",
+      "rewardId": 66,
+      "evidence": "https://ffxivcollect.com/api/emotes/66",
+      "note": "Little Ladies' Day (2018) reward of quest 68620 A Colorful Affair; FFXIV Collect lists Premium: Online Store"
+    },
+    "22380": {
+      "name": "Cheer Jump: Red",
+      "kind": "Emote",
+      "rewardId": 67,
+      "evidence": "https://ffxivcollect.com/api/emotes/67",
+      "note": "Little Ladies' Day (2018) reward of quest 68620 A Colorful Affair; FFXIV Collect lists Premium: Online Store"
+    },
+    "23029": {
+      "name": "Wind-up Cirina",
+      "kind": "Minion",
+      "rewardId": 293,
+      "evidence": "https://ffxivcollect.com/api/minions/293",
+      "note": "The Rising (2018) reward of quest 68674 In Adventurers We Trust; FFXIV Collect lists Premium: Online Store"
+    },
+    "23320": {
+      "name": "Revolutions",
+      "kind": "Orchestrion",
+      "rewardId": 226,
+      "evidence": "https://ffxivcollect.com/api/orchestrions/226",
+      "note": "The Rising (2018) reward of quest 68674 In Adventurers We Trust; FFXIV Collect lists Premium: Online Store"
+    },
+    "23993": {
+      "name": "Little Yin",
+      "kind": "Minion",
+      "rewardId": 307,
+      "evidence": "https://ffxivcollect.com/api/minions/307",
+      "note": "All Saints' Wake (2018) reward of quest 68707 The Sordid Cipher; FFXIV Collect lists Premium: Online Store"
+    },
+    "23994": {
+      "name": "Little Yang",
+      "kind": "Minion",
+      "rewardId": 308,
+      "evidence": "https://ffxivcollect.com/api/minions/308",
+      "note": "All Saints' Wake (2018) reward of quest 68707 The Sordid Cipher; FFXIV Collect lists Premium: Online Store"
+    },
+    "24235": {
+      "name": "Senor Sabotender",
+      "kind": "Emote",
+      "rewardId": 197,
+      "evidence": "https://ffxivcollect.com/api/emotes/197",
+      "note": "The Make It Rain Campaign (2019) reward of quest 68743 The Sabotender Shimmy; FFXIV Collect lists Premium: Online Store (store item unlocks the emote the quest grants directly)"
+    },
+    "26784": {
+      "name": "Circus ahriman",
+      "kind": "Mount",
+      "rewardId": 194,
+      "evidence": "https://ffxivcollect.com/api/mounts/194",
+      "note": "All Saints' Wake (2019) reward of quest 69204 Fear and Delight; FFXIV Collect lists Premium: Online Store"
+    },
+    "26785": {
+      "name": "Brave new Y'shtola",
+      "kind": "Minion",
+      "rewardId": 331,
+      "evidence": "https://ffxivcollect.com/api/minions/331",
+      "note": "The Rising (2019) reward of quest 69196 Message in a Bottle; FFXIV Collect lists Premium: Online Store"
+    },
+    "27978": {
+      "name": "Splash",
+      "kind": "Emote",
+      "rewardId": 178,
+      "evidence": "https://ffxivcollect.com/api/emotes/178",
+      "note": "Moonfire Faire (2018) reward of quest 68671 Jump to the Beach; FFXIV Collect lists Premium: Online Store (store item unlocks the emote the quest grants directly)"
+    },
+    "30869": {
+      "name": "Wind-up Ardbert",
+      "kind": "Minion",
+      "rewardId": 382,
+      "evidence": "https://ffxivcollect.com/api/minions/382",
+      "note": "The Rising (2020) reward of quest 69510 Glass from the Past; FFXIV Collect lists Premium: Online Store"
+    },
+    "31338": {
+      "name": "Consider",
+      "kind": "Emote",
+      "rewardId": 209,
+      "evidence": "https://ffxivcollect.com/api/emotes/209",
+      "note": "The Make It Rain Campaign (2020) reward of quest 69499 Caught Shorthanded; FFXIV Collect lists Premium: Online Store (store item unlocks the emote the quest grants directly)"
+    },
+    "31400": {
+      "name": "Flame Dance",
+      "kind": "Emote",
+      "rewardId": 212,
+      "evidence": "https://ffxivcollect.com/api/emotes/212",
+      "note": "Moonfire Faire (2020) reward of quest 69502 A Fish Too Far; FFXIV Collect lists Premium: Online Store (store item unlocks the emote the quest grants directly)"
+    },
+    "32837": {
+      "name": "Snowman",
+      "kind": "Mount",
+      "rewardId": 232,
+      "evidence": "https://ffxivcollect.com/api/mounts/232",
+      "note": "The Starlight Celebration (2020) reward of quest 69558 Starlit Smiles; FFXIV Collect lists Premium: Online Store"
+    },
+    "33686": {
+      "name": "Polar bear",
+      "kind": "Mount",
+      "rewardId": 250,
+      "evidence": "https://ffxivcollect.com/api/mounts/250",
+      "note": "Moonfire Faire (2021) reward of quest 69619 A Treat to Beat the Heat; FFXIV Collect lists Premium: Online Store"
+    },
+    "33703": {
+      "name": "Vexed",
+      "kind": "Emote",
+      "rewardId": 230,
+      "evidence": "https://ffxivcollect.com/api/emotes/230",
+      "note": "The Make It Rain Campaign (2021) reward of quest 69591 A Token of Thanks; FFXIV Collect lists Premium: Online Store"
+    },
+    "33711": {
+      "name": "Red Moon Parasol",
+      "kind": "Ornament",
+      "rewardId": 16,
+      "evidence": "https://ffxivcollect.com/api/ornaments/16",
+      "note": "The Rising (2021) reward of quest 69627 Rising Calm; FFXIV Collect lists Premium: Online Store"
+    },
+    "35968": {
+      "name": "Wind-up Rudy",
+      "kind": "Minion",
+      "rewardId": 420,
+      "evidence": "https://ffxivcollect.com/api/minions/420",
+      "note": "The Starlight Celebration (2021) reward of quest 70005 Time to Shine; FFXIV Collect lists Premium: Online Store"
+    },
+    "35969": {
+      "name": "Squirrel emperor",
+      "kind": "Minion",
+      "rewardId": 421,
+      "evidence": "https://ffxivcollect.com/api/minions/421",
+      "note": "The Starlight Celebration (2021) reward of quest 70005 Time to Shine; FFXIV Collect lists Premium: Online Store"
+    },
+    "36013": {
+      "name": "Postmoogle Barding",
+      "kind": "Barding",
+      "rewardId": 84,
+      "evidence": "https://ffxivcollect.com/api/bardings/84",
+      "note": "Valentione's Day (2022) reward of quest 70002 Love's Labors; FFXIV Collect lists Premium: Online Store"
+    },
+    "36857": {
+      "name": "Hatching bunny",
+      "kind": "Minion",
+      "rewardId": 450,
+      "evidence": "https://ffxivcollect.com/api/minions/450",
+      "note": "Hatching-tide (2022) reward of quest 70126 Hippity, Hoppity, Happily; FFXIV Collect lists Premium: Online Store"
+    },
+    "36862": {
+      "name": "Clockwork Solus",
+      "kind": "Minion",
+      "rewardId": 455,
+      "evidence": "https://ffxivcollect.com/api/minions/455",
+      "note": "The Rising (2022) reward of quest 70080 Newfound Journey; FFXIV Collect lists Premium: Online Store"
+    },
+    "36922": {
+      "name": "Show Right",
+      "kind": "Emote",
+      "rewardId": 241,
+      "evidence": "https://ffxivcollect.com/api/emotes/241",
+      "note": "The Make It Rain Campaign (2022) reward of quest 70120 A Prickly Plaint; FFXIV Collect lists Premium: Online Store"
+    },
+    "38449": {
+      "name": "Ryunosuke",
+      "kind": "Minion",
+      "rewardId": 461,
+      "evidence": "https://ffxivcollect.com/api/minions/461",
+      "note": "Heavensturn (2024) reward of quest 70216 Unlike a Dragon; FFXIV Collect lists Premium: Online Store"
+    },
+    "38460": {
+      "name": "Starlight steed",
+      "kind": "Mount",
+      "rewardId": 302,
+      "evidence": "https://ffxivcollect.com/api/mounts/302",
+      "note": "The Starlight Celebration (2022) reward of quest 70195 The Ghost of Starlight Present; FFXIV Collect lists Premium: Online Store"
+    },
+    "39483": {
+      "name": "Wind-up Godbert",
+      "kind": "Minion",
+      "rewardId": 476,
+      "evidence": "https://ffxivcollect.com/api/minions/476",
+      "note": "The Make It Rain Campaign (2023) reward of quest 70264 Hearts of Gold; FFXIV Collect lists Premium: Online Store"
+    },
+    "39497": {
+      "name": "Little Ladies' Dance",
+      "kind": "Emote",
+      "rewardId": 250,
+      "evidence": "https://ffxivcollect.com/api/emotes/250",
+      "note": "Little Ladies' Day (2023) reward of quest 70256 Inheritance; FFXIV Collect lists Premium: Online Store"
+    },
+    "39500": {
+      "name": "Frighten",
+      "kind": "Emote",
+      "rewardId": 256,
+      "evidence": "https://ffxivcollect.com/api/emotes/256",
+      "note": "Hatching-tide (2023) reward of quest 70258 Chaos, Carnage, Eggs; FFXIV Collect lists Premium: Online Store"
+    },
+    "40362": {
+      "name": "All Saints' Charm",
+      "kind": "Emote",
+      "rewardId": 267,
+      "evidence": "https://ffxivcollect.com/api/emotes/267",
+      "note": "All Saints' Wake (2023) reward of quest 70321 The Fright Stuff; FFXIV Collect lists Premium: Online Store (store item unlocks the emote the quest grants directly)"
+    },
+    "40386": {
+      "name": "Rising Phoenix",
+      "kind": "Mount",
+      "rewardId": 320,
+      "evidence": "https://ffxivcollect.com/api/mounts/320",
+      "note": "The Rising (2023) reward of quest 70302 What Drives Us; FFXIV Collect lists Premium: Online Store"
+    },
+    "41461": {
+      "name": "Love Heart",
+      "kind": "Emote",
+      "rewardId": 274,
+      "evidence": "https://ffxivcollect.com/api/emotes/274",
+      "note": "Valentione's Day (2024) reward of quest 70344 The Symbol of Love; FFXIV Collect lists Premium: Online Store (store item unlocks the emote the quest grants directly)"
+    },
+    "41472": {
+      "name": "the Great White Tsuchinoko",
+      "kind": "Minion",
+      "rewardId": 492,
+      "evidence": "https://ffxivcollect.com/api/minions/492",
+      "note": "Heavensturn (2025) reward of quest 70722 Heavensssturn Trivia; FFXIV Collect lists Premium: Online Store"
+    },
+    "41497": {
+      "name": "Peatie",
+      "kind": "Mount",
+      "rewardId": 336,
+      "evidence": "https://ffxivcollect.com/api/mounts/336",
+      "note": "Little Ladies' Day & Hatching-tide (2024) reward of quest 70347 Peatie in Pink; FFXIV Collect lists Premium: Online Store"
+    },
+    "43587": {
+      "name": "Brushed-up Krile",
+      "kind": "Minion",
+      "rewardId": 525,
+      "evidence": "https://ffxivcollect.com/api/minions/525",
+      "note": "The Rising (2024) reward of quest 70552 We Who Are About to Set Sail Salute You; FFXIV Collect lists Premium: Online Store"
+    },
+    "43605": {
+      "name": "Uchiwasshoi",
+      "kind": "Emote",
+      "rewardId": 278,
+      "evidence": "https://ffxivcollect.com/api/emotes/278",
+      "note": "Moonfire Faire (2024) reward of quest 70718 Fire Red, Beast Green; FFXIV Collect lists Premium: Online Store (store item unlocks the emote the quest grants directly)"
+    },
+    "44496": {
+      "name": "Starlight Stalls Barding",
+      "kind": "Barding",
+      "rewardId": 101,
+      "evidence": "https://ffxivcollect.com/api/bardings/101",
+      "note": "The Starlight Celebration (2024) reward of quest 70764 Spreading the Warmth and Cheer; FFXIV Collect lists Premium: Online Store"
+    },
+    "44513": {
+      "name": "Bouquet",
+      "kind": "Emote",
+      "rewardId": 283,
+      "evidence": "https://ffxivcollect.com/api/emotes/283",
+      "note": "Valentione's Day (2025) reward of quest 70787 I Promise You a Rose Garden; FFXIV Collect lists Premium: Online Store (store item unlocks the emote the quest grants directly)"
+    },
+    "44997": {
+      "name": "Archon Egg Parasol",
+      "kind": "Ornament",
+      "rewardId": 43,
+      "evidence": "https://ffxivcollect.com/api/ornaments/43",
+      "note": "Hatching-tide (2025) reward of quest 70779 Eggceeding Expectations; FFXIV Collect lists Premium: Online Store"
+    },
+    "47963": {
+      "name": "Wind-up Gulool Ja Ja",
+      "kind": "Minion",
+      "rewardId": 546,
+      "evidence": "https://ffxivcollect.com/api/minions/546",
+      "note": "The Rising (2025) reward of quest 70834 A Light That Ever Burns; FFXIV Collect lists Premium: Online Store"
+    },
+    "47982": {
+      "name": "Overreact",
+      "kind": "Emote",
+      "rewardId": 291,
+      "evidence": "https://ffxivcollect.com/api/emotes/291",
+      "note": "The Make It Rain Campaign (2025) reward of quest 70858 Royal Rumblings; FFXIV Collect lists Premium: Online Store (store item unlocks the emote the quest grants directly)"
+    }
+  }
+}

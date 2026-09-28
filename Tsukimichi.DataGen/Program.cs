@@ -102,6 +102,9 @@ public static class Program
 
         foreach (var group in entries.GroupBy(e => e.Kind).OrderBy(k => k.Key))
             Console.WriteLine($"  {group.Key,-16} {group.Count(),5}");
+        Console.WriteLine("otherSources by value:");
+        foreach (var group in entries.SelectMany(e => e.OtherSources).GroupBy(s => s).OrderByDescending(x => x.Count()).ThenBy(x => x.Key, StringComparer.Ordinal))
+            Console.WriteLine($"  {group.Key,-16} {group.Count(),5}");
 
         var failures = SanityChecks(entries);
         clock.Stop();
@@ -277,6 +280,10 @@ public static class Program
             "70012 Where Familiars Dare should yield DutyUnlock 808 (Asphodelos: The First Circle, curated)");
         Require(!entries.Any(e => e is { QuestRowId: 70011, Kind: RewardKind.DutyUnlock, RewardId: 808 }),
             "70011 The Crystal from Beyond must not yield DutyUnlock 808 (it only starts the chain; verification-report-2 row 5)");
+        Require(entries.Any(e => e is { QuestRowId: 68546, Kind: RewardKind.Mount, RewardId: 99 } && e.SoldOnOnlineStore),
+            "68546 Starlight Stakeout's Mount 99 should carry OnlineStore from curated/online_store.json");
+        Require(entries.All(e => e.Source.Contains(";otherSource=", StringComparison.Ordinal) == e.OtherSources.Any(s => s != OtherSource.OnlineStore)),
+            "source text ;otherSource= and the structured otherSources must agree (store aside)");
 
         var mounts = entries.Count(e => e.Kind == RewardKind.Mount);
         var minions = entries.Count(e => e.Kind == RewardKind.Minion);

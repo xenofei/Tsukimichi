@@ -1,7 +1,7 @@
 # Unique reward verification report
 
-Generated 2026-09-28 02:37 UTC by `Tsukimichi.DataGen --verify` against game version `2026.09.15.0000.0000`.
-Data file: `unique_quests.json` generated 2026-09-28 02:34 UTC from game version `2026.09.15.0000.0000`; **3464** entries.
+Generated 2026-09-28 22:28 UTC by `Tsukimichi.DataGen --verify` against game version `2026.09.15.0000.0000`.
+Data file: `unique_quests.json` generated 2026-09-28 22:28 UTC from game version `2026.09.15.0000.0000`; **3464** entries.
 
 ## 0. Findings of the 2026-09-27 verification pass (hand-written)
 
@@ -68,22 +68,22 @@ Entries: **3464** across **1173** quests. Problems found: **0**.
 
 ### Counts per kind and confidence
 
-| Kind | Static | Community | Curated | UserOverride | Total | With `otherSource` |
+| Kind | Static | Community | Curated | UserOverride | Total | With `otherSources` |
 |---|---:|---:|---:|---:|---:|---:|
 | Item | 165 | 0 | 0 | 0 | 165 | 127 |
 | OptionalItem | 53 | 0 | 0 | 0 | 53 | 9 |
-| Emote | 56 | 0 | 0 | 0 | 56 | 0 |
+| Emote | 56 | 0 | 0 | 0 | 56 | 21 |
 | Action | 250 | 0 | 0 | 0 | 250 | 0 |
 | GeneralAction | 12 | 0 | 0 | 0 | 12 | 0 |
 | ClassJob | 48 | 0 | 0 | 0 | 48 | 0 |
 | Other | 163 | 0 | 0 | 0 | 163 | 0 |
 | ArtifactGear | 1175 | 0 | 0 | 0 | 1175 | 660 |
-| Mount | 38 | 0 | 0 | 0 | 38 | 2 |
-| Minion | 64 | 0 | 0 | 0 | 64 | 5 |
-| Orchestrion | 79 | 0 | 0 | 0 | 79 | 0 |
+| Mount | 38 | 0 | 0 | 0 | 38 | 11 |
+| Minion | 64 | 0 | 0 | 0 | 64 | 28 |
+| Orchestrion | 79 | 0 | 0 | 0 | 79 | 4 |
 | TripleTriadCard | 6 | 0 | 0 | 0 | 6 | 1 |
-| Ornament | 4 | 0 | 0 | 0 | 4 | 0 |
-| Barding | 6 | 0 | 0 | 0 | 6 | 2 |
+| Ornament | 4 | 0 | 0 | 0 | 4 | 2 |
+| Barding | 6 | 0 | 0 | 0 | 6 | 5 |
 | Hairstyle | 1 | 0 | 0 | 0 | 1 | 0 |
 | AetherCurrent | 151 | 0 | 0 | 0 | 151 | 0 |
 | BlueMageSpell | 16 | 0 | 0 | 0 | 16 | 0 |
@@ -92,23 +92,29 @@ Entries: **3464** across **1173** quests. Problems found: **0**.
 | Title | 220 | 0 | 0 | 0 | 220 | 0 |
 | DutyUnlock | 135 | 0 | 39 | 0 | 174 | 0 |
 | SystemUnlock | 0 | 0 | 65 | 0 | 65 | 0 |
-| **Total** | 3360 | 0 | 104 | 0 | 3464 | 806 |
+| **Total** | 3360 | 0 | 104 | 0 | 3464 | 868 |
 
-### `otherSource` breakdown
+### `otherSources` breakdown
 
-| Kind | otherSource | Entries |
+| Kind | otherSources | Entries |
 |---|---|---:|
 | Item | GilShopItem | 127 |
 | OptionalItem | GilShopItem | 9 |
+| Emote | OnlineStore | 21 |
 | ArtifactGear | Tradable,Marketable,SpecialShop,GatheringItem | 468 |
 | ArtifactGear | SpecialShop | 110 |
 | ArtifactGear | Tradable | 60 |
 | ArtifactGear | Tradable,Marketable,SpecialShop,Recipe | 22 |
-| Mount | SpecialShop | 2 |
+| Mount | OnlineStore | 9 |
+| Mount | SpecialShop,OnlineStore | 2 |
+| Minion | OnlineStore | 23 |
 | Minion | Tradable,Marketable | 3 |
-| Minion | SpecialShop | 2 |
+| Minion | SpecialShop,OnlineStore | 2 |
+| Orchestrion | OnlineStore | 4 |
 | TripleTriadCard | SpecialShop | 1 |
-| Barding | Tradable,Marketable | 2 |
+| Ornament | OnlineStore | 2 |
+| Barding | OnlineStore | 3 |
+| Barding | Tradable,Marketable,OnlineStore | 2 |
 
 ## 2. Icon checks
 
@@ -209,13 +215,18 @@ Banner dimensions for well-known quests (the journal banner is a wide image, 376
 | Check | Result | Detail |
 |---|---|---|
 | Her Last Vow (66038) -> Emote 114 Most Gentlemanly | pass | Emote 114 'Most Gentlemanly' item 0 [Static] |
-| Her Last Vow (66038) -> Minion Wind-up Gentleman | pass | Minion 21 'wind-up gentleman' item 10073 [Static] |
-| The Ultimate Weapon (70058) -> Mount 6 Magitek Armor (item 6008) | pass | Mount 6 'magitek armor' item 6008 [Static] |
+| Her Last Vow (66038) -> Minion Wind-up Gentleman | pass | Minion 21 'Wind-up Gentleman' item 10073 [Static] |
+| The Ultimate Weapon (70058) -> Mount 6 Magitek Armor (item 6008) | pass | Mount 6 'Magitek Armor' item 6008 [Static] |
 | The Ultimate Weapon (70058) does not list Fantasia as a unique Item | pass | (none) |
-| Paladin's Pledge (66591) -> ClassJob 19 paladin | pass | ClassJob 19 'paladin' item 0 [Static] |
+| Paladin's Pledge (66591) -> ClassJob 19 paladin | pass | ClassJob 19 'Paladin' item 0 [Static] |
 | Dawntrail aether current quests present and linked from AetherCurrent.Quest | pass | 30 entries; e.g. 69739 Alchemist or Dancer -> Aether Current (Thavnair) (current 2818325) |
 | Curated retainer quests -> SystemUnlock Retainers (three city variants, quest named An Ill-conceived Venture) | pass | SystemUnlock 0 'Retainers' item 0 [Curated]; SystemUnlock 0 'Retainers' item 0 [Curated]; SystemUnlock 0 'Retainers' item 0 [Curated] |
 | Sastasha (CFC 4) is a DutyUnlock of It's Probably Pirates (65781 and 66211) | pass | DutyUnlock 4 'Sastasha' item 0 [Curated]; DutyUnlock 4 'Sastasha' item 0 [Curated] |
+| Asphodelos: The First Circle (CFC 808) is a DutyUnlock of Where Familiars Dare (70012) | pass | DutyUnlock 808 'Asphodelos: The First Circle' item 0 [Curated] |
+| The Crystal from Beyond (70011) has no DutyUnlock 808 | pass | (none) |
+| Starlight Stakeout (68546) -> Mount 99 Starlight bear carries OnlineStore | pass | Mount 99 'Starlight bear' item 21050 [Static] otherSources=OnlineStore |
+| Remember Me This Moonfire Faire (67079) -> Emote 109 Bomb Dance (no item) carries OnlineStore | pass | Emote 109 'Bomb Dance' item 0 [Static] |
+| Exactly 68 entries carry OnlineStore (25 Minion, 21 Emote, 11 Mount, 5 Barding, 4 Orchestrion, 2 Ornament) | pass | Emote 21, Mount 11, Minion 25, Orchestrion 4, Ornament 2, Barding 5 |
 
 Ye Olde Faux Hollows: skipped (unsure of the expected entry).
 
@@ -228,15 +239,15 @@ Sample: **64** entries (seed 20260927, up to 3 per kind then filled at random), 
 | 65602 Accept No Imitations | Item | 2429 | 2429 | Quest name | Accept No Imitations | Accept No Imitations | pass |
 | 65602 Accept No Imitations | Item | 2429 | 2429 | Item.Name | Pinga | Pinga | pass |
 | 65637 So You Want to Be a Rogue | ClassJob | 29 | 0 | Quest name | So You Want to Be a Rogue | So You Want to Be a Rogue | pass |
-| 65637 So You Want to Be a Rogue | ClassJob | 29 | 0 | ClassJob.Name | rogue | rogue | pass |
+| 65637 So You Want to Be a Rogue | ClassJob | 29 | 0 | ClassJob.Name | Rogue | rogue | pass |
 | 65705 Between Captain and Conjurer | Title | 47 | 0 | Quest name | Between Captain and Conjurer | Between Captain and Conjurer | pass |
 | 65705 Between Captain and Conjurer | Title | 47 | 0 | Title.Masculine | Seeker of Skill | Seeker of Skill | pass |
 | 65705 Between Captain and Conjurer | Title | 47 | 0 | Achievement 316.Title | 47 | 47 | pass |
 | 65705 Between Captain and Conjurer | Title | 47 | 0 | Achievement 316 links quest | 65705 | linked | pass |
 | 65717 So You Want to Be an Archer | ClassJob | 5 | 0 | Quest name | So You Want to Be an Archer | So You Want to Be an Archer | pass |
-| 65717 So You Want to Be an Archer | ClassJob | 5 | 0 | ClassJob.Name | archer | archer | pass |
+| 65717 So You Want to Be an Archer | ClassJob | 5 | 0 | ClassJob.Name | Archer | archer | pass |
 | 65719 So You Want to Be a Thaumaturge | ClassJob | 7 | 0 | Quest name | So You Want to Be a Thaumaturge | So You Want to Be a Thaumaturge | pass |
-| 65719 So You Want to Be a Thaumaturge | ClassJob | 7 | 0 | ClassJob.Name | thaumaturge | thaumaturge | pass |
+| 65719 So You Want to Be a Thaumaturge | ClassJob | 7 | 0 | ClassJob.Name | Thaumaturge | thaumaturge | pass |
 | 65972 So You Want to Be a Jockey | SystemUnlock | 0 | 0 | Quest name | So You Want to Be a Jockey | So You Want to Be a Jockey | pass |
 | 65972 So You Want to Be a Jockey | SystemUnlock | 0 | 0 | Curated label non-empty | non-empty | Chocobo racing | pass |
 | 65973 Triple Triad Trial | TripleTriadCard | 1 | 9772 | Quest name | Triple Triad Trial | Triple Triad Trial | pass |
@@ -268,7 +279,7 @@ Sample: **64** entries (seed 20260927, up to 3 per kind then filled at random), 
 | 66235 Color Your World | GeneralAction | 15 | 0 | Quest name | Color Your World | Color Your World | pass |
 | 66235 Color Your World | GeneralAction | 15 | 0 | GeneralAction.Name | Dye | Dye | pass |
 | 66237 My Little Chocobo (Maelstrom) | Mount | 1 | 6001 | Quest name | My Little Chocobo (Maelstrom) | My Little Chocobo (Maelstrom) | pass |
-| 66237 My Little Chocobo (Maelstrom) | Mount | 1 | 6001 | Mount.Singular | company chocobo | company chocobo | pass |
+| 66237 My Little Chocobo (Maelstrom) | Mount | 1 | 6001 | Mount.Singular | Company Chocobo | company chocobo | pass |
 | 66237 My Little Chocobo (Maelstrom) | Mount | 1 | 6001 | Item exists | item 6001 | Chocobo Whistle | pass |
 | 66237 My Little Chocobo (Maelstrom) | Mount | 1 | 6001 | ItemAction type | 1322 | 1322 | pass |
 | 66237 My Little Chocobo (Maelstrom) | Mount | 1 | 6001 | ItemAction.Data[0] = rewardId | 1 | 1 | pass |
@@ -418,7 +429,7 @@ Sample: **64** entries (seed 20260927, up to 3 per kind then filled at random), 
 | 71014 Windborne | Item | 52431 | 52431 | Quest name | Windborne | Windborne | pass |
 | 71014 Windborne | Item | 52431 | 52431 | Item.Name | Successor's Breeches | Successor's Breeches | pass |
 | 71018 Clotted Crime | Minion | 559 | 46784 | Quest name | Clotted Crime | Clotted Crime | pass |
-| 71018 Clotted Crime | Minion | 559 | 46784 | Companion.Singular | oglop | oglop | pass |
+| 71018 Clotted Crime | Minion | 559 | 46784 | Companion.Singular | Oglop | oglop | pass |
 | 71018 Clotted Crime | Minion | 559 | 46784 | Item exists | item 46784 | Oglop | pass |
 | 71018 Clotted Crime | Minion | 559 | 46784 | ItemAction type | 853 | 853 | pass |
 | 71018 Clotted Crime | Minion | 559 | 46784 | ItemAction.Data[0] = rewardId | 559 | 559 | pass |

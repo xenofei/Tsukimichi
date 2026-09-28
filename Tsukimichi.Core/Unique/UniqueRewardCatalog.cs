@@ -139,7 +139,8 @@ public sealed class UniqueRewardCatalog
     /// <summary>
     /// Merges the three sources. Entries with the same quest, kind and reward id collapse to one, the higher
     /// <see cref="Confidence"/> winning in the position of the first; curated unlocks the shipped file already carries
-    /// are therefore not duplicated.
+    /// are therefore not duplicated. Shipped entries listed in <see cref="CuratedData.OnlineStore"/> gain
+    /// <see cref="OtherSource.OnlineStore"/> when the shipped file does not carry it yet.
     /// </summary>
     public static UniqueRewardCatalog Build(
         UniqueRewardsData data,
@@ -150,10 +151,21 @@ public sealed class UniqueRewardCatalog
         ArgumentNullException.ThrowIfNull(overrides);
         ArgumentNullException.ThrowIfNull(curated);
 
+        // curated/online_store.json marks shipped entries the Online Store also sells, by store item or by the
+        // collectible it unlocks, in case the shipped file predates the curated entry.
+        var storeItems = curated.OnlineStore;
+        var storeRewards = new HashSet<(RewardKind Kind, uint RewardId)>();
+        foreach (var store in storeItems.Values)
+        {
+            storeRewards.Add((store.Kind, store.RewardId));
+        }
+
         var merged = new Merger();
         foreach (var entry in data.Entries)
         {
-            merged.Add(entry);
+            var sold = storeItems.Count != 0
+                       && ((entry.ItemId != 0 && storeItems.ContainsKey(entry.ItemId)) || storeRewards.Contains((entry.Kind, entry.RewardId)));
+            merged.Add(sold ? entry.WithOtherSource(OtherSource.OnlineStore) : entry);
         }
 
         foreach (var (rowId, unlock) in curated.SystemUnlocks)

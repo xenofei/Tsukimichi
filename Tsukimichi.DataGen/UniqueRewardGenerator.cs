@@ -94,6 +94,69 @@ internal sealed class UniqueRewardGenerator
         entries[(entry.QuestRowId, entry.Kind, entry.RewardId)] = entry;
     }
 
+    /// <summary>
+    /// Adds <paramref name="name"/> to <see cref="UniqueRewardEntry.OtherSources"/> of every entry delivered as item
+    /// <paramref name="itemId"/> or granting the collectible (<paramref name="kind"/>, <paramref name="rewardId"/>);
+    /// the second match catches rewards a quest grants directly, such as an emote with no item. Returns how many
+    /// entries were marked.
+    /// </summary>
+    public int MarkOtherSource(uint itemId, RewardKind kind, uint rewardId, string name)
+    {
+        var marked = 0;
+        foreach (var key in entries.Keys.ToList())
+        {
+            var entry = entries[key];
+            var byItem = itemId != 0 && entry.ItemId == itemId;
+            var byReward = rewardId != 0 && entry.Kind == kind && entry.RewardId == rewardId;
+            if (!byItem && !byReward)
+                continue;
+            entries[key] = entry.WithOtherSource(name);
+            marked++;
+        }
+        return marked;
+    }
+
+    /// <summary>
+    /// The collectible an item unlocks through its ItemAction, with the same rules <see cref="ClassifyItem"/> applies:
+    /// mount, minion, orchestrion roll, Triple Triad card, ornament, barding, emote or hairstyle. False for anything else.
+    /// </summary>
+    public bool TryResolveCollectible(Item item, out RewardKind kind, out uint rewardId)
+    {
+        kind = default;
+        rewardId = 0;
+        var action = item.ItemAction.RowId == 0 ? null : g.ItemActions.GetRowOrDefault(item.ItemAction.RowId);
+        var type = action?.Action.RowId ?? 0;
+        var data0 = action is { } a && a.Data.Count > 0 ? a.Data[0] : (ushort)0;
+        switch (type)
+        {
+            case ActionMount:
+                (kind, rewardId) = (RewardKind.Mount, data0);
+                break;
+            case ActionMinion:
+                (kind, rewardId) = (RewardKind.Minion, data0);
+                break;
+            case ActionOrchestrion:
+                (kind, rewardId) = (RewardKind.Orchestrion, item.AdditionalData.Is<Orchestrion>() ? item.AdditionalData.RowId : 0u);
+                break;
+            case ActionTripleTriad:
+                (kind, rewardId) = (RewardKind.TripleTriadCard, data0);
+                break;
+            case ActionOrnament:
+                (kind, rewardId) = (RewardKind.Ornament, data0);
+                break;
+            case ActionBarding:
+                (kind, rewardId) = (RewardKind.Barding, data0);
+                break;
+            case ActionUnlockLink when emoteByUnlockLink.TryGetValue(data0, out var emoteId):
+                (kind, rewardId) = (RewardKind.Emote, emoteId);
+                break;
+            case ActionUnlockLink when hairstyleByUnlockLink.ContainsKey(data0):
+                (kind, rewardId) = (RewardKind.Hairstyle, data0);
+                break;
+        }
+        return rewardId != 0;
+    }
+
     // ----------------------------------------------------------------------------------------------------------
     // Indexes
 
@@ -277,7 +340,8 @@ internal sealed class UniqueRewardGenerator
                     Dropped.Add(new DroppedItem(quest.RowId, item.Value.RowId, string.Empty, "unnamed item row"));
                     continue;
                 }
-                Add(quest.RowId, kind, item.Value.RowId, item.Value.RowId, Text(item.Value.Name), source + Exclusivity(item.Value));
+                var others = OtherSourcesOf(item.Value);
+                Add(quest.RowId, kind, item.Value.RowId, item.Value.RowId, Text(item.Value.Name), source + Suffix(others), others);
             }
         }
     }
@@ -289,7 +353,8 @@ internal sealed class UniqueRewardGenerator
         var type = action?.Action.RowId ?? 0;
         var data0 = action is { } a && a.Data.Count > 0 ? a.Data[0] : (ushort)0;
         var itemName = Text(item.Name);
-        var exclusivity = Exclusivity(item);
+        var others = OtherSourcesOf(item);
+        var exclusivity = Suffix(others);
         if (itemName.Length == 0)
         {
             Dropped.Add(new DroppedItem(questRowId, item.RowId, string.Empty, "unnamed item row"));
@@ -299,10 +364,10 @@ internal sealed class UniqueRewardGenerator
         switch (type)
         {
             case ActionMount:
-                Add(questRowId, RewardKind.Mount, data0, item.RowId, NameOr(g.Mounts.GetRowOrDefault(data0)?.Singular, itemName), $"{source};ItemAction={type}{exclusivity}");
+                Add(questRowId, RewardKind.Mount, data0, item.RowId, NameOr(g.Mounts.GetRowOrDefault(data0)?.Singular, itemName), $"{source};ItemAction={type}{exclusivity}", others);
                 return;
             case ActionMinion:
-                Add(questRowId, RewardKind.Minion, data0, item.RowId, NameOr(g.Companions.GetRowOrDefault(data0)?.Singular, itemName), $"{source};ItemAction={type}{exclusivity}");
+                Add(questRowId, RewardKind.Minion, data0, item.RowId, NameOr(g.Companions.GetRowOrDefault(data0)?.Singular, itemName), $"{source};ItemAction={type}{exclusivity}", others);
                 return;
             case ActionOrchestrion:
             {
@@ -313,28 +378,28 @@ internal sealed class UniqueRewardGenerator
                     Dropped.Add(new DroppedItem(questRowId, item.RowId, itemName, "orchestrion roll without an Orchestrion link"));
                     return;
                 }
-                Add(questRowId, RewardKind.Orchestrion, orchestrionId, item.RowId, NameOr(g.Orchestrions.GetRowOrDefault(orchestrionId)?.Name, itemName), $"{source};ItemAction={type};AdditionalData={orchestrionId}{exclusivity}");
+                Add(questRowId, RewardKind.Orchestrion, orchestrionId, item.RowId, NameOr(g.Orchestrions.GetRowOrDefault(orchestrionId)?.Name, itemName), $"{source};ItemAction={type};AdditionalData={orchestrionId}{exclusivity}", others);
                 return;
             }
             case ActionTripleTriad:
-                Add(questRowId, RewardKind.TripleTriadCard, data0, item.RowId, NameOr(g.TripleTriadCards.GetRowOrDefault(data0)?.Name, itemName), $"{source};ItemAction={type}{exclusivity}");
+                Add(questRowId, RewardKind.TripleTriadCard, data0, item.RowId, NameOr(g.TripleTriadCards.GetRowOrDefault(data0)?.Name, itemName), $"{source};ItemAction={type}{exclusivity}", others);
                 return;
             case ActionOrnament:
-                Add(questRowId, RewardKind.Ornament, data0, item.RowId, NameOr(g.Ornaments.GetRowOrDefault(data0)?.Singular, itemName), $"{source};ItemAction={type}{exclusivity}");
+                Add(questRowId, RewardKind.Ornament, data0, item.RowId, NameOr(g.Ornaments.GetRowOrDefault(data0)?.Singular, itemName), $"{source};ItemAction={type}{exclusivity}", others);
                 return;
             case ActionBarding:
-                Add(questRowId, RewardKind.Barding, data0, item.RowId, NameOr(g.BuddyEquips.GetRowOrDefault(data0)?.Name, itemName), $"{source};ItemAction={type}{exclusivity}");
+                Add(questRowId, RewardKind.Barding, data0, item.RowId, NameOr(g.BuddyEquips.GetRowOrDefault(data0)?.Name, itemName), $"{source};ItemAction={type}{exclusivity}", others);
                 return;
             case ActionUnlockLink:
                 if (emoteByUnlockLink.TryGetValue(data0, out var emoteId))
                 {
-                    Add(questRowId, RewardKind.Emote, emoteId, item.RowId, NameOr(g.Emotes.GetRowOrDefault(emoteId)?.Name, itemName), $"{source};ItemAction={type};unlockLink={data0}{exclusivity}");
+                    Add(questRowId, RewardKind.Emote, emoteId, item.RowId, NameOr(g.Emotes.GetRowOrDefault(emoteId)?.Name, itemName), $"{source};ItemAction={type};unlockLink={data0}{exclusivity}", others);
                     return;
                 }
                 if (hairstyleByUnlockLink.ContainsKey(data0))
                 {
                     // rewardId is the unlock link id: that is what UIState.IsUnlockLinkUnlocked checks at runtime.
-                    Add(questRowId, RewardKind.Hairstyle, data0, item.RowId, itemName, $"{source};ItemAction={type};unlockLink={data0}{exclusivity}");
+                    Add(questRowId, RewardKind.Hairstyle, data0, item.RowId, itemName, $"{source};ItemAction={type};unlockLink={data0}{exclusivity}", others);
                     return;
                 }
                 // Neither an emote nor a hairstyle: fall through to the generic untradable-item rule with the link recorded.
@@ -342,7 +407,7 @@ internal sealed class UniqueRewardGenerator
                 break;
             case ActionGlasses:
                 // Facewear has no RewardKind of its own in V1; it is shipped as an untradable Item.
-                Add(questRowId, RewardKind.Item, item.RowId, item.RowId, itemName, $"{source};ItemAction={type};glasses{exclusivity}");
+                Add(questRowId, RewardKind.Item, item.RowId, item.RowId, itemName, $"{source};ItemAction={type};glasses{exclusivity}", others);
                 return;
         }
 
@@ -355,7 +420,7 @@ internal sealed class UniqueRewardGenerator
             }
             var kind = optionalSlot ? RewardKind.OptionalItem : RewardKind.Item;
             var actionTag = type == 0 || source.Contains("ItemAction=") ? string.Empty : $";ItemAction={type}";
-            Add(questRowId, kind, item.RowId, item.RowId, itemName, $"{source}{actionTag};untradable{exclusivity}");
+            Add(questRowId, kind, item.RowId, item.RowId, itemName, $"{source}{actionTag};untradable{exclusivity}", others);
         }
     }
 
@@ -374,19 +439,26 @@ internal sealed class UniqueRewardGenerator
         return null;
     }
 
-    /// <summary>Source suffix naming every other place the item can come from. Empty when the item looks quest-exclusive.</summary>
-    private string Exclusivity(Item item)
+    /// <summary>
+    /// Every other place the item can come from, as <see cref="OtherSource"/> names; empty when the item looks
+    /// quest-exclusive. Shipped structured on the entry (<see cref="UniqueRewardEntry.OtherSources"/>); the
+    /// <c>;otherSource=</c> suffix in the source text is provenance only.
+    /// </summary>
+    private string[] OtherSourcesOf(Item item)
     {
         var other = new List<string>(4);
-        if (!item.IsUntradable) other.Add("Tradable");
-        if (item.ItemSearchCategory.RowId != 0) other.Add("Marketable");
-        if (gilShopItems.Contains(item.RowId)) other.Add("GilShopItem");
-        if (specialShopItems.Contains(item.RowId)) other.Add("SpecialShop");
-        if (recipeResults.Contains(item.RowId)) other.Add("Recipe");
-        if (gatheringItems.Contains(item.RowId)) other.Add("GatheringItem");
-        if (achievementItems.Contains(item.RowId)) other.Add("Achievement");
-        return other.Count == 0 ? string.Empty : ";otherSource=" + string.Join(",", other);
+        if (!item.IsUntradable) other.Add(OtherSource.Tradable);
+        if (item.ItemSearchCategory.RowId != 0) other.Add(OtherSource.Marketable);
+        if (gilShopItems.Contains(item.RowId)) other.Add(OtherSource.GilShopItem);
+        if (specialShopItems.Contains(item.RowId)) other.Add(OtherSource.SpecialShop);
+        if (recipeResults.Contains(item.RowId)) other.Add(OtherSource.Recipe);
+        if (gatheringItems.Contains(item.RowId)) other.Add(OtherSource.GatheringItem);
+        if (achievementItems.Contains(item.RowId)) other.Add(OtherSource.Achievement);
+        return other.Count == 0 ? [] : other.ToArray();
     }
+
+    /// <summary>Source-text suffix for <see cref="OtherSourcesOf"/>; empty when there is nothing to name.</summary>
+    private static string Suffix(string[] others) => others.Length == 0 ? string.Empty : ";otherSource=" + string.Join(",", others);
 
     private void AddInstanceUnlock(uint questRowId, uint instanceContentId, string source)
     {
@@ -485,12 +557,12 @@ internal sealed class UniqueRewardGenerator
     // ----------------------------------------------------------------------------------------------------------
     // Helpers
 
-    private void Add(uint questRowId, RewardKind kind, uint rewardId, uint itemId, string name, string source)
+    private void Add(uint questRowId, RewardKind kind, uint rewardId, uint itemId, string name, string source, string[]? otherSources = null)
     {
         var key = (questRowId, kind, rewardId);
         if (entries.ContainsKey(key))
             return; // first writer wins; forward Quest fields run before reverse links
-        entries[key] = new UniqueRewardEntry(questRowId, kind, rewardId, itemId, name, Confidence.Static, source);
+        entries[key] = new UniqueRewardEntry(questRowId, kind, rewardId, itemId, name, Confidence.Static, source) { OtherSources = otherSources ?? [] };
     }
 
     private void NoteSignal(uint questRowId, string signal)

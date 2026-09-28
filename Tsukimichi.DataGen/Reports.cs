@@ -16,9 +16,11 @@ internal static class Reports
         sb.AppendLine($"Generated {generatedUtc:yyyy-MM-dd HH:mm} UTC from game version `{g.GameVersion}` by Tsukimichi.DataGen.");
         sb.AppendLine();
         var questCount = entries.Select(e => e.QuestRowId).Distinct().Count();
-        var flagged = entries.Count(e => e.Source.Contains(";otherSource="));
+        var flagged = entries.Count(e => e.OtherSources.Count > 0);
         sb.AppendLine($"- Entries: **{entries.Count}** across **{questCount}** quests.");
-        sb.AppendLine($"- Entries whose item is also obtainable elsewhere (source carries `;otherSource=`): **{flagged}**. They keep confidence Static in V1; the UI shows the source.");
+        sb.AppendLine($"- Entries whose reward is also obtainable elsewhere (`otherSources` non-empty): **{flagged}**. They keep confidence Static in V1; the UI shows the source and marks Online Store re-sells.");
+        foreach (var grp in entries.SelectMany(e => e.OtherSources).GroupBy(s => s).OrderByDescending(x => x.Count()).ThenBy(x => x.Key, StringComparer.Ordinal))
+            sb.AppendLine($"  - `{grp.Key}`: {grp.Count()}");
         sb.AppendLine($"- Plain item rewards refused by the exclusivity rule ({(gen.StrictItemExclusivity ? "strict" : "legacy, --keep-nonexclusive-items")}): **{gen.Dropped.Count}** (listed at the end).");
         sb.AppendLine();
 
