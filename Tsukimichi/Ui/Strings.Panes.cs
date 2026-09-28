@@ -35,6 +35,13 @@ static partial class Strings
     public const string MoonlitSourceUnknown = "Source not recorded";
     public const string MoonlitQuestPrefix = "Quest ";
 
+    // ---- Lifestream teleport (table and detail pane) ----
+    public const string TeleportToGiver = "Teleport to giver (Lifestream)";
+    public const string TeleportBusy = "Lifestream is busy; wait for it to finish.";
+    public const string TeleportNoAetheryte = "No aetheryte is known for the giver's zone.";
+    /// <summary>{0} = aetheryte place name.</summary>
+    public const string TeleportTooltipFormat = "Teleport to {0}, the aetheryte nearest the giver";
+
     /// <summary>Display name of a reward kind, plural, as the Moonlit left column lists them.</summary>
     public static string MoonlitKindName(RewardKind kind) => kind switch
     {

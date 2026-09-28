@@ -40,6 +40,7 @@ public sealed class Plugin : IDalamudPlugin
     private readonly TsukimichiCommand command;
     private readonly UiState ui;
     private readonly GameLinks gameLinks;
+    private readonly Game.LifestreamIpc lifestream;
     private readonly QueryRunner queryRunner;
     private readonly MainWindow mainWindow;
     private MoonlitPane? moonlitPane;
@@ -248,6 +249,8 @@ public sealed class Plugin : IDalamudPlugin
             // The main window reads Session/Settings/Paths lazily; they are initialized by the game-state block below.
             ui = new UiState();
             gameLinks = new GameLinks(GameGui, ChatGui, DataManager, Log);
+            lifestream = new Game.LifestreamIpc(PluginInterface, Log);
+            gameLinks.Lifestream = lifestream;
             queryRunner = new QueryRunner(this, ui, Log);
             mainWindow = new MainWindow(this, ui, queryRunner, gameLinks, TextureProvider, PluginInterface, Log, RetryCatalogAsync);
             windowSystem.AddWindow(mainWindow);
@@ -345,6 +348,7 @@ public sealed class Plugin : IDalamudPlugin
         mainWindow.Dispose();
         moonlitPane?.Dispose();
         queryRunner.Dispose();
+        lifestream.Dispose();
         // /UI
 
         // ---- Game state dispose ----
@@ -381,6 +385,7 @@ public sealed class Plugin : IDalamudPlugin
         Unwind("main window", () => mainWindow?.Dispose());
         Unwind("moonlit pane", () => moonlitPane?.Dispose());
         Unwind("query runner", () => queryRunner?.Dispose());
+        Unwind("lifestream ipc", () => lifestream?.Dispose());
         Unwind("game state", DisposeGameState);
         Unwind("catalog build", StopCatalogBuild);
     }
