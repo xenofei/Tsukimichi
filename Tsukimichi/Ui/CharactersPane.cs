@@ -280,6 +280,11 @@ public sealed class CharactersPane
             ImGui.TableNextRow();
             ImGui.TableNextColumn();
             MoonGlyph.DrawFillingInline(row.Fraction, UiMetrics.InlineGlyphSize(line));
+            if (ImGui.IsItemHovered())
+            {
+                FillingMoonTooltip(row.Count, row.Percent);
+            }
+
             ImGui.TableNextColumn();
             if (row.Overall)
             {
@@ -336,7 +341,7 @@ public sealed class CharactersPane
             using var rowId = ImRaii.PushId(i);
             ImGui.TableNextRow();
             ImGui.TableNextColumn();
-            DrawJobIcon(row.IconId, iconSize);
+            DrawJobIcon(row.IconId, iconSize, row.Name, row.Level);
             ImGui.TableNextColumn();
             if (row.IsRole)
             {
@@ -354,6 +359,11 @@ public sealed class CharactersPane
             ImGui.TextUnformatted(row.Level);
             ImGui.TableNextColumn();
             MoonGlyph.DrawFillingInline(row.Fraction, UiMetrics.InlineGlyphSize(line));
+            if (ImGui.IsItemHovered())
+            {
+                FillingMoonTooltip(row.Count);
+            }
+
             ImGui.TableNextColumn();
             ImGui.TextUnformatted(row.Count);
             ImGui.TableNextColumn();
@@ -413,6 +423,11 @@ public sealed class CharactersPane
             ImGui.TableNextRow();
             ImGui.TableNextColumn();
             MoonGlyph.DrawFillingInline(row.Fraction, UiMetrics.InlineGlyphSize(line));
+            if (ImGui.IsItemHovered())
+            {
+                FillingMoonTooltip(row.Count);
+            }
+
             ImGui.TableNextColumn();
             ImGui.TextUnformatted(row.Name);
             ImGui.TableNextColumn();
@@ -489,6 +504,10 @@ public sealed class CharactersPane
             else
             {
                 MoonGlyph.DrawFillingInline(row.Fraction, UiMetrics.InlineGlyphSize(line));
+                if (ImGui.IsItemHovered())
+                {
+                    FillingMoonTooltip(row.Count);
+                }
             }
 
             ImGui.TableNextColumn();
@@ -528,7 +547,7 @@ public sealed class CharactersPane
             MoonGlyph.DrawInline(row.State, UiMetrics.InlineGlyphSize(line));
             if (ImGui.IsItemHovered())
             {
-                UiMetrics.Tooltip(Strings.StateName(row.State, row.Quest));
+                UiMetrics.Tooltip(Strings.StateTooltip(row.State, row.Quest));
             }
 
             ImGui.TableNextColumn();
@@ -638,7 +657,7 @@ public sealed class CharactersPane
 
             ImGui.TableNextRow();
             ImGui.TableNextColumn();
-            DrawJobIcon(row.IconId, iconSize);
+            DrawJobIcon(row.IconId, iconSize, row.Name, row.Level);
             ImGui.TableNextColumn();
             ImGui.TextUnformatted(row.Name);
             if (ImGui.IsItemHovered())
@@ -651,16 +670,53 @@ public sealed class CharactersPane
         }
     }
 
-    private void DrawJobIcon(uint iconId, Vector2 size)
+    /// <summary>The job's icon (a blank of the same size without one), naming the job and its level on hover.</summary>
+    private void DrawJobIcon(uint iconId, Vector2 size, string name, string level)
     {
         if (textures is null || iconId == 0)
         {
             ImGui.Dummy(size);
-            return;
+        }
+        else
+        {
+            var wrap = textures.GetFromGameIcon(new GameIconLookup(iconId)).GetWrapOrEmpty();
+            ImGui.Image(wrap.Handle, size);
         }
 
-        var wrap = textures.GetFromGameIcon(new GameIconLookup(iconId)).GetWrapOrEmpty();
-        ImGui.Image(wrap.Handle, size);
+        if (ImGui.IsItemHovered())
+        {
+            JobTooltip(name, level);
+        }
+    }
+
+    /// <summary>Job icon tooltip: the job's name, then "Level N" under it; a role row has no level and shows the name alone.</summary>
+    private static void JobTooltip(string name, string level)
+    {
+        using var tooltip = ImRaii.Tooltip();
+        UiMetrics.ApplyFontScale();
+        ImGui.TextUnformatted(name);
+        if (level.Length > 0)
+        {
+            ImGui.TextDisabled(Strings.CharactersColumnLevel);
+            ImGui.SameLine();
+            ImGui.TextDisabled(level);
+        }
+    }
+
+    /// <summary>Filling moon tooltip: what the moon shows, then the row's done/total (and percent where the row has one).</summary>
+    private static void FillingMoonTooltip(string count, string? percent = null)
+    {
+        using var tooltip = ImRaii.Tooltip();
+        UiMetrics.ApplyFontScale();
+        ImGui.TextUnformatted(Strings.FillingMoonTooltip);
+        ImGui.TextDisabled(count);
+        if (percent is { Length: > 0 })
+        {
+            ImGui.SameLine();
+            ImGui.TextDisabled(Strings.StateReasonSeparator);
+            ImGui.SameLine();
+            ImGui.TextDisabled(percent);
+        }
     }
 
     private static void DrawGrandCompanyAndTribes(Dashboard d)
@@ -946,7 +1002,7 @@ public sealed class CharactersPane
             MoonGlyph.DrawInline(row.State, UiMetrics.InlineGlyphSize(line));
             if (ImGui.IsItemHovered())
             {
-                UiMetrics.Tooltip(row.StateTooltip);
+                UiMetrics.Tooltip(Strings.StateTooltip(row.State, row.Quest), row.StateTooltip);
             }
 
             ImGui.TableNextColumn();
@@ -1246,12 +1302,22 @@ public sealed class CharactersPane
             if (evaluation is null)
             {
                 MoonGlyph.DrawInline(QuestState.Unknown, UiMetrics.InlineGlyphSize(line));
+                if (ImGui.IsItemHovered())
+                {
+                    UiMetrics.Tooltip(Strings.StateTooltip(QuestState.Unknown), Strings.CharactersSnapshotUnreadable);
+                }
+
                 ImGui.SameLine();
                 ImGui.TextDisabled(Strings.CharactersSnapshotUnreadable);
             }
             else
             {
                 MoonGlyph.DrawInline(evaluation.State, UiMetrics.InlineGlyphSize(line));
+                if (ImGui.IsItemHovered())
+                {
+                    UiMetrics.StateTooltip(evaluation.State, evaluation, quest);
+                }
+
                 ImGui.SameLine();
                 using (Theme.PushText(Theme.StateColor(evaluation.State)))
                 {

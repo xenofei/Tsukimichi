@@ -4,6 +4,9 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+### Changed
+- Every moon now says what it is when you hover it: the state's name and the shape to look for ("Blocked · new moon, silver ring"), with the reason under it where there is one. That covers the path and unlock moons in the detail pane, the large header moon, Moonlit, Flight, the todo overlay, Nearby, the Characters dashboard and its Compare rows; filling moons in the tree and on the dashboard show done/total and the percent. Moonlit reward icons show the same large reward tooltip as the detail pane (with the verdict's source under it), a reward whose kind has no icon shows a faint veiled moon that says so, and the confidence badges explain what static, community, curated and yours mean. Job icons on the dashboard name the job and its level, the state chip lists every hidden state in full, and the server info bar entry says "Ready". Tooltips on the detail pane's special badge now stay hidden behind popups and other windows.
+
 ### Added
 - "What's new" card: after an update, the first time the main window opens, a card above the detail pane lists what changed in this version, with Close and Help. It never shows on a fresh install, and nothing is fetched: the notes ship inside the plugin.
 - Help topics "Why my counts differ from the journal" (unlisted and removed quests, seasonal quests out of season, foreclosed choices, the derived Feature Unlocks node, repeatables) and "Known quirks" (steps the game skips such as Up In Arms with the Zenith, "Bloodsworn" reading "Allied" since 7.0, conditions listed but not judged, Online Store re-sells in Moonlit), both searchable; the Commands topic gains `/tsuki todo`.

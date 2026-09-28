@@ -198,6 +198,11 @@ public sealed class FlightPane
             MoonGlyph.DrawFilling(ImGui.GetWindowDrawList(), center, radius, zone.Fraction);
         }
 
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(zone.AllUnknown ? Strings.StateTooltip(QuestState.Unknown) : zone.TooltipText);
+        }
+
         ImGui.SameLine();
         var textHeight = ImGui.GetTextLineHeight();
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + MathF.Max(0f, (box - textHeight) * 0.5f));
@@ -297,7 +302,7 @@ public sealed class FlightPane
         MoonGlyph.DrawInline(state, UiMetrics.InlineGlyphSize(line));
         if (ImGui.IsItemHovered())
         {
-            UiMetrics.Tooltip(Strings.StateName(state, row.Quest));
+            UiMetrics.StateTooltip(state, evaluation, row.Quest);
         }
 
         ImGui.TableNextColumn();

@@ -311,7 +311,8 @@ public sealed class DiscoveryWindow : Window, IDisposable
         MoonGlyph.DrawInline(row.State, glyphSize);
         if (ImGui.IsItemHovered())
         {
-            UiMetrics.Tooltip(row.StateText);
+            // The job line only adds something for ReadyOnOtherJob ("Ready on WHM"); the name is in the first line otherwise.
+            UiMetrics.Tooltip(Strings.StateTooltip(row.State, row.Quest), row.State == QuestState.ReadyOnOtherJob ? row.StateText : null);
         }
 
         ImGui.TableNextColumn();

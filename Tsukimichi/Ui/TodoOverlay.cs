@@ -317,6 +317,11 @@ public sealed class TodoOverlay : Window, IDisposable
     {
         using var id = ImRaii.PushId(index);
         MoonGlyph.DrawInline(row.State, glyphSize);
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.StateTooltip(row.State, row.Quest), row.Hint);
+        }
+
         ImGui.SameLine();
 
         // The selectable is sized to the name so the hint can follow on the same line; the name itself is painted over

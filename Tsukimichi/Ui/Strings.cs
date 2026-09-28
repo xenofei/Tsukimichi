@@ -81,6 +81,8 @@ public static partial class Strings
     public const string Unlisted = "Unlisted";
     /// <summary>{0} = done, {1} = total.</summary>
     public const string CountFormat = "{0}/{1}";
+    /// <summary>A filling moon's tooltip line: {0} = done/total, {1} = percent.</summary>
+    public const string ProgressFormat = "{0} · {1}%";
     /// <summary>Hover text of a folded tree node: {0} = section, {1} = category, {2} = genre.</summary>
     public const string FoldedPathFormat = "{0} › {1} › {2}";
 
@@ -178,6 +180,11 @@ public static partial class Strings
     public const string ChipSeasonal = FilterNames.SeasonalActive;
     public const string ChipPinned = FilterNames.Pinned;
     public const string ChipTooltip = "Click to clear";
+    /// <summary>First line of the state chip's tooltip; the excluded states follow, all of them, however many the chip names.</summary>
+    public const string ChipStateTooltipPrefix = "Hiding: ";
+
+    /// <summary>First line of a filling moon's tooltip; the done/total (and percent where shown) follows.</summary>
+    public const string FillingMoonTooltip = "Done of total";
 
     // Table
     public const string ColumnGlyph = "State";
