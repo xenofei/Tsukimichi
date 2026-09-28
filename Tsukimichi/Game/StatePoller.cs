@@ -42,7 +42,6 @@ public sealed class StatePoller : IDisposable
 
     private CharacterSnapshot? last;
     private IReadOnlyDictionary<uint, QuestEvaluation>? states;
-    private HashSet<ushort> lastOffer = [];
 
     // When each accepted quest entered the journal; loaded from the sidecar on the first pass, kept from diffs after.
     private Dictionary<ushort, DateTime> acceptedSince = [];
@@ -240,8 +239,9 @@ public sealed class StatePoller : IDisposable
         var bundle = session.Bundle!;
         var catalog = bundle.Catalog;
         var snapshot = reader.Capture(catalog, bundle.Jobs, last?.CompletedBits);
-        var offer = reader.ReadDailyOffer();
-        var context = session.BaseContext with { TodaysDailyOffer = offer };
+        // The allied-society daily offer is not readable from the client (see GameStateReader), so the live context
+        // is the base context: an in-progress daily is Accepted through the journal, a turned-in one is done this cycle.
+        var context = session.BaseContext;
 
         var firstPass = last is null || states is null || last.ContentId != snapshot.ContentId;
         IReadOnlyList<QuestEvent> events = [];
@@ -273,8 +273,7 @@ public sealed class StatePoller : IDisposable
         else
         {
             var diff = SnapshotDiff.Compute(last!, snapshot);
-            var offerChanged = !offer.SetEquals(lastOffer);
-            if (diff.IsEmpty && !offerChanged)
+            if (diff.IsEmpty)
             {
                 return null;
             }
@@ -284,7 +283,6 @@ public sealed class StatePoller : IDisposable
             // A level change touches every level-gated quest, which the reverse index cannot enumerate by job; level-ups
             // are rare and a full resolve costs milliseconds, so resolve everything rather than pass jobs as levels.
             var full = diff.OtherChanged
-                || offerChanged
                 || diff.ChangedJobs.Count > 0
                 || diff.ChangedQuestIds.Count > FullResolveThreshold;
             resolved = full
@@ -296,7 +294,6 @@ public sealed class StatePoller : IDisposable
 
         last = snapshot;
         states = resolved;
-        lastOffer = offer;
         saves.MarkDirty();
         return new PollResult(snapshot, resolved, context, events, firstPass);
     }
@@ -304,7 +301,7 @@ public sealed class StatePoller : IDisposable
     private void Publish(PollResult result)
     {
         session.SetLive(result.Snapshot, result.States, result.Context, acceptedSince);
-        session.AddEvents(result.Events);
+        session.AddEvents(result.Snapshot.ContentId, result.Events);
     }
 
     /// <summary>Runs a session update; a throwing listener is logged at most once per <see cref="ListenerWarningInterval"/>.</summary>
@@ -395,7 +392,6 @@ public sealed class StatePoller : IDisposable
     {
         last = null;
         states = null;
-        lastOffer = [];
         acceptedSince = [];
         acceptedSinceDirty = false;
     }

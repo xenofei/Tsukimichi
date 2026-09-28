@@ -9,6 +9,10 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ### Changed
 - CI: every push and pull request builds the solution with warnings as errors and runs the tests. The release workflow refuses a tag whose version differs from the plugin's, or that has no changelog section; it publishes tags with a suffix (`-rc1`) as prereleases without touching the plugin repository index, retries the index push, and can be re-run for an existing tag.
+### Fixed
+- Allied society dailies: accepting one daily no longer turns every other tribe's dailies Blocked with "not offered today". The game never stores the day's offer (the array the plugin read holds the dailies you have already accepted), so that check is gone; a daily you have picked up now shows Accepted instead of Ready, and one you have turned in today still shows done this cycle.
+- Seasonal quests: the shipped event end dates now reach the evaluation, so a seasonal quest of an event whose known end has passed shows Foreclosed instead of staying Blocked forever; an event with no known end still shows Blocked with "seasonal event not active" until it runs. Counts and totals are unchanged in this release.
+- Switching characters without logging out in between no longer carries the previous character's Recent activity over, and no longer re-announces that character's newly available quests in chat for the new one.
 
 ## [0.5.0] - 2026-09-28
 

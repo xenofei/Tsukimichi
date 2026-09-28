@@ -1,4 +1,3 @@
-using System.Collections.Frozen;
 using Tsukimichi.Core.Model;
 
 namespace Tsukimichi.Core.Evaluation;
@@ -24,8 +23,12 @@ public sealed record EvalContext
     /// <summary>Whether a quest (by row id) is gated by an achievement, from curated data.</summary>
     public Func<uint, bool> IsAchievementGated { get; init; } = static _ => false;
 
-    /// <summary>Quest ids offered by allied societies today. Empty means unknown and the offer is not checked.</summary>
-    public IReadOnlySet<ushort> TodaysDailyOffer { get; init; } = FrozenSet<ushort>.Empty;
+    /// <summary>
+    /// Quest ids the allied societies offer today, when a source for it exists. Null means the offer is unknown and
+    /// no daily is held back for it: the client never stores the day's offer (its 12-slot daily array holds the
+    /// dailies already accepted), so the plugin leaves this null and only a future offer source sets it.
+    /// </summary>
+    public IReadOnlySet<ushort>? TodaysDailyOffer { get; init; }
 
     /// <summary>
     /// Whether an inactive festival already ran for this character, from curated data. Composed with the default

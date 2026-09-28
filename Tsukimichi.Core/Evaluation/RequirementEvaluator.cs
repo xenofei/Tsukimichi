@@ -128,9 +128,10 @@ public static class RequirementEvaluator
                     hasAllowance,
                     hasAllowance ? $"{s.TribeAllowance} allowances left" : "no allowances left today"));
 
-                if (ctx.TodaysDailyOffer.Count > 0)
+                // An unknown offer (null) is not a blocker: nothing is listed, so the daily resolves on its other gates.
+                if (ctx.TodaysDailyOffer is { } todaysOffer)
                 {
-                    var offered = ctx.TodaysDailyOffer.Contains(q.QuestId);
+                    var offered = todaysOffer.Contains(q.QuestId);
                     results.Add(new(new TribeDailyOfferRequirement(q.QuestId, offered), offered, offered ? "offered today" : "not offered today"));
                 }
             }

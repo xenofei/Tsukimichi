@@ -148,7 +148,8 @@ public sealed class GameStateReader
 
         // Journal.
         var normal = qm->NormalQuests;
-        var accepted = new List<AcceptedQuest>(normal.Length);
+        var daily = qm->DailyQuests;
+        var accepted = new List<AcceptedQuest>(normal.Length + daily.Length);
         for (var i = 0; i < normal.Length; i++)
         {
             var work = normal[i];
@@ -158,15 +159,25 @@ public sealed class GameStateReader
             }
         }
 
-        // Allied society dailies done this cycle.
+        // Allied society dailies live in their own 12-slot array (DailyQuestWork: QuestId and Flags only, no step),
+        // which holds the dailies accepted today, not the day's offer. One still in progress is in the journal and
+        // joins Accepted with step 0; one already turned in keeps its slot with the completed flag and is done this cycle.
         var dailyDone = new Dictionary<ushort, byte>();
-        var daily = qm->DailyQuests;
         for (var i = 0; i < daily.Length; i++)
         {
             var work = daily[i];
-            if (work.QuestId != 0 && qm->IsDailyQuestCompleted(work.QuestId))
+            if (work.QuestId == 0)
+            {
+                continue;
+            }
+
+            if (qm->IsDailyQuestCompleted(work.QuestId))
             {
                 dailyDone[work.QuestId] = work.Flags;
+            }
+            else if (!ContainsQuest(accepted, work.QuestId))
+            {
+                accepted.Add(new AcceptedQuest(work.QuestId, 0));
             }
         }
 
@@ -274,34 +285,6 @@ public sealed class GameStateReader
         return snapshot;
     }
 
-    /// <summary>Quest ids the allied societies offer today (done or not). Framework thread only.</summary>
-    public unsafe HashSet<ushort> ReadDailyOffer()
-    {
-        if (!framework.IsInFrameworkUpdateThread)
-        {
-            throw new InvalidOperationException("GameStateReader.ReadDailyOffer must run on the framework thread.");
-        }
-
-        var offer = new HashSet<ushort>();
-        var qm = QuestManager.Instance();
-        if (qm == null)
-        {
-            return offer;
-        }
-
-        var daily = qm->DailyQuests;
-        for (var i = 0; i < daily.Length; i++)
-        {
-            var questId = daily[i].QuestId;
-            if (questId != 0)
-            {
-                offer.Add(questId);
-            }
-        }
-
-        return offer;
-    }
-
     /// <summary>What changed between two captures; see <see cref="SnapshotDiff.Compute"/>.</summary>
     public static SnapshotDiff Diff(CharacterSnapshot old, CharacterSnapshot @new) => SnapshotDiff.Compute(old, @new);
 
@@ -392,6 +375,20 @@ public sealed class GameStateReader
         var built = new CatalogIds(catalog, [.. quests], [.. instances]);
         catalogIds = built;
         return built;
+    }
+
+    /// <summary>Linear scan; the journal holds at most 30 quests plus 12 dailies, so a set is not worth its allocation.</summary>
+    private static bool ContainsQuest(List<AcceptedQuest> accepted, ushort questId)
+    {
+        foreach (var quest in accepted)
+        {
+            if (quest.QuestId == questId)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private sealed record CatalogIds(QuestCatalog Catalog, ushort[] QuestIds, uint[] InstanceIds);

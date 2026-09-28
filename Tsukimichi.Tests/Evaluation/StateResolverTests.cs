@@ -227,6 +227,56 @@ public class StateResolverTests
         Assert.Equal(QuestState.Accepted, Resolve(quest, snapshot).State);
     }
 
+    // Rule 4 with allied-society dailies (bug-hunt C1/C2)
+
+    [Fact]
+    public void Accepting_one_tribe_daily_leaves_the_other_dailies_Ready_and_resolves_it_Accepted()
+    {
+        // The client's 12-slot daily array holds the dailies accepted today, not the day's offer. 0.5.0 fed it to the
+        // context as the offer, so after accepting one Vanu Vanu daily every other daily read Blocked "not offered
+        // today". The reader now lists an in-progress daily in Accepted (step 0) and the context carries no offer.
+        var vanuA = Quest(A) with { BeastTribe = 7, BeastRank = 1, IsRepeatable = true, RepeatInterval = 1 };
+        var vanuB = Quest(B) with { BeastTribe = 7, BeastRank = 1, IsRepeatable = true, RepeatInterval = 1 };
+        var ixal = Quest(C) with { BeastTribe = 3, BeastRank = 1, IsRepeatable = true, RepeatInterval = 1 };
+        var catalog = Catalog(vanuA, vanuB, ixal);
+        var snapshot = Snapshot() with
+        {
+            Tribes = new Dictionary<byte, TribeStanding> { [7] = new(3, 0), [3] = new(3, 0) },
+            TribeAllowance = 11,
+            Accepted = [Accepted(A, 0)],
+        };
+
+        var states = StateResolver.ResolveAll(catalog, snapshot, EvalContext.Default);
+
+        var accepted = states[A];
+        Assert.Equal(QuestState.Accepted, accepted.State);
+        Assert.Equal((byte)0, accepted.Sequence);
+        Assert.Equal(QuestState.Ready, states[B].State);
+        Assert.Equal(QuestState.Ready, states[C].State);
+        Assert.DoesNotContain(states[B].Requirements, r => r.Req.Kind == RequirementKind.TribeDailyOffer);
+    }
+
+    [Fact]
+    public void Turned_in_tribe_daily_is_DoneThisCycle_while_an_in_progress_one_is_Accepted()
+    {
+        // A turned-in daily keeps its slot with the completed flag: it lands in DailyDone, not in Accepted.
+        var done = Quest(A) with { BeastTribe = 7, BeastRank = 1, IsRepeatable = true, RepeatInterval = 1 };
+        var inProgress = Quest(B) with { BeastTribe = 7, BeastRank = 1, IsRepeatable = true, RepeatInterval = 1 };
+        var catalog = Catalog(done, inProgress);
+        var snapshot = Snapshot() with
+        {
+            Tribes = new Dictionary<byte, TribeStanding> { [7] = new(3, 0) },
+            TribeAllowance = 10,
+            Accepted = [Accepted(B, 0)],
+            DailyDone = new Dictionary<ushort, byte> { [QuestRecord.ToQuestId(A)] = 1 },
+        };
+
+        var states = StateResolver.ResolveAll(catalog, snapshot, EvalContext.Default);
+
+        Assert.Equal(QuestState.DoneThisCycle, states[A].State);
+        Assert.Equal(QuestState.Accepted, states[B].State);
+    }
+
     // Rule 5
 
     [Fact]

@@ -439,6 +439,6 @@ public class RequirementEvaluatorTests
         Assert.Equal(TribeRanks.Name(7), EvalContext.Default.TribeRankName(7));
         Assert.Equal(GrandCompanies.Name(1), EvalContext.Default.GrandCompanyName(1));
         Assert.Equal(Expansions.Name(3), EvalContext.Default.ExpansionName(3));
-        Assert.Empty(EvalContext.Default.TodaysDailyOffer);
+        Assert.Null(EvalContext.Default.TodaysDailyOffer);
     }
 }
