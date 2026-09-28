@@ -279,7 +279,7 @@
     <div>
       <p class="eyebrow">First in-game pass · Dalamud API 15 · V1</p>
       <h1>Tsukimichi Smoke Test<span class="kanji">月道</span></h1>
-      <p class="lede">Every check has the exact clicks to make and what should happen. Mark each one Pass, Fail, or Unknown, add notes where a yes or no is not enough, and copy the report at the end. Progress stays in this browser.</p>
+      <p class="lede">Every check has the exact clicks to make and what should happen. Mark each one Pass, Fail, or Unknown, add notes where a yes or no is not enough, and copy the report at the end. Progress stays in this browser. Use the Round 2 filter to test only what changed after your first report.</p>
     </div>
     <div class="meta">
       <label>Plugin version (Settings › About)<input id="metaVersion" placeholder="0.1.0"></label>
@@ -312,6 +312,7 @@
       <div class="side-actions">
         <button class="primary" id="btnReport">Generate report</button>
         <button class="small" id="btnExportJson">Copy full answers as JSON</button>
+        <button class="small" id="btnResetRound2">Clear Round 2 answers</button>
         <button class="small danger" id="btnReset">Reset all answers</button>
         <div class="confirm" id="resetConfirm">
           <span>Erase every answer and note?</span>
@@ -350,6 +351,7 @@
           <button data-filter="open" aria-pressed="false">Unanswered</button>
           <button data-filter="fail" aria-pressed="false">Failed</button>
           <button data-filter="na" aria-pressed="false">Unknown</button>
+          <button data-filter="round2" aria-pressed="false">Round 2</button>
         </div>
         <span id="filterNote" style="color:var(--text-2);font-size:.9rem"></span>
       </div>
@@ -362,6 +364,7 @@
         <div class="actions">
           <button class="primary" id="btnCopy">Copy report</button>
           <button id="btnRegen">Refresh</button>
+          <label style="display:inline-flex;align-items:center;gap:6px;font-size:.9rem"><input type="checkbox" id="reportRound2"> Round 2 items only</label>
         </div>
         <pre id="reportText" tabindex="0"></pre>
       </div>
@@ -388,9 +391,9 @@ const SECTIONS = [
       { id: "A4", title: "Catalog failure screen", optional: "developer build only",
         how: ["This needs a deliberately broken build (for example throwing inside LuminaCatalogLoader). If you do not want to do that, choose Unknown."],
         expect: "The window shows Catalog unavailable in pink-red, the exception text, and a Retry button. Retry shows Loading catalog again and then the normal window." },
-      { id: "A5", title: "Toolbar contents, left to right",
-        how: ["Look at the top row of the window."],
-        expect: "A search box with the hint text Search quests, rewards or ids; a small × button that is greyed out while the box is empty; a Filters button; a Character dropdown; and a moon glyph at the far right." },
+      { id: "A5", title: "Toolbar contents, left to right", changed: true,
+        how: ["Look at the top row of the window. Hover each control."],
+        expect: "Search box with hint Search quests, rewards or ids; a × button greyed while empty; a Filters button; a Character dropdown; a strip for active-filter chips (empty when none); a moon glyph at the far right. Every control shows a one-line tooltip on hover." },
       { id: "A6", title: "Status bar text",
         how: ["Look at the single line at the very bottom of the window while logged in."],
         expect: "It reads like 5,373 quests · showing 212 of 5,373 · live · v0.1.0. When viewing a stored character it says snapshot HH:mm instead of live; before any character was ever captured it says no snapshot." },
@@ -406,9 +409,9 @@ const SECTIONS = [
       { id: "B2", title: "Clearing search is immediate and writes nothing",
         how: ["With text in the search box, note the modified time of the plugin config file (pluginConfigs\\Tsukimichi.json in Explorer).", "Click the × next to the search box. Then type something again and this time click the Search chip under the search box."],
         expect: "Both ways, the full table returns instantly with no pause and the Search chip disappears. The config file modified time does not change." },
-      { id: "B3", title: "Filters button toggles the panel",
-        how: ["Click Filters once, then again."],
-        expect: "The filter panel appears above the tree in the left column, then hides. Any active filter chips under the search box stay visible in both cases. The Filters button looks highlighted while the panel is open." },
+      { id: "B3", title: "Filters button toggles the panel; chips live on the toolbar", changed: true,
+        how: ["Click Filters once, then again.", "Tick Hide completed and Available now on and off while watching the tree and table."],
+        expect: "The filter panel appears above the tree and hides again. Chips appear in the toolbar strip between the Character dropdown and the moon glyph, and nothing below the toolbar moves. With many chips the strip clips at its right edge instead of wrapping." },
       { id: "B4", title: "Character dropdown lists live and stored characters",
         how: ["Requires a second character to have been logged in at least once.", "Open the Character dropdown in the toolbar.", "Choose the other (stored) character."],
         expect: "The live character has a ● in front and no age. Stored characters read like Name@World · 3 h ago. Choosing one switches the whole window (tree counts, table glyphs, detail pane) to that character's snapshot." },
@@ -436,9 +439,9 @@ const SECTIONS = [
       { id: "C3", title: "Available now",
         how: ["Untick Hide completed. Tick Available now."],
         expect: "Only rows whose glyph is first quarter (ready), silver first quarter (ready on another job) or waxing gibbous (accepted) remain." },
-      { id: "C4", title: "State checkboxes",
-        how: ["Untick Available now. Expand Advanced. Under States untick Completed. Then click the State chip."],
-        expect: "Completed rows vanish and a State chip appears. Clicking the chip re-ticks all eight states." },
+      { id: "C4", title: "State chip names the excluded states", changed: true,
+        how: ["Untick Available now. Expand Advanced. Under States untick Completed, then also Foreclosed, then untick three more. Click the chip."],
+        expect: "The chip reads States: −Completed, then States: −Completed, −Foreclosed, then three names followed by +2. Clicking the chip restores all eight states." },
       { id: "C5", title: "Expansion filter",
         how: ["Under Advanced tick Heavensward in Expansions."],
         expect: "Only Heavensward quests remain (the Exp column reads HW) and the chip reads Expansion." },
@@ -472,12 +475,12 @@ const SECTIONS = [
     code: "D", id: "tree", title: "Journal tree",
     intro: "The left column under the three tabs.",
     checks: [
-      { id: "D1", title: "The three tabs each show their pane",
+      { id: "D1", title: "The three tabs each show their pane", changed: true,
         how: ["Click Journal, Moonlit and Characters in turn at the top of the left column."],
-        expect: "Journal shows the tree. Moonlit shows a list of reward kinds with counts. Characters shows the list of characters. No placeholder text anywhere." },
-      { id: "D2", title: "Tree order",
-        how: ["On the Journal tab read the nodes from top to bottom, expanding a section."],
-        expect: "All quests first, then each Section with its Categories and Genres in journal order, then Feature Unlocks, then Unlisted only if Show Unlisted bucket is on in the config window." },
+        expect: "Journal shows the tree. Moonlit shows the list of reward kinds with counts. Characters shows the character list and the dashboard in the middle column." },
+      { id: "D2", title: "Tree order and folded single-child nodes", changed: true,
+        how: ["Read the nodes from top to bottom. Find a category that used to expand to a single genre (for example Seventh Astral Era Main Scenario Quests) and hover it, then click it."],
+        expect: "All quests first, then sections in journal order, then Feature Unlocks, then Unlisted only if enabled in settings. A category with one genre is a single leaf named after the category with no arrow; clicking it scopes the table and highlights the leaf; hovering shows Section › Category › Genre. No node anywhere expands to a single child." },
       { id: "D3", title: "Counts match the in-game journal",
         how: ["Note the done/total on the node Seventh Umbral Era Main Scenario Quests (or another category you have completed quests in).", "Press J to open the game journal, Completed tab, and count the entries under the same category."],
         expect: "Every node shows a small filling moon and done/total at its right edge; the moon's lit part matches the ratio; the done count equals the number of completed entries in the game journal for that category." },
@@ -508,21 +511,21 @@ const SECTIONS = [
       { id: "E4", title: "Scrolling 5,000 rows is smooth",
         how: ["Select All quests with no filters. Scroll the table quickly from top to bottom with the mouse wheel and drag the scrollbar.", "Optional: type /xlstats and watch the plugin's frame time and allocations while idle over the table."],
         expect: "No stutter or hitching; the frame counter shows no steady growth in allocations while idle." },
-      { id: "E5", title: "Row click and double-click",
-        how: ["Click a row. Double-click a different row."],
-        expect: "Single click shows that quest in the right-hand detail pane. Double-click also opens the in-game journal on it. If the journal opens on a different quest than the one you clicked, mark Fail and write both quest names in the notes: this is a known open question." },
+      { id: "E5", title: "Row click and double-click", changed: true,
+        how: ["Click a row. Double-click a quest you have completed. Double-click a quest you have not accepted yet."],
+        expect: "Single click shows the quest in the detail pane. Double-clicking an accepted or completed quest opens the game journal on it (the game journal has no page for other quests, so those are only selected). If the journal opens on a different quest than the one you clicked, mark Fail with both names." },
       { id: "E6", title: "Selecting from another pane always scrolls the table",
         how: ["Select a quest with a long prerequisite path. In the detail pane's Path section click the first step, then the second, then the third.", "Click a row in the table, then go to Moonlit and use Show in Journal on any reward."],
         expect: "Every external selection scrolls the table so the selected row is visible, every single time, not every other time. Clicking a row inside the table itself never scrolls." },
       { id: "E7", title: "Pinned rows show a gold dot",
         how: ["Right-click a row and choose Pin."],
         expect: "A small gold dot appears at the left edge of the glyph column on that row." },
-      { id: "E8", title: "Reward icons with tooltips",
-        how: ["Find a quest with several rewards (Her Last Vow is a good one). Hover each icon in its Rewards cell."],
-        expect: "Up to four icons show; hovering shows the reward name and ×N for stacks." },
-      { id: "E9", title: "Context menu items",
-        how: ["Right-click a row and read the menu. Also right-click a quest whose giver has no map location (legacy row The Ultimate Weapon under Unlisted, if visible)."],
-        expect: "Items: Pin/Unpin, Flag on map, Open journal, Copy name, Show path, Link in chat, and Quest Map graph only when the Quest Map plugin is installed and loaded. Flag on map is greyed out when the giver has no map." },
+      { id: "E8", title: "Reward tooltips with a large icon and details", changed: true,
+        how: ["Find a quest with several rewards (Her Last Vow). Hover each icon in its Rewards cell. Then select the quest and hover a reward row in the detail pane."],
+        expect: "A tooltip with a 64 px icon, the name in bold, the kind with ×N for stacks, and for items iLv N · Category plus the item description; emotes and actions show their description. No boxed glyphs or stray hyphens. The detail pane rows show the same tooltip." },
+      { id: "E9", title: "Context menu items", changed: true,
+        how: ["Right-click a completed quest, then a quest you have not accepted, then a quest whose giver has no map."],
+        expect: "Items: Pin/Unpin, Flag on map (greyed without a map), Open journal (greyed unless accepted or completed, with a tooltip saying why), Copy name, Copy coordinates (greyed without a map), Show path, Link in chat, and Quest Map graph only when that plugin is loaded." },
       { id: "E10", title: "Pin writes the file; browse mode disables pinning",
         how: ["Pin a quest, wait one second, open user\\pins.json in the plugin data folder. Unpin it and check again.", "Log out to the title screen with no snapshots (only possible right after Delete all data) and right-click a row."],
         expect: "The row id appears in the file under your character's id within a second and is removed on Unpin. In browse mode the Pin item is greyed out and nothing is written under content id 0." },
@@ -532,9 +535,9 @@ const SECTIONS = [
       { id: "E12", title: "Copy name",
         how: ["Right-click a row → Copy name. Paste into the chat box."],
         expect: "The exact quest name is pasted." },
-      { id: "E13", title: "Show path scrolls the detail pane",
-        how: ["Select a quest deep in a chain. Scroll the detail pane to the top. Right-click the row → Show path."],
-        expect: "The detail pane scrolls to its Path section." },
+      { id: "E13", title: "Show path scrolls and highlights the Path section", changed: true,
+        how: ["Select a quest deep in a chain so the detail pane is long. Scroll the detail pane to the top. Right-click the row → Show path. Repeat on a quest with a short chain."],
+        expect: "The detail pane scrolls so the Path header sits at the top and the header plus its rule glow gold for about a second and a half. On a short quest nothing needs to scroll but the gold highlight still shows." },
       { id: "E14", title: "Link in chat prints quest and map links",
         how: ["Right-click a row → Link in chat. Look at the chat log. Click each link."],
         expect: "One chat line with a clickable quest link followed by a clickable map link showing place name and coordinates. The quest link opens the journal entry; the map link opens the map at the giver." },
@@ -550,15 +553,15 @@ const SECTIONS = [
       { id: "F2", title: "Requirements with the next step marked",
         how: ["Select a blocked quest (new-moon glyph), for example a tribal quest above your rank or a job quest above your level."],
         expect: "One line per requirement with a gold ✓ or pink ✗, the requirement name and a detail clause such as Trusted, needs Sworn or needs level 50, you are 30. The first failing line carries a ▶ and is drawn in gold. Without a snapshot the section says requirements need a snapshot." },
-      { id: "F3", title: "Rewards list",
-        how: ["Select Her Last Vow."],
-        expect: "Each reward shows icon, name with ×N for stacks, and its kind in blue-grey. No obtained badges are shown in this version." },
-      { id: "F4", title: "Path chain",
-        how: ["Select a quest a few steps into the main scenario, then a quest with no prerequisites (any Close to Home style opener)."],
-        expect: "A vertical chain of moons joined by a thin line runs from the first step to the selected quest; each step name is clickable and selects that quest. A quest with no prerequisites reads This quest starts its own path." },
-      { id: "F5", title: "Giver and map flag match the game",
-        how: ["Select a quest you have not completed. Read the Giver block. Click Flag map, then open the game journal for the same quest and compare its map location. Click Open journal."],
-        expect: "NPC name, Region › Place and coordinates like (12.3, 45.6). Flag map places a flag where the game journal's own map shows the giver. Open journal opens the game journal on this exact quest; if it opens on a different quest, mark Fail and note both names." },
+      { id: "F3", title: "Rewards list and Moonlit section", changed: true,
+        how: ["Select Her Last Vow. Then select a quest with no unique rewards."],
+        expect: "Each reward shows icon, name with ×N and kind; hovering a row shows the large tooltip. A Moonlit section reads Listed in Moonlit treasures for Her Last Vow, and Not listed with a Mark as unique… button for the other quest." },
+      { id: "F4", title: "Path chain grouped and folded, plus Unlocks next", changed: true,
+        how: ["Select a quest late in the main scenario (a Dawntrail quest if you have one). Read the Path section, click a ▸ N completed steps row, click it again. Then read Unlocks next below it. Select a quest with no prerequisites."],
+        expect: "Steps are grouped under expansion headers; runs of two or more completed steps fold into ▸ N completed steps that unfold on click; incomplete, accepted, ready and the selected quest are always listed with moons joined by a thin line. Unlocks next lists the quests this one leads to (max eight, then and N more), each clickable. A quest with no prerequisites reads This quest starts its own path." },
+      { id: "F5", title: "Giver, map flag, journal and coordinates", changed: true,
+        how: ["Select a quest you have completed. Click Flag map and compare with the game journal's own map for that quest. Click Open journal. Click Copy coordinates and paste into chat. Then select a quest you have not accepted and hover Open journal."],
+        expect: "NPC name, Region › Place and coordinates. Flag map lands where the journal's map shows the giver. Open journal opens that exact quest; for an unaccepted quest the button is greyed with a tooltip. Copy coordinates pastes Place (x.x, y.y)." },
       { id: "F6", title: "Provenance line",
         how: ["Read the last line of the pane for a completed quest, then for an uncompleted quest, then while logged out."],
         expect: "Completed per client flags at HH:mm for completed quests, Evaluated from snapshot taken HH:mm otherwise, No snapshot; state unknown while there is no character." },
@@ -571,7 +574,9 @@ const SECTIONS = [
     code: "G", id: "command", title: "Command",
     intro: "Chat commands.",
     checks: [
-      { id: "G1", title: "/tsukimichi toggles", how: ["Type /tsukimichi twice."], expect: "The main window toggles." },
+      { id: "G1", title: "/tsukimichi and the /tsuki alias", changed: true,
+        how: ["Type /tsukimichi twice. Type /tsuki twice. Type /tsuki config. Type /xlhelp and look for the commands."],
+        expect: "Both commands toggle the main window; /tsuki config opens settings. /xlhelp lists /tsukimichi once and does not list the alias." },
       { id: "G2", title: "/tsukimichi glyphs", how: ["Type /tsukimichi glyphs."], expect: "A small window titled Tsukimichi Glyphs opens showing all eight moon phases at three sizes." },
       { id: "G3", title: "Searching by name from chat",
         how: ["Type /tsukimichi close to home. Then type /tsukimichi the (a word matching many quests). Then type /tsukimichi zzzzqqq."],
@@ -595,15 +600,15 @@ const SECTIONS = [
     code: "I", id: "moonlit", title: "Moonlit pane",
     intro: "Unique rewards. Use a character that has completed Her Last Vow for the reference row.",
     checks: [
-      { id: "I1", title: "Reward kinds with moons and counts",
-        how: ["Click the Moonlit tab. Read the left column."],
-        expect: "All first, then one line per reward kind (Emote, Mount, Minion, Orchestrion, and so on), each with a small filling moon and obtained/total. The moon's lit part matches the ratio." },
+      { id: "I1", title: "Reward kinds with correct filling moons", changed: true,
+        how: ["Click the Moonlit tab. Compare each kind's moon with its obtained/total. Then switch to a stored character or log out and look again."],
+        expect: "0/1175 is a new moon, 5/6 nearly full, 136/177 a gibbous; only n/n is a full moon. Kinds with no readable entry on the viewed character show a veiled moon with a tooltip." },
       { id: "I2", title: "Selecting a kind filters the table",
         how: ["Click Emote. Then click All."],
         expect: "Only emote rows show, the selected line is highlighted; All shows every entry again." },
-      { id: "I3", title: "Table columns and frozen header",
-        how: ["Read the headers. Right-click a header, drag a divider, then scroll down."],
-        expect: "Columns: Have (moon), Reward (icon and name), Kind, Quest, State (moon), Confidence. They resize, reorder and hide; the header row stays visible while scrolling." },
+      { id: "I3", title: "Table columns reorder, including State", changed: true,
+        how: ["Grab the middle of the State header (not its edge) and drag it left of Quest. Do the same with Have. Scroll down."],
+        expect: "The column moves and Quest keeps its width. The header row stays frozen while scrolling; columns still resize and hide from the header menu." },
       { id: "I4", title: "Her Last Vow reference row",
         how: ["Filter to Emote, find Most Gentlemanly. If you have a second character without the emote, switch to it with the toolbar dropdown and look again."],
         expect: "Have shows a full moon on a character who owns the emote and a new moon on one who does not." },
@@ -661,12 +666,12 @@ const SECTIONS = [
       { id: "J4", title: "Selecting the live character follows live state",
         how: ["Select the ● character again."],
         expect: "The sync glyph returns to full gold and the status bar says live." },
-      { id: "J5", title: "Main column header",
-        how: ["Read the top of the middle column for the live character, then for a stored one."],
-        expect: "Name, world, Live · time or Snapshot taken <time> (<age>), then completed · in journal · current job." },
-      { id: "J6", title: "Levels, Grand Company, societies, allowances",
-        how: ["Read the rest of the middle column."],
-        expect: "A job levels table sorted by level descending with real job names; a Grand Company line with company and rank; an allied societies table with society, rank name and reputation; an allowances line with society and leve counts." },
+      { id: "J5", title: "Dashboard header and completion by section", changed: true,
+        how: ["Open Characters and read the top of the middle column. Compare the Completion by journal section rows with the Journal tree's section nodes."],
+        expect: "Name, world, Live · time or Snapshot taken time (age), then completed · in journal · current job (job names as titles such as Black Mage). Then All quests in gold and one row per section, each with a filling moon, done/total and a percent matching the tree." },
+      { id: "J6", title: "Moonlit summary, pins, activity, job groups with icons", changed: true,
+        how: ["Read the rest of the dashboard. Pin a quest from the Journal and come back. Accept a quest in game and come back."],
+        expect: "Moonlit treasures shows Emotes, Mounts, Minions, Orchestrion rolls, Triple Triad cards and Duty unlocks with the same obtained/total as the Moonlit tab. Pinned quests lists your pins with moon, name and next step, clickable. Recent activity shows the last ten events newest first. Job levels are grouped Tanks, Healers, Melee DPS, Physical ranged, Magical ranged, Hand, Land with the game's job icons; no Job 44 or Job 45 rows; a base class is hidden once its job is unlocked. Grand Company, societies and allowances follow." },
       { id: "J7", title: "Export JSON",
         how: ["Click Export JSON…. Open the exports folder in the plugin data folder."],
         expect: "A file named like Michiru_Tsukikage-20260927-2114.json appears, its path shows in gold under the buttons for a few seconds and in the log, and it has the same content as the stored characters\\<id>.json." },
@@ -700,9 +705,51 @@ const SECTIONS = [
       { id: "K5", title: "Delete all data with double confirmation",
         how: ["Click Delete all Tsukimichi data, then Cancel. Click it, Continue, then Cancel. Click it, Continue, Delete everything."],
         expect: "Cancel at either step does nothing. Delete everything removes characters\\*.json, user\\pins.json and user\\overrides.json; the Characters list empties; hidden Moonlit rewards reappear; the window shows a done message." },
-      { id: "K6", title: "About section",
-        how: ["Read the About section. Compare the plugin version with the csproj Version (0.1.0.0)."],
-        expect: "Plugin version matches; the reward-data game version and generation date, the unique entry count, the four curated counts, and Catalog: 5373 quests, English (or your client language) are all shown; loading before the build finishes." },
+      { id: "K6", title: "About section with poll timing", changed: true,
+        how: ["Read the About section and the hint under the poll interval slider. Watch the poll counter for a few seconds."],
+        expect: "Plugin version 0.1.0, reward-data game version and date, entry count, four curated counts, Catalog: 5373 quests, English. Under the slider: Each poll costs about Y ms; 1 s is the default and is safe. At the bottom: Last poll: X.XX ms · average Y.YY ms · N polls, with N growing about once per second and Y a small stable number." },
+    ]
+  },
+  {
+    code: "R", id: "round2", title: "Round 2: new since your report",
+    intro: "Features added or changed after the first report. Everything here is new; the changed checks in earlier sections are also tagged and appear under the Round 2 filter.",
+    checks: [
+      { id: "R1", title: "Help window opens on first run", changed: true,
+        how: ["Disable the plugin. Open Dalamud's plugin config file for Tsukimichi (pluginConfigs\\Tsukimichi.json) and set ShowHelpOnFirstRun to true, or delete the file. Enable the plugin and open the main window. Close everything and open the main window again."],
+        expect: "The first time the main window opens, Tsukimichi Help opens in front of it on Getting started. It does not open by itself the second time, and the config file now has ShowHelpOnFirstRun false." },
+      { id: "R2", title: "Help window routes and layout", changed: true,
+        how: ["Type /tsukimichi help. Close it. Open Settings and click Show help. Tick and untick Show help on first run. Drag the help window smaller."],
+        expect: "All routes open the same window. Topics on the left: Getting started, The moon phases, Filters and chips, Quest table and detail pane, Moonlit and confidence, Characters and snapshots, Commands, Tips. It stops shrinking at about 480 by 360." },
+      { id: "R3", title: "Moon phases page explains every state", changed: true,
+        how: ["In the help window click The moon phases. Compare each glyph with a row in the table that has that state."],
+        expect: "All eight glyphs drawn large with shading, the state name in its colour, the glyph name, a one-line meaning and which filters include or hide it. Every page wraps at the window width with no horizontal scrollbar." },
+      { id: "R4", title: "Commands and Tips pages", changed: true,
+        how: ["Click Commands, then Tips."],
+        expect: "Commands lists /tsukimichi, /tsuki, search <text>, config, help and glyphs. Tips lists twelve short bullets." },
+      { id: "R5", title: "Glyph shading at larger sizes", changed: true,
+        how: ["Type /tsukimichi glyphs. Compare the 12 px column with the 20, 40 and 64 px columns. Look at the filling row."],
+        expect: "Columns read 12 px · table row, 20 px · toolbar, 40 px · detail header, 64 px · help. The 12 px moons are flat and crisp; from 20 px up the lit parts show a brighter core and a faint arc on the upper-left of the lit region only. The filling row reads new, crescent, half, gibbous, full at every size. Say in the notes whether the look now feels finished or still basic." },
+      { id: "R6", title: "Pinned first ordering", changed: true,
+        how: ["Pin two quests far apart in the list. Sort by Lv. Then open the filter panel and untick Pinned first. Reload the plugin and check the checkbox."],
+        expect: "With Pinned first on, the pinned rows sit at the top whatever the sort; off, they sort in place. The setting survives a reload." },
+      { id: "R7", title: "Mark as unique and Restore from the detail pane", changed: true,
+        how: ["Select a quest with no unique rewards; in the detail pane's Moonlit section click Mark as unique…, type a note, confirm. Open the Moonlit tab and find it. Back in the detail pane click Restore. Then, on the Moonlit tab, right-click Most Gentlemanly → Not unique (hide); select Her Last Vow in the Journal and use Restore in its detail pane."],
+        expect: "The marked quest appears on the Moonlit tab under source yours with the note as its name; Restore removes it again. The hidden reward comes back on the Moonlit tab as soon as Restore is clicked." },
+      { id: "R8", title: "Filter panel tooltips", changed: true,
+        how: ["Open the filter panel and hover every checkbox, dropdown, slider, the Overrides and Reset buttons. Log out and hover a disabled one."],
+        expect: "Each control shows a short tooltip; disabled ones say Needs a character snapshot." },
+      { id: "R9", title: "Column header tooltips", changed: true,
+        how: ["Hover each column header in the quest table."],
+        expect: "Each header shows a tooltip naming what the column holds." },
+      { id: "R10", title: "Veiled kind moons on a stored character", changed: true,
+        how: ["Needs a second character or a logout. View a stored snapshot (or log out), open Moonlit."],
+        expect: "Kinds whose entries cannot be read offline (emotes, mounts, minions, orchestrion, ornaments, cards, aether currents, duties) show a veiled moon with a tooltip; quest-following kinds still show real counts." },
+      { id: "R11", title: "Dashboard stays allocation-free", changed: true,
+        how: ["Open Characters and leave it open. Type /xlstats and watch Tsukimichi's frame time and allocation columns for ten seconds."],
+        expect: "Frame time is a fraction of a millisecond and allocations do not climb steadily while idle." },
+      { id: "R12", title: "Live poll cost", changed: true,
+        how: ["Open Settings → About and note Last poll and average. Then open the Journal, scroll around, and check again."],
+        expect: "Both numbers are small (a few milliseconds at most, typically under one) and stable. Write the numbers in the notes so the 1-second default can be judged." },
     ]
   },
 ];
@@ -823,7 +870,7 @@ function applyFilter(f, announce) {
   let shown = 0;
   for (const c of ALL) {
     const s = (state.answers[c.id] || {}).s || "";
-    const show = f === "all" || (f === "open" ? !s : s === f);
+    const show = f === "all" || (f === "round2" ? !!c.changed : (f === "open" ? !s : s === f));
     document.getElementById(`check-${c.id}`).classList.toggle("hidden-by-filter", !show);
     if (show) shown++;
   }
@@ -838,13 +885,14 @@ function stateWord(s) { return { pass: "PASS", fail: "FAIL", na: "UNKNOWN" }[s] 
 
 function buildReport() {
   const m = state.meta;
-  const rows = ALL.map(c => ({ c, a: state.answers[c.id] || {} }));
+  const r2only = document.getElementById("reportRound2").checked;
+  const rows = ALL.filter(c => !r2only || c.changed).map(c => ({ c, a: state.answers[c.id] || {} }));
   const counts = { pass: 0, fail: 0, na: 0, open: 0 };
   rows.forEach(r => counts[r.a.s || "open"]++);
   const lines = [];
-  lines.push("# Tsukimichi smoke test report");
+  lines.push(r2only ? "# Tsukimichi smoke test report (round 2 items)" : "# Tsukimichi smoke test report");
   lines.push(`Date: ${m.metaDate || "(not given)"} · Plugin: ${m.metaVersion || "(not given)"} · Dalamud: ${m.metaDalamud || "(not given)"} · Character: ${m.metaCharacter || "(not given)"}`);
-  lines.push(`Result: ${counts.pass} pass · ${counts.fail} fail · ${counts.na} unknown · ${counts.open} unanswered (of ${ALL.length})`);
+  lines.push(`Result: ${counts.pass} pass · ${counts.fail} fail · ${counts.na} unknown · ${counts.open} unanswered (of ${rows.length})`);
   const block = (title, filter, withNotesOnly) => {
     const items = rows.filter(r => filter(r) && (!withNotesOnly || (r.a.n || "").trim()));
     if (!items.length) return;
@@ -889,6 +937,11 @@ document.getElementById("btnReport").addEventListener("click", () => {
   buildReport(); const r = document.getElementById("report"); r.hidden = false; r.scrollIntoView({ behavior: "smooth", block: "start" });
 });
 document.getElementById("btnRegen").addEventListener("click", () => { buildReport(); toast("Report refreshed."); });
+document.getElementById("reportRound2").addEventListener("change", () => buildReport());
+document.getElementById("btnResetRound2").addEventListener("click", () => {
+  for (const c of ALL) if (c.changed) delete state.answers[c.id];
+  save(); wasComplete = false; render(); applyFilter("round2", false); toast("Round 2 answers cleared. Showing Round 2 checks.");
+});
 document.getElementById("btnCopy").addEventListener("click", () => copyText(buildReport(), "Report copied. Paste it into the chat."));
 document.getElementById("btnExportJson").addEventListener("click", () => copyText(JSON.stringify({ meta: state.meta, answers: state.answers }, null, 2), "Full answers copied as JSON."));
 document.getElementById("btnReset").addEventListener("click", () => document.getElementById("resetConfirm").classList.add("open"));
