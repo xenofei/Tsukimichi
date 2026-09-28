@@ -13,9 +13,10 @@ using Tsukimichi.GameData;
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// Settings (spec §7): poll interval, chat notices, the Unlisted bucket, data deletion with a double confirm, and an
-/// About section with the plugin, reward-data and catalog stamps. Every change is saved as it happens; the slider
-/// saves when released.
+/// Settings (spec §7): poll interval (with the measured cost of a poll under it), chat notices, the Unlisted bucket,
+/// help (open it, show it on first run), data deletion with a double confirm, and an About section with the plugin,
+/// reward-data and catalog stamps plus the poll timing. Every change is saved as it happens; the slider saves when
+/// released.
 /// </summary>
 public sealed class ConfigWindow : Window
 {
@@ -41,6 +42,11 @@ public sealed class ConfigWindow : Window
     private string? toast;
     private DateTime toastUntilUtc;
 
+    // Poll timing lines, rebuilt only when another poll completed.
+    private int pollTimingCount = -1;
+    private string pollTimingLine = Strings.ConfigPollTimingNone;
+    private string pollCostLine = Strings.ConfigPollCostUnknown;
+
     public ConfigWindow(Configuration settings, SessionState session, IDalamudPluginInterface pluginInterface, Action<bool> onShowUnlistedChanged)
         : base("Tsukimichi Settings###TsukimichiConfig")
     {
@@ -49,7 +55,7 @@ public sealed class ConfigWindow : Window
         this.pluginInterface = pluginInterface ?? throw new ArgumentNullException(nameof(pluginInterface));
         this.onShowUnlistedChanged = onShowUnlistedChanged ?? throw new ArgumentNullException(nameof(onShowUnlistedChanged));
 
-        Size = new Vector2(480f, 560f);
+        Size = new Vector2(480f, 640f);
         SizeCondition = ImGuiCond.FirstUseEver;
         SizeConstraints = new WindowSizeConstraints { MinimumSize = new Vector2(400f, 320f) };
 
@@ -72,6 +78,9 @@ public sealed class ConfigWindow : Window
 
         pollSeconds = (float)settings.PollInterval.TotalSeconds;
     }
+
+    /// <summary>Opens the help window; set by the plugin once the help window exists. Null hides the button.</summary>
+    public Action? ShowHelp { get; set; }
 
     public override void OnOpen()
     {
@@ -96,6 +105,8 @@ public sealed class ConfigWindow : Window
         ImGui.Spacing();
         DrawJournal();
         ImGui.Spacing();
+        DrawHelp();
+        ImGui.Spacing();
         DrawData();
         ImGui.Spacing();
         DrawAbout();
@@ -118,6 +129,55 @@ public sealed class ConfigWindow : Window
         }
 
         ImGui.TextDisabled(Strings.ConfigPollIntervalHint);
+        RefreshPollTiming();
+        ImGui.TextDisabled(pollCostLine);
+    }
+
+    private void DrawHelp()
+    {
+        Header(Strings.ConfigSectionHelp);
+        if (ShowHelp is { } showHelp)
+        {
+            if (ImGui.Button(Strings.ConfigShowHelp))
+            {
+                showHelp();
+            }
+
+            ImGui.SameLine();
+        }
+
+        var firstRun = settings.ShowHelpOnFirstRun;
+        if (ImGui.Checkbox(Strings.ConfigShowHelpOnFirstRun, ref firstRun))
+        {
+            settings.ShowHelpOnFirstRun = firstRun;
+            Save();
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip(Strings.ConfigShowHelpOnFirstRunHint);
+        }
+    }
+
+    /// <summary>"Last poll … · average … · n polls" and the slider hint, once per completed poll.</summary>
+    private void RefreshPollTiming()
+    {
+        var count = session.PollCount;
+        if (count == pollTimingCount)
+        {
+            return;
+        }
+
+        pollTimingCount = count;
+        if (count == 0)
+        {
+            pollTimingLine = Strings.ConfigPollTimingNone;
+            pollCostLine = Strings.ConfigPollCostUnknown;
+            return;
+        }
+
+        pollTimingLine = string.Format(CultureInfo.InvariantCulture, Strings.ConfigPollTimingFormat, session.LastPollMs, session.AveragePollMs, count);
+        pollCostLine = string.Format(CultureInfo.InvariantCulture, Strings.ConfigPollCostFormat, session.AveragePollMs);
     }
 
     private void DrawNotices()
@@ -257,6 +317,8 @@ public sealed class ConfigWindow : Window
         ImGui.TextUnformatted(entriesLine);
         ImGui.TextUnformatted(curatedLine);
         ImGui.TextUnformatted(catalogLine);
+        RefreshPollTiming();
+        ImGui.TextUnformatted(pollTimingLine);
     }
 
     /// <summary>Catalog language and size, rebuilt when the bundle (or the error) changes.</summary>
