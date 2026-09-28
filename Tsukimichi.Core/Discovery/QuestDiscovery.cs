@@ -12,7 +12,38 @@ public static class QuestDiscovery
     /// Quests whose giver stands in <paramref name="territoryId"/> and whose state is Ready or ReadyOnOtherJob,
     /// sorted by level then name. Empty for territory 0 or without evaluations.
     /// </summary>
-    public static List<QuestRecord> StartableInZone(QuestCatalog catalog, IReadOnlyDictionary<uint, QuestEvaluation> states, uint territoryId)
+    public static List<QuestRecord> StartableInZone(QuestCatalog catalog, IReadOnlyDictionary<uint, QuestEvaluation> states, uint territoryId) =>
+        StartableInZone(catalog, states, territoryId, includeOtherJob: true);
+
+    /// <summary>
+    /// Quests whose giver stands in <paramref name="territoryId"/> and whose state is Ready, plus ReadyOnOtherJob when
+    /// <paramref name="includeOtherJob"/> is set, sorted by level then name. Empty for territory 0 or without evaluations.
+    /// </summary>
+    public static List<QuestRecord> StartableInZone(QuestCatalog catalog, IReadOnlyDictionary<uint, QuestEvaluation> states, uint territoryId, bool includeOtherJob) =>
+        InZoneWithState(catalog, states, territoryId, includeOtherJob ? ZoneFilter.Startable : ZoneFilter.ReadyOnly);
+
+    /// <summary>
+    /// Accepted quests whose giver stands in <paramref name="territoryId"/>, sorted by level then name: the "also
+    /// accepted here" list. Empty for territory 0 or without evaluations.
+    /// </summary>
+    public static List<QuestRecord> AcceptedInZone(QuestCatalog catalog, IReadOnlyDictionary<uint, QuestEvaluation> states, uint territoryId) =>
+        InZoneWithState(catalog, states, territoryId, ZoneFilter.Accepted);
+
+    private enum ZoneFilter
+    {
+        ReadyOnly,
+        Startable,
+        Accepted,
+    }
+
+    private static bool Matches(ZoneFilter filter, QuestState state) => filter switch
+    {
+        ZoneFilter.ReadyOnly => state == QuestState.Ready,
+        ZoneFilter.Startable => state is QuestState.Ready or QuestState.ReadyOnOtherJob,
+        _ => state == QuestState.Accepted,
+    };
+
+    private static List<QuestRecord> InZoneWithState(QuestCatalog catalog, IReadOnlyDictionary<uint, QuestEvaluation> states, uint territoryId, ZoneFilter filter)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(states);
@@ -30,7 +61,7 @@ public static class QuestDiscovery
                 continue;
             }
 
-            if (!states.TryGetValue(quest.RowId, out var evaluation) || evaluation.State is not (QuestState.Ready or QuestState.ReadyOnOtherJob))
+            if (!states.TryGetValue(quest.RowId, out var evaluation) || !Matches(filter, evaluation.State))
             {
                 continue;
             }

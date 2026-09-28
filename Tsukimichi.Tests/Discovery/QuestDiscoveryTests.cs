@@ -52,6 +52,37 @@ public class QuestDiscoveryTests
     }
 
     [Fact]
+    public void StartableInZone_can_leave_out_quests_ready_on_another_job()
+    {
+        Assert.Equal(["Corundum", "Zephyr"], QuestDiscovery.StartableInZone(Catalog, States, Gridania, includeOtherJob: false).Select(q => q.Name));
+        Assert.Equal(["Corundum", "Aurora", "Zephyr"], QuestDiscovery.StartableInZone(Catalog, States, Gridania, includeOtherJob: true).Select(q => q.Name));
+    }
+
+    [Fact]
+    public void AcceptedInZone_lists_accepted_quests_whose_giver_stands_in_the_territory_sorted_by_level_then_name()
+    {
+        var states = new Dictionary<uint, QuestEvaluation>(States)
+        {
+            [65601] = Eval(QuestState.Accepted),
+            [65603] = Eval(QuestState.Accepted),
+            [65605] = Eval(QuestState.Accepted),
+        };
+
+        Assert.Equal(["Bramble", "Zephyr"], QuestDiscovery.AcceptedInZone(Catalog, states, Gridania).Select(q => q.Name));
+        Assert.Equal(["Distant"], QuestDiscovery.AcceptedInZone(Catalog, states, Bentbranch).Select(q => q.Name));
+        Assert.Equal(["Corundum", "Aurora"], QuestDiscovery.StartableInZone(Catalog, states, Gridania).Select(q => q.Name));
+    }
+
+    [Fact]
+    public void AcceptedInZone_is_empty_without_territory_states_or_matches()
+    {
+        Assert.Empty(QuestDiscovery.AcceptedInZone(Catalog, States, Gridania));
+        Assert.Empty(QuestDiscovery.AcceptedInZone(Catalog, States, 0));
+        Assert.Empty(QuestDiscovery.AcceptedInZone(Catalog, new Dictionary<uint, QuestEvaluation>(), Gridania));
+        Assert.Empty(QuestDiscovery.AcceptedInZone(Catalog, States, 999));
+    }
+
+    [Fact]
     public void StartableInZone_is_empty_without_territory_states_or_matches()
     {
         Assert.Empty(QuestDiscovery.StartableInZone(Catalog, States, 0));
