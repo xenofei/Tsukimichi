@@ -19,7 +19,8 @@ public readonly record struct UniqueRewardKind(RewardKind Kind, int Count);
 /// <para>
 /// The <b>unique view</b> (<see cref="All"/>, <see cref="ByKind"/>, <see cref="Kinds"/>, <see cref="View"/>,
 /// <see cref="Counts"/>) omits quests the user marked not unique; <see cref="ForQuest"/> still returns their entries so
-/// the detail pane can show what the override hides. A quest the user marked unique that had no entry gains one of kind
+/// the detail pane can show what the override hides, and <see cref="Hidden"/> lists them all so the Moonlit pane can
+/// offer them back under its "Yours" filter. A quest the user marked unique that had no entry gains one of kind
 /// <see cref="RewardKind.Other"/> at <see cref="Confidence.UserOverride"/>, named after the note.
 /// Obtained state is not stored here: the caller answers it per entry through <see cref="View"/> and <see cref="Counts"/>.
 /// </para>
@@ -32,6 +33,9 @@ public sealed class UniqueRewardCatalog
     /// <summary>Name given to a user-added entry whose override carries no note.</summary>
     public const string DefaultUserRewardName = "Marked unique by you";
 
+    /// <summary>Name given to the stand-in entry of a quest hidden by a "not unique" override although no source lists it.</summary>
+    public const string DefaultHiddenRewardName = "Hidden by you";
+
     private static readonly UniqueRewardEntry[] NoEntries = [];
 
     public static readonly UniqueRewardCatalog Empty = new(
@@ -39,7 +43,8 @@ public sealed class UniqueRewardCatalog
         FrozenDictionary<uint, IReadOnlyList<UniqueRewardEntry>>.Empty,
         FrozenDictionary<RewardKind, IReadOnlyList<UniqueRewardEntry>>.Empty,
         [],
-        FrozenSet<uint>.Empty);
+        FrozenSet<uint>.Empty,
+        NoEntries);
 
     private readonly UniqueRewardEntry[] all;
     private readonly FrozenDictionary<uint, IReadOnlyList<UniqueRewardEntry>> byQuest;
@@ -50,13 +55,15 @@ public sealed class UniqueRewardCatalog
         FrozenDictionary<uint, IReadOnlyList<UniqueRewardEntry>> byQuest,
         FrozenDictionary<RewardKind, IReadOnlyList<UniqueRewardEntry>> byKind,
         UniqueRewardKind[] kinds,
-        FrozenSet<uint> uniqueQuests)
+        FrozenSet<uint> uniqueQuests,
+        UniqueRewardEntry[] hidden)
     {
         this.all = all;
         this.byQuest = byQuest;
         this.uniqueQuests = uniqueQuests;
         ByKind = byKind;
         Kinds = kinds;
+        Hidden = hidden;
     }
 
     /// <summary>Number of entries in the unique view.</summary>
@@ -70,6 +77,12 @@ public sealed class UniqueRewardCatalog
 
     /// <summary>Kinds present in the unique view with their entry counts, in <see cref="RewardKind"/> order.</summary>
     public IReadOnlyList<UniqueRewardKind> Kinds { get; }
+
+    /// <summary>
+    /// Entries kept out of the unique view by a "not unique" override, in source order (shipped, curated), one stand-in
+    /// of kind <see cref="RewardKind.Other"/> per hidden quest no source lists. Never overlaps <see cref="All"/>.
+    /// </summary>
+    public IReadOnlyList<UniqueRewardEntry> Hidden { get; }
 
     /// <summary>Entries of one kind in the unique view; empty when none.</summary>
     public IReadOnlyList<UniqueRewardEntry> Entries(RewardKind kind) => ByKind.GetValueOrDefault(kind) ?? NoEntries;
@@ -157,11 +170,17 @@ public sealed class UniqueRewardCatalog
         }
 
         var hidden = new HashSet<uint>();
+        var hiddenEntries = new List<UniqueRewardEntry>();
         foreach (var (rowId, verdict) in overrides)
         {
             if (!verdict.Unique)
             {
                 hidden.Add(rowId);
+                if (!merged.HasQuest(rowId))
+                {
+                    var name = string.IsNullOrWhiteSpace(verdict.Note) ? DefaultHiddenRewardName : verdict.Note.Trim();
+                    hiddenEntries.Add(new UniqueRewardEntry(rowId, RewardKind.Other, 0, 0, name, Confidence.UserOverride, UserSource));
+                }
             }
             else if (!merged.HasQuest(rowId))
             {
@@ -171,7 +190,7 @@ public sealed class UniqueRewardCatalog
         }
 
         var entries = merged.Entries;
-        if (entries.Count == 0)
+        if (entries.Count == 0 && hiddenEntries.Count == 0)
         {
             return Empty;
         }
@@ -185,6 +204,7 @@ public sealed class UniqueRewardCatalog
             Append(byQuest, entry.QuestRowId, entry);
             if (hidden.Contains(entry.QuestRowId))
             {
+                hiddenEntries.Add(entry);
                 continue;
             }
 
@@ -211,7 +231,8 @@ public sealed class UniqueRewardCatalog
             byQuest.ToFrozenDictionary(kv => kv.Key, kv => (IReadOnlyList<UniqueRewardEntry>)kv.Value.ToArray()),
             byKind.ToFrozenDictionary(kv => kv.Key, kv => (IReadOnlyList<UniqueRewardEntry>)kv.Value.ToArray()),
             kinds,
-            uniqueQuests.ToFrozenSet());
+            uniqueQuests.ToFrozenSet(),
+            hiddenEntries.ToArray());
     }
 
     private static void Append(Dictionary<uint, List<UniqueRewardEntry>> map, uint key, UniqueRewardEntry entry)

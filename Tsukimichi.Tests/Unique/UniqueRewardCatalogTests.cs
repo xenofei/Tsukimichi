@@ -68,6 +68,46 @@ public class UniqueRewardCatalogTests
     }
 
     [Fact]
+    public void Hidden_overrides_are_enumerable_and_stay_out_of_the_view()
+    {
+        var overrides = new Dictionary<uint, UniqueOverride>
+        {
+            [TwoKindsQuest] = new(false, "farmable now"),
+            [PlainQuest] = new(false, null),
+            [MountQuest] = new(true, "still unique"),
+        };
+
+        var catalog = Build(overrides: overrides);
+
+        // Both shipped entries of the hidden quest, plus a stand-in for the hidden quest no source lists.
+        Assert.Equal(3, catalog.Hidden.Count);
+        Assert.Equal([RewardKind.Mount, RewardKind.Minion], catalog.Hidden.Where(e => e.QuestRowId == TwoKindsQuest).Select(e => e.Kind));
+        var standIn = Assert.Single(catalog.Hidden, e => e.QuestRowId == PlainQuest);
+        Assert.Equal(RewardKind.Other, standIn.Kind);
+        Assert.Equal(UniqueRewardCatalog.DefaultHiddenRewardName, standIn.RewardName);
+        Assert.Equal(Confidence.UserOverride, standIn.Confidence);
+
+        // Hidden entries never leak into the view, its kinds or its counts; the unique override is not "hidden".
+        Assert.DoesNotContain(catalog.All, e => e.QuestRowId == TwoKindsQuest || e.QuestRowId == PlainQuest);
+        Assert.Equal(2, catalog.Count);
+        Assert.DoesNotContain(catalog.Hidden, e => e.QuestRowId == MountQuest);
+        Assert.False(catalog.IsUnique(TwoKindsQuest));
+        Assert.False(catalog.IsUnique(PlainQuest));
+    }
+
+    [Fact]
+    public void Hidden_stand_in_alone_does_not_collapse_the_catalog_to_Empty()
+    {
+        var overrides = new Dictionary<uint, UniqueOverride> { [PlainQuest] = new(false, "never was") };
+
+        var catalog = Build(Data(), overrides);
+
+        Assert.Equal(0, catalog.Count);
+        Assert.Equal("never was", Assert.Single(catalog.Hidden).RewardName);
+        Assert.Empty(UniqueRewardCatalog.Empty.Hidden);
+    }
+
+    [Fact]
     public void Override_true_adds_a_user_entry_only_when_the_quest_had_none()
     {
         var overrides = new Dictionary<uint, UniqueOverride>
