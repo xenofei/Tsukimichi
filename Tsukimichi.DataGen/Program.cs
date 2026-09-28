@@ -112,8 +112,8 @@ public static class Program
         Directory.CreateDirectory(reports);
         var uniqueReportPath = Path.Combine(reports, "unique-report.md");
         var catalogStatsPath = Path.Combine(reports, "catalog-stats.md");
-        File.WriteAllText(uniqueReportPath, Reports.UniqueReport(sheets, generator, entries, generatedUtc));
-        File.WriteAllText(catalogStatsPath, Reports.CatalogStats(sheets, generatedUtc));
+        File.WriteAllText(uniqueReportPath, Reports.UniqueReport(sheets, generator, entries));
+        File.WriteAllText(catalogStatsPath, Reports.CatalogStats(sheets));
         Console.WriteLine($"wrote:   {uniqueReportPath}");
         Console.WriteLine($"wrote:   {catalogStatsPath}");
 

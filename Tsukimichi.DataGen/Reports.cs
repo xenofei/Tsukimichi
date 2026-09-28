@@ -8,12 +8,14 @@ internal static class Reports
 {
     private const int ExamplesPerKind = 10;
 
-    public static string UniqueReport(GameSheets g, UniqueRewardGenerator gen, IReadOnlyCollection<UniqueRewardEntry> entries, DateTime generatedUtc)
+    // No timestamps anywhere in the reports: a regeneration that changes nothing must produce no diff. The date of
+    // the last regeneration lives in docs/data/DATA-VERSION.md (tools/regen.ps1).
+    public static string UniqueReport(GameSheets g, UniqueRewardGenerator gen, IReadOnlyCollection<UniqueRewardEntry> entries)
     {
         var sb = new StringBuilder();
         sb.AppendLine("# Unique reward report");
         sb.AppendLine();
-        sb.AppendLine($"Generated {generatedUtc:yyyy-MM-dd HH:mm} UTC from game version `{g.GameVersion}` by Tsukimichi.DataGen.");
+        sb.AppendLine($"Generated from game version `{g.GameVersion}` by Tsukimichi.DataGen (see docs/data/DATA-VERSION.md for when).");
         sb.AppendLine();
         var questCount = entries.Select(e => e.QuestRowId).Distinct().Count();
         var flagged = entries.Count(e => e.OtherSources.Count > 0);
@@ -119,12 +121,12 @@ internal static class Reports
         return sb.ToString();
     }
 
-    public static string CatalogStats(GameSheets g, DateTime generatedUtc)
+    public static string CatalogStats(GameSheets g)
     {
         var sb = new StringBuilder();
         sb.AppendLine("# Quest catalog statistics");
         sb.AppendLine();
-        sb.AppendLine($"Generated {generatedUtc:yyyy-MM-dd HH:mm} UTC from game version `{g.GameVersion}` by Tsukimichi.DataGen.");
+        sb.AppendLine($"Generated from game version `{g.GameVersion}` by Tsukimichi.DataGen (see docs/data/DATA-VERSION.md for when).");
         sb.AppendLine();
 
         var all = g.Quests.Where(q => q.RowId != 0).ToList();

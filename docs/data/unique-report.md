@@ -1,6 +1,6 @@
 # Unique reward report
 
-Generated 2026-09-28 22:28 UTC from game version `2026.09.15.0000.0000` by Tsukimichi.DataGen.
+Generated from game version `2026.09.15.0000.0000` by Tsukimichi.DataGen (see docs/data/DATA-VERSION.md for when).
 
 - Entries: **3464** across **1173** quests.
 - Entries whose reward is also obtainable elsewhere (`otherSources` non-empty): **868**. They keep confidence Static in V1; the UI shows the source and marks Online Store re-sells.
