@@ -124,6 +124,7 @@ public sealed class DetailPane
             return;
         }
 
+        ui.RecordWindow(UiRects.Detail);
         if (ui.SelectedRowId is not { } rowId)
         {
             ImGui.TextDisabled(Strings.SelectQuest);
@@ -145,9 +146,14 @@ public sealed class DetailPane
         }
 
         var scale = ImGuiHelpers.GlobalScale;
+        var width = ImGui.GetContentRegionAvail().X;
         DrawHeader(quest, scale);
+
+        var start = ImGui.GetCursorScreenPos();
         Section(Strings.Requirements);
         DrawRequirements();
+        ui.RecordSpan(UiRects.DetailRequirements, start, width);
+
         Section(Strings.Rewards);
         DrawRewards(scale);
         if (Overrides is { } overrides)
@@ -156,6 +162,7 @@ public sealed class DetailPane
             DrawUnique(overrides, rowId);
         }
 
+        start = ImGui.GetCursorScreenPos();
         Section(Strings.Path, highlight: ImGui.GetTime() < pathHighlightUntil);
         if (pathScrollFrames > 0)
         {
@@ -165,8 +172,12 @@ public sealed class DetailPane
 
         DrawPath(scale);
         DrawUnlocks(scale);
+        ui.RecordSpan(UiRects.DetailPath, start, width);
+
+        start = ImGui.GetCursorScreenPos();
         Section(Strings.Giver);
         DrawGiver(quest);
+        ui.RecordSpan(UiRects.DetailGiver, start, width);
         ImGui.Spacing();
         ImGui.Separator();
         ImGui.TextDisabled(model.Provenance);

@@ -76,6 +76,8 @@ public sealed class FilterPanel
         var f = ui.Filters;
         var hasSnapshot = snapshot is not null;
         var scale = ImGuiHelpers.GlobalScale;
+        var start = ImGui.GetCursorScreenPos();
+        var width = ImGui.GetContentRegionAvail().X;
 
         DrawRuntimeToggle(Strings.HideCompleted, Strings.HideCompletedTooltip, "##hideCompleted", hasSnapshot, f.HideCompleted, v => f.HideCompleted = v, f.PerCategoryHideCompleted);
         DrawRuntimeToggle(Strings.AvailableOnly, Strings.AvailableOnlyTooltip, "##availableOnly", hasSnapshot, f.AvailableOnly, v => f.AvailableOnly = v, f.PerCategoryAvailableOnly);
@@ -102,6 +104,7 @@ public sealed class FilterPanel
 
         Tip(Strings.ResetTooltip);
         ImGui.Separator();
+        ui.RecordSpan(UiRects.FilterPanel, start, width);
     }
 
     /// <summary>The sort's pinned-first flag lives beside the filters; MainWindow persists it with the sort.</summary>

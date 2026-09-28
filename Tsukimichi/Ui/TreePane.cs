@@ -57,6 +57,8 @@ public sealed class TreePane
         EnsureNodes(current);
         RefreshCounts(runner);
 
+        var start = ImGui.GetCursorScreenPos();
+        var width = ImGui.GetContentRegionAvail().X;
         DrawNode(allNode);
         foreach (var section in sections)
         {
@@ -69,6 +71,8 @@ public sealed class TreePane
         {
             DrawNode(unlistedNode);
         }
+
+        ui.RecordSpan(UiRects.Tree, start, width);
     }
 
     private void DrawNode(Node node)

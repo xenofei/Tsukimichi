@@ -124,6 +124,9 @@ public sealed class TablePane : IDisposable
             return;
         }
 
+        // ScrollY gives the table its own inner window, so this is the table's rectangle.
+        ui.RecordWindow(UiRects.Table);
+
         // The persisted sort is handed to ImGui only while the table initializes (ImGui ignores DefaultSort afterwards
         // and whenever its own saved settings already carry a sort), so no column is default-sorted otherwise.
         var initialSort = tableInitialized ? SortSpec.Default : ui.Sort;
@@ -345,6 +348,7 @@ public sealed class TablePane : IDisposable
 
     private void DrawEmpty(EmptyReason empty)
     {
+        ui.RecordWindow(UiRects.Table);
         ImGui.Spacing();
         using (Theme.PushText(Theme.Dusk))
         {

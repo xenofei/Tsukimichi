@@ -351,12 +351,14 @@ public sealed class MainWindow : Window, IDisposable
             searchBuffer = ui.SearchText;
         }
 
+        var toolbarMin = ImGui.GetCursorScreenPos();
         ImGui.SetNextItemWidth(280f * scale);
         if (ImGui.InputTextWithHint("##search", Strings.SearchHint, ref searchBuffer, 200))
         {
             ui.SearchText = searchBuffer;
         }
 
+        ui.RecordItem(UiRects.Search);
         if (ImGui.IsItemHovered())
         {
             ImGui.SetTooltip(Strings.SearchTooltip);
@@ -386,6 +388,7 @@ public sealed class MainWindow : Window, IDisposable
             }
         }
 
+        ui.RecordItem(UiRects.FiltersButton);
         if (ImGui.IsItemHovered())
         {
             ImGui.SetTooltip(Strings.FiltersTooltip);
@@ -408,11 +411,16 @@ public sealed class MainWindow : Window, IDisposable
             {
                 if (strip)
                 {
+                    ui.RecordWindow(UiRects.Chips);
                     filterPanel.DrawChips();
                 }
             }
 
             ImGui.SameLine();
+        }
+        else
+        {
+            ui.Rects.Remove(UiRects.Chips);
         }
 
         // Sync glyph and the action buttons, right-aligned.
@@ -423,6 +431,7 @@ public sealed class MainWindow : Window, IDisposable
         }
 
         MoonGlyph.DrawInline(session.IsLive && session.PollerHealthy ? QuestState.Completed : QuestState.Unknown, glyphSize);
+        ui.RecordItem(UiRects.Sync);
         if (ImGui.IsItemHovered())
         {
             ImGui.SetTooltip(syncTooltip);
@@ -430,15 +439,19 @@ public sealed class MainWindow : Window, IDisposable
 
         var buttonSize = new Vector2(glyphSize, glyphSize);
         ImGui.SameLine();
-        ToolbarButton("##help", FontAwesomeIcon.QuestionCircle, Strings.HelpButtonTooltip, openHelp, buttonSize);
+        ToolbarButton("##help", FontAwesomeIcon.QuestionCircle, Strings.HelpButtonTooltip, openHelp, buttonSize, UiRects.HelpButton);
         ImGui.SameLine();
-        ToolbarButton("##tutorial", FontAwesomeIcon.GraduationCap, Strings.TutorialButtonTooltip, startTutorial, buttonSize);
+        ToolbarButton("##tutorial", FontAwesomeIcon.GraduationCap, Strings.TutorialButtonTooltip, startTutorial, buttonSize, UiRects.TutorialButton);
         ImGui.SameLine();
-        ToolbarButton("##settings", FontAwesomeIcon.Cog, Strings.SettingsButtonTooltip, openSettings, buttonSize);
+        ToolbarButton("##settings", FontAwesomeIcon.Cog, Strings.SettingsButtonTooltip, openSettings, buttonSize, UiRects.SettingsButton);
+
+        // The whole row, from the search box to the last button.
+        var lastMax = ImGui.GetItemRectMax();
+        ui.RecordRect(UiRects.Toolbar, toolbarMin, new Vector2(lastMax.X, MathF.Max(lastMax.Y, toolbarMin.Y + glyphSize)));
     }
 
     /// <summary>A square icon button; disabled (with a tooltip saying so) until its action is attached.</summary>
-    private static void ToolbarButton(string id, FontAwesomeIcon icon, string tooltip, Action? action, Vector2 size)
+    private void ToolbarButton(string id, FontAwesomeIcon icon, string tooltip, Action? action, Vector2 size, string rectKey)
     {
         using (ImRaii.Disabled(action is null))
         {
@@ -448,6 +461,7 @@ public sealed class MainWindow : Window, IDisposable
             }
         }
 
+        ui.RecordItem(rectKey);
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
             ImGui.SetTooltip(action is null ? Strings.ActionUnavailable : tooltip);
@@ -465,6 +479,8 @@ public sealed class MainWindow : Window, IDisposable
 
         if (!combo)
         {
+            // While the popup is open the last item belongs to it; the closed frame's rectangle stays recorded.
+            ui.RecordItem(UiRects.Character);
             return;
         }
 
@@ -570,12 +586,16 @@ public sealed class MainWindow : Window, IDisposable
             return;
         }
 
+        var tabsMin = ImGui.GetCursorScreenPos();
+        var tabsWidth = ImGui.GetContentRegionAvail().X;
         using var bar = ImRaii.TabBar("##navTabs");
         if (!bar)
         {
             return;
         }
 
+        // BeginTabBar leaves the cursor under the tab row.
+        ui.RecordRect(UiRects.Tabs, tabsMin, new Vector2(tabsMin.X + tabsWidth, ImGui.GetCursorScreenPos().Y));
         var force = ui.Tab != drawnTab;
         DrawTab(NavTab.Journal, Strings.TabJournal, force, session, bundle);
         DrawTab(NavTab.Moonlit, Strings.TabMoonlit, force, session, bundle);
@@ -605,6 +625,10 @@ public sealed class MainWindow : Window, IDisposable
                 if (ui.FilterPanelOpen)
                 {
                     filterPanel.Draw(bundle, session.ViewedSnapshot);
+                }
+                else
+                {
+                    ui.Rects.Remove(UiRects.FilterPanel);
                 }
 
                 treePane.Draw(bundle, runner, plugin.Settings.ShowUnlisted);
@@ -644,7 +668,10 @@ public sealed class MainWindow : Window, IDisposable
             status = string.Format(CultureInfo.CurrentCulture, Strings.StatusFormat, bundle.Catalog.Count, runner.Rows.Length, runner.TotalInScope, mode, version);
         }
 
+        var barMin = ImGui.GetCursorScreenPos();
         ImGui.Separator();
         ImGui.TextDisabled(status);
+        var windowX = ImGui.GetWindowPos().X;
+        ui.RecordRect(UiRects.StatusBar, new Vector2(windowX + ImGui.GetWindowContentRegionMin().X, barMin.Y), new Vector2(windowX + ImGui.GetWindowContentRegionMax().X, ImGui.GetItemRectMax().Y));
     }
 }

@@ -116,9 +116,12 @@ public sealed class CharactersPane
         using var id = ImRaii.PushId("charactersLeft");
         RefreshItems();
 
+        var start = ImGui.GetCursorScreenPos();
+        var width = ImGui.GetContentRegionAvail().X;
         if (items.Length == 0)
         {
             ImGui.TextWrapped(Strings.CharactersNoneStored);
+            ui.RecordSpan(UiRects.CharactersList, start, width);
             return;
         }
 
@@ -144,6 +147,8 @@ public sealed class CharactersPane
                 ImGui.TextDisabled(item.Detail);
             }
         }
+
+        ui.RecordSpan(UiRects.CharactersList, start, width);
     }
 
     /// <summary>Center column: the viewed character's dashboard, its actions and the account view for the selected quest.</summary>
@@ -152,6 +157,8 @@ public sealed class CharactersPane
         ArgumentNullException.ThrowIfNull(ui);
         using var id = ImRaii.PushId("charactersMain");
 
+        // The dashboard fills the centre column; the column is its own child window.
+        ui.RecordWindow(UiRects.CharactersDashboard);
         var snapshot = session.ViewedSnapshot;
         if (snapshot is null)
         {

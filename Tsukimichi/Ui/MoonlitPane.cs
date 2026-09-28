@@ -177,21 +177,27 @@ public sealed class MoonlitPane : IDisposable
 
         var line = ImGui.GetTextLineHeight();
         var countWidth = ImGui.CalcTextSize("9999/9999").X;
-        using var table = ImRaii.Table("##moonlitKinds", 3, ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.NoPadOuterX);
-        if (!table)
+        var start = ImGui.GetCursorScreenPos();
+        var width = ImGui.GetContentRegionAvail().X;
+        using (var table = ImRaii.Table("##moonlitKinds", 3, ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.NoPadOuterX))
         {
-            return;
+            if (!table)
+            {
+                return;
+            }
+
+            ImGui.TableSetupColumn("##moon", ImGuiTableColumnFlags.WidthFixed, line * 1.4f);
+            ImGui.TableSetupColumn("##name", ImGuiTableColumnFlags.WidthStretch);
+            ImGui.TableSetupColumn("##count", ImGuiTableColumnFlags.WidthFixed, countWidth);
+
+            DrawKindRow(ui, allItem, -1);
+            for (var i = 0; i < kindItems.Length; i++)
+            {
+                DrawKindRow(ui, kindItems[i], i);
+            }
         }
 
-        ImGui.TableSetupColumn("##moon", ImGuiTableColumnFlags.WidthFixed, line * 1.4f);
-        ImGui.TableSetupColumn("##name", ImGuiTableColumnFlags.WidthStretch);
-        ImGui.TableSetupColumn("##count", ImGuiTableColumnFlags.WidthFixed, countWidth);
-
-        DrawKindRow(ui, allItem, -1);
-        for (var i = 0; i < kindItems.Length; i++)
-        {
-            DrawKindRow(ui, kindItems[i], i);
-        }
+        ui.RecordSpan(UiRects.MoonlitKinds, start, width);
     }
 
     /// <summary>Center column: toolbar (hide obtained, filter) and the reward table with a list clipper.</summary>
@@ -248,6 +254,8 @@ public sealed class MoonlitPane : IDisposable
             return;
         }
 
+        // ScrollY gives the table its own inner window, so this is the table's rectangle.
+        ui.RecordWindow(UiRects.MoonlitTable);
         var line = ImGui.GetTextLineHeight();
         var scale = ImGuiHelpers.GlobalScale;
         var glyphColumn = MathF.Max(line * 2.4f, 44f * scale);
