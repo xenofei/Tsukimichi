@@ -9,7 +9,7 @@ namespace Tsukimichi.Commands;
 /// The <c>/tsukimichi</c> chat command. Sub-commands are dispatched by the first word: <c>glyphs</c> opens the glyph
 /// sheet, <c>search &lt;text&gt;</c> (or any other text) searches and prints matches to chat, <c>zone</c> and
 /// <c>which</c> print discovery lists, <c>nearby</c> toggles the Nearby quests window, <c>todo</c> toggles the todo
-/// overlay, <c>config</c> and <c>help</c> open those windows; a bare command toggles the main window.
+/// overlay, <c>settings</c> (or <c>config</c>) and <c>help</c> open those windows; a bare command toggles the main window.
 /// </summary>
 public sealed class TsukimichiCommand : IDisposable
 {

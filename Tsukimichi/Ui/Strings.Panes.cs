@@ -504,12 +504,13 @@ static partial class Strings
             "/tsukimichi",
             "/tsuki",
             "/tsukimichi search <text>",
-            "/tsukimichi config",
+            "/tsukimichi settings",
             "/tsukimichi help",
             "/tsukimichi glyphs",
             "/tsuki zone",
             "/tsuki which",
             "/tsuki nearby",
+            "/tsuki todo",
         ];
 
         public static readonly string[] CommandMeanings =
@@ -517,12 +518,13 @@ static partial class Strings
             "open or close the window",
             "the same, shorter",
             "search and print matching quests to chat as links; /tsukimichi <text> does the same",
-            "open Settings",
+            "open Settings; /tsukimichi config does the same",
             "open this window",
             "the glyph sheet: every moon at every size",
             "quests you can start in the current zone, as chat links by level",
             "every quest the targeted NPC hands out, with its state",
             "open or close the Nearby quests window: what you can start in the current zone",
+            "turn the todo overlay on or off",
         ];
 
         // ---- Tips ----
