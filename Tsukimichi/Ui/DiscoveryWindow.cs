@@ -454,7 +454,7 @@ public sealed class DiscoveryWindow : Window, IDisposable
             var evaluation = states.TryGetValue(quest.RowId, out var found) ? found : null;
             var state = evaluation?.State ?? QuestState.Unknown;
             var job = runner.JobShort(quest);
-            var stateText = Strings.StateName(state);
+            var stateText = Strings.StateName(state, quest);
             if (state == QuestState.ReadyOnOtherJob && evaluation?.ReadyOnJob is { } readyOn && bundle is not null)
             {
                 var abbreviation = bundle.Names.ClassJobAbbreviation(readyOn);

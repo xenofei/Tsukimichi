@@ -511,7 +511,7 @@ public sealed class CharactersPane
         var line = ImGui.GetTextLineHeight();
         ImGui.TableSetupColumn("##state", ImGuiTableColumnFlags.WidthFixed, line * 1.4f);
         ImGui.TableSetupColumn(Strings.CharactersColumnQuest, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(300f));
-        ImGui.TableSetupColumn(Strings.CharactersColumnNextStep, ImGuiTableColumnFlags.WidthStretch);
+        ImGui.TableSetupColumn(Strings.CharactersColumnStatus, ImGuiTableColumnFlags.WidthStretch);
 
         for (var i = 0; i < d.Pinned.Length; i++)
         {
@@ -522,7 +522,7 @@ public sealed class CharactersPane
             MoonGlyph.DrawInline(row.State, UiMetrics.InlineGlyphSize(line));
             if (ImGui.IsItemHovered())
             {
-                UiMetrics.Tooltip(Strings.MoonlitStateName(row.State));
+                UiMetrics.Tooltip(Strings.StateName(row.State, row.Quest));
             }
 
             ImGui.TableNextColumn();
@@ -1124,7 +1124,7 @@ public sealed class CharactersPane
                 quest,
                 quest.Name,
                 state,
-                lacks + ": " + Strings.MoonlitStateName(state),
+                lacks + ": " + Strings.StateWithReason(state, evaluation, quest),
                 entry.Value.ToString(CultureInfo.InvariantCulture),
                 entry.Reason));
         }
@@ -1222,7 +1222,7 @@ public sealed class CharactersPane
         var line = ImGui.GetTextLineHeight();
         ImGui.TableSetupColumn(Strings.CharactersColumnCharacter, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(200f));
         ImGui.TableSetupColumn(Strings.CharactersColumnState, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(170f));
-        ImGui.TableSetupColumn(Strings.CharactersColumnNextStep, ImGuiTableColumnFlags.WidthStretch);
+        ImGui.TableSetupColumn(Strings.CharactersColumnStatus, ImGuiTableColumnFlags.WidthStretch);
         ImGui.TableHeadersRow();
 
         for (var i = 0; i < items.Length; i++)
@@ -1247,7 +1247,7 @@ public sealed class CharactersPane
                 ImGui.SameLine();
                 using (Theme.PushText(Theme.StateColor(evaluation.State)))
                 {
-                    ImGui.TextUnformatted(Strings.MoonlitStateName(evaluation.State));
+                    ImGui.TextUnformatted(Strings.StateName(evaluation.State, quest));
                 }
             }
 

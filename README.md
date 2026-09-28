@@ -10,7 +10,7 @@ Tsukimichi (月道) reads as "the moon's path": *tsuki* (moon) from the characte
 - **Filters**: hide completed, available now (both global with per-category overrides), state, expansion, level, job, reward kind, repeatable, seasonal, pinned, unlisted. Active filters show as chips; an empty result explains which filters caused it.
 - **Moonlit** tab: rewards obtainable only through a quest (emotes, mounts, minions, orchestrion, cards, gear, unlocks and more) with obtained state, the quest state, and a confidence badge showing whether the claim comes from game data or a curated list.
 - **Characters** tab: every character snapshotted on this account, with an offline account-wide view of any quest's state per character, JSON export, and forget.
-- **Quest states** are moon phases: full = completed, first quarter = ready, waxing gibbous = accepted, new = blocked, waning gibbous = repeatable done this cycle, eclipsed = foreclosed, veiled = unknown.
+- **Quest states**, one name each everywhere: Ready, Ready on another job, In journal, Blocked (always with what blocks it), Done today / Done this week, Completed, Locked out (with the cause), Not checked. Each is drawn as a moon phase; Help › Moon phases is the legend (see `docs/glossary.md`).
 
 Commands: `/tsukimichi` toggles the window, `/tsukimichi <text>` searches and prints quest links to chat, `/tsukimichi config`, `/tsukimichi glyphs`.
 

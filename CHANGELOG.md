@@ -4,6 +4,10 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+### Changed
+- One name per quest state, the same everywhere (table, chips, tooltips, detail pane, Moonlit, Compare, the todo overlay, Nearby, chat links, Help and the tour): Ready, Ready on another job, In journal (was Accepted), Blocked (now always followed by what blocks it), Done today or Done this week (was Done this cycle; picked by the quest's reset), Completed, Locked out (was Foreclosed; followed by the cause) and Not checked (was Unknown). The moon-phase names (first quarter, waxing gibbous, eclipsed, veiled, …) stay as the small subtitle under each name in Help › Moon phases and the glyphs window only. Recent activity says "Picked up" for a newly accepted quest.
+- Renamed labels: the Feature Unlocks tree node is "Unlock quests"; the presets group is "Quick views" with chips "Unlocks" (was Feature quests), "My level" (was Around my level) and "Stalled"; the "Next step" column is "Status" in the Journal table, the Characters pins and account view and the Flight table; the todo overlay section is "Unlocks you can start here"; the Moonlit pane carries the subtitle "rewards only a quest gives"; Compare's reason reads "Unlock quest"; requirement names say "Allied Society". A glossary of every name lives in docs/glossary.md.
+
 ## [0.5.1] - 2026-09-28
 
 ### Added

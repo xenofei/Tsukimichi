@@ -45,7 +45,7 @@ public sealed class TablePane : IDisposable
         Strings.ColumnName,
         Strings.ColumnLevel,
         Strings.ColumnJob,
-        Strings.ColumnNextStep,
+        Strings.ColumnStatus,
         Strings.ColumnExpansion,
         Strings.ColumnRewards,
     ];
@@ -57,7 +57,7 @@ public sealed class TablePane : IDisposable
         Strings.ColumnNameTooltip,
         Strings.ColumnLevelTooltip,
         Strings.ColumnJobTooltip,
-        Strings.ColumnNextStepTooltip,
+        Strings.ColumnStatusTooltip,
         Strings.ColumnExpansionTooltip,
         Strings.ColumnRewardsTooltip,
     ];
@@ -143,7 +143,7 @@ public sealed class TablePane : IDisposable
         ImGui.TableSetupColumn(Strings.ColumnName, ImGuiTableColumnFlags.WidthStretch | ImGuiTableColumnFlags.NoHide | InitialSortFlags(initialSort, SortColumn.Name), 3f);
         ImGui.TableSetupColumn(Strings.ColumnLevel, ImGuiTableColumnFlags.WidthFixed | InitialSortFlags(initialSort, SortColumn.Level), UiMetrics.Px(34f));
         ImGui.TableSetupColumn(Strings.ColumnJob, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoSort, UiMetrics.Px(64f));
-        ImGui.TableSetupColumn(Strings.ColumnNextStep, ImGuiTableColumnFlags.WidthStretch | ImGuiTableColumnFlags.NoSort, 2f);
+        ImGui.TableSetupColumn(Strings.ColumnStatus, ImGuiTableColumnFlags.WidthStretch | ImGuiTableColumnFlags.NoSort, 2f);
         ImGui.TableSetupColumn(Strings.ColumnExpansion, ImGuiTableColumnFlags.WidthFixed | InitialSortFlags(initialSort, SortColumn.Expansion), UiMetrics.Px(40f));
         ImGui.TableSetupColumn(Strings.ColumnRewards, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoSort, rewardsColumn);
         ImGui.TableSetupScrollFreeze(0, 1);
@@ -317,7 +317,7 @@ public sealed class TablePane : IDisposable
         DrawRewardIcons(quest, in layout);
     }
 
-    /// <summary>Next step in Dusk with its first word in Silver, so the gate's kind reads at a glance; spans only, no new strings.</summary>
+    /// <summary>Status text in Dusk with its first word in Silver, so the gate's kind reads at a glance; spans only, no new strings.</summary>
     private static void DrawNextStep(string text)
     {
         var split = text.IndexOf(' ');

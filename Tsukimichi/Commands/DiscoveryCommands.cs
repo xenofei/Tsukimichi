@@ -78,7 +78,7 @@ public sealed class DiscoveryCommands(SessionState session, IClientState clientS
         {
             var quest = matches[i];
             var state = session.States.TryGetValue(quest.RowId, out var evaluation) ? evaluation.State : QuestState.Unknown;
-            links.PrintQuestLink(quest, Strings.MoonlitStateName(state));
+            links.PrintQuestLink(quest, Strings.StateWithReason(state, evaluation, quest));
         }
 
         if (matches.Count > MaxChatMatches)

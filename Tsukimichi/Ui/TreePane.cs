@@ -11,7 +11,7 @@ using Tsukimichi.GameData;
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// The Journal tree: All quests, then Section → Category → Genre, then the Feature Unlocks and Unlisted virtual nodes.
+/// The Journal tree: All quests, then Section → Category → Genre, then the Unlock quests and Unlisted virtual nodes.
 /// Each node shows a filling moon and done/total. Selecting a node scopes the table through <see cref="UiState.Scope"/>.
 /// A category with a single genre is folded into one leaf (the category's name, the genre's scope and counts), and a
 /// section whose only category folded likewise becomes a single leaf, so no node ever expands to just one child.

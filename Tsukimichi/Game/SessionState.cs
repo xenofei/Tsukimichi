@@ -114,7 +114,7 @@ public sealed class SessionState
 
     /// <summary>
     /// Row ids of the feature ("blue") quests, derived once per catalog by <see cref="FeaturePresets.Derive"/> from the
-    /// curated files and the quests' rewards. Backs the Feature Unlocks node, the Feature quests preset and chat notices.
+    /// curated files and the quests' rewards. Backs the Unlock quests node, the Unlocks quick view and chat notices.
     /// </summary>
     public IReadOnlySet<uint> FeatureQuestIds { get; private set; } = FrozenSet<uint>.Empty;
 

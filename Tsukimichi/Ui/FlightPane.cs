@@ -238,7 +238,7 @@ public sealed class FlightPane
             ImGui.TableSetupColumn(Strings.FlightColumnAttuned, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, glyphColumn);
             ImGui.TableSetupColumn(Strings.FlightColumnQuest, ImGuiTableColumnFlags.WidthStretch, 3f);
             ImGui.TableSetupColumn(Strings.FlightColumnState, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, glyphColumn);
-            ImGui.TableSetupColumn(Strings.FlightColumnNextStep, ImGuiTableColumnFlags.WidthStretch, 3f);
+            ImGui.TableSetupColumn(Strings.FlightColumnStatus, ImGuiTableColumnFlags.WidthStretch, 3f);
             ImGui.TableSetupColumn(Strings.FlightColumnActions, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, actionsWidth + spacing);
             ImGui.TableHeadersRow();
 
@@ -297,7 +297,7 @@ public sealed class FlightPane
         MoonGlyph.DrawInline(state, UiMetrics.InlineGlyphSize(line));
         if (ImGui.IsItemHovered())
         {
-            UiMetrics.Tooltip(Strings.StateName(state));
+            UiMetrics.Tooltip(Strings.StateName(state, row.Quest));
         }
 
         ImGui.TableNextColumn();

@@ -165,7 +165,7 @@ public sealed class FilterPanel
 
     /// <summary>
     /// One-click presets as toggle chips at the head of the panel; at most one is on, and clicking the active one
-    /// turns it off. Around my level and Stalled read the snapshot, so they are disabled in browse mode.
+    /// turns it off. My level and Stalled read the snapshot, so they are disabled in browse mode.
     /// </summary>
     private void DrawPresets(FilterSet f, bool hasSnapshot, Configuration settings)
     {
@@ -558,7 +558,7 @@ public sealed class FilterPanel
         Tip(enabled ? tooltip : Strings.NeedsSnapshot);
     }
 
-    /// <summary>"States: −Completed, −Foreclosed", naming up to <see cref="MaxStateChipNames"/> excluded states then "+N"; rebuilt when the mask changes.</summary>
+    /// <summary>"States: −Completed, −Locked out", naming up to <see cref="MaxStateChipNames"/> excluded states then "+N"; rebuilt when the mask changes.</summary>
     private string StateChipText(FilterSet f)
     {
         if (stateChipMask == f.StateMask && stateChip.Length > 0)
@@ -580,7 +580,7 @@ public sealed class FilterPanel
             excluded++;
             if (named < MaxStateChipNames)
             {
-                text += (named > 0 ? Strings.ChipStateSeparator : string.Empty) + Strings.ChipStateExcludedMarker + Strings.StateShortName(state);
+                text += (named > 0 ? Strings.ChipStateSeparator : string.Empty) + Strings.ChipStateExcludedMarker + Strings.StateName(state);
                 named++;
             }
         }

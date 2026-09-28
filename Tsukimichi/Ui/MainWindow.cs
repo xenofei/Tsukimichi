@@ -840,7 +840,7 @@ public sealed class MainWindow : Window, IDisposable
             tooltip += "\n" + (zone.Length > 0 ? string.Format(CultureInfo.CurrentCulture, Strings.MsqGiverFormat, issuer.Name, zone) : issuer.Name);
         }
 
-        msqTooltip = tooltip + "\n" + Strings.StateName(position.State) + "\n" + Strings.MsqClickHint;
+        msqTooltip = tooltip + "\n" + Strings.StateName(position.State, next) + "\n" + Strings.MsqClickHint;
     }
 
     /// <summary>Selects the next main scenario quest in the Journal tab; an active preset would hide it, so it is cleared first.</summary>
