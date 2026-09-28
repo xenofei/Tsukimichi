@@ -270,6 +270,7 @@ public static partial class Strings
     public const string NoMatches = "No quests match.";
     public const string CatalogNotReady = "The catalog is still loading.";
     public const string ChatTag = "Tsukimichi";
+    public const string ChatNewlyAvailablePrefix = "Now available: ";
 
     // Command help
     public const string CommandHelp = "Open Tsukimichi (also /tsuki). /tsukimichi <text> prints matching quest links; config, help and glyphs open those windows.";
