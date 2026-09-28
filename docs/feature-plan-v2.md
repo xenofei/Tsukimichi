@@ -12,7 +12,7 @@ These were requested in the same message and are being built while this plan is 
 - Quest banner images in the detail pane header and in table tooltips, using the journal artwork the game ships for each quest.
 - Engagement pass: filling moons in tree rows, state stripes on table rows, moon-shaped requirement marks, empty states with guidance.
 - Help window rebuilt from cards, phase rows, numbered steps and tips, with a topic search.
-- Interactive tutorial overlay: fourteen steps that dim the window and highlight each region with a step card, offered on first run and restartable from the toolbar, help, or settings.
+- Interactive tutorial overlay: fifteen steps that dim the window and highlight each region with a step card, offered on first run and restartable from the toolbar, help, or settings.
 - Item and reward database verification with tightened exclusivity rules. Done: a `--verify` mode in DataGen checks structure, icon file existence, banner artwork, and 197 cross-checks against xivapi (all pass). It found and fixed a shipped bug (every orchestrion roll carried reward id 0 and 17 rolls were lost), dropped 713 items that are not actually quest-exclusive (Fantasia, cordials, tickets, coffers, vendor-resold items), and left 3,464 entries across 1,173 quests. Full report in docs/data/verification-report.md.
 
 Two follow-ups the verification surfaced, small and worth doing in 0.2:

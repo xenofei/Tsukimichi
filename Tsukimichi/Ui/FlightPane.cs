@@ -22,12 +22,18 @@ namespace Tsukimichi.Ui;
 /// <para>
 /// The <see cref="FlightIndex"/> is built on the first draw through the factory the plugin hands in (a handful of
 /// small sheets). Zone and row models are built once per catalog; attunement and quest counts, and every count string,
-/// refresh only when <see cref="SessionState.Version"/> changes; the header strings when the version or the selected
-/// zone changes. Nothing allocates per frame except tooltips on hover.
+/// refresh when <see cref="SessionState.Version"/> changes and, because attuning a current changes nothing in the
+/// snapshot, also when the tab becomes visible, when the territory changes and every
+/// <see cref="LiveAttunementRefreshMs"/> while a live character is viewed (the memoized attunements are dropped through
+/// <see cref="RewardUnlockReader.InvalidateAetherCurrents"/> first); the header strings when the counts or the selected
+/// zone change. Nothing allocates per frame except tooltips on hover.
 /// </para>
 /// </summary>
 public sealed class FlightPane
 {
+    /// <summary>How often the live character's attunements are re-read while the tab is visible.</summary>
+    public const int LiveAttunementRefreshMs = 5000;
+
     private readonly SessionState session;
     private readonly RewardUnlockReader unlocks;
     private readonly GameLinks links;
@@ -41,6 +47,12 @@ public sealed class FlightPane
     private ExpansionGroup[] groups = [];
     private CatalogBundle? zonesBundle;
     private int countsVersion = -1;
+
+    // Attunement re-reads: the frame the tab was last drawn in (a gap means it just became visible), the territory the
+    // counts were read in and when they were last re-read for a live character.
+    private int lastDrawFrame = -2;
+    private uint countsTerritory;
+    private long lastLiveRefreshTick;
 
     // Selected zone and the strings the centre column shows for it.
     private ZoneItem? selected;
@@ -405,6 +417,12 @@ public sealed class FlightPane
             BuildZones(bundle);
         }
 
+        if (AttunementsMayHaveChanged())
+        {
+            unlocks.InvalidateAetherCurrents();
+            countsVersion = -1;
+        }
+
         if (countsVersion != session.Version)
         {
             RefreshCounts();
@@ -423,6 +441,38 @@ public sealed class FlightPane
                 : zone.FieldAttuned == field ? string.Format(CultureInfo.CurrentCulture, Strings.FlightFieldAllFormat, field)
                 : string.Format(CultureInfo.CurrentCulture, Strings.FlightFieldFormat, zone.FieldAttuned, field);
         }
+    }
+
+    /// <summary>
+    /// Once per frame, for a live character: true when the tab was not drawn last frame (it just became visible), when
+    /// the territory differs from the one the counts were read in, or when <see cref="LiveAttunementRefreshMs"/> have
+    /// passed since the last re-read. Both columns call <see cref="Refresh"/>, so the frame check keeps it to one answer.
+    /// </summary>
+    private bool AttunementsMayHaveChanged()
+    {
+        var frame = ImGui.GetFrameCount();
+        if (frame == lastDrawFrame)
+        {
+            return false;
+        }
+
+        var becameVisible = frame != lastDrawFrame + 1;
+        lastDrawFrame = frame;
+        if (!session.IsLive)
+        {
+            return false;
+        }
+
+        var territory = currentTerritory();
+        var now = Environment.TickCount64;
+        if (!becameVisible && territory == countsTerritory && now - lastLiveRefreshTick < LiveAttunementRefreshMs)
+        {
+            return false;
+        }
+
+        countsTerritory = territory;
+        lastLiveRefreshTick = now;
+        return true;
     }
 
     /// <summary>

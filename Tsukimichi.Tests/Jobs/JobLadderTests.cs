@@ -250,8 +250,44 @@ public sealed class JobLadderTests
         var before = new Dictionary<byte, short> { [Gladiator] = 34, [Paladin] = 34 };
         var after = new Dictionary<byte, short> { [Gladiator] = 35, [Paladin] = 35 };
 
+        // The role quest is level 70: not this level-up's doing, so only the job quest is named.
         var nudges = ladder.LevelUpNudges(before, after, states);
-        Assert.Equal([new JobNudge(Jobs[5], 35, PaladinOne), new JobNudge(Jobs[5], 35, TankRole)], nudges);
+        Assert.Equal([new JobNudge(Jobs[5], 35, PaladinOne)], nudges);
+
+        // Reaching 70 opens the role ladder's next quest.
+        var roleStates = States(
+            (GladiatorOne, QuestState.Completed), (GladiatorTwo, QuestState.Completed), (Pledge, QuestState.Completed),
+            (PaladinOne, QuestState.Completed), (TankRole, QuestState.Ready));
+        var roleNudges = ladder.LevelUpNudges(
+            new Dictionary<byte, short> { [Gladiator] = 69, [Paladin] = 69 },
+            new Dictionary<byte, short> { [Gladiator] = 70, [Paladin] = 70 },
+            roleStates);
+        Assert.Equal([new JobNudge(Jobs[5], 70, TankRole)], roleNudges);
+    }
+
+    [Fact]
+    public void Level_up_nudges_only_the_quest_the_new_level_unlocked()
+    {
+        var ladder = Ladder();
+        var ready = States((GladiatorOne, QuestState.Completed), (GladiatorTwo, QuestState.Ready));
+
+        // Level 15 is exactly the quest's level: nudged, also across a jump that passes it.
+        Assert.Equal([new JobNudge(Jobs[0], 15, GladiatorTwo)], ladder.LevelUpNudges(new Dictionary<byte, short> { [Gladiator] = 14 }, new Dictionary<byte, short> { [Gladiator] = 15 }, ready));
+        Assert.Equal([new JobNudge(Jobs[0], 16, GladiatorTwo)], ladder.LevelUpNudges(new Dictionary<byte, short> { [Gladiator] = 13 }, new Dictionary<byte, short> { [Gladiator] = 16 }, ready));
+        // Ready on another job counts as open.
+        Assert.Equal(
+            [new JobNudge(Jobs[0], 15, GladiatorTwo)],
+            ladder.LevelUpNudges(new Dictionary<byte, short> { [Gladiator] = 14 }, new Dictionary<byte, short> { [Gladiator] = 15 }, States((GladiatorOne, QuestState.Completed), (GladiatorTwo, QuestState.ReadyOnOtherJob))));
+
+        // Already available before the level-up (level 15 quest, 20 to 21): nothing new to announce.
+        Assert.Empty(ladder.LevelUpNudges(new Dictionary<byte, short> { [Gladiator] = 20 }, new Dictionary<byte, short> { [Gladiator] = 21 }, ready));
+        // Still one level short.
+        Assert.Empty(ladder.LevelUpNudges(new Dictionary<byte, short> { [Gladiator] = 13 }, new Dictionary<byte, short> { [Gladiator] = 14 }, ready));
+        // Already accepted: it is in the journal, so no nudge even at the unlocking level.
+        Assert.Empty(ladder.LevelUpNudges(
+            new Dictionary<byte, short> { [Gladiator] = 14 },
+            new Dictionary<byte, short> { [Gladiator] = 15 },
+            States((GladiatorOne, QuestState.Completed), (GladiatorTwo, QuestState.Accepted))));
     }
 
     [Fact]

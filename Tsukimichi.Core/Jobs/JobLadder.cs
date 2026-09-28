@@ -287,8 +287,11 @@ public sealed class JobLadder
     /// <summary>
     /// The quests to announce after a level-up: for every job whose level in <paramref name="after"/> is above the one in
     /// <paramref name="before"/> (jobs absent from <paramref name="before"/> are a first capture, not a level-up), the
-    /// next quest of its ladder and of its role's ladder when that quest is ready now. A class whose job is unlocked
-    /// is skipped so the job's name is the one printed; each quest is listed once.
+    /// next quest of its ladder and of its role's ladder when that quest is open now (Ready or Ready on another job;
+    /// an accepted quest is already in the journal) and it is this level-up that opened it: its level is above the
+    /// previous level and at most the new one. A quest that was already available before the level-up, or that needs
+    /// a level still to come, is not announced. A class whose job is unlocked is skipped so the job's name is the one
+    /// printed; each quest is listed once.
     /// </summary>
     public IReadOnlyList<JobNudge> LevelUpNudges(
         IReadOnlyDictionary<byte, short> before,
@@ -317,7 +320,16 @@ public sealed class JobLadder
             void Consider(IReadOnlyList<uint> rowIds)
             {
                 var progress = Progress(rowIds, states, level);
-                if (progress.IsReadyNow && progress.NextRowId is { } next && seen.Add(next))
+                if (progress.NextRowId is not { } next
+                    || progress.NextLevel <= previous
+                    || progress.NextLevel > level
+                    || !states.TryGetValue(next, out var evaluation)
+                    || evaluation.State is not (QuestState.Ready or QuestState.ReadyOnOtherJob))
+                {
+                    return;
+                }
+
+                if (seen.Add(next))
                 {
                     result.Add(new JobNudge(entry.Job, level, next));
                 }

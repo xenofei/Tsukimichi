@@ -32,6 +32,7 @@ public sealed class DtrEntry : IDisposable
     private readonly StringBuilder tooltip = new();
     private IDtrBarEntry? entry;
     private bool disposed;
+    private bool warned;
 
     public DtrEntry(IDtrBar bar, DiscoveryWindow window, DiscoverySettings settings, IPluginLog log)
     {
@@ -71,7 +72,16 @@ public sealed class DtrEntry : IDisposable
         }
         catch (Exception ex)
         {
-            log.Warning(ex, "Server info bar entry could not be updated");
+            // Warn once when the bar keeps refusing the entry; later failures go to the debug log.
+            if (!warned)
+            {
+                warned = true;
+                log.Warning(ex, "Server info bar entry could not be updated; further failures are logged at debug level");
+            }
+            else
+            {
+                log.Debug(ex, "Server info bar entry could not be updated");
+            }
         }
     }
 

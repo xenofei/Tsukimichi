@@ -15,6 +15,9 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 ### Changed
 - Tutorial and help cover the Flight tab and the Nearby quests window: a fifteenth tour step after Characters, a "Flight and nearby" help topic, an "Unlock flying" quick-start step, and `/tsuki nearby` in the Commands topic.
 
+### Fixed
+- The level-up nudge no longer announces a job or role quest that is already in the journal, or one that was already available before the level-up; only a quest the new level itself unlocks is named.
+
 ## [0.3.0] - 2026-09-28
 
 ### Added

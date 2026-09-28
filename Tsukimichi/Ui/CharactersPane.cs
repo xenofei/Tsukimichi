@@ -355,7 +355,7 @@ public sealed class CharactersPane
             return;
         }
 
-        using var node = ImRaii.TreeNode(string.Format(CultureInfo.CurrentCulture, Strings.JobsChainsNotStartedFormat, d.ChainsNotStarted.Length));
+        using var node = ImRaii.TreeNode(d.ChainsNotStartedLabel);
         if (node)
         {
             DrawChainTable(ui, "##chainsNotStarted", d.ChainsNotStarted);
@@ -1024,6 +1024,9 @@ public sealed class CharactersPane
         RefreshDerived(bundle);
         var jobs = BuildJobs(snapshot, bundle);
         var (chainRows, notStarted) = BuildChains(bundle);
+        var notStartedLabel = notStarted.Length == 0
+            ? string.Empty
+            : string.Format(CultureInfo.CurrentCulture, Strings.JobsChainsNotStartedFormat, notStarted.Length);
 
         return new Dashboard(
             snapshot,
@@ -1038,6 +1041,7 @@ public sealed class CharactersPane
             BuildJobQuests(jobs),
             chainRows,
             notStarted,
+            notStartedLabel,
             BuildMoonlit(),
             BuildPinned(snapshot, bundle),
             BuildRecent(bundle),
@@ -1615,6 +1619,7 @@ public sealed class CharactersPane
         LadderRow[] JobQuests,
         ChainRow[] Chains,
         ChainRow[] ChainsNotStarted,
+        string ChainsNotStartedLabel,
         MoonlitRow[] Moonlit,
         PinnedRow[] Pinned,
         RecentRow[] Recent,

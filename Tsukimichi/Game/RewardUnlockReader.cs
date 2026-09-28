@@ -19,7 +19,9 @@ namespace Tsukimichi.Game;
 /// </para>
 /// <para>
 /// Results are memoized per (kind, reward id, quest) and dropped whenever <see cref="SessionState.Version"/> changes.
-/// A ClientStructs failure is logged once and reads as unknown.
+/// Attuning a current changes nothing in the snapshot, so the Flight pane also calls
+/// <see cref="InvalidateAetherCurrents"/> when it is shown, on a zone change and every few seconds while live. A
+/// ClientStructs failure is logged once and reads as unknown.
 /// </para>
 /// </summary>
 public sealed class RewardUnlockReader
@@ -89,6 +91,33 @@ public sealed class RewardUnlockReader
         var result = ReadLive(RewardKind.AetherCurrent, aetherCurrentId);
         memo[key] = result;
         return result;
+    }
+
+    /// <summary>
+    /// Drops the memoized aether current attunements (the Flight pane's and Moonlit's alike) so the next read asks
+    /// <c>PlayerState</c> again. Attuning a field current bumps no session version, so the Flight pane calls this when
+    /// it becomes visible, when the territory changes and every few seconds while a live character is viewed.
+    /// </summary>
+    public void InvalidateAetherCurrents()
+    {
+        List<(RewardKind Kind, uint RewardId, uint QuestRowId)>? stale = null;
+        foreach (var key in memo.Keys)
+        {
+            if (key.Kind == RewardKind.AetherCurrent)
+            {
+                (stale ??= []).Add(key);
+            }
+        }
+
+        if (stale is null)
+        {
+            return;
+        }
+
+        foreach (var key in stale)
+        {
+            memo.Remove(key);
+        }
     }
 
     /// <summary>Whether <see cref="IsObtained"/> can currently read client flags: a live character on the framework thread.</summary>

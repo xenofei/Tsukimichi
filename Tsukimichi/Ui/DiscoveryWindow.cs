@@ -19,7 +19,8 @@ namespace Tsukimichi.Ui;
 /// <summary>
 /// Nearby quests (F-76 companion): the quests the viewed character can start in the current zone, with a Flag and a
 /// Teleport button per row, plus the accepted quests whose giver stands here. The row model is rebuilt only on
-/// <see cref="SessionState.Changed"/> and <see cref="IClientState.TerritoryChanged"/> (and when a setting flips);
+/// <see cref="SessionState.Changed"/> and <see cref="IClientState.TerritoryChanged"/> (and when a setting flips), and
+/// a notification that changed neither the session version, the catalog nor the territory is skipped outright;
 /// nothing is looked up per frame beyond the visible rows' teleport gating. <see cref="Changed"/> fires after a
 /// rebuild that altered the lists, which is what the server info bar entry listens to. Opened with
 /// <c>/tsuki nearby</c> or a click on that entry. Settings live behind the cog at the top right and persist through
@@ -46,6 +47,8 @@ public sealed class DiscoveryWindow : Window, IDisposable
     private Row[] accepted = [];
     private string[] startableNames = [];
     private uint territoryId;
+    private int rowsVersion = -1;
+    private GameData.CatalogBundle? rowsBundle;
     private string zoneName = string.Empty;
     private string zoneLabel = Strings.DiscoveryUnknownZone;
     private string header = string.Empty;
@@ -359,17 +362,27 @@ public sealed class DiscoveryWindow : Window, IDisposable
     private void OnTerritoryChanged(uint territory) => Rebuild(force: false);
 
     /// <summary>
-    /// Recomputes the lists from the session and the current territory. Row labels are rebuilt, and <see cref="Changed"/>
-    /// raised, only when the zone or the (quest, state) sequences differ from the last build, so a poll that changed
-    /// nothing nearby costs two catalog scans and no allocation.
+    /// Recomputes the lists from the session and the current territory. A call that finds the session version, the
+    /// catalog and the territory unchanged since the last build returns at once. Otherwise row labels are rebuilt, and
+    /// <see cref="Changed"/> raised, only when the zone or the (quest, state) sequences differ from the last build or
+    /// the catalog was replaced (rows hold its <see cref="QuestRecord"/>s), so a poll that changed nothing nearby
+    /// costs two catalog scans and no allocation.
     /// </summary>
     private void Rebuild(bool force)
     {
         var territory = clientState.TerritoryType;
+        var version = session.Version;
+        var sessionBundle = session.Bundle;
+        var unchanged = territory == territoryId && ReferenceEquals(sessionBundle, rowsBundle);
+        if (!force && unchanged && version == rowsVersion)
+        {
+            return;
+        }
+
         List<QuestRecord> startNow;
         List<QuestRecord> acceptedHere;
         var states = session.States;
-        if (session.Bundle is { } bundle && session.ViewedSnapshot is not null)
+        if (sessionBundle is { } bundle && session.ViewedSnapshot is not null)
         {
             startNow = QuestDiscovery.StartableInZone(bundle.Catalog, states, territory, settings.NearbyIncludeOtherJob);
             acceptedHere = QuestDiscovery.AcceptedInZone(bundle.Catalog, states, territory);
@@ -381,12 +394,14 @@ public sealed class DiscoveryWindow : Window, IDisposable
             acceptedHere = [];
         }
 
-        if (!force && territory == territoryId && Same(startable, startNow, states) && Same(accepted, acceptedHere, states))
+        rowsVersion = version;
+        if (!force && unchanged && Same(startable, startNow, states) && Same(accepted, acceptedHere, states))
         {
             return;
         }
 
         territoryId = territory;
+        rowsBundle = sessionBundle;
         zoneName = ZoneNameFor(territory);
         zoneLabel = zoneName.Length > 0 ? zoneName : Strings.DiscoveryUnknownZone;
         startable = BuildRows(startNow, states, bundle);
