@@ -364,6 +364,7 @@ public sealed class QueryRunner : IDisposable
             SearchIndex: SearchIndex.For(current.Catalog),
             AcceptedSince: session.AcceptedSince,
             NowUtc: nowUtc,
+            CurrentLevel: CurrentLevel(snapshot),
             StalledDays: plugin.Settings.StalledDaysClamped);
 
         // The Feature quests preset reads best with what can be picked up now on top; the other presets keep the table's sort.
@@ -380,6 +381,17 @@ public sealed class QueryRunner : IDisposable
         sort = ui.Sort;
         searchDirty = false;
         filtersSnapshot = ui.Filters.Clone();
+    }
+
+    /// <summary>Unsynced level of the snapshot's current job for the Around-my-level preset; 0 without a snapshot or a recorded level.</summary>
+    private static byte CurrentLevel(CharacterSnapshot? snapshot)
+    {
+        if (snapshot is null || !snapshot.JobLevels.TryGetValue(snapshot.CurrentJob, out var level) || level <= 0)
+        {
+            return 0;
+        }
+
+        return (byte)Math.Min(level, byte.MaxValue);
     }
 
     private static NodeCount ComputeFeatureCount(SessionState session, QuestCatalog catalog)
