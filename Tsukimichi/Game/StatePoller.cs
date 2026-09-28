@@ -301,7 +301,7 @@ public sealed class StatePoller : IDisposable
     private void Publish(PollResult result)
     {
         session.SetLive(result.Snapshot, result.States, result.Context, acceptedSince);
-        session.AddEvents(result.Events);
+        session.AddEvents(result.Snapshot.ContentId, result.Events);
     }
 
     /// <summary>Runs a session update; a throwing listener is logged at most once per <see cref="ListenerWarningInterval"/>.</summary>

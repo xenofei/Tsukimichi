@@ -26,7 +26,7 @@ public sealed class SessionState
 
     private readonly SnapshotService snapshots;
     private readonly PluginPaths paths;
-    private readonly List<QuestEvent> recentEvents = [];
+    private readonly RecentEventsTracker recentEvents = new(MaxRecentEvents);
 
     private EvalContext baseContext = EvalContext.Default;
     private CharacterSnapshot? liveSnapshot;
@@ -121,8 +121,8 @@ public sealed class SessionState
     /// <summary>False while the poller is backing off after an exception; the sync glyph shows veiled.</summary>
     public bool PollerHealthy { get; private set; } = true;
 
-    /// <summary>Newest first, capped at <see cref="MaxRecentEvents"/>; cleared on logout.</summary>
-    public IReadOnlyList<QuestEvent> RecentEvents => recentEvents;
+    /// <summary>Newest first, capped at <see cref="MaxRecentEvents"/>; cleared on logout and when another character becomes live.</summary>
+    public IReadOnlyList<QuestEvent> RecentEvents => recentEvents.Events;
 
     /// <summary>Increments on every change; the UI compares it to rebuild its query.</summary>
     public int Version { get; private set; }
@@ -260,6 +260,8 @@ public sealed class SessionState
         liveContext = context;
         liveAcceptedSince = acceptedSince ?? liveAcceptedSince;
         LiveContentId = snapshot.ContentId;
+        // Another character without a logout gap in between: its Recent activity must not start with the previous one's.
+        recentEvents.Follow(snapshot.ContentId);
 
         if (followLive || ViewedContentId == snapshot.ContentId)
         {
@@ -286,25 +288,14 @@ public sealed class SessionState
         Bump();
     }
 
-    internal void AddEvents(IReadOnlyList<QuestEvent> events)
+    /// <summary>One poll's events for the character they belong to; events of another character are dropped first.</summary>
+    internal void AddEvents(ulong contentId, IReadOnlyList<QuestEvent> events)
     {
         ArgumentNullException.ThrowIfNull(events);
-        if (events.Count == 0)
+        if (recentEvents.Add(contentId, events))
         {
-            return;
+            Bump();
         }
-
-        for (var i = events.Count - 1; i >= 0; i--)
-        {
-            recentEvents.Insert(0, events[i]);
-        }
-
-        if (recentEvents.Count > MaxRecentEvents)
-        {
-            recentEvents.RemoveRange(MaxRecentEvents, recentEvents.Count - MaxRecentEvents);
-        }
-
-        Bump();
     }
 
     internal void SetPollerHealthy(bool healthy)
