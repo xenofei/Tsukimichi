@@ -22,8 +22,26 @@ public sealed class UiState
 {
     public NavTab Tab { get; set; } = NavTab.Journal;
 
-    /// <summary>Journal tree selection; QuestScope.None means "everything".</summary>
-    public QuestScope Scope { get; set; } = QuestScope.None;
+    private QuestScope scope = QuestScope.None;
+
+    /// <summary>
+    /// Journal tree selection; QuestScope.None means "everything". A change by any other means than
+    /// <see cref="Reveal(uint, QuestScope, bool)"/> (a tree click, a command, the tutorial) drops a reveal still pending
+    /// for the previous scope, so the tree never opens and scrolls to the wrong node later.
+    /// </summary>
+    public QuestScope Scope
+    {
+        get => scope;
+        set
+        {
+            if (value != scope)
+            {
+                RevealPending = false;
+            }
+
+            scope = value;
+        }
+    }
 
     /// <summary>Row id of the quest shown in the detail pane, or null.</summary>
     public uint? SelectedRowId { get; set; }
