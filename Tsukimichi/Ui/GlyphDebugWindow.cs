@@ -51,6 +51,9 @@ public sealed class GlyphDebugWindow : Window
         SizeConstraints = new WindowSizeConstraints { MinimumSize = new Vector2(420f, 320f) };
     }
 
+    /// <summary>Starts the interactive tutorial (the same action the help window and Settings use); null hides the button.</summary>
+    public Action? StartTutorial { get; set; }
+
     public override void Draw()
     {
         ImGui.Checkbox("Night panel", ref nightPanel);
@@ -59,6 +62,14 @@ public sealed class GlyphDebugWindow : Window
         ImGui.SliderFloat("Test radius", ref testRadius, 4f, 64f, "%.0f px");
         ImGui.SameLine();
         ImGui.TextDisabled($"scale {ImGuiHelpers.GlobalScale:0.00}");
+        if (StartTutorial is { } startTutorial)
+        {
+            ImGui.SameLine();
+            if (ImGui.Button("Tutorial preview"))
+            {
+                startTutorial();
+            }
+        }
 
         using var colors = Theme.PushNightPanel(nightPanel);
         using var panel = ImRaii.Child("##glyphPanel", new Vector2(-1f, -1f), true);
