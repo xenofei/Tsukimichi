@@ -46,6 +46,8 @@ public sealed class Plugin : IDalamudPlugin
     private CharactersPane? charactersPane;
     private ConfigWindow? configWindow;
     private HelpWindow? helpWindow;
+    // The interactive tutorial overlay (TutorialOverlay), assigned where it is created; null until then.
+    private ITutorial? tutorial = null;
 
     /// <summary>The Moonlit pane's override store as the detail pane's <see cref="IUniqueOverrides"/>.</summary>
     private sealed class MoonlitOverrides(MoonlitPane pane) : IUniqueOverrides
@@ -278,6 +280,13 @@ public sealed class Plugin : IDalamudPlugin
             configWindow.ShowHelp = helpWindow.Show;
 
             command.ToggleHelpWindow = helpWindow.Toggle;
+
+            // Toolbar buttons on the main window; the tutorial lambda reads the field lazily so wiring order does not matter.
+            mainWindow.AttachActions(configWindow.Toggle, helpWindow.Toggle, () => tutorial?.Start());
+            if (tutorial is not null)
+            {
+                mainWindow.AttachTutorial(tutorial);
+            }
             // /UI
         }
         catch (Exception ex)

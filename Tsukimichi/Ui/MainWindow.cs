@@ -34,6 +34,7 @@ public sealed class MainWindow : Window, IDisposable
     public const float RightColumnWidth = 360f;
     public const int MaxChatMatches = 5;
     public const float MinChipStripWidth = 40f;
+    public const int ToolbarButtonCount = 3;
 
     private static readonly TimeSpan SettingsSaveDebounce = TimeSpan.FromSeconds(1);
     private static readonly string[] LoadingDots = ["", ".", "..", "..."];
@@ -55,6 +56,12 @@ public sealed class MainWindow : Window, IDisposable
     // Attached after the game state exists (they need the session); null until then.
     private MoonlitPane? moonlitPane;
     private CharactersPane? charactersPane;
+
+    // Toolbar actions and the tutorial overlay, attached by the plugin once those windows exist.
+    private Action? openSettings;
+    private Action? openHelp;
+    private Action? startTutorial;
+    private ITutorial? tutorial;
 
     private Task? retryTask;
     private bool initialized;
@@ -123,6 +130,26 @@ public sealed class MainWindow : Window, IDisposable
         detailPane.Overrides = overrides ?? throw new ArgumentNullException(nameof(overrides));
     }
 
+    /// <summary>
+    /// Wires the toolbar's Settings, Help and Tutorial buttons. Until this is called the buttons are drawn disabled,
+    /// so the toolbar layout never changes.
+    /// </summary>
+    public void AttachActions(Action openSettings, Action openHelp, Action startTutorial)
+    {
+        this.openSettings = openSettings ?? throw new ArgumentNullException(nameof(openSettings));
+        this.openHelp = openHelp ?? throw new ArgumentNullException(nameof(openHelp));
+        this.startTutorial = startTutorial ?? throw new ArgumentNullException(nameof(startTutorial));
+    }
+
+    /// <summary>
+    /// Attaches the interactive tutorial; it is drawn at the very end of <see cref="Draw"/>, after every pane has
+    /// recorded its region rectangles in <see cref="UiState.Rects"/>.
+    /// </summary>
+    public void AttachTutorial(ITutorial tutorial)
+    {
+        this.tutorial = tutorial ?? throw new ArgumentNullException(nameof(tutorial));
+    }
+
     public override void Draw()
     {
         if (plugin.Session is not { } session)
@@ -159,6 +186,9 @@ public sealed class MainWindow : Window, IDisposable
             persistedSort = ui.Sort;
             settingsDirtyAtUtc ??= now;
         }
+
+        // Last, after every pane recorded its rectangles for this frame.
+        tutorial?.Draw(ui);
     }
 
     /// <summary>
@@ -369,7 +399,9 @@ public sealed class MainWindow : Window, IDisposable
         ImGui.SameLine();
         var glyphSize = ImGui.GetFrameHeight();
         var spacing = ImGui.GetStyle().ItemSpacing.X;
-        var chipsWidth = ImGui.GetContentRegionAvail().X - glyphSize - spacing;
+        // Right block: sync glyph plus three square icon buttons (help, tutorial, settings).
+        var rightWidth = glyphSize * (1 + ToolbarButtonCount) + spacing * ToolbarButtonCount;
+        var chipsWidth = ImGui.GetContentRegionAvail().X - rightWidth - spacing;
         if (chipsWidth > MinChipStripWidth * scale)
         {
             using (var strip = ImRaii.Child("##chips", new Vector2(chipsWidth, glyphSize), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse))
@@ -383,17 +415,42 @@ public sealed class MainWindow : Window, IDisposable
             ImGui.SameLine();
         }
 
-        // Sync glyph, right-aligned.
+        // Sync glyph and the action buttons, right-aligned.
         var avail = ImGui.GetContentRegionAvail().X;
-        if (avail > glyphSize)
+        if (avail > rightWidth)
         {
-            ImGui.SetCursorPosX(ImGui.GetCursorPosX() + avail - glyphSize);
+            ImGui.SetCursorPosX(ImGui.GetCursorPosX() + avail - rightWidth);
         }
 
         MoonGlyph.DrawInline(session.IsLive && session.PollerHealthy ? QuestState.Completed : QuestState.Unknown, glyphSize);
         if (ImGui.IsItemHovered())
         {
             ImGui.SetTooltip(syncTooltip);
+        }
+
+        var buttonSize = new Vector2(glyphSize, glyphSize);
+        ImGui.SameLine();
+        ToolbarButton("##help", FontAwesomeIcon.QuestionCircle, Strings.HelpButtonTooltip, openHelp, buttonSize);
+        ImGui.SameLine();
+        ToolbarButton("##tutorial", FontAwesomeIcon.GraduationCap, Strings.TutorialButtonTooltip, startTutorial, buttonSize);
+        ImGui.SameLine();
+        ToolbarButton("##settings", FontAwesomeIcon.Cog, Strings.SettingsButtonTooltip, openSettings, buttonSize);
+    }
+
+    /// <summary>A square icon button; disabled (with a tooltip saying so) until its action is attached.</summary>
+    private static void ToolbarButton(string id, FontAwesomeIcon icon, string tooltip, Action? action, Vector2 size)
+    {
+        using (ImRaii.Disabled(action is null))
+        {
+            if (ImGuiComponents.IconButton(id, icon, size))
+            {
+                action?.Invoke();
+            }
+        }
+
+        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+        {
+            ImGui.SetTooltip(action is null ? Strings.ActionUnavailable : tooltip);
         }
     }
 

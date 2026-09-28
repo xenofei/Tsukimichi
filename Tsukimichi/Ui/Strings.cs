@@ -38,6 +38,10 @@ public static partial class Strings
     /// <summary>{0} = name, {1} = world.</summary>
     public const string CharacterNameFormat = "{0}@{1}";
     public const string BrowseModeNotice = "No character snapshot: states, next steps and availability are not evaluated.";
+    public const string HelpButtonTooltip = "Help";
+    public const string TutorialButtonTooltip = "Interactive tutorial: a guided walk through the window";
+    public const string SettingsButtonTooltip = "Settings";
+    public const string ActionUnavailable = "Not available yet";
 
     // Status bar: {0} = catalog count, {1} = rows shown, {2} = total in scope, {3} = live/snapshot text, {4} = version.
     public const string StatusFormat = "{0:N0} quests · showing {1:N0} of {2:N0} · {3} · v{4}";
