@@ -24,6 +24,10 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 - Revealing a quest from another pane (Moonlit, Wotsit, chain links) also clears the active preset, so the revealed row is never hidden by it.
 - `/tsukimichi` help text names the `zone` and `which` subcommands.
 
+### Fixed
+- `/tsuki which` printed every quest a prolific NPC hands out; it now stops at ten links and adds "and N more", like `/tsuki zone`.
+- Teleport to the giver could pick the wrong aetheryte for city aetherytes drawn on several maps: the marker came from whichever map page the sheet listed first, so the position was converted with another map's scale and offset. The aetheryte's own map page is used now.
+
 ## [0.2.0] - 2026-09-28
 
 ### Added

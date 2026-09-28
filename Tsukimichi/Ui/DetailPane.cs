@@ -109,6 +109,7 @@ public sealed class DetailPane
     private readonly QueryRunner runner;
     private readonly GameLinks links;
     private readonly ITextureProvider textures;
+    private readonly IPluginLog? log;
 
     private readonly Model model = new() { RowId = uint.MaxValue, Version = -1 };
     private bool pinnedShown;
@@ -131,12 +132,14 @@ public sealed class DetailPane
     private int pathScrollFrames;
     private double pathHighlightUntil;
 
-    public DetailPane(UiState ui, QueryRunner runner, GameLinks links, ITextureProvider textures)
+    /// <param name="log">Receives the chain catalog's warnings once per rebuild; null logs nothing.</param>
+    public DetailPane(UiState ui, QueryRunner runner, GameLinks links, ITextureProvider textures, IPluginLog? log = null)
     {
         this.ui = ui ?? throw new ArgumentNullException(nameof(ui));
         this.runner = runner ?? throw new ArgumentNullException(nameof(runner));
         this.links = links ?? throw new ArgumentNullException(nameof(links));
         this.textures = textures ?? throw new ArgumentNullException(nameof(textures));
+        this.log = log;
     }
 
     /// <summary>The user's unique-reward verdicts; null until the plugin attaches them, which hides the Moonlit section.</summary>
@@ -1000,6 +1003,13 @@ public sealed class DetailPane
         {
             chains = ChainCatalog.Build(bundle.Catalog, session.Curated);
             chainsBundle = bundle;
+            if (log is not null)
+            {
+                foreach (var warning in chains.Warnings)
+                {
+                    log.Warning("Chains: {Warning}", warning);
+                }
+            }
         }
 
         if (chains.ForQuest(rowId) is not { } chain)

@@ -116,48 +116,57 @@ public sealed class AetheryteIndex
     /// Reads the sheets. An aetheryte's position comes from its map marker (MapMarker rows of type 3 carry the
     /// aetheryte id and a pixel position on the 2048-px map image), converted back to raw world units with the Map
     /// row's scale and offset; the Level rows the Aetheryte sheet names are mostly absent from the shipped Level sheet.
-    /// Rows without <c>IsAetheryte</c>, without a territory or without a marker are skipped.
+    /// A city aetheryte is drawn on several maps (its own, the region map, the world map), each page with its own
+    /// scale and offset, so the marker on the page the aetheryte's own Map row names is used; any other page only
+    /// serves rows that name no map. Rows without <c>IsAetheryte</c>, without a territory or without a marker are skipped.
     /// </summary>
     public static AetheryteIndex Build(ExcelModule excel, Language language = Language.None)
     {
         ArgumentNullException.ThrowIfNull(excel);
 
-        // Marker pixel position per aetheryte id; the page that the aetheryte's own map names wins over any other.
-        var markers = new Dictionary<uint, (uint Page, short X, short Y)>();
+        // Marker pixel positions per aetheryte id, one per MapMarker page (a page id is a Map.MapMarkerRange).
+        var markers = new Dictionary<uint, List<(uint Page, short X, short Y)>>();
         foreach (var page in excel.GetSubrowSheet<MapMarker>(language))
         {
             foreach (var marker in page)
             {
-                if (marker.DataType == AetheryteMarkerType && marker.DataKey.RowId != 0 && !markers.ContainsKey(marker.DataKey.RowId))
+                if (marker.DataType != AetheryteMarkerType || marker.DataKey.RowId == 0)
                 {
-                    markers[marker.DataKey.RowId] = (page.RowId, marker.X, marker.Y);
+                    continue;
                 }
+
+                if (!markers.TryGetValue(marker.DataKey.RowId, out var pages))
+                {
+                    pages = [];
+                    markers[marker.DataKey.RowId] = pages;
+                }
+
+                pages.Add((page.RowId, marker.X, marker.Y));
             }
         }
 
         var maps = excel.GetSheet<Map>(language);
+        var mapsByRange = new Dictionary<uint, Map>();
+        foreach (var candidate in maps)
+        {
+            mapsByRange.TryAdd(candidate.MapMarkerRange, candidate);
+        }
+
         var aetherytes = new List<AetheryteInfo>();
         foreach (var row in excel.GetSheet<Aetheryte>(language))
         {
-            if (!row.IsAetheryte || row.Territory.RowId == 0 || !markers.TryGetValue(row.RowId, out var marker))
+            if (!row.IsAetheryte || row.Territory.RowId == 0 || !markers.TryGetValue(row.RowId, out var pages))
             {
                 continue;
             }
 
-            var map = row.Map.RowId != 0 ? maps.GetRowOrDefault(row.Map.RowId) : null;
-            if (map is null && marker.Page != 0)
-            {
-                // The aetheryte row names no map: the marker page is a Map.MapMarkerRange, so find the map that way.
-                foreach (var candidate in maps)
-                {
-                    if (candidate.MapMarkerRange == marker.Page)
-                    {
-                        map = candidate;
-                        break;
-                    }
-                }
-            }
+            var own = row.Map.RowId != 0 ? maps.GetRowOrDefault(row.Map.RowId) : null;
+            var marker = PreferPage(pages, own?.MapMarkerRange ?? 0);
 
+            // Convert with the map the chosen marker belongs to; the aetheryte's own map when its page had no marker.
+            Map? map = own is { } o && o.MapMarkerRange == marker.Page ? o
+                : mapsByRange.TryGetValue(marker.Page, out var byRange) ? byRange
+                : own;
             if (map is not { } m)
             {
                 continue;
@@ -192,6 +201,29 @@ public sealed class AetheryteIndex
 
     /// <summary><c>MapMarker.DataType</c> of an aetheryte marker; <c>DataKey</c> is then the Aetheryte row id.</summary>
     public const byte AetheryteMarkerType = 3;
+
+    /// <summary>
+    /// The marker on <paramref name="preferredPage"/> (the aetheryte's own <c>Map.MapMarkerRange</c>) when one exists,
+    /// otherwise the first marker; page order in the sheet never decides. Pure; exposed for tests.
+    /// </summary>
+    public static (uint Page, short X, short Y) PreferPage(IReadOnlyList<(uint Page, short X, short Y)> markers, uint preferredPage)
+    {
+        ArgumentNullException.ThrowIfNull(markers);
+        if (markers.Count == 0)
+        {
+            throw new ArgumentException("At least one marker is required.", nameof(markers));
+        }
+
+        foreach (var marker in markers)
+        {
+            if (marker.Page == preferredPage)
+            {
+                return marker;
+            }
+        }
+
+        return markers[0];
+    }
 
     /// <summary>
     /// Map-image pixel (0..2048) back to the raw world coordinate, the inverse of the game's

@@ -119,7 +119,7 @@ public sealed class MainWindow : Window, IDisposable
         ui.FiltersChanged += OnFiltersChanged;
         treePane = new TreePane(ui);
         tablePane = new TablePane(ui, runner, links, textures, pluginInterface, log, filterPanel.ResetAll);
-        detailPane = new DetailPane(ui, runner, links, textures);
+        detailPane = new DetailPane(ui, runner, links, textures, log);
 
         version = typeof(Plugin).Assembly.GetName().Version?.ToString(3) ?? "0";
     }

@@ -9,9 +9,10 @@ namespace Tsukimichi.Game;
 /// <summary>
 /// Teleport through Lifestream's IPC (<c>Lifestream.Teleport(uint aetheryteId, byte subIndex) -> bool</c>,
 /// <c>Lifestream.IsBusy() -> bool</c>). <see cref="Available"/> is answered from Dalamud's plugin list, cached and
-/// refreshed whenever the list changes, so the UI can hide the teleport item without an IPC call per frame. Every
-/// call is wrapped: a gate that is not ready or throws reads as unavailable / not busy / failed, and the first
-/// failure is logged once.
+/// refreshed whenever the list changes, so the UI can hide the teleport item without an IPC call per frame;
+/// <see cref="IsBusy"/> is cached for <see cref="IsBusyCacheMs"/> so a per-frame read costs at most a few IPC calls a
+/// second. Every call is wrapped: a gate that is not ready or throws reads as unavailable / not busy / failed, and
+/// the first failure is logged once.
 /// </summary>
 public sealed class LifestreamIpc : IDisposable
 {
@@ -19,12 +20,17 @@ public sealed class LifestreamIpc : IDisposable
     private const string TeleportGate = "Lifestream.Teleport";
     private const string IsBusyGate = "Lifestream.IsBusy";
 
+    /// <summary>How long an <see cref="IsBusy"/> answer is reused before Lifestream is asked again.</summary>
+    public const long IsBusyCacheMs = 250;
+
     private readonly IDalamudPluginInterface pluginInterface;
     private readonly IPluginLog log;
     private readonly ICallGateSubscriber<uint, byte, bool>? teleport;
     private readonly ICallGateSubscriber<bool>? isBusy;
 
     private bool? available;
+    private bool busyCached;
+    private long? busyCheckedAt;
     private bool warned;
 
     public LifestreamIpc(IDalamudPluginInterface pluginInterface, IPluginLog log)
@@ -67,30 +73,47 @@ public sealed class LifestreamIpc : IDisposable
         }
     }
 
-    /// <summary>True while Lifestream is executing a task; false when it is idle or cannot be asked.</summary>
+    /// <summary>
+    /// True while Lifestream is executing a task; false when it is idle or cannot be asked. The answer is cached for
+    /// <see cref="IsBusyCacheMs"/> (by <see cref="Environment.TickCount64"/>) and refreshed on the first read after that.
+    /// </summary>
     public bool IsBusy
     {
         get
         {
             if (!Available || isBusy is null)
             {
+                busyCheckedAt = null;
                 return false;
             }
 
-            try
+            var now = Environment.TickCount64;
+            if (busyCheckedAt is { } checkedAt && now - checkedAt < IsBusyCacheMs)
             {
-                return isBusy.InvokeFunc();
+                return busyCached;
             }
-            catch (IpcNotReadyError)
-            {
-                available = false;
-                return false;
-            }
-            catch (Exception ex)
-            {
-                WarnOnce(ex, "Lifestream.IsBusy failed");
-                return false;
-            }
+
+            busyCached = QueryBusy(isBusy);
+            busyCheckedAt = now;
+            return busyCached;
+        }
+    }
+
+    private bool QueryBusy(ICallGateSubscriber<bool> gate)
+    {
+        try
+        {
+            return gate.InvokeFunc();
+        }
+        catch (IpcNotReadyError)
+        {
+            available = false;
+            return false;
+        }
+        catch (Exception ex)
+        {
+            WarnOnce(ex, "Lifestream.IsBusy failed");
+            return false;
         }
     }
 
@@ -110,6 +133,8 @@ public sealed class LifestreamIpc : IDisposable
                 log.Debug("Lifestream declined teleport to aetheryte {AetheryteId}", aetheryteId);
             }
 
+            // Lifestream is busy from now on; drop the cached idle answer so the next frame sees it.
+            busyCheckedAt = null;
             return accepted;
         }
         catch (IpcNotReadyError)

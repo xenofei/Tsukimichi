@@ -50,7 +50,7 @@ public sealed class DiscoveryCommands(SessionState session, IClientState clientS
         }
     }
 
-    /// <summary>Every quest the targeted NPC issues, each with its state for the viewed character.</summary>
+    /// <summary>Quests the targeted NPC issues, each with its state for the viewed character; capped like <see cref="Zone"/>.</summary>
     public void Which()
     {
         if (session.Bundle is not { } bundle)
@@ -74,10 +74,16 @@ public sealed class DiscoveryCommands(SessionState session, IClientState clientS
             return;
         }
 
-        foreach (var quest in matches)
+        for (var i = 0; i < matches.Count && i < MaxChatMatches; i++)
         {
+            var quest = matches[i];
             var state = session.States.TryGetValue(quest.RowId, out var evaluation) ? evaluation.State : QuestState.Unknown;
             links.PrintQuestLink(quest, Strings.MoonlitStateName(state));
+        }
+
+        if (matches.Count > MaxChatMatches)
+        {
+            links.PrintText(string.Format(CultureInfo.CurrentCulture, Strings.AndMoreFormat, matches.Count - MaxChatMatches));
         }
     }
 }

@@ -24,7 +24,8 @@ public sealed record WotsitEntry(string DisplayName, string SearchText, uint Ico
 /// Registration is batched on the framework thread: each tick registers as many entries as fit in
 /// <see cref="TickBudgetMs"/>, so a few thousand calls never stall a frame, and the total is logged once. The
 /// entries are rebuilt (after an <c>UnregisterAll</c>) whenever the catalog or the Moonlit catalog is a new instance,
-/// and again whenever Wotsit announces itself, since a reloaded Wotsit has forgotten them.
+/// and again whenever Wotsit announces itself, since a reloaded Wotsit has forgotten them. Dalamud's plugin-list
+/// event and Wotsit's messages may arrive off the framework thread, so they only raise flags that the next tick acts on.
 /// </para>
 /// <para>
 /// <see cref="Enabled"/> follows the <c>Configuration.WotsitIntegration</c> setting: the plugin sets it after
@@ -72,6 +73,11 @@ public sealed class WotsitIpc : IDisposable
     private bool wotsitLoaded;
     private bool warned;
     private bool disposed;
+
+    // Raised off the framework thread (ActivePluginsChanged, FA.Available) and consumed at the top of OnUpdate, so
+    // pending/actions are only ever touched on the framework thread.
+    private volatile bool pluginListDirty;
+    private volatile bool wotsitAnnounced;
 
     public WotsitIpc(IDalamudPluginInterface pluginInterface, IFramework framework, IPluginLog log)
     {
@@ -219,7 +225,33 @@ public sealed class WotsitIpc : IDisposable
 
     private void OnUpdate(IFramework _)
     {
-        if (disposed || !enabled || !Available || bundle is null || rewards is null || rewardIcon is null || reveal is null)
+        if (disposed)
+        {
+            return;
+        }
+
+        if (pluginListDirty)
+        {
+            pluginListDirty = false;
+            var loaded = IsWotsitLoaded();
+            if (loaded != wotsitLoaded)
+            {
+                wotsitLoaded = loaded;
+                if (!loaded)
+                {
+                    ResetRegistration();
+                }
+            }
+        }
+
+        if (wotsitAnnounced)
+        {
+            wotsitAnnounced = false;
+            wotsitLoaded = true;
+            ResetRegistration();
+        }
+
+        if (!enabled || !Available || bundle is null || rewards is null || rewardIcon is null || reveal is null)
         {
             return;
         }
@@ -327,25 +359,31 @@ public sealed class WotsitIpc : IDisposable
         }
     }
 
+    /// <summary>Wotsit picked an entry. The guid lookup happens on the framework thread, the only place <see cref="actions"/> is touched.</summary>
     private void OnInvoke(string guid)
     {
-        if (disposed || !actions.TryGetValue(guid, out var action))
+        if (disposed)
         {
             return;
         }
 
         if (framework.IsInFrameworkUpdateThread)
         {
-            Run(action);
+            Run(guid);
         }
         else
         {
-            framework.RunOnFrameworkThread(() => Run(action)).ContinueWith(static t => _ = t.Exception, System.Threading.Tasks.TaskContinuationOptions.OnlyOnFaulted);
+            framework.RunOnFrameworkThread(() => Run(guid)).ContinueWith(static t => _ = t.Exception, System.Threading.Tasks.TaskContinuationOptions.OnlyOnFaulted);
         }
     }
 
-    private void Run(Action action)
+    private void Run(string guid)
     {
+        if (disposed || !actions.TryGetValue(guid, out var action))
+        {
+            return;
+        }
+
         try
         {
             action();
@@ -356,30 +394,18 @@ public sealed class WotsitIpc : IDisposable
         }
     }
 
-    /// <summary>Wotsit (re)loaded: everything must be registered again.</summary>
-    private void OnWotsitAvailable()
+    /// <summary>Wotsit (re)loaded: everything must be registered again. Acted on by the next tick.</summary>
+    private void OnWotsitAvailable() => wotsitAnnounced = true;
+
+    /// <summary>Dalamud's plugin list changed: the next tick re-checks whether Wotsit is loaded.</summary>
+    private void OnActivePluginsChanged(IActivePluginsChangedEventArgs args) => pluginListDirty = true;
+
+    /// <summary>Forgets every registered guid and queues a full rebuild on the next tick (framework thread only).</summary>
+    private void ResetRegistration()
     {
-        wotsitLoaded = true;
         actions.Clear();
         pending = null;
         registered = false;
-    }
-
-    private void OnActivePluginsChanged(IActivePluginsChangedEventArgs args)
-    {
-        var loaded = IsWotsitLoaded();
-        if (loaded == wotsitLoaded)
-        {
-            return;
-        }
-
-        wotsitLoaded = loaded;
-        if (!loaded)
-        {
-            actions.Clear();
-            pending = null;
-            registered = false;
-        }
     }
 
     private bool IsWotsitLoaded()

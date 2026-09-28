@@ -1,3 +1,5 @@
+using Lumina.Data;
+using Lumina.Excel.Sheets;
 using Tsukimichi.GameData;
 using Xunit.Abstractions;
 
@@ -50,6 +52,19 @@ public class AetheryteIndexTests
     }
 
     [Fact]
+    public void Prefer_page_picks_the_own_map_page_regardless_of_sheet_order()
+    {
+        (uint Page, short X, short Y)[] markers = [(299, 10, 20), (276, 30, 40), (300, 50, 60)];
+        Assert.Equal((276u, (short)30, (short)40), AetheryteIndex.PreferPage(markers, 276));
+        Assert.Equal((300u, (short)50, (short)60), AetheryteIndex.PreferPage(markers, 300));
+
+        // No marker on the preferred page (or no own map at all): the first page serves.
+        Assert.Equal((299u, (short)10, (short)20), AetheryteIndex.PreferPage(markers, 1));
+        Assert.Equal((299u, (short)10, (short)20), AetheryteIndex.PreferPage(markers, 0));
+        Assert.Throws<ArgumentException>(() => AetheryteIndex.PreferPage([], 276));
+    }
+
+    [Fact]
     public void From_with_nothing_is_empty()
     {
         Assert.Same(AetheryteIndex.Empty, AetheryteIndex.From([]));
@@ -79,5 +94,47 @@ public class AetheryteIndexGameDataTests(GameDataFixture fixture, ITestOutputHel
         // Old Gridania (133) holds no aetheryte of its own; the TerritoryType row points at Gridania's.
         Assert.Empty(index.InTerritory(133));
         Assert.Equal(2u, index.Nearest(133, 0f, 0f)!.RowId);
+    }
+
+    [GameDataFact]
+    public void Multi_map_city_aetheryte_takes_the_marker_from_its_own_map_page()
+    {
+        var excel = fixture.Game.Excel;
+        var index = AetheryteIndex.Build(excel, Language.English);
+
+        // Kugane (aetheryte 111) stands in territory 628 and carries a type-3 marker on its own map page (Map 370,
+        // range 280) and again on the page of the instanced Kugane map (Map 411, range 300, territory 665). The
+        // index must resolve it to its own territory with the own page's marker converted by the own map's row.
+        var row = excel.GetSheet<Aetheryte>(Language.English).GetRow(111u);
+        Assert.True(row.IsAetheryte);
+        Assert.Equal(628u, row.Territory.RowId);
+        var map = row.Map.Value;
+
+        var pages = new List<uint>();
+        (short X, short Y)? own = null;
+        foreach (var page in excel.GetSubrowSheet<MapMarker>(Language.English))
+        {
+            foreach (var marker in page)
+            {
+                if (marker.DataType == AetheryteIndex.AetheryteMarkerType && marker.DataKey.RowId == 111u)
+                {
+                    pages.Add(page.RowId);
+                    if (page.RowId == map.MapMarkerRange)
+                    {
+                        own = (marker.X, marker.Y);
+                    }
+                }
+            }
+        }
+
+        output.WriteLine($"Kugane: map {row.Map.RowId} (marker range {map.MapMarkerRange}), marker pages [{string.Join(", ", pages)}]");
+        Assert.NotNull(own);
+        Assert.Contains(pages, page => page != map.MapMarkerRange);
+
+        var info = Assert.Single(index.InTerritory(628), a => a.RowId == 111u);
+        Assert.Equal("Kugane", info.Name);
+        Assert.Equal(AetheryteIndex.ToRaw(own.Value.X, map.OffsetX, map.SizeFactor), info.X);
+        Assert.Equal(AetheryteIndex.ToRaw(own.Value.Y, map.OffsetY, map.SizeFactor), info.Z);
+        Assert.DoesNotContain(index.InTerritory(665), a => a.RowId == 111u);
     }
 }

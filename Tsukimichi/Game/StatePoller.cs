@@ -73,6 +73,7 @@ public sealed class StatePoller : IDisposable
         this.config = config ?? throw new ArgumentNullException(nameof(config));
 
         snapshots.LoggingOut += OnLoggingOut;
+        session.CharacterForgotten += OnCharacterForgotten;
         framework.Update += OnUpdate;
     }
 
@@ -147,6 +148,7 @@ public sealed class StatePoller : IDisposable
         disposed = true;
         framework.Update -= OnUpdate;
         snapshots.LoggingOut -= OnLoggingOut;
+        session.CharacterForgotten -= OnCharacterForgotten;
         Flush();
     }
 
@@ -247,6 +249,12 @@ public sealed class StatePoller : IDisposable
 
         if (firstPass)
         {
+            if (last is not null && last.ContentId != snapshot.ContentId)
+            {
+                // Another character arrived without a not-ready gap in between: persist the previous one before dropping it.
+                Flush();
+            }
+
             Reset();
             resolved = StateResolver.ResolveAll(catalog, snapshot, context);
             log.Debug("First evaluation for {Name} ({ContentId}): {Count} quests", snapshot.Name, snapshot.ContentId, resolved.Count);
@@ -369,6 +377,18 @@ public sealed class StatePoller : IDisposable
         }
 
         Flush();
+    }
+
+    /// <summary>
+    /// Forgetting the live character deletes its accepted-time sidecar while the times stay in memory here; marking
+    /// them dirty writes the file again on the next flush, so the two do not drift apart.
+    /// </summary>
+    private void OnCharacterForgotten(ulong contentId)
+    {
+        if (!disposed && last is { } snapshot && snapshot.ContentId == contentId)
+        {
+            acceptedSinceDirty = true;
+        }
     }
 
     private void Reset()
