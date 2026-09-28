@@ -11,8 +11,8 @@ namespace Tsukimichi.Ui;
 /// <summary>
 /// Every pixel size the main window's panes use, derived once per frame from Dalamud's global scale and the user's
 /// UI and icon scales (<see cref="Configuration.UiScale"/>, <see cref="Configuration.IconScale"/>, arithmetic in
-/// <see cref="ScaleMetrics"/>). <see cref="Update"/> runs at the top of <c>MainWindow.Draw</c>; the values default
-/// to plain global scale before that.
+/// <see cref="ScaleMetrics"/>). <see cref="Update"/> runs once per frame before the window system draws (and again
+/// at the top of <c>MainWindow.Draw</c>); the values default to plain global scale before that.
 ///
 /// Font scale: ImGui multiplies a window's own font scale by its parent's, so <see cref="ApplyFontScale"/> belongs
 /// only in windows whose parent is not already scaled: the main window itself, tooltips (no parent), popups opened
@@ -79,14 +79,20 @@ public static class UiMetrics
 
     // Layout.
     public static float ChipHeight => ImGui.GetFrameHeight();
-    public static float LeftColumnWidth => Px(240f);
-    public static float RightColumnWidth => Px(360f);
+    public static float LeftColumnWidth => Px(ScaleMetrics.LeftColumnLogical);
+    public static float RightColumnWidth => Px(ScaleMetrics.RightColumnLogical);
     public static float SearchWidth => Px(280f);
     public static float CharacterComboWidth => Px(240f);
     public static float MinChipStripWidth => Px(40f);
     public static float MinBodyHeight => Px(120f);
     public static float Stripe => MathF.Max(1f, Px(2f));
     public static float Hairline => MathF.Max(1f, Px(1f));
+
+    /// <summary>
+    /// Smallest side of a click target (icon buttons, the search clear, chip close targets): Px(26), never under
+    /// 24 px, so UiScale 0.9 keeps the WCAG 2.5.8 minimum. Tree chevrons keep TreeNodeEx's arrow slot instead.
+    /// </summary>
+    public static float MinTarget => MathF.Max(Px(26f), 24f);
 
     /// <summary>A plain text tooltip drawn with the window's font scale (SetTooltip cannot be scaled).</summary>
     public static void Tooltip(string text)

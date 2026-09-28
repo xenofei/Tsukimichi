@@ -1,3 +1,4 @@
+using System.Numerics;
 using Tsukimichi.Core.Ui;
 
 namespace Tsukimichi.Tests.Ui;
@@ -98,5 +99,85 @@ public class ScaleMetricsTests
         var icon = ScaleMetrics.IconFactor(1f, ScaleMetrics.DefaultUiScale, ScaleMetrics.DefaultIconScale);
         Assert.InRange(RowGlyphLogical * icon / OldRowGlyphRadius, 1.15f, 1.35f);
         Assert.InRange(RowIconLogical * icon / OldRowIconSize, 1.15f, 1.35f);
+    }
+
+    [Fact]
+    public void Min_window_size_at_scale_one_is_the_side_columns_plus_the_centre_floor()
+    {
+        var size = ScaleMetrics.MinWindowSize(1f);
+        Assert.Equal(240f + 360f + 200f, size.X);
+        Assert.Equal(500f, size.Y);
+    }
+
+    [Theory]
+    [InlineData(0.9f)]
+    [InlineData(1.15f)]
+    [InlineData(1.6f)]
+    public void Min_window_size_leaves_the_centre_column_its_floor_at_every_ui_scale(float uiScale)
+    {
+        var size = ScaleMetrics.MinWindowSize(uiScale);
+        var columns = (ScaleMetrics.LeftColumnLogical + ScaleMetrics.RightColumnLogical) * uiScale;
+        Assert.Equal(ScaleMetrics.CentreFloorLogical * uiScale, size.X - columns, 3);
+        Assert.Equal(ScaleMetrics.MinWindowHeightLogical * uiScale, size.Y, 3);
+    }
+
+    [Fact]
+    public void Min_window_size_clamps_the_ui_scale_like_everything_else()
+    {
+        Assert.Equal(ScaleMetrics.MinWindowSize(ScaleMetrics.MaxUiScale), ScaleMetrics.MinWindowSize(9f));
+        Assert.Equal(ScaleMetrics.MinWindowSize(ScaleMetrics.DefaultUiScale), ScaleMetrics.MinWindowSize(float.NaN));
+    }
+
+    [Fact]
+    public void Center_crop_of_a_matching_aspect_shows_the_whole_image()
+    {
+        var (uv0, uv1) = ScaleMetrics.CenterCropUv(400f, 200f, 800f, 400f);
+        Assert.Equal(Vector2.Zero, uv0);
+        Assert.Equal(Vector2.One, uv1);
+    }
+
+    [Fact]
+    public void Center_crop_of_a_taller_image_trims_top_and_bottom_evenly()
+    {
+        // A 2:1 image in a 4:1 box shows the middle half of its height.
+        var (uv0, uv1) = ScaleMetrics.CenterCropUv(400f, 100f, 800f, 400f);
+        Assert.Equal(0f, uv0.X);
+        Assert.Equal(1f, uv1.X);
+        Assert.Equal(0.25f, uv0.Y, 5);
+        Assert.Equal(0.75f, uv1.Y, 5);
+    }
+
+    [Fact]
+    public void Center_crop_of_a_wider_image_trims_the_sides_evenly()
+    {
+        // A 4:1 image in a 2:1 box shows the middle half of its width.
+        var (uv0, uv1) = ScaleMetrics.CenterCropUv(400f, 200f, 800f, 200f);
+        Assert.Equal(0.25f, uv0.X, 5);
+        Assert.Equal(0.75f, uv1.X, 5);
+        Assert.Equal(0f, uv0.Y);
+        Assert.Equal(1f, uv1.Y);
+    }
+
+    [Fact]
+    public void Center_crop_keeps_the_aspect_for_the_banner_case()
+    {
+        // The right column at Px(344) with the Px(200) height clamp on a 1024x384 journal banner.
+        var (uv0, uv1) = ScaleMetrics.CenterCropUv(344f, 200f, 1024f, 384f);
+        var shownWidth = (uv1.X - uv0.X) * 1024f;
+        var shownHeight = (uv1.Y - uv0.Y) * 384f;
+        Assert.Equal(344f / 200f, shownWidth / shownHeight, 3);
+        Assert.Equal(uv0.X, 1f - uv1.X, 5);
+        Assert.Equal(uv0.Y, 1f - uv1.Y, 5);
+    }
+
+    [Theory]
+    [InlineData(0f, 100f, 100f, 100f)]
+    [InlineData(100f, 100f, 0f, 100f)]
+    [InlineData(100f, 100f, 100f, float.NaN)]
+    public void Center_crop_with_a_degenerate_size_shows_the_whole_image(float boxW, float boxH, float texW, float texH)
+    {
+        var (uv0, uv1) = ScaleMetrics.CenterCropUv(boxW, boxH, texW, texH);
+        Assert.Equal(Vector2.Zero, uv0);
+        Assert.Equal(Vector2.One, uv1);
     }
 }

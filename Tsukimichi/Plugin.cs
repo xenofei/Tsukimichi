@@ -188,6 +188,15 @@ public sealed class Plugin : IDalamudPlugin
     }
 
     /// <summary>Remembers an explicit character choice across sessions; following the live character stores null.</summary>
+    /// <summary>Once per frame, before the window system draws: the scale factors every window reads.</summary>
+    private void UpdateUiMetrics()
+    {
+        if (Settings is { } settings)
+        {
+            Ui.UiMetrics.Update(settings);
+        }
+    }
+
     private void PersistViewedCharacter()
     {
         var explicitId = Session.IsFollowingLive ? null : Session.ViewedContentId;
@@ -256,6 +265,9 @@ public sealed class Plugin : IDalamudPlugin
             queryRunner = new QueryRunner(this, ui, Log);
             mainWindow = new MainWindow(this, ui, queryRunner, gameLinks, TextureProvider, PluginInterface, Log, RetryCatalogAsync);
             windowSystem.AddWindow(mainWindow);
+            // Subscribed before the window system so every window (the todo overlay and Nearby too) draws with
+            // this frame's scale factors.
+            PluginInterface.UiBuilder.Draw += UpdateUiMetrics;
             PluginInterface.UiBuilder.Draw += windowSystem.Draw;
             PluginInterface.UiBuilder.OpenMainUi += mainWindow.Toggle;
 
@@ -415,6 +427,7 @@ public sealed class Plugin : IDalamudPlugin
         itemHooks?.Dispose();
         PluginInterface.UiBuilder.OpenMainUi -= mainWindow.Toggle;
         PluginInterface.UiBuilder.Draw -= windowSystem.Draw;
+        PluginInterface.UiBuilder.Draw -= UpdateUiMetrics;
         windowSystem.RemoveAllWindows();
         todoOverlay?.Dispose();
         dtrEntry?.Dispose();
@@ -460,6 +473,7 @@ public sealed class Plugin : IDalamudPlugin
             }
 
             PluginInterface.UiBuilder.Draw -= windowSystem.Draw;
+            PluginInterface.UiBuilder.Draw -= UpdateUiMetrics;
             windowSystem.RemoveAllWindows();
         });
         Unwind("item hooks", () => itemHooks?.Dispose());
