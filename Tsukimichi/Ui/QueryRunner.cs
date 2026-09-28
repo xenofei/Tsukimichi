@@ -365,7 +365,8 @@ public sealed class QueryRunner : IDisposable
             AcceptedSince: session.AcceptedSince,
             NowUtc: nowUtc,
             CurrentLevel: CurrentLevel(snapshot),
-            StalledDays: plugin.Settings.StalledDaysClamped);
+            StalledDays: plugin.Settings.StalledDaysClamped,
+            Names: session.Names);
 
         // The Unlocks quick view reads best with what can be picked up now on top; the other presets keep the table's sort.
         var effectiveSort = ui.Sort with { AvailableFirst = ui.Filters.Preset == Preset.FeatureQuests };

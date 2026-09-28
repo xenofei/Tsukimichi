@@ -842,7 +842,7 @@ public sealed class DetailPane
         model.HasSnapshot = snapshot is not null;
         session.States.TryGetValue(rowId, out var evaluation);
         model.State = evaluation?.State ?? QuestState.Unknown;
-        model.StateText = Strings.StateName(model.State, quest);
+        model.StateText = BlockerText.StatusText(evaluation, quest, session.Names, session.States);
         model.HasUniqueEntries = HasShippedUniqueEntry(session.UniqueRewards, rowId);
 
         model.JournalPath = string.Format(CultureInfo.CurrentCulture, Strings.JournalPathFormat, quest.Journal.GenreName, quest.Journal.CategoryName);
@@ -856,13 +856,11 @@ public sealed class DetailPane
 
         if (evaluation is not null)
         {
+            // The status line already carries the step ("In journal · step 3 of 7") and the blocker; only the job
+            // that can take the quest is a note beside it.
             if (evaluation.ReadyOnJob is { } job)
             {
                 model.StateNote = string.Format(CultureInfo.CurrentCulture, Strings.ReadyOnJobFormat, bundle.Names.ClassJobAbbreviation(job));
-            }
-            else if (evaluation.Sequence is { } sequence)
-            {
-                model.StateNote = string.Format(CultureInfo.CurrentCulture, Strings.AcceptedSequenceFormat, sequence);
             }
 
             foreach (var result in evaluation.Requirements)

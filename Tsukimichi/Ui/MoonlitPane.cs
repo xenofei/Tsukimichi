@@ -8,6 +8,7 @@ using Dalamud.Interface.Textures;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
 using Lumina.Excel.Sheets;
+using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Storage;
@@ -485,7 +486,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         MoonGlyph.DrawInline(state, UiMetrics.InlineGlyphSize(line));
         if (ImGui.IsItemHovered())
         {
-            UiMetrics.Tooltip(Strings.StateWithReason(state, evaluation, row.Quest));
+            UiMetrics.Tooltip(row.Quest is { } tooltipQuest ? BlockerText.StatusText(evaluation, tooltipQuest, session.Names, session.States) : Strings.StateName(state));
         }
 
         // Confidence badge with the source on hover.

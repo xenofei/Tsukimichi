@@ -5,6 +5,7 @@ using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Plugin.Services;
 using Tsukimichi.Config;
+using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Jobs;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Runtime;
@@ -162,7 +163,17 @@ public sealed class ChatNotifier : IDisposable
 
                 tracker.MarkJobNudged(nudge.RowId);
                 var prefix = string.Format(CultureInfo.CurrentCulture, Strings.JobsNudgePrefixFormat, nudge.Level, DisplayName(nudge.Job.Name));
-                Print(prefix, quest, Strings.JobsNudgeSuffix);
+
+                // "[quest] is available", or, when the level was the only thing this level-up settled, the one blocker
+                // left ("[quest] · after MSQ: The Vault"), so the player learns why no quest appeared.
+                var suffix = Strings.JobsNudgeSuffix;
+                if (nudge.State == QuestState.Blocked && session.LiveStates.TryGetValue(nudge.RowId, out var evaluation))
+                {
+                    var blocker = BlockerText.For(evaluation, quest, session.Names, session.LiveStates);
+                    suffix = blocker.Length > 0 ? Strings.StateReasonSeparator + blocker : Strings.JobsNudgeBlockedSuffix;
+                }
+
+                Print(prefix, quest, suffix);
             }
         }
 
