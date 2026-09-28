@@ -229,7 +229,7 @@ public sealed class SessionState
         CatalogLoading = false;
         Index = ReversePrereqIndex.Build(bundle.Catalog);
         FeatureQuestIds = FeaturePresets.Derive(bundle.Catalog, Curated, UniqueRewards.Entries);
-        baseContext = EvalContext.Default with { ClassJobs = bundle.Jobs };
+        baseContext = EvalContextBuilder.Build(Curated.Festivals, bundle.Jobs, static () => DateTime.UtcNow);
 
         if (ViewedSnapshot is { } viewed && !IsLive)
         {
@@ -318,7 +318,7 @@ public sealed class SessionState
         Bump();
     }
 
-    /// <summary>The base context for stored characters: category lookup from the bundle, no daily offer.</summary>
+    /// <summary>The context every character is resolved with: category lookup from the bundle and curated festival ends; the daily offer stays unknown.</summary>
     internal EvalContext BaseContext => baseContext;
 
     /// <summary>Where the snapshots and their sidecars live, for the poller.</summary>
