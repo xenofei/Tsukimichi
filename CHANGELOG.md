@@ -4,6 +4,9 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+### Added
+- `tools/Tsukimichi.Verify`: a standalone console (not part of the plugin, never run in CI) that checks every named quest against the Lodestone Eorzea Database, the consolegameswiki quest page and, for curated duty unlocks, Garland Tools, and every shipped unique reward against the FFXIV Collect dumps or the wiki item page. It fetches politely (identifying User-Agent, robots.txt, one request every two seconds per host, backoff, a permanent cache outside the repository), resumes from the cache, and writes `docs/data/quest-verification.csv`, `quest-verification-summary.csv`, `reward-verification.csv`, `verification-full.md`, `verification-allowlist.json`, `verification-manifest.json` and a `festival-end-dates.json` seed. `Tsukimichi.Verify summary` exits non-zero when a row is unresolved or catalogWrong outside the allowlist.
+
 ## [0.5.1] - 2026-09-28
 
 ### Added
