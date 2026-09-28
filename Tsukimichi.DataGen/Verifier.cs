@@ -508,6 +508,16 @@ internal sealed class Verifier
             entries.Count(e => e is { Kind: RewardKind.DutyUnlock, RewardId: 4 } && e.QuestRowId is 65781 or 66211) == 2,
             Join(entries.Where(e => e is { Kind: RewardKind.DutyUnlock, RewardId: 4 })));
 
+        // Curated fix (docs/data/verification-report-2.md section 2 row 5): Asphodelos: The First Circle is unlocked by
+        // Where Familiars Dare (70012), not by the chain's first quest The Crystal from Beyond (70011).
+        var asphodelos = entries.Where(e => e is { Kind: RewardKind.DutyUnlock, RewardId: 808 }).ToList();
+        Check("Asphodelos: The First Circle (CFC 808) is a DutyUnlock of Where Familiars Dare (70012)",
+            asphodelos.Any(e => e.QuestRowId == 70012 && e.Confidence == Confidence.Curated),
+            Join(asphodelos));
+        Check("The Crystal from Beyond (70011) has no DutyUnlock 808",
+            asphodelos.All(e => e.QuestRowId != 70011),
+            Join(entries.Where(e => e.QuestRowId == 70011)));
+
         md.AppendLine();
         md.AppendLine("Ye Olde Faux Hollows: skipped (unsure of the expected entry).");
         md.AppendLine();

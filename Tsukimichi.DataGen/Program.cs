@@ -273,6 +273,10 @@ public static class Program
             "every entry except SystemUnlock should carry a reward id");
         Require(entries.Any(e => e is { QuestRowId: 69254, Kind: RewardKind.Orchestrion, RewardId: 350, ItemId: 28894 }),
             "69254 On the Threshold should yield Orchestrion 350 (Significance (Nothing), via item 28894 AdditionalData)");
+        Require(entries.Any(e => e is { QuestRowId: 70012, Kind: RewardKind.DutyUnlock, RewardId: 808 }),
+            "70012 Where Familiars Dare should yield DutyUnlock 808 (Asphodelos: The First Circle, curated)");
+        Require(!entries.Any(e => e is { QuestRowId: 70011, Kind: RewardKind.DutyUnlock, RewardId: 808 }),
+            "70011 The Crystal from Beyond must not yield DutyUnlock 808 (it only starts the chain; verification-report-2 row 5)");
 
         var mounts = entries.Count(e => e.Kind == RewardKind.Mount);
         var minions = entries.Count(e => e.Kind == RewardKind.Minion);

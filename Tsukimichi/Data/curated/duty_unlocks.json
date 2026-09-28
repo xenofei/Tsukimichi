@@ -162,11 +162,12 @@
     ],
     "note": "Ifrit Ain't Broke -> the Bowl of Embers (Extreme); objective territory matches CFC 63."
   },
-  "70011": {
+  "70012": {
     "contentFinderConditionIds": [
       808
     ],
-    "note": "The Crystal from Beyond -> Asphodelos: The First Circle (Pandaemonium raid series entry); not a relic quest."
+    "note": "Where Familiars Dare -> Asphodelos: The First Circle (Pandaemonium raid series entry). Not 70011 The Crystal from Beyond, which only starts the chain: wiki req-quest on the duty page and Garland instance 30111 on quest 70012.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Where_Familiars_Dare ; https://www.garlandtools.org/db/doc/quest/en/2/70012.json"
   },
   "70057": {
     "contentFinderConditionIds": [

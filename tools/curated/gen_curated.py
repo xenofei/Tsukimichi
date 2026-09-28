@@ -116,7 +116,7 @@ d(66733, [63], "Ifrit Ain't Broke -> the Bowl of Embers (Extreme); objective ter
 d(66732, [64], "Quake Me Up Before You O'Ghomoro -> the Navel (Extreme); objective territory matches CFC 64.")
 d(66731, [65], "Gale-force Warning -> the Howling Eye (Extreme); objective territory matches CFC 65.")
 d(65905, [84], "An Uninvited Ascian -> the Chrysalis (2.4 MSQ); objective territory matches CFC 84.")
-d(70011, [808], "The Crystal from Beyond -> Asphodelos: The First Circle (Pandaemonium raid series entry); not a relic quest.")
+d(70012, [808], "Where Familiars Dare -> Asphodelos: The First Circle (Pandaemonium raid series entry). Not 70011 The Crystal from Beyond, which only starts the chain: wiki req-quest on the duty page and Garland instance 30111 on quest 70012.")
 # Dawntrail MSQ dungeons (objective territory matches)
 d(70415, [826], "For All Turali -> Ihuykatumu; objective territory 1167 matches CFC 826.")
 d(70427, [824], "The High Luminary -> Worqor Zormor; objective territory 1193 matches CFC 824.")
