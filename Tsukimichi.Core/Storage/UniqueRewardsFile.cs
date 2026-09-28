@@ -25,11 +25,13 @@ public sealed record UniqueRewardsData(string GameVersion, DateTime GeneratedUtc
 ///   "generatedUtc": "2026-09-27T08:00:00Z",
 ///   "entries": [
 ///     { "questRowId": 66038, "kind": "Emote", "rewardId": 114, "itemId": 0,
-///       "rewardName": "Most Gentlemanly", "confidence": "Static", "source": "Quest.EmoteReward" }
+///       "rewardName": "Most Gentlemanly", "confidence": "Static", "source": "Quest.EmoteReward",
+///       "otherSources": [] }
 ///   ]
 /// }
 /// </code>
-/// Enums are serialized as their names.
+/// Enums are serialized as their names. <c>otherSources</c> lists <see cref="OtherSource"/> names and may be absent
+/// in files written before it existed (read as empty).
 /// </summary>
 public static class UniqueRewardsFile
 {
@@ -133,7 +135,34 @@ public static class UniqueRewardsFile
         {
             RewardName = DisplayName(entry.Kind, entry.RewardName),
             Source = entry.Source ?? string.Empty,
+            OtherSources = CleanOtherSources(entry.OtherSources),
         };
+    }
+
+    /// <summary>Drops null or blank names; files older than the field load as empty through the record's own default.</summary>
+    private static IReadOnlyList<string> CleanOtherSources(IReadOnlyList<string> sources)
+    {
+        var clean = true;
+        for (var i = 0; i < sources.Count && clean; i++)
+        {
+            clean = !string.IsNullOrWhiteSpace(sources[i]);
+        }
+
+        if (clean)
+        {
+            return sources;
+        }
+
+        var kept = new List<string>(sources.Count);
+        foreach (var source in sources)
+        {
+            if (!string.IsNullOrWhiteSpace(source))
+            {
+                kept.Add(source);
+            }
+        }
+
+        return kept;
     }
 
     /// <summary>Mount, minion, ornament and job names come from their sheets in lower case; they are title-cased at load.</summary>

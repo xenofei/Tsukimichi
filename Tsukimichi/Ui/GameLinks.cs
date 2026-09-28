@@ -27,6 +27,12 @@ public sealed class GameLinks(IGameGui gameGui, IChatGui chat, IDataManager data
     /// <summary>Lifestream's IPC, attached by the plugin; null (no teleport) until then.</summary>
     public LifestreamIpc? Lifestream { get; set; }
 
+    /// <summary>
+    /// Whether the FFXIV Online Store also sells a reward (the session's <see cref="Core.Unique.StoreResells"/>), attached
+    /// by the plugin so <see cref="RewardTooltip"/> can say "Store only"; null (never) until then.
+    /// </summary>
+    public Func<RewardRef, bool>? IsStoreResell { get; set; }
+
     /// <summary>Teleportable aetherytes by territory, read from the sheets on first use; empty when the read fails.</summary>
     public AetheryteIndex Aetherytes
     {

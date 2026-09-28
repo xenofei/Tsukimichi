@@ -7,6 +7,7 @@ using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Runtime;
 using Tsukimichi.Core.Storage;
+using Tsukimichi.Core.Unique;
 using Tsukimichi.GameData;
 using AcceptedSinceFile = Tsukimichi.Core.Runtime.AcceptedSince;
 
@@ -42,6 +43,7 @@ public sealed class SessionState
         this.paths = paths ?? throw new ArgumentNullException(nameof(paths));
         UniqueRewards = uniqueRewards ?? throw new ArgumentNullException(nameof(uniqueRewards));
         Curated = curated ?? throw new ArgumentNullException(nameof(curated));
+        StoreResells = StoreResells.Build(UniqueRewards.Entries);
         snapshots.CharactersChanged += Bump;
     }
 
@@ -111,6 +113,9 @@ public sealed class SessionState
     public UniqueRewardsData UniqueRewards { get; }
 
     public CuratedData Curated { get; }
+
+    /// <summary>Rewards the FFXIV Online Store also sells, from the shipped entries' <c>otherSources</c>; the reward tooltip reads it.</summary>
+    public StoreResells StoreResells { get; }
 
     /// <summary>
     /// Row ids of the feature ("blue") quests, derived once per catalog by <see cref="FeaturePresets.Derive"/> from the

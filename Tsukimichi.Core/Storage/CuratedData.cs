@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Tsukimichi.Core.Model;
 
 namespace Tsukimichi.Core.Storage;
 
@@ -16,17 +17,26 @@ public sealed record FestivalInfo(string Name, DateTime? Start, DateTime? End, b
 public sealed record CuratedChain(string Name, IReadOnlyList<uint> GenreIds, string? Note);
 
 /// <summary>
+/// A quest reward that the FFXIV Online Store also sells, from <c>curated/online_store.json</c>. The file is keyed by
+/// the store item's row id; <paramref name="Kind"/> and <paramref name="RewardId"/> name the collectible that item
+/// unlocks, so a reward a quest grants directly (an emote with no item) still matches.
+/// </summary>
+public sealed record OnlineStoreItem(string Name, RewardKind Kind, uint RewardId, string Evidence, string? Note);
+
+/// <summary>
 /// Hand-maintained overlays shipped in the plugin's <c>curated/</c> directory. Every file is optional and every entry
 /// is validated on its own, so one bad line never hides the rest. Shapes (object keys are row ids as strings; keys
 /// starting with <c>$</c>, such as <c>$schema_note</c>, are comments and ignored everywhere):
 /// <code>
 /// system_unlocks.json  { "66038": { "label": "Glamour Dresser", "kind": "system", "note": "..." } }
 /// duty_unlocks.json    { "66038": [ 4, 5 ] }  or  { "66038": { "contentFinderConditionIds": [ 4, 5 ], "note": "..." } }
-/// feature_quests.json  [ 66038, 66039 ]  or  { "questRowIds": [ 66038, 66039 ], "note": "..." }
+/// feature_quests.json  [ 66038, 66039 ]  or  { "questRowIds": [ 66038, 66039 ], "note": "..." }   (written by DataGen, not by hand)
 /// festivals.json       { "1": { "name": "Starlight Celebration", "start": "2025-12-15T08:00:00Z", "end": "...", "mogStation": false } }
 ///                      or  { "entries": { "1": { ... } } }
 /// chains.json          { "chains": [ { "name": "Hildibrand", "genreIds": [ 93, 94 ], "note": "..." } ] }
+/// online_store.json    { "schema": 1, "note": "...", "entries": { "22437": { "name": "Starlight Bear", "kind": "Mount", "rewardId": 99, "evidence": "https://...", "note": "..." } } }
 /// </code>
+/// Every file must be strict JSON (no comments, no trailing commas), as the curated README requires.
 /// </summary>
 public sealed class CuratedData
 {
@@ -35,6 +45,7 @@ public sealed class CuratedData
     public const string FeatureQuestsFileName = "feature_quests.json";
     public const string FestivalsFileName = "festivals.json";
     public const string ChainsFileName = "chains.json";
+    public const string OnlineStoreFileName = "online_store.json";
 
     private const string DefaultSystemKind = "system";
 
@@ -47,12 +58,20 @@ public sealed class CuratedData
     /// <summary>Object keys starting with this are comments (<c>$schema_note</c>) and never entries.</summary>
     private const char CommentKeyPrefix = '$';
 
+    /// <summary>The parse options every curated file must satisfy: no comments, no trailing commas.</summary>
+    public static readonly JsonDocumentOptions StrictOptions = new()
+    {
+        CommentHandling = JsonCommentHandling.Disallow,
+        AllowTrailingCommas = false,
+    };
+
     private CuratedData(
         IReadOnlyDictionary<uint, SystemUnlock> systemUnlocks,
         IReadOnlyDictionary<uint, DutyUnlock> dutyUnlocks,
         IReadOnlySet<uint> featureQuests,
         IReadOnlyDictionary<ushort, FestivalInfo> festivals,
         IReadOnlyList<CuratedChain> chains,
+        IReadOnlyDictionary<uint, OnlineStoreItem> onlineStore,
         IReadOnlyList<string> warnings)
     {
         SystemUnlocks = systemUnlocks;
@@ -60,6 +79,7 @@ public sealed class CuratedData
         FeatureQuests = featureQuests;
         Festivals = festivals;
         Chains = chains;
+        OnlineStore = onlineStore;
         Warnings = warnings;
     }
 
@@ -69,6 +89,7 @@ public sealed class CuratedData
         new HashSet<uint>(),
         new Dictionary<ushort, FestivalInfo>(),
         [],
+        new Dictionary<uint, OnlineStoreItem>(),
         []);
 
     public IReadOnlyDictionary<uint, SystemUnlock> SystemUnlocks { get; }
@@ -79,8 +100,18 @@ public sealed class CuratedData
     /// <summary>Named chains in file order; genre ids are not checked against the catalog here.</summary>
     public IReadOnlyList<CuratedChain> Chains { get; }
 
+    /// <summary>Rewards the Online Store also sells, by store item row id.</summary>
+    public IReadOnlyDictionary<uint, OnlineStoreItem> OnlineStore { get; }
+
     /// <summary>One line per skipped entry or unreadable file, for the caller to log once.</summary>
     public IReadOnlyList<string> Warnings { get; }
+
+    /// <summary>
+    /// The same data with <see cref="FeatureQuests"/> empty: what DataGen derives <c>feature_quests.json</c> from and
+    /// what the invariants test compares the shipped file against, so the file never feeds its own derivation.
+    /// </summary>
+    public CuratedData WithoutFeatureQuests() =>
+        FeatureQuests.Count == 0 ? this : new CuratedData(SystemUnlocks, DutyUnlocks, new HashSet<uint>(), Festivals, Chains, OnlineStore, Warnings);
 
     /// <summary>Loads every curated file under <paramref name="dir"/>. A missing directory or file yields empty collections.</summary>
     public static CuratedData Load(string dir)
@@ -97,6 +128,7 @@ public sealed class CuratedData
         var featureQuests = new HashSet<uint>();
         var festivals = new Dictionary<ushort, FestivalInfo>();
         var chains = new List<CuratedChain>();
+        var onlineStore = new Dictionary<uint, OnlineStoreItem>();
 
         ForEachEntry(Path.Combine(dir, SystemUnlocksFileName), warnings, (key, node, warn) =>
         {
@@ -230,7 +262,51 @@ public sealed class CuratedData
 
         LoadChains(Path.Combine(dir, ChainsFileName), chains, warnings);
 
-        return new CuratedData(systemUnlocks, dutyUnlocks, featureQuests, festivals, chains, warnings);
+        ForEachEntry(Path.Combine(dir, OnlineStoreFileName), warnings, (key, node, warn) =>
+        {
+            if (!StorageJson.TryParseKey(key, out uint itemId) || itemId == 0)
+            {
+                warn("key is not an item row id");
+                return;
+            }
+
+            if (node is not JsonObject obj)
+            {
+                warn("value is not an object");
+                return;
+            }
+
+            var name = StorageJson.ReadString(obj, "name");
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                warn("name is missing");
+                return;
+            }
+
+            var kindText = StorageJson.ReadString(obj, "kind");
+            if (kindText is null || !Enum.TryParse<RewardKind>(kindText, ignoreCase: false, out var kind) || !Enum.IsDefined(kind))
+            {
+                warn($"kind '{kindText}' is not a RewardKind");
+                return;
+            }
+
+            if (!obj.TryGetPropertyValue("rewardId", out var rewardNode) || !StorageJson.TryReadId(rewardNode, out var rewardId) || rewardId == 0)
+            {
+                warn("rewardId is not a positive integer");
+                return;
+            }
+
+            var evidence = StorageJson.ReadString(obj, "evidence");
+            if (string.IsNullOrWhiteSpace(evidence))
+            {
+                warn("evidence is missing");
+                return;
+            }
+
+            onlineStore[itemId] = new OnlineStoreItem(name.Trim(), kind, rewardId, evidence.Trim(), StorageJson.ReadString(obj, "note"));
+        });
+
+        return new CuratedData(systemUnlocks, dutyUnlocks, featureQuests, festivals, chains, onlineStore, warnings);
     }
 
     /// <summary>
@@ -402,11 +478,8 @@ public sealed class CuratedData
 
         try
         {
-            return JsonNode.Parse(text, documentOptions: new JsonDocumentOptions
-            {
-                CommentHandling = JsonCommentHandling.Skip,
-                AllowTrailingCommas = true,
-            }) ?? throw new JsonException("file is empty");
+            // Strict, as the curated README promises: a comment or a trailing comma is a parse error, not a tolerance.
+            return JsonNode.Parse(text, documentOptions: StrictOptions) ?? throw new JsonException("file is empty");
         }
         catch (JsonException ex)
         {

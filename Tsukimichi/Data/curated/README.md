@@ -12,9 +12,10 @@ directory (design spec section 6).
 | --- | --- | --- |
 | `system_unlocks.json` | `{ "<questRowId>": { "label", "kind": "system", "note" } }` | Quests that unlock a game system or feature (retainers, chocobo companion, Gold Saucer, glamour, custom deliveries, deep dungeons, ...). Nothing in the sheets ties these quests to the feature they gate. |
 | `duty_unlocks.json` | `{ "<questRowId>": { "contentFinderConditionIds": [..], "note" } }` | Quests whose script unlocks a duty. Only ~35 quests link via `InstanceContentUnlock`; the rest (Sastasha, Toto-Rak, the Praetorium, ...) need this file. Values are `ContentFinderCondition` row ids. |
-| `feature_quests.json` | `{ "questRowIds": [..], "note" }` | Union of the quest ids in the two files above. Seeds the "Feature Unlocks" virtual category. Regenerate whenever the other two change. |
+| `feature_quests.json` | `{ "questRowIds": [..], "note" }` | **Generated, never hand-edited.** DataGen writes it from the same rule the plugin applies at runtime (`FeaturePresets.Derive`: quests with the blue `EventIconType` 8 journal icon, quests in the two unlock files above, quests the unique-reward data credits with an unlock, and quests whose own rewards unlock something; never main scenario or repeatable quests). Seeds the "Unlock quests" virtual category so it is right even when `unique_quests.json` fails to load. `CuratedInvariantsTests` fails when the file differs from the derived set. |
 | `festivals.json` | `{ "$schema_note", "entries": { "<festivalId>": { name, start, end, mogStation } } }` | Seasonal-event windows. Empty in V1 (DRAFT-NEEDED B); when absent or empty the UI shows only active/inactive. |
 | `chains.json` | `{ "chains": [ { "name", "genreIds": [..], "note" } ] }` | Named quest chains for the detail pane's chain progress widget. Values are `JournalGenre` row ids (not quest ids); a chain is the listed genres concatenated in order, each in journal order. Genres left out still form a chain on their own when their quests are a single previous-quest line. |
+| `online_store.json` | `{ "schema": 1, "note", "entries": { "<itemId>": { "name", "kind", "rewardId", "evidence", "note" } } }` | Quest rewards the FFXIV Online Store also sells (seasonal-event collectibles re-sold on the Mog Station), so they are not exclusive to the quest. Keys are the **store item's** `Item` row id; `kind` and `rewardId` name the collectible it unlocks (`Mount`, `Companion`, `Emote`, `Orchestrion`, `BuddyEquip` or `Ornament` row id, the same ids FFXIV Collect uses), so an emote a quest grants directly (no item on the entry) still matches. DataGen marks every `unique_quests.json` entry delivered as the item or granting the collectible with `otherSources: ["OnlineStore"]`; the plugin shows those rows as "Store only" and can hide them. `evidence` is the FFXIV Collect API URL that lists `Premium: Online Store`. |
 
 ## Key convention
 
@@ -55,6 +56,10 @@ version `541c0c12e07da325` (patch 7.56x1).
 
 - Do not guess ids from memory; verify every id before writing it.
 - Keep entries sorted by row id within each file.
-- Changing `system_unlocks.json` or `duty_unlocks.json` means regenerating
-  `feature_quests.json` (union of both key sets, sorted, deduplicated).
-- All files must parse as strict JSON (no comments, no trailing commas).
+- After any change here run `tools/regen.ps1`: it regenerates
+  `unique_quests.json` and `feature_quests.json` (DataGen derives the latter;
+  do not edit it by hand), verifies the output, refreshes the test fixture and
+  records the data version in `docs/data/DATA-VERSION.md`.
+- All files must parse as strict JSON (no comments, no trailing commas); both
+  the plugin and DataGen reject a file that does not.
+- `online_store.json` entries need an `evidence` URL besides the `note`.

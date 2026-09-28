@@ -6,8 +6,10 @@ using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Textures;
 using Dalamud.Interface.Utility.Raii;
+using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using Lumina.Excel.Sheets;
+using Tsukimichi.Config;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Storage;
@@ -26,8 +28,10 @@ namespace Tsukimichi.Ui;
 /// quests hidden that way stay in the row array as struck-through rows the Yours confidence filter lists, so their
 /// context menu can restore them.
 /// <para>
+/// A row whose reward the FFXIV Online Store also sells (entry OtherSources carries OnlineStore) wears a small Dusk
+/// "Store only" mark; the persisted "Hide store re-sells" toggle drops those rows and leaves them out of every count.
 /// Row arrays and every label are built once per catalog build; obtained states and the filtered index refresh only
-/// when <see cref="SessionState.Version"/>, the kind, the toggle or the filter text change. Nothing allocates per frame
+/// when <see cref="SessionState.Version"/>, the kind, the toggles or the filter text change. Nothing allocates per frame
 /// in the table body except tooltips on hover. The list clipper lives as long as the pane; <see cref="Dispose"/>
 /// destroys it and unsubscribes from the session.
 /// </para>
@@ -35,6 +39,9 @@ namespace Tsukimichi.Ui;
 public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 {
     private const int FilterMaxLength = 128;
+
+    /// <summary>Font size of the "Store only" mark relative to the row's text.</summary>
+    private const float SmallTextScale = 0.85f;
 
     /// <summary>The combo next to "Hide obtained": which rows to keep by confidence, or only the unreadable ones.</summary>
     public enum ConfidenceFilter
@@ -61,6 +68,8 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     private readonly RewardUnlockReader unlocks;
     private readonly PluginPaths paths;
     private readonly IPluginLog log;
+    private readonly Configuration settings;
+    private readonly IDalamudPluginInterface pluginInterface;
     private readonly Dictionary<uint, UniqueOverride> overrides;
     private readonly VerdictPrompt verdict = new(Strings.MoonlitVerdictPopup);
     private int overridesVersion;
@@ -77,11 +86,13 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 
     private Row[] rows = [];
     private int uniqueCount;
+    private int storeCount;
     private int rowsBuild = -1;
     private CatalogBundle? rowsBundle;
 
     private int obtainedVersion = -1;
     private int obtainedBuild = -1;
+    private bool countsHideStore;
     private readonly KindItem allItem = new(null, Strings.MoonlitAllKinds);
     private KindItem[] kindItems = [];
     private int kindsBuild = -1;
@@ -97,13 +108,15 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     private string visibleSummary = string.Empty;
     private string filterText = string.Empty;
 
-    public MoonlitPane(SessionState session, ITextureProvider textures, RewardUnlockReader unlocks, PluginPaths paths, IPluginLog log, IDataManager data)
+    public MoonlitPane(SessionState session, ITextureProvider textures, RewardUnlockReader unlocks, PluginPaths paths, IPluginLog log, IDataManager data, Configuration settings, IDalamudPluginInterface pluginInterface)
     {
         this.session = session ?? throw new ArgumentNullException(nameof(session));
         this.textures = textures ?? throw new ArgumentNullException(nameof(textures));
         this.unlocks = unlocks ?? throw new ArgumentNullException(nameof(unlocks));
         this.paths = paths ?? throw new ArgumentNullException(nameof(paths));
         this.log = log ?? throw new ArgumentNullException(nameof(log));
+        this.settings = settings ?? throw new ArgumentNullException(nameof(settings));
+        this.pluginInterface = pluginInterface ?? throw new ArgumentNullException(nameof(pluginInterface));
         Icons = new MoonlitIconResolver(data ?? throw new ArgumentNullException(nameof(data)), log);
 
         var warnings = new List<string>();
@@ -258,7 +271,10 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         ui.RecordSpan(UiRects.MoonlitKinds, start, width);
     }
 
-    /// <summary>Center column: toolbar (hide obtained, filter) and the reward table with a list clipper.</summary>
+    /// <summary>Whether rows the Online Store also sells are dropped from the table and the counts (Configuration.MoonlitHideStoreResells).</summary>
+    public bool HideStoreResells => settings.MoonlitHideStoreResells;
+
+    /// <summary>Center column: toolbar (hide obtained, hide store re-sells, filter) and the reward table with a list clipper.</summary>
     public void DrawMain(UiState ui)
     {
         ArgumentNullException.ThrowIfNull(ui);
@@ -274,6 +290,19 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         if (ImGui.Checkbox(Strings.MoonlitHideObtainedLabel, ref hide))
         {
             ui.MoonlitHideObtained = hide;
+        }
+
+        ImGui.SameLine();
+        var hideStore = settings.MoonlitHideStoreResells;
+        if (ImGui.Checkbox(Strings.MoonlitHideStoreResellsLabel, ref hideStore))
+        {
+            settings.MoonlitHideStoreResells = hideStore;
+            settings.Save(pluginInterface);
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.MoonlitHideStoreResellsTooltip);
         }
 
         ImGui.SameLine();
@@ -468,6 +497,16 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             }
         }
 
+        if (row.StoreResell)
+        {
+            ImGui.SameLine();
+            SmallDuskText(Strings.MoonlitStoreOnly);
+            if (ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(Strings.MoonlitStoreOnlyTooltip);
+            }
+        }
+
         // Kind.
         ImGui.TableNextColumn();
         ImGui.TextUnformatted(row.KindName);
@@ -557,6 +596,18 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         }
     }
 
+    /// <summary>Small Dusk text vertically centred on the current line, occupying its own width; hoverable through the reserved item.</summary>
+    private static void SmallDuskText(string text)
+    {
+        var size = ImGui.GetFontSize() * SmallTextScale;
+        var extent = ImGui.CalcTextSize(text) * SmallTextScale;
+        var lineHeight = ImGui.GetTextLineHeight();
+        var pos = ImGui.GetCursorScreenPos();
+        pos.Y += MathF.Round((lineHeight - extent.Y) * 0.5f);
+        ImGui.GetWindowDrawList().AddText(ImGui.GetFont(), size, pos, Theme.DuskU32, text, 0f);
+        ImGui.Dummy(new Vector2(extent.X, lineHeight));
+    }
+
     /// <summary>A Dusk hairline through the middle of the last item's text (its own width, not the whole cell).</summary>
     private static void StrikeThrough(string text)
     {
@@ -579,7 +630,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             BuildRows();
         }
 
-        if (obtainedVersion != session.Version || obtainedBuild != rowsBuild)
+        if (obtainedVersion != session.Version || obtainedBuild != rowsBuild || countsHideStore != settings.MoonlitHideStoreResells)
         {
             RefreshObtained();
         }
@@ -620,13 +671,22 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         }
 
         uniqueCount = all.Count;
+        storeCount = 0;
+        for (var i = 0; i < all.Count; i++)
+        {
+            if (built[i].StoreResell)
+            {
+                storeCount++;
+            }
+        }
+
         rows = built;
         rowsBuild = catalogBuild;
         rowsBundle = bundle;
         obtainedVersion = -1;
     }
 
-    /// <summary>Obtained state per row and the per-kind counts, once per session version.</summary>
+    /// <summary>Obtained state per row and the per-kind counts, once per session version (and per store toggle: hidden re-sells leave the counts).</summary>
     private void RefreshObtained()
     {
         var obtained = kindObtained;
@@ -635,11 +695,12 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         Array.Clear(obtained);
         Array.Clear(total);
         Array.Clear(unknown);
+        var hideStore = settings.MoonlitHideStoreResells;
 
         foreach (var row in rows)
         {
             row.SetObtained(unlocks.IsObtained(row.Entry));
-            if (row.Hidden)
+            if (row.Hidden || (hideStore && row.StoreResell))
             {
                 continue;
             }
@@ -689,13 +750,15 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         allItem.SetCounts(allObtained, allTotal, allUnknown);
         obtainedVersion = session.Version;
         obtainedBuild = rowsBuild;
+        countsHideStore = hideStore;
         visibleKey = default;
     }
 
     /// <summary>The filtered index array, rebuilt when the kind, the toggle, the filter text or the obtained states change.</summary>
     private void RefreshVisible(UiState ui)
     {
-        var key = new VisibleKey(rowsBuild, obtainedVersion, ui.MoonlitKind, ui.MoonlitHideObtained, confidenceFilter, filterText);
+        var hideStore = settings.MoonlitHideStoreResells;
+        var key = new VisibleKey(rowsBuild, obtainedVersion, ui.MoonlitKind, ui.MoonlitHideObtained, hideStore, confidenceFilter, filterText);
         if (key == visibleKey)
         {
             return;
@@ -718,6 +781,11 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             }
 
             if (ui.MoonlitHideObtained && row.Obtained == true)
+            {
+                continue;
+            }
+
+            if (hideStore && row.StoreResell)
             {
                 continue;
             }
@@ -748,7 +816,8 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         }
 
         visibleCount = count;
-        visibleSummary = listed.ToString(CultureInfo.InvariantCulture) + " / " + uniqueCount.ToString(CultureInfo.InvariantCulture);
+        var denominator = hideStore ? uniqueCount - storeCount : uniqueCount;
+        visibleSummary = listed.ToString(CultureInfo.InvariantCulture) + " / " + denominator.ToString(CultureInfo.InvariantCulture);
     }
 
     /// <summary>Whether a row passes the confidence combo: a confidence match, or (Unknown obtained) an unreadable obtained state.</summary>
@@ -840,6 +909,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             ConfidenceLabel = hidden ? Strings.MoonlitConfidenceUser : MoonlitPane.ConfidenceLabel(entry.Confidence);
             ConfidenceColor = hidden ? Theme.Eclipse : MoonlitPane.ConfidenceColor(entry.Confidence);
             SourceText = string.IsNullOrWhiteSpace(entry.Source) ? Strings.MoonlitSourceUnknown : entry.Source;
+            StoreResell = entry.SoldOnOnlineStore;
         }
 
         public int Index { get; }
@@ -854,6 +924,9 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         public string ConfidenceLabel { get; }
         public Vector4 ConfidenceColor { get; }
         public string SourceText { get; }
+
+        /// <summary>The FFXIV Online Store also sells this reward (entry OtherSources carries OnlineStore).</summary>
+        public bool StoreResell { get; }
 
         public bool? Obtained { get; private set; }
         public QuestState ObtainedGlyph { get; private set; } = QuestState.Unknown;
@@ -876,7 +949,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             || KindName.Contains(filter, StringComparison.OrdinalIgnoreCase);
     }
 
-    private readonly record struct VisibleKey(int Build, int Version, RewardKind? Kind, bool HideObtained, ConfidenceFilter Confidence, string Filter);
+    private readonly record struct VisibleKey(int Build, int Version, RewardKind? Kind, bool HideObtained, bool HideStore, ConfidenceFilter Confidence, string Filter);
 }
 
 /// <summary>

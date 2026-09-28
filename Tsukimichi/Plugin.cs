@@ -279,8 +279,10 @@ public sealed class Plugin : IDalamudPlugin
 
             // UI (session-dependent surfaces)
             var unlockReader = new Game.RewardUnlockReader(Session, DataManager, Framework, Log);
-            moonlitPane = new MoonlitPane(Session, TextureProvider, unlockReader, Paths, Log, DataManager);
+            moonlitPane = new MoonlitPane(Session, TextureProvider, unlockReader, Paths, Log, DataManager, Settings, PluginInterface);
             MoonlitPane moonlit = moonlitPane;
+            // Reward tooltips (table icons, detail rows) say "Store only" for rewards the Online Store also sells.
+            gameLinks.IsStoreResell = reward => Session.StoreResells.Contains(reward);
             wotsit = new Game.WotsitIpc(PluginInterface, Framework, Log);
             wotsit.Enabled = Settings.WotsitIntegration;
             wotsit.Attach(() => Session.Bundle, () => moonlit.Catalog, moonlit.Icons.Resolve, quest =>

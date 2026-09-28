@@ -39,6 +39,12 @@ static partial class Strings
     public const string MoonlitSourceUnknown = "Source not recorded";
     public const string MoonlitQuestPrefix = "Quest ";
 
+    // Rewards the FFXIV Online Store also sells (curated/online_store.json; entry OtherSources carries OnlineStore)
+    public const string MoonlitStoreOnly = "Store only";
+    public const string MoonlitStoreOnlyTooltip = "Also sold on the FFXIV Online Store; not exclusive to the quest";
+    public const string MoonlitHideStoreResellsLabel = "Hide store re-sells";
+    public const string MoonlitHideStoreResellsTooltip = "Leave out rewards the FFXIV Online Store also sells; the obtained/total counts leave them out too while this is on";
+
     // Confidence filter next to "Hide obtained"
     public const string MoonlitConfidenceFilterTooltip = "Show only rows with this confidence, or only rows whose obtained state the plugin cannot read";
     public const string MoonlitConfidenceAny = "Any confidence";
