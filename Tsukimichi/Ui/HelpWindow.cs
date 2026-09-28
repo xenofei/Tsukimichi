@@ -21,6 +21,7 @@ public enum HelpTopic
     ReadingAQuest,
     Moonlit,
     Characters,
+    Flight,
     Commands,
     Tips,
 }
@@ -83,6 +84,7 @@ public sealed class HelpWindow : Window
         FontAwesomeIcon.BookOpen.ToIconString(),
         FontAwesomeIcon.Gem.ToIconString(),
         FontAwesomeIcon.Users.ToIconString(),
+        FontAwesomeIcon.Plane.ToIconString(),
         FontAwesomeIcon.Terminal.ToIconString(),
         FontAwesomeIcon.Lightbulb.ToIconString(),
     ];
@@ -146,6 +148,15 @@ public sealed class HelpWindow : Window
         FontAwesomeIcon.LayerGroup,
         FontAwesomeIcon.Download);
 
+    private static readonly CardItem[] FlightCards = Cards(
+        Strings.Help.FlightCardTitles,
+        Strings.Help.FlightCardBodies,
+        FontAwesomeIcon.Plane,
+        FontAwesomeIcon.Compass,
+        FontAwesomeIcon.MapMarkerAlt,
+        FontAwesomeIcon.Moon,
+        FontAwesomeIcon.Terminal);
+
     private static readonly float[] FillingFractions = [0f, 0.5f, 1f];
 
     private readonly HelpActions actions;
@@ -177,7 +188,8 @@ public sealed class HelpWindow : Window
             new("2", Strings.Help.StepFiltersTitle, Strings.Help.StepFiltersBody, actions.OpenFilters),
             new("3", Strings.Help.StepMoonlitTitle, Strings.Help.StepMoonlitBody, () => actions.ShowTab(NavTab.Moonlit)),
             new("4", Strings.Help.StepCharactersTitle, Strings.Help.StepCharactersBody, () => actions.ShowTab(NavTab.Characters)),
-            new("5", Strings.Help.StepTourTitle, Strings.Help.StepTourBody, actions.StartTutorial),
+            new("5", Strings.Help.StepFlightTitle, Strings.Help.StepFlightBody, () => actions.ShowTab(NavTab.Flight)),
+            new("6", Strings.Help.StepTourTitle, Strings.Help.StepTourBody, actions.StartTutorial),
         ];
 
         BuildSearchText();
@@ -353,6 +365,9 @@ public sealed class HelpWindow : Window
                 case HelpTopic.Characters:
                     AppendCards(sb, CharacterCards);
                     break;
+                case HelpTopic.Flight:
+                    AppendCards(sb, FlightCards);
+                    break;
                 case HelpTopic.Commands:
                     for (var c = 0; c < Strings.Help.CommandKeys.Length; c++)
                     {
@@ -421,6 +436,9 @@ public sealed class HelpWindow : Window
                 break;
             case HelpTopic.Characters:
                 DrawCards(CharacterCards);
+                break;
+            case HelpTopic.Flight:
+                DrawCards(FlightCards);
                 break;
             case HelpTopic.Commands:
                 DrawCommands(scale);

@@ -12,6 +12,9 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 - Story chains on the Characters dashboard: every curated chain (Hildibrand, the relic lines, the raid stories and the rest of `curated/chains.json`) with a filling moon, "N of M" and a clickable next quest; chains with nothing done yet fold under "Not started (N)".
 - Level-up nudge: when a job's level rises and the next quest of its ladder or its role's ladder is open, a chat line "Level N Job: [quest] is available" with the giver's map link, once per quest per login session. Settings › Notices: "Chat notice when a job or role quest becomes available after a level-up" (on by default).
 
+### Changed
+- Tutorial and help cover the Flight tab and the Nearby quests window: a fifteenth tour step after Characters, a "Flight and nearby" help topic, an "Unlock flying" quick-start step, and `/tsuki nearby` in the Commands topic.
+
 ## [0.3.0] - 2026-09-28
 
 ### Added
