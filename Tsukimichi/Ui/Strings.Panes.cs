@@ -35,6 +35,33 @@ static partial class Strings
     public const string MoonlitSourceUnknown = "Source not recorded";
     public const string MoonlitQuestPrefix = "Quest ";
 
+    // Confidence filter next to "Hide obtained"
+    public const string MoonlitConfidenceFilterTooltip = "Show only rows with this confidence, or only rows whose obtained state the plugin cannot read";
+    public const string MoonlitConfidenceAny = "Any confidence";
+    public const string MoonlitConfidenceStaticOnly = "Static only";
+    public const string MoonlitConfidenceCuratedOnly = "Curated only";
+    public const string MoonlitConfidenceYoursOnly = "Yours only";
+    public const string MoonlitConfidenceUnknownObtained = "Unknown obtained";
+
+    // ---- Discovery commands ----
+    public const string ZoneNoCharacter = "No character evaluated yet; log in first.";
+    public const string ZoneNoQuests = "No quests to start in this zone.";
+    public const string WhichNoTarget = "Target an NPC first.";
+    /// <summary>{0} = NPC name.</summary>
+    public const string WhichNoQuestsFormat = "{0} starts no quests in the catalog.";
+    public const string ChatSuffixSeparator = "  · ";
+
+    // ---- Wotsit entries ----
+    public const string WotsitQuestPrefix = "Quest: ";
+    public const string WotsitRewardPrefix = "Reward: ";
+
+    // ---- Lifestream teleport (table and detail pane) ----
+    public const string TeleportToGiver = "Teleport to giver (Lifestream)";
+    public const string TeleportBusy = "Lifestream is busy; wait for it to finish.";
+    public const string TeleportNoAetheryte = "No aetheryte is known for the giver's zone.";
+    /// <summary>{0} = aetheryte place name.</summary>
+    public const string TeleportTooltipFormat = "Teleport to {0}, the aetheryte nearest the giver";
+
     /// <summary>Display name of a reward kind, plural, as the Moonlit left column lists them.</summary>
     public static string MoonlitKindName(RewardKind kind) => kind switch
     {
@@ -393,6 +420,8 @@ static partial class Strings
             "/tsukimichi config",
             "/tsukimichi help",
             "/tsukimichi glyphs",
+            "/tsuki zone",
+            "/tsuki which",
         ];
 
         public static readonly string[] CommandMeanings =
@@ -403,6 +432,8 @@ static partial class Strings
             "open Settings",
             "open this window",
             "the glyph sheet: every moon at every size",
+            "quests you can start in the current zone, as chat links by level",
+            "every quest the targeted NPC hands out, with its state",
         ];
 
         // ---- Tips ----

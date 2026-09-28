@@ -5,19 +5,87 @@ using System.Numerics;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Plugin.Services;
+using Dalamud.Utility;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using Lumina.Excel.Sheets;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Game;
+using Tsukimichi.GameData;
 
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// The only place UI code touches the game: map flags, the in-game journal, chat links and the few sheet lookups
-/// (Map, World, ClassJobCategory) the panes need for labels. Every game call is wrapped; a failure logs one warning
-/// and the UI carries on. Sheet lookups are cached per id since the sheets never change at runtime.
+/// The only place UI code touches the game: map flags, the in-game journal, chat links, Lifestream teleports and
+/// the few sheet lookups (Map, World, ClassJobCategory, Aetheryte) the panes need for labels. Every game call is
+/// wrapped; a failure logs one warning and the UI carries on. Sheet lookups are cached per id since the sheets never
+/// change at runtime.
 /// </summary>
 public sealed class GameLinks(IGameGui gameGui, IChatGui chat, IDataManager data, IPluginLog log)
 {
+    private AetheryteIndex? aetherytes;
+
+    /// <summary>Lifestream's IPC, attached by the plugin; null (no teleport) until then.</summary>
+    public LifestreamIpc? Lifestream { get; set; }
+
+    /// <summary>Teleportable aetherytes by territory, read from the sheets on first use; empty when the read fails.</summary>
+    public AetheryteIndex Aetherytes
+    {
+        get
+        {
+            if (aetherytes is null)
+            {
+                try
+                {
+                    aetherytes = AetheryteIndex.Build(data.Excel, data.Language.ToLumina());
+                }
+                catch (Exception ex)
+                {
+                    log.Warning(ex, "Aetheryte index could not be built; teleport to giver is unavailable");
+                    aetherytes = AetheryteIndex.Empty;
+                }
+            }
+
+            return aetherytes;
+        }
+    }
+
+    /// <summary>True while Lifestream is loaded, so teleport controls can be shown at all.</summary>
+    public bool TeleportAvailable => Lifestream?.Available == true;
+
+    /// <summary>True while Lifestream is busy with another task; teleport controls are disabled meanwhile.</summary>
+    public bool TeleportBusy => Lifestream?.IsBusy == true;
+
+    /// <summary>The aetheryte closest to the quest giver (id and place name), or null without an issuer or a known aetheryte.</summary>
+    public (uint Id, string Name)? NearestAetheryte(QuestRecord quest)
+    {
+        if (quest.Issuer is not { TerritoryId: > 0 } issuer)
+        {
+            return null;
+        }
+
+        return Aetherytes.Nearest(issuer.TerritoryId, issuer.X, issuer.Z) is { } nearest ? (nearest.RowId, nearest.Name) : null;
+    }
+
+    /// <summary>True when a teleport can be started now: Lifestream loaded and idle, and an aetheryte known for the giver.</summary>
+    public bool CanTeleport(QuestRecord quest) => TeleportAvailable && !TeleportBusy && NearestAetheryte(quest) is not null;
+
+    /// <summary>Teleports to the giver's nearest aetheryte through Lifestream. False when nothing was started.</summary>
+    public bool TeleportToGiver(QuestRecord quest)
+    {
+        if (Lifestream is not { } lifestream || NearestAetheryte(quest) is not { } aetheryte)
+        {
+            return false;
+        }
+
+        var started = lifestream.Teleport(aetheryte.Id);
+        if (!started)
+        {
+            log.Warning("Teleport to {Aetheryte} ({AetheryteId}) for quest {RowId} did not start", aetheryte.Name, aetheryte.Id, quest.RowId);
+        }
+
+        return started;
+    }
+
     /// <summary>What the Map sheet says about one map: scale, offsets and names.</summary>
     public sealed record MapInfo(uint MapId, ushort SizeFactor, short OffsetX, short OffsetY, string PlaceName, string Region);
 
@@ -200,11 +268,14 @@ public sealed class GameLinks(IGameGui gameGui, IChatGui chat, IDataManager data
     }
 
     /// <summary>One chat line: the quest link, then the issuer's map link when there is one.</summary>
-    public void PrintQuestLink(QuestRecord quest)
+    public void PrintQuestLink(QuestRecord quest) => PrintQuestLink(quest, null);
+
+    /// <summary>One chat line: the quest link, the issuer's map link when there is one, then <paramref name="suffix"/> (e.g. a state name).</summary>
+    public void PrintQuestLink(QuestRecord quest, string? suffix)
     {
         try
         {
-            chat.Print(BuildQuestLine(quest), Strings.ChatTag);
+            chat.Print(BuildQuestLine(quest, suffix), Strings.ChatTag);
         }
         catch (Exception ex)
         {
@@ -317,7 +388,7 @@ public sealed class GameLinks(IGameGui gameGui, IChatGui chat, IDataManager data
         return 41f / scale * ((raw + offset) * scale + 1024f) / 2048f + 1f;
     }
 
-    private SeString BuildQuestLine(QuestRecord quest)
+    private SeString BuildQuestLine(QuestRecord quest, string? suffix)
     {
         var builder = new SeStringBuilder()
             .Add(new QuestPayload(quest.RowId))
@@ -330,6 +401,11 @@ public sealed class GameLinks(IGameGui gameGui, IChatGui chat, IDataManager data
                    .Add(link)
                    .AddText(link.PlaceName + " " + link.CoordinateString)
                    .Add(RawPayload.LinkTerminator);
+        }
+
+        if (!string.IsNullOrEmpty(suffix))
+        {
+            builder.AddText(Strings.ChatSuffixSeparator + suffix);
         }
 
         return builder.Build();

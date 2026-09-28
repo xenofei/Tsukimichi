@@ -25,6 +25,7 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] internal static IGameGui GameGui { get; private set; } = null!;
     [PluginService] internal static IChatGui ChatGui { get; private set; } = null!;
     [PluginService] internal static ITextureProvider TextureProvider { get; private set; } = null!;
+    [PluginService] internal static ITargetManager TargetManager { get; private set; } = null!;
     // /UI
 
     private static readonly TimeSpan DisposeWait = TimeSpan.FromSeconds(5);
@@ -40,9 +41,11 @@ public sealed class Plugin : IDalamudPlugin
     private readonly TsukimichiCommand command;
     private readonly UiState ui;
     private readonly GameLinks gameLinks;
+    private readonly Game.LifestreamIpc lifestream;
     private readonly QueryRunner queryRunner;
     private readonly MainWindow mainWindow;
     private MoonlitPane? moonlitPane;
+    private Game.WotsitIpc? wotsit;
     private CharactersPane? charactersPane;
     private ConfigWindow? configWindow;
     private HelpWindow? helpWindow;
@@ -248,6 +251,8 @@ public sealed class Plugin : IDalamudPlugin
             // The main window reads Session/Settings/Paths lazily; they are initialized by the game-state block below.
             ui = new UiState();
             gameLinks = new GameLinks(GameGui, ChatGui, DataManager, Log);
+            lifestream = new Game.LifestreamIpc(PluginInterface, Log);
+            gameLinks.Lifestream = lifestream;
             queryRunner = new QueryRunner(this, ui, Log);
             mainWindow = new MainWindow(this, ui, queryRunner, gameLinks, TextureProvider, PluginInterface, Log, RetryCatalogAsync);
             windowSystem.AddWindow(mainWindow);
@@ -262,7 +267,18 @@ public sealed class Plugin : IDalamudPlugin
 
             // UI (session-dependent surfaces)
             var unlockReader = new Game.RewardUnlockReader(Session, DataManager, Framework, Log);
-            moonlitPane = new MoonlitPane(Session, TextureProvider, unlockReader, Paths, Log);
+            moonlitPane = new MoonlitPane(Session, TextureProvider, unlockReader, Paths, Log, DataManager);
+            MoonlitPane moonlit = moonlitPane;
+            wotsit = new Game.WotsitIpc(PluginInterface, Framework, Log);
+            wotsit.Attach(() => Session.Bundle, () => moonlit.Catalog, moonlit.Icons.Resolve, quest =>
+            {
+                mainWindow.IsOpen = true;
+                mainWindow.BringToFront();
+                MoonlitPane.Reveal(ui, quest);
+            });
+            var discovery = new DiscoveryCommands(Session, ClientState, TargetManager, gameLinks);
+            command.ListZoneQuests = discovery.Zone;
+            command.ListTargetQuests = discovery.Which;
             charactersPane = new CharactersPane(Session, Paths, Log, Snapshots.Load, DataManager, TextureProvider);
             charactersPane.MoonlitCounts = moonlitPane.CountsFor;
             mainWindow.AttachPanes(moonlitPane, charactersPane);
@@ -343,8 +359,10 @@ public sealed class Plugin : IDalamudPlugin
         PluginInterface.UiBuilder.Draw -= windowSystem.Draw;
         windowSystem.RemoveAllWindows();
         mainWindow.Dispose();
+        wotsit?.Dispose();
         moonlitPane?.Dispose();
         queryRunner.Dispose();
+        lifestream.Dispose();
         // /UI
 
         // ---- Game state dispose ----
@@ -379,8 +397,10 @@ public sealed class Plugin : IDalamudPlugin
         });
         Unwind("command", () => command?.Dispose());
         Unwind("main window", () => mainWindow?.Dispose());
+        Unwind("wotsit ipc", () => wotsit?.Dispose());
         Unwind("moonlit pane", () => moonlitPane?.Dispose());
         Unwind("query runner", () => queryRunner?.Dispose());
+        Unwind("lifestream ipc", () => lifestream?.Dispose());
         Unwind("game state", DisposeGameState);
         Unwind("catalog build", StopCatalogBuild);
     }

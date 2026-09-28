@@ -10,6 +10,11 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ### Changed
 - Mount, minion, fashion accessory and job names read "Magitek Armor" and "Paladin" instead of the sheet's lower case.
+- Teleport to the quest giver through Lifestream: a context-menu item on table rows (hidden when Lifestream is absent, disabled while it is busy or the giver's zone has no aetheryte), backed by an aetheryte index built from the Aetheryte, MapMarker and TerritoryType sheets.
+- Wotsit search: every catalog quest ("Quest: name") and every Moonlit reward ("Reward: name (kind)") is registered with Wotsit when it is loaded, re-registered when it reloads or the catalog rebuilds, and picking one reveals the quest in the Journal. Registration is spread over frames within a 4 ms budget per tick.
+- `/tsuki zone` prints chat links for quests you can start in the current zone (Ready or Ready on another job, by level, up to ten plus "and N more"); `/tsuki which` prints every quest the targeted NPC hands out with its state.
+- Moonlit confidence filter next to Hide obtained: Any, Static only, Curated only, Yours only, or only rows whose obtained state cannot be read.
+- Moonlit rows without a reward icon now show one by kind: duty unlocks and instances use the duty's content-type icon, jobs their job icon, aether currents the attunement crystal, traits, achievements and blue mage spells their sheet icon.
 
 ## [0.2.0] - 2026-09-28
 
