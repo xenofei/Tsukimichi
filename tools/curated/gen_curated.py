@@ -86,7 +86,9 @@ s(67747, "Relic: Anima weapons", "An Unexpected Proposal; first quest of the HW 
 s(70188, "Relic: Manderville weapons", "Make It a Manderville (in-game name carries a leading icon glyph); first quest of the EW relic chain.")
 
 D = {}
-def d(qid, cfcs, note): D[str(qid)] = {"contentFinderConditionIds": cfcs, "note": note}
+def d(qid, cfcs, note, evidence=None):
+    D[str(qid)] = {"contentFinderConditionIds": cfcs, "note": note}
+    if evidence: D[str(qid)]["evidence"] = evidence
 d(65781, [4], "It's Probably Pirates (Limsa start, ManSea203) -> Sastasha; objective territory 1036 matches CFC 4.")
 d(66211, [4], "It's Probably Pirates (Gridania/Ul'dah start, ManFst203) -> Sastasha; name-variant of 65781.")
 d(66213, [2], "Fire in the Gloom -> the Tam-Tara Deepcroft; objective territory matches CFC 2.")
@@ -116,7 +118,8 @@ d(66733, [63], "Ifrit Ain't Broke -> the Bowl of Embers (Extreme); objective ter
 d(66732, [64], "Quake Me Up Before You O'Ghomoro -> the Navel (Extreme); objective territory matches CFC 64.")
 d(66731, [65], "Gale-force Warning -> the Howling Eye (Extreme); objective territory matches CFC 65.")
 d(65905, [84], "An Uninvited Ascian -> the Chrysalis (2.4 MSQ); objective territory matches CFC 84.")
-d(70012, [808], "Where Familiars Dare -> Asphodelos: The First Circle (Pandaemonium raid series entry). Not 70011 The Crystal from Beyond, which only starts the chain: wiki req-quest on the duty page and Garland instance 30111 on quest 70012.")
+d(70012, [808], "Where Familiars Dare -> Asphodelos: The First Circle (Pandaemonium raid series entry). Not 70011 The Crystal from Beyond, which only starts the chain: wiki req-quest on the duty page and Garland instance 30111 on quest 70012.",
+  "https://ffxiv.consolegameswiki.com/wiki/Where_Familiars_Dare ; https://www.garlandtools.org/db/doc/quest/en/2/70012.json")
 # Dawntrail MSQ dungeons (objective territory matches)
 d(70415, [826], "For All Turali -> Ihuykatumu; objective territory 1167 matches CFC 826.")
 d(70427, [824], "The High Luminary -> Worqor Zormor; objective territory 1193 matches CFC 824.")
@@ -131,12 +134,9 @@ def dump(name, obj):
 
 dump("system_unlocks.json", dict(sorted(S.items(), key=lambda kv: int(kv[0]))))
 dump("duty_unlocks.json", dict(sorted(D.items(), key=lambda kv: int(kv[0]))))
-ids = sorted({int(k) for k in S} | {int(k) for k in D})
-dump("feature_quests.json", {
-    "questRowIds": ids,
-    "note": "Union of the Quest row ids in system_unlocks.json and duty_unlocks.json; seeds the Feature Unlocks virtual category. Regenerate when either file changes.",
-})
-print("system", len(S), "duty", len(D), "feature", len(ids), "overlap", len(S) + len(D) - len(ids))
+# feature_quests.json is no longer written here: Tsukimichi.DataGen derives it (tools/regen.ps1) from the
+# catalog, these files and the generated unique_quests.json; CuratedInvariantsTests checks the shipped file.
+print("system", len(S), "duty", len(D), "overlap", len(set(S) & set(D)))
 for k in S:
     assert int(k) >= 65536 and S[k]["note"]
 for k in D:

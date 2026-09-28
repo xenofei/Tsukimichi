@@ -1,3 +1,5 @@
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Storage;
 
@@ -14,6 +16,35 @@ public sealed class CuratedInvariantsTests(FixtureCatalog fixture) : IClassFixtu
     private static string CuratedDir => Path.Combine(FixtureCatalog.ShippedDataDir(), "curated");
 
     private static CuratedData Curated() => CuratedData.Load(CuratedDir);
+
+    private static UniqueRewardsData Unique() => UniqueRewardsFile.Load(Path.Combine(FixtureCatalog.ShippedDataDir(), "unique_quests.json"));
+
+    [Fact]
+    public void Feature_quests_json_equals_the_set_DataGen_derives()
+    {
+        // feature_quests.json is written by DataGen from FeaturePresets.Derive over the catalog, the other curated
+        // files and the unique-reward entries; a hand edit, or a regen against a different game version than the
+        // fixture, shows up here as a set difference.
+        var curated = Curated();
+        var unique = Unique();
+        Assert.NotEmpty(unique.Entries);
+        Assert.Equal(fixture.GameVersion, unique.GameVersion);
+
+        var derived = FeaturePresets.Derive(fixture.Bundle.Catalog, curated.WithoutFeatureQuests(), unique.Entries);
+        var shipped = curated.FeatureQuests;
+
+        var missing = derived.Where(id => !shipped.Contains(id)).OrderBy(id => id).ToList();
+        var extra = shipped.Where(id => !derived.Contains(id)).OrderBy(id => id).ToList();
+        Assert.True(missing.Count == 0 && extra.Count == 0,
+            $"feature_quests.json differs from the derived set: missing {missing.Count} [{string.Join(", ", missing.Take(10))}], extra {extra.Count} [{string.Join(", ", extra.Take(10))}]; regenerate with tools/regen.ps1");
+
+        // The file itself: an object with a note and questRowIds sorted ascending without duplicates.
+        var root = JsonNode.Parse(File.ReadAllText(Path.Combine(CuratedDir, CuratedData.FeatureQuestsFileName)), documentOptions: CuratedData.StrictOptions)!.AsObject();
+        var ids = root["questRowIds"]!.AsArray().Select(n => n!.GetValue<uint>()).ToList();
+        Assert.Equal(ids.OrderBy(id => id).Distinct(), ids);
+        Assert.Equal(derived.Count, ids.Count);
+        Assert.Contains("DataGen", (string?)root["note"]);
+    }
 
     [Fact]
     public void Asphodelos_first_circle_is_unlocked_by_Where_Familiars_Dare_not_The_Crystal_from_Beyond()

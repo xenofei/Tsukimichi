@@ -1,5 +1,8 @@
 using System.Diagnostics;
+using Lumina.Data;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Query;
+using Tsukimichi.Core.Storage;
 using Tsukimichi.GameData;
 
 namespace Tsukimichi.DataGen;
@@ -91,6 +94,20 @@ public static class Program
         var entries = generator.Entries.ToList();
         OutputFile.Write(output, sheets.GameVersion, generatedUtc, entries);
         Console.WriteLine($"wrote:   {output} ({entries.Count} entries)");
+
+        if (curated is not null && Directory.Exists(curated))
+        {
+            // feature_quests.json is derived, not maintained: the runtime rule over the mapped catalog, the other
+            // curated files and the entries just written. CuratedInvariantsTests compares the shipped file to this.
+            var curatedData = CuratedData.Load(curated);
+            foreach (var warning in curatedData.Warnings)
+                Console.WriteLine($"curated: {warning}");
+            var bundle = CatalogMapper.Map(sheets.Data.Excel, Language.English);
+            var featureIds = FeaturePresets.Derive(bundle.Catalog, curatedData.WithoutFeatureQuests(), entries);
+            var featurePath = Path.Combine(curated, CuratedData.FeatureQuestsFileName);
+            FeatureQuestsFile.Write(featurePath, featureIds);
+            Console.WriteLine($"wrote:   {featurePath} ({featureIds.Count} feature quests, derived)");
+        }
 
         Directory.CreateDirectory(reports);
         var uniqueReportPath = Path.Combine(reports, "unique-report.md");

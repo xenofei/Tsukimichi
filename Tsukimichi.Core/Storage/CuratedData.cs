@@ -30,7 +30,7 @@ public sealed record OnlineStoreItem(string Name, RewardKind Kind, uint RewardId
 /// <code>
 /// system_unlocks.json  { "66038": { "label": "Glamour Dresser", "kind": "system", "note": "..." } }
 /// duty_unlocks.json    { "66038": [ 4, 5 ] }  or  { "66038": { "contentFinderConditionIds": [ 4, 5 ], "note": "..." } }
-/// feature_quests.json  [ 66038, 66039 ]  or  { "questRowIds": [ 66038, 66039 ], "note": "..." }
+/// feature_quests.json  [ 66038, 66039 ]  or  { "questRowIds": [ 66038, 66039 ], "note": "..." }   (written by DataGen, not by hand)
 /// festivals.json       { "1": { "name": "Starlight Celebration", "start": "2025-12-15T08:00:00Z", "end": "...", "mogStation": false } }
 ///                      or  { "entries": { "1": { ... } } }
 /// chains.json          { "chains": [ { "name": "Hildibrand", "genreIds": [ 93, 94 ], "note": "..." } ] }
@@ -105,6 +105,13 @@ public sealed class CuratedData
 
     /// <summary>One line per skipped entry or unreadable file, for the caller to log once.</summary>
     public IReadOnlyList<string> Warnings { get; }
+
+    /// <summary>
+    /// The same data with <see cref="FeatureQuests"/> empty: what DataGen derives <c>feature_quests.json</c> from and
+    /// what the invariants test compares the shipped file against, so the file never feeds its own derivation.
+    /// </summary>
+    public CuratedData WithoutFeatureQuests() =>
+        FeatureQuests.Count == 0 ? this : new CuratedData(SystemUnlocks, DutyUnlocks, new HashSet<uint>(), Festivals, Chains, OnlineStore, Warnings);
 
     /// <summary>Loads every curated file under <paramref name="dir"/>. A missing directory or file yields empty collections.</summary>
     public static CuratedData Load(string dir)
