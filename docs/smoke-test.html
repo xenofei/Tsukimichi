@@ -279,7 +279,7 @@
     <div>
       <p class="eyebrow">First in-game pass · Dalamud API 15 · V1</p>
       <h1>Tsukimichi Smoke Test<span class="kanji">月道</span></h1>
-      <p class="lede">Every check has the exact clicks to make and what should happen. Mark each one Pass, Fail, or Unknown, add notes where a yes or no is not enough, and copy the report at the end. Progress stays in this browser. Use the Round 2 filter to test only what changed after your first report.</p>
+      <p class="lede">Every check has the exact clicks to make and what should happen. Mark each one Pass, Fail, or Unknown, add notes where a yes or no is not enough, and copy the report at the end. Progress stays in this browser. Use the Round 3 filter for the latest changes; the report box defaults to Round 3 items only.</p>
     </div>
     <div class="meta">
       <label>Plugin version (Settings › About)<input id="metaVersion" placeholder="0.1.0"></label>
@@ -312,6 +312,7 @@
       <div class="side-actions">
         <button class="primary" id="btnReport">Generate report</button>
         <button class="small" id="btnExportJson">Copy full answers as JSON</button>
+        <button class="small" id="btnResetRound3">Clear Round 3 answers</button>
         <button class="small" id="btnResetRound2">Clear Round 2 answers</button>
         <button class="small danger" id="btnReset">Reset all answers</button>
         <div class="confirm" id="resetConfirm">
@@ -352,6 +353,7 @@
           <button data-filter="fail" aria-pressed="false">Failed</button>
           <button data-filter="na" aria-pressed="false">Unknown</button>
           <button data-filter="round2" aria-pressed="false">Round 2</button>
+          <button data-filter="round3" aria-pressed="false">Round 3</button>
         </div>
         <span id="filterNote" style="color:var(--text-2);font-size:.9rem"></span>
       </div>
@@ -365,6 +367,7 @@
           <button class="primary" id="btnCopy">Copy report</button>
           <button id="btnRegen">Refresh</button>
           <label style="display:inline-flex;align-items:center;gap:6px;font-size:.9rem"><input type="checkbox" id="reportRound2"> Round 2 items only</label>
+          <label style="display:inline-flex;align-items:center;gap:6px;font-size:.9rem"><input type="checkbox" id="reportRound3" checked> Round 3 items only</label>
         </div>
         <pre id="reportText" tabindex="0"></pre>
       </div>
@@ -752,6 +755,66 @@ const SECTIONS = [
         expect: "Both numbers are small (a few milliseconds at most, typically under one) and stable. Write the numbers in the notes so the 1-second default can be judged." },
     ]
   },
+  {
+    code: "S", id: "round3", title: "Round 3: toolbar, scale, banners, help, tutorial",
+    intro: "New since the second report. Rebuild and reload the plugin first. The help window no longer opens by itself; the tutorial is offered instead.",
+    checks: [
+      { id: "S1", title: "Toolbar icon buttons", round: 3,
+        how: ["Look at the right end of the toolbar after the sync moon. Hover each of the three square buttons, then click each."],
+        expect: "Three icon buttons: Help (question circle), Tutorial (graduation cap), Settings (cog), each with a tooltip. Help toggles the help window, Settings toggles the settings window, Tutorial starts the tour over the main window." },
+      { id: "S2", title: "Status bar moon", round: 3,
+        how: ["Look at the very start of the bottom status line."],
+        expect: "A tiny filling moon whose lit part matches your overall completed/total; the text after it is unchanged." },
+      { id: "S3", title: "Default sizes are larger", round: 3,
+        how: ["Open the filter panel and scroll to the Display section at the bottom. Confirm UI scale reads 1.15× and Icon scale 1.25×. Compare the window with another plugin window."],
+        expect: "Text, moons, reward icons and columns are visibly larger (roughly 15 to 25 percent) than before; other plugin windows and the title bar are unchanged. The Default sizes button is greyed while both sliders are at their defaults." },
+      { id: "S4", title: "UI scale slider", round: 3,
+        how: ["Drag UI scale to 1.4×. Look at the toolbar, tree, table, detail pane, a reward tooltip, a right-click menu and the Overrides popup. Then drag to 0.9×, then to 1.6× with the window at its minimum size."],
+        expect: "Everything in the window grows together on the next frame, rows get taller without clipping, scrolling stays smooth, nothing overlaps. At 0.9× it is still readable; at 1.6× the toolbar still fits with the chip strip shrinking first." },
+      { id: "S5", title: "Icon scale slider", round: 3,
+        how: ["Reset with Default sizes. Drag Icon scale to 2.0×, then to 0.8×."],
+        expect: "State moons, reward icons, job icons, the tooltip's big icon and the banner moon grow or shrink while text stays the same size; rows only grow when an icon is taller than the text." },
+      { id: "S6", title: "Scale settings persist and tolerate bad values", round: 3,
+        how: ["Set UI scale 1.3× and Icon scale 1.5×. Wait two seconds, reload the plugin. Then open Settings → Display and confirm the same values. Optional: disable the plugin, edit the config file to UiScale 99, enable."],
+        expect: "Both values survive the reload and match in both places. A bad value is clamped with no red line in /xllog." },
+      { id: "S7", title: "Quest banner in the detail header", round: 3,
+        how: ["Select Close to Home, then The Ultimate Weapon, then a side quest such as Waking the Spirit. Drag the right column wider and narrower."],
+        expect: "MSQ quests show their journal artwork filling the pane width with the name on a dark strip at the bottom and the large state moon at the right; it rescales with the column, never stretches. A quest without artwork shows a raised night card with the moon and name instead." },
+      { id: "S8", title: "Banner tooltip on quest names", round: 3,
+        how: ["Hover the Name cell of Close to Home in the table, then hover one of its reward icons."],
+        expect: "The name shows a tooltip with the banner about 240 px wide plus name, genre, expansion and level. The reward icon shows the reward tooltip instead; never both at once." },
+      { id: "S9", title: "Tree moons before names and bold sections", round: 3,
+        how: ["Look at the tree. Find a section or category that is 100 percent complete if you have one."],
+        expect: "Each node shows a filling moon right after the arrow, before the name, with done/total at the right edge. Top-level nodes are slightly bolder; a fully completed top-level node is tinted gold. Long names clip before the count instead of overlapping it." },
+      { id: "S10", title: "Table zebra rows and state stripes", round: 3,
+        how: ["Select All quests. Look at rows in Ready and Accepted states. Sort and scroll."],
+        expect: "Rows alternate a faint tint. Ready rows carry a thin gold stripe on the left edge, Accepted rows a silver one, others none. Next step shows the first word in silver and the rest in blue-grey." },
+      { id: "S11", title: "Detail pane section icons and requirement moons", round: 3,
+        how: ["Select a blocked quest. Read the section headers and the requirement lines. Hover a requirement mark."],
+        expect: "Requirements, Rewards, Moonlit, Path and Giver headers each start with a small icon and end with a rule. Requirement marks are small moons: full for met, new for unmet, with Met / Not met tooltips. The path line is gold below completed steps and dark below others." },
+      { id: "S12", title: "Empty states", round: 3,
+        how: ["Click in the table where no row is (or press Esc) so nothing is selected. Then select a node with zero quests if one exists."],
+        expect: "The detail pane shows a large veiled moon centred with one line of guidance. An empty node shows the same treatment in the table area." },
+      { id: "S13", title: "Help window rail and search", round: 3,
+        how: ["Click the Help button. Read the left rail. Type override in the search box, then xyz, then clear it."],
+        expect: "Eight topics with icons; the active one has a gold bar. Searching override keeps Filters, Moonlit and Quick start; xyz shows No topic matches; clearing restores all eight." },
+      { id: "S14", title: "Help content and Try it buttons", round: 3,
+        how: ["Open Quick start and click Try it on steps 2 through 5. Open The moon phases, Filters and chips, Commands and Tips."],
+        expect: "Try it opens the filter panel, switches to Moonlit, switches to Characters, and starts the tutorial. The phases page shows eight shaded glyphs with meanings and Shown by chips. Cards, key caps and tip callouts replace plain text; everything wraps with no horizontal scroll. Say in the notes whether it still feels blocky." },
+      { id: "S15", title: "Tutorial first-run offer", round: 3,
+        how: ["Disable the plugin, set TutorialCompleted to false in the config file (or delete the file), enable, open the main window. Click Not now. Reopen the window."],
+        expect: "A welcome card appears over the window with Take the tour and Not now. Not now closes it, writes TutorialCompleted true, and it is not offered again." },
+      { id: "S16", title: "Tutorial steps and highlights", round: 3,
+        how: ["Click the Tutorial toolbar button. Step through all 14 steps with Next, reading each card and watching the highlight. Use Back once from the Characters step."],
+        expect: "The window dims except a gold-bordered cutout around the target region and the card; the card sits beside the target and never leaves the screen. Step 3 opens the filter panel, step 11 switches to Moonlit, step 12 to Characters; Back returns to the previous step and tab. Steps without a target (welcome, finish) centre the card." },
+      { id: "S17", title: "Tutorial finish, skip and escape", round: 3,
+        how: ["Run the tour to the end and click Done. Start it again and click Skip on step 3. Start again, click the card and press Esc. Close the main window mid-tour and reopen it."],
+        expect: "Done ends the tour and writes TutorialCompleted true. Skip and Esc end it without writing. Closing the window hides the overlay; reopening resumes the same step." },
+      { id: "S18", title: "Corrected Moonlit data", round: 3,
+        how: ["Open Moonlit → Orchestrion. Find a roll from a quest you have completed and one you have not. Then open the Journal, select The Ultimate Weapon and read its Moonlit section; also search Moonlit for Fantasia and Hi-Cordial."],
+        expect: "Orchestrion rows show real obtained states (full or new moon), no longer all unknown. The Ultimate Weapon is listed for the Magitek Armor mount only; Fantasia, cordials, tickets and coffers no longer appear anywhere in Moonlit." },
+    ]
+  },
 ];
 
 const STORE_KEY = "tsukimichi-smoke-v1";
@@ -857,7 +920,8 @@ function updateProgress() {
     el.textContent = `${sd}/${s.checks.length}`;
     el.parentElement.classList.toggle("done", sd === s.checks.length);
   }
-  const complete = done === total;
+  const r3 = ALL.filter(c => c.round === 3);
+  const complete = done === total || (r3.length > 0 && r3.every(c => (state.answers[c.id] || {}).s));
   if (complete && !wasComplete) { buildReport(); document.getElementById("report").hidden = false; toast("All checks answered. Report is ready at the bottom."); }
   else if (!document.getElementById("report").hidden) buildReport();
   wasComplete = complete;
@@ -870,7 +934,7 @@ function applyFilter(f, announce) {
   let shown = 0;
   for (const c of ALL) {
     const s = (state.answers[c.id] || {}).s || "";
-    const show = f === "all" || (f === "round2" ? !!c.changed : (f === "open" ? !s : s === f));
+    const show = f === "all" || (f === "round2" ? !!c.changed : (f === "round3" ? c.round === 3 : (f === "open" ? !s : s === f)));
     document.getElementById(`check-${c.id}`).classList.toggle("hidden-by-filter", !show);
     if (show) shown++;
   }
@@ -886,11 +950,12 @@ function stateWord(s) { return { pass: "PASS", fail: "FAIL", na: "UNKNOWN" }[s] 
 function buildReport() {
   const m = state.meta;
   const r2only = document.getElementById("reportRound2").checked;
-  const rows = ALL.filter(c => !r2only || c.changed).map(c => ({ c, a: state.answers[c.id] || {} }));
+  const r3only = document.getElementById("reportRound3").checked;
+  const rows = ALL.filter(c => (!r2only && !r3only) || (r2only && c.changed) || (r3only && c.round === 3)).map(c => ({ c, a: state.answers[c.id] || {} }));
   const counts = { pass: 0, fail: 0, na: 0, open: 0 };
   rows.forEach(r => counts[r.a.s || "open"]++);
   const lines = [];
-  lines.push(r2only ? "# Tsukimichi smoke test report (round 2 items)" : "# Tsukimichi smoke test report");
+  lines.push(r3only && !r2only ? "# Tsukimichi smoke test report (round 3 items)" : r2only ? "# Tsukimichi smoke test report (round 2 items)" : "# Tsukimichi smoke test report");
   lines.push(`Date: ${m.metaDate || "(not given)"} · Plugin: ${m.metaVersion || "(not given)"} · Dalamud: ${m.metaDalamud || "(not given)"} · Character: ${m.metaCharacter || "(not given)"}`);
   lines.push(`Result: ${counts.pass} pass · ${counts.fail} fail · ${counts.na} unknown · ${counts.open} unanswered (of ${rows.length})`);
   const block = (title, filter, withNotesOnly) => {
@@ -938,6 +1003,11 @@ document.getElementById("btnReport").addEventListener("click", () => {
 });
 document.getElementById("btnRegen").addEventListener("click", () => { buildReport(); toast("Report refreshed."); });
 document.getElementById("reportRound2").addEventListener("change", () => buildReport());
+document.getElementById("reportRound3").addEventListener("change", () => buildReport());
+document.getElementById("btnResetRound3").addEventListener("click", () => {
+  for (const c of ALL) if (c.round === 3) delete state.answers[c.id];
+  save(); wasComplete = false; render(); applyFilter("round3", false); toast("Round 3 answers cleared. Showing Round 3 checks.");
+});
 document.getElementById("btnResetRound2").addEventListener("click", () => {
   for (const c of ALL) if (c.changed) delete state.answers[c.id];
   save(); wasComplete = false; render(); applyFilter("round2", false); toast("Round 2 answers cleared. Showing Round 2 checks.");
