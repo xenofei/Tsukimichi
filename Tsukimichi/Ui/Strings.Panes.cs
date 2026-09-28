@@ -314,6 +314,16 @@ static partial class Strings
     public const string ConfigPollCostFormat = "Each poll costs about {0:0.0} ms; 1 s is the default and is safe.";
     public const string ConfigPollCostUnknown = "Each poll costs a few milliseconds; 1 s is the default and is safe.";
 
+    /// <summary>"What's new" card at the top of the detail column after an update.</summary>
+    public static class WhatsNew
+    {
+        /// <summary>{0} = plugin version.</summary>
+        public const string TitleFormat = "What's new in {0}";
+        public const string Close = "Close";
+        public const string Help = "Help";
+        public const string Bullet = "• ";
+    }
+
     /// <summary>
     /// Help window text. Topics are built from small blocks (cards, steps, tips, key caps), so each block's text is
     /// its own constant or array element; every paragraph stays under sixty words.

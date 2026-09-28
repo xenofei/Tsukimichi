@@ -381,6 +381,9 @@ public sealed class Plugin : IDalamudPlugin
 
             command.ToggleHelpWindow = helpWindow.Toggle;
 
+            // "What's new" after an update: decided on the main window's first draw, drawn above the detail pane.
+            mainWindow.AttachWhatsNew(new WhatsNewCard(Settings, PluginInterface, Log, helpWindow.Show));
+
             // Toolbar buttons on the main window (help, tutorial, settings).
             mainWindow.AttachActions(configWindow.Toggle, helpWindow.Toggle, helpActions.StartTutorial);
             // /UI

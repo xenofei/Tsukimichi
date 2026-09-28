@@ -97,6 +97,13 @@ public sealed class Configuration : IPluginConfiguration
     /// </summary>
     public float IconScale { get; set; } = ScaleMetrics.DefaultIconScale;
 
+    // ---- 0.6.0: what's new ----
+    /// <summary>
+    /// The plugin version whose "What's new" card was seen (or recorded silently on a fresh install); empty until the
+    /// main window first opens. When it differs from the running version the card shows once (see <c>Ui.WhatsNewCard</c>).
+    /// </summary>
+    public string LastSeenVersion { get; set; } = string.Empty;
+
     // ---- 0.5.1: motion ----
     /// <summary>
     /// Replace the hold-to-confirm arc with a text countdown (and, later, other animation with a cut). Off by default;
@@ -138,6 +145,7 @@ public sealed class Configuration : IPluginConfiguration
         }
 
         config.Filters ??= new FilterSet();
+        config.LastSeenVersion ??= string.Empty;
         return config;
     }
 

@@ -22,6 +22,11 @@ Moonlit treasures collects quests with unique rewards, and per-character snapsho
   </ItemGroup>
 
   <ItemGroup>
+    <!-- The in-app "What's new" card reads the running version's section from this copy at runtime (Ui\WhatsNewCard.cs). -->
+    <EmbeddedResource Include="..\CHANGELOG.md" LogicalName="Tsukimichi.CHANGELOG.md" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- Shipped data files only; Data\ also holds source (LuminaCatalogLoader.cs) that must not be copied to the output. -->
     <Content Include="Data\**" Exclude="Data\**\*.cs" CopyToOutputDirectory="PreserveNewest" />
     <!-- Packaged as images\icon.png, where Dalamud looks for a plugin's icon inside the zip; assets\icon.png stays the source. -->

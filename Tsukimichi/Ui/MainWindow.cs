@@ -60,6 +60,7 @@ public sealed class MainWindow : Window, IDisposable
     private Action? openHelp;
     private Action? startTutorial;
     private ITutorial? tutorial;
+    private WhatsNewCard? whatsNew;
 
     private Task? retryTask;
     private bool initialized;
@@ -165,6 +166,12 @@ public sealed class MainWindow : Window, IDisposable
     public void AttachTutorial(ITutorial tutorial)
     {
         this.tutorial = tutorial ?? throw new ArgumentNullException(nameof(tutorial));
+    }
+
+    /// <summary>Attaches the "What's new" card; it decides on the window's first draw and sits above the detail pane while visible.</summary>
+    public void AttachWhatsNew(WhatsNewCard card)
+    {
+        whatsNew = card ?? throw new ArgumentNullException(nameof(card));
     }
 
     public override void Draw()
@@ -336,6 +343,7 @@ public sealed class MainWindow : Window, IDisposable
         }
 
         initialized = true;
+        whatsNew?.CheckOnOpen();
         ui.Filters = plugin.Settings.Filters;
         ui.Sort = new SortSpec(plugin.Settings.SortColumn, plugin.Settings.SortDescending, plugin.Settings.PinnedFirst);
         persistedSort = ui.Sort;
@@ -663,7 +671,13 @@ public sealed class MainWindow : Window, IDisposable
         }
 
         ImGui.TableNextColumn();
-        detailPane.Draw(session, bundle, new Vector2(0f, cellHeight));
+        var detailHeight = cellHeight;
+        if (whatsNew is { Visible: true } card)
+        {
+            detailHeight -= card.Draw(cellHeight);
+        }
+
+        detailPane.Draw(session, bundle, new Vector2(0f, detailHeight));
     }
 
     private void DrawNavigation(SessionState session, CatalogBundle bundle, float height)
