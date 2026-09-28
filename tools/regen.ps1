@@ -11,7 +11,8 @@
       4. Tsukimichi.DataGen --dump-catalog: the test fixture Tsukimichi.Tests/Fixtures/catalog-<gameVersion>.json.gz
          (the previous fixture is removed, so exactly one remains).
       5. docs/data/DATA-VERSION.md: game version, generation time, curated revision (short git hash of the last
-         commit touching Tsukimichi/Data/curated, "-dirty" when that directory has uncommitted changes) and counts;
+         commit touching a data file under Tsukimichi/Data/curated, README.md and VERSION.json excluded, "-dirty"
+         when those files have uncommitted changes) and counts;
          the same revision goes into Tsukimichi/Data/curated/VERSION.json, which the plugin shows in Settings > About
          and in the "Report this quest" diagnostic block.
       6. dotnet test Tsukimichi.Tests (the curated invariants run without the game; with the game path they all run).
@@ -84,9 +85,10 @@ $data = $raw | ConvertFrom-Json
 # ConvertFrom-Json turns the ISO timestamp into a DateTime; keep the file's own text.
 $generatedUtc = [regex]::Match($raw, '"generatedUtc":\s*"([^"]+)"').Groups[1].Value
 $curated = Get-Content (Join-Path $curatedDir "feature_quests.json") -Raw | ConvertFrom-Json
-# The revision excludes VERSION.json itself, or every regeneration would point at the commit that recorded the previous one.
+# The revision names the commit that last changed the data files: VERSION.json is excluded, or every regeneration
+# would point at the commit that recorded the previous stamp, and README.md, or a wording change would look like new data.
 $curatedVersionFile = "$curatedDir/VERSION.json"
-$curatedPathspec = @($curatedDir, ":(exclude)$curatedVersionFile")
+$curatedPathspec = @($curatedDir, ":(exclude)$curatedVersionFile", ":(exclude)$curatedDir/README.md")
 $curatedRevision = (git log -n 1 --format=%h -- @curatedPathspec).Trim()
 if ((git status --porcelain -- @curatedPathspec | Measure-Object).Count -gt 0) { $curatedRevision += "-dirty" }
 $fixture = (Get-ChildItem $fixturesDir -Filter "catalog-*.json.gz" | Select-Object -First 1).Name
@@ -94,7 +96,7 @@ $fixture = (Get-ChildItem $fixturesDir -Filter "catalog-*.json.gz" | Select-Obje
 # The plugin reads the revision from VERSION.json (CuratedData.CuratedRevision) for Settings > About and the diagnostic block.
 $versionJson = @(
     "{",
-    "  `"`$schema_note`": `"Written by tools/regen.ps1; do not edit by hand. curatedRevision is the short git hash of the last commit touching this directory (excluding this file), with -dirty appended when it had uncommitted changes.`",",
+    "  `"`$schema_note`": `"Written by tools/regen.ps1; do not edit by hand. curatedRevision is the short git hash of the last commit touching a data file in this directory (this file and README.md excluded), with -dirty appended when those files had uncommitted changes.`",",
     "  `"curatedRevision`": `"$curatedRevision`"",
     "}"
 )
@@ -115,7 +117,7 @@ $lines = @(
     "|---|---|",
     "| Game version | ``$($data.gameVersion)`` |",
     "| Generated (UTC) | ``$generatedUtc`` |",
-    "| Curated revision | ``$curatedRevision`` (last commit touching ``$curatedDir``) |",
+    "| Curated revision | ``$curatedRevision`` (last commit touching a data file under ``$curatedDir``) |",
     "| Catalog fixture | ``$fixture`` |",
     "| unique_quests.json entries | $($data.entries.Count) across $questCount quests |",
     "| feature_quests.json (derived) | $($curated.questRowIds.Count) quests |",
