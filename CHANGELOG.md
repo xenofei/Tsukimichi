@@ -4,6 +4,14 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+### Added
+- "What's new" card: after an update, the first time the main window opens, a card above the detail pane lists what changed in this version, with Close and Help. It never shows on a fresh install, and nothing is fetched: the notes ship inside the plugin.
+- Help topics "Why my counts differ from the journal" (unlisted and removed quests, seasonal quests out of season, foreclosed choices, the derived Feature Unlocks node, repeatables) and "Known quirks" (steps the game skips such as Up In Arms with the Zenith, "Bloodsworn" reading "Allied" since 7.0, conditions listed but not judged, Online Store re-sells in Moonlit), both searchable; the Commands topic gains `/tsuki todo`.
+- MIT license, a README written for players and Discord moderators (install, features, every command, what the plugin hooks and never does, releases, credits), a CONTRIBUTING page and GitHub issue templates for bugs, wrong quest states (with a field for the diagnostic block) and data corrections.
+
+### Fixed
+- The plugin installer shows Tsukimichi's icon: the manifest inside the release package now carries the icon address, and the icon ships as `images/icon.png`.
+
 ## [0.5.1] - 2026-09-28
 
 ### Added
