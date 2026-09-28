@@ -26,7 +26,7 @@ static partial class Strings
     public const string MoonlitColumnConfidence = "Confidence";
     public const string MoonlitObtainedYes = "Obtained";
     public const string MoonlitObtainedNo = "Not obtained";
-    public const string MoonlitObtainedUnknown = "Unknown: not readable for this reward kind or character";
+    public const string MoonlitObtainedUnknown = "Not checked: not readable for this reward kind or character";
     public const string MoonlitShowInJournal = "Show in Journal";
     public const string MoonlitMarkNotUnique = "Not unique (hide)…";
     public const string MoonlitRestoreOverride = "Restore shipped verdict";
@@ -66,7 +66,7 @@ static partial class Strings
     public const string MoonlitConfidenceStaticOnly = "Static only";
     public const string MoonlitConfidenceCuratedOnly = "Curated only";
     public const string MoonlitConfidenceYoursOnly = "Yours only";
-    public const string MoonlitConfidenceUnknownObtained = "Unknown obtained";
+    public const string MoonlitConfidenceUnknownObtained = "Obtained not checked";
 
     // ---- Flight pane ----
     public const string TabFlight = "Flight";
@@ -94,7 +94,7 @@ static partial class Strings
     public const string FlightColumnActions = "##actions";
     public const string FlightAttunedYes = "Attuned";
     public const string FlightAttunedNo = "Not attuned: completing the quest attunes it";
-    public const string FlightAttunedUnknown = "Unknown: attunement is read for the logged-in character only";
+    public const string FlightAttunedUnknown = "Not checked: attunement is read for the logged-in character only";
     public const string FlightQuestClickHint = "Show the quest's requirements and path in the detail pane";
     public const string FlightQuestPrefix = "Quest ";
     public const string FlightFlag = "Flag";
@@ -506,7 +506,7 @@ static partial class Strings
         [
             "Every zone you can fly in, under its expansion, with a moon that fills as you attune its currents; the zone you stand in is marked ● and selected first. Pick a zone and the table lists its quest currents: attuned or not, the quest's state and status, and Flag or Teleport to the giver.",
             "Quest currents come from quests, five per zone in most expansions, and completing the quest attunes them. Field currents are touched in the world; the tab counts them but never locates them. Use the Aether Compass, a General Action under Actions & Traits, to point at the nearest one.",
-            "/tsuki nearby opens a small window with the quests you can start in the current zone: state moon, level, job, Flag and Teleport, and a click on the name shows it in the Journal. Also accepted here folds out the accepted quests whose giver stands in the zone. The cog holds its settings.",
+            "/tsuki nearby opens a small window with the quests you can start in the current zone: state moon, level, job, Flag and Teleport, and a click on the name shows it in the Journal. Also in your journal here folds out the quests in your journal whose giver stands in the zone. The cog holds its settings.",
             "☾ N in the server info bar is the count of quests you can start here. Hover it for the first five names; click it to open Nearby quests. It hides at zero unless Keep the entry visible is on, and the cog in Nearby quests can turn it off entirely.",
             "/tsuki zone prints chat links for the quests you can start in the current zone, by level, up to ten. /tsuki which prints every quest the targeted NPC hands out with its state. Both need an evaluated character; the Nearby quests window keeps the same list on screen.",
         ];

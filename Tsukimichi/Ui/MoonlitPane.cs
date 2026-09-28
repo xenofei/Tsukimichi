@@ -842,7 +842,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         visibleSummary = listed.ToString(CultureInfo.InvariantCulture) + " / " + denominator.ToString(CultureInfo.InvariantCulture);
     }
 
-    /// <summary>Whether a row passes the confidence combo: a confidence match, or (Unknown obtained) an unreadable obtained state.</summary>
+    /// <summary>Whether a row passes the confidence combo: a confidence match, or (Obtained not checked) an unreadable obtained state.</summary>
     internal static bool PassesConfidence(ConfidenceFilter filter, Confidence confidence, bool? obtained) => filter switch
     {
         ConfidenceFilter.Any => true,
