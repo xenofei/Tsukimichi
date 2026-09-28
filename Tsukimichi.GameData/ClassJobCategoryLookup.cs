@@ -57,8 +57,11 @@ public sealed class ClassJobCategoryLookup : IClassJobCategoryLookup
         return new ClassJobCategoryLookup(result.ToFrozenDictionary(), jobColumns);
     }
 
-    /// <summary>Builds from explicit membership, for tests and offline tools.</summary>
-    public static ClassJobCategoryLookup FromMembership(IEnumerable<KeyValuePair<uint, IEnumerable<byte>>> membership)
+    /// <summary>
+    /// Builds from explicit membership, for tests and offline tools. <paramref name="jobColumns"/> restores the sheet's
+    /// column count when known (a frozen catalog); otherwise it is the highest job id + 1.
+    /// </summary>
+    public static ClassJobCategoryLookup FromMembership(IEnumerable<KeyValuePair<uint, IEnumerable<byte>>> membership, int? jobColumns = null)
     {
         var result = new Dictionary<uint, Bits>();
         var max = 0;
@@ -74,7 +77,19 @@ public sealed class ClassJobCategoryLookup : IClassJobCategoryLookup
             result[category] = bits;
         }
 
-        return new ClassJobCategoryLookup(result.ToFrozenDictionary(), max);
+        return new ClassJobCategoryLookup(result.ToFrozenDictionary(), Math.Min(jobColumns ?? max, MaxJobs));
+    }
+
+    /// <summary>Every category with its admitted job ids in ascending order; the inverse of <see cref="FromMembership"/>.</summary>
+    public IReadOnlyDictionary<uint, byte[]> ToMembership()
+    {
+        var result = new SortedDictionary<uint, byte[]>();
+        foreach (var category in categories.Keys)
+        {
+            result[category] = JobsIn(category).ToArray();
+        }
+
+        return result;
     }
 
     public int Count => categories.Count;
