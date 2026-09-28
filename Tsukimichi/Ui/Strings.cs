@@ -65,6 +65,17 @@ public static partial class Strings
     /// <summary>Hover text of a folded tree node: {0} = section, {1} = category, {2} = genre.</summary>
     public const string FoldedPathFormat = "{0} › {1} › {2}";
 
+    // Presets (top of the filter panel)
+    public const string Presets = "Presets";
+    public const string PresetFeatureQuests = FilterNames.FeatureQuests;
+    public const string PresetLevelBand = FilterNames.LevelBand;
+    public const string PresetStalled = FilterNames.Stalled;
+    public const string PresetFeatureQuestsTooltip = "Unlock quests: duties, jobs, actions, aether currents, systems. Quests you can pick up now come first";
+    public const string PresetLevelBandTooltip = "Quests within five levels of your current job's level";
+    public const string PresetStalledTooltip = "Quests that have sat in your journal for the number of days below";
+    public const string StalledDaysFormat = "%d days";
+    public const string StalledDaysTooltip = "How long an accepted quest waits before Stalled lists it";
+
     // Filter panel
     public const string HideCompleted = FilterNames.HideCompleted;
     public const string AvailableOnly = FilterNames.AvailableOnly;

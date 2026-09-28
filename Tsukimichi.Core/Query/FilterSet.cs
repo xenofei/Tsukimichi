@@ -53,9 +53,13 @@ public sealed class FilterSet : IEquatable<FilterSet>
     /// <summary>Keeps only quests pinned in the query context.</summary>
     public bool PinnedOnly { get; set; }
 
+    /// <summary>The active one-click preset (feature quests, level band, stalled); <see cref="Preset.None"/> when none.</summary>
+    public Preset Preset { get; set; }
+
     /// <summary>True when any narrowing filter is engaged. <see cref="IncludeUnlisted"/> widens, so it does not count.</summary>
     public bool IsActive() =>
-        HideCompletedEngaged()
+        Preset != Preset.None
+        || HideCompletedEngaged()
         || AvailableOnlyEngaged()
         || StateMask != QuestStateMask.All
         || Expansions.Count > 0
@@ -109,6 +113,7 @@ public sealed class FilterSet : IEquatable<FilterSet>
         SeasonalActiveOnly = SeasonalActiveOnly,
         IncludeUnlisted = IncludeUnlisted,
         PinnedOnly = PinnedOnly,
+        Preset = Preset,
     };
 
     /// <summary>Returns every field to its default; the one-click reset behind the empty-result guard.</summary>
@@ -128,6 +133,7 @@ public sealed class FilterSet : IEquatable<FilterSet>
         SeasonalActiveOnly = false;
         IncludeUnlisted = false;
         PinnedOnly = false;
+        Preset = Preset.None;
     }
 
     public bool Equals(FilterSet? other)
@@ -152,6 +158,7 @@ public sealed class FilterSet : IEquatable<FilterSet>
             && SeasonalActiveOnly == other.SeasonalActiveOnly
             && IncludeUnlisted == other.IncludeUnlisted
             && PinnedOnly == other.PinnedOnly
+            && Preset == other.Preset
             && Expansions.SetEquals(other.Expansions)
             && SameEntries(PerCategoryHideCompleted, other.PerCategoryHideCompleted)
             && SameEntries(PerCategoryAvailableOnly, other.PerCategoryAvailableOnly)
@@ -173,6 +180,7 @@ public sealed class FilterSet : IEquatable<FilterSet>
         hash.Add(SeasonalActiveOnly);
         hash.Add(IncludeUnlisted);
         hash.Add(PinnedOnly);
+        hash.Add(Preset);
         hash.Add(OrderInsensitiveHash(Expansions));
         hash.Add(OrderInsensitiveHash(PerCategoryHideCompleted));
         hash.Add(OrderInsensitiveHash(PerCategoryAvailableOnly));

@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.IO;
 using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Runtime;
 using Tsukimichi.Core.Storage;
 using Tsukimichi.GameData;
@@ -93,6 +95,12 @@ public sealed class SessionState
     public UniqueRewardsData UniqueRewards { get; }
 
     public CuratedData Curated { get; }
+
+    /// <summary>
+    /// Row ids of the feature ("blue") quests, derived once per catalog by <see cref="FeaturePresets.Derive"/> from the
+    /// curated files and the quests' rewards. Backs the Feature Unlocks node, the Feature quests preset and chat notices.
+    /// </summary>
+    public IReadOnlySet<uint> FeatureQuestIds { get; private set; } = FrozenSet<uint>.Empty;
 
     /// <summary>False while the poller is backing off after an exception; the sync glyph shows veiled.</summary>
     public bool PollerHealthy { get; private set; } = true;
@@ -193,6 +201,7 @@ public sealed class SessionState
         CatalogError = null;
         CatalogLoading = false;
         Index = ReversePrereqIndex.Build(bundle.Catalog);
+        FeatureQuestIds = FeaturePresets.Derive(bundle.Catalog, Curated, UniqueRewards.Entries);
         baseContext = EvalContext.Default with { ClassJobs = bundle.Jobs };
 
         if (ViewedSnapshot is { } viewed && !IsLive)

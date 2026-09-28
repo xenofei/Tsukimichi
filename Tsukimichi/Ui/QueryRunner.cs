@@ -82,7 +82,7 @@ public sealed class QueryRunner : IDisposable
     /// <summary>Null until a catalog exists.</summary>
     public TreeCounts? Counts { get; private set; }
 
-    /// <summary>Done/total over the curated Feature Unlocks quests.</summary>
+    /// <summary>Done/total over the derived feature quests (<see cref="SessionState.FeatureQuestIds"/>).</summary>
     public NodeCount FeatureCount { get; private set; }
 
     /// <summary>Pinned row ids for the viewed character.</summary>
@@ -352,8 +352,11 @@ public sealed class QueryRunner : IDisposable
             festivals = snapshot is null || snapshot.ActiveFestivals.Count == 0 ? NoFestivals : new HashSet<ushort>(snapshot.ActiveFestivals);
         }
 
-        var ctx = new QueryContext(festivals, pinned, session.Curated.FeatureQuests, SearchIndex: SearchIndex.For(current.Catalog));
-        var result = QuestQuery.Apply(current.Catalog, session.States, ui.Filters, ui.Scope, ui.Sort, appliedSearch, ctx);
+        var ctx = new QueryContext(festivals, pinned, session.FeatureQuestIds, SearchIndex: SearchIndex.For(current.Catalog));
+
+        // The Feature quests preset reads best with what can be picked up now on top; the other presets keep the table's sort.
+        var effectiveSort = ui.Sort with { AvailableFirst = ui.Filters.Preset == Preset.FeatureQuests };
+        var result = QuestQuery.Apply(current.Catalog, session.States, ui.Filters, ui.Scope, effectiveSort, appliedSearch, ctx);
 
         Rows = result.Rows;
         Empty = result.Empty;
@@ -372,7 +375,7 @@ public sealed class QueryRunner : IDisposable
         var done = 0;
         var total = 0;
         var foreclosed = 0;
-        foreach (var rowId in session.Curated.FeatureQuests)
+        foreach (var rowId in session.FeatureQuestIds)
         {
             if (!catalog.ByRowId.ContainsKey(rowId))
             {

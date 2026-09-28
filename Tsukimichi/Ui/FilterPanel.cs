@@ -87,6 +87,8 @@ public sealed class FilterPanel
         var start = ImGui.GetCursorScreenPos();
         var width = ImGui.GetContentRegionAvail().X;
 
+        DrawPresets(f, hasSnapshot);
+        ImGui.Separator();
         DrawRuntimeToggle(Strings.HideCompleted, Strings.HideCompletedTooltip, "##hideCompleted", hasSnapshot, f.HideCompleted, v => f.HideCompleted = v, f.PerCategoryHideCompleted);
         DrawRuntimeToggle(Strings.AvailableOnly, Strings.AvailableOnlyTooltip, "##availableOnly", hasSnapshot, f.AvailableOnly, v => f.AvailableOnly = v, f.PerCategoryAvailableOnly);
         DrawPinnedFirst();
@@ -161,6 +163,48 @@ public sealed class FilterPanel
         Tip(Strings.ResetDisplayTooltip);
     }
 
+    /// <summary>
+    /// One-click presets as toggle chips at the head of the panel; at most one is on, and clicking the active one
+    /// turns it off. Around my level and Stalled read the snapshot, so they are disabled in browse mode.
+    /// </summary>
+    private void DrawPresets(FilterSet f, bool hasSnapshot)
+    {
+        ImGui.TextDisabled(Strings.Presets);
+        var first = true;
+        PresetChip(Strings.PresetFeatureQuests, Strings.PresetFeatureQuestsTooltip, Preset.FeatureQuests, f, enabled: true, ref first);
+        PresetChip(Strings.PresetLevelBand, Strings.PresetLevelBandTooltip, Preset.LevelBand, f, hasSnapshot, ref first);
+        PresetChip(Strings.PresetStalled, Strings.PresetStalledTooltip, Preset.Stalled, f, hasSnapshot, ref first);
+    }
+
+    private void PresetChip(string label, string tooltip, Preset preset, FilterSet f, bool enabled, ref bool first)
+    {
+        // Chips share a line while they fit the column and flow onto the next one otherwise.
+        if (!first)
+        {
+            var style = ImGui.GetStyle();
+            var needed = ImGui.CalcTextSize(label).X + style.FramePadding.X * 2f + style.ItemSpacing.X;
+            var limit = ImGui.GetWindowPos().X + ImGui.GetWindowContentRegionMax().X;
+            if (ImGui.GetItemRectMax().X + needed <= limit)
+            {
+                ImGui.SameLine();
+            }
+        }
+
+        first = false;
+        var active = f.Preset == preset;
+        using (ImRaii.Disabled(!enabled))
+        using (ImRaii.PushColor(ImGuiCol.Button, ImGui.GetColorU32(ImGuiCol.ButtonActive), active))
+        {
+            if (ImGui.SmallButton(label))
+            {
+                f.Preset = active ? Preset.None : preset;
+                changed();
+            }
+        }
+
+        Tip(enabled ? tooltip : Strings.NeedsSnapshot);
+    }
+
     /// <summary>The sort's pinned-first flag lives beside the filters; MainWindow persists it with the sort.</summary>
     private void DrawPinnedFirst()
     {
@@ -198,6 +242,11 @@ public sealed class FilterPanel
         {
             // The search is not persisted and QueryRunner applies an emptied search on its own, so no changed() here.
             Chip(Strings.ChipSearch, ref any, () => ui.SearchText = string.Empty, notify: false);
+        }
+
+        if (f.Preset != Preset.None)
+        {
+            Chip(FilterNames.PresetName(f.Preset), ref any, () => f.Preset = Preset.None);
         }
 
         if (f.HideCompletedEngaged())
