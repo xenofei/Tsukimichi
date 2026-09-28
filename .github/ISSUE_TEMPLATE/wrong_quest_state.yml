@@ -1,0 +1,58 @@
+name: Wrong quest state
+description: A quest shows Ready but the NPC will not give it, shows Blocked while it is offered, or the blocker named is wrong.
+title: "[State] "
+labels: ["wrong-state"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing, check **Known quirks** and **Why my counts differ from the journal** in the help window (`/tsuki help`); steps the game skips, "Bloodsworn" versus "Allied" and conditions that are listed but not judged are already known.
+  - type: input
+    id: quest
+    attributes:
+      label: Quest
+      description: Name, and the id if you have it (the diagnostic block below carries it).
+      placeholder: "Saint Sayer (67818)"
+    validations:
+      required: true
+  - type: dropdown
+    id: shown
+    attributes:
+      label: State Tsukimichi shows
+      options:
+        - Ready
+        - Ready on another job
+        - Accepted
+        - Blocked
+        - Done this cycle
+        - Completed
+        - Foreclosed
+        - Unknown
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What the game does
+      description: Does the NPC offer the quest? Is it in your journal? What does the game say when you talk to the NPC?
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostic
+    attributes:
+      label: Diagnostic block
+      description: Select the quest, press **Report this quest** in the detail pane (or `/tsuki report`), and paste what it copied. It carries the plugin and data versions, the quest id, the state, every requirement's verdict and the inputs it was judged from, and no character identifiers.
+      render: text
+      placeholder: |
+        Tsukimichi 0.6.0 · data … · curated … · schema …
+        Quest … "…" (…)
+        State: …
+        Requirements: …
+        Inputs: …
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else
+      description: A guide or wiki page that says what the real requirement is, if you know one.
