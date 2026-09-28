@@ -144,7 +144,7 @@ public sealed class Plugin : IDalamudPlugin
 
         var reader = new Game.GameStateReader(Framework, PlayerState, DataManager, Log);
         Snapshots = new Game.SnapshotService(new Core.Storage.JsonSnapshotStore(Paths.ConfigDir), ClientState, Framework, Log, reader);
-        Session = new Game.SessionState(Snapshots, Paths, uniqueRewards, curated);
+        Session = new Game.SessionState(Snapshots, Paths, uniqueRewards, curated, Log);
         if (Settings.ViewedContentId is { } viewed && !Session.ViewCharacter(viewed))
         {
             Settings.ViewedContentId = null;

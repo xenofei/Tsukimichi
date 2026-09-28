@@ -376,6 +376,14 @@ public sealed class StatePoller : IDisposable
             return;
         }
 
+        if (pending.Snapshot.ContentId != reader.ContentId)
+        {
+            // Another character arrived without a not-ready gap while the pass was on the worker: publishing the
+            // previous one as live, even for one interval, would show the wrong character. The next poll starts over.
+            log.Debug("Character changed during the first evaluation; the next poll starts another");
+            return;
+        }
+
         var result = pending.Task.Result;
         foreach (var warning in result.Warnings)
         {
