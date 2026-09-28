@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
 
 namespace Tsukimichi.Ui;
@@ -48,6 +49,12 @@ public sealed class UiState
     public bool ScrollToPath { get; set; }
 
     /// <summary>
+    /// Set by <see cref="Reveal(uint, QuestScope, bool)"/>: the Journal tree opens the ancestors of <see cref="Scope"/>
+    /// and scrolls to it on its next draw, then clears this.
+    /// </summary>
+    public bool RevealPending { get; set; }
+
+    /// <summary>
     /// Screen rectangles of named UI regions recorded during the last frame (toolbar, search, filters, chips,
     /// tabs, tree, table, detail, path, moonlit, characters, flight, settings, help). Consumers such as the interactive
     /// tutorial read them to draw highlights; panes call <see cref="RecordRect"/> right after drawing a region.
@@ -82,6 +89,7 @@ public sealed class UiState
         Tab = NavTab.Journal;
         Scope = scope;
         SelectedRowId = rowId;
+        RevealPending = true;
 
         var f = Filters;
         var changed = false;
@@ -129,5 +137,12 @@ public sealed class UiState
         }
 
         MarkQueryDirty();
+    }
+
+    /// <summary>Reveals a catalog quest: its genre's scope, or the Unlisted virtual scope for an unlisted quest.</summary>
+    public void Reveal(QuestRecord quest)
+    {
+        ArgumentNullException.ThrowIfNull(quest);
+        Reveal(quest.RowId, quest.IsUnlisted ? QuestScope.VirtualUnlisted : QuestScope.Genre(quest.Journal.GenreId), quest.IsUnlisted);
     }
 }

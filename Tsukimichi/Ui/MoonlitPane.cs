@@ -543,8 +543,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     }
 
     /// <summary>Shows a quest in the Journal tab scoped to its genre (or the Unlisted bucket); also used by Wotsit picks.</summary>
-    internal static void Reveal(UiState ui, QuestRecord quest) =>
-        ui.Reveal(quest.RowId, quest.IsUnlisted ? QuestScope.VirtualUnlisted : QuestScope.Genre(quest.Journal.GenreId), quest.IsUnlisted);
+    internal static void Reveal(UiState ui, QuestRecord quest) => ui.Reveal(quest);
 
     /// <summary>Catalog, rows and obtained states, each only when its inputs changed.</summary>
     private void Refresh()

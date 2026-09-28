@@ -46,6 +46,7 @@ public sealed class TreePane
     private readonly Node unlistedNode = new(QuestScope.VirtualUnlisted, "##unlisted", Strings.Unlisted, leaf: true);
     private TreeCounts? counts;
     private NodeCount featureCount;
+    private bool revealing;
 
     public TreePane(UiState ui)
     {
@@ -56,6 +57,11 @@ public sealed class TreePane
     {
         EnsureNodes(current);
         RefreshCounts(runner);
+
+        // A reveal from another pane (Moonlit, Characters, Flight, the MSQ status, chat) selected a scope whose
+        // ancestors may be collapsed: this frame opens them and scrolls the selected node into view.
+        revealing = ui.RevealPending;
+        ui.RevealPending = false;
 
         var start = ImGui.GetCursorScreenPos();
         var width = ImGui.GetContentRegionAvail().X;
@@ -72,7 +78,27 @@ public sealed class TreePane
             DrawNode(unlistedNode, section: true);
         }
 
+        revealing = false;
         ui.RecordSpan(UiRects.Tree, start, width);
+    }
+
+    /// <summary>Whether <paramref name="node"/> or one of its descendants carries <paramref name="scope"/>.</summary>
+    private static bool Contains(Node node, QuestScope scope)
+    {
+        if (node.Scope == scope)
+        {
+            return true;
+        }
+
+        foreach (var child in node.Children)
+        {
+            if (Contains(child, scope))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /// <summary>
@@ -88,12 +114,22 @@ public sealed class TreePane
             flags |= ImGuiTreeNodeFlags.Leaf | ImGuiTreeNodeFlags.NoTreePushOnOpen;
         }
 
-        if (ui.Scope == node.Scope)
+        var selected = ui.Scope == node.Scope;
+        if (selected)
         {
             flags |= ImGuiTreeNodeFlags.Selected;
         }
 
+        if (revealing && !node.Leaf && !selected && Contains(node, ui.Scope))
+        {
+            ImGui.SetNextItemOpen(true);
+        }
+
         var open = ImGui.TreeNodeEx(node.Id, flags, HiddenLabel);
+        if (revealing && selected)
+        {
+            ImGui.SetScrollHereY(0.5f);
+        }
         if (ImGui.IsItemClicked() && !ImGui.IsItemToggledOpen())
         {
             Select(node.Scope);
