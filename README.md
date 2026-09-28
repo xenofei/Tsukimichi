@@ -62,6 +62,7 @@ Regenerate the unique-rewards file after a game patch or after editing the curat
 
 ```
 dotnet run --project Tsukimichi.DataGen -- --game "<path to sqpack>" --out Tsukimichi/Data/unique_quests.json --curated Tsukimichi/Data/curated
+dotnet run --project Tsukimichi.DataGen -- --verify --game "<path to sqpack>"
 ```
 
 Curated overlays (`Tsukimichi/Data/curated/`) are keyed by Quest row id; see the README there for the verification recipe. The helper scripts in `tools/curated/` query xivapi to check ids.

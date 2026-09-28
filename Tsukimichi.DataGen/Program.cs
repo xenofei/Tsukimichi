@@ -5,16 +5,24 @@ namespace Tsukimichi.DataGen;
 
 /// <summary>
 /// Offline generator: local game files -> unique_quests.json plus the review reports under docs/data.
-/// Usage: Tsukimichi.DataGen --game "<sqpack path>" --out <unique_quests.json> [--curated <dir>] [--reports <dir>]
+/// Usage: Tsukimichi.DataGen --game "<sqpack path>" --out <unique_quests.json> [--curated <dir>] [--reports <dir>] [--keep-nonexclusive-items]
+///        Tsukimichi.DataGen --verify --game "<sqpack path>" [--data <unique_quests.json>] [--report <verification-report.md>] [--no-xivapi] [--sample N] [--seed N]
 /// </summary>
 public static class Program
 {
+    private const string DefaultData = "Tsukimichi/Data/unique_quests.json";
+    private const string DefaultVerifyReport = "docs/data/verification-report.md";
+
     public static int Main(string[] args)
     {
+        if (args.Contains("--verify"))
+            return Verify(args);
+
         string? game = null;
         string? output = null;
         string? curated = null;
         var reports = Path.Combine("docs", "data");
+        var strictItems = true;
 
         for (var i = 0; i < args.Length; i++)
         {
@@ -31,6 +39,9 @@ public static class Program
                     break;
                 case "--reports" when i + 1 < args.Length:
                     reports = args[++i];
+                    break;
+                case "--keep-nonexclusive-items":
+                    strictItems = false;
                     break;
                 case "--help" or "-h":
                     PrintUsage();
@@ -62,13 +73,14 @@ public static class Program
         Console.WriteLine($"out:     {output}");
         Console.WriteLine($"curated: {curated ?? "(none)"}");
         Console.WriteLine($"reports: {reports}");
+        Console.WriteLine($"items:   {(strictItems ? "strict exclusivity rule" : "legacy rule (--keep-nonexclusive-items)")}");
 
         var sheets = new GameSheets(game);
         Console.WriteLine($"version: {sheets.GameVersion}  (sheets opened in {clock.Elapsed.TotalSeconds:F1} s)");
 
-        var generator = new UniqueRewardGenerator(sheets);
+        var generator = new UniqueRewardGenerator(sheets) { StrictItemExclusivity = strictItems };
         generator.Run();
-        Console.WriteLine($"static:  {generator.Entries.Count} entries in {clock.Elapsed.TotalSeconds:F1} s");
+        Console.WriteLine($"static:  {generator.Entries.Count} entries in {clock.Elapsed.TotalSeconds:F1} s ({generator.Dropped.Count} item rewards dropped as non-exclusive or unnamed)");
 
         CuratedOverlay.Apply(curated, sheets, generator, Console.Out);
 
@@ -104,6 +116,72 @@ public static class Program
         return 0;
     }
 
+    private static int Verify(string[] args)
+    {
+        string? game = null;
+        var data = DefaultData;
+        var report = DefaultVerifyReport;
+        var xivapi = true;
+        var sample = 48;
+        var seed = 20260927;
+
+        for (var i = 0; i < args.Length; i++)
+        {
+            switch (args[i])
+            {
+                case "--verify":
+                    break;
+                case "--game" when i + 1 < args.Length:
+                    game = args[++i];
+                    break;
+                case "--data" when i + 1 < args.Length:
+                    data = args[++i];
+                    break;
+                case "--report" when i + 1 < args.Length:
+                    report = args[++i];
+                    break;
+                case "--no-xivapi":
+                    xivapi = false;
+                    break;
+                case "--sample" when i + 1 < args.Length && int.TryParse(args[i + 1], out var n):
+                    sample = n;
+                    i++;
+                    break;
+                case "--seed" when i + 1 < args.Length && int.TryParse(args[i + 1], out var s):
+                    seed = s;
+                    i++;
+                    break;
+                case "--help" or "-h":
+                    PrintUsage();
+                    return 0;
+                default:
+                    Console.Error.WriteLine($"Unknown or incomplete argument: {args[i]}");
+                    PrintUsage();
+                    return 2;
+            }
+        }
+
+        if (game is null || !Directory.Exists(game))
+        {
+            Console.Error.WriteLine("--verify needs --game pointing at an existing sqpack directory.");
+            PrintUsage();
+            return 2;
+        }
+        if (!File.Exists(data))
+        {
+            Console.Error.WriteLine($"data file not found: {data}");
+            return 2;
+        }
+
+        var clock = Stopwatch.StartNew();
+        Console.WriteLine($"game:    {game}");
+        Console.WriteLine($"xivapi:  {(xivapi ? $"sample {sample}, seed {seed}" : "off")}");
+        var notes = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(report)) ?? string.Empty, "verification-notes.md");
+        var code = Verifier.Run(new VerifyOptions(game, data, report, File.Exists(notes) ? notes : null, xivapi, sample, seed));
+        Console.WriteLine($"done in {clock.Elapsed.TotalSeconds:F1} s");
+        return code;
+    }
+
     /// <summary>Known facts the output must reproduce. A failure means the sheet layout or a rule regressed.</summary>
     private static List<string> SanityChecks(IReadOnlyList<UniqueRewardEntry> entries)
     {
@@ -120,6 +198,12 @@ public static class Program
             "66038 Her Last Vow should yield a Minion");
         Require(entries.Any(e => e is { QuestRowId: 70058, Kind: RewardKind.Mount, RewardId: 6, ItemId: 6008 }),
             "70058 The Ultimate Weapon should yield Mount 6 (Magitek Armor via item 6008)");
+        Require(entries.All(e => !string.IsNullOrWhiteSpace(e.RewardName)),
+            "every entry should carry a reward name");
+        Require(entries.All(e => e.Kind == RewardKind.SystemUnlock || e.RewardId != 0),
+            "every entry except SystemUnlock should carry a reward id");
+        Require(entries.Any(e => e is { QuestRowId: 69254, Kind: RewardKind.Orchestrion, RewardId: 350, ItemId: 28894 }),
+            "69254 On the Threshold should yield Orchestrion 350 (Significance (Nothing), via item 28894 AdditionalData)");
 
         var mounts = entries.Count(e => e.Kind == RewardKind.Mount);
         var minions = entries.Count(e => e.Kind == RewardKind.Minion);
@@ -133,6 +217,9 @@ public static class Program
 
     private static void PrintUsage()
     {
-        Console.WriteLine("Usage: Tsukimichi.DataGen --game <sqpack path> --out <unique_quests.json> [--curated <curated dir>] [--reports <docs/data dir>]");
+        Console.WriteLine("Usage: Tsukimichi.DataGen --game <sqpack path> --out <unique_quests.json> [--curated <curated dir>] [--reports <docs/data dir>] [--keep-nonexclusive-items]");
+        Console.WriteLine($"       Tsukimichi.DataGen --verify --game <sqpack path> [--data <unique_quests.json>] [--report <report.md>] [--no-xivapi] [--sample N] [--seed N]");
+        Console.WriteLine($"       defaults: --data {DefaultData} --report {DefaultVerifyReport} --sample 48 --seed 20260927");
+        Console.WriteLine("       a verification-notes.md next to the report is inserted after the header (hand-written findings).");
     }
 }

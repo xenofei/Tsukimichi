@@ -53,7 +53,7 @@ Runtime state to compare against: `IPlayerState` (all job levels, GC + rank, Con
 
 Automatic from static sheets (verified counts):
 - Emotes: `Quest.EmoteReward` (41 quests) plus items with ItemAction 2633 carrying the emote unlock link (168 of 191 non-quest-link emotes). Uncovered: seasonal, Gold Saucer, hunt emotes.
-- Mounts: quest item rewards with ItemAction 1322 (36 quests). Minions: ItemAction 853 (62 quests). Orchestrion: ItemAction 25183. TT cards: 3357. Ornaments: 20086. Bardings: 1013.
+- Mounts: quest item rewards with ItemAction 1322 (36 quests). Minions: ItemAction 853 (62 quests). Orchestrion: ItemAction 25183 (the Orchestrion row id is `Item.AdditionalData`, not `ItemAction.Data`). TT cards: 3357. Ornaments: 20086. Bardings: 1013.
 - Actions: `Action.UnlockLink` → Quest (249 actions). Traits: `Trait.Quest` (54). Job unlocks: `ClassJob.UnlockQuest`. Blue mage: `AozActionTransient.RequiredForQuest`. Aether currents: `AetherCurrent.Quest` (150 quests flagged "Aether Current").
 - Job artifact gear: `ItemRewardType` 6 → `QuestClassJobReward` (115 quests).
 - Achievements/titles: `Achievement.Key/Data` → Quest (753 + 131 links), `Achievement.Title` (891 titles).
