@@ -24,6 +24,38 @@ public class NoticeTrackerTests
     private static HashSet<uint> Set(IEnumerable<uint> ids) => [.. ids];
 
     [Fact]
+    public void Job_nudges_are_deduped_per_session_apart_from_notices()
+    {
+        var tracker = new NoticeTracker();
+        tracker.Scan([], 7);
+
+        Assert.False(tracker.WasJobNudged(1));
+        Assert.True(tracker.MarkJobNudged(1));
+        Assert.False(tracker.MarkJobNudged(1));
+        Assert.True(tracker.WasJobNudged(1));
+        Assert.Equal(Set([1u]), Set(tracker.JobNudged));
+
+        // A job quest that is also a feature quest can still get its ordinary notice.
+        Assert.False(tracker.WasNotified(1));
+        Assert.True(tracker.MarkNotified(1));
+    }
+
+    [Fact]
+    public void Job_nudges_reset_when_the_live_character_changes()
+    {
+        var tracker = new NoticeTracker();
+        tracker.Scan([], 7);
+        tracker.MarkJobNudged(1);
+
+        tracker.Scan([], 7);
+        Assert.True(tracker.WasJobNudged(1));
+
+        tracker.Scan([], 8);
+        Assert.False(tracker.WasJobNudged(1));
+        Assert.Empty(tracker.JobNudged);
+    }
+
+    [Fact]
     public void First_scan_reports_every_newly_available_event_and_nothing_else()
     {
         var recent = new List<QuestEvent>();

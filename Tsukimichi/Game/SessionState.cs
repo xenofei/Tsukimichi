@@ -90,6 +90,12 @@ public sealed class SessionState
     /// <summary>Evaluations for <see cref="ViewedSnapshot"/> keyed by quest row id; empty without a catalog or a character.</summary>
     public IReadOnlyDictionary<uint, QuestEvaluation> States { get; private set; } = NoStates;
 
+    /// <summary>The poller's latest capture of the logged-in character, whichever character is viewed; null when logged out.</summary>
+    public CharacterSnapshot? LiveSnapshot => liveSnapshot;
+
+    /// <summary>Evaluations for <see cref="LiveSnapshot"/> keyed by quest row id; empty when logged out.</summary>
+    public IReadOnlyDictionary<uint, QuestEvaluation> LiveStates => liveStates;
+
     public ReversePrereqIndex? Index { get; private set; }
 
     /// <summary>Context the current <see cref="States"/> were resolved with.</summary>

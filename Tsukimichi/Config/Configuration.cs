@@ -32,6 +32,9 @@ public sealed class Configuration : IPluginConfiguration
     /// <summary>Whether main scenario quests are included in those notices.</summary>
     public bool IncludeMsqInNotices { get; set; }
 
+    /// <summary>Print a chat line when a level-up opens the next job or role quest (see <c>Game.ChatNotifier</c>). On by default.</summary>
+    public bool JobQuestNudge { get; set; } = true;
+
     /// <summary>Show quests with no journal genre outside the Unlisted node.</summary>
     public bool ShowUnlisted { get; set; }
 

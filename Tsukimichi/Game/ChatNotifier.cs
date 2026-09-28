@@ -1,12 +1,15 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Plugin.Services;
 using Tsukimichi.Config;
+using Tsukimichi.Core.Jobs;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Runtime;
 using Tsukimichi.Core.Storage;
+using Tsukimichi.GameData;
 using Tsukimichi.Ui;
 
 namespace Tsukimichi.Game;
@@ -18,6 +21,12 @@ namespace Tsukimichi.Game;
 /// nothing is printed while <see cref="Configuration.ChatNoticeNewlyAvailable"/> is off, though events are still
 /// consumed so turning it on later does not replay them. Pins are read from <c>user/pins.json</c> when a candidate
 /// needs them. Runs on the framework thread, from <see cref="SessionState.Changed"/>.
+/// <para>
+/// Also the level-up nudge (V2-11): the live snapshot's job levels are compared with the last seen ones, and when a
+/// job's level rose and the next quest of its ladder or its role's ladder is open now, "Level N Job: [quest] is
+/// available" is printed, once per quest per session, while <see cref="Configuration.JobQuestNudge"/> is on. The
+/// first capture of a character is a baseline, not a level-up.
+/// </para>
 /// </summary>
 public sealed class ChatNotifier : IDisposable
 {
@@ -30,6 +39,12 @@ public sealed class ChatNotifier : IDisposable
     private readonly NoticeTracker tracker = new();
     private bool warned;
     private bool disposed;
+
+    // Level-up nudge state: the ladder per bundle and the levels of the last live snapshot seen.
+    private JobLadder ladder = JobLadder.Empty;
+    private CatalogBundle? ladderBundle;
+    private CharacterSnapshot? lastSnapshot;
+    private readonly Dictionary<byte, short> lastLevels = [];
 
     public ChatNotifier(SessionState session, Configuration config, PluginPaths paths, GameLinks links, IChatGui chat, IPluginLog log)
     {
@@ -63,6 +78,7 @@ public sealed class ChatNotifier : IDisposable
         try
         {
             Announce();
+            Nudge();
         }
         catch (Exception ex)
         {
@@ -109,9 +125,68 @@ public sealed class ChatNotifier : IDisposable
             }
 
             tracker.MarkNotified(rowId);
-            Print(quest);
+            Print(Strings.ChatNewlyAvailablePrefix, quest, string.Empty);
         }
     }
+
+    /// <summary>
+    /// Compares the live snapshot's job levels with the last ones seen and prints the ladder quests a level-up opened.
+    /// The baseline always advances, so turning the setting on later does not replay old level-ups.
+    /// </summary>
+    private void Nudge()
+    {
+        var snapshot = session.LiveSnapshot;
+        if (ReferenceEquals(snapshot, lastSnapshot))
+        {
+            return;
+        }
+
+        var previous = lastSnapshot;
+        lastSnapshot = snapshot;
+        if (snapshot is null)
+        {
+            lastLevels.Clear();
+            return;
+        }
+
+        var firstCapture = previous is null || previous.ContentId != snapshot.ContentId;
+        if (!firstCapture && config.JobQuestNudge && session.Bundle is { } bundle)
+        {
+            RefreshLadder(bundle);
+            foreach (var nudge in ladder.LevelUpNudges(lastLevels, snapshot.JobLevels, session.LiveStates))
+            {
+                if (tracker.WasJobNudged(nudge.RowId) || bundle.Catalog.GetByRowId(nudge.RowId) is not { } quest)
+                {
+                    continue;
+                }
+
+                tracker.MarkJobNudged(nudge.RowId);
+                var prefix = string.Format(CultureInfo.CurrentCulture, Strings.JobsNudgePrefixFormat, nudge.Level, DisplayName(nudge.Job.Name));
+                Print(prefix, quest, Strings.JobsNudgeSuffix);
+            }
+        }
+
+        lastLevels.Clear();
+        foreach (var (job, level) in snapshot.JobLevels)
+        {
+            lastLevels[job] = level;
+        }
+    }
+
+    private void RefreshLadder(CatalogBundle bundle)
+    {
+        if (ReferenceEquals(ladderBundle, bundle))
+        {
+            return;
+        }
+
+        ladderBundle = bundle;
+        ladder = bundle.BuildJobLadder();
+    }
+
+    /// <summary>The sheet names jobs in lower case ("dark knight"); chat shows them as titles, like the dashboard.</summary>
+    private static string DisplayName(string name) =>
+        name.Length == 0 ? name : CultureInfo.InvariantCulture.TextInfo.ToTitleCase(name);
 
     /// <summary>The live character's pins; read on demand since the file is small and notices are rare.</summary>
     private HashSet<uint> LoadPins()
@@ -137,14 +212,19 @@ public sealed class ChatNotifier : IDisposable
         return result;
     }
 
-    /// <summary>"Now available: [quest]  [place x, y]" under the plugin's chat tag, shaped like GameLinks' quest line.</summary>
-    private void Print(QuestRecord quest)
+    /// <summary>"&lt;prefix&gt;[quest]&lt;suffix&gt;  [place x, y]" under the plugin's chat tag, shaped like GameLinks' quest line.</summary>
+    private void Print(string prefix, QuestRecord quest, string suffix)
     {
         var builder = new SeStringBuilder()
-            .AddText(Strings.ChatNewlyAvailablePrefix)
+            .AddText(prefix)
             .Add(new QuestPayload(quest.RowId))
             .AddText(quest.Name)
             .Add(RawPayload.LinkTerminator);
+
+        if (suffix.Length > 0)
+        {
+            builder.AddText(suffix);
+        }
 
         if (links.MapLink(quest) is { } link)
         {
