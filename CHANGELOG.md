@@ -9,6 +9,9 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 - Server info bar entry "☾ N" with the count of quests you can start here; the tooltip names up to five of them and a click opens Nearby quests. Hidden at zero unless "Keep the entry visible" is on, and off entirely with "Show a count in the server info bar" unticked.
 - Flight tab: every flying zone under its expansion with a filling moon of attuned currents (veiled for stored characters) and the quest currents done, the zone you stand in marked ● and selected first. The selected zone lists its quest currents from the AetherCurrentCompFlgSet and AetherCurrent sheets with attunement, quest state, next step, Flag and (with Lifestream) Teleport buttons; clicking a quest shows its requirements and path in the detail pane. Field currents are counted and pointed at the Aether Compass, never located. Since patch 6.0 the game's own sets hold five quest and four field currents per zone from Heavensward to Endwalker, five and ten in Dawntrail, and Mor Dhona's single current (The Ultimate Weapon) for A Realm Reborn; the view follows the sheet.
 
+### Changed
+- Tutorial and help cover the Flight tab and the Nearby quests window: a fifteenth tour step after Characters, a "Flight and nearby" help topic, an "Unlock flying" quick-start step, and `/tsuki nearby` in the Commands topic.
+
 ## [0.3.0] - 2026-09-28
 
 ### Added

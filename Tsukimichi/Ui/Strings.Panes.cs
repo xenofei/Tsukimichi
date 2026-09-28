@@ -315,6 +315,7 @@ static partial class Strings
             HelpTopic.ReadingAQuest => "Reading a quest",
             HelpTopic.Moonlit => "Moonlit treasures",
             HelpTopic.Characters => "Characters and snapshots",
+            HelpTopic.Flight => "Flight and nearby",
             HelpTopic.Commands => "Commands",
             HelpTopic.Tips => "Tips",
             _ => topic.ToString(),
@@ -323,12 +324,13 @@ static partial class Strings
         /// <summary>One sentence under the topic title.</summary>
         public static string TopicLede(HelpTopic topic) => topic switch
         {
-            HelpTopic.QuickStart => "Five steps from an empty window to a plan for the evening.",
+            HelpTopic.QuickStart => "Six steps from an empty window to a plan for the evening.",
             HelpTopic.MoonPhases => "A quest's state is a moon phase; eight glyphs carry the meaning without text.",
             HelpTopic.Filters => "Narrow the table, see what is narrowing it, and clear it with one click.",
             HelpTopic.ReadingAQuest => "The detail pane answers what blocks a quest, what leads to it and what it opens.",
             HelpTopic.Moonlit => "Rewards that exist nowhere else, with how sure the plugin is about each.",
             HelpTopic.Characters => "One snapshot per character keeps the whole account in view, even logged out.",
+            HelpTopic.Flight => "Which quests stand between you and flying, and what you can start where you are.",
             HelpTopic.Commands => "Everything the chat command can do.",
             HelpTopic.Tips => "Small habits that make the catalog faster.",
             _ => string.Empty,
@@ -343,6 +345,8 @@ static partial class Strings
         public const string StepMoonlitBody = "The Moonlit tab lists quests whose reward exists nowhere else, grouped by kind, with whether you already have each one.";
         public const string StepCharactersTitle = "Browse other characters";
         public const string StepCharactersBody = "The Characters tab keeps a snapshot per character. Pick one to browse the whole catalog as that character, with a dashboard of its progress.";
+        public const string StepFlightTitle = "Unlock flying";
+        public const string StepFlightBody = "The Flight tab lists every zone you can fly in. Pick one to see its quest currents, the quest that blocks each and where to fly next.";
         public const string StepTourTitle = "Take the tour";
         public const string StepTourBody = "The interactive tour points at each part of the window in turn and explains it in a sentence or two.";
         public const string QuickStartTip = "Select any row to read its requirements, path and giver in the detail pane. Right-click a row for pin, map flag and journal.";
@@ -455,6 +459,25 @@ static partial class Strings
             "Export JSON writes the snapshot to the exports folder in the config directory. Forget deletes a stored character. Settings can delete everything.",
         ];
 
+        // ---- Flight and nearby ----
+        public static readonly string[] FlightCardTitles =
+        [
+            "Flight tab",
+            "Quest and field currents",
+            "Nearby quests window",
+            "Server bar entry",
+            "/tsuki zone and /tsuki which",
+        ];
+
+        public static readonly string[] FlightCardBodies =
+        [
+            "Every zone you can fly in, under its expansion, with a moon that fills as you attune its currents; the zone you stand in is marked ● and selected first. Pick a zone and the table lists its quest currents: attuned or not, the quest's state, its next step, and Flag or Teleport to the giver.",
+            "Quest currents come from quests, five per zone in most expansions, and completing the quest attunes them. Field currents are touched in the world; the tab counts them but never locates them. Use the Aether Compass, a General Action under Actions & Traits, to point at the nearest one.",
+            "/tsuki nearby opens a small window with the quests you can start in the current zone: state moon, level, job, Flag and Teleport, and a click on the name shows it in the Journal. Also accepted here folds out the accepted quests whose giver stands in the zone. The cog holds its settings.",
+            "☾ N in the server info bar is the count of quests you can start here. Hover it for the first five names; click it to open Nearby quests. It hides at zero unless Keep the entry visible is on, and the cog in Nearby quests can turn it off entirely.",
+            "/tsuki zone prints chat links for the quests you can start in the current zone, by level, up to ten. /tsuki which prints every quest the targeted NPC hands out with its state. Both need an evaluated character; the Nearby quests window keeps the same list on screen.",
+        ];
+
         // ---- Commands ----
         public static readonly string[] CommandKeys =
         [
@@ -466,6 +489,7 @@ static partial class Strings
             "/tsukimichi glyphs",
             "/tsuki zone",
             "/tsuki which",
+            "/tsuki nearby",
         ];
 
         public static readonly string[] CommandMeanings =
@@ -478,6 +502,7 @@ static partial class Strings
             "the glyph sheet: every moon at every size",
             "quests you can start in the current zone, as chat links by level",
             "every quest the targeted NPC hands out, with its state",
+            "open or close the Nearby quests window: what you can start in the current zone",
         ];
 
         // ---- Tips ----
@@ -520,8 +545,8 @@ static partial class Strings
         public const string FiltersBody = "Filters opens this panel. Hide completed and Available now are the two you will use most; both take per-category overrides. States, expansions, level, job and reward kind sit below.";
         public const string ChipsTitle = "Chips";
         public const string ChipsBody = "Every active filter shows here as a chip. Click a chip to clear that filter; Reset clears them all together with the search.";
-        public const string TabsTitle = "Three tabs";
-        public const string TabsBody = "Journal is the catalog. Moonlit collects quests with unique rewards. Characters holds every snapshot on the account.";
+        public const string TabsTitle = "Four tabs";
+        public const string TabsBody = "Journal is the catalog. Moonlit collects quests with unique rewards. Characters holds every snapshot on the account. Flight shows the aether current quests of each flying zone.";
         public const string TreeTitle = "Journal tree";
         public const string TreeBody = "Section, category and genre scope the table. Each node shows done/total and a moon that fills with completion; Feature Unlocks and Unlisted are virtual nodes.";
         public const string TableTitle = "Quest table";
@@ -536,6 +561,8 @@ static partial class Strings
         public const string MoonlitBody = "Reward kinds on the left with obtained/total; the table lists each treasure, its quest, whether you have it and a confidence badge. Hover a badge for its source.";
         public const string CharactersTitle = "Characters";
         public const string CharactersBody = "Every stored snapshot on the left. The dashboard shows completion by section, Moonlit progress, pins, recent activity, job levels and standings for the viewed character.";
+        public const string FlightTitle = "Flight";
+        public const string FlightBody = "Every flying zone, under its expansion, with a moon of attuned currents. Pick one: the table lists its five quest currents, whether each is attuned, the quest that blocks it and its next step, plus Flag and Teleport for where to fly next.";
         public const string HelpTitle = "Help, tour and settings";
         public const string HelpBody = "The book reopens the guide, the graduation cap replays this tour, and the cog opens Settings: poll interval, display scale and data controls.";
         public const string FinishTitle = "That is the road";

@@ -12,7 +12,7 @@ using Tsukimichi.Core.Ui;
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// The interactive tour (<see cref="ITutorial"/>): fourteen steps, each pointing at a region the main window
+/// The interactive tour (<see cref="ITutorial"/>): fifteen steps, each pointing at a region the main window
 /// recorded in <see cref="UiState.Rects"/>. Drawn on the foreground draw list at the end of the main window's
 /// Draw: the window area (union of every recorded rect, or the screen) is dimmed with Night at 70 % except for a
 /// rounded cutout around the target and around the card; the target gets a Moon border with a soft glow; the card
@@ -86,6 +86,7 @@ public sealed class TutorialOverlay : ITutorial
         new(Strings.Tutorial.GiverTitle, Strings.Tutorial.GiverBody, ["detail.giver"], ["detail"], ShowJournal),
         new(Strings.Tutorial.MoonlitTitle, Strings.Tutorial.MoonlitBody, ["moonlit.kinds", "moonlit.table"], NoKeys, static ui => ui.Tab = NavTab.Moonlit),
         new(Strings.Tutorial.CharactersTitle, Strings.Tutorial.CharactersBody, ["characters.dashboard"], ["characters.list"], static ui => ui.Tab = NavTab.Characters),
+        new(Strings.Tutorial.FlightTitle, Strings.Tutorial.FlightBody, ["flight.table"], ["flight.zones"], static ui => ui.Tab = NavTab.Flight),
         new(Strings.Tutorial.HelpTitle, Strings.Tutorial.HelpBody, ["helpButton", "tutorialButton", "settingsButton"], ["toolbar"], null),
         new(Strings.Tutorial.FinishTitle, Strings.Tutorial.FinishBody, NoKeys, NoKeys, null),
     ];
@@ -94,7 +95,7 @@ public sealed class TutorialOverlay : ITutorial
     private readonly IDalamudPluginInterface pluginInterface;
     private readonly UiState ui;
 
-    /// <summary>"3 of 14" per step, built once.</summary>
+    /// <summary>"3 of 15" per step, built once.</summary>
     private readonly string[] progress;
 
     private int index = -1;
