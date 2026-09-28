@@ -292,7 +292,7 @@ public sealed class TablePane : IDisposable
 
         ImGui.TableNextColumn();
         CenterText(in layout);
-        ImGui.TextUnformatted(runner.LevelText(quest.Level));
+        ImGui.TextUnformatted(runner.LevelText(quest.DisplayLevel));
 
         ImGui.TableNextColumn();
         CenterText(in layout);
@@ -361,7 +361,7 @@ public sealed class TablePane : IDisposable
         ImGui.SameLine();
         ImGui.TextDisabled(Strings.ColumnLevel);
         ImGui.SameLine(0f, UiMetrics.Px(3f));
-        ImGui.TextDisabled(runner.LevelText(quest.Level));
+        ImGui.TextDisabled(runner.LevelText(quest.DisplayLevel));
     }
 
     private void DrawRewardIcons(QuestRecord quest, in RowLayout layout)

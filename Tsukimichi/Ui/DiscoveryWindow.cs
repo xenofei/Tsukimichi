@@ -465,7 +465,7 @@ public sealed class DiscoveryWindow : Window, IDisposable
                 }
             }
 
-            rows[i] = new Row(quest, state, string.Format(CultureInfo.CurrentCulture, Strings.DiscoveryLevelFormat, quest.Level), job, stateText);
+            rows[i] = new Row(quest, state, string.Format(CultureInfo.CurrentCulture, Strings.DiscoveryLevelFormat, quest.DisplayLevel), job, stateText);
         }
 
         return rows;

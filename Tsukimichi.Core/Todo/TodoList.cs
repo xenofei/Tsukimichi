@@ -205,7 +205,7 @@ public static class TodoList
                 return byRank;
             }
 
-            var byLevel = a.Quest.Level.CompareTo(b.Quest.Level);
+            var byLevel = a.Quest.DisplayLevel.CompareTo(b.Quest.DisplayLevel);
             return byLevel != 0 ? byLevel : string.Compare(a.Quest.Name, b.Quest.Name, StringComparison.CurrentCultureIgnoreCase);
         });
 
@@ -343,7 +343,7 @@ public static class TodoList
 
     private static string LevelAndGiver(QuestRecord quest)
     {
-        var level = LevelPrefix + quest.Level.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        var level = LevelPrefix + quest.DisplayLevel.ToString(System.Globalization.CultureInfo.InvariantCulture);
         return quest.Issuer is { Name.Length: > 0 } issuer ? level + Separator + issuer.Name : level;
     }
 }

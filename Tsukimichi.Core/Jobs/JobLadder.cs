@@ -35,7 +35,7 @@ public sealed record JobLadderEntry(LadderJob Job, IReadOnlyList<uint> QuestRowI
 /// <param name="Done">Completed quests.</param>
 /// <param name="Total">Quests that count: foreclosed ones (the other start of a class) are left out.</param>
 /// <param name="NextRowId">First quest in ladder order that is neither completed nor foreclosed; null once finished.</param>
-/// <param name="NextLevel">The next quest's level; 0 when finished.</param>
+/// <param name="NextLevel">The next quest's acceptance level (<see cref="QuestRecord.Level"/>, not the displayed one); 0 when finished.</param>
 /// <param name="IsReadyNow">The next quest is Ready, Ready on another job or already accepted.</param>
 /// <param name="LevelReached">The job's level is at least <see cref="NextLevel"/> (true when finished).</param>
 public readonly record struct LadderProgress(int Done, int Total, uint? NextRowId, byte NextLevel, bool IsReadyNow, bool LevelReached)

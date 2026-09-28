@@ -852,7 +852,7 @@ public sealed class DetailPane
             jobName = runner.JobShort(quest);
         }
 
-        model.HeaderLine = string.Format(CultureInfo.CurrentCulture, Strings.HeaderLineFormat, bundle.Names.Expansion(quest.Expansion), quest.Level, jobName);
+        model.HeaderLine = string.Format(CultureInfo.CurrentCulture, Strings.HeaderLineFormat, bundle.Names.Expansion(quest.Expansion), quest.DisplayLevel, jobName);
 
         if (evaluation is not null)
         {

@@ -20,9 +20,23 @@ public sealed record QuestRecord
     public JournalRef Journal { get; init; } = JournalRef.None;
 
     public byte Expansion { get; init; }
+    /// <summary>
+    /// Acceptance level from <c>Quest.ClassJobLevel[0]</c>: the level a job must reach to take the quest. The
+    /// evaluator gates on this; the interface shows <see cref="DisplayLevel"/>.
+    /// </summary>
     public byte Level { get; init; }
+
     public byte LevelMax { get; init; }
+
+    /// <summary><c>Quest.QuestLevelOffset</c>: what the journal adds to <see cref="Level"/> for the level it prints.</summary>
     public byte LevelOffset { get; init; }
+
+    /// <summary>
+    /// The level the game journal and the Lodestone print: <see cref="Level"/> plus <see cref="LevelOffset"/> (at most
+    /// 117 in the current sheets, so the byte never wraps). Every level the interface shows, sorts or filters on is
+    /// this one; requirements still use <see cref="Level"/>.
+    /// </summary>
+    public byte DisplayLevel => (byte)(Level + LevelOffset);
 
     public uint ClassJobCategory { get; init; }
     public uint ClassJobCategory1 { get; init; }
