@@ -47,7 +47,7 @@ internal sealed class RewardVerifier(
         if (items.Count > 0)
         {
             log.WriteLine($"rewards: fetching {items.Select(e => e.RewardName).Distinct().Count()} wiki item pages for {items.Count} item entries");
-            var pages = await wiki.GetPagesByIdAsync(items.Select(e => (e.RewardName, e.ItemId)).Distinct(), ct);
+            var pages = await wiki.GetPagesByIdAsync(items.Select(e => (e.RewardName, e.ItemId)).Distinct(), questPages: false, ct);
             foreach (var e in items)
             {
                 pages.TryGetValue(Names.WikiTitle(e.RewardName), out var page);
@@ -59,15 +59,16 @@ internal sealed class RewardVerifier(
         var unlocks = entries.Where(e => e.Kind == RewardKind.DutyUnlock).ToList();
         if (unlocks.Count > 0)
         {
-            var questPages = await wiki.GetPagesByIdAsync(unlocks.Select(e => (questName(e.QuestRowId), e.QuestRowId)).Where(w => w.Item1.Length > 0).Distinct(), ct);
+            var questPages = await wiki.GetPagesByIdAsync(unlocks.Select(e => (questName(e.QuestRowId), e.QuestRowId)).Where(w => w.Item1.Length > 0).Distinct(), questPages: true, ct);
             foreach (var e in unlocks)
             {
                 var name = questName(e.QuestRowId);
                 questPages.TryGetValue(Names.WikiTitle(name), out var page);
-                rows.Add(CompareDutyUnlockWiki(e, name, page));
+                var wikiRow = CompareDutyUnlockWiki(e, name, page);
+                rows.Add(wikiRow);
                 if (e.Source.StartsWith("curated/", StringComparison.Ordinal) && curatedDutyUnlocks.ContainsKey(e.QuestRowId))
                 {
-                    rows.Add(await CompareDutyUnlockGarlandAsync(e, name, ct));
+                    rows.Add(await CompareDutyUnlockGarlandAsync(e, name, wikiRow.Verdict == Verdict.Match, ct));
                 }
             }
         }
@@ -120,7 +121,7 @@ internal sealed class RewardVerifier(
         return string.Empty;
     }
 
-    private static RewardRow CompareCollect(UniqueRewardEntry e, string questName, IReadOnlyList<CollectEntry>? dump)
+    private RewardRow CompareCollect(UniqueRewardEntry e, string questName, IReadOnlyList<CollectEntry>? dump)
     {
         var kind = e.Kind.ToString();
         var path = CollectSource.Paths[e.Kind];
@@ -140,8 +141,12 @@ internal sealed class RewardVerifier(
         var questSources = hit.Sources.Where(s => s.Type.Equals("Quest", StringComparison.OrdinalIgnoreCase)).ToList();
         var nonQuest = types.Where(t => !QuestOnlyCollectSources.Contains(t)).ToList();
         var other = OtherSource(e);
-        var namesQuest = questSources.Any(s => s.RelatedId == e.QuestRowId);
-        var questNote = questSources.Count == 0 ? "Collect lists no Quest source" : namesQuest ? string.Empty : $"Collect's Quest source is a different quest ({string.Join("; ", questSources.Select(s => s.Text + " (" + s.RelatedId + ")"))})";
+        // Collect links one quest row; the city and legacy variants of that quest share its name and hand out the same reward.
+        var namesQuest = questSources.Any(s => s.RelatedId == e.QuestRowId
+            || (s.RelatedId is { } rid && rid <= uint.MaxValue && game.Catalog.GetByRowId((uint)rid) is { } other && Names.Canon(other.Name) == Names.Canon(questName)));
+        var questNote = questSources.Count == 0 ? "Collect lists no Quest source" : namesQuest
+            ? (questSources.Any(s => s.RelatedId == e.QuestRowId) ? string.Empty : "Collect links a same-name variant of this quest")
+            : $"Collect's Quest source is a different quest ({string.Join("; ", questSources.Select(s => s.Text + " (" + s.RelatedId + ")"))})";
 
         if (hit.Sources.Count == 0)
         {
@@ -151,7 +156,7 @@ internal sealed class RewardVerifier(
         if (nonQuest.Count == 0)
         {
             return namesQuest || questSources.Count == 0 && types.Count > 0
-                ? new RewardRow(e.QuestRowId, questName, kind, e.RewardId, e.ItemId, e.RewardName, Claim(e), SourceNames.Collect, summary, hit.Url, Verdict.Match, questSources.Count == 0 ? "quest-line (" + string.Join(";", types) + ") only" : string.Empty, string.Empty)
+                ? new RewardRow(e.QuestRowId, questName, kind, e.RewardId, e.ItemId, e.RewardName, Claim(e), SourceNames.Collect, summary, hit.Url, Verdict.Match, questSources.Count == 0 ? "quest-line (" + string.Join(";", types) + ") only" : questNote, string.Empty)
                 : new RewardRow(e.QuestRowId, questName, kind, e.RewardId, e.ItemId, e.RewardName, Claim(e), SourceNames.Collect, summary, hit.Url, Verdict.Ambiguous, questNote, string.Empty);
         }
 
@@ -202,7 +207,10 @@ internal sealed class RewardVerifier(
             return new RewardRow(e.QuestRowId, questName, kind, e.RewardId, e.ItemId, e.RewardName, Claim(e), SourceNames.Wiki, value, url, Verdict.NotModeled, "item page has no Acquisition section", string.Empty);
         }
 
-        var nonQuest = acq.Sections.Where(s => !QuestOnlyWikiSections.Contains(s)).ToList();
+        // "From Items" is the coffer the quest hands out; "Exchange" is either the Calamity Salvager re-buy of gear already earned or a
+        // relic-step upgrade trade, which cannot be told apart from the heading alone.
+        var exchange = acq.Sections.Where(s => s.Equals("Exchange", StringComparison.OrdinalIgnoreCase) || s.Equals("Exchanges", StringComparison.OrdinalIgnoreCase)).ToList();
+        var nonQuest = acq.Sections.Where(s => !QuestOnlyWikiSections.Contains(s) && !exchange.Contains(s) && !s.Equals("From Items", StringComparison.OrdinalIgnoreCase)).ToList();
         var namesQuest = acq.QuestRows.Any(q => Names.Canon(q) == Names.Canon(questName));
         if (acq.OnlineStore || nonQuest.Count > 0)
         {
@@ -213,6 +221,11 @@ internal sealed class RewardVerifier(
 
             var what = (acq.OnlineStore ? "Online Store" : string.Empty) + (nonQuest.Count > 0 ? (acq.OnlineStore ? "; " : string.Empty) + string.Join("; ", nonQuest) : string.Empty);
             return new RewardRow(e.QuestRowId, questName, kind, e.RewardId, e.ItemId, e.RewardName, Claim(e), SourceNames.Wiki, value, url, Verdict.CatalogWrong, "wiki lists a non-quest acquisition (" + what + ") and the entry carries no otherSource", "T4");
+        }
+
+        if (exchange.Count > 0 && other.Length == 0)
+        {
+            return new RewardRow(e.QuestRowId, questName, kind, e.RewardId, e.ItemId, e.RewardName, Claim(e), SourceNames.Wiki, value, url, Verdict.Ambiguous, "wiki lists an Exchange under Acquisition (Calamity Salvager re-buy of earned gear, or an upgrade trade); needs a human look", string.Empty);
         }
 
         if (acq.QuestRows.Count > 0 && !namesQuest)
@@ -232,9 +245,17 @@ internal sealed class RewardVerifier(
             return new RewardRow(e.QuestRowId, questName, kind, e.RewardId, e.ItemId, e.RewardName, Claim(e), SourceNames.Wiki, string.Empty, url, page is { IsDisambiguation: true } ? Verdict.Ambiguous : Verdict.NotListed, page is { IsDisambiguation: true } ? "quest name is a disambiguation page with no target carrying id-gt=" + e.QuestRowId : "no wiki quest page", string.Empty);
         }
 
+        var variantNote = string.Empty;
         if (page.IdGt != 0 && page.IdGt != e.QuestRowId)
         {
-            return new RewardRow(e.QuestRowId, questName, kind, e.RewardId, e.ItemId, e.RewardName, Claim(e), SourceNames.Wiki, $"id-gt={page.IdGt}", url, Verdict.Ambiguous, $"wiki page of this name describes quest {page.IdGt} (a same-name variant)", string.Empty);
+            // The city and legacy variants share one wiki page; they unlock the same duty, so the page still answers the question.
+            var other = game.Catalog.GetByRowId(page.IdGt);
+            if (other is null || Names.Canon(other.Name) != Names.Canon(questName))
+            {
+                return new RewardRow(e.QuestRowId, questName, kind, e.RewardId, e.ItemId, e.RewardName, Claim(e), SourceNames.Wiki, $"id-gt={page.IdGt}", url, Verdict.Ambiguous, $"wiki page of this name describes quest {page.IdGt}, which is not a same-name variant", string.Empty);
+            }
+
+            variantNote = $"same-name variant page (id-gt={page.IdGt})";
         }
 
         var unlocks = WikiSource.Unlocks(page.QuestInfobox.GetValueOrDefault("unlocks")).Where(u => WikiSource.DutyCodes.Contains(u.Code)).Select(u => u.Name).ToList();
@@ -245,13 +266,35 @@ internal sealed class RewardVerifier(
         }
 
         var cfcName = game.ContentFinderConditionNames.GetValueOrDefault(e.RewardId, e.RewardName);
-        var ok = unlocks.Any(u => Names.Canon(u) == Names.Canon(cfcName) || Names.Canon(u) == Names.Canon(e.RewardName));
-        return ok
-            ? new RewardRow(e.QuestRowId, questName, kind, e.RewardId, e.ItemId, e.RewardName, Claim(e), SourceNames.Wiki, value, url, Verdict.Match, string.Empty, string.Empty)
-            : new RewardRow(e.QuestRowId, questName, kind, e.RewardId, e.ItemId, e.RewardName, Claim(e), SourceNames.Wiki, value, url, Verdict.Unresolved, $"wiki names other duty unlock(s) for this quest; catalog says {cfcName}", string.Empty);
+        var ok = unlocks.Any(u => SameDuty(u, cfcName) || SameDuty(u, e.RewardName));
+        if (ok)
+        {
+            return new RewardRow(e.QuestRowId, questName, kind, e.RewardId, e.ItemId, e.RewardName, Claim(e), SourceNames.Wiki, value, url, Verdict.Match, variantNote, string.Empty);
+        }
+
+        // "Palace of the Dead" for "the Palace of the Dead (Floors 1-10)", "Frontline" for "the Borderland Ruins (Secure)": the wiki names the series.
+        var series = unlocks.Any(u => DutyPrefix(cfcName).StartsWith(DutyPrefix(u), StringComparison.Ordinal) || DutyPrefix(u).StartsWith(DutyPrefix(cfcName), StringComparison.Ordinal));
+        return series
+            ? new RewardRow(e.QuestRowId, questName, kind, e.RewardId, e.ItemId, e.RewardName, Claim(e), SourceNames.Wiki, value, url, Verdict.Match, "wiki names the duty series rather than the ContentFinderCondition" + (variantNote.Length > 0 ? "; " + variantNote : string.Empty), string.Empty)
+            : new RewardRow(e.QuestRowId, questName, kind, e.RewardId, e.ItemId, e.RewardName, Claim(e), SourceNames.Wiki, value, url, Verdict.Ambiguous, $"wiki names a different duty or a series name that does not contain the catalog's ({cfcName}); needs a human look", string.Empty);
     }
 
-    private async Task<RewardRow> CompareDutyUnlockGarlandAsync(UniqueRewardEntry e, string questName, CancellationToken ct)
+    private static bool SameDuty(string a, string b) => DutyKey(a) == DutyKey(b);
+
+    private static string DutyKey(string s)
+    {
+        var k = Names.Canon(s).Replace("(duty)", string.Empty).Replace("  ", " ").Trim();
+        return k.StartsWith("the ", StringComparison.Ordinal) ? k[4..] : k;
+    }
+
+    private static string DutyPrefix(string s)
+    {
+        var k = DutyKey(s);
+        var paren = k.IndexOf('(');
+        return (paren > 0 ? k[..paren] : k).Trim();
+    }
+
+    private async Task<RewardRow> CompareDutyUnlockGarlandAsync(UniqueRewardEntry e, string questName, bool wikiConfirms, CancellationToken ct)
     {
         var kind = e.Kind.ToString();
         var url = GarlandSource.SiteUrl(e.QuestRowId);
@@ -272,9 +315,15 @@ internal sealed class RewardVerifier(
         }
 
         var cfcName = game.ContentFinderConditionNames.GetValueOrDefault(e.RewardId, e.RewardName);
-        var ok = Names.Canon(g.InstanceName) == Names.Canon(cfcName) || Names.Canon(g.InstanceName) == Names.Canon(e.RewardName);
-        return ok
-            ? new RewardRow(e.QuestRowId, questName, kind, e.RewardId, e.ItemId, e.RewardName, Claim(e), SourceNames.Garland, g.InstanceName, url, Verdict.Match, string.Empty, string.Empty)
+        var ok = SameDuty(g.InstanceName, cfcName) || SameDuty(g.InstanceName, e.RewardName);
+        if (ok)
+        {
+            return new RewardRow(e.QuestRowId, questName, kind, e.RewardId, e.ItemId, e.RewardName, Claim(e), SourceNames.Garland, g.InstanceName, url, Verdict.Match, string.Empty, string.Empty);
+        }
+
+        // Garland carries one reward.instance (the sheet's InstanceContentUnlock); a quest that also unlocks a second duty by script shows that one on the wiki.
+        return wikiConfirms
+            ? new RewardRow(e.QuestRowId, questName, kind, e.RewardId, e.ItemId, e.RewardName, Claim(e), SourceNames.Garland, g.InstanceName, url, Verdict.SourceWrong, $"Garland's single reward.instance {g.InstanceId} names {g.InstanceName}; the wiki confirms the catalog's {cfcName} as a second unlock of this quest", string.Empty)
             : new RewardRow(e.QuestRowId, questName, kind, e.RewardId, e.ItemId, e.RewardName, Claim(e), SourceNames.Garland, g.InstanceName, url, Verdict.Unresolved, $"Garland reward.instance {g.InstanceId} names {g.InstanceName}; catalog says {cfcName}", string.Empty);
     }
 }

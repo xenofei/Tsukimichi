@@ -203,16 +203,26 @@ internal sealed partial class WikiSource(PoliteHttp http, TextWriter log)
     /// pages one level (their targets are fetched in one extra batch). A title whose page is not a disambiguation is
     /// returned as fetched; a disambiguation with no target carrying the id yields the disambiguation page itself.
     /// </summary>
-    public async Task<Dictionary<string, WikiPage>> GetPagesByIdAsync(IEnumerable<(string Title, uint Id)> wanted, CancellationToken ct)
+    public async Task<Dictionary<string, WikiPage>> GetPagesByIdAsync(IEnumerable<(string Title, uint Id)> wanted, bool questPages, CancellationToken ct)
     {
         var list = wanted.ToList();
         var pages = await GetPagesAsync(list.Select(w => w.Title), ct);
         var targets = new List<string>();
         foreach (var (title, _) in list)
         {
-            if (pages.TryGetValue(Names.WikiTitle(title), out var p) && !p.Missing && p.IsDisambiguation)
+            if (!pages.TryGetValue(Names.WikiTitle(title), out var p) || p.Missing)
+            {
+                continue;
+            }
+
+            if (p.IsDisambiguation)
             {
                 targets.AddRange(p.DisambiguationTargets());
+            }
+            else if (questPages ? p.QuestInfobox.Count == 0 : p.ItemInfobox.Count == 0)
+            {
+                // The plain title belongs to something else (an expansion page, an action); the wiki files the page as "Name (Quest)" / "Name (Item)".
+                targets.Add($"{title} ({(questPages ? "Quest" : "Item")})");
             }
         }
 
@@ -241,8 +251,33 @@ internal sealed partial class WikiSource(PoliteHttp http, TextWriter log)
             if (id != 0 && byId.TryGetValue(id, out var exact))
             {
                 result[key] = exact;
+                continue;
             }
-            else if (pages.TryGetValue(key, out var p))
+
+            pages.TryGetValue(key, out var p);
+            var right = p is not null && !p.Missing && !p.IsDisambiguation && (questPages ? p.QuestInfobox.Count > 0 : p.ItemInfobox.Count > 0);
+            if (!right)
+            {
+                // Fall back to the "(Quest)"/"(Item)" page, then to any disambiguation target of the same base name (a same-name variant's page).
+                var suffixed = Names.WikiTitle($"{title} ({(questPages ? "Quest" : "Item")})");
+                if (pages.TryGetValue(suffixed, out var s) && !s.Missing && (questPages ? s.QuestInfobox.Count > 0 : s.ItemInfobox.Count > 0))
+                {
+                    p = s;
+                }
+                else if (p is { IsDisambiguation: true })
+                {
+                    foreach (var t in p.DisambiguationTargets())
+                    {
+                        if (pages.TryGetValue(Names.WikiTitle(t), out var v) && !v.Missing && (questPages ? v.QuestInfobox.Count > 0 : v.ItemInfobox.Count > 0))
+                        {
+                            p = v;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (p is not null)
             {
                 result[key] = p;
             }

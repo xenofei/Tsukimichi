@@ -136,6 +136,11 @@ internal sealed partial class QuestVerifier(
             {
                 extra.AddRange(page.DisambiguationTargets());
             }
+            else if (page is { Missing: false } && page.QuestInfobox.Count == 0)
+            {
+                // The title belongs to something else (an action, a zone, an expansion); the wiki files the quest as "Name (Quest)".
+                extra.Add($"{quest.Name} (Quest)");
+            }
 
             var siblings = rowsByName.GetValueOrDefault(Names.Canon(quest.Name), []);
             if (siblings.Count > 1)
@@ -548,8 +553,12 @@ internal sealed partial class QuestVerifier(
                 drafts.Add(new Draft(Facts.ClassJob, extras.ClassJobCategoryName, SourceNames.Lodestone, string.Empty, lodestoneRef, Verdict.NotModeled, "no Class/Job line on the page"));
             }
 
-            var startOk = Names.Canon(page.StartingClass) == Names.Canon(extras.ClassJobRequiredName) || (page.StartingClass.Length == 0 && classShownAsRequired);
-            drafts.Add(Compare(Facts.StartingClass, extras.ClassJobRequiredName, SourceNames.Lodestone, page.StartingClass.Length > 0 ? page.StartingClass : (classShownAsRequired ? page.ClassJobText : string.Empty), lodestoneRef, startOk, classShownAsRequired ? "required class shown in the Class/Job line" : string.Empty));
+            // City-start MSQ variants carry no ClassJobRequired; their single-class ClassJobCategory ("LNC") is what the Lodestone prints as Starting Class.
+            var startIsCategory = page.StartingClass.Length > 0 && extras.ClassJobRequiredName.Length == 0
+                && (Names.Canon(page.StartingClass) == Names.Canon(extras.ClassJobCategoryName) || Names.Canon(game.Bundle.Names.ClassJobAbbreviations.FirstOrDefault(kv => Names.Canon(game.Bundle.Names.ClassJob(kv.Key)) == Names.Canon(page.StartingClass)).Value ?? "\0") == Names.Canon(extras.ClassJobCategoryName));
+            var startOk = Names.Canon(page.StartingClass) == Names.Canon(extras.ClassJobRequiredName) || (page.StartingClass.Length == 0 && classShownAsRequired) || startIsCategory;
+            drafts.Add(Compare(Facts.StartingClass, extras.ClassJobRequiredName.Length > 0 ? extras.ClassJobRequiredName : (startIsCategory ? "(category " + extras.ClassJobCategoryName + ")" : string.Empty), SourceNames.Lodestone, page.StartingClass.Length > 0 ? page.StartingClass : (classShownAsRequired ? page.ClassJobText : string.Empty), lodestoneRef, startOk,
+                classShownAsRequired ? "required class shown in the Class/Job line" : startIsCategory ? "no ClassJobRequired; the single-class ClassJobCategory is the starting class" : string.Empty));
 
             var gcOk = extras.GrandCompanyName.Length == 0
                 ? page.GrandCompany.Length == 0
