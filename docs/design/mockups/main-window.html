@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tsukimichi — main window mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Surfaces */
+    --night: #0F1424; --night-sunken: #0B0F1C; --night-raised: #1E2437; --night-hover: #262D45;
+    --night-line: #2A3149; --veil-line: #5C6584; --shadow: #3A4363; --unlit-old: #2C334A;
+    /* Text */
+    --silver: #DDE3F0; --mist: #A9B2CC; --dusk: #7C86A8; --veil: #4A5270; --veil-text: #8A93B0;
+    /* Gold */
+    --moon-bright: #FFE9A6; --moon: #F2D27A; --moon-deep: #D8B45A; --moon-dim: #B8933F;
+    /* State */
+    --eclipse: #B25C7F; --eclipse-text: #D68AA8;
+    --sel: rgba(242,210,122,.12); --sel-ring: rgba(242,210,122,.45); --active: rgba(242,210,122,.16);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #070A14; color: var(--silver); font: 13px/1.35 "Noto Sans", "Segoe UI", sans-serif; }
+  body { padding: 28px 24px 48px; }
+  h1 { font-size: 15px; font-weight: 600; margin: 0 0 6px; color: var(--silver); }
+  p.lead { margin: 0 0 18px; color: var(--mist); max-width: 1100px; }
+  .cap { font-size: 11px; color: var(--mist); }
+  .tiny { font-size: 11px; }
+  .gold { color: var(--moon); } .mist { color: var(--mist); } .dusk { color: var(--dusk); } .veil { color: var(--veil); } .eclipse { color: var(--eclipse-text); }
+
+  /* ---------- Window frame ---------- */
+  .win { width: 1100px; height: 720px; background: var(--night); border: 1px solid var(--night-line); border-radius: 8px; overflow: hidden; display: grid; grid-template-rows: 28px 36px 24px 1fr 26px; box-shadow: 0 0 0 1px #000 inset, 0 18px 50px rgba(0,0,0,.6); }
+  .title { background: var(--night-raised); display: flex; align-items: center; gap: 8px; padding: 0 10px; border-bottom: 1px solid var(--night-line); font-weight: 600; font-size: 12.5px; }
+  .title .wc { margin-left: auto; display: flex; gap: 12px; color: var(--dusk); font-size: 12px; }
+
+  /* Toolbar */
+  .toolbar { background: var(--night-raised); border-bottom: 1px solid var(--night-line); display: flex; align-items: center; gap: 8px; padding: 0 10px; }
+  .search { width: 280px; height: 26px; border-radius: 13px; background: var(--night-sunken); border: 1px solid var(--night-line); display: flex; align-items: center; gap: 8px; padding: 0 8px 0 10px; color: var(--dusk); }
+  .search span { flex: 1; }
+  .seg { height: 26px; border-radius: 13px; background: var(--night-sunken); border: 1px solid var(--night-line); display: flex; overflow: hidden; }
+  .seg div { padding: 0 11px; display: flex; align-items: center; color: var(--mist); border-right: 1px solid var(--night-line); font-size: 12px; }
+  .seg div:last-child { border-right: 0; }
+  .seg div.on { background: var(--active); color: var(--moon); }
+  .seg div.off { color: var(--veil); }
+  .btn { height: 26px; border-radius: 13px; display: inline-flex; align-items: center; gap: 6px; padding: 0 10px; color: var(--mist); position: relative; font-size: 12px; }
+  .btn.open { background: var(--active); color: var(--moon); }
+  .btn .badge { position: absolute; top: -4px; right: -2px; width: 14px; height: 14px; border-radius: 7px; background: var(--moon); color: var(--night); font-size: 9.5px; font-weight: 600; display: flex; align-items: center; justify-content: center; }
+  .chip-char { height: 26px; border-radius: 13px; background: var(--night-sunken); border: 1px solid var(--night-line); display: flex; align-items: center; gap: 7px; padding: 0 10px 0 4px; }
+  .job { width: 18px; height: 18px; border-radius: 9px; background: linear-gradient(135deg,#3b4a7a,#1e2437); border: 1px solid var(--veil-line); display: flex; align-items: center; justify-content: center; font-size: 8px; color: var(--silver); font-weight: 600; }
+  .pip { width: 6px; height: 6px; border-radius: 3px; background: var(--moon); animation: breath 1.6s ease-in-out infinite; box-shadow: 0 0 6px rgba(242,210,122,.5); }
+  @keyframes breath { 0%,100% { opacity: .6 } 50% { opacity: 1 } }
+  .right { margin-left: auto; display: flex; align-items: center; gap: 4px; }
+  .ib { width: 26px; height: 26px; border-radius: 13px; display: flex; align-items: center; justify-content: center; color: var(--mist); }
+  .ib.hov { background: var(--night-hover); color: var(--silver); }
+
+  /* Chip row */
+  .chips { display: flex; align-items: center; gap: 6px; padding: 0 10px; background: var(--night); }
+  .chip { height: 20px; border-radius: 10px; background: var(--night-raised); border: 1px solid var(--night-line); color: var(--mist); font-size: 11.5px; display: inline-flex; align-items: center; gap: 6px; padding: 0 6px 0 9px; }
+  .chip i { color: var(--dusk); font-style: normal; }
+
+  /* Body grid */
+  .body { display: grid; grid-template-columns: 240px 1fr 360px; min-height: 0; }
+  .left { border-right: 1px solid var(--night-line); display: flex; flex-direction: column; min-height: 0; }
+  .center { min-height: 0; display: flex; flex-direction: column; }
+  .rightpane { border-left: 1px solid var(--night-line); display: flex; flex-direction: column; min-height: 0; }
+
+  /* Tab strip */
+  .tabs { padding: 6px 6px 4px; border-bottom: 1px solid var(--night-line); }
+  .tab { height: 30px; display: flex; align-items: center; gap: 8px; padding: 0 8px 0 10px; border-radius: 4px; color: var(--mist); position: relative; font-size: 12.5px; }
+  .tab svg.ic { color: var(--dusk); }
+  .tab.on { background: var(--night-hover); color: var(--silver); }
+  .tab.on::before { content: ""; position: absolute; left: 0; top: 6px; bottom: 6px; width: 3px; border-radius: 1.5px; background: var(--moon); }
+  .tab.on svg.ic { color: var(--moon); }
+  .tab .b { margin-left: auto; font-size: 11px; color: var(--mist); }
+
+  /* Tree */
+  .tree { padding: 6px 6px; flex: 1; overflow: hidden; }
+  .row { height: 28px; display: flex; align-items: center; gap: 6px; padding: 0 6px 0 4px; border-radius: 4px; position: relative; font-size: 12.5px; white-space: nowrap; }
+  .row .chev { width: 12px; display: flex; justify-content: center; color: var(--dusk); }
+  .row.l1 { padding-left: 20px; }
+  .row .name { flex: 1; overflow: hidden; text-overflow: ellipsis; }
+  .row.sec .name { font-weight: 600; }
+  .row .pct { font-size: 11px; color: var(--mist); }
+  .row.done .name, .row.done .pct { color: var(--moon); }
+  .row.hov { background: var(--night-hover); }
+  .row.sel { background: var(--sel); }
+  .row.sel::before { content: ""; position: absolute; left: 0; top: 4px; bottom: 4px; width: 2px; border-radius: 1px; background: var(--moon); }
+  .row .rb { font-size: 10px; color: var(--moon); background: var(--active); border-radius: 8px; padding: 1px 6px; }
+  .hair { height: 1px; background: var(--night-line); margin: 6px 4px; }
+
+  /* Table */
+  .thead { height: 28px; display: grid; grid-template-columns: 34px 1.6fr 40px 58px 1.15fr 54px 74px; align-items: center; background: var(--night-raised); border-bottom: 1px solid var(--night-line); color: var(--mist); font-size: 11px; padding-right: 8px; }
+  .thead div { padding: 0 6px; }
+  .thead .sort { color: var(--moon); }
+  .tr { height: 32px; display: grid; grid-template-columns: 34px 1.6fr 40px 58px 1.15fr 54px 74px; align-items: center; border-bottom: 1px solid rgba(42,49,73,.5); position: relative; padding-right: 8px; font-size: 12.5px; }
+  .tr > div { padding: 0 6px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .tr .g { display: flex; justify-content: center; padding-left: 8px; }
+  .tr::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--stripe, transparent); }
+  .tr.dash::before { background: repeating-linear-gradient(to bottom, var(--stripe) 0 2px, transparent 2px 4px); }
+  .tr.hov { background: var(--night-hover); box-shadow: inset 0 1px 0 rgba(221,227,240,.08), inset 0 -1px 0 rgba(15,20,36,.6); }
+  .tr.sel { background: var(--sel); box-shadow: inset 0 0 0 1px var(--sel-ring); border-radius: 4px; }
+  .tr .ns b { font-weight: 500; color: var(--silver); } .tr .ns { color: var(--mist); }
+  .tr .ns.gold { color: var(--moon); }
+  .pill { display: inline-flex; align-items: center; justify-content: center; height: 16px; min-width: 28px; padding: 0 6px; border-radius: 8px; background: var(--night-sunken); color: var(--mist); font-size: 11px; }
+  .pill.ex { color: var(--dusk); min-width: 0; padding: 0 5px; }
+  .jobc { display: inline-flex; align-items: center; gap: 5px; color: var(--mist); font-size: 11.5px; }
+  .jobc .job { width: 16px; height: 16px; font-size: 7px; }
+  .rw { display: flex; gap: 3px; }
+  .rw i { width: 18px; height: 18px; border-radius: 3px; display: block; }
+  .ic-coin { background: radial-gradient(circle at 40% 35%, #f5dc8a, #8a6a20); } .ic-gear { background: linear-gradient(135deg,#7a8bb0,#2c3550); } .ic-min { background: linear-gradient(135deg,#8ad0c0,#25505a); } .ic-book { background: linear-gradient(135deg,#a37c5a,#4a2f1c); } .ic-card { background: linear-gradient(135deg,#c48ad0,#4a2560); }
+
+  /* Detail */
+  .detail { padding: 8px; overflow: hidden; flex: 1; display: flex; flex-direction: column; gap: 8px; }
+  .hero { position: relative; height: 140px; border-radius: 6px; overflow: hidden; background: var(--night-raised); }
+  .hero svg.bg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .hero .scrim { position: absolute; left: 0; right: 0; bottom: 0; height: 55%; background: linear-gradient(to bottom, rgba(15,20,36,0), rgba(15,20,36,.92)); }
+  .hero .spill { position: absolute; top: 8px; left: 8px; height: 20px; border-radius: 10px; display: inline-flex; align-items: center; gap: 6px; padding: 0 8px 0 5px; font-size: 11px; font-weight: 500; }
+  .hero .sbadge { position: absolute; top: 8px; right: 8px; width: 22px; height: 22px; border-radius: 4px; background: linear-gradient(135deg,#d8b45a,#7a5a1a); border: 1px solid rgba(255,233,166,.5); }
+  .hero .t { position: absolute; left: 10px; right: 10px; bottom: 8px; }
+  .hero .t .n { font-size: 15.5px; font-weight: 600; line-height: 1.2; }
+  .hero .t .m { font-size: 11px; color: var(--mist); margin-top: 3px; }
+  .chain { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--mist); padding: 0 2px; }
+  .bar { flex: 1; height: 6px; border-radius: 3px; background: rgba(74,82,112,.4); overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 43%; border-radius: 3px; background: linear-gradient(to bottom, var(--moon-bright), var(--moon) 50%, var(--moon-deep)); }
+  .card { background: var(--night-raised); border: 1px solid var(--night-line); border-radius: 6px; padding: 6px 10px 8px; position: relative; }
+  .card h4 { margin: 0 0 4px; font-size: 11px; font-weight: 500; color: var(--mist); display: flex; align-items: center; gap: 6px; }
+  .card h4 .r { margin-left: auto; color: var(--dusk); font-weight: 400; }
+  .req { height: 22px; display: flex; align-items: center; gap: 8px; font-size: 12.5px; position: relative; }
+  .req .d { color: var(--mist); font-size: 11.5px; }
+  .req.next::before { content: ""; position: absolute; left: -10px; top: 3px; bottom: 3px; width: 2px; background: var(--moon); border-radius: 1px; }
+  .req.next .l { color: var(--moon); }
+  .rs { display: flex; gap: 6px; align-items: center; }
+  .tile { width: 44px; height: 44px; border-radius: 6px; background: var(--night-sunken); display: flex; align-items: center; justify-content: center; position: relative; }
+  .tile i { width: 34px; height: 34px; border-radius: 6px; display: block; }
+  .tile.uniq { box-shadow: inset 0 0 0 1.5px var(--moon); }
+  .tile.uniq::after { content: ""; position: absolute; top: -3px; right: -3px; width: 10px; height: 10px; border-radius: 5px; background: var(--moon); box-shadow: inset -3px 0 0 var(--night-raised); }
+  .tile .have { position: absolute; right: 2px; bottom: 2px; }
+  .rs .pill { height: 18px; }
+  .path .st { height: 22px; display: flex; align-items: center; gap: 8px; font-size: 12.5px; position: relative; padding-left: 2px; }
+  .path .st.tgt { background: var(--sel); border-radius: 4px; margin: 0 -6px; padding: 0 6px 0 8px; }
+  .path .st .ln { position: absolute; left: 9px; top: -6px; width: 2px; height: 12px; background: var(--moon); }
+  .path .st .ln.dk { background: var(--dusk); width: 1px; left: 9.5px; }
+  .path .eh { font-size: 11px; color: var(--mist); margin: 2px 0; }
+  .giver { font-size: 12.5px; } .giver .z { color: var(--mist); font-size: 11.5px; }
+  .actions { height: 32px; border-top: 1px solid var(--night-line); display: flex; align-items: center; gap: 4px; padding: 0 8px; background: var(--night); }
+  .actions .ab { width: 28px; height: 28px; border-radius: 14px; background: var(--night-raised); display: flex; align-items: center; justify-content: center; color: var(--mist); }
+  .actions .ab.hov { background: var(--night-hover); color: var(--silver); }
+  .actions .ab.dis { color: var(--veil); }
+  .actions .prov { margin-left: auto; font-size: 10.5px; color: var(--dusk); }
+
+  /* Status bar */
+  .status { background: var(--night-sunken); border-top: 1px solid var(--night-line); display: flex; align-items: center; gap: 6px; padding: 0 10px; font-size: 11.5px; color: var(--mist); }
+  .status .dot { color: var(--veil); }
+  .status .msq { height: 18px; border-radius: 9px; background: rgba(242,210,122,.10); color: var(--moon); display: inline-flex; align-items: center; gap: 4px; padding: 0 8px; }
+  .status .ver { margin-left: auto; color: var(--veil); }
+
+  /* Legibility strip */
+  .strip { margin-top: 26px; width: 1100px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .panel { background: var(--night); border: 1px solid var(--night-line); border-radius: 8px; padding: 12px 14px; }
+  .panel h3 { margin: 0 0 8px; font-size: 12.5px; font-weight: 600; }
+  .lrow { display: flex; align-items: center; gap: 18px; height: 44px; }
+  .lrow .lbl { width: 190px; font-size: 11px; color: var(--mist); }
+  .lrow .cell { display: flex; align-items: center; gap: 6px; width: 74px; }
+  .lrow .cell .cap { width: 32px; }
+  .raised { background: var(--night-raised); border-radius: 6px; padding: 4px 8px; }
+  .states { display: flex; gap: 14px; flex-wrap: wrap; }
+  .states .s { width: 118px; display: flex; align-items: center; gap: 8px; font-size: 11.5px; height: 30px; }
+  .states .s .nm { display: flex; flex-direction: column; line-height: 1.15; } .states .s .nm small { color: var(--dusk); font-size: 10px; }
+  .sw { display: flex; gap: 8px; flex-wrap: wrap; }
+  .sw div { width: 96px; height: 44px; border-radius: 6px; padding: 5px 7px; font-size: 10px; line-height: 1.25; border: 1px solid var(--night-line); }
+  .sw div b { display: block; font-weight: 600; font-size: 10.5px; }
+</style>
+</head>
+<body>
+
+<!-- Shared gradients for the sphere shading (ImGui: three inset discs; here: a radial gradient). -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <radialGradient id="gGold" cx="38%" cy="32%" r="75%"><stop offset="0" stop-color="#FFE9A6"/><stop offset=".55" stop-color="#F2D27A"/><stop offset="1" stop-color="#D8B45A"/></radialGradient>
+    <radialGradient id="gSilver" cx="38%" cy="32%" r="75%"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".55" stop-color="#DDE3F0"/><stop offset="1" stop-color="#B7C0D6"/></radialGradient>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1B2447"/><stop offset="1" stop-color="#0F1424"/></linearGradient>
+  </defs>
+</svg>
+
+<h1>Tsukimichi — proposed Journal tab (mockup for approval)</h1>
+<p class="lead">1100 × 720 at UI scale 1.0. Moons are inline SVG built from a base disc and a lit lens, the same two-disc construction the plugin's <code>MoonGeometry</code> uses. The strip under the window compares the current 7 px moons with the proposed gauge at 12 / 16 / 24 / 32 px so partial-fill legibility can be judged before code is written.</p>
+
+<div class="win">
+  <!-- Title bar (Dalamud window chrome; pushed to Night in Window.PreDraw) -->
+  <div class="title"><i class="state" data-s="Accepted" data-size="14"></i> Tsukimichi <span class="wc"><span>—</span><span>▢</span><span>✕</span></span></div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="search"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 14 14"/></svg><span>Search quests, rewards, ids</span><svg width="10" height="10" viewBox="0 0 16 16" stroke="currentColor" stroke-width="2"><path d="M3 3l10 10M13 3 3 13"/></svg></div>
+    <div class="seg"><div>Features</div><div class="on">Level band</div><div>Stalled</div></div>
+    <div class="btn open"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 4h12M2 8h12M2 12h12"/><circle cx="5" cy="4" r="1.6" fill="var(--night-raised)"/><circle cx="11" cy="8" r="1.6" fill="var(--night-raised)"/><circle cx="7" cy="12" r="1.6" fill="var(--night-raised)"/></svg>Filters<span class="badge">2</span></div>
+    <div class="chip-char"><span class="job">WHM</span><span>Michiru Tsukikage</span><span class="mist tiny">Balmung</span><span class="pip"></span><svg width="9" height="9" viewBox="0 0 16 16" fill="none" stroke="var(--dusk)" stroke-width="2"><path d="M3 6l5 5 5-5"/></svg></div>
+    <div class="right">
+      <i class="state" data-s="Completed" data-size="18" title="Live"></i>
+      <div class="ib"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="8" r="6.5"/><path d="M6 6.2a2 2 0 1 1 2.8 1.8c-.6.3-.8.7-.8 1.3"/><circle cx="8" cy="11.6" r=".6" fill="currentColor"/></svg></div>
+      <div class="ib"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 3 1.5 6 8 9l6.5-3L8 3z"/><path d="M4 7.6v3.2c0 .9 1.8 1.8 4 1.8s4-.9 4-1.8V7.6L8 9.5 4 7.6z" opacity=".7"/></svg></div>
+      <div class="ib hov"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor"><circle cx="8" cy="8" r="5" stroke-width="3" stroke-dasharray="2.1 2.1"/><circle cx="8" cy="8" r="2.2" stroke-width="1.5"/></svg></div>
+    </div>
+  </div>
+
+  <!-- Active filter chips (row only exists while something is engaged) -->
+  <div class="chips"><span class="chip">Level 26–36 <i>✕</i></span><span class="chip">Hide completed <i>✕</i></span></div>
+
+  <!-- Body -->
+  <div class="body">
+    <!-- Left: tab strip + tree -->
+    <div class="left">
+      <div class="tabs">
+        <div class="tab on"><i class="moon" data-f="0.62" data-size="16"></i>Journal<span class="b">62%</span></div>
+        <div class="tab"><svg class="ic" width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M10 1.5A6.5 6.5 0 1 0 14.5 11 5 5 0 0 1 10 1.5z"/></svg>Moonlit<span class="b">41%</span></div>
+        <div class="tab"><svg class="ic" width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><circle cx="6" cy="5" r="2.5"/><circle cx="11.5" cy="6" r="2"/><path d="M1.5 13c0-2.6 2-4.2 4.5-4.2s4.5 1.6 4.5 4.2z"/><path d="M11 13c0-1.8-.7-3-1.8-3.7 2.6-.6 5.3.8 5.3 3.7z" opacity=".7"/></svg>Characters<span class="b">3</span></div>
+        <div class="tab"><svg class="ic" width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M14.5 8 9 6.5V2.2L7.6 1.4 6.3 6 2 7.2v1.6l4.3 1.2 1.3 4.6 1.4-.8V9.5L14.5 8z"/></svg>Flight<span class="b">2 zones</span></div>
+      </div>
+      <div class="tree">
+        <div class="row"><span class="chev"></span><i class="moon" data-f="0.62" data-size="24" data-arc="1"></i><span class="name">All quests</span><span class="pct">62%</span></div>
+        <div class="row sec"><span class="chev"><svg width="8" height="8" viewBox="0 0 8 8" fill="currentColor"><path d="M0 2h8L4 7z"/></svg></span><i class="moon" data-f="0.91" data-size="24" data-arc="1"></i><span class="name">Main Scenario</span><span class="rb">1</span><span class="pct">91%</span></div>
+        <div class="row l1 done"><span class="chev"></span><i class="moon" data-f="1" data-size="24" data-arc="1"></i><span class="name">A Realm Reborn</span><span class="pct">100%</span></div>
+        <div class="row l1"><span class="chev"></span><i class="moon" data-f="0.9" data-size="24" data-arc="1"></i><span class="name">Heavensward</span><span class="pct">90%</span></div>
+        <div class="row l1"><span class="chev"></span><i class="moon" data-f="0.5" data-size="24" data-arc="1"></i><span class="name">Stormblood</span><span class="pct">50%</span></div>
+        <div class="row l1 hov"><span class="chev"></span><i class="moon" data-f="0.35" data-size="24" data-arc="1"></i><span class="name">Shadowbringers</span><span class="pct">35%</span></div>
+        <div class="row l1"><span class="chev"></span><i class="moon" data-f="0.1" data-size="24" data-arc="1"></i><span class="name">Endwalker</span><span class="pct">10%</span></div>
+        <div class="row sec"><span class="chev"><svg width="8" height="8" viewBox="0 0 8 8" fill="currentColor"><path d="M2 0v8l5-4z"/></svg></span><i class="moon" data-f="0.74" data-size="24" data-arc="1"></i><span class="name">Chronicles of a New Era</span><span class="pct">74%</span></div>
+        <div class="row sec"><span class="chev"><svg width="8" height="8" viewBox="0 0 8 8" fill="currentColor"><path d="M2 0v8l5-4z"/></svg></span><i class="moon" data-f="0.88" data-size="24" data-arc="1"></i><span class="name">Class &amp; Job Quests</span><span class="pct">88%</span></div>
+        <div class="row sec sel"><span class="chev"><svg width="8" height="8" viewBox="0 0 8 8" fill="currentColor"><path d="M2 0v8l5-4z"/></svg></span><i class="moon" data-f="0.58" data-size="24" data-arc="1"></i><span class="name">Side Story Quests</span><span class="rb">4</span><span class="pct">58%</span></div>
+        <div class="row sec"><span class="chev"><svg width="8" height="8" viewBox="0 0 8 8" fill="currentColor"><path d="M2 0v8l5-4z"/></svg></span><i class="moon" data-f="0.71" data-size="24" data-arc="1"></i><span class="name">Feature Quests</span><span class="pct">71%</span></div>
+        <div class="row sec"><span class="chev"><svg width="8" height="8" viewBox="0 0 8 8" fill="currentColor"><path d="M2 0v8l5-4z"/></svg></span><i class="moon" data-f="0.44" data-size="24" data-arc="1"></i><span class="name">Sidequests</span><span class="pct">44%</span></div>
+        <div class="row sec"><span class="chev"><svg width="8" height="8" viewBox="0 0 8 8" fill="currentColor"><path d="M2 0v8l5-4z"/></svg></span><i class="moon" data-f="0.12" data-size="24" data-arc="1"></i><span class="name">Seasonal Events</span><span class="pct">12%</span></div>
+        <div class="hair"></div>
+        <div class="row sec"><span class="chev"><svg width="9" height="9" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0"/></svg></span><i class="moon" data-f="0.67" data-size="24" data-arc="1"></i><span class="name">Feature Unlocks</span><span class="pct">67%</span></div>
+        <div class="row"><span class="chev"></span><i class="moon" data-f="0.03" data-size="24" data-arc="1"></i><span class="name mist">Unlisted</span><span class="pct">3%</span></div>
+      </div>
+    </div>
+
+    <!-- Center: table -->
+    <div class="center">
+      <div class="thead"><div></div><div class="sort">Name ▴</div><div>Lv</div><div>Job</div><div>Next step</div><div>Exp</div><div>Rewards</div></div>
+      <div class="tr" style="--stripe: var(--moon)"><div class="g"><i class="state" data-s="Ready" data-size="18"></i></div><div>Sylph-management</div><div><span class="pill">20</span></div><div><span class="jobc"><span class="job">ALL</span>All</span></div><div class="ns gold">Ready · Vorsaile Heuloix</div><div><span class="pill ex">ARR</span></div><div class="rw"><i class="ic-coin"></i><i class="ic-gear"></i></div></div>
+      <div class="tr" style="--stripe: var(--silver)"><div class="g"><i class="state" data-s="Accepted" data-size="18"></i></div><div>Seeking Solace</div><div><span class="pill">22</span></div><div><span class="jobc"><span class="job">ALL</span>All</span></div><div class="ns"><b>Step</b> 3 of 7 · Little Solace</div><div><span class="pill ex">ARR</span></div><div class="rw"><i class="ic-coin"></i></div></div>
+      <div class="tr sel" style="--stripe: var(--moon)"><div class="g"><i class="state" data-s="Blocked" data-size="18"></i></div><div>Brotherhood of Ash</div><div><span class="pill">24</span></div><div><span class="jobc"><span class="job">ALL</span>All</span></div><div class="ns"><b>Rank</b> Trusted, needs Sworn</div><div><span class="pill ex">ARR</span></div><div class="rw"><i class="ic-min"></i><i class="ic-coin"></i></div></div>
+      <div class="tr" style="--stripe: var(--moon)"><div class="g"><i class="state" data-s="Completed" data-size="18"></i></div><div>Close to Home</div><div><span class="pill">1</span></div><div><span class="jobc"><span class="job">CNJ</span>CNJ</span></div><div class="ns"><b>Done</b> · 2024-11-02</div><div><span class="pill ex">ARR</span></div><div class="rw"><i class="ic-gear"></i></div></div>
+      <div class="tr hov" style="--stripe: var(--silver)"><div class="g"><i class="state" data-s="ReadyOnOtherJob" data-size="18"></i></div><div>Life, Materia and Everything</div><div><span class="pill">19</span></div><div><span class="jobc"><span class="job">DoH</span>Hand</span></div><div class="ns"><b>Job</b> any Disciple of the Hand, you are WHM</div><div><span class="pill ex">ARR</span></div><div class="rw"><i class="ic-book"></i></div></div>
+      <div class="tr" style="--stripe: var(--silver)"><div class="g"><i class="state" data-s="DoneThisCycle" data-size="18"></i></div><div>Sylphic Studies</div><div><span class="pill">22</span></div><div><span class="jobc"><span class="job">ALL</span>All</span></div><div class="ns"><b>Done</b> today · resets 16:00</div><div><span class="pill ex">ARR</span></div><div class="rw"><i class="ic-coin"></i><i class="ic-card"></i></div></div>
+      <div class="tr" style="--stripe: rgba(124,134,168,.6)"><div class="g"><i class="state" data-s="Blocked" data-size="18"></i></div><div>Into the Beast's Maw</div><div><span class="pill">26</span></div><div><span class="jobc"><span class="job">ALL</span>All</span></div><div class="ns"><b>Level</b> 26, you are 24</div><div><span class="pill ex">ARR</span></div><div class="rw"><i class="ic-coin"></i></div></div>
+      <div class="tr dash" style="--stripe: var(--eclipse)"><div class="g"><i class="state" data-s="Foreclosed" data-size="18"></i></div><div>Ul'dahn Envoy</div><div><span class="pill">15</span></div><div><span class="jobc"><span class="job">ALL</span>All</span></div><div class="ns eclipse"><b style="color:var(--eclipse-text)">Locked</b> by Gridanian Envoy</div><div><span class="pill ex">ARR</span></div><div class="rw"><i class="ic-coin"></i></div></div>
+      <div class="tr" style="--stripe: var(--veil)"><div class="g"><i class="state" data-s="Unknown" data-size="18"></i></div><div>The Ultimate Ballad</div><div><span class="pill">50</span></div><div><span class="jobc"><span class="job">ALL</span>All</span></div><div class="ns" style="color:var(--veil-text)"><b style="color:var(--veil-text)">Veiled</b> · achievements not loaded</div><div><span class="pill ex">ARR</span></div><div class="rw"><i class="ic-card"></i></div></div>
+      <div class="tr" style="--stripe: var(--moon)"><div class="g"><i class="state" data-s="Completed" data-size="18"></i></div><div>A Hero in the Making</div><div><span class="pill">1</span></div><div><span class="jobc"><span class="job">ALL</span>All</span></div><div class="ns"><b>Done</b> · 2024-11-02</div><div><span class="pill ex">ARR</span></div><div class="rw"></div></div>
+      <div class="tr" style="--stripe: var(--moon)"><div class="g"><i class="state" data-s="Completed" data-size="18"></i></div><div>Water, Water Everywhere</div><div><span class="pill">32</span></div><div><span class="jobc"><span class="job">ALL</span>All</span></div><div class="ns"><b>Done</b> · 2025-01-14</div><div><span class="pill ex">ARR</span></div><div class="rw"><i class="ic-coin"></i><i class="ic-gear"></i><i class="ic-book"></i></div></div>
+      <div class="tr" style="--stripe: rgba(124,134,168,.6)"><div class="g"><i class="state" data-s="Blocked" data-size="18"></i></div><div>The Lost Lambs</div><div><span class="pill">30</span></div><div><span class="jobc"><span class="job">ALL</span>All</span></div><div class="ns"><b>Previous</b> quest: Sylph-management</div><div><span class="pill ex">ARR</span></div><div class="rw"><i class="ic-coin"></i></div></div>
+      <div class="tr" style="--stripe: var(--moon)"><div class="g"><i class="state" data-s="Ready" data-size="18"></i></div><div>Sweet Somethings</div><div><span class="pill">28</span></div><div><span class="jobc"><span class="job">ALL</span>All</span></div><div class="ns gold">Ready · Buscarron</div><div><span class="pill ex">ARR</span></div><div class="rw"><i class="ic-coin"></i></div></div>
+    </div>
+
+    <!-- Right: detail card stack -->
+    <div class="rightpane">
+      <div class="detail">
+        <div class="hero">
+          <svg class="bg" viewBox="0 0 344 140" preserveAspectRatio="none">
+            <rect width="344" height="140" fill="url(#sky)"/>
+            <circle cx="286" cy="34" r="20" fill="#3A4363"/><path d="M286 14a20 20 0 0 1 0 40a14 20 0 0 0 0-40z" fill="#F2D27A" opacity=".9"/>
+            <path d="M0 108 C 60 96, 110 118, 180 100 S 300 92, 344 104 V140 H0z" fill="#161C31"/>
+            <path d="M0 122 C 70 112, 130 130, 200 116 S 300 110, 344 120 V140 H0z" fill="#121729"/>
+            <path d="M150 140 C 165 122, 190 112, 230 104" stroke="#F2D27A" stroke-width="1.2" opacity=".35" fill="none"/>
+          </svg>
+          <div class="scrim"></div>
+          <div class="spill" style="background: rgba(124,134,168,.18); box-shadow: inset 0 0 0 1px rgba(124,134,168,.7); color: var(--mist)"><i class="state" data-s="Blocked" data-size="12"></i>Blocked</div>
+          <div class="sbadge" title="Seasonal / special"></div>
+          <div class="t"><div class="n">Brotherhood of Ash</div><div class="m">Side Story Quests · Tribal Quests · A Realm Reborn · Lv 24</div></div>
+        </div>
+        <div class="chain">Chain: Sylphs <span class="bar"><i></i></span>3 of 7</div>
+        <div class="card">
+          <h4><svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 4h3M7 4h7M2 8h3M7 8h7M2 12h3M7 12h7"/></svg>Requirements<span class="r">1 of 3 unmet</span></h4>
+          <div class="req"><i class="state" data-s="Completed" data-size="14"></i><span class="l">Level 24</span><span class="d">you are 31</span></div>
+          <div class="req"><i class="state" data-s="Completed" data-size="14"></i><span class="l">Previous quest</span><span class="d">Sylph-management</span></div>
+          <div class="req next"><i class="state" data-s="Ready" data-size="14"></i><span class="l">▸ Sylphs rank</span><span class="d">Trusted, needs Sworn</span></div>
+        </div>
+        <div class="card">
+          <h4><svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="6" width="12" height="8" rx="1.5"/><path d="M2 9h12M8 6v8M5 6c-2-1-2-4 0-4s3 3 3 4M11 6c2-1 2-4 0-4S8 5 8 6"/></svg>Rewards<span class="r">2 obtained</span></h4>
+          <div class="rs">
+            <div class="tile uniq"><i class="ic-min"></i></div>
+            <div class="tile"><i class="ic-coin"></i><span class="have"><i class="state" data-s="Completed" data-size="10"></i></span></div>
+            <div class="tile"><i class="ic-gear"></i><span class="have"><i class="state" data-s="Completed" data-size="10"></i></span></div>
+            <span class="pill">2,880 gil</span><span class="pill">14,560 exp</span>
+          </div>
+        </div>
+        <div class="card path">
+          <h4><svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="4" cy="4" r="2"/><circle cx="12" cy="12" r="2"/><path d="M6 4h4a2 2 0 0 1 2 2v4"/></svg>Path<span class="r">7 steps · 3 done</span></h4>
+          <div class="eh">A Realm Reborn</div>
+          <div class="st"><i class="state" data-s="Completed" data-size="14"></i>Close to Home</div>
+          <div class="st"><span class="ln"></span><i class="state" data-s="Completed" data-size="14"></i>Sylphic Studies <span class="cap">· 2 folded</span></div>
+          <div class="st"><span class="ln"></span><i class="state" data-s="Completed" data-size="14"></i>Sylph-management</div>
+          <div class="st tgt"><span class="ln dk" style="left:15.5px"></span><i class="state" data-s="Blocked" data-size="14"></i>Brotherhood of Ash</div>
+        </div>
+        <div class="card giver">
+          <h4><svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a5 5 0 0 0-5 5c0 3.7 5 9 5 9s5-5.3 5-9a5 5 0 0 0-5-5zm0 7a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/></svg>Giver</h4>
+          Vorsaile Heuloix <span class="z">· New Gridania (9.7, 11.0)</span>
+        </div>
+      </div>
+      <div class="actions">
+        <div class="ab hov" title="Flag on map"><svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M3 1v14h1.5V9.5H13l-2-3.2 2-3.3H4.5V1z"/></svg></div>
+        <div class="ab dis" title="Open journal (accepted or completed only)"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 3h5a1.5 1.5 0 0 1 1 .5A1.5 1.5 0 0 1 9 3h5v10H9a1 1 0 0 0-1 1 1 1 0 0 0-1-1H2z"/><path d="M8 3.5V14"/></svg></div>
+        <div class="ab" title="Link in chat"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6.5 9.5 9.5 6.5M7 4.5 8.5 3a2.5 2.5 0 1 1 3.5 3.5L10.5 8M9 11.5 7.5 13a2.5 2.5 0 1 1-3.5-3.5L5.5 8"/></svg></div>
+        <div class="ab" title="Copy coordinates"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="5" width="9" height="9" rx="1.5"/><path d="M11 5V3.5A1.5 1.5 0 0 0 9.5 2h-6A1.5 1.5 0 0 0 2 3.5v6A1.5 1.5 0 0 0 3.5 11H5"/></svg></div>
+        <div class="ab" title="Teleport (Lifestream)"><svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M14.5 8 9 6.5V2.2L7.6 1.4 6.3 6 2 7.2v1.6l4.3 1.2 1.3 4.6 1.4-.8V9.5L14.5 8z"/></svg></div>
+        <span class="prov">Blocked per client flags at 21:14</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status bar -->
+  <div class="status">
+    <i class="moon" data-f="0.62" data-size="18" data-arc="1"></i><span style="color:var(--silver)">62%</span>
+    <span class="dot">·</span><span>5,373 quests</span><span class="dot">·</span><span>showing 1,204 of 1,204</span>
+    <span class="dot">·</span><span class="pip" style="animation:none;opacity:.9"></span><span>live</span>
+    <span class="dot">·</span><span class="msq">MSQ · Close to Home <svg width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2.5 1l3 3-3 3"/></svg></span>
+    <span class="ver">v0.5.0</span>
+  </div>
+</div>
+
+<!-- ---------- Legibility strip ---------- -->
+<div class="strip">
+  <div class="panel">
+    <h3>Filling moon at 0.10 · 0.35 · 0.50 · 0.90 · 1.00</h3>
+    <div class="lrow"><div class="lbl">Today: r 7 px, disc #2C334A, 1 px Veil ring, no arc (tree at default scale)</div>
+      <div class="cell"><i class="moon" data-f="0.1" data-size="14" data-old="1"></i></div><div class="cell"><i class="moon" data-f="0.35" data-size="14" data-old="1"></i></div><div class="cell"><i class="moon" data-f="0.5" data-size="14" data-old="1"></i></div><div class="cell"><i class="moon" data-f="0.9" data-size="14" data-old="1"></i></div><div class="cell"><i class="moon" data-f="1" data-size="14" data-old="1"></i></div></div>
+    <div class="lrow"><div class="lbl">Proposed 12 px (Dense rows): Shadow disc + Dusk ring, no arc</div>
+      <div class="cell"><i class="moon" data-f="0.1" data-size="12"></i></div><div class="cell"><i class="moon" data-f="0.35" data-size="12"></i></div><div class="cell"><i class="moon" data-f="0.5" data-size="12"></i></div><div class="cell"><i class="moon" data-f="0.9" data-size="12"></i></div><div class="cell"><i class="moon" data-f="1" data-size="12"></i></div></div>
+    <div class="lrow"><div class="lbl">Proposed 16 px (tab strip): no arc</div>
+      <div class="cell"><i class="moon" data-f="0.1" data-size="16"></i></div><div class="cell"><i class="moon" data-f="0.35" data-size="16"></i></div><div class="cell"><i class="moon" data-f="0.5" data-size="16"></i></div><div class="cell"><i class="moon" data-f="0.9" data-size="16"></i></div><div class="cell"><i class="moon" data-f="1" data-size="16"></i></div></div>
+    <div class="lrow"><div class="lbl">Proposed 24 px gauge (tree): arc + percentage</div>
+      <div class="cell"><i class="moon" data-f="0.1" data-size="24" data-arc="1"></i><span class="cap">10%</span></div><div class="cell"><i class="moon" data-f="0.35" data-size="24" data-arc="1"></i><span class="cap">35%</span></div><div class="cell"><i class="moon" data-f="0.5" data-size="24" data-arc="1"></i><span class="cap">50%</span></div><div class="cell"><i class="moon" data-f="0.9" data-size="24" data-arc="1"></i><span class="cap">90%</span></div><div class="cell"><i class="moon" data-f="1" data-size="24" data-arc="1"></i><span class="cap">100%</span></div></div>
+    <div class="lrow"><div class="lbl">Proposed 32 px gauge (Characters dashboard)</div>
+      <div class="cell"><i class="moon" data-f="0.1" data-size="32" data-arc="1"></i></div><div class="cell"><i class="moon" data-f="0.35" data-size="32" data-arc="1"></i></div><div class="cell"><i class="moon" data-f="0.5" data-size="32" data-arc="1"></i></div><div class="cell"><i class="moon" data-f="0.9" data-size="32" data-arc="1"></i></div><div class="cell"><i class="moon" data-f="1" data-size="32" data-arc="1"></i></div></div>
+    <div class="lrow raised"><div class="lbl">Same 24 px gauge on a NightRaised card (the hardest background today)</div>
+      <div class="cell"><i class="moon" data-f="0.1" data-size="24" data-arc="1"></i></div><div class="cell"><i class="moon" data-f="0.35" data-size="24" data-arc="1"></i></div><div class="cell"><i class="moon" data-f="0.5" data-size="24" data-arc="1"></i></div><div class="cell"><i class="moon" data-f="0.9" data-size="24" data-arc="1"></i></div><div class="cell"><i class="moon" data-f="1" data-size="24" data-arc="1"></i></div></div>
+  </div>
+  <div class="panel">
+    <h3>Eight state glyphs at 18 px (table) and 12 px (Dense)</h3>
+    <div class="states">
+      <div class="s"><i class="state" data-s="Completed" data-size="18"></i><i class="state" data-s="Completed" data-size="12"></i><span class="nm">Completed<small>full</small></span></div>
+      <div class="s"><i class="state" data-s="Accepted" data-size="18"></i><i class="state" data-s="Accepted" data-size="12"></i><span class="nm">Accepted<small>gibbous + ring</small></span></div>
+      <div class="s"><i class="state" data-s="Ready" data-size="18"></i><i class="state" data-s="Ready" data-size="12"></i><span class="nm">Ready<small>half + halo</small></span></div>
+      <div class="s"><i class="state" data-s="ReadyOnOtherJob" data-size="18"></i><i class="state" data-s="ReadyOnOtherJob" data-size="12"></i><span class="nm">Other job<small>silver + gold ring</small></span></div>
+      <div class="s"><i class="state" data-s="DoneThisCycle" data-size="18"></i><i class="state" data-s="DoneThisCycle" data-size="12"></i><span class="nm">Done this cycle<small>waning, silver</small></span></div>
+      <div class="s"><i class="state" data-s="Blocked" data-size="18"></i><i class="state" data-s="Blocked" data-size="12"></i><span class="nm">Blocked<small>new + silver ring</small></span></div>
+      <div class="s"><i class="state" data-s="Foreclosed" data-size="18"></i><i class="state" data-s="Foreclosed" data-size="12"></i><span class="nm">Foreclosed<small>eclipse ring + notch</small></span></div>
+      <div class="s"><i class="state" data-s="Unknown" data-size="18"></i><i class="state" data-s="Unknown" data-size="12"></i><span class="nm">Unknown<small>dashed ring</small></span></div>
+    </div>
+    <h3 style="margin-top:14px">Tokens</h3>
+    <div class="sw">
+      <div style="background:#0F1424"><b>Night</b>#0F1424<br>body, detail</div>
+      <div style="background:#0B0F1C"><b>NightSunken</b>#0B0F1C<br>search, status</div>
+      <div style="background:#1E2437"><b>NightRaised</b>#1E2437<br>cards, header</div>
+      <div style="background:#262D45"><b>NightHover</b>#262D45<br>hover</div>
+      <div style="background:#3A4363"><b>Shadow</b>#3A4363<br>unlit disc</div>
+      <div style="background:#0F1424;color:#DDE3F0"><b>Silver</b>#DDE3F0<br>primary 14.2:1</div>
+      <div style="background:#0F1424;color:#A9B2CC"><b>Mist</b>#A9B2CC<br>secondary 8.7:1</div>
+      <div style="background:#0F1424;color:#7C86A8"><b>Dusk</b>#7C86A8<br>tertiary 5.1:1</div>
+      <div style="background:#0F1424;color:#F2D27A"><b>Moon</b>#F2D27A<br>accent 12.5:1</div>
+      <div style="background:linear-gradient(#FFE9A6,#F2D27A 50%,#D8B45A);color:#0F1424"><b>Gold gradient</b>bright → deep<br>bars, buttons</div>
+      <div style="background:#0F1424;color:#D68AA8"><b>EclipseText</b>#D68AA8<br>foreclosed 7.0:1</div>
+      <div style="background:#0F1424;color:#8A93B0"><b>VeilText</b>#8A93B0<br>unknown 6.0:1</div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const C = { night:'#0F1424', shadow:'#3A4363', old:'#2C334A', moon:'#F2D27A', silver:'#DDE3F0', dusk:'#7C86A8', veil:'#4A5270', veilText:'#8A93B0', eclipse:'#B25C7F' };
+
+  // Lit lens for a waxing fraction f (lit from the right): right rim from top to bottom, back along an
+  // ellipse terminator whose x-radius is |1-2f|·r; bulges right (thin crescent) below a half, left above it.
+  function lens(cx, cy, r, f, mirror) {
+    if (f <= 0) return '';
+    if (f >= 1) return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#gGold)"/>`;
+    const rx = Math.abs(1 - 2 * f) * r, sweep = f > 0.5 ? 1 : 0;
+    const d = `M ${cx} ${cy - r} A ${r} ${r} 0 0 1 ${cx} ${cy + r} A ${rx} ${r} 0 0 ${sweep} ${cx} ${cy - r} Z`;
+    const t = mirror ? ` transform="translate(${2 * cx} 0) scale(-1 1)"` : '';
+    return `<path d="${d}"${t} fill="__FILL__"/>`;
+  }
+
+  // Filling moon / gauge. size = box in px; with arc: track+arc ring outside the disc.
+  function gauge(size, f, arc, old) {
+    const half = size / 2;
+    let r, out = '';
+    if (arc) { r = half - 4; } else { r = half - 1; }
+    const cx = half, cy = half;
+    const disc = old ? C.old : C.shadow;
+    const ring = old ? Math.max(1, r * 0.07) : Math.max(1.5, r * 0.12);
+    const ringColor = old ? C.veil : C.dusk;
+    if (arc) {
+      const R = half - 1, circ = 2 * Math.PI * R;
+      out += `<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="${C.veil}" stroke-opacity=".55" stroke-width="2"/>`;
+      if (f > 0) out += `<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="${f >= 1 ? C.moon : C.moon}" stroke-width="2" stroke-linecap="round" stroke-dasharray="${Math.max(0.01, f * circ)} ${circ}" transform="rotate(-90 ${cx} ${cy})"/>`;
+    }
+    out += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${disc}"/>`;
+    out += lens(cx, cy, r, f, false).replace('__FILL__', r >= 9 ? 'url(#gGold)' : C.moon);
+    if (f < 1) out += `<circle cx="${cx}" cy="${cy}" r="${r - ring / 2}" fill="none" stroke="${ringColor}" stroke-width="${ring}"/>`;
+    return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="display:block;flex:none">${out}</svg>`;
+  }
+
+  // The eight state glyphs (spec 2.1). r = 42% of the box, leaving room for rings, notch and halo.
+  function state(name, size) {
+    const cx = size / 2, cy = size / 2, r = size * 0.42;
+    const ring = Math.max(1.2, r * 0.12);
+    const gold = r >= 9 ? 'url(#gGold)' : C.moon, silver = r >= 9 ? 'url(#gSilver)' : C.silver;
+    let out = '';
+    const disc = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${C.shadow}"/>`;
+    const ringOf = (col, w) => `<circle cx="${cx}" cy="${cy}" r="${r - w / 2}" fill="none" stroke="${col}" stroke-width="${w}"/>`;
+    switch (name) {
+      case 'Completed': out = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${gold}"/>`; break;
+      case 'Accepted': out = disc + lens(cx, cy, r, 0.75).replace('__FILL__', gold) + ringOf(C.moon, ring); break;
+      case 'Ready':
+        out = [[1.6,.04],[1.35,.07],[1.15,.10]].map(([s,a]) => `<circle cx="${cx}" cy="${cy}" r="${r*s}" fill="${C.moon}" fill-opacity="${a}"/>`).join('')
+            + disc + lens(cx, cy, r, 0.5).replace('__FILL__', gold); break;
+      case 'ReadyOnOtherJob': out = disc + lens(cx, cy, r, 0.5).replace('__FILL__', silver) + ringOf(C.moon, ring); break;
+      case 'DoneThisCycle': out = disc + lens(cx, cy, r, 0.75, true).replace('__FILL__', silver); break;
+      case 'Blocked': out = disc + ringOf(C.silver, ring); break;
+      case 'Foreclosed': out = disc + ringOf(C.eclipse, ring * 1.3) + `<circle cx="${cx + 0.72 * r}" cy="${cy - 0.72 * r}" r="${r * 0.3}" fill="${C.night}"/>`; break;
+      default: {
+        const rr = r - ring / 2, seg = 2 * Math.PI * rr / 12, dash = seg * (16 / 30);
+        out = disc + `<circle cx="${cx}" cy="${cy}" r="${rr}" fill="none" stroke="${C.veilText}" stroke-width="${ring}" stroke-dasharray="${dash} ${seg - dash}" transform="rotate(-90 ${cx} ${cy})"/>`;
+      }
+    }
+    return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="display:block;flex:none">${out}</svg>`;
+  }
+
+  document.querySelectorAll('i.moon').forEach(el => {
+    el.outerHTML = gauge(+el.dataset.size, +el.dataset.f, el.dataset.arc === '1', el.dataset.old === '1');
+  });
+  document.querySelectorAll('i.state').forEach(el => {
+    el.outerHTML = state(el.dataset.s, +el.dataset.size);
+  });
+})();
+</script>
+</body>
+</html>
