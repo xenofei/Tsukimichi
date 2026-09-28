@@ -4,6 +4,9 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+### Added
+- Compare with on the Characters dashboard (alt diff): pick another stored character (the most recently captured one at first) and see "Done on A, not on B" and the reverse, ranked by unlock value (1 for any quest, +3 main scenario, +5 feature quest, +2 per unique reward) with a value badge and the reason ("Feature quest · 2 unique rewards"), the lacking character's state moon, and a click that reveals the quest; each list shows 25 rows and "and N more". A lead line ("A is 12 quests ahead of B"), done-on-both and done-on-neither counts, and per-section counts sit above the lists. A quest foreclosed on the other character (a Grand Company choice not taken) is not counted as missing. Copy list puts the whole list on the clipboard as "name (value)" lines. The other character is evaluated offline from its snapshot once per capture; with a single stored character the section shows "Log in on another character to compare."
+
 ## [0.4.0] - 2026-09-28
 
 ### Added
