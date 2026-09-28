@@ -37,6 +37,19 @@ static partial class Strings
     public const string MoonlitConfidenceCurated = "curated";
     public const string MoonlitConfidenceUser = "yours";
     public const string MoonlitSourceUnknown = "Source not recorded";
+
+    // Confidence badge tooltips: what the badge means, with the source under it.
+    public const string MoonlitBadgeStatic = "Static: the game data alone marks this reward as found nowhere else";
+    public const string MoonlitBadgeCommunity = "Community: reported by players, not yet checked";
+    public const string MoonlitBadgeCurated = "Curated: checked by hand and shipped with the plugin";
+    public const string MoonlitBadgeUser = "Yours: you marked this quest's reward as unique";
+    public const string MoonlitBadgeHidden = "Yours: you hid this reward as not unique";
+
+    /// <summary>Hover text of the veiled stand-in drawn where a reward of a kind without sheet art would show its icon.</summary>
+    public const string MoonlitNoIconTooltip = "No icon for this reward kind";
+
+    /// <summary>{0} = the kind row's obtained/total.</summary>
+    public const string MoonlitKindCountTooltipFormat = "{0} obtained";
     public const string MoonlitQuestPrefix = "Quest ";
 
     // Rewards the FFXIV Online Store also sells (curated/online_store.json; entry OtherSources carries OnlineStore)

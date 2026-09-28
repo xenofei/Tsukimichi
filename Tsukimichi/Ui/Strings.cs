@@ -326,6 +326,24 @@ public static partial class Strings
     public static string StateGlyphSubtitle(QuestState state) => StateNames.GlyphSubtitle(state);
 
     /// <summary>
+    /// What a state moon says on hover: the display name and the glyph's shape hint ("Blocked · new moon, silver
+    /// ring"); <see cref="StateNames"/> composes the eight strings once, so hovering allocates nothing.
+    /// </summary>
+    public static string StateTooltip(QuestState state) => StateNames.Tooltip(state);
+
+    /// <summary>The state moon tooltip for a quest: a done repeatable says "Done today" or "Done this week" by its reset.</summary>
+    public static string StateTooltip(QuestState state, QuestRecord? quest) => StateNames.Tooltip(state, quest);
+
+    /// <summary>
+    /// The clause <see cref="StateWithReason"/> appends, on its own, for the second line of a moon's tooltip: the
+    /// decisive requirement or reason for Blocked, Locked out and Not checked; null for every other state or when
+    /// the evaluation has none.
+    /// </summary>
+    public static string? StateReason(QuestState state, QuestEvaluation? evaluation) =>
+        state is QuestState.Blocked or QuestState.Foreclosed or QuestState.Unknown
+        && evaluation?.NextStep?.Detail is { Length: > 0 } detail ? detail : null;
+
+    /// <summary>
     /// The display name followed by " · " and the decisive requirement or reason when the evaluation has one: Blocked
     /// always names its blocker, Locked out its cause, Not checked what could not be read. Other states show the name alone.
     /// </summary>

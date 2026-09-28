@@ -22,8 +22,11 @@ public static class RewardTooltip
 
     private static readonly Dictionary<(RewardKind Kind, uint Count), string> KindLines = [];
 
-    /// <summary>Draws the tooltip; call only while the reward's item is hovered.</summary>
-    public static void Draw(RewardRef reward, GameLinks links, ITextureProvider textures)
+    /// <summary>
+    /// Draws the tooltip; call only while the reward's item is hovered. <paramref name="source"/>, when given, closes
+    /// the tooltip as a disabled line (Moonlit passes where its unique verdict came from).
+    /// </summary>
+    public static void Draw(RewardRef reward, GameLinks links, ITextureProvider textures, string? source = null)
     {
         ArgumentNullException.ThrowIfNull(reward);
         ArgumentNullException.ThrowIfNull(links);
@@ -80,6 +83,12 @@ public static class RewardTooltip
                 ImGui.Spacing();
                 ImGui.TextWrapped(description);
             }
+        }
+
+        if (!string.IsNullOrEmpty(source))
+        {
+            ImGui.Spacing();
+            ImGui.TextDisabled(source);
         }
     }
 

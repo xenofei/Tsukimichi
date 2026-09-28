@@ -162,6 +162,31 @@ public static class MoonGlyph
     }
 
     /// <summary>
+    /// The veiled (Unknown) glyph faded to <paramref name="alpha"/>, as a stand-in where an icon would go and none
+    /// exists (Moonlit rewards of a kind without sheet art). Reserves a square item like <see cref="DrawInline"/>, so
+    /// the caller can hang a tooltip on it; the faint disc and dashed rim both carry the alpha, and it says nothing
+    /// about state or progress.
+    /// </summary>
+    public static void DrawVeiledInline(float size, float alpha)
+    {
+        var pos = ImGui.GetCursorScreenPos();
+        ImGui.Dummy(new Vector2(size, size));
+        var radius = size * InlineRadiusFraction;
+        if (!(radius > 0.5f)) return;
+
+        var dl = ImGui.GetWindowDrawList();
+        var center = Snap(pos + new Vector2(size * 0.5f), radius);
+        var segments = MoonGeometry.SegmentsFor(radius);
+        var rim = Rim(radius);
+        FillDisc(dl, center, radius, segments, Theme.WithAlpha(Theme.Shadow, 0.60f * alpha));
+        var rimColor = Theme.WithAlpha(Theme.Dusk, alpha);
+        if (radius >= FineDashMinRadius)
+            DashedRing(dl, center, radius, segments, rim, rimColor, dashes: 12, dashDegrees: 16f);
+        else
+            DashedRing(dl, center, radius, segments, rim, rimColor, dashes: 8, dashDegrees: 22f);
+    }
+
+    /// <summary>
     /// Progress moon for tree nodes: lit <paramref name="fraction"/> from 0 (new) to 1 (full), filling right to left like a
     /// waxing moon. The dark side is Shadow with a Dusk rim of <see cref="Rim"/> px around it (the terminator always
     /// runs pole to pole, so the dark side's rim is exactly the left half-circle); the lit side is rimless, like Completed.
