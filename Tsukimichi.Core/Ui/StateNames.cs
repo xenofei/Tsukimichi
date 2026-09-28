@@ -58,9 +58,61 @@ public static class StateNames
         _ => DoneThisCycle,
     };
 
+    /// <summary>Between the display name and the shape hint in a moon's tooltip.</summary>
+    public const string TooltipSeparator = " · ";
+
+    /// <summary>One tooltip per state, composed once; indexed by the enum value.</summary>
+    private static readonly string[] Tooltips = BuildTooltips();
+
+    private static readonly string DoneTodayTooltip = ComposeTooltip(DoneToday, GlyphSubtitle(QuestState.DoneThisCycle));
+    private static readonly string DoneThisWeekTooltip = ComposeTooltip(DoneThisWeek, GlyphSubtitle(QuestState.DoneThisCycle));
+
+    /// <summary>
+    /// What a state moon says on hover, wherever one is drawn: the display name, then the glyph's shape so the moon
+    /// can be told apart next time ("Blocked · new moon, silver ring"). Precomposed per state; allocates nothing.
+    /// </summary>
+    public static string Tooltip(QuestState state) =>
+        (uint)state < (uint)Tooltips.Length ? Tooltips[(int)state] : ComposeTooltip(Name(state), GlyphSubtitle(state));
+
+    /// <summary>Tooltip of a state for a quest with the given repeat interval: a done repeatable says today or this week.</summary>
+    public static string Tooltip(QuestState state, byte repeatInterval) => state == QuestState.DoneThisCycle
+        ? repeatInterval switch
+        {
+            DailyInterval => DoneTodayTooltip,
+            WeeklyInterval => DoneThisWeekTooltip,
+            _ => Tooltips[(int)QuestState.DoneThisCycle],
+        }
+        : Tooltip(state);
+
+    /// <summary>Tooltip of a state for a quest; null quest falls back to <see cref="Tooltip(QuestState)"/>.</summary>
+    public static string Tooltip(QuestState state, QuestRecord? quest) =>
+        quest is null ? Tooltip(state) : Tooltip(state, quest.RepeatInterval);
+
+    /// <summary>"Name · subtitle", or the name alone when there is no subtitle.</summary>
+    public static string ComposeTooltip(string name, string subtitle) =>
+        string.IsNullOrEmpty(subtitle) ? name : name + TooltipSeparator + subtitle;
+
+    private static string[] BuildTooltips()
+    {
+        var states = Enum.GetValues<QuestState>();
+        var max = 0;
+        foreach (var state in states)
+        {
+            max = Math.Max(max, (int)state);
+        }
+
+        var table = new string[max + 1];
+        foreach (var state in states)
+        {
+            table[(int)state] = ComposeTooltip(Name(state), GlyphSubtitle(state));
+        }
+
+        return table;
+    }
+
     /// <summary>
     /// The moon-phase name of a state's glyph: a subtitle under the display name in the Help legend and the glyph
-    /// window, never a label on its own.
+    /// window, and the shape hint in every moon's tooltip (<see cref="Tooltip(QuestState)"/>).
     /// </summary>
     public static string GlyphSubtitle(QuestState state) => state switch
     {
