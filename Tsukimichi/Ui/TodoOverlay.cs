@@ -24,9 +24,11 @@ namespace Tsukimichi.Ui;
 /// <summary>
 /// Todo overlay (feature plan V2-13): a small always-visible panel, DailyDuty style, with one collapsible section per
 /// enabled part of <see cref="TodoList"/> (pins, feature quests startable here, the next main scenario quest, the
-/// current job's next job and role quest). Each row is a state moon, the quest name (click flags the giver on the
-/// map; right-click offers Reveal in Tsukimichi, Flag, Teleport through Lifestream and a chat link) and a Dusk hint;
-/// hovering shows the state and the next step. <see cref="Window.IsOpen"/> follows
+/// current job's next job and role quest). Each row is a state moon, the quest name (click shows it in the main
+/// window, double-click flags the giver on the map; right-click offers Reveal in Tsukimichi, Flag, Teleport through
+/// Lifestream and a chat link) and a Dusk hint; hovering shows the state and the next step. The panel draws at the
+/// main window's UI scale; below <see cref="ShadowBelowOpacity"/> every text gets a one-pixel Night shadow so it
+/// still reads over snow, sand and sky. <see cref="Window.IsOpen"/> follows
 /// <see cref="Configuration.TodoOverlayEnabled"/>; the window is not drawn while logged out, in a duty or in a
 /// cutscene. The rows are rebuilt on <see cref="SessionState.Changed"/>, <see cref="IClientState.TerritoryChanged"/>,
 /// when a section toggle flips and when <c>user/pins.json</c> changes (its write time is checked every
@@ -37,8 +39,17 @@ namespace Tsukimichi.Ui;
 /// </summary>
 public sealed class TodoOverlay : Window, IDisposable
 {
-    public const float MinOpacity = 0.2f;
+    public const float MinOpacity = 0.6f;
     public const float MaxOpacity = 1f;
+
+    /// <summary>Below this background opacity the texts get a Night drop shadow.</summary>
+    public const float ShadowBelowOpacity = 0.9f;
+
+    /// <summary>Logical minimum width of the panel.</summary>
+    private const float MinWidthLogical = 180f;
+
+    /// <summary>The row's selectable has no visible label; the name is painted over it (with its shadow) instead.</summary>
+    private const string RowSelectableId = "##row";
 
     /// <summary>How often the pins file's write time is checked while the overlay is drawn.</summary>
     public static readonly TimeSpan PinsCheckInterval = TimeSpan.FromSeconds(2);
@@ -52,9 +63,10 @@ public sealed class TodoOverlay : Window, IDisposable
     private static readonly Vector2 DefaultOffset = new(24f, 96f);
     private static readonly string LockGlyph = FontAwesomeIcon.Lock.ToIconString();
 
-    private readonly record struct Row(QuestRecord Quest, QuestState State, string Label, string Hint, string Tooltip);
+    private readonly record struct Row(QuestRecord Quest, QuestState State, string Hint, string Tooltip);
 
-    private sealed record SectionView(TodoSection Section, string Header, Row[] Rows);
+    /// <summary><paramref name="HeaderId"/> is the label-less "###" id the collapsing header keeps its open state under; <paramref name="HeaderText"/> is painted over it.</summary>
+    private sealed record SectionView(TodoSection Section, string HeaderId, string HeaderText, Row[] Rows);
 
     private readonly Configuration settings;
     private readonly SessionState session;
@@ -86,6 +98,7 @@ public sealed class TodoOverlay : Window, IDisposable
     private CatalogBundle? ladderBundle;
     private bool resetPosition;
     private bool disposed;
+    private bool shadowText;
 
     /// <param name="settings">Overlay settings; read every frame so the config window's changes show at once.</param>
     /// <param name="session">Catalog, viewed character and its evaluations.</param>
@@ -125,7 +138,7 @@ public sealed class TodoOverlay : Window, IDisposable
         AllowClickthrough = false;
         SizeConstraints = new WindowSizeConstraints
         {
-            MinimumSize = new Vector2(180f, 0f),
+            MinimumSize = new Vector2(MinWidthLogical, 0f),
             MaximumSize = new Vector2(float.MaxValue, float.MaxValue),
         };
 
@@ -179,7 +192,14 @@ public sealed class TodoOverlay : Window, IDisposable
     public override void PreDraw()
     {
         Flags = settings.TodoOverlayLocked ? LockedFlags : BaseFlags;
-        BgAlpha = ClampOpacity(settings.TodoOverlayOpacity);
+        var opacity = ClampOpacity(settings.TodoOverlayOpacity);
+        BgAlpha = opacity;
+        shadowText = opacity < ShadowBelowOpacity;
+        SizeConstraints = new WindowSizeConstraints
+        {
+            MinimumSize = new Vector2(MinWidthLogical * UiMetrics.FontScale, 0f),
+            MaximumSize = new Vector2(float.MaxValue, float.MaxValue),
+        };
         if (resetPosition)
         {
             resetPosition = false;
@@ -191,25 +211,45 @@ public sealed class TodoOverlay : Window, IDisposable
 
     public override void Draw()
     {
+        // The panel is its own top-level window, so it scales itself (the glyphs already followed the icon scale;
+        // the text now keeps pace). Reset before Begin lays the window out again.
+        UiMetrics.ApplyFontScale();
+        try
+        {
+            DrawContent();
+        }
+        finally
+        {
+            ImGui.SetWindowFontScale(1f);
+        }
+    }
+
+    private void DrawContent()
+    {
         DrawHeader();
         if (!catalogReady)
         {
-            ImGui.TextDisabled(session.CatalogLoading ? Strings.CatalogNotReady : Strings.CatalogUnavailable);
+            ShadowedText(session.CatalogLoading ? Strings.CatalogNotReady : Strings.CatalogUnavailable, ImGui.GetStyle().Colors[(int)ImGuiCol.TextDisabled]);
             return;
         }
 
         if (sections.Length == 0)
         {
-            using var dusk = Theme.PushText(Theme.Dusk);
-            ImGui.TextUnformatted(enabledSections > 0 ? Strings.TodoEmpty : Strings.TodoNoSections);
+            ShadowedText(enabledSections > 0 ? Strings.TodoEmpty : Strings.TodoNoSections, Theme.Dusk);
             return;
         }
 
         var glyphSize = UiMetrics.InlineGlyphSize(ImGui.GetTextLineHeight());
+        var style = ImGui.GetStyle();
         foreach (var section in sections)
         {
             using var id = ImRaii.PushId((int)section.Section);
-            if (!ImGui.CollapsingHeader(section.Header, ImGuiTreeNodeFlags.DefaultOpen))
+            // The header's own label is empty and its text painted over the frame, so it can carry the shadow too;
+            // the text sits where TreeNodeBehavior puts a framed node's label (after the arrow slot).
+            var open = ImGui.CollapsingHeader(section.HeaderId, ImGuiTreeNodeFlags.DefaultOpen);
+            var headerMin = ImGui.GetItemRectMin();
+            ShadowedTextAt(headerMin + new Vector2(ImGui.GetFontSize() + style.FramePadding.X * 3f, style.FramePadding.Y), section.HeaderText, ImGui.GetColorU32(ImGuiCol.Text));
+            if (!open)
             {
                 continue;
             }
@@ -224,11 +264,7 @@ public sealed class TodoOverlay : Window, IDisposable
     /// <summary>"☾ Tsukimichi" in Moon, a small lock when locked; right-click for lock, reset position and hide.</summary>
     private void DrawHeader()
     {
-        using (Theme.PushText(Theme.Moon))
-        {
-            ImGui.TextUnformatted(Strings.TodoHeader);
-        }
-
+        ShadowedText(Strings.TodoHeader, Theme.Moon);
         DrawHeaderMenu();
 
         if (!settings.TodoOverlayLocked)
@@ -237,14 +273,14 @@ public sealed class TodoOverlay : Window, IDisposable
         }
 
         ImGui.SameLine();
-        ImGui.SetWindowFontScale(0.75f);
+        ImGui.SetWindowFontScale(0.75f * UiMetrics.FontScale);
         using (ImRaii.PushFont(UiBuilder.IconFont))
         using (Theme.PushText(Theme.Dusk))
         {
             ImGui.TextUnformatted(LockGlyph);
         }
 
-        ImGui.SetWindowFontScale(1f);
+        UiMetrics.ApplyFontScale();
         if (ImGui.IsItemHovered())
         {
             UiMetrics.Tooltip(Strings.TodoLockedTooltip);
@@ -283,21 +319,30 @@ public sealed class TodoOverlay : Window, IDisposable
         MoonGlyph.DrawInline(row.State, glyphSize);
         ImGui.SameLine();
 
-        // The selectable is sized to the name so the hint can follow on the same line.
+        // The selectable is sized to the name so the hint can follow on the same line; the name itself is painted over
+        // it so it can carry the shadow. A click shows the quest in the main window; only a double-click flags the
+        // map (a game action with no undo), so a slip of the mouse never plants a flag.
         var nameWidth = ImGui.CalcTextSize(row.Quest.Name).X;
-        if (ImGui.Selectable(row.Label, false, ImGuiSelectableFlags.None, new Vector2(nameWidth, 0f)))
+        if (ImGui.Selectable(RowSelectableId, false, ImGuiSelectableFlags.AllowDoubleClick, new Vector2(nameWidth, 0f)))
         {
-            OnRowClick(row.Quest);
+            if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
+            {
+                OnRowDoubleClick(row.Quest);
+            }
+            else
+            {
+                reveal(row.Quest);
+            }
         }
 
+        ShadowedTextAt(ImGui.GetItemRectMin(), row.Quest.Name, ImGui.GetColorU32(ImGuiCol.Text));
         var hovered = ImGui.IsItemHovered();
         DrawRowMenu(row);
 
         if (row.Hint.Length > 0)
         {
             ImGui.SameLine();
-            using var dusk = Theme.PushText(Theme.Dusk);
-            ImGui.TextUnformatted(row.Hint);
+            ShadowedText(row.Hint, Theme.Dusk);
         }
 
         if (hovered)
@@ -306,8 +351,8 @@ public sealed class TodoOverlay : Window, IDisposable
         }
     }
 
-    /// <summary>Click flags the giver; a quest without a mappable giver is shown in the main window instead.</summary>
-    private void OnRowClick(QuestRecord quest)
+    /// <summary>Double-click flags the giver; a quest without a mappable giver is shown in the main window instead.</summary>
+    private void OnRowDoubleClick(QuestRecord quest)
     {
         if (links.CanFlagMap(quest))
         {
@@ -317,6 +362,31 @@ public sealed class TodoOverlay : Window, IDisposable
         {
             reveal(quest);
         }
+    }
+
+    /// <summary>A text item in <paramref name="color"/>, over a one-pixel Night shadow while the panel is translucent.</summary>
+    private void ShadowedText(string text, Vector4 color)
+    {
+        if (shadowText)
+        {
+            var pos = ImGui.GetCursorScreenPos();
+            ImGui.GetWindowDrawList().AddText(pos + new Vector2(UiMetrics.Hairline), Theme.NightU32, text);
+        }
+
+        using var push = Theme.PushText(color);
+        ImGui.TextUnformatted(text);
+    }
+
+    /// <summary>Draw-list text at <paramref name="pos"/> (no item), with the same shadow rule.</summary>
+    private void ShadowedTextAt(Vector2 pos, string text, uint color)
+    {
+        var dl = ImGui.GetWindowDrawList();
+        if (shadowText)
+        {
+            dl.AddText(pos + new Vector2(UiMetrics.Hairline), Theme.NightU32, text);
+        }
+
+        dl.AddText(pos, color, text);
     }
 
     private void DrawRowMenu(Row row)
@@ -462,15 +532,14 @@ public sealed class TodoOverlay : Window, IDisposable
                     continue;
                 }
 
-                var label = row.Name + "##" + row.RowId.ToString(CultureInfo.InvariantCulture);
                 var tooltip = row.Hint.Length > 0
                     ? Strings.StateName(row.State) + " · " + row.Hint + "\n" + Strings.TodoRowClickHint
                     : Strings.StateName(row.State) + "\n" + Strings.TodoRowClickHint;
-                rows.Add(new Row(quest, row.State, label, row.Hint, tooltip));
+                rows.Add(new Row(quest, row.State, row.Hint, tooltip));
             }
 
-            var header = string.Format(CultureInfo.CurrentCulture, Strings.TodoSectionFormat, Strings.TodoSectionName(section.Section), rows.Count) + "###todo" + section.Section;
-            views[i] = new SectionView(section.Section, header, rows.ToArray());
+            var headerText = string.Format(CultureInfo.CurrentCulture, Strings.TodoSectionFormat, Strings.TodoSectionName(section.Section), rows.Count);
+            views[i] = new SectionView(section.Section, "###todo" + section.Section, headerText, rows.ToArray());
         }
 
         sections = views;
