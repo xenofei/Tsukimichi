@@ -4,6 +4,10 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+### Added
+- Todo overlay (`/tsuki todo`, Settings › Todo overlay): a small always-visible "☾ Tsukimichi" panel with one collapsible section per enabled part: your pins that are still to do (Ready first), the feature quests you can start in the current zone (up to eight), the next main scenario quest with its blocker, and the current job's next job and role quest when they are open. Each row shows the state moon, the quest name and a hint (next step, "Ready on PLD", journal step, or level and giver); hovering shows the state and next step, a click flags the giver on the map, and a right-click offers Reveal in Tsukimichi, Flag on map, Teleport to giver (with Lifestream) and Link in chat. Right-clicking the title locks or unlocks the panel, resets its position or hides it. The panel is hidden while logged out, in a duty or in a cutscene, and is rebuilt only when the session, the zone, the pins file or a section toggle changes.
+- Settings › Todo overlay: show the overlay, lock its position (rows stay clickable), background opacity, the four section toggles and a "Reset position" button. Settings › Item hints: the hover hint and the item context-menu entry (the hooks behind them ship separately).
+
 ## [0.4.0] - 2026-09-28
 
 ### Added
