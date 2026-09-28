@@ -512,10 +512,15 @@ public sealed class CharactersPane
         var countsLine = completed.ToString(CultureInfo.InvariantCulture) + Strings.CharactersCompletedSuffix + " · "
                          + snapshot.Accepted.Count.ToString(CultureInfo.InvariantCulture) + Strings.CharactersAcceptedSuffix + " · " + currentJob;
 
+        // Older snapshots recorded every ClassJob row with an exp slot, including nameless placeholder rows that
+        // would show as "Job 44"; those and zero levels are not job levels the character has.
         var jobs = new List<(byte Id, short Level)>(snapshot.JobLevels.Count);
         foreach (var (job, level) in snapshot.JobLevels)
         {
-            jobs.Add((job, level));
+            if (level > 0 && !string.IsNullOrEmpty(names?.ClassJob(job)))
+            {
+                jobs.Add((job, level));
+            }
         }
 
         jobs.Sort((a, b) => b.Level != a.Level ? b.Level.CompareTo(a.Level) : a.Id.CompareTo(b.Id));
