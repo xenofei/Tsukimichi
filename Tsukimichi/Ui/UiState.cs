@@ -10,6 +10,7 @@ public enum NavTab
     Journal,
     Moonlit,
     Characters,
+    Flight,
 }
 
 /// <summary>
