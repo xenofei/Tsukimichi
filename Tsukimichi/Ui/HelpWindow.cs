@@ -23,6 +23,8 @@ public enum HelpTopic
     Characters,
     Flight,
     Commands,
+    CountsDiffer,
+    KnownQuirks,
     Tips,
 }
 
@@ -86,6 +88,8 @@ public sealed class HelpWindow : Window
         FontAwesomeIcon.Users.ToIconString(),
         FontAwesomeIcon.Plane.ToIconString(),
         FontAwesomeIcon.Terminal.ToIconString(),
+        FontAwesomeIcon.Calculator.ToIconString(),
+        FontAwesomeIcon.ExclamationTriangle.ToIconString(),
         FontAwesomeIcon.Lightbulb.ToIconString(),
     ];
 
@@ -156,6 +160,23 @@ public sealed class HelpWindow : Window
         FontAwesomeIcon.MapMarkerAlt,
         FontAwesomeIcon.Moon,
         FontAwesomeIcon.Terminal);
+
+    private static readonly CardItem[] CountsCards = Cards(
+        Strings.Help.CountsCardTitles,
+        Strings.Help.CountsCardBodies,
+        FontAwesomeIcon.EyeSlash,
+        FontAwesomeIcon.Snowflake,
+        FontAwesomeIcon.Lock,
+        FontAwesomeIcon.Plus,
+        FontAwesomeIcon.Redo);
+
+    private static readonly CardItem[] QuirkCards = Cards(
+        Strings.Help.QuirkCardTitles,
+        Strings.Help.QuirkCardBodies,
+        FontAwesomeIcon.StepForward,
+        FontAwesomeIcon.Tag,
+        FontAwesomeIcon.Clock,
+        FontAwesomeIcon.ShoppingCart);
 
     private static readonly float[] FillingFractions = [0f, 0.5f, 1f];
 
@@ -375,6 +396,14 @@ public sealed class HelpWindow : Window
                     }
 
                     break;
+                case HelpTopic.CountsDiffer:
+                    AppendCards(sb, CountsCards);
+                    sb.Append(Strings.Help.CountsTip);
+                    break;
+                case HelpTopic.KnownQuirks:
+                    AppendCards(sb, QuirkCards);
+                    sb.Append(Strings.Help.QuirksTip);
+                    break;
                 case HelpTopic.Tips:
                     foreach (var tip in Strings.Help.Tips)
                     {
@@ -442,6 +471,14 @@ public sealed class HelpWindow : Window
                 break;
             case HelpTopic.Commands:
                 DrawCommands(scale);
+                break;
+            case HelpTopic.CountsDiffer:
+                DrawCards(CountsCards);
+                Tip(100, Strings.Help.CountsTip);
+                break;
+            case HelpTopic.KnownQuirks:
+                DrawCards(QuirkCards);
+                Tip(100, Strings.Help.QuirksTip);
                 break;
             case HelpTopic.Tips:
                 for (var i = 0; i < Strings.Help.Tips.Length; i++)

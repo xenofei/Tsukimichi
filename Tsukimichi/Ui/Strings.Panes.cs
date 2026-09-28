@@ -347,6 +347,8 @@ static partial class Strings
             HelpTopic.Characters => "Characters and snapshots",
             HelpTopic.Flight => "Flight and nearby",
             HelpTopic.Commands => "Commands",
+            HelpTopic.CountsDiffer => "Why my counts differ from the journal",
+            HelpTopic.KnownQuirks => "Known quirks",
             HelpTopic.Tips => "Tips",
             _ => topic.ToString(),
         };
@@ -362,6 +364,8 @@ static partial class Strings
             HelpTopic.Characters => "One snapshot per character keeps the whole account in view, even logged out.",
             HelpTopic.Flight => "Which quests stand between you and flying, and what you can start where you are.",
             HelpTopic.Commands => "Everything the chat command can do.",
+            HelpTopic.CountsDiffer => "Four reasons a done/total here is not the number in the game's journal or on a wiki.",
+            HelpTopic.KnownQuirks => "Things the plugin gets wrong on purpose or cannot know yet, so you need not report them.",
             HelpTopic.Tips => "Small habits that make the catalog faster.",
             _ => string.Empty,
         };
@@ -520,20 +524,62 @@ static partial class Strings
             "/tsuki zone",
             "/tsuki which",
             "/tsuki nearby",
+            "/tsuki todo",
         ];
 
         public static readonly string[] CommandMeanings =
         [
             "open or close the window",
-            "the same, shorter",
+            "the same, shorter; every subcommand works with either",
             "search and print matching quests to chat as links; /tsukimichi <text> does the same",
-            "open Settings",
+            "open Settings (/tsukimichi settings does the same)",
             "open this window",
             "the glyph sheet: every moon at every size",
             "quests you can start in the current zone, as chat links by level",
             "every quest the targeted NPC hands out, with its state",
             "open or close the Nearby quests window: what you can start in the current zone",
+            "show or hide the todo overlay: pins, feature quests here, the next main scenario quest and job quests",
         ];
+
+        // ---- Why my counts differ from the journal ----
+        public static readonly string[] CountsCardTitles =
+        [
+            "Unlisted and removed quests",
+            "Seasonal quests out of season",
+            "Foreclosed choices",
+            "Feature Unlocks is derived",
+            "Repeatables count once",
+        ];
+
+        public static readonly string[] CountsCardBodies =
+        [
+            "The game's journal only lists quests that have a journal genre. Quests without one, and quests the game removed in later patches (the A Realm Reborn trim in 5.3, the Summoner rework, the Crystal Tower rewrite), sit under the Unlisted node, off by default, and never count toward a section's total. A completed one still shows Completed when Include Unlisted reveals it.",
+            "A seasonal quest of an event that is not running shows Blocked with \"seasonal event not active\", and is left out of its genre's total the way a Foreclosed quest is, so the moon can fill without it; it counts again while the event runs. An event whose end date is known and past turns its quests Foreclosed for good.",
+            "A quest locked out by a choice, such as the other two Grand Companies' quests once you have joined one, is Foreclosed and left out of the total. A category can reach a full moon with them undone, while a wiki's count per genre includes them.",
+            "Feature Unlocks is not a journal category. It gathers every quest the game draws with the blue + icon, the curated duty and system unlocks, and quests that reward a duty, job, action, trait, aether current or blue magic spell; main scenario and repeatable quests are left out. Its total matches no page of the journal and moves when the curated lists do.",
+            "A daily or weekly quest is one row and one count however many times you have turned it in. Done this cycle marks the ones already handed in today or this week; they are still counted as completed.",
+        ];
+
+        public const string CountsTip = "The State filter shows Foreclosed and seasonal quests again; the Unlisted node and Include Unlisted reveal the removed ones. Both change the counts while they are on.";
+
+        // ---- Known quirks ----
+        public static readonly string[] QuirkCardTitles =
+        [
+            "Steps the game skips",
+            "\"Bloodsworn\" reads \"Allied\"",
+            "Conditions listed but not judged",
+            "Store re-sells in Moonlit",
+        ];
+
+        public static readonly string[] QuirkCardBodies =
+        [
+            "The plugin lists every prerequisite the game's data records. For a few quests the game waives one: Up In Arms is optional once the Zenith is in hand, so what follows it is offered while Tsukimichi still shows Up In Arms undone and marks the next quest Blocked. When an NPC offers a quest shown Blocked here, use Report this quest so the exception can be added to the curated notes.",
+            "Patch 7.0 renamed beast tribes to allied societies and the top rank from Bloodsworn to Allied. Tsukimichi uses the current names, so a requirement reads \"Allied\" where an older guide, or quest text written before 7.0, says \"Bloodsworn\". They are the same rank.",
+            "Some accept conditions are listed in the requirements but not yet judged: a custom delivery client's satisfaction rank, the Delivery Moogle's carrier rank, and which phase of a running seasonal event has begun. Such a quest can show Ready a little before the NPC hands it out.",
+            "Some past seasonal rewards (minions, emotes, mounts, bardings, orchestrion rolls, ornaments) are sold again on the Online Store, which the game files cannot know. Moonlit says so on the rows the curated list covers; if you find one it does not, open a data correction issue with the store page as evidence.",
+        ];
+
+        public const string QuirksTip = "A quest in the wrong state that is not one of these? Report this quest in the detail pane copies a diagnostic block with the quest id, the state and every requirement's verdict, and no character identifiers; paste it into a GitHub issue.";
 
         // ---- Tips ----
         public static readonly string[] Tips =
