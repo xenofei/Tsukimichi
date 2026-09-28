@@ -302,7 +302,7 @@ public sealed class FlightPane
         MoonGlyph.DrawInline(state, UiMetrics.InlineGlyphSize(line));
         if (ImGui.IsItemHovered())
         {
-            UiMetrics.StateTooltip(state, evaluation, row.Quest);
+            UiMetrics.StateTooltip(state, evaluation, row.Quest, session.Names, session.States);
         }
 
         ImGui.TableNextColumn();

@@ -306,6 +306,18 @@ public sealed class Plugin : IDalamudPlugin
             command.ListZoneQuests = discovery.Zone;
             command.ListTargetQuests = discovery.Which;
 
+            // "Report this quest": the diagnostic block (detail pane button and /tsuki report), the data stamp in
+            // Settings > About and on the status bar, and the game-version warning. The client version is read once.
+            var diagnostics = new Game.DiagnosticBuilder(Session, Game.DiagnosticBuilder.PluginVersionText(), Game.DiagnosticBuilder.ReadClientGameVersion(DataManager, Log));
+            if (diagnostics.VersionMismatchWarning is { } versionWarning)
+            {
+                Log.Warning("{Warning}", versionWarning);
+            }
+
+            mainWindow.AttachDiagnostics(diagnostics);
+            var report = new ReportCommand(Session, ui, gameLinks, diagnostics, Log);
+            command.Report = report.Run;
+
             // Nearby quests window and the server info bar entry; settings in user/discovery.json until they move into Configuration.
             var discoverySettingsPath = Core.Discovery.DiscoverySettings.PathFor(Paths);
             var discoveryWarnings = new System.Collections.Generic.List<string>();
@@ -335,7 +347,7 @@ public sealed class Plugin : IDalamudPlugin
             mainWindow.AttachFlight(flightPane);
             chatNotifier = new Game.ChatNotifier(Session, Settings, Paths, gameLinks, ChatGui, Log);
 
-            configWindow = new ConfigWindow(Settings, Session, PluginInterface, _ => ui.MarkQueryDirty());
+            configWindow = new ConfigWindow(Settings, Session, PluginInterface, diagnostics, _ => ui.MarkQueryDirty());
             configWindow.Overrides = moonlitPane;
             Game.WotsitIpc wotsitIpc = wotsit;
             configWindow.WotsitToggled = enabled => wotsitIpc.Enabled = enabled;

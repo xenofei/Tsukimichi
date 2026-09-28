@@ -1316,7 +1316,8 @@ public sealed class CharactersPane
                 MoonGlyph.DrawInline(evaluation.State, UiMetrics.InlineGlyphSize(line));
                 if (ImGui.IsItemHovered())
                 {
-                    UiMetrics.StateTooltip(evaluation.State, evaluation, quest);
+                    // Another character's evaluation: no per-quest state map for it, so the blocker line reads the done ids it carries.
+                    UiMetrics.StateTooltip(evaluation.State, evaluation, quest, session.Names, states: null);
                 }
 
                 ImGui.SameLine();

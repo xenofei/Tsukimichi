@@ -88,6 +88,9 @@ public sealed class MainWindow : Window, IDisposable
     /// <summary>The least width the status text keeps when the MSQ segment crowds it, in logical pixels.</summary>
     private const float StatusMinLogical = 120f;
 
+    /// <summary>The data version stamp the status text shows on hover (the same line as Settings › About); null shows no tooltip.</summary>
+    public string? DataStamp { get; set; }
+
     // Main scenario position, memoized per session version and catalog; empty strings hide it.
     private int msqVersion = -1;
     private CatalogBundle? msqBundle;
@@ -148,6 +151,14 @@ public sealed class MainWindow : Window, IDisposable
     public void AttachOverrides(IUniqueOverrides overrides)
     {
         detailPane.Overrides = overrides ?? throw new ArgumentNullException(nameof(overrides));
+    }
+
+    /// <summary>The detail pane's Report button and the status bar's data stamp tooltip.</summary>
+    public void AttachDiagnostics(DiagnosticBuilder diagnostics)
+    {
+        ArgumentNullException.ThrowIfNull(diagnostics);
+        detailPane.Diagnostics = diagnostics;
+        DataStamp = diagnostics.DataStampLine;
     }
 
     /// <summary>
@@ -820,6 +831,12 @@ public sealed class MainWindow : Window, IDisposable
             statusRoom = MathF.Min(statusRoom, avail);
             EllipsisText(status, statusRoom, statusWidth);
             msqRoom = MathF.Max(0f, avail - statusRoom);
+        }
+
+        // The status text carries the data stamp on hover, so "which data is this" is one hover away from any tab.
+        if (DataStamp is { } stamp && ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(stamp);
         }
 
         if (msqStatus.Length > 0)
