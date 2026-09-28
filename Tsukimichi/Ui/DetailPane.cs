@@ -11,6 +11,7 @@ using Tsukimichi.Core.Chains;
 using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Storage;
+using Tsukimichi.Core.Ui;
 using Tsukimichi.Game;
 using Tsukimichi.GameData;
 
@@ -291,8 +292,25 @@ public sealed class DetailPane
             UiMetrics.Tooltip(ChainNextTooltip);
             if (ImGui.IsItemClicked())
             {
-                ui.SelectedRowId = model.ChainNextRowId;
+                RevealRow(model.ChainNextRowId);
             }
+        }
+    }
+
+    /// <summary>
+    /// Selects a path step, an unlock or the chain's next quest the way the other panes do: the Journal tab scoped to
+    /// its genre with the narrowing filters cleared, so the table shows the row wherever the step lives. A row id the
+    /// catalog does not know is selected plainly so the detail pane can say so.
+    /// </summary>
+    private void RevealRow(uint rowId)
+    {
+        if (model.Bundle?.Catalog.GetByRowId(rowId) is { } quest)
+        {
+            ui.Reveal(quest);
+        }
+        else
+        {
+            ui.SelectedRowId = rowId;
         }
     }
 
@@ -309,7 +327,9 @@ public sealed class DetailPane
         var height = MathF.Min(UiMetrics.BannerMaxHeight, width * wrap.Height / wrap.Width);
         var min = ImGui.GetCursorScreenPos();
         var max = min + new Vector2(width, height);
-        ImGui.Image(wrap.Handle, new Vector2(width, height));
+        // When the height clamp bites, the image is cropped to the box (top and bottom trimmed evenly), not squashed.
+        var (uv0, uv1) = ScaleMetrics.CenterCropUv(width, height, wrap.Width, wrap.Height);
+        ImGui.Image(wrap.Handle, new Vector2(width, height), uv0, uv1);
 
         // Name strip: a Night gradient over the lower part of the image, the name in Silver at its left and the
         // large state moon at its right.
@@ -356,7 +376,8 @@ public sealed class DetailPane
 
         var max = min + new Vector2(size, size);
         dl.AddImage(wrap.Handle, min, max);
-        if (ImGui.IsMouseHoveringRect(min, max))
+        // The rect test alone fires through a popup or another window lying over the badge.
+        if (ImGui.IsMouseHoveringRect(min, max) && ImGui.IsWindowHovered(ImGuiHoveredFlags.ChildWindows))
         {
             UiMetrics.Tooltip(quest.Festival != 0 ? SeasonalBadgeTooltip : SpecialBadgeTooltip);
         }
@@ -631,7 +652,7 @@ public sealed class DetailPane
         BeginGlyphLine(dl, step.State, radius, lineHeight, glyphBox, ref chain);
         if (ImGui.Selectable(step.Name, step.IsTarget))
         {
-            ui.SelectedRowId = step.RowId;
+            RevealRow(step.RowId);
         }
     }
 
@@ -684,7 +705,7 @@ public sealed class DetailPane
             ImGui.SameLine();
             if (ImGui.Selectable(line.Name))
             {
-                ui.SelectedRowId = line.RowId;
+                RevealRow(line.RowId);
             }
         }
 
