@@ -271,6 +271,13 @@ public sealed class ConfigWindow : Window
                 Save();
             }
         }
+
+        var nudge = settings.JobQuestNudge;
+        if (ImGui.Checkbox(Strings.JobsConfigNudge, ref nudge))
+        {
+            settings.JobQuestNudge = nudge;
+            Save();
+        }
     }
 
     private void DrawJournal()

@@ -13,12 +13,16 @@ namespace Tsukimichi.Core.Runtime;
 public sealed class NoticeTracker
 {
     private readonly HashSet<uint> notified = [];
+    private readonly HashSet<uint> jobNudged = [];
     private QuestEvent? lastSeen;
     private ulong? sessionContentId;
     private bool started;
 
     /// <summary>Row ids announced this session.</summary>
     public IReadOnlySet<uint> Notified => notified;
+
+    /// <summary>Row ids announced as a level-up nudge this session; a separate set, since a job quest may also be a feature quest.</summary>
+    public IReadOnlySet<uint> JobNudged => jobNudged;
 
     /// <summary>
     /// Row ids of <see cref="QuestEventKind.NewlyAvailable"/> events added since the previous call, earlier polls
@@ -35,6 +39,7 @@ public sealed class NoticeTracker
             started = true;
             sessionContentId = liveContentId;
             notified.Clear();
+            jobNudged.Clear();
             lastSeen = null;
         }
 
@@ -77,6 +82,11 @@ public sealed class NoticeTracker
 
     /// <summary>Records an announcement; false when the quest was already announced this session.</summary>
     public bool MarkNotified(uint rowId) => notified.Add(rowId);
+
+    public bool WasJobNudged(uint rowId) => jobNudged.Contains(rowId);
+
+    /// <summary>Records a level-up nudge; false when the quest was already nudged this session.</summary>
+    public bool MarkJobNudged(uint rowId) => jobNudged.Add(rowId);
 
     /// <summary>
     /// Whether a newly available quest deserves a line: it must be pinned or a feature quest, and a main scenario

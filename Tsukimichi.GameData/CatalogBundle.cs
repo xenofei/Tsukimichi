@@ -1,3 +1,4 @@
+using Tsukimichi.Core.Jobs;
 using Tsukimichi.Core.Model;
 
 namespace Tsukimichi.GameData;
@@ -10,7 +11,20 @@ namespace Tsukimichi.GameData;
 /// <param name="Names">Display names for tribes, Grand Companies, expansions, classes and tribe ranks.</param>
 /// <param name="Jobs">ClassJobCategory membership.</param>
 /// <param name="Language">Lumina language name the strings were read in, e.g. "English".</param>
-public sealed record CatalogBundle(QuestCatalog Catalog, GameNames Names, ClassJobCategoryLookup Jobs, string Language);
+public sealed record CatalogBundle(QuestCatalog Catalog, GameNames Names, ClassJobCategoryLookup Jobs, string Language)
+{
+    /// <summary>The per-job quest ladders over this catalog's ClassJob rows; the callers memoize one per bundle.</summary>
+    public JobLadder BuildJobLadder()
+    {
+        var jobs = new LadderJob[Names.ClassJobInfos.Count];
+        for (var i = 0; i < jobs.Length; i++)
+        {
+            jobs[i] = Names.ClassJobInfos[i].ToLadderJob();
+        }
+
+        return JobLadder.Build(Catalog, jobs, Jobs);
+    }
+}
 
 /// <summary>
 /// One ClassJob sheet row the UI can group and decorate: the base class a job grew out of (<see cref="ParentRowId"/>
@@ -31,6 +45,9 @@ public sealed record ClassJobInfo(
 {
     /// <summary>Icon id in the game's 062000 icon set (062101 Gladiator … 062142 Pictomancer).</summary>
     public uint IconId => 62100u + RowId;
+
+    /// <summary>The row as the job ladder builder takes it.</summary>
+    public LadderJob ToLadderJob() => new(RowId, Name, ParentRowId, UnlockQuestRowId, Role, IsCrafter, IsGatherer);
 }
 
 /// <summary>
