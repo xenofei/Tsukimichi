@@ -248,7 +248,7 @@ public sealed class JobLadder
 
     /// <summary>
     /// Counts completed quests and finds the first still to do. A quest without an evaluation is not done; a foreclosed
-    /// one (the other start of a class, locked once its twin is taken) is skipped and not counted.
+    /// one (the other start of a class, locked once its twin is taken) or an out-of-season one is skipped and not counted.
     /// </summary>
     public LadderProgress Progress(IReadOnlyList<uint> rowIds, IReadOnlyDictionary<uint, QuestEvaluation> states, short jobLevel)
     {
@@ -262,12 +262,13 @@ public sealed class JobLadder
         var ready = false;
         foreach (var rowId in rowIds)
         {
-            var state = states.TryGetValue(rowId, out var evaluation) ? evaluation.State : QuestState.Unknown;
-            if (state == QuestState.Foreclosed)
+            states.TryGetValue(rowId, out var evaluation);
+            if (evaluation is { LeavesTotals: true })
             {
                 continue;
             }
 
+            var state = evaluation?.State ?? QuestState.Unknown;
             total++;
             if (state == QuestState.Completed)
             {

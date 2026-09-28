@@ -4,6 +4,9 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+### Fixed
+- Counts and totals: a seasonal quest whose event is not running now leaves every done/total count the way a foreclosed quest does (tree nodes, tab badges, dashboard sections, the Feature Unlocks count, Compare's "neither done"), so "Seasonal Events" and the overall total can reach 100 % between events. Completed seasonal quests still count as done; a quest blocked for any other reason still counts.
+
 ## [0.5.1] - 2026-09-28
 
 ### Added

@@ -398,7 +398,7 @@ public sealed class QueryRunner : IDisposable
     {
         var done = 0;
         var total = 0;
-        var foreclosed = 0;
+        var excluded = 0;
         foreach (var rowId in session.FeatureQuestIds)
         {
             if (!catalog.ByRowId.ContainsKey(rowId))
@@ -406,23 +406,23 @@ public sealed class QueryRunner : IDisposable
                 continue;
             }
 
-            var state = session.States.TryGetValue(rowId, out var evaluation) ? evaluation.State : QuestState.Unknown;
-            switch (state)
+            // Foreclosed and out-of-season quests leave the total, as in TreeCounts.
+            session.States.TryGetValue(rowId, out var evaluation);
+            if (evaluation is { LeavesTotals: true })
             {
-                case QuestState.Completed:
+                excluded++;
+            }
+            else
+            {
+                total++;
+                if (evaluation is { State: QuestState.Completed })
+                {
                     done++;
-                    total++;
-                    break;
-                case QuestState.Foreclosed:
-                    foreclosed++;
-                    break;
-                default:
-                    total++;
-                    break;
+                }
             }
         }
 
-        return new NodeCount(done, total, foreclosed);
+        return new NodeCount(done, total, excluded);
     }
 
     private void EnsurePins(SessionState session)

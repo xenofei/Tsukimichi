@@ -157,8 +157,10 @@ public static class CharacterDiff
                 continue;
             }
 
-            var stateA = StateOf(statesA, quest.RowId);
-            var stateB = StateOf(statesB, quest.RowId);
+            statesA.TryGetValue(quest.RowId, out var evaluationA);
+            statesB.TryGetValue(quest.RowId, out var evaluationB);
+            var stateA = evaluationA?.State ?? QuestState.Unknown;
+            var stateB = evaluationB?.State ?? QuestState.Unknown;
             var doneA = stateA == QuestState.Completed;
             var doneB = stateB == QuestState.Completed;
 
@@ -170,7 +172,8 @@ public static class CharacterDiff
 
             if (!doneA && !doneB)
             {
-                if (stateA != QuestState.Foreclosed || stateB != QuestState.Foreclosed)
+                // A quest neither can do (foreclosed for both, or out of season for both) is not pending for either.
+                if (evaluationA is not { LeavesTotals: true } || evaluationB is not { LeavesTotals: true })
                 {
                     neitherDone++;
                 }
@@ -204,9 +207,6 @@ public static class CharacterDiff
 
         return new DiffResult(Sort(onlyA), Sort(onlyB), sharedDone, neitherDone, sectionRows);
     }
-
-    private static QuestState StateOf(IReadOnlyDictionary<uint, QuestEvaluation> states, uint rowId) =>
-        states.TryGetValue(rowId, out var evaluation) ? evaluation.State : QuestState.Unknown;
 
     /// <summary>Value descending, then journal order (the catalog index), which makes the sort deterministic.</summary>
     private static DiffEntry[] Sort(List<Ranked> ranked)

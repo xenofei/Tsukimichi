@@ -87,4 +87,18 @@ public sealed record QuestEvaluation(
     IReadOnlyList<RequirementResult> Requirements,
     RequirementResult? NextStep,
     byte? ReadyOnJob,
-    byte? Sequence);
+    byte? Sequence)
+{
+    /// <summary>
+    /// Blocked only because its seasonal event is not running (resolver rule 3). Nothing the character does changes
+    /// it until the event returns, so it is treated like a foreclosed quest by every done/total count.
+    /// </summary>
+    public bool IsOutOfSeason => State == QuestState.Blocked && NextStep is { Req.Kind: RequirementKind.Seasonal };
+
+    /// <summary>
+    /// The quest leaves every done/total count (tree nodes, dashboard sections, tab badges, Compare's "neither done"):
+    /// it is <see cref="QuestState.Foreclosed"/>, which the character can never do, or <see cref="IsOutOfSeason"/>,
+    /// which they cannot do now. A section whose remainder is all of these reads as complete.
+    /// </summary>
+    public bool LeavesTotals => State == QuestState.Foreclosed || IsOutOfSeason;
+}
