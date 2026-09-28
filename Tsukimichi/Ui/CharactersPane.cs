@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Numerics;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Dalamud.Bindings.ImGui;
@@ -11,6 +12,7 @@ using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
 using Lumina.Excel.Sheets;
 using Tsukimichi.Core.Chains;
+using Tsukimichi.Core.Diff;
 using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Jobs;
 using Tsukimichi.Core.Model;
@@ -26,8 +28,8 @@ namespace Tsukimichi.Ui;
 /// <summary>
 /// Characters (spec §7, F-50..F-61, F-73). <see cref="DrawLeft"/> lists every stored snapshot (the live one marked ●)
 /// and switches the viewed character; <see cref="DrawMain"/> is a dashboard for the viewed character, top to bottom:
-/// header, completion per journal section (filling moons), job and role quest ladders, curated story chains, the
-/// Moonlit summary, pinned quests, recent activity, jobs
+/// header, completion per journal section (filling moons), job and role quest ladders, curated story chains, a
+/// comparison with another stored character (the alt diff, V2-12), the Moonlit summary, pinned quests, recent activity, jobs
 /// grouped by role with the game's job icons, Grand Company and allied societies, Export JSON and Forget (with a
 /// confirm popup), and the Account view: the state of <see cref="UiState.SelectedRowId"/> on every character,
 /// evaluated offline from their snapshots.
@@ -42,6 +44,7 @@ public sealed class CharactersPane
     private const string ExportsFolder = "exports";
     private const int MaxRecentRows = 10;
     private const int MaxPinnedRows = 50;
+    private const int MaxDiffRows = 25;
     private static readonly TimeSpan ToastDuration = TimeSpan.FromSeconds(8);
 
     /// <summary>Reward kinds the dashboard summarizes, in display order.</summary>
@@ -87,6 +90,14 @@ public sealed class CharactersPane
     private uint accountRowId;
     private int accountVersion = -1;
 
+    // Compare with (V2-12): the chosen other character (null follows the most recent capture), the other characters'
+    // offline evaluations memoized per capture time and bundle, and the view model with its key.
+    private ulong? compareTarget;
+    private Compare? compare;
+    private CompareKey compareKey;
+    private readonly Dictionary<ulong, (DateTime Taken, CatalogBundle Bundle, IReadOnlyDictionary<uint, QuestEvaluation>? States)> compareStates = [];
+    private UniqueRewardCatalog? fallbackRewards;
+
     private string? toast;
     private DateTime toastUntilUtc;
     private string forgetQuestion = string.Empty;
@@ -116,6 +127,12 @@ public sealed class CharactersPane
     /// summary agrees with the Moonlit pane. Null hides the Moonlit section.
     /// </summary>
     public Func<RewardKind, UniqueRewardCounts>? MoonlitCounts { get; set; }
+
+    /// <summary>
+    /// The merged unique-reward catalog (normally <c>MoonlitPane.Catalog</c>), which gives the comparison its unlock
+    /// values. Null falls back to the shipped data and curated files without the user's overrides.
+    /// </summary>
+    public Func<UniqueRewardCatalog>? UniqueRewards { get; set; }
 
     /// <summary>Left column: stored characters, newest capture first; selecting one views it.</summary>
     public void DrawLeft(UiState ui)
@@ -202,6 +219,8 @@ public sealed class CharactersPane
         DrawJobQuests(ui, d);
         Gap();
         DrawChains(ui, d);
+        Gap();
+        DrawCompare(ui, d);
         Gap();
         DrawMoonlitSummary(d);
         Gap();
@@ -720,6 +739,12 @@ public sealed class CharactersPane
             {
                 session.ForgetCharacter(forgetTarget);
                 snapshotCache.Remove(forgetTarget);
+                compareStates.Remove(forgetTarget);
+                if (compareTarget == forgetTarget)
+                {
+                    compareTarget = null;
+                }
+
                 accountVersion = -1;
                 ui.MarkQueryDirty();
                 log.Information("Forgot character {ContentId}", forgetTarget);
@@ -751,6 +776,414 @@ public sealed class CharactersPane
         {
             ImGui.TextWrapped(toast);
         }
+    }
+
+    /// <summary>
+    /// Compare with (V2-12): a combo of the other stored characters (the most recently captured one at first), the lead
+    /// line and per-section counts, then the quests done on the viewed character and not on the other and the reverse,
+    /// each ranked by unlock value, capped at <see cref="MaxDiffRows"/> rows and copyable as text. Hidden behind a hint
+    /// until a second character is stored.
+    /// </summary>
+    private void DrawCompare(UiState ui, Dashboard d)
+    {
+        ImGui.TextDisabled(Strings.DiffSection);
+        RefreshItems();
+        if (items.Length < 2)
+        {
+            ImGui.TextDisabled(Strings.DiffNeedsTwo);
+            return;
+        }
+
+        if (d.Bundle is null)
+        {
+            ImGui.TextDisabled(Strings.DiffNeedsCatalog);
+            return;
+        }
+
+        if (RefreshCompare(d) is not { } c)
+        {
+            ImGui.TextDisabled(Strings.DiffNeedsTwo);
+            return;
+        }
+
+        DrawCompareCombo(c);
+        if (c.OtherUnreadable)
+        {
+            ImGui.TextDisabled(Strings.DiffOtherUnreadable);
+            return;
+        }
+
+        ImGui.TextUnformatted(c.Summary);
+        ImGui.TextDisabled(c.CountsLine);
+        DrawCompareSections(c);
+        ImGui.Spacing();
+        DrawDiffList(ui, "onlyViewed", c.OnlyViewed);
+        ImGui.Spacing();
+        DrawDiffList(ui, "onlyOther", c.OnlyOther);
+    }
+
+    private void DrawCompareCombo(Compare c)
+    {
+        ImGui.SetNextItemWidth(UiMetrics.CharacterComboWidth);
+        using var combo = ImRaii.Combo("##compareWith", c.OtherLabel);
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.DiffComboTooltip);
+        }
+
+        if (!combo)
+        {
+            return;
+        }
+
+        for (var i = 0; i < c.Candidates.Length; i++)
+        {
+            var candidate = c.Candidates[i];
+            using var itemId = ImRaii.PushId(i);
+            if (ImGui.Selectable(candidate.Label, candidate.ContentId == c.OtherContentId))
+            {
+                compareTarget = candidate.ContentId;
+            }
+
+            if (ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(candidate.Detail);
+            }
+        }
+    }
+
+    /// <summary>Sections where the two characters differ: how many quests each has that the other lacks.</summary>
+    private static void DrawCompareSections(Compare c)
+    {
+        if (c.Sections.Length == 0)
+        {
+            return;
+        }
+
+        using var table = ImRaii.Table("##diffSections", 3, ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.RowBg | ImGuiTableFlags.BordersInnerH);
+        if (!table)
+        {
+            return;
+        }
+
+        ImGui.TableSetupColumn(Strings.DiffColumnSection, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(300f));
+        ImGui.TableSetupColumn(c.ViewedHeader, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(130f));
+        ImGui.TableSetupColumn(c.OtherHeader, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(130f));
+        ImGui.TableHeadersRow();
+
+        foreach (var row in c.Sections)
+        {
+            ImGui.TableNextRow();
+            ImGui.TableNextColumn();
+            ImGui.TextUnformatted(row.Name);
+            ImGui.TableNextColumn();
+            ImGui.TextUnformatted(row.OnlyViewed);
+            ImGui.TableNextColumn();
+            ImGui.TextUnformatted(row.OnlyOther);
+        }
+    }
+
+    /// <summary>One side of the diff: header with count and Copy list, the capped table, then "and N more".</summary>
+    private void DrawDiffList(UiState ui, string id, DiffList list)
+    {
+        using var listId = ImRaii.PushId(id);
+        ImGui.TextUnformatted(list.Header);
+        if (list.Rows.Length == 0)
+        {
+            ImGui.TextDisabled(Strings.DiffNone);
+            return;
+        }
+
+        ImGui.SameLine();
+        if (ImGui.SmallButton(Strings.DiffCopyList))
+        {
+            ImGui.SetClipboardText(list.Clipboard);
+            ShowToast(list.CopiedToast);
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.DiffCopyListTooltip);
+        }
+
+        DrawDiffTable(ui, list.Rows);
+        if (list.More.Length > 0)
+        {
+            ImGui.TextDisabled(list.More);
+        }
+    }
+
+    /// <summary>Rows: the lacking character's state moon, the quest (click reveals it), the value badge and the reason in Dusk.</summary>
+    private static void DrawDiffTable(UiState ui, DiffRow[] rows)
+    {
+        using var table = ImRaii.Table("##diff", 4, ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.RowBg | ImGuiTableFlags.BordersInnerH);
+        if (!table)
+        {
+            return;
+        }
+
+        var line = ImGui.GetTextLineHeight();
+        ImGui.TableSetupColumn("##state", ImGuiTableColumnFlags.WidthFixed, line * 1.4f);
+        ImGui.TableSetupColumn(Strings.DiffColumnQuest, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(300f));
+        ImGui.TableSetupColumn(Strings.DiffColumnValue, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(60f));
+        ImGui.TableSetupColumn(Strings.DiffColumnWhy, ImGuiTableColumnFlags.WidthStretch);
+        ImGui.TableHeadersRow();
+
+        for (var i = 0; i < rows.Length; i++)
+        {
+            var row = rows[i];
+            using var rowId = ImRaii.PushId(i);
+            ImGui.TableNextRow();
+            ImGui.TableNextColumn();
+            MoonGlyph.DrawInline(row.State, UiMetrics.InlineGlyphSize(line));
+            if (ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(row.StateTooltip);
+            }
+
+            ImGui.TableNextColumn();
+            if (ImGui.Selectable(row.Name))
+            {
+                Reveal(ui, row.Quest);
+            }
+
+            if (ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(Strings.MoonlitShowInJournal);
+            }
+
+            ImGui.TableNextColumn();
+            DrawValueBadge(row.Value);
+            ImGui.TableNextColumn();
+            using (Theme.PushText(Theme.Dusk))
+            {
+                ImGui.TextUnformatted(row.Reason);
+            }
+        }
+    }
+
+    /// <summary>The unlock value as a small pill: Moon text on a raised night rounded rectangle.</summary>
+    private static void DrawValueBadge(string value)
+    {
+        var pad = UiMetrics.Px(5f);
+        var height = ImGui.GetTextLineHeight();
+        var min = ImGui.GetCursorScreenPos();
+        var max = new Vector2(min.X + ImGui.CalcTextSize(value).X + pad * 2f, min.Y + height);
+        ImGui.GetWindowDrawList().AddRectFilled(min, max, Theme.NightRaisedU32, height * 0.35f);
+        ImGui.SetCursorScreenPos(new Vector2(min.X + pad, min.Y));
+        using (Theme.PushText(Theme.Moon))
+        {
+            ImGui.TextUnformatted(value);
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.DiffValueTooltip);
+        }
+    }
+
+    /// <summary>
+    /// The comparison view model, rebuilt when the session version, the viewed character, the other character or its
+    /// capture time, or the bundle changes. The other character defaults to the most recently captured one that is not
+    /// the viewed one; a chosen character that was forgotten falls back to that default.
+    /// </summary>
+    private Compare? RefreshCompare(Dashboard d)
+    {
+        var viewedId = d.Snapshot.ContentId;
+        CharacterItem? other = null;
+        CharacterItem? newest = null;
+        foreach (var item in items)
+        {
+            if (item.ContentId == viewedId)
+            {
+                continue;
+            }
+
+            newest ??= item;
+            if (item.ContentId == compareTarget)
+            {
+                other = item;
+                break;
+            }
+        }
+
+        other ??= newest;
+        if (other is null)
+        {
+            return null;
+        }
+
+        var key = new CompareKey(session.Version, viewedId, other.ContentId, other.TakenUtc);
+        if (compare is { } current && key == compareKey && ReferenceEquals(current.Bundle, d.Bundle))
+        {
+            return current;
+        }
+
+        compareKey = key;
+        compare = BuildCompare(d, other);
+        return compare;
+    }
+
+    private Compare BuildCompare(Dashboard d, CharacterItem other)
+    {
+        var bundle = d.Bundle!;
+        var viewedId = d.Snapshot.ContentId;
+        var candidates = new List<CompareCandidate>(items.Length - 1);
+        foreach (var item in items)
+        {
+            if (item.ContentId != viewedId)
+            {
+                candidates.Add(new CompareCandidate(item.ContentId, item.Label, item.Detail));
+            }
+        }
+
+        var viewedHeader = string.Format(CultureInfo.CurrentCulture, Strings.DiffOnlyColumnFormat, d.Name);
+        var otherHeader = string.Format(CultureInfo.CurrentCulture, Strings.DiffOnlyColumnFormat, other.Name);
+        var otherStates = StatesFor(other, bundle);
+        if (otherStates is null)
+        {
+            return new Compare(bundle, other.ContentId, other.Label, candidates.ToArray(), true, string.Empty, string.Empty, viewedHeader, otherHeader, [], DiffList.Empty, DiffList.Empty);
+        }
+
+        var rewards = RewardsCatalog();
+        var diff = DiffResult.Empty;
+        try
+        {
+            var ctx = DiffContext.For(bundle.Catalog, session.FeatureQuestIds, rowId => rewards.ForQuest(rowId).Count);
+            diff = CharacterDiff.Compute(bundle.Catalog, session.States, otherStates, ctx);
+        }
+        catch (Exception ex)
+        {
+            log.Warning(ex, "Characters {Viewed} and {Other} could not be compared", viewedId, other.ContentId);
+        }
+
+        var lead = diff.Lead;
+        var summary = lead switch
+        {
+            > 0 => string.Format(CultureInfo.CurrentCulture, Strings.DiffAheadFormat, d.Name, Strings.DiffQuestCount(lead), other.Name),
+            < 0 => string.Format(CultureInfo.CurrentCulture, Strings.DiffBehindFormat, d.Name, Strings.DiffQuestCount(-lead), other.Name),
+            _ => string.Format(CultureInfo.CurrentCulture, Strings.DiffLevelFormat, d.Name, other.Name),
+        };
+        var counts = string.Format(CultureInfo.CurrentCulture, Strings.DiffCountsFormat, diff.SharedDone, diff.NeitherDone);
+
+        var sections = new DiffSectionRow[diff.Sections.Count];
+        for (var i = 0; i < sections.Length; i++)
+        {
+            var s = diff.Sections[i];
+            var name = s.SectionName.Length == 0 ? Strings.CharactersSectionPrefix + s.SectionId.ToString(CultureInfo.InvariantCulture) : s.SectionName;
+            sections[i] = new DiffSectionRow(name, s.OnlyA.ToString(CultureInfo.InvariantCulture), s.OnlyB.ToString(CultureInfo.InvariantCulture));
+        }
+
+        return new Compare(
+            bundle,
+            other.ContentId,
+            other.Label,
+            candidates.ToArray(),
+            false,
+            summary,
+            counts,
+            viewedHeader,
+            otherHeader,
+            sections,
+            BuildDiffList(diff.OnlyA, otherStates, d.Name, other.Name, bundle),
+            BuildDiffList(diff.OnlyB, session.States, other.Name, d.Name, bundle));
+    }
+
+    /// <summary>One side's list: the first <see cref="MaxDiffRows"/> as rows (moon from the lacking side), every entry as clipboard text.</summary>
+    private static DiffList BuildDiffList(
+        IReadOnlyList<DiffEntry> entries,
+        IReadOnlyDictionary<uint, QuestEvaluation> lackingStates,
+        string has,
+        string lacks,
+        CatalogBundle bundle)
+    {
+        var header = string.Format(CultureInfo.CurrentCulture, Strings.DiffOnlyFormat, has, lacks) + " · " + Strings.DiffQuestCount(entries.Count);
+        var rows = new List<DiffRow>(Math.Min(entries.Count, MaxDiffRows));
+        var clipboard = new StringBuilder();
+        foreach (var entry in entries)
+        {
+            if (bundle.Catalog.GetByRowId(entry.RowId) is not { } quest)
+            {
+                continue;
+            }
+
+            if (clipboard.Length > 0)
+            {
+                clipboard.Append('\n');
+            }
+
+            clipboard.AppendFormat(CultureInfo.CurrentCulture, Strings.DiffClipboardLineFormat, quest.Name, entry.Value);
+            if (rows.Count >= MaxDiffRows)
+            {
+                continue;
+            }
+
+            var state = lackingStates.TryGetValue(entry.RowId, out var evaluation) ? evaluation.State : QuestState.Unknown;
+            rows.Add(new DiffRow(
+                quest,
+                quest.Name,
+                state,
+                lacks + ": " + Strings.MoonlitStateName(state),
+                entry.Value.ToString(CultureInfo.InvariantCulture),
+                entry.Reason));
+        }
+
+        var more = entries.Count > MaxDiffRows
+            ? string.Format(CultureInfo.CurrentCulture, Strings.DiffMoreFormat, entries.Count - MaxDiffRows)
+            : string.Empty;
+        var copied = string.Format(CultureInfo.CurrentCulture, Strings.DiffCopiedFormat, Strings.DiffQuestCount(entries.Count));
+        return new DiffList(header, rows.ToArray(), more, clipboard.ToString(), copied);
+    }
+
+    /// <summary>
+    /// The other character's evaluations: the poller's for the live character, otherwise resolved offline from the
+    /// stored snapshot once per capture time and bundle. Null when the snapshot cannot be read.
+    /// </summary>
+    private IReadOnlyDictionary<uint, QuestEvaluation>? StatesFor(CharacterItem item, CatalogBundle bundle)
+    {
+        if (item.ContentId == session.LiveContentId && session.LiveStates.Count > 0)
+        {
+            return session.LiveStates;
+        }
+
+        if (compareStates.TryGetValue(item.ContentId, out var cached) && cached.Taken == item.TakenUtc && ReferenceEquals(cached.Bundle, bundle))
+        {
+            return cached.States;
+        }
+
+        IReadOnlyDictionary<uint, QuestEvaluation>? states = null;
+        if (SnapshotFor(item) is { } snapshot)
+        {
+            try
+            {
+                states = StateResolver.ResolveAll(bundle.Catalog, snapshot, session.Context);
+            }
+            catch (Exception ex)
+            {
+                log.Warning(ex, "Character {ContentId} could not be evaluated for the comparison", item.ContentId);
+            }
+        }
+
+        compareStates[item.ContentId] = (item.TakenUtc, bundle, states);
+        return states;
+    }
+
+    /// <summary>The Moonlit pane's merged catalog when attached; otherwise the shipped data and curated files, built once.</summary>
+    private UniqueRewardCatalog RewardsCatalog()
+    {
+        if (UniqueRewards is { } provider)
+        {
+            try
+            {
+                return provider();
+            }
+            catch (Exception ex)
+            {
+                log.Warning(ex, "Unique rewards could not be read for the comparison; using the shipped data");
+            }
+        }
+
+        return fallbackRewards ??= UniqueRewardCatalog.Build(session.UniqueRewards, new Dictionary<uint, UniqueOverride>(), session.Curated);
     }
 
     /// <summary>Every character × the selected quest's state, evaluated offline for characters other than the viewed one.</summary>
@@ -1605,6 +2038,37 @@ public sealed class CharactersPane
     private sealed record LadderRow(uint IconId, string Name, string Level, bool IsRole, float Fraction, string Count, QuestRecord? Next, string NextText, bool Ready);
 
     private sealed record ChainRow(string Name, float Fraction, string Count, QuestRecord? Next, string NextText);
+
+    // ---- Compare with (V2-12) ----
+
+    private readonly record struct CompareKey(int Version, ulong Viewed, ulong Other, DateTime OtherTaken);
+
+    private sealed record CompareCandidate(ulong ContentId, string Label, string Detail);
+
+    private sealed record DiffSectionRow(string Name, string OnlyViewed, string OnlyOther);
+
+    /// <summary>One quest of a diff list; <paramref name="State"/> and its tooltip belong to the character that lacks the quest.</summary>
+    private sealed record DiffRow(QuestRecord Quest, string Name, QuestState State, string StateTooltip, string Value, string Reason);
+
+    /// <summary>One side of the diff: the capped rows, the "and N more" line (empty when none) and the full list as clipboard text.</summary>
+    private sealed record DiffList(string Header, DiffRow[] Rows, string More, string Clipboard, string CopiedToast)
+    {
+        public static readonly DiffList Empty = new(string.Empty, [], string.Empty, string.Empty, string.Empty);
+    }
+
+    private sealed record Compare(
+        CatalogBundle Bundle,
+        ulong OtherContentId,
+        string OtherLabel,
+        CompareCandidate[] Candidates,
+        bool OtherUnreadable,
+        string Summary,
+        string CountsLine,
+        string ViewedHeader,
+        string OtherHeader,
+        DiffSectionRow[] Sections,
+        DiffList OnlyViewed,
+        DiffList OnlyOther);
 
     private sealed record Dashboard(
         CharacterSnapshot Snapshot,
