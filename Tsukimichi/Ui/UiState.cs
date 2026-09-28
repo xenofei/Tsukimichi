@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Tsukimichi.Core.Query;
 
 namespace Tsukimichi.Ui;
@@ -41,6 +42,16 @@ public sealed class UiState
 
     /// <summary>Set by "Show path"; the detail pane clears it when drawn, then scrolls to and briefly highlights its Path section.</summary>
     public bool ScrollToPath { get; set; }
+
+    /// <summary>
+    /// Screen rectangles of named UI regions recorded during the last frame (toolbar, search, filters, chips,
+    /// tabs, tree, table, detail, path, moonlit, characters, settings, help). Consumers such as the interactive
+    /// tutorial read them to draw highlights; panes call <see cref="RecordRect"/> right after drawing a region.
+    /// </summary>
+    public Dictionary<string, (System.Numerics.Vector2 Min, System.Numerics.Vector2 Max)> Rects { get; } = new();
+
+    /// <summary>Records the last drawn ImGui item's rectangle under a stable key.</summary>
+    public void RecordRect(string key, System.Numerics.Vector2 min, System.Numerics.Vector2 max) => Rects[key] = (min, max);
 
     /// <summary>Bumped by any pane that changed something affecting the query; MainWindow re-runs the query when it differs from the last run.</summary>
     public int QueryVersion { get; private set; }
