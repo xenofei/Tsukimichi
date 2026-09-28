@@ -86,7 +86,7 @@ public sealed class CharactersPane
     // Snapshot is null when the file could not be read at that capture time; the failure is cached too so an
     // unreadable file is not re-read on every session version bump.
     private readonly Dictionary<ulong, (DateTime Taken, CharacterSnapshot? Snapshot)> snapshotCache = [];
-    private readonly Dictionary<ulong, QuestEvaluation?> accountCache = [];
+    private readonly Dictionary<ulong, (QuestEvaluation? Evaluation, string Reason)> accountCache = [];
     private uint accountRowId;
     private int accountVersion = -1;
 
@@ -1293,7 +1293,7 @@ public sealed class CharactersPane
         for (var i = 0; i < items.Length; i++)
         {
             var item = items[i];
-            var evaluation = EvaluateFor(item, quest, bundle);
+            var (evaluation, reason) = EvaluateFor(item, quest, bundle);
 
             ImGui.TableNextRow();
             ImGui.TableNextColumn();
@@ -1328,14 +1328,10 @@ public sealed class CharactersPane
             }
 
             ImGui.TableNextColumn();
-            if (evaluation is not null)
+            if (reason.Length > 0)
             {
                 // The state column beside it already names the state; this is the reason alone (blocker or step).
-                var reason = BlockerText.Reason(evaluation, quest, session.Names, item.ContentId == session.ViewedContentId ? session.States : null);
-                if (reason.Length > 0)
-                {
-                    ImGui.TextUnformatted(reason);
-                }
+                ImGui.TextUnformatted(reason);
             }
         }
     }
@@ -1343,21 +1339,26 @@ public sealed class CharactersPane
     private static void Reveal(UiState ui, QuestRecord quest) =>
         ui.Reveal(quest.RowId, quest.IsUnlisted ? QuestScope.VirtualUnlisted : QuestScope.Genre(quest.Journal.GenreId), quest.IsUnlisted);
 
-    private QuestEvaluation? EvaluateFor(CharacterItem item, QuestRecord quest, CatalogBundle bundle)
+    /// <summary>
+    /// One character's evaluation of the quest and its reason line, memoized in <see cref="accountCache"/> (cleared
+    /// when the quest or the session version changes): the viewed character's comes from the session, the others are
+    /// resolved offline from their stored snapshot. The reason is composed here, not per frame.
+    /// </summary>
+    private (QuestEvaluation? Evaluation, string Reason) EvaluateFor(CharacterItem item, QuestRecord quest, CatalogBundle bundle)
     {
-        if (item.ContentId == session.ViewedContentId)
-        {
-            return session.States.TryGetValue(quest.RowId, out var viewed) ? viewed : null;
-        }
-
         if (accountCache.TryGetValue(item.ContentId, out var cached))
         {
             return cached;
         }
 
         QuestEvaluation? evaluation = null;
-        var snapshot = SnapshotFor(item);
-        if (snapshot is not null)
+        IReadOnlyDictionary<uint, QuestEvaluation>? states = null;
+        if (item.ContentId == session.ViewedContentId)
+        {
+            states = session.States;
+            states.TryGetValue(quest.RowId, out evaluation);
+        }
+        else if (SnapshotFor(item) is { } snapshot)
         {
             try
             {
@@ -1369,8 +1370,10 @@ public sealed class CharactersPane
             }
         }
 
-        accountCache[item.ContentId] = evaluation;
-        return evaluation;
+        var reason = evaluation is null ? string.Empty : BlockerText.Reason(evaluation, quest, session.Names, states);
+        var entry = (evaluation, reason);
+        accountCache[item.ContentId] = entry;
+        return entry;
     }
 
     /// <summary>The stored snapshot of a character (or null when unreadable), reloaded only when its capture time changed.</summary>
