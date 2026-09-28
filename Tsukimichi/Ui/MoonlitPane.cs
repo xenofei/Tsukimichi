@@ -21,7 +21,10 @@ namespace Tsukimichi.Ui;
 /// Moonlit treasures (spec §7): quests whose rewards exist nowhere else. <see cref="DrawLeft"/> lists reward kinds with
 /// obtained/total and a filling moon; <see cref="DrawMain"/> is the toolbar plus the reward table. The pane owns the
 /// user's unique/not-unique overrides (<c>user/overrides.json</c>) and the merged <see cref="UniqueRewardCatalog"/>,
-/// which the detail pane can query through <see cref="Catalog"/>, <see cref="SetOverride"/> and <see cref="ClearOverride"/>.
+/// which the detail pane and the settings window reach through <see cref="IUniqueOverrides"/>. "Not unique (hide)…"
+/// in a row's context menu goes through the same <see cref="VerdictPrompt"/> as the detail pane's "Mark as unique…";
+/// quests hidden that way stay in the row array as struck-through rows the Yours confidence filter lists, so their
+/// context menu can restore them.
 /// <para>
 /// Row arrays and every label are built once per catalog build; obtained states and the filtered index refresh only
 /// when <see cref="SessionState.Version"/>, the kind, the toggle or the filter text change. Nothing allocates per frame
@@ -29,7 +32,7 @@ namespace Tsukimichi.Ui;
 /// destroys it and unsubscribes from the session.
 /// </para>
 /// </summary>
-public sealed class MoonlitPane : IDisposable
+public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 {
     private const int FilterMaxLength = 128;
 
@@ -58,6 +61,8 @@ public sealed class MoonlitPane : IDisposable
     private readonly PluginPaths paths;
     private readonly IPluginLog log;
     private readonly Dictionary<uint, UniqueOverride> overrides;
+    private readonly VerdictPrompt verdict = new(Strings.MoonlitVerdictPopup);
+    private int overridesVersion;
 
     /// <summary>Session-only: which confidence (or the unreadable rows) the table shows.</summary>
     private ConfidenceFilter confidenceFilter = ConfidenceFilter.Any;
@@ -70,6 +75,7 @@ public sealed class MoonlitPane : IDisposable
     private int catalogBuild;
 
     private Row[] rows = [];
+    private int uniqueCount;
     private int rowsBuild = -1;
     private CatalogBundle? rowsBundle;
 
@@ -134,6 +140,19 @@ public sealed class MoonlitPane : IDisposable
     /// <summary>The user's overrides by quest row id.</summary>
     public IReadOnlyDictionary<uint, UniqueOverride> Overrides => overrides;
 
+    IReadOnlyDictionary<uint, UniqueOverride> IUniqueOverrides.All => overrides;
+
+    int IUniqueOverrides.Version => overridesVersion;
+
+    /// <summary>The user's verdict for a quest, or null when the shipped data applies.</summary>
+    public UniqueOverride? Get(uint rowId) => overrides.TryGetValue(rowId, out var stored) ? stored : null;
+
+    void IUniqueOverrides.Clear(uint rowId) => ClearOverride(rowId);
+
+    void IUniqueOverrides.ClearAll() => ClearAllOverrides();
+
+    void IUniqueOverrides.Set(uint rowId, bool unique, string? note) => SetOverride(rowId, unique, note);
+
     /// <summary>Icon lookup for reward entries (quest reward list first, then per-kind sheet fallbacks); shared with Wotsit.</summary>
     public MoonlitIconResolver Icons { get; }
 
@@ -143,7 +162,19 @@ public sealed class MoonlitPane : IDisposable
     /// </summary>
     public void SetOverride(uint rowId, bool unique, string? note)
     {
-        overrides[rowId] = new UniqueOverride(unique, string.IsNullOrWhiteSpace(note) ? null : note.Trim());
+        overrides[rowId] = new UniqueOverride(unique, string.IsNullOrWhiteSpace(note) ? null : note.Trim(), DateTime.UtcNow);
+        SaveOverrides();
+    }
+
+    /// <summary>Removes every verdict (Settings › Data › Restore all) so the shipped data applies everywhere again.</summary>
+    public void ClearAllOverrides()
+    {
+        if (overrides.Count == 0)
+        {
+            return;
+        }
+
+        overrides.Clear();
         SaveOverrides();
     }
 
@@ -180,12 +211,13 @@ public sealed class MoonlitPane : IDisposable
         }
 
         overrides.Clear();
-        foreach (var (rowId, verdict) in loaded)
+        foreach (var (rowId, stored) in loaded)
         {
-            overrides[rowId] = verdict;
+            overrides[rowId] = stored;
         }
 
         catalogDirty = true;
+        overridesVersion++;
     }
 
     /// <summary>Left column: reward kinds with obtained/total and a filling moon; "All" on top.</summary>
@@ -267,6 +299,16 @@ public sealed class MoonlitPane : IDisposable
                 ImGui.TextUnformatted(Strings.MoonlitOfflineHint);
             }
         }
+
+        if (verdict.UndoShowing)
+        {
+            ImGui.SameLine();
+            verdict.DrawUndo(this);
+        }
+
+        // The verdict popup is begun here, in the centre column's scope, because the context menu that requests it
+        // lives inside the table's inner window and closes before the popup could be shown from there.
+        verdict.Draw(this, UiMetrics.Scale);
 
         if (rows.Length == 0)
         {
@@ -370,14 +412,27 @@ public sealed class MoonlitPane : IDisposable
             UiMetrics.Tooltip(row.ObtainedText);
         }
 
-        // Icon and reward name; the row's context menu hangs off the name.
+        // Icon and reward name; the row's context menu hangs off the name. A row hidden by the user's verdict is
+        // Dusk and struck through, and says so on hover.
         ImGui.TableNextColumn();
         DrawIcon(row, UiMetrics.RowIconSize);
         ImGui.SameLine();
-        if (ImGui.Selectable(row.Name, selectedRow == row.Index))
+        using (Theme.PushText(Theme.Dusk, row.Hidden))
         {
-            selectedRow = row.Index;
-            ui.SelectedRowId = row.Entry.QuestRowId;
+            if (ImGui.Selectable(row.Name, selectedRow == row.Index))
+            {
+                selectedRow = row.Index;
+                ui.SelectedRowId = row.Entry.QuestRowId;
+            }
+        }
+
+        if (row.Hidden)
+        {
+            StrikeThrough(row.Name);
+            if (ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(Strings.MoonlitHiddenTooltip);
+            }
         }
 
         using (var menu = ImRaii.ContextPopupItem("ctx"))
@@ -396,9 +451,17 @@ public sealed class MoonlitPane : IDisposable
         ImGui.TableNextColumn();
         if (row.Quest is { } quest)
         {
-            if (ImGui.Selectable(row.QuestLabel))
+            using (Theme.PushText(Theme.Dusk, row.Hidden))
             {
-                Reveal(ui, quest);
+                if (ImGui.Selectable(row.QuestLabel))
+                {
+                    Reveal(ui, quest);
+                }
+            }
+
+            if (row.Hidden)
+            {
+                StrikeThrough(row.QuestName);
             }
 
             if (ImGui.IsItemHovered())
@@ -464,8 +527,19 @@ public sealed class MoonlitPane : IDisposable
         }
         else if (ImGui.MenuItem(Strings.MoonlitMarkNotUnique))
         {
-            SetOverride(rowId, false, null);
+            // Only requested here; the popup itself is begun in DrawMain once this menu has closed.
+            verdict.Open(rowId, false, row.QuestName);
         }
+    }
+
+    /// <summary>A Dusk hairline through the middle of the last item's text (its own width, not the whole cell).</summary>
+    private static void StrikeThrough(string text)
+    {
+        var min = ImGui.GetItemRectMin();
+        var max = ImGui.GetItemRectMax();
+        var y = MathF.Round((min.Y + max.Y) * 0.5f);
+        var right = MathF.Min(max.X, min.X + ImGui.CalcTextSize(text, true, -1f).X);
+        ImGui.GetWindowDrawList().AddLine(new Vector2(min.X, y), new Vector2(right, y), Theme.DuskU32, UiMetrics.Hairline);
     }
 
     /// <summary>Shows a quest in the Journal tab scoped to its genre (or the Unlisted bucket); also used by Wotsit picks.</summary>
@@ -503,14 +577,25 @@ public sealed class MoonlitPane : IDisposable
     {
         var bundle = session.Bundle;
         var all = catalog.All;
-        var built = new Row[all.Count];
-        for (var i = 0; i < built.Length; i++)
+        var hidden = catalog.Hidden;
+        var built = new Row[all.Count + hidden.Count];
+        for (var i = 0; i < all.Count; i++)
         {
             var entry = all[i];
             var quest = bundle?.Catalog.GetByRowId(entry.QuestRowId);
-            built[i] = new Row(i, entry, quest, Icons.Resolve(quest, entry));
+            built[i] = new Row(i, entry, quest, Icons.Resolve(quest, entry), hidden: false);
         }
 
+        // Rows hidden by a "not unique" verdict follow the view so the Yours filter can list them for Restore.
+        for (var j = 0; j < hidden.Count; j++)
+        {
+            var i = all.Count + j;
+            var entry = hidden[j];
+            var quest = bundle?.Catalog.GetByRowId(entry.QuestRowId);
+            built[i] = new Row(i, entry, quest, Icons.Resolve(quest, entry), hidden: true);
+        }
+
+        uniqueCount = all.Count;
         rows = built;
         rowsBuild = catalogBuild;
         rowsBundle = bundle;
@@ -531,6 +616,11 @@ public sealed class MoonlitPane : IDisposable
         foreach (var row in rows)
         {
             row.SetObtained(unlocks.IsObtained(row.Entry));
+            if (row.Hidden)
+            {
+                continue;
+            }
+
             var k = (int)row.Entry.Kind;
             if ((uint)k < KindCount)
             {
@@ -608,7 +698,15 @@ public sealed class MoonlitPane : IDisposable
                 continue;
             }
 
-            if (!PassesConfidence(confidenceFilter, row.Entry.Confidence, row.Obtained))
+            if (row.Hidden)
+            {
+                // Hidden by the user's verdict: only the Yours filter lists it (struck through) so it can be restored.
+                if (confidenceFilter != ConfidenceFilter.Yours)
+                {
+                    continue;
+                }
+            }
+            else if (!PassesConfidence(confidenceFilter, row.Entry.Confidence, row.Obtained))
             {
                 continue;
             }
@@ -622,7 +720,7 @@ public sealed class MoonlitPane : IDisposable
         }
 
         visibleCount = count;
-        visibleSummary = count.ToString(CultureInfo.InvariantCulture) + " / " + rows.Length.ToString(CultureInfo.InvariantCulture);
+        visibleSummary = count.ToString(CultureInfo.InvariantCulture) + " / " + uniqueCount.ToString(CultureInfo.InvariantCulture);
     }
 
     /// <summary>Whether a row passes the confidence combo: a confidence match, or (Unknown obtained) an unreadable obtained state.</summary>
@@ -648,6 +746,7 @@ public sealed class MoonlitPane : IDisposable
         }
 
         catalogDirty = true;
+        overridesVersion++;
     }
 
     private static readonly int KindCount = Enum.GetValues<RewardKind>().Length;
@@ -691,23 +790,27 @@ public sealed class MoonlitPane : IDisposable
         }
     }
 
-    /// <summary>One table row with every label pre-materialized; only the obtained state changes after construction.</summary>
+    /// <summary>
+    /// One table row with every label pre-materialized; only the obtained state changes after construction. A hidden
+    /// row (kept out of the unique view by the user's verdict) wears the "yours" badge whatever its entry's confidence.
+    /// </summary>
     private sealed class Row
     {
-        public Row(int index, UniqueRewardEntry entry, QuestRecord? quest, uint icon)
+        public Row(int index, UniqueRewardEntry entry, QuestRecord? quest, uint icon, bool hidden)
         {
             Index = index;
             Entry = entry;
             Quest = quest;
             Icon = icon;
+            Hidden = hidden;
             KindName = Strings.MoonlitKindName(entry.Kind);
             Name = string.IsNullOrWhiteSpace(entry.RewardName)
                 ? KindName + " #" + entry.RewardId.ToString(CultureInfo.InvariantCulture)
                 : entry.RewardName;
             QuestName = quest?.Name ?? Strings.MoonlitQuestPrefix + entry.QuestRowId.ToString(CultureInfo.InvariantCulture);
             QuestLabel = QuestName + "##q";
-            ConfidenceLabel = MoonlitPane.ConfidenceLabel(entry.Confidence);
-            ConfidenceColor = MoonlitPane.ConfidenceColor(entry.Confidence);
+            ConfidenceLabel = hidden ? Strings.MoonlitConfidenceUser : MoonlitPane.ConfidenceLabel(entry.Confidence);
+            ConfidenceColor = hidden ? Theme.Eclipse : MoonlitPane.ConfidenceColor(entry.Confidence);
             SourceText = string.IsNullOrWhiteSpace(entry.Source) ? Strings.MoonlitSourceUnknown : entry.Source;
         }
 
@@ -715,6 +818,7 @@ public sealed class MoonlitPane : IDisposable
         public UniqueRewardEntry Entry { get; }
         public QuestRecord? Quest { get; }
         public uint Icon { get; }
+        public bool Hidden { get; }
         public string Name { get; }
         public string KindName { get; }
         public string QuestName { get; }

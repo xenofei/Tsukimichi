@@ -4,6 +4,17 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+### Added
+- Settings › Display: "Reduce motion". With it on, hold-to-confirm buttons count down in text ("Hold… (0.4 s)") instead of filling an arc.
+- Settings › Data: "Your Moonlit verdicts (N)" lists every quest you marked unique or hid as not unique, with the note and the date, a Restore button per row and "Restore all" (hold to confirm, or Shift and click).
+
+### Changed
+- Marking a quest as unique, and hiding one as not unique from a Moonlit row's context menu, both ask first in the same small popup: type a note (it has the keyboard already; Enter confirms), then press and hold the confirm button until the gold arc around it closes, or hold Shift and click. Releasing early cancels; Escape cancels. "Not unique (hide)" no longer applies on a single click.
+- After either verdict a "Marked unique · Undo" (or "Hidden as not unique · Undo") line shows for eight seconds where you made the change; Undo forgets the verdict again.
+- Quests you hid as not unique are no longer unreachable: the Moonlit "Yours only" confidence filter lists them struck through in grey, and their context menu offers "Restore shipped verdict". Every other filter keeps them hidden.
+- Verdicts now remember when they were given; verdicts stored by earlier versions load unchanged and show no date.
+- Help (Moonlit › Overrides and Restore) and the tour's Moonlit step describe the hold-or-Shift confirm and the ways back.
+
 ## [0.5.0] - 2026-09-28
 
 ### Added

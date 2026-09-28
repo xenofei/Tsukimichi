@@ -61,16 +61,6 @@ public sealed class Plugin : IDalamudPlugin
     private Game.ItemHooks? itemHooks;
     private TodoOverlay? todoOverlay;
 
-    /// <summary>The Moonlit pane's override store as the detail pane's <see cref="IUniqueOverrides"/>.</summary>
-    private sealed class MoonlitOverrides(MoonlitPane pane) : IUniqueOverrides
-    {
-        public Core.Storage.UniqueOverride? Get(uint rowId) => pane.Overrides.TryGetValue(rowId, out var verdict) ? verdict : null;
-
-        public void Clear(uint rowId) => pane.ClearOverride(rowId);
-
-        public void Set(uint rowId, bool unique, string? note) => pane.SetOverride(rowId, unique, note);
-    }
-
     /// <summary>
     /// Retry hook for the "Catalog unavailable" panel: rebuilds the catalog and hands it to the session on the
     /// framework thread. The returned task completes when the session has been updated either way.
@@ -324,13 +314,14 @@ public sealed class Plugin : IDalamudPlugin
             charactersPane.MoonlitCounts = moonlitPane.CountsFor;
             charactersPane.UniqueRewards = () => moonlit.Catalog;
             mainWindow.AttachPanes(moonlitPane, charactersPane);
-            mainWindow.AttachOverrides(new MoonlitOverrides(moonlitPane));
+            mainWindow.AttachOverrides(moonlitPane);
             // The flight index (a few small sheets) is built on the pane's first draw, on the framework thread.
             flightPane = new FlightPane(Session, unlockReader, gameLinks, TextureProvider, Log, () => ClientState.TerritoryType, () => FlightIndex.Build(DataManager.Excel, Dalamud.Utility.ClientLanguageExtensions.ToLumina(DataManager.Language)));
             mainWindow.AttachFlight(flightPane);
             chatNotifier = new Game.ChatNotifier(Session, Settings, Paths, gameLinks, ChatGui, Log);
 
             configWindow = new ConfigWindow(Settings, Session, PluginInterface, _ => ui.MarkQueryDirty());
+            configWindow.Overrides = moonlitPane;
             Game.WotsitIpc wotsitIpc = wotsit;
             configWindow.WotsitToggled = enabled => wotsitIpc.Enabled = enabled;
             if (hoverHint is { } hint) { configWindow.ItemHintsToggled = enabled => hint.Enabled = enabled; }

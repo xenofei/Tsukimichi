@@ -30,6 +30,9 @@ public static class UiMetrics
     /// <summary>Pixels per logical unit for moons, icons and banners: <see cref="Scale"/> × icon scale.</summary>
     public static float IconScale { get; private set; } = 1f;
 
+    /// <summary><see cref="Configuration.ReduceMotion"/> as of the last <see cref="Update"/>: animated gauges draw as text.</summary>
+    public static bool ReduceMotion { get; private set; }
+
     /// <summary>Recomputes the factors from the live global scale and the settings; call once per frame before drawing.</summary>
     public static void Update(Configuration settings)
     {
@@ -38,6 +41,7 @@ public static class UiMetrics
         FontScale = ScaleMetrics.ClampUiScale(settings.UiScale);
         Scale = ScaleMetrics.LayoutFactor(global, settings.UiScale);
         IconScale = ScaleMetrics.IconFactor(global, settings.UiScale, settings.IconScale);
+        ReduceMotion = settings.ReduceMotion;
     }
 
     /// <summary>Applies the font scale to the current window (see the class remarks for where that is right).</summary>

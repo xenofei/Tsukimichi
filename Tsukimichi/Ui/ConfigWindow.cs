@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
@@ -15,15 +16,17 @@ namespace Tsukimichi.Ui;
 
 /// <summary>
 /// Settings (spec §7): poll interval (with the measured cost of a poll under it), display scale sliders
-/// (<see cref="Configuration.UiScale"/>, <see cref="Configuration.IconScale"/>), chat notices, the Unlisted bucket,
-/// the todo overlay (on/off, lock, opacity, sections, reset position), item hints, the Wotsit integration, help
-/// (open it, start the tutorial, offer it on first run), data deletion with a double confirm, and an About
-/// section with the plugin, reward-data and catalog stamps plus the poll timing. Every change is saved as it
-/// happens; sliders save when released.
+/// (<see cref="Configuration.UiScale"/>, <see cref="Configuration.IconScale"/>) and Reduce motion, chat notices, the
+/// Unlisted bucket, the todo overlay (on/off, lock, opacity, sections, reset position), item hints, the Wotsit
+/// integration, help (open it, start the tutorial, offer it on first run), the user's Moonlit verdicts with Restore
+/// and a hold-to-confirm Restore all, data deletion with a double confirm, and an About section with the plugin,
+/// reward-data and catalog stamps plus the poll timing. Every change is saved as it happens; sliders save when
+/// released.
 /// </summary>
 public sealed class ConfigWindow : Window
 {
     private static readonly TimeSpan ToastDuration = TimeSpan.FromSeconds(8);
+    private static readonly string RestoreAllLabel = Strings.ConfigVerdictRestoreAll + HoldButton.IdSuffix;
 
     private readonly Configuration settings;
     private readonly SessionState session;
@@ -46,6 +49,13 @@ public sealed class ConfigWindow : Window
     private bool openSecondConfirm;
     private string? toast;
     private DateTime toastUntilUtc;
+
+    // "Your Moonlit verdicts": one row per override, rebuilt when the overrides or the quest catalog change.
+    private readonly ConfirmGate restoreAllGate = new();
+    private VerdictRow[] verdictRows = [];
+    private int verdictVersion = -1;
+    private CatalogBundle? verdictBundle;
+    private string verdictsHeader = string.Empty;
 
     // Poll timing lines, rebuilt only when another poll completed.
     private int pollTimingCount = -1;
@@ -101,6 +111,9 @@ public sealed class ConfigWindow : Window
 
     /// <summary>Called with the new value after <see cref="Configuration.ItemContextMenuEnabled"/> is toggled and saved; the item-hint feature wires it.</summary>
     public Action<bool>? ItemContextMenuToggled { get; set; }
+
+    /// <summary>The user's Moonlit verdicts for the Data section; set by the plugin once the Moonlit pane exists. Null shows a placeholder.</summary>
+    public IUniqueOverrides? Overrides { get; set; }
 
     public override void OnOpen()
     {
@@ -201,6 +214,18 @@ public sealed class ConfigWindow : Window
 
         SaveWhenReleased();
         ImGui.TextDisabled(Strings.ConfigIconScaleHint);
+
+        var reduceMotion = settings.ReduceMotion;
+        if (ImGui.Checkbox(Strings.ConfigReduceMotion, ref reduceMotion))
+        {
+            settings.ReduceMotion = reduceMotion;
+            Save();
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip(Strings.ConfigReduceMotionHint);
+        }
     }
 
     private void SaveWhenReleased()
@@ -456,6 +481,8 @@ public sealed class ConfigWindow : Window
         Header(Strings.ConfigSectionData);
         ImGui.TextWrapped(Strings.ConfigDataRetention);
         ImGui.Spacing();
+        DrawVerdicts();
+        ImGui.Spacing();
 
         using (Theme.PushDestructiveButton())
         {
@@ -467,6 +494,115 @@ public sealed class ConfigWindow : Window
 
         DrawDeleteConfirms();
         DrawToast();
+    }
+
+    /// <summary>
+    /// "Your Moonlit verdicts (N)": quest, verdict, note and date per stored override with a Restore button each, and
+    /// Restore all behind the same hold-to-confirm gate the verdict popups use. Restoring goes through the Moonlit
+    /// pane, so its catalog rebuilds exactly as after a verdict.
+    /// </summary>
+    private void DrawVerdicts()
+    {
+        if (Overrides is not { } overrides)
+        {
+            ImGui.TextDisabled(Strings.ConfigVerdictsUnavailable);
+            return;
+        }
+
+        RefreshVerdictRows(overrides);
+        ImGui.TextUnformatted(verdictsHeader);
+        if (verdictRows.Length == 0)
+        {
+            ImGui.TextDisabled(Strings.ConfigVerdictsNone);
+            return;
+        }
+
+        var scale = ImGuiHelpers.GlobalScale;
+        var restoreWidth = ImGui.CalcTextSize(Strings.ConfigVerdictRestore).X + ImGui.GetStyle().FramePadding.X * 2f + 4f * scale;
+        const ImGuiTableFlags Flags = ImGuiTableFlags.RowBg | ImGuiTableFlags.BordersInnerH | ImGuiTableFlags.SizingStretchProp;
+        using (var table = ImRaii.Table("##verdicts", 5, Flags))
+        {
+            if (table)
+            {
+                ImGui.TableSetupColumn(Strings.ConfigVerdictColumnQuest, ImGuiTableColumnFlags.WidthStretch, 3f);
+                ImGui.TableSetupColumn(Strings.ConfigVerdictColumnVerdict, ImGuiTableColumnFlags.WidthFixed, 80f * scale);
+                ImGui.TableSetupColumn(Strings.ConfigVerdictColumnNote, ImGuiTableColumnFlags.WidthStretch, 3f);
+                ImGui.TableSetupColumn(Strings.ConfigVerdictColumnDate, ImGuiTableColumnFlags.WidthFixed, 80f * scale);
+                ImGui.TableSetupColumn(Strings.ConfigVerdictColumnRestore, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoHeaderLabel, restoreWidth);
+                ImGui.TableHeadersRow();
+
+                foreach (var row in verdictRows)
+                {
+                    using var id = ImRaii.PushId((int)row.RowId);
+                    ImGui.TableNextRow();
+                    ImGui.TableNextColumn();
+                    ImGui.TextUnformatted(row.QuestName);
+                    ImGui.TableNextColumn();
+                    using (Theme.PushText(row.Color))
+                    {
+                        ImGui.TextUnformatted(row.Verdict);
+                    }
+
+                    ImGui.TableNextColumn();
+                    ImGui.TextUnformatted(row.Note);
+                    ImGui.TableNextColumn();
+                    ImGui.TextDisabled(row.Date);
+                    ImGui.TableNextColumn();
+                    if (ImGui.SmallButton(Strings.ConfigVerdictRestore))
+                    {
+                        // The row cache refreshes next frame from the bumped version; the array is not touched here.
+                        overrides.Clear(row.RowId);
+                    }
+
+                    if (ImGui.IsItemHovered())
+                    {
+                        ImGui.SetTooltip(Strings.ConfigVerdictRestoreTooltip);
+                    }
+                }
+            }
+        }
+
+        if (HoldButton.Draw(RestoreAllLabel, restoreAllGate, settings.ReduceMotion, scale))
+        {
+            overrides.ClearAll();
+            toast = Strings.ConfigVerdictsRestored;
+            toastUntilUtc = DateTime.UtcNow + ToastDuration;
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip(Strings.ConfigVerdictRestoreAllTooltip);
+        }
+    }
+
+    /// <summary>Rebuilds the verdict rows (sorted by quest name) when the overrides or the catalog changed.</summary>
+    private void RefreshVerdictRows(IUniqueOverrides overrides)
+    {
+        var bundle = session.Bundle;
+        if (overrides.Version == verdictVersion && ReferenceEquals(bundle, verdictBundle))
+        {
+            return;
+        }
+
+        verdictVersion = overrides.Version;
+        verdictBundle = bundle;
+        var all = overrides.All;
+        var list = new List<VerdictRow>(all.Count);
+        foreach (var (rowId, stored) in all)
+        {
+            var name = bundle?.Catalog.GetByRowId(rowId)?.Name ?? Strings.MoonlitQuestPrefix + rowId.ToString(CultureInfo.InvariantCulture);
+            list.Add(new VerdictRow(
+                rowId,
+                name,
+                stored.Unique ? Strings.ConfigVerdictUnique : Strings.ConfigVerdictNotUnique,
+                stored.Unique ? Theme.Moon : Theme.Dusk,
+                stored.Note ?? string.Empty,
+                stored.MarkedUtc?.ToLocalTime().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) ?? string.Empty));
+        }
+
+        list.Sort(static (a, b) => string.Compare(a.QuestName, b.QuestName, StringComparison.CurrentCultureIgnoreCase));
+        verdictRows = list.ToArray();
+        verdictsHeader = string.Format(CultureInfo.InvariantCulture, Strings.ConfigVerdictsHeaderFormat, verdictRows.Length);
     }
 
     /// <summary>Two modals in a row: the first explains, the second asks again; only the second deletes.</summary>
@@ -592,4 +728,6 @@ public sealed class ConfigWindow : Window
     }
 
     private void Save() => settings.Save(pluginInterface);
+
+    private readonly record struct VerdictRow(uint RowId, string QuestName, string Verdict, Vector4 Color, string Note, string Date);
 }

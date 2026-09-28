@@ -36,7 +36,6 @@ public sealed class DetailPane
     private static readonly string GiverIcon = FontAwesomeIcon.MapMarkerAlt.ToIconString();
     private const double PathHighlightSeconds = 1.5;
     private const int MinFoldedRun = 2;
-    private const int NoteLength = 120;
 
     // Header badge for QuestRecord.IconSpecial (seasonal events, promotions).
     private const string SeasonalBadgeTooltip = "Seasonal event quest";
@@ -125,7 +124,8 @@ public sealed class DetailPane
     private ChainCatalog chains = ChainCatalog.Empty;
     private CatalogBundle? chainsBundle;
 
-    private string noteBuffer = string.Empty;
+    // The "Mark as unique…" confirm popup and its eight-second Undo line.
+    private readonly VerdictPrompt verdict = new(Strings.MarkUniquePopup);
 
     // "Show path": the scroll is requested on two consecutive frames because ImGui clamps a scroll target against the
     // content size measured in the previous frame, which does not yet include a freshly selected quest's sections.
@@ -497,17 +497,21 @@ public sealed class DetailPane
         }
     }
 
-    /// <summary>The user's Moonlit verdict: restore an override, or vouch for a quest the shipped data does not list.</summary>
+    /// <summary>
+    /// The user's Moonlit verdict: restore an override, or vouch for a quest the shipped data does not list. "Mark as
+    /// unique…" opens the shared <see cref="VerdictPrompt"/> (Shift and click, or hold, to confirm) and an Undo line
+    /// follows for eight seconds.
+    /// </summary>
     private void DrawUnique(IUniqueOverrides overrides, uint rowId)
     {
-        if (overrides.Get(rowId) is { } verdict)
+        if (overrides.Get(rowId) is { } stored)
         {
-            using (Theme.PushText(verdict.Unique ? Theme.Moon : Theme.Dusk))
+            using (Theme.PushText(stored.Unique ? Theme.Moon : Theme.Dusk))
             {
-                ImGui.TextUnformatted(verdict.Unique ? Strings.MarkedUniqueByYou : Strings.MarkedNotUniqueByYou);
+                ImGui.TextUnformatted(stored.Unique ? Strings.MarkedUniqueByYou : Strings.MarkedNotUniqueByYou);
             }
 
-            if (verdict.Note is { Length: > 0 } note)
+            if (stored.Note is { Length: > 0 } note)
             {
                 ImGui.SameLine();
                 ImGui.TextDisabled(note);
@@ -523,50 +527,29 @@ public sealed class DetailPane
             {
                 UiMetrics.Tooltip(Strings.RestoreOverrideTooltip);
             }
-
-            return;
         }
-
-        if (model.HasUniqueEntries)
+        else if (model.HasUniqueEntries)
         {
             ImGui.TextDisabled(Strings.ListedInMoonlit);
-            return;
+        }
+        else
+        {
+            ImGui.TextDisabled(Strings.NotListedInMoonlit);
+            ImGui.SameLine();
+            if (ImGui.SmallButton(Strings.MarkUnique))
+            {
+                verdict.Open(rowId, true, model.Quest?.Name ?? string.Empty);
+            }
+
+            if (ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(Strings.MarkUniqueTooltip);
+            }
         }
 
-        ImGui.TextDisabled(Strings.NotListedInMoonlit);
-        ImGui.SameLine();
-        if (ImGui.SmallButton(Strings.MarkUnique))
-        {
-            noteBuffer = string.Empty;
-            ImGui.OpenPopup(Strings.MarkUniquePopup);
-        }
-
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(Strings.MarkUniqueTooltip);
-        }
-
-        using var popup = ImRaii.Popup(Strings.MarkUniquePopup);
-        if (!popup)
-        {
-            return;
-        }
-
-        // Opened from the detail child (own font scale 1), so the popup scales itself.
-        UiMetrics.ApplyFontScale();
-        ImGui.SetNextItemWidth(UiMetrics.Px(220f));
-        ImGui.InputTextWithHint("##uniqueNote", Strings.MarkUniqueNoteHint, ref noteBuffer, NoteLength);
-        if (ImGui.Button(Strings.MarkUniqueConfirm))
-        {
-            overrides.Set(rowId, true, noteBuffer);
-            ImGui.CloseCurrentPopup();
-        }
-
-        ImGui.SameLine();
-        if (ImGui.Button(Strings.Cancel))
-        {
-            ImGui.CloseCurrentPopup();
-        }
+        // Begun on every path so a popup opened for one quest is not orphaned when the selection moves on.
+        verdict.Draw(overrides, UiMetrics.Scale);
+        verdict.DrawUndo(overrides);
     }
 
     /// <summary>

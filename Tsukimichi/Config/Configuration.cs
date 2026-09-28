@@ -97,6 +97,13 @@ public sealed class Configuration : IPluginConfiguration
     /// </summary>
     public float IconScale { get; set; } = ScaleMetrics.DefaultIconScale;
 
+    // ---- 0.5.1: motion ----
+    /// <summary>
+    /// Replace the hold-to-confirm arc with a text countdown (and, later, other animation with a cut). Off by default;
+    /// a later release follows the OS animation setting instead.
+    /// </summary>
+    public bool ReduceMotion { get; set; }
+
     /// <summary>Poll interval as a <see cref="TimeSpan"/> within the allowed bounds.</summary>
     public TimeSpan PollInterval
     {

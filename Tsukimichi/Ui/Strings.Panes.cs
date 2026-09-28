@@ -26,8 +26,10 @@ static partial class Strings
     public const string MoonlitObtainedNo = "Not obtained";
     public const string MoonlitObtainedUnknown = "Unknown: not readable for this reward kind or character";
     public const string MoonlitShowInJournal = "Show in Journal";
-    public const string MoonlitMarkNotUnique = "Not unique (hide)";
+    public const string MoonlitMarkNotUnique = "Not unique (hide)…";
     public const string MoonlitRestoreOverride = "Restore shipped verdict";
+    public const string MoonlitVerdictPopup = "##moonlitVerdict";
+    public const string MoonlitHiddenTooltip = "Hidden by your verdict; right-click for Restore shipped verdict";
     public const string MoonlitConfidenceStatic = "static";
     public const string MoonlitConfidenceCommunity = "community";
     public const string MoonlitConfidenceCurated = "curated";
@@ -262,6 +264,22 @@ static partial class Strings
     public const string ConfigDeleteConfirm = "Delete everything";
     public const string ConfigDeleteDone = "All Tsukimichi data deleted.";
     public const string ConfigCancel = "Cancel";
+    /// <summary>{0} = number of stored verdicts.</summary>
+    public const string ConfigVerdictsHeaderFormat = "Your Moonlit verdicts ({0})";
+    public const string ConfigVerdictsNone = "No verdicts yet. Mark a quest from its detail pane, or hide one from a Moonlit row.";
+    public const string ConfigVerdictsUnavailable = "Verdicts are listed once the Moonlit pane has loaded.";
+    public const string ConfigVerdictColumnQuest = "Quest";
+    public const string ConfigVerdictColumnVerdict = "Verdict";
+    public const string ConfigVerdictColumnNote = "Note";
+    public const string ConfigVerdictColumnDate = "Date";
+    public const string ConfigVerdictColumnRestore = "##restore";
+    public const string ConfigVerdictUnique = "unique";
+    public const string ConfigVerdictNotUnique = "not unique";
+    public const string ConfigVerdictRestore = "Restore";
+    public const string ConfigVerdictRestoreTooltip = "Forget this verdict; the shipped reward data applies again";
+    public const string ConfigVerdictRestoreAll = "Restore all";
+    public const string ConfigVerdictRestoreAllTooltip = "Forget every verdict. Hold Shift and click, or press and hold.";
+    public const string ConfigVerdictsRestored = "All verdicts restored; the shipped reward data applies again.";
     public const string ConfigSectionAbout = "About";
     public const string ConfigPluginVersionPrefix = "Tsukimichi ";
     public const string ConfigGameDataPrefix = "Reward data from game ";
@@ -282,6 +300,8 @@ static partial class Strings
     public const string ConfigUiScaleHint = "Text and spacing in Tsukimichi's windows, on top of Dalamud's global scale.";
     public const string ConfigIconScale = "Icon scale";
     public const string ConfigIconScaleHint = "Moon glyphs, reward icons and toolbar buttons.";
+    public const string ConfigReduceMotion = "Reduce motion";
+    public const string ConfigReduceMotionHint = "Hold-to-confirm buttons count down in text instead of filling an arc.";
     public const string ConfigSectionHelp = "Help";
     public const string ConfigShowHelp = "Show help";
     public const string ConfigStartTutorial = "Start tutorial";
@@ -436,9 +456,9 @@ static partial class Strings
         public const string HaveTitle = "Have";
         public const string HaveBody = "Whether the viewed character owns the reward. Emotes, mounts, minions, rolls, cards and duties are read from the live client, so a stored snapshot shows a veiled moon for them.";
         public const string OverridesTitle = "Overrides";
-        public const string OverridesBody = "Not unique (hide) in a row's context menu removes a quest from Moonlit. Mark quest unique in the detail pane adds one, with a note naming the reward.";
+        public const string OverridesBody = "Not unique (hide) in a row's context menu removes a quest from Moonlit; Mark as unique in the detail pane adds one, with a note naming the reward. Both ask first: press and hold the confirm button until its arc closes, or hold Shift and click. Enter in the note field confirms too. An Undo line stays for eight seconds.";
         public const string RestoreTitle = "Restore";
-        public const string RestoreBody = "Restore shipped verdict, in the row's context menu or the detail pane, undoes either. Overrides live in user/overrides.json and survive updates.";
+        public const string RestoreBody = "Restore shipped verdict, in the row's context menu or the detail pane, undoes either. Hidden quests stay listed under the Yours confidence filter, struck through, so they can be restored; Settings › Data lists every verdict with Restore and Restore all. Overrides live in user/overrides.json and survive updates.";
 
         // ---- Characters and snapshots ----
         public static readonly string[] CharacterCardTitles =
@@ -558,7 +578,7 @@ static partial class Strings
         public const string GiverTitle = "Giver actions";
         public const string GiverBody = "The giver line names the NPC and zone. Flag it on the map or open the in-game journal from here; the last line says where the state came from and when.";
         public const string MoonlitTitle = "Moonlit treasures";
-        public const string MoonlitBody = "Reward kinds on the left with obtained/total; the table lists each treasure, its quest, whether you have it and a confidence badge. Hover a badge for its source.";
+        public const string MoonlitBody = "Reward kinds on the left with obtained/total; the table lists each treasure, its quest, whether you have it and a confidence badge. Hover a badge for its source. Right-click a row to hide it as not unique: press and hold to confirm, or hold Shift and click.";
         public const string CharactersTitle = "Characters";
         public const string CharactersBody = "Every stored snapshot on the left. The dashboard shows completion by section, Moonlit progress, pins, recent activity, job levels and standings for the viewed character.";
         public const string FlightTitle = "Flight";
