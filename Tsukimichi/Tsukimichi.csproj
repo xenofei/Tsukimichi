@@ -11,6 +11,8 @@ Moonlit treasures collects quests with unique rewards, and per-character snapsho
     <!-- Dalamud reads the installer icon from the plugin's own manifest (DalamudPackager maps IconUrl to it), not from pluginmaster.json. -->
     <IconUrl>https://raw.githubusercontent.com/xenofei/Tsukimichi/main/assets/icon.png</IconUrl>
     <Tags>quests;journal;tracker;rewards</Tags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Copyright>Copyright (c) 2026 Michiru Tsukikage</Copyright>
     <RootNamespace>Tsukimichi</RootNamespace>
   </PropertyGroup>
 
