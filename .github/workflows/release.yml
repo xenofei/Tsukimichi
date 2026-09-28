@@ -116,7 +116,8 @@ jobs:
         run: dotnet build Tsukimichi.sln -c Release -warnaserror
 
       - name: Test
-        run: dotnet test Tsukimichi.Tests -c Release --no-build
+        # The timing tests (Category=Perf) have developer-machine budgets; see ci.yml.
+        run: dotnet test Tsukimichi.Tests -c Release --no-build --filter "Category!=Perf"
 
       # The solution builds the plugin under bin/x64/Release; the package step and make_pluginmaster.py read
       # bin/Release, so build the plugin project on its own as the packaging step (incremental, seconds).
