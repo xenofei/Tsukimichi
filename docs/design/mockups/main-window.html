@@ -136,11 +136,24 @@
   .tile.uniq::after { content: ""; position: absolute; top: -3px; right: -3px; width: 10px; height: 10px; border-radius: 5px; background: var(--moon); box-shadow: inset -3px 0 0 var(--night-raised); }
   .tile .have { position: absolute; right: 2px; bottom: 2px; }
   .rs .pill { height: 18px; }
-  .path .st { height: 22px; display: flex; align-items: center; gap: 8px; font-size: 12.5px; position: relative; padding-left: 2px; }
-  .path .st.tgt { background: var(--sel); border-radius: 4px; margin: 0 -6px; padding: 0 6px 0 8px; }
-  .path .st .ln { position: absolute; left: 9px; top: -6px; width: 2px; height: 12px; background: var(--moon); }
-  .path .st .ln.dk { background: var(--dusk); width: 1px; left: 9.5px; }
-  .path .eh { font-size: 11px; color: var(--mist); margin: 2px 0; }
+  /* Path card: the star chart (see docs/design/path-section-proposal.md) */
+  .path { padding-bottom: 6px; }
+  .path svg.chart { display: block; width: 100%; height: auto; }
+  .path svg.chart text { font-family: "Noto Sans", "Segoe UI", sans-serif; }
+  .path svg.chart .breath { animation: ringbreath 2.4s ease-in-out infinite; }
+  .path svg.chart .twinkle { animation: twinkle 4s ease-in-out infinite; }
+  @keyframes ringbreath { 0%,100% { stroke-opacity: .35 } 50% { stroke-opacity: .55 } }
+  @keyframes twinkle { 0%,100% { opacity: .24 } 50% { opacity: .40 } }
+
+  /* Standalone path panels under the window */
+  .pathstrip { margin-top: 26px; width: 1100px; display: grid; grid-template-columns: 360px 1fr; gap: 16px; align-items: start; }
+  .pathstrip .stage { background: var(--night); border: 1px solid var(--night-line); border-radius: 8px; padding: 10px; }
+  .pathstrip .stage .card.path { width: 340px; height: 420px; }
+  .pathstrip .notes { background: var(--night); border: 1px solid var(--night-line); border-radius: 8px; padding: 12px 14px; }
+  .pathstrip .notes h3 { margin: 0 0 8px; font-size: 12.5px; font-weight: 600; }
+  .pathstrip .notes .card.path { width: 300px; display: inline-block; vertical-align: top; margin: 0 12px 10px 0; }
+  .pathstrip .legend { font-size: 11px; color: var(--mist); line-height: 1.5; max-width: 700px; }
+  .pathstrip .legend b { color: var(--silver); font-weight: 500; }
   .giver { font-size: 12.5px; } .giver .z { color: var(--mist); font-size: 11.5px; }
   .actions { height: 32px; border-top: 1px solid var(--night-line); display: flex; align-items: center; gap: 4px; padding: 0 8px; background: var(--night); }
   .actions .ab { width: 28px; height: 28px; border-radius: 14px; background: var(--night-raised); display: flex; align-items: center; justify-content: center; color: var(--mist); }
@@ -287,12 +300,9 @@
           </div>
         </div>
         <div class="card path">
-          <h4><svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="4" cy="4" r="2"/><circle cx="12" cy="12" r="2"/><path d="M6 4h4a2 2 0 0 1 2 2v4"/></svg>Path<span class="r">7 steps · 3 done</span></h4>
-          <div class="eh">A Realm Reborn</div>
-          <div class="st"><i class="state" data-s="Completed" data-size="14"></i>Close to Home</div>
-          <div class="st"><span class="ln"></span><i class="state" data-s="Completed" data-size="14"></i>Sylphic Studies <span class="cap">· 2 folded</span></div>
-          <div class="st"><span class="ln"></span><i class="state" data-s="Completed" data-size="14"></i>Sylph-management</div>
-          <div class="st tgt"><span class="ln dk" style="left:15.5px"></span><i class="state" data-s="Blocked" data-size="14"></i>Brotherhood of Ash</div>
+          <h4><svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="4" cy="4" r="2"/><circle cx="12" cy="12" r="2"/><path d="M6 4h4a2 2 0 0 1 2 2v4"/></svg>Path<span class="r">4 steps · 3 done</span></h4>
+          <!-- Star chart: sky band, folded bead, last completed step, the target with halo, Unlocks-next tail. -->
+          <svg class="chart" data-chart="window"></svg>
         </div>
         <div class="card giver">
           <h4><svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a5 5 0 0 0-5 5c0 3.7 5 9 5 9s5-5.3 5-9a5 5 0 0 0-5-5zm0 7a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/></svg>Giver</h4>
@@ -317,6 +327,29 @@
     <span class="dot">·</span><span class="pip" style="animation:none;opacity:.9"></span><span>live</span>
     <span class="dot">·</span><span class="msq">MSQ · Close to Home <svg width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2.5 1l3 3-3 3"/></svg></span>
     <span class="ver">v0.5.0</span>
+  </div>
+</div>
+
+<!-- ---------- Path card, standalone (docs/design/path-section-proposal.md) ---------- -->
+<div class="pathstrip">
+  <div class="stage">
+    <div class="card path">
+      <h4><svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="4" cy="4" r="2"/><circle cx="12" cy="12" r="2"/><path d="M6 4h4a2 2 0 0 1 2 2v4"/></svg>Path<span class="r">14 steps · 10 done</span></h4>
+      <svg class="chart" data-chart="full"></svg>
+    </div>
+  </div>
+  <div class="notes">
+    <h3>Path card at 360 × 420 — every element at once</h3>
+    <p class="legend">Three <b>sky bands</b> (one per expansion, alternating Silver @ 0.03 tint, pre-seeded star field at 1 star / 1,400 px² in three magnitudes) headed by a <b>four-point star</b> on the thread and a fading rule. Completed runs fold into a <b>bead</b> (capsule on the thread, "N moons walked"). The <b>gold thread</b> (2 px Moon over a 5 px glow) runs wherever the step above is done and turns into a <b>dashed silver thread</b> where it is not. An <b>Any-join alternative</b> is a hollow dashed ghost node whose curve merges into the join. The <b>target</b> is the one large moon: spotlight row, three-layer halo, a breathing orrery ring. <b>Unlocks next</b> hangs off the continuing spine as a comb behind a hollow star junction, trailing off in three fading dots after "and N more".</p>
+    <h3 style="margin-top:12px">States: bead expanded · hovered row · path of one</h3>
+    <div class="card path">
+      <h4><svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="4" cy="4" r="2"/><circle cx="12" cy="12" r="2"/><path d="M6 4h4a2 2 0 0 1 2 2v4"/></svg>Path<span class="r">5 steps · 3 done</span></h4>
+      <svg class="chart" data-chart="states"></svg>
+    </div>
+    <div class="card path">
+      <h4><svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="4" cy="4" r="2"/><circle cx="12" cy="12" r="2"/><path d="M6 4h4a2 2 0 0 1 2 2v4"/></svg>Path<span class="r">1 step</span></h4>
+      <svg class="chart" data-chart="single"></svg>
+    </div>
   </div>
 </div>
 
@@ -404,6 +437,16 @@
 
   // The eight state glyphs (spec 2.1). r = 42% of the box, leaving room for rings, notch and halo.
   function state(name, size) {
+    return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="display:block;flex:none">${stateInner(name, size)}</svg>`;
+  }
+
+  // Same glyph as a nested <svg> placed by centre inside a larger drawing.
+  function stateAt(name, cx, cy, r) {
+    const size = Math.round(r / 0.42);
+    return `<svg x="${cx - size / 2}" y="${cy - size / 2}" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" overflow="visible">${stateInner(name, size)}</svg>`;
+  }
+
+  function stateInner(name, size) {
     const cx = size / 2, cy = size / 2, r = size * 0.42;
     const ring = Math.max(1.2, r * 0.12);
     const gold = r >= 9 ? 'url(#gGold)' : C.moon, silver = r >= 9 ? 'url(#gSilver)' : C.silver;
@@ -425,8 +468,240 @@
         out = disc + `<circle cx="${cx}" cy="${cy}" r="${rr}" fill="none" stroke="${C.veilText}" stroke-width="${ring}" stroke-dasharray="${dash} ${seg - dash}" transform="rotate(-90 ${cx} ${cy})"/>`;
       }
     }
-    return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="display:block;flex:none">${out}</svg>`;
+    return out;
   }
+
+  // ---------- Path star chart (docs/design/path-section-proposal.md §4) ----------
+  // Rows: band {name} · bead {n, open?, run?} · step {name, s, hover?} · alt {name, steps} · target {name, s}
+  //       · uhead {n} · unlock {name, s} · more {n} · caption {text}. All sizes are logical px at scale 1.0.
+  const P = { mist: '#A9B2CC', sunken: '#0B0F1C', hover: '#262D45', veilLine: '#5C6584', eclipseText: '#D68AA8' };
+  const H = { band: 20, bead: 24, step: 24, alt: 22, target: 32, uhead: 20, unlock: 22, more: 18, inner: 22, caption: 16 };
+  const TX = 18, LX = 36, GX = 40, GLX = 52;
+
+  function nameColor(s, target) {
+    if (target) return C.silver;
+    switch (s) { case 'Completed': return P.mist; case 'Foreclosed': return P.eclipseText; case 'Unknown': return C.veilText; default: return C.silver; }
+  }
+  function star4(cx, cy, ro, ri) {
+    const pts = [];
+    for (let i = 0; i < 8; i++) { const a = (-90 + 45 * i) * Math.PI / 180, r = i % 2 ? ri : ro; pts.push(`${(cx + r * Math.cos(a)).toFixed(2)},${(cy + r * Math.sin(a)).toFixed(2)}`); }
+    return `M${pts.join('L')}Z`;
+  }
+  function dashed(x1, y1, x2, y2, col, op) {
+    // ImGui has no dash pattern: one AddLine per 3 px dash on a 6 px period, phase starting at the upper rim.
+    const len = Math.hypot(x2 - x1, y2 - y1), ux = (x2 - x1) / len, uy = (y2 - y1) / len;
+    let out = '';
+    for (let t = 0; t < len; t += 6) {
+      const e = Math.min(t + 3, len);
+      out += `<line x1="${(x1 + ux * t).toFixed(1)}" y1="${(y1 + uy * t).toFixed(1)}" x2="${(x1 + ux * e).toFixed(1)}" y2="${(y1 + uy * e).toFixed(1)}" stroke="${col}" stroke-opacity="${op}" stroke-width="1"/>`;
+    }
+    return out;
+  }
+  function walked(x1, y1, x2, y2) {
+    return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${C.moon}" stroke-opacity=".10" stroke-width="5" stroke-linecap="round"/>`
+         + `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${C.moon}" stroke-opacity=".9" stroke-width="2"/>`;
+  }
+  function rule(x, y, w) { return `<rect x="${x}" y="${y}" width="${Math.max(0, w)}" height="1" fill="url(#rule)"/>`; }
+
+  function chart(spec) {
+    const w = spec.w;
+    // Layout pass: row y and height, band extents, node centres.
+    let y = 0; const rows = [];
+    for (const r of spec.rows) {
+      let h = H[r.k];
+      if (r.k === 'bead' && r.open) h += H.inner * r.run.length;
+      rows.push({ ...r, y, h, cy: y + h / 2 });
+      y += h;
+    }
+    const total = y + 4;
+    const bands = [];
+    rows.forEach((r, i) => { if (r.k === 'band') bands.push({ i, y0: r.y, name: r.name }); });
+    bands.forEach((b, i) => {
+      const next = rows.find((r, j) => j > b.i && (r.k === 'band' || r.k === 'uhead'));
+      b.y1 = next ? next.y : total;
+    });
+    const nodes = [];  // exclusion zones for the star field
+    rows.forEach(r => { if (['bead', 'step', 'target'].includes(r.k)) nodes.push([TX, r.cy]); if (['alt', 'unlock'].includes(r.k)) nodes.push([GX, r.cy]); });
+
+    let bg = '', stars = '', fills = '', threads = '', glyphs = '', text = '';
+    // Sky bands + star field (deterministic LCG per band; ImGui: pre-seeded float[] on the model).
+    bands.forEach((b, i) => {
+      if (i % 2 === 1) bg += `<rect x="2" y="${b.y0}" width="${w - 4}" height="${b.y1 - b.y0}" rx="4" fill="${C.silver}" fill-opacity=".03"/>`;
+      bg += `<rect x="2" y="${b.y0}" width="${w - 4}" height="1" fill="${C.silver}" fill-opacity=".05"/>`;
+      let seed = (spec.seed || 1) * 7919 + i * 104729 + rows.length;
+      const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+      const n = Math.max(6, Math.min(48, Math.round((w - 4) * (b.y1 - b.y0) / 1400)));
+      for (let k = 0; k < n; k++) {
+        const sx = 4 + rnd() * (w - 8), sy = b.y0 + 3 + rnd() * (b.y1 - b.y0 - 6), m = rnd();
+        if (Math.abs(sx - TX) < 6) continue;
+        if (nodes.some(([nx, ny]) => Math.hypot(sx - nx, sy - ny) < 12)) continue;
+        const row = rows.find(r => sy >= r.y && sy < r.y + r.h);
+        if (row && row.name && ['step', 'target', 'bead'].includes(row.k) && sx >= LX - 2 && sx <= LX + row.name.length * 6.6 && Math.abs(sy - row.cy) < 7) continue;
+        if (m < 0.70) stars += `<rect x="${(sx - .5).toFixed(1)}" y="${(sy - .5).toFixed(1)}" width="1" height="1" fill="${C.silver}" fill-opacity=".14"/>`;
+        else if (m < 0.95) stars += `<circle cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" r="1" fill="${C.silver}" fill-opacity=".22"/>`;
+        else stars += `<g class="twinkle" style="animation-delay:${(-rnd() * 4).toFixed(1)}s"><circle cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" r="1.5" fill="${C.silver}"/><path d="M${(sx - 3.5).toFixed(1)} ${sy.toFixed(1)}h7M${sx.toFixed(1)} ${(sy - 3.5).toFixed(1)}v7" stroke="${C.silver}" stroke-opacity=".4" stroke-width="1"/></g>`;
+      }
+    });
+
+    let prev = null;           // previous main-thread node: {y, r, done}
+    let pendingAlts = [];      // ghost nodes waiting for their join node
+    let spineFrom = null, lastUnlock = null, moreRow = null;
+    const joinThread = (cy, r) => {
+      if (prev) threads += prev.done ? walked(TX, prev.y + prev.r, TX, cy - r) : dashed(TX, prev.y + prev.r, TX, cy - r, C.silver, .45);
+      for (const a of pendingAlts) threads += `<path d="M${GX} ${a.cy + 5} C${GX} ${a.cy + 17}, ${TX} ${cy - r - 12}, ${TX} ${cy - r}" fill="none" stroke="${C.dusk}" stroke-opacity=".6" stroke-width="1"/>`;
+      pendingAlts = [];
+    };
+    for (const r of rows) {
+      switch (r.k) {
+        case 'band': {
+          glyphs += `<path d="${star4(TX, r.cy, 4, 1.6)}" fill="${C.dusk}"/>`;
+          const label = r.name.toUpperCase();
+          text += `<text x="${LX}" y="${r.cy + 3.5}" font-size="10.5" letter-spacing=".6" fill="${P.mist}">${label}</text>`;
+          threads += rule(LX + label.length * 7.2 + 8, r.cy, w - 4 - (LX + label.length * 7.2 + 8));
+          break;
+        }
+        case 'bead': {
+          const cy = r.y + H.bead / 2;
+          joinThread(cy, 11);
+          if (!r.open) {
+            glyphs += `<rect x="${TX - 7}" y="${cy - 11}" width="14" height="22" rx="7" fill="${P.sunken}" stroke="${C.moon}" stroke-opacity="${r.hover ? 1 : .6}" stroke-width="1"/>`
+                    + [-5, 0, 5].map(d => `<circle cx="${TX}" cy="${cy + d}" r="1.1" fill="${C.moon}"/>`).join('');
+            text += `<text x="${LX}" y="${cy + 4}" font-size="11" fill="${r.hover ? P.mist : C.dusk}">${r.n} moons walked</text>`
+                  + `<text x="${LX + 8 + String(r.n).length * 6.5 + 74}" y="${cy + 4}" font-size="11" fill="${C.dusk}">›</text>`;
+            prev = { y: cy, r: 11, done: true };
+          } else {
+            glyphs += `<circle cx="${TX}" cy="${cy}" r="7" fill="none" stroke="${C.moon}" stroke-width="1"/>`
+                    + `<path d="M${TX - 2.5} ${cy - 1}l2.5 2.5 2.5-2.5" fill="none" stroke="${C.moon}" stroke-width="1.2"/>`;
+            text += `<text x="${LX}" y="${cy + 4}" font-size="11" fill="${P.mist}">${r.n} moons walked</text>`;
+            const last = cy + H.bead / 2 + H.inner * r.run.length - H.inner / 2;
+            fills += `<rect x="4" y="${cy - 8}" width="1" height="${last - cy + 16}" fill="${C.moon}" fill-opacity=".25"/>`;
+            let p = { y: cy, r: 7, done: true };
+            r.run.forEach((nm, i) => {
+              const icy = r.y + H.bead + H.inner * i + H.inner / 2;
+              threads += walked(TX, p.y + p.r, TX, icy - 6);
+              glyphs += stateAt('Completed', TX, icy, 6);
+              text += `<text x="${LX}" y="${icy + 4}" font-size="12" fill="${P.mist}">${nm}</text>`;
+              p = { y: icy, r: 6, done: true };
+            });
+            prev = p;
+          }
+          break;
+        }
+        case 'step': {
+          joinThread(r.cy, 7);
+          if (r.hover) fills += `<rect x="34" y="${r.y + 2}" width="${w - 36}" height="${r.h - 4}" rx="4" fill="${P.hover}"/>`
+                              + [[1.6, .016], [1.35, .028], [1.15, .04]].map(([s, a]) => `<circle cx="${TX}" cy="${r.cy}" r="${7 * s}" fill="${C.moon}" fill-opacity="${a}"/>`).join('');
+          glyphs += stateAt(r.s, TX, r.cy, 7);
+          text += `<text x="${LX}" y="${r.cy + 4.5}" font-size="12.5" fill="${r.hover ? C.silver : nameColor(r.s)}">${r.name}</text>`;
+          prev = { y: r.cy, r: 7, done: r.s === 'Completed' };
+          break;
+        }
+        case 'alt': {
+          const circ = 2 * Math.PI * 5, seg = circ / 8, dash = seg * (22 / 45);
+          glyphs += `<circle cx="${GX}" cy="${r.cy}" r="5" fill="none" stroke="${C.dusk}" stroke-width="1" stroke-dasharray="${dash.toFixed(2)} ${(seg - dash).toFixed(2)}" transform="rotate(-90 ${GX} ${r.cy})"/>`;
+          text += `<text x="${GLX}" y="${r.cy + 4}" font-size="11" fill="${C.dusk}">or via <tspan fill="${C.veilText}">${r.name}</tspan> · ${r.steps} steps</text>`;
+          pendingAlts.push(r);
+          break;
+        }
+        case 'target': {
+          joinThread(r.cy, 9);
+          fills += `<rect x="2" y="${r.y + 2}" width="${w - 4}" height="${r.h - 4}" rx="4" fill="url(#spot)"/>`;
+          glyphs += [[2.2, .04], [1.7, .07], [1.35, .10]].map(([s, a]) => `<circle cx="${TX}" cy="${r.cy}" r="${9 * s}" fill="${C.moon}" fill-opacity="${a}"/>`).join('')
+                  + `<circle class="breath" cx="${TX}" cy="${r.cy}" r="13.5" fill="none" stroke="${C.moon}" stroke-opacity=".45" stroke-width="1"/>`
+                  + stateAt(r.s, TX, r.cy, 9);
+          text += `<text x="${LX}" y="${r.cy + 4.5}" font-size="12.5" font-weight="600" fill="${C.silver}">${r.name}</text>`;
+          prev = null; spineFrom = r.cy + 9;
+          break;
+        }
+        case 'caption': {
+          text += `<text x="${LX}" y="${r.cy + 3.5}" font-size="10.5" fill="${C.dusk}">${r.text}</text>`;
+          break;
+        }
+        case 'uhead': {
+          glyphs += `<path d="${star4(TX, r.cy, 4, 1.6)}" fill="none" stroke="${C.dusk}" stroke-width="1"/>`;
+          const label = `UNLOCKS NEXT · ${r.n}`;
+          text += `<text x="${LX}" y="${r.cy + 3.5}" font-size="10.5" letter-spacing=".6" fill="${r.n === 'none' ? C.dusk : P.mist}">${label}</text>`;
+          threads += rule(LX + label.length * 7 + 8, r.cy, w - 4 - (LX + label.length * 7 + 8));
+          break;
+        }
+        case 'unlock': {
+          threads += `<path d="M${TX} ${r.cy - 11} Q${TX} ${r.cy} ${TX + 12} ${r.cy} H${GX - 6}" fill="none" stroke="${C.silver}" stroke-opacity=".35" stroke-width="1"/>`;
+          if (r.hover) fills += `<rect x="34" y="${r.y + 2}" width="${w - 36}" height="${r.h - 4}" rx="4" fill="${P.hover}"/>`;
+          glyphs += stateAt(r.s, GX, r.cy, 6);
+          text += `<text x="${GLX}" y="${r.cy + 4.5}" font-size="12.5" fill="${nameColor(r.s)}">${r.name}</text>`;
+          lastUnlock = r;
+          break;
+        }
+        case 'more': {
+          text += `<text x="${GLX}" y="${r.cy + 4}" font-size="11" fill="${C.dusk}">and ${r.n} more</text>`;
+          moreRow = r;
+          break;
+        }
+      }
+    }
+    // The Unlocks spine: dashed and dimmer, ending in three fading dots.
+    if (spineFrom !== null) {
+      const end = lastUnlock ? lastUnlock.cy + 2 : spineFrom + 6;
+      if (end > spineFrom) threads += dashed(TX, spineFrom, TX, end, C.silver, .35);
+      threads += [[.3, 5], [.2, 10], [.1, 15]].map(([a, d]) => `<circle cx="${TX}" cy="${end + d}" r=".8" fill="${C.silver}" fill-opacity="${a}"/>`).join('');
+    }
+    const defs = `<defs><linearGradient id="spot" x1="0" x2="1"><stop offset="0" stop-color="${C.moon}" stop-opacity=".14"/><stop offset="1" stop-color="${C.moon}" stop-opacity=".02"/></linearGradient>`
+               + `<linearGradient id="rule" x1="0" x2="1"><stop offset="0" stop-color="${P.veilLine}" stop-opacity=".6"/><stop offset="1" stop-color="${P.veilLine}" stop-opacity="0"/></linearGradient></defs>`;
+    return { w, h: total, inner: defs + bg + stars + fills + threads + glyphs + text };
+  }
+
+  const charts = {
+    // Inside the window (Brotherhood of Ash): one band, a bead, the arriving step, the target, one unlock.
+    window: { w: 324, seed: 3, rows: [
+      { k: 'band', name: 'A Realm Reborn' },
+      { k: 'bead', n: 2 },
+      { k: 'step', name: 'Sylph-management', s: 'Completed' },
+      { k: 'target', name: 'Brotherhood of Ash', s: 'Blocked' },
+      { k: 'uhead', n: 1 },
+      { k: 'unlock', name: 'Sylphic Sympathy', s: 'Blocked' },
+    ] },
+    // Standalone 360 × 420: three bands, beads, two future steps, an Any-join alternative, the target, the tail.
+    full: { w: 320, seed: 7, rows: [
+      { k: 'band', name: 'A Realm Reborn' },
+      { k: 'bead', n: 5 },
+      { k: 'step', name: 'Sylph-management', s: 'Completed' },
+      { k: 'band', name: 'Heavensward' },
+      { k: 'bead', n: 3 },
+      { k: 'step', name: 'A Fortuitous Encounter', s: 'Completed' },
+      { k: 'band', name: 'Stormblood' },
+      { k: 'step', name: 'The Rising Tide', s: 'Ready' },
+      { k: 'step', name: 'Under the Moonlight', s: 'Blocked' },
+      { k: 'alt', name: 'A Distant Shore', steps: 3 },
+      { k: 'target', name: 'Brotherhood of Ash', s: 'Blocked' },
+      { k: 'uhead', n: 3 },
+      { k: 'unlock', name: 'Sylphic Sympathy', s: 'Blocked' },
+      { k: 'unlock', name: 'Moonlit Vows', s: 'Unknown' },
+      { k: 'unlock', name: 'Whispers in the Dark', s: 'Blocked' },
+      { k: 'more', n: 2 },
+    ] },
+    // Bead expanded (with its bracket), a hovered future step, the target.
+    states: { w: 280, seed: 11, rows: [
+      { k: 'band', name: 'A Realm Reborn' },
+      { k: 'bead', n: 3, open: true, run: ['Close to Home', 'Sylphic Studies', 'Sylph-management'] },
+      { k: 'step', name: 'The Rising Tide', s: 'Ready', hover: true },
+      { k: 'target', name: 'Brotherhood of Ash', s: 'Blocked' },
+      { k: 'uhead', n: 'none' },
+    ] },
+    // A quest that starts its own path.
+    single: { w: 280, seed: 5, rows: [
+      { k: 'target', name: 'Close to Home', s: 'Completed' },
+      { k: 'caption', text: 'Starts its own path — no previous quests.' },
+      { k: 'uhead', n: 2 },
+      { k: 'unlock', name: 'A Hero in the Making', s: 'Completed' },
+      { k: 'unlock', name: 'Sylphic Studies', s: 'Completed' },
+    ] },
+  };
+  document.querySelectorAll('svg.chart').forEach(el => {
+    const c = chart(charts[el.dataset.chart]);
+    el.setAttribute('viewBox', `0 0 ${c.w} ${c.h}`);
+    el.setAttribute('width', c.w); el.setAttribute('height', c.h);
+    el.innerHTML = c.inner;
+  });
 
   document.querySelectorAll('i.moon').forEach(el => {
     el.outerHTML = gauge(+el.dataset.size, +el.dataset.f, el.dataset.arc === '1', el.dataset.old === '1');

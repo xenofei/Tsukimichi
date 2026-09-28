@@ -1,21 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Tsukimichi glyph system v2 — design sheet (proposal, see proposal.md).
+  Tsukimichi glyph system v2.1 — design sheet (proposal, see proposal.md).
 
-  Hand-authored geometry only: circles, paths, clipPath, gradients, one blur
-  filter. No raster, no external fonts (Segoe UI / sans-serif for labels).
+  Hand-authored geometry only: circles, ellipses, lines, paths, clipPath,
+  gradients, blur filters, one saturate filter (the greyscale test line).
+  No raster, no external fonts (Segoe UI / sans-serif for labels).
 
   Every glyph is authored once at UNIT radius inside <defs> and placed with
   <use transform="translate(x,y) scale(r)">. Stroke widths inside a symbol are
-  therefore fractions of r; the three size classes (L ≥ 16 px radius, M ≥ 9 px,
-  S below) carry different fractions because the outline rule is
-  o = clamp(0.10·r, 1.25 px, 3 px) and dashes drop from 12 to 8 below r = 10.
+  therefore fractions of r; the size classes (L = 16 px radius, also used at 28;
+  M = 10.5; S = 7; XS = 6) carry different fractions because the rim rule is
+  o = clamp(0.12·r, 1.5 px, 3 px) and dashes drop from 12 to 8 below r = 10.
+  (At r = 28 the clamp would give 3.0 px; the L symbol draws 3.36 px. Accepted
+  deviation on a 64 px reference glyph.)
+
+  v2.1 changes (owner review + accessibility panel A1/A2/A4/B1):
+    · Accepted = early waxing gibbous, lit WIDTH 60 % (terminator through the poles,
+      equator crossing x = −0.20 r → circle centre 2.4 r, radius 2.6 r), SILVER rim,
+      plus a Night "seal" dot at (0.40 r, 0), radius max(0.16 r, 1.5 px). Row 0 shows
+      the candidates considered and a greyscale line.
+    · Unlit disc = Shadow #3A4363 (one answer with ui-revamp §2.7); Bruise dropped.
+    · Foreclosed = Shadow disc, Eclipse rim, Eclipse diagonal bar max(2 px, 0.22 r);
+      the notch stays from r ≥ 12 as decoration.
+    · Ready below r = 9: one 1 px Moon ring at 1.25 r @ 35 % instead of the glow.
+    · Halo: track VeilLine #5C6584, stroke max(2 px, 0.18 R), core (Shadow + Dusk rim)
+      only from R ≥ 12 (24 px box); 16 px = track + arc, number beside it.
+    · Lit regions with r ≥ 12 px carry interior detail (#lunar-gold / #lunar-silver).
 
   Tokens: Night #0F1424 · Moon #F2D27A · Silver #DDE3F0 · Dusk #7C86A8
-          Eclipse #B25C7F · Veil #4A5270 · Umbra #2C334A (old UnlitDisc)
-          Bruise #645574 (Veil→Eclipse 25 %)
+          Eclipse #B25C7F · Veil #4A5270 · VeilLine #5C6584 · Shadow #3A4363
+          Umbra #2C334A (maria tint only)
 -->
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700" width="1200" height="700"
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 930" width="1200" height="930"
      font-family="'Segoe UI', sans-serif">
   <defs>
     <!-- Lit-disc shading: highlight upper-left, deeper tone at the rim. Unit space. -->
@@ -29,353 +45,529 @@
       <stop offset="0.42" stop-color="#DDE3F0"/>
       <stop offset="1"    stop-color="#B9C2D8"/>
     </radialGradient>
+    <!-- Rim vignette (§3.6): Umbra rising quadratically from 0 at 0.72 r to the peak at the rim. -->
+    <radialGradient id="vigGold" gradientUnits="userSpaceOnUse" cx="0" cy="0" r="1">
+      <stop offset="0.72" stop-color="#2C334A" stop-opacity="0"/>
+      <stop offset="0.86" stop-color="#2C334A" stop-opacity="0.04"/>
+      <stop offset="1"    stop-color="#2C334A" stop-opacity="0.16"/>
+    </radialGradient>
+    <radialGradient id="vigSilver" gradientUnits="userSpaceOnUse" cx="0" cy="0" r="1">
+      <stop offset="0.72" stop-color="#2C334A" stop-opacity="0"/>
+      <stop offset="0.86" stop-color="#2C334A" stop-opacity="0.03"/>
+      <stop offset="1"    stop-color="#2C334A" stop-opacity="0.12"/>
+    </radialGradient>
 
     <!-- Glow = blurred duplicate of the lit shape (unit space, so it scales with r). -->
     <filter id="glow" x="-80%" y="-80%" width="260%" height="260%">
       <feGaussianBlur stdDeviation="0.28"/>
     </filter>
-    <filter id="glowSoft" x="-80%" y="-80%" width="260%" height="260%">
-      <feGaussianBlur stdDeviation="0.18"/>
+    <!-- Soft edges for the maria (σ = 0.05 r) and the terminator glow band (σ = 0.03 r). -->
+    <filter id="soft" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="0.05"/>
     </filter>
+    <filter id="band" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="0.03"/>
+    </filter>
+    <!-- Greyscale test (achromatopsia / monochrome stream). -->
+    <filter id="grey"><feColorMatrix type="saturate" values="0"/></filter>
 
+    <!-- ============ INTERIOR DETAIL (§3.6), unit disc space, always clipped to the lit region ============
+         maria: soft Umbra ellipses · craters: Umbra floor 14 %, shadow arc upper-left (C1 only),
+         white highlight edge lower-right · vignette: Umbra 16 % at the rim. Terminator glow is
+         per phase (a 0.24 r stroke on the terminator circle, clipped to the lit side = 0.12 r band). -->
+    <g id="lunar-gold">
+      <g fill="#2C334A" filter="url(#soft)">
+        <ellipse cx="-0.30" cy="-0.24" rx="0.32" ry="0.24" transform="rotate(-25 -0.30 -0.24)" fill-opacity="0.20"/>
+        <ellipse cx="0.30"  cy="0.06"  rx="0.24" ry="0.20" transform="rotate(-15 0.30 0.06)"   fill-opacity="0.18"/>
+        <ellipse cx="-0.10" cy="0.40"  rx="0.30" ry="0.14" transform="rotate(10 -0.10 0.40)"   fill-opacity="0.18"/>
+      </g>
+      <g fill="#2C334A" fill-opacity="0.14">
+        <circle cx="0.34"  cy="-0.46" r="0.120"/>
+        <circle cx="-0.50" cy="0.30"  r="0.095"/>
+        <circle cx="0.10"  cy="0.60"  r="0.075"/>
+      </g>
+      <g fill="none" stroke-width="0.035" stroke-linecap="round">
+        <path d="M 0.2407,-0.4425 A 0.1008 0.1008 0 0 1 0.3745,-0.5547" stroke="#2C334A" stroke-opacity="0.30"/>
+        <path d="M 0.4534,-0.4800 A 0.1152 0.1152 0 0 1 0.3006,-0.3517" stroke="#FFFFFF" stroke-opacity="0.38"/>
+        <path d="M -0.4102,0.2842 A 0.0912 0.0912 0 0 1 -0.5312,0.3857" stroke="#FFFFFF" stroke-opacity="0.38"/>
+        <path d="M 0.1709,0.5875 A 0.0720 0.0720 0 0 1 0.0754,0.6677"   stroke="#FFFFFF" stroke-opacity="0.38"/>
+      </g>
+      <circle r="1" fill="url(#vigGold)"/>
+    </g>
+    <g id="lunar-silver">
+      <g fill="#2C334A" filter="url(#soft)">
+        <ellipse cx="-0.30" cy="-0.24" rx="0.32" ry="0.24" transform="rotate(-25 -0.30 -0.24)" fill-opacity="0.14"/>
+        <ellipse cx="0.30"  cy="0.06"  rx="0.24" ry="0.20" transform="rotate(-15 0.30 0.06)"   fill-opacity="0.13"/>
+        <ellipse cx="-0.10" cy="0.40"  rx="0.30" ry="0.14" transform="rotate(10 -0.10 0.40)"   fill-opacity="0.13"/>
+      </g>
+      <g fill="#2C334A" fill-opacity="0.14">
+        <circle cx="0.34"  cy="-0.46" r="0.120"/>
+        <circle cx="-0.50" cy="0.30"  r="0.095"/>
+        <circle cx="0.10"  cy="0.60"  r="0.075"/>
+      </g>
+      <g fill="none" stroke-width="0.035" stroke-linecap="round">
+        <path d="M 0.2407,-0.4425 A 0.1008 0.1008 0 0 1 0.3745,-0.5547" stroke="#2C334A" stroke-opacity="0.30"/>
+        <path d="M 0.4534,-0.4800 A 0.1152 0.1152 0 0 1 0.3006,-0.3517" stroke="#FFFFFF" stroke-opacity="0.30"/>
+        <path d="M -0.4102,0.2842 A 0.0912 0.0912 0 0 1 -0.5312,0.3857" stroke="#FFFFFF" stroke-opacity="0.30"/>
+        <path d="M 0.1709,0.5875 A 0.0720 0.0720 0 0 1 0.0754,0.6677"   stroke="#FFFFFF" stroke-opacity="0.30"/>
+      </g>
+      <circle r="1" fill="url(#vigSilver)"/>
+    </g>
 
-    <!-- ============ STATE GLYPHS, class L (r ≥ 16 px): o/r = 0.10, ring at 0.95 r, shading + highlight arc ============ -->
+    <!-- Lit-region clips (unit space). Phases use a terminator circle through the poles. -->
+    <clipPath id="clip-disc"><circle r="1"/></clipPath>
+    <clipPath id="clip-acc"><path d="M 0,-1 A 1 1 0 0 1 0,1 A 2.6 2.6 0 0 1 0,-1 Z"/></clipPath>           <!-- 60 % waxing -->
+    <clipPath id="clip-half"><path d="M 0,-1 A 1 1 0 0 1 0,1 Z"/></clipPath>                                  <!-- first quarter -->
+    <clipPath id="clip-wan"><path d="M -0.25,-0.968 A 1 1 0 0 0 -0.25,0.968 A 1 1 0 1 0 -0.25,-0.968 Z"/></clipPath> <!-- waning 75 % -->
+    <clipPath id="clip-core-03"><path d="M 0,-1 A 1 1 0 0 1 0,1 A 1.0409 1.0409 0 0 0 0,-1 Z"/></clipPath>
+    <clipPath id="clip-core-10"><path d="M 0,-1 A 1 1 0 0 1 0,1 A 1.1013 1.1013 0 0 0 0,-1 Z"/></clipPath>
+    <clipPath id="clip-core-25"><path d="M 0,-1 A 1 1 0 0 1 0,1 A 1.4500 1.4500 0 0 0 0,-1 Z"/></clipPath>
+    <clipPath id="clip-core-75"><path d="M 0,-1 A 1 1 0 0 1 0,1 A 1.4500 1.4500 0 0 1 0,-1 Z"/></clipPath>
+    <clipPath id="clip-core-90"><path d="M 0,-1 A 1 1 0 0 1 0,1 A 1.1013 1.1013 0 0 1 0,-1 Z"/></clipPath>
+    <clipPath id="clip-core-97"><path d="M 0,-1 A 1 1 0 0 1 0,1 A 1.0409 1.0409 0 0 1 0,-1 Z"/></clipPath>
+
+    <!-- Terminator glow bands (unit space): stroke on the terminator, clipped to the lit side. -->
+    <g id="band-acc"><circle cx="2.4" r="2.6" fill="none" stroke="#FFF0BE" stroke-width="0.24" opacity="0.30" filter="url(#band)"/></g>
+    <g id="band-half-gold"><rect x="-0.12" y="-1" width="0.24" height="2" fill="#FFF0BE" opacity="0.30" filter="url(#band)"/></g>
+    <g id="band-half-silver"><rect x="-0.12" y="-1" width="0.24" height="2" fill="#FFFFFF" opacity="0.25" filter="url(#band)"/></g>
+    <g id="band-wan"><circle cx="-0.5" r="1" fill="none" stroke="#FFFFFF" stroke-width="0.24" opacity="0.25" filter="url(#band)"/></g>
+
+    <!-- Shared lit shapes -->
+    <path id="gib60" d="M 0,-1 A 1 1 0 0 1 0,1 A 2.6 2.6 0 0 1 0,-1 Z"/>
+    <path id="gib66" d="M 0,-1 A 1 1 0 0 1 0,1 A 1.7225 1.7225 0 0 1 0,-1 Z"/>
+    <path id="lens75" d="M 0.25,-0.968 A 1 1 0 0 1 0.25,0.968 A 1 1 0 1 1 0.25,-0.968 Z"/>
+    <path id="half" d="M 0,-1 A 1 1 0 0 1 0,1 Z"/>
+
+    <!-- ============ STATE GLYPHS, class L (r = 16 px; also used at 28): o/r = 0.12, rim at 0.94 r, shading + detail + highlight arc ============ -->
     <g id="st-completed-L">
       <circle r="1" fill="url(#gold)"/>
+      <g clip-path="url(#clip-disc)"><use href="#lunar-gold"/></g>
       <path d="M -0.714,-0.260 A 0.76 0.76 0 0 1 -0.235,-0.723" fill="none" stroke="#FFFFFF" stroke-opacity="0.32" stroke-width="0.06" stroke-linecap="round"/>
     </g>
     <g id="st-accepted-L">
-      <circle r="1" fill="#4A5270"/>
-      <path d="M 0.25,-0.968 A 1 1 0 0 1 0.25,0.968 A 1 1 0 1 1 0.25,-0.968 Z" fill="url(#gold)"/>
-      <circle r="0.95" fill="none" stroke="#F2D27A" stroke-width="0.10"/>
+      <circle r="1" fill="#3A4363"/>
+      <use href="#gib60" fill="url(#gold)"/>
+      <g clip-path="url(#clip-acc)"><use href="#lunar-gold"/><use href="#band-acc"/></g>
+      <circle cx="0.40" r="0.16" fill="#0F1424"/>
+      <circle r="0.94" fill="none" stroke="#DDE3F0" stroke-width="0.12"/>
     </g>
     <g id="st-ready-L">
       <circle r="1.12" fill="#F2D27A" opacity="0.55" filter="url(#glow)"/>
-      <circle r="1" fill="#4A5270"/>
-      <circle r="0.95" fill="none" stroke="#7C86A8" stroke-width="0.10"/>
-      <path d="M 0,-1 A 1 1 0 0 1 0,1 Z" fill="url(#gold)"/>
+      <circle r="1" fill="#3A4363"/>
+      <circle r="0.94" fill="none" stroke="#7C86A8" stroke-width="0.12"/>
+      <use href="#half" fill="url(#gold)"/>
+      <g clip-path="url(#clip-half)"><use href="#lunar-gold"/><use href="#band-half-gold"/></g>
     </g>
     <g id="st-readyother-L">
-      <circle r="1" fill="#4A5270"/>
-      <path d="M 0,-1 A 1 1 0 0 1 0,1 Z" fill="url(#silver)"/>
-      <circle r="0.95" fill="none" stroke="#F2D27A" stroke-width="0.10"/>
+      <circle r="1" fill="#3A4363"/>
+      <use href="#half" fill="url(#silver)"/>
+      <g clip-path="url(#clip-half)"><use href="#lunar-silver"/><use href="#band-half-silver"/></g>
+      <circle r="0.94" fill="none" stroke="#F2D27A" stroke-width="0.12"/>
     </g>
     <g id="st-donecycle-L">
-      <circle r="1" fill="#4A5270"/>
-      <circle r="0.95" fill="none" stroke="#7C86A8" stroke-width="0.10"/>
-      <path transform="scale(-1,1)" d="M 0.25,-0.968 A 1 1 0 0 1 0.25,0.968 A 1 1 0 1 1 0.25,-0.968 Z" fill="url(#silver)"/>
+      <circle r="1" fill="#3A4363"/>
+      <circle r="0.94" fill="none" stroke="#7C86A8" stroke-width="0.12"/>
+      <use href="#lens75" transform="scale(-1,1)" fill="url(#silver)"/>
+      <g clip-path="url(#clip-wan)"><use href="#lunar-silver"/><use href="#band-wan"/></g>
     </g>
     <g id="st-blocked-L">
-      <circle r="1" fill="#4A5270"/>
-      <circle r="0.95" fill="none" stroke="#DDE3F0" stroke-width="0.10"/>
+      <circle r="1" fill="#3A4363"/>
+      <circle r="0.94" fill="none" stroke="#DDE3F0" stroke-width="0.12"/>
     </g>
     <g id="st-foreclosed-L">
-      <circle r="1" fill="#645574"/>
+      <circle r="1" fill="#3A4363"/>
       <circle r="0.94" fill="none" stroke="#B25C7F" stroke-width="0.12"/>
+      <line x1="-0.636" y1="-0.636" x2="0.636" y2="0.636" stroke="#B25C7F" stroke-width="0.22"/>
       <circle cx="0.72" cy="-0.72" r="0.30" fill="#0F1424"/>
     </g>
     <g id="st-unknown-L">
-      <circle r="1" fill="#4A5270" fill-opacity="0.45"/>
-      <circle r="0.95" fill="none" stroke="#7C86A8" stroke-width="0.10" stroke-dasharray="0.2653 0.2321" transform="rotate(-90)"/>
+      <circle r="1" fill="#3A4363" fill-opacity="0.60"/>
+      <circle r="0.94" fill="none" stroke="#7C86A8" stroke-width="0.12" stroke-dasharray="0.2625 0.2297" transform="rotate(-90)"/>
     </g>
 
-    <!-- ============ class M (9 ≤ r < 16 px, here r = 10.5): o/r = 0.119, ring at 0.9405 r, shading, no arc ============ -->
+    <!-- ============ class M (9 ≤ r < 12 px, here r = 10.5): o/r = 0.1429, rim at 0.9286 r, gradient only, no detail, no notch ============ -->
     <g id="st-completed-M"><circle r="1" fill="url(#gold)"/></g>
     <g id="st-accepted-M">
-      <circle r="1" fill="#4A5270"/>
-      <path d="M 0.25,-0.968 A 1 1 0 0 1 0.25,0.968 A 1 1 0 1 1 0.25,-0.968 Z" fill="url(#gold)"/>
-      <circle r="0.9405" fill="none" stroke="#F2D27A" stroke-width="0.119"/>
+      <circle r="1" fill="#3A4363"/>
+      <use href="#gib60" fill="url(#gold)"/>
+      <circle cx="0.40" r="0.16" fill="#0F1424"/>
+      <circle r="0.9286" fill="none" stroke="#DDE3F0" stroke-width="0.1429"/>
     </g>
     <g id="st-ready-M">
       <circle r="1.12" fill="#F2D27A" opacity="0.55" filter="url(#glow)"/>
-      <circle r="1" fill="#4A5270"/>
-      <circle r="0.9405" fill="none" stroke="#7C86A8" stroke-width="0.119"/>
-      <path d="M 0,-1 A 1 1 0 0 1 0,1 Z" fill="url(#gold)"/>
+      <circle r="1" fill="#3A4363"/>
+      <circle r="0.9286" fill="none" stroke="#7C86A8" stroke-width="0.1429"/>
+      <use href="#half" fill="url(#gold)"/>
     </g>
     <g id="st-readyother-M">
-      <circle r="1" fill="#4A5270"/>
-      <path d="M 0,-1 A 1 1 0 0 1 0,1 Z" fill="url(#silver)"/>
-      <circle r="0.9405" fill="none" stroke="#F2D27A" stroke-width="0.119"/>
+      <circle r="1" fill="#3A4363"/>
+      <use href="#half" fill="url(#silver)"/>
+      <circle r="0.9286" fill="none" stroke="#F2D27A" stroke-width="0.1429"/>
     </g>
     <g id="st-donecycle-M">
-      <circle r="1" fill="#4A5270"/>
-      <circle r="0.9405" fill="none" stroke="#7C86A8" stroke-width="0.119"/>
-      <path transform="scale(-1,1)" d="M 0.25,-0.968 A 1 1 0 0 1 0.25,0.968 A 1 1 0 1 1 0.25,-0.968 Z" fill="url(#silver)"/>
+      <circle r="1" fill="#3A4363"/>
+      <circle r="0.9286" fill="none" stroke="#7C86A8" stroke-width="0.1429"/>
+      <use href="#lens75" transform="scale(-1,1)" fill="url(#silver)"/>
     </g>
     <g id="st-blocked-M">
-      <circle r="1" fill="#4A5270"/>
-      <circle r="0.9405" fill="none" stroke="#DDE3F0" stroke-width="0.119"/>
+      <circle r="1" fill="#3A4363"/>
+      <circle r="0.9286" fill="none" stroke="#DDE3F0" stroke-width="0.1429"/>
     </g>
     <g id="st-foreclosed-M">
-      <circle r="1" fill="#645574"/>
-      <circle r="0.929" fill="none" stroke="#B25C7F" stroke-width="0.143"/>
-      <circle cx="0.72" cy="-0.72" r="0.30" fill="#0F1424"/>
+      <circle r="1" fill="#3A4363"/>
+      <circle r="0.9286" fill="none" stroke="#B25C7F" stroke-width="0.1429"/>
+      <line x1="-0.636" y1="-0.636" x2="0.636" y2="0.636" stroke="#B25C7F" stroke-width="0.22"/>
     </g>
     <g id="st-unknown-M">
-      <circle r="1" fill="#4A5270" fill-opacity="0.45"/>
-      <circle r="0.9405" fill="none" stroke="#7C86A8" stroke-width="0.119" stroke-dasharray="0.2626 0.2298" transform="rotate(-90)"/>
+      <circle r="1" fill="#3A4363" fill-opacity="0.60"/>
+      <circle r="0.9286" fill="none" stroke="#7C86A8" stroke-width="0.1429" stroke-dasharray="0.2593 0.2269" transform="rotate(-90)"/>
     </g>
 
-    <!-- ============ class S (r < 9 px, here r = 7): o/r = 0.1786, ring at 0.9107 r, flat fills, 8 dashes ============ -->
+    <!-- ============ class S (r < 9 px, here r = 7): o/r = 0.2143, rim at 0.8929 r, flat fills, 8 dashes, Ready ring instead of glow ============ -->
     <g id="st-completed-S"><circle r="1" fill="#F2D27A"/></g>
     <g id="st-accepted-S">
-      <circle r="1" fill="#4A5270"/>
-      <path d="M 0.25,-0.968 A 1 1 0 0 1 0.25,0.968 A 1 1 0 1 1 0.25,-0.968 Z" fill="#F2D27A"/>
-      <circle r="0.9107" fill="none" stroke="#F2D27A" stroke-width="0.1786"/>
+      <circle r="1" fill="#3A4363"/>
+      <use href="#gib60" fill="#F2D27A"/>
+      <circle cx="0.40" r="0.2143" fill="#0F1424"/>
+      <circle r="0.8929" fill="none" stroke="#DDE3F0" stroke-width="0.2143"/>
     </g>
     <g id="st-ready-S">
-      <circle r="1.15" fill="#F2D27A" opacity="0.5" filter="url(#glowSoft)"/>
-      <circle r="1" fill="#4A5270"/>
-      <circle r="0.9107" fill="none" stroke="#7C86A8" stroke-width="0.1786"/>
-      <path d="M 0,-1 A 1 1 0 0 1 0,1 Z" fill="#F2D27A"/>
+      <circle r="1.25" fill="none" stroke="#F2D27A" stroke-opacity="0.35" stroke-width="0.1429"/>
+      <circle r="1" fill="#3A4363"/>
+      <circle r="0.8929" fill="none" stroke="#7C86A8" stroke-width="0.2143"/>
+      <use href="#half" fill="#F2D27A"/>
     </g>
     <g id="st-readyother-S">
-      <circle r="1" fill="#4A5270"/>
-      <path d="M 0,-1 A 1 1 0 0 1 0,1 Z" fill="#DDE3F0"/>
-      <circle r="0.9107" fill="none" stroke="#F2D27A" stroke-width="0.1786"/>
+      <circle r="1" fill="#3A4363"/>
+      <use href="#half" fill="#DDE3F0"/>
+      <circle r="0.8929" fill="none" stroke="#F2D27A" stroke-width="0.2143"/>
     </g>
     <g id="st-donecycle-S">
-      <circle r="1" fill="#4A5270"/>
-      <circle r="0.9107" fill="none" stroke="#7C86A8" stroke-width="0.1786"/>
-      <path transform="scale(-1,1)" d="M 0.25,-0.968 A 1 1 0 0 1 0.25,0.968 A 1 1 0 1 1 0.25,-0.968 Z" fill="#DDE3F0"/>
+      <circle r="1" fill="#3A4363"/>
+      <circle r="0.8929" fill="none" stroke="#7C86A8" stroke-width="0.2143"/>
+      <use href="#lens75" transform="scale(-1,1)" fill="#DDE3F0"/>
     </g>
     <g id="st-blocked-S">
-      <circle r="1" fill="#4A5270"/>
-      <circle r="0.9107" fill="none" stroke="#DDE3F0" stroke-width="0.1786"/>
+      <circle r="1" fill="#3A4363"/>
+      <circle r="0.8929" fill="none" stroke="#DDE3F0" stroke-width="0.2143"/>
     </g>
     <g id="st-foreclosed-S">
-      <circle r="1" fill="#645574"/>
-      <circle r="0.893" fill="none" stroke="#B25C7F" stroke-width="0.214"/>
-      <circle cx="0.72" cy="-0.72" r="0.30" fill="#0F1424"/>
+      <circle r="1" fill="#3A4363"/>
+      <circle r="0.8929" fill="none" stroke="#B25C7F" stroke-width="0.2143"/>
+      <line x1="-0.636" y1="-0.636" x2="0.636" y2="0.636" stroke="#B25C7F" stroke-width="0.2857"/>
     </g>
     <g id="st-unknown-S">
-      <circle r="1" fill="#4A5270" fill-opacity="0.45"/>
-      <circle r="0.9107" fill="none" stroke="#7C86A8" stroke-width="0.1786" stroke-dasharray="0.3497 0.3656" transform="rotate(-90)"/>
+      <circle r="1" fill="#3A4363" fill-opacity="0.60"/>
+      <circle r="0.8929" fill="none" stroke="#7C86A8" stroke-width="0.2143" stroke-dasharray="0.3428 0.3584" transform="rotate(-90)"/>
     </g>
 
+    <!-- ============ class XS (r = 6, the 12 px test in row 0): o/r = 0.25, rim at 0.875 r ============ -->
+    <g id="st-completed-XS"><circle r="1" fill="#F2D27A"/></g>
+    <g id="st-accepted-XS">
+      <circle r="1" fill="#3A4363"/>
+      <use href="#gib60" fill="#F2D27A"/>
+      <circle cx="0.40" r="0.25" fill="#0F1424"/>
+      <circle r="0.875" fill="none" stroke="#DDE3F0" stroke-width="0.25"/>
+    </g>
+    <g id="st-ready-XS">
+      <circle r="1.25" fill="none" stroke="#F2D27A" stroke-opacity="0.35" stroke-width="0.1667"/>
+      <circle r="1" fill="#3A4363"/>
+      <circle r="0.875" fill="none" stroke="#7C86A8" stroke-width="0.25"/>
+      <use href="#half" fill="#F2D27A"/>
+    </g>
+    <g id="st-donecycle-XS">
+      <circle r="1" fill="#3A4363"/>
+      <circle r="0.875" fill="none" stroke="#7C86A8" stroke-width="0.25"/>
+      <use href="#lens75" transform="scale(-1,1)" fill="#DDE3F0"/>
+    </g>
+
+    <!-- ============ ROW 0: ACCEPTED CANDIDATES (v2.0, a–e; f = #st-accepted-*). Lit shapes:
+         lens75 = disc ∩ disc offset +0.5 r (the v2.0 sheet) · gib60 = terminator equator −0.20 r · gib66 = −0.32 r. ============ -->
+    <!-- M (r = 10.5) -->
+    <g id="cand-v20-M"><circle r="1" fill="#3A4363"/><use href="#lens75" fill="url(#gold)"/><circle r="0.9286" fill="none" stroke="#F2D27A" stroke-width="0.1429"/></g>
+    <g id="cand-a-M"><circle r="1" fill="#3A4363"/><use href="#gib60" fill="url(#gold)"/><circle r="0.9286" fill="none" stroke="#F2D27A" stroke-width="0.1429"/></g>
+    <g id="cand-b-M"><circle r="1" fill="#3A4363"/><use href="#gib66" fill="url(#gold)"/><path d="M -0.0970,-0.9235 A 0.9286 0.9286 0 1 1 -0.0970,0.9235" fill="none" stroke="#F2D27A" stroke-width="0.1429" stroke-linecap="round"/></g>
+    <g id="cand-c-M"><use href="#cand-v20-M"/><circle cx="0.66" cy="0.66" r="0.36" fill="#0F1424"/><circle cx="0.66" cy="0.66" r="0.13" fill="#F2D27A"/></g>
+    <g id="cand-d-M"><circle r="1" fill="#3A4363"/><use href="#lens75" fill="url(#gold)"/><circle r="0.9286" fill="none" stroke="#DDE3F0" stroke-width="0.1429"/></g>
+    <g id="cand-e-M"><circle r="1" fill="#3A4363"/><use href="#gib60" fill="url(#gold)"/><circle r="0.9286" fill="none" stroke="#DDE3F0" stroke-width="0.1429"/></g>
+    <!-- S (r = 7) -->
+    <g id="cand-v20-S"><circle r="1" fill="#3A4363"/><use href="#lens75" fill="#F2D27A"/><circle r="0.8929" fill="none" stroke="#F2D27A" stroke-width="0.2143"/></g>
+    <g id="cand-a-S"><circle r="1" fill="#3A4363"/><use href="#gib60" fill="#F2D27A"/><circle r="0.8929" fill="none" stroke="#F2D27A" stroke-width="0.2143"/></g>
+    <g id="cand-b-S"><circle r="1" fill="#3A4363"/><use href="#gib66" fill="#F2D27A"/><path d="M -0.0933,-0.8880 A 0.8929 0.8929 0 1 1 -0.0933,0.8880" fill="none" stroke="#F2D27A" stroke-width="0.2143" stroke-linecap="round"/></g>
+    <g id="cand-c-S"><use href="#cand-v20-S"/><circle cx="0.66" cy="0.66" r="0.36" fill="#0F1424"/><circle cx="0.66" cy="0.66" r="0.143" fill="#F2D27A"/></g>
+    <g id="cand-d-S"><circle r="1" fill="#3A4363"/><use href="#lens75" fill="#F2D27A"/><circle r="0.8929" fill="none" stroke="#DDE3F0" stroke-width="0.2143"/></g>
+    <g id="cand-e-S"><circle r="1" fill="#3A4363"/><use href="#gib60" fill="#F2D27A"/><circle r="0.8929" fill="none" stroke="#DDE3F0" stroke-width="0.2143"/></g>
+    <!-- XS (r = 6) -->
+    <g id="cand-v20-XS"><circle r="1" fill="#3A4363"/><use href="#lens75" fill="#F2D27A"/><circle r="0.875" fill="none" stroke="#F2D27A" stroke-width="0.25"/></g>
+    <g id="cand-a-XS"><circle r="1" fill="#3A4363"/><use href="#gib60" fill="#F2D27A"/><circle r="0.875" fill="none" stroke="#F2D27A" stroke-width="0.25"/></g>
+    <g id="cand-b-XS"><circle r="1" fill="#3A4363"/><use href="#gib66" fill="#F2D27A"/><path d="M -0.0914,-0.8702 A 0.875 0.875 0 1 1 -0.0914,0.8702" fill="none" stroke="#F2D27A" stroke-width="0.25" stroke-linecap="round"/></g>
+    <g id="cand-c-XS"><use href="#cand-v20-XS"/><circle cx="0.66" cy="0.66" r="0.4167" fill="#0F1424"/><circle cx="0.66" cy="0.66" r="0.1667" fill="#F2D27A"/></g>
+    <g id="cand-d-XS"><circle r="1" fill="#3A4363"/><use href="#lens75" fill="#F2D27A"/><circle r="0.875" fill="none" stroke="#DDE3F0" stroke-width="0.25"/></g>
+    <g id="cand-e-XS"><circle r="1" fill="#3A4363"/><use href="#gib60" fill="#F2D27A"/><circle r="0.875" fill="none" stroke="#DDE3F0" stroke-width="0.25"/></g>
+
     <!-- ============ PROGRESS GLYPH "halo gauge" — unit space = R (half the box) ============
-         track ring r = 0.80 R, width 0.16 R (min 1.5 px); progress arc on the same ring, gold,
-         round caps, from 12 o'clock clockwise; core disc r = 0.62 R behind a 0.10 R gap.
+         track ring r = 0.80 R, VeilLine, width max(2 px, 0.18 R); progress arc on the same ring, gold,
+         round caps, from 12 o'clock clockwise; from R ≥ 12 a core disc r = 0.61 R (Shadow + Dusk rim)
+         behind a 0.10 R gap; below R = 12 track + arc only.
          Visual fraction v = ε + (1 − 2ε)·f for 0 < f < 1, ε = max(0.06, (w + 1.5 px) / circumference). -->
-    <g id="halo-track"><circle r="0.80" fill="none" stroke="#4A5270" stroke-width="0.16"/></g>
-    <g id="halo-track-S"><circle r="0.80" fill="none" stroke="#4A5270" stroke-width="0.1875"/></g>
-    <g id="halo-core-empty"><circle r="0.62" fill="#2C334A"/></g>
-    <g id="halo-full">
-      <circle r="0.80" fill="none" stroke="#F2D27A" stroke-width="0.34" opacity="0.45" filter="url(#glow)"/>
-      <circle r="0.80" fill="none" stroke="#F2D27A" stroke-width="0.16"/>
-      <circle r="0.62" fill="url(#gold)"/>
+    <g id="halo-track"><circle r="0.80" fill="none" stroke="#5C6584" stroke-width="0.18"/></g>
+    <g id="halo-track-S"><circle r="0.80" fill="none" stroke="#5C6584" stroke-width="0.25"/></g>
+    <!-- Core moons in unit CORE space (r_c): Shadow disc + Dusk rim (o = clamp(0.12 r_c, 1.5, 3)), lit region = right rim
+         from pole to pole + terminator circle through the poles, equator at x = 1 − 2·w, w = ε_c + (1 − 2ε_c)·f, ε_c = 0.10.
+         Class L (64 px box, r_c = 19.52 px): rim 0.12 at 0.94, gradient + interior detail + terminator glow. -->
+    <g id="coreL-rim"><circle r="0.94" fill="none" stroke="#7C86A8" stroke-width="0.12"/></g>
+    <g id="coreL-00"><circle r="1" fill="#3A4363"/><use href="#coreL-rim"/></g>
+    <g id="coreL-03"><circle r="1" fill="#3A4363"/><use href="#coreL-rim"/><path d="M 0,-1 A 1 1 0 0 1 0,1 A 1.0409 1.0409 0 0 0 0,-1 Z" fill="url(#gold)"/><g clip-path="url(#clip-core-03)"><use href="#lunar-gold"/><circle cx="-0.2889" r="1.0409" fill="none" stroke="#FFF0BE" stroke-width="0.24" opacity="0.30" filter="url(#band)"/></g></g>
+    <g id="coreL-10"><circle r="1" fill="#3A4363"/><use href="#coreL-rim"/><path d="M 0,-1 A 1 1 0 0 1 0,1 A 1.1013 1.1013 0 0 0 0,-1 Z" fill="url(#gold)"/><g clip-path="url(#clip-core-10)"><use href="#lunar-gold"/><circle cx="-0.4613" r="1.1013" fill="none" stroke="#FFF0BE" stroke-width="0.24" opacity="0.30" filter="url(#band)"/></g></g>
+    <g id="coreL-25"><circle r="1" fill="#3A4363"/><use href="#coreL-rim"/><path d="M 0,-1 A 1 1 0 0 1 0,1 A 1.4500 1.4500 0 0 0 0,-1 Z" fill="url(#gold)"/><g clip-path="url(#clip-core-25)"><use href="#lunar-gold"/><circle cx="-1.05" r="1.45" fill="none" stroke="#FFF0BE" stroke-width="0.24" opacity="0.30" filter="url(#band)"/></g></g>
+    <g id="coreL-50"><circle r="1" fill="#3A4363"/><use href="#coreL-rim"/><use href="#half" fill="url(#gold)"/><g clip-path="url(#clip-half)"><use href="#lunar-gold"/><use href="#band-half-gold"/></g></g>
+    <g id="coreL-75"><circle r="1" fill="#3A4363"/><use href="#coreL-rim"/><path d="M 0,-1 A 1 1 0 0 1 0,1 A 1.4500 1.4500 0 0 1 0,-1 Z" fill="url(#gold)"/><g clip-path="url(#clip-core-75)"><use href="#lunar-gold"/><circle cx="1.05" r="1.45" fill="none" stroke="#FFF0BE" stroke-width="0.24" opacity="0.30" filter="url(#band)"/></g></g>
+    <g id="coreL-90"><circle r="1" fill="#3A4363"/><use href="#coreL-rim"/><path d="M 0,-1 A 1 1 0 0 1 0,1 A 1.1013 1.1013 0 0 1 0,-1 Z" fill="url(#gold)"/><g clip-path="url(#clip-core-90)"><use href="#lunar-gold"/><circle cx="0.4613" r="1.1013" fill="none" stroke="#FFF0BE" stroke-width="0.24" opacity="0.30" filter="url(#band)"/></g></g>
+    <g id="coreL-97"><circle r="1" fill="#3A4363"/><use href="#coreL-rim"/><path d="M 0,-1 A 1 1 0 0 1 0,1 A 1.0409 1.0409 0 0 1 0,-1 Z" fill="url(#gold)"/><g clip-path="url(#clip-core-97)"><use href="#lunar-gold"/><circle cx="0.2889" r="1.0409" fill="none" stroke="#FFF0BE" stroke-width="0.24" opacity="0.30" filter="url(#band)"/></g></g>
+    <g id="halo-full-L">
+      <circle r="0.80" fill="none" stroke="#F2D27A" stroke-width="0.38" opacity="0.45" filter="url(#glow)"/>
+      <circle r="0.80" fill="none" stroke="#F2D27A" stroke-width="0.18"/>
+      <circle r="0.61" fill="url(#gold)"/>
+      <g transform="scale(0.61)" clip-path="url(#clip-disc)"><use href="#lunar-gold"/></g>
     </g>
+    <!-- Class M (24 px box, r_c = 7.32 px): rim 0.2049 at 0.8975, flat gold (r_c < 9), ε_c ≈ 0.10 -->
+    <g id="coreM-rim"><circle r="0.8975" fill="none" stroke="#7C86A8" stroke-width="0.2049"/></g>
+    <g id="coreM-00"><circle r="1" fill="#3A4363"/><use href="#coreM-rim"/></g>
+    <g id="coreM-03"><circle r="1" fill="#3A4363"/><use href="#coreM-rim"/><path d="M 0,-1 A 1 1 0 0 1 0,1 A 1.0409 1.0409 0 0 0 0,-1 Z" fill="#F2D27A"/></g>
+    <g id="coreM-10"><circle r="1" fill="#3A4363"/><use href="#coreM-rim"/><path d="M 0,-1 A 1 1 0 0 1 0,1 A 1.1013 1.1013 0 0 0 0,-1 Z" fill="#F2D27A"/></g>
+    <g id="coreM-24"><circle r="1" fill="#3A4363"/><use href="#coreM-rim"/><path d="M 0,-1 A 1 1 0 0 1 0,1 A 1.4099 1.4099 0 0 0 0,-1 Z" fill="#F2D27A"/></g>
+    <g id="coreM-25"><circle r="1" fill="#3A4363"/><use href="#coreM-rim"/><path d="M 0,-1 A 1 1 0 0 1 0,1 A 1.4500 1.4500 0 0 0 0,-1 Z" fill="#F2D27A"/></g>
+    <g id="coreM-50"><circle r="1" fill="#3A4363"/><use href="#coreM-rim"/><use href="#half" fill="#F2D27A"/></g>
+    <g id="coreM-66"><circle r="1" fill="#3A4363"/><use href="#coreM-rim"/><path d="M 0,-1 A 1 1 0 0 1 0,1 A 2.0811 2.0811 0 0 1 0,-1 Z" fill="#F2D27A"/></g>
+    <g id="coreM-75"><circle r="1" fill="#3A4363"/><use href="#coreM-rim"/><path d="M 0,-1 A 1 1 0 0 1 0,1 A 1.4500 1.4500 0 0 1 0,-1 Z" fill="#F2D27A"/></g>
+    <g id="coreM-76"><circle r="1" fill="#3A4363"/><use href="#coreM-rim"/><path d="M 0,-1 A 1 1 0 0 1 0,1 A 1.4099 1.4099 0 0 1 0,-1 Z" fill="#F2D27A"/></g>
+    <g id="coreM-90"><circle r="1" fill="#3A4363"/><use href="#coreM-rim"/><path d="M 0,-1 A 1 1 0 0 1 0,1 A 1.1013 1.1013 0 0 1 0,-1 Z" fill="#F2D27A"/></g>
+    <g id="coreM-97"><circle r="1" fill="#3A4363"/><use href="#coreM-rim"/><path d="M 0,-1 A 1 1 0 0 1 0,1 A 1.0409 1.0409 0 0 1 0,-1 Z" fill="#F2D27A"/></g>
+    <g id="halo-full-M">
+      <circle r="0.80" fill="none" stroke="#F2D27A" stroke-width="0.38" opacity="0.45" filter="url(#glow)"/>
+      <circle r="0.80" fill="none" stroke="#F2D27A" stroke-width="0.18"/>
+      <circle r="0.61" fill="#F2D27A"/>
+    </g>
+    <!-- Class S (16 px box, R = 8): track + arc only, stroke 2 px = 0.25 R, ε = 0.087; complete = gold ring + glow, no core -->
     <g id="halo-full-S">
-      <circle r="0.80" fill="none" stroke="#F2D27A" stroke-width="0.34" opacity="0.4" filter="url(#glowSoft)"/>
-      <circle r="0.80" fill="none" stroke="#F2D27A" stroke-width="0.1875"/>
-      <circle r="0.581" fill="#F2D27A"/>
+      <circle r="0.80" fill="none" stroke="#F2D27A" stroke-width="0.50" opacity="0.40" filter="url(#glow)"/>
+      <circle r="0.80" fill="none" stroke="#F2D27A" stroke-width="0.25"/>
     </g>
-    <!-- Core moons (unit core space): lit region = right rim from pole to pole + terminator circle
-         through the poles, equator at x = 1 − 2·w, w = ε_c + (1 − 2ε_c)·f, ε_c = max(0.10, 1.5 px / core diameter).
-         Class L/M (ε_c = 0.10) -->
-    <g id="core-03"><circle r="1" fill="#2C334A"/><path d="M 0,-1 A 1 1 0 0 1 0,1 A 1.0409 1.0409 0 0 0 0,-1 Z" fill="url(#gold)"/></g>
-    <g id="core-10"><circle r="1" fill="#2C334A"/><path d="M 0,-1 A 1 1 0 0 1 0,1 A 1.1013 1.1013 0 0 0 0,-1 Z" fill="url(#gold)"/></g>
-    <g id="core-25"><circle r="1" fill="#2C334A"/><path d="M 0,-1 A 1 1 0 0 1 0,1 A 1.4500 1.4500 0 0 0 0,-1 Z" fill="url(#gold)"/></g>
-    <g id="core-50"><circle r="1" fill="#2C334A"/><path d="M 0,-1 A 1 1 0 0 1 0,1 Z" fill="url(#gold)"/></g>
-    <g id="core-75"><circle r="1" fill="#2C334A"/><path d="M 0,-1 A 1 1 0 0 1 0,1 A 1.4500 1.4500 0 0 1 0,-1 Z" fill="url(#gold)"/></g>
-    <g id="core-90"><circle r="1" fill="#2C334A"/><path d="M 0,-1 A 1 1 0 0 1 0,1 A 1.1013 1.1013 0 0 1 0,-1 Z" fill="url(#gold)"/></g>
-    <g id="core-97"><circle r="1" fill="#2C334A"/><path d="M 0,-1 A 1 1 0 0 1 0,1 A 1.0409 1.0409 0 0 1 0,-1 Z" fill="url(#gold)"/></g>
-    <!-- Class T (tree, 20 px box, core r = 6.2 px, ε_c = 0.121) -->
-    <g id="coreT-03"><circle r="1" fill="#2C334A"/><path d="M 0,-1 A 1 1 0 0 1 0,1 A 1.0580 1.0580 0 0 0 0,-1 Z" fill="url(#gold)"/></g>
-    <g id="coreT-24"><circle r="1" fill="#2C334A"/><path d="M 0,-1 A 1 1 0 0 1 0,1 A 1.4656 1.4656 0 0 0 0,-1 Z" fill="url(#gold)"/></g>
-    <g id="coreT-66"><circle r="1" fill="#2C334A"/><path d="M 0,-1 A 1 1 0 0 1 0,1 A 2.1826 2.1826 0 0 1 0,-1 Z" fill="url(#gold)"/></g>
-    <g id="coreT-76"><circle r="1" fill="#2C334A"/><path d="M 0,-1 A 1 1 0 0 1 0,1 A 1.4656 1.4656 0 0 1 0,-1 Z" fill="url(#gold)"/></g>
-    <!-- Class S (16 px box, core r = 4.65 px, ε_c = 0.1613, flat fill: no shading below r = 6 px) -->
-    <g id="coreS-03"><circle r="1" fill="#2C334A"/><path d="M 0,-1 A 1 1 0 0 1 0,1 A 1.1036 1.1036 0 0 0 0,-1 Z" fill="#F2D27A"/></g>
-    <g id="coreS-10"><circle r="1" fill="#2C334A"/><path d="M 0,-1 A 1 1 0 0 1 0,1 A 1.1936 1.1936 0 0 0 0,-1 Z" fill="#F2D27A"/></g>
-    <g id="coreS-25"><circle r="1" fill="#2C334A"/><path d="M 0,-1 A 1 1 0 0 1 0,1 A 1.6455 1.6455 0 0 0 0,-1 Z" fill="#F2D27A"/></g>
-    <g id="coreS-50"><circle r="1" fill="#2C334A"/><path d="M 0,-1 A 1 1 0 0 1 0,1 Z" fill="#F2D27A"/></g>
-    <g id="coreS-75"><circle r="1" fill="#2C334A"/><path d="M 0,-1 A 1 1 0 0 1 0,1 A 1.6455 1.6455 0 0 1 0,-1 Z" fill="#F2D27A"/></g>
-    <g id="coreS-90"><circle r="1" fill="#2C334A"/><path d="M 0,-1 A 1 1 0 0 1 0,1 A 1.1936 1.1936 0 0 1 0,-1 Z" fill="#F2D27A"/></g>
-    <g id="coreS-97"><circle r="1" fill="#2C334A"/><path d="M 0,-1 A 1 1 0 0 1 0,1 A 1.1036 1.1036 0 0 1 0,-1 Z" fill="#F2D27A"/></g>
   </defs>
 
   <!-- ================= SHEET ================= -->
-  <rect width="1200" height="700" fill="#0F1424"/>
-  <text x="40" y="42" fill="#DDE3F0" font-size="21" font-weight="600">Tsukimichi glyphs v2</text>
-  <text x="270" y="42" fill="#7C86A8" font-size="12">state moons with crisp rims · halo gauge for tree progress · proposal sheet</text>
+  <rect width="1200" height="930" fill="#0F1424"/>
+  <text x="40" y="42" fill="#DDE3F0" font-size="21" font-weight="600">Tsukimichi glyphs v2.1</text>
+  <text x="290" y="42" fill="#7C86A8" font-size="12">state moons with crisp rims and lunar detail · halo gauge for tree progress · proposal sheet</text>
+
+  <!-- ~~~~~ Row 0: Accepted candidates at 24 / 16 / 12 px (r = 10.5 / 7 / 6) beside Completed, Ready, DoneThisCycle; last line 16 px in greyscale ~~~~~ -->
+  <text x="40" y="78" fill="#7C86A8" font-size="11" letter-spacing="1.2">0 · ACCEPTED CANDIDATES · 24 / 16 / 12 PX · NEXT TO COMPLETED, READY, DONE THIS CYCLE · LAST LINE = 16 PX IN GREYSCALE</text>
+  <rect x="1034" y="92" width="104" height="132" rx="6" fill="none" stroke="#F2D27A" stroke-width="1"/>
+  <text x="1086" y="89" fill="#F2D27A" font-size="9" text-anchor="middle" letter-spacing="1">CHOSEN</text>
+  <g>
+    <use href="#st-completed-M" transform="translate(78,112) scale(10.5)"/><use href="#st-completed-S" transform="translate(78,140) scale(7)"/><use href="#st-completed-XS" transform="translate(78,162) scale(6)"/>
+    <use href="#st-ready-M"     transform="translate(190,112) scale(10.5)"/><use href="#st-ready-S"     transform="translate(190,140) scale(7)"/><use href="#st-ready-XS"     transform="translate(190,162) scale(6)"/>
+    <use href="#st-donecycle-M" transform="translate(302,112) scale(10.5)"/><use href="#st-donecycle-S" transform="translate(302,140) scale(7)"/><use href="#st-donecycle-XS" transform="translate(302,162) scale(6)"/>
+    <use href="#cand-v20-M"     transform="translate(414,112) scale(10.5)"/><use href="#cand-v20-S"     transform="translate(414,140) scale(7)"/><use href="#cand-v20-XS"     transform="translate(414,162) scale(6)"/>
+    <use href="#cand-a-M"       transform="translate(526,112) scale(10.5)"/><use href="#cand-a-S"       transform="translate(526,140) scale(7)"/><use href="#cand-a-XS"       transform="translate(526,162) scale(6)"/>
+    <use href="#cand-b-M"       transform="translate(638,112) scale(10.5)"/><use href="#cand-b-S"       transform="translate(638,140) scale(7)"/><use href="#cand-b-XS"       transform="translate(638,162) scale(6)"/>
+    <use href="#cand-c-M"       transform="translate(750,112) scale(10.5)"/><use href="#cand-c-S"       transform="translate(750,140) scale(7)"/><use href="#cand-c-XS"       transform="translate(750,162) scale(6)"/>
+    <use href="#cand-d-M"       transform="translate(862,112) scale(10.5)"/><use href="#cand-d-S"       transform="translate(862,140) scale(7)"/><use href="#cand-d-XS"       transform="translate(862,162) scale(6)"/>
+    <use href="#cand-e-M"       transform="translate(974,112) scale(10.5)"/><use href="#cand-e-S"       transform="translate(974,140) scale(7)"/><use href="#cand-e-XS"       transform="translate(974,162) scale(6)"/>
+    <use href="#st-accepted-M"  transform="translate(1086,112) scale(10.5)"/><use href="#st-accepted-S" transform="translate(1086,140) scale(7)"/><use href="#st-accepted-XS" transform="translate(1086,162) scale(6)"/>
+  </g>
+  <rect x="0" y="174" width="1150" height="24" fill="#131313"/>
+  <g filter="url(#grey)">
+    <use href="#st-completed-S" transform="translate(78,186) scale(7)"/><use href="#st-ready-S" transform="translate(190,186) scale(7)"/><use href="#st-donecycle-S" transform="translate(302,186) scale(7)"/>
+    <use href="#cand-v20-S" transform="translate(414,186) scale(7)"/><use href="#cand-a-S" transform="translate(526,186) scale(7)"/><use href="#cand-b-S" transform="translate(638,186) scale(7)"/>
+    <use href="#cand-c-S" transform="translate(750,186) scale(7)"/><use href="#cand-d-S" transform="translate(862,186) scale(7)"/><use href="#cand-e-S" transform="translate(974,186) scale(7)"/><use href="#st-accepted-S" transform="translate(1086,186) scale(7)"/>
+  </g>
+  <g fill="#7C86A8" font-size="10" text-anchor="middle"><text x="1170" y="116">24</text><text x="1170" y="144">16</text><text x="1170" y="166">12</text><text x="1170" y="190">grey</text></g>
+  <g fill="#7C86A8" font-size="10" text-anchor="middle">
+    <text x="78" y="206">Completed</text><text x="190" y="206">Ready</text><text x="302" y="206">Done this cycle</text><text x="414" y="206">v2.0 Accepted</text><text x="526" y="206">(a) 60 %</text>
+    <text x="638" y="206">(b) 66 %</text><text x="750" y="206">(c) 75 % + badge</text><text x="862" y="206">(d) 75 %</text><text x="974" y="206">(e) 60 %</text><text x="1086" y="206" fill="#DDE3F0">(f) 60 % + seal</text>
+  </g>
+  <g fill="#7C86A8" font-size="8" text-anchor="middle">
+    <text x="78" y="218">reference</text><text x="190" y="218">reference</text><text x="302" y="218">reference</text><text x="414" y="218">75 % lens · gold ring</text><text x="526" y="218">gold ring</text>
+    <text x="638" y="218">gold rim, lit side</text><text x="750" y="218">tick · gold ring</text><text x="862" y="218">silver ring</text><text x="974" y="218">silver ring · a + d</text><text x="1086" y="218">silver ring · Night dot</text>
+  </g>
 
   <!-- ~~~~~ Row 1: eight state glyphs at 64 px (r = 28 + glow overshoot) ~~~~~ -->
-  <text x="40" y="78" fill="#7C86A8" font-size="11" letter-spacing="1.2">1 · STATE GLYPHS · 64 PX</text>
-  <use href="#st-completed-L"   transform="translate(115,130) scale(28)"/>
-  <use href="#st-accepted-L"    transform="translate(250,130) scale(28)"/>
-  <use href="#st-ready-L"       transform="translate(385,130) scale(28)"/>
-  <use href="#st-readyother-L"  transform="translate(520,130) scale(28)"/>
-  <use href="#st-donecycle-L"   transform="translate(655,130) scale(28)"/>
-  <use href="#st-blocked-L"     transform="translate(790,130) scale(28)"/>
-  <use href="#st-foreclosed-L"  transform="translate(925,130) scale(28)"/>
-  <use href="#st-unknown-L"     transform="translate(1060,130) scale(28)"/>
+  <text x="40" y="268" fill="#7C86A8" font-size="11" letter-spacing="1.2">1 · STATE GLYPHS · 64 PX · WITH INTERIOR DETAIL (r ≥ 12)</text>
+  <use href="#st-completed-L"   transform="translate(115,320) scale(28)"/>
+  <use href="#st-accepted-L"    transform="translate(250,320) scale(28)"/>
+  <use href="#st-ready-L"       transform="translate(385,320) scale(28)"/>
+  <use href="#st-readyother-L"  transform="translate(520,320) scale(28)"/>
+  <use href="#st-donecycle-L"   transform="translate(655,320) scale(28)"/>
+  <use href="#st-blocked-L"     transform="translate(790,320) scale(28)"/>
+  <use href="#st-foreclosed-L"  transform="translate(925,320) scale(28)"/>
+  <use href="#st-unknown-L"     transform="translate(1060,320) scale(28)"/>
   <g fill="#DDE3F0" font-size="12" text-anchor="middle">
-    <text x="115"  y="182">Completed</text>
-    <text x="250"  y="182">Accepted</text>
-    <text x="385"  y="182">Ready</text>
-    <text x="520"  y="182">Ready on other job</text>
-    <text x="655"  y="182">Done this cycle</text>
-    <text x="790"  y="182">Blocked</text>
-    <text x="925"  y="182">Foreclosed</text>
-    <text x="1060" y="182">Unknown</text>
+    <text x="115"  y="372">Completed</text>
+    <text x="250"  y="372">Accepted</text>
+    <text x="385"  y="372">Ready</text>
+    <text x="520"  y="372">Ready on other job</text>
+    <text x="655"  y="372">Done this cycle</text>
+    <text x="790"  y="372">Blocked</text>
+    <text x="925"  y="372">Foreclosed</text>
+    <text x="1060" y="372">Unknown</text>
   </g>
   <g fill="#7C86A8" font-size="10" text-anchor="middle">
-    <text x="115"  y="197">full · gold</text>
-    <text x="250"  y="197">waxing gibbous · gold ring</text>
-    <text x="385"  y="197">first quarter · glow · dusk rim</text>
-    <text x="520"  y="197">first quarter silver · gold ring</text>
-    <text x="655"  y="197">waning gibbous silver · dusk rim</text>
-    <text x="790"  y="197">new · silver ring</text>
-    <text x="925"  y="197">eclipse ring · notch · bruised disc</text>
-    <text x="1060" y="197">veiled · dashed dusk ring</text>
+    <text x="115"  y="387">full · gold</text>
+    <text x="250"  y="387">gibbous 60 % · seal · silver ring</text>
+    <text x="385"  y="387">first quarter · glow · dusk rim</text>
+    <text x="520"  y="387">first quarter silver · gold ring</text>
+    <text x="655"  y="387">waning gibbous silver · dusk rim</text>
+    <text x="790"  y="387">new · silver ring</text>
+    <text x="925"  y="387">eclipse ring · bar · notch</text>
+    <text x="1060" y="387">veiled · dashed dusk ring</text>
   </g>
 
-  <!-- ~~~~~ Row 2: the same at 24 px (r = 10.5) and 16 px (r = 7), on Night and on the Dalamud default window bg ~~~~~ -->
-  <text x="40" y="228" fill="#7C86A8" font-size="11" letter-spacing="1.2">2 · 24 PX AND 16 PX</text>
+  <!-- ~~~~~ Row 2: 32 px (r = 16, class L with detail), 24 px (r = 10.5) and 16 px (r = 7), on Night and on the Dalamud default window bg ~~~~~ -->
+  <text x="40" y="418" fill="#7C86A8" font-size="11" letter-spacing="1.2">2 · 32 / 24 / 16 PX</text>
   <g>
-    <use href="#st-completed-M"  transform="translate(95,252) scale(10.5)"/>  <use href="#st-completed-S"  transform="translate(133,252) scale(7)"/>
-    <use href="#st-accepted-M"   transform="translate(230,252) scale(10.5)"/> <use href="#st-accepted-S"   transform="translate(268,252) scale(7)"/>
-    <use href="#st-ready-M"      transform="translate(365,252) scale(10.5)"/> <use href="#st-ready-S"      transform="translate(403,252) scale(7)"/>
-    <use href="#st-readyother-M" transform="translate(500,252) scale(10.5)"/> <use href="#st-readyother-S" transform="translate(538,252) scale(7)"/>
-    <use href="#st-donecycle-M"  transform="translate(635,252) scale(10.5)"/> <use href="#st-donecycle-S"  transform="translate(673,252) scale(7)"/>
-    <use href="#st-blocked-M"    transform="translate(770,252) scale(10.5)"/> <use href="#st-blocked-S"    transform="translate(808,252) scale(7)"/>
-    <use href="#st-foreclosed-M" transform="translate(905,252) scale(10.5)"/> <use href="#st-foreclosed-S" transform="translate(943,252) scale(7)"/>
-    <use href="#st-unknown-M"    transform="translate(1040,252) scale(10.5)"/><use href="#st-unknown-S"    transform="translate(1078,252) scale(7)"/>
+    <use href="#st-completed-L"  transform="translate(78,442) scale(16)"/>  <use href="#st-completed-M"  transform="translate(116,442) scale(10.5)"/>  <use href="#st-completed-S"  transform="translate(148,442) scale(7)"/>
+    <use href="#st-accepted-L"   transform="translate(213,442) scale(16)"/> <use href="#st-accepted-M"   transform="translate(251,442) scale(10.5)"/> <use href="#st-accepted-S"   transform="translate(283,442) scale(7)"/>
+    <use href="#st-ready-L"      transform="translate(348,442) scale(16)"/> <use href="#st-ready-M"      transform="translate(386,442) scale(10.5)"/> <use href="#st-ready-S"      transform="translate(418,442) scale(7)"/>
+    <use href="#st-readyother-L" transform="translate(483,442) scale(16)"/> <use href="#st-readyother-M" transform="translate(521,442) scale(10.5)"/> <use href="#st-readyother-S" transform="translate(553,442) scale(7)"/>
+    <use href="#st-donecycle-L"  transform="translate(618,442) scale(16)"/> <use href="#st-donecycle-M"  transform="translate(656,442) scale(10.5)"/> <use href="#st-donecycle-S"  transform="translate(688,442) scale(7)"/>
+    <use href="#st-blocked-L"    transform="translate(753,442) scale(16)"/> <use href="#st-blocked-M"    transform="translate(791,442) scale(10.5)"/> <use href="#st-blocked-S"    transform="translate(823,442) scale(7)"/>
+    <use href="#st-foreclosed-L" transform="translate(888,442) scale(16)"/> <use href="#st-foreclosed-M" transform="translate(926,442) scale(10.5)"/> <use href="#st-foreclosed-S" transform="translate(958,442) scale(7)"/>
+    <use href="#st-unknown-L"    transform="translate(1023,442) scale(16)"/><use href="#st-unknown-M"    transform="translate(1061,442) scale(10.5)"/><use href="#st-unknown-S"    transform="translate(1093,442) scale(7)"/>
   </g>
-  <text x="1108" y="256" fill="#7C86A8" font-size="10">on Night</text>
-  <rect x="60" y="270" width="1040" height="34" rx="4" fill="#141414"/>
+  <text x="1110" y="446" fill="#7C86A8" font-size="10">on Night</text>
+  <rect x="50" y="460" width="1050" height="34" rx="4" fill="#141414"/>
   <g>
-    <use href="#st-completed-M"  transform="translate(95,287) scale(10.5)"/>  <use href="#st-completed-S"  transform="translate(133,287) scale(7)"/>
-    <use href="#st-accepted-M"   transform="translate(230,287) scale(10.5)"/> <use href="#st-accepted-S"   transform="translate(268,287) scale(7)"/>
-    <use href="#st-ready-M"      transform="translate(365,287) scale(10.5)"/> <use href="#st-ready-S"      transform="translate(403,287) scale(7)"/>
-    <use href="#st-readyother-M" transform="translate(500,287) scale(10.5)"/> <use href="#st-readyother-S" transform="translate(538,287) scale(7)"/>
-    <use href="#st-donecycle-M"  transform="translate(635,287) scale(10.5)"/> <use href="#st-donecycle-S"  transform="translate(673,287) scale(7)"/>
-    <use href="#st-blocked-M"    transform="translate(770,287) scale(10.5)"/> <use href="#st-blocked-S"    transform="translate(808,287) scale(7)"/>
-    <use href="#st-foreclosed-M" transform="translate(905,287) scale(10.5)"/> <use href="#st-foreclosed-S" transform="translate(943,287) scale(7)"/>
-    <use href="#st-unknown-M"    transform="translate(1040,287) scale(10.5)"/><use href="#st-unknown-S"    transform="translate(1078,287) scale(7)"/>
+    <use href="#st-completed-L"  transform="translate(78,477) scale(16)"/>  <use href="#st-completed-M"  transform="translate(116,477) scale(10.5)"/>  <use href="#st-completed-S"  transform="translate(148,477) scale(7)"/>
+    <use href="#st-accepted-L"   transform="translate(213,477) scale(16)"/> <use href="#st-accepted-M"   transform="translate(251,477) scale(10.5)"/> <use href="#st-accepted-S"   transform="translate(283,477) scale(7)"/>
+    <use href="#st-ready-L"      transform="translate(348,477) scale(16)"/> <use href="#st-ready-M"      transform="translate(386,477) scale(10.5)"/> <use href="#st-ready-S"      transform="translate(418,477) scale(7)"/>
+    <use href="#st-readyother-L" transform="translate(483,477) scale(16)"/> <use href="#st-readyother-M" transform="translate(521,477) scale(10.5)"/> <use href="#st-readyother-S" transform="translate(553,477) scale(7)"/>
+    <use href="#st-donecycle-L"  transform="translate(618,477) scale(16)"/> <use href="#st-donecycle-M"  transform="translate(656,477) scale(10.5)"/> <use href="#st-donecycle-S"  transform="translate(688,477) scale(7)"/>
+    <use href="#st-blocked-L"    transform="translate(753,477) scale(16)"/> <use href="#st-blocked-M"    transform="translate(791,477) scale(10.5)"/> <use href="#st-blocked-S"    transform="translate(823,477) scale(7)"/>
+    <use href="#st-foreclosed-L" transform="translate(888,477) scale(16)"/> <use href="#st-foreclosed-M" transform="translate(926,477) scale(10.5)"/> <use href="#st-foreclosed-S" transform="translate(958,477) scale(7)"/>
+    <use href="#st-unknown-L"    transform="translate(1023,477) scale(16)"/><use href="#st-unknown-M"    transform="translate(1061,477) scale(10.5)"/><use href="#st-unknown-S"    transform="translate(1093,477) scale(7)"/>
   </g>
-  <text x="1108" y="291" fill="#7C86A8" font-size="10">on ImGui bg</text>
+  <text x="1110" y="481" fill="#7C86A8" font-size="10">on ImGui bg</text>
 
   <!-- ~~~~~ Row 3: progress glyph at 0, .03, .1, .25, .5, .75, .9, .97, 1 — 64 / 24 / 16 px ~~~~~ -->
-  <text x="40" y="330" fill="#7C86A8" font-size="11" letter-spacing="1.2">3 · PROGRESS GLYPH (HALO GAUGE) · 64 / 24 / 16 PX</text>
+  <text x="40" y="520" fill="#7C86A8" font-size="11" letter-spacing="1.2">3 · PROGRESS GLYPH (HALO GAUGE) · 64 / 24 / 16 PX (16 = TRACK + ARC ONLY, NUMBER BESIDE IT)</text>
 
-  <!-- 64 px (R = 32, ε = 0.06): arc end = (0.8 sin θ, −0.8 cos θ), θ = 360°·v -->
-  <g stroke="#F2D27A" stroke-width="0.16" stroke-linecap="round" fill="none">
-    <use href="#halo-track" transform="translate(110,382) scale(32)"/><use href="#halo-core-empty" transform="translate(110,382) scale(32)"/>
-    <g transform="translate(230,382) scale(32)"><use href="#halo-track"/><path d="M 0,-0.8 A 0.8 0.8 0 0 1 0.4133,-0.6850"/><use href="#core-03" transform="scale(0.62)"/></g>
-    <g transform="translate(350,382) scale(32)"><use href="#halo-track"/><path d="M 0,-0.8 A 0.8 0.8 0 0 1 0.6413,-0.4783"/><use href="#core-10" transform="scale(0.62)"/></g>
-    <g transform="translate(470,382) scale(32)"><use href="#halo-track"/><path d="M 0,-0.8 A 0.8 0.8 0 0 1 0.7858,0.1499"/><use href="#core-25" transform="scale(0.62)"/></g>
-    <g transform="translate(590,382) scale(32)"><use href="#halo-track"/><path d="M 0,-0.8 A 0.8 0.8 0 0 1 0,0.8"/><use href="#core-50" transform="scale(0.62)"/></g>
-    <g transform="translate(710,382) scale(32)"><use href="#halo-track"/><path d="M 0,-0.8 A 0.8 0.8 0 1 1 -0.7858,0.1499"/><use href="#core-75" transform="scale(0.62)"/></g>
-    <g transform="translate(830,382) scale(32)"><use href="#halo-track"/><path d="M 0,-0.8 A 0.8 0.8 0 1 1 -0.6413,-0.4783"/><use href="#core-90" transform="scale(0.62)"/></g>
-    <g transform="translate(950,382) scale(32)"><use href="#halo-track"/><path d="M 0,-0.8 A 0.8 0.8 0 1 1 -0.4133,-0.6850"/><use href="#core-97" transform="scale(0.62)"/></g>
-    <use href="#halo-full" transform="translate(1070,382) scale(32)"/>
+  <!-- 64 px (R = 32, ε = 0.06): arc end = (0.8 sin θ, −0.8 cos θ), θ = 360°·v; cores (r_c = 19.52) carry the interior detail -->
+  <g stroke="#F2D27A" stroke-width="0.18" stroke-linecap="round" fill="none">
+    <g transform="translate(110,572) scale(32)"><use href="#halo-track"/><use href="#coreL-00" transform="scale(0.61)"/></g>
+    <g transform="translate(230,572) scale(32)"><use href="#halo-track"/><path d="M 0,-0.8 A 0.8 0.8 0 0 1 0.4133,-0.6850"/><use href="#coreL-03" transform="scale(0.61)"/></g>
+    <g transform="translate(350,572) scale(32)"><use href="#halo-track"/><path d="M 0,-0.8 A 0.8 0.8 0 0 1 0.6413,-0.4783"/><use href="#coreL-10" transform="scale(0.61)"/></g>
+    <g transform="translate(470,572) scale(32)"><use href="#halo-track"/><path d="M 0,-0.8 A 0.8 0.8 0 0 1 0.7858,0.1499"/><use href="#coreL-25" transform="scale(0.61)"/></g>
+    <g transform="translate(590,572) scale(32)"><use href="#halo-track"/><path d="M 0,-0.8 A 0.8 0.8 0 0 1 0,0.8"/><use href="#coreL-50" transform="scale(0.61)"/></g>
+    <g transform="translate(710,572) scale(32)"><use href="#halo-track"/><path d="M 0,-0.8 A 0.8 0.8 0 1 1 -0.7858,0.1499"/><use href="#coreL-75" transform="scale(0.61)"/></g>
+    <g transform="translate(830,572) scale(32)"><use href="#halo-track"/><path d="M 0,-0.8 A 0.8 0.8 0 1 1 -0.6413,-0.4783"/><use href="#coreL-90" transform="scale(0.61)"/></g>
+    <g transform="translate(950,572) scale(32)"><use href="#halo-track"/><path d="M 0,-0.8 A 0.8 0.8 0 1 1 -0.4133,-0.6850"/><use href="#coreL-97" transform="scale(0.61)"/></g>
+    <use href="#halo-full-L" transform="translate(1070,572) scale(32)"/>
   </g>
-  <!-- 24 px (R = 12, ε = 0.06) at x − 18 -->
-  <g stroke="#F2D27A" stroke-width="0.16" stroke-linecap="round" fill="none">
-    <use href="#halo-track" transform="translate(92,438) scale(12)"/><use href="#halo-core-empty" transform="translate(92,438) scale(12)"/>
-    <g transform="translate(212,438) scale(12)"><use href="#halo-track"/><path d="M 0,-0.8 A 0.8 0.8 0 0 1 0.4133,-0.6850"/><use href="#core-03" transform="scale(0.62)"/></g>
-    <g transform="translate(332,438) scale(12)"><use href="#halo-track"/><path d="M 0,-0.8 A 0.8 0.8 0 0 1 0.6413,-0.4783"/><use href="#core-10" transform="scale(0.62)"/></g>
-    <g transform="translate(452,438) scale(12)"><use href="#halo-track"/><path d="M 0,-0.8 A 0.8 0.8 0 0 1 0.7858,0.1499"/><use href="#core-25" transform="scale(0.62)"/></g>
-    <g transform="translate(572,438) scale(12)"><use href="#halo-track"/><path d="M 0,-0.8 A 0.8 0.8 0 0 1 0,0.8"/><use href="#core-50" transform="scale(0.62)"/></g>
-    <g transform="translate(692,438) scale(12)"><use href="#halo-track"/><path d="M 0,-0.8 A 0.8 0.8 0 1 1 -0.7858,0.1499"/><use href="#core-75" transform="scale(0.62)"/></g>
-    <g transform="translate(812,438) scale(12)"><use href="#halo-track"/><path d="M 0,-0.8 A 0.8 0.8 0 1 1 -0.6413,-0.4783"/><use href="#core-90" transform="scale(0.62)"/></g>
-    <g transform="translate(932,438) scale(12)"><use href="#halo-track"/><path d="M 0,-0.8 A 0.8 0.8 0 1 1 -0.4133,-0.6850"/><use href="#core-97" transform="scale(0.62)"/></g>
-    <use href="#halo-full" transform="translate(1052,438) scale(12)"/>
+  <!-- 24 px (R = 12, ε = 0.0607, r_c = 7.32) at x − 18 -->
+  <g stroke="#F2D27A" stroke-width="0.18" stroke-linecap="round" fill="none">
+    <g transform="translate(92,628) scale(12)"><use href="#halo-track"/><use href="#coreM-00" transform="scale(0.61)"/></g>
+    <g transform="translate(212,628) scale(12)"><use href="#halo-track"/><path d="M 0,-0.8 A 0.8 0.8 0 0 1 0.4160,-0.6833"/><use href="#coreM-03" transform="scale(0.61)"/></g>
+    <g transform="translate(332,628) scale(12)"><use href="#halo-track"/><path d="M 0,-0.8 A 0.8 0.8 0 0 1 0.6429,-0.4761"/><use href="#coreM-10" transform="scale(0.61)"/></g>
+    <g transform="translate(452,628) scale(12)"><use href="#halo-track"/><path d="M 0,-0.8 A 0.8 0.8 0 0 1 0.7855,0.1516"/><use href="#coreM-25" transform="scale(0.61)"/></g>
+    <g transform="translate(572,628) scale(12)"><use href="#halo-track"/><path d="M 0,-0.8 A 0.8 0.8 0 0 1 0,0.8"/><use href="#coreM-50" transform="scale(0.61)"/></g>
+    <g transform="translate(692,628) scale(12)"><use href="#halo-track"/><path d="M 0,-0.8 A 0.8 0.8 0 1 1 -0.7855,0.1516"/><use href="#coreM-75" transform="scale(0.61)"/></g>
+    <g transform="translate(812,628) scale(12)"><use href="#halo-track"/><path d="M 0,-0.8 A 0.8 0.8 0 1 1 -0.6429,-0.4761"/><use href="#coreM-90" transform="scale(0.61)"/></g>
+    <g transform="translate(932,628) scale(12)"><use href="#halo-track"/><path d="M 0,-0.8 A 0.8 0.8 0 1 1 -0.4160,-0.6833"/><use href="#coreM-97" transform="scale(0.61)"/></g>
+    <use href="#halo-full-M" transform="translate(1052,628) scale(12)"/>
   </g>
-  <!-- 16 px (R = 8, ε = 0.0746, stroke 1.5 px, ember core) at x + 16 -->
-  <g stroke="#F2D27A" stroke-width="0.1875" stroke-linecap="round" fill="none">
-    <use href="#halo-track-S" transform="translate(126,438) scale(8)"/><use href="#halo-core-empty" transform="translate(126,438) scale(8)"/>
-    <g transform="translate(246,438) scale(8)"><use href="#halo-track-S"/><path d="M 0,-0.8 A 0.8 0.8 0 0 1 0.4708,-0.6469"/><use href="#coreS-03" transform="scale(0.581)"/></g>
-    <g transform="translate(366,438) scale(8)"><use href="#halo-track-S"/><path d="M 0,-0.8 A 0.8 0.8 0 0 1 0.6746,-0.4300"/><use href="#coreS-10" transform="scale(0.581)"/></g>
-    <g transform="translate(486,438) scale(8)"><use href="#halo-track-S"/><path d="M 0,-0.8 A 0.8 0.8 0 0 1 0.7781,0.1858"/><use href="#coreS-25" transform="scale(0.581)"/></g>
-    <g transform="translate(606,438) scale(8)"><use href="#halo-track-S"/><path d="M 0,-0.8 A 0.8 0.8 0 0 1 0,0.8"/><use href="#coreS-50" transform="scale(0.581)"/></g>
-    <g transform="translate(726,438) scale(8)"><use href="#halo-track-S"/><path d="M 0,-0.8 A 0.8 0.8 0 1 1 -0.7781,0.1858"/><use href="#coreS-75" transform="scale(0.581)"/></g>
-    <g transform="translate(846,438) scale(8)"><use href="#halo-track-S"/><path d="M 0,-0.8 A 0.8 0.8 0 1 1 -0.6746,-0.4300"/><use href="#coreS-90" transform="scale(0.581)"/></g>
-    <g transform="translate(966,438) scale(8)"><use href="#halo-track-S"/><path d="M 0,-0.8 A 0.8 0.8 0 1 1 -0.4708,-0.6469"/><use href="#coreS-97" transform="scale(0.581)"/></g>
-    <use href="#halo-full-S" transform="translate(1086,438) scale(8)"/>
+  <!-- 16 px (R = 8, ε = 0.087, stroke 2 px, no core) at x + 16 -->
+  <g stroke="#F2D27A" stroke-width="0.25" stroke-linecap="round" fill="none">
+    <use href="#halo-track-S" transform="translate(126,628) scale(8)"/>
+    <g transform="translate(246,628) scale(8)"><use href="#halo-track-S"/><path d="M 0,-0.8 A 0.8 0.8 0 0 1 0.5169,-0.6106"/></g>
+    <g transform="translate(366,628) scale(8)"><use href="#halo-track-S"/><path d="M 0,-0.8 A 0.8 0.8 0 0 1 0.7001,-0.3870"/></g>
+    <g transform="translate(486,628) scale(8)"><use href="#halo-track-S"/><path d="M 0,-0.8 A 0.8 0.8 0 0 1 0.7703,0.2160"/></g>
+    <g transform="translate(606,628) scale(8)"><use href="#halo-track-S"/><path d="M 0,-0.8 A 0.8 0.8 0 0 1 0,0.8"/></g>
+    <g transform="translate(726,628) scale(8)"><use href="#halo-track-S"/><path d="M 0,-0.8 A 0.8 0.8 0 1 1 -0.7703,0.2160"/></g>
+    <g transform="translate(846,628) scale(8)"><use href="#halo-track-S"/><path d="M 0,-0.8 A 0.8 0.8 0 1 1 -0.7001,-0.3870"/></g>
+    <g transform="translate(966,628) scale(8)"><use href="#halo-track-S"/><path d="M 0,-0.8 A 0.8 0.8 0 1 1 -0.5169,-0.6106"/></g>
+    <use href="#halo-full-S" transform="translate(1086,628) scale(8)"/>
   </g>
   <g fill="#DDE3F0" font-size="11" text-anchor="middle">
-    <text x="110" y="470">0</text><text x="230" y="470">0.03</text><text x="350" y="470">0.10</text><text x="470" y="470">0.25</text>
-    <text x="590" y="470">0.50</text><text x="710" y="470">0.75</text><text x="830" y="470">0.90</text><text x="950" y="470">0.97</text><text x="1070" y="470">1.00</text>
+    <text x="110" y="660">0</text><text x="230" y="660">0.03</text><text x="350" y="660">0.10</text><text x="470" y="660">0.25</text>
+    <text x="590" y="660">0.50</text><text x="710" y="660">0.75</text><text x="830" y="660">0.90</text><text x="950" y="660">0.97</text><text x="1070" y="660">1.00</text>
   </g>
   <g fill="#7C86A8" font-size="10" text-anchor="middle">
-    <text x="110" y="485">0 / 240</text><text x="230" y="485">17 / 612</text><text x="350" y="485">20 / 195</text><text x="470" y="485">153 / 612</text>
-    <text x="590" y="485">98 / 195</text><text x="710" y="485">459 / 612</text><text x="830" y="485">176 / 195</text><text x="950" y="485">594 / 612</text><text x="1070" y="485">612 / 612</text>
+    <text x="110" y="675">0 / 240</text><text x="230" y="675">17 / 612</text><text x="350" y="675">20 / 195</text><text x="470" y="675">153 / 612</text>
+    <text x="590" y="675">98 / 195</text><text x="710" y="675">459 / 612</text><text x="830" y="675">176 / 195</text><text x="950" y="675">594 / 612</text><text x="1070" y="675">612 / 612</text>
   </g>
 
-  <!-- ~~~~~ Row 4: journal tree in situ, 20 px glyphs (R = 10, ε = 0.0617, core r = 6.2 px) ~~~~~ -->
-  <text x="40" y="522" fill="#7C86A8" font-size="11" letter-spacing="1.2">4 · JOURNAL TREE IN SITU · 20 PX GLYPHS · 26 PX ROWS</text>
-  <rect x="40" y="532" width="560" height="160" rx="4" fill="#141414"/>
+  <!-- ~~~~~ Row 4: journal tree in situ, 24 px glyphs (R = 12, the floor), 30 px rows ~~~~~ -->
+  <text x="40" y="712" fill="#7C86A8" font-size="11" letter-spacing="1.2">4 · JOURNAL TREE IN SITU · 24 PX GLYPHS · 30 PX ROWS</text>
+  <rect x="40" y="722" width="560" height="184" rx="4" fill="#141414"/>
 
   <!-- row 1 · section · Main Scenario 758 / 1002 (0.76) -->
-  <path d="M 52,545 L 60,545 L 56,552 Z" fill="#7C86A8"/>
-  <g transform="translate(78,549) scale(10)" stroke="#F2D27A" stroke-width="0.16" stroke-linecap="round" fill="none">
-    <use href="#halo-track"/><path d="M 0,-0.8 A 0.8 0.8 0 1 1 -0.7923,0.1107"/><use href="#coreT-76" transform="scale(0.62)"/>
+  <path d="M 52,737 L 60,737 L 56,744 Z" fill="#7C86A8"/>
+  <g transform="translate(80,741) scale(12)" stroke="#F2D27A" stroke-width="0.18" stroke-linecap="round" fill="none">
+    <use href="#halo-track"/><path d="M 0,-0.8 A 0.8 0.8 0 1 1 -0.7927,0.1080"/><use href="#coreM-76" transform="scale(0.61)"/>
   </g>
-  <text x="98" y="553.5" fill="#DDE3F0" font-size="13" font-weight="600">Main Scenario</text>
-  <rect x="462" y="547.5" width="44" height="3" rx="1.5" fill="#4A5270"/><rect x="462" y="547.5" width="33.4" height="3" rx="1.5" fill="#F2D27A"/>
-  <text x="588" y="553" fill="#7C86A8" font-size="11" text-anchor="end">758 / 1 002</text>
-  <line x1="52" y1="562.5" x2="588" y2="562.5" stroke="#F2D27A" stroke-opacity="0.28" stroke-width="1"/>
+  <text x="102" y="745.5" fill="#DDE3F0" font-size="13" font-weight="600">Main Scenario</text>
+  <rect x="462" y="739.5" width="44" height="3" rx="1.5" fill="#4A5270"/><rect x="462" y="739.5" width="33.4" height="3" rx="1.5" fill="#F2D27A"/>
+  <text x="588" y="745" fill="#7C86A8" font-size="11" text-anchor="end">758 / 1 002</text>
+  <line x1="52" y1="756.5" x2="588" y2="756.5" stroke="#F2D27A" stroke-opacity="0.28" stroke-width="1"/>
 
   <!-- row 2 · Seventh Umbral Era 612 / 612 (1.0) -->
-  <path d="M 74,570.5 L 81,575 L 74,579.5 Z" fill="#4A5270"/>
-  <use href="#halo-full" transform="translate(100,575) scale(10)"/>
-  <text x="120" y="579.5" fill="#F2D27A" font-size="13">Seventh Umbral Era</text>
-  <rect x="248" y="568" width="26" height="14" rx="7" fill="none" stroke="#4A5270" stroke-width="1"/><text x="261" y="578.5" fill="#7C86A8" font-size="9" text-anchor="middle" letter-spacing="0.5">ARR</text>
-  <rect x="462" y="573.5" width="44" height="3" rx="1.5" fill="#F2D27A"/>
-  <text x="588" y="579" fill="#7C86A8" font-size="11" text-anchor="end">612 / 612</text>
+  <path d="M 74,766.5 L 81,771 L 74,775.5 Z" fill="#4A5270"/>
+  <use href="#halo-full-M" transform="translate(102,771) scale(12)"/>
+  <text x="124" y="775.5" fill="#F2D27A" font-size="13">Seventh Umbral Era</text>
+  <rect x="252" y="764" width="26" height="14" rx="7" fill="none" stroke="#4A5270" stroke-width="1"/><text x="265" y="774.5" fill="#7C86A8" font-size="9" text-anchor="middle" letter-spacing="0.5">ARR</text>
+  <rect x="462" y="769.5" width="44" height="3" rx="1.5" fill="#F2D27A"/>
+  <text x="588" y="775" fill="#7C86A8" font-size="11" text-anchor="end">612 / 612</text>
 
   <!-- row 3 · selected · Seventh Astral Era 129 / 195 (0.66) -->
-  <rect x="40" y="588" width="560" height="26" fill="#4A5270" fill-opacity="0.22"/>
-  <rect x="40" y="588" width="2" height="26" fill="#F2D27A"/>
-  <path d="M 74,596.5 L 81,601 L 74,605.5 Z" fill="#7C86A8"/>
-  <g transform="translate(100,601) scale(10)" stroke="#F2D27A" stroke-width="0.16" stroke-linecap="round" fill="none">
-    <use href="#halo-track"/><path d="M 0,-0.8 A 0.8 0.8 0 1 1 -0.6172,0.5089"/><use href="#coreT-66" transform="scale(0.62)"/>
+  <rect x="40" y="786" width="560" height="30" fill="#4A5270" fill-opacity="0.22"/>
+  <rect x="40" y="786" width="2" height="30" fill="#F2D27A"/>
+  <path d="M 74,796.5 L 81,801 L 74,805.5 Z" fill="#7C86A8"/>
+  <g transform="translate(102,801) scale(12)" stroke="#F2D27A" stroke-width="0.18" stroke-linecap="round" fill="none">
+    <use href="#halo-track"/><path d="M 0,-0.8 A 0.8 0.8 0 1 1 -0.6183,0.5077"/><use href="#coreM-66" transform="scale(0.61)"/>
   </g>
-  <text x="120" y="605.5" fill="#DDE3F0" font-size="13">Seventh Astral Era</text>
-  <rect x="244" y="594" width="26" height="14" rx="7" fill="none" stroke="#4A5270" stroke-width="1"/><text x="257" y="604.5" fill="#7C86A8" font-size="9" text-anchor="middle" letter-spacing="0.5">ARR</text>
-  <rect x="462" y="599.5" width="44" height="3" rx="1.5" fill="#4A5270"/><rect x="462" y="599.5" width="29.1" height="3" rx="1.5" fill="#F2D27A"/>
-  <text x="588" y="605" fill="#DDE3F0" font-size="11" text-anchor="end">129 / 195</text>
+  <text x="124" y="805.5" fill="#DDE3F0" font-size="13">Seventh Astral Era</text>
+  <rect x="248" y="794" width="26" height="14" rx="7" fill="none" stroke="#4A5270" stroke-width="1"/><text x="261" y="804.5" fill="#7C86A8" font-size="9" text-anchor="middle" letter-spacing="0.5">ARR</text>
+  <rect x="462" y="799.5" width="44" height="3" rx="1.5" fill="#4A5270"/><rect x="462" y="799.5" width="29.1" height="3" rx="1.5" fill="#F2D27A"/>
+  <text x="588" y="805" fill="#DDE3F0" font-size="11" text-anchor="end">129 / 195</text>
 
   <!-- row 4 · hovered · Heavensward 17 / 612 (0.03) -->
-  <rect x="40" y="614" width="560" height="26" fill="#DDE3F0" fill-opacity="0.05"/>
-  <path d="M 74,622.5 L 81,627 L 74,631.5 Z" fill="#4A5270"/>
-  <g transform="translate(100,627) scale(10)" stroke="#F2D27A" stroke-width="0.16" stroke-linecap="round" fill="none">
-    <use href="#halo-track"/><path d="M 0,-0.8 A 0.8 0.8 0 0 1 0.4200,-0.6809"/><use href="#coreT-03" transform="scale(0.62)"/>
+  <rect x="40" y="816" width="560" height="30" fill="#DDE3F0" fill-opacity="0.05"/>
+  <path d="M 74,826.5 L 81,831 L 74,835.5 Z" fill="#4A5270"/>
+  <g transform="translate(102,831) scale(12)" stroke="#F2D27A" stroke-width="0.18" stroke-linecap="round" fill="none">
+    <use href="#halo-track"/><path d="M 0,-0.8 A 0.8 0.8 0 0 1 0.4160,-0.6833"/><use href="#coreM-03" transform="scale(0.61)"/>
   </g>
-  <text x="120" y="631.5" fill="#DDE3F0" font-size="13">Heavensward</text>
-  <rect x="214" y="620" width="24" height="14" rx="7" fill="none" stroke="#4A5270" stroke-width="1"/><text x="226" y="630.5" fill="#7C86A8" font-size="9" text-anchor="middle" letter-spacing="0.5">HW</text>
-  <rect x="462" y="625.5" width="44" height="3" rx="1.5" fill="#4A5270"/><rect x="462" y="625.5" width="2" height="3" rx="1" fill="#F2D27A"/>
-  <text x="588" y="631" fill="#7C86A8" font-size="11" text-anchor="end">17 / 612</text>
+  <text x="124" y="835.5" fill="#DDE3F0" font-size="13">Heavensward</text>
+  <rect x="218" y="824" width="24" height="14" rx="7" fill="none" stroke="#4A5270" stroke-width="1"/><text x="230" y="834.5" fill="#7C86A8" font-size="9" text-anchor="middle" letter-spacing="0.5">HW</text>
+  <rect x="462" y="829.5" width="44" height="3" rx="1.5" fill="#4A5270"/><rect x="462" y="829.5" width="2" height="3" rx="1" fill="#F2D27A"/>
+  <text x="588" y="835" fill="#7C86A8" font-size="11" text-anchor="end">17 / 612</text>
 
   <!-- row 5 · section · Side Quests 388 / 1624 (0.24) -->
-  <path d="M 52,649 L 60,649 L 56,656 Z" fill="#7C86A8"/>
-  <g transform="translate(78,653) scale(10)" stroke="#F2D27A" stroke-width="0.16" stroke-linecap="round" fill="none">
-    <use href="#halo-track"/><path d="M 0,-0.8 A 0.8 0.8 0 0 1 0.7923,0.1107"/><use href="#coreT-24" transform="scale(0.62)"/>
+  <path d="M 52,857 L 60,857 L 56,864 Z" fill="#7C86A8"/>
+  <g transform="translate(80,861) scale(12)" stroke="#F2D27A" stroke-width="0.18" stroke-linecap="round" fill="none">
+    <use href="#halo-track"/><path d="M 0,-0.8 A 0.8 0.8 0 0 1 0.7927,0.1080"/><use href="#coreM-24" transform="scale(0.61)"/>
   </g>
-  <text x="98" y="657.5" fill="#DDE3F0" font-size="13" font-weight="600">Side Quests</text>
-  <rect x="462" y="651.5" width="44" height="3" rx="1.5" fill="#4A5270"/><rect x="462" y="651.5" width="10.5" height="3" rx="1.5" fill="#F2D27A"/>
-  <text x="588" y="657" fill="#7C86A8" font-size="11" text-anchor="end">388 / 1 624</text>
-  <line x1="52" y1="666.5" x2="588" y2="666.5" stroke="#F2D27A" stroke-opacity="0.28" stroke-width="1"/>
+  <text x="102" y="865.5" fill="#DDE3F0" font-size="13" font-weight="600">Side Quests</text>
+  <rect x="462" y="859.5" width="44" height="3" rx="1.5" fill="#4A5270"/><rect x="462" y="859.5" width="10.5" height="3" rx="1.5" fill="#F2D27A"/>
+  <text x="588" y="865" fill="#7C86A8" font-size="11" text-anchor="end">388 / 1 624</text>
+  <line x1="52" y1="876.5" x2="588" y2="876.5" stroke="#F2D27A" stroke-opacity="0.28" stroke-width="1"/>
 
   <!-- row 6 · Chronicles of a New Era 0 / 240 (0) -->
-  <path d="M 74,674.5 L 81,679 L 74,683.5 Z" fill="#4A5270"/>
-  <use href="#halo-track" transform="translate(100,679) scale(10)"/><use href="#halo-core-empty" transform="translate(100,679) scale(10)"/>
-  <text x="120" y="683.5" fill="#DDE3F0" font-size="13">Chronicles of a New Era</text>
-  <rect x="462" y="677.5" width="44" height="3" rx="1.5" fill="#4A5270"/>
-  <text x="588" y="683" fill="#7C86A8" font-size="11" text-anchor="end">0 / 240</text>
+  <path d="M 74,886.5 L 81,891 L 74,895.5 Z" fill="#4A5270"/>
+  <g transform="translate(102,891) scale(12)"><use href="#halo-track"/><use href="#coreM-00" transform="scale(0.61)"/></g>
+  <text x="124" y="895.5" fill="#DDE3F0" font-size="13">Chronicles of a New Era</text>
+  <rect x="462" y="889.5" width="44" height="3" rx="1.5" fill="#4A5270"/>
+  <text x="588" y="895" fill="#7C86A8" font-size="11" text-anchor="end">0 / 240</text>
 
   <!-- Callouts -->
   <g fill="#7C86A8" font-size="11">
-    <text x="640" y="548" fill="#DDE3F0" font-size="12" font-weight="600">Journal tab upgrades shown at left</text>
-    <text x="640" y="568">1 · Section rows: 600 weight, thin gold rule (Moon 28 %) beneath</text>
-    <text x="640" y="586">2 · Halo gauge at 20 px: 3 % reads as a gold pip, 66 % as two thirds</text>
-    <text x="640" y="604">3 · Complete nodes: full gold ring + core + glow, name tinted Moon</text>
-    <text x="640" y="622">4 · Selected row: Veil 22 % wash + 2 px gold left rule; count in Silver</text>
-    <text x="640" y="640">5 · Hover row: Silver 5 % wash</text>
-    <text x="640" y="658">6 · Expansion badge pill (Veil stroke, Dusk 9 px caps) after the name</text>
-    <text x="640" y="676">7 · Count as "done / total" in Dusk, 44 × 3 px mini bar 12 px before it</text>
+    <text x="640" y="738" fill="#DDE3F0" font-size="12" font-weight="600">Journal tab upgrades shown at left</text>
+    <text x="640" y="758">1 · Section rows: 600 weight, thin gold rule (Moon 28 %) beneath</text>
+    <text x="640" y="776">2 · Halo gauge at 24 px (floor): 3 % reads as a gold pip, 66 % as two thirds</text>
+    <text x="640" y="794">3 · Complete nodes: full gold ring + core + glow, name tinted Moon</text>
+    <text x="640" y="812">4 · Selected row: Veil 22 % wash + 2 px gold left rule; count in Silver</text>
+    <text x="640" y="830">5 · Hover row: Silver 5 % wash</text>
+    <text x="640" y="848">6 · Expansion badge pill (Veil stroke, Dusk 9 px caps) after the name</text>
+    <text x="640" y="866">7 · Count as "done / total" in Dusk, 44 × 3 px mini bar 12 px before it</text>
   </g>
 </svg>
