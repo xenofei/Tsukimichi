@@ -268,4 +268,57 @@ public class CatalogLoaderTests(GameDataFixture fixture, ITestOutputHelper outpu
         cts.Cancel();
         Assert.Throws<OperationCanceledException>(() => CatalogMapper.Map(fixture.Game.Excel, Language.English, cts.Token));
     }
+    [GameDataFact]
+    public void Class_job_infos_carry_parent_unlock_quest_roles_and_disciplines()
+    {
+        var names = fixture.Bundle.Names;
+        var jobs = fixture.Bundle.Jobs;
+        var paladin = names.ClassJobInfo(19);
+        Assert.NotNull(paladin);
+        Assert.Equal("paladin", paladin.Name, ignoreCase: true);
+        Assert.Equal("PLD", paladin.Abbreviation);
+        Assert.Equal(1u, paladin.ParentRowId);
+        Assert.Equal(66591u, paladin.UnlockQuestRowId);
+        Assert.Equal(1, paladin.Role);
+        Assert.False(paladin.IsCrafter);
+        Assert.False(paladin.IsGatherer);
+
+        // A job shares its class's level slot, which is why hiding the class once the job is unlocked loses nothing.
+        var gladiator = names.ClassJobInfo(1);
+        Assert.NotNull(gladiator);
+        Assert.Equal(1u, gladiator.ParentRowId);
+        Assert.True(gladiator.ExpArrayIndex >= 0);
+        Assert.Equal(gladiator.ExpArrayIndex, paladin.ExpArrayIndex);
+
+        var pictomancer = names.ClassJobInfo(42);
+        Assert.NotNull(pictomancer);
+        Assert.False(string.IsNullOrEmpty(pictomancer.Name));
+        Assert.Equal("PCT", pictomancer.Abbreviation);
+        Assert.Equal(42u, pictomancer.ParentRowId);
+        Assert.Equal(3, pictomancer.Role);
+        Assert.True(jobs.Admits(31, 42), "31 (Disciples of Magic) admits PCT");
+
+        var bard = names.ClassJobInfo(23);
+        Assert.NotNull(bard);
+        Assert.Equal(3, bard.Role);
+        Assert.False(jobs.Admits(31, 23), "31 (Disciples of Magic) does not admit BRD");
+
+        var carpenter = names.ClassJobInfo(8);
+        Assert.NotNull(carpenter);
+        Assert.True(carpenter.IsCrafter);
+        Assert.False(carpenter.IsGatherer);
+        Assert.Equal(0, carpenter.Role);
+
+        var miner = names.ClassJobInfo(16);
+        Assert.NotNull(miner);
+        Assert.True(miner.IsGatherer);
+        Assert.False(miner.IsCrafter);
+
+        // Rows 44 and 45 are empty placeholders whose exp slot is 0 (Gladiator's); they must not become jobs.
+        Assert.All(names.ClassJobInfos, i => Assert.False(string.IsNullOrEmpty(i.Name), $"row {i.RowId} has no name"));
+        Assert.DoesNotContain(names.ClassJobInfos, i => i.RowId is 44 or 45);
+        Assert.Null(names.ClassJobInfo(44));
+        Assert.Equal(string.Empty, names.ClassJob(44));
+        Assert.Equal(62119u, paladin.IconId);
+    }
 }

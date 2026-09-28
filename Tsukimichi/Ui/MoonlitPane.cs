@@ -57,6 +57,11 @@ public sealed class MoonlitPane : IDisposable
     private KindItem[] kindItems = [];
     private int kindsBuild = -1;
 
+    // Per-kind counts from the last RefreshObtained, indexed by RewardKind; CountsFor reads them.
+    private readonly int[] kindObtained = new int[KindCount];
+    private readonly int[] kindTotal = new int[KindCount];
+    private readonly int[] kindUnknown = new int[KindCount];
+
     private int[] visible = [];
     private int visibleCount;
     private VisibleKey visibleKey;
@@ -123,6 +128,19 @@ public sealed class MoonlitPane : IDisposable
         {
             SaveOverrides();
         }
+    }
+
+    /// <summary>
+    /// Obtained/total/unknown for one reward kind on the viewed character, with the same obtained logic the table
+    /// uses. Memoized per <see cref="SessionState.Version"/>; the Characters dashboard reads it every frame.
+    /// </summary>
+    public UniqueRewardCounts CountsFor(RewardKind kind)
+    {
+        Refresh();
+        var k = (int)kind;
+        return (uint)k < KindCount
+            ? new UniqueRewardCounts(kindObtained[k], kindTotal[k], kindUnknown[k])
+            : default;
     }
 
     /// <summary>Re-reads <c>user/overrides.json</c>, e.g. after the file was deleted or replaced outside the pane.</summary>
@@ -217,8 +235,13 @@ public sealed class MoonlitPane : IDisposable
             return;
         }
 
+        // Every column is reorderable (no NoReorder anywhere). The two glyph columns are fixed and not resizable, but
+        // wide enough that their header can be grabbed away from the neighbouring resize border: ImGui claims the
+        // 4 px either side of a border for resizing, and a header only as wide as the glyph left almost nothing
+        // else to drag, so a reorder attempt on State became a resize of the stretch column before it.
         const ImGuiTableFlags Flags = ImGuiTableFlags.ScrollY | ImGuiTableFlags.RowBg | ImGuiTableFlags.BordersInnerH
-                                      | ImGuiTableFlags.Resizable | ImGuiTableFlags.Reorderable | ImGuiTableFlags.Hideable;
+                                      | ImGuiTableFlags.Resizable | ImGuiTableFlags.Reorderable | ImGuiTableFlags.Hideable
+                                      | ImGuiTableFlags.SizingStretchProp;
         using var table = ImRaii.Table("##moonlitTable", 6, Flags, new Vector2(-1f, -1f));
         if (!table)
         {
@@ -227,12 +250,13 @@ public sealed class MoonlitPane : IDisposable
 
         var line = ImGui.GetTextLineHeight();
         var scale = ImGuiHelpers.GlobalScale;
+        var glyphColumn = MathF.Max(line * 2.4f, 44f * scale);
         ImGui.TableSetupScrollFreeze(0, 1);
-        ImGui.TableSetupColumn(Strings.MoonlitColumnObtained, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, line * 1.6f);
+        ImGui.TableSetupColumn(Strings.MoonlitColumnObtained, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, glyphColumn);
         ImGui.TableSetupColumn(Strings.MoonlitColumnReward, ImGuiTableColumnFlags.WidthStretch, 3f);
         ImGui.TableSetupColumn(Strings.MoonlitColumnKind, ImGuiTableColumnFlags.WidthFixed, 110f * scale);
         ImGui.TableSetupColumn(Strings.MoonlitColumnQuest, ImGuiTableColumnFlags.WidthStretch, 3f);
-        ImGui.TableSetupColumn(Strings.MoonlitColumnState, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, line * 1.6f);
+        ImGui.TableSetupColumn(Strings.MoonlitColumnState, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, glyphColumn);
         ImGui.TableSetupColumn(Strings.MoonlitColumnConfidence, ImGuiTableColumnFlags.WidthFixed, 80f * scale);
         ImGui.TableHeadersRow();
 
@@ -259,7 +283,20 @@ public sealed class MoonlitPane : IDisposable
         using var id = ImRaii.PushId(index);
         ImGui.TableNextRow();
         ImGui.TableNextColumn();
-        MoonGlyph.DrawFillingInline(item.Fraction, ImGui.GetTextLineHeight());
+        if (item.AllUnknown)
+        {
+            // Nothing readable for this kind on the viewed character (logged out, a stored snapshot, or a kind the
+            // reader cannot answer): a veiled moon says so instead of a misleading empty one.
+            MoonGlyph.DrawInline(QuestState.Unknown, ImGui.GetTextLineHeight());
+            if (ImGui.IsItemHovered())
+            {
+                ImGui.SetTooltip(Strings.MoonlitObtainedUnknown);
+            }
+        }
+        else
+        {
+            MoonGlyph.DrawFillingInline(item.Fraction, ImGui.GetTextLineHeight());
+        }
 
         ImGui.TableNextColumn();
         var selected = ui.MoonlitKind == item.Kind;
@@ -435,10 +472,12 @@ public sealed class MoonlitPane : IDisposable
     /// <summary>Obtained state per row and the per-kind counts, once per session version.</summary>
     private void RefreshObtained()
     {
-        Span<int> obtained = stackalloc int[KindCount];
-        Span<int> total = stackalloc int[KindCount];
-        obtained.Clear();
-        total.Clear();
+        var obtained = kindObtained;
+        var total = kindTotal;
+        var unknown = kindUnknown;
+        Array.Clear(obtained);
+        Array.Clear(total);
+        Array.Clear(unknown);
 
         foreach (var row in rows)
         {
@@ -447,15 +486,21 @@ public sealed class MoonlitPane : IDisposable
             if ((uint)k < KindCount)
             {
                 total[k]++;
-                if (row.Obtained == true)
+                switch (row.Obtained)
                 {
-                    obtained[k]++;
+                    case true:
+                        obtained[k]++;
+                        break;
+                    case null:
+                        unknown[k]++;
+                        break;
                 }
             }
         }
 
         var allObtained = 0;
         var allTotal = 0;
+        var allUnknown = 0;
         var kinds = catalog.Kinds;
         if (kindsBuild != rowsBuild)
         {
@@ -472,12 +517,14 @@ public sealed class MoonlitPane : IDisposable
             var k = (int)kinds[i].Kind;
             var o = (uint)k < KindCount ? obtained[k] : 0;
             var t = (uint)k < KindCount ? total[k] : kinds[i].Count;
-            kindItems[i].SetCounts(o, t);
+            var u = (uint)k < KindCount ? unknown[k] : 0;
+            kindItems[i].SetCounts(o, t, u);
             allObtained += o;
             allTotal += t;
+            allUnknown += u;
         }
 
-        allItem.SetCounts(allObtained, allTotal);
+        allItem.SetCounts(allObtained, allTotal, allUnknown);
         obtainedVersion = session.Version;
         obtainedBuild = rowsBuild;
         visibleKey = default;
@@ -597,12 +644,18 @@ public sealed class MoonlitPane : IDisposable
         public RewardKind? Kind { get; } = kind;
         public string Name { get; } = name;
         public string CountText { get; private set; } = "0/0";
+
+        /// <summary>Obtained over every entry of the kind (unknown entries count as not obtained).</summary>
         public float Fraction { get; private set; }
 
-        public void SetCounts(int obtained, int total)
+        /// <summary>True when no entry of the kind is readable, so the row shows a veiled moon instead of a fraction.</summary>
+        public bool AllUnknown { get; private set; }
+
+        public void SetCounts(int obtained, int total, int unknown)
         {
             CountText = obtained.ToString(CultureInfo.InvariantCulture) + "/" + total.ToString(CultureInfo.InvariantCulture);
-            Fraction = total == 0 ? 0f : (float)obtained / total;
+            Fraction = total > 0 ? (float)obtained / total : 0f;
+            AllUnknown = total > 0 && unknown == total;
         }
     }
 

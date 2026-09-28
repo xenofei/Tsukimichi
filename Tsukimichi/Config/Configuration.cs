@@ -45,6 +45,9 @@ public sealed class Configuration : IPluginConfiguration
     /// <summary>Character the user chose to view explicitly; null follows the live character.</summary>
     public ulong? ViewedContentId { get; set; }
 
+    /// <summary>Open the help window by itself the first time the main window opens; cleared once that happened.</summary>
+    public bool ShowHelpOnFirstRun { get; set; } = true;
+
     /// <summary>Poll interval as a <see cref="TimeSpan"/> within the allowed bounds.</summary>
     public TimeSpan PollInterval
     {

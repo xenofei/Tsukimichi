@@ -61,9 +61,9 @@ public static class CatalogMapper
 
         ct.ThrowIfCancellationRequested();
         var catalog = QuestCatalog.Build(records);
-        var names = ReadNames(excel, language);
-        ct.ThrowIfCancellationRequested();
         var jobs = ClassJobCategoryLookup.Build(excel, language);
+        ct.ThrowIfCancellationRequested();
+        var names = ReadNames(excel, language, jobs);
 
         log?.Invoke($"Quest sheet: {quests.Count} rows, {records.Count} named, {skipped} skipped; {journal.GenreCount} journal genres; {jobs.Count} class/job categories");
         return new CatalogBundle(catalog, names, jobs, language.ToString());
@@ -329,20 +329,39 @@ public static class CatalogMapper
     private static RewardRef ItemReward(RewardKind kind, in Item item, byte count)
         => new(kind, item.RowId, item.RowId, Math.Max(count, (byte)1), item.Name.ExtractText(), item.Icon);
 
-    private static GameNames ReadNames(ExcelModule excel, Language language)
+    /// <summary>ClassJobCategory rows "Disciples of the Land" and "Disciples of the Hand"; membership marks gatherers and crafters.</summary>
+    private const uint DisciplesOfTheLandCategory = 32;
+    private const uint DisciplesOfTheHandCategory = 33;
+
+    private static GameNames ReadNames(ExcelModule excel, Language language, ClassJobCategoryLookup jobs)
     {
         var classJobs = new Dictionary<uint, string>();
         var abbreviations = new Dictionary<uint, string>();
+        var infos = new List<ClassJobInfo>();
         foreach (var job in excel.GetSheet<ClassJob>(language))
         {
+            // Rows past the last real job carry an abbreviation and an exp slot but no name; they are not jobs.
             var abbreviation = job.Abbreviation.ExtractText();
-            if (abbreviation.Length == 0)
+            var name = job.Name.ExtractText();
+            if (abbreviation.Length == 0 || name.Length == 0)
             {
                 continue;
             }
 
-            classJobs[job.RowId] = job.Name.ExtractText();
+            classJobs[job.RowId] = name;
             abbreviations[job.RowId] = abbreviation;
+
+            var id = job.RowId <= byte.MaxValue ? (byte)job.RowId : (byte)0;
+            infos.Add(new ClassJobInfo(
+                job.RowId,
+                name,
+                abbreviation,
+                job.ClassJobParent.RowId,
+                job.UnlockQuest.RowId,
+                job.Role,
+                IsCrafter: id != 0 && jobs.Admits(DisciplesOfTheHandCategory, id),
+                IsGatherer: id != 0 && jobs.Admits(DisciplesOfTheLandCategory, id),
+                job.ExpArrayIndex));
         }
 
         return new GameNames(
@@ -351,7 +370,8 @@ public static class CatalogMapper
             Names(excel.GetSheet<ExVersion>(language), static (in ExVersion r) => r.Name),
             classJobs,
             abbreviations,
-            Names(excel.GetSheet<BeastReputationRank>(language), static (in BeastReputationRank r) => r.Name));
+            Names(excel.GetSheet<BeastReputationRank>(language), static (in BeastReputationRank r) => r.Name),
+            infos);
     }
 
     private delegate Lumina.Text.ReadOnly.ReadOnlySeString NameOf<T>(in T row);

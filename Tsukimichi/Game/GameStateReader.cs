@@ -333,7 +333,11 @@ public sealed class GameStateReader
         return result;
     }
 
-    /// <summary>ClassJob row id to ExpArrayIndex, read once from the sheet.</summary>
+    /// <summary>
+    /// ClassJob row id to ExpArrayIndex, read once from the sheet. Rows without a name (placeholder rows the sheet
+    /// carries past the last real job) are skipped even when they point at an exp slot, so a snapshot never lists a
+    /// "Job 44".
+    /// </summary>
     private (byte RowId, int ExpIndex)[] JobExpIndex()
     {
         if (jobExpIndex is not null)
@@ -344,7 +348,7 @@ public sealed class GameStateReader
         var list = new List<(byte, int)>();
         foreach (var job in data.GetExcelSheet<ClassJob>())
         {
-            if (job.RowId == 0 || job.RowId > byte.MaxValue || job.ExpArrayIndex < 0)
+            if (job.RowId == 0 || job.RowId > byte.MaxValue || job.ExpArrayIndex < 0 || job.Name.IsEmpty)
             {
                 continue;
             }

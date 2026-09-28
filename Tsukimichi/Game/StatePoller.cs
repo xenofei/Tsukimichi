@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Dalamud.Plugin.Services;
 using Tsukimichi.Config;
 using Tsukimichi.Core.Evaluation;
@@ -151,9 +152,11 @@ public sealed class StatePoller : IDisposable
 
         lastPollUtc = now;
 
-        // Game reads and the state commit: only these drive the backoff.
+        // Game reads and the state commit: only these drive the backoff. The stopwatch covers capture, diff and
+        // resolve; publishing to the session (and the UI it wakes) is not part of a poll's own cost.
         PollResult? result = null;
         var failed = false;
+        var started = Stopwatch.GetTimestamp();
         try
         {
             result = Poll(now);
@@ -171,6 +174,7 @@ public sealed class StatePoller : IDisposable
 
         if (!failed)
         {
+            session.RecordPoll(Stopwatch.GetElapsedTime(started).TotalMilliseconds);
             if (backoff.IsActive)
             {
                 log.Information("Poller recovered after {Failures} failure(s)", backoff.Failures);

@@ -103,6 +103,31 @@ public sealed class SessionState
     /// <summary>Increments on every change; the UI compares it to rebuild its query.</summary>
     public int Version { get; private set; }
 
+    /// <summary>Wall time of the last poll (capture, diff and resolve) in milliseconds; 0 before the first poll.</summary>
+    public double LastPollMs { get; private set; }
+
+    /// <summary>Exponential moving average of <see cref="LastPollMs"/> over the session.</summary>
+    public double AveragePollMs { get; private set; }
+
+    /// <summary>Polls completed this session, including ones that found nothing changed.</summary>
+    public int PollCount { get; private set; }
+
+    /// <summary>Weight of the newest poll in <see cref="AveragePollMs"/>.</summary>
+    private const double PollAverageWeight = 0.1;
+
+    /// <summary>Records one poll's cost. Does not bump <see cref="Version"/>: timing is not state the UI must rebuild for.</summary>
+    internal void RecordPoll(double milliseconds)
+    {
+        if (!double.IsFinite(milliseconds) || milliseconds < 0)
+        {
+            return;
+        }
+
+        LastPollMs = milliseconds;
+        PollCount++;
+        AveragePollMs = PollCount == 1 ? milliseconds : AveragePollMs + (milliseconds - AveragePollMs) * PollAverageWeight;
+    }
+
     public event Action? Changed;
 
     /// <summary>Raised after <see cref="DeleteAllData"/> removed the stored files, so in-memory copies (pins, overrides) can drop them.</summary>

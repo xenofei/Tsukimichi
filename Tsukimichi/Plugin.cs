@@ -45,6 +45,7 @@ public sealed class Plugin : IDalamudPlugin
     private MoonlitPane? moonlitPane;
     private CharactersPane? charactersPane;
     private ConfigWindow? configWindow;
+    private HelpWindow? helpWindow;
 
     /// <summary>The Moonlit pane's override store as the detail pane's <see cref="IUniqueOverrides"/>.</summary>
     private sealed class MoonlitOverrides(MoonlitPane pane) : IUniqueOverrides
@@ -261,7 +262,8 @@ public sealed class Plugin : IDalamudPlugin
             // UI (session-dependent surfaces)
             var unlockReader = new Game.RewardUnlockReader(Session, DataManager, Framework, Log);
             moonlitPane = new MoonlitPane(Session, TextureProvider, unlockReader, Paths, Log);
-            charactersPane = new CharactersPane(Session, Paths, Log, Snapshots.Load, DataManager);
+            charactersPane = new CharactersPane(Session, Paths, Log, Snapshots.Load, DataManager, TextureProvider);
+            charactersPane.MoonlitCounts = moonlitPane.CountsFor;
             mainWindow.AttachPanes(moonlitPane, charactersPane);
             mainWindow.AttachOverrides(new MoonlitOverrides(moonlitPane));
 
@@ -269,6 +271,13 @@ public sealed class Plugin : IDalamudPlugin
             windowSystem.AddWindow(configWindow);
             PluginInterface.UiBuilder.OpenConfigUi += configWindow.Toggle;
             command.ToggleConfigWindow = configWindow.Toggle;
+
+            helpWindow = new HelpWindow(Settings, PluginInterface, mainWindow);
+            windowSystem.AddWindow(helpWindow);
+            PluginInterface.UiBuilder.Draw += helpWindow.CheckFirstRun;
+            configWindow.ShowHelp = helpWindow.Show;
+            // MERGE: uncomment once TsukimichiCommand.ToggleHelpWindow lands (added on the other branch).
+            // command.ToggleHelpWindow = helpWindow.Toggle;
             // /UI
         }
         catch (Exception ex)
@@ -286,6 +295,11 @@ public sealed class Plugin : IDalamudPlugin
         if (configWindow is not null)
         {
             PluginInterface.UiBuilder.OpenConfigUi -= configWindow.Toggle;
+        }
+
+        if (helpWindow is not null)
+        {
+            PluginInterface.UiBuilder.Draw -= helpWindow.CheckFirstRun;
         }
 
         PluginInterface.UiBuilder.OpenMainUi -= mainWindow.Toggle;
@@ -311,6 +325,11 @@ public sealed class Plugin : IDalamudPlugin
             if (configWindow is not null)
             {
                 PluginInterface.UiBuilder.OpenConfigUi -= configWindow.Toggle;
+            }
+
+            if (helpWindow is not null)
+            {
+                PluginInterface.UiBuilder.Draw -= helpWindow.CheckFirstRun;
             }
 
             if (mainWindow is not null)
