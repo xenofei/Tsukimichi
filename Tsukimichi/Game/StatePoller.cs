@@ -460,6 +460,7 @@ public sealed class StatePoller : IDisposable
         }
 
         var wasWaiting = readiness.WaitingSinceUtc is not null;
+        var wasOverdue = readiness.Overdue;
         switch (readiness.Check(capture, stored, now))
         {
             case LoginVerdict.NotReady:
@@ -467,11 +468,15 @@ public sealed class StatePoller : IDisposable
                 {
                     log.Debug("First capture for {ContentId} has no quest data yet; waiting up to {Seconds} s for the client to settle", capture.ContentId, readiness.MaxWait.TotalSeconds);
                 }
+                else if (readiness.Overdue && !wasOverdue)
+                {
+                    log.Warning("First capture for {ContentId} still has no quest data after {Seconds} s while the stored snapshot has; keeping the stored character and waiting for the client", capture.ContentId, readiness.MaxWait.TotalSeconds);
+                }
 
                 return false;
 
             case LoginVerdict.ReadyAfterTimeout:
-                log.Information("First capture for {ContentId} still has no quest data after {Seconds} s; committing it as an empty character", capture.ContentId, readiness.MaxWait.TotalSeconds);
+                log.Information("First capture for {ContentId} still has no quest data after {Seconds} s and nothing is stored; committing it as an empty character", capture.ContentId, readiness.MaxWait.TotalSeconds);
                 return true;
 
             default:

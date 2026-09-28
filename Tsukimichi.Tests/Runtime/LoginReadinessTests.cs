@@ -67,6 +67,28 @@ public sealed class LoginReadinessTests
     }
 
     [Fact]
+    public void Timeout_never_commits_an_empty_capture_over_a_non_empty_stored_snapshot()
+    {
+        var readiness = new LoginReadiness(TimeSpan.FromSeconds(5));
+        var stored = Fixture.Snapshot(Fixture.A);
+
+        Assert.Equal(LoginVerdict.NotReady, readiness.Check(Unsettled(), stored, T0));
+        Assert.False(readiness.Overdue);
+
+        // Past the maximum wait the verdict stays NotReady: the overrun is flagged once for the log, not committed.
+        Assert.Equal(LoginVerdict.NotReady, readiness.Check(Unsettled(), stored, T0.AddSeconds(5)));
+        Assert.True(readiness.Overdue);
+        Assert.Equal(T0, readiness.WaitingSinceUtc);
+        Assert.Equal(LoginVerdict.NotReady, readiness.Check(Unsettled(), stored, T0.AddMinutes(10)));
+        Assert.True(readiness.Overdue);
+
+        // The client delivering ends the wait as usual.
+        Assert.Equal(LoginVerdict.Ready, readiness.Check(Fixture.Snapshot(Fixture.A), stored, T0.AddMinutes(11)));
+        Assert.False(readiness.Overdue);
+        Assert.Null(readiness.WaitingSinceUtc);
+    }
+
+    [Fact]
     public void Reset_forgets_a_wait_in_progress()
     {
         var readiness = new LoginReadiness(TimeSpan.FromSeconds(5));
@@ -75,7 +97,22 @@ public sealed class LoginReadinessTests
         readiness.Reset();
 
         Assert.Null(readiness.WaitingSinceUtc);
+        Assert.False(readiness.Overdue);
         Assert.Equal(LoginVerdict.NotReady, readiness.Check(Unsettled(), null, T0.AddSeconds(10)));
+    }
+
+    [Fact]
+    public void Reset_clears_an_overdue_wait()
+    {
+        var readiness = new LoginReadiness(TimeSpan.FromSeconds(5));
+        readiness.Check(Unsettled(), Fixture.Snapshot(Fixture.A), T0);
+        readiness.Check(Unsettled(), Fixture.Snapshot(Fixture.A), T0.AddSeconds(5));
+        Assert.True(readiness.Overdue);
+
+        readiness.Reset();
+
+        Assert.False(readiness.Overdue);
+        Assert.Null(readiness.WaitingSinceUtc);
     }
 
     [Fact]
@@ -85,10 +122,15 @@ public sealed class LoginReadinessTests
         // every stored accepted time. This pins the contract the two share.
         var since = new Dictionary<ushort, DateTime> { [QuestRecord.ToQuestId(Fixture.A)] = T0 };
         var capture = Unsettled();
+        var readiness = new LoginReadiness(TimeSpan.FromSeconds(5));
 
-        if (new LoginReadiness().Check(capture, Fixture.Snapshot(Fixture.A), T0) == LoginVerdict.Ready)
+        // At login, and long past the maximum wait: the poller commits on Ready or ReadyAfterTimeout only.
+        foreach (var at in new[] { T0, T0.AddSeconds(5), T0.AddHours(1) })
         {
-            AcceptedSince.Reconcile(since, capture, T0);
+            if (readiness.Check(capture, Fixture.Snapshot(Fixture.A), at) is LoginVerdict.Ready or LoginVerdict.ReadyAfterTimeout)
+            {
+                AcceptedSince.Reconcile(since, capture, at);
+            }
         }
 
         Assert.Single(since);
