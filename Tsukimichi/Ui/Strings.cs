@@ -181,7 +181,7 @@ public static partial class Strings
     public const string ItemLevelFormat = "iLv {0}";
 
     // Detail pane
-    public const string SelectQuest = "Select a quest";
+    public const string SelectQuest = "Select a quest in the table to see its requirements, rewards and path.";
     public const string QuestNotInCatalog = "Quest not in catalog";
     public const string Requirements = "Requirements";
     public const string NoRequirements = "Nothing gates this quest.";
@@ -215,6 +215,8 @@ public static partial class Strings
     public const string NoGiver = "No issuer recorded.";
     public const string Met = "✓";
     public const string Unmet = "✗";
+    public const string MetTooltip = "Met";
+    public const string UnmetTooltip = "Not met";
     public const string NextStepMarker = "▶";
     /// <summary>{0} = x, {1} = y.</summary>
     public const string CoordinatesFormat = "({0:0.0}, {1:0.0})";

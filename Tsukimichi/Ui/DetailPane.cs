@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface;
 using Dalamud.Interface.Textures;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
@@ -25,6 +26,13 @@ public sealed class DetailPane
     public const int MaxUnlocks = 8;
 
     private const int PathScrollFrames = 2;
+
+    // Section icons, converted once (ToIconString allocates).
+    private static readonly string RequirementsIcon = FontAwesomeIcon.Tasks.ToIconString();
+    private static readonly string RewardsIcon = FontAwesomeIcon.Gift.ToIconString();
+    private static readonly string MoonlitIcon = FontAwesomeIcon.Moon.ToIconString();
+    private static readonly string PathIcon = FontAwesomeIcon.Route.ToIconString();
+    private static readonly string GiverIcon = FontAwesomeIcon.MapMarkerAlt.ToIconString();
     private const double PathHighlightSeconds = 1.5;
     private const int MinFoldedRun = 2;
     private const int NoteLength = 120;
@@ -124,7 +132,7 @@ public sealed class DetailPane
         ui.RecordWindow(UiRects.Detail);
         if (ui.SelectedRowId is not { } rowId)
         {
-            ImGui.TextDisabled(Strings.SelectQuest);
+            EmptyState.Draw(Strings.SelectQuest);
             return;
         }
 
@@ -138,41 +146,40 @@ public sealed class DetailPane
 
         if (model.Quest is not { } quest)
         {
-            ImGui.TextDisabled(Strings.QuestNotInCatalog);
+            EmptyState.Draw(Strings.QuestNotInCatalog);
             return;
         }
 
-        var scale = UiMetrics.Scale;
         var width = ImGui.GetContentRegionAvail().X;
-        DrawHeader(quest, scale);
+        DrawHeader(quest);
 
         var start = ImGui.GetCursorScreenPos();
-        Section(Strings.Requirements);
+        Section(Strings.Requirements, RequirementsIcon);
         DrawRequirements();
         ui.RecordSpan(UiRects.DetailRequirements, start, width);
 
-        Section(Strings.Rewards);
-        DrawRewards(scale);
+        Section(Strings.Rewards, RewardsIcon);
+        DrawRewards();
         if (Overrides is { } overrides)
         {
-            Section(Strings.UniqueSection);
+            Section(Strings.UniqueSection, MoonlitIcon);
             DrawUnique(overrides, rowId);
         }
 
         start = ImGui.GetCursorScreenPos();
-        Section(Strings.Path, highlight: ImGui.GetTime() < pathHighlightUntil);
+        Section(Strings.Path, PathIcon, highlight: ImGui.GetTime() < pathHighlightUntil);
         if (pathScrollFrames > 0)
         {
             pathScrollFrames--;
             ImGui.SetScrollHereY(0f);
         }
 
-        DrawPath(scale);
-        DrawUnlocks(scale);
+        DrawPath();
+        DrawUnlocks();
         ui.RecordSpan(UiRects.DetailPath, start, width);
 
         start = ImGui.GetCursorScreenPos();
-        Section(Strings.Giver);
+        Section(Strings.Giver, GiverIcon);
         DrawGiver(quest);
         ui.RecordSpan(UiRects.DetailGiver, start, width);
         ImGui.Spacing();
@@ -185,9 +192,8 @@ public sealed class DetailPane
     /// state moon at its right; quests without a banner (or whose banner is still loading) get a raised Night card
     /// with the moon beside the name instead. The journal path, header line and state follow either way.
     /// </summary>
-    private void DrawHeader(QuestRecord quest, float scale)
+    private void DrawHeader(QuestRecord quest)
     {
-        _ = scale;
         if (!DrawBanner(quest))
         {
             DrawHeaderCard(quest);
@@ -300,11 +306,19 @@ public sealed class DetailPane
             return;
         }
 
+        var dl = ImGui.GetWindowDrawList();
+        var lineHeight = ImGui.GetTextLineHeight();
+        var radius = UiMetrics.RequirementMoonRadius;
+        var box = MathF.Max(lineHeight, radius * 2.4f);
         foreach (var line in model.Requirements)
         {
-            using (Theme.PushText(line.Met ? Theme.Moon : Theme.Eclipse))
+            // Met is a full moon, unmet a new moon; the marks are moons like everything else here.
+            var pos = ImGui.GetCursorScreenPos();
+            ImGui.Dummy(new Vector2(box, lineHeight));
+            MoonGlyph.Draw(dl, pos + new Vector2(box * 0.5f, lineHeight * 0.5f), radius, line.Met ? QuestState.Completed : QuestState.Blocked);
+            if (ImGui.IsItemHovered())
             {
-                ImGui.TextUnformatted(line.Met ? Strings.Met : Strings.Unmet);
+                UiMetrics.Tooltip(line.Met ? Strings.MetTooltip : Strings.UnmetTooltip);
             }
 
             ImGui.SameLine();
@@ -332,7 +346,7 @@ public sealed class DetailPane
     }
 
     /// <summary>Icon, name and kind per reward; hovering anywhere on the row shows the blown-up reward tooltip.</summary>
-    private void DrawRewards(float scale)
+    private void DrawRewards()
     {
         if (model.Rewards.Count == 0)
         {
@@ -340,7 +354,6 @@ public sealed class DetailPane
             return;
         }
 
-        _ = scale;
         var iconSize = UiMetrics.DetailIconSize;
         foreach (var line in model.Rewards)
         {
@@ -446,7 +459,7 @@ public sealed class DetailPane
     /// The chain grouped by expansion, completed runs folded behind a toggle, every visible glyph joined by a thin
     /// Dusk line; each name is clickable and selects that quest.
     /// </summary>
-    private void DrawPath(float scale)
+    private void DrawPath()
     {
         if (model.Path.Count <= 1)
         {
@@ -458,8 +471,7 @@ public sealed class DetailPane
         var radius = UiMetrics.PathGlyphRadius;
         var lineHeight = ImGui.GetTextLineHeight();
         var glyphBox = MathF.Max(lineHeight, radius * 2.4f);
-        var previousCenter = Vector2.Zero;
-        var hasPrevious = false;
+        var chain = default(Chain);
 
         foreach (var row in model.PathRows)
         {
@@ -470,14 +482,14 @@ public sealed class DetailPane
                     break;
 
                 case PathRowKind.Step:
-                    DrawStep(dl, row.Step!, radius, lineHeight, glyphBox, scale, ref previousCenter, ref hasPrevious);
+                    DrawStep(dl, row.Step!, radius, lineHeight, glyphBox, ref chain);
                     break;
 
                 case PathRowKind.FoldedRun:
                 {
                     var expanded = expandedRuns.Contains(row.RunIndex);
                     using var id = ImRaii.PushId(row.RunIndex);
-                    var center = BeginGlyphLine(dl, QuestState.Completed, radius, lineHeight, glyphBox, scale, ref previousCenter, ref hasPrevious);
+                    BeginGlyphLine(dl, QuestState.Completed, radius, lineHeight, glyphBox, ref chain);
                     using (Theme.PushText(Theme.Dusk))
                     {
                         if (ImGui.Selectable(expanded ? row.ExpandedText : row.Text))
@@ -494,12 +506,11 @@ public sealed class DetailPane
                         UiMetrics.Tooltip(expanded ? Strings.FoldedRunCollapseTooltip : Strings.FoldedRunExpandTooltip);
                     }
 
-                    previousCenter = center;
                     if (expanded)
                     {
                         foreach (var step in row.Run!)
                         {
-                            DrawStep(dl, step, radius, lineHeight, glyphBox, scale, ref previousCenter, ref hasPrevious);
+                            DrawStep(dl, step, radius, lineHeight, glyphBox, ref chain);
                         }
                     }
 
@@ -509,38 +520,51 @@ public sealed class DetailPane
         }
     }
 
-    private void DrawStep(ImDrawListPtr dl, PathLine step, float radius, float lineHeight, float glyphBox, float scale, ref Vector2 previousCenter, ref bool hasPrevious)
+    /// <summary>The previous glyph of the chain: where it is and whether that step is done (its outgoing line is then lit).</summary>
+    private struct Chain
+    {
+        public Vector2 Center;
+        public bool Has;
+        public bool Done;
+    }
+
+    private void DrawStep(ImDrawListPtr dl, PathLine step, float radius, float lineHeight, float glyphBox, ref Chain chain)
     {
         using var id = ImRaii.PushId((int)step.RowId);
-        var center = BeginGlyphLine(dl, step.State, radius, lineHeight, glyphBox, scale, ref previousCenter, ref hasPrevious);
+        BeginGlyphLine(dl, step.State, radius, lineHeight, glyphBox, ref chain);
         if (ImGui.Selectable(step.Name, step.IsTarget))
         {
             ui.SelectedRowId = step.RowId;
         }
-
-        previousCenter = center;
     }
 
-    /// <summary>Glyph at the line's left joined to the previous glyph, cursor left on the same line for the label.</summary>
-    private static Vector2 BeginGlyphLine(ImDrawListPtr dl, QuestState state, float radius, float lineHeight, float glyphBox, float scale, ref Vector2 previousCenter, ref bool hasPrevious)
+    /// <summary>
+    /// Glyph at the line's left joined to the previous glyph by a line that is Moon where the path is already walked
+    /// (the previous step done) and Dusk where it is not; the cursor is left on the same line for the label.
+    /// </summary>
+    private static void BeginGlyphLine(ImDrawListPtr dl, QuestState state, float radius, float lineHeight, float glyphBox, ref Chain chain)
     {
         var pos = ImGui.GetCursorScreenPos();
         var center = pos + new Vector2(glyphBox * 0.5f, lineHeight * 0.5f);
-        _ = scale;
-        if (hasPrevious)
+        if (chain.Has)
         {
-            dl.AddLine(previousCenter + new Vector2(0f, radius), center - new Vector2(0f, radius), Theme.DuskU32, UiMetrics.Hairline);
+            dl.AddLine(
+                chain.Center + new Vector2(0f, radius),
+                center - new Vector2(0f, radius),
+                chain.Done ? Theme.MoonU32 : Theme.DuskU32,
+                chain.Done ? UiMetrics.Px(1.5f) : UiMetrics.Hairline);
         }
 
         ImGui.Dummy(new Vector2(glyphBox, lineHeight));
         MoonGlyph.Draw(dl, center, radius, state);
         ImGui.SameLine();
-        hasPrevious = true;
-        return center;
+        chain.Center = center;
+        chain.Has = true;
+        chain.Done = state == QuestState.Completed;
     }
 
     /// <summary>Direct dependents of the selected quest: the quests it is a previous quest of, with their glyphs.</summary>
-    private void DrawUnlocks(float scale)
+    private void DrawUnlocks()
     {
         ImGui.Spacing();
         ImGui.TextDisabled(Strings.UnlocksNext);
@@ -550,7 +574,6 @@ public sealed class DetailPane
             return;
         }
 
-        _ = scale;
         var dl = ImGui.GetWindowDrawList();
         var radius = UiMetrics.PathGlyphRadius;
         var lineHeight = ImGui.GetTextLineHeight();
@@ -636,15 +659,23 @@ public sealed class DetailPane
         }
     }
 
-    private static void Section(string title, bool highlight = false)
+    /// <summary>Section header: a small FontAwesome icon in Dusk, the title, then a Dusk rule; all Moon while highlighted.</summary>
+    private static void Section(string title, string icon, bool highlight = false)
     {
         ImGui.Spacing();
+        using (ImRaii.PushFont(UiBuilder.IconFont))
+        using (Theme.PushText(highlight ? Theme.Moon : Theme.Dusk))
+        {
+            ImGui.TextUnformatted(icon);
+        }
+
+        ImGui.SameLine();
         using (Theme.PushText(Theme.Moon, highlight))
         {
             ImGui.TextUnformatted(title);
         }
 
-        using (ImRaii.PushColor(ImGuiCol.Separator, Theme.Moon, highlight))
+        using (ImRaii.PushColor(ImGuiCol.Separator, highlight ? Theme.Moon : Theme.Dusk))
         {
             ImGui.Separator();
         }

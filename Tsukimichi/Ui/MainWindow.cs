@@ -686,6 +686,14 @@ public sealed class MainWindow : Window, IDisposable
 
         var barMin = ImGui.GetCursorScreenPos();
         ImGui.Separator();
+
+        // A tiny filling moon of overall completion leads the line.
+        var lineHeight = ImGui.GetTextLineHeight();
+        var moonBox = MathF.Max(lineHeight, UiMetrics.StatusMoonRadius * 2.4f);
+        var moonPos = ImGui.GetCursorScreenPos();
+        ImGui.Dummy(new Vector2(moonBox, lineHeight));
+        MoonGlyph.DrawFilling(ImGui.GetWindowDrawList(), moonPos + new Vector2(moonBox * 0.5f, lineHeight * 0.5f), UiMetrics.StatusMoonRadius, runner.Counts?.Overall.Fraction ?? 0f);
+        ImGui.SameLine();
         ImGui.TextDisabled(status);
         var windowX = ImGui.GetWindowPos().X;
         ui.RecordRect(UiRects.StatusBar, new Vector2(windowX + ImGui.GetWindowContentRegionMin().X, barMin.Y), new Vector2(windowX + ImGui.GetWindowContentRegionMax().X, ImGui.GetItemRectMax().Y));

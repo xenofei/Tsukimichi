@@ -160,6 +160,8 @@ public sealed class TablePane : IDisposable
 
         // Rows can be taller than the text when icons are scaled up; the selectable fills the row and centres its label.
         using var textAlign = ImRaii.PushStyle(ImGuiStyleVar.SelectableTextAlign, new Vector2(0f, 0.5f));
+        // Zebra rows: every other row tinted so long lists stay easy to track across columns.
+        using var zebra = ImRaii.PushColor(ImGuiCol.TableRowBgAlt, Theme.ZebraRow);
         var layout = new RowLayout(lineHeight, rowContent, glyphBox);
         clipper.Begin(rows.Length, rowHeight);
         while (clipper.Step())
@@ -231,12 +233,22 @@ public sealed class TablePane : IDisposable
         ImGui.Dummy(new Vector2(lead + layout.GlyphBox, layout.RowContent));
         var dl = ImGui.GetWindowDrawList();
         var centerY = cell.Y + layout.RowContent * 0.5f;
+        var state = hasSnapshot ? row.State : QuestState.Unknown;
+
+        // A thin stripe on the row's left edge: Moon for Ready, Silver for Accepted, so the actionable rows stand out.
+        if (state is QuestState.Ready or QuestState.Accepted)
+        {
+            var padding = ImGui.GetStyle().CellPadding;
+            var stripeMin = new Vector2(cell.X - padding.X, cell.Y - padding.Y);
+            dl.AddRectFilled(stripeMin, new Vector2(stripeMin.X + UiMetrics.Stripe, cell.Y + layout.RowContent + padding.Y), state == QuestState.Ready ? Theme.MoonU32 : Theme.SilverU32);
+        }
+
         if (runner.IsPinned(quest.RowId))
         {
             dl.AddCircleFilled(cell + new Vector2(UiMetrics.Px(3f), centerY - cell.Y), UiMetrics.Px(2.5f), Theme.MoonU32);
         }
 
-        MoonGlyph.Draw(dl, new Vector2(cell.X + lead + layout.GlyphBox * 0.5f, centerY), UiMetrics.RowGlyphRadius, hasSnapshot ? row.State : QuestState.Unknown);
+        MoonGlyph.Draw(dl, new Vector2(cell.X + lead + layout.GlyphBox * 0.5f, centerY), UiMetrics.RowGlyphRadius, state);
 
         // Name column carries the row-wide selectable and the context menu.
         ImGui.TableNextColumn();
@@ -290,7 +302,7 @@ public sealed class TablePane : IDisposable
         CenterText(in layout);
         if (hasSnapshot)
         {
-            ImGui.TextUnformatted(row.NextStep);
+            DrawNextStep(row.NextStep);
         }
         else
         {
@@ -303,6 +315,29 @@ public sealed class TablePane : IDisposable
 
         ImGui.TableNextColumn();
         DrawRewardIcons(quest, in layout);
+    }
+
+    /// <summary>Next step in Dusk with its first word in Silver, so the gate's kind reads at a glance; spans only, no new strings.</summary>
+    private static void DrawNextStep(string text)
+    {
+        var split = text.IndexOf(' ');
+        if (split <= 0)
+        {
+            using var dusk = Theme.PushText(Theme.Dusk);
+            ImGui.TextUnformatted(text);
+            return;
+        }
+
+        using (Theme.PushText(Theme.Silver))
+        {
+            ImGui.TextUnformatted(text.AsSpan(0, split));
+        }
+
+        ImGui.SameLine(0f, 0f);
+        using (Theme.PushText(Theme.Dusk))
+        {
+            ImGui.TextUnformatted(text.AsSpan(split));
+        }
     }
 
     /// <summary>
@@ -424,15 +459,16 @@ public sealed class TablePane : IDisposable
     private void DrawEmpty(EmptyReason empty)
     {
         ui.RecordWindow(UiRects.Table);
+        if (empty.ScopeIsEmpty)
+        {
+            EmptyState.Draw(Strings.ScopeEmpty);
+            return;
+        }
+
         ImGui.Spacing();
         using (Theme.PushText(Theme.Dusk))
         {
-            ImGui.TextUnformatted(empty.ScopeIsEmpty ? Strings.ScopeEmpty : Strings.NothingMatches);
-        }
-
-        if (empty.ScopeIsEmpty)
-        {
-            return;
+            ImGui.TextUnformatted(Strings.NothingMatches);
         }
 
         if (empty.Filters.Count > 0)

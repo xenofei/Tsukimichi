@@ -56,23 +56,28 @@ public sealed class TreePane
 
         var start = ImGui.GetCursorScreenPos();
         var width = ImGui.GetContentRegionAvail().X;
-        DrawNode(allNode);
+        DrawNode(allNode, section: true);
         foreach (var section in sections)
         {
-            DrawNode(section);
+            DrawNode(section, section: true);
         }
 
-        DrawNode(featureNode);
+        DrawNode(featureNode, section: true);
         // A reveal can land in the Unlisted scope while the config hides the node; show it so the selection is visible.
         if (showUnlisted || ui.Scope == QuestScope.VirtualUnlisted)
         {
-            DrawNode(unlistedNode);
+            DrawNode(unlistedNode, section: true);
         }
 
         ui.RecordSpan(UiRects.Tree, start, width);
     }
 
-    private void DrawNode(Node node)
+    /// <summary>
+    /// One node: the tree item is drawn with an empty label so its arrow, hover and selection behave as usual, then the
+    /// filling moon, the name and the right-aligned done/total are painted over it. <paramref name="section"/> nodes
+    /// (the top level) are drawn a touch bolder, and Moon-tinted once every quest under them is done.
+    /// </summary>
+    private void DrawNode(Node node, bool section)
     {
         var flags = ImGuiTreeNodeFlags.SpanAvailWidth | ImGuiTreeNodeFlags.OpenOnArrow | ImGuiTreeNodeFlags.OpenOnDoubleClick;
         if (node.Leaf)
@@ -85,7 +90,7 @@ public sealed class TreePane
             flags |= ImGuiTreeNodeFlags.Selected;
         }
 
-        var open = ImGui.TreeNodeEx(node.Id, flags, node.Name);
+        var open = ImGui.TreeNodeEx(node.Id, flags, string.Empty);
         if (ImGui.IsItemClicked() && !ImGui.IsItemToggledOpen())
         {
             Select(node.Scope);
@@ -96,35 +101,53 @@ public sealed class TreePane
             UiMetrics.Tooltip(path);
         }
 
-        DrawCountOverlay(node);
+        DrawNodeOverlay(node, section);
 
         if (open && !node.Leaf)
         {
             foreach (var child in node.Children)
             {
-                DrawNode(child);
+                DrawNode(child, section: false);
             }
 
             ImGui.TreePop();
         }
     }
 
-    /// <summary>Filling moon and done/total right-aligned on the node's line, drawn without an item so layout is untouched.</summary>
-    private static void DrawCountOverlay(Node node)
+    /// <summary>Moon, name and done/total painted on the node's line; drawn without items so layout is untouched.</summary>
+    private static void DrawNodeOverlay(Node node, bool section)
     {
         var dl = ImGui.GetWindowDrawList();
         var min = ImGui.GetItemRectMin();
         var max = ImGui.GetItemRectMax();
-        var textSize = ImGui.CalcTextSize(node.CountText);
+        var style = ImGui.GetStyle();
         var radius = UiMetrics.TreeMoonRadius;
         var pad = UiMetrics.Px(6f);
         var lineCenterY = (min.Y + max.Y) * 0.5f;
+        var textY = lineCenterY - ImGui.GetTextLineHeight() * 0.5f;
 
-        var textPos = new Vector2(max.X - pad - textSize.X, lineCenterY - textSize.Y * 0.5f);
-        dl.AddText(textPos, Theme.DuskU32, node.CountText);
+        // Count, right-aligned in Dusk.
+        var countSize = ImGui.CalcTextSize(node.CountText);
+        var countPos = new Vector2(max.X - pad - countSize.X, textY);
+        dl.AddText(countPos, Theme.DuskU32, node.CountText);
 
-        var moonCenter = new Vector2(textPos.X - pad - radius, lineCenterY);
-        MoonGlyph.DrawFilling(dl, moonCenter, radius, node.Count.Fraction);
+        // Where TreeNodeEx puts its label: after the arrow slot (one font size plus twice the frame padding).
+        var labelX = min.X + ImGui.GetFontSize() + style.FramePadding.X * 2f;
+        MoonGlyph.DrawFilling(dl, new Vector2(labelX + radius, lineCenterY), radius, node.Count.Fraction);
+
+        var complete = node.Count.Total > 0 && node.Count.Done >= node.Count.Total;
+        var color = section && complete ? Theme.MoonU32 : ImGui.GetColorU32(ImGuiCol.Text);
+        var namePos = new Vector2(labelX + radius * 2f + pad, textY);
+        var nameWidth = MathF.Max(0f, countPos.X - pad - radius - namePos.X);
+        dl.PushClipRect(namePos, new Vector2(namePos.X + nameWidth, max.Y), true);
+        dl.AddText(namePos, color, node.Name);
+        if (section)
+        {
+            // No bold face in Dalamud: a second pass one scaled pixel to the right thickens the strokes.
+            dl.AddText(namePos + new Vector2(UiMetrics.Hairline, 0f), color, node.Name);
+        }
+
+        dl.PopClipRect();
     }
 
     private void Select(QuestScope scope)
