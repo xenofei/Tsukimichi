@@ -28,3 +28,18 @@ public enum ScopeKind
     VirtualFeature,
     VirtualUnlisted,
 }
+
+/// <summary>One-click table presets from the filter panel; at most one is active at a time.</summary>
+public enum Preset
+{
+    None,
+
+    /// <summary>Feature (unlock) quests only, from <see cref="QueryContext.FeatureQuestIds"/>; the caller sorts available ones first.</summary>
+    FeatureQuests,
+
+    /// <summary>Quests within <see cref="QuestQuery.LevelBandRadius"/> levels of <see cref="QueryContext.CurrentLevel"/>.</summary>
+    LevelBand,
+
+    /// <summary>Accepted quests whose journal entry is <see cref="QueryContext.StalledDays"/> days old or older.</summary>
+    Stalled,
+}

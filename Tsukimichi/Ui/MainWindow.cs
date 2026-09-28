@@ -10,6 +10,7 @@ using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
+using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
 using Tsukimichi.Game;
@@ -82,6 +83,13 @@ public sealed class MainWindow : Window, IDisposable
     // Status bar string, rebuilt when its inputs change.
     private (int Catalog, int Rows, int Total, bool Live, long SnapshotMinute) statusKey = (-1, -1, -1, false, -1);
     private string status = string.Empty;
+
+    // Main scenario position, memoized per session version and catalog; empty strings hide it.
+    private int msqVersion = -1;
+    private CatalogBundle? msqBundle;
+    private MsqPosition? msq;
+    private string msqStatus = string.Empty;
+    private string msqTooltip = string.Empty;
 
     public MainWindow(
         Plugin plugin,
@@ -741,6 +749,8 @@ public sealed class MainWindow : Window, IDisposable
             status = string.Format(CultureInfo.CurrentCulture, Strings.StatusFormat, bundle.Catalog.Count, runner.Rows.Length, runner.TotalInScope, mode, version);
         }
 
+        RefreshMsq(session, bundle);
+
         var barMin = ImGui.GetCursorScreenPos();
         ImGui.Separator();
 
@@ -752,7 +762,74 @@ public sealed class MainWindow : Window, IDisposable
         MoonGlyph.DrawFilling(ImGui.GetWindowDrawList(), moonPos + new Vector2(moonBox * 0.5f, lineHeight * 0.5f), UiMetrics.StatusMoonRadius, runner.Counts?.Overall.Fraction ?? 0f);
         ImGui.SameLine();
         ImGui.TextDisabled(status);
+        if (msqStatus.Length > 0)
+        {
+            // The MSQ position follows the status text as its own item so it can carry a tooltip and a click.
+            ImGui.SameLine(0f, 0f);
+            ImGui.TextDisabled(msqStatus);
+            if (ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(msqTooltip);
+                if (msq?.Next is { } next && ImGui.IsItemClicked())
+                {
+                    SelectMsq(next);
+                }
+            }
+        }
+
         var windowX = ImGui.GetWindowPos().X;
         ui.RecordRect(UiRects.StatusBar, new Vector2(windowX + ImGui.GetWindowContentRegionMin().X, barMin.Y), new Vector2(windowX + ImGui.GetWindowContentRegionMax().X, ImGui.GetItemRectMax().Y));
+    }
+
+    /// <summary>
+    /// Recomputes the main scenario position and its two strings when the session version or catalog changed. Hidden
+    /// (empty strings) without a character, since every quest would read as unknown.
+    /// </summary>
+    private void RefreshMsq(SessionState session, CatalogBundle bundle)
+    {
+        if (msqVersion == session.Version && ReferenceEquals(msqBundle, bundle))
+        {
+            return;
+        }
+
+        msqVersion = session.Version;
+        msqBundle = bundle;
+        msq = session.ViewedSnapshot is null || session.States.Count == 0 ? null : MsqProgress.Compute(bundle.Catalog, session.States);
+        if (msq is not { } position)
+        {
+            msqStatus = string.Empty;
+            msqTooltip = string.Empty;
+            return;
+        }
+
+        if (position.Next is not { } next)
+        {
+            msqStatus = Strings.StatusMsqComplete;
+            msqTooltip = string.Format(CultureInfo.CurrentCulture, Strings.MsqCompleteFormat, position.Done, position.Total);
+            return;
+        }
+
+        msqStatus = string.Format(CultureInfo.CurrentCulture, Strings.StatusMsqFormat, next.Name);
+        var expansion = bundle.Names.Expansion(next.Expansion) is { Length: > 0 } named ? named : Expansions.Name(next.Expansion);
+        var tooltip = string.Format(CultureInfo.CurrentCulture, Strings.MsqProgressFormat, expansion, position.Done, position.Total);
+        if (next.Issuer is { } issuer)
+        {
+            var zone = links.Map(issuer.MapId)?.PlaceName ?? string.Empty;
+            tooltip += "\n" + (zone.Length > 0 ? string.Format(CultureInfo.CurrentCulture, Strings.MsqGiverFormat, issuer.Name, zone) : issuer.Name);
+        }
+
+        msqTooltip = tooltip + "\n" + Strings.StateName(position.State) + "\n" + Strings.MsqClickHint;
+    }
+
+    /// <summary>Selects the next main scenario quest in the Journal tab; an active preset would hide it, so it is cleared first.</summary>
+    private void SelectMsq(QuestRecord quest)
+    {
+        if (ui.Filters.Preset != Preset.None)
+        {
+            ui.Filters.Preset = Preset.None;
+            OnFiltersChanged();
+        }
+
+        ui.Reveal(quest.RowId, quest.IsUnlisted ? QuestScope.VirtualUnlisted : QuestScope.Genre(quest.Journal.GenreId), quest.IsUnlisted);
     }
 }

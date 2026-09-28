@@ -50,6 +50,7 @@ public sealed class Plugin : IDalamudPlugin
     private ConfigWindow? configWindow;
     private HelpWindow? helpWindow;
     private ITutorial? tutorial;
+    private Game.ChatNotifier? chatNotifier;
 
     /// <summary>The Moonlit pane's override store as the detail pane's <see cref="IUniqueOverrides"/>.</summary>
     private sealed class MoonlitOverrides(MoonlitPane pane) : IUniqueOverrides
@@ -283,6 +284,7 @@ public sealed class Plugin : IDalamudPlugin
             charactersPane.MoonlitCounts = moonlitPane.CountsFor;
             mainWindow.AttachPanes(moonlitPane, charactersPane);
             mainWindow.AttachOverrides(new MoonlitOverrides(moonlitPane));
+            chatNotifier = new Game.ChatNotifier(Session, Settings, Paths, gameLinks, ChatGui, Log);
 
             configWindow = new ConfigWindow(Settings, Session, PluginInterface, _ => ui.MarkQueryDirty());
             windowSystem.AddWindow(configWindow);
@@ -361,6 +363,7 @@ public sealed class Plugin : IDalamudPlugin
         mainWindow.Dispose();
         wotsit?.Dispose();
         moonlitPane?.Dispose();
+        chatNotifier?.Dispose();
         queryRunner.Dispose();
         lifestream.Dispose();
         // /UI

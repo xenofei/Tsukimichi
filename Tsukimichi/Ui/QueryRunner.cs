@@ -40,6 +40,7 @@ public sealed class QueryRunner : IDisposable
     private string appliedSearch = string.Empty;
     private DateTime lastKeystrokeUtc;
     private bool searchDirty;
+    private long ranStalledHour;
 
     // Counts cache keys.
     private int countsVersion = -1;
@@ -82,7 +83,7 @@ public sealed class QueryRunner : IDisposable
     /// <summary>Null until a catalog exists.</summary>
     public TreeCounts? Counts { get; private set; }
 
-    /// <summary>Done/total over the curated Feature Unlocks quests.</summary>
+    /// <summary>Done/total over the derived feature quests (<see cref="SessionState.FeatureQuestIds"/>).</summary>
     public NodeCount FeatureCount { get; private set; }
 
     /// <summary>Pinned row ids for the viewed character.</summary>
@@ -186,17 +187,21 @@ public sealed class QueryRunner : IDisposable
             countsIncludeUnlisted = includeUnlisted;
         }
 
+        // The Stalled preset compares accepted times with the clock, so it is re-run once an hour even when nothing else moved.
+        var stalledHour = ui.Filters.Preset == Preset.Stalled ? nowUtc.Ticks / TimeSpan.TicksPerHour : 0L;
         var dirty = catalogChanged
             || sessionVersion != session.Version
             || queryVersion != ui.QueryVersion
             || scope != ui.Scope
             || sort != ui.Sort
             || searchDirty
+            || stalledHour != ranStalledHour
             || !filtersSnapshot.Equals(ui.Filters);
 
         if (dirty)
         {
-            Run(session, current);
+            Run(session, current, nowUtc);
+            ranStalledHour = stalledHour;
         }
 
         if (pinsDirty && nowUtc - pinsDirtyAtUtc >= PinsSaveDebounce)
@@ -343,7 +348,7 @@ public sealed class QueryRunner : IDisposable
         return hand + land == 0 ? Strings.JobDowDom : Strings.JobMulti;
     }
 
-    private void Run(SessionState session, CatalogBundle current)
+    private void Run(SessionState session, CatalogBundle current, DateTime nowUtc)
     {
         var snapshot = session.ViewedSnapshot;
         if (!ReferenceEquals(snapshot, festivalsSnapshot))
@@ -352,8 +357,19 @@ public sealed class QueryRunner : IDisposable
             festivals = snapshot is null || snapshot.ActiveFestivals.Count == 0 ? NoFestivals : new HashSet<ushort>(snapshot.ActiveFestivals);
         }
 
-        var ctx = new QueryContext(festivals, pinned, session.Curated.FeatureQuests, SearchIndex: SearchIndex.For(current.Catalog));
-        var result = QuestQuery.Apply(current.Catalog, session.States, ui.Filters, ui.Scope, ui.Sort, appliedSearch, ctx);
+        var ctx = new QueryContext(
+            festivals,
+            pinned,
+            session.FeatureQuestIds,
+            SearchIndex: SearchIndex.For(current.Catalog),
+            AcceptedSince: session.AcceptedSince,
+            NowUtc: nowUtc,
+            CurrentLevel: CurrentLevel(snapshot),
+            StalledDays: plugin.Settings.StalledDaysClamped);
+
+        // The Feature quests preset reads best with what can be picked up now on top; the other presets keep the table's sort.
+        var effectiveSort = ui.Sort with { AvailableFirst = ui.Filters.Preset == Preset.FeatureQuests };
+        var result = QuestQuery.Apply(current.Catalog, session.States, ui.Filters, ui.Scope, effectiveSort, appliedSearch, ctx);
 
         Rows = result.Rows;
         Empty = result.Empty;
@@ -367,12 +383,23 @@ public sealed class QueryRunner : IDisposable
         filtersSnapshot = ui.Filters.Clone();
     }
 
+    /// <summary>Unsynced level of the snapshot's current job for the Around-my-level preset; 0 without a snapshot or a recorded level.</summary>
+    private static byte CurrentLevel(CharacterSnapshot? snapshot)
+    {
+        if (snapshot is null || !snapshot.JobLevels.TryGetValue(snapshot.CurrentJob, out var level) || level <= 0)
+        {
+            return 0;
+        }
+
+        return (byte)Math.Min(level, byte.MaxValue);
+    }
+
     private static NodeCount ComputeFeatureCount(SessionState session, QuestCatalog catalog)
     {
         var done = 0;
         var total = 0;
         var foreclosed = 0;
-        foreach (var rowId in session.Curated.FeatureQuests)
+        foreach (var rowId in session.FeatureQuestIds)
         {
             if (!catalog.ByRowId.ContainsKey(rowId))
             {

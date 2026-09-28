@@ -50,6 +50,23 @@ public static partial class Strings
     public const string StatusSnapshotFormat = "snapshot {0}";
     public const string StatusNoSnapshot = "no snapshot";
 
+    // Main scenario position (status bar and Characters dashboard)
+    /// <summary>{0} = quest name.</summary>
+    public const string StatusMsqFormat = " · MSQ: {0}";
+    public const string StatusMsqComplete = " · MSQ: complete";
+    /// <summary>{0} = expansion, {1} = done, {2} = total.</summary>
+    public const string MsqProgressFormat = "{0} · {1:N0} of {2:N0} main scenario quests done";
+    /// <summary>{0} = done, {1} = total.</summary>
+    public const string MsqCompleteFormat = "Main scenario complete · {0:N0} of {1:N0}";
+    /// <summary>{0} = NPC, {1} = zone.</summary>
+    public const string MsqGiverFormat = "{0}, {1}";
+    public const string MsqClickHint = "Click to select";
+    /// <summary>{0} = expansion, {1} = quest, {2} = giver ("NPC, zone").</summary>
+    public const string CharactersMsqFormat = "MSQ: {0} · next: {1} ({2})";
+    /// <summary>{0} = expansion, {1} = quest.</summary>
+    public const string CharactersMsqNoGiverFormat = "MSQ: {0} · next: {1}";
+    public const string CharactersMsqComplete = "MSQ: complete";
+
     // Tabs
     public const string TabJournal = "Journal";
     public const string TabMoonlit = "Moonlit";
@@ -64,6 +81,18 @@ public static partial class Strings
     public const string CountFormat = "{0}/{1}";
     /// <summary>Hover text of a folded tree node: {0} = section, {1} = category, {2} = genre.</summary>
     public const string FoldedPathFormat = "{0} › {1} › {2}";
+
+    // Presets (top of the filter panel)
+    public const string Presets = "Presets";
+    public const string PresetFeatureQuests = FilterNames.FeatureQuests;
+    public const string PresetLevelBand = FilterNames.LevelBand;
+    public const string PresetStalled = FilterNames.Stalled;
+    public const string PresetFeatureQuestsTooltip = "Unlock quests: duties, jobs, actions, aether currents, systems. Quests you can pick up now come first";
+    public const string PresetLevelBandTooltip = "Quests within five levels of your current job's level";
+    public const string PresetStalledTooltip = "Quests that have sat in your journal for the number of days below";
+    public const string StalledDaysFormat = "%d days";
+    public const string StalledDaysLabel = "Stalled after";
+    public const string StalledDaysTooltip = "How long an accepted quest sits untouched before Stalled lists it";
 
     // Filter panel
     public const string HideCompleted = FilterNames.HideCompleted;
@@ -241,6 +270,7 @@ public static partial class Strings
     public const string NoMatches = "No quests match.";
     public const string CatalogNotReady = "The catalog is still loading.";
     public const string ChatTag = "Tsukimichi";
+    public const string ChatNewlyAvailablePrefix = "Now available: ";
 
     // Command help
     public const string CommandHelp = "Open Tsukimichi (also /tsuki). /tsukimichi <text> prints matching quest links; config, help and glyphs open those windows.";

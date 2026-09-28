@@ -15,4 +15,18 @@ public static class FilterNames
     public const string IncludeUnlisted = "Include Unlisted";
     public const string Pinned = "Pinned";
     public const string Search = "Search";
+
+    // Presets
+    public const string FeatureQuests = "Feature quests";
+    public const string LevelBand = "Around my level";
+    public const string Stalled = "Stalled";
+
+    /// <summary>Chip and empty-guard label of a preset; empty for <see cref="Preset.None"/>.</summary>
+    public static string PresetName(Preset preset) => preset switch
+    {
+        Preset.FeatureQuests => FeatureQuests,
+        Preset.LevelBand => LevelBand,
+        Preset.Stalled => Stalled,
+        _ => string.Empty,
+    };
 }

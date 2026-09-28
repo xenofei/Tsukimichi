@@ -43,6 +43,11 @@ public sealed class StatePoller : IDisposable
     private CharacterSnapshot? last;
     private IReadOnlyDictionary<uint, QuestEvaluation>? states;
     private HashSet<ushort> lastOffer = [];
+
+    // When each accepted quest entered the journal; loaded from the sidecar on the first pass, kept from diffs after.
+    private Dictionary<ushort, DateTime> acceptedSince = [];
+    private bool acceptedSinceDirty;
+    private bool acceptedSinceWarned;
     private DateTime lastPollUtc = DateTime.MinValue;
     private DateTime lastListenerWarningUtc = DateTime.MinValue;
     private bool wasReady;
@@ -72,41 +77,65 @@ public sealed class StatePoller : IDisposable
     }
 
     /// <summary>
-    /// Writes the last capture if it changed since the last save. A failure is warned once, retried no sooner than
-    /// <see cref="SaveInterval"/> later, and the recovery is logged.
+    /// Writes the last capture if it changed since the last save, then the accepted-time sidecar if it changed. A
+    /// failure is warned once, retried no sooner than <see cref="SaveInterval"/> later, and the recovery is logged.
     /// </summary>
     public void Flush()
     {
-        if (last is null || !saves.Pending)
+        if (last is null)
         {
             return;
         }
 
         var now = DateTime.UtcNow;
-        try
+        if (saves.Pending)
         {
-            snapshots.Save(last);
-            saves.MarkSaved(now);
-            if (saveWarned)
+            try
             {
-                saveWarned = false;
-                log.Information("Snapshot save recovered for {ContentId}", last.ContentId);
+                snapshots.Save(last);
+                saves.MarkSaved(now);
+                if (saveWarned)
+                {
+                    saveWarned = false;
+                    log.Information("Snapshot save recovered for {ContentId}", last.ContentId);
+                }
+            }
+            catch (Exception ex)
+            {
+                saves.MarkFailed(now);
+                if (!saveWarned)
+                {
+                    saveWarned = true;
+                    log.Warning(ex, "Snapshot save failed for {ContentId}; retrying every {Seconds} s until it succeeds", last.ContentId, SaveInterval.TotalSeconds);
+                }
+                else
+                {
+                    log.Debug(ex, "Snapshot save still failing for {ContentId} ({Failures} attempts)", last.ContentId, saves.Failures);
+                }
             }
         }
-        catch (Exception ex)
+
+        if (acceptedSinceDirty)
         {
-            saves.MarkFailed(now);
-            if (!saveWarned)
+            try
             {
-                saveWarned = true;
-                log.Warning(ex, "Snapshot save failed for {ContentId}; retrying every {Seconds} s until it succeeds", last.ContentId, SaveInterval.TotalSeconds);
+                AcceptedSince.Save(AcceptedSincePath(last.ContentId), acceptedSince);
+                acceptedSinceDirty = false;
+                acceptedSinceWarned = false;
             }
-            else
+            catch (Exception ex)
             {
-                log.Debug(ex, "Snapshot save still failing for {ContentId} ({Failures} attempts)", last.ContentId, saves.Failures);
+                // Derived data: the next journal change retries; the Stalled preset just reads a stale file until then.
+                if (!acceptedSinceWarned)
+                {
+                    acceptedSinceWarned = true;
+                    log.Warning(ex, "Accepted-time sidecar save failed for {ContentId}", last.ContentId);
+                }
             }
         }
     }
+
+    private string AcceptedSincePath(ulong contentId) => AcceptedSince.PathFor(session.Paths.CharactersDir, contentId);
 
     public void Dispose()
     {
@@ -221,6 +250,17 @@ public sealed class StatePoller : IDisposable
             Reset();
             resolved = StateResolver.ResolveAll(catalog, snapshot, context);
             log.Debug("First evaluation for {Name} ({ContentId}): {Count} quests", snapshot.Name, snapshot.ContentId, resolved.Count);
+
+            // Accepted times survive across sessions in the sidecar; quests that entered the journal while the
+            // plugin was not watching are stamped now, the earliest moment they are known to be there.
+            var warnings = new List<string>();
+            acceptedSince = AcceptedSince.Load(AcceptedSincePath(snapshot.ContentId), warnings);
+            foreach (var warning in warnings)
+            {
+                log.Warning("Accepted times: {Warning}", warning);
+            }
+
+            acceptedSinceDirty = AcceptedSince.Reconcile(acceptedSince, snapshot, now);
         }
         else
         {
@@ -230,6 +270,8 @@ public sealed class StatePoller : IDisposable
             {
                 return null;
             }
+
+            acceptedSinceDirty |= AcceptedSince.Apply(acceptedSince, last!, snapshot, diff, now);
 
             // A level change touches every level-gated quest, which the reverse index cannot enumerate by job; level-ups
             // are rare and a full resolve costs milliseconds, so resolve everything rather than pass jobs as levels.
@@ -253,7 +295,7 @@ public sealed class StatePoller : IDisposable
 
     private void Publish(PollResult result)
     {
-        session.SetLive(result.Snapshot, result.States, result.Context);
+        session.SetLive(result.Snapshot, result.States, result.Context, acceptedSince);
         session.AddEvents(result.Events);
     }
 
@@ -334,6 +376,8 @@ public sealed class StatePoller : IDisposable
         last = null;
         states = null;
         lastOffer = [];
+        acceptedSince = [];
+        acceptedSinceDirty = false;
     }
 
     private readonly record struct PollResult(

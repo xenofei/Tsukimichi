@@ -15,12 +15,16 @@ namespace Tsukimichi.Core.Query;
 /// </summary>
 public static class QuestQuery
 {
+    /// <summary>Half-width of the Around-my-level preset: quest level within the current level ± this.</summary>
+    public const int LevelBandRadius = 5;
+
     private static readonly QuestRow[] NoRows = [];
 
     /// <summary>Filters, ordered as the panel shows them; the order also fixes <see cref="EmptyReason.Filters"/>.</summary>
     private enum Filter
     {
         None,
+        Preset,
         HideCompleted,
         AvailableOnly,
         State,
@@ -35,8 +39,10 @@ public static class QuestQuery
         Search,
     }
 
+    /// <summary>The preset's name depends on which one is active, so its entry here is resolved at diagnosis time.</summary>
     private static readonly (Filter Filter, string Name)[] Diagnosable =
     [
+        (Filter.Preset, string.Empty),
         (Filter.HideCompleted, FilterNames.HideCompleted),
         (Filter.AvailableOnly, FilterNames.AvailableOnly),
         (Filter.State, FilterNames.State),
@@ -138,9 +144,15 @@ public static class QuestQuery
         }
 
         var sorted = Sort(rows, sort);
-        if (sort.PinnedFirst)
+        if (sort.AvailableFirst)
         {
-            sorted = PinnedFirst(sorted, ctx.Pinned);
+            sorted = Partition(sorted, static row => IsAvailable(row.State));
+        }
+
+        if (sort.PinnedFirst && ctx.Pinned.Count > 0)
+        {
+            var pinned = ctx.Pinned;
+            sorted = Partition(sorted, row => pinned.Contains(row.Quest.RowId));
         }
 
         return new QueryResult(sorted, null, totalInScope);
@@ -205,7 +217,7 @@ public static class QuestQuery
 
                 if (plan.Passes(quest, source.StateOf(quest.RowId), filter))
                 {
-                    (blamed ??= []).Add(name);
+                    (blamed ??= []).Add(filter == Filter.Preset ? FilterNames.PresetName(plan.Preset) : name);
                     break;
                 }
             }
@@ -246,36 +258,33 @@ public static class QuestQuery
         return sorted;
     }
 
-    /// <summary>Stable partition: pinned rows first, then the rest, each group in the order <paramref name="rows"/> had. Returns the input when nothing moves.</summary>
-    private static QuestRow[] PinnedFirst(QuestRow[] rows, IReadOnlySet<uint> pinned)
-    {
-        if (pinned.Count == 0)
-        {
-            return rows;
-        }
+    private static bool IsAvailable(QuestState state) => state is QuestState.Ready or QuestState.ReadyOnOtherJob or QuestState.Accepted;
 
-        var pinnedCount = 0;
+    /// <summary>Stable partition: rows matching <paramref name="first"/> lead, then the rest, each group in the order <paramref name="rows"/> had. Returns the input when nothing moves.</summary>
+    private static QuestRow[] Partition(QuestRow[] rows, Func<QuestRow, bool> first)
+    {
+        var leadCount = 0;
         foreach (ref readonly var row in rows.AsSpan())
         {
-            if (pinned.Contains(row.Quest.RowId))
+            if (first(row))
             {
-                pinnedCount++;
+                leadCount++;
             }
         }
 
-        if (pinnedCount == 0 || pinnedCount == rows.Length)
+        if (leadCount == 0 || leadCount == rows.Length)
         {
             return rows;
         }
 
         var result = new QuestRow[rows.Length];
-        var nextPinned = 0;
-        var nextOther = pinnedCount;
+        var nextLead = 0;
+        var nextOther = leadCount;
         foreach (ref readonly var row in rows.AsSpan())
         {
-            if (pinned.Contains(row.Quest.RowId))
+            if (first(row))
             {
-                result[nextPinned++] = row;
+                result[nextLead++] = row;
             }
             else
             {
@@ -327,6 +336,9 @@ public static class QuestQuery
         private readonly bool hideCompletedEngaged;
         private readonly bool availableOnlyEngaged;
         private readonly bool levelRangeEngaged;
+        private readonly int bandMin;
+        private readonly int bandMax;
+        private readonly DateTime stalledBeforeUtc;
 
         public Plan(FilterSet filters, QueryContext ctx, SearchIndex? index, string query, QuestScope scope)
         {
@@ -334,6 +346,11 @@ public static class QuestQuery
             this.ctx = ctx;
             this.index = index;
             this.query = query;
+            Preset = filters.Preset;
+            bandMin = ctx.CurrentLevel - LevelBandRadius;
+            bandMax = ctx.CurrentLevel + LevelBandRadius;
+            var days = Math.Max(0, ctx.StalledDays);
+            stalledBeforeUtc = ctx.NowUtc > DateTime.MinValue + TimeSpan.FromDays(days) ? ctx.NowUtc - TimeSpan.FromDays(days) : DateTime.MinValue;
             UnlistedToggleable = scope.Kind is ScopeKind.None or ScopeKind.VirtualFeature;
             IncludeUnlisted = scope.Kind switch
             {
@@ -366,8 +383,11 @@ public static class QuestQuery
         /// <summary>Whether <see cref="FilterSet.IncludeUnlisted"/> has any say under this scope (it never does under a journal node).</summary>
         public bool UnlistedToggleable { get; }
 
+        public Preset Preset { get; }
+
         public bool IsEngaged(Filter filter) => filter switch
         {
+            Filter.Preset => Preset != Preset.None,
             Filter.HideCompleted => hideCompletedEngaged,
             Filter.AvailableOnly => availableOnlyEngaged,
             Filter.State => filters.StateMask != QuestStateMask.All,
@@ -387,6 +407,11 @@ public static class QuestQuery
         public bool Passes(QuestRecord quest, QuestState state, Filter skip)
         {
             var categoryId = quest.Journal.CategoryId;
+
+            if (skip != Filter.Preset && !PassesPreset(quest, state))
+            {
+                return false;
+            }
 
             if (skip != Filter.HideCompleted && hideCompletedEngaged
                 && state is QuestState.Completed or QuestState.Foreclosed
@@ -452,6 +477,23 @@ public static class QuestQuery
 
             return true;
         }
+
+        /// <summary>
+        /// Feature quests: membership in the derived set. Around my level: quest level within
+        /// <see cref="LevelBandRadius"/> of the current level (nothing when the level is unknown). Stalled: in the
+        /// journal, with a known accepted time at least <see cref="QueryContext.StalledDays"/> days before now.
+        /// </summary>
+        private bool PassesPreset(QuestRecord quest, QuestState state) => Preset switch
+        {
+            Preset.None => true,
+            Preset.FeatureQuests => ctx.FeatureQuestIds.Contains(quest.RowId),
+            Preset.LevelBand => ctx.CurrentLevel > 0 && quest.Level >= bandMin && quest.Level <= bandMax,
+            Preset.Stalled => state == QuestState.Accepted
+                && ctx.AcceptedSince is { } since
+                && since.TryGetValue(quest.QuestId, out var acceptedUtc)
+                && acceptedUtc <= stalledBeforeUtc,
+            _ => true,
+        };
 
         private bool PassesRewardKinds(QuestRecord quest)
         {
