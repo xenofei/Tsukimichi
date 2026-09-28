@@ -28,6 +28,7 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] internal static ITargetManager TargetManager { get; private set; } = null!;
     [PluginService] internal static IDtrBar DtrBar { get; private set; } = null!;
     [PluginService] internal static IContextMenu ContextMenu { get; private set; } = null!;
+    [PluginService] internal static ICondition Condition { get; private set; } = null!;
     // /UI
 
     private static readonly TimeSpan DisposeWait = TimeSpan.FromSeconds(5);
@@ -58,6 +59,7 @@ public sealed class Plugin : IDalamudPlugin
     private Game.DtrEntry? dtrEntry;
     private HoverHint? hoverHint;
     private Game.ItemHooks? itemHooks;
+    private TodoOverlay? todoOverlay;
 
     /// <summary>The Moonlit pane's override store as the detail pane's <see cref="IUniqueOverrides"/>.</summary>
     private sealed class MoonlitOverrides(MoonlitPane pane) : IUniqueOverrides
@@ -331,11 +333,22 @@ public sealed class Plugin : IDalamudPlugin
             configWindow = new ConfigWindow(Settings, Session, PluginInterface, _ => ui.MarkQueryDirty());
             Game.WotsitIpc wotsitIpc = wotsit;
             configWindow.WotsitToggled = enabled => wotsitIpc.Enabled = enabled;
-            // MERGE: configWindow.ItemHintsToggled = enabled => hoverHint.Enabled = enabled;
-            // MERGE: configWindow.ItemContextMenuToggled = enabled => itemHooks.Enabled = enabled;
+            if (hoverHint is { } hint) { configWindow.ItemHintsToggled = enabled => hint.Enabled = enabled; }
+            if (itemHooks is { } hooks) { configWindow.ItemContextMenuToggled = enabled => hooks.Enabled = enabled; }
             windowSystem.AddWindow(configWindow);
             PluginInterface.UiBuilder.OpenConfigUi += configWindow.Toggle;
             command.ToggleConfigWindow = configWindow.Toggle;
+
+            // Todo overlay (V2-13): follows Settings.TodoOverlayEnabled; /tsuki todo and the settings window flip it.
+            todoOverlay = new TodoOverlay(Settings, Session, gameLinks, quest =>
+            {
+                mainWindow.IsOpen = true;
+                mainWindow.BringToFront();
+                MoonlitPane.Reveal(ui, quest);
+            }, ClientState, Condition, Paths, PluginInterface, Log);
+            windowSystem.AddWindow(todoOverlay);
+            command.ToggleTodoOverlay = todoOverlay.ToggleEnabled;
+            configWindow.ResetTodoPosition = todoOverlay.ResetPosition;
 
             // The tutorial draws over the main window (ITutorial.Draw at the end of MainWindow.Draw) and offers itself
             // the first time the main window opens (CheckFirstRun on UiBuilder.Draw).
@@ -412,6 +425,7 @@ public sealed class Plugin : IDalamudPlugin
         PluginInterface.UiBuilder.OpenMainUi -= mainWindow.Toggle;
         PluginInterface.UiBuilder.Draw -= windowSystem.Draw;
         windowSystem.RemoveAllWindows();
+        todoOverlay?.Dispose();
         dtrEntry?.Dispose();
         discoveryWindow?.Dispose();
         mainWindow.Dispose();
@@ -459,6 +473,7 @@ public sealed class Plugin : IDalamudPlugin
         });
         Unwind("item hooks", () => itemHooks?.Dispose());
         Unwind("command", () => command?.Dispose());
+        Unwind("todo overlay", () => todoOverlay?.Dispose());
         Unwind("server bar entry", () => dtrEntry?.Dispose());
         Unwind("nearby window", () => discoveryWindow?.Dispose());
         Unwind("main window", () => mainWindow?.Dispose());

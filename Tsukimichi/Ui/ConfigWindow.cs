@@ -16,7 +16,8 @@ namespace Tsukimichi.Ui;
 /// <summary>
 /// Settings (spec §7): poll interval (with the measured cost of a poll under it), display scale sliders
 /// (<see cref="Configuration.UiScale"/>, <see cref="Configuration.IconScale"/>), chat notices, the Unlisted bucket,
-/// the Wotsit integration, help (open it, start the tutorial, offer it on first run), data deletion with a double confirm, and an About
+/// the todo overlay (on/off, lock, opacity, sections, reset position), item hints, the Wotsit integration, help
+/// (open it, start the tutorial, offer it on first run), data deletion with a double confirm, and an About
 /// section with the plugin, reward-data and catalog stamps plus the poll timing. Every change is saved as it
 /// happens; sliders save when released.
 /// </summary>
@@ -41,6 +42,7 @@ public sealed class ConfigWindow : Window
     private float pollSeconds;
     private bool pollDirty;
     private bool scaleDirty;
+    private bool todoDirty;
     private bool openSecondConfirm;
     private string? toast;
     private DateTime toastUntilUtc;
@@ -91,6 +93,15 @@ public sealed class ConfigWindow : Window
     /// <summary>Called with the new value after <see cref="Configuration.WotsitIntegration"/> is toggled and saved; the plugin points it at the Wotsit IPC.</summary>
     public Action<bool>? WotsitToggled { get; set; }
 
+    /// <summary>Moves the todo overlay back to its default place; set by the plugin once the overlay exists. Null hides the button.</summary>
+    public Action? ResetTodoPosition { get; set; }
+
+    /// <summary>Called with the new value after <see cref="Configuration.ItemHintsEnabled"/> is toggled and saved; the item-hint feature wires it.</summary>
+    public Action<bool>? ItemHintsToggled { get; set; }
+
+    /// <summary>Called with the new value after <see cref="Configuration.ItemContextMenuEnabled"/> is toggled and saved; the item-hint feature wires it.</summary>
+    public Action<bool>? ItemContextMenuToggled { get; set; }
+
     public override void OnOpen()
     {
         ReadSettings();
@@ -98,10 +109,11 @@ public sealed class ConfigWindow : Window
 
     public override void OnClose()
     {
-        if (pollDirty || scaleDirty)
+        if (pollDirty || scaleDirty || todoDirty)
         {
             pollDirty = false;
             scaleDirty = false;
+            todoDirty = false;
             Save();
         }
     }
@@ -115,6 +127,10 @@ public sealed class ConfigWindow : Window
         DrawNotices();
         ImGui.Spacing();
         DrawJournal();
+        ImGui.Spacing();
+        DrawTodoOverlay();
+        ImGui.Spacing();
+        DrawItemHints();
         ImGui.Spacing();
         DrawIntegrations();
         ImGui.Spacing();
@@ -292,6 +308,130 @@ public sealed class ConfigWindow : Window
         }
 
         ImGui.TextDisabled(Strings.ConfigShowUnlistedHint);
+    }
+
+    /// <summary>
+    /// The todo overlay: on/off, lock, an opacity slider (saved when released), the four section toggles and a
+    /// "Reset position" button. The overlay reads the configuration every frame, so every change shows at once.
+    /// </summary>
+    private void DrawTodoOverlay()
+    {
+        Header(Strings.TodoConfigSection);
+        var enabled = settings.TodoOverlayEnabled;
+        if (ImGui.Checkbox(Strings.TodoConfigEnabled, ref enabled))
+        {
+            settings.TodoOverlayEnabled = enabled;
+            Save();
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip(Strings.TodoConfigEnabledHint);
+        }
+
+        using var indent = ImRaii.PushIndent();
+        using var disabled = ImRaii.Disabled(!enabled);
+
+        var locked = settings.TodoOverlayLocked;
+        if (ImGui.Checkbox(Strings.TodoConfigLocked, ref locked))
+        {
+            settings.TodoOverlayLocked = locked;
+            Save();
+        }
+
+        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+        {
+            ImGui.SetTooltip(Strings.TodoConfigLockedHint);
+        }
+
+        var opacity = TodoOverlay.ClampOpacity(settings.TodoOverlayOpacity);
+        ImGui.SetNextItemWidth(220f * ImGuiHelpers.GlobalScale);
+        if (ImGui.SliderFloat(Strings.TodoConfigOpacity, ref opacity, TodoOverlay.MinOpacity, TodoOverlay.MaxOpacity, "%.2f", ImGuiSliderFlags.AlwaysClamp))
+        {
+            settings.TodoOverlayOpacity = opacity;
+            todoDirty = true;
+        }
+
+        if (todoDirty && ImGui.IsItemDeactivatedAfterEdit())
+        {
+            todoDirty = false;
+            Save();
+        }
+
+        ImGui.TextDisabled(Strings.TodoConfigSectionsLabel);
+        var pins = settings.TodoShowPins;
+        if (ImGui.Checkbox(Strings.TodoConfigShowPins, ref pins))
+        {
+            settings.TodoShowPins = pins;
+            Save();
+        }
+
+        var nearby = settings.TodoShowNearbyFeature;
+        if (ImGui.Checkbox(Strings.TodoConfigShowNearby, ref nearby))
+        {
+            settings.TodoShowNearbyFeature = nearby;
+            Save();
+        }
+
+        var msq = settings.TodoShowMsq;
+        if (ImGui.Checkbox(Strings.TodoConfigShowMsq, ref msq))
+        {
+            settings.TodoShowMsq = msq;
+            Save();
+        }
+
+        var jobs = settings.TodoShowJobQuests;
+        if (ImGui.Checkbox(Strings.TodoConfigShowJobQuests, ref jobs))
+        {
+            settings.TodoShowJobQuests = jobs;
+            Save();
+        }
+
+        if (ResetTodoPosition is not { } reset)
+        {
+            return;
+        }
+
+        if (ImGui.Button(Strings.TodoConfigResetPosition))
+        {
+            reset();
+        }
+
+        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+        {
+            ImGui.SetTooltip(Strings.TodoConfigResetPositionHint);
+        }
+    }
+
+    /// <summary>Item hints: the hover hint and the context-menu entry. The feature itself listens through the two callbacks.</summary>
+    private void DrawItemHints()
+    {
+        Header(Strings.ConfigSectionItemHints);
+        var hints = settings.ItemHintsEnabled;
+        if (ImGui.Checkbox(Strings.ConfigItemHints, ref hints))
+        {
+            settings.ItemHintsEnabled = hints;
+            Save();
+            ItemHintsToggled?.Invoke(hints);
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip(Strings.ConfigItemHintsHint);
+        }
+
+        var contextMenu = settings.ItemContextMenuEnabled;
+        if (ImGui.Checkbox(Strings.ConfigItemContextMenu, ref contextMenu))
+        {
+            settings.ItemContextMenuEnabled = contextMenu;
+            Save();
+            ItemContextMenuToggled?.Invoke(contextMenu);
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip(Strings.ConfigItemContextMenuHint);
+        }
     }
 
     private void DrawIntegrations()

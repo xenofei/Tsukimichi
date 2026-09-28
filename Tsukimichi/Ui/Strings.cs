@@ -272,8 +272,15 @@ public static partial class Strings
     public const string ChatTag = "Tsukimichi";
     public const string ChatNewlyAvailablePrefix = "Now available: ";
 
+    // Settings › Item hints (the hooks themselves are wired by the item-hint feature)
+    public const string ConfigSectionItemHints = "Item hints";
+    public const string ConfigItemHints = "Show a hint when hovering an item that is a quest reward";
+    public const string ConfigItemHintsHint = "A small line near the cursor naming the quest and whether it is done";
+    public const string ConfigItemContextMenu = "Add a Tsukimichi entry to item context menus";
+    public const string ConfigItemContextMenuHint = "Right-click an item to reveal the quest that rewards it";
+
     // Command help
-    public const string CommandHelp = "Open Tsukimichi (also /tsuki). /tsukimichi <text> prints matching quest links; zone lists quests you can start here; which lists the targeted NPC's quests; config, help and glyphs open those windows.";
+    public const string CommandHelp ="Open Tsukimichi (also /tsuki). /tsukimichi <text> prints matching quest links; zone lists quests you can start here; which lists the targeted NPC's quests; nearby and todo toggle the Nearby quests window and the todo overlay; config, help and glyphs open those windows.";
     public const string CommandAliasHelp = "Short form of /tsukimichi.";
 
     // Time
