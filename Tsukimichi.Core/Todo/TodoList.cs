@@ -3,6 +3,7 @@ using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Jobs;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
+using Tsukimichi.Core.Ui;
 
 namespace Tsukimichi.Core.Todo;
 
@@ -73,6 +74,7 @@ public sealed record TodoModel(IReadOnlyList<TodoSectionModel> Sections, int Ena
 /// <param name="ShowNearbyFeature">Include the Nearby feature quests section.</param>
 /// <param name="ShowMsq">Include the MSQ section.</param>
 /// <param name="ShowJobQuests">Include the Job quests section.</param>
+/// <param name="Names">Name lookups for the blocker hints (<see cref="BlockerText"/>); null names quests from <paramref name="Catalog"/> only.</param>
 public sealed record TodoInputs(
     QuestCatalog Catalog,
     IReadOnlyDictionary<uint, QuestEvaluation> States,
@@ -86,7 +88,8 @@ public sealed record TodoInputs(
     bool ShowPins = true,
     bool ShowNearbyFeature = true,
     bool ShowMsq = true,
-    bool ShowJobQuests = true);
+    bool ShowJobQuests = true,
+    BlockerNames? Names = null);
 
 /// <summary>
 /// Pure builder for the todo overlay (V2-13). Four sections, each only when enabled and non-empty: the character's
@@ -102,15 +105,11 @@ public static class TodoList
     /// <summary>Most feature quests the Nearby section lists.</summary>
     public const int MaxNearby = 8;
 
-    // Hint fragments, in the same voice as RequirementResult.Detail (English in Core; the overlay shows them as is).
-    private const string ReadyOnOtherJobHint = "Ready on another job";
+    // Hint fragments in the display vocabulary (English in Core; the overlay shows them as is). The row's moon already
+    // carries the state, so a hint never repeats the state name: a blocked row shows its blocker, an accepted one its step.
     private const string ReadyOnJobPrefix = "Ready on ";
-    private const string AcceptedHint = "In your journal";
-    private const string AcceptedStepPrefix = "In your journal, step ";
     private const string LevelPrefix = "Lv ";
     private const string Separator = " · ";
-    private const string UnknownHint = "State unknown";
-    private const string BlockedHint = "Blocked";
 
     public static TodoModel Build(TodoInputs inputs)
     {
@@ -309,8 +308,10 @@ public static class TodoList
         new(quest.RowId, quest.Name, state, Hint(inputs, quest, state), kind);
 
     /// <summary>
-    /// The row's hint: the evaluator's next-step clause when the quest is blocked, "Ready on JOB" when another job can
-    /// take it, the journal step when accepted, otherwise the level and the giver's name.
+    /// The row's hint: the decisive blocker (<see cref="BlockerText.For"/>) when the quest is blocked or not checked,
+    /// "Ready on JOB" when another job can take it, "step 3 of 7" when accepted, otherwise the level and the giver's
+    /// name. The state name itself is never in the hint (the moon and the tooltip carry it), so a state with nothing
+    /// to add gets the display name as a fallback only when no evaluation exists.
     /// </summary>
     public static string Hint(TodoInputs inputs, QuestRecord quest, QuestState state)
     {
@@ -328,16 +329,23 @@ public static class TodoList
                     return ReadyOnJobPrefix + jobName;
                 }
 
-                return ReadyOnOtherJobHint;
+                return StateNames.ReadyOnOtherJob;
 
             case QuestState.Accepted:
-                return evaluation?.Sequence is { } sequence ? AcceptedStepPrefix + sequence.ToString(System.Globalization.CultureInfo.InvariantCulture) : AcceptedHint;
+                return evaluation is null ? string.Empty : BlockerText.StepText(evaluation.Sequence, quest.StepCount);
 
             case QuestState.Blocked:
-                return evaluation?.NextStep?.Detail is { Length: > 0 } detail ? detail : BlockedHint;
+            case QuestState.Unknown:
+                if (evaluation is null)
+                {
+                    return StateNames.Name(state, quest);
+                }
+
+                var blocker = BlockerText.For(evaluation, quest, inputs.Names ?? BlockerNames.Default with { Catalog = inputs.Catalog }, inputs.States);
+                return blocker.Length > 0 ? blocker : StateNames.Name(state, quest);
 
             default:
-                return UnknownHint;
+                return StateNames.Name(state, quest);
         }
     }
 

@@ -45,8 +45,11 @@ public readonly record struct LadderProgress(int Done, int Total, uint? NextRowI
     public float Fraction => Total == 0 ? 0f : (float)Done / Total;
 }
 
-/// <summary>A quest that became available because <paramref name="Job"/> reached <paramref name="Level"/>.</summary>
-public readonly record struct JobNudge(LadderJob Job, short Level, uint RowId);
+/// <summary>
+/// A quest whose level <paramref name="Job"/> reached at <paramref name="Level"/>: <paramref name="State"/> is Ready or
+/// Ready on another job when it opened, Blocked when something other than the level still gates it.
+/// </summary>
+public readonly record struct JobNudge(LadderJob Job, short Level, uint RowId, QuestState State = QuestState.Ready);
 
 /// <summary>
 /// Per-job quest ladders (V2-11), built once per catalog. A job's ladder is every listed quest of the "Class &amp; Job
@@ -287,11 +290,13 @@ public sealed class JobLadder
     /// <summary>
     /// The quests to announce after a level-up: for every job whose level in <paramref name="after"/> is above the one in
     /// <paramref name="before"/> (jobs absent from <paramref name="before"/> are a first capture, not a level-up), the
-    /// next quest of its ladder and of its role's ladder when that quest is open now (Ready or Ready on another job;
-    /// an accepted quest is already in the journal) and it is this level-up that opened it: its level is above the
-    /// previous level and at most the new one. A quest that was already available before the level-up, or that needs
-    /// a level still to come, is not announced. A class whose job is unlocked is skipped so the job's name is the one
-    /// printed; each quest is listed once.
+    /// next quest of its ladder and of its role's ladder when it is this level-up that reached its level: the quest's
+    /// level is above the previous level and at most the new one. The quest is announced Ready or Ready on another
+    /// job when nothing else gates it, and Blocked (with its blocker, so the player learns why no quest appeared at
+    /// the level they were waiting for) when something still does; an accepted quest is already in the journal and
+    /// is not announced. A quest that was already available before the level-up, or that needs a level still to
+    /// come, is not announced either. A class whose job is unlocked is skipped so the job's name is the one printed;
+    /// each quest is listed once.
     /// </summary>
     public IReadOnlyList<JobNudge> LevelUpNudges(
         IReadOnlyDictionary<byte, short> before,
@@ -324,14 +329,14 @@ public sealed class JobLadder
                     || progress.NextLevel <= previous
                     || progress.NextLevel > level
                     || !states.TryGetValue(next, out var evaluation)
-                    || evaluation.State is not (QuestState.Ready or QuestState.ReadyOnOtherJob))
+                    || evaluation.State is not (QuestState.Ready or QuestState.ReadyOnOtherJob or QuestState.Blocked))
                 {
                     return;
                 }
 
                 if (seen.Add(next))
                 {
-                    result.Add(new JobNudge(entry.Job, level, next));
+                    result.Add(new JobNudge(entry.Job, level, next, evaluation.State));
                 }
             }
         }

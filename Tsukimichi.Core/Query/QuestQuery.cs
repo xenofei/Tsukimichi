@@ -57,8 +57,11 @@ public static class QuestQuery
         (Filter.Search, FilterNames.Search),
     ];
 
-    /// <summary>Runs the query over evaluator output; each row's state and next-step text come from its <see cref="QuestEvaluation"/>.</summary>
-    /// <param name="evaluations">Resolved evaluation per quest row id; missing rows read as <see cref="QuestState.Unknown"/> with no next step.</param>
+    /// <summary>
+    /// Runs the query over evaluator output; each row's state comes from its <see cref="QuestEvaluation"/> and its
+    /// Status text from <see cref="BlockerText.StatusText"/> with <see cref="QueryContext.Names"/>.
+    /// </summary>
+    /// <param name="evaluations">Resolved evaluation per quest row id; missing rows read as <see cref="QuestState.Unknown"/> with no status text.</param>
     /// <param name="search">Raw search text; normalized here.</param>
     public static QueryResult Apply(
         QuestCatalog catalog,
@@ -70,10 +73,11 @@ public static class QuestQuery
         QueryContext ctx)
     {
         ArgumentNullException.ThrowIfNull(evaluations);
-        return Apply(catalog, new EvaluationSource(evaluations), filters, scope, sort, search, ctx);
+        ArgumentNullException.ThrowIfNull(ctx);
+        return Apply(catalog, new EvaluationSource(evaluations, ctx.Names ?? BlockerNames.Default), filters, scope, sort, search, ctx);
     }
 
-    /// <summary>Runs the query over a plain state map; next-step text comes from <see cref="QueryContext.NextStepText"/> when set.</summary>
+    /// <summary>Runs the query over a plain state map; status text comes from <see cref="QueryContext.NextStepText"/> when set.</summary>
     /// <param name="states">Resolved state per quest row id; missing rows read as <see cref="QuestState.Unknown"/>.</param>
     /// <param name="search">Raw search text; normalized here.</param>
     public static QueryResult Apply(
@@ -130,7 +134,7 @@ public static class QuestQuery
             var state = source.StateOf(quest.RowId);
             if (plan.Passes(quest, state, Filter.None))
             {
-                rows.Add(new QuestRow(quest, state, source.NextStepOf(quest.RowId)));
+                rows.Add(new QuestRow(quest, state, source.StatusOf(quest)));
             }
         }
 

@@ -274,10 +274,16 @@ public sealed class JobLadderTests
         // Level 15 is exactly the quest's level: nudged, also across a jump that passes it.
         Assert.Equal([new JobNudge(Jobs[0], 15, GladiatorTwo)], ladder.LevelUpNudges(new Dictionary<byte, short> { [Gladiator] = 14 }, new Dictionary<byte, short> { [Gladiator] = 15 }, ready));
         Assert.Equal([new JobNudge(Jobs[0], 16, GladiatorTwo)], ladder.LevelUpNudges(new Dictionary<byte, short> { [Gladiator] = 13 }, new Dictionary<byte, short> { [Gladiator] = 16 }, ready));
-        // Ready on another job counts as open.
+        // Ready on another job counts as open, and the nudge carries the state.
         Assert.Equal(
-            [new JobNudge(Jobs[0], 15, GladiatorTwo)],
+            [new JobNudge(Jobs[0], 15, GladiatorTwo, QuestState.ReadyOnOtherJob)],
             ladder.LevelUpNudges(new Dictionary<byte, short> { [Gladiator] = 14 }, new Dictionary<byte, short> { [Gladiator] = 15 }, States((GladiatorOne, QuestState.Completed), (GladiatorTwo, QuestState.ReadyOnOtherJob))));
+        // Still blocked by something other than the level (a main scenario gate, say): announced as Blocked so the
+        // notice can carry the blocker; the level-up is still what made the level gate pass.
+        Assert.Equal(
+            [new JobNudge(Jobs[0], 15, GladiatorTwo, QuestState.Blocked)],
+            ladder.LevelUpNudges(new Dictionary<byte, short> { [Gladiator] = 14 }, new Dictionary<byte, short> { [Gladiator] = 15 }, States((GladiatorOne, QuestState.Completed), (GladiatorTwo, QuestState.Blocked))));
+        Assert.Empty(ladder.LevelUpNudges(new Dictionary<byte, short> { [Gladiator] = 13 }, new Dictionary<byte, short> { [Gladiator] = 14 }, States((GladiatorOne, QuestState.Completed), (GladiatorTwo, QuestState.Blocked))));
 
         // Already available before the level-up (level 15 quest, 20 to 21): nothing new to announce.
         Assert.Empty(ladder.LevelUpNudges(new Dictionary<byte, short> { [Gladiator] = 20 }, new Dictionary<byte, short> { [Gladiator] = 21 }, ready));

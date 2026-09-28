@@ -89,6 +89,7 @@ public static class CatalogMapper
             Level = ToByte(quest.ClassJobLevel.Count > 0 ? quest.ClassJobLevel[0] : 0u),
             LevelMax = quest.LevelMax,
             LevelOffset = quest.QuestLevelOffset,
+            StepCount = StepCountOf(in quest),
 
             ClassJobCategory = quest.ClassJobCategory0.RowId,
             ClassJobCategory1 = quest.ClassJobCategory1.RowId,
@@ -103,7 +104,9 @@ public static class CatalogMapper
             GrandCompanyRank = ToByte(quest.GrandCompanyRank.RowId),
             BeastTribe = ToByte(quest.BeastTribe.RowId),
             BeastRank = ToByte(quest.BeastReputationRank.RowId),
-            BeastValue = quest.BeastReputationValue,
+            // The society story quests carry 65535 here (no reputation gate, the rank alone decides); only the
+            // dailies and a few rank-ups hold a real value, so the sentinel maps to "none".
+            BeastValue = quest.BeastReputationValue == ushort.MaxValue ? (ushort)0 : quest.BeastReputationValue,
 
             IsRepeatable = quest.IsRepeatable,
             RepeatInterval = quest.RepeatIntervalType,
@@ -123,6 +126,29 @@ public static class CatalogMapper
             ExpFactor = quest.ExpFactor,
             Gil = quest.GilReward,
         };
+    }
+
+    /// <summary>
+    /// Journal steps: the distinct non-zero <c>ToDoCompleteSeq</c> values across the quest's objectives. Every quest
+    /// with objectives runs 1, 2, … then 255 (checked against the 7.3 sheets: no gaps), so the count is the number of
+    /// steps and an accepted quest's sequence is its current step, 255 the last. Objectives sharing a sequence (three
+    /// people to talk to) are one step.
+    /// </summary>
+    private static byte StepCountOf(in Quest quest)
+    {
+        Span<bool> seen = stackalloc bool[256];
+        var count = 0;
+        foreach (var todo in quest.TodoParams)
+        {
+            var sequence = todo.ToDoCompleteSeq;
+            if (sequence != 0 && !seen[sequence])
+            {
+                seen[sequence] = true;
+                count++;
+            }
+        }
+
+        return (byte)Math.Min(count, byte.MaxValue);
     }
 
     /// <summary>
@@ -374,7 +400,37 @@ public static class CatalogMapper
             classJobs,
             abbreviations,
             Names(excel.GetSheet<BeastReputationRank>(language), static (in BeastReputationRank r) => r.Name),
-            infos);
+            infos,
+            Names(excel.GetSheet<ClassJobCategory>(language), static (in ClassJobCategory r) => r.Name),
+            DutyNames(excel.GetSheet<ContentFinderCondition>(language)));
+    }
+
+    /// <summary><c>ContentFinderCondition.ContentLinkType</c> value whose <c>Content</c> is an InstanceContent row.</summary>
+    private const byte InstanceContentLink = 1;
+
+    /// <summary>
+    /// Duty names keyed by InstanceContent row id, from the Duty Finder entry that links the instance: what
+    /// <see cref="QuestRecord.InstanceContentRequired"/> refers to. The first named entry per instance wins.
+    /// </summary>
+    private static Dictionary<uint, string> DutyNames(ExcelSheet<ContentFinderCondition> sheet)
+    {
+        var result = new Dictionary<uint, string>();
+        foreach (var row in sheet)
+        {
+            if (row.ContentLinkType != InstanceContentLink || row.Content.RowId == 0 || result.ContainsKey(row.Content.RowId))
+            {
+                continue;
+            }
+
+            var text = row.Name.ExtractText();
+            if (text.Length != 0)
+            {
+                // The sheet writes "the Vault"; a line opens with the name, so its first letter is raised.
+                result[row.Content.RowId] = char.IsLower(text[0]) ? char.ToUpperInvariant(text[0]) + text[1..] : text;
+            }
+        }
+
+        return result;
     }
 
     private delegate Lumina.Text.ReadOnly.ReadOnlySeString NameOf<T>(in T row);

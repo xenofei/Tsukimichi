@@ -1,3 +1,4 @@
+using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Jobs;
 using Tsukimichi.Core.Model;
 
@@ -13,6 +14,19 @@ namespace Tsukimichi.GameData;
 /// <param name="Language">Lumina language name the strings were read in, e.g. "English".</param>
 public sealed record CatalogBundle(QuestCatalog Catalog, GameNames Names, ClassJobCategoryLookup Jobs, string Language)
 {
+    /// <summary>The name lookups <see cref="BlockerText"/> prints with, over this bundle's catalog and sheet names; the callers memoize one per bundle.</summary>
+    public BlockerNames BlockerNames() => new()
+    {
+        Catalog = Catalog,
+        Tribe = id => Names.Tribe(id),
+        TribeRank = id => Names.TribeRank(id) is { Length: > 0 } rank ? rank : TribeRanks.Name(id),
+        GrandCompany = id => Names.GrandCompany(id) is { Length: > 0 } company ? company : GrandCompanies.Name(id),
+        Expansion = id => Names.Expansion(id) is { Length: > 0 } expansion ? expansion : Expansions.Name(id),
+        JobAbbreviation = Names.ClassJobAbbreviation,
+        ClassJobCategory = Names.ClassJobCategory,
+        Duty = Names.Duty,
+    };
+
     /// <summary>The per-job quest ladders over this catalog's ClassJob rows; the callers memoize one per bundle.</summary>
     public JobLadder BuildJobLadder()
     {
@@ -51,8 +65,10 @@ public sealed record ClassJobInfo(
 }
 
 /// <summary>
-/// Small id-to-name lookups read from the BeastTribe, GrandCompany, ExVersion, ClassJob and BeastReputationRank sheets.
-/// Keys are row ids; the byte-sized ids on <see cref="QuestRecord"/> widen implicitly.
+/// Small id-to-name lookups read from the BeastTribe, GrandCompany, ExVersion, ClassJob, BeastReputationRank,
+/// ClassJobCategory and ContentFinderCondition sheets. Keys are row ids; the byte-sized ids on <see cref="QuestRecord"/>
+/// widen implicitly. <paramref name="Duties"/> is keyed by InstanceContent row id (what
+/// <see cref="QuestRecord.InstanceContentRequired"/> holds), named after the duty's Duty Finder entry.
 /// </summary>
 public sealed record GameNames(
     IReadOnlyDictionary<uint, string> Tribes,
@@ -61,7 +77,9 @@ public sealed record GameNames(
     IReadOnlyDictionary<uint, string> ClassJobs,
     IReadOnlyDictionary<uint, string> ClassJobAbbreviations,
     IReadOnlyDictionary<uint, string> TribeRanks,
-    IReadOnlyList<ClassJobInfo> ClassJobInfos)
+    IReadOnlyList<ClassJobInfo> ClassJobInfos,
+    IReadOnlyDictionary<uint, string> ClassJobCategories,
+    IReadOnlyDictionary<uint, string> Duties)
 {
     public static readonly GameNames Empty = new(
         new Dictionary<uint, string>(),
@@ -70,7 +88,9 @@ public sealed record GameNames(
         new Dictionary<uint, string>(),
         new Dictionary<uint, string>(),
         new Dictionary<uint, string>(),
-        []);
+        [],
+        new Dictionary<uint, string>(),
+        new Dictionary<uint, string>());
 
     /// <summary>The ClassJob row, or null for an id the sheet has no named row for.</summary>
     public ClassJobInfo? ClassJobInfo(uint id)
@@ -97,4 +117,8 @@ public sealed record GameNames(
     public string ClassJobAbbreviation(uint id) => ClassJobAbbreviations.GetValueOrDefault(id, string.Empty);
 
     public string TribeRank(uint id) => TribeRanks.GetValueOrDefault(id, string.Empty);
+
+    public string ClassJobCategory(uint id) => ClassJobCategories.GetValueOrDefault(id, string.Empty);
+
+    public string Duty(uint instanceContentId) => Duties.GetValueOrDefault(instanceContentId, string.Empty);
 }

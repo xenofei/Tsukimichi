@@ -2,8 +2,8 @@ using Tsukimichi.Core.Model;
 
 namespace Tsukimichi.Core.Query;
 
-/// <summary>One table row: the quest, its resolved state and the pre-materialized "Next step" text.</summary>
-public readonly record struct QuestRow(QuestRecord Quest, QuestState State, string NextStep);
+/// <summary>One table row: the quest, its resolved state and the pre-materialized Status text (<see cref="Evaluation.BlockerText.StatusText"/>).</summary>
+public readonly record struct QuestRow(QuestRecord Quest, QuestState State, string Status);
 
 /// <summary>
 /// Why a query produced no rows. <see cref="Filters"/> lists, in panel order, each filter that would alone have

@@ -22,8 +22,8 @@ public sealed record ClassJobRequirement(uint CategoryId, uint RequiredJob, byte
 /// <summary>Unsynced level of the job under consideration against the quest level.</summary>
 public sealed record LevelRequirement(byte Level, byte ActualLevel) : Requirement(RequirementKind.Level);
 
-/// <summary>Previous quests with their join and how many are completed.</summary>
-public sealed record PreviousQuestsRequirement(uint[] QuestIds, JoinKind Join, int DoneCount) : Requirement(RequirementKind.PreviousQuests);
+/// <summary>Previous quests with their join, how many are completed and which (<paramref name="DoneIds"/>, null when the caller did not say).</summary>
+public sealed record PreviousQuestsRequirement(uint[] QuestIds, JoinKind Join, int DoneCount, uint[]? DoneIds = null) : Requirement(RequirementKind.PreviousQuests);
 
 /// <summary>Membership in a specific Grand Company.</summary>
 public sealed record GrandCompanyRequirement(byte GrandCompany, byte ActualGrandCompany) : Requirement(RequirementKind.GrandCompany);
@@ -77,6 +77,31 @@ public static class GrandCompanies
 
     public static string Name(byte grandCompany) =>
         grandCompany != 0 && grandCompany < Names.Length ? Names[grandCompany] : $"Grand Company {grandCompany}";
+}
+
+/// <summary>
+/// Grand Company rank titles by GrandCompanyRank row id, without the company's own prefix (Storm, Serpent, Flame):
+/// the rank a quest asks for is the same tier in every company.
+/// </summary>
+public static class GrandCompanyRanks
+{
+    private static readonly string[] Names =
+    [
+        "no rank",
+        "Private Third Class",
+        "Private Second Class",
+        "Private First Class",
+        "Corporal",
+        "Sergeant Third Class",
+        "Sergeant Second Class",
+        "Sergeant First Class",
+        "Chief Sergeant",
+        "Second Lieutenant",
+        "First Lieutenant",
+        "Captain",
+    ];
+
+    public static string Name(byte rank) => rank < Names.Length ? Names[rank] : $"rank {rank}";
 }
 
 /// <summary>Expansion names by ExVersion row id.</summary>
