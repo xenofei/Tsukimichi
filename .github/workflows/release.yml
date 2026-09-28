@@ -1,0 +1,55 @@
+name: Release
+
+# Push a tag like v0.2.0 to build the plugin against the current Dalamud, attach latest.zip to a
+# GitHub Release, and refresh pluginmaster.json on main so custom-repo users get the update.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - name: Check out the tagged commit
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Download Dalamud
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri https://goatcorp.github.io/dalamud-distrib/latest.zip -OutFile dalamud.zip
+          Expand-Archive dalamud.zip -DestinationPath "$env:RUNNER_TEMP\dalamud"
+          "DALAMUD_HOME=$env:RUNNER_TEMP\dalamud" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Build Release package
+        run: dotnet build Tsukimichi/Tsukimichi.csproj -c Release
+
+      - name: Create GitHub Release with latest.zip
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Tsukimichi ${{ github.ref_name }}
+          files: Tsukimichi/bin/Release/Tsukimichi/latest.zip
+          generate_release_notes: true
+
+      - name: Refresh pluginmaster.json on main
+        shell: pwsh
+        run: |
+          python tools/make_pluginmaster.py --tag "${{ github.ref_name }}"
+          Copy-Item pluginmaster.json "$env:RUNNER_TEMP\pluginmaster.json"
+          git fetch origin main
+          git checkout -B main origin/main
+          Copy-Item "$env:RUNNER_TEMP\pluginmaster.json" pluginmaster.json
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add pluginmaster.json
+          if (git diff --cached --quiet) { "pluginmaster.json unchanged" } else {
+            git commit -m "chore: pluginmaster.json for ${{ github.ref_name }}"
+            git push origin main
+          }

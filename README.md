@@ -14,6 +14,17 @@ Tsukimichi (月道) reads as "the moon's path": *tsuki* (moon) from the characte
 
 Commands: `/tsukimichi` toggles the window, `/tsukimichi <text>` searches and prints quest links to chat, `/tsukimichi config`, `/tsukimichi glyphs`.
 
+## Install (custom repository)
+
+1. In game, type `/xlsettings`, open the **Experimental** tab, and under **Custom Plugin Repositories** paste:
+   ```
+   https://raw.githubusercontent.com/xenofei/Tsukimichi/main/pluginmaster.json
+   ```
+2. Click the **+** button, then **Save and Close**.
+3. Type `/xlplugins`, search for **Tsukimichi**, and click **Install**.
+
+Updates arrive through the plugin installer like any other plugin. The repository index is `pluginmaster.json` at the root of this repo; each release's `latest.zip` is attached to the matching GitHub Release.
+
 ## Layout
 
 | Project | Purpose |

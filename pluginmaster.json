@@ -1,0 +1,33 @@
+[
+  {
+    "Author": "Michiru Tsukikage",
+    "Name": "Tsukimichi",
+    "InternalName": "Tsukimichi",
+    "AssemblyVersion": "0.1.0.0",
+    "Description": "A quest catalog for every journal type, with completed and available filters and a per-requirement breakdown of what still blocks a quest.\nMoonlit treasures collects quests with unique rewards, and per-character snapshots keep the whole account in view.",
+    "ApplicableVersion": "any",
+    "RepoUrl": "https://github.com/xenofei/Tsukimichi",
+    "Tags": [
+      "quests",
+      "journal",
+      "tracker",
+      "rewards"
+    ],
+    "DalamudApiLevel": 15,
+    "LoadRequiredState": 0,
+    "LoadSync": false,
+    "CanUnloadAsync": false,
+    "LoadPriority": 0,
+    "Punchline": "Walk the moon's path: every quest, every requirement, every unique reward.",
+    "AcceptsFeedback": true,
+    "IconUrl": "https://raw.githubusercontent.com/xenofei/Tsukimichi/main/assets/icon.png",
+    "DownloadLinkInstall": "https://github.com/xenofei/Tsukimichi/releases/download/v0.1.0/latest.zip",
+    "DownloadLinkTesting": "https://github.com/xenofei/Tsukimichi/releases/download/v0.1.0/latest.zip",
+    "DownloadLinkUpdate": "https://github.com/xenofei/Tsukimichi/releases/download/v0.1.0/latest.zip",
+    "LastUpdate": 1790560557,
+    "DownloadCount": 0,
+    "IsHide": false,
+    "IsTestingExclusive": false,
+    "Changelog": "First release: quest catalog by journal type, completed/available filters with requirement breakdown, Moonlit unique rewards, per-character snapshots, help window."
+  }
+]
