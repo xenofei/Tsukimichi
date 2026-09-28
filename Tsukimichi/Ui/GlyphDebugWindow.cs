@@ -1,3 +1,4 @@
+using System;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility;
@@ -8,8 +9,9 @@ using Tsukimichi.Core.Model;
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// Developer window that renders every state glyph at three sizes plus the filling moon, on a Night panel, with a
-/// slider to try any radius. Opened with <c>/tsukimichi glyphs</c>.
+/// Developer window that renders every state glyph at the four sizes the UI uses plus the filling moon, on a Night
+/// panel, with a slider to try any radius. Opened with <c>/tsukimichi glyphs</c>. The 12 px column stays flat; from
+/// 20 px up the shading and highlight arc (<see cref="MoonGlyph.ShadingMinRadius"/>) are visible.
 /// </summary>
 public sealed class GlyphDebugWindow : Window
 {
@@ -25,8 +27,16 @@ public sealed class GlyphDebugWindow : Window
         (QuestState.Unknown, "Veiled"),
     ];
 
-    /// <summary>Glyph diameters in unscaled pixels: table row, toolbar and detail header sizes.</summary>
-    private static readonly float[] Diameters = [12f, 20f, 40f];
+    /// <summary>Glyph diameters in unscaled pixels and where the UI draws them.</summary>
+    private static readonly (float Diameter, string Use)[] Sizes =
+    [
+        (12f, "table row"),
+        (20f, "toolbar"),
+        (40f, "detail header"),
+        (64f, "help"),
+    ];
+
+    private static readonly string[] SizeHeaders = Array.ConvertAll(Sizes, static s => $"{s.Diameter:0} px · {s.Use}");
 
     private static readonly float[] Fractions = [0f, 0.25f, 0.5f, 0.75f, 1f];
 
@@ -36,7 +46,7 @@ public sealed class GlyphDebugWindow : Window
     public GlyphDebugWindow()
         : base("Tsukimichi Glyphs###TsukimichiGlyphs")
     {
-        Size = new Vector2(620f, 640f);
+        Size = new Vector2(760f, 720f);
         SizeCondition = ImGuiCond.FirstUseEver;
         SizeConstraints = new WindowSizeConstraints { MinimumSize = new Vector2(420f, 320f) };
     }
@@ -68,12 +78,12 @@ public sealed class GlyphDebugWindow : Window
     private void DrawStates()
     {
         ImGui.TextUnformatted("Quest states");
-        using var table = ImRaii.Table("##states", 2 + Diameters.Length + 1, ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.BordersInnerH);
+        using var table = ImRaii.Table("##states", 2 + Sizes.Length + 1, ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.BordersInnerH);
         if (!table) return;
 
         ImGui.TableSetupColumn("State");
         ImGui.TableSetupColumn("Phase");
-        foreach (var d in Diameters) ImGui.TableSetupColumn($"{d:0} px");
+        foreach (var header in SizeHeaders) ImGui.TableSetupColumn(header);
         ImGui.TableSetupColumn("Slider");
         ImGui.TableHeadersRow();
 
@@ -88,10 +98,10 @@ public sealed class GlyphDebugWindow : Window
             ImGui.AlignTextToFramePadding();
             ImGui.TextDisabled(phase);
 
-            foreach (var d in Diameters)
+            foreach (var (diameter, _) in Sizes)
             {
                 ImGui.TableNextColumn();
-                GlyphCell(d * 0.5f * ImGuiHelpers.GlobalScale, state);
+                GlyphCell(diameter * 0.5f * ImGuiHelpers.GlobalScale, state);
             }
 
             ImGui.TableNextColumn();
@@ -102,11 +112,11 @@ public sealed class GlyphDebugWindow : Window
     private void DrawFilling()
     {
         ImGui.TextUnformatted("Filling moon (tree progress)");
-        using var table = ImRaii.Table("##filling", 1 + Diameters.Length + 1, ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.BordersInnerH);
+        using var table = ImRaii.Table("##filling", 1 + Sizes.Length + 1, ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.BordersInnerH);
         if (!table) return;
 
         ImGui.TableSetupColumn("Fraction");
-        foreach (var d in Diameters) ImGui.TableSetupColumn($"{d:0} px");
+        foreach (var header in SizeHeaders) ImGui.TableSetupColumn(header);
         ImGui.TableSetupColumn("Slider");
         ImGui.TableHeadersRow();
 
@@ -117,10 +127,10 @@ public sealed class GlyphDebugWindow : Window
             ImGui.AlignTextToFramePadding();
             ImGui.TextUnformatted($"{f:0.00}");
 
-            foreach (var d in Diameters)
+            foreach (var (diameter, _) in Sizes)
             {
                 ImGui.TableNextColumn();
-                FillingCell(d * 0.5f * ImGuiHelpers.GlobalScale, f);
+                FillingCell(diameter * 0.5f * ImGuiHelpers.GlobalScale, f);
             }
 
             ImGui.TableNextColumn();
