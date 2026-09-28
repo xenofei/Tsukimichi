@@ -199,6 +199,22 @@ public class QuestQueryFilterTests
     }
 
     [Fact]
+    public void Level_range_uses_the_displayed_level()
+    {
+        // A Lv 5 quest with offset 5 shows as Lv 10 and belongs in a 10..50 band although its raw level is below it.
+        var catalog = QuestCatalog.Build(
+        [
+            Quest(1, "Raw five", level: 5),
+            Quest(2, "Shown as ten", level: 5) with { LevelOffset = 5 },
+            Quest(3, "Shown as fifty-one", level: 50) with { LevelOffset = 1 },
+        ]);
+
+        var result = Run(catalog, States(catalog, QuestState.Ready), new FilterSet { LevelMin = 10, LevelMax = 50 });
+
+        Assert.Equal(new uint[] { 2 }, RowIds(result));
+    }
+
+    [Fact]
     public void Class_job_category_matches_either_slot()
     {
         var catalog = QuestCatalog.Build(

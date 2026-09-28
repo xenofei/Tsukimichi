@@ -309,7 +309,7 @@ public static class QuestQuery
             var c = sort.Column switch
             {
                 SortColumn.Name => string.Compare(a.Quest.Name, b.Quest.Name, StringComparison.OrdinalIgnoreCase),
-                SortColumn.Level => a.Quest.Level.CompareTo(b.Quest.Level),
+                SortColumn.Level => a.Quest.DisplayLevel.CompareTo(b.Quest.DisplayLevel),
                 SortColumn.State => ((int)a.State).CompareTo((int)b.State),
                 SortColumn.Expansion => a.Quest.Expansion.CompareTo(b.Quest.Expansion),
                 _ => 0,
@@ -438,7 +438,7 @@ public static class QuestQuery
             }
 
             if (skip != Filter.LevelRange && levelRangeEngaged
-                && (quest.Level < filters.LevelMin || quest.Level > filters.LevelMax))
+                && (quest.DisplayLevel < filters.LevelMin || quest.DisplayLevel > filters.LevelMax))
             {
                 return false;
             }
@@ -487,7 +487,7 @@ public static class QuestQuery
         {
             Preset.None => true,
             Preset.FeatureQuests => ctx.FeatureQuestIds.Contains(quest.RowId),
-            Preset.LevelBand => ctx.CurrentLevel > 0 && quest.Level >= bandMin && quest.Level <= bandMax,
+            Preset.LevelBand => ctx.CurrentLevel > 0 && quest.DisplayLevel >= bandMin && quest.DisplayLevel <= bandMax,
             Preset.Stalled => state == QuestState.Accepted
                 && ctx.AcceptedSince is { } since
                 && since.TryGetValue(quest.QuestId, out var acceptedUtc)

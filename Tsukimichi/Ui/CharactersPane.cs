@@ -1566,7 +1566,7 @@ public sealed class CharactersPane
         var next = progress.NextRowId is { } nextRowId ? derivedBundle?.Catalog.GetByRowId(nextRowId) : null;
         var text = next is null
             ? Strings.JobsAllDone
-            : string.Format(CultureInfo.CurrentCulture, progress.IsReadyNow ? Strings.JobsNextReadyFormat : Strings.JobsNextLaterFormat, next.Name, progress.NextLevel);
+            : string.Format(CultureInfo.CurrentCulture, progress.IsReadyNow ? Strings.JobsNextReadyFormat : Strings.JobsNextLaterFormat, next.Name, next.DisplayLevel);
         return new LadderRow(iconId, name, level, isRole, progress.Fraction, count, next, text, progress.IsReadyNow);
     }
 

@@ -1,8 +1,10 @@
 using Tsukimichi.Core.Chains;
+using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Storage;
 using Tsukimichi.GameData;
+using Tsukimichi.Tests.Evaluation;
 using Xunit.Abstractions;
 
 namespace Tsukimichi.Tests.Data;
@@ -167,6 +169,30 @@ public class CatalogFixtureTests(FixtureCatalog fixture, ITestOutputHelper outpu
 
         Assert.All(chains.Chains, c => Assert.True(c.RowIds.Count >= ChainCatalog.MinChainLength));
         Assert.True(chains.Chains.Count >= 80, $"expected dozens of derived chains, found {chains.Chains.Count}");
+    }
+
+    [Fact]
+    public void Quarrels_with_Squirrels_displays_the_journal_level_and_is_Ready_at_the_raw_level()
+    {
+        // Verification report 2, inaccuracy 1: the journal and the Lodestone print ClassJobLevel + QuestLevelOffset
+        // (Lv 3), while the Lodestone requirement line still reads "Lv. 1"; the raw value stays the acceptance gate.
+        var quest = Catalog.GetByRowId(65561u);
+        Assert.NotNull(quest);
+        Assert.Equal("Quarrels with Squirrels", quest.Name);
+        Assert.Equal(1, quest.Level);
+        Assert.Equal(2, quest.LevelOffset);
+        Assert.Equal(3, quest.DisplayLevel);
+
+        var ctx = EvalContext.Default with { ClassJobs = fixture.Bundle.Jobs };
+        var levelOne = Fixture.Snapshot() with { JobLevels = Fixture.Levels((Fixture.Gladiator, 1)) };
+        var result = StateResolver.Resolve(quest, levelOne, Catalog, ctx);
+
+        Assert.Equal(QuestState.Ready, result.State);
+        Assert.True(Fixture.Only(result.Requirements, RequirementKind.Level).Met, "level 1 meets the raw acceptance level");
+
+        // The report's count, and the identity every display site relies on.
+        Assert.Equal(215, Catalog.All.Count(q => q.LevelOffset > 0));
+        Assert.All(Catalog.All, q => Assert.Equal(q.Level + q.LevelOffset, q.DisplayLevel));
     }
 }
 

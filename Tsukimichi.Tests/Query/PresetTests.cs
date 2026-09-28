@@ -163,6 +163,22 @@ public class PresetTests
         Assert.Equal(5, QuestQuery.LevelBandRadius);
     }
 
+    [Fact]
+    public void Level_band_uses_the_displayed_level()
+    {
+        var catalog = QuestCatalog.Build(
+        [
+            Quest(1, "Raw ten", section: 2, level: 10),
+            Quest(2, "Shown as fifteen", section: 2, level: 10) with { LevelOffset = 5 },
+            Quest(3, "Shown as twenty-six", section: 2, level: 25) with { LevelOffset = 1 },
+        ]);
+        var ctx = QueryContext.Empty with { CurrentLevel = 20 };
+
+        var result = Run(catalog, States(catalog, QuestState.Ready), With(Preset.LevelBand), ctx: ctx);
+
+        Assert.Equal(new uint[] { 2 }, RowIds(result));
+    }
+
     // ---- Stalled ----
 
     private static QueryContext StalledContext(int days, params (uint RowId, DateTime SinceUtc)[] entries)

@@ -52,6 +52,18 @@ public class QuestDiscoveryTests
     }
 
     [Fact]
+    public void StartableInZone_sorts_by_the_displayed_level()
+    {
+        var catalog = QuestCatalog.Build(
+        [
+            Quest(65601, "Shown as twelve", 10, Mother, Gridania) with { LevelOffset = 2 },
+            Quest(65602, "Eleven", 11, Mother, Gridania),
+        ]);
+
+        Assert.Equal(["Eleven", "Shown as twelve"], QuestDiscovery.StartableInZone(catalog, States, Gridania).Select(q => q.Name));
+    }
+
+    [Fact]
     public void StartableInZone_can_leave_out_quests_ready_on_another_job()
     {
         Assert.Equal(["Corundum", "Zephyr"], QuestDiscovery.StartableInZone(Catalog, States, Gridania, includeOtherJob: false).Select(q => q.Name));

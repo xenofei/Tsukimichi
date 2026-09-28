@@ -4,6 +4,9 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+### Fixed
+- Quest levels now match the game's journal and the Lodestone. 215 quests (Quarrels with Squirrels, Surveying the Damage, Reach for the Starboard and others, mostly early sidequests, ARR main scenario and allied society quests) showed a lower level than the game because the level the journal prints adds a per-quest offset the plugin was not applying. The Lv column, the detail header, the Nearby list, the Todo overlay hints, the job ladder "next" line, the level-range filter, the "Around my level" view and the level sort all use the journal level now. Whether you can take a quest is unchanged: the game still accepts Quarrels with Squirrels at level 1, so it still shows Ready at level 1.
+
 ## [0.5.1] - 2026-09-28
 
 ### Added

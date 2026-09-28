@@ -71,7 +71,7 @@ public static class QuestDiscovery
 
         matches.Sort(static (a, b) =>
         {
-            var byLevel = a.Level.CompareTo(b.Level);
+            var byLevel = a.DisplayLevel.CompareTo(b.DisplayLevel);
             return byLevel != 0 ? byLevel : string.Compare(a.Name, b.Name, StringComparison.CurrentCultureIgnoreCase);
         });
         return matches;
