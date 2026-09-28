@@ -264,8 +264,11 @@ public sealed class GameStateReader
             LeveAllowance = qm->NumLeveAllowances,
             UnlockedInstances = unlockedInstances,
             ActiveFestivals = ReadActiveFestivals(),
-            MaxExpansion = 0, // DRAFT-NEEDED E: PlayerState.MaxExpansion / MaxLevel exist but their semantics are unverified.
-            LevelCap = 0,
+            // Account entitlement caps: PlayerState.MaxExpansion is the ExVersion row the account owns up to,
+            // PlayerState.MaxLevel the level cap that comes with it. 0 means the client has not said (a snapshot
+            // written by an older build reads the same), and the evaluator treats 0 as "not checked", never as level 0.
+            MaxExpansion = ps->MaxExpansion,
+            LevelCap = ps->MaxLevel,
             AchievementsLoaded = achievementsLoaded,
             CompletedAchievements = completedAchievements,
             CurrentJob = ps->CurrentClassJobId,
