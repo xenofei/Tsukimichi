@@ -17,7 +17,8 @@ namespace Tsukimichi.Ui;
 /// Draw: the window area (union of every recorded rect, or the screen) is dimmed with Night at 70 % except for a
 /// rounded cutout around the target and around the card; the target gets a Moon border with a soft glow; the card
 /// is a small ImGui window placed beside the target, flipping sides near the screen edge, with the step number,
-/// title, body and Back / Next / Skip. Esc skips. A step whose region is not on screen shows without a highlight.
+/// title, body and Back / Next / Skip. Esc skips while the card is focused. A step whose region is not on screen
+/// shows without a highlight.
 /// On first run (<see cref="Configuration.TutorialCompleted"/> false) the welcome card offers the tour when the
 /// main window first opens; finishing or declining sets the flag. Sizes go through
 /// <see cref="ImGuiHelpers.GlobalScale"/> (the main window's UiMetrics is not used here).
@@ -31,7 +32,14 @@ public sealed class TutorialOverlay : ITutorial
     private const int GlowLayers = 3;
     private const float Gap = 14f;
     private const float CardWidth = 330f;
-    private const float CardHeightGuess = 170f;
+    private const float CardHeightGuess = 160f;
+
+    /// <summary>
+    /// Frames a step is drawn before the card's measured size is trusted: the auto-resized card takes its size from
+    /// the previous frame's content, so the frame a step changes (and the measurement taken on it) still reflect the
+    /// previous step.
+    /// </summary>
+    private const int CardSettleFrames = 2;
     private const float TitleScale = 1.2f;
     private const float DimAlpha = 0.7f;
 
@@ -95,7 +103,9 @@ public sealed class TutorialOverlay : ITutorial
     private bool mainWasOpen;
     private bool focusCard;
     private Vector2 cardSize;
-    private bool cardMeasured;
+
+    /// <summary>Frames drawn on the current step; the card is placed from an estimate until <see cref="CardSettleFrames"/>.</summary>
+    private int stepFrames;
 
     public TutorialOverlay(Configuration settings, IDalamudPluginInterface pluginInterface, UiState ui)
     {
@@ -160,6 +170,7 @@ public sealed class TutorialOverlay : ITutorial
             offering = true;
             index = 0;
             focusCard = true;
+            stepFrames = 0;
         }
 
         mainWasOpen = open;
@@ -190,13 +201,16 @@ public sealed class TutorialOverlay : ITutorial
             target = target.Expand(CutoutPad * scale);
         }
 
+        // Right after a step change the card is placed from a conservative estimate and gets no hole in the dim;
+        // once it has settled, its measured size is used.
+        var cardMeasured = stepFrames >= CardSettleFrames;
         var size = cardMeasured ? cardSize : new Vector2(CardWidth * scale, CardHeightGuess * scale);
         var cardPos = hasTarget
             ? OverlayGeometry.PlaceCard(in target, size, in screen, Gap * scale, out _)
             : OverlayGeometry.CenterIn(in area, size);
         var card = ScreenRect.FromSize(cardPos, size);
 
-        DrawDim(in area, hasTarget, in target, in card);
+        DrawDim(in area, hasTarget, in target, in card, cardMeasured);
         if (hasTarget)
         {
             DrawHighlight(in target, scale);
@@ -204,11 +218,18 @@ public sealed class TutorialOverlay : ITutorial
 
         DrawCard(cardPos, in step, scale);
 
-        if (ImGui.IsKeyPressed(ImGuiKey.Escape, false))
+        // A click in the main window gives it focus; its NoBringToFrontOnFocus flag (set by MainWindow while the tour
+        // runs) already keeps the card in front. As a second guard the card asks for focus again on the frame after any
+        // release, but not while a widget is active or a popup is open (focusing would deactivate the widget or close
+        // the popup, and the window underneath must stay usable).
+        if (Active && AnyMouseReleased() && !ImGui.IsAnyItemActive() && !ImGui.IsPopupOpen(string.Empty, ImGuiPopupFlags.AnyPopupId | ImGuiPopupFlags.AnyPopupLevel))
         {
-            Stop();
+            focusCard = true;
         }
     }
+
+    private static bool AnyMouseReleased() =>
+        ImGui.IsMouseReleased(ImGuiMouseButton.Left) || ImGui.IsMouseReleased(ImGuiMouseButton.Right) || ImGui.IsMouseReleased(ImGuiMouseButton.Middle);
 
     // ------------------------------------------------------------------ steps
 
@@ -216,6 +237,7 @@ public sealed class TutorialOverlay : ITutorial
     {
         index = i;
         focusCard = true;
+        stepFrames = 0;
         Steps[i].OnShow?.Invoke(ui);
     }
 
@@ -274,7 +296,7 @@ public sealed class TutorialOverlay : ITutorial
     // ------------------------------------------------------------------ drawing
 
     /// <summary>Night at 70 % over the area, as bands around the target and the card (ImGui has no cutouts).</summary>
-    private void DrawDim(in ScreenRect area, bool hasTarget, in ScreenRect target, in ScreenRect card)
+    private void DrawDim(in ScreenRect area, bool hasTarget, in ScreenRect target, in ScreenRect card, bool cardMeasured)
     {
         Span<ScreenRect> holes = stackalloc ScreenRect[2];
         var holeCount = 0;
@@ -283,6 +305,7 @@ public sealed class TutorialOverlay : ITutorial
             holes[holeCount++] = target;
         }
 
+        // The card's hole is cut only from its measured rectangle; an estimate would leave a visible seam.
         if (cardMeasured)
         {
             holes[holeCount++] = card;
@@ -342,9 +365,21 @@ public sealed class TutorialOverlay : ITutorial
         {
             if (visible)
             {
-                DrawCardContent(in step, scale);
+                // Measured before the content, whose buttons may move to another step and restart the count.
                 cardSize = ImGui.GetWindowSize();
-                cardMeasured = true;
+                if (stepFrames < CardSettleFrames)
+                {
+                    stepFrames++;
+                }
+
+                DrawCardContent(in step, scale);
+
+                // Esc skips only while the card itself has focus; with the main window focused it does nothing (the
+                // window's own close hotkey is suspended by MainWindow for the tour).
+                if (Active && ImGui.IsWindowFocused(ImGuiFocusedFlags.RootAndChildWindows) && ImGui.IsKeyPressed(ImGuiKey.Escape, false))
+                {
+                    Stop();
+                }
             }
         }
         finally

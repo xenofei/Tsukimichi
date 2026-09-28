@@ -281,20 +281,26 @@ public sealed class Plugin : IDalamudPlugin
             PluginInterface.UiBuilder.Draw += tutorial.CheckFirstRun;
             mainWindow.AttachTutorial(tutorial);
 
+            // Each action opens the main window in front of the help window it was clicked in.
             var helpActions = new HelpActions(
                 OpenFilters: () =>
                 {
+                    // The filter panel lives on the Journal tab.
+                    ui.Tab = NavTab.Journal;
                     ui.FilterPanelOpen = true;
                     mainWindow.IsOpen = true;
+                    mainWindow.BringToFront();
                 },
                 ShowTab: tab =>
                 {
                     ui.Tab = tab;
                     mainWindow.IsOpen = true;
+                    mainWindow.BringToFront();
                 },
                 StartTutorial: () =>
                 {
                     mainWindow.IsOpen = true;
+                    mainWindow.BringToFront();
                     tutorial.Start();
                 },
                 OpenSettings: configWindow.Toggle);

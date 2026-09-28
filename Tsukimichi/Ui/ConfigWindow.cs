@@ -7,6 +7,7 @@ using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin;
 using Tsukimichi.Config;
+using Tsukimichi.Core.Ui;
 using Tsukimichi.Game;
 using Tsukimichi.GameData;
 
@@ -22,11 +23,6 @@ namespace Tsukimichi.Ui;
 public sealed class ConfigWindow : Window
 {
     private static readonly TimeSpan ToastDuration = TimeSpan.FromSeconds(8);
-
-    private const float MinUiScale = 0.9f;
-    private const float MaxUiScale = 1.6f;
-    private const float MinIconScale = 0.8f;
-    private const float MaxIconScale = 2.0f;
 
     private readonly Configuration settings;
     private readonly SessionState session;
@@ -44,8 +40,6 @@ public sealed class ConfigWindow : Window
 
     private float pollSeconds;
     private bool pollDirty;
-    private float uiScale;
-    private float iconScale;
     private bool scaleDirty;
     private bool openSecondConfirm;
     private string? toast;
@@ -151,20 +145,23 @@ public sealed class ConfigWindow : Window
     private void ReadSettings()
     {
         pollSeconds = (float)settings.PollInterval.TotalSeconds;
-        uiScale = Math.Clamp(settings.UiScale, MinUiScale, MaxUiScale);
-        iconScale = Math.Clamp(settings.IconScale, MinIconScale, MaxIconScale);
         pollDirty = false;
         scaleDirty = false;
     }
 
-    /// <summary>Two sliders written to the configuration as they move and saved when released.</summary>
+    /// <summary>
+    /// Two sliders written to the configuration as they move and saved when released. They read the configuration
+    /// every frame (through the same clamps as the main window's filter panel, which edits the same values), so the
+    /// two places never disagree and a corrupt value shows as the default rather than NaN.
+    /// </summary>
     private void DrawDisplay()
     {
         Header(Strings.ConfigSectionDisplay);
         var width = 220f * ImGuiHelpers.GlobalScale;
 
+        var uiScale = ScaleMetrics.ClampUiScale(settings.UiScale);
         ImGui.SetNextItemWidth(width);
-        if (ImGui.SliderFloat(Strings.ConfigUiScale, ref uiScale, MinUiScale, MaxUiScale, "%.2f", ImGuiSliderFlags.AlwaysClamp))
+        if (ImGui.SliderFloat(Strings.ConfigUiScale, ref uiScale, ScaleMetrics.MinUiScale, ScaleMetrics.MaxUiScale, "%.2f", ImGuiSliderFlags.AlwaysClamp))
         {
             settings.UiScale = uiScale;
             scaleDirty = true;
@@ -173,8 +170,9 @@ public sealed class ConfigWindow : Window
         SaveWhenReleased();
         ImGui.TextDisabled(Strings.ConfigUiScaleHint);
 
+        var iconScale = ScaleMetrics.ClampIconScale(settings.IconScale);
         ImGui.SetNextItemWidth(width);
-        if (ImGui.SliderFloat(Strings.ConfigIconScale, ref iconScale, MinIconScale, MaxIconScale, "%.2f", ImGuiSliderFlags.AlwaysClamp))
+        if (ImGui.SliderFloat(Strings.ConfigIconScale, ref iconScale, ScaleMetrics.MinIconScale, ScaleMetrics.MaxIconScale, "%.2f", ImGuiSliderFlags.AlwaysClamp))
         {
             settings.IconScale = iconScale;
             scaleDirty = true;

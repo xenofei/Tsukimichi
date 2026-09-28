@@ -66,6 +66,12 @@ public sealed class MainWindow : Window, IDisposable
     private string searchBuffer = string.Empty;
     private NavTab drawnTab = NavTab.Journal;
 
+    // While the tour runs the window must not climb over the tutorial card when clicked, and Esc belongs to the
+    // card; both settings are restored from these copies when the tour ends.
+    private bool tourWasActive;
+    private ImGuiWindowFlags flagsBeforeTour;
+    private bool closeHotkeyBeforeTour;
+
     // Toolbar strings, rebuilt when the session version changes.
     private int toolbarVersion = -1;
     private string characterPreview = Strings.NoCharacter;
@@ -148,6 +154,7 @@ public sealed class MainWindow : Window, IDisposable
 
     public override void Draw()
     {
+        SyncTourState();
         if (plugin.Session is not { } session)
         {
             return;
@@ -256,11 +263,47 @@ public sealed class MainWindow : Window, IDisposable
         }
     }
 
+    /// <summary>Closing inside the save debounce must not lose the pending filters, sort or display settings.</summary>
+    public override void OnClose()
+    {
+        FlushSettings(DateTime.UtcNow, force: true);
+        SyncTourState();
+    }
+
     public void Dispose()
     {
         FlushSettings(DateTime.UtcNow, force: true);
         ui.FiltersChanged -= OnFiltersChanged;
         tablePane.Dispose();
+    }
+
+    /// <summary>
+    /// Applies or restores the tour-time window settings when the tutorial starts or stops: the card is a separate
+    /// top-level window, so <see cref="ImGuiWindowFlags.NoBringToFrontOnFocus"/> keeps this window from climbing over
+    /// it after a click, and the close hotkey is left to the card (Esc skips the tour instead of closing the window).
+    /// Flags take effect at the next Begin.
+    /// </summary>
+    private void SyncTourState()
+    {
+        var active = tutorial?.Active == true;
+        if (active == tourWasActive)
+        {
+            return;
+        }
+
+        tourWasActive = active;
+        if (active)
+        {
+            flagsBeforeTour = Flags;
+            closeHotkeyBeforeTour = RespectCloseHotkey;
+            Flags |= ImGuiWindowFlags.NoBringToFrontOnFocus;
+            RespectCloseHotkey = false;
+        }
+        else
+        {
+            Flags = flagsBeforeTour;
+            RespectCloseHotkey = closeHotkeyBeforeTour;
+        }
     }
 
     private void EnsureInitialized()
@@ -616,23 +659,33 @@ public sealed class MainWindow : Window, IDisposable
 
         // BeginTabBar leaves the cursor under the tab row.
         ui.RecordRect(UiRects.Tabs, tabsMin, new Vector2(tabsMin.X + tabsWidth, ImGui.GetCursorScreenPos().Y));
-        var force = ui.Tab != drawnTab;
-        DrawTab(NavTab.Journal, Strings.TabJournal, force, session, bundle);
-        DrawTab(NavTab.Moonlit, Strings.TabMoonlit, force, session, bundle);
-        DrawTab(NavTab.Characters, Strings.TabCharacters, force, session, bundle);
+
+        // A programmatic switch (ui.Tab set by the tutorial, help or a command) is requested once for the whole row:
+        // ImGui applies SetSelected a frame late, so the old tab is still the visible one this frame and must not
+        // write itself back into ui.Tab while the request is pending.
+        var requested = ui.Tab;
+        var force = requested != drawnTab;
+        DrawTab(NavTab.Journal, Strings.TabJournal, requested, force, session, bundle);
+        DrawTab(NavTab.Moonlit, Strings.TabMoonlit, requested, force, session, bundle);
+        DrawTab(NavTab.Characters, Strings.TabCharacters, requested, force, session, bundle);
     }
 
-    private void DrawTab(NavTab tab, string label, bool force, SessionState session, CatalogBundle bundle)
+    private void DrawTab(NavTab tab, string label, NavTab requested, bool force, SessionState session, CatalogBundle bundle)
     {
-        var flags = force && ui.Tab == tab ? ImGuiTabItemFlags.SetSelected : ImGuiTabItemFlags.None;
+        var flags = force && requested == tab ? ImGuiTabItemFlags.SetSelected : ImGuiTabItemFlags.None;
         using var item = ImRaii.TabItem(label, flags);
         if (!item)
         {
             return;
         }
 
-        ui.Tab = tab;
         drawnTab = tab;
+        if (!force)
+        {
+            // The user clicked a tab: the visible item is the source of truth.
+            ui.Tab = tab;
+        }
+
         DrawTabBody(tab, session, bundle);
     }
 

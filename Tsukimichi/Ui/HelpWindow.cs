@@ -666,8 +666,10 @@ public sealed class HelpWindow : Window
 
             if (step.TryIt is { } tryIt)
             {
+                // SameLine(x) is relative to the group's start, so the button is placed in window coordinates instead.
                 var buttonWidth = ImGuiHelpers.GetButtonSize(Strings.Help.TryIt).X;
-                ImGui.SameLine(ImGui.GetWindowContentRegionMax().X - buttonWidth);
+                ImGui.SameLine();
+                ImGui.SetCursorPosX(ImGui.GetWindowContentRegionMax().X - buttonWidth);
                 if (ImGui.Button(Strings.Help.TryIt))
                 {
                     tryIt();
