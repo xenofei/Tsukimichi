@@ -236,6 +236,15 @@ public sealed class StatePoller : IDisposable
     private PollResult? Poll(DateTime now)
     {
         var bundle = session.Bundle!;
+        if (memory.IsStaleFor(bundle))
+        {
+            // A catalog retry replaced the bundle: the committed evaluations belong to the old one, so a diff against
+            // them would find nothing and never re-resolve. Persist what there is and start over with a first pass.
+            log.Debug("Catalog instance changed; the next poll is a first pass");
+            Flush();
+            memory.Reset();
+        }
+
         var catalog = bundle.Catalog;
         var snapshot = reader.Capture(catalog, bundle.Jobs, memory.Last?.CompletedBits);
         // The allied-society daily offer is not readable from the client (see GameStateReader), so the live context
