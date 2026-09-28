@@ -173,7 +173,7 @@ public sealed class TreePane
         var min = ImGui.GetItemRectMin();
         var max = ImGui.GetItemRectMax();
         var style = ImGui.GetStyle();
-        var radius = UiMetrics.TreeMoonRadius;
+        var radius = UiMetrics.TreeMoonRadius(max.Y - min.Y);
         var pad = UiMetrics.Px(6f);
         var lineCenterY = (min.Y + max.Y) * 0.5f;
         var textY = lineCenterY - ImGui.GetTextLineHeight() * 0.5f;

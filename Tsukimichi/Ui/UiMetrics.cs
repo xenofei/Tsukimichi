@@ -58,7 +58,11 @@ public static class UiMetrics
 
     // Moons.
     public static float RowGlyphRadius => Icon(6f);
-    public static float TreeMoonRadius => Icon(5f);
+    /// <summary>
+    /// The tree node's filling moon: Icon(5), clamped so it never reaches more than 2 px past the node line's edges
+    /// (at IconScale 2 the unclamped moon would overhang the neighbouring rows).
+    /// </summary>
+    public static float TreeMoonRadius(float lineHeight) => MathF.Min(Icon(5f), lineHeight * 0.5f + 2f);
     public static float HeaderMoonRadius => Icon(17f);
     public static float PathGlyphRadius => Icon(6f);
     public static float RequirementMoonRadius => Icon(4.5f);
@@ -118,9 +122,11 @@ public static class UiMetrics
     }
 
     // The last reason line composed for a moon tooltip: one moon is hovered at a time, and an evaluation is an
-    // immutable record replaced on every resolve, so the pair (evaluation, quest) identifies the line.
+    // immutable record replaced on every resolve, so (evaluation, quest, states) identifies the line; the states map
+    // is part of the key because the blocker picks its prerequisite differently with and without it.
     private static QuestEvaluation? reasonEvaluation;
     private static QuestRecord? reasonQuest;
+    private static IReadOnlyDictionary<uint, QuestEvaluation>? reasonStates;
     private static string? reasonText;
 
     /// <summary>
@@ -133,10 +139,11 @@ public static class UiMetrics
     /// <param name="states">Every quest's evaluation for the same character when at hand; null for another character's evaluation.</param>
     public static void StateTooltip(QuestState state, QuestEvaluation? evaluation, QuestRecord? quest, BlockerNames names, IReadOnlyDictionary<uint, QuestEvaluation>? states)
     {
-        if (!ReferenceEquals(evaluation, reasonEvaluation) || !ReferenceEquals(quest, reasonQuest))
+        if (!ReferenceEquals(evaluation, reasonEvaluation) || !ReferenceEquals(quest, reasonQuest) || !ReferenceEquals(states, reasonStates))
         {
             reasonEvaluation = evaluation;
             reasonQuest = quest;
+            reasonStates = states;
             reasonText = Strings.StateReason(state, evaluation, quest, names, states);
         }
 

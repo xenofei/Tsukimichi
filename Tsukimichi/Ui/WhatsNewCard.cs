@@ -41,6 +41,9 @@ public sealed class WhatsNewCard
     private string title = string.Empty;
     private bool checkedThisLoad;
 
+    // The section's items per group with the bullet already in front, composed once when the card is prepared.
+    private string[][] groupLines = [];
+
     /// <param name="settings">Holds <see cref="Configuration.LastSeenVersion"/>.</param>
     /// <param name="pluginInterface">To save the configuration.</param>
     /// <param name="log">For a warning when the save fails.</param>
@@ -91,6 +94,19 @@ public sealed class WhatsNewCard
             case WhatsNewDecision.Show:
                 section = found;
                 title = string.Format(CultureInfo.CurrentCulture, Strings.WhatsNew.TitleFormat, version);
+                groupLines = new string[found!.Groups.Count][];
+                for (var g = 0; g < groupLines.Length; g++)
+                {
+                    var items = found.Groups[g].Items;
+                    var lines = new string[items.Count];
+                    for (var i = 0; i < lines.Length; i++)
+                    {
+                        lines[i] = Strings.WhatsNew.Bullet + items[i];
+                    }
+
+                    groupLines[g] = lines;
+                }
+
                 break;
             case WhatsNewDecision.RecordSilently:
                 MarkSeen();
@@ -113,17 +129,18 @@ public sealed class WhatsNewCard
             return 0f;
         }
 
-        var scale = ImGuiHelpers.GlobalScale;
-        var height = MathF.Min(availableHeight * MaxHeightFraction, MaxHeightPx * scale);
+        // Scaled like every other pane (global scale times the UI scale), so the padding keeps pace with the text.
+        var pad = UiMetrics.Px(Pad);
+        var height = MathF.Min(availableHeight * MaxHeightFraction, UiMetrics.Px(MaxHeightPx));
         var start = ImGui.GetCursorPosY();
 
         using (Theme.PushNightPanel())
-        using (ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(Pad, Pad) * scale))
+        using (ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(pad, pad)))
         using (var child = ImRaii.Child("##whatsNew", new Vector2(0f, height), true))
         {
             if (child)
             {
-                DrawBody(current, scale);
+                DrawBody(current, pad);
             }
         }
 
@@ -131,7 +148,7 @@ public sealed class WhatsNewCard
         return ImGui.GetCursorPosY() - start;
     }
 
-    private void DrawBody(ChangelogSection current, float scale)
+    private void DrawBody(ChangelogSection current, float pad)
     {
         using (Theme.PushText(Theme.Moon))
         {
@@ -169,12 +186,13 @@ public sealed class WhatsNewCard
                 }
             }
 
-            using (ImRaii.PushIndent(Pad * scale, false))
+            using (ImRaii.PushIndent(pad, false))
             using (Theme.PushText(Theme.Silver))
             {
-                foreach (var item in group.Items)
+                var lines = groupLines[g];
+                for (var i = 0; i < lines.Length; i++)
                 {
-                    ImGui.TextUnformatted(Strings.WhatsNew.Bullet + item);
+                    ImGui.TextUnformatted(lines[i]);
                 }
             }
 

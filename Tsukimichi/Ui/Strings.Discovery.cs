@@ -21,8 +21,8 @@ static partial class Strings
     /// <summary>Stands in for the zone name when the territory has no place name.</summary>
     public const string DiscoveryUnknownZone = "this zone";
 
-    /// <summary>{0} count of accepted quests whose giver stands in the zone.</summary>
-    public const string DiscoveryAcceptedHeaderFormat = "Also accepted here ({0})";
+    /// <summary>{0} count of quests in the journal whose giver stands in the zone.</summary>
+    public const string DiscoveryAcceptedHeaderFormat = "Also in your journal here ({0})";
 
     public const string DiscoveryColumnState = "State";
     public const string DiscoveryColumnQuest = "Quest";

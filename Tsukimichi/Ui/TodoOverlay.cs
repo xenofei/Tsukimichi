@@ -100,6 +100,10 @@ public sealed class TodoOverlay : Window, IDisposable
     private bool disposed;
     private bool shadowText;
 
+    // A clicked row whose reveal waits out the double-click window (ImGui time of the click); see DrawRow.
+    private QuestRecord? pendingReveal;
+    private double pendingRevealTime;
+
     /// <param name="settings">Overlay settings; read every frame so the config window's changes show at once.</param>
     /// <param name="session">Catalog, viewed character and its evaluations.</param>
     /// <param name="links">Map flags, Lifestream teleports and chat links.</param>
@@ -226,6 +230,7 @@ public sealed class TodoOverlay : Window, IDisposable
 
     private void DrawContent()
     {
+        FireDueReveal();
         DrawHeader();
         if (!catalogReady)
         {
@@ -326,17 +331,21 @@ public sealed class TodoOverlay : Window, IDisposable
 
         // The selectable is sized to the name so the hint can follow on the same line; the name itself is painted over
         // it so it can carry the shadow. A click shows the quest in the main window; only a double-click flags the
-        // map (a game action with no undo), so a slip of the mouse never plants a flag.
+        // map (a game action with no undo), so a slip of the mouse never plants a flag. The selectable reports the
+        // first press of a double-click as a click, so the reveal waits one double-click window (FireDueReveal) and
+        // the second press cancels it: a double-click flags without opening the main window over the overlay first.
         var nameWidth = ImGui.CalcTextSize(row.Quest.Name).X;
         if (ImGui.Selectable(RowSelectableId, false, ImGuiSelectableFlags.AllowDoubleClick, new Vector2(nameWidth, 0f)))
         {
             if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
             {
+                pendingReveal = null;
                 OnRowDoubleClick(row.Quest);
             }
             else
             {
-                reveal(row.Quest);
+                pendingReveal = row.Quest;
+                pendingRevealTime = ImGui.GetTime();
             }
         }
 
@@ -354,6 +363,21 @@ public sealed class TodoOverlay : Window, IDisposable
         {
             UiMetrics.Tooltip(row.Tooltip);
         }
+    }
+
+    /// <summary>
+    /// The single-click reveal, once a double-click window has passed since the click without a second press:
+    /// a plain click still opens the main window, a beat later than the press.
+    /// </summary>
+    private void FireDueReveal()
+    {
+        if (pendingReveal is not { } quest || ImGui.GetTime() - pendingRevealTime <= ImGui.GetIO().MouseDoubleClickTime)
+        {
+            return;
+        }
+
+        pendingReveal = null;
+        reveal(quest);
     }
 
     /// <summary>Double-click flags the giver; a quest without a mappable giver is shown in the main window instead.</summary>

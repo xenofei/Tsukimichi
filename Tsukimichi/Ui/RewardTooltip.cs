@@ -55,7 +55,7 @@ public static class RewardTooltip
             {
                 ImGui.TextUnformatted(Strings.MoonlitStoreOnly);
                 ImGui.SameLine();
-                ImGui.TextUnformatted("· " + Strings.MoonlitStoreOnlyTooltip);
+                ImGui.TextUnformatted(Strings.MoonlitStoreOnlyTooltipLine);
             }
         }
 

@@ -289,20 +289,15 @@ public sealed class FlightPane
             ImGui.TextDisabled(row.QuestName);
         }
 
-        // Quest state for the viewed character, and its status line (state word first, then the decisive blocker).
+        // Quest state for the viewed character, and its status line (state word first, then the decisive blocker),
+        // both stored on the row by RefreshCounts once per session version.
         ImGui.TableNextColumn();
-        var state = QuestState.Unknown;
-        string nextStep = string.Empty;
-        if (session.States.TryGetValue(row.Current.QuestRowId, out var evaluation))
-        {
-            state = evaluation.State;
-            nextStep = row.Quest is { } statusQuest ? BlockerText.StatusText(evaluation, statusQuest, session.Names, session.States) : Strings.StateName(state);
-        }
-
+        var state = row.State;
+        var nextStep = row.StatusText;
         MoonGlyph.DrawInline(state, UiMetrics.InlineGlyphSize(line));
         if (ImGui.IsItemHovered())
         {
-            UiMetrics.StateTooltip(state, evaluation, row.Quest, session.Names, session.States);
+            UiMetrics.StateTooltip(state, row.Evaluation, row.Quest, session.Names, session.States);
         }
 
         ImGui.TableNextColumn();
@@ -570,7 +565,7 @@ public sealed class FlightPane
     private static string ExpansionName(CatalogBundle? bundle, byte expansion) =>
         bundle?.Names.Expansion(expansion) is { Length: > 0 } named ? named : Expansions.Name(expansion);
 
-    /// <summary>Attunement per current and quest completion per row, once per session version; count strings follow.</summary>
+    /// <summary>Attunement per current, quest state and status line per row, once per session version; count strings follow.</summary>
     private void RefreshCounts()
     {
         var states = session.States;
@@ -593,7 +588,9 @@ public sealed class FlightPane
                         break;
                 }
 
-                if (states.TryGetValue(row.Current.QuestRowId, out var evaluation) && evaluation.State == QuestState.Completed)
+                states.TryGetValue(row.Current.QuestRowId, out var evaluation);
+                row.SetState(evaluation, session.Names, states);
+                if (evaluation?.State == QuestState.Completed)
                 {
                     questsDone++;
                 }
@@ -675,7 +672,10 @@ public sealed class FlightPane
         }
     }
 
-    /// <summary>One quest current with its quest record; only the attunement changes after construction.</summary>
+    /// <summary>
+    /// One quest current with its quest record; the attunement and the quest state with its status line change once
+    /// per session version (<see cref="RefreshCounts"/>), so the row draw reads stored strings.
+    /// </summary>
     private sealed class QuestRow(FlightCurrent current, QuestRecord? quest)
     {
         public FlightCurrent Current { get; } = current;
@@ -683,6 +683,14 @@ public sealed class FlightPane
         public string QuestName { get; } = quest?.Name ?? Strings.FlightQuestPrefix + current.QuestRowId.ToString(CultureInfo.InvariantCulture);
         public QuestState AttunedGlyph { get; private set; } = QuestState.Unknown;
         public string AttunedText { get; private set; } = Strings.FlightAttunedUnknown;
+
+        /// <summary>The viewed character's evaluation of the quest; null when it has none (no snapshot, unknown quest).</summary>
+        public QuestEvaluation? Evaluation { get; private set; }
+
+        public QuestState State { get; private set; } = QuestState.Unknown;
+
+        /// <summary>The Status cell: state word then the decisive blocker; empty without an evaluation.</summary>
+        public string StatusText { get; private set; } = string.Empty;
 
         public void SetAttuned(bool? attuned)
         {
@@ -692,6 +700,20 @@ public sealed class FlightPane
                 false => (QuestState.Blocked, Strings.FlightAttunedNo),
                 null => (QuestState.Unknown, Strings.FlightAttunedUnknown),
             };
+        }
+
+        public void SetState(QuestEvaluation? evaluation, BlockerNames names, IReadOnlyDictionary<uint, QuestEvaluation> states)
+        {
+            Evaluation = evaluation;
+            if (evaluation is null)
+            {
+                State = QuestState.Unknown;
+                StatusText = string.Empty;
+                return;
+            }
+
+            State = evaluation.State;
+            StatusText = Quest is { } quest ? BlockerText.StatusText(evaluation, quest, names, states) : Strings.StateName(State);
         }
     }
 }

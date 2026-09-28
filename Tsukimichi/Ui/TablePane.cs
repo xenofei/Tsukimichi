@@ -85,10 +85,21 @@ public sealed class TablePane : IDisposable
     private uint? lastSelection;
     private bool tableInitialized;
 
-    // Columns FitStatusColumn hid to keep Status readable, and whether the player overrode it (see the method).
+    // FitStatusColumn state (see the method): the columns it hid, whether a re-show by hand suspended it, each
+    // hideable column's enabled flag last frame (null before the first) and whether a re-show is the fit's own; the
+    // Status width each hide gained, measured on the frame the hide took effect (widthBeforeHide is the width the
+    // frame before); and a sort to write back into the column state once the sorted column is enabled again.
     private bool rewardsAutoHidden;
     private bool expansionAutoHidden;
     private bool fitSuspended;
+    private bool? lastRewardsEnabled;
+    private bool? lastExpansionEnabled;
+    private bool fitReshowing;
+    private Column? measureGainFor;
+    private float widthBeforeHide;
+    private float rewardsGain;
+    private float expansionGain;
+    private bool restoreSort;
 
     public TablePane(UiState ui, QueryRunner runner, GameLinks links, ITextureProvider textures, IDalamudPluginInterface pluginInterface, IPluginLog log, Action resetFilters)
     {
@@ -153,15 +164,18 @@ public sealed class TablePane : IDisposable
         ImGui.TableSetupColumn(Strings.ColumnLevel, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(34f));
         ImGui.TableSetupColumn(Strings.ColumnJob, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoSort, UiMetrics.Px(64f));
         ImGui.TableSetupColumn(Strings.ColumnStatus, ImGuiTableColumnFlags.WidthStretch | ImGuiTableColumnFlags.NoSort, 1f);
-        ImGui.TableSetupColumn(Strings.ColumnExpansion, ImGuiTableColumnFlags.WidthFixed, expansionColumn);
+        // Expansion is a four-letter tag: NoResize keeps its width the setup width, so hiding it frees exactly that.
+        ImGui.TableSetupColumn(Strings.ColumnExpansion, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, expansionColumn);
         ImGui.TableSetupColumn(Strings.ColumnRewards, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoSort, rewardsColumn);
         ImGui.TableSetupScrollFreeze(0, 1);
 
         // The persisted sort is written straight into the column state on the table's first frame: ImGui's own saved
-        // settings (imgui.ini) would otherwise win over DefaultSort and hand their sort back through SpecsDirty.
-        if (!tableInitialized)
+        // settings (imgui.ini) would otherwise win over DefaultSort and hand their sort back through SpecsDirty. It is
+        // written again on the frame the sorted column comes back from a FitStatusColumn hide (ImGui dropped it).
+        if (!tableInitialized || restoreSort)
         {
             tableInitialized = true;
+            restoreSort = false;
             ApplyInitialSort(ui.Sort);
         }
 
@@ -252,9 +266,12 @@ public sealed class TablePane : IDisposable
 
     /// <summary>
     /// Keeps the Status column at least <see cref="StatusMinWidth"/> wide: when the laid-out width falls short, Rewards
-    /// is hidden first, then Expansion; each comes back, Expansion first, once the column has room for it again. A
-    /// column the player hid or re-showed from the header menu is theirs: only the columns this hid are re-shown, and
-    /// re-showing one by hand suspends the fit until the column is wide enough on its own.
+    /// is hidden first, then Expansion; each comes back, Expansion first, once Status would still hold the minimum
+    /// after giving back what the hide gained (measured on the frame the hide took effect, never less than the
+    /// column's setup width, so the two cannot alternate). The column the table is sorted by is never hidden here,
+    /// since ImGui drops the sort of a hidden column. A column the player hid or re-showed from the header menu is
+    /// theirs: only the columns this hid are re-shown, and any column the player brings back (a disabled-to-enabled
+    /// step this did not request) suspends the fit until Status is wide enough on its own.
     /// </summary>
     private void FitStatusColumn(float statusWidth, float expansionWidth, float rewardsWidth)
     {
@@ -267,11 +284,39 @@ public sealed class TablePane : IDisposable
         var padding = ImGui.GetStyle().CellPadding.X * 2f;
         var rewardsEnabled = IsColumnEnabled(Column.Rewards);
         var expansionEnabled = IsColumnEnabled(Column.Expansion);
-        if ((rewardsAutoHidden && rewardsEnabled) || (expansionAutoHidden && expansionEnabled))
+
+        if (measureGainFor is { } hidden)
         {
-            rewardsAutoHidden = expansionAutoHidden = false;
+            var measured = statusWidth - widthBeforeHide;
+            if (hidden == Column.Rewards)
+            {
+                rewardsGain = MathF.Max(measured, rewardsWidth + padding);
+            }
+            else
+            {
+                expansionGain = MathF.Max(measured, expansionWidth + padding);
+            }
+
+            measureGainFor = null;
+        }
+
+        var rewardsBack = lastRewardsEnabled == false && rewardsEnabled;
+        var expansionBack = lastExpansionEnabled == false && expansionEnabled;
+        lastRewardsEnabled = rewardsEnabled;
+        lastExpansionEnabled = expansionEnabled;
+        if ((rewardsBack || expansionBack) && !fitReshowing)
+        {
+            if (expansionBack && expansionAutoHidden && ui.Sort.Column == SortColumn.Expansion)
+            {
+                restoreSort = true;
+            }
+
+            rewardsAutoHidden &= !rewardsBack;
+            expansionAutoHidden &= !expansionBack;
             fitSuspended = true;
         }
+
+        fitReshowing = false;
 
         if (statusWidth < min)
         {
@@ -282,12 +327,12 @@ public sealed class TablePane : IDisposable
 
             if (rewardsEnabled)
             {
-                ImGui.TableSetColumnEnabled((int)Column.Rewards, false);
+                Hide(Column.Rewards, statusWidth);
                 rewardsAutoHidden = true;
             }
-            else if (expansionEnabled)
+            else if (expansionEnabled && ui.Sort.Column != SortColumn.Expansion)
             {
-                ImGui.TableSetColumnEnabled((int)Column.Expansion, false);
+                Hide(Column.Expansion, statusWidth);
                 expansionAutoHidden = true;
             }
 
@@ -295,16 +340,27 @@ public sealed class TablePane : IDisposable
         }
 
         fitSuspended = false;
-        if (expansionAutoHidden && statusWidth >= min + expansionWidth + padding)
+        if (expansionAutoHidden && statusWidth - expansionGain >= min)
         {
             ImGui.TableSetColumnEnabled((int)Column.Expansion, true);
             expansionAutoHidden = false;
+            fitReshowing = true;
+            restoreSort = ui.Sort.Column == SortColumn.Expansion;
         }
-        else if (rewardsAutoHidden && !expansionAutoHidden && statusWidth >= min + rewardsWidth + padding)
+        else if (rewardsAutoHidden && !expansionAutoHidden && statusWidth - rewardsGain >= min)
         {
             ImGui.TableSetColumnEnabled((int)Column.Rewards, true);
             rewardsAutoHidden = false;
+            fitReshowing = true;
         }
+    }
+
+    /// <summary>Hides a column for the next frame and arms the measurement of what Status gains from it.</summary>
+    private void Hide(Column column, float statusWidth)
+    {
+        ImGui.TableSetColumnEnabled((int)column, false);
+        measureGainFor = column;
+        widthBeforeHide = statusWidth;
     }
 
     private static bool IsColumnEnabled(Column column) =>
@@ -655,6 +711,14 @@ public sealed class TablePane : IDisposable
         var specs = ImGui.TableGetSortSpecs();
         if (specs.IsNull || !specs.SpecsDirty)
         {
+            return;
+        }
+
+        // ImGui clears the sort of a column that is disabled and reports it as no specs: while FitStatusColumn holds
+        // the sorted column hidden that is its doing, not a header click, and the persisted sort stands.
+        if (specs.SpecsCount == 0 && expansionAutoHidden && ui.Sort.Column == SortColumn.Expansion)
+        {
+            specs.SpecsDirty = false;
             return;
         }
 

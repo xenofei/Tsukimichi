@@ -305,20 +305,35 @@ public sealed class DetailPane
     }
 
     /// <summary>
-    /// Selects a path step, an unlock or the chain's next quest the way the other panes do: the Journal tab scoped to
-    /// its genre with the narrowing filters cleared, so the table shows the row wherever the step lives. A row id the
-    /// catalog does not know is selected plainly so the detail pane can say so.
+    /// Selects a path step, an unlock or the chain's next quest. A row the table already lists is selected in place
+    /// (the table scrolls to it; the tab, scope and filters stay as they are). Otherwise it is revealed the way the
+    /// other panes do: the Journal tab scoped to its genre with the narrowing filters cleared, so the table shows the
+    /// row wherever the step lives. A row id the catalog does not know is selected plainly so the detail pane can say so.
     /// </summary>
     private void RevealRow(uint rowId)
     {
-        if (model.Bundle?.Catalog.GetByRowId(rowId) is { } quest)
-        {
-            ui.Reveal(quest);
-        }
-        else
+        if (model.Bundle?.Catalog.GetByRowId(rowId) is not { } quest || IsListed(rowId))
         {
             ui.SelectedRowId = rowId;
+            return;
         }
+
+        ui.Reveal(quest);
+    }
+
+    /// <summary>Whether the table's current rows hold <paramref name="rowId"/>.</summary>
+    private bool IsListed(uint rowId)
+    {
+        var rows = runner.Rows;
+        for (var i = 0; i < rows.Length; i++)
+        {
+            if (rows[i].Quest.RowId == rowId)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /// <summary>Banner image with the name overlaid; false when the quest has none or it is not loaded yet.</summary>
