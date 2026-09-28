@@ -51,14 +51,16 @@ static partial class Strings
     /// <summary>{0} count of startable quests in the current zone.</summary>
     public const string DiscoveryDtrTextFormat = "☾ {0}";
 
+    // The server info bar tooltip names the state the count means (Ready, docs/glossary.md), not just "can start".
+
     /// <summary>{0} count, {1} zone name.</summary>
-    public const string DiscoveryDtrTooltipHeaderFormat = "{0} quests you can start in {1}";
+    public const string DiscoveryDtrTooltipHeaderFormat = "{0} quests Ready to start in {1}";
 
     /// <summary>{0} zone name.</summary>
-    public const string DiscoveryDtrTooltipHeaderOneFormat = "1 quest you can start in {0}";
+    public const string DiscoveryDtrTooltipHeaderOneFormat = "1 quest Ready to start in {0}";
 
     /// <summary>{0} zone name.</summary>
-    public const string DiscoveryDtrTooltipEmptyFormat = "Nothing to start in {0}";
+    public const string DiscoveryDtrTooltipEmptyFormat = "Nothing Ready to start in {0}";
 
     public const string DiscoveryDtrTooltipClick = "Click to open Nearby quests";
 }

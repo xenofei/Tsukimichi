@@ -81,6 +81,8 @@ public static partial class Strings
     public const string Unlisted = "Unlisted";
     /// <summary>{0} = done, {1} = total.</summary>
     public const string CountFormat = "{0}/{1}";
+    /// <summary>A filling moon's tooltip line: {0} = done/total, {1} = percent.</summary>
+    public const string ProgressFormat = "{0} · {1}%";
     /// <summary>Hover text of a folded tree node: {0} = section, {1} = category, {2} = genre.</summary>
     public const string FoldedPathFormat = "{0} › {1} › {2}";
 
@@ -178,6 +180,11 @@ public static partial class Strings
     public const string ChipSeasonal = FilterNames.SeasonalActive;
     public const string ChipPinned = FilterNames.Pinned;
     public const string ChipTooltip = "Click to clear";
+    /// <summary>First line of the state chip's tooltip; the excluded states follow, all of them, however many the chip names.</summary>
+    public const string ChipStateTooltipPrefix = "Hiding: ";
+
+    /// <summary>First line of a filling moon's tooltip; the done/total (and percent where shown) follows.</summary>
+    public const string FillingMoonTooltip = "Done of total";
 
     // Table
     public const string ColumnGlyph = "State";
@@ -324,6 +331,24 @@ public static partial class Strings
 
     /// <summary>The moon-phase name of a state's glyph, shown under the display name in the Help legend and the glyph window only.</summary>
     public static string StateGlyphSubtitle(QuestState state) => StateNames.GlyphSubtitle(state);
+
+    /// <summary>
+    /// What a state moon says on hover: the display name and the glyph's shape hint ("Blocked · new moon, silver
+    /// ring"); <see cref="StateNames"/> composes the eight strings once, so hovering allocates nothing.
+    /// </summary>
+    public static string StateTooltip(QuestState state) => StateNames.Tooltip(state);
+
+    /// <summary>The state moon tooltip for a quest: a done repeatable says "Done today" or "Done this week" by its reset.</summary>
+    public static string StateTooltip(QuestState state, QuestRecord? quest) => StateNames.Tooltip(state, quest);
+
+    /// <summary>
+    /// The clause <see cref="StateWithReason"/> appends, on its own, for the second line of a moon's tooltip: the
+    /// decisive requirement or reason for Blocked, Locked out and Not checked; null for every other state or when
+    /// the evaluation has none.
+    /// </summary>
+    public static string? StateReason(QuestState state, QuestEvaluation? evaluation) =>
+        state is QuestState.Blocked or QuestState.Foreclosed or QuestState.Unknown
+        && evaluation?.NextStep?.Detail is { Length: > 0 } detail ? detail : null;
 
     /// <summary>
     /// The display name followed by " · " and the decisive requirement or reason when the evaluation has one: Blocked

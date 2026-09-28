@@ -39,6 +39,13 @@ public static class UiFormat
     public static string Count(int done, int total) =>
         string.Format(CultureInfo.CurrentCulture, Strings.CountFormat, done, total);
 
+    /// <summary>"done/total · N%" for a filling moon's tooltip; 0% when there is nothing to count.</summary>
+    public static string Progress(int done, int total)
+    {
+        var percent = total <= 0 ? 0 : (int)MathF.Round(100f * done / total);
+        return string.Format(CultureInfo.CurrentCulture, Strings.ProgressFormat, Count(done, total), percent);
+    }
+
     /// <summary>
     /// Sheet text made printable: Square Enix's private-use glyphs (U+E000–U+F8FF, the font-only icons) and soft
     /// hyphens are dropped, surrounding whitespace trimmed. Returns the input when nothing needs removing.

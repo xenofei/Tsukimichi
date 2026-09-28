@@ -4,6 +4,8 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Tsukimichi.Config;
+using Tsukimichi.Core.Evaluation;
+using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Ui;
 
 namespace Tsukimichi.Ui;
@@ -101,6 +103,26 @@ public static class UiMetrics
         ApplyFontScale();
         ImGui.TextUnformatted(text);
     }
+
+    /// <summary>A two-line tooltip: <paramref name="text"/>, then <paramref name="detail"/> in the disabled tone when it is not empty.</summary>
+    public static void Tooltip(string text, string? detail)
+    {
+        using var tooltip = ImRaii.Tooltip();
+        ApplyFontScale();
+        ImGui.TextUnformatted(text);
+        if (!string.IsNullOrEmpty(detail))
+        {
+            ImGui.TextDisabled(detail);
+        }
+    }
+
+    /// <summary>
+    /// The tooltip of a state moon: <see cref="Strings.StateTooltip(QuestState, QuestRecord?)"/> (name and shape
+    /// hint), then the decisive reason under it when the evaluation has one. Call after the moon's item while it is
+    /// hovered; every string is precomposed, so nothing allocates.
+    /// </summary>
+    public static void StateTooltip(QuestState state, QuestEvaluation? evaluation, QuestRecord? quest) =>
+        Tooltip(Strings.StateTooltip(state, quest), Strings.StateReason(state, evaluation));
 
     /// <summary>Square size vector helper.</summary>
     public static Vector2 Square(float size) => new(size, size);

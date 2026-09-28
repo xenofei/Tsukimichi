@@ -279,7 +279,7 @@ public sealed class Plugin : IDalamudPlugin
 
             // UI (session-dependent surfaces)
             var unlockReader = new Game.RewardUnlockReader(Session, DataManager, Framework, Log);
-            moonlitPane = new MoonlitPane(Session, TextureProvider, unlockReader, Paths, Log, DataManager, Settings, PluginInterface);
+            moonlitPane = new MoonlitPane(Session, TextureProvider, unlockReader, Paths, Log, DataManager, Settings, PluginInterface, gameLinks);
             MoonlitPane moonlit = moonlitPane;
             // Reward tooltips (table icons, detail rows) say "Store only" for rewards the Online Store also sells.
             gameLinks.IsStoreResell = reward => Session.StoreResells.Contains(reward);

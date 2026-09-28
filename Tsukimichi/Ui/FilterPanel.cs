@@ -60,6 +60,7 @@ public sealed class FilterPanel
     private uint? currentJobCategory;
 
     private string stateChip = string.Empty;
+    private string stateChipTooltip = string.Empty;
     private QuestStateMask stateChipMask = QuestStateMask.All;
     private string levelChip = string.Empty;
     private byte levelChipMin = byte.MaxValue;
@@ -285,7 +286,7 @@ public sealed class FilterPanel
 
         if (f.StateMask != QuestStateMask.All)
         {
-            Chip(StateChipText(f), ref any, () => f.StateMask = QuestStateMask.All);
+            Chip(StateChipText(f), ref any, () => f.StateMask = QuestStateMask.All, explanation: stateChipTooltip);
         }
 
         if (f.Expansions.Count > 0)
@@ -336,7 +337,11 @@ public sealed class FilterPanel
         changed();
     }
 
-    private void Chip(string label, ref bool any, Action clear, bool notify = true)
+    /// <summary>
+    /// One active-filter chip. <paramref name="explanation"/>, when given, says what the chip's text means (the state
+    /// chip names only a few excluded states and counts the rest) above the "click to clear" line.
+    /// </summary>
+    private void Chip(string label, ref bool any, Action clear, bool notify = true, string? explanation = null)
     {
         if (any)
         {
@@ -357,7 +362,14 @@ public sealed class FilterPanel
 
         if (ImGui.IsItemHovered())
         {
-            UiMetrics.Tooltip(Strings.ChipTooltip);
+            if (explanation is { Length: > 0 })
+            {
+                UiMetrics.Tooltip(explanation, Strings.ChipTooltip);
+            }
+            else
+            {
+                UiMetrics.Tooltip(Strings.ChipTooltip);
+            }
         }
     }
 
@@ -588,6 +600,7 @@ public sealed class FilterPanel
 
         stateChipMask = f.StateMask;
         var text = Strings.ChipStatePrefix;
+        var tooltip = Strings.ChipStateTooltipPrefix;
         var named = 0;
         var excluded = 0;
         foreach (var state in StateOrder)
@@ -597,6 +610,8 @@ public sealed class FilterPanel
                 continue;
             }
 
+            // The tooltip names every excluded state, so the chip's "+N" has somewhere to be read in full.
+            tooltip += (excluded > 0 ? Strings.ChipStateSeparator : string.Empty) + Strings.StateName(state);
             excluded++;
             if (named < MaxStateChipNames)
             {
@@ -611,6 +626,7 @@ public sealed class FilterPanel
         }
 
         stateChip = text;
+        stateChipTooltip = tooltip;
         return stateChip;
     }
 

@@ -35,6 +35,9 @@ public sealed class TreePane
 
         public NodeCount Count { get; set; }
         public string CountText { get; set; } = string.Empty;
+
+        /// <summary>The moon's hover text: done/total and the percent, rebuilt with <see cref="CountText"/>.</summary>
+        public string ProgressText { get; set; } = string.Empty;
     }
 
     private readonly UiState ui;
@@ -135,12 +138,19 @@ public sealed class TreePane
             Select(node.Scope);
         }
 
-        if (node.FoldedPath is { } path && ImGui.IsItemHovered())
+        // The overlay paints on the node item; over the moon its progress shows, elsewhere the folded path if any.
+        var overMoon = DrawNodeOverlay(node, section);
+        if (ImGui.IsItemHovered())
         {
-            UiMetrics.Tooltip(path);
+            if (overMoon)
+            {
+                UiMetrics.Tooltip(Strings.FillingMoonTooltip, node.ProgressText);
+            }
+            else if (node.FoldedPath is { } path)
+            {
+                UiMetrics.Tooltip(path);
+            }
         }
-
-        DrawNodeOverlay(node, section);
 
         if (open && !node.Leaf)
         {
@@ -153,8 +163,11 @@ public sealed class TreePane
         }
     }
 
-    /// <summary>Moon, name and done/total painted on the node's line; drawn without items so layout is untouched.</summary>
-    private static void DrawNodeOverlay(Node node, bool section)
+    /// <summary>
+    /// Moon, name and done/total painted on the node's line; drawn without items so layout is untouched. Returns
+    /// whether the mouse is over the moon's box, for the caller's item-hover check (the node is the item).
+    /// </summary>
+    private static bool DrawNodeOverlay(Node node, bool section)
     {
         var dl = ImGui.GetWindowDrawList();
         var min = ImGui.GetItemRectMin();
@@ -187,6 +200,10 @@ public sealed class TreePane
         }
 
         dl.PopClipRect();
+
+        var moonCenter = new Vector2(labelX + radius, lineCenterY);
+        var moonHalf = new Vector2(radius * 1.2f);
+        return ImGui.IsMouseHoveringRect(moonCenter - moonHalf, moonCenter + moonHalf, false);
     }
 
     private void Select(QuestScope scope)
@@ -254,6 +271,7 @@ public sealed class TreePane
 
         node.Count = count;
         node.CountText = UiFormat.Count(count.Done, count.Total);
+        node.ProgressText = UiFormat.Progress(count.Done, count.Total);
     }
 
     private void EnsureNodes(CatalogBundle current)

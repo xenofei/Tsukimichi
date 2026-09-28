@@ -351,37 +351,57 @@ public sealed class DetailPane
 
         dl.AddRectFilled(new Vector2(min.X, stripTop), max, solid);
         dl.AddText(ImGui.GetFont(), ImGui.GetFontSize(), new Vector2(min.X + pad, max.Y - pad - textHeight), Theme.SilverU32, quest.Name, textWrap);
-        MoonGlyph.Draw(dl, new Vector2(max.X - pad - moonBox * 0.5f, max.Y - stripHeight * 0.5f), radius, model.State);
+        var moonCenter = new Vector2(max.X - pad - moonBox * 0.5f, max.Y - stripHeight * 0.5f);
+        MoonGlyph.Draw(dl, moonCenter, radius, model.State);
+
+        // The moon and the badge sit on the image item, so each gets an invisible item of its own for its tooltip;
+        // the cursor goes back under the image afterwards.
+        var cursor = ImGui.GetCursorScreenPos();
+        ImGui.SetCursorScreenPos(moonCenter - new Vector2(moonBox * 0.5f));
+        ImGui.InvisibleButton("##bannerMoon", new Vector2(moonBox, moonBox));
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.StateTooltip(model.State, quest));
+        }
+
         if (badge > 0f)
         {
             var size = UiMetrics.BannerBadgeSize;
             var badgeMin = new Vector2(max.X - pad - moonBox - pad - size, max.Y - stripHeight * 0.5f - size * 0.5f);
-            DrawSpecialBadge(dl, quest, badgeMin, size);
+            if (DrawSpecialBadge(dl, quest, badgeMin, size))
+            {
+                ImGui.SetCursorScreenPos(badgeMin);
+                ImGui.InvisibleButton("##bannerBadge", new Vector2(size, size));
+                if (ImGui.IsItemHovered())
+                {
+                    UiMetrics.Tooltip(BadgeTooltip(quest));
+                }
+            }
         }
 
+        ImGui.SetCursorScreenPos(cursor);
         ImGui.Spacing();
         return true;
     }
 
     /// <summary>
-    /// The quest's special icon (<see cref="QuestRecord.IconSpecial"/>) drawn on the draw list at <paramref name="min"/>,
-    /// with a tooltip naming what the badge means. Nothing is drawn while the texture is still loading.
+    /// The quest's special icon (<see cref="QuestRecord.IconSpecial"/>) drawn on the draw list at <paramref name="min"/>;
+    /// false (nothing drawn) while the texture is still loading. The caller owns the item under it and hangs
+    /// <see cref="BadgeTooltip"/> on that item, so the tooltip honours popups and window hover.
     /// </summary>
-    private void DrawSpecialBadge(ImDrawListPtr dl, QuestRecord quest, Vector2 min, float size)
+    private bool DrawSpecialBadge(ImDrawListPtr dl, QuestRecord quest, Vector2 min, float size)
     {
         if (!textures.GetFromGameIcon(new GameIconLookup(quest.IconSpecial)).TryGetWrap(out var wrap, out _))
         {
-            return;
+            return false;
         }
 
-        var max = min + new Vector2(size, size);
-        dl.AddImage(wrap.Handle, min, max);
-        // The rect test alone fires through a popup or another window lying over the badge.
-        if (ImGui.IsMouseHoveringRect(min, max) && ImGui.IsWindowHovered(ImGuiHoveredFlags.ChildWindows))
-        {
-            UiMetrics.Tooltip(quest.Festival != 0 ? SeasonalBadgeTooltip : SpecialBadgeTooltip);
-        }
+        dl.AddImage(wrap.Handle, min, min + new Vector2(size, size));
+        return true;
     }
+
+    /// <summary>What the special badge means.</summary>
+    private static string BadgeTooltip(QuestRecord quest) => quest.Festival != 0 ? SeasonalBadgeTooltip : SpecialBadgeTooltip;
 
     /// <summary>Raised Night card with the state moon and the name, for quests without a banner.</summary>
     private void DrawHeaderCard(QuestRecord quest)
@@ -402,6 +422,11 @@ public sealed class DetailPane
             var pos = ImGui.GetCursorScreenPos();
             ImGui.Dummy(new Vector2(box, box));
             MoonGlyph.Draw(dl, pos + new Vector2(box * 0.5f), radius, model.State);
+            if (ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(Strings.StateTooltip(model.State, quest));
+            }
+
             ImGui.SameLine();
             var badge = 0f;
             if (quest.IconSpecial != 0)
@@ -410,7 +435,11 @@ public sealed class DetailPane
                 badge = size + pad;
                 var badgeMin = ImGui.GetCursorScreenPos() + new Vector2(0f, (box - size) * 0.5f);
                 ImGui.Dummy(new Vector2(size, box));
-                DrawSpecialBadge(dl, quest, badgeMin, size);
+                if (DrawSpecialBadge(dl, quest, badgeMin, size) && ImGui.IsItemHovered())
+                {
+                    UiMetrics.Tooltip(BadgeTooltip(quest));
+                }
+
                 ImGui.SameLine();
             }
 
@@ -675,6 +704,11 @@ public sealed class DetailPane
 
         ImGui.Dummy(new Vector2(glyphBox, lineHeight));
         MoonGlyph.Draw(dl, center, radius, state);
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.StateTooltip(state));
+        }
+
         ImGui.SameLine();
         chain.Center = center;
         chain.Has = true;
@@ -702,6 +736,11 @@ public sealed class DetailPane
             var pos = ImGui.GetCursorScreenPos();
             ImGui.Dummy(new Vector2(glyphBox, lineHeight));
             MoonGlyph.Draw(dl, pos + new Vector2(glyphBox * 0.5f, lineHeight * 0.5f), radius, line.State);
+            if (ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(Strings.StateTooltip(line.State));
+            }
+
             ImGui.SameLine();
             if (ImGui.Selectable(line.Name))
             {
