@@ -41,12 +41,15 @@ public sealed class UiState
 
     public bool MoonlitHideObtained { get; set; }
 
+    /// <summary>Flight pane: TerritoryType id of the selected flying zone; null until the pane picks the current zone on its first draw.</summary>
+    public uint? FlightTerritoryId { get; set; }
+
     /// <summary>Set by "Show path"; the detail pane clears it when drawn, then scrolls to and briefly highlights its Path section.</summary>
     public bool ScrollToPath { get; set; }
 
     /// <summary>
     /// Screen rectangles of named UI regions recorded during the last frame (toolbar, search, filters, chips,
-    /// tabs, tree, table, detail, path, moonlit, characters, settings, help). Consumers such as the interactive
+    /// tabs, tree, table, detail, path, moonlit, characters, flight, settings, help). Consumers such as the interactive
     /// tutorial read them to draw highlights; panes call <see cref="RecordRect"/> right after drawing a region.
     /// </summary>
     public Dictionary<string, (System.Numerics.Vector2 Min, System.Numerics.Vector2 Max)> Rects { get; } = new();

@@ -31,6 +31,8 @@ public static class UiRects
     public const string MoonlitTable = "moonlit.table";
     public const string CharactersList = "characters.list";
     public const string CharactersDashboard = "characters.dashboard";
+    public const string FlightZones = "flight.zones";
+    public const string FlightTable = "flight.table";
 
     /// <summary>Records the rectangle of the item drawn last.</summary>
     public static void RecordItem(this UiState ui, string key) =>

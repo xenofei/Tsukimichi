@@ -53,6 +53,7 @@ public sealed class MainWindow : Window, IDisposable
     // Attached after the game state exists (they need the session); null until then.
     private MoonlitPane? moonlitPane;
     private CharactersPane? charactersPane;
+    private FlightPane? flightPane;
 
     // Toolbar actions and the tutorial overlay, attached by the plugin once those windows exist.
     private Action? openSettings;
@@ -132,6 +133,12 @@ public sealed class MainWindow : Window, IDisposable
     {
         moonlitPane = moonlit ?? throw new ArgumentNullException(nameof(moonlit));
         charactersPane = characters ?? throw new ArgumentNullException(nameof(characters));
+    }
+
+    /// <summary>Attaches the Flight pane (aether current quests per zone); the Flight tab shows a placeholder until then.</summary>
+    public void AttachFlight(FlightPane flight)
+    {
+        flightPane = flight ?? throw new ArgumentNullException(nameof(flight));
     }
 
     /// <summary>Gives the detail pane the user's unique-reward verdicts so it can show and change them.</summary>
@@ -638,6 +645,9 @@ public sealed class MainWindow : Window, IDisposable
                     case NavTab.Characters when charactersPane is not null:
                         charactersPane.DrawMain(ui);
                         break;
+                    case NavTab.Flight when flightPane is not null:
+                        flightPane.DrawMain(ui);
+                        break;
                     default:
                         tablePane.Draw(session.ViewedSnapshot is not null);
                         break;
@@ -676,6 +686,7 @@ public sealed class MainWindow : Window, IDisposable
         DrawTab(NavTab.Journal, Strings.TabJournal, requested, force, session, bundle);
         DrawTab(NavTab.Moonlit, Strings.TabMoonlit, requested, force, session, bundle);
         DrawTab(NavTab.Characters, Strings.TabCharacters, requested, force, session, bundle);
+        DrawTab(NavTab.Flight, Strings.TabFlight, requested, force, session, bundle);
     }
 
     private void DrawTab(NavTab tab, string label, NavTab requested, bool force, SessionState session, CatalogBundle bundle)
@@ -721,6 +732,10 @@ public sealed class MainWindow : Window, IDisposable
 
             case NavTab.Characters when charactersPane is not null:
                 charactersPane.DrawLeft(ui);
+                break;
+
+            case NavTab.Flight when flightPane is not null:
+                flightPane.DrawLeft(ui);
                 break;
 
             default:

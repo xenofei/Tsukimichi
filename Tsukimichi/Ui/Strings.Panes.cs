@@ -4,7 +4,7 @@ using Tsukimichi.Core.Runtime;
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// UI strings for the Moonlit pane, the Characters pane and the config window. The other half of this partial class
+/// UI strings for the Moonlit, Characters and Flight panes and the config window. The other half of this partial class
 /// holds the main window's strings; constant names here are prefixed so the two halves never collide.
 /// </summary>
 static partial class Strings
@@ -42,6 +42,47 @@ static partial class Strings
     public const string MoonlitConfidenceCuratedOnly = "Curated only";
     public const string MoonlitConfidenceYoursOnly = "Yours only";
     public const string MoonlitConfidenceUnknownObtained = "Unknown obtained";
+
+    // ---- Flight pane ----
+    public const string TabFlight = "Flight";
+    public const string FlightNoData = "Aether current data could not be read from the game; the Flight view is empty.";
+    public const string FlightNoZone = "Pick a zone on the left.";
+    public const string FlightOfflineHint = "Attunement is read for the logged-in character only; quest states come from the viewed character.";
+    public const string FlightCurrentZoneMarker = "● ";
+    public const string FlightCurrentZoneTooltip = "You are here";
+    /// <summary>{0} = quest currents done, {1} = quest currents in the zone.</summary>
+    public const string FlightZoneCountFormat = "{0}/{1}";
+    /// <summary>{0} = attuned, {1} = total currents, {2} = quest currents done, {3} = quest currents.</summary>
+    public const string FlightZoneTooltipFormat = "{0} of {1} currents attuned · {2} of {3} quest currents done";
+    /// <summary>{0} = total currents, {1} = quest currents done, {2} = quest currents.</summary>
+    public const string FlightZoneTooltipUnknownFormat = "{0} currents · {1} of {2} quest currents done · attunement needs the logged-in character";
+    /// <summary>{0} = zone, {1} = attuned, {2} = total currents.</summary>
+    public const string FlightHeaderFormat = "Flight in {0}: {1} of {2} currents attuned";
+    /// <summary>{0} = zone, {1} = total currents.</summary>
+    public const string FlightHeaderUnknownFormat = "Flight in {0}: {1} currents";
+    public const string FlightHeaderComplete = "You can fly here.";
+    public const string FlightQuestCurrents = "Quest currents";
+    public const string FlightColumnAttuned = "Attuned";
+    public const string FlightColumnQuest = "Quest";
+    public const string FlightColumnState = "State";
+    public const string FlightColumnNextStep = "Next step";
+    public const string FlightColumnActions = "##actions";
+    public const string FlightAttunedYes = "Attuned";
+    public const string FlightAttunedNo = "Not attuned: completing the quest attunes it";
+    public const string FlightAttunedUnknown = "Unknown: attunement is read for the logged-in character only";
+    public const string FlightQuestClickHint = "Show the quest's requirements and path in the detail pane";
+    public const string FlightQuestPrefix = "Quest ";
+    public const string FlightFlag = "Flag";
+    public const string FlightFlagTooltip = "Flag the quest giver on the map";
+    public const string FlightTeleport = "Teleport";
+    /// <summary>{0} = attuned field currents, {1} = field currents in the zone.</summary>
+    public const string FlightFieldFormat = "Field currents: {0} of {1} attuned · use the Aether Compass (a General Action) to find the rest";
+    /// <summary>{0} = field currents in the zone.</summary>
+    public const string FlightFieldAllFormat = "Field currents: all {0} attuned";
+    /// <summary>{0} = field currents in the zone.</summary>
+    public const string FlightFieldUnknownFormat = "Field currents: {0} in this zone · use the Aether Compass (a General Action) to find them";
+    public const string FlightFieldNone = "This zone has no field currents; the quests above are all it takes.";
+    public const string FlightFieldTooltip = "Field currents are attuned by touching them in the world. The Aether Compass (Actions & Traits › General) points at the nearest one; Tsukimichi does not track their positions.";
 
     // ---- Discovery commands ----
     public const string ZoneNoCharacter = "No character evaluated yet; log in first.";
