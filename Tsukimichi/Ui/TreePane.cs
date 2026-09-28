@@ -19,6 +19,9 @@ namespace Tsukimichi.Ui;
 /// </summary>
 public sealed class TreePane
 {
+    /// <summary>A label ImGui renders as nothing (text after "##" is hidden) but that is still a real, terminated string.</summary>
+    private const string HiddenLabel = "##";
+
     private sealed class Node(QuestScope scope, string id, string name, bool leaf)
     {
         public QuestScope Scope { get; } = scope;
@@ -90,7 +93,7 @@ public sealed class TreePane
             flags |= ImGuiTreeNodeFlags.Selected;
         }
 
-        var open = ImGui.TreeNodeEx(node.Id, flags, string.Empty);
+        var open = ImGui.TreeNodeEx(node.Id, flags, HiddenLabel);
         if (ImGui.IsItemClicked() && !ImGui.IsItemToggledOpen())
         {
             Select(node.Scope);

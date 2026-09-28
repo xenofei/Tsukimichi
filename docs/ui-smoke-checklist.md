@@ -3,14 +3,18 @@
 Manual, in game, with the repo folder added as a dev plugin location. One line per feature: what to do, what to expect.
 "Snapshot" below means a stored character file under `<config>/characters/`.
 
+Round 3 additions (toolbar icon buttons, the Display sliders, quest banners, the engagement pass) are folded into the sections below; the "Display" subsection under Filter panel is new. Regions the interactive tutorial highlights are recorded every frame under these keys: toolbar, search, filtersButton, chips, character, sync, helpButton, tutorialButton, settingsButton, tabs, tree, table, detail, detail.requirements, detail.path, detail.giver, statusBar, filterPanel (only while open), moonlit.kinds, moonlit.table, characters.list, characters.dashboard.
+
 ## Window shell
 - `/tsukimichi` → the main window "Tsukimichi" toggles; default size 1100×700 (scaled), cannot shrink below 800×500.
 - Dalamud plugin installer → "Open" on Tsukimichi → the main window opens (OpenMainUi hook).
 - While the catalog builds → the window shows "Loading catalog" with animated dots, nothing else.
 - Force a catalog failure (rename the game's `sqpack` is not practical; simulate by breaking `LuminaCatalogLoader` in a dev build) → "Catalog unavailable" in Eclipse, the exception text, a Retry button; Retry shows "Loading catalog" again and then the normal window.
-- Toolbar left to right: search box with hint "Search quests, rewards or ids", an × clear button (disabled when empty), a Filters button (highlighted when the panel is open), the Character combo, the active-filter chip strip (empty when nothing is engaged), and a moon glyph at the far right.
-- Hover each toolbar control (search box, ×, Filters, Character combo, sync glyph) → a one-line tooltip explains it.
-- Status bar at the bottom reads `N,NNN quests · showing R of T · live · vX.Y.Z` while logged in; `snapshot HH:mm` when viewing a stored character; `no snapshot` before any capture.
+- Toolbar left to right: search box with hint "Search quests, rewards or ids", an × clear button (disabled when empty), a Filters button (highlighted when the panel is open), the Character combo, the active-filter chip strip (empty when nothing is engaged), then a right-aligned block: the sync moon glyph and three square icon buttons — Help (question circle), Tutorial (graduation cap), Settings (cog).
+- Hover each toolbar control (search box, ×, Filters, Character combo, sync glyph, the three icon buttons) → a one-line tooltip explains it ("Help", "Interactive tutorial: …", "Settings").
+- Help button → the help window toggles (same as `/tsukimichi help`); Settings button → the config window toggles (same as the plugin installer's cog); Tutorial button → the interactive tutorial starts over the main window. Before the plugin has wired them (never, in a normal load) the buttons are disabled with the tooltip "Not available yet".
+- Status bar at the bottom reads `N,NNN quests · showing R of T · live · vX.Y.Z` while logged in; `snapshot HH:mm` when viewing a stored character; `no snapshot` before any capture. A tiny filling moon leads the line: its lit fraction is the overall completed/total of the catalog (full when everything is done, new before any snapshot).
+- The window title bar keeps Dalamud's font size whatever the UI scale slider says; only the content scales.
 
 ## Toolbar
 - Type in the search box → the table narrows about 150 ms after the last keystroke, not per keystroke; the status bar "showing" count follows.
@@ -37,13 +41,24 @@ Manual, in game, with the repo folder added as a dev plugin location. One line p
 - Reset (panel) or Reset filters (empty state) → every filter and the search clear at once.
 - Filters survive a plugin reload (saved 1 s after the last change into `Settings.Filters`).
 - Make the query empty (e.g. Pinned only with no pins) → the table area shows "Nothing matches", the offending filter names as bullets, and a "Reset filters" button; when only a combination is to blame the text says so.
-- Select a genre with no quests under the current filters but quests in scope → "Nothing matches"; select a scope with zero quests → "This node has no quests."
+- Select a genre with no quests under the current filters but quests in scope → "Nothing matches"; select a scope with zero quests → a large veiled moon centred in the table area with "This node has no quests." in Dusk beneath it.
+
+### Display
+- Bottom of the filter panel, under "Display": a "UI scale" slider (0.90×–1.60×, default 1.15×) and an "Icon scale" slider (0.80×–2.00×, default 1.25×), each with a tooltip, and a "Default sizes" button (disabled while both are at their defaults).
+- Fresh config → text, moons, reward icons and column widths in the main window are visibly larger (about 15–25 %) than Dalamud's global scale alone; the rest of Dalamud and the other plugin windows are unchanged.
+- Drag "UI scale" → text in the toolbar, tree, table, detail pane, tooltips, the table's context menu, the Overrides / job popups and the Forget-character modal all grow together on the next frame; table rows get taller with the text (no clipped rows, the list clipper still scrolls smoothly); the three columns widen; nothing overlaps.
+- Drag "Icon scale" → state moons (table, tree, detail header, path chain, requirement marks, status bar), reward icons, job icons, the reward tooltip's big icon and the detail banner's moon grow while the text stays; rows grow only when an icon gets taller than the text and their text stays vertically centred.
+- Extremes: 0.90× / 0.80× still readable; 1.60× / 2.00× still fits at the 800×500 minimum window with no overlapping toolbar controls (the chip strip shrinks first).
+- Both values survive a plugin reload (saved 1 s after the last change into `Settings.UiScale` / `Settings.IconScale`); "Default sizes" restores 1.15× / 1.25× at once. The Config window (other agent) may expose the same two values; changing them there is reflected in the panel's sliders next frame.
+- Hand-edit the config with `"UiScale": 99` or `NaN` → the window uses the clamped or default value, no error in `/xllog`.
 
 ## Journal tree
 - Left column tabs Journal / Moonlit / Characters → Moonlit and Characters show "Coming in the next merge"; Journal shows the tree.
 - Tree order: "All quests", then each Section → Category → Genre, then "Feature Unlocks", then "Unlisted" only when Show Unlisted is on in the config.
 - A category with a single genre shows as one leaf named after the category (no arrow); clicking it scopes the table to that genre and the leaf highlights; hovering shows "Section › Category › Genre". A section whose only category folded this way is itself one leaf. No node anywhere expands to a single child.
-- Every node shows a small filling moon and `done/total` in Dusk at the right edge; the moon's lit fraction matches done/total; counts match the in-game journal's Completed tab for one category.
+- Every node shows a small filling moon *before* its name (in the label slot, after the arrow) and `done/total` in Dusk at the right edge; the moon's lit fraction matches done/total; counts match the in-game journal's Completed tab for one category.
+- Top-level nodes ("All quests", each Section, "Feature Unlocks", "Unlisted") are drawn slightly bolder than their children; a top-level node whose done equals total (e.g. a finished section, or "All quests" on a completed character) has its name tinted Moon gold. Children never tint.
+- Long node names are clipped before the count, never drawn over it; hovering, clicking and the selection highlight behave exactly as before (the label is painted over an unlabelled tree item).
 - Clicking a node name selects it (highlighted) and scopes the table; clicking the arrow only expands; double-click expands too.
 - "All quests" → the table shows the whole catalog (Unlisted only when Include Unlisted is on); "Feature Unlocks" → only curated feature quests.
 - Moonlit → "Show in Journal" on a quest while Hide completed / Available now / Pinned only / a State filter is on → the Journal opens on its genre with those filters cleared (their chips gone) and the row selected and visible. For an unlisted quest → Include Unlisted turns on and the "Unlisted" node appears selected even when Show Unlisted is off in the config.
@@ -56,7 +71,11 @@ Manual, in game, with the repo folder added as a dev plugin location. One line p
 - Row click → the detail pane shows that quest; double-click an accepted or completed quest → the in-game journal opens on it; double-click any other quest → it is only selected (the game journal has no page for it).
 - Select a quest from another pane (Path chain in the detail pane, Moonlit "Show in Journal") repeatedly → the table scrolls to the row every time, not every other time; clicking a row in the table never scrolls it.
 - Pinned rows show a small gold dot at the left edge of the glyph column.
-- Rewards column shows up to four icons; hovering an icon shows the blown-up tooltip: a 64 px icon, the name in bold, the kind with "×N" for stacks, and for items "iLv N · Category" plus the item description; emotes and actions show their description. No boxed private-use glyphs or stray hyphens in the text.
+- Rows alternate between plain and a faint Veil tint (zebra); the tint follows the rows when sorting and scrolling.
+- Ready rows carry a thin Moon-gold stripe on the row's left edge, Accepted rows a Silver one, every other state none; in browse mode (no snapshot) no row has a stripe.
+- Next step column: the first word in Silver, the rest in Dusk ("Level 50, you are 43" → "Level" bright); greyed as a whole in browse mode.
+- Hover a quest name (the Name cell only, not the reward icons) → a tooltip with the quest's journal banner about 240 px wide when the quest has one (Close to Home, The Ultimate Weapon do; most side quests do not, and then no image), the name, the genre, and "ARR · Lv 1"-style expansion and level. Hovering the reward icons still shows the reward tooltip, never both at once.
+- Rewards column shows up to four icons (scaled by Icon scale); hovering an icon shows the blown-up tooltip: a large icon (56 px × Icon scale), the name in bold, the kind with "×N" for stacks, and for items "iLv N · Category" plus the item description; emotes and actions show their description. No boxed private-use glyphs or stray hyphens in the text.
 - Right-click a row → menu: Pin/Unpin, Flag on map (disabled when the issuer has no map), Open journal (disabled unless accepted or completed, tooltip explains), Copy name, Copy coordinates (disabled without a map), Show path, Link in chat, and "Quest Map graph" only when the QuestMap plugin is installed and loaded.
 - Copy coordinates → the clipboard holds "Place (x.x, y.y)", pasteable into chat.
 - Pin → the dot appears immediately and `user/pins.json` gains the row id within about a second; Unpin removes it; pins are per character. Without a character (browse mode) the Pin item is disabled and nothing is written under content id 0.
@@ -66,11 +85,15 @@ Manual, in game, with the repo folder added as a dev plugin location. One line p
 - Link in chat → one chat line: a clickable quest link followed by a clickable map link with place name and coordinates.
 
 ## Detail pane
-- Header: quest name, a large state moon, "Genre › Category", then "Expansion · Lv N · Job category", then the state name in its token colour plus "Ready on XXX" or "Accepted, step N" when applicable, and "Pinned" in gold when pinned.
-- Requirements: one line per gate with ✓ (gold) or ✗ (Eclipse), the gate name, and the detail clause ("Trusted, needs Sworn"); the next step is marked ▶ and drawn in gold; without a snapshot the section explains that requirements need a snapshot.
+- No selection → a large veiled moon centred in the pane with "Select a quest in the table to see its requirements, rewards and path." in Dusk beneath it; a selection that is not in the catalog shows the same moon with "Quest not in catalog".
+- Header, quest with a journal banner (Close to Home, The Ultimate Weapon, most MSQ): the banner fills the pane's width keeping its aspect (no stretching, capped in height), a Night gradient strip covers its lower part with the quest name in Silver bottom-left (wrapping to a second line for long names) and the large state moon at the strip's right; resizing the right column rescales the banner. While the texture loads (first frame or two) the card below is shown instead, then the banner replaces it.
+- Header, quest without a banner (icon 0, most side quests): a raised Night card with the large state moon beside the name.
+- Under either header: "Genre › Category", then "Expansion · Lv N · Job category", then the state name in its token colour plus "Ready on XXX" or "Accepted, step N" when applicable, and "Pinned" in gold when pinned.
+- Section headers (Requirements, Rewards, Moonlit, Path, Giver) each start with a small FontAwesome icon in Dusk (tasks, gift, moon, route, map marker), the title, and a Dusk rule; "Show path" turns the Path icon, title and rule gold for about 1.5 s.
+- Requirements: one line per gate with a small full moon (met) or new moon (unmet) instead of ✓/✗ (hover: "Met" / "Not met"), the gate name, and the detail clause ("Trusted, needs Sworn"); the next step is marked ▶ and drawn in gold; without a snapshot the section explains that requirements need a snapshot.
 - Rewards: icon, name (with ×N for stacks) and the kind in Dusk; hovering anywhere on a reward row shows the same blown-up tooltip as the table; no obtained badges are shown yet.
 - Moonlit: a quest with shipped unique entries reads "Listed in Moonlit treasures."; one without reads "Not listed…" with "Mark as unique…" → a popup with a note field and "Mark as unique" adds it (Moonlit tab shows it under source "yours"); a quest marked not unique from the Moonlit tab reads "Marked not unique by you" with Restore, and Restore brings it back in Moonlit at once.
-- Path: grouped under an expansion header each ("A Realm Reborn", "Heavensward", …); runs of two or more consecutive completed steps fold into "▸ N completed steps" (click to unfold, click again to fold; the choice holds until another quest is selected); incomplete, accepted, ready and the selected quest are always listed; every visible moon is joined by a thin Dusk line; each name is clickable and selects that quest; a quest with no prerequisites reads "This quest starts its own path."
+- Path: grouped under an expansion header each ("A Realm Reborn", "Heavensward", …); runs of two or more consecutive completed steps fold into "▸ N completed steps" (click to unfold, click again to fold; the choice holds until another quest is selected); incomplete, accepted, ready and the selected quest are always listed; every visible moon is joined by a line that is Moon gold (slightly thicker) below a completed step and thin Dusk below any other, so the walked part of the road is lit and the rest dark; each name is clickable and selects that quest; a quest with no prerequisites reads "This quest starts its own path."
 - Unlocks next (under the chain): the quests that list the selected one as a previous quest, each with its moon, clickable; at most eight then "and N more"; none reads "No quest lists this one as a previous quest."
 - Giver: NPC name, "Region › Place" and "(x.x, y.y)"; Flag map opens the map with a flag at the NPC (compare against the journal's own map); Open journal opens the in-game journal (disabled with a tooltip unless the quest is accepted or completed); Link in chat prints the link line; Copy coordinates puts "Place (x.x, y.y)" on the clipboard.
 - Provenance line at the bottom: "Completed per client flags at HH:mm" for completed quests, "Evaluated from snapshot taken HH:mm" otherwise, "No snapshot; state unknown" without a character.
