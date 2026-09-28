@@ -97,14 +97,14 @@ public sealed class HelpWindow : Window
 
     private static readonly PhaseItem[] Phases =
     [
-        Phase(QuestState.Completed, Strings.Help.PhaseCompletedName, Strings.Help.PhaseCompletedMeaning, Strings.Help.ChipHideCompletedOff),
-        Phase(QuestState.Accepted, Strings.Help.PhaseAcceptedName, Strings.Help.PhaseAcceptedMeaning, Strings.Help.ChipAvailableNow),
-        Phase(QuestState.Ready, Strings.Help.PhaseReadyName, Strings.Help.PhaseReadyMeaning, Strings.Help.ChipAvailableNow),
-        Phase(QuestState.ReadyOnOtherJob, Strings.Help.PhaseReadyOtherJobName, Strings.Help.PhaseReadyOtherJobMeaning, Strings.Help.ChipAvailableNow),
-        Phase(QuestState.DoneThisCycle, Strings.Help.PhaseDoneThisCycleName, Strings.Help.PhaseDoneThisCycleMeaning, Strings.Help.ChipAvailableNowOff),
-        Phase(QuestState.Blocked, Strings.Help.PhaseBlockedName, Strings.Help.PhaseBlockedMeaning, Strings.Help.ChipAvailableNowOff),
-        Phase(QuestState.Foreclosed, Strings.Help.PhaseForeclosedName, Strings.Help.PhaseForeclosedMeaning, Strings.Help.ChipHideCompletedOff, Strings.Help.ChipNotInTotals),
-        Phase(QuestState.Unknown, Strings.Help.PhaseUnknownName, Strings.Help.PhaseUnknownMeaning),
+        Phase(QuestState.Completed, Strings.Help.PhaseCompletedMeaning, Strings.Help.ChipHideCompletedOff),
+        Phase(QuestState.Accepted, Strings.Help.PhaseAcceptedMeaning, Strings.Help.ChipAvailableNow),
+        Phase(QuestState.Ready, Strings.Help.PhaseReadyMeaning, Strings.Help.ChipAvailableNow),
+        Phase(QuestState.ReadyOnOtherJob, Strings.Help.PhaseReadyOtherJobMeaning, Strings.Help.ChipAvailableNow),
+        Phase(QuestState.DoneThisCycle, Strings.Help.PhaseDoneThisCycleMeaning, Strings.Help.ChipAvailableNowOff),
+        Phase(QuestState.Blocked, Strings.Help.PhaseBlockedMeaning, Strings.Help.ChipAvailableNowOff),
+        Phase(QuestState.Foreclosed, Strings.Help.PhaseForeclosedMeaning, Strings.Help.ChipHideCompletedOff, Strings.Help.ChipNotInTotals),
+        Phase(QuestState.Unknown, Strings.Help.PhaseUnknownMeaning),
     ];
 
     private static readonly CardItem[] FilterCards = Cards(
@@ -358,7 +358,7 @@ public sealed class HelpWindow : Window
                 case HelpTopic.MoonPhases:
                     foreach (var phase in Phases)
                     {
-                        sb.Append(Strings.MoonlitStateName(phase.State)).Append('\n').Append(phase.Name).Append('\n').Append(phase.Meaning).Append('\n');
+                        sb.Append(Strings.StateName(phase.State)).Append('\n').Append(phase.Name).Append('\n').Append(phase.Meaning).Append('\n');
                         foreach (var chip in phase.Chips)
                         {
                             sb.Append(chip).Append('\n');
@@ -615,7 +615,7 @@ public sealed class HelpWindow : Window
         {
             using (Theme.PushText(Theme.StateColor(phase.State)))
             {
-                ImGui.TextUnformatted(Strings.MoonlitStateName(phase.State));
+                ImGui.TextUnformatted(Strings.StateName(phase.State));
             }
 
             ImGui.SameLine(0f, 6f * scale);
@@ -848,12 +848,13 @@ public sealed class HelpWindow : Window
 
     // ------------------------------------------------------------------ static data helpers
 
-    private static PhaseItem Phase(QuestState state, string name, string meaning, params string[] filterChips)
+    /// <summary>One legend row: the display name, the moon-phase subtitle from <see cref="Strings.StateGlyphSubtitle"/>, the meaning and its chips.</summary>
+    private static PhaseItem Phase(QuestState state, string meaning, params string[] filterChips)
     {
         var chips = new string[filterChips.Length + 1];
-        chips[0] = Strings.Help.ChipStatePrefix + Strings.MoonlitStateName(state);
+        chips[0] = Strings.Help.ChipStatePrefix + Strings.StateName(state);
         Array.Copy(filterChips, 0, chips, 1, filterChips.Length);
-        return new PhaseItem(state, name, meaning, chips);
+        return new PhaseItem(state, Strings.StateGlyphSubtitle(state), meaning, chips);
     }
 
     private static CardItem[] Cards(string[] titles, string[] bodies, params FontAwesomeIcon[] icons)

@@ -69,7 +69,7 @@ public class RequirementEvaluatorTests
 
         var r = Only(results, RequirementKind.Foreclosure);
         Assert.False(r.Met);
-        Assert.Equal("foreclosed by Joining the Maelstrom", r.Detail);
+        Assert.Equal("locked out by Joining the Maelstrom", r.Detail);
         var req = Assert.IsType<ForeclosureRequirement>(r.Req);
         Assert.Equal(new uint[] { B }, req.CompletedLockIds);
     }

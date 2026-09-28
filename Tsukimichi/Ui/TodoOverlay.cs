@@ -367,7 +367,7 @@ public sealed class TodoOverlay : Window, IDisposable
 
         if (ImGui.MenuItem(Strings.LinkInChat))
         {
-            links.PrintQuestLink(quest, Strings.StateName(row.State));
+            links.PrintQuestLink(quest, Strings.StateName(row.State, quest));
         }
     }
 
@@ -464,8 +464,8 @@ public sealed class TodoOverlay : Window, IDisposable
 
                 var label = row.Name + "##" + row.RowId.ToString(CultureInfo.InvariantCulture);
                 var tooltip = row.Hint.Length > 0
-                    ? Strings.StateName(row.State) + " · " + row.Hint + "\n" + Strings.TodoRowClickHint
-                    : Strings.StateName(row.State) + "\n" + Strings.TodoRowClickHint;
+                    ? Strings.StateName(row.State, quest) + Strings.StateReasonSeparator + row.Hint + "\n" + Strings.TodoRowClickHint
+                    : Strings.StateName(row.State, quest) + "\n" + Strings.TodoRowClickHint;
                 rows.Add(new Row(quest, row.State, label, row.Hint, tooltip));
             }
 

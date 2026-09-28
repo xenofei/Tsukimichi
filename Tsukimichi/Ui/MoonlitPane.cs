@@ -265,6 +265,11 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         using var id = ImRaii.PushId("moonlitMain");
         Refresh();
 
+        using (Theme.PushText(Theme.Dusk))
+        {
+            ImGui.TextUnformatted(Strings.MoonlitSubtitle);
+        }
+
         var hide = ui.MoonlitHideObtained;
         if (ImGui.Checkbox(Strings.MoonlitHideObtainedLabel, ref hide))
         {
@@ -480,7 +485,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         MoonGlyph.DrawInline(state, UiMetrics.InlineGlyphSize(line));
         if (ImGui.IsItemHovered())
         {
-            UiMetrics.Tooltip(Strings.MoonlitStateName(state));
+            UiMetrics.Tooltip(Strings.StateWithReason(state, evaluation, row.Quest));
         }
 
         // Confidence badge with the source on hover.

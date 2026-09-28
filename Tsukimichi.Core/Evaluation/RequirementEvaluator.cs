@@ -27,7 +27,7 @@ public static class RequirementEvaluator
             var completedLocks = q.QuestLocks.Where(id => s.IsCompleted(QuestRecord.ToQuestId(id))).ToArray();
             var detail = completedLocks.Length == 0
                 ? "no conflicting quest completed"
-                : "foreclosed by " + string.Join(", ", completedLocks.Select(id => NameOf(catalog, id)));
+                : "locked out by " + string.Join(", ", completedLocks.Select(id => NameOf(catalog, id)));
             results.Add(new(new ForeclosureRequirement(q.QuestLocks, completedLocks), completedLocks.Length == 0, detail));
         }
 

@@ -144,10 +144,10 @@ public sealed class GlyphDebugWindow : Window
             ImGui.TableNextColumn();
             ImGui.AlignTextToFramePadding();
             using (Theme.PushText(Theme.StateColor(state)))
-                ImGui.TextUnformatted(state.ToString());
+                ImGui.TextUnformatted(Strings.StateName(state));
             ImGui.TableNextColumn();
             ImGui.AlignTextToFramePadding();
-            ImGui.TextDisabled(phase);
+            ImGui.TextDisabled(Strings.StateGlyphSubtitle(state) + " · " + phase);
 
             foreach (var (radius, _) in Radii)
             {

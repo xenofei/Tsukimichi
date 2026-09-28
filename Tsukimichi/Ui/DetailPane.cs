@@ -842,7 +842,7 @@ public sealed class DetailPane
         model.HasSnapshot = snapshot is not null;
         session.States.TryGetValue(rowId, out var evaluation);
         model.State = evaluation?.State ?? QuestState.Unknown;
-        model.StateText = Strings.StateName(model.State);
+        model.StateText = Strings.StateName(model.State, quest);
         model.HasUniqueEntries = HasShippedUniqueEntry(session.UniqueRewards, rowId);
 
         model.JournalPath = string.Format(CultureInfo.CurrentCulture, Strings.JournalPathFormat, quest.Journal.GenreName, quest.Journal.CategoryName);

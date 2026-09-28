@@ -4,14 +4,17 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
-### Fixed
-- Quest levels now match the game's journal and the Lodestone. 215 quests (Quarrels with Squirrels, Surveying the Damage, Reach for the Starboard and others, mostly early sidequests, ARR main scenario and allied society quests) showed a lower level than the game because the level the journal prints adds a per-quest offset the plugin was not applying. The Lv column, the detail header, the Nearby list, the Todo overlay hints, the job ladder "next" line, the level-range filter, the "Around my level" view and the level sort all use the journal level now. Whether you can take a quest is unchanged: the game still accepts Quarrels with Squirrels at level 1, so it still shows Ready at level 1.
 ### Added
 - "What's new" card: after an update, the first time the main window opens, a card above the detail pane lists what changed in this version, with Close and Help. It never shows on a fresh install, and nothing is fetched: the notes ship inside the plugin.
 - Help topics "Why my counts differ from the journal" (unlisted and removed quests, seasonal quests out of season, foreclosed choices, the derived Feature Unlocks node, repeatables) and "Known quirks" (steps the game skips such as Up In Arms with the Zenith, "Bloodsworn" reading "Allied" since 7.0, conditions listed but not judged, Online Store re-sells in Moonlit), both searchable; the Commands topic gains `/tsuki todo`.
 - MIT license, a README written for players and Discord moderators (install, features, every command, what the plugin hooks and never does, releases, credits), a CONTRIBUTING page and GitHub issue templates for bugs, wrong quest states (with a field for the diagnostic block) and data corrections.
 
+### Changed
+- One name per quest state, the same everywhere (table, chips, tooltips, detail pane, Moonlit, Compare, the todo overlay, Nearby, chat links, Help and the tour): Ready, Ready on another job, In journal (was Accepted), Blocked (now always followed by what blocks it), Done today or Done this week (was Done this cycle; picked by the quest's reset), Completed, Locked out (was Foreclosed; followed by the cause) and Not checked (was Unknown). The moon-phase names (first quarter, waxing gibbous, eclipsed, veiled, …) stay as the small subtitle under each name in Help › Moon phases and the glyphs window only. Recent activity says "Picked up" for a newly accepted quest.
+- Renamed labels: the Feature Unlocks tree node is "Unlock quests"; the presets group is "Quick views" with chips "Unlocks" (was Feature quests), "My level" (was Around my level) and "Stalled"; the "Next step" column is "Status" in the Journal table, the Characters pins and account view and the Flight table; the todo overlay section is "Unlocks you can start here"; the Moonlit pane carries the subtitle "rewards only a quest gives"; Compare's reason reads "Unlock quest"; requirement names say "Allied Society". A glossary of every name lives in docs/glossary.md.
+
 ### Fixed
+- Quest levels now match the game's journal and the Lodestone. 215 quests (Quarrels with Squirrels, Surveying the Damage, Reach for the Starboard and others, mostly early sidequests, ARR main scenario and allied society quests) showed a lower level than the game because the level the journal prints adds a per-quest offset the plugin was not applying. The Lv column, the detail header, the Nearby list, the Todo overlay hints, the job ladder "next" line, the level-range filter, the "Around my level" view and the level sort all use the journal level now. Whether you can take a quest is unchanged: the game still accepts Quarrels with Squirrels at level 1, so it still shows Ready at level 1.
 - The plugin installer shows Tsukimichi's icon: the manifest inside the release package now carries the icon address, and the icon ships as `images/icon.png`.
 
 ## [0.5.1] - 2026-09-28

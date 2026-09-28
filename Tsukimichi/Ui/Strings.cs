@@ -1,5 +1,7 @@
+using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
+using Tsukimichi.Core.Ui;
 
 namespace Tsukimichi.Ui;
 
@@ -37,7 +39,7 @@ public static partial class Strings
     public const string CharacterEntryFormat = "{0}@{1} · {2}";
     /// <summary>{0} = name, {1} = world.</summary>
     public const string CharacterNameFormat = "{0}@{1}";
-    public const string BrowseModeNotice = "No character snapshot: states, next steps and availability are not evaluated.";
+    public const string BrowseModeNotice = "No character snapshot: states, blockers and availability are not evaluated.";
     public const string HelpButtonTooltip = "Help";
     public const string TutorialButtonTooltip = "Interactive tutorial: a guided walk through the window";
     public const string SettingsButtonTooltip = "Settings";
@@ -75,15 +77,15 @@ public static partial class Strings
 
     // Tree
     public const string AllQuests = "All quests";
-    public const string FeatureUnlocks = "Feature Unlocks";
+    public const string FeatureUnlocks = "Unlock quests";
     public const string Unlisted = "Unlisted";
     /// <summary>{0} = done, {1} = total.</summary>
     public const string CountFormat = "{0}/{1}";
     /// <summary>Hover text of a folded tree node: {0} = section, {1} = category, {2} = genre.</summary>
     public const string FoldedPathFormat = "{0} › {1} › {2}";
 
-    // Presets (top of the filter panel)
-    public const string Presets = "Presets";
+    // Quick views (one-click presets at the top of the filter panel)
+    public const string Presets = "Quick views";
     public const string PresetFeatureQuests = FilterNames.FeatureQuests;
     public const string PresetLevelBand = FilterNames.LevelBand;
     public const string PresetStalled = FilterNames.Stalled;
@@ -139,8 +141,8 @@ public static partial class Strings
     public const string ResetDisplayTooltip = "Back to the default UI and icon scale";
 
     // Filter panel tooltips
-    public const string HideCompletedTooltip = "Remove Completed and Foreclosed quests from the table";
-    public const string AvailableOnlyTooltip = "Keep only quests you can pick up now: Ready, Ready on another job and Accepted";
+    public const string HideCompletedTooltip = "Remove Completed and Locked out quests from the table";
+    public const string AvailableOnlyTooltip = "Keep only quests you can pick up now: Ready, Ready on another job and In journal";
     public const string OverridesTooltip = "Turn this filter on or off for single categories";
     public const string PinnedFirstTooltip = "Keep pinned quests at the top of the table whatever the sort";
     public const string StatesTooltip = "Untick a state to hide quests in it";
@@ -150,7 +152,7 @@ public static partial class Strings
     public const string RewardKindsTooltip = "Per reward kind: Hidden removes quests giving it, Only keeps just those";
     public const string RepeatableOnlyTooltip = "Keep only repeatable quests such as dailies and weeklies";
     public const string SeasonalActiveOnlyTooltip = "Keep only seasonal-event quests whose event is running right now";
-    public const string IncludeUnlistedTooltip = "Also show quests with no journal genre under All quests and Feature Unlocks";
+    public const string IncludeUnlistedTooltip = "Also show quests with no journal genre under All quests and Unlock quests";
     public const string PinnedOnlyTooltip = "Keep only quests you pinned";
     public const string ResetTooltip = "Clear every filter and the search";
     public const string ResetFilters = "Reset filters";
@@ -176,14 +178,14 @@ public static partial class Strings
     public const string ColumnName = "Name";
     public const string ColumnLevel = "Lv";
     public const string ColumnJob = "Job";
-    public const string ColumnNextStep = "Next step";
+    public const string ColumnStatus = "Status";
     public const string ColumnExpansion = "Exp";
     public const string ColumnRewards = "Rewards";
     public const string ColumnGlyphTooltip = "Quest state as a moon phase; click to sort by state";
     public const string ColumnNameTooltip = "Quest name; click to sort, right-click a header to hide columns";
     public const string ColumnLevelTooltip = "Quest level; click to sort";
     public const string ColumnJobTooltip = "Who can take it: Any, one job, or a discipline";
-    public const string ColumnNextStepTooltip = "The first unmet requirement, what to do next";
+    public const string ColumnStatusTooltip = "Why the quest is not ready yet: the first unmet requirement, or what to do next";
     public const string ColumnExpansionTooltip = "Expansion the quest belongs to; click to sort";
     public const string ColumnRewardsTooltip = "Up to four reward icons; hover one for details";
     public const string JobAny = "Any";
@@ -275,7 +277,7 @@ public static partial class Strings
     /// <summary>{0} = job abbreviation.</summary>
     public const string ReadyOnJobFormat = "Ready on {0}";
     /// <summary>{0} = sequence.</summary>
-    public const string AcceptedSequenceFormat = "Accepted, step {0}";
+    public const string AcceptedSequenceFormat = "In journal, step {0}";
     public const string Pinned = "Pinned";
 
     // Chat
@@ -308,32 +310,31 @@ public static partial class Strings
     public const string TimeFormat = "HH:mm";
     public const string DateTimeFormat = "yyyy-MM-dd HH:mm";
 
-    public static string StateName(QuestState state) => state switch
-    {
-        QuestState.Ready => "Ready",
-        QuestState.ReadyOnOtherJob => "Ready on another job",
-        QuestState.Accepted => "Accepted",
-        QuestState.Blocked => "Blocked",
-        QuestState.DoneThisCycle => "Done this cycle",
-        QuestState.Completed => "Completed",
-        QuestState.Foreclosed => "Foreclosed",
-        QuestState.Unknown => "Unknown",
-        _ => state.ToString(),
-    };
+    /// <summary>The display name of a state (docs/glossary.md); <see cref="StateNames"/> in Core owns the table.</summary>
+    public static string StateName(QuestState state) => StateNames.Name(state);
 
-    /// <summary>Short state name for chips.</summary>
-    public static string StateShortName(QuestState state) => state switch
+    /// <summary>The display name of a state for a quest: a done repeatable says "Done today" or "Done this week" by its reset.</summary>
+    public static string StateName(QuestState state, QuestRecord? quest) => StateNames.Name(state, quest);
+
+    /// <summary>The moon-phase name of a state's glyph, shown under the display name in the Help legend and the glyph window only.</summary>
+    public static string StateGlyphSubtitle(QuestState state) => StateNames.GlyphSubtitle(state);
+
+    /// <summary>
+    /// The display name followed by " · " and the decisive requirement or reason when the evaluation has one: Blocked
+    /// always names its blocker, Locked out its cause, Not checked what could not be read. Other states show the name alone.
+    /// </summary>
+    public static string StateWithReason(QuestState state, QuestEvaluation? evaluation, QuestRecord? quest)
     {
-        QuestState.Ready => "Ready",
-        QuestState.ReadyOnOtherJob => "Other job",
-        QuestState.Accepted => "Accepted",
-        QuestState.Blocked => "Blocked",
-        QuestState.DoneThisCycle => "Done cycle",
-        QuestState.Completed => "Completed",
-        QuestState.Foreclosed => "Foreclosed",
-        QuestState.Unknown => "Unknown",
-        _ => state.ToString(),
-    };
+        var name = StateName(state, quest);
+        if (state is not (QuestState.Blocked or QuestState.Foreclosed or QuestState.Unknown))
+        {
+            return name;
+        }
+
+        return evaluation?.NextStep?.Detail is { Length: > 0 } detail ? name + StateReasonSeparator + detail : name;
+    }
+
+    public const string StateReasonSeparator = " · ";
 
     public static string RequirementName(RequirementKind kind) => kind switch
     {
@@ -345,8 +346,8 @@ public static partial class Strings
         RequirementKind.PreviousQuests => "Previous quests",
         RequirementKind.GrandCompany => "Grand Company",
         RequirementKind.GrandCompanyRank => "Grand Company rank",
-        RequirementKind.TribeRank => "Allied society rank",
-        RequirementKind.TribeReputation => "Allied society reputation",
+        RequirementKind.TribeRank => "Allied Society rank",
+        RequirementKind.TribeReputation => "Allied Society reputation",
         RequirementKind.TribeAllowance => "Allowance",
         RequirementKind.TribeDailyOffer => "Daily offer",
         RequirementKind.DutyCompletion => "Duty",

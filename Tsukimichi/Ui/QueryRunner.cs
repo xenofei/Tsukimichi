@@ -367,7 +367,7 @@ public sealed class QueryRunner : IDisposable
             CurrentLevel: CurrentLevel(snapshot),
             StalledDays: plugin.Settings.StalledDaysClamped);
 
-        // The Feature quests preset reads best with what can be picked up now on top; the other presets keep the table's sort.
+        // The Unlocks quick view reads best with what can be picked up now on top; the other presets keep the table's sort.
         var effectiveSort = ui.Sort with { AvailableFirst = ui.Filters.Preset == Preset.FeatureQuests };
         var result = QuestQuery.Apply(current.Catalog, session.States, ui.Filters, ui.Scope, effectiveSort, appliedSearch, ctx);
 

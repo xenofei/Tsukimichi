@@ -153,7 +153,7 @@ public sealed class HoverHint
             var evaluation = session.States.GetValueOrDefault(quest.RowId);
             var state = evaluation?.State ?? QuestState.Unknown;
             var done = state == QuestState.Completed;
-            var status = done ? Strings.ItemsDone : evaluation?.NextStep?.Detail ?? Strings.StateName(state);
+            var status = done ? Strings.ItemsDone : evaluation?.NextStep?.Detail ?? Strings.StateName(state, quest);
             var line = new Line(quest.RowId, state, string.Format(CultureInfo.CurrentCulture, Strings.ItemsQuestRewardFormat, quest.Name), status, done);
             if (IsUnlockable(entry.Kind))
             {

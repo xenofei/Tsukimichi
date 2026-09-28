@@ -68,7 +68,7 @@ public static class CharacterDiff
     public const int UniqueRewardValue = 2;
 
     public const string ReasonMainScenario = "Main scenario";
-    public const string ReasonFeature = "Feature quest";
+    public const string ReasonFeature = "Unlock quest";
     public const string ReasonSide = "Side quest";
     public const string ReasonSeparator = " · ";
 
@@ -94,7 +94,7 @@ public static class CharacterDiff
         return value + UniqueRewardValue * Math.Max(0, ctx.UniqueRewardCount(rowId));
     }
 
-    /// <summary>The parts of <see cref="ValueOf"/> as text: "Main scenario", "Feature quest", "N unique rewards", joined by " · "; "Side quest" when none apply.</summary>
+    /// <summary>The parts of <see cref="ValueOf"/> as text: "Main scenario", "Unlock quest", "N unique rewards", joined by " · "; "Side quest" when none apply.</summary>
     public static string ReasonOf(uint rowId, DiffContext ctx)
     {
         ArgumentNullException.ThrowIfNull(ctx);

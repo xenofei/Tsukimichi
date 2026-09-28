@@ -15,6 +15,8 @@ static partial class Strings
     public const string MoonlitNothingMatches = "No rewards match.";
     public const string MoonlitHideObtainedLabel = "Hide obtained";
     public const string MoonlitFilterHint = "Filter rewards";
+    /// <summary>Subtitle under the Moonlit pane header; the tab keeps the brand word.</summary>
+    public const string MoonlitSubtitle = "rewards only a quest gives";
     public const string MoonlitOfflineHint = "Obtained states need the live character.";
     public const string MoonlitColumnObtained = "Have";
     public const string MoonlitColumnReward = "Reward";
@@ -67,7 +69,7 @@ static partial class Strings
     public const string FlightColumnAttuned = "Attuned";
     public const string FlightColumnQuest = "Quest";
     public const string FlightColumnState = "State";
-    public const string FlightColumnNextStep = "Next step";
+    public const string FlightColumnStatus = "Status";
     public const string FlightColumnActions = "##actions";
     public const string FlightAttunedYes = "Attuned";
     public const string FlightAttunedNo = "Not attuned: completing the quest attunes it";
@@ -134,20 +136,6 @@ static partial class Strings
         _ => kind.ToString(),
     };
 
-    /// <summary>State name for glyph tooltips.</summary>
-    public static string MoonlitStateName(QuestState state) => state switch
-    {
-        QuestState.Ready => "Ready",
-        QuestState.ReadyOnOtherJob => "Ready on another job",
-        QuestState.Accepted => "Accepted",
-        QuestState.Blocked => "Blocked",
-        QuestState.DoneThisCycle => "Done this cycle",
-        QuestState.Completed => "Completed",
-        QuestState.Foreclosed => "Foreclosed",
-        QuestState.Unknown => "Unknown",
-        _ => state.ToString(),
-    };
-
     // ---- Characters pane ----
     public const string CharactersNoneStored = "No characters stored yet. Log in once to capture one.";
     public const string CharactersNoneViewed = "No character. Log in, or pick a stored character on the left.";
@@ -185,7 +173,7 @@ static partial class Strings
     public const string CharactersAccountUnknownQuest = "The selected quest is not in the catalog.";
     public const string CharactersColumnCharacter = "Character";
     public const string CharactersColumnState = "State";
-    public const string CharactersColumnNextStep = "Next step";
+    public const string CharactersColumnStatus = "Status";
     public const string CharactersSnapshotUnreadable = "snapshot unreadable";
     public const string CharactersLiveMarker = "● ";
     public const string CharactersWorldPrefix = "World ";
@@ -221,7 +209,7 @@ static partial class Strings
     public static string CharactersEventName(QuestEventKind kind) => kind switch
     {
         QuestEventKind.Completed => "Completed",
-        QuestEventKind.Accepted => "Accepted",
+        QuestEventKind.Accepted => "Picked up",
         QuestEventKind.Abandoned => "Abandoned",
         QuestEventKind.NewlyAvailable => "Newly available",
         _ => kind.ToString(),
@@ -289,7 +277,7 @@ static partial class Strings
     public const string ConfigCuratedPrefix = "Curated: ";
     public const string ConfigCuratedSystemSuffix = " system unlocks, ";
     public const string ConfigCuratedDutySuffix = " duty unlocks, ";
-    public const string ConfigCuratedFeatureSuffix = " feature quests, ";
+    public const string ConfigCuratedFeatureSuffix = " unlock quests, ";
     public const string ConfigCuratedFestivalSuffix = " festivals";
     public const string ConfigCatalogPrefix = "Catalog: ";
     public const string ConfigCatalogLoading = "Catalog: loading";
@@ -387,21 +375,14 @@ static partial class Strings
         public const string QuickStartSettingsTip = "Text too small? Settings has a Display section with a window scale and an icon scale.";
 
         // ---- Moon phases ----
-        public const string PhaseCompletedName = "full moon";
+        // The moon-phase name under each state comes from Strings.StateGlyphSubtitle; only the meanings live here.
         public const string PhaseCompletedMeaning = "Turned in on this character.";
-        public const string PhaseAcceptedName = "waxing gibbous, gold ring";
         public const string PhaseAcceptedMeaning = "In the journal now; the detail pane shows the step.";
-        public const string PhaseReadyName = "first quarter, glow";
         public const string PhaseReadyMeaning = "Every requirement is met on the current job; go get it.";
-        public const string PhaseReadyOtherJobName = "first quarter, silver, gold ring";
         public const string PhaseReadyOtherJobMeaning = "Met on another job; the detail pane names it.";
-        public const string PhaseDoneThisCycleName = "waning gibbous, silver";
-        public const string PhaseDoneThisCycleMeaning = "A repeatable quest already done this daily or weekly cycle.";
-        public const string PhaseBlockedName = "new moon, silver ring";
-        public const string PhaseBlockedMeaning = "A requirement is unmet; the next step names it in one clause.";
-        public const string PhaseForeclosedName = "eclipsed";
-        public const string PhaseForeclosedMeaning = "Locked out for good, usually by a choice made in another quest.";
-        public const string PhaseUnknownName = "veiled";
+        public const string PhaseDoneThisCycleMeaning = "A repeatable quest already turned in since its last reset: Done today for a daily, Done this week for a weekly.";
+        public const string PhaseBlockedMeaning = "A requirement is unmet; Status names it in one clause.";
+        public const string PhaseForeclosedMeaning = "Locked out for good, usually by a choice made in another quest; Status names the cause.";
         public const string PhaseUnknownMeaning = "Not evaluated: no snapshot, or data the plugin cannot read for this character.";
 
         // "Shown by" chips: what must be set for the phase to appear in the table.
@@ -412,7 +393,7 @@ static partial class Strings
         public const string ChipStatePrefix = "State: ";
 
         public const string FillingTitle = "The filling moon";
-        public const string FillingBody = "Tree nodes, Moonlit kinds and the Characters dashboard show a moon whose lit fraction is the completion ratio: new at none, half at half, full only when everything is done. Foreclosed quests are left out of the total.";
+        public const string FillingBody = "Tree nodes, Moonlit kinds and the Characters dashboard show a moon whose lit fraction is the completion ratio: new at none, half at half, full only when everything is done. Locked out quests are left out of the total.";
 
         // ---- Filters and chips ----
         public static readonly string[] FilterCardTitles =
@@ -427,8 +408,8 @@ static partial class Strings
 
         public static readonly string[] FilterCardBodies =
         [
-            "Drops Completed and Foreclosed quests. Per-category overrides let you hide completed everywhere except, say, the main scenario.",
-            "Keeps only Ready, Ready on another job and Accepted: the quests you can act on now. Takes the same per-category overrides.",
+            "Drops Completed and Locked out quests. Per-category overrides let you hide completed everywhere except, say, the main scenario.",
+            "Keeps only Ready, Ready on another job and In journal: the quests you can act on now. Takes the same per-category overrides.",
             "All eight phases as checkboxes for fine control. Untick a phase to hide its quests.",
             "Expansion, level range, job category, reward kind (three-state per kind), Repeatable, Seasonal active and Include Unlisted narrow the table further.",
             "Every active filter shows as a chip under the search box. Click a chip to clear it; Reset clears them all and the search.",
@@ -505,7 +486,7 @@ static partial class Strings
 
         public static readonly string[] FlightCardBodies =
         [
-            "Every zone you can fly in, under its expansion, with a moon that fills as you attune its currents; the zone you stand in is marked ● and selected first. Pick a zone and the table lists its quest currents: attuned or not, the quest's state, its next step, and Flag or Teleport to the giver.",
+            "Every zone you can fly in, under its expansion, with a moon that fills as you attune its currents; the zone you stand in is marked ● and selected first. Pick a zone and the table lists its quest currents: attuned or not, the quest's state and status, and Flag or Teleport to the giver.",
             "Quest currents come from quests, five per zone in most expansions, and completing the quest attunes them. Field currents are touched in the world; the tab counts them but never locates them. Use the Aether Compass, a General Action under Actions & Traits, to point at the nearest one.",
             "/tsuki nearby opens a small window with the quests you can start in the current zone: state moon, level, job, Flag and Teleport, and a click on the name shows it in the Journal. Also accepted here folds out the accepted quests whose giver stands in the zone. The cog holds its settings.",
             "☾ N in the server info bar is the count of quests you can start here. Hover it for the first five names; click it to open Nearby quests. It hides at zero unless Keep the entry visible is on, and the cog in Nearby quests can turn it off entirely.",
@@ -585,7 +566,7 @@ static partial class Strings
         public static readonly string[] Tips =
         [
             "Hide completed plus Available now is the fastest view of what to do next.",
-            "Pin a quest and it stays one click away in the Characters dashboard, with its next step.",
+            "Pin a quest and it stays one click away in the Characters dashboard, with its status.",
             "The search box takes a quest id; paste one from a wiki.",
             "Hover a requirement's ✗ for the exact gap, such as the rank or level you still need.",
             "The path is clickable: select any earlier step to see its own requirements.",
@@ -593,7 +574,7 @@ static partial class Strings
             "Reward kind filters are three-state: require, exclude or ignore each kind.",
             "The toolbar's sync moon is full when live and veiled on a snapshot; hover it for the time.",
             "Chat notices for newly available quests are off by default; turn them on in Settings, main scenario excluded.",
-            "Foreclosed quests are left out of totals, so a category can reach 100% without them.",
+            "Locked out quests are left out of totals, so a category can reach 100% without them.",
             "Settings shows how long each poll takes; 1 s is the default and is safe.",
             "Delete all data in Settings removes snapshots, pins and overrides but keeps your settings.",
         ];
@@ -624,9 +605,9 @@ static partial class Strings
         public const string TabsTitle = "Four tabs";
         public const string TabsBody = "Journal is the catalog. Moonlit collects quests with unique rewards. Characters holds every snapshot on the account. Flight shows the aether current quests of each flying zone.";
         public const string TreeTitle = "Journal tree";
-        public const string TreeBody = "Section, category and genre scope the table. Each node shows done/total and a moon that fills with completion; Feature Unlocks and Unlisted are virtual nodes.";
+        public const string TreeBody = "Section, category and genre scope the table. Each node shows done/total and a moon that fills with completion; Unlock quests and Unlisted are virtual nodes.";
         public const string TableTitle = "Quest table";
-        public const string TableBody = "One row per quest. The glyph is its moon phase: full is completed, first quarter is ready, new is blocked. Click a header to sort; right-click a row for pin, map flag and journal.";
+        public const string TableBody = "One row per quest. The moon is its state (hover it for the name; Help lists all eight) and Status says what blocks it. Click a header to sort; right-click a row for pin, map flag and journal.";
         public const string RequirementsTitle = "Requirements";
         public const string RequirementsBody = "Select a row and the detail pane lists every requirement with ✓ or ✗. The ▶ marks the one blocking you; hover it for the exact gap.";
         public const string PathTitle = "Path and unlocks next";
@@ -638,7 +619,7 @@ static partial class Strings
         public const string CharactersTitle = "Characters";
         public const string CharactersBody = "Every stored snapshot on the left. The dashboard shows completion by section, Moonlit progress, pins, recent activity, job levels and standings for the viewed character.";
         public const string FlightTitle = "Flight";
-        public const string FlightBody = "Every flying zone, under its expansion, with a moon of attuned currents. Pick one: the table lists its five quest currents, whether each is attuned, the quest that blocks it and its next step, plus Flag and Teleport for where to fly next.";
+        public const string FlightBody = "Every flying zone, under its expansion, with a moon of attuned currents. Pick one: the table lists its five quest currents, whether each is attuned, the quest that blocks it and its status, plus Flag and Teleport for where to fly next.";
         public const string HelpTitle = "Help, tour and settings";
         public const string HelpBody = "The book reopens the guide, the graduation cap replays this tour, and the cog opens Settings: poll interval, display scale and data controls.";
         public const string FinishTitle = "That is the road";

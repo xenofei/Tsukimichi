@@ -20,7 +20,7 @@ static partial class Strings
     public const string DiffColumnSection = "Section";
     /// <summary>{0} = character name; header of a per-section count column.</summary>
     public const string DiffOnlyColumnFormat = "Only {0}";
-    public const string DiffValueTooltip = "Unlock value: 1 for any quest, +3 main scenario, +5 feature quest, +2 per unique reward. Higher first.";
+    public const string DiffValueTooltip = "Unlock value: 1 for any quest, +3 main scenario, +5 unlock quest, +2 per unique reward. Higher first.";
     /// <summary>{0} = the character that has the quests, {1} = the one that lacks them.</summary>
     public const string DiffOnlyFormat = "Done on {0}, not on {1}";
     public const string DiffNone = "None.";
