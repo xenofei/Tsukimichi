@@ -16,9 +16,9 @@ public static class FilterNames
     public const string Pinned = "Pinned";
     public const string Search = "Search";
 
-    // Presets
-    public const string FeatureQuests = "Feature quests";
-    public const string LevelBand = "Around my level";
+    // Quick views (presets)
+    public const string FeatureQuests = "Unlocks";
+    public const string LevelBand = "My level";
     public const string Stalled = "Stalled";
 
     /// <summary>Chip and empty-guard label of a preset; empty for <see cref="Preset.None"/>.</summary>

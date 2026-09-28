@@ -68,8 +68,8 @@ public class CharacterDiffTests
     {
         Assert.Equal("Side quest", CharacterDiff.ReasonOf(10, Ctx));
         Assert.Equal("Main scenario", CharacterDiff.ReasonOf(1, Ctx));
-        Assert.Equal("Feature quest", CharacterDiff.ReasonOf(12, Ctx));
-        Assert.Equal("Feature quest · 2 unique rewards", CharacterDiff.ReasonOf(13, Ctx));
+        Assert.Equal("Unlock quest", CharacterDiff.ReasonOf(12, Ctx));
+        Assert.Equal("Unlock quest · 2 unique rewards", CharacterDiff.ReasonOf(13, Ctx));
 
         var oneReward = new DiffContext(new HashSet<uint>(), _ => 1, _ => true);
         Assert.Equal("Main scenario · 1 unique reward", CharacterDiff.ReasonOf(10, oneReward));
