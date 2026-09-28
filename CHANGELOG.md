@@ -4,6 +4,12 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+### Changed
+- Moonlit: 68 seasonal-event rewards that the FFXIV Online Store also sells (Starlight Bear, Witch's Broom, Pumpkin Butler, the Bomb Dance and Huzzah emotes, Postmoogle Barding, Red Moon Parasol, ...) are now marked "Store only" in the row, in the reward tooltip and in the item hover hint, with the note that they are not exclusive to the quest. A new toolbar checkbox, "Hide store re-sells", drops them from the list and from the obtained/total counts; the setting is remembered.
+
+### Fixed
+- Pandaemonium: Asphodelos: The First Circle is now credited to the quest that actually unlocks it, "Where Familiars Dare", instead of the chain's first quest "The Crystal from Beyond" (which stays listed as an unlock quest by its journal icon).
+
 ## [0.5.1] - 2026-09-28
 
 ### Added
