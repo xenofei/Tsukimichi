@@ -37,6 +37,10 @@ public sealed class DetailPane
     private const int MinFoldedRun = 2;
     private const int NoteLength = 120;
 
+    // Header badge for QuestRecord.IconSpecial (seasonal events, promotions).
+    private const string SeasonalBadgeTooltip = "Seasonal event quest";
+    private const string SpecialBadgeTooltip = "Special";
+
     private sealed record RequirementLine(bool Met, bool IsNext, string Label, string Detail);
 
     private sealed record RewardLine(RewardRef Reward, string Text, string Kind);
@@ -240,7 +244,8 @@ public sealed class DetailPane
         var pad = UiMetrics.Px(8f);
         var radius = UiMetrics.HeaderMoonRadius;
         var moonBox = radius * 2.4f;
-        var textWrap = MathF.Max(UiMetrics.Px(40f), width - pad * 3f - moonBox);
+        var badge = quest.IconSpecial != 0 ? UiMetrics.BannerBadgeSize + pad : 0f;
+        var textWrap = MathF.Max(UiMetrics.Px(40f), width - pad * 3f - moonBox - badge);
         var textHeight = ImGui.CalcTextSize(quest.Name, false, textWrap).Y;
         var stripHeight = MathF.Min(height, MathF.Max(textHeight + pad * 2f, moonBox + pad));
         var stripTop = max.Y - stripHeight;
@@ -255,8 +260,34 @@ public sealed class DetailPane
         dl.AddRectFilled(new Vector2(min.X, stripTop), max, solid);
         dl.AddText(ImGui.GetFont(), ImGui.GetFontSize(), new Vector2(min.X + pad, max.Y - pad - textHeight), Theme.SilverU32, quest.Name, textWrap);
         MoonGlyph.Draw(dl, new Vector2(max.X - pad - moonBox * 0.5f, max.Y - stripHeight * 0.5f), radius, model.State);
+        if (badge > 0f)
+        {
+            var size = UiMetrics.BannerBadgeSize;
+            var badgeMin = new Vector2(max.X - pad - moonBox - pad - size, max.Y - stripHeight * 0.5f - size * 0.5f);
+            DrawSpecialBadge(dl, quest, badgeMin, size);
+        }
+
         ImGui.Spacing();
         return true;
+    }
+
+    /// <summary>
+    /// The quest's special icon (<see cref="QuestRecord.IconSpecial"/>) drawn on the draw list at <paramref name="min"/>,
+    /// with a tooltip naming what the badge means. Nothing is drawn while the texture is still loading.
+    /// </summary>
+    private void DrawSpecialBadge(ImDrawListPtr dl, QuestRecord quest, Vector2 min, float size)
+    {
+        if (!textures.GetFromGameIcon(new GameIconLookup(quest.IconSpecial)).TryGetWrap(out var wrap, out _))
+        {
+            return;
+        }
+
+        var max = min + new Vector2(size, size);
+        dl.AddImage(wrap.Handle, min, max);
+        if (ImGui.IsMouseHoveringRect(min, max))
+        {
+            UiMetrics.Tooltip(quest.Festival != 0 ? SeasonalBadgeTooltip : SpecialBadgeTooltip);
+        }
     }
 
     /// <summary>Raised Night card with the state moon and the name, for quests without a banner.</summary>
@@ -279,7 +310,18 @@ public sealed class DetailPane
             ImGui.Dummy(new Vector2(box, box));
             MoonGlyph.Draw(dl, pos + new Vector2(box * 0.5f), radius, model.State);
             ImGui.SameLine();
-            using var wrap = ImRaii.TextWrapPos(ImGui.GetCursorPosX() + width - box - pad * 3f);
+            var badge = 0f;
+            if (quest.IconSpecial != 0)
+            {
+                var size = UiMetrics.BannerBadgeSize;
+                badge = size + pad;
+                var badgeMin = ImGui.GetCursorScreenPos() + new Vector2(0f, (box - size) * 0.5f);
+                ImGui.Dummy(new Vector2(size, box));
+                DrawSpecialBadge(dl, quest, badgeMin, size);
+                ImGui.SameLine();
+            }
+
+            using var wrap = ImRaii.TextWrapPos(ImGui.GetCursorPosX() + width - box - badge - pad * 3f);
             using var silver = Theme.PushText(Theme.Silver);
             ImGui.TextWrapped(quest.Name);
         }

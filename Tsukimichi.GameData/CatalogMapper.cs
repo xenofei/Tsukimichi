@@ -116,6 +116,7 @@ public static class CatalogMapper
 
             Issuer = MapIssuer(in quest),
             Icon = quest.Icon,
+            IconSpecial = quest.IconSpecial,
 
             Rewards = MapRewards(in quest, sheets),
             ExpFactor = quest.ExpFactor,

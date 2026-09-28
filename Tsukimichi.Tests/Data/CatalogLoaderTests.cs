@@ -158,6 +158,8 @@ public class CatalogLoaderTests(GameDataFixture fixture, ITestOutputHelper outpu
         Assert.Equal(48, quest.Festival);
         Assert.Equal(JoinKind.Any, quest.PreviousQuests.Join);
         Assert.Equal(3, quest.PreviousQuests.QuestIds.Length);
+        Assert.Equal(80116u, quest.IconSpecial);
+        Assert.Equal(0u, Catalog.GetByRowId(65621u)!.IconSpecial);
     }
 
     [GameDataFact]
