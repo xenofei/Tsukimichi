@@ -792,8 +792,9 @@ public sealed class MainWindow : Window, IDisposable
         ImGui.SameLine();
         var avail = ImGui.GetContentRegionAvail().X;
         var statusWidth = ImGui.CalcTextSize(status).X;
-        var msqWidth = msqStatus.Length > 0 ? ImGui.CalcTextSize(msqStatus).X : 0f;
-        if (statusWidth + msqWidth <= avail)
+        var msqTextWidth = msqStatus.Length > 0 ? ImGui.CalcTextSize(msqStatus).X : 0f;
+        var msqRoom = msqTextWidth;
+        if (statusWidth + msqTextWidth <= avail)
         {
             ImGui.TextDisabled(status);
         }
@@ -801,23 +802,23 @@ public sealed class MainWindow : Window, IDisposable
         {
             // Too narrow for both: the status keeps at least its floor and the MSQ segment gets the rest; whichever
             // does not fit ends in an ellipsis instead of running past the window edge.
-            var statusRoom = MathF.Max(MathF.Min(statusWidth, UiMetrics.Px(StatusMinLogical)), avail - msqWidth);
+            var statusRoom = MathF.Max(MathF.Min(statusWidth, UiMetrics.Px(StatusMinLogical)), avail - msqTextWidth);
             statusRoom = MathF.Min(statusRoom, avail);
             EllipsisText(status, statusRoom, statusWidth);
-            msqWidth = MathF.Max(0f, avail - statusRoom);
+            msqRoom = MathF.Max(0f, avail - statusRoom);
         }
 
         if (msqStatus.Length > 0)
         {
             // The MSQ position follows the status text as its own item so it can carry a tooltip and a click.
             ImGui.SameLine(0f, 0f);
-            if (ImGui.CalcTextSize(msqStatus).X <= msqWidth)
+            if (msqTextWidth <= msqRoom)
             {
                 ImGui.TextDisabled(msqStatus);
             }
             else
             {
-                EllipsisText(msqStatus, msqWidth, ImGui.CalcTextSize(msqStatus).X);
+                EllipsisText(msqStatus, msqRoom, msqTextWidth);
             }
 
             if (ImGui.IsItemHovered())
