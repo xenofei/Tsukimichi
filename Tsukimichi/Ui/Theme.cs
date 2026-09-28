@@ -30,8 +30,14 @@ public static class Theme
     /// <summary>#4A5270 – disabled, unknown.</summary>
     public static readonly Vector4 Veil = Rgb(0x4A5270);
 
-    /// <summary>Dark disc of the unlit glyph states: Night lifted halfway toward Veil (#2C334A) so it stays visible on a Night panel.</summary>
-    public static readonly Vector4 UnlitDisc = Vector4.Lerp(Night, Veil, 0.5f);
+    /// <summary>#3A4363 – the dark side of every state moon and the filling moon (glyph proposal v2.1 §3.4); always behind a rim.</summary>
+    public static readonly Vector4 Shadow = Rgb(0x3A4363);
+
+    /// <summary>#5C6584 – line tone that clears 3 : 1 on Night (3.19 : 1): the halo gauge track and similar thin strokes.</summary>
+    public static readonly Vector4 VeilLine = Rgb(0x5C6584);
+
+    /// <summary>Dark disc of the unlit glyph states. Now <see cref="Shadow"/>; the name stays so callers compile.</summary>
+    public static readonly Vector4 UnlitDisc = Shadow;
 
     /// <summary>A panel one step above Night (a quarter of the way to Veil), for header cards on the Night background.</summary>
     public static readonly Vector4 NightRaised = Vector4.Lerp(Night, Veil, 0.25f);
@@ -45,6 +51,8 @@ public static class Theme
     public static readonly uint DuskU32 = Pack(Dusk);
     public static readonly uint EclipseU32 = Pack(Eclipse);
     public static readonly uint VeilU32 = Pack(Veil);
+    public static readonly uint ShadowU32 = Pack(Shadow);
+    public static readonly uint VeilLineU32 = Pack(VeilLine);
     public static readonly uint UnlitDiscU32 = Pack(UnlitDisc);
     public static readonly uint NightRaisedU32 = Pack(NightRaised);
 

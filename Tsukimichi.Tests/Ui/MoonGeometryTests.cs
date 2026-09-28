@@ -114,8 +114,22 @@ public class MoonGeometryTests
     [InlineData(0.50f, 0.50f)]
     [InlineData(0.75f, 0.75f)]
     [InlineData(1.00f, 1.00f)]
-    public void Filling_moon_lit_area_tracks_the_fraction(float fraction, float expected)
+    public void Exact_terminator_lit_area_tracks_the_width(float litWidth, float expected)
     {
+        var layers = MoonGeometry.Terminator(Center, 20f, litWidth);
+        Assert.InRange(layers.LitAreaFraction, expected - 0.05f, expected + 0.05f);
+    }
+
+    [Theory]
+    [InlineData(0.00f)]
+    [InlineData(0.25f)]
+    [InlineData(0.50f)]
+    [InlineData(0.75f)]
+    [InlineData(1.00f)]
+    public void Filling_moon_lit_area_tracks_the_floored_fraction(float fraction)
+    {
+        // The floor moves 0.25 to 0.30 and 0.75 to 0.70 at r = 20 (floor 0.10); 0, 0.5 and 1 are fixed points.
+        var expected = MoonGeometry.FlooredFraction(fraction, 20f);
         var layers = MoonGeometry.Filling(Center, 20f, fraction);
         Assert.InRange(layers.LitAreaFraction, expected - 0.05f, expected + 0.05f);
     }
@@ -184,6 +198,97 @@ public class MoonGeometryTests
         Assert.Equal(0f, MoonGeometry.Filling(Center, 20f, -0.5f).LitAreaFraction);
         Assert.Equal(1f, MoonGeometry.Filling(Center, 20f, 1.5f).LitAreaFraction);
         Assert.Equal(0f, MoonGeometry.Filling(Center, 20f, float.NaN).LitAreaFraction);
+    }
+
+    // ------------------------------------------------------------------ terminator floor
+
+    [Fact]
+    public void Terminator_floor_is_the_larger_of_the_fraction_and_the_pixel_floor()
+    {
+        Assert.Equal(0.10f, MoonGeometry.TerminatorFloor(20f), 4);          // 1.5 / 40 = 0.0375 < 0.10
+        Assert.Equal(1.5f / 14f, MoonGeometry.TerminatorFloor(7f), 4);      // 0.107 > 0.10
+        Assert.Equal(0.25f, MoonGeometry.TerminatorFloor(3f), 4);           // 1.5 / 6
+        Assert.Equal(0.5f, MoonGeometry.TerminatorFloor(1f), 4);            // capped at the half
+        Assert.Equal(0.5f, MoonGeometry.TerminatorFloor(0f), 4);
+    }
+
+    [Fact]
+    public void Floored_fraction_keeps_the_endpoints_exact_and_lifts_everything_between()
+    {
+        Assert.Equal(0f, MoonGeometry.FlooredFraction(0f, 7f));
+        Assert.Equal(1f, MoonGeometry.FlooredFraction(1f, 7f));
+        Assert.Equal(0f, MoonGeometry.FlooredFraction(-0.2f, 7f));
+        Assert.Equal(1f, MoonGeometry.FlooredFraction(1.2f, 7f));
+        Assert.Equal(0f, MoonGeometry.FlooredFraction(float.NaN, 7f));
+        Assert.Equal(0.5f, MoonGeometry.FlooredFraction(0.5f, 7f), 5);
+
+        var floor = MoonGeometry.TerminatorFloor(7f);
+        Assert.True(MoonGeometry.FlooredFraction(0.001f, 7f) >= floor);
+        Assert.True(MoonGeometry.FlooredFraction(0.999f, 7f) <= 1f - floor);
+    }
+
+    [Fact]
+    public void Three_percent_at_radius_seven_draws_a_visible_crescent()
+    {
+        // 17 / 612 on a 14 px tree moon: the plan's failing case. The lit sliver must be at least 1.5 px wide.
+        var layers = MoonGeometry.Filling(Center, 7f, 17f / 612f);
+        Assert.True(layers.BaseLit);
+        Assert.True(layers.HasOverlay);
+        Assert.True(layers.LitEquatorWidth >= MoonGeometry.MinLitWidthPx - 1e-3f, $"lit width {layers.LitEquatorWidth} px");
+        Assert.True(layers.LitAreaFraction > 0f);
+    }
+
+    [Fact]
+    public void Near_one_the_dark_side_keeps_the_same_floor()
+    {
+        var layers = MoonGeometry.Filling(Center, 7f, 0.97f);
+        Assert.False(layers.BaseLit);
+        Assert.True(layers.HasOverlay);
+        Assert.True(layers.DarkEquatorWidth >= MoonGeometry.MinLitWidthPx - 1e-3f, $"dark width {layers.DarkEquatorWidth} px");
+        Assert.True(layers.LitAreaFraction < 1f);
+    }
+
+    [Fact]
+    public void Lit_width_is_floored_at_every_radius_and_exact_at_the_ends()
+    {
+        foreach (var radius in Radii)
+        {
+            var pixelFloor = MathF.Min(radius, MathF.Max(MoonGeometry.MinLitWidthPx, MoonGeometry.MinLitFraction * 2f * radius));
+            foreach (var f in new[] { 0.001f, 0.03f, 0.10f, 0.90f, 0.97f, 0.999f })
+            {
+                var layers = MoonGeometry.Filling(Center, radius, f);
+                Assert.True(layers.LitEquatorWidth >= pixelFloor - 1e-3f, $"r={radius} f={f}: lit {layers.LitEquatorWidth}");
+                Assert.True(layers.DarkEquatorWidth >= pixelFloor - 1e-3f, $"r={radius} f={f}: dark {layers.DarkEquatorWidth}");
+            }
+
+            Assert.Equal(0f, MoonGeometry.Filling(Center, radius, 0f).LitEquatorWidth);
+            Assert.Equal(2f * radius, MoonGeometry.Filling(Center, radius, 1f).LitEquatorWidth);
+        }
+    }
+
+    [Fact]
+    public void Lit_width_is_monotonic_in_the_fraction()
+    {
+        foreach (var radius in Radii)
+        {
+            var previous = -1f;
+            for (var f = 0f; f <= 1.0001f; f += 0.01f)
+            {
+                var width = MoonGeometry.Filling(Center, radius, f).LitEquatorWidth;
+                Assert.True(width >= previous - 1e-3f, $"r={radius}: lit width fell from {previous} to {width} at f={f}");
+                previous = width;
+            }
+        }
+    }
+
+    [Fact]
+    public void Equator_crossings_of_a_square_are_its_sides()
+    {
+        var square = new[] { new Vector2(0, 0), new Vector2(2, 0), new Vector2(2, 2), new Vector2(0, 2) };
+        Assert.True(MoonGeometry.EquatorCrossings(square, 1f, out var min, out var max));
+        Assert.Equal(0f, min, 4);
+        Assert.Equal(2f, max, 4);
+        Assert.False(MoonGeometry.EquatorCrossings(square, 3f, out _, out _));
     }
 
     // ------------------------------------------------------------------ building blocks

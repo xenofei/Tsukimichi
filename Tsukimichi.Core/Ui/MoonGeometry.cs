@@ -24,9 +24,9 @@ public enum MoonPhase
 
 /// <summary>
 /// Allocating description of a moon as two layers: a base disc in one tone and, optionally, one convex
-/// overlay polygon in the opposite tone. Produced by <see cref="MoonGeometry.Filling"/> and
-/// <see cref="MoonGeometry.ForPhase"/>; mainly for tests and one-off callers. Per-frame drawing uses the
-/// list-filling overloads instead.
+/// overlay polygon in the opposite tone. Produced by <see cref="MoonGeometry.Filling"/>,
+/// <see cref="MoonGeometry.Terminator"/> and <see cref="MoonGeometry.ForPhase"/>; mainly for tests and one-off
+/// callers. Per-frame drawing uses the list-filling overloads instead.
 /// </summary>
 public readonly record struct MoonLayers(Vector2 Center, float Radius, int Segments, bool BaseLit, Vector2[] Overlay)
 {
@@ -50,6 +50,25 @@ public readonly record struct MoonLayers(Vector2 Center, float Radius, int Segme
             return Math.Clamp(lit / disc, 0f, 1f);
         }
     }
+
+    /// <summary>
+    /// Width in pixels of the lit part along the equator (the horizontal line through the centre), measured on the
+    /// drawn polygons: a lit lens is as wide as its equator crossing; a shadow lens on a lit disc leaves the rim to
+    /// its right lit. This is what the terminator floor guarantees, so tests measure it rather than the formula.
+    /// </summary>
+    public float LitEquatorWidth
+    {
+        get
+        {
+            if (!HasOverlay) return BaseLit ? 2f * Radius : 0f;
+            if (!MoonGeometry.EquatorCrossings(Overlay, Center.Y, out var min, out var max))
+                return BaseLit ? 2f * Radius : 0f;
+            return BaseLit ? Math.Max(0f, Center.X + Radius - max) : Math.Max(0f, max - min);
+        }
+    }
+
+    /// <summary>Width in pixels of the dark part along the equator; the complement of <see cref="LitEquatorWidth"/>.</summary>
+    public float DarkEquatorWidth => Math.Max(0f, 2f * Radius - LitEquatorWidth);
 }
 
 /// <summary>
@@ -71,6 +90,16 @@ public static class MoonGeometry
 {
     /// <summary>Terminator disc offset for the gibbous phases as a fraction of the radius (Pillow script: 0.5·r).</summary>
     public const float GibbousOffset = 0.5f;
+
+    /// <summary>
+    /// Terminator floor (glyph proposal v2.1 §3.2, imgui-notes §1): the lit side of a filling moon is never narrower
+    /// at the equator than this fraction of the diameter, nor than <see cref="MinLitWidthPx"/>, for any fraction
+    /// strictly between 0 and 1; the same holds for the dark side near 1. A 17/612 node shows a crescent, not a full disc.
+    /// </summary>
+    public const float MinLitFraction = 0.10f;
+
+    /// <summary>Pixel floor for the lit (or dark) equator width of a filling moon; 1.5 px survives anti-aliasing.</summary>
+    public const float MinLitWidthPx = 1.5f;
 
     /// <summary>Smallest circle segment count; keeps a 6 px moon from looking like a decagon.</summary>
     public const int MinSegments = 12;
@@ -127,6 +156,39 @@ public static class MoonGeometry
     {
         segments = Math.Max(3, segments);
         return 0.5f * segments * radius * radius * MathF.Sin(TwoPi / segments);
+    }
+
+    /// <summary>
+    /// Leftmost and rightmost x where the horizontal line y = <paramref name="y"/> crosses the polygon's edges.
+    /// False when the line misses it.
+    /// </summary>
+    public static bool EquatorCrossings(ReadOnlySpan<Vector2> polygon, float y, out float min, out float max)
+    {
+        min = float.PositiveInfinity;
+        max = float.NegativeInfinity;
+        for (int i = 0, j = polygon.Length - 1; i < polygon.Length; j = i++)
+        {
+            var a = polygon[j];
+            var b = polygon[i];
+            if (a.Y == b.Y)
+            {
+                if (a.Y != y) continue;        // horizontal edge on the line: both ends count
+                Widen(a.X, ref min, ref max);
+                Widen(b.X, ref min, ref max);
+                continue;
+            }
+
+            if ((a.Y <= y) == (b.Y <= y)) continue;   // both ends on the same side
+            Widen(a.X + (b.X - a.X) * (y - a.Y) / (b.Y - a.Y), ref min, ref max);
+        }
+
+        return min <= max;
+
+        static void Widen(float x, ref float min, ref float max)
+        {
+            if (x < min) min = x;
+            if (x > max) max = x;
+        }
     }
 
     /// <summary>Regular polygon approximating the disc, vertices at angles 2π·k/segments.</summary>
@@ -232,15 +294,46 @@ public static class MoonGeometry
     }
 
     /// <summary>
-    /// Layers for a filling moon: lit fraction from 0 (new) to 1 (full), filling right to left like a waxing moon.
-    /// The terminator is a circle through both poles whose equator point sits at x = center + (1 − 2·fraction)·radius,
-    /// so the lit width at the equator is exactly <paramref name="fraction"/> of the diameter. Returns whether the
-    /// base disc is lit; <paramref name="overlay"/> receives the convex overlay polygon in the opposite tone.
+    /// Smallest lit (or dark) equator width for a moon of this radius, as a fraction of the diameter:
+    /// max(<see cref="MinLitFraction"/>, <see cref="MinLitWidthPx"/> / 2r), never above one half.
     /// </summary>
-    public static bool FillingLayers(Vector2 center, float radius, float fraction, int segments, List<Vector2> overlay)
+    public static float TerminatorFloor(float radius)
+    {
+        if (!(radius > 0f)) return 0.5f;
+        return MathF.Min(0.5f, MathF.Max(MinLitFraction, MinLitWidthPx / (2f * radius)));
+    }
+
+    /// <summary>
+    /// The lit width the filling moon draws for a progress <paramref name="fraction"/>: 0 and 1 stay exact, everything
+    /// between is mapped into [floor, 1 − floor] so both the first sliver and the last gap are visible.
+    /// </summary>
+    public static float FlooredFraction(float fraction, float radius)
+    {
+        fraction = float.IsNaN(fraction) ? 0f : Math.Clamp(fraction, 0f, 1f);
+        if (fraction <= 0f) return 0f;
+        if (fraction >= 1f) return 1f;
+        var floor = TerminatorFloor(radius);
+        return floor + (1f - 2f * floor) * fraction;
+    }
+
+    /// <summary>
+    /// Layers for a filling moon: lit <paramref name="fraction"/> from 0 (new) to 1 (full), filling right to left like
+    /// a waxing moon, with the terminator floor applied (<see cref="FlooredFraction"/>). Returns whether the base disc
+    /// is lit; <paramref name="overlay"/> receives the convex overlay polygon in the opposite tone.
+    /// </summary>
+    public static bool FillingLayers(Vector2 center, float radius, float fraction, int segments, List<Vector2> overlay) =>
+        TerminatorLayers(center, radius, FlooredFraction(fraction, radius), segments, overlay);
+
+    /// <summary>
+    /// Exact terminator geometry: a circle through both poles whose equator point sits at
+    /// x = center + (1 − 2·<paramref name="litWidth"/>)·radius, so the lit width at the equator is exactly
+    /// <paramref name="litWidth"/> of the diameter (no floor). Returns whether the base disc is lit;
+    /// <paramref name="overlay"/> receives the convex overlay polygon in the opposite tone.
+    /// </summary>
+    public static bool TerminatorLayers(Vector2 center, float radius, float litWidth, int segments, List<Vector2> overlay)
     {
         overlay.Clear();
-        fraction = float.IsNaN(fraction) ? 0f : Math.Clamp(fraction, 0f, 1f);
+        var fraction = float.IsNaN(litWidth) ? 0f : Math.Clamp(litWidth, 0f, 1f);
         const float Epsilon = 0.005f;
 
         if (fraction <= Epsilon) return false;          // new: dark disc only
@@ -280,12 +373,21 @@ public static class MoonGeometry
         return new MoonLayers(center, radius, segments, baseLit, overlay.ToArray());
     }
 
-    /// <summary>Allocating form of <see cref="FillingLayers"/>.</summary>
+    /// <summary>Allocating form of <see cref="FillingLayers"/> (floored).</summary>
     public static MoonLayers Filling(Vector2 center, float radius, float fraction, int segments = 0)
     {
         if (segments <= 0) segments = SegmentsFor(radius);
         var overlay = new List<Vector2>();
         var baseLit = FillingLayers(center, radius, fraction, segments, overlay);
+        return new MoonLayers(center, radius, segments, baseLit, overlay.ToArray());
+    }
+
+    /// <summary>Allocating form of <see cref="TerminatorLayers"/> (exact, no floor).</summary>
+    public static MoonLayers Terminator(Vector2 center, float radius, float litWidth, int segments = 0)
+    {
+        if (segments <= 0) segments = SegmentsFor(radius);
+        var overlay = new List<Vector2>();
+        var baseLit = TerminatorLayers(center, radius, litWidth, segments, overlay);
         return new MoonLayers(center, radius, segments, baseLit, overlay.ToArray());
     }
 

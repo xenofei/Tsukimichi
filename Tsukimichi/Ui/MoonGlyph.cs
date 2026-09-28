@@ -12,11 +12,13 @@ namespace Tsukimichi.Ui;
 /// Procedural moon-phase glyphs for quest states (spec §2.1), drawn with ImDrawList primitives so they scale with
 /// the UI and need no textures. Geometry comes from <see cref="MoonGeometry"/>; this class only paints.
 ///
-/// The look replicates assets/icons/render_icons.py: a dark base disc, the lit part as the intersection of the base
-/// disc with an offset terminator disc, rings whose thickness scales with the radius, a soft glow for Ready, a
-/// dashed ring for Unknown and a notch bitten out of the Foreclosed ring. From <see cref="ShadingMinRadius"/> up the
-/// lit part also gets three inset discs that brighten toward its centre and a faint highlight arc on the upper-left
-/// of the lit region, so larger moons read as spheres; below that the flat fill stays crisp.
+/// The look follows docs/design/glyphs/proposal.md v2.1 §3.1 for the parts that need no new art (release 0.5.1, T9a):
+/// a Shadow base disc, a rim stroke of <see cref="Rim"/> px inside the rim in the state's colour, the lit part as the
+/// intersection of the base disc with a terminator disc, a soft glow for Ready (a single thin ring below r 9), a
+/// dashed rim for Unknown and a diagonal Eclipse bar (plus a notch from r 12) for Foreclosed. Draw order is
+/// disc → rim → lit part, except the ring states (Accepted, ReadyOnOtherJob, Blocked) where the ring goes last, and
+/// marks after the lit part. From <see cref="ShadingMinRadius"/> up the lit part also gets three inset discs that
+/// brighten toward its centre and a faint highlight arc on the upper-left, so larger moons read as spheres.
 /// </summary>
 public static class MoonGlyph
 {
@@ -26,11 +28,30 @@ public static class MoonGlyph
     /// <summary>Radius of an inline glyph as a fraction of its square, leaving room for rings, the notch and the glow.</summary>
     public const float InlineRadiusFraction = 0.42f;
 
-    /// <summary>Ring thickness as a fraction of the radius (never thinner than one pixel).</summary>
-    private const float RingFraction = 0.07f;
+    /// <summary>Radius from which the Foreclosed notch is bitten out of the rim; below it the bar alone carries the state.</summary>
+    public const float NotchMinRadius = 12f;
 
-    /// <summary>Glow discs for Ready, largest first: (radius multiplier, alpha). Approximates the Pillow quadratic halo.</summary>
-    private static readonly (float Scale, float Alpha)[] Glow = [(1.6f, 0.04f), (1.35f, 0.07f), (1.15f, 0.10f)];
+    /// <summary>Radius from which the Unknown rim has twelve 16° dashes; below it eight 22° dashes stay readable.</summary>
+    public const float FineDashMinRadius = 10f;
+
+    /// <summary>Glow discs for Ready at r ≥ 9, largest first: (radius multiplier, alpha), approximating the proposal's blurred gold disc.</summary>
+    private static readonly (float Scale, float Alpha)[] Glow = [(1.70f, 0.05f), (1.42f, 0.09f), (1.20f, 0.15f)];
+
+    /// <summary>Ready below r 9: one 1 px Moon ring at 1.25 r, 35 % — the glow discs vanish at that size.</summary>
+    private const float SmallReadyRingScale = 1.25f;
+    private static readonly uint SmallReadyRingColor = Theme.WithAlpha(Theme.Moon, 0.35f);
+
+    /// <summary>Unknown's disc: Shadow at 60 %, so the veiled state stays the faintest.</summary>
+    private static readonly uint VeiledDiscColor = Theme.WithAlpha(Theme.Shadow, 0.60f);
+
+    /// <summary>Foreclosed bar endpoints (× r) and width rule: a diagonal that survives every colour deficiency.</summary>
+    private static readonly Vector2 BarEnd = new(0.636f, 0.636f);
+    private const float BarWidthFraction = 0.22f;
+    private const float BarMinWidth = 2f;
+
+    /// <summary>Foreclosed notch: a Night disc biting the rim at the upper right.</summary>
+    private static readonly Vector2 NotchOffset = new(0.72f, -0.72f);
+    private const float NotchRadius = 0.30f;
 
     /// <summary>Inset shading layers, outermost first: (scale about the lit region's centroid, alpha).</summary>
     private static readonly (float Scale, float Alpha)[] Shading = [(0.78f, 0.09f), (0.55f, 0.11f), (0.32f, 0.13f)];
@@ -53,64 +74,78 @@ public static class MoonGlyph
     private static readonly List<Vector2> Overlay = new(256);
     private static readonly List<Vector2> Inset = new(256);
 
+    /// <summary>Rim stroke for a state moon of radius <paramref name="radius"/> px: 0.12 r clamped to 1.5–3 px (ui-revamp §2.7).</summary>
+    public static float Rim(float radius) => Math.Clamp(0.12f * radius, 1.5f, 3f);
+
     /// <summary>Draws the glyph for <paramref name="state"/> centred at <paramref name="center"/> with the given pixel radius.</summary>
     public static void Draw(ImDrawListPtr dl, Vector2 center, float radius, QuestState state)
     {
         if (!(radius > 0.5f)) return;
 
+        center = Snap(center, radius);
         var segments = MoonGeometry.SegmentsFor(radius);
-        var ring = RingThickness(radius);
+        var rim = Rim(radius);
 
         switch (state)
         {
-            case QuestState.Completed:                       // full moon
+            case QuestState.Completed:                       // full moon: the only rimless disc
                 FillDisc(dl, center, radius, segments, Theme.MoonU32);
                 ShadeLit(dl, center, radius, Scratch, null, GoldTone);
                 break;
 
-            case QuestState.Accepted:                        // waxing gibbous, gold, thin gold ring
-                FillDisc(dl, center, radius, segments, Theme.UnlitDiscU32);
+            case QuestState.Accepted:                        // waxing gibbous, gold, Moon ring last
+                FillDisc(dl, center, radius, segments, Theme.ShadowU32);
                 FillPhase(dl, center, radius, MoonPhase.WaxingGibbous, segments, Theme.MoonU32);
                 ShadeLit(dl, center, radius, Scratch, null, GoldTone);
-                Ring(dl, center, radius, segments, ring, Theme.MoonU32);
+                Ring(dl, center, radius, segments, rim, Theme.MoonU32);
                 break;
 
-            case QuestState.Ready:                           // first quarter, gold, outer glow
-                foreach (var (scale, alpha) in Glow)
-                    dl.AddCircleFilled(center, radius * scale, Theme.WithAlpha(Theme.Moon, alpha));
-                FillDisc(dl, center, radius, segments, Theme.UnlitDiscU32);
+            case QuestState.Ready:                           // first quarter, gold, Dusk rim under the lit half, glow or thin outer ring
+                if (radius < ShadingMinRadius)
+                    dl.AddCircle(center, radius * SmallReadyRingScale, SmallReadyRingColor, segments, 1f);
+                else
+                    foreach (var (scale, alpha) in Glow)
+                        dl.AddCircleFilled(center, radius * scale, Theme.WithAlpha(Theme.Moon, alpha));
+                FillDisc(dl, center, radius, segments, Theme.ShadowU32);
+                Ring(dl, center, radius, segments, rim, Theme.DuskU32);
                 FillPhase(dl, center, radius, MoonPhase.FirstQuarter, segments, Theme.MoonU32);
                 ShadeLit(dl, center, radius, Scratch, null, GoldTone);
                 break;
 
-            case QuestState.ReadyOnOtherJob:                 // first quarter, silver, gold ring
-                FillDisc(dl, center, radius, segments, Theme.UnlitDiscU32);
+            case QuestState.ReadyOnOtherJob:                 // first quarter, silver, Moon ring last
+                FillDisc(dl, center, radius, segments, Theme.ShadowU32);
                 FillPhase(dl, center, radius, MoonPhase.FirstQuarter, segments, Theme.SilverU32);
                 ShadeLit(dl, center, radius, Scratch, null, SilverTone);
-                Ring(dl, center, radius, segments, ring, Theme.MoonU32);
+                Ring(dl, center, radius, segments, rim, Theme.MoonU32);
                 break;
 
-            case QuestState.DoneThisCycle:                   // waning gibbous, silver
-                FillDisc(dl, center, radius, segments, Theme.UnlitDiscU32);
+            case QuestState.DoneThisCycle:                   // waning gibbous, silver, Dusk rim under the lit part
+                FillDisc(dl, center, radius, segments, Theme.ShadowU32);
+                Ring(dl, center, radius, segments, rim, Theme.DuskU32);
                 FillPhase(dl, center, radius, MoonPhase.WaningGibbous, segments, Theme.SilverU32);
                 ShadeLit(dl, center, radius, Scratch, null, SilverTone);
                 break;
 
-            case QuestState.Blocked:                         // new moon, thin silver ring
-                FillDisc(dl, center, radius, segments, Theme.UnlitDiscU32);
-                Ring(dl, center, radius, segments, ring, Theme.SilverU32);
+            case QuestState.Blocked:                         // new moon, Silver ring: the only plain empty ring
+                FillDisc(dl, center, radius, segments, Theme.ShadowU32);
+                Ring(dl, center, radius, segments, rim, Theme.SilverU32);
                 break;
 
-            case QuestState.Foreclosed:                      // eclipsed: dark, eclipse ring, notch at the upper right
-                FillDisc(dl, center, radius, segments, Theme.UnlitDiscU32);
-                Ring(dl, center, radius, segments, ring * 1.3f, Theme.EclipseU32);
-                dl.AddCircleFilled(center + new Vector2(0.72f, -0.72f) * radius, radius * 0.30f, Theme.NightU32);
+            case QuestState.Foreclosed:                      // eclipsed: Eclipse rim, diagonal bar, notch from r 12
+                FillDisc(dl, center, radius, segments, Theme.ShadowU32);
+                Ring(dl, center, radius, segments, rim, Theme.EclipseU32);
+                dl.AddLine(center - BarEnd * radius, center + BarEnd * radius, Theme.EclipseU32, MathF.Max(BarMinWidth, BarWidthFraction * radius));
+                if (radius >= NotchMinRadius)
+                    dl.AddCircleFilled(center + NotchOffset * radius, radius * NotchRadius, Theme.NightU32);
                 break;
 
-            case QuestState.Unknown:                         // veiled: dark, dashed ring
+            case QuestState.Unknown:                         // veiled: faint disc, dashed Dusk rim
             default:
-                FillDisc(dl, center, radius, segments, Theme.UnlitDiscU32);
-                DashedRing(dl, center, radius, ring, Theme.DuskU32);
+                FillDisc(dl, center, radius, segments, VeiledDiscColor);
+                if (radius >= FineDashMinRadius)
+                    DashedRing(dl, center, radius, segments, rim, Theme.DuskU32, dashes: 12, dashDegrees: 16f);
+                else
+                    DashedRing(dl, center, radius, segments, rim, Theme.DuskU32, dashes: 8, dashDegrees: 22f);
                 break;
         }
     }
@@ -128,34 +163,50 @@ public static class MoonGlyph
 
     /// <summary>
     /// Progress moon for tree nodes: lit <paramref name="fraction"/> from 0 (new) to 1 (full), filling right to left like a
-    /// waxing moon, with a thin Veil ring for definition on any background.
+    /// waxing moon. The dark side is Shadow with a Dusk rim of <see cref="Rim"/> px around it (the terminator always
+    /// runs pole to pole, so the dark side's rim is exactly the left half-circle); the lit side is rimless, like Completed.
+    /// <see cref="MoonGeometry.FillingLayers"/> applies the terminator floor, so any fraction strictly between 0 and 1
+    /// shows a visible sliver on both sides.
     /// </summary>
     public static void DrawFilling(ImDrawListPtr dl, Vector2 center, float radius, float fraction)
     {
         if (!(radius > 0.5f)) return;
 
+        center = Snap(center, radius);
         var segments = MoonGeometry.SegmentsFor(radius);
+        var rim = Rim(radius);
 
         // The overlay goes into its own list: FillDisc rewrites Scratch with the base polygon, and painting that
         // polygon in the overlay tone is exactly the bug that showed every partial moon as full (or new).
         var baseLit = MoonGeometry.FillingLayers(center, radius, fraction, segments, Overlay);
+        var hasOverlay = Overlay.Count >= 3;
 
-        FillDisc(dl, center, radius, segments, baseLit ? Theme.MoonU32 : Theme.UnlitDiscU32);
         if (baseLit)
         {
-            // Crescent (or full): the lit disc is shaded first, then the shadow lens covers the dark side.
-            ShadeLit(dl, center, radius, Scratch, Overlay.Count >= 3 ? Overlay : null, GoldTone);
-            FillPolygon(dl, Overlay, Theme.UnlitDiscU32);
+            // Crescent (or full): the lit disc is shaded first, then the shadow lens covers the dark side and the
+            // rim goes around that side only.
+            FillDisc(dl, center, radius, segments, Theme.MoonU32);
+            ShadeLit(dl, center, radius, Scratch, hasOverlay ? Overlay : null, GoldTone);
+            if (hasOverlay)
+            {
+                FillPolygon(dl, Overlay, Theme.ShadowU32);
+                DarkSideRim(dl, center, radius, segments, rim, Theme.DuskU32);
+            }
+        }
+        else if (hasOverlay)
+        {
+            // Gibbous or half: dark disc, rim under the lit lens, then the lit lens.
+            FillDisc(dl, center, radius, segments, Theme.ShadowU32);
+            DarkSideRim(dl, center, radius, segments, rim, Theme.DuskU32);
+            FillPolygon(dl, Overlay, Theme.MoonU32);
+            ShadeLit(dl, center, radius, Overlay, null, GoldTone);
         }
         else
         {
-            // Gibbous, half or new: the lit lens sits on the dark disc.
-            FillPolygon(dl, Overlay, Theme.MoonU32);
-            if (Overlay.Count >= 3)
-                ShadeLit(dl, center, radius, Overlay, null, GoldTone);
+            // New: a plain rimmed dark disc, so an empty node still has an outline.
+            FillDisc(dl, center, radius, segments, Theme.ShadowU32);
+            Ring(dl, center, radius, segments, rim, Theme.DuskU32);
         }
-
-        Ring(dl, center, radius, segments, RingThickness(radius), Theme.VeilU32);
     }
 
     /// <summary>Inline form of <see cref="DrawFilling"/>: reserves a square item and draws at the cursor.</summary>
@@ -166,7 +217,15 @@ public static class MoonGlyph
         DrawFilling(ImGui.GetWindowDrawList(), pos + new Vector2(size * 0.5f), size * 0.42f, fraction);
     }
 
-    private static float RingThickness(float radius) => MathF.Max(1f, radius * RingFraction);
+    /// <summary>
+    /// Snaps the centre so the rim lands on whole pixels: integer centres for an even diameter, half-integer for an
+    /// odd one (imgui-notes §1). Moves the glyph by at most half a pixel; the reserved box is not touched.
+    /// </summary>
+    private static Vector2 Snap(Vector2 center, float radius)
+    {
+        var offset = (int)MathF.Round(2f * radius) % 2 == 1 ? 0.5f : 0f;
+        return new Vector2(MathF.Round(center.X - offset) + offset, MathF.Round(center.Y - offset) + offset);
+    }
 
     /// <summary>Base disc through the same polygon the overlays use, so their rim chords coincide with it.</summary>
     private static void FillDisc(ImDrawListPtr dl, Vector2 center, float radius, int segments, uint color)
@@ -274,29 +333,39 @@ public static class MoonGlyph
         return true;
     }
 
-    /// <summary>Ring just inside the rim, like Pillow's inward outline.</summary>
+    /// <summary>Ring just inside the rim, like Pillow's inward outline: stroke centred at r − thickness/2.</summary>
     private static void Ring(ImDrawListPtr dl, Vector2 center, float radius, int segments, float thickness, uint color)
     {
         dl.AddCircle(center, radius - thickness * 0.5f, color, segments, thickness);
     }
 
-    /// <summary>Twelve 16° dashes every 30°, starting at the top (Pillow: start = k·30 − 90).</summary>
-    private static void DashedRing(ImDrawListPtr dl, Vector2 center, float radius, float thickness, uint color)
+    /// <summary>The rim arc over the dark side of a filling moon: the left half-circle, pole to pole, butt ends.</summary>
+    private static void DarkSideRim(ImDrawListPtr dl, Vector2 center, float radius, int segments, float thickness, uint color)
     {
-        const int Dashes = 12;
-        const float DashDegrees = 16f;
+        dl.PathClear();
+        dl.PathArcTo(center, radius - thickness * 0.5f, MathF.PI / 2f, 3f * MathF.PI / 2f, ArcSegments(segments, MathF.PI));
+        dl.PathStroke(color, ImDrawFlags.None, thickness);
+    }
+
+    /// <summary><paramref name="dashes"/> dashes of <paramref name="dashDegrees"/> each, evenly spaced from 12 o'clock.</summary>
+    private static void DashedRing(ImDrawListPtr dl, Vector2 center, float radius, int segments, float thickness, uint color, int dashes, float dashDegrees)
+    {
         var r = radius - thickness * 0.5f;
-        var arcSegments = Math.Max(2, (int)MathF.Ceiling(radius / 8f));
+        var sweep = dashDegrees * (MathF.PI / 180f);
+        var arcSegments = ArcSegments(segments, sweep);
 
         dl.PathClear();
-        for (var k = 0; k < Dashes; k++)
+        for (var k = 0; k < dashes; k++)
         {
-            var start = (k * 360f / Dashes - 90f) * (MathF.PI / 180f);
-            var end = start + DashDegrees * (MathF.PI / 180f);
-            dl.PathArcTo(center, r, start, end, arcSegments);
+            var start = (k * 360f / dashes - 90f) * (MathF.PI / 180f);
+            dl.PathArcTo(center, r, start, start + sweep, arcSegments);
             dl.PathStroke(color, ImDrawFlags.None, thickness);
         }
     }
+
+    /// <summary>Segments for an arc of <paramref name="sweep"/> radians at the disc's segment density, at least six.</summary>
+    private static int ArcSegments(int segments, float sweep) =>
+        Math.Max(6, (int)MathF.Ceiling(segments * sweep / (2f * MathF.PI)));
 
     /// <summary>Packed highlight colours for one lit tone: the inset discs (outermost first) and the arc.</summary>
     private readonly struct Tone(uint[] inner, uint arc)
