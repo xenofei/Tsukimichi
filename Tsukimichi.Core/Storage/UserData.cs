@@ -3,7 +3,8 @@ using System.Text.Json;
 namespace Tsukimichi.Core.Storage;
 
 /// <summary>A user's verdict on whether a quest's reward is unique, overriding shipped data.</summary>
-public sealed record UniqueOverride(bool Unique, string? Note);
+/// <param name="MarkedUtc">When the verdict was given; null for verdicts stored before 0.5.1.</param>
+public sealed record UniqueOverride(bool Unique, string? Note, DateTime? MarkedUtc = null);
 
 /// <summary>
 /// <c>user/pins.json</c>: content id to the quest row ids that character has pinned.
@@ -24,7 +25,8 @@ public static class PinsFile
 
 /// <summary>
 /// <c>user/overrides.json</c>: quest row id to the user's unique/not-unique override.
-/// Shape: <c>{ "&lt;rowId&gt;": { "unique": true, "note": "..." } }</c>; <c>note</c> may be null or absent.
+/// Shape: <c>{ "&lt;rowId&gt;": { "unique": true, "note": "...", "markedUtc": "2026-09-28T10:00:00Z" } }</c>; <c>note</c>
+/// and <c>markedUtc</c> may be null or absent.
 /// </summary>
 public static class OverridesFile
 {

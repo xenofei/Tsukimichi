@@ -10,11 +10,18 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 ### Changed
 - CI: every push and pull request builds the solution with warnings as errors and runs the tests. The release workflow refuses a tag whose version differs from the plugin's, or that has no changelog section; it publishes tags with a suffix (`-rc1`) as prereleases without touching the plugin repository index, retries the index push, and can be re-run for an existing tag.
 - Partial moons in the tree are visible again: a section that is only a few quests along shows a thin gold crescent instead of a dark disc, and one that is nearly done keeps a visible dark sliver until the last quest. Every state moon now sits on a slightly lighter disc with a coloured rim, so it reads at row size on dark backgrounds; Ready keeps a thin gold ring around it at small sizes where the glow used to vanish; a foreclosed quest shows a diagonal bar through its moon, so the state no longer depends on telling red from grey.
+- Marking a quest as unique, and hiding one as not unique from a Moonlit row's context menu, both ask first in the same small popup: type a note (it has the keyboard already; Enter confirms), then press and hold the confirm button until the gold arc around it closes, or hold Shift and click. Releasing early cancels; Escape cancels. "Not unique (hide)" no longer applies on a single click.
+- After either verdict a "Marked unique · Undo" (or "Hidden as not unique · Undo") line shows for eight seconds where you made the change; Undo forgets the verdict again.
+- Quests you hid as not unique are no longer unreachable: the Moonlit "Yours only" confidence filter lists them struck through in grey, and their context menu offers "Restore shipped verdict". Every other filter keeps them hidden.
+- Verdicts now remember when they were given; verdicts stored by earlier versions load unchanged and show no date.
+- Help (Moonlit › Overrides and Restore) and the tour's Moonlit step describe the hold-or-Shift confirm and the ways back.
 
 ### Fixed
 - Allied society dailies: accepting one daily no longer turns every other tribe's dailies Blocked with "not offered today". The game never stores the day's offer (the array the plugin read holds the dailies you have already accepted), so that check is gone; a daily you have picked up now shows Accepted instead of Ready, and one you have turned in today still shows done this cycle.
 - Seasonal quests: the shipped event end dates now reach the evaluation, so a seasonal quest of an event whose known end has passed shows Foreclosed instead of staying Blocked forever; an event with no known end still shows Blocked with "seasonal event not active" until it runs. Counts and totals are unchanged in this release.
 - Switching characters without logging out in between no longer carries the previous character's Recent activity over, and no longer re-announces that character's newly available quests in chat for the new one.
+- Settings › Display: "Reduce motion". With it on, hold-to-confirm buttons count down in text ("Hold… (0.4 s)") instead of filling an arc.
+- Settings › Data: "Your Moonlit verdicts (N)" lists every quest you marked unique or hid as not unique, with the note and the date, a Restore button per row and "Restore all" (hold to confirm, or Shift and click).
 
 ## [0.5.0] - 2026-09-28
 

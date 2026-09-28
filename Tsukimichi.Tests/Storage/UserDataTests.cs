@@ -108,9 +108,10 @@ public sealed class UserDataTests : IDisposable
     public void Overrides_round_trip()
     {
         var path = tmp.File(Path.Combine("user", "overrides.json"));
+        var marked = new DateTime(2026, 9, 28, 10, 30, 0, DateTimeKind.Utc);
         var overrides = new Dictionary<uint, UniqueOverride>
         {
-            [66038] = new UniqueOverride(true, "Actually unique"),
+            [66038] = new UniqueOverride(true, "Actually unique", marked),
             [65576] = new UniqueOverride(false, null),
         };
 
@@ -118,8 +119,10 @@ public sealed class UserDataTests : IDisposable
         var loaded = OverridesFile.Load(path);
 
         Assert.Equal(2, loaded.Count);
-        Assert.Equal(new UniqueOverride(true, "Actually unique"), loaded[66038]);
+        Assert.Equal(new UniqueOverride(true, "Actually unique", marked), loaded[66038]);
+        Assert.Equal(DateTimeKind.Utc, loaded[66038].MarkedUtc!.Value.Kind);
         Assert.Equal(new UniqueOverride(false, null), loaded[65576]);
+        Assert.Null(loaded[65576].MarkedUtc);
         Assert.False(File.Exists(path + ".tmp"));
     }
 
