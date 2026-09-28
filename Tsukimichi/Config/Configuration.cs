@@ -26,7 +26,7 @@ public sealed class Configuration : IPluginConfiguration
     /// <summary>How often the poller reads game state, clamped to 0.5–5 s when read.</summary>
     public double PollIntervalSeconds { get; set; } = 1.0;
 
-    /// <summary>Print a chat line when a quest becomes available. Off by default; not wired in V1.</summary>
+    /// <summary>Print a chat line when a pinned or feature quest becomes available (see <c>Game.ChatNotifier</c>). Off by default.</summary>
     public bool ChatNoticeNewlyAvailable { get; set; }
 
     /// <summary>Whether main scenario quests are included in those notices.</summary>
