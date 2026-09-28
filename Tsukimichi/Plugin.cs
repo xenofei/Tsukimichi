@@ -27,6 +27,7 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] internal static ITextureProvider TextureProvider { get; private set; } = null!;
     [PluginService] internal static ITargetManager TargetManager { get; private set; } = null!;
     [PluginService] internal static IDtrBar DtrBar { get; private set; } = null!;
+    [PluginService] internal static IContextMenu ContextMenu { get; private set; } = null!;
     // /UI
 
     private static readonly TimeSpan DisposeWait = TimeSpan.FromSeconds(5);
@@ -55,6 +56,8 @@ public sealed class Plugin : IDalamudPlugin
     private Game.ChatNotifier? chatNotifier;
     private DiscoveryWindow? discoveryWindow;
     private Game.DtrEntry? dtrEntry;
+    private HoverHint? hoverHint;
+    private Game.ItemHooks? itemHooks;
 
     /// <summary>The Moonlit pane's override store as the detail pane's <see cref="IUniqueOverrides"/>.</summary>
     private sealed class MoonlitOverrides(MoonlitPane pane) : IUniqueOverrides
@@ -282,6 +285,17 @@ public sealed class Plugin : IDalamudPlugin
                 mainWindow.BringToFront();
                 MoonlitPane.Reveal(ui, quest);
             });
+            // Item hover hints and context-menu links (V2-14). The lookup follows the Moonlit catalog reference (rebuilt
+            // after an override change) and the quest catalog (set once the build finishes); both are read per use.
+            var rewardLookup = new Core.Unique.RewardLookupSource(() => moonlit.Catalog, () => Session.Bundle?.Catalog);
+            hoverHint = new HoverHint(GameGui, Session, unlockReader, rewardLookup, Log) { Enabled = Settings.ItemHintsEnabled };
+            PluginInterface.UiBuilder.Draw += hoverHint.Draw;
+            itemHooks = new Game.ItemHooks(ContextMenu, rewardLookup, quest =>
+            {
+                mainWindow.IsOpen = true;
+                mainWindow.BringToFront();
+                MoonlitPane.Reveal(ui, quest);
+            }, Log) { Enabled = Settings.ItemContextMenuEnabled };
             var discovery = new DiscoveryCommands(Session, ClientState, TargetManager, gameLinks);
             command.ListZoneQuests = discovery.Zone;
             command.ListTargetQuests = discovery.Which;
@@ -316,6 +330,8 @@ public sealed class Plugin : IDalamudPlugin
             configWindow = new ConfigWindow(Settings, Session, PluginInterface, _ => ui.MarkQueryDirty());
             Game.WotsitIpc wotsitIpc = wotsit;
             configWindow.WotsitToggled = enabled => wotsitIpc.Enabled = enabled;
+            // MERGE: configWindow.ItemHintsToggled = enabled => hoverHint.Enabled = enabled;
+            // MERGE: configWindow.ItemContextMenuToggled = enabled => itemHooks.Enabled = enabled;
             windowSystem.AddWindow(configWindow);
             PluginInterface.UiBuilder.OpenConfigUi += configWindow.Toggle;
             command.ToggleConfigWindow = configWindow.Toggle;
@@ -386,6 +402,12 @@ public sealed class Plugin : IDalamudPlugin
             PluginInterface.UiBuilder.Draw -= overlay.CheckFirstRun;
         }
 
+        if (hoverHint is not null)
+        {
+            PluginInterface.UiBuilder.Draw -= hoverHint.Draw;
+        }
+
+        itemHooks?.Dispose();
         PluginInterface.UiBuilder.OpenMainUi -= mainWindow.Toggle;
         PluginInterface.UiBuilder.Draw -= windowSystem.Draw;
         windowSystem.RemoveAllWindows();
@@ -426,9 +448,15 @@ public sealed class Plugin : IDalamudPlugin
                 PluginInterface.UiBuilder.OpenMainUi -= mainWindow.Toggle;
             }
 
+            if (hoverHint is not null)
+            {
+                PluginInterface.UiBuilder.Draw -= hoverHint.Draw;
+            }
+
             PluginInterface.UiBuilder.Draw -= windowSystem.Draw;
             windowSystem.RemoveAllWindows();
         });
+        Unwind("item hooks", () => itemHooks?.Dispose());
         Unwind("command", () => command?.Dispose());
         Unwind("server bar entry", () => dtrEntry?.Dispose());
         Unwind("nearby window", () => discoveryWindow?.Dispose());
