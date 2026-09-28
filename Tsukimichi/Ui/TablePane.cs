@@ -240,6 +240,8 @@ public sealed class TablePane : IDisposable
 
         // Name column carries the row-wide selectable and the context menu.
         ImGui.TableNextColumn();
+        var nameCellMin = ImGui.GetCursorScreenPos();
+        var nameCellWidth = ImGui.GetContentRegionAvail().X;
         var selected = ui.SelectedRowId == quest.RowId;
         if (ImGui.Selectable(quest.Name, selected, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowDoubleClick | ImGuiSelectableFlags.AllowItemOverlap, new Vector2(0f, layout.RowContent)))
         {
@@ -262,6 +264,17 @@ public sealed class TablePane : IDisposable
                 }
 
                 DrawContextMenu(quest, row.State);
+            }
+        }
+
+        // The selectable spans every column; the banner tooltip belongs to the name cell only, so the reward icons
+        // keep their own tooltips.
+        if (ImGui.IsItemHovered())
+        {
+            var mouseX = ImGui.GetMousePos().X;
+            if (mouseX >= nameCellMin.X && mouseX <= nameCellMin.X + nameCellWidth)
+            {
+                DrawNameTooltip(quest);
             }
         }
 
@@ -290,6 +303,30 @@ public sealed class TablePane : IDisposable
 
         ImGui.TableNextColumn();
         DrawRewardIcons(quest, in layout);
+    }
+
+    /// <summary>
+    /// Hover card for a quest name: the journal banner (when the quest has one and it is loaded) about 240 px wide,
+    /// the name, then genre, expansion and level. Textures come from the provider's per-frame cache, nothing is kept.
+    /// </summary>
+    private void DrawNameTooltip(QuestRecord quest)
+    {
+        using var tooltip = ImRaii.Tooltip();
+        UiMetrics.ApplyFontScale();
+        var width = UiMetrics.BannerTooltipWidth;
+        if (quest.Icon != 0 && textures.GetFromGameIcon(new GameIconLookup(quest.Icon)).TryGetWrap(out var wrap, out _) && wrap.Width > 0 && wrap.Height > 0)
+        {
+            ImGui.Image(wrap.Handle, new Vector2(width, width * wrap.Height / wrap.Width));
+        }
+
+        using var wrapPos = ImRaii.TextWrapPos(ImGui.GetCursorPosX() + width);
+        ImGui.TextWrapped(quest.Name);
+        ImGui.TextDisabled(quest.Journal.GenreName);
+        ImGui.TextDisabled(runner.ExpansionShort(quest.Expansion));
+        ImGui.SameLine();
+        ImGui.TextDisabled(Strings.ColumnLevel);
+        ImGui.SameLine(0f, UiMetrics.Px(3f));
+        ImGui.TextDisabled(runner.LevelText(quest.Level));
     }
 
     private void DrawRewardIcons(QuestRecord quest, in RowLayout layout)

@@ -33,6 +33,12 @@ public static class Theme
     /// <summary>Dark disc of the unlit glyph states: Night lifted halfway toward Veil (#2C334A) so it stays visible on a Night panel.</summary>
     public static readonly Vector4 UnlitDisc = Vector4.Lerp(Night, Veil, 0.5f);
 
+    /// <summary>A panel one step above Night (a quarter of the way to Veil), for header cards on the Night background.</summary>
+    public static readonly Vector4 NightRaised = Vector4.Lerp(Night, Veil, 0.25f);
+
+    /// <summary>Alternate table row tint for zebra striping: Veil at low alpha, readable on Night and on the default style alike.</summary>
+    public static readonly Vector4 ZebraRow = Veil with { W = 0.16f };
+
     public static readonly uint NightU32 = Pack(Night);
     public static readonly uint MoonU32 = Pack(Moon);
     public static readonly uint SilverU32 = Pack(Silver);
@@ -40,6 +46,7 @@ public static class Theme
     public static readonly uint EclipseU32 = Pack(Eclipse);
     public static readonly uint VeilU32 = Pack(Veil);
     public static readonly uint UnlitDiscU32 = Pack(UnlitDisc);
+    public static readonly uint NightRaisedU32 = Pack(NightRaised);
 
     /// <summary>Text color for a state badge next to a glyph.</summary>
     public static Vector4 StateColor(QuestState state) => state switch

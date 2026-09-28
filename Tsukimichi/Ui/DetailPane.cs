@@ -180,18 +180,19 @@ public sealed class DetailPane
         ImGui.TextDisabled(model.Provenance);
     }
 
+    /// <summary>
+    /// The journal banner (<see cref="QuestRecord.Icon"/>) at the pane's width with the name on a Night strip and the
+    /// state moon at its right; quests without a banner (or whose banner is still loading) get a raised Night card
+    /// with the moon beside the name instead. The journal path, header line and state follow either way.
+    /// </summary>
     private void DrawHeader(QuestRecord quest, float scale)
     {
         _ = scale;
-        var radius = UiMetrics.HeaderMoonRadius;
-        var box = radius * 2.6f;
-        var pos = ImGui.GetCursorScreenPos();
-        ImGui.Dummy(new Vector2(box, box));
-        MoonGlyph.Draw(ImGui.GetWindowDrawList(), pos + new Vector2(box * 0.5f), radius, model.State);
-        ImGui.SameLine();
+        if (!DrawBanner(quest))
+        {
+            DrawHeaderCard(quest);
+        }
 
-        using var group = ImRaii.Group();
-        ImGui.TextWrapped(quest.Name);
         ImGui.TextDisabled(model.JournalPath);
         ImGui.TextDisabled(model.HeaderLine);
         using (Theme.PushText(Theme.StateColor(model.State)))
@@ -211,6 +212,78 @@ public sealed class DetailPane
             using var moon = Theme.PushText(Theme.Moon);
             ImGui.TextUnformatted(Strings.Pinned);
         }
+    }
+
+    /// <summary>Banner image with the name overlaid; false when the quest has none or it is not loaded yet.</summary>
+    private bool DrawBanner(QuestRecord quest)
+    {
+        if (quest.Icon == 0 || !textures.GetFromGameIcon(new GameIconLookup(quest.Icon)).TryGetWrap(out var wrap, out _) || wrap.Width <= 0 || wrap.Height <= 0)
+        {
+            return false;
+        }
+
+        var dl = ImGui.GetWindowDrawList();
+        var width = ImGui.GetContentRegionAvail().X;
+        var height = MathF.Min(UiMetrics.BannerMaxHeight, width * wrap.Height / wrap.Width);
+        var min = ImGui.GetCursorScreenPos();
+        var max = min + new Vector2(width, height);
+        ImGui.Image(wrap.Handle, new Vector2(width, height));
+
+        // Name strip: a Night gradient over the lower part of the image, the name in Silver at its left and the
+        // large state moon at its right.
+        var pad = UiMetrics.Px(8f);
+        var radius = UiMetrics.HeaderMoonRadius;
+        var moonBox = radius * 2.4f;
+        var textWrap = MathF.Max(UiMetrics.Px(40f), width - pad * 3f - moonBox);
+        var textHeight = ImGui.CalcTextSize(quest.Name, false, textWrap).Y;
+        var stripHeight = MathF.Min(height, MathF.Max(textHeight + pad * 2f, moonBox + pad));
+        var stripTop = max.Y - stripHeight;
+        var fade = MathF.Min(UiMetrics.Px(28f), stripTop - min.Y);
+        var solid = Theme.WithAlpha(Theme.Night, 0.84f);
+        var clear = Theme.WithAlpha(Theme.Night, 0f);
+        if (fade > 0f)
+        {
+            dl.AddRectFilledMultiColor(new Vector2(min.X, stripTop - fade), new Vector2(max.X, stripTop), clear, clear, solid, solid);
+        }
+
+        dl.AddRectFilled(new Vector2(min.X, stripTop), max, solid);
+        dl.AddText(ImGui.GetFont(), ImGui.GetFontSize(), new Vector2(min.X + pad, max.Y - pad - textHeight), Theme.SilverU32, quest.Name, textWrap);
+        MoonGlyph.Draw(dl, new Vector2(max.X - pad - moonBox * 0.5f, max.Y - stripHeight * 0.5f), radius, model.State);
+        ImGui.Spacing();
+        return true;
+    }
+
+    /// <summary>Raised Night card with the state moon and the name, for quests without a banner.</summary>
+    private void DrawHeaderCard(QuestRecord quest)
+    {
+        var dl = ImGui.GetWindowDrawList();
+        var width = ImGui.GetContentRegionAvail().X;
+        var pad = UiMetrics.Px(8f);
+        var min = ImGui.GetCursorScreenPos();
+
+        // Content first on its own channel, the card underneath on channel 0 once its height is known.
+        dl.ChannelsSplit(2);
+        dl.ChannelsSetCurrent(1);
+        ImGui.SetCursorScreenPos(min + new Vector2(pad, pad));
+        using (ImRaii.Group())
+        {
+            var radius = UiMetrics.HeaderMoonRadius;
+            var box = radius * 2.6f;
+            var pos = ImGui.GetCursorScreenPos();
+            ImGui.Dummy(new Vector2(box, box));
+            MoonGlyph.Draw(dl, pos + new Vector2(box * 0.5f), radius, model.State);
+            ImGui.SameLine();
+            using var wrap = ImRaii.TextWrapPos(ImGui.GetCursorPosX() + width - box - pad * 3f);
+            using var silver = Theme.PushText(Theme.Silver);
+            ImGui.TextWrapped(quest.Name);
+        }
+
+        var max = new Vector2(min.X + width, ImGui.GetItemRectMax().Y + pad);
+        dl.ChannelsSetCurrent(0);
+        dl.AddRectFilled(min, max, Theme.NightRaisedU32, UiMetrics.Px(4f));
+        dl.ChannelsMerge();
+        ImGui.SetCursorScreenPos(new Vector2(min.X, max.Y));
+        ImGui.Spacing();
     }
 
     private void DrawRequirements()
