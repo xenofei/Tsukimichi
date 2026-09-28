@@ -19,6 +19,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Frozen data the tests read from the output directory: the schema-v1 snapshot and the DataGen catalog dump. -->
+    <None Include="Fixtures\*.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Fixtures\*.json.gz" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- Standalone Lumina for the data-driven catalog tests (gated by TSUKIMICHI_GAME_PATH). -->
     <PackageReference Include="Lumina" Version="7.7.1" />
     <PackageReference Include="Lumina.Excel" Version="7.5.0" />
