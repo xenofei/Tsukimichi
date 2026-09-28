@@ -26,6 +26,7 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] internal static IChatGui ChatGui { get; private set; } = null!;
     [PluginService] internal static ITextureProvider TextureProvider { get; private set; } = null!;
     [PluginService] internal static ITargetManager TargetManager { get; private set; } = null!;
+    [PluginService] internal static IDtrBar DtrBar { get; private set; } = null!;
     // /UI
 
     private static readonly TimeSpan DisposeWait = TimeSpan.FromSeconds(5);
@@ -51,6 +52,8 @@ public sealed class Plugin : IDalamudPlugin
     private HelpWindow? helpWindow;
     private ITutorial? tutorial;
     private Game.ChatNotifier? chatNotifier;
+    private DiscoveryWindow? discoveryWindow;
+    private Game.DtrEntry? dtrEntry;
 
     /// <summary>The Moonlit pane's override store as the detail pane's <see cref="IUniqueOverrides"/>.</summary>
     private sealed class MoonlitOverrides(MoonlitPane pane) : IUniqueOverrides
@@ -281,6 +284,25 @@ public sealed class Plugin : IDalamudPlugin
             var discovery = new DiscoveryCommands(Session, ClientState, TargetManager, gameLinks);
             command.ListZoneQuests = discovery.Zone;
             command.ListTargetQuests = discovery.Which;
+
+            // Nearby quests window and the server info bar entry; settings in user/discovery.json until they move into Configuration.
+            var discoverySettingsPath = Core.Discovery.DiscoverySettings.PathFor(Paths);
+            var discoveryWarnings = new System.Collections.Generic.List<string>();
+            var discoverySettings = Core.Discovery.DiscoverySettings.Load(discoverySettingsPath, discoveryWarnings);
+            foreach (var warning in discoveryWarnings)
+            {
+                Log.Warning("Discovery settings: {Warning}", warning);
+            }
+
+            discoveryWindow = new DiscoveryWindow(Session, ClientState, gameLinks, queryRunner, DataManager, discoverySettings, discoverySettingsPath, Log, quest =>
+            {
+                mainWindow.IsOpen = true;
+                mainWindow.BringToFront();
+                MoonlitPane.Reveal(ui, quest);
+            });
+            windowSystem.AddWindow(discoveryWindow);
+            dtrEntry = new Game.DtrEntry(DtrBar, discoveryWindow, discoverySettings, Log);
+            command.ToggleNearbyWindow = discoveryWindow.Toggle;
             charactersPane = new CharactersPane(Session, Paths, Log, Snapshots.Load, DataManager, TextureProvider);
             charactersPane.MoonlitCounts = moonlitPane.CountsFor;
             mainWindow.AttachPanes(moonlitPane, charactersPane);
@@ -363,6 +385,8 @@ public sealed class Plugin : IDalamudPlugin
         PluginInterface.UiBuilder.OpenMainUi -= mainWindow.Toggle;
         PluginInterface.UiBuilder.Draw -= windowSystem.Draw;
         windowSystem.RemoveAllWindows();
+        dtrEntry?.Dispose();
+        discoveryWindow?.Dispose();
         mainWindow.Dispose();
         wotsit?.Dispose();
         moonlitPane?.Dispose();
@@ -402,6 +426,8 @@ public sealed class Plugin : IDalamudPlugin
             windowSystem.RemoveAllWindows();
         });
         Unwind("command", () => command?.Dispose());
+        Unwind("server bar entry", () => dtrEntry?.Dispose());
+        Unwind("nearby window", () => discoveryWindow?.Dispose());
         Unwind("main window", () => mainWindow?.Dispose());
         Unwind("wotsit ipc", () => wotsit?.Dispose());
         Unwind("moonlit pane", () => moonlitPane?.Dispose());
