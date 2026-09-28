@@ -2,7 +2,8 @@
 
 Usage (after `dotnet build Tsukimichi/Tsukimichi.csproj -c Release`):
     python tools/make_pluginmaster.py --tag v0.1.0
-The tag must match a GitHub Release that has latest.zip attached.
+The tag must match a GitHub Release that has latest.zip attached, and CHANGELOG.md must have a
+`## [X.Y.Z]` section for it (or pass --changelog); otherwise the script exits 1 and writes nothing.
 """
 import argparse
 import json
@@ -70,8 +71,15 @@ def main() -> int:
         "IsTestingExclusive": False,
     })
     changelog = args.changelog or changelog_section(tag)
-    if changelog:
-        entry["Changelog"] = changelog
+    if not changelog:
+        version_label = tag[1:] if tag.startswith("v") else tag
+        print(
+            f"CHANGELOG.md has no '## [{version_label}]' section with content for {tag}; "
+            "write the release notes (or pass --changelog) before regenerating pluginmaster.json",
+            file=sys.stderr,
+        )
+        return 1
+    entry["Changelog"] = changelog
 
     with open(OUTPUT, "w", encoding="utf-8", newline="\n") as f:
         json.dump([entry], f, indent=2, ensure_ascii=False)
