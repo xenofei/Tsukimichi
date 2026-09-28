@@ -251,7 +251,8 @@ public sealed class Plugin : IDalamudPlugin
             // UI (session-dependent surfaces)
             var unlockReader = new Game.RewardUnlockReader(Session, DataManager, Framework, Log);
             moonlitPane = new MoonlitPane(Session, TextureProvider, unlockReader, Paths, Log);
-            charactersPane = new CharactersPane(Session, Paths, Log, Snapshots.Load, DataManager);
+            charactersPane = new CharactersPane(Session, Paths, Log, Snapshots.Load, DataManager, TextureProvider);
+            charactersPane.MoonlitCounts = moonlitPane.CountsFor;
             mainWindow.AttachPanes(moonlitPane, charactersPane);
 
             configWindow = new ConfigWindow(Settings, Session, PluginInterface, _ => ui.MarkQueryDirty());

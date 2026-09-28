@@ -1,4 +1,5 @@
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Runtime;
 
 namespace Tsukimichi.Ui;
 
@@ -124,6 +125,50 @@ static partial class Strings
     public const string CharactersAgeMinutesSuffix = " min ago";
     public const string CharactersAgeHoursSuffix = " h ago";
     public const string CharactersAgeDaysSuffix = " d ago";
+
+    // Characters dashboard
+    public const string CharactersSectionCompletion = "Completion by journal section";
+    public const string CharactersNoSections = "Section counts appear once the catalog is built and a character is evaluated.";
+    public const string CharactersAllQuests = "All quests";
+    public const string CharactersSectionPrefix = "Section ";
+    public const string CharactersColumnSection = "Section";
+    public const string CharactersColumnDone = "Done";
+    public const string CharactersColumnPercent = "%";
+    public const string CharactersMoonlitSummary = "Moonlit treasures";
+    public const string CharactersMoonlitUnavailable = "Reward data is not available.";
+    public const string CharactersColumnKind = "Kind";
+    public const string CharactersColumnObtained = "Obtained";
+    public const string CharactersPinned = "Pinned quests";
+    public const string CharactersNoPins = "No pinned quests. Pin one from the quest table's context menu.";
+    public const string CharactersColumnQuest = "Quest";
+    public const string CharactersRecent = "Recent activity";
+    public const string CharactersRecentNeedsLive = "Activity is recorded for the logged-in character only.";
+    public const string CharactersNoRecent = "Nothing yet this session. Turn in or accept a quest and it appears here.";
+    public const string CharactersColumnTime = "Time";
+    public const string CharactersColumnEvent = "Event";
+
+    /// <summary>Label for a recent-activity row.</summary>
+    public static string CharactersEventName(QuestEventKind kind) => kind switch
+    {
+        QuestEventKind.Completed => "Completed",
+        QuestEventKind.Accepted => "Accepted",
+        QuestEventKind.Abandoned => "Abandoned",
+        QuestEventKind.NewlyAvailable => "Newly available",
+        _ => kind.ToString(),
+    };
+
+    /// <summary>Group header in the job table.</summary>
+    public static string CharactersJobGroupName(CharactersPane.JobGroup group) => group switch
+    {
+        CharactersPane.JobGroup.Tank => "Tanks",
+        CharactersPane.JobGroup.Healer => "Healers",
+        CharactersPane.JobGroup.Melee => "Melee DPS",
+        CharactersPane.JobGroup.Ranged => "Physical ranged DPS",
+        CharactersPane.JobGroup.Caster => "Magical ranged DPS",
+        CharactersPane.JobGroup.Crafter => "Disciples of the Hand",
+        CharactersPane.JobGroup.Gatherer => "Disciples of the Land",
+        _ => "Other",
+    };
 
     // ---- Config window ----
     public const string ConfigSectionPolling = "Polling";

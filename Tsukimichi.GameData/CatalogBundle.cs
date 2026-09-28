@@ -13,6 +13,27 @@ namespace Tsukimichi.GameData;
 public sealed record CatalogBundle(QuestCatalog Catalog, GameNames Names, ClassJobCategoryLookup Jobs, string Language);
 
 /// <summary>
+/// One ClassJob sheet row the UI can group and decorate: the base class a job grew out of (<see cref="ParentRowId"/>
+/// equals <see cref="RowId"/> for classes and for jobs without a class), the quest that unlocks the job, the sheet's
+/// role byte (1 tank, 2 melee, 3 ranged or caster, 4 healer, 0 none) and the crafter/gatherer flags from
+/// ClassJobCategory 33 and 32 membership. <see cref="ExpArrayIndex"/> is the PlayerState level slot; −1 when none.
+/// </summary>
+public sealed record ClassJobInfo(
+    uint RowId,
+    string Name,
+    string Abbreviation,
+    uint ParentRowId,
+    uint UnlockQuestRowId,
+    byte Role,
+    bool IsCrafter,
+    bool IsGatherer,
+    int ExpArrayIndex)
+{
+    /// <summary>Icon id in the game's 062000 icon set (062101 Gladiator … 062142 Pictomancer).</summary>
+    public uint IconId => 62100u + RowId;
+}
+
+/// <summary>
 /// Small id-to-name lookups read from the BeastTribe, GrandCompany, ExVersion, ClassJob and BeastReputationRank sheets.
 /// Keys are row ids; the byte-sized ids on <see cref="QuestRecord"/> widen implicitly.
 /// </summary>
@@ -22,7 +43,8 @@ public sealed record GameNames(
     IReadOnlyDictionary<uint, string> Expansions,
     IReadOnlyDictionary<uint, string> ClassJobs,
     IReadOnlyDictionary<uint, string> ClassJobAbbreviations,
-    IReadOnlyDictionary<uint, string> TribeRanks)
+    IReadOnlyDictionary<uint, string> TribeRanks,
+    IReadOnlyList<ClassJobInfo> ClassJobInfos)
 {
     public static readonly GameNames Empty = new(
         new Dictionary<uint, string>(),
@@ -30,7 +52,22 @@ public sealed record GameNames(
         new Dictionary<uint, string>(),
         new Dictionary<uint, string>(),
         new Dictionary<uint, string>(),
-        new Dictionary<uint, string>());
+        new Dictionary<uint, string>(),
+        []);
+
+    /// <summary>The ClassJob row, or null for an id the sheet has no named row for.</summary>
+    public ClassJobInfo? ClassJobInfo(uint id)
+    {
+        foreach (var info in ClassJobInfos)
+        {
+            if (info.RowId == id)
+            {
+                return info;
+            }
+        }
+
+        return null;
+    }
 
     public string Tribe(uint id) => Tribes.GetValueOrDefault(id, string.Empty);
 
