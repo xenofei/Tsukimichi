@@ -14,6 +14,7 @@ directory (design spec section 6).
 | `duty_unlocks.json` | `{ "<questRowId>": { "contentFinderConditionIds": [..], "note" } }` | Quests whose script unlocks a duty. Only ~35 quests link via `InstanceContentUnlock`; the rest (Sastasha, Toto-Rak, the Praetorium, ...) need this file. Values are `ContentFinderCondition` row ids. |
 | `feature_quests.json` | `{ "questRowIds": [..], "note" }` | Union of the quest ids in the two files above. Seeds the "Feature Unlocks" virtual category. Regenerate whenever the other two change. |
 | `festivals.json` | `{ "$schema_note", "entries": { "<festivalId>": { name, start, end, mogStation } } }` | Seasonal-event windows. Empty in V1 (DRAFT-NEEDED B); when absent or empty the UI shows only active/inactive. |
+| `chains.json` | `{ "chains": [ { "name", "genreIds": [..], "note" } ] }` | Named quest chains for the detail pane's chain progress widget. Values are `JournalGenre` row ids (not quest ids); a chain is the listed genres concatenated in order, each in journal order. Genres left out still form a chain on their own when their quests are a single previous-quest line. |
 
 ## Key convention
 
@@ -28,6 +29,9 @@ directory (design spec section 6).
 - Every entry carries a one-line `note` explaining why it is included and,
   where useful, which variant it is. Entries without a `note` are rejected in
   review.
+- `chains.json` is the one file keyed by something else: its `genreIds` are
+  `JournalGenre` row ids. Find them with the data-driven tests
+  (`ChainCatalogDataTests`) or `Quest.JournalGenre` on xivapi.
 
 ## Verifying an id with xivapi v2
 
@@ -53,4 +57,4 @@ version `541c0c12e07da325` (patch 7.56x1).
 - Keep entries sorted by row id within each file.
 - Changing `system_unlocks.json` or `duty_unlocks.json` means regenerating
   `feature_quests.json` (union of both key sets, sorted, deduplicated).
-- All four files must parse as strict JSON (no comments, no trailing commas).
+- All files must parse as strict JSON (no comments, no trailing commas).

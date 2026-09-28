@@ -1,0 +1,26 @@
+{
+  "$schema_note": "Named quest chains. Each chain concatenates the listed JournalGenre row ids in order; quests keep their journal order inside a genre. Genres not listed here still become chains on their own when their quests form a single previous-quest line.",
+  "chains": [
+    { "name": "Hildibrand", "genreIds": [82, 83, 84, 85, 87], "note": "Hildibrand Adventures (ARR) through Inconceivably Further Hildibrand Adventures (EW); 57 quests. Manderville Weapons is its own chain." },
+    { "name": "Zodiac Weapons", "genreIds": [88], "note": "ARR relic line; branches per step in the sheet." },
+    { "name": "Anima Weapons", "genreIds": [89], "note": "HW relic line." },
+    { "name": "Resistance Weapons", "genreIds": [91], "note": "ShB relic line including the Bozjan Southern Front and Zadnor story." },
+    { "name": "Manderville Weapons", "genreIds": [86], "note": "EW relic line, listed under Hildibrand Sidequests in the journal." },
+    { "name": "Primals", "genreIds": [16], "note": "Chronicles of a New Era - Primals (ARR extreme primal unlocks)." },
+    { "name": "The Binding Coil of Bahamut", "genreIds": [17], "note": "Chronicles of a New Era - Bahamut." },
+    { "name": "Crystal Tower", "genreIds": [18], "note": "Chronicles of a New Era - The Crystal Tower; required for Shadowbringers." },
+    { "name": "Alexander", "genreIds": [19], "note": "Chronicles of a New Era - Alexander." },
+    { "name": "The Warring Triad", "genreIds": [20], "note": "Chronicles of a New Era - The Warring Triad (HW primals)." },
+    { "name": "Shadow of Mhach", "genreIds": [21], "note": "Chronicles of a New Era - The Shadow of Mhach." },
+    { "name": "Omega", "genreIds": [22, 23], "note": "Omega Quests then Omega: Beyond the Rift (Ultimate lead-in)." },
+    { "name": "Return to Ivalice", "genreIds": [24], "note": "Chronicles of a New Era - Return to Ivalice." },
+    { "name": "The Four Lords", "genreIds": [25], "note": "Chronicles of a New Era - The Four Lords." },
+    { "name": "Eden", "genreIds": [26], "note": "Chronicles of a New Era - Eden." },
+    { "name": "YoRHa: Dark Apocalypse", "genreIds": [27], "note": "Chronicles of a New Era - YoRHa: Dark Apocalypse." },
+    { "name": "The Sorrow of Werlyt", "genreIds": [28], "note": "Chronicles of a New Era - The Sorrow of Werlyt (genre named Garlemald's Machinations)." },
+    { "name": "Pandæmonium", "genreIds": [29, 30], "note": "Pandæmonium then Pandæmonium: Epilogue." },
+    { "name": "Myths of the Realm", "genreIds": [31], "note": "Chronicles of a New Era - Myths of the Realm." },
+    { "name": "The Arcadion", "genreIds": [32], "note": "Chronicles of a New Era - The Arcadion." },
+    { "name": "Echoes of Vana'diel", "genreIds": [33], "note": "Chronicles of a New Era - Echoes of Vana'diel." }
+  ]
+}

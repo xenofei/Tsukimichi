@@ -12,6 +12,9 @@ public sealed record DutyUnlock(IReadOnlyList<uint> ContentFinderConditionIds, s
 /// <summary>A seasonal event window, from <c>curated/festivals.json</c>. Null dates mean "unknown; use the live flag only".</summary>
 public sealed record FestivalInfo(string Name, DateTime? Start, DateTime? End, bool MogStation);
 
+/// <summary>A named quest chain assembled from journal genres in the listed order, from <c>curated/chains.json</c>.</summary>
+public sealed record CuratedChain(string Name, IReadOnlyList<uint> GenreIds, string? Note);
+
 /// <summary>
 /// Hand-maintained overlays shipped in the plugin's <c>curated/</c> directory. Every file is optional and every entry
 /// is validated on its own, so one bad line never hides the rest. Shapes (object keys are row ids as strings):
@@ -20,6 +23,7 @@ public sealed record FestivalInfo(string Name, DateTime? Start, DateTime? End, b
 /// duty_unlocks.json    { "66038": [ 4, 5 ] }  or  { "66038": { "contentFinderConditionIds": [ 4, 5 ], "note": "..." } }
 /// feature_quests.json  [ 66038, 66039 ]
 /// festivals.json       { "1": { "name": "Starlight Celebration", "start": "2025-12-15T08:00:00Z", "end": "...", "mogStation": false } }
+/// chains.json          { "chains": [ { "name": "Hildibrand", "genreIds": [ 93, 94 ], "note": "..." } ] }
 /// </code>
 /// </summary>
 public sealed class CuratedData
@@ -28,6 +32,7 @@ public sealed class CuratedData
     public const string DutyUnlocksFileName = "duty_unlocks.json";
     public const string FeatureQuestsFileName = "feature_quests.json";
     public const string FestivalsFileName = "festivals.json";
+    public const string ChainsFileName = "chains.json";
 
     private const string DefaultSystemKind = "system";
 
@@ -36,12 +41,14 @@ public sealed class CuratedData
         IReadOnlyDictionary<uint, DutyUnlock> dutyUnlocks,
         IReadOnlySet<uint> featureQuests,
         IReadOnlyDictionary<ushort, FestivalInfo> festivals,
+        IReadOnlyList<CuratedChain> chains,
         IReadOnlyList<string> warnings)
     {
         SystemUnlocks = systemUnlocks;
         DutyUnlocks = dutyUnlocks;
         FeatureQuests = featureQuests;
         Festivals = festivals;
+        Chains = chains;
         Warnings = warnings;
     }
 
@@ -50,12 +57,16 @@ public sealed class CuratedData
         new Dictionary<uint, DutyUnlock>(),
         new HashSet<uint>(),
         new Dictionary<ushort, FestivalInfo>(),
+        [],
         []);
 
     public IReadOnlyDictionary<uint, SystemUnlock> SystemUnlocks { get; }
     public IReadOnlyDictionary<uint, DutyUnlock> DutyUnlocks { get; }
     public IReadOnlySet<uint> FeatureQuests { get; }
     public IReadOnlyDictionary<ushort, FestivalInfo> Festivals { get; }
+
+    /// <summary>Named chains in file order; genre ids are not checked against the catalog here.</summary>
+    public IReadOnlyList<CuratedChain> Chains { get; }
 
     /// <summary>One line per skipped entry or unreadable file, for the caller to log once.</summary>
     public IReadOnlyList<string> Warnings { get; }
@@ -74,6 +85,7 @@ public sealed class CuratedData
         var dutyUnlocks = new Dictionary<uint, DutyUnlock>();
         var featureQuests = new HashSet<uint>();
         var festivals = new Dictionary<ushort, FestivalInfo>();
+        var chains = new List<CuratedChain>();
 
         ForEachEntry(Path.Combine(dir, SystemUnlocksFileName), warnings, (key, node, warn) =>
         {
@@ -205,7 +217,88 @@ public sealed class CuratedData
             festivals[festivalId] = new FestivalInfo(name, start, end, mogStation);
         });
 
-        return new CuratedData(systemUnlocks, dutyUnlocks, featureQuests, festivals, warnings);
+        LoadChains(Path.Combine(dir, ChainsFileName), chains, warnings);
+
+        return new CuratedData(systemUnlocks, dutyUnlocks, featureQuests, festivals, chains, warnings);
+    }
+
+    /// <summary>
+    /// chains.json: an object with a "chains" array (a bare array is accepted too). Each chain needs a name and at
+    /// least one genre id; ids may be numbers or digit strings. Duplicate ids within a chain are dropped.
+    /// </summary>
+    private static void LoadChains(string path, List<CuratedChain> chains, List<string> warnings)
+    {
+        if (ParseRoot(path, warnings) is not { } root)
+        {
+            return;
+        }
+
+        var fileName = Path.GetFileName(path);
+        var array = root switch
+        {
+            JsonArray bare => bare,
+            JsonObject obj when obj.TryGetPropertyValue("chains", out var node) && node is JsonArray inner => inner,
+            _ => null,
+        };
+
+        if (array is null)
+        {
+            warnings.Add($"{fileName}: root must be an object with a \"chains\" array; file ignored.");
+            return;
+        }
+
+        for (var i = 0; i < array.Count; i++)
+        {
+            var label = $"{fileName}: chains[{i}] skipped: ";
+            if (array[i] is not JsonObject chain)
+            {
+                warnings.Add(label + "not an object");
+                continue;
+            }
+
+            var name = StorageJson.ReadString(chain, "name");
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                warnings.Add(label + "name is missing");
+                continue;
+            }
+
+            if (!chain.TryGetPropertyValue("genreIds", out var idsNode) || idsNode is not JsonArray ids)
+            {
+                warnings.Add(label + "genreIds is not an array");
+                continue;
+            }
+
+            var genreIds = new List<uint>(ids.Count);
+            var valid = true;
+            foreach (var element in ids)
+            {
+                if (!StorageJson.TryReadId(element, out var genreId) || genreId == 0)
+                {
+                    warnings.Add(label + $"genre id '{element}' is not a positive integer");
+                    valid = false;
+                    break;
+                }
+
+                if (!genreIds.Contains(genreId))
+                {
+                    genreIds.Add(genreId);
+                }
+            }
+
+            if (!valid)
+            {
+                continue;
+            }
+
+            if (genreIds.Count == 0)
+            {
+                warnings.Add(label + "genreIds is empty");
+                continue;
+            }
+
+            chains.Add(new CuratedChain(name.Trim(), genreIds, StorageJson.ReadString(chain, "note")));
+        }
     }
 
     private delegate void EntryHandler(string key, JsonNode? value, Action<string> warn);
