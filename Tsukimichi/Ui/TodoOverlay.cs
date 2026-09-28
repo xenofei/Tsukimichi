@@ -50,6 +50,7 @@ public sealed class TodoOverlay : Window, IDisposable
 
     /// <summary>Offset from the main viewport's work area the panel returns to on <see cref="ResetPosition"/>, in logical pixels.</summary>
     private static readonly Vector2 DefaultOffset = new(24f, 96f);
+    private static readonly string LockGlyph = FontAwesomeIcon.Lock.ToIconString();
 
     private readonly record struct Row(QuestRecord Quest, QuestState State, string Label, string Hint, string Tooltip);
 
@@ -240,7 +241,7 @@ public sealed class TodoOverlay : Window, IDisposable
         using (ImRaii.PushFont(UiBuilder.IconFont))
         using (Theme.PushText(Theme.Dusk))
         {
-            ImGui.TextUnformatted(FontAwesomeIcon.Lock.ToIconString());
+            ImGui.TextUnformatted(LockGlyph);
         }
 
         ImGui.SetWindowFontScale(1f);

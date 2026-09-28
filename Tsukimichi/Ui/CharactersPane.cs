@@ -1014,7 +1014,7 @@ public sealed class CharactersPane
         }
 
         var key = new CompareKey(session.Version, viewedId, other.ContentId, other.TakenUtc);
-        if (compare is { } current && key == compareKey && ReferenceEquals(current.Bundle, d.Bundle))
+        if (compare is { } current && key == compareKey && ReferenceEquals(current.Bundle, d.Bundle) && ReferenceEquals(current.Rewards, RewardsCatalog()))
         {
             return current;
         }
@@ -1042,7 +1042,7 @@ public sealed class CharactersPane
         var otherStates = StatesFor(other, bundle);
         if (otherStates is null)
         {
-            return new Compare(bundle, other.ContentId, other.Label, candidates.ToArray(), true, string.Empty, string.Empty, viewedHeader, otherHeader, [], DiffList.Empty, DiffList.Empty);
+            return new Compare(bundle, RewardsCatalog(), other.ContentId, other.Label, candidates.ToArray(), true, string.Empty, string.Empty, viewedHeader, otherHeader, [], DiffList.Empty, DiffList.Empty);
         }
 
         var rewards = RewardsCatalog();
@@ -1076,6 +1076,7 @@ public sealed class CharactersPane
 
         return new Compare(
             bundle,
+            rewards,
             other.ContentId,
             other.Label,
             candidates.ToArray(),
@@ -2058,6 +2059,7 @@ public sealed class CharactersPane
 
     private sealed record Compare(
         CatalogBundle Bundle,
+        UniqueRewardCatalog Rewards,
         ulong OtherContentId,
         string OtherLabel,
         CompareCandidate[] Candidates,

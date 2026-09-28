@@ -54,6 +54,7 @@ public sealed class HoverHint
     private readonly RewardLookupSource lookup;
     private readonly IPluginLog log;
     private readonly List<Line> lines = [];
+    private readonly HashSet<uint> seen = [];
 
     private uint modelItem;
     private int modelVersion = -1;
@@ -134,10 +135,11 @@ public sealed class HoverHint
 
         var entries = current.ByItem(itemId);
         var quests = 0;
+        seen.Clear();
         foreach (var entry in entries)
         {
             var quest = current.QuestFor(entry);
-            if (quest is null || Listed(quest.RowId))
+            if (quest is null || !seen.Add(quest.RowId))
             {
                 continue;
             }
