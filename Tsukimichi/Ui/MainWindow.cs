@@ -117,6 +117,12 @@ public sealed class MainWindow : Window, IDisposable
         charactersPane = characters ?? throw new ArgumentNullException(nameof(characters));
     }
 
+    /// <summary>Gives the detail pane the user's unique-reward verdicts so it can show and change them.</summary>
+    public void AttachOverrides(IUniqueOverrides overrides)
+    {
+        detailPane.Overrides = overrides ?? throw new ArgumentNullException(nameof(overrides));
+    }
+
     public override void Draw()
     {
         if (plugin.Session is not { } session)

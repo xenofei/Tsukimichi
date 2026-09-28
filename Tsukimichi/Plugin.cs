@@ -46,6 +46,16 @@ public sealed class Plugin : IDalamudPlugin
     private CharactersPane? charactersPane;
     private ConfigWindow? configWindow;
 
+    /// <summary>The Moonlit pane's override store as the detail pane's <see cref="IUniqueOverrides"/>.</summary>
+    private sealed class MoonlitOverrides(MoonlitPane pane) : IUniqueOverrides
+    {
+        public Core.Storage.UniqueOverride? Get(uint rowId) => pane.Overrides.TryGetValue(rowId, out var verdict) ? verdict : null;
+
+        public void Clear(uint rowId) => pane.ClearOverride(rowId);
+
+        public void Set(uint rowId, bool unique, string? note) => pane.SetOverride(rowId, unique, note);
+    }
+
     /// <summary>
     /// Retry hook for the "Catalog unavailable" panel: rebuilds the catalog and hands it to the session on the
     /// framework thread. The returned task completes when the session has been updated either way.
@@ -253,6 +263,7 @@ public sealed class Plugin : IDalamudPlugin
             moonlitPane = new MoonlitPane(Session, TextureProvider, unlockReader, Paths, Log);
             charactersPane = new CharactersPane(Session, Paths, Log, Snapshots.Load, DataManager);
             mainWindow.AttachPanes(moonlitPane, charactersPane);
+            mainWindow.AttachOverrides(new MoonlitOverrides(moonlitPane));
 
             configWindow = new ConfigWindow(Settings, Session, PluginInterface, _ => ui.MarkQueryDirty());
             windowSystem.AddWindow(configWindow);

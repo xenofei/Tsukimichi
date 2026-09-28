@@ -9,28 +9,52 @@ using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
 using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Storage;
 using Tsukimichi.Game;
 using Tsukimichi.GameData;
 
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// The detail pane for <see cref="UiState.SelectedRowId"/> on a Night panel: header, requirements, rewards, path,
-/// giver, provenance. Everything shown is materialized into a <see cref="Model"/> when the selection or the session
-/// version changes, so drawing allocates nothing.
+/// The detail pane for <see cref="UiState.SelectedRowId"/> on a Night panel: header, requirements, rewards, Moonlit
+/// verdict, path (grouped by expansion, completed runs folded), what the quest unlocks next, giver, provenance.
+/// Everything shown is materialized into a <see cref="Model"/> when the selection or the session version changes, so
+/// drawing allocates nothing.
 /// </summary>
 public sealed class DetailPane
 {
+    public const int MaxUnlocks = 8;
+
     private const float HeaderGlyphRadius = 20f;
     private const float PathGlyphRadius = 7f;
     private const int PathScrollFrames = 2;
     private const double PathHighlightSeconds = 1.5;
+    private const int MinFoldedRun = 2;
+    private const int NoteLength = 120;
 
     private sealed record RequirementLine(bool Met, bool IsNext, string Label, string Detail);
 
-    private sealed record RewardLine(uint Icon, string Text, string Kind);
+    private sealed record RewardLine(RewardRef Reward, string Text, string Kind);
 
-    private sealed record PathLine(uint RowId, string Name, QuestState State, bool IsTarget);
+    private sealed record PathLine(uint RowId, string Name, QuestState State, bool IsTarget, byte Expansion);
+
+    private enum PathRowKind
+    {
+        ExpansionHeader,
+        Step,
+        FoldedRun,
+    }
+
+    /// <summary>One drawn line of the Path section: an expansion header, a single step, or a folded run of completed steps.</summary>
+    private sealed class PathRow(PathRowKind kind, string text, string? expandedText, PathLine? step, List<PathLine>? run, int runIndex)
+    {
+        public PathRowKind Kind { get; } = kind;
+        public string Text { get; } = text;
+        public string ExpandedText { get; } = expandedText ?? text;
+        public PathLine? Step { get; } = step;
+        public List<PathLine>? Run { get; } = run;
+        public int RunIndex { get; } = runIndex;
+    }
 
     private sealed class Model
     {
@@ -45,9 +69,13 @@ public sealed class DetailPane
         public string? StateNote;
         public bool HasSnapshot;
         public bool Pinned;
+        public bool HasUniqueEntries;
         public readonly List<RequirementLine> Requirements = [];
         public readonly List<RewardLine> Rewards = [];
         public readonly List<PathLine> Path = [];
+        public readonly List<PathRow> PathRows = [];
+        public readonly List<PathLine> Unlocks = [];
+        public string? UnlocksMore;
         public string? GiverName;
         public string? PlaceText;
         public string? CoordinateText;
@@ -62,6 +90,15 @@ public sealed class DetailPane
     private readonly Model model = new() { RowId = uint.MaxValue, Version = -1 };
     private bool pinnedShown;
 
+    // Folded completed runs the user opened, by run index; forgotten when another quest is selected.
+    private readonly HashSet<int> expandedRuns = [];
+
+    // Quests with shipped unique-reward entries, rebuilt when the shipped data instance changes.
+    private UniqueRewardsData? uniqueData;
+    private readonly HashSet<uint> uniqueQuests = [];
+
+    private string noteBuffer = string.Empty;
+
     // "Show path": the scroll is requested on two consecutive frames because ImGui clamps a scroll target against the
     // content size measured in the previous frame, which does not yet include a freshly selected quest's sections.
     private int pathScrollFrames;
@@ -74,6 +111,9 @@ public sealed class DetailPane
         this.links = links ?? throw new ArgumentNullException(nameof(links));
         this.textures = textures ?? throw new ArgumentNullException(nameof(textures));
     }
+
+    /// <summary>The user's unique-reward verdicts; null until the plugin attaches them, which hides the Moonlit section.</summary>
+    public IUniqueOverrides? Overrides { get; set; }
 
     public void Draw(SessionState session, CatalogBundle bundle, Vector2 size)
     {
@@ -110,6 +150,12 @@ public sealed class DetailPane
         DrawRequirements();
         Section(Strings.Rewards);
         DrawRewards(scale);
+        if (Overrides is { } overrides)
+        {
+            Section(Strings.UniqueSection);
+            DrawUnique(overrides, rowId);
+        }
+
         Section(Strings.Path, highlight: ImGui.GetTime() < pathHighlightUntil);
         if (pathScrollFrames > 0)
         {
@@ -118,6 +164,7 @@ public sealed class DetailPane
         }
 
         DrawPath(scale);
+        DrawUnlocks(scale);
         Section(Strings.Giver);
         DrawGiver(quest);
         ImGui.Spacing();
@@ -202,6 +249,7 @@ public sealed class DetailPane
         }
     }
 
+    /// <summary>Icon, name and kind per reward; hovering anywhere on the row shows the blown-up reward tooltip.</summary>
     private void DrawRewards(float scale)
     {
         if (model.Rewards.Count == 0)
@@ -213,26 +261,106 @@ public sealed class DetailPane
         var iconSize = ImGui.GetTextLineHeight() + 4f * scale;
         foreach (var line in model.Rewards)
         {
-            if (line.Icon != 0)
+            using (ImRaii.Group())
             {
-                var wrap = textures.GetFromGameIcon(new GameIconLookup(line.Icon)).GetWrapOrEmpty();
-                ImGui.Image(wrap.Handle, new Vector2(iconSize, iconSize));
+                if (line.Reward.Icon != 0)
+                {
+                    var wrap = textures.GetFromGameIcon(new GameIconLookup(line.Reward.Icon)).GetWrapOrEmpty();
+                    ImGui.Image(wrap.Handle, new Vector2(iconSize, iconSize));
+                }
+                else
+                {
+                    ImGui.Dummy(new Vector2(iconSize, iconSize));
+                }
+
                 ImGui.SameLine();
-            }
-            else
-            {
-                ImGui.Dummy(new Vector2(iconSize, iconSize));
+                ImGui.AlignTextToFramePadding();
+                ImGui.TextUnformatted(line.Text);
                 ImGui.SameLine();
+                ImGui.TextDisabled(line.Kind);
             }
 
-            ImGui.AlignTextToFramePadding();
-            ImGui.TextUnformatted(line.Text);
-            ImGui.SameLine();
-            ImGui.TextDisabled(line.Kind);
+            if (ImGui.IsItemHovered())
+            {
+                RewardTooltip.Draw(line.Reward, links, textures);
+            }
         }
     }
 
-    /// <summary>Vertical chain: a glyph per step joined by a thin Dusk line, the name clickable to select that quest.</summary>
+    /// <summary>The user's Moonlit verdict: restore an override, or vouch for a quest the shipped data does not list.</summary>
+    private void DrawUnique(IUniqueOverrides overrides, uint rowId)
+    {
+        if (overrides.Get(rowId) is { } verdict)
+        {
+            using (Theme.PushText(verdict.Unique ? Theme.Moon : Theme.Dusk))
+            {
+                ImGui.TextUnformatted(verdict.Unique ? Strings.MarkedUniqueByYou : Strings.MarkedNotUniqueByYou);
+            }
+
+            if (verdict.Note is { Length: > 0 } note)
+            {
+                ImGui.SameLine();
+                ImGui.TextDisabled(note);
+            }
+
+            ImGui.SameLine();
+            if (ImGui.SmallButton(Strings.RestoreOverride))
+            {
+                overrides.Clear(rowId);
+            }
+
+            if (ImGui.IsItemHovered())
+            {
+                ImGui.SetTooltip(Strings.RestoreOverrideTooltip);
+            }
+
+            return;
+        }
+
+        if (model.HasUniqueEntries)
+        {
+            ImGui.TextDisabled(Strings.ListedInMoonlit);
+            return;
+        }
+
+        ImGui.TextDisabled(Strings.NotListedInMoonlit);
+        ImGui.SameLine();
+        if (ImGui.SmallButton(Strings.MarkUnique))
+        {
+            noteBuffer = string.Empty;
+            ImGui.OpenPopup(Strings.MarkUniquePopup);
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip(Strings.MarkUniqueTooltip);
+        }
+
+        using var popup = ImRaii.Popup(Strings.MarkUniquePopup);
+        if (!popup)
+        {
+            return;
+        }
+
+        ImGui.SetNextItemWidth(220f * ImGuiHelpers.GlobalScale);
+        ImGui.InputTextWithHint("##uniqueNote", Strings.MarkUniqueNoteHint, ref noteBuffer, NoteLength);
+        if (ImGui.Button(Strings.MarkUniqueConfirm))
+        {
+            overrides.Set(rowId, true, noteBuffer);
+            ImGui.CloseCurrentPopup();
+        }
+
+        ImGui.SameLine();
+        if (ImGui.Button(Strings.Cancel))
+        {
+            ImGui.CloseCurrentPopup();
+        }
+    }
+
+    /// <summary>
+    /// The chain grouped by expansion, completed runs folded behind a toggle, every visible glyph joined by a thin
+    /// Dusk line; each name is clickable and selects that quest.
+    /// </summary>
     private void DrawPath(float scale)
     {
         if (model.Path.Count <= 1)
@@ -248,26 +376,114 @@ public sealed class DetailPane
         var previousCenter = Vector2.Zero;
         var hasPrevious = false;
 
-        foreach (var step in model.Path)
+        foreach (var row in model.PathRows)
         {
-            using var id = ImRaii.PushId((int)step.RowId);
+            switch (row.Kind)
+            {
+                case PathRowKind.ExpansionHeader:
+                    ImGui.TextDisabled(row.Text);
+                    break;
+
+                case PathRowKind.Step:
+                    DrawStep(dl, row.Step!, radius, lineHeight, glyphBox, scale, ref previousCenter, ref hasPrevious);
+                    break;
+
+                case PathRowKind.FoldedRun:
+                {
+                    var expanded = expandedRuns.Contains(row.RunIndex);
+                    using var id = ImRaii.PushId(row.RunIndex);
+                    var center = BeginGlyphLine(dl, QuestState.Completed, radius, lineHeight, glyphBox, scale, ref previousCenter, ref hasPrevious);
+                    using (Theme.PushText(Theme.Dusk))
+                    {
+                        if (ImGui.Selectable(expanded ? row.ExpandedText : row.Text))
+                        {
+                            if (!expandedRuns.Remove(row.RunIndex))
+                            {
+                                expandedRuns.Add(row.RunIndex);
+                            }
+                        }
+                    }
+
+                    if (ImGui.IsItemHovered())
+                    {
+                        ImGui.SetTooltip(expanded ? Strings.FoldedRunCollapseTooltip : Strings.FoldedRunExpandTooltip);
+                    }
+
+                    previousCenter = center;
+                    if (expanded)
+                    {
+                        foreach (var step in row.Run!)
+                        {
+                            DrawStep(dl, step, radius, lineHeight, glyphBox, scale, ref previousCenter, ref hasPrevious);
+                        }
+                    }
+
+                    break;
+                }
+            }
+        }
+    }
+
+    private void DrawStep(ImDrawListPtr dl, PathLine step, float radius, float lineHeight, float glyphBox, float scale, ref Vector2 previousCenter, ref bool hasPrevious)
+    {
+        using var id = ImRaii.PushId((int)step.RowId);
+        var center = BeginGlyphLine(dl, step.State, radius, lineHeight, glyphBox, scale, ref previousCenter, ref hasPrevious);
+        if (ImGui.Selectable(step.Name, step.IsTarget))
+        {
+            ui.SelectedRowId = step.RowId;
+        }
+
+        previousCenter = center;
+    }
+
+    /// <summary>Glyph at the line's left joined to the previous glyph, cursor left on the same line for the label.</summary>
+    private static Vector2 BeginGlyphLine(ImDrawListPtr dl, QuestState state, float radius, float lineHeight, float glyphBox, float scale, ref Vector2 previousCenter, ref bool hasPrevious)
+    {
+        var pos = ImGui.GetCursorScreenPos();
+        var center = pos + new Vector2(glyphBox * 0.5f, lineHeight * 0.5f);
+        if (hasPrevious)
+        {
+            dl.AddLine(previousCenter + new Vector2(0f, radius), center - new Vector2(0f, radius), Theme.DuskU32, 1f * scale);
+        }
+
+        ImGui.Dummy(new Vector2(glyphBox, lineHeight));
+        MoonGlyph.Draw(dl, center, radius, state);
+        ImGui.SameLine();
+        hasPrevious = true;
+        return center;
+    }
+
+    /// <summary>Direct dependents of the selected quest: the quests it is a previous quest of, with their glyphs.</summary>
+    private void DrawUnlocks(float scale)
+    {
+        ImGui.Spacing();
+        ImGui.TextDisabled(Strings.UnlocksNext);
+        if (model.Unlocks.Count == 0)
+        {
+            ImGui.TextDisabled(Strings.UnlocksNone);
+            return;
+        }
+
+        var dl = ImGui.GetWindowDrawList();
+        var radius = PathGlyphRadius * scale;
+        var lineHeight = ImGui.GetTextLineHeight();
+        var glyphBox = MathF.Max(lineHeight, radius * 2.4f);
+        foreach (var line in model.Unlocks)
+        {
+            using var id = ImRaii.PushId((int)line.RowId);
             var pos = ImGui.GetCursorScreenPos();
-            var center = pos + new Vector2(glyphBox * 0.5f, lineHeight * 0.5f);
-            if (hasPrevious)
-            {
-                dl.AddLine(previousCenter + new Vector2(0f, radius), center - new Vector2(0f, radius), Theme.DuskU32, 1f * scale);
-            }
-
             ImGui.Dummy(new Vector2(glyphBox, lineHeight));
-            MoonGlyph.Draw(dl, center, radius, step.State);
+            MoonGlyph.Draw(dl, pos + new Vector2(glyphBox * 0.5f, lineHeight * 0.5f), radius, line.State);
             ImGui.SameLine();
-            if (ImGui.Selectable(step.Name, step.IsTarget))
+            if (ImGui.Selectable(line.Name))
             {
-                ui.SelectedRowId = step.RowId;
+                ui.SelectedRowId = line.RowId;
             }
+        }
 
-            previousCenter = center;
-            hasPrevious = true;
+        if (model.UnlocksMore is { } more)
+        {
+            ImGui.TextDisabled(more);
         }
     }
 
@@ -355,6 +571,11 @@ public sealed class DetailPane
             return;
         }
 
+        if (model.RowId != rowId)
+        {
+            expandedRuns.Clear();
+        }
+
         pinnedShown = pinned;
         model.RowId = rowId;
         model.Version = session.Version;
@@ -363,6 +584,9 @@ public sealed class DetailPane
         model.Requirements.Clear();
         model.Rewards.Clear();
         model.Path.Clear();
+        model.PathRows.Clear();
+        model.Unlocks.Clear();
+        model.UnlocksMore = null;
         model.StateNote = null;
         model.GiverName = null;
         model.PlaceText = null;
@@ -380,6 +604,7 @@ public sealed class DetailPane
         session.States.TryGetValue(rowId, out var evaluation);
         model.State = evaluation?.State ?? QuestState.Unknown;
         model.StateText = Strings.StateName(model.State);
+        model.HasUniqueEntries = HasShippedUniqueEntry(session.UniqueRewards, rowId);
 
         model.JournalPath = string.Format(CultureInfo.CurrentCulture, Strings.JournalPathFormat, quest.Journal.GenreName, quest.Journal.CategoryName);
         var jobName = quest.ClassJobCategory <= 1 ? Strings.JobAny : links.ClassJobCategoryName(quest.ClassJobCategory);
@@ -412,14 +637,18 @@ public sealed class DetailPane
             var text = reward.Count > 1
                 ? string.Format(CultureInfo.CurrentCulture, Strings.RewardCountFormat, reward.Name, reward.Count)
                 : reward.Name;
-            model.Rewards.Add(new RewardLine(reward.Icon, text, Strings.RewardKindName(reward.Kind)));
+            model.Rewards.Add(new RewardLine(reward, text, Strings.RewardKindName(reward.Kind)));
         }
 
         foreach (var step in PathFinder.PathTo(rowId, bundle.Catalog, session.States))
         {
-            var name = bundle.Catalog.GetByRowId(step.RowId)?.Name ?? step.RowId.ToString(CultureInfo.InvariantCulture);
-            model.Path.Add(new PathLine(step.RowId, name, step.State, step.RowId == rowId));
+            var stepQuest = bundle.Catalog.GetByRowId(step.RowId);
+            var name = stepQuest?.Name ?? step.RowId.ToString(CultureInfo.InvariantCulture);
+            model.Path.Add(new PathLine(step.RowId, name, step.State, step.RowId == rowId, stepQuest?.Expansion ?? quest.Expansion));
         }
+
+        BuildPathRows(bundle);
+        BuildUnlocks(session, bundle, quest);
 
         if (quest.Issuer is { } issuer)
         {
@@ -443,5 +672,118 @@ public sealed class DetailPane
                 CultureInfo.CurrentCulture,
                 model.State == QuestState.Completed ? Strings.ProvenanceCompletedFormat : Strings.ProvenanceEvaluatedFormat,
                 UiFormat.Time(snapshot.TakenUtc));
+    }
+
+    /// <summary>
+    /// Groups <see cref="Model.Path"/> by expansion under a header each, and folds every run of at least
+    /// <see cref="MinFoldedRun"/> consecutive completed steps into one toggle row. The target and every step that is
+    /// not completed stay listed.
+    /// </summary>
+    private void BuildPathRows(CatalogBundle bundle)
+    {
+        if (model.Path.Count <= 1)
+        {
+            return;
+        }
+
+        var rows = model.PathRows;
+        List<PathLine>? run = null;
+        var runIndex = 0;
+        byte? expansion = null;
+
+        void Flush()
+        {
+            if (run is null)
+            {
+                return;
+            }
+
+            if (run.Count >= MinFoldedRun)
+            {
+                var collapsed = string.Format(CultureInfo.CurrentCulture, Strings.FoldedRunCollapsedFormat, run.Count);
+                var expanded = string.Format(CultureInfo.CurrentCulture, Strings.FoldedRunExpandedFormat, run.Count);
+                rows.Add(new PathRow(PathRowKind.FoldedRun, collapsed, expanded, null, run, runIndex++));
+            }
+            else
+            {
+                foreach (var step in run)
+                {
+                    rows.Add(new PathRow(PathRowKind.Step, step.Name, null, step, null, -1));
+                }
+            }
+
+            run = null;
+        }
+
+        foreach (var line in model.Path)
+        {
+            if (expansion != line.Expansion)
+            {
+                Flush();
+                expansion = line.Expansion;
+                var name = bundle.Names.Expansion(line.Expansion);
+                rows.Add(new PathRow(PathRowKind.ExpansionHeader, name.Length > 0 ? name : Strings.ExpansionShort(line.Expansion), null, null, null, -1));
+            }
+
+            if (line.State == QuestState.Completed && !line.IsTarget)
+            {
+                (run ??= []).Add(line);
+            }
+            else
+            {
+                Flush();
+                rows.Add(new PathRow(PathRowKind.Step, line.Name, null, line, null, -1));
+            }
+        }
+
+        Flush();
+    }
+
+    /// <summary>Quests that list the selected one among their previous quests, in catalog order, capped at <see cref="MaxUnlocks"/>.</summary>
+    private void BuildUnlocks(SessionState session, CatalogBundle bundle, QuestRecord quest)
+    {
+        if (session.Index is not { } index)
+        {
+            return;
+        }
+
+        var more = 0;
+        foreach (var dependentId in index.Dependents(quest.RowId))
+        {
+            // The index also lists quests that merely lock on this one; only a true prerequisite is an unlock.
+            if (bundle.Catalog.GetByRowId(dependentId) is not { } dependent || Array.IndexOf(dependent.PreviousQuests.QuestIds, quest.RowId) < 0)
+            {
+                continue;
+            }
+
+            if (model.Unlocks.Count >= MaxUnlocks)
+            {
+                more++;
+                continue;
+            }
+
+            var state = session.States.TryGetValue(dependentId, out var evaluation) ? evaluation.State : QuestState.Unknown;
+            model.Unlocks.Add(new PathLine(dependentId, dependent.Name, state, false, dependent.Expansion));
+        }
+
+        if (more > 0)
+        {
+            model.UnlocksMore = string.Format(CultureInfo.CurrentCulture, Strings.AndMoreFormat, more);
+        }
+    }
+
+    private bool HasShippedUniqueEntry(UniqueRewardsData data, uint rowId)
+    {
+        if (!ReferenceEquals(uniqueData, data))
+        {
+            uniqueData = data;
+            uniqueQuests.Clear();
+            foreach (var entry in data.Entries)
+            {
+                uniqueQuests.Add(entry.QuestRowId);
+            }
+        }
+
+        return uniqueQuests.Contains(rowId);
     }
 }

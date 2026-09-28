@@ -36,6 +36,18 @@ public sealed class TablePane : IDisposable
         Rewards,
     }
 
+    /// <summary>Header label per <see cref="Column"/>; the glyph column keeps its name for the hide/show menu but shows none.</summary>
+    private static readonly string[] HeaderLabels =
+    [
+        string.Empty,
+        Strings.ColumnName,
+        Strings.ColumnLevel,
+        Strings.ColumnJob,
+        Strings.ColumnNextStep,
+        Strings.ColumnExpansion,
+        Strings.ColumnRewards,
+    ];
+
     /// <summary>Header tooltip per <see cref="Column"/>, in column order.</summary>
     private static readonly string[] HeaderTooltips =
     [
@@ -169,8 +181,7 @@ public sealed class TablePane : IDisposable
             }
 
             using var id = ImRaii.PushId(i);
-            // The glyph column keeps its name for the hide/show context menu but shows no label.
-            ImGui.TableHeader(i == (int)Column.Glyph ? string.Empty : ImGui.TableGetColumnName(i));
+            ImGui.TableHeader(HeaderLabels[i]);
             if (ImGui.IsItemHovered())
             {
                 ImGui.SetTooltip(HeaderTooltips[i]);
