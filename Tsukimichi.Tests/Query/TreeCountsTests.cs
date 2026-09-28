@@ -1,5 +1,7 @@
+using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
+using Tsukimichi.Tests.Evaluation;
 using static Tsukimichi.Tests.Query.QueryTestData;
 
 namespace Tsukimichi.Tests.Query;
@@ -62,6 +64,58 @@ public class TreeCountsTests
 
         Assert.Equal(new NodeCount(1, 1, 2), counts.Categories[10]);
         Assert.Equal(1f, counts.Categories[10].Fraction);
+    }
+
+    [Fact]
+    public void Out_of_season_quest_leaves_the_total_the_way_foreclosed_does()
+    {
+        // Two seasonal quests: festival 7 is running, festival 8 is not (and the character never saw it, so it is
+        // Blocked, not Foreclosed). Only the running one counts, so "Seasonal Events" can reach 100 %.
+        var catalog = QuestCatalog.Build(
+        [
+            Quest(65600, "Running event", festival: 7),
+            Quest(65601, "Event not running", festival: 8),
+        ]);
+        var snapshot = Fixture.Snapshot() with { ActiveFestivals = [7] };
+        var evaluations = StateResolver.ResolveAll(catalog, snapshot, EvalContext.Default);
+
+        Assert.Equal(QuestState.Blocked, evaluations[65601].State);
+        Assert.True(evaluations[65601].IsOutOfSeason);
+        Assert.False(evaluations[65600].IsOutOfSeason);
+
+        var counts = TreeCounts.Compute(catalog, evaluations, includeUnlisted: false);
+
+        Assert.Equal(new NodeCount(0, 1, 1), counts.Overall);
+        Assert.Equal(new NodeCount(0, 1, 1), counts.Genres[100]);
+    }
+
+    [Fact]
+    public void Out_of_season_remainder_lets_a_node_reach_100_percent()
+    {
+        var catalog = QuestCatalog.Build(
+        [
+            Quest(65600, "Done last year", festival: 8),
+            Quest(65601, "Not running", festival: 9),
+        ]);
+        var snapshot = Fixture.Snapshot(65600);
+        var evaluations = StateResolver.ResolveAll(catalog, snapshot, EvalContext.Default);
+
+        var counts = TreeCounts.Compute(catalog, evaluations, includeUnlisted: false);
+
+        Assert.Equal(new NodeCount(1, 1, 1), counts.Overall);
+        Assert.Equal(1f, counts.Overall.Fraction);
+    }
+
+    [Fact]
+    public void Blocked_for_another_reason_still_counts()
+    {
+        // The exclusion is the seasonal blocker only, never Blocked in general.
+        var catalog = QuestCatalog.Build([Quest(65600, "Needs level 90", level: 90)]);
+        var evaluations = StateResolver.ResolveAll(catalog, Fixture.Snapshot(), EvalContext.Default);
+
+        Assert.Equal(QuestState.Blocked, evaluations[65600].State);
+        Assert.False(evaluations[65600].LeavesTotals);
+        Assert.Equal(new NodeCount(0, 1, 0), TreeCounts.Compute(catalog, evaluations, includeUnlisted: false).Overall);
     }
 
     [Fact]

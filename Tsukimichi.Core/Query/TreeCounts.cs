@@ -5,11 +5,12 @@ using Tsukimichi.Core.Model;
 namespace Tsukimichi.Core.Query;
 
 /// <summary>
-/// Progress for one tree node. <see cref="Total"/> leaves out <see cref="QuestState.Foreclosed"/> quests, which the
-/// character can never do, so a node whose remainder is foreclosed reads as complete; they are reported in
-/// <see cref="Foreclosed"/> instead. <see cref="Fraction"/> feeds the filling moon.
+/// Progress for one tree node. <see cref="Total"/> leaves out the quests that <see cref="QuestEvaluation.LeavesTotals"/>
+/// names: <see cref="QuestState.Foreclosed"/> ones, which the character can never do, and out-of-season ones, which
+/// they cannot do until the event returns. A node whose remainder is all of these reads as complete; they are
+/// reported in <see cref="Excluded"/> instead. <see cref="Fraction"/> feeds the filling moon.
 /// </summary>
-public readonly record struct NodeCount(int Done, int Total, int Foreclosed)
+public readonly record struct NodeCount(int Done, int Total, int Excluded)
 {
     public NodeCount(int done, int total)
         : this(done, total, 0)
@@ -63,7 +64,7 @@ public sealed class TreeCounts
         return Compute(catalog, new EvaluationSource(evaluations), includeUnlisted);
     }
 
-    /// <summary>Counts from a plain state map; missing rows read as <see cref="QuestState.Unknown"/>.</summary>
+    /// <summary>Counts from a plain state map; missing rows read as <see cref="QuestState.Unknown"/>. Without requirements only Foreclosed leaves the totals.</summary>
     public static TreeCounts Compute(QuestCatalog catalog, IReadOnlyDictionary<uint, QuestState> states, bool includeUnlisted)
     {
         ArgumentNullException.ThrowIfNull(states);
@@ -83,36 +84,35 @@ public sealed class TreeCounts
 
         foreach (var quest in catalog.All)
         {
-            var state = source.StateOf(quest.RowId);
-            var done = state == QuestState.Completed ? 1 : 0;
-            var foreclosed = state == QuestState.Foreclosed ? 1 : 0;
+            var done = source.StateOf(quest.RowId) == QuestState.Completed ? 1 : 0;
+            var excluded = source.LeavesTotals(quest.RowId) ? 1 : 0;
 
             if (quest.IsUnlisted)
             {
-                unlisted = Add(unlisted, done, foreclosed);
+                unlisted = Add(unlisted, done, excluded);
                 if (includeUnlisted)
                 {
-                    overall = Add(overall, done, foreclosed);
+                    overall = Add(overall, done, excluded);
                 }
 
                 continue;
             }
 
-            Bump(sections, quest.Journal.SectionId, done, foreclosed);
-            Bump(categories, quest.Journal.CategoryId, done, foreclosed);
-            Bump(genres, quest.Journal.GenreId, done, foreclosed);
-            overall = Add(overall, done, foreclosed);
+            Bump(sections, quest.Journal.SectionId, done, excluded);
+            Bump(categories, quest.Journal.CategoryId, done, excluded);
+            Bump(genres, quest.Journal.GenreId, done, excluded);
+            overall = Add(overall, done, excluded);
         }
 
         return new TreeCounts(sections, categories, genres, unlisted, overall);
     }
 
-    private static NodeCount Add(NodeCount count, int done, int foreclosed) =>
-        new(count.Done + done, count.Total + 1 - foreclosed, count.Foreclosed + foreclosed);
+    private static NodeCount Add(NodeCount count, int done, int excluded) =>
+        new(count.Done + done, count.Total + 1 - excluded, count.Excluded + excluded);
 
-    private static void Bump(Dictionary<uint, NodeCount> counts, uint key, int done, int foreclosed)
+    private static void Bump(Dictionary<uint, NodeCount> counts, uint key, int done, int excluded)
     {
         ref var slot = ref CollectionsMarshal.GetValueRefOrAddDefault(counts, key, out _);
-        slot = Add(slot, done, foreclosed);
+        slot = Add(slot, done, excluded);
     }
 }

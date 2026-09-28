@@ -3,6 +3,7 @@ using Dalamud.Configuration;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using Tsukimichi.Core.Query;
+using Tsukimichi.Core.Storage;
 using Tsukimichi.Core.Ui;
 
 namespace Tsukimichi.Config;
@@ -132,7 +133,8 @@ public sealed class Configuration : IPluginConfiguration
 
     /// <summary>
     /// Reads the saved configuration or returns defaults when there is none, it is of another type, or reading it
-    /// throws (a corrupt file must not stop the plugin from loading; the failure is logged when a log is given).
+    /// throws (a corrupt file must not stop the plugin from loading). Before defaults replace an unreadable file it
+    /// is copied aside (see <see cref="ConfigRecovery"/>) and the failure is logged once when a log is given.
     /// </summary>
     public static Configuration Load(IDalamudPluginInterface pluginInterface) => Load(pluginInterface, null);
 
@@ -147,7 +149,21 @@ public sealed class Configuration : IPluginConfiguration
         }
         catch (Exception ex)
         {
-            log?.Warning(ex, "Could not read the saved configuration; using defaults");
+            // The next Save overwrites the file, so the unreadable one is kept beside it first.
+            var path = pluginInterface.ConfigFile.FullName;
+            if (ConfigRecovery.TryCopyAside(path, out var copiedTo, out var copyError) && copiedTo is not null)
+            {
+                log?.Warning(ex, "Could not read the saved configuration; a copy was kept at {Path} and defaults are in use", copiedTo);
+            }
+            else if (copyError is not null)
+            {
+                log?.Warning(ex, "Could not read the saved configuration and could not copy it aside ({Error}); using defaults", copyError);
+            }
+            else
+            {
+                log?.Warning(ex, "Could not read the saved configuration; using defaults");
+            }
+
             config = new Configuration();
         }
 

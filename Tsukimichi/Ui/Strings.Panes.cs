@@ -505,7 +505,7 @@ static partial class Strings
             "/tsukimichi",
             "/tsuki",
             "/tsukimichi search <text>",
-            "/tsukimichi config",
+            "/tsukimichi settings",
             "/tsukimichi help",
             "/tsukimichi glyphs",
             "/tsuki zone",

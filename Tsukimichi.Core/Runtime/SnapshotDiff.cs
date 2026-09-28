@@ -1,3 +1,4 @@
+using System.Buffers;
 using Tsukimichi.Core.Model;
 
 namespace Tsukimichi.Core.Runtime;
@@ -21,6 +22,9 @@ public sealed record SnapshotDiff(
     bool OtherChanged)
 {
     public static readonly SnapshotDiff Empty = new([], [], [], false);
+
+    /// <summary>Largest id list the order-insensitive compare sorts on the stack; longer ones borrow from the array pool.</summary>
+    private const int StackSetLimit = 256;
 
     public bool IsEmpty => ChangedQuestIds.Count == 0 && ChangedJobs.Count == 0 && ChangedFestivals.Count == 0 && !OtherChanged;
 
@@ -181,12 +185,35 @@ public sealed record SnapshotDiff(
         }
     }
 
+    /// <summary>
+    /// Key-and-value equality of two maps. Captures and stored files hold <see cref="Dictionary{TKey, TValue}"/>
+    /// instances, which are walked with the struct enumerator so the once-a-second fast path boxes nothing; any
+    /// other implementation takes the interface enumerator.
+    /// </summary>
     private static bool SameEntries<TKey, TValue>(IReadOnlyDictionary<TKey, TValue> a, IReadOnlyDictionary<TKey, TValue> b)
         where TKey : notnull
     {
         if (a.Count != b.Count)
         {
             return false;
+        }
+
+        if (a.Count == 0)
+        {
+            return true;
+        }
+
+        if (a is Dictionary<TKey, TValue> dictionary)
+        {
+            foreach (var (key, value) in dictionary)
+            {
+                if (!b.TryGetValue(key, out var other) || !EqualityComparer<TValue>.Default.Equals(value, other))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         foreach (var (key, value) in a)
@@ -200,22 +227,48 @@ public sealed record SnapshotDiff(
         return true;
     }
 
-    private static bool SameSet<T>(IReadOnlyList<T> a, IReadOnlyList<T> b)
+    /// <summary>
+    /// Order-insensitive equality of two id lists without a heap allocation: captures list ids in a fixed order, so
+    /// the element-wise compare answers the common poll; a reordered pair is compared as two sorted copies on the
+    /// stack (or, past <see cref="StackSetLimit"/>, in a pooled array).
+    /// </summary>
+    private static bool SameSet(IReadOnlyList<uint> a, IReadOnlyList<uint> b)
     {
         if (a.Count != b.Count)
         {
             return false;
         }
 
-        var set = new HashSet<T>(a);
-        foreach (var item in b)
+        if (SameSequence(a, b))
         {
-            if (!set.Contains(item))
-            {
-                return false;
-            }
+            return true;
         }
 
-        return true;
+        var n = a.Count;
+        uint[]? rented = null;
+        var buffer = n <= StackSetLimit
+            ? stackalloc uint[2 * n]
+            : (rented = ArrayPool<uint>.Shared.Rent(2 * n)).AsSpan(0, 2 * n);
+        try
+        {
+            var left = buffer[..n];
+            var right = buffer[n..];
+            for (var i = 0; i < n; i++)
+            {
+                left[i] = a[i];
+                right[i] = b[i];
+            }
+
+            left.Sort();
+            right.Sort();
+            return left.SequenceEqual(right);
+        }
+        finally
+        {
+            if (rented is not null)
+            {
+                ArrayPool<uint>.Shared.Return(rented);
+            }
+        }
     }
 }

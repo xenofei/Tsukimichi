@@ -19,6 +19,61 @@ public sealed class SnapshotDiffTests
     }
 
     [Fact]
+    public void Reordered_id_lists_are_the_same_set()
+    {
+        var a = Fixture.Snapshot(Fixture.A) with { UnlockedInstances = [3, 1, 2], CompletedAchievements = [9, 8] };
+        var b = a with { UnlockedInstances = [1, 2, 3], CompletedAchievements = [8, 9] };
+
+        Assert.True(SnapshotDiff.Compute(a, b).IsEmpty);
+        Assert.True(SnapshotDiff.Compute(b, a).IsEmpty);
+    }
+
+    [Theory]
+    [InlineData(new uint[] { 1, 2, 3 }, new uint[] { 1, 2, 4 })]
+    [InlineData(new uint[] { 1, 2, 3 }, new uint[] { 1, 2 })]
+    [InlineData(new uint[] { 1, 1, 2 }, new uint[] { 1, 2, 2 })]
+    [InlineData(new uint[] { }, new uint[] { 5 })]
+    public void Different_id_sets_change_other_inputs(uint[] oldIds, uint[] newIds)
+    {
+        var a = Fixture.Snapshot(Fixture.A) with { UnlockedInstances = oldIds };
+        var b = a with { UnlockedInstances = newIds };
+
+        Assert.True(SnapshotDiff.Compute(a, b).OtherChanged);
+
+        var c = Fixture.Snapshot(Fixture.A) with { CompletedAchievements = oldIds };
+        var d = c with { CompletedAchievements = newIds };
+
+        Assert.True(SnapshotDiff.Compute(c, d).OtherChanged);
+    }
+
+    [Theory]
+    [InlineData(200)]
+    [InlineData(600)]
+    public void Same_set_compare_allocates_nothing(int count)
+    {
+        // Both the stack path (small lists) and the pooled path (large lists) must leave the heap alone on every
+        // poll: the diff runs once a second for as long as the character is logged in.
+        var ids = Enumerable.Range(1, count).Select(i => (uint)i).ToArray();
+        var reversed = Enumerable.Reverse(ids).ToArray();
+        var a = Fixture.Snapshot(Fixture.A) with { UnlockedInstances = ids, CompletedAchievements = ids };
+        var b = a with { UnlockedInstances = reversed, CompletedAchievements = reversed };
+
+        for (var i = 0; i < 100; i++)
+        {
+            Assert.True(SnapshotDiff.Compute(a, b).IsEmpty);
+        }
+
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        for (var i = 0; i < 50; i++)
+        {
+            SnapshotDiff.Compute(a, b);
+        }
+
+        var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+        Assert.True(allocated == 0, $"{allocated} bytes allocated over 50 unchanged polls");
+    }
+
+    [Fact]
     public void Unchanged_pair_of_distinct_instances_takes_the_fast_path()
     {
         // Every collection is a fresh instance with equal content, as a poll produces them; the fast path must still

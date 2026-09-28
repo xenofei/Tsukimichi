@@ -47,6 +47,10 @@ public sealed class SnapshotFixtureTests
         Assert.Empty(loaded.DailyDone);
         Assert.False(loaded.AchievementsLoaded);
 
+        // Written before the caps were read from the client: both 0, which the evaluator treats as "not checked".
+        Assert.Equal(0, loaded.MaxExpansion);
+        Assert.Equal(0, loaded.LevelCap);
+
         var outRoot = tmp.File("out");
         new JsonSnapshotStore(outRoot).Save(loaded);
         var written = File.ReadAllText(Path.Combine(outRoot, "characters", "1.json"));

@@ -225,7 +225,7 @@ public static class StateResolver
 
         foreach (var job in candidates)
         {
-            if (RequirementEvaluator.AdmitsJob(q, ctx, job) && RequirementEvaluator.LevelOf(s, job) >= q.Level)
+            if (RequirementEvaluator.AdmitsJob(q, s, ctx, job) && RequirementEvaluator.LevelOf(s, job) >= q.Level)
             {
                 return job;
             }

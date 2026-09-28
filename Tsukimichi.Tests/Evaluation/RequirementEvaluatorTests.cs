@@ -132,6 +132,28 @@ public class RequirementEvaluatorTests
     }
 
     [Fact]
+    public void Job_may_take_its_base_class_quest_when_the_journal_shows_it_accepted_on_that_job()
+    {
+        // Gladiator-pinned quest evaluated on Paladin. The parent lookup alone changes nothing: only the client's own
+        // record that the quest was accepted on Paladin (QuestWork.AcceptClassJob) proves the game admits the job.
+        var quest = Quest(Target) with { ClassJobRequired = Gladiator };
+        var ctx = new EvalContext { ParentJob = job => job == Paladin ? Gladiator : job };
+        var onPaladin = Snapshot() with { CurrentJob = Paladin, JobLevels = Levels((Paladin, 60)) };
+
+        Assert.False(Only(Eval(quest, onPaladin, ctx: ctx), RequirementKind.ClassJob).Met);
+        Assert.False(Only(Eval(quest, onPaladin with { Accepted = [Accepted(Target, 1, Gladiator)] }, ctx: ctx), RequirementKind.ClassJob).Met);
+        Assert.False(Only(Eval(quest, onPaladin with { Accepted = [Accepted(Target, 1, Paladin)] }), RequirementKind.ClassJob).Met);
+
+        var r = Only(Eval(quest, onPaladin with { Accepted = [Accepted(Target, 1, Paladin)] }, ctx: ctx), RequirementKind.ClassJob);
+        Assert.True(r.Met);
+        Assert.Equal("available on the current job", r.Detail);
+
+        // A job of another class is never admitted, journal or not.
+        var onConjurer = onPaladin with { CurrentJob = Conjurer, Accepted = [Accepted(Target, 1, Conjurer)] };
+        Assert.False(Only(Eval(quest, onConjurer, ctx: ctx), RequirementKind.ClassJob).Met);
+    }
+
+    [Fact]
     public void Level_uses_unsynced_job_level_and_reports_gap()
     {
         var quest = Quest(Target) with { Level = 50 };

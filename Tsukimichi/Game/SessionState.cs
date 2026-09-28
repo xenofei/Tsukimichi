@@ -234,7 +234,7 @@ public sealed class SessionState
         CatalogLoading = false;
         Index = ReversePrereqIndex.Build(bundle.Catalog);
         FeatureQuestIds = FeaturePresets.Derive(bundle.Catalog, Curated, UniqueRewards.Entries);
-        baseContext = EvalContextBuilder.Build(Curated.Festivals, bundle.Jobs, static () => DateTime.UtcNow);
+        baseContext = EvalContextBuilder.Build(Curated.Festivals, bundle.Jobs, static () => DateTime.UtcNow, jobParents: bundle.JobParents());
 
         if (ViewedSnapshot is { } viewed && !IsLive)
         {

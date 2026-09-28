@@ -1,7 +1,16 @@
+using System.Text.Json.Serialization;
+
 namespace Tsukimichi.Core.Model;
 
-/// <summary>A quest the character currently has in the journal, with its step.</summary>
-public readonly record struct AcceptedQuest(ushort QuestId, byte Sequence);
+/// <summary>
+/// A quest the character currently has in the journal, with its step and, when the client says, the ClassJob it was
+/// accepted on (<c>QuestWork.AcceptClassJob</c>). <paramref name="AcceptClassJob"/> is additive at schema v1: 0 means
+/// unknown (files written before it was read, allied-society dailies), and 0 is not written to disk.
+/// </summary>
+public readonly record struct AcceptedQuest(
+    ushort QuestId,
+    byte Sequence,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] byte AcceptClassJob = 0);
 
 /// <summary>Standing with one allied society (beast tribe).</summary>
 public readonly record struct TribeStanding(byte Rank, ushort Value);
