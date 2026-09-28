@@ -1,0 +1,49 @@
+name: Bug report
+description: Something crashed, drew wrong, or did not do what the help window says it does.
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. A quest shown in the wrong state has its own template ("Wrong quest state"); a wrong fact in the data (a reward that is not unique, a missing unlock) has "Data correction".
+  - type: input
+    id: version
+    attributes:
+      label: Tsukimichi version
+      description: Settings › About, or the plugin installer.
+      placeholder: "0.6.0"
+    validations:
+      required: true
+  - type: input
+    id: game
+    attributes:
+      label: Game and Dalamud version
+      placeholder: "7.3 hotfix 1, Dalamud 15.0.x"
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, what you saw instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open /tsuki
+        2. …
+  - type: textarea
+    id: log
+    attributes:
+      label: Log lines (optional)
+      description: "Lines mentioning Tsukimichi from `/xllog` or `%AppData%\\XIVLauncher\\dalamud.log`. Remove anything you do not want public; the plugin never logs character names or ids, but the surrounding log might."
+      render: text
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I looked at Known quirks in the help window and this is not one of them.
+        - label: This is not a request to automate anything (the plugin never will).
