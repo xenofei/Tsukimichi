@@ -24,10 +24,9 @@
     "DownloadLinkInstall": "https://github.com/xenofei/Tsukimichi/releases/download/v0.1.0/latest.zip",
     "DownloadLinkTesting": "https://github.com/xenofei/Tsukimichi/releases/download/v0.1.0/latest.zip",
     "DownloadLinkUpdate": "https://github.com/xenofei/Tsukimichi/releases/download/v0.1.0/latest.zip",
-    "LastUpdate": 1790560557,
+    "LastUpdate": 1790560606,
     "DownloadCount": 0,
     "IsHide": false,
-    "IsTestingExclusive": false,
-    "Changelog": "First release: quest catalog by journal type, completed/available filters with requirement breakdown, Moonlit unique rewards, per-character snapshots, help window."
+    "IsTestingExclusive": false
   }
 ]
