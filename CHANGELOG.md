@@ -4,6 +4,9 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+### Added
+- Flight tab: every flying zone under its expansion with a filling moon of attuned currents (veiled for stored characters) and the quest currents done, the zone you stand in marked ● and selected first. The selected zone lists its quest currents from the AetherCurrentCompFlgSet and AetherCurrent sheets with attunement, quest state, next step, Flag and (with Lifestream) Teleport buttons; clicking a quest shows its requirements and path in the detail pane. Field currents are counted and pointed at the Aether Compass, never located. Since patch 6.0 the game's own sets hold five quest and four field currents per zone from Heavensward to Endwalker, five and ten in Dawntrail, and Mor Dhona's single current (The Ultimate Weapon) for A Realm Reborn; the view follows the sheet.
+
 ## [0.3.0] - 2026-09-28
 
 ### Added

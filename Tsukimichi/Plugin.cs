@@ -47,6 +47,7 @@ public sealed class Plugin : IDalamudPlugin
     private MoonlitPane? moonlitPane;
     private Game.WotsitIpc? wotsit;
     private CharactersPane? charactersPane;
+    private FlightPane? flightPane;
     private ConfigWindow? configWindow;
     private HelpWindow? helpWindow;
     private ITutorial? tutorial;
@@ -285,6 +286,9 @@ public sealed class Plugin : IDalamudPlugin
             charactersPane.MoonlitCounts = moonlitPane.CountsFor;
             mainWindow.AttachPanes(moonlitPane, charactersPane);
             mainWindow.AttachOverrides(new MoonlitOverrides(moonlitPane));
+            // The flight index (a few small sheets) is built on the pane's first draw, on the framework thread.
+            flightPane = new FlightPane(Session, unlockReader, gameLinks, TextureProvider, Log, () => ClientState.TerritoryType, () => FlightIndex.Build(DataManager.Excel, Dalamud.Utility.ClientLanguageExtensions.ToLumina(DataManager.Language)));
+            mainWindow.AttachFlight(flightPane);
             chatNotifier = new Game.ChatNotifier(Session, Settings, Paths, gameLinks, ChatGui, Log);
 
             configWindow = new ConfigWindow(Settings, Session, PluginInterface, _ => ui.MarkQueryDirty());
