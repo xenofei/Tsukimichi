@@ -48,6 +48,15 @@ public sealed class Configuration : IPluginConfiguration
     /// <summary>Open the help window by itself the first time the main window opens; cleared once that happened.</summary>
     public bool ShowHelpOnFirstRun { get; set; } = true;
 
+    /// <summary>Set when the interactive tutorial was finished or declined; while false the welcome card offers the tour the first time the main window opens.</summary>
+    public bool TutorialCompleted { get; set; }
+
+    /// <summary>Scale of Tsukimichi's windows (text, spacing) on top of Dalamud's global scale, 0.9–1.6.</summary>
+    public float UiScale { get; set; } = 1.15f;
+
+    /// <summary>Scale of moon glyphs, reward icons and toolbar buttons, 0.8–2.0.</summary>
+    public float IconScale { get; set; } = 1.25f;
+
     /// <summary>Poll interval as a <see cref="TimeSpan"/> within the allowed bounds.</summary>
     public TimeSpan PollInterval
     {

@@ -46,6 +46,7 @@ public sealed class Plugin : IDalamudPlugin
     private CharactersPane? charactersPane;
     private ConfigWindow? configWindow;
     private HelpWindow? helpWindow;
+    private ITutorial? tutorial;
 
     /// <summary>The Moonlit pane's override store as the detail pane's <see cref="IUniqueOverrides"/>.</summary>
     private sealed class MoonlitOverrides(MoonlitPane pane) : IUniqueOverrides
@@ -272,10 +273,37 @@ public sealed class Plugin : IDalamudPlugin
             PluginInterface.UiBuilder.OpenConfigUi += configWindow.Toggle;
             command.ToggleConfigWindow = configWindow.Toggle;
 
-            helpWindow = new HelpWindow(Settings, PluginInterface, mainWindow);
+            // The tutorial draws over the main window (ITutorial.Draw at the end of MainWindow.Draw) and offers itself
+            // the first time the main window opens (CheckFirstRun on UiBuilder.Draw).
+            TutorialOverlay tutorial = new(Settings, PluginInterface, ui);
+            this.tutorial = tutorial;
+            tutorial.WatchedWindow = mainWindow;
+            PluginInterface.UiBuilder.Draw += tutorial.CheckFirstRun;
+            // MERGE: mainWindow.AttachTutorial(tutorial); — AttachTutorial arrives with the main-window branch; uncomment on merge.
+
+            var helpActions = new HelpActions(
+                OpenFilters: () =>
+                {
+                    ui.FilterPanelOpen = true;
+                    mainWindow.IsOpen = true;
+                },
+                ShowTab: tab =>
+                {
+                    ui.Tab = tab;
+                    mainWindow.IsOpen = true;
+                },
+                StartTutorial: () =>
+                {
+                    mainWindow.IsOpen = true;
+                    tutorial.Start();
+                },
+                OpenSettings: configWindow.Toggle);
+            helpWindow = new HelpWindow(helpActions, PluginInterface);
             windowSystem.AddWindow(helpWindow);
-            PluginInterface.UiBuilder.Draw += helpWindow.CheckFirstRun;
+            tutorial.OpenHelp = helpWindow.Show;
             configWindow.ShowHelp = helpWindow.Show;
+            configWindow.StartTutorial = helpActions.StartTutorial;
+            glyphDebugWindow.StartTutorial = helpActions.StartTutorial;
 
             command.ToggleHelpWindow = helpWindow.Toggle;
             // /UI
@@ -297,9 +325,9 @@ public sealed class Plugin : IDalamudPlugin
             PluginInterface.UiBuilder.OpenConfigUi -= configWindow.Toggle;
         }
 
-        if (helpWindow is not null)
+        if (tutorial is TutorialOverlay overlay)
         {
-            PluginInterface.UiBuilder.Draw -= helpWindow.CheckFirstRun;
+            PluginInterface.UiBuilder.Draw -= overlay.CheckFirstRun;
         }
 
         PluginInterface.UiBuilder.OpenMainUi -= mainWindow.Toggle;
@@ -327,9 +355,9 @@ public sealed class Plugin : IDalamudPlugin
                 PluginInterface.UiBuilder.OpenConfigUi -= configWindow.Toggle;
             }
 
-            if (helpWindow is not null)
+            if (tutorial is TutorialOverlay overlay)
             {
-                PluginInterface.UiBuilder.Draw -= helpWindow.CheckFirstRun;
+                PluginInterface.UiBuilder.Draw -= overlay.CheckFirstRun;
             }
 
             if (mainWindow is not null)
