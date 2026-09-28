@@ -5,6 +5,7 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 ## [Unreleased]
 
 ### Fixed
+- Login: the first capture after logging in is no longer trusted while the game has not yet delivered the character's quest data (an all-zero completion mask and an empty journal). Before, that capture could reset every "accepted since" time, and the next poll then announced every pinned quest as newly available. Loading the plugin while already logged in now waits for the character the same way instead of retrying with a growing back-off.
 - Counts and totals: a seasonal quest whose event is not running now leaves every done/total count the way a foreclosed quest does (tree nodes, tab badges, dashboard sections, the Feature Unlocks count, Compare's "neither done"), so "Seasonal Events" and the overall total can reach 100 % between events. Completed seasonal quests still count as done; a quest blocked for any other reason still counts.
 
 ## [0.5.1] - 2026-09-28

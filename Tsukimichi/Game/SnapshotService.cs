@@ -13,7 +13,9 @@ namespace Tsukimichi.Game;
 /// Owns the snapshot store and the login lifecycle. After <see cref="IClientState.Login"/> the character is not
 /// readable at once: <see cref="CharacterReady"/> turns true on the first framework tick where the player is loaded
 /// with a content id (see <see cref="GameStateReader.IsCharacterReadable"/>), or after <see cref="LoginSettleTimeout"/>
-/// as a safety net. It tells the poller when it may capture. A character already logged in at load is ready at once.
+/// as a safety net. It tells the poller when it may capture. A character already logged in at load (a hot load) goes
+/// through the same probe: the content id can still be 0 for a few ticks, and marking it ready at once would make the
+/// poller's first capture throw and back off for up to <see cref="StatePoller.MaxBackoff"/>.
 /// Every event here fires on the framework thread.
 /// </summary>
 public sealed class SnapshotService : IDisposable
@@ -64,8 +66,9 @@ public sealed class SnapshotService : IDisposable
 
         if (clientState.IsLoggedIn)
         {
-            // Hot load with a character in the world: its state is already populated, no need to wait.
-            CharacterReady = true;
+            // Hot load with a character in the world: readable on the next tick in the usual case, so the probe marks
+            // it ready then; the settle timeout covers a client that is still loading.
+            BeginSettle("Hot load");
         }
     }
 
@@ -133,12 +136,15 @@ public sealed class SnapshotService : IDisposable
         lifetime.Dispose();
     }
 
-    private void OnLogin()
+    private void OnLogin() => BeginSettle("Login");
+
+    /// <summary>Starts the readiness probe (<see cref="OnUpdate"/>) with the settle timeout as its safety net.</summary>
+    private void BeginSettle(string reason)
     {
         var generation = ++loginGeneration;
         CharacterReady = false;
         awaitingCharacter = true;
-        log.Debug("Login: waiting for the character to become readable (or {Seconds} s)", LoginSettleTimeout.TotalSeconds);
+        log.Debug("{Reason}: waiting for the character to become readable (or {Seconds} s)", reason, LoginSettleTimeout.TotalSeconds);
 
         framework.RunOnTick(() => OnLoginTimeout(generation), delay: LoginSettleTimeout, cancellationToken: lifetime.Token)
             .ContinueWith(static t => _ = t.Exception, TaskContinuationOptions.OnlyOnFaulted);

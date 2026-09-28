@@ -39,6 +39,7 @@ public sealed class StatePoller : IDisposable
 
     private readonly SaveDebouncer saves = new(SaveInterval);
     private readonly PollBackoff backoff = new(TimeSpan.FromSeconds(2), MaxBackoff);
+    private readonly LoginReadiness readiness = new();
 
     private CharacterSnapshot? last;
     private IReadOnlyDictionary<uint, QuestEvaluation>? states;
@@ -249,6 +250,14 @@ public sealed class StatePoller : IDisposable
 
         if (firstPass)
         {
+            // Right after login the client can report a loaded player with no quest data yet (all-zero mask, empty
+            // journal). Committing that would wipe the accepted times and announce every quest on the next poll, so
+            // such a capture is refused until it settles; nothing below runs and the next poll captures again.
+            if (!IsSettled(snapshot, now))
+            {
+                return null;
+            }
+
             if (last is not null && last.ContentId != snapshot.ContentId)
             {
                 // Another character arrived without a not-ready gap in between: persist the previous one before dropping it.
@@ -302,6 +311,45 @@ public sealed class StatePoller : IDisposable
     {
         session.SetLive(result.Snapshot, result.States, result.Context, acceptedSince);
         session.AddEvents(result.Snapshot.ContentId, result.Events);
+    }
+
+    /// <summary>
+    /// <see cref="LoginReadiness"/> for a first-pass capture. The stored snapshot is consulted only when the capture
+    /// looks empty, so the usual login reads no file; an unreadable store simply counts as "nothing stored".
+    /// </summary>
+    private bool IsSettled(CharacterSnapshot capture, DateTime now)
+    {
+        CharacterSnapshot? stored = null;
+        if (LoginReadiness.LooksEmpty(capture))
+        {
+            try
+            {
+                stored = snapshots.Load(capture.ContentId);
+            }
+            catch (Exception ex)
+            {
+                log.Debug(ex, "Stored snapshot unavailable while judging the first capture");
+            }
+        }
+
+        var wasWaiting = readiness.WaitingSinceUtc is not null;
+        switch (readiness.Check(capture, stored, now))
+        {
+            case LoginVerdict.NotReady:
+                if (!wasWaiting)
+                {
+                    log.Debug("First capture for {ContentId} has no quest data yet; waiting up to {Seconds} s for the client to settle", capture.ContentId, readiness.MaxWait.TotalSeconds);
+                }
+
+                return false;
+
+            case LoginVerdict.ReadyAfterTimeout:
+                log.Information("First capture for {ContentId} still has no quest data after {Seconds} s; committing it as an empty character", capture.ContentId, readiness.MaxWait.TotalSeconds);
+                return true;
+
+            default:
+                return true;
+        }
     }
 
     /// <summary>Runs a session update; a throwing listener is logged at most once per <see cref="ListenerWarningInterval"/>.</summary>
@@ -394,6 +442,7 @@ public sealed class StatePoller : IDisposable
         states = null;
         acceptedSince = [];
         acceptedSinceDirty = false;
+        readiness.Reset();
     }
 
     private readonly record struct PollResult(
