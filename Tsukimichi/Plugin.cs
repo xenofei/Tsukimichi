@@ -276,8 +276,8 @@ public sealed class Plugin : IDalamudPlugin
             windowSystem.AddWindow(helpWindow);
             PluginInterface.UiBuilder.Draw += helpWindow.CheckFirstRun;
             configWindow.ShowHelp = helpWindow.Show;
-            // MERGE: uncomment once TsukimichiCommand.ToggleHelpWindow lands (added on the other branch).
-            // command.ToggleHelpWindow = helpWindow.Toggle;
+
+            command.ToggleHelpWindow = helpWindow.Toggle;
             // /UI
         }
         catch (Exception ex)
