@@ -15,6 +15,28 @@ MANIFEST = os.path.join(ROOT, "Tsukimichi", "bin", "Release", "Tsukimichi", "Tsu
 OUTPUT = os.path.join(ROOT, "pluginmaster.json")
 
 
+def changelog_section(tag: str) -> str:
+    """Return the CHANGELOG.md section for `tag` (vX.Y.Z -> [X.Y.Z]) as plain text, or empty."""
+    path = os.path.join(ROOT, "CHANGELOG.md")
+    if not os.path.exists(path):
+        return ""
+    version = tag[1:] if tag.startswith("v") else tag
+    lines = []
+    capture = False
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            if line.startswith("## "):
+                if capture:
+                    break
+                capture = line.startswith(f"## [{version}]")
+                continue
+            if capture:
+                lines.append(line.rstrip())
+    text = "\n".join(lines).strip()
+    # Headings inside the section become plain labels; bullets stay.
+    return "\n".join(l.replace("### ", "") for l in text.splitlines())
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--repo", default="xenofei/Tsukimichi", help="GitHub owner/name")
@@ -47,8 +69,9 @@ def main() -> int:
         "IsHide": False,
         "IsTestingExclusive": False,
     })
-    if args.changelog:
-        entry["Changelog"] = args.changelog
+    changelog = args.changelog or changelog_section(tag)
+    if changelog:
+        entry["Changelog"] = changelog
 
     with open(OUTPUT, "w", encoding="utf-8", newline="\n") as f:
         json.dump([entry], f, indent=2, ensure_ascii=False)
