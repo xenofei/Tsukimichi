@@ -118,6 +118,11 @@ jobs:
       - name: Test
         run: dotnet test Tsukimichi.Tests -c Release --no-build
 
+      # The solution builds the plugin under bin/x64/Release; the package step and make_pluginmaster.py read
+      # bin/Release, so build the plugin project on its own as the packaging step (incremental, seconds).
+      - name: Build the plugin package
+        run: dotnet build Tsukimichi/Tsukimichi.csproj -c Release
+
       - name: Create or update the GitHub Release with latest.zip
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
         with:

@@ -12,7 +12,8 @@ import sys
 import time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-MANIFEST = os.path.join(ROOT, "Tsukimichi", "bin", "Release", "Tsukimichi", "Tsukimichi.json")
+_CANDIDATES = [os.path.join(ROOT, "Tsukimichi", "bin", *tail, "Tsukimichi", "Tsukimichi.json") for tail in (("Release",), ("x64", "Release"))]
+MANIFEST = next((c for c in _CANDIDATES if os.path.exists(c)), _CANDIDATES[0])
 OUTPUT = os.path.join(ROOT, "pluginmaster.json")
 
 
