@@ -77,12 +77,20 @@ internal static class CuratedOverlay
                 continue;
             }
 
-            var kindText = obj["kind"]?.GetValue<string>();
+            // Read like the runtime loader (CuratedData): a non-string kind or evidence, or a numeric kind, is a
+            // warning and a skipped entry, never an exception out of the generator.
+            var kindText = ReadString(obj, "kind");
             var rewardId = obj["rewardId"] is JsonValue r && r.TryGetValue<uint>(out var rid) ? rid : 0;
-            var evidence = obj["evidence"]?.GetValue<string>();
-            if (kindText is null || !Enum.TryParse<RewardKind>(kindText, out var kind) || rewardId == 0 || string.IsNullOrWhiteSpace(evidence))
+            var evidence = ReadString(obj, "evidence");
+            if (kindText is null || !Enum.TryParse<RewardKind>(kindText, ignoreCase: false, out var kind) || !Enum.IsDefined(kind))
             {
-                log.WriteLine($"curated: online_store entry {itemId} needs kind, rewardId and evidence; skipped.");
+                log.WriteLine($"curated: online_store entry {itemId} kind '{kindText}' is not a RewardKind name; skipped.");
+                continue;
+            }
+
+            if (rewardId == 0 || string.IsNullOrWhiteSpace(evidence))
+            {
+                log.WriteLine($"curated: online_store entry {itemId} needs rewardId and evidence; skipped.");
                 continue;
             }
 
@@ -236,4 +244,10 @@ internal static class CuratedOverlay
             return null;
         }
     }
+
+    /// <summary>A string property, or null when absent, null or not a string (a number is not coerced).</summary>
+    private static string? ReadString(JsonObject obj, string name) =>
+        obj.TryGetPropertyValue(name, out var node) && node is JsonValue value && value.TryGetValue<string>(out var text)
+            ? text
+            : null;
 }
