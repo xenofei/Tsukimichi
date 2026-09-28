@@ -1,22 +1,24 @@
 using System;
 using System.Numerics;
+using System.Text;
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface;
+using Dalamud.Interface.ManagedFontAtlas;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin;
-using Tsukimichi.Config;
 using Tsukimichi.Core.Model;
 
 namespace Tsukimichi.Ui;
 
-/// <summary>Help topics in the order the left list shows them.</summary>
+/// <summary>Help topics in the order the rail shows them.</summary>
 public enum HelpTopic
 {
-    GettingStarted,
+    QuickStart,
     MoonPhases,
     Filters,
-    TableAndDetail,
+    ReadingAQuest,
     Moonlit,
     Characters,
     Commands,
@@ -24,49 +26,166 @@ public enum HelpTopic
 }
 
 /// <summary>
-/// Guided help (F: C1/G2/I12): a list of topics on the left and the topic's text on the right, with the eight moon
-/// phases drawn large on their own page. Opens once by itself the first time the main window opens
-/// (<see cref="Configuration.ShowHelpOnFirstRun"/>), and any time from Settings or <c>/tsukimichi help</c>.
-/// Every string lives in <see cref="Strings.Help"/>.
+/// What the help window's "Try it" buttons do. Each action is expected to bring the main window to the front as
+/// well as perform the change, so the reader sees the result next to the explanation.
+/// </summary>
+/// <param name="OpenFilters">Opens the filter panel.</param>
+/// <param name="ShowTab">Switches the main window's navigation tab.</param>
+/// <param name="StartTutorial">Starts the interactive tutorial from its first step.</param>
+/// <param name="OpenSettings">Toggles the settings window.</param>
+public sealed record HelpActions(Action OpenFilters, Action<NavTab> ShowTab, Action StartTutorial, Action OpenSettings);
+
+/// <summary>
+/// Guided help (F: C1/G2/I12): a topic rail on the left, each topic with an icon and the active one marked with a
+/// Moon bar, and the topic's page on a Night panel on the right. Pages are built from small blocks: cards, phase
+/// rows, numbered steps with "Try it" buttons, tip callouts and key caps. The search box at the top of the rail
+/// filters topics by their title and body text. Opened from the toolbar, Settings or <c>/tsukimichi help</c>.
+/// Every string lives in <see cref="Strings.Help"/>; sizes go through <see cref="ImGuiHelpers.GlobalScale"/>.
 /// </summary>
 public sealed class HelpWindow : Window
 {
+    private const float RailWidth = 212f;
+    private const float Rounding = 6f;
+    private const float Pad = 10f;
+    private const float BarWidth = 3f;
+    private const float PhaseGlyphRadius = 18f;
+    private const float FillingGlyphRadius = 11f;
+    private const float StepRadius = 11f;
+    private const float TitleScale = 1.4f;
+    private const int SearchMaxLength = 64;
+
     private static readonly HelpTopic[] Topics = Enum.GetValues<HelpTopic>();
 
-    /// <summary>The eight glyphs on the Moon phases page: state, glyph name, meaning and the filters that include it.</summary>
-    private static readonly (QuestState State, string Name, string Meaning, string Filters)[] Phases =
+    /// <summary>Card background: Night lifted a little toward Veil, so cards read as raised on the panel.</summary>
+    private static readonly uint CardBgU32 = Theme.WithAlpha(Vector4.Lerp(Theme.Night, Theme.Veil, 0.22f), 1f);
+
+    private static readonly uint TipBgU32 = Theme.WithAlpha(Theme.Moon, 0.07f);
+    private static readonly uint KeyBgU32 = Theme.WithAlpha(Vector4.Lerp(Theme.Night, Theme.Veil, 0.35f), 1f);
+    private static readonly uint HairlineU32 = Theme.WithAlpha(Theme.Veil, 0.6f);
+    private static readonly Vector4 BodyText = Theme.WithAlphaVector(Theme.Silver, 0.85f);
+    private static readonly Vector4 RowHeader = Theme.WithAlphaVector(Theme.Moon, 0.18f);
+    private static readonly Vector4 RowHeaderHovered = Theme.WithAlphaVector(Theme.Moon, 0.12f);
+    private static readonly Vector4 RowHeaderActive = Theme.WithAlphaVector(Theme.Moon, 0.26f);
+
+    private readonly record struct CardItem(string Icon, string Title, string Body);
+
+    private readonly record struct StepItem(string Number, string Title, string Body, Action? TryIt);
+
+    private readonly record struct PhaseItem(QuestState State, string Name, string Meaning, string[] Chips);
+
+    private readonly record struct BadgeItem(string Label, Vector4 Color, string Meaning);
+
+    private static readonly string[] TopicIcons =
     [
-        (QuestState.Completed, Strings.Help.PhaseCompletedName, Strings.Help.PhaseCompletedMeaning, Strings.Help.PhaseCompletedFilters),
-        (QuestState.Accepted, Strings.Help.PhaseAcceptedName, Strings.Help.PhaseAcceptedMeaning, Strings.Help.PhaseAcceptedFilters),
-        (QuestState.Ready, Strings.Help.PhaseReadyName, Strings.Help.PhaseReadyMeaning, Strings.Help.PhaseReadyFilters),
-        (QuestState.ReadyOnOtherJob, Strings.Help.PhaseReadyOtherJobName, Strings.Help.PhaseReadyOtherJobMeaning, Strings.Help.PhaseReadyOtherJobFilters),
-        (QuestState.DoneThisCycle, Strings.Help.PhaseDoneThisCycleName, Strings.Help.PhaseDoneThisCycleMeaning, Strings.Help.PhaseDoneThisCycleFilters),
-        (QuestState.Blocked, Strings.Help.PhaseBlockedName, Strings.Help.PhaseBlockedMeaning, Strings.Help.PhaseBlockedFilters),
-        (QuestState.Foreclosed, Strings.Help.PhaseForeclosedName, Strings.Help.PhaseForeclosedMeaning, Strings.Help.PhaseForeclosedFilters),
-        (QuestState.Unknown, Strings.Help.PhaseUnknownName, Strings.Help.PhaseUnknownMeaning, Strings.Help.PhaseUnknownFilters),
+        FontAwesomeIcon.Rocket.ToIconString(),
+        FontAwesomeIcon.Moon.ToIconString(),
+        FontAwesomeIcon.Filter.ToIconString(),
+        FontAwesomeIcon.BookOpen.ToIconString(),
+        FontAwesomeIcon.Gem.ToIconString(),
+        FontAwesomeIcon.Users.ToIconString(),
+        FontAwesomeIcon.Terminal.ToIconString(),
+        FontAwesomeIcon.Lightbulb.ToIconString(),
     ];
 
-    private const float TopicListWidth = 170f;
-    private const float PhaseGlyphRadius = 16f;
+    private static readonly string LightbulbIcon = FontAwesomeIcon.Lightbulb.ToIconString();
 
-    private readonly Configuration settings;
-    private readonly IDalamudPluginInterface pluginInterface;
-    private readonly Window mainWindow;
+    private static readonly PhaseItem[] Phases =
+    [
+        Phase(QuestState.Completed, Strings.Help.PhaseCompletedName, Strings.Help.PhaseCompletedMeaning, Strings.Help.ChipHideCompletedOff),
+        Phase(QuestState.Accepted, Strings.Help.PhaseAcceptedName, Strings.Help.PhaseAcceptedMeaning, Strings.Help.ChipAvailableNow),
+        Phase(QuestState.Ready, Strings.Help.PhaseReadyName, Strings.Help.PhaseReadyMeaning, Strings.Help.ChipAvailableNow),
+        Phase(QuestState.ReadyOnOtherJob, Strings.Help.PhaseReadyOtherJobName, Strings.Help.PhaseReadyOtherJobMeaning, Strings.Help.ChipAvailableNow),
+        Phase(QuestState.DoneThisCycle, Strings.Help.PhaseDoneThisCycleName, Strings.Help.PhaseDoneThisCycleMeaning, Strings.Help.ChipAvailableNowOff),
+        Phase(QuestState.Blocked, Strings.Help.PhaseBlockedName, Strings.Help.PhaseBlockedMeaning, Strings.Help.ChipAvailableNowOff),
+        Phase(QuestState.Foreclosed, Strings.Help.PhaseForeclosedName, Strings.Help.PhaseForeclosedMeaning, Strings.Help.ChipHideCompletedOff, Strings.Help.ChipNotInTotals),
+        Phase(QuestState.Unknown, Strings.Help.PhaseUnknownName, Strings.Help.PhaseUnknownMeaning),
+    ];
 
-    private HelpTopic topic = HelpTopic.GettingStarted;
-    private bool mainWasOpen;
+    private static readonly CardItem[] FilterCards = Cards(
+        Strings.Help.FilterCardTitles,
+        Strings.Help.FilterCardBodies,
+        FontAwesomeIcon.Eye,
+        FontAwesomeIcon.Check,
+        FontAwesomeIcon.Moon,
+        FontAwesomeIcon.SlidersH,
+        FontAwesomeIcon.Tags,
+        FontAwesomeIcon.Search);
 
-    /// <param name="mainWindow">Watched by <see cref="CheckFirstRun"/> for its first opening.</param>
-    public HelpWindow(Configuration settings, IDalamudPluginInterface pluginInterface, Window mainWindow)
+    private static readonly CardItem[] QuestCards = Cards(
+        Strings.Help.QuestCardTitles,
+        Strings.Help.QuestCardBodies,
+        FontAwesomeIcon.Check,
+        FontAwesomeIcon.Route,
+        FontAwesomeIcon.Link,
+        FontAwesomeIcon.MapMarkerAlt,
+        FontAwesomeIcon.History);
+
+    private static readonly CardItem[] MoonlitCards =
+    [
+        new(FontAwesomeIcon.Gem.ToIconString(), Strings.Help.UniqueTitle, Strings.Help.UniqueBody),
+        new(FontAwesomeIcon.Certificate.ToIconString(), Strings.Help.ConfidenceTitle, Strings.Help.ConfidenceBody),
+        new(FontAwesomeIcon.Check.ToIconString(), Strings.Help.HaveTitle, Strings.Help.HaveBody),
+        new(FontAwesomeIcon.Adjust.ToIconString(), Strings.Help.OverridesTitle, Strings.Help.OverridesBody),
+        new(FontAwesomeIcon.Undo.ToIconString(), Strings.Help.RestoreTitle, Strings.Help.RestoreBody),
+    ];
+
+    private static readonly BadgeItem[] Badges =
+    [
+        new(Strings.MoonlitConfidenceStatic, Theme.Silver, Strings.Help.ConfidenceStaticMeaning),
+        new(Strings.MoonlitConfidenceCommunity, Theme.Dusk, Strings.Help.ConfidenceCommunityMeaning),
+        new(Strings.MoonlitConfidenceCurated, Theme.Moon, Strings.Help.ConfidenceCuratedMeaning),
+        new(Strings.MoonlitConfidenceUser, Theme.Eclipse, Strings.Help.ConfidenceUserMeaning),
+    ];
+
+    private static readonly CardItem[] CharacterCards = Cards(
+        Strings.Help.CharacterCardTitles,
+        Strings.Help.CharacterCardBodies,
+        FontAwesomeIcon.Camera,
+        FontAwesomeIcon.Users,
+        FontAwesomeIcon.Table,
+        FontAwesomeIcon.LayerGroup,
+        FontAwesomeIcon.Download);
+
+    private static readonly float[] FillingFractions = [0f, 0.5f, 1f];
+
+    private readonly HelpActions actions;
+    private readonly IFontHandle iconFont;
+    private readonly IFontHandle monoFont;
+    private readonly StepItem[] steps;
+
+    /// <summary>Lower-cased title, lede and every block's text per topic, for the rail's search box.</summary>
+    private readonly string[] topicSearchText = new string[Topics.Length];
+
+    private readonly bool[] topicVisible = new bool[Topics.Length];
+
+    private HelpTopic topic = HelpTopic.QuickStart;
+    private string searchText = string.Empty;
+
+    /// <param name="actions">What the "Try it" buttons do.</param>
+    /// <param name="pluginInterface">For the icon and monospace font handles.</param>
+    public HelpWindow(HelpActions actions, IDalamudPluginInterface pluginInterface)
         : base(Strings.Help.WindowTitle)
     {
-        this.settings = settings ?? throw new ArgumentNullException(nameof(settings));
-        this.pluginInterface = pluginInterface ?? throw new ArgumentNullException(nameof(pluginInterface));
-        this.mainWindow = mainWindow ?? throw new ArgumentNullException(nameof(mainWindow));
+        this.actions = actions ?? throw new ArgumentNullException(nameof(actions));
+        ArgumentNullException.ThrowIfNull(pluginInterface);
+        iconFont = pluginInterface.UiBuilder.IconFontFixedWidthHandle;
+        monoFont = pluginInterface.UiBuilder.MonoFontHandle;
 
-        Size = new Vector2(640f, 560f);
+        steps =
+        [
+            new("1", Strings.Help.StepOpenTitle, Strings.Help.StepOpenBody, null),
+            new("2", Strings.Help.StepFiltersTitle, Strings.Help.StepFiltersBody, actions.OpenFilters),
+            new("3", Strings.Help.StepMoonlitTitle, Strings.Help.StepMoonlitBody, () => actions.ShowTab(NavTab.Moonlit)),
+            new("4", Strings.Help.StepCharactersTitle, Strings.Help.StepCharactersBody, () => actions.ShowTab(NavTab.Characters)),
+            new("5", Strings.Help.StepTourTitle, Strings.Help.StepTourBody, actions.StartTutorial),
+        ];
+
+        BuildSearchText();
+        Array.Fill(topicVisible, true);
+
+        Size = new Vector2(780f, 600f);
         SizeCondition = ImGuiCond.FirstUseEver;
-        SizeConstraints = new WindowSizeConstraints { MinimumSize = new Vector2(480f, 360f) };
+        SizeConstraints = new WindowSizeConstraints { MinimumSize = new Vector2(560f, 380f) };
     }
 
     /// <summary>Opens the window (on its current topic) and brings it to the front.</summary>
@@ -83,154 +202,616 @@ public sealed class HelpWindow : Window
         Show();
     }
 
-    /// <summary>
-    /// <c>UiBuilder.Draw</c> handler: the first time the main window is seen open while
-    /// <see cref="Configuration.ShowHelpOnFirstRun"/> is set, opens the help, clears the flag and saves.
-    /// </summary>
-    public void CheckFirstRun()
-    {
-        var open = mainWindow.IsOpen;
-        if (open && !mainWasOpen && settings.ShowHelpOnFirstRun)
-        {
-            settings.ShowHelpOnFirstRun = false;
-            settings.Save(pluginInterface);
-            Show(HelpTopic.GettingStarted);
-        }
-
-        mainWasOpen = open;
-    }
-
     public override void Draw()
     {
         var scale = ImGuiHelpers.GlobalScale;
-        using (var list = ImRaii.Child("##helpTopics", new Vector2(TopicListWidth * scale, -1f), true))
+        using (var rail = ImRaii.Child("##helpRail", new Vector2(RailWidth * scale, -1f), false))
         {
-            if (list)
+            if (rail)
             {
-                DrawTopics();
+                DrawRail(scale);
             }
         }
 
         ImGui.SameLine();
         using var colors = Theme.PushNightPanel();
+        using var rounding = ImRaii.PushStyle(ImGuiStyleVar.ChildRounding, Rounding * scale);
+        using var padding = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(16f, 14f) * scale);
         using var content = ImRaii.Child("##helpContent", new Vector2(-1f, -1f), true);
         if (!content)
         {
             return;
         }
 
-        using var wrap = ImRaii.TextWrapPos(0f);
-        using (Theme.PushText(Theme.Moon))
+        DrawContent(scale);
+    }
+
+    // ------------------------------------------------------------------ rail
+
+    private void DrawRail(float scale)
+    {
+        ImGui.SetNextItemWidth(-1f);
+        if (ImGui.InputTextWithHint("##helpSearch", Strings.Help.SearchHint, ref searchText, SearchMaxLength))
         {
-            ImGui.TextUnformatted(Strings.Help.TopicName(topic));
+            UpdateVisible();
         }
 
-        ImGui.Separator();
         ImGui.Spacing();
-
-        switch (topic)
+        var any = false;
+        for (var i = 0; i < Topics.Length; i++)
         {
-            case HelpTopic.MoonPhases:
-                Paragraphs(Strings.Help.MoonPhasesIntro);
-                ImGui.Spacing();
-                DrawPhases();
-                break;
-            case HelpTopic.GettingStarted:
-                Paragraphs(Strings.Help.GettingStarted);
-                break;
-            case HelpTopic.Filters:
-                Paragraphs(Strings.Help.Filters);
-                break;
-            case HelpTopic.TableAndDetail:
-                Paragraphs(Strings.Help.TableAndDetail);
-                break;
-            case HelpTopic.Moonlit:
-                Paragraphs(Strings.Help.Moonlit);
-                break;
-            case HelpTopic.Characters:
-                Paragraphs(Strings.Help.Characters);
-                break;
-            case HelpTopic.Commands:
-                Paragraphs(Strings.Help.Commands);
-                break;
-            case HelpTopic.Tips:
-                Paragraphs(Strings.Help.Tips);
-                break;
+            if (!topicVisible[i])
+            {
+                continue;
+            }
+
+            any = true;
+            DrawTopicRow(i, scale);
+        }
+
+        if (!any)
+        {
+            ImGui.TextDisabled(Strings.Help.NoTopicMatches);
         }
     }
 
-    private void DrawTopics()
+    /// <summary>A full-width selectable with the topic's icon and title drawn over it and a Moon bar when active.</summary>
+    private void DrawTopicRow(int index, float scale)
     {
-        foreach (var t in Topics)
+        var t = Topics[index];
+        var selected = topic == t;
+        var rowHeight = ImGui.GetFrameHeight() * 1.35f;
+        var min = ImGui.GetCursorScreenPos();
+
+        using var id = ImRaii.PushId(index);
+        using (ImRaii.PushColor(ImGuiCol.Header, RowHeader)
+                     .Push(ImGuiCol.HeaderHovered, RowHeaderHovered)
+                     .Push(ImGuiCol.HeaderActive, RowHeaderActive))
         {
-            if (ImGui.Selectable(Strings.Help.TopicName(t), topic == t))
+            if (ImGui.Selectable("##topic", selected, ImGuiSelectableFlags.None, new Vector2(0f, rowHeight)))
             {
                 topic = t;
             }
         }
 
-        ImGui.Spacing();
-        ImGui.Separator();
-        ImGui.Spacing();
-        var again = settings.ShowHelpOnFirstRun;
-        if (ImGui.Checkbox(Strings.Help.ShowAgain, ref again))
+        var max = ImGui.GetItemRectMax();
+        var dl = ImGui.GetWindowDrawList();
+        if (selected)
         {
-            settings.ShowHelpOnFirstRun = again;
-            settings.Save(pluginInterface);
+            var inset = 4f * scale;
+            dl.AddRectFilled(new Vector2(min.X, min.Y + inset), new Vector2(min.X + BarWidth * scale, max.Y - inset), Theme.MoonU32, BarWidth * scale * 0.5f);
         }
 
-        if (ImGui.IsItemHovered())
+        var textY = min.Y + (rowHeight - ImGui.GetTextLineHeight()) * 0.5f;
+        ImGui.SetCursorScreenPos(new Vector2(min.X + 12f * scale, textY));
+        using (iconFont.Push())
+        using (Theme.PushText(selected ? Theme.Moon : Theme.Dusk))
         {
-            ImGui.SetTooltip(Strings.Help.ShowAgainHint);
+            ImGui.TextUnformatted(TopicIcons[index]);
+        }
+
+        ImGui.SameLine(0f, 8f * scale);
+        ImGui.TextUnformatted(Strings.Help.TopicName(t));
+        ImGui.SetCursorScreenPos(new Vector2(min.X, max.Y + ImGui.GetStyle().ItemSpacing.Y));
+    }
+
+    private void UpdateVisible()
+    {
+        for (var i = 0; i < Topics.Length; i++)
+        {
+            topicVisible[i] = searchText.Length == 0 || topicSearchText[i].Contains(searchText, StringComparison.OrdinalIgnoreCase);
         }
     }
 
-    /// <summary>Every phase as a row: the glyph at <see cref="PhaseGlyphRadius"/>, then name, meaning and filters.</summary>
-    private static void DrawPhases()
+    /// <summary>Concatenates each topic's visible text once, so the search box filters without allocating per frame.</summary>
+    private void BuildSearchText()
     {
-        using var table = ImRaii.Table("##phases", 2, ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.BordersInnerH);
-        if (!table)
+        var sb = new StringBuilder();
+        for (var i = 0; i < Topics.Length; i++)
         {
-            return;
-        }
-
-        var scale = ImGuiHelpers.GlobalScale;
-        var radius = PhaseGlyphRadius * scale;
-        var box = radius * 3.4f;
-        ImGui.TableSetupColumn("##glyph", ImGuiTableColumnFlags.WidthFixed, box);
-        ImGui.TableSetupColumn("##text", ImGuiTableColumnFlags.WidthStretch);
-
-        foreach (var (state, name, meaning, filters) in Phases)
-        {
-            ImGui.TableNextRow();
-            ImGui.TableNextColumn();
-            var pos = ImGui.GetCursorScreenPos();
-            ImGui.Dummy(new Vector2(box, box));
-            MoonGlyph.Draw(ImGui.GetWindowDrawList(), pos + new Vector2(box * 0.5f), radius, state);
-
-            ImGui.TableNextColumn();
-            using (Theme.PushText(Theme.StateColor(state)))
+            var t = Topics[i];
+            sb.Clear();
+            sb.Append(Strings.Help.TopicName(t)).Append('\n').Append(Strings.Help.TopicLede(t)).Append('\n');
+            switch (t)
             {
-                ImGui.TextUnformatted(Strings.MoonlitStateName(state));
+                case HelpTopic.QuickStart:
+                    foreach (var step in steps)
+                    {
+                        sb.Append(step.Title).Append('\n').Append(step.Body).Append('\n');
+                    }
+
+                    sb.Append(Strings.Help.QuickStartTip).Append('\n').Append(Strings.Help.QuickStartSettingsTip);
+                    break;
+                case HelpTopic.MoonPhases:
+                    foreach (var phase in Phases)
+                    {
+                        sb.Append(Strings.MoonlitStateName(phase.State)).Append('\n').Append(phase.Name).Append('\n').Append(phase.Meaning).Append('\n');
+                        foreach (var chip in phase.Chips)
+                        {
+                            sb.Append(chip).Append('\n');
+                        }
+                    }
+
+                    sb.Append(Strings.Help.FillingTitle).Append('\n').Append(Strings.Help.FillingBody);
+                    break;
+                case HelpTopic.Filters:
+                    AppendCards(sb, FilterCards);
+                    sb.Append(Strings.Help.FiltersTip);
+                    break;
+                case HelpTopic.ReadingAQuest:
+                    AppendCards(sb, QuestCards);
+                    sb.Append(Strings.Help.QuestTip);
+                    break;
+                case HelpTopic.Moonlit:
+                    AppendCards(sb, MoonlitCards);
+                    foreach (var badge in Badges)
+                    {
+                        sb.Append(badge.Label).Append('\n').Append(badge.Meaning).Append('\n');
+                    }
+
+                    break;
+                case HelpTopic.Characters:
+                    AppendCards(sb, CharacterCards);
+                    break;
+                case HelpTopic.Commands:
+                    for (var c = 0; c < Strings.Help.CommandKeys.Length; c++)
+                    {
+                        sb.Append(Strings.Help.CommandKeys[c]).Append('\n').Append(Strings.Help.CommandMeanings[c]).Append('\n');
+                    }
+
+                    break;
+                case HelpTopic.Tips:
+                    foreach (var tip in Strings.Help.Tips)
+                    {
+                        sb.Append(tip).Append('\n');
+                    }
+
+                    break;
             }
 
-            ImGui.SameLine();
-            ImGui.TextDisabled(name);
-            ImGui.TextWrapped(meaning);
+            topicSearchText[i] = sb.ToString();
+        }
+    }
+
+    private static void AppendCards(StringBuilder sb, CardItem[] cards)
+    {
+        foreach (var card in cards)
+        {
+            sb.Append(card.Title).Append('\n').Append(card.Body).Append('\n');
+        }
+    }
+
+    // ------------------------------------------------------------------ content
+
+    private void DrawContent(float scale)
+    {
+        ImGui.SetWindowFontScale(TitleScale);
+        using (Theme.PushText(Theme.Moon))
+        {
+            ImGui.TextUnformatted(Strings.Help.TopicName(topic));
+        }
+
+        ImGui.SetWindowFontScale(1f);
+        using (Theme.PushText(Theme.Dusk))
+        {
+            ImGui.TextWrapped(Strings.Help.TopicLede(topic));
+        }
+
+        ImGui.Spacing();
+        ImGui.Spacing();
+
+        switch (topic)
+        {
+            case HelpTopic.QuickStart:
+                DrawQuickStart();
+                break;
+            case HelpTopic.MoonPhases:
+                DrawMoonPhases(scale);
+                break;
+            case HelpTopic.Filters:
+                DrawCards(FilterCards);
+                Tip(100, Strings.Help.FiltersTip);
+                break;
+            case HelpTopic.ReadingAQuest:
+                DrawCards(QuestCards);
+                Tip(100, Strings.Help.QuestTip);
+                break;
+            case HelpTopic.Moonlit:
+                DrawMoonlit(scale);
+                break;
+            case HelpTopic.Characters:
+                DrawCards(CharacterCards);
+                break;
+            case HelpTopic.Commands:
+                DrawCommands(scale);
+                break;
+            case HelpTopic.Tips:
+                for (var i = 0; i < Strings.Help.Tips.Length; i++)
+                {
+                    Tip(i, Strings.Help.Tips[i]);
+                }
+
+                break;
+        }
+    }
+
+    private void DrawQuickStart()
+    {
+        for (var i = 0; i < steps.Length; i++)
+        {
+            Step(i, in steps[i]);
+        }
+
+        ImGui.Spacing();
+        Tip(100, Strings.Help.QuickStartTip);
+        Tip(101, Strings.Help.QuickStartSettingsTip, actions.OpenSettings, Strings.Help.OpenSettings);
+    }
+
+    private void DrawMoonPhases(float scale)
+    {
+        for (var i = 0; i < Phases.Length; i++)
+        {
+            PhaseRow(i, in Phases[i], scale);
+        }
+
+        ImGui.Spacing();
+        FillingCard(scale);
+    }
+
+    private void DrawMoonlit(float scale)
+    {
+        Card(0, in MoonlitCards[0]);
+        Card(1, in MoonlitCards[1]);
+        using (ImRaii.PushIndent(Pad * scale, false))
+        {
+            foreach (var badge in Badges)
+            {
+                Chip(badge.Label, badge.Color, scale);
+                ImGui.SameLine(0f, 8f * scale);
+                using (Theme.PushText(BodyText))
+                {
+                    ImGui.TextUnformatted(badge.Meaning);
+                }
+            }
+        }
+
+        ImGui.Spacing();
+        for (var i = 2; i < MoonlitCards.Length; i++)
+        {
+            Card(i, in MoonlitCards[i]);
+        }
+    }
+
+    private void DrawCommands(float scale)
+    {
+        for (var i = 0; i < Strings.Help.CommandKeys.Length; i++)
+        {
+            KeyCap(Strings.Help.CommandKeys[i], Strings.Help.CommandMeanings[i], scale);
+        }
+    }
+
+    private void DrawCards(CardItem[] cards)
+    {
+        for (var i = 0; i < cards.Length; i++)
+        {
+            Card(i, in cards[i]);
+        }
+    }
+
+    // ------------------------------------------------------------------ blocks
+
+    /// <summary>A rounded, bordered box with an icon and title on the first line and a wrapped body under them.</summary>
+    private void Card(int id, in CardItem card)
+    {
+        var scale = ImGuiHelpers.GlobalScale;
+        var pad = Pad * scale;
+        var dl = ImGui.GetWindowDrawList();
+        var start = ImGui.GetCursorScreenPos();
+        var width = ImGui.GetContentRegionAvail().X;
+
+        using var idScope = ImRaii.PushId(id);
+        dl.ChannelsSplit(2);
+        dl.ChannelsSetCurrent(1);
+        ImGui.SetCursorScreenPos(new Vector2(start.X + pad, start.Y + pad));
+        using (ImRaii.Group())
+        {
+            using (iconFont.Push())
+            using (Theme.PushText(Theme.Moon))
+            {
+                ImGui.TextUnformatted(card.Icon);
+            }
+
+            ImGui.SameLine(0f, 8f * scale);
+            ImGui.TextUnformatted(card.Title);
+            using (ImRaii.TextWrapPos(ImGui.GetCursorPosX() + width - 2f * pad))
+            using (Theme.PushText(BodyText))
+            {
+                ImGui.TextUnformatted(card.Body);
+            }
+        }
+
+        var groupMax = ImGui.GetItemRectMax();
+        var max = new Vector2(start.X + width, groupMax.Y + pad);
+        dl.ChannelsSetCurrent(0);
+        dl.AddRectFilled(start, max, CardBgU32, Rounding * scale);
+        dl.AddRect(start, max, Theme.VeilU32, Rounding * scale);
+        dl.ChannelsMerge();
+
+        ImGui.SetCursorScreenPos(new Vector2(start.X, groupMax.Y));
+        ImGui.Dummy(new Vector2(width, pad));
+        ImGui.Spacing();
+    }
+
+    /// <summary>The glyph at <see cref="PhaseGlyphRadius"/>, the state name in its colour, the glyph name, the meaning and the "shown by" chips.</summary>
+    private void PhaseRow(int id, in PhaseItem phase, float scale)
+    {
+        var radius = PhaseGlyphRadius * scale;
+        var box = radius * 3.2f;
+        var dl = ImGui.GetWindowDrawList();
+        var pos = ImGui.GetCursorScreenPos();
+        var width = ImGui.GetContentRegionAvail().X;
+
+        using var idScope = ImRaii.PushId(id);
+        ImGui.Dummy(new Vector2(box, box));
+        MoonGlyph.Draw(dl, pos + new Vector2(box * 0.5f), radius, phase.State);
+
+        ImGui.SameLine(0f, 8f * scale);
+        using (ImRaii.Group())
+        {
+            using (Theme.PushText(Theme.StateColor(phase.State)))
+            {
+                ImGui.TextUnformatted(Strings.MoonlitStateName(phase.State));
+            }
+
+            ImGui.SameLine(0f, 6f * scale);
             using (Theme.PushText(Theme.Dusk))
             {
-                ImGui.TextWrapped(filters);
+                ImGui.TextUnformatted(phase.Name);
+            }
+
+            using (Theme.PushText(BodyText))
+            {
+                ImGui.TextWrapped(phase.Meaning);
+            }
+
+            using (Theme.PushText(Theme.Dusk))
+            {
+                ImGui.TextUnformatted(Strings.Help.ShownBy);
+            }
+
+            foreach (var chip in phase.Chips)
+            {
+                ImGui.SameLine(0f, 6f * scale);
+                Chip(chip, Theme.Dusk, scale);
             }
         }
+
+        ImGui.Spacing();
+        var y = ImGui.GetCursorScreenPos().Y;
+        dl.AddLine(new Vector2(pos.X, y), new Vector2(pos.X + width, y), HairlineU32);
+        ImGui.Spacing();
     }
 
-    /// <summary>Paragraphs separated by a little space; lines starting with the bullet keep their indent.</summary>
-    private static void Paragraphs(string[] paragraphs)
+    /// <summary>Three filling moons (new, half, full) beside the explanation of the progress moon.</summary>
+    private void FillingCard(float scale)
     {
-        foreach (var paragraph in paragraphs)
+        var pad = Pad * scale;
+        var radius = FillingGlyphRadius * scale;
+        var box = radius * 2.4f;
+        var dl = ImGui.GetWindowDrawList();
+        var start = ImGui.GetCursorScreenPos();
+        var width = ImGui.GetContentRegionAvail().X;
+
+        dl.ChannelsSplit(2);
+        dl.ChannelsSetCurrent(1);
+        ImGui.SetCursorScreenPos(new Vector2(start.X + pad, start.Y + pad));
+        using (ImRaii.Group())
         {
-            ImGui.TextWrapped(paragraph);
-            ImGui.Spacing();
+            foreach (var fraction in FillingFractions)
+            {
+                var pos = ImGui.GetCursorScreenPos();
+                ImGui.Dummy(new Vector2(box, box));
+                MoonGlyph.DrawFilling(dl, pos + new Vector2(box * 0.5f), radius, fraction);
+                ImGui.SameLine(0f, 6f * scale);
+            }
+
+            ImGui.NewLine();
+            using (Theme.PushText(Theme.Moon))
+            {
+                ImGui.TextUnformatted(Strings.Help.FillingTitle);
+            }
+
+            using (ImRaii.TextWrapPos(ImGui.GetCursorPosX() + width - 2f * pad))
+            using (Theme.PushText(BodyText))
+            {
+                ImGui.TextUnformatted(Strings.Help.FillingBody);
+            }
         }
+
+        var groupMax = ImGui.GetItemRectMax();
+        var max = new Vector2(start.X + width, groupMax.Y + pad);
+        dl.ChannelsSetCurrent(0);
+        dl.AddRectFilled(start, max, CardBgU32, Rounding * scale);
+        dl.AddRect(start, max, Theme.VeilU32, Rounding * scale);
+        dl.ChannelsMerge();
+
+        ImGui.SetCursorScreenPos(new Vector2(start.X, groupMax.Y));
+        ImGui.Dummy(new Vector2(width, pad));
+        ImGui.Spacing();
+    }
+
+    /// <summary>A Moon circle with the step number, the title with an optional "Try it" button on its right, and the body.</summary>
+    private void Step(int id, in StepItem step)
+    {
+        var scale = ImGuiHelpers.GlobalScale;
+        var radius = StepRadius * scale;
+        var box = radius * 2.2f;
+        var dl = ImGui.GetWindowDrawList();
+        var pos = ImGui.GetCursorScreenPos();
+
+        using var idScope = ImRaii.PushId(id);
+        ImGui.Dummy(new Vector2(box, box));
+        var center = pos + new Vector2(box * 0.5f);
+        dl.AddCircleFilled(center, radius, Theme.MoonU32);
+        var numberSize = ImGui.CalcTextSize(step.Number);
+        dl.AddText(center - numberSize * 0.5f, Theme.NightU32, step.Number);
+
+        ImGui.SameLine(0f, 10f * scale);
+        using (ImRaii.Group())
+        {
+            using (Theme.PushText(Theme.Moon))
+            {
+                ImGui.TextUnformatted(step.Title);
+            }
+
+            if (step.TryIt is { } tryIt)
+            {
+                var buttonWidth = ImGuiHelpers.GetButtonSize(Strings.Help.TryIt).X;
+                ImGui.SameLine(ImGui.GetWindowContentRegionMax().X - buttonWidth);
+                if (ImGui.Button(Strings.Help.TryIt))
+                {
+                    tryIt();
+                }
+            }
+
+            using (Theme.PushText(BodyText))
+            {
+                ImGui.TextWrapped(step.Body);
+            }
+        }
+
+        ImGui.Spacing();
+    }
+
+    /// <summary>A callout on a faint Moon wash with a Moon bar on the left, a lightbulb and the text; optionally a button under it.</summary>
+    private void Tip(int id, string body, Action? action = null, string? label = null)
+    {
+        var scale = ImGuiHelpers.GlobalScale;
+        var pad = Pad * scale;
+        var dl = ImGui.GetWindowDrawList();
+        var start = ImGui.GetCursorScreenPos();
+        var width = ImGui.GetContentRegionAvail().X;
+
+        using var idScope = ImRaii.PushId(id);
+        dl.ChannelsSplit(2);
+        dl.ChannelsSetCurrent(1);
+        ImGui.SetCursorScreenPos(new Vector2(start.X + pad + BarWidth * scale, start.Y + pad * 0.7f));
+        using (ImRaii.Group())
+        {
+            using (iconFont.Push())
+            using (Theme.PushText(Theme.Moon))
+            {
+                ImGui.TextUnformatted(LightbulbIcon);
+            }
+
+            ImGui.SameLine(0f, 8f * scale);
+            using (ImRaii.Group())
+            {
+                using (ImRaii.TextWrapPos(ImGui.GetCursorPosX() + width - 3f * pad))
+                using (Theme.PushText(BodyText))
+                {
+                    ImGui.TextUnformatted(body);
+                }
+
+                if (action is not null && label is not null && ImGui.Button(label))
+                {
+                    action();
+                }
+            }
+        }
+
+        var groupMax = ImGui.GetItemRectMax();
+        var max = new Vector2(start.X + width, groupMax.Y + pad * 0.7f);
+        dl.ChannelsSetCurrent(0);
+        dl.AddRectFilled(start, max, TipBgU32, Rounding * scale);
+        dl.AddRectFilled(start, new Vector2(start.X + BarWidth * scale, max.Y), Theme.MoonU32, Rounding * scale, ImDrawFlags.RoundCornersLeft);
+        dl.ChannelsMerge();
+
+        ImGui.SetCursorScreenPos(new Vector2(start.X, groupMax.Y));
+        ImGui.Dummy(new Vector2(width, pad * 0.7f));
+        ImGui.Spacing();
+    }
+
+    /// <summary>The command in a key cap (monospace on a raised box) with its meaning beside it.</summary>
+    private void KeyCap(string command, string meaning, float scale)
+    {
+        var padX = 8f * scale;
+        var padY = 3f * scale;
+        var dl = ImGui.GetWindowDrawList();
+        var rounding = 4f * scale;
+
+        Vector2 textSize;
+        using (monoFont.Push())
+        {
+            textSize = ImGui.CalcTextSize(command);
+        }
+
+        var size = textSize + new Vector2(padX * 2f, padY * 2f + 2f * scale);
+        var pos = ImGui.GetCursorScreenPos();
+        ImGui.Dummy(size);
+        dl.AddRectFilled(pos, pos + size, KeyBgU32, rounding);
+        dl.AddRect(pos, pos + size, Theme.VeilU32, rounding);
+        dl.AddLine(new Vector2(pos.X + rounding, pos.Y + size.Y - 1.5f * scale), new Vector2(pos.X + size.X - rounding, pos.Y + size.Y - 1.5f * scale), Theme.DuskU32, 2f * scale);
+        using (monoFont.Push())
+        {
+            dl.AddText(pos + new Vector2(padX, padY), Theme.SilverU32, command);
+        }
+
+        ImGui.SameLine(0f, 10f * scale);
+        ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (size.Y - ImGui.GetTextLineHeight()) * 0.5f);
+        using (Theme.PushText(BodyText))
+        {
+            ImGui.TextWrapped(meaning);
+        }
+
+        ImGui.Spacing();
+    }
+
+    /// <summary>A small rounded pill with the text in <paramref name="color"/>; wraps to the next line when it would overflow.</summary>
+    private static void Chip(string text, Vector4 color, float scale)
+    {
+        var padX = 7f * scale;
+        var padY = 2f * scale;
+        var size = ImGui.CalcTextSize(text) + new Vector2(padX * 2f, padY * 2f);
+        var pos = ImGui.GetCursorScreenPos();
+        var right = ImGui.GetWindowPos().X + ImGui.GetWindowContentRegionMax().X;
+        if (pos.X + size.X > right)
+        {
+            ImGui.NewLine();
+            pos = ImGui.GetCursorScreenPos();
+        }
+
+        ImGui.Dummy(size);
+        var dl = ImGui.GetWindowDrawList();
+        var rounding = size.Y * 0.5f;
+        dl.AddRectFilled(pos, pos + size, Theme.WithAlpha(color, 0.16f), rounding);
+        dl.AddRect(pos, pos + size, Theme.WithAlpha(color, 0.65f), rounding);
+        dl.AddText(pos + new Vector2(padX, padY), Theme.WithAlpha(color, 1f), text);
+    }
+
+    // ------------------------------------------------------------------ static data helpers
+
+    private static PhaseItem Phase(QuestState state, string name, string meaning, params string[] filterChips)
+    {
+        var chips = new string[filterChips.Length + 1];
+        chips[0] = Strings.Help.ChipStatePrefix + Strings.MoonlitStateName(state);
+        Array.Copy(filterChips, 0, chips, 1, filterChips.Length);
+        return new PhaseItem(state, name, meaning, chips);
+    }
+
+    private static CardItem[] Cards(string[] titles, string[] bodies, params FontAwesomeIcon[] icons)
+    {
+        if (titles.Length != bodies.Length || titles.Length != icons.Length)
+        {
+            throw new InvalidOperationException("Help card titles, bodies and icons must have the same length.");
+        }
+
+        var cards = new CardItem[titles.Length];
+        for (var i = 0; i < cards.Length; i++)
+        {
+            cards[i] = new CardItem(icons[i].ToIconString(), titles[i], bodies[i]);
+        }
+
+        return cards;
     }
 }

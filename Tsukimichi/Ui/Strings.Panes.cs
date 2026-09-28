@@ -206,10 +206,16 @@ static partial class Strings
     public const string ConfigCatalogLoading = "Catalog: loading";
     public const string ConfigCatalogUnavailable = "Catalog unavailable: ";
     public const string ConfigCatalogQuestsSuffix = " quests, ";
+    public const string ConfigSectionDisplay = "Display";
+    public const string ConfigUiScale = "Window scale";
+    public const string ConfigUiScaleHint = "Text and spacing in Tsukimichi's windows, on top of Dalamud's global scale.";
+    public const string ConfigIconScale = "Icon scale";
+    public const string ConfigIconScaleHint = "Moon glyphs, reward icons and toolbar buttons.";
     public const string ConfigSectionHelp = "Help";
     public const string ConfigShowHelp = "Show help";
-    public const string ConfigShowHelpOnFirstRun = "Show help on first run";
-    public const string ConfigShowHelpOnFirstRunHint = "Opens the help window the next time the main window opens, then turns itself off.";
+    public const string ConfigStartTutorial = "Start tutorial";
+    public const string ConfigOfferTutorial = "Offer the tutorial on first run";
+    public const string ConfigOfferTutorialHint = "Shows the tour's welcome card the next time the main window opens.";
     public const string ConfigPollTimingNone = "No polls yet";
     /// <summary>{0} = last ms, {1} = average ms, {2} = poll count.</summary>
     public const string ConfigPollTimingFormat = "Last poll: {0:0.00} ms · average {1:0.00} ms · {2:N0} polls";
@@ -217,131 +223,247 @@ static partial class Strings
     public const string ConfigPollCostFormat = "Each poll costs about {0:0.0} ms; 1 s is the default and is safe.";
     public const string ConfigPollCostUnknown = "Each poll costs a few milliseconds; 1 s is the default and is safe.";
 
-    /// <summary>Help window text, one array per topic; each element is a paragraph.</summary>
+    /// <summary>
+    /// Help window text. Topics are built from small blocks (cards, steps, tips, key caps), so each block's text is
+    /// its own constant or array element; every paragraph stays under sixty words.
+    /// </summary>
     public static class Help
     {
         public const string WindowTitle = "Tsukimichi Help###TsukimichiHelp";
-        public const string ShowAgain = "Show on first run";
-        public const string ShowAgainHint = "Open this window by itself the next time the main window opens.";
+        public const string SearchHint = "Search help";
+        public const string NoTopicMatches = "No topic matches.";
+        public const string TryIt = "Try it";
+        public const string OpenSettings = "Open settings";
+        public const string ShownBy = "Shown by";
 
         public static string TopicName(HelpTopic topic) => topic switch
         {
-            HelpTopic.GettingStarted => "Getting started",
+            HelpTopic.QuickStart => "Quick start",
             HelpTopic.MoonPhases => "The moon phases",
             HelpTopic.Filters => "Filters and chips",
-            HelpTopic.TableAndDetail => "Quest table and detail pane",
-            HelpTopic.Moonlit => "Moonlit and confidence",
+            HelpTopic.ReadingAQuest => "Reading a quest",
+            HelpTopic.Moonlit => "Moonlit treasures",
             HelpTopic.Characters => "Characters and snapshots",
             HelpTopic.Commands => "Commands",
             HelpTopic.Tips => "Tips",
             _ => topic.ToString(),
         };
 
-        public static readonly string[] GettingStarted =
-        [
-            "Tsukimichi is a quest catalog for every journal type. Open it with /tsukimichi, /tsuki, or from the Dalamud plugin list.",
-            "The window has three regions: the navigation on the left with the Journal, Moonlit and Characters tabs, the quest table in the middle and the detail pane on the right.",
-            "Journal: pick a section, category or genre in the tree to scope the table. Each node shows done/total and a small moon that fills as you complete it.",
-            "Search matches quest names, reward names and numeric ids. Filters opens the filter panel; the chips under the search box show what is active.",
-            "Select a quest to see its requirements, rewards, path and giver in the detail pane. Right-click a row for pin, map flag, journal and more.",
-            "Log in and the plugin reads the character once a second; states update on their own. A snapshot is kept per character, so you can browse others while logged out.",
-            "Reopen this help any time from Settings or with /tsukimichi help.",
-        ];
+        /// <summary>One sentence under the topic title.</summary>
+        public static string TopicLede(HelpTopic topic) => topic switch
+        {
+            HelpTopic.QuickStart => "Five steps from an empty window to a plan for the evening.",
+            HelpTopic.MoonPhases => "A quest's state is a moon phase; eight glyphs carry the meaning without text.",
+            HelpTopic.Filters => "Narrow the table, see what is narrowing it, and clear it with one click.",
+            HelpTopic.ReadingAQuest => "The detail pane answers what blocks a quest, what leads to it and what it opens.",
+            HelpTopic.Moonlit => "Rewards that exist nowhere else, with how sure the plugin is about each.",
+            HelpTopic.Characters => "One snapshot per character keeps the whole account in view, even logged out.",
+            HelpTopic.Commands => "Everything the chat command can do.",
+            HelpTopic.Tips => "Small habits that make the catalog faster.",
+            _ => string.Empty,
+        };
 
-        public static readonly string[] MoonPhasesIntro =
-        [
-            "A quest's state is a moon phase. The eight glyphs carry the meaning without text; hover any glyph in the window for its name.",
-        ];
+        // ---- Quick start: the "Try it" action of each step is attached by the window ----
+        public const string StepOpenTitle = "Open the window";
+        public const string StepOpenBody = "Type /tsukimichi or /tsuki, or pick Tsukimichi in the plugin list. The navigation sits on the left, the quest table in the middle and the detail pane on the right.";
+        public const string StepFiltersTitle = "Narrow with filters";
+        public const string StepFiltersBody = "Filters opens a panel beside the tree. Hide completed and Available now are the two you will use most; every active filter shows as a chip under the search box.";
+        public const string StepMoonlitTitle = "Find Moonlit treasures";
+        public const string StepMoonlitBody = "The Moonlit tab lists quests whose reward exists nowhere else, grouped by kind, with whether you already have each one.";
+        public const string StepCharactersTitle = "Browse other characters";
+        public const string StepCharactersBody = "The Characters tab keeps a snapshot per character. Pick one to browse the whole catalog as that character, with a dashboard of its progress.";
+        public const string StepTourTitle = "Take the tour";
+        public const string StepTourBody = "The interactive tour points at each part of the window in turn and explains it in a sentence or two.";
+        public const string QuickStartTip = "Select any row to read its requirements, path and giver in the detail pane. Right-click a row for pin, map flag and journal.";
+        public const string QuickStartSettingsTip = "Text too small? Settings has a Display section with a window scale and an icon scale.";
 
+        // ---- Moon phases ----
         public const string PhaseCompletedName = "full moon";
         public const string PhaseCompletedMeaning = "Turned in on this character.";
-        public const string PhaseCompletedFilters = "Hidden by Hide completed. State filter: Completed.";
         public const string PhaseAcceptedName = "waxing gibbous, gold ring";
         public const string PhaseAcceptedMeaning = "In the journal now; the detail pane shows the step.";
-        public const string PhaseAcceptedFilters = "Included by Available now. State filter: Accepted.";
         public const string PhaseReadyName = "first quarter, glow";
         public const string PhaseReadyMeaning = "Every requirement is met on the current job; go get it.";
-        public const string PhaseReadyFilters = "Included by Available now. State filter: Ready.";
         public const string PhaseReadyOtherJobName = "first quarter, silver, gold ring";
         public const string PhaseReadyOtherJobMeaning = "Met on another job; the detail pane names it.";
-        public const string PhaseReadyOtherJobFilters = "Included by Available now. State filter: Ready on another job.";
         public const string PhaseDoneThisCycleName = "waning gibbous, silver";
         public const string PhaseDoneThisCycleMeaning = "A repeatable quest already done this daily or weekly cycle.";
-        public const string PhaseDoneThisCycleFilters = "Excluded by Available now. State filter: Done this cycle.";
         public const string PhaseBlockedName = "new moon, silver ring";
         public const string PhaseBlockedMeaning = "A requirement is unmet; the next step names it in one clause.";
-        public const string PhaseBlockedFilters = "Excluded by Available now. State filter: Blocked.";
         public const string PhaseForeclosedName = "eclipsed";
         public const string PhaseForeclosedMeaning = "Locked out for good, usually by a choice made in another quest.";
-        public const string PhaseForeclosedFilters = "Hidden by Hide completed; left out of every total. State filter: Foreclosed.";
         public const string PhaseUnknownName = "veiled";
         public const string PhaseUnknownMeaning = "Not evaluated: no snapshot, or data the plugin cannot read for this character.";
-        public const string PhaseUnknownFilters = "Only the State filter hides it.";
 
-        public static readonly string[] Filters =
+        // "Shown by" chips: what must be set for the phase to appear in the table.
+        public const string ChipHideCompletedOff = "Hide completed off";
+        public const string ChipAvailableNow = "Available now";
+        public const string ChipAvailableNowOff = "Available now off";
+        public const string ChipNotInTotals = "Left out of totals";
+        public const string ChipStatePrefix = "State: ";
+
+        public const string FillingTitle = "The filling moon";
+        public const string FillingBody = "Tree nodes, Moonlit kinds and the Characters dashboard show a moon whose lit fraction is the completion ratio: new at none, half at half, full only when everything is done. Foreclosed quests are left out of the total.";
+
+        // ---- Filters and chips ----
+        public static readonly string[] FilterCardTitles =
         [
-            "Filters opens a panel in the navigation column. Every active filter shows as a chip under the search box; a chip's × clears it and Reset clears them all.",
-            "Hide completed drops Completed and Foreclosed quests. Available now keeps only Ready, Ready on another job and Accepted. Both take per-category overrides, so you can hide completed everywhere except the main scenario.",
-            "State lists all eight phases for fine control. Expansion, Level range, Job category, Reward kind (three-state per kind), Repeatable and Seasonal active narrow the table further.",
-            "Include Unlisted adds quests with no journal genre: removed, hidden and legacy entries. Settings has a switch for the Unlisted tree node.",
-            "Pinned only shows your pins. When nothing matches, the panel names the filters responsible and offers Reset.",
-            "Filters, sort and the viewed character are remembered between sessions.",
+            "Hide completed",
+            "Available now",
+            "State",
+            "More filters",
+            "Chips",
+            "Nothing matches",
         ];
 
-        public static readonly string[] TableAndDetail =
+        public static readonly string[] FilterCardBodies =
         [
-            "Columns: state moon, name, level, job, next step, expansion and up to four reward icons. Click a header to sort by name, level, state or expansion; click again to reverse, a third time to return to journal order. Drag headers to reorder, right-click them to hide.",
-            "Next step is the first unmet requirement in one clause, such as needs Sworn, you are Trusted.",
-            "Right-click a row: pin, flag the giver on the map, open the in-game journal, copy the name, show the path, or link the quest in chat.",
-            "The detail pane lists every requirement with ✓ or ✗ and a ▶ on the one that blocks you. Hover a requirement for detail.",
-            "Path is the prerequisite chain as a trail of moons, lit where done; click any step to inspect it. Unlocks next lists what this quest opens.",
-            "The giver line has map and journal buttons. The provenance line says where the state came from and when: client flags for the live character, the snapshot time otherwise.",
+            "Drops Completed and Foreclosed quests. Per-category overrides let you hide completed everywhere except, say, the main scenario.",
+            "Keeps only Ready, Ready on another job and Accepted: the quests you can act on now. Takes the same per-category overrides.",
+            "All eight phases as checkboxes for fine control. Untick a phase to hide its quests.",
+            "Expansion, level range, job category, reward kind (three-state per kind), Repeatable, Seasonal active and Include Unlisted narrow the table further.",
+            "Every active filter shows as a chip under the search box. Click a chip to clear it; Reset clears them all and the search.",
+            "When the table empties, the panel names the filters responsible and offers Reset.",
         ];
 
-        public static readonly string[] Moonlit =
+        public const string FiltersTip = "Filters, sort and the viewed character are remembered between sessions.";
+
+        // ---- Reading a quest ----
+        public static readonly string[] QuestCardTitles =
         [
-            "Moonlit treasures are quests whose reward exists nowhere else: an emote, mount, minion, orchestrion roll, Triple Triad card, duty or feature you can only find on this road.",
-            "Unique means the reward has no other source in the game data or the curated lists. A reward that trades, shops or achievements also hand out is not unique.",
-            "Confidence badges: static comes from the game data alone; curated was checked by hand and shipped with the plugin; yours is your own override. Hover a badge for its source.",
-            "Have shows whether the logged-in character owns the reward. Emotes, mounts, minions, rolls, cards and duties are read from the live client, so other characters show a veiled moon for them.",
-            "Not unique (hide) in a row's context menu removes a quest from Moonlit; Mark quest unique in the detail pane adds one, with a note naming the reward.",
-            "Restore shipped verdict, in the row's context menu or the detail pane, undoes either. Overrides are stored in user/overrides.json and survive updates.",
+            "Requirements",
+            "Path",
+            "Unlocks next",
+            "Giver actions",
+            "Provenance",
         ];
 
-        public static readonly string[] Characters =
+        public static readonly string[] QuestCardBodies =
         [
-            "A snapshot is everything the plugin read from a character: completed quests, journal, job levels, Grand Company, allied societies and unlocked duties. One is kept per character and refreshed while you play, and again on logout.",
-            "Pick a stored character in the list to browse the whole catalog as that character, evaluated from its snapshot. The toolbar's sync moon goes veiled and a banner names the snapshot.",
-            "The dashboard shows completion per journal section, Moonlit progress, the character's pins, recent activity, job levels grouped by role, and Grand Company and society standings.",
-            "Rewards the plugin can only read from the live client show a veiled moon for other characters: a snapshot has no record of them.",
-            "Account view at the bottom shows every character's state for the quest selected in the Journal, without switching characters.",
-            "Export JSON writes the snapshot to the exports folder in the config directory. Forget deletes a stored character; Settings can delete everything.",
+            "Every requirement with ✓ or ✗ and a ▶ on the one that blocks you. Hover a ✗ for the exact gap, such as the rank or level you still need.",
+            "The prerequisite chain as a trail of moons, lit where done. Long stretches of finished steps fold into one line; open it to see them. Click any step to inspect it.",
+            "What this quest opens once turned in. Click an entry to jump to it.",
+            "The giver line names the NPC and zone, with buttons to flag the giver on the map and open the in-game journal.",
+            "The last line says where the state came from and when: client flags for the live character, the snapshot time for a stored one.",
         ];
 
-        public static readonly string[] Commands =
+        public const string QuestTip = "Right-click a table row for pin, map flag, journal, copy name, show path and chat link.";
+
+        // ---- Moonlit treasures ----
+        public const string UniqueTitle = "What unique means";
+        public const string UniqueBody = "A Moonlit treasure is a reward that exists nowhere else: an emote, mount, minion, roll, card, duty or feature you can only find on this road. Anything trades, shops or achievements also hand out is not unique.";
+        public const string ConfidenceTitle = "Confidence badges";
+        public const string ConfidenceBody = "Each row carries a badge saying how the verdict was reached. Hover a badge in the table for its source.";
+        public const string ConfidenceStaticMeaning = "from the game data alone";
+        public const string ConfidenceCommunityMeaning = "reported by players, not yet checked";
+        public const string ConfidenceCuratedMeaning = "checked by hand and shipped with the plugin";
+        public const string ConfidenceUserMeaning = "your own override";
+        public const string HaveTitle = "Have";
+        public const string HaveBody = "Whether the viewed character owns the reward. Emotes, mounts, minions, rolls, cards and duties are read from the live client, so a stored snapshot shows a veiled moon for them.";
+        public const string OverridesTitle = "Overrides";
+        public const string OverridesBody = "Not unique (hide) in a row's context menu removes a quest from Moonlit. Mark quest unique in the detail pane adds one, with a note naming the reward.";
+        public const string RestoreTitle = "Restore";
+        public const string RestoreBody = "Restore shipped verdict, in the row's context menu or the detail pane, undoes either. Overrides live in user/overrides.json and survive updates.";
+
+        // ---- Characters and snapshots ----
+        public static readonly string[] CharacterCardTitles =
         [
-            "/tsukimichi — open or close the window.",
-            "/tsuki — the same, shorter.",
-            "/tsukimichi search <text> — search and print matching quests to chat as links; /tsukimichi <text> does the same.",
-            "/tsukimichi config — open Settings.",
-            "/tsukimichi help — open this window.",
-            "/tsukimichi glyphs — the glyph sheet: every moon at every size.",
+            "Snapshot",
+            "View another character",
+            "Dashboard",
+            "Account view",
+            "Export and forget",
         ];
 
+        public static readonly string[] CharacterCardBodies =
+        [
+            "Everything read from a character: completed quests, journal, job levels, Grand Company, allied societies and unlocked duties. One per character, refreshed while you play and again on logout.",
+            "Pick a stored character to browse the catalog as that character. The toolbar's sync moon goes veiled and a banner names the snapshot.",
+            "Completion per journal section, Moonlit progress, pins, recent activity, job levels by role, Grand Company and society standings.",
+            "At the bottom: every character's state for the quest selected in the Journal, without switching characters.",
+            "Export JSON writes the snapshot to the exports folder in the config directory. Forget deletes a stored character. Settings can delete everything.",
+        ];
+
+        // ---- Commands ----
+        public static readonly string[] CommandKeys =
+        [
+            "/tsukimichi",
+            "/tsuki",
+            "/tsukimichi search <text>",
+            "/tsukimichi config",
+            "/tsukimichi help",
+            "/tsukimichi glyphs",
+        ];
+
+        public static readonly string[] CommandMeanings =
+        [
+            "open or close the window",
+            "the same, shorter",
+            "search and print matching quests to chat as links; /tsukimichi <text> does the same",
+            "open Settings",
+            "open this window",
+            "the glyph sheet: every moon at every size",
+        ];
+
+        // ---- Tips ----
         public static readonly string[] Tips =
         [
-            "• Hide completed plus Available now is the fastest view of what to do next.",
-            "• Pin a quest and it stays one click away in the Characters dashboard, with its next step.",
-            "• The search box takes a quest id; paste one from a wiki.",
-            "• Hover a requirement's ✗ for the exact gap, such as the rank or level you still need.",
-            "• The path is clickable: select any earlier step to see its own requirements.",
-            "• Scope the tree to a genre and sort by level to run a zone's side quests in order.",
-            "• Reward kind filters are three-state: require, exclude or ignore each kind.",
-            "• The toolbar's sync moon is full when live and veiled on a snapshot; hover it for the time.",
-            "• Chat notices for newly available quests are off by default; turn them on in Settings, main scenario excluded.",
-            "• Foreclosed quests are left out of totals, so a category can reach 100% without them.",
-            "• Settings shows how long each poll takes; 1 s is the default and is safe.",
-            "• Delete all data in Settings removes snapshots, pins and overrides but keeps your settings.",
+            "Hide completed plus Available now is the fastest view of what to do next.",
+            "Pin a quest and it stays one click away in the Characters dashboard, with its next step.",
+            "The search box takes a quest id; paste one from a wiki.",
+            "Hover a requirement's ✗ for the exact gap, such as the rank or level you still need.",
+            "The path is clickable: select any earlier step to see its own requirements.",
+            "Scope the tree to a genre and sort by level to run a zone's side quests in order.",
+            "Reward kind filters are three-state: require, exclude or ignore each kind.",
+            "The toolbar's sync moon is full when live and veiled on a snapshot; hover it for the time.",
+            "Chat notices for newly available quests are off by default; turn them on in Settings, main scenario excluded.",
+            "Foreclosed quests are left out of totals, so a category can reach 100% without them.",
+            "Settings shows how long each poll takes; 1 s is the default and is safe.",
+            "Delete all data in Settings removes snapshots, pins and overrides but keeps your settings.",
         ];
+    }
+
+    /// <summary>Interactive tutorial text: one title and one body (under fifty words) per step, plus the card buttons.</summary>
+    public static class Tutorial
+    {
+        public const string CardId = "##TsukimichiTutorialCard";
+        public const string TakeTour = "Take the tour";
+        public const string NotNow = "Not now";
+        public const string Back = "Back";
+        public const string Next = "Next";
+        public const string Skip = "Skip";
+        public const string Done = "Done";
+        public const string OpenHelp = "Open help";
+        /// <summary>{0} = step number, {1} = step count.</summary>
+        public const string ProgressFormat = "{0} of {1}";
+
+        public const string WelcomeTitle = "Welcome to Tsukimichi";
+        public const string WelcomeBody = "Tsukimichi is the road you walk by moonlight: every quest is a step, and the moon fills as you complete it. This tour points at each part of the window. Nothing in it changes your game.";
+        public const string SearchTitle = "Search";
+        public const string SearchBody = "Type a quest name, a reward name or a numeric id. The table narrows 150 ms after you stop typing; the × clears it.";
+        public const string FiltersTitle = "Filters";
+        public const string FiltersBody = "Filters opens this panel. Hide completed and Available now are the two you will use most; both take per-category overrides. States, expansions, level, job and reward kind sit below.";
+        public const string ChipsTitle = "Chips";
+        public const string ChipsBody = "Every active filter shows here as a chip. Click a chip to clear that filter; Reset clears them all together with the search.";
+        public const string TabsTitle = "Three tabs";
+        public const string TabsBody = "Journal is the catalog. Moonlit collects quests with unique rewards. Characters holds every snapshot on the account.";
+        public const string TreeTitle = "Journal tree";
+        public const string TreeBody = "Section, category and genre scope the table. Each node shows done/total and a moon that fills with completion; Feature Unlocks and Unlisted are virtual nodes.";
+        public const string TableTitle = "Quest table";
+        public const string TableBody = "One row per quest. The glyph is its moon phase: full is completed, first quarter is ready, new is blocked. Click a header to sort; right-click a row for pin, map flag and journal.";
+        public const string RequirementsTitle = "Requirements";
+        public const string RequirementsBody = "Select a row and the detail pane lists every requirement with ✓ or ✗. The ▶ marks the one blocking you; hover it for the exact gap.";
+        public const string PathTitle = "Path and unlocks next";
+        public const string PathBody = "Path is the prerequisite chain as moons, lit where done; finished stretches fold into one line. Unlocks next lists what this quest opens.";
+        public const string GiverTitle = "Giver actions";
+        public const string GiverBody = "The giver line names the NPC and zone. Flag it on the map or open the in-game journal from here; the last line says where the state came from and when.";
+        public const string MoonlitTitle = "Moonlit treasures";
+        public const string MoonlitBody = "Reward kinds on the left with obtained/total; the table lists each treasure, its quest, whether you have it and a confidence badge. Hover a badge for its source.";
+        public const string CharactersTitle = "Characters";
+        public const string CharactersBody = "Every stored snapshot on the left. The dashboard shows completion by section, Moonlit progress, pins, recent activity, job levels and standings for the viewed character.";
+        public const string HelpTitle = "Help, tour and settings";
+        public const string HelpBody = "The book reopens the guide, the graduation cap replays this tour, and the cog opens Settings: poll interval, display scale and data controls.";
+        public const string FinishTitle = "That is the road";
+        public const string FinishBody = "Reopen this tour any time from the toolbar or Settings. The help window has more on every topic, with buttons that take you straight to each part.";
     }
 }

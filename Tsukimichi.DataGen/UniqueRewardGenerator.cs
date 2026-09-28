@@ -21,7 +21,10 @@ internal sealed class UniqueRewardGenerator
     private const uint ActionGlasses = 37312;
 
     private const byte ItemRewardTypeArtifactGear = 6;
-    private const byte ItemRewardTypeClassJobItems = 7;
+    private const byte ItemRewardTypeBeastRankBonus = 7;
+
+    /// <summary>ItemAction types that unlock a collectible without a RewardKind of their own: portrait framer's kits and Bozja field notes.</summary>
+    internal static readonly HashSet<uint> UnlockItemActions = [29459, 19743];
     private const byte UnlockTypeQuest = 1;
 
     private readonly GameSheets g;
@@ -31,6 +34,7 @@ internal sealed class UniqueRewardGenerator
     private readonly Dictionary<ushort, uint> hairstyleByUnlockLink = new();
     private readonly Dictionary<uint, string> aetherCurrentZone = new();
     private readonly HashSet<uint> gilShopItems = new();
+    private readonly HashSet<uint> vendorItems = new(); // gil shop items sold through a menu that is not a quest-reward reacquisition menu
     private readonly HashSet<uint> specialShopItems = new();
     private readonly HashSet<uint> recipeResults = new();
     private readonly HashSet<uint> gatheringItems = new();
@@ -38,6 +42,37 @@ internal sealed class UniqueRewardGenerator
 
     /// <summary>Quests that hand out at least one reward signal, for the "unclassified" section of the report.</summary>
     public Dictionary<uint, List<string>> RewardSignals { get; } = new();
+
+    /// <summary>Plain item rewards the exclusivity rule (or the unnamed-item rule) refused, for the review report.</summary>
+    public List<DroppedItem> Dropped { get; } = new();
+
+    /// <summary>
+    /// When true (the default), a plain untradable item is only shipped as a unique Item/OptionalItem when nothing else hands
+    /// it out (no special shop, recipe or gathering node; no gil shop other than a Calamity Salvager) and it is not in a
+    /// consumable-like ItemUICategory (see <see cref="NonExclusiveCategories"/>). Collectible kinds are never affected.
+    /// </summary>
+    public bool StrictItemExclusivity { get; set; } = true;
+
+    /// <summary>
+    /// ItemUICategory names (English) whose items are consumed, spent or re-sold and therefore never a quest-only
+    /// collectible: potions, food, crafting materials, currencies, tickets, vouchers, Fantasia, coffers.
+    /// </summary>
+    internal static readonly HashSet<string> NonExclusiveCategories = new(StringComparer.Ordinal)
+    {
+        "Medicine", "Meal", "Ingredient", "Reagent", "Dye", "Crystal", "Catalyst", "Currency", "Other", "Miscellany",
+        "Seasonal Miscellany", "Materia", "Demimateria", "Part", "Lumber", "Stone", "Metal", "Cloth", "Leather", "Bone",
+        "Gardening",
+    };
+
+    /// <summary>
+    /// Gil shop menus through which a Calamity Salvager re-sells quest rewards to characters that already completed the
+    /// quest ("Purchase Quest Rewards I/II", "Purchase Lv. 50 Arms &amp; Tools", "Purchase Blue Mage Arms &amp; Gear", ...).
+    /// Being listed there does not make an item obtainable by anyone else. Every other gil shop menu is a real vendor.
+    /// </summary>
+    internal static bool IsReacquisitionMenu(string shopName)
+        => shopName.StartsWith("Purchase Quest Rewards", StringComparison.Ordinal)
+           || shopName.EndsWith("Arms & Gear", StringComparison.Ordinal)
+           || shopName.EndsWith("Arms & Tools", StringComparison.Ordinal);
 
     public UniqueRewardGenerator(GameSheets sheets)
     {
@@ -90,8 +125,11 @@ internal sealed class UniqueRewardGenerator
 
         foreach (var row in g.GilShopItems.Flatten())
         {
-            if (row.Item.RowId != 0)
-                gilShopItems.Add(row.Item.RowId);
+            if (row.Item.RowId == 0)
+                continue;
+            gilShopItems.Add(row.Item.RowId);
+            if (!IsReacquisitionMenu(Text(g.GilShops.GetRowOrDefault(row.RowId)?.Name)))
+                vendorItems.Add(row.Item.RowId);
         }
 
         foreach (var shop in g.SpecialShops)
@@ -140,8 +178,14 @@ internal sealed class UniqueRewardGenerator
                 case ItemRewardTypeArtifactGear:
                     ScanClassJobRewards(quest, RewardKind.ArtifactGear, "Quest.Reward;QuestClassJobReward;ItemRewardType=6");
                     break;
-                case ItemRewardTypeClassJobItems:
-                    ScanClassJobRewards(quest, null, "Quest.Reward;QuestClassJobReward;ItemRewardType=7");
+                case ItemRewardTypeBeastRankBonus:
+                    // Reward[0] is a BeastRankBonus row (tribal quests): one item whose quantity scales with reputation rank.
+                    if (quest.Reward[0].RowId != 0 && quest.Reward[0].GetValueOrDefault<BeastRankBonus>() is { } bonus
+                        && bonus.Item.RowId != 0 && bonus.Item.ValueNullable is { } bonusItem)
+                    {
+                        NoteSignal(quest.RowId, $"BeastRankBonus item {DescribeItem(bonusItem)}");
+                        ClassifyItem(quest.RowId, bonusItem, "Quest.Reward;BeastRankBonus;ItemRewardType=7");
+                    }
                     break;
                 default:
                     foreach (var reward in quest.Reward)
@@ -210,8 +254,8 @@ internal sealed class UniqueRewardGenerator
         }
     }
 
-    /// <summary>ItemRewardType 6/7: Reward[0] points at a QuestClassJobReward row whose subrows list items per job category.</summary>
-    private void ScanClassJobRewards(Quest quest, RewardKind? forcedKind, string source)
+    /// <summary>ItemRewardType 6: Reward[0] points at a QuestClassJobReward row whose subrows list items per job category.</summary>
+    private void ScanClassJobRewards(Quest quest, RewardKind kind, string source)
     {
         var rowId = quest.Reward[0].RowId;
         if (rowId == 0)
@@ -228,10 +272,12 @@ internal sealed class UniqueRewardGenerator
                 if (reward.RowId == 0 || item is null)
                     continue;
                 NoteSignal(quest.RowId, $"ClassJob reward item {DescribeItem(item.Value)}");
-                if (forcedKind is { } kind)
-                    Add(quest.RowId, kind, item.Value.RowId, item.Value.RowId, Text(item.Value.Name), source + Exclusivity(item.Value));
-                else
-                    ClassifyItem(quest.RowId, item.Value, source);
+                if (Text(item.Value.Name).Length == 0)
+                {
+                    Dropped.Add(new DroppedItem(quest.RowId, item.Value.RowId, string.Empty, "unnamed item row"));
+                    continue;
+                }
+                Add(quest.RowId, kind, item.Value.RowId, item.Value.RowId, Text(item.Value.Name), source + Exclusivity(item.Value));
             }
         }
     }
@@ -244,6 +290,11 @@ internal sealed class UniqueRewardGenerator
         var data0 = action is { } a && a.Data.Count > 0 ? a.Data[0] : (ushort)0;
         var itemName = Text(item.Name);
         var exclusivity = Exclusivity(item);
+        if (itemName.Length == 0)
+        {
+            Dropped.Add(new DroppedItem(questRowId, item.RowId, string.Empty, "unnamed item row"));
+            return;
+        }
 
         switch (type)
         {
@@ -254,8 +305,17 @@ internal sealed class UniqueRewardGenerator
                 Add(questRowId, RewardKind.Minion, data0, item.RowId, NameOr(g.Companions.GetRowOrDefault(data0)?.Singular, itemName), $"{source};ItemAction={type}{exclusivity}");
                 return;
             case ActionOrchestrion:
-                Add(questRowId, RewardKind.Orchestrion, data0, item.RowId, NameOr(g.Orchestrions.GetRowOrDefault(data0)?.Name, itemName), $"{source};ItemAction={type}{exclusivity}");
+            {
+                // Orchestrion rolls keep ItemAction.Data empty; the Orchestrion row is linked from Item.AdditionalData.
+                var orchestrionId = item.AdditionalData.Is<Orchestrion>() ? item.AdditionalData.RowId : 0u;
+                if (orchestrionId == 0)
+                {
+                    Dropped.Add(new DroppedItem(questRowId, item.RowId, itemName, "orchestrion roll without an Orchestrion link"));
+                    return;
+                }
+                Add(questRowId, RewardKind.Orchestrion, orchestrionId, item.RowId, NameOr(g.Orchestrions.GetRowOrDefault(orchestrionId)?.Name, itemName), $"{source};ItemAction={type};AdditionalData={orchestrionId}{exclusivity}");
                 return;
+            }
             case ActionTripleTriad:
                 Add(questRowId, RewardKind.TripleTriadCard, data0, item.RowId, NameOr(g.TripleTriadCards.GetRowOrDefault(data0)?.Name, itemName), $"{source};ItemAction={type}{exclusivity}");
                 return;
@@ -288,9 +348,30 @@ internal sealed class UniqueRewardGenerator
 
         if (item.IsUntradable && item.ItemSearchCategory.RowId == 0)
         {
+            if (StrictItemExclusivity && NonExclusiveReason(item, type) is { } reason)
+            {
+                Dropped.Add(new DroppedItem(questRowId, item.RowId, itemName, reason));
+                return;
+            }
             var kind = optionalSlot ? RewardKind.OptionalItem : RewardKind.Item;
-            Add(questRowId, kind, item.RowId, item.RowId, itemName, $"{source};untradable{exclusivity}");
+            var actionTag = type == 0 || source.Contains("ItemAction=") ? string.Empty : $";ItemAction={type}";
+            Add(questRowId, kind, item.RowId, item.RowId, itemName, $"{source}{actionTag};untradable{exclusivity}");
         }
+    }
+
+    /// <summary>Why a plain untradable item is not a quest-only collectible, or null when it looks quest-exclusive.</summary>
+    private string? NonExclusiveReason(Item item, uint itemActionType)
+    {
+        if (UnlockItemActions.Contains(itemActionType))
+            return null; // framer's kit, field notes: an unlock, whatever category the item sits in
+        var category = Text(item.ItemUICategory.ValueNullable?.Name);
+        if (NonExclusiveCategories.Contains(category))
+            return $"ItemUICategory {category}";
+        if (specialShopItems.Contains(item.RowId)) return "sold by a special shop";
+        if (recipeResults.Contains(item.RowId)) return "crafted by a recipe";
+        if (gatheringItems.Contains(item.RowId)) return "gathered";
+        if (vendorItems.Contains(item.RowId)) return "sold by a gil shop that is not a quest-reward reacquisition menu";
+        return null;
     }
 
     /// <summary>Source suffix naming every other place the item can come from. Empty when the item looks quest-exclusive.</summary>
@@ -311,9 +392,15 @@ internal sealed class UniqueRewardGenerator
     {
         var instance = g.InstanceContents.GetRowOrDefault(instanceContentId);
         var cfc = instance?.ContentFinderCondition.ValueNullable;
-        if (cfc is { RowId: not 0 })
+        if (cfc is { RowId: not 0 } && Text(cfc.Value.Name).Length > 0)
         {
             Add(questRowId, RewardKind.DutyUnlock, cfc.Value.RowId, 0, Text(cfc.Value.Name), $"{source};InstanceContent={instanceContentId}");
+        }
+        else if (cfc is { RowId: not 0 })
+        {
+            // A ContentFinderCondition row without a name (row 121, reached from InstanceContent 40001 by the Grand Company
+            // quests "A Pup No Longer") is a placeholder with nothing to show; it must not become an entry.
+            NoteSignal(questRowId, $"InstanceContentUnlock {instanceContentId} -> unnamed ContentFinderCondition {cfc.Value.RowId}; skipped");
         }
         else
         {
@@ -389,7 +476,7 @@ internal sealed class UniqueRewardGenerator
 
         foreach (var cfc in g.ContentFinderConditions)
         {
-            if (cfc.UnlockType != UnlockTypeQuest || cfc.UnlockCriteria.RowId == 0 || !cfc.UnlockCriteria.Is<Quest>())
+            if (cfc.UnlockType != UnlockTypeQuest || cfc.UnlockCriteria.RowId == 0 || !cfc.UnlockCriteria.Is<Quest>() || Text(cfc.Name).Length == 0)
                 continue;
             Add(cfc.UnlockCriteria.RowId, RewardKind.DutyUnlock, cfc.RowId, 0, Text(cfc.Name), "ContentFinderCondition.UnlockCriteria");
         }
@@ -441,3 +528,6 @@ internal sealed class UniqueRewardGenerator
         return text.Length == 0 ? fallback : text;
     }
 }
+
+/// <summary>A plain item reward the generator refused, with the rule that refused it.</summary>
+internal sealed record DroppedItem(uint QuestRowId, uint ItemId, string Name, string Reason);

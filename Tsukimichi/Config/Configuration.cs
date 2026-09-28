@@ -49,6 +49,9 @@ public sealed class Configuration : IPluginConfiguration
     /// <summary>Open the help window by itself the first time the main window opens; cleared once that happened.</summary>
     public bool ShowHelpOnFirstRun { get; set; } = true;
 
+    /// <summary>Set when the interactive tutorial was finished or declined; while false the welcome card offers the tour the first time the main window opens.</summary>
+    public bool TutorialCompleted { get; set; }
+
     /// <summary>
     /// Text and layout scale of the main window on top of Dalamud's global scale; 0.9–1.6, default 1.15. Clamped by
     /// <see cref="ScaleMetrics.ClampUiScale"/> when read.
@@ -56,8 +59,8 @@ public sealed class Configuration : IPluginConfiguration
     public float UiScale { get; set; } = ScaleMetrics.DefaultUiScale;
 
     /// <summary>
-    /// Size of moons, reward icons and banners relative to the scaled text; 0.8–2.0, default 1.25. Clamped by
-    /// <see cref="ScaleMetrics.ClampIconScale"/> when read.
+    /// Size of moons, reward icons, banners and toolbar buttons relative to the scaled text; 0.8–2.0, default 1.25.
+    /// Clamped by <see cref="ScaleMetrics.ClampIconScale"/> when read.
     /// </summary>
     public float IconScale { get; set; } = ScaleMetrics.DefaultIconScale;
 

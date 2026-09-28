@@ -13,14 +13,20 @@ using Tsukimichi.GameData;
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// Settings (spec §7): poll interval (with the measured cost of a poll under it), chat notices, the Unlisted bucket,
-/// help (open it, show it on first run), data deletion with a double confirm, and an About section with the plugin,
-/// reward-data and catalog stamps plus the poll timing. Every change is saved as it happens; the slider saves when
-/// released.
+/// Settings (spec §7): poll interval (with the measured cost of a poll under it), display scale sliders
+/// (<see cref="Configuration.UiScale"/>, <see cref="Configuration.IconScale"/>), chat notices, the Unlisted bucket,
+/// help (open it, start the tutorial, offer it on first run), data deletion with a double confirm, and an About
+/// section with the plugin, reward-data and catalog stamps plus the poll timing. Every change is saved as it
+/// happens; sliders save when released.
 /// </summary>
 public sealed class ConfigWindow : Window
 {
     private static readonly TimeSpan ToastDuration = TimeSpan.FromSeconds(8);
+
+    private const float MinUiScale = 0.9f;
+    private const float MaxUiScale = 1.6f;
+    private const float MinIconScale = 0.8f;
+    private const float MaxIconScale = 2.0f;
 
     private readonly Configuration settings;
     private readonly SessionState session;
@@ -38,6 +44,9 @@ public sealed class ConfigWindow : Window
 
     private float pollSeconds;
     private bool pollDirty;
+    private float uiScale;
+    private float iconScale;
+    private bool scaleDirty;
     private bool openSecondConfirm;
     private string? toast;
     private DateTime toastUntilUtc;
@@ -76,23 +85,26 @@ public sealed class ConfigWindow : Window
                       + curated.FeatureQuests.Count.ToString(CultureInfo.InvariantCulture) + Strings.ConfigCuratedFeatureSuffix
                       + curated.Festivals.Count.ToString(CultureInfo.InvariantCulture) + Strings.ConfigCuratedFestivalSuffix;
 
-        pollSeconds = (float)settings.PollInterval.TotalSeconds;
+        ReadSettings();
     }
 
     /// <summary>Opens the help window; set by the plugin once the help window exists. Null hides the button.</summary>
     public Action? ShowHelp { get; set; }
 
+    /// <summary>Starts the interactive tutorial; set by the plugin once the overlay exists. Null hides the button.</summary>
+    public Action? StartTutorial { get; set; }
+
     public override void OnOpen()
     {
-        pollSeconds = (float)settings.PollInterval.TotalSeconds;
-        pollDirty = false;
+        ReadSettings();
     }
 
     public override void OnClose()
     {
-        if (pollDirty)
+        if (pollDirty || scaleDirty)
         {
             pollDirty = false;
+            scaleDirty = false;
             Save();
         }
     }
@@ -100,6 +112,8 @@ public sealed class ConfigWindow : Window
     public override void Draw()
     {
         DrawPolling();
+        ImGui.Spacing();
+        DrawDisplay();
         ImGui.Spacing();
         DrawNotices();
         ImGui.Spacing();
@@ -133,29 +147,83 @@ public sealed class ConfigWindow : Window
         ImGui.TextDisabled(pollCostLine);
     }
 
+    /// <summary>Copies the slider-backed values out of the configuration (on construction and each time the window opens).</summary>
+    private void ReadSettings()
+    {
+        pollSeconds = (float)settings.PollInterval.TotalSeconds;
+        uiScale = Math.Clamp(settings.UiScale, MinUiScale, MaxUiScale);
+        iconScale = Math.Clamp(settings.IconScale, MinIconScale, MaxIconScale);
+        pollDirty = false;
+        scaleDirty = false;
+    }
+
+    /// <summary>Two sliders written to the configuration as they move and saved when released.</summary>
+    private void DrawDisplay()
+    {
+        Header(Strings.ConfigSectionDisplay);
+        var width = 220f * ImGuiHelpers.GlobalScale;
+
+        ImGui.SetNextItemWidth(width);
+        if (ImGui.SliderFloat(Strings.ConfigUiScale, ref uiScale, MinUiScale, MaxUiScale, "%.2f", ImGuiSliderFlags.AlwaysClamp))
+        {
+            settings.UiScale = uiScale;
+            scaleDirty = true;
+        }
+
+        SaveWhenReleased();
+        ImGui.TextDisabled(Strings.ConfigUiScaleHint);
+
+        ImGui.SetNextItemWidth(width);
+        if (ImGui.SliderFloat(Strings.ConfigIconScale, ref iconScale, MinIconScale, MaxIconScale, "%.2f", ImGuiSliderFlags.AlwaysClamp))
+        {
+            settings.IconScale = iconScale;
+            scaleDirty = true;
+        }
+
+        SaveWhenReleased();
+        ImGui.TextDisabled(Strings.ConfigIconScaleHint);
+    }
+
+    private void SaveWhenReleased()
+    {
+        if (scaleDirty && ImGui.IsItemDeactivatedAfterEdit())
+        {
+            scaleDirty = false;
+            Save();
+        }
+    }
+
     private void DrawHelp()
     {
         Header(Strings.ConfigSectionHelp);
+        if (StartTutorial is { } startTutorial)
+        {
+            if (ImGui.Button(Strings.ConfigStartTutorial))
+            {
+                startTutorial();
+            }
+
+            ImGui.SameLine();
+        }
+
         if (ShowHelp is { } showHelp)
         {
             if (ImGui.Button(Strings.ConfigShowHelp))
             {
                 showHelp();
             }
-
-            ImGui.SameLine();
         }
 
-        var firstRun = settings.ShowHelpOnFirstRun;
-        if (ImGui.Checkbox(Strings.ConfigShowHelpOnFirstRun, ref firstRun))
+        var offer = !settings.TutorialCompleted;
+        if (ImGui.Checkbox(Strings.ConfigOfferTutorial, ref offer))
         {
-            settings.ShowHelpOnFirstRun = firstRun;
+            settings.TutorialCompleted = !offer;
             Save();
         }
 
         if (ImGui.IsItemHovered())
         {
-            ImGui.SetTooltip(Strings.ConfigShowHelpOnFirstRunHint);
+            ImGui.SetTooltip(Strings.ConfigOfferTutorialHint);
         }
     }
 

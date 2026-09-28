@@ -1,0 +1,528 @@
+# Unique reward verification report
+
+Generated 2026-09-28 02:37 UTC by `Tsukimichi.DataGen --verify` against game version `2026.09.15.0000.0000`.
+Data file: `unique_quests.json` generated 2026-09-28 02:34 UTC from game version `2026.09.15.0000.0000`; **3464** entries.
+
+## 0. Findings of the 2026-09-27 verification pass (hand-written)
+
+This section is kept in `docs/data/verification-notes.md` and inserted by `Tsukimichi.DataGen --verify`; everything
+below it is regenerated on every run. Update the notes when the generator rules change.
+
+### Generator bugs fixed
+
+| Bug | Effect on the shipped file | Fix |
+|---|---|---|
+| Orchestrion rolls read the roll id from `ItemAction.Data[0]`, which is always 0 for rolls; the Orchestrion row is linked from `Item.AdditionalData`. | All 62 Orchestrion entries shipped `rewardId 0` (runtime `IsOrchestrionRollUnlocked(0)` and a name that was the item name). Because every roll of a multi-roll quest collided on the same key, 17 further rolls were silently dropped. | `rewardId` = `Item.AdditionalData` (typed `Orchestrion`), name = `Orchestrion.Name`; 79 entries now. Verifier checks the link offline and against xivapi. |
+| `ItemRewardType 7` was handled as a second QuestClassJobReward case; Lumina resolves `Reward[0]` for type 7 to `BeastRankBonus` (30 tribal quests). | Latent: the lookup found no QuestClassJobReward row, so no entry was produced (and none was wrong). | Type 7 now reads `BeastRankBonus.Item` and classifies it like any reward item. |
+| A `ContentFinderCondition` without a name (row 121, reached from InstanceContent 40001 by the three "A Pup No Longer" quests) became a `DutyUnlock` entry. | 3 entries with an empty `rewardName`. | Unnamed conditions are skipped (forward and reverse links). |
+| An unnamed Item row (33138) rewarded by three Bozja quests became an `Item` entry. | 3 entries with an empty `rewardName`. | Unnamed items are dropped and listed in `unique-report.md`. |
+
+### Exclusivity rule (new, default on; `--keep-nonexclusive-items` restores the old behaviour)
+
+A plain untradable, non-marketable reward item is shipped as `Item`/`OptionalItem` only when it is not in a
+consumable-like `ItemUICategory` (Medicine, Meal, Ingredient, Reagent, Dye, Crystal, Catalyst, Currency, Other,
+Miscellany, Seasonal Miscellany, Materia, Demimateria, Part, Lumber, Stone, Metal, Cloth, Leather, Bone, Gardening),
+is not sold by a special shop, crafted by a recipe or gathered, and is not sold by a gil shop menu other than the
+Calamity Salvager's quest-reward reacquisition menus ("Purchase Quest Rewards ...", "... Arms & Gear", "... Arms & Tools",
+which only re-sell what the character already earned). Items whose ItemAction is an unlock (portrait framer's kits 29459,
+Bozja field notes 19743) are kept whatever their category, as is facewear (37312). Collectible kinds (Mount, Minion,
+Emote, Orchestrion, Triple Triad card, Ornament, Barding, Hairstyle) are untouched.
+
+### Before / after
+
+| | Shipped before (2026-09-27 20:07) | Fixed generator, legacy item rule | Fixed generator, strict rule (shipped now) |
+|---|---:|---:|---:|
+| Entries | 4160 | 4171 | 3464 |
+| Item | 739 | 736 | 165 |
+| OptionalItem | 189 | 189 | 53 |
+| Orchestrion | 62 (all `rewardId 0`) | 79 | 79 |
+| DutyUnlock | 177 (3 unnamed) | 174 | 174 |
+| Entries with `;otherSource=` | 1114 (444 Item/OptionalItem) | 1114 (444) | 806 (136; every one of them a Calamity Salvager reacquisition menu) |
+| Empty reward names | 6 | 0 | 0 |
+
+Items refused by the strict rule: 713 (Miscellany 337, other gil shop menu 130, special shop 109, Seasonal Miscellany 58,
+Other 37, Medicine 24, Currency 10, Reagent 3, unnamed 3, Catalyst 1, Stone 1). Examples that are gone: Fantasia
+(70058), Hi-Cordial (19 quests), Aetheryte Tickets, MGP vouchers and cards, Faire Vouchers, Gold Saucer Tickets,
+Rowena's and Jandelaine's Tokens, every gear and accessory coffer, chocobo feed, Bozjan coins, seasonal fireworks and
+all seasonal-event gear the Calamity Salvager sells to anyone. The full list is in `unique-report.md`.
+
+### Observations not fixed here (outside `Tsukimichi.DataGen` / `Tsukimichi/Data`)
+
+- `DutyUnlock` entries never get a reward icon in the Moonlit pane: the catalog emits `RewardKind.Instance` keyed by
+  InstanceContent id while the data file keys `DutyUnlock` by ContentFinderCondition id, so `MoonlitPane.FindIcon`
+  never matches. Likewise ClassJob (icon 0 in the catalog), AetherCurrent, BlueMageSpell, Trait, Achievement, Title,
+  SystemUnlock and reverse-linked Actions have no icon source in the catalog.
+- Mount, Minion, Ornament and ClassJob names are the sheet's lowercase `Singular`/`Name` ("magitek armor",
+  "wind-up gentleman", "paladin"); the UI shows them as-is.
+
+## Summary
+
+- Hard checks: **all passed**.
+- Observations (2):
+  - DutyUnlock entries never get an icon: the catalog emits RewardKind.Instance with the InstanceContent id, the data file DutyUnlock with the ContentFinderCondition id, so MoonlitPane.FindIcon's (kind, id) match never hits (UI/GameData side, not fixed here).
+  - 18 Item entries are unlock items kept despite a consumable-like category (framer's kits, field notes)
+
+## 1. Structural checks
+
+Entries: **3464** across **1173** quests. Problems found: **0**.
+
+### Counts per kind and confidence
+
+| Kind | Static | Community | Curated | UserOverride | Total | With `otherSource` |
+|---|---:|---:|---:|---:|---:|---:|
+| Item | 165 | 0 | 0 | 0 | 165 | 127 |
+| OptionalItem | 53 | 0 | 0 | 0 | 53 | 9 |
+| Emote | 56 | 0 | 0 | 0 | 56 | 0 |
+| Action | 250 | 0 | 0 | 0 | 250 | 0 |
+| GeneralAction | 12 | 0 | 0 | 0 | 12 | 0 |
+| ClassJob | 48 | 0 | 0 | 0 | 48 | 0 |
+| Other | 163 | 0 | 0 | 0 | 163 | 0 |
+| ArtifactGear | 1175 | 0 | 0 | 0 | 1175 | 660 |
+| Mount | 38 | 0 | 0 | 0 | 38 | 2 |
+| Minion | 64 | 0 | 0 | 0 | 64 | 5 |
+| Orchestrion | 79 | 0 | 0 | 0 | 79 | 0 |
+| TripleTriadCard | 6 | 0 | 0 | 0 | 6 | 1 |
+| Ornament | 4 | 0 | 0 | 0 | 4 | 0 |
+| Barding | 6 | 0 | 0 | 0 | 6 | 2 |
+| Hairstyle | 1 | 0 | 0 | 0 | 1 | 0 |
+| AetherCurrent | 151 | 0 | 0 | 0 | 151 | 0 |
+| BlueMageSpell | 16 | 0 | 0 | 0 | 16 | 0 |
+| Trait | 54 | 0 | 0 | 0 | 54 | 0 |
+| Achievement | 664 | 0 | 0 | 0 | 664 | 0 |
+| Title | 220 | 0 | 0 | 0 | 220 | 0 |
+| DutyUnlock | 135 | 0 | 39 | 0 | 174 | 0 |
+| SystemUnlock | 0 | 0 | 65 | 0 | 65 | 0 |
+| **Total** | 3360 | 0 | 104 | 0 | 3464 | 806 |
+
+### `otherSource` breakdown
+
+| Kind | otherSource | Entries |
+|---|---|---:|
+| Item | GilShopItem | 127 |
+| OptionalItem | GilShopItem | 9 |
+| ArtifactGear | Tradable,Marketable,SpecialShop,GatheringItem | 468 |
+| ArtifactGear | SpecialShop | 110 |
+| ArtifactGear | Tradable | 60 |
+| ArtifactGear | Tradable,Marketable,SpecialShop,Recipe | 22 |
+| Mount | SpecialShop | 2 |
+| Minion | Tradable,Marketable | 3 |
+| Minion | SpecialShop | 2 |
+| TripleTriadCard | SpecialShop | 1 |
+| Barding | Tradable,Marketable | 2 |
+
+## 2. Icon checks
+
+Reward icons the Moonlit pane will draw: **850** distinct ids over 1982 entries.
+Missing `ui/icon/{folder}/{id}.tex`: **0**; missing `_hr1` variant: **0**.
+
+Entries with no drawable icon (no catalog reward matches by item id or by kind and id), per kind:
+
+| Kind | Entries | Without icon |
+|---|---:|---:|
+| Item | 165 | 0 |
+| OptionalItem | 53 | 0 |
+| Emote | 56 | 0 |
+| Action | 250 | 90 |
+| GeneralAction | 12 | 0 |
+| ClassJob | 48 | 48 |
+| Other | 163 | 0 |
+| ArtifactGear | 1175 | 0 |
+| Mount | 38 | 0 |
+| Minion | 64 | 0 |
+| Orchestrion | 79 | 0 |
+| TripleTriadCard | 6 | 0 |
+| Ornament | 4 | 0 |
+| Barding | 6 | 0 |
+| Hairstyle | 1 | 0 |
+| AetherCurrent | 151 | 151 |
+| BlueMageSpell | 16 | 16 |
+| Trait | 54 | 54 |
+| Achievement | 664 | 664 |
+| Title | 220 | 220 |
+| DutyUnlock | 174 | 174 |
+| SystemUnlock | 65 | 65 |
+
+### Quest banners
+
+Named quests: **5373**; with a non-zero `Quest.Icon` banner: **2532** (1584 distinct ids); with a non-zero `Quest.IconSpecial`: **313** (33 distinct ids).
+
+Distinct banner ids: **1617**; missing `.tex`: **0**; missing `_hr1`: **0**.
+
+Banner id distribution (folder = id / 1000; top 25 by quest count):
+
+| Banner id | Quests | Example |
+|---:|---:|---|
+| 100101 | 13 | 66643 Way of the Fisher |
+| 100047 | 12 | 66111 Way of the Alchemist |
+| 100049 | 12 | 65809 Way of the Armorer |
+| 100050 | 12 | 65827 Way of the Blacksmith |
+| 100052 | 12 | 65790 My First Skillet |
+| 100055 | 12 | 66144 Way of the Goldsmith |
+| 100056 | 12 | 65539 Way of the Botanist |
+| 100058 | 12 | 66133 Way of the Miner |
+| 100060 | 12 | 65587 Skin in the Game |
+| 100062 | 12 | 65674 Way of the Carpenter |
+| 100063 | 12 | 66070 Way of the Weaver |
+| 100100 | 12 | 65987 So You Want to Be an Arcanist |
+| 100048 | 10 | 65557 Way of the Archer |
+| 100051 | 10 | 65558 Way of the Conjurer |
+| 100053 | 10 | 65846 Way of the Marauder |
+| 100054 | 10 | 65789 Way of the Gladiator |
+| 100057 | 10 | 65559 Way of the Lancer |
+| 100059 | 10 | 66068 Way of the Pugilist |
+| 100061 | 10 | 65880 Way of the Thaumaturge |
+| 100165 | 10 | 66655 A Relic Reborn (Bravura) |
+| 100344 | 10 | 65638 My First Daggers |
+| 101486 | 10 | 71026 Strangers in the Wood |
+| 100327 | 9 | 65748 Peasants by Day, Ninjas by Night |
+| 100444 | 9 | 67232 Savior of Skysteel |
+| 100442 | 8 | 67548 Stairway to the Heavens |
+
+Banner folders (id / 1000) by quest count:
+
+| Folder | Quests | Distinct ids |
+|---:|---:|---:|
+| 000100 | 1700 | 939 |
+| 000101 | 675 | 494 |
+| 000112 | 157 | 151 |
+
+Banner dimensions for well-known quests (the journal banner is a wide image, 376x120 at base resolution):
+
+| Quest | Banner id | Base tex | hr1 tex | Plausible |
+|---|---:|---|---|---|
+| 65621 Close to Home | 100004 | 376x120 | 1128x360 | yes |
+| 65644 Close to Home | 100079 | 376x120 | 1128x360 | yes |
+| 65645 Close to Home | 100079 | 376x120 | 1128x360 | yes |
+| 65659 Close to Home | 100004 | 376x120 | 1128x360 | yes |
+| 65660 Close to Home | 100004 | 376x120 | 1128x360 | yes |
+| 66104 Close to Home | 100087 | 376x120 | 1128x360 | yes |
+| 66105 Close to Home | 100087 | 376x120 | 1128x360 | yes |
+| 66106 Close to Home | 100087 | 376x120 | 1128x360 | yes |
+| 70058 The Ultimate Weapon | 112017 | 376x120 | 1128x360 | yes |
+| 66038 Her Last Vow | 100357 | 376x120 | 1128x360 | yes |
+| 66643 (most common banner) | 100101 | 376x120 | 1128x360 | yes |
+| 65539 (most common banner) | 100056 | 376x120 | 1128x360 | yes |
+| 65587 (most common banner) | 100060 | 376x120 | 1128x360 | yes |
+
+## 3. Known-answer checks
+
+| Check | Result | Detail |
+|---|---|---|
+| Her Last Vow (66038) -> Emote 114 Most Gentlemanly | pass | Emote 114 'Most Gentlemanly' item 0 [Static] |
+| Her Last Vow (66038) -> Minion Wind-up Gentleman | pass | Minion 21 'wind-up gentleman' item 10073 [Static] |
+| The Ultimate Weapon (70058) -> Mount 6 Magitek Armor (item 6008) | pass | Mount 6 'magitek armor' item 6008 [Static] |
+| The Ultimate Weapon (70058) does not list Fantasia as a unique Item | pass | (none) |
+| Paladin's Pledge (66591) -> ClassJob 19 paladin | pass | ClassJob 19 'paladin' item 0 [Static] |
+| Dawntrail aether current quests present and linked from AetherCurrent.Quest | pass | 30 entries; e.g. 69739 Alchemist or Dancer -> Aether Current (Thavnair) (current 2818325) |
+| Curated retainer quests -> SystemUnlock Retainers (three city variants, quest named An Ill-conceived Venture) | pass | SystemUnlock 0 'Retainers' item 0 [Curated]; SystemUnlock 0 'Retainers' item 0 [Curated]; SystemUnlock 0 'Retainers' item 0 [Curated] |
+| Sastasha (CFC 4) is a DutyUnlock of It's Probably Pirates (65781 and 66211) | pass | DutyUnlock 4 'Sastasha' item 0 [Curated]; DutyUnlock 4 'Sastasha' item 0 [Curated] |
+
+Ye Olde Faux Hollows: skipped (unsure of the expected entry).
+
+## 4. Semantic spot checks (xivapi v2)
+
+Sample: **64** entries (seed 20260927, up to 3 per kind then filled at random), **197** checks, **0** failed. xivapi version `541c0c12e07da325`, 21 requests, 0 request errors.
+
+| Quest | Kind | Reward id | Item id | Check | Expected (local) | Actual (xivapi) | Result |
+|---|---|---:|---:|---|---|---|---|
+| 65602 Accept No Imitations | Item | 2429 | 2429 | Quest name | Accept No Imitations | Accept No Imitations | pass |
+| 65602 Accept No Imitations | Item | 2429 | 2429 | Item.Name | Pinga | Pinga | pass |
+| 65637 So You Want to Be a Rogue | ClassJob | 29 | 0 | Quest name | So You Want to Be a Rogue | So You Want to Be a Rogue | pass |
+| 65637 So You Want to Be a Rogue | ClassJob | 29 | 0 | ClassJob.Name | rogue | rogue | pass |
+| 65705 Between Captain and Conjurer | Title | 47 | 0 | Quest name | Between Captain and Conjurer | Between Captain and Conjurer | pass |
+| 65705 Between Captain and Conjurer | Title | 47 | 0 | Title.Masculine | Seeker of Skill | Seeker of Skill | pass |
+| 65705 Between Captain and Conjurer | Title | 47 | 0 | Achievement 316.Title | 47 | 47 | pass |
+| 65705 Between Captain and Conjurer | Title | 47 | 0 | Achievement 316 links quest | 65705 | linked | pass |
+| 65717 So You Want to Be an Archer | ClassJob | 5 | 0 | Quest name | So You Want to Be an Archer | So You Want to Be an Archer | pass |
+| 65717 So You Want to Be an Archer | ClassJob | 5 | 0 | ClassJob.Name | archer | archer | pass |
+| 65719 So You Want to Be a Thaumaturge | ClassJob | 7 | 0 | Quest name | So You Want to Be a Thaumaturge | So You Want to Be a Thaumaturge | pass |
+| 65719 So You Want to Be a Thaumaturge | ClassJob | 7 | 0 | ClassJob.Name | thaumaturge | thaumaturge | pass |
+| 65972 So You Want to Be a Jockey | SystemUnlock | 0 | 0 | Quest name | So You Want to Be a Jockey | So You Want to Be a Jockey | pass |
+| 65972 So You Want to Be a Jockey | SystemUnlock | 0 | 0 | Curated label non-empty | non-empty | Chocobo racing | pass |
+| 65973 Triple Triad Trial | TripleTriadCard | 1 | 9772 | Quest name | Triple Triad Trial | Triple Triad Trial | pass |
+| 65973 Triple Triad Trial | TripleTriadCard | 1 | 9772 | TripleTriadCard.Name | Dodo | Dodo | pass |
+| 65973 Triple Triad Trial | TripleTriadCard | 1 | 9772 | Item exists | item 9772 | Dodo Card | pass |
+| 65973 Triple Triad Trial | TripleTriadCard | 1 | 9772 | ItemAction type | 3357 | 3357 | pass |
+| 65973 Triple Triad Trial | TripleTriadCard | 1 | 9772 | ItemAction.Data[0] = rewardId | 1 | 1 | pass |
+| 65973 Triple Triad Trial | TripleTriadCard | 3 | 9774 | Quest name | Triple Triad Trial | Triple Triad Trial | pass |
+| 65973 Triple Triad Trial | TripleTriadCard | 3 | 9774 | TripleTriadCard.Name | Sabotender | Sabotender | pass |
+| 65973 Triple Triad Trial | TripleTriadCard | 3 | 9774 | Item exists | item 9774 | Sabotender Card | pass |
+| 65973 Triple Triad Trial | TripleTriadCard | 3 | 9774 | ItemAction type | 3357 | 3357 | pass |
+| 65973 Triple Triad Trial | TripleTriadCard | 3 | 9774 | ItemAction.Data[0] = rewardId | 3 | 3 | pass |
+| 65973 Triple Triad Trial | TripleTriadCard | 6 | 9777 | Quest name | Triple Triad Trial | Triple Triad Trial | pass |
+| 65973 Triple Triad Trial | TripleTriadCard | 6 | 9777 | TripleTriadCard.Name | Bomb | Bomb | pass |
+| 65973 Triple Triad Trial | TripleTriadCard | 6 | 9777 | Item exists | item 9777 | Bomb Card | pass |
+| 65973 Triple Triad Trial | TripleTriadCard | 6 | 9777 | ItemAction type | 3357 | 3357 | pass |
+| 65973 Triple Triad Trial | TripleTriadCard | 6 | 9777 | ItemAction.Data[0] = rewardId | 6 | 6 | pass |
+| 66038 Her Last Vow | Emote | 114 | 0 | Quest name | Her Last Vow | Her Last Vow | pass |
+| 66038 Her Last Vow | Emote | 114 | 0 | Emote.Name | Most Gentlemanly | Most Gentlemanly | pass |
+| 66083 Now That We've Found Love | Barding | 30 | 10082 | Quest name | Now That We've Found Love | Now That We've Found Love | pass |
+| 66083 Now That We've Found Love | Barding | 30 | 10082 | BuddyEquip.Name | Paramour Barding | Paramour Barding | pass |
+| 66083 Now That We've Found Love | Barding | 30 | 10082 | Item exists | item 10082 | Paramour Barding | pass |
+| 66083 Now That We've Found Love | Barding | 30 | 10082 | ItemAction type | 1013 | 1013 | pass |
+| 66083 Now That We've Found Love | Barding | 30 | 10082 | ItemAction.Data[0] = rewardId | 30 | 30 | pass |
+| 66103 Return of the Holyfist | Title | 45 | 0 | Quest name | Return of the Holyfist | Return of the Holyfist | pass |
+| 66103 Return of the Holyfist | Title | 45 | 0 | Title.Masculine | Seeker of Blood | Seeker of Blood | pass |
+| 66103 Return of the Holyfist | Title | 45 | 0 | Achievement 314.Title | 45 | 45 | pass |
+| 66103 Return of the Holyfist | Title | 45 | 0 | Achievement 314 links quest | 66103 | linked | pass |
+| 66235 Color Your World | GeneralAction | 15 | 0 | Quest name | Color Your World | Color Your World | pass |
+| 66235 Color Your World | GeneralAction | 15 | 0 | GeneralAction.Name | Dye | Dye | pass |
+| 66237 My Little Chocobo (Maelstrom) | Mount | 1 | 6001 | Quest name | My Little Chocobo (Maelstrom) | My Little Chocobo (Maelstrom) | pass |
+| 66237 My Little Chocobo (Maelstrom) | Mount | 1 | 6001 | Mount.Singular | company chocobo | company chocobo | pass |
+| 66237 My Little Chocobo (Maelstrom) | Mount | 1 | 6001 | Item exists | item 6001 | Chocobo Whistle | pass |
+| 66237 My Little Chocobo (Maelstrom) | Mount | 1 | 6001 | ItemAction type | 1322 | 1322 | pass |
+| 66237 My Little Chocobo (Maelstrom) | Mount | 1 | 6001 | ItemAction.Data[0] = rewardId | 1 | 1 | pass |
+| 66515 Fort of Fear | DutyUnlock | 13 | 0 | Quest name | Fort of Fear | Fort of Fear | pass |
+| 66515 Fort of Fear | DutyUnlock | 13 | 0 | ContentFinderCondition.Name | Dzemael Darkhold | Dzemael Darkhold | pass |
+| 66592 Honor Lost | Trait | 209 | 0 | Quest name | Honor Lost | Honor Lost | pass |
+| 66592 Honor Lost | Trait | 209 | 0 | Trait.Name | Oath Mastery | Oath Mastery | pass |
+| 66629 Shadowing the Summoner | Action | 3578 | 0 | Quest name | Shadowing the Summoner | Shadowing the Summoner | pass |
+| 66629 Shadowing the Summoner | Action | 3578 | 0 | Action.Name | Painflare | Painflare | pass |
+| 66639 Topaz Teachings | Trait | 466 | 0 | Quest name | Topaz Teachings | Topaz Teachings | pass |
+| 66639 Topaz Teachings | Trait | 466 | 0 | Trait.Name | Enhanced Aethercharge | Enhanced Aethercharge | pass |
+| 66711 The Price of Principles | OptionalItem | 4523 | 4523 | Quest name | The Price of Principles | The Price of Principles | pass |
+| 66711 The Price of Principles | OptionalItem | 4523 | 4523 | Item.Name | Darklight Band of Fending | Darklight Band of Fending | pass |
+| 66725 Hail to the King, Kupo | OptionalItem | 4176 | 4176 | Quest name | Hail to the King, Kupo | Hail to the King, Kupo | pass |
+| 66725 Hail to the King, Kupo | OptionalItem | 4176 | 4176 | Item.Name | Darklight Bracelet of Aiming | Darklight Bracelet of Aiming | pass |
+| 66747 Treasures and Tribulations | GeneralAction | 20 | 0 | Quest name | Treasures and Tribulations | Treasures and Tribulations | pass |
+| 66747 Treasures and Tribulations | GeneralAction | 20 | 0 | GeneralAction.Name | Dig | Dig | pass |
+| 66956 Hard-boiled | Barding | 24 | 7550 | Quest name | Hard-boiled | Hard-boiled | pass |
+| 66956 Hard-boiled | Barding | 24 | 7550 | BuddyEquip.Name | Egg Barding | Egg Barding | pass |
+| 66956 Hard-boiled | Barding | 24 | 7550 | Item exists | item 7550 | Egg Harness | pass |
+| 66956 Hard-boiled | Barding | 24 | 7550 | ItemAction type | 1013 | 1013 | pass |
+| 66956 Hard-boiled | Barding | 24 | 7550 | ItemAction.Data[0] = rewardId | 24 | 24 | pass |
+| 67092 The House That Death Built | DutyUnlock | 175 | 0 | Quest name | The House That Death Built | The House That Death Built | pass |
+| 67092 The House That Death Built | DutyUnlock | 175 | 0 | ContentFinderCondition.Name | the Palace of the Dead (Floors 11-20) | the Palace of the Dead (Floors 11-20) | pass |
+| 67201 In Node We Trust | Other | 2 | 0 | Quest name | In Node We Trust | In Node We Trust | pass |
+| 67201 In Node We Trust | Other | 2 | 0 | QuestRewardOther.Name | Aether Current | Aether Current | pass |
+| 67359 Road Kill | Other | 2 | 0 | Quest name | Road Kill | Road Kill | pass |
+| 67359 Road Kill | Other | 2 | 0 | QuestRewardOther.Name | Aether Current | Aether Current | pass |
+| 67641 A Flare for the Dramatic | Action | 3582 | 0 | Quest name | A Flare for the Dramatic | A Flare for the Dramatic | pass |
+| 67641 A Flare for the Dramatic | Action | 3582 | 0 | Action.Name | Deathflare | Deathflare | pass |
+| 67686 Joining the Circus | Minion | 159 | 13113 | Quest name | Joining the Circus | Joining the Circus | pass |
+| 67686 Joining the Circus | Minion | 159 | 13113 | Companion.Singular | Pumpkin Butler | Pumpkin Butler | pass |
+| 67686 Joining the Circus | Minion | 159 | 13113 | Item exists | item 13113 | Pumpkin Butler | pass |
+| 67686 Joining the Circus | Minion | 159 | 13113 | ItemAction type | 853 | 853 | pass |
+| 67686 Joining the Circus | Minion | 159 | 13113 | ItemAction.Data[0] = rewardId | 159 | 159 | pass |
+| 68131 Eastern Apprentice | Trait | 140 | 0 | Quest name | Eastern Apprentice | Eastern Apprentice | pass |
+| 68131 Eastern Apprentice | Trait | 140 | 0 | Trait.Name | Quality Assurance | Quality Assurance | pass |
+| 68191 Saint Sayer | AetherCurrent | 2818144 | 0 | Quest name | Saint Sayer | Saint Sayer | pass |
+| 68191 Saint Sayer | AetherCurrent | 2818144 | 0 | Zone is a real AetherCurrentCompFlgSet territory | The Peaks | found | pass |
+| 68191 Saint Sayer | AetherCurrent | 2818144 | 0 | AetherCurrent.Quest | 68191 | 68191 | pass |
+| 68445 The Mongrel and the Knight | Action | 7418 | 0 | Quest name | The Mongrel and the Knight | The Mongrel and the Knight | pass |
+| 68445 The Mongrel and the Knight | Action | 7418 | 0 | Action.Name | Flamethrower | Flamethrower | pass |
+| 68546 Starlight Stakeout | Mount | 99 | 21050 | Quest name | Starlight Stakeout | Starlight Stakeout | pass |
+| 68546 Starlight Stakeout | Mount | 99 | 21050 | Mount.Singular | Starlight bear | Starlight bear | pass |
+| 68546 Starlight Stakeout | Mount | 99 | 21050 | Item exists | item 21050 | Starlight Bear Horn | pass |
+| 68546 Starlight Stakeout | Mount | 99 | 21050 | ItemAction type | 1322 | 1322 | pass |
+| 68546 Starlight Stakeout | Mount | 99 | 21050 | ItemAction.Data[0] = rewardId | 99 | 99 | pass |
+| 68553 If I Had a Glamour | GeneralAction | 22 | 0 | Quest name | If I Had a Glamour | If I Had a Glamour | pass |
+| 68553 If I Had a Glamour | GeneralAction | 22 | 0 | GeneralAction.Name | Cast Glamour | Cast Glamour | pass |
+| 68614 And We Shall Call It Eureka | SystemUnlock | 0 | 0 | Quest name | And We Shall Call It Eureka | And We Shall Call It Eureka | pass |
+| 68614 And We Shall Call It Eureka | SystemUnlock | 0 | 0 | Curated label non-empty | non-empty | Eureka (Forbidden Land) | pass |
+| 68622 Precious Reclamation | SystemUnlock | 0 | 0 | Quest name | Precious Reclamation | Precious Reclamation | pass |
+| 68622 Precious Reclamation | SystemUnlock | 0 | 0 | Curated label non-empty | non-empty | Doman Enclave reconstruction | pass |
+| 68650 Local Special Tea | ArtifactGear | 6141 | 6141 | Quest name | Local Special Tea |  Local Special Tea | pass |
+| 68650 Local Special Tea | ArtifactGear | 6141 | 6141 | Item.Name | Cordial | Cordial | pass |
+| 68684 The Call | Emote | 190 | 0 | Quest name | The Call | The Call | pass |
+| 68684 The Call | Emote | 190 | 0 | Emote.Name | Endure | Endure | pass |
+| 68730 Blue Collar Work | BlueMageSpell | 13 | 0 | Quest name | Blue Collar Work | Blue Collar Work | pass |
+| 68730 Blue Collar Work | BlueMageSpell | 13 | 0 | AozAction.Action.Name | Blood Drain | Blood Drain | pass |
+| 68734 The Real Folk Blues | BlueMageSpell | 22 | 0 | Quest name | The Real Folk Blues | The Real Folk Blues | pass |
+| 68734 The Real Folk Blues | BlueMageSpell | 22 | 0 | AozAction.Action.Name | Glower | Glower | pass |
+| 69129 Debate and Discourse | AetherCurrent | 2818296 | 0 | Quest name | Debate and Discourse |  Debate and Discourse | pass |
+| 69129 Debate and Discourse | AetherCurrent | 2818296 | 0 | Zone is a real AetherCurrentCompFlgSet territory | The Tempest | found | pass |
+| 69129 Debate and Discourse | AetherCurrent | 2818296 | 0 | AetherCurrent.Quest | 69129 | 69129 | pass |
+| 69254 On the Threshold | Orchestrion | 350 | 28894 | Quest name | On the Threshold | On the Threshold | pass |
+| 69254 On the Threshold | Orchestrion | 350 | 28894 | Orchestrion.Name | Significance (Nothing) | Significance (Nothing) | pass |
+| 69254 On the Threshold | Orchestrion | 350 | 28894 | Item exists | item 28894 | Significance (Nothing) Orchestrion Roll | pass |
+| 69254 On the Threshold | Orchestrion | 350 | 28894 | ItemAction type | 25183 | 25183 | pass |
+| 69254 On the Threshold | Orchestrion | 350 | 28894 | Item.AdditionalData = rewardId | 350 | 350 | pass |
+| 69413 It's Possibly a Primal | OptionalItem | 4178 | 4178 | Quest name | It's Possibly a Primal | It's Possibly a Primal | pass |
+| 69413 It's Possibly a Primal | OptionalItem | 4178 | 4178 | Item.Name | Darklight Bracelet of Fending | Darklight Bracelet of Fending | pass |
+| 69431 Sleep Now in Sapphire | Item | 30382 | 30382 | Quest name | Sleep Now in Sapphire | Sleep Now in Sapphire | pass |
+| 69431 Sleep Now in Sapphire | Item | 30382 | 30382 | Item.Name | Sapphire Weapon Bust | Sapphire Weapon Bust | pass |
+| 69461 Fast and Loud | ArtifactGear | 10 | 10 | Quest name | Fast and Loud |  Fast and Loud | pass |
+| 69461 Fast and Loud | ArtifactGear | 10 | 10 | Item.Name | Wind Crystal | Wind Crystal | pass |
+| 69571 Brave New World | Orchestrion | 474 | 33912 | Quest name | Brave New World | Brave New World | pass |
+| 69571 Brave New World | Orchestrion | 474 | 33912 | Orchestrion.Name | Faltering Prayer (Dawn Breeze) | Faltering Prayer (Dawn Breeze) | pass |
+| 69571 Brave New World | Orchestrion | 474 | 33912 | Item exists | item 33912 | Faltering Prayer (Dawn Breeze) Orchestrion Roll | pass |
+| 69571 Brave New World | Orchestrion | 474 | 33912 | ItemAction type | 25183 | 25183 | pass |
+| 69571 Brave New World | Orchestrion | 474 | 33912 | Item.AdditionalData = rewardId | 474 | 474 | pass |
+| 69627 Rising Calm | Ornament | 16 | 33711 | Quest name | Rising Calm | Rising Calm | pass |
+| 69627 Rising Calm | Ornament | 16 | 33711 | Ornament.Singular | Red Moon Parasol | Red Moon Parasol | pass |
+| 69627 Rising Calm | Ornament | 16 | 33711 | Item exists | item 33711 | Red Moon Parasol | pass |
+| 69627 Rising Calm | Ornament | 16 | 33711 | ItemAction type | 20086 | 20086 | pass |
+| 69627 Rising Calm | Ornament | 16 | 33711 | ItemAction.Data[0] = rewardId | 16 | 16 | pass |
+| 70000 Endwalker | Mount | 263 | 36002 | Quest name | Endwalker | Endwalker | pass |
+| 70000 Endwalker | Mount | 263 | 36002 | Mount.Singular | Argos | Argos | pass |
+| 70000 Endwalker | Mount | 263 | 36002 | Item exists | item 36002 | Argos Horn | pass |
+| 70000 Endwalker | Mount | 263 | 36002 | ItemAction type | 1322 | 1322 | pass |
+| 70000 Endwalker | Mount | 263 | 36002 | ItemAction.Data[0] = rewardId | 263 | 263 | pass |
+| 70043 Touring Anagnorisis, Part I | Other | 2 | 0 | Quest name | Touring Anagnorisis, Part I |  Touring Anagnorisis, Part I | pass |
+| 70043 Touring Anagnorisis, Part I | Other | 2 | 0 | QuestRewardOther.Name | Aether Current | Aether Current | pass |
+| 70056 A Feast to Remember | Hairstyle | 239 | 36618 | Quest name | A Feast to Remember | A Feast to Remember | pass |
+| 70056 A Feast to Remember | Hairstyle | 239 | 36618 | CharaMakeCustomize unlock link exists locally | 239 | found | pass |
+| 70056 A Feast to Remember | Hairstyle | 239 | 36618 | Item.Name | Modern Cosmetics - Clowning Around | Modern Cosmetics - Clowning Around | pass |
+| 70056 A Feast to Remember | Hairstyle | 239 | 36618 | ItemAction type | 2633 | 2633 | pass |
+| 70056 A Feast to Remember | Hairstyle | 239 | 36618 | ItemAction.Data[0] = rewardId | 239 | 239 | pass |
+| 70185 For Coin, Country, and Comrades | Title | 656 | 0 | Quest name | For Coin, Country, and Comrades | For Coin, Country, and Comrades | pass |
+| 70185 For Coin, Country, and Comrades | Title | 656 | 0 | Title.Masculine | Sultana's Shadow | Sultana's Shadow | pass |
+| 70185 For Coin, Country, and Comrades | Title | 656 | 0 | Achievement 3152.Title | 656 | 656 | pass |
+| 70185 For Coin, Country, and Comrades | Title | 656 | 0 | Achievement 3152 links quest | 70185 | linked | pass |
+| 70261 Well-oiled | Achievement | 3226 | 0 | Quest name | Well-oiled |  Well-oiled | pass |
+| 70261 Well-oiled | Achievement | 3226 | 0 | Achievement.Name | Well-oiled: Amazing Manderville Zweihander | Well-oiled: Amazing Manderville Zweihander | pass |
+| 70312 No Butts About It | BlueMageSpell | 108 | 0 | Quest name | No Butts About It | No Butts About It | pass |
+| 70312 No Butts About It | BlueMageSpell | 108 | 0 | AozAction.Action.Name | Rehydration | Rehydration | pass |
+| 70342 Resonating with Perfection | ArtifactGear | 40934 | 40934 | Quest name | Resonating with Perfection |  Resonating with Perfection | pass |
+| 70342 Resonating with Perfection | ArtifactGear | 40934 | 40934 | Item.Name | Mandervillous Battleaxe | Mandervillous Battleaxe | pass |
+| 70342 Resonating with Perfection | Achievement | 3396 | 0 | Quest name | Resonating with Perfection |  Resonating with Perfection | pass |
+| 70342 Resonating with Perfection | Achievement | 3396 | 0 | Achievement.Name | Perfect: Mandervillous Codex | Perfect: Mandervillous Codex | pass |
+| 70349 More Precious than Gil | Barding | 95 | 41470 | Quest name | More Precious than Gil | More Precious than Gil | pass |
+| 70349 More Precious than Gil | Barding | 95 | 41470 | BuddyEquip.Name | Wayfarer's Barding | Wayfarer's Barding | pass |
+| 70349 More Precious than Gil | Barding | 95 | 41470 | Item exists | item 41470 | Wayfarer's Barding | pass |
+| 70349 More Precious than Gil | Barding | 95 | 41470 | ItemAction type | 1013 | 1013 | pass |
+| 70349 More Precious than Gil | Barding | 95 | 41470 | ItemAction.Data[0] = rewardId | 95 | 95 | pass |
+| 70480 Unto the Summit | AetherCurrent | 2818459 | 0 | Quest name | Unto the Summit | Unto the Summit | pass |
+| 70480 Unto the Summit | AetherCurrent | 2818459 | 0 | Zone is a real AetherCurrentCompFlgSet territory | Heritage Found | found | pass |
+| 70480 Unto the Summit | AetherCurrent | 2818459 | 0 | AetherCurrent.Quest | 70480 | 70480 | pass |
+| 70779 Eggceeding Expectations | Ornament | 43 | 44997 | Quest name | Eggceeding Expectations | Eggceeding Expectations | pass |
+| 70779 Eggceeding Expectations | Ornament | 43 | 44997 | Ornament.Singular | Archon Egg Parasol | Archon Egg Parasol | pass |
+| 70779 Eggceeding Expectations | Ornament | 43 | 44997 | Item exists | item 44997 | Archon Egg Parasol | pass |
+| 70779 Eggceeding Expectations | Ornament | 43 | 44997 | ItemAction type | 20086 | 20086 | pass |
+| 70779 Eggceeding Expectations | Ornament | 43 | 44997 | ItemAction.Data[0] = rewardId | 43 | 43 | pass |
+| 70788 A Present from the Present | Minion | 538 | 44493 | Quest name | A Present from the Present | A Present from the Present | pass |
+| 70788 A Present from the Present | Minion | 538 | 44493 | Companion.Singular | wind-up Themis | wind-up Themis | pass |
+| 70788 A Present from the Present | Minion | 538 | 44493 | Item exists | item 44493 | Wind-up Themis | pass |
+| 70788 A Present from the Present | Minion | 538 | 44493 | ItemAction type | 853 | 853 | pass |
+| 70788 A Present from the Present | Minion | 538 | 44493 | ItemAction.Data[0] = rewardId | 538 | 538 | pass |
+| 70856 Forging the Phantasmal | Achievement | 3643 | 0 | Quest name | Forging the Phantasmal |  Forging the Phantasmal | pass |
+| 70856 Forging the Phantasmal | Achievement | 3643 | 0 | Achievement.Name | The Might Phantastick: Knuckles Penumbrae | The Might Phantastick: Knuckles Penumbrae | pass |
+| 70909 The Promise of Tomorrow | Orchestrion | 769 | 46148 | Quest name | The Promise of Tomorrow | The Promise of Tomorrow | pass |
+| 70909 The Promise of Tomorrow | Orchestrion | 769 | 46148 | Orchestrion.Name | The Promise of Tomorrow | The Promise of Tomorrow | pass |
+| 70909 The Promise of Tomorrow | Orchestrion | 769 | 46148 | Item exists | item 46148 | The Promise of Tomorrow Orchestrion Roll | pass |
+| 70909 The Promise of Tomorrow | Orchestrion | 769 | 46148 | ItemAction type | 25183 | 25183 | pass |
+| 70909 The Promise of Tomorrow | Orchestrion | 769 | 46148 | Item.AdditionalData = rewardId | 769 | 769 | pass |
+| 70941 Pilgrimage of Light | DutyUnlock | 1032 | 0 | Quest name | Pilgrimage of Light | Pilgrimage of Light | pass |
+| 70941 Pilgrimage of Light | DutyUnlock | 1032 | 0 | ContentFinderCondition.Name | Pilgrim's Traverse (Stones 1-10) | Pilgrim's Traverse (Stones 1-10) | pass |
+| 70979 You Otter Be There | Ornament | 52 | 50825 | Quest name | You Otter Be There | You Otter Be There | pass |
+| 70979 You Otter Be There | Ornament | 52 | 50825 | Ornament.Singular | Senor Otter Pack | Senor Otter Pack | pass |
+| 70979 You Otter Be There | Ornament | 52 | 50825 | Item exists | item 50825 | Senor Otter Pack | pass |
+| 70979 You Otter Be There | Ornament | 52 | 50825 | ItemAction type | 20086 | 20086 | pass |
+| 70979 You Otter Be There | Ornament | 52 | 50825 | ItemAction.Data[0] = rewardId | 52 | 52 | pass |
+| 70980 What Can Eye Do for You | Emote | 323 | 50462 | Quest name | What Can Eye Do for You | What Can Eye Do for You | pass |
+| 70980 What Can Eye Do for You | Emote | 323 | 50462 | Emote.Name | Cheer Light: Blue | Cheer Light: Blue | pass |
+| 70980 What Can Eye Do for You | Emote | 323 | 50462 | Item exists | item 50462 | Ballroom Etiquette - Improper Praise (Cheer Light: Blue) | pass |
+| 70980 What Can Eye Do for You | Emote | 323 | 50462 | ItemAction type | 2633 | 2633 | pass |
+| 70980 What Can Eye Do for You | Emote | 323 | 50462 | ItemAction.Data[0] = Emote.UnlockLink | 592 | 592 | pass |
+| 71014 Windborne | Item | 52431 | 52431 | Quest name | Windborne | Windborne | pass |
+| 71014 Windborne | Item | 52431 | 52431 | Item.Name | Successor's Breeches | Successor's Breeches | pass |
+| 71018 Clotted Crime | Minion | 559 | 46784 | Quest name | Clotted Crime | Clotted Crime | pass |
+| 71018 Clotted Crime | Minion | 559 | 46784 | Companion.Singular | oglop | oglop | pass |
+| 71018 Clotted Crime | Minion | 559 | 46784 | Item exists | item 46784 | Oglop | pass |
+| 71018 Clotted Crime | Minion | 559 | 46784 | ItemAction type | 853 | 853 | pass |
+| 71018 Clotted Crime | Minion | 559 | 46784 | ItemAction.Data[0] = rewardId | 559 | 559 | pass |
+
+## 5. Exclusivity of Item entries
+
+Static Item/OptionalItem entries: **218**.
+
+### ItemUICategory distribution
+
+| ItemUICategory | Entries | Consumable-like | Of which unlock items | Examples |
+|---|---:|---|---:|---|
+| Body | 27 |  | 0 | Custom-made Tunic, Custom-made Scale Mail, Custom-made Robe of Healing, Custom-made Cuirass |
+| Miscellany | 18 | yes | 18 | Field Notes on Misija, Field Notes on Menenius, Field Notes on Gunnhildr, Field Notes on Lilja |
+| Head | 16 |  | 0 | Postmoogle Cap, Monoa Mask, Sable Death Mask, Scion Adventurer's Monocle |
+| Soul Crystal | 16 |  | 0 | Soul of the Ninja, Soul of the Summoner, Soul of the Scholar, Soul of the Machinist |
+| Ring | 15 |  | 0 | Gridanian Ring, Lominsan Ring, Ul'dahn Ring, Meteor Survivor Ring |
+| Legs | 14 |  | 0 | Manderville Bottoms, Star-spangled Subligar, Scion Adventurer's Bottoms, Sophist's Podea |
+| Earrings | 13 |  | 0 | Voice of the Just, Hero's Earrings of Casting, Hero's Earrings of Healing, Darklight Earrings of Striking |
+| Feet | 13 |  | 0 | Dress Shoes, Scion Adventurer's Boots, Crystarium Greaves, Sophist's Hupodema |
+| Necklace | 13 |  | 0 | Hero's Necklace of Fending, Hero's Necklace of Slaying, Hero's Necklace of Aiming, Hero's Necklace of Casting |
+| Bracelets | 12 |  | 0 | Dawn Wristguards, Darklight Bracelet of Aiming, Darklight Bracelet of Healing, Darklight Bracelet of Casting |
+| Hands | 9 |  | 0 | Crystarium Gauntlets, Wayfarer's Fingerless Gloves, Isle Farmhand's Cotton Gloves, Isle Shepherd's Wristdress |
+| Shield | 9 |  | 0 | Holy Shield, House Fortemps Kite Shield, Beast Herder's Hoplon, Beast Tender's Hoplon |
+| Beastmaster's Arm | 7 |  | 0 | Beast Herder's Hand Axe, Beast Tender's Hand Axe, Beast Handler's Tabar, Beast Whisperer's Hand Axe |
+| Blue Mage's Arm | 5 |  | 0 | Rainmaker, The Spirit of the Whalaqee, Azulmagia, Predatrice |
+| Tabletop | 5 |  | 0 | Sapphire Weapon Bust, G-Warrior MG, Hyper Hustle Trophy, Wachumeqimeqi Balloon |
+| Alchemist's Primary Tool | 1 |  | 0 | Paracelsus |
+| Arcanist's Grimoire | 1 |  | 0 | The Veil of Wiyu |
+| Archer's Arm | 1 |  | 0 | Artemis Bow |
+| Armorer's Primary Tool | 1 |  | 0 | Kurdalegon |
+| Blacksmith's Primary Tool | 1 |  | 0 | Vulcan |
+| Botanist's Primary Tool | 1 |  | 0 | Rauni |
+| Carpenter's Primary Tool | 1 |  | 0 | Ullikummi |
+| Culinarian's Primary Tool | 1 |  | 0 | Chantico |
+| Culinarian's Secondary Tool | 1 |  | 0 | Phantom Philleter |
+| Fisher's Primary Tool | 1 |  | 0 | Halcyon Rod |
+| Furnishing | 1 |  | 0 | Eternity Cake |
+| Gladiator's Arm | 1 |  | 0 | Curtana |
+| Goldsmith's Primary Tool | 1 |  | 0 | Urcaguary |
+| Lancer's Arm | 1 |  | 0 | Gae Bolg |
+| Leatherworker's Primary Tool | 1 |  | 0 | Pinga |
+| Marauder's Arm | 1 |  | 0 | Bravura |
+| Miner's Primary Tool | 1 |  | 0 | Mammon |
+| Pictomancer's Arm | 1 |  | 0 | Weathered Round Brush |
+| Pugilist's Arm | 1 |  | 0 | Sphairai |
+| Rogue's Arm | 1 |  | 0 | Yoshimitsu |
+| Scholar's Arm | 1 |  | 0 | Omnilex |
+| Two-handed Conjurer's Arm | 1 |  | 0 | Thyrus |
+| Two-handed Thaumaturge's Arm | 1 |  | 0 | Stardust Rod |
+| Viper's Arm | 1 |  | 0 | Weathered Twinfangs |
+| Wall-mounted | 1 |  | 0 | Forever at Your Side |
+| Weaver's Primary Tool | 1 |  | 0 | Clotho |
+
+### Gil shop menus selling flagged items
+
+Items with a GilShopItem row: **133**; sold only through quest-reward reacquisition menus: **133**; sold by a real vendor menu: **0**.
+
+| Menu | NPC(s) | Reacquisition | Items | Examples |
+|---|---|---|---:|---|
+| Purchase Quest Rewards II | journeyman salvager | yes | 47 | Wayfarer's Tabard, Wayfarer's Fingerless Gloves, Wayfarer's Boots |
+| Purchase Quest Rewards I | (no ENpc) | yes | 42 | Monoa Mask, Dress Shoes, Voice of the Just |
+| Purchase Quest Rewards I | journeyman salvager | yes | 42 | Monoa Mask, Dress Shoes, Voice of the Just |
+| Purchase Lv. 50 Arms & Tools | (no ENpc) | yes | 22 | Curtana, Holy Shield, Sphairai |
+| Purchase Beastmaster Arms & Gear | (no ENpc) | yes | 14 | Beast Herder's Hand Axe, Beast Herder's Hoplon, Beast Tender's Hand Axe |
+| Purchase Blue Mage Arms & Gear | (no ENpc) | yes | 6 | Rainmaker, The Spirit of the Whalaqee, Azulmagia |
+| Purchase Lv. 80 Arms & Gear | (no ENpc) | yes | 2 | Weathered Twinfangs, Weathered Round Brush |
+
+### 20 most suspicious Static entries
+
+Score: +100 consumable-like ItemUICategory, +40 stack size above 1, +25 each for SpecialShop / Recipe / GatheringItem, +10 sold through a gil shop menu that is not a quest-reward reacquisition menu, +5 per additional quest handing out the same item.
+
+| Score | Quest | Kind | Item | Category | Stack | Quests | Source |
+|---:|---|---|---|---|---:|---:|---|
+| 40 | 69487 The Lady of Blades | Item | 30357 Field Notes on Misija | Miscellany | 999 | 1 | `Quest.Reward;ItemAction=19743;untradable` |
+| 40 | 69487 The Lady of Blades | Item | 30359 Field Notes on Menenius | Miscellany | 999 | 1 | `Quest.Reward;ItemAction=19743;untradable` |
+| 40 | 69487 The Lady of Blades | Item | 30361 Field Notes on Gunnhildr | Miscellany | 999 | 1 | `Quest.Reward;ItemAction=19743;untradable` |
+| 40 | 69561 A Sign of What's to Come | Item | 32191 Field Notes on Lilja | Miscellany | 999 | 1 | `Quest.Reward;ItemAction=19743;untradable` |
+| 40 | 69561 A Sign of What's to Come | Item | 32192 Field Notes on Bwagi | Miscellany | 999 | 1 | `Quest.Reward;ItemAction=19743;untradable` |
+| 40 | 69562 Fit for a Queen | Item | 32193 Field Notes on Mikoto | Miscellany | 999 | 1 | `Quest.Reward;ItemAction=19743;untradable` |
+| 40 | 69562 Fit for a Queen | Item | 32194 Field Notes on Misija, Part II | Miscellany | 999 | 1 | `Quest.Reward;ItemAction=19743;untradable` |
+| 40 | 69562 Fit for a Queen | Item | 32195 Field Notes on Gunnhildr, Part II | Miscellany | 999 | 1 | `Quest.Reward;ItemAction=19743;untradable` |
+| 40 | 69562 Fit for a Queen | Item | 32200 Field Notes on Rostik | Miscellany | 999 | 1 | `Quest.Reward;ItemAction=19743;untradable` |
+| 40 | 69624 March of the Bloody Queen | Item | 33814 Field Notes on Cid | Miscellany | 999 | 1 | `Quest.Reward;ItemAction=19743;untradable` |
+| 40 | 69624 March of the Bloody Queen | Item | 33815 Field Notes on Fran | Miscellany | 999 | 1 | `Quest.Reward;ItemAction=19743;untradable` |
+| 40 | 69624 March of the Bloody Queen | Item | 33816 Field Notes on Hien | Miscellany | 999 | 1 | `Quest.Reward;ItemAction=19743;untradable` |
+| 40 | 69624 March of the Bloody Queen | Item | 33817 Field Notes on Noah | Miscellany | 999 | 1 | `Quest.Reward;ItemAction=19743;untradable` |
+| 5 | 65582 A Matter of Perspective | OptionalItem | 3003 Custom-made Tunic | Body | 1 | 2 | `Quest.OptionalItemReward;untradable;otherSource=GilShopItem` |
+| 5 | 65646 A Dainty Dilemma | OptionalItem | 3003 Custom-made Tunic | Body | 1 | 2 | `Quest.OptionalItemReward;untradable;otherSource=GilShopItem` |
+| 5 | 65792 Kicking the Hornet's Nest | OptionalItem | 3005 Custom-made Cuirass | Body | 1 | 2 | `Quest.OptionalItemReward;untradable;otherSource=GilShopItem` |
+| 5 | 65849 Axe in the Stone | OptionalItem | 3005 Custom-made Cuirass | Body | 1 | 2 | `Quest.OptionalItemReward;untradable;otherSource=GilShopItem` |
+| 5 | 65883 The Threat of Intimacy | OptionalItem | 3007 Custom-made Robe of Casting | Body | 1 | 2 | `Quest.OptionalItemReward;untradable;otherSource=GilShopItem` |
+| 5 | 65991 What's in the Box | OptionalItem | 3007 Custom-made Robe of Casting | Body | 1 | 2 | `Quest.OptionalItemReward;untradable;otherSource=GilShopItem` |
+| 0 | 66656 A Relic Reborn (Curtana) | Item | 1675 Curtana | Gladiator's Arm | 1 | 1 | `Quest.Reward;untradable;otherSource=GilShopItem` |
+
+## 6. Generator diagnostics
+
+Which sheet `Quest.Reward[0]` points at per `ItemRewardType` (Lumina resolves the union from the schema). The generator's rules must agree with this table.
+
+| ItemRewardType | Reward[0] row type | Quests | Example |
+|---:|---|---:|---|
+| 1 | Item | 1885 | 65537 A Good Adventurer Is Hard to Find |
+| 3 | Item | 20 | 66689 For the Winsome |
+| 5 | Item | 6 | 65783 The Gift of Joy (The Lavender Beds) |
+| 6 | QuestClassJobReward | 115 | 67748 Soul without Life |
+| 7 | BeastRankBonus | 30 | 67826 With a Little Help |
+

@@ -19,6 +19,7 @@ internal static class Reports
         var flagged = entries.Count(e => e.Source.Contains(";otherSource="));
         sb.AppendLine($"- Entries: **{entries.Count}** across **{questCount}** quests.");
         sb.AppendLine($"- Entries whose item is also obtainable elsewhere (source carries `;otherSource=`): **{flagged}**. They keep confidence Static in V1; the UI shows the source.");
+        sb.AppendLine($"- Plain item rewards refused by the exclusivity rule ({(gen.StrictItemExclusivity ? "strict" : "legacy, --keep-nonexclusive-items")}): **{gen.Dropped.Count}** (listed at the end).");
         sb.AppendLine();
 
         sb.AppendLine("## Counts per kind and confidence");
@@ -97,6 +98,21 @@ internal static class Reports
                 sb.AppendLine($"| {t.Key} | {t.Count()} |");
             sb.AppendLine();
         }
+
+        sb.AppendLine("## Item rewards refused by the exclusivity rule");
+        sb.AppendLine();
+        sb.AppendLine("Untradable, non-marketable item rewards that are nevertheless not quest-only collectibles: consumable-like ItemUICategory (potions, food, materials, currencies, tickets, vouchers, coffers), or also sold, crafted or gathered elsewhere. The Calamity Salvager's quest-reward reacquisition menus (\"Purchase Quest Rewards\", \"... Arms & Gear\", \"... Arms & Tools\") do not count; they only re-sell what the character already earned. Items whose ItemAction is an unlock (framer's kits, field notes) are kept whatever their category. Collectible kinds (mount, minion, emote, ...) are never affected. Pass `--keep-nonexclusive-items` to ship them anyway.");
+        sb.AppendLine();
+        sb.AppendLine("| Reason | Items dropped |");
+        sb.AppendLine("|---|---:|");
+        foreach (var grp in gen.Dropped.GroupBy(d => d.Reason).OrderByDescending(x => x.Count()).ThenBy(x => x.Key))
+            sb.AppendLine($"| {Md(grp.Key)} | {grp.Count()} |");
+        sb.AppendLine();
+        sb.AppendLine("| Quest | Item | Reason |");
+        sb.AppendLine("|---|---|---|");
+        foreach (var d in gen.Dropped.OrderBy(d => d.QuestRowId).ThenBy(d => d.ItemId))
+            sb.AppendLine($"| {d.QuestRowId} {Md(QuestName(g, d.QuestRowId))} | {d.ItemId} {Md(d.Name)} | {Md(d.Reason)} |");
+        sb.AppendLine();
 
         return sb.ToString();
     }

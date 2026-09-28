@@ -1,4 +1,5 @@
 using Lumina;
+using LuminaGameData = Lumina.GameData;
 using Lumina.Data;
 using Lumina.Excel;
 using Lumina.Excel.Sheets;
@@ -8,7 +9,7 @@ namespace Tsukimichi.DataGen;
 /// <summary>Opens the local game install and exposes every sheet the generator reads.</summary>
 internal sealed class GameSheets
 {
-    public GameData Data { get; }
+    public LuminaGameData Data { get; }
     public string GameVersion { get; }
 
     public ExcelSheet<Quest> Quests { get; }
@@ -43,10 +44,15 @@ internal sealed class GameSheets
     public ExcelSheet<Ornament> Ornaments { get; }
     public ExcelSheet<BuddyEquip> BuddyEquips { get; }
     public ExcelSheet<CharaMakeCustomize> CharaMakeCustomizes { get; }
+    public ExcelSheet<ItemUICategory> ItemUICategories { get; }
+    public ExcelSheet<GilShop> GilShops { get; }
+    public ExcelSheet<BeastRankBonus> BeastRankBonuses { get; }
+    public ExcelSheet<ENpcBase> ENpcBases { get; }
+    public ExcelSheet<ENpcResident> ENpcResidents { get; }
 
     public GameSheets(string sqpackPath)
     {
-        Data = new GameData(sqpackPath, new LuminaOptions { PanicOnSheetChecksumMismatch = false });
+        Data = new LuminaGameData(sqpackPath, new LuminaOptions { PanicOnSheetChecksumMismatch = false });
         GameVersion = ReadGameVersion(sqpackPath);
 
         Quests = Sheet<Quest>();
@@ -81,6 +87,11 @@ internal sealed class GameSheets
         Ornaments = Sheet<Ornament>();
         BuddyEquips = Sheet<BuddyEquip>();
         CharaMakeCustomizes = Sheet<CharaMakeCustomize>();
+        ItemUICategories = Sheet<ItemUICategory>();
+        GilShops = Sheet<GilShop>();
+        BeastRankBonuses = Sheet<BeastRankBonus>();
+        ENpcBases = Sheet<ENpcBase>();
+        ENpcResidents = Sheet<ENpcResident>();
     }
 
     private ExcelSheet<T> Sheet<T>() where T : struct, IExcelRow<T>
