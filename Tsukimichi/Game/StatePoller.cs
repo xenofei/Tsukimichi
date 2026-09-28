@@ -14,7 +14,7 @@ namespace Tsukimichi.Game;
 /// diff, re-resolve what changed, emit events, publish to <see cref="SessionState"/> and persist (debounced).
 /// Exceptions from game reads back the interval off exponentially to <see cref="MaxBackoff"/> with a single warning;
 /// exceptions from session listeners are logged (rate-limited) and never affect the backoff.
-/// Runs entirely inside <see cref="IFramework.Update"/>.
+/// Runs entirely inside <see cref="IFramework.Update"/>. What it keeps between polls lives in <see cref="PollerMemory"/>.
 /// </summary>
 public sealed class StatePoller : IDisposable
 {
@@ -37,16 +37,10 @@ public sealed class StatePoller : IDisposable
     private readonly SessionState session;
     private readonly Configuration config;
 
-    private readonly SaveDebouncer saves = new(SaveInterval);
+    private readonly PollerMemory memory = new(SaveInterval);
     private readonly PollBackoff backoff = new(TimeSpan.FromSeconds(2), MaxBackoff);
     private readonly LoginReadiness readiness = new();
 
-    private CharacterSnapshot? last;
-    private IReadOnlyDictionary<uint, QuestEvaluation>? states;
-
-    // When each accepted quest entered the journal; loaded from the sidecar on the first pass, kept from diffs after.
-    private Dictionary<ushort, DateTime> acceptedSince = [];
-    private bool acceptedSinceDirty;
     private bool acceptedSinceWarned;
     private DateTime lastPollUtc = DateTime.MinValue;
     private DateTime lastListenerWarningUtc = DateTime.MinValue;
@@ -74,6 +68,7 @@ public sealed class StatePoller : IDisposable
 
         snapshots.LoggingOut += OnLoggingOut;
         session.CharacterForgotten += OnCharacterForgotten;
+        session.DataDeleted += OnDataDeleted;
         framework.Update += OnUpdate;
     }
 
@@ -83,12 +78,13 @@ public sealed class StatePoller : IDisposable
     /// </summary>
     public void Flush()
     {
-        if (last is null)
+        if (memory.Last is not { } last)
         {
             return;
         }
 
         var now = DateTime.UtcNow;
+        var saves = memory.Saves;
         if (saves.Pending)
         {
             try
@@ -116,12 +112,12 @@ public sealed class StatePoller : IDisposable
             }
         }
 
-        if (acceptedSinceDirty)
+        if (memory.AcceptedSinceDirty)
         {
             try
             {
-                AcceptedSince.Save(AcceptedSincePath(last.ContentId), acceptedSince);
-                acceptedSinceDirty = false;
+                AcceptedSince.Save(AcceptedSincePath(last.ContentId), memory.AcceptedSince);
+                memory.AcceptedSinceDirty = false;
                 acceptedSinceWarned = false;
             }
             catch (Exception ex)
@@ -149,6 +145,7 @@ public sealed class StatePoller : IDisposable
         framework.Update -= OnUpdate;
         snapshots.LoggingOut -= OnLoggingOut;
         session.CharacterForgotten -= OnCharacterForgotten;
+        session.DataDeleted -= OnDataDeleted;
         Flush();
     }
 
@@ -166,7 +163,8 @@ public sealed class StatePoller : IDisposable
             {
                 wasReady = false;
                 Flush();
-                Reset();
+                memory.Reset();
+                readiness.Reset();
                 Notify(session.ClearLive);
             }
 
@@ -225,7 +223,7 @@ public sealed class StatePoller : IDisposable
             }
         });
 
-        if (result is { FirstPass: true } || saves.ShouldSave(now))
+        if (result is { FirstPass: true } || memory.Saves.ShouldSave(now))
         {
             Flush();
         }
@@ -239,12 +237,13 @@ public sealed class StatePoller : IDisposable
     {
         var bundle = session.Bundle!;
         var catalog = bundle.Catalog;
-        var snapshot = reader.Capture(catalog, bundle.Jobs, last?.CompletedBits);
+        var snapshot = reader.Capture(catalog, bundle.Jobs, memory.Last?.CompletedBits);
         // The allied-society daily offer is not readable from the client (see GameStateReader), so the live context
         // is the base context: an in-progress daily is Accepted through the journal, a turned-in one is done this cycle.
         var context = session.BaseContext;
 
-        var firstPass = last is null || states is null || last.ContentId != snapshot.ContentId;
+        var last = memory.Last;
+        var firstPass = last is null || memory.States is null || last.ContentId != snapshot.ContentId;
         IReadOnlyList<QuestEvent> events = [];
         IReadOnlyDictionary<uint, QuestEvaluation> resolved;
 
@@ -264,30 +263,31 @@ public sealed class StatePoller : IDisposable
                 Flush();
             }
 
-            Reset();
+            memory.Reset();
             resolved = StateResolver.ResolveAll(catalog, snapshot, context);
             log.Debug("First evaluation for {Name} ({ContentId}): {Count} quests", snapshot.Name, snapshot.ContentId, resolved.Count);
 
             // Accepted times survive across sessions in the sidecar; quests that entered the journal while the
             // plugin was not watching are stamped now, the earliest moment they are known to be there.
             var warnings = new List<string>();
-            acceptedSince = AcceptedSince.Load(AcceptedSincePath(snapshot.ContentId), warnings);
+            var acceptedSince = AcceptedSince.Load(AcceptedSincePath(snapshot.ContentId), warnings);
             foreach (var warning in warnings)
             {
                 log.Warning("Accepted times: {Warning}", warning);
             }
 
-            acceptedSinceDirty = AcceptedSince.Reconcile(acceptedSince, snapshot, now);
+            memory.SetAcceptedSince(acceptedSince, AcceptedSince.Reconcile(acceptedSince, snapshot, now));
         }
         else
         {
+            var states = memory.States!;
             var diff = SnapshotDiff.Compute(last!, snapshot);
             if (diff.IsEmpty)
             {
                 return null;
             }
 
-            acceptedSinceDirty |= AcceptedSince.Apply(acceptedSince, last!, snapshot, diff, now);
+            memory.AcceptedSinceDirty |= AcceptedSince.Apply(memory.AcceptedSince, last!, snapshot, diff, now);
 
             // A level change touches every level-gated quest, which the reverse index cannot enumerate by job; level-ups
             // are rare and a full resolve costs milliseconds, so resolve everything rather than pass jobs as levels.
@@ -296,20 +296,18 @@ public sealed class StatePoller : IDisposable
                 || diff.ChangedQuestIds.Count > FullResolveThreshold;
             resolved = full
                 ? StateResolver.ResolveAll(catalog, snapshot, context)
-                : StateResolver.ResolveDependents(states!, ChangedRows(diff, catalog, session.Index!), session.Index!, catalog, snapshot, context, changedFestivals: diff.ChangedFestivals);
+                : StateResolver.ResolveDependents(states, ChangedRows(diff, catalog, session.Index!), session.Index!, catalog, snapshot, context, changedFestivals: diff.ChangedFestivals);
 
-            events = QuestEvents.Derive(diff, last!, snapshot, catalog, states!, resolved, now);
+            events = QuestEvents.Derive(diff, last!, snapshot, catalog, states, resolved, now);
         }
 
-        last = snapshot;
-        states = resolved;
-        saves.MarkDirty();
+        memory.Commit(snapshot, resolved, bundle);
         return new PollResult(snapshot, resolved, context, events, firstPass);
     }
 
     private void Publish(PollResult result)
     {
-        session.SetLive(result.Snapshot, result.States, result.Context, acceptedSince);
+        session.SetLive(result.Snapshot, result.States, result.Context, memory.AcceptedSince);
         session.AddEvents(result.Snapshot.ContentId, result.Events);
     }
 
@@ -425,24 +423,28 @@ public sealed class StatePoller : IDisposable
     }
 
     /// <summary>
-    /// Forgetting the live character deletes its accepted-time sidecar while the times stay in memory here; marking
-    /// them dirty writes the file again on the next flush, so the two do not drift apart.
+    /// Forgetting the live character deletes its snapshot and sidecar while both stay in memory here; marking both
+    /// dirty writes the pair again on the next flush, so the two never drift apart (see <see cref="PollerMemory.OnCharacterForgotten"/>).
     /// </summary>
     private void OnCharacterForgotten(ulong contentId)
     {
-        if (!disposed && last is { } snapshot && snapshot.ContentId == contentId)
+        if (!disposed)
         {
-            acceptedSinceDirty = true;
+            memory.OnCharacterForgotten(contentId);
         }
     }
 
-    private void Reset()
+    /// <summary>
+    /// Every stored file is gone: the memory goes with it, so the next poll is a first pass that writes the snapshot
+    /// and a fresh sidecar rather than a diff that reappears on disk piecemeal.
+    /// </summary>
+    private void OnDataDeleted()
     {
-        last = null;
-        states = null;
-        acceptedSince = [];
-        acceptedSinceDirty = false;
-        readiness.Reset();
+        if (!disposed)
+        {
+            memory.OnDataDeleted();
+            readiness.Reset();
+        }
     }
 
     private readonly record struct PollResult(
