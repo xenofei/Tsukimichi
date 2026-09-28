@@ -9,7 +9,8 @@
          Tsukimichi/Data/curated/feature_quests.json and the reports under docs/data.
       3. Tsukimichi.DataGen --verify: docs/data/verification-report.md (hard checks fail the script).
       4. Tsukimichi.DataGen --dump-catalog: the test fixture Tsukimichi.Tests/Fixtures/catalog-<gameVersion>.json.gz
-         (the previous fixture is removed, so exactly one remains).
+         (the previous fixture is removed once the new one is written, so exactly one remains; a failed dump
+         leaves the old one in place).
       5. docs/data/DATA-VERSION.md: game version, generation time, curated revision (short git hash of the last
          commit touching a data file under Tsukimichi/Data/curated, README.md and VERSION.json excluded, "-dirty"
          when those files have uncommitted changes) and counts;
@@ -75,9 +76,11 @@ if ($NoXivApi) { $verifyArgs += "--no-xivapi" }
 if ($LASTEXITCODE -ne 0) { throw "verification failed; see docs/data/verification-report.md" }
 
 Step "dump catalog fixture"
-Get-ChildItem $fixturesDir -Filter "catalog-*.json.gz" | Remove-Item -Force
 & dotnet @datagen --dump-catalog $fixturesDir --game $GamePath
 if ($LASTEXITCODE -ne 0) { throw "catalog dump failed" }
+# The dump writes catalog-<gameVersion>.json.gz; only then do the fixtures for other game versions go, so a failed
+# dump leaves the tree with its previous fixture rather than none.
+Get-ChildItem $fixturesDir -Filter "catalog-*.json.gz" | Sort-Object LastWriteTimeUtc -Descending | Select-Object -Skip 1 | Remove-Item -Force
 
 Step "write $versionFile"
 $raw = Get-Content $dataFile -Raw
