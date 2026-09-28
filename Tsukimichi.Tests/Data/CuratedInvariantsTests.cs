@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Storage;
 
@@ -44,6 +45,127 @@ public sealed class CuratedInvariantsTests(FixtureCatalog fixture) : IClassFixtu
         Assert.Equal(ids.OrderBy(id => id).Distinct(), ids);
         Assert.Equal(derived.Count, ids.Count);
         Assert.Contains("DataGen", (string?)root["note"]);
+    }
+
+    [Fact]
+    public void Every_curated_file_parses_as_strict_json_and_loads_without_warnings()
+    {
+        var files = Directory.GetFiles(CuratedDir, "*.json");
+        Assert.NotEmpty(files);
+        foreach (var file in files)
+        {
+            // The README's rule: no comments, no trailing commas. Both loaders now reject them; this pins the files.
+            using var doc = JsonDocument.Parse(File.ReadAllText(file), CuratedData.StrictOptions);
+            Assert.Equal(JsonValueKind.Object, doc.RootElement.ValueKind);
+        }
+
+        var known = new[]
+        {
+            CuratedData.SystemUnlocksFileName, CuratedData.DutyUnlocksFileName, CuratedData.FeatureQuestsFileName,
+            CuratedData.FestivalsFileName, CuratedData.ChainsFileName, CuratedData.OnlineStoreFileName,
+        };
+        Assert.Equal(known.OrderBy(n => n, StringComparer.Ordinal), files.Select(Path.GetFileName).OrderBy(n => n, StringComparer.Ordinal));
+        Assert.Empty(Curated().Warnings);
+    }
+
+    [Fact]
+    public void Every_curated_quest_id_is_a_named_quest_in_the_catalog()
+    {
+        var curated = Curated();
+        var catalog = fixture.Bundle.Catalog;
+        var ids = curated.SystemUnlocks.Keys.Select(id => (File: CuratedData.SystemUnlocksFileName, Id: id))
+            .Concat(curated.DutyUnlocks.Keys.Select(id => (File: CuratedData.DutyUnlocksFileName, Id: id)))
+            .Concat(curated.FeatureQuests.Select(id => (File: CuratedData.FeatureQuestsFileName, Id: id)))
+            .ToList();
+        Assert.NotEmpty(ids);
+
+        var unknown = ids.Where(x => catalog.GetByRowId(x.Id) is null).ToList();
+        Assert.True(unknown.Count == 0, "curated quest ids missing from the catalog: " + string.Join(", ", unknown.Select(x => $"{x.File}:{x.Id}")));
+        Assert.All(ids, x => Assert.True(x.Id >= 65536, $"{x.File}:{x.Id} is not a Quest sheet row id"));
+    }
+
+    [Fact]
+    public void System_and_duty_unlock_entries_each_carry_a_note_and_duty_unlocks_have_content_ids()
+    {
+        var curated = Curated();
+        Assert.All(curated.SystemUnlocks, kv => Assert.False(string.IsNullOrWhiteSpace(kv.Value.Note), $"system_unlocks {kv.Key} has no note"));
+        Assert.All(curated.SystemUnlocks, kv => Assert.Equal("system", kv.Value.Kind));
+        Assert.All(curated.DutyUnlocks, kv => Assert.False(string.IsNullOrWhiteSpace(kv.Value.Note), $"duty_unlocks {kv.Key} has no note"));
+        Assert.All(curated.DutyUnlocks, kv => Assert.NotEmpty(kv.Value.ContentFinderConditionIds));
+        Assert.All(curated.DutyUnlocks, kv => Assert.All(kv.Value.ContentFinderConditionIds, cfc => Assert.NotEqual(0u, cfc)));
+    }
+
+    [Fact]
+    public void Online_store_entries_carry_evidence_and_each_matches_an_entry_marked_OnlineStore()
+    {
+        var curated = Curated();
+        var unique = Unique();
+        Assert.Equal(68, curated.OnlineStore.Count);
+
+        // Raw file: every entry has name, kind, rewardId, evidence (an https URL) and a note; keys ascend.
+        var root = JsonNode.Parse(File.ReadAllText(Path.Combine(CuratedDir, CuratedData.OnlineStoreFileName)), documentOptions: CuratedData.StrictOptions)!.AsObject();
+        Assert.Equal(1, (int)root["schema"]!);
+        Assert.False(string.IsNullOrWhiteSpace((string?)root["note"]));
+        var entries = root["entries"]!.AsObject();
+        var keys = entries.Select(kv => uint.Parse(kv.Key)).ToList();
+        Assert.Equal(keys.OrderBy(k => k), keys);
+        foreach (var (key, node) in entries)
+        {
+            var obj = node!.AsObject();
+            foreach (var field in new[] { "name", "kind", "rewardId", "evidence", "note" })
+            {
+                Assert.True(obj.ContainsKey(field), $"online_store {key} lacks {field}");
+            }
+
+            Assert.StartsWith("https://", (string?)obj["evidence"], StringComparison.Ordinal);
+        }
+
+        // Every store item resolves to at least one shipped entry (by its item id, or by the collectible it unlocks)
+        // and every such entry carries OnlineStore; otherwise a regen silently orphaned the curated entry.
+        var byItem = unique.Entries.Where(e => e.ItemId != 0).ToLookup(e => e.ItemId);
+        var byReward = unique.Entries.ToLookup(e => (e.Kind, e.RewardId));
+        var orphans = new List<string>();
+        var unmarked = new List<string>();
+        foreach (var (itemId, store) in curated.OnlineStore)
+        {
+            var matched = byItem[itemId].Concat(byReward[(store.Kind, store.RewardId)]).Distinct().ToList();
+            if (matched.Count == 0)
+            {
+                orphans.Add($"{itemId} {store.Name}");
+            }
+
+            unmarked.AddRange(matched.Where(e => !e.SoldOnOnlineStore).Select(e => $"{e.QuestRowId} {e.Kind} {e.RewardId}"));
+        }
+
+        Assert.True(orphans.Count == 0, "online_store items matching no unique_quests.json entry: " + string.Join(", ", orphans));
+        Assert.True(unmarked.Count == 0, "entries the store sells but not marked OnlineStore (stale regen?): " + string.Join(", ", unmarked));
+
+        var marked = unique.Entries.Where(e => e.SoldOnOnlineStore).ToList();
+        Assert.Equal(68, marked.Count);
+        Assert.All(marked, e => Assert.True(curated.OnlineStore.ContainsKey(e.ItemId) || curated.OnlineStore.Values.Any(s => s.Kind == e.Kind && s.RewardId == e.RewardId),
+            $"{e.QuestRowId} {e.Kind} {e.RewardId} is marked OnlineStore but no curated store item explains it"));
+        Assert.Equal(
+            new Dictionary<RewardKind, int> { [RewardKind.Minion] = 25, [RewardKind.Emote] = 21, [RewardKind.Mount] = 11, [RewardKind.Barding] = 5, [RewardKind.Orchestrion] = 4, [RewardKind.Ornament] = 2 },
+            marked.GroupBy(e => e.Kind).ToDictionary(g => g.Key, g => g.Count()));
+    }
+
+    [Fact]
+    public void Chains_reference_existing_genres_in_the_catalog()
+    {
+        var curated = Curated();
+        var genres = fixture.Bundle.Catalog.ByGenre;
+        Assert.NotEmpty(curated.Chains);
+        foreach (var chain in curated.Chains)
+        {
+            Assert.False(string.IsNullOrWhiteSpace(chain.Note), $"chain '{chain.Name}' has no note");
+            foreach (var genreId in chain.GenreIds)
+            {
+                Assert.True(genres.ContainsKey(genreId), $"chain '{chain.Name}' references genre {genreId}, which holds no quest in the catalog");
+            }
+        }
+
+        var names = curated.Chains.Select(c => c.Name).ToList();
+        Assert.Equal(names.Distinct(StringComparer.Ordinal), names);
     }
 
     [Fact]
