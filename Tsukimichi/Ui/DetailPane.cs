@@ -768,6 +768,28 @@ public sealed class DetailPane
         {
             UiMetrics.Tooltip(Strings.CopyCoordinatesTooltip);
         }
+
+        // Teleport through Lifestream: shown only when that plugin is loaded.
+        if (links.TeleportAvailable)
+        {
+            ImGui.SameLine();
+            var canTeleport = links.CanTeleport(quest);
+            using (ImRaii.Disabled(!canTeleport))
+            {
+                if (ImGui.SmallButton(Strings.TeleportToGiver))
+                {
+                    links.TeleportToGiver(quest);
+                }
+            }
+
+            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+            {
+                var tip = links.TeleportBusy ? Strings.TeleportBusy
+                    : links.NearestAetheryte(quest) is { } aetheryte ? aetheryte.Name
+                    : Strings.TeleportNoAetheryte;
+                UiMetrics.Tooltip(tip);
+            }
+        }
     }
 
     /// <summary>Section header: a small FontAwesome icon in Dusk, the title, then a Dusk rule; all Moon while highlighted.</summary>
