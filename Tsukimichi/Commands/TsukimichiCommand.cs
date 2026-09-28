@@ -7,8 +7,9 @@ namespace Tsukimichi.Commands;
 
 /// <summary>
 /// The <c>/tsukimichi</c> chat command. Sub-commands are dispatched by the first word: <c>glyphs</c> opens the glyph
-/// sheet, <c>search &lt;text&gt;</c> (or any other text) searches and prints matches to chat; a bare command toggles
-/// the main window. A later task adds <c>config</c>.
+/// sheet, <c>search &lt;text&gt;</c> (or any other text) searches and prints matches to chat, <c>zone</c> and
+/// <c>which</c> print discovery lists, <c>config</c> and <c>help</c> open those windows; a bare command toggles the
+/// main window.
 /// </summary>
 public sealed class TsukimichiCommand : IDisposable
 {
@@ -27,6 +28,12 @@ public sealed class TsukimichiCommand : IDisposable
 
     /// <summary>Invoked for <c>/tsukimichi help</c>; set once the help window exists. Falls back to the main window.</summary>
     public Action? ToggleHelpWindow { get; set; }
+
+    /// <summary>Invoked for <c>/tsukimichi zone</c>: quests startable in the current zone. Falls back to a search for "zone".</summary>
+    public Action? ListZoneQuests { get; set; }
+
+    /// <summary>Invoked for <c>/tsukimichi which</c>: quests the targeted NPC hands out. Falls back to a search for "which".</summary>
+    public Action? ListTargetQuests { get; set; }
 
     /// <param name="commands">Dalamud command manager.</param>
     /// <param name="toggleMainWindow">Invoked for <c>/tsukimichi</c> with no arguments.</param>
@@ -107,6 +114,30 @@ public sealed class TsukimichiCommand : IDisposable
                 else
                 {
                     toggleMainWindow();
+                }
+
+                break;
+
+            case "zone":
+                if (ListZoneQuests is { } zone)
+                {
+                    zone();
+                }
+                else
+                {
+                    search(args);
+                }
+
+                break;
+
+            case "which":
+                if (ListTargetQuests is { } which)
+                {
+                    which();
+                }
+                else
+                {
+                    search(args);
                 }
 
                 break;

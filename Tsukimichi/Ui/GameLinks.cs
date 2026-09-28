@@ -268,11 +268,14 @@ public sealed class GameLinks(IGameGui gameGui, IChatGui chat, IDataManager data
     }
 
     /// <summary>One chat line: the quest link, then the issuer's map link when there is one.</summary>
-    public void PrintQuestLink(QuestRecord quest)
+    public void PrintQuestLink(QuestRecord quest) => PrintQuestLink(quest, null);
+
+    /// <summary>One chat line: the quest link, the issuer's map link when there is one, then <paramref name="suffix"/> (e.g. a state name).</summary>
+    public void PrintQuestLink(QuestRecord quest, string? suffix)
     {
         try
         {
-            chat.Print(BuildQuestLine(quest), Strings.ChatTag);
+            chat.Print(BuildQuestLine(quest, suffix), Strings.ChatTag);
         }
         catch (Exception ex)
         {
@@ -385,7 +388,7 @@ public sealed class GameLinks(IGameGui gameGui, IChatGui chat, IDataManager data
         return 41f / scale * ((raw + offset) * scale + 1024f) / 2048f + 1f;
     }
 
-    private SeString BuildQuestLine(QuestRecord quest)
+    private SeString BuildQuestLine(QuestRecord quest, string? suffix)
     {
         var builder = new SeStringBuilder()
             .Add(new QuestPayload(quest.RowId))
@@ -398,6 +401,11 @@ public sealed class GameLinks(IGameGui gameGui, IChatGui chat, IDataManager data
                    .Add(link)
                    .AddText(link.PlaceName + " " + link.CoordinateString)
                    .Add(RawPayload.LinkTerminator);
+        }
+
+        if (!string.IsNullOrEmpty(suffix))
+        {
+            builder.AddText(Strings.ChatSuffixSeparator + suffix);
         }
 
         return builder.Build();
