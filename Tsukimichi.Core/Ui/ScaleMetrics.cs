@@ -1,4 +1,5 @@
 using System;
+using System.Numerics;
 
 namespace Tsukimichi.Core.Ui;
 
@@ -33,6 +34,62 @@ public static class ScaleMetrics
 
     /// <summary>Pixels per logical unit for moons and icons: the layout factor × clamped icon scale.</summary>
     public static float IconFactor(float globalScale, float uiScale, float iconScale) => LayoutFactor(globalScale, uiScale) * ClampIconScale(iconScale);
+
+    /// <summary>Logical width of the main window's fixed navigation column.</summary>
+    public const float LeftColumnLogical = 240f;
+
+    /// <summary>Logical width of the main window's fixed detail column.</summary>
+    public const float RightColumnLogical = 360f;
+
+    /// <summary>The least logical width the centre column (the quest table) may be squeezed to.</summary>
+    public const float CentreFloorLogical = 200f;
+
+    /// <summary>Logical height floor of the main window.</summary>
+    public const float MinWindowHeightLogical = 500f;
+
+    /// <summary>
+    /// The main window's minimum size in Dalamud-scaled units for a UI scale: the two fixed side columns plus the
+    /// centre floor, and the height floor, each multiplied by the clamped UI scale. Dalamud multiplies the result by
+    /// its global scale, so the window can never shrink below what the fixed columns need.
+    /// </summary>
+    public static Vector2 MinWindowSize(float uiScale)
+    {
+        var scale = ClampUiScale(uiScale);
+        return new Vector2((LeftColumnLogical + RightColumnLogical + CentreFloorLogical) * scale, MinWindowHeightLogical * scale);
+    }
+
+    /// <summary>
+    /// Texture coordinates that show a <paramref name="textureWidth"/> × <paramref name="textureHeight"/> image in a
+    /// <paramref name="boxWidth"/> × <paramref name="boxHeight"/> box at the image's own aspect, cropping the excess
+    /// evenly at both ends (an object-fit "cover"). Non-positive sizes yield the full image.
+    /// </summary>
+    public static (Vector2 Uv0, Vector2 Uv1) CenterCropUv(float boxWidth, float boxHeight, float textureWidth, float textureHeight)
+    {
+        if (!(boxWidth > 0f) || !(boxHeight > 0f) || !(textureWidth > 0f) || !(textureHeight > 0f))
+        {
+            return (Vector2.Zero, Vector2.One);
+        }
+
+        var boxAspect = boxWidth / boxHeight;
+        var textureAspect = textureWidth / textureHeight;
+        if (textureAspect > boxAspect)
+        {
+            // Image wider than the box: keep the full height, trim the sides.
+            var visible = boxAspect / textureAspect;
+            var trim = (1f - visible) * 0.5f;
+            return (new Vector2(trim, 0f), new Vector2(1f - trim, 1f));
+        }
+
+        if (textureAspect < boxAspect)
+        {
+            // Image taller than the box: keep the full width, trim top and bottom.
+            var visible = textureAspect / boxAspect;
+            var trim = (1f - visible) * 0.5f;
+            return (new Vector2(0f, trim), new Vector2(1f, 1f - trim));
+        }
+
+        return (Vector2.Zero, Vector2.One);
+    }
 
     private static float Clamp(float value, float min, float max, float fallback) =>
         float.IsFinite(value) ? Math.Clamp(value, min, max) : fallback;

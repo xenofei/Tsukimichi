@@ -169,19 +169,6 @@ public sealed class HoverHint
         }
     }
 
-    private bool Listed(uint rowId)
-    {
-        foreach (var line in lines)
-        {
-            if (line.QuestRowId == rowId)
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     private void DrawWindow()
     {
         var viewport = ImGuiHelpers.MainViewport;

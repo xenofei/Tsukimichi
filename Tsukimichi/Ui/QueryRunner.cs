@@ -89,6 +89,18 @@ public sealed class QueryRunner : IDisposable
     /// <summary>Pinned row ids for the viewed character.</summary>
     public IReadOnlySet<uint> Pinned => pinned;
 
+    /// <summary>
+    /// The viewed character's pins in the order they were pinned (the file's order); empty in browse mode. The list
+    /// is the runner's own, so read it on the draw thread only and key any memo on <see cref="PinsVersion"/>.
+    /// </summary>
+    public IReadOnlyList<uint> PinnedInOrder =>
+        pinsFile is not null && pinsKey != 0 && pinsKey != NoPinsKey && pinsFile.TryGetValue(pinsKey, out var list) ? list : NoPins;
+
+    private static readonly uint[] NoPins = [];
+
+    /// <summary>Bumped whenever <see cref="Pinned"/> changes: a toggle, a character switch, a reload or a delete.</summary>
+    public int PinsVersion { get; private set; }
+
     /// <summary>Search text the current rows were computed with (after debounce).</summary>
     public string AppliedSearch => appliedSearch;
 
@@ -125,6 +137,7 @@ public sealed class QueryRunner : IDisposable
             list.Add(rowId);
         }
 
+        PinsVersion++;
         MarkPinsDirty();
         ui.MarkQueryDirty();
         return true;
@@ -281,6 +294,7 @@ public sealed class QueryRunner : IDisposable
         pinsKey = NoPinsKey;
         pinned.Clear();
         pinsDirty = false;
+        PinsVersion++;
         ui.MarkQueryDirty();
     }
 
@@ -296,6 +310,7 @@ public sealed class QueryRunner : IDisposable
         {
             pinsKey = NoPinsKey;
             pinned.Clear();
+            PinsVersion++;
             ui.MarkQueryDirty();
         }
 
@@ -454,6 +469,7 @@ public sealed class QueryRunner : IDisposable
             }
         }
 
+        PinsVersion++;
         ui.MarkQueryDirty();
     }
 

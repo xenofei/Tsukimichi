@@ -23,7 +23,7 @@ static partial class Strings
     /// <summary>{0} = section name, {1} = row count.</summary>
     public const string TodoSectionFormat = "{0} ({1})";
 
-    public const string TodoRowClickHint = "Click: flag the giver on the map · right-click: more";
+    public const string TodoRowClickHint = "Click: show in Tsukimichi · double-click: flag the giver on the map · right-click: more";
     public const string TodoRevealInTsukimichi = "Reveal in Tsukimichi";
 
     // Header context menu (right-click on the title).

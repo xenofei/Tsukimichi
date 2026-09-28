@@ -122,7 +122,13 @@ public static partial class Strings
     public const string RewardHidden = "Hidden";
     public const string RewardShow = "Show";
     public const string RewardOnly = "Only";
-    public const string RewardOptions = "Hidden\0Show\0Only\0";
+
+    public static string RewardOptionName(TriState option) => option switch
+    {
+        TriState.Hidden => RewardHidden,
+        TriState.Only => RewardOnly,
+        _ => RewardShow,
+    };
     public const string RepeatableOnly = "Repeatable only";
     public const string SeasonalActiveOnly = "Seasonal active only";
     public const string IncludeUnlisted = FilterNames.IncludeUnlisted;

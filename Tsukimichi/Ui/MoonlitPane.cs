@@ -46,14 +46,15 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         UnknownObtained,
     }
 
-    /// <summary>Combo labels in <see cref="ConfidenceFilter"/> order, as one ImGui items-separated-by-zeros string.</summary>
-    private static readonly string ConfidenceFilterItems = string.Join(
-        '\0',
+    /// <summary>Combo labels in <see cref="ConfidenceFilter"/> order.</summary>
+    private static readonly string[] ConfidenceFilterItems =
+    [
         Strings.MoonlitConfidenceAny,
         Strings.MoonlitConfidenceStaticOnly,
         Strings.MoonlitConfidenceCuratedOnly,
         Strings.MoonlitConfidenceYoursOnly,
-        Strings.MoonlitConfidenceUnknownObtained) + "\0";
+        Strings.MoonlitConfidenceUnknownObtained,
+    ];
 
     private readonly SessionState session;
     private readonly ITextureProvider textures;
@@ -95,7 +96,6 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     private VisibleKey visibleKey;
     private string visibleSummary = string.Empty;
     private string filterText = string.Empty;
-    private int selectedRow = -1;
 
     public MoonlitPane(SessionState session, ITextureProvider textures, RewardUnlockReader unlocks, PluginPaths paths, IPluginLog log, IDataManager data)
     {
@@ -278,16 +278,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 
         ImGui.SameLine();
         ImGui.SetNextItemWidth(UiMetrics.Px(150f));
-        var confidenceIndex = (int)confidenceFilter;
-        if (ImGui.Combo("##moonlitConfidence", ref confidenceIndex, ConfidenceFilterItems))
-        {
-            confidenceFilter = (ConfidenceFilter)confidenceIndex;
-        }
-
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(Strings.MoonlitConfidenceFilterTooltip);
-        }
+        DrawConfidenceCombo();
 
         ImGui.SameLine();
         ImGui.SetNextItemWidth(UiMetrics.Px(220f));
@@ -353,6 +344,10 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         ImGui.TableSetupColumn(Strings.MoonlitColumnQuest, ImGuiTableColumnFlags.WidthStretch, 3f);
         ImGui.TableSetupColumn(Strings.MoonlitColumnState, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, glyphColumn);
         ImGui.TableSetupColumn(Strings.MoonlitColumnConfidence, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(80f));
+        // The glyph columns follow IconScale, which imgui.ini's saved widths do not track; re-asserted every frame
+        // (a no-op once they agree) so a changed IconScale never clips the moons.
+        ImGuiP.TableSetColumnWidth(0, glyphColumn);
+        ImGuiP.TableSetColumnWidth(4, glyphColumn);
         ImGui.TableHeadersRow();
 
         if (!clipperCreated)
@@ -371,6 +366,30 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         }
 
         clipper.End();
+    }
+
+    /// <summary>The confidence filter; its popup opens from the centre column (own font scale 1), so it scales itself.</summary>
+    private void DrawConfidenceCombo()
+    {
+        using var combo = ImRaii.Combo("##moonlitConfidence", ConfidenceFilterItems[(int)confidenceFilter]);
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.MoonlitConfidenceFilterTooltip);
+        }
+
+        if (!combo)
+        {
+            return;
+        }
+
+        UiMetrics.ApplyFontScale();
+        for (var i = 0; i < ConfidenceFilterItems.Length; i++)
+        {
+            if (ImGui.Selectable(ConfidenceFilterItems[i], i == (int)confidenceFilter))
+            {
+                confidenceFilter = (ConfidenceFilter)i;
+            }
+        }
     }
 
     private void DrawKindRow(UiState ui, KindItem item, int index)
@@ -424,9 +443,10 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         ImGui.SameLine();
         using (Theme.PushText(Theme.Dusk, row.Hidden))
         {
-            if (ImGui.Selectable(row.Name, selectedRow == row.Index))
+            // The highlight follows the global selection, as in the Flight pane, so a quest picked from the detail
+            // pane's path, another pane or chat lights its Moonlit row too, and an override never wipes it.
+            if (ImGui.Selectable(row.Name, ui.SelectedRowId == row.Entry.QuestRowId))
             {
-                selectedRow = row.Index;
                 ui.SelectedRowId = row.Entry.QuestRowId;
             }
         }
@@ -548,8 +568,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     }
 
     /// <summary>Shows a quest in the Journal tab scoped to its genre (or the Unlisted bucket); also used by Wotsit picks.</summary>
-    internal static void Reveal(UiState ui, QuestRecord quest) =>
-        ui.Reveal(quest.RowId, quest.IsUnlisted ? QuestScope.VirtualUnlisted : QuestScope.Genre(quest.Journal.GenreId), quest.IsUnlisted);
+    internal static void Reveal(UiState ui, QuestRecord quest) => ui.Reveal(quest);
 
     /// <summary>Catalog, rows and obtained states, each only when its inputs changed.</summary>
     private void Refresh()
@@ -604,7 +623,6 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         rows = built;
         rowsBuild = catalogBuild;
         rowsBundle = bundle;
-        selectedRow = -1;
         obtainedVersion = -1;
     }
 

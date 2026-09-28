@@ -330,9 +330,20 @@ public sealed class HelpWindow : Window
 
     private void UpdateVisible()
     {
+        var first = -1;
         for (var i = 0; i < Topics.Length; i++)
         {
             topicVisible[i] = searchText.Length == 0 || topicSearchText[i].Contains(searchText, StringComparison.OrdinalIgnoreCase);
+            if (topicVisible[i] && first < 0)
+            {
+                first = i;
+            }
+        }
+
+        // The content pane never shows a topic the rail no longer lists: move to the first match while there is one.
+        if (first >= 0 && !topicVisible[Array.IndexOf(Topics, topic)])
+        {
+            topic = Topics[first];
         }
     }
 

@@ -134,6 +134,12 @@ public sealed class CharactersPane
     /// </summary>
     public Func<UniqueRewardCatalog>? UniqueRewards { get; set; }
 
+    /// <summary>
+    /// The query runner that owns the live pinned set: the dashboard's Pinned section reads its pins in order and
+    /// rebuilds when its pins version moves, instead of re-reading <c>user/pins.json</c>. Null hides the section.
+    /// </summary>
+    public QueryRunner? Pins { get; set; }
+
     /// <summary>Left column: stored characters, newest capture first; selecting one views it.</summary>
     public void DrawLeft(UiState ui)
     {
@@ -836,6 +842,8 @@ public sealed class CharactersPane
             return;
         }
 
+        // The popup opens from the centre column (own font scale 1), so it scales itself.
+        UiMetrics.ApplyFontScale();
         for (var i = 0; i < c.Candidates.Length; i++)
         {
             var candidate = c.Candidates[i];
@@ -1394,7 +1402,7 @@ public sealed class CharactersPane
     {
         var bundle = session.Bundle;
         var minute = DateTime.UtcNow.Ticks / TimeSpan.TicksPerMinute;
-        var key = new DashboardKey(session.Version, snapshot.ContentId, session.IsLive, minute, MoonlitCounts is not null);
+        var key = new DashboardKey(session.Version, snapshot.ContentId, session.IsLive, minute, MoonlitCounts is not null, Pins?.PinsVersion ?? -1);
         if (dashboard is { } current && key == dashboardKey && ReferenceEquals(current.Snapshot, snapshot) && ReferenceEquals(current.Bundle, bundle))
         {
             return current;
@@ -1753,27 +1761,19 @@ public sealed class CharactersPane
         return rows.ToArray();
     }
 
-    /// <summary>The viewed character's pins from <c>user/pins.json</c>, in the file's order, with the current state and next step.</summary>
+    /// <summary>
+    /// The viewed character's pins from the runner (the order they were pinned), with the current state and next
+    /// step. The runner's pins follow the viewed character, so a snapshot other than the viewed one has none.
+    /// </summary>
     private PinnedRow[] BuildPinned(CharacterSnapshot snapshot, CatalogBundle? bundle)
     {
-        var warnings = new List<string>();
-        Dictionary<ulong, List<uint>> pins;
-        try
+        if (Pins is not { } runner || session.ViewedContentId != snapshot.ContentId)
         {
-            pins = PinsFile.Load(paths.PinsFile, warnings);
-        }
-        catch (Exception ex)
-        {
-            log.Warning(ex, "Pins could not be read for the dashboard");
             return [];
         }
 
-        foreach (var warning in warnings)
-        {
-            log.Warning("Pins: {Warning}", warning);
-        }
-
-        if (!pins.TryGetValue(snapshot.ContentId, out var list) || list.Count == 0)
+        var list = runner.PinnedInOrder;
+        if (list.Count == 0)
         {
             return [];
         }
@@ -2011,7 +2011,7 @@ public sealed class CharactersPane
 
     private sealed record CharacterItem(ulong ContentId, string Name, DateTime TakenUtc, string Label, string Detail);
 
-    private readonly record struct DashboardKey(int Version, ulong ContentId, bool Live, long Minute, bool HasMoonlit);
+    private readonly record struct DashboardKey(int Version, ulong ContentId, bool Live, long Minute, bool HasMoonlit, int PinsVersion);
 
     private sealed record SectionRow(string Name, string Count, string Percent, float Fraction, bool Overall)
     {
