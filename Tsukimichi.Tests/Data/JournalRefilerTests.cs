@@ -164,12 +164,53 @@ public class JournalRefilerTests
     [Fact]
     public void Rule3_grand_company_maps_to_233_plus_the_company()
     {
+        var filed = Refile(
+            null,
+            Quest(67925, "Squadron and Commander", grandCompany: 2, issuer: At(132)),
+            Quest(66216, "A Grand Company Quest", genre: 235, section: 3, category: 30));
+
+        var squadron = filed[67925];
+        Assert.Equal(235u, squadron.Journal.GenreId);
+        Assert.Equal(3, squadron.RefiledFrom);
+        // The reference is the listed quest's: names, section and category, with the quest's own sheet key inside.
+        Assert.Equal("Genre 235", squadron.Journal.GenreName);
+        Assert.Equal(3u, squadron.Journal.SectionId);
+        Assert.Equal(30u, squadron.Journal.CategoryId);
+        Assert.False(squadron.IsRemoved);
+    }
+
+    [Fact]
+    public void A_genre_no_listed_quest_holds_leaves_the_quest_unlisted_rather_than_in_the_main_scenario()
+    {
+        // Rule 3 computes its genre instead of reading it off a listed quest, so it is the one rule that can name an
+        // empty genre. Filing there with JournalRef.None would put the quest in section 0 under a nameless node.
         var filed = Refile(null, Quest(67925, "Squadron and Commander", grandCompany: 2, issuer: At(132)));
 
-        Assert.Equal(235u, filed[67925].Journal.GenreId);
-        Assert.Equal(3, filed[67925].RefiledFrom);
-        // No quest holds genre 235 here, so the reference carries the id and nothing else.
-        Assert.Equal(string.Empty, filed[67925].Journal.GenreName);
+        var squadron = filed[67925];
+        Assert.True(squadron.IsUnlisted);
+        Assert.True(squadron.IsRemoved);
+        Assert.False(squadron.IsRetired);
+        Assert.Equal(JournalRefiler.UnlistedRule, squadron.RefiledFrom);
+        Assert.Equal(255u, squadron.Journal.SectionId);
+        Assert.Equal(0u, squadron.Journal.CategoryId);
+        Assert.False(QuestCatalog.Build(filed.Values).BySection.ContainsKey(0));
+    }
+
+    [Fact]
+    public void An_override_to_a_genre_no_listed_quest_holds_is_ignored()
+    {
+        var curated = Curated(overrides: """{ "schema": 1, "entries": { "68478": { "genre": 9, "note": "typo for 90", "evidence": "https://example.test/pagos" }, "68614": { "genre": 9, "note": "typo for 90", "evidence": "https://example.test/eureka" } } }""");
+        Assert.Empty(curated.Warnings);
+
+        var eureka = Quest(68614, "And We Shall Call It Eureka", genre: 90, section: 2, category: 56, expansion: 2);
+        var filed = Refile(curated, Quest(68478, "And We Shall Call It Pagos", expansion: 2, issuer: At(628)), eureka);
+
+        // The unlisted row stays unlisted under rule 7 (the log names it); the listed row keeps the sheet's filing.
+        Assert.True(filed[68478].IsUnlisted);
+        Assert.Equal(JournalRefiler.UnlistedRule, filed[68478].RefiledFrom);
+        Assert.Same(eureka, filed[68614]);
+        Assert.Equal(90u, filed[68614].Journal.GenreId);
+        Assert.Equal(0, filed[68614].RefiledFrom);
     }
 
     [Fact]

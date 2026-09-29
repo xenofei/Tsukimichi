@@ -87,7 +87,15 @@ public static partial class JournalRefiler
 
         if (curated.RefileOverrides.TryGetValue(quest.RowId, out var pinned))
         {
-            return quest with { Journal = index.Assign(quest, pinned.GenreId), RefiledFrom = CuratedRule };
+            if (index.Assign(quest, pinned.GenreId) is { } target)
+            {
+                return quest with { Journal = target, RefiledFrom = CuratedRule };
+            }
+
+            // The override names a genre no listed quest holds (a typo, or a genre the sheet emptied): filing there
+            // would create a nameless node under the main scenario. A listed quest keeps the sheet's filing; an
+            // unlisted one stays unlisted as if no rule had placed it, and the caller's log names the row.
+            return quest.IsUnlisted ? quest with { RefiledFrom = UnlistedRule } : quest;
         }
 
         if (!quest.IsUnlisted)
@@ -96,9 +104,16 @@ public static partial class JournalRefiler
         }
 
         var (rule, genre) = Decide(quest, index);
-        return genre == 0
-            ? quest with { RefiledFrom = rule }
-            : quest with { Journal = index.Assign(quest, genre), RefiledFrom = rule };
+        if (genre == 0)
+        {
+            return quest with { RefiledFrom = rule };
+        }
+
+        // Rules 2, 4, 5 and 6 read the genre off a listed quest, so a template exists; rule 3 computes it and the
+        // Grand Company genre may hold no listed quest in a future sheet.
+        return index.Assign(quest, genre) is { } journal
+            ? quest with { Journal = journal, RefiledFrom = rule }
+            : quest with { RefiledFrom = UnlistedRule };
     }
 
     /// <summary>Rule 1's predicate on the row alone.</summary>
@@ -195,20 +210,21 @@ public static partial class JournalRefiler
         }
 
         /// <summary>
-        /// The quest's journal reference under <paramref name="genreId"/>: the genre's names and rank from any listed
-        /// quest already filed there, with the quest's own sheet SortKey in the low bits so it sorts inside the genre.
-        /// A genre no quest holds keeps the quest's rank and names nothing.
+        /// The quest's journal reference under <paramref name="genreId"/>: the genre's names, section, category and
+        /// rank from any listed quest already filed there, with the quest's own sheet SortKey in the low bits so it
+        /// sorts inside the genre. Null when no listed quest holds the genre: there is no section or category to
+        /// file under, and <see cref="JournalRef.None"/> would put the quest in the main scenario section.
         /// </summary>
-        public JournalRef Assign(QuestRecord quest, uint genreId)
+        public JournalRef? Assign(QuestRecord quest, uint genreId)
         {
-            var sheetKey = quest.Journal.SortKey & SheetSortKeyMask;
-            if (templates.TryGetValue(genreId, out var template))
+            if (!templates.TryGetValue(genreId, out var template))
             {
-                var rank = template.SortKey >> SortKeyGenreShift;
-                return template with { SortKey = (rank << SortKeyGenreShift) | sheetKey };
+                return null;
             }
 
-            return JournalRef.None with { GenreId = genreId, SortKey = quest.Journal.SortKey };
+            var sheetKey = quest.Journal.SortKey & SheetSortKeyMask;
+            var rank = template.SortKey >> SortKeyGenreShift;
+            return template with { SortKey = (rank << SortKeyGenreShift) | sheetKey };
         }
 
         /// <summary>Rule 2: the genre of the first listed direct successor, in row order.</summary>

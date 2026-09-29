@@ -151,6 +151,50 @@ public sealed class CuratedInvariantsTests(FixtureCatalog fixture) : IClassFixtu
     }
 
     [Fact]
+    public void Refiling_files_name_fixture_rows_with_evidence_and_override_genres_a_listed_quest_holds()
+    {
+        var curated = Curated();
+        // The sheet's own filing: the refiler builds its genre templates from these listed rows, and an id must exist
+        // whatever the refiler does with it.
+        var sheet = fixture.LegacyBundle.Catalog;
+        Assert.NotEmpty(curated.RefileOverrides);
+        Assert.NotEmpty(curated.RetiredQuests);
+
+        foreach (var (rowId, entry) in curated.RefileOverrides)
+        {
+            Assert.True(sheet.GetByRowId(rowId) is not null, $"refile_overrides {rowId} is not a row of the catalog fixture");
+            Assert.StartsWith("https://", entry.Evidence, StringComparison.Ordinal);
+            Assert.False(string.IsNullOrWhiteSpace(entry.Note), $"refile_overrides {rowId} has no note");
+
+            // JournalRefiler.Index.Assign needs a listed quest holding the genre for the section, category and names;
+            // without one the quest stays unlisted, and the main scenario sections are never a refiling target.
+            var holders = sheet.All.Where(q => !q.IsUnlisted && q.Journal.GenreId == entry.GenreId).ToList();
+            Assert.True(holders.Count > 0, $"refile_overrides {rowId} names genre {entry.GenreId}, which no listed quest holds");
+            Assert.All(holders, q => Assert.True(q.Journal.SectionId is not (0 or 1), $"refile_overrides {rowId} names genre {entry.GenreId}, a main scenario genre"));
+        }
+
+        foreach (var (rowId, entry) in curated.RetiredQuests)
+        {
+            Assert.True(sheet.GetByRowId(rowId) is not null, $"retired_quests {rowId} is not a row of the catalog fixture");
+            Assert.StartsWith("https://", entry.Evidence, StringComparison.Ordinal);
+            Assert.False(string.IsNullOrWhiteSpace(entry.Note), $"retired_quests {rowId} has no note");
+        }
+
+        Assert.Empty(curated.RefileOverrides.Keys.Intersect(curated.RetiredQuests.Keys));
+
+        // Raw files: keys ascend, and the loader dropped nothing (every entry made it into the maps).
+        foreach (var (file, count) in new[] { (CuratedData.RefileOverridesFileName, curated.RefileOverrides.Count), (CuratedData.RetiredQuestsFileName, curated.RetiredQuests.Count) })
+        {
+            var root = JsonNode.Parse(File.ReadAllText(Path.Combine(CuratedDir, file)), documentOptions: CuratedData.StrictOptions)!.AsObject();
+            Assert.Equal(1, (int)root["schema"]!);
+            Assert.False(string.IsNullOrWhiteSpace((string?)root["note"]));
+            var keys = root["entries"]!.AsObject().Select(kv => uint.Parse(kv.Key, System.Globalization.CultureInfo.InvariantCulture)).ToList();
+            Assert.Equal(keys.OrderBy(k => k), keys);
+            Assert.Equal(count, keys.Count);
+        }
+    }
+
+    [Fact]
     public void Chains_reference_existing_genres_in_the_catalog()
     {
         var curated = Curated();
