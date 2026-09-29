@@ -11,8 +11,27 @@ namespace Tsukimichi.Core.Diagnostics;
 /// </summary>
 public sealed record DiagnosticInputs
 {
-    /// <summary>The filing rule printed until quest refiling (feature plan v3 T1) exists.</summary>
+    /// <summary>The filing text when the caller does not say (older callers and tests).</summary>
     public const string NoFilingRule = "n/a";
+
+    /// <summary>
+    /// The filing text for a quest: "sheet" when the sheet's own genre stands, "rule N" for a refiled quest, "retired
+    /// (rule 1)" or "retired (curated)" for a removed one, "curated" for an override, followed by the filing mode
+    /// ("rule 4, Refiled"; "sheet, Legacy"), so a bug report says which rule and which setting produced the genre.
+    /// </summary>
+    public static string DescribeFiling(QuestRecord quest, JournalFiling filing)
+    {
+        ArgumentNullException.ThrowIfNull(quest);
+        var rule = quest.RefiledFrom switch
+        {
+            0 => "sheet",
+            1 => "retired (rule 1)",
+            8 when quest.IsRetired => "retired (curated)",
+            8 => "curated",
+            var n => "rule " + n.ToString(System.Globalization.CultureInfo.InvariantCulture),
+        };
+        return rule + ", " + filing;
+    }
 
     /// <summary>Assembly version of the plugin, e.g. "0.6.0.0".</summary>
     public string PluginVersion { get; init; } = string.Empty;
@@ -35,7 +54,7 @@ public sealed record DiagnosticInputs
     /// <summary>The quest being reported.</summary>
     public required QuestRecord Quest { get; init; }
 
-    /// <summary>Which refiling rule placed the quest in its journal genre; <see cref="NoFilingRule"/> until T1 lands.</summary>
+    /// <summary>Which refiling rule placed the quest in its journal genre and under which filing mode (<see cref="DescribeFiling"/>); <see cref="NoFilingRule"/> when not given.</summary>
     public string FilingRule { get; init; } = NoFilingRule;
 
     /// <summary>The quest's evaluation for the viewed character; null when no character is viewed or the catalog is not built.</summary>

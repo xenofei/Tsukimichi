@@ -152,7 +152,7 @@ public static class CharacterDiff
         for (var i = 0; i < all.Count; i++)
         {
             var quest = all[i];
-            if (quest.IsUnlisted)
+            if (quest.IsRemoved)
             {
                 continue;
             }

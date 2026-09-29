@@ -12,7 +12,7 @@ public static class FilterNames
     public const string RewardKinds = "Reward kinds";
     public const string Repeatable = "Repeatable";
     public const string SeasonalActive = "Seasonal active";
-    public const string IncludeUnlisted = "Include Unlisted";
+    public const string IncludeUnlisted = "Include removed";
     public const string Pinned = "Pinned";
     public const string Search = "Search";
 

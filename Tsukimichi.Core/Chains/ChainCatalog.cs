@@ -74,11 +74,15 @@ public sealed class ChainCatalog
                 }
 
                 // A curated genre need not be linear (branching side stories are still one story); its quests keep
-                // journal order either way, which is the play order for every linear genre.
+                // journal order either way, which is the play order for every linear genre. A retired row the genre
+                // still carries (two Crystal Tower quests the 6.3 rewrite removed) is no longer a step of the story.
                 claimedGenres.Add(genreId);
                 foreach (var quest in quests)
                 {
-                    rowIds.Add(quest.RowId);
+                    if (!quest.IsRetired)
+                    {
+                        rowIds.Add(quest.RowId);
+                    }
                 }
             }
 
@@ -92,9 +96,15 @@ public sealed class ChainCatalog
 
         var derived = new List<IReadOnlyList<QuestRecord>>();
         var nameCounts = new Dictionary<string, int>(StringComparer.Ordinal);
-        foreach (var (genreId, quests) in catalog.ByGenre.OrderBy(kv => kv.Value[0].Journal.SortKey))
+        foreach (var (genreId, all) in catalog.ByGenre.OrderBy(kv => kv.Value[0].Journal.SortKey))
         {
-            if (genreId == 0 || claimedGenres.Contains(genreId) || !IsLinear(quests))
+            if (genreId == 0 || claimedGenres.Contains(genreId))
+            {
+                continue;
+            }
+
+            var quests = Live(all);
+            if (!IsLinear(quests))
             {
                 continue;
             }
@@ -116,6 +126,25 @@ public sealed class ChainCatalog
         }
 
         return new ChainCatalog(chains, byRowId.ToFrozenDictionary(), warnings);
+    }
+
+    /// <summary>The genre's quests without its retired rows; the same list when it has none.</summary>
+    private static IReadOnlyList<QuestRecord> Live(IReadOnlyList<QuestRecord> quests)
+    {
+        List<QuestRecord>? live = null;
+        for (var i = 0; i < quests.Count; i++)
+        {
+            if (quests[i].IsRetired)
+            {
+                live ??= [.. quests.Take(i)];
+            }
+            else
+            {
+                live?.Add(quests[i]);
+            }
+        }
+
+        return live ?? quests;
     }
 
     /// <summary>

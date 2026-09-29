@@ -57,7 +57,7 @@ public static class MsqProgress
 
             foreach (var quest in quests)
             {
-                if (quest.IsUnlisted)
+                if (quest.IsRemoved)
                 {
                     continue;
                 }

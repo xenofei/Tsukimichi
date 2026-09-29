@@ -8,7 +8,7 @@ public readonly record struct QuestScope(ScopeKind Kind, uint Id)
     /// <summary>Feature Unlocks virtual node; membership comes from <see cref="QueryContext.FeatureQuestIds"/>.</summary>
     public static readonly QuestScope VirtualFeature = new(ScopeKind.VirtualFeature, 0);
 
-    /// <summary>Unlisted virtual node: quests with no journal genre, shown regardless of <see cref="FilterSet.IncludeUnlisted"/>.</summary>
+    /// <summary>The "Removed from the game" virtual node: retired quests and those with no journal genre (<see cref="Model.QuestRecord.IsRemoved"/>), shown regardless of <see cref="FilterSet.IncludeUnlisted"/>.</summary>
     public static readonly QuestScope VirtualUnlisted = new(ScopeKind.VirtualUnlisted, 0);
 
     public static QuestScope Section(uint id) => new(ScopeKind.Section, id);

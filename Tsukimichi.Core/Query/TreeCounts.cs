@@ -22,8 +22,10 @@ public readonly record struct NodeCount(int Done, int Total, int Excluded)
 
 /// <summary>
 /// Done/total per section, category and genre for the tree labels. Done counts only <see cref="QuestState.Completed"/>.
-/// Unlisted quests (genre 0) never enter a section, category or genre node, whatever ids the sheet gave them; they
-/// always land in <see cref="Unlisted"/> and join <see cref="Overall"/> only when included.
+/// Removed quests (<see cref="QuestRecord.IsRemoved"/>: retired rows and the genre-0 leftovers) never enter a
+/// section, category or genre node, whatever ids the sheet gave them; they always land in <see cref="Unlisted"/> and
+/// join <see cref="Overall"/> only when included. That bucket counts every row, exclusions aside: a removed quest
+/// evaluates Locked out, and "118 of 179 done before they went" is the number the bucket is for.
 /// </summary>
 public sealed class TreeCounts
 {
@@ -45,10 +47,10 @@ public sealed class TreeCounts
     public IReadOnlyDictionary<uint, NodeCount> Categories { get; }
     public IReadOnlyDictionary<uint, NodeCount> Genres { get; }
 
-    /// <summary>Counts for the Unlisted virtual node, independent of the include flag.</summary>
+    /// <summary>Counts for the "Removed from the game" virtual node, independent of the include flag.</summary>
     public NodeCount Unlisted { get; }
 
-    /// <summary>Counts across every listed quest, plus Unlisted when included.</summary>
+    /// <summary>Counts across every listed quest, plus <see cref="Unlisted"/> when included.</summary>
     public NodeCount Overall { get; }
 
     public NodeCount Section(uint id) => Sections.GetValueOrDefault(id);
@@ -85,18 +87,19 @@ public sealed class TreeCounts
         foreach (var quest in catalog.All)
         {
             var done = source.StateOf(quest.RowId) == QuestState.Completed ? 1 : 0;
-            var excluded = source.LeavesTotals(quest.RowId) ? 1 : 0;
 
-            if (quest.IsUnlisted)
+            if (quest.IsRemoved)
             {
-                unlisted = Add(unlisted, done, excluded);
+                unlisted = Add(unlisted, done, 0);
                 if (includeUnlisted)
                 {
-                    overall = Add(overall, done, excluded);
+                    overall = Add(overall, done, 0);
                 }
 
                 continue;
             }
+
+            var excluded = source.LeavesTotals(quest.RowId) ? 1 : 0;
 
             Bump(sections, quest.Journal.SectionId, done, excluded);
             Bump(categories, quest.Journal.CategoryId, done, excluded);
