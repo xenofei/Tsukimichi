@@ -63,6 +63,9 @@ public sealed record DiagnosticInputs
     /// <summary>Name lookups for quests, tribes, ranks, jobs and duties; <see cref="BlockerNames.Default"/> prints ids.</summary>
     public BlockerNames Names { get; init; } = BlockerNames.Default;
 
+    /// <summary>The curated quirk note for the quest (<c>curated/quirks.json</c>), printed as a "quirk:" line; null or empty when it has none.</summary>
+    public string? QuirkNote { get; init; }
+
     /// <summary>Every quest's evaluation for the same character, when at hand: refines the blocker line and gives the main scenario position.</summary>
     public IReadOnlyDictionary<uint, QuestEvaluation>? States { get; init; }
 
