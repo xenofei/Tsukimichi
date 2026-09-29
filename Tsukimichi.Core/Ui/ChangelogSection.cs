@@ -167,10 +167,18 @@ public enum WhatsNewDecision
 
 public static class WhatsNew
 {
-    /// <param name="lastSeenVersion">The persisted last-seen version, empty on a fresh install.</param>
+    /// <param name="lastSeenVersion">
+    /// The persisted last-seen version: empty on a fresh install, and also after an update from a build that did not
+    /// record it yet (every release before 0.6.0), which <paramref name="hasPriorConfig"/> tells apart.
+    /// </param>
     /// <param name="runningVersion">The plugin's assembly version.</param>
     /// <param name="hasSection">Whether the changelog has a non-empty section for the running version.</param>
-    public static WhatsNewDecision Decide(string? lastSeenVersion, string? runningVersion, bool hasSection)
+    /// <param name="hasPriorConfig">
+    /// Whether a configuration existed before this load (the file was there). An empty
+    /// <paramref name="lastSeenVersion"/> with one is an update from a build that predates the card and shows it; without
+    /// one it is a fresh install, which records the version silently.
+    /// </param>
+    public static WhatsNewDecision Decide(string? lastSeenVersion, string? runningVersion, bool hasSection, bool hasPriorConfig)
     {
         var running = ChangelogSection.NormalizeVersion(runningVersion);
         var seen = ChangelogSection.NormalizeVersion(lastSeenVersion);
@@ -179,6 +187,15 @@ public static class WhatsNew
             return WhatsNewDecision.Nothing;
         }
 
-        return seen.Length == 0 || !hasSection ? WhatsNewDecision.RecordSilently : WhatsNewDecision.Show;
+        var freshInstall = seen.Length == 0 && !hasPriorConfig;
+        return freshInstall || !hasSection ? WhatsNewDecision.RecordSilently : WhatsNewDecision.Show;
     }
+
+    /// <summary>
+    /// <see cref="Decide(string?, string?, bool, bool)"/> for a caller that cannot say whether a configuration
+    /// existed: an empty last-seen version then reads as a fresh install, so an update from a build before 0.6.0
+    /// records silently. Callers with the configuration at hand pass <c>hasPriorConfig</c>.
+    /// </summary>
+    public static WhatsNewDecision Decide(string? lastSeenVersion, string? runningVersion, bool hasSection) =>
+        Decide(lastSeenVersion, runningVersion, hasSection, hasPriorConfig: false);
 }
