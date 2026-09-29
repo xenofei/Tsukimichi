@@ -325,6 +325,43 @@ public class JournalRefilerTests
     }
 
     [Fact]
+    public void Rule6_vote_ignores_a_listed_row_that_is_retired_by_the_sheet_or_the_curated_file()
+    {
+        // A tie between G128 and G124 that only a retired row would break, once by the placeholder issuer and once by
+        // retired_quests.json: the vote stays tied and the quest stays unlisted.
+        var curated = Curated(retired: """{ "schema": 1, "entries": { "68003": { "note": "removed", "evidence": "https://example.test/x" } } }""");
+        Assert.Empty(curated.Warnings);
+
+        var bySheet = Refile(
+            null,
+            Quest(68457, "Leves of Kugane", issuer: At(628)),
+            Quest(68001, genre: G128, category: 67, issuer: At(628)),
+            Quest(68002, genre: G128, category: 67, issuer: new Issuer(JournalRefiler.PlaceholderIssuer, string.Empty, 628, 1, 0, 0, 0)),
+            Quest(68003, genre: G124, category: 66, issuer: At(628)));
+        Assert.True(bySheet[68002].IsRetired);
+        Assert.True(bySheet[68457].IsUnlisted);
+        Assert.Equal(JournalRefiler.UnlistedRule, bySheet[68457].RefiledFrom);
+
+        var byCurated = Refile(
+            curated,
+            Quest(68457, "Leves of Kugane", issuer: At(628)),
+            Quest(68001, genre: G128, category: 67, issuer: At(628)),
+            Quest(68003, genre: G124, category: 66, issuer: At(628)),
+            Quest(68004, genre: G124, category: 66, issuer: At(628)));
+        Assert.True(byCurated[68003].IsRetired);
+        Assert.True(byCurated[68457].IsUnlisted);
+
+        // The same rows with the retired one live: G124 wins.
+        var live = Refile(
+            null,
+            Quest(68457, "Leves of Kugane", issuer: At(628)),
+            Quest(68001, genre: G128, category: 67, issuer: At(628)),
+            Quest(68003, genre: G124, category: 66, issuer: At(628)),
+            Quest(68004, genre: G124, category: 66, issuer: At(628)));
+        Assert.Equal(G124, live[68457].Journal.GenreId);
+    }
+
+    [Fact]
     public void Rule6_tie_stays_unlisted_with_rule_seven()
     {
         var filed = Refile(

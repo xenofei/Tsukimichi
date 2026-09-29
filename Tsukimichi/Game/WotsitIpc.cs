@@ -200,9 +200,10 @@ public sealed class WotsitIpc : IDisposable
         var entries = new List<WotsitEntry>(catalog.Count + rewards.Count);
         foreach (var quest in catalog.All)
         {
-            if (quest.IsRetired)
+            if (quest.IsRemoved)
             {
-                // Removed from the game: nothing to find on the map, and a twin with the same name is listed.
+                // Removed from the game (retired, or left without a journal genre): nothing to find on the map, and
+                // a retired twin with the same name is listed.
                 continue;
             }
 

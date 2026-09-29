@@ -70,7 +70,7 @@ public static partial class JournalRefiler
         ArgumentNullException.ThrowIfNull(quests);
         ArgumentNullException.ThrowIfNull(curated);
 
-        var index = new Index(quests);
+        var index = new Index(quests, curated);
         var result = new QuestRecord[quests.Count];
         for (var i = 0; i < quests.Count; i++)
         {
@@ -178,7 +178,7 @@ public static partial class JournalRefiler
         private readonly Dictionary<uint, List<uint>> lockedBy = [];
         private readonly Dictionary<uint, Dictionary<uint, int>> territoryVotes = [];
 
-        public Index(IReadOnlyList<QuestRecord> quests)
+        public Index(IReadOnlyList<QuestRecord> quests, CuratedData curated)
         {
             byRowId = new Dictionary<uint, QuestRecord>(quests.Count);
             foreach (var quest in quests)
@@ -205,6 +205,13 @@ public static partial class JournalRefiler
                 }
 
                 templates.TryAdd(quest.Journal.GenreId, quest.Journal);
+
+                // Rule 6 is a vote among the quests the game still hands out: a listed row retired by the sheet or by
+                // the curated file (A Seat at the Feast in Mor Dhona) must not be the tie-breaker.
+                if (IsRetiredRow(quest) || curated.RetiredQuests.ContainsKey(quest.RowId))
+                {
+                    continue;
+                }
 
                 var category = quest.Journal.CategoryId;
                 if (category is >= RegionalCategoryMin and <= RegionalCategoryMax && quest.Issuer is { TerritoryId: not 0 } issuer)
