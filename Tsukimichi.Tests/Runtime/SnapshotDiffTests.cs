@@ -168,6 +168,21 @@ public sealed class SnapshotDiffTests
     }
 
     [Fact]
+    public void Accepting_job_change_alone_counts_as_a_quest_change()
+    {
+        // The fast path compares whole AcceptedQuest records, so a capture that differs only in AcceptClassJob
+        // (a file written before the field was read, say) must commit, or every later poll takes the slow path.
+        var a = Fixture.Snapshot() with { Accepted = [Fixture.Accepted(Fixture.A, 2, acceptClassJob: 0)] };
+        var b = Fixture.Snapshot() with { Accepted = [Fixture.Accepted(Fixture.A, 2, acceptClassJob: 22)] };
+
+        var diff = SnapshotDiff.Compute(a, b);
+
+        Assert.False(diff.IsEmpty);
+        Assert.Equal([QuestRecord.ToQuestId(Fixture.A)], diff.ChangedQuestIds);
+        Assert.True(SnapshotDiff.Compute(b, b with { Accepted = [Fixture.Accepted(Fixture.A, 2, acceptClassJob: 22)] }).IsEmpty);
+    }
+
+    [Fact]
     public void Daily_done_changes_count_as_quest_changes()
     {
         var a = Fixture.Snapshot() with { DailyDone = new Dictionary<ushort, byte> { [100] = 1 } };

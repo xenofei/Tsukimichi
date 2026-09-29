@@ -7,7 +7,7 @@ namespace Tsukimichi.Core.Runtime;
 /// What changed between two captures of the same character, in the shape the incremental resolver wants.
 /// Identity fields (name, world) and <see cref="CharacterSnapshot.TakenUtc"/> are ignored.
 /// </summary>
-/// <param name="ChangedQuestIds">Quest ids whose completion bit, journal presence, sequence or daily-done flag changed; ascending, distinct.</param>
+/// <param name="ChangedQuestIds">Quest ids whose completion bit, journal presence, sequence, accepting job or daily-done flag changed; ascending, distinct.</param>
 /// <param name="ChangedJobs">ClassJob ids whose unsynced level changed, appeared or disappeared; ascending.</param>
 /// <param name="ChangedFestivals">Festival ids that started or ended; ascending.</param>
 /// <param name="OtherChanged">
@@ -147,21 +147,26 @@ public sealed record SnapshotDiff(
         }
     }
 
+    /// <summary>
+    /// Journal entries by quest id, compared on step and accepting job: the fast path compares whole
+    /// <see cref="AcceptedQuest"/> records, so anything it sees must count here too, or a capture that differs
+    /// only in <see cref="AcceptedQuest.AcceptClassJob"/> would never commit and every later poll would take the slow path.
+    /// </summary>
     private static void DiffAccepted(IReadOnlyList<AcceptedQuest> a, IReadOnlyList<AcceptedQuest> b, SortedSet<ushort> changed)
     {
-        var oldSeq = new Dictionary<ushort, byte>(a.Count);
+        var old = new Dictionary<ushort, (byte Sequence, byte AcceptClassJob)>(a.Count);
         foreach (var q in a)
         {
-            oldSeq[q.QuestId] = q.Sequence;
+            old[q.QuestId] = (q.Sequence, q.AcceptClassJob);
         }
 
-        var newSeq = new Dictionary<ushort, byte>(b.Count);
+        var current = new Dictionary<ushort, (byte Sequence, byte AcceptClassJob)>(b.Count);
         foreach (var q in b)
         {
-            newSeq[q.QuestId] = q.Sequence;
+            current[q.QuestId] = (q.Sequence, q.AcceptClassJob);
         }
 
-        DiffKeyed(oldSeq, newSeq, changed);
+        DiffKeyed(old, current, changed);
     }
 
     /// <summary>Adds every key present in one map only, or present in both with different values.</summary>
