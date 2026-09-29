@@ -23,6 +23,8 @@ public enum JoinKind
 /// <summary>One gate that can keep a quest from being accepted. Order matches display and "next step" priority.</summary>
 public enum RequirementKind
 {
+    /// <summary>The game removed the quest (<see cref="QuestRecord.IsRetired"/>); nothing can be done about it.</summary>
+    Retired,
     Foreclosure,
     ExpansionCap,
     LevelCap,

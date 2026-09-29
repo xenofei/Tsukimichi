@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "note": "Quests the game removed that the sheets do not mark (no placeholder issuer 1034221, no hidden flag), or mark while still giving them a journal genre. JournalRefiler treats them as retired: never counted, shown only under Removed from the game. Keys are Quest sheet row ids; patch is the patch that removed the quest, shown in the detail pane. Every entry needs a note and an evidence URL.",
+  "entries": {
+    "66023": {
+      "note": "Meet, Greet, and Deceit (Lominsan Sidequests). Removed in patch 3.05 with two other level-9 sidequests over inconsistencies in the Mac and Korean versions; the sheet still lists it with a normal issuer and genre, and the Lodestone omits it (verification-report-2 inaccuracy 6).",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Meet,_Greet,_and_Deceit",
+      "patch": "3.05"
+    },
+    "66033": {
+      "note": "But I Hardly Noah (Crystal Tower Quests). Removed in patch 6.3 with the Crystal Tower rewrite; the sheet keeps its genre but carries the hidden flag and the placeholder issuer.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/But_I_Hardly_Noah",
+      "patch": "6.3"
+    },
+    "66034": {
+      "note": "The Gift of the Archmagus (Crystal Tower Quests). Removed in patch 6.3 with the Crystal Tower rewrite; the sheet keeps its genre but carries the hidden flag and the placeholder issuer.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Gift_of_the_Archmagus",
+      "patch": "6.3"
+    },
+    "66964": {
+      "note": "He's Got a Ticket to Ride (Gridanian Sidequests). Removed in patch 3.05 with two other level-9 sidequests over inconsistencies in the Mac and Korean versions; the sheet still lists it with a normal issuer and genre, and the Lodestone omits it (verification-report-2 inaccuracy 6).",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/He%27s_Got_a_Ticket_to_Ride",
+      "patch": "3.05"
+    },
+    "66965": {
+      "note": "Lend Me Your Ears Already (Ul'dahn Sidequests). Removed in patch 3.05 with two other level-9 sidequests over inconsistencies in the Mac and Korean versions; the sheet still lists it with a normal issuer and genre, and the Lodestone omits it (verification-report-2 inaccuracy 6).",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Lend_Me_Your_Ears_Already",
+      "patch": "3.05"
+    },
+    "67819": {
+      "note": "A Seat at the Feast (Mor Dhonan Sidequests). Removed in patch 6.1 together with The Feast; the sheet keeps its genre but moved its issuer to the placeholder NPC.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Seat_at_the_Feast",
+      "patch": "6.1"
+    },
+    "68629": {
+      "note": "Makin' Bacon (Bread) (Return to Ivalice). Removed in patch 6.2; the sheet keeps its genre but moved its issuer to the placeholder NPC.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Makin%27_Bacon_(Bread)",
+      "patch": "6.2"
+    },
+    "68727": {
+      "note": "Wok on By (Return to Ivalice). Removed in patch 6.2; the sheet keeps its genre but moved its issuer to the placeholder NPC.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Wok_on_By",
+      "patch": "6.2"
+    }
+  }
+}

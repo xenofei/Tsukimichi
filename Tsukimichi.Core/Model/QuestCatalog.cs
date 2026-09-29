@@ -32,6 +32,17 @@ public sealed class QuestCatalog
         BySection = Group(all, q => q.Journal.SectionId);
         ByCategory = Group(all, q => q.Journal.CategoryId);
         ByGenre = Group(all, q => q.Journal.GenreId);
+
+        var removed = new List<QuestRecord>();
+        foreach (var quest in all)
+        {
+            if (quest.IsRemoved)
+            {
+                removed.Add(quest);
+            }
+        }
+
+        Removed = removed.ToArray();
     }
 
     /// <summary>Builds a catalog. Records are ordered by <see cref="JournalRef.SortKey"/> then row id; duplicate row ids throw.</summary>
@@ -56,14 +67,21 @@ public sealed class QuestCatalog
     /// <summary>Keyed by runtime quest id (low 16 bits of the row id). First record wins on a collision.</summary>
     public IReadOnlyDictionary<ushort, QuestRecord> ByQuestId { get; }
 
-    /// <summary>Keyed by JournalSection id. Unlisted quests (genre 0) are listed under whatever section id the sheet gave them; the tree and query layers never show them there.</summary>
+    /// <summary>
+    /// Keyed by JournalSection id. Removed quests (<see cref="QuestRecord.IsRemoved"/>) sit under whatever section id
+    /// the sheet gave them (255 for genre 0, their own for a retired listed row); the tree and query layers never show
+    /// them there.
+    /// </summary>
     public IReadOnlyDictionary<uint, IReadOnlyList<QuestRecord>> BySection { get; }
 
-    /// <summary>Keyed by JournalCategory id; see <see cref="BySection"/> for how unlisted quests are treated.</summary>
+    /// <summary>Keyed by JournalCategory id; see <see cref="BySection"/> for how removed quests are treated.</summary>
     public IReadOnlyDictionary<uint, IReadOnlyList<QuestRecord>> ByCategory { get; }
 
-    /// <summary>Keyed by JournalGenre id; key 0 holds every unlisted quest.</summary>
+    /// <summary>Keyed by JournalGenre id; key 0 holds every unlisted quest. A retired listed row stays under its genre.</summary>
     public IReadOnlyDictionary<uint, IReadOnlyList<QuestRecord>> ByGenre { get; }
+
+    /// <summary>Every quest of the "Removed from the game" bucket (<see cref="QuestRecord.IsRemoved"/>), in journal order.</summary>
+    public IReadOnlyList<QuestRecord> Removed { get; }
 
     /// <summary>Lookup by Quest sheet row id (65536 + n): the id prerequisites, locks, pins and unique-reward entries carry.</summary>
     public QuestRecord? GetByRowId(uint rowId) => ByRowId.GetValueOrDefault(rowId);

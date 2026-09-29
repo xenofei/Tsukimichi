@@ -8,7 +8,10 @@ namespace Tsukimichi.GameData;
 /// <summary>
 /// The mapped catalog frozen to a file: every <see cref="QuestRecord"/>, the name tables and the ClassJobCategory
 /// membership, stamped with the game version the sheets came from. <c>Tsukimichi.DataGen --dump-catalog</c> writes it
-/// and the tests read it, so record-only tests run without the game files. Test content; never shipped in the plugin.
+/// and the tests read it, so record-only tests run without the game files. The records are the sheet's own filing
+/// (<see cref="JournalFiling.Legacy"/>); <see cref="CatalogFixtureFile.Read(string, JournalFiling, Core.Storage.CuratedData)"/>
+/// runs the refiler on the way in, so the frozen data serves both filings and the refiler's own tests. Test content;
+/// never shipped in the plugin.
 /// </summary>
 public sealed record CatalogFixtureData(
     string GameVersion,
@@ -65,14 +68,19 @@ public static class CatalogFixtureFile
                ?? throw new InvalidDataException($"{path} holds no catalog.");
     }
 
-    /// <summary>Loads the file and rebuilds the bundle the mapper would have produced.</summary>
-    public static (CatalogBundle Bundle, string GameVersion) Read(string path)
+    /// <summary>Loads the file as written: the sheet's own filing, no refiler.</summary>
+    public static (CatalogBundle Bundle, string GameVersion) Read(string path) => Read(path, JournalFiling.Legacy, Core.Storage.CuratedData.Empty);
+
+    /// <summary>Loads the file and rebuilds the bundle the mapper would have produced under <paramref name="filing"/> with <paramref name="curated"/>.</summary>
+    public static (CatalogBundle Bundle, string GameVersion) Read(string path, JournalFiling filing, Core.Storage.CuratedData curated)
     {
+        ArgumentNullException.ThrowIfNull(curated);
         var data = ReadData(path);
         var jobs = ClassJobCategoryLookup.FromMembership(
             data.JobCategories.Select(kv => new KeyValuePair<uint, IEnumerable<byte>>(kv.Key, kv.Value)),
             data.JobColumns);
-        var bundle = new CatalogBundle(QuestCatalog.Build(data.Quests), data.Names, jobs, data.Language);
+        var quests = filing == JournalFiling.Refiled ? JournalRefiler.Apply(data.Quests, curated) : data.Quests;
+        var bundle = new CatalogBundle(QuestCatalog.Build(quests), data.Names, jobs, data.Language);
         return (bundle, data.GameVersion);
     }
 

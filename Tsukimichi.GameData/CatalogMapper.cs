@@ -2,6 +2,7 @@ using Lumina.Data;
 using Lumina.Excel;
 using Lumina.Excel.Sheets;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Storage;
 
 namespace Tsukimichi.GameData;
 
@@ -26,7 +27,15 @@ public static class CatalogMapper
     /// <param name="language">Language for every localized string; non-localized sheets fall back to their neutral page.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <param name="log">Optional sink for one-line progress facts (row counts, skips).</param>
-    public static CatalogBundle Map(ExcelModule excel, Language language, CancellationToken ct = default, Action<string>? log = null)
+    /// <param name="filing">Whether the <see cref="JournalRefiler"/> runs over the mapped records (the default) or the sheet's genres stand.</param>
+    /// <param name="curated">The curated overlay the refiler reads (<c>refile_overrides.json</c>, <c>retired_quests.json</c>); null runs the rules alone.</param>
+    public static CatalogBundle Map(
+        ExcelModule excel,
+        Language language,
+        CancellationToken ct = default,
+        Action<string>? log = null,
+        JournalFiling filing = JournalFiling.Refiled,
+        CuratedData? curated = null)
     {
         ArgumentNullException.ThrowIfNull(excel);
 
@@ -60,12 +69,32 @@ public static class CatalogMapper
         }
 
         ct.ThrowIfCancellationRequested();
-        var catalog = QuestCatalog.Build(records);
+        IReadOnlyList<QuestRecord> filed = filing == JournalFiling.Refiled ? JournalRefiler.Apply(records, curated ?? CuratedData.Empty) : records;
+        var catalog = QuestCatalog.Build(filed);
         var jobs = ClassJobCategoryLookup.Build(excel, language);
         ct.ThrowIfCancellationRequested();
         var names = ReadNames(excel, language, jobs);
 
         log?.Invoke($"Quest sheet: {quests.Count} rows, {records.Count} named, {skipped} skipped; {journal.GenreCount} journal genres; {jobs.Count} class/job categories");
+        if (filing == JournalFiling.Refiled)
+        {
+            var refiled = 0;
+            var retired = 0;
+            foreach (var quest in filed)
+            {
+                if (quest.IsRetired)
+                {
+                    retired++;
+                }
+                else if (quest.RefiledFrom != 0 && !quest.IsUnlisted)
+                {
+                    refiled++;
+                }
+            }
+
+            log?.Invoke($"Journal refiling: {refiled} quests filed into a genre, {retired} retired, {catalog.ByGenre.GetValueOrDefault(0u)?.Count ?? 0} left unlisted");
+        }
+
         return new CatalogBundle(catalog, names, jobs, language.ToString());
     }
 
@@ -122,6 +151,9 @@ public static class CatalogMapper
             Icon = quest.Icon,
             IconSpecial = quest.IconSpecial,
             EventIconType = ToByte(quest.EventIconType.RowId),
+            // The unnamed bool between HideOfferIcon and HideInScenarioGuide; Lumina numbers unknown columns per
+            // release, so HiddenFlagColumnTests pins the column against the sheet's own header.
+            IsHidden = quest.Unknown12,
 
             Rewards = MapRewards(in quest, sheets),
             ExpFactor = quest.ExpFactor,
@@ -495,9 +527,10 @@ public static class CatalogMapper
     /// <summary>
     /// Journal genre → (section, category, genre) names plus a rank that orders genres by section, then category, then
     /// genre row id, matching the in-game journal. The quest's own SortKey fills the low 16 bits of the composite key.
-    /// Genre 0 (unlisted quests) sorts after every listed genre and keeps whatever section and category the sheet's
-    /// row 0 names (usually none); the tree and query layers never place unlisted quests under a journal node, so a
-    /// zero there cannot be mistaken for the real section 0.
+    /// Genre 0 (unlisted quests) sorts after every listed genre and keeps the section and category ids the sheet's
+    /// row 0 points at (category 0 under section 255) but none of their names: row 0 is a placeholder whose category
+    /// reads "Sephiroth Missions", and no quest is filed there. The tree and query layers never place unlisted quests
+    /// under a journal node, so the ids cannot be mistaken for the real section 0.
     /// </summary>
     private sealed class JournalIndex
     {
@@ -525,7 +558,7 @@ public static class CatalogMapper
                 var template = Template(in genre);
                 if (genre.RowId == 0)
                 {
-                    unlisted = template;
+                    unlisted = template with { SectionName = string.Empty, CategoryName = string.Empty, GenreName = string.Empty };
                     continue;
                 }
 

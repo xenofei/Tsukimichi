@@ -1,0 +1,333 @@
+using System.Text.RegularExpressions;
+using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Storage;
+
+namespace Tsukimichi.GameData;
+
+/// <summary>
+/// Second pass over the mapped records: files the quests the sheet leaves without a journal genre, following the
+/// seven rules of docs/data/unlisted-report.md section 4 in order, then the curated overrides. Pure over
+/// <see cref="QuestRecord"/>s, so it runs on a frozen catalog as well as on the live sheets, and under
+/// <see cref="JournalFiling.Legacy"/> it is simply not called.
+/// <list type="number">
+/// <item>Placeholder issuer (<see cref="PlaceholderIssuer"/>) or the hidden flag: retired; stays genre 0.</item>
+/// <item>Class or job intro quasi-quest (<c>Cls…001</c>, <c>Cls…999</c>, <c>Job…299</c>): the genre of its first listed successor.</item>
+/// <item>A Grand Company: that company's Grand Company Quests genre (<see cref="GrandCompanyGenreBase"/> + company).</item>
+/// <item>The first listed prerequisite, walking through unlisted ones in slot order, outside the main scenario sections and in the quest's own expansion: its genre.</item>
+/// <item>Else the first listed successor, then a quest-lock partner, under the same constraint.</item>
+/// <item>Else the dominant genre of the listed regional sidequests (categories 59–85) issued from the same territory; a tie stays unlisted.</item>
+/// <item>Else unlisted.</item>
+/// </list>
+/// Curated <c>retired_quests.json</c> retires listed rows too (they keep their genre); curated
+/// <c>refile_overrides.json</c> pins a quest to a genre after the rules. Both mark <see cref="QuestRecord.RefiledFrom"/>
+/// with <see cref="CuratedRule"/>.
+/// </summary>
+public static partial class JournalRefiler
+{
+    /// <summary>The empty <c>ENpcResident</c> row the game moves a quest's issuer to when it retires the quest.</summary>
+    public const uint PlaceholderIssuer = 1034221;
+
+    /// <summary><see cref="QuestRecord.RefiledFrom"/> value for a filing a curated file decided rather than a rule.</summary>
+    public const byte CuratedRule = 8;
+
+    /// <summary>The Grand Company Quests genres are 234 Maelstrom, 235 Twin Adder, 236 Immortal Flames: this plus the GrandCompany row id.</summary>
+    public const uint GrandCompanyGenreBase = 233;
+
+    /// <summary>JournalCategory ids of the regional sidequest categories rule 6 votes over.</summary>
+    public const uint RegionalCategoryMin = 59;
+    public const uint RegionalCategoryMax = 85;
+
+    /// <summary>Rules that keep a quest out of a journal node: retired, and no signal.</summary>
+    public const byte RetiredRule = 1;
+    public const byte UnlistedRule = 7;
+
+    /// <summary>The genre rank sits above the sheet's own SortKey in <see cref="JournalRef.SortKey"/>; see <c>CatalogMapper</c>.</summary>
+    private const int SortKeyGenreShift = 16;
+    private const int SheetSortKeyMask = 0xFFFF;
+
+    /// <summary>Main scenario sections, never a refiling target: a hidden step of the story would still not be story.</summary>
+    private static bool IsMainScenarioSection(uint sectionId) => sectionId is 0 or 1;
+
+    [GeneratedRegex(@"^(Cls\w{3}(001|999)|Job\w{3}299)_", RegexOptions.CultureInvariant)]
+    private static partial Regex ClassIntroPattern();
+
+    /// <summary>Whether an internal id names a class or job intro quasi-quest (rule 2).</summary>
+    public static bool IsClassIntro(string internalId) => internalId is not null && ClassIntroPattern().IsMatch(internalId);
+
+    /// <summary>
+    /// Files every genre-0 record and retires the curated ones; listed records come back unchanged unless a curated
+    /// file names them. The result keeps the input order; the caller sorts it into a catalog.
+    /// </summary>
+    public static IReadOnlyList<QuestRecord> Apply(IReadOnlyList<QuestRecord> quests, CuratedData curated)
+    {
+        ArgumentNullException.ThrowIfNull(quests);
+        ArgumentNullException.ThrowIfNull(curated);
+
+        var index = new Index(quests);
+        var result = new QuestRecord[quests.Count];
+        for (var i = 0; i < quests.Count; i++)
+        {
+            result[i] = File(quests[i], index, curated);
+        }
+
+        return result;
+    }
+
+    private static QuestRecord File(QuestRecord quest, Index index, CuratedData curated)
+    {
+        if (curated.RetiredQuests.ContainsKey(quest.RowId))
+        {
+            return quest with { IsRetired = true, RefiledFrom = CuratedRule };
+        }
+
+        if (quest.IsUnlisted && IsRetiredRow(quest))
+        {
+            return quest with { IsRetired = true, RefiledFrom = RetiredRule };
+        }
+
+        if (curated.RefileOverrides.TryGetValue(quest.RowId, out var pinned))
+        {
+            return quest with { Journal = index.Assign(quest, pinned.GenreId), RefiledFrom = CuratedRule };
+        }
+
+        if (!quest.IsUnlisted)
+        {
+            return quest;
+        }
+
+        var (rule, genre) = Decide(quest, index);
+        return genre == 0
+            ? quest with { RefiledFrom = rule }
+            : quest with { Journal = index.Assign(quest, genre), RefiledFrom = rule };
+    }
+
+    /// <summary>Rule 1's predicate on the row alone.</summary>
+    public static bool IsRetiredRow(QuestRecord quest)
+    {
+        ArgumentNullException.ThrowIfNull(quest);
+        return quest.IsHidden || quest.Issuer is { NpcId: PlaceholderIssuer };
+    }
+
+    /// <summary>Rules 2–7 for a genre-0 quest that is not retired: the rule that fired and the genre it chose (0 for rule 7).</summary>
+    private static (byte Rule, uint Genre) Decide(QuestRecord quest, Index index)
+    {
+        if (IsClassIntro(quest.InternalId) && index.FirstListedSuccessorGenre(quest) is { } intro)
+        {
+            return (2, intro);
+        }
+
+        if (quest.GrandCompany != 0)
+        {
+            return (3, GrandCompanyGenreBase + quest.GrandCompany);
+        }
+
+        if (index.PrerequisiteGenre(quest) is { } prerequisite)
+        {
+            return (4, prerequisite);
+        }
+
+        if (index.SuccessorOrLockGenre(quest) is { } successor)
+        {
+            return (5, successor);
+        }
+
+        if (index.TerritoryGenre(quest) is { } territory)
+        {
+            return (6, territory);
+        }
+
+        return (UnlistedRule, 0);
+    }
+
+    /// <summary>Whether <paramref name="candidate"/> can lend its genre to <paramref name="quest"/> under rules 4 and 5.</summary>
+    private static bool Fits(QuestRecord candidate, QuestRecord quest) =>
+        !candidate.IsUnlisted && !IsMainScenarioSection(candidate.Journal.SectionId) && candidate.Expansion == quest.Expansion;
+
+    /// <summary>Lookups over the raw records: rows, genre templates, successors, lock partners and the territory vote.</summary>
+    private sealed class Index
+    {
+        private readonly Dictionary<uint, QuestRecord> byRowId;
+        private readonly Dictionary<uint, JournalRef> templates = [];
+        private readonly Dictionary<uint, List<uint>> successors = [];
+        private readonly Dictionary<uint, List<uint>> lockedBy = [];
+        private readonly Dictionary<uint, Dictionary<uint, int>> territoryVotes = [];
+
+        public Index(IReadOnlyList<QuestRecord> quests)
+        {
+            byRowId = new Dictionary<uint, QuestRecord>(quests.Count);
+            foreach (var quest in quests)
+            {
+                byRowId[quest.RowId] = quest;
+            }
+
+            // Successor and lock lists in row order, so "first" is the same whatever order the records arrived in.
+            foreach (var quest in quests.OrderBy(q => q.RowId))
+            {
+                foreach (var previous in quest.PreviousQuests.QuestIds)
+                {
+                    Add(successors, previous, quest.RowId);
+                }
+
+                foreach (var lockId in quest.QuestLocks)
+                {
+                    Add(lockedBy, lockId, quest.RowId);
+                }
+
+                if (quest.IsUnlisted)
+                {
+                    continue;
+                }
+
+                templates.TryAdd(quest.Journal.GenreId, quest.Journal);
+
+                var category = quest.Journal.CategoryId;
+                if (category is >= RegionalCategoryMin and <= RegionalCategoryMax && quest.Issuer is { TerritoryId: not 0 } issuer)
+                {
+                    if (!territoryVotes.TryGetValue(issuer.TerritoryId, out var votes))
+                    {
+                        votes = [];
+                        territoryVotes[issuer.TerritoryId] = votes;
+                    }
+
+                    votes[quest.Journal.GenreId] = votes.GetValueOrDefault(quest.Journal.GenreId) + 1;
+                }
+            }
+        }
+
+        /// <summary>
+        /// The quest's journal reference under <paramref name="genreId"/>: the genre's names and rank from any listed
+        /// quest already filed there, with the quest's own sheet SortKey in the low bits so it sorts inside the genre.
+        /// A genre no quest holds keeps the quest's rank and names nothing.
+        /// </summary>
+        public JournalRef Assign(QuestRecord quest, uint genreId)
+        {
+            var sheetKey = quest.Journal.SortKey & SheetSortKeyMask;
+            if (templates.TryGetValue(genreId, out var template))
+            {
+                var rank = template.SortKey >> SortKeyGenreShift;
+                return template with { SortKey = (rank << SortKeyGenreShift) | sheetKey };
+            }
+
+            return JournalRef.None with { GenreId = genreId, SortKey = quest.Journal.SortKey };
+        }
+
+        /// <summary>Rule 2: the genre of the first listed direct successor, in row order.</summary>
+        public uint? FirstListedSuccessorGenre(QuestRecord quest)
+        {
+            if (!successors.TryGetValue(quest.RowId, out var next))
+            {
+                return null;
+            }
+
+            foreach (var id in next)
+            {
+                if (byRowId.TryGetValue(id, out var successor) && !successor.IsUnlisted)
+                {
+                    return successor.Journal.GenreId;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>Rule 4: depth-first through the prerequisite slots, descending only through unlisted ones.</summary>
+        public uint? PrerequisiteGenre(QuestRecord quest)
+        {
+            var visited = new HashSet<uint> { quest.RowId };
+            return Walk(quest, quest.PreviousQuests.QuestIds, visited, static (q, index) => q.PreviousQuests.QuestIds);
+        }
+
+        /// <summary>Rule 5: the successors the same way, then the quest's lock partners in either direction.</summary>
+        public uint? SuccessorOrLockGenre(QuestRecord quest)
+        {
+            var visited = new HashSet<uint> { quest.RowId };
+            if (Walk(quest, SuccessorsOf(quest.RowId), visited, static (q, index) => index.SuccessorsOf(q.RowId)) is { } genre)
+            {
+                return genre;
+            }
+
+            foreach (var id in quest.QuestLocks.Concat(lockedBy.GetValueOrDefault(quest.RowId) ?? []))
+            {
+                if (byRowId.TryGetValue(id, out var partner) && Fits(partner, quest))
+                {
+                    return partner.Journal.GenreId;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>Rule 6: the genre with the most listed regional sidequests issued from the quest's territory; null on a tie or no vote.</summary>
+        public uint? TerritoryGenre(QuestRecord quest)
+        {
+            if (quest.Issuer is not { TerritoryId: not 0 } issuer || !territoryVotes.TryGetValue(issuer.TerritoryId, out var votes))
+            {
+                return null;
+            }
+
+            uint best = 0;
+            var bestCount = 0;
+            var tied = false;
+            foreach (var (genre, count) in votes)
+            {
+                if (count > bestCount)
+                {
+                    best = genre;
+                    bestCount = count;
+                    tied = false;
+                }
+                else if (count == bestCount)
+                {
+                    tied = true;
+                }
+            }
+
+            return tied ? null : best;
+        }
+
+        private IReadOnlyList<uint> SuccessorsOf(uint rowId) => successors.GetValueOrDefault(rowId) ?? [];
+
+        /// <summary>
+        /// First listed record that fits, in slot order, descending through unlisted records only; a listed record
+        /// that does not fit ends its branch.
+        /// </summary>
+        private uint? Walk(QuestRecord quest, IReadOnlyList<uint> ids, HashSet<uint> visited, Func<QuestRecord, Index, IReadOnlyList<uint>> next)
+        {
+            foreach (var id in ids)
+            {
+                if (!visited.Add(id) || !byRowId.TryGetValue(id, out var candidate))
+                {
+                    continue;
+                }
+
+                if (!candidate.IsUnlisted)
+                {
+                    if (Fits(candidate, quest))
+                    {
+                        return candidate.Journal.GenreId;
+                    }
+
+                    continue;
+                }
+
+                if (Walk(quest, next(candidate, this), visited, next) is { } genre)
+                {
+                    return genre;
+                }
+            }
+
+            return null;
+        }
+
+        private static void Add(Dictionary<uint, List<uint>> map, uint key, uint value)
+        {
+            if (!map.TryGetValue(key, out var list))
+            {
+                list = [];
+                map[key] = list;
+            }
+
+            list.Add(value);
+        }
+    }
+}

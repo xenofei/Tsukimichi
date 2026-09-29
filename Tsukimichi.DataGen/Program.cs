@@ -102,7 +102,8 @@ public static class Program
             var curatedData = CuratedData.Load(curated);
             foreach (var warning in curatedData.Warnings)
                 Console.WriteLine($"curated: {warning}");
-            var bundle = CatalogMapper.Map(sheets.Data.Excel, Language.English);
+            // The refiled catalog, as the plugin builds it: retired quests never derive, refiled quasi-quests do.
+            var bundle = CatalogMapper.Map(sheets.Data.Excel, Language.English, curated: curatedData);
             var featureIds = FeaturePresets.Derive(bundle.Catalog, curatedData.WithoutFeatureQuests(), entries);
             var featurePath = Path.Combine(curated, CuratedData.FeatureQuestsFileName);
             FeatureQuestsFile.Write(featurePath, featureIds);
@@ -263,7 +264,8 @@ public static class Program
             DefaultExcelLanguage = Lumina.Data.Language.English,
             PanicOnSheetChecksumMismatch = false,
         });
-        var bundle = CatalogMapper.Map(data.Excel, Lumina.Data.Language.English, log: line => Console.WriteLine($"  {line}"));
+        // The fixture holds the sheet's own filing; the tests run the refiler on it with the curated files of their checkout.
+        var bundle = CatalogMapper.Map(data.Excel, Lumina.Data.Language.English, log: line => Console.WriteLine($"  {line}"), filing: JournalFiling.Legacy);
         CatalogFixtureFile.Write(path, bundle, gameVersion);
 
         var bytes = new FileInfo(path).Length;
@@ -319,6 +321,6 @@ public static class Program
         Console.WriteLine($"       defaults: --data {DefaultData} --report {DefaultVerifyReport} --sample 48 --seed 20260927");
         Console.WriteLine("       a verification-notes.md next to the report is inserted after the header (hand-written findings).");
         Console.WriteLine("       Tsukimichi.DataGen --dump-catalog <file.json.gz or directory> --game <sqpack path>");
-        Console.WriteLine("       freezes the mapped catalog for the tests (Tsukimichi.Tests/Fixtures/catalog-<gameVersion>.json.gz).");
+        Console.WriteLine("       freezes the mapped catalog (the sheet's own journal filing) for the tests (Tsukimichi.Tests/Fixtures/catalog-<gameVersion>.json.gz).");
     }
 }
