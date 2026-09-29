@@ -2,7 +2,8 @@ name: CI
 
 # Every push to main and every pull request builds the whole solution with warnings as errors and runs the test
 # suite. The [GameDataFact] tests skip here (no game files on the runner); the curated-data and fixture-backed
-# tests run everywhere.
+# tests run everywhere. The timing tests ([Trait("Category", "Perf")]) are left out: their budgets are for a
+# developer machine, and a busy shared runner would fail them for no reason.
 on:
   push:
     branches: [main]
@@ -38,7 +39,7 @@ jobs:
         run: dotnet build Tsukimichi.sln -c Release -warnaserror
 
       - name: Test
-        run: dotnet test Tsukimichi.Tests -c Release --no-build
+        run: dotnet test Tsukimichi.Tests -c Release --no-build --filter "Category!=Perf"
 
       - name: Curated-data invariants
         # The shipped curated JSON and the committed catalog fixture; these carry [Trait("Category", "Curated")].

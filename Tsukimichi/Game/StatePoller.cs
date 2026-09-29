@@ -14,8 +14,9 @@ namespace Tsukimichi.Game;
 /// <summary>
 /// Once per <see cref="Configuration.PollInterval"/> while a character is ready and the catalog is built: capture,
 /// diff, re-resolve what changed, emit events, publish to <see cref="SessionState"/> and persist (debounced).
-/// Exceptions from game reads back the interval off exponentially to <see cref="MaxBackoff"/> with a single warning;
-/// exceptions from session listeners are logged (rate-limited) and never affect the backoff.
+/// Exceptions from game reads, and a first pass that faults on its worker, back the interval off exponentially to
+/// <see cref="MaxBackoff"/> with a single warning (<see cref="PollSchedule"/>); exceptions from session listeners are
+/// logged (rate-limited) and never affect the backoff.
 /// <para>
 /// The first pass for a character resolves the whole catalog, which took a visible slice of a frame; the capture
 /// still happens here (ClientStructs reads stay on the framework thread), but the catalog-wide resolve and the
@@ -46,7 +47,7 @@ public sealed class StatePoller : IDisposable
     private readonly Configuration config;
 
     private readonly PollerMemory memory = new(SaveInterval);
-    private readonly PollBackoff backoff = new(TimeSpan.FromSeconds(2), MaxBackoff);
+    private readonly PollSchedule schedule = new(TimeSpan.FromSeconds(2), MaxBackoff);
     private readonly LoginReadiness readiness = new();
 
     /// <summary>The first pass in flight on a worker; null while none is. Touched only on the framework thread.</summary>
@@ -54,10 +55,8 @@ public sealed class StatePoller : IDisposable
 
     private bool firstCaptureLogged;
     private bool acceptedSinceWarned;
-    private DateTime lastPollUtc = DateTime.MinValue;
     private DateTime lastListenerWarningUtc = DateTime.MinValue;
     private bool wasReady;
-    private bool warned;
     private bool saveWarned;
     private bool disposed;
 
@@ -200,12 +199,12 @@ public sealed class StatePoller : IDisposable
 
         var first = !wasReady;
         wasReady = true;
-        if (!first && now - lastPollUtc < backoff.IntervalOr(config.PollInterval))
+        if (!first && !schedule.IsDue(now, config.PollInterval))
         {
             return;
         }
 
-        lastPollUtc = now;
+        schedule.Attempt(now);
 
         // Game reads and the state commit: only these drive the backoff. The stopwatch covers capture, diff and
         // resolve; publishing to the session (and the UI it wakes) is not part of a poll's own cost.
@@ -219,30 +218,32 @@ public sealed class StatePoller : IDisposable
         catch (Exception ex)
         {
             failed = true;
-            backoff.RecordFailure();
-            if (!warned)
+            if (schedule.Fail(now))
             {
-                warned = true;
-                log.Warning(ex, "Game state read failed; retrying in {Seconds} s and backing off to {Max} s", backoff.Current.TotalSeconds, MaxBackoff.TotalSeconds);
+                log.Warning(ex, "Game state read failed; retrying in {Seconds} s and backing off to {Max} s", schedule.Wait.TotalSeconds, MaxBackoff.TotalSeconds);
             }
         }
 
+        // A poll that only started a first pass has not succeeded yet: its outcome, the backoff and the poller's
+        // health wait for CommitFirstPass. Poll throws before it starts one, so a failed poll is always settled.
+        var settled = pendingFirst is null;
         if (!failed)
         {
             session.RecordPoll(Stopwatch.GetElapsedTime(started).TotalMilliseconds);
-            if (backoff.IsActive)
+            if (settled)
             {
-                log.Information("Poller recovered after {Failures} failure(s)", backoff.Failures);
+                RecordSuccess();
             }
-
-            backoff.Reset();
-            warned = false;
         }
 
         // Session listeners (the UI) run apart from the reads: a throwing subscriber is not a game-read failure.
         Notify(() =>
         {
-            session.SetPollerHealthy(!failed);
+            if (settled)
+            {
+                session.SetPollerHealthy(!failed);
+            }
+
             if (result is { } r)
             {
                 Publish(r);
@@ -357,21 +358,29 @@ public sealed class StatePoller : IDisposable
     {
         if (!pending.Task.IsCompletedSuccessfully)
         {
-            // Pure Core work on immutable inputs: a failure here is a bug, not a game read. Report it once and let
-            // the next poll start another first pass at the backoff cadence rather than every second.
-            backoff.RecordFailure();
-            if (!warned)
+            // Pure Core work on immutable inputs: a failure here is a bug, not a game read. It shares the read
+            // failures' schedule: the next first pass starts a backoff step after the fault (not every second),
+            // the warning is logged once, and the poller reads unhealthy until a pass commits.
+            if (schedule.Fail(now))
             {
-                warned = true;
-                log.Warning(pending.Task.Exception?.GetBaseException(), "First evaluation failed; retrying in {Seconds} s", backoff.Current.TotalSeconds);
+                log.Warning(pending.Task.Exception?.GetBaseException(), "First evaluation failed; retrying in {Seconds} s and backing off to {Max} s", schedule.Wait.TotalSeconds, MaxBackoff.TotalSeconds);
             }
 
+            Notify(() => session.SetPollerHealthy(false));
             return;
         }
 
         if (!ReferenceEquals(pending.Bundle, session.Bundle))
         {
             log.Debug("Catalog changed during the first evaluation; it will run again");
+            return;
+        }
+
+        if (pending.Snapshot.ContentId != reader.ContentId)
+        {
+            // Another character arrived without a not-ready gap while the pass was on the worker: publishing the
+            // previous one as live, even for one interval, would show the wrong character. The next poll starts over.
+            log.Debug("Character changed during the first evaluation; the next poll starts another");
             return;
         }
 
@@ -404,8 +413,23 @@ public sealed class StatePoller : IDisposable
             log.Debug("First evaluation for {Name} ({ContentId}): {Count} quests in {ResolveMs:F1} ms on a worker", snapshot.Name, snapshot.ContentId, result.States.Count, result.ResolveMs);
         }
 
-        Notify(() => Publish(new PollResult(snapshot, result.States, pending.Context, [])));
+        RecordSuccess();
+        Notify(() =>
+        {
+            session.SetPollerHealthy(true);
+            Publish(new PollResult(snapshot, result.States, pending.Context, []));
+        });
         Flush();
+    }
+
+    /// <summary>A poll committed, or a first pass did: the backoff and its warning latch clear, and a recovery is logged.</summary>
+    private void RecordSuccess()
+    {
+        var recovered = schedule.Succeed();
+        if (recovered > 0)
+        {
+            log.Information("Poller recovered after {Failures} failure(s)", recovered);
+        }
     }
 
     /// <summary>Forgets a first pass in flight; the worker finishes on its own and its result is ignored.</summary>
@@ -444,6 +468,7 @@ public sealed class StatePoller : IDisposable
         }
 
         var wasWaiting = readiness.WaitingSinceUtc is not null;
+        var wasOverdue = readiness.Overdue;
         switch (readiness.Check(capture, stored, now))
         {
             case LoginVerdict.NotReady:
@@ -451,11 +476,15 @@ public sealed class StatePoller : IDisposable
                 {
                     log.Debug("First capture for {ContentId} has no quest data yet; waiting up to {Seconds} s for the client to settle", capture.ContentId, readiness.MaxWait.TotalSeconds);
                 }
+                else if (readiness.Overdue && !wasOverdue)
+                {
+                    log.Warning("First capture for {ContentId} still has no quest data after {Seconds} s while the stored snapshot has; keeping the stored character and waiting for the client", capture.ContentId, readiness.MaxWait.TotalSeconds);
+                }
 
                 return false;
 
             case LoginVerdict.ReadyAfterTimeout:
-                log.Information("First capture for {ContentId} still has no quest data after {Seconds} s; committing it as an empty character", capture.ContentId, readiness.MaxWait.TotalSeconds);
+                log.Information("First capture for {ContentId} still has no quest data after {Seconds} s and nothing is stored; committing it as an empty character", capture.ContentId, readiness.MaxWait.TotalSeconds);
                 return true;
 
             default:

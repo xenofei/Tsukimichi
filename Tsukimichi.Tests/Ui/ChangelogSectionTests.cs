@@ -97,16 +97,36 @@ public class ChangelogSectionTests
     }
 
     [Theory]
-    [InlineData("", "0.6.0", true, WhatsNewDecision.RecordSilently)]
-    [InlineData(null, "0.6.0", true, WhatsNewDecision.RecordSilently)]
-    [InlineData("0.6.0", "0.6.0", true, WhatsNewDecision.Nothing)]
-    [InlineData("0.6.0", "0.6.0.0", true, WhatsNewDecision.Nothing)]
-    [InlineData("0.5.1", "0.6.0", true, WhatsNewDecision.Show)]
-    [InlineData("0.5.1", "0.6.0", false, WhatsNewDecision.RecordSilently)]
-    [InlineData("0.5.1", "", true, WhatsNewDecision.Nothing)]
-    public void WhatsNew_shows_once_after_an_update_and_never_on_a_fresh_install(string? seen, string? running, bool hasSection, WhatsNewDecision expected)
+    [InlineData("", "0.6.0", true, false, WhatsNewDecision.RecordSilently)]
+    [InlineData(null, "0.6.0", true, false, WhatsNewDecision.RecordSilently)]
+    [InlineData("0.6.0", "0.6.0", true, false, WhatsNewDecision.Nothing)]
+    [InlineData("0.6.0", "0.6.0.0", true, true, WhatsNewDecision.Nothing)]
+    [InlineData("0.5.1", "0.6.0", true, true, WhatsNewDecision.Show)]
+    [InlineData("0.5.1", "0.6.0", true, false, WhatsNewDecision.Show)]
+    [InlineData("0.5.1", "0.6.0", false, true, WhatsNewDecision.RecordSilently)]
+    [InlineData("0.5.1", "", true, true, WhatsNewDecision.Nothing)]
+    public void WhatsNew_shows_once_after_an_update_and_never_on_a_fresh_install(string? seen, string? running, bool hasSection, bool hasPriorConfig, WhatsNewDecision expected)
     {
-        Assert.Equal(expected, WhatsNew.Decide(seen, running, hasSection));
+        Assert.Equal(expected, WhatsNew.Decide(seen, running, hasSection, hasPriorConfig));
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData(null)]
+    public void WhatsNew_shows_after_an_update_from_a_build_that_never_recorded_a_version(string? seen)
+    {
+        // Every release before 0.6.0 left LastSeenVersion empty; a configuration that already existed tells that
+        // update apart from a fresh install, which still records silently.
+        Assert.Equal(WhatsNewDecision.Show, WhatsNew.Decide(seen, "0.6.0", hasSection: true, hasPriorConfig: true));
+        Assert.Equal(WhatsNewDecision.RecordSilently, WhatsNew.Decide(seen, "0.6.0", hasSection: false, hasPriorConfig: true));
+        Assert.Equal(WhatsNewDecision.RecordSilently, WhatsNew.Decide(seen, "0.6.0", hasSection: true, hasPriorConfig: false));
+    }
+
+    [Fact]
+    public void WhatsNew_without_the_prior_config_flag_reads_an_empty_version_as_a_fresh_install()
+    {
+        Assert.Equal(WhatsNewDecision.RecordSilently, WhatsNew.Decide("", "0.6.0", hasSection: true));
+        Assert.Equal(WhatsNewDecision.Show, WhatsNew.Decide("0.5.1", "0.6.0", hasSection: true));
     }
 
     [Fact]

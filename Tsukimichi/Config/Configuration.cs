@@ -105,6 +105,14 @@ public sealed class Configuration : IPluginConfiguration
     /// </summary>
     public string LastSeenVersion { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Whether a configuration file existed before this load; set by <see cref="Load(IDalamudPluginInterface, IPluginLog?)"/>,
+    /// never persisted. With <see cref="LastSeenVersion"/> empty it tells an update from a build that predates the
+    /// card (every release before 0.6.0) apart from a fresh install (<c>Core.Ui.WhatsNew.Decide</c>).
+    /// </summary>
+    [Newtonsoft.Json.JsonIgnore]
+    public bool HasPriorConfig { get; private set; }
+
     // ---- 0.6.0: Moonlit store re-sells ----
     /// <summary>
     /// Moonlit toolbar "Hide store re-sells": drop rewards the FFXIV Online Store also sells (entry OtherSources carries
@@ -142,6 +150,8 @@ public sealed class Configuration : IPluginConfiguration
     public static Configuration Load(IDalamudPluginInterface pluginInterface, IPluginLog? log)
     {
         ArgumentNullException.ThrowIfNull(pluginInterface);
+        // Read before the load: a file that exists but cannot be read still counts as a prior configuration.
+        var hadFile = pluginInterface.ConfigFile.Exists;
         Configuration config;
         try
         {
@@ -169,6 +179,7 @@ public sealed class Configuration : IPluginConfiguration
 
         config.Filters ??= new FilterSet();
         config.LastSeenVersion ??= string.Empty;
+        config.HasPriorConfig = hadFile;
         return config;
     }
 

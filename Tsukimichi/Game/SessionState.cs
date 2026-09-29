@@ -2,6 +2,8 @@ using System;
 using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
+using Dalamud.Plugin.Services;
 using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
@@ -22,11 +24,15 @@ public sealed class SessionState
 {
     public const int MaxRecentEvents = 100;
 
+    /// <summary>Pause before the one retry of a delete that hit the first-pass worker's read of the same file.</summary>
+    private const int DeleteRetryDelayMs = 10;
+
     private static readonly IReadOnlyDictionary<uint, QuestEvaluation> NoStates = new Dictionary<uint, QuestEvaluation>();
     private static readonly IReadOnlyDictionary<ushort, DateTime> NoAcceptedSince = new Dictionary<ushort, DateTime>();
 
     private readonly SnapshotService snapshots;
     private readonly PluginPaths paths;
+    private readonly IPluginLog? log;
     private readonly RecentEventsTracker recentEvents = new(MaxRecentEvents);
 
     private EvalContext baseContext = EvalContext.Default;
@@ -37,10 +43,11 @@ public sealed class SessionState
     private bool followLive = true;
     private ulong? viewedContentId;
 
-    public SessionState(SnapshotService snapshots, PluginPaths paths, UniqueRewardsData uniqueRewards, CuratedData curated)
+    public SessionState(SnapshotService snapshots, PluginPaths paths, UniqueRewardsData uniqueRewards, CuratedData curated, IPluginLog? log = null)
     {
         this.snapshots = snapshots ?? throw new ArgumentNullException(nameof(snapshots));
         this.paths = paths ?? throw new ArgumentNullException(nameof(paths));
+        this.log = log;
         UniqueRewards = uniqueRewards ?? throw new ArgumentNullException(nameof(uniqueRewards));
         Curated = curated ?? throw new ArgumentNullException(nameof(curated));
         StoreResells = StoreResells.Build(UniqueRewards.Entries);
@@ -353,11 +360,34 @@ public sealed class SessionState
         Changed?.Invoke();
     }
 
-    private static void DeleteIfExists(string path)
+    /// <summary>
+    /// Deletes a file when it exists. The poller's first-pass worker reads the accepted-time sidecar with
+    /// <see cref="File.ReadAllText(string)"/>, whose share mode refuses a delete for the milliseconds the read takes,
+    /// so a sharing violation is retried once after a short pause; a second failure is logged and the file stays
+    /// (the next flush rewrites the pair, the next forget removes it) rather than surfacing from a button click.
+    /// </summary>
+    private void DeleteIfExists(string path)
     {
-        if (File.Exists(path))
+        for (var attempt = 1; ; attempt++)
         {
-            File.Delete(path);
+            try
+            {
+                if (File.Exists(path))
+                {
+                    File.Delete(path);
+                }
+
+                return;
+            }
+            catch (IOException) when (attempt == 1)
+            {
+                Thread.Sleep(DeleteRetryDelayMs);
+            }
+            catch (IOException ex)
+            {
+                log?.Warning(ex, "Could not delete {Path}; it is left in place", path);
+                return;
+            }
         }
     }
 }

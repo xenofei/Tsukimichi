@@ -68,6 +68,9 @@ public sealed class GameStateReader
     /// </summary>
     public bool IsCharacterReadable() => IsPlayerLoaded() && playerState.ContentId != 0;
 
+    /// <summary>The content id of the character the client has now (what <see cref="Capture"/> would stamp), 0 while none. Framework thread only.</summary>
+    public ulong ContentId => playerState.ContentId;
+
     /// <summary>
     /// Captures the logged-in character. Framework thread only.
     /// Completion is read per catalog quest id (plus every previous-quest and lock id the catalog references) through
