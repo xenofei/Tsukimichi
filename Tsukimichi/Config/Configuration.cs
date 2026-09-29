@@ -188,6 +188,14 @@ public sealed class Configuration : IPluginConfiguration
 
         config.Filters ??= new FilterSet();
         config.LastSeenVersion ??= string.Empty;
+        if (!Enum.IsDefined(config.JournalFiling))
+        {
+            // A hand-edited integer, or a value a newer build wrote before a downgrade: the mapper would read it as
+            // Legacy while neither radio button showed selected. The default filing stands.
+            log?.Warning("Saved JournalFiling {Value} is not a known mode; using {Default}", (int)config.JournalFiling, JournalFiling.Refiled);
+            config.JournalFiling = JournalFiling.Refiled;
+        }
+
         config.HasPriorConfig = hadFile;
         return config;
     }
