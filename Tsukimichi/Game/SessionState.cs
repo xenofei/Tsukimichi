@@ -263,6 +263,21 @@ public sealed class SessionState
         Bump();
     }
 
+    /// <summary>
+    /// A rebuild started (a filing flip or a retry): the windows show the catalog as loading until the build lands.
+    /// The current <see cref="Bundle"/> stays in place for the poller and the integrations meanwhile.
+    /// </summary>
+    internal void SetCatalogRebuilding()
+    {
+        if (CatalogLoading)
+        {
+            return;
+        }
+
+        CatalogLoading = true;
+        Bump();
+    }
+
     /// <summary>The poller's latest capture and evaluations. Shown when following live or when the viewed character is this one.</summary>
     /// <param name="acceptedSince">The poller's accepted-time map for this character; null keeps whatever was published last.</param>
     internal void SetLive(CharacterSnapshot snapshot, IReadOnlyDictionary<uint, QuestEvaluation> states, EvalContext context, IReadOnlyDictionary<ushort, DateTime>? acceptedSince = null)
