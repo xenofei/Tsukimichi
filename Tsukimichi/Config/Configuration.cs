@@ -69,6 +69,10 @@ public sealed class Configuration : IPluginConfiguration
     /// <summary>Add a "Tsukimichi: quest reward" entry to item context menus.</summary>
     public bool ItemContextMenuEnabled { get; set; } = true;
 
+    // ---- 0.6.2: NPC context menu (P2) ----
+    /// <summary>Add a "Tsukimichi: quests here (N)" entry to the target bar's menu on a quest-giving NPC.</summary>
+    public bool NpcContextMenuEnabled { get; set; } = true;
+
     /// <summary>Days an accepted quest sits untouched before the Stalled preset lists it; 1–90, default 7. Clamped by <see cref="StalledDaysClamped"/> when read.</summary>
     public int StalledDays { get; set; } = DefaultStalledDays;
 

@@ -523,7 +523,7 @@ public sealed class MainWindow : Window, IDisposable
                 if (strip)
                 {
                     ui.RecordWindow(UiRects.Chips);
-                    filterPanel.DrawChips();
+                    filterPanel.DrawChips(session.Bundle);
                 }
             }
 

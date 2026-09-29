@@ -5,6 +5,7 @@ using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility.Raii;
 using Tsukimichi.Config;
+using Tsukimichi.Core.Discovery;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Ui;
@@ -245,15 +246,30 @@ public sealed class FilterPanel
 
     /// <summary>
     /// Chips for every engaged filter on one line; clicking one clears that filter. Drawn inside the toolbar's
-    /// fixed-height strip, so it never wraps and draws nothing when none is engaged.
+    /// fixed-height strip, so it never wraps and draws nothing when none is engaged. The NPC scope from the context
+    /// menu (<see cref="QuestScope.Issuer"/>) has no tree node, so it is the first chip: "Quests from Gerolt", named
+    /// from <paramref name="current"/>; clearing it shows the whole journal again.
     /// </summary>
-    public void DrawChips()
+    /// <param name="current">The catalog, for the NPC's name; null while it is loading.</param>
+    public void DrawChips(CatalogBundle? current)
     {
         var f = ui.Filters;
         var any = false;
 
         // Small buttons are text-high; centre them on the toolbar's frame-high row.
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + MathF.Max(0f, (ImGui.GetFrameHeight() - ImGui.GetTextLineHeight()) * 0.5f));
+
+        if (ui.Scope.Kind == ScopeKind.VirtualIssuer)
+        {
+            var name = current is { } b ? QuestDiscovery.IssuerName(b.Catalog, ui.Scope.Id) : null;
+            var label = name is null ? Strings.ChipIssuerUnknown : string.Format(CultureInfo.CurrentCulture, Strings.ChipIssuerFormat, name);
+            // The scope is not a filter and is not persisted; the query re-runs on the dirty mark alone.
+            Chip(label, ref any, () =>
+            {
+                ui.Scope = QuestScope.None;
+                ui.MarkQueryDirty();
+            }, notify: false, explanation: Strings.ChipIssuerTooltip);
+        }
 
         if (ui.SearchText.Length > 0)
         {

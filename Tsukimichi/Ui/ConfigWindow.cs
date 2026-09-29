@@ -112,6 +112,9 @@ public sealed class ConfigWindow : Window
     /// <summary>Called with the new value after <see cref="Configuration.ItemContextMenuEnabled"/> is toggled and saved; the item-hint feature wires it.</summary>
     public Action<bool>? ItemContextMenuToggled { get; set; }
 
+    /// <summary>Called with the new value after <see cref="Configuration.NpcContextMenuEnabled"/> is toggled and saved; the NPC menu hook wires it.</summary>
+    public Action<bool>? NpcContextMenuToggled { get; set; }
+
     /// <summary>The user's Moonlit verdicts for the Data section; set by the plugin once the Moonlit pane exists. Null shows a placeholder.</summary>
     public IUniqueOverrides? Overrides { get; set; }
 
@@ -508,6 +511,19 @@ public sealed class ConfigWindow : Window
         if (ImGui.IsItemHovered())
         {
             ImGui.SetTooltip(Strings.ConfigWotsitIntegrationHint);
+        }
+
+        var npcMenu = settings.NpcContextMenuEnabled;
+        if (ImGui.Checkbox(Strings.ConfigNpcContextMenu, ref npcMenu))
+        {
+            settings.NpcContextMenuEnabled = npcMenu;
+            Save();
+            NpcContextMenuToggled?.Invoke(npcMenu);
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip(Strings.ConfigNpcContextMenuHint);
         }
     }
 
