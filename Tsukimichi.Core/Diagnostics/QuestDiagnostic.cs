@@ -138,6 +138,8 @@ public static class QuestDiagnostic
             MountRequirement { HasMount: null } => NotChecked,
             HouseRequirement { HasHouse: null } => NotChecked,
             AchievementRequirement { Loaded: false } => NotChecked,
+            CustomDeliveryRankRequirement { ActualRank: null } => NotChecked,
+            CarrierLevelRequirement { ActualLevel: null } => NotChecked,
             _ => result.Met ? Met : Unmet,
         };
     }
@@ -266,6 +268,41 @@ public static class QuestDiagnostic
 
             case SeasonalRequirement s:
                 sb.Append("festival ").Append(s.FestivalId.ToString(CultureInfo.InvariantCulture)).Append(s.Active ? " active" : " not active");
+                if (s.HasWindow)
+                {
+                    sb.Append(", window ").Append(s.Begin.ToString(CultureInfo.InvariantCulture)).Append('-').Append(s.End.ToString(CultureInfo.InvariantCulture));
+                    if (s.Active)
+                    {
+                        sb.Append(", phase ").Append(s.Phase is { } phase ? phase.ToString(CultureInfo.InvariantCulture) : Unknown);
+                    }
+                }
+
+                break;
+
+            case CustomDeliveryRankRequirement c:
+                sb.Append(SatisfactionNpcName(names, c.Npc)).Append(" rank ");
+                if (c.ActualRank is { } rank)
+                {
+                    sb.Append(rank.ToString(CultureInfo.InvariantCulture)).Append(CompareActualFirst(result.Met)).Append(c.RequiredRank.ToString(CultureInfo.InvariantCulture));
+                }
+                else
+                {
+                    sb.Append(Unknown).Append(", needs ").Append(c.RequiredRank.ToString(CultureInfo.InvariantCulture));
+                }
+
+                break;
+
+            case CarrierLevelRequirement c:
+                sb.Append("carrier level ");
+                if (c.ActualLevel is { } level)
+                {
+                    sb.Append(level.ToString(CultureInfo.InvariantCulture)).Append(CompareActualFirst(result.Met)).Append(c.RequiredLevel.ToString(CultureInfo.InvariantCulture));
+                }
+                else
+                {
+                    sb.Append(Unknown).Append(", needs ").Append(c.RequiredLevel.ToString(CultureInfo.InvariantCulture));
+                }
+
                 break;
 
             case AcceptConditionRequirement a:
@@ -368,7 +405,19 @@ public static class QuestDiagnostic
         if (Has(kinds, RequirementKind.Seasonal))
         {
             sb.Append(", festivals ");
-            AppendIds(sb, s.ActiveFestivals);
+            AppendFestivals(sb, s);
+        }
+
+        if (Has(kinds, RequirementKind.CustomDeliveryRank))
+        {
+            var rank = s.SatisfactionRank(quest.SatisfactionNpc);
+            sb.Append(", delivery client ").Append(quest.SatisfactionNpc.ToString(CultureInfo.InvariantCulture))
+                .Append(" rank ").Append(rank is { } r ? r.ToString(CultureInfo.InvariantCulture) : Unknown);
+        }
+
+        if (Has(kinds, RequirementKind.CarrierLevel))
+        {
+            sb.Append(", carrier level ").Append(s.CarrierLevelOrNull is { } level ? level.ToString(CultureInfo.InvariantCulture) : Unknown);
         }
 
         if (Has(kinds, RequirementKind.Mount))
@@ -439,6 +488,44 @@ public static class QuestDiagnostic
     {
         var name = names.Tribe(tribe);
         return name.Length > 0 ? name : "tribe " + tribe.ToString(CultureInfo.InvariantCulture);
+    }
+
+    private static string SatisfactionNpcName(BlockerNames names, byte npc)
+    {
+        var name = names.SatisfactionNpc(npc);
+        return name.Length > 0 ? name : "client " + npc.ToString(CultureInfo.InvariantCulture);
+    }
+
+    /// <summary>"[39/1, 256/0]" as id/phase when the capture holds phases, "[39, 256]" without them; "[-]" when none run.</summary>
+    private static void AppendFestivals(StringBuilder sb, CharacterSnapshot s)
+    {
+        if (s.ActiveFestivalPhases.Count == 0)
+        {
+            AppendIds(sb, s.ActiveFestivals);
+            return;
+        }
+
+        sb.Append('[');
+        for (var i = 0; i < s.ActiveFestivals.Count; i++)
+        {
+            if (i > 0)
+            {
+                sb.Append(", ");
+            }
+
+            sb.Append(s.ActiveFestivals[i].ToString(CultureInfo.InvariantCulture));
+            if (i < s.ActiveFestivalPhases.Count)
+            {
+                sb.Append('/').Append(s.ActiveFestivalPhases[i].ToString(CultureInfo.InvariantCulture));
+            }
+        }
+
+        if (s.ActiveFestivals.Count == 0)
+        {
+            sb.Append('-');
+        }
+
+        sb.Append(']');
     }
 
     private static void AppendQuest(StringBuilder sb, uint rowId, BlockerNames names)

@@ -62,6 +62,9 @@ public sealed record EvalContext
     /// <summary>Expansion name for requirement details; defaults to <see cref="Expansions.Name"/>.</summary>
     public Func<byte, string> ExpansionName { get; init; } = Expansions.Name;
 
+    /// <summary>Custom delivery client name by SatisfactionNpc row id for requirement details ("M'naago"); empty leaves the client out of the clause.</summary>
+    public Func<byte, string> SatisfactionNpcName { get; init; } = static _ => string.Empty;
+
     /// <summary>
     /// A context whose <see cref="FestivalIsPast"/> answers true for a festival whose curated end lies before
     /// <paramref name="nowUtc"/>. Festivals without an entry, or with a null end, are left to the other sources:

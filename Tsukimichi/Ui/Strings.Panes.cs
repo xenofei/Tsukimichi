@@ -572,7 +572,7 @@ static partial class Strings
         [
             "Steps the game skips",
             "\"Bloodsworn\" reads \"Allied\"",
-            "Conditions listed but not judged",
+            "Delivery ranks and event chapters",
             "Store re-sells in Moonlit",
         ];
 
@@ -580,7 +580,7 @@ static partial class Strings
         [
             "The plugin lists every prerequisite the game's data records. For a few quests the game waives one: Up In Arms is optional once the Zenith is in hand, so what follows it is offered while Tsukimichi still shows Up In Arms undone and marks the next quest Blocked. When an NPC offers a quest shown Blocked here, use Report this quest so the exception can be added to the curated notes.",
             "Patch 7.0 renamed beast tribes to allied societies and the top rank from Bloodsworn to Allied. Tsukimichi uses the current names, so a requirement reads \"Allied\" where an older guide, or quest text written before 7.0, says \"Bloodsworn\". They are the same rank.",
-            "Some accept conditions are listed in the requirements but not yet judged: a custom delivery client's satisfaction rank, the Delivery Moogle's carrier rank, and which phase of a running seasonal event has begun. Such a quest can show Ready a little before the NPC hands it out.",
+            "A custom delivery client's satisfaction rank, the Delivery Moogle's carrier level and the chapter of a running seasonal event are judged since 0.6.2: a quest that needs rank 4 with M'naago, carrier level 7 or a chapter that has not opened yet shows Blocked with that reason. A character file written by an older version carries none of these values, so its quests read as before until the next capture. The game keeps the event chapter in three places and it is not yet known which one the quest givers follow; the plugin reads the first (GameMain) and, once per login, writes all three to the Dalamud log under \"[festival probe]\". If a chapter gate looks wrong during an event, send that log line with the report.",
             "Some past seasonal rewards (minions, emotes, mounts, bardings, orchestrion rolls, ornaments) are sold again on the Online Store, which the game files cannot know. Moonlit says so on the rows the curated list covers; if you find one it does not, open a data correction issue with the store page as evidence.",
         ];
 

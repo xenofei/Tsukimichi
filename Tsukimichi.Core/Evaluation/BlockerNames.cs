@@ -39,4 +39,7 @@ public sealed record BlockerNames
 
     /// <summary>Duty name by InstanceContent row id ("The Vault"); empty prints how many duties are left.</summary>
     public Func<uint, string> Duty { get; init; } = static _ => string.Empty;
+
+    /// <summary>Custom delivery client name by SatisfactionNpc row id ("M'naago"); empty drops the "with M'naago" clause.</summary>
+    public Func<byte, string> SatisfactionNpc { get; init; } = static _ => string.Empty;
 }
