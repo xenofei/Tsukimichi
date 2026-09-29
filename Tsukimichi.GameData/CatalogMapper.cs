@@ -104,8 +104,9 @@ public static class CatalogMapper
             GrandCompanyRank = ToByte(quest.GrandCompanyRank.RowId),
             BeastTribe = ToByte(quest.BeastTribe.RowId),
             BeastRank = ToByte(quest.BeastReputationRank.RowId),
-            // The society story quests carry 65535 here (no reputation gate, the rank alone decides); only the
-            // dailies and a few rank-ups hold a real value, so the sentinel maps to "none".
+            // With current data every quest carries 0 or 65535 here, the society story quests 65535: no reputation
+            // gate, the rank alone decides. The sentinel maps to "none", so no tribe quest reads a reputation value
+            // today; the requirement stays for a sheet that ever holds a real one.
             BeastValue = quest.BeastReputationValue == ushort.MaxValue ? (ushort)0 : quest.BeastReputationValue,
 
             IsRepeatable = quest.IsRepeatable,
