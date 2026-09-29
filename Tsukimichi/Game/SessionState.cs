@@ -247,10 +247,19 @@ public sealed class SessionState
         Names = bundle.BlockerNames();
         baseContext = EvalContextBuilder.Build(Curated.Festivals, bundle.Jobs, static () => DateTime.UtcNow, jobParents: bundle.JobParents());
 
+        // The live evaluations belong to the previous catalog (a filing flip retires or restores rows): shown
+        // against this one they would read "Locked out · removed from the game" on rows no longer retired, or Ready
+        // on retired ones, until the poller's next pass. The poller sees the new bundle on its next poll and starts
+        // a first pass; until it commits, the live character reads Not checked.
+        liveStates = NoStates;
         if (ViewedSnapshot is { } viewed && !IsLive)
         {
             Context = baseContext;
             States = StateResolver.ResolveAll(bundle.Catalog, viewed, baseContext);
+        }
+        else if (IsLive)
+        {
+            States = NoStates;
         }
 
         Bump();
