@@ -1,0 +1,4 @@
+{
+  "$schema_note": "entries: { rowId (quest row id or \u0022*\u0022), fact (fact name, or reward:\u003CKind\u003E for reward rows), source (optional), verdict, reason, evidence (URL), until (release in which the fix lands; the entry expires once the plugin version reaches it) }",
+  "entries": []
+}

@@ -594,14 +594,6 @@ internal sealed partial class QuestVerifier(
             drafts.Add(Compare(Facts.Rewards, Names.Join(rewardNames), SourceNames.Lodestone, Names.Join(pageRewards), lodestoneRef, RewardsConsistent(rewardNames, pageRewards, out var rewardWhy), rewardWhy));
         }
 
-        if (quest.IsUnlisted)
-        {
-            // Unlisted (hidden, removed, legacy) rows: only identity facts are compared, as qa-data-engineer §1.4 asks; the rest would only pollute the counts.
-            drafts = drafts.Select(d => d.Fact is Facts.Listed or Facts.Name or Facts.DisplayLevel or Facts.Retired || !d.Disagree
-                ? d
-                : d with { Verdict = Verdict.NotModeled, Disagree = false, Reason = "unlisted row; only identity facts are compared (" + d.Reason + ")" }).ToList();
-        }
-
         // ---- wiki
         if (wikiByRow.TryGetValue(quest.RowId, out var wikiPage))
         {
@@ -739,6 +731,14 @@ internal sealed partial class QuestVerifier(
                 var ok = curatedNames.Any(n => Names.Canon(n) == Names.Canon(g.InstanceName));
                 drafts.Add(Compare(Facts.DutyUnlock, Names.Join(curatedNames), SourceNames.Garland, g.InstanceName, gref, ok, ok ? string.Empty : $"Garland reward.instance {g.InstanceId} = {g.InstanceName}"));
             }
+        }
+
+        if (quest.IsUnlisted)
+        {
+            // Unlisted (hidden, removed, legacy) rows: only identity facts are compared, as qa-data-engineer §1.4 asks; the rest would only pollute the counts.
+            drafts = drafts.Select(d => d.Fact is Facts.Listed or Facts.Name or Facts.DisplayLevel or Facts.Retired || !d.Disagree
+                ? d
+                : d with { Verdict = Verdict.NotModeled, Disagree = false, Reason = "unlisted row; only identity facts are compared (" + d.Reason + ")" }).ToList();
         }
 
         return drafts.Select(d => (quest, d)).ToList();
