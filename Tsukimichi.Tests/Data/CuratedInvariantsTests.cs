@@ -63,7 +63,7 @@ public sealed class CuratedInvariantsTests(FixtureCatalog fixture) : IClassFixtu
         {
             CuratedData.SystemUnlocksFileName, CuratedData.DutyUnlocksFileName, CuratedData.FeatureQuestsFileName,
             CuratedData.FestivalsFileName, CuratedData.ChainsFileName, CuratedData.OnlineStoreFileName,
-            CuratedData.RefileOverridesFileName, CuratedData.RetiredQuestsFileName, CuratedData.VersionFileName,
+            CuratedData.RefileOverridesFileName, CuratedData.RetiredQuestsFileName, CuratedData.QuirksFileName, CuratedData.VersionFileName,
         };
         Assert.Equal(known.OrderBy(n => n, StringComparer.Ordinal), files.Select(Path.GetFileName).OrderBy(n => n, StringComparer.Ordinal));
         Assert.Empty(Curated().Warnings);
@@ -192,6 +192,52 @@ public sealed class CuratedInvariantsTests(FixtureCatalog fixture) : IClassFixtu
             Assert.Equal(keys.OrderBy(k => k), keys);
             Assert.Equal(count, keys.Count);
         }
+    }
+
+    [Fact]
+    public void Quirks_name_live_fixture_quests_with_a_note_and_https_evidence()
+    {
+        var curated = Curated();
+        var catalog = fixture.Bundle.Catalog;
+        Assert.NotEmpty(curated.Quirks);
+
+        foreach (var (rowId, quirk) in curated.Quirks)
+        {
+            var quest = catalog.GetByRowId(rowId);
+            Assert.True(quest is not null, $"quirks {rowId} is not a row of the catalog fixture");
+            Assert.False(quest!.IsRemoved, $"quirks {rowId} {quest.Name} is a removed quest; a note on it is never shown");
+            Assert.False(string.IsNullOrWhiteSpace(quirk.Note), $"quirks {rowId} has no note");
+            Assert.StartsWith("https://", quirk.Evidence, StringComparison.Ordinal);
+        }
+
+        // The three quirks the research threads name (docs/research/player-gripes-2026.md section 3 P2).
+        var upInArms = Assert.Single(catalog.All, q => q.Name == "Up in Arms");
+        Assert.Contains("Zenith", curated.Quirks[upInArms.RowId].Note);
+
+        var nestOfHonor = Assert.Single(catalog.All, q => q.Name == "The Nest of Honor");
+        Assert.Equal(7, nestOfHonor.BeastRank);
+        Assert.Contains("Bloodsworn", curated.Quirks[nestOfHonor.RowId].Note);
+        Assert.Contains("Allied", curated.Quirks[nestOfHonor.RowId].Note);
+
+        var inscrutableTastes = Assert.Single(catalog.All, q => q.Name == "Inscrutable Tastes");
+        var repointed = curated.Quirks.Where(kv => kv.Value.Note.Contains("Inscrutable Tastes", StringComparison.Ordinal)).ToList();
+        Assert.Equal(11, repointed.Count);
+        foreach (var (rowId, quirk) in repointed)
+        {
+            Assert.Contains(inscrutableTastes.RowId, catalog.ByRowId[rowId].PreviousQuests.QuestIds);
+            Assert.StartsWith("https://na.finalfantasyxiv.com/lodestone/topics/detail/", quirk.Evidence, StringComparison.Ordinal);
+        }
+
+        Assert.Contains(repointed, kv => catalog.ByRowId[kv.Key].Name == "Expanding House of Splendors");
+        Assert.Contains(repointed, kv => catalog.ByRowId[kv.Key].Name == "The Seaweed Is Always Greener");
+
+        // Raw file: schema 1, a note, keys ascending, and the loader dropped nothing.
+        var root = JsonNode.Parse(File.ReadAllText(Path.Combine(CuratedDir, CuratedData.QuirksFileName)), documentOptions: CuratedData.StrictOptions)!.AsObject();
+        Assert.Equal(1, (int)root["schema"]!);
+        Assert.False(string.IsNullOrWhiteSpace((string?)root["note"]));
+        var keys = root["entries"]!.AsObject().Select(kv => uint.Parse(kv.Key, System.Globalization.CultureInfo.InvariantCulture)).ToList();
+        Assert.Equal(keys.OrderBy(k => k), keys);
+        Assert.Equal(curated.Quirks.Count, keys.Count);
     }
 
     [Fact]
