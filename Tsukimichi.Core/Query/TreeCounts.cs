@@ -25,7 +25,8 @@ public readonly record struct NodeCount(int Done, int Total, int Excluded)
 /// Removed quests (<see cref="QuestRecord.IsRemoved"/>: retired rows and the genre-0 leftovers) never enter a
 /// section, category or genre node, whatever ids the sheet gave them; they always land in <see cref="Unlisted"/> and
 /// join <see cref="Overall"/> only when included. That bucket counts every row, exclusions aside: a removed quest
-/// evaluates Locked out, and "118 of 179 done before they went" is the number the bucket is for.
+/// evaluates Locked out, and "118 of 179 done before they went" is the number the bucket is for. A listed quest with
+/// <see cref="QuestRecord.CountsInTotals"/> false (the class intros) is in no count at all, done or not.
 /// </summary>
 public sealed class TreeCounts
 {
@@ -96,6 +97,12 @@ public sealed class TreeCounts
                     overall = Add(overall, done, 0);
                 }
 
+                continue;
+            }
+
+            if (!quest.CountsInTotals)
+            {
+                // A class intro: listed under its genre, never in its numbers (done or total).
                 continue;
             }
 

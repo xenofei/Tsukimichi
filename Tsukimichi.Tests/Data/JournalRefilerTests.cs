@@ -170,6 +170,15 @@ public class JournalRefilerTests
         Assert.Equal("Genre 156", intro.Journal.GenreName);
         Assert.Equal(6u, intro.Journal.SectionId);
         Assert.True(FeaturePresets.IsFeatureQuest(intro, CuratedData.Empty));
+
+        // Listed under the genre, out of its numbers: the class a character started as never gets its intro.
+        Assert.False(intro.CountsInTotals);
+        Assert.True(filed[65821].CountsInTotals);
+        var catalog = QuestCatalog.Build(filed.Values);
+        var counts = TreeCounts.Compute(catalog, new Dictionary<uint, QuestState> { [65713] = QuestState.Ready, [65821] = QuestState.Completed }, includeUnlisted: false);
+        Assert.Equal(new NodeCount(1, 1, 0), counts.Genre(G156));
+        Assert.Equal(new NodeCount(1, 1, 0), counts.Overall);
+        Assert.Equal([65713u, 65821u], catalog.ByGenre[G156].Select(q => q.RowId));
     }
 
     [Theory]

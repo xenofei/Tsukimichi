@@ -208,9 +208,15 @@ public class RefilingFixtureTests(FixtureCatalog fixture, ITestOutputHelper outp
         var states = Catalog.All.ToDictionary(q => q.RowId, _ => QuestState.Ready);
         var counts = TreeCounts.Compute(Catalog, states, includeUnlisted: true);
 
+        // The class intros sit in a genre node but in none of its numbers (QuestRecord.CountsInTotals).
+        var uncounted = Catalog.All.Where(q => !q.CountsInTotals).ToList();
+        Assert.Equal(ExpectedCounts.RefiledByRule2, uncounted.Count);
+        Assert.All(uncounted, q => Assert.Equal(JournalRefiler.ClassIntroRule, q.RefiledFrom));
+        Assert.All(Catalog.All.Where(q => q.RefiledFrom != JournalRefiler.ClassIntroRule), q => Assert.True(q.CountsInTotals, $"{q.RowId} {q.Name}"));
+
         var inGenres = counts.Genres.Values.Sum(c => c.Total);
-        Assert.Equal(Catalog.Count, inGenres + counts.Unlisted.Total);
-        Assert.Equal(Catalog.Count, counts.Overall.Total);
+        Assert.Equal(Catalog.Count, inGenres + counts.Unlisted.Total + uncounted.Count);
+        Assert.Equal(Catalog.Count, counts.Overall.Total + uncounted.Count);
         Assert.Equal(inGenres, counts.Sections.Values.Sum(c => c.Total));
         Assert.Equal(inGenres, counts.Categories.Values.Sum(c => c.Total));
         Assert.False(counts.Genres.ContainsKey(0));
@@ -224,6 +230,8 @@ public class RefilingFixtureTests(FixtureCatalog fixture, ITestOutputHelper outp
             {
                 continue;
             }
+
+            Assert.Contains(quest, Catalog.ByGenre[quest.Journal.GenreId]);
 
             // A refiled quest sits in a genre that real journal rows name, with the genre's section and category.
             Assert.NotEqual(0u, quest.Journal.GenreId);
@@ -243,8 +251,9 @@ public class RefilingFixtureTests(FixtureCatalog fixture, ITestOutputHelper outp
         var states = Catalog.All.ToDictionary(q => q.RowId, _ => QuestState.Ready);
 
         var counts = TreeCounts.Compute(Catalog, states, includeUnlisted: false);
-        Assert.Equal(Catalog.Count - retired.Count, counts.Overall.Total);
-        Assert.Equal(Catalog.Count - retired.Count, counts.Sections.Values.Sum(c => c.Total));
+        var uncounted = Catalog.All.Count(q => !q.CountsInTotals);
+        Assert.Equal(Catalog.Count - retired.Count - uncounted, counts.Overall.Total);
+        Assert.Equal(Catalog.Count - retired.Count - uncounted, counts.Sections.Values.Sum(c => c.Total));
         Assert.Equal(retired.Count, counts.Unlisted.Total);
         Assert.Equal(Catalog.ByGenre[18].Count(q => !q.IsRetired), counts.Genre(18).Total);
 
@@ -347,7 +356,7 @@ public class RefilingFixtureTests(FixtureCatalog fixture, ITestOutputHelper outp
             }
 
             var lag = lagRows.Length + ExpectedCounts.LodestoneLagSectionCounts.GetValueOrDefault(section);
-            var refiled = Catalog.BySection[section].Count(q => !q.IsRemoved && q.RefiledFrom != 0);
+            var refiled = Catalog.BySection[section].Count(q => !q.IsRemoved && q.RefiledFrom != 0 && q.CountsInTotals);
             output.WriteLine($"section {section}: lodestone {lodestone} + lag {lag} + refiled {refiled} = {lodestone + lag + refiled}; catalog {counts.Section(section).Total}");
             Assert.True(lodestone + lag + refiled == counts.Section(section).Total, $"section {section}: lodestone {lodestone} + lag {lag} + refiled {refiled} != catalog {counts.Section(section).Total}");
         }
@@ -356,7 +365,7 @@ public class RefilingFixtureTests(FixtureCatalog fixture, ITestOutputHelper outp
         foreach (var (category, lodestone) in ExpectedCounts.LodestoneCategoryTotals)
         {
             var lag = lagByCategory[category].Count() + ExpectedCounts.LodestoneLagCategoryCounts.GetValueOrDefault(category);
-            var refiled = Catalog.ByCategory[category].Count(q => !q.IsRemoved && q.RefiledFrom != 0);
+            var refiled = Catalog.ByCategory[category].Count(q => !q.IsRemoved && q.RefiledFrom != 0 && q.CountsInTotals);
             output.WriteLine($"category {category}: lodestone {lodestone} + lag {lag} + refiled {refiled} = {lodestone + lag + refiled}; catalog {counts.Category(category).Total}");
             Assert.True(lodestone + lag + refiled == counts.Category(category).Total, $"category {category}: lodestone {lodestone} + lag {lag} + refiled {refiled} != catalog {counts.Category(category).Total}");
         }

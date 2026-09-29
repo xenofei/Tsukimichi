@@ -11,7 +11,7 @@ namespace Tsukimichi.GameData;
 /// <see cref="JournalFiling.Legacy"/> it is simply not called.
 /// <list type="number">
 /// <item>Placeholder issuer (<see cref="PlaceholderIssuer"/>) or the hidden flag: retired, listed or not; keeps the genre it carries (0 for the sheet's genre-less rows).</item>
-/// <item>Class or job intro quasi-quest (<c>Cls…001</c>, <c>Cls…999</c>, <c>Job…299</c>): the genre of its first listed successor.</item>
+/// <item>Class or job intro quasi-quest (<c>Cls…001</c>, <c>Cls…999</c>, <c>Job…299</c>): the genre of its first listed successor, out of the genre's counts (<see cref="ClassIntroRule"/>).</item>
 /// <item>A Grand Company: that company's Grand Company Quests genre (<see cref="GrandCompanyGenreBase"/> + company).</item>
 /// <item>The first listed prerequisite, walking through unlisted ones in slot order, outside the main scenario sections and in the quest's own expansion: its genre.</item>
 /// <item>Else the first listed successor, then a quest-lock partner, under the same constraint.</item>
@@ -40,6 +40,13 @@ public static partial class JournalRefiler
     /// <summary>Rules that keep a quest out of a journal node: retired, and no signal.</summary>
     public const byte RetiredRule = 1;
     public const byte UnlistedRule = 7;
+
+    /// <summary>
+    /// Rule 2, the class and job intros: filed under their class's genre but with <see cref="QuestRecord.CountsInTotals"/>
+    /// false, because the class a character started as never gets its intro (the starter is handed "Way of the …"
+    /// directly; the intro is only offered to a character switching in), so counting it would keep that genre one short.
+    /// </summary>
+    public const byte ClassIntroRule = 2;
 
     /// <summary>The genre rank sits above the sheet's own SortKey in <see cref="JournalRef.SortKey"/>; see <c>CatalogMapper</c>.</summary>
     private const int SortKeyGenreShift = 16;
@@ -116,7 +123,7 @@ public static partial class JournalRefiler
         // Rules 2, 4, 5 and 6 read the genre off a listed quest, so a template exists; rule 3 computes it and the
         // Grand Company genre may hold no listed quest in a future sheet.
         return index.Assign(quest, genre) is { } journal
-            ? quest with { Journal = journal, RefiledFrom = rule }
+            ? quest with { Journal = journal, RefiledFrom = rule, CountsInTotals = rule != ClassIntroRule }
             : quest with { RefiledFrom = UnlistedRule };
     }
 
@@ -132,7 +139,7 @@ public static partial class JournalRefiler
     {
         if (IsClassIntro(quest.InternalId) && index.FirstListedSuccessorGenre(quest) is { } intro)
         {
-            return (2, intro);
+            return (ClassIntroRule, intro);
         }
 
         if (quest.GrandCompany != 0)
