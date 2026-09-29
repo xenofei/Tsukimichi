@@ -200,6 +200,12 @@ public sealed class WotsitIpc : IDisposable
         var entries = new List<WotsitEntry>(catalog.Count + rewards.Count);
         foreach (var quest in catalog.All)
         {
+            if (quest.IsRetired)
+            {
+                // Removed from the game: nothing to find on the map, and a twin with the same name is listed.
+                continue;
+            }
+
             var target = quest;
             var expansion = bundle.Names.Expansion(quest.Expansion);
             entries.Add(new WotsitEntry(

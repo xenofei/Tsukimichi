@@ -54,8 +54,8 @@ public sealed class ReportCommand(SessionState session, UiState ui, GameLinks li
     }
 
     /// <summary>
-    /// A quest by name: an exact match first (case-insensitive, listed quests before unlisted ones), else the first
-    /// listed quest the search index matches in catalog order; null when nothing matches.
+    /// A quest by name: an exact match first (case-insensitive, live quests before removed ones), else the first
+    /// live quest the search index matches in catalog order; null when nothing matches.
     /// </summary>
     internal static QuestRecord? FindByName(QuestCatalog catalog, string name)
     {
@@ -67,7 +67,7 @@ public sealed class ReportCommand(SessionState session, UiState ui, GameLinks li
                 continue;
             }
 
-            if (!quest.IsUnlisted)
+            if (!quest.IsRemoved)
             {
                 return quest;
             }
@@ -84,7 +84,7 @@ public sealed class ReportCommand(SessionState session, UiState ui, GameLinks li
         var normalized = SearchIndex.Normalize(name);
         foreach (var quest in catalog.All)
         {
-            if (!quest.IsUnlisted && index.Matches(quest.RowId, normalized))
+            if (!quest.IsRemoved && index.Matches(quest.RowId, normalized))
             {
                 return quest;
             }

@@ -23,10 +23,13 @@ public sealed class DiagnosticBuilder
     private const string GameVersionFile = "ffxivgame.ver";
 
     private readonly SessionState session;
+    private readonly Func<JournalFiling> filing;
 
-    public DiagnosticBuilder(SessionState session, string pluginVersion, string clientGameVersion)
+    /// <param name="filing">Reads the current journal filing setting, so the block says which mode produced the quest's genre.</param>
+    public DiagnosticBuilder(SessionState session, string pluginVersion, string clientGameVersion, Func<JournalFiling> filing)
     {
         this.session = session ?? throw new ArgumentNullException(nameof(session));
+        this.filing = filing ?? throw new ArgumentNullException(nameof(filing));
         PluginVersion = pluginVersion ?? string.Empty;
         ClientGameVersion = clientGameVersion ?? string.Empty;
 
@@ -64,6 +67,7 @@ public sealed class DiagnosticBuilder
             CuratedRevision = session.Curated.CuratedRevision,
             SnapshotSchema = snapshot?.SchemaVersion ?? CharacterSnapshot.CurrentSchemaVersion,
             Quest = quest,
+            FilingRule = DiagnosticInputs.DescribeFiling(quest, filing()),
             Evaluation = evaluation,
             Names = session.Names,
             States = session.States.Count > 0 ? session.States : null,

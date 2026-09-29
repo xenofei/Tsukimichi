@@ -62,15 +62,16 @@ public sealed class Plugin : IDalamudPlugin
     private TodoOverlay? todoOverlay;
 
     /// <summary>
-    /// Retry hook for the "Catalog unavailable" panel: rebuilds the catalog and hands it to the session on the
-    /// framework thread. The returned task completes when the session has been updated either way.
+    /// Rebuilds the catalog under the current <see cref="Config.Configuration.JournalFiling"/> and hands it to the
+    /// session on the framework thread: the retry hook of the "Catalog unavailable" panel, and what a filing change
+    /// in Settings runs. The returned task completes when the session has been updated either way.
     /// </summary>
     internal async Task RetryCatalogAsync()
     {
-        var loader = new LuminaCatalogLoader(DataManager, Log);
+        var loader = new LuminaCatalogLoader(DataManager, Log, curated);
         try
         {
-            var bundle = await loader.BuildBundleAsync(DataManager.Language, catalogCts.Token).ConfigureAwait(false);
+            var bundle = await loader.BuildBundleAsync(DataManager.Language, Settings.JournalFiling, catalogCts.Token).ConfigureAwait(false);
             await Framework.RunOnFrameworkThread(() =>
             {
                 if (!gameStateDisposed)
@@ -111,8 +112,11 @@ public sealed class Plugin : IDalamudPlugin
     /// <summary>Read from the catalog continuation off-thread, so it must be volatile.</summary>
     private volatile bool gameStateDisposed;
 
-    /// <summary>Config, shipped data, snapshot store, session state and poller; hands the catalog to the session when built.</summary>
-    private void InitializeGameState()
+    /// <summary>The curated overlay, read once before the first catalog build (the refiler needs it) and kept for rebuilds.</summary>
+    private Core.Storage.CuratedData curated = Core.Storage.CuratedData.Empty;
+
+    /// <summary>Settings, paths and the curated overlay: what the catalog build needs before anything else starts.</summary>
+    private void LoadSettingsAndCurated()
     {
         Settings = Config.Configuration.Load(PluginInterface, Log);
 
@@ -121,16 +125,20 @@ public sealed class Plugin : IDalamudPlugin
         var dataDir = System.IO.Path.Combine(assemblyDir, "Data");
         Paths = new Core.Storage.PluginPaths(PluginInterface.GetPluginConfigDirectory(), System.IO.Directory.Exists(dataDir) ? dataDir : assemblyDir);
 
+        curated = Core.Storage.CuratedData.Load(Paths.CuratedDir);
+        foreach (var warning in curated.Warnings)
+        {
+            Log.Warning("Curated data: {Warning}", warning);
+        }
+    }
+
+    /// <summary>Shipped reward data, snapshot store, session state and poller; hands the catalog to the session when built.</summary>
+    private void InitializeGameState()
+    {
         var uniqueRewards = Core.Storage.UniqueRewardsFile.Load(Paths.UniqueRewardsFile);
         foreach (var warning in uniqueRewards.Warnings)
         {
             Log.Warning("Unique rewards: {Warning}", warning);
-        }
-
-        var curated = Core.Storage.CuratedData.Load(Paths.CuratedDir);
-        foreach (var warning in curated.Warnings)
-        {
-            Log.Warning("Curated data: {Warning}", warning);
         }
 
         Log.Information(
@@ -227,8 +235,10 @@ public sealed class Plugin : IDalamudPlugin
     {
         Log.Information("Tsukimichi loaded (config directory: {Dir})", PluginInterface.GetPluginConfigDirectory());
 
-        var loader = new LuminaCatalogLoader(DataManager, Log);
-        CatalogTask = loader.BuildBundleAsync(DataManager.Language, catalogCts.Token);
+        // The catalog build reads the filing setting and the curated overlay, so those come before it starts.
+        LoadSettingsAndCurated();
+        var loader = new LuminaCatalogLoader(DataManager, Log, curated);
+        CatalogTask = loader.BuildBundleAsync(DataManager.Language, Settings.JournalFiling, catalogCts.Token);
         CatalogTask.ContinueWith(
             static t =>
             {
@@ -308,7 +318,7 @@ public sealed class Plugin : IDalamudPlugin
 
             // "Report this quest": the diagnostic block (detail pane button and /tsuki report), the data stamp in
             // Settings > About and on the status bar, and the game-version warning. The client version is read once.
-            var diagnostics = new Game.DiagnosticBuilder(Session, Game.DiagnosticBuilder.PluginVersionText(), Game.DiagnosticBuilder.ReadClientGameVersion(DataManager, Log));
+            var diagnostics = new Game.DiagnosticBuilder(Session, Game.DiagnosticBuilder.PluginVersionText(), Game.DiagnosticBuilder.ReadClientGameVersion(DataManager, Log), () => Settings.JournalFiling);
             if (diagnostics.VersionMismatchWarning is { } versionWarning)
             {
                 Log.Warning("{Warning}", versionWarning);
@@ -349,6 +359,8 @@ public sealed class Plugin : IDalamudPlugin
 
             configWindow = new ConfigWindow(Settings, Session, PluginInterface, diagnostics, _ => ui.MarkQueryDirty());
             configWindow.Overrides = moonlitPane;
+            // A filing change rebuilds the catalog off-thread; the session swaps it in on the framework thread.
+            configWindow.JournalFilingChanged = filing => _ = RetryCatalogAsync();
             Game.WotsitIpc wotsitIpc = wotsit;
             configWindow.WotsitToggled = enabled => wotsitIpc.Enabled = enabled;
             if (hoverHint is { } hint) { configWindow.ItemHintsToggled = enabled => hint.Enabled = enabled; }

@@ -81,6 +81,9 @@ public sealed class DetailPane
         public QuestRecord? Quest;
         public QuestState State;
         public string JournalPath = string.Empty;
+
+        /// <summary>Provenance of a refiled or removed quest ("Filed under … (rule 4: …)", "Removed from the game in patch 6.3"); null for an ordinary quest.</summary>
+        public string? FilingLine;
         public string HeaderLine = string.Empty;
         public string StateText = string.Empty;
         public string? StateNote;
@@ -233,6 +236,11 @@ public sealed class DetailPane
         }
 
         ImGui.TextDisabled(model.JournalPath);
+        if (model.FilingLine is { } filing)
+        {
+            ImGui.TextDisabled(filing);
+        }
+
         ImGui.TextDisabled(model.HeaderLine);
         using (Theme.PushText(Theme.StateColor(model.State)))
         {
@@ -966,7 +974,10 @@ public sealed class DetailPane
         model.StateText = BlockerText.StatusText(evaluation, quest, session.Names, session.States);
         model.HasUniqueEntries = HasShippedUniqueEntry(session.UniqueRewards, rowId);
 
-        model.JournalPath = string.Format(CultureInfo.CurrentCulture, Strings.JournalPathFormat, quest.Journal.GenreName, quest.Journal.CategoryName);
+        model.JournalPath = quest.IsUnlisted
+            ? Strings.RemovedFromGame
+            : string.Format(CultureInfo.CurrentCulture, Strings.JournalPathFormat, quest.Journal.GenreName, quest.Journal.CategoryName);
+        model.FilingLine = FilingLine(quest, session.Curated);
         var jobName = quest.ClassJobCategory <= 1 ? Strings.JobAny : links.ClassJobCategoryName(quest.ClassJobCategory);
         if (jobName.Length == 0)
         {
@@ -1162,6 +1173,29 @@ public sealed class DetailPane
         {
             model.UnlocksMore = string.Format(CultureInfo.CurrentCulture, Strings.AndMoreFormat, more);
         }
+    }
+
+    /// <summary>
+    /// The provenance line under the journal path: which rule (or curated file) filed a refiled quest, or that the
+    /// game removed it, with the patch when the curated note names one. Null for a quest the sheet filed itself.
+    /// </summary>
+    internal static string? FilingLine(QuestRecord quest, CuratedData curated)
+    {
+        if (quest.IsRetired)
+        {
+            return curated.RetiredQuests.TryGetValue(quest.RowId, out var retired) && retired.Patch.Length > 0
+                ? string.Format(CultureInfo.CurrentCulture, Strings.RemovedInPatchFormat, retired.Patch)
+                : Strings.RemovedFromGame;
+        }
+
+        if (quest.RefiledFrom == 0 || quest.IsUnlisted)
+        {
+            return null;
+        }
+
+        return quest.RefiledFrom == JournalRefiler.CuratedRule
+            ? string.Format(CultureInfo.CurrentCulture, Strings.FilingCuratedFormat, quest.Journal.GenreName)
+            : string.Format(CultureInfo.CurrentCulture, Strings.FilingRuleFormat, quest.Journal.GenreName, quest.RefiledFrom, Strings.FilingReason(quest.RefiledFrom));
     }
 
     private bool HasShippedUniqueEntry(UniqueRewardsData data, uint rowId)

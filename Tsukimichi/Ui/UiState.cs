@@ -157,10 +157,10 @@ public sealed class UiState
         MarkQueryDirty();
     }
 
-    /// <summary>Reveals a catalog quest: its genre's scope, or the Unlisted virtual scope for an unlisted quest.</summary>
+    /// <summary>Reveals a catalog quest: its genre's scope, or the "Removed from the game" scope for a removed quest.</summary>
     public void Reveal(QuestRecord quest)
     {
         ArgumentNullException.ThrowIfNull(quest);
-        Reveal(quest.RowId, quest.IsUnlisted ? QuestScope.VirtualUnlisted : QuestScope.Genre(quest.Journal.GenreId), quest.IsUnlisted);
+        Reveal(quest.RowId, quest.IsRemoved ? QuestScope.VirtualUnlisted : QuestScope.Genre(quest.Journal.GenreId), quest.IsRemoved);
     }
 }

@@ -2,6 +2,7 @@ using System;
 using Dalamud.Configuration;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
+using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Storage;
 using Tsukimichi.Core.Ui;
@@ -36,8 +37,16 @@ public sealed class Configuration : IPluginConfiguration
     /// <summary>Print a chat line when a level-up opens the next job or role quest (see <c>Game.ChatNotifier</c>). On by default.</summary>
     public bool JobQuestNudge { get; set; } = true;
 
-    /// <summary>Show quests with no journal genre outside the Unlisted node.</summary>
+    /// <summary>Show the "Removed from the game" tree node (retired quests and those with no journal genre). Off by default.</summary>
     public bool ShowUnlisted { get; set; }
+
+    // ---- 0.6.1: journal refiling ----
+    /// <summary>
+    /// Whether the catalog files the sheet's genre-less quests by the refiling rules (<see cref="JournalFiling.Refiled"/>,
+    /// the default) or leaves them in the removed bucket as releases before 0.6.1 did (<see cref="JournalFiling.Legacy"/>,
+    /// the in-field rollback). A change rebuilds the catalog.
+    /// </summary>
+    public JournalFiling JournalFiling { get; set; } = JournalFiling.Refiled;
 
     /// <summary>Register every quest and Moonlit reward with Wotsit when it is loaded (see <c>Game.WotsitIpc</c>). On by default.</summary>
     public bool WotsitIntegration { get; set; } = true;
