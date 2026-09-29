@@ -105,16 +105,14 @@ public class JournalRefilerTests
     }
 
     [Fact]
-    public void Rule1_applies_to_listed_rows_named_in_retired_quests_json()
+    public void Rule1_retires_a_listed_row_on_the_placeholder_issuer_and_it_keeps_its_genre()
     {
-        var curated = Curated(retired: """{ "schema": 1, "entries": { "66033": { "note": "removed", "evidence": "https://example.test/x", "patch": "6.3" } } }""");
-        Assert.Empty(curated.Warnings);
-        Assert.Equal("6.3", curated.RetiredQuests[66033].Patch);
-
-        var filed = Refile(curated, Quest(66033, genre: 18, issuer: Placeholder), Quest(66035, genre: 18));
+        // But I Hardly Noah after the 6.3 Crystal Tower rewrite: the sheet keeps genre 18 but moved the issuer and set
+        // the hidden flag. No curated entry is needed for the retirement itself.
+        var filed = Refile(null, Quest(66033, genre: 18, issuer: Placeholder, hidden: true), Quest(66035, genre: 18));
         var retired = filed[66033];
         Assert.True(retired.IsRetired);
-        Assert.Equal(JournalRefiler.CuratedRule, retired.RefiledFrom);
+        Assert.Equal(JournalRefiler.RetiredRule, retired.RefiledFrom);
         Assert.Equal(18u, retired.Journal.GenreId);
         Assert.False(retired.IsUnlisted);
         Assert.True(retired.IsRemoved);
@@ -128,6 +126,32 @@ public class JournalRefilerTests
         Assert.Equal(new NodeCount(0, 1, 0), counts.Overall);
         Assert.Equal(new NodeCount(1, 2, 0), TreeCounts.Compute(catalog, states, includeUnlisted: true).Overall);
         Assert.Equal([66033u], catalog.Removed.Select(q => q.RowId));
+
+        // With a curated entry too, the sheet signal is the rule that fires; the entry only lends its patch note.
+        var curated = Curated(retired: """{ "schema": 1, "entries": { "66033": { "note": "removed", "evidence": "https://example.test/x", "patch": "6.3" } } }""");
+        Assert.Empty(curated.Warnings);
+        Assert.Equal("6.3", curated.RetiredQuests[66033].Patch);
+        var withNote = Refile(curated, Quest(66033, genre: 18, issuer: Placeholder, hidden: true), Quest(66035, genre: 18));
+        Assert.True(withNote[66033].IsRetired);
+        Assert.Equal(JournalRefiler.RetiredRule, withNote[66033].RefiledFrom);
+    }
+
+    [Fact]
+    public void Curated_retired_quests_json_retires_a_listed_row_the_sheet_does_not_mark()
+    {
+        // Meet, Greet, and Deceit (3.05): a normal issuer, no hidden flag, a genre; only the curated file knows.
+        var curated = Curated(retired: """{ "schema": 1, "entries": { "66023": { "note": "removed", "evidence": "https://example.test/x", "patch": "3.05" } } }""");
+        Assert.Empty(curated.Warnings);
+
+        var filed = Refile(curated, Quest(66023, genre: 112, issuer: At(129)), Quest(66024, genre: 112, issuer: At(129)));
+        var retired = filed[66023];
+        Assert.True(retired.IsRetired);
+        Assert.Equal(JournalRefiler.CuratedRule, retired.RefiledFrom);
+        Assert.Equal(112u, retired.Journal.GenreId);
+        Assert.False(retired.IsUnlisted);
+        Assert.True(retired.IsRemoved);
+        Assert.False(filed[66024].IsRetired);
+        Assert.False(Refile(null, Quest(66023, genre: 112, issuer: At(129)))[66023].IsRetired);
     }
 
     [Fact]

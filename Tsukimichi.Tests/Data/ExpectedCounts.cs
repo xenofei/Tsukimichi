@@ -45,8 +45,14 @@ internal static class ExpectedCounts
     /// <summary>Curated overrides applied to genre-0 rows: the three Eureka entry quests, Seeing the Cieldalaes, The New Frontier.</summary>
     public const int OverriddenUnlisted = 5;
 
-    /// <summary>Listed rows retired_quests.json retires: three 3.05 sidequests and five rows on the placeholder issuer.</summary>
+    /// <summary>
+    /// Listed rows retired_quests.json names: the 3.05 trio the sheet does not mark (<see cref="CuratedOnlyRetiredListed"/>)
+    /// and the five rows on the placeholder issuer, which rule 1 retires by itself (<see cref="SheetRetiredListed"/>;
+    /// the entry only carries the patch note).
+    /// </summary>
     public const int CuratedRetiredListed = 8;
+    public const int SheetRetiredListed = 5;
+    public const int CuratedOnlyRetiredListed = 3;
 
     /// <summary>Every retired row: <see cref="RetiredByRule1"/> + <see cref="CuratedRetiredListed"/>.</summary>
     public const int Retired = RetiredByRule1 + CuratedRetiredListed;

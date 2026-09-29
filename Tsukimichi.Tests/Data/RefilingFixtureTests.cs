@@ -150,15 +150,22 @@ public class RefilingFixtureTests(FixtureCatalog fixture, ITestOutputHelper outp
         Assert.Equal(117u, Catalog.ByRowId[67752].Journal.GenreId);
         Assert.Equal("The Forbidden Land, Eureka", Catalog.ByRowId[68478].Journal.GenreName);
 
-        // The eight curated retired rows keep their genre and read retired.
+        // The eight curated retired rows keep their genre and read retired: the five the sheet marks by rule 1
+        // (the curated entry only lends its patch note), the 3.05 trio by the curated file alone.
         Assert.Equal(ExpectedCounts.CuratedRetiredListed, fixture.Curated.RetiredQuests.Count);
         foreach (var rowId in fixture.Curated.RetiredQuests.Keys)
         {
             var quest = Catalog.ByRowId[rowId];
             Assert.True(quest.IsRetired, $"{rowId} {quest.Name} should be retired");
-            Assert.Equal(JournalRefiler.CuratedRule, quest.RefiledFrom);
+            Assert.Equal(JournalRefiler.IsRetiredRow(quest) ? JournalRefiler.RetiredRule : JournalRefiler.CuratedRule, quest.RefiledFrom);
             Assert.NotEqual(0u, quest.Journal.GenreId);
         }
+
+        // Rule 1 alone, no curated file: the five listed rows on the placeholder issuer retire, the 3.05 trio do not.
+        var sheetRetiredListed = JournalRefiler.Apply(Legacy.All, CuratedData.Empty).Where(q => q.IsRetired && !q.IsUnlisted).Select(q => q.RowId).OrderBy(id => id).ToList();
+        Assert.Equal([66033u, 66034u, 67819u, 68629u, 68727u], sheetRetiredListed);
+        Assert.Equal(ExpectedCounts.SheetRetiredListed, sheetRetiredListed.Count);
+        Assert.Equal(ExpectedCounts.CuratedOnlyRetiredListed, fixture.Curated.RetiredQuests.Keys.Count(id => !sheetRetiredListed.Contains(id)));
 
         Assert.Equal(ExpectedCounts.Retired, Catalog.All.Count(q => q.IsRetired));
         Assert.Equal(ExpectedCounts.Retired, Catalog.Removed.Count);

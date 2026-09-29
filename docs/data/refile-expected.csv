@@ -46,8 +46,8 @@ rowId,name,rule,genreId
 66023,"Meet, Greet, and Deceit",8,112
 66024,Scratch It Rich,4,114
 66025,Hitting the Cactpot,4,114
-66033,But I Hardly Noah,8,18
-66034,The Gift of the Archmagus,8,18
+66033,But I Hardly Noah,1,18
+66034,The Gift of the Archmagus,1,18
 66060,The Ultimate Weapon,1,0
 66211,It's Probably Pirates,1,0
 66244,We Come in Peace,1,0
@@ -133,7 +133,7 @@ rowId,name,rule,genreId
 67653,I Believe I Can Fly,1,0
 67659,What's Your Sign,2,188
 67752,The New Frontier,8,117
-67819,A Seat at the Feast,8,116
+67819,A Seat at the Feast,1,116
 67870,Recondition the Anima,4,89
 67923,What Lies Beneath,6,113
 67925,Squadron and Commander (Twin Adder),3,235
@@ -148,8 +148,8 @@ rowId,name,rule,genreId
 68479,Songs in the Key of Kugane,6,128
 68555,Plucking the Heartstrings,4,180
 68624,Recall of Duty,6,116
-68629,Makin' Bacon (Bread),8,24
-68727,Wok on By,8,24
+68629,Makin' Bacon (Bread),1,24
+68727,Wok on By,1,24
 68753,To Be Second Best,1,0
 69138,Leves of the Crystarium,6,132
 69139,The Boutique Always Wins,5,133

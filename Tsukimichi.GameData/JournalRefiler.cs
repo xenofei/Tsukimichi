@@ -10,7 +10,7 @@ namespace Tsukimichi.GameData;
 /// <see cref="QuestRecord"/>s, so it runs on a frozen catalog as well as on the live sheets, and under
 /// <see cref="JournalFiling.Legacy"/> it is simply not called.
 /// <list type="number">
-/// <item>Placeholder issuer (<see cref="PlaceholderIssuer"/>) or the hidden flag: retired; stays genre 0.</item>
+/// <item>Placeholder issuer (<see cref="PlaceholderIssuer"/>) or the hidden flag: retired, listed or not; keeps the genre it carries (0 for the sheet's genre-less rows).</item>
 /// <item>Class or job intro quasi-quest (<c>Cls…001</c>, <c>Cls…999</c>, <c>Job…299</c>): the genre of its first listed successor.</item>
 /// <item>A Grand Company: that company's Grand Company Quests genre (<see cref="GrandCompanyGenreBase"/> + company).</item>
 /// <item>The first listed prerequisite, walking through unlisted ones in slot order, outside the main scenario sections and in the quest's own expansion: its genre.</item>
@@ -18,9 +18,9 @@ namespace Tsukimichi.GameData;
 /// <item>Else the dominant genre of the listed regional sidequests (categories 59–85) issued from the same territory; a tie stays unlisted.</item>
 /// <item>Else unlisted.</item>
 /// </list>
-/// Curated <c>retired_quests.json</c> retires listed rows too (they keep their genre); curated
-/// <c>refile_overrides.json</c> pins a quest to a genre after the rules. Both mark <see cref="QuestRecord.RefiledFrom"/>
-/// with <see cref="CuratedRule"/>.
+/// Curated <c>retired_quests.json</c> retires rows the sheet does not mark (they keep their genre) and carries the
+/// patch note for the ones rule 1 already retires; curated <c>refile_overrides.json</c> pins a quest to a genre after
+/// the rules. A quest a curated file decided marks <see cref="QuestRecord.RefiledFrom"/> with <see cref="CuratedRule"/>.
 /// </summary>
 public static partial class JournalRefiler
 {
@@ -75,14 +75,18 @@ public static partial class JournalRefiler
 
     private static QuestRecord File(QuestRecord quest, Index index, CuratedData curated)
     {
+        // Rule 1 reads the sheet alone, listed or not: a row the game moved to the placeholder issuer or flagged
+        // hidden is retired and keeps whatever genre it carries, so the next patch that retires a listed quest is
+        // seen without a curated entry. The curated file covers rows with no sheet signal (the 3.05 trio) and lends
+        // its patch note to the others.
+        if (IsRetiredRow(quest))
+        {
+            return quest with { IsRetired = true, RefiledFrom = RetiredRule };
+        }
+
         if (curated.RetiredQuests.ContainsKey(quest.RowId))
         {
             return quest with { IsRetired = true, RefiledFrom = CuratedRule };
-        }
-
-        if (quest.IsUnlisted && IsRetiredRow(quest))
-        {
-            return quest with { IsRetired = true, RefiledFrom = RetiredRule };
         }
 
         if (curated.RefileOverrides.TryGetValue(quest.RowId, out var pinned))
