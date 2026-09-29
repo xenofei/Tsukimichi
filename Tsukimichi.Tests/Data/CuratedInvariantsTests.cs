@@ -63,7 +63,7 @@ public sealed class CuratedInvariantsTests(FixtureCatalog fixture) : IClassFixtu
         {
             CuratedData.SystemUnlocksFileName, CuratedData.DutyUnlocksFileName, CuratedData.FeatureQuestsFileName,
             CuratedData.FestivalsFileName, CuratedData.ChainsFileName, CuratedData.OnlineStoreFileName,
-            CuratedData.VersionFileName,
+            CuratedData.RefileOverridesFileName, CuratedData.RetiredQuestsFileName, CuratedData.VersionFileName,
         };
         Assert.Equal(known.OrderBy(n => n, StringComparer.Ordinal), files.Select(Path.GetFileName).OrderBy(n => n, StringComparer.Ordinal));
         Assert.Empty(Curated().Warnings);

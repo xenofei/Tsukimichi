@@ -1,0 +1,191 @@
+# Refiling outcome per touched quest, generated from the catalog fixture by RefilingFixtureTests (set TSUKIMICHI_REGEN_GOLDEN to rewrite).
+# rule: 1 retired, 2 class or job intro, 3 Grand Company, 4 nearest listed prerequisite, 5 nearest listed successor or lock, 6 issuer's zone, 7 no signal, 8 curated file. genreId 0 = stays unlisted.
+rowId,name,rule,genreId
+65615,Chasing Ivy,1,0
+65616,Doman Connection,1,0
+65617,In Flagrante Delicto,1,0
+65637,So You Want to Be a Rogue,2,161
+65661,A Soldier's Breakfast,1,0
+65664,Eggs over Queasy,1,0
+65692,Ruffled Feathers,1,0
+65695,Lights Out,1,0
+65713,So You Want to Be a Gladiator,2,156
+65714,So You Want to Be a Pugilist,2,157
+65715,So You Want to Be a Marauder,2,158
+65716,So You Want to Be a Lancer,2,159
+65717,So You Want to Be an Archer,2,160
+65718,So You Want to Be a Conjurer,2,162
+65719,So You Want to Be a Thaumaturge,2,163
+65720,So You Want to Be a Carpenter,2,165
+65721,So You Want to Be a Blacksmith,2,166
+65722,So You Want to Be an Armorer,2,167
+65723,So You Want to Be a Goldsmith,2,168
+65724,So You Want to Be a Leatherworker,2,169
+65725,So You Want to Be a Weaver,2,170
+65726,So You Want to Be an Alchemist,2,171
+65727,So You Want to Be a Culinarian,2,172
+65728,So You Want to Be a Miner,2,173
+65729,So You Want to Be a Botanist,2,174
+65732,An Eft for Effort,1,0
+65734,Butcher of Greentear,1,0
+65841,Until a Quieter Time,1,0
+65842,Prudence at This Junction,1,0
+65860,Disorderly Conduct,1,0
+65863,Spriggan Cleaning,1,0
+65867,"Heir Today, Gone Tomorrow",1,0
+65871,Compulsory Catering,1,0
+65903,Aether on Demand,1,0
+65910,Feeding Time,1,0
+65918,Skeletons in My Deepcroft,1,0
+65934,Courier for a Day,1,0
+65940,Farmer of Fortune,1,0
+65955,The Steps of Faith,1,0
+65973,Triple Triad Trial,4,114
+65987,So You Want to Be an Arcanist,2,164
+66000,Further Afield,1,0
+66023,"Meet, Greet, and Deceit",8,112
+66024,Scratch It Rich,4,114
+66025,Hitting the Cactpot,4,114
+66033,But I Hardly Noah,8,18
+66034,The Gift of the Archmagus,8,18
+66060,The Ultimate Weapon,1,0
+66211,It's Probably Pirates,1,0
+66244,We Come in Peace,1,0
+66253,Dance Dance Diplomacy,1,0
+66254,Forest Friend,1,0
+66262,Druthers House Rules,1,0
+66269,Never Forget,1,0
+66270,Microbrewing,1,0
+66276,Nouveau Riche,1,0
+66288,Ratting It Out,1,0
+66320,Terror at Fallgourd,1,0
+66321,Ziz Is So Ridiculous,1,0
+66351,The Penitent Man,1,0
+66352,Changing of the Guard,1,0
+66355,Trial by Turtle,1,0
+66356,The Drake Exception,1,0
+66375,What Do You Mean You Forgot the Wine,1,0
+66383,Not My War,1,0
+66390,A Final Ignominy,1,0
+66407,With a Little Elbow Grease,1,0
+66408,You Can't Take It with You,1,0
+66413,The Warden Works in Mysterious Ways,1,0
+66417,A Tall Drink of Aqua del Sol,1,0
+66432,Feats of Strength,1,0
+66453,The Final Flight of the Enterprise,1,0
+66461,Opportunity Knocks,1,0
+66462,All by Ourselves,1,0
+66473,The Best Inventions,1,0
+66490,All Due Precautions,1,0
+66504,The Curious Case of Giggity,1,0
+66507,Of Sylphs and Spriggans,1,0
+66510,Crazy Enough to Work,1,0
+66539,Dressed for Conquest,1,0
+66552,Can't Do It without U,1,0
+66572,Operation Archon,1,0
+66575,The Ladle in the Darkness,1,0
+66578,All upon the Watchtowers,1,0
+66579,Hearts on Fire,1,0
+66582,Setting the Stage,1,0
+66670,So You Want to Be a Fisher,2,175
+66672,Rock the Castrum,1,0
+66712,Moving On,1,0
+66713,Flowers for One,1,0
+66714,All Things in Time,1,0
+66715,The Resolute,1,0
+66716,Laying the Foundation,1,0
+66717,Better Late than Sever,1,0
+66718,Rock-solid Protection,1,0
+66719,Crate Go Kaboom,1,0
+66720,Hest of the Best,1,0
+66721,Pass the Smell Hest,1,0
+66722,You're Gonna Carry That,1,0
+66723,The Things We Do for Tea,1,0
+66724,It's Possibly a Primal,1,0
+66729,Build on the Stone,1,0
+66735,Legacy of Allag,1,0
+66881,Still Waters,1,0
+66884,Promises to Keep,1,0
+66885,A Small-scale Operation,1,0
+66886,Yugiri's Game,1,0
+66887,If Wishes Were Horsebirds,1,0
+66889,All Due Respect,1,0
+66890,"Full Belly, Happy Heart",1,0
+66891,Writhing in the Dark,1,0
+66893,Fireworks and Fish Don't Mix,1,0
+66964,He's Got a Ticket to Ride,8,113
+66965,Lend Me Your Ears Already,8,114
+66980,Shock and Awe,1,0
+66981,Reap the Whirlwind,1,0
+66985,A Sylphlands Sting,1,0
+66986,Scattered Scions,1,0
+66987,True to Form,1,0
+66988,Levin an Impression,1,0
+66990,A Hard Hapalit to Break,1,0
+66991,Picking Up the Sledge,1,0
+67097,Welcome to Morbol Country,1,0
+67098,Answering the Call,1,0
+67635,The Favors of the House,1,0
+67642,Leves of Ishgard,6,117
+67643,Sights of the North,6,119
+67645,So You Want to Be a Machinist,2,187
+67646,A Dark Spectacle,2,186
+67653,I Believe I Can Fly,1,0
+67659,What's Your Sign,2,188
+67752,The New Frontier,8,117
+67819,A Seat at the Feast,8,116
+67870,Recondition the Anima,4,89
+67923,What Lies Beneath,6,113
+67925,Squadron and Commander (Twin Adder),3,235
+67926,Squadron and Commander (Maelstrom),3,234
+67927,Squadron and Commander (Immortal Flames),3,236
+68148,And We Shall Call It Pyros,8,90
+68149,And We Shall Call It Hydatos,8,90
+68456,Sights of Crimson and Dawn,6,124
+68457,Leves of Kugane,6,128
+68477,Reach Long and Prosper,5,124
+68478,And We Shall Call It Pagos,8,90
+68479,Songs in the Key of Kugane,6,128
+68555,Plucking the Heartstrings,4,180
+68624,Recall of Duty,6,116
+68629,Makin' Bacon (Bread),8,24
+68727,Wok on By,8,24
+68753,To Be Second Best,1,0
+69138,Leves of the Crystarium,6,132
+69139,The Boutique Always Wins,5,133
+69140,Sights of the First,6,132
+69141,The Aspiring Skywatcher,6,132
+69198,Minstrel from Another Mother,6,132
+69295,Memories Rekindled,6,114
+69296,The Mendicant's Court,4,100
+69377,The New Nest,4,100
+69378,Weapon of Choice,4,28
+69478,Memoirs from the Front,4,91
+69508,Featherfall,4,100
+69563,A Seaside Story,4,91
+69566,Open and Inviting,6,114
+69577,Forged Anew,4,91
+69578,The Risensong Quarter,4,100
+69580,A Message from Konogg,4,27
+69581,Dwarves of a Beard,4,27
+69582,Strange Glagg,4,27
+69583,Dwarves of a Beard Freshened,4,27
+69584,Stranger Glagg,4,27
+69585,All's Well That Ends with Ale,4,27
+69630,An Honor to Serve,4,91
+69706,Leves of Old Sharlayan,6,140
+69707,I Wandered Sharlayan as a Minstrel,6,140
+69710,Sights of the End,6,140
+69711,Expanding House of Splendors,6,141
+70180,Seeing the Cieldalaes,8,107
+70187,An Odd Job,5,108
+70539,Leves of Tuliyollal,6,148
+70540,How the West Was Sung,6,148
+70542,Sights of the West,6,148
+70543,Sights of the West and Beyond,6,154
+70544,Dawn of a New Deal,6,154
+70944,The Pilgrim's Answer,4,106
+70995,Abridged Too Far,6,140
+71036,Free for All,4,198
+71037,Mastery Rematch,4,198
+71045,Blazing Trails,4,198

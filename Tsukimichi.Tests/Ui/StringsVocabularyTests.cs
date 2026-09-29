@@ -25,6 +25,7 @@ public class StringsVocabularyTests
         "Level band",
         "Around my level",
         "Tribal",
+        "Unlisted",
     ];
 
     /// <summary>Spellings that are retired as a whole label but may still open a longer sentence about something else.</summary>

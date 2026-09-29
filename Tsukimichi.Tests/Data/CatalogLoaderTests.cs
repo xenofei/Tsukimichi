@@ -22,7 +22,10 @@ public sealed class GameDataFactAttribute : FactAttribute
     }
 }
 
-/// <summary>Opens the game data and maps the catalog once per test class. Lazy so skipped runs never touch the disk.</summary>
+/// <summary>
+/// Opens the game data and maps the catalog once per test class, refiled with the shipped curated overlay as the plugin
+/// does. Lazy so skipped runs never touch the disk.
+/// </summary>
 public sealed class GameDataFixture : IDisposable
 {
     private readonly Lazy<(LuminaGameData Game, CatalogBundle Bundle, TimeSpan Elapsed)> built;
@@ -57,7 +60,7 @@ public sealed class GameDataFixture : IDisposable
         });
 
         var stopwatch = Stopwatch.StartNew();
-        var bundle = CatalogMapper.Map(game.Excel, Language.English);
+        var bundle = CatalogMapper.Map(game.Excel, Language.English, curated: Tsukimichi.Core.Storage.CuratedData.Load(FixtureCatalog.CuratedDir()));
         return (game, bundle, stopwatch.Elapsed);
     }
 }
@@ -195,11 +198,11 @@ public class CatalogLoaderTests(GameDataFixture fixture, ITestOutputHelper outpu
         Assert.Equal("Close to Home", msq.First(q => q.RowId == 65621).Name);
         Assert.True(msq.Zip(msq.Skip(1)).All(p => p.First.Journal.SortKey <= p.Second.Journal.SortKey));
 
-        // Listed quests never sort after unlisted ones.
+        // Listed quests never sort after unlisted ones; after refiling only the retired rows are left without a genre.
         var lastListed = all.Select((q, i) => (q, i)).Last(p => !p.q.IsUnlisted).i;
         var firstUnlisted = all.Select((q, i) => (q, i)).First(p => p.q.IsUnlisted).i;
         Assert.True(lastListed < firstUnlisted);
-        Assert.Equal(180, all.Count(q => q.IsUnlisted));
+        Assert.Equal(ExpectedCounts.RetiredByRule1, all.Count(q => q.IsUnlisted));
     }
 
     [GameDataFact]
@@ -247,18 +250,20 @@ public class CatalogLoaderTests(GameDataFixture fixture, ITestOutputHelper outpu
     }
 
     [GameDataFact]
-    public void Unlisted_quests_never_share_a_journal_node_with_listed_ones()
+    public void Removed_quests_never_share_a_journal_node_with_listed_ones()
     {
         var unlisted = Catalog.All.Where(q => q.IsUnlisted).ToArray();
         Assert.NotEmpty(unlisted);
         Assert.All(unlisted, q => Assert.Equal(0u, q.Journal.GenreId));
+        Assert.All(unlisted, q => Assert.Equal(string.Empty, q.Journal.CategoryName));
 
         // Whatever section or category ids the sheet gives them, the tree never counts them under a journal node.
         var states = Catalog.All.ToDictionary(q => q.RowId, _ => QuestState.Ready);
         var counts = Tsukimichi.Core.Query.TreeCounts.Compute(Catalog, states, includeUnlisted: true);
-        var listedInSection0 = Catalog.All.Count(q => !q.IsUnlisted && q.Journal.SectionId == 0);
+        var listedInSection0 = Catalog.All.Count(q => !q.IsRemoved && q.Journal.SectionId == 0);
         Assert.Equal(listedInSection0, counts.Section(0).Total);
-        Assert.Equal(unlisted.Length, counts.Unlisted.Total);
+        Assert.Equal(Catalog.Removed.Count, counts.Unlisted.Total);
+        Assert.Equal(ExpectedCounts.Retired, Catalog.Removed.Count);
     }
 
     [GameDataFact]
