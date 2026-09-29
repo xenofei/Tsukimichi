@@ -77,7 +77,7 @@ public sealed class WhatsNewCard
         checkedThisLoad = true;
         var seen = settings.LastSeenVersion;
         ChangelogSection? found = null;
-        if (seen.Length > 0 && ChangelogSection.NormalizeVersion(seen) != version)
+        if ((seen.Length > 0 || settings.HasPriorConfig) && ChangelogSection.NormalizeVersion(seen) != version)
         {
             try
             {
@@ -89,7 +89,7 @@ public sealed class WhatsNewCard
             }
         }
 
-        switch (WhatsNew.Decide(seen, version, found is not null))
+        switch (WhatsNew.Decide(seen, version, found is not null, settings.HasPriorConfig))
         {
             case WhatsNewDecision.Show:
                 section = found;
