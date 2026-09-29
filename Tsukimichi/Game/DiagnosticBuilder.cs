@@ -57,6 +57,7 @@ public sealed class DiagnosticBuilder
         ArgumentNullException.ThrowIfNull(quest);
         var snapshot = session.ViewedSnapshot;
         session.States.TryGetValue(quest.RowId, out var evaluation);
+        session.Curated.Quirks.TryGetValue(quest.RowId, out var quirk);
         var rewards = session.UniqueRewards;
         return QuestDiagnostic.Compose(new DiagnosticInputs
         {
@@ -69,6 +70,7 @@ public sealed class DiagnosticBuilder
             Quest = quest,
             FilingRule = DiagnosticInputs.DescribeFiling(quest, filing()),
             Evaluation = evaluation,
+            QuirkNote = quirk?.Note,
             Names = session.Names,
             States = session.States.Count > 0 ? session.States : null,
             Snapshot = snapshot,
