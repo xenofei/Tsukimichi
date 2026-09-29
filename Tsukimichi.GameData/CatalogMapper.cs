@@ -149,6 +149,11 @@ public static class CatalogMapper
             RepeatInterval = quest.RepeatIntervalType,
             DailyPool = quest.DailyQuestPool,
             Festival = ToUInt16(quest.Festival.RowId),
+            FestivalBegin = quest.FestivalBegin,
+            FestivalEnd = quest.FestivalEnd,
+            SatisfactionNpc = ToByte(quest.SatisfactionNpc.RowId),
+            SatisfactionLevel = quest.SatisfactionLevel,
+            CarrierLevel = ToByte(quest.DeliveryQuest.RowId),
 
             MountRequired = quest.MountRequired.RowId != 0,
             HouseRequired = quest.IsHouseRequired,
@@ -442,7 +447,32 @@ public static class CatalogMapper
             Names(excel.GetSheet<BeastReputationRank>(language), static (in BeastReputationRank r) => r.Name),
             infos,
             Names(excel.GetSheet<ClassJobCategory>(language), static (in ClassJobCategory r) => r.Name),
-            DutyNames(excel.GetSheet<ContentFinderCondition>(language)));
+            DutyNames(excel.GetSheet<ContentFinderCondition>(language)),
+            SatisfactionNpcNames(excel.GetSheet<SatisfactionNpc>(language)));
+    }
+
+    /// <summary>
+    /// Custom delivery client names keyed by SatisfactionNpc row id (what <see cref="QuestRecord.SatisfactionNpc"/>
+    /// holds), from the ENpcResident row each client points at ("M'naago", "Kurenai"). Row 0 is empty and skipped.
+    /// </summary>
+    private static Dictionary<uint, string> SatisfactionNpcNames(ExcelSheet<SatisfactionNpc> sheet)
+    {
+        var result = new Dictionary<uint, string>();
+        foreach (var row in sheet)
+        {
+            if (row.Npc.RowId == 0 || row.Npc.ValueNullable is not { } npc)
+            {
+                continue;
+            }
+
+            var text = npc.Singular.ExtractText();
+            if (text.Length != 0)
+            {
+                result[row.RowId] = text;
+            }
+        }
+
+        return result;
     }
 
     /// <summary><c>ContentFinderCondition.ContentLinkType</c> value whose <c>Content</c> is an InstanceContent row.</summary>

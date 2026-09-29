@@ -25,6 +25,7 @@ public sealed record CatalogBundle(QuestCatalog Catalog, GameNames Names, ClassJ
         JobAbbreviation = Names.ClassJobAbbreviation,
         ClassJobCategory = Names.ClassJobCategory,
         Duty = Names.Duty,
+        SatisfactionNpc = id => Names.SatisfactionNpc(id),
     };
 
     /// <summary>The per-job quest ladders over this catalog's ClassJob rows; the callers memoize one per bundle.</summary>
@@ -86,7 +87,9 @@ public sealed record ClassJobInfo(
 /// Small id-to-name lookups read from the BeastTribe, GrandCompany, ExVersion, ClassJob, BeastReputationRank,
 /// ClassJobCategory and ContentFinderCondition sheets. Keys are row ids; the byte-sized ids on <see cref="QuestRecord"/>
 /// widen implicitly. <paramref name="Duties"/> is keyed by InstanceContent row id (what
-/// <see cref="QuestRecord.InstanceContentRequired"/> holds), named after the duty's Duty Finder entry.
+/// <see cref="QuestRecord.InstanceContentRequired"/> holds), named after the duty's Duty Finder entry;
+/// <paramref name="SatisfactionNpcs"/> by SatisfactionNpc row id (<see cref="QuestRecord.SatisfactionNpc"/>), the
+/// custom delivery client's name.
 /// </summary>
 public sealed record GameNames(
     IReadOnlyDictionary<uint, string> Tribes,
@@ -97,7 +100,8 @@ public sealed record GameNames(
     IReadOnlyDictionary<uint, string> TribeRanks,
     IReadOnlyList<ClassJobInfo> ClassJobInfos,
     IReadOnlyDictionary<uint, string> ClassJobCategories,
-    IReadOnlyDictionary<uint, string> Duties)
+    IReadOnlyDictionary<uint, string> Duties,
+    IReadOnlyDictionary<uint, string> SatisfactionNpcs)
 {
     public static readonly GameNames Empty = new(
         new Dictionary<uint, string>(),
@@ -107,6 +111,7 @@ public sealed record GameNames(
         new Dictionary<uint, string>(),
         new Dictionary<uint, string>(),
         [],
+        new Dictionary<uint, string>(),
         new Dictionary<uint, string>(),
         new Dictionary<uint, string>());
 
@@ -139,4 +144,7 @@ public sealed record GameNames(
     public string ClassJobCategory(uint id) => ClassJobCategories.GetValueOrDefault(id, string.Empty);
 
     public string Duty(uint instanceContentId) => Duties.GetValueOrDefault(instanceContentId, string.Empty);
+
+    /// <summary>The custom delivery client's name by SatisfactionNpc row id ("M'naago"); empty for an unknown row.</summary>
+    public string SatisfactionNpc(uint id) => SatisfactionNpcs.GetValueOrDefault(id, string.Empty);
 }
