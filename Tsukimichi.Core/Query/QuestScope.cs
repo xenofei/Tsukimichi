@@ -1,6 +1,6 @@
 namespace Tsukimichi.Core.Query;
 
-/// <summary>The selected journal tree node. <see cref="Id"/> is meaningful for Section, Category and Genre only.</summary>
+/// <summary>The selected journal tree node. <see cref="Id"/> is meaningful for Section, Category, Genre and Issuer only.</summary>
 public readonly record struct QuestScope(ScopeKind Kind, uint Id)
 {
     public static readonly QuestScope None = new(ScopeKind.None, 0);
@@ -16,4 +16,10 @@ public readonly record struct QuestScope(ScopeKind Kind, uint Id)
     public static QuestScope Category(uint id) => new(ScopeKind.Category, id);
 
     public static QuestScope Genre(uint id) => new(ScopeKind.Genre, id);
+
+    /// <summary>
+    /// The quests the NPC with this ENpcResident row id hands out (<see cref="Model.Issuer.NpcId"/>), in journal order,
+    /// removed quests left out: what the NPC context menu opens the Journal on. Not a tree node; the scope chip names it.
+    /// </summary>
+    public static QuestScope Issuer(uint npcId) => new(ScopeKind.VirtualIssuer, npcId);
 }
