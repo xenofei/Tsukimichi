@@ -160,10 +160,13 @@ public static class StateResolver
         }
 
         // 3. Inactive festival: foreclosed if the character already saw a run of it, otherwise blocked as seasonal.
-        if (q.Festival != 0 && !s.ActiveFestivals.Contains(q.Festival))
+        //    A running event whose reported phase lies outside the quest's window (a chapter not open yet, or over)
+        //    is blocked as seasonal too; the requirement carries which.
+        if (q.Festival != 0 && FirstOfKind(requirements, RequirementKind.Seasonal) is { Met: false } seasonal)
         {
-            var state = festivalIsPast(q.Festival) ? QuestState.Foreclosed : QuestState.Blocked;
-            return new(state, requirements, FirstOfKind(requirements, RequirementKind.Seasonal), null, null);
+            var running = seasonal.Req is SeasonalRequirement { Active: true };
+            var state = !running && festivalIsPast(q.Festival) ? QuestState.Foreclosed : QuestState.Blocked;
+            return new(state, requirements, seasonal, null, null);
         }
 
         // 4. In the journal.

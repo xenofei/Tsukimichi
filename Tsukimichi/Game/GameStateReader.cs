@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.Game.Event;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using Lumina.Excel.Sheets;
 using Tsukimichi.Core.Model;
@@ -13,8 +14,8 @@ namespace Tsukimichi.Game;
 
 /// <summary>
 /// Reads everything a <see cref="CharacterSnapshot"/> needs from the client (QuestManager, PlayerState, UIState,
-/// GameMain) and from <see cref="IPlayerState"/>. Every method that touches ClientStructs must run on the framework
-/// thread; <see cref="Capture"/> checks and throws otherwise.
+/// GameMain, SatisfactionSupplyManager) and from <see cref="IPlayerState"/>. Every method that touches ClientStructs
+/// must run on the framework thread; <see cref="Capture"/> checks and throws otherwise.
 /// </summary>
 public sealed class GameStateReader
 {
@@ -23,6 +24,16 @@ public sealed class GameStateReader
 
     /// <summary>Allied societies the client tracks (BeastReputation has 20 slots; ids are 1-based).</summary>
     public const byte TribeCount = 20;
+
+    /// <summary>
+    /// Custom delivery clients the client tracks: <c>SatisfactionSupplyManager.SatisfactionRanks</c> has 12 slots, one
+    /// per SatisfactionNpc row 1..12, so slot i is row i + 1. A 13th client in a later patch overflows the fixed array
+    /// until ClientStructs updates; its quests then read "not checked" rather than a wrong rank.
+    /// </summary>
+    public const int SatisfactionNpcSlots = 12;
+
+    /// <summary>Prefix of the once-per-login log line comparing the three festival arrays the client keeps.</summary>
+    public const string FestivalProbePrefix = "[festival probe]";
 
     /// <summary>Grand Companies (Maelstrom, Twin Adder, Immortal Flames); ids are 1-based.</summary>
     private const int GrandCompanyCount = 3;
@@ -39,7 +50,9 @@ public sealed class GameStateReader
     private CatalogIds? catalogIds;
     private bool measured;
     private bool festivalsWarned;
+    private bool satisfactionWarned;
     private bool outOfRangeLogged;
+    private ulong festivalProbeContentId;
 
     public GameStateReader(IFramework framework, IPlayerState playerState, IDataManager data, IPluginLog log)
     {
@@ -118,6 +131,12 @@ public sealed class GameStateReader
 
         var ids = IdsFor(catalog);
         var stopwatch = measured ? null : Stopwatch.StartNew();
+
+        if (festivalProbeContentId != contentId)
+        {
+            festivalProbeContentId = contentId;
+            LogFestivalProbe(ps);
+        }
 
         // Completion bits. The client mask is finite; ids past its end are not completable and must not be looked up,
         // since IsQuestComplete does no bounds check of its own.
@@ -251,6 +270,8 @@ public sealed class GameStateReader
             }
         }
 
+        var (festivalIds, festivalPhases) = ReadActiveFestivals();
+
         var snapshot = new CharacterSnapshot
         {
             ContentId = contentId,
@@ -267,7 +288,12 @@ public sealed class GameStateReader
             TribeAllowance = (byte)Math.Min(qm->GetBeastTribeAllowance(), byte.MaxValue),
             LeveAllowance = qm->NumLeveAllowances,
             UnlockedInstances = unlockedInstances,
-            ActiveFestivals = ReadActiveFestivals(),
+            ActiveFestivals = festivalIds,
+            ActiveFestivalPhases = festivalPhases,
+            SatisfactionRanks = ReadSatisfactionRanks(),
+            // PlayerState.DeliveryLevel ("Carrier Level of Delivery Moogle Quests"), surfaced by Dalamud; 0 before
+            // the postmoogle quests start, which the evaluator reads as "not checked".
+            CarrierLevel = playerState.DeliveryLevel,
             // Account entitlement caps: PlayerState.MaxExpansion is the ExVersion row the account owns up to,
             // PlayerState.MaxLevel the level cap that comes with it. 0 means the client has not said (a snapshot
             // written by an older build reads the same), and the evaluator treats 0 as "not checked", never as level 0.
@@ -295,9 +321,16 @@ public sealed class GameStateReader
     /// <summary>What changed between two captures; see <see cref="SnapshotDiff.Compute"/>.</summary>
     public static SnapshotDiff Diff(CharacterSnapshot old, CharacterSnapshot @new) => SnapshotDiff.Compute(old, @new);
 
-    private unsafe List<ushort> ReadActiveFestivals()
+    /// <summary>
+    /// Running festivals as (id, phase) pairs from <c>GameMain.ActiveFestivals</c> (8 slots of
+    /// <c>GameMain.Festival { ushort Id; ushort Phase }</c>), ids and phases in two parallel lists; a repeated id
+    /// keeps its first slot. The client holds two more copies (<see cref="LogFestivalProbe"/>); GameMain's is read
+    /// until the probe log from a live phased event says another one drives the quest givers.
+    /// </summary>
+    private unsafe (List<ushort> Ids, List<ushort> Phases) ReadActiveFestivals()
     {
-        var result = new List<ushort>();
+        var ids = new List<ushort>();
+        var phases = new List<ushort>();
         var gm = GameMain.Instance();
         if (gm == null)
         {
@@ -307,20 +340,99 @@ public sealed class GameStateReader
                 log.Warning("GameMain is not available; active festivals will read as none");
             }
 
-            return result;
+            return (ids, phases);
         }
 
         var festivals = gm->ActiveFestivals;
         for (var i = 0; i < festivals.Length; i++)
         {
-            var id = festivals[i].Id;
-            if (id != 0 && !result.Contains(id))
+            var festival = festivals[i];
+            if (festival.Id != 0 && !ids.Contains(festival.Id))
             {
-                result.Add(id);
+                ids.Add(festival.Id);
+                phases.Add(festival.Phase);
             }
         }
 
+        return (ids, phases);
+    }
+
+    /// <summary>
+    /// Custom delivery satisfaction rank per client from <c>SatisfactionSupplyManager.SatisfactionRanks</c>, keyed by
+    /// SatisfactionNpc row id (slot + 1), every slot included so a client not yet unlocked reads rank 0. Empty when the
+    /// manager is not available, which the evaluator reads as "not checked".
+    /// </summary>
+    private unsafe Dictionary<byte, byte> ReadSatisfactionRanks()
+    {
+        var result = new Dictionary<byte, byte>(SatisfactionNpcSlots);
+        var manager = SatisfactionSupplyManager.Instance();
+        if (manager == null)
+        {
+            if (!satisfactionWarned)
+            {
+                satisfactionWarned = true;
+                log.Warning("SatisfactionSupplyManager is not available; custom delivery ranks will read as not checked");
+            }
+
+            return result;
+        }
+
+        var ranks = manager->SatisfactionRanks;
+        for (var slot = 0; slot < ranks.Length && slot < byte.MaxValue; slot++)
+        {
+            result[(byte)(slot + 1)] = ranks[slot];
+        }
+
         return result;
+    }
+
+    /// <summary>
+    /// Once per login, the three festival arrays the client keeps, with phases, so the owner can compare them during a
+    /// phased event and pick the one the quest givers follow: <c>GameMain.ActiveFestivals</c> (what the snapshot
+    /// reads), <c>PlayerState.ActiveFestivalIds</c> / <c>ActiveFestivalPhases</c> (the server-sent per-character
+    /// state) and <c>EventFramework.Festivals</c>. Logged at Information under <see cref="FestivalProbePrefix"/>.
+    /// </summary>
+    private unsafe void LogFestivalProbe(PlayerState* ps)
+    {
+        var gm = GameMain.Instance();
+        var ef = EventFramework.Instance();
+        var gameMain = gm == null ? "unavailable" : FormatFestivals(gm->ActiveFestivals);
+        var playerStateText = FormatFestivals(ps->ActiveFestivalIds, ps->ActiveFestivalPhases);
+        var eventFramework = ef == null ? "unavailable" : FormatFestivals(ef->Festivals);
+        log.Information(
+            "{Prefix} GameMain.ActiveFestivals [{GameMain}]; PlayerState.ActiveFestivalIds/Phases [{PlayerState}]; EventFramework.Festivals [{EventFramework}] (id/phase; GameMain is what the snapshot reads)",
+            FestivalProbePrefix,
+            gameMain,
+            playerStateText,
+            eventFramework);
+    }
+
+    private static string FormatFestivals(Span<GameMain.Festival> festivals)
+    {
+        var parts = new List<string>(festivals.Length);
+        for (var i = 0; i < festivals.Length; i++)
+        {
+            if (festivals[i].Id != 0)
+            {
+                parts.Add($"{festivals[i].Id}/{festivals[i].Phase}");
+            }
+        }
+
+        return parts.Count == 0 ? "none" : string.Join(", ", parts);
+    }
+
+    private static string FormatFestivals(Span<ushort> ids, Span<ushort> phases)
+    {
+        var parts = new List<string>(ids.Length);
+        for (var i = 0; i < ids.Length; i++)
+        {
+            if (ids[i] != 0)
+            {
+                parts.Add(i < phases.Length ? $"{ids[i]}/{phases[i]}" : $"{ids[i]}/?");
+            }
+        }
+
+        return parts.Count == 0 ? "none" : string.Join(", ", parts);
     }
 
     /// <summary>

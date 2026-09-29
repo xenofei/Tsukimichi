@@ -143,6 +143,33 @@ public static class RequirementEvaluator
             }
         }
 
+        if (q.SatisfactionNpc != 0 && q.SatisfactionLevel > 0)
+        {
+            // Null: the ranks were never captured (an older file, or the client had no manager); listed, not judged.
+            var actual = s.SatisfactionRank(q.SatisfactionNpc);
+            var met = actual is null || actual >= q.SatisfactionLevel;
+            var npc = ctx.SatisfactionNpcName(q.SatisfactionNpc);
+            var with = npc.Length > 0 ? " with " + npc : string.Empty;
+            results.Add(new(new CustomDeliveryRankRequirement(q.SatisfactionNpc, q.SatisfactionLevel, actual), met, actual switch
+            {
+                null => $"needs satisfaction rank {q.SatisfactionLevel}{with}, not checked",
+                _ when met => $"satisfaction rank {actual}{with}",
+                _ => $"needs satisfaction rank {q.SatisfactionLevel}{with}, you are rank {actual}",
+            }));
+        }
+
+        if (q.CarrierLevel > 0)
+        {
+            var actual = s.CarrierLevelOrNull;
+            var met = actual is null || actual >= q.CarrierLevel;
+            results.Add(new(new CarrierLevelRequirement(q.CarrierLevel, actual), met, actual switch
+            {
+                null => $"needs carrier level {q.CarrierLevel}, not checked",
+                _ when met => $"carrier level {actual}",
+                _ => $"needs carrier level {q.CarrierLevel}, you are level {actual}",
+            }));
+        }
+
         if (q.InstanceContentRequired.Length > 0)
         {
             var ids = q.InstanceContentRequired;
@@ -159,8 +186,31 @@ public static class RequirementEvaluator
 
         if (q.Festival != 0)
         {
+            // The event must be running; a quest with a phase window (a later chapter of a phased event) also needs
+            // the running event's phase inside it. A phase the client did not report never blocks.
             var active = s.ActiveFestivals.Contains(q.Festival);
-            results.Add(new(new SeasonalRequirement(q.Festival, active), active, active ? "seasonal event active" : "seasonal event not active"));
+            var phase = active ? s.FestivalPhase(q.Festival) : null;
+            var seasonal = new SeasonalRequirement(q.Festival, active, q.FestivalBegin, q.FestivalEnd, phase);
+            var met = active && !seasonal.ChapterNotOpen && !seasonal.ChapterOver;
+            string detail;
+            if (!active)
+            {
+                detail = "seasonal event not active";
+            }
+            else if (seasonal.ChapterNotOpen)
+            {
+                detail = $"chapter opens at phase {q.FestivalBegin}, the event is at phase {phase}";
+            }
+            else if (seasonal.ChapterOver)
+            {
+                detail = $"chapter ended after phase {q.FestivalEnd}, the event is at phase {phase}";
+            }
+            else
+            {
+                detail = seasonal.HasWindow && phase is { } p ? $"seasonal event active, phase {p}" : "seasonal event active";
+            }
+
+            results.Add(new(seasonal, met, detail));
         }
 
         if (q.AcceptConditions.Length > 0)

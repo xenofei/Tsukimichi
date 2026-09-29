@@ -429,6 +429,8 @@ public static partial class Strings
         RequirementKind.Mount => "Mount",
         RequirementKind.House => "House",
         RequirementKind.Achievement => "Achievement",
+        RequirementKind.CustomDeliveryRank => "Custom delivery",
+        RequirementKind.CarrierLevel => "Carrier level",
         _ => kind.ToString(),
     };
 

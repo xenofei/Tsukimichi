@@ -43,6 +43,12 @@ public enum RequirementKind
     Mount,
     House,
     Achievement,
+
+    /// <summary>Custom delivery satisfaction rank with one client (<see cref="QuestRecord.SatisfactionNpc"/>).</summary>
+    CustomDeliveryRank,
+
+    /// <summary>Delivery Moogle carrier level (<see cref="QuestRecord.CarrierLevel"/>).</summary>
+    CarrierLevel,
 }
 
 /// <summary>What a quest hands out. The first block mirrors the Quest sheet reward slots; the rest are resolved links.</summary>

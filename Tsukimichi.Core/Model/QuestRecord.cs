@@ -69,6 +69,32 @@ public sealed record QuestRecord
     public byte DailyPool { get; init; }
     public ushort Festival { get; init; }
 
+    /// <summary>
+    /// <c>Quest.FestivalBegin</c> / <c>Quest.FestivalEnd</c>: the phase window of the running festival the quest is
+    /// offered in (a phased event opens later chapters on later days; Hatching-tide 2014 ran phases 1 to 5). Both 0
+    /// means the quest is offered for the whole run; a non-zero bound is inclusive and the other bound, when 0, is
+    /// open. Only read when the client reports the festival's phase (<see cref="CharacterSnapshot.ActiveFestivalPhases"/>).
+    /// </summary>
+    public byte FestivalBegin { get; init; }
+
+    /// <inheritdoc cref="FestivalBegin"/>
+    public byte FestivalEnd { get; init; }
+
+    /// <summary>
+    /// <c>Quest.SatisfactionNpc</c>: the custom delivery client (SatisfactionNpc row id, 1-based; 0 when none) whose
+    /// satisfaction rank <see cref="SatisfactionLevel"/> the quest needs.
+    /// </summary>
+    public byte SatisfactionNpc { get; init; }
+
+    /// <summary><c>Quest.SatisfactionLevel</c>: the satisfaction rank needed with <see cref="SatisfactionNpc"/>; 0 when none.</summary>
+    public byte SatisfactionLevel { get; init; }
+
+    /// <summary>
+    /// <c>Quest.DeliveryQuest</c>: the Delivery Moogle carrier level the quest needs. The sheet's row id is the
+    /// carrier level itself on every row (docs/data/verification-report-2.md section 2 row 3); 0 when none.
+    /// </summary>
+    public byte CarrierLevel { get; init; }
+
     public bool MountRequired { get; init; }
     public bool HouseRequired { get; init; }
     public uint[] AcceptConditions { get; init; } = [];

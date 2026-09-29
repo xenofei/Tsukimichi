@@ -29,6 +29,9 @@ public class RequirementEvaluatorTests
             AcceptConditions = [11],
             MountRequired = true,
             HouseRequired = true,
+            SatisfactionNpc = 2,
+            SatisfactionLevel = 4,
+            CarrierLevel = 7,
         };
         var ctx = new EvalContext
         {
@@ -44,6 +47,7 @@ public class RequirementEvaluatorTests
             RequirementKind.Foreclosure, RequirementKind.ClassJob, RequirementKind.Level, RequirementKind.PreviousQuests,
             RequirementKind.GrandCompany, RequirementKind.GrandCompanyRank,
             RequirementKind.TribeRank, RequirementKind.TribeReputation, RequirementKind.TribeAllowance, RequirementKind.TribeDailyOffer,
+            RequirementKind.CustomDeliveryRank, RequirementKind.CarrierLevel,
             RequirementKind.DutyCompletion, RequirementKind.Seasonal, RequirementKind.AcceptCondition,
             RequirementKind.Mount, RequirementKind.House, RequirementKind.Achievement,
         ], kinds);

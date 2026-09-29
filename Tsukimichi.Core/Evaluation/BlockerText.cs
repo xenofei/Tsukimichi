@@ -25,9 +25,10 @@ namespace Tsukimichi.Core.Evaluation;
 /// <item>Level on the current job</item>
 /// <item>Grand Company membership, then rank</item>
 /// <item>Allied society rank, then reputation, then daily allowances and today's offer</item>
+/// <item>Custom delivery satisfaction rank, then Delivery Moogle carrier level</item>
 /// <item>Duties to clear</item>
 /// <item>Mount, house</item>
-/// <item>Seasonal event not running</item>
+/// <item>Seasonal event not running, or its chapter not open yet or over</item>
 /// <item>Not checked: achievements not loaded, accept conditions the plugin cannot judge (docs: Help › Known quirks)</item>
 /// </list>
 /// A quest whose state is Not checked or Locked out keeps the evaluator's own reason (the veil or the lock), since
@@ -67,6 +68,8 @@ public static class BlockerText
         RequirementKind.TribeReputation,
         RequirementKind.TribeAllowance,
         RequirementKind.TribeDailyOffer,
+        RequirementKind.CustomDeliveryRank,
+        RequirementKind.CarrierLevel,
         RequirementKind.DutyCompletion,
         RequirementKind.Mount,
         RequirementKind.House,
@@ -200,8 +203,10 @@ public static class BlockerText
             TribeReputationRequirement t => string.Create(CultureInfo.InvariantCulture, $"Reputation: {Math.Max(0, t.RequiredValue - t.ActualValue)} more") + WithTribe(t.Tribe, names),
             TribeAllowanceRequirement => "Allowance: none left today",
             TribeDailyOfferRequirement => "Not offered today",
+            CustomDeliveryRankRequirement c => c.ActualRank is null ? NotCheckedPrefix + "custom delivery rank" : CustomDelivery(c, names),
+            CarrierLevelRequirement c => c.ActualLevel is null ? NotCheckedPrefix + "carrier level" : string.Create(CultureInfo.InvariantCulture, $"Delivery Moogle: carrier level {c.RequiredLevel}"),
             DutyCompletionRequirement d => Duty(d, names),
-            SeasonalRequirement => state == QuestState.Foreclosed ? "Seasonal: ended" : "Seasonal: not running",
+            SeasonalRequirement s => Seasonal(s, state),
             MountRequirement m => m.HasMount is null ? NotCheckedPrefix + "mount" : "Mount",
             HouseRequirement h => h.HasHouse is null ? NotCheckedPrefix + "house" : "House",
             AchievementRequirement => NotCheckedPrefix + "achievements",
@@ -313,6 +318,33 @@ public static class BlockerText
         }
 
         return p.DoneIds is not null && Array.IndexOf(p.DoneIds, rowId) >= 0;
+    }
+
+    /// <summary>"Custom delivery: rank 4 with M'naago"; without a client name, "Custom delivery: rank 4".</summary>
+    private static string CustomDelivery(CustomDeliveryRankRequirement c, BlockerNames names)
+    {
+        var text = string.Create(CultureInfo.InvariantCulture, $"Custom delivery: rank {c.RequiredRank}");
+        var npc = names.SatisfactionNpc(c.Npc);
+        return npc.Length > 0 ? text + " with " + npc : text;
+    }
+
+    /// <summary>
+    /// "Seasonal: ended" for a run the character missed, "Seasonal: chapter not open yet" or "Seasonal: chapter over"
+    /// while the event runs but its phase lies outside the quest's window, and "Seasonal: not running" otherwise.
+    /// </summary>
+    private static string Seasonal(SeasonalRequirement s, QuestState state)
+    {
+        if (state == QuestState.Foreclosed)
+        {
+            return "Seasonal: ended";
+        }
+
+        if (s.ChapterNotOpen)
+        {
+            return "Seasonal: chapter not open yet";
+        }
+
+        return s.ChapterOver ? "Seasonal: chapter over" : "Seasonal: not running";
     }
 
     /// <summary>"Duty: The Vault" for the first duty with a name; otherwise how many are left to clear.</summary>

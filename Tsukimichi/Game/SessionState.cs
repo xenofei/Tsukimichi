@@ -245,7 +245,12 @@ public sealed class SessionState
         Index = ReversePrereqIndex.Build(bundle.Catalog);
         FeatureQuestIds = FeaturePresets.Derive(bundle.Catalog, Curated, UniqueRewards.Entries);
         Names = bundle.BlockerNames();
-        baseContext = EvalContextBuilder.Build(Curated.Festivals, bundle.Jobs, static () => DateTime.UtcNow, jobParents: bundle.JobParents());
+        baseContext = EvalContextBuilder.Build(
+            Curated.Festivals,
+            bundle.Jobs,
+            static () => DateTime.UtcNow,
+            jobParents: bundle.JobParents(),
+            satisfactionNpcName: id => bundle.Names.SatisfactionNpc(id));
 
         // The live evaluations belong to the previous catalog (a filing flip retires or restores rows): shown
         // against this one they would read "Locked out · removed from the game" on rows no longer retired, or Ready

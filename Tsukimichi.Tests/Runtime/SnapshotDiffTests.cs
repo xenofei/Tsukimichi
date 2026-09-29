@@ -19,6 +19,39 @@ public sealed class SnapshotDiffTests
     }
 
     [Fact]
+    public void A_festival_phase_change_alone_changes_that_festival()
+    {
+        var a = Fixture.Snapshot(Fixture.A) with { ActiveFestivals = [10, 39], ActiveFestivalPhases = [1, 0] };
+        var b = a with { ActiveFestivalPhases = [2, 0] };
+
+        var diff = SnapshotDiff.Compute(a, b);
+
+        Assert.Equal([10], diff.ChangedFestivals);
+        Assert.Empty(diff.ChangedQuestIds);
+        Assert.Empty(diff.ChangedJobs);
+        Assert.False(diff.OtherChanged);
+        Assert.True(SnapshotDiff.Compute(a, a with { ActiveFestivalPhases = [1, 0] }).IsEmpty);
+
+        // A phase that becomes known (or unknown) counts too: the window applies from that capture on.
+        Assert.Equal([10, 39], SnapshotDiff.Compute(a, a with { ActiveFestivalPhases = [] }).ChangedFestivals);
+        Assert.Equal([39], SnapshotDiff.Compute(a, a with { ActiveFestivalPhases = [1] }).ChangedFestivals);
+
+        // Ids still diff as before: one ends, another starts.
+        Assert.Equal([10, 84], SnapshotDiff.Compute(a, a with { ActiveFestivals = [84, 39], ActiveFestivalPhases = [3, 0] }).ChangedFestivals);
+    }
+
+    [Fact]
+    public void Delivery_ranks_and_carrier_level_are_other_inputs()
+    {
+        var a = Fixture.Snapshot(Fixture.A) with { SatisfactionRanks = new Dictionary<byte, byte> { [2] = 3 }, CarrierLevel = 6 };
+
+        Assert.True(SnapshotDiff.Compute(a, a with { SatisfactionRanks = new Dictionary<byte, byte> { [2] = 4 } }).OtherChanged);
+        Assert.True(SnapshotDiff.Compute(a, a with { SatisfactionRanks = new Dictionary<byte, byte> { [2] = 3, [3] = 1 } }).OtherChanged);
+        Assert.True(SnapshotDiff.Compute(a, a with { CarrierLevel = 7 }).OtherChanged);
+        Assert.True(SnapshotDiff.Compute(a, a with { SatisfactionRanks = new Dictionary<byte, byte> { [2] = 3 }, CarrierLevel = 6 }).IsEmpty);
+    }
+
+    [Fact]
     public void Reordered_id_lists_are_the_same_set()
     {
         var a = Fixture.Snapshot(Fixture.A) with { UnlockedInstances = [3, 1, 2], CompletedAchievements = [9, 8] };
