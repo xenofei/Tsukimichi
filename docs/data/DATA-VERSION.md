@@ -5,8 +5,8 @@ Written by `tools/regen.ps1`; do not edit by hand. The reports under `docs/data`
 | Field | Value |
 |---|---|
 | Game version | `2026.09.15.0000.0000` |
-| Generated (UTC) | `2026-09-29T00:47:07Z` |
-| Curated revision | `cfb233c` (last commit touching a data file under `Tsukimichi/Data/curated`) |
+| Generated (UTC) | `2026-09-29T01:28:14Z` |
+| Curated revision | `39a5af3` (last commit touching a data file under `Tsukimichi/Data/curated`) |
 | Catalog fixture | `catalog-2026.09.15.0000.0000.json.gz` |
 | unique_quests.json entries | 3464 across 1173 quests |
 | feature_quests.json (derived) | 1734 quests |
