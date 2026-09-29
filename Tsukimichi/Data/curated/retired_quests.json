@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "note": "Quests the game removed that the sheets do not mark (no placeholder issuer 1034221, no hidden flag), or mark while still giving them a journal genre. JournalRefiler treats them as retired: never counted, shown only under Removed from the game. Keys are Quest sheet row ids; patch is the patch that removed the quest, shown in the detail pane. Every entry needs a note and an evidence URL.",
+  "note": "Quests the game removed that the sheets do not mark (no placeholder issuer 1034221, no hidden flag: the 3.05 trio), plus the patch note for listed rows the sheets do mark (JournalRefiler rule 1 retires those by itself, listed or not). A named quest is retired: never counted, shown only under Removed from the game, keeping its genre. Keys are Quest sheet row ids; patch is the patch that removed the quest, shown in the detail pane. Every entry needs a note and an evidence URL.",
   "entries": {
     "66023": {
       "note": "Meet, Greet, and Deceit (Lominsan Sidequests). Removed in patch 3.05 with two other level-9 sidequests over inconsistencies in the Mac and Korean versions; the sheet still lists it with a normal issuer and genre, and the Lodestone omits it (verification-report-2 inaccuracy 6).",

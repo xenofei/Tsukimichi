@@ -80,19 +80,26 @@ public static class CatalogMapper
         {
             var refiled = 0;
             var retired = 0;
+            var unlisted = new List<uint>();
             foreach (var quest in filed)
             {
                 if (quest.IsRetired)
                 {
                     retired++;
                 }
-                else if (quest.RefiledFrom != 0 && !quest.IsUnlisted)
+                else if (quest.IsUnlisted)
+                {
+                    // Rule 7, or a rule or override whose genre no listed quest holds: worth a row id in the log.
+                    unlisted.Add(quest.RowId);
+                }
+                else if (quest.RefiledFrom != 0)
                 {
                     refiled++;
                 }
             }
 
-            log?.Invoke($"Journal refiling: {refiled} quests filed into a genre, {retired} retired, {catalog.ByGenre.GetValueOrDefault(0u)?.Count ?? 0} left unlisted");
+            var unlistedIds = unlisted.Count == 0 ? string.Empty : " (" + string.Join(", ", unlisted) + ")";
+            log?.Invoke($"Journal refiling: {refiled} quests filed into a genre, {retired} retired, {unlisted.Count} left unlisted{unlistedIds}");
         }
 
         return new CatalogBundle(catalog, names, jobs, language.ToString());

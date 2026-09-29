@@ -93,7 +93,12 @@ $curated = Get-Content (Join-Path $curatedDir "feature_quests.json") -Raw | Conv
 $curatedVersionFile = "$curatedDir/VERSION.json"
 $curatedPathspec = @($curatedDir, ":(exclude)$curatedVersionFile", ":(exclude)$curatedDir/README.md")
 $curatedRevision = (git log -n 1 --format=%h -- @curatedPathspec).Trim()
-if ((git status --porcelain -- @curatedPathspec | Measure-Object).Count -gt 0) { $curatedRevision += "-dirty" }
+# Content-based: `git status` also flags a file whose line endings differ from the checkout's (the generator writes
+# LF under core.autocrlf=true), which would stamp "-dirty" on data that is byte-for-byte what is committed.
+git diff --quiet HEAD -- @curatedPathspec
+$curatedChanged = $LASTEXITCODE -ne 0
+$curatedUntracked = (git ls-files --others --exclude-standard -- @curatedPathspec | Measure-Object).Count -gt 0
+if ($curatedChanged -or $curatedUntracked) { $curatedRevision += "-dirty" }
 $fixture = (Get-ChildItem $fixturesDir -Filter "catalog-*.json.gz" | Select-Object -First 1).Name
 
 # The plugin reads the revision from VERSION.json (CuratedData.CuratedRevision) for Settings > About and the diagnostic block.

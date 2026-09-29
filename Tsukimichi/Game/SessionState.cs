@@ -247,10 +247,19 @@ public sealed class SessionState
         Names = bundle.BlockerNames();
         baseContext = EvalContextBuilder.Build(Curated.Festivals, bundle.Jobs, static () => DateTime.UtcNow, jobParents: bundle.JobParents());
 
+        // The live evaluations belong to the previous catalog (a filing flip retires or restores rows): shown
+        // against this one they would read "Locked out · removed from the game" on rows no longer retired, or Ready
+        // on retired ones, until the poller's next pass. The poller sees the new bundle on its next poll and starts
+        // a first pass; until it commits, the live character reads Not checked.
+        liveStates = NoStates;
         if (ViewedSnapshot is { } viewed && !IsLive)
         {
             Context = baseContext;
             States = StateResolver.ResolveAll(bundle.Catalog, viewed, baseContext);
+        }
+        else if (IsLive)
+        {
+            States = NoStates;
         }
 
         Bump();
@@ -260,6 +269,21 @@ public sealed class SessionState
     {
         CatalogError = error;
         CatalogLoading = false;
+        Bump();
+    }
+
+    /// <summary>
+    /// A rebuild started (a filing flip or a retry): the windows show the catalog as loading until the build lands.
+    /// The current <see cref="Bundle"/> stays in place for the poller and the integrations meanwhile.
+    /// </summary>
+    internal void SetCatalogRebuilding()
+    {
+        if (CatalogLoading)
+        {
+            return;
+        }
+
+        CatalogLoading = true;
         Bump();
     }
 

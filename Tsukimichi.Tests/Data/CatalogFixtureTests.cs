@@ -70,17 +70,21 @@ public class CatalogFixtureTests(FixtureCatalog fixture, ITestOutputHelper outpu
         var states = Catalog.All.ToDictionary(q => q.RowId, _ => QuestState.Ready);
         var counts = TreeCounts.Compute(Catalog, states, includeUnlisted: true);
 
+        // The class intros are listed under their genre but in no count (QuestRecord.CountsInTotals).
+        var uncounted = Catalog.All.Count(q => !q.IsRemoved && !q.CountsInTotals);
+        Assert.Equal(ExpectedCounts.UncountedClassIntros, uncounted);
+
         Assert.Equal(removed.Count, counts.Unlisted.Total);
-        Assert.Equal(Catalog.Count, counts.Overall.Total);
+        Assert.Equal(Catalog.Count - uncounted, counts.Overall.Total);
         foreach (var (section, quests) in Catalog.BySection)
         {
-            var listed = quests.Count(q => !q.IsRemoved);
-            output.WriteLine($"section {section}: {listed} listed of {quests.Count}");
+            var listed = quests.Count(q => !q.IsRemoved && q.CountsInTotals);
+            output.WriteLine($"section {section}: {listed} counted of {quests.Count}");
             Assert.Equal(listed, counts.Section(section).Total);
         }
 
-        Assert.Equal(Catalog.Count - removed.Count, counts.Sections.Values.Sum(c => c.Total));
-        Assert.Equal(Catalog.Count - removed.Count, TreeCounts.Compute(Catalog, states, includeUnlisted: false).Overall.Total);
+        Assert.Equal(Catalog.Count - removed.Count - uncounted, counts.Sections.Values.Sum(c => c.Total));
+        Assert.Equal(Catalog.Count - removed.Count - uncounted, TreeCounts.Compute(Catalog, states, includeUnlisted: false).Overall.Total);
     }
 
     [Fact]

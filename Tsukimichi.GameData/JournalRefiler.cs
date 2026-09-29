@@ -10,17 +10,17 @@ namespace Tsukimichi.GameData;
 /// <see cref="QuestRecord"/>s, so it runs on a frozen catalog as well as on the live sheets, and under
 /// <see cref="JournalFiling.Legacy"/> it is simply not called.
 /// <list type="number">
-/// <item>Placeholder issuer (<see cref="PlaceholderIssuer"/>) or the hidden flag: retired; stays genre 0.</item>
-/// <item>Class or job intro quasi-quest (<c>Cls…001</c>, <c>Cls…999</c>, <c>Job…299</c>): the genre of its first listed successor.</item>
+/// <item>Placeholder issuer (<see cref="PlaceholderIssuer"/>) or the hidden flag: retired, listed or not; keeps the genre it carries (0 for the sheet's genre-less rows).</item>
+/// <item>Class or job intro quasi-quest (<c>Cls…001</c>, <c>Cls…999</c>, <c>Job…299</c>): the genre of its first listed successor; the class intros stay out of the genre's counts, the job intros count (<see cref="ClassIntroRule"/>).</item>
 /// <item>A Grand Company: that company's Grand Company Quests genre (<see cref="GrandCompanyGenreBase"/> + company).</item>
 /// <item>The first listed prerequisite, walking through unlisted ones in slot order, outside the main scenario sections and in the quest's own expansion: its genre.</item>
 /// <item>Else the first listed successor, then a quest-lock partner, under the same constraint.</item>
 /// <item>Else the dominant genre of the listed regional sidequests (categories 59–85) issued from the same territory; a tie stays unlisted.</item>
 /// <item>Else unlisted.</item>
 /// </list>
-/// Curated <c>retired_quests.json</c> retires listed rows too (they keep their genre); curated
-/// <c>refile_overrides.json</c> pins a quest to a genre after the rules. Both mark <see cref="QuestRecord.RefiledFrom"/>
-/// with <see cref="CuratedRule"/>.
+/// Curated <c>retired_quests.json</c> retires rows the sheet does not mark (they keep their genre) and carries the
+/// patch note for the ones rule 1 already retires; curated <c>refile_overrides.json</c> pins a quest to a genre after
+/// the rules. A quest a curated file decided marks <see cref="QuestRecord.RefiledFrom"/> with <see cref="CuratedRule"/>.
 /// </summary>
 public static partial class JournalRefiler
 {
@@ -41,6 +41,16 @@ public static partial class JournalRefiler
     public const byte RetiredRule = 1;
     public const byte UnlistedRule = 7;
 
+    /// <summary>
+    /// Rule 2, the class and job intros, filed under their class's genre. The class intros (<c>Cls…001</c>/<c>999</c>,
+    /// see <see cref="IsStartingClassIntro"/>) get <see cref="QuestRecord.CountsInTotals"/> false, because the class a
+    /// character started as never gets its intro (the starter is handed "Way of the …" directly; the intro is only
+    /// offered to a character switching in), so counting it would keep that genre one short. The job intros
+    /// (<c>Job…299</c>: A Dark Spectacle, So You Want to Be a Machinist, What's Your Sign) count as usual: nobody
+    /// starts as a job, so every character can complete them.
+    /// </summary>
+    public const byte ClassIntroRule = 2;
+
     /// <summary>The genre rank sits above the sheet's own SortKey in <see cref="JournalRef.SortKey"/>; see <c>CatalogMapper</c>.</summary>
     private const int SortKeyGenreShift = 16;
     private const int SheetSortKeyMask = 0xFFFF;
@@ -54,6 +64,16 @@ public static partial class JournalRefiler
     /// <summary>Whether an internal id names a class or job intro quasi-quest (rule 2).</summary>
     public static bool IsClassIntro(string internalId) => internalId is not null && ClassIntroPattern().IsMatch(internalId);
 
+    [GeneratedRegex(@"^Cls\w{3}(001|999)_", RegexOptions.CultureInvariant)]
+    private static partial Regex StartingClassIntroPattern();
+
+    /// <summary>
+    /// Whether an internal id names the intro of a class a character can start as (<c>Cls…001</c>/<c>999</c>, "So You
+    /// Want to Be a Gladiator"): the rule-2 rows that stay out of the totals (<see cref="ClassIntroRule"/>). The job
+    /// intros (<c>Job…299</c>) are class intros for rule 2 but not for this.
+    /// </summary>
+    public static bool IsStartingClassIntro(string internalId) => internalId is not null && StartingClassIntroPattern().IsMatch(internalId);
+
     /// <summary>
     /// Files every genre-0 record and retires the curated ones; listed records come back unchanged unless a curated
     /// file names them. The result keeps the input order; the caller sorts it into a catalog.
@@ -63,7 +83,7 @@ public static partial class JournalRefiler
         ArgumentNullException.ThrowIfNull(quests);
         ArgumentNullException.ThrowIfNull(curated);
 
-        var index = new Index(quests);
+        var index = new Index(quests, curated);
         var result = new QuestRecord[quests.Count];
         for (var i = 0; i < quests.Count; i++)
         {
@@ -75,19 +95,31 @@ public static partial class JournalRefiler
 
     private static QuestRecord File(QuestRecord quest, Index index, CuratedData curated)
     {
+        // Rule 1 reads the sheet alone, listed or not: a row the game moved to the placeholder issuer or flagged
+        // hidden is retired and keeps whatever genre it carries, so the next patch that retires a listed quest is
+        // seen without a curated entry. The curated file covers rows with no sheet signal (the 3.05 trio) and lends
+        // its patch note to the others.
+        if (IsRetiredRow(quest))
+        {
+            return quest with { IsRetired = true, RefiledFrom = RetiredRule };
+        }
+
         if (curated.RetiredQuests.ContainsKey(quest.RowId))
         {
             return quest with { IsRetired = true, RefiledFrom = CuratedRule };
         }
 
-        if (quest.IsUnlisted && IsRetiredRow(quest))
-        {
-            return quest with { IsRetired = true, RefiledFrom = RetiredRule };
-        }
-
         if (curated.RefileOverrides.TryGetValue(quest.RowId, out var pinned))
         {
-            return quest with { Journal = index.Assign(quest, pinned.GenreId), RefiledFrom = CuratedRule };
+            if (index.Assign(quest, pinned.GenreId) is { } target)
+            {
+                return quest with { Journal = target, RefiledFrom = CuratedRule };
+            }
+
+            // The override names a genre no listed quest holds (a typo, or a genre the sheet emptied): filing there
+            // would create a nameless node under the main scenario. A listed quest keeps the sheet's filing; an
+            // unlisted one stays unlisted as if no rule had placed it, and the caller's log names the row.
+            return quest.IsUnlisted ? quest with { RefiledFrom = UnlistedRule } : quest;
         }
 
         if (!quest.IsUnlisted)
@@ -96,9 +128,16 @@ public static partial class JournalRefiler
         }
 
         var (rule, genre) = Decide(quest, index);
-        return genre == 0
-            ? quest with { RefiledFrom = rule }
-            : quest with { Journal = index.Assign(quest, genre), RefiledFrom = rule };
+        if (genre == 0)
+        {
+            return quest with { RefiledFrom = rule };
+        }
+
+        // Rules 2, 4, 5 and 6 read the genre off a listed quest, so a template exists; rule 3 computes it and the
+        // Grand Company genre may hold no listed quest in a future sheet.
+        return index.Assign(quest, genre) is { } journal
+            ? quest with { Journal = journal, RefiledFrom = rule, CountsInTotals = !(rule == ClassIntroRule && IsStartingClassIntro(quest.InternalId)) }
+            : quest with { RefiledFrom = UnlistedRule };
     }
 
     /// <summary>Rule 1's predicate on the row alone.</summary>
@@ -113,7 +152,7 @@ public static partial class JournalRefiler
     {
         if (IsClassIntro(quest.InternalId) && index.FirstListedSuccessorGenre(quest) is { } intro)
         {
-            return (2, intro);
+            return (ClassIntroRule, intro);
         }
 
         if (quest.GrandCompany != 0)
@@ -152,7 +191,7 @@ public static partial class JournalRefiler
         private readonly Dictionary<uint, List<uint>> lockedBy = [];
         private readonly Dictionary<uint, Dictionary<uint, int>> territoryVotes = [];
 
-        public Index(IReadOnlyList<QuestRecord> quests)
+        public Index(IReadOnlyList<QuestRecord> quests, CuratedData curated)
         {
             byRowId = new Dictionary<uint, QuestRecord>(quests.Count);
             foreach (var quest in quests)
@@ -180,6 +219,13 @@ public static partial class JournalRefiler
 
                 templates.TryAdd(quest.Journal.GenreId, quest.Journal);
 
+                // Rule 6 is a vote among the quests the game still hands out: a listed row retired by the sheet or by
+                // the curated file (A Seat at the Feast in Mor Dhona) must not be the tie-breaker.
+                if (IsRetiredRow(quest) || curated.RetiredQuests.ContainsKey(quest.RowId))
+                {
+                    continue;
+                }
+
                 var category = quest.Journal.CategoryId;
                 if (category is >= RegionalCategoryMin and <= RegionalCategoryMax && quest.Issuer is { TerritoryId: not 0 } issuer)
                 {
@@ -195,20 +241,21 @@ public static partial class JournalRefiler
         }
 
         /// <summary>
-        /// The quest's journal reference under <paramref name="genreId"/>: the genre's names and rank from any listed
-        /// quest already filed there, with the quest's own sheet SortKey in the low bits so it sorts inside the genre.
-        /// A genre no quest holds keeps the quest's rank and names nothing.
+        /// The quest's journal reference under <paramref name="genreId"/>: the genre's names, section, category and
+        /// rank from any listed quest already filed there, with the quest's own sheet SortKey in the low bits so it
+        /// sorts inside the genre. Null when no listed quest holds the genre: there is no section or category to
+        /// file under, and <see cref="JournalRef.None"/> would put the quest in the main scenario section.
         /// </summary>
-        public JournalRef Assign(QuestRecord quest, uint genreId)
+        public JournalRef? Assign(QuestRecord quest, uint genreId)
         {
-            var sheetKey = quest.Journal.SortKey & SheetSortKeyMask;
-            if (templates.TryGetValue(genreId, out var template))
+            if (!templates.TryGetValue(genreId, out var template))
             {
-                var rank = template.SortKey >> SortKeyGenreShift;
-                return template with { SortKey = (rank << SortKeyGenreShift) | sheetKey };
+                return null;
             }
 
-            return JournalRef.None with { GenreId = genreId, SortKey = quest.Journal.SortKey };
+            var sheetKey = quest.Journal.SortKey & SheetSortKeyMask;
+            var rank = template.SortKey >> SortKeyGenreShift;
+            return template with { SortKey = (rank << SortKeyGenreShift) | sheetKey };
         }
 
         /// <summary>Rule 2: the genre of the first listed direct successor, in row order.</summary>

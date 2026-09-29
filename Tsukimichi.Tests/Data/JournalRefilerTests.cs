@@ -105,16 +105,14 @@ public class JournalRefilerTests
     }
 
     [Fact]
-    public void Rule1_applies_to_listed_rows_named_in_retired_quests_json()
+    public void Rule1_retires_a_listed_row_on_the_placeholder_issuer_and_it_keeps_its_genre()
     {
-        var curated = Curated(retired: """{ "schema": 1, "entries": { "66033": { "note": "removed", "evidence": "https://example.test/x", "patch": "6.3" } } }""");
-        Assert.Empty(curated.Warnings);
-        Assert.Equal("6.3", curated.RetiredQuests[66033].Patch);
-
-        var filed = Refile(curated, Quest(66033, genre: 18, issuer: Placeholder), Quest(66035, genre: 18));
+        // But I Hardly Noah after the 6.3 Crystal Tower rewrite: the sheet keeps genre 18 but moved the issuer and set
+        // the hidden flag. No curated entry is needed for the retirement itself.
+        var filed = Refile(null, Quest(66033, genre: 18, issuer: Placeholder, hidden: true), Quest(66035, genre: 18));
         var retired = filed[66033];
         Assert.True(retired.IsRetired);
-        Assert.Equal(JournalRefiler.CuratedRule, retired.RefiledFrom);
+        Assert.Equal(JournalRefiler.RetiredRule, retired.RefiledFrom);
         Assert.Equal(18u, retired.Journal.GenreId);
         Assert.False(retired.IsUnlisted);
         Assert.True(retired.IsRemoved);
@@ -128,6 +126,32 @@ public class JournalRefilerTests
         Assert.Equal(new NodeCount(0, 1, 0), counts.Overall);
         Assert.Equal(new NodeCount(1, 2, 0), TreeCounts.Compute(catalog, states, includeUnlisted: true).Overall);
         Assert.Equal([66033u], catalog.Removed.Select(q => q.RowId));
+
+        // With a curated entry too, the sheet signal is the rule that fires; the entry only lends its patch note.
+        var curated = Curated(retired: """{ "schema": 1, "entries": { "66033": { "note": "removed", "evidence": "https://example.test/x", "patch": "6.3" } } }""");
+        Assert.Empty(curated.Warnings);
+        Assert.Equal("6.3", curated.RetiredQuests[66033].Patch);
+        var withNote = Refile(curated, Quest(66033, genre: 18, issuer: Placeholder, hidden: true), Quest(66035, genre: 18));
+        Assert.True(withNote[66033].IsRetired);
+        Assert.Equal(JournalRefiler.RetiredRule, withNote[66033].RefiledFrom);
+    }
+
+    [Fact]
+    public void Curated_retired_quests_json_retires_a_listed_row_the_sheet_does_not_mark()
+    {
+        // Meet, Greet, and Deceit (3.05): a normal issuer, no hidden flag, a genre; only the curated file knows.
+        var curated = Curated(retired: """{ "schema": 1, "entries": { "66023": { "note": "removed", "evidence": "https://example.test/x", "patch": "3.05" } } }""");
+        Assert.Empty(curated.Warnings);
+
+        var filed = Refile(curated, Quest(66023, genre: 112, issuer: At(129)), Quest(66024, genre: 112, issuer: At(129)));
+        var retired = filed[66023];
+        Assert.True(retired.IsRetired);
+        Assert.Equal(JournalRefiler.CuratedRule, retired.RefiledFrom);
+        Assert.Equal(112u, retired.Journal.GenreId);
+        Assert.False(retired.IsUnlisted);
+        Assert.True(retired.IsRemoved);
+        Assert.False(filed[66024].IsRetired);
+        Assert.False(Refile(null, Quest(66023, genre: 112, issuer: At(129)))[66023].IsRetired);
     }
 
     [Fact]
@@ -146,6 +170,27 @@ public class JournalRefilerTests
         Assert.Equal("Genre 156", intro.Journal.GenreName);
         Assert.Equal(6u, intro.Journal.SectionId);
         Assert.True(FeaturePresets.IsFeatureQuest(intro, CuratedData.Empty));
+
+        // Listed under the genre, out of its numbers: the class a character started as never gets its intro.
+        Assert.False(intro.CountsInTotals);
+        Assert.True(filed[65821].CountsInTotals);
+
+        // A job intro (Job…299) is filed by the same rule but counts: nobody starts as a job.
+        var job = Refile(
+            null,
+            Quest(67646, "A Dark Spectacle", internalId: "JobDrk299_02110", issuer: At(418), eventIcon: FeaturePresets.QuasiQuestEventIconType),
+            Quest(67589, "Our End", genre: 186, section: 6, category: 94, previous: [67646]));
+        Assert.Equal(JournalRefiler.ClassIntroRule, job[67646].RefiledFrom);
+        Assert.Equal(186u, job[67646].Journal.GenreId);
+        Assert.True(job[67646].CountsInTotals);
+        Assert.False(JournalRefiler.IsStartingClassIntro("JobDrk299_02110"));
+        Assert.True(JournalRefiler.IsStartingClassIntro("ClsGla001_00177"));
+        Assert.True(JournalRefiler.IsStartingClassIntro("ClsLnc999_00180"));
+        var catalog = QuestCatalog.Build(filed.Values);
+        var counts = TreeCounts.Compute(catalog, new Dictionary<uint, QuestState> { [65713] = QuestState.Ready, [65821] = QuestState.Completed }, includeUnlisted: false);
+        Assert.Equal(new NodeCount(1, 1, 0), counts.Genre(G156));
+        Assert.Equal(new NodeCount(1, 1, 0), counts.Overall);
+        Assert.Equal([65713u, 65821u], catalog.ByGenre[G156].Select(q => q.RowId));
     }
 
     [Theory]
@@ -164,12 +209,53 @@ public class JournalRefilerTests
     [Fact]
     public void Rule3_grand_company_maps_to_233_plus_the_company()
     {
+        var filed = Refile(
+            null,
+            Quest(67925, "Squadron and Commander", grandCompany: 2, issuer: At(132)),
+            Quest(66216, "A Grand Company Quest", genre: 235, section: 3, category: 30));
+
+        var squadron = filed[67925];
+        Assert.Equal(235u, squadron.Journal.GenreId);
+        Assert.Equal(3, squadron.RefiledFrom);
+        // The reference is the listed quest's: names, section and category, with the quest's own sheet key inside.
+        Assert.Equal("Genre 235", squadron.Journal.GenreName);
+        Assert.Equal(3u, squadron.Journal.SectionId);
+        Assert.Equal(30u, squadron.Journal.CategoryId);
+        Assert.False(squadron.IsRemoved);
+    }
+
+    [Fact]
+    public void A_genre_no_listed_quest_holds_leaves_the_quest_unlisted_rather_than_in_the_main_scenario()
+    {
+        // Rule 3 computes its genre instead of reading it off a listed quest, so it is the one rule that can name an
+        // empty genre. Filing there with JournalRef.None would put the quest in section 0 under a nameless node.
         var filed = Refile(null, Quest(67925, "Squadron and Commander", grandCompany: 2, issuer: At(132)));
 
-        Assert.Equal(235u, filed[67925].Journal.GenreId);
-        Assert.Equal(3, filed[67925].RefiledFrom);
-        // No quest holds genre 235 here, so the reference carries the id and nothing else.
-        Assert.Equal(string.Empty, filed[67925].Journal.GenreName);
+        var squadron = filed[67925];
+        Assert.True(squadron.IsUnlisted);
+        Assert.True(squadron.IsRemoved);
+        Assert.False(squadron.IsRetired);
+        Assert.Equal(JournalRefiler.UnlistedRule, squadron.RefiledFrom);
+        Assert.Equal(255u, squadron.Journal.SectionId);
+        Assert.Equal(0u, squadron.Journal.CategoryId);
+        Assert.False(QuestCatalog.Build(filed.Values).BySection.ContainsKey(0));
+    }
+
+    [Fact]
+    public void An_override_to_a_genre_no_listed_quest_holds_is_ignored()
+    {
+        var curated = Curated(overrides: """{ "schema": 1, "entries": { "68478": { "genre": 9, "note": "typo for 90", "evidence": "https://example.test/pagos" }, "68614": { "genre": 9, "note": "typo for 90", "evidence": "https://example.test/eureka" } } }""");
+        Assert.Empty(curated.Warnings);
+
+        var eureka = Quest(68614, "And We Shall Call It Eureka", genre: 90, section: 2, category: 56, expansion: 2);
+        var filed = Refile(curated, Quest(68478, "And We Shall Call It Pagos", expansion: 2, issuer: At(628)), eureka);
+
+        // The unlisted row stays unlisted under rule 7 (the log names it); the listed row keeps the sheet's filing.
+        Assert.True(filed[68478].IsUnlisted);
+        Assert.Equal(JournalRefiler.UnlistedRule, filed[68478].RefiledFrom);
+        Assert.Same(eureka, filed[68614]);
+        Assert.Equal(90u, filed[68614].Journal.GenreId);
+        Assert.Equal(0, filed[68614].RefiledFrom);
     }
 
     [Fact]
@@ -248,6 +334,43 @@ public class JournalRefilerTests
 
         Assert.Equal(G128, filed[68457].Journal.GenreId);
         Assert.Equal(6, filed[68457].RefiledFrom);
+    }
+
+    [Fact]
+    public void Rule6_vote_ignores_a_listed_row_that_is_retired_by_the_sheet_or_the_curated_file()
+    {
+        // A tie between G128 and G124 that only a retired row would break, once by the placeholder issuer and once by
+        // retired_quests.json: the vote stays tied and the quest stays unlisted.
+        var curated = Curated(retired: """{ "schema": 1, "entries": { "68003": { "note": "removed", "evidence": "https://example.test/x" } } }""");
+        Assert.Empty(curated.Warnings);
+
+        var bySheet = Refile(
+            null,
+            Quest(68457, "Leves of Kugane", issuer: At(628)),
+            Quest(68001, genre: G128, category: 67, issuer: At(628)),
+            Quest(68002, genre: G128, category: 67, issuer: new Issuer(JournalRefiler.PlaceholderIssuer, string.Empty, 628, 1, 0, 0, 0)),
+            Quest(68003, genre: G124, category: 66, issuer: At(628)));
+        Assert.True(bySheet[68002].IsRetired);
+        Assert.True(bySheet[68457].IsUnlisted);
+        Assert.Equal(JournalRefiler.UnlistedRule, bySheet[68457].RefiledFrom);
+
+        var byCurated = Refile(
+            curated,
+            Quest(68457, "Leves of Kugane", issuer: At(628)),
+            Quest(68001, genre: G128, category: 67, issuer: At(628)),
+            Quest(68003, genre: G124, category: 66, issuer: At(628)),
+            Quest(68004, genre: G124, category: 66, issuer: At(628)));
+        Assert.True(byCurated[68003].IsRetired);
+        Assert.True(byCurated[68457].IsUnlisted);
+
+        // The same rows with the retired one live: G124 wins.
+        var live = Refile(
+            null,
+            Quest(68457, "Leves of Kugane", issuer: At(628)),
+            Quest(68001, genre: G128, category: 67, issuer: At(628)),
+            Quest(68003, genre: G124, category: 66, issuer: At(628)),
+            Quest(68004, genre: G124, category: 66, issuer: At(628)));
+        Assert.Equal(G124, live[68457].Journal.GenreId);
     }
 
     [Fact]

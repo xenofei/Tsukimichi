@@ -49,6 +49,32 @@ public class TreeCountsTests
     }
 
     [Fact]
+    public void A_quest_that_does_not_count_in_totals_is_in_no_number_done_or_not()
+    {
+        // A class intro under its class's genre: the class a character started as never gets it, so it is neither
+        // a done nor a total; its neighbours count as usual and the node can reach a full moon without it.
+        var catalog = QuestCatalog.Build(
+        [
+            Quest(65713, "So You Want to Be a Gladiator", section: 6, category: 93, genre: 156) with { CountsInTotals = false },
+            Quest(65821, "Way of the Gladiator", section: 6, category: 93, genre: 156),
+            Quest(65714, "So You Want to Be a Pugilist", section: 6, category: 93, genre: 157) with { CountsInTotals = false },
+            Quest(66068, "Way of the Pugilist", section: 6, category: 93, genre: 157),
+        ]);
+        var states = States((65713, QuestState.Ready), (65821, QuestState.Completed), (65714, QuestState.Completed), (66068, QuestState.Ready));
+
+        var counts = TreeCounts.Compute(catalog, states, includeUnlisted: true);
+
+        Assert.Equal(new NodeCount(1, 1, 0), counts.Genre(156));
+        Assert.Equal(1f, counts.Genre(156).Fraction);
+        Assert.Equal(new NodeCount(0, 1, 0), counts.Genre(157));
+        Assert.Equal(new NodeCount(1, 2, 0), counts.Category(93));
+        Assert.Equal(new NodeCount(1, 2, 0), counts.Section(6));
+        Assert.Equal(new NodeCount(1, 2, 0), counts.Overall);
+        Assert.Equal(default, counts.Unlisted);
+        Assert.Equal(4, catalog.Count);
+    }
+
+    [Fact]
     public void Foreclosed_only_remainder_lets_a_node_reach_100_percent()
     {
         // An MSQ category whose remaining quests are the other Grand Companies' choices reads as complete.

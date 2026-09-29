@@ -88,6 +88,21 @@ public static partial class Strings
     public const string FilingCuratedFormat = "Filed under {0} (curated override)";
     /// <summary>{0} = the patch the curated note names.</summary>
     public const string RemovedInPatchFormat = "Removed from the game in patch {0}";
+    /// <summary>
+    /// The sheet's own signal behind a rule-1 retirement, under a journal path that already reads "Removed from the
+    /// game" (an unlisted row): {0} = <see cref="RetiredReason"/>.
+    /// </summary>
+    public const string RetiredRuleFormat = "Rule 1: {0}";
+    /// <summary>The same signal for a retired row the journal still lists, whose path is its genre: {0} = <see cref="RetiredReason"/>.</summary>
+    public const string RemovedByRuleFormat = "Removed from the game (rule 1: {0})";
+
+    /// <summary>Which sheet signal retired a row under rule 1 (docs/data/unlisted-report.md section 4).</summary>
+    public static string RetiredReason(bool placeholderIssuer, bool hiddenFlag) => (placeholderIssuer, hiddenFlag) switch
+    {
+        (true, true) => "placeholder issuer, hidden flag",
+        (_, true) => "hidden flag",
+        _ => "placeholder issuer",
+    };
 
     /// <summary>The short reason behind a refiling rule (docs/data/unlisted-report.md section 4).</summary>
     public static string FilingReason(byte rule) => rule switch

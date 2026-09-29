@@ -1176,16 +1176,29 @@ public sealed class DetailPane
     }
 
     /// <summary>
-    /// The provenance line under the journal path: which rule (or curated file) filed a refiled quest, or that the
-    /// game removed it, with the patch when the curated note names one. Null for a quest the sheet filed itself.
+    /// The provenance line under the journal path: which rule (or curated file) filed a refiled quest, or why the
+    /// game removed it: the patch when the curated note names one, else the sheet signal rule 1 read ("Rule 1:
+    /// placeholder issuer"). It never repeats the path: an unlisted retired row's path already reads "Removed from
+    /// the game", so only a listed retired row (its path is the genre) gets those words here. Null for a quest the
+    /// sheet filed itself.
     /// </summary>
     internal static string? FilingLine(QuestRecord quest, CuratedData curated)
     {
         if (quest.IsRetired)
         {
-            return curated.RetiredQuests.TryGetValue(quest.RowId, out var retired) && retired.Patch.Length > 0
-                ? string.Format(CultureInfo.CurrentCulture, Strings.RemovedInPatchFormat, retired.Patch)
-                : Strings.RemovedFromGame;
+            if (curated.RetiredQuests.TryGetValue(quest.RowId, out var retired) && retired.Patch.Length > 0)
+            {
+                return string.Format(CultureInfo.CurrentCulture, Strings.RemovedInPatchFormat, retired.Patch);
+            }
+
+            if (JournalRefiler.IsRetiredRow(quest))
+            {
+                var reason = Strings.RetiredReason(quest.Issuer is { NpcId: JournalRefiler.PlaceholderIssuer }, quest.IsHidden);
+                return string.Format(CultureInfo.CurrentCulture, quest.IsUnlisted ? Strings.RetiredRuleFormat : Strings.RemovedByRuleFormat, reason);
+            }
+
+            // Curated without a patch: the path of an unlisted row says it already.
+            return quest.IsUnlisted ? null : Strings.RemovedFromGame;
         }
 
         if (quest.RefiledFrom == 0 || quest.IsUnlisted)

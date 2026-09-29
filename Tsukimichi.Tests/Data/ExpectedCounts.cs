@@ -35,6 +35,14 @@ internal static class ExpectedCounts
     // ---- Refiling (unlisted-report appendix A; the rules alone, before curated overrides) ----
     public const int RetiredByRule1 = 99;
     public const int RefiledByRule2 = 23;
+
+    /// <summary>
+    /// Of the rule-2 rows, the class intros (<c>Cls…001</c>/<c>999</c>, "So You Want to Be a Gladiator") stay out of
+    /// the totals (<c>QuestRecord.CountsInTotals</c> false: the class a character started as never gets its intro);
+    /// the job intros (<c>Job…299</c>: A Dark Spectacle, So You Want to Be a Machinist, What's Your Sign) count.
+    /// </summary>
+    public const int UncountedClassIntros = 20;
+    public const int CountedJobIntros = 3;
     public const int RefiledByRule3 = 3;
     public const int RefiledByRule4 = 24;
     public const int RefiledByRule5 = 3;
@@ -45,8 +53,14 @@ internal static class ExpectedCounts
     /// <summary>Curated overrides applied to genre-0 rows: the three Eureka entry quests, Seeing the Cieldalaes, The New Frontier.</summary>
     public const int OverriddenUnlisted = 5;
 
-    /// <summary>Listed rows retired_quests.json retires: three 3.05 sidequests and five rows on the placeholder issuer.</summary>
+    /// <summary>
+    /// Listed rows retired_quests.json names: the 3.05 trio the sheet does not mark (<see cref="CuratedOnlyRetiredListed"/>)
+    /// and the five rows on the placeholder issuer, which rule 1 retires by itself (<see cref="SheetRetiredListed"/>;
+    /// the entry only carries the patch note).
+    /// </summary>
     public const int CuratedRetiredListed = 8;
+    public const int SheetRetiredListed = 5;
+    public const int CuratedOnlyRetiredListed = 3;
 
     /// <summary>Every retired row: <see cref="RetiredByRule1"/> + <see cref="CuratedRetiredListed"/>.</summary>
     public const int Retired = RetiredByRule1 + CuratedRetiredListed;
