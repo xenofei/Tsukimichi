@@ -1,14 +1,20 @@
+using System.Collections;
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
+using Tsukimichi.Core.Model;
 
 namespace Tsukimichi.Core.Storage;
 
 /// <summary>Serializer settings shared by every file Tsukimichi reads or writes, plus small tolerant-parsing helpers.</summary>
 internal static class StorageJson
 {
-    /// <summary>camelCase properties, enums as strings, indented, unknown properties ignored, comments and trailing commas tolerated.</summary>
+    /// <summary>
+    /// camelCase properties, enums as strings, indented, unknown properties ignored, comments and trailing commas
+    /// tolerated; a property marked <see cref="OmitWhenEmptyAttribute"/> is skipped while its collection is empty.
+    /// </summary>
     public static readonly JsonSerializerOptions Options = new(JsonSerializerDefaults.General)
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -17,7 +23,43 @@ internal static class StorageJson
         ReadCommentHandling = JsonCommentHandling.Skip,
         AllowTrailingCommas = true,
         Converters = { new JsonStringEnumConverter() },
+        TypeInfoResolver = new DefaultJsonTypeInfoResolver { Modifiers = { OmitEmptyCollections } },
     };
+
+    private static void OmitEmptyCollections(JsonTypeInfo typeInfo)
+    {
+        foreach (var property in typeInfo.Properties)
+        {
+            if (property.AttributeProvider?.IsDefined(typeof(OmitWhenEmptyAttribute), inherit: false) == true)
+            {
+                property.ShouldSerialize = static (_, value) => !IsEmptyCollection(value);
+            }
+        }
+    }
+
+    private static bool IsEmptyCollection(object? value)
+    {
+        switch (value)
+        {
+            case null:
+                return true;
+            case ICollection collection:
+                return collection.Count == 0;
+            case IEnumerable enumerable:
+                var enumerator = enumerable.GetEnumerator();
+                try
+                {
+                    return !enumerator.MoveNext();
+                }
+                finally
+                {
+                    (enumerator as IDisposable)?.Dispose();
+                }
+
+            default:
+                return false;
+        }
+    }
 
     /// <summary>Parses a JSON object key as an unsigned id. Only plain decimal digits are accepted.</summary>
     public static bool TryParseKey(string key, out uint id) =>

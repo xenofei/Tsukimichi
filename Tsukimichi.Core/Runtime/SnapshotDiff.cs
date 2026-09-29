@@ -9,11 +9,11 @@ namespace Tsukimichi.Core.Runtime;
 /// </summary>
 /// <param name="ChangedQuestIds">Quest ids whose completion bit, journal presence, sequence, accepting job or daily-done flag changed; ascending, distinct.</param>
 /// <param name="ChangedJobs">ClassJob ids whose unsynced level changed, appeared or disappeared; ascending.</param>
-/// <param name="ChangedFestivals">Festival ids that started or ended; ascending.</param>
+/// <param name="ChangedFestivals">Festival ids that started, ended or changed phase; ascending.</param>
 /// <param name="OtherChanged">
 /// Any other evaluation input changed (Grand Company or ranks, tribe standing, allowances, cleared duties, current job,
-/// achievements, entitlement caps, content id). These touch quests the reverse index cannot enumerate, so the caller
-/// resolves everything.
+/// achievements, entitlement caps, custom delivery ranks, carrier level, content id). These touch quests the reverse
+/// index cannot enumerate, so the caller resolves everything.
 /// </param>
 public sealed record SnapshotDiff(
     IReadOnlyList<ushort> ChangedQuestIds,
@@ -41,6 +41,7 @@ public sealed record SnapshotDiff(
             && SameEntries(old.DailyDone, @new.DailyDone)
             && SameEntries(old.JobLevels, @new.JobLevels)
             && SameSequence(old.ActiveFestivals, @new.ActiveFestivals)
+            && SameSequence(old.ActiveFestivalPhases, @new.ActiveFestivalPhases)
             && !OtherInputsChanged(old, @new))
         {
             return Empty;
@@ -54,8 +55,10 @@ public sealed record SnapshotDiff(
         var jobs = new SortedSet<byte>();
         DiffKeyed(old.JobLevels, @new.JobLevels, jobs);
 
-        var festivals = new SortedSet<ushort>(old.ActiveFestivals);
-        festivals.SymmetricExceptWith(@new.ActiveFestivals);
+        // A festival counts as changed when it started, ended or moved to another phase (a phased event opens its
+        // later chapters mid-run, and those quests must re-resolve); an unknown phase is a value of its own.
+        var festivals = new SortedSet<ushort>();
+        DiffKeyed(FestivalPhases(old), FestivalPhases(@new), festivals);
 
         var other = OtherInputsChanged(old, @new);
 
@@ -79,7 +82,21 @@ public sealed record SnapshotDiff(
         || old.AchievementsLoaded != @new.AchievementsLoaded
         || !SameSet(old.CompletedAchievements, @new.CompletedAchievements)
         || old.MaxExpansion != @new.MaxExpansion
-        || old.LevelCap != @new.LevelCap;
+        || old.LevelCap != @new.LevelCap
+        || old.CarrierLevel != @new.CarrierLevel
+        || !SameEntries(old.SatisfactionRanks, @new.SatisfactionRanks);
+
+    /// <summary>Running festivals by id with their phase, −1 when the capture holds none; the first entry of a repeated id wins.</summary>
+    private static Dictionary<ushort, int> FestivalPhases(CharacterSnapshot s)
+    {
+        var result = new Dictionary<ushort, int>(s.ActiveFestivals.Count);
+        for (var i = 0; i < s.ActiveFestivals.Count; i++)
+        {
+            result.TryAdd(s.ActiveFestivals[i], i < s.ActiveFestivalPhases.Count ? s.ActiveFestivalPhases[i] : -1);
+        }
+
+        return result;
+    }
 
     /// <summary>Bitmask equality where a shorter mask reads as zero-padded.</summary>
     private static bool SameMask(byte[] a, byte[] b)
