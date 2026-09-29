@@ -11,7 +11,7 @@ namespace Tsukimichi.GameData;
 /// <see cref="JournalFiling.Legacy"/> it is simply not called.
 /// <list type="number">
 /// <item>Placeholder issuer (<see cref="PlaceholderIssuer"/>) or the hidden flag: retired, listed or not; keeps the genre it carries (0 for the sheet's genre-less rows).</item>
-/// <item>Class or job intro quasi-quest (<c>Cls…001</c>, <c>Cls…999</c>, <c>Job…299</c>): the genre of its first listed successor, out of the genre's counts (<see cref="ClassIntroRule"/>).</item>
+/// <item>Class or job intro quasi-quest (<c>Cls…001</c>, <c>Cls…999</c>, <c>Job…299</c>): the genre of its first listed successor; the class intros stay out of the genre's counts, the job intros count (<see cref="ClassIntroRule"/>).</item>
 /// <item>A Grand Company: that company's Grand Company Quests genre (<see cref="GrandCompanyGenreBase"/> + company).</item>
 /// <item>The first listed prerequisite, walking through unlisted ones in slot order, outside the main scenario sections and in the quest's own expansion: its genre.</item>
 /// <item>Else the first listed successor, then a quest-lock partner, under the same constraint.</item>
@@ -42,9 +42,12 @@ public static partial class JournalRefiler
     public const byte UnlistedRule = 7;
 
     /// <summary>
-    /// Rule 2, the class and job intros: filed under their class's genre but with <see cref="QuestRecord.CountsInTotals"/>
-    /// false, because the class a character started as never gets its intro (the starter is handed "Way of the …"
-    /// directly; the intro is only offered to a character switching in), so counting it would keep that genre one short.
+    /// Rule 2, the class and job intros, filed under their class's genre. The class intros (<c>Cls…001</c>/<c>999</c>,
+    /// see <see cref="IsStartingClassIntro"/>) get <see cref="QuestRecord.CountsInTotals"/> false, because the class a
+    /// character started as never gets its intro (the starter is handed "Way of the …" directly; the intro is only
+    /// offered to a character switching in), so counting it would keep that genre one short. The job intros
+    /// (<c>Job…299</c>: A Dark Spectacle, So You Want to Be a Machinist, What's Your Sign) count as usual: nobody
+    /// starts as a job, so every character can complete them.
     /// </summary>
     public const byte ClassIntroRule = 2;
 
@@ -60,6 +63,16 @@ public static partial class JournalRefiler
 
     /// <summary>Whether an internal id names a class or job intro quasi-quest (rule 2).</summary>
     public static bool IsClassIntro(string internalId) => internalId is not null && ClassIntroPattern().IsMatch(internalId);
+
+    [GeneratedRegex(@"^Cls\w{3}(001|999)_", RegexOptions.CultureInvariant)]
+    private static partial Regex StartingClassIntroPattern();
+
+    /// <summary>
+    /// Whether an internal id names the intro of a class a character can start as (<c>Cls…001</c>/<c>999</c>, "So You
+    /// Want to Be a Gladiator"): the rule-2 rows that stay out of the totals (<see cref="ClassIntroRule"/>). The job
+    /// intros (<c>Job…299</c>) are class intros for rule 2 but not for this.
+    /// </summary>
+    public static bool IsStartingClassIntro(string internalId) => internalId is not null && StartingClassIntroPattern().IsMatch(internalId);
 
     /// <summary>
     /// Files every genre-0 record and retires the curated ones; listed records come back unchanged unless a curated
@@ -123,7 +136,7 @@ public static partial class JournalRefiler
         // Rules 2, 4, 5 and 6 read the genre off a listed quest, so a template exists; rule 3 computes it and the
         // Grand Company genre may hold no listed quest in a future sheet.
         return index.Assign(quest, genre) is { } journal
-            ? quest with { Journal = journal, RefiledFrom = rule, CountsInTotals = rule != ClassIntroRule }
+            ? quest with { Journal = journal, RefiledFrom = rule, CountsInTotals = !(rule == ClassIntroRule && IsStartingClassIntro(quest.InternalId)) }
             : quest with { RefiledFrom = UnlistedRule };
     }
 

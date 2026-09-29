@@ -72,7 +72,7 @@ public class CatalogFixtureTests(FixtureCatalog fixture, ITestOutputHelper outpu
 
         // The class intros are listed under their genre but in no count (QuestRecord.CountsInTotals).
         var uncounted = Catalog.All.Count(q => !q.IsRemoved && !q.CountsInTotals);
-        Assert.Equal(ExpectedCounts.RefiledByRule2, uncounted);
+        Assert.Equal(ExpectedCounts.UncountedClassIntros, uncounted);
 
         Assert.Equal(removed.Count, counts.Unlisted.Total);
         Assert.Equal(Catalog.Count - uncounted, counts.Overall.Total);

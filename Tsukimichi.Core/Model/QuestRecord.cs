@@ -113,11 +113,12 @@ public sealed record QuestRecord
 
     /// <summary>
     /// Whether the quest enters its section, category and genre totals (and the overall count). False for the class
-    /// and job intro quasi-quests the refiler files by rule 2 ("So You Want to Be a …"): the receptionist offers the
-    /// intro only to a character switching into the class, so the class a character started as never gets its intro
-    /// flagged, and a genre that counted it would stay one short for good. They still sit under their genre in the
-    /// table, in search, in Unlock quests and in reveals; only the counts skip them. True for every other quest;
-    /// removed quests are kept out of the counts by <see cref="IsRemoved"/> before this is read.
+    /// intro quasi-quests the refiler files by rule 2 ("So You Want to Be a Gladiator", <c>Cls…001</c>/<c>999</c>):
+    /// the receptionist offers the intro only to a character switching into the class, so the class a character
+    /// started as never gets its intro flagged, and a genre that counted it would stay one short for good. They still
+    /// sit under their genre in the table, in search, in Unlock quests and in reveals; only the counts skip them.
+    /// True for every other quest, the job intros included (<c>Job…299</c>: nobody starts as a job); removed quests
+    /// are kept out of the counts by <see cref="IsRemoved"/> before this is read.
     /// </summary>
     public bool CountsInTotals { get; init; } = true;
 

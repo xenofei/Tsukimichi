@@ -46,7 +46,13 @@ public sealed class ClassIntroSnapshotTests(FixtureCatalog fixture, ITestOutputH
         var intros = catalog.All.Where(q => q.RefiledFrom == JournalRefiler.ClassIntroRule).ToList();
         Assert.Equal(ExpectedCounts.RefiledByRule2, intros.Count);
         Assert.All(intros, q => Assert.True(JournalRefiler.IsClassIntro(q.InternalId)));
-        Assert.All(intros, q => Assert.False(q.CountsInTotals, $"{q.RowId} {q.Name} should stay out of the totals"));
+        // The class intros stay out of the totals; the job intros (nobody starts as a job) count, and hers are done.
+        Assert.All(intros.Where(q => JournalRefiler.IsStartingClassIntro(q.InternalId)), q => Assert.False(q.CountsInTotals, $"{q.RowId} {q.Name} should stay out of the totals"));
+        var jobIntros = intros.Where(q => !JournalRefiler.IsStartingClassIntro(q.InternalId)).ToList();
+        Assert.Equal(ExpectedCounts.CountedJobIntros, jobIntros.Count);
+        Assert.All(jobIntros, q => Assert.True(q.CountsInTotals, $"{q.RowId} {q.Name} should count"));
+        Assert.True(snapshot.IsCompleted(catalog.ByRowId[67646].QuestId), "A Dark Spectacle (DRK) is done");
+        Assert.True(snapshot.IsCompleted(catalog.ByRowId[67659].QuestId), "What's Your Sign (AST) is done");
 
         // Every class with a level (jobs inherit their base class), with the base class's intro row.
         var undone = new List<string>();

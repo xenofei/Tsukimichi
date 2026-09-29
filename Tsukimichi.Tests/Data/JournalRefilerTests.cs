@@ -174,6 +174,18 @@ public class JournalRefilerTests
         // Listed under the genre, out of its numbers: the class a character started as never gets its intro.
         Assert.False(intro.CountsInTotals);
         Assert.True(filed[65821].CountsInTotals);
+
+        // A job intro (Job…299) is filed by the same rule but counts: nobody starts as a job.
+        var job = Refile(
+            null,
+            Quest(67646, "A Dark Spectacle", internalId: "JobDrk299_02110", issuer: At(418), eventIcon: FeaturePresets.QuasiQuestEventIconType),
+            Quest(67589, "Our End", genre: 186, section: 6, category: 94, previous: [67646]));
+        Assert.Equal(JournalRefiler.ClassIntroRule, job[67646].RefiledFrom);
+        Assert.Equal(186u, job[67646].Journal.GenreId);
+        Assert.True(job[67646].CountsInTotals);
+        Assert.False(JournalRefiler.IsStartingClassIntro("JobDrk299_02110"));
+        Assert.True(JournalRefiler.IsStartingClassIntro("ClsGla001_00177"));
+        Assert.True(JournalRefiler.IsStartingClassIntro("ClsLnc999_00180"));
         var catalog = QuestCatalog.Build(filed.Values);
         var counts = TreeCounts.Compute(catalog, new Dictionary<uint, QuestState> { [65713] = QuestState.Ready, [65821] = QuestState.Completed }, includeUnlisted: false);
         Assert.Equal(new NodeCount(1, 1, 0), counts.Genre(G156));

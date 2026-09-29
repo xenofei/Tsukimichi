@@ -208,10 +208,17 @@ public class RefilingFixtureTests(FixtureCatalog fixture, ITestOutputHelper outp
         var states = Catalog.All.ToDictionary(q => q.RowId, _ => QuestState.Ready);
         var counts = TreeCounts.Compute(Catalog, states, includeUnlisted: true);
 
-        // The class intros sit in a genre node but in none of its numbers (QuestRecord.CountsInTotals).
+        // The class intros sit in a genre node but in none of its numbers (QuestRecord.CountsInTotals); the three
+        // job intros filed by the same rule count like any other quest.
         var uncounted = Catalog.All.Where(q => !q.CountsInTotals).ToList();
-        Assert.Equal(ExpectedCounts.RefiledByRule2, uncounted.Count);
+        Assert.Equal(ExpectedCounts.UncountedClassIntros, uncounted.Count);
         Assert.All(uncounted, q => Assert.Equal(JournalRefiler.ClassIntroRule, q.RefiledFrom));
+        Assert.All(uncounted, q => Assert.True(JournalRefiler.IsStartingClassIntro(q.InternalId), $"{q.RowId} {q.InternalId}"));
+        var jobIntros = Catalog.All.Where(q => q.RefiledFrom == JournalRefiler.ClassIntroRule && !JournalRefiler.IsStartingClassIntro(q.InternalId)).ToList();
+        Assert.Equal(ExpectedCounts.CountedJobIntros, jobIntros.Count);
+        Assert.Equal([67645u, 67646u, 67659u], jobIntros.Select(q => q.RowId).OrderBy(id => id));
+        Assert.All(jobIntros, q => Assert.True(q.CountsInTotals, $"{q.RowId} {q.Name}"));
+        Assert.Equal(ExpectedCounts.RefiledByRule2, uncounted.Count + jobIntros.Count);
         Assert.All(Catalog.All.Where(q => q.RefiledFrom != JournalRefiler.ClassIntroRule), q => Assert.True(q.CountsInTotals, $"{q.RowId} {q.Name}"));
 
         var inGenres = counts.Genres.Values.Sum(c => c.Total);

@@ -35,6 +35,14 @@ internal static class ExpectedCounts
     // ---- Refiling (unlisted-report appendix A; the rules alone, before curated overrides) ----
     public const int RetiredByRule1 = 99;
     public const int RefiledByRule2 = 23;
+
+    /// <summary>
+    /// Of the rule-2 rows, the class intros (<c>Cls…001</c>/<c>999</c>, "So You Want to Be a Gladiator") stay out of
+    /// the totals (<c>QuestRecord.CountsInTotals</c> false: the class a character started as never gets its intro);
+    /// the job intros (<c>Job…299</c>: A Dark Spectacle, So You Want to Be a Machinist, What's Your Sign) count.
+    /// </summary>
+    public const int UncountedClassIntros = 20;
+    public const int CountedJobIntros = 3;
     public const int RefiledByRule3 = 3;
     public const int RefiledByRule4 = 24;
     public const int RefiledByRule5 = 3;
