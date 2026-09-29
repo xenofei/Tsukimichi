@@ -73,6 +73,7 @@ public sealed class Plugin : IDalamudPlugin
     private Game.DtrEntry? dtrEntry;
     private HoverHint? hoverHint;
     private Game.ItemHooks? itemHooks;
+    private Game.NpcHooks? npcHooks;
     private TodoOverlay? todoOverlay;
 
     /// <summary>
@@ -362,6 +363,16 @@ public sealed class Plugin : IDalamudPlugin
             var discovery = new DiscoveryCommands(Session, ClientState, TargetManager, gameLinks);
             command.ListZoneQuests = discovery.Zone;
             command.ListTargetQuests = discovery.Which;
+            // "Why not offered?" (P2): the NPC context-menu entry opens the Journal on the NPC's quests; /tsuki why
+            // prints a quest's blockers. The hook reads the target's kind and base id only; nothing is stored.
+            npcHooks = new Game.NpcHooks(ContextMenu, Session, TargetManager, npcId =>
+            {
+                mainWindow.IsOpen = true;
+                mainWindow.BringToFront();
+                ui.ShowIssuer(npcId);
+            }, Log) { Enabled = Settings.NpcContextMenuEnabled };
+            var why = new WhyCommand(Session, ui, gameLinks);
+            command.Why = why.Run;
 
             // "Report this quest": the diagnostic block (detail pane button and /tsuki report), the data stamp in
             // Settings > About and on the status bar, and the game-version warning. The client version is read once.
@@ -412,6 +423,7 @@ public sealed class Plugin : IDalamudPlugin
             configWindow.WotsitToggled = enabled => wotsitIpc.Enabled = enabled;
             if (hoverHint is { } hint) { configWindow.ItemHintsToggled = enabled => hint.Enabled = enabled; }
             if (itemHooks is { } hooks) { configWindow.ItemContextMenuToggled = enabled => hooks.Enabled = enabled; }
+            if (npcHooks is { } npcMenu) { configWindow.NpcContextMenuToggled = enabled => npcMenu.Enabled = enabled; }
             windowSystem.AddWindow(configWindow);
             PluginInterface.UiBuilder.OpenConfigUi += configWindow.Toggle;
             command.ToggleConfigWindow = configWindow.Toggle;
@@ -502,6 +514,7 @@ public sealed class Plugin : IDalamudPlugin
         }
 
         itemHooks?.Dispose();
+        npcHooks?.Dispose();
         PluginInterface.UiBuilder.OpenMainUi -= mainWindow.Toggle;
         PluginInterface.UiBuilder.Draw -= windowSystem.Draw;
         PluginInterface.UiBuilder.Draw -= UpdateUiMetrics;
@@ -554,6 +567,7 @@ public sealed class Plugin : IDalamudPlugin
             windowSystem.RemoveAllWindows();
         });
         Unwind("item hooks", () => itemHooks?.Dispose());
+        Unwind("npc hooks", () => npcHooks?.Dispose());
         Unwind("command", () => command?.Dispose());
         Unwind("todo overlay", () => todoOverlay?.Dispose());
         Unwind("server bar entry", () => dtrEntry?.Dispose());

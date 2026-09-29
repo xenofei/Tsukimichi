@@ -32,4 +32,17 @@ static partial class Strings
 
     /// <summary>{0} = number of quests; the entry opens a submenu with one line per quest.</summary>
     public const string ItemsMenuManyFormat = "Tsukimichi: quest rewards ({0})";
+
+    // ---- NPC context menu (P2) ----
+    /// <summary>{0} = number of quests the targeted NPC hands out (removed quests excluded); clicking opens the Journal on them.</summary>
+    public const string NpcMenuFormat = "Tsukimichi: quests here ({0})";
+
+    /// <summary>{0} = NPC name; the scope chip while the Journal shows one NPC's quests.</summary>
+    public const string ChipIssuerFormat = "Quests from {0}";
+
+    /// <summary>The chip when the catalog has no name for the NPC (it issues nothing); the chip still clears the scope.</summary>
+    public const string ChipIssuerUnknown = "Quests from this NPC";
+
+    /// <summary>Above the "click to clear" line on the issuer chip.</summary>
+    public const string ChipIssuerTooltip = "The quests this NPC hands out, each with what blocks it; clearing shows the whole journal again";
 }

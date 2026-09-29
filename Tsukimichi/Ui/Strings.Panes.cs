@@ -266,6 +266,17 @@ static partial class Strings
     public const string ConfigSectionIntegrations = "Integrations";
     public const string ConfigWotsitIntegration = "Register quests and rewards with Wotsit";
     public const string ConfigWotsitIntegrationHint = "Every quest and Moonlit reward becomes a Wotsit search entry that reveals it in the Journal. Needs Wotsit installed.";
+    public const string ConfigNpcContextMenu = "NPC context menu";
+    public const string ConfigNpcContextMenuHint = "Target a quest-giving NPC and open the target bar's menu: \"Tsukimichi: quests here (N)\" opens the Journal on that NPC's quests, each with what blocks it. Nothing about the NPC is stored.";
+
+    // ---- /tsuki why ----
+    public const string WhyNoSelection = "Select a quest first, or name one: /tsuki why <quest name>";
+
+    /// <summary>Between "talk to &lt;giver&gt;" and the giver's map link on a Ready line.</summary>
+    public const string WhyGiverIn = " in ";
+
+    /// <summary>The map link's text on a Ready line: {0} place name, {1} x, {2} y.</summary>
+    public const string WhyGiverPlaceFormat = "{0} ({1:0.0}, {2:0.0})";
     public const string ConfigSectionData = "Data";
     public const string ConfigDataRetention = "Tsukimichi keeps one snapshot per character, your pins and your unique-reward overrides in its config directory. Forget a single character from the Characters tab.";
     public const string ConfigDeleteAll = "Delete all Tsukimichi data";
@@ -526,6 +537,7 @@ static partial class Strings
             "/tsukimichi glyphs",
             "/tsuki zone",
             "/tsuki which",
+            "/tsuki why [quest name]",
             "/tsuki nearby",
             "/tsuki todo",
             "/tsuki report [quest name]",
@@ -541,6 +553,7 @@ static partial class Strings
             "the glyph sheet: every moon at every size",
             "quests you can start in the current zone, as chat links by level",
             "every quest the targeted NPC hands out, with its state",
+            "why the selected quest (or the named one) is not offered: its state and blocker, then one line per requirement with met or unmet and the values compared, then the curated note where the game is known to behave differently; a Ready quest says whom to talk to, with a map link. The same list opens in the Journal from an NPC's target-bar menu (\"Tsukimichi: quests here\")",
             "open or close the Nearby quests window: what you can start in the current zone",
             "show or hide the todo overlay: pins, feature quests here, the next main scenario quest and job quests",
             "copy a diagnostic block for the selected quest (or the named one) to the clipboard, ready to paste into a GitHub issue; the Report button in the detail pane does the same",
@@ -572,14 +585,16 @@ static partial class Strings
         [
             "Steps the game skips",
             "\"Bloodsworn\" reads \"Allied\"",
+            "Prerequisites that moved in 7.5",
             "Delivery ranks and event chapters",
             "Store re-sells in Moonlit",
         ];
 
         public static readonly string[] QuirkCardBodies =
         [
-            "The plugin lists every prerequisite the game's data records. For a few quests the game waives one: Up In Arms is optional once the Zenith is in hand, so what follows it is offered while Tsukimichi still shows Up In Arms undone and marks the next quest Blocked. When an NPC offers a quest shown Blocked here, use Report this quest so the exception can be added to the curated notes.",
-            "Patch 7.0 renamed beast tribes to allied societies and the top rank from Bloodsworn to Allied. Tsukimichi uses the current names, so a requirement reads \"Allied\" where an older guide, or quest text written before 7.0, says \"Bloodsworn\". They are the same rank.",
+            "The plugin lists every prerequisite the game's data records. For a few quests the game waives one: Up in Arms is optional once the Zenith is in hand, so what follows it is offered while Tsukimichi still shows Up in Arms undone. The known cases carry a curated note: the detail pane shows it under the requirements as \"Note: …\", /tsuki why prints it and Report this quest includes it. When an NPC offers a quest shown Blocked here and there is no note, use Report this quest so the exception can be added.",
+            "Patch 7.0 renamed beast tribes to allied societies and the top rank from Bloodsworn to Allied. Tsukimichi uses the current names, so a requirement reads \"Allied\" where an older guide, or quest text written before 7.0, says \"Bloodsworn\". They are the same rank; the quest that awards it carries a note saying so.",
+            "Patch 7.5 changed the prerequisite of eleven crafter and gatherer sidequests (the Splendorous tools, Cosmic Exploration and the Kugane, Crystarium, Old Sharlayan and Tuliyollal scrip exchanges among them) from Go West, Craftsman to Inscrutable Tastes, a level 50 quest from Morgayne in Foundation. Tsukimichi follows the current game data, so it lists Inscrutable Tastes where an older guide names Go West, Craftsman; each affected quest carries a note with the patch notes as evidence.",
             "A custom delivery client's satisfaction rank, the Delivery Moogle's carrier level and the chapter of a running seasonal event are judged since 0.6.2: a quest that needs rank 4 with M'naago, carrier level 7 or a chapter that has not opened yet shows Blocked with that reason. A character file written by an older version carries none of these values, so its quests read as before until the next capture. The game keeps the event chapter in three places and it is not yet known which one the quest givers follow; the plugin reads the first (GameMain) and, once per login, writes all three to the Dalamud log under \"[festival probe]\". If a chapter gate looks wrong during an event, send that log line with the report.",
             "Some past seasonal rewards (minions, emotes, mounts, bardings, orchestrion rolls, ornaments) are sold again on the Online Store, which the game files cannot know. Moonlit says so on the rows the curated list covers; if you find one it does not, open a data correction issue with the store page as evidence.",
         ];

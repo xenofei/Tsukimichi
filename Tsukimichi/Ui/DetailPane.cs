@@ -8,6 +8,7 @@ using Dalamud.Interface.Textures;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
 using Tsukimichi.Core.Chains;
+using Tsukimichi.Core.Diagnostics;
 using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Storage;
@@ -87,6 +88,9 @@ public sealed class DetailPane
         public string HeaderLine = string.Empty;
         public string StateText = string.Empty;
         public string? StateNote;
+
+        /// <summary>"Note: …" from <c>curated/quirks.json</c>, drawn under the requirements; null for a quest without one.</summary>
+        public string? QuirkNote;
         public string? ChainText;
         public string? ChainNextName;
         public uint ChainNextRowId;
@@ -487,6 +491,18 @@ public sealed class DetailPane
     }
 
     private void DrawRequirements()
+    {
+        DrawRequirementLines();
+        if (model.QuirkNote is { } note)
+        {
+            // The curated quirk: what the game does that its data does not say. Shown whatever the state, since it is
+            // the answer to "the NPC offers this while the plugin shows it Blocked".
+            using var dusk = Theme.PushText(Theme.Dusk);
+            ImGui.TextWrapped(note);
+        }
+    }
+
+    private void DrawRequirementLines()
     {
         if (!model.HasSnapshot)
         {
@@ -954,6 +970,7 @@ public sealed class DetailPane
         model.Unlocks.Clear();
         model.UnlocksMore = null;
         model.StateNote = null;
+        model.QuirkNote = null;
         model.ChainText = null;
         model.ChainNextName = null;
         model.GiverName = null;
@@ -978,6 +995,7 @@ public sealed class DetailPane
             ? Strings.RemovedFromGame
             : string.Format(CultureInfo.CurrentCulture, Strings.JournalPathFormat, quest.Journal.GenreName, quest.Journal.CategoryName);
         model.FilingLine = FilingLine(quest, session.Curated);
+        model.QuirkNote = session.Curated.Quirks.TryGetValue(rowId, out var quirk) ? WhyText.NoteLine(quirk.Note) : null;
         var jobName = quest.ClassJobCategory <= 1 ? Strings.JobAny : links.ClassJobCategoryName(quest.ClassJobCategory);
         if (jobName.Length == 0)
         {

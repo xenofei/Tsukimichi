@@ -11,8 +11,9 @@ namespace Tsukimichi.Core.Diagnostics;
 /// The "Report this quest" block (feature plan v3 T18): one fenced text block a player pastes into a GitHub issue,
 /// composed on click only. It carries the plugin, client and data versions, the quest, its display state with the
 /// blocker line, one line per requirement in the evaluator's order with the verdict and the values compared, the
-/// character inputs the evaluation used, and when they were captured. It never carries the content id, the
-/// character's name, the world or the account: the fields the composer reads from the snapshot are gameplay ones.
+/// curated quirk note when the quest has one, the character inputs the evaluation used, and when they were
+/// captured. It never carries the content id, the character's name, the world or the account: the fields the
+/// composer reads from the snapshot are gameplay ones.
 /// <code>
 /// ```tsukimichi-diagnostic
 /// plugin: 0.6.0.0
@@ -24,6 +25,7 @@ namespace Tsukimichi.Core.Diagnostics;
 ///   - Level: met (24 ≤ 31)
 ///   - PreviousQuests: unmet (66753 Peace for Thanalan: not done)
 ///   - TribeRank: met (Amalj'aa Recognized ≥ Recognized)
+/// quirk: Up in Arms is optional once the Zenith is in hand …   (only when curated/quirks.json names the quest)
 /// inputs: job WHM 31, msq 66043, tribe 1 rank 2 rep 0
 /// captured: 2026-09-28T21:14:02Z live
 /// ```
@@ -76,6 +78,7 @@ public static class QuestDiagnostic
 
         AppendState(sb, inputs);
         AppendRequirements(sb, inputs);
+        AppendQuirk(sb, inputs);
         AppendInputs(sb, inputs);
 
         sb.Append("captured: ");
@@ -122,10 +125,40 @@ public static class QuestDiagnostic
         sb.Append("requirements:\n");
         foreach (var result in requirements)
         {
-            sb.Append(Indent).Append(result.Req.Kind.ToString()).Append(": ").Append(Verdict(result)).Append(" (");
-            AppendValues(sb, result, inputs.Names);
-            sb.Append(")\n");
+            sb.Append(Indent);
+            AppendRequirement(sb, result, inputs.Names);
+            sb.Append('\n');
         }
+    }
+
+    /// <summary>The curated quirk note, when the quest has one: what the game does that its data does not say.</summary>
+    private static void AppendQuirk(StringBuilder sb, DiagnosticInputs inputs)
+    {
+        if (inputs.QuirkNote is { Length: > 0 } quirk)
+        {
+            sb.Append("quirk: ").Append(quirk).Append('\n');
+        }
+    }
+
+    /// <summary>
+    /// "Level: met (24 ≤ 31)", "PreviousQuests: unmet (66753 Peace for Thanalan: not done)": one requirement as the
+    /// block prints it, without the indent. <c>/tsuki why</c> prints the same lines, so a chat answer and a pasted
+    /// block read alike.
+    /// </summary>
+    public static string RequirementLine(RequirementResult result, BlockerNames names)
+    {
+        ArgumentNullException.ThrowIfNull(result);
+        ArgumentNullException.ThrowIfNull(names);
+        var sb = new StringBuilder(96);
+        AppendRequirement(sb, result, names);
+        return sb.ToString();
+    }
+
+    private static void AppendRequirement(StringBuilder sb, RequirementResult result, BlockerNames names)
+    {
+        sb.Append(result.Req.Kind.ToString()).Append(": ").Append(Verdict(result)).Append(" (");
+        AppendValues(sb, result, names);
+        sb.Append(')');
     }
 
     /// <summary>"met", "unmet", or "not checked" for a gate the evaluator listed without judging it.</summary>

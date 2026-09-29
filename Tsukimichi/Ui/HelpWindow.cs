@@ -175,6 +175,7 @@ public sealed class HelpWindow : Window
         Strings.Help.QuirkCardBodies,
         FontAwesomeIcon.StepForward,
         FontAwesomeIcon.Tag,
+        FontAwesomeIcon.ExchangeAlt,
         FontAwesomeIcon.Clock,
         FontAwesomeIcon.ShoppingCart);
 

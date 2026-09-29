@@ -109,6 +109,42 @@ public sealed class UiState
         SelectedRowId = rowId;
         RevealPending = true;
 
+        if (ClearNarrowingFilters(isUnlisted))
+        {
+            FiltersChanged?.Invoke();
+        }
+
+        MarkQueryDirty();
+    }
+
+    /// <summary>
+    /// Switch to the Journal tab scoped to the quests one NPC hands out (<see cref="QuestScope.Issuer"/>), from the
+    /// NPC context menu. The narrowing filters are cleared as <see cref="Reveal(uint, QuestScope, bool)"/> clears
+    /// them, so a Blocked quest is listed with its blocker rather than hidden; the selection is dropped, since the
+    /// quest shown in the detail pane may not be one of the NPC's. No tree node carries the scope, so no reveal is
+    /// pending; the scope chip names the NPC and clears the scope.
+    /// </summary>
+    public void ShowIssuer(uint npcId)
+    {
+        Tab = NavTab.Journal;
+        Scope = QuestScope.Issuer(npcId);
+        SelectedRowId = null;
+        RevealPending = false;
+
+        if (ClearNarrowingFilters(includeUnlisted: false))
+        {
+            FiltersChanged?.Invoke();
+        }
+
+        MarkQueryDirty();
+    }
+
+    /// <summary>
+    /// Turns off the state-based narrowing filters and the active preset (and turns Include removed on when asked);
+    /// true when anything changed and the window should persist the filters.
+    /// </summary>
+    private bool ClearNarrowingFilters(bool includeUnlisted)
+    {
         var f = Filters;
         var changed = false;
         if (f.HideCompletedEngaged())
@@ -143,18 +179,13 @@ public sealed class UiState
             changed = true;
         }
 
-        if (isUnlisted && !f.IncludeUnlisted)
+        if (includeUnlisted && !f.IncludeUnlisted)
         {
             f.IncludeUnlisted = true;
             changed = true;
         }
 
-        if (changed)
-        {
-            FiltersChanged?.Invoke();
-        }
-
-        MarkQueryDirty();
+        return changed;
     }
 
     /// <summary>Reveals a catalog quest: its genre's scope, or the "Removed from the game" scope for a removed quest.</summary>

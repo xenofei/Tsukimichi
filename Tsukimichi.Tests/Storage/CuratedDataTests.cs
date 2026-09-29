@@ -352,6 +352,65 @@ public sealed class CuratedDataTests : IDisposable
     }
 
     [Fact]
+    public void Quirks_parse_note_and_evidence_by_row_id()
+    {
+        WriteCurated("quirks.json",
+            """
+            {
+              "schema": 1,
+              "note": "file note, ignored",
+              "entries": {
+                "66971": { "note": "Optional once the Zenith is in hand.", "evidence": "https://forum.square-enix.com/ffxiv/threads/525622" },
+                "$comment": { "note": "skipped silently" }
+              }
+            }
+            """);
+
+        var data = CuratedData.Load(tmp.File("curated"));
+
+        var (rowId, quirk) = Assert.Single(data.Quirks);
+        Assert.Equal(66971u, rowId);
+        Assert.Equal(new QuestQuirk("Optional once the Zenith is in hand.", "https://forum.square-enix.com/ffxiv/threads/525622"), quirk);
+        Assert.Empty(data.Warnings);
+    }
+
+    [Fact]
+    public void Quirks_require_note_and_evidence_and_a_row_id_key()
+    {
+        WriteCurated("quirks.json",
+            """
+            {
+              "schema": 1,
+              "entries": {
+                "66971": { "note": "good", "evidence": "https://example.test/" },
+                "66972": { "note": "no evidence" },
+                "66973": { "evidence": "https://example.test/no-note" },
+                "66974": "not an object",
+                "0": { "note": "zero", "evidence": "https://example.test/" },
+                "Up in Arms": { "note": "keyed by name", "evidence": "https://example.test/" }
+              }
+            }
+            """);
+
+        var data = CuratedData.Load(tmp.File("curated"));
+
+        Assert.Equal([66971u], data.Quirks.Keys);
+        Assert.Equal(5, data.Warnings.Count);
+        Assert.All(data.Warnings, w => Assert.Contains("quirks.json", w));
+    }
+
+    [Fact]
+    public void Quirks_file_with_a_trailing_comma_is_rejected_whole()
+    {
+        WriteCurated("quirks.json", """{ "entries": { "66971": { "note": "n", "evidence": "https://e/" }, } }""");
+
+        var data = CuratedData.Load(tmp.File("curated"));
+
+        Assert.Empty(data.Quirks);
+        Assert.Contains(data.Warnings, w => w.Contains("quirks.json could not be parsed", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void Festivals_parse_optional_dates_and_mog_station()
     {
         WriteCurated("festivals.json",

@@ -289,6 +289,37 @@ public sealed class GameLinks(IGameGui gameGui, IChatGui chat, IDataManager data
         }
     }
 
+    /// <summary>
+    /// The first line of <c>/tsuki why</c>: the quest link, the separator and <paramref name="headline"/>, and, when
+    /// <paramref name="linkGiver"/> is set and the giver is mappable, " in " followed by the giver's zone and
+    /// coordinates as a map link ("Ready — talk to Gerolt in [Northern Thanalan (23.1, 14.2)]").
+    /// </summary>
+    public void PrintHeadline(QuestRecord quest, string headline, bool linkGiver)
+    {
+        try
+        {
+            var builder = new SeStringBuilder()
+                .Add(new QuestPayload(quest.RowId))
+                .AddText(quest.Name)
+                .Add(RawPayload.LinkTerminator)
+                .AddText(Strings.ChatSuffixSeparator + headline);
+
+            if (linkGiver && MapLink(quest) is { } link && MapCoordinates(quest) is { } coords)
+            {
+                builder.AddText(Strings.WhyGiverIn)
+                       .Add(link)
+                       .AddText(string.Format(CultureInfo.CurrentCulture, Strings.WhyGiverPlaceFormat, link.PlaceName, coords.X, coords.Y))
+                       .Add(RawPayload.LinkTerminator);
+            }
+
+            chat.Print(builder.Build(), Strings.ChatTag);
+        }
+        catch (Exception ex)
+        {
+            log.Warning(ex, "Chat headline for quest {RowId} failed", quest.RowId);
+        }
+    }
+
     /// <summary>Prints plain text under the plugin's chat tag.</summary>
     public void PrintText(string text)
     {

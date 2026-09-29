@@ -8,8 +8,9 @@ namespace Tsukimichi.Commands;
 /// <summary>
 /// The <c>/tsukimichi</c> chat command. Sub-commands are dispatched by the first word: <c>glyphs</c> opens the glyph
 /// sheet, <c>search &lt;text&gt;</c> (or any other text) searches and prints matches to chat, <c>zone</c> and
-/// <c>which</c> print discovery lists, <c>nearby</c> toggles the Nearby quests window, <c>todo</c> toggles the todo
-/// overlay, <c>report [quest name]</c> copies a quest's diagnostic block, <c>settings</c> (or <c>config</c>) and
+/// <c>which</c> print discovery lists, <c>why [quest name]</c> prints what blocks a quest, <c>nearby</c> toggles the
+/// Nearby quests window, <c>todo</c> toggles the todo overlay, <c>report [quest name]</c> copies a quest's diagnostic
+/// block, <c>settings</c> (or <c>config</c>) and
 /// <c>help</c> open those windows; a bare command toggles the main window.
 /// </summary>
 public sealed class TsukimichiCommand : IDisposable
@@ -47,6 +48,12 @@ public sealed class TsukimichiCommand : IDisposable
     /// copies the quest's diagnostic block to the clipboard. Falls back to a search for the text.
     /// </summary>
     public Action<string>? Report { get; set; }
+
+    /// <summary>
+    /// Invoked for <c>/tsukimichi why [quest name]</c> with the rest of the line (empty for the selected quest):
+    /// prints why the quest is not offered. Falls back to a search for the text.
+    /// </summary>
+    public Action<string>? Why { get; set; }
 
     /// <param name="commands">Dalamud command manager.</param>
     /// <param name="toggleMainWindow">Invoked for <c>/tsukimichi</c> with no arguments.</param>
@@ -171,6 +178,18 @@ public sealed class TsukimichiCommand : IDisposable
                 if (Report is { } report)
                 {
                     report(rest);
+                }
+                else
+                {
+                    search(args);
+                }
+
+                break;
+
+            case "why":
+                if (Why is { } why)
+                {
+                    why(rest);
                 }
                 else
                 {

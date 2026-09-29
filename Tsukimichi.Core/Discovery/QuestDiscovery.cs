@@ -77,7 +77,11 @@ public static class QuestDiscovery
         return matches;
     }
 
-    /// <summary>Quests whose issuer is the NPC with this id (ENpcResident row id, the game object's base id), in journal order.</summary>
+    /// <summary>
+    /// Quests whose issuer is the NPC with this id (ENpcResident row id, the game object's base id), in journal order.
+    /// Removed quests (<see cref="QuestRecord.IsRemoved"/>) are left out: the NPC no longer hands them out. Backs
+    /// <c>/tsuki which</c>, the NPC context menu's count and the <see cref="Query.QuestScope.Issuer"/> scope.
+    /// </summary>
     public static List<QuestRecord> IssuedBy(QuestCatalog catalog, uint npcId)
     {
         ArgumentNullException.ThrowIfNull(catalog);
@@ -90,12 +94,32 @@ public static class QuestDiscovery
 
         foreach (var quest in catalog.All)
         {
-            if (!quest.IsRetired && quest.Issuer is { } issuer && issuer.NpcId == npcId)
+            if (!quest.IsRemoved && quest.Issuer is { } issuer && issuer.NpcId == npcId)
             {
                 matches.Add(quest);
             }
         }
 
         return matches;
+    }
+
+    /// <summary>The name the catalog records for the NPC with this id, from its first quest; null when it issues none.</summary>
+    public static string? IssuerName(QuestCatalog catalog, uint npcId)
+    {
+        ArgumentNullException.ThrowIfNull(catalog);
+        if (npcId == 0)
+        {
+            return null;
+        }
+
+        foreach (var quest in catalog.All)
+        {
+            if (quest.Issuer is { } issuer && issuer.NpcId == npcId && issuer.Name.Length > 0)
+            {
+                return issuer.Name;
+            }
+        }
+
+        return null;
     }
 }

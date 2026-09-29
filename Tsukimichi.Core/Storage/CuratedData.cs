@@ -39,6 +39,14 @@ public sealed record RefileOverride(uint GenreId, string Note, string Evidence);
 public sealed record RetiredQuest(string Note, string Evidence, string Patch);
 
 /// <summary>
+/// A known quirk of one quest, from <c>curated/quirks.json</c>: the game behaves differently from what its data
+/// says (a prerequisite it waives, such as Up in Arms once the Zenith is in hand) or a name changed and older guides
+/// mislead ("Bloodsworn" is "Allied" since 7.0; a prerequisite re-pointed in 7.5). The detail pane shows the note
+/// under the requirements, <c>/tsuki why</c> prints it and the diagnostic block carries it.
+/// </summary>
+public sealed record QuestQuirk(string Note, string Evidence);
+
+/// <summary>
 /// Hand-maintained overlays shipped in the plugin's <c>curated/</c> directory. Every file is optional and every entry
 /// is validated on its own, so one bad line never hides the rest. Shapes (object keys are row ids as strings; keys
 /// starting with <c>$</c>, such as <c>$schema_note</c>, are comments and ignored everywhere):
@@ -52,6 +60,7 @@ public sealed record RetiredQuest(string Note, string Evidence, string Patch);
 /// online_store.json    { "schema": 1, "note": "...", "entries": { "22437": { "name": "Starlight Bear", "kind": "Mount", "rewardId": 99, "evidence": "https://...", "note": "..." } } }
 /// refile_overrides.json { "schema": 1, "entries": { "68478": { "genre": 90, "note": "...", "evidence": "https://..." } } }
 /// retired_quests.json  { "schema": 1, "entries": { "66033": { "note": "...", "evidence": "https://...", "patch": "6.3" } } }   (patch optional)
+/// quirks.json          { "schema": 1, "entries": { "66971": { "note": "...", "evidence": "https://..." } } }
 /// VERSION.json         { "curatedRevision": "573d225" }   (written by tools/regen.ps1; absent in a checkout that never ran it)
 /// </code>
 /// Every file must be strict JSON (no comments, no trailing commas), as the curated README requires.
@@ -66,6 +75,7 @@ public sealed class CuratedData
     public const string OnlineStoreFileName = "online_store.json";
     public const string RefileOverridesFileName = "refile_overrides.json";
     public const string RetiredQuestsFileName = "retired_quests.json";
+    public const string QuirksFileName = "quirks.json";
 
     /// <summary>Written by <c>tools/regen.ps1</c>: the overlay's revision for the About stamp and the diagnostic block.</summary>
     public const string VersionFileName = "VERSION.json";
@@ -100,6 +110,7 @@ public sealed class CuratedData
         IReadOnlyDictionary<uint, OnlineStoreItem> onlineStore,
         IReadOnlyDictionary<uint, RefileOverride> refileOverrides,
         IReadOnlyDictionary<uint, RetiredQuest> retiredQuests,
+        IReadOnlyDictionary<uint, QuestQuirk> quirks,
         string curatedRevision,
         IReadOnlyList<string> warnings)
     {
@@ -111,6 +122,7 @@ public sealed class CuratedData
         OnlineStore = onlineStore;
         RefileOverrides = refileOverrides;
         RetiredQuests = retiredQuests;
+        Quirks = quirks;
         CuratedRevision = curatedRevision;
         Warnings = warnings;
     }
@@ -124,6 +136,7 @@ public sealed class CuratedData
         new Dictionary<uint, OnlineStoreItem>(),
         new Dictionary<uint, RefileOverride>(),
         new Dictionary<uint, RetiredQuest>(),
+        new Dictionary<uint, QuestQuirk>(),
         string.Empty,
         []);
 
@@ -144,6 +157,9 @@ public sealed class CuratedData
     /// <summary>Quests the game removed that the sheets do not mark, by quest row id; read by <c>JournalRefiler</c>.</summary>
     public IReadOnlyDictionary<uint, RetiredQuest> RetiredQuests { get; }
 
+    /// <summary>Known quirks by quest row id: a note the detail pane, <c>/tsuki why</c> and the diagnostic block show.</summary>
+    public IReadOnlyDictionary<uint, QuestQuirk> Quirks { get; }
+
     /// <summary>
     /// Short git hash of the last commit touching the overlay, from <see cref="VersionFileName"/> ("573d225", or
     /// "573d225-dirty" when regenerated with uncommitted changes); empty when the file is absent or has no value.
@@ -158,7 +174,7 @@ public sealed class CuratedData
     /// what the invariants test compares the shipped file against, so the file never feeds its own derivation.
     /// </summary>
     public CuratedData WithoutFeatureQuests() =>
-        FeatureQuests.Count == 0 ? this : new CuratedData(SystemUnlocks, DutyUnlocks, new HashSet<uint>(), Festivals, Chains, OnlineStore, RefileOverrides, RetiredQuests, CuratedRevision, Warnings);
+        FeatureQuests.Count == 0 ? this : new CuratedData(SystemUnlocks, DutyUnlocks, new HashSet<uint>(), Festivals, Chains, OnlineStore, RefileOverrides, RetiredQuests, Quirks, CuratedRevision, Warnings);
 
     /// <summary>Loads every curated file under <paramref name="dir"/>. A missing directory or file yields empty collections.</summary>
     public static CuratedData Load(string dir)
@@ -178,6 +194,7 @@ public sealed class CuratedData
         var onlineStore = new Dictionary<uint, OnlineStoreItem>();
         var refileOverrides = new Dictionary<uint, RefileOverride>();
         var retiredQuests = new Dictionary<uint, RetiredQuest>();
+        var quirks = new Dictionary<uint, QuestQuirk>();
 
         ForEachEntry(Path.Combine(dir, SystemUnlocksFileName), warnings, (key, node, warn) =>
         {
@@ -405,9 +422,31 @@ public sealed class CuratedData
             retiredQuests[rowId] = new RetiredQuest(note, evidence, StorageJson.ReadString(obj, "patch")?.Trim() ?? string.Empty);
         });
 
+        ForEachEntry(Path.Combine(dir, QuirksFileName), warnings, (key, node, warn) =>
+        {
+            if (!StorageJson.TryParseKey(key, out uint rowId) || rowId == 0)
+            {
+                warn("key is not a quest row id");
+                return;
+            }
+
+            if (node is not JsonObject obj)
+            {
+                warn("value is not an object");
+                return;
+            }
+
+            if (!TryReadNoteAndEvidence(obj, warn, out var note, out var evidence))
+            {
+                return;
+            }
+
+            quirks[rowId] = new QuestQuirk(note, evidence);
+        });
+
         var curatedRevision = LoadRevision(Path.Combine(dir, VersionFileName), warnings);
 
-        return new CuratedData(systemUnlocks, dutyUnlocks, featureQuests, festivals, chains, onlineStore, refileOverrides, retiredQuests, curatedRevision, warnings);
+        return new CuratedData(systemUnlocks, dutyUnlocks, featureQuests, festivals, chains, onlineStore, refileOverrides, retiredQuests, quirks, curatedRevision, warnings);
     }
 
     /// <summary>The note and evidence URL every refiling entry must carry (the curated README's rule for hand-filed quests).</summary>
