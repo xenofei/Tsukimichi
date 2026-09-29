@@ -19,10 +19,12 @@ public class QuestDiagnosticTests
     private const uint TheVault = 7;
     private const uint UnnamedDuty = 8;
     private const ushort Starlight = 1;
+    private const byte Mnaago = 2;
 
     private static readonly BlockerNames Names = new()
     {
         Tribe = id => id == Pelupelu ? "Pelupelu" : string.Empty,
+        SatisfactionNpc = id => id == Mnaago ? "M'naago" : string.Empty,
         JobAbbreviation = id => id switch { Gladiator => "GLA", Conjurer => "CNJ", Paladin => "PLD", WhiteMage => "WHM", _ => string.Empty },
         ClassJobCategory = id => id == DisciplesOfTheHand ? "Disciple of the Hand" : string.Empty,
         Duty = id => id == TheVault ? "The Vault" : string.Empty,
@@ -51,6 +53,9 @@ public class QuestDiagnosticTests
         AcceptConditions = [12, 34],
         MountRequired = true,
         HouseRequired = true,
+        SatisfactionNpc = Mnaago,
+        SatisfactionLevel = 4,
+        CarrierLevel = 7,
     };
 
     private static QuestCatalog EverythingCatalog(QuestRecord target) =>
@@ -73,6 +78,8 @@ public class QuestDiagnosticTests
         UnlockedInstances = [TheVault],
         ActiveFestivals = [],
         AchievementsLoaded = false,
+        SatisfactionRanks = new Dictionary<byte, byte> { [Mnaago] = 3 },
+        CarrierLevel = 5,
     };
 
     private static EvalContext Context(ushort offeredQuestId) => new()
@@ -128,12 +135,34 @@ public class QuestDiagnosticTests
         Assert.Contains("  - TribeReputation: met (Pelupelu 120 ≥ 100)", requirementLines);
         Assert.Contains("  - TribeAllowance: met (3 left today)", requirementLines);
         Assert.Contains("  - TribeDailyOffer: met (quest 164 offered today)", requirementLines);
+        Assert.Contains("  - CustomDeliveryRank: unmet (M'naago rank 3 < 4)", requirementLines);
+        Assert.Contains("  - CarrierLevel: unmet (carrier level 5 < 7)", requirementLines);
         Assert.Contains("  - DutyCompletion: met (1 of 2 cleared, one needed: 7 The Vault, 8)", requirementLines);
         Assert.Contains("  - Seasonal: unmet (festival 1 not active)", requirementLines);
         Assert.Contains("  - AcceptCondition: not checked (conditions 12, 34; listed, not judged)", requirementLines);
         Assert.Contains("  - Mount: not checked (has mount unknown)", requirementLines);
         Assert.Contains("  - House: unmet (has house no)", requirementLines);
         Assert.Contains("  - Achievement: not checked (achievements not loaded, quest 65700)", requirementLines);
+    }
+
+    [Fact]
+    public void Delivery_gates_the_capture_did_not_read_are_not_checked_and_a_phased_event_prints_its_window()
+    {
+        var quest = Everything() with { FestivalBegin = 2, FestivalEnd = 5 };
+        var catalog = EverythingCatalog(quest);
+        var unread = Character() with { SatisfactionRanks = new Dictionary<byte, byte>(), CarrierLevel = 0, ActiveFestivals = [Starlight], ActiveFestivalPhases = [1] };
+        var lines = Lines(QuestDiagnostic.Compose(Inputs(quest, catalog, unread, Context(quest.QuestId))));
+        var requirementLines = lines.Where(l => l.StartsWith("  - ", StringComparison.Ordinal)).ToArray();
+
+        Assert.Contains("  - CustomDeliveryRank: not checked (M'naago rank unknown, needs 4)", requirementLines);
+        Assert.Contains("  - CarrierLevel: not checked (carrier level unknown, needs 7)", requirementLines);
+        Assert.Contains("  - Seasonal: unmet (festival 1 active, window 2-5, phase 1)", requirementLines);
+        Assert.Contains("festivals [1/1], delivery client 2 rank unknown, carrier level unknown", lines[^3]);
+
+        var noPhase = unread with { ActiveFestivalPhases = [] };
+        var unknown = Lines(QuestDiagnostic.Compose(Inputs(quest, catalog, noPhase, Context(quest.QuestId))));
+        Assert.Contains("  - Seasonal: met (festival 1 active, window 2-5, phase unknown)", unknown);
+        Assert.Contains("festivals [1],", unknown[^3]);
     }
 
     [Fact]
@@ -166,7 +195,7 @@ public class QuestDiagnosticTests
         // Only what the listed gates read: the caps, the main scenario position (none in this catalog), the Grand
         // Company, the society standing, the allowances and the offer, the festivals, mount, house, achievements.
         Assert.Equal(
-            "inputs: job GLA 50, cap expansion 4 lv 80, gc 1 rank 5, tribe 3 rank 4 rep 120, dailies 3/12, offer [164], festivals [-], mount unknown, house no, achievements not loaded",
+            "inputs: job GLA 50, cap expansion 4 lv 80, gc 1 rank 5, tribe 3 rank 4 rep 120, dailies 3/12, offer [164], festivals [-], delivery client 2 rank 3, carrier level 5, mount unknown, house no, achievements not loaded",
             lines[^3]);
         Assert.Equal("captured: 2026-09-28T21:14:02Z live", lines[^2]);
         Assert.Equal("```", lines[^1]);
