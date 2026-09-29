@@ -144,6 +144,13 @@ public static class StateResolver
             return new(QuestState.Completed, requirements, null, null, null);
         }
 
+        // 2. Removed from the game: locked out for good. A completed retired quest already read Completed under rule 1,
+        //    which is how a character that cleared the old A Realm Reborn story before 5.3 keeps that history.
+        if (q.IsRetired)
+        {
+            return new(QuestState.Foreclosed, requirements, FirstOfKind(requirements, RequirementKind.Retired), null, null);
+        }
+
         // 2. A completed lock forecloses, except for a Grand Company quest the character could still switch to.
         if (q.QuestLocks.Length > 0
             && !RequirementEvaluator.IsSwitchableGrandCompanyQuest(q, s)

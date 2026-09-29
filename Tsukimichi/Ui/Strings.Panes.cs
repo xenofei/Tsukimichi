@@ -257,8 +257,12 @@ static partial class Strings
     public const string ConfigChatNotice = "Chat notice for newly available quests";
     public const string ConfigIncludeMsq = "Include main scenario";
     public const string ConfigSectionJournal = "Journal";
-    public const string ConfigShowUnlisted = "Show Unlisted bucket";
-    public const string ConfigShowUnlistedHint = "Quests with no journal genre: hidden, removed or legacy entries.";
+    public const string ConfigShowUnlisted = "Show removed quests";
+    public const string ConfigShowUnlistedHint = "Adds the Removed from the game node to the tree: quests the game deleted in later patches. They never count toward a total; a completed one still shows Completed.";
+    public const string ConfigJournalFiling = "Journal filing";
+    public const string ConfigJournalFilingRefiled = "Refiled";
+    public const string ConfigJournalFilingLegacy = "Legacy";
+    public const string ConfigJournalFilingHint = "Refiled puts the hidden quests the game never lists (class intros, Leves of…, Sights of…, Eureka entry, hidden chain steps) under the genre their links point at, and keeps removed quests out of every total. Legacy shows them as releases before 0.6.1 did, all in one bucket. Changing this rebuilds the catalog.";
     public const string ConfigSectionIntegrations = "Integrations";
     public const string ConfigWotsitIntegration = "Register quests and rewards with Wotsit";
     public const string ConfigWotsitIntegrationHint = "Every quest and Moonlit reward becomes a Wotsit search entry that reveals it in the Journal. Needs Wotsit installed.";
@@ -429,7 +433,7 @@ static partial class Strings
             "Drops Completed and Locked out quests. Per-category overrides let you hide completed everywhere except, say, the main scenario.",
             "Keeps only Ready, Ready on another job and In journal: the quests you can act on now. Takes the same per-category overrides.",
             "All eight phases as checkboxes for fine control. Untick a phase to hide its quests.",
-            "Expansion, level range, job category, reward kind (three-state per kind), Repeatable, Seasonal active and Include Unlisted narrow the table further.",
+            "Expansion, level range, job category, reward kind (three-state per kind), Repeatable and Seasonal active narrow the table further; Include removed widens it to quests the game deleted.",
             "Every active filter shows as a chip under the search box. Click a chip to clear it; Reset clears them all and the search.",
             "When the table empties, the panel names the filters responsible and offers Reset.",
         ];
@@ -545,7 +549,7 @@ static partial class Strings
         // ---- Why my counts differ from the journal ----
         public static readonly string[] CountsCardTitles =
         [
-            "Unlisted and removed quests",
+            "Removed and hidden quests",
             "Seasonal quests out of season",
             "Locked-out choices",
             "Unlock quests is derived",
@@ -554,14 +558,14 @@ static partial class Strings
 
         public static readonly string[] CountsCardBodies =
         [
-            "The game's journal only lists quests that have a journal genre. Quests without one, and quests the game removed in later patches (the A Realm Reborn trim in 5.3, the Summoner rework, the Crystal Tower rewrite), sit under the Unlisted node, off by default, and never count toward a section's total. A completed one still shows Completed when Include Unlisted reveals it.",
+            "Quests the game removed in later patches (the A Realm Reborn trim in 5.3, the Summoner rework, the Crystal Tower rewrite, a few deleted sidequests) sit under the Removed from the game node, off by default, and never count toward any total; a completed one still shows Completed when the node or Include removed reveals it, and its detail pane says which patch removed it where that is known. Quests the game's journal hides but still hands out (So You Want to Be a Gladiator, Leves of Kugane, Sights of the North, the Eureka entry quests, hidden steps of YoRHa and the Resistance Weapons) are filed under the genre their links point at, so a class's quests start with its intro and a zone's sidequests include its leve unlock; the detail pane says which rule filed them. Settings › Display › Journal filing › Legacy puts every one of them back in the single bucket releases before 0.6.1 showed.",
             "A seasonal quest of an event that is not running shows Blocked with \"seasonal event not active\", and is left out of its genre's total the way a locked-out quest is, so the moon can fill without it; it counts again while the event runs. An event whose end date is known and past locks its quests out for good.",
             "A quest locked out by a choice, such as the other two Grand Companies' quests once you have joined one, is Locked out and left out of the total. A category can reach a full moon with them undone, while a wiki's count per genre includes them.",
             "Unlock quests is not a journal category. It gathers every quest the game draws with the blue + icon, the curated duty and system unlocks, and quests that reward a duty, job, action, trait, aether current or blue magic spell; main scenario and repeatable quests are left out. Its total matches no page of the journal and moves when the curated lists do.",
             "A daily or weekly quest is one row and one count however many times you have turned it in. Done today or Done this week marks the ones already handed in; they are still counted as completed.",
         ];
 
-        public const string CountsTip = "The State filter shows locked-out and seasonal quests again; the Unlisted node and Include Unlisted reveal the removed ones. Both change the counts while they are on.";
+        public const string CountsTip = "The State filter shows locked-out and seasonal quests again; the Removed from the game node and Include removed reveal the deleted ones. Both change the counts while they are on.";
 
         // ---- Known quirks ----
         public static readonly string[] QuirkCardTitles =
@@ -625,7 +629,7 @@ static partial class Strings
         public const string TabsTitle = "Four tabs";
         public const string TabsBody = "Journal is the catalog. Moonlit collects quests with unique rewards. Characters holds every snapshot on the account. Flight shows the aether current quests of each flying zone.";
         public const string TreeTitle = "Journal tree";
-        public const string TreeBody = "Section, category and genre scope the table. Each node shows done/total and a moon that fills with completion; Unlock quests and Unlisted are virtual nodes.";
+        public const string TreeBody = "Section, category and genre scope the table. Each node shows done/total and a moon that fills with completion; Unlock quests and Removed from the game are virtual nodes.";
         public const string TableTitle = "Quest table";
         public const string TableBody = "One row per quest. The moon is its state (hover it for the name; Help lists all eight) and Status says what blocks it. Click a header to sort; right-click a row for pin, map flag and journal.";
         public const string RequirementsTitle = "Requirements";

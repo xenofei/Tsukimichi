@@ -260,7 +260,7 @@ public class FeaturePresetsDataTests(GameDataFixture fixture, ITestOutputHelper 
             {
                 entry.Derived++;
             }
-            else if (icon == 8 && !quest.IsUnlisted && !FeaturePresets.IsMainScenario(quest) && !quest.IsRepeatable && missing.Count < 10)
+            else if (icon is 8 or 10 && !quest.IsRemoved && !FeaturePresets.IsMainScenario(quest) && !quest.IsRepeatable && missing.Count < 10)
             {
                 missing.Add($"{quest.RowId} {quest.Name} [{quest.Journal.SectionName} › {quest.Journal.CategoryName}] rewards: {string.Join(", ", quest.Rewards.Select(r => r.Kind + ":" + r.Name))}");
             }
@@ -278,17 +278,18 @@ public class FeaturePresetsDataTests(GameDataFixture fixture, ITestOutputHelper 
             output.WriteLine("  not derived: " + line);
         }
 
-        Assert.Equal(5373, catalog.Count);
-        Assert.Equal(1699, ids.Count);
+        Assert.Equal(Tests.Data.ExpectedCounts.NamedQuests, catalog.Count);
+        Assert.Equal(Tests.Data.ExpectedCounts.FeatureQuests, ids.Count);
         Assert.True(ids.Count >= 1600, $"expected at least 1600 feature quests, got {ids.Count}");
         Assert.Empty(missing);
         Assert.All(ids, id => Assert.False(FeaturePresets.IsMainScenario(catalog.ByRowId[id])));
         Assert.All(ids, id => Assert.False(catalog.ByRowId[id].IsRepeatable));
+        Assert.All(ids, id => Assert.False(catalog.ByRowId[id].IsRetired));
 
-        // Every listed, non-repeatable blue-icon quest outside the main scenario is in.
+        // Every live, non-repeatable blue-icon quest (feature or quasi-quest) outside the main scenario is in.
         foreach (var quest in catalog.All)
         {
-            if (quest.EventIconType == FeaturePresets.FeatureEventIconType && !quest.IsRepeatable && !FeaturePresets.IsMainScenario(quest))
+            if (FeaturePresets.HasFeatureIcon(quest) && !quest.IsRetired && !quest.IsRepeatable && !FeaturePresets.IsMainScenario(quest))
             {
                 Assert.Contains(quest.RowId, ids);
             }

@@ -214,7 +214,7 @@ public sealed class CharactersPane
                 UiMetrics.Tooltip(Strings.MsqClickHint);
                 if (ImGui.IsItemClicked())
                 {
-                    ui.Reveal(msqQuest.RowId, msqQuest.IsUnlisted ? QuestScope.VirtualUnlisted : QuestScope.Genre(msqQuest.Journal.GenreId), msqQuest.IsUnlisted);
+                    ui.Reveal(msqQuest);
                 }
             }
         }
@@ -1337,8 +1337,7 @@ public sealed class CharactersPane
         }
     }
 
-    private static void Reveal(UiState ui, QuestRecord quest) =>
-        ui.Reveal(quest.RowId, quest.IsUnlisted ? QuestScope.VirtualUnlisted : QuestScope.Genre(quest.Journal.GenreId), quest.IsUnlisted);
+    private static void Reveal(UiState ui, QuestRecord quest) => ui.Reveal(quest);
 
     /// <summary>
     /// One character's evaluation of the quest and its reason line, memoized in <see cref="accountCache"/> (cleared

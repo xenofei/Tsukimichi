@@ -5,6 +5,15 @@ namespace Tsukimichi.Core.Evaluation;
 // One concrete record per RequirementKind. Each carries the ids and numbers a renderer needs; the
 // human-readable clause lives in RequirementResult.Detail so the records stay language-neutral.
 
+/// <summary>The game removed the quest (<see cref="QuestRecord.IsRetired"/>); never met, so an uncompleted one is locked out.</summary>
+public sealed record RetiredRequirement : Requirement
+{
+    public RetiredRequirement()
+        : base(RequirementKind.Retired)
+    {
+    }
+}
+
 /// <summary>Quests that foreclose this one once completed, and which of them the character has completed.</summary>
 public sealed record ForeclosureRequirement(uint[] LockIds, uint[] CompletedLockIds) : Requirement(RequirementKind.Foreclosure);
 

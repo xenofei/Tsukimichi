@@ -22,6 +22,11 @@ public static class RequirementEvaluator
 
         var results = new List<RequirementResult>(4);
 
+        if (q.IsRetired)
+        {
+            results.Add(new(new RetiredRequirement(), false, "removed from the game"));
+        }
+
         if (q.QuestLocks.Length > 0 && !IsSwitchableGrandCompanyQuest(q, s))
         {
             var completedLocks = q.QuestLocks.Where(id => s.IsCompleted(QuestRecord.ToQuestId(id))).ToArray();

@@ -83,16 +83,50 @@ public sealed record QuestRecord
 
     /// <summary>
     /// Journal icon family from <c>Quest.EventIconType</c>: 3 is the ordinary side quest, 8 the blue "+" feature
-    /// quest (see <c>FeaturePresets.FeatureEventIconType</c>); zero when the sheet has none.
+    /// quest and 10 the quasi-quest that shares its icon (see <c>FeaturePresets.HasFeatureIcon</c>); zero when the
+    /// sheet has none.
     /// </summary>
     public byte EventIconType { get; init; }
+
+    /// <summary>
+    /// The Quest sheet's unnamed bool between <c>HideOfferIcon</c> and <c>HideInScenarioGuide</c> (Lumina's
+    /// <c>Unknown12</c>): set on the rows the game retired in 5.3, 5.5 and 6.3. One of the two signals of
+    /// <see cref="IsRetired"/>; kept raw so the refiler can run on a frozen catalog.
+    /// </summary>
+    public bool IsHidden { get; init; }
+
+    /// <summary>
+    /// Removed from the game: the row sits on the placeholder issuer or carries <see cref="IsHidden"/> (refiling rule
+    /// 1), or the curated <c>retired_quests.json</c> names it. Never counted in a total, never listed under a journal
+    /// node, never a feature quest; shown only under the "Removed from the game" node or when revealed directly, where
+    /// a completed one still reads Completed. A retired quest keeps whatever genre the sheet gave it.
+    /// </summary>
+    public bool IsRetired { get; init; }
+
+    /// <summary>
+    /// Which refiling rule (docs/data/unlisted-report.md section 4) decided this quest's filing: 1 retired, 2 class or
+    /// job intro, 3 Grand Company, 4 nearest listed prerequisite, 5 nearest listed successor or lock, 6 the issuer's
+    /// zone, 7 no signal (still unlisted), or <c>JournalRefiler.CuratedRule</c> (8) when a curated file decided. Zero
+    /// when the sheet's own genre stands (every listed quest, and every quest under <see cref="JournalFiling.Legacy"/>).
+    /// </summary>
+    public byte RefiledFrom { get; init; }
 
     public IReadOnlyList<RewardRef> Rewards { get; init; } = [];
     public uint ExpFactor { get; init; }
     public uint Gil { get; init; }
 
-    /// <summary>Quests with no journal genre are hidden, removed or legacy; the UI buckets them as Unlisted.</summary>
+    /// <summary>
+    /// No journal genre after refiling: the retired rows (rule 1) and the rare quest no rule could place (rule 7).
+    /// Under <see cref="JournalFiling.Legacy"/> every genre-0 row of the sheet.
+    /// </summary>
     public bool IsUnlisted => Journal.GenreId == 0;
+
+    /// <summary>
+    /// Belongs to the "Removed from the game" bucket rather than a journal node: <see cref="IsRetired"/>, or
+    /// <see cref="IsUnlisted"/> (a genre-0 quest is either retired or left without a home by every rule). Tree counts,
+    /// queries, the main scenario line, ladders, chains, Compare, search and the integrations all test this one flag.
+    /// </summary>
+    public bool IsRemoved => IsRetired || IsUnlisted;
 
     /// <summary>Computes the runtime quest id from a Quest sheet row id.</summary>
     public static ushort ToQuestId(uint rowId) => (ushort)(rowId & 0xFFFF);

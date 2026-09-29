@@ -24,6 +24,21 @@ public sealed record CuratedChain(string Name, IReadOnlyList<uint> GenreIds, str
 public sealed record OnlineStoreItem(string Name, RewardKind Kind, uint RewardId, string Evidence, string? Note);
 
 /// <summary>
+/// A quest pinned to a journal genre after the refiling rules ran, from <c>curated/refile_overrides.json</c>: a
+/// quest whose sheet signals point at the wrong genre (the Eureka entry quasi-quests land in Kugane Sidequests by
+/// their issuer's zone; they belong with The Forbidden Land, Eureka) or at none.
+/// </summary>
+/// <param name="GenreId">JournalGenre row id the quest is filed under.</param>
+public sealed record RefileOverride(uint GenreId, string Note, string Evidence);
+
+/// <summary>
+/// A quest the game removed that the sheets do not mark, from <c>curated/retired_quests.json</c>: sidequests deleted
+/// without a placeholder issuer or the hidden flag, and listed rows the game retired but never re-filed.
+/// </summary>
+/// <param name="Patch">The patch that removed it ("6.3"), when known; empty otherwise.</param>
+public sealed record RetiredQuest(string Note, string Evidence, string Patch);
+
+/// <summary>
 /// Hand-maintained overlays shipped in the plugin's <c>curated/</c> directory. Every file is optional and every entry
 /// is validated on its own, so one bad line never hides the rest. Shapes (object keys are row ids as strings; keys
 /// starting with <c>$</c>, such as <c>$schema_note</c>, are comments and ignored everywhere):
@@ -35,6 +50,8 @@ public sealed record OnlineStoreItem(string Name, RewardKind Kind, uint RewardId
 ///                      or  { "entries": { "1": { ... } } }
 /// chains.json          { "chains": [ { "name": "Hildibrand", "genreIds": [ 93, 94 ], "note": "..." } ] }
 /// online_store.json    { "schema": 1, "note": "...", "entries": { "22437": { "name": "Starlight Bear", "kind": "Mount", "rewardId": 99, "evidence": "https://...", "note": "..." } } }
+/// refile_overrides.json { "schema": 1, "entries": { "68478": { "genre": 90, "note": "...", "evidence": "https://..." } } }
+/// retired_quests.json  { "schema": 1, "entries": { "66033": { "note": "...", "evidence": "https://...", "patch": "6.3" } } }   (patch optional)
 /// VERSION.json         { "curatedRevision": "573d225" }   (written by tools/regen.ps1; absent in a checkout that never ran it)
 /// </code>
 /// Every file must be strict JSON (no comments, no trailing commas), as the curated README requires.
@@ -47,6 +64,8 @@ public sealed class CuratedData
     public const string FestivalsFileName = "festivals.json";
     public const string ChainsFileName = "chains.json";
     public const string OnlineStoreFileName = "online_store.json";
+    public const string RefileOverridesFileName = "refile_overrides.json";
+    public const string RetiredQuestsFileName = "retired_quests.json";
 
     /// <summary>Written by <c>tools/regen.ps1</c>: the overlay's revision for the About stamp and the diagnostic block.</summary>
     public const string VersionFileName = "VERSION.json";
@@ -79,6 +98,8 @@ public sealed class CuratedData
         IReadOnlyDictionary<ushort, FestivalInfo> festivals,
         IReadOnlyList<CuratedChain> chains,
         IReadOnlyDictionary<uint, OnlineStoreItem> onlineStore,
+        IReadOnlyDictionary<uint, RefileOverride> refileOverrides,
+        IReadOnlyDictionary<uint, RetiredQuest> retiredQuests,
         string curatedRevision,
         IReadOnlyList<string> warnings)
     {
@@ -88,6 +109,8 @@ public sealed class CuratedData
         Festivals = festivals;
         Chains = chains;
         OnlineStore = onlineStore;
+        RefileOverrides = refileOverrides;
+        RetiredQuests = retiredQuests;
         CuratedRevision = curatedRevision;
         Warnings = warnings;
     }
@@ -99,6 +122,8 @@ public sealed class CuratedData
         new Dictionary<ushort, FestivalInfo>(),
         [],
         new Dictionary<uint, OnlineStoreItem>(),
+        new Dictionary<uint, RefileOverride>(),
+        new Dictionary<uint, RetiredQuest>(),
         string.Empty,
         []);
 
@@ -112,6 +137,12 @@ public sealed class CuratedData
 
     /// <summary>Rewards the Online Store also sells, by store item row id.</summary>
     public IReadOnlyDictionary<uint, OnlineStoreItem> OnlineStore { get; }
+
+    /// <summary>Quests pinned to a genre after the refiling rules, by quest row id; read by <c>JournalRefiler</c>.</summary>
+    public IReadOnlyDictionary<uint, RefileOverride> RefileOverrides { get; }
+
+    /// <summary>Quests the game removed that the sheets do not mark, by quest row id; read by <c>JournalRefiler</c>.</summary>
+    public IReadOnlyDictionary<uint, RetiredQuest> RetiredQuests { get; }
 
     /// <summary>
     /// Short git hash of the last commit touching the overlay, from <see cref="VersionFileName"/> ("573d225", or
@@ -127,7 +158,7 @@ public sealed class CuratedData
     /// what the invariants test compares the shipped file against, so the file never feeds its own derivation.
     /// </summary>
     public CuratedData WithoutFeatureQuests() =>
-        FeatureQuests.Count == 0 ? this : new CuratedData(SystemUnlocks, DutyUnlocks, new HashSet<uint>(), Festivals, Chains, OnlineStore, CuratedRevision, Warnings);
+        FeatureQuests.Count == 0 ? this : new CuratedData(SystemUnlocks, DutyUnlocks, new HashSet<uint>(), Festivals, Chains, OnlineStore, RefileOverrides, RetiredQuests, CuratedRevision, Warnings);
 
     /// <summary>Loads every curated file under <paramref name="dir"/>. A missing directory or file yields empty collections.</summary>
     public static CuratedData Load(string dir)
@@ -145,6 +176,8 @@ public sealed class CuratedData
         var festivals = new Dictionary<ushort, FestivalInfo>();
         var chains = new List<CuratedChain>();
         var onlineStore = new Dictionary<uint, OnlineStoreItem>();
+        var refileOverrides = new Dictionary<uint, RefileOverride>();
+        var retiredQuests = new Dictionary<uint, RetiredQuest>();
 
         ForEachEntry(Path.Combine(dir, SystemUnlocksFileName), warnings, (key, node, warn) =>
         {
@@ -322,9 +355,79 @@ public sealed class CuratedData
             onlineStore[itemId] = new OnlineStoreItem(name.Trim(), kind, rewardId, evidence.Trim(), StorageJson.ReadString(obj, "note"));
         });
 
+        ForEachEntry(Path.Combine(dir, RefileOverridesFileName), warnings, (key, node, warn) =>
+        {
+            if (!StorageJson.TryParseKey(key, out uint rowId) || rowId == 0)
+            {
+                warn("key is not a quest row id");
+                return;
+            }
+
+            if (node is not JsonObject obj)
+            {
+                warn("value is not an object");
+                return;
+            }
+
+            if (!obj.TryGetPropertyValue("genre", out var genreNode) || !StorageJson.TryReadId(genreNode, out var genreId) || genreId == 0)
+            {
+                warn("genre is not a positive JournalGenre row id");
+                return;
+            }
+
+            if (!TryReadNoteAndEvidence(obj, warn, out var note, out var evidence))
+            {
+                return;
+            }
+
+            refileOverrides[rowId] = new RefileOverride(genreId, note, evidence);
+        });
+
+        ForEachEntry(Path.Combine(dir, RetiredQuestsFileName), warnings, (key, node, warn) =>
+        {
+            if (!StorageJson.TryParseKey(key, out uint rowId) || rowId == 0)
+            {
+                warn("key is not a quest row id");
+                return;
+            }
+
+            if (node is not JsonObject obj)
+            {
+                warn("value is not an object");
+                return;
+            }
+
+            if (!TryReadNoteAndEvidence(obj, warn, out var note, out var evidence))
+            {
+                return;
+            }
+
+            retiredQuests[rowId] = new RetiredQuest(note, evidence, StorageJson.ReadString(obj, "patch")?.Trim() ?? string.Empty);
+        });
+
         var curatedRevision = LoadRevision(Path.Combine(dir, VersionFileName), warnings);
 
-        return new CuratedData(systemUnlocks, dutyUnlocks, featureQuests, festivals, chains, onlineStore, curatedRevision, warnings);
+        return new CuratedData(systemUnlocks, dutyUnlocks, featureQuests, festivals, chains, onlineStore, refileOverrides, retiredQuests, curatedRevision, warnings);
+    }
+
+    /// <summary>The note and evidence URL every refiling entry must carry (the curated README's rule for hand-filed quests).</summary>
+    private static bool TryReadNoteAndEvidence(JsonObject obj, Action<string> warn, out string note, out string evidence)
+    {
+        note = StorageJson.ReadString(obj, "note")?.Trim() ?? string.Empty;
+        evidence = StorageJson.ReadString(obj, "evidence")?.Trim() ?? string.Empty;
+        if (note.Length == 0)
+        {
+            warn("note is missing");
+            return false;
+        }
+
+        if (evidence.Length == 0)
+        {
+            warn("evidence is missing");
+            return false;
+        }
+
+        return true;
     }
 
     /// <summary>

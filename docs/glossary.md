@@ -54,4 +54,18 @@ One phrase per quest that is not Ready, from `BlockerText` in Core: the single r
 | Moonlit tab | Moonlit (pane subtitle: rewards only a quest gives) | Moonlit | Tab strip; subtitle at the top of the Moonlit pane |
 | Compare "Why" column reason | Unlock quest | Feature quest | Characters › Compare with |
 | Beast tribe requirements | Allied Society rank / Allied Society reputation | Allied society rank / reputation | Requirement names in the detail pane; "Tribal" never appears |
-| Quests with no journal genre | Unlisted | Unlisted | unchanged until 0.6.1 |
+| Quests with no journal genre | Unlisted | Unlisted | retired in 0.6.1, see below |
+
+## 0.6.1: journal refiling
+
+| Concept | Display name (0.6.1) | Was | Where it appears |
+|---|---|---|---|
+| Virtual tree node of quests the game deleted (`QuestRecord.IsRemoved`: retired rows, plus any genre-0 row no rule could place) | Removed from the game | Unlisted | Journal tree (off by default), detail pane journal path of a genre-0 quest, tutorial Journal tree step, Help › Why my counts differ |
+| Setting that shows the node | Show removed quests | Show Unlisted bucket | Settings › Journal |
+| Filter that widens All quests and Unlock quests to the node's quests | Include removed | Include Unlisted | Filters › Advanced, active-filter chip, empty-result guard |
+| Setting that picks the filing (`Configuration.JournalFiling`) | Journal filing: Refiled / Legacy | – | Settings › Display; Legacy is the in-field rollback to the 0.6.0 filing |
+| Requirement of a retired quest (`RequirementKind.Retired`) | Removed (requirement name); "Locked out · removed from the game" (status) | – | Detail pane requirement list, Status column, blocker line |
+| Provenance line of a refiled quest | Filed under {genre} (rule N: {reason}) / Filed under {genre} (curated override) | – | Detail pane, under the journal path |
+| Provenance line of a retired quest | Removed from the game / Removed from the game in patch {patch} | – | Detail pane, under the journal path |
+
+"Unlisted" no longer appears on any surface (`StringsVocabularyTests` lints it). The rule reasons are: class or job intro (2), Grand Company (3), nearest listed prerequisite (4), nearest listed successor (5), issuer's zone (6), no signal (7).

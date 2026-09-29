@@ -7,10 +7,11 @@ namespace Tsukimichi.Core.Query;
 /// Produces the flat, filtered, sorted row array the table renders. Pure: no caching beyond the shared
 /// <see cref="SearchIndex"/>; the caller runs it only when a dirty flag says so.
 /// <para>
-/// Unlisted quests (no journal genre) are shown only under <see cref="QuestScope.None"/> and
-/// <see cref="QuestScope.VirtualFeature"/> when <see cref="FilterSet.IncludeUnlisted"/> is on, and always under
-/// <see cref="QuestScope.VirtualUnlisted"/>. A section, category or genre node never shows them, whatever ids the
-/// sheet gave them, because section 0 is a real journal section.
+/// Removed quests (<see cref="QuestRecord.IsRemoved"/>: retired rows and quests with no journal genre) are shown only
+/// under <see cref="QuestScope.None"/> and <see cref="QuestScope.VirtualFeature"/> when
+/// <see cref="FilterSet.IncludeUnlisted"/> is on, and always under <see cref="QuestScope.VirtualUnlisted"/>. A
+/// section, category or genre node never shows them, whatever ids the sheet gave them, because section 0 is a real
+/// journal section and a retired listed row still carries its old genre.
 /// </para>
 /// </summary>
 public static class QuestQuery
@@ -125,7 +126,7 @@ public static class QuestQuery
         var totalInScope = 0;
         foreach (var quest in candidates)
         {
-            if (quest.IsUnlisted && !plan.IncludeUnlisted)
+            if (quest.IsRemoved && !plan.IncludeUnlisted)
             {
                 continue;
             }
@@ -140,7 +141,7 @@ public static class QuestQuery
 
         if (rows.Count == 0)
         {
-            // A journal node holding only unlisted quests has nothing a filter could bring back.
+            // A journal node holding only removed quests has nothing a filter could bring back.
             var reason = totalInScope == 0 && !plan.UnlistedToggleable
                 ? EmptyReason.Scope
                 : Diagnose(candidates, source, plan);
@@ -175,7 +176,7 @@ public static class QuestQuery
             case ScopeKind.Genre:
                 return catalog.ByGenre.GetValueOrDefault(scope.Id) ?? [];
             case ScopeKind.VirtualUnlisted:
-                return catalog.ByGenre.GetValueOrDefault(0u) ?? [];
+                return catalog.Removed;
             case ScopeKind.VirtualFeature:
             {
                 if (ctx.FeatureQuestIds.Count == 0)
@@ -214,7 +215,7 @@ public static class QuestQuery
 
             foreach (var quest in candidates)
             {
-                if (quest.IsUnlisted && !plan.IncludeUnlisted && filter != Filter.IncludeUnlisted)
+                if (quest.IsRemoved && !plan.IncludeUnlisted && filter != Filter.IncludeUnlisted)
                 {
                     continue;
                 }
@@ -381,7 +382,7 @@ public static class QuestQuery
             }
         }
 
-        /// <summary>Whether unlisted quests pass under this scope.</summary>
+        /// <summary>Whether removed quests pass under this scope.</summary>
         public bool IncludeUnlisted { get; }
 
         /// <summary>Whether <see cref="FilterSet.IncludeUnlisted"/> has any say under this scope (it never does under a journal node).</summary>

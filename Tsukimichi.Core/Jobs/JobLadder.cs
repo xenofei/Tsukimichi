@@ -130,7 +130,7 @@ public sealed class JobLadder
         {
             foreach (var quest in section)
             {
-                if (quest.IsUnlisted)
+                if (quest.IsRemoved)
                 {
                     continue;
                 }

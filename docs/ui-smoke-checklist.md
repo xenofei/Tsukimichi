@@ -37,7 +37,7 @@ Round 3 additions (toolbar icon buttons, the Display sliders, quest banners, the
 - Advanced → Level range: drag to 50–60 → rows outside vanish; the chip reads "Lv 50–60"; dragging the max to 100 means unbounded.
 - Advanced → Job category: pick DoH → only crafter-restricted quests; "Current job only" is disabled without a snapshot and otherwise limits to quests restricted to exactly the current job.
 - Advanced → Reward kinds: set Mount to Only → only mount-rewarding quests; set Item to Hidden → quests with item rewards vanish; chip reads "Reward kinds".
-- Repeatable only / Seasonal active only / Include Unlisted / Pinned only → each narrows (or widens, for Unlisted) and adds its chip except Include Unlisted.
+- Repeatable only / Seasonal active only / Include removed / Pinned only → each narrows (or widens, for Include removed) and adds its chip except Include removed.
 - Reset (panel) or Reset filters (empty state) → every filter and the search clear at once.
 - Filters survive a plugin reload (saved 1 s after the last change into `Settings.Filters`).
 - Make the query empty (e.g. Pinned only with no pins) → the table area shows "Nothing matches", the offending filter names as bullets, and a "Reset filters" button; when only a combination is to blame the text says so.
@@ -54,14 +54,16 @@ Round 3 additions (toolbar icon buttons, the Display sliders, quest banners, the
 
 ## Journal tree
 - Left column tabs Journal / Moonlit / Characters → Moonlit and Characters show "Coming in the next merge"; Journal shows the tree.
-- Tree order: "All quests", then each Section → Category → Genre, then "Feature Unlocks", then "Unlisted" only when Show Unlisted is on in the config.
+- Tree order: "All quests", then each Section → Category → Genre, then "Unlock quests", then "Removed from the game" only when Show removed quests is on in the config.
+- Refiling (0.6.1): with Settings › Display › Journal filing on Refiled, Class & Job › Gladiator Quests opens with "So You Want to Be a Gladiator", Kugane Sidequests holds "Leves of Kugane", The Forbidden Land, Eureka holds the three "And We Shall Call It…" quests, and each of them shows a "Filed under … (rule N: …)" or "(curated override)" line under the journal path in the detail pane. Switching to Legacy rebuilds the catalog: those quests move back to "Removed from the game", the line disappears, and the tree totals return to the 0.6.0 numbers; switching back restores them.
 - A category with a single genre shows as one leaf named after the category (no arrow); clicking it scopes the table to that genre and the leaf highlights; hovering shows "Section › Category › Genre". A section whose only category folded this way is itself one leaf. No node anywhere expands to a single child.
 - Every node shows a small filling moon *before* its name (in the label slot, after the arrow) and `done/total` in Dusk at the right edge; the moon's lit fraction matches done/total; counts match the in-game journal's Completed tab for one category.
-- Top-level nodes ("All quests", each Section, "Feature Unlocks", "Unlisted") are drawn slightly bolder than their children; a top-level node whose done equals total (e.g. a finished section, or "All quests" on a completed character) has its name tinted Moon gold. Children never tint.
+- Top-level nodes ("All quests", each Section, "Unlock quests", "Removed from the game") are drawn slightly bolder than their children; a top-level node whose done equals total (e.g. a finished section, or "All quests" on a completed character) has its name tinted Moon gold. Children never tint.
 - Long node names are clipped before the count, never drawn over it; hovering, clicking and the selection highlight behave exactly as before (the label is painted over an unlabelled tree item).
 - Clicking a node name selects it (highlighted) and scopes the table; clicking the arrow only expands; double-click expands too.
-- "All quests" → the table shows the whole catalog (Unlisted only when Include Unlisted is on); "Feature Unlocks" → only curated feature quests.
-- Moonlit → "Show in Journal" on a quest while Hide completed / Available now / Pinned only / a State filter is on → the Journal opens on its genre with those filters cleared (their chips gone) and the row selected and visible. For an unlisted quest → Include Unlisted turns on and the "Unlisted" node appears selected even when Show Unlisted is off in the config.
+- "All quests" → the table shows the whole catalog (removed quests only when Include removed is on); "Unlock quests" → only derived feature quests, quasi-quests such as "Leves of Kugane" included, never a removed one.
+- "Removed from the game" → exactly the retired rows (the old A Realm Reborn story, But I Hardly Noah, the three 3.05 sidequests, …); an undone one reads "Locked out · removed from the game", a completed one "Completed"; its detail pane says "Removed from the game in patch 6.3" where the curated note names the patch.
+- Moonlit → "Show in Journal" on a quest while Hide completed / Available now / Pinned only / a State filter is on → the Journal opens on its genre with those filters cleared (their chips gone) and the row selected and visible. For a removed quest → Include removed turns on and the "Removed from the game" node appears selected even when Show removed quests is off in the config.
 
 ## Quest table
 - Columns: state glyph, Name, Lv, Job, Next step, Exp, Rewards; headers can be reordered, hidden (right-click header) and resized; Name and Next step stretch; hovering a header shows a tooltip naming what the column holds.

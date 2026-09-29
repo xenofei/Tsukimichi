@@ -11,7 +11,7 @@ using Tsukimichi.GameData;
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// The Journal tree: All quests, then Section → Category → Genre, then the Unlock quests and Unlisted virtual nodes.
+/// The Journal tree: All quests, then Section → Category → Genre, then the Unlock quests and Removed from the game virtual nodes.
 /// Each node shows a filling moon and done/total. Selecting a node scopes the table through <see cref="UiState.Scope"/>.
 /// A category with a single genre is folded into one leaf (the category's name, the genre's scope and counts), and a
 /// section whose only category folded likewise becomes a single leaf, so no node ever expands to just one child.
@@ -46,7 +46,7 @@ public sealed class TreePane
     private readonly List<Node> sections = [];
     private readonly Node allNode = new(QuestScope.None, "##all", Strings.AllQuests, leaf: true);
     private readonly Node featureNode = new(QuestScope.VirtualFeature, "##feature", Strings.FeatureUnlocks, leaf: true);
-    private readonly Node unlistedNode = new(QuestScope.VirtualUnlisted, "##unlisted", Strings.Unlisted, leaf: true);
+    private readonly Node unlistedNode = new(QuestScope.VirtualUnlisted, "##unlisted", Strings.RemovedFromGame, leaf: true);
     private TreeCounts? counts;
     private NodeCount featureCount;
     private bool revealing;
@@ -75,7 +75,7 @@ public sealed class TreePane
         }
 
         DrawNode(featureNode, section: true);
-        // A reveal can land in the Unlisted scope while the config hides the node; show it so the selection is visible.
+        // A reveal can land in the removed scope while the config hides the node; show it so the selection is visible.
         if (showUnlisted || ui.Scope == QuestScope.VirtualUnlisted)
         {
             DrawNode(unlistedNode, section: true);
@@ -293,7 +293,7 @@ public sealed class TreePane
         var genreById = new Dictionary<uint, Node>();
         foreach (var quest in ordered)
         {
-            if (quest.IsUnlisted)
+            if (quest.IsRemoved)
             {
                 continue;
             }

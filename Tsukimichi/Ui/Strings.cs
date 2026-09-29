@@ -79,7 +79,27 @@ public static partial class Strings
     // Tree
     public const string AllQuests = "All quests";
     public const string FeatureUnlocks = "Unlock quests";
-    public const string Unlisted = "Unlisted";
+    public const string RemovedFromGame = "Removed from the game";
+
+    // Journal filing provenance (detail pane, under the journal path)
+    /// <summary>{0} = genre name, {1} = rule number, {2} = <see cref="FilingReason"/>.</summary>
+    public const string FilingRuleFormat = "Filed under {0} (rule {1}: {2})";
+    /// <summary>{0} = genre name.</summary>
+    public const string FilingCuratedFormat = "Filed under {0} (curated override)";
+    /// <summary>{0} = the patch the curated note names.</summary>
+    public const string RemovedInPatchFormat = "Removed from the game in patch {0}";
+
+    /// <summary>The short reason behind a refiling rule (docs/data/unlisted-report.md section 4).</summary>
+    public static string FilingReason(byte rule) => rule switch
+    {
+        2 => "class or job intro",
+        3 => "Grand Company",
+        4 => "nearest listed prerequisite",
+        5 => "nearest listed successor",
+        6 => "issuer's zone",
+        7 => "no signal",
+        _ => "rule " + rule.ToString(System.Globalization.CultureInfo.InvariantCulture),
+    };
     /// <summary>{0} = done, {1} = total.</summary>
     public const string CountFormat = "{0}/{1}";
     /// <summary>A filling moon's tooltip line: {0} = done/total, {1} = percent.</summary>
@@ -161,7 +181,7 @@ public static partial class Strings
     public const string RewardKindsTooltip = "Per reward kind: Hidden removes quests giving it, Only keeps just those";
     public const string RepeatableOnlyTooltip = "Keep only repeatable quests such as dailies and weeklies";
     public const string SeasonalActiveOnlyTooltip = "Keep only seasonal-event quests whose event is running right now";
-    public const string IncludeUnlistedTooltip = "Also show quests with no journal genre under All quests and Unlock quests";
+    public const string IncludeUnlistedTooltip = "Also show quests removed from the game under All quests and Unlock quests";
     public const string PinnedOnlyTooltip = "Keep only quests you pinned";
     public const string ResetTooltip = "Clear every filter and the search";
     public const string ResetFilters = "Reset filters";
@@ -375,6 +395,7 @@ public static partial class Strings
 
     public static string RequirementName(RequirementKind kind) => kind switch
     {
+        RequirementKind.Retired => "Removed",
         RequirementKind.Foreclosure => "Foreclosure",
         RequirementKind.ExpansionCap => "Expansion",
         RequirementKind.LevelCap => "Level cap",

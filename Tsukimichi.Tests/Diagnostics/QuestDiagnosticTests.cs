@@ -109,10 +109,11 @@ public class QuestDiagnosticTests
         var block = QuestDiagnostic.Compose(Inputs(quest, catalog, Character(), Context(quest.QuestId)));
         var lines = Lines(block);
 
-        // One line per kind, in the evaluator's order, and every kind of the enum is represented.
+        // One line per kind, in the evaluator's order, and every kind of the enum is represented; Retired is the one
+        // gate a live quest cannot carry, so it has its own test below.
         var requirementLines = lines.Where(l => l.StartsWith("  - ", StringComparison.Ordinal)).ToArray();
         var kinds = requirementLines.Select(l => l[4..l.IndexOf(':', StringComparison.Ordinal)]).ToArray();
-        Assert.Equal(Enum.GetValues<RequirementKind>().Select(k => k.ToString()).OrderBy(k => k, StringComparer.Ordinal), kinds.OrderBy(k => k, StringComparer.Ordinal));
+        Assert.Equal(Enum.GetValues<RequirementKind>().Where(k => k != RequirementKind.Retired).Select(k => k.ToString()).OrderBy(k => k, StringComparer.Ordinal), kinds.OrderBy(k => k, StringComparer.Ordinal));
         Assert.Equal(kinds, RequirementEvaluator.Evaluate(quest, Character(), catalog, Context(quest.QuestId)).Select(r => r.Req.Kind.ToString()));
 
         Assert.Contains("  - Foreclosure: unmet (locks 65600 Lock A; completed 65600 Lock A)", requirementLines);
@@ -133,6 +134,19 @@ public class QuestDiagnosticTests
         Assert.Contains("  - Mount: not checked (has mount unknown)", requirementLines);
         Assert.Contains("  - House: unmet (has house no)", requirementLines);
         Assert.Contains("  - Achievement: not checked (achievements not loaded, quest 65700)", requirementLines);
+    }
+
+    [Fact]
+    public void A_retired_quest_lists_the_removed_gate_first_and_names_its_filing()
+    {
+        var quest = Quest(Target, "Old Story") with { IsRetired = true, RefiledFrom = 1 };
+        var catalog = Catalog(quest);
+        var inputs = Inputs(quest, catalog, Character(), Context(quest.QuestId)) with { FilingRule = "rule 1 (retired)" };
+        var lines = Lines(QuestDiagnostic.Compose(inputs));
+
+        Assert.Equal("quest: 65700 \"Old Story\" (genre 1, lvl 1 / display 1, filing rule 1 (retired))", lines[4]);
+        var requirementLines = lines.Where(l => l.StartsWith("  - ", StringComparison.Ordinal)).ToArray();
+        Assert.Equal("  - Retired: unmet (removed from the game)", requirementLines[0]);
     }
 
     [Fact]

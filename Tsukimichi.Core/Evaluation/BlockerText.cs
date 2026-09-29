@@ -17,7 +17,7 @@ namespace Tsukimichi.Core.Evaluation;
 /// character has yet to reach, which outranks a rank, and a seasonal event that is not running comes last (the
 /// player can do everything else meanwhile). The order is:
 /// <list type="number">
-/// <item>Locked out by a completed lock (nothing can be done)</item>
+/// <item>Removed from the game, then locked out by a completed lock (nothing can be done)</item>
 /// <item>Expansion the account does not own; level above the account's cap</item>
 /// <item>Prerequisite quests: the nearest unmet one, "after MSQ:" when it is a main scenario quest; through an
 /// Any join, the prerequisite with the fewest quests left on its path</item>
@@ -45,12 +45,16 @@ public static class BlockerText
     private const string AfterMsqPrefix = "after MSQ: ";
     private const string AfterPrefix = "after: ";
     private const string ClosedByPrefix = "closed by: ";
+
+    /// <summary>The reason a retired quest is locked out; the "Removed from the game" node and the detail pane use the same words.</summary>
+    public const string RemovedFromGame = "removed from the game";
     private const string AnotherChoice = "another choice";
     private const string AnotherJob = "another job";
     private const string NotCheckedPrefix = "Not checked: ";
 
     private static readonly RequirementKind[] Priority =
     [
+        RequirementKind.Retired,
         RequirementKind.Foreclosure,
         RequirementKind.ExpansionCap,
         RequirementKind.LevelCap,
@@ -183,6 +187,7 @@ public static class BlockerText
     private static string Phrase(RequirementResult result, QuestState state, QuestRecord quest, BlockerNames names, IReadOnlyDictionary<uint, QuestEvaluation>? states) =>
         result.Req switch
         {
+            RetiredRequirement => RemovedFromGame,
             ForeclosureRequirement f => ClosedByPrefix + (f.CompletedLockIds.Length > 0 ? QuestName(names, f.CompletedLockIds[0]) : AnotherChoice),
             ExpansionCapRequirement e => "Expansion: " + names.Expansion(e.Expansion),
             LevelCapRequirement l => string.Create(CultureInfo.InvariantCulture, $"Lv {l.Level}, above your cap"),

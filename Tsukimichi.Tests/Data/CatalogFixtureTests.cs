@@ -22,7 +22,8 @@ public class CatalogFixtureTests(FixtureCatalog fixture, ITestOutputHelper outpu
     public void Fixture_loads_every_named_quest_with_its_lookups()
     {
         output.WriteLine($"{Path.GetFileName(fixture.Path)}: {Catalog.Count} quests, game {fixture.GameVersion}");
-        Assert.Equal(5373, Catalog.Count);
+        Assert.Equal(ExpectedCounts.NamedQuests, Catalog.Count);
+        Assert.Equal(ExpectedCounts.GameVersion, fixture.GameVersion);
         Assert.Equal("English", fixture.Bundle.Language);
         Assert.Matches(@"^\d{4}\.\d{2}\.\d{2}\.\d{4}\.\d{4}$", fixture.GameVersion);
         Assert.EndsWith(CatalogFixtureFile.FileName(fixture.GameVersion), fixture.Path);
@@ -57,26 +58,29 @@ public class CatalogFixtureTests(FixtureCatalog fixture, ITestOutputHelper outpu
     }
 
     [Fact]
-    public void Tree_totals_count_listed_quests_per_section_and_bucket_the_unlisted()
+    public void Tree_totals_count_listed_quests_per_section_and_bucket_the_removed()
     {
         var unlisted = Catalog.All.Where(q => q.IsUnlisted).ToArray();
-        Assert.Equal(180, unlisted.Length);
+        Assert.Equal(ExpectedCounts.RetiredByRule1, unlisted.Length);
         Assert.All(unlisted, q => Assert.Equal(0u, q.Journal.GenreId));
+        Assert.All(unlisted, q => Assert.True(q.IsRetired));
+        var removed = Catalog.Removed;
+        Assert.Equal(ExpectedCounts.Retired, removed.Count);
 
         var states = Catalog.All.ToDictionary(q => q.RowId, _ => QuestState.Ready);
         var counts = TreeCounts.Compute(Catalog, states, includeUnlisted: true);
 
-        Assert.Equal(unlisted.Length, counts.Unlisted.Total);
+        Assert.Equal(removed.Count, counts.Unlisted.Total);
         Assert.Equal(Catalog.Count, counts.Overall.Total);
         foreach (var (section, quests) in Catalog.BySection)
         {
-            var listed = quests.Count(q => !q.IsUnlisted);
+            var listed = quests.Count(q => !q.IsRemoved);
             output.WriteLine($"section {section}: {listed} listed of {quests.Count}");
             Assert.Equal(listed, counts.Section(section).Total);
         }
 
-        Assert.Equal(Catalog.Count - unlisted.Length, counts.Sections.Values.Sum(c => c.Total));
-        Assert.Equal(Catalog.Count - unlisted.Length, TreeCounts.Compute(Catalog, states, includeUnlisted: false).Overall.Total);
+        Assert.Equal(Catalog.Count - removed.Count, counts.Sections.Values.Sum(c => c.Total));
+        Assert.Equal(Catalog.Count - removed.Count, TreeCounts.Compute(Catalog, states, includeUnlisted: false).Overall.Total);
     }
 
     [Fact]
@@ -91,14 +95,15 @@ public class CatalogFixtureTests(FixtureCatalog fixture, ITestOutputHelper outpu
         IReadOnlySet<uint> ids = FeaturePresets.Derive(Catalog, curated, unique.Entries);
         output.WriteLine($"Feature quests: {ids.Count} of {Catalog.Count}");
 
-        Assert.Equal(1699, ids.Count);
+        Assert.Equal(ExpectedCounts.FeatureQuests, ids.Count);
         Assert.All(ids, id => Assert.False(FeaturePresets.IsMainScenario(Catalog.ByRowId[id])));
         Assert.All(ids, id => Assert.False(Catalog.ByRowId[id].IsRepeatable));
+        Assert.All(ids, id => Assert.False(Catalog.ByRowId[id].IsRetired));
 
-        // Every listed, non-repeatable blue-icon quest outside the main scenario is in.
+        // Every live, non-repeatable blue-icon quest (feature or quasi-quest) outside the main scenario is in.
         foreach (var quest in Catalog.All)
         {
-            if (quest.EventIconType == FeaturePresets.FeatureEventIconType && !quest.IsRepeatable && !FeaturePresets.IsMainScenario(quest))
+            if (FeaturePresets.HasFeatureIcon(quest) && !quest.IsRetired && !quest.IsRepeatable && !FeaturePresets.IsMainScenario(quest))
             {
                 Assert.Contains(quest.RowId, ids);
             }
@@ -138,7 +143,7 @@ public class CatalogFixtureTests(FixtureCatalog fixture, ITestOutputHelper outpu
         foreach (var entry in curated.Chains)
         {
             var chain = chains.Chains.First(c => c.Name == entry.Name);
-            Assert.Equal(entry.GenreIds.Sum(id => Catalog.ByGenre[id].Count), chain.RowIds.Count);
+            Assert.Equal(entry.GenreIds.Sum(id => Catalog.ByGenre[id].Count(q => !q.IsRetired)), chain.RowIds.Count);
             Assert.All(chain.RowIds, id => Assert.Same(chain, chains.ForQuest(id)));
         }
 

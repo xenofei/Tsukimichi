@@ -280,12 +280,12 @@ public sealed class MainWindow : Window, IDisposable
 
         var index = SearchIndex.For(bundle.Catalog);
         var normalized = SearchIndex.Normalize(text);
-        // Chat results mirror the table: unlisted quests only when the Include Unlisted filter is on.
+        // Chat results mirror the table: removed quests only when the Include removed filter is on.
         var showUnlisted = ui.Filters.IncludeUnlisted;
         var count = 0;
         foreach (var quest in bundle.Catalog.All)
         {
-            if ((quest.IsUnlisted && !showUnlisted) || !index.Matches(quest.RowId, normalized))
+            if ((quest.IsRemoved && !showUnlisted) || !index.Matches(quest.RowId, normalized))
             {
                 continue;
             }
@@ -934,6 +934,6 @@ public sealed class MainWindow : Window, IDisposable
             OnFiltersChanged();
         }
 
-        ui.Reveal(quest.RowId, quest.IsUnlisted ? QuestScope.VirtualUnlisted : QuestScope.Genre(quest.Journal.GenreId), quest.IsUnlisted);
+        ui.Reveal(quest);
     }
 }

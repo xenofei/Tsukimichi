@@ -6,6 +6,7 @@ using Dalamud.Game;
 using Dalamud.Plugin.Services;
 using Dalamud.Utility;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Storage;
 using Tsukimichi.GameData;
 
 namespace Tsukimichi.Data;
@@ -15,29 +16,31 @@ namespace Tsukimichi.Data;
 /// Only <see cref="IDataManager.Excel"/> is touched off-thread (Lumina sheet reads are thread-safe); no other Dalamud
 /// service is used from the worker, and <see cref="IPluginLog"/> is thread-safe.
 /// </summary>
-public sealed class LuminaCatalogLoader(IDataManager data, IPluginLog log)
+/// <param name="curated">The curated overlay the refiler reads; <see cref="CuratedData.Empty"/> runs the rules alone.</param>
+public sealed class LuminaCatalogLoader(IDataManager data, IPluginLog log, CuratedData curated)
 {
-    /// <summary>Builds the catalog and its lookups. Faults with <see cref="OperationCanceledException"/> when cancelled.</summary>
-    public Task<CatalogBundle> BuildBundleAsync(ClientLanguage language, CancellationToken ct)
-        => Task.Run(() => Build(language, ct), ct);
+    /// <summary>Builds the catalog and its lookups under <paramref name="filing"/>. Faults with <see cref="OperationCanceledException"/> when cancelled.</summary>
+    public Task<CatalogBundle> BuildBundleAsync(ClientLanguage language, JournalFiling filing, CancellationToken ct)
+        => Task.Run(() => Build(language, filing, ct), ct);
 
     /// <summary>Builds just the <see cref="QuestCatalog"/>; convenience over <see cref="BuildBundleAsync"/>.</summary>
-    public async Task<QuestCatalog> BuildAsync(ClientLanguage language, CancellationToken ct)
-        => (await BuildBundleAsync(language, ct).ConfigureAwait(false)).Catalog;
+    public async Task<QuestCatalog> BuildAsync(ClientLanguage language, JournalFiling filing, CancellationToken ct)
+        => (await BuildBundleAsync(language, filing, ct).ConfigureAwait(false)).Catalog;
 
-    private CatalogBundle Build(ClientLanguage language, CancellationToken ct)
+    private CatalogBundle Build(ClientLanguage language, JournalFiling filing, CancellationToken ct)
     {
         var luminaLanguage = language.ToLumina();
-        log.Debug("Catalog build starting ({Language})", luminaLanguage);
+        log.Debug("Catalog build starting ({Language}, {Filing} filing)", luminaLanguage, filing);
         var stopwatch = Stopwatch.StartNew();
         try
         {
-            var bundle = CatalogMapper.Map(data.Excel, luminaLanguage, ct, line => log.Debug("Catalog: {Line}", line));
+            var bundle = CatalogMapper.Map(data.Excel, luminaLanguage, ct, line => log.Debug("Catalog: {Line}", line), filing, curated);
             log.Information(
-                "Catalog built: {Count} quests in {Elapsed} ms ({Language})",
+                "Catalog built: {Count} quests in {Elapsed} ms ({Language}, {Filing} filing)",
                 bundle.Catalog.Count,
                 stopwatch.ElapsedMilliseconds,
-                bundle.Language);
+                bundle.Language,
+                filing);
             return bundle;
         }
         catch (OperationCanceledException)

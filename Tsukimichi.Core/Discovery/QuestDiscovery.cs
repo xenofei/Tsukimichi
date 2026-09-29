@@ -56,7 +56,7 @@ public static class QuestDiscovery
 
         foreach (var quest in catalog.All)
         {
-            if (quest.Issuer is not { } issuer || issuer.TerritoryId != territoryId)
+            if (quest.IsRetired || quest.Issuer is not { } issuer || issuer.TerritoryId != territoryId)
             {
                 continue;
             }
@@ -90,7 +90,7 @@ public static class QuestDiscovery
 
         foreach (var quest in catalog.All)
         {
-            if (quest.Issuer is { } issuer && issuer.NpcId == npcId)
+            if (!quest.IsRetired && quest.Issuer is { } issuer && issuer.NpcId == npcId)
             {
                 matches.Add(quest);
             }
