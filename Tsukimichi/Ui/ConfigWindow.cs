@@ -391,8 +391,8 @@ public sealed partial class ConfigWindow : Window
 
     /// <summary>
     /// Live previews of the three Flair levels (proposal §7.9), side by side when three cells of
-    /// <see cref="PreviewCellLogical"/> fit (the window's default width does) and stacked otherwise: each a section heading and a small journal row drawn exactly as that level draws them (the pane
-    /// gradient behind at Full; the heading's sigil and rule, the orbit, the road and the Numeral count at Full and
+    /// <see cref="PreviewCellLogical"/> fit (the window's default width does) and stacked otherwise: each a section
+    /// heading and a small journal row drawn exactly as that level draws them (the pane gradient behind at Full; the heading's sigil and rule, the orbit, the road and the Numeral count at Full and
     /// Quiet; the filling moon and the plain heading at Plain). Under the high-contrast palette Full previews as Quiet,
     /// as it draws. The level in use is outlined; a click on a preview chooses it. The game's heading fonts are not built
     /// at Plain, so while Plain is chosen a note under the previews says the Full and Quiet ones show the usual font
