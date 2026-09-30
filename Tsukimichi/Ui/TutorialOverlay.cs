@@ -246,6 +246,7 @@ public sealed class TutorialOverlay : ITutorial
     {
         if (!Active)
         {
+            popupDepthAtEnd = 0;
             return;
         }
 
@@ -295,7 +296,16 @@ public sealed class TutorialOverlay : ITutorial
         {
             focusCard = true;
         }
+
+        popupDepthAtEnd = ImGui.GetCurrentContext().OpenPopupStack.Size;
     }
+
+    /// <summary>
+    /// How many popups were open when the last frame's Draw ended. ImGui's keyboard navigation can close a popup on
+    /// Esc in NewFrame, before this frame's <see cref="HandleKeys"/> runs, so <see cref="AnyPopupOpen"/> alone would let
+    /// the same press close the tour too; a popup open last frame means this frame's keys were the popup's.
+    /// </summary>
+    private int popupDepthAtEnd;
 
     private static bool AnyMouseReleased() =>
         ImGui.IsMouseReleased(ImGuiMouseButton.Left) || ImGui.IsMouseReleased(ImGuiMouseButton.Right) || ImGui.IsMouseReleased(ImGuiMouseButton.Middle);
@@ -441,7 +451,7 @@ public sealed class TutorialOverlay : ITutorial
     {
         keysOwned = Active && !ImGui.GetIO().WantTextInput && (mainFocused || ImGui.IsWindowFocused(ImGuiFocusedFlags.RootAndChildWindows));
         keysOwnedAt = Environment.TickCount64;
-        if (!keysOwned || stepChanged || ImGui.IsAnyItemActive() || AnyPopupOpen())
+        if (!keysOwned || stepChanged || ImGui.IsAnyItemActive() || AnyPopupOpen() || popupDepthAtEnd > 0)
         {
             return;
         }
