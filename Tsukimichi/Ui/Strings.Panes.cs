@@ -450,7 +450,7 @@ static partial class Strings
         public const string ChipStatePrefix = "State: ";
 
         public const string FillingTitle = "The halo";
-        public const string FillingBody = "Tree nodes, Moonlit kinds, flying zones and the Characters dashboard show a ring that fills clockwise from the top with the completion ratio, around a small moon that fills with it. Even one quest shows a gold pip, and the ring closes and glows only when everything is done. Where the ring is small the number sits beside it. Locked out quests are left out of the total.";
+        public const string FillingBody = "Tree nodes, Moonlit kinds, flying zones and the Characters dashboard show a ring that fills clockwise from the top with the completion ratio, around a small moon that fills with it. Even one quest shows a gold pip, and the ring closes only when everything is done. Where the ring is small the number sits beside it. Locked out quests are left out of the total.";
 
         // ---- Filters and chips ----
         public static readonly string[] FilterCardTitles =
@@ -498,7 +498,7 @@ static partial class Strings
 
         // ---- Moonlit treasures ----
         public const string UniqueTitle = "What unique means";
-        public const string UniqueBody = "A Moonlit treasure is a reward that exists nowhere else: an emote, mount, minion, roll, card, duty or feature you can only find on this road. Anything trades, shops or achievements also hand out is not unique.";
+        public const string UniqueBody = "A Moonlit treasure is a reward that exists nowhere else: an emote, mount, minion, roll, card, duty or feature you can only find on this road. Anything trades, shops or achievements also hand out is not unique. A few rewards the Online Store also sells or a duty also drops stay listed with a \"Store only\" or \"Also drops\" mark (hover it for where); tick \"Hide rewards found elsewhere\" to leave them out of the list and the counts.";
         public const string ConfidenceTitle = "Confidence badges";
         public const string ConfidenceBody = "Each row carries a badge saying how the verdict was reached. Hover a badge in the table for its source.";
         public const string ConfidenceStaticMeaning = "from the game data alone";
@@ -600,7 +600,7 @@ static partial class Strings
         public static readonly string[] CountsCardBodies =
         [
             "Quests the game removed in later patches (the A Realm Reborn trim in 5.3, the Summoner rework, the Crystal Tower rewrite, a few deleted sidequests) sit under the Removed from the game node, off by default, and never count toward any total; a completed one still shows Completed when the node or Include removed reveals it, and its detail pane says which patch removed it where that is known. Quests the game's journal hides but still hands out (So You Want to Be a Gladiator, Leves of Kugane, Sights of the North, the Eureka entry quests, hidden steps of YoRHa and the Resistance Weapons) are filed under the genre their links point at, so a class's quests start with its intro and a zone's sidequests include its leve unlock; the detail pane says which rule filed them. The class intros (So You Want to Be a Gladiator and the other A Realm Reborn classes) are listed but never counted: the class you started as hands you \"Way of the …\" directly and never offers its intro, so counting it would keep that class one short for good; the job intros (A Dark Spectacle, So You Want to Be a Machinist, What's Your Sign) count as usual. Settings › Display › Journal filing › Legacy puts every one of them back in the single bucket releases before 0.6.1 showed.",
-            "A seasonal quest of an event that is not running shows Blocked with \"seasonal event not active\", and is left out of its genre's total the way a locked-out quest is, so the moon can fill without it; it counts again while the event runs. An event whose end date is known and past locks its quests out for good.",
+            "A seasonal quest of an event that is not running shows Blocked with \"seasonal event not active\", and is left out of its genre's total the way a locked-out quest is, so the halo can close without it; it counts again while the event runs. An event whose end date is known and past locks its quests out for good.",
             "A quest locked out by a choice, such as the other two Grand Companies' quests once you have joined one, is Locked out and left out of the total. A category can reach 100% with them undone, while a wiki's count per genre includes them.",
             "Unlock quests is not a journal category. It gathers every quest the game draws with the blue + icon, the curated duty and system unlocks, and quests that reward a duty, job, action, trait, aether current or blue magic spell; main scenario and repeatable quests are left out. Its total matches no page of the journal and moves when the curated lists do.",
             "A daily or weekly quest is one row and one count however many times you have turned it in. Done today or Done this week marks the ones already handed in; they are still counted as completed.",
@@ -640,10 +640,10 @@ static partial class Strings
 
         public static readonly string[] SpoilerCardBodies =
         [
-            "A main scenario quest more than three quests past your current one reads \"Main scenario quest (Lv 83)\" everywhere a name prints: the tree, the table, the detail pane, the status bar, the Todo overlay, Characters, chat links, Wotsit and the diagnostic block. Search finds it only by that placeholder. Quests you have accepted or completed always show their names. Reveal this name in the detail pane shows one quest's name until the plugin reloads.",
+            "A main scenario quest more than a set number of quests past your current one (three by default) reads \"Main scenario quest (Lv 83)\" everywhere a name prints: the table, the detail pane, the status bar, the Todo overlay, Characters, chat links, Wotsit and the diagnostic block. Search finds it only by that placeholder. Quests you have accepted or completed always show their names. Reveal this name in the detail pane shows one quest's name until the plugin reloads.",
             "A quest's banner art sums up the quest, so it shows only once the quest is in your journal or done; until then the detail pane and the name tooltip show a card saying so.",
             "The Sprout mode quick view in the filter panel keeps the table to the expansions your main scenario has reached, with a count of the quests in your reach, and folds the tree's later sections to their counts.",
-            "Settings > Spoilers turns the names or the artwork off, sets how many quests ahead keep their names (0 to 10), and holds an override for the character shown: a character who finished the story can show everything while an alt stays shielded.",
+            "Settings › Spoilers turns the names or the artwork off, sets how many quests ahead keep their names (0 to 10), and holds an override for the character shown: a character who finished the story can show everything while an alt stays shielded.",
         ];
 
         public const string SpoilersTip = "Without a character (or a stored one with no data yet) there is no position to measure from, so every main scenario name after the first quest stays hidden until the first capture.";
@@ -693,7 +693,7 @@ static partial class Strings
         public const string TreeTitle = "Journal tree";
         public const string TreeBody = "Section, category and genre scope the table. Each node shows a halo that fills with completion, done / total and, when some can be accepted now, a gold count; Unlock quests and Removed from the game are virtual nodes.";
         public const string TableTitle = "Quest table";
-        public const string TableBody = "One row per quest. The moon is its state (hover it for the name; Help lists all eight) and Status says what blocks it. Click a header to sort; right-click a row for pin, map flag and journal. Main scenario quests far ahead of you read \"Main scenario quest (Lv 83)\" until you reach them; Settings > Spoilers changes that.";
+        public const string TableBody = "One row per quest. The moon is its state (hover it for the name; Help lists all eight) and Status says what blocks it. Click a header to sort; right-click a row for pin, map flag and journal. Main scenario quests far ahead of you read \"Main scenario quest (Lv 83)\" until you reach them; Settings › Spoilers changes that.";
         public const string RequirementsTitle = "Requirements";
         public const string RequirementsBody = "Select a row and the detail pane lists every requirement with ✓ or ✗. The ▶ marks the one blocking you; hover it for the exact gap.";
         public const string PathTitle = "Path and unlocks next";
