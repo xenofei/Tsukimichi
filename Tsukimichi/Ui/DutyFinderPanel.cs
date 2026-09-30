@@ -2,6 +2,7 @@ using System;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility;
+using Dalamud.Interface.Utility.Raii;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Ui;
 using Tsukimichi.Game;
@@ -104,18 +105,26 @@ public sealed class DutyFinderPanel
         ImGui.PushStyleVar(ImGuiStyleVar.Alpha, settled < SettleFrames ? 0f : 1f);
         try
         {
-            if (ImGui.Begin(Strings.DutyHintWindowId, PanelFlags))
+            // Drawn from a raw UiBuilder.Draw handler, so nothing rebalances a Begin left open: End runs whatever
+            // Begin returned and whatever DrawContent throws.
+            var visible = ImGui.Begin(Strings.DutyHintWindowId, PanelFlags);
+            try
             {
-                size = ImGui.GetWindowSize();
-                if (settled < SettleFrames)
+                if (visible)
                 {
-                    settled++;
+                    size = ImGui.GetWindowSize();
+                    if (settled < SettleFrames)
+                    {
+                        settled++;
+                    }
+
+                    DrawContent(model);
                 }
-
-                DrawContent(model);
             }
-
-            ImGui.End();
+            finally
+            {
+                ImGui.End();
+            }
         }
         finally
         {
@@ -139,7 +148,7 @@ public sealed class DutyFinderPanel
         for (var i = 0; i < quests.Count; i++)
         {
             var line = quests[i];
-            ImGui.PushID(i);
+            using var id = ImRaii.PushId(i);
             ImGui.Spacing();
             ImGui.TextDisabled(Strings.DutyHintUnlockedBy);
             ImGui.SameLine();
@@ -147,10 +156,11 @@ public sealed class DutyFinderPanel
             ImGui.SameLine();
             ImGui.TextUnformatted(line.Name);
 
-            ImGui.Indent(indent);
-            ImGui.PushStyleColor(ImGuiCol.Text, line.Done ? Theme.Moon : Theme.Dusk);
-            ImGui.TextUnformatted(line.StatusText);
-            ImGui.PopStyleColor();
+            using var indented = ImRaii.PushIndent(indent, scaled: false);
+            using (ImRaii.PushColor(ImGuiCol.Text, line.Done ? Theme.Moon : Theme.Dusk))
+            {
+                ImGui.TextUnformatted(line.StatusText);
+            }
 
             if (ImGui.SmallButton(Strings.DutyHintReveal) && interactive)
             {
@@ -164,20 +174,18 @@ public sealed class DutyFinderPanel
 
             ImGui.SameLine();
             var canFlag = links.CanFlagMap(line.Quest);
-            ImGui.BeginDisabled(!canFlag);
-            if (ImGui.SmallButton(Strings.DutyHintFlagGiver) && interactive)
+            using (ImRaii.Disabled(!canFlag))
             {
-                links.FlagMap(line.Quest);
+                if (ImGui.SmallButton(Strings.DutyHintFlagGiver) && interactive)
+                {
+                    links.FlagMap(line.Quest);
+                }
             }
 
-            ImGui.EndDisabled();
             if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
             {
                 UiMetrics.Tooltip(canFlag ? Strings.DutyHintFlagGiverHint : Strings.DutyHintNoGiver);
             }
-
-            ImGui.Unindent(indent);
-            ImGui.PopID();
         }
 
         if (model.MoreText.Length > 0)
