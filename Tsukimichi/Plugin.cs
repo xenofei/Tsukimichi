@@ -231,6 +231,8 @@ public sealed class Plugin : IDalamudPlugin
         Session.SpoilerOptionsFor = Settings.SpoilerOptionsFor;
         Session.CharacterForgotten += ForgetSpoilerOverride;
         Session.DataDeleted += ClearSpoilerOverrides;
+        Session.CharacterForgotten += ForgetPayoffGates;
+        Session.DataDeleted += ClearPayoffGates;
         if (Settings.ViewedContentId is { } viewed && !Session.ViewCharacter(viewed))
         {
             Settings.ViewedContentId = null;
@@ -305,6 +307,24 @@ public sealed class Plugin : IDalamudPlugin
         }
     }
 
+    /// <summary>A forgotten character takes its "Before you continue" notices and open "why?" disclosures with it (P5).</summary>
+    private void ForgetPayoffGates(ulong contentId)
+    {
+        if (Settings.ForgetPayoffGates(contentId))
+        {
+            Settings.Save(PluginInterface);
+        }
+    }
+
+    /// <summary>"Delete all data" drops every character's "Before you continue" notices and disclosures (P5).</summary>
+    private void ClearPayoffGates()
+    {
+        if (Settings.ClearPayoffGates())
+        {
+            Settings.Save(PluginInterface);
+        }
+    }
+
     private void PersistViewedCharacter()
     {
         var explicitId = Session.IsFollowingLive ? null : Session.ViewedContentId;
@@ -326,6 +346,8 @@ public sealed class Plugin : IDalamudPlugin
             Session.Changed -= PersistViewedCharacter;
             Session.CharacterForgotten -= ForgetSpoilerOverride;
             Session.DataDeleted -= ClearSpoilerOverrides;
+            Session.CharacterForgotten -= ForgetPayoffGates;
+            Session.DataDeleted -= ClearPayoffGates;
         }
 
         Poller?.Dispose();
@@ -509,6 +531,13 @@ public sealed class Plugin : IDalamudPlugin
             planSource = new PlanSource(Session, () => DutyIndex.Build(DataManager.Excel, Dalamud.Utility.ClientLanguageExtensions.ToLumina(DataManager.Language)), Log);
             mainWindow.AttachPlan(new PlanPane(Session, planSource, gameLinks, Settings, () => Settings.Save(PluginInterface)));
             chatNotifier = new Game.ChatNotifier(Session, Settings, Paths, gameLinks, ChatGui, Log);
+            // "Before you continue" (P5): the dashboard and the Tonight card lines, and the once-per-character chat line.
+            var payoffGates = new Game.PayoffGateSource(Session, Log);
+            var payoffLines = new PayoffGateLines(payoffGates, Session, Settings, () => Settings.Save(PluginInterface));
+            charactersPane.PayoffLines = payoffLines;
+            mainWindow.AttachPayoffLines(payoffLines);
+            chatNotifier.PayoffGates = payoffGates;
+            chatNotifier.SaveSettings = () => Settings.Save(PluginInterface);
 
             configWindow = new ConfigWindow(Settings, Session, PluginInterface, diagnostics, _ => ui.MarkQueryDirty());
             configWindow.Overrides = moonlitPane;

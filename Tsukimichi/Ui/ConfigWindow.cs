@@ -512,6 +512,18 @@ public sealed class ConfigWindow : Window
         {
             UiMetrics.Tooltip(Strings.SeasonalConfigNoticeHint);
         }
+
+        var payoff = settings.ChatNoticePayoffGates;
+        if (ImGui.Checkbox(Strings.PayoffConfigNotice, ref payoff))
+        {
+            settings.ChatNoticePayoffGates = payoff;
+            Save();
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.PayoffConfigNoticeHint);
+        }
     }
 
     private void DrawJournal()

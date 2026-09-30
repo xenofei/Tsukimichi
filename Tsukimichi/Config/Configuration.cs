@@ -292,6 +292,32 @@ public sealed class Configuration : IPluginConfiguration
     /// <summary>P pins or unpins the selected quest while the main window has focus. Off by default.</summary>
     public bool ShortcutPin { get; set; }
 
+    // ---- 1.0.0: "Before you continue" payoff gates (P5) ----
+    /// <summary>
+    /// Print "Before you continue: Finish the Eden raid series first." once per gate per character, the first time the
+    /// gate's milestone quest is Ready or in the journal (see <c>Game.ChatNotifier</c>). On by default.
+    /// </summary>
+    public bool ChatNoticePayoffGates { get; set; } = true;
+
+    /// <summary>Gate ids already announced in chat, by character content id; a gate is announced once per character, ever. Dropped with the character.</summary>
+    public Dictionary<ulong, HashSet<string>> PayoffGatesNoticedByCharacter { get; set; } = [];
+
+    /// <summary>Gate ids whose "why? (spoiler)" the player opened, by character content id; closed by default. Dropped with the character.</summary>
+    public Dictionary<ulong, HashSet<string>> PayoffWhyOpenByCharacter { get; set; } = [];
+
+    /// <summary>Drops a forgotten character's payoff gate state; true when there was any.</summary>
+    public bool ForgetPayoffGates(ulong contentId) =>
+        PayoffGatesNoticedByCharacter.Remove(contentId) | PayoffWhyOpenByCharacter.Remove(contentId);
+
+    /// <summary>Drops every character's payoff gate state ("Delete all data"); true when there was any.</summary>
+    public bool ClearPayoffGates()
+    {
+        var any = PayoffGatesNoticedByCharacter.Count > 0 || PayoffWhyOpenByCharacter.Count > 0;
+        PayoffGatesNoticedByCharacter.Clear();
+        PayoffWhyOpenByCharacter.Clear();
+        return any;
+    }
+
     /// <summary>Poll interval as a <see cref="TimeSpan"/> within the allowed bounds.</summary>
     public TimeSpan PollInterval
     {
@@ -346,6 +372,8 @@ public sealed class Configuration : IPluginConfiguration
         config.LastSeenVersion ??= string.Empty;
         config.EnableHooksOnUntestedVersion = config.EnableHooksOnUntestedVersion?.Trim() ?? string.Empty;
         config.SpoilerShieldByCharacter ??= [];
+        config.PayoffGatesNoticedByCharacter ??= [];
+        config.PayoffWhyOpenByCharacter ??= [];
         config.ExportFolder ??= string.Empty;
         if (!Enum.IsDefined(config.ExportFormat))
         {

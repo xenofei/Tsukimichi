@@ -38,6 +38,11 @@ namespace Tsukimichi.Game;
 /// And the seasonal line (P11): "Moonfire Faire is running: 2 quests ready (ends Aug 28) · [quest]" once per event
 /// per login when the event has a Ready quest, while <see cref="Configuration.ChatNoticeSeasonal"/> is on (the default).
 /// </para>
+/// <para>
+/// And "Before you continue" (P5): "Before you continue: Finish the Eden raid series first. Next: [quest]" once per
+/// payoff gate per character, the first time the gate speaks, while <see cref="Configuration.ChatNoticePayoffGates"/>
+/// is on (the default).
+/// </para>
 /// </summary>
 public sealed class ChatNotifier : IDisposable
 {
@@ -95,6 +100,7 @@ public sealed class ChatNotifier : IDisposable
             Announce();
             Nudge();
             AnnounceSeasonal();
+            AnnouncePayoffGates();
         }
         catch (Exception ex)
         {
@@ -237,6 +243,73 @@ public sealed class ChatNotifier : IDisposable
                     Print(SeasonalNow.NoticeText(festival, now) + Strings.SeasonalChatNextPrefix, entry.Quest, string.Empty);
                     break;
                 }
+            }
+        }
+    }
+
+    /// <summary>The payoff gates for the one-time "Before you continue" line (P5); set by the plugin. Null prints none.</summary>
+    public PayoffGateSource? PayoffGates { get; set; }
+
+    /// <summary>Persists the configuration after a gate was announced (the once-per-character record); set by the plugin.</summary>
+    public Action? SaveSettings { get; set; }
+
+    /// <summary>
+    /// "Before you continue: Finish the Eden raid series first. Next: [quest]" the first time a payoff gate speaks for
+    /// the logged-in character (its milestone Ready or in the journal, its content not done), once per gate per
+    /// character ever: the announced ids are kept in <see cref="Configuration.PayoffGatesNoticedByCharacter"/>. The line
+    /// is the curated instruction only, never the reason; the link is the first content quest left. Nothing is marked
+    /// while <see cref="Configuration.ChatNoticePayoffGates"/> is off, so turning it on later still announces a gate
+    /// that is speaking then.
+    /// </summary>
+    private void AnnouncePayoffGates()
+    {
+        if (!config.ChatNoticePayoffGates
+            || PayoffGates is not { } source
+            || session.LiveContentId is not { } contentId
+            || session.Bundle is not { } bundle)
+        {
+            return;
+        }
+
+        var active = source.Live();
+        if (active.Count == 0)
+        {
+            return;
+        }
+
+        if (!config.PayoffGatesNoticedByCharacter.TryGetValue(contentId, out var noticed) || noticed is null)
+        {
+            noticed = new HashSet<string>(StringComparer.Ordinal);
+            config.PayoffGatesNoticedByCharacter[contentId] = noticed;
+        }
+
+        var fresh = Core.Payoff.PayoffGates.TakeNotices(active, noticed);
+        if (fresh.Count == 0)
+        {
+            return;
+        }
+
+        SaveSettings?.Invoke();
+        foreach (var gate in fresh)
+        {
+            QuestRecord? next = null;
+            foreach (var rowId in gate.Resolved.Content)
+            {
+                if (!(session.LiveStates.TryGetValue(rowId, out var evaluation) && evaluation.State == QuestState.Completed))
+                {
+                    next = bundle.Catalog.GetByRowId(rowId);
+                    break;
+                }
+            }
+
+            var line = Strings.PayoffPrefix + gate.Gate.Instruction;
+            if (next is null)
+            {
+                chat.Print(new SeStringBuilder().AddText(line).Build(), Strings.ChatTag);
+            }
+            else
+            {
+                Print(line + Strings.PayoffChatNextPrefix, next, string.Empty);
             }
         }
     }

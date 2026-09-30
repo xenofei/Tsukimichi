@@ -175,6 +175,12 @@ public sealed class MainWindow : Window, IDisposable
         planPane = plan ?? throw new ArgumentNullException(nameof(plan));
     }
 
+    /// <summary>"Before you continue" (P5): the Tonight card draws the payoff gate lines under its main scenario row.</summary>
+    public void AttachPayoffLines(PayoffGateLines lines)
+    {
+        tonightCard.PayoffLines = lines ?? throw new ArgumentNullException(nameof(lines));
+    }
+
     /// <summary>Gives the detail pane the user's unique-reward verdicts so it can show and change them.</summary>
     public void AttachOverrides(IUniqueOverrides overrides)
     {
