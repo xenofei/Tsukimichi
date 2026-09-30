@@ -1185,6 +1185,8 @@ public sealed class MainWindow : Window, IDisposable
 
         RefreshMsq(session, bundle);
 
+        // The whole bar is in the caption role (ui-revamp §4.2): 0.85× the body, never under 12 px.
+        using var caption = Typography.Caption();
         var barMin = ImGui.GetCursorScreenPos();
         ImGui.Separator();
 

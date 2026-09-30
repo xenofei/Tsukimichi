@@ -257,6 +257,7 @@ public sealed class Plugin : IDalamudPlugin
         if (Settings is { } settings)
         {
             Ui.UiMetrics.Update(settings);
+            Ui.Typography.Update();
             Ui.Theme.Refresh(settings.FollowDalamudColours);
             Ui.Motion.BeginFrame();
         }
@@ -365,6 +366,7 @@ public sealed class Plugin : IDalamudPlugin
             windowSystem.AddWindow(mainWindow);
             // Subscribed before the window system so every window (the todo overlay and Nearby too) draws with
             // this frame's scale factors.
+            Ui.Typography.Initialize(PluginInterface.UiBuilder.FontAtlas, Log);
             PluginInterface.UiBuilder.Draw += UpdateUiMetrics;
             PluginInterface.UiBuilder.Draw += windowSystem.Draw;
             PluginInterface.UiBuilder.OpenMainUi += mainWindow.Toggle;
@@ -584,6 +586,7 @@ public sealed class Plugin : IDalamudPlugin
         PluginInterface.UiBuilder.Draw -= windowSystem.Draw;
         PluginInterface.UiBuilder.Draw -= UpdateUiMetrics;
         windowSystem.RemoveAllWindows();
+        Ui.Typography.Dispose();
         todoOverlay?.Dispose();
         dtrEntry?.Dispose();
         discoveryWindow?.Dispose();
@@ -631,6 +634,7 @@ public sealed class Plugin : IDalamudPlugin
             PluginInterface.UiBuilder.Draw -= windowSystem.Draw;
             PluginInterface.UiBuilder.Draw -= UpdateUiMetrics;
             windowSystem.RemoveAllWindows();
+            Ui.Typography.Dispose();
         });
         Unwind("item hooks", () => itemHooks?.Dispose());
         Unwind("npc hooks", () => npcHooks?.Dispose());

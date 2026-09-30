@@ -35,7 +35,6 @@ public sealed class DetailPane
 
     private const int PathScrollFrames = 2;
     private const float HeroMaxHeight = 96f;
-    private const float CaptionScale = 0.85f;
     private const float MarkScale = 0.72f;
 
     // Section icons, converted once (ToIconString allocates).
@@ -275,10 +274,11 @@ public sealed class DetailPane
 
         var titleMin = ImGui.GetItemRectMin();
         var titleHeight = ImGui.GetItemRectSize().Y;
-        var size = ImGui.GetFontSize() * CaptionScale;
-        var width = ImGui.CalcTextSize(caption).X * CaptionScale;
+        using var role = Typography.Caption();
+        var size = ImGui.GetFontSize();
+        var width = ImGui.CalcTextSize(caption).X;
         var pos = new Vector2(cardRight - UiMetrics.Px(10f) - width, titleMin.Y + ((titleHeight - size) * 0.5f));
-        ImGui.GetWindowDrawList().AddText(ImGui.GetFont(), size, pos, Theme.U32(Theme.Surface.TextTertiary), caption);
+        ImGui.GetWindowDrawList().AddText(pos, Theme.U32(Theme.Surface.TextTertiary), caption);
     }
 
     // ------------------------------------------------------------------ hero
@@ -315,17 +315,22 @@ public sealed class DetailPane
         Chrome.Scrim(dl, new Vector2(min.X, min.Y + (height * 0.3f)), max, 0f, 0.92f);
 
         var pad = UiMetrics.Px(8f);
-        var font = ImGui.GetFont();
-        var fontSize = ImGui.GetFontSize();
-        var captionSize = fontSize * CaptionScale;
 
-        // Name over the caption line, bottom left.
+        // Name (display role) over the caption line (caption role), bottom left.
         var wrapWidth = MathF.Max(UiMetrics.Px(40f), width - (pad * 2f));
-        var captionY = max.Y - pad - captionSize;
-        var nameHeight = ImGui.CalcTextSize(model.DisplayName, false, wrapWidth).Y;
-        var nameY = captionY - UiMetrics.Px(2f) - nameHeight;
-        dl.AddText(font, fontSize, new Vector2(min.X + pad, nameY), Theme.U32(Theme.Surface.Text), model.DisplayName, wrapWidth);
-        dl.AddText(font, captionSize, new Vector2(min.X + pad, captionY), Theme.U32(Theme.Surface.TextSecondary), model.HeaderLine);
+        float captionY;
+        using (Typography.Caption())
+        {
+            captionY = max.Y - pad - ImGui.GetFontSize();
+            dl.AddText(new Vector2(min.X + pad, captionY), Theme.U32(Theme.Surface.TextSecondary), model.HeaderLine);
+        }
+
+        using (Typography.Display())
+        {
+            var nameHeight = ImGui.CalcTextSize(model.DisplayName, false, wrapWidth).Y;
+            var nameY = captionY - UiMetrics.Px(2f) - nameHeight;
+            dl.AddText(ImGui.GetFont(), ImGui.GetFontSize(), new Vector2(min.X + pad, nameY), Theme.U32(Theme.Surface.Text), model.DisplayName, wrapWidth);
+        }
 
         // State pill top left; its item carries the state tooltip.
         var pillMin = min + new Vector2(pad, pad);
@@ -368,10 +373,11 @@ public sealed class DetailPane
     /// </summary>
     private Vector2 StatePill(ImDrawListPtr dl, Vector2 min)
     {
-        var captionSize = ImGui.GetFontSize() * CaptionScale;
+        using var caption = Typography.Caption();
+        var captionSize = ImGui.GetFontSize();
         var moon = UiMetrics.Icon(6f);
         var height = MathF.Max(UiMetrics.Px(20f), MathF.Max(captionSize + UiMetrics.Px(6f), (moon * 2f) + UiMetrics.Px(6f)));
-        var textWidth = ImGui.CalcTextSize(model.StateName).X * CaptionScale;
+        var textWidth = ImGui.CalcTextSize(model.StateName).X;
         var size = new Vector2(UiMetrics.Px(5f) + (moon * 2f) + UiMetrics.Px(6f) + textWidth + UiMetrics.Px(8f), height);
         var max = min + size;
         var tone = Theme.StateColor(model.State);
@@ -381,7 +387,7 @@ public sealed class DetailPane
         dl.AddRect(min, max, Theme.WithAlpha(tone, 0.7f), rounding, ImDrawFlags.None, UiMetrics.Hairline);
         var center = new Vector2(min.X + UiMetrics.Px(5f) + moon, min.Y + (height * 0.5f));
         MoonGlyph.Draw(dl, center, moon, model.State);
-        dl.AddText(ImGui.GetFont(), captionSize, new Vector2(center.X + moon + UiMetrics.Px(6f), min.Y + ((height - captionSize) * 0.5f)), Theme.U32(StateTextColor(model.State)), model.StateName);
+        dl.AddText(new Vector2(center.X + moon + UiMetrics.Px(6f), min.Y + ((height - captionSize) * 0.5f)), Theme.U32(StateTextColor(model.State)), model.StateName);
         return size;
     }
 
@@ -447,6 +453,7 @@ public sealed class DetailPane
         // The name wraps at the card's inner edge (Chrome pushes the wrap position).
         using (ImRaii.Group())
         {
+            using (Typography.Display())
             using (Theme.PushText(Theme.Surface.Text))
             {
                 ImGui.TextWrapped(model.DisplayName);

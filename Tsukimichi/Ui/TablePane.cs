@@ -333,6 +333,9 @@ public sealed class TablePane : IDisposable
     {
         var statusWidth = 0f;
         var s = Theme.Surface;
+
+        // Header labels are captions (ui-revamp §4.2): 0.85× the body, never under 12 px, in the caption game font.
+        using var caption = Typography.Caption();
         ImGui.TableNextRow(ImGuiTableRowFlags.Headers);
         for (var i = 0; i < HeaderTooltips.Length; i++)
         {
@@ -705,6 +708,7 @@ public sealed class TablePane : IDisposable
 
         var pos = ImGui.GetCursorScreenPos();
         var avail = ImGui.GetContentRegionAvail().X;
+        using var caption = Typography.Caption();
         var textSize = ImGui.CalcTextSize(text);
         var height = MathF.Min(layout.RowContent, MathF.Max(UiMetrics.Px(PillHeight), textSize.Y + UiMetrics.Px(2f)));
         var width = MathF.Max(1f, MathF.Min(avail, MathF.Max(minWidth, textSize.X + padX * 2f)));
