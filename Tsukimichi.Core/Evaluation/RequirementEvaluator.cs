@@ -189,8 +189,11 @@ public static class RequirementEvaluator
             // The event must be running; a quest with a phase window in a phased event (one whose quests carry two or
             // more distinct windows, see QuestCatalog.PhasedFestivals) also needs the running event's phase inside
             // it. Every other festival's single window is ignored, and a phase the client did not report never blocks.
-            var active = s.ActiveFestivals.Contains(q.Festival);
-            var phase = active ? s.FestivalPhase(q.Festival) : null;
+            // The context's server festivals, when set, stand in for the snapshot's own (a stored character's flags
+            // are the ones from when it was saved).
+            var server = ctx.ServerFestivals;
+            var active = server?.Contains(q.Festival) ?? s.ActiveFestivals.Contains(q.Festival);
+            var phase = !active ? null : server is not null ? server.Phase(q.Festival) : s.FestivalPhase(q.Festival);
             var phased = catalog.PhasedFestivals.Contains(q.Festival);
             var seasonal = new SeasonalRequirement(q.Festival, active, phased ? q.FestivalBegin : (byte)0, phased ? q.FestivalEnd : (byte)0, phase);
             var met = active && !seasonal.ChapterNotOpen && !seasonal.ChapterOver;

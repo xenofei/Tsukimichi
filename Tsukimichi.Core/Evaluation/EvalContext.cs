@@ -47,6 +47,13 @@ public sealed record EvalContext
     /// </summary>
     public Func<ushort, bool?>? CuratedFestivalPast { get; init; }
 
+    /// <summary>
+    /// The events running on the server (<see cref="Evaluation.ServerFestivals.For"/>), read by the seasonal requirement
+    /// in place of the snapshot's own flags; null uses the snapshot's. Set it when evaluating a stored character: its
+    /// flags are the ones from when it was saved, and festivals run server-wide.
+    /// </summary>
+    public ServerFestivals? ServerFestivals { get; init; }
+
     /// <summary>Category membership; null admits every job and takes other-job candidates from the snapshot's job levels.</summary>
     public IClassJobCategoryLookup? ClassJobs { get; init; }
 
