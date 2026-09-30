@@ -86,6 +86,9 @@ public sealed class QueryRunner : IDisposable
     /// <summary>Done/total over the derived feature quests (<see cref="SessionState.FeatureQuestIds"/>).</summary>
     public NodeCount FeatureCount { get; private set; }
 
+    /// <summary>How many of the derived feature quests are Ready, for the tree node's badge.</summary>
+    public int FeatureReady { get; private set; }
+
     /// <summary>Pinned row ids for the viewed character.</summary>
     public IReadOnlySet<uint> Pinned => pinned;
 
@@ -195,7 +198,7 @@ public sealed class QueryRunner : IDisposable
         if (catalogChanged || countsVersion != session.Version || countsIncludeUnlisted != includeUnlisted || Counts is null)
         {
             Counts = TreeCounts.Compute(current.Catalog, session.States, includeUnlisted);
-            FeatureCount = ComputeFeatureCount(session, current.Catalog);
+            (FeatureCount, FeatureReady) = ComputeFeatureCount(session, current.Catalog);
             countsVersion = session.Version;
             countsIncludeUnlisted = includeUnlisted;
         }
@@ -410,8 +413,9 @@ public sealed class QueryRunner : IDisposable
         return (byte)Math.Min(level, byte.MaxValue);
     }
 
-    private static NodeCount ComputeFeatureCount(SessionState session, QuestCatalog catalog)
+    private static (NodeCount Count, int Ready) ComputeFeatureCount(SessionState session, QuestCatalog catalog)
     {
+        var ready = 0;
         var done = 0;
         var total = 0;
         var excluded = 0;
@@ -435,10 +439,14 @@ public sealed class QueryRunner : IDisposable
                 {
                     done++;
                 }
+                else if (evaluation is { State: QuestState.Ready })
+                {
+                    ready++;
+                }
             }
         }
 
-        return new NodeCount(done, total, excluded);
+        return (new NodeCount(done, total, excluded), ready);
     }
 
     private void EnsurePins(SessionState session)

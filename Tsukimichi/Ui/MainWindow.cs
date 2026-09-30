@@ -722,11 +722,32 @@ public sealed class MainWindow : Window, IDisposable
         // write itself back into ui.Tab while the request is pending.
         var requested = ui.Tab;
         var force = requested != drawnTab;
-        DrawTab(NavTab.Journal, Strings.TabJournal, requested, force, session, bundle);
+        DrawTab(NavTab.Journal, JournalTabLabel(), requested, force, session, bundle);
         DrawTab(NavTab.Moonlit, Strings.TabMoonlit, requested, force, session, bundle);
         DrawTab(NavTab.Characters, Strings.TabCharacters, requested, force, session, bundle);
         DrawTab(NavTab.Flight, Strings.TabFlight, requested, force, session, bundle);
     }
+
+    /// <summary>
+    /// The Journal tab's label with its badge: the number of Ready quests for the viewed character (T11), rebuilt only
+    /// when that number changes. The "###" id keeps the tab the same item as the count comes and goes.
+    /// </summary>
+    private string JournalTabLabel()
+    {
+        var ready = runner.Counts?.OverallReady ?? 0;
+        if (ready != journalTabReady)
+        {
+            journalTabReady = ready;
+            journalTabLabel = ready > 0
+                ? string.Format(CultureInfo.CurrentCulture, Strings.TreeTabJournalReadyFormat, ready)
+                : Strings.TreeTabJournal;
+        }
+
+        return journalTabLabel;
+    }
+
+    private int journalTabReady = -1;
+    private string journalTabLabel = Strings.TreeTabJournal;
 
     private void DrawTab(NavTab tab, string label, NavTab requested, bool force, SessionState session, CatalogBundle bundle)
     {
