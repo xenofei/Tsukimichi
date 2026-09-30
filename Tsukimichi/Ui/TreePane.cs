@@ -221,8 +221,9 @@ public sealed class TreePane
             Select(node.Scope);
         }
 
-        // The overlay paints on the node item; its tooltip depends on the part under the mouse.
-        var hover = DrawNodeOverlay(node, section, selected, indentX);
+        // The overlay paints on the node item; its tooltip depends on the part under the mouse. Rows scrolled out of
+        // view skip the painting (a fully open tree is hundreds of halos); a hidden row cannot be hovered anyway.
+        var hover = ImGui.IsItemVisible() ? DrawNodeOverlay(node, section, selected, indentX) : Hover.None;
         if (ImGui.IsItemHovered())
         {
             if (sproutFolded && hover is not (Hover.Halo or Hover.Progress or Hover.Ready))
