@@ -655,6 +655,18 @@ public sealed class ConfigWindow : Window
             Save();
         }
 
+        var seasonal = settings.TodoShowSeasonal;
+        if (ImGui.Checkbox(Strings.TodoConfigShowSeasonal, ref seasonal))
+        {
+            settings.TodoShowSeasonal = seasonal;
+            Save();
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip(Strings.TodoConfigShowSeasonalHint);
+        }
+
         var nearby = settings.TodoShowNearbyFeature;
         if (ImGui.Checkbox(Strings.TodoConfigShowNearby, ref nearby))
         {

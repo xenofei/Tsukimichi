@@ -14,6 +14,7 @@ using Dalamud.Plugin.Services;
 using Tsukimichi.Config;
 using Tsukimichi.Core.Jobs;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Seasonal;
 using Tsukimichi.Core.Storage;
 using Tsukimichi.Core.Todo;
 using Tsukimichi.Game;
@@ -23,8 +24,9 @@ namespace Tsukimichi.Ui;
 
 /// <summary>
 /// Todo overlay (feature plan V2-13), the surface read while playing (game UX panel finding 5, accessibility A6/A8):
-/// a small always-visible panel with one section per enabled part of <see cref="TodoList"/> (pins, unlock quests
-/// startable here, the next main scenario quest, the current job's next job and role quest). It draws on the Night
+/// a small always-visible panel with one section per enabled part of <see cref="TodoList"/> (pins, the quests of the
+/// seasonal events running now with the Lodestone's end date when curated data has one, unlock quests startable here,
+/// the next main scenario quest, the current job's next job and role quest). It draws on the Night
 /// chrome (<see cref="Theme.PushNightWindow"/>) at <see cref="Configuration.TodoOverlayOpacity"/>, and every text is
 /// outlined in the window colour (<see cref="Chrome.OutlinedText"/>) so it reads over snow, sand and sky; hints are in
 /// the secondary tone (Mist, 8.7 : 1 against its outline), moons never under 14 px
@@ -81,8 +83,11 @@ public sealed class TodoOverlay : Window, IDisposable
     /// <param name="Name">The quest's name as the spoiler shield prints it.</param>
     private readonly record struct Row(QuestRecord Quest, string Name, QuestState State, string Hint, string Tooltip);
 
-    /// <summary><paramref name="HeaderText"/> is the caption; <paramref name="ToggleTooltip"/> says a click folds it.</summary>
-    private sealed record SectionView(TodoSection Section, string HeaderText, string ToggleTooltip, Row[] Rows);
+    /// <summary>
+    /// <paramref name="HeaderText"/> is the caption; <paramref name="ToggleTooltip"/> says a click folds it;
+    /// <paramref name="Notes"/> are lines under the caption ("Ends Aug 28 (Lodestone)"), not drawn in Compact mode.
+    /// </summary>
+    private sealed record SectionView(TodoSection Section, string HeaderText, string ToggleTooltip, string[] Notes, Row[] Rows);
 
     private readonly Configuration settings;
     private readonly SessionState session;
@@ -295,6 +300,14 @@ public sealed class TodoOverlay : Window, IDisposable
                 continue;
             }
 
+            if (!compact)
+            {
+                foreach (var note in section.Notes)
+                {
+                    Chrome.OutlinedText(note, Theme.Surface.TextSecondary);
+                }
+            }
+
             for (var i = 0; i < section.Rows.Length; i++)
             {
                 DrawRow(section.Rows[i], i, layout, compact);
@@ -327,6 +340,11 @@ public sealed class TodoOverlay : Window, IDisposable
             foreach (var section in sections)
             {
                 text = MathF.Max(text, ImGui.CalcTextSize(section.HeaderText).X + ImGui.GetFontSize());
+                foreach (var note in section.Notes)
+                {
+                    text = MathF.Max(text, ImGui.CalcTextSize(note).X);
+                }
+
                 foreach (var row in section.Rows)
                 {
                     var width = ImGui.CalcTextSize(row.Name).X;
@@ -616,7 +634,8 @@ public sealed class TodoOverlay : Window, IDisposable
 
     /// <summary>Section toggles as one integer, compared per frame so a change in the settings window rebuilds at once.</summary>
     private int SettingsSignature() =>
-        (settings.TodoShowPins ? 1 : 0) | (settings.TodoShowNearbyFeature ? 2 : 0) | (settings.TodoShowMsq ? 4 : 0) | (settings.TodoShowJobQuests ? 8 : 0);
+        (settings.TodoShowPins ? 1 : 0) | (settings.TodoShowNearbyFeature ? 2 : 0) | (settings.TodoShowMsq ? 4 : 0) | (settings.TodoShowJobQuests ? 8 : 0)
+        | (settings.TodoShowSeasonal ? 16 : 0);
 
     /// <summary>Once per frame: notices a changed pins file on a timer, then rebuilds when any input moved.</summary>
     private void Refresh()
@@ -652,7 +671,8 @@ public sealed class TodoOverlay : Window, IDisposable
     {
         var bundle = session.Bundle;
         catalogReady = bundle is not null;
-        enabledSections = (settings.TodoShowPins ? 1 : 0) + (settings.TodoShowNearbyFeature ? 1 : 0) + (settings.TodoShowMsq ? 1 : 0) + (settings.TodoShowJobQuests ? 1 : 0);
+        enabledSections = (settings.TodoShowPins ? 1 : 0) + (settings.TodoShowNearbyFeature ? 1 : 0) + (settings.TodoShowMsq ? 1 : 0) + (settings.TodoShowJobQuests ? 1 : 0)
+                          + (settings.TodoShowSeasonal ? 1 : 0);
 
         if (bundle is null || session.ViewedSnapshot is not { } snapshot)
         {
@@ -667,6 +687,11 @@ public sealed class TodoOverlay : Window, IDisposable
             ladder = bundle.BuildJobLadder();
         }
 
+        // Seasonal events from the snapshot's running festivals (the evaluator's Active flag), ends from curated data only.
+        var now = DateTime.UtcNow;
+        IReadOnlyList<RunningFestival> running = settings.TodoShowSeasonal
+            ? SeasonalNow.Running(bundle.Catalog, snapshot, session.States, session.Curated.Festivals, now)
+            : [];
         var model = TodoList.Build(new TodoInputs(
             bundle.Catalog,
             session.States,
@@ -682,7 +707,10 @@ public sealed class TodoOverlay : Window, IDisposable
             settings.TodoShowMsq,
             settings.TodoShowJobQuests,
             // The session's names: blocker hints name quests, masked ones by their placeholder (T19).
-            session.Names));
+            session.Names,
+            running,
+            settings.TodoShowSeasonal,
+            now));
 
         enabledSections = model.EnabledSections;
         if (model.Sections.Count == 0)
@@ -712,7 +740,7 @@ public sealed class TodoOverlay : Window, IDisposable
             var name = Strings.TodoSectionName(section.Section);
             var headerText = string.Format(CultureInfo.CurrentCulture, Strings.TodoSectionFormat, name, rows.Count);
             var toggle = string.Format(CultureInfo.CurrentCulture, Strings.TodoSectionToggleFormat, name);
-            views[i] = new SectionView(section.Section, headerText, toggle, rows.ToArray());
+            views[i] = new SectionView(section.Section, headerText, toggle, [.. section.Notes], rows.ToArray());
         }
 
         sections = views;

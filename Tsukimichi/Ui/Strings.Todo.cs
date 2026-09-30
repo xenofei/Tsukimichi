@@ -15,6 +15,7 @@ static partial class Strings
     public const string TodoNoSections = "No sections enabled";
 
     public const string TodoSectionPinned = "Pinned";
+    public const string TodoSectionSeasonal = "Event quests running now";
     public const string TodoSectionNearby = "Unlocks you can start here";
     public const string TodoSectionMsq = "Main scenario";
     public const string TodoSectionJobQuests = "Job quests";
@@ -40,6 +41,7 @@ static partial class Strings
     public static string TodoSectionName(TodoSection section) => section switch
     {
         TodoSection.Pinned => TodoSectionPinned,
+        TodoSection.Seasonal => TodoSectionSeasonal,
         TodoSection.NearbyFeature => TodoSectionNearby,
         TodoSection.Msq => TodoSectionMsq,
         TodoSection.JobQuests => TodoSectionJobQuests,
@@ -49,7 +51,7 @@ static partial class Strings
     // ---- Settings › Todo overlay ----
     public const string TodoConfigSection = "Todo overlay";
     public const string TodoConfigEnabled = "Show the todo overlay";
-    public const string TodoConfigEnabledHint = "A small always-visible panel: your pins, unlock quests you can start here, the next main scenario quest and your job quests. /tsuki todo toggles it.";
+    public const string TodoConfigEnabledHint = "A small always-visible panel: your pins, event quests running now, unlock quests you can start here, the next main scenario quest and your job quests. /tsuki todo toggles it.";
     public const string TodoConfigLocked = "Locked (click-through)";
     public const string TodoConfigLockedHint = "The overlay cannot be moved and ignores the mouse: clicks go to the game behind it. Untick this to use its rows and menu again.";
     public const string TodoConfigCompact = "Compact";
@@ -57,6 +59,8 @@ static partial class Strings
     public const string TodoConfigOpacity = "Background opacity";
     public const string TodoConfigSectionsLabel = "Sections";
     public const string TodoConfigShowPins = "Pinned quests";
+    public const string TodoConfigShowSeasonal = "Event quests running now";
+    public const string TodoConfigShowSeasonalHint = "Quests of the seasonal events running now that you can start or have in your journal, with their giver. An end date shows only when the Lodestone announced it (\"Ends Aug 28 (Lodestone)\").";
     public const string TodoConfigShowNearby = "Unlock quests you can start in this zone";
     public const string TodoConfigShowMsq = "Next main scenario quest";
     public const string TodoConfigShowJobQuests = "Job and role quests for the current job";

@@ -85,6 +85,13 @@ public sealed class Configuration : IPluginConfiguration
     public bool TodoShowMsq { get; set; } = true;
     public bool TodoShowJobQuests { get; set; } = true;
 
+    // ---- 0.8.0: seasonal now (P11) ----
+    /// <summary>The todo overlay's "Event quests running now" section. On by default.</summary>
+    public bool TodoShowSeasonal { get; set; } = true;
+
+    /// <summary>Print "Moonfire Faire is running: 2 quests ready (ends Aug 28)" once per login (see <c>Game.ChatNotifier</c>). On by default.</summary>
+    public bool ChatNoticeSeasonal { get; set; } = true;
+
     // ---- 0.5.0: item hints ----
     /// <summary>Show a small hint near the cursor when hovering an item that is a quest-exclusive reward.</summary>
     public bool ItemHintsEnabled { get; set; } = true;
