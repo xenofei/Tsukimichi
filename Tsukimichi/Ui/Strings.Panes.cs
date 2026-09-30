@@ -592,7 +592,7 @@ static partial class Strings
             "open or close the window",
             "the same, shorter; every subcommand works with either",
             "search and print matching quests to chat as links; /tsukimichi <text> does the same",
-            "open Settings (/tsukimichi settings does the same)",
+            "open Settings (/tsukimichi config does the same)",
             "open this window",
             "the glyph sheet: every moon at every size",
             "quests you can start in the current zone, as chat links by level",
