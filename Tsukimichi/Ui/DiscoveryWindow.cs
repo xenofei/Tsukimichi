@@ -11,6 +11,7 @@ using Dalamud.Interface.Windowing;
 using Dalamud.Plugin.Services;
 using TerritoryType = Lumina.Excel.Sheets.TerritoryType;
 using Tsukimichi.Core.Discovery;
+using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Game;
 
@@ -31,6 +32,10 @@ public sealed class DiscoveryWindow : Window, IDisposable
     private readonly record struct Row(QuestRecord Quest, QuestState State, string Level, string Job, string StateText);
 
     private const ImGuiTableFlags TableFlags = ImGuiTableFlags.RowBg | ImGuiTableFlags.BordersInnerH | ImGuiTableFlags.SizingStretchProp;
+
+    /// <summary>Logical minimum size of the window, scaled by the UI scale each frame.</summary>
+    private const float MinWidthLogical = 320f;
+    private const float MinHeightLogical = 180f;
 
     private readonly SessionState session;
     private readonly IClientState clientState;
@@ -93,7 +98,7 @@ public sealed class DiscoveryWindow : Window, IDisposable
         SizeCondition = ImGuiCond.FirstUseEver;
         SizeConstraints = new WindowSizeConstraints
         {
-            MinimumSize = new Vector2(320f, 180f),
+            MinimumSize = new Vector2(MinWidthLogical, MinHeightLogical),
             MaximumSize = new Vector2(float.MaxValue, float.MaxValue),
         };
 
@@ -131,7 +136,32 @@ public sealed class DiscoveryWindow : Window, IDisposable
         }
     }
 
+    public override void PreDraw()
+    {
+        // The window is its own top level, so its minimum follows the UI scale like the main window's.
+        SizeConstraints = new WindowSizeConstraints
+        {
+            MinimumSize = new Vector2(MinWidthLogical, MinHeightLogical) * UiMetrics.FontScale,
+            MaximumSize = new Vector2(float.MaxValue, float.MaxValue),
+        };
+    }
+
     public override void Draw()
+    {
+        // The window scales itself so the rows, the tooltips and the moons (already at the icon scale) agree; the
+        // scale is reset before Begin lays the title bar out again.
+        UiMetrics.ApplyFontScale();
+        try
+        {
+            DrawContent();
+        }
+        finally
+        {
+            ImGui.SetWindowFontScale(1f);
+        }
+    }
+
+    private void DrawContent()
     {
         DrawHeader();
         ImGui.Separator();
@@ -176,8 +206,8 @@ public sealed class DiscoveryWindow : Window, IDisposable
         ImGui.SameLine();
         ImGui.TextUnformatted(header);
 
-        // Cog at the right edge; the popup below hangs off it.
-        var buttonSize = new Vector2(ImGui.GetFrameHeight());
+        // Cog at the right edge, never under the minimum click target; the popup below hangs off it.
+        var buttonSize = UiMetrics.Square(MathF.Max(ImGui.GetFrameHeight(), UiMetrics.MinTarget));
         ImGui.SameLine(ImGui.GetWindowContentRegionMax().X - buttonSize.X);
         if (ImGuiComponents.IconButton("##nearbyCog", FontAwesomeIcon.Cog, buttonSize))
         {
@@ -186,7 +216,7 @@ public sealed class DiscoveryWindow : Window, IDisposable
 
         if (ImGui.IsItemHovered())
         {
-            ImGui.SetTooltip(Strings.DiscoverySettingsTooltip);
+            UiMetrics.Tooltip(Strings.DiscoverySettingsTooltip);
         }
 
         using var popup = ImRaii.Popup(Strings.DiscoverySettingsPopup);
@@ -282,7 +312,8 @@ public sealed class DiscoveryWindow : Window, IDisposable
         MoonGlyph.DrawInline(row.State, glyphSize);
         if (ImGui.IsItemHovered())
         {
-            ImGui.SetTooltip(row.StateText);
+            // The job line only adds something for ReadyOnOtherJob ("Ready on WHM"); the name is in the first line otherwise.
+            UiMetrics.Tooltip(Strings.StateTooltip(row.State, row.Quest), row.State == QuestState.ReadyOnOtherJob ? row.StateText : null);
         }
 
         ImGui.TableNextColumn();
@@ -293,7 +324,7 @@ public sealed class DiscoveryWindow : Window, IDisposable
 
         if (ImGui.IsItemHovered())
         {
-            ImGui.SetTooltip(Strings.DiscoveryRevealTooltip);
+            UiMetrics.Tooltip(Strings.DiscoveryRevealTooltip);
         }
 
         ImGui.TableNextColumn();
@@ -318,7 +349,7 @@ public sealed class DiscoveryWindow : Window, IDisposable
 
         if (ImGui.IsItemHovered())
         {
-            ImGui.SetTooltip(Strings.DiscoveryFlagTooltip);
+            UiMetrics.Tooltip(Strings.DiscoveryFlagTooltip);
         }
 
         // Hidden without Lifestream; disabled, with the reason on hover, while it is busy or the giver's zone has no aetheryte.
@@ -345,15 +376,15 @@ public sealed class DiscoveryWindow : Window, IDisposable
 
         if (aetheryte is not { } target)
         {
-            ImGui.SetTooltip(Strings.TeleportNoAetheryte);
+            UiMetrics.Tooltip(Strings.TeleportNoAetheryte);
         }
         else if (busy)
         {
-            ImGui.SetTooltip(Strings.TeleportBusy);
+            UiMetrics.Tooltip(Strings.TeleportBusy);
         }
         else
         {
-            ImGui.SetTooltip(string.Format(CultureInfo.CurrentCulture, Strings.TeleportTooltipFormat, target.Name));
+            UiMetrics.Tooltip(string.Format(CultureInfo.CurrentCulture, Strings.TeleportTooltipFormat, target.Name));
         }
     }
 
@@ -454,7 +485,7 @@ public sealed class DiscoveryWindow : Window, IDisposable
             var evaluation = states.TryGetValue(quest.RowId, out var found) ? found : null;
             var state = evaluation?.State ?? QuestState.Unknown;
             var job = runner.JobShort(quest);
-            var stateText = Strings.StateName(state);
+            var stateText = BlockerText.StatusText(evaluation, quest, session.Names, states);
             if (state == QuestState.ReadyOnOtherJob && evaluation?.ReadyOnJob is { } readyOn && bundle is not null)
             {
                 var abbreviation = bundle.Names.ClassJobAbbreviation(readyOn);
@@ -465,7 +496,7 @@ public sealed class DiscoveryWindow : Window, IDisposable
                 }
             }
 
-            rows[i] = new Row(quest, state, string.Format(CultureInfo.CurrentCulture, Strings.DiscoveryLevelFormat, quest.Level), job, stateText);
+            rows[i] = new Row(quest, state, string.Format(CultureInfo.CurrentCulture, Strings.DiscoveryLevelFormat, quest.DisplayLevel), job, stateText);
         }
 
         return rows;

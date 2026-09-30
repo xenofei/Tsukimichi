@@ -33,7 +33,21 @@ public sealed class Plugin : IDalamudPlugin
 
     private static readonly TimeSpan DisposeWait = TimeSpan.FromSeconds(5);
 
-    private readonly CancellationTokenSource catalogCts = new();
+    /// <summary>
+    /// One build at a time: every build (the one at load, a retry, a filing flip) takes a ticket from
+    /// <see cref="catalogGeneration"/> and its own token source; starting the next cancels the one in flight, and a
+    /// build whose ticket is no longer current drops its result on the framework thread instead of swapping in a
+    /// catalog of the other filing mode over the newer one.
+    /// </summary>
+    private readonly Core.Runtime.BuildGeneration catalogGeneration = new();
+    private readonly object catalogBuildLock = new();
+    private CancellationTokenSource catalogCts = new();
+
+    /// <summary>The ticket of the build started at load, checked by its continuation.</summary>
+    private readonly int initialCatalogGeneration;
+
+    /// <summary>The latest rebuild (retry or filing flip); waited on at unload beside <see cref="CatalogTask"/>.</summary>
+    private Task? catalogRebuild;
 
     /// <summary>The catalog build started at load. Faulted or cancelled when the build did not finish.</summary>
     internal Task<CatalogBundle> CatalogTask { get; }
@@ -59,41 +73,85 @@ public sealed class Plugin : IDalamudPlugin
     private Game.DtrEntry? dtrEntry;
     private HoverHint? hoverHint;
     private Game.ItemHooks? itemHooks;
+    private Game.NpcHooks? npcHooks;
     private TodoOverlay? todoOverlay;
 
     /// <summary>
-    /// Retry hook for the "Catalog unavailable" panel: rebuilds the catalog and hands it to the session on the
-    /// framework thread. The returned task completes when the session has been updated either way.
+    /// Rebuilds the catalog under the current <see cref="Config.Configuration.JournalFiling"/> and hands it to the
+    /// session on the framework thread: the retry hook of the "Catalog unavailable" panel, and what a filing change
+    /// in Settings runs. Called on the framework thread (both callers draw). The build in flight, if any, is
+    /// cancelled and superseded; the session shows the catalog as loading until this build lands. The returned task
+    /// completes when the session has been updated either way, or the build was superseded.
     /// </summary>
-    internal async Task RetryCatalogAsync()
+    internal Task RetryCatalogAsync()
     {
-        var loader = new LuminaCatalogLoader(DataManager, Log);
+        var (generation, token) = StartCatalogBuild();
+        Session.SetCatalogRebuilding();
+        var rebuild = BuildCatalogAsync(generation, token);
+        catalogRebuild = rebuild;
+        return rebuild;
+    }
+
+    /// <summary>Takes the next build ticket and a fresh token, cancelling the build in flight (its result would be stale).</summary>
+    private (int Generation, CancellationToken Token) StartCatalogBuild()
+    {
+        lock (catalogBuildLock)
+        {
+            var previous = catalogCts;
+            // Not disposed: the superseded build still holds its token and may register on it while it winds down.
+            previous.Cancel();
+            catalogCts = new CancellationTokenSource();
+            return (catalogGeneration.Start(), catalogCts.Token);
+        }
+    }
+
+    private async Task BuildCatalogAsync(int generation, CancellationToken token)
+    {
+        var loader = new LuminaCatalogLoader(DataManager, Log, curated);
+        // Read on the caller's (framework) thread, before the first await.
+        var filing = Settings.JournalFiling;
         try
         {
-            var bundle = await loader.BuildBundleAsync(DataManager.Language, catalogCts.Token).ConfigureAwait(false);
-            await Framework.RunOnFrameworkThread(() =>
-            {
-                if (!gameStateDisposed)
-                {
-                    Session.SetCatalog(bundle);
-                }
-            }).ConfigureAwait(false);
+            var bundle = await loader.BuildBundleAsync(DataManager.Language, filing, token).ConfigureAwait(false);
+            await Framework.RunOnFrameworkThread(() => PublishCatalog(generation, bundle, null)).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
-            Log.Debug("Catalog retry cancelled");
+            Log.Debug("Catalog build {Generation} cancelled", generation);
         }
         catch (Exception ex)
         {
             Log.Error(ex, "Catalog unavailable");
             var message = ex.GetBaseException().Message;
-            await Framework.RunOnFrameworkThread(() =>
-            {
-                if (!gameStateDisposed)
-                {
-                    Session.SetCatalogError(message);
-                }
-            }).ConfigureAwait(false);
+            await Framework.RunOnFrameworkThread(() => PublishCatalog(generation, null, message)).ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>
+    /// Framework thread. Hands a finished build to the session, unless the plugin is unloading or a newer build has
+    /// started since (a filing flip or retry during this one): then this result is stale and is dropped, and the
+    /// newer build's result is the one the session gets.
+    /// </summary>
+    private void PublishCatalog(int generation, CatalogBundle? bundle, string? error)
+    {
+        if (gameStateDisposed)
+        {
+            return;
+        }
+
+        if (!catalogGeneration.IsCurrent(generation))
+        {
+            Log.Debug("Catalog build {Generation} superseded by build {Current}; its result is dropped", generation, catalogGeneration.Current);
+            return;
+        }
+
+        if (bundle is not null)
+        {
+            Session.SetCatalog(bundle);
+        }
+        else
+        {
+            Session.SetCatalogError(error ?? "unknown error");
         }
     }
     // /UI
@@ -111,8 +169,11 @@ public sealed class Plugin : IDalamudPlugin
     /// <summary>Read from the catalog continuation off-thread, so it must be volatile.</summary>
     private volatile bool gameStateDisposed;
 
-    /// <summary>Config, shipped data, snapshot store, session state and poller; hands the catalog to the session when built.</summary>
-    private void InitializeGameState()
+    /// <summary>The curated overlay, read once before the first catalog build (the refiler needs it) and kept for rebuilds.</summary>
+    private Core.Storage.CuratedData curated = Core.Storage.CuratedData.Empty;
+
+    /// <summary>Settings, paths and the curated overlay: what the catalog build needs before anything else starts.</summary>
+    private void LoadSettingsAndCurated()
     {
         Settings = Config.Configuration.Load(PluginInterface, Log);
 
@@ -121,16 +182,20 @@ public sealed class Plugin : IDalamudPlugin
         var dataDir = System.IO.Path.Combine(assemblyDir, "Data");
         Paths = new Core.Storage.PluginPaths(PluginInterface.GetPluginConfigDirectory(), System.IO.Directory.Exists(dataDir) ? dataDir : assemblyDir);
 
+        curated = Core.Storage.CuratedData.Load(Paths.CuratedDir);
+        foreach (var warning in curated.Warnings)
+        {
+            Log.Warning("Curated data: {Warning}", warning);
+        }
+    }
+
+    /// <summary>Shipped reward data, snapshot store, session state and poller; hands the catalog to the session when built.</summary>
+    private void InitializeGameState()
+    {
         var uniqueRewards = Core.Storage.UniqueRewardsFile.Load(Paths.UniqueRewardsFile);
         foreach (var warning in uniqueRewards.Warnings)
         {
             Log.Warning("Unique rewards: {Warning}", warning);
-        }
-
-        var curated = Core.Storage.CuratedData.Load(Paths.CuratedDir);
-        foreach (var warning in curated.Warnings)
-        {
-            Log.Warning("Curated data: {Warning}", warning);
         }
 
         Log.Information(
@@ -144,7 +209,7 @@ public sealed class Plugin : IDalamudPlugin
 
         var reader = new Game.GameStateReader(Framework, PlayerState, DataManager, Log);
         Snapshots = new Game.SnapshotService(new Core.Storage.JsonSnapshotStore(Paths.ConfigDir), ClientState, Framework, Log, reader);
-        Session = new Game.SessionState(Snapshots, Paths, uniqueRewards, curated);
+        Session = new Game.SessionState(Snapshots, Paths, uniqueRewards, curated, Log);
         if (Settings.ViewedContentId is { } viewed && !Session.ViewCharacter(viewed))
         {
             Settings.ViewedContentId = null;
@@ -155,6 +220,9 @@ public sealed class Plugin : IDalamudPlugin
 
         Poller = new Game.StatePoller(Framework, ClientState, Log, reader, Snapshots, Session, Settings);
 
+        // The initial build's ticket: a filing flip from Settings during the startup build supersedes it, and
+        // PublishCatalog drops its result on the framework thread.
+        var generation = initialCatalogGeneration;
         CatalogTask.ContinueWith(
             t =>
             {
@@ -165,29 +233,24 @@ public sealed class Plugin : IDalamudPlugin
 
                 var error = t.IsFaulted ? t.Exception?.GetBaseException().Message ?? "unknown error" : null;
                 var bundle = t.IsFaulted ? null : t.Result;
-                Framework.RunOnFrameworkThread(() =>
-                {
-                    if (gameStateDisposed)
-                    {
-                        return;
-                    }
-
-                    if (bundle is not null)
-                    {
-                        Session.SetCatalog(bundle);
-                    }
-                    else
-                    {
-                        Session.SetCatalogError(error ?? "unknown error");
-                    }
-                }).ContinueWith(static r => _ = r.Exception, TaskContinuationOptions.OnlyOnFaulted);
+                Framework.RunOnFrameworkThread(() => PublishCatalog(generation, bundle, error))
+                    .ContinueWith(static r => _ = r.Exception, TaskContinuationOptions.OnlyOnFaulted);
             },
-            catalogCts.Token,
+            CancellationToken.None,
             TaskContinuationOptions.ExecuteSynchronously,
             TaskScheduler.Default);
     }
 
     /// <summary>Remembers an explicit character choice across sessions; following the live character stores null.</summary>
+    /// <summary>Once per frame, before the window system draws: the scale factors every window reads.</summary>
+    private void UpdateUiMetrics()
+    {
+        if (Settings is { } settings)
+        {
+            Ui.UiMetrics.Update(settings);
+        }
+    }
+
     private void PersistViewedCharacter()
     {
         var explicitId = Session.IsFollowingLive ? null : Session.ViewedContentId;
@@ -218,8 +281,12 @@ public sealed class Plugin : IDalamudPlugin
     {
         Log.Information("Tsukimichi loaded (config directory: {Dir})", PluginInterface.GetPluginConfigDirectory());
 
-        var loader = new LuminaCatalogLoader(DataManager, Log);
-        CatalogTask = loader.BuildBundleAsync(DataManager.Language, catalogCts.Token);
+        // The catalog build reads the filing setting and the curated overlay, so those come before it starts.
+        LoadSettingsAndCurated();
+        var loader = new LuminaCatalogLoader(DataManager, Log, curated);
+        var (initialGeneration, initialToken) = StartCatalogBuild();
+        initialCatalogGeneration = initialGeneration;
+        CatalogTask = loader.BuildBundleAsync(DataManager.Language, Settings.JournalFiling, initialToken);
         CatalogTask.ContinueWith(
             static t =>
             {
@@ -256,6 +323,9 @@ public sealed class Plugin : IDalamudPlugin
             queryRunner = new QueryRunner(this, ui, Log);
             mainWindow = new MainWindow(this, ui, queryRunner, gameLinks, TextureProvider, PluginInterface, Log, RetryCatalogAsync);
             windowSystem.AddWindow(mainWindow);
+            // Subscribed before the window system so every window (the todo overlay and Nearby too) draws with
+            // this frame's scale factors.
+            PluginInterface.UiBuilder.Draw += UpdateUiMetrics;
             PluginInterface.UiBuilder.Draw += windowSystem.Draw;
             PluginInterface.UiBuilder.OpenMainUi += mainWindow.Toggle;
 
@@ -267,8 +337,10 @@ public sealed class Plugin : IDalamudPlugin
 
             // UI (session-dependent surfaces)
             var unlockReader = new Game.RewardUnlockReader(Session, DataManager, Framework, Log);
-            moonlitPane = new MoonlitPane(Session, TextureProvider, unlockReader, Paths, Log, DataManager);
+            moonlitPane = new MoonlitPane(Session, TextureProvider, unlockReader, Paths, Log, DataManager, Settings, PluginInterface, gameLinks);
             MoonlitPane moonlit = moonlitPane;
+            // Reward tooltips (table icons, detail rows) say "Store only" for rewards the Online Store also sells.
+            gameLinks.IsStoreResell = reward => Session.StoreResells.Contains(reward);
             wotsit = new Game.WotsitIpc(PluginInterface, Framework, Log);
             wotsit.Enabled = Settings.WotsitIntegration;
             wotsit.Attach(() => Session.Bundle, () => moonlit.Catalog, moonlit.Icons.Resolve, quest =>
@@ -291,6 +363,28 @@ public sealed class Plugin : IDalamudPlugin
             var discovery = new DiscoveryCommands(Session, ClientState, TargetManager, gameLinks);
             command.ListZoneQuests = discovery.Zone;
             command.ListTargetQuests = discovery.Which;
+            // "Why not offered?" (P2): the NPC context-menu entry opens the Journal on the NPC's quests; /tsuki why
+            // prints a quest's blockers. The hook reads the target's kind and base id only; nothing is stored.
+            npcHooks = new Game.NpcHooks(ContextMenu, Session, TargetManager, npcId =>
+            {
+                mainWindow.IsOpen = true;
+                mainWindow.BringToFront();
+                ui.ShowIssuer(npcId);
+            }, Log) { Enabled = Settings.NpcContextMenuEnabled };
+            var why = new WhyCommand(Session, ui, gameLinks);
+            command.Why = why.Run;
+
+            // "Report this quest": the diagnostic block (detail pane button and /tsuki report), the data stamp in
+            // Settings > About and on the status bar, and the game-version warning. The client version is read once.
+            var diagnostics = new Game.DiagnosticBuilder(Session, Game.DiagnosticBuilder.PluginVersionText(), Game.DiagnosticBuilder.ReadClientGameVersion(DataManager, Log), () => Settings.JournalFiling);
+            if (diagnostics.VersionMismatchWarning is { } versionWarning)
+            {
+                Log.Warning("{Warning}", versionWarning);
+            }
+
+            mainWindow.AttachDiagnostics(diagnostics);
+            var report = new ReportCommand(Session, ui, gameLinks, diagnostics, Log);
+            command.Report = report.Run;
 
             // Nearby quests window and the server info bar entry; settings in user/discovery.json until they move into Configuration.
             var discoverySettingsPath = Core.Discovery.DiscoverySettings.PathFor(Paths);
@@ -313,6 +407,7 @@ public sealed class Plugin : IDalamudPlugin
             charactersPane = new CharactersPane(Session, Paths, Log, Snapshots.Load, DataManager, TextureProvider);
             charactersPane.MoonlitCounts = moonlitPane.CountsFor;
             charactersPane.UniqueRewards = () => moonlit.Catalog;
+            charactersPane.Pins = queryRunner;
             mainWindow.AttachPanes(moonlitPane, charactersPane);
             mainWindow.AttachOverrides(moonlitPane);
             // The flight index (a few small sheets) is built on the pane's first draw, on the framework thread.
@@ -320,12 +415,15 @@ public sealed class Plugin : IDalamudPlugin
             mainWindow.AttachFlight(flightPane);
             chatNotifier = new Game.ChatNotifier(Session, Settings, Paths, gameLinks, ChatGui, Log);
 
-            configWindow = new ConfigWindow(Settings, Session, PluginInterface, _ => ui.MarkQueryDirty());
+            configWindow = new ConfigWindow(Settings, Session, PluginInterface, diagnostics, _ => ui.MarkQueryDirty());
             configWindow.Overrides = moonlitPane;
+            // A filing change rebuilds the catalog off-thread; the session swaps it in on the framework thread.
+            configWindow.JournalFilingChanged = filing => _ = RetryCatalogAsync();
             Game.WotsitIpc wotsitIpc = wotsit;
             configWindow.WotsitToggled = enabled => wotsitIpc.Enabled = enabled;
             if (hoverHint is { } hint) { configWindow.ItemHintsToggled = enabled => hint.Enabled = enabled; }
             if (itemHooks is { } hooks) { configWindow.ItemContextMenuToggled = enabled => hooks.Enabled = enabled; }
+            if (npcHooks is { } npcMenu) { configWindow.NpcContextMenuToggled = enabled => npcMenu.Enabled = enabled; }
             windowSystem.AddWindow(configWindow);
             PluginInterface.UiBuilder.OpenConfigUi += configWindow.Toggle;
             command.ToggleConfigWindow = configWindow.Toggle;
@@ -381,6 +479,9 @@ public sealed class Plugin : IDalamudPlugin
 
             command.ToggleHelpWindow = helpWindow.Toggle;
 
+            // "What's new" after an update: decided on the main window's first draw, drawn above the detail pane.
+            mainWindow.AttachWhatsNew(new WhatsNewCard(Settings, PluginInterface, Log, helpWindow.Show));
+
             // Toolbar buttons on the main window (help, tutorial, settings).
             mainWindow.AttachActions(configWindow.Toggle, helpWindow.Toggle, helpActions.StartTutorial);
             // /UI
@@ -413,8 +514,10 @@ public sealed class Plugin : IDalamudPlugin
         }
 
         itemHooks?.Dispose();
+        npcHooks?.Dispose();
         PluginInterface.UiBuilder.OpenMainUi -= mainWindow.Toggle;
         PluginInterface.UiBuilder.Draw -= windowSystem.Draw;
+        PluginInterface.UiBuilder.Draw -= UpdateUiMetrics;
         windowSystem.RemoveAllWindows();
         todoOverlay?.Dispose();
         dtrEntry?.Dispose();
@@ -460,9 +563,11 @@ public sealed class Plugin : IDalamudPlugin
             }
 
             PluginInterface.UiBuilder.Draw -= windowSystem.Draw;
+            PluginInterface.UiBuilder.Draw -= UpdateUiMetrics;
             windowSystem.RemoveAllWindows();
         });
         Unwind("item hooks", () => itemHooks?.Dispose());
+        Unwind("npc hooks", () => npcHooks?.Dispose());
         Unwind("command", () => command?.Dispose());
         Unwind("todo overlay", () => todoOverlay?.Dispose());
         Unwind("server bar entry", () => dtrEntry?.Dispose());
@@ -489,13 +594,20 @@ public sealed class Plugin : IDalamudPlugin
         }
     }
 
-    /// <summary>Cancels the catalog build, waits briefly for it to stop and releases the token source.</summary>
+    /// <summary>Cancels the catalog build in flight, waits briefly for the builds to stop and releases the token source.</summary>
     private void StopCatalogBuild()
     {
-        catalogCts.Cancel();
+        CancellationTokenSource cts;
+        lock (catalogBuildLock)
+        {
+            cts = catalogCts;
+        }
+
+        cts.Cancel();
         try
         {
-            if (!CatalogTask.Wait(DisposeWait))
+            var builds = catalogRebuild is { } rebuild ? new Task[] { CatalogTask, rebuild } : [CatalogTask];
+            if (!Task.WaitAll(builds, DisposeWait))
             {
                 Log.Warning("Catalog build did not stop within {Seconds} s", DisposeWait.TotalSeconds);
             }
@@ -505,6 +617,6 @@ public sealed class Plugin : IDalamudPlugin
             // Cancelled or faulted builds surface here; both were already logged.
         }
 
-        catalogCts.Dispose();
+        cts.Dispose();
     }
 }

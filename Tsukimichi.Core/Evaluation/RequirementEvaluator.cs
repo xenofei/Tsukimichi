@@ -22,12 +22,17 @@ public static class RequirementEvaluator
 
         var results = new List<RequirementResult>(4);
 
+        if (q.IsRetired)
+        {
+            results.Add(new(new RetiredRequirement(), false, "removed from the game"));
+        }
+
         if (q.QuestLocks.Length > 0 && !IsSwitchableGrandCompanyQuest(q, s))
         {
             var completedLocks = q.QuestLocks.Where(id => s.IsCompleted(QuestRecord.ToQuestId(id))).ToArray();
             var detail = completedLocks.Length == 0
                 ? "no conflicting quest completed"
-                : "foreclosed by " + string.Join(", ", completedLocks.Select(id => NameOf(catalog, id)));
+                : "locked out by " + string.Join(", ", completedLocks.Select(id => NameOf(catalog, id)));
             results.Add(new(new ForeclosureRequirement(q.QuestLocks, completedLocks), completedLocks.Length == 0, detail));
         }
 
@@ -43,7 +48,7 @@ public static class RequirementEvaluator
 
         if (q.ClassJobRequired != 0 || q.ClassJobCategory != 0)
         {
-            var admits = AdmitsJob(q, ctx, job);
+            var admits = AdmitsJob(q, s, ctx, job);
             var which = job == s.CurrentJob ? "the current job" : "this job";
             results.Add(new(new ClassJobRequirement(q.ClassJobCategory, q.ClassJobRequired, job), admits, admits ? $"available on {which}" : $"not available on {which}"));
         }
@@ -59,7 +64,8 @@ public static class RequirementEvaluator
         {
             var ids = q.PreviousQuests.QuestIds;
             var join = q.PreviousQuests.Join;
-            var done = ids.Count(id => s.IsCompleted(QuestRecord.ToQuestId(id)));
+            var doneIds = ids.Where(id => s.IsCompleted(QuestRecord.ToQuestId(id))).ToArray();
+            var done = doneIds.Length;
             var met = join == JoinKind.Any ? done >= 1 : done == ids.Length;
             string detail;
             if (ids.Length == 1)
@@ -76,7 +82,7 @@ public static class RequirementEvaluator
                 }
             }
 
-            results.Add(new(new PreviousQuestsRequirement(ids, join, done), met, detail));
+            results.Add(new(new PreviousQuestsRequirement(ids, join, done, doneIds), met, detail));
         }
 
         if (q.GrandCompany != 0)
@@ -137,6 +143,33 @@ public static class RequirementEvaluator
             }
         }
 
+        if (q.SatisfactionNpc != 0 && q.SatisfactionLevel > 0)
+        {
+            // Null: the ranks were never captured (an older file, or the client had no manager); listed, not judged.
+            var actual = s.SatisfactionRank(q.SatisfactionNpc);
+            var met = actual is null || actual >= q.SatisfactionLevel;
+            var npc = ctx.SatisfactionNpcName(q.SatisfactionNpc);
+            var with = npc.Length > 0 ? " with " + npc : string.Empty;
+            results.Add(new(new CustomDeliveryRankRequirement(q.SatisfactionNpc, q.SatisfactionLevel, actual), met, actual switch
+            {
+                null => $"needs satisfaction rank {q.SatisfactionLevel}{with}, not checked",
+                _ when met => $"satisfaction rank {actual}{with}",
+                _ => $"needs satisfaction rank {q.SatisfactionLevel}{with}, you are rank {actual}",
+            }));
+        }
+
+        if (q.CarrierLevel > 0)
+        {
+            var actual = s.CarrierLevelOrNull;
+            var met = actual is null || actual >= q.CarrierLevel;
+            results.Add(new(new CarrierLevelRequirement(q.CarrierLevel, actual), met, actual switch
+            {
+                null => $"needs carrier level {q.CarrierLevel}, not checked",
+                _ when met => $"carrier level {actual}",
+                _ => $"needs carrier level {q.CarrierLevel}, you are level {actual}",
+            }));
+        }
+
         if (q.InstanceContentRequired.Length > 0)
         {
             var ids = q.InstanceContentRequired;
@@ -153,8 +186,31 @@ public static class RequirementEvaluator
 
         if (q.Festival != 0)
         {
+            // The event must be running; a quest with a phase window (a later chapter of a phased event) also needs
+            // the running event's phase inside it. A phase the client did not report never blocks.
             var active = s.ActiveFestivals.Contains(q.Festival);
-            results.Add(new(new SeasonalRequirement(q.Festival, active), active, active ? "seasonal event active" : "seasonal event not active"));
+            var phase = active ? s.FestivalPhase(q.Festival) : null;
+            var seasonal = new SeasonalRequirement(q.Festival, active, q.FestivalBegin, q.FestivalEnd, phase);
+            var met = active && !seasonal.ChapterNotOpen && !seasonal.ChapterOver;
+            string detail;
+            if (!active)
+            {
+                detail = "seasonal event not active";
+            }
+            else if (seasonal.ChapterNotOpen)
+            {
+                detail = $"chapter opens at phase {q.FestivalBegin}, the event is at phase {phase}";
+            }
+            else if (seasonal.ChapterOver)
+            {
+                detail = $"chapter ended after phase {q.FestivalEnd}, the event is at phase {phase}";
+            }
+            else
+            {
+                detail = seasonal.HasWindow && phase is { } p ? $"seasonal event active, phase {p}" : "seasonal event active";
+            }
+
+            results.Add(new(seasonal, met, detail));
         }
 
         if (q.AcceptConditions.Length > 0)
@@ -207,16 +263,34 @@ public static class RequirementEvaluator
 
     /// <summary>
     /// Whether the quest can be taken on <paramref name="job"/>: the pinned job when it has one, else the category
-    /// through the context lookup (no lookup admits everything), else any job.
+    /// through the context lookup (no lookup admits everything), else any job. A class-pinned quest also admits a job
+    /// whose base class (<see cref="EvalContext.ParentJob"/>) is that class when the journal shows the quest accepted
+    /// on that job (<see cref="AcceptedQuest.AcceptClassJob"/>): the client's own evidence that the game let the job
+    /// take its class's quest, so an accepted Lancer quest on Dragoon reads as available rather than ready on Lancer.
     /// </summary>
-    internal static bool AdmitsJob(QuestRecord q, EvalContext ctx, byte job)
+    internal static bool AdmitsJob(QuestRecord q, CharacterSnapshot s, EvalContext ctx, byte job)
     {
         if (q.ClassJobRequired != 0)
         {
-            return job == q.ClassJobRequired;
+            return job == q.ClassJobRequired
+                || (ctx.ParentJob is { } parentOf && parentOf(job) == q.ClassJobRequired && AcceptedOn(s, q.QuestId, job));
         }
 
         return q.ClassJobCategory == 0 || (ctx.ClassJobs?.Admits(q.ClassJobCategory, job) ?? true);
+    }
+
+    /// <summary>The quest sits in the journal with <paramref name="job"/> recorded as the job it was accepted on.</summary>
+    private static bool AcceptedOn(CharacterSnapshot s, ushort questId, byte job)
+    {
+        foreach (var accepted in s.Accepted)
+        {
+            if (accepted.QuestId == questId)
+            {
+                return accepted.AcceptClassJob == job;
+            }
+        }
+
+        return false;
     }
 
     private static string NameOf(QuestCatalog catalog, uint rowId) =>

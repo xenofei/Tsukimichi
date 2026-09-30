@@ -16,14 +16,14 @@ static partial class Strings
     public const string TodoNoSections = "No sections enabled";
 
     public const string TodoSectionPinned = "Pinned";
-    public const string TodoSectionNearby = "Feature quests here";
+    public const string TodoSectionNearby = "Unlocks you can start here";
     public const string TodoSectionMsq = "Main scenario";
     public const string TodoSectionJobQuests = "Job quests";
 
     /// <summary>{0} = section name, {1} = row count.</summary>
     public const string TodoSectionFormat = "{0} ({1})";
 
-    public const string TodoRowClickHint = "Click: flag the giver on the map · right-click: more";
+    public const string TodoRowClickHint = "Click: show in Tsukimichi · double-click: flag the giver on the map · right-click: more";
     public const string TodoRevealInTsukimichi = "Reveal in Tsukimichi";
 
     // Header context menu (right-click on the title).
@@ -44,13 +44,13 @@ static partial class Strings
     // ---- Settings › Todo overlay ----
     public const string TodoConfigSection = "Todo overlay";
     public const string TodoConfigEnabled = "Show the todo overlay";
-    public const string TodoConfigEnabledHint = "A small always-visible panel: your pins, feature quests you can start here, the next main scenario quest and your job quests. /tsuki todo toggles it.";
+    public const string TodoConfigEnabledHint = "A small always-visible panel: your pins, unlock quests you can start here, the next main scenario quest and your job quests. /tsuki todo toggles it.";
     public const string TodoConfigLocked = "Lock position";
     public const string TodoConfigLockedHint = "The overlay cannot be dragged; rows stay clickable.";
     public const string TodoConfigOpacity = "Background opacity";
     public const string TodoConfigSectionsLabel = "Sections";
     public const string TodoConfigShowPins = "Pinned quests";
-    public const string TodoConfigShowNearby = "Feature quests you can start in this zone";
+    public const string TodoConfigShowNearby = "Unlock quests you can start in this zone";
     public const string TodoConfigShowMsq = "Next main scenario quest";
     public const string TodoConfigShowJobQuests = "Job and role quests for the current job";
     public const string TodoConfigResetPosition = "Reset position";

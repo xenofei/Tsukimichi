@@ -1,3 +1,4 @@
+using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Storage;
 
 namespace Tsukimichi.Tests.Storage;
@@ -261,6 +262,78 @@ public sealed class CuratedDataTests : IDisposable
     }
 
     [Fact]
+    public void Online_store_entries_parse_with_kind_reward_id_and_evidence()
+    {
+        WriteCurated("online_store.json",
+            """
+            {
+              "schema": 1,
+              "note": "store re-sells",
+              "entries": {
+                "22437": { "name": "Starlight bear", "kind": "Mount", "rewardId": 99, "evidence": "https://ffxivcollect.com/api/mounts/99", "note": "Starlight 2017" },
+                "12040": { "name": "Bomb Dance", "kind": "Emote", "rewardId": "109", "evidence": "https://ffxivcollect.com/api/emotes/109" }
+              }
+            }
+            """);
+
+        var data = CuratedData.Load(tmp.File("curated"));
+
+        Assert.Empty(data.Warnings);
+        Assert.Equal(2, data.OnlineStore.Count);
+        Assert.Equal(new OnlineStoreItem("Starlight bear", RewardKind.Mount, 99, "https://ffxivcollect.com/api/mounts/99", "Starlight 2017"), data.OnlineStore[22437]);
+        Assert.Equal(new OnlineStoreItem("Bomb Dance", RewardKind.Emote, 109, "https://ffxivcollect.com/api/emotes/109", null), data.OnlineStore[12040]);
+    }
+
+    [Fact]
+    public void Online_store_malformed_entries_are_skipped_with_warning()
+    {
+        WriteCurated("online_store.json",
+            """
+            {
+              "schema": 1,
+              "entries": {
+                "1": { "name": "Good", "kind": "Minion", "rewardId": 5, "evidence": "https://x" },
+                "abc": { "name": "Bad key", "kind": "Minion", "rewardId": 5, "evidence": "https://x" },
+                "2": { "kind": "Minion", "rewardId": 5, "evidence": "https://x" },
+                "3": { "name": "Bad kind", "kind": "Pet", "rewardId": 5, "evidence": "https://x" },
+                "4": { "name": "No reward", "kind": "Minion", "rewardId": 0, "evidence": "https://x" },
+                "5": { "name": "No evidence", "kind": "Minion", "rewardId": 5 },
+                "6": "not an object"
+              }
+            }
+            """);
+
+        var data = CuratedData.Load(tmp.File("curated"));
+
+        Assert.Equal("Good", Assert.Single(data.OnlineStore).Value.Name);
+        Assert.Equal(6, data.Warnings.Count);
+        Assert.All(data.Warnings, w => Assert.StartsWith("online_store.json", w));
+    }
+
+    [Fact]
+    public void Curated_files_are_parsed_strictly_so_comments_and_trailing_commas_are_errors()
+    {
+        WriteCurated("feature_quests.json", "[ 66038, 66039, ]");
+        WriteCurated("system_unlocks.json",
+            """
+            {
+              // not allowed by the README
+              "66038": { "label": "Glamour Dresser" }
+            }
+            """);
+        WriteCurated("duty_unlocks.json", """{ "66038": [ 4 ] }""");
+
+        var data = CuratedData.Load(tmp.File("curated"));
+
+        Assert.Empty(data.FeatureQuests);
+        Assert.Empty(data.SystemUnlocks);
+        Assert.Single(data.DutyUnlocks);
+        Assert.Equal(2, data.Warnings.Count);
+        Assert.Contains(data.Warnings, w => w.StartsWith("feature_quests.json could not be parsed", StringComparison.Ordinal));
+        Assert.Contains(data.Warnings, w => w.StartsWith("system_unlocks.json could not be parsed", StringComparison.Ordinal));
+    }
+
+    [Fact]
     [Trait("Category", "Curated")]
     public void Shipped_curated_files_load_without_warnings()
     {
@@ -274,7 +347,67 @@ public sealed class CuratedDataTests : IDisposable
         Assert.NotEmpty(data.SystemUnlocks);
         Assert.NotEmpty(data.DutyUnlocks);
         Assert.NotEmpty(data.Chains);
+        Assert.NotEmpty(data.OnlineStore);
         Assert.Empty(data.Festivals);
+    }
+
+    [Fact]
+    public void Quirks_parse_note_and_evidence_by_row_id()
+    {
+        WriteCurated("quirks.json",
+            """
+            {
+              "schema": 1,
+              "note": "file note, ignored",
+              "entries": {
+                "66971": { "note": "Optional once the Zenith is in hand.", "evidence": "https://forum.square-enix.com/ffxiv/threads/525622" },
+                "$comment": { "note": "skipped silently" }
+              }
+            }
+            """);
+
+        var data = CuratedData.Load(tmp.File("curated"));
+
+        var (rowId, quirk) = Assert.Single(data.Quirks);
+        Assert.Equal(66971u, rowId);
+        Assert.Equal(new QuestQuirk("Optional once the Zenith is in hand.", "https://forum.square-enix.com/ffxiv/threads/525622"), quirk);
+        Assert.Empty(data.Warnings);
+    }
+
+    [Fact]
+    public void Quirks_require_note_and_evidence_and_a_row_id_key()
+    {
+        WriteCurated("quirks.json",
+            """
+            {
+              "schema": 1,
+              "entries": {
+                "66971": { "note": "good", "evidence": "https://example.test/" },
+                "66972": { "note": "no evidence" },
+                "66973": { "evidence": "https://example.test/no-note" },
+                "66974": "not an object",
+                "0": { "note": "zero", "evidence": "https://example.test/" },
+                "Up in Arms": { "note": "keyed by name", "evidence": "https://example.test/" }
+              }
+            }
+            """);
+
+        var data = CuratedData.Load(tmp.File("curated"));
+
+        Assert.Equal([66971u], data.Quirks.Keys);
+        Assert.Equal(5, data.Warnings.Count);
+        Assert.All(data.Warnings, w => Assert.Contains("quirks.json", w));
+    }
+
+    [Fact]
+    public void Quirks_file_with_a_trailing_comma_is_rejected_whole()
+    {
+        WriteCurated("quirks.json", """{ "entries": { "66971": { "note": "n", "evidence": "https://e/" }, } }""");
+
+        var data = CuratedData.Load(tmp.File("curated"));
+
+        Assert.Empty(data.Quirks);
+        Assert.Contains(data.Warnings, w => w.Contains("quirks.json could not be parsed", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -356,5 +489,35 @@ public sealed class CuratedDataTests : IDisposable
         Assert.Single(data.Warnings);
         Assert.Contains("system_unlocks.json", data.Warnings[0]);
         Assert.True(File.Exists(tmp.File(Path.Combine("curated", "system_unlocks.json"))));
+    }
+
+    [Fact]
+    public void Version_file_gives_the_curated_revision_and_is_optional()
+    {
+        WriteCurated("feature_quests.json", "[1]");
+        Assert.Equal(string.Empty, CuratedData.Load(tmp.File("curated")).CuratedRevision);
+        Assert.Empty(CuratedData.Load(tmp.File("curated")).Warnings);
+
+        WriteCurated(CuratedData.VersionFileName, """{ "$schema_note": "written by regen", "curatedRevision": " 573d225-dirty " }""");
+        var data = CuratedData.Load(tmp.File("curated"));
+        Assert.Equal("573d225-dirty", data.CuratedRevision);
+        Assert.Empty(data.Warnings);
+        Assert.Equal("573d225-dirty", data.WithoutFeatureQuests().CuratedRevision);
+    }
+
+    [Fact]
+    public void Version_file_without_a_revision_is_warned_and_reads_empty()
+    {
+        WriteCurated(CuratedData.VersionFileName, """{ "note": "no revision" }""");
+        var missing = CuratedData.Load(tmp.File("curated"));
+        Assert.Equal(string.Empty, missing.CuratedRevision);
+        Assert.Single(missing.Warnings);
+        Assert.Contains(CuratedData.CuratedRevisionKey, missing.Warnings[0]);
+
+        WriteCurated(CuratedData.VersionFileName, "[1]");
+        var array = CuratedData.Load(tmp.File("curated"));
+        Assert.Equal(string.Empty, array.CuratedRevision);
+        Assert.Single(array.Warnings);
+        Assert.Contains(CuratedData.VersionFileName, array.Warnings[0]);
     }
 }

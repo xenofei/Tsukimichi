@@ -68,7 +68,7 @@ public static class CharacterDiff
     public const int UniqueRewardValue = 2;
 
     public const string ReasonMainScenario = "Main scenario";
-    public const string ReasonFeature = "Feature quest";
+    public const string ReasonFeature = "Unlock quest";
     public const string ReasonSide = "Side quest";
     public const string ReasonSeparator = " · ";
 
@@ -94,7 +94,7 @@ public static class CharacterDiff
         return value + UniqueRewardValue * Math.Max(0, ctx.UniqueRewardCount(rowId));
     }
 
-    /// <summary>The parts of <see cref="ValueOf"/> as text: "Main scenario", "Feature quest", "N unique rewards", joined by " · "; "Side quest" when none apply.</summary>
+    /// <summary>The parts of <see cref="ValueOf"/> as text: "Main scenario", "Unlock quest", "N unique rewards", joined by " · "; "Side quest" when none apply.</summary>
     public static string ReasonOf(uint rowId, DiffContext ctx)
     {
         ArgumentNullException.ThrowIfNull(ctx);
@@ -152,13 +152,15 @@ public static class CharacterDiff
         for (var i = 0; i < all.Count; i++)
         {
             var quest = all[i];
-            if (quest.IsUnlisted)
+            if (quest.IsRemoved)
             {
                 continue;
             }
 
-            var stateA = StateOf(statesA, quest.RowId);
-            var stateB = StateOf(statesB, quest.RowId);
+            statesA.TryGetValue(quest.RowId, out var evaluationA);
+            statesB.TryGetValue(quest.RowId, out var evaluationB);
+            var stateA = evaluationA?.State ?? QuestState.Unknown;
+            var stateB = evaluationB?.State ?? QuestState.Unknown;
             var doneA = stateA == QuestState.Completed;
             var doneB = stateB == QuestState.Completed;
 
@@ -170,7 +172,8 @@ public static class CharacterDiff
 
             if (!doneA && !doneB)
             {
-                if (stateA != QuestState.Foreclosed || stateB != QuestState.Foreclosed)
+                // A quest neither can do (foreclosed for both, or out of season for both) is not pending for either.
+                if (evaluationA is not { LeavesTotals: true } || evaluationB is not { LeavesTotals: true })
                 {
                     neitherDone++;
                 }
@@ -204,9 +207,6 @@ public static class CharacterDiff
 
         return new DiffResult(Sort(onlyA), Sort(onlyB), sharedDone, neitherDone, sectionRows);
     }
-
-    private static QuestState StateOf(IReadOnlyDictionary<uint, QuestEvaluation> states, uint rowId) =>
-        states.TryGetValue(rowId, out var evaluation) ? evaluation.State : QuestState.Unknown;
 
     /// <summary>Value descending, then journal order (the catalog index), which makes the sort deterministic.</summary>
     private static DiffEntry[] Sort(List<Ranked> ranked)

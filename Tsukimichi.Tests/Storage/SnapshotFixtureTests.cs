@@ -47,6 +47,19 @@ public sealed class SnapshotFixtureTests
         Assert.Empty(loaded.DailyDone);
         Assert.False(loaded.AchievementsLoaded);
 
+        // Written before the caps were read from the client: both 0, which the evaluator treats as "not checked".
+        Assert.Equal(0, loaded.MaxExpansion);
+        Assert.Equal(0, loaded.LevelCap);
+
+        // Written before 0.6.2 read festival phases, custom delivery ranks and the carrier level: every one defaults
+        // to "not captured", so a phase is unknown (never blocks) and the delivery gates are listed, not judged.
+        Assert.Empty(loaded.ActiveFestivalPhases);
+        Assert.Null(loaded.FestivalPhase(39));
+        Assert.Empty(loaded.SatisfactionRanks);
+        Assert.Null(loaded.SatisfactionRank(2));
+        Assert.Equal(0, loaded.CarrierLevel);
+        Assert.Null(loaded.CarrierLevelOrNull);
+
         var outRoot = tmp.File("out");
         new JsonSnapshotStore(outRoot).Save(loaded);
         var written = File.ReadAllText(Path.Combine(outRoot, "characters", "1.json"));

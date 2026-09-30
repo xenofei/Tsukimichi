@@ -89,6 +89,18 @@ public sealed class QueryRunner : IDisposable
     /// <summary>Pinned row ids for the viewed character.</summary>
     public IReadOnlySet<uint> Pinned => pinned;
 
+    /// <summary>
+    /// The viewed character's pins in the order they were pinned (the file's order); empty in browse mode. The list
+    /// is the runner's own, so read it on the draw thread only and key any memo on <see cref="PinsVersion"/>.
+    /// </summary>
+    public IReadOnlyList<uint> PinnedInOrder =>
+        pinsFile is not null && pinsKey != 0 && pinsKey != NoPinsKey && pinsFile.TryGetValue(pinsKey, out var list) ? list : NoPins;
+
+    private static readonly uint[] NoPins = [];
+
+    /// <summary>Bumped whenever <see cref="Pinned"/> changes: a toggle, a character switch, a reload or a delete.</summary>
+    public int PinsVersion { get; private set; }
+
     /// <summary>Search text the current rows were computed with (after debounce).</summary>
     public string AppliedSearch => appliedSearch;
 
@@ -125,6 +137,7 @@ public sealed class QueryRunner : IDisposable
             list.Add(rowId);
         }
 
+        PinsVersion++;
         MarkPinsDirty();
         ui.MarkQueryDirty();
         return true;
@@ -281,6 +294,7 @@ public sealed class QueryRunner : IDisposable
         pinsKey = NoPinsKey;
         pinned.Clear();
         pinsDirty = false;
+        PinsVersion++;
         ui.MarkQueryDirty();
     }
 
@@ -296,6 +310,7 @@ public sealed class QueryRunner : IDisposable
         {
             pinsKey = NoPinsKey;
             pinned.Clear();
+            PinsVersion++;
             ui.MarkQueryDirty();
         }
 
@@ -365,9 +380,10 @@ public sealed class QueryRunner : IDisposable
             AcceptedSince: session.AcceptedSince,
             NowUtc: nowUtc,
             CurrentLevel: CurrentLevel(snapshot),
-            StalledDays: plugin.Settings.StalledDaysClamped);
+            StalledDays: plugin.Settings.StalledDaysClamped,
+            Names: session.Names);
 
-        // The Feature quests preset reads best with what can be picked up now on top; the other presets keep the table's sort.
+        // The Unlocks quick view reads best with what can be picked up now on top; the other presets keep the table's sort.
         var effectiveSort = ui.Sort with { AvailableFirst = ui.Filters.Preset == Preset.FeatureQuests };
         var result = QuestQuery.Apply(current.Catalog, session.States, ui.Filters, ui.Scope, effectiveSort, appliedSearch, ctx);
 
@@ -398,7 +414,7 @@ public sealed class QueryRunner : IDisposable
     {
         var done = 0;
         var total = 0;
-        var foreclosed = 0;
+        var excluded = 0;
         foreach (var rowId in session.FeatureQuestIds)
         {
             if (!catalog.ByRowId.ContainsKey(rowId))
@@ -406,23 +422,23 @@ public sealed class QueryRunner : IDisposable
                 continue;
             }
 
-            var state = session.States.TryGetValue(rowId, out var evaluation) ? evaluation.State : QuestState.Unknown;
-            switch (state)
+            // Foreclosed and out-of-season quests leave the total, as in TreeCounts.
+            session.States.TryGetValue(rowId, out var evaluation);
+            if (evaluation is { LeavesTotals: true })
             {
-                case QuestState.Completed:
+                excluded++;
+            }
+            else
+            {
+                total++;
+                if (evaluation is { State: QuestState.Completed })
+                {
                     done++;
-                    total++;
-                    break;
-                case QuestState.Foreclosed:
-                    foreclosed++;
-                    break;
-                default:
-                    total++;
-                    break;
+                }
             }
         }
 
-        return new NodeCount(done, total, foreclosed);
+        return new NodeCount(done, total, excluded);
     }
 
     private void EnsurePins(SessionState session)
@@ -454,6 +470,7 @@ public sealed class QueryRunner : IDisposable
             }
         }
 
+        PinsVersion++;
         ui.MarkQueryDirty();
     }
 

@@ -6,6 +6,7 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
+using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Ui;
 using Tsukimichi.Core.Unique;
@@ -153,8 +154,8 @@ public sealed class HoverHint
             var evaluation = session.States.GetValueOrDefault(quest.RowId);
             var state = evaluation?.State ?? QuestState.Unknown;
             var done = state == QuestState.Completed;
-            var status = done ? Strings.ItemsDone : evaluation?.NextStep?.Detail ?? Strings.StateName(state);
-            var line = new Line(quest.RowId, state, string.Format(CultureInfo.CurrentCulture, Strings.ItemsQuestRewardFormat, quest.Name), status, done);
+            var status = done ? Strings.ItemsDone : BlockerText.StatusText(evaluation, quest, session.Names, session.States);
+            var line = new Line(quest.RowId, state, string.Format(CultureInfo.CurrentCulture, Strings.ItemsQuestRewardFormat, quest.Name), status, done, entry.SoldOnOnlineStore);
             if (IsUnlockable(entry.Kind))
             {
                 line.SetObtained(unlocks.IsObtained(entry));
@@ -167,19 +168,6 @@ public sealed class HoverHint
         {
             moreText = string.Format(CultureInfo.CurrentCulture, Strings.ItemsMoreFormat, quests - MaxQuestLines);
         }
-    }
-
-    private bool Listed(uint rowId)
-    {
-        foreach (var line in lines)
-        {
-            if (line.QuestRowId == rowId)
-            {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     private void DrawWindow()
@@ -241,20 +229,26 @@ public sealed class HoverHint
                 ImGui.TextUnformatted(line.StatusText);
             }
 
-            if (!line.HasObtained)
+            if (line.HasObtained)
             {
-                continue;
+                ImGui.Indent(indent);
+                MoonGlyph.DrawInline(line.ObtainedGlyph, glyph);
+                ImGui.SameLine();
+                using (Theme.PushText(line.ObtainedColor))
+                {
+                    ImGui.TextUnformatted(line.ObtainedText);
+                }
+
+                ImGui.Unindent(indent);
             }
 
-            ImGui.Indent(indent);
-            MoonGlyph.DrawInline(line.ObtainedGlyph, glyph);
-            ImGui.SameLine();
-            using (Theme.PushText(line.ObtainedColor))
+            if (line.StoreResell)
             {
-                ImGui.TextUnformatted(line.ObtainedText);
+                // Also on the FFXIV Online Store (curated/online_store.json): the hint takes no input, so no tooltip; the line says why.
+                ImGui.Indent(indent);
+                ImGui.TextDisabled(Strings.ItemsStoreOnly);
+                ImGui.Unindent(indent);
             }
-
-            ImGui.Unindent(indent);
         }
 
         if (moreText.Length > 0)
@@ -295,13 +289,16 @@ public sealed class HoverHint
     }
 
     /// <summary>One quest of the hint, with its strings built once.</summary>
-    private sealed class Line(uint questRowId, QuestState state, string questText, string statusText, bool done)
+    private sealed class Line(uint questRowId, QuestState state, string questText, string statusText, bool done, bool storeResell)
     {
         public uint QuestRowId { get; } = questRowId;
         public QuestState State { get; } = state;
         public string QuestText { get; } = questText;
         public string StatusText { get; } = statusText;
         public bool Done { get; } = done;
+
+        /// <summary>The FFXIV Online Store also sells this reward (entry OtherSources carries OnlineStore).</summary>
+        public bool StoreResell { get; } = storeResell;
 
         public bool HasObtained { get; private set; }
         public QuestState ObtainedGlyph { get; private set; } = QuestState.Unknown;

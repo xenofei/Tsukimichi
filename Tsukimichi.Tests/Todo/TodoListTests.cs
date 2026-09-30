@@ -132,7 +132,13 @@ public sealed class TodoListTests
         bool nearby = true,
         bool msq = true,
         bool jobs = true) =>
-        new(Catalog, states ?? States(), pinned ?? new HashSet<uint>(), FeatureIds, territory, job, new Dictionary<byte, short> { [job] = level }, Ladder, JobNames, pins, nearby, msq, jobs);
+        new(Catalog, states ?? States(), pinned ?? new HashSet<uint>(), FeatureIds, territory, job, new Dictionary<byte, short> { [job] = level }, Ladder, JobNames, pins, nearby, msq, jobs, Names);
+
+    private static readonly BlockerNames Names = new()
+    {
+        Catalog = Catalog,
+        JobAbbreviation = id => JobNames.GetValueOrDefault(id, string.Empty),
+    };
 
     private static TodoSectionModel? Section(TodoModel model, TodoSection section)
     {
@@ -163,8 +169,22 @@ public sealed class TodoListTests
         Assert.All(section.Rows, r => Assert.Equal(TodoRowKind.Pin, r.Kind));
         Assert.Equal("Lv 15 · Nedrick", section.Rows[0].Hint);
         Assert.Equal("Ready on PLD", section.Rows[1].Hint);
-        Assert.Equal("In your journal, step 2", section.Rows[2].Hint);
-        Assert.Equal("Level 50 (you are 1)", section.Rows[3].Hint);
+        Assert.Equal("step 2", section.Rows[2].Hint);
+        Assert.Equal("Lv 50", section.Rows[3].Hint);
+    }
+
+    [Fact]
+    public void Hints_are_the_blocker_line_and_the_step_without_the_state_name()
+    {
+        // The moon carries the state, so the hint is what follows it in the Status column: "step 3 of 7" for a quest in
+        // the journal, the decisive blocker ("Lv 50 on GLA") for a blocked one.
+        var accepted = Catalog.GetByRowId(FeatureA)! with { StepCount = 7 };
+        var inputs = Inputs(States(
+            (FeatureA, Eval(QuestState.Accepted, sequence: 3)),
+            (GladiatorTwo, Eval(QuestState.Blocked, "Level 50 (you are 1)"))));
+
+        Assert.Equal("step 3 of 7", TodoList.Hint(inputs, accepted, QuestState.Accepted));
+        Assert.Equal("Lv 50 on GLA", TodoList.Hint(inputs, Catalog.GetByRowId(GladiatorTwo)!, QuestState.Blocked));
     }
 
     [Fact]
@@ -232,7 +252,7 @@ public sealed class TodoListTests
 
         var blocked = Section(TodoList.Build(Inputs(States((MsqTwo, Eval(QuestState.Blocked, "Complete Coming to Gridania"))))), TodoSection.Msq)!;
         Assert.Equal(QuestState.Blocked, blocked.Rows[0].State);
-        Assert.Equal("Complete Coming to Gridania", blocked.Rows[0].Hint);
+        Assert.Equal("Lv 50", blocked.Rows[0].Hint);
     }
 
     [Fact]
@@ -279,7 +299,7 @@ public sealed class TodoListTests
 
         Assert.Equal([PaladinOne, TankRole], section.Rows.Select(r => r.RowId));
         Assert.Equal([TodoRowKind.JobQuest, TodoRowKind.RoleQuest], section.Rows.Select(r => r.Kind));
-        Assert.Equal("In your journal, step 1", section.Rows[0].Hint);
+        Assert.Equal("step 1", section.Rows[0].Hint);
     }
 
     [Fact]
@@ -329,9 +349,17 @@ public sealed class TodoListTests
         });
 
         Assert.Equal("Ready on another job", TodoList.Hint(inputs, quest, QuestState.ReadyOnOtherJob));
-        Assert.Equal("In your journal", TodoList.Hint(inputs, quest, QuestState.Accepted));
+        Assert.Equal(string.Empty, TodoList.Hint(inputs, quest, QuestState.Accepted));
         Assert.Equal("Blocked", TodoList.Hint(inputs, quest, QuestState.Blocked));
-        Assert.Equal("State unknown", TodoList.Hint(inputs, quest, QuestState.Unknown));
+        Assert.Equal("Not checked", TodoList.Hint(inputs, quest, QuestState.Unknown));
         Assert.Equal("Lv 15 · Nedrick", TodoList.Hint(inputs, quest, QuestState.Ready));
+    }
+
+    [Fact]
+    public void Hint_prints_the_displayed_level()
+    {
+        var quest = Catalog.GetByRowId(FeatureA)! with { LevelOffset = 2 };
+
+        Assert.Equal("Lv 17 · Nedrick", TodoList.Hint(Inputs(), quest, QuestState.Ready));
     }
 }

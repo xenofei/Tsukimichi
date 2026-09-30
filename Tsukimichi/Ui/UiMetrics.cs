@@ -1,9 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Tsukimichi.Config;
+using Tsukimichi.Core.Evaluation;
+using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Ui;
 
 namespace Tsukimichi.Ui;
@@ -11,8 +14,8 @@ namespace Tsukimichi.Ui;
 /// <summary>
 /// Every pixel size the main window's panes use, derived once per frame from Dalamud's global scale and the user's
 /// UI and icon scales (<see cref="Configuration.UiScale"/>, <see cref="Configuration.IconScale"/>, arithmetic in
-/// <see cref="ScaleMetrics"/>). <see cref="Update"/> runs at the top of <c>MainWindow.Draw</c>; the values default
-/// to plain global scale before that.
+/// <see cref="ScaleMetrics"/>). <see cref="Update"/> runs once per frame before the window system draws (and again
+/// at the top of <c>MainWindow.Draw</c>); the values default to plain global scale before that.
 ///
 /// Font scale: ImGui multiplies a window's own font scale by its parent's, so <see cref="ApplyFontScale"/> belongs
 /// only in windows whose parent is not already scaled: the main window itself, tooltips (no parent), popups opened
@@ -55,7 +58,11 @@ public static class UiMetrics
 
     // Moons.
     public static float RowGlyphRadius => Icon(6f);
-    public static float TreeMoonRadius => Icon(5f);
+    /// <summary>
+    /// The tree node's filling moon: Icon(5), clamped so it never reaches more than 2 px past the node line's edges
+    /// (at IconScale 2 the unclamped moon would overhang the neighbouring rows).
+    /// </summary>
+    public static float TreeMoonRadius(float lineHeight) => MathF.Min(Icon(5f), lineHeight * 0.5f + 2f);
     public static float HeaderMoonRadius => Icon(17f);
     public static float PathGlyphRadius => Icon(6f);
     public static float RequirementMoonRadius => Icon(4.5f);
@@ -79,8 +86,8 @@ public static class UiMetrics
 
     // Layout.
     public static float ChipHeight => ImGui.GetFrameHeight();
-    public static float LeftColumnWidth => Px(240f);
-    public static float RightColumnWidth => Px(360f);
+    public static float LeftColumnWidth => Px(ScaleMetrics.LeftColumnLogical);
+    public static float RightColumnWidth => Px(ScaleMetrics.RightColumnLogical);
     public static float SearchWidth => Px(280f);
     public static float CharacterComboWidth => Px(240f);
     public static float MinChipStripWidth => Px(40f);
@@ -88,12 +95,59 @@ public static class UiMetrics
     public static float Stripe => MathF.Max(1f, Px(2f));
     public static float Hairline => MathF.Max(1f, Px(1f));
 
+    /// <summary>
+    /// Smallest side of a click target (icon buttons, the search clear, chip close targets): Px(26), never under
+    /// 24 px, so UiScale 0.9 keeps the WCAG 2.5.8 minimum. Tree chevrons keep TreeNodeEx's arrow slot instead.
+    /// </summary>
+    public static float MinTarget => MathF.Max(Px(26f), 24f);
+
     /// <summary>A plain text tooltip drawn with the window's font scale (SetTooltip cannot be scaled).</summary>
     public static void Tooltip(string text)
     {
         using var tooltip = ImRaii.Tooltip();
         ApplyFontScale();
         ImGui.TextUnformatted(text);
+    }
+
+    /// <summary>A two-line tooltip: <paramref name="text"/>, then <paramref name="detail"/> in the disabled tone when it is not empty.</summary>
+    public static void Tooltip(string text, string? detail)
+    {
+        using var tooltip = ImRaii.Tooltip();
+        ApplyFontScale();
+        ImGui.TextUnformatted(text);
+        if (!string.IsNullOrEmpty(detail))
+        {
+            ImGui.TextDisabled(detail);
+        }
+    }
+
+    // The last reason line composed for a moon tooltip: one moon is hovered at a time, and an evaluation is an
+    // immutable record replaced on every resolve, so (evaluation, quest, states) identifies the line; the states map
+    // is part of the key because the blocker picks its prerequisite differently with and without it.
+    private static QuestEvaluation? reasonEvaluation;
+    private static QuestRecord? reasonQuest;
+    private static IReadOnlyDictionary<uint, QuestEvaluation>? reasonStates;
+    private static string? reasonText;
+
+    /// <summary>
+    /// The tooltip of a state moon: <see cref="Strings.StateTooltip(QuestState, QuestRecord?)"/> (name and shape
+    /// hint), then the decisive blocker under it (<see cref="Strings.StateReason"/>, the same words as the Status
+    /// column) when the evaluation has one. Call after the moon's item while it is hovered. The name line is
+    /// precomposed and the reason is cached per evaluation, so a hover held over frames allocates nothing.
+    /// </summary>
+    /// <param name="names">Name lookups for the blocker line, normally the session's.</param>
+    /// <param name="states">Every quest's evaluation for the same character when at hand; null for another character's evaluation.</param>
+    public static void StateTooltip(QuestState state, QuestEvaluation? evaluation, QuestRecord? quest, BlockerNames names, IReadOnlyDictionary<uint, QuestEvaluation>? states)
+    {
+        if (!ReferenceEquals(evaluation, reasonEvaluation) || !ReferenceEquals(quest, reasonQuest) || !ReferenceEquals(states, reasonStates))
+        {
+            reasonEvaluation = evaluation;
+            reasonQuest = quest;
+            reasonStates = states;
+            reasonText = Strings.StateReason(state, evaluation, quest, names, states);
+        }
+
+        Tooltip(Strings.StateTooltip(state, quest), reasonText);
     }
 
     /// <summary>Square size vector helper.</summary>

@@ -27,6 +27,9 @@ public enum ScopeKind
     Genre,
     VirtualFeature,
     VirtualUnlisted,
+
+    /// <summary>The quests one NPC hands out (<see cref="QuestScope.Id"/> is the ENpcResident row id); reached from the NPC context menu, not the tree.</summary>
+    VirtualIssuer,
 }
 
 /// <summary>One-click table presets from the filter panel; at most one is active at a time.</summary>

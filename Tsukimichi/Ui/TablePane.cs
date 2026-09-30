@@ -13,7 +13,7 @@ using Tsukimichi.Core.Query;
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// The quest table: glyph, name, level, job, next step, expansion, reward icons; sortable, reorderable, hideable,
+/// The quest table: glyph, name, level, job, status, expansion, reward icons; sortable, reorderable, hideable,
 /// clipped with <see cref="ImGuiListClipperPtr"/>. Row click selects, double-click opens the journal, right-click
 /// opens the context menu. The body allocates nothing: every string it shows is pre-materialized by
 /// <see cref="QueryRunner"/> or the query rows.
@@ -27,13 +27,19 @@ public sealed class TablePane : IDisposable
     /// <summary>Logical space left of the state moon for the pinned dot.</summary>
     private const float GlyphColumnLead = 8f;
 
+    /// <summary>Initial logical width of the Name column; the player can drag it, and long names clip.</summary>
+    private const float NameColumnWidth = 240f;
+
+    /// <summary>Logical width under which the Status column sheds Rewards, then Expansion: room for "Ready on another job".</summary>
+    private const float StatusMinWidth = 170f;
+
     private enum Column
     {
         Glyph,
         Name,
         Level,
         Job,
-        NextStep,
+        Status,
         Expansion,
         Rewards,
     }
@@ -45,7 +51,7 @@ public sealed class TablePane : IDisposable
         Strings.ColumnName,
         Strings.ColumnLevel,
         Strings.ColumnJob,
-        Strings.ColumnNextStep,
+        Strings.ColumnStatus,
         Strings.ColumnExpansion,
         Strings.ColumnRewards,
     ];
@@ -57,7 +63,7 @@ public sealed class TablePane : IDisposable
         Strings.ColumnNameTooltip,
         Strings.ColumnLevelTooltip,
         Strings.ColumnJobTooltip,
-        Strings.ColumnNextStepTooltip,
+        Strings.ColumnStatusTooltip,
         Strings.ColumnExpansionTooltip,
         Strings.ColumnRewardsTooltip,
     ];
@@ -78,6 +84,22 @@ public sealed class TablePane : IDisposable
 
     private uint? lastSelection;
     private bool tableInitialized;
+
+    // FitStatusColumn state (see the method): the columns it hid, whether a re-show by hand suspended it, each
+    // hideable column's enabled flag last frame (null before the first) and whether a re-show is the fit's own; the
+    // Status width each hide gained, measured on the frame the hide took effect (widthBeforeHide is the width the
+    // frame before); and a sort to write back into the column state once the sorted column is enabled again.
+    private bool rewardsAutoHidden;
+    private bool expansionAutoHidden;
+    private bool fitSuspended;
+    private bool? lastRewardsEnabled;
+    private bool? lastExpansionEnabled;
+    private bool fitReshowing;
+    private Column? measureGainFor;
+    private float widthBeforeHide;
+    private float rewardsGain;
+    private float expansionGain;
+    private bool restoreSort;
 
     public TablePane(UiState ui, QueryRunner runner, GameLinks links, ITextureProvider textures, IDalamudPluginInterface pluginInterface, IPluginLog log, Action resetFilters)
     {
@@ -134,20 +156,34 @@ public sealed class TablePane : IDisposable
         var glyphColumn = UiMetrics.Px(GlyphColumnLead) + glyphBox + UiMetrics.Px(2f);
         var rewardsColumn = UiMetrics.RowIconSize * MaxRewardIcons + UiMetrics.Px(2f) * (MaxRewardIcons - 1) + UiMetrics.Px(8f);
 
-        // The persisted sort is handed to ImGui only while the table initializes (ImGui ignores DefaultSort afterwards
-        // and whenever its own saved settings already carry a sort), so no column is default-sorted otherwise.
-        var initialSort = tableInitialized ? SortSpec.Default : ui.Sort;
-        tableInitialized = true;
-
-        ImGui.TableSetupColumn(Strings.ColumnGlyph, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize | ImGuiTableColumnFlags.NoHide | ImGuiTableColumnFlags.NoHeaderLabel | InitialSortFlags(initialSort, SortColumn.State), glyphColumn);
-        ImGui.TableSetupColumn(Strings.ColumnName, ImGuiTableColumnFlags.WidthStretch | ImGuiTableColumnFlags.NoHide | InitialSortFlags(initialSort, SortColumn.Name), 3f);
-        ImGui.TableSetupColumn(Strings.ColumnLevel, ImGuiTableColumnFlags.WidthFixed | InitialSortFlags(initialSort, SortColumn.Level), UiMetrics.Px(34f));
+        ImGui.TableSetupColumn(Strings.ColumnGlyph, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize | ImGuiTableColumnFlags.NoHide | ImGuiTableColumnFlags.NoHeaderLabel, glyphColumn);
+        // Status is the one stretch column (feature plan v3 P1): it holds the answer to "why not", so it takes the
+        // width the others leave, and FitStatusColumn hides Rewards, then Expansion, before it drops under its minimum.
+        var expansionColumn = UiMetrics.Px(40f);
+        ImGui.TableSetupColumn(Strings.ColumnName, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoHide, UiMetrics.Px(NameColumnWidth));
+        ImGui.TableSetupColumn(Strings.ColumnLevel, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(34f));
         ImGui.TableSetupColumn(Strings.ColumnJob, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoSort, UiMetrics.Px(64f));
-        ImGui.TableSetupColumn(Strings.ColumnNextStep, ImGuiTableColumnFlags.WidthStretch | ImGuiTableColumnFlags.NoSort, 2f);
-        ImGui.TableSetupColumn(Strings.ColumnExpansion, ImGuiTableColumnFlags.WidthFixed | InitialSortFlags(initialSort, SortColumn.Expansion), UiMetrics.Px(40f));
+        ImGui.TableSetupColumn(Strings.ColumnStatus, ImGuiTableColumnFlags.WidthStretch | ImGuiTableColumnFlags.NoSort, 1f);
+        // Expansion is a four-letter tag: NoResize keeps its width the setup width, so hiding it frees exactly that.
+        ImGui.TableSetupColumn(Strings.ColumnExpansion, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, expansionColumn);
         ImGui.TableSetupColumn(Strings.ColumnRewards, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoSort, rewardsColumn);
         ImGui.TableSetupScrollFreeze(0, 1);
-        DrawHeaders();
+
+        // The persisted sort is written straight into the column state on the table's first frame: ImGui's own saved
+        // settings (imgui.ini) would otherwise win over DefaultSort and hand their sort back through SpecsDirty. It is
+        // written again on the frame the sorted column comes back from a FitStatusColumn hide (ImGui dropped it).
+        if (!tableInitialized || restoreSort)
+        {
+            tableInitialized = true;
+            restoreSort = false;
+            ApplyInitialSort(ui.Sort);
+        }
+
+        // The two icon-derived widths are re-asserted every frame (imgui.ini restores font-tracked widths, not IconScale).
+        ImGuiP.TableSetColumnWidth((int)Column.Glyph, glyphColumn);
+        ImGuiP.TableSetColumnWidth((int)Column.Rewards, rewardsColumn);
+        var statusWidth = DrawHeaders();
+        FitStatusColumn(statusWidth, expansionColumn, rewardsColumn);
 
         ApplySortSpecs();
         ScrollToExternalSelection(rows, rowHeight);
@@ -200,15 +236,21 @@ public sealed class TablePane : IDisposable
         }
     }
 
-    /// <summary>What TableHeadersRow does, one header at a time, so each can carry a tooltip.</summary>
-    private static void DrawHeaders()
+    /// <summary>What TableHeadersRow does, one header at a time, so each can carry a tooltip. Returns the Status column's laid-out width (0 when hidden).</summary>
+    private static float DrawHeaders()
     {
+        var statusWidth = 0f;
         ImGui.TableNextRow(ImGuiTableRowFlags.Headers);
         for (var i = 0; i < HeaderTooltips.Length; i++)
         {
             if (!ImGui.TableSetColumnIndex(i))
             {
                 continue;
+            }
+
+            if (i == (int)Column.Status)
+            {
+                statusWidth = ImGui.GetContentRegionAvail().X;
             }
 
             using var id = ImRaii.PushId(i);
@@ -218,7 +260,111 @@ public sealed class TablePane : IDisposable
                 UiMetrics.Tooltip(HeaderTooltips[i]);
             }
         }
+
+        return statusWidth;
     }
+
+    /// <summary>
+    /// Keeps the Status column at least <see cref="StatusMinWidth"/> wide: when the laid-out width falls short, Rewards
+    /// is hidden first, then Expansion; each comes back, Expansion first, once Status would still hold the minimum
+    /// after giving back what the hide gained (measured on the frame the hide took effect, never less than the
+    /// column's setup width, so the two cannot alternate). The column the table is sorted by is never hidden here,
+    /// since ImGui drops the sort of a hidden column. A column the player hid or re-showed from the header menu is
+    /// theirs: only the columns this hid are re-shown, and any column the player brings back (a disabled-to-enabled
+    /// step this did not request) suspends the fit until Status is wide enough on its own.
+    /// </summary>
+    private void FitStatusColumn(float statusWidth, float expansionWidth, float rewardsWidth)
+    {
+        if (statusWidth <= 0f)
+        {
+            return;
+        }
+
+        var min = UiMetrics.Px(StatusMinWidth);
+        var padding = ImGui.GetStyle().CellPadding.X * 2f;
+        var rewardsEnabled = IsColumnEnabled(Column.Rewards);
+        var expansionEnabled = IsColumnEnabled(Column.Expansion);
+
+        if (measureGainFor is { } hidden)
+        {
+            var measured = statusWidth - widthBeforeHide;
+            if (hidden == Column.Rewards)
+            {
+                rewardsGain = MathF.Max(measured, rewardsWidth + padding);
+            }
+            else
+            {
+                expansionGain = MathF.Max(measured, expansionWidth + padding);
+            }
+
+            measureGainFor = null;
+        }
+
+        var rewardsBack = lastRewardsEnabled == false && rewardsEnabled;
+        var expansionBack = lastExpansionEnabled == false && expansionEnabled;
+        lastRewardsEnabled = rewardsEnabled;
+        lastExpansionEnabled = expansionEnabled;
+        if ((rewardsBack || expansionBack) && !fitReshowing)
+        {
+            if (expansionBack && expansionAutoHidden && ui.Sort.Column == SortColumn.Expansion)
+            {
+                restoreSort = true;
+            }
+
+            rewardsAutoHidden &= !rewardsBack;
+            expansionAutoHidden &= !expansionBack;
+            fitSuspended = true;
+        }
+
+        fitReshowing = false;
+
+        if (statusWidth < min)
+        {
+            if (fitSuspended)
+            {
+                return;
+            }
+
+            if (rewardsEnabled)
+            {
+                Hide(Column.Rewards, statusWidth);
+                rewardsAutoHidden = true;
+            }
+            else if (expansionEnabled && ui.Sort.Column != SortColumn.Expansion)
+            {
+                Hide(Column.Expansion, statusWidth);
+                expansionAutoHidden = true;
+            }
+
+            return;
+        }
+
+        fitSuspended = false;
+        if (expansionAutoHidden && statusWidth - expansionGain >= min)
+        {
+            ImGui.TableSetColumnEnabled((int)Column.Expansion, true);
+            expansionAutoHidden = false;
+            fitReshowing = true;
+            restoreSort = ui.Sort.Column == SortColumn.Expansion;
+        }
+        else if (rewardsAutoHidden && !expansionAutoHidden && statusWidth - rewardsGain >= min)
+        {
+            ImGui.TableSetColumnEnabled((int)Column.Rewards, true);
+            rewardsAutoHidden = false;
+            fitReshowing = true;
+        }
+    }
+
+    /// <summary>Hides a column for the next frame and arms the measurement of what Status gains from it.</summary>
+    private void Hide(Column column, float statusWidth)
+    {
+        ImGui.TableSetColumnEnabled((int)column, false);
+        measureGainFor = column;
+        widthBeforeHide = statusWidth;
+    }
+
+    private static bool IsColumnEnabled(Column column) =>
+        (ImGui.TableGetColumnFlags((int)column) & ImGuiTableColumnFlags.IsEnabled) != 0;
 
     private void DrawRow(in QuestRow row, bool hasSnapshot, in RowLayout layout)
     {
@@ -281,7 +427,8 @@ public sealed class TablePane : IDisposable
 
         // The selectable spans every column; the banner tooltip belongs to the name cell only, so the reward icons
         // keep their own tooltips.
-        if (ImGui.IsItemHovered())
+        var rowHovered = ImGui.IsItemHovered();
+        if (rowHovered)
         {
             var mouseX = ImGui.GetMousePos().X;
             if (mouseX >= nameCellMin.X && mouseX <= nameCellMin.X + nameCellWidth)
@@ -292,7 +439,7 @@ public sealed class TablePane : IDisposable
 
         ImGui.TableNextColumn();
         CenterText(in layout);
-        ImGui.TextUnformatted(runner.LevelText(quest.Level));
+        ImGui.TextUnformatted(runner.LevelText(quest.DisplayLevel));
 
         ImGui.TableNextColumn();
         CenterText(in layout);
@@ -300,13 +447,26 @@ public sealed class TablePane : IDisposable
 
         ImGui.TableNextColumn();
         CenterText(in layout);
+        var statusCellMin = ImGui.GetCursorScreenPos();
+        var statusCellWidth = ImGui.GetContentRegionAvail().X;
         if (hasSnapshot)
         {
-            DrawNextStep(row.NextStep);
+            DrawStatus(row.Status);
         }
         else
         {
-            ImGui.TextDisabled(row.NextStep);
+            ImGui.TextDisabled(row.Status);
+        }
+
+        // The cell clips rather than ellipsises, so the state word (first) always survives; the full line is a tooltip
+        // whenever the tail was cut.
+        if (rowHovered && row.Status.Length > 0 && ImGui.CalcTextSize(row.Status).X > statusCellWidth)
+        {
+            var mouseX = ImGui.GetMousePos().X;
+            if (mouseX >= statusCellMin.X && mouseX <= statusCellMin.X + statusCellWidth)
+            {
+                UiMetrics.Tooltip(row.Status);
+            }
         }
 
         ImGui.TableNextColumn();
@@ -317,13 +477,16 @@ public sealed class TablePane : IDisposable
         DrawRewardIcons(quest, in layout);
     }
 
-    /// <summary>Next step in Dusk with its first word in Silver, so the gate's kind reads at a glance; spans only, no new strings.</summary>
-    private static void DrawNextStep(string text)
+    /// <summary>
+    /// Status text: the state name (everything before the separator) in Silver, the reason after it in Dusk, so the
+    /// state reads at a glance and the blocker sits beside it; spans only, no new strings.
+    /// </summary>
+    private static void DrawStatus(string text)
     {
-        var split = text.IndexOf(' ');
+        var split = text.IndexOf(Strings.StateReasonSeparator, StringComparison.Ordinal);
         if (split <= 0)
         {
-            using var dusk = Theme.PushText(Theme.Dusk);
+            using var silver = Theme.PushText(Theme.Silver);
             ImGui.TextUnformatted(text);
             return;
         }
@@ -361,7 +524,7 @@ public sealed class TablePane : IDisposable
         ImGui.SameLine();
         ImGui.TextDisabled(Strings.ColumnLevel);
         ImGui.SameLine(0f, UiMetrics.Px(3f));
-        ImGui.TextDisabled(runner.LevelText(quest.Level));
+        ImGui.TextDisabled(runner.LevelText(quest.DisplayLevel));
     }
 
     private void DrawRewardIcons(QuestRecord quest, in RowLayout layout)
@@ -501,7 +664,7 @@ public sealed class TablePane : IDisposable
         if (empty.Filters.Count > 0)
         {
             ImGui.TextUnformatted(Strings.NothingMatchesHint);
-            using var indent = ImRaii.PushIndent(12f);
+            using var indent = ImRaii.PushIndent(UiMetrics.Px(12f));
             foreach (var name in empty.Filters)
             {
                 ImGui.Bullet();
@@ -520,15 +683,27 @@ public sealed class TablePane : IDisposable
         }
     }
 
-    /// <summary>DefaultSort (plus the direction) for the column the persisted sort names; none for every other column.</summary>
-    private static ImGuiTableColumnFlags InitialSortFlags(SortSpec initial, SortColumn column)
+    /// <summary>
+    /// Sets the table's sort column and direction from the persisted sort; journal order clears every column's sort
+    /// (allowed because the table is SortTristate). Called between the column setup and the header row.
+    /// </summary>
+    private static void ApplyInitialSort(SortSpec initial)
     {
-        if (initial.Column != column)
+        var column = initial.Column switch
         {
-            return ImGuiTableColumnFlags.None;
+            SortColumn.State => Column.Glyph,
+            SortColumn.Name => Column.Name,
+            SortColumn.Level => Column.Level,
+            SortColumn.Expansion => Column.Expansion,
+            _ => (Column?)null,
+        };
+        if (column is not { } index)
+        {
+            ImGuiP.TableSetColumnSortDirection((int)Column.Glyph, ImGuiSortDirection.None, appendToSortSpecs: false);
+            return;
         }
 
-        return ImGuiTableColumnFlags.DefaultSort | (initial.Descending ? ImGuiTableColumnFlags.PreferSortDescending : ImGuiTableColumnFlags.PreferSortAscending);
+        ImGuiP.TableSetColumnSortDirection((int)index, initial.Descending ? ImGuiSortDirection.Descending : ImGuiSortDirection.Ascending, appendToSortSpecs: false);
     }
 
     private void ApplySortSpecs()
@@ -536,6 +711,14 @@ public sealed class TablePane : IDisposable
         var specs = ImGui.TableGetSortSpecs();
         if (specs.IsNull || !specs.SpecsDirty)
         {
+            return;
+        }
+
+        // ImGui clears the sort of a column that is disabled and reports it as no specs: while FitStatusColumn holds
+        // the sorted column hidden that is its doing, not a header click, and the persisted sort stands.
+        if (specs.SpecsCount == 0 && expansionAutoHidden && ui.Sort.Column == SortColumn.Expansion)
+        {
+            specs.SpecsDirty = false;
             return;
         }
 

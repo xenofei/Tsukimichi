@@ -2,7 +2,9 @@ using System;
 using Dalamud.Configuration;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
+using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
+using Tsukimichi.Core.Storage;
 using Tsukimichi.Core.Ui;
 
 namespace Tsukimichi.Config;
@@ -35,8 +37,16 @@ public sealed class Configuration : IPluginConfiguration
     /// <summary>Print a chat line when a level-up opens the next job or role quest (see <c>Game.ChatNotifier</c>). On by default.</summary>
     public bool JobQuestNudge { get; set; } = true;
 
-    /// <summary>Show quests with no journal genre outside the Unlisted node.</summary>
+    /// <summary>Show the "Removed from the game" tree node (retired quests and those with no journal genre). Off by default.</summary>
     public bool ShowUnlisted { get; set; }
+
+    // ---- 0.6.1: journal refiling ----
+    /// <summary>
+    /// Whether the catalog files the sheet's genre-less quests by the refiling rules (<see cref="JournalFiling.Refiled"/>,
+    /// the default) or leaves them in the removed bucket as releases before 0.6.1 did (<see cref="JournalFiling.Legacy"/>,
+    /// the in-field rollback). A change rebuilds the catalog.
+    /// </summary>
+    public JournalFiling JournalFiling { get; set; } = JournalFiling.Refiled;
 
     /// <summary>Register every quest and Moonlit reward with Wotsit when it is loaded (see <c>Game.WotsitIpc</c>). On by default.</summary>
     public bool WotsitIntegration { get; set; } = true;
@@ -58,6 +68,10 @@ public sealed class Configuration : IPluginConfiguration
     public bool ItemHintsEnabled { get; set; } = true;
     /// <summary>Add a "Tsukimichi: quest reward" entry to item context menus.</summary>
     public bool ItemContextMenuEnabled { get; set; } = true;
+
+    // ---- 0.6.2: NPC context menu (P2) ----
+    /// <summary>Add a "Tsukimichi: quests here (N)" entry to the target bar's menu on a quest-giving NPC.</summary>
+    public bool NpcContextMenuEnabled { get; set; } = true;
 
     /// <summary>Days an accepted quest sits untouched before the Stalled preset lists it; 1–90, default 7. Clamped by <see cref="StalledDaysClamped"/> when read.</summary>
     public int StalledDays { get; set; } = DefaultStalledDays;
@@ -97,6 +111,28 @@ public sealed class Configuration : IPluginConfiguration
     /// </summary>
     public float IconScale { get; set; } = ScaleMetrics.DefaultIconScale;
 
+    // ---- 0.6.0: what's new ----
+    /// <summary>
+    /// The plugin version whose "What's new" card was seen (or recorded silently on a fresh install); empty until the
+    /// main window first opens. When it differs from the running version the card shows once (see <c>Ui.WhatsNewCard</c>).
+    /// </summary>
+    public string LastSeenVersion { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Whether a configuration file existed before this load; set by <see cref="Load(IDalamudPluginInterface, IPluginLog?)"/>,
+    /// never persisted. With <see cref="LastSeenVersion"/> empty it tells an update from a build that predates the
+    /// card (every release before 0.6.0) apart from a fresh install (<c>Core.Ui.WhatsNew.Decide</c>).
+    /// </summary>
+    [Newtonsoft.Json.JsonIgnore]
+    public bool HasPriorConfig { get; private set; }
+
+    // ---- 0.6.0: Moonlit store re-sells ----
+    /// <summary>
+    /// Moonlit toolbar "Hide store re-sells": drop rewards the FFXIV Online Store also sells (entry OtherSources carries
+    /// OnlineStore) from the rows and from the obtained/total counts. Off by default.
+    /// </summary>
+    public bool MoonlitHideStoreResells { get; set; }
+
     // ---- 0.5.1: motion ----
     /// <summary>
     /// Replace the hold-to-confirm arc with a text countdown (and, later, other animation with a cut). Off by default;
@@ -118,7 +154,8 @@ public sealed class Configuration : IPluginConfiguration
 
     /// <summary>
     /// Reads the saved configuration or returns defaults when there is none, it is of another type, or reading it
-    /// throws (a corrupt file must not stop the plugin from loading; the failure is logged when a log is given).
+    /// throws (a corrupt file must not stop the plugin from loading). Before defaults replace an unreadable file it
+    /// is copied aside (see <see cref="ConfigRecovery"/>) and the failure is logged once when a log is given.
     /// </summary>
     public static Configuration Load(IDalamudPluginInterface pluginInterface) => Load(pluginInterface, null);
 
@@ -126,6 +163,8 @@ public sealed class Configuration : IPluginConfiguration
     public static Configuration Load(IDalamudPluginInterface pluginInterface, IPluginLog? log)
     {
         ArgumentNullException.ThrowIfNull(pluginInterface);
+        // Read before the load: a file that exists but cannot be read still counts as a prior configuration.
+        var hadFile = pluginInterface.ConfigFile.Exists;
         Configuration config;
         try
         {
@@ -133,11 +172,35 @@ public sealed class Configuration : IPluginConfiguration
         }
         catch (Exception ex)
         {
-            log?.Warning(ex, "Could not read the saved configuration; using defaults");
+            // The next Save overwrites the file, so the unreadable one is kept beside it first.
+            var path = pluginInterface.ConfigFile.FullName;
+            if (ConfigRecovery.TryCopyAside(path, out var copiedTo, out var copyError) && copiedTo is not null)
+            {
+                log?.Warning(ex, "Could not read the saved configuration; a copy was kept at {Path} and defaults are in use", copiedTo);
+            }
+            else if (copyError is not null)
+            {
+                log?.Warning(ex, "Could not read the saved configuration and could not copy it aside ({Error}); using defaults", copyError);
+            }
+            else
+            {
+                log?.Warning(ex, "Could not read the saved configuration; using defaults");
+            }
+
             config = new Configuration();
         }
 
         config.Filters ??= new FilterSet();
+        config.LastSeenVersion ??= string.Empty;
+        if (!Enum.IsDefined(config.JournalFiling))
+        {
+            // A hand-edited integer, or a value a newer build wrote before a downgrade: the mapper would read it as
+            // Legacy while neither radio button showed selected. The default filing stands.
+            log?.Warning("Saved JournalFiling {Value} is not a known mode; using {Default}", (int)config.JournalFiling, JournalFiling.Refiled);
+            config.JournalFiling = JournalFiling.Refiled;
+        }
+
+        config.HasPriorConfig = hadFile;
         return config;
     }
 

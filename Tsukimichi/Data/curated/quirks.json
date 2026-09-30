@@ -1,0 +1,114 @@
+{
+  "schema": 1,
+  "note": "Known quirks: hand-written notes for quests where the game behaves differently from what its data says, or where a name changed and older guides mislead. Keys are Quest sheet row ids. The detail pane shows the note under the requirements, /tsuki why prints it and the diagnostic block carries it. Every entry needs a note and an evidence URL; notes are original wording, never wiki sentences.",
+  "entries": {
+    "66971": {
+      "note": "Up in Arms is optional once the Zenith is in hand: Gerolt offers the next Zodiac Weapons step without it, so what follows shows Blocked here while the NPC already hands it out. Take the next quest; this one can stay undone.",
+      "evidence": "https://forum.square-enix.com/ffxiv/threads/525622"
+    },
+    "67761": {
+      "note": "Completing this quest raises your standing with the society to Allied, its top rank. Patch 7.0 renamed that rank from Bloodsworn, so older guides, achievements and quest text still say Bloodsworn; it is the same rank. The quest itself needs Sworn, the rank the requirement above prints.",
+      "evidence": "https://www.reddit.com/r/ffxiv/comments/1sak9u4/"
+    },
+    "67796": {
+      "note": "Completing this quest raises your standing with the society to Allied, its top rank. Patch 7.0 renamed that rank from Bloodsworn, so older guides, achievements and quest text still say Bloodsworn; it is the same rank. The quest itself needs Sworn, the rank the requirement above prints.",
+      "evidence": "https://www.reddit.com/r/ffxiv/comments/1sak9u4/"
+    },
+    "67863": {
+      "note": "Completing this quest raises your standing with the society to Allied, its top rank. Patch 7.0 renamed that rank from Bloodsworn, so older guides, achievements and quest text still say Bloodsworn; it is the same rank. The quest itself needs Sworn, the rank the requirement above prints.",
+      "evidence": "https://www.reddit.com/r/ffxiv/comments/1sak9u4/"
+    },
+    "68477": {
+      "note": "Since patch 7.5 this quest needs Inscrutable Tastes (level 50, Morgayne in Foundation), not Go West, Craftsman as older guides say. The list here follows the current game data.",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/topics/detail/07320affa7e0fcd9685afcbe54fbf55405b6d822/"
+    },
+    "68514": {
+      "note": "Completing this quest raises your standing with the society to Allied, its top rank. Patch 7.0 renamed that rank from Bloodsworn, so older guides, achievements and quest text still say Bloodsworn; it is the same rank. The quest itself needs Sworn, the rank the requirement above prints.",
+      "evidence": "https://www.reddit.com/r/ffxiv/comments/1sak9u4/"
+    },
+    "68577": {
+      "note": "Completing this quest raises your standing with the society to Allied, its top rank. Patch 7.0 renamed that rank from Bloodsworn, so older guides, achievements and quest text still say Bloodsworn; it is the same rank. The quest itself needs Sworn, the rank the requirement above prints.",
+      "evidence": "https://www.reddit.com/r/ffxiv/comments/1sak9u4/"
+    },
+    "68638": {
+      "note": "Completing this quest raises your standing with the society to Allied, its top rank. Patch 7.0 renamed that rank from Bloodsworn, so older guides, achievements and quest text still say Bloodsworn; it is the same rank. The quest itself needs Sworn, the rank the requirement above prints.",
+      "evidence": "https://www.reddit.com/r/ffxiv/comments/1sak9u4/"
+    },
+    "68675": {
+      "note": "Since patch 7.5 this quest needs Inscrutable Tastes (level 50, Morgayne in Foundation), not None Forgotten, None Forsaken as older guides say. The list here follows the current game data.",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/topics/detail/07320affa7e0fcd9685afcbe54fbf55405b6d822/"
+    },
+    "69139": {
+      "note": "Since patch 7.5 this quest needs Inscrutable Tastes (level 50, Morgayne in Foundation), not Go West, Craftsman as older guides say. The list here follows the current game data.",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/topics/detail/07320affa7e0fcd9685afcbe54fbf55405b6d822/"
+    },
+    "69224": {
+      "note": "Completing this quest raises your standing with the society to Allied, its top rank. Patch 7.0 renamed that rank from Bloodsworn, so older guides, achievements and quest text still say Bloodsworn; it is the same rank. The quest itself needs Sworn, the rank the requirement above prints.",
+      "evidence": "https://www.reddit.com/r/ffxiv/comments/1sak9u4/"
+    },
+    "69335": {
+      "note": "Completing this quest raises your standing with the society to Allied, its top rank. Patch 7.0 renamed that rank from Bloodsworn, so older guides, achievements and quest text still say Bloodsworn; it is the same rank. The quest itself needs Sworn, the rank the requirement above prints.",
+      "evidence": "https://www.reddit.com/r/ffxiv/comments/1sak9u4/"
+    },
+    "69425": {
+      "note": "Since patch 7.5 this quest needs Inscrutable Tastes (level 50, Morgayne in Foundation), not Go West, Craftsman as older guides say. The list here follows the current game data.",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/topics/detail/07320affa7e0fcd9685afcbe54fbf55405b6d822/"
+    },
+    "69437": {
+      "note": "Completing this quest raises your standing with the society to Allied, its top rank. Patch 7.0 renamed that rank from Bloodsworn, so older guides, achievements and quest text still say Bloodsworn; it is the same rank. The quest itself needs Sworn, the rank the requirement above prints.",
+      "evidence": "https://www.reddit.com/r/ffxiv/comments/1sak9u4/"
+    },
+    "69615": {
+      "note": "Since patch 7.5 this quest needs Inscrutable Tastes (level 50, Morgayne in Foundation), not Go West, Craftsman as older guides say. The list here follows the current game data.",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/topics/detail/07320affa7e0fcd9685afcbe54fbf55405b6d822/"
+    },
+    "69711": {
+      "note": "Since patch 7.5 this quest needs Inscrutable Tastes (level 50, Morgayne in Foundation), not Go West, Craftsman as older guides say. The list here follows the current game data.",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/topics/detail/07320affa7e0fcd9685afcbe54fbf55405b6d822/"
+    },
+    "70059": {
+      "note": "Since patch 7.5 this quest needs Inscrutable Tastes (level 50, Morgayne in Foundation), not Go West, Craftsman as older guides say. The list here follows the current game data.",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/topics/detail/07320affa7e0fcd9685afcbe54fbf55405b6d822/"
+    },
+    "70086": {
+      "note": "Completing this quest raises your standing with the society to Allied, its top rank. Patch 7.0 renamed that rank from Bloodsworn, so older guides, achievements and quest text still say Bloodsworn; it is the same rank. The quest itself needs Sworn, the rank the requirement above prints.",
+      "evidence": "https://www.reddit.com/r/ffxiv/comments/1sak9u4/"
+    },
+    "70142": {
+      "note": "Completing this quest raises your standing with the society to Allied, its top rank. Patch 7.0 renamed that rank from Bloodsworn, so older guides, achievements and quest text still say Bloodsworn; it is the same rank. The quest itself needs Sworn, the rank the requirement above prints.",
+      "evidence": "https://www.reddit.com/r/ffxiv/comments/1sak9u4/"
+    },
+    "70222": {
+      "note": "Completing this quest raises your standing with the society to Allied, its top rank. Patch 7.0 renamed that rank from Bloodsworn, so older guides, achievements and quest text still say Bloodsworn; it is the same rank. The quest itself needs Sworn, the rank the requirement above prints.",
+      "evidence": "https://www.reddit.com/r/ffxiv/comments/1sak9u4/"
+    },
+    "70251": {
+      "note": "Since patch 7.5 this quest needs Inscrutable Tastes (level 50, Morgayne in Foundation), not Go West, Craftsman as older guides say. The list here follows the current game data.",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/topics/detail/07320affa7e0fcd9685afcbe54fbf55405b6d822/"
+    },
+    "70351": {
+      "note": "Since patch 7.5 this quest needs Inscrutable Tastes (level 50, Morgayne in Foundation), not Go West, Craftsman as older guides say. The list here follows the current game data.",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/topics/detail/07320affa7e0fcd9685afcbe54fbf55405b6d822/"
+    },
+    "70544": {
+      "note": "Since patch 7.5 this quest needs Inscrutable Tastes (level 50, Morgayne in Foundation), not Go West, Craftsman as older guides say. The list here follows the current game data.",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/topics/detail/07320affa7e0fcd9685afcbe54fbf55405b6d822/"
+    },
+    "70734": {
+      "note": "Completing this quest raises your standing with the society to Allied, its top rank. Patch 7.0 renamed that rank from Bloodsworn, so older guides, achievements and quest text still say Bloodsworn; it is the same rank. The quest itself needs Sworn, the rank the requirement above prints.",
+      "evidence": "https://www.reddit.com/r/ffxiv/comments/1sak9u4/"
+    },
+    "70775": {
+      "note": "Since patch 7.5 this quest needs Inscrutable Tastes (level 50, Morgayne in Foundation), not Go West, Craftsman as older guides say. The list here follows the current game data.",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/topics/detail/07320affa7e0fcd9685afcbe54fbf55405b6d822/"
+    },
+    "70796": {
+      "note": "Completing this quest raises your standing with the society to Allied, its top rank. Patch 7.0 renamed that rank from Bloodsworn, so older guides, achievements and quest text still say Bloodsworn; it is the same rank. The quest itself needs Sworn, the rank the requirement above prints.",
+      "evidence": "https://www.reddit.com/r/ffxiv/comments/1sak9u4/"
+    },
+    "70871": {
+      "note": "Completing this quest raises your standing with the society to Allied, its top rank. Patch 7.0 renamed that rank from Bloodsworn, so older guides, achievements and quest text still say Bloodsworn; it is the same rank. The quest itself needs Sworn, the rank the requirement above prints.",
+      "evidence": "https://www.reddit.com/r/ffxiv/comments/1sak9u4/"
+    }
+  }
+}

@@ -144,6 +144,13 @@ public static class StateResolver
             return new(QuestState.Completed, requirements, null, null, null);
         }
 
+        // 2. Removed from the game: locked out for good. A completed retired quest already read Completed under rule 1,
+        //    which is how a character that cleared the old A Realm Reborn story before 5.3 keeps that history.
+        if (q.IsRetired)
+        {
+            return new(QuestState.Foreclosed, requirements, FirstOfKind(requirements, RequirementKind.Retired), null, null);
+        }
+
         // 2. A completed lock forecloses, except for a Grand Company quest the character could still switch to.
         if (q.QuestLocks.Length > 0
             && !RequirementEvaluator.IsSwitchableGrandCompanyQuest(q, s)
@@ -153,10 +160,13 @@ public static class StateResolver
         }
 
         // 3. Inactive festival: foreclosed if the character already saw a run of it, otherwise blocked as seasonal.
-        if (q.Festival != 0 && !s.ActiveFestivals.Contains(q.Festival))
+        //    A running event whose reported phase lies outside the quest's window (a chapter not open yet, or over)
+        //    is blocked as seasonal too; the requirement carries which.
+        if (q.Festival != 0 && FirstOfKind(requirements, RequirementKind.Seasonal) is { Met: false } seasonal)
         {
-            var state = festivalIsPast(q.Festival) ? QuestState.Foreclosed : QuestState.Blocked;
-            return new(state, requirements, FirstOfKind(requirements, RequirementKind.Seasonal), null, null);
+            var running = seasonal.Req is SeasonalRequirement { Active: true };
+            var state = !running && festivalIsPast(q.Festival) ? QuestState.Foreclosed : QuestState.Blocked;
+            return new(state, requirements, seasonal, null, null);
         }
 
         // 4. In the journal.
@@ -225,7 +235,7 @@ public static class StateResolver
 
         foreach (var job in candidates)
         {
-            if (RequirementEvaluator.AdmitsJob(q, ctx, job) && RequirementEvaluator.LevelOf(s, job) >= q.Level)
+            if (RequirementEvaluator.AdmitsJob(q, s, ctx, job) && RequirementEvaluator.LevelOf(s, job) >= q.Level)
             {
                 return job;
             }

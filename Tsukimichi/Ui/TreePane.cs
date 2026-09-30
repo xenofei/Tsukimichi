@@ -11,7 +11,7 @@ using Tsukimichi.GameData;
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// The Journal tree: All quests, then Section → Category → Genre, then the Feature Unlocks and Unlisted virtual nodes.
+/// The Journal tree: All quests, then Section → Category → Genre, then the Unlock quests and Removed from the game virtual nodes.
 /// Each node shows a filling moon and done/total. Selecting a node scopes the table through <see cref="UiState.Scope"/>.
 /// A category with a single genre is folded into one leaf (the category's name, the genre's scope and counts), and a
 /// section whose only category folded likewise becomes a single leaf, so no node ever expands to just one child.
@@ -35,6 +35,9 @@ public sealed class TreePane
 
         public NodeCount Count { get; set; }
         public string CountText { get; set; } = string.Empty;
+
+        /// <summary>The moon's hover text: done/total and the percent, rebuilt with <see cref="CountText"/>.</summary>
+        public string ProgressText { get; set; } = string.Empty;
     }
 
     private readonly UiState ui;
@@ -43,9 +46,10 @@ public sealed class TreePane
     private readonly List<Node> sections = [];
     private readonly Node allNode = new(QuestScope.None, "##all", Strings.AllQuests, leaf: true);
     private readonly Node featureNode = new(QuestScope.VirtualFeature, "##feature", Strings.FeatureUnlocks, leaf: true);
-    private readonly Node unlistedNode = new(QuestScope.VirtualUnlisted, "##unlisted", Strings.Unlisted, leaf: true);
+    private readonly Node unlistedNode = new(QuestScope.VirtualUnlisted, "##unlisted", Strings.RemovedFromGame, leaf: true);
     private TreeCounts? counts;
     private NodeCount featureCount;
+    private bool revealing;
 
     public TreePane(UiState ui)
     {
@@ -57,6 +61,11 @@ public sealed class TreePane
         EnsureNodes(current);
         RefreshCounts(runner);
 
+        // A reveal from another pane (Moonlit, Characters, Flight, the MSQ status, chat) selected a scope whose
+        // ancestors may be collapsed: this frame opens them and scrolls the selected node into view.
+        revealing = ui.RevealPending;
+        ui.RevealPending = false;
+
         var start = ImGui.GetCursorScreenPos();
         var width = ImGui.GetContentRegionAvail().X;
         DrawNode(allNode, section: true);
@@ -66,13 +75,33 @@ public sealed class TreePane
         }
 
         DrawNode(featureNode, section: true);
-        // A reveal can land in the Unlisted scope while the config hides the node; show it so the selection is visible.
+        // A reveal can land in the removed scope while the config hides the node; show it so the selection is visible.
         if (showUnlisted || ui.Scope == QuestScope.VirtualUnlisted)
         {
             DrawNode(unlistedNode, section: true);
         }
 
+        revealing = false;
         ui.RecordSpan(UiRects.Tree, start, width);
+    }
+
+    /// <summary>Whether <paramref name="node"/> or one of its descendants carries <paramref name="scope"/>.</summary>
+    private static bool Contains(Node node, QuestScope scope)
+    {
+        if (node.Scope == scope)
+        {
+            return true;
+        }
+
+        foreach (var child in node.Children)
+        {
+            if (Contains(child, scope))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /// <summary>
@@ -88,23 +117,40 @@ public sealed class TreePane
             flags |= ImGuiTreeNodeFlags.Leaf | ImGuiTreeNodeFlags.NoTreePushOnOpen;
         }
 
-        if (ui.Scope == node.Scope)
+        var selected = ui.Scope == node.Scope;
+        if (selected)
         {
             flags |= ImGuiTreeNodeFlags.Selected;
         }
 
+        if (revealing && !node.Leaf && !selected && Contains(node, ui.Scope))
+        {
+            ImGui.SetNextItemOpen(true);
+        }
+
         var open = ImGui.TreeNodeEx(node.Id, flags, HiddenLabel);
+        if (revealing && selected)
+        {
+            ImGui.SetScrollHereY(0.5f);
+        }
         if (ImGui.IsItemClicked() && !ImGui.IsItemToggledOpen())
         {
             Select(node.Scope);
         }
 
-        if (node.FoldedPath is { } path && ImGui.IsItemHovered())
+        // The overlay paints on the node item; over the moon its progress shows, elsewhere the folded path if any.
+        var overMoon = DrawNodeOverlay(node, section);
+        if (ImGui.IsItemHovered())
         {
-            UiMetrics.Tooltip(path);
+            if (overMoon)
+            {
+                UiMetrics.Tooltip(Strings.FillingMoonTooltip, node.ProgressText);
+            }
+            else if (node.FoldedPath is { } path)
+            {
+                UiMetrics.Tooltip(path);
+            }
         }
-
-        DrawNodeOverlay(node, section);
 
         if (open && !node.Leaf)
         {
@@ -117,14 +163,17 @@ public sealed class TreePane
         }
     }
 
-    /// <summary>Moon, name and done/total painted on the node's line; drawn without items so layout is untouched.</summary>
-    private static void DrawNodeOverlay(Node node, bool section)
+    /// <summary>
+    /// Moon, name and done/total painted on the node's line; drawn without items so layout is untouched. Returns
+    /// whether the mouse is over the moon's box, for the caller's item-hover check (the node is the item).
+    /// </summary>
+    private static bool DrawNodeOverlay(Node node, bool section)
     {
         var dl = ImGui.GetWindowDrawList();
         var min = ImGui.GetItemRectMin();
         var max = ImGui.GetItemRectMax();
         var style = ImGui.GetStyle();
-        var radius = UiMetrics.TreeMoonRadius;
+        var radius = UiMetrics.TreeMoonRadius(max.Y - min.Y);
         var pad = UiMetrics.Px(6f);
         var lineCenterY = (min.Y + max.Y) * 0.5f;
         var textY = lineCenterY - ImGui.GetTextLineHeight() * 0.5f;
@@ -151,6 +200,10 @@ public sealed class TreePane
         }
 
         dl.PopClipRect();
+
+        var moonCenter = new Vector2(labelX + radius, lineCenterY);
+        var moonHalf = new Vector2(radius * 1.2f);
+        return ImGui.IsMouseHoveringRect(moonCenter - moonHalf, moonCenter + moonHalf, false);
     }
 
     private void Select(QuestScope scope)
@@ -218,6 +271,7 @@ public sealed class TreePane
 
         node.Count = count;
         node.CountText = UiFormat.Count(count.Done, count.Total);
+        node.ProgressText = UiFormat.Progress(count.Done, count.Total);
     }
 
     private void EnsureNodes(CatalogBundle current)
@@ -239,7 +293,7 @@ public sealed class TreePane
         var genreById = new Dictionary<uint, Node>();
         foreach (var quest in ordered)
         {
-            if (quest.IsUnlisted)
+            if (quest.IsRemoved)
             {
                 continue;
             }

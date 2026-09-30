@@ -12,13 +12,13 @@ public static class FilterNames
     public const string RewardKinds = "Reward kinds";
     public const string Repeatable = "Repeatable";
     public const string SeasonalActive = "Seasonal active";
-    public const string IncludeUnlisted = "Include Unlisted";
+    public const string IncludeUnlisted = "Include removed";
     public const string Pinned = "Pinned";
     public const string Search = "Search";
 
-    // Presets
-    public const string FeatureQuests = "Feature quests";
-    public const string LevelBand = "Around my level";
+    // Quick views (presets)
+    public const string FeatureQuests = "Unlocks";
+    public const string LevelBand = "My level";
     public const string Stalled = "Stalled";
 
     /// <summary>Chip and empty-guard label of a preset; empty for <see cref="Preset.None"/>.</summary>

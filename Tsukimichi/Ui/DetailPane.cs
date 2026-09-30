@@ -8,9 +8,11 @@ using Dalamud.Interface.Textures;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
 using Tsukimichi.Core.Chains;
+using Tsukimichi.Core.Diagnostics;
 using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Storage;
+using Tsukimichi.Core.Ui;
 using Tsukimichi.Game;
 using Tsukimichi.GameData;
 
@@ -80,9 +82,15 @@ public sealed class DetailPane
         public QuestRecord? Quest;
         public QuestState State;
         public string JournalPath = string.Empty;
+
+        /// <summary>Provenance of a refiled or removed quest ("Filed under … (rule 4: …)", "Removed from the game in patch 6.3"); null for an ordinary quest.</summary>
+        public string? FilingLine;
         public string HeaderLine = string.Empty;
         public string StateText = string.Empty;
         public string? StateNote;
+
+        /// <summary>"Note: …" from <c>curated/quirks.json</c>, drawn under the requirements; null for a quest without one.</summary>
+        public string? QuirkNote;
         public string? ChainText;
         public string? ChainNextName;
         public uint ChainNextRowId;
@@ -132,6 +140,10 @@ public sealed class DetailPane
     private int pathScrollFrames;
     private double pathHighlightUntil;
 
+    // "Copied · paste it into a GitHub issue" beside the Report button for a few seconds after a click.
+    private const double ReportNoteSeconds = 5.0;
+    private double reportNoteUntil;
+
     /// <param name="log">Receives the chain catalog's warnings once per rebuild; null logs nothing.</param>
     public DetailPane(UiState ui, QueryRunner runner, GameLinks links, ITextureProvider textures, IPluginLog? log = null)
     {
@@ -144,6 +156,9 @@ public sealed class DetailPane
 
     /// <summary>The user's unique-reward verdicts; null until the plugin attaches them, which hides the Moonlit section.</summary>
     public IUniqueOverrides? Overrides { get; set; }
+
+    /// <summary>Composes the "Report" diagnostic block; null until the plugin attaches it, which hides the button.</summary>
+    public DiagnosticBuilder? Diagnostics { get; set; }
 
     public void Draw(SessionState session, CatalogBundle bundle, Vector2 size)
     {
@@ -225,6 +240,11 @@ public sealed class DetailPane
         }
 
         ImGui.TextDisabled(model.JournalPath);
+        if (model.FilingLine is { } filing)
+        {
+            ImGui.TextDisabled(filing);
+        }
+
         ImGui.TextDisabled(model.HeaderLine);
         using (Theme.PushText(Theme.StateColor(model.State)))
         {
@@ -291,9 +311,41 @@ public sealed class DetailPane
             UiMetrics.Tooltip(ChainNextTooltip);
             if (ImGui.IsItemClicked())
             {
-                ui.SelectedRowId = model.ChainNextRowId;
+                RevealRow(model.ChainNextRowId);
             }
         }
+    }
+
+    /// <summary>
+    /// Selects a path step, an unlock or the chain's next quest. A row the table already lists is selected in place
+    /// (the table scrolls to it; the tab, scope and filters stay as they are). Otherwise it is revealed the way the
+    /// other panes do: the Journal tab scoped to its genre with the narrowing filters cleared, so the table shows the
+    /// row wherever the step lives. A row id the catalog does not know is selected plainly so the detail pane can say so.
+    /// </summary>
+    private void RevealRow(uint rowId)
+    {
+        if (model.Bundle?.Catalog.GetByRowId(rowId) is not { } quest || IsListed(rowId))
+        {
+            ui.SelectedRowId = rowId;
+            return;
+        }
+
+        ui.Reveal(quest);
+    }
+
+    /// <summary>Whether the table's current rows hold <paramref name="rowId"/>.</summary>
+    private bool IsListed(uint rowId)
+    {
+        var rows = runner.Rows;
+        for (var i = 0; i < rows.Length; i++)
+        {
+            if (rows[i].Quest.RowId == rowId)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /// <summary>Banner image with the name overlaid; false when the quest has none or it is not loaded yet.</summary>
@@ -309,7 +361,9 @@ public sealed class DetailPane
         var height = MathF.Min(UiMetrics.BannerMaxHeight, width * wrap.Height / wrap.Width);
         var min = ImGui.GetCursorScreenPos();
         var max = min + new Vector2(width, height);
-        ImGui.Image(wrap.Handle, new Vector2(width, height));
+        // When the height clamp bites, the image is cropped to the box (top and bottom trimmed evenly), not squashed.
+        var (uv0, uv1) = ScaleMetrics.CenterCropUv(width, height, wrap.Width, wrap.Height);
+        ImGui.Image(wrap.Handle, new Vector2(width, height), uv0, uv1);
 
         // Name strip: a Night gradient over the lower part of the image, the name in Silver at its left and the
         // large state moon at its right.
@@ -331,36 +385,57 @@ public sealed class DetailPane
 
         dl.AddRectFilled(new Vector2(min.X, stripTop), max, solid);
         dl.AddText(ImGui.GetFont(), ImGui.GetFontSize(), new Vector2(min.X + pad, max.Y - pad - textHeight), Theme.SilverU32, quest.Name, textWrap);
-        MoonGlyph.Draw(dl, new Vector2(max.X - pad - moonBox * 0.5f, max.Y - stripHeight * 0.5f), radius, model.State);
+        var moonCenter = new Vector2(max.X - pad - moonBox * 0.5f, max.Y - stripHeight * 0.5f);
+        MoonGlyph.Draw(dl, moonCenter, radius, model.State);
+
+        // The moon and the badge sit on the image item, so each gets an invisible item of its own for its tooltip;
+        // the cursor goes back under the image afterwards.
+        var cursor = ImGui.GetCursorScreenPos();
+        ImGui.SetCursorScreenPos(moonCenter - new Vector2(moonBox * 0.5f));
+        ImGui.InvisibleButton("##bannerMoon", new Vector2(moonBox, moonBox));
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.StateTooltip(model.State, quest));
+        }
+
         if (badge > 0f)
         {
             var size = UiMetrics.BannerBadgeSize;
             var badgeMin = new Vector2(max.X - pad - moonBox - pad - size, max.Y - stripHeight * 0.5f - size * 0.5f);
-            DrawSpecialBadge(dl, quest, badgeMin, size);
+            if (DrawSpecialBadge(dl, quest, badgeMin, size))
+            {
+                ImGui.SetCursorScreenPos(badgeMin);
+                ImGui.InvisibleButton("##bannerBadge", new Vector2(size, size));
+                if (ImGui.IsItemHovered())
+                {
+                    UiMetrics.Tooltip(BadgeTooltip(quest));
+                }
+            }
         }
 
+        ImGui.SetCursorScreenPos(cursor);
         ImGui.Spacing();
         return true;
     }
 
     /// <summary>
-    /// The quest's special icon (<see cref="QuestRecord.IconSpecial"/>) drawn on the draw list at <paramref name="min"/>,
-    /// with a tooltip naming what the badge means. Nothing is drawn while the texture is still loading.
+    /// The quest's special icon (<see cref="QuestRecord.IconSpecial"/>) drawn on the draw list at <paramref name="min"/>;
+    /// false (nothing drawn) while the texture is still loading. The caller owns the item under it and hangs
+    /// <see cref="BadgeTooltip"/> on that item, so the tooltip honours popups and window hover.
     /// </summary>
-    private void DrawSpecialBadge(ImDrawListPtr dl, QuestRecord quest, Vector2 min, float size)
+    private bool DrawSpecialBadge(ImDrawListPtr dl, QuestRecord quest, Vector2 min, float size)
     {
         if (!textures.GetFromGameIcon(new GameIconLookup(quest.IconSpecial)).TryGetWrap(out var wrap, out _))
         {
-            return;
+            return false;
         }
 
-        var max = min + new Vector2(size, size);
-        dl.AddImage(wrap.Handle, min, max);
-        if (ImGui.IsMouseHoveringRect(min, max))
-        {
-            UiMetrics.Tooltip(quest.Festival != 0 ? SeasonalBadgeTooltip : SpecialBadgeTooltip);
-        }
+        dl.AddImage(wrap.Handle, min, min + new Vector2(size, size));
+        return true;
     }
+
+    /// <summary>What the special badge means.</summary>
+    private static string BadgeTooltip(QuestRecord quest) => quest.Festival != 0 ? SeasonalBadgeTooltip : SpecialBadgeTooltip;
 
     /// <summary>Raised Night card with the state moon and the name, for quests without a banner.</summary>
     private void DrawHeaderCard(QuestRecord quest)
@@ -381,6 +456,11 @@ public sealed class DetailPane
             var pos = ImGui.GetCursorScreenPos();
             ImGui.Dummy(new Vector2(box, box));
             MoonGlyph.Draw(dl, pos + new Vector2(box * 0.5f), radius, model.State);
+            if (ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(Strings.StateTooltip(model.State, quest));
+            }
+
             ImGui.SameLine();
             var badge = 0f;
             if (quest.IconSpecial != 0)
@@ -389,7 +469,11 @@ public sealed class DetailPane
                 badge = size + pad;
                 var badgeMin = ImGui.GetCursorScreenPos() + new Vector2(0f, (box - size) * 0.5f);
                 ImGui.Dummy(new Vector2(size, box));
-                DrawSpecialBadge(dl, quest, badgeMin, size);
+                if (DrawSpecialBadge(dl, quest, badgeMin, size) && ImGui.IsItemHovered())
+                {
+                    UiMetrics.Tooltip(BadgeTooltip(quest));
+                }
+
                 ImGui.SameLine();
             }
 
@@ -407,6 +491,18 @@ public sealed class DetailPane
     }
 
     private void DrawRequirements()
+    {
+        DrawRequirementLines();
+        if (model.QuirkNote is { } note)
+        {
+            // The curated quirk: what the game does that its data does not say. Shown whatever the state, since it is
+            // the answer to "the NPC offers this while the plugin shows it Blocked".
+            using var dusk = Theme.PushText(Theme.Dusk);
+            ImGui.TextWrapped(note);
+        }
+    }
+
+    private void DrawRequirementLines()
     {
         if (!model.HasSnapshot)
         {
@@ -631,7 +727,7 @@ public sealed class DetailPane
         BeginGlyphLine(dl, step.State, radius, lineHeight, glyphBox, ref chain);
         if (ImGui.Selectable(step.Name, step.IsTarget))
         {
-            ui.SelectedRowId = step.RowId;
+            RevealRow(step.RowId);
         }
     }
 
@@ -654,6 +750,11 @@ public sealed class DetailPane
 
         ImGui.Dummy(new Vector2(glyphBox, lineHeight));
         MoonGlyph.Draw(dl, center, radius, state);
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.StateTooltip(state));
+        }
+
         ImGui.SameLine();
         chain.Center = center;
         chain.Has = true;
@@ -681,10 +782,15 @@ public sealed class DetailPane
             var pos = ImGui.GetCursorScreenPos();
             ImGui.Dummy(new Vector2(glyphBox, lineHeight));
             MoonGlyph.Draw(dl, pos + new Vector2(glyphBox * 0.5f, lineHeight * 0.5f), radius, line.State);
+            if (ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(Strings.StateTooltip(line.State));
+            }
+
             ImGui.SameLine();
             if (ImGui.Selectable(line.Name))
             {
-                ui.SelectedRowId = line.RowId;
+                RevealRow(line.RowId);
             }
         }
 
@@ -699,6 +805,7 @@ public sealed class DetailPane
         if (model.GiverName is null)
         {
             ImGui.TextDisabled(Strings.NoGiver);
+            DrawReport(quest, sameLine: false);
             return;
         }
 
@@ -776,6 +883,44 @@ public sealed class DetailPane
                 UiMetrics.Tooltip(tip);
             }
         }
+
+        DrawReport(quest, sameLine: true);
+    }
+
+    /// <summary>
+    /// "Report" at the end of the action row (feature plan v3 T18): composes the diagnostic block for this quest on
+    /// the click only, puts it on the clipboard and shows "Copied · paste it into a GitHub issue" beside the button for
+    /// <see cref="ReportNoteSeconds"/>. Absent until the plugin attaches <see cref="Diagnostics"/>.
+    /// </summary>
+    private void DrawReport(QuestRecord quest, bool sameLine)
+    {
+        if (Diagnostics is not { } diagnostics)
+        {
+            return;
+        }
+
+        if (sameLine)
+        {
+            ImGui.SameLine();
+        }
+
+        if (ImGui.SmallButton(Strings.Report))
+        {
+            var copied = DiagnosticBuilder.TryCopy(diagnostics.Compose(quest), log ?? Plugin.Log);
+            reportNoteUntil = copied ? ImGui.GetTime() + ReportNoteSeconds : 0.0;
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.ReportTooltip);
+        }
+
+        if (ImGui.GetTime() < reportNoteUntil)
+        {
+            ImGui.SameLine();
+            using var moon = Theme.PushText(Theme.Moon);
+            ImGui.TextUnformatted(Strings.ReportCopied);
+        }
     }
 
     /// <summary>Section header: a small FontAwesome icon in Dusk, the title, then a Dusk rule; all Moon while highlighted.</summary>
@@ -825,6 +970,7 @@ public sealed class DetailPane
         model.Unlocks.Clear();
         model.UnlocksMore = null;
         model.StateNote = null;
+        model.QuirkNote = null;
         model.ChainText = null;
         model.ChainNextName = null;
         model.GiverName = null;
@@ -842,27 +988,29 @@ public sealed class DetailPane
         model.HasSnapshot = snapshot is not null;
         session.States.TryGetValue(rowId, out var evaluation);
         model.State = evaluation?.State ?? QuestState.Unknown;
-        model.StateText = Strings.StateName(model.State);
+        model.StateText = BlockerText.StatusText(evaluation, quest, session.Names, session.States);
         model.HasUniqueEntries = HasShippedUniqueEntry(session.UniqueRewards, rowId);
 
-        model.JournalPath = string.Format(CultureInfo.CurrentCulture, Strings.JournalPathFormat, quest.Journal.GenreName, quest.Journal.CategoryName);
+        model.JournalPath = quest.IsUnlisted
+            ? Strings.RemovedFromGame
+            : string.Format(CultureInfo.CurrentCulture, Strings.JournalPathFormat, quest.Journal.GenreName, quest.Journal.CategoryName);
+        model.FilingLine = FilingLine(quest, session.Curated);
+        model.QuirkNote = session.Curated.Quirks.TryGetValue(rowId, out var quirk) ? WhyText.NoteLine(quirk.Note) : null;
         var jobName = quest.ClassJobCategory <= 1 ? Strings.JobAny : links.ClassJobCategoryName(quest.ClassJobCategory);
         if (jobName.Length == 0)
         {
             jobName = runner.JobShort(quest);
         }
 
-        model.HeaderLine = string.Format(CultureInfo.CurrentCulture, Strings.HeaderLineFormat, bundle.Names.Expansion(quest.Expansion), quest.Level, jobName);
+        model.HeaderLine = string.Format(CultureInfo.CurrentCulture, Strings.HeaderLineFormat, bundle.Names.Expansion(quest.Expansion), quest.DisplayLevel, jobName);
 
         if (evaluation is not null)
         {
+            // The status line already carries the step ("In journal · step 3 of 7") and the blocker; only the job
+            // that can take the quest is a note beside it.
             if (evaluation.ReadyOnJob is { } job)
             {
                 model.StateNote = string.Format(CultureInfo.CurrentCulture, Strings.ReadyOnJobFormat, bundle.Names.ClassJobAbbreviation(job));
-            }
-            else if (evaluation.Sequence is { } sequence)
-            {
-                model.StateNote = string.Format(CultureInfo.CurrentCulture, Strings.AcceptedSequenceFormat, sequence);
             }
 
             foreach (var result in evaluation.Requirements)
@@ -1043,6 +1191,42 @@ public sealed class DetailPane
         {
             model.UnlocksMore = string.Format(CultureInfo.CurrentCulture, Strings.AndMoreFormat, more);
         }
+    }
+
+    /// <summary>
+    /// The provenance line under the journal path: which rule (or curated file) filed a refiled quest, or why the
+    /// game removed it: the patch when the curated note names one, else the sheet signal rule 1 read ("Rule 1:
+    /// placeholder issuer"). It never repeats the path: an unlisted retired row's path already reads "Removed from
+    /// the game", so only a listed retired row (its path is the genre) gets those words here. Null for a quest the
+    /// sheet filed itself.
+    /// </summary>
+    internal static string? FilingLine(QuestRecord quest, CuratedData curated)
+    {
+        if (quest.IsRetired)
+        {
+            if (curated.RetiredQuests.TryGetValue(quest.RowId, out var retired) && retired.Patch.Length > 0)
+            {
+                return string.Format(CultureInfo.CurrentCulture, Strings.RemovedInPatchFormat, retired.Patch);
+            }
+
+            if (JournalRefiler.IsRetiredRow(quest))
+            {
+                var reason = Strings.RetiredReason(quest.Issuer is { NpcId: JournalRefiler.PlaceholderIssuer }, quest.IsHidden);
+                return string.Format(CultureInfo.CurrentCulture, quest.IsUnlisted ? Strings.RetiredRuleFormat : Strings.RemovedByRuleFormat, reason);
+            }
+
+            // Curated without a patch: the path of an unlisted row says it already.
+            return quest.IsUnlisted ? null : Strings.RemovedFromGame;
+        }
+
+        if (quest.RefiledFrom == 0 || quest.IsUnlisted)
+        {
+            return null;
+        }
+
+        return quest.RefiledFrom == JournalRefiler.CuratedRule
+            ? string.Format(CultureInfo.CurrentCulture, Strings.FilingCuratedFormat, quest.Journal.GenreName)
+            : string.Format(CultureInfo.CurrentCulture, Strings.FilingRuleFormat, quest.Journal.GenreName, quest.RefiledFrom, Strings.FilingReason(quest.RefiledFrom));
     }
 
     private bool HasShippedUniqueEntry(UniqueRewardsData data, uint rowId)

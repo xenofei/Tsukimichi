@@ -14,19 +14,33 @@ public static class EvalContextBuilder
     /// <param name="classJobs">ClassJobCategory membership from the game data; null admits every job.</param>
     /// <param name="nowUtc">Clock, read on every festival check so a long-lived context stays current.</param>
     /// <param name="achievementGatedRowIds">Quest row ids gated by an achievement; null or empty gates nothing.</param>
+    /// <param name="jobParents">ClassJob row id to its <c>ClassJobParent</c> row id, from the sheet; null leaves <see cref="EvalContext.ParentJob"/> unset.</param>
+    /// <param name="satisfactionNpcName">Custom delivery client name by SatisfactionNpc row id, from the sheet; null leaves the client out of the requirement detail.</param>
     public static EvalContext Build(
         IReadOnlyDictionary<ushort, FestivalInfo> festivals,
         IClassJobCategoryLookup? classJobs,
         Func<DateTime> nowUtc,
-        IReadOnlySet<uint>? achievementGatedRowIds = null)
+        IReadOnlySet<uint>? achievementGatedRowIds = null,
+        IReadOnlyDictionary<byte, byte>? jobParents = null,
+        Func<byte, string>? satisfactionNpcName = null)
     {
         ArgumentNullException.ThrowIfNull(festivals);
         ArgumentNullException.ThrowIfNull(nowUtc);
 
         var context = EvalContext.Default with { ClassJobs = classJobs };
+        if (satisfactionNpcName is not null)
+        {
+            context = context with { SatisfactionNpcName = satisfactionNpcName };
+        }
+
         if (achievementGatedRowIds is { Count: > 0 } gated)
         {
             context = context with { IsAchievementGated = gated.Contains };
+        }
+
+        if (jobParents is { Count: > 0 } parents)
+        {
+            context = context with { ParentJob = job => parents.TryGetValue(job, out var parent) && parent != 0 ? parent : job };
         }
 
         var ends = FestivalEnds(festivals);

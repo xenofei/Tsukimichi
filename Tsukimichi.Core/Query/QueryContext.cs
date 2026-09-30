@@ -1,4 +1,5 @@
 using System.Collections.Frozen;
+using Tsukimichi.Core.Evaluation;
 
 namespace Tsukimichi.Core.Query;
 
@@ -15,17 +16,19 @@ namespace Tsukimichi.Core.Query;
 /// <param name="NowUtc">Clock the Stalled preset measures against.</param>
 /// <param name="CurrentLevel">Unsynced level of the current job for the Around-my-level preset; 0 means unknown and the preset keeps nothing.</param>
 /// <param name="StalledDays">Age in days from which an accepted quest counts as stalled.</param>
+/// <param name="Names">Name lookups for the Status text of each row (<see cref="Evaluation.BlockerText.StatusText"/>); null uses <see cref="BlockerNames.Default"/>, which names quests from the catalog only.</param>
 public sealed record QueryContext(
     IReadOnlySet<ushort> ActiveFestivals,
     IReadOnlySet<uint> Pinned,
     IReadOnlySet<uint> FeatureQuestIds,
-    [property: Obsolete("Use the QuestEvaluation overload of QuestQuery.Apply; next-step text is read from each evaluation.")]
+    [property: Obsolete("Use the QuestEvaluation overload of QuestQuery.Apply; the Status text is built from each evaluation.")]
     IReadOnlyDictionary<uint, string>? NextStepText = null,
     SearchIndex? SearchIndex = null,
     IReadOnlyDictionary<ushort, DateTime>? AcceptedSince = null,
     DateTime NowUtc = default,
     byte CurrentLevel = 0,
-    int StalledDays = QueryContext.DefaultStalledDays)
+    int StalledDays = QueryContext.DefaultStalledDays,
+    BlockerNames? Names = null)
 {
     public const int DefaultStalledDays = 7;
 

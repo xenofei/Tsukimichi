@@ -6,8 +6,11 @@ using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Textures;
 using Dalamud.Interface.Utility.Raii;
+using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using Lumina.Excel.Sheets;
+using Tsukimichi.Config;
+using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Storage;
@@ -26,8 +29,10 @@ namespace Tsukimichi.Ui;
 /// quests hidden that way stay in the row array as struck-through rows the Yours confidence filter lists, so their
 /// context menu can restore them.
 /// <para>
+/// A row whose reward the FFXIV Online Store also sells (entry OtherSources carries OnlineStore) wears a small Dusk
+/// "Store only" mark; the persisted "Hide store re-sells" toggle drops those rows and leaves them out of every count.
 /// Row arrays and every label are built once per catalog build; obtained states and the filtered index refresh only
-/// when <see cref="SessionState.Version"/>, the kind, the toggle or the filter text change. Nothing allocates per frame
+/// when <see cref="SessionState.Version"/>, the kind, the toggles or the filter text change. Nothing allocates per frame
 /// in the table body except tooltips on hover. The list clipper lives as long as the pane; <see cref="Dispose"/>
 /// destroys it and unsubscribes from the session.
 /// </para>
@@ -35,6 +40,9 @@ namespace Tsukimichi.Ui;
 public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 {
     private const int FilterMaxLength = 128;
+
+    /// <summary>Font size of the "Store only" mark relative to the row's text.</summary>
+    private const float SmallTextScale = 0.85f;
 
     /// <summary>The combo next to "Hide obtained": which rows to keep by confidence, or only the unreadable ones.</summary>
     public enum ConfidenceFilter
@@ -46,20 +54,24 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         UnknownObtained,
     }
 
-    /// <summary>Combo labels in <see cref="ConfidenceFilter"/> order, as one ImGui items-separated-by-zeros string.</summary>
-    private static readonly string ConfidenceFilterItems = string.Join(
-        '\0',
+    /// <summary>Combo labels in <see cref="ConfidenceFilter"/> order.</summary>
+    private static readonly string[] ConfidenceFilterItems =
+    [
         Strings.MoonlitConfidenceAny,
         Strings.MoonlitConfidenceStaticOnly,
         Strings.MoonlitConfidenceCuratedOnly,
         Strings.MoonlitConfidenceYoursOnly,
-        Strings.MoonlitConfidenceUnknownObtained) + "\0";
+        Strings.MoonlitConfidenceUnknownObtained,
+    ];
 
     private readonly SessionState session;
     private readonly ITextureProvider textures;
+    private readonly GameLinks links;
     private readonly RewardUnlockReader unlocks;
     private readonly PluginPaths paths;
     private readonly IPluginLog log;
+    private readonly Configuration settings;
+    private readonly IDalamudPluginInterface pluginInterface;
     private readonly Dictionary<uint, UniqueOverride> overrides;
     private readonly VerdictPrompt verdict = new(Strings.MoonlitVerdictPopup);
     private int overridesVersion;
@@ -76,11 +88,13 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 
     private Row[] rows = [];
     private int uniqueCount;
+    private int storeCount;
     private int rowsBuild = -1;
     private CatalogBundle? rowsBundle;
 
     private int obtainedVersion = -1;
     private int obtainedBuild = -1;
+    private bool countsHideStore;
     private readonly KindItem allItem = new(null, Strings.MoonlitAllKinds);
     private KindItem[] kindItems = [];
     private int kindsBuild = -1;
@@ -95,15 +109,17 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     private VisibleKey visibleKey;
     private string visibleSummary = string.Empty;
     private string filterText = string.Empty;
-    private int selectedRow = -1;
 
-    public MoonlitPane(SessionState session, ITextureProvider textures, RewardUnlockReader unlocks, PluginPaths paths, IPluginLog log, IDataManager data)
+    public MoonlitPane(SessionState session, ITextureProvider textures, RewardUnlockReader unlocks, PluginPaths paths, IPluginLog log, IDataManager data, Configuration settings, IDalamudPluginInterface pluginInterface, GameLinks links)
     {
         this.session = session ?? throw new ArgumentNullException(nameof(session));
         this.textures = textures ?? throw new ArgumentNullException(nameof(textures));
+        this.links = links ?? throw new ArgumentNullException(nameof(links));
         this.unlocks = unlocks ?? throw new ArgumentNullException(nameof(unlocks));
         this.paths = paths ?? throw new ArgumentNullException(nameof(paths));
         this.log = log ?? throw new ArgumentNullException(nameof(log));
+        this.settings = settings ?? throw new ArgumentNullException(nameof(settings));
+        this.pluginInterface = pluginInterface ?? throw new ArgumentNullException(nameof(pluginInterface));
         Icons = new MoonlitIconResolver(data ?? throw new ArgumentNullException(nameof(data)), log);
 
         var warnings = new List<string>();
@@ -258,12 +274,20 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         ui.RecordSpan(UiRects.MoonlitKinds, start, width);
     }
 
-    /// <summary>Center column: toolbar (hide obtained, filter) and the reward table with a list clipper.</summary>
+    /// <summary>Whether rows the Online Store also sells are dropped from the table and the counts (Configuration.MoonlitHideStoreResells).</summary>
+    public bool HideStoreResells => settings.MoonlitHideStoreResells;
+
+    /// <summary>Center column: toolbar (hide obtained, hide store re-sells, filter) and the reward table with a list clipper.</summary>
     public void DrawMain(UiState ui)
     {
         ArgumentNullException.ThrowIfNull(ui);
         using var id = ImRaii.PushId("moonlitMain");
         Refresh();
+
+        using (Theme.PushText(Theme.Dusk))
+        {
+            ImGui.TextUnformatted(Strings.MoonlitSubtitle);
+        }
 
         var hide = ui.MoonlitHideObtained;
         if (ImGui.Checkbox(Strings.MoonlitHideObtainedLabel, ref hide))
@@ -272,17 +296,21 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         }
 
         ImGui.SameLine();
-        ImGui.SetNextItemWidth(UiMetrics.Px(150f));
-        var confidenceIndex = (int)confidenceFilter;
-        if (ImGui.Combo("##moonlitConfidence", ref confidenceIndex, ConfidenceFilterItems))
+        var hideStore = settings.MoonlitHideStoreResells;
+        if (ImGui.Checkbox(Strings.MoonlitHideStoreResellsLabel, ref hideStore))
         {
-            confidenceFilter = (ConfidenceFilter)confidenceIndex;
+            settings.MoonlitHideStoreResells = hideStore;
+            settings.Save(pluginInterface);
         }
 
         if (ImGui.IsItemHovered())
         {
-            UiMetrics.Tooltip(Strings.MoonlitConfidenceFilterTooltip);
+            UiMetrics.Tooltip(Strings.MoonlitHideStoreResellsTooltip);
         }
+
+        ImGui.SameLine();
+        ImGui.SetNextItemWidth(UiMetrics.Px(150f));
+        DrawConfidenceCombo();
 
         ImGui.SameLine();
         ImGui.SetNextItemWidth(UiMetrics.Px(220f));
@@ -348,6 +376,10 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         ImGui.TableSetupColumn(Strings.MoonlitColumnQuest, ImGuiTableColumnFlags.WidthStretch, 3f);
         ImGui.TableSetupColumn(Strings.MoonlitColumnState, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, glyphColumn);
         ImGui.TableSetupColumn(Strings.MoonlitColumnConfidence, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(80f));
+        // The glyph columns follow IconScale, which imgui.ini's saved widths do not track; re-asserted every frame
+        // (a no-op once they agree) so a changed IconScale never clips the moons.
+        ImGuiP.TableSetColumnWidth(0, glyphColumn);
+        ImGuiP.TableSetColumnWidth(4, glyphColumn);
         ImGui.TableHeadersRow();
 
         if (!clipperCreated)
@@ -368,6 +400,30 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         clipper.End();
     }
 
+    /// <summary>The confidence filter; its popup opens from the centre column (own font scale 1), so it scales itself.</summary>
+    private void DrawConfidenceCombo()
+    {
+        using var combo = ImRaii.Combo("##moonlitConfidence", ConfidenceFilterItems[(int)confidenceFilter]);
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.MoonlitConfidenceFilterTooltip);
+        }
+
+        if (!combo)
+        {
+            return;
+        }
+
+        UiMetrics.ApplyFontScale();
+        for (var i = 0; i < ConfidenceFilterItems.Length; i++)
+        {
+            if (ImGui.Selectable(ConfidenceFilterItems[i], i == (int)confidenceFilter))
+            {
+                confidenceFilter = (ConfidenceFilter)i;
+            }
+        }
+    }
+
     private void DrawKindRow(UiState ui, KindItem item, int index)
     {
         using var id = ImRaii.PushId(index);
@@ -386,6 +442,10 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         else
         {
             MoonGlyph.DrawFillingInline(item.Fraction, UiMetrics.InlineGlyphSize(ImGui.GetTextLineHeight()));
+            if (ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(item.TooltipText);
+            }
         }
 
         ImGui.TableNextColumn();
@@ -419,9 +479,10 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         ImGui.SameLine();
         using (Theme.PushText(Theme.Dusk, row.Hidden))
         {
-            if (ImGui.Selectable(row.Name, selectedRow == row.Index))
+            // The highlight follows the global selection, as in the Flight pane, so a quest picked from the detail
+            // pane's path, another pane or chat lights its Moonlit row too, and an override never wipes it.
+            if (ImGui.Selectable(row.Name, ui.SelectedRowId == row.Entry.QuestRowId))
             {
-                selectedRow = row.Index;
                 ui.SelectedRowId = row.Entry.QuestRowId;
             }
         }
@@ -440,6 +501,16 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             if (menu)
             {
                 DrawContextMenu(ui, row);
+            }
+        }
+
+        if (row.StoreResell)
+        {
+            ImGui.SameLine();
+            SmallDuskText(Strings.MoonlitStoreOnly);
+            if (ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(Strings.MoonlitStoreOnlyTooltip);
             }
         }
 
@@ -480,10 +551,10 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         MoonGlyph.DrawInline(state, UiMetrics.InlineGlyphSize(line));
         if (ImGui.IsItemHovered())
         {
-            UiMetrics.Tooltip(Strings.MoonlitStateName(state));
+            UiMetrics.StateTooltip(state, evaluation, row.Quest, session.Names, session.States);
         }
 
-        // Confidence badge with the source on hover.
+        // Confidence badge: what it means, with the source under it.
         ImGui.TableNextColumn();
         using (Theme.PushText(row.ConfidenceColor))
         {
@@ -492,22 +563,37 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 
         if (ImGui.IsItemHovered())
         {
-            UiMetrics.Tooltip(row.SourceText);
+            UiMetrics.Tooltip(row.ConfidenceTooltip, row.SourceText);
         }
     }
 
+    /// <summary>
+    /// The reward's icon with the blown-up reward tooltip on hover (the source line under it), or, for a kind without
+    /// sheet art, a faded veiled moon that says so: the Obtained column already shows whether the reward is owned.
+    /// </summary>
     private void DrawIcon(Row row, float size)
     {
-        if (row.Icon != 0)
+        if (row.Reward is { } reward)
         {
             var wrap = textures.GetFromGameIcon(new GameIconLookup(row.Icon)).GetWrapOrEmpty();
             ImGui.Image(wrap.Handle, new Vector2(size, size));
+            if (ImGui.IsItemHovered())
+            {
+                RewardTooltip.Draw(reward, links, textures, row.SourceText);
+            }
         }
         else
         {
-            MoonGlyph.DrawFillingInline(row.Obtained == true ? 1f : 0f, size);
+            MoonGlyph.DrawVeiledInline(size, NoIconAlpha);
+            if (ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(Strings.MoonlitNoIconTooltip);
+            }
         }
     }
+
+    /// <summary>Alpha of the veiled stand-in where an icon would go: present but clearly not a state.</summary>
+    private const float NoIconAlpha = 0.6f;
 
     private void DrawContextMenu(UiState ui, Row row)
     {
@@ -532,6 +618,18 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         }
     }
 
+    /// <summary>Small Dusk text vertically centred on the current line, occupying its own width; hoverable through the reserved item.</summary>
+    private static void SmallDuskText(string text)
+    {
+        var size = ImGui.GetFontSize() * SmallTextScale;
+        var extent = ImGui.CalcTextSize(text) * SmallTextScale;
+        var lineHeight = ImGui.GetTextLineHeight();
+        var pos = ImGui.GetCursorScreenPos();
+        pos.Y += MathF.Round((lineHeight - extent.Y) * 0.5f);
+        ImGui.GetWindowDrawList().AddText(ImGui.GetFont(), size, pos, Theme.DuskU32, text, 0f);
+        ImGui.Dummy(new Vector2(extent.X, lineHeight));
+    }
+
     /// <summary>A Dusk hairline through the middle of the last item's text (its own width, not the whole cell).</summary>
     private static void StrikeThrough(string text)
     {
@@ -543,8 +641,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     }
 
     /// <summary>Shows a quest in the Journal tab scoped to its genre (or the Unlisted bucket); also used by Wotsit picks.</summary>
-    internal static void Reveal(UiState ui, QuestRecord quest) =>
-        ui.Reveal(quest.RowId, quest.IsUnlisted ? QuestScope.VirtualUnlisted : QuestScope.Genre(quest.Journal.GenreId), quest.IsUnlisted);
+    internal static void Reveal(UiState ui, QuestRecord quest) => ui.Reveal(quest);
 
     /// <summary>Catalog, rows and obtained states, each only when its inputs changed.</summary>
     private void Refresh()
@@ -555,7 +652,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             BuildRows();
         }
 
-        if (obtainedVersion != session.Version || obtainedBuild != rowsBuild)
+        if (obtainedVersion != session.Version || obtainedBuild != rowsBuild || countsHideStore != settings.MoonlitHideStoreResells)
         {
             RefreshObtained();
         }
@@ -596,14 +693,22 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         }
 
         uniqueCount = all.Count;
+        storeCount = 0;
+        for (var i = 0; i < all.Count; i++)
+        {
+            if (built[i].StoreResell)
+            {
+                storeCount++;
+            }
+        }
+
         rows = built;
         rowsBuild = catalogBuild;
         rowsBundle = bundle;
-        selectedRow = -1;
         obtainedVersion = -1;
     }
 
-    /// <summary>Obtained state per row and the per-kind counts, once per session version.</summary>
+    /// <summary>Obtained state per row and the per-kind counts, once per session version (and per store toggle: hidden re-sells leave the counts).</summary>
     private void RefreshObtained()
     {
         var obtained = kindObtained;
@@ -612,11 +717,12 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         Array.Clear(obtained);
         Array.Clear(total);
         Array.Clear(unknown);
+        var hideStore = settings.MoonlitHideStoreResells;
 
         foreach (var row in rows)
         {
             row.SetObtained(unlocks.IsObtained(row.Entry));
-            if (row.Hidden)
+            if (row.Hidden || (hideStore && row.StoreResell))
             {
                 continue;
             }
@@ -666,13 +772,15 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         allItem.SetCounts(allObtained, allTotal, allUnknown);
         obtainedVersion = session.Version;
         obtainedBuild = rowsBuild;
+        countsHideStore = hideStore;
         visibleKey = default;
     }
 
     /// <summary>The filtered index array, rebuilt when the kind, the toggle, the filter text or the obtained states change.</summary>
     private void RefreshVisible(UiState ui)
     {
-        var key = new VisibleKey(rowsBuild, obtainedVersion, ui.MoonlitKind, ui.MoonlitHideObtained, confidenceFilter, filterText);
+        var hideStore = settings.MoonlitHideStoreResells;
+        var key = new VisibleKey(rowsBuild, obtainedVersion, ui.MoonlitKind, ui.MoonlitHideObtained, hideStore, confidenceFilter, filterText);
         if (key == visibleKey)
         {
             return;
@@ -695,6 +803,11 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             }
 
             if (ui.MoonlitHideObtained && row.Obtained == true)
+            {
+                continue;
+            }
+
+            if (hideStore && row.StoreResell)
             {
                 continue;
             }
@@ -725,10 +838,11 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         }
 
         visibleCount = count;
-        visibleSummary = listed.ToString(CultureInfo.InvariantCulture) + " / " + uniqueCount.ToString(CultureInfo.InvariantCulture);
+        var denominator = hideStore ? uniqueCount - storeCount : uniqueCount;
+        visibleSummary = listed.ToString(CultureInfo.InvariantCulture) + " / " + denominator.ToString(CultureInfo.InvariantCulture);
     }
 
-    /// <summary>Whether a row passes the confidence combo: a confidence match, or (Unknown obtained) an unreadable obtained state.</summary>
+    /// <summary>Whether a row passes the confidence combo: a confidence match, or (Obtained not checked) an unreadable obtained state.</summary>
     internal static bool PassesConfidence(ConfidenceFilter filter, Confidence confidence, bool? obtained) => filter switch
     {
         ConfidenceFilter.Any => true,
@@ -765,6 +879,15 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         _ => confidence.ToString(),
     };
 
+    private static string ConfidenceTooltip(Confidence confidence) => confidence switch
+    {
+        Confidence.Static => Strings.MoonlitBadgeStatic,
+        Confidence.Community => Strings.MoonlitBadgeCommunity,
+        Confidence.Curated => Strings.MoonlitBadgeCurated,
+        Confidence.UserOverride => Strings.MoonlitBadgeUser,
+        _ => Strings.MoonlitSourceUnknown,
+    };
+
     private static Vector4 ConfidenceColor(Confidence confidence) => confidence switch
     {
         Confidence.Static => Theme.Silver,
@@ -787,9 +910,13 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         /// <summary>True when no entry of the kind is readable, so the row shows a veiled moon instead of a fraction.</summary>
         public bool AllUnknown { get; private set; }
 
+        /// <summary>The filling moon's hover text: the count with what it counts.</summary>
+        public string TooltipText { get; private set; } = string.Empty;
+
         public void SetCounts(int obtained, int total, int unknown)
         {
             CountText = obtained.ToString(CultureInfo.InvariantCulture) + "/" + total.ToString(CultureInfo.InvariantCulture);
+            TooltipText = string.Format(CultureInfo.CurrentCulture, Strings.MoonlitKindCountTooltipFormat, CountText);
             Fraction = total > 0 ? (float)obtained / total : 0f;
             AllUnknown = total > 0 && unknown == total;
         }
@@ -816,7 +943,39 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             QuestLabel = QuestName + "##q";
             ConfidenceLabel = hidden ? Strings.MoonlitConfidenceUser : MoonlitPane.ConfidenceLabel(entry.Confidence);
             ConfidenceColor = hidden ? Theme.Eclipse : MoonlitPane.ConfidenceColor(entry.Confidence);
+            ConfidenceTooltip = hidden ? Strings.MoonlitBadgeHidden : MoonlitPane.ConfidenceTooltip(entry.Confidence);
             SourceText = string.IsNullOrWhiteSpace(entry.Source) ? Strings.MoonlitSourceUnknown : entry.Source;
+            StoreResell = entry.SoldOnOnlineStore;
+            Reward = icon == 0 ? null : RewardFor(quest, entry, icon, Name);
+        }
+
+        /// <summary>
+        /// The reward the icon tooltip describes: the quest's own reward entry (same item, else same kind and id; what
+        /// <see cref="MoonlitIconResolver.FromQuestRewards"/> matched), or one made from the catalog entry when the
+        /// icon came from the sheets instead.
+        /// </summary>
+        private static RewardRef RewardFor(QuestRecord? quest, UniqueRewardEntry entry, uint icon, string name)
+        {
+            if (quest is not null)
+            {
+                foreach (var reward in quest.Rewards)
+                {
+                    if (entry.ItemId != 0 && reward.ItemId == entry.ItemId && reward.Icon == icon)
+                    {
+                        return reward;
+                    }
+                }
+
+                foreach (var reward in quest.Rewards)
+                {
+                    if (entry.RewardId != 0 && reward.Kind == entry.Kind && reward.Id == entry.RewardId && reward.Icon == icon)
+                    {
+                        return reward;
+                    }
+                }
+            }
+
+            return new RewardRef(entry.Kind, entry.RewardId, entry.ItemId, 1, name, icon);
         }
 
         public int Index { get; }
@@ -830,7 +989,14 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         public string QuestLabel { get; }
         public string ConfidenceLabel { get; }
         public Vector4 ConfidenceColor { get; }
+        public string ConfidenceTooltip { get; }
         public string SourceText { get; }
+
+        /// <summary>The FFXIV Online Store also sells this reward (entry OtherSources carries OnlineStore).</summary>
+        public bool StoreResell { get; }
+
+        /// <summary>What the icon's tooltip describes; null when the row has no icon (the veiled stand-in is drawn instead).</summary>
+        public RewardRef? Reward { get; }
 
         public bool? Obtained { get; private set; }
         public QuestState ObtainedGlyph { get; private set; } = QuestState.Unknown;
@@ -853,7 +1019,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             || KindName.Contains(filter, StringComparison.OrdinalIgnoreCase);
     }
 
-    private readonly record struct VisibleKey(int Build, int Version, RewardKind? Kind, bool HideObtained, ConfidenceFilter Confidence, string Filter);
+    private readonly record struct VisibleKey(int Build, int Version, RewardKind? Kind, bool HideObtained, bool HideStore, ConfidenceFilter Confidence, string Filter);
 }
 
 /// <summary>

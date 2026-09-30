@@ -55,6 +55,22 @@ public class CharacterDiffTests
     }
 
     [Fact]
+    public void Neither_done_skips_a_quest_out_of_season_for_both()
+    {
+        var a = Done(1);
+        var b = Done(1);
+        var seasonal = new RequirementResult(new SeasonalRequirement(7, false), false, "seasonal event not active");
+        a[14] = new QuestEvaluation(QuestState.Blocked, [seasonal], seasonal, null, null);
+        b[14] = new QuestEvaluation(QuestState.Blocked, [seasonal], seasonal, null, null);
+        // Out of season for one side only stays pending: the other could still do it.
+        a[11] = new QuestEvaluation(QuestState.Blocked, [seasonal], seasonal, null, null);
+
+        var diff = CharacterDiff.Compute(Catalog, a, b, Ctx);
+
+        Assert.Equal(7, diff.NeitherDone); // 2, 3, 4, 10, 11, 12, 13; not 14
+    }
+
+    [Fact]
     public void Value_adds_base_main_scenario_feature_and_two_per_unique_reward()
     {
         Assert.Equal(1, CharacterDiff.ValueOf(10, Ctx));
@@ -68,8 +84,8 @@ public class CharacterDiffTests
     {
         Assert.Equal("Side quest", CharacterDiff.ReasonOf(10, Ctx));
         Assert.Equal("Main scenario", CharacterDiff.ReasonOf(1, Ctx));
-        Assert.Equal("Feature quest", CharacterDiff.ReasonOf(12, Ctx));
-        Assert.Equal("Feature quest · 2 unique rewards", CharacterDiff.ReasonOf(13, Ctx));
+        Assert.Equal("Unlock quest", CharacterDiff.ReasonOf(12, Ctx));
+        Assert.Equal("Unlock quest · 2 unique rewards", CharacterDiff.ReasonOf(13, Ctx));
 
         var oneReward = new DiffContext(new HashSet<uint>(), _ => 1, _ => true);
         Assert.Equal("Main scenario · 1 unique reward", CharacterDiff.ReasonOf(10, oneReward));

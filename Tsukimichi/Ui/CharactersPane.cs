@@ -86,7 +86,7 @@ public sealed class CharactersPane
     // Snapshot is null when the file could not be read at that capture time; the failure is cached too so an
     // unreadable file is not re-read on every session version bump.
     private readonly Dictionary<ulong, (DateTime Taken, CharacterSnapshot? Snapshot)> snapshotCache = [];
-    private readonly Dictionary<ulong, QuestEvaluation?> accountCache = [];
+    private readonly Dictionary<ulong, (QuestEvaluation? Evaluation, string Reason)> accountCache = [];
     private uint accountRowId;
     private int accountVersion = -1;
 
@@ -133,6 +133,12 @@ public sealed class CharactersPane
     /// values. Null falls back to the shipped data and curated files without the user's overrides.
     /// </summary>
     public Func<UniqueRewardCatalog>? UniqueRewards { get; set; }
+
+    /// <summary>
+    /// The query runner that owns the live pinned set: the dashboard's Pinned section reads its pins in order and
+    /// rebuilds when its pins version moves, instead of re-reading <c>user/pins.json</c>. Null hides the section.
+    /// </summary>
+    public QueryRunner? Pins { get; set; }
 
     /// <summary>Left column: stored characters, newest capture first; selecting one views it.</summary>
     public void DrawLeft(UiState ui)
@@ -208,7 +214,7 @@ public sealed class CharactersPane
                 UiMetrics.Tooltip(Strings.MsqClickHint);
                 if (ImGui.IsItemClicked())
                 {
-                    ui.Reveal(msqQuest.RowId, msqQuest.IsUnlisted ? QuestScope.VirtualUnlisted : QuestScope.Genre(msqQuest.Journal.GenreId), msqQuest.IsUnlisted);
+                    ui.Reveal(msqQuest);
                 }
             }
         }
@@ -274,6 +280,11 @@ public sealed class CharactersPane
             ImGui.TableNextRow();
             ImGui.TableNextColumn();
             MoonGlyph.DrawFillingInline(row.Fraction, UiMetrics.InlineGlyphSize(line));
+            if (ImGui.IsItemHovered())
+            {
+                FillingMoonTooltip(row.Count, row.Percent);
+            }
+
             ImGui.TableNextColumn();
             if (row.Overall)
             {
@@ -296,7 +307,7 @@ public sealed class CharactersPane
 
     /// <summary>
     /// Job quests (V2-11): one row per leveled job with its icon, level, a filling moon over its ladder and the next
-    /// quest ("Lv N" in Moon when it can be taken now, "at Lv N" in Dusk otherwise), then one row per role the
+    /// quest ("Lv N" in Moon when it can be taken now, its decisive blocker in Dusk otherwise), then one row per role the
     /// character has a job in. The next quest's name reveals it in the Journal.
     /// </summary>
     private void DrawJobQuests(UiState ui, Dashboard d)
@@ -330,7 +341,7 @@ public sealed class CharactersPane
             using var rowId = ImRaii.PushId(i);
             ImGui.TableNextRow();
             ImGui.TableNextColumn();
-            DrawJobIcon(row.IconId, iconSize);
+            DrawJobIcon(row.IconId, iconSize, row.Name, row.Level);
             ImGui.TableNextColumn();
             if (row.IsRole)
             {
@@ -348,6 +359,11 @@ public sealed class CharactersPane
             ImGui.TextUnformatted(row.Level);
             ImGui.TableNextColumn();
             MoonGlyph.DrawFillingInline(row.Fraction, UiMetrics.InlineGlyphSize(line));
+            if (ImGui.IsItemHovered())
+            {
+                FillingMoonTooltip(row.Count);
+            }
+
             ImGui.TableNextColumn();
             ImGui.TextUnformatted(row.Count);
             ImGui.TableNextColumn();
@@ -407,6 +423,11 @@ public sealed class CharactersPane
             ImGui.TableNextRow();
             ImGui.TableNextColumn();
             MoonGlyph.DrawFillingInline(row.Fraction, UiMetrics.InlineGlyphSize(line));
+            if (ImGui.IsItemHovered())
+            {
+                FillingMoonTooltip(row.Count);
+            }
+
             ImGui.TableNextColumn();
             ImGui.TextUnformatted(row.Name);
             ImGui.TableNextColumn();
@@ -483,6 +504,10 @@ public sealed class CharactersPane
             else
             {
                 MoonGlyph.DrawFillingInline(row.Fraction, UiMetrics.InlineGlyphSize(line));
+                if (ImGui.IsItemHovered())
+                {
+                    FillingMoonTooltip(row.Count);
+                }
             }
 
             ImGui.TableNextColumn();
@@ -511,7 +536,7 @@ public sealed class CharactersPane
         var line = ImGui.GetTextLineHeight();
         ImGui.TableSetupColumn("##state", ImGuiTableColumnFlags.WidthFixed, line * 1.4f);
         ImGui.TableSetupColumn(Strings.CharactersColumnQuest, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(300f));
-        ImGui.TableSetupColumn(Strings.CharactersColumnNextStep, ImGuiTableColumnFlags.WidthStretch);
+        ImGui.TableSetupColumn(Strings.CharactersColumnStatus, ImGuiTableColumnFlags.WidthStretch);
 
         for (var i = 0; i < d.Pinned.Length; i++)
         {
@@ -522,7 +547,7 @@ public sealed class CharactersPane
             MoonGlyph.DrawInline(row.State, UiMetrics.InlineGlyphSize(line));
             if (ImGui.IsItemHovered())
             {
-                UiMetrics.Tooltip(Strings.MoonlitStateName(row.State));
+                UiMetrics.Tooltip(Strings.StateTooltip(row.State, row.Quest));
             }
 
             ImGui.TableNextColumn();
@@ -632,7 +657,7 @@ public sealed class CharactersPane
 
             ImGui.TableNextRow();
             ImGui.TableNextColumn();
-            DrawJobIcon(row.IconId, iconSize);
+            DrawJobIcon(row.IconId, iconSize, row.Name, row.Level);
             ImGui.TableNextColumn();
             ImGui.TextUnformatted(row.Name);
             if (ImGui.IsItemHovered())
@@ -645,16 +670,53 @@ public sealed class CharactersPane
         }
     }
 
-    private void DrawJobIcon(uint iconId, Vector2 size)
+    /// <summary>The job's icon (a blank of the same size without one), naming the job and its level on hover.</summary>
+    private void DrawJobIcon(uint iconId, Vector2 size, string name, string level)
     {
         if (textures is null || iconId == 0)
         {
             ImGui.Dummy(size);
-            return;
+        }
+        else
+        {
+            var wrap = textures.GetFromGameIcon(new GameIconLookup(iconId)).GetWrapOrEmpty();
+            ImGui.Image(wrap.Handle, size);
         }
 
-        var wrap = textures.GetFromGameIcon(new GameIconLookup(iconId)).GetWrapOrEmpty();
-        ImGui.Image(wrap.Handle, size);
+        if (ImGui.IsItemHovered())
+        {
+            JobTooltip(name, level);
+        }
+    }
+
+    /// <summary>Job icon tooltip: the job's name, then "Level N" under it; a role row has no level and shows the name alone.</summary>
+    private static void JobTooltip(string name, string level)
+    {
+        using var tooltip = ImRaii.Tooltip();
+        UiMetrics.ApplyFontScale();
+        ImGui.TextUnformatted(name);
+        if (level.Length > 0)
+        {
+            ImGui.TextDisabled(Strings.CharactersColumnLevel);
+            ImGui.SameLine();
+            ImGui.TextDisabled(level);
+        }
+    }
+
+    /// <summary>Filling moon tooltip: what the moon shows, then the row's done/total (and percent where the row has one).</summary>
+    private static void FillingMoonTooltip(string count, string? percent = null)
+    {
+        using var tooltip = ImRaii.Tooltip();
+        UiMetrics.ApplyFontScale();
+        ImGui.TextUnformatted(Strings.FillingMoonTooltip);
+        ImGui.TextDisabled(count);
+        if (percent is { Length: > 0 })
+        {
+            ImGui.SameLine();
+            ImGui.TextDisabled(Strings.StateReasonSeparator);
+            ImGui.SameLine();
+            ImGui.TextDisabled(percent);
+        }
     }
 
     private static void DrawGrandCompanyAndTribes(Dashboard d)
@@ -836,6 +898,8 @@ public sealed class CharactersPane
             return;
         }
 
+        // The popup opens from the centre column (own font scale 1), so it scales itself.
+        UiMetrics.ApplyFontScale();
         for (var i = 0; i < c.Candidates.Length; i++)
         {
             var candidate = c.Candidates[i];
@@ -938,7 +1002,7 @@ public sealed class CharactersPane
             MoonGlyph.DrawInline(row.State, UiMetrics.InlineGlyphSize(line));
             if (ImGui.IsItemHovered())
             {
-                UiMetrics.Tooltip(row.StateTooltip);
+                UiMetrics.Tooltip(Strings.StateTooltip(row.State, row.Quest), row.StateTooltip);
             }
 
             ImGui.TableNextColumn();
@@ -1098,6 +1162,7 @@ public sealed class CharactersPane
         string lacks,
         CatalogBundle bundle)
     {
+        var names = bundle.BlockerNames();
         var header = string.Format(CultureInfo.CurrentCulture, Strings.DiffOnlyFormat, has, lacks) + " · " + Strings.DiffQuestCount(entries.Count);
         var rows = new List<DiffRow>(Math.Min(entries.Count, MaxDiffRows));
         var clipboard = new StringBuilder();
@@ -1124,7 +1189,7 @@ public sealed class CharactersPane
                 quest,
                 quest.Name,
                 state,
-                lacks + ": " + Strings.MoonlitStateName(state),
+                lacks + ": " + BlockerText.StatusText(evaluation, quest, names, lackingStates),
                 entry.Value.ToString(CultureInfo.InvariantCulture),
                 entry.Reason));
         }
@@ -1222,13 +1287,13 @@ public sealed class CharactersPane
         var line = ImGui.GetTextLineHeight();
         ImGui.TableSetupColumn(Strings.CharactersColumnCharacter, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(200f));
         ImGui.TableSetupColumn(Strings.CharactersColumnState, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(170f));
-        ImGui.TableSetupColumn(Strings.CharactersColumnNextStep, ImGuiTableColumnFlags.WidthStretch);
+        ImGui.TableSetupColumn(Strings.CharactersColumnStatus, ImGuiTableColumnFlags.WidthStretch);
         ImGui.TableHeadersRow();
 
         for (var i = 0; i < items.Length; i++)
         {
             var item = items[i];
-            var evaluation = EvaluateFor(item, quest, bundle);
+            var (evaluation, reason) = EvaluateFor(item, quest, bundle);
 
             ImGui.TableNextRow();
             ImGui.TableNextColumn();
@@ -1238,45 +1303,62 @@ public sealed class CharactersPane
             if (evaluation is null)
             {
                 MoonGlyph.DrawInline(QuestState.Unknown, UiMetrics.InlineGlyphSize(line));
+                if (ImGui.IsItemHovered())
+                {
+                    UiMetrics.Tooltip(Strings.StateTooltip(QuestState.Unknown), Strings.CharactersSnapshotUnreadable);
+                }
+
                 ImGui.SameLine();
                 ImGui.TextDisabled(Strings.CharactersSnapshotUnreadable);
             }
             else
             {
                 MoonGlyph.DrawInline(evaluation.State, UiMetrics.InlineGlyphSize(line));
+                if (ImGui.IsItemHovered())
+                {
+                    // The viewed character has the session's state map (the same line Flight and Moonlit show); another
+                    // character's evaluation has none, so its blocker line reads the done ids it carries.
+                    UiMetrics.StateTooltip(evaluation.State, evaluation, quest, session.Names, item.ContentId == session.ViewedContentId ? session.States : null);
+                }
+
                 ImGui.SameLine();
                 using (Theme.PushText(Theme.StateColor(evaluation.State)))
                 {
-                    ImGui.TextUnformatted(Strings.MoonlitStateName(evaluation.State));
+                    ImGui.TextUnformatted(Strings.StateName(evaluation.State, quest));
                 }
             }
 
             ImGui.TableNextColumn();
-            if (evaluation?.NextStep is { } next)
+            if (reason.Length > 0)
             {
-                ImGui.TextUnformatted(next.Detail);
+                // The state column beside it already names the state; this is the reason alone (blocker or step).
+                ImGui.TextUnformatted(reason);
             }
         }
     }
 
-    private static void Reveal(UiState ui, QuestRecord quest) =>
-        ui.Reveal(quest.RowId, quest.IsUnlisted ? QuestScope.VirtualUnlisted : QuestScope.Genre(quest.Journal.GenreId), quest.IsUnlisted);
+    private static void Reveal(UiState ui, QuestRecord quest) => ui.Reveal(quest);
 
-    private QuestEvaluation? EvaluateFor(CharacterItem item, QuestRecord quest, CatalogBundle bundle)
+    /// <summary>
+    /// One character's evaluation of the quest and its reason line, memoized in <see cref="accountCache"/> (cleared
+    /// when the quest or the session version changes): the viewed character's comes from the session, the others are
+    /// resolved offline from their stored snapshot. The reason is composed here, not per frame.
+    /// </summary>
+    private (QuestEvaluation? Evaluation, string Reason) EvaluateFor(CharacterItem item, QuestRecord quest, CatalogBundle bundle)
     {
-        if (item.ContentId == session.ViewedContentId)
-        {
-            return session.States.TryGetValue(quest.RowId, out var viewed) ? viewed : null;
-        }
-
         if (accountCache.TryGetValue(item.ContentId, out var cached))
         {
             return cached;
         }
 
         QuestEvaluation? evaluation = null;
-        var snapshot = SnapshotFor(item);
-        if (snapshot is not null)
+        IReadOnlyDictionary<uint, QuestEvaluation>? states = null;
+        if (item.ContentId == session.ViewedContentId)
+        {
+            states = session.States;
+            states.TryGetValue(quest.RowId, out evaluation);
+        }
+        else if (SnapshotFor(item) is { } snapshot)
         {
             try
             {
@@ -1288,8 +1370,10 @@ public sealed class CharactersPane
             }
         }
 
-        accountCache[item.ContentId] = evaluation;
-        return evaluation;
+        var reason = evaluation is null ? string.Empty : BlockerText.Reason(evaluation, quest, session.Names, states);
+        var entry = (evaluation, reason);
+        accountCache[item.ContentId] = entry;
+        return entry;
     }
 
     /// <summary>The stored snapshot of a character (or null when unreadable), reloaded only when its capture time changed.</summary>
@@ -1394,7 +1478,7 @@ public sealed class CharactersPane
     {
         var bundle = session.Bundle;
         var minute = DateTime.UtcNow.Ticks / TimeSpan.TicksPerMinute;
-        var key = new DashboardKey(session.Version, snapshot.ContentId, session.IsLive, minute, MoonlitCounts is not null);
+        var key = new DashboardKey(session.Version, snapshot.ContentId, session.IsLive, minute, MoonlitCounts is not null, Pins?.PinsVersion ?? -1);
         if (dashboard is { } current && key == dashboardKey && ReferenceEquals(current.Snapshot, snapshot) && ReferenceEquals(current.Bundle, bundle))
         {
             return current;
@@ -1564,9 +1648,25 @@ public sealed class CharactersPane
     {
         var count = string.Format(CultureInfo.InvariantCulture, Strings.JobsCountFormat, progress.Done, progress.Total);
         var next = progress.NextRowId is { } nextRowId ? derivedBundle?.Catalog.GetByRowId(nextRowId) : null;
-        var text = next is null
-            ? Strings.JobsAllDone
-            : string.Format(CultureInfo.CurrentCulture, progress.IsReadyNow ? Strings.JobsNextReadyFormat : Strings.JobsNextLaterFormat, next.Name, progress.NextLevel);
+        string text;
+        if (next is null)
+        {
+            text = Strings.JobsAllDone;
+        }
+        else if (progress.IsReadyNow)
+        {
+            text = string.Format(CultureInfo.CurrentCulture, Strings.JobsNextReadyFormat, next.Name, next.DisplayLevel);
+        }
+        else
+        {
+            // The decisive blocker ("after MSQ: The Vault", "Lv 80 on DRG") rather than only the level, so a job quest
+            // gated by the main scenario says so; the level is the fallback when nothing else is known.
+            var blocker = session.States.TryGetValue(next.RowId, out var evaluation) ? BlockerText.For(evaluation, next, session.Names, session.States) : string.Empty;
+            text = blocker.Length > 0
+                ? string.Format(CultureInfo.CurrentCulture, Strings.JobsNextBlockedFormat, next.Name, blocker)
+                : string.Format(CultureInfo.CurrentCulture, Strings.JobsNextLaterFormat, next.Name, next.DisplayLevel);
+        }
+
         return new LadderRow(iconId, name, level, isRole, progress.Fraction, count, next, text, progress.IsReadyNow);
     }
 
@@ -1753,27 +1853,19 @@ public sealed class CharactersPane
         return rows.ToArray();
     }
 
-    /// <summary>The viewed character's pins from <c>user/pins.json</c>, in the file's order, with the current state and next step.</summary>
+    /// <summary>
+    /// The viewed character's pins from the runner (the order they were pinned), with the current state and next
+    /// step. The runner's pins follow the viewed character, so a snapshot other than the viewed one has none.
+    /// </summary>
     private PinnedRow[] BuildPinned(CharacterSnapshot snapshot, CatalogBundle? bundle)
     {
-        var warnings = new List<string>();
-        Dictionary<ulong, List<uint>> pins;
-        try
+        if (Pins is not { } runner || session.ViewedContentId != snapshot.ContentId)
         {
-            pins = PinsFile.Load(paths.PinsFile, warnings);
-        }
-        catch (Exception ex)
-        {
-            log.Warning(ex, "Pins could not be read for the dashboard");
             return [];
         }
 
-        foreach (var warning in warnings)
-        {
-            log.Warning("Pins: {Warning}", warning);
-        }
-
-        if (!pins.TryGetValue(snapshot.ContentId, out var list) || list.Count == 0)
+        var list = runner.PinnedInOrder;
+        if (list.Count == 0)
         {
             return [];
         }
@@ -1792,7 +1884,7 @@ public sealed class CharactersPane
                 quest,
                 quest?.Name ?? Strings.MoonlitQuestPrefix + rowId.ToString(CultureInfo.InvariantCulture),
                 evaluation?.State ?? QuestState.Unknown,
-                evaluation?.NextStep?.Detail ?? string.Empty));
+                quest is null ? string.Empty : BlockerText.StatusText(evaluation, quest, session.Names, session.States)));
         }
 
         return rows.ToArray();
@@ -2011,7 +2103,7 @@ public sealed class CharactersPane
 
     private sealed record CharacterItem(ulong ContentId, string Name, DateTime TakenUtc, string Label, string Detail);
 
-    private readonly record struct DashboardKey(int Version, ulong ContentId, bool Live, long Minute, bool HasMoonlit);
+    private readonly record struct DashboardKey(int Version, ulong ContentId, bool Live, long Minute, bool HasMoonlit, int PinsVersion);
 
     private sealed record SectionRow(string Name, string Count, string Percent, float Fraction, bool Overall)
     {

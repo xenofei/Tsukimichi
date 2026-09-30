@@ -1,72 +1,95 @@
-# Tsukimichi
+# Tsukimichi — FFXIV quest tracker (Dalamud)
 
-Status: V1 feature-complete, awaiting first in-game smoke test. Builds clean against Dalamud API 15 with 356 passing tests.
+Every FINAL FANTASY XIV quest, what blocks it, and which rewards only a quest can give. A [Dalamud](https://github.com/goatcorp/Dalamud) plugin, installed from a custom repository.
 
-Tsukimichi (月道) reads as "the moon's path": *tsuki* (moon) from the character's family name Tsukikage (月影, moon-shadow) and *michi* (path). The plugin is the road you walk by moonlight: every FINAL FANTASY XIV quest is a step on the path, and the moon fills as you complete it. It catalogs every quest by journal type, shows which are completed or available right now with a breakdown of each unfulfilled requirement, gathers quests with unique rewards under Moonlit, and keeps a snapshot per character so the whole account stays in view.
+Tsukimichi (月道, "the moon's path") takes *tsuki* from the author's character, Michiru Tsukikage (月影, moon-shadow), and *michi*, path. Every quest is a step on the road and the moon fills as you walk it.
 
-## What it does
+- Source: this repository, [MIT licensed](LICENSE).
+- Releases: [GitHub Releases](https://github.com/xenofei/Tsukimichi/releases), built by GitHub Actions from the tagged commit.
+- Issues: [GitHub Issues](https://github.com/xenofei/Tsukimichi/issues).
 
-- **Journal** tab: the real journal hierarchy (Section, Category, Genre) with completion counts and a filling moon per node; a sortable, searchable quest table; a detail pane with every requirement marked met or not and the exact gap ("needs Sworn, you are Trusted"), rewards, the prerequisite path, and the quest giver with map-flag and journal buttons.
-- **Filters**: hide completed, available now (both global with per-category overrides), state, expansion, level, job, reward kind, repeatable, seasonal, pinned, unlisted. Active filters show as chips; an empty result explains which filters caused it.
-- **Moonlit** tab: rewards obtainable only through a quest (emotes, mounts, minions, orchestrion, cards, gear, unlocks and more) with obtained state, the quest state, and a confidence badge showing whether the claim comes from game data or a curated list.
-- **Characters** tab: every character snapshotted on this account, with an offline account-wide view of any quest's state per character, JSON export, and forget.
-- **Quest states** are moon phases: full = completed, first quarter = ready, waxing gibbous = accepted, new = blocked, waning gibbous = repeatable done this cycle, eclipsed = foreclosed, veiled = unknown.
-
-Commands: `/tsukimichi` toggles the window, `/tsukimichi <text>` searches and prints quest links to chat, `/tsukimichi config`, `/tsukimichi glyphs`.
-
-## Install (custom repository)
+## Install
 
 1. In game, type `/xlsettings`, open the **Experimental** tab, and under **Custom Plugin Repositories** paste:
    ```
    https://raw.githubusercontent.com/xenofei/Tsukimichi/main/pluginmaster.json
    ```
-2. Click the **+** button, then **Save and Close**.
+2. Click **+**, then **Save and Close**.
 3. Type `/xlplugins`, search for **Tsukimichi**, and click **Install**.
+4. `/tsukimichi` (or `/tsuki`) opens the window. A short tour is offered on first run.
 
-Updates arrive through the plugin installer like any other plugin. The repository index is `pluginmaster.json` at the root of this repo; each release's `latest.zip` is attached to the matching GitHub Release.
+Updates arrive through the plugin installer like any other plugin.
 
-## Layout
+## What it does
 
-| Project | Purpose |
+- **Journal tab**: the game's own journal hierarchy (section, category, genre) with done/total counts and a filling moon per node; a sortable, searchable quest table; a detail pane with every requirement marked met or not and the exact gap ("needs Sworn, you are Trusted"), the rewards, the prerequisite path as a trail of moons, what the quest unlocks next, and the giver with map-flag and journal buttons. The Unlock quests node gathers every quest that opens a duty, system, job, action or trait.
+- **Eight quest states as moon glyphs**, one name each everywhere: Ready (first quarter, glowing), Ready on another job, In journal (waxing gibbous), Blocked (new moon, always with what blocks it), Done today / Done this week (repeatables), Completed (full), Locked out (for good, such as a Grand Company choice not taken) and Not checked. The glyphs differ in shape, not only colour; Help › Moon phases is the legend and `docs/glossary.md` the reference.
+- **Filters and presets**: hide completed, available now (both with per-category overrides), state, expansion, level, job, reward kind, repeatable, seasonal, pinned, unlisted; presets for feature quests, quests around your level and stalled quests. Active filters show as chips; an empty table says which filters emptied it.
+- **Moonlit tab**: unique quest rewards, the ones that exist nowhere else (emotes, mounts, minions, orchestrion rolls, Triple Triad cards, gear, duties, systems and more), with whether you already own each one, the quest's state and a confidence badge saying whether the claim comes from the game data or a curated list. Your own verdicts (mark unique, hide as not unique) are kept and can be restored.
+- **Characters tab**: a snapshot of every character on the account with a dashboard (completion by section, Moonlit progress, pins, recent activity, job quest ladders, story chains, Grand Company and allied society standings), the main scenario position, an account-wide view of any quest's state per character, **Compare with** (what one character has done that another has not, ranked by unlock value), JSON export and forget.
+- **Flight tab**: every flying zone with its aether current quests, attunement, the quest that blocks each, and Flag or Teleport to the giver.
+- **Nearby quests** (`/tsuki nearby`): the quests you can start in the current zone, with a "☾ N" count in the server info bar.
+- **Todo overlay** (`/tsuki todo`): a small always-visible panel with your pins, the feature quests you can start here, the next main scenario quest and the current job's next job and role quest.
+- **Item hints**: hovering an item that is a quest-exclusive reward shows which quest gives it and whether it is done; right-clicking such an item in the inventory adds "Tsukimichi: quest reward" to its context menu.
+- **Chains and ladders**: Hildibrand, the relic lines, the raid stories and every job and role quest ladder with "N of M" and the next quest.
+- **Notices**: an optional chat line when a pinned or feature quest becomes available, and when a level-up opens the next job or role quest.
+- **Integrations**: every quest and Moonlit reward is registered with the Wotsit search plugin; Teleport to the giver goes through the Lifestream plugin when it is installed. Both are optional.
+- **Help, tour and settings** from the toolbar: a searchable help window, an interactive tour that points at each part of the window, UI and icon scale, reduce motion.
+
+## Commands
+
+| Command | What it does |
 |---|---|
-| `Tsukimichi.Core` | Domain model, state evaluation, query, storage, unique-reward catalog. net10.0, no Dalamud reference. |
-| `Tsukimichi.GameData` | Lumina mapping from game sheets to the Core model. Shared by the plugin and the tests. |
-| `Tsukimichi` | The Dalamud plugin (`Dalamud.NET.Sdk/15.0.0`): runtime state reader, poller, snapshots, ImGui UI. |
-| `Tsukimichi.DataGen` | Console tool that turns local game files into `Tsukimichi/Data/unique_quests.json`. |
-| `Tsukimichi.Tests` | xunit tests for Core and GameData; data-driven tests run when `TSUKIMICHI_GAME_PATH` points at the game's `sqpack` folder. |
-| `assets/` | Original icon (SVG source, Pillow renderer, PNG). |
-| `docs/` | Feasibility report, feature panel, design spec, implementation plan, smoke checklists, data reports. |
+| `/tsukimichi` | open or close the main window |
+| `/tsuki` | the same, shorter; every subcommand works with either |
+| `/tsuki search <text>` | search and print matching quests to chat as links (`/tsuki <text>` does the same) |
+| `/tsuki zone` | chat links for the quests you can start in the current zone, by level |
+| `/tsuki which` | every quest the targeted NPC hands out, with its state |
+| `/tsuki why [quest name]` | why the selected or named quest is not offered: its state and blocker, one line per requirement, and the curated note where the game is known to skip a step; a Ready quest says whom to talk to, with a map link |
+| `/tsuki nearby` | open or close the Nearby quests window |
+| `/tsuki todo` | show or hide the todo overlay |
+| `/tsuki config` or `/tsuki settings` | open Settings |
+| `/tsuki help` | open the help window |
+| `/tsuki glyphs` | the glyph sheet: every moon at every size |
 
-## Build
+## What it hooks, and what it never does
 
-Requires the .NET 10 SDK and a Dalamud dev install (XIVLauncher puts it at `%AppData%\XIVLauncher\addon\Hooks\dev`; the SDK resolves it automatically, or set `DALAMUD_HOME`).
+Tsukimichi reads the game's quest sheets from your installed client and your character's own quest flags, journal, levels and standings through Dalamud. Beyond ordinary Dalamud windows it touches four places in the game UI:
 
-```
-dotnet build Tsukimichi.sln -c Debug
-dotnet test Tsukimichi.sln -c Debug
-```
+- the **item tooltip**: it reads which item is hovered and draws its own small panel beside the game's tooltip (Settings › Item hints);
+- the **item context menu**: it adds a "Tsukimichi: quest reward" entry (Settings › Item hints);
+- the **target bar's menu on an NPC**: it adds a "Tsukimichi: quests here (N)" entry on a quest-giving NPC that opens the Journal on that NPC's quests (Settings › Integrations); it reads only the NPC's kind and id, never a player's, and stores nothing;
+- the **server info bar**: a "☾ N" entry with the count of quests you can start here (Nearby quests › cog).
 
-Build through the solution. The plugin lands in `Tsukimichi\bin\x64\Debug\` (`Tsukimichi.dll`, the generated `Tsukimichi.json` manifest, `Tsukimichi.Core.dll`, `Tsukimichi.GameData.dll`, `icon.png`, `Data\`). A Release build additionally produces `Tsukimichi\bin\Release\Tsukimichi\latest.zip` via DalamudPackager.
+Everything else is a Dalamud window. It also talks to two other plugins over Dalamud IPC when they are present: Wotsit (to register searchable entries) and Lifestream (to teleport when you click Teleport).
 
-## Load it in game
+It never automates anything: it does not move your character, accept or turn in quests, skip dialogue or press anything for you. Teleport to the giver is a button you click, handed to Lifestream. Map flags, journal pages and chat links use the game's own functions.
 
-1. Dalamud Settings (`/xlsettings`), Experimental, Dev Plugin Locations: add the full path to `Tsukimichi\bin\x64\Debug`.
-2. Plugin Installer (`/xlplugins`), Dev Tools tab: enable Tsukimichi.
-3. `/tsukimichi` opens the window. Follow `docs/ui-smoke-checklist.md` and `docs/ui-smoke-checklist-panes.md` for the first pass.
+It has no network code. Nothing leaves your machine. Snapshots and settings live in `%AppData%\XIVLauncher\pluginConfigs\Tsukimichi\` (`characters\<id>.json`, `user\pins.json`, `user\overrides.json`, `user\discovery.json`). Export is a file you write on purpose, and Settings › Data can delete everything.
 
-Per-character data lives in `%AppData%\XIVLauncher\pluginConfigs\Tsukimichi\` (`characters\<ContentId>.json`, `user\pins.json`, `user\overrides.json`). Nothing is uploaded anywhere.
+## Verification and releases
 
-## Data generation
+- Every push and pull request builds the whole solution with warnings as errors and runs the test suite ([CI workflow](.github/workflows/ci.yml)).
+- A release is a tag `vX.Y.Z` on this repository. GitHub Actions builds `latest.zip` from that tagged commit against the current Dalamud, attaches it to the GitHub Release and regenerates `pluginmaster.json` ([release workflow](.github/workflows/release.yml)). The workflow refuses a tag whose version differs from the plugin's or that has no [CHANGELOG](CHANGELOG.md) section.
+- The plugin data (`unique_quests.json`) is generated from the game files by a tool in this repository and checked by curated-data tests on every build. The version of the game it was generated for shows in Settings › About.
 
-Regenerate the unique-rewards file after a game patch or after editing the curated files:
+## Reporting a problem
 
-```
-dotnet run --project Tsukimichi.DataGen -- --game "<path to sqpack>" --out Tsukimichi/Data/unique_quests.json --curated Tsukimichi/Data/curated
-dotnet run --project Tsukimichi.DataGen -- --verify --game "<path to sqpack>"
-```
+Open an [issue](https://github.com/xenofei/Tsukimichi/issues/new/choose) with the template that fits: a bug, a quest shown in the wrong state, or a data correction. For a wrong state, paste the diagnostic block the plugin copies for you (Report this quest in the detail pane); it carries the quest id, the state, every requirement's verdict and the data version, and no character identifiers.
 
-Curated overlays (`Tsukimichi/Data/curated/`) are keyed by Quest row id; see the README there for the verification recipe. The helper scripts in `tools/curated/` query xivapi to check ids.
+Known quirks (quests the game skips a step on, older guides' rank names, seasonal rewards the Online Store re-sells) are listed in the help window under **Known quirks**, next to **Why my counts differ from the journal**.
 
-## Not yet in V1
+## Data credits
 
-Community reward-source overlay, festival calendar and countdowns, patch-of-origin badges, IPC provider and Wotsit registration, entitlement (free trial) filter, UI localization resources, official repo submission. Each is listed as a DRAFT-NEEDED phase in the design spec.
+- Quest, reward and journal data are read from your own installed copy of FINAL FANTASY XIV. FINAL FANTASY XIV © SQUARE ENIX CO., LTD. All rights reserved. FINAL FANTASY is a registered trademark of Square Enix Holdings Co., Ltd.
+- Curated lists (duty and system unlocks, story chains, seasonal windows, store re-sells) were checked against the [Final Fantasy XIV Console Games Wiki](https://ffxiv.consolegameswiki.com/) (CC BY-NC-SA 3.0), [FFXIV Collect](https://ffxivcollect.com/) and [Garland Tools](https://www.garlandtools.org/), with ids confirmed through [xivapi](https://v2.xivapi.com/). The plugin itself never contacts any of them.
+
+## Third-party tools and the Terms of Service
+
+Dalamud and every plugin, this one included, are third-party tools that Square Enix does not sanction. Use them at your own discretion, do not mention them in game, and hide them in screenshots and streams.
+
+## License
+
+[MIT](LICENSE). Copyright (c) 2026 Michiru Tsukikage.
+
+Building from source, the project layout and regenerating the data files are described in [CONTRIBUTING.md](CONTRIBUTING.md).

@@ -29,6 +29,9 @@ public class RequirementEvaluatorTests
             AcceptConditions = [11],
             MountRequired = true,
             HouseRequired = true,
+            SatisfactionNpc = 2,
+            SatisfactionLevel = 4,
+            CarrierLevel = 7,
         };
         var ctx = new EvalContext
         {
@@ -44,6 +47,7 @@ public class RequirementEvaluatorTests
             RequirementKind.Foreclosure, RequirementKind.ClassJob, RequirementKind.Level, RequirementKind.PreviousQuests,
             RequirementKind.GrandCompany, RequirementKind.GrandCompanyRank,
             RequirementKind.TribeRank, RequirementKind.TribeReputation, RequirementKind.TribeAllowance, RequirementKind.TribeDailyOffer,
+            RequirementKind.CustomDeliveryRank, RequirementKind.CarrierLevel,
             RequirementKind.DutyCompletion, RequirementKind.Seasonal, RequirementKind.AcceptCondition,
             RequirementKind.Mount, RequirementKind.House, RequirementKind.Achievement,
         ], kinds);
@@ -69,7 +73,7 @@ public class RequirementEvaluatorTests
 
         var r = Only(results, RequirementKind.Foreclosure);
         Assert.False(r.Met);
-        Assert.Equal("foreclosed by Joining the Maelstrom", r.Detail);
+        Assert.Equal("locked out by Joining the Maelstrom", r.Detail);
         var req = Assert.IsType<ForeclosureRequirement>(r.Req);
         Assert.Equal(new uint[] { B }, req.CompletedLockIds);
     }
@@ -129,6 +133,28 @@ public class RequirementEvaluatorTests
 
         Assert.False(Only(Eval(quest, Snapshot()), RequirementKind.ClassJob).Met);
         Assert.True(Only(Eval(quest, Snapshot() with { CurrentJob = Conjurer, JobLevels = Levels((Conjurer, 1)) }), RequirementKind.ClassJob).Met);
+    }
+
+    [Fact]
+    public void Job_may_take_its_base_class_quest_when_the_journal_shows_it_accepted_on_that_job()
+    {
+        // Gladiator-pinned quest evaluated on Paladin. The parent lookup alone changes nothing: only the client's own
+        // record that the quest was accepted on Paladin (QuestWork.AcceptClassJob) proves the game admits the job.
+        var quest = Quest(Target) with { ClassJobRequired = Gladiator };
+        var ctx = new EvalContext { ParentJob = job => job == Paladin ? Gladiator : job };
+        var onPaladin = Snapshot() with { CurrentJob = Paladin, JobLevels = Levels((Paladin, 60)) };
+
+        Assert.False(Only(Eval(quest, onPaladin, ctx: ctx), RequirementKind.ClassJob).Met);
+        Assert.False(Only(Eval(quest, onPaladin with { Accepted = [Accepted(Target, 1, Gladiator)] }, ctx: ctx), RequirementKind.ClassJob).Met);
+        Assert.False(Only(Eval(quest, onPaladin with { Accepted = [Accepted(Target, 1, Paladin)] }), RequirementKind.ClassJob).Met);
+
+        var r = Only(Eval(quest, onPaladin with { Accepted = [Accepted(Target, 1, Paladin)] }, ctx: ctx), RequirementKind.ClassJob);
+        Assert.True(r.Met);
+        Assert.Equal("available on the current job", r.Detail);
+
+        // A job of another class is never admitted, journal or not.
+        var onConjurer = onPaladin with { CurrentJob = Conjurer, Accepted = [Accepted(Target, 1, Conjurer)] };
+        Assert.False(Only(Eval(quest, onConjurer, ctx: ctx), RequirementKind.ClassJob).Met);
     }
 
     [Fact]

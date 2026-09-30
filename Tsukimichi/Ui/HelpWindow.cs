@@ -23,6 +23,8 @@ public enum HelpTopic
     Characters,
     Flight,
     Commands,
+    CountsDiffer,
+    KnownQuirks,
     Tips,
 }
 
@@ -86,6 +88,8 @@ public sealed class HelpWindow : Window
         FontAwesomeIcon.Users.ToIconString(),
         FontAwesomeIcon.Plane.ToIconString(),
         FontAwesomeIcon.Terminal.ToIconString(),
+        FontAwesomeIcon.Calculator.ToIconString(),
+        FontAwesomeIcon.ExclamationTriangle.ToIconString(),
         FontAwesomeIcon.Lightbulb.ToIconString(),
     ];
 
@@ -93,14 +97,14 @@ public sealed class HelpWindow : Window
 
     private static readonly PhaseItem[] Phases =
     [
-        Phase(QuestState.Completed, Strings.Help.PhaseCompletedName, Strings.Help.PhaseCompletedMeaning, Strings.Help.ChipHideCompletedOff),
-        Phase(QuestState.Accepted, Strings.Help.PhaseAcceptedName, Strings.Help.PhaseAcceptedMeaning, Strings.Help.ChipAvailableNow),
-        Phase(QuestState.Ready, Strings.Help.PhaseReadyName, Strings.Help.PhaseReadyMeaning, Strings.Help.ChipAvailableNow),
-        Phase(QuestState.ReadyOnOtherJob, Strings.Help.PhaseReadyOtherJobName, Strings.Help.PhaseReadyOtherJobMeaning, Strings.Help.ChipAvailableNow),
-        Phase(QuestState.DoneThisCycle, Strings.Help.PhaseDoneThisCycleName, Strings.Help.PhaseDoneThisCycleMeaning, Strings.Help.ChipAvailableNowOff),
-        Phase(QuestState.Blocked, Strings.Help.PhaseBlockedName, Strings.Help.PhaseBlockedMeaning, Strings.Help.ChipAvailableNowOff),
-        Phase(QuestState.Foreclosed, Strings.Help.PhaseForeclosedName, Strings.Help.PhaseForeclosedMeaning, Strings.Help.ChipHideCompletedOff, Strings.Help.ChipNotInTotals),
-        Phase(QuestState.Unknown, Strings.Help.PhaseUnknownName, Strings.Help.PhaseUnknownMeaning),
+        Phase(QuestState.Completed, Strings.Help.PhaseCompletedMeaning, Strings.Help.ChipHideCompletedOff),
+        Phase(QuestState.Accepted, Strings.Help.PhaseAcceptedMeaning, Strings.Help.ChipAvailableNow),
+        Phase(QuestState.Ready, Strings.Help.PhaseReadyMeaning, Strings.Help.ChipAvailableNow),
+        Phase(QuestState.ReadyOnOtherJob, Strings.Help.PhaseReadyOtherJobMeaning, Strings.Help.ChipAvailableNow),
+        Phase(QuestState.DoneThisCycle, Strings.Help.PhaseDoneThisCycleMeaning, Strings.Help.ChipAvailableNowOff),
+        Phase(QuestState.Blocked, Strings.Help.PhaseBlockedMeaning, Strings.Help.ChipAvailableNowOff),
+        Phase(QuestState.Foreclosed, Strings.Help.PhaseForeclosedMeaning, Strings.Help.ChipHideCompletedOff, Strings.Help.ChipNotInTotals),
+        Phase(QuestState.Unknown, Strings.Help.PhaseUnknownMeaning),
     ];
 
     private static readonly CardItem[] FilterCards = Cards(
@@ -156,6 +160,24 @@ public sealed class HelpWindow : Window
         FontAwesomeIcon.MapMarkerAlt,
         FontAwesomeIcon.Moon,
         FontAwesomeIcon.Terminal);
+
+    private static readonly CardItem[] CountsCards = Cards(
+        Strings.Help.CountsCardTitles,
+        Strings.Help.CountsCardBodies,
+        FontAwesomeIcon.EyeSlash,
+        FontAwesomeIcon.Snowflake,
+        FontAwesomeIcon.Lock,
+        FontAwesomeIcon.Plus,
+        FontAwesomeIcon.Redo);
+
+    private static readonly CardItem[] QuirkCards = Cards(
+        Strings.Help.QuirkCardTitles,
+        Strings.Help.QuirkCardBodies,
+        FontAwesomeIcon.StepForward,
+        FontAwesomeIcon.Tag,
+        FontAwesomeIcon.ExchangeAlt,
+        FontAwesomeIcon.Clock,
+        FontAwesomeIcon.ShoppingCart);
 
     private static readonly float[] FillingFractions = [0f, 0.5f, 1f];
 
@@ -309,9 +331,20 @@ public sealed class HelpWindow : Window
 
     private void UpdateVisible()
     {
+        var first = -1;
         for (var i = 0; i < Topics.Length; i++)
         {
             topicVisible[i] = searchText.Length == 0 || topicSearchText[i].Contains(searchText, StringComparison.OrdinalIgnoreCase);
+            if (topicVisible[i] && first < 0)
+            {
+                first = i;
+            }
+        }
+
+        // The content pane never shows a topic the rail no longer lists: move to the first match while there is one.
+        if (first >= 0 && !topicVisible[Array.IndexOf(Topics, topic)])
+        {
+            topic = Topics[first];
         }
     }
 
@@ -337,7 +370,7 @@ public sealed class HelpWindow : Window
                 case HelpTopic.MoonPhases:
                     foreach (var phase in Phases)
                     {
-                        sb.Append(Strings.MoonlitStateName(phase.State)).Append('\n').Append(phase.Name).Append('\n').Append(phase.Meaning).Append('\n');
+                        sb.Append(Strings.StateName(phase.State)).Append('\n').Append(phase.Name).Append('\n').Append(phase.Meaning).Append('\n');
                         foreach (var chip in phase.Chips)
                         {
                             sb.Append(chip).Append('\n');
@@ -374,6 +407,14 @@ public sealed class HelpWindow : Window
                         sb.Append(Strings.Help.CommandKeys[c]).Append('\n').Append(Strings.Help.CommandMeanings[c]).Append('\n');
                     }
 
+                    break;
+                case HelpTopic.CountsDiffer:
+                    AppendCards(sb, CountsCards);
+                    sb.Append(Strings.Help.CountsTip);
+                    break;
+                case HelpTopic.KnownQuirks:
+                    AppendCards(sb, QuirkCards);
+                    sb.Append(Strings.Help.QuirksTip);
                     break;
                 case HelpTopic.Tips:
                     foreach (var tip in Strings.Help.Tips)
@@ -442,6 +483,14 @@ public sealed class HelpWindow : Window
                 break;
             case HelpTopic.Commands:
                 DrawCommands(scale);
+                break;
+            case HelpTopic.CountsDiffer:
+                DrawCards(CountsCards);
+                Tip(100, Strings.Help.CountsTip);
+                break;
+            case HelpTopic.KnownQuirks:
+                DrawCards(QuirkCards);
+                Tip(100, Strings.Help.QuirksTip);
                 break;
             case HelpTopic.Tips:
                 for (var i = 0; i < Strings.Help.Tips.Length; i++)
@@ -578,7 +627,7 @@ public sealed class HelpWindow : Window
         {
             using (Theme.PushText(Theme.StateColor(phase.State)))
             {
-                ImGui.TextUnformatted(Strings.MoonlitStateName(phase.State));
+                ImGui.TextUnformatted(Strings.StateName(phase.State));
             }
 
             ImGui.SameLine(0f, 6f * scale);
@@ -811,12 +860,13 @@ public sealed class HelpWindow : Window
 
     // ------------------------------------------------------------------ static data helpers
 
-    private static PhaseItem Phase(QuestState state, string name, string meaning, params string[] filterChips)
+    /// <summary>One legend row: the display name, the moon-phase subtitle from <see cref="Strings.StateGlyphSubtitle"/>, the meaning and its chips.</summary>
+    private static PhaseItem Phase(QuestState state, string meaning, params string[] filterChips)
     {
         var chips = new string[filterChips.Length + 1];
-        chips[0] = Strings.Help.ChipStatePrefix + Strings.MoonlitStateName(state);
+        chips[0] = Strings.Help.ChipStatePrefix + Strings.StateName(state);
         Array.Copy(filterChips, 0, chips, 1, filterChips.Length);
-        return new PhaseItem(state, name, meaning, chips);
+        return new PhaseItem(state, Strings.StateGlyphSubtitle(state), meaning, chips);
     }
 
     private static CardItem[] Cards(string[] titles, string[] bodies, params FontAwesomeIcon[] icons)

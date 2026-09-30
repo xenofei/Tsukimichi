@@ -7,10 +7,12 @@ namespace Tsukimichi.Core.Query;
 /// Produces the flat, filtered, sorted row array the table renders. Pure: no caching beyond the shared
 /// <see cref="SearchIndex"/>; the caller runs it only when a dirty flag says so.
 /// <para>
-/// Unlisted quests (no journal genre) are shown only under <see cref="QuestScope.None"/> and
-/// <see cref="QuestScope.VirtualFeature"/> when <see cref="FilterSet.IncludeUnlisted"/> is on, and always under
-/// <see cref="QuestScope.VirtualUnlisted"/>. A section, category or genre node never shows them, whatever ids the
-/// sheet gave them, because section 0 is a real journal section.
+/// Removed quests (<see cref="QuestRecord.IsRemoved"/>: retired rows and quests with no journal genre) are shown only
+/// under <see cref="QuestScope.None"/> and <see cref="QuestScope.VirtualFeature"/> when
+/// <see cref="FilterSet.IncludeUnlisted"/> is on, and always under <see cref="QuestScope.VirtualUnlisted"/>. A
+/// section, category or genre node never shows them, whatever ids the sheet gave them, because section 0 is a real
+/// journal section and a retired listed row still carries its old genre. <see cref="QuestScope.Issuer"/> (the NPC
+/// context menu's scope) lists what the NPC hands out today, so it leaves them out too.
 /// </para>
 /// </summary>
 public static class QuestQuery
@@ -57,8 +59,11 @@ public static class QuestQuery
         (Filter.Search, FilterNames.Search),
     ];
 
-    /// <summary>Runs the query over evaluator output; each row's state and next-step text come from its <see cref="QuestEvaluation"/>.</summary>
-    /// <param name="evaluations">Resolved evaluation per quest row id; missing rows read as <see cref="QuestState.Unknown"/> with no next step.</param>
+    /// <summary>
+    /// Runs the query over evaluator output; each row's state comes from its <see cref="QuestEvaluation"/> and its
+    /// Status text from <see cref="BlockerText.StatusText"/> with <see cref="QueryContext.Names"/>.
+    /// </summary>
+    /// <param name="evaluations">Resolved evaluation per quest row id; missing rows read as <see cref="QuestState.Unknown"/> with no status text.</param>
     /// <param name="search">Raw search text; normalized here.</param>
     public static QueryResult Apply(
         QuestCatalog catalog,
@@ -70,10 +75,11 @@ public static class QuestQuery
         QueryContext ctx)
     {
         ArgumentNullException.ThrowIfNull(evaluations);
-        return Apply(catalog, new EvaluationSource(evaluations), filters, scope, sort, search, ctx);
+        ArgumentNullException.ThrowIfNull(ctx);
+        return Apply(catalog, new EvaluationSource(evaluations, ctx.Names ?? BlockerNames.Default), filters, scope, sort, search, ctx);
     }
 
-    /// <summary>Runs the query over a plain state map; next-step text comes from <see cref="QueryContext.NextStepText"/> when set.</summary>
+    /// <summary>Runs the query over a plain state map; status text comes from <see cref="QueryContext.NextStepText"/> when set.</summary>
     /// <param name="states">Resolved state per quest row id; missing rows read as <see cref="QuestState.Unknown"/>.</param>
     /// <param name="search">Raw search text; normalized here.</param>
     public static QueryResult Apply(
@@ -121,7 +127,7 @@ public static class QuestQuery
         var totalInScope = 0;
         foreach (var quest in candidates)
         {
-            if (quest.IsUnlisted && !plan.IncludeUnlisted)
+            if (quest.IsRemoved && !plan.IncludeUnlisted)
             {
                 continue;
             }
@@ -130,13 +136,13 @@ public static class QuestQuery
             var state = source.StateOf(quest.RowId);
             if (plan.Passes(quest, state, Filter.None))
             {
-                rows.Add(new QuestRow(quest, state, source.NextStepOf(quest.RowId)));
+                rows.Add(new QuestRow(quest, state, source.StatusOf(quest)));
             }
         }
 
         if (rows.Count == 0)
         {
-            // A journal node holding only unlisted quests has nothing a filter could bring back.
+            // A journal node holding only removed quests has nothing a filter could bring back.
             var reason = totalInScope == 0 && !plan.UnlistedToggleable
                 ? EmptyReason.Scope
                 : Diagnose(candidates, source, plan);
@@ -171,7 +177,7 @@ public static class QuestQuery
             case ScopeKind.Genre:
                 return catalog.ByGenre.GetValueOrDefault(scope.Id) ?? [];
             case ScopeKind.VirtualUnlisted:
-                return catalog.ByGenre.GetValueOrDefault(0u) ?? [];
+                return catalog.Removed;
             case ScopeKind.VirtualFeature:
             {
                 if (ctx.FeatureQuestIds.Count == 0)
@@ -191,6 +197,9 @@ public static class QuestQuery
 
                 return picked;
             }
+            case ScopeKind.VirtualIssuer:
+                // Journal order, removed quests left out: an NPC that lost a quest in a patch never lists it.
+                return Discovery.QuestDiscovery.IssuedBy(catalog, scope.Id);
             default:
                 throw new ArgumentOutOfRangeException(nameof(scope), scope.Kind, "Unknown scope kind.");
         }
@@ -210,7 +219,7 @@ public static class QuestQuery
 
             foreach (var quest in candidates)
             {
-                if (quest.IsUnlisted && !plan.IncludeUnlisted && filter != Filter.IncludeUnlisted)
+                if (quest.IsRemoved && !plan.IncludeUnlisted && filter != Filter.IncludeUnlisted)
                 {
                     continue;
                 }
@@ -309,7 +318,7 @@ public static class QuestQuery
             var c = sort.Column switch
             {
                 SortColumn.Name => string.Compare(a.Quest.Name, b.Quest.Name, StringComparison.OrdinalIgnoreCase),
-                SortColumn.Level => a.Quest.Level.CompareTo(b.Quest.Level),
+                SortColumn.Level => a.Quest.DisplayLevel.CompareTo(b.Quest.DisplayLevel),
                 SortColumn.State => ((int)a.State).CompareTo((int)b.State),
                 SortColumn.Expansion => a.Quest.Expansion.CompareTo(b.Quest.Expansion),
                 _ => 0,
@@ -355,7 +364,7 @@ public static class QuestQuery
             IncludeUnlisted = scope.Kind switch
             {
                 ScopeKind.VirtualUnlisted => true,
-                ScopeKind.Section or ScopeKind.Category or ScopeKind.Genre => false,
+                ScopeKind.Section or ScopeKind.Category or ScopeKind.Genre or ScopeKind.VirtualIssuer => false,
                 _ => filters.IncludeUnlisted,
             };
             hideCompletedEngaged = filters.HideCompletedEngaged();
@@ -377,7 +386,7 @@ public static class QuestQuery
             }
         }
 
-        /// <summary>Whether unlisted quests pass under this scope.</summary>
+        /// <summary>Whether removed quests pass under this scope.</summary>
         public bool IncludeUnlisted { get; }
 
         /// <summary>Whether <see cref="FilterSet.IncludeUnlisted"/> has any say under this scope (it never does under a journal node).</summary>
@@ -438,7 +447,7 @@ public static class QuestQuery
             }
 
             if (skip != Filter.LevelRange && levelRangeEngaged
-                && (quest.Level < filters.LevelMin || quest.Level > filters.LevelMax))
+                && (quest.DisplayLevel < filters.LevelMin || quest.DisplayLevel > filters.LevelMax))
             {
                 return false;
             }
@@ -487,7 +496,7 @@ public static class QuestQuery
         {
             Preset.None => true,
             Preset.FeatureQuests => ctx.FeatureQuestIds.Contains(quest.RowId),
-            Preset.LevelBand => ctx.CurrentLevel > 0 && quest.Level >= bandMin && quest.Level <= bandMax,
+            Preset.LevelBand => ctx.CurrentLevel > 0 && quest.DisplayLevel >= bandMin && quest.DisplayLevel <= bandMax,
             Preset.Stalled => state == QuestState.Accepted
                 && ctx.AcceptedSince is { } since
                 && since.TryGetValue(quest.QuestId, out var acceptedUtc)

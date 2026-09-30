@@ -15,8 +15,53 @@ public sealed class UniqueRewardsFileTests : IDisposable
         new DateTime(2026, 9, 27, 8, 0, 0, DateTimeKind.Utc),
         [
             new UniqueRewardEntry(66038, RewardKind.Emote, 114, 0, "Most Gentlemanly", Confidence.Static, "Quest.EmoteReward"),
-            new UniqueRewardEntry(65576, RewardKind.Mount, 71, 15939, "Company Chocobo", Confidence.Curated, "curated/mounts.json"),
+            new UniqueRewardEntry(65576, RewardKind.Mount, 71, 15939, "Company Chocobo", Confidence.Curated, "curated/mounts.json")
+            {
+                OtherSources = [OtherSource.OnlineStore, OtherSource.Tradable],
+            },
         ]);
+
+    [Fact]
+    public void Entries_compare_by_value_including_other_sources()
+    {
+        var plain = new UniqueRewardEntry(1, RewardKind.Mount, 2, 3, "n", Confidence.Static, "s");
+        var store = plain with { OtherSources = [OtherSource.OnlineStore] };
+
+        Assert.Equal(plain, new UniqueRewardEntry(1, RewardKind.Mount, 2, 3, "n", Confidence.Static, "s"));
+        Assert.Equal(store, plain with { OtherSources = new List<string> { OtherSource.OnlineStore } });
+        Assert.NotEqual(plain, store);
+        Assert.Equal(plain.GetHashCode(), new UniqueRewardEntry(1, RewardKind.Mount, 2, 3, "n", Confidence.Static, "s").GetHashCode());
+        Assert.Empty(plain.OtherSources);
+        Assert.True(store.SoldOnOnlineStore);
+        Assert.False(plain.SoldOnOnlineStore);
+        Assert.Same(store, store.WithOtherSource(OtherSource.OnlineStore));
+        Assert.Equal([OtherSource.OnlineStore, OtherSource.Tradable], store.WithOtherSource(OtherSource.Tradable).OtherSources);
+    }
+
+    [Fact]
+    public void Load_reads_other_sources_and_treats_a_missing_or_null_field_as_empty()
+    {
+        var path = tmp.File("unique_quests.json");
+        File.WriteAllText(path,
+            """
+            { "gameVersion": "x", "generatedUtc": "2026-09-27T08:00:00Z", "entries": [
+              { "questRowId": 68546, "kind": "Mount", "rewardId": 99, "itemId": 22437, "rewardName": "Starlight bear", "confidence": "Static", "source": "s", "otherSources": ["OnlineStore"] },
+              { "questRowId": 66038, "kind": "Emote", "rewardId": 114, "itemId": 0, "rewardName": "A", "confidence": "Static", "source": "s" },
+              { "questRowId": 66039, "kind": "Emote", "rewardId": 115, "itemId": 0, "rewardName": "B", "confidence": "Static", "source": "s", "otherSources": null },
+              { "questRowId": 66040, "kind": "Emote", "rewardId": 116, "itemId": 0, "rewardName": "C", "confidence": "Static", "source": "s", "otherSources": ["SpecialShop", null, " "] }
+            ] }
+            """);
+
+        var loaded = UniqueRewardsFile.Load(path);
+
+        Assert.Empty(loaded.Warnings);
+        Assert.Equal(4, loaded.Entries.Count);
+        Assert.Equal(["OnlineStore"], loaded.Entries[0].OtherSources);
+        Assert.True(loaded.Entries[0].SoldOnOnlineStore);
+        Assert.Empty(loaded.Entries[1].OtherSources);
+        Assert.Empty(loaded.Entries[2].OtherSources);
+        Assert.Equal(["SpecialShop"], loaded.Entries[3].OtherSources);
+    }
 
     [Fact]
     public void Write_then_Load_round_trips()
@@ -80,7 +125,11 @@ public sealed class UniqueRewardsFileTests : IDisposable
         Assert.Equal("Most Gentlemanly", (string?)entry["rewardName"]);
         Assert.Equal("Static", (string?)entry["confidence"]);
         Assert.Equal("Quest.EmoteReward", (string?)entry["source"]);
-        Assert.Equal(7, entry.Count);
+        Assert.Equal("[]", entry["otherSources"]!.ToJsonString());
+        Assert.Equal(8, entry.Count);
+        var store = json["entries"]![1]!.AsObject();
+        Assert.Equal("""["OnlineStore","Tradable"]""", store["otherSources"]!.ToJsonString());
+        Assert.Null(store["soldOnOnlineStore"]);
     }
 
     [Fact]

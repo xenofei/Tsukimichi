@@ -2,6 +2,7 @@ using Lumina.Data;
 using Lumina.Excel;
 using Lumina.Excel.Sheets;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Storage;
 
 namespace Tsukimichi.GameData;
 
@@ -26,7 +27,15 @@ public static class CatalogMapper
     /// <param name="language">Language for every localized string; non-localized sheets fall back to their neutral page.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <param name="log">Optional sink for one-line progress facts (row counts, skips).</param>
-    public static CatalogBundle Map(ExcelModule excel, Language language, CancellationToken ct = default, Action<string>? log = null)
+    /// <param name="filing">Whether the <see cref="JournalRefiler"/> runs over the mapped records (the default) or the sheet's genres stand.</param>
+    /// <param name="curated">The curated overlay the refiler reads (<c>refile_overrides.json</c>, <c>retired_quests.json</c>); null runs the rules alone.</param>
+    public static CatalogBundle Map(
+        ExcelModule excel,
+        Language language,
+        CancellationToken ct = default,
+        Action<string>? log = null,
+        JournalFiling filing = JournalFiling.Refiled,
+        CuratedData? curated = null)
     {
         ArgumentNullException.ThrowIfNull(excel);
 
@@ -60,12 +69,39 @@ public static class CatalogMapper
         }
 
         ct.ThrowIfCancellationRequested();
-        var catalog = QuestCatalog.Build(records);
+        IReadOnlyList<QuestRecord> filed = filing == JournalFiling.Refiled ? JournalRefiler.Apply(records, curated ?? CuratedData.Empty) : records;
+        var catalog = QuestCatalog.Build(filed);
         var jobs = ClassJobCategoryLookup.Build(excel, language);
         ct.ThrowIfCancellationRequested();
         var names = ReadNames(excel, language, jobs);
 
         log?.Invoke($"Quest sheet: {quests.Count} rows, {records.Count} named, {skipped} skipped; {journal.GenreCount} journal genres; {jobs.Count} class/job categories");
+        if (filing == JournalFiling.Refiled)
+        {
+            var refiled = 0;
+            var retired = 0;
+            var unlisted = new List<uint>();
+            foreach (var quest in filed)
+            {
+                if (quest.IsRetired)
+                {
+                    retired++;
+                }
+                else if (quest.IsUnlisted)
+                {
+                    // Rule 7, or a rule or override whose genre no listed quest holds: worth a row id in the log.
+                    unlisted.Add(quest.RowId);
+                }
+                else if (quest.RefiledFrom != 0)
+                {
+                    refiled++;
+                }
+            }
+
+            var unlistedIds = unlisted.Count == 0 ? string.Empty : " (" + string.Join(", ", unlisted) + ")";
+            log?.Invoke($"Journal refiling: {refiled} quests filed into a genre, {retired} retired, {unlisted.Count} left unlisted{unlistedIds}");
+        }
+
         return new CatalogBundle(catalog, names, jobs, language.ToString());
     }
 
@@ -89,6 +125,7 @@ public static class CatalogMapper
             Level = ToByte(quest.ClassJobLevel.Count > 0 ? quest.ClassJobLevel[0] : 0u),
             LevelMax = quest.LevelMax,
             LevelOffset = quest.QuestLevelOffset,
+            StepCount = StepCountOf(in quest),
 
             ClassJobCategory = quest.ClassJobCategory0.RowId,
             ClassJobCategory1 = quest.ClassJobCategory1.RowId,
@@ -103,12 +140,20 @@ public static class CatalogMapper
             GrandCompanyRank = ToByte(quest.GrandCompanyRank.RowId),
             BeastTribe = ToByte(quest.BeastTribe.RowId),
             BeastRank = ToByte(quest.BeastReputationRank.RowId),
-            BeastValue = quest.BeastReputationValue,
+            // With current data every quest carries 0 or 65535 here, the society story quests 65535: no reputation
+            // gate, the rank alone decides. The sentinel maps to "none", so no tribe quest reads a reputation value
+            // today; the requirement stays for a sheet that ever holds a real one.
+            BeastValue = quest.BeastReputationValue == ushort.MaxValue ? (ushort)0 : quest.BeastReputationValue,
 
             IsRepeatable = quest.IsRepeatable,
             RepeatInterval = quest.RepeatIntervalType,
             DailyPool = quest.DailyQuestPool,
             Festival = ToUInt16(quest.Festival.RowId),
+            FestivalBegin = quest.FestivalBegin,
+            FestivalEnd = quest.FestivalEnd,
+            SatisfactionNpc = ToByte(quest.SatisfactionNpc.RowId),
+            SatisfactionLevel = quest.SatisfactionLevel,
+            CarrierLevel = ToByte(quest.DeliveryQuest.RowId),
 
             MountRequired = quest.MountRequired.RowId != 0,
             HouseRequired = quest.IsHouseRequired,
@@ -118,11 +163,37 @@ public static class CatalogMapper
             Icon = quest.Icon,
             IconSpecial = quest.IconSpecial,
             EventIconType = ToByte(quest.EventIconType.RowId),
+            // The unnamed bool between HideOfferIcon and HideInScenarioGuide; Lumina numbers unknown columns per
+            // release, so HiddenFlagColumnTests pins the column against the sheet's own header.
+            IsHidden = quest.Unknown12,
 
             Rewards = MapRewards(in quest, sheets),
             ExpFactor = quest.ExpFactor,
             Gil = quest.GilReward,
         };
+    }
+
+    /// <summary>
+    /// Journal steps: the distinct non-zero <c>ToDoCompleteSeq</c> values across the quest's objectives. Every quest
+    /// with objectives runs 1, 2, … then 255 (checked against the 7.3 sheets: no gaps), so the count is the number of
+    /// steps and an accepted quest's sequence is its current step, 255 the last. Objectives sharing a sequence (three
+    /// people to talk to) are one step.
+    /// </summary>
+    private static byte StepCountOf(in Quest quest)
+    {
+        Span<bool> seen = stackalloc bool[256];
+        var count = 0;
+        foreach (var todo in quest.TodoParams)
+        {
+            var sequence = todo.ToDoCompleteSeq;
+            if (sequence != 0 && !seen[sequence])
+            {
+                seen[sequence] = true;
+                count++;
+            }
+        }
+
+        return (byte)Math.Min(count, byte.MaxValue);
     }
 
     /// <summary>
@@ -374,7 +445,62 @@ public static class CatalogMapper
             classJobs,
             abbreviations,
             Names(excel.GetSheet<BeastReputationRank>(language), static (in BeastReputationRank r) => r.Name),
-            infos);
+            infos,
+            Names(excel.GetSheet<ClassJobCategory>(language), static (in ClassJobCategory r) => r.Name),
+            DutyNames(excel.GetSheet<ContentFinderCondition>(language)),
+            SatisfactionNpcNames(excel.GetSheet<SatisfactionNpc>(language)));
+    }
+
+    /// <summary>
+    /// Custom delivery client names keyed by SatisfactionNpc row id (what <see cref="QuestRecord.SatisfactionNpc"/>
+    /// holds), from the ENpcResident row each client points at ("M'naago", "Kurenai"). Row 0 is empty and skipped.
+    /// </summary>
+    private static Dictionary<uint, string> SatisfactionNpcNames(ExcelSheet<SatisfactionNpc> sheet)
+    {
+        var result = new Dictionary<uint, string>();
+        foreach (var row in sheet)
+        {
+            if (row.Npc.RowId == 0 || row.Npc.ValueNullable is not { } npc)
+            {
+                continue;
+            }
+
+            var text = npc.Singular.ExtractText();
+            if (text.Length != 0)
+            {
+                result[row.RowId] = text;
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary><c>ContentFinderCondition.ContentLinkType</c> value whose <c>Content</c> is an InstanceContent row.</summary>
+    private const byte InstanceContentLink = 1;
+
+    /// <summary>
+    /// Duty names keyed by InstanceContent row id, from the Duty Finder entry that links the instance: what
+    /// <see cref="QuestRecord.InstanceContentRequired"/> refers to. The first named entry per instance wins.
+    /// </summary>
+    private static Dictionary<uint, string> DutyNames(ExcelSheet<ContentFinderCondition> sheet)
+    {
+        var result = new Dictionary<uint, string>();
+        foreach (var row in sheet)
+        {
+            if (row.ContentLinkType != InstanceContentLink || row.Content.RowId == 0 || result.ContainsKey(row.Content.RowId))
+            {
+                continue;
+            }
+
+            var text = row.Name.ExtractText();
+            if (text.Length != 0)
+            {
+                // The sheet writes "the Vault"; a line opens with the name, so its first letter is raised.
+                result[row.Content.RowId] = char.IsLower(text[0]) ? char.ToUpperInvariant(text[0]) + text[1..] : text;
+            }
+        }
+
+        return result;
     }
 
     private delegate Lumina.Text.ReadOnly.ReadOnlySeString NameOf<T>(in T row);
@@ -438,9 +564,10 @@ public static class CatalogMapper
     /// <summary>
     /// Journal genre → (section, category, genre) names plus a rank that orders genres by section, then category, then
     /// genre row id, matching the in-game journal. The quest's own SortKey fills the low 16 bits of the composite key.
-    /// Genre 0 (unlisted quests) sorts after every listed genre and keeps whatever section and category the sheet's
-    /// row 0 names (usually none); the tree and query layers never place unlisted quests under a journal node, so a
-    /// zero there cannot be mistaken for the real section 0.
+    /// Genre 0 (unlisted quests) sorts after every listed genre and keeps the section and category ids the sheet's
+    /// row 0 points at (category 0 under section 255) but none of their names: row 0 is a placeholder whose category
+    /// reads "Sephiroth Missions", and no quest is filed there. The tree and query layers never place unlisted quests
+    /// under a journal node, so the ids cannot be mistaken for the real section 0.
     /// </summary>
     private sealed class JournalIndex
     {
@@ -468,7 +595,7 @@ public static class CatalogMapper
                 var template = Template(in genre);
                 if (genre.RowId == 0)
                 {
-                    unlisted = template;
+                    unlisted = template with { SectionName = string.Empty, CategoryName = string.Empty, GenreName = string.Empty };
                     continue;
                 }
 

@@ -1,14 +1,18 @@
 <Project Sdk="Dalamud.NET.Sdk/15.0.0">
 
   <PropertyGroup>
-    <Version>0.5.1.0</Version>
+    <Version>0.6.1.0</Version>
     <Author>Michiru Tsukikage</Author>
     <Name>Tsukimichi</Name>
     <Punchline>Walk the moon's path: every quest, every requirement, every unique reward.</Punchline>
     <Description>A quest catalog for every journal type, with completed and available filters and a per-requirement breakdown of what still blocks a quest.
 Moonlit treasures collects quests with unique rewards, and per-character snapshots keep the whole account in view.</Description>
     <RepoUrl>https://github.com/xenofei/Tsukimichi</RepoUrl>
+    <!-- Dalamud reads the installer icon from the plugin's own manifest (DalamudPackager maps IconUrl to it), not from pluginmaster.json. -->
+    <IconUrl>https://raw.githubusercontent.com/xenofei/Tsukimichi/main/assets/icon.png</IconUrl>
     <Tags>quests;journal;tracker;rewards</Tags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Copyright>Copyright (c) 2026 Michiru Tsukikage</Copyright>
     <RootNamespace>Tsukimichi</RootNamespace>
   </PropertyGroup>
 
@@ -18,9 +22,15 @@ Moonlit treasures collects quests with unique rewards, and per-character snapsho
   </ItemGroup>
 
   <ItemGroup>
+    <!-- The in-app "What's new" card reads the running version's section from this copy at runtime (Ui\WhatsNewCard.cs). -->
+    <EmbeddedResource Include="..\CHANGELOG.md" LogicalName="Tsukimichi.CHANGELOG.md" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- Shipped data files only; Data\ also holds source (LuminaCatalogLoader.cs) that must not be copied to the output. -->
     <Content Include="Data\**" Exclude="Data\**\*.cs" CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="..\assets\icon.png" Link="icon.png" CopyToOutputDirectory="PreserveNewest" Condition="Exists('..\assets\icon.png')" />
+    <!-- Packaged as images\icon.png, where Dalamud looks for a plugin's icon inside the zip; assets\icon.png stays the source. -->
+    <Content Include="..\assets\icon.png" Link="images\icon.png" CopyToOutputDirectory="PreserveNewest" Condition="Exists('..\assets\icon.png')" />
   </ItemGroup>
 
 </Project>

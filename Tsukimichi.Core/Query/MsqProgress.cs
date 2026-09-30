@@ -7,7 +7,7 @@ namespace Tsukimichi.Core.Query;
 /// <param name="Next">The first main scenario quest, in journal order, that is not completed; null once every one is.</param>
 /// <param name="State">Resolved state of <paramref name="Next"/>; <see cref="QuestState.Completed"/> when there is no next quest.</param>
 /// <param name="Done">Completed main scenario quests.</param>
-/// <param name="Total">Main scenario quests the character can still do or has done; foreclosed branches (the other two Grand Company choices, say) are left out.</param>
+/// <param name="Total">Main scenario quests the character can still do or has done; foreclosed branches (the other two Grand Company choices, say) and out-of-season quests are left out.</param>
 public sealed record MsqPosition(QuestRecord? Next, QuestState State, int Done, int Total)
 {
     public bool IsComplete => Next is null;
@@ -57,31 +57,28 @@ public static class MsqProgress
 
             foreach (var quest in quests)
             {
-                if (quest.IsUnlisted)
+                if (quest.IsRemoved)
                 {
                     continue;
                 }
 
                 any = true;
-                var state = source.StateOf(quest.RowId);
-                switch (state)
+                if (source.LeavesTotals(quest.RowId))
                 {
-                    case QuestState.Completed:
-                        done++;
-                        total++;
-                        break;
-                    case QuestState.Foreclosed:
-                        // A branch the character did not take; neither pending nor countable.
-                        break;
-                    default:
-                        total++;
-                        if (next is null)
-                        {
-                            next = quest;
-                            nextState = state;
-                        }
+                    // A branch the character did not take (or a quest out of season); neither pending nor countable.
+                    continue;
+                }
 
-                        break;
+                var state = source.StateOf(quest.RowId);
+                total++;
+                if (state == QuestState.Completed)
+                {
+                    done++;
+                }
+                else if (next is null)
+                {
+                    next = quest;
+                    nextState = state;
                 }
             }
         }

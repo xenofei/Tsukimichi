@@ -15,6 +15,8 @@ static partial class Strings
     public const string MoonlitNothingMatches = "No rewards match.";
     public const string MoonlitHideObtainedLabel = "Hide obtained";
     public const string MoonlitFilterHint = "Filter rewards";
+    /// <summary>Subtitle under the Moonlit pane header; the tab keeps the brand word.</summary>
+    public const string MoonlitSubtitle = "rewards only a quest gives";
     public const string MoonlitOfflineHint = "Obtained states need the live character.";
     public const string MoonlitColumnObtained = "Have";
     public const string MoonlitColumnReward = "Reward";
@@ -24,7 +26,7 @@ static partial class Strings
     public const string MoonlitColumnConfidence = "Confidence";
     public const string MoonlitObtainedYes = "Obtained";
     public const string MoonlitObtainedNo = "Not obtained";
-    public const string MoonlitObtainedUnknown = "Unknown: not readable for this reward kind or character";
+    public const string MoonlitObtainedUnknown = "Not checked: not readable for this reward kind or character";
     public const string MoonlitShowInJournal = "Show in Journal";
     public const string MoonlitMarkNotUnique = "Not unique (hide)…";
     public const string MoonlitRestoreOverride = "Restore shipped verdict";
@@ -35,7 +37,28 @@ static partial class Strings
     public const string MoonlitConfidenceCurated = "curated";
     public const string MoonlitConfidenceUser = "yours";
     public const string MoonlitSourceUnknown = "Source not recorded";
+
+    // Confidence badge tooltips: what the badge means, with the source under it.
+    public const string MoonlitBadgeStatic = "Static: the game data alone marks this reward as found nowhere else";
+    public const string MoonlitBadgeCommunity = "Community: reported by players, not yet checked";
+    public const string MoonlitBadgeCurated = "Curated: checked by hand and shipped with the plugin";
+    public const string MoonlitBadgeUser = "Yours: you marked this quest's reward as unique";
+    public const string MoonlitBadgeHidden = "Yours: you hid this reward as not unique";
+
+    /// <summary>Hover text of the veiled stand-in drawn where a reward of a kind without sheet art would show its icon.</summary>
+    public const string MoonlitNoIconTooltip = "No icon for this reward kind";
+
+    /// <summary>{0} = the kind row's obtained/total.</summary>
+    public const string MoonlitKindCountTooltipFormat = "{0} obtained";
     public const string MoonlitQuestPrefix = "Quest ";
+
+    // Rewards the FFXIV Online Store also sells (curated/online_store.json; entry OtherSources carries OnlineStore)
+    public const string MoonlitStoreOnly = "Store only";
+    public const string MoonlitStoreOnlyTooltip = "Also sold on the FFXIV Online Store; not exclusive to the quest";
+    /// <summary>The same as the second line of the reward tooltip, after "Store only": composed once, since the tooltip draws every hovered frame.</summary>
+    public const string MoonlitStoreOnlyTooltipLine = "· " + MoonlitStoreOnlyTooltip;
+    public const string MoonlitHideStoreResellsLabel = "Hide store re-sells";
+    public const string MoonlitHideStoreResellsTooltip = "Leave out rewards the FFXIV Online Store also sells; the obtained/total counts leave them out too while this is on";
 
     // Confidence filter next to "Hide obtained"
     public const string MoonlitConfidenceFilterTooltip = "Show only rows with this confidence, or only rows whose obtained state the plugin cannot read";
@@ -43,7 +66,7 @@ static partial class Strings
     public const string MoonlitConfidenceStaticOnly = "Static only";
     public const string MoonlitConfidenceCuratedOnly = "Curated only";
     public const string MoonlitConfidenceYoursOnly = "Yours only";
-    public const string MoonlitConfidenceUnknownObtained = "Unknown obtained";
+    public const string MoonlitConfidenceUnknownObtained = "Obtained not checked";
 
     // ---- Flight pane ----
     public const string TabFlight = "Flight";
@@ -67,11 +90,11 @@ static partial class Strings
     public const string FlightColumnAttuned = "Attuned";
     public const string FlightColumnQuest = "Quest";
     public const string FlightColumnState = "State";
-    public const string FlightColumnNextStep = "Next step";
+    public const string FlightColumnStatus = "Status";
     public const string FlightColumnActions = "##actions";
     public const string FlightAttunedYes = "Attuned";
     public const string FlightAttunedNo = "Not attuned: completing the quest attunes it";
-    public const string FlightAttunedUnknown = "Unknown: attunement is read for the logged-in character only";
+    public const string FlightAttunedUnknown = "Not checked: attunement is read for the logged-in character only";
     public const string FlightQuestClickHint = "Show the quest's requirements and path in the detail pane";
     public const string FlightQuestPrefix = "Quest ";
     public const string FlightFlag = "Flag";
@@ -134,20 +157,6 @@ static partial class Strings
         _ => kind.ToString(),
     };
 
-    /// <summary>State name for glyph tooltips.</summary>
-    public static string MoonlitStateName(QuestState state) => state switch
-    {
-        QuestState.Ready => "Ready",
-        QuestState.ReadyOnOtherJob => "Ready on another job",
-        QuestState.Accepted => "Accepted",
-        QuestState.Blocked => "Blocked",
-        QuestState.DoneThisCycle => "Done this cycle",
-        QuestState.Completed => "Completed",
-        QuestState.Foreclosed => "Foreclosed",
-        QuestState.Unknown => "Unknown",
-        _ => state.ToString(),
-    };
-
     // ---- Characters pane ----
     public const string CharactersNoneStored = "No characters stored yet. Log in once to capture one.";
     public const string CharactersNoneViewed = "No character. Log in, or pick a stored character on the left.";
@@ -185,7 +194,7 @@ static partial class Strings
     public const string CharactersAccountUnknownQuest = "The selected quest is not in the catalog.";
     public const string CharactersColumnCharacter = "Character";
     public const string CharactersColumnState = "State";
-    public const string CharactersColumnNextStep = "Next step";
+    public const string CharactersColumnStatus = "Status";
     public const string CharactersSnapshotUnreadable = "snapshot unreadable";
     public const string CharactersLiveMarker = "● ";
     public const string CharactersWorldPrefix = "World ";
@@ -221,7 +230,7 @@ static partial class Strings
     public static string CharactersEventName(QuestEventKind kind) => kind switch
     {
         QuestEventKind.Completed => "Completed",
-        QuestEventKind.Accepted => "Accepted",
+        QuestEventKind.Accepted => "Picked up",
         QuestEventKind.Abandoned => "Abandoned",
         QuestEventKind.NewlyAvailable => "Newly available",
         _ => kind.ToString(),
@@ -248,11 +257,26 @@ static partial class Strings
     public const string ConfigChatNotice = "Chat notice for newly available quests";
     public const string ConfigIncludeMsq = "Include main scenario";
     public const string ConfigSectionJournal = "Journal";
-    public const string ConfigShowUnlisted = "Show Unlisted bucket";
-    public const string ConfigShowUnlistedHint = "Quests with no journal genre: hidden, removed or legacy entries.";
+    public const string ConfigShowUnlisted = "Show removed quests";
+    public const string ConfigShowUnlistedHint = "Adds the Removed from the game node to the tree: quests the game deleted in later patches. They never count toward a total; a completed one still shows Completed.";
+    public const string ConfigJournalFiling = "Journal filing";
+    public const string ConfigJournalFilingRefiled = "Refiled";
+    public const string ConfigJournalFilingLegacy = "Legacy";
+    public const string ConfigJournalFilingHint = "Refiled puts the hidden quests the game never lists (class intros, Leves of…, Sights of…, Eureka entry, hidden chain steps) under the genre their links point at, and keeps removed quests out of every total. Legacy shows them as releases before 0.6.1 did, all in one bucket. Changing this rebuilds the catalog.";
     public const string ConfigSectionIntegrations = "Integrations";
     public const string ConfigWotsitIntegration = "Register quests and rewards with Wotsit";
     public const string ConfigWotsitIntegrationHint = "Every quest and Moonlit reward becomes a Wotsit search entry that reveals it in the Journal. Needs Wotsit installed.";
+    public const string ConfigNpcContextMenu = "NPC context menu";
+    public const string ConfigNpcContextMenuHint = "Target a quest-giving NPC and open the target bar's menu: \"Tsukimichi: quests here (N)\" opens the Journal on that NPC's quests, each with what blocks it. Nothing about the NPC is stored.";
+
+    // ---- /tsuki why ----
+    public const string WhyNoSelection = "Select a quest first, or name one: /tsuki why <quest name>";
+
+    /// <summary>Between "talk to &lt;giver&gt;" and the giver's map link on a Ready line.</summary>
+    public const string WhyGiverIn = " in ";
+
+    /// <summary>The map link's text on a Ready line: {0} place name, {1} x, {2} y.</summary>
+    public const string WhyGiverPlaceFormat = "{0} ({1:0.0}, {2:0.0})";
     public const string ConfigSectionData = "Data";
     public const string ConfigDataRetention = "Tsukimichi keeps one snapshot per character, your pins and your unique-reward overrides in its config directory. Forget a single character from the Characters tab.";
     public const string ConfigDeleteAll = "Delete all Tsukimichi data";
@@ -282,15 +306,12 @@ static partial class Strings
     public const string ConfigVerdictsRestored = "All verdicts restored; the shipped reward data applies again.";
     public const string ConfigSectionAbout = "About";
     public const string ConfigPluginVersionPrefix = "Tsukimichi ";
-    public const string ConfigGameDataPrefix = "Reward data from game ";
-    public const string ConfigGameDataMissing = "Reward data not shipped in this build";
-    public const string ConfigGeneratedPrefix = ", generated ";
-    public const string ConfigUniqueEntriesSuffix = " unique reward entries";
     public const string ConfigCuratedPrefix = "Curated: ";
     public const string ConfigCuratedSystemSuffix = " system unlocks, ";
     public const string ConfigCuratedDutySuffix = " duty unlocks, ";
-    public const string ConfigCuratedFeatureSuffix = " feature quests, ";
+    public const string ConfigCuratedFeatureSuffix = " unlock quests, ";
     public const string ConfigCuratedFestivalSuffix = " festivals";
+    public const string ConfigDataStampTooltip = "The game version the reward data was generated from, how many entries and when, and the curated overlay's revision. The same stamp is in every diagnostic block.";
     public const string ConfigCatalogPrefix = "Catalog: ";
     public const string ConfigCatalogLoading = "Catalog: loading";
     public const string ConfigCatalogUnavailable = "Catalog unavailable: ";
@@ -313,6 +334,16 @@ static partial class Strings
     /// <summary>{0} = average ms.</summary>
     public const string ConfigPollCostFormat = "Each poll costs about {0:0.0} ms; 1 s is the default and is safe.";
     public const string ConfigPollCostUnknown = "Each poll costs a few milliseconds; 1 s is the default and is safe.";
+
+    /// <summary>"What's new" card at the top of the detail column after an update.</summary>
+    public static class WhatsNew
+    {
+        /// <summary>{0} = plugin version.</summary>
+        public const string TitleFormat = "What's new in {0}";
+        public const string Close = "Close";
+        public const string Help = "Help";
+        public const string Bullet = "• ";
+    }
 
     /// <summary>
     /// Help window text. Topics are built from small blocks (cards, steps, tips, key caps), so each block's text is
@@ -337,6 +368,8 @@ static partial class Strings
             HelpTopic.Characters => "Characters and snapshots",
             HelpTopic.Flight => "Flight and nearby",
             HelpTopic.Commands => "Commands",
+            HelpTopic.CountsDiffer => "Why my counts differ from the journal",
+            HelpTopic.KnownQuirks => "Known quirks",
             HelpTopic.Tips => "Tips",
             _ => topic.ToString(),
         };
@@ -352,6 +385,8 @@ static partial class Strings
             HelpTopic.Characters => "One snapshot per character keeps the whole account in view, even logged out.",
             HelpTopic.Flight => "Which quests stand between you and flying, and what you can start where you are.",
             HelpTopic.Commands => "Everything the chat command can do.",
+            HelpTopic.CountsDiffer => "Four reasons a done/total here is not the number in the game's journal or on a wiki.",
+            HelpTopic.KnownQuirks => "Things the plugin gets wrong on purpose or cannot know yet, so you need not report them.",
             HelpTopic.Tips => "Small habits that make the catalog faster.",
             _ => string.Empty,
         };
@@ -373,21 +408,14 @@ static partial class Strings
         public const string QuickStartSettingsTip = "Text too small? Settings has a Display section with a window scale and an icon scale.";
 
         // ---- Moon phases ----
-        public const string PhaseCompletedName = "full moon";
+        // The moon-phase name under each state comes from Strings.StateGlyphSubtitle; only the meanings live here.
         public const string PhaseCompletedMeaning = "Turned in on this character.";
-        public const string PhaseAcceptedName = "waxing gibbous, gold ring";
         public const string PhaseAcceptedMeaning = "In the journal now; the detail pane shows the step.";
-        public const string PhaseReadyName = "first quarter, glow";
         public const string PhaseReadyMeaning = "Every requirement is met on the current job; go get it.";
-        public const string PhaseReadyOtherJobName = "first quarter, silver, gold ring";
         public const string PhaseReadyOtherJobMeaning = "Met on another job; the detail pane names it.";
-        public const string PhaseDoneThisCycleName = "waning gibbous, silver";
-        public const string PhaseDoneThisCycleMeaning = "A repeatable quest already done this daily or weekly cycle.";
-        public const string PhaseBlockedName = "new moon, silver ring";
-        public const string PhaseBlockedMeaning = "A requirement is unmet; the next step names it in one clause.";
-        public const string PhaseForeclosedName = "eclipsed";
-        public const string PhaseForeclosedMeaning = "Locked out for good, usually by a choice made in another quest.";
-        public const string PhaseUnknownName = "veiled";
+        public const string PhaseDoneThisCycleMeaning = "A repeatable quest already turned in since its last reset: Done today for a daily, Done this week for a weekly.";
+        public const string PhaseBlockedMeaning = "A requirement is unmet; Status names it in one clause.";
+        public const string PhaseForeclosedMeaning = "Locked out for good, usually by a choice made in another quest; Status names the cause.";
         public const string PhaseUnknownMeaning = "Not evaluated: no snapshot, or data the plugin cannot read for this character.";
 
         // "Shown by" chips: what must be set for the phase to appear in the table.
@@ -398,7 +426,7 @@ static partial class Strings
         public const string ChipStatePrefix = "State: ";
 
         public const string FillingTitle = "The filling moon";
-        public const string FillingBody = "Tree nodes, Moonlit kinds and the Characters dashboard show a moon whose lit fraction is the completion ratio: new at none, half at half, full only when everything is done. Foreclosed quests are left out of the total.";
+        public const string FillingBody = "Tree nodes, Moonlit kinds and the Characters dashboard show a moon whose lit fraction is the completion ratio: new at none, half at half, full only when everything is done. Locked out quests are left out of the total.";
 
         // ---- Filters and chips ----
         public static readonly string[] FilterCardTitles =
@@ -413,10 +441,10 @@ static partial class Strings
 
         public static readonly string[] FilterCardBodies =
         [
-            "Drops Completed and Foreclosed quests. Per-category overrides let you hide completed everywhere except, say, the main scenario.",
-            "Keeps only Ready, Ready on another job and Accepted: the quests you can act on now. Takes the same per-category overrides.",
+            "Drops Completed and Locked out quests. Per-category overrides let you hide completed everywhere except, say, the main scenario.",
+            "Keeps only Ready, Ready on another job and In journal: the quests you can act on now. Takes the same per-category overrides.",
             "All eight phases as checkboxes for fine control. Untick a phase to hide its quests.",
-            "Expansion, level range, job category, reward kind (three-state per kind), Repeatable, Seasonal active and Include Unlisted narrow the table further.",
+            "Expansion, level range, job category, reward kind (three-state per kind), Repeatable and Seasonal active narrow the table further; Include removed widens it to quests the game deleted.",
             "Every active filter shows as a chip under the search box. Click a chip to clear it; Reset clears them all and the search.",
             "When the table empties, the panel names the filters responsible and offers Reset.",
         ];
@@ -491,9 +519,9 @@ static partial class Strings
 
         public static readonly string[] FlightCardBodies =
         [
-            "Every zone you can fly in, under its expansion, with a moon that fills as you attune its currents; the zone you stand in is marked ● and selected first. Pick a zone and the table lists its quest currents: attuned or not, the quest's state, its next step, and Flag or Teleport to the giver.",
+            "Every zone you can fly in, under its expansion, with a moon that fills as you attune its currents; the zone you stand in is marked ● and selected first. Pick a zone and the table lists its quest currents: attuned or not, the quest's state and status, and Flag or Teleport to the giver.",
             "Quest currents come from quests, five per zone in most expansions, and completing the quest attunes them. Field currents are touched in the world; the tab counts them but never locates them. Use the Aether Compass, a General Action under Actions & Traits, to point at the nearest one.",
-            "/tsuki nearby opens a small window with the quests you can start in the current zone: state moon, level, job, Flag and Teleport, and a click on the name shows it in the Journal. Also accepted here folds out the accepted quests whose giver stands in the zone. The cog holds its settings.",
+            "/tsuki nearby opens a small window with the quests you can start in the current zone: state moon, level, job, Flag and Teleport, and a click on the name shows it in the Journal. Also in your journal here folds out the quests in your journal whose giver stands in the zone. The cog holds its settings.",
             "☾ N in the server info bar is the count of quests you can start here. Hover it for the first five names; click it to open Nearby quests. It hides at zero unless Keep the entry visible is on, and the cog in Nearby quests can turn it off entirely.",
             "/tsuki zone prints chat links for the quests you can start in the current zone, by level, up to ten. /tsuki which prints every quest the targeted NPC hands out with its state. Both need an evaluated character; the Nearby quests window keeps the same list on screen.",
         ];
@@ -504,32 +532,80 @@ static partial class Strings
             "/tsukimichi",
             "/tsuki",
             "/tsukimichi search <text>",
-            "/tsukimichi config",
+            "/tsukimichi settings",
             "/tsukimichi help",
             "/tsukimichi glyphs",
             "/tsuki zone",
             "/tsuki which",
+            "/tsuki why [quest name]",
             "/tsuki nearby",
+            "/tsuki todo",
+            "/tsuki report [quest name]",
         ];
 
         public static readonly string[] CommandMeanings =
         [
             "open or close the window",
-            "the same, shorter",
+            "the same, shorter; every subcommand works with either",
             "search and print matching quests to chat as links; /tsukimichi <text> does the same",
-            "open Settings",
+            "open Settings (/tsukimichi settings does the same)",
             "open this window",
             "the glyph sheet: every moon at every size",
             "quests you can start in the current zone, as chat links by level",
             "every quest the targeted NPC hands out, with its state",
+            "why the selected quest (or the named one) is not offered: its state and blocker, then one line per requirement with met or unmet and the values compared, then the curated note where the game is known to behave differently; a Ready quest says whom to talk to, with a map link. The same list opens in the Journal from an NPC's target-bar menu (\"Tsukimichi: quests here\")",
             "open or close the Nearby quests window: what you can start in the current zone",
+            "show or hide the todo overlay: pins, feature quests here, the next main scenario quest and job quests",
+            "copy a diagnostic block for the selected quest (or the named one) to the clipboard, ready to paste into a GitHub issue; the Report button in the detail pane does the same",
         ];
+
+        // ---- Why my counts differ from the journal ----
+        public static readonly string[] CountsCardTitles =
+        [
+            "Removed and hidden quests",
+            "Seasonal quests out of season",
+            "Locked-out choices",
+            "Unlock quests is derived",
+            "Repeatables count once",
+        ];
+
+        public static readonly string[] CountsCardBodies =
+        [
+            "Quests the game removed in later patches (the A Realm Reborn trim in 5.3, the Summoner rework, the Crystal Tower rewrite, a few deleted sidequests) sit under the Removed from the game node, off by default, and never count toward any total; a completed one still shows Completed when the node or Include removed reveals it, and its detail pane says which patch removed it where that is known. Quests the game's journal hides but still hands out (So You Want to Be a Gladiator, Leves of Kugane, Sights of the North, the Eureka entry quests, hidden steps of YoRHa and the Resistance Weapons) are filed under the genre their links point at, so a class's quests start with its intro and a zone's sidequests include its leve unlock; the detail pane says which rule filed them. The class intros (So You Want to Be a Gladiator and the other A Realm Reborn classes) are listed but never counted: the class you started as hands you \"Way of the …\" directly and never offers its intro, so counting it would keep that class one short for good; the job intros (A Dark Spectacle, So You Want to Be a Machinist, What's Your Sign) count as usual. Settings › Display › Journal filing › Legacy puts every one of them back in the single bucket releases before 0.6.1 showed.",
+            "A seasonal quest of an event that is not running shows Blocked with \"seasonal event not active\", and is left out of its genre's total the way a locked-out quest is, so the moon can fill without it; it counts again while the event runs. An event whose end date is known and past locks its quests out for good.",
+            "A quest locked out by a choice, such as the other two Grand Companies' quests once you have joined one, is Locked out and left out of the total. A category can reach a full moon with them undone, while a wiki's count per genre includes them.",
+            "Unlock quests is not a journal category. It gathers every quest the game draws with the blue + icon, the curated duty and system unlocks, and quests that reward a duty, job, action, trait, aether current or blue magic spell; main scenario and repeatable quests are left out. Its total matches no page of the journal and moves when the curated lists do.",
+            "A daily or weekly quest is one row and one count however many times you have turned it in. Done today or Done this week marks the ones already handed in; they are still counted as completed.",
+        ];
+
+        public const string CountsTip = "The State filter shows locked-out and seasonal quests again; the Removed from the game node and Include removed reveal the deleted ones. Both change the counts while they are on.";
+
+        // ---- Known quirks ----
+        public static readonly string[] QuirkCardTitles =
+        [
+            "Steps the game skips",
+            "\"Bloodsworn\" reads \"Allied\"",
+            "Prerequisites that moved in 7.5",
+            "Delivery ranks and event chapters",
+            "Store re-sells in Moonlit",
+        ];
+
+        public static readonly string[] QuirkCardBodies =
+        [
+            "The plugin lists every prerequisite the game's data records. For a few quests the game waives one: Up in Arms is optional once the Zenith is in hand, so what follows it is offered while Tsukimichi still shows Up in Arms undone. The known cases carry a curated note: the detail pane shows it under the requirements as \"Note: …\", /tsuki why prints it and Report this quest includes it. When an NPC offers a quest shown Blocked here and there is no note, use Report this quest so the exception can be added.",
+            "Patch 7.0 renamed beast tribes to allied societies and the top rank from Bloodsworn to Allied. Tsukimichi uses the current names, so a requirement reads \"Allied\" where an older guide, or quest text written before 7.0, says \"Bloodsworn\". They are the same rank; the quest that awards it carries a note saying so.",
+            "Patch 7.5 changed the prerequisite of eleven crafter and gatherer sidequests (the Splendorous tools, Cosmic Exploration and the Kugane, Crystarium, Old Sharlayan and Tuliyollal scrip exchanges among them) from Go West, Craftsman to Inscrutable Tastes, a level 50 quest from Morgayne in Foundation. Tsukimichi follows the current game data, so it lists Inscrutable Tastes where an older guide names Go West, Craftsman; each affected quest carries a note with the patch notes as evidence.",
+            "A custom delivery client's satisfaction rank, the Delivery Moogle's carrier level and the chapter of a running seasonal event are judged since 0.6.2: a quest that needs rank 4 with M'naago, carrier level 7 or a chapter that has not opened yet shows Blocked with that reason. A character file written by an older version carries none of these values, so its quests read as before until the next capture. The game keeps the event chapter in three places and it is not yet known which one the quest givers follow; the plugin reads the first (GameMain) and, once per login, writes all three to the Dalamud log under \"[festival probe]\". If a chapter gate looks wrong during an event, send that log line with the report.",
+            "Some past seasonal rewards (minions, emotes, mounts, bardings, orchestrion rolls, ornaments) are sold again on the Online Store, which the game files cannot know. Moonlit says so on the rows the curated list covers; if you find one it does not, open a data correction issue with the store page as evidence.",
+        ];
+
+        public const string QuirksTip = "A quest in the wrong state that is not one of these? Report this quest in the detail pane copies a diagnostic block with the quest id, the state and every requirement's verdict, and no character identifiers; paste it into a GitHub issue.";
 
         // ---- Tips ----
         public static readonly string[] Tips =
         [
             "Hide completed plus Available now is the fastest view of what to do next.",
-            "Pin a quest and it stays one click away in the Characters dashboard, with its next step.",
+            "Pin a quest and it stays one click away in the Characters dashboard, with its status.",
             "The search box takes a quest id; paste one from a wiki.",
             "Hover a requirement's ✗ for the exact gap, such as the rank or level you still need.",
             "The path is clickable: select any earlier step to see its own requirements.",
@@ -537,7 +613,7 @@ static partial class Strings
             "Reward kind filters are three-state: require, exclude or ignore each kind.",
             "The toolbar's sync moon is full when live and veiled on a snapshot; hover it for the time.",
             "Chat notices for newly available quests are off by default; turn them on in Settings, main scenario excluded.",
-            "Foreclosed quests are left out of totals, so a category can reach 100% without them.",
+            "Locked out quests are left out of totals, so a category can reach 100% without them.",
             "Settings shows how long each poll takes; 1 s is the default and is safe.",
             "Delete all data in Settings removes snapshots, pins and overrides but keeps your settings.",
         ];
@@ -568,9 +644,9 @@ static partial class Strings
         public const string TabsTitle = "Four tabs";
         public const string TabsBody = "Journal is the catalog. Moonlit collects quests with unique rewards. Characters holds every snapshot on the account. Flight shows the aether current quests of each flying zone.";
         public const string TreeTitle = "Journal tree";
-        public const string TreeBody = "Section, category and genre scope the table. Each node shows done/total and a moon that fills with completion; Feature Unlocks and Unlisted are virtual nodes.";
+        public const string TreeBody = "Section, category and genre scope the table. Each node shows done/total and a moon that fills with completion; Unlock quests and Removed from the game are virtual nodes.";
         public const string TableTitle = "Quest table";
-        public const string TableBody = "One row per quest. The glyph is its moon phase: full is completed, first quarter is ready, new is blocked. Click a header to sort; right-click a row for pin, map flag and journal.";
+        public const string TableBody = "One row per quest. The moon is its state (hover it for the name; Help lists all eight) and Status says what blocks it. Click a header to sort; right-click a row for pin, map flag and journal.";
         public const string RequirementsTitle = "Requirements";
         public const string RequirementsBody = "Select a row and the detail pane lists every requirement with ✓ or ✗. The ▶ marks the one blocking you; hover it for the exact gap.";
         public const string PathTitle = "Path and unlocks next";
@@ -582,7 +658,7 @@ static partial class Strings
         public const string CharactersTitle = "Characters";
         public const string CharactersBody = "Every stored snapshot on the left. The dashboard shows completion by section, Moonlit progress, pins, recent activity, job levels and standings for the viewed character.";
         public const string FlightTitle = "Flight";
-        public const string FlightBody = "Every flying zone, under its expansion, with a moon of attuned currents. Pick one: the table lists its five quest currents, whether each is attuned, the quest that blocks it and its next step, plus Flag and Teleport for where to fly next.";
+        public const string FlightBody = "Every flying zone, under its expansion, with a moon of attuned currents. Pick one: the table lists its five quest currents, whether each is attuned, the quest that blocks it and its status, plus Flag and Teleport for where to fly next.";
         public const string HelpTitle = "Help, tour and settings";
         public const string HelpBody = "The book reopens the guide, the graduation cap replays this tour, and the cog opens Settings: poll interval, display scale and data controls.";
         public const string FinishTitle = "That is the road";

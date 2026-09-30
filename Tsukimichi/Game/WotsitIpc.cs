@@ -6,6 +6,7 @@ using Dalamud.Plugin.Ipc;
 using Dalamud.Plugin.Ipc.Exceptions;
 using Dalamud.Plugin.Services;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Runtime;
 using Tsukimichi.Core.Unique;
 using Tsukimichi.GameData;
 using Tsukimichi.Ui;
@@ -22,7 +23,9 @@ public sealed record WotsitEntry(string DisplayName, string SearchText, uint Ico
 /// <c>FA.Available</c> (message sent when Wotsit loads). Picking an entry reveals the quest in the Journal.
 /// <para>
 /// Registration is batched on the framework thread: each tick registers as many entries as fit in
-/// <see cref="TickBudgetMs"/>, so a few thousand calls never stall a frame, and the total is logged once. The
+/// <see cref="TickBudgetMs"/>, so a few thousand calls never stall a frame, and the total is logged once. A call that
+/// throws is retried from the same entry on the next tick (<see cref="BatchCursor"/>); after
+/// <see cref="MaxRegisterAttempts"/> failures on one entry the rest of the batch is abandoned with a warning. The
 /// entries are rebuilt (after an <c>UnregisterAll</c>) whenever the catalog or the Moonlit catalog is a new instance,
 /// and again whenever Wotsit announces itself, since a reloaded Wotsit has forgotten them. Dalamud's plugin-list
 /// event and Wotsit's messages may arrive off the framework thread, so they only raise flags that the next tick acts on.
@@ -39,6 +42,9 @@ public sealed class WotsitIpc : IDisposable
 
     /// <summary>Wall time one tick may spend registering before the rest waits for the next tick.</summary>
     public const double TickBudgetMs = 4.0;
+
+    /// <summary>Consecutive failed <c>FA.RegisterWithSearch</c> calls on one entry before the batch is given up.</summary>
+    public const int MaxRegisterAttempts = BatchCursor.DefaultMaxAttempts;
 
     private const string RegisterWithSearchGate = "FA.RegisterWithSearch";
     private const string UnregisterAllGate = "FA.UnregisterAll";
@@ -66,7 +72,7 @@ public sealed class WotsitIpc : IDisposable
     private CatalogBundle? registeredBundle;
     private UniqueRewardCatalog? registeredRewards;
     private List<WotsitEntry>? pending;
-    private int pendingIndex;
+    private BatchCursor? cursor;
     private int pendingTicks;
     private double pendingMs;
     private bool registered;
@@ -194,6 +200,13 @@ public sealed class WotsitIpc : IDisposable
         var entries = new List<WotsitEntry>(catalog.Count + rewards.Count);
         foreach (var quest in catalog.All)
         {
+            if (quest.IsRemoved)
+            {
+                // Removed from the game (retired, or left without a journal genre): nothing to find on the map, and
+                // a retired twin with the same name is listed.
+                continue;
+            }
+
             var target = quest;
             var expansion = bundle.Names.Expansion(quest.Expansion);
             entries.Add(new WotsitEntry(
@@ -279,25 +292,30 @@ public sealed class WotsitIpc : IDisposable
         registeredBundle = currentBundle;
         registeredRewards = currentRewards;
         pending = BuildEntries(currentBundle, currentRewards, rewardIcon, reveal);
-        pendingIndex = 0;
+        cursor = new BatchCursor(pending.Count, MaxRegisterAttempts);
         pendingTicks = 0;
         pendingMs = 0;
         registered = true;
     }
 
-    /// <summary>Registers entries until the tick budget is spent; finishes the list over as many ticks as needed.</summary>
+    /// <summary>
+    /// Registers entries until the tick budget is spent; finishes the list over as many ticks as needed. A call that
+    /// throws ends the tick and is retried from that entry next tick; once the cursor gives up on an entry, the
+    /// batch is dropped with the entries registered so far kept (a partial list beats none) until the catalog or
+    /// Wotsit itself changes.
+    /// </summary>
     private void RegisterBatch()
     {
-        if (pending is null || registerWithSearch is null)
+        if (pending is null || cursor is null || registerWithSearch is null)
         {
             return;
         }
 
         batchClock.Restart();
         pendingTicks++;
-        while (pendingIndex < pending.Count)
+        while (!cursor.IsDone)
         {
-            var entry = pending[pendingIndex];
+            var entry = pending[cursor.Index];
             try
             {
                 var guid = registerWithSearch.InvokeFunc(PluginName, entry.DisplayName, entry.SearchText, entry.IconId);
@@ -311,17 +329,28 @@ public sealed class WotsitIpc : IDisposable
                 // Wotsit went away mid-batch; FA.Available brings the rest back.
                 wotsitLoaded = false;
                 pending = null;
+                cursor = null;
                 registered = false;
                 return;
             }
             catch (Exception ex)
             {
-                WarnOnce(ex, "Wotsit FA.RegisterWithSearch failed; registration stopped");
-                pending = null;
+                if (cursor.Fail())
+                {
+                    log.Warning(ex, "Wotsit FA.RegisterWithSearch failed {Attempts} times at entry {Index} of {Count}; giving up on the rest", cursor.Attempts, cursor.Index, cursor.Count);
+                    pending = null;
+                    cursor = null;
+                }
+                else
+                {
+                    log.Debug(ex, "Wotsit FA.RegisterWithSearch failed at entry {Index} of {Count} (attempt {Attempts}); retrying next tick", cursor.Index, cursor.Count, cursor.Attempts);
+                }
+
+                pendingMs += batchClock.Elapsed.TotalMilliseconds;
                 return;
             }
 
-            pendingIndex++;
+            cursor.Advance();
             if (batchClock.Elapsed.TotalMilliseconds >= TickBudgetMs)
             {
                 break;
@@ -329,16 +358,18 @@ public sealed class WotsitIpc : IDisposable
         }
 
         pendingMs += batchClock.Elapsed.TotalMilliseconds;
-        if (pendingIndex >= pending.Count)
+        if (cursor.IsDone)
         {
             log.Information("Wotsit: registered {Count} entries in {Ms:0.0} ms over {Ticks} tick(s)", pending.Count, pendingMs, pendingTicks);
             pending = null;
+            cursor = null;
         }
     }
 
     private void Unregister()
     {
         pending = null;
+        cursor = null;
         actions.Clear();
         if (unregisterAll is null || !wotsitLoaded)
         {
@@ -405,6 +436,7 @@ public sealed class WotsitIpc : IDisposable
     {
         actions.Clear();
         pending = null;
+        cursor = null;
         registered = false;
     }
 

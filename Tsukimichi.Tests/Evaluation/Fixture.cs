@@ -58,7 +58,7 @@ internal static class Fixture
         AchievementsLoaded = true,
     };
 
-    public static AcceptedQuest Accepted(uint rowId, byte sequence = 1) => new(QuestRecord.ToQuestId(rowId), sequence);
+    public static AcceptedQuest Accepted(uint rowId, byte sequence = 1, byte acceptClassJob = 0) => new(QuestRecord.ToQuestId(rowId), sequence, acceptClassJob);
 
     /// <summary>The single result of the given kind; fails when there are none or several.</summary>
     public static RequirementResult Only(IReadOnlyList<RequirementResult> results, RequirementKind kind) =>

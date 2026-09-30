@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Help window first
+    url: https://github.com/xenofei/Tsukimichi#reporting-a-problem
+    about: "/tsuki help has Known quirks and Why my counts differ from the journal; the README says what the plugin hooks and never does."

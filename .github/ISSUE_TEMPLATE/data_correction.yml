@@ -1,0 +1,50 @@
+name: Data correction
+description: A Moonlit reward that is not unique (or one that is missing), a duty or system unlock quest that is wrong, a chain step out of place, an event date.
+title: "[Data] "
+labels: ["data"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Curated data lives in `Tsukimichi/Data/curated/` and is keyed by Quest row id; the reward database is generated from the game files. A correction needs something a maintainer can check, so the evidence link is required.
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What is wrong
+      options:
+        - A Moonlit reward is not unique (also sold, traded, or given elsewhere)
+        - A unique reward is missing from Moonlit
+        - A duty or system unlock points at the wrong quest, or is missing
+        - A story chain is missing a step or has one out of order
+        - A seasonal event window or end date
+        - Something else in the data
+    validations:
+      required: true
+  - type: input
+    id: subject
+    attributes:
+      label: Quest or reward
+      description: Name and id where you have it (quest row id, item id, or the entry as Moonlit shows it).
+      placeholder: "Wind-up Sun minion (item 12345) from quest 66236"
+    validations:
+      required: true
+  - type: textarea
+    id: correction
+    attributes:
+      label: What it should say
+    validations:
+      required: true
+  - type: input
+    id: evidence
+    attributes:
+      label: Evidence URL
+      description: A page that shows the fact — Lodestone Eorzea Database, the Console Games Wiki, FFXIV Collect, Garland Tools, the Online Store, or a screenshot you uploaded to the issue.
+      placeholder: "https://ffxiv.consolegameswiki.com/wiki/…"
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Data version
+      description: Settings › About shows the game version the reward data was generated for.
+      placeholder: "0.6.0 · data 2026.09.20"

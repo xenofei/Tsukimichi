@@ -8,6 +8,7 @@ using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin;
 using Tsukimichi.Config;
+using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Ui;
 using Tsukimichi.Game;
 using Tsukimichi.GameData;
@@ -16,8 +17,8 @@ namespace Tsukimichi.Ui;
 
 /// <summary>
 /// Settings (spec §7): poll interval (with the measured cost of a poll under it), display scale sliders
-/// (<see cref="Configuration.UiScale"/>, <see cref="Configuration.IconScale"/>) and Reduce motion, chat notices, the
-/// Unlisted bucket, the todo overlay (on/off, lock, opacity, sections, reset position), item hints, the Wotsit
+/// (<see cref="Configuration.UiScale"/>, <see cref="Configuration.IconScale"/>), Reduce motion and the journal
+/// filing, chat notices, the Removed from the game node, the todo overlay (on/off, lock, opacity, sections, reset position), item hints, the Wotsit
 /// integration, help (open it, start the tutorial, offer it on first run), the user's Moonlit verdicts with Restore
 /// and a hold-to-confirm Restore all, data deletion with a double confirm, and an About section with the plugin,
 /// reward-data and catalog stamps plus the poll timing. Every change is saved as it happens; sliders save when
@@ -34,8 +35,8 @@ public sealed class ConfigWindow : Window
     private readonly Action<bool> onShowUnlistedChanged;
 
     private readonly string pluginVersionLine;
-    private readonly string gameDataLine;
-    private readonly string entriesLine;
+    private readonly string dataStampLine;
+    private readonly string? dataVersionWarning;
     private readonly string curatedLine;
 
     private CatalogBundle? aboutBundle;
@@ -62,27 +63,23 @@ public sealed class ConfigWindow : Window
     private string pollTimingLine = Strings.ConfigPollTimingNone;
     private string pollCostLine = Strings.ConfigPollCostUnknown;
 
-    public ConfigWindow(Configuration settings, SessionState session, IDalamudPluginInterface pluginInterface, Action<bool> onShowUnlistedChanged)
+    /// <param name="diagnostics">Owns the data stamp and the game-version warning the About section shows.</param>
+    public ConfigWindow(Configuration settings, SessionState session, IDalamudPluginInterface pluginInterface, DiagnosticBuilder diagnostics, Action<bool> onShowUnlistedChanged)
         : base("Tsukimichi Settings###TsukimichiConfig")
     {
         this.settings = settings ?? throw new ArgumentNullException(nameof(settings));
         this.session = session ?? throw new ArgumentNullException(nameof(session));
         this.pluginInterface = pluginInterface ?? throw new ArgumentNullException(nameof(pluginInterface));
+        ArgumentNullException.ThrowIfNull(diagnostics);
         this.onShowUnlistedChanged = onShowUnlistedChanged ?? throw new ArgumentNullException(nameof(onShowUnlistedChanged));
 
         Size = new Vector2(480f, 640f);
         SizeCondition = ImGuiCond.FirstUseEver;
         SizeConstraints = new WindowSizeConstraints { MinimumSize = new Vector2(400f, 320f) };
 
-        var version = typeof(ConfigWindow).Assembly.GetName().Version;
-        pluginVersionLine = Strings.ConfigPluginVersionPrefix + (version?.ToString() ?? "unknown");
-
-        var rewards = session.UniqueRewards;
-        gameDataLine = string.IsNullOrEmpty(rewards.GameVersion)
-            ? Strings.ConfigGameDataMissing
-            : Strings.ConfigGameDataPrefix + rewards.GameVersion
-              + (rewards.GeneratedUtc == default ? string.Empty : Strings.ConfigGeneratedPrefix + rewards.GeneratedUtc.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
-        entriesLine = rewards.Entries.Count.ToString(CultureInfo.InvariantCulture) + Strings.ConfigUniqueEntriesSuffix;
+        pluginVersionLine = Strings.ConfigPluginVersionPrefix + (diagnostics.PluginVersion.Length > 0 ? diagnostics.PluginVersion : "unknown");
+        dataStampLine = diagnostics.DataStampLine;
+        dataVersionWarning = diagnostics.VersionMismatchWarning;
 
         var curated = session.Curated;
         curatedLine = Strings.ConfigCuratedPrefix
@@ -103,6 +100,9 @@ public sealed class ConfigWindow : Window
     /// <summary>Called with the new value after <see cref="Configuration.WotsitIntegration"/> is toggled and saved; the plugin points it at the Wotsit IPC.</summary>
     public Action<bool>? WotsitToggled { get; set; }
 
+    /// <summary>Called with the new value after <see cref="Configuration.JournalFiling"/> changes and is saved; the plugin rebuilds the catalog.</summary>
+    public Action<JournalFiling>? JournalFilingChanged { get; set; }
+
     /// <summary>Moves the todo overlay back to its default place; set by the plugin once the overlay exists. Null hides the button.</summary>
     public Action? ResetTodoPosition { get; set; }
 
@@ -111,6 +111,9 @@ public sealed class ConfigWindow : Window
 
     /// <summary>Called with the new value after <see cref="Configuration.ItemContextMenuEnabled"/> is toggled and saved; the item-hint feature wires it.</summary>
     public Action<bool>? ItemContextMenuToggled { get; set; }
+
+    /// <summary>Called with the new value after <see cref="Configuration.NpcContextMenuEnabled"/> is toggled and saved; the NPC menu hook wires it.</summary>
+    public Action<bool>? NpcContextMenuToggled { get; set; }
 
     /// <summary>The user's Moonlit verdicts for the Data section; set by the plugin once the Moonlit pane exists. Null shows a placeholder.</summary>
     public IUniqueOverrides? Overrides { get; set; }
@@ -226,6 +229,41 @@ public sealed class ConfigWindow : Window
         {
             ImGui.SetTooltip(Strings.ConfigReduceMotionHint);
         }
+
+        DrawJournalFiling();
+    }
+
+    /// <summary>
+    /// The journal filing radio: Refiled (the 0.6.1 rules) or Legacy (the genre-less quests stay in the removed
+    /// bucket, as before). Saved at once; the plugin rebuilds the catalog through <see cref="JournalFilingChanged"/>.
+    /// </summary>
+    private void DrawJournalFiling()
+    {
+        ImGui.Spacing();
+        ImGui.TextUnformatted(Strings.ConfigJournalFiling);
+        var filing = settings.JournalFiling;
+        var changed = false;
+        if (ImGui.RadioButton(Strings.ConfigJournalFilingRefiled, filing == JournalFiling.Refiled))
+        {
+            filing = JournalFiling.Refiled;
+            changed = true;
+        }
+
+        ImGui.SameLine();
+        if (ImGui.RadioButton(Strings.ConfigJournalFilingLegacy, filing == JournalFiling.Legacy))
+        {
+            filing = JournalFiling.Legacy;
+            changed = true;
+        }
+
+        if (changed && filing != settings.JournalFiling)
+        {
+            settings.JournalFiling = filing;
+            Save();
+            JournalFilingChanged?.Invoke(filing);
+        }
+
+        ImGui.TextDisabled(Strings.ConfigJournalFilingHint);
     }
 
     private void SaveWhenReleased()
@@ -474,6 +512,19 @@ public sealed class ConfigWindow : Window
         {
             ImGui.SetTooltip(Strings.ConfigWotsitIntegrationHint);
         }
+
+        var npcMenu = settings.NpcContextMenuEnabled;
+        if (ImGui.Checkbox(Strings.ConfigNpcContextMenu, ref npcMenu))
+        {
+            settings.NpcContextMenuEnabled = npcMenu;
+            Save();
+            NpcContextMenuToggled?.Invoke(npcMenu);
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip(Strings.ConfigNpcContextMenuHint);
+        }
     }
 
     private void DrawData()
@@ -684,8 +735,18 @@ public sealed class ConfigWindow : Window
         Header(Strings.ConfigSectionAbout);
         RefreshCatalogLine();
         ImGui.TextUnformatted(pluginVersionLine);
-        ImGui.TextUnformatted(gameDataLine);
-        ImGui.TextUnformatted(entriesLine);
+        ImGui.TextUnformatted(dataStampLine);
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.ConfigDataStampTooltip);
+        }
+
+        if (dataVersionWarning is { } warning)
+        {
+            using var eclipse = Theme.PushText(Theme.Eclipse);
+            ImGui.TextWrapped(warning);
+        }
+
         ImGui.TextUnformatted(curatedLine);
         ImGui.TextUnformatted(catalogLine);
         RefreshPollTiming();

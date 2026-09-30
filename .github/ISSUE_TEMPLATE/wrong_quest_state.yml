@@ -1,0 +1,64 @@
+name: Wrong quest state
+description: A quest shows Ready but the NPC will not give it, shows Blocked while it is offered, or the blocker named is wrong.
+title: "[State] "
+labels: ["wrong-state"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing, check **Known quirks** and **Why my counts differ from the journal** in the help window (`/tsuki help`); steps the game skips, "Bloodsworn" versus "Allied" and conditions that are listed but not judged are already known.
+  - type: input
+    id: quest
+    attributes:
+      label: Quest
+      description: Name, and the id if you have it (the diagnostic block below carries it).
+      placeholder: "Saint Sayer (67818)"
+    validations:
+      required: true
+  - type: dropdown
+    id: shown
+    attributes:
+      label: State Tsukimichi shows
+      options:
+        - Ready
+        - Ready on another job
+        - Accepted
+        - Blocked
+        - Done this cycle
+        - Completed
+        - Foreclosed
+        - Unknown
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What the game does
+      description: Does the NPC offer the quest? Is it in your journal? What does the game say when you talk to the NPC?
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostic
+    attributes:
+      label: Diagnostic block
+      description: Select the quest in Tsukimichi and press **Report** at the end of the buttons under Giver in the detail pane (or type `/tsuki report`, or `/tsuki report <quest name>`), then paste what it copied here, fence and all. It carries the plugin, game and data versions, the quest id, the state with its blocker, every requirement's verdict and the inputs it was judged from; no character identifiers.
+      render: text
+      placeholder: |
+        ```tsukimichi-diagnostic
+        plugin: 0.6.0.0
+        game: … (client) / … (data)
+        data: unique_quests generated …, curated …, schema …
+        quest: … "…" (…)
+        state: …
+        requirements:
+          - …
+        inputs: …
+        captured: …
+        ```
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else
+      description: A guide or wiki page that says what the real requirement is, if you know one.

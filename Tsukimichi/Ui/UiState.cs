@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
 
 namespace Tsukimichi.Ui;
@@ -21,8 +22,26 @@ public sealed class UiState
 {
     public NavTab Tab { get; set; } = NavTab.Journal;
 
-    /// <summary>Journal tree selection; QuestScope.None means "everything".</summary>
-    public QuestScope Scope { get; set; } = QuestScope.None;
+    private QuestScope scope = QuestScope.None;
+
+    /// <summary>
+    /// Journal tree selection; QuestScope.None means "everything". A change by any other means than
+    /// <see cref="Reveal(uint, QuestScope, bool)"/> (a tree click, a command, the tutorial) drops a reveal still pending
+    /// for the previous scope, so the tree never opens and scrolls to the wrong node later.
+    /// </summary>
+    public QuestScope Scope
+    {
+        get => scope;
+        set
+        {
+            if (value != scope)
+            {
+                RevealPending = false;
+            }
+
+            scope = value;
+        }
+    }
 
     /// <summary>Row id of the quest shown in the detail pane, or null.</summary>
     public uint? SelectedRowId { get; set; }
@@ -46,6 +65,12 @@ public sealed class UiState
 
     /// <summary>Set by "Show path"; the detail pane clears it when drawn, then scrolls to and briefly highlights its Path section.</summary>
     public bool ScrollToPath { get; set; }
+
+    /// <summary>
+    /// Set by <see cref="Reveal(uint, QuestScope, bool)"/>: the Journal tree opens the ancestors of <see cref="Scope"/>
+    /// and scrolls to it on its next draw, then clears this.
+    /// </summary>
+    public bool RevealPending { get; set; }
 
     /// <summary>
     /// Screen rectangles of named UI regions recorded during the last frame (toolbar, search, filters, chips,
@@ -82,7 +107,44 @@ public sealed class UiState
         Tab = NavTab.Journal;
         Scope = scope;
         SelectedRowId = rowId;
+        RevealPending = true;
 
+        if (ClearNarrowingFilters(isUnlisted))
+        {
+            FiltersChanged?.Invoke();
+        }
+
+        MarkQueryDirty();
+    }
+
+    /// <summary>
+    /// Switch to the Journal tab scoped to the quests one NPC hands out (<see cref="QuestScope.Issuer"/>), from the
+    /// NPC context menu. The narrowing filters are cleared as <see cref="Reveal(uint, QuestScope, bool)"/> clears
+    /// them, so a Blocked quest is listed with its blocker rather than hidden; the selection is dropped, since the
+    /// quest shown in the detail pane may not be one of the NPC's. No tree node carries the scope, so no reveal is
+    /// pending; the scope chip names the NPC and clears the scope.
+    /// </summary>
+    public void ShowIssuer(uint npcId)
+    {
+        Tab = NavTab.Journal;
+        Scope = QuestScope.Issuer(npcId);
+        SelectedRowId = null;
+        RevealPending = false;
+
+        if (ClearNarrowingFilters(includeUnlisted: false))
+        {
+            FiltersChanged?.Invoke();
+        }
+
+        MarkQueryDirty();
+    }
+
+    /// <summary>
+    /// Turns off the state-based narrowing filters and the active preset (and turns Include removed on when asked);
+    /// true when anything changed and the window should persist the filters.
+    /// </summary>
+    private bool ClearNarrowingFilters(bool includeUnlisted)
+    {
         var f = Filters;
         var changed = false;
         if (f.HideCompletedEngaged())
@@ -117,17 +179,19 @@ public sealed class UiState
             changed = true;
         }
 
-        if (isUnlisted && !f.IncludeUnlisted)
+        if (includeUnlisted && !f.IncludeUnlisted)
         {
             f.IncludeUnlisted = true;
             changed = true;
         }
 
-        if (changed)
-        {
-            FiltersChanged?.Invoke();
-        }
+        return changed;
+    }
 
-        MarkQueryDirty();
+    /// <summary>Reveals a catalog quest: its genre's scope, or the "Removed from the game" scope for a removed quest.</summary>
+    public void Reveal(QuestRecord quest)
+    {
+        ArgumentNullException.ThrowIfNull(quest);
+        Reveal(quest.RowId, quest.IsRemoved ? QuestScope.VirtualUnlisted : QuestScope.Genre(quest.Journal.GenreId), quest.IsRemoved);
     }
 }

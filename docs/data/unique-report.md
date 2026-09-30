@@ -1,9 +1,16 @@
 # Unique reward report
 
-Generated 2026-09-28 02:34 UTC from game version `2026.09.15.0000.0000` by Tsukimichi.DataGen.
+Generated from game version `2026.09.15.0000.0000` by Tsukimichi.DataGen (see docs/data/DATA-VERSION.md for when).
 
 - Entries: **3464** across **1173** quests.
-- Entries whose item is also obtainable elsewhere (source carries `;otherSource=`): **806**. They keep confidence Static in V1; the UI shows the source.
+- Entries whose reward is also obtainable elsewhere (`otherSources` non-empty): **868**. They keep confidence Static in V1; the UI shows the source and marks Online Store re-sells.
+  - `SpecialShop`: 605
+  - `Tradable`: 555
+  - `Marketable`: 495
+  - `GatheringItem`: 468
+  - `GilShopItem`: 136
+  - `OnlineStore`: 68
+  - `Recipe`: 22
 - Plain item rewards refused by the exclusivity rule (strict): **713** (listed at the end).
 
 ## Counts per kind and confidence

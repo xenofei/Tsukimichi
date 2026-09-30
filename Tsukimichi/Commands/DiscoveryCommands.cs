@@ -2,7 +2,7 @@ using System.Globalization;
 using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Plugin.Services;
 using Tsukimichi.Core.Discovery;
-using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Game;
 using Tsukimichi.Ui;
 
@@ -41,7 +41,9 @@ public sealed class DiscoveryCommands(SessionState session, IClientState clientS
 
         for (var i = 0; i < matches.Count && i < MaxChatMatches; i++)
         {
-            links.PrintQuestLink(matches[i]);
+            var quest = matches[i];
+            session.States.TryGetValue(quest.RowId, out var evaluation);
+            links.PrintQuestLink(quest, BlockerText.StatusText(evaluation, quest, session.Names, session.States));
         }
 
         if (matches.Count > MaxChatMatches)
@@ -77,8 +79,8 @@ public sealed class DiscoveryCommands(SessionState session, IClientState clientS
         for (var i = 0; i < matches.Count && i < MaxChatMatches; i++)
         {
             var quest = matches[i];
-            var state = session.States.TryGetValue(quest.RowId, out var evaluation) ? evaluation.State : QuestState.Unknown;
-            links.PrintQuestLink(quest, Strings.MoonlitStateName(state));
+            session.States.TryGetValue(quest.RowId, out var evaluation);
+            links.PrintQuestLink(quest, BlockerText.StatusText(evaluation, quest, session.Names, session.States));
         }
 
         if (matches.Count > MaxChatMatches)

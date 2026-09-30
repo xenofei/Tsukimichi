@@ -13,6 +13,7 @@ using Dalamud.Plugin.Services;
 using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
+using Tsukimichi.Core.Ui;
 using Tsukimichi.Game;
 using Tsukimichi.GameData;
 
@@ -28,8 +29,6 @@ public sealed class MainWindow : Window, IDisposable
 {
     public const float DefaultWidth = 1100f;
     public const float DefaultHeight = 700f;
-    public const float MinWidth = 800f;
-    public const float MinHeight = 500f;
     public const int MaxChatMatches = 5;
     public const int ToolbarButtonCount = 3;
 
@@ -60,6 +59,7 @@ public sealed class MainWindow : Window, IDisposable
     private Action? openHelp;
     private Action? startTutorial;
     private ITutorial? tutorial;
+    private WhatsNewCard? whatsNew;
 
     private Task? retryTask;
     private bool initialized;
@@ -84,6 +84,12 @@ public sealed class MainWindow : Window, IDisposable
     // Status bar string, rebuilt when its inputs change.
     private (int Catalog, int Rows, int Total, bool Live, long SnapshotMinute) statusKey = (-1, -1, -1, false, -1);
     private string status = string.Empty;
+
+    /// <summary>The least width the status text keeps when the MSQ segment crowds it, in logical pixels.</summary>
+    private const float StatusMinLogical = 120f;
+
+    /// <summary>The data version stamp the status text shows on hover (the same line as Settings › About); null shows no tooltip.</summary>
+    public string? DataStamp { get; set; }
 
     // Main scenario position, memoized per session version and catalog; empty strings hide it.
     private int msqVersion = -1;
@@ -114,7 +120,7 @@ public sealed class MainWindow : Window, IDisposable
 
         Size = new Vector2(DefaultWidth, DefaultHeight);
         SizeCondition = ImGuiCond.FirstUseEver;
-        SizeConstraints = new WindowSizeConstraints { MinimumSize = new Vector2(MinWidth, MinHeight) };
+        SizeConstraints = new WindowSizeConstraints { MinimumSize = ScaleMetrics.MinWindowSize(ScaleMetrics.DefaultUiScale) };
 
         filterPanel = new FilterPanel(ui, OnFiltersChanged, OnDisplayChanged);
         ui.FiltersChanged += OnFiltersChanged;
@@ -147,6 +153,14 @@ public sealed class MainWindow : Window, IDisposable
         detailPane.Overrides = overrides ?? throw new ArgumentNullException(nameof(overrides));
     }
 
+    /// <summary>The detail pane's Report button and the status bar's data stamp tooltip.</summary>
+    public void AttachDiagnostics(DiagnosticBuilder diagnostics)
+    {
+        ArgumentNullException.ThrowIfNull(diagnostics);
+        detailPane.Diagnostics = diagnostics;
+        DataStamp = diagnostics.DataStampLine;
+    }
+
     /// <summary>
     /// Wires the toolbar's Settings, Help and Tutorial buttons. Until this is called the buttons are drawn disabled,
     /// so the toolbar layout never changes.
@@ -167,6 +181,12 @@ public sealed class MainWindow : Window, IDisposable
         this.tutorial = tutorial ?? throw new ArgumentNullException(nameof(tutorial));
     }
 
+    /// <summary>Attaches the "What's new" card; it decides on the window's first draw and sits above the detail pane while visible.</summary>
+    public void AttachWhatsNew(WhatsNewCard card)
+    {
+        whatsNew = card ?? throw new ArgumentNullException(nameof(card));
+    }
+
     public override void Draw()
     {
         SyncTourState();
@@ -177,6 +197,9 @@ public sealed class MainWindow : Window, IDisposable
 
         EnsureInitialized();
         UiMetrics.Update(plugin.Settings);
+
+        // The fixed side columns grow with the UI scale, so the minimum size must too or the centre column collapses.
+        SizeConstraints = new WindowSizeConstraints { MinimumSize = ScaleMetrics.MinWindowSize(UiMetrics.FontScale) };
 
         // Dalamud closes the window on Esc while it or one of its popups is focused; while a popup (verdict prompt,
         // context menu) is open Esc belongs to the popup. The tour manages the flag itself while it runs.
@@ -257,12 +280,12 @@ public sealed class MainWindow : Window, IDisposable
 
         var index = SearchIndex.For(bundle.Catalog);
         var normalized = SearchIndex.Normalize(text);
-        // Chat results mirror the table: unlisted quests only when the Include Unlisted filter is on.
+        // Chat results mirror the table: removed quests only when the Include removed filter is on.
         var showUnlisted = ui.Filters.IncludeUnlisted;
         var count = 0;
         foreach (var quest in bundle.Catalog.All)
         {
-            if ((quest.IsUnlisted && !showUnlisted) || !index.Matches(quest.RowId, normalized))
+            if ((quest.IsRemoved && !showUnlisted) || !index.Matches(quest.RowId, normalized))
             {
                 continue;
             }
@@ -336,6 +359,7 @@ public sealed class MainWindow : Window, IDisposable
         }
 
         initialized = true;
+        whatsNew?.CheckOnOpen();
         ui.Filters = plugin.Settings.Filters;
         ui.Sort = new SortSpec(plugin.Settings.SortColumn, plugin.Settings.SortDescending, plugin.Settings.PinnedFirst);
         persistedSort = ui.Sort;
@@ -453,7 +477,7 @@ public sealed class MainWindow : Window, IDisposable
         ImGui.SameLine();
         using (ImRaii.Disabled(searchBuffer.Length == 0))
         {
-            if (ImGuiComponents.IconButton(FontAwesomeIcon.Times))
+            if (ImGuiComponents.IconButton("##clearSearch", FontAwesomeIcon.Times, UiMetrics.Square(UiMetrics.MinTarget)))
             {
                 searchBuffer = string.Empty;
                 ui.SearchText = string.Empty;
@@ -486,7 +510,8 @@ public sealed class MainWindow : Window, IDisposable
         // Active-filter chips live on the toolbar row itself, in a fixed-height strip clipped horizontally, so toggling
         // a filter never moves the layout below. The strip stays empty when nothing is engaged.
         ImGui.SameLine();
-        var glyphSize = UiMetrics.ChipHeight;
+        // The icon buttons (and so the strip) never go under the minimum click target.
+        var glyphSize = MathF.Max(UiMetrics.ChipHeight, UiMetrics.MinTarget);
         var spacing = ImGui.GetStyle().ItemSpacing.X;
         // Right block: sync glyph plus three square icon buttons (help, tutorial, settings).
         var rightWidth = glyphSize * (1 + ToolbarButtonCount) + spacing * ToolbarButtonCount;
@@ -498,7 +523,7 @@ public sealed class MainWindow : Window, IDisposable
                 if (strip)
                 {
                     ui.RecordWindow(UiRects.Chips);
-                    filterPanel.DrawChips();
+                    filterPanel.DrawChips(session.Bundle);
                 }
             }
 
@@ -600,7 +625,8 @@ public sealed class MainWindow : Window, IDisposable
             var label = summary.ContentId == session.LiveContentId
                 ? Strings.LiveMarker + name
                 : string.Format(CultureInfo.CurrentCulture, Strings.CharacterEntryFormat, summary.Name, links.WorldName(summary.World), UiFormat.Age(summary.TakenUtc, now));
-            characterLabels.Add((summary.ContentId, label));
+            // The content id keeps the ImGui id unique when two snapshots share a name and world.
+            characterLabels.Add((summary.ContentId, label + "##" + summary.ContentId.ToString(CultureInfo.InvariantCulture)));
         }
     }
 
@@ -663,7 +689,13 @@ public sealed class MainWindow : Window, IDisposable
         }
 
         ImGui.TableNextColumn();
-        detailPane.Draw(session, bundle, new Vector2(0f, cellHeight));
+        var detailHeight = cellHeight;
+        if (whatsNew is { Visible: true } card)
+        {
+            detailHeight -= card.Draw(cellHeight);
+        }
+
+        detailPane.Draw(session, bundle, new Vector2(0f, detailHeight));
     }
 
     private void DrawNavigation(SessionState session, CatalogBundle bundle, float height)
@@ -783,12 +815,43 @@ public sealed class MainWindow : Window, IDisposable
         ImGui.Dummy(new Vector2(moonBox, lineHeight));
         MoonGlyph.DrawFilling(ImGui.GetWindowDrawList(), moonPos + new Vector2(moonBox * 0.5f, lineHeight * 0.5f), UiMetrics.StatusMoonRadius, runner.Counts?.Overall.Fraction ?? 0f);
         ImGui.SameLine();
-        ImGui.TextDisabled(status);
+        var avail = ImGui.GetContentRegionAvail().X;
+        var statusWidth = ImGui.CalcTextSize(status).X;
+        var msqTextWidth = msqStatus.Length > 0 ? ImGui.CalcTextSize(msqStatus).X : 0f;
+        var msqRoom = msqTextWidth;
+        if (statusWidth + msqTextWidth <= avail)
+        {
+            ImGui.TextDisabled(status);
+        }
+        else
+        {
+            // Too narrow for both: the status keeps at least its floor and the MSQ segment gets the rest; whichever
+            // does not fit ends in an ellipsis instead of running past the window edge.
+            var statusRoom = MathF.Max(MathF.Min(statusWidth, UiMetrics.Px(StatusMinLogical)), avail - msqTextWidth);
+            statusRoom = MathF.Min(statusRoom, avail);
+            EllipsisText(status, statusRoom, statusWidth);
+            msqRoom = MathF.Max(0f, avail - statusRoom);
+        }
+
+        // The status text carries the data stamp on hover, so "which data is this" is one hover away from any tab.
+        if (DataStamp is { } stamp && ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(stamp);
+        }
+
         if (msqStatus.Length > 0)
         {
             // The MSQ position follows the status text as its own item so it can carry a tooltip and a click.
             ImGui.SameLine(0f, 0f);
-            ImGui.TextDisabled(msqStatus);
+            if (msqTextWidth <= msqRoom)
+            {
+                ImGui.TextDisabled(msqStatus);
+            }
+            else
+            {
+                EllipsisText(msqStatus, msqRoom, msqTextWidth);
+            }
+
             if (ImGui.IsItemHovered())
             {
                 UiMetrics.Tooltip(msqTooltip);
@@ -801,6 +864,25 @@ public sealed class MainWindow : Window, IDisposable
 
         var windowX = ImGui.GetWindowPos().X;
         ui.RecordRect(UiRects.StatusBar, new Vector2(windowX + ImGui.GetWindowContentRegionMin().X, barMin.Y), new Vector2(windowX + ImGui.GetWindowContentRegionMax().X, ImGui.GetItemRectMax().Y));
+    }
+
+    /// <summary>
+    /// Disabled-coloured text clipped to <paramref name="width"/> with an ellipsis, as one item (a Dummy) so hover and
+    /// click tests still work on it. Nothing is allocated: ImGui renders the ellipsis itself.
+    /// </summary>
+    private static void EllipsisText(string text, float width, float textWidth)
+    {
+        var min = ImGui.GetCursorScreenPos();
+        var max = min + new Vector2(MathF.Max(0f, width), ImGui.GetTextLineHeight());
+        ImGui.Dummy(max - min);
+        if (width <= 0f)
+        {
+            return;
+        }
+
+        using var color = ImRaii.PushColor(ImGuiCol.Text, ImGui.GetColorU32(ImGuiCol.TextDisabled));
+        Vector2? size = new Vector2(textWidth, max.Y - min.Y);
+        ImGuiP.RenderTextEllipsis(ImGui.GetWindowDrawList(), in min, in max, max.X, max.X, text, in size);
     }
 
     /// <summary>
@@ -840,7 +922,7 @@ public sealed class MainWindow : Window, IDisposable
             tooltip += "\n" + (zone.Length > 0 ? string.Format(CultureInfo.CurrentCulture, Strings.MsqGiverFormat, issuer.Name, zone) : issuer.Name);
         }
 
-        msqTooltip = tooltip + "\n" + Strings.StateName(position.State) + "\n" + Strings.MsqClickHint;
+        msqTooltip = tooltip + "\n" + Strings.StateName(position.State, next) + "\n" + Strings.MsqClickHint;
     }
 
     /// <summary>Selects the next main scenario quest in the Journal tab; an active preset would hide it, so it is cleared first.</summary>
@@ -852,6 +934,6 @@ public sealed class MainWindow : Window, IDisposable
             OnFiltersChanged();
         }
 
-        ui.Reveal(quest.RowId, quest.IsUnlisted ? QuestScope.VirtualUnlisted : QuestScope.Genre(quest.Journal.GenreId), quest.IsUnlisted);
+        ui.Reveal(quest);
     }
 }

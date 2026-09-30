@@ -177,6 +177,38 @@ public class UniqueRewardCatalogTests
     }
 
     [Fact]
+    public void Curated_online_store_marks_shipped_entries_by_item_or_by_collectible()
+    {
+        var shipped = Data(
+            new UniqueRewardEntry(68546, RewardKind.Mount, 99, 22437, "Starlight bear", Confidence.Static, "s"),
+            new UniqueRewardEntry(67079, RewardKind.Emote, 109, 0, "Bomb Dance", Confidence.Static, "Quest.EmoteReward"),
+            new UniqueRewardEntry(66038, RewardKind.Emote, 114, 0, "Most Gentlemanly", Confidence.Static, "Quest.EmoteReward"),
+            new UniqueRewardEntry(66001, RewardKind.Minion, 46, 6207, "Tender lamb", Confidence.Static, "s") { OtherSources = [OtherSource.OnlineStore] });
+
+        using var tmp = new Storage.TempDir();
+        var dir = tmp.File("curated");
+        Directory.CreateDirectory(dir);
+        File.WriteAllText(Path.Combine(dir, CuratedData.OnlineStoreFileName),
+            """
+            { "schema": 1, "entries": {
+              "22437": { "name": "Starlight bear", "kind": "Mount", "rewardId": 99, "evidence": "https://x" },
+              "12040": { "name": "Bomb Dance", "kind": "Emote", "rewardId": 109, "evidence": "https://x" },
+              "6207": { "name": "Tender lamb", "kind": "Minion", "rewardId": 46, "evidence": "https://x" }
+            } }
+            """);
+        var curated = CuratedData.Load(dir);
+        Assert.Empty(curated.Warnings);
+
+        var catalog = Build(shipped, curated: curated);
+
+        Assert.True(catalog.ForQuest(68546).Single().SoldOnOnlineStore, "matched by the store item id");
+        Assert.True(catalog.ForQuest(67079).Single().SoldOnOnlineStore, "matched by the emote the store item unlocks");
+        Assert.False(catalog.ForQuest(66038).Single().SoldOnOnlineStore);
+        Assert.Equal([OtherSource.OnlineStore], catalog.ForQuest(66001).Single().OtherSources);
+        Assert.Equal(4, catalog.Count);
+    }
+
+    [Fact]
     public void Duplicate_shipped_entries_keep_the_higher_confidence()
     {
         var shipped = Data(

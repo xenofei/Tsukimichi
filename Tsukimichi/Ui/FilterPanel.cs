@@ -5,6 +5,7 @@ using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility.Raii;
 using Tsukimichi.Config;
+using Tsukimichi.Core.Discovery;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Ui;
@@ -21,6 +22,9 @@ public sealed class FilterPanel
 {
     private const int LevelCap = 100;
     private const int MaxStateChipNames = 3;
+
+    /// <summary>Reward-kind combo entries in display order.</summary>
+    private static readonly TriState[] RewardOptionOrder = [TriState.Hidden, TriState.Show, TriState.Only];
 
     private static readonly QuestState[] StateOrder =
     [
@@ -57,6 +61,7 @@ public sealed class FilterPanel
     private uint? currentJobCategory;
 
     private string stateChip = string.Empty;
+    private string stateChipTooltip = string.Empty;
     private QuestStateMask stateChipMask = QuestStateMask.All;
     private string levelChip = string.Empty;
     private byte levelChipMin = byte.MaxValue;
@@ -95,7 +100,7 @@ public sealed class FilterPanel
 
         if (ImGui.CollapsingHeader(Strings.Advanced))
         {
-            using var indent = ImRaii.PushIndent(8f);
+            using var indent = ImRaii.PushIndent(UiMetrics.Px(8f));
             DrawStates(f);
             DrawExpansions(f);
             DrawLevelRange(f);
@@ -165,7 +170,7 @@ public sealed class FilterPanel
 
     /// <summary>
     /// One-click presets as toggle chips at the head of the panel; at most one is on, and clicking the active one
-    /// turns it off. Around my level and Stalled read the snapshot, so they are disabled in browse mode.
+    /// turns it off. My level and Stalled read the snapshot, so they are disabled in browse mode.
     /// </summary>
     private void DrawPresets(FilterSet f, bool hasSnapshot, Configuration settings)
     {
@@ -241,15 +246,30 @@ public sealed class FilterPanel
 
     /// <summary>
     /// Chips for every engaged filter on one line; clicking one clears that filter. Drawn inside the toolbar's
-    /// fixed-height strip, so it never wraps and draws nothing when none is engaged.
+    /// fixed-height strip, so it never wraps and draws nothing when none is engaged. The NPC scope from the context
+    /// menu (<see cref="QuestScope.Issuer"/>) has no tree node, so it is the first chip: "Quests from Gerolt", named
+    /// from <paramref name="current"/>; clearing it shows the whole journal again.
     /// </summary>
-    public void DrawChips()
+    /// <param name="current">The catalog, for the NPC's name; null while it is loading.</param>
+    public void DrawChips(CatalogBundle? current)
     {
         var f = ui.Filters;
         var any = false;
 
         // Small buttons are text-high; centre them on the toolbar's frame-high row.
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + MathF.Max(0f, (ImGui.GetFrameHeight() - ImGui.GetTextLineHeight()) * 0.5f));
+
+        if (ui.Scope.Kind == ScopeKind.VirtualIssuer)
+        {
+            var name = current is { } b ? QuestDiscovery.IssuerName(b.Catalog, ui.Scope.Id) : null;
+            var label = name is null ? Strings.ChipIssuerUnknown : string.Format(CultureInfo.CurrentCulture, Strings.ChipIssuerFormat, name);
+            // The scope is not a filter and is not persisted; the query re-runs on the dirty mark alone.
+            Chip(label, ref any, () =>
+            {
+                ui.Scope = QuestScope.None;
+                ui.MarkQueryDirty();
+            }, notify: false, explanation: Strings.ChipIssuerTooltip);
+        }
 
         if (ui.SearchText.Length > 0)
         {
@@ -282,7 +302,7 @@ public sealed class FilterPanel
 
         if (f.StateMask != QuestStateMask.All)
         {
-            Chip(StateChipText(f), ref any, () => f.StateMask = QuestStateMask.All);
+            Chip(StateChipText(f), ref any, () => f.StateMask = QuestStateMask.All, explanation: stateChipTooltip);
         }
 
         if (f.Expansions.Count > 0)
@@ -333,7 +353,11 @@ public sealed class FilterPanel
         changed();
     }
 
-    private void Chip(string label, ref bool any, Action clear, bool notify = true)
+    /// <summary>
+    /// One active-filter chip. <paramref name="explanation"/>, when given, says what the chip's text means (the state
+    /// chip names only a few excluded states and counts the rest) above the "click to clear" line.
+    /// </summary>
+    private void Chip(string label, ref bool any, Action clear, bool notify = true, string? explanation = null)
     {
         if (any)
         {
@@ -342,7 +366,8 @@ public sealed class FilterPanel
 
         any = true;
         using var id = ImRaii.PushId(label);
-        if (ImGui.SmallButton(label))
+        // The whole chip is its own close target, so it stands at least the minimum target tall.
+        if (ImGui.Button(label, new Vector2(0f, UiMetrics.MinTarget)))
         {
             clear();
             if (notify)
@@ -353,7 +378,14 @@ public sealed class FilterPanel
 
         if (ImGui.IsItemHovered())
         {
-            UiMetrics.Tooltip(Strings.ChipTooltip);
+            if (explanation is { Length: > 0 })
+            {
+                UiMetrics.Tooltip(explanation, Strings.ChipTooltip);
+            }
+            else
+            {
+                UiMetrics.Tooltip(Strings.ChipTooltip);
+            }
         }
     }
 
@@ -521,26 +553,42 @@ public sealed class FilterPanel
         foreach (var kind in Kinds)
         {
             using var id = ImRaii.PushId((int)kind);
-            var current = (int)(f.RewardKinds.TryGetValue(kind, out var v) ? v : TriState.Show);
+            var current = f.RewardKinds.TryGetValue(kind, out var v) ? v : TriState.Show;
             ImGui.SetNextItemWidth(width);
-            if (ImGui.Combo("##kind", ref current, Strings.RewardOptions))
-            {
-                var value = (TriState)current;
-                if (value == TriState.Show)
-                {
-                    f.RewardKinds.Remove(kind);
-                }
-                else
-                {
-                    f.RewardKinds[kind] = value;
-                }
-
-                changed();
-            }
-
+            DrawRewardKindCombo(f, kind, current);
             Tip(Strings.RewardKindsTooltip);
             ImGui.SameLine();
             ImGui.TextUnformatted(Strings.RewardKindName(kind));
+        }
+    }
+
+    /// <summary>One reward kind's Hidden / Show / Only choice; the popup opens from the left column, so it scales itself.</summary>
+    private void DrawRewardKindCombo(FilterSet f, RewardKind kind, TriState current)
+    {
+        using var combo = ImRaii.Combo("##kind", Strings.RewardOptionName(current));
+        if (!combo)
+        {
+            return;
+        }
+
+        UiMetrics.ApplyFontScale();
+        foreach (var option in RewardOptionOrder)
+        {
+            if (!ImGui.Selectable(Strings.RewardOptionName(option), option == current))
+            {
+                continue;
+            }
+
+            if (option == TriState.Show)
+            {
+                f.RewardKinds.Remove(kind);
+            }
+            else
+            {
+                f.RewardKinds[kind] = option;
+            }
+
+            changed();
         }
     }
 
@@ -558,7 +606,7 @@ public sealed class FilterPanel
         Tip(enabled ? tooltip : Strings.NeedsSnapshot);
     }
 
-    /// <summary>"States: −Completed, −Foreclosed", naming up to <see cref="MaxStateChipNames"/> excluded states then "+N"; rebuilt when the mask changes.</summary>
+    /// <summary>"States: −Completed, −Locked out", naming up to <see cref="MaxStateChipNames"/> excluded states then "+N"; rebuilt when the mask changes.</summary>
     private string StateChipText(FilterSet f)
     {
         if (stateChipMask == f.StateMask && stateChip.Length > 0)
@@ -568,6 +616,7 @@ public sealed class FilterPanel
 
         stateChipMask = f.StateMask;
         var text = Strings.ChipStatePrefix;
+        var tooltip = Strings.ChipStateTooltipPrefix;
         var named = 0;
         var excluded = 0;
         foreach (var state in StateOrder)
@@ -577,10 +626,12 @@ public sealed class FilterPanel
                 continue;
             }
 
+            // The tooltip names every excluded state, so the chip's "+N" has somewhere to be read in full.
+            tooltip += (excluded > 0 ? Strings.ChipStateSeparator : string.Empty) + Strings.StateName(state);
             excluded++;
             if (named < MaxStateChipNames)
             {
-                text += (named > 0 ? Strings.ChipStateSeparator : string.Empty) + Strings.ChipStateExcludedMarker + Strings.StateShortName(state);
+                text += (named > 0 ? Strings.ChipStateSeparator : string.Empty) + Strings.ChipStateExcludedMarker + Strings.StateName(state);
                 named++;
             }
         }
@@ -591,6 +642,7 @@ public sealed class FilterPanel
         }
 
         stateChip = text;
+        stateChipTooltip = tooltip;
         return stateChip;
     }
 

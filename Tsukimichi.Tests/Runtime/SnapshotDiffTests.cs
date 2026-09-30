@@ -19,6 +19,94 @@ public sealed class SnapshotDiffTests
     }
 
     [Fact]
+    public void A_festival_phase_change_alone_changes_that_festival()
+    {
+        var a = Fixture.Snapshot(Fixture.A) with { ActiveFestivals = [10, 39], ActiveFestivalPhases = [1, 0] };
+        var b = a with { ActiveFestivalPhases = [2, 0] };
+
+        var diff = SnapshotDiff.Compute(a, b);
+
+        Assert.Equal([10], diff.ChangedFestivals);
+        Assert.Empty(diff.ChangedQuestIds);
+        Assert.Empty(diff.ChangedJobs);
+        Assert.False(diff.OtherChanged);
+        Assert.True(SnapshotDiff.Compute(a, a with { ActiveFestivalPhases = [1, 0] }).IsEmpty);
+
+        // A phase that becomes known (or unknown) counts too: the window applies from that capture on.
+        Assert.Equal([10, 39], SnapshotDiff.Compute(a, a with { ActiveFestivalPhases = [] }).ChangedFestivals);
+        Assert.Equal([39], SnapshotDiff.Compute(a, a with { ActiveFestivalPhases = [1] }).ChangedFestivals);
+
+        // Ids still diff as before: one ends, another starts.
+        Assert.Equal([10, 84], SnapshotDiff.Compute(a, a with { ActiveFestivals = [84, 39], ActiveFestivalPhases = [3, 0] }).ChangedFestivals);
+    }
+
+    [Fact]
+    public void Delivery_ranks_and_carrier_level_are_other_inputs()
+    {
+        var a = Fixture.Snapshot(Fixture.A) with { SatisfactionRanks = new Dictionary<byte, byte> { [2] = 3 }, CarrierLevel = 6 };
+
+        Assert.True(SnapshotDiff.Compute(a, a with { SatisfactionRanks = new Dictionary<byte, byte> { [2] = 4 } }).OtherChanged);
+        Assert.True(SnapshotDiff.Compute(a, a with { SatisfactionRanks = new Dictionary<byte, byte> { [2] = 3, [3] = 1 } }).OtherChanged);
+        Assert.True(SnapshotDiff.Compute(a, a with { CarrierLevel = 7 }).OtherChanged);
+        Assert.True(SnapshotDiff.Compute(a, a with { SatisfactionRanks = new Dictionary<byte, byte> { [2] = 3 }, CarrierLevel = 6 }).IsEmpty);
+    }
+
+    [Fact]
+    public void Reordered_id_lists_are_the_same_set()
+    {
+        var a = Fixture.Snapshot(Fixture.A) with { UnlockedInstances = [3, 1, 2], CompletedAchievements = [9, 8] };
+        var b = a with { UnlockedInstances = [1, 2, 3], CompletedAchievements = [8, 9] };
+
+        Assert.True(SnapshotDiff.Compute(a, b).IsEmpty);
+        Assert.True(SnapshotDiff.Compute(b, a).IsEmpty);
+    }
+
+    [Theory]
+    [InlineData(new uint[] { 1, 2, 3 }, new uint[] { 1, 2, 4 })]
+    [InlineData(new uint[] { 1, 2, 3 }, new uint[] { 1, 2 })]
+    [InlineData(new uint[] { 1, 1, 2 }, new uint[] { 1, 2, 2 })]
+    [InlineData(new uint[] { }, new uint[] { 5 })]
+    public void Different_id_sets_change_other_inputs(uint[] oldIds, uint[] newIds)
+    {
+        var a = Fixture.Snapshot(Fixture.A) with { UnlockedInstances = oldIds };
+        var b = a with { UnlockedInstances = newIds };
+
+        Assert.True(SnapshotDiff.Compute(a, b).OtherChanged);
+
+        var c = Fixture.Snapshot(Fixture.A) with { CompletedAchievements = oldIds };
+        var d = c with { CompletedAchievements = newIds };
+
+        Assert.True(SnapshotDiff.Compute(c, d).OtherChanged);
+    }
+
+    [Theory]
+    [InlineData(200)]
+    [InlineData(600)]
+    public void Same_set_compare_allocates_nothing(int count)
+    {
+        // Both the stack path (small lists) and the pooled path (large lists) must leave the heap alone on every
+        // poll: the diff runs once a second for as long as the character is logged in.
+        var ids = Enumerable.Range(1, count).Select(i => (uint)i).ToArray();
+        var reversed = Enumerable.Reverse(ids).ToArray();
+        var a = Fixture.Snapshot(Fixture.A) with { UnlockedInstances = ids, CompletedAchievements = ids };
+        var b = a with { UnlockedInstances = reversed, CompletedAchievements = reversed };
+
+        for (var i = 0; i < 100; i++)
+        {
+            Assert.True(SnapshotDiff.Compute(a, b).IsEmpty);
+        }
+
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        for (var i = 0; i < 50; i++)
+        {
+            SnapshotDiff.Compute(a, b);
+        }
+
+        var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+        Assert.True(allocated == 0, $"{allocated} bytes allocated over 50 unchanged polls");
+    }
+
+    [Fact]
     public void Unchanged_pair_of_distinct_instances_takes_the_fast_path()
     {
         // Every collection is a fresh instance with equal content, as a poll produces them; the fast path must still
@@ -110,6 +198,21 @@ public sealed class SnapshotDiffTests
         Assert.Equal(
             new[] { QuestRecord.ToQuestId(Fixture.B), QuestRecord.ToQuestId(Fixture.C), QuestRecord.ToQuestId(Fixture.D) },
             diff.ChangedQuestIds);
+    }
+
+    [Fact]
+    public void Accepting_job_change_alone_counts_as_a_quest_change()
+    {
+        // The fast path compares whole AcceptedQuest records, so a capture that differs only in AcceptClassJob
+        // (a file written before the field was read, say) must commit, or every later poll takes the slow path.
+        var a = Fixture.Snapshot() with { Accepted = [Fixture.Accepted(Fixture.A, 2, acceptClassJob: 0)] };
+        var b = Fixture.Snapshot() with { Accepted = [Fixture.Accepted(Fixture.A, 2, acceptClassJob: 22)] };
+
+        var diff = SnapshotDiff.Compute(a, b);
+
+        Assert.False(diff.IsEmpty);
+        Assert.Equal([QuestRecord.ToQuestId(Fixture.A)], diff.ChangedQuestIds);
+        Assert.True(SnapshotDiff.Compute(b, b with { Accepted = [Fixture.Accepted(Fixture.A, 2, acceptClassJob: 22)] }).IsEmpty);
     }
 
     [Fact]

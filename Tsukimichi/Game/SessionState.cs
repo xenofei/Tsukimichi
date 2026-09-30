@@ -2,11 +2,14 @@ using System;
 using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
+using Dalamud.Plugin.Services;
 using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Runtime;
 using Tsukimichi.Core.Storage;
+using Tsukimichi.Core.Unique;
 using Tsukimichi.GameData;
 using AcceptedSinceFile = Tsukimichi.Core.Runtime.AcceptedSince;
 
@@ -21,11 +24,15 @@ public sealed class SessionState
 {
     public const int MaxRecentEvents = 100;
 
+    /// <summary>Pause before the one retry of a delete that hit the first-pass worker's read of the same file.</summary>
+    private const int DeleteRetryDelayMs = 10;
+
     private static readonly IReadOnlyDictionary<uint, QuestEvaluation> NoStates = new Dictionary<uint, QuestEvaluation>();
     private static readonly IReadOnlyDictionary<ushort, DateTime> NoAcceptedSince = new Dictionary<ushort, DateTime>();
 
     private readonly SnapshotService snapshots;
     private readonly PluginPaths paths;
+    private readonly IPluginLog? log;
     private readonly RecentEventsTracker recentEvents = new(MaxRecentEvents);
 
     private EvalContext baseContext = EvalContext.Default;
@@ -36,17 +43,22 @@ public sealed class SessionState
     private bool followLive = true;
     private ulong? viewedContentId;
 
-    public SessionState(SnapshotService snapshots, PluginPaths paths, UniqueRewardsData uniqueRewards, CuratedData curated)
+    public SessionState(SnapshotService snapshots, PluginPaths paths, UniqueRewardsData uniqueRewards, CuratedData curated, IPluginLog? log = null)
     {
         this.snapshots = snapshots ?? throw new ArgumentNullException(nameof(snapshots));
         this.paths = paths ?? throw new ArgumentNullException(nameof(paths));
+        this.log = log;
         UniqueRewards = uniqueRewards ?? throw new ArgumentNullException(nameof(uniqueRewards));
         Curated = curated ?? throw new ArgumentNullException(nameof(curated));
+        StoreResells = StoreResells.Build(UniqueRewards.Entries);
         snapshots.CharactersChanged += Bump;
     }
 
     /// <summary>The built catalog; null while loading or after a failure.</summary>
     public CatalogBundle? Bundle { get; private set; }
+
+    /// <summary>Name lookups for <see cref="BlockerText"/> over the current bundle; <see cref="BlockerNames.Default"/> until the catalog is built.</summary>
+    public BlockerNames Names { get; private set; } = BlockerNames.Default;
 
     /// <summary>Why the catalog is unavailable, for the "Catalog unavailable" panel.</summary>
     public string? CatalogError { get; private set; }
@@ -112,9 +124,12 @@ public sealed class SessionState
 
     public CuratedData Curated { get; }
 
+    /// <summary>Rewards the FFXIV Online Store also sells, from the shipped entries' <c>otherSources</c>; the reward tooltip reads it.</summary>
+    public StoreResells StoreResells { get; }
+
     /// <summary>
     /// Row ids of the feature ("blue") quests, derived once per catalog by <see cref="FeaturePresets.Derive"/> from the
-    /// curated files and the quests' rewards. Backs the Feature Unlocks node, the Feature quests preset and chat notices.
+    /// curated files and the quests' rewards. Backs the Unlock quests node, the Unlocks quick view and chat notices.
     /// </summary>
     public IReadOnlySet<uint> FeatureQuestIds { get; private set; } = FrozenSet<uint>.Empty;
 
@@ -229,12 +244,27 @@ public sealed class SessionState
         CatalogLoading = false;
         Index = ReversePrereqIndex.Build(bundle.Catalog);
         FeatureQuestIds = FeaturePresets.Derive(bundle.Catalog, Curated, UniqueRewards.Entries);
-        baseContext = EvalContextBuilder.Build(Curated.Festivals, bundle.Jobs, static () => DateTime.UtcNow);
+        Names = bundle.BlockerNames();
+        baseContext = EvalContextBuilder.Build(
+            Curated.Festivals,
+            bundle.Jobs,
+            static () => DateTime.UtcNow,
+            jobParents: bundle.JobParents(),
+            satisfactionNpcName: id => bundle.Names.SatisfactionNpc(id));
 
+        // The live evaluations belong to the previous catalog (a filing flip retires or restores rows): shown
+        // against this one they would read "Locked out · removed from the game" on rows no longer retired, or Ready
+        // on retired ones, until the poller's next pass. The poller sees the new bundle on its next poll and starts
+        // a first pass; until it commits, the live character reads Not checked.
+        liveStates = NoStates;
         if (ViewedSnapshot is { } viewed && !IsLive)
         {
             Context = baseContext;
             States = StateResolver.ResolveAll(bundle.Catalog, viewed, baseContext);
+        }
+        else if (IsLive)
+        {
+            States = NoStates;
         }
 
         Bump();
@@ -244,6 +274,21 @@ public sealed class SessionState
     {
         CatalogError = error;
         CatalogLoading = false;
+        Bump();
+    }
+
+    /// <summary>
+    /// A rebuild started (a filing flip or a retry): the windows show the catalog as loading until the build lands.
+    /// The current <see cref="Bundle"/> stays in place for the poller and the integrations meanwhile.
+    /// </summary>
+    internal void SetCatalogRebuilding()
+    {
+        if (CatalogLoading)
+        {
+            return;
+        }
+
+        CatalogLoading = true;
         Bump();
     }
 
@@ -344,11 +389,34 @@ public sealed class SessionState
         Changed?.Invoke();
     }
 
-    private static void DeleteIfExists(string path)
+    /// <summary>
+    /// Deletes a file when it exists. The poller's first-pass worker reads the accepted-time sidecar with
+    /// <see cref="File.ReadAllText(string)"/>, whose share mode refuses a delete for the milliseconds the read takes,
+    /// so a sharing violation is retried once after a short pause; a second failure is logged and the file stays
+    /// (the next flush rewrites the pair, the next forget removes it) rather than surfacing from a button click.
+    /// </summary>
+    private void DeleteIfExists(string path)
     {
-        if (File.Exists(path))
+        for (var attempt = 1; ; attempt++)
         {
-            File.Delete(path);
+            try
+            {
+                if (File.Exists(path))
+                {
+                    File.Delete(path);
+                }
+
+                return;
+            }
+            catch (IOException) when (attempt == 1)
+            {
+                Thread.Sleep(DeleteRetryDelayMs);
+            }
+            catch (IOException ex)
+            {
+                log?.Warning(ex, "Could not delete {Path}; it is left in place", path);
+                return;
+            }
         }
     }
 }

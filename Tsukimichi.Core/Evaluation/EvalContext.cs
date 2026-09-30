@@ -40,6 +40,13 @@ public sealed record EvalContext
     /// <summary>Category membership; null admits every job and takes other-job candidates from the snapshot's job levels.</summary>
     public IClassJobCategoryLookup? ClassJobs { get; init; }
 
+    /// <summary>
+    /// The base class a job grew out of (<c>ClassJob.ClassJobParent</c>): Dragoon to Lancer, Paladin to Gladiator;
+    /// a class, or a job without one, maps to itself. Null when the plugin has no sheet to answer from, in which case
+    /// a class-pinned quest admits only that class.
+    /// </summary>
+    public Func<byte, byte>? ParentJob { get; init; }
+
     /// <summary>Whether the character owns a mount; null means not checked.</summary>
     public bool? HasMount { get; init; }
 
@@ -54,6 +61,9 @@ public sealed record EvalContext
 
     /// <summary>Expansion name for requirement details; defaults to <see cref="Expansions.Name"/>.</summary>
     public Func<byte, string> ExpansionName { get; init; } = Expansions.Name;
+
+    /// <summary>Custom delivery client name by SatisfactionNpc row id for requirement details ("M'naago"); empty leaves the client out of the clause.</summary>
+    public Func<byte, string> SatisfactionNpcName { get; init; } = static _ => string.Empty;
 
     /// <summary>
     /// A context whose <see cref="FestivalIsPast"/> answers true for a festival whose curated end lies before
@@ -87,4 +97,18 @@ public sealed record QuestEvaluation(
     IReadOnlyList<RequirementResult> Requirements,
     RequirementResult? NextStep,
     byte? ReadyOnJob,
-    byte? Sequence);
+    byte? Sequence)
+{
+    /// <summary>
+    /// Blocked only because its seasonal event is not running (resolver rule 3). Nothing the character does changes
+    /// it until the event returns, so it is treated like a foreclosed quest by every done/total count.
+    /// </summary>
+    public bool IsOutOfSeason => State == QuestState.Blocked && NextStep is { Req.Kind: RequirementKind.Seasonal };
+
+    /// <summary>
+    /// The quest leaves every done/total count (tree nodes, dashboard sections, tab badges, Compare's "neither done"):
+    /// it is <see cref="QuestState.Foreclosed"/>, which the character can never do, or <see cref="IsOutOfSeason"/>,
+    /// which they cannot do now. A section whose remainder is all of these reads as complete.
+    /// </summary>
+    public bool LeavesTotals => State == QuestState.Foreclosed || IsOutOfSeason;
+}

@@ -1,5 +1,8 @@
 using System.Diagnostics;
+using Lumina.Data;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Query;
+using Tsukimichi.Core.Storage;
 using Tsukimichi.GameData;
 
 namespace Tsukimichi.DataGen;
@@ -92,15 +95,33 @@ public static class Program
         OutputFile.Write(output, sheets.GameVersion, generatedUtc, entries);
         Console.WriteLine($"wrote:   {output} ({entries.Count} entries)");
 
+        if (curated is not null && Directory.Exists(curated))
+        {
+            // feature_quests.json is derived, not maintained: the runtime rule over the mapped catalog, the other
+            // curated files and the entries just written. CuratedInvariantsTests compares the shipped file to this.
+            var curatedData = CuratedData.Load(curated);
+            foreach (var warning in curatedData.Warnings)
+                Console.WriteLine($"curated: {warning}");
+            // The refiled catalog, as the plugin builds it: retired quests never derive, refiled quasi-quests do.
+            var bundle = CatalogMapper.Map(sheets.Data.Excel, Language.English, curated: curatedData);
+            var featureIds = FeaturePresets.Derive(bundle.Catalog, curatedData.WithoutFeatureQuests(), entries);
+            var featurePath = Path.Combine(curated, CuratedData.FeatureQuestsFileName);
+            FeatureQuestsFile.Write(featurePath, featureIds);
+            Console.WriteLine($"wrote:   {featurePath} ({featureIds.Count} feature quests, derived)");
+        }
+
         Directory.CreateDirectory(reports);
         var uniqueReportPath = Path.Combine(reports, "unique-report.md");
         var catalogStatsPath = Path.Combine(reports, "catalog-stats.md");
-        File.WriteAllText(uniqueReportPath, Reports.UniqueReport(sheets, generator, entries, generatedUtc));
-        File.WriteAllText(catalogStatsPath, Reports.CatalogStats(sheets, generatedUtc));
+        File.WriteAllText(uniqueReportPath, Reports.UniqueReport(sheets, generator, entries));
+        File.WriteAllText(catalogStatsPath, Reports.CatalogStats(sheets));
         Console.WriteLine($"wrote:   {uniqueReportPath}");
         Console.WriteLine($"wrote:   {catalogStatsPath}");
 
         foreach (var group in entries.GroupBy(e => e.Kind).OrderBy(k => k.Key))
+            Console.WriteLine($"  {group.Key,-16} {group.Count(),5}");
+        Console.WriteLine("otherSources by value:");
+        foreach (var group in entries.SelectMany(e => e.OtherSources).GroupBy(s => s).OrderByDescending(x => x.Count()).ThenBy(x => x.Key, StringComparer.Ordinal))
             Console.WriteLine($"  {group.Key,-16} {group.Count(),5}");
 
         var failures = SanityChecks(entries);
@@ -243,7 +264,8 @@ public static class Program
             DefaultExcelLanguage = Lumina.Data.Language.English,
             PanicOnSheetChecksumMismatch = false,
         });
-        var bundle = CatalogMapper.Map(data.Excel, Lumina.Data.Language.English, log: line => Console.WriteLine($"  {line}"));
+        // The fixture holds the sheet's own filing; the tests run the refiler on it with the curated files of their checkout.
+        var bundle = CatalogMapper.Map(data.Excel, Lumina.Data.Language.English, log: line => Console.WriteLine($"  {line}"), filing: JournalFiling.Legacy);
         CatalogFixtureFile.Write(path, bundle, gameVersion);
 
         var bytes = new FileInfo(path).Length;
@@ -273,6 +295,14 @@ public static class Program
             "every entry except SystemUnlock should carry a reward id");
         Require(entries.Any(e => e is { QuestRowId: 69254, Kind: RewardKind.Orchestrion, RewardId: 350, ItemId: 28894 }),
             "69254 On the Threshold should yield Orchestrion 350 (Significance (Nothing), via item 28894 AdditionalData)");
+        Require(entries.Any(e => e is { QuestRowId: 70012, Kind: RewardKind.DutyUnlock, RewardId: 808 }),
+            "70012 Where Familiars Dare should yield DutyUnlock 808 (Asphodelos: The First Circle, curated)");
+        Require(!entries.Any(e => e is { QuestRowId: 70011, Kind: RewardKind.DutyUnlock, RewardId: 808 }),
+            "70011 The Crystal from Beyond must not yield DutyUnlock 808 (it only starts the chain; verification-report-2 row 5)");
+        Require(entries.Any(e => e is { QuestRowId: 68546, Kind: RewardKind.Mount, RewardId: 99 } && e.SoldOnOnlineStore),
+            "68546 Starlight Stakeout's Mount 99 should carry OnlineStore from curated/online_store.json");
+        Require(entries.All(e => e.Source.Contains(";otherSource=", StringComparison.Ordinal) == e.OtherSources.Any(s => s != OtherSource.OnlineStore)),
+            "source text ;otherSource= and the structured otherSources must agree (store aside)");
 
         var mounts = entries.Count(e => e.Kind == RewardKind.Mount);
         var minions = entries.Count(e => e.Kind == RewardKind.Minion);
@@ -291,6 +321,6 @@ public static class Program
         Console.WriteLine($"       defaults: --data {DefaultData} --report {DefaultVerifyReport} --sample 48 --seed 20260927");
         Console.WriteLine("       a verification-notes.md next to the report is inserted after the header (hand-written findings).");
         Console.WriteLine("       Tsukimichi.DataGen --dump-catalog <file.json.gz or directory> --game <sqpack path>");
-        Console.WriteLine("       freezes the mapped catalog for the tests (Tsukimichi.Tests/Fixtures/catalog-<gameVersion>.json.gz).");
+        Console.WriteLine("       freezes the mapped catalog (the sheet's own journal filing) for the tests (Tsukimichi.Tests/Fixtures/catalog-<gameVersion>.json.gz).");
     }
 }

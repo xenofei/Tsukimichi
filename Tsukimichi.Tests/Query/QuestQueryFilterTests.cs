@@ -34,7 +34,7 @@ public class QuestQueryFilterTests
         (10, QuestState.Ready));
 
     [Fact]
-    public void No_filters_returns_everything_in_journal_order_with_states_and_next_step()
+    public void No_filters_returns_everything_in_journal_order_with_states_and_status()
     {
         var evaluations = Evaluations(AllStates, new Dictionary<uint, string> { [4] = "needs level 50" });
         var result = Run(Catalog, evaluations);
@@ -43,8 +43,10 @@ public class QuestQueryFilterTests
         Assert.Equal(10, result.TotalInScope);
         Assert.Equal(Enumerable.Range(1, 10).Select(i => (uint)i).ToArray(), RowIds(result));
         Assert.Equal(QuestState.Blocked, result.Rows[3].State);
-        Assert.Equal("needs level 50", result.Rows[3].NextStep);
-        Assert.Equal(string.Empty, result.Rows[0].NextStep);
+        // The Status text is the state name first, then the decisive blocker in the display vocabulary.
+        Assert.Equal("Blocked · Lv 50", result.Rows[3].Status);
+        Assert.Equal("Ready", result.Rows[0].Status);
+        Assert.Equal("Not checked", result.Rows[7].Status);
     }
 
     [Fact]
@@ -69,8 +71,8 @@ public class QuestQueryFilterTests
 #pragma warning restore CS0618
         var result = Run(Catalog, AllStates, ctx: ctx);
 
-        Assert.Equal("needs level 50", result.Rows[3].NextStep);
-        Assert.Equal(string.Empty, result.Rows[0].NextStep);
+        Assert.Equal("needs level 50", result.Rows[3].Status);
+        Assert.Equal(string.Empty, result.Rows[0].Status);
     }
 
     [Fact]
@@ -196,6 +198,22 @@ public class QuestQueryFilterTests
         var result = Run(catalog, States(catalog, QuestState.Ready), new FilterSet { LevelMin = 10, LevelMax = 50 });
 
         Assert.Equal(new uint[] { 2, 3 }, RowIds(result));
+    }
+
+    [Fact]
+    public void Level_range_uses_the_displayed_level()
+    {
+        // A Lv 5 quest with offset 5 shows as Lv 10 and belongs in a 10..50 band although its raw level is below it.
+        var catalog = QuestCatalog.Build(
+        [
+            Quest(1, "Raw five", level: 5),
+            Quest(2, "Shown as ten", level: 5) with { LevelOffset = 5 },
+            Quest(3, "Shown as fifty-one", level: 50) with { LevelOffset = 1 },
+        ]);
+
+        var result = Run(catalog, States(catalog, QuestState.Ready), new FilterSet { LevelMin = 10, LevelMax = 50 });
+
+        Assert.Equal(new uint[] { 2 }, RowIds(result));
     }
 
     [Fact]

@@ -480,6 +480,48 @@ public class StateResolverTests
         Assert.Equal(Conjurer, result.ReadyOnJob);
     }
 
+    // Entitlement caps (PlayerState.MaxExpansion / MaxLevel; 0 = not checked)
+
+    [Fact]
+    public void Caps_of_zero_are_not_checked()
+    {
+        // A snapshot from an older build, or a client that has not said, carries 0 for both caps; that must never read
+        // as "level 0" or "no expansion", so a Dawntrail level-100 quest is gated by its other requirements only.
+        var quest = Quest(Target) with { Expansion = 5, Level = 100 };
+        var snapshot = Snapshot() with { JobLevels = Levels((Gladiator, 100)), MaxExpansion = 0, LevelCap = 0 };
+
+        var result = Resolve(quest, snapshot);
+
+        Assert.Equal(QuestState.Ready, result.State);
+        Assert.DoesNotContain(result.Requirements, r => r.Req.Kind is RequirementKind.ExpansionCap or RequirementKind.LevelCap);
+    }
+
+    [Fact]
+    public void Expansion_cap_below_the_quest_blocks_it()
+    {
+        var quest = Quest(Target) with { Expansion = 5, Level = 100 };
+        var snapshot = Snapshot() with { JobLevels = Levels((Gladiator, 100)), MaxExpansion = 4, LevelCap = 100 };
+
+        var result = Resolve(quest, snapshot);
+
+        Assert.Equal(QuestState.Blocked, result.State);
+        Assert.Equal(RequirementKind.ExpansionCap, result.NextStep!.Req.Kind);
+    }
+
+    [Fact]
+    public void Level_cap_below_the_quest_blocks_it_and_caps_at_or_above_pass()
+    {
+        var quest = Quest(Target) with { Expansion = 4, Level = 90 };
+        var levelled = Snapshot() with { JobLevels = Levels((Gladiator, 90)) };
+
+        var capped = Resolve(quest, levelled with { MaxExpansion = 4, LevelCap = 80 });
+        Assert.Equal(QuestState.Blocked, capped.State);
+        Assert.Equal(RequirementKind.LevelCap, capped.NextStep!.Req.Kind);
+
+        Assert.Equal(QuestState.Ready, Resolve(quest, levelled with { MaxExpansion = 4, LevelCap = 90 }).State);
+        Assert.Equal(QuestState.Ready, Resolve(quest, levelled with { MaxExpansion = 5, LevelCap = 100 }).State);
+    }
+
     // Batch
 
     [Fact]
