@@ -4,6 +4,8 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-09-30
+
 ### Added
 - Requirements you don't meet now stand out. A quest you can't take yet opens its details with a "Not yet" line that names everything in the way at once ("Not yet · level 56 (you're 52) and 1 previous quest"); a quest you're locked out of says why ("Locked out · Another city's start (Ul'dah)", with who the quest is for under it), and one another job can take says "Not on this job · ready on PLD". Each requirement you don't meet gets a ✕ and its value in the Locked out colour; a level, rank, reputation or carrier level gets a small bar showing where you stand against what it asks ("52 → 56"); and an arrow button beside it goes to the quest that clears it: the next previous quest to do, the unlock quest of a job you haven't unlocked yet, or the quest that opens a required duty. Requirements you meet go quiet, with a small check. In the quest list, the reason after Blocked or Locked out is in the same colour, and the Path chart puts the same ✕ after a selected quest you can't take yet.
 
