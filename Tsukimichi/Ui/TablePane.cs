@@ -40,7 +40,39 @@ public sealed class TablePane : IDisposable
     private const float NameColumnWidth = 240f;
 
     /// <summary>Logical width under which the Status column sheds Rewards, then Expansion: room for "Ready on another job".</summary>
-    private const float StatusMinWidth = 170f;
+    private const float StatusMinWidth = LayoutBudgets.StatusMinLogical;
+
+    // The status column's minimum for the current language (V2-19): the widest state name must show whole.
+    private int statusMinLanguage = -1;
+    private float statusMinFont = -1f;
+    private float statusMin;
+
+    /// <summary>
+    /// <see cref="StatusMinWidth"/>, or wider for a language whose longest state name (with " · …" after the states that
+    /// carry a reason) would not fit it (<see cref="LayoutBudgets.StatusMin"/>); measured again on a language or font change.
+    /// </summary>
+    private float StatusMin()
+    {
+        var font = ImGui.GetFontSize();
+        if (statusMinLanguage != Localization.Loc.Version || statusMinFont != font)
+        {
+            statusMinLanguage = Localization.Loc.Version;
+            statusMinFont = font;
+            var unit = MathF.Max(UiMetrics.Px(1f), 0.01f);
+            var ellipsis = ImGui.CalcTextSize(Strings.StateReasonSeparator + "…").X;
+            var widest = 0f;
+            foreach (var state in Enum.GetValues<QuestState>())
+            {
+                var reason = state is QuestState.Blocked or QuestState.Foreclosed or QuestState.Unknown or QuestState.Accepted ? ellipsis : 0f;
+                widest = MathF.Max(widest, ImGui.CalcTextSize(Strings.StateName(state)).X + reason);
+            }
+
+            widest = MathF.Max(widest, ImGui.CalcTextSize(Strings.StateName(QuestState.DoneThisCycle, null)).X);
+            statusMin = UiMetrics.Px(LayoutBudgets.StatusMin(widest / unit));
+        }
+
+        return statusMin;
+    }
 
     /// <summary>Logical gap between a story sidequest's name and its book badge.</summary>
     private const float StoryBadgeGap = 6f;
@@ -497,7 +529,7 @@ public sealed class TablePane : IDisposable
             return;
         }
 
-        var min = UiMetrics.Px(StatusMinWidth);
+        var min = StatusMin();
         var padding = ImGui.GetStyle().CellPadding.X * 2f;
         var rewardsEnabled = IsColumnEnabled(Column.Rewards);
         var expansionEnabled = IsColumnEnabled(Column.Expansion);

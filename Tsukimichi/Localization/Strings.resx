@@ -4678,4 +4678,388 @@
     <value>source</value>
     <comment>Not shown. English is the source ("source"); a translation says "draft" until players have reviewed it, then "reviewed". Settings shows the draft notice while it says "draft".</comment>
   </data>
+  <data name="Core.Blocker.Step" xml:space="preserve">
+    <value>step {0}</value>
+    <comment>Core: BlockerText.cs.</comment>
+  </data>
+  <data name="Core.Blocker.StepOf" xml:space="preserve">
+    <value>step {0} of {1}</value>
+    <comment>Core: BlockerText.cs.</comment>
+  </data>
+  <data name="Core.Blocker.NotChecked" xml:space="preserve">
+    <value>Not checked: {0}</value>
+    <comment>Core: BlockerText.cs.</comment>
+  </data>
+  <data name="Core.Blocker.ClosedBy" xml:space="preserve">
+    <value>closed by: {0}</value>
+    <comment>Core: BlockerText.cs.</comment>
+  </data>
+  <data name="Core.Blocker.Expansion" xml:space="preserve">
+    <value>Expansion: {0}</value>
+    <comment>Core: BlockerText.cs.</comment>
+  </data>
+  <data name="Core.Blocker.LevelCap" xml:space="preserve">
+    <value>Lv {0}, above your cap</value>
+    <comment>Core: BlockerText.cs.</comment>
+  </data>
+  <data name="Core.Blocker.GrandCompany" xml:space="preserve">
+    <value>Grand Company: {0}</value>
+    <comment>Core: BlockerText.cs.</comment>
+  </data>
+  <data name="Core.Blocker.TribeRankWith" xml:space="preserve">
+    <value>Rank: {0} with the {1}</value>
+    <comment>Core: BlockerText.cs.</comment>
+  </data>
+  <data name="Core.Blocker.TribeRank" xml:space="preserve">
+    <value>Rank: {0}</value>
+    <comment>Core: BlockerText.cs.</comment>
+  </data>
+  <data name="Core.Blocker.ReputationWith" xml:space="preserve">
+    <value>Reputation: {0} more with the {1}</value>
+    <comment>Core: BlockerText.cs.</comment>
+  </data>
+  <data name="Core.Blocker.Reputation" xml:space="preserve">
+    <value>Reputation: {0} more</value>
+    <comment>Core: BlockerText.cs.</comment>
+  </data>
+  <data name="Core.Blocker.CarrierLevel" xml:space="preserve">
+    <value>Delivery Moogle: carrier level {0}</value>
+    <comment>Core: BlockerText.cs.</comment>
+  </data>
+  <data name="Core.Blocker.Level" xml:space="preserve">
+    <value>Lv {0}</value>
+    <comment>Core: BlockerText.cs.</comment>
+  </data>
+  <data name="Core.Blocker.LevelOn" xml:space="preserve">
+    <value>Lv {0} on {1}</value>
+    <comment>Core: BlockerText.cs.</comment>
+  </data>
+  <data name="Core.Blocker.JobAnyYouAre" xml:space="preserve">
+    <value>Job: any {0}, you are {1}</value>
+    <comment>Core: BlockerText.cs.</comment>
+  </data>
+  <data name="Core.Blocker.JobAny" xml:space="preserve">
+    <value>Job: any {0}</value>
+    <comment>Core: BlockerText.cs.</comment>
+  </data>
+  <data name="Core.Blocker.JobYouAre" xml:space="preserve">
+    <value>Job: {0}, you are {1}</value>
+    <comment>Core: BlockerText.cs.</comment>
+  </data>
+  <data name="Core.Blocker.Job" xml:space="preserve">
+    <value>Job: {0}</value>
+    <comment>Core: BlockerText.cs.</comment>
+  </data>
+  <data name="Core.Blocker.After" xml:space="preserve">
+    <value>after: {0}</value>
+    <comment>Core: BlockerText.cs.</comment>
+  </data>
+  <data name="Core.Blocker.AfterMsq" xml:space="preserve">
+    <value>after MSQ: {0}</value>
+    <comment>Core: BlockerText.cs.</comment>
+  </data>
+  <data name="Core.Blocker.CustomDeliveryWith" xml:space="preserve">
+    <value>Custom delivery: rank {0} with {1}</value>
+    <comment>Core: BlockerText.cs.</comment>
+  </data>
+  <data name="Core.Blocker.CustomDelivery" xml:space="preserve">
+    <value>Custom delivery: rank {0}</value>
+    <comment>Core: BlockerText.cs.</comment>
+  </data>
+  <data name="Core.Blocker.Duty" xml:space="preserve">
+    <value>Duty: {0}</value>
+    <comment>Core: BlockerText.cs.</comment>
+  </data>
+  <data name="Core.Blocker.DutiesToClear" xml:space="preserve">
+    <value>Duty: {0} to clear</value>
+    <comment>Core: BlockerText.cs.</comment>
+  </data>
+  <data name="Core.Blocker.QuestId" xml:space="preserve">
+    <value>quest {0}</value>
+    <comment>Core: BlockerText.cs.</comment>
+  </data>
+  <data name="Core.Req.Retired" xml:space="preserve">
+    <value>removed from the game</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.NoConflict" xml:space="preserve">
+    <value>no conflicting quest completed</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.LockedOutBy" xml:space="preserve">
+    <value>locked out by {0}</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.RequiresExpansion" xml:space="preserve">
+    <value>requires {0}</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.LevelCap" xml:space="preserve">
+    <value>level {0} is above your cap of {1}</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.AvailableCurrentJob" xml:space="preserve">
+    <value>available on the current job</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.AvailableThisJob" xml:space="preserve">
+    <value>available on this job</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.NotAvailableCurrentJob" xml:space="preserve">
+    <value>not available on the current job</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.NotAvailableThisJob" xml:space="preserve">
+    <value>not available on this job</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.Level" xml:space="preserve">
+    <value>level {0}</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.NeedsLevel" xml:space="preserve">
+    <value>needs level {0}, you are {1}</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.RequiresGrandCompany" xml:space="preserve">
+    <value>requires {0}</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.GrandCompanyRank" xml:space="preserve">
+    <value>{0} rank {1}</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.NeedsGrandCompanyRank" xml:space="preserve">
+    <value>needs {0} rank {1}, you are rank {2}</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.NeedsTribeRank" xml:space="preserve">
+    <value>needs {0}, you are {1}</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.Reputation" xml:space="preserve">
+    <value>{0} reputation</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.NeedsReputation" xml:space="preserve">
+    <value>needs {0} reputation, you have {1}</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.AllowancesLeft" xml:space="preserve">
+    <value>{0} allowances left</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.NoAllowances" xml:space="preserve">
+    <value>no allowances left today</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.OfferedToday" xml:space="preserve">
+    <value>offered today</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.NotOfferedToday" xml:space="preserve">
+    <value>not offered today</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.NeedsCarrierNotChecked" xml:space="preserve">
+    <value>needs carrier level {0}, not checked</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.CarrierLevel" xml:space="preserve">
+    <value>carrier level {0}</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.NeedsCarrierLevel" xml:space="preserve">
+    <value>needs carrier level {0}, you are level {1}</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.DutiesDoneOneNeeded" xml:space="preserve">
+    <value>{0} of {1} duties completed, one needed</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.DutiesDone" xml:space="preserve">
+    <value>{0} of {1} duties completed</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.AcceptConditionOne" xml:space="preserve">
+    <value>1 accept condition not checked</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.AcceptConditions" xml:space="preserve">
+    <value>{0} accept conditions not checked</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.MountAvailable" xml:space="preserve">
+    <value>mount available</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.RequiresMount" xml:space="preserve">
+    <value>requires a mount</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.RequiresMountNotChecked" xml:space="preserve">
+    <value>requires a mount, not checked</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.HouseAvailable" xml:space="preserve">
+    <value>house available</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.RequiresHouse" xml:space="preserve">
+    <value>requires a house</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.RequiresHouseNotChecked" xml:space="preserve">
+    <value>requires a house, not checked</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.Achievement" xml:space="preserve">
+    <value>achievement requirement, see journal</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.AchievementsNotLoaded" xml:space="preserve">
+    <value>achievements not loaded</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.QuestDone" xml:space="preserve">
+    <value>{0} done</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.NeedsQuest" xml:space="preserve">
+    <value>needs {0}</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.PrerequisitesDoneOneNeeded" xml:space="preserve">
+    <value>{0} of {1} prerequisites done, one needed</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.PrerequisitesDone" xml:space="preserve">
+    <value>{0} of {1} prerequisites done</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.NeedsSatisfactionWithNotChecked" xml:space="preserve">
+    <value>needs satisfaction rank {0} with {1}, not checked</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.NeedsSatisfactionNotChecked" xml:space="preserve">
+    <value>needs satisfaction rank {0}, not checked</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.SatisfactionWith" xml:space="preserve">
+    <value>satisfaction rank {0} with {1}</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.Satisfaction" xml:space="preserve">
+    <value>satisfaction rank {0}</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.NeedsSatisfactionWith" xml:space="preserve">
+    <value>needs satisfaction rank {0} with {1}, you are rank {2}</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.NeedsSatisfaction" xml:space="preserve">
+    <value>needs satisfaction rank {0}, you are rank {1}</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.SeasonalNotActive" xml:space="preserve">
+    <value>seasonal event not active</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.ChapterNotOpen" xml:space="preserve">
+    <value>chapter opens at phase {0}, the event is at phase {1}</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.ChapterOver" xml:space="preserve">
+    <value>chapter ended after phase {0}, the event is at phase {1}</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.SeasonalActivePhase" xml:space="preserve">
+    <value>seasonal event active, phase {0}</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.SeasonalActive" xml:space="preserve">
+    <value>seasonal event active</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Req.QuestId" xml:space="preserve">
+    <value>quest {0}</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.Filter.HideCompleted" xml:space="preserve">
+    <value>Hide completed</value>
+    <comment>Core: FilterNames.cs.</comment>
+  </data>
+  <data name="Core.Filter.AvailableOnly" xml:space="preserve">
+    <value>Available now</value>
+    <comment>Core: FilterNames.cs.</comment>
+  </data>
+  <data name="Core.Filter.State" xml:space="preserve">
+    <value>State</value>
+    <comment>Core: FilterNames.cs.</comment>
+  </data>
+  <data name="Core.Filter.Expansion" xml:space="preserve">
+    <value>Expansion</value>
+    <comment>Core: FilterNames.cs.</comment>
+  </data>
+  <data name="Core.Filter.AddedIn" xml:space="preserve">
+    <value>Added in</value>
+    <comment>Core: FilterNames.cs.</comment>
+  </data>
+  <data name="Core.Filter.LevelRange" xml:space="preserve">
+    <value>Level range</value>
+    <comment>Core: FilterNames.cs.</comment>
+  </data>
+  <data name="Core.Filter.JobCategory" xml:space="preserve">
+    <value>Job category</value>
+    <comment>Core: FilterNames.cs.</comment>
+  </data>
+  <data name="Core.Filter.RewardKinds" xml:space="preserve">
+    <value>Reward kinds</value>
+    <comment>Core: FilterNames.cs.</comment>
+  </data>
+  <data name="Core.Filter.Repeatable" xml:space="preserve">
+    <value>Repeatable</value>
+    <comment>Core: FilterNames.cs.</comment>
+  </data>
+  <data name="Core.Filter.SeasonalActive" xml:space="preserve">
+    <value>Seasonal active</value>
+    <comment>Core: FilterNames.cs.</comment>
+  </data>
+  <data name="Core.Filter.IncludeUnlisted" xml:space="preserve">
+    <value>Include removed</value>
+    <comment>Core: FilterNames.cs.</comment>
+  </data>
+  <data name="Core.Filter.Pinned" xml:space="preserve">
+    <value>Pinned</value>
+    <comment>Core: FilterNames.cs.</comment>
+  </data>
+  <data name="Core.Filter.Abandoned" xml:space="preserve">
+    <value>Abandoned</value>
+    <comment>Core: FilterNames.cs.</comment>
+  </data>
+  <data name="Core.Filter.Search" xml:space="preserve">
+    <value>Search</value>
+    <comment>Core: FilterNames.cs.</comment>
+  </data>
+  <data name="Core.Filter.FeatureQuests" xml:space="preserve">
+    <value>Unlocks</value>
+    <comment>Core: FilterNames.cs.</comment>
+  </data>
+  <data name="Core.Filter.LevelBand" xml:space="preserve">
+    <value>My level</value>
+    <comment>Core: FilterNames.cs.</comment>
+  </data>
+  <data name="Core.Filter.Stalled" xml:space="preserve">
+    <value>Stalled</value>
+    <comment>Core: FilterNames.cs.</comment>
+  </data>
+  <data name="Core.Filter.Sprout" xml:space="preserve">
+    <value>Sprout mode</value>
+    <comment>Core: FilterNames.cs.</comment>
+  </data>
+  <data name="Core.Filter.StorySidequests" xml:space="preserve">
+    <value>Story sidequests</value>
+    <comment>Core: FilterNames.cs.</comment>
+  </data>
 </root>

@@ -64,6 +64,17 @@ public static class LayoutBudgets
     /// <summary>The status column's least width before Rewards, then Expansion, are hidden to make room.</summary>
     public const float StatusMinLogical = 170f;
 
+    /// <summary>The widest the status column's minimum may grow for a long state name.</summary>
+    public const float MaxStatusMinLogical = 260f;
+
+    /// <summary>
+    /// The status column's least content width for a language: <see cref="StatusMinLogical"/>, or the widest state name
+    /// (a state with a reason already followed by " · …") when that is wider, so the state word, which the column never
+    /// cuts, always shows whole; at most <see cref="MaxStatusMinLogical"/>.
+    /// </summary>
+    public static float StatusMin(float widestStateWord) =>
+        Math.Clamp(MathF.Ceiling(widestStateWord), StatusMinLogical, MaxStatusMinLogical);
+
     /// <summary>ImGui's cell padding either side of a header label (Dalamud's style).</summary>
     public const float CellPaddingLogical = 4f;
 
