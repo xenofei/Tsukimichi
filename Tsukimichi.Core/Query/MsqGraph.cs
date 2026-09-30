@@ -107,8 +107,9 @@ public sealed record MsqRouteProgress(MsqRoute Route, QuestRecord? Next, QuestSt
 /// (<see cref="MsqPosition.Next"/>) is the first route's next quest. The reconvergence quest is never a position
 /// while its join is unmet. The join is met once the reconvergence quest itself is open, in the journal or completed
 /// (the evaluator has judged its previous quests as the game does), or else once the routes it needs are done: every
-/// route that is not locked out for an All join, one of them for an Any join. Once the join is met, the unfinished
-/// quests of the routes are optional: they leave the position and the totals, like a branch not taken.
+/// route that is not locked out for an All join, one of them for an Any join (or none, when every route is locked
+/// out). Once the join is met, the unfinished quests of the routes are optional: they leave the position and the
+/// totals, like a branch not taken.
 /// </para>
 /// </summary>
 public sealed class MsqGraph
@@ -326,9 +327,14 @@ public sealed class MsqGraph
             primary ??= routes[i].Next is not null ? routes[i] : null;
         }
 
-        var next = primary?.Next ?? first;
-        var nextState = primary?.Next is not null ? primary.State : firstState;
-        return new MsqPosition(next, nextState, done, total)
+        if (primary?.Next is not { } next)
+        {
+            // No route has a quest left (an unmet join always has one; kept so the position can never be branched
+            // with no route position): the linear answer, so Next and Positions agree.
+            return new MsqPosition(first, firstState, done, total);
+        }
+
+        return new MsqPosition(next, primary.State, done, total)
         {
             Branch = branch,
             Routes = routes,
@@ -394,7 +400,7 @@ public sealed class MsqGraph
     /// <summary>
     /// The region's join is met: the reconvergence quest is completed, in the journal or open (Ready, or ready on
     /// another job), or the routes it needs are done (every route not locked out for an All join, one route for an
-    /// Any join).
+    /// Any join, or none when every route of an Any join is locked out).
     /// <para>
     /// The reconvergence quest's own state comes first: the evaluator has already judged its previous quests the way
     /// the game does, while a route here is every quest that leads to it, so a route holding a quest the game does not
@@ -410,7 +416,7 @@ public sealed class MsqGraph
         }
 
         var anyDone = false;
-        var allDone = true;
+        var anyOpen = false;
         foreach (var route in branch.Routes)
         {
             switch (Progress(route, source).Status)
@@ -421,12 +427,13 @@ public sealed class MsqGraph
                 case MsqRouteStatus.LockedOut:
                     break;
                 default:
-                    allDone = false;
+                    anyOpen = true;
                     break;
             }
         }
 
-        return branch.JoinKind == JoinKind.Any ? anyDone : allDone;
+        // An Any join with every route locked out has nothing left to wait for, as RoutesToJoin already says (0).
+        return branch.JoinKind == JoinKind.Any ? anyDone || !anyOpen : !anyOpen;
     }
 
     /// <summary>
