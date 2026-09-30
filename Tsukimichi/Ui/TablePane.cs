@@ -148,6 +148,10 @@ public sealed class TablePane : IDisposable
     private uint? hoveredRow;
     private uint? hoveredNext;
 
+    // The row array hoveredRow was recorded against: a re-sort, filter or search hands out a new one, and the quest
+    // under the mouse last frame is somewhere else now, so it gets neither the lift nor a fade at its new place.
+    private QuestRow[]? hoverRows;
+
     // The row whose "…" button had keyboard focus last frame (it stays drawn while focused), and this frame's.
     private uint? moreFocusedRow;
     private uint? moreFocusedNext;
@@ -213,6 +217,17 @@ public sealed class TablePane : IDisposable
         }
 
         var rows = runner.Rows;
+        if (!ReferenceEquals(rows, hoverRows))
+        {
+            hoverRows = rows;
+            if (hoveredRow is { } moved)
+            {
+                // Snap its fill out instead of fading it where the row landed.
+                Motion.Lerp(HoverKeyTag | moved, 0f, float.MaxValue);
+                hoveredRow = null;
+            }
+        }
+
         if (runner.SproutCaption is { } caption)
         {
             // Sprout mode (T19): how much of the game is in reach, instead of the whole catalog.
