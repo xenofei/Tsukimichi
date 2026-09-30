@@ -49,10 +49,12 @@ public sealed record RouteTarget(RouteTargetKind Kind, string Label, IReadOnlyLi
 
     /// <summary>
     /// A Moonlit entry: the quest granting it, plus every other entry of <paramref name="all"/> handing out the same
-    /// reward (same kind and reward id, or for a reward without an id the same name). A duty or system unlock entry
+    /// reward (same kind, reward id and item; for a system unlock, which has no id, the same curated label). A reward
+    /// without an id of any other kind (a quest you marked unique yourself) stands alone. A duty or system unlock entry
     /// makes a <see cref="RouteTargetKind.Duty"/> or <see cref="RouteTargetKind.System"/> target.
     /// </summary>
-    public static RouteTarget ForReward(UniqueRewardEntry entry, IEnumerable<UniqueRewardEntry>? all = null)
+    /// <param name="label">The name the route is titled with; null uses <see cref="UniqueRewardEntry.RewardName"/>.</param>
+    public static RouteTarget ForReward(UniqueRewardEntry entry, IEnumerable<UniqueRewardEntry>? all = null, string? label = null)
     {
         ArgumentNullException.ThrowIfNull(entry);
         var quests = new List<uint> { entry.QuestRowId };
@@ -73,7 +75,7 @@ public sealed record RouteTarget(RouteTargetKind Kind, string Label, IReadOnlyLi
             RewardKind.SystemUnlock => RouteTargetKind.System,
             _ => RouteTargetKind.Reward,
         };
-        return new RouteTarget(kind, entry.RewardName, quests);
+        return new RouteTarget(kind, label ?? entry.RewardName, quests);
     }
 
     /// <summary>
@@ -126,8 +128,13 @@ public sealed record RouteTarget(RouteTargetKind Kind, string Label, IReadOnlyLi
         return new RouteTarget(RouteTargetKind.System, label ?? string.Empty, quests);
     }
 
-    private static bool SameReward(UniqueRewardEntry a, UniqueRewardEntry b) =>
-        a.RewardId != 0 || b.RewardId != 0
-            ? a.RewardId == b.RewardId && a.ItemId == b.ItemId
-            : string.Equals(a.RewardName, b.RewardName, StringComparison.Ordinal);
+    private static bool SameReward(UniqueRewardEntry a, UniqueRewardEntry b)
+    {
+        if (a.RewardId != 0 || b.RewardId != 0)
+        {
+            return a.RewardId == b.RewardId && a.ItemId == b.ItemId;
+        }
+
+        return a.Kind == RewardKind.SystemUnlock && string.Equals(a.RewardName, b.RewardName, StringComparison.Ordinal);
+    }
 }

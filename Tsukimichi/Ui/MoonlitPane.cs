@@ -652,7 +652,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 
         if (ImGui.MenuItem(Strings.RouteToThisReward))
         {
-            ui.OpenRoute(Core.Route.RouteTarget.ForReward(row.Entry, catalog.All));
+            ui.OpenRoute(Core.Route.RouteTarget.ForReward(row.Entry, catalog.All, row.Name));
         }
 
         ImGui.Separator();

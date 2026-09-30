@@ -189,6 +189,15 @@ public class UnlockRouteTests
         Assert.Equal(RouteTargetKind.System, RouteTarget.ForReward(entries[0], entries).Kind);
         Assert.Equal([D, E], RouteTarget.ForReward(entries[3], entries).QuestRowIds);
         Assert.Equal(RouteTargetKind.Reward, RouteTarget.ForReward(entries[3]).Kind);
+        Assert.Equal("Airship", RouteTarget.ForReward(entries[3], entries, "Airship").Label);
+
+        // Quests you marked unique yourself share one placeholder name but are not one reward.
+        var marked = new[]
+        {
+            new UniqueRewardEntry(A, RewardKind.Other, 0, 0, "Marked unique by you", Confidence.UserOverride, "user"),
+            new UniqueRewardEntry(B, RewardKind.Other, 0, 0, "Marked unique by you", Confidence.UserOverride, "user"),
+        };
+        Assert.Equal([A], RouteTarget.ForReward(marked[0], marked).QuestRowIds);
 
         var catalog = Catalog(Quest(A) with { Rewards = [new RewardRef(RewardKind.Instance, 20040, 0, 1, "Nidhogg's Rage", 0)] }, Quest(B));
         var duty = RouteTarget.ForDuty(catalog, RewardKind.Instance, 20040, "Nidhogg's Rage", [new UniqueRewardEntry(B, RewardKind.Instance, 20040, 0, string.Empty, Confidence.Curated, "curated")]);
