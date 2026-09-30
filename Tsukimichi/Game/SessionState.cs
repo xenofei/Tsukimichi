@@ -68,6 +68,12 @@ public sealed partial class SessionState
     /// <summary>The built catalog; null while loading or after a failure.</summary>
     public CatalogBundle? Bundle { get; private set; }
 
+    /// <summary>
+    /// The Journal tree's node icons for <see cref="Bundle"/> (Moon Road proposal §6.2), resolved once per catalog off
+    /// the framework thread; <see cref="Core.Ui.NodeIconMap.Empty"/> until then or when the sheets could not be read.
+    /// </summary>
+    public Core.Ui.NodeIconMap NodeIcons { get; private set; } = Core.Ui.NodeIconMap.Empty;
+
     /// <summary>Name lookups for <see cref="BlockerText"/> over the current bundle; <see cref="BlockerNames.Default"/> until the catalog is built.</summary>
     public BlockerNames Names { get; private set; } = BlockerNames.Default;
 
@@ -390,10 +396,11 @@ public sealed partial class SessionState
         }
     }
 
-    internal void SetCatalog(CatalogBundle bundle)
+    internal void SetCatalog(CatalogBundle bundle, Core.Ui.NodeIconMap? nodeIcons = null)
     {
         ArgumentNullException.ThrowIfNull(bundle);
         Bundle = bundle;
+        NodeIcons = nodeIcons ?? Core.Ui.NodeIconMap.Empty;
         CatalogError = null;
         CatalogLoading = false;
         Index = ReversePrereqIndex.Build(bundle.Catalog);

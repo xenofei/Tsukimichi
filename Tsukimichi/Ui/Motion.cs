@@ -91,6 +91,23 @@ public static class Motion
         Lerp(key, float.IsFinite(fraction) ? System.Math.Clamp(fraction, 0f, 1f) : 0f, MotionMath.GaugeRate);
 
     /// <summary>
+    /// An orbit's shown fraction (Moon Road proposal §9): under Full flair with motion on, the arc fills from empty the
+    /// first time the orbit shows and runs from the old fraction to the new one when the count changes, each over
+    /// <see cref="MotionMath.OrbitFillSeconds"/> with an ease-out computed from its start time. At Quiet and Plain it is
+    /// <see cref="Gauge"/> (the 1.3 behaviour); under Reduce motion, or while scrolling, it is the fraction itself.
+    /// </summary>
+    public static float Fill(ulong key, float fraction)
+    {
+        if (!Theme.FlairMotion)
+        {
+            return Gauge(key, fraction);
+        }
+
+        var f = float.IsFinite(fraction) ? System.Math.Clamp(fraction, 0f, 1f) : 0f;
+        return Store.Tween(key, f, MotionMath.OrbitFillSeconds, ImGui.GetTime(), Enabled);
+    }
+
+    /// <summary>
     /// Draws the reveal pulse under <paramref name="key"/> around the rectangle, if one is playing: a Moon ring that
     /// grows 0 → 6 px outward while fading 0.7 → 0, twice in 900 ms (ui-revamp §3, accessibility B5: 2.2 flashes/s on
     /// a small area). Nothing is drawn with motion off or once the pulse has ended.

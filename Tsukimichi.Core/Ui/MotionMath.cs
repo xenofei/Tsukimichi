@@ -28,6 +28,15 @@ public static class MotionMath
     /// <summary>One ring of the reveal pulse.</summary>
     public const float RevealRingSeconds = 0.45f;
 
+    /// <summary>
+    /// The orbit fill (Moon Road proposal §9, the mockup's 0.9 s): an orbit's arc and its road run from nothing to their
+    /// fraction when first shown, and from the old fraction to the new one when the count changes, ease-out.
+    /// </summary>
+    public const float OrbitFillSeconds = 0.9f;
+
+    /// <summary>The rail's active station lighting up after a tab change (the mockup's 0.5 s ease-out).</summary>
+    public const float StationLightSeconds = 0.5f;
+
     /// <summary>Closer than this to the target counts as there, so an eased value settles instead of creeping forever.</summary>
     public const float SnapEpsilon = 0.001f;
 
@@ -122,6 +131,10 @@ public sealed class MotionStore
         public double Touched;
         public double PulseStart;
         public bool Pulsing;
+        public float From;
+        public float To;
+        public double TweenStart;
+        public bool Tweening;
     }
 
     private readonly Dictionary<ulong, Entry> entries = [];
@@ -143,6 +156,60 @@ public sealed class MotionStore
         entry.Touched = nowSeconds;
         entry.Value = existed && animate ? MotionMath.Approach(entry.Value, target, rate, deltaSeconds) : target;
         return entry.Value;
+    }
+
+    /// <summary>
+    /// A timed tween under <paramref name="key"/>: the value runs to <paramref name="target"/> over
+    /// <paramref name="seconds"/> with a cubic ease-out, computed from the tween's start time rather than accumulated per
+    /// frame. A key seen for the first time starts at <paramref name="from"/> (0: an orbit fills from empty when first
+    /// shown); a new target restarts the tween from the value shown now, so a change mid-fill carries on smoothly. With
+    /// <paramref name="animate"/> false (Reduce motion, the user scrolling) the value is the target at once, and a key
+    /// first seen then does not replay its fill later. Allocation-free once the key exists.
+    /// </summary>
+    public float Tween(ulong key, float target, float seconds, double nowSeconds, bool animate, float from = 0f)
+    {
+        ref var entry = ref System.Runtime.InteropServices.CollectionsMarshal.GetValueRefOrAddDefault(entries, key, out var existed);
+        entry.Touched = nowSeconds;
+        if (!animate || !(seconds > 0f) || !float.IsFinite(target))
+        {
+            entry.Value = entry.From = entry.To = float.IsFinite(target) ? target : entry.Value;
+            entry.Tweening = false;
+            return entry.Value;
+        }
+
+        if (!existed)
+        {
+            entry.Value = float.IsFinite(from) ? from : 0f;
+            StartTween(ref entry, target, nowSeconds);
+        }
+        else if (entry.To != target || (!entry.Tweening && entry.Value != target))
+        {
+            StartTween(ref entry, target, nowSeconds);
+        }
+
+        if (entry.Tweening)
+        {
+            var progress = MotionMath.PulseProgress(entry.TweenStart, nowSeconds, seconds);
+            if (progress < 0f)
+            {
+                entry.Tweening = false;
+                entry.Value = entry.To;
+            }
+            else
+            {
+                entry.Value = entry.From + ((entry.To - entry.From) * MotionMath.EaseOutCubic(progress));
+            }
+        }
+
+        return entry.Value;
+    }
+
+    private static void StartTween(ref Entry entry, float target, double nowSeconds)
+    {
+        entry.From = entry.Value;
+        entry.To = target;
+        entry.TweenStart = nowSeconds;
+        entry.Tweening = true;
     }
 
     /// <summary>

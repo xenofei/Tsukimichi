@@ -139,7 +139,7 @@ public sealed class MainWindow : Window, IDisposable
         filterPanel = new FilterPanel(ui, OnFiltersChanged, OnDisplayChanged);
         ui.FiltersChanged += OnFiltersChanged;
         tabStrip = new TabStrip(ui);
-        treePane = new TreePane(ui);
+        treePane = new TreePane(ui, textures, () => plugin.Session.NodeIcons);
         tablePane = new TablePane(ui, runner, links, textures, pluginInterface, log, filterPanel.ResetAll, OnFiltersChanged);
         detailPane = new DetailPane(ui, runner, links, textures, log);
         tonightCard = new TonightCard(ui, runner, OnFiltersChanged);

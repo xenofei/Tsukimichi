@@ -12,7 +12,7 @@ namespace Tsukimichi.Ui;
 /// icon sits in the middle (an official game icon, or a gap glyph from the ornament atlas); an OrbitTrack ring runs
 /// round it; a Moon arc from 12 o'clock clockwise is the completed fraction, with round caps and a moon bead (a
 /// MoonHigh disc on a Night disc) at its head, so a 3 % arc still shows. At 100 % the ring closes and the bead becomes
-/// a full-moon pip at 12 o'clock; at 0 % only the track shows and the icon draws at 60 % alpha. Ready is a gold pip
+/// a full-moon pip at 12 o'clock; at 0 % only the track shows and the icon draws at 60 % alpha. Ready is a gold spark
 /// at 2 o'clock. Settings-independent: every size and switch is a parameter; nothing allocates.
 /// </summary>
 public static class Orbit
@@ -37,11 +37,20 @@ public static class Orbit
     /// <summary>The ring's unlit track: VeilLine at 0.55 (proposal §3, OrbitTrack).</summary>
     public static readonly uint TrackU32 = Theme.WithAlpha(Theme.VeilLine, 0.55f);
 
+    /// <summary>ExVersion.Icon (061875 ARR … 061880 DT): the expansion rings are circles, drawn unrounded and keylined as circles.</summary>
+    public const uint FirstExpansionIcon = 61875;
+    public const uint LastExpansionIcon = 61880;
+
+    /// <summary>The filling moon's radius inside an orbit (the mockup's 8.5 in a ring of 14).</summary>
+    public const float MoonLogical = 8f;
+
     /// <summary>
     /// Draws the orbit in the square box of side <paramref name="box"/> px at <paramref name="min"/>.
     /// <paramref name="fraction"/> is done/total (clamped; NaN is 0). <paramref name="rounding"/> rounds the icon's
-    /// corners in px (3 logical for square icons; pass 0 for circular ones such as the expansion rings).
-    /// <paramref name="highContrast"/> draws a 3 px arc with a Night gap and a full-alpha track (proposal §10.2).
+    /// corners in px (-1: 3 logical for square icons, none for the circular expansion rings).
+    /// <paramref name="highContrast"/> draws a 3 px arc with a Night gap, a full-alpha track and a Silver keyline round
+    /// official icons (proposal §10.2). While the icon's texture loads a NightRaised square stands in; see
+    /// <see cref="TryDraw"/> to draw nothing instead.
     /// </summary>
     public static void Draw(
         ImDrawListPtr dl,
@@ -62,15 +71,133 @@ public static class Orbit
         var k = box / BoxLogical;
         var center = min + new Vector2(box * 0.5f);
         var f = GaugeGeometry.Clamp01(fraction);
+        var (iconMin, iconMax) = IconRect(center, k);
+        var round = Rounding(icon, rounding, k);
+        DrawIcon(dl, textures, icon, iconMin, iconMax, f > 0f ? 1f : UntouchedIconAlpha, round);
+        Finish(dl, icon, center, k, f, iconMin, iconMax, round, ready, highContrast);
+    }
 
-        // Icon.
-        var iconSize = IconLogical * k;
-        var iconMin = center - new Vector2(iconSize * 0.5f);
-        var iconMax = iconMin + new Vector2(iconSize);
-        var alpha = f > 0f ? 1f : UntouchedIconAlpha;
-        DrawIcon(dl, textures, icon, iconMin, iconMax, alpha, rounding < 0f ? 3f * k : rounding);
+    /// <summary>
+    /// <see cref="Draw"/> only once the icon can show: false, with nothing drawn, for an empty icon or while its texture
+    /// (the game icon, or the ornament atlas for a gap glyph) is still loading, so the caller can draw its own
+    /// placeholder (the Journal tree keeps the moon halo). One texture lookup per call; nothing allocates.
+    /// </summary>
+    public static bool TryDraw(
+        ImDrawListPtr dl,
+        ITextureProvider textures,
+        Vector2 min,
+        float box,
+        NodeIcon icon,
+        float fraction,
+        bool ready = false,
+        float rounding = -1f,
+        bool highContrast = false)
+    {
+        if (!(box > 0f) || icon.IsEmpty)
+        {
+            return false;
+        }
 
-        // Track and arc.
+        var k = box / BoxLogical;
+        var center = min + new Vector2(box * 0.5f);
+        var f = GaugeGeometry.Clamp01(fraction);
+        var (iconMin, iconMax) = IconRect(center, k);
+        var round = Rounding(icon, rounding, k);
+        var tint = Theme.WithAlpha(Vector4.One, f > 0f ? 1f : UntouchedIconAlpha);
+        if (icon.IsOfficial)
+        {
+            if (!textures.GetFromGameIcon(Lookup(icon, iconMax.X - iconMin.X)).TryGetWrap(out var wrap, out _))
+            {
+                return false;
+            }
+
+            dl.AddImageRounded(wrap.Handle, iconMin, iconMax, Vector2.Zero, Vector2.One, tint, round);
+        }
+        else if (!OrnamentAtlas.IsReady || !OrnamentAtlas.Draw(dl, icon.Glyph, iconMin, iconMax, tint))
+        {
+            return false;
+        }
+
+        Finish(dl, icon, center, k, f, iconMin, iconMax, round, ready, highContrast);
+        return true;
+    }
+
+    /// <summary>
+    /// The orbit round a filling moon instead of an icon: the rail's Journal station and its foot gauge (proposal §6.3,
+    /// "the filling moon stays wherever a scope is summarised without an icon"). The moon is lit to
+    /// <paramref name="fraction"/> inside the same track, arc and bead.
+    /// </summary>
+    public static void DrawMoon(ImDrawListPtr dl, Vector2 min, float box, float fraction, bool highContrast = false)
+    {
+        if (!(box > 0f))
+        {
+            return;
+        }
+
+        var k = box / BoxLogical;
+        var center = min + new Vector2(box * 0.5f);
+        var f = GaugeGeometry.Clamp01(fraction);
+        MoonGlyph.DrawFilling(dl, center, MoonLogical * k, f);
+        Ring(dl, center, k, f, highContrast);
+    }
+
+    /// <summary>
+    /// Ready: a gold four-point spark with a gold heart on the ring at 2 o'clock, outlined in Night so it separates from
+    /// the arc. Its place never moves and its shape (a star, not a disc) tells it from the moon bead without colour
+    /// (proposal §6.3, §10.3).
+    /// </summary>
+    public static void ReadyMark(ImDrawListPtr dl, Vector2 center, float ringRadius, float k)
+    {
+        var (sin, cos) = MathF.SinCos(GaugeGeometry.StartAngle + (MathF.PI / 3f));
+        var at = center + (new Vector2(cos, sin) * ringRadius);
+        var pip = ReadyPipLogical * k;
+        var spark = (2f * pip) + (3f * k);
+        dl.AddCircleFilled(at, pip + k, Theme.NightU32);
+        Ornament.Sigil(dl, at, spark + (2.5f * k), Theme.NightU32);
+        Ornament.Sigil(dl, at, spark, Theme.MoonU32);
+        dl.AddCircleFilled(at, pip * 0.75f, Theme.MoonU32);
+    }
+
+    private static (Vector2 Min, Vector2 Max) IconRect(Vector2 center, float k)
+    {
+        var half = new Vector2(IconLogical * k * 0.5f);
+        return (center - half, center + half);
+    }
+
+    private static bool IsCircular(NodeIcon icon) => icon.IconId is >= FirstExpansionIcon and <= LastExpansionIcon;
+
+    private static float Rounding(NodeIcon icon, float rounding, float k) =>
+        rounding >= 0f ? rounding : IsCircular(icon) ? 0f : 3f * k;
+
+    /// <summary>The game icon at its native 32 px (HiRes off) for ≤ 24 physical px, the hi-res texture above that.</summary>
+    private static GameIconLookup Lookup(NodeIcon icon, float sizePx) => new(icon.IconId, false, sizePx > LowResMaxPx);
+
+    /// <summary>After the icon: the high-contrast keyline, the ring and the Ready mark.</summary>
+    private static void Finish(ImDrawListPtr dl, NodeIcon icon, Vector2 center, float k, float f, Vector2 iconMin, Vector2 iconMax, float rounding, bool ready, bool highContrast)
+    {
+        if (highContrast && icon.IsOfficial)
+        {
+            // A 1 px Silver keyline, so dark tribe tiles do not melt into Night (proposal §10.2).
+            if (IsCircular(icon))
+            {
+                dl.AddCircle(center, (iconMax.X - iconMin.X) * 0.5f, Theme.SilverU32, 24, 1f);
+            }
+            else
+            {
+                dl.AddRect(iconMin, iconMax, Theme.SilverU32, rounding, ImDrawFlags.None, 1f);
+            }
+        }
+
+        Ring(dl, center, k, f, highContrast);
+        if (ready)
+        {
+            ReadyMark(dl, center, RingRadiusLogical * k, k);
+        }
+    }
+
+    /// <summary>The track, the arc from 12 o'clock with round caps, and the bead at its head (a full-moon pip once closed).</summary>
+    private static void Ring(ImDrawListPtr dl, Vector2 center, float k, float f, bool highContrast)
+    {
         var r = RingRadiusLogical * k;
         var stroke = (highContrast ? 3f : StrokeLogical) * k;
         var track = highContrast ? Theme.VeilLineU32 : TrackU32;
@@ -91,7 +218,7 @@ public static class Orbit
             {
                 dl.PathClear();
                 dl.PathArcTo(center, r, start, start + sweep, GaugeGeometry.ArcSegments(RingSegments, sweep));
-                dl.PathStroke(Theme.NightU32, ImDrawFlags.None, stroke + 2f * k);
+                dl.PathStroke(Theme.NightU32, ImDrawFlags.None, stroke + (2f * k));
             }
 
             dl.PathClear();
@@ -99,16 +226,7 @@ public static class Orbit
             dl.PathStroke(Theme.MoonU32, ImDrawFlags.None, stroke);
             dl.AddCircleFilled(center + new Vector2(0f, -r), stroke * 0.5f, Theme.MoonU32);
             var (sin, cos) = MathF.SinCos(start + sweep);
-            Bead(dl, center + new Vector2(cos, sin) * r, k, full: false);
-        }
-
-        // Ready: a gold pip on the ring at 2 o'clock, ringed in Night so it separates from the arc.
-        if (ready)
-        {
-            var (sin, cos) = MathF.SinCos(start + MathF.PI / 3f);
-            var at = center + new Vector2(cos, sin) * r;
-            dl.AddCircleFilled(at, (ReadyPipLogical + 1f) * k, Theme.NightU32);
-            dl.AddCircleFilled(at, ReadyPipLogical * k, Theme.MoonU32);
+            Bead(dl, center + (new Vector2(cos, sin) * r), k, full: false);
         }
     }
 
@@ -122,8 +240,7 @@ public static class Orbit
         var tint = Theme.WithAlpha(Vector4.One, alpha);
         if (icon.IsOfficial)
         {
-            var hiRes = max.X - min.X > LowResMaxPx;
-            if (textures.GetFromGameIcon(new GameIconLookup(icon.IconId, false, hiRes)).TryGetWrap(out var wrap, out _))
+            if (textures.GetFromGameIcon(Lookup(icon, max.X - min.X)).TryGetWrap(out var wrap, out _))
             {
                 dl.AddImageRounded(wrap.Handle, min, max, Vector2.Zero, Vector2.One, tint, rounding);
             }
