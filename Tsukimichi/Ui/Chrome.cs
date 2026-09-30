@@ -90,6 +90,21 @@ public static class Chrome
     /// <param name="accent">The callout rule's colour; default is VeilLine (neutral). Ignored by the other kinds.</param>
     public static void BeginCard(string id, string? title = null, string? icon = null, CardKind kind = CardKind.Raised, Vector4? accent = null)
     {
+        OpenCard(kind, accent);
+        ImGui.PushID(id);
+        CardContent(title, icon);
+    }
+
+    /// <summary><see cref="BeginCard(string, string?, string?, CardKind, Vector4?)"/> with an integer id (no string to build per card).</summary>
+    public static void BeginCard(int id, string? title = null, string? icon = null, CardKind kind = CardKind.Raised, Vector4? accent = null)
+    {
+        OpenCard(kind, accent);
+        ImGui.PushID(id);
+        CardContent(title, icon);
+    }
+
+    private static void OpenCard(CardKind kind, Vector4? accent)
+    {
         if (cardOpen)
         {
             throw new InvalidOperationException("Chrome cards do not nest; call EndCard first.");
@@ -100,8 +115,10 @@ public static class Chrome
         cardAccent = accent ?? Theme.Surface.StrongLine;
         cardStart = ImGui.GetCursorScreenPos();
         cardWidth = MathF.Max(0f, ImGui.GetContentRegionAvail().X);
+    }
 
-        ImGui.PushID(id);
+    private static void CardContent(string? title, string? icon)
+    {
         var dl = ImGui.GetWindowDrawList();
         dl.ChannelsSplit(2);
         dl.ChannelsSetCurrent(1);
