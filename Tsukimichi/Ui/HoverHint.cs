@@ -28,7 +28,7 @@ namespace Tsukimichi.Ui;
 /// </para>
 /// <para>
 /// Behind the addon kill switch (T20): on a game version newer than the tested one <see cref="Draw"/> returns before
-/// reading <see cref="IGameGui.HoveredItem"/> or the addon, unless the player enabled hooks on untested versions.
+/// reading <see cref="IGameGui.HoveredItem"/> or the addon, unless the player enabled hooks on this untested version.
 /// </para>
 /// </summary>
 public sealed class HoverHint

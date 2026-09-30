@@ -5,7 +5,7 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 ## [Unreleased]
 
 ### Added
-- Patch-day safety: the item tooltip panel, the item and NPC menu entries and the server info bar entry now pause themselves on a game version newer than the one this release was tested on, instead of misbehaving after a patch. A chat line at login and a notice in Settings › Integrations say when they are paused; the quest journal and everything else work as usual, and the next tested update turns them back on. Settings › Integrations › "Enable game hooks on untested versions" (off by default) runs them anyway, at once. Help › Known quirks explains it. This release is tested on game 2026.09.15.
+- Patch-day safety: the item tooltip panel, the item and NPC menu entries and the server info bar entry now pause themselves on a game version newer than the one this release was tested on, instead of misbehaving after a patch. A chat line at login and a notice in Settings › Integrations say when they are paused; the quest journal and everything else work as usual, and the next tested update turns them back on. Settings › Integrations › "Enable game hooks on this untested version" (off by default) runs them anyway, at once, on the game version you are on; the next patch pauses them again. Help › Known quirks explains it. This release is tested on game 2026.09.15.
 
 ## [0.7.0] - 2026-09-29
 

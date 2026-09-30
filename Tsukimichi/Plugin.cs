@@ -393,11 +393,11 @@ public sealed class Plugin : IDalamudPlugin
             var rewardLookup = new Core.Unique.RewardLookupSource(() => moonlit.Catalog, () => Session.Bundle?.Catalog);
             // Addon kill switch (T20): the four game hooks below (hover hint, item and NPC menu entries, server info
             // bar entry) run only while this gate allows them, that is on the game version they were play-tested on
-            // (the csproj's TsukimichiTestedGameVersion) or with "Enable game hooks on untested versions" ticked. It is
+            // (the csproj's TsukimichiTestedGameVersion) or with "Enable game hooks on this untested version" ticked for the running version. It is
             // one shared service: anything else drawn beside a game addon, the Duty Finder unlock hint of 0.9.0 (P13)
             // first, takes this instance and follows its Changed event. The client version is read once here.
             var clientGameVersion = Game.DiagnosticBuilder.ReadClientGameVersion(DataManager, Log);
-            var gate = new Core.Runtime.HookGate(Game.DiagnosticBuilder.TestedGameVersionText(), clientGameVersion, Settings.EnableHooksOnUntestedVersions);
+            var gate = new Core.Runtime.HookGate(Game.DiagnosticBuilder.TestedGameVersionText(), clientGameVersion, Settings.EnableHooksOnUntestedVersion);
             hookGateNotice = new Game.HookGateNotice(gate, ClientState, ChatGui, Log, () => Game.DiagnosticBuilder.ReadClientGameVersion(DataManager, Log));
             hoverHint = new HoverHint(GameGui, Session, unlockReader, rewardLookup, gate, Log) { Enabled = Settings.ItemHintsEnabled };
             PluginInterface.UiBuilder.Draw += hoverHint.Draw;

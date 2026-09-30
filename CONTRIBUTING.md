@@ -45,11 +45,11 @@ A release is a tag `vX.Y.Z` whose version equals the csproj `<Version>`, whose c
 
 ## Patch day
 
-The game hooks (the item tooltip panel, the item and NPC context-menu entries and the server info bar entry) sit beside game UI that a patch can move or change. Each build records the game version they were play-tested on, `<TsukimichiTestedGameVersion>` in `Tsukimichi/Tsukimichi.csproj` (the text of `ffxivgame.ver`, for example `2026.09.15.0000.0000`), and on any newer game they pause themselves: one chat line at login and a notice in Settings › Integrations, while the quest journal keeps working. Players can tick "Enable game hooks on untested versions" to run them anyway. Anything new that draws beside a game addon (the Duty Finder unlock hint in 0.9.0) takes the same `HookGate` (`Tsukimichi.Core/Runtime/HookGate.cs`).
+The game hooks (the item tooltip panel, the item and NPC context-menu entries and the server info bar entry) sit beside game UI that a patch can move or change. Each build records the game version they were play-tested on, `<TsukimichiTestedGameVersion>` in `Tsukimichi/Tsukimichi.csproj` (the text of `ffxivgame.ver`, for example `2026.09.15.0000.0000`), and on any newer game they pause themselves: one chat line at login and a notice in Settings › Integrations, while the quest journal keeps working. Players can tick "Enable game hooks on this untested version" to run them anyway; the setting stores the game version it was ticked on and does not carry over to the next patch. Anything new that draws beside a game addon (the Duty Finder unlock hint in 0.9.0) takes the same `HookGate` (`Tsukimichi.Core/Runtime/HookGate.cs`).
 
 When a patch lands:
 
-1. Update the client and load a dev build with "Enable game hooks on untested versions" ticked (or with the version already bumped locally).
+1. Update the client and load a dev build with "Enable game hooks on this untested version" ticked (or with the version already bumped locally).
 2. Play-test each hook on the new client: hover a quest-exclusive reward in the inventory (the panel sits beside the game tooltip, not over it); right-click it (the "Tsukimichi: quest reward" entry opens the quest); open the target bar menu on a quest-giving NPC ("Tsukimichi: quests here (N)"); check the "☾ N" server info bar entry and its tooltip and click.
 3. Fix whatever broke, then run `pwsh tools/set-tested-version.ps1` (reads `ffxivgame.ver` beside the sqpack directory; `-GamePath` or `-Version` to override) and commit the csproj.
 4. Add a changelog line such as "Game hooks tested on patch 7.x (game 2026.10.28)", bump `<Version>` and release as usual. The release workflow refuses a tag whose tested version is empty.

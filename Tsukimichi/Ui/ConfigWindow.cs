@@ -130,8 +130,8 @@ public sealed class ConfigWindow : Window
     public Action<bool>? NpcContextMenuToggled { get; set; }
 
     /// <summary>
-    /// The shared addon kill switch (T20) behind Integrations' paused notice and "Enable game hooks on untested
-    /// versions"; set by the plugin. Null hides both.
+    /// The shared addon kill switch (T20) behind Integrations' paused notice and "Enable game hooks on this untested
+    /// version"; set by the plugin. Null hides both.
     /// </summary>
     public HookGate? HookGate { get; set; }
 
@@ -732,7 +732,8 @@ public sealed class ConfigWindow : Window
 
     /// <summary>
     /// The addon kill switch (T20): the paused notice while the game hooks wait for a tested update, and "Enable game
-    /// hooks on untested versions", which re-registers them at once through <see cref="HookGate.Changed"/>.
+    /// hooks on this untested version", scoped to the running game version, which re-registers them at once through
+    /// <see cref="HookGate.Changed"/>.
     /// </summary>
     private void DrawHookGate()
     {
@@ -747,15 +748,22 @@ public sealed class ConfigWindow : Window
             ImGui.TextWrapped(Strings.HooksPausedNotice);
         }
 
-        var anyway = settings.EnableHooksOnUntestedVersions;
-        if (ImGui.Checkbox(Strings.HooksEnableUntested, ref anyway))
+        // Ticked only when the stored override names the running version: one from an earlier patch reads unticked.
+        // Ticking stores the running version, unticking clears it. Without a known running version there is nothing
+        // to store (and the gate already allows the hooks), so the box is disabled.
+        var anyway = gate.EnableAnywayApplies;
+        using (ImRaii.Disabled(gate.RunningVersion.Length == 0))
         {
-            settings.EnableHooksOnUntestedVersions = anyway;
-            Save();
-            gate.SetEnableAnyway(anyway);
+            if (ImGui.Checkbox(Strings.HooksEnableUntested, ref anyway))
+            {
+                var version = anyway ? gate.RunningVersion : string.Empty;
+                settings.EnableHooksOnUntestedVersion = version;
+                Save();
+                gate.SetEnableAnyway(version);
+            }
         }
 
-        if (ImGui.IsItemHovered())
+        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
             ImGui.SetTooltip(Strings.HooksEnableUntestedHint);
         }

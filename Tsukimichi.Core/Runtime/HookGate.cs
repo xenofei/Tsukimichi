@@ -11,7 +11,7 @@ public enum HookGateVerdict
     /// <summary>The game is newer than the tested version: the hooks are paused until an update is tested.</summary>
     Paused,
 
-    /// <summary>The game is newer than the tested version and the player turned on "Enable game hooks on untested versions".</summary>
+    /// <summary>The game is newer than the tested version and the player turned on "Enable game hooks on this untested version" for it.</summary>
     Overridden,
 
     /// <summary>The game is older than the tested version (a stale client or a test server): allowed, noted in the log.</summary>
@@ -103,8 +103,10 @@ public readonly record struct GameVersion(int Year, int Month, int Day, int Buil
 /// and NPC context-menu entries, the server info bar entry) may run on the game version the client reports. The
 /// hooks were play-tested on <see cref="TestedVersion"/> (the csproj's <c>TsukimichiTestedGameVersion</c>, stamped
 /// into the assembly); a newer game pauses them until an update ships with the tested version bumped, unless the
-/// player turned on "Enable game hooks on untested versions". An older or unreadable version leaves them on with a
-/// log note: the switch acts only when the client is known to be newer.
+/// player turned on "Enable game hooks on this untested version" for exactly the running version. The override is
+/// stored as the game version it was ticked on (<see cref="EnableAnywayVersion"/>), so the next patch pauses the
+/// hooks again. An older or unreadable version leaves them on with a log note: the switch acts only when the client
+/// is known to be newer.
 /// <para>
 /// One instance is shared by every hook consumer, which reads <see cref="HooksAllowed"/> and re-applies itself on
 /// <see cref="Changed"/>. The Duty Finder unlock hint (P13, 0.9.0) draws beside a game addon too and is to take the
@@ -114,14 +116,15 @@ public readonly record struct GameVersion(int Year, int Month, int Day, int Buil
 public sealed class HookGate
 {
     private string runningVersion = string.Empty;
-    private bool enableAnyway;
+    private string enableAnywayVersion = string.Empty;
 
-    public HookGate(string? testedVersion, string? runningVersion = null, bool enableAnyway = false)
+    /// <param name="enableAnywayVersion">The game version the player enabled the hooks on anyway; empty for none.</param>
+    public HookGate(string? testedVersion, string? runningVersion = null, string? enableAnywayVersion = null)
     {
         TestedVersion = testedVersion?.Trim() ?? string.Empty;
         this.runningVersion = runningVersion?.Trim() ?? string.Empty;
-        this.enableAnyway = enableAnyway;
-        Decision = Decide(TestedVersion, this.runningVersion, enableAnyway);
+        this.enableAnywayVersion = enableAnywayVersion?.Trim() ?? string.Empty;
+        Decision = Decide(TestedVersion, this.runningVersion, this.enableAnywayVersion);
     }
 
     /// <summary>Raised after <see cref="Decision"/> changed (a new running version or a flipped override).</summary>
@@ -133,8 +136,11 @@ public sealed class HookGate
     /// <summary>The client's game version; empty until known.</summary>
     public string RunningVersion => runningVersion;
 
-    /// <summary>The player's "Enable game hooks on untested versions" setting.</summary>
-    public bool EnableAnyway => enableAnyway;
+    /// <summary>The game version the player's "enable anyway" was ticked on; empty when it is off.</summary>
+    public string EnableAnywayVersion => enableAnywayVersion;
+
+    /// <summary>Whether the stored override names the running game version (what the Settings checkbox shows).</summary>
+    public bool EnableAnywayApplies => OverrideApplies(runningVersion, enableAnywayVersion);
 
     public HookGateDecision Decision { get; private set; }
 
@@ -151,18 +157,22 @@ public sealed class HookGate
         Update();
     }
 
-    /// <summary>Applies the player's override; raises <see cref="Changed"/> when the decision moves.</summary>
-    public void SetEnableAnyway(bool value)
+    /// <summary>
+    /// Applies the player's override: the game version it was ticked on (the running one), or empty to clear it.
+    /// Raises <see cref="Changed"/> when the decision moves.
+    /// </summary>
+    public void SetEnableAnyway(string? version)
     {
-        enableAnyway = value;
+        enableAnywayVersion = version?.Trim() ?? string.Empty;
         Update();
     }
 
     /// <summary>
-    /// The rule: same version → allowed; running newer → paused unless <paramref name="enableAnyway"/>; running older,
-    /// or either version missing or unparseable → allowed (the decision's <see cref="HookGateDecision.LogNote"/> says so).
+    /// The rule: same version → allowed; running newer → paused unless <paramref name="enableAnywayVersion"/> is that
+    /// same running version (an override from an earlier patch does not carry over); running older, or either version
+    /// missing or unparseable → allowed (the decision's <see cref="HookGateDecision.LogNote"/> says so).
     /// </summary>
-    public static HookGateDecision Decide(string? tested, string? running, bool enableAnyway)
+    public static HookGateDecision Decide(string? tested, string? running, string? enableAnywayVersion)
     {
         var testedText = tested?.Trim() ?? string.Empty;
         var runningText = running?.Trim() ?? string.Empty;
@@ -176,14 +186,20 @@ public sealed class HookGate
         {
             0 => HookGateVerdict.Tested,
             < 0 => HookGateVerdict.Older,
-            _ => enableAnyway ? HookGateVerdict.Overridden : HookGateVerdict.Paused,
+            _ => OverrideApplies(runningText, enableAnywayVersion) ? HookGateVerdict.Overridden : HookGateVerdict.Paused,
         };
         return new HookGateDecision(verdict, testedText, runningText);
     }
 
+    /// <summary>Whether a stored override names the running version: both parse and are the same version.</summary>
+    public static bool OverrideApplies(string? running, string? enableAnywayVersion) =>
+        GameVersion.TryParse(running, out var runningVersion)
+        && GameVersion.TryParse(enableAnywayVersion, out var overrideVersion)
+        && runningVersion.CompareTo(overrideVersion) == 0;
+
     private void Update()
     {
-        var next = Decide(TestedVersion, runningVersion, enableAnyway);
+        var next = Decide(TestedVersion, runningVersion, enableAnywayVersion);
         if (next == Decision)
         {
             return;
