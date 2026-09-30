@@ -140,10 +140,10 @@
   },
   "66572": {
     "contentFinderConditionIds": [
-      15,
       865
     ],
-    "note": "Operation Archon (legacy pre-6.1 row GaiUsc901) -> Castrum Meridianum and Cape Westwind."
+    "note": "Operation Archon (legacy pre-6.1 row GaiUsc901) -> the Cape Westwind quest battle (script INSTANCEDUNGEON0 is InstanceContent 20007). Castrum Meridianum moved to Rock the Castrum: the wiki page of Operation Archon lists no unlock.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Operation_Archon"
   },
   "66584": {
     "contentFinderConditionIds": [
@@ -295,6 +295,13 @@
     ],
     "note": "The Fires of Sohm Al -> Sohm Al (Hard); quest script INSTANCEDUNGEON0 is InstanceContent 49 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 221."
   },
+  "69409": {
+    "contentFinderConditionIds": [
+      15
+    ],
+    "note": "Rock the Castrum (current row XxaFst502) -> Castrum Meridianum; quest script INSTANCEDUNGEON0 is InstanceContent 15, CFC 15 and it runs UNLOCK_IMAGE_DUNGEON and CONTENT_START 15 (the removed legacy row 66672 of the same quest also runs UNLOCK_ADD_NEW_CONTENT_TO_CF). The wiki quest page (id-gt 69409) lists Castrum Meridianum under unlocks. Previously credited to Operation Archon; an in-game check that Castrum Meridianum is not in the Duty Finder between Operation Archon and Rock the Castrum is still pending.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Rock_the_Castrum"
+  },
   "70012": {
     "contentFinderConditionIds": [
       808
@@ -304,10 +311,10 @@
   },
   "70057": {
     "contentFinderConditionIds": [
-      15,
       865
     ],
-    "note": "Operation Archon (6.1 rework row XxcUsc901) -> Castrum Meridianum and the Cape Westwind quest battle."
+    "note": "Operation Archon (6.1 rework row XxcUsc901) -> the Cape Westwind quest battle. Castrum Meridianum moved to Rock the Castrum (69409): the wiki page of Operation Archon (id-gt 70057) lists no unlock.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Operation_Archon"
   },
   "70058": {
     "contentFinderConditionIds": [
