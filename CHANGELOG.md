@@ -14,6 +14,9 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 - A chat line at login when an event has quests ready, "Moonfire Faire is running: 2 quests ready (ends Aug 28)" with a link to the first one, once per event per login. Settings › Notices › "Chat line at login when a seasonal event has quests ready" (on by default).
 - Characters dashboard: a "Seasonal events" section with the events running now and all their quests (moon, state, what blocks them, giver on hover; click one to see it in the Journal), and "Completed seasonal quests by year", your seasonal history for collectors. The year is the one the Lodestone gave the event ("Moonfire Faire (2014)"), or counted from the nearest announced edition of the same event; collaboration events, which come back again and again, are listed under "Year not known". Help › Characters explains it.
 - Lodestone dates for 83 past seasonal events (All Saints' Wake 2013 to The Rising 2026), each with its announcement's link, in the curated data.
+- Quest table and Moonlit list: a "…" button at the end of a row (shown when you point at the row or reach it with the keyboard) opens the same menu as a right-click, so Pin, Copy name, Show path, Quest Map, "Not unique (hide)" and the rest no longer need the right mouse button. The Menu key or Shift+F10 opens that menu on the row that has keyboard focus.
+- Settings › Keyboard: optional shortcuts, all off by default because the game sees the keys too (Ctrl+1 to Ctrl+4 are hotbar 2 in the default keybinds): Ctrl+1 to 4 switch tabs, F flags the selected quest's giver, Enter shows the selected quest in the Journal from the Moonlit, Characters and Flight tabs, and P pins or unpins it. Help › Commands lists every key.
+- Help › The moon phases: a legend of the quest table's state stripes, each drawn as the table draws it with its state and pattern name.
 
 ### Changed
 - The Night look for the whole main window, title bar included, and for Help, Nearby quests and the Todo overlay: dark surfaces, cards and pills, tooltips and menus to match. Your Dalamud window opacity still applies.
@@ -35,6 +38,10 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 - The main window opens at a size that fits your screen at every UI scale (up to 1.6), and its smallest size makes room for the tab column.
 - The tour is shorter and comes in three chapters you can jump between: Find, Read and Beyond. Read shows all eight quest moons side by side with their names. Enter or the right arrow moves on, the left arrow goes back and Esc closes; the card follows your UI scale, and the tab and the filter panel go back to how you left them when the tour ends. The first-run offer now has "Later" (asked again next session, up to three times) and "Don't offer again".
 - Help › Quick start follows the tour: find, narrow, read why, then Moonlit, Characters and Flight.
+- A little motion, only when something changes: a tree chevron turns as its node opens or closes, the Journal row and tree node you jump to from another pane, the dashboard or chat pulse twice, and a halo's ring slides to its new value when a quest is completed or you switch character. Nothing moves on its own, and Reduce motion turns all of it off.
+- Esc closes the open menu or the filter panel first, and the window only after that. Only Ctrl+F and Esc are bound unless you turn on more in Settings › Keyboard.
+- Captions and titles use the game's own font at sizes picked for your UI scale: table headers, level and expansion pills and the status bar are a little smaller (never under 12 px), and the quest's name at the top of the detail pane and the card titles a little larger. Settings' tooltips now match the rest of the window and follow the UI scale.
+- Players whose saved table layout still had the narrow Job column get it widened once, so "DoH/DoL" beside the job icon is no longer cut off.
 
 ## [0.7.0] - 2026-09-29
 
