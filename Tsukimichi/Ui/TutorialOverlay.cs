@@ -40,7 +40,7 @@ public sealed class TutorialOverlay : ITutorial
     private const float GlowStep = 3f;
     private const int GlowLayers = 3;
     private const float Gap = 14f;
-    private const float CardWidth = 380f;
+    private const float CardWidth = 400f;
     private const float CardHeightGuess = 220f;
     private const float LegendGlyphRadius = 9f;
 
@@ -116,7 +116,7 @@ public sealed class TutorialOverlay : ITutorial
         new(Chapter.Find, StepKind.Welcome, Strings.Tutorial.WelcomeTitle, Strings.Tutorial.WelcomeBody, NoKeys, NoKeys, ShowJournal),
         new(Chapter.Find, StepKind.Normal, Strings.Tutorial.SearchTitle, Strings.Tutorial.SearchBody, [UiRects.Search], [UiRects.Toolbar], ShowJournal),
         new(Chapter.Find, StepKind.Normal, Strings.Tutorial.QuickViewsTitle, Strings.Tutorial.QuickViewsBody, [UiRects.QuickViews], [UiRects.Toolbar], ShowJournal),
-        new(Chapter.Find, StepKind.Normal, Strings.Tutorial.FiltersTitle, Strings.Tutorial.FiltersBody, [UiRects.FilterPanel, UiRects.FiltersButton, UiRects.Chips], [UiRects.FiltersButton], static ui =>
+        new(Chapter.Find, StepKind.Normal, Strings.Tutorial.FiltersTitle, Strings.Tutorial.FiltersBody, [UiRects.FilterPanel, UiRects.FiltersButton], [UiRects.FiltersButton], static ui =>
         {
             ui.Tab = NavTab.Journal;
             ui.FilterPanelOpen = true;

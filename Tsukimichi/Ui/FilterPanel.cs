@@ -14,9 +14,9 @@ using Tsukimichi.GameData;
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// The filter panel (spec §7) drawn in the left column above the tree, plus the active-filter chips under the search
-/// box. Binds straight to <see cref="UiState.Filters"/>; every change calls <c>changed</c> so the window can mark the
-/// query dirty and persist the filters.
+/// The filter panel (spec §7) drawn in the left column above the tree, plus the toolbar's Quick views control and the
+/// chip row under the toolbar (T14). Binds straight to <see cref="UiState.Filters"/>; every change calls
+/// <c>changed</c> so the window can mark the query dirty and persist the filters.
 /// </summary>
 public sealed class FilterPanel
 {
