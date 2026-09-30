@@ -474,7 +474,7 @@ static partial class Strings
             "Expansion, level range, job category, reward kind (three-state per kind), Repeatable, Seasonal active, Pinned only and Abandoned only narrow the table further; Include removed widens it to quests the game deleted.",
             "One-click views at the top of the panel: Unlocks, Story sidequests, My level, Sprout mode and Stalled. Story sidequests lists the sidequests with journal artwork, the ones that tell a small story, zone by zone, with each side story in the order you play it; a book after the name marks them in any view, and its tooltip says which story and how far in (\"3 of 9\"). The detail pane shows the story's progress as \"Story: <first quest> · 3 of 9 done · next: …\". The blue aether current quests that open a zone's story lines are part of it; other blue unlock quests (dungeons, systems, jobs) are left out.",
             "Every active filter shows as a chip under the search box. Click a chip to clear it; Reset clears them all and the search.",
-            "When the table empties, the panel names the filters responsible and offers Reset.",
+            "When the table empties, it names the filters responsible as chips: click one to clear only that filter, or Reset filters to clear them all.",
         ];
 
         public const string FiltersTip = "Filters, sort and the viewed character are remembered between sessions.";
@@ -485,20 +485,20 @@ static partial class Strings
             "Requirements",
             "Path",
             "Unlocks next",
-            "Giver actions",
+            "Action bar",
             "Provenance",
         ];
 
         public static readonly string[] QuestCardBodies =
         [
-            "Every requirement with ✓ or ✗ and a ▶ on the one that blocks you. Hover a ✗ for the exact gap, such as the rank or level you still need.",
-            "The prerequisite chain as a trail of moons, lit where done. Long stretches of finished steps fold into one line; open it to see them. Click any step to inspect it.",
-            "What this quest opens once turned in. Click an entry to jump to it.",
-            "The giver line names the NPC and zone, with buttons to flag the giver on the map and open the in-game journal.",
-            "The last line says where the state came from and when: client flags for the live character, the snapshot time for a stored one.",
+            "The first card under the quest's picture: every requirement with ✓ or ✗. The one that blocks you has a gold bar and a gold label; hover a ✗ for the exact gap, such as the rank or level you still need. A \"Note:\" under the list explains the few quests the game offers anyway.",
+            "The prerequisite chain as a star chart: a moon per quest on a thread that is gold where you have walked and dashed where you have not, one band per expansion. Finished stretches fold into a bead (\"12 moons walked\"); click it to open them. Where a quest accepts either of two previous quests, the other way in is a hollow moon beside the thread; click it to see its own path. This quest is the large moon with the halo; when it is scrolled out of view, the \"target\" pill brings it back. Click any step to inspect it.",
+            "Under this quest the thread branches into what it opens once turned in. Click an entry to jump to it.",
+            "Along the bottom of the pane: Flag on map (Teleport instead when Lifestream is installed), then Pin, Show path, Link in chat, Copy coordinates, Open journal and Report. Every button works from the keyboard; a greyed one says why on hover. The Giver card above names the NPC, the zone and the coordinates.",
+            "The last line says where the state came from: \"Checked just now · live\" for the character you are logged in as, \"From Michiru's snapshot, 2 d ago\" for a stored one, or \"Log in to check this quest\" before the first login.",
         ];
 
-        public const string QuestTip = "Right-click a table row for pin, map flag, journal, copy name, show path and chat link.";
+        public const string QuestTip = "With no quest selected, the pane shows Tonight: how many quests you can pick up now (Show them filters the table to them), the next main scenario quest and what blocks it, the events running now and your pinned quests that are ready. A table row's right-click menu has pin, map flag, journal, copy name, show path and chat link too.";
 
         // ---- Moonlit treasures ----
         public const string UniqueTitle = "What unique means";
@@ -701,11 +701,11 @@ static partial class Strings
         public const string TableTitle = "Quest table";
         public const string TableBody = "One row per quest. The moon is its state (hover it for the name; Help lists all eight) and Status says what blocks it. Click a header to sort; right-click a row for pin, map flag and journal. Main scenario quests far ahead of you read \"Main scenario quest (Lv 83)\" until you reach them; Settings › Spoilers changes that.";
         public const string RequirementsTitle = "Requirements";
-        public const string RequirementsBody = "Select a row and the detail pane lists every requirement with ✓ or ✗. The ▶ marks the one blocking you; hover it for the exact gap.";
+        public const string RequirementsBody = "Select a row: the detail pane opens on its requirements, each with ✓ or ✗. A gold bar marks the one blocking you; hover its ✗ for the exact gap.";
         public const string PathTitle = "Path and unlocks next";
-        public const string PathBody = "Path is the prerequisite chain as moons, lit where done; finished stretches fold into one line. Unlocks next lists what this quest opens.";
-        public const string GiverTitle = "Giver actions";
-        public const string GiverBody = "The giver line names the NPC and zone. Flag it on the map or open the in-game journal from here; the last line says where the state came from and when.";
+        public const string PathBody = "The Path card draws the prerequisite chain as moons on a thread, gold where walked. Finished stretches fold into a bead; under this quest, what it unlocks next.";
+        public const string GiverTitle = "Giver and actions";
+        public const string GiverBody = "The Giver card names the NPC and zone. The bar at the bottom flags the giver, pins the quest, shows the path and more; the last line says where the state came from.";
         public const string MoonlitTitle = "Moonlit treasures";
         public const string MoonlitBody = "Reward kinds on the left with obtained/total; the table lists each treasure, its quest, whether you have it and a confidence badge. Hover a badge for its source. Right-click a row to hide it as not unique: press and hold to confirm, or hold Shift and click.";
         public const string CharactersTitle = "Characters";
