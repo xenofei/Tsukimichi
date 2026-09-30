@@ -258,12 +258,13 @@ public sealed class ChatNotifier : IDisposable
     /// the logged-in character (its milestone Ready or in the journal, its content not done), once per gate per
     /// character ever: the announced ids are kept in <see cref="Configuration.PayoffGatesNoticedByCharacter"/>. The line
     /// is the curated instruction only, never the reason; the link is the first content quest left. Nothing is marked
-    /// while <see cref="Configuration.ChatNoticePayoffGates"/> is off, so turning it on later still announces a gate
-    /// that is speaking then.
+    /// while <see cref="Configuration.ChatNoticePayoffGates"/> or <see cref="Configuration.ShowPayoffGates"/> is off, so
+    /// turning it on later still announces a gate that is speaking then.
     /// </summary>
     private void AnnouncePayoffGates()
     {
-        if (!config.ChatNoticePayoffGates
+        if (!config.ShowPayoffGates
+            || !config.ChatNoticePayoffGates
             || PayoffGates is not { } source
             || session.LiveContentId is not { } contentId
             || session.Bundle is not { } bundle)

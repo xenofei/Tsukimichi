@@ -42,14 +42,19 @@ public sealed class PayoffGateLines
         this.save = save ?? throw new ArgumentNullException(nameof(save));
     }
 
-    /// <summary>Whether any gate speaks for the viewed character now.</summary>
-    public bool Any => source.Viewed().Count > 0;
+    /// <summary>Whether any gate speaks for the viewed character now; never while Settings › Spoilers hides the notes.</summary>
+    public bool Any => config.ShowPayoffGates && source.Viewed().Count > 0;
 
-    /// <summary>Draws the gates speaking for the viewed character; nothing when none does.</summary>
+    /// <summary>Draws the gates speaking for the viewed character; nothing when none does or the notes are hidden.</summary>
     /// <param name="scope">An id scope, so the dashboard and the Tonight card never share ImGui ids.</param>
     public void Draw(UiState ui, string scope)
     {
         ArgumentNullException.ThrowIfNull(ui);
+        if (!config.ShowPayoffGates)
+        {
+            return;
+        }
+
         var gates = source.Viewed();
         if (gates.Count == 0)
         {

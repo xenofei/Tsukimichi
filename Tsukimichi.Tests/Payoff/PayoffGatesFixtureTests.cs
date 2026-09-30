@@ -267,6 +267,45 @@ public sealed class PayoffGatesFixtureTests(FixtureCatalog fixture) : IClassFixt
         }
     }
 
+    /// <summary>
+    /// The 1.0.0 review (F3): the pairs ship active while two players who finished the story have not confirmed them
+    /// yet, and that must stay visible. The file keeps <c>"review": "pending: …"</c> until the owner confirms every
+    /// pair and changes this test together with the file; dropping the field, or changing it without the test, fails.
+    /// </summary>
+    [Fact]
+    public void The_review_status_stays_pending_until_the_owner_confirms_the_pairs()
+    {
+        var root = JsonNode.Parse(File.ReadAllText(Path.Combine(FixtureCatalog.CuratedDir(), CuratedData.PayoffGatesFileName)), documentOptions: CuratedData.StrictOptions)!.AsObject();
+
+        Assert.True(root.ContainsKey("review"), "payoff_gates.json lost its review field");
+        var review = (string?)root["review"];
+        Assert.True(
+            review is not null && review.StartsWith("pending:", StringComparison.Ordinal) && review.Length > "pending:".Length + 1,
+            $"payoff_gates.json review is \"{review}\": it stays \"pending: …\" until two finishers confirm every pair; the owner changes this test with the file");
+    }
+
+    /// <summary>
+    /// Every entry in the file, as written, carries https evidence: the loader skips an entry without it (with a
+    /// warning nobody reads in a test run), so this reads the raw entries rather than the loaded gates.
+    /// </summary>
+    [Fact]
+    public void Every_entry_in_the_file_carries_https_evidence()
+    {
+        var root = JsonNode.Parse(File.ReadAllText(Path.Combine(FixtureCatalog.CuratedDir(), CuratedData.PayoffGatesFileName)), documentOptions: CuratedData.StrictOptions)!.AsObject();
+        var entries = root["entries"]!.AsObject();
+
+        Assert.NotEmpty(entries);
+        foreach (var (id, entry) in entries)
+        {
+            var evidence = entry?["evidence"] as JsonArray;
+            Assert.True(evidence is { Count: > 0 }, $"payoff gate {id}: no evidence");
+            Assert.All(evidence!, url => Assert.StartsWith("https://", (string?)url ?? string.Empty, StringComparison.Ordinal));
+        }
+
+        // No entry was dropped by the loader for a missing field.
+        Assert.Equal(entries.Select(e => e.Key).Order(StringComparer.Ordinal), fixture.Curated.PayoffGates.Select(g => g.Id).Order(StringComparer.Ordinal));
+    }
+
     [Fact]
     public void The_chat_notice_is_taken_once_per_gate()
     {

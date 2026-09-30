@@ -513,14 +513,17 @@ public sealed class ConfigWindow : Window
             UiMetrics.Tooltip(Strings.SeasonalConfigNoticeHint);
         }
 
-        var payoff = settings.ChatNoticePayoffGates;
-        if (ImGui.Checkbox(Strings.PayoffConfigNotice, ref payoff))
+        using (ImRaii.Disabled(!settings.ShowPayoffGates))
         {
-            settings.ChatNoticePayoffGates = payoff;
-            Save();
+            var payoff = settings.ChatNoticePayoffGates;
+            if (ImGui.Checkbox(Strings.PayoffConfigNotice, ref payoff))
+            {
+                settings.ChatNoticePayoffGates = payoff;
+                Save();
+            }
         }
 
-        if (ImGui.IsItemHovered())
+        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
             UiMetrics.Tooltip(Strings.PayoffConfigNoticeHint);
         }
@@ -542,8 +545,8 @@ public sealed class ConfigWindow : Window
 
     /// <summary>
     /// Spoilers (T19): hide main scenario names ahead of the character, how many quests ahead keep their names (saved
-    /// when the slider is released), hide journal artwork until a quest is in the journal, and an override for the
-    /// character shown. Every change bumps the session so each surface re-reads the mask at once.
+    /// when the slider is released), hide journal artwork until a quest is in the journal, whether "Before you
+    /// continue" notes show (P5), and an override for the character shown. Every change bumps the session so each surface re-reads the mask at once.
     /// </summary>
     private void DrawSpoilers()
     {
@@ -600,6 +603,18 @@ public sealed class ConfigWindow : Window
         if (ImGui.IsItemHovered())
         {
             UiMetrics.Tooltip(Strings.SpoilerHideArtworkHelp);
+        }
+
+        var payoffNotes = settings.ShowPayoffGates;
+        if (ImGui.Checkbox(Strings.PayoffConfigShow, ref payoffNotes))
+        {
+            settings.ShowPayoffGates = payoffNotes;
+            Save();
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.PayoffConfigShowHint);
         }
 
         DrawSpoilerOverride();
