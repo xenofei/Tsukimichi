@@ -102,6 +102,13 @@ public sealed class Configuration : IPluginConfiguration
     /// <summary>Print "Moonfire Faire is running: 2 quests ready (ends Aug 28)" once per login (see <c>Game.ChatNotifier</c>). On by default.</summary>
     public bool ChatNoticeSeasonal { get; set; } = true;
 
+    // ---- 0.9.0: Clear my blues (P3) ----
+    /// <summary>The todo overlay's "Clear my blues" section: the pinned expansion's Ready unlock quests. On by default; empty until an expansion is pinned.</summary>
+    public bool TodoShowPlan { get; set; } = true;
+
+    /// <summary>ExVersion row id of the expansion pinned from the My blues tab ("Pin to overlay"); -1 when none.</summary>
+    public int TodoPlanExpansion { get; set; } = -1;
+
     // ---- 0.5.0: item hints ----
     /// <summary>Show a small hint near the cursor when hovering an item that is a quest-exclusive reward.</summary>
     public bool ItemHintsEnabled { get; set; } = true;

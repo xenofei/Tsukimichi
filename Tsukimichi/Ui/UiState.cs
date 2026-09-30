@@ -12,6 +12,9 @@ public enum NavTab
     Moonlit,
     Characters,
     Flight,
+
+    /// <summary>"Clear my blues" (P3): the unlock quests left, by expansion and zone.</summary>
+    Plan,
 }
 
 /// <summary>

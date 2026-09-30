@@ -27,17 +27,18 @@ public sealed class TabStrip
     private const float GapLogical = 8f;
     private const float BarLogical = 3f;
 
-    private static readonly NavTab[] Tabs = [NavTab.Journal, NavTab.Moonlit, NavTab.Characters, NavTab.Flight];
+    private static readonly NavTab[] Tabs = [NavTab.Journal, NavTab.Moonlit, NavTab.Characters, NavTab.Flight, NavTab.Plan];
 
-    private static readonly string[] Labels = [Strings.TabJournal, Strings.TabMoonlit, Strings.TabCharacters, Strings.TabFlight];
+    private static readonly string[] Labels = [Strings.TabJournal, Strings.TabMoonlit, Strings.TabCharacters, Strings.TabFlight, Strings.PlanTab];
 
-    private static readonly string[] Ids = ["##tabJournal", "##tabMoonlit", "##tabCharacters", "##tabFlight"];
+    private static readonly string[] Ids = ["##tabJournal", "##tabMoonlit", "##tabCharacters", "##tabFlight", "##tabPlan"];
 
-    private static readonly string[] Tooltips = [Strings.TabJournalTooltip, Strings.TabMoonlitTooltip, Strings.TabCharactersTooltip, Strings.TabFlightTooltip];
+    private static readonly string[] Tooltips = [Strings.TabJournalTooltip, Strings.TabMoonlitTooltip, Strings.TabCharactersTooltip, Strings.TabFlightTooltip, Strings.PlanTabTooltip];
 
     private static readonly string GemIcon = FontAwesomeIcon.Gem.ToIconString();
     private static readonly string UsersIcon = FontAwesomeIcon.Users.ToIconString();
     private static readonly string PlaneIcon = FontAwesomeIcon.Plane.ToIconString();
+    private static readonly string PlanIcon = FontAwesomeIcon.ClipboardList.ToIconString();
 
     private readonly UiState ui;
 
@@ -106,7 +107,7 @@ public sealed class TabStrip
             }
             else
             {
-                DrawIcon(dl, iconCenter, tab == NavTab.Moonlit ? GemIcon : tab == NavTab.Characters ? UsersIcon : PlaneIcon, iconInk);
+                DrawIcon(dl, iconCenter, tab == NavTab.Moonlit ? GemIcon : tab == NavTab.Characters ? UsersIcon : tab == NavTab.Flight ? PlaneIcon : PlanIcon, iconInk);
             }
 
             // Badge (Journal only), right-aligned; the label is clipped short of it.
