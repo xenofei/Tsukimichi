@@ -1,4 +1,5 @@
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Storage;
 
 namespace Tsukimichi.Core.Evaluation;
 
@@ -31,11 +32,20 @@ public sealed record EvalContext
     public IReadOnlySet<ushort>? TodaysDailyOffer { get; init; }
 
     /// <summary>
-    /// Whether an inactive festival already ran for this character, from curated data. Composed with the default
-    /// heuristic (any quest of that festival completed): a festival is past when either says so. Null uses the
-    /// heuristic alone. See <see cref="WithFestivalEnds"/> for the curated end-date form.
+    /// Whether an inactive festival already ran for this character. Composed with the default heuristic (any quest of
+    /// that festival completed): a festival is past when either says so. Null uses the heuristic alone. See
+    /// <see cref="WithFestivalEnds"/> for the end-date form. <see cref="CuratedFestivalPast"/> is asked first and, when
+    /// it answers, decides.
     /// </summary>
     public Func<ushort, bool>? FestivalIsPast { get; init; }
+
+    /// <summary>
+    /// The curated verdict on an inactive festival, checked before <see cref="FestivalIsPast"/> and the completed-quest
+    /// heuristic: true when its curated end has passed, false when a curated entry says it is not past (a rerun
+    /// collaboration, or an end still ahead), which the heuristic may not overrule; null when curated data has no say
+    /// and the other sources decide. See <see cref="WithCuratedFestivals"/>.
+    /// </summary>
+    public Func<ushort, bool?>? CuratedFestivalPast { get; init; }
 
     /// <summary>Category membership; null admits every job and takes other-job candidates from the snapshot's job levels.</summary>
     public IClassJobCategoryLookup? ClassJobs { get; init; }
@@ -83,6 +93,40 @@ public sealed record EvalContext
             FestivalIsPast = id =>
                 (ends.TryGetValue(id, out var end) && end is { } endUtc && endUtc < nowUtc())
                 || (previous?.Invoke(id) ?? false),
+        };
+    }
+
+    /// <summary>
+    /// A context whose <see cref="CuratedFestivalPast"/> answers from curated <c>festivals.json</c> entries: an entry
+    /// with an end is past once that end lies before <paramref name="nowUtc"/> and not past before it; an undated entry
+    /// whose name carries no edition year (<see cref="FestivalInfo.IsRerun"/>, a collaboration the game reruns under
+    /// the same id) is never past, so a character who did part of it is not locked out between runs. An undated
+    /// edition (a name with its year, "The Rising (2024)") and a festival without an entry are left to the other
+    /// sources: <see cref="FestivalIsPast"/>, then the resolver's completed-quest heuristic.
+    /// </summary>
+    /// <param name="festivals">Festival id to curated entry.</param>
+    /// <param name="nowUtc">Clock, read on every check so a long-lived context stays current.</param>
+    public EvalContext WithCuratedFestivals(IReadOnlyDictionary<ushort, FestivalInfo> festivals, Func<DateTime> nowUtc)
+    {
+        ArgumentNullException.ThrowIfNull(festivals);
+        ArgumentNullException.ThrowIfNull(nowUtc);
+
+        return this with
+        {
+            CuratedFestivalPast = id =>
+            {
+                if (!festivals.TryGetValue(id, out var info))
+                {
+                    return null;
+                }
+
+                if (info.End is { } end)
+                {
+                    return end < nowUtc();
+                }
+
+                return info.IsRerun ? false : null;
+            },
         };
     }
 }

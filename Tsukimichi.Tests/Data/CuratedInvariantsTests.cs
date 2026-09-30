@@ -437,5 +437,17 @@ public sealed class CuratedInvariantsTests(FixtureCatalog fixture) : IClassFixtu
 
         // Even a dated festival the game switches on again reads by the live flag, not by its old end.
         Assert.NotEqual(QuestState.Foreclosed, StateResolver.Resolve(moonfire, fresh with { ActiveFestivals = [11] }, catalog, context).State);
+
+        // A character who did part of a rerun is not locked out of the rest between runs: the curated rerun entry is
+        // checked before the completed-quest heuristic. The Man in Black (68694) done, 84 not running.
+        var partial = fresh with { CompletedBits = Evaluation.Fixture.Bits(68694) };
+        Assert.True(partial.IsCompleted(QuestRecord.ToQuestId(68694)));
+        foreach (var rowId in new uint[] { 68695, 68696 })
+        {
+            var rest = catalog.ByRowId[rowId];
+            Assert.Equal(84, rest.Festival);
+            Assert.NotEqual(QuestState.Foreclosed, StateResolver.Resolve(rest, partial, catalog, context).State);
+            Assert.NotEqual(QuestState.Foreclosed, StateResolver.ResolveAll(catalog, partial, context)[rowId].State);
+        }
     }
 }
