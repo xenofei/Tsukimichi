@@ -64,7 +64,7 @@ all seasonal-event gear the Calamity Salvager sells to anyone. The full list is 
 
 ## 1. Structural checks
 
-Entries: **3516** across **1216** quests. Problems found: **0**.
+Entries: **3516** across **1211** quests. Problems found: **0**.
 
 ### Counts per kind and confidence
 
@@ -235,7 +235,7 @@ Ye Olde Faux Hollows: skipped (unsure of the expected entry).
 
 ## 4. Semantic spot checks (xivapi v2)
 
-_Carried over unchanged from the previous online run: this regeneration (0.9.0 duty unlock fixes) ran with `-NoXivApi`, and none of the fields checked here changed._
+_Carried over unchanged from the previous online run: this regeneration (the aether current quest fix, docs/data/v4/flight-currents.md) ran with `-NoXivApi`. None of the five corrected aether current entries is in this sample; the AetherCurrent check now compares xivapi's `AetherCurrent.Quest` with the listed quest, not the entry's awarding quest._
 
 Sample: **64** entries (seed 20260927, up to 3 per kind then filled at random), **197** checks, **0** failed. xivapi version `541c0c12e07da325`, 21 requests, 0 request errors.
 

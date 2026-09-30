@@ -81,9 +81,12 @@ internal static class ExpectedCounts
     /// <summary>
     /// <c>FeaturePresets.Derive</c> over the refiled catalog with the shipped curated and unique-reward data: the 0.6.0
     /// set of 1,699 plus the 43 quasi-quests the icon rule newly admits (the other 15 of the 58, the class intros
-    /// among them, were in through their unlock rewards already), minus the 8 retired rows the rule now drops.
+    /// among them, were in through their unlock rewards already), minus the 8 retired rows the rule now drops (1,734),
+    /// minus the four Heavensward quests the AetherCurrent sheet named instead of the quest that awards the current
+    /// (67328, 67334, 67365, 67437; docs/data/v4/flight-currents.md). The awarding quests were in already through their
+    /// "Aether Current" quest reward, and Thavnair's listed 70030 stays in on its own merits.
     /// </summary>
-    public const int FeatureQuests = 1734;
+    public const int FeatureQuests = 1730;
 
     /// <summary>Retired rows that carry an unlock reward or the blue icon and so derived as feature quests in 0.6.0.</summary>
     public const int RetiredFeatureRows = 8;

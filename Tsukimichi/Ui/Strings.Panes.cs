@@ -99,9 +99,11 @@ static partial class Strings
     public static string FlightCurrentZoneTooltip => Loc.Get("FlightCurrentZoneTooltip");
     /// <summary>{0} = quest currents done, {1} = quest currents in the zone.</summary>
     public const string FlightZoneCountFormat = "{0}/{1}";
-    /// <summary>{0} = attuned, {1} = total currents, {2} = quest currents done, {3} = quest currents.</summary>
+    /// <summary>{0} = expansion name; the entry that covers all of an expansion's field zones (A Realm Reborn).</summary>
+    public static string FlightAllZonesFormat => Loc.Get("FlightAllZonesFormat");
+    /// <summary>{0} = attuned, {1} = total currents, {2} = quest currents attuned, {3} = quest currents.</summary>
     public static string FlightZoneTooltipFormat => Loc.Get("FlightZoneTooltipFormat");
-    /// <summary>{0} = total currents, {1} = quest currents done, {2} = quest currents.</summary>
+    /// <summary>{0} = total currents, {1} = quest currents whose quest is complete, {2} = quest currents.</summary>
     public static string FlightZoneTooltipUnknownFormat => Loc.Get("FlightZoneTooltipUnknownFormat");
     /// <summary>{0} = zone, {1} = attuned, {2} = total currents.</summary>
     public static string FlightHeaderFormat => Loc.Get("FlightHeaderFormat");

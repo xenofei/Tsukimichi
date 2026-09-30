@@ -948,18 +948,22 @@
     <value>Pick a zone on the left.</value>
   </data>
   <data name="FlightOfflineHint" xml:space="preserve">
-    <value>Attunement is read for the logged-in character only; quest states come from the viewed character.</value>
+    <value>Attunement is read for the logged-in character only; for this character, quest currents are counted from completed quests.</value>
   </data>
   <data name="FlightCurrentZoneTooltip" xml:space="preserve">
     <value>You are here</value>
   </data>
+  <data name="FlightAllZonesFormat" xml:space="preserve">
+    <value>{0} (all zones)</value>
+    <comment>{0} = expansion name. One entry for every field zone of the expansion, which share one aether current (A Realm Reborn).</comment>
+  </data>
   <data name="FlightZoneTooltipFormat" xml:space="preserve">
-    <value>{0} of {1} currents attuned · {2} of {3} quest currents done</value>
-    <comment>{0} = attuned, {1} = total currents, {2} = quest currents done, {3} = quest currents.</comment>
+    <value>{0} of {1} currents attuned · {2} of {3} quest currents attuned</value>
+    <comment>{0} = attuned, {1} = total currents, {2} = quest currents attuned, {3} = quest currents.</comment>
   </data>
   <data name="FlightZoneTooltipUnknownFormat" xml:space="preserve">
-    <value>{0} currents · {1} of {2} quest currents done · attunement needs the logged-in character</value>
-    <comment>{0} = total currents, {1} = quest currents done, {2} = quest currents.</comment>
+    <value>{0} currents · {1} of {2} quest currents counted from completed quests · attunement is read for the logged-in character only</value>
+    <comment>{0} = total currents, {1} = quest currents whose quest is complete, {2} = quest currents.</comment>
   </data>
   <data name="FlightHeaderFormat" xml:space="preserve">
     <value>Flight in {0}: {1} of {2} currents attuned</value>

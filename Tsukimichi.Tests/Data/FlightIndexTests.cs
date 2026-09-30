@@ -1,5 +1,7 @@
 using Lumina.Data;
 using Lumina.Excel.Sheets;
+using Tsukimichi.Core.Evaluation;
+using Tsukimichi.Core.Model;
 using Tsukimichi.GameData;
 using Xunit.Abstractions;
 
@@ -56,6 +58,133 @@ public class FlightIndexTests
         Assert.Null(FlightIndex.Empty.ZoneFor(397));
         Assert.Equal(0u, FlightIndex.Empty.AetherCompassIcon);
     }
+
+    [Fact]
+    public void A_zone_shared_by_several_territories_answers_each_of_them()
+    {
+        var arr = new FlightZone(156, "A Realm Reborn (all zones)", 0, [new FlightCurrent(2818308, 70058)], [], [134, 135, 180]);
+        var index = FlightIndex.From([arr, Zone(397, "Coerthas Western Highlands", 1, field: 4)]);
+
+        Assert.Equal(2, index.Zones.Count);
+        Assert.True(arr.CoversManyTerritories);
+        Assert.False(index.ZoneFor(397)!.CoversManyTerritories);
+        Assert.All(new uint[] { 156, 134, 135, 180 }, t => Assert.Same(arr, index.ZoneFor(t)));
+        Assert.Null(index.ZoneFor(132));
+    }
+}
+
+/// <summary>The awarding-quest rule on plain ids (<see cref="AetherCurrentQuests.Resolve(uint, uint, Func{uint, bool}, Func{uint, IEnumerable{uint}})"/>).</summary>
+public class AetherCurrentQuestsTests
+{
+    // Quests 10, 20, 21 and 30 carry the Aether Current reward; 11 is the follow-up of 10, 12 follows 20 and 21.
+    private static readonly HashSet<uint> Awarding = [10, 20, 21, 30];
+
+    private static readonly Dictionary<uint, uint[]> Previous = new()
+    {
+        [11] = [5, 10, 0],
+        [12] = [20, 21, 0],
+        [13] = [4, 0, 0],
+        [40] = [3, 0, 0],
+    };
+
+    private static AetherCurrentQuest Resolve(uint current, uint listed) =>
+        AetherCurrentQuests.Resolve(current, listed, Awarding.Contains, id => Previous.GetValueOrDefault(id) ?? []);
+
+    [Fact]
+    public void The_listed_quest_stands_when_it_carries_the_reward()
+    {
+        var resolved = Resolve(1, 10);
+        Assert.Equal(10u, resolved.QuestRowId);
+        Assert.Equal(10u, resolved.ListedQuestRowId);
+        Assert.Equal(AetherCurrentQuestSource.Listed, resolved.Source);
+    }
+
+    [Fact]
+    public void Otherwise_the_single_prerequisite_that_carries_it()
+    {
+        var resolved = Resolve(1, 11);
+        Assert.Equal(10u, resolved.QuestRowId);
+        Assert.Equal(11u, resolved.ListedQuestRowId);
+        Assert.Equal(AetherCurrentQuestSource.PreviousQuest, resolved.Source);
+
+        // Two prerequisites carry it: neither is taken, and without an override the listed quest stays.
+        var ambiguous = Resolve(1, 12);
+        Assert.Equal(12u, ambiguous.QuestRowId);
+        Assert.Equal(AetherCurrentQuestSource.ListedUnflagged, ambiguous.Source);
+    }
+
+    [Fact]
+    public void Otherwise_the_curated_override_then_the_listed_quest()
+    {
+        var thavnair = Resolve(2818328, 13);
+        Assert.Equal(69793u, thavnair.QuestRowId);
+        Assert.Equal(13u, thavnair.ListedQuestRowId);
+        Assert.Equal(AetherCurrentQuestSource.Override, thavnair.Source);
+
+        // The Ultimate Weapon: nothing carries the reward, so the listed quest is kept.
+        var ultimateWeapon = Resolve(2818308, 40);
+        Assert.Equal(40u, ultimateWeapon.QuestRowId);
+        Assert.Equal(AetherCurrentQuestSource.ListedUnflagged, ultimateWeapon.Source);
+    }
+}
+
+/// <summary>
+/// The shipped unique-reward data credits the awarding quests (DataGen resolves them as the Flight index does), so the
+/// aether-current presets classify the five corrected quests and no longer the five the sheet lists.
+/// </summary>
+public class AetherCurrentFixtureTests(FixtureCatalog fixture) : IClassFixture<FixtureCatalog>
+{
+    private static readonly uint[] Awarding = [67364, 67326, 67333, 67410, 69793];
+    private static readonly uint[] Listed = [67365, 67328, 67334, 67437, 70030];
+
+    [Fact]
+    public void Shipped_data_credits_the_awarding_quests()
+    {
+        var unique = Tsukimichi.Core.Storage.UniqueRewardsFile.Load(Path.Combine(FixtureCatalog.ShippedDataDir(), "unique_quests.json"));
+        var currentEntries = unique.Entries.Where(e => e.Kind == RewardKind.AetherCurrent).ToList();
+        Assert.Equal(151, currentEntries.Count);
+        Assert.Equal(151, currentEntries.Select(e => e.RewardId).Distinct().Count());
+
+        var currents = Tsukimichi.Core.Query.FeaturePresets.AetherCurrentQuests(fixture.Bundle.Catalog, unique.Entries);
+        var others = Tsukimichi.Core.Query.FeaturePresets.NonCurrentUnlockQuests(unique.Entries);
+        foreach (var id in Awarding)
+        {
+            Assert.Contains(id, currents);
+            Assert.True(Tsukimichi.Core.Query.FeaturePresets.UnlocksOnlyAetherCurrents(fixture.Bundle.Catalog.ByRowId[id], fixture.Curated, currents, others), $"{id}");
+        }
+
+        foreach (var id in Listed)
+        {
+            Assert.DoesNotContain(id, currents);
+            Assert.DoesNotContain(currentEntries, e => e.QuestRowId == id);
+        }
+    }
+}
+
+/// <summary>The Flight view's counting rule (<see cref="FlightProgress.QuestCurrentDone"/>).</summary>
+public class FlightProgressTests
+{
+    [Fact]
+    public void The_attunement_flag_decides_when_it_can_be_read()
+    {
+        // Flag set: done, whatever the quest says.
+        Assert.True(FlightProgress.QuestCurrentDone(true, QuestState.Completed));
+        Assert.True(FlightProgress.QuestCurrentDone(true, QuestState.Ready));
+        Assert.True(FlightProgress.QuestCurrentDone(true, null));
+
+        // Flag unset: not done, even with the quest complete.
+        Assert.False(FlightProgress.QuestCurrentDone(false, QuestState.Completed));
+        Assert.False(FlightProgress.QuestCurrentDone(false, QuestState.Ready));
+    }
+
+    [Fact]
+    public void Without_a_flag_the_quest_completion_stands_in()
+    {
+        Assert.True(FlightProgress.QuestCurrentDone(null, QuestState.Completed));
+        Assert.False(FlightProgress.QuestCurrentDone(null, QuestState.Ready));
+        Assert.False(FlightProgress.QuestCurrentDone(null, QuestState.Unknown));
+        Assert.False(FlightProgress.QuestCurrentDone(null, null));
+    }
 }
 
 public class FlightIndexGameDataTests(GameDataFixture fixture, ITestOutputHelper output) : IClassFixture<GameDataFixture>
@@ -82,12 +211,16 @@ public class FlightIndexGameDataTests(GameDataFixture fixture, ITestOutputHelper
         Assert.Equal(6, index.Zones.Count(z => z.Expansion == Heavensward));
         Assert.Equal(6, index.Zones.Count(z => z.Expansion == Endwalker));
 
-        // A Realm Reborn: flight is opened by The Ultimate Weapon, recorded as one quest current on Mor Dhona (156).
+        // A Realm Reborn: flight is opened by The Ultimate Weapon, one quest current in a set whose own territory is
+        // Mor Dhona (156) and which all seventeen field zones name: one entry for all of them.
         var arr = Assert.Single(index.Zones, z => z.Expansion == ARealmReborn);
         Assert.Equal(156u, arr.TerritoryId);
-        Assert.Equal("Mor Dhona", arr.Name);
+        Assert.Equal("A Realm Reborn (all zones)", arr.Name);
+        Assert.True(arr.CoversManyTerritories);
         Assert.Equal(0, arr.FieldCurrentCount);
         var ultimateWeapon = Assert.Single(arr.QuestCurrents);
+        Assert.Equal(70058u, ultimateWeapon.QuestRowId);
+        Assert.False(ultimateWeapon.Corrected);
         Assert.Equal("The Ultimate Weapon", fixture.Bundle.Catalog.GetByRowId(ultimateWeapon.QuestRowId)?.Name);
 
         // Heavensward to Endwalker: five quest currents and, since the 6.0 reduction, four field currents per zone.
@@ -122,10 +255,89 @@ public class FlightIndexGameDataTests(GameDataFixture fixture, ITestOutputHelper
         Assert.Equal(allIds.Count, allIds.Distinct().Count());
         Assert.Equal(303, allIds.Count);
 
-        // Territories without flying are absent: New Gridania (132), Middle La Noscea (134), Sastasha (1036).
+        // Territories without flying are absent: the cities New Gridania (132) and Ul'dah - Steps of Nald (130), the
+        // duty Sastasha (1036).
         Assert.Null(index.ZoneFor(132));
-        Assert.Null(index.ZoneFor(134));
+        Assert.Null(index.ZoneFor(130));
         Assert.Null(index.ZoneFor(1036));
+    }
+
+    /// <summary>The seventeen A Realm Reborn field territories, all naming AetherCurrentCompFlgSet 19.</summary>
+    private static readonly uint[] ArrFieldZones = [134, 135, 137, 138, 139, 140, 141, 145, 146, 147, 148, 152, 153, 154, 155, 156, 180];
+
+    [GameDataFact]
+    public void Every_a_realm_reborn_field_zone_resolves_to_the_one_entry()
+    {
+        var index = FlightIndex.Build(fixture.Game.Excel, Language.English);
+        var arr = Assert.Single(index.Zones, z => z.Expansion == ARealmReborn);
+        Assert.Equal(ArrFieldZones.Length - 1, arr.OtherTerritoryIds!.Count);
+        Assert.Equal(ArrFieldZones, arr.OtherTerritoryIds.Append(arr.TerritoryId).Order());
+        Assert.All(ArrFieldZones, t => Assert.Same(arr, index.ZoneFor(t)));
+
+        // Middle La Noscea (134) has A Realm Reborn flying; later zones keep their own entry.
+        Assert.Equal("A Realm Reborn (all zones)", index.ZoneFor(134)!.Name);
+        Assert.Equal("Coerthas Western Highlands", index.ZoneFor(397)!.Name);
+        Assert.All(index.Zones.Where(z => z.Expansion != ARealmReborn), z => Assert.False(z.CoversManyTerritories, z.Name));
+
+        // The label follows the format the plugin hands in.
+        Assert.Equal("A Realm Reborn · every zone", FlightIndex.Build(fixture.Game.Excel, Language.English, "{0} · every zone").ZoneFor(140)!.Name);
+    }
+
+    /// <summary>Current -> (listed quest, awarding quest) for the five currents <c>AetherCurrent.Quest</c> names wrongly.</summary>
+    private static readonly Dictionary<uint, (uint Listed, uint Awarding)> Corrected = new()
+    {
+        [2818096] = (67365, 67364), // The Churning Mists: The Unceasing Gardener -> Hide Your Moogles
+        [2818065] = (67328, 67326), // The Dravanian Forelands: Natural Repellent -> Stolen Munitions
+        [2818066] = (67334, 67333), // The Dravanian Forelands: Chocobo's Last Stand -> The Hunter Becomes the Kweh
+        [2818110] = (67437, 67410), // The Sea of Clouds: Search and Rescue -> Honoring the Past
+        [2818328] = (70030, 69793), // Thavnair: Curing What Ails -> In Agama's Footsteps
+    };
+
+    [GameDataFact]
+    public void Every_counted_quest_awards_its_aether_current_one_to_one()
+    {
+        var index = FlightIndex.Build(fixture.Game.Excel, Language.English);
+        var quests = fixture.Game.Excel.GetSheet<Quest>(Language.English);
+        var awarding = quests
+            .Where(q => q.OtherReward.RowId == AetherCurrentQuests.OtherRewardAetherCurrent)
+            .Select(q => q.RowId)
+            .ToHashSet();
+        Assert.Equal(150, awarding.Count);
+
+        // Every quest current outside A Realm Reborn: its quest carries Quest.OtherReward = Aether Current, and the 150
+        // counted quests are exactly the 150 flagged ones, each once.
+        var counted = index.Zones
+            .Where(z => z.Expansion != ARealmReborn)
+            .SelectMany(z => z.QuestCurrents)
+            .ToList();
+        Assert.Equal(150, counted.Count);
+        Assert.All(counted, c => Assert.True(awarding.Contains(c.QuestRowId), $"current {c.AetherCurrentId}: quest {c.QuestRowId} does not award an aether current"));
+        Assert.Equal(150, counted.Select(c => c.QuestRowId).Distinct().Count());
+        Assert.True(awarding.SetEquals(counted.Select(c => c.QuestRowId)));
+
+        // The five corrected ids, with the listed quest kept for diagnostics; no other current was changed.
+        var byCurrent = index.Zones.SelectMany(z => z.QuestCurrents).ToDictionary(c => c.AetherCurrentId);
+        foreach (var (current, (listed, quest)) in Corrected)
+        {
+            var row = byCurrent[current];
+            output.WriteLine($"{current}: {listed} -> {row.QuestRowId} {fixture.Bundle.Catalog.GetByRowId(row.QuestRowId)?.Name}");
+            Assert.Equal(quest, row.QuestRowId);
+            Assert.Equal(listed, row.ListedQuestRowId);
+            Assert.True(row.Corrected);
+        }
+
+        Assert.Equal(Corrected.Keys.Order(), byCurrent.Values.Where(c => c.Corrected).Select(c => c.AetherCurrentId).Order());
+
+        // The zones the five belong to.
+        Assert.Contains(index.ZoneFor(400)!.QuestCurrents, c => c.QuestRowId == 67364);
+        Assert.Contains(index.ZoneFor(398)!.QuestCurrents, c => c.QuestRowId == 67326);
+        Assert.Contains(index.ZoneFor(398)!.QuestCurrents, c => c.QuestRowId == 67333);
+        Assert.Contains(index.ZoneFor(401)!.QuestCurrents, c => c.QuestRowId == 67410);
+        Assert.Contains(index.ZoneFor(957)!.QuestCurrents, c => c.QuestRowId == 69793);
+
+        // DataGen's resolver is the same code: every listed current resolves as the index does.
+        var resolved = AetherCurrentQuests.ResolveAll(fixture.Game.Excel.GetSheet<AetherCurrent>(Language.English), quests);
+        Assert.All(byCurrent.Values, c => Assert.Equal(c.QuestRowId, resolved[c.AetherCurrentId].QuestRowId));
     }
 
     [GameDataFact]

@@ -623,8 +623,13 @@ internal sealed class Verifier
                 case RewardKind.AetherCurrent:
                     var zoneOk = e.RewardName.StartsWith("Aether Current (", StringComparison.Ordinal) && ZoneNames().Contains(ZoneOf(e.RewardName));
                     rows.Add((e, "Zone is a real AetherCurrentCompFlgSet territory", ZoneOf(e.RewardName), zoneOk ? "found" : "not found", zoneOk));
+                    // The entry carries the awarding quest; xivapi's AetherCurrent.Quest is the listed one, which
+                    // differs for the five currents the sheet lists wrongly (Tsukimichi.GameData.AetherCurrentQuests).
                     var acQuest = XivApi.Ref(fields?["Quest"]);
-                    rows.Add((e, "AetherCurrent.Quest", e.QuestRowId.ToString(), acQuest.ToString(), acQuest == e.QuestRowId));
+                    var listedQuest = g.AetherCurrents.GetRowOrDefault(e.RewardId) is { } acRow
+                        ? Tsukimichi.GameData.AetherCurrentQuests.Resolve(acRow, g.Quests)?.ListedQuestRowId ?? 0
+                        : 0;
+                    rows.Add((e, "AetherCurrent.Quest (as listed)", listedQuest.ToString(), acQuest.ToString(), acQuest == listedQuest));
                     break;
                 case RewardKind.BlueMageSpell:
                     var spell = XivApi.Str(XivApi.Nested(fields, "Action"), "Name");
