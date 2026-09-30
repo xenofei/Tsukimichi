@@ -2,7 +2,7 @@
 
 Generated from game version `2026.09.15.0000.0000` by Tsukimichi.DataGen (see docs/data/DATA-VERSION.md for when).
 
-- Entries: **3464** across **1173** quests.
+- Entries: **3486** across **1191** quests.
 - Entries whose reward is also obtainable elsewhere (`otherSources` non-empty): **913**. They keep confidence Static in V1; the UI shows the source and marks Online Store re-sells and dungeon drops.
   - `SpecialShop`: 605
   - `Tradable`: 555
@@ -38,9 +38,9 @@ Generated from game version `2026.09.15.0000.0000` by Tsukimichi.DataGen (see do
 | Trait | 54 | 0 | 0 | 0 | 54 |
 | Achievement | 664 | 0 | 0 | 0 | 664 |
 | Title | 220 | 0 | 0 | 0 | 220 |
-| DutyUnlock | 135 | 0 | 39 | 0 | 174 |
+| DutyUnlock | 135 | 0 | 61 | 0 | 196 |
 | SystemUnlock | 0 | 0 | 65 | 0 | 65 |
-| **Total** | 3360 | 0 | 104 | 0 | 3464 |
+| **Total** | 3360 | 0 | 126 | 0 | 3486 |
 
 ## Examples per kind
 
@@ -321,7 +321,7 @@ Generated from game version `2026.09.15.0000.0000` by Tsukimichi.DataGen (see do
 | 65802 The Chefsbane Cometh | Seeker of Skill | 47 | 0 | Static | `Achievement.Data;achievement=316;type=6` |
 | 65816 May the Best Armorer Win | Seeker of Skill | 47 | 0 | Static | `Achievement.Data;achievement=316;type=6` |
 
-### DutyUnlock (174)
+### DutyUnlock (196)
 
 | Quest | Reward | Reward id | Item id | Confidence | Source |
 |---|---|---:|---:|---|---|
@@ -329,12 +329,12 @@ Generated from game version `2026.09.15.0000.0000` by Tsukimichi.DataGen (see do
 | 65594 Simply the Hest | Basic Training: Enemy Parties | 42 | 0 | Static | `Quest.InstanceContentUnlock;InstanceContent=10001` |
 | 65595 Simply the Hest | Basic Training: Enemy Parties | 42 | 0 | Static | `Quest.InstanceContentUnlock;InstanceContent=10001` |
 | 65596 Simply the Hest | Basic Training: Enemy Parties | 42 | 0 | Static | `Quest.InstanceContentUnlock;InstanceContent=10001` |
+| 65626 Drop Dead Shiva | the Akh Afah Amphitheatre (Extreme) | 80 | 0 | Curated | `curated/duty_unlocks.json` |
+| 65630 It's Definitely Pirates | Sastasha (Hard) | 28 | 0 | Curated | `curated/duty_unlocks.json` |
+| 65632 The Wrath of Qarn | the Sunken Temple of Qarn (Hard) | 26 | 0 | Curated | `curated/duty_unlocks.json` |
 | 65781 It's Probably Pirates | Sastasha | 4 | 0 | Curated | `curated/duty_unlocks.json` |
 | 65879 Lord of the Inferno | the Bowl of Embers | 56 | 0 | Curated | `curated/duty_unlocks.json` |
 | 65905 An Uninvited Ascian | the Chrysalis | 84 | 0 | Curated | `curated/duty_unlocks.json` |
-| 66050 Into the Beast's Maw | the Thousand Maws of Toto-Rak | 1 | 0 | Curated | `curated/duty_unlocks.json` |
-| 66055 Lady of the Vortex | the Howling Eye | 58 | 0 | Curated | `curated/duty_unlocks.json` |
-| 66060 The Ultimate Weapon | the Praetorium | 16 | 0 | Curated | `curated/duty_unlocks.json` |
 
 ### SystemUnlock (65)
 
