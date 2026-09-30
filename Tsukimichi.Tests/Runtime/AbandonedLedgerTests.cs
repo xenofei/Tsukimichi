@@ -162,6 +162,33 @@ public sealed class AbandonedLedgerTests : IDisposable
         Assert.Contains("\"questId\"", text);
         Assert.Contains("\"abandonedUtc\"", text);
         Assert.Contains("\"stepCount\"", text);
+        // Derived properties stay out of the file.
+        Assert.DoesNotContain("\"rowId\"", text);
+        Assert.DoesNotContain("\"stepText\"", text);
+    }
+
+    [Fact]
+    public void A_ledger_written_with_the_derived_properties_still_loads()
+    {
+        // Files written before RowId and StepText were ignored carry both; they are read past, not trusted.
+        var path = tmp.File("old.abandoned.json");
+        File.WriteAllText(path, """
+            {
+              "version": 1,
+              "entries": [
+                { "questId": 1, "abandonedUtc": "2026-09-20T08:00:00Z", "sequence": 3, "stepCount": 5, "rowId": 99, "stepText": "step 9 of 9" }
+              ]
+            }
+            """);
+
+        var warnings = new List<string>();
+        var back = AbandonedLedger.Load(path, warnings);
+
+        Assert.Empty(warnings);
+        var entry = Assert.Single(back.Values);
+        Assert.Equal(new AbandonedEntry(1, T0, 3, 5), entry);
+        Assert.Equal(0x10001u, entry.RowId);
+        Assert.Equal(BlockerText.StepText(3, 5), entry.StepText);
     }
 
     [Fact]
