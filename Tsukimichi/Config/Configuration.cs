@@ -78,6 +78,16 @@ public sealed class Configuration : IPluginConfiguration
     /// all, so clicks go to the game behind it. Unlocked again from Settings (its own menu is unreachable while locked).
     /// </summary>
     public bool TodoOverlayLocked { get; set; } = false;
+
+    /// <summary>
+    /// 0.8.0 upgrade notice: set on the first load of a configuration an earlier release saved with the overlay Locked,
+    /// when Locked still meant "cannot be moved" and the rows took clicks. While it is set and the overlay is locked,
+    /// Settings › Todo overlay says the overlay is now click-through and how to unlock it; unlocking clears it.
+    /// </summary>
+    public bool TodoLockNoticeDue { get; set; }
+
+    /// <summary>Whether the one chat line about <see cref="TodoLockNoticeDue"/> was printed (once, at a login).</summary>
+    public bool TodoLockNoticePrinted { get; set; }
     /// <summary>Background opacity of the overlay, 0.6–1.0 (clamped when read).</summary>
     public float TodoOverlayOpacity { get; set; } = 0.85f;
     public bool TodoShowPins { get; set; } = true;
@@ -358,9 +368,31 @@ public sealed class Configuration : IPluginConfiguration
             config.ReduceMotion = animationsOff;
         }
 
+        // Locked meant "no move" before 0.8.0 and means click-through now: a player upgrading with it on is told once.
+        if (hadFile && config.TodoOverlayLocked && !config.TodoLockNoticeDue && !config.TodoLockNoticePrinted && SavedBeforeClickThroughLock(config.LastSeenVersion))
+        {
+            config.TodoLockNoticeDue = true;
+        }
+
         config.HasPriorConfig = hadFile;
         return config;
     }
+
+    /// <summary>
+    /// Whether a configuration last seen by <paramref name="lastSeenVersion"/> comes from before 0.8.0 (where Locked became
+    /// click-through): an older version, or none at all (every release before 0.6.0). An unreadable version says no.
+    /// </summary>
+    internal static bool SavedBeforeClickThroughLock(string? lastSeenVersion)
+    {
+        if (string.IsNullOrWhiteSpace(lastSeenVersion))
+        {
+            return true;
+        }
+
+        return System.Version.TryParse(ChangelogSection.NormalizeVersion(lastSeenVersion), out var seen) && seen < ClickThroughLockVersion;
+    }
+
+    private static readonly System.Version ClickThroughLockVersion = new(0, 8, 0);
 
     public void Save(IDalamudPluginInterface pluginInterface)
     {

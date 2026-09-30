@@ -44,18 +44,6 @@ public sealed class DetailPane
     private static readonly string PathIcon = FontAwesomeIcon.Route.ToIconString();
     private static readonly string GiverIcon = FontAwesomeIcon.MapMarkerAlt.ToIconString();
 
-    // Header badge for QuestRecord.IconSpecial (seasonal events, promotions).
-    private const string SeasonalBadgeTooltip = "Seasonal event quest";
-    private const string SpecialBadgeTooltip = "Special";
-
-    // Chain progress line at the top of the Path card.
-    private const string ChainFormat = "Chain: {0} · {1} of {2} done";
-    private const string StoryFormat = "{0} · {1} of {2} done";
-    private const string ChainNextLabel = "· next:";
-    private const string ChainCompleteLabel = "· complete";
-    private const string ChainNextTooltip = "Select the next quest in this chain";
-    private const string ChainMoonTooltipFormat = "{0} of {1} quests done";
-
     // Refresh the "Checked just now" line this often while nothing else changes.
     private const double ProvenanceRefreshSeconds = 30.0;
 
@@ -100,10 +88,11 @@ public sealed class DetailPane
         /// <summary>"Note: …" from <c>curated/quirks.json</c>, drawn under the requirements; null for a quest without one.</summary>
         public string? QuirkNote;
         public string? ChainText;
+
+        /// <summary>The chain halo's tooltip ("3 of 7 quests done"), composed with <see cref="ChainText"/>.</summary>
+        public string ChainHaloTooltip = string.Empty;
         public string? ChainNextName;
         public uint ChainNextRowId;
-        public int ChainDone;
-        public int ChainTotal;
         public float ChainFraction;
         public bool HasSnapshot;
         public bool Pinned;
@@ -415,7 +404,7 @@ public sealed class DetailPane
     }
 
     /// <summary>What the special badge means.</summary>
-    private static string BadgeTooltip(QuestRecord quest) => quest.Festival != 0 ? SeasonalBadgeTooltip : SpecialBadgeTooltip;
+    private static string BadgeTooltip(QuestRecord quest) => quest.Festival != 0 ? Strings.DetailSeasonalBadgeTooltip : Strings.DetailSpecialBadgeTooltip;
 
     /// <summary>
     /// The Night card with the state moon, the name and the caption line, for quests without a banner, and for quests
@@ -781,7 +770,7 @@ public sealed class DetailPane
         MoonGlyph.DrawHaloInline(model.ChainFraction, size, onCard: true);
         if (ImGui.IsItemHovered())
         {
-            UiMetrics.Tooltip(string.Format(CultureInfo.CurrentCulture, ChainMoonTooltipFormat, model.ChainDone, model.ChainTotal));
+            UiMetrics.Tooltip(model.ChainHaloTooltip);
         }
 
         // The glyph box is taller than a text line; centre the text on it.
@@ -795,12 +784,12 @@ public sealed class DetailPane
         ImGui.SameLine();
         if (model.ChainNextName is not { } next)
         {
-            using var done = Theme.PushText(Theme.MoonDim);
-            ImGui.TextUnformatted(ChainCompleteLabel);
+            using var done = Theme.PushText(Theme.AccentDim);
+            ImGui.TextUnformatted(Strings.DetailChainComplete);
             return;
         }
 
-        ImGui.TextDisabled(ChainNextLabel);
+        ImGui.TextDisabled(Strings.DetailChainNext);
         ImGui.SameLine();
         using (Theme.PushText(Theme.Moon))
         {
@@ -813,7 +802,7 @@ public sealed class DetailPane
         if (ImGui.IsItemHovered())
         {
             ImGui.SetMouseCursor(ImGuiMouseCursor.Hand);
-            UiMetrics.Tooltip(ChainNextTooltip);
+            UiMetrics.Tooltip(Strings.DetailChainNextTooltip);
         }
     }
 
@@ -871,12 +860,15 @@ public sealed class DetailPane
         return total <= width ? 1 : 2;
     }
 
-    /// <summary>Height under the scrolling stack: hairline, the action rows, the provenance line and paddings.</summary>
+    /// <summary>
+    /// Height under the scrolling stack, as laid out: the spacing after the body child, the hairline and its spacing,
+    /// each action row and its spacing, then the provenance line (a caption).
+    /// </summary>
     private float ActionBarHeight()
     {
         var spacing = ImGui.GetStyle().ItemSpacing.Y;
         var rows = ActionRows(ImGui.GetContentRegionAvail().X);
-        return UiMetrics.Hairline + spacing + (rows * UiMetrics.MinTarget) + ((rows - 1) * spacing) + spacing + ImGui.GetTextLineHeight() + UiMetrics.Px(2f);
+        return UiMetrics.Hairline + ((rows + 2) * spacing) + (rows * UiMetrics.MinTarget) + Typography.CaptionSize;
     }
 
     /// <summary>
@@ -1012,7 +1004,7 @@ public sealed class DetailPane
             dl.AddRectFilled(min, max, Theme.U32(s.Raised), rounding);
         }
 
-        var ink = enabled ? Theme.MoonU32 : Theme.U32(s.TextDisabled);
+        var ink = enabled ? Theme.AccentU32 : Theme.U32(s.TextDisabled);
         ImGui.PushFont(UiBuilder.IconFont);
         dl.AddText(new Vector2(min.X + padX, min.Y + ((height - iconSize.Y) * 0.5f)), ink, icon);
         ImGui.PopFont();
@@ -1034,6 +1026,8 @@ public sealed class DetailPane
     /// </summary>
     private void DrawProvenance(SessionState session)
     {
+        // Provenance is a caption (ui-revamp §4.2).
+        using var caption = Typography.Caption();
         var now = ImGui.GetTime();
         if (now < reportNoteUntil && reportNoteRowId == model.RowId)
         {
@@ -1248,11 +1242,10 @@ public sealed class DetailPane
         }
 
         var progress = ChainCatalog.Progress(chain, session.States);
-        model.ChainDone = progress.Done;
-        model.ChainTotal = progress.Total;
         model.ChainFraction = progress.Fraction;
         var name = ChainCatalog.DisplayName(chain, id => session.Spoilers.DisplayName(bundle.Catalog, id, id.ToString(CultureInfo.InvariantCulture)));
-        model.ChainText = string.Format(CultureInfo.CurrentCulture, chain.IsStory ? StoryFormat : ChainFormat, name, progress.Done, progress.Total);
+        model.ChainText = string.Format(CultureInfo.CurrentCulture, chain.IsStory ? Strings.DetailStoryFormat : Strings.DetailChainFormat, name, progress.Done, progress.Total);
+        model.ChainHaloTooltip = string.Format(CultureInfo.CurrentCulture, Strings.DetailChainHaloTooltipFormat, progress.Done, progress.Total);
         if (progress.NextRowId is { } next)
         {
             model.ChainNextRowId = next;

@@ -41,7 +41,7 @@ public static partial class Strings
     public const string CharacterNameFormat = "{0}@{1}";
     public const string BrowseModeNotice = "No character snapshot: states, blockers and availability are not evaluated.";
     public const string HelpButtonTooltip = "Help";
-    public const string TutorialButtonTooltip = "Interactive tutorial: a guided walk through the window";
+    public const string TutorialButtonTooltip = "Tour: a guided walk through the window";
     public const string SettingsButtonTooltip = "Settings";
     public const string ActionUnavailable = "Not available yet";
 
@@ -131,7 +131,7 @@ public static partial class Strings
     public const string PresetFeatureQuests = FilterNames.FeatureQuests;
     public const string PresetLevelBand = FilterNames.LevelBand;
     public const string PresetStalled = FilterNames.Stalled;
-    public const string PresetFeatureQuestsTooltip = "Unlock quests: duties, jobs, actions, aether currents, systems. Quests you can pick up now come first";
+    public const string PresetFeatureQuestsTooltip = "Unlock quests: duties, jobs, actions, aether currents, systems. Quests you can act on now come first";
     public const string PresetLevelBandTooltip = "Quests within five levels of your current job's level";
     public const string PresetStalledTooltip = "Quests that have sat in your journal for the number of days below";
     public const string PresetStorySidequests = FilterNames.StorySidequests;
@@ -159,6 +159,9 @@ public static partial class Strings
     public const string LevelRange = FilterNames.LevelRange;
     public const string LevelFormat = "Lv %d";
     public const string LevelMaxFormat = "to %d";
+
+    /// <summary>The level range filter's chip: {0} = lowest level, {1} = highest.</summary>
+    public const string LevelRangeChipFormat = "Lv {0}–{1}";
     public const string JobCategory = FilterNames.JobCategory;
     public const string JobAll = "All";
     public const string JobDowDom = "DoW/DoM";
@@ -196,7 +199,7 @@ public static partial class Strings
 
     // Filter panel tooltips
     public const string HideCompletedTooltip = "Remove Completed and Locked out quests from the table";
-    public const string AvailableOnlyTooltip = "Keep only quests you can pick up now: Ready, Ready on another job and In journal";
+    public const string AvailableOnlyTooltip = "Keep only quests you can act on now: Ready, Ready on another job and In journal";
     public const string OverridesTooltip = "Turn this filter on or off for single categories";
     public const string PinnedFirstTooltip = "Keep pinned quests at the top of the table whatever the sort";
     public const string StatesTooltip = "Untick a state to hide quests in it";

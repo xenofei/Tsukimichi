@@ -349,8 +349,8 @@ static partial class Strings
     public const string ConfigDensityHint = "Height of the quest table's rows; the Journal tree keeps its size.";
     public const string ConfigSectionHelp = "Help";
     public const string ConfigShowHelp = "Show help";
-    public const string ConfigStartTutorial = "Start tutorial";
-    public const string ConfigOfferTutorial = "Offer the tutorial on first run";
+    public const string ConfigStartTutorial = "Start the tour";
+    public const string ConfigOfferTutorial = "Offer the tour on first run";
     public const string ConfigOfferTutorialHint = "Shows the tour's welcome card the next time the main window opens.";
     public const string ConfigPollTimingNone = "No polls yet";
     /// <summary>{0} = last ms, {1} = average ms, {2} = poll count.</summary>
@@ -592,14 +592,14 @@ static partial class Strings
             "open or close the window",
             "the same, shorter; every subcommand works with either",
             "search and print matching quests to chat as links; /tsukimichi <text> does the same",
-            "open Settings (/tsukimichi settings does the same)",
+            "open Settings (/tsukimichi config does the same)",
             "open this window",
             "the glyph sheet: every moon at every size",
             "quests you can start in the current zone, as chat links by level",
             "every quest the targeted NPC hands out, with its state",
             "why the selected quest (or the named one) is not offered: its state and blocker, then one line per requirement with met or unmet and the values compared, then the curated note where the game is known to behave differently; a Ready quest says whom to talk to, with a map link. The same list opens in the Journal from an NPC's target-bar menu (\"Tsukimichi: quests here\")",
             "open or close the Nearby quests window: what you can start in the current zone",
-            "show or hide the todo overlay: pins, event quests running now, feature quests here, the next main scenario quest and job quests",
+            "show or hide the todo overlay: pins, Event quests running now, Unlocks you can start here, the next main scenario quest and job quests",
             "copy a diagnostic block for the selected quest (or the named one) to the clipboard, ready to paste into a GitHub issue; the Report button in the detail pane does the same",
             "write the viewed character's completed quests, its Moonlit collection, or both to the exports folder as JSON or CSV (the Settings format when none is named) and print where; see docs/export-format.md. No content id, account or world, and the name only when Settings › Data › Export › Include character name is ticked",
             "put the caret in the search, while the window has focus",

@@ -99,7 +99,7 @@ public sealed class TabStrip
             // Icon.
             var iconSize = UiMetrics.Px(IconLogical);
             var iconCenter = new Vector2(min.X + UiMetrics.Px(InsetLogical) + iconSize * 0.5f, min.Y + height * 0.5f);
-            var iconInk = active ? Theme.MoonU32 : Theme.U32(s.TextTertiary);
+            var iconInk = active ? Theme.AccentU32 : Theme.U32(s.TextTertiary);
             if (tab == NavTab.Journal)
             {
                 MoonGlyph.DrawFilling(dl, iconCenter, iconSize * 0.5f, overallFraction);

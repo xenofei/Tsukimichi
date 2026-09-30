@@ -11,7 +11,7 @@ namespace Tsukimichi.Tests.Ui;
 /// </summary>
 public class StringsVocabularyTests
 {
-    /// <summary>Spellings that must not appear inside any literal.</summary>
+    /// <summary>Spellings that must not appear inside any literal, in any letter case.</summary>
     private static readonly string[] RetiredFragments =
     [
         "Foreclosed",
@@ -27,6 +27,15 @@ public class StringsVocabularyTests
         "Tribal",
         "Unlisted",
     ];
+
+    /// <summary>
+    /// Whole literals that contain a retired fragment on purpose. "veiled" is the item hint's word for an obtained state
+    /// that cannot be read for a stored character, the one meaning docs/glossary.md keeps for it (never a quest state).
+    /// </summary>
+    private static readonly HashSet<string> Sanctioned = new(StringComparer.Ordinal)
+    {
+        "veiled",
+    };
 
     /// <summary>Spellings that are retired as a whole label but may still open a longer sentence about something else.</summary>
     private static readonly string[] RetiredLabels =
@@ -71,9 +80,15 @@ public class StringsVocabularyTests
             foreach (Match match in Literal.Matches(line))
             {
                 var text = match.Groups[1].Success ? match.Groups[1].Value : match.Groups[2].Value;
+                if (Sanctioned.Contains(text))
+                {
+                    continue;
+                }
+
                 foreach (var fragment in RetiredFragments)
                 {
-                    if (text.Contains(fragment, StringComparison.Ordinal))
+                    // Case-insensitive: "feature quests" in a sentence is as retired as "Feature quests" as a label.
+                    if (text.Contains(fragment, StringComparison.OrdinalIgnoreCase))
                     {
                         offenders.Add($"{fileName}:{lineNumber} contains \"{fragment}\": {text}");
                     }

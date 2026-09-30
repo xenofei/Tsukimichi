@@ -498,7 +498,8 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         {
             // The highlight follows the global selection, as in the Flight pane, so a quest picked from the detail
             // pane's path, another pane or chat lights its Moonlit row too, and an override never wipes it.
-            if (ImGui.Selectable(row.Name, ui.SelectedRowId == row.Entry.QuestRowId))
+            // AllowItemOverlap lets the "…" button drawn over the cell's right end take the hover and the click.
+            if (ImGui.Selectable(row.Name, ui.SelectedRowId == row.Entry.QuestRowId, ImGuiSelectableFlags.AllowItemOverlap))
             {
                 ui.SelectedRowId = row.Entry.QuestRowId;
             }
@@ -551,14 +552,13 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         var cellMax = new Vector2(cellMin.X + cellWidth, cellMin.Y + size);
         if (nameFocused || moreFocusedRow == row.Index || (ImGui.IsWindowHovered() && ImGui.IsMouseHoveringRect(cellMin, cellMax)))
         {
-            var after = ImGui.GetCursorScreenPos();
+            // No cursor restore afterwards: TableNextColumn follows at once, and a set position folded into the
+            // cell's CursorMaxPos would make the row taller while the button shows.
             Keyboard.MoreButton("##more", RowMenuId, new Vector2(cellMax.X - size, cellMin.Y), size);
             if (ImGui.IsItemFocused())
             {
                 moreFocusedNext = row.Index;
             }
-
-            ImGui.SetCursorScreenPos(after);
         }
 
         // Kind.

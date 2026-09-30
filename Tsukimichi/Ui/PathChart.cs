@@ -92,7 +92,9 @@ public sealed class PathChart
     private int targetCore = -1;
     private uint targetRowId = uint.MaxValue;
     private float walkedFraction;
-    private readonly HashSet<int> expandedRuns = [];
+    // Opened beads, keyed by the run's first quest: a refresh that re-numbers the runs (a step completed above) keeps
+    // the same stretch open.
+    private readonly HashSet<uint> expandedRuns = [];
 
     // ---- layout (pixels) ----
     private readonly List<VRow> layout = new(64);
@@ -211,6 +213,7 @@ public sealed class PathChart
                     break;
                 case PathRowKind.MoreAlternatives:
                     rowLabels[i] = string.Format(CultureInfo.CurrentCulture, Strings.AndMoreFormat, row.Count);
+                    rowTooltips[i] = OverflowNames(row, catalog, spoilers);
                     break;
             }
         }
@@ -224,6 +227,28 @@ public sealed class PathChart
             : unlocks.Count == 0 ? Strings.PathAloneCaption
             : Strings.PathSingleCaption;
         layoutDirty = true;
+    }
+
+    /// <summary>The names an "and N more" alternatives line stands for, one per line, through the spoiler shield.</summary>
+    private static string OverflowNames(PathRow row, QuestCatalog catalog, Core.Query.SpoilerMask spoilers)
+    {
+        if (row.OverflowRowIds.Count == 0)
+        {
+            return string.Empty;
+        }
+
+        var names = new StringBuilder();
+        foreach (var id in row.OverflowRowIds)
+        {
+            if (names.Length > 0)
+            {
+                names.Append('\n');
+            }
+
+            names.Append(spoilers.DisplayName(catalog, id, id.ToString(CultureInfo.InvariantCulture)));
+        }
+
+        return names.ToString();
     }
 
     /// <summary>Scrolls the chart so the target sits at 60 %; with <paramref name="pulse"/> its ring pulses (the "Show path" reveal).</summary>
@@ -387,7 +412,7 @@ public sealed class PathChart
                     pendingAlternatives = layout.Count;
                     break;
                 case PathRowKind.FoldedRun:
-                    var open = expandedRuns.Contains(row.RunIndex);
+                    var open = expandedRuns.Contains(RunKey(row));
                     AddNode(VKind.Bead, core, -1, ref y, ref prevNode, line, captionLine, outDone: true);
                     if (!open)
                     {
@@ -654,6 +679,7 @@ public sealed class PathChart
 
         dl.ChannelsSetCurrent(0);
         DrawSky(dl, origin, width, top, bottom);
+        DrawCulledOwners(dl, origin, first);
         var hovered = -1;
         for (var i = first; i < threadEnd; i++)
         {
@@ -682,6 +708,68 @@ public sealed class PathChart
         ImGui.SetCursorScreenPos(origin);
         ImGui.Dummy(new Vector2(1f, contentHeight));
         return scrollY;
+    }
+
+    /// <summary>
+    /// Decorations whose owner row is culled above the view but that reach into it: the bracket of an opened bead
+    /// whose steps are in view, and the ghost curves of alternatives whose join is in view (they sit just above it).
+    /// </summary>
+    private void DrawCulledOwners(ImDrawListPtr dl, Vector2 origin, int first)
+    {
+        if (first <= 0 || first >= layout.Count)
+        {
+            return;
+        }
+
+        var row = layout[first];
+        if (row.Kind == VKind.RunStep && row.Core >= 0 && coreToRow[row.Core] < first)
+        {
+            var bead = layout[coreToRow[row.Core]];
+            dl.ChannelsSetCurrent(2);
+            DrawRunBracket(dl, origin, bead, origin + new Vector2(threadX, bead.NodeY));
+        }
+
+        for (var i = first - 1; i >= 0 && layout[i].Kind is VKind.Alternative or VKind.MoreAlternatives; i--)
+        {
+            var alternative = layout[i];
+            if (alternative.Kind == VKind.Alternative && alternative.Join >= first)
+            {
+                DrawJoinCurve(dl, origin, alternative);
+            }
+        }
+
+        dl.ChannelsSetCurrent(0);
+    }
+
+    /// <summary>An alternative's curve from its ghost node into its join's upper rim, on the threads' channel (1).</summary>
+    private void DrawJoinCurve(ImDrawListPtr dl, Vector2 origin, VRow row)
+    {
+        if (row.Join < 0)
+        {
+            return;
+        }
+
+        var ghost = origin + new Vector2(ghostX, row.NodeY);
+        var r = UiMetrics.Icon(5f);
+        var join = layout[row.Join];
+        var end = origin + new Vector2(threadX, join.NodeY - join.NodeR);
+        var start = ghost + new Vector2(0f, r);
+        var bend = Px(12f);
+        dl.ChannelsSetCurrent(1);
+        dl.AddBezierCubic(start, start + new Vector2(0f, bend), end - new Vector2(0f, bend), end, Theme.WithAlpha(Theme.Surface.TextTertiary, 0.6f), UiMetrics.Hairline, 12);
+    }
+
+    /// <summary>The faint bracket beside an opened bead's steps, from the bead down to its last step.</summary>
+    private void DrawRunBracket(ImDrawListPtr dl, Vector2 origin, VRow bead, Vector2 node)
+    {
+        var lastChild = FindLastChild(bead.Core, rows[bead.Core].Count);
+        if (lastChild < 0)
+        {
+            return;
+        }
+
+        var x = origin.X + Px(4f);
+        dl.AddLine(new Vector2(x, node.Y - Px(8f)), new Vector2(x, origin.Y + layout[lastChild].NodeY + Px(8f)), Theme.WithAlpha(Theme.Moon, 0.25f), UiMetrics.Hairline);
     }
 
     private int FirstRowAt(float y)
@@ -812,6 +900,7 @@ public sealed class PathChart
             case VKind.Alternative:
             case VKind.Unlock:
             case VKind.UnlocksMore:
+            case VKind.MoreAlternatives:
                 x0 = ghostX - UiMetrics.Icon(6f) - Px(2f);
                 break;
             default:
@@ -822,11 +911,16 @@ public sealed class PathChart
         ImGui.PushID(index);
         var clicked = ImGui.InvisibleButton("##row", new Vector2(MathF.Max(1f, width - x0), row.H));
         var hovered = ImGui.IsItemHovered();
+
+        // The ring on the rows' channel, over the hover fill and the threads (a ring on channel 0 hid under them).
+        var dl = ImGui.GetWindowDrawList();
+        dl.ChannelsSetCurrent(2);
         Chrome.FocusRing(Px(4f));
+        dl.ChannelsSetCurrent(0);
         ImGui.PopID();
         if (hovered)
         {
-            ImGui.SetMouseCursor(row.Kind == VKind.UnlocksMore ? ImGuiMouseCursor.Arrow : ImGuiMouseCursor.Hand);
+            ImGui.SetMouseCursor(row.Kind is VKind.UnlocksMore or VKind.MoreAlternatives ? ImGuiMouseCursor.Arrow : ImGuiMouseCursor.Hand);
         }
 
         var focused = ImGui.GetIO().NavVisible && ImGui.IsItemFocused();
@@ -852,7 +946,7 @@ public sealed class PathChart
                 UiMetrics.Tooltip(Strings.StateTooltip(path[row.Item].State), stepDetails[row.Item]);
                 break;
             case VKind.Bead:
-                var expanded = expandedRuns.Contains(rows[row.Core].RunIndex);
+                var expanded = expandedRuns.Contains(RunKey(rows[row.Core]));
                 UiMetrics.Tooltip(expanded ? Strings.FoldedRunCollapseTooltip : Strings.FoldedRunExpandTooltip);
                 break;
             case VKind.Alternative:
@@ -864,6 +958,9 @@ public sealed class PathChart
                 break;
             case VKind.UnlocksMore when unlocksMoreTooltip is { Length: > 0 } names:
                 UiMetrics.Tooltip(names);
+                break;
+            case VKind.MoreAlternatives when rowTooltips[row.Core] is { Length: > 0 } others:
+                UiMetrics.Tooltip(others);
                 break;
         }
     }
@@ -877,7 +974,7 @@ public sealed class PathChart
                 select(path[row.Item].RowId);
                 break;
             case VKind.Bead:
-                var run = rows[row.Core].RunIndex;
+                var run = RunKey(rows[row.Core]);
                 if (!expandedRuns.Remove(run))
                 {
                     expandedRuns.Add(run);
@@ -951,16 +1048,8 @@ public sealed class PathChart
                 var ghost = origin + new Vector2(ghostX, row.NodeY);
                 var r = UiMetrics.Icon(5f);
                 GhostRing(dl, ghost, r, Theme.U32(hovered ? s.Text : s.TextTertiary));
-                if (row.Join >= 0)
-                {
-                    var join = layout[row.Join];
-                    var end = origin + new Vector2(threadX, join.NodeY - join.NodeR);
-                    var start = ghost + new Vector2(0f, r);
-                    var bend = Px(12f);
-                    dl.ChannelsSetCurrent(1);
-                    dl.AddBezierCubic(start, start + new Vector2(0f, bend), end - new Vector2(0f, bend), end, Theme.WithAlpha(s.TextTertiary, 0.6f), UiMetrics.Hairline, 12);
-                    dl.ChannelsSetCurrent(2);
-                }
+                DrawJoinCurve(dl, origin, row);
+                dl.ChannelsSetCurrent(2);
 
                 var x = origin.X + ghostLabelX;
                 var dusk = Theme.U32(s.TextTertiary);
@@ -974,7 +1063,7 @@ public sealed class PathChart
             }
 
             case VKind.MoreAlternatives:
-                dl.AddText(font, captionSize, new Vector2(origin.X + ghostLabelX, captionY), Theme.U32(s.TextTertiary), rowLabels[row.Core]);
+                dl.AddText(font, captionSize, new Vector2(origin.X + ghostLabelX, captionY), Theme.U32(hovered ? s.TextSecondary : s.TextTertiary), rowLabels[row.Core]);
                 break;
 
             case VKind.Caption:
@@ -1050,7 +1139,7 @@ public sealed class PathChart
     private void DrawBead(ImDrawListPtr dl, Vector2 origin, VRow row, Vector2 node, bool hovered, ImFontPtr font, float captionSize, float captionY)
     {
         var s = Theme.Surface;
-        var expanded = expandedRuns.Contains(rows[row.Core].RunIndex);
+        var expanded = expandedRuns.Contains(RunKey(rows[row.Core]));
         var label = rowLabels[row.Core];
         if (!expanded)
         {
@@ -1073,13 +1162,7 @@ public sealed class PathChart
             var c = UiMetrics.Icon(2.5f);
             dl.AddLine(node + new Vector2(-c, -c * 0.4f), node + new Vector2(0f, c * 0.6f), Theme.MoonU32, UiMetrics.Hairline);
             dl.AddLine(node + new Vector2(0f, c * 0.6f), node + new Vector2(c, -c * 0.4f), Theme.MoonU32, UiMetrics.Hairline);
-            var runCount = rows[row.Core].Count;
-            var lastChild = FindLastChild(row.Core, runCount);
-            if (lastChild >= 0)
-            {
-                var x = origin.X + Px(4f);
-                dl.AddLine(new Vector2(x, node.Y - Px(8f)), new Vector2(x, origin.Y + layout[lastChild].NodeY + Px(8f)), Theme.WithAlpha(Theme.Moon, 0.25f), UiMetrics.Hairline);
-            }
+            DrawRunBracket(dl, origin, row, node);
         }
 
         var ink = expanded || hovered ? s.TextSecondary : s.TextTertiary;
@@ -1094,6 +1177,9 @@ public sealed class PathChart
             dl.AddLine(new Vector2(x + c, y), new Vector2(x, y + c), Theme.U32(ink), UiMetrics.Hairline);
         }
     }
+
+    /// <summary>A folded run's key in <see cref="expandedRuns"/>: its first quest's row id.</summary>
+    private uint RunKey(PathRow row) => row.PathIndex >= 0 && row.PathIndex < path.Count ? path[row.PathIndex].RowId : uint.MaxValue;
 
     private int FindLastChild(int core, int runCount)
     {
@@ -1171,7 +1257,6 @@ public sealed class PathChart
             UiMetrics.Tooltip(Strings.PathJumpToTargetTooltip);
         }
 
-        Chrome.FocusRing(height * 0.5f);
         dl.ChannelsSetCurrent(3);
         var max = min + size;
         dl.AddRectFilled(min, max, Theme.WithAlpha(Theme.Surface.Window, 0.9f), height * 0.5f);
@@ -1188,6 +1273,9 @@ public sealed class PathChart
         }
 
         dl.AddText(ImGui.GetFont(), captionSize, new Vector2(cx + arrow + Px(4f), cy - (captionSize * 0.5f)), Theme.MoonU32, Strings.PathJumpToTarget);
+
+        // The pill's ring on its own channel, after its fill (the button is still the last item).
+        Chrome.FocusRing(height * 0.5f);
         dl.ChannelsSetCurrent(0);
     }
 

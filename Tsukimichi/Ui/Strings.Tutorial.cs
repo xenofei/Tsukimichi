@@ -47,7 +47,7 @@ static partial class Strings
         public const string TreeTitle = "Pick a part of the journal";
         public const string TreeBody = "Sections, categories and genres narrow the table. Each ring fills as you complete its quests; a gold count means quests you can accept now.";
         public const string TableTitle = "Every quest, one row each";
-        public const string TableBody = "Click a header to sort and a row to read it. Right-click a row for pin, map flag and the in-game journal.";
+        public const string TableBody = "Click a header to sort and a row to read it. Right-click a row, or use the … at its end or the Menu key, for pin, map flag and the in-game journal.";
 
         // ---- Read ----
         public const string DetailTitle = "Why not this one";

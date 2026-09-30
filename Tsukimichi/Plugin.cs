@@ -76,6 +76,7 @@ public sealed class Plugin : IDalamudPlugin
     private Game.ItemHooks? itemHooks;
     private Game.NpcHooks? npcHooks;
     private Game.HookGateNotice? hookGateNotice;
+    private Game.TodoLockNotice? todoLockNotice;
     private TodoOverlay? todoOverlay;
 
     /// <summary>
@@ -498,6 +499,8 @@ public sealed class Plugin : IDalamudPlugin
                 MoonlitPane.Reveal(ui, quest);
             }, ClientState, Condition, Paths, PluginInterface, Log);
             windowSystem.AddWindow(todoOverlay);
+            // 0.8.0: Locked became click-through; a player who upgraded with it on is told once in chat.
+            todoLockNotice = new Game.TodoLockNotice(Settings, ClientState, ChatGui, PluginInterface, Log);
             command.ToggleTodoOverlay = todoOverlay.ToggleEnabled;
             configWindow.ResetTodoPosition = todoOverlay.ResetPosition;
 
@@ -507,10 +510,13 @@ public sealed class Plugin : IDalamudPlugin
             this.tutorial = tutorial;
             tutorial.WatchedWindow = mainWindow;
             PluginInterface.UiBuilder.Draw += tutorial.CheckFirstRun;
-            // The tour's keys (Enter, arrows, Backspace, Esc) are kept from the game while the tour has the keyboard.
+            // Enter, Backspace and Esc are kept from the game while the tour card has the keyboard (the arrows never are).
             tutorial.KeyState = KeyState;
             Framework.Update += tutorial.ConsumeKeys;
             mainWindow.AttachTutorial(tutorial);
+            // Esc that closes a popup or the filter panel is kept from the game (the Esc ladder, T17).
+            mainWindow.KeyState = KeyState;
+            Framework.Update += mainWindow.ConsumeEscape;
 
             // Each action opens the main window in front of the help window it was clicked in.
             var helpActions = new HelpActions(
@@ -582,7 +588,9 @@ public sealed class Plugin : IDalamudPlugin
         itemHooks?.Dispose();
         npcHooks?.Dispose();
         hookGateNotice?.Dispose();
+        todoLockNotice?.Dispose();
         PluginInterface.UiBuilder.OpenMainUi -= mainWindow.Toggle;
+        Framework.Update -= mainWindow.ConsumeEscape;
         PluginInterface.UiBuilder.Draw -= windowSystem.Draw;
         PluginInterface.UiBuilder.Draw -= UpdateUiMetrics;
         windowSystem.RemoveAllWindows();
@@ -624,6 +632,7 @@ public sealed class Plugin : IDalamudPlugin
             if (mainWindow is not null)
             {
                 PluginInterface.UiBuilder.OpenMainUi -= mainWindow.Toggle;
+                Framework.Update -= mainWindow.ConsumeEscape;
             }
 
             if (hoverHint is not null)
@@ -639,6 +648,7 @@ public sealed class Plugin : IDalamudPlugin
         Unwind("item hooks", () => itemHooks?.Dispose());
         Unwind("npc hooks", () => npcHooks?.Dispose());
         Unwind("hook gate notice", () => hookGateNotice?.Dispose());
+        Unwind("todo lock notice", () => todoLockNotice?.Dispose());
         Unwind("command", () => command?.Dispose());
         Unwind("todo overlay", () => todoOverlay?.Dispose());
         Unwind("server bar entry", () => dtrEntry?.Dispose());

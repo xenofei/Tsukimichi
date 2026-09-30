@@ -43,7 +43,7 @@ public sealed record PathRow(PathRowKind Kind)
     /// <summary>Steps a folded run holds, or alternatives a <see cref="PathRowKind.MoreAlternatives"/> line stands for.</summary>
     public int Count { get; init; }
 
-    /// <summary>A folded run's ordinal on the path (0, 1, …), the key its expanded state is remembered by; -1 otherwise.</summary>
+    /// <summary>A folded run's ordinal on the path (0, 1, …); -1 otherwise. The chart remembers an opened run by its first quest instead, which survives a re-numbering.</summary>
     public int RunIndex { get; init; } = -1;
 
     /// <summary>An alternative's quests still to do (<see cref="PathAlternative.RemainingCount"/>).</summary>
@@ -51,6 +51,9 @@ public sealed record PathRow(PathRowKind Kind)
 
     /// <summary>The Any join an alternative (or its "and N more") leads into.</summary>
     public uint JoinRowId { get; init; }
+
+    /// <summary>The quests a <see cref="PathRowKind.MoreAlternatives"/> line stands for (<see cref="JoinAlternatives.Overflow"/>); empty otherwise.</summary>
+    public IReadOnlyList<uint> OverflowRowIds { get; init; } = [];
 }
 
 /// <summary>
@@ -255,7 +258,13 @@ public static class PathRows
 
             if (join.More > 0)
             {
-                rows.Add(new PathRow(PathRowKind.MoreAlternatives) { Expansion = expansion, Count = join.More, JoinRowId = joinRowId });
+                var overflow = new uint[join.Overflow.Count];
+                for (var i = 0; i < overflow.Length; i++)
+                {
+                    overflow[i] = join.Overflow[i].RowId;
+                }
+
+                rows.Add(new PathRow(PathRowKind.MoreAlternatives) { Expansion = expansion, Count = join.More, JoinRowId = joinRowId, OverflowRowIds = overflow });
             }
 
             return;

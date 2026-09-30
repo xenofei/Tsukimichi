@@ -88,9 +88,8 @@ public sealed partial class CharactersPane
     private Dashboard? dashboard;
     private DashboardKey dashboardKey;
 
-    // Per-job ladders and named chains, built once per catalog bundle.
+    // Per-job ladders, built once per catalog bundle (the named chains are the session's).
     private JobLadder ladder = JobLadder.Empty;
-    private ChainCatalog chains = ChainCatalog.Empty;
     private CatalogBundle? derivedBundle;
 
     // Snapshot is null when the file could not be read at that capture time; the failure is cached too so an
@@ -101,11 +100,12 @@ public sealed partial class CharactersPane
     private int accountVersion = -1;
 
     // Compare with (V2-12): the chosen other character (null follows the most recent capture), the other characters'
-    // offline evaluations memoized per capture time and bundle, and the view model with its key.
+    // offline evaluations memoized per capture time, bundle and the server festivals they were resolved with (Live
+    // says those were the live character's flags, which change under a stored character), and the view model with its key.
     private ulong? compareTarget;
     private Compare? compare;
     private CompareKey compareKey;
-    private readonly Dictionary<ulong, (DateTime Taken, CatalogBundle Bundle, IReadOnlyDictionary<uint, QuestEvaluation>? States)> compareStates = [];
+    private readonly Dictionary<ulong, (DateTime Taken, CatalogBundle Bundle, ServerFestivals? Live, IReadOnlyDictionary<uint, QuestEvaluation>? States)> compareStates = [];
     private UniqueRewardCatalog? fallbackRewards;
 
     private string? toast;
@@ -1235,7 +1235,11 @@ public sealed partial class CharactersPane
             return session.LiveStates;
         }
 
-        if (compareStates.TryGetValue(item.ContentId, out var cached) && cached.Taken == item.TakenUtc && ReferenceEquals(cached.Bundle, bundle))
+        // Festivals run server-wide: while someone is logged in the live flags decide for every stored character, so a
+        // change of them (a login, a logout, an event starting) resolves the other character again.
+        var live = session.LiveSnapshot is { } liveSnapshot ? ServerFestivals.Of(liveSnapshot) : null;
+        if (compareStates.TryGetValue(item.ContentId, out var cached) && cached.Taken == item.TakenUtc && ReferenceEquals(cached.Bundle, bundle)
+            && (live is null ? cached.Live is null : live.SameAs(cached.Live)))
         {
             return cached.States;
         }
@@ -1245,7 +1249,7 @@ public sealed partial class CharactersPane
         {
             try
             {
-                states = StateResolver.ResolveAll(bundle.Catalog, snapshot, session.Context);
+                states = StateResolver.ResolveAll(bundle.Catalog, snapshot, ContextFor(snapshot));
             }
             catch (Exception ex)
             {
@@ -1253,9 +1257,17 @@ public sealed partial class CharactersPane
             }
         }
 
-        compareStates[item.ContentId] = (item.TakenUtc, bundle, states);
+        compareStates[item.ContentId] = (item.TakenUtc, bundle, live, states);
         return states;
     }
+
+    /// <summary>
+    /// The context another stored character is resolved with: the session's, with the festivals running on the server
+    /// for that character (<see cref="ServerFestivals.For"/>: the live flags while someone is logged in, else its own
+    /// less the stale ones) instead of the viewed character's.
+    /// </summary>
+    private EvalContext ContextFor(CharacterSnapshot snapshot) =>
+        session.Context with { ServerFestivals = ServerFestivals.For(snapshot, session.LiveSnapshot, session.Curated.Festivals, DateTime.UtcNow) };
 
     /// <summary>The Moonlit pane's merged catalog when attached; otherwise the shipped data and curated files, built once.</summary>
     private UniqueRewardCatalog RewardsCatalog()
@@ -1385,7 +1397,7 @@ public sealed partial class CharactersPane
         {
             try
             {
-                evaluation = StateResolver.Resolve(quest, snapshot, bundle.Catalog, session.Context);
+                evaluation = StateResolver.Resolve(quest, snapshot, bundle.Catalog, ContextFor(snapshot));
             }
             catch (Exception ex)
             {
@@ -1592,7 +1604,10 @@ public sealed partial class CharactersPane
             allowances);
     }
 
-    /// <summary>Ladders and chains follow the bundle; the chain warnings are logged once per rebuild.</summary>
+    /// <summary>
+    /// Ladders follow the bundle. Chains are the session's (<see cref="SessionState.Chains"/>, built and logged once per
+    /// bundle there), so the dashboard and the detail pane read the same catalog.
+    /// </summary>
     private void RefreshDerived(CatalogBundle? bundle)
     {
         if (ReferenceEquals(derivedBundle, bundle))
@@ -1602,7 +1617,6 @@ public sealed partial class CharactersPane
 
         derivedBundle = bundle;
         ladder = JobLadder.Empty;
-        chains = ChainCatalog.Empty;
         if (bundle is null)
         {
             return;
@@ -1611,15 +1625,10 @@ public sealed partial class CharactersPane
         try
         {
             ladder = bundle.BuildJobLadder();
-            chains = ChainCatalog.Build(bundle.Catalog, session.Curated);
-            foreach (var warning in chains.Warnings)
-            {
-                log.Warning("Chains: {Warning}", warning);
-            }
         }
         catch (Exception ex)
         {
-            log.Warning(ex, "Job ladders or chains could not be built for the dashboard");
+            log.Warning(ex, "Job ladders could not be built for the dashboard");
         }
     }
 
@@ -1697,6 +1706,7 @@ public sealed partial class CharactersPane
     private (ChainRow[] Started, ChainRow[] NotStarted) BuildChains(CatalogBundle? bundle)
     {
         var states = session.States;
+        var chains = session.Chains;
         if (bundle is null || states.Count == 0 || chains.Chains.Count == 0)
         {
             return ([], []);

@@ -148,6 +148,10 @@ public sealed class TablePane : IDisposable
     private uint? hoveredRow;
     private uint? hoveredNext;
 
+    // The row array hoveredRow was recorded against: a re-sort, filter or search hands out a new one, and the quest
+    // under the mouse last frame is somewhere else now, so it gets neither the lift nor a fade at its new place.
+    private QuestRow[]? hoverRows;
+
     // The row whose "…" button had keyboard focus last frame (it stays drawn while focused), and this frame's.
     private uint? moreFocusedRow;
     private uint? moreFocusedNext;
@@ -213,6 +217,17 @@ public sealed class TablePane : IDisposable
         }
 
         var rows = runner.Rows;
+        if (!ReferenceEquals(rows, hoverRows))
+        {
+            hoverRows = rows;
+            if (hoveredRow is { } moved)
+            {
+                // Snap its fill out instead of fading it where the row landed.
+                Motion.Lerp(HoverKeyTag | moved, 0f, float.MaxValue);
+                hoveredRow = null;
+            }
+        }
+
         if (runner.SproutCaption is { } caption)
         {
             // Sprout mode (T19): how much of the game is in reach, instead of the whole catalog.
@@ -622,10 +637,19 @@ public sealed class TablePane : IDisposable
         // itself) has keyboard focus: a left click, Enter or Space opens the same menu, so no action needs the right
         // button (accessibility A6).
         var mouseInRow = ImGui.IsWindowHovered() && ImGui.IsMouseHoveringRect(rowMin, rowMax);
+        if (mouseInRow)
+        {
+            // The "…" takes the hover from the selectable (AllowItemOverlap), so rowHovered alone would drop the
+            // row's fill while the pointer is on the button.
+            hoveredNext = quest.RowId;
+        }
+
         if (mouseInRow || rowFocused || moreFocusedRow == quest.RowId)
         {
-            var size = MathF.Min(layout.RowHeight, UiMetrics.MinTarget);
-            var moreMin = new Vector2(nameCellMin.X + nameCellWidth - size, rowMin.Y + ((layout.RowHeight - size) * 0.5f));
+            // Sized to the row's content, not its padded height: a button reaching into the cell padding would push
+            // the cell's CursorMaxPos down and make the hovered or focused row taller.
+            var size = MathF.Min(layout.RowContent, UiMetrics.MinTarget);
+            var moreMin = new Vector2(nameCellMin.X + nameCellWidth - size, nameCellMin.Y + ((layout.RowContent - size) * 0.5f));
             if (Keyboard.MoreButton("##more", RowMenuId, moreMin, size))
             {
                 SelectFromTable(quest.RowId);
@@ -824,7 +848,7 @@ public sealed class TablePane : IDisposable
         ImGui.PushFont(UiBuilder.IconFont);
         var size = ImGui.CalcTextSize(StoryBadgeIcon);
         var x = MathF.Max(cellMin.X, MathF.Min(afterName, cellMin.X + cellWidth - size.X));
-        dl.AddText(new Vector2(x, cellMin.Y + (rowContent - size.Y) * 0.5f), Theme.DuskU32, StoryBadgeIcon);
+        dl.AddText(new Vector2(x, cellMin.Y + (rowContent - size.Y) * 0.5f), Theme.U32(Theme.Surface.TextTertiary), StoryBadgeIcon);
         ImGui.PopFont();
         return new Vector2(x, size.X);
     }

@@ -125,6 +125,19 @@ public static class Theme
     /// <summary>Whether <see cref="Surface"/> is mapped from the user's Dalamud style this frame.</summary>
     public static bool FollowingDalamud { get; private set; }
 
+    /// <summary>
+    /// Gold for text and small ink (pill labels, the active tab icon): <see cref="Moon"/>, or under "Follow Dalamud
+    /// colours" Moon pushed towards the palette's text colour until it reads at 4.5 : 1 on the window, so a light
+    /// Dalamud style gets a deep gold instead of Moon's 1.4 : 1. Fills, rims and glyphs keep Moon.
+    /// </summary>
+    public static Vector4 Accent { get; private set; } = Moon;
+
+    /// <summary><see cref="Accent"/> packed for ImDrawList calls.</summary>
+    public static uint AccentU32 { get; private set; } = MoonU32;
+
+    /// <summary><see cref="MoonDim"/> as text, made to read on the palette the way <see cref="Accent"/> is.</summary>
+    public static Vector4 AccentDim { get; private set; } = MoonDim;
+
     /// <summary>The host style's window background alpha as of the last <see cref="Refresh"/>; <see cref="PushNightWindow"/> keeps it.</summary>
     private static float hostWindowAlpha = 1f;
 
@@ -150,6 +163,10 @@ public static class Theme
                 colors[(int)ImGuiCol.Text],
                 colors[(int)ImGuiCol.TextDisabled])
             : NightSurface;
+        var s = Surface;
+        Accent = followDalamud ? ColorMath.EnsureContrast(Moon, s.Text, s.Window, SurfaceColors.TextMinContrast) : Moon;
+        AccentDim = followDalamud ? ColorMath.EnsureContrast(MoonDim, s.Text, s.Window, SurfaceColors.TextMinContrast) : MoonDim;
+        AccentU32 = Pack(Accent);
     }
 
     /// <summary>Text color for a state badge next to a glyph.</summary>

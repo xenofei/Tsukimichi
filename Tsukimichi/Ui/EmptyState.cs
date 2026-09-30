@@ -21,7 +21,6 @@ public static class EmptyState
     /// <summary><see cref="DrawWithAction"/>: the action button was clicked.</summary>
     public const int ActionClicked = -1;
 
-    private const float HeadingScale = 1.2f;
     private const float MaxColumn = 360f;
 
     /// <summary>Draws the moon and <paramref name="guidance"/> centred in the current window's remaining region.</summary>
@@ -46,7 +45,7 @@ public static class EmptyState
 
     /// <summary>
     /// The full empty state centred in the remaining region: a moon (<paramref name="moon"/>: the veiled moon for
-    /// "nothing here yet", Blocked's new moon for "nothing matches"), <paramref name="heading"/> at 1.2× in the primary
+    /// "nothing here yet", Blocked's new moon for "nothing matches"), <paramref name="heading"/> in the display role (1.2×) in the primary
     /// tone, <paramref name="body"/> wrapped in the secondary tone, one chip per <paramref name="chips"/> entry and a
     /// gold pill for <paramref name="action"/> (none when null). Returns <see cref="ActionClicked"/>, the index of the
     /// chip clicked, or <see cref="NothingClicked"/>.
@@ -63,7 +62,12 @@ public static class EmptyState
         var column = MathF.Max(UiMetrics.Px(120f), MathF.Min(avail.X - UiMetrics.Px(16f), UiMetrics.Px(MaxColumn)));
         var font = ImGui.GetFont();
         var fontSize = ImGui.GetFontSize();
-        var headingSize = ImGui.CalcTextSize(heading) * HeadingScale;
+        Vector2 headingSize;
+        using (Typography.Display())
+        {
+            headingSize = ImGui.CalcTextSize(heading);
+        }
+
         var bodySize = ImGui.CalcTextSize(body, false, column);
         var chipHeight = MathF.Max(UiMetrics.Px(22f), ImGui.GetTextLineHeight() + UiMetrics.Px(4f));
         var chipRows = ChipRows(chips, column);
@@ -77,7 +81,12 @@ public static class EmptyState
         MoonGlyph.Draw(dl, new Vector2(centerX, top + radius), radius, moon);
         var y = top + (radius * 2f) + gap;
         var s = Theme.Surface;
-        dl.AddText(font, fontSize * HeadingScale, new Vector2(centerX - (headingSize.X * 0.5f), y), Theme.U32(s.Text), heading);
+        using (Typography.Display())
+        {
+            // The display role's font is pushed (with its atlas texture) while the heading is drawn.
+            dl.AddText(ImGui.GetFont(), ImGui.GetFontSize(), new Vector2(centerX - (headingSize.X * 0.5f), y), Theme.U32(s.Text), heading);
+        }
+
         y += headingSize.Y + UiMetrics.Px(4f);
         dl.AddText(font, fontSize, new Vector2(centerX - (bodySize.X * 0.5f), y), Theme.U32(s.TextSecondary), body, column);
         y += bodySize.Y + gap;
@@ -131,7 +140,7 @@ public static class EmptyState
             var rounding = size.Y * 0.5f;
             dl.AddRectFilled(min, min + size, Theme.WithAlpha(Theme.Moon, held ? 0.28f : hovered ? 0.22f : 0.16f), rounding);
             dl.AddRect(min, min + size, Theme.WithAlpha(Theme.Moon, 0.45f), rounding, ImDrawFlags.None, UiMetrics.Hairline);
-            dl.AddText(min + ((size - labelSize) * 0.5f), Theme.MoonU32, action);
+            dl.AddText(min + ((size - labelSize) * 0.5f), Theme.AccentU32, action);
             Chrome.FocusRing(rounding);
         }
 

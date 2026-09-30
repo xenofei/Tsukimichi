@@ -687,7 +687,8 @@ public sealed class TodoOverlay : Window, IDisposable
             ladder = bundle.BuildJobLadder();
         }
 
-        // Seasonal events from the snapshot's running festivals (the evaluator's Active flag), ends from curated data only.
+        // Seasonal events running on the server (SessionState.ServerFestivals: the live flags, or the viewed snapshot's
+        // less those a passed curated end shows to be stale, the set the states were resolved with); ends from curated data only.
         var now = DateTime.UtcNow;
         IReadOnlyList<RunningFestival> running = settings.TodoShowSeasonal
             ? SeasonalNow.Running(bundle.Catalog, session.ServerFestivals, session.States, session.Curated.Festivals, now)

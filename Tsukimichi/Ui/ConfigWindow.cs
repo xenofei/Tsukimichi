@@ -690,12 +690,24 @@ public sealed class ConfigWindow : Window
         if (ImGui.Checkbox(Strings.TodoConfigLocked, ref locked))
         {
             settings.TodoOverlayLocked = locked;
+            if (!locked)
+            {
+                // Unlocked: the upgrade notice has done its job.
+                settings.TodoLockNoticeDue = false;
+            }
+
             Save();
         }
 
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
             UiMetrics.Tooltip(Strings.TodoConfigLockedHint);
+        }
+
+        if (settings.TodoLockNoticeDue && settings.TodoOverlayLocked)
+        {
+            using var accent = Theme.PushText(Theme.Accent);
+            ImGui.TextWrapped(Strings.TodoLockUpgradeNotice);
         }
 
         var compact = settings.TodoOverlayCompact;

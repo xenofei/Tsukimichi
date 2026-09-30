@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using Dalamud.Plugin.Services;
 using Tsukimichi.Core.Chains;
+using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Storage;
@@ -47,8 +48,8 @@ public sealed class QueryRunner : IDisposable
     private int countsVersion = -1;
     private bool countsIncludeUnlisted;
 
-    // Festivals of the viewed snapshot, rebuilt when the snapshot instance changes.
-    private CharacterSnapshot? festivalsSnapshot;
+    // The festivals running on the server for the viewed character (SessionState.ServerFestivals), rebuilt when they change.
+    private ServerFestivals? festivalsServer;
     private HashSet<ushort> festivals = NoFestivals;
 
     // The Sprout caption's reach count, rebuilt once per session version and catalog.
@@ -130,7 +131,7 @@ public sealed class QueryRunner : IDisposable
 
     /// <summary>
     /// The book badge's hover line for a story sidequest: "Part of a side story: &lt;chain&gt; (3 of 7)", the chain
-    /// named through the spoiler shield, or the one-quest line. Built on hover only.
+    /// named through the spoiler shield, or the one-quest line. Built on the first hovered frame and cached.
     /// </summary>
     public string StoryBadgeText(uint rowId)
     {
@@ -139,9 +140,26 @@ public sealed class QueryRunner : IDisposable
             return Strings.StoryBadgeLone;
         }
 
+        // Built once per row and session version (spoiler reveals bump it too), so a hover held over the badge
+        // allocates nothing after its first frame.
+        if (storyBadgeText is { } cached && storyBadgeRowId == rowId && storyBadgeVersion == session.Version && ReferenceEquals(storyBadgeBundle, bundle))
+        {
+            return cached;
+        }
+
         var title = ChainCatalog.Title(chain, id => session.Spoilers.DisplayName(bundle.Catalog, id, id.ToString(CultureInfo.InvariantCulture)));
-        return string.Format(CultureInfo.CurrentCulture, Strings.StoryBadgeFormat, title, ChainCatalog.IndexOf(chain, rowId) + 1, chain.RowIds.Count);
+        storyBadgeRowId = rowId;
+        storyBadgeVersion = session.Version;
+        storyBadgeBundle = bundle;
+        storyBadgeText = string.Format(CultureInfo.CurrentCulture, Strings.StoryBadgeFormat, title, ChainCatalog.IndexOf(chain, rowId) + 1, chain.RowIds.Count);
+        return storyBadgeText;
     }
+
+    // StoryBadgeText's one-entry cache: the row, session version and catalog it was built for.
+    private uint storyBadgeRowId;
+    private int storyBadgeVersion = -1;
+    private CatalogBundle? storyBadgeBundle;
+    private string? storyBadgeText;
 
     /// <summary>Search text the current rows were computed with (after debounce).</summary>
     public string AppliedSearch => appliedSearch;
@@ -434,10 +452,14 @@ public sealed class QueryRunner : IDisposable
     private void Run(SessionState session, CatalogBundle current, DateTime nowUtc)
     {
         var snapshot = session.ViewedSnapshot;
-        if (!ReferenceEquals(snapshot, festivalsSnapshot))
+
+        // Festivals are server-wide: a stored character on view gets the live character's flags (or its own, less the
+        // stale ones), the same set its states were resolved with, so "Seasonal active" and the states agree.
+        var server = session.ServerFestivals;
+        if (!server.SameAs(festivalsServer))
         {
-            festivalsSnapshot = snapshot;
-            festivals = snapshot is null || snapshot.ActiveFestivals.Count == 0 ? NoFestivals : new HashSet<ushort>(snapshot.ActiveFestivals);
+            festivalsServer = server;
+            festivals = server.Ids.Count == 0 ? NoFestivals : new HashSet<ushort>(server.Ids);
         }
 
         var ctx = new QueryContext(

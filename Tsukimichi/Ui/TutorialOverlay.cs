@@ -25,8 +25,9 @@ namespace Tsukimichi.Ui;
 /// glow; the card is a small ImGui window beside the target, flipping sides near the screen edge. The card carries a
 /// chapter strip (click to jump), the step within its chapter, title, body and Back / Next / Close.
 /// Keys while the tour runs and the card or the main window has focus (not while typing): Enter or → next, ← or
-/// Backspace back, Esc closes (on the first-run offer, Esc means Later). <see cref="ConsumeKeys"/> keeps those keys
-/// from the game meanwhile, so Enter does not also open the chat box.
+/// Backspace back, Esc closes (on the first-run offer, Esc means Later). While the card itself has focus,
+/// <see cref="ConsumeKeys"/> keeps Enter, Esc and Backspace from the game, so Enter does not also open the chat box; the
+/// arrows always reach the game too, so the camera still turns during the tour.
 /// On first run the welcome card offers the tour with "Take the tour", "Later" (offered again next session, up to
 /// <see cref="LaterLimit"/> times) and "Don't offer again". The tab, the filter panel and the other window state the
 /// tour changes are put back when it ends. Sizes follow <see cref="UiMetrics.Scale"/> and the card's text follows the
@@ -53,7 +54,6 @@ public sealed class TutorialOverlay : ITutorial
     /// previous step.
     /// </summary>
     private const int CardSettleFrames = 2;
-    private const float TitleScale = 1.2f;
     private const float DimAlpha = 0.7f;
 
     /// <summary>Two holes (target and card) split the area into at most 4² pieces.</summary>
@@ -246,6 +246,7 @@ public sealed class TutorialOverlay : ITutorial
     {
         if (!Active)
         {
+            popupDepthAtEnd = 0;
             return;
         }
 
@@ -295,7 +296,16 @@ public sealed class TutorialOverlay : ITutorial
         {
             focusCard = true;
         }
+
+        popupDepthAtEnd = ImGui.GetCurrentContext().OpenPopupStack.Size;
     }
+
+    /// <summary>
+    /// How many popups were open when the last frame's Draw ended. ImGui's keyboard navigation can close a popup on
+    /// Esc in NewFrame, before this frame's <see cref="HandleKeys"/> runs, so <see cref="AnyPopupOpen"/> alone would let
+    /// the same press close the tour too; a popup open last frame means this frame's keys were the popup's.
+    /// </summary>
+    private int popupDepthAtEnd;
 
     private static bool AnyMouseReleased() =>
         ImGui.IsMouseReleased(ImGuiMouseButton.Left) || ImGui.IsMouseReleased(ImGuiMouseButton.Right) || ImGui.IsMouseReleased(ImGuiMouseButton.Middle);
@@ -344,6 +354,7 @@ public sealed class TutorialOverlay : ITutorial
         offering = false;
         stepChanged = true;
         keysOwned = false;
+        cardHasKeys = false;
         if (seen && !settings.TutorialCompleted)
         {
             settings.TutorialCompleted = true;
@@ -396,15 +407,16 @@ public sealed class TutorialOverlay : ITutorial
     }
 
     /// <summary>
-    /// <c>Framework.Update</c> handler: while the tour owns the keyboard (<see cref="keysOwned"/>, decided on the last
-    /// draw), clears its keys from the game's key state before the game reads them, so Enter does not also open the
-    /// chat box and Esc does not also open the system menu. Dalamud passes keys to the game unless a text input is
+    /// <c>Framework.Update</c> handler: while the card itself has the keyboard (<see cref="cardHasKeys"/>, decided on the
+    /// last draw), clears Enter, Esc and Backspace from the game's key state before the game reads them, so Enter does
+    /// not also open the chat box and Esc does not also open the system menu. The arrows are left alone (the camera
+    /// turns with them), and nothing is cleared while only the main window has focus. Dalamud passes keys to the game unless a text input is
     /// active; ImGui still receives them through its own window messages.
     /// </summary>
     public void ConsumeKeys(IFramework framework)
     {
         // Only right after a draw that owned them: a tour paused by closing the main window gives the keys back.
-        if (!keysOwned || Environment.TickCount64 - keysOwnedAt > KeysOwnedGraceMs || KeyState is not { } keys)
+        if (!cardHasKeys || Environment.TickCount64 - keysOwnedAt > KeysOwnedGraceMs || KeyState is not { } keys)
         {
             return;
         }
@@ -421,10 +433,13 @@ public sealed class TutorialOverlay : ITutorial
     /// <summary>The game's key state, for <see cref="ConsumeKeys"/>; null leaves the game's keys alone.</summary>
     public IKeyState? KeyState { get; set; }
 
-    private static readonly VirtualKey[] TourKeys = [VirtualKey.RETURN, VirtualKey.ESCAPE, VirtualKey.LEFT, VirtualKey.RIGHT, VirtualKey.BACK];
+    private static readonly VirtualKey[] TourKeys = [VirtualKey.RETURN, VirtualKey.ESCAPE, VirtualKey.BACK];
 
     /// <summary>Whether the tour answered keys on the last draw: the card or the main window had focus and nothing was being typed.</summary>
     private bool keysOwned;
+
+    /// <summary>Whether the card window itself had focus (not only the main window) when <see cref="keysOwned"/> was decided.</summary>
+    private bool cardHasKeys;
 
     /// <summary>When <see cref="keysOwned"/> was last decided (<see cref="Environment.TickCount64"/>).</summary>
     private long keysOwnedAt;
@@ -439,9 +454,11 @@ public sealed class TutorialOverlay : ITutorial
     /// </summary>
     private void HandleKeys(bool mainFocused)
     {
-        keysOwned = Active && !ImGui.GetIO().WantTextInput && (mainFocused || ImGui.IsWindowFocused(ImGuiFocusedFlags.RootAndChildWindows));
+        var cardFocused = ImGui.IsWindowFocused(ImGuiFocusedFlags.RootAndChildWindows);
+        keysOwned = Active && !ImGui.GetIO().WantTextInput && (mainFocused || cardFocused);
+        cardHasKeys = keysOwned && cardFocused;
         keysOwnedAt = Environment.TickCount64;
-        if (!keysOwned || stepChanged || ImGui.IsAnyItemActive() || AnyPopupOpen())
+        if (!keysOwned || stepChanged || ImGui.IsAnyItemActive() || AnyPopupOpen() || popupDepthAtEnd > 0)
         {
             return;
         }
@@ -623,13 +640,12 @@ public sealed class TutorialOverlay : ITutorial
             ImGui.TextDisabled(progress[index]);
         }
 
-        ImGui.SetWindowFontScale(UiMetrics.FontScale * TitleScale);
+        using (Typography.Display())
         using (Theme.PushText(Theme.Moon))
         {
             ImGui.TextUnformatted(step.Title);
         }
 
-        ImGui.SetWindowFontScale(UiMetrics.FontScale);
         ImGui.TextWrapped(step.Body);
         if (step.Kind == StepKind.Legend)
         {

@@ -137,18 +137,17 @@ public static class Chrome
             return;
         }
 
+        // The title in the caption role (ui-revamp §4.2 "Section title": 0.85× + icon, same as Caption), the icon at
+        // the same size, so the header row is one size.
+        using var caption = Typography.Caption();
         if (icon is not null)
         {
-            ImGui.PushFont(UiBuilder.IconFont);
             ImGui.PushStyleColor(ImGuiCol.Text, Theme.Surface.TextSecondary);
-            ImGui.TextUnformatted(icon);
+            Typography.Icon(icon);
             ImGui.PopStyleColor();
-            ImGui.PopFont();
-            ImGui.SameLine(0f, UiMetrics.Px(8f));
+            ImGui.SameLine(0f, UiMetrics.Px(6f));
         }
 
-        // The title in the display role (T17): the display game font at 1.2× the body.
-        using var display = Typography.Display();
         ImGui.PushStyleColor(ImGuiCol.Text, Theme.Surface.Text);
         ImGui.TextUnformatted(title);
         ImGui.PopStyleColor();
