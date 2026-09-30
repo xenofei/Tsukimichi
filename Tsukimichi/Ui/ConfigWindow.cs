@@ -218,10 +218,29 @@ public sealed class ConfigWindow : Window
         SaveWhenReleased();
         ImGui.TextDisabled(Strings.ConfigIconScaleHint);
 
+        // Density: the quest table's row height only (T12).
+        ImGui.TextUnformatted(Strings.ConfigDensity);
+        ImGui.SameLine();
+        if (ImGui.RadioButton(Strings.ConfigDensityComfortable, settings.Density == RowDensity.Comfortable))
+        {
+            settings.Density = RowDensity.Comfortable;
+            Save();
+        }
+
+        ImGui.SameLine();
+        if (ImGui.RadioButton(Strings.ConfigDensityDense, settings.Density == RowDensity.Dense))
+        {
+            settings.Density = RowDensity.Dense;
+            Save();
+        }
+
+        ImGui.TextDisabled(Strings.ConfigDensityHint);
+
         var reduceMotion = settings.ReduceMotion;
         if (ImGui.Checkbox(Strings.ConfigReduceMotion, ref reduceMotion))
         {
             settings.ReduceMotion = reduceMotion;
+            settings.ReduceMotionChosen = true;
             Save();
         }
 

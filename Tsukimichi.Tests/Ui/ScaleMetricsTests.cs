@@ -197,6 +197,26 @@ public class ScaleMetricsTests
         Assert.Equal(row, ScaleMetrics.TreeRowHeight(line, r, uiScale), 1);
     }
 
+    [Theory]
+    [InlineData(RowDensity.Dense, 1f, 20.7f, 2f, 20.7f)]        // content already fills 24 px with padding
+    [InlineData(RowDensity.Dense, 1f, 16f, 2f, 20f)]
+    [InlineData(RowDensity.Comfortable, 1f, 20.7f, 2f, 28f)]
+    [InlineData(RowDensity.Comfortable, 2f, 20.7f, 4f, 56f)]    // 4K: the host's global scale doubles the target
+    [InlineData(RowDensity.Comfortable, 1f, 40f, 2f, 40f)]       // UiScale 1.6 + IconScale 2: content wins
+    [InlineData((RowDensity)7, 1f, 16f, 2f, 28f)]                // an unknown value reads as Comfortable
+    public void Table_rows_follow_the_density_but_never_clip_their_content(RowDensity density, float global, float content, float padding, float expected)
+    {
+        Assert.Equal(expected, ScaleMetrics.TableRowContent(density, global, content, padding), 3);
+    }
+
+    [Fact]
+    public void Comfortable_is_the_default_density()
+    {
+        Assert.Equal(RowDensity.Comfortable, default(RowDensity));
+        Assert.Equal(24f, ScaleMetrics.TableRowTarget(RowDensity.Dense));
+        Assert.Equal(32f, ScaleMetrics.TableRowTarget(RowDensity.Comfortable));
+    }
+
     [Fact]
     public void Tree_glyph_guards_bad_input()
     {

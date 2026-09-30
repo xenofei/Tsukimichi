@@ -36,6 +36,12 @@ public static class UiMetrics
     /// <summary>The user's icon scale alone (clamped), without the global and UI scales: the tree glyph's line factor.</summary>
     public static float IconFactor { get; private set; } = 1f;
 
+    /// <summary>Dalamud's global scale alone, as of the last <see cref="Update"/>.</summary>
+    public static float GlobalScale { get; private set; } = 1f;
+
+    /// <summary><see cref="Configuration.Density"/> as of the last <see cref="Update"/>: the quest table's row height.</summary>
+    public static RowDensity Density { get; private set; } = RowDensity.Comfortable;
+
     /// <summary><see cref="Configuration.ReduceMotion"/> as of the last <see cref="Update"/>: animated gauges draw as text.</summary>
     public static bool ReduceMotion { get; private set; }
 
@@ -48,6 +54,8 @@ public static class UiMetrics
         Scale = ScaleMetrics.LayoutFactor(global, settings.UiScale);
         IconScale = ScaleMetrics.IconFactor(global, settings.UiScale, settings.IconScale);
         IconFactor = ScaleMetrics.ClampIconScale(settings.IconScale);
+        GlobalScale = ScaleMetrics.SafeGlobalScale(global);
+        Density = settings.Density;
         ReduceMotion = settings.ReduceMotion;
     }
 
@@ -97,6 +105,13 @@ public static class UiMetrics
 
     /// <summary>Content height of a table row holding a moon, an icon and a line of text.</summary>
     public static float RowContentHeight(float lineHeight) => MathF.Max(lineHeight, MathF.Max(RowIconSize, RowGlyphRadius * 2.4f));
+
+    /// <summary>
+    /// Content height of a quest table row under the current <see cref="Density"/>: 24 or 32 px at Dalamud's scale less
+    /// the cell padding, never less than <see cref="RowContentHeight"/> (T12).
+    /// </summary>
+    public static float TableRowContentHeight(float lineHeight, float cellPaddingY) =>
+        ScaleMetrics.TableRowContent(Density, GlobalScale, RowContentHeight(lineHeight), cellPaddingY);
 
     // Layout.
     public static float ChipHeight => ImGui.GetFrameHeight();

@@ -3,6 +3,16 @@ using System.Numerics;
 
 namespace Tsukimichi.Core.Ui;
 
+/// <summary>Quest table row density (Settings › Display). Only the table's rows change; the tree keeps its 30 px floor.</summary>
+public enum RowDensity
+{
+    /// <summary>32 px rows, the default.</summary>
+    Comfortable = 0,
+
+    /// <summary>24 px rows.</summary>
+    Dense = 1,
+}
+
 /// <summary>
 /// The pure arithmetic behind the main window's size system: the user's UI scale multiplies Dalamud's global scale
 /// for every layout pixel and the font, and the icon scale multiplies that again for moons and icons. Lives in Core
@@ -86,6 +96,22 @@ public static class ScaleMetrics
         var line = float.IsFinite(lineHeight) ? lineHeight : 0f;
         var scale = float.IsFinite(layoutScale) && layoutScale > 0f ? layoutScale : 1f;
         return MathF.Max(TreeRowMinHeight, MathF.Max(line, 2f * glyphRadius + TreeRowPaddingLogical * scale));
+    }
+
+    /// <summary>Quest table row height in Dalamud-scaled pixels for each density (T12): Dense 24, Comfortable 32.</summary>
+    public static float TableRowTarget(RowDensity density) => density == RowDensity.Dense ? 24f : 32f;
+
+    /// <summary>
+    /// A quest table row's content height (the row minus its cell padding): the density's target at the host's global
+    /// scale, never less than what the moon, icon and text need (<paramref name="minContent"/>), so large UI scales
+    /// still fit. Unknown density values read as Comfortable.
+    /// </summary>
+    public static float TableRowContent(RowDensity density, float globalScale, float minContent, float cellPaddingY)
+    {
+        var target = TableRowTarget(Enum.IsDefined(density) ? density : RowDensity.Comfortable) * SafeGlobalScale(globalScale);
+        var padding = float.IsFinite(cellPaddingY) ? MathF.Max(0f, cellPaddingY) : 0f;
+        var floor = float.IsFinite(minContent) ? MathF.Max(0f, minContent) : 0f;
+        return MathF.Max(floor, target - 2f * padding);
     }
 
     /// <summary>

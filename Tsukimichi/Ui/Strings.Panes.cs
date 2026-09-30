@@ -322,7 +322,11 @@ static partial class Strings
     public const string ConfigIconScale = "Icon scale";
     public const string ConfigIconScaleHint = "Moon glyphs, reward icons and toolbar buttons.";
     public const string ConfigReduceMotion = "Reduce motion";
-    public const string ConfigReduceMotionHint = "Hold-to-confirm buttons count down in text instead of filling an arc.";
+    public const string ConfigReduceMotionHint = "Hold-to-confirm buttons count down in text instead of filling an arc. Until you change it here, it follows Windows' \"Show animations\" setting.";
+    public const string ConfigDensity = "Table rows";
+    public const string ConfigDensityComfortable = "Comfortable";
+    public const string ConfigDensityDense = "Dense";
+    public const string ConfigDensityHint = "Height of the quest table's rows; the Journal tree keeps its size.";
     public const string ConfigSectionHelp = "Help";
     public const string ConfigShowHelp = "Show help";
     public const string ConfigStartTutorial = "Start tutorial";
