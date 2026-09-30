@@ -64,6 +64,8 @@ Tsukimichi reads the game's quest sheets from your installed client and your cha
 - the **target bar's menu on an NPC**: it adds a "Tsukimichi: quests here (N)" entry on a quest-giving NPC that opens the Journal on that NPC's quests (Settings › Integrations); it reads only the NPC's kind and id, never a player's, and stores nothing;
 - the **server info bar**: a "☾ N" entry with the count of quests you can start here (Nearby quests › cog).
 
+All four are tested on a specific game version, recorded in each release. After a game patch they pause themselves until a Tsukimichi update has been tested on the new version, so a patch that moves the game's interface cannot leave a panel or menu entry misbehaving; a chat line and a notice in Settings › Integrations say so, and the quest journal and everything else keep working. Settings › Integrations › "Enable game hooks on untested versions" runs them anyway.
+
 Everything else is a Dalamud window. It also talks to two other plugins over Dalamud IPC when they are present: Wotsit (to register searchable entries) and Lifestream (to teleport when you click Teleport).
 
 It never automates anything: it does not move your character, accept or turn in quests, skip dialogue or press anything for you. Teleport to the giver is a button you click, handed to Lifestream. Map flags, journal pages and chat links use the game's own functions.
