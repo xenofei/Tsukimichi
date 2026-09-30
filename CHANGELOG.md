@@ -4,6 +4,9 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+### Added
+- Duty Finder unlock hint: select a padlocked duty in the Duty Finder or Raid Finder and a small panel beside the window names the quest that unlocks it, with its moon and what it is waiting for, and buttons to reveal it in Tsukimichi or flag its giver on the map. Nothing shows for a duty you have unlocked or one no known quest unlocks; it follows the character you are logged in on and your spoiler shield, and never queues or opens a duty. The curated unlock data gains the Crystal Tower and Shadow of Mhach alliance raids, nine Heavensward optional dungeons, five A Realm Reborn hard dungeons and three extreme trials. Like the other game hooks it pauses on an untested game version. Settings › Integrations › "Duty Finder unlock hint" (on by default); Help › Known quirks explains it.
+
 ## [0.8.0] - 2026-09-29
 
 ### Added

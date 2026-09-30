@@ -403,8 +403,8 @@ public sealed class Plugin : IDalamudPlugin
             // Item hover hints and context-menu links (V2-14). The lookup follows the Moonlit catalog reference (rebuilt
             // after an override change) and the quest catalog (set once the build finishes); both are read per use.
             var rewardLookup = new Core.Unique.RewardLookupSource(() => moonlit.Catalog, () => Session.Bundle?.Catalog);
-            // Addon kill switch (T20): the four game hooks below (hover hint, item and NPC menu entries, server info
-            // bar entry) run only while this gate allows them, that is on the game version they were play-tested on
+            // Addon kill switch (T20): the five game hooks below (hover hint, item and NPC menu entries, Duty Finder
+            // unlock hint, server info bar entry) run only while this gate allows them, that is on the game version they were play-tested on
             // (the csproj's TsukimichiTestedGameVersion) or with "Enable game hooks on this untested version" ticked for the running version. It is
             // one shared service: anything else drawn beside a game addon, the Duty Finder unlock hint of 0.9.0 (P13)
             // first, takes this instance and follows its Changed event. The client version is read once here.
