@@ -1,4 +1,22 @@
 {
+  "65594": {
+    "label": "Guildhests",
+    "kind": "system",
+    "note": "Simply the Hest; the wiki quest page lists guildhests under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Simply_the_Hest_(Ul'dah)"
+  },
+  "65595": {
+    "label": "Guildhests",
+    "kind": "system",
+    "note": "Simply the Hest; the wiki quest page lists guildhests under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Simply_the_Hest_(Limsa_Lominsa)"
+  },
+  "65596": {
+    "label": "Guildhests",
+    "kind": "system",
+    "note": "Simply the Hest; the wiki quest page lists guildhests under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Simply_the_Hest_(Gridania)"
+  },
   "65688": {
     "label": "Desynthesis",
     "kind": "system",
@@ -23,6 +41,18 @@
     "label": "Triple Triad",
     "kind": "system",
     "note": "Triple Triad Trial; unlocks Triple Triad play and card collection."
+  },
+  "66024": {
+    "label": "Mini Cactpot",
+    "kind": "system",
+    "note": "Scratch It Rich; the wiki quest page lists the Mini Cactpot under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Scratch_It_Rich"
+  },
+  "66025": {
+    "label": "Jumbo Cactpot",
+    "kind": "system",
+    "note": "Hitting the Cactpot; the wiki quest page lists the Jumbo Cactpot under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Hitting_the_Cactpot"
   },
   "66174": {
     "label": "Materia extraction",
@@ -69,6 +99,12 @@
     "kind": "system",
     "note": "The Weaponsmith of Legend; first quest of the ARR relic chain."
   },
+  "66338": {
+    "label": "White Wolf Gate (New Gridania)",
+    "kind": "system",
+    "note": "Broadening Horizons; the wiki quest page lists passage through the White Wolf Gate under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Broadening_Horizons"
+  },
   "66640": {
     "label": "PvP",
     "kind": "system",
@@ -84,6 +120,12 @@
     "kind": "system",
     "note": "A Pup No Longer (Immortal Flames); unlocks the Wolves' Den and PvP duties."
   },
+  "66698": {
+    "label": "Chocobo saddlebag",
+    "kind": "system",
+    "note": "My Feisty Little Chocobo; the wiki quest page lists the chocobo saddlebag and companion training under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/My_Feisty_Little_Chocobo"
+  },
   "66746": {
     "label": "Aesthetician",
     "kind": "system",
@@ -94,10 +136,46 @@
     "kind": "system",
     "note": "Treasures and Tribulations; unlocks treasure map deciphering."
   },
+  "66748": {
+    "label": "Housing (the Lavender Beds)",
+    "kind": "system",
+    "note": "Where the Heart Is (The Lavender Beds); the wiki quest page lists housing in the Lavender Beds under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Where_the_Heart_Is_(The_Lavender_Beds)"
+  },
+  "66749": {
+    "label": "Housing (the Goblet)",
+    "kind": "system",
+    "note": "Where the Heart Is (The Goblet); the wiki quest page lists housing in the Goblet under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Where_the_Heart_Is_(The_Goblet)"
+  },
+  "66750": {
+    "label": "Housing (Mist)",
+    "kind": "system",
+    "note": "Where the Heart Is (Mist); the wiki quest page lists housing in Mist under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Where_the_Heart_Is_(Mist)"
+  },
   "66957": {
     "label": "Glamour (Mor Dhona legacy)",
     "kind": "system",
     "note": "A Self-improving Man; original 2.x glamour unlock, retained for characters that completed it before the rework."
+  },
+  "66958": {
+    "label": "Master recipes: glamours",
+    "kind": "system",
+    "note": "Submission Impossible; the wiki quest page lists the glamour master recipes under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Submission_Impossible"
+  },
+  "66959": {
+    "label": "Master recipes: crafting",
+    "kind": "system",
+    "note": "Just Tooling Around; the wiki quest page lists the crafting master recipes under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Just_Tooling_Around"
+  },
+  "66967": {
+    "label": "Challenge Log",
+    "kind": "system",
+    "note": "Rising to the Challenge; the wiki quest page lists the Challenge Log under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Rising_to_the_Challenge"
   },
   "66968": {
     "label": "Retainers",
@@ -114,6 +192,12 @@
     "kind": "system",
     "note": "An Ill-conceived Venture (Ul'dah variant, SubCts813); unlocks retainer hire."
   },
+  "66999": {
+    "label": "Materia transmutation",
+    "kind": "system",
+    "note": "Marvelously Mutable Materia; the wiki quest page lists materia transmutation under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Marvelously_Mutable_Materia"
+  },
   "67087": {
     "label": "Custom deliveries: Zhloe Aliapoh",
     "kind": "system",
@@ -123,6 +207,12 @@
     "label": "Palace of the Dead",
     "kind": "system",
     "note": "The House That Death Built; unlocks the Palace of the Dead."
+  },
+  "67094": {
+    "label": "Augmented artifact armor",
+    "kind": "system",
+    "note": "Simply to Dye For; the wiki quest page lists the augmented artifact armor exchange under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Simply_to_Dye_For"
   },
   "67096": {
     "label": "Chocobo raising",
@@ -149,10 +239,46 @@
     "kind": "system",
     "note": "Divine Intervention; rewards Black Chocobo Whistle (first flying mount) and Aether Compass (QuestRewardOther 5). Per-zone flight in HW is aether-current gated; SB/ShB/EW/DT zones are aether-current only with no gating quest (AetherCurrent.Quest is static)."
   },
+  "67634": {
+    "label": "Scrip exchange (Idyllshire)",
+    "kind": "system",
+    "note": "Go West, Craftsman; the wiki quest page lists the Idyllshire collectable appraiser and scrip exchange under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Go_West,_Craftsman"
+  },
+  "67642": {
+    "label": "Levequests (Ishgard)",
+    "kind": "system",
+    "note": "Leves of Ishgard; the wiki quest page lists the Ishgard levequests under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Leves_of_Ishgard"
+  },
+  "67643": {
+    "label": "Sightseeing Log (Heavensward)",
+    "kind": "system",
+    "note": "Sights of the North; the wiki quest page lists the Heavensward sightseeing log under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Sights_of_the_North"
+  },
+  "67654": {
+    "label": "Stone, Sky, Sea",
+    "kind": "system",
+    "note": "A Striking Opportunity; the wiki quest page lists the Stone, Sky, Sea striking dummies under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Striking_Opportunity"
+  },
   "67655": {
     "label": "Hunts (Heavensward)",
     "kind": "system",
     "note": "Let the Clan Hunt Begin; unlocks Clan Centurio hunts."
+  },
+  "67656": {
+    "label": "Hunts (Heavensward)",
+    "kind": "system",
+    "note": "Better Bill Hunting; the wiki quest page lists the second-level clan mark bills under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Better_Bill_Hunting"
+  },
+  "67657": {
+    "label": "Hunts (Heavensward)",
+    "kind": "system",
+    "note": "Top Marks; the wiki quest page lists the third-level clan mark bills under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Top_Marks"
   },
   "67658": {
     "label": "Hunts (Heavensward elite)",
@@ -163,6 +289,12 @@
     "label": "Relic: Anima weapons",
     "kind": "system",
     "note": "An Unexpected Proposal; first quest of the HW Anima chain."
+  },
+  "67896": {
+    "label": "Egi glamours",
+    "kind": "system",
+    "note": "An Egi by Any Other Name; the wiki quest page lists egi glamours under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/An_Egi_by_Any_Other_Name"
   },
   "67925": {
     "label": "Adventurer Squadron",
@@ -184,6 +316,48 @@
     "kind": "system",
     "note": "Keeping Up with the Aliapohs; unlocks Wondrous Tails journals from Khloe Aliapoh."
   },
+  "68167": {
+    "label": "Housing (Shirogane)",
+    "kind": "system",
+    "note": "I Dream of Shirogane; the wiki quest page lists housing in Shirogane under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/I_Dream_of_Shirogane"
+  },
+  "68456": {
+    "label": "Sightseeing Log (Stormblood)",
+    "kind": "system",
+    "note": "Sights of Crimson and Dawn; the wiki quest page lists the Stormblood sightseeing log under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Sights_of_Crimson_and_Dawn"
+  },
+  "68472": {
+    "label": "Hunts (Stormblood)",
+    "kind": "system",
+    "note": "One-star Veteran Clan Hunt; the wiki quest page lists the veteran clan hunt under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/One-star_Veteran_Clan_Hunt"
+  },
+  "68473": {
+    "label": "Hunts (Stormblood)",
+    "kind": "system",
+    "note": "Two-star Veteran Clan Hunt; the wiki quest page lists the two-star veteran clan mark bills under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Two-star_Veteran_Clan_Hunt"
+  },
+  "68474": {
+    "label": "Hunts (Stormblood)",
+    "kind": "system",
+    "note": "Three-star Veteran Clan Hunt; the wiki quest page lists the three-star veteran clan mark bills under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Three-star_Veteran_Clan_Hunt"
+  },
+  "68475": {
+    "label": "Hunts (Stormblood elite)",
+    "kind": "system",
+    "note": "Elite Veteran Clan Hunt; the wiki quest page lists the Stormblood elite marks under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Elite_Veteran_Clan_Hunt"
+  },
+  "68476": {
+    "label": "The Circles of Answering",
+    "kind": "system",
+    "note": "Another Striking Opportunity; the wiki quest page lists the Circles of Answering striking dummies under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Another_Striking_Opportunity"
+  },
   "68541": {
     "label": "Custom deliveries: M'naago",
     "kind": "system",
@@ -194,15 +368,39 @@
     "kind": "system",
     "note": "If I Had a Glamour; unlocks glamour prisms, glamour plates and the Glamour Dresser."
   },
+  "68554": {
+    "label": "Master recipes: glamours",
+    "kind": "system",
+    "note": "Absolutely Glamourous; the wiki quest page lists the glamour master recipes under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Absolutely_Glamourous"
+  },
+  "68555": {
+    "label": "Performance",
+    "kind": "system",
+    "note": "Plucking the Heartstrings; the wiki quest page lists the bard's performance actions under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Plucking_the_Heartstrings"
+  },
   "68614": {
     "label": "Eureka (Forbidden Land)",
     "kind": "system",
     "note": "And We Shall Call It Eureka; unlocks Eureka Anemos and the Eureka relic chain."
   },
+  "68617": {
+    "label": "Fashion Report",
+    "kind": "system",
+    "note": "Passion for Fashion; the wiki quest page lists the Fashion Report under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Passion_for_Fashion"
+  },
   "68622": {
     "label": "Doman Enclave reconstruction",
     "kind": "system",
     "note": "Precious Reclamation (StmBdy501, first quest of the Doman Enclave chain); unlocks the Enclave donation system."
+  },
+  "68624": {
+    "label": "Duty Recorder",
+    "kind": "system",
+    "note": "Recall of Duty; the wiki quest page lists the Duty Recorder under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Recall_of_Duty"
   },
   "68667": {
     "label": "Heaven-on-High",
@@ -229,6 +427,48 @@
     "kind": "system",
     "note": "Nuts to You; unlocks Clan Nutsy hunts."
   },
+  "69134": {
+    "label": "Hunts (Shadowbringers)",
+    "kind": "system",
+    "note": "Two Nuts Too Nutty; the wiki quest page lists the two-nut clan mark bills under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Two_Nuts_Too_Nutty"
+  },
+  "69135": {
+    "label": "Hunts (Shadowbringers)",
+    "kind": "system",
+    "note": "How Do You Like Three Nuts; the wiki quest page lists the three-nut clan mark bills under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/How_Do_You_Like_Three_Nuts"
+  },
+  "69136": {
+    "label": "Hunts (Shadowbringers elite)",
+    "kind": "system",
+    "note": "Too Many Nutters; the wiki quest page lists the Shadowbringers elite marks under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Too_Many_Nutters"
+  },
+  "69137": {
+    "label": "The Lawns",
+    "kind": "system",
+    "note": "Yet Another Striking Opportunity; the wiki quest page lists the Lawns striking dummies under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Yet_Another_Striking_Opportunity"
+  },
+  "69139": {
+    "label": "Scrip exchange (Eulmore)",
+    "kind": "system",
+    "note": "The Boutique Always Wins; the wiki quest page lists the Eulmore collectable appraiser and scrip exchange under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Boutique_Always_Wins"
+  },
+  "69140": {
+    "label": "Sightseeing Log (Shadowbringers)",
+    "kind": "system",
+    "note": "Sights of the First; the wiki quest page lists the Shadowbringers sightseeing log under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Sights_of_the_First"
+  },
+  "69191": {
+    "label": "Custom deliveries: the Crystarium",
+    "kind": "system",
+    "note": "The Crystalline Mean; the wiki quest page lists the Crystarium deliveries under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Crystalline_Mean"
+  },
   "69208": {
     "label": "Ishgardian Restoration",
     "kind": "system",
@@ -238,6 +478,18 @@
     "label": "Custom deliveries: Kai-Shirr",
     "kind": "system",
     "note": "Oh, Beehive Yourself; SatisfactionNpc 5 QuestRequired."
+  },
+  "69267": {
+    "label": "Airship (Eulmore)",
+    "kind": "system",
+    "note": "A Ship on His Shoulder; the wiki quest page lists the airship under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Ship_on_His_Shoulder"
+  },
+  "69295": {
+    "label": "New Game+",
+    "kind": "system",
+    "note": "Memories Rekindled; the wiki quest page lists New Game+ under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Memories_Rekindled"
   },
   "69370": {
     "label": "Bozja (Resistance weapons)",
@@ -264,30 +516,102 @@
     "kind": "system",
     "note": "Fantastic Mr. Faux; unlocks Faux Hollows (Painfully Ishgardian Man, Idyllshire)."
   },
+  "69562": {
+    "label": "Delubrum Reginae",
+    "kind": "system",
+    "note": "Fit for a Queen; the wiki quest page lists Delubrum Reginae under unlocks. A system unlock rather than a duty unlock: the duty (CFC 760) is not an InstanceContent row, and the quest script's own duty constant names another instance.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Fit_for_a_Queen"
+  },
   "69615": {
     "label": "Custom deliveries: Charlemend",
     "kind": "system",
     "note": "You Can Count on It; SatisfactionNpc 7 QuestRequired."
+  },
+  "69708": {
+    "label": "Housing (Empyreum)",
+    "kind": "system",
+    "note": "Ascending to Empyreum; the wiki quest page lists housing in Empyreum under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Ascending_to_Empyreum"
+  },
+  "69709": {
+    "label": "The Burning Field",
+    "kind": "system",
+    "note": "A Place to Train; the wiki quest page lists the Burning Field striking dummies under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Place_to_Train"
+  },
+  "69710": {
+    "label": "Sightseeing Log (Endwalker)",
+    "kind": "system",
+    "note": "Sights of the End; the wiki quest page lists the Endwalker sightseeing log under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Sights_of_the_End"
+  },
+  "69711": {
+    "label": "Scrip exchange (Radz-at-Han)",
+    "kind": "system",
+    "note": "Expanding House of Splendors; the wiki quest page lists the Radz-at-Han collectable appraiser and scrip exchange under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Expanding_House_of_Splendors"
   },
   "69712": {
     "label": "Hunts (Endwalker)",
     "kind": "system",
     "note": "The Hunt for Specimens; unlocks Endwalker hunt bills."
   },
+  "69713": {
+    "label": "Hunts (Endwalker)",
+    "kind": "system",
+    "note": "That Specimen Came from the Moon; the wiki quest page lists the associate guildship mark bills under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/That_Specimen_Came_from_the_Moon"
+  },
+  "69714": {
+    "label": "Hunts (Endwalker)",
+    "kind": "system",
+    "note": "A Hunt for the Ages; the wiki quest page lists the senior guildship mark bills under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Hunt_for_the_Ages"
+  },
+  "69715": {
+    "label": "Hunts (Endwalker elite)",
+    "kind": "system",
+    "note": "Perfect Specimens; the wiki quest page lists the Endwalker elite marks under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Perfect_Specimens"
+  },
+  "70009": {
+    "label": "Custom deliveries: the Studium",
+    "kind": "system",
+    "note": "The Faculty; the wiki quest page lists the Studium deliveries under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Faculty"
+  },
   "70059": {
     "label": "Custom deliveries: Ameliance",
     "kind": "system",
     "note": "Of Mothers and Merchants; SatisfactionNpc 8 QuestRequired."
+  },
+  "70121": {
+    "label": "Crystalline Conflict",
+    "kind": "system",
+    "note": "The Crystal (Line's) Call; the wiki quest page lists Crystalline Conflict under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Crystal_(Line's)_Call"
   },
   "70179": {
     "label": "Island Sanctuary",
     "kind": "system",
     "note": "Seeking Sanctuary; unlocks Island Sanctuary."
   },
+  "70180": {
+    "label": "Island Sanctuary visits",
+    "kind": "system",
+    "note": "Seeing the Cieldalaes; the wiki quest page lists visiting other players' island sanctuaries under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Seeing_the_Cieldalaes"
+  },
   "70182": {
     "label": "Variant and Criterion dungeons",
     "kind": "system",
     "note": "A Key to the Past; unlocks variant dungeons (Sil'dih Subterrane) and criterion."
+  },
+  "70187": {
+    "label": "Variant and Criterion dungeons",
+    "kind": "system",
+    "note": "An Odd Job; the wiki quest page lists variant dungeons under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/An_Odd_Job"
   },
   "70188": {
     "label": "Relic: Manderville weapons",
@@ -304,20 +628,110 @@
     "kind": "system",
     "note": "That's So Anden; SatisfactionNpc 9 QuestRequired."
   },
+  "70300": {
+    "label": "Egi glamours",
+    "kind": "system",
+    "note": "A Faerie Tale Come True; the wiki quest page lists egi glamours under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Faerie_Tale_Come_True"
+  },
   "70351": {
     "label": "Custom deliveries: Margrat",
     "kind": "system",
     "note": "A Request of One's Own; SatisfactionNpc 10 QuestRequired."
+  },
+  "70352": {
+    "label": "Custom deliveries: Margrat",
+    "kind": "system",
+    "note": "The Pride of Labyrinthos; the wiki quest page lists Margrat's custom deliveries under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Pride_of_Labyrinthos"
+  },
+  "70502": {
+    "label": "Custom deliveries: Wachumeqimeqi",
+    "kind": "system",
+    "note": "Wrought in Wachumeqimeqi; the wiki quest page lists the Wachumeqimeqi deliveries under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Wrought_in_Wachumeqimeqi"
+  },
+  "70541": {
+    "label": "The Spire of Trial",
+    "kind": "system",
+    "note": "Trial by Spire; the wiki quest page lists the Spire of Trial striking dummies under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Trial_by_Spire"
+  },
+  "70542": {
+    "label": "Sightseeing Log (Dawntrail)",
+    "kind": "system",
+    "note": "Sights of the West; the wiki quest page lists the first Dawntrail sightseeing log entries under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Sights_of_the_West"
+  },
+  "70543": {
+    "label": "Sightseeing Log (Dawntrail)",
+    "kind": "system",
+    "note": "Sights of the West and Beyond; the wiki quest page lists the later Dawntrail sightseeing log entries under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Sights_of_the_West_and_Beyond"
+  },
+  "70544": {
+    "label": "Scrip exchange (Solution Nine)",
+    "kind": "system",
+    "note": "Dawn of a New Deal; the wiki quest page lists the Solution Nine collectable appraiser and scrip exchange under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Dawn_of_a_New_Deal"
+  },
+  "70545": {
+    "label": "Hunts (Dawntrail)",
+    "kind": "system",
+    "note": "A New Dawn, a New Hunt; the wiki quest page lists the beginner Dawn mark bills under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_New_Dawn,_a_New_Hunt"
+  },
+  "70546": {
+    "label": "Hunts (Dawntrail)",
+    "kind": "system",
+    "note": "Why We Hunt; the wiki quest page lists the intermediate Dawn mark bills under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Why_We_Hunt"
+  },
+  "70547": {
+    "label": "Hunts (Dawntrail)",
+    "kind": "system",
+    "note": "Hunting the Hunter; the wiki quest page lists the advanced Dawn mark bills under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Hunting_the_Hunter"
+  },
+  "70548": {
+    "label": "Hunts (Dawntrail elite)",
+    "kind": "system",
+    "note": "The Hunt Goes On; the wiki quest page lists the Dawntrail elite marks under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Hunt_Goes_On"
   },
   "70775": {
     "label": "Custom deliveries: Nitowikwe",
     "kind": "system",
     "note": "Laying New Tracks; SatisfactionNpc 11 QuestRequired."
   },
+  "70789": {
+    "label": "Cosmic Exploration",
+    "kind": "system",
+    "note": "A Cosmic Homecoming; the wiki quest page lists Cosmic Exploration and Sinus Ardorum under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Cosmic_Homecoming"
+  },
+  "70945": {
+    "label": "Cosmic Exploration: Phaenna",
+    "kind": "system",
+    "note": "Go Forth, Brave Explorers; the wiki quest page lists the Phaenna exploration site under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Go_Forth,_Brave_Explorers"
+  },
+  "70984": {
+    "label": "Cosmic Exploration: Oizys",
+    "kind": "system",
+    "note": "Mission of Gravity; the wiki quest page lists the Oizys exploration site under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Mission_of_Gravity"
+  },
   "70996": {
     "label": "Custom deliveries: Tiisol Ja",
     "kind": "system",
     "note": "Taco Time; SatisfactionNpc 12 QuestRequired."
+  },
+  "71019": {
+    "label": "Cosmic Exploration: Auxesia",
+    "kind": "system",
+    "note": "The Forests of Paradise; the wiki quest page lists the Auxesia exploration site under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Forests_of_Paradise"
   },
   "71047": {
     "label": "Occult Crescent",

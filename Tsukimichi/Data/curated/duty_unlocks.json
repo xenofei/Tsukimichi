@@ -1,4 +1,13 @@
 {
+  "65579": {
+    "contentFinderConditionIds": [
+      108,
+      109,
+      110
+    ],
+    "note": "Fragments of Truth -> the Final Coil of Bahamut - Turn 2 (CFC 108), the Final Coil of Bahamut - Turn 3 (CFC 109), the Final Coil of Bahamut - Turn 4 (CFC 110). The wiki quest page lists them under unlocks; its script names none of them.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Fragments_of_Truth"
+  },
   "65611": {
     "contentFinderConditionIds": [
       27
@@ -50,11 +59,39 @@
     ],
     "note": "Lord of the Inferno -> the Bowl of Embers (Ifrit); objective territory matches CFC 56."
   },
+  "65902": {
+    "contentFinderConditionIds": [
+      32
+    ],
+    "note": "The Rising Chorus -> the Keeper of the Lake (CFC 32). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 32 (CFC 32) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Rising_Chorus"
+  },
   "65905": {
     "contentFinderConditionIds": [
       84
     ],
     "note": "An Uninvited Ascian -> the Chrysalis (2.4 MSQ); objective territory matches CFC 84."
+  },
+  "65966": {
+    "contentFinderConditionIds": [
+      29
+    ],
+    "note": "For Keep's Sake -> Amdapor Keep (Hard) (CFC 29). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 29 (CFC 29) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/For_Keep's_Sake"
+  },
+  "65967": {
+    "contentFinderConditionIds": [
+      30
+    ],
+    "note": "Not Easy Being Green -> the Wanderer's Palace (Hard) (CFC 30). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 30 (CFC 30) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Not_Easy_Being_Green"
+  },
+  "65969": {
+    "contentFinderConditionIds": [
+      82
+    ],
+    "note": "Fear and Odin in the Shroud -> Urth's Fount (CFC 82). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 20027 (CFC 82) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Fear_and_Odin_in_the_Shroud"
   },
   "66030": {
     "contentFinderConditionIds": [
@@ -179,6 +216,78 @@
     ],
     "note": "Ifrit Bleeds, We Can Kill It -> the Bowl of Embers (Hard); Quest.InstanceContentUnlock 20004 confirms."
   },
+  "66655": {
+    "contentFinderConditionIds": [
+      74,
+      75
+    ],
+    "note": "A Relic Reborn (Bravura) -> A Relic Reborn: the Chimera (CFC 74), A Relic Reborn: the Hydra (CFC 75). The wiki quest page lists them under unlocks; its script's first duty constant is InstanceContent 20019 (CFC 74) but it runs no unlock step, so the script rule does not credit it; its script names InstanceContent 20020 (CFC 75) after its first duty.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Relic_Reborn_(Bravura)"
+  },
+  "66656": {
+    "contentFinderConditionIds": [
+      74,
+      75
+    ],
+    "note": "A Relic Reborn (Curtana) -> A Relic Reborn: the Chimera (CFC 74), A Relic Reborn: the Hydra (CFC 75). The wiki quest page lists them under unlocks; its script's first duty constant is InstanceContent 20019 (CFC 74) but it runs no unlock step, so the script rule does not credit it; its script names InstanceContent 20020 (CFC 75) after its first duty.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Relic_Reborn_(Curtana)"
+  },
+  "66657": {
+    "contentFinderConditionIds": [
+      74,
+      75
+    ],
+    "note": "A Relic Reborn (Sphairai) -> A Relic Reborn: the Chimera (CFC 74), A Relic Reborn: the Hydra (CFC 75). The wiki quest page lists them under unlocks; its script's first duty constant is InstanceContent 20019 (CFC 74) but it runs no unlock step, so the script rule does not credit it; its script names InstanceContent 20020 (CFC 75) after its first duty.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Relic_Reborn_(Sphairai)"
+  },
+  "66658": {
+    "contentFinderConditionIds": [
+      74,
+      75
+    ],
+    "note": "A Relic Reborn (Gae Bolg) -> A Relic Reborn: the Chimera (CFC 74), A Relic Reborn: the Hydra (CFC 75). The wiki quest page lists them under unlocks; its script's first duty constant is InstanceContent 20019 (CFC 74) but it runs no unlock step, so the script rule does not credit it; its script names InstanceContent 20020 (CFC 75) after its first duty.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Relic_Reborn_(Gae_Bolg)"
+  },
+  "66659": {
+    "contentFinderConditionIds": [
+      74,
+      75
+    ],
+    "note": "A Relic Reborn (Stardust Rod) -> A Relic Reborn: the Chimera (CFC 74), A Relic Reborn: the Hydra (CFC 75). The wiki quest page lists them under unlocks; its script's first duty constant is InstanceContent 20019 (CFC 74) but it runs no unlock step, so the script rule does not credit it; its script names InstanceContent 20020 (CFC 75) after its first duty.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Relic_Reborn_(Stardust_Rod)"
+  },
+  "66660": {
+    "contentFinderConditionIds": [
+      74,
+      75
+    ],
+    "note": "A Relic Reborn (Thyrus) -> A Relic Reborn: the Chimera (CFC 74), A Relic Reborn: the Hydra (CFC 75). The wiki quest page lists them under unlocks; its script's first duty constant is InstanceContent 20019 (CFC 74) but it runs no unlock step, so the script rule does not credit it; its script names InstanceContent 20020 (CFC 75) after its first duty.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Relic_Reborn_(Thyrus)"
+  },
+  "66661": {
+    "contentFinderConditionIds": [
+      74,
+      75
+    ],
+    "note": "A Relic Reborn (Artemis Bow) -> A Relic Reborn: the Chimera (CFC 74), A Relic Reborn: the Hydra (CFC 75). The wiki quest page lists them under unlocks; its script's first duty constant is InstanceContent 20019 (CFC 74) but it runs no unlock step, so the script rule does not credit it; its script names InstanceContent 20020 (CFC 75) after its first duty.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Relic_Reborn_(Artemis_Bow)"
+  },
+  "66662": {
+    "contentFinderConditionIds": [
+      74,
+      75
+    ],
+    "note": "A Relic Reborn (The Veil of Wiyu) -> A Relic Reborn: the Chimera (CFC 74), A Relic Reborn: the Hydra (CFC 75). The wiki quest page lists them under unlocks; its script's first duty constant is InstanceContent 20019 (CFC 74) but it runs no unlock step, so the script rule does not credit it; its script names InstanceContent 20020 (CFC 75) after its first duty.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Relic_Reborn_(The_Veil_of_Wiyu)"
+  },
+  "66663": {
+    "contentFinderConditionIds": [
+      74,
+      75
+    ],
+    "note": "A Relic Reborn (Omnilex) -> A Relic Reborn: the Chimera (CFC 74), A Relic Reborn: the Hydra (CFC 75). The wiki quest page lists them under unlocks; its script's first duty constant is InstanceContent 20019 (CFC 74) but it runs no unlock step, so the script rule does not credit it; its script names InstanceContent 20020 (CFC 75) after its first duty.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Relic_Reborn_(Omnilex)"
+  },
   "66664": {
     "contentFinderConditionIds": [
       13
@@ -239,6 +348,16 @@
     ],
     "note": "In a Titan Spot -> the Navel (Hard); GaiUsd004 in the hard-mode primal chain."
   },
+  "66695": {
+    "contentFinderConditionIds": [
+      94,
+      95,
+      96,
+      97
+    ],
+    "note": "Primal Awakening -> the Binding Coil of Bahamut - Turn 2 (CFC 94), the Binding Coil of Bahamut - Turn 3 (CFC 95), the Binding Coil of Bahamut - Turn 4 (CFC 96), the Binding Coil of Bahamut - Turn 5 (CFC 97). The wiki quest page lists them under unlocks; its script names none of them.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Primal_Awakening"
+  },
   "66726": {
     "contentFinderConditionIds": [
       66
@@ -275,6 +394,15 @@
       68
     ],
     "note": "The Ultimate Ballad -> the Minstrel's Ballad: Ultima's Bane; quest script INSTANCEDUNGEON0 is InstanceContent 20013 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 68."
+  },
+  "66849": {
+    "contentFinderConditionIds": [
+      99,
+      100,
+      101
+    ],
+    "note": "Another Turn in the Coil -> the Second Coil of Bahamut - Turn 2 (CFC 99), the Second Coil of Bahamut - Turn 3 (CFC 100), the Second Coil of Bahamut - Turn 4 (CFC 101). The wiki quest page lists them under unlocks; its script names none of them.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Another_Turn_in_the_Coil"
   },
   "66854": {
     "contentFinderConditionIds": [
@@ -320,12 +448,79 @@
     ],
     "note": "Judgment Bolts and Lightning -> the Striking Tree (Extreme); quest script INSTANCEDUNGEON0 is InstanceContent 20023 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 78."
   },
+  "67090": {
+    "contentFinderConditionIds": [
+      474
+    ],
+    "note": "The New King on the Block -> the Great Hunt (CFC 474). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 20053 (CFC 474) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_New_King_on_the_Block"
+  },
+  "67095": {
+    "contentFinderConditionIds": [
+      104,
+      105,
+      106
+    ],
+    "note": "Sing Me Another Song -> the Second Coil of Bahamut (Savage) - Turn 2 (CFC 104), the Second Coil of Bahamut (Savage) - Turn 3 (CFC 105), the Second Coil of Bahamut (Savage) - Turn 4 (CFC 106). Each duty's wiki page names this quest as its required quest (also The Second Coil of Bahamut (Savage) - Turn 3, The Second Coil of Bahamut (Savage) - Turn 4); its script names none of them.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Second_Coil_of_Bahamut_(Savage)_-_Turn_2"
+  },
+  "67115": {
+    "contentFinderConditionIds": [
+      74,
+      75
+    ],
+    "note": "A Relic Reborn (Yoshimitsu) -> A Relic Reborn: the Chimera (CFC 74), A Relic Reborn: the Hydra (CFC 75). The wiki quest page lists them under unlocks; its script's first duty constant is InstanceContent 20019 (CFC 74) and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF, so the script rule credits the Chimera as well (listed here so the curated duty keeps every quest the script announces it on); its script names InstanceContent 20020 (CFC 75) after its first duty.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Relic_Reborn_(Yoshimitsu)"
+  },
+  "67152": {
+    "contentFinderConditionIds": [
+      86
+    ],
+    "note": "Lord of the Hive -> Thok ast Thok (Hard) (CFC 86). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 20031 (CFC 86) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Lord_of_the_Hive"
+  },
+  "67153": {
+    "contentFinderConditionIds": [
+      37
+    ],
+    "note": "Mourn in Passing -> Sohm Al (CFC 37). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 37 (CFC 37) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Mourn_in_Passing"
+  },
+  "67170": {
+    "contentFinderConditionIds": [
+      39
+    ],
+    "note": "Into the Aery -> the Aery (CFC 39). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 39 (CFC 39) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Into_the_Aery"
+  },
+  "67176": {
+    "contentFinderConditionIds": [
+      34
+    ],
+    "note": "A Knight's Calling -> the Vault (CFC 34). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 34 (CFC 34) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Knight's_Calling"
+  },
   "67183": {
     "contentFinderConditionIds": [
       88
     ],
     "note": "Bolt, Chain, and Island -> the Limitless Blue (Hard) (Heavensward MSQ trial); quest script INSTANCEDUNGEON0 is InstanceContent 20033 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 88. The wiki quest page (id-gt 67183) lists the duty under unlocks.",
     "evidence": "https://ffxiv.consolegameswiki.com/wiki/Bolt,_Chain,_and_Island"
+  },
+  "67196": {
+    "contentFinderConditionIds": [
+      31
+    ],
+    "note": "Forbidden Knowledge -> the Great Gubal Library (CFC 31). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 31 (CFC 31) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Forbidden_Knowledge"
+  },
+  "67205": {
+    "contentFinderConditionIds": [
+      38,
+      90
+    ],
+    "note": "Heavensward -> the Aetherochemical Research Facility (CFC 38), the Singularity Reactor (CFC 90). The wiki quest page lists them under unlocks; its script's first duty constant is InstanceContent 38 (CFC 38) but it runs no unlock step, so the script rule does not credit it; its script names InstanceContent 20035 (CFC 90) after its first duty.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Heavensward_(Quest)"
   },
   "67627": {
     "contentFinderConditionIds": [
@@ -348,6 +543,15 @@
     "note": "The Pulsing Heart -> Alexander - The Burden of the Father; quest script INSTANCEDUNGEON0 is InstanceContent 30024 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 115. The wiki quest page (id-gt 67629) lists the duty under unlocks.",
     "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Pulsing_Heart"
   },
+  "67644": {
+    "contentFinderConditionIds": [
+      117,
+      118,
+      119
+    ],
+    "note": "A Song of Steam and Steel -> Alexander - The Cuff of the Father (Savage) (CFC 117), Alexander - The Arm of the Father (Savage) (CFC 118), Alexander - The Burden of the Father (Savage) (CFC 119). Each duty's wiki page names this quest as its required quest (also Alexander - The Burden of the Father (Savage), Alexander - The Cuff of the Father (Savage)); its script names none of them.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Alexander_-_The_Arm_of_the_Father_(Savage)"
+  },
   "67647": {
     "contentFinderConditionIds": [
       36
@@ -366,6 +570,20 @@
     ],
     "note": "Do It for Gilly -> the Fractal Continuum (Heavensward optional dungeon); quest script INSTANCEDUNGEON0 is InstanceContent 35 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 35."
   },
+  "67651": {
+    "contentFinderConditionIds": [
+      89
+    ],
+    "note": "The Diabolical Bismarck -> the Limitless Blue (Extreme) (CFC 89). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 20034 (CFC 89) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Diabolical_Bismarck"
+  },
+  "67652": {
+    "contentFinderConditionIds": [
+      87
+    ],
+    "note": "Thok Around the Clock -> Thok ast Thok (Extreme) (CFC 87). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 20032 (CFC 87) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Thok_Around_the_Clock"
+  },
   "67737": {
     "contentFinderConditionIds": [
       40
@@ -383,6 +601,34 @@
       120
     ],
     "note": "To Rule the Skies -> the Void Ark (Shadow of Mhach alliance raid); quest script INSTANCEDUNGEON0 is InstanceContent 30029 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 120."
+  },
+  "67766": {
+    "contentFinderConditionIds": [
+      134
+    ],
+    "note": "When the Bough Wakes -> Containment Bay S1T7 (CFC 134). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 20037 (CFC 134) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/When_the_Bough_Wakes"
+  },
+  "67768": {
+    "contentFinderConditionIds": [
+      141
+    ],
+    "note": "The Word of the Mother -> the Antitower (CFC 141). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 43 (CFC 141) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Word_of_the_Mother"
+  },
+  "67780": {
+    "contentFinderConditionIds": [
+      171
+    ],
+    "note": "Winning Over the Wyrm -> Sohr Khai (CFC 171). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 44 (CFC 171) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Winning_Over_the_Wyrm"
+  },
+  "67781": {
+    "contentFinderConditionIds": [
+      169
+    ],
+    "note": "An End to the Song -> the Final Steps of Faith (CFC 169). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 20039 (CFC 169) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/An_End_to_the_Song"
   },
   "67784": {
     "contentFinderConditionIds": [
@@ -411,6 +657,15 @@
     "note": "One Step Behind -> Alexander - The Burden of the Son; quest script INSTANCEDUNGEON0 is InstanceContent 30033 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 139. The wiki quest page (id-gt 67788) lists the duty under unlocks.",
     "evidence": "https://ffxiv.consolegameswiki.com/wiki/One_Step_Behind"
   },
+  "67790": {
+    "contentFinderConditionIds": [
+      148,
+      149,
+      150
+    ],
+    "note": "A Refrain for the Undaunted -> Alexander - The Cuff of the Son (Savage) (CFC 148), Alexander - The Arm of the Son (Savage) (CFC 149), Alexander - The Burden of the Son (Savage) (CFC 150). Each duty's wiki page names this quest as its required quest (also Alexander - The Burden of the Son (Savage), Alexander - The Cuff of the Son (Savage)); its script names none of them.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Alexander_-_The_Arm_of_the_Son_(Savage)"
+  },
   "67818": {
     "contentFinderConditionIds": [
       140
@@ -423,17 +678,68 @@
     ],
     "note": "The Weeping City -> the Weeping City of Mhach (Shadow of Mhach alliance raid); quest script INSTANCEDUNGEON0 is InstanceContent 30038 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 168."
   },
+  "67868": {
+    "contentFinderConditionIds": [
+      183
+    ],
+    "note": "Balance unto All -> Containment Bay P1T6 (CFC 183). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 20041 (CFC 183) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Balance_unto_All"
+  },
+  "67876": {
+    "contentFinderConditionIds": [
+      191,
+      192,
+      193
+    ],
+    "note": "Who Lives, Who Dies, Who Retells Your Story -> Alexander - The Breath of the Creator (Savage) (CFC 191), Alexander - The Heart of the Creator (Savage) (CFC 192), Alexander - The Soul of the Creator (Savage) (CFC 193). Each duty's wiki page names this quest as its required quest (also Alexander - The Heart of the Creator (Savage), Alexander - The Soul of the Creator (Savage)); its script names none of them.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Alexander_-_The_Breath_of_the_Creator_(Savage)"
+  },
+  "67878": {
+    "contentFinderConditionIds": [
+      182
+    ],
+    "note": "Shadows of the First -> Xelphatol (CFC 182). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 46 (CFC 182) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Shadows_of_the_First"
+  },
+  "67890": {
+    "contentFinderConditionIds": [
+      219
+    ],
+    "note": "Griffin, Griffin on the Wall -> Baelsar's Wall (CFC 219). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 48 (CFC 219) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Griffin,_Griffin_on_the_Wall"
+  },
   "67922": {
     "contentFinderConditionIds": [
       196
     ],
     "note": "Let Me Gubal That for You -> the Great Gubal Library (Hard); quest script INSTANCEDUNGEON0 is InstanceContent 47 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 196."
   },
+  "67930": {
+    "contentFinderConditionIds": [
+      223
+    ],
+    "note": "The Last Pillar to Fall -> Containment Bay Z1T9 (CFC 223). The wiki quest page lists it under unlocks; its script names InstanceContent 20043 (CFC 223) after its first duty.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Last_Pillar_to_Fall"
+  },
   "67938": {
     "contentFinderConditionIds": [
       221
     ],
     "note": "The Fires of Sohm Al -> Sohm Al (Hard); quest script INSTANCEDUNGEON0 is InstanceContent 49 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 221."
+  },
+  "68005": {
+    "contentFinderConditionIds": [
+      238
+    ],
+    "note": "Not without Incident -> the Sirensong Sea (CFC 238). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 52 (CFC 238) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Not_without_Incident"
+  },
+  "68025": {
+    "contentFinderConditionIds": [
+      243
+    ],
+    "note": "The Lord of the Revel -> the Pool of Tribute (CFC 243). The wiki quest page lists it under unlocks; its script names InstanceContent 20046 (CFC 243) after its first duty.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Lord_of_the_Revel"
   },
   "68043": {
     "contentFinderConditionIds": [
@@ -442,12 +748,55 @@
     "note": "In the Footsteps of Bardam the Brave -> Bardam's Mettle (Stormblood MSQ dungeon); quest script INSTANCEDUNGEON0 is InstanceContent 53 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 240. The wiki quest page (id-gt 68043) lists the duty under unlocks.",
     "evidence": "https://ffxiv.consolegameswiki.com/wiki/In_the_Footsteps_of_Bardam_the_Brave"
   },
+  "68060": {
+    "contentFinderConditionIds": [
+      241
+    ],
+    "note": "The Die Is Cast -> Doma Castle (CFC 241). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 54 (CFC 241) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Die_Is_Cast"
+  },
+  "68068": {
+    "contentFinderConditionIds": [
+      263
+    ],
+    "note": "The Lady of Bliss -> Emanation (CFC 263). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 20048 (CFC 263) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Lady_of_Bliss"
+  },
+  "68080": {
+    "contentFinderConditionIds": [
+      242
+    ],
+    "note": "The Price of Freedom -> Castrum Abania (CFC 242). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 55 (CFC 242) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Price_of_Freedom"
+  },
+  "68089": {
+    "contentFinderConditionIds": [
+      239,
+      247
+    ],
+    "note": "Stormblood -> the Royal Menagerie (CFC 239), Ala Mhigo (CFC 247). The wiki quest page lists them under unlocks; its script names InstanceContent 20045 (CFC 239) after its first duty; its script's first duty constant is InstanceContent 56 (CFC 247) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Stormblood_(Quest)"
+  },
   "68168": {
     "contentFinderConditionIds": [
       235
     ],
     "note": "The Palace of Lost Souls -> Shisui of the Violet Tides (Stormblood optional dungeon); quest script INSTANCEDUNGEON0 is InstanceContent 50 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 235. The wiki quest page (id-gt 68168) lists the duty under unlocks.",
     "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Palace_of_Lost_Souls"
+  },
+  "68169": {
+    "contentFinderConditionIds": [
+      236
+    ],
+    "note": "To Kill a Coeurl -> the Temple of the Fist (CFC 236). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 51 (CFC 236) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/To_Kill_a_Coeurl"
+  },
+  "68170": {
+    "contentFinderConditionIds": [
+      262
+    ],
+    "note": "King of the Castle -> Kugane Castle (CFC 262). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 57 (CFC 262) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/King_of_the_Castle"
   },
   "68465": {
     "contentFinderConditionIds": [
@@ -477,6 +826,275 @@
     "note": "A Void at All Costs -> Deltascape V4.0; quest script INSTANCEDUNGEON0 is InstanceContent 30052 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 255. The wiki quest page (id-gt 68468) lists the duty under unlocks.",
     "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Void_at_All_Costs"
   },
+  "68479": {
+    "contentFinderConditionIds": [
+      244,
+      264,
+      278,
+      291,
+      538,
+      597,
+      638,
+      280,
+      539,
+      694
+    ],
+    "note": "Songs in the Key of Kugane -> the Pool of Tribute (Extreme) (CFC 244), Emanation (Extreme) (CFC 264), the Minstrel's Ballad: Shinryu's Domain (CFC 278), the Jade Stoa (Extreme) (CFC 291), the Minstrel's Ballad: Tsukuyomi's Pain (CFC 538), Hells' Kier (Extreme) (CFC 597), the Wreath of Snakes (Extreme) (CFC 638), the Unending Coil of Bahamut (Ultimate) (CFC 280), the Weapon's Refrain (Ultimate) (CFC 539), the Epic of Alexander (Ultimate) (CFC 694). The wiki quest page lists them in its Unlocks section: this quasi-quest is how they are unlocked, speaking to its NPC again once each duty's own prerequisite is done; its script names none of them.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Songs_in_the_Key_of_Kugane"
+  },
+  "68500": {
+    "contentFinderConditionIds": [
+      279
+    ],
+    "note": "The Mad King's Trove -> the Drowned City of Skalla (CFC 279). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 58 (CFC 279) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Mad_King's_Trove"
+  },
+  "68551": {
+    "contentFinderConditionIds": [
+      284,
+      290
+    ],
+    "note": "An Auspicious Encounter -> Hells' Lid (CFC 284), the Jade Stoa (CFC 290). The wiki quest page lists them under unlocks; its script's first duty constant is InstanceContent 59 (CFC 284) but it runs no unlock step, so the script rule does not credit it; its script names InstanceContent 20051 (CFC 290) after its first duty.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/An_Auspicious_Encounter"
+  },
+  "68552": {
+    "contentFinderConditionIds": [
+      536
+    ],
+    "note": "Tortoise in Time -> the Swallow's Compass (CFC 536). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 61 (CFC 536) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Tortoise_in_Time"
+  },
+  "68610": {
+    "contentFinderConditionIds": [
+      537
+    ],
+    "note": "The Primary Agreement -> Castrum Fluminis (CFC 537). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 20055 (CFC 537) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Primary_Agreement"
+  },
+  "68678": {
+    "contentFinderConditionIds": [
+      584
+    ],
+    "note": "Secret of the Ooze -> Saint Mocianne's Arboretum (Hard) (CFC 584). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 62 (CFC 584) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Secret_of_the_Ooze"
+  },
+  "68680": {
+    "contentFinderConditionIds": [
+      585
+    ],
+    "note": "Feel the Burn -> the Burn (CFC 585). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 63 (CFC 585) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Feel_the_Burn"
+  },
+  "68688": {
+    "contentFinderConditionIds": [
+      596
+    ],
+    "note": "The Fire-bird Down Below -> Hells' Kier (CFC 596). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 20057 (CFC 596) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Fire-bird_Down_Below"
+  },
+  "68692": {
+    "contentFinderConditionIds": [
+      590
+    ],
+    "note": "In the End, There Is Omega -> Alphascape V4.0 (CFC 590). The wiki quest page lists it under unlocks; its script names InstanceContent 30072 (CFC 590) after its first duty.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/In_the_End,_There_Is_Omega"
+  },
+  "68701": {
+    "contentFinderConditionIds": [
+      637
+    ],
+    "note": "Surpassing the Samurai -> the Wreath of Snakes (CFC 637). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 20060 (CFC 637) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Surpassing_the_Samurai"
+  },
+  "68703": {
+    "contentFinderConditionIds": [
+      595
+    ],
+    "note": "The Past Is Never Past -> Kugane Ohashi (CFC 595). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 20059 (CFC 595) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Past_Is_Never_Past"
+  },
+  "68719": {
+    "contentFinderConditionIds": [
+      611
+    ],
+    "note": "The Face of War -> the Ghimlyt Dark (CFC 611). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 64 (CFC 611) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Face_of_War"
+  },
+  "68792": {
+    "contentFinderConditionIds": [
+      653
+    ],
+    "note": "Deploy the Core -> Eden's Gate: Resurrection (CFC 653). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 30078 (CFC 653) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Deploy_the_Core"
+  },
+  "68793": {
+    "contentFinderConditionIds": [
+      684
+    ],
+    "note": "One Fell Swoop -> Eden's Gate: Descent (CFC 684). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 30082 (CFC 684) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/One_Fell_Swoop"
+  },
+  "68794": {
+    "contentFinderConditionIds": [
+      682
+    ],
+    "note": "Nor Any Drop to Drink -> Eden's Gate: Inundation (CFC 682). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 30080 (CFC 682) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Nor_Any_Drop_to_Drink"
+  },
+  "68795": {
+    "contentFinderConditionIds": [
+      689
+    ],
+    "note": "Super Seismic -> Eden's Gate: Sepulture (CFC 689). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 30084 (CFC 689) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Super_Seismic"
+  },
+  "68836": {
+    "contentFinderConditionIds": [
+      676
+    ],
+    "note": "The Lightwardens -> Holminster Switch (CFC 676). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 72 (CFC 676) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Lightwardens"
+  },
+  "68848": {
+    "contentFinderConditionIds": [
+      649
+    ],
+    "note": "The Key to the Castle -> Dohn Mheg (CFC 649). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 65 (CFC 649) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Key_to_the_Castle"
+  },
+  "68856": {
+    "contentFinderConditionIds": [
+      657
+    ],
+    "note": "Acht-la Ormh Inn -> the Dancing Plague (CFC 657). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 20062 (CFC 657) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Acht-la_Ormh_Inn"
+  },
+  "68876": {
+    "contentFinderConditionIds": [
+      651
+    ],
+    "note": "The Burden of Knowledge -> the Qitana Ravel (CFC 651). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 66 (CFC 651) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Burden_of_Knowledge"
+  },
+  "69131": {
+    "contentFinderConditionIds": [
+      655
+    ],
+    "note": "By the Time You Hear This -> the Twinning (CFC 655). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 68 (CFC 655) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/By_the_Time_You_Hear_This"
+  },
+  "69132": {
+    "contentFinderConditionIds": [
+      661
+    ],
+    "note": "Akadaemia Anyder -> Akadaemia Anyder (CFC 661). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 71 (CFC 661) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Akadaemia_Anyder_(Quest)"
+  },
+  "69157": {
+    "contentFinderConditionIds": [
+      656
+    ],
+    "note": "A Fresh Start -> Malikah's Well (CFC 656). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 69 (CFC 656) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Fresh_Start"
+  },
+  "69179": {
+    "contentFinderConditionIds": [
+      659,
+      666
+    ],
+    "note": "Extinguishing the Last Light -> Mt. Gulg (CFC 659), the Crown of the Immaculate (CFC 666). The wiki quest page lists them under unlocks; its script's first duty constant is InstanceContent 70 (CFC 659) but it runs no unlock step, so the script rule does not credit it; its script names InstanceContent 20064 (CFC 666) after its first duty.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Extinguishing_the_Last_Light"
+  },
+  "69190": {
+    "contentFinderConditionIds": [
+      652,
+      687
+    ],
+    "note": "Shadowbringers -> Amaurot (CFC 652), the Dying Gasp (CFC 687). The wiki quest page lists them under unlocks; its script's first duty constant is InstanceContent 67 (CFC 652) but it runs no unlock step, so the script rule does not credit it; its script names InstanceContent 20066 (CFC 687) after its first duty.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Shadowbringers_(Quest)"
+  },
+  "69198": {
+    "contentFinderConditionIds": [
+      658,
+      667,
+      693,
+      739
+    ],
+    "note": "Minstrel from Another Mother -> the Dancing Plague (Extreme) (CFC 658), the Crown of the Immaculate (Extreme) (CFC 667), the Minstrel's Ballad: Hades's Elegy (CFC 693), the Seat of Sacrifice (Extreme) (CFC 739). The wiki quest page lists them in its Unlocks section: this quasi-quest is how they are unlocked, speaking to its NPC again once each duty's own prerequisite is done; its script names none of them.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Minstrel_from_Another_Mother"
+  },
+  "69210": {
+    "contentFinderConditionIds": [
+      692
+    ],
+    "note": "A Grand Adventure -> the Grand Cosmos (CFC 692). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 73 (CFC 692) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Grand_Adventure"
+  },
+  "69305": {
+    "contentFinderConditionIds": [
+      714
+    ],
+    "note": "Beneath the Surface -> Anamnesis Anyder (CFC 714). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 74 (CFC 714) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Beneath_the_Surface"
+  },
+  "69313": {
+    "contentFinderConditionIds": [
+      737
+    ],
+    "note": "The Converging Light -> the Heroes' Gauntlet (CFC 737). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 75 (CFC 737) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Converging_Light"
+  },
+  "69314": {
+    "contentFinderConditionIds": [
+      738
+    ],
+    "note": "Hope's Confluence -> the Seat of Sacrifice (CFC 738). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 20071 (CFC 738) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Hope's_Confluence"
+  },
+  "69319": {
+    "contentFinderConditionIds": [
+      717
+    ],
+    "note": "Ruby Doomsday -> Cinder Drift (CFC 717). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 20068 (CFC 717) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Ruby_Doomsday"
+  },
+  "69324": {
+    "contentFinderConditionIds": [
+      715
+    ],
+    "note": "Blood and Thunder -> Eden's Verse: Fulmination (CFC 715). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 30088 (CFC 715) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Blood_and_Thunder"
+  },
+  "69325": {
+    "contentFinderConditionIds": [
+      719
+    ],
+    "note": "Into the Firestorm -> Eden's Verse: Furor (CFC 719). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 30090 (CFC 719) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Into_the_Firestorm"
+  },
+  "69326": {
+    "contentFinderConditionIds": [
+      726
+    ],
+    "note": "Heart of Darkness -> Eden's Verse: Iconoclasm (CFC 726). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 30092 (CFC 726) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Heart_of_Darkness"
+  },
+  "69327": {
+    "contentFinderConditionIds": [
+      728
+    ],
+    "note": "On Thin Ice -> Eden's Verse: Refulgence (CFC 728). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 30094 (CFC 728) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/On_Thin_Ice"
+  },
+  "69378": {
+    "contentFinderConditionIds": [
+      718,
+      763,
+      782
+    ],
+    "note": "Weapon of Choice -> Cinder Drift (Extreme) (CFC 718), Castrum Marinum (Extreme) (CFC 763), the Cloud Deck (Extreme) (CFC 782). The wiki quest page lists them in its Unlocks section: this quasi-quest is how they are unlocked, speaking to its NPC again once each duty's own prerequisite is done; its script names none of them.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Weapon_of_Choice"
+  },
   "69409": {
     "contentFinderConditionIds": [
       15
@@ -491,12 +1109,184 @@
     "note": "Levin an Impression -> the Striking Tree (Hard) (2.3 MSQ trial; current row, the removed legacy row 66988 runs UNLOCK_ADD_NEW_CONTENT_TO_CF); quest script INSTANCEDUNGEON0 is InstanceContent 20022, CFC 77. The wiki quest page (id-gt 69421) lists the duty under unlocks.",
     "evidence": "https://ffxiv.consolegameswiki.com/wiki/Levin_an_Impression"
   },
+  "69501": {
+    "contentFinderConditionIds": [
+      1118
+    ],
+    "note": "Fantastic Mr. Faux -> Shinryu's Domain (Unreal) (CFC 1118). The wiki quest page lists it under unlocks; its script names no duty.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Fantastic_Mr._Faux"
+  },
+  "69512": {
+    "contentFinderConditionIds": [
+      749
+    ],
+    "note": "Fear of the Dark -> Eden's Promise: Umbra (CFC 749). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 30097 (CFC 749) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Fear_of_the_Dark"
+  },
+  "69513": {
+    "contentFinderConditionIds": [
+      747
+    ],
+    "note": "Shadows of the Past -> Eden's Promise: Litany (CFC 747). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 30099 (CFC 747) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Shadows_of_the_Past"
+  },
+  "69514": {
+    "contentFinderConditionIds": [
+      751,
+      758
+    ],
+    "note": "Voice of the Soul -> Eden's Promise: Anamorphosis (CFC 751), Eden's Promise: Eternity (CFC 758). The wiki quest page lists them under unlocks; its script's first duty constant is InstanceContent 30101 (CFC 751) but it runs no unlock step, so the script rule does not credit it; its script names InstanceContent 30103 (CFC 758) after its first duty.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Voice_of_the_Soul"
+  },
+  "69516": {
+    "contentFinderConditionIds": [
+      762
+    ],
+    "note": "Blood of Emerald -> Castrum Marinum (CFC 762). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 20073 (CFC 762) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Blood_of_Emerald"
+  },
+  "69547": {
+    "contentFinderConditionIds": [
+      746
+    ],
+    "note": "Like Master, Like Pupil -> Matoya's Relict (CFC 746). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 76 (CFC 746) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Like_Master,_Like_Pupil"
+  },
+  "69563": {
+    "contentFinderConditionIds": [
+      761
+    ],
+    "note": "A Seaside Story -> Delubrum Reginae (Savage) (CFC 761). The wiki quest page lists it under unlocks; its script names no duty.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Seaside_Story"
+  },
+  "69567": {
+    "contentFinderConditionIds": [
+      781
+    ],
+    "note": "Duty in the Sky with Diamond -> the Cloud Deck (CFC 781). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 20075 (CFC 781) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Duty_in_the_Sky_with_Diamond"
+  },
+  "69598": {
+    "contentFinderConditionIds": [
+      777
+    ],
+    "note": "The Flames of War -> Paglth'an (CFC 777). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 77 (CFC 777) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Flames_of_War"
+  },
+  "69620": {
+    "contentFinderConditionIds": [
+      778
+    ],
+    "note": "A New Playing Field -> Zadnor (CFC 778), a field operation. The wiki quest page lists it under unlocks; its script names no duty.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_New_Playing_Field"
+  },
+  "69703": {
+    "contentFinderConditionIds": [
+      794
+    ],
+    "note": "Cutting the Cheese -> Smileton (CFC 794). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 85 (CFC 794) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Cutting_the_Cheese"
+  },
+  "69704": {
+    "contentFinderConditionIds": [
+      784
+    ],
+    "note": "Where No Loporrit Has Gone Before -> the Stigma Dreamscape (CFC 784). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 79 (CFC 784) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Where_No_Loporrit_Has_Gone_Before"
+  },
+  "69707": {
+    "contentFinderConditionIds": [
+      803,
+      791,
+      846,
+      871,
+      924,
+      950,
+      965,
+      788,
+      908
+    ],
+    "note": "I Wandered Sharlayan as a Minstrel -> the Minstrel's Ballad: Zodiark's Fall (CFC 803), the Minstrel's Ballad: Hydaelyn's Call (CFC 791), the Minstrel's Ballad: Endsinger's Aria (CFC 846), Storm's Crown (Extreme) (CFC 871), Mount Ordeals (Extreme) (CFC 924), the Voidcast Dais (Extreme) (CFC 950), the Abyssal Fracture (Extreme) (CFC 965), Dragonsong's Reprise (Ultimate) (CFC 788), the Omega Protocol (Ultimate) (CFC 908). The wiki quest page lists them in its Unlocks section: this quasi-quest is how they are unlocked, speaking to its NPC again once each duty's own prerequisite is done; its script names none of them.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/I_Wandered_Sharlayan_as_a_Minstrel"
+  },
+  "69913": {
+    "contentFinderConditionIds": [
+      783
+    ],
+    "note": "In the Dark of the Tower -> the Tower of Zot (CFC 783). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 78 (CFC 783) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/In_the_Dark_of_the_Tower"
+  },
+  "69931": {
+    "contentFinderConditionIds": [
+      785
+    ],
+    "note": "Gateway of the Gods -> the Tower of Babil (CFC 785). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 80 (CFC 785) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Gateway_of_the_Gods"
+  },
+  "69934": {
+    "contentFinderConditionIds": [
+      802
+    ],
+    "note": "The Martyr -> the Dark Inside (CFC 802). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 20080 (CFC 802) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Martyr"
+  },
+  "69945": {
+    "contentFinderConditionIds": [
+      789
+    ],
+    "note": "Skies Aflame -> Vanaspati (CFC 789). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 83 (CFC 789) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Skies_Aflame"
+  },
+  "69973": {
+    "contentFinderConditionIds": [
+      787
+    ],
+    "note": "Caging the Messenger -> Ktisis Hyperboreia (CFC 787). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 82 (CFC 787) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Caging_the_Messenger"
+  },
+  "69985": {
+    "contentFinderConditionIds": [
+      786,
+      790
+    ],
+    "note": "Her Children, One and All -> the Aitiascope (CFC 786), the Mothercrystal (CFC 790). The wiki quest page lists them under unlocks; its script's first duty constant is InstanceContent 81 (CFC 786) but it runs no unlock step, so the script rule does not credit it; its script names InstanceContent 20077 (CFC 790) after its first duty.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Her_Children,_One_and_All"
+  },
+  "70000": {
+    "contentFinderConditionIds": [
+      792,
+      796
+    ],
+    "note": "Endwalker -> the Dead Ends (CFC 792), the Final Day (CFC 796). The wiki quest page lists them under unlocks; its script's first duty constant is InstanceContent 84 (CFC 792) but it runs no unlock step, so the script rule does not credit it; its script names InstanceContent 20079 (CFC 796) after its first duty.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Endwalker_(Quest)"
+  },
   "70012": {
     "contentFinderConditionIds": [
       808
     ],
     "note": "Where Familiars Dare -> Asphodelos: The First Circle (Pandaemonium raid series entry). Not 70011 The Crystal from Beyond, which only starts the chain: wiki req-quest on the duty page and Garland instance 30111 on quest 70012.",
     "evidence": "https://ffxiv.consolegameswiki.com/wiki/Where_Familiars_Dare ; https://www.garlandtools.org/db/doc/quest/en/2/70012.json"
+  },
+  "70013": {
+    "contentFinderConditionIds": [
+      810
+    ],
+    "note": "Under the Surface -> Asphodelos: The Second Circle (CFC 810). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 30113 (CFC 810) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Under_the_Surface"
+  },
+  "70014": {
+    "contentFinderConditionIds": [
+      806
+    ],
+    "note": "The Fires of Creation -> Asphodelos: The Third Circle (CFC 806). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 30109 (CFC 806) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Fires_of_Creation"
+  },
+  "70015": {
+    "contentFinderConditionIds": [
+      800
+    ],
+    "note": "Who Wards the Warders? -> Asphodelos: The Fourth Circle (CFC 800). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 30107 (CFC 800) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Who_Wards_the_Warders%3F"
   },
   "70057": {
     "contentFinderConditionIds": [
@@ -512,12 +1302,75 @@
     ],
     "note": "The Ultimate Weapon (6.1 rework row XxcFst503) -> the Praetorium and the Porta Decumana; both objective territories match."
   },
+  "70065": {
+    "contentFinderConditionIds": [
+      844
+    ],
+    "note": "Alzadaal's Legacy -> Alzadaal's Legacy (CFC 844). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 87 (CFC 844) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Alzadaal's_Legacy_(Quest)"
+  },
+  "70128": {
+    "contentFinderConditionIds": [
+      869
+    ],
+    "note": "In Search of Azdaja -> the Fell Court of Troia (CFC 869). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 88 (CFC 869) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/In_Search_of_Azdaja"
+  },
+  "70133": {
+    "contentFinderConditionIds": [
+      870
+    ],
+    "note": "The Wind Rises -> Storm's Crown (CFC 870). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 20084 (CFC 870) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Wind_Rises"
+  },
+  "70172": {
+    "contentFinderConditionIds": [
+      872
+    ],
+    "note": "Masks of the Father -> Abyssos: The Fifth Circle (CFC 872). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 30116 (CFC 872) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Masks_of_the_Father"
+  },
+  "70173": {
+    "contentFinderConditionIds": [
+      880
+    ],
+    "note": "A Keyward's Gaol -> Abyssos: The Sixth Circle (CFC 880). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 30120 (CFC 880) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Keyward's_Gaol"
+  },
+  "70174": {
+    "contentFinderConditionIds": [
+      876
+    ],
+    "note": "Servant of Violence -> Abyssos: The Seventh Circle (CFC 876). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 30118 (CFC 876) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Servant_of_Violence"
+  },
+  "70175": {
+    "contentFinderConditionIds": [
+      883
+    ],
+    "note": "One Final Wish -> Abyssos: The Eighth Circle (CFC 883). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 30122 (CFC 883) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/One_Final_Wish"
+  },
   "70182": {
     "contentFinderConditionIds": [
       868
     ],
     "note": "A Key to the Past -> the Sil'dihn Subterrane (variant dungeon); quest script INSTANCEDUNGEON0 is InstanceContent 36001 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 868. The wiki quest page (id-gt 70182) lists the duty under unlocks.",
     "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Key_to_the_Past"
+  },
+  "70210": {
+    "contentFinderConditionIds": [
+      896
+    ],
+    "note": "King of the Mountain -> Lapis Manalis (CFC 896). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 89 (CFC 896) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/King_of_the_Mountain"
+  },
+  "70213": {
+    "contentFinderConditionIds": [
+      886
+    ],
+    "note": "Desires Untold -> Mount Ordeals (CFC 886). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 20086 (CFC 886) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Desires_Untold"
   },
   "70269": {
     "contentFinderConditionIds": [
@@ -526,12 +1379,70 @@
     "note": "Mononoke Aware -> Mount Rokkon (variant dungeon); quest script INSTANCEDUNGEON0 is InstanceContent 36002 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 945. The wiki quest page (id-gt 70269) lists the duty under unlocks.",
     "evidence": "https://ffxiv.consolegameswiki.com/wiki/Mononoke_Aware"
   },
+  "70272": {
+    "contentFinderConditionIds": [
+      822
+    ],
+    "note": "Going Haam -> the Aetherfont (CFC 822). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 90 (CFC 822) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Going_Haam"
+  },
+  "70278": {
+    "contentFinderConditionIds": [
+      949
+    ],
+    "note": "Abyssal Dark -> the Voidcast Dais (CFC 949). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 20089 (CFC 949) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Abyssal_Dark"
+  },
+  "70284": {
+    "contentFinderConditionIds": [
+      823,
+      964
+    ],
+    "note": "Down in the Dark -> the Lunar Subterrane (CFC 823), the Abyssal Fracture (CFC 964). The wiki quest page lists them under unlocks; its script's first duty constant is InstanceContent 91 (CFC 823) but it runs no unlock step, so the script rule does not credit it; its script names InstanceContent 20091 (CFC 964) after its first duty.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Down_in_the_Dark"
+  },
+  "70292": {
+    "contentFinderConditionIds": [
+      936
+    ],
+    "note": "Eater of Souls -> Anabaseios: The Ninth Circle (CFC 936). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 30126 (CFC 936) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Eater_of_Souls"
+  },
+  "70293": {
+    "contentFinderConditionIds": [
+      938
+    ],
+    "note": "Pandæmonium Awakens -> Anabaseios: The Tenth Circle (CFC 938). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 30128 (CFC 938) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Pand%C3%A6monium_Awakens"
+  },
+  "70294": {
+    "contentFinderConditionIds": [
+      940
+    ],
+    "note": "The Emissary's Judgment -> Anabaseios: The Eleventh Circle (CFC 940). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 30130 (CFC 940) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Emissary's_Judgment"
+  },
+  "70295": {
+    "contentFinderConditionIds": [
+      942
+    ],
+    "note": "A Mother's Touch -> Anabaseios: The Twelfth Circle (CFC 942). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 30132 (CFC 942) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Mother's_Touch"
+  },
   "70325": {
     "contentFinderConditionIds": [
       961
     ],
     "note": "Stranger from Paradise -> Aloalo Island (variant dungeon); quest script INSTANCEDUNGEON0 is InstanceContent 36003 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 961. The wiki quest page (id-gt 70325) lists the duty under unlocks.",
     "evidence": "https://ffxiv.consolegameswiki.com/wiki/Stranger_from_Paradise"
+  },
+  "70336": {
+    "contentFinderConditionIds": [
+      69,
+      944
+    ],
+    "note": "Gentlemen at Heart -> The Gilded Araya (CFC 69), the Gilded Araya (CFC 944). The wiki quest page lists them under unlocks; its script's first duty constant is InstanceContent 20088 (CFC 944) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Gentlemen_at_Heart"
   },
   "70415": {
     "contentFinderConditionIds": [
@@ -544,6 +1455,13 @@
       824
     ],
     "note": "The High Luminary -> Worqor Zormor; objective territory 1193 matches CFC 824."
+  },
+  "70430": {
+    "contentFinderConditionIds": [
+      832
+    ],
+    "note": "The Skyruin -> Worqor Lar Dor (CFC 832). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 20093 (CFC 832) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Skyruin"
   },
   "70445": {
     "contentFinderConditionIds": [
@@ -559,15 +1477,177 @@
   },
   "70481": {
     "contentFinderConditionIds": [
-      825
+      825,
+      995
     ],
-    "note": "The Resilient Son -> Origenics; objective territory 1208 matches CFC 825."
+    "note": "The Resilient Son -> Origenics; objective territory 1208 matches CFC 825. Also Everkeep (CFC 995): the wiki quest page lists it under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Resilient_Son"
   },
   "70495": {
     "contentFinderConditionIds": [
-      827
+      827,
+      984
     ],
-    "note": "Dawntrail -> Alexandria; objective territory 1199 matches CFC 827."
+    "note": "Dawntrail -> Alexandria; objective territory 1199 matches CFC 827. Also the Interphos (CFC 984): the wiki quest page lists it under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Dawntrail_(Quest)"
+  },
+  "70497": {
+    "contentFinderConditionIds": [
+      985
+    ],
+    "note": "The Claw in the Dark -> AAC Light-heavyweight M1 (CFC 985). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 30135 (CFC 985) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Claw_in_the_Dark"
+  },
+  "70498": {
+    "contentFinderConditionIds": [
+      987
+    ],
+    "note": "Sweet Poison -> AAC Light-heavyweight M2 (CFC 987). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 30137 (CFC 987) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Sweet_Poison"
+  },
+  "70500": {
+    "contentFinderConditionIds": [
+      989
+    ],
+    "note": "Vile Heat -> AAC Light-heavyweight M3 (CFC 989). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 30139 (CFC 989) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Vile_Heat"
+  },
+  "70501": {
+    "contentFinderConditionIds": [
+      991
+    ],
+    "note": "The Neoteric Witch -> AAC Light-heavyweight M4 (CFC 991). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 30141 (CFC 991) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Neoteric_Witch"
+  },
+  "70540": {
+    "contentFinderConditionIds": [
+      833,
+      996,
+      1017,
+      1031,
+      1062,
+      1044,
+      1077,
+      1116,
+      1006,
+      1094,
+      1010
+    ],
+    "note": "How the West Was Sung -> Worqor Lar Dor (Extreme) (CFC 833), Everkeep (Extreme) (CFC 996), the Minstrel's Ballad: Sphene's Burden (CFC 1017), Recollection (Extreme) (CFC 1031), the Minstrel's Ballad: Necron's Embrace (CFC 1062), the Windward Wilds (Extreme) (CFC 1044), Hell on Rails (Extreme) (CFC 1077), the Unmaking (Extreme) (CFC 1116), Futures Rewritten (Ultimate) (CFC 1006), Dancing Mad (Ultimate) (CFC 1094), the Cloud of Darkness (Chaotic) (CFC 1010). The wiki quest page lists them in its Unlocks section: this quasi-quest is how they are unlocked, speaking to its NPC again once each duty's own prerequisite is done; its script names none of them.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/How_the_West_Was_Sung"
+  },
+  "70549": {
+    "contentFinderConditionIds": [
+      834
+    ],
+    "note": "It Belongs in a Museum -> Tender Valley (CFC 834). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 98 (CFC 834) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/It_Belongs_in_a_Museum"
+  },
+  "70550": {
+    "contentFinderConditionIds": [
+      981
+    ],
+    "note": "Something Stray in the Neighborhood -> The Strayborough Deadwalk (CFC 981). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 99 (CFC 981) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Something_Stray_in_the_Neighborhood"
+  },
+  "70769": {
+    "contentFinderConditionIds": [
+      1015
+    ],
+    "note": "An Otherworldly Encounter -> Jeuno: The First Walk (CFC 1015). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 30144 (CFC 1015) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/An_Otherworldly_Encounter"
+  },
+  "70782": {
+    "contentFinderConditionIds": [
+      1008
+    ],
+    "note": "In Search of the Past -> Yuweyawata Field Station (CFC 1008). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 100 (CFC 1008) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/In_Search_of_the_Past"
+  },
+  "70826": {
+    "contentFinderConditionIds": [
+      1019
+    ],
+    "note": "The Dancing King -> AAC Cruiserweight M1 (CFC 1019). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 30145 (CFC 1019) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Dancing_King"
+  },
+  "70827": {
+    "contentFinderConditionIds": [
+      1021
+    ],
+    "note": "Art at War -> AAC Cruiserweight M2 (CFC 1021). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 30147 (CFC 1021) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Art_at_War"
+  },
+  "70828": {
+    "contentFinderConditionIds": [
+      1023
+    ],
+    "note": "Twisted Vengeance -> AAC Cruiserweight M3 (CFC 1023). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 30149 (CFC 1023) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Twisted_Vengeance"
+  },
+  "70830": {
+    "contentFinderConditionIds": [
+      1025
+    ],
+    "note": "The Lone Wolf -> AAC Cruiserweight M4 (CFC 1025). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 30151 (CFC 1025) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Lone_Wolf"
+  },
+  "70840": {
+    "contentFinderConditionIds": [
+      1030
+    ],
+    "note": "Descent to the Foundation -> Recollection (CFC 1030). The wiki quest page lists it under unlocks; its script names InstanceContent 20100 (CFC 1030) after its first duty.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Descent_to_the_Foundation"
+  },
+  "70862": {
+    "contentFinderConditionIds": [
+      1058
+    ],
+    "note": "Dreams of Paradise -> San d'Oria: The Second Walk (CFC 1058). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 30153 (CFC 1058) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Dreams_of_Paradise"
+  },
+  "70907": {
+    "contentFinderConditionIds": [
+      1028,
+      1061
+    ],
+    "note": "A Terminal Invitation -> the Meso Terminal (CFC 1028), the Ageless Necropolis (CFC 1061). The wiki quest page lists them under unlocks; its script's first duty constant is InstanceContent 102 (CFC 1028) but it runs no unlock step, so the script rule does not credit it; its script names InstanceContent 20104 (CFC 1061) after its first duty.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Terminal_Invitation"
+  },
+  "70910": {
+    "contentFinderConditionIds": [
+      1043
+    ],
+    "note": "The White Wanderer -> the Windward Wilds (CFC 1043). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 20102 (CFC 1043) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_White_Wanderer"
+  },
+  "70972": {
+    "contentFinderConditionIds": [
+      1068
+    ],
+    "note": "The Breathtaker -> AAC Heavyweight M1 (CFC 1068). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 30154 (CFC 1068) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Breathtaker"
+  },
+  "70973": {
+    "contentFinderConditionIds": [
+      1070
+    ],
+    "note": "Daring Devils -> AAC Heavyweight M2 (CFC 1070). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 30156 (CFC 1070) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Daring_Devils"
+  },
+  "70975": {
+    "contentFinderConditionIds": [
+      1072
+    ],
+    "note": "Iron Fist -> AAC Heavyweight M3 (CFC 1072). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 30158 (CFC 1072) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Iron_Fist"
+  },
+  "70976": {
+    "contentFinderConditionIds": [
+      1074
+    ],
+    "note": "Glory Incarnate -> AAC Heavyweight M4 (CFC 1074). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 30160 (CFC 1074) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Glory_Incarnate"
   },
   "70977": {
     "contentFinderConditionIds": [
@@ -575,5 +1655,26 @@
     ],
     "note": "A Spellbinding Read -> the Merchant's Tale (variant dungeon); quest script INSTANCEDUNGEON0 is InstanceContent 36004 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 1066. The wiki quest page (id-gt 70977) lists the duty under unlocks.",
     "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Spellbinding_Read"
+  },
+  "71007": {
+    "contentFinderConditionIds": [
+      1011
+    ],
+    "note": "Two Worlds Entwined -> the Clyteum (CFC 1011). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 104 (CFC 1011) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Two_Worlds_Entwined"
+  },
+  "71008": {
+    "contentFinderConditionIds": [
+      1115
+    ],
+    "note": "A Grave Presentiment -> the Unmaking (CFC 1115). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 20108 (CFC 1115) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Grave_Presentiment"
+  },
+  "71015": {
+    "contentFinderConditionIds": [
+      1117
+    ],
+    "note": "The Hollow Promise -> Windurst: The Third Walk (CFC 1117). The wiki quest page lists it under unlocks; its script's first duty constant is InstanceContent 30163 (CFC 1117) but it runs no unlock step, so the script rule does not credit it.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Hollow_Promise"
   }
 }

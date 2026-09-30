@@ -29,6 +29,15 @@ public sealed record QuestScriptDuty(
 {
     /// <summary>The script announces a new duty (Duty Finder message or unlock banner).</summary>
     public bool IsUnlockStep => AddsToDutyFinder || ShowsUnlockImage;
+
+    /// <summary>
+    /// The duties the script rule says the quest unlocks: its <see cref="PrimaryDuties"/> when it
+    /// <see cref="IsUnlockStep">announces a duty</see>, else none. Against the wiki's quest pages the rule's only false
+    /// pairs came from removed legacy rows (Rock the Castrum 66672, Levin an Impression 66988, whose current rows are
+    /// curated), so callers leave out quests the catalog marks <c>IsRemoved</c> or <c>IsRetired</c>; over the live
+    /// quests every pair it yields is on the wiki (docs/data/v4/tagging-audit.md finding 4).
+    /// </summary>
+    public IReadOnlyList<uint> UnlockedDuties => IsUnlockStep ? PrimaryDuties : [];
 }
 
 /// <summary>

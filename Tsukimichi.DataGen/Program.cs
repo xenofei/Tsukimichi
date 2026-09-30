@@ -92,23 +92,26 @@ public static class Program
         generator.Run();
         Console.WriteLine($"static:  {generator.Entries.Count} entries in {clock.Elapsed.TotalSeconds:F1} s ({generator.Dropped.Count} item rewards dropped as non-exclusive or unnamed)");
 
+        var hasCurated = curated is not null && Directory.Exists(curated);
+        var curatedData = hasCurated ? CuratedData.Load(curated!) : CuratedData.Empty;
+        foreach (var warning in curatedData.Warnings)
+            Console.WriteLine($"curated: {warning}");
+        // The refiled catalog, as the plugin builds it: retired quests never derive, refiled quasi-quests do.
+        var bundle = CatalogMapper.Map(sheets.Data.Excel, Language.English, curated: curatedData);
+
+        DutyUnlockDerivation.AddScriptUnlocks(sheets, bundle.Catalog, generator, Console.Out);
         CuratedOverlay.Apply(curated, sheets, generator, Console.Out);
 
-        var entries = generator.Entries.ToList();
+        var entries = DutyUnlockDerivation.WithoutRetiredDuties(generator.Entries, sheets, Console.Out);
         OutputFile.Write(output, sheets.GameVersion, generatedUtc, entries);
         Console.WriteLine($"wrote:   {output} ({entries.Count} entries)");
 
-        if (curated is not null && Directory.Exists(curated))
+        if (hasCurated)
         {
             // feature_quests.json is derived, not maintained: the runtime rule over the mapped catalog, the other
             // curated files and the entries just written. CuratedInvariantsTests compares the shipped file to this.
-            var curatedData = CuratedData.Load(curated);
-            foreach (var warning in curatedData.Warnings)
-                Console.WriteLine($"curated: {warning}");
-            // The refiled catalog, as the plugin builds it: retired quests never derive, refiled quasi-quests do.
-            var bundle = CatalogMapper.Map(sheets.Data.Excel, Language.English, curated: curatedData);
             var featureIds = FeaturePresets.Derive(bundle.Catalog, curatedData.WithoutFeatureQuests(), entries);
-            var featurePath = Path.Combine(curated, CuratedData.FeatureQuestsFileName);
+            var featurePath = Path.Combine(curated!, CuratedData.FeatureQuestsFileName);
             FeatureQuestsFile.Write(featurePath, featureIds);
             Console.WriteLine($"wrote:   {featurePath} ({featureIds.Count} feature quests, derived)");
         }

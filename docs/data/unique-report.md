@@ -2,7 +2,7 @@
 
 Generated from game version `2026.09.15.0000.0000` by Tsukimichi.DataGen (see docs/data/DATA-VERSION.md for when).
 
-- Entries: **3516** across **1211** quests.
+- Entries: **3823** across **1390** quests.
 - Entries whose reward is also obtainable elsewhere (`otherSources` non-empty): **913**. They keep confidence Static in V1; the UI shows the source and marks Online Store re-sells and dungeon drops.
   - `SpecialShop`: 605
   - `Tradable`: 555
@@ -38,9 +38,9 @@ Generated from game version `2026.09.15.0000.0000` by Tsukimichi.DataGen (see do
 | Trait | 54 | 0 | 0 | 0 | 54 |
 | Achievement | 664 | 0 | 0 | 0 | 664 |
 | Title | 220 | 0 | 0 | 0 | 220 |
-| DutyUnlock | 135 | 0 | 91 | 0 | 226 |
-| SystemUnlock | 0 | 0 | 65 | 0 | 65 |
-| **Total** | 3360 | 0 | 156 | 0 | 3516 |
+| DutyUnlock | 156 | 0 | 308 | 0 | 464 |
+| SystemUnlock | 0 | 0 | 134 | 0 | 134 |
+| **Total** | 3381 | 0 | 442 | 0 | 3823 |
 
 ## Examples per kind
 
@@ -321,42 +321,42 @@ Generated from game version `2026.09.15.0000.0000` by Tsukimichi.DataGen (see do
 | 65802 The Chefsbane Cometh | Seeker of Skill | 47 | 0 | Static | `Achievement.Data;achievement=316;type=6` |
 | 65816 May the Best Armorer Win | Seeker of Skill | 47 | 0 | Static | `Achievement.Data;achievement=316;type=6` |
 
-### DutyUnlock (226)
+### DutyUnlock (464)
 
 | Quest | Reward | Reward id | Item id | Confidence | Source |
 |---|---|---:|---:|---|---|
 | 65579 Fragments of Truth | the Final Coil of Bahamut - Turn 1 | 107 | 0 | Static | `Quest.InstanceContentUnlock;InstanceContent=30016` |
+| 65579 Fragments of Truth | the Final Coil of Bahamut - Turn 2 | 108 | 0 | Curated | `curated/duty_unlocks.json` |
+| 65579 Fragments of Truth | the Final Coil of Bahamut - Turn 3 | 109 | 0 | Curated | `curated/duty_unlocks.json` |
+| 65579 Fragments of Truth | the Final Coil of Bahamut - Turn 4 | 110 | 0 | Curated | `curated/duty_unlocks.json` |
 | 65594 Simply the Hest | Basic Training: Enemy Parties | 42 | 0 | Static | `Quest.InstanceContentUnlock;InstanceContent=10001` |
 | 65595 Simply the Hest | Basic Training: Enemy Parties | 42 | 0 | Static | `Quest.InstanceContentUnlock;InstanceContent=10001` |
 | 65596 Simply the Hest | Basic Training: Enemy Parties | 42 | 0 | Static | `Quest.InstanceContentUnlock;InstanceContent=10001` |
 | 65611 The Path of the Righteous | Snowcloak | 27 | 0 | Curated | `curated/duty_unlocks.json` |
 | 65620 The Instruments of Our Deliverance | the Akh Afah Amphitheatre (Hard) | 79 | 0 | Curated | `curated/duty_unlocks.json` |
 | 65626 Drop Dead Shiva | the Akh Afah Amphitheatre (Extreme) | 80 | 0 | Curated | `curated/duty_unlocks.json` |
-| 65630 It's Definitely Pirates | Sastasha (Hard) | 28 | 0 | Curated | `curated/duty_unlocks.json` |
-| 65632 The Wrath of Qarn | the Sunken Temple of Qarn (Hard) | 26 | 0 | Curated | `curated/duty_unlocks.json` |
-| 65740 The Coliseum Conundrum | the Dragon's Neck | 81 | 0 | Curated | `curated/duty_unlocks.json` |
 
-### SystemUnlock (65)
+### SystemUnlock (134)
 
 | Quest | Reward | Reward id | Item id | Confidence | Source |
 |---|---|---:|---:|---|---|
+| 65594 Simply the Hest | Guildhests | 0 | 0 | Curated | `curated/system_unlocks.json` |
+| 65595 Simply the Hest | Guildhests | 0 | 0 | Curated | `curated/system_unlocks.json` |
+| 65596 Simply the Hest | Guildhests | 0 | 0 | Curated | `curated/system_unlocks.json` |
 | 65688 Gone to Pieces | Desynthesis | 0 | 0 | Curated | `curated/system_unlocks.json` |
 | 65698 A Sight to Behold | Sightseeing Log | 0 | 0 | Curated | `curated/system_unlocks.json` |
 | 65970 It Could Happen to You | Gold Saucer | 0 | 0 | Curated | `curated/system_unlocks.json` |
 | 65972 So You Want to Be a Jockey | Chocobo racing | 0 | 0 | Curated | `curated/system_unlocks.json` |
 | 65973 Triple Triad Trial | Triple Triad | 0 | 0 | Curated | `curated/system_unlocks.json` |
-| 66174 Forging the Spirit | Materia extraction | 0 | 0 | Curated | `curated/system_unlocks.json` |
-| 66175 Waking the Spirit | Materia melding | 0 | 0 | Curated | `curated/system_unlocks.json` |
-| 66216 The Company You Keep (Twin Adder) | Grand Company enrollment | 0 | 0 | Curated | `curated/system_unlocks.json` |
-| 66217 The Company You Keep (Maelstrom) | Grand Company enrollment | 0 | 0 | Curated | `curated/system_unlocks.json` |
-| 66218 The Company You Keep (Immortal Flames) | Grand Company enrollment | 0 | 0 | Curated | `curated/system_unlocks.json` |
+| 66024 Scratch It Rich | Mini Cactpot | 0 | 0 | Curated | `curated/system_unlocks.json` |
+| 66025 Hitting the Cactpot | Jumbo Cactpot | 0 | 0 | Curated | `curated/system_unlocks.json` |
 
 ## Quests with rewards but no unique classification
 
-Named quests that hand out at least one reward signal (item, emote, action, unlock or other) but produced no entry: **1981** of 3015.
+Named quests that hand out at least one reward signal (item, emote, action, unlock or other) but produced no entry: **1917** of 3015.
 Most of them only give tradable gear or consumables. The list below is restricted to the ones worth a second look: at least one reward item is untradable, or carries an ItemAction and is not sold on the market board, yet no rule claimed it.
 
-Quests to review: **364**.
+Quests to review: **360**.
 
 | Quest | Reward signals |
 |---|---|
@@ -385,8 +385,6 @@ Quests to review: **364**.
 | 65896 A Treasured Mother | Reward item 9509 Flawless Alexandrite [untradable] |
 | 65960 The Least among Us | Optional item 7060 Durability Draught [ItemAction=846, untradable] |
 | 65971 World of Wonders | Reward item 10085 Gold Saucer Ticket [untradable] |
-| 66024 Scratch It Rich | Reward item 10131 MGP Voucher [ItemAction=3800, untradable] |
-| 66025 Hitting the Cactpot | Reward item 10131 MGP Voucher [ItemAction=3800, untradable] |
 | 66036 Digging for Dolls | Reward item 10088 Nanapasi's Happy Smile Super Wish Bag [ItemAction=2120] |
 | 66045 The Scions of the Seventh Dawn | Reward item 30362 Vesper Bay Aetheryte Ticket [ItemAction=9994, untradable] |
 | 66048 Where Did Our Loves Go | Reward item 7569 Aetheryte Ticket [untradable] |
@@ -643,7 +641,6 @@ Quests to review: **364**.
 | 70063 Bountiful Ruins | Reward item 44274 Lunar Envoy's Weapon Coffer (IL 630) [ItemAction=4647, untradable] |
 | 70070 Void Theory | Optional item 44282 Lunar Envoy's Accessories of Fending Coffer (IL 630) [ItemAction=29153, untradable]; Optional item 44283 Lunar Envoy's Accessories of Slaying Coffer (IL 630) [ItemAction=29153, untradable]; Optional item 44284 Lunar Envoy's Accessories of Aiming Coffer (IL 630) [ItemAction=29153, untradable]; Optional item 44285 Lunar Envoy's Accessories of Healing Coffer (IL 630) [ItemAction=29153, untradable]; Optional item 44286 Lunar Envoy's Accessories of Casting Coffer (IL 630) [ItemAction=29153, untradable] |
 | 70193 A Spooky Celebration | Reward item 16929 Magicked Prism (Pumpkin) [ItemAction=944, untradable] |
-| 70210 King of the Mountain | Optional item 44275 Lunar Envoy's Gear of Fending Coffer (IL 630) [ItemAction=29153, untradable]; Optional item 44276 Lunar Envoy's Gear of Maiming Coffer (IL 630) [ItemAction=29153, untradable]; Optional item 44277 Lunar Envoy's Gear of Striking Coffer (IL 630) [ItemAction=29153, untradable] |
 | 70211 A Dragon's Resolve | Optional item 44278 Lunar Envoy's Gear of Aiming Coffer (IL 630) [ItemAction=29153, untradable]; Optional item 44279 Lunar Envoy's Gear of Scouting Coffer (IL 630) [ItemAction=29153, untradable]; Optional item 44280 Lunar Envoy's Gear of Healing Coffer (IL 630) [ItemAction=29153, untradable]; Optional item 44281 Lunar Envoy's Gear of Casting Coffer (IL 630) [ItemAction=29153, untradable] |
 | 70266 An Original Improvement | Reward item 38809 Splendorous Coffer [ItemAction=4647, untradable] |
 | 70282 In Defiance of Fate | Optional item 38076 Augmented Lunar Envoy's Ring of Fending [untradable]; Optional item 38077 Augmented Lunar Envoy's Ring of Slaying [untradable]; Optional item 38078 Augmented Lunar Envoy's Ring of Aiming [untradable]; Optional item 38079 Augmented Lunar Envoy's Ring of Healing [untradable]; Optional item 38080 Augmented Lunar Envoy's Ring of Casting [untradable] |
@@ -712,7 +709,6 @@ Quests to review: **364**.
 | 70708 Warrior of Light, Wrangler of Cats | Reward item 43525 Ra'Kaznar Ring Coffer (IL 675) [ItemAction=4647, untradable] |
 | 70723 Bottled Fantasy | Reward item 6221 Fantasia [ItemAction=1326, untradable] |
 | 70777 His Heart Blazes On | Reward item 44660 Dawnblazer Attire Coffer [ItemAction=4647, untradable] |
-| 70789 A Cosmic Homecoming | Reward item 48750 Cosmic Prototype Coffer [ItemAction=4647, untradable] |
 | 70875 Getting a Glow On | Reward item 46178 Yok Huy Ward [untradable] |
 | 70879 Worth Their Salt | Reward item 46178 Yok Huy Ward [untradable] |
 | 70882 Romanced by the Stone | Reward item 46178 Yok Huy Ward [untradable] |
@@ -729,13 +725,13 @@ Unhandled ItemAction types among those rewards (candidates for a new rule):
 
 | ItemAction type | Reward items |
 |---:|---:|
-| 4647 | 182 |
-| 29153 | 38 |
+| 4647 | 181 |
+| 29153 | 35 |
 | 816 | 22 |
 | 1055 | 16 |
 | 944 | 7 |
-| 3800 | 5 |
 | 2120 | 5 |
+| 3800 | 3 |
 | 846 | 2 |
 | 9994 | 2 |
 | 852 | 1 |
