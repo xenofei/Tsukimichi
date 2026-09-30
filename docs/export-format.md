@@ -53,7 +53,7 @@ One row per reward of the Moonlit tab's unique view (rewards you marked not uniq
 |---|---|
 | `kind` | Reward kind: `Emote`, `Mount`, `Minion`, `Orchestrion`, `TripleTriadCard`, `Barding`, `Hairstyle`, `Ornament`, `DutyUnlock`, `SystemUnlock`, `Action`, `Title`, `Item`, … |
 | `rewardId` | Row id in the sheet the kind refers to (Mount, Companion, Emote, TripleTriadCard, …) |
-| `rewardName` | The reward's name |
+| `rewardName` | The reward's name in English, from the shipped reward data, whatever the client's language |
 | `questRowId` | Quest sheet row id of the quest that gives it |
 | `obtained` | `true`, `false`, or unknown (`null` in JSON, `unknown` in CSV) |
 
@@ -162,4 +162,4 @@ Mount,15,unicorn,65730,false
 Minion,21,wind-up gentleman,66038,unknown
 ```
 
-The rows in these samples come from the game data of 2026.09.15; names are in the client's language and case.
+The rows in these samples come from the game data of 2026.09.15. Quest, section, category and genre names are in the client's language; Moonlit reward names are always the shipped English ones.

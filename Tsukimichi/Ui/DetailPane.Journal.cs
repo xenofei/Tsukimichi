@@ -63,7 +63,7 @@ public sealed partial class DetailPane
         }
 
         var live = session.IsLive;
-        var view = service.Journal(quest, model.State, model.Evaluation?.Sequence, live, live ? null : session.ViewedSnapshot?.Name);
+        var view = service.Journal(quest, model.State, model.Evaluation?.Sequence, live, live ? null : session.ViewedSnapshot?.Name, session.ViewedContentId ?? 0);
         switch (view.Availability)
         {
             case JournalAvailability.Available:

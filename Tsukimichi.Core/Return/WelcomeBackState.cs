@@ -47,6 +47,15 @@ public sealed record WelcomeBackState
     /// <summary>Whether the answer was "I'm new".</summary>
     [JsonIgnore]
     public bool IsNewPlayer => string.Equals(LastPlayedPatch, NewPlayer, StringComparison.Ordinal);
+
+    /// <summary>
+    /// The state a summary is computed from: this one (the current answer and choices) with the patch recorded as it
+    /// was at login (<paramref name="atLogin"/>). A character's first live evaluation records this session's patch as
+    /// <see cref="SeenPatch"/>, but the capture kept from before the login was taken on the older one, so "new since"
+    /// must be measured from that. Null <paramref name="atLogin"/> (no evaluation this session) keeps this state.
+    /// </summary>
+    public WelcomeBackState MeasuredFrom(WelcomeBackState? atLogin) =>
+        atLogin is null ? this : this with { SeenPatch = atLogin.SeenPatch };
 }
 
 /// <summary>Reads and writes <see cref="WelcomeBackState"/> sidecars.</summary>

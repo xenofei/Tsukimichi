@@ -38,6 +38,10 @@ public sealed class WelcomeBackSource : IDisposable
     private List<SnapshotSummary> capturesAtLogin = [];
     private readonly Dictionary<ulong, CharacterSnapshot> previousById = [];
 
+    // Each character's state as it was loaded at its first live evaluation this session, before this session's patch
+    // was saved over SeenPatch: a summary opened by hand later is measured from the patch the old capture was taken on.
+    private readonly Dictionary<ulong, WelcomeBackState> stateAtLogin = [];
+
     // Characters already evaluated this session; summaries computed this session, by character.
     private readonly HashSet<ulong> handled = [];
     private readonly Dictionary<ulong, WelcomeBackSummary> summaries = [];
@@ -113,7 +117,7 @@ public sealed class WelcomeBackSource : IDisposable
         var state = LoadState(contentId);
         if (previousById.ContainsKey(contentId) || (state.Answered && !state.IsNewPlayer))
         {
-            StartCompute(contentId, state, automatic: false);
+            StartCompute(contentId, state.MeasuredFrom(stateAtLogin.GetValueOrDefault(contentId)), automatic: false);
             return;
         }
 
@@ -149,7 +153,7 @@ public sealed class WelcomeBackSource : IDisposable
             return;
         }
 
-        StartCompute(view.ContentId, state, automatic: false);
+        StartCompute(view.ContentId, state.MeasuredFrom(stateAtLogin.GetValueOrDefault(view.ContentId)), automatic: false);
     }
 
     public void Close() => View = null;
@@ -225,7 +229,8 @@ public sealed class WelcomeBackSource : IDisposable
         }
 
         var state = LoadState(id);
-        var decision = WelcomeBackTrigger.Decide(id, capturesAtLogin, state, settings.WelcomeBackDays, shownThisSession, DateTime.UtcNow);
+        stateAtLogin[id] = state;
+        var decision =WelcomeBackTrigger.Decide(id, capturesAtLogin, state, settings.WelcomeBackDays, shownThisSession, DateTime.UtcNow);
         var newest = PatchIndex.For(bundle.Catalog).Newest;
         var updated = newest.Length > 0 ? state with { SeenPatch = newest } : state;
         switch (decision)
@@ -331,6 +336,7 @@ public sealed class WelcomeBackSource : IDisposable
     private void OnCharacterForgotten(ulong contentId)
     {
         previousById.Remove(contentId);
+        stateAtLogin.Remove(contentId);
         summaries.Remove(contentId);
         if (View is { } view && view.ContentId == contentId)
         {
@@ -341,6 +347,7 @@ public sealed class WelcomeBackSource : IDisposable
     private void OnDataDeleted()
     {
         previousById.Clear();
+        stateAtLogin.Clear();
         summaries.Clear();
         capturesAtLogin = [];
         View = null;

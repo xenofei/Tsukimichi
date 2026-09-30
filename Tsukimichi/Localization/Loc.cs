@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Resources;
 using Tsukimichi.Core.Localization;
 
@@ -38,6 +39,9 @@ public static class Loc
 
     private static readonly ResourceManager Resources = new(ResourceBaseName, typeof(Loc).Assembly);
 
+    // Taken by every writer of the table (SetLanguage and the lazy English load), so one never overwrites the other.
+    private static readonly object Gate = new();
+
     private static Dictionary<string, string>? englishTable;
     private static volatile Dictionary<string, string> table = new(StringComparer.Ordinal);
     private static volatile ConcurrentDictionary<string, string[]> arrays = new(StringComparer.Ordinal);
@@ -51,6 +55,9 @@ public static class Loc
 
     /// <summary>Keys the current language translates (English: all of them). Settings shows coverage from it.</summary>
     public static int TranslatedCount { get; private set; }
+
+    /// <summary>The last error a resource file failed to load with (a corrupt or locked satellite assembly); null when none did.</summary>
+    public static Exception? LastReadError { get; private set; }
 
     /// <summary>Keys in English.</summary>
     public static int KeyCount => EnglishTable.Count;
@@ -155,18 +162,24 @@ public static class Loc
     public static void SetLanguage(string language)
     {
         language = Resolve(language);
-        if (language == Language && table.Count > 0)
+
+        // The same lock as EnsureLoaded: a worker's first Get must not install English over the table set here.
+        lock (Gate)
         {
-            return;
+            if (language == Language && table.Count > 0)
+            {
+                return;
+            }
+
+            var merged = Build(language, out var translated);
+            Language = language;
+            TranslatedCount = translated;
+            table = merged;
+            arrays = new ConcurrentDictionary<string, string[]>(StringComparer.Ordinal);
+            System.Threading.Interlocked.Increment(ref version);
+            CoreText.Use(language == English ? null : Provider);
         }
 
-        var merged = Build(language, out var translated);
-        Language = language;
-        TranslatedCount = translated;
-        table = merged;
-        arrays = new ConcurrentDictionary<string, string[]>(StringComparer.Ordinal);
-        System.Threading.Interlocked.Increment(ref version);
-        CoreText.Use(language == English ? null : Provider);
         Changed?.Invoke();
     }
 
@@ -176,7 +189,7 @@ public static class Loc
 
     private static Dictionary<string, string> EnsureLoaded()
     {
-        lock (Resources)
+        lock (Gate)
         {
             if (table.Count == 0)
             {
@@ -224,6 +237,7 @@ public static class Loc
     private static Dictionary<string, string> Read(CultureInfo culture, bool tryParents)
     {
         var result = new Dictionary<string, string>(StringComparer.Ordinal);
+        LastReadError = null;
         ResourceSet? set;
         try
         {
@@ -235,6 +249,13 @@ public static class Loc
         }
         catch (MissingSatelliteAssemblyException)
         {
+            set = null;
+        }
+        catch (Exception ex) when (ex is FileLoadException or BadImageFormatException or IOException)
+        {
+            // A satellite assembly that is corrupt, locked or unreadable: the language reads English, and LocService
+            // logs why (LastReadError) instead of the plugin failing to load.
+            LastReadError = ex;
             set = null;
         }
 

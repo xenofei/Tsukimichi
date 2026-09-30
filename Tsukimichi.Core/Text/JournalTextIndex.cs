@@ -8,13 +8,16 @@ namespace Tsukimichi.Core.Text;
 /// sentence, so the file it is saved to is an index and not a copy of the game's text. Built off the framework thread
 /// from the client's own quest text sheets, saved once per game version and language (<see cref="JournalIndexStore"/>),
 /// and matched on the framework thread: a query term matches every word it starts ("ishga" finds "ishgard" and
-/// "ishgardian"), a two-character pair of a script without spaces matches exactly, and a quest matches when every term
-/// does. Immutable once built; safe to read from any thread.
+/// "ishgardian"), a two-character pair of a script without spaces matches exactly, a lone character of such a script
+/// matches every pair holding it ("竜" finds "竜騎士"), and a quest matches when every term does. Immutable once built; safe to read from any thread.
 /// </summary>
 public sealed class JournalTextIndex
 {
     /// <summary>Bumped when the file layout or the tokenizer's rules change, so an older file is rebuilt.</summary>
-    public const int FormatVersion = 1;
+    public const int FormatVersion = 2;
+
+    /// <summary>The first character of the scripts without spaces (Hiragana); every CJK word sorts at or after it.</summary>
+    private const string CjkStart = "぀";
 
     private static readonly byte[] Magic = "TSJI"u8.ToArray();
 
@@ -98,23 +101,29 @@ public sealed class JournalTextIndex
         return result;
     }
 
-    /// <summary>Quests containing a word that <paramref name="term"/> starts (or equals, for a CJK pair).</summary>
+    /// <summary>
+    /// Quests containing a word that <paramref name="term"/> starts. A CJK pair is stored as a word of its own, so a
+    /// pair term matches only that pair; a lone CJK character matches every pair it begins or ends, and itself.
+    /// </summary>
     private HashSet<uint> TermHits(string term)
     {
         var hits = new HashSet<uint>();
-        var exact = JournalTokenizer.IsCjkWord(term);
-        var i = LowerBound(term);
-        for (; i < words.Length; i++)
+        for (var i = LowerBound(term); i < words.Length && words[i].StartsWith(term, StringComparison.Ordinal); i++)
         {
-            var word = words[i];
-            if (exact ? !string.Equals(word, term, StringComparison.Ordinal) : !word.StartsWith(term, StringComparison.Ordinal))
-            {
-                break;
-            }
+            hits.UnionWith(postings[i]);
+        }
 
-            foreach (var id in postings[i])
+        if (term.Length == 1 && JournalTokenizer.IsCjkWord(term))
+        {
+            // The pairs that end with the character: the last one of a run ("士" in "竜騎士") starts no pair.
+            var c = term[0];
+            for (var i = LowerBound(CjkStart); i < words.Length; i++)
             {
-                hits.Add(id);
+                var word = words[i];
+                if (word.Length == 2 && word[1] == c && JournalTokenizer.IsCjkWord(word))
+                {
+                    hits.UnionWith(postings[i]);
+                }
             }
         }
 

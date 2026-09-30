@@ -112,6 +112,119 @@ public sealed class JournalTextIndexTests
         Assert.DoesNotContain("|", Path.GetFileName(hashed));
     }
 
+    [Fact]
+    public void Tokenizer_stores_a_french_elision_with_and_without_its_article()
+    {
+        var words = JournalTokenizer.Words("Aux portes d'Ishgard, jusqu'à l'Alliance qu'Ul'dah soutient.");
+
+        Assert.Contains("d'ishgard", words);
+        Assert.Contains("ishgard", words);
+        Assert.Contains("l'alliance", words);
+        Assert.Contains("alliance", words);
+        Assert.Contains("qu'ul'dah", words);
+        Assert.Contains("ul'dah", words);
+        Assert.Contains("uldah", words);
+        Assert.DoesNotContain("jusqu", words);
+
+        // A longer word before the apostrophe is no elision: its end stays part of it.
+        Assert.Equal(["tataru's", "tatarus"], JournalTokenizer.Words("Tataru's").Order(StringComparer.Ordinal));
+    }
+
+    [Fact]
+    public void Tokenizer_spells_out_ligatures_and_the_sharp_s()
+    {
+        Assert.Equal("coeur", Assert.Single(JournalTokenizer.Words("Cœur")));
+        Assert.Equal("aether", Assert.Single(JournalTokenizer.Words("Æther")));
+        Assert.Equal("strasse", Assert.Single(JournalTokenizer.Words("Straße")));
+        Assert.Equal("strasse", Assert.Single(JournalTokenizer.Words("STRAẞE")));
+    }
+
+    [Theory]
+    [InlineData("Ishgard", 65580u)]
+    [InlineData("d'Ishgard", 65580u)]
+    [InlineData("d’ishga", 65580u)]
+    [InlineData("alliance", 65580u)]
+    [InlineData("coeur", 65580u)]
+    [InlineData("cœur", 65580u)]
+    [InlineData("strasse", 65581u)]
+    [InlineData("straße", 65581u)]
+    [InlineData("uldah", 65581u)]
+    [InlineData("Ul'dah", 65581u)]
+    [InlineData("yshtola", 65581u)]
+    [InlineData("Y'shtola", 65581u)]
+    public void Elisions_ligatures_and_apostrophes_match_either_way(string query, uint expected)
+    {
+        var builder = new JournalTextIndex.Builder();
+        builder.Add(65580, JournalTokenizer.Words("Le cœur de l'Alliance bat aux portes d'Ishgard."));
+        builder.Add(65581, JournalTokenizer.Words("Y'shtola attend dans la Straße d'Ul'dah."));
+        var index = builder.Build("2026.09.15.0000.0000", "fr");
+
+        Assert.Equal([expected], index.Match(query)!.Order());
+    }
+
+    [Fact]
+    public void A_single_character_of_a_script_without_spaces_matches_inside_a_longer_run()
+    {
+        var builder = new JournalTextIndex.Builder();
+        builder.Add(65590, JournalTokenizer.Words("竜騎士の槍"));
+        builder.Add(65591, JournalTokenizer.Words("光の戦士"));
+        builder.Add(65592, JournalTokenizer.Words("竜"));
+        var index = builder.Build("2026.09.15.0000.0000", "ja");
+
+        // Beginning, middle and end of a run, and a run of one.
+        Assert.Equal([65590u, 65592u], index.Match("竜")!.Order());
+        Assert.Equal([65590u], index.Match("騎")!.Order());
+        Assert.Equal([65590u], index.Match("槍")!.Order());
+        Assert.Equal([65590u, 65591u], index.Match("の")!.Order());
+        Assert.Equal([65590u, 65591u], index.Match("士")!.Order());
+        Assert.Empty(index.Match("剣")!);
+
+        // A pair still matches only itself.
+        Assert.Equal([65590u], index.Match("竜騎士")!.Order());
+    }
+
+    [Fact]
+    public void A_name_written_with_a_middle_dot_matches_with_or_without_it()
+    {
+        Assert.Equal(["シュ", "トラ", "ヤシ", "ュト"], JournalTokenizer.Words("ヤ・シュトラ").Order(StringComparer.Ordinal));
+
+        var builder = new JournalTextIndex.Builder();
+        builder.Add(65600, JournalTokenizer.Words("ヤ・シュトラは石の家にいる。"));
+        builder.Add(65601, JournalTokenizer.Words("ヤシの木"));
+        var index = builder.Build("2026.09.15.0000.0000", "ja");
+
+        Assert.Equal([65600u], index.Match("ヤシュトラ")!.Order());
+        Assert.Equal([65600u], index.Match("ヤ・シュトラ")!.Order());
+        Assert.Equal([65600u], index.Match("シュトラ")!.Order());
+        Assert.Equal([65600u, 65601u], index.Match("ヤ")!.Order());
+
+        // Outside a run the dot only separates.
+        Assert.Equal(["abc", "def"], JournalTokenizer.Words("abc・def").Order(StringComparer.Ordinal));
+    }
+
+    [Fact]
+    public void Saves_use_their_own_temporary_file_and_only_a_startup_sweep_removes_leftovers()
+    {
+        using var dir = new TempDir();
+        var index = Sample();
+        JournalIndexStore.Save(dir.Path, index);
+        var path = JournalIndexStore.PathFor(dir.Path, index.GameVersion, index.Language);
+
+        // A temporary file another build is writing: the sweep of other versions leaves it alone.
+        var leftover = path + ".abcdefgh" + JournalIndexStore.TempSuffix;
+        File.WriteAllBytes(leftover, [1, 2, 3]);
+        Assert.Equal(0, JournalIndexStore.DeleteOthers(dir.Path, path));
+        Assert.True(File.Exists(leftover));
+
+        // Saving again does not touch it either, and leaves no temporary file of its own.
+        JournalIndexStore.Save(dir.Path, index);
+        Assert.Equal([leftover], Directory.GetFiles(JournalIndexStore.Folder(dir.Path), "*" + JournalIndexStore.TempSuffix));
+
+        Assert.Equal(1, JournalIndexStore.DeleteTemp(dir.Path));
+        Assert.Equal(1, JournalIndexStore.DeleteOthers(dir.Path, null));
+        Assert.Empty(Directory.GetFiles(JournalIndexStore.Folder(dir.Path)));
+    }
+
     [Theory]
     [InlineData(QuestState.Completed, null, 5, JournalVisibility.All)]
     [InlineData(QuestState.DoneThisCycle, null, 5, JournalVisibility.All)]

@@ -547,7 +547,7 @@ public sealed class Plugin : IDalamudPlugin
 
             // Journal text (P9): the detail pane's Journal card, and with Settings › Journal text the search box's journal
             // words, from an index kept per game version under the config directory.
-            QuestText = new Game.QuestTextService(DataManager, SeStringEvaluator, Log, Paths.ConfigDir, clientGameVersion);
+            QuestText = new Game.QuestTextService(DataManager, SeStringEvaluator, ClientState, Log, Paths.ConfigDir, clientGameVersion);
             QuestText.SetEnabled(Settings.JournalTextSearch);
             mainWindow.AttachQuestText(QuestText);
             var report = new ReportCommand(Session, ui, gameLinks, diagnostics, Log);
