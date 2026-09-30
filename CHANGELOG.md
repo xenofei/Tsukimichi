@@ -4,6 +4,9 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+### Added
+- Unlock route: pick a job, a duty, a system or a Moonlit reward and get every quest the character still needs for it, in order, each after the quests it needs and lower levels first where there is a choice, with level gates where you must level up first and the main scenario milestones on the way ("24 quests · Lv 50–60 · MSQ: Heavensward"). Where a quest takes either of two earlier quests, the shorter way is used and the other is shown with how many quests it needs. Open it from the signpost button under a quest (Route to this), Route to this reward in a Moonlit row's menu, or Route to unlock… beside Job quests on the Characters tab (a right-click on a class under Jobs offers its jobs), so a fresh alt can see exactly what stands between it and Blue Mage. Viewing a stored character gives that character's route. Copy route copies it as a Markdown list, names through the spoiler shield and without your character's name; Pin all (hold, or Shift and click) pins every step in order for the Todo overlay, with an Undo. Help › Characters explains it.
+
 ## [0.8.0] - 2026-09-29
 
 ### Added

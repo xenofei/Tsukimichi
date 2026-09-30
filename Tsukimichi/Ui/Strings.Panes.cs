@@ -533,6 +533,7 @@ static partial class Strings
             "Export and forget",
             "Abandoned quests",
             "Seasonal events",
+            "Unlock route",
         ];
 
         public static readonly string[] CharacterCardBodies =
@@ -544,6 +545,7 @@ static partial class Strings
             "Export JSON writes the snapshot to the exports folder in the config directory. For a spreadsheet or a collection tracker, Settings › Data › Export (or /tsuki export) writes the completed quests or the Moonlit collection as JSON or CSV, without your name unless you tick Include character name; nothing is ever uploaded. Forget deletes a stored character. Settings can delete everything.",
             "A quest that leaves your journal without being completed is listed under Abandoned (N) with the step it had reached and when (\"step 3 of 5 · 2 days ago\"), with Flag, Teleport and Reveal to go and take it up again; Show in Journal turns on the Abandoned filter. Chat says \"Abandoned: [quest] (step 3 of 5)\" the moment it happens (Settings › Notices). Taking the quest up again or completing it clears the row.",
             "While a seasonal event runs, Seasonal events lists its quests with their moon, state and giver, and the Todo overlay shows the ones you can start or have in your journal under Event quests running now. At login, chat says \"Moonfire Faire is running: 2 quests ready\" once per event (Settings › Notices). An end date appears (\"ends Aug 28 (Lodestone)\") only when the Lodestone announced it; otherwise it says running now, never a guess. Completed seasonal quests by year keeps your history; the year is the one the Lodestone gave the event, or counted from the nearest announced one.",
+            "Every quest a character still needs for one thing, in order: the signpost button under a quest (Route to this), Route to this reward in a Moonlit row's menu, and Route to unlock… beside Job quests (or a right-click on a class under Jobs) for a job such as Blue Mage. Each quest comes after the ones it needs, lower levels first where there is a choice; a level gate marks where to level up, main scenario milestones split the list, and where a quest takes either of two earlier quests the shorter way is used and the other is shown with its count. Viewing a stored alt gives that alt's route. Copy route copies it as a Markdown list without your name; Pin all (hold, or Shift and click) pins every step for the Todo overlay, with an Undo.",
         ];
 
         // ---- Flight and nearby ----
