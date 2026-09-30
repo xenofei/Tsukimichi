@@ -25,6 +25,10 @@ static partial class Strings
     /// <summary>After the instruction, before the link to the first content quest left.</summary>
     public const string PayoffChatNextPrefix = " Next: ";
 
+    // ---- Settings › Spoilers ----
+    public const string PayoffConfigShow = "Show \"Before you continue\" notes";
+    public const string PayoffConfigShowHint = "When your story reaches a point where optional content changes a scene, a line under the MSQ line on the Characters tab and in the Tonight card says what to do first. Off hides the line and the chat notice.";
+
     public const string PayoffConfigNotice = "Chat line when optional content pays off in the story ahead";
     public const string PayoffConfigNoticeHint = "\"Before you continue: Finish the Eden raid series first.\", once per character, when the main scenario reaches the point where it matters. It never says why; the Characters tab and the Tonight card keep the line, with the reason behind \"why? (spoiler)\".";
 }

@@ -7,7 +7,8 @@ namespace Tsukimichi.Tests.Query;
 
 /// <summary>
 /// P14 regression over the frozen catalog: today's main scenario must give exactly the position the 0.9.0 journal
-/// walk gave (<see cref="LegacyPosition"/>, kept here verbatim as the reference), whatever the character completed.
+/// walk gave (<see cref="LegacyPosition"/>, kept here verbatim as the reference), and exactly the spoiler mask the
+/// 0.9.0 shield built (<see cref="LegacyMask"/>), whatever the character completed.
 /// </summary>
 public class MsqGraphFixtureTests(FixtureCatalog fixture) : IClassFixture<FixtureCatalog>
 {
@@ -56,6 +57,74 @@ public class MsqGraphFixtureTests(FixtureCatalog fixture) : IClassFixture<Fixtur
         }
 
         return any ? new MsqPosition(next, nextState, done, total) : null;
+    }
+
+    /// <summary>
+    /// SpoilerMask.Build as shipped in 0.9.0, over a state map: the position is the first quest in journal order
+    /// neither completed nor foreclosed, and a quest more than <paramref name="options"/>' Ahead past it is masked
+    /// unless completed or in the journal. Returns the masked row ids and the reach expansion.
+    /// </summary>
+    private static (HashSet<uint> Masked, byte Reach) LegacyMask(QuestCatalog catalog, IReadOnlyDictionary<uint, QuestState> states, SpoilerOptions options)
+    {
+        var noStates = states.Count == 0;
+        var ahead = noStates ? 0 : options.AheadClamped;
+        var masked = new HashSet<uint>();
+        byte? reach = null;
+        var ordinal = -1;
+        int? position = null;
+        var any = false;
+        foreach (var section in MsqProgress.MainScenarioSections)
+        {
+            if (catalog.BySection.GetValueOrDefault(section) is not { } quests)
+            {
+                continue;
+            }
+
+            foreach (var quest in quests)
+            {
+                if (quest.IsRemoved)
+                {
+                    continue;
+                }
+
+                any = true;
+                var state = states.GetValueOrDefault(quest.RowId, QuestState.Unknown);
+                if (state != QuestState.Foreclosed)
+                {
+                    ordinal++;
+                    if (position is null && state != QuestState.Completed)
+                    {
+                        position = ordinal;
+                        reach = quest.Expansion;
+                    }
+                }
+
+                if (!options.HideNames || position is not { } at || ordinal - at <= ahead || state is QuestState.Completed or QuestState.Accepted)
+                {
+                    continue;
+                }
+
+                masked.Add(quest.RowId);
+            }
+        }
+
+        return (masked, !any ? byte.MaxValue : noStates ? (byte)0 : reach ?? byte.MaxValue);
+    }
+
+    /// <summary>The mask built today equals the 0.9.0 mask for these states, at 0, 3 and 10 quests ahead.</summary>
+    private void AssertLegacyMask(List<QuestRecord> story, Dictionary<uint, QuestState> states, string label)
+    {
+        foreach (var ahead in new[] { 0, SpoilerOptions.DefaultAhead, SpoilerOptions.MaxAhead })
+        {
+            var options = SpoilerOptions.Default with { Ahead = ahead };
+            var (expected, reach) = LegacyMask(Catalog, states, options);
+            var actual = SpoilerMask.Build(Catalog, states, options);
+
+            var differ = story.Where(q => expected.Contains(q.RowId) != actual.IsMasked(q.RowId)).Select(q => q.RowId).ToList();
+            Assert.True(differ.Count == 0, $"{label}, {ahead} ahead: masked differently from 0.9.0 for {string.Join(", ", differ.Take(5))}");
+            Assert.Equal(expected.Count, actual.MaskedCount);
+            Assert.Equal(reach, actual.ReachExpansion);
+        }
     }
 
     private List<QuestRecord> Story() => MsqGraph.For(Catalog).Story.ToList();
@@ -119,6 +188,38 @@ public class MsqGraphFixtureTests(FixtureCatalog fixture) : IClassFixture<Fixtur
             }
 
             Assert.Equal(LegacyPosition(Catalog, states), MsqProgress.Compute(Catalog, states));
+        }
+    }
+
+    [Fact]
+    public void Every_completion_prefix_gives_the_old_spoiler_mask()
+    {
+        var story = Story();
+        for (var count = 0; count <= story.Count; count++)
+        {
+            AssertLegacyMask(story, Prefix(story, count, foreclose: false), $"prefix {count}");
+            AssertLegacyMask(story, Prefix(story, count, foreclose: true), $"prefix {count}, Maelstrom");
+        }
+
+        AssertLegacyMask(story, [], "no states");
+    }
+
+    [Fact]
+    public void Random_completion_sets_give_the_old_spoiler_mask()
+    {
+        var story = Story();
+        var random = new Random(7);
+        var pick = new[] { QuestState.Completed, QuestState.Ready, QuestState.Blocked, QuestState.Accepted, QuestState.Foreclosed, QuestState.Unknown };
+        for (var run = 0; run < 300; run++)
+        {
+            var states = new Dictionary<uint, QuestState>();
+            var cut = random.Next(story.Count);
+            for (var i = 0; i < story.Count; i++)
+            {
+                states[story[i].RowId] = random.Next(6) == 0 ? pick[random.Next(pick.Length)] : i < cut ? QuestState.Completed : QuestState.Blocked;
+            }
+
+            AssertLegacyMask(story, states, $"run {run}");
         }
     }
 

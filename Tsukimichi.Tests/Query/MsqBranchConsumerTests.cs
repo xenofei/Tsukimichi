@@ -82,11 +82,13 @@ public class MsqBranchConsumerTests
 
     // The Todo overlay and the Tonight card (one TodoList model).
 
-    private static TodoSectionModel? MsqSection(params uint[] completed)
+    private static TodoSectionModel? MsqSection(params uint[] completed) => MsqSection(Catalog, Evaluate(Catalog, completed));
+
+    private static TodoSectionModel? MsqSection(QuestCatalog catalog, IReadOnlyDictionary<uint, QuestEvaluation> evaluations)
     {
         var inputs = new TodoInputs(
-            Catalog,
-            Evaluate(Catalog, completed),
+            catalog,
+            evaluations,
             new HashSet<uint>(),
             new HashSet<uint>(),
             0,
@@ -139,6 +141,35 @@ public class MsqBranchConsumerTests
 
         Assert.Empty(new IpcView(Catalog, null, BlockerNames.Default).MsqPositions());
         Assert.Empty(IpcView.Empty.MsqPositions());
+    }
+
+    [Fact]
+    public void An_any_join_with_every_route_locked_out_reads_the_same_everywhere()
+    {
+        // Every quest of the three routes foreclosed: nothing is left to wait for, so J is the single position and
+        // no surface reads "MSQ done" or an empty route list.
+        var catalog = Build(JoinKind.Any);
+        var evaluations = Evaluate(catalog, L1, L2);
+        foreach (var id in Done(RouteA, RouteB, RouteC))
+        {
+            evaluations[id] = evaluations[id] with { State = QuestState.Foreclosed };
+        }
+
+        var position = MsqProgress.Compute(catalog, evaluations)!;
+        Assert.False(position.IsBranched);
+        Assert.False(position.IsComplete);
+        Assert.Equal(J, position.Next?.RowId);
+        Assert.Equal([J], position.Positions.Select(q => q.RowId));
+        Assert.Equal((2, Story.Length - RouteA.Length - RouteB.Length - RouteC.Length), (position.Done, position.Total));
+
+        // IPC: the first entry of GetMsqPositions is GetMsqPosition's answer.
+        var view = new IpcView(catalog, evaluations, BlockerNames.Default);
+        Assert.Equal(J, view.MsqNext());
+        Assert.Equal([J], view.MsqPositions());
+
+        // The pill has no route wording to print, and Todo and Tonight list J.
+        Assert.Equal(string.Empty, MsqText.Compact(position, Name));
+        Assert.Equal([J], MsqSection(catalog, evaluations)!.Rows.Select(r => r.RowId));
     }
 
     [Fact]

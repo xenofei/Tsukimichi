@@ -300,6 +300,13 @@ public sealed class Configuration : IPluginConfiguration
 
     // ---- 1.0.0: "Before you continue" payoff gates (P5) ----
     /// <summary>
+    /// Show "Before you continue" notes (Settings › Spoilers): the lines under the MSQ line on the Characters
+    /// dashboard and in the Tonight card. Off hides them and suppresses the chat notice too (nothing is marked as
+    /// announced while off). On by default.
+    /// </summary>
+    public bool ShowPayoffGates { get; set; } = true;
+
+    /// <summary>
     /// Print "Before you continue: Finish the Eden raid series first." once per gate per character, the first time the
     /// gate's milestone quest is Ready or in the journal (see <c>Game.ChatNotifier</c>). On by default.
     /// </summary>

@@ -258,6 +258,51 @@ public class MsqBranchTests
         Assert.Equal(Story.Length - RouteC.Length, position.Total);
     }
 
+    [Fact]
+    public void The_join_is_met_once_the_reconvergence_quest_opens_even_with_an_optional_quest_left_on_a_route()
+    {
+        // Route B holds its own Any fork: B3 needs B2 or B2alt, and B2alt (after B1) lies on route B. The player
+        // takes B2 and skips B2alt, so route B never reads done; the game opens J all the same.
+        const uint B2alt = 70_026;
+        var fixture = Build(JoinKind.All);
+        var b2 = fixture.GetByRowId(B2)!;
+        var catalog = QuestCatalog.Build(fixture.All
+            .Select(q => q.RowId == B3 ? q with { PreviousQuests = new Prereq([B2, B2alt], JoinKind.Any) } : q)
+            .Append(Msq(B2alt, "Around the Crevasse", 40, Evercold, B1) with { Journal = b2.Journal }));
+        var graph = MsqGraph.For(catalog);
+        Assert.Contains(B2alt, Ids(graph.RouteOf(B2)!.Quests));
+        Assert.Same(graph.RouteOf(B2), graph.RouteOf(B2alt));
+
+        // Before route C is done J is blocked and the region is reported route by route, B2alt on route B's line.
+        var open = Done([L1, L2], RouteA, RouteB, [C1]);
+        var inside = MsqProgress.Compute(catalog, Evaluate(catalog, open))!;
+        Assert.True(inside.IsBranched);
+        Assert.Equal([B2alt, C2], Ids(inside.Positions));
+
+        // Every route the game needs is done: J reads Ready, and it is the position, B2alt a leftover.
+        var evaluations = Evaluate(catalog, [.. open, C2]);
+        Assert.Equal(QuestState.Ready, evaluations[J].State);
+        Assert.Equal(QuestState.Ready, evaluations[B2alt].State);
+        foreach (var state in new[] { QuestState.Ready, QuestState.ReadyOnOtherJob, QuestState.Accepted })
+        {
+            evaluations[J] = evaluations[J] with { State = state };
+            var position = MsqProgress.Compute(catalog, evaluations)!;
+
+            Assert.False(position.IsBranched);
+            Assert.Equal(J, position.Next?.RowId);
+            Assert.Equal(state, position.State);
+            Assert.Equal([J], Ids(position.Positions));
+            Assert.Equal(Story.Length, position.Total);
+
+            // The shield no longer hides J behind the skipped quest.
+            var mask = SpoilerMask.Build(catalog, evaluations, SpoilerOptions.Default with { Ahead = 0 });
+            Assert.False(mask.IsMasked(J));
+        }
+
+        // Past J, the skipped quest never becomes the position.
+        Assert.Equal(P1, MsqProgress.Compute(catalog, Evaluate(catalog, [.. open, C2, J]))!.Next?.RowId);
+    }
+
     // The Any join.
 
     [Fact]
@@ -330,6 +375,23 @@ public class MsqBranchTests
         Assert.Equal(Story.Where(id => id is not (J or P1 or P2)).ToArray(), Visible(AllJoin, 1, late));
         Assert.Equal(Story.Where(id => id is not (P1 or P2)).ToArray(), Visible(AllJoin, 2, late));
         Assert.Equal(Story.Where(id => id is not P2).ToArray(), Visible(AllJoin, 3, late));
+    }
+
+    [Fact]
+    public void Spoiler_mask_does_not_count_quests_done_out_of_order_toward_the_join()
+    {
+        // Route B done out of order (B2 skipped for now, B3 to B5 completed) and route C not started: B2 is the one
+        // quest left on B, C1 and C2 on C, so J is 3 ahead, not 6.
+        var states = States(AllJoin, Done([L1, L2], RouteA, [B1, B3, B4, B5]));
+        Assert.Equal(QuestState.Completed, states[B4]);
+        Assert.Equal(QuestState.Blocked, states[J]);
+
+        var three = SpoilerMask.Build(AllJoin, states, SpoilerOptions.Default with { Ahead = 3 });
+        Assert.False(three.IsMasked(J));
+        Assert.True(three.IsMasked(P1));
+
+        var two = SpoilerMask.Build(AllJoin, states, SpoilerOptions.Default with { Ahead = 2 });
+        Assert.True(two.IsMasked(J));
     }
 
     [Fact]

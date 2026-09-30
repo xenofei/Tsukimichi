@@ -105,7 +105,7 @@ A Ready quest still lists its (met) requirements after `"Ready"`; a quest with n
 
 `() -> uint`. The Quest row id of the logged-in character's next main scenario quest: the first one in journal order (A Realm Reborn through Dawntrail) that is neither completed nor on a branch the character did not take. Its state may be Ready, In journal or Blocked (a level gate between patches); ask `GetState`. 0 when every main scenario quest is done, and 0 when there is no answer.
 
-Inside a branch region of the main scenario (from Evercold, 8.0, on: routes that run in parallel from a shared quest and meet again later), this is the **first route's** next quest: the first route in journal order that is not done yet. The quest where the routes meet is never returned while a route it needs is still open. To see every route, call `GetMsqPositions`.
+Inside a branch region of the main scenario (from Evercold, 8.0, on: routes that run in parallel from a shared quest and meet again later), this is the **first route's** next quest: the first route in journal order that is not done yet. The quest where the routes meet is never returned while a route it needs is still open; once the game opens it (or no route is left to play), it is the answer again. To see every route, call `GetMsqPositions`.
 
 ### Tsukimichi.GetMsqPositions
 
@@ -256,8 +256,8 @@ Source: `Game/QuestionableIpc.cs`; the comparison is `Tsukimichi.Core/Ipc/Questi
 - Questionable is asked when a quest is selected or the character's state changes, one call per quest per session version, never per frame, and only about the character logged in: a stored character is not compared.
 - Both lock gates answer locked for a quest Questionable has no path for; the reason gate then gives an empty reason. Tsukimichi reads a locked answer without a reason as "no answer", not a disagreement.
 - Questionable's lock does not check the level of an ordinary quest, the job, the account caps, or whether the quest is done or in the journal, so only Ready, Available on another job and Blocked are compared, and a quest Blocked only by level or job is compared as open. Its reasons are the English ones ("Prev quest (2)", "Aetheryte locked: …", "Low level (GLA)").
-- Tsukimichi never asks about Gold Saucer quest 4081 or Palace of the Dead quest 2387, whose lock check makes Questionable open the Achievements window.
-- `AddQuestPriority` answers true even for a quest Questionable does not know, so the menu item is enabled only when the reason gate named a path for the quest. It adds the quest to Questionable's list and nothing else: Questionable does not start, and Tsukimichi never calls `StartQuest`, `Stop` or any other gate.
+- Tsukimichi never asks about two quests whose lock check makes Questionable open the Achievements window (it checks an achievement, and shows the window to load the list; `Questionable/Functions/QuestFunctions.cs`): 4081, row 69617 "The Adventurer with All the Cards" (Gold Saucer), and 2387, row 67923 "What Lies Beneath", the Palace of the Dead quest that opens floors 51 to 100 (the journal files it with the Gridanian sidequests).
+- `AddQuestPriority` answers true even for a quest Questionable does not know, so the menu item is enabled only when the reason gate named a path for the quest, and the "…" button is not shown at all when the reason gate is absent (the WigglyMuffin fork) or fails. It adds the quest to Questionable's list and nothing else: Questionable does not start, and Tsukimichi never calls `StartQuest`, `Stop` or any other gate.
 
 ## Versioning
 

@@ -168,8 +168,8 @@ public class QuestionableCrossCheckTests
     [InlineData(0u)]
     [InlineData(65535u)]
     [InlineData(131072u)]
-    [InlineData(65536u + 4081u)]
-    [InlineData(65536u + 2387u)]
+    [InlineData(65536u + 4081u)] // 69617 The Adventurer with All the Cards (Gold Saucer)
+    [InlineData(65536u + 2387u)] // 67923 What Lies Beneath (Palace of the Dead floors 51 to 100)
     public void Rows_outside_the_quest_sheet_and_side_effect_quests_have_no_Questionable_id(uint rowId)
     {
         Assert.Null(QuestionableCrossCheck.QuestionableId(rowId));
