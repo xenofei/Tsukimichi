@@ -277,7 +277,7 @@ public sealed class Plugin : IDalamudPlugin
         {
             Ui.UiMetrics.Update(settings);
             Ui.Typography.Update();
-            Ui.Theme.Refresh(settings.FollowDalamudColours);
+            Ui.Theme.Refresh(settings.FollowDalamudColours, settings.GlyphPalette);
             Ui.Motion.BeginFrame();
         }
     }

@@ -16,23 +16,37 @@ namespace Tsukimichi.Ui;
 /// Radii are device pixels, not logical sizes, because the rim, ring, notch and shading gates are pixel rules.
 ///
 /// The "Simulate" combo re-colours everything the panel draws through a colour-vision-deficiency simulation
-/// (Machado, Oliveira and Fernandes 2009 at severity 1.0 in linear sRGB; greyscale is WCAG relative luminance —
-/// docs/review/panel/accessibility.md Appendix C) so the owner can check that all eight states differ without a
-/// legend (accessibility §2.3 rule 1). The simulation lives here only: after the panel is drawn its draw list's
-/// vertex colours are rewritten, so <see cref="Theme"/> and <see cref="MoonGlyph"/> stay untouched.
+/// (<see cref="ColorVisionSimulation"/>: Machado, Oliveira and Fernandes 2009 at severity 1.0 in linear sRGB; greyscale
+/// is WCAG relative luminance — docs/review/panel/accessibility.md Appendix C) so the owner can check that all eight
+/// states differ without a legend (accessibility §2.3 rule 1). The simulation lives here only: after the panel is
+/// drawn its draw list's vertex colours are rewritten, so <see cref="Theme"/> and <see cref="MoonGlyph"/> stay untouched.
+///
+/// The "Palettes" strip at the top draws the Standard and the high-contrast glyph palettes (and the high-contrast
+/// light variant on a white host) side by side once per simulation, each row re-coloured through its own simulation,
+/// so the two palettes can be compared under every condition at a glance. The "Palette" combo picks the palette the
+/// tables below are drawn with.
 /// </summary>
 public sealed class GlyphDebugWindow : Window
 {
-    private enum Simulation
-    {
-        None,
-        Greyscale,
-        Deuteranopia,
-        Protanopia,
-        Tritanopia,
-    }
+    private static readonly string[] SimulationNames = Array.ConvertAll(ColorVisionSimulation.All, ColorVisionSimulation.Name);
 
-    private static readonly string[] SimulationNames = ["None", "Greyscale", "Deuteranopia", "Protanopia", "Tritanopia"];
+    /// <summary>What the tables draw with: the palette in effect (Settings), or one forced.</summary>
+    private static readonly string[] PaletteNames = ["Settings", "Standard", "High contrast", "High contrast (light host)"];
+
+    /// <summary>The palettes compared side by side, and the host colour each is shown on (null: the panel's own).</summary>
+    private static readonly (GlyphPalette Palette, string Label, Vector4? Host)[] Compared =
+    [
+        (GlyphPalette.Standard, "Standard", null),
+        (GlyphPalette.HighContrastDark, "High contrast", null),
+        (GlyphPalette.HighContrastLight, "High contrast · light host", new Vector4(1f, 1f, 1f, 1f)),
+    ];
+
+    /// <summary>The comparison's states, in the Help legend's order.</summary>
+    private static readonly QuestState[] ComparedStates =
+    [
+        QuestState.Completed, QuestState.Accepted, QuestState.Ready, QuestState.ReadyOnOtherJob,
+        QuestState.DoneThisCycle, QuestState.Blocked, QuestState.Foreclosed, QuestState.Unknown,
+    ];
 
     private static readonly (QuestState State, string Phase)[] States =
     [
@@ -74,22 +88,15 @@ public sealed class GlyphDebugWindow : Window
 
     private static readonly string[] HaloHeaders = Array.ConvertAll(HaloBoxes, static s => $"{s.Box:0} px · {s.Use}");
 
-    // sRGB → linear lookup for the 256 channel values; the encode side is a pow per channel, cached per colour.
-    private static readonly float[] ToLinear = BuildToLinear();
-
-    // Machado 2009, severity 1.0, row-major, applied to linear RGB.
-    private static readonly float[] Deuteranopia = [0.367322f, 0.860646f, -0.227968f, 0.280085f, 0.672501f, 0.047413f, -0.011820f, 0.042940f, 0.968881f];
-    private static readonly float[] Protanopia = [0.152286f, 1.052583f, -0.204868f, 0.114503f, 0.786281f, 0.099216f, -0.003882f, -0.048116f, 1.051998f];
-    private static readonly float[] Tritanopia = [1.255528f, -0.076749f, -0.178779f, -0.078411f, 0.930809f, 0.147602f, 0.004733f, 0.691367f, 0.303900f];
-
     private float testRadius = 24f;
+    private float compareRadius = 9f;
     private bool nightPanel = true;
     private bool haloOnCard;
     private int simulation;
+    private int tablePalette;
 
-    /// <summary>Packed colour → simulated packed colour for the current mode; the panel draws a few dozen distinct colours.</summary>
-    private readonly Dictionary<uint, uint> simulated = new();
-    private int simulatedMode;
+    /// <summary>Packed colour → simulated packed colour, one cache per simulation; the panel draws a few dozen distinct colours.</summary>
+    private readonly Dictionary<uint, uint>[] simulated = Array.ConvertAll(ColorVisionSimulation.All, static _ => new Dictionary<uint, uint>());
 
     public GlyphDebugWindow()
         : base("Tsukimichi Glyphs###TsukimichiGlyphs")
@@ -122,10 +129,19 @@ public sealed class GlyphDebugWindow : Window
             }
         }
 
+        ImGui.SetNextItemWidth(190f * ImGuiHelpers.GlobalScale);
+        ImGui.Combo("Palette (tables)", ref tablePalette, PaletteNames);
+        ImGui.SameLine();
+        ImGui.SetNextItemWidth(160f * ImGuiHelpers.GlobalScale);
+        ImGui.SliderFloat("Compare radius", ref compareRadius, 6f, 24f, "%.1f px");
+
         using var colors = Theme.PushNightPanel(nightPanel);
+        DrawComparison();
+
         using var panel = ImRaii.Child("##glyphPanel", new Vector2(-1f, -1f), true);
         if (!panel) return;
 
+        using var glyphs = Theme.PushGlyphs(TablePalette());
         DrawStates();
         ImGui.Spacing();
         ImGui.Separator();
@@ -141,7 +157,88 @@ public sealed class GlyphDebugWindow : Window
         DrawInlineRow();
 
         // Everything the child drew this frame, background included, is in its own draw list.
-        ApplySimulation(ImGui.GetWindowDrawList());
+        var dl = ImGui.GetWindowDrawList();
+        ApplySimulation(dl, (ColorVision)simulation, 0, dl.VtxBuffer.Size);
+    }
+
+    private GlyphPalette TablePalette() => tablePalette switch
+    {
+        1 => GlyphPalette.Standard,
+        2 => GlyphPalette.HighContrastDark,
+        3 => GlyphPalette.HighContrastLight,
+        _ => Theme.Glyphs,
+    };
+
+    /// <summary>
+    /// Both palettes side by side under every simulation: one row per <see cref="ColorVision"/>, each holding the eight
+    /// state moons, a halo at 35 % and the check and cross marks per palette, the light high-contrast variant on a
+    /// white host swatch. Drawn without a table in a child of its own, so each row's vertices are one contiguous range
+    /// of the child's draw list that its simulation re-colours; the panel-wide "Simulate" combo does not touch it.
+    /// </summary>
+    private void DrawComparison()
+    {
+        var scale = ImGuiHelpers.GlobalScale;
+        var radius = compareRadius;
+        var box = MathF.Round(radius * 2.6f);
+        var halo = MathF.Max(box, 2f * GaugeGeometry.RingMinRadius);
+        var line = ImGui.GetTextLineHeightWithSpacing();
+        var labelWidth = 110f * scale;
+        var gap = 3f * scale;
+        var blockGap = 18f * scale;
+        var rowHeight = MathF.Max(box, halo) + 6f * scale;
+        var height = line * 2f + ColorVisionSimulation.All.Length * rowHeight + 12f * scale;
+
+        ImGui.TextUnformatted("Palettes side by side (each row under its own simulation)");
+        using var child = ImRaii.Child("##glyphCompare", new Vector2(-1f, height), true, ImGuiWindowFlags.HorizontalScrollbar);
+        if (!child) return;
+
+        var dl = ImGui.GetWindowDrawList();
+
+        // Header: the palette names over their blocks.
+        var blockWidth = ComparedStates.Length * (box + gap) + halo + 2f * (box + gap) + gap;
+        ImGui.Dummy(new Vector2(labelWidth, line));
+        for (var b = 0; b < Compared.Length; b++)
+        {
+            ImGui.SameLine(labelWidth + b * (blockWidth + blockGap));
+            ImGui.TextUnformatted(Compared[b].Label);
+        }
+
+        foreach (var mode in ColorVisionSimulation.All)
+        {
+            var rowStart = dl.VtxBuffer.Size;
+            var rowPos = ImGui.GetCursorScreenPos();
+            ImGui.Dummy(new Vector2(labelWidth, rowHeight));
+            dl.AddText(rowPos + new Vector2(0f, (rowHeight - ImGui.GetTextLineHeight()) * 0.5f), ImGui.GetColorU32(ImGuiCol.Text), ColorVisionSimulation.Name(mode));
+
+            for (var b = 0; b < Compared.Length; b++)
+            {
+                var (palette, _, host) = Compared[b];
+                var x = rowPos.X + labelWidth + b * (blockWidth + blockGap);
+                if (host is { } hostColor)
+                {
+                    dl.AddRectFilled(new Vector2(x - gap, rowPos.Y), new Vector2(x + blockWidth, rowPos.Y + rowHeight - 2f * scale), Theme.U32(hostColor), 4f * scale);
+                }
+
+                using var glyphs = Theme.PushGlyphs(palette);
+                var midY = rowPos.Y + rowHeight * 0.5f;
+                foreach (var state in ComparedStates)
+                {
+                    MoonGlyph.Draw(dl, new Vector2(x + box * 0.5f, midY), radius, state);
+                    x += box + gap;
+                }
+
+                MoonGlyph.DrawHalo(dl, new Vector2(x + halo * 0.5f, midY), halo * 0.5f, 0.35f);
+                x += halo + gap;
+                Marks.Draw(dl, new Vector2(x + box * 0.5f, midY), box, Mark.Check);
+                x += box + gap;
+                Marks.Draw(dl, new Vector2(x + box * 0.5f, midY), box, Mark.Cross);
+            }
+
+            // Reserve the row's width so the child scrolls horizontally when the three blocks do not fit.
+            ImGui.SameLine(labelWidth + Compared.Length * (blockWidth + blockGap));
+            ImGui.Dummy(new Vector2(1f, rowHeight));
+            ApplySimulation(dl, mode, rowStart, dl.VtxBuffer.Size);
+        }
     }
 
     private void DrawStates()
@@ -165,7 +262,10 @@ public sealed class GlyphDebugWindow : Window
                 ImGui.TextUnformatted(Strings.StateName(state));
             ImGui.TableNextColumn();
             ImGui.AlignTextToFramePadding();
-            ImGui.TextDisabled(Strings.StateGlyphSubtitle(state) + " · " + phase);
+            var palette = Theme.Glyphs;
+            ImGui.TextDisabled(palette.HighContrast
+                ? $"{StateNames.HighContrastSubtitle(state)} · {palette.Style(state).Mark}, rim {palette.Style(state).RimWidth(7.5f):0.#} px at r 7.5"
+                : Strings.StateGlyphSubtitle(state) + " · " + phase);
 
             foreach (var (radius, _) in Radii)
             {
@@ -306,87 +406,32 @@ public sealed class GlyphDebugWindow : Window
 
     // ------------------------------------------------------------------ colour-vision simulation
 
-    /// <summary>Rewrites every vertex colour in <paramref name="dl"/> through the selected simulation.</summary>
-    private void ApplySimulation(ImDrawListPtr dl)
+    /// <summary>
+    /// Rewrites the vertex colours <paramref name="from"/> (inclusive) to <paramref name="to"/> (exclusive) of
+    /// <paramref name="dl"/> through <paramref name="mode"/> (<see cref="ColorVisionSimulation"/>).
+    /// </summary>
+    private void ApplySimulation(ImDrawListPtr dl, ColorVision mode, int from, int to)
     {
-        var mode = (Simulation)simulation;
-        if (mode == Simulation.None) return;
+        if (mode == ColorVision.None || (uint)mode >= (uint)simulated.Length) return;
 
-        if (simulatedMode != simulation)
-        {
-            simulated.Clear();
-            simulatedMode = simulation;
-        }
-
+        var cache = simulated[(int)mode];
         var vertices = dl.VtxBuffer;
-        for (var i = 0; i < vertices.Size; i++)
+        to = Math.Min(to, vertices.Size);
+        for (var i = Math.Max(0, from); i < to; i++)
         {
             var vertex = vertices[i];
-            vertex.Col = SimulatePacked(vertex.Col, mode);
+            vertex.Col = SimulatePacked(cache, vertex.Col, mode);
             vertices[i] = vertex;
         }
     }
 
-    private uint SimulatePacked(uint packed, Simulation mode)
+    private static uint SimulatePacked(Dictionary<uint, uint> cache, uint packed, ColorVision mode)
     {
-        if (simulated.TryGetValue(packed, out var cached)) return cached;
+        if (cache.TryGetValue(packed, out var cached)) return cached;
 
-        var color = Unpack(packed);
-        var result = Pack(Simulate(color, mode));
-        simulated[packed] = result;
+        var result = Pack(ColorVisionSimulation.Simulate(Unpack(packed), mode));
+        cache[packed] = result;
         return result;
-    }
-
-    /// <summary>The colour as a viewer with the given deficiency sees it; alpha is untouched.</summary>
-    private static Vector4 Simulate(Vector4 color, Simulation mode)
-    {
-        var r = ToLinear[Channel(color.X)];
-        var g = ToLinear[Channel(color.Y)];
-        var b = ToLinear[Channel(color.Z)];
-
-        float r2, g2, b2;
-        switch (mode)
-        {
-            case Simulation.Greyscale:
-                r2 = g2 = b2 = 0.2126f * r + 0.7152f * g + 0.0722f * b;
-                break;
-            case Simulation.Deuteranopia:
-                (r2, g2, b2) = Multiply(Deuteranopia, r, g, b);
-                break;
-            case Simulation.Protanopia:
-                (r2, g2, b2) = Multiply(Protanopia, r, g, b);
-                break;
-            case Simulation.Tritanopia:
-                (r2, g2, b2) = Multiply(Tritanopia, r, g, b);
-                break;
-            default:
-                return color;
-        }
-
-        return new Vector4(ToSrgb(r2), ToSrgb(g2), ToSrgb(b2), color.W);
-    }
-
-    private static (float R, float G, float B) Multiply(float[] m, float r, float g, float b) => (
-        m[0] * r + m[1] * g + m[2] * b,
-        m[3] * r + m[4] * g + m[5] * b,
-        m[6] * r + m[7] * g + m[8] * b);
-
-    private static float[] BuildToLinear()
-    {
-        var table = new float[256];
-        for (var i = 0; i < 256; i++)
-        {
-            var c = i / 255f;
-            table[i] = c <= 0.04045f ? c / 12.92f : MathF.Pow((c + 0.055f) / 1.055f, 2.4f);
-        }
-
-        return table;
-    }
-
-    private static float ToSrgb(float linear)
-    {
-        linear = Math.Clamp(linear, 0f, 1f);
-        return linear <= 0.0031308f ? 12.92f * linear : 1.055f * MathF.Pow(linear, 1f / 2.4f) - 0.055f;
     }
 
     private static int Channel(float value) => Math.Clamp((int)MathF.Round(value * 255f), 0, 255);
@@ -401,3 +446,4 @@ public sealed class GlyphDebugWindow : Window
     private static uint Pack(Vector4 c) =>
         (uint)Channel(c.X) | ((uint)Channel(c.Y) << 8) | ((uint)Channel(c.Z) << 16) | ((uint)Channel(c.W) << 24);
 }
+

@@ -22,28 +22,28 @@ namespace Tsukimichi.Ui;
 public static class Theme
 {
     /// <summary>#0F1424 – panel backgrounds for the detail pane and path view.</summary>
-    public static readonly Vector4 Night = Rgb(0x0F1424);
+    public static readonly Vector4 Night = Rgb(GlyphTokens.NightHex);
 
     /// <summary>#F2D27A – Completed, Ready, gold accents, progress fill.</summary>
-    public static readonly Vector4 Moon = Rgb(0xF2D27A);
+    public static readonly Vector4 Moon = Rgb(GlyphTokens.MoonHex);
 
     /// <summary>#DDE3F0 – primary text on Night, silver glyphs.</summary>
-    public static readonly Vector4 Silver = Rgb(0xDDE3F0);
+    public static readonly Vector4 Silver = Rgb(GlyphTokens.SilverHex);
 
     /// <summary>#7C86A8 – tertiary text, rings, separators (5.1 : 1 on Night; fails AA on raised surfaces, so never body text on cards).</summary>
-    public static readonly Vector4 Dusk = Rgb(0x7C86A8);
+    public static readonly Vector4 Dusk = Rgb(GlyphTokens.DuskHex);
 
     /// <summary>#B25C7F – Foreclosed, destructive actions.</summary>
-    public static readonly Vector4 Eclipse = Rgb(0xB25C7F);
+    public static readonly Vector4 Eclipse = Rgb(GlyphTokens.EclipseHex);
 
     /// <summary>#4A5270 – disabled, unknown.</summary>
-    public static readonly Vector4 Veil = Rgb(0x4A5270);
+    public static readonly Vector4 Veil = Rgb(GlyphTokens.VeilHex);
 
     /// <summary>#3A4363 – the dark side of every state moon and the filling moon (glyph proposal v2.1 §3.4); always behind a rim.</summary>
-    public static readonly Vector4 Shadow = Rgb(0x3A4363);
+    public static readonly Vector4 Shadow = Rgb(GlyphTokens.ShadowHex);
 
     /// <summary>#5C6584 – line tone that clears 3 : 1 on Night (3.19 : 1): the halo gauge track and similar thin strokes.</summary>
-    public static readonly Vector4 VeilLine = Rgb(0x5C6584);
+    public static readonly Vector4 VeilLine = Rgb(GlyphTokens.VeilLineHex);
 
     /// <summary>Dark disc of the unlit glyph states. Now <see cref="Shadow"/>; the name stays so callers compile.</summary>
     public static readonly Vector4 UnlitDisc = Shadow;
@@ -52,16 +52,16 @@ public static class Theme
     public static readonly Vector4 Umbra = Rgb(0x2C334A);
 
     /// <summary>#FFF0BE – the highlight stop of the gold gradient (glyph proposal §3.1); also the terminator glow on gold.</summary>
-    public static readonly Vector4 MoonHigh = Rgb(0xFFF0BE);
+    public static readonly Vector4 MoonHigh = Rgb(GlyphTokens.MoonHighHex);
 
     /// <summary>#D6B25A – the deep stop of the gold gradient, at the limb away from the light.</summary>
-    public static readonly Vector4 MoonDeep = Rgb(0xD6B25A);
+    public static readonly Vector4 MoonDeep = Rgb(GlyphTokens.MoonDeepHex);
 
     /// <summary>#FFFFFF – the highlight stop of the silver gradient.</summary>
-    public static readonly Vector4 SilverHigh = Rgb(0xFFFFFF);
+    public static readonly Vector4 SilverHigh = Rgb(GlyphTokens.SilverHighHex);
 
     /// <summary>#B9C2D8 – the deep stop of the silver gradient.</summary>
-    public static readonly Vector4 SilverDeep = Rgb(0xB9C2D8);
+    public static readonly Vector4 SilverDeep = Rgb(GlyphTokens.SilverDeepHex);
 
     /// <summary>
     /// Moon dimmed toward Dusk, for the name and count of a completed tree node: still reads as gold, but quieter than
@@ -73,7 +73,7 @@ public static class Theme
     public static readonly Vector4 NightRaised = Vector4.Lerp(Night, Veil, 0.25f);
 
     /// <summary>#0B0F1C – wells below the window: search pill, gauge wells, level pills, the title bar (ui-revamp §4.3).</summary>
-    public static readonly Vector4 NightSunken = Rgb(0x0B0F1C);
+    public static readonly Vector4 NightSunken = Rgb(GlyphTokens.NightSunkenHex);
 
     /// <summary>#262D45 – hover fill for rows, tabs and buttons.</summary>
     public static readonly Vector4 NightHover = Rgb(0x262D45);
@@ -126,6 +126,13 @@ public static class Theme
     public static bool FollowingDalamud { get; private set; }
 
     /// <summary>
+    /// The glyph palette in effect this frame (Settings › Display › Glyph palette), resolved against the palette's window
+    /// colour: Standard, or the high-contrast variant for a dark or a light host (<see cref="GlyphPalette.Resolve"/>).
+    /// <see cref="MoonGlyph"/>, <see cref="Marks"/> and the table stripe paint from it.
+    /// </summary>
+    public static GlyphPalette Glyphs { get; private set; } = GlyphPalette.Standard;
+
+    /// <summary>
     /// Gold for text and small ink (pill labels, the active tab icon): <see cref="Moon"/>, or under "Follow Dalamud
     /// colours" Moon pushed towards the palette's text colour until it reads at 4.5 : 1 on the window, so a light
     /// Dalamud style gets a deep gold instead of Moon's 1.4 : 1. Fills, rims and glyphs keep Moon.
@@ -146,9 +153,11 @@ public static class Theme
     /// <summary>
     /// Picks this frame's palette. Call once per frame before any window draws (nothing is pushed then, so the style
     /// read is the user's own): with <paramref name="followDalamud"/> the surface roles are mapped from the Dalamud
-    /// style (<see cref="SurfaceColors.FromHost"/>), otherwise they are the Night tokens. Allocates nothing.
+    /// style (<see cref="SurfaceColors.FromHost"/>), otherwise they are the Night tokens. The glyph palette
+    /// <paramref name="glyphPalette"/> is resolved against the resulting window colour (<see cref="Glyphs"/>), so the
+    /// high-contrast glyphs switch to their light variant on a light Dalamud theme. Allocates nothing.
     /// </summary>
-    public static void Refresh(bool followDalamud)
+    public static void Refresh(bool followDalamud, GlyphPaletteKind glyphPalette = GlyphPaletteKind.Standard)
     {
         var colors = ImGui.GetStyle().Colors;
         var windowBg = colors[(int)ImGuiCol.WindowBg];
@@ -167,6 +176,30 @@ public static class Theme
         Accent = followDalamud ? ColorMath.EnsureContrast(Moon, s.Text, s.Window, SurfaceColors.TextMinContrast) : Moon;
         AccentDim = followDalamud ? ColorMath.EnsureContrast(MoonDim, s.Text, s.Window, SurfaceColors.TextMinContrast) : MoonDim;
         AccentU32 = Pack(Accent);
+        Glyphs = GlyphPalette.Resolve(glyphPalette, s.Window);
+    }
+
+    /// <summary>
+    /// Draws with <paramref name="palette"/> until the returned scope is disposed, then restores the frame's palette:
+    /// the glyph window's side-by-side comparison. A struct; <c>using</c> allocates nothing.
+    /// </summary>
+    public static GlyphScope PushGlyphs(GlyphPalette palette)
+    {
+        var previous = Glyphs;
+        Glyphs = palette;
+        return new GlyphScope(previous);
+    }
+
+    /// <summary>Restores the glyph palette that was in effect before <see cref="PushGlyphs"/>. Dispose exactly once.</summary>
+    public readonly struct GlyphScope(GlyphPalette previous) : IDisposable
+    {
+        public void Dispose()
+        {
+            if (previous is not null)
+            {
+                Glyphs = previous;
+            }
+        }
     }
 
     /// <summary>Text color for a state badge next to a glyph.</summary>

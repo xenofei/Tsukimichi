@@ -343,6 +343,10 @@ static partial class Strings
     public const string ConfigReduceMotionHint = "No hover fades or pulses anywhere, and hold-to-confirm buttons count down in text instead of filling an arc. Until you change it here, it follows Windows' \"Show animations\" setting.";
     public const string ConfigFollowDalamudColours = "Follow Dalamud colours";
     public const string ConfigFollowDalamudColoursHint = "Draw Tsukimichi's windows in your Dalamud theme's colours instead of the Night palette. The layout, the moons and the gold stay the same.";
+    public const string ConfigGlyphPalette = "Glyph palette";
+    public const string ConfigGlyphPaletteStandard = "Standard";
+    public const string ConfigGlyphPaletteHighContrast = "High contrast";
+    public const string ConfigGlyphPaletteHint = "High contrast draws the moons in flat colours on a brightness ladder, with thicker rims and a mark inside each one: a bold bar for Ready, a hollow bar for Ready on another job, a large seal for In journal, a check for Done, a solid disc for Completed, a thick rim for Blocked, a thick diagonal bar for Locked out and dashes for Not checked. Every state then reads in greyscale and with colour blindness; the table stripes, halos and check marks follow it, on the Night palette and on your Dalamud colours alike.";
     public const string ConfigDensity = "Table rows";
     public const string ConfigDensityComfortable = "Comfortable";
     public const string ConfigDensityDense = "Dense";
@@ -458,6 +462,8 @@ static partial class Strings
         public const string ChipAvailableNowOff = "Available now off";
         public const string ChipNotInTotals = "Left out of totals";
         public const string ChipStatePrefix = "State: ";
+
+        public const string HighContrastLegendNote = "Showing the high-contrast glyphs (Settings › Display › Glyph palette): each moon carries a mark as well as its shape, and states with the same shape differ clearly in brightness.";
 
         public const string StripeTitle = "The table's state stripe";
         public const string StripeBody = "The thin bar on the left edge of each quest table row repeats the row's state as a pattern, so it reads without colour too: in a greyscale stream, through a colour filter or with colour blindness. Hover the stripe for the state and the pattern's name.";

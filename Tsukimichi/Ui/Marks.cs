@@ -38,42 +38,67 @@ public static class Marks
     private const float DashHalf = 0.20f;
     private const float PipRadius = 0.18f;
 
-    /// <summary>The mark centred at <paramref name="center"/> inside a <paramref name="size"/> px box.</summary>
+    /// <summary>
+    /// The mark centred at <paramref name="center"/> inside a <paramref name="size"/> px box, in the colours of the glyph
+    /// palette in effect (<see cref="Theme.Glyphs"/>). The high-contrast palette draws its brighter or darker rungs at
+    /// a thicker stroke over a 1 px keyline in the palette's ground, so the mark reads on any surface.
+    /// </summary>
     public static void Draw(ImDrawListPtr dl, Vector2 center, float size, Mark mark)
     {
         if (!(size > 1f)) return;
 
-        var stroke = MathF.Max(1.5f, 0.11f * size);
+        var palette = Theme.Glyphs;
+        var colors = palette.Marks;
+        var stroke = MathF.Max(1.5f, 0.11f * size) * colors.StrokeScale;
+        var keyline = palette.HighContrast ? 1f : 0f;
+        var ground = Theme.U32(palette.Ground);
         switch (mark)
         {
             case Mark.Check:
-                dl.PathClear();
-                dl.PathLineTo(center + CheckA * size);
-                dl.PathLineTo(center + CheckB * size);
-                dl.PathLineTo(center + CheckC * size);
-                dl.PathStroke(Theme.MoonDimU32, ImDrawFlags.None, stroke);
+                if (keyline > 0f) Check(dl, center, size, ground, stroke + 2f * keyline);
+                Check(dl, center, size, palette.HighContrast ? Theme.U32(colors.Check) : Theme.MoonDimU32, stroke);
                 break;
 
             case Mark.Cross:
-                var d = CrossHalf * size;
-                dl.AddLine(center + new Vector2(-d, -d), center + new Vector2(d, d), Theme.DuskU32, stroke);
-                dl.AddLine(center + new Vector2(-d, d), center + new Vector2(d, -d), Theme.DuskU32, stroke);
+                if (keyline > 0f) Cross(dl, center, size, ground, stroke + 2f * keyline);
+                Cross(dl, center, size, palette.HighContrast ? Theme.U32(colors.Cross) : Theme.DuskU32, stroke);
                 break;
 
             case Mark.Unknown:
                 var h = DashHalf * size;
-                dl.AddLine(center + new Vector2(-h, 0f), center + new Vector2(h, 0f), Theme.DuskU32, stroke);
+                if (keyline > 0f) dl.AddLine(center + new Vector2(-h - keyline, 0f), center + new Vector2(h + keyline, 0f), ground, stroke + 2f * keyline);
+                dl.AddLine(center + new Vector2(-h, 0f), center + new Vector2(h, 0f), palette.HighContrast ? Theme.U32(colors.Dash) : Theme.DuskU32, stroke);
                 break;
 
             case Mark.LivePip:
-                dl.AddCircleFilled(center, MathF.Max(2.5f, PipRadius * size), Theme.MoonU32);
+                var live = MathF.Max(2.5f, PipRadius * size);
+                if (keyline > 0f) dl.AddCircleFilled(center, live + keyline, ground);
+                dl.AddCircleFilled(center, live, palette.HighContrast ? Theme.U32(colors.LivePip) : Theme.MoonU32);
                 break;
 
             case Mark.SnapshotPip:
                 var r = MathF.Max(2.5f, PipRadius * size);
-                dl.AddCircle(center, r - 0.75f, Theme.DuskU32, 0, 1.5f);
+                var ring = 1.5f * colors.StrokeScale;
+                if (keyline > 0f) dl.AddCircleFilled(center, r + keyline, ground);
+                dl.AddCircle(center, r - ring * 0.5f, palette.HighContrast ? Theme.U32(colors.SnapshotPip) : Theme.DuskU32, 0, ring);
                 break;
         }
+    }
+
+    private static void Check(ImDrawListPtr dl, Vector2 center, float size, uint color, float stroke)
+    {
+        dl.PathClear();
+        dl.PathLineTo(center + CheckA * size);
+        dl.PathLineTo(center + CheckB * size);
+        dl.PathLineTo(center + CheckC * size);
+        dl.PathStroke(color, ImDrawFlags.None, stroke);
+    }
+
+    private static void Cross(ImDrawListPtr dl, Vector2 center, float size, uint color, float stroke)
+    {
+        var d = CrossHalf * size;
+        dl.AddLine(center + new Vector2(-d, -d), center + new Vector2(d, d), color, stroke);
+        dl.AddLine(center + new Vector2(-d, d), center + new Vector2(d, -d), color, stroke);
     }
 
     /// <summary>Reserves a <paramref name="size"/> square item at the cursor and draws the mark in it, so a tooltip can hang off it.</summary>

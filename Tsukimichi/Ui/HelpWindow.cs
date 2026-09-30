@@ -406,6 +406,7 @@ public sealed class HelpWindow : Window
                     foreach (var phase in Phases)
                     {
                         sb.Append(Strings.StateName(phase.State)).Append('\n').Append(phase.Name).Append('\n').Append(phase.Meaning).Append('\n');
+                        sb.Append(StateNames.HighContrastSubtitle(phase.State)).Append('\n');
                         foreach (var chip in phase.Chips)
                         {
                             sb.Append(chip).Append('\n');
@@ -571,6 +572,16 @@ public sealed class HelpWindow : Window
 
     private void DrawMoonPhases(float scale)
     {
+        if (Theme.Glyphs.HighContrast)
+        {
+            using (Theme.PushText(Theme.Surface.TextSecondary))
+            {
+                ImGui.TextWrapped(Strings.Help.HighContrastLegendNote);
+            }
+
+            ImGui.Spacing();
+        }
+
         for (var i = 0; i < Phases.Length; i++)
         {
             PhaseRow(i, in Phases[i], scale);
@@ -656,10 +667,11 @@ public sealed class HelpWindow : Window
                 ImGui.TextUnformatted(Strings.StateName(phase.State));
             }
 
+            // The shape the moon beside it has: the high-contrast silhouette and mark when that palette is on.
             ImGui.SameLine(0f, 6f * scale);
             using (Theme.PushText(Theme.Surface.TextSecondary))
             {
-                ImGui.TextUnformatted(phase.Name);
+                ImGui.TextUnformatted(Theme.Glyphs.HighContrast ? StateNames.HighContrastSubtitle(phase.State) : phase.Name);
             }
 
             using (Theme.PushText(BodyText))
@@ -731,7 +743,7 @@ public sealed class HelpWindow : Window
         ImGui.Spacing();
         var dl = ImGui.GetWindowDrawList();
         var height = MathF.Round(24f * scale);
-        var thickness = MathF.Max(2f, MathF.Round(3f * scale));
+        var thickness = MathF.Max(2f, MathF.Round(Theme.Glyphs.StripeWidth * scale));
         var line = ImGui.GetTextLineHeight();
         foreach (var phase in Phases)
         {

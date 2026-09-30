@@ -23,6 +23,11 @@ namespace Tsukimichi.Ui;
 /// <see cref="MoonDetail.PrimitiveBudget"/> primitives) from r 12; Completed adds a highlight arc from r 16.
 /// Draw order is disc → rim → lit part → detail → marks, except the ring states (Accepted, ReadyOnOtherJob, Blocked)
 /// where the ring goes last.
+///
+/// With the high-contrast glyph palette (<see cref="Theme.Glyphs"/>, Settings › Display › Glyph palette; accessibility
+/// panel §2.2) the same silhouettes are drawn flat from <see cref="GlyphPalette"/>: a keyline disc in the palette's
+/// ground, the lit part and a rim of at least 2 px in the state's rung of the luminance ladder, and one in-disc mark
+/// per state (<see cref="DrawContrast"/>); the halo gets a thicker stroke over a ground well (<see cref="DrawContrastHalo"/>).
 /// </summary>
 public static class MoonGlyph
 {
@@ -110,6 +115,13 @@ public static class MoonGlyph
         if (!(radius > 0.5f)) return;
 
         center = Snap(center, radius);
+        var palette = Theme.Glyphs;
+        if (palette.HighContrast)
+        {
+            DrawContrast(dl, center, radius, palette, palette.Style(state));
+            return;
+        }
+
         var segments = MoonGeometry.SegmentsFor(radius);
         var rim = Rim(radius);
 
@@ -240,6 +252,12 @@ public static class MoonGlyph
         if (mode == HaloMode.NumberOnly) return;
 
         center = Snap(center, radius);
+        if (Theme.Glyphs.HighContrast)
+        {
+            DrawContrastHalo(dl, center, radius, fraction, mode, Theme.Glyphs, onCard, dimComplete);
+            return;
+        }
+
         var f = GaugeGeometry.Clamp01(fraction);
         var track = GaugeGeometry.TrackRadius(radius);
         var stroke = GaugeGeometry.Stroke(radius);
@@ -362,6 +380,196 @@ public static class MoonGlyph
             // New: a plain rimmed dark disc, so an empty node still has an outline.
             FillDisc(dl, center, radius, segments, Theme.ShadowU32);
             Ring(dl, center, radius, segments, rim, Theme.DuskU32);
+        }
+    }
+
+    // ------------------------------------------------------------------ high contrast
+
+    /// <summary>Ready's bar: centre x (× r), half height (× r) and width rule.</summary>
+    private const float ContrastBarX = -0.42f;
+    private const float ContrastBarHalfHeight = 0.48f;
+    private const float ContrastBarWidthFraction = 0.20f;
+    private const float ContrastBarMinWidth = 2f;
+
+    /// <summary>Ready on another job's hollow bar: width rule and outline.</summary>
+    private const float ContrastHollowWidthFraction = 0.28f;
+    private const float ContrastHollowMinWidth = 4f;
+    private const float ContrastHollowStrokeFraction = 0.08f;
+
+    /// <summary>In journal's large seal: centre on the lit side and radius rule (the Standard seal is 0.16 r, 1.5 px).</summary>
+    private static readonly Vector2 ContrastSealOffset = new(0.32f, 0f);
+    private const float ContrastSealRadiusFraction = 0.24f;
+    private const float ContrastSealMinRadius = 2f;
+
+    /// <summary>Done's check on the waning lens (× r): short leg down-right, long leg up-right.</summary>
+    private static readonly Vector2 ContrastCheckA = new(-0.60f, -0.02f);
+    private static readonly Vector2 ContrastCheckB = new(-0.36f, 0.26f);
+    private static readonly Vector2 ContrastCheckC = new(0.04f, -0.30f);
+    private const float ContrastCheckStrokeFraction = 0.14f;
+
+    /// <summary>Locked out's thickened bar: width max(3 px, 0.32 r) (Standard: max(2, 0.22 r)).</summary>
+    private const float ContrastDiagonalWidthFraction = 0.32f;
+    private const float ContrastDiagonalMinWidth = 3f;
+
+    /// <summary>
+    /// A state glyph in the high-contrast palette: the ground as a disc of the full radius (the unlit side, and a
+    /// keyline of <see cref="GlyphPalette.Keyline"/> px around everything else, so the glyph carries its own background),
+    /// then inside it the lit part flat in the state's rung, the rim (≥ 2 px; Blocked's thick, Not checked's dashed) and
+    /// the state's mark: bold bar, hollow bar, large seal, check, thick diagonal bar. No gradient, detail or glow.
+    /// </summary>
+    private static void DrawContrast(ImDrawListPtr dl, Vector2 center, float radius, GlyphPalette palette, in GlyphStyle style)
+    {
+        var segments = MoonGeometry.SegmentsFor(radius);
+        FillDisc(dl, center, radius, segments, Theme.U32(palette.Ground));
+
+        var r = radius - palette.Keyline(radius);
+        if (!(r > 0.5f)) return;
+
+        var lit = Theme.U32(style.Lit);
+        if (style.Phase == MoonPhase.Full)
+            FillDisc(dl, center, r, segments, lit);
+        else if (style.HasLit)
+            FillPhase(dl, center, r, style.Phase, segments, lit);
+
+        var rim = style.RimWidth(r);
+        var rimColor = Theme.U32(style.Rim);
+        if (style.RimStyle == RimStyle.Solid)
+        {
+            Ring(dl, center, r, segments, rim, rimColor);
+        }
+        else if (style.RimStyle == RimStyle.Dashed)
+        {
+            if (r >= FineDashMinRadius)
+                DashedRing(dl, center, r, segments, rim, rimColor, dashes: 12, dashDegrees: 18f);
+            else
+                DashedRing(dl, center, r, segments, rim, rimColor, dashes: 8, dashDegrees: 24f);
+        }
+
+        var mark = Theme.U32(style.MarkColor);
+        switch (style.Mark)
+        {
+            case GlyphMark.Bar:
+            {
+                var w = MathF.Max(ContrastBarMinWidth, MathF.Round(ContrastBarWidthFraction * r));
+                var x0 = MathF.Round(center.X + ContrastBarX * r - w * 0.5f);
+                var h = ContrastBarHalfHeight * r;
+                dl.AddRectFilled(new Vector2(x0, center.Y - h), new Vector2(x0 + w, center.Y + h), mark);
+                break;
+            }
+
+            case GlyphMark.HollowBar:
+            {
+                var w = MathF.Max(ContrastHollowMinWidth, MathF.Round(ContrastHollowWidthFraction * r));
+                var x0 = MathF.Round(center.X + ContrastBarX * r - w * 0.5f);
+                var h = ContrastBarHalfHeight * r;
+                var t = MathF.Max(1f, MathF.Round(ContrastHollowStrokeFraction * r));
+                dl.AddRect(new Vector2(x0, center.Y - h), new Vector2(x0 + w, center.Y + h), mark, 0f, ImDrawFlags.None, t);
+                break;
+            }
+
+            case GlyphMark.LargeSeal:
+                dl.AddCircleFilled(center + ContrastSealOffset * r, MathF.Max(ContrastSealRadiusFraction * r, ContrastSealMinRadius), mark);
+                break;
+
+            case GlyphMark.Check:
+                dl.PathClear();
+                dl.PathLineTo(center + ContrastCheckA * r);
+                dl.PathLineTo(center + ContrastCheckB * r);
+                dl.PathLineTo(center + ContrastCheckC * r);
+                dl.PathStroke(mark, ImDrawFlags.None, MathF.Max(1.5f, ContrastCheckStrokeFraction * r));
+                break;
+
+            case GlyphMark.ThickDiagonalBar:
+                dl.AddLine(center - BarEnd * r, center + BarEnd * r, mark, MathF.Max(ContrastDiagonalMinWidth, ContrastDiagonalWidthFraction * r));
+                break;
+        }
+    }
+
+    /// <summary>
+    /// The halo gauge in the high-contrast palette: a ground well under the track (a keyline wide on each side), the
+    /// track in the palette's dim rung and the arc in its bright one (≥ 3 : 1 against the background and each other,
+    /// see the palette tests), stroke <see cref="GlyphPalette.HaloStroke"/> = max(2.5, 0.2 R); from R 12 a flat core
+    /// moon inside its own keyline. Complete: the ring in the arc colour (or the dim rung with
+    /// <paramref name="dimComplete"/>) around a solid core, no glow.
+    /// </summary>
+    private static void DrawContrastHalo(ImDrawListPtr dl, Vector2 center, float radius, float fraction, HaloMode mode, GlyphPalette palette, bool onCard, bool dimComplete)
+    {
+        var f = GaugeGeometry.Clamp01(fraction);
+        var track = GaugeGeometry.TrackRadius(radius);
+        var stroke = palette.HaloStroke(radius);
+        var keyline = palette.Keyline(radius);
+        var segments = MoonGeometry.SegmentsFor(track);
+        var ground = Theme.U32(palette.Ground);
+        var arc = Theme.U32(palette.HaloArc);
+        var core = mode == HaloMode.Core ? GaugeGeometry.CoreRadius(radius, stroke) : 0f;
+
+        dl.AddCircle(center, track, ground, segments, stroke + 2f * keyline);
+
+        if (f >= 1f)
+        {
+            var ring = dimComplete ? Theme.U32(palette.HaloCompleteDim) : arc;
+            dl.AddCircle(center, track, ring, segments, stroke);
+            if (core > 0.5f)
+            {
+                var coreSegments = MoonGeometry.SegmentsFor(core);
+                FillDisc(dl, center, core, coreSegments, ground);
+                FillDisc(dl, center, core - palette.Keyline(core), coreSegments, ring);
+            }
+
+            return;
+        }
+
+        dl.AddCircle(center, track, Theme.U32(onCard ? palette.HaloTrackOnCard : palette.HaloTrack), segments, stroke);
+        var sweep = GaugeGeometry.Sweep(f, radius, stroke);
+        if (sweep > 0f)
+        {
+            var start = GaugeGeometry.StartAngle;
+            dl.PathClear();
+            dl.PathArcTo(center, track, start, start + sweep, GaugeGeometry.ArcSegments(segments, sweep));
+            dl.PathStroke(arc, ImDrawFlags.None, stroke);
+
+            var (from, to) = GaugeGeometry.Caps(center, radius, f, stroke);
+            dl.AddCircleFilled(from, stroke * 0.5f, arc);
+            dl.AddCircleFilled(to, stroke * 0.5f, arc);
+        }
+
+        if (core > 0.5f)
+            ContrastFillingMoon(dl, center, core, GaugeGeometry.CoreLitWidth(f, core), palette);
+    }
+
+    /// <summary>The halo core in high contrast: a ground keyline disc, then a flat filling moon in the bright rung with the dim rim on its dark side.</summary>
+    private static void ContrastFillingMoon(ImDrawListPtr dl, Vector2 center, float radius, float width, GlyphPalette palette)
+    {
+        var segments = MoonGeometry.SegmentsFor(radius);
+        var ground = Theme.U32(palette.Ground);
+        var lit = Theme.U32(palette.HaloArc);
+        var rimColor = Theme.U32(palette.HaloTrack);
+        FillDisc(dl, center, radius, segments, ground);
+
+        var r = radius - palette.Keyline(radius);
+        if (!(r > 0.5f)) return;
+
+        // The overlay lives in its own list: FillDisc rewrites Scratch.
+        var rim = palette.Style(QuestState.Ready).RimWidth(r);
+        var baseLit = MoonGeometry.TerminatorLayers(center, r, width, segments, Overlay);
+        var hasOverlay = Overlay.Count >= 3;
+        if (baseLit)
+        {
+            FillDisc(dl, center, r, segments, lit);
+            if (hasOverlay)
+            {
+                FillPolygon(dl, Overlay, ground);
+                DarkSideRim(dl, center, r, segments, rim, rimColor);
+            }
+        }
+        else if (hasOverlay)
+        {
+            DarkSideRim(dl, center, r, segments, rim, rimColor);
+            FillPolygon(dl, Overlay, lit);
+        }
+        else
+        {
+            Ring(dl, center, r, segments, rim, rimColor);
         }
     }
 

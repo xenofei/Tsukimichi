@@ -92,7 +92,9 @@ public static class StateNames
     public static string ComposeTooltip(string name, string subtitle) =>
         string.IsNullOrEmpty(subtitle) ? name : name + TooltipSeparator + subtitle;
 
-    private static string[] BuildTooltips()
+    private static string[] BuildTooltips() => BuildTooltips(GlyphSubtitle);
+
+    private static string[] BuildTooltips(Func<QuestState, string> subtitle)
     {
         var states = Enum.GetValues<QuestState>();
         var max = 0;
@@ -104,11 +106,62 @@ public static class StateNames
         var table = new string[max + 1];
         foreach (var state in states)
         {
-            table[(int)state] = ComposeTooltip(Name(state), GlyphSubtitle(state));
+            table[(int)state] = ComposeTooltip(Name(state), subtitle(state));
         }
 
         return table;
     }
+
+    private static readonly string[] HighContrastTooltips = BuildTooltips(HighContrastSubtitle);
+    private static readonly string HighContrastDoneTodayTooltip = ComposeTooltip(DoneToday, HighContrastSubtitle(QuestState.DoneThisCycle));
+    private static readonly string HighContrastDoneThisWeekTooltip = ComposeTooltip(DoneThisWeek, HighContrastSubtitle(QuestState.DoneThisCycle));
+
+    /// <summary>
+    /// A state moon's tooltip in the glyph palette in use: <see cref="Tooltip(QuestState, byte)"/> for Standard, the
+    /// same name with <see cref="HighContrastSubtitle"/> as the shape hint for the high-contrast palette.
+    /// </summary>
+    public static string Tooltip(QuestState state, byte repeatInterval, bool highContrast)
+    {
+        if (!highContrast)
+        {
+            return Tooltip(state, repeatInterval);
+        }
+
+        if (state == QuestState.DoneThisCycle)
+        {
+            return repeatInterval switch
+            {
+                DailyInterval => HighContrastDoneTodayTooltip,
+                WeeklyInterval => HighContrastDoneThisWeekTooltip,
+                _ => HighContrastTooltips[(int)QuestState.DoneThisCycle],
+            };
+        }
+
+        return (uint)state < (uint)HighContrastTooltips.Length
+            ? HighContrastTooltips[(int)state]
+            : ComposeTooltip(Name(state), HighContrastSubtitle(state));
+    }
+
+    /// <summary>The high-contrast tooltip for a quest; null quest falls back to the state's own.</summary>
+    public static string Tooltip(QuestState state, QuestRecord? quest, bool highContrast) =>
+        Tooltip(state, quest?.RepeatInterval ?? 0, highContrast);
+
+    /// <summary>
+    /// The shape of a state's glyph in the high-contrast palette (Settings › Display › Glyph palette; accessibility
+    /// panel §2.2): its silhouette and in-disc mark, as the Help legend and the moon tooltips name them.
+    /// </summary>
+    public static string HighContrastSubtitle(QuestState state) => state switch
+    {
+        QuestState.Ready => "bright half, bold bar",
+        QuestState.ReadyOnOtherJob => "dim half, hollow bar",
+        QuestState.Accepted => "bright gibbous, large seal",
+        QuestState.Blocked => "empty disc, thick rim",
+        QuestState.DoneThisCycle => "dim gibbous, check",
+        QuestState.Completed => "solid bright disc",
+        QuestState.Foreclosed => "thick diagonal bar",
+        QuestState.Unknown => "dashed rim",
+        _ => string.Empty,
+    };
 
     /// <summary>
     /// The moon-phase name of a state's glyph: a subtitle under the display name in the Help legend and the glyph

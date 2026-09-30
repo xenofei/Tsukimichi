@@ -45,9 +45,6 @@ public sealed class TablePane : IDisposable
     /// <summary>Logical gap between a story sidequest's name and its book badge.</summary>
     private const float StoryBadgeGap = 6f;
 
-    /// <summary>Logical width of the state stripe.</summary>
-    private const float StripeWidth = 3f;
-
     /// <summary>Level pill (ui-revamp §2.4): at least 28 × 16 logical, text padded 6 each side.</summary>
     private const float LevelPillMinWidth = 28f;
     private const float PillHeight = 16f;
@@ -737,8 +734,8 @@ public sealed class TablePane : IDisposable
         ImGuiP.TablePopBackgroundChannel();
     }
 
-    /// <summary>Width of the state stripe in pixels: 3 logical, never under 2.</summary>
-    private static float StripeThickness() => MathF.Max(2f, MathF.Round(UiMetrics.Px(StripeWidth)));
+    /// <summary>Width of the state stripe in pixels: the glyph palette's (3 logical, 4 in high contrast), never under 2.</summary>
+    internal static float StripeThickness() => MathF.Max(2f, MathF.Round(UiMetrics.Px(Theme.Glyphs.StripeWidth)));
 
     /// <summary>
     /// The row's lines, on the table's background channel so they span every column under the text: the separator
@@ -800,9 +797,10 @@ public sealed class TablePane : IDisposable
     /// The stripe's colour, from the Theme tokens the moons use: gold for what can be acted on (Ready, In journal), the
     /// quieter gold for Completed, silver for Ready on another job and Done (the palette's text colour in a light
     /// Dalamud theme, where silver would vanish), Eclipse for Locked out and VeilText for Not checked. The pattern,
-    /// not the colour, carries the state.
+    /// not the colour, carries the state. The high-contrast glyph palette uses its own rungs instead
+    /// (<see cref="GlyphPalette.Stripe"/>: the state's identity colour, 3 : 1 or better on the host window).
     /// </summary>
-    internal static uint StripeColor(QuestState state) => state switch
+    internal static uint StripeColor(QuestState state) => Theme.Glyphs.HighContrast ? Theme.U32(Theme.Glyphs.Stripe(state)) : state switch
     {
         QuestState.Ready or QuestState.Accepted => Theme.MoonU32,
         QuestState.Completed => Theme.MoonDimU32,

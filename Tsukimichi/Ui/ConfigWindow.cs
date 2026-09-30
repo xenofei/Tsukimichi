@@ -298,6 +298,7 @@ public sealed class ConfigWindow : Window
             UiMetrics.Tooltip(Strings.ConfigFollowDalamudColoursHint);
         }
 
+        DrawGlyphPalette();
         DrawJournalFiling();
     }
 
@@ -361,6 +362,59 @@ public sealed class ConfigWindow : Window
         {
             UiMetrics.Tooltip(hint);
         }
+    }
+
+    /// <summary>States in the order the glyph palette preview shows them (the Help legend's order).</summary>
+    private static readonly QuestState[] PalettePreviewStates =
+    [
+        QuestState.Completed, QuestState.Accepted, QuestState.Ready, QuestState.ReadyOnOtherJob,
+        QuestState.DoneThisCycle, QuestState.Blocked, QuestState.Foreclosed, QuestState.Unknown,
+    ];
+
+    /// <summary>
+    /// Settings › Display › Glyph palette (accessibility panel §2.2): Standard or High contrast, saved at once and
+    /// applied from the next frame (<see cref="Theme.Refresh"/>), with the eight state moons drawn beside it in the
+    /// palette in effect so the choice can be seen before closing the window. Each moon's tooltip names its shape.
+    /// </summary>
+    private void DrawGlyphPalette()
+    {
+        ImGui.TextUnformatted(Strings.ConfigGlyphPalette);
+        ImGui.SameLine();
+        if (ImGui.RadioButton(Strings.ConfigGlyphPaletteStandard, settings.GlyphPalette == GlyphPaletteKind.Standard))
+        {
+            settings.GlyphPalette = GlyphPaletteKind.Standard;
+            Save();
+        }
+
+        HintOnHover(Strings.ConfigGlyphPaletteHint);
+        ImGui.SameLine();
+        if (ImGui.RadioButton(Strings.ConfigGlyphPaletteHighContrast, settings.GlyphPalette == GlyphPaletteKind.HighContrast))
+        {
+            settings.GlyphPalette = GlyphPaletteKind.HighContrast;
+            Save();
+        }
+
+        HintOnHover(Strings.ConfigGlyphPaletteHint);
+
+        var glyph = UiMetrics.InlineGlyphSize(ImGui.GetTextLineHeight());
+        var gap = 4f * ImGuiHelpers.GlobalScale;
+        for (var i = 0; i < PalettePreviewStates.Length; i++)
+        {
+            if (i > 0)
+            {
+                ImGui.SameLine(0f, gap);
+            }
+
+            MoonGlyph.DrawInline(PalettePreviewStates[i], glyph);
+            HintOnHover(Strings.StateTooltip(PalettePreviewStates[i]));
+        }
+
+        ImGui.SameLine(0f, gap * 2f);
+        Marks.DrawInline(Mark.Check, glyph);
+        ImGui.SameLine(0f, gap);
+        Marks.DrawInline(Mark.Cross, glyph);
+        ImGui.SameLine(0f, gap * 2f);
+        MoonGlyph.DrawHaloInline(0.6f, MathF.Max(glyph, 16f * ImGuiHelpers.GlobalScale));
     }
 
     /// <summary>
