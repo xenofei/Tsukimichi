@@ -21,6 +21,7 @@ public static class Motion
     private const double PruneEverySeconds = 0.5;
 
     private static readonly MotionStore Store = new();
+    private static readonly ScrollWatch Watched = new();
     private static double lastPrune;
     private static double scrollQuietUntil;
     private static bool scrolling;
@@ -29,14 +30,15 @@ public static class Motion
     public static bool Enabled => !UiMetrics.ReduceMotion && !scrolling;
 
     /// <summary>
-    /// Once per frame, after <see cref="UiMetrics.Update"/> and before any window draws: notes whether the mouse wheel
-    /// moved (motion pauses while scrolling), drops every key when Reduce motion is on, and prunes stale keys.
+    /// Once per frame, after <see cref="UiMetrics.Update"/> and before any window draws: notes whether the user is
+    /// scrolling (the mouse wheel, a scrollbar held, or a watched window's scroll moved or about to jump; motion pauses
+    /// meanwhile), drops every key when Reduce motion is on, and prunes stale keys.
     /// </summary>
     public static void BeginFrame()
     {
         var now = ImGui.GetTime();
         var io = ImGui.GetIO();
-        if (io.MouseWheel != 0f || io.MouseWheelH != 0f)
+        if (io.MouseWheel != 0f || io.MouseWheelH != 0f || ScrollbarHeld() || WatchedWindowScrolled())
         {
             scrollQuietUntil = now + ScrollQuietSeconds;
         }
@@ -57,6 +59,54 @@ public static class Motion
             lastPrune = now;
             Store.Prune(now);
         }
+    }
+
+    /// <summary>
+    /// Watches the current window's scroll: call it inside a scrolling pane before its rows draw, every frame. When the
+    /// scroll moved since the last frame (a scrollbar drag, a keyboard scroll, a reveal jump landing) motion pauses from
+    /// here on, so rows coming into view do not animate; <see cref="BeginFrame"/> checks the watched windows too.
+    /// </summary>
+    public static void WatchScroll()
+    {
+        if (Watched.Moved(ImGuiP.GetCurrentWindow().ID, ImGui.GetScrollY()))
+        {
+            scrollQuietUntil = ImGui.GetTime() + ScrollQuietSeconds;
+            scrolling = true;
+        }
+    }
+
+    /// <summary>Whether a scrollbar of any window is held (the active item is a window's scrollbar).</summary>
+    private static bool ScrollbarHeld()
+    {
+        var active = ImGuiP.GetActiveID();
+        if (active == 0)
+        {
+            return false;
+        }
+
+        var window = ImGui.GetCurrentContext().ActiveIdWindow;
+        return !window.IsNull && (active == ImGuiP.GetWindowScrollbarID(window, ImGuiAxis.Y) || active == ImGuiP.GetWindowScrollbarID(window, ImGuiAxis.X));
+    }
+
+    /// <summary>Whether a watched window scrolled since it was last seen, or has a scroll jump pending (a reveal, a keyboard scroll).</summary>
+    private static bool WatchedWindowScrolled()
+    {
+        var any = false;
+        for (var i = 0; i < Watched.Count; i++)
+        {
+            var id = Watched.IdAt(i);
+            var window = ImGuiP.FindWindowByID(id);
+            if (window.IsNull)
+            {
+                continue;
+            }
+
+            // Every window is noted, so each keeps its position even when an earlier one already moved.
+            any |= Watched.Moved(id, window.Scroll.Y);
+            any |= window.ScrollTarget.Y < float.MaxValue;
+        }
+
+        return any;
     }
 
     /// <summary>
@@ -95,8 +145,10 @@ public static class Motion
     /// first time the orbit shows and runs from the old fraction to the new one when the count changes, each over
     /// <see cref="MotionMath.OrbitFillSeconds"/> with an ease-out computed from its start time. At Quiet and Plain it is
     /// <see cref="Gauge"/> (the 1.3 behaviour); under Reduce motion, or while scrolling, it is the fraction itself.
+    /// <paramref name="from"/> is where a key without state starts: 0 for an orbit never shown, the fraction it last
+    /// showed for one whose state was pruned while out of view (<see cref="FillMemory"/>), so it does not refill.
     /// </summary>
-    public static float Fill(ulong key, float fraction)
+    public static float Fill(ulong key, float fraction, float from = 0f)
     {
         if (!Theme.FlairMotion)
         {
@@ -104,7 +156,7 @@ public static class Motion
         }
 
         var f = float.IsFinite(fraction) ? System.Math.Clamp(fraction, 0f, 1f) : 0f;
-        return Store.Tween(key, f, MotionMath.OrbitFillSeconds, ImGui.GetTime(), Enabled);
+        return Store.Tween(key, f, MotionMath.OrbitFillSeconds, ImGui.GetTime(), Enabled, from);
     }
 
     /// <summary>

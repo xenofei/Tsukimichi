@@ -43,7 +43,7 @@ public sealed partial class DetailPane
         }
 
         Gap();
-        BeginSection("##journalText", Strings.JournalTextCard, JournalEyebrow, JournalTextIcon);
+        BeginSection("##journalText", Strings.JournalTextCard, JournalTextIcon);
         if (journalOpenRowId != quest.RowId)
         {
             using (Theme.PushText(Theme.Surface.TextSecondary))

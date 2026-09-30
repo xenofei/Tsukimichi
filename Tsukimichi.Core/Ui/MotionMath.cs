@@ -272,3 +272,85 @@ public sealed class MotionStore
     /// <summary>Forgets every key (plugin unload, Reduce motion switched on).</summary>
     public void Clear() => entries.Clear();
 }
+
+/// <summary>
+/// The scroll positions of a few watched windows (the Journal tree's pane), so motion can pause for any scroll, not
+/// only the mouse wheel's: a scrollbar drag, a keyboard scroll, a reveal jump. Up to <see cref="Capacity"/> windows by
+/// id; a window first seen is not a move. Fixed arrays, allocation-free.
+/// </summary>
+public sealed class ScrollWatch
+{
+    /// <summary>How many windows can be watched at once; further ones are ignored.</summary>
+    public const int Capacity = 8;
+
+    private readonly uint[] ids = new uint[Capacity];
+    private readonly float[] positions = new float[Capacity];
+
+    /// <summary>How many windows are watched.</summary>
+    public int Count { get; private set; }
+
+    /// <summary>The id of the <paramref name="index"/>th watched window.</summary>
+    public uint IdAt(int index) => ids[index];
+
+    /// <summary>
+    /// Notes that window <paramref name="id"/> is scrolled to <paramref name="scrollY"/>; true when it moved since the
+    /// last note (more than a hundredth of a pixel). A window seen for the first time is watched from here on and has not moved.
+    /// </summary>
+    public bool Moved(uint id, float scrollY)
+    {
+        if (!float.IsFinite(scrollY))
+        {
+            return false;
+        }
+
+        for (var i = 0; i < Count; i++)
+        {
+            if (ids[i] == id)
+            {
+                var moved = MathF.Abs(positions[i] - scrollY) > 0.01f;
+                positions[i] = scrollY;
+                return moved;
+            }
+        }
+
+        if (Count < Capacity)
+        {
+            ids[Count] = id;
+            positions[Count] = scrollY;
+            Count++;
+        }
+
+        return false;
+    }
+
+    /// <summary>Forgets every window.</summary>
+    public void Clear() => Count = 0;
+}
+
+/// <summary>
+/// The fraction each orbit last showed, kept past <see cref="MotionStore.Prune"/> (Moon Road proposal §9: an orbit fills
+/// from empty once, the first time it shows). A row scrolled out of view for two seconds loses its tween state; when
+/// it comes back (a scrollbar drag, a keyboard scroll, a reveal jump, a return to the tab) its tween starts from the
+/// fraction remembered here instead of from 0, so it does not replay its fill. Cleared when what the fractions mean
+/// changes (another catalog, another character viewed). One entry per node; allocation-free once grown.
+/// </summary>
+public sealed class FillMemory
+{
+    private readonly Dictionary<ulong, float> last = [];
+
+    /// <summary>How many keys are remembered.</summary>
+    public int Count => last.Count;
+
+    /// <summary>Whether the orbit under <paramref name="key"/> has shown before.</summary>
+    public bool Knows(ulong key) => last.ContainsKey(key);
+
+    /// <summary>Where a tween under <paramref name="key"/> starts when it has no state: the fraction it last showed, or 0 for an orbit never shown.</summary>
+    public float StartFor(ulong key) => last.TryGetValue(key, out var fraction) ? fraction : 0f;
+
+    /// <summary>Notes that the orbit under <paramref name="key"/> shows <paramref name="fraction"/> (clamped to 0..1; non-finite reads as 0).</summary>
+    public void Remember(ulong key, float fraction) =>
+        last[key] = float.IsFinite(fraction) ? Math.Clamp(fraction, 0f, 1f) : 0f;
+
+    /// <summary>Forgets every orbit (another catalog or character).</summary>
+    public void Clear() => last.Clear();
+}

@@ -97,12 +97,24 @@ public class TypeScaleTests
             var title = TypeScale.TitleGameFontSizesPx[TypeScale.TitleGameFont(bucket, body)];
             var numeral = TypeScale.NumeralGameFontSizesPx[TypeScale.NumeralGameFont(bucket, body)];
 
-            // TrumpGothic jumps from 23 to 34 pt and Jupiter from 23 to 46 pt, so at the largest bucket the remainder is
-            // wider than the Axis roles'; the window scale still makes up the difference.
-            Assert.InRange(TypeScale.EyebrowPxFor(scaled) / eyebrow, 0.8f, 1.25f);
-            Assert.InRange(TypeScale.TitlePxFor(scaled) / title, 0.7f, 1.45f);
-            Assert.InRange(TypeScale.NumeralPxFor(scaled) / numeral, 0.8f, 1.2f);
+            // A bitmap face is never stretched by more than MaxUpscale: past it the next larger size is drawn smaller.
+            // TrumpGothic jumps from 23 to 34 pt and Jupiter from 23 to 46 pt, so the shrink can reach about half.
+            Assert.InRange(TypeScale.EyebrowPxFor(scaled) / eyebrow, 0.55f, TypeScale.MaxUpscale);
+            Assert.InRange(TypeScale.TitlePxFor(scaled) / title, 0.55f, TypeScale.MaxUpscale);
+            Assert.InRange(TypeScale.NumeralPxFor(scaled) / numeral, 0.55f, TypeScale.MaxUpscale);
         }
+    }
+
+    [Fact]
+    public void A_heading_font_goes_one_size_up_rather_than_stretch_past_a_tenth()
+    {
+        // Jupiter 23 is 30.67 px. Body 17 at bucket 1.3 asks the title for 35.4 px: the nearest (23) would be stretched
+        // 1.15×, so Jupiter 46 is drawn at 0.58× instead.
+        Assert.Equal(3, TypeScale.TitleGameFont(3, 17f));
+        // Body 16 at bucket 1.3 asks for 33.3 px: 1.085× Jupiter 23 is within the limit.
+        Assert.Equal(2, TypeScale.TitleGameFont(3, 16f));
+        // MiedingerMid 18 (24 px) at body 17 × 1.6 = 27.2 px would be 1.13×: MiedingerMid 36.
+        Assert.Equal(4, TypeScale.NumeralGameFont(4, 17f));
     }
 
     [Fact]

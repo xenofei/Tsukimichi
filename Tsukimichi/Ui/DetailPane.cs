@@ -81,12 +81,6 @@ public sealed partial class DetailPane
         /// <summary>The shield masks the name; the pane offers "Reveal this name".</summary>
         public bool NameMasked;
 
-        /// <summary>
-        /// The spoiler shield lets the quest's game art show (<see cref="Core.Query.SpoilerMask.ShowArtwork"/>); when it
-        /// does not, the hero shows the quest's bundled category art instead, which spoils nothing.
-        /// </summary>
-        public bool ShowArtwork = true;
-
         /// <summary>Provenance of a refiled or removed quest ("Filed under … (rule 4: …)", "Removed from the game in patch 6.3"); null for an ordinary quest.</summary>
         public string? FilingLine;
 
@@ -247,20 +241,20 @@ public sealed partial class DetailPane
 
         Gap();
         var start = ImGui.GetCursorScreenPos();
-        BeginSection("##requirements", Strings.Requirements, RequirementsEyebrow, RequirementsIcon, model.RequirementsCaption, model.UnmetCount > 0 ? Theme.EclipseText : Theme.Surface.TextTertiary);
+        BeginSection("##requirements", Strings.Requirements, RequirementsIcon, model.RequirementsCaption, model.UnmetCount > 0 ? Theme.EclipseText : Theme.Surface.TextTertiary);
         DrawRequirements(start.X);
         EndSection();
         ui.RecordItem(UiRects.DetailRequirements);
 
         Gap();
-        BeginSection("##rewards", Strings.Rewards, RewardsEyebrow, RewardsIcon, model.RewardsCaption, Theme.Surface.TextTertiary);
+        BeginSection("##rewards", Strings.Rewards, RewardsIcon, model.RewardsCaption, Theme.Surface.TextTertiary);
         DrawRewards(cardRight);
         EndSection();
 
         if (Overrides is { } overrides)
         {
             Gap();
-            BeginSection("##moonlit", Strings.UniqueSection, MoonlitEyebrow, MoonlitIcon);
+            BeginSection("##moonlit", Strings.UniqueSection, MoonlitIcon);
             DrawUnique(overrides, rowId);
             EndSection();
         }
@@ -273,7 +267,7 @@ public sealed partial class DetailPane
         }
 
         var pad = UiMetrics.Px(10f);
-        BeginSection("##path", Strings.Path, PathEyebrow, PathIcon, chart.HeaderCaption, Theme.Surface.TextTertiary);
+        BeginSection("##path", Strings.Path, PathIcon, chart.HeaderCaption, Theme.Surface.TextTertiary);
         DrawChain();
 
         // The chart ends at the card's inner edge, or a gutter short of the body's (the minimap draws in the gutter).
@@ -283,7 +277,7 @@ public sealed partial class DetailPane
         ui.RecordItem(UiRects.DetailPath);
 
         Gap();
-        BeginSection("##giver", Strings.Giver, GiverEyebrow, GiverIcon);
+        BeginSection("##giver", Strings.Giver, GiverIcon);
         DrawGiver();
         EndSection();
         ui.RecordItem(UiRects.DetailGiver);
@@ -346,8 +340,8 @@ public sealed partial class DetailPane
     /// The journal banner at the column's width and at most 96 px tall, cover-cropped, a scrim from 30 % of its height
     /// to the bottom, the state pill top left (clamped, with an ellipsis), the special badge top right, and the name
     /// bottom left while it fits under the pill, else under the banner; the caption line follows under the banner as
-    /// whole segments that wrap (L5). The banner is the quest's from the fallback chain (<see cref="CurrentBanner"/>),
-    /// its source in the tooltip. False while it is not loaded yet.
+    /// whole segments that wrap (L5): the 1.3 hero, with the banner from the fallback chain (<see cref="CurrentBanner"/>)
+    /// so every quest has one. False while it is not loaded yet.
     /// </summary>
     private bool DrawBanner(QuestRecord quest)
     {
@@ -376,6 +370,7 @@ public sealed partial class DetailPane
         var pillSize = StatePill(dl, pillMin, pillRoom);
         ImGui.SetCursorScreenPos(pillMin);
         ImGui.InvisibleButton("##heroState", pillSize);
+        Chrome.FocusRing(pillSize.Y * 0.5f);
         if (ImGui.IsItemHovered())
         {
             UiMetrics.StateTooltip(model.State, model.Evaluation, quest, BlockerNamesOf(), lastStates);
@@ -417,8 +412,12 @@ public sealed partial class DetailPane
             TextFlow.Wrapped(model.DisplayName, width, Theme.U32(Theme.Surface.Text));
         }
 
-        // The banner's source, where nothing else on it is hovered.
-        BannerTooltip(min, max, shown);
+        // The 1.3 banner had no tooltip; only a banner the shield swapped for the category art says why, as 1.3's Night
+        // card did.
+        if (ArtworkWithheld(quest))
+        {
+            BannerTooltip(min, max, shown);
+        }
 
         // The caption line under the banner, its segments whole and wrapping.
         SegmentFlow(model.HeaderSegments, BlockerText.Separator, width, Theme.Surface.TextSecondary);
@@ -430,6 +429,10 @@ public sealed partial class DetailPane
     // The session's names and states as of the last refresh, for the state tooltip's blocker line.
     private BlockerNames? lastNames;
     private IReadOnlyDictionary<uint, QuestEvaluation>? lastStates;
+
+    // The spoiler shield and the catalog as of the last refresh, for the hero banner's shield (a donor's own state).
+    private Core.Query.SpoilerMask? lastSpoilers;
+    private QuestCatalog? lastCatalog;
 
     /// <summary>
     /// The state pill (ui-revamp §2.5): the state colour at 18 % over a dark base, a 1 px border at 70 %, a 12 px moon and
@@ -474,11 +477,11 @@ public sealed partial class DetailPane
 
     /// <summary>
     /// The quest's special icon (<see cref="QuestRecord.IconSpecial"/>) drawn on the draw list at <paramref name="min"/>;
-    /// false (nothing drawn) while the texture is still loading.
+    /// false (nothing drawn) while the texture is still loading or when the game has no such icon.
     /// </summary>
     private bool DrawSpecialBadge(ImDrawListPtr dl, QuestRecord quest, Vector2 min, float size)
     {
-        if (!textures.GetFromGameIcon(new GameIconLookup(quest.IconSpecial)).TryGetWrap(out var wrap, out _))
+        if (!textures.TryGetFromGameIcon(new GameIconLookup(quest.IconSpecial), out var badge) || !badge.TryGetWrap(out var wrap, out _))
         {
             return false;
         }
@@ -1258,6 +1261,8 @@ public sealed partial class DetailPane
         model.JournalSegments = [];
         lastNames = session.Names;
         lastStates = session.States;
+        lastSpoilers = session.Spoilers;
+        lastCatalog = bundle.Catalog;
 
         var quest = bundle.Catalog.GetByRowId(rowId);
         model.Quest = quest;
@@ -1274,7 +1279,6 @@ public sealed partial class DetailPane
         var spoilers = session.Spoilers;
         model.DisplayName = spoilers.DisplayName(quest);
         model.NameMasked = spoilers.IsMasked(quest);
-        model.ShowArtwork = spoilers.ShowArtwork(quest, model.State);
         model.StateName = Strings.StateName(model.State, quest);
         var status = BlockerText.StatusText(evaluation, quest, session.Names, session.States);
         var prefix = model.StateName + BlockerText.Separator;

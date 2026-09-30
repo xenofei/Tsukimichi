@@ -1,5 +1,4 @@
 using System;
-using System.Globalization;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Tsukimichi.Core.Model;
@@ -27,7 +26,8 @@ namespace Tsukimichi.Ui;
 /// at Flair Full only and never under Reduce motion. The title (Title role) and the meta chips follow beside it, or
 /// under it when narrow; the state line under the hero spells the state out.
 /// </para>
-/// Nothing here allocates per frame: strings are composed when the selection changes, eyebrows once per language.
+/// Nothing here allocates per frame: strings are composed when the selection changes, headings cased once per string
+/// (<see cref="SectionHeading.Label"/>).
 /// </summary>
 public sealed partial class DetailPane
 {
@@ -37,14 +37,6 @@ public sealed partial class DetailPane
     private const double MoonriseSeconds = 0.35;
     private const double TitleDelaySeconds = 0.08;
     private const float MoonriseLogical = 6f;
-
-    // Section eyebrows, upper-cased once per language (the Eyebrow role's face is capitals).
-    private static readonly Localization.LocText RequirementsEyebrow = new(static () => Strings.Requirements.ToUpper(CultureInfo.CurrentCulture));
-    private static readonly Localization.LocText RewardsEyebrow = new(static () => Strings.Rewards.ToUpper(CultureInfo.CurrentCulture));
-    private static readonly Localization.LocText MoonlitEyebrow = new(static () => Strings.UniqueSection.ToUpper(CultureInfo.CurrentCulture));
-    private static readonly Localization.LocText PathEyebrow = new(static () => Strings.Path.ToUpper(CultureInfo.CurrentCulture));
-    private static readonly Localization.LocText GiverEyebrow = new(static () => Strings.Giver.ToUpper(CultureInfo.CurrentCulture));
-    private static readonly Localization.LocText JournalEyebrow = new(static () => Strings.JournalTextCard.ToUpper(CultureInfo.CurrentCulture));
 
     // The moonrise: the row it last started for and when.
     private uint riseRowId = uint.MaxValue;
@@ -60,18 +52,25 @@ public sealed partial class DetailPane
 
     /// <summary>
     /// The banner to draw for <paramref name="quest"/>: the chain's choice, or its category art when the spoiler shield
-    /// withholds the game's art. Looked up per frame (a frozen dictionary read), so an index that finishes building
-    /// while the quest is shown takes over at once.
+    /// withholds it (<see cref="BannerShield"/>: a borrowed banner by its donor's own state, a duty's once the quest is
+    /// completed). Looked up per frame (frozen dictionary reads), so an index that finishes building while the quest is
+    /// shown takes over at once.
     /// </summary>
     private BannerChoice CurrentBanner(QuestRecord quest)
     {
-        var choice = Banners?.For(quest) ?? BannerIndex.Resolve(quest, null, null);
-        return choice.Source != BannerSource.Category && !model.ShowArtwork ? BannerChoice.ForArt(choice.Art) : choice;
+        var choice = ChainBanner(quest);
+        return BannerShield.Apply(in choice, quest, model.State, lastSpoilers ?? Core.Query.SpoilerMask.None, lastCatalog, lastStates);
     }
 
+    /// <summary>The chain's choice before the shield.</summary>
+    private BannerChoice ChainBanner(QuestRecord quest) => Banners?.For(quest) ?? BannerIndex.Resolve(quest, null, null);
+
     /// <summary>Whether the spoiler shield withholds game art this quest would otherwise show.</summary>
-    private bool ArtworkWithheld(QuestRecord quest) =>
-        !model.ShowArtwork && (Banners?.For(quest) ?? BannerIndex.Resolve(quest, null, null)).Source != BannerSource.Category;
+    private bool ArtworkWithheld(QuestRecord quest)
+    {
+        var choice = ChainBanner(quest);
+        return !BannerShield.Allows(in choice, quest, model.State, lastSpoilers ?? Core.Query.SpoilerMask.None, lastCatalog, lastStates);
+    }
 
     /// <summary>The banner tooltip's caption for the source drawn.</summary>
     private static string BannerCaption(BannerSource shown) => shown switch
@@ -177,6 +176,7 @@ public sealed partial class DetailPane
         var box = radius + ring;
         ImGui.SetCursorScreenPos(new Vector2(centerX - box, max.Y - box));
         ImGui.InvisibleButton("##heroMoon", new Vector2(box * 2f, box * 2f));
+        Chrome.FocusRing(box);
         if (ImGui.IsItemHovered())
         {
             UiMetrics.StateTooltip(model.State, model.Evaluation, quest, BlockerNamesOf(), lastStates);
@@ -418,17 +418,17 @@ public sealed partial class DetailPane
     // ------------------------------------------------------------------ sections
 
     /// <summary>
-    /// Opens one of the pane's sections: an open section (<see cref="OpenSection"/>: sigil, eyebrow, Gilt rule and
-    /// caption) at Flair Full and Quiet, the 1.3 card with its eyebrow title and caption at Plain. Close it with
-    /// <see cref="EndSection"/>.
+    /// Opens one of the pane's sections: an open section (<see cref="OpenSection"/>: the shared heading line with its
+    /// sigil, <paramref name="title"/> cased for the language, the Gilt rule and the caption) at Flair Full and Quiet,
+    /// the 1.3 card with its title and caption at Plain. Close it with <see cref="EndSection"/>.
     /// </summary>
-    private void BeginSection(string id, string title, Localization.LocText eyebrow, string icon, string caption = "", Vector4 captionColor = default)
+    private void BeginSection(string id, string title, string icon, string caption = "", Vector4 captionColor = default)
     {
         var right = ImGui.GetCursorScreenPos().X + ImGui.GetContentRegionAvail().X;
         sectionOpen = Theme.ShowRules;
         if (sectionOpen)
         {
-            OpenSection.Begin(id, eyebrow.Value, caption, Theme.U32(captionColor));
+            OpenSection.Begin(id, title, caption, Theme.U32(captionColor));
             return;
         }
 

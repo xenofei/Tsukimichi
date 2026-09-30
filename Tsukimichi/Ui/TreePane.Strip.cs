@@ -24,9 +24,11 @@ public sealed partial class TreePane
     /// <summary>Draws the strip in the current (left pane) window.</summary>
     public void DrawStrip(CatalogBundle current, QueryRunner runner, bool showUnlisted)
     {
+        Motion.WatchScroll();
         EnsureNodes(current);
         ApplyIcons();
         RefreshCounts(runner);
+        ForgetFillsOnNewCharacter(runner);
         // The strip has no rows to open or scroll to: a pending reveal is left for the full tree, which opens the
         // node's ancestors and scrolls to it once the pane is wide again (a scope change drops it meanwhile).
         revealing = false;
@@ -91,7 +93,9 @@ public sealed partial class TreePane
         }
 
         var center = new Vector2(MathF.Round((min.X + max.X) * 0.5f), MathF.Round((min.Y + max.Y) * 0.5f));
-        DrawNodeGlyph(dl, node, center, glyphRadius, Motion.Fill(Motion.Key(GaugeTag, itemId), node.Count.Fraction), readyDot: node.Ready > 0);
+        // Plain draws the 1.3 strip: the glyph at the count's fraction, without easing.
+        var fraction = Theme.Flair == Flair.Plain ? node.Count.Fraction : NodeFill(Motion.Key(GaugeTag, itemId), node.Count.Fraction);
+        DrawNodeGlyph(dl, node, center, glyphRadius, fraction, readyDot: node.Ready > 0);
         Chrome.FocusRing();
 
         if (hovered)

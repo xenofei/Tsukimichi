@@ -106,7 +106,8 @@ public static class Orbit
         var tint = Theme.WithAlpha(Vector4.One, f > 0f ? 1f : UntouchedIconAlpha);
         if (icon.IsOfficial)
         {
-            if (!textures.GetFromGameIcon(Lookup(icon, iconMax.X - iconMin.X)).TryGetWrap(out var wrap, out _))
+            // An icon the game does not have fails like one still loading: the caller draws the halo.
+            if (!textures.TryGetFromGameIcon(Lookup(icon, iconMax.X - iconMin.X), out var texture) || !texture.TryGetWrap(out var wrap, out _))
             {
                 return false;
             }
@@ -240,7 +241,12 @@ public static class Orbit
         var tint = Theme.WithAlpha(Vector4.One, alpha);
         if (icon.IsOfficial)
         {
-            if (textures.GetFromGameIcon(Lookup(icon, max.X - min.X)).TryGetWrap(out var wrap, out _))
+            if (!textures.TryGetFromGameIcon(Lookup(icon, max.X - min.X), out var texture))
+            {
+                // The game has no such icon: the generic gap glyph stands in for good.
+                OrnamentAtlas.Draw(dl, OrnamentGlyph.Other, min, max, tint);
+            }
+            else if (texture.TryGetWrap(out var wrap, out _))
             {
                 dl.AddImageRounded(wrap.Handle, min, max, Vector2.Zero, Vector2.One, tint, rounding);
             }

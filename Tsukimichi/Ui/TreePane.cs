@@ -219,9 +219,12 @@ public sealed partial class TreePane
 
     public void Draw(CatalogBundle current, QueryRunner runner, bool showUnlisted)
     {
+        // A scrollbar drag, a keyboard scroll or a reveal jump pauses motion before any row draws (as the wheel does).
+        Motion.WatchScroll();
         EnsureNodes(current);
         ApplyIcons();
         RefreshCounts(runner);
+        ForgetFillsOnNewCharacter(runner);
 
         // A reveal from another pane (Moonlit, Characters, Flight, the MSQ status, chat) selected a scope whose
         // ancestors may be collapsed: this frame opens them and scrolls the selected node into view.
@@ -588,7 +591,7 @@ public sealed partial class TreePane
         // The glyph, with the Ready mark when the pill could not show. The fill moves only when the count changes (a
         // quest completed, another character viewed) or, under Full flair, when the orbit first shows; never on its own.
         var readyDot = node.Ready > 0 && !showReady;
-        var shown = Motion.Fill(Motion.Key(GaugeTag, itemId), node.Count.Fraction);
+        var shown = NodeFill(Motion.Key(GaugeTag, itemId), node.Count.Fraction);
         DrawNodeGlyph(dl, node, haloCenter, radius, shown, readyDot);
         if (road)
         {
@@ -601,9 +604,9 @@ public sealed partial class TreePane
             Motion.DrawRevealPulse(dl, Motion.Key(RevealTag, itemId), new Vector2(indentX, min.Y + 1f), new Vector2(max.X - pad, max.Y - 1f), UiMetrics.Px(4f));
         }
 
-        // Section rows read as chapters: a 1 px VeilLine rule under the row, indented past the arrow (Plain flair; the
-        // road takes its place otherwise).
-        if (section && !Theme.ShowRules)
+        // Section rows read as chapters: a 1 px VeilLine rule under the row, indented past the arrow (Plain flair, and
+        // the Other paths row, which has no road; the road takes its place otherwise).
+        if (section && !road)
         {
             var y = max.Y - 0.5f;
             dl.AddLine(new Vector2(labelX, y), new Vector2(max.X - pad, y), Theme.VeilLineU32, 1f);
@@ -879,6 +882,7 @@ public sealed partial class TreePane
         bundle = current;
         counts = null;
         featureReady = -1;
+        filled.Clear();
         sproutCheckedReach = null;
         sections.Clear();
 

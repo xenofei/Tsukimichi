@@ -134,6 +134,7 @@ public static class Typography
         }
 
         UpdateHeadingHandles(atlas, next, basePx, headingFonts);
+        CheckHeadingLoad();
         var nextCaption = TypeScale.CaptionGameFont(next, basePx);
         var nextDisplay = TypeScale.DisplayGameFont(next, basePx);
         if (next == bucket && nextCaption == captionFont && nextDisplay == displayFont)
@@ -191,6 +192,29 @@ public static class Typography
             headingFontsFailed = true;
             DisposeHeadingHandles();
         }
+    }
+
+    /// <summary>
+    /// A heading handle whose build failed (<see cref="IFontHandle.LoadException"/>: the delegate handle never throws when
+    /// created, the atlas records the failure when it builds): logged once, and the headings keep the Caption and
+    /// Display roles for the session, as when creating the handles throws.
+    /// </summary>
+    private static void CheckHeadingLoad()
+    {
+        if (headingFontsFailed)
+        {
+            return;
+        }
+
+        var error = eyebrow?.LoadException ?? title?.LoadException ?? numeral?.LoadException;
+        if (error is null)
+        {
+            return;
+        }
+
+        log?.Warning(error, "Game heading fonts failed to build; headings use the caption and display roles");
+        headingFontsFailed = true;
+        DisposeHeadingHandles();
     }
 
     /// <summary>
