@@ -17,7 +17,8 @@ namespace Tsukimichi.Ui;
 /// Drawn from <c>UiBuilder.Draw</c>, outside the window system, so it has no chrome; unlike the item hover hint it takes
 /// clicks. Placed by <see cref="BesidePlacement"/>: right of the Duty Finder, else left, below or above, sliding along
 /// that side to stay on screen, and not drawn at all when no side has room, so it never covers the game window. A new
-/// model is drawn transparent for <see cref="SettleFrames"/> frames while ImGui settles its auto-resized size.
+/// duty, or a new number of quests, is drawn transparent for <see cref="SettleFrames"/> frames while ImGui settles its
+/// auto-resized size; a session change that keeps both redraws in place.
 /// Allocation-free per frame: every string is built by <see cref="DutyFinderHint"/> when the model changes.
 /// </para>
 /// </summary>
@@ -41,7 +42,10 @@ public sealed class DutyFinderPanel
     private readonly GameLinks links;
     private readonly Action<QuestRecord> reveal;
 
-    private DutyHintModel? drawn;
+    // The shape last measured: a new duty or another number of quests changes the size; a session change that only
+    // rewords a status line does not, so it keeps the panel visible and clickable.
+    private uint drawnCondition;
+    private int drawnCount = -1;
     private Vector2 size;
     private int settled;
 
@@ -60,13 +64,15 @@ public sealed class DutyFinderPanel
         var model = hint.Current();
         if (model is null || !hint.TryGetWindowRect(out var target))
         {
-            drawn = null;
+            drawnCondition = 0;
+            drawnCount = -1;
             return;
         }
 
-        if (!ReferenceEquals(model, drawn))
+        if (model.ContentFinderConditionId != drawnCondition || model.Quests.Count != drawnCount)
         {
-            drawn = model;
+            drawnCondition = model.ContentFinderConditionId;
+            drawnCount = model.Quests.Count;
             settled = 0;
         }
 

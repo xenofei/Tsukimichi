@@ -302,6 +302,7 @@ public sealed unsafe class DutyFinderHint : IDisposable
         modelLocked = locked;
         modelVersion = session.Version;
         modelIndex = currentIndex;
+        var previous = model;
         model = null;
 
         var resolved = currentIndex.Resolve(selected, session.Bundle?.Catalog);
@@ -331,7 +332,33 @@ public sealed unsafe class DutyFinderHint : IDisposable
         var more = resolved.Count > MaxQuests
             ? string.Format(CultureInfo.CurrentCulture, Strings.DutyHintMoreFormat, resolved.Count - MaxQuests)
             : string.Empty;
-        model = new DutyHintModel(selected, duty.Name, quests.Count == 0 ? NoQuests : quests.ToArray(), more);
+        // Every poller apply bumps the session version; when the panel's content came out the same, keep the model the
+        // panel already has rather than hand it an equal new one.
+        model = previous is not null && SameContent(previous, selected, duty.Name, quests, more)
+            ? previous
+            : new DutyHintModel(selected, duty.Name, quests.Count == 0 ? NoQuests : quests.ToArray(), more);
+    }
+
+    private static bool SameContent(DutyHintModel previous, uint condition, string dutyName, List<DutyHintQuest> lines, string more)
+    {
+        if (previous.ContentFinderConditionId != condition || previous.Quests.Count != lines.Count
+            || !string.Equals(previous.DutyName, dutyName, StringComparison.Ordinal) || !string.Equals(previous.MoreText, more, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        for (var i = 0; i < lines.Count; i++)
+        {
+            var a = previous.Quests[i];
+            var b = lines[i];
+            if (!ReferenceEquals(a.Quest, b.Quest) || a.State != b.State || a.Done != b.Done
+                || !string.Equals(a.Name, b.Name, StringComparison.Ordinal) || !string.Equals(a.StatusText, b.StatusText, StringComparison.Ordinal))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /// <summary>ContentFinderCondition row id to its InstanceContent row and display name, read once from the sheet.</summary>
