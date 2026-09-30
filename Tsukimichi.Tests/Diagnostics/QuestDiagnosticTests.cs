@@ -220,6 +220,25 @@ public class QuestDiagnosticTests
     }
 
     [Fact]
+    public void Questionables_answer_is_a_line_before_the_inputs_only_when_it_is_loaded()
+    {
+        var quest = Quest(Target, "Plain") with { Level = 24 };
+        var catalog = Catalog(quest);
+        var snapshot = Character() with { CurrentJob = WhiteMage, JobLevels = Levels((WhiteMage, 31)) };
+        var evaluation = StateResolver.Resolve(quest, snapshot, catalog, EvalContext.Default);
+        var inputs = Inputs(quest, catalog, snapshot, EvalContext.Default) with { Evaluation = evaluation };
+        var check = Core.Ipc.QuestionableCrossCheck.Compare(evaluation, new Core.Ipc.QuestionableAnswer(true, "Prev quest (1)"));
+
+        var without = Lines(QuestDiagnostic.Compose(inputs));
+        var with = Lines(QuestDiagnostic.Compose(inputs with { Questionable = check }));
+
+        Assert.DoesNotContain(without, line => line.StartsWith("questionable:", StringComparison.Ordinal));
+        Assert.Equal(without.Length + 1, with.Length);
+        Assert.Equal("questionable: disagrees; locked: Prev quest (1); tsukimichi Ready", with[^4]);
+        Assert.StartsWith("inputs: ", with[^3], StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Without_an_evaluation_or_a_character_the_block_says_so()
     {
         var quest = Quest(Target, "Plain");
