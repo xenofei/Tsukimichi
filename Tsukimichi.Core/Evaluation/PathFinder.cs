@@ -9,6 +9,15 @@ public sealed record PathStep(uint RowId, QuestState State, int Depth)
     public bool Done => State == QuestState.Completed;
 }
 
+/// <summary>A previous quest of an Any join that the path does not take.</summary>
+/// <param name="RowId">The alternative prerequisite.</param>
+/// <param name="State">Its state for the character.</param>
+/// <param name="RemainingCount">Quests on its own path, itself included, that are not completed.</param>
+public sealed record PathAlternative(uint RowId, QuestState State, int RemainingCount);
+
+/// <summary>The alternatives into one Any join: the listed ones (at most <see cref="PathFinder.MaxAlternatives"/>) and how many more there are.</summary>
+public sealed record JoinAlternatives(uint JoinRowId, IReadOnlyList<PathAlternative> Alternatives, int More);
+
 /// <summary>
 /// Walks a quest's previous quests to the first step. Through an Any join it takes the branch with the fewest
 /// incomplete quests (ties to the lowest row id); cycles are cut and ids missing from the catalog are skipped.
@@ -41,6 +50,81 @@ public static class PathFinder
     /// <summary>How many quests on the path, including the target, are not completed.</summary>
     public static int RemainingCount(uint targetRowId, QuestCatalog c, IReadOnlyDictionary<uint, QuestEvaluation> states) =>
         PathTo(targetRowId, c, states).Count(step => !step.Done);
+
+    /// <summary>Most alternatives listed per Any join; the rest are counted in <see cref="JoinAlternatives.More"/>.</summary>
+    public const int MaxAlternatives = 3;
+
+    /// <summary>
+    /// The roads not taken on <paramref name="path"/> (path-section proposal §4.9): for every step whose quest joins
+    /// two or more catalogued previous quests with Any, the prerequisites the path does not walk, each with how many
+    /// of its own path's quests are still to do (<see cref="RemainingCount"/>). At most <paramref name="max"/> per
+    /// join, fewest remaining first (ties to the lowest row id), the rest counted; a prerequisite whose own path
+    /// leads back through the join is left out. Joins with nothing left over are omitted. In path order.
+    /// </summary>
+    public static IReadOnlyList<JoinAlternatives> Alternatives(IReadOnlyList<PathStep> path, QuestCatalog c, IReadOnlyDictionary<uint, QuestEvaluation> states, int max = MaxAlternatives)
+    {
+        ArgumentNullException.ThrowIfNull(path);
+        ArgumentNullException.ThrowIfNull(c);
+        ArgumentNullException.ThrowIfNull(states);
+        ArgumentOutOfRangeException.ThrowIfNegative(max);
+
+        List<JoinAlternatives>? joins = null;
+        HashSet<uint>? onPath = null;
+        Walk? walk = null;
+        foreach (var step in path)
+        {
+            if (!c.ByRowId.TryGetValue(step.RowId, out var quest) || quest.PreviousQuests.Join != JoinKind.Any)
+            {
+                continue;
+            }
+
+            var prereqs = quest.PreviousQuests.QuestIds;
+            var catalogued = 0;
+            foreach (var id in prereqs.Distinct())
+            {
+                if (id != step.RowId && c.ByRowId.ContainsKey(id))
+                {
+                    catalogued++;
+                }
+            }
+
+            if (catalogued < 2)
+            {
+                continue;
+            }
+
+            onPath ??= path.Select(p => p.RowId).ToHashSet();
+            walk ??= new Walk(c, states);
+            List<PathAlternative>? found = null;
+            foreach (var id in prereqs.Distinct())
+            {
+                if (id == step.RowId || onPath.Contains(id) || !c.ByRowId.ContainsKey(id))
+                {
+                    continue;
+                }
+
+                var branch = walk.SubPath(id);
+                if (branch.Count == 0 || branch.Exists(s => s.RowId == step.RowId))
+                {
+                    continue;
+                }
+
+                var remaining = branch.Count(s => walk.StateOf(s.RowId) != QuestState.Completed);
+                (found ??= []).Add(new PathAlternative(id, walk.StateOf(id), remaining));
+            }
+
+            if (found is null)
+            {
+                continue;
+            }
+
+            found.Sort(static (a, b) => a.RemainingCount != b.RemainingCount ? a.RemainingCount.CompareTo(b.RemainingCount) : a.RowId.CompareTo(b.RowId));
+            var shown = Math.Min(max, found.Count);
+            (joins ??= []).Add(new JoinAlternatives(step.RowId, found.GetRange(0, shown), found.Count - shown));
+        }
+
+        return joins ?? (IReadOnlyList<JoinAlternatives>)[];
+    }
 
     private sealed class Walk(QuestCatalog catalog, IReadOnlyDictionary<uint, QuestEvaluation> states)
     {

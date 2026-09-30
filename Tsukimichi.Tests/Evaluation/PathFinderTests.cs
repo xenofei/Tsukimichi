@@ -174,4 +174,101 @@ public class PathFinderTests
         Assert.Equal([A, B, C, Target], path.Select(p => p.RowId));
         Assert.Equal(1, path[0].Depth);
     }
+
+    [Fact]
+    public void Alternatives_list_the_prerequisites_the_path_does_not_take_with_their_remaining_counts()
+    {
+        // Target joins C (two steps: B, C) or D (one step) with Any; the path takes D, so C is the road not taken.
+        var catalog = Catalog(
+            Quest(B),
+            Quest(C) with { PreviousQuests = new Prereq([B], JoinKind.All) },
+            Quest(D),
+            Quest(Target) with { PreviousQuests = new Prereq([C, D], JoinKind.Any) });
+        var states = States(catalog);
+        var path = PathFinder.PathTo(Target, catalog, states);
+
+        var joins = PathFinder.Alternatives(path, catalog, states);
+
+        var join = Assert.Single(joins);
+        Assert.Equal(Target, join.JoinRowId);
+        var alternative = Assert.Single(join.Alternatives);
+        Assert.Equal(C, alternative.RowId);
+        Assert.Equal(2, alternative.RemainingCount);
+        Assert.Equal(QuestState.Blocked, alternative.State);
+        Assert.Equal(0, join.More);
+        Assert.Equal(PathFinder.RemainingCount(C, catalog, states), alternative.RemainingCount);
+    }
+
+    [Fact]
+    public void Alternatives_cap_at_three_per_join_fewest_remaining_first_and_count_the_rest()
+    {
+        var catalog = Catalog(
+            Quest(A),
+            Quest(B) with { PreviousQuests = new Prereq([A], JoinKind.All) },
+            Quest(C),
+            Quest(D),
+            Quest(E),
+            Quest(65605),
+            Quest(Target) with { PreviousQuests = new Prereq([B, E, D, C, 65605], JoinKind.Any) });
+        var states = States(catalog, C);
+        var path = PathFinder.PathTo(Target, catalog, states);
+        Assert.Equal([C, Target], path.Select(p => p.RowId));
+
+        var join = Assert.Single(PathFinder.Alternatives(path, catalog, states));
+
+        // D, E and 65605 cost one quest each (ties by row id); B costs two and is only counted.
+        Assert.Equal([D, E, 65605u], join.Alternatives.Select(a => a.RowId));
+        Assert.All(join.Alternatives, a => Assert.Equal(1, a.RemainingCount));
+        Assert.Equal(1, join.More);
+    }
+
+    [Fact]
+    public void Alternatives_skip_all_joins_single_prerequisites_and_uncatalogued_ids()
+    {
+        var catalog = Catalog(
+            Quest(A),
+            Quest(B) with { PreviousQuests = new Prereq([A, 12345], JoinKind.Any) },
+            Quest(C),
+            Quest(Target) with { PreviousQuests = new Prereq([B, C], JoinKind.All) });
+        var states = States(catalog);
+        var path = PathFinder.PathTo(Target, catalog, states);
+
+        Assert.Empty(PathFinder.Alternatives(path, catalog, states));
+    }
+
+    [Fact]
+    public void Alternatives_leave_out_a_branch_that_leads_back_through_the_join()
+    {
+        var catalog = Catalog(
+            Quest(A),
+            Quest(B) with { PreviousQuests = new Prereq([Target], JoinKind.All) },
+            Quest(Target) with { PreviousQuests = new Prereq([A, B], JoinKind.Any) });
+        var states = States(catalog);
+        var path = PathFinder.PathTo(Target, catalog, states);
+        Assert.Equal([A, Target], path.Select(p => p.RowId));
+
+        Assert.Empty(PathFinder.Alternatives(path, catalog, states));
+    }
+
+    [Fact]
+    public void Alternatives_only_cover_joins_on_the_path()
+    {
+        var catalog = Catalog(
+            Quest(A),
+            Quest(B),
+            Quest(C) with { PreviousQuests = new Prereq([A, B], JoinKind.Any) },
+            Quest(D),
+            Quest(Target) with { PreviousQuests = new Prereq([C, D], JoinKind.Any) });
+        var states = States(catalog, A, B, D);
+        var path = PathFinder.PathTo(Target, catalog, states);
+        Assert.Equal([D, Target], path.Select(p => p.RowId));
+
+        var joins = PathFinder.Alternatives(path, catalog, states);
+
+        // C's own join is not on the path (D is done), so only the target's join is listed.
+        var join = Assert.Single(joins);
+        Assert.Equal(C, Assert.Single(join.Alternatives).RowId);
+        Assert.Equal(1, join.Alternatives[0].RemainingCount);
+        Assert.Empty(PathFinder.Alternatives([], catalog, states));
+    }
 }
