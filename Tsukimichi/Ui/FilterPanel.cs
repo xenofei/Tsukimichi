@@ -63,6 +63,10 @@ public sealed class FilterPanel
     private string stateChip = string.Empty;
     private string stateChipTooltip = string.Empty;
     private QuestStateMask stateChipMask = QuestStateMask.All;
+    // The issuer chip's label, memoized per (NPC id, catalog): naming the NPC is a scan of the whole catalog.
+    private string issuerChip = string.Empty;
+    private uint issuerChipId;
+    private QuestCatalog? issuerChipCatalog;
     private string levelChip = string.Empty;
     private byte levelChipMin = byte.MaxValue;
     private byte levelChipMax;
@@ -261,10 +265,8 @@ public sealed class FilterPanel
 
         if (ui.Scope.Kind == ScopeKind.VirtualIssuer)
         {
-            var name = current is { } b ? QuestDiscovery.IssuerName(b.Catalog, ui.Scope.Id) : null;
-            var label = name is null ? Strings.ChipIssuerUnknown : string.Format(CultureInfo.CurrentCulture, Strings.ChipIssuerFormat, name);
             // The scope is not a filter and is not persisted; the query re-runs on the dirty mark alone.
-            Chip(label, ref any, () =>
+            Chip(IssuerChipText(ui.Scope.Id, current?.Catalog), ref any, () =>
             {
                 ui.Scope = QuestScope.None;
                 ui.MarkQueryDirty();
@@ -644,6 +646,19 @@ public sealed class FilterPanel
         stateChip = text;
         stateChipTooltip = tooltip;
         return stateChip;
+    }
+
+    private string IssuerChipText(uint npcId, QuestCatalog? catalog)
+    {
+        if (issuerChip.Length == 0 || npcId != issuerChipId || !ReferenceEquals(catalog, issuerChipCatalog))
+        {
+            var name = catalog is null ? null : QuestDiscovery.IssuerName(catalog, npcId);
+            issuerChip = name is null ? Strings.ChipIssuerUnknown : string.Format(CultureInfo.CurrentCulture, Strings.ChipIssuerFormat, name);
+            issuerChipId = npcId;
+            issuerChipCatalog = catalog;
+        }
+
+        return issuerChip;
     }
 
     private string LevelChipText(FilterSet f)
