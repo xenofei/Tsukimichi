@@ -246,10 +246,10 @@
       "fact": "reward:Item",
       "source": "wiki",
       "verdict": "unresolved",
-      "reason": "The Ties That Bind / Eternity Cake (Item 8791): only the wiki lists an Online Store acquisition, and only as part of the Ceremony of Eternal Bonding plans; the Lodestone item page lists the quest alone and Collect does not cover items. Whether a plan bundle counts as an Online Store re-sell needs a human",
+      "reason": "The Ties That Bind / Eternity Cake (Item 8791): decided quest-exclusive for 0.7.0. The wiki's only non-quest acquisition is the Ceremony of Eternal Bonding plans sold on the Online Store, but every plan includes the cake, the free Standard Plan too ({{onlinestore|0}}, 'available to all Plans' on https://ffxiv.consolegameswiki.com/wiki/Ceremony_of_Eternal_Bonding), and it is handed out as the fixed reward of this quest, which every plan runs. Nothing sells the cake apart from doing the quest, so it is not a store re-sell; the Lodestone item page lists the quest alone. The tool keeps reading the wiki's onlinestore template as one unconfirmed source, hence unresolved",
       "evidence": "https://ffxiv.consolegameswiki.com/wiki/Eternity_Cake",
-      "fix": "product decision: add item 8791 to curated/online_store.json (re-sold inside a paid plan) or keep it quest-only",
-      "until": "0.7.0",
+      "fix": "none: kept quest-only by decision; re-check if the cake is ever sold outside the ceremony (then add item 8791 to curated/online_store.json)",
+      "until": "0.8.0",
       "rewardId": "8791"
     }
   ]
