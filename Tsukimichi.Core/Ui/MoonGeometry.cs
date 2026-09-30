@@ -9,13 +9,19 @@ public enum MoonPhase
     /// <summary>Whole disc lit.</summary>
     Full,
 
-    /// <summary>Right side lit; terminator is a disc of the same radius offset right by <see cref="MoonGeometry.GibbousOffset"/>.</summary>
+    /// <summary>
+    /// Right side lit, early gibbous (Accepted, glyph proposal v2.1 §3.1a): lit width <see cref="MoonGeometry.AcceptedLitWidth"/>
+    /// of the diameter, terminator through the poles crossing the equator at x = −0.20 r (circle centre (2.4 r, 0), radius 2.6 r).
+    /// </summary>
     WaxingGibbous,
 
     /// <summary>Right half lit, straight terminator.</summary>
     FirstQuarter,
 
-    /// <summary>Left side lit; mirror of <see cref="WaxingGibbous"/>.</summary>
+    /// <summary>
+    /// Left side lit: the disc intersected with a disc of the same radius offset left by <see cref="MoonGeometry.GibbousOffset"/>
+    /// (75 % of the width, cusps at x = −0.25 r). No longer the mirror of <see cref="WaxingGibbous"/> (panel A2).
+    /// </summary>
     WaningGibbous,
 
     /// <summary>Nothing lit.</summary>
@@ -90,6 +96,9 @@ public static class MoonGeometry
 {
     /// <summary>Terminator disc offset for the gibbous phases as a fraction of the radius (Pillow script: 0.5·r).</summary>
     public const float GibbousOffset = 0.5f;
+
+    /// <summary>Lit equator width of the Accepted gibbous as a fraction of the diameter (proposal v2.1 §3.1a: 60 %).</summary>
+    public const float AcceptedLitWidth = 0.60f;
 
     /// <summary>
     /// Terminator floor (glyph proposal v2.1 §3.2, imgui-notes §1): the lit side of a filling moon is never narrower
@@ -280,8 +289,7 @@ public static class MoonGeometry
             case MoonPhase.Full:
                 return true;
             case MoonPhase.WaxingGibbous:
-                LensPolygon(center, radius, center + new Vector2(GibbousOffset * radius, 0f), radius, segments, overlay);
-                return false;
+                return TerminatorLayers(center, radius, AcceptedLitWidth, segments, overlay);
             case MoonPhase.FirstQuarter:
                 HalfDiscPolygon(center, radius, segments, right: true, overlay);
                 return false;

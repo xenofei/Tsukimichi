@@ -264,7 +264,7 @@ public sealed class FlightPane
 
         // Attuned.
         ImGui.TableNextColumn();
-        MoonGlyph.DrawInline(row.AttunedGlyph, UiMetrics.InlineGlyphSize(line));
+        Marks.DrawInline(row.AttunedGlyph, UiMetrics.InlineGlyphSize(line));
         if (ImGui.IsItemHovered())
         {
             UiMetrics.Tooltip(row.AttunedText);
@@ -681,7 +681,7 @@ public sealed class FlightPane
         public FlightCurrent Current { get; } = current;
         public QuestRecord? Quest { get; } = quest;
         public string QuestName { get; } = quest?.Name ?? Strings.FlightQuestPrefix + current.QuestRowId.ToString(CultureInfo.InvariantCulture);
-        public QuestState AttunedGlyph { get; private set; } = QuestState.Unknown;
+        public Mark AttunedGlyph { get; private set; } = Mark.Unknown;
         public string AttunedText { get; private set; } = Strings.FlightAttunedUnknown;
 
         /// <summary>The viewed character's evaluation of the quest; null when it has none (no snapshot, unknown quest).</summary>
@@ -696,9 +696,9 @@ public sealed class FlightPane
         {
             (AttunedGlyph, AttunedText) = attuned switch
             {
-                true => (QuestState.Completed, Strings.FlightAttunedYes),
-                false => (QuestState.Blocked, Strings.FlightAttunedNo),
-                null => (QuestState.Unknown, Strings.FlightAttunedUnknown),
+                true => (Mark.Check, Strings.FlightAttunedYes),
+                false => (Mark.Cross, Strings.FlightAttunedNo),
+                null => (Mark.Unknown, Strings.FlightAttunedUnknown),
             };
         }
 

@@ -482,7 +482,7 @@ static partial class Strings
         public const string ConfidenceCuratedMeaning = "checked by hand and shipped with the plugin";
         public const string ConfidenceUserMeaning = "your own override";
         public const string HaveTitle = "Have";
-        public const string HaveBody = "Whether the viewed character owns the reward. Emotes, mounts, minions, rolls, cards and duties are read from the live client, so a stored snapshot shows a veiled moon for them.";
+        public const string HaveBody = "Whether the viewed character owns the reward. Emotes, mounts, minions, rolls, cards and duties are read from the live client, so a stored snapshot shows a dash for them.";
         public const string OverridesTitle = "Overrides";
         public const string OverridesBody = "Not unique (hide) in a row's context menu removes a quest from Moonlit; Mark as unique in the detail pane adds one, with a note naming the reward. Both ask first: press and hold the confirm button until its arc closes, or hold Shift and click. Enter in the note field confirms too. An Undo line stays for eight seconds.";
         public const string RestoreTitle = "Restore";
@@ -501,7 +501,7 @@ static partial class Strings
         public static readonly string[] CharacterCardBodies =
         [
             "Everything read from a character: completed quests, journal, job levels, Grand Company, allied societies and unlocked duties. One per character, refreshed while you play and again on logout.",
-            "Pick a stored character to browse the catalog as that character. The toolbar's sync moon goes veiled and a banner names the snapshot.",
+            "Pick a stored character to browse the catalog as that character. The toolbar's live pip turns hollow and a banner names the snapshot.",
             "Completion per journal section, Moonlit progress, pins, recent activity, job levels by role, Grand Company and society standings.",
             "At the bottom: every character's state for the quest selected in the Journal, without switching characters.",
             "Export JSON writes the snapshot to the exports folder in the config directory. Forget deletes a stored character. Settings can delete everything.",
@@ -573,7 +573,7 @@ static partial class Strings
         [
             "Quests the game removed in later patches (the A Realm Reborn trim in 5.3, the Summoner rework, the Crystal Tower rewrite, a few deleted sidequests) sit under the Removed from the game node, off by default, and never count toward any total; a completed one still shows Completed when the node or Include removed reveals it, and its detail pane says which patch removed it where that is known. Quests the game's journal hides but still hands out (So You Want to Be a Gladiator, Leves of Kugane, Sights of the North, the Eureka entry quests, hidden steps of YoRHa and the Resistance Weapons) are filed under the genre their links point at, so a class's quests start with its intro and a zone's sidequests include its leve unlock; the detail pane says which rule filed them. The class intros (So You Want to Be a Gladiator and the other A Realm Reborn classes) are listed but never counted: the class you started as hands you \"Way of the …\" directly and never offers its intro, so counting it would keep that class one short for good; the job intros (A Dark Spectacle, So You Want to Be a Machinist, What's Your Sign) count as usual. Settings › Display › Journal filing › Legacy puts every one of them back in the single bucket releases before 0.6.1 showed.",
             "A seasonal quest of an event that is not running shows Blocked with \"seasonal event not active\", and is left out of its genre's total the way a locked-out quest is, so the moon can fill without it; it counts again while the event runs. An event whose end date is known and past locks its quests out for good.",
-            "A quest locked out by a choice, such as the other two Grand Companies' quests once you have joined one, is Locked out and left out of the total. A category can reach a full moon with them undone, while a wiki's count per genre includes them.",
+            "A quest locked out by a choice, such as the other two Grand Companies' quests once you have joined one, is Locked out and left out of the total. A category can reach 100% with them undone, while a wiki's count per genre includes them.",
             "Unlock quests is not a journal category. It gathers every quest the game draws with the blue + icon, the curated duty and system unlocks, and quests that reward a duty, job, action, trait, aether current or blue magic spell; main scenario and repeatable quests are left out. Its total matches no page of the journal and moves when the curated lists do.",
             "A daily or weekly quest is one row and one count however many times you have turned it in. Done today or Done this week marks the ones already handed in; they are still counted as completed.",
         ];
@@ -611,7 +611,7 @@ static partial class Strings
             "The path is clickable: select any earlier step to see its own requirements.",
             "Scope the tree to a genre and sort by level to run a zone's side quests in order.",
             "Reward kind filters are three-state: require, exclude or ignore each kind.",
-            "The toolbar's sync moon is full when live and veiled on a snapshot; hover it for the time.",
+            "The toolbar's pip is filled when live and hollow on a snapshot; hover it for the time.",
             "Chat notices for newly available quests are off by default; turn them on in Settings, main scenario excluded.",
             "Locked out quests are left out of totals, so a category can reach 100% without them.",
             "Settings shows how long each poll takes; 1 s is the default and is safe.",

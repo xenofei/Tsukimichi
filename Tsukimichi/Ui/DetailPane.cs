@@ -518,14 +518,14 @@ public sealed class DetailPane
 
         var dl = ImGui.GetWindowDrawList();
         var lineHeight = ImGui.GetTextLineHeight();
-        var radius = UiMetrics.RequirementMoonRadius;
-        var box = MathF.Max(lineHeight, radius * 2.4f);
+        var mark = UiMetrics.RequirementMarkSize;
+        var box = MathF.Max(lineHeight, mark);
         foreach (var line in model.Requirements)
         {
-            // Met is a full moon, unmet a new moon; the marks are moons like everything else here.
+            // Met is a check, unmet a cross: a moon means a quest state or a fraction only (accessibility B2).
             var pos = ImGui.GetCursorScreenPos();
             ImGui.Dummy(new Vector2(box, lineHeight));
-            MoonGlyph.Draw(dl, pos + new Vector2(box * 0.5f, lineHeight * 0.5f), radius, line.Met ? QuestState.Completed : QuestState.Blocked);
+            Marks.Draw(dl, pos + new Vector2(box * 0.5f, lineHeight * 0.5f), mark, line.Met ? Mark.Check : Mark.Cross);
             if (ImGui.IsItemHovered())
             {
                 UiMetrics.Tooltip(line.Met ? Strings.MetTooltip : Strings.UnmetTooltip);

@@ -495,7 +495,7 @@ public sealed class CharactersPane
             ImGui.TableNextColumn();
             if (row.AllUnknown)
             {
-                MoonGlyph.DrawInline(QuestState.Unknown, UiMetrics.InlineGlyphSize(line));
+                Marks.DrawInline(Mark.Unknown, UiMetrics.InlineGlyphSize(line));
                 if (ImGui.IsItemHovered())
                 {
                     UiMetrics.Tooltip(Strings.MoonlitObtainedUnknown);

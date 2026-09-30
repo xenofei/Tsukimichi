@@ -541,7 +541,7 @@ public sealed class MainWindow : Window, IDisposable
             ImGui.SetCursorPosX(ImGui.GetCursorPosX() + avail - rightWidth);
         }
 
-        MoonGlyph.DrawInline(session.IsLive && session.PollerHealthy ? QuestState.Completed : QuestState.Unknown, glyphSize);
+        Marks.DrawInline(session.IsLive && session.PollerHealthy ? Mark.LivePip : Mark.SnapshotPip, glyphSize);
         ui.RecordItem(UiRects.Sync);
         if (ImGui.IsItemHovered())
         {

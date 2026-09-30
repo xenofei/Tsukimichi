@@ -35,8 +35,8 @@ public sealed class GlyphDebugWindow : Window
 
     private static readonly (QuestState State, string Phase)[] States =
     [
-        (QuestState.Completed, "Full moon, no rim"),
-        (QuestState.Accepted, "Waxing gibbous, Moon ring"),
+        (QuestState.Completed, "Full moon, no rim, highlight arc from r 16"),
+        (QuestState.Accepted, "Early gibbous 60 %, Night seal, Silver rim"),
         (QuestState.Ready, "First quarter, Dusk rim, glow (ring below r 9)"),
         (QuestState.ReadyOnOtherJob, "First quarter, silver, Moon ring"),
         (QuestState.DoneThisCycle, "Waning gibbous, silver, Dusk rim"),
@@ -51,8 +51,8 @@ public sealed class GlyphDebugWindow : Window
         (6f, "12 px box"),
         (7.5f, "row glyph"),
         (9f, "shading gate"),
-        (12f, "notch gate"),
-        (16f, "header"),
+        (12f, "notch + detail gate"),
+        (16f, "header + arc"),
         (32f, "help"),
     ];
 

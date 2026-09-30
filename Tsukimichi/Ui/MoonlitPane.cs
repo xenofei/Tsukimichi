@@ -466,7 +466,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 
         // Obtained.
         ImGui.TableNextColumn();
-        MoonGlyph.DrawInline(row.ObtainedGlyph, UiMetrics.InlineGlyphSize(line));
+        Marks.DrawInline(row.ObtainedGlyph, UiMetrics.InlineGlyphSize(line));
         if (ImGui.IsItemHovered())
         {
             UiMetrics.Tooltip(row.ObtainedText);
@@ -999,7 +999,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         public RewardRef? Reward { get; }
 
         public bool? Obtained { get; private set; }
-        public QuestState ObtainedGlyph { get; private set; } = QuestState.Unknown;
+        public Mark ObtainedGlyph { get; private set; } = Mark.Unknown;
         public string ObtainedText { get; private set; } = Strings.MoonlitObtainedUnknown;
 
         public void SetObtained(bool? obtained)
@@ -1007,9 +1007,9 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             Obtained = obtained;
             (ObtainedGlyph, ObtainedText) = obtained switch
             {
-                true => (QuestState.Completed, Strings.MoonlitObtainedYes),
-                false => (QuestState.Blocked, Strings.MoonlitObtainedNo),
-                null => (QuestState.Unknown, Strings.MoonlitObtainedUnknown),
+                true => (Mark.Check, Strings.MoonlitObtainedYes),
+                false => (Mark.Cross, Strings.MoonlitObtainedNo),
+                null => (Mark.Unknown, Strings.MoonlitObtainedUnknown),
             };
         }
 

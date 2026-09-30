@@ -65,7 +65,8 @@ public static class UiMetrics
     public static float TreeMoonRadius(float lineHeight) => MathF.Min(Icon(5f), lineHeight * 0.5f + 2f);
     public static float HeaderMoonRadius => Icon(17f);
     public static float PathGlyphRadius => Icon(6f);
-    public static float RequirementMoonRadius => Icon(4.5f);
+    /// <summary>Box of a requirement line's check or cross mark.</summary>
+    public static float RequirementMarkSize => Icon(12f);
     public static float StatusMoonRadius => Icon(4.5f);
     public static float EmptyStateMoonRadius => Icon(28f);
 
