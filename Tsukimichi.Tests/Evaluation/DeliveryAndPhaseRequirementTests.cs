@@ -173,6 +173,29 @@ public class DeliveryAndPhaseRequirementTests
     }
 
     [Fact]
+    public void A_chapter_quest_in_the_journal_stays_in_journal_and_counted_after_its_phase()
+    {
+        var quest = Chapter2();
+
+        // Picked up while its chapter ran; the event has moved on but still runs, and the game keeps the quest.
+        var held = Running(6) with { Accepted = [Accepted(Target, sequence: 2)] };
+        var result = Resolve(quest, held);
+        Assert.Equal(QuestState.Accepted, result.State);
+        Assert.Equal((byte?)2, result.Sequence);
+        Assert.False(result.IsOutOfSeason);
+        Assert.False(result.LeavesTotals);
+
+        // Before its chapter opens (a stale journal entry) it reads the same.
+        Assert.Equal(QuestState.Accepted, Resolve(quest, Running(1) with { Accepted = [Accepted(Target)] }).State);
+
+        // With the event over, the seasonal check still comes first, as before.
+        var ended = Snapshot() with { Accepted = [Accepted(Target)] };
+        var blocked = Resolve(quest, ended);
+        Assert.Equal(QuestState.Blocked, blocked.State);
+        Assert.True(blocked.LeavesTotals);
+    }
+
+    [Fact]
     public void An_unknown_phase_never_blocks_a_windowed_quest()
     {
         var quest = Chapter2();
