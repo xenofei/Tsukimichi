@@ -144,11 +144,38 @@ internal static class DutyNames
 
     public static bool Same(string a, string b) => Key(a) == Key(b);
 
-    /// <summary>True when one name is the series of the other ("Palace of the Dead" for "the Palace of the Dead (Floors 1-10)").</summary>
+    /// <summary>
+    /// Family names the wiki uses for a set of ContentFinderCondition rows that share no prefix with them: the PvP
+    /// modes (Frontline, Rival Wings) and the Alexander tiers ("Alexander: Gordias" for the four "of the Father" turns).
+    /// Keys and members are <see cref="Key"/> forms; a member matches when the duty key contains it.
+    /// </summary>
+    private static readonly Dictionary<string, string[]> Families = new(StringComparer.Ordinal)
+    {
+        ["frontline"] = ["borderland ruins", "seal rock", "fields of glory", "onsal hakair"],
+        ["rival wings"] = ["astragalos", "hidden gorge"],
+        ["alexander: gordias"] = ["of the father"],
+        ["alexander: midas"] = ["of the son"],
+        ["alexander: the creator"] = ["of the creator"],
+    };
+
+    /// <summary>True when one name is the series of the other ("Palace of the Dead" for "the Palace of the Dead (Floors 1-10)", "Frontline" for "the Borderland Ruins (Secure)").</summary>
     public static bool Series(string a, string b)
     {
         var pa = Prefix(a);
         var pb = Prefix(b);
-        return pa.Length > 0 && pb.Length > 0 && (pa.StartsWith(pb, StringComparison.Ordinal) || pb.StartsWith(pa, StringComparison.Ordinal));
+        if (pa.Length > 0 && pb.Length > 0 && (pa.StartsWith(pb, StringComparison.Ordinal) || pb.StartsWith(pa, StringComparison.Ordinal)))
+        {
+            return true;
+        }
+
+        return InFamily(a, b) || InFamily(b, a);
+    }
+
+    private static bool InFamily(string family, string duty)
+    {
+        var f = Prefix(family);
+        var d = Key(duty);
+        var savage = Key(family).Contains("(savage)", StringComparison.Ordinal);
+        return Families.TryGetValue(f, out var members) && members.Any(m => d.Contains(m, StringComparison.Ordinal)) && (!savage || d.Contains("(savage)", StringComparison.Ordinal));
     }
 }

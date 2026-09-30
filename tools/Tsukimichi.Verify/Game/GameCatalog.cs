@@ -55,6 +55,7 @@ internal sealed class GameCatalog
         SheetRecords = legacy.Catalog.All.ToDictionary(q => q.RowId);
 
         var quests = data.GetExcelSheet<Quest>(Language.English) ?? throw new InvalidOperationException("Quest sheet missing");
+        items = data.GetExcelSheet<Item>(Language.English) ?? throw new InvalidOperationException("Item sheet missing");
         var categories = data.GetExcelSheet<ClassJobCategory>(Language.English) ?? throw new InvalidOperationException("ClassJobCategory sheet missing");
         var cfcs = data.GetExcelSheet<ContentFinderCondition>(Language.English) ?? throw new InvalidOperationException("ContentFinderCondition sheet missing");
         var sections = data.GetExcelSheet<JournalSection>(Language.English) ?? throw new InvalidOperationException("JournalSection sheet missing");
@@ -132,6 +133,11 @@ internal sealed class GameCatalog
 
         Extras = extras;
     }
+
+    private readonly ExcelSheet<Item> items;
+
+    /// <summary>The Item sheet's English name for an item row, or empty.</summary>
+    public string ItemName(uint itemId) => items.GetRowOrDefault(itemId) is { } item ? item.Name.ExtractText() : string.Empty;
 
     /// <summary>The curated overlay the catalog was mapped with (quirk notes, retired quests, online store marks).</summary>
     public Tsukimichi.Core.Storage.CuratedData Curated { get; }

@@ -25,6 +25,13 @@ internal sealed record LodestonePage(
     IReadOnlyList<string> OptionalRewards,
     bool SeasonalEnded);
 
+/// <summary>An item page's "Obtained From" tables: the table heading (Quest, Duty, Shop, ...) and the linked names under it.</summary>
+internal sealed record LodestoneItem(string LodestoneId, string Url, string Name, IReadOnlyList<(string Kind, string Name)> Sources)
+{
+    /// <summary>Source tables other than Quest.</summary>
+    public IReadOnlyList<(string Kind, string Name)> NonQuest => Sources.Where(s => !s.Kind.Equals("Quest", StringComparison.OrdinalIgnoreCase)).ToList();
+}
+
 /// <summary>
 /// The Lodestone Eorzea Database (official). Ids are enumerated from the category listings
 /// (<c>?category2=&lt;JournalSection&gt;&amp;category3=&lt;JournalCategory&gt;&amp;page=n</c>, 50 rows per page) and
@@ -60,7 +67,63 @@ internal sealed partial class LodestoneSource(PoliteHttp http, TextWriter log)
     [GeneratedRegex(@"\s*Lv\.\s*(\d+)\s*$")]
     private static partial Regex TrailingLevel();
 
+    public const string ItemBase = "https://na.finalfantasyxiv.com/lodestone/playguide/db/item/";
+
+    [GeneratedRegex(@"<a href=""/lodestone/playguide/db/item/([0-9a-f]+)/"" class=""db_popup db-table__txt--detail_link"">(.*?)</a>", RegexOptions.Singleline)]
+    private static partial Regex ItemLink();
+
+    [GeneratedRegex(@"<th[^>]*>(.*?)</th>", RegexOptions.Singleline)]
+    private static partial Regex TableHead();
+
+    [GeneratedRegex(@"class=""db_popup db-table__txt--detail_link"">(.*?)</a>", RegexOptions.Singleline)]
+    private static partial Regex DetailLink();
+
     public static string PageUrl(string lodestoneId) => $"{Base}{lodestoneId}/";
+
+    public static string ItemSearchUrl(string name) => $"{ItemBase}?q={Uri.EscapeDataString(name)}";
+
+    public static string ItemUrl(string lodestoneId) => $"{ItemBase}{lodestoneId}/";
+
+    /// <summary>
+    /// The item page for an exact item name, found through the database search: null when the search returned no
+    /// response, an item with no <see cref="LodestoneItem.Sources"/> and an empty id when no result carries that name.
+    /// </summary>
+    public async Task<LodestoneItem?> FindItemAsync(string name, CancellationToken ct)
+    {
+        var search = await http.GetAsync(ItemSearchUrl(name), ct);
+        if (!search.Ok)
+        {
+            return null;
+        }
+
+        var id = ItemLink().Matches(search.Body).Where(m => Names.Canon(m.Groups[2].Value) == Names.Canon(name)).Select(m => m.Groups[1].Value).FirstOrDefault();
+        if (id is null)
+        {
+            return new LodestoneItem(string.Empty, ItemSearchUrl(name), name, []);
+        }
+
+        var page = await http.GetAsync(ItemUrl(id), ct);
+        return page.Ok ? ParseItem(id, ItemUrl(id), name, page.Body) : null;
+    }
+
+    /// <summary>Each <c>db-item__source</c> table under "Obtained From": its first column heading and the detail links in it.</summary>
+    public static LodestoneItem ParseItem(string lodestoneId, string url, string name, string html)
+    {
+        var sources = new List<(string Kind, string Name)>();
+        var chunks = html.Split("db-item__source");
+        for (var i = 1; i < chunks.Length; i++)
+        {
+            var end = chunks[i].IndexOf("</table>", StringComparison.Ordinal);
+            var table = end < 0 ? chunks[i] : chunks[i][..end];
+            var kind = TableHead().Match(table) is { Success: true } h ? Names.Clean(h.Groups[1].Value) : string.Empty;
+            foreach (Match m in DetailLink().Matches(table))
+            {
+                sources.Add((kind, Names.Clean(m.Groups[1].Value)));
+            }
+        }
+
+        return new LodestoneItem(lodestoneId, url, name, sources);
+    }
 
     public static string ListingUrl(uint section, uint category, int page) => $"{Base}?category2={section}&category3={category}&page={page}";
 

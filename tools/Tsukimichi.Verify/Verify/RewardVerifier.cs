@@ -14,6 +14,7 @@ internal sealed class RewardVerifier(
     GameCatalog game,
     CollectSource collect,
     WikiSource wiki,
+    LodestoneSource lodestone,
     GarlandSource garland,
     IReadOnlyDictionary<uint, List<uint>> curatedDutyUnlocks,
     TextWriter log)
@@ -42,6 +43,31 @@ internal sealed class RewardVerifier(
             }
         }
 
+        // A Collect "Premium" (Online Store) finding needs a second source: the wiki page of the item that grants the collectible.
+        var premium = rows.Where(r => r.Verdict == Verdict.CatalogWrong && r.Source == SourceNames.Collect && r.ItemId != 0).ToList();
+        if (premium.Count > 0)
+        {
+            var itemNames = premium.Select(r => (Name: game.ItemName(r.ItemId), Id: r.ItemId)).Where(n => n.Name.Length > 0).Distinct().ToList();
+            var pages = await wiki.GetPagesByIdAsync(itemNames, questPages: false, ct);
+            foreach (var r in premium)
+            {
+                var itemName = game.ItemName(r.ItemId);
+                pages.TryGetValue(Names.WikiTitle(itemName), out var page);
+                var found = page is { Missing: false };
+                var acq = WikiSource.Acquisition(found ? page!.Text : string.Empty);
+                var url = page?.Url ?? WikiSource.PageUrl(itemName);
+                var confirmed = found && acq.OnlineStore;
+                rows[rows.IndexOf(r)] = confirmed
+                    ? r with { Reason = r.Reason + $"; the wiki page of item {itemName} ({r.ItemId}) also lists the Online Store: {url}" }
+                    : r with { Verdict = Verdict.Unresolved, Reason = r.Reason + $"; the wiki page of item {itemName} does not list the Online Store, so only one source says so ({url})", FixedIn = string.Empty };
+                rows.Add(new RewardRow(r.QuestRowId, r.QuestName, r.Kind, r.RewardId, r.ItemId, r.RewardName, r.CatalogClaim, SourceNames.Wiki,
+                    found ? (acq.OnlineStore ? "onlinestore;" : string.Empty) + string.Join(";", acq.Sections) : string.Empty, url,
+                    confirmed ? Verdict.CatalogWrong : found ? Verdict.Match : Verdict.NotListed,
+                    confirmed ? $"the item that grants this {r.Kind} ({itemName}) is also sold on the Online Store; Collect agrees" : found ? "the wiki item page lists no Online Store acquisition" : "no wiki page for the item that grants this " + r.Kind,
+                    confirmed ? r.FixedIn : string.Empty));
+            }
+        }
+
         // Item kinds: the wiki item page.
         var items = entries.Where(e => e.Kind is RewardKind.Item or RewardKind.OptionalItem or RewardKind.ArtifactGear).ToList();
         if (items.Count > 0)
@@ -51,7 +77,18 @@ internal sealed class RewardVerifier(
             foreach (var e in items)
             {
                 pages.TryGetValue(Names.WikiTitle(e.RewardName), out var page);
-                rows.Add(CompareItem(e, questName(e.QuestRowId), page));
+                var row = CompareItem(e, questName(e.QuestRowId), page);
+                if (row.Verdict == Verdict.CatalogWrong)
+                {
+                    // The wiki alone says the item comes from somewhere else; the Lodestone item page is the second source.
+                    var item = await lodestone.FindItemAsync(e.RewardName, ct);
+                    var (wikiRow, lodestoneRow) = ConfirmWithLodestone(row, item);
+                    rows.Add(wikiRow);
+                    rows.Add(lodestoneRow);
+                    continue;
+                }
+
+                rows.Add(row);
             }
         }
 
@@ -242,6 +279,37 @@ internal sealed class RewardVerifier(
         return new RewardRow(e.QuestRowId, questName, kind, e.RewardId, e.ItemId, e.RewardName, Claim(e), SourceNames.Wiki, value, url, Verdict.Match, acq.QuestRows.Count == 0 ? "acquisition sections are quest-only; no quest list template" : string.Empty, string.Empty);
     }
 
+    /// <summary>
+    /// A wiki non-quest acquisition becomes catalogWrong only when the Lodestone item page also lists a non-quest
+    /// source (a duty, a shop, ...); otherwise it is one source against the catalog and stays unresolved.
+    /// </summary>
+    private static (RewardRow Wiki, RewardRow Lodestone) ConfirmWithLodestone(RewardRow wikiRow, LodestoneItem? item)
+    {
+        if (item is null)
+        {
+            return (wikiRow with { Verdict = Verdict.Unresolved, Reason = wikiRow.Reason + "; the Lodestone item page could not be fetched", FixedIn = string.Empty },
+                wikiRow with { Source = SourceNames.Lodestone, SourceValue = string.Empty, SourceRef = LodestoneSource.ItemSearchUrl(wikiRow.RewardName), Verdict = Verdict.Unresolved, Reason = "item search not fetched", FixedIn = string.Empty });
+        }
+
+        if (item.LodestoneId.Length == 0)
+        {
+            return (wikiRow with { Verdict = Verdict.Unresolved, Reason = wikiRow.Reason + "; the Lodestone database has no item of this name, so only one source says so", FixedIn = string.Empty },
+                wikiRow with { Source = SourceNames.Lodestone, SourceValue = string.Empty, SourceRef = item.Url, Verdict = Verdict.NotListed, Reason = "no Lodestone item of this name", FixedIn = string.Empty });
+        }
+
+        var value = string.Join(";", item.Sources.Select(s => s.Kind + ":" + s.Name).Distinct());
+        var nonQuest = item.NonQuest;
+        if (nonQuest.Count > 0)
+        {
+            var what = string.Join("; ", nonQuest.GroupBy(s => s.Kind).Select(g => g.Key + " (" + string.Join(", ", g.Select(x => x.Name).Distinct()) + ")"));
+            return (wikiRow with { Reason = wikiRow.Reason + "; the Lodestone agrees: " + what + " " + item.Url },
+                wikiRow with { Source = SourceNames.Lodestone, SourceValue = value, SourceRef = item.Url, Verdict = Verdict.CatalogWrong, Reason = "Lodestone lists non-quest sources: " + what + "; the wiki agrees" });
+        }
+
+        return (wikiRow with { Verdict = Verdict.Unresolved, Reason = wikiRow.Reason + "; the Lodestone item page lists only quests, so only one source says so", FixedIn = string.Empty },
+            wikiRow with { Source = SourceNames.Lodestone, SourceValue = value, SourceRef = item.Url, Verdict = Verdict.Match, Reason = "Lodestone lists quest sources only", FixedIn = string.Empty });
+    }
+
     private RewardRow CompareDutyUnlockWiki(UniqueRewardEntry e, string questName, WikiPage? page)
     {
         var kind = e.Kind.ToString();
@@ -276,6 +344,13 @@ internal sealed class RewardVerifier(
         if (ok)
         {
             return new RewardRow(e.QuestRowId, questName, kind, e.RewardId, e.ItemId, e.RewardName, Claim(e), SourceNames.Wiki, value, url, Verdict.Match, variantNote, string.Empty);
+        }
+
+        if (e.Source.StartsWith("ContentFinderCondition.UnlockCriteria", StringComparison.Ordinal))
+        {
+            // The sheet's link runs the other way: the duty's unlock criteria require this quest, which the wiki's unlocks field (duties the quest opens itself) does not list.
+            return new RewardRow(e.QuestRowId, questName, kind, e.RewardId, e.ItemId, e.RewardName, Claim(e), SourceNames.Wiki, value, url, Verdict.NotModeled,
+                $"the catalog's link is ContentFinderCondition {e.RewardId}'s unlock criteria naming this quest; the wiki's unlocks field lists only the duties the quest opens directly", string.Empty);
         }
 
         // "Palace of the Dead" for "the Palace of the Dead (Floors 1-10)", "Frontline" for "the Borderland Ruins (Secure)": the wiki names the series.
