@@ -159,6 +159,9 @@ public static partial class Strings
     public const string LevelRange = FilterNames.LevelRange;
     public const string LevelFormat = "Lv %d";
     public const string LevelMaxFormat = "to %d";
+
+    /// <summary>The level range filter's chip: {0} = lowest level, {1} = highest.</summary>
+    public const string LevelRangeChipFormat = "Lv {0}–{1}";
     public const string JobCategory = FilterNames.JobCategory;
     public const string JobAll = "All";
     public const string JobDowDom = "DoW/DoM";

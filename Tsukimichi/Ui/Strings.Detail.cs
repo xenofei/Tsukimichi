@@ -18,6 +18,23 @@ static partial class Strings
     public const string DetailUniqueRewardTooltip = "Unique: this quest is the only way to get it";
     public const string DetailNoGiverPlace = "No map position recorded";
 
+    /// <summary>The header badge's tooltip for <c>QuestRecord.IconSpecial</c>: a seasonal event quest, or another special one (a promotion).</summary>
+    public const string DetailSeasonalBadgeTooltip = "Seasonal event quest";
+    public const string DetailSpecialBadgeTooltip = "Special";
+
+    // ---- Chain line at the top of the Path card ----
+    /// <summary>{0} = chain name, {1} = quests done, {2} = quests in the chain.</summary>
+    public const string DetailChainFormat = "Chain: {0} · {1} of {2} done";
+
+    /// <summary>A side story: {0} = the story's name ("Story: …"), {1} = quests done, {2} = quests in it.</summary>
+    public const string DetailStoryFormat = "{0} · {1} of {2} done";
+    public const string DetailChainNext = "· next:";
+    public const string DetailChainComplete = "· complete";
+    public const string DetailChainNextTooltip = "Select the next quest in this chain";
+
+    /// <summary>The chain halo's tooltip: {0} = quests done, {1} = quests in the chain.</summary>
+    public const string DetailChainHaloTooltipFormat = "{0} of {1} quests done";
+
     // ---- Path (star chart) ----
     /// <summary>{0} = steps on the path, {1} = steps done.</summary>
     public const string PathCaptionFormat = "{0} steps · {1} done";

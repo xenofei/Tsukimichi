@@ -770,7 +770,7 @@ public sealed class FilterPanel
             levelChipMin = f.LevelMin;
             levelChipMax = f.LevelMax;
             var max = f.LevelMax == FilterSet.NoLevelMax ? LevelCap : f.LevelMax;
-            levelChip = string.Format(CultureInfo.CurrentCulture, "Lv {0}–{1}", f.LevelMin, max);
+            levelChip = string.Format(CultureInfo.CurrentCulture, Strings.LevelRangeChipFormat, f.LevelMin, max);
         }
 
         return levelChip;

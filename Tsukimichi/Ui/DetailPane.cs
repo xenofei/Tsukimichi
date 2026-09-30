@@ -44,18 +44,6 @@ public sealed class DetailPane
     private static readonly string PathIcon = FontAwesomeIcon.Route.ToIconString();
     private static readonly string GiverIcon = FontAwesomeIcon.MapMarkerAlt.ToIconString();
 
-    // Header badge for QuestRecord.IconSpecial (seasonal events, promotions).
-    private const string SeasonalBadgeTooltip = "Seasonal event quest";
-    private const string SpecialBadgeTooltip = "Special";
-
-    // Chain progress line at the top of the Path card.
-    private const string ChainFormat = "Chain: {0} · {1} of {2} done";
-    private const string StoryFormat = "{0} · {1} of {2} done";
-    private const string ChainNextLabel = "· next:";
-    private const string ChainCompleteLabel = "· complete";
-    private const string ChainNextTooltip = "Select the next quest in this chain";
-    private const string ChainMoonTooltipFormat = "{0} of {1} quests done";
-
     // Refresh the "Checked just now" line this often while nothing else changes.
     private const double ProvenanceRefreshSeconds = 30.0;
 
@@ -416,7 +404,7 @@ public sealed class DetailPane
     }
 
     /// <summary>What the special badge means.</summary>
-    private static string BadgeTooltip(QuestRecord quest) => quest.Festival != 0 ? SeasonalBadgeTooltip : SpecialBadgeTooltip;
+    private static string BadgeTooltip(QuestRecord quest) => quest.Festival != 0 ? Strings.DetailSeasonalBadgeTooltip : Strings.DetailSpecialBadgeTooltip;
 
     /// <summary>
     /// The Night card with the state moon, the name and the caption line, for quests without a banner, and for quests
@@ -797,11 +785,11 @@ public sealed class DetailPane
         if (model.ChainNextName is not { } next)
         {
             using var done = Theme.PushText(Theme.MoonDim);
-            ImGui.TextUnformatted(ChainCompleteLabel);
+            ImGui.TextUnformatted(Strings.DetailChainComplete);
             return;
         }
 
-        ImGui.TextDisabled(ChainNextLabel);
+        ImGui.TextDisabled(Strings.DetailChainNext);
         ImGui.SameLine();
         using (Theme.PushText(Theme.Moon))
         {
@@ -814,7 +802,7 @@ public sealed class DetailPane
         if (ImGui.IsItemHovered())
         {
             ImGui.SetMouseCursor(ImGuiMouseCursor.Hand);
-            UiMetrics.Tooltip(ChainNextTooltip);
+            UiMetrics.Tooltip(Strings.DetailChainNextTooltip);
         }
     }
 
@@ -1256,8 +1244,8 @@ public sealed class DetailPane
         var progress = ChainCatalog.Progress(chain, session.States);
         model.ChainFraction = progress.Fraction;
         var name = ChainCatalog.DisplayName(chain, id => session.Spoilers.DisplayName(bundle.Catalog, id, id.ToString(CultureInfo.InvariantCulture)));
-        model.ChainText = string.Format(CultureInfo.CurrentCulture, chain.IsStory ? StoryFormat : ChainFormat, name, progress.Done, progress.Total);
-        model.ChainHaloTooltip = string.Format(CultureInfo.CurrentCulture, ChainMoonTooltipFormat, progress.Done, progress.Total);
+        model.ChainText = string.Format(CultureInfo.CurrentCulture, chain.IsStory ? Strings.DetailStoryFormat : Strings.DetailChainFormat, name, progress.Done, progress.Total);
+        model.ChainHaloTooltip = string.Format(CultureInfo.CurrentCulture, Strings.DetailChainHaloTooltipFormat, progress.Done, progress.Total);
         if (progress.NextRowId is { } next)
         {
             model.ChainNextRowId = next;
