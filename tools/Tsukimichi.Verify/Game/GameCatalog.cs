@@ -46,6 +46,7 @@ internal sealed class GameCatalog
     {
         var data = new Lumina.GameData(sqpackPath, new LuminaOptions { PanicOnSheetChecksumMismatch = false });
         GameVersion = ReadGameVersion(sqpackPath);
+        Curated = curated;
         Bundle = CatalogMapper.Map(data.Excel, Language.English, default, line => log.WriteLine("catalog: " + line), JournalFiling.Refiled, curated);
 
         // The sheet's own filing: the Lodestone and the wiki file a quest by the journal genre the game gives it, not by
@@ -131,6 +132,9 @@ internal sealed class GameCatalog
 
         Extras = extras;
     }
+
+    /// <summary>The curated overlay the catalog was mapped with (quirk notes, retired quests, online store marks).</summary>
+    public Tsukimichi.Core.Storage.CuratedData Curated { get; }
 
     /// <summary>Records as the sheet files them (<see cref="JournalFiling.Legacy"/>), by row id.</summary>
     public IReadOnlyDictionary<uint, QuestRecord> SheetRecords { get; }

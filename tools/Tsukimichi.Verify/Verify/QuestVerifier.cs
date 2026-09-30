@@ -1037,12 +1037,18 @@ internal sealed partial class QuestVerifier(
         Agree,
         Disagree,
         NotModeled,
+
+        /// <summary>The source contradicts the sheet in a way the sheet itself rules out (a successor named as a prerequisite).</summary>
+        SourceWrong,
     }
 
     private static Draft Compare(string fact, string catalog, string source, string sourceValue, string sourceRef, Consistency c, string reason = "")
-        => c == Consistency.NotModeled
-            ? new Draft(fact, catalog, source, sourceValue, sourceRef, Verdict.NotModeled, reason)
-            : Compare(fact, catalog, source, sourceValue, sourceRef, c == Consistency.Agree, reason);
+        => c switch
+        {
+            Consistency.NotModeled => new Draft(fact, catalog, source, sourceValue, sourceRef, Verdict.NotModeled, reason),
+            Consistency.SourceWrong => new Draft(fact, catalog, source, sourceValue, sourceRef, Verdict.SourceWrong, reason),
+            _ => Compare(fact, catalog, source, sourceValue, sourceRef, c == Consistency.Agree, reason),
+        };
 
     private static bool SameJournalName(string wikiName, string sheetName)
     {
@@ -1234,6 +1240,12 @@ internal sealed partial class QuestVerifier(
                 return Consistency.NotModeled;
             }
 
+            if (game.Curated.Quirks.ContainsKey(quest.RowId))
+            {
+                reason = $"sheet has no PreviousQuest; the wiki names {named}, which curated/quirks.json explains for this quest";
+                return Consistency.NotModeled;
+            }
+
             reason = "catalog has no PreviousQuest; source names " + named;
             return Consistency.Disagree;
         }
@@ -1297,6 +1309,13 @@ internal sealed partial class QuestVerifier(
 
         if (unreachable.Count > 0)
         {
+            var successors = unreachable.Where(n => ResolveNames(n).SelectMany(r => rowsByName.GetValueOrDefault(r, [])).Any(id => IsAncestorOf(quest.RowId, id))).ToList();
+            if (successors.Count == unreachable.Count)
+            {
+                reason = "source names quests that themselves require this one in the sheet (successors, not prerequisites): " + string.Join("; ", successors);
+                return Consistency.SourceWrong;
+            }
+
             reason = "source names quests the catalog does not require, directly or transitively: " + string.Join("; ", unreachable);
             return Consistency.Disagree;
         }
@@ -1347,6 +1366,33 @@ internal sealed partial class QuestVerifier(
 
         reason = string.Join("; ", notes);
         return Consistency.Agree;
+    }
+
+    /// <summary>Whether <paramref name="ancestor"/> is a PreviousQuest or accept-condition ancestor of <paramref name="rowId"/>.</summary>
+    private bool IsAncestorOf(uint ancestor, uint rowId)
+    {
+        var seen = new HashSet<uint>();
+        var stack = new Stack<uint>([rowId]);
+        while (stack.Count > 0 && seen.Count < 5000)
+        {
+            var id = stack.Pop();
+            if (!seen.Add(id) || game.Catalog.GetByRowId(id) is not { } q)
+            {
+                continue;
+            }
+
+            foreach (var p in q.PreviousQuests.QuestIds.Concat(AcceptQuests(q)))
+            {
+                if (p == ancestor)
+                {
+                    return true;
+                }
+
+                stack.Push(p);
+            }
+        }
+
+        return false;
     }
 
     private HashSet<string> AncestorNames(QuestRecord quest)

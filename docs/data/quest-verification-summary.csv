@@ -1374,7 +1374,7 @@ rowId,name,sourcesChecked,overallVerdict,worstFact,facts,gateFailures
 66968,An Ill-conceived Venture,lodestone;wiki,notModeled,prereqs,20,0
 66969,An Ill-conceived Venture,lodestone;wiki,notModeled,prereqs,20,0
 66970,An Ill-conceived Venture,lodestone;wiki,notModeled,prereqs,20,0
-66971,Up in Arms,lodestone;wiki,unresolved,prereqs,20,1
+66971,Up in Arms,lodestone;wiki,notModeled,prereqs,20,0
 66972,Trials of the Braves,lodestone;wiki,notModeled,prereqs,20,0
 66973,The Greatest Story Never Told,lodestone;wiki,notModeled,prereqs,20,0
 66974,The Business of Betrothal,lodestone;wiki,notModeled,prereqs,20,0
@@ -2318,7 +2318,7 @@ rowId,name,sourcesChecked,overallVerdict,worstFact,facts,gateFailures
 67929,It's Time to Duel,lodestone;wiki,notModeled,expansion,20,0
 67930,The Last Pillar to Fall,lodestone;wiki,notModeled,dutyUnlock,21,0
 67931,A Demonic Duplicate,lodestone;wiki,notModeled,prereqs,21,0
-67932, Born Again Anima,lodestone;wiki,unresolved,prereqs,20,1
+67932, Born Again Anima,lodestone;wiki,sourceWrong,prereqs,20,0
 67933,Some Assembly Required,lodestone;wiki,notModeled,prereqs,20,0
 67934,Body and Soul,lodestone;wiki,notModeled,prereqs,20,0
 67935,Birdwatching Gone Wrong,lodestone;wiki,notModeled,expansion,20,0
