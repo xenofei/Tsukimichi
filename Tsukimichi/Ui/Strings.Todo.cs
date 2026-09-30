@@ -45,6 +45,7 @@ static partial class Strings
         TodoSection.NearbyFeature => TodoSectionNearby,
         TodoSection.Msq => TodoSectionMsq,
         TodoSection.JobQuests => TodoSectionJobQuests,
+        TodoSection.Plan => PlanTodoSection,
         _ => section.ToString(),
     };
 

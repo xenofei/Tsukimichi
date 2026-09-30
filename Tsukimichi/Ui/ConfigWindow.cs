@@ -668,6 +668,27 @@ public sealed class ConfigWindow : Window
     /// The todo overlay: on/off, lock, an opacity slider (saved when released), the four section toggles and a
     /// "Reset position" button. The overlay reads the configuration every frame, so every change shows at once.
     /// </summary>
+    /// <summary>The todo overlay's "Clear my blues" section (P3): its toggle and which expansion is pinned.</summary>
+    private void DrawTodoPlanToggle()
+    {
+        var plan = settings.TodoShowPlan;
+        if (ImGui.Checkbox(Strings.PlanTodoConfig, ref plan))
+        {
+            settings.TodoShowPlan = plan;
+            Save();
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.PlanTodoConfigHint);
+        }
+
+        ImGui.SameLine();
+        ImGui.TextDisabled(settings.TodoPlanExpansion is >= 0 and <= byte.MaxValue
+            ? string.Format(CultureInfo.CurrentCulture, Strings.PlanTodoConfigPinnedFormat, session.Names.Expansion((byte)settings.TodoPlanExpansion))
+            : Strings.PlanTodoConfigNone);
+    }
+
     private void DrawTodoOverlay()
     {
         Header(Strings.TodoConfigSection);
@@ -755,6 +776,8 @@ public sealed class ConfigWindow : Window
         {
             UiMetrics.Tooltip(Strings.TodoConfigShowSeasonalHint);
         }
+
+        DrawTodoPlanToggle();
 
         var nearby = settings.TodoShowNearbyFeature;
         if (ImGui.Checkbox(Strings.TodoConfigShowNearby, ref nearby))

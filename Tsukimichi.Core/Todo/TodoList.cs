@@ -2,6 +2,7 @@ using Tsukimichi.Core.Discovery;
 using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Jobs;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Plan;
 using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Seasonal;
 using Tsukimichi.Core.Ui;
@@ -9,8 +10,8 @@ using Tsukimichi.Core.Ui;
 namespace Tsukimichi.Core.Todo;
 
 /// <summary>
-/// The parts of the todo overlay. Display order is Pinned, Seasonal, NearbyFeature, Msq, JobQuests; Seasonal was added
-/// last (0.8.0), so the stored values of the others did not move.
+/// The parts of the todo overlay. Display order is Pinned, Seasonal, NearbyFeature, Plan, Msq, JobQuests; Seasonal
+/// (0.8.0) and Plan (0.9.0) were added last, so the stored values of the others did not move.
 /// </summary>
 public enum TodoSection : byte
 {
@@ -19,6 +20,9 @@ public enum TodoSection : byte
     Msq,
     JobQuests,
     Seasonal,
+
+    /// <summary>"Clear my blues" (P3): the Ready unlock quests of the expansion pinned from the plan.</summary>
+    Plan,
 }
 
 /// <summary>Why a quest is on the list; one kind per section except job quests, which tell a job's own line from its role's.</summary>
@@ -30,6 +34,7 @@ public enum TodoRowKind : byte
     JobQuest,
     RoleQuest,
     Seasonal,
+    Plan,
 }
 
 /// <summary>One line of the overlay: the quest, its state for the character and a short hint (the next step, or where to start it).</summary>
@@ -88,6 +93,9 @@ public sealed record TodoModel(IReadOnlyList<TodoSectionModel> Sections, int Ena
 /// <param name="Running">The seasonal events running for the character (<see cref="SeasonalNow.Running"/>); null leaves the section out.</param>
 /// <param name="ShowSeasonal">Include the "Event quests running now" section.</param>
 /// <param name="NowUtc">Clock for the section's end-date line; null reads <see cref="DateTime.UtcNow"/>.</param>
+/// <param name="Plan">The character's "Clear my blues" plan (<see cref="UnlockPlan"/>); null leaves the section out.</param>
+/// <param name="PlanExpansion">The expansion pinned from the plan (ExVersion row id); negative leaves the section out.</param>
+/// <param name="ShowPlan">Include the "Clear my blues" section.</param>
 public sealed record TodoInputs(
     QuestCatalog Catalog,
     IReadOnlyDictionary<uint, QuestEvaluation> States,
@@ -105,14 +113,18 @@ public sealed record TodoInputs(
     BlockerNames? Names = null,
     IReadOnlyList<RunningFestival>? Running = null,
     bool ShowSeasonal = true,
-    DateTime? NowUtc = null);
+    DateTime? NowUtc = null,
+    UnlockPlan? Plan = null,
+    int PlanExpansion = -1,
+    bool ShowPlan = true);
 
 /// <summary>
-/// Pure builder for the todo overlay (V2-13). Five sections, each only when enabled and non-empty: the character's
+/// Pure builder for the todo overlay (V2-13). Six sections, each only when enabled and non-empty: the character's
 /// pins that are still to do (Ready first, then Ready on another job, Accepted, Blocked, Unknown; by level then name
 /// within a state), the quests of the seasonal events running now that can be started or are in the journal (P11,
 /// with an "Ends Aug 28 (Lodestone)" line only when curated data announces the end), the feature quests startable in the current zone (at most <see cref="MaxNearby"/>, by level then
-/// name), the next main scenario quest with its blocker, and for the current job the next quest of its ladder and of
+/// name), the Ready unlock quests of the expansion pinned from the "Clear my blues" plan (P3, at most
+/// <see cref="MaxPlan"/>, in plan order), the next main scenario quest with its blocker, and for the current job the next quest of its ladder and of
 /// its role's ladder when either is open now (Ready, Ready on another job or Accepted). Completed, done-this-cycle and
 /// foreclosed pins are not todos and are left out. Hints are the evaluator's next-step clause when something blocks,
 /// otherwise the level and giver. The caller memoizes per session version, territory and settings.
@@ -121,6 +133,9 @@ public static class TodoList
 {
     /// <summary>Most feature quests the Nearby section lists.</summary>
     public const int MaxNearby = 8;
+
+    /// <summary>Most quests the "Clear my blues" section lists.</summary>
+    public const int MaxPlan = 8;
 
     // Hint fragments in the display vocabulary (English in Core; the overlay shows them as is). The row's moon already
     // carries the state, so a hint never repeats the state name: a blocked row shows its blocker, an accepted one its step.
@@ -139,7 +154,7 @@ public static class TodoList
         ArgumentNullException.ThrowIfNull(inputs.Ladder);
         ArgumentNullException.ThrowIfNull(inputs.JobNames);
 
-        var sections = new List<TodoSectionModel>(5);
+        var sections = new List<TodoSectionModel>(6);
         var enabled = 0;
         if (inputs.ShowPins)
         {
@@ -157,6 +172,12 @@ public static class TodoList
         {
             enabled++;
             Add(sections, TodoSection.NearbyFeature, BuildNearby(inputs));
+        }
+
+        if (inputs.ShowPlan && inputs.Plan is { } plan && inputs.PlanExpansion is >= 0 and <= byte.MaxValue)
+        {
+            enabled++;
+            AddPlan(sections, inputs, plan, (byte)inputs.PlanExpansion);
         }
 
         if (inputs.ShowMsq)
@@ -385,6 +406,53 @@ public static class TodoList
         }
 
         rows.Add(Row(inputs, quest, StateOf(inputs.States, next), kind));
+    }
+
+    /// <summary>
+    /// The pinned expansion's block of the plan (P3): its quests that can be started now, in plan order (zone by zone,
+    /// in story order), at most <see cref="MaxPlan"/>, with a note naming the expansion and how many unlock quests are
+    /// left there. A Ready row's hint is its level and what it unlocks ("Lv 20 · Dungeon: Halatali").
+    /// </summary>
+    private static void AddPlan(List<TodoSectionModel> sections, TodoInputs inputs, UnlockPlan plan, byte expansion)
+    {
+        if (plan.Expansion(expansion) is not { } block)
+        {
+            return;
+        }
+
+        var rows = new List<TodoRow>();
+        foreach (var entry in block.Entries)
+        {
+            if (!entry.IsReady)
+            {
+                continue;
+            }
+
+            var hint = entry.State == QuestState.Ready
+                ? PlanHint(entry)
+                : Hint(inputs, entry.Quest, entry.State);
+            rows.Add(new TodoRow(entry.Quest.RowId, entry.Name, entry.State, hint, TodoRowKind.Plan));
+            if (rows.Count >= MaxPlan)
+            {
+                break;
+            }
+        }
+
+        if (rows.Count > 0)
+        {
+            var note = block.Name + Separator + block.Count.ToString(System.Globalization.CultureInfo.InvariantCulture) + PlanLeftSuffix;
+            sections.Add(new TodoSectionModel(TodoSection.Plan, rows) { Notes = [note] });
+        }
+    }
+
+    private const string PlanLeftSuffix = " left";
+
+    /// <summary>"Lv 20 · Dungeon: Halatali": the level and the entry's first unlock.</summary>
+    public static string PlanHint(PlanEntry entry)
+    {
+        ArgumentNullException.ThrowIfNull(entry);
+        var level = LevelPrefix + entry.Quest.DisplayLevel.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        return entry.Unlocks.Count > 0 ? level + Separator + entry.Unlocks[0].Label : level;
     }
 
     private static QuestState StateOf(IReadOnlyDictionary<uint, QuestEvaluation> states, uint rowId) =>
