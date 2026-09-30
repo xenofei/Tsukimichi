@@ -390,17 +390,19 @@ public sealed partial class ConfigWindow : Window
     }
 
     /// <summary>
-    /// Live previews of the three Flair levels (proposal §7.9), side by side when the window is wide enough and stacked
-    /// otherwise: each a section heading and a small journal row drawn exactly as that level draws them (the pane
+    /// Live previews of the three Flair levels (proposal §7.9), side by side when three cells of
+    /// <see cref="PreviewCellLogical"/> fit (the window's default width does) and stacked otherwise: each a section heading and a small journal row drawn exactly as that level draws them (the pane
     /// gradient behind at Full; the heading's sigil and rule, the orbit, the road and the Numeral count at Full and
     /// Quiet; the filling moon and the plain heading at Plain). Under the high-contrast palette Full previews as Quiet,
-    /// as it draws. The level in use is outlined; a click on a preview chooses it. Drawn only while the window is open.
+    /// as it draws. The level in use is outlined; a click on a preview chooses it. The game's heading fonts are not built
+    /// at Plain, so while Plain is chosen a note under the previews says the Full and Quiet ones show the usual font
+    /// until another level is chosen. Drawn only while the window is open.
     /// </summary>
     private void DrawFlairPreviews()
     {
         var room = ImGui.GetContentRegionAvail().X;
         var gap = UiMetrics.Px(10f);
-        var side = room >= UiMetrics.Px(480f);
+        var side = room >= (3f * UiMetrics.Px(PreviewCellLogical)) + (2f * gap);
         var cell = side ? MathF.Floor((room - (2f * gap)) / 3f) : MathF.Min(room, UiMetrics.Px(260f));
         var origin = ImGui.GetCursorScreenPos();
         var contentRight = origin.X + room;
@@ -459,7 +461,18 @@ public sealed partial class ConfigWindow : Window
 
         ImGui.SetCursorScreenPos(new Vector2(origin.X, bottom + (side ? gap : 0f)));
         ImGui.Dummy(Vector2.Zero);
+        if (settings.Flair == Flair.Plain && settings.GameHeadingFonts)
+        {
+            using (ImRaii.TextWrapPos(0f))
+            using (Theme.PushText(Theme.Surface.TextSecondary))
+            {
+                ImGui.TextWrapped(Strings.ConfigFlairPreviewPlainNote);
+            }
+        }
     }
+
+    /// <summary>The least width of a Flair preview cell side by side (three fit in the window's default 480 px).</summary>
+    private const float PreviewCellLogical = 140f;
 
     private static readonly Flair[] PreviewLevels = [Flair.Full, Flair.Quiet, Flair.Plain];
 

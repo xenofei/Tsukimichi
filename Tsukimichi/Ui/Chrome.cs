@@ -416,6 +416,24 @@ public static partial class Chrome
     public static void Scrim(ImDrawListPtr dl, Vector2 min, Vector2 max, float fromAlpha = 0f, float toAlpha = 0.92f) =>
         Scrim(dl, min, max, Theme.Surface.Window, fromAlpha, toAlpha);
 
+    /// <summary>
+    /// Scales the alpha of every vertex drawn into <paramref name="dl"/> since vertex <paramref name="from"/> by
+    /// <paramref name="alpha"/>: a fade-in of draw-list shapes, which the style's Alpha does not reach (their colours are
+    /// packed by hand). Allocation-free.
+    /// </summary>
+    public static void FadeVertices(ImDrawListPtr dl, int from, float alpha)
+    {
+        var vertices = dl.VtxBuffer;
+        var scale = Math.Clamp(alpha, 0f, 1f);
+        for (var i = Math.Max(0, from); i < vertices.Size; i++)
+        {
+            var vertex = vertices[i];
+            var a = (uint)MathF.Round((vertex.Col >> 24) * scale);
+            vertex.Col = (vertex.Col & 0x00FFFFFFu) | (a << 24);
+            vertices[i] = vertex;
+        }
+    }
+
     /// <summary>The scrim in an explicit colour.</summary>
     public static void Scrim(ImDrawListPtr dl, Vector2 min, Vector2 max, Vector4 color, float fromAlpha, float toAlpha)
     {

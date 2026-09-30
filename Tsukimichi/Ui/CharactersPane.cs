@@ -94,9 +94,18 @@ public sealed partial class CharactersPane
     private const uint SectionGridGauges = 0x6_0000;
     private const uint HeaderGauge = 0x7_0000;
 
-    // The journal sections' official icons for the section rings, resolved once per catalog bundle.
-    private NodeIconMap sectionIcons = NodeIconMap.Empty;
-    private CatalogBundle? sectionIconsBundle;
+    /// <summary>The least room a heading keeps beside a button on its line before the button moves under it.</summary>
+    private const float HeadingLeastLogical = 80f;
+
+    /// <summary>The section rings show this many rows until "Show all sections" (the table under them lists every one).</summary>
+    private const int SectionRingRows = 2;
+
+    // Whether the section rings show every row rather than the first SectionRingRows.
+    private bool sectionRingsAll;
+
+    // The node icons the dashboard was built with (SessionState.NodeIcons, resolved off the draw thread once per
+    // catalog): a new map rebuilds the section rings.
+    private NodeIconMap? dashboardIcons;
 
     /// <summary>Reward kinds the dashboard summarizes, in display order.</summary>
     private static readonly RewardKind[] SummaryKinds =
@@ -312,7 +321,7 @@ public sealed partial class CharactersPane
         DrawJobs(ui, d);
         ImGui.Spacing();
         DrawGrandCompanyAndTribes(d);
-        Gap();
+        Gap(ruled: true);
         DrawActions(snapshot);
         DrawForgetPopup(ui);
         DrawToast();
@@ -343,11 +352,14 @@ public sealed partial class CharactersPane
         }
     }
 
-    /// <summary>Between two blocks: a separator, or at Full and Quiet flair only air (the next heading's rule is the line).</summary>
-    private static void Gap()
+    /// <summary>
+    /// Between two blocks: a separator, or at Full and Quiet flair only air (the next heading's rule is the line). With
+    /// <paramref name="ruled"/> the separator stays at every level, before a block with no heading of its own.
+    /// </summary>
+    private static void Gap(bool ruled = false)
     {
         ImGui.Spacing();
-        if (Theme.ShowRules)
+        if (Theme.ShowRules && !ruled)
         {
             ImGui.Spacing();
         }
@@ -444,7 +456,7 @@ public sealed partial class CharactersPane
         }
 
         var overall = d.Sections[0];
-        var fraction = Motion.Gauge(Motion.Key(DashboardGaugeTag, HeaderGauge), overall.Fraction);
+        var fraction = Motion.Fill(Motion.Key(DashboardGaugeTag, HeaderGauge), overall.Fraction);
         if (textures is not null)
         {
             Orbit.Draw(dl, textures, gaugeMin, gauge, overall.Icon, fraction, highContrast: highContrast);
@@ -553,9 +565,22 @@ public sealed partial class CharactersPane
         }
 
         var height = MathF.Ceiling(orbit + pad + numeralLine + captionLine + (2f * pad));
-        var rows = PaneGrid.Rows(d.Sections.Length, columns);
+        var capped = PaneGrid.Capped(d.Sections.Length, columns, SectionRingRows);
+        var count = sectionRingsAll ? d.Sections.Length : capped;
+        var rows = PaneGrid.Rows(count, columns);
         ImGui.Dummy(new Vector2(room, rows * height));
-        if (!ImGui.IsItemVisible())
+        var visible = ImGui.IsItemVisible();
+        var hoverable = ImGui.IsItemHovered();
+        if (capped < d.Sections.Length)
+        {
+            // Two rows keep the dashboard short in a narrow pane; the table under the rings lists every section.
+            if (ImGui.SmallButton(sectionRingsAll ? Strings.CharactersSectionRingsFewer : Strings.CharactersSectionRingsAll))
+            {
+                sectionRingsAll = !sectionRingsAll;
+            }
+        }
+
+        if (!visible)
         {
             return;
         }
@@ -563,14 +588,13 @@ public sealed partial class CharactersPane
         var dl = ImGui.GetWindowDrawList();
         var s = Theme.Surface;
         var highContrast = Theme.Glyphs.HighContrast;
-        var hoverable = ImGui.IsItemHovered();
-        for (var i = 0; i < d.Sections.Length; i++)
+        for (var i = 0; i < count; i++)
         {
             var row = d.Sections[i];
             var min = origin + new Vector2((i % columns) * cell, (i / columns) * height);
             var centerX = min.X + (cell * 0.5f);
             var orbitMin = new Vector2(MathF.Floor(centerX - (orbit * 0.5f)), min.Y + pad);
-            var fraction = Motion.Gauge(Motion.Key(DashboardGaugeTag, SectionGridGauges | (uint)i), row.Fraction);
+            var fraction = Motion.Fill(Motion.Key(DashboardGaugeTag, SectionGridGauges | (uint)i), row.Fraction);
             if (textures is not null)
             {
                 Orbit.Draw(dl, textures, orbitMin, orbit, row.Icon, fraction, highContrast: highContrast);
@@ -625,11 +649,18 @@ public sealed partial class CharactersPane
     private void DrawJobQuests(UiState ui, Dashboard d)
     {
         var routeButton = ImGui.CalcTextSize(Strings.RouteToUnlockMenu).X + (ImGui.GetStyle().FramePadding.X * 2f);
-        if (Theme.ShowRules)
+        var reserve = routeButton + ImGui.GetStyle().ItemSpacing.X;
+        if (Theme.ShowRules && ImGui.GetContentRegionAvail().X - reserve >= UiMetrics.Px(HeadingLeastLogical))
         {
             // The open-section heading leaves room for the button at the end of its line.
-            SectionHeading.Draw(Strings.JobsSection, reserve: routeButton + ImGui.GetStyle().ItemSpacing.X);
+            SectionHeading.Draw(Strings.JobsSection, reserve: reserve);
             ImGui.SameLine();
+        }
+        else if (Theme.ShowRules)
+        {
+            // Too narrow to share the line (the heading would be a bare "…"): the heading whole, the button under it.
+            SectionHeading.Draw(Strings.JobsSection);
+            Chrome.SameLineOrWrap(routeButton);
         }
         else
         {
@@ -2043,25 +2074,28 @@ public sealed partial class CharactersPane
     }
 
     /// <summary>
-    /// The dashboard view model, rebuilt only when the session version, the viewed character, the catalog bundle or
-    /// the live flag changes (and once a minute so the snapshot age ticks).
+    /// The dashboard view model, rebuilt only when the session version, the viewed character, the catalog bundle, the
+    /// session's node icons or the live flag changes (and once a minute so the snapshot age ticks).
     /// </summary>
     private Dashboard RefreshDashboard(CharacterSnapshot snapshot)
     {
         var bundle = session.Bundle;
         var minute = DateTime.UtcNow.Ticks / TimeSpan.TicksPerMinute;
         var key = new DashboardKey(session.Version, snapshot.ContentId, session.IsLive, minute, MoonlitCounts is not null, Pins?.PinsVersion ?? -1);
-        if (dashboard is { } current && key == dashboardKey && ReferenceEquals(current.Snapshot, snapshot) && ReferenceEquals(current.Bundle, bundle))
+        var icons = session.NodeIcons;
+        if (dashboard is { } current && key == dashboardKey && ReferenceEquals(current.Snapshot, snapshot) && ReferenceEquals(current.Bundle, bundle)
+            && ReferenceEquals(dashboardIcons, icons))
         {
             return current;
         }
 
         dashboardKey = key;
-        dashboard = BuildDashboard(snapshot, bundle);
+        dashboardIcons = icons;
+        dashboard = BuildDashboard(snapshot, bundle, icons);
         return dashboard;
     }
 
-    private Dashboard BuildDashboard(CharacterSnapshot snapshot, CatalogBundle? bundle)
+    private Dashboard BuildDashboard(CharacterSnapshot snapshot, CatalogBundle? bundle, NodeIconMap icons)
     {
         var names = bundle?.Names;
         var taken = snapshot.TakenUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture);
@@ -2138,7 +2172,7 @@ public sealed partial class CharactersPane
             countsLine,
             msqLine,
             msqQuest,
-            BuildSections(bundle),
+            BuildSections(bundle, icons),
             BuildJobQuests(jobs),
             chainRows,
             notStarted,
@@ -2370,8 +2404,11 @@ public sealed partial class CharactersPane
         return name;
     }
 
-    /// <summary>All quests first, then every journal section in journal order, from the viewed character's evaluations.</summary>
-    private SectionRow[] BuildSections(CatalogBundle? bundle)
+    /// <summary>
+    /// All quests first, then every journal section in journal order, from the viewed character's evaluations; each
+    /// section's ring carries its icon from <paramref name="icons"/> (the session's map for the catalog).
+    /// </summary>
+    private SectionRow[] BuildSections(CatalogBundle? bundle, NodeIconMap icons)
     {
         if (bundle is null || session.States.Count == 0)
         {
@@ -2402,7 +2439,6 @@ public sealed partial class CharactersPane
         }
 
         sections.Sort((a, b) => a.Id.CompareTo(b.Id));
-        var icons = SectionIcons(bundle);
         var rows = new SectionRow[sections.Count + 1];
         rows[0] = SectionRow.From(Strings.CharactersAllQuests, counts.Overall, overall: true, NodeIcon.Of(OrnamentGlyph.AllQuests));
         for (var i = 0; i < sections.Count; i++)
@@ -2412,36 +2448,6 @@ public sealed partial class CharactersPane
         }
 
         return rows;
-    }
-
-    /// <summary>
-    /// The journal's node icons for this bundle (the sheets' own icons through <see cref="NodeIconResolver"/>), read once
-    /// per bundle; empty (every section the Other glyph) without the data manager or when the sheets cannot be read.
-    /// </summary>
-    private NodeIconMap SectionIcons(CatalogBundle bundle)
-    {
-        if (ReferenceEquals(sectionIconsBundle, bundle))
-        {
-            return sectionIcons;
-        }
-
-        sectionIconsBundle = bundle;
-        sectionIcons = NodeIconMap.Empty;
-        if (data is null)
-        {
-            return sectionIcons;
-        }
-
-        try
-        {
-            sectionIcons = NodeIconResolver.Build(data.Excel).Resolve(bundle.Catalog);
-        }
-        catch (Exception ex)
-        {
-            log.Warning(ex, "Journal section icons could not be read; the section rings show glyphs");
-        }
-
-        return sectionIcons;
     }
 
     private MoonlitRow[] BuildMoonlit()

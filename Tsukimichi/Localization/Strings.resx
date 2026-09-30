@@ -1307,6 +1307,12 @@
   <data name="CharactersNoSections" xml:space="preserve">
     <value>Section counts appear once the catalog is built and a character is evaluated.</value>
   </data>
+  <data name="CharactersSectionRingsAll" xml:space="preserve">
+    <value>Show all sections</value>
+  </data>
+  <data name="CharactersSectionRingsFewer" xml:space="preserve">
+    <value>Show fewer sections</value>
+  </data>
   <data name="CharactersAllQuests" xml:space="preserve">
     <value>All quests</value>
   </data>
@@ -1612,6 +1618,9 @@
   </data>
   <data name="ConfigGameHeadingFontsHint" xml:space="preserve">
     <value>Draw section headings, titles and numbers in the game's own display fonts. A heading the game fonts can't show, such as one in Japanese, uses the usual font. Off, or with Flair set to Plain, every heading uses the usual font.</value>
+  </data>
+  <data name="ConfigFlairPreviewPlainNote" xml:space="preserve">
+    <value>With Flair set to Plain, these previews use the usual font. The game's heading fonts show in them once you choose Full or Quiet.</value>
   </data>
   <data name="ConfigFollowDalamudColours" xml:space="preserve">
     <value>Follow Dalamud colours</value>

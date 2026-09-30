@@ -23,9 +23,10 @@ namespace Tsukimichi.Ui;
 /// <para>
 /// The Moon Road look (feature plan v4 V5, proposal §7.7): at Flair Full the selected zone's loading-screen art is a
 /// banner over the centre column (only that one texture is asked for, through the shared cache, with a drawn night sky
-/// while it loads), the zone name on it in the Title role over a scrim and the counts in the Numeral role. At Full and
-/// Quiet each zone in the list carries a bead ring, one segment per quest current, lit when done, whose new segments
-/// light one after another at Full (never under Reduce motion); the expansion headers and the currents heading are open
+/// while it loads), the zone name on it in the Title role over a scrim (a solid band under high contrast) and the counts
+/// in the Numeral role. At Full and Quiet each zone in the list carries a bead ring, one segment per quest current, lit
+/// when done, whose new segments light one after another at Full (never under Reduce motion, and only as progress of
+/// the same character: <see cref="BeadRingMath.ShouldSequence"/>); the expansion headers and the currents heading are open
 /// sections. Plain keeps the look before 1.4.
 /// </para>
 /// <para>
@@ -203,7 +204,7 @@ public sealed class FlightPane
             return;
         }
 
-        if (Theme.Flair == Flair.Full && zone.Zone.LoadingImagePath is not null)
+        if (Theme.FlairSetting == Flair.Full && zone.Zone.LoadingImagePath is not null)
         {
             DrawBanner(zone);
         }
@@ -539,10 +540,14 @@ public sealed class FlightPane
 
         if (art && isSelected)
         {
-            // The selected zone's gold edge (the mockup's inset rule), at the row's left.
+            // The selected zone's gold edge (the mockup's inset rule), at the row's left. The span-all-columns item
+            // starts in the ring column, outside this column's clip, so the edge goes on the table's background
+            // channel (over the selection fill, under every column's content).
             var min = ImGui.GetItemRectMin();
             var max = ImGui.GetItemRectMax();
+            ImGuiP.TablePushBackgroundChannel();
             ImGui.GetWindowDrawList().AddRectFilled(min, new Vector2(min.X + MathF.Max(2f, UiMetrics.Px(2f)), max.Y), Theme.MoonU32);
+            ImGuiP.TablePopBackgroundChannel();
         }
 
         ImGui.TableNextColumn();
@@ -587,13 +592,23 @@ public sealed class FlightPane
     /// The zone banner (Flair Full): the zone's loading-screen art cover-cropped to min(160, 0.35 × width), a scrim, the
     /// expansion's ring, the zone's name in the Title role and the counts in the Numeral role. Only the selected zone's
     /// texture is asked for; while it loads (or if it cannot) a drawn night sky stands in. One item, hovered for the
-    /// zone's counts. Too narrow a pane for a banner of 56 px gets the header the other flair levels draw.
+    /// zone's counts. A pane too narrow for a banner that holds its text (padding, the title line and the counts line)
+    /// gets the header the other flair levels draw. Under the high-contrast palette (whose flair is capped at Quiet, so
+    /// the banner follows the Flair setting) a solid band behind the text replaces the scrims, as on the detail hero.
     /// </summary>
     private void DrawBanner(ZoneItem zone)
     {
         var width = ImGui.GetContentRegionAvail().X;
         var height = MathF.Round(UiMetrics.Px(PaneGrid.BannerHeight(width / UiMetrics.Scale)));
-        if (height < UiMetrics.Px(56f))
+        var pad = UiMetrics.Px(12f);
+        var body = ImGui.GetTextLineHeight();
+        float titleLine;
+        using (Typography.Title(zone.Name))
+        {
+            titleLine = ImGui.GetTextLineHeight();
+        }
+
+        if (height < (2f * pad) + titleLine + body)
         {
             DrawHeader(zone);
             return;
@@ -620,29 +635,25 @@ public sealed class FlightPane
             dl.AddRectFilledMultiColor(min, max, Theme.NightTopU32, Theme.NightTopU32, Theme.TideDeepU32, Theme.TideDeepU32);
         }
 
-        // Scrims: the bottom one under the text, the side one keeps the title legible over bright art (proposal §3,
-        // §10.1); high contrast has a deeper bottom scrim and no side one (§10.2).
-        Chrome.Scrim(dl, new Vector2(min.X, min.Y + (height * 0.35f)), max, 0f, highContrast ? 0.97f : 0.94f);
-        if (!highContrast)
+        var s = Theme.Surface;
+        var countsY = max.Y - pad - body;
+        var titleY = countsY - titleLine;
+        if (highContrast)
         {
-            var side = Theme.WithAlpha(Theme.Surface.Deep, 0.55f);
-            var clear = Theme.WithAlpha(Theme.Surface.Deep, 0f);
+            // A solid band behind the text (proposal §10.2).
+            dl.AddRectFilled(new Vector2(min.X, MathF.Max(min.Y, titleY - (pad * 0.5f))), max, Theme.WithAlpha(s.Window, 0.97f));
+        }
+        else
+        {
+            // Scrims: the bottom one under the text, the side one keeps the title legible over bright art (proposal §3,
+            // §10.1).
+            Chrome.Scrim(dl, new Vector2(min.X, min.Y + (height * 0.35f)), max, 0f, 0.94f);
+            var side = Theme.WithAlpha(s.Deep, 0.55f);
+            var clear = Theme.WithAlpha(s.Deep, 0f);
             dl.AddRectFilledMultiColor(min, new Vector2(min.X + (width * 0.6f), max.Y), side, clear, clear, side);
         }
 
-        dl.AddRect(min, max, highContrast ? Theme.VeilLineU32 : Theme.U32(Theme.Surface.Line), 0f, ImDrawFlags.None, UiMetrics.Hairline);
-
-        var s = Theme.Surface;
-        var pad = UiMetrics.Px(12f);
-        var body = ImGui.GetTextLineHeight();
-        float titleLine;
-        using (Typography.Title(zone.Name))
-        {
-            titleLine = ImGui.GetTextLineHeight();
-        }
-
-        var countsY = max.Y - pad - body;
-        var titleY = countsY - titleLine;
+        dl.AddRect(min, max, highContrast ? Theme.VeilLineU32 : Theme.U32(s.Line), 0f, ImDrawFlags.None, UiMetrics.Hairline);
         var x = min.X + pad;
         var icon = zone.Zone.ExpansionIcon;
         if (icon != 0)
@@ -901,6 +912,9 @@ public sealed class FlightPane
     private void RefreshCounts()
     {
         var states = session.States;
+        var viewed = session.ViewedContentId;
+        var live = session.IsLive;
+        var hasStates = states.Count > 0;
         foreach (var zone in zones)
         {
             var attuned = 0;
@@ -943,7 +957,9 @@ public sealed class FlightPane
                 }
             }
 
-            zone.SetCounts(attuned, fieldAttuned, unknown, questsDone);
+            var total = zone.Zone.TotalCurrents;
+            var reading = new BeadReading(viewed, live, total > 0 && unknown == total, hasStates);
+            zone.SetCounts(attuned, fieldAttuned, unknown, questsDone, reading);
         }
 
         countsVersion = session.Version;
@@ -984,7 +1000,8 @@ public sealed class FlightPane
         /// <summary>The field currents' count for the banner ("2/4"); empty when the zone has none or none is readable.</summary>
         public string FieldCountText { get; private set; } = string.Empty;
 
-        private bool countsSet;
+        /// <summary>Whose counts these are and how they were read; the default before the first read.</summary>
+        private BeadReading reading;
 
         public FlightZone Zone { get; }
         public QuestRow[] Rows { get; }
@@ -1005,11 +1022,12 @@ public sealed class FlightPane
         /// <summary>True when no current is readable (a stored snapshot, logged out), so the moon is veiled instead of new.</summary>
         public bool AllUnknown { get; private set; } = true;
 
-        public void SetCounts(int attuned, int fieldAttuned, int unknown, int questsDone)
+        public void SetCounts(int attuned, int fieldAttuned, int unknown, int questsDone, BeadReading read)
         {
-            // A rise after the first count lights the new beads one after another (Full flair, motion on); the first
-            // count, a fall, or a rise with the motion off shows at once.
-            if (countsSet && questsDone > QuestsDone && Theme.FlairMotion)
+            // A rise between two real reads of the same character lights the new beads one after another (Full flair,
+            // motion on); the first count, a character switch, attunement becoming readable, a fall, or a rise with the
+            // motion off shows at once.
+            if (BeadRingMath.ShouldSequence(reading, read, QuestsDone, questsDone) && Theme.FlairMotion)
             {
                 LitFrom = QuestsDone;
                 Motion.Trigger(BeadKey);
@@ -1019,7 +1037,7 @@ public sealed class FlightPane
                 LitFrom = questsDone;
             }
 
-            countsSet = true;
+            reading = read;
             QuestsDone = questsDone;
             var total = Zone.TotalCurrents;
             Attuned = attuned;
