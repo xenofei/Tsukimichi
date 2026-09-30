@@ -58,11 +58,49 @@ public class RailAndTreeTierTests
         Assert.Equal(TreeTier.Compact, LayoutBudgets.TreeTierFor(width, TreeTier.Compact));
     }
 
-    [Fact]
-    public void The_default_tree_is_in_the_full_tier()
+    /// <summary>UI scales 0.9 to 1.6 in steps of 0.05, each at Dalamud global scales 1 to 1.5, as UiMetrics.Scale takes them.</summary>
+    public static IEnumerable<object[]> Scales()
     {
-        Assert.Equal(TreeTier.Full, LayoutBudgets.TreeTierFor(PaneLayout.TreeDefaultLogical, TreeTier.Full));
+        foreach (var global in new[] { 1f, 1.1f, 1.25f, 1.5f })
+        {
+            for (var step = 0; step <= 14; step++)
+            {
+                yield return [ScaleMetrics.MinUiScale + (step * 0.05f), global];
+            }
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(Scales))]
+    public void The_default_tree_is_in_the_full_tier(float uiScale, float globalScale)
+    {
+        // What TreePane measures: the ##left pane PaneLayout gives the tree (whole pixels, so up to a pixel under 300 ×
+        // the scale), through the same conversion the pane uses. Its rows' room beside the scrollbar is not the tier's.
         Assert.Equal(300f, PaneLayout.TreeDefaultLogical);
+        var scale = ScaleMetrics.LayoutFactor(globalScale, uiScale);
+        var widths = PaneLayout.Solve(2400f * scale, MathF.Round(ScaleMetrics.RailLogical * scale), PaneLayout.TreeDefaultLogical, PaneLayout.DetailDefaultLogical, scale);
+        Assert.True(widths.Tree <= PaneLayout.TreeDefaultLogical * scale, $"tree {widths.Tree}");
+        Assert.Equal(TreeTier.Full, LayoutBudgets.TreeTierForPane(widths.Tree, scale, TreeTier.Full));
+    }
+
+    [Theory]
+    [MemberData(nameof(Scales))]
+    public void A_pane_two_logical_pixels_under_a_breakpoint_takes_the_narrower_tier(float uiScale, float globalScale)
+    {
+        // The pixel the floor can take off is all the tolerance there is: a pane really under a breakpoint narrows.
+        var scale = ScaleMetrics.LayoutFactor(globalScale, uiScale);
+        foreach (var tier in new[] { TreeTier.Full, TreeTier.Trim, TreeTier.Compact })
+        {
+            var pane = MathF.Floor((LayoutBudgets.TreeTierFloor(tier) - 2f) * scale);
+            Assert.Equal(tier + 1, LayoutBudgets.TreeTierForPane(pane, scale, TreeTier.Full));
+        }
+    }
+
+    [Fact]
+    public void An_unreadable_pane_keeps_the_tier()
+    {
+        Assert.Equal(TreeTier.Compact, LayoutBudgets.TreeTierForPane(float.NaN, 1.15f, TreeTier.Compact));
+        Assert.Equal(TreeTier.Full, LayoutBudgets.TreeTierForPane(345f, float.NaN, TreeTier.Full));
     }
 
     [Theory]
@@ -192,6 +230,51 @@ public class RailAndTreeTierTests
             {
                 Assert.True(LayoutBudgets.RailHeight(fit, 5, compact) <= height + 0.05f, $"{height}: {LayoutBudgets.RailHeight(fit, 5, compact)}");
             }
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(Scales))]
+    public void A_placed_rail_whose_foot_is_anchored_never_overflows_its_pane(float uiScale, float globalScale)
+    {
+        // TabStrip draws exactly PlaceRail: whole-pixel stations and the foot buttons at the 24 px click-target floor
+        // (UiMetrics.MinTarget), which is more than 26 logical px under a scale of 24/26. Its content (a 1 px item at
+        // ContentBottom) must end inside the pane whenever the foot is anchored, or the rail becomes wheel-scrollable.
+        var scale = ScaleMetrics.LayoutFactor(globalScale, uiScale);
+        var button = MathF.Max(LayoutBudgets.RailButtonLogical * scale, 24f);
+        foreach (var compact in new[] { false, true })
+        {
+            for (var height = 150f; height <= 1400f; height += 0.75f)
+            {
+                var place = LayoutBudgets.PlaceRail(height, scale, 5, compact, button);
+                if (!place.Fit.FootAnchored)
+                {
+                    continue;
+                }
+
+                var foot = LayoutBudgets.FootHeight(place.Fit.Percent, compact, place.Button / scale) * scale;
+                var stationsBottom = place.StationsTop + (5 * place.Station);
+                var where = $"{height} px, compact {compact}";
+                Assert.True(place.ContentBottom <= height, $"{where}: content ends at {place.ContentBottom}");
+                Assert.True(place.FootTop + foot + (LayoutBudgets.RailPadLogical * scale) <= height + 0.05f, $"{where}: foot ends at {place.FootTop + foot}");
+                Assert.True(stationsBottom + (LayoutBudgets.RailGapLogical * scale) <= place.FootTop + 0.001f, $"{where}: stations end at {stationsBottom}, foot at {place.FootTop}");
+                Assert.Equal(button, place.Button, 3);
+                Assert.Equal(MathF.Floor(place.Station), place.Station);
+            }
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(Scales))]
+    public void The_labelled_rail_only_shows_on_a_window_wider_than_its_own_minimum(float uiScale, float globalScale)
+    {
+        // So the main window's minimum is the compact rail's always: one that followed the rail would never bind.
+        var labelledMin = ScaleMetrics.MinWindowSize(uiScale, globalScale, new System.Numerics.Vector2(float.NaN), ScaleMetrics.RailLogical).X;
+        var compactMin = ScaleMetrics.MinWindowSize(uiScale, globalScale, new System.Numerics.Vector2(float.NaN), ScaleMetrics.RailCompactLogical).X;
+        Assert.True(compactMin < labelledMin);
+        foreach (var wasCompact in new[] { false, true })
+        {
+            Assert.True(LayoutBudgets.CompactRail(labelledMin - 0.01f, uiScale, wasCompact, forced: false), $"{uiScale} × {globalScale}: labelled rail at {labelledMin - 0.01f}");
         }
     }
 

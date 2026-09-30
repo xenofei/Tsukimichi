@@ -26,6 +26,17 @@ public enum TreeTier
 /// <param name="FootAnchored">Whether the foot sits at the bottom; false when the rail is taller than its pane and scrolls.</param>
 public readonly record struct RailFit(float Crest, float Station, bool Percent, bool FootAnchored);
 
+/// <summary>The rail's pixel layout for one frame (<see cref="LayoutBudgets.PlaceRail"/>), offsets from the pane's top.</summary>
+/// <param name="Fit">The logical fit it was placed from.</param>
+/// <param name="CrestTop">The crest's top.</param>
+/// <param name="Crest">The crest's size; 0 hides it.</param>
+/// <param name="StationsTop">The first station's top.</param>
+/// <param name="Station">Each station's height, in whole pixels.</param>
+/// <param name="FootTop">The foot's top (the gauge's).</param>
+/// <param name="Button">The foot buttons' side.</param>
+/// <param name="ContentBottom">Where the rail's content ends, its bottom pad included; inside the pane while the foot is anchored.</param>
+public readonly record struct RailPlacement(RailFit Fit, float CrestTop, float Crest, float StationsTop, float Station, float FootTop, float Button, float ContentBottom);
+
 /// <summary>
 /// The fixed-width places a translated label has to fit (V2-19), in logical pixels at UI scale 1: the tab rail's
 /// label room, the quest table's fixed columns and the quick-view segments. The plugin draws with these numbers
@@ -121,62 +132,109 @@ public static class LayoutBudgets
     /// height runs short the rail gives up, in order: the crest's full size, the percentage (the gauge's tooltip still
     /// has it), the stations' spare height, the crest; past that the foot follows the stations and the rail scrolls.
     /// </summary>
-    public static RailFit FitRail(float heightLogical, int stations, bool compact)
+    /// <param name="heightLogical">The rail pane's height in logical pixels.</param>
+    /// <param name="stations">How many stations the rail has.</param>
+    /// <param name="compact">Whether the rail is the compact icon rail.</param>
+    /// <param name="buttonLogical">
+    /// The foot buttons' side in logical pixels as drawn: <see cref="RailButtonLogical"/>, or more where the 24 px click
+    /// target floor lifts it at a small scale (<see cref="PlaceRail"/> passes it).
+    /// </param>
+    public static RailFit FitRail(float heightLogical, int stations, bool compact, float buttonLogical = RailButtonLogical)
     {
         var height = float.IsFinite(heightLogical) ? MathF.Max(0f, heightLogical) : 0f;
         var count = Math.Max(0, stations);
+        var button = Button(buttonLogical);
         var station = compact ? CompactStationLogical : StationLogical;
         var stationMin = compact ? CompactStationMinLogical : StationMinLogical;
         var crest = compact ? CrestSmallLogical : CrestLogical;
 
         var fit = new RailFit(crest, station, Percent: true, FootAnchored: true);
-        if (RailHeight(fit, count, compact) <= height)
+        if (RailHeight(fit, count, compact, button) <= height)
         {
             return fit;
         }
 
         fit = fit with { Crest = CrestSmallLogical };
-        if (RailHeight(fit, count, compact) <= height)
+        if (RailHeight(fit, count, compact, button) <= height)
         {
             return fit;
         }
 
         fit = fit with { Percent = false };
-        if (RailHeight(fit, count, compact) <= height)
+        if (RailHeight(fit, count, compact, button) <= height)
         {
             return fit;
         }
 
         // The stations give up their spare height, as far as their minimum.
-        var spare = RailHeight(fit, count, compact) - height;
+        var spare = RailHeight(fit, count, compact, button) - height;
         var give = count > 0 ? MathF.Min(station - stationMin, spare / count) : 0f;
         fit = fit with { Station = station - give };
-        if (RailHeight(fit, count, compact) <= height + 0.01f)
+        if (RailHeight(fit, count, compact, button) <= height + 0.01f)
         {
             return fit;
         }
 
         fit = fit with { Crest = 0f };
-        return RailHeight(fit, count, compact) <= height + 0.01f ? fit : fit with { FootAnchored = false };
+        return RailHeight(fit, count, compact, button) <= height + 0.01f ? fit : fit with { FootAnchored = false };
     }
 
     /// <summary>The height a rail laid out as <paramref name="fit"/> needs, from the top pad to the bottom pad.</summary>
-    public static float RailHeight(RailFit fit, int stations, bool compact)
+    public static float RailHeight(RailFit fit, int stations, bool compact, float buttonLogical = RailButtonLogical)
     {
         var crest = fit.Crest > 0f ? fit.Crest + RailGapLogical : 0f;
-        return RailPadLogical + crest + (Math.Max(0, stations) * fit.Station) + RailGapLogical + FootHeight(fit.Percent, compact) + RailPadLogical;
+        return RailPadLogical + crest + (Math.Max(0, stations) * fit.Station) + RailGapLogical + FootHeight(fit.Percent, compact, buttonLogical) + RailPadLogical;
     }
 
     /// <summary>
     /// The foot's height: the gauge, the percentage under it (a line at the label size), and the two buttons side by
     /// side on the labelled rail or one above the other on the compact rail.
     /// </summary>
-    public static float FootHeight(bool percent, bool compact)
+    public static float FootHeight(bool percent, bool compact, float buttonLogical = RailButtonLogical)
     {
-        var percentLine = percent ? (BodyFontPx * RailLabelFraction) + RailGapLogical : 0f;
-        var buttons = compact ? (2f * RailButtonLogical) + RailGapLogical : RailButtonLogical;
-        return RailGaugeLogical + RailGapLogical + percentLine + buttons;
+        var button = Button(buttonLogical);
+        var buttons = compact ? (2f * button) + RailGapLogical : button;
+        return RailGaugeLogical + RailGapLogical + PercentLine(percent) + buttons;
     }
+
+    /// <summary>The percentage's line under the gauge with its gap, in logical pixels; 0 when it does not show.</summary>
+    public static float PercentLine(bool percent) => percent ? (BodyFontPx * RailLabelFraction) + RailGapLogical : 0f;
+
+    /// <summary>
+    /// Where the rail draws everything in a pane <paramref name="heightPx"/> pixels tall at <paramref name="scale"/>
+    /// pixels per logical unit, fitted by <see cref="FitRail"/> with the foot buttons at the size they are drawn,
+    /// <paramref name="buttonPx"/> (the 24 px click-target floor can make them larger than 26 logical px). Each station is
+    /// a whole number of pixels, rounded down so the pixel layout is never taller than the logical one, and while the
+    /// foot is anchored the content ends inside the pane: a rail that fits never scrolls. Offsets are from the pane's top.
+    /// </summary>
+    public static RailPlacement PlaceRail(float heightPx, float scale, int stations, bool compact, float buttonPx)
+    {
+        var s = float.IsFinite(scale) && scale > 0.01f ? scale : 1f;
+        var height = float.IsFinite(heightPx) ? MathF.Max(0f, heightPx) : 0f;
+        var count = Math.Max(0, stations);
+        var buttonLogical = Button(float.IsFinite(buttonPx) ? buttonPx / s : RailButtonLogical);
+        var fit = FitRail(height / s, count, compact, buttonLogical);
+        var pad = RailPadLogical * s;
+        var gap = RailGapLogical * s;
+
+        var crest = fit.Crest * s;
+        var stationsTop = pad + (crest > 0f ? crest + gap : 0f);
+        var station = MathF.Max(1f, MathF.Floor(fit.Station * s));
+        var stationsBottom = stationsTop + (count * station);
+        var foot = FootHeight(fit.Percent, compact, buttonLogical) * s;
+        var footTop = fit.FootAnchored ? MathF.Max(stationsBottom + gap, height - pad - foot) : stationsBottom + gap;
+        var contentBottom = footTop + foot + pad;
+        if (fit.FootAnchored)
+        {
+            // FitRail lets its logical sum run a hundredth over the height; the content never does.
+            contentBottom = MathF.Min(contentBottom, height);
+        }
+
+        return new RailPlacement(fit, pad, crest, stationsTop, station, footTop, buttonLogical * s, contentBottom);
+    }
+
+    private static float Button(float buttonLogical) =>
+        float.IsFinite(buttonLogical) ? MathF.Max(RailButtonLogical, buttonLogical) : RailButtonLogical;
 
     // ---- Quest table (TablePane) ----
 
@@ -301,6 +359,24 @@ public static class LayoutBudgets
 
         return tier;
     }
+
+    /// <summary>
+    /// What <see cref="PaneLayout.Solve"/>'s whole-pixel floor can take off a pane: a pane asked for 300 logical px is
+    /// up to a pixel under 300 × the scale, so a pane's tier reads it as this much wider.
+    /// </summary>
+    public const float PaneFloorTolerancePx = 1f;
+
+    /// <summary>
+    /// A pane's logical width for its tier, from its window's width in pixels: the scrollbar included (a tier follows
+    /// the pane's width, not the room its rows keep beside a scrollbar), plus <see cref="PaneFloorTolerancePx"/> for the
+    /// floor that made it whole pixels, over the layout scale. An unreadable width is NaN, which keeps the tier.
+    /// </summary>
+    public static float PaneLogical(float panePx, float scale) =>
+        float.IsFinite(panePx) ? (panePx + PaneFloorTolerancePx) / (float.IsFinite(scale) && scale > 0.01f ? scale : 1f) : float.NaN;
+
+    /// <summary>The tree's tier for its pane, <paramref name="panePx"/> pixels wide (<see cref="PaneLogical"/>, <see cref="TreeTierFor"/>).</summary>
+    public static TreeTier TreeTierForPane(float panePx, float scale, TreeTier previous) =>
+        TreeTierFor(PaneLogical(panePx, scale), previous);
 
     /// <summary>The narrowest pane a tier holds at (its breakpoint); the last tier has none.</summary>
     public static float TreeTierFloor(TreeTier tier) => tier switch

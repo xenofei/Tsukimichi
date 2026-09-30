@@ -45,7 +45,6 @@ public static partial class Strings
     public const string CharacterNameFormat = "{0}@{1}";
     public static string BrowseModeNotice => Loc.Get("BrowseModeNotice");
     public static string HelpButtonTooltip => Loc.Get("HelpButtonTooltip");
-    public static string TutorialButtonTooltip => Loc.Get("TutorialButtonTooltip");
     public static string SettingsButtonTooltip => Loc.Get("SettingsButtonTooltip");
     public static string ActionUnavailable => Loc.Get("ActionUnavailable");
 
@@ -268,6 +267,8 @@ public static partial class Strings
     public static string ColumnStatusTooltip => Loc.Get("ColumnStatusTooltip");
     public static string ColumnExpansionTooltip => Loc.Get("ColumnExpansionTooltip");
     public static string ColumnRewardsTooltip => Loc.Get("ColumnRewardsTooltip");
+    /// <summary>{0} = the sorted column's header, hidden by the table's width.</summary>
+    public static string TableSortHiddenFormat => Loc.Get("TableSortHiddenFormat");
     public static string JobAny => Loc.Get("JobAny");
     public static string JobMulti => Loc.Get("JobMulti");
     public static string JobDohDol => Loc.Get("JobDohDol");

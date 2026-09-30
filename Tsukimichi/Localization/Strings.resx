@@ -3423,9 +3423,6 @@
   <data name="HelpButtonTooltip" xml:space="preserve">
     <value>Help</value>
   </data>
-  <data name="TutorialButtonTooltip" xml:space="preserve">
-    <value>Tour: a guided walk through the window</value>
-  </data>
   <data name="SettingsButtonTooltip" xml:space="preserve">
     <value>Settings</value>
   </data>
@@ -3809,6 +3806,10 @@
   </data>
   <data name="ColumnRewardsTooltip" xml:space="preserve">
     <value>Up to four reward icons; hover one for details</value>
+  </data>
+  <data name="TableSortHiddenFormat" xml:space="preserve">
+    <value>Sorted by {0}, a column hidden at this width</value>
+    <comment>{0} = the sorted column's header (Level, Expansion). The Name header's tooltip while the table is too narrow to show the sorted column.</comment>
   </data>
   <data name="JobAny" xml:space="preserve">
     <value>Any</value>

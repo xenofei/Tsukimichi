@@ -3198,9 +3198,6 @@
   <data name="HelpButtonTooltip" xml:space="preserve">
     <value>ヘルプ</value>
   </data>
-  <data name="TutorialButtonTooltip" xml:space="preserve">
-    <value>ツアー: ウィンドウの案内</value>
-  </data>
   <data name="SettingsButtonTooltip" xml:space="preserve">
     <value>設定</value>
   </data>

@@ -5,7 +5,7 @@
 Manual, in game, with the repo folder added as a dev plugin location. One line per feature: what to do, what to expect.
 "Snapshot" below means a stored character file under `<config>/characters/`.
 
-Round 3 additions (toolbar icon buttons, the Display sliders, quest banners, the engagement pass) are folded into the sections below; the "Display" subsection under Filter panel is new. Regions the interactive tutorial highlights are recorded every frame under these keys: toolbar, search, filtersButton, chips, character, sync, helpButton, tutorialButton, settingsButton, tabs, tree, table, detail, detail.requirements, detail.path, detail.giver, statusBar, filterPanel (only while open), moonlit.kinds, moonlit.table, characters.list, characters.dashboard.
+Round 3 additions (toolbar icon buttons, the Display sliders, quest banners, the engagement pass) are folded into the sections below; the "Display" subsection under Filter panel is new. Regions the interactive tutorial highlights are recorded every frame under these keys: toolbar, search, filtersButton, chips, character, sync, helpButton, settingsButton, tabs, tree, table, detail, detail.requirements, detail.path, detail.giver, statusBar, filterPanel (only while open), moonlit.kinds, moonlit.table, characters.list, characters.dashboard.
 
 ## Window shell
 - `/tsukimichi` → the main window "Tsukimichi" toggles; default size 1100×700 (scaled), cannot shrink below 800×500.

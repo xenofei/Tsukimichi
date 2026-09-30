@@ -17,7 +17,6 @@ public static class UiRects
     public const string Character = "character";
     public const string Sync = "sync";
     public const string HelpButton = "helpButton";
-    public const string TutorialButton = "tutorialButton";
     public const string SettingsButton = "settingsButton";
     public const string Tabs = "tabs";
     public const string Tree = "tree";
