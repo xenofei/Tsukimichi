@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="4" viewBox="0 0 200 4">
+<title>rule-fade (1x)</title>
+<desc>Section rule: the fading hairline that follows a section eyebrow to the pane edge (AddRectFilledMultiColor, Gilt 0.7 to 0). Original Tsukimichi art; rasterize into assets/ui/ornaments.png.</desc>
+<defs><linearGradient id="f" x1="0" x2="1"><stop offset="0" stop-color="#A88B52" stop-opacity=".7"/><stop offset="1" stop-color="#A88B52" stop-opacity="0"/></linearGradient></defs>
+<rect x="0" y="1.5" width="200" height="1" fill="url(#f)"/>
+</svg>

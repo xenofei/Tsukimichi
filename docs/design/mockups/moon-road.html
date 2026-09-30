@@ -1,0 +1,840 @@
+<title>Tsukimichi Moon Road</title>
+<style>
+:root{
+  color-scheme: dark;
+  /* surfaces */
+  --abyss:#080B16; --night-top:#151C33; --night:#0F1424; --sunken:#0B0F1C; --raised:#1E2437; --hover:#262D45;
+  --line:#2A3149; --veil-line:#5C6584; --shadow:#3A4363; --umbra:#2C334A;
+  /* text */
+  --silver:#DDE3F0; --mist:#A9B2CC; --dusk:#7C86A8; --veil:#4A5270; --veil-text:#8A93B0;
+  /* gold (signal) and gilt (ornament) */
+  --moon:#F2D27A; --moon-high:#FFF0BE; --moon-deep:#D6B25A; --moon-dim:#C3AD72;
+  --gilt:#A88B52; --gilt-high:#D9BE82;
+  /* cool accent, danger */
+  --tide:#6F8FD0; --tide-deep:#24345C; --eclipse:#B25C7F; --eclipse-text:#D68AA8;
+  /* alpha helpers */
+  --moon-wash:rgba(242,210,122,.16); --silver-wash:rgba(221,227,240,.07); --gilt-rule:rgba(168,139,82,.7);
+  --focus:#F2D27A;
+  /* type: stand-ins for the game fonts */
+  --f-body:"M PLUS 1p","Noto Sans JP","Segoe UI",system-ui,sans-serif;            /* AXIS */
+  --f-eyebrow:"Saira Extra Condensed","Arial Narrow","Roboto Condensed",sans-serif; /* TrumpGothic */
+  --f-title:"Cinzel","Trajan Pro","Palatino Linotype",Georgia,serif;               /* Jupiter */
+  --f-num:"Rajdhani","Bahnschrift","DIN Alternate",sans-serif;                      /* MiedingerMid */
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--abyss);color:var(--silver);font:14px/1.45 var(--f-body);-webkit-font-smoothing:antialiased}
+.page{max-width:1460px;margin:0 auto;padding:28px 16px 72px}
+a{color:var(--tide)}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:4px}
+svg{display:block}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* ---------- page chrome ---------- */
+.intro{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.intro svg{width:56px;height:56px;flex:none}
+.intro h1{font:600 30px/1.1 var(--f-title);letter-spacing:.04em;margin:0}
+.intro p{margin:4px 0 0;color:var(--mist);max-width:760px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;color:var(--dusk);font-size:12.5px;margin:14px 0 26px}
+.legend b{color:var(--mist);font-weight:500}
+h2.band{display:flex;align-items:center;gap:10px;font:600 15px/1 var(--f-eyebrow);letter-spacing:.14em;text-transform:uppercase;color:var(--mist);margin:40px 0 6px}
+h2.band::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--gilt-rule),transparent)}
+.band-note{color:var(--dusk);font-size:13px;margin:0 0 14px;max-width:880px}
+.scroller{overflow-x:auto;padding-bottom:10px}
+.sigil{width:10px;height:10px;flex:none}
+
+/* ---------- the window ---------- */
+.win{width:1400px;background:var(--night);border:1px solid #20263A;border-radius:8px;overflow:hidden;box-shadow:0 18px 50px rgba(0,0,0,.55)}
+.titlebar{height:30px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;background:var(--sunken);border-bottom:1px solid var(--line);font-size:13px;color:var(--mist)}
+.titlebar .dots{display:flex;gap:10px;color:var(--dusk)}
+.toolbar{height:48px;display:flex;align-items:center;gap:10px;padding:0 12px;background:linear-gradient(var(--raised),#1A2033);border-bottom:1px solid var(--line)}
+.search{display:flex;align-items:center;gap:8px;width:300px;height:30px;padding:0 12px;border-radius:15px;background:var(--sunken);border:1px solid var(--line);color:var(--dusk)}
+.seg{display:flex;height:30px;border:1px solid var(--line);border-radius:15px;background:var(--sunken);overflow:hidden}
+.seg button{padding:0 13px;color:var(--mist);font-size:13px;border-right:1px solid var(--line)}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed=true]{background:var(--silver-wash);color:var(--silver)}
+.btn{display:inline-flex;align-items:center;gap:7px;height:30px;padding:0 12px;border-radius:15px;background:var(--raised);border:1px solid var(--line);color:var(--mist);font-size:13px}
+.btn .count{min-width:18px;height:18px;border-radius:9px;background:var(--silver);color:var(--night);font:700 12px/18px var(--f-num);text-align:center}
+.chip-char{margin-left:auto;display:flex;align-items:center;gap:8px;height:32px;padding:0 12px 0 4px;border-radius:16px;background:var(--raised);border:1px solid var(--line)}
+.chip-char .who{font-size:13px}.chip-char .who span{color:var(--mist)}
+.live{width:7px;height:7px;border-radius:50%;background:var(--moon);box-shadow:0 0 0 3px rgba(242,210,122,.15)}
+
+.body{display:grid;grid-template-columns:64px 6px 300px 6px 1fr 6px 372px;height:760px}
+.split{background:transparent;position:relative}
+.split::before{content:"";position:absolute;left:2.5px;top:0;bottom:0;width:1px;background:var(--line)}
+.split:hover::before{background:var(--gilt)}
+.pane{position:relative;overflow:hidden;background:linear-gradient(var(--night-top),var(--night) 60%)}
+
+/* ---------- rail ---------- */
+.rail{background:var(--abyss);display:flex;flex-direction:column;align-items:center;padding:10px 0 12px;position:relative;overflow:hidden}
+.rail .crest{width:40px;height:40px}
+.rail .crest-rule{width:40px;height:1px;background:linear-gradient(90deg,transparent,var(--gilt),transparent);margin:10px 0 4px}
+.stations{position:relative;display:flex;flex-direction:column;width:100%}
+.stations::before{content:"";position:absolute;left:31.5px;top:12px;bottom:30px;width:1px;background:rgba(168,139,82,.35)}
+.station{position:relative;height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;color:var(--mist);width:100%}
+.station .ic{width:22px;height:22px;position:relative;z-index:1;background:var(--abyss);border-radius:6px}
+.station .ic svg{width:22px;height:22px}
+.station .lbl{font:600 11.5px/1 var(--f-eyebrow);letter-spacing:.09em;text-transform:uppercase}
+.station:hover{color:var(--silver)}
+.station.on{color:var(--silver)}
+.station.on::before{content:"";position:absolute;left:31px;top:4px;width:2px;height:22px;border-radius:1px;background:linear-gradient(var(--moon-high),var(--moon-deep));animation:lit .5s ease-out both}
+.station.on::after{content:"";position:absolute;left:18px;top:3px;width:28px;height:28px;border-radius:50%;background:radial-gradient(rgba(242,210,122,.16),transparent 70%)}
+.station .badge{position:absolute;top:4px;left:36px;z-index:2;height:15px;padding:0 4px;border-radius:8px;background:var(--moon);color:var(--night);font:700 11px/15px var(--f-num)}
+.rail .stars{flex:1;width:100%;min-height:40px;opacity:.9}
+.rail .foot{display:flex;flex-direction:column;align-items:center;gap:6px}
+.rail .foot .pct{font:700 14px/1 var(--f-num);color:var(--silver)}
+.round{width:28px;height:28px;border-radius:14px;display:grid;place-items:center;color:var(--dusk);border:1px solid var(--line)}
+.round:hover{color:var(--silver);background:var(--hover)}
+.round svg{width:14px;height:14px}
+@keyframes lit{from{transform:scaleY(.2);opacity:0}to{transform:none;opacity:1}}
+
+/* ---------- section eyebrow (the header treatment) ---------- */
+.eyebrow{display:flex;align-items:center;gap:7px;height:28px;font:600 13px/1 var(--f-eyebrow);letter-spacing:.13em;text-transform:uppercase;color:var(--mist)}
+.eyebrow .rule{flex:1;height:1px;background:linear-gradient(90deg,var(--gilt-rule),transparent);min-width:16px}
+.eyebrow .cap{font:500 12px/1 var(--f-body);letter-spacing:0;text-transform:none;color:var(--dusk)}
+.eyebrow .cap.good{color:var(--mist)}
+.num{font-family:var(--f-num);font-weight:600;letter-spacing:.02em}
+
+/* ---------- tree ---------- */
+.tree{padding:6px 8px 0 6px;height:100%;overflow:hidden}
+.tree .eyebrow{padding:0 4px 0 6px;margin-bottom:2px}
+.node{position:relative;display:flex;align-items:center;gap:5px;height:34px;font-size:13px;padding:0 8px 0 calc(4px + var(--d,0) * 14px);border-radius:5px;width:100%;text-align:left}
+.node:hover{background:var(--silver-wash)}
+.node .chev{width:10px;height:10px;flex:none;color:var(--dusk)}
+.node .chev.leaf{visibility:hidden}
+.node .chev.open{transform:rotate(90deg)}
+.node .nm{flex:1;min-width:48px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13.5px}
+.node.sec .nm{font-weight:700}
+.node .pc{font-size:11.5px;color:var(--dusk);flex:none}
+.node .xp{font:600 11px/16px var(--f-eyebrow);letter-spacing:.06em;padding:0 5px;border:1px solid var(--line);border-radius:8px;color:var(--dusk);flex:none}
+.node .rdy{flex:none;height:17px;min-width:17px;padding:0 5px;border-radius:9px;background:var(--moon-wash);color:var(--moon);font:700 12px/17px var(--f-num);text-align:center}
+.node .ct{flex:none;font:600 13px/1 var(--f-num);color:var(--mist);padding-left:2px;text-align:right}
+.node.done .nm,.node.done .ct{color:var(--moon-dim)}
+.node .road{position:absolute;left:calc(4px + var(--d,0) * 14px + 52px);right:8px;bottom:2px;height:2px;border-radius:1px;background:linear-gradient(90deg,var(--moon-deep),var(--moon) calc(var(--p) * 1%),var(--line) calc(var(--p) * 1%))}
+.node.sel{background:var(--silver-wash)}
+.node.sel::before{content:"";position:absolute;left:0;top:6px;bottom:6px;width:2px;border-radius:1px;background:var(--moon)}
+.node.sel .road{background:linear-gradient(90deg,var(--moon),var(--moon-high) calc(var(--p) * 1%),var(--line) calc(var(--p) * 1%))}
+.tree .divider{height:14px;margin:4px 0}
+.tree .fade{position:absolute;left:0;right:0;bottom:0;height:40px;background:linear-gradient(transparent,var(--night))}
+
+/* orbit ring */
+.orb{width:28px;height:28px;flex:none}
+.orb .trk{fill:none;stroke:rgba(92,101,132,.55);stroke-width:2}
+.orb .arc{fill:none;stroke:var(--moon);stroke-width:2;stroke-linecap:round;stroke-dasharray:var(--p) 100;transform:rotate(-90deg);transform-origin:16px 16px;animation:orbit .9s ease-out both}
+.orb .bead{transform:rotate(calc(var(--p) * 3.6deg));transform-origin:16px 16px}
+.orb .bead .bh{fill:var(--night)} .orb .bead .bd{fill:var(--moon-high)}
+.orb.zero .arc,.orb.zero .bead{display:none}
+.orb.zero .icon{opacity:.6}
+.orb.full .trk{stroke:var(--moon)}
+.orb .rdot{fill:var(--moon)}
+@keyframes orbit{from{stroke-dasharray:0 100}}
+
+/* ---------- table ---------- */
+.center{display:flex;flex-direction:column}
+.ptitle{padding:12px 16px 0}
+.ptitle .crumb{font-size:12px;color:var(--dusk)}
+.ptitle .row1{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.ptitle h3{margin:0;font:600 21px/1.2 var(--f-title);letter-spacing:.03em}
+.ptitle .sum{margin-left:auto;color:var(--mist);font-size:13px}
+.ptitle .sum .num{color:var(--silver)}
+.ptitle .sum .gold{color:var(--moon)}
+.ptitle .rule{height:1px;margin:10px 0 0;background:linear-gradient(90deg,var(--gilt-rule),transparent)}
+.qt{--cols:40px minmax(140px,3fr) 46px 54px minmax(150px,2.4fr) 48px 62px;padding:0 8px 0 8px;flex:1;overflow:hidden}
+.qh,.qr{display:grid;grid-template-columns:var(--cols);align-items:center}
+.qh{height:34px;font:600 12.5px/1 var(--f-eyebrow);letter-spacing:.12em;text-transform:uppercase;color:var(--mist);border-bottom:1px solid rgba(168,139,82,.45)}
+.qh span{padding:0 6px}
+.qh .sorted::after{content:"";display:inline-block;margin-left:5px;border:4px solid transparent;border-top-color:var(--silver);border-bottom:0;vertical-align:2px}
+.qr{position:relative;height:36px;border-bottom:1px solid rgba(42,49,73,.6);width:100%;text-align:left}
+.qr>span{padding:0 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qr:hover{background:var(--hover)}
+.qr::before{content:"";position:absolute;left:0;top:5px;bottom:5px;width:3px;border-radius:1.5px;background:var(--stripe,transparent)}
+.qr.s-done{--stripe:var(--moon-deep)} .qr.s-ready{--stripe:var(--moon)} .qr.s-blocked{--stripe:rgba(124,134,168,.6)}
+.qr.sel{background:rgba(221,227,240,.08);box-shadow:inset 0 0 0 1px rgba(221,227,240,.22)}
+.qr.s-ready .road{position:absolute;left:44px;right:8px;bottom:0;height:1px;background:linear-gradient(90deg,rgba(242,210,122,.55),transparent)}
+.qr .mn{display:grid;place-items:center;padding:0}
+.qr .mn svg{width:20px;height:20px}
+.qr .name{font-size:14px}
+.qr .name em{font-style:normal;color:var(--mist)}
+.lv{display:inline-block;min-width:28px;height:18px;padding:0 6px;border-radius:9px;background:var(--sunken);border:1px solid var(--line);color:var(--mist);font:600 12.5px/16px var(--f-num);text-align:center}
+.job{color:var(--mist);font-size:13px;display:flex;align-items:center;gap:5px}
+.st{font-size:13px}.st b{font-weight:500}
+.st .r{color:var(--dusk)}
+.t-done{color:var(--moon)} .t-ready{color:var(--moon)} .t-blocked{color:var(--mist)} .t-fore{color:var(--eclipse-text)}
+.xpp{font:600 11px/16px var(--f-eyebrow);letter-spacing:.06em;padding:0 5px;border:1px solid var(--line);border-radius:8px;color:var(--dusk)}
+.rw{display:flex;gap:3px}
+.rw svg{width:20px;height:20px;border-radius:4px}
+
+/* ---------- detail ---------- */
+.detail{display:flex;flex-direction:column;height:100%}
+.dscroll{flex:1;overflow:hidden;padding:12px 14px 0}
+.hero{position:relative}
+.banner{position:relative;border-radius:6px;overflow:hidden;aspect-ratio:376/120;background:var(--abyss);box-shadow:inset 0 0 0 1px var(--abyss)}
+.banner>svg{width:100%;height:100%}
+.banner .scrim{position:absolute;inset:0;background:linear-gradient(transparent 35%,rgba(15,20,36,.94)),linear-gradient(90deg,rgba(8,11,22,.55),transparent 60%)}
+.banner .tag{position:absolute;top:8px;right:8px;font-size:10px;letter-spacing:.02em;color:var(--mist);background:rgba(8,11,22,.72);padding:2px 7px;border-radius:9px;border:1px dashed var(--veil-line)}
+.corners{position:absolute;inset:4px;pointer-events:none}
+.corners svg{position:absolute;width:12px;height:12px}
+.corners .tl{left:0;top:0}.corners .tr{right:0;top:0;transform:scaleX(-1)}.corners .bl{left:0;bottom:0;transform:scaleY(-1)}.corners .br{right:0;bottom:0;transform:scale(-1,-1)}
+.bwrap{position:relative}
+.rise{position:absolute;left:14px;top:calc(100% - 26px);width:52px;height:52px;border-radius:50%;background:var(--abyss);display:grid;place-items:center;animation:moonrise .35s ease-out both}
+.rise svg{width:44px;height:44px}
+@keyframes moonrise{from{transform:translateY(6px);opacity:0}to{transform:none;opacity:1}}
+.htext{padding:6px 0 0 76px;min-height:30px}
+.htext .chips{margin-top:7px}
+.htext h4{margin:0;font:600 19px/1.25 var(--f-title);letter-spacing:.02em}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
+.chip{display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 8px;border-radius:11px;background:var(--raised);border:1px solid var(--line);color:var(--mist);font-size:12px;white-space:nowrap}
+.chip svg{width:14px;height:14px}
+.chip .num{color:var(--silver)}
+.state-line{margin:8px 0 2px;font-size:13px}
+.state-line .r{color:var(--mist)}
+.moondiv{height:14px;margin:10px 0 2px}
+.req{display:grid;grid-template-columns:18px 36% 1fr;gap:4px 8px;align-items:start;font-size:13px;margin:2px 0 6px}
+.req .mk{padding-top:2px}.req .mk svg{width:14px;height:14px}
+.req .k{color:var(--mist)} .req .v{color:var(--silver)}
+.req .v small{color:var(--dusk);font-size:12px}
+.rewards{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 6px;align-items:center}
+.tile{width:44px;height:44px;border-radius:6px;background:var(--sunken);border:1px solid var(--line);display:grid;place-items:center;position:relative}
+.tile svg{width:34px;height:34px}
+.pillv{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 9px;border-radius:12px;background:var(--sunken);border:1px solid var(--line);font-size:12px;color:var(--mist)}
+.pillv .num{color:var(--silver);font-size:14px}
+.duty{display:flex;gap:9px;align-items:center;margin-top:2px;font-size:13px}
+.duty .thumb{width:96px;height:31px;border-radius:4px;overflow:hidden;position:relative;flex:none;box-shadow:inset 0 0 0 1px var(--line)}
+.duty .thumb svg{width:100%;height:100%}
+.duty small{display:block;color:var(--dusk);font-size:11px}
+.chart{margin:0 -2px}
+.chart svg{width:100%;height:auto}
+.chart text{font-family:var(--f-body)}
+.actions{display:flex;align-items:center;gap:6px;padding:10px 14px;border-top:1px solid var(--line);background:linear-gradient(rgba(11,15,28,.2),rgba(11,15,28,.6))}
+.primary{white-space:nowrap;display:inline-flex;align-items:center;gap:7px;height:30px;padding:0 14px;border-radius:15px;background:linear-gradient(var(--moon-high),var(--moon) 45%,var(--moon-deep));color:#2A2008;font-weight:700;font-size:13px}
+.primary svg{width:14px;height:14px}
+.icb{width:30px;height:30px;border-radius:15px;display:grid;place-items:center;color:var(--mist);background:var(--raised);border:1px solid var(--line)}
+.icb:hover{color:var(--silver);background:var(--hover)}
+.icb svg{width:14px;height:14px}
+.prov{padding:0 14px 10px;color:var(--dusk);font-size:11.5px;background:rgba(11,15,28,.6)}
+
+.status{height:30px;display:flex;align-items:center;gap:10px;padding:0 12px;background:var(--sunken);border-top:1px solid var(--line);font-size:12.5px;color:var(--mist)}
+.status .dot{color:var(--veil)}
+.msq{display:inline-flex;align-items:center;gap:6px;height:20px;padding:0 9px;border-radius:10px;background:rgba(242,210,122,.10);color:var(--moon)}
+.msq svg{width:14px;height:14px}
+.status .ver{margin-left:auto;color:var(--veil-text)}
+
+/* ---------- narrow band ---------- */
+.cards{display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start}
+.frame{background:var(--night);border:1px solid #20263A;border-radius:8px;overflow:hidden}
+.frame .cap{padding:8px 12px;font:600 12px/1 var(--f-eyebrow);letter-spacing:.12em;text-transform:uppercase;color:var(--dusk);background:var(--sunken);border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:8px}
+.frame .cap i{font-style:normal;color:var(--gilt-high)}
+.tiers .tier{border-bottom:1px dashed var(--line);padding:4px 6px}
+.tiers .tier:last-child{border-bottom:0}
+.tiers .tl{font:600 11px/1 var(--f-eyebrow);letter-spacing:.1em;color:var(--dusk);text-transform:uppercase;padding:6px 4px 2px}
+.dotred{width:6px;height:6px;border-radius:3px;background:var(--moon);flex:none}
+.duo{display:flex}
+.strip{width:56px;background:linear-gradient(var(--night-top),var(--night) 60%);border-right:1px solid var(--line);padding:6px 0;display:flex;flex-direction:column;align-items:center;gap:4px}
+.strip .orbwrap{position:relative;width:40px;height:36px;display:grid;place-items:center;border-radius:6px}
+.strip .orbwrap.sel{background:var(--silver-wash)}
+.strip .orbwrap.sel::before{content:"";position:absolute;left:-8px;top:6px;bottom:6px;width:2px;background:var(--moon);border-radius:1px}
+.strip .hd{font:600 10px/1.1 var(--f-eyebrow);letter-spacing:.08em;color:var(--mist);text-align:center;padding:0 3px 4px;border-bottom:1px solid rgba(168,139,82,.4);margin-bottom:2px;width:100%}
+.dn{width:260px;padding:10px 12px 0}
+.dn .banner{aspect-ratio:2.6/1}
+.dn .rise{left:50%;margin-left:-19px;top:calc(100% - 19px);width:38px;height:38px}
+.dn .rise svg{width:30px;height:30px}
+.dn .htext{padding:22px 0 0;text-align:left}
+.dn .htext h4{font-size:17px}
+.stack{font-size:13px;margin:4px 0 8px}
+.stack .it{display:grid;grid-template-columns:18px 1fr;column-gap:6px;margin-bottom:6px}
+.stack .it .k{font:600 11.5px/1.3 var(--f-eyebrow);letter-spacing:.1em;text-transform:uppercase;color:var(--mist)}
+.stack .it .v{grid-column:2}
+.dn .tile{width:36px;height:36px}.dn .tile svg{width:28px;height:28px}
+.dn .actions{flex-wrap:wrap;margin:8px -12px 0}
+.dn .primary{width:100%;justify-content:center}
+.two .qr2{position:relative;display:grid;grid-template-columns:30px 1fr auto;column-gap:6px;padding:6px 10px 6px 8px;border-bottom:1px solid rgba(42,49,73,.6)}
+.two .qr2::before{content:"";position:absolute;left:0;top:6px;bottom:6px;width:3px;border-radius:1.5px;background:var(--stripe,transparent)}
+.two .qr2 .mn{grid-row:span 2;align-self:center}
+.two .qr2 .mn svg{width:20px;height:20px}
+.two .qr2 .n{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.two .qr2 .n em{font-style:normal;color:var(--mist)}
+.two .qr2 .l2{grid-column:2 / span 2;font-size:12.5px}
+.two .qr2 .l2 .r{color:var(--dusk)}
+.blues .br{display:grid;grid-template-columns:28px 1fr auto;column-gap:8px;padding:7px 10px;border-bottom:1px solid rgba(42,49,73,.6);align-items:center}
+.blues .br .mn svg{width:20px;height:20px}
+.blues .br .n{font-size:14px;display:flex;gap:6px;align-items:center;min-width:0}
+.blues .br .n span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.blues .br .n svg{width:16px;height:16px;flex:none}
+.blues .br .l2{grid-column:2;font-size:12.5px;line-height:1.35}
+.blues .br .l2 .r{color:var(--dusk)}
+.blues .br .more{grid-row:1 / span 2;grid-column:3}
+.blues .zone{padding:8px 10px 2px}
+.blues .zone .eyebrow{height:18px;font-size:12px}
+
+/* ---------- Flight & Moonlit panels ---------- */
+.panel{display:grid;grid-template-columns:200px minmax(0,1fr);width:min(100%,690px);background:var(--night);border:1px solid #20263A;border-radius:8px;overflow:hidden}
+.panel .lst{background:linear-gradient(var(--night-top),var(--night) 60%);border-right:1px solid var(--line);padding:8px}
+.panel .mainp{padding:12px 14px;min-width:0}
+.zrow{display:flex;align-items:center;gap:8px;height:32px;padding:0 6px;border-radius:5px;font-size:13.5px;width:100%;text-align:left}
+.zrow:hover{background:var(--silver-wash)}
+.zrow.sel{background:var(--silver-wash);box-shadow:inset 2px 0 0 var(--moon)}
+.zrow .nm{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.zrow .ct{font:600 13px/1 var(--f-num);color:var(--mist)}
+.zrow .beads{width:24px;height:24px;flex:none}
+.zbanner{position:relative;border-radius:6px;overflow:hidden;height:150px}
+.zbanner>svg{width:100%;height:100%}
+.zbanner .scrim{position:absolute;inset:0;background:linear-gradient(transparent 40%,rgba(15,20,36,.94))}
+.zbanner .zt{position:absolute;left:14px;bottom:10px;right:14px;display:flex;align-items:flex-end;gap:10px}
+.zbanner .zt h4{margin:0;font:600 22px/1.1 var(--f-title);letter-spacing:.03em}
+.zbanner .zt .s{color:var(--mist);font-size:12.5px}
+.zbanner .tag{position:absolute;top:8px;right:8px;font-size:10px;color:var(--mist);background:rgba(8,11,22,.72);padding:2px 7px;border-radius:9px;border:1px dashed var(--veil-line)}
+.cur{display:grid;grid-template-columns:24px 1fr auto auto;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid rgba(42,49,73,.6);font-size:13.5px}
+.cur .mn svg{width:20px;height:20px}
+.cur .r{color:var(--dusk);font-size:12.5px}
+.cur .att{font:600 11px/1 var(--f-eyebrow);letter-spacing:.1em;text-transform:uppercase}
+.cur .att.y{color:var(--moon)} .cur .att.n{color:var(--tide)}
+.fline{margin-top:8px;color:var(--tide);font-size:12.5px;display:flex;gap:6px;align-items:center}
+.mapbox{margin-top:10px;position:relative;border-radius:6px;overflow:hidden;height:150px}
+.mapbox svg{width:100%;height:100%}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px;margin-top:10px}
+.treasure{display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;padding:8px 4px;border-radius:6px;font-size:12.5px;line-height:1.25}
+.treasure:hover{background:var(--silver-wash)}
+.treasure .ti{position:relative;width:64px;height:64px;border-radius:8px;background:var(--sunken);border:1px solid var(--line);display:grid;place-items:center}
+.treasure .ti.got{border:1.5px solid var(--moon)}
+.treasure .ti>svg{width:52px;height:52px}
+.treasure .pip{position:absolute;right:-5px;bottom:-5px;width:18px;height:18px;border-radius:50%;background:var(--night);display:grid;place-items:center}
+.treasure .pip svg{width:14px;height:14px}
+.treasure small{color:var(--dusk);font-size:11px}
+
+/* ---------- ornament kit ---------- */
+.kit{display:flex;flex-wrap:wrap;gap:14px}
+.kit figure{margin:0;background:var(--night);border:1px solid #20263A;border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;align-items:center;gap:8px;min-width:120px}
+.kit figcaption{font-size:11.5px;color:var(--dusk);text-align:center;max-width:200px}
+.kit .row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.kit .row svg{width:36px;height:36px}
+
+@media (max-width:760px){
+  .panel{grid-template-columns:minmax(0,1fr)}
+  .panel .lst{border-right:0;border-bottom:1px solid var(--line)}
+  .intro h1{font-size:24px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=M+PLUS+1p:wght@400;500;700&family=Rajdhani:wght@500;600;700&family=Saira+Extra+Condensed:wght@500;600;700&display=swap">
+
+<!-- shared symbols -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+<defs>
+  <linearGradient id="g-gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF0BE"/><stop offset=".45" stop-color="#F2D27A"/><stop offset="1" stop-color="#D6B25A"/></linearGradient>
+  <linearGradient id="g-silver" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#B9C2D8"/></linearGradient>
+  <radialGradient id="g-halo"><stop offset=".55" stop-color="#F2D27A" stop-opacity=".28"/><stop offset="1" stop-color="#F2D27A" stop-opacity="0"/></radialGradient>
+  <linearGradient id="g-fade" x1="0" x2="1"><stop offset="0" stop-color="#A88B52" stop-opacity="0"/><stop offset=".5" stop-color="#A88B52" stop-opacity=".8"/><stop offset="1" stop-color="#A88B52" stop-opacity="0"/></linearGradient>
+  <mask id="mk-crest"><rect width="40" height="40" fill="#fff"/><circle cx="24.2" cy="11.6" r="7.4" fill="#000"/></mask>
+  <mask id="mk-cres-l"><rect width="240" height="12" fill="#fff"/><circle cx="106.2" cy="6" r="2.4" fill="#000"/></mask>
+  <mask id="mk-cres-r"><rect width="240" height="12" fill="#fff"/><circle cx="133.8" cy="6" r="2.4" fill="#000"/></mask>
+  <mask id="mk-gall"><rect width="24" height="24" fill="#fff"/><circle cx="14.6" cy="7.2" r="5.2" fill="#000"/></mask>
+  <mask id="mk-gchr"><rect width="24" height="24" fill="#fff"/><circle cx="13.6" cy="3.2" r="2.3" fill="#000"/></mask>
+  <mask id="mk-gmoon"><rect width="24" height="24" fill="#fff"/><circle cx="12" cy="11.2" r="7.4" fill="#000"/></mask>
+</defs>
+
+<!-- state moons (v2.1 language) -->
+<symbol id="m-done" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.2" fill="url(#g-gold)"/><circle cx="9" cy="9.5" r="1.6" fill="#D6B25A" opacity=".45"/><circle cx="14.5" cy="14" r="2.2" fill="#D6B25A" opacity=".35"/></symbol>
+<symbol id="m-ready" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11.8" fill="url(#g-halo)"/><circle cx="12" cy="12" r="9" fill="#3A4363"/><path d="M12 3a9 9 0 0 1 0 18z" fill="url(#g-gold)"/><circle cx="12" cy="12" r="9" fill="none" stroke="#7C86A8" stroke-width="1.1"/></symbol>
+<symbol id="m-acc" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="#3A4363"/><path d="M12 3a9 9 0 0 1 0 18a4.5 9 0 0 1 0-18z" fill="url(#g-gold)"/><circle cx="15.3" cy="12" r="1.6" fill="#0F1424"/><circle cx="12" cy="12" r="9" fill="none" stroke="#F2D27A" stroke-width="1"/></symbol>
+<symbol id="m-blocked" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="#3A4363"/><circle cx="12" cy="12" r="9" fill="none" stroke="#A9B2CC" stroke-width="1.6"/></symbol>
+<symbol id="m-fore" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="#3A4363"/><circle cx="12" cy="12" r="9" fill="none" stroke="#B25C7F" stroke-width="2"/><path d="M6 18L18 6" stroke="#D68AA8" stroke-width="1.8"/></symbol>
+<symbol id="m-unk" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="#4A5270" opacity=".5"/><circle cx="12" cy="12" r="9" fill="none" stroke="#8A93B0" stroke-width="1.5" stroke-dasharray="3 2.4"/></symbol>
+<symbol id="m-other" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="#3A4363"/><path d="M12 3a9 9 0 0 1 0 18z" fill="url(#g-silver)"/><circle cx="12" cy="12" r="9" fill="none" stroke="#F2D27A" stroke-width="1.3"/></symbol>
+
+<!-- stand-ins for OFFICIAL game icons (read from the player's install at runtime) -->
+<symbol id="i-msq" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8.6" fill="#2E240D" stroke="url(#g-gold)" stroke-width="2.2"/><path d="M15 3.5q4 .5 5.5 4M17.5 2.6q3.5 1.6 4 5M5 5q-2 2-2.5 5" stroke="#F2D27A" stroke-width="1.2" fill="none" stroke-linecap="round"/><rect x="10.9" y="8" width="2.2" height="6.4" rx="1" fill="#FFF0BE"/><circle cx="12" cy="17" r="1.3" fill="#FFF0BE"/></symbol>
+<symbol id="i-side" viewBox="0 0 24 24"><path d="M12 3.2a8.2 8.2 0 1 0 5.2 14.6l3 3.2l.4-4.4A8.2 8.2 0 0 0 12 3.2z" fill="#2E240D" stroke="url(#g-gold)" stroke-width="2"/><rect x="10.9" y="7" width="2.2" height="6.4" rx="1" fill="#FFF0BE"/><circle cx="12" cy="16" r="1.3" fill="#FFF0BE"/></symbol>
+<symbol id="i-feature" viewBox="0 0 24 24"><path d="M12 3.2a8.2 8.2 0 1 0 5.2 14.6l3 3.2l.4-4.4A8.2 8.2 0 0 0 12 3.2z" fill="#16213F" stroke="url(#g-gold)" stroke-width="2"/><path d="M12 7.2v8.6M7.7 11.5h8.6" stroke="#6FA0FF" stroke-width="2.6" stroke-linecap="round"/></symbol>
+<symbol id="i-exp" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="4" fill="currentColor" opacity=".16"/><circle cx="12" cy="12" r="6.6" fill="currentColor" opacity=".25"/><circle cx="12" cy="12" r="6.6" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="12" cy="12" r="6.6" fill="none" stroke="#fff" stroke-width=".7" opacity=".7"/><path d="M15.5 5.2q2.6-1.2 4.2.2M17 7.4q2-.2 3 1.4M6.4 17.4q-1.8 1.2-3.4.4" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round"/></symbol>
+<symbol id="i-tribe-a" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="4" fill="#4B5368"/><path d="M9 6l4 4-3 3 5 5M15 6l-2 4" stroke="#E6F2F6" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-tribe-b" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="4" fill="#4B5368"/><path d="M13 6q-5 1-3 5t-2 7M11 9q4-1 5 2" stroke="#E6F2F6" stroke-width="1.6" fill="none" stroke-linecap="round"/></symbol>
+<symbol id="i-tribe-c" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="4" fill="#4B5368"/><path d="M7 8h10v3q0 5-5 6q-5-1-5-6z" fill="none" stroke="#E6F2F6" stroke-width="1.5"/><circle cx="10" cy="11" r="1" fill="#E6F2F6"/><circle cx="14" cy="11" r="1" fill="#E6F2F6"/></symbol>
+<symbol id="i-dow" viewBox="0 0 24 24"><path d="M5 5l13 13M19 5L6 18" stroke="url(#g-gold)" stroke-width="2.4" stroke-linecap="round"/><path d="M4 16l4 4M20 16l-4 4" stroke="#F2D27A" stroke-width="1.6" stroke-linecap="round"/></symbol>
+<symbol id="i-gc" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="4" fill="#7E2A26" stroke="#C9A55A" stroke-width="1"/><path d="M7 16q5-9 10 0M9 12l3-4 3 4" stroke="#F4D9A0" stroke-width="1.5" fill="none" stroke-linecap="round"/></symbol>
+<symbol id="i-allied" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="4" fill="#2F7C83" stroke="#C9A55A" stroke-width="1"/><path d="M12 5l2 5 5 .5-4 3 1.4 5L12 16l-4.4 2.5L9 13.5l-4-3 5-.5z" fill="#F5F0C8"/></symbol>
+<symbol id="i-job" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="3" fill="#7A2233" stroke="#C9A55A" stroke-width="1.2"/><path d="M12 17L6.5 9.5q5.5-3 11 0z" fill="#F4D9A0"/><path d="M12 17V9M12 17l-3-6.8M12 17l3-6.8" stroke="#7A2233" stroke-width=".8"/></symbol>
+<symbol id="i-current" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="#123A3E"/><path d="M6 13q3-6 8-3t4 5M8 16q3 2 6 0M9 9q2-2 5-1" stroke="#7FE3D6" stroke-width="1.6" fill="none" stroke-linecap="round"/></symbol>
+<symbol id="i-gil" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="url(#g-gold)"/><circle cx="12" cy="12" r="5.6" fill="none" stroke="#9C7A2E" stroke-width="1"/><path d="M12 8.5v7M10 10.2h4" stroke="#7A5E22" stroke-width="1.3"/></symbol>
+<symbol id="i-xp" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3" fill="#2A3656" stroke="#8FB0E8" stroke-width="1"/><text x="12" y="15.2" font-family="Rajdhani,Bahnschrift,sans-serif" font-weight="700" font-size="8" fill="#DDE8FF" text-anchor="middle">EXP</text></symbol>
+<symbol id="i-mount" viewBox="0 0 24 24"><rect width="24" height="24" rx="5" fill="#26314F"/><path d="M6 18q1-7 6-9l2-4 1 4q4 1 4 5l-2 1-2-2-1 5z" fill="#E9EEF9"/><path d="M14 5l2.4-2.2" stroke="#F2D27A" stroke-width="1.4" stroke-linecap="round"/></symbol>
+<symbol id="i-bird" viewBox="0 0 24 24"><rect width="24" height="24" rx="5" fill="#4A2020"/><path d="M4 14q6-1 8-6q2 5 8 6q-5 1-8 6q-3-5-8-6z" fill="#FFB35C"/><circle cx="12" cy="11" r="1.5" fill="#FFF0BE"/></symbol>
+<symbol id="i-kirin" viewBox="0 0 24 24"><rect width="24" height="24" rx="5" fill="#1F3A35"/><path d="M6 18q0-6 5-8l1-5 2 5q4 2 4 8z" fill="#CFF3E6"/><path d="M12 5l-1-2M14 6l2-2" stroke="#F2D27A" stroke-width="1.2" stroke-linecap="round"/></symbol>
+<symbol id="i-minion" viewBox="0 0 24 24"><rect width="24" height="24" rx="5" fill="#2A3350"/><circle cx="12" cy="13" r="6" fill="#EDE4D6"/><circle cx="7" cy="9" r="2.2" fill="#EDE4D6"/><circle cx="17" cy="9" r="2.2" fill="#EDE4D6"/><circle cx="10" cy="13" r=".9" fill="#2A3350"/><circle cx="14" cy="13" r=".9" fill="#2A3350"/></symbol>
+<symbol id="i-gent" viewBox="0 0 24 24"><rect width="24" height="24" rx="5" fill="#2E2A40"/><rect x="8" y="4" width="8" height="6" fill="#1C1A26" stroke="#C9C1DE" stroke-width=".8"/><path d="M5.5 10h13" stroke="#C9C1DE" stroke-width="1.2"/><circle cx="12" cy="15" r="4.5" fill="#C9C1DE"/></symbol>
+<symbol id="i-goob" viewBox="0 0 24 24"><rect width="24" height="24" rx="5" fill="#22352A"/><path d="M6 19q-1-9 6-10q7 1 6 10z" fill="#9CC98E"/><path d="M12 9V5M12 6q2-2 4-1" stroke="#9CC98E" stroke-width="1.3" fill="none" stroke-linecap="round"/></symbol>
+<symbol id="i-larva" viewBox="0 0 24 24"><rect width="24" height="24" rx="5" fill="#3A2E24"/><path d="M5 15q2-5 7-4t7-2" stroke="#E7C9A0" stroke-width="4" fill="none" stroke-linecap="round"/></symbol>
+<symbol id="i-kind" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" fill="#2B3354" stroke="#C9A55A" stroke-width="1"/><circle cx="12" cy="12" r="5" fill="none" stroke="#E9EEF9" stroke-width="1.5"/><path d="M12 7v5l3 2" stroke="#E9EEF9" stroke-width="1.5" fill="none" stroke-linecap="round"/></symbol>
+
+<!-- original gap glyphs (same shapes as ornaments/) -->
+<symbol id="g-all" viewBox="0 0 24 24"><circle cx="12" cy="9" r="5.6" fill="url(#g-gold)" mask="url(#mk-gall)"/><path d="M3.5 16.5H20.5" stroke="#DDE3F0" stroke-width="1.1" opacity=".7"/><path d="M9 18.8H15" stroke="#F2D27A" stroke-width="1.3" stroke-linecap="round"/><path d="M10.4 21H13.6" stroke="#F2D27A" stroke-width="1.2" stroke-linecap="round" opacity=".7"/></symbol>
+<symbol id="g-chron" viewBox="0 0 24 24"><path d="M2.8 9.2Q7.4 7.6 12 9.6Q16.6 7.6 21.2 9.2V20Q16.6 18.4 12 20.4Q7.4 18.4 2.8 20Z" fill="#1E2437" stroke="#DDE3F0" stroke-width="1.2" stroke-linejoin="round"/><path d="M12 9.6V20.4" stroke="#DDE3F0"/><circle cx="12" cy="4.4" r="2.8" fill="url(#g-gold)" mask="url(#mk-gchr)"/></symbol>
+<symbol id="g-other" viewBox="0 0 24 24"><circle cx="5" cy="12" r="3.2" fill="#DDE3F0" opacity=".85"/><circle cx="3.6" cy="12" r="3" fill="#0F1424"/><circle cx="12" cy="12" r="3.8" fill="url(#g-gold)"/><circle cx="19" cy="12" r="3.2" fill="#DDE3F0" opacity=".85"/><circle cx="20.4" cy="12" r="3" fill="#0F1424"/><path d="M3 18.5H21" stroke="#A88B52" stroke-width=".8"/></symbol>
+<symbol id="g-removed" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7.6" fill="#3A4363" opacity=".6"/><circle cx="12" cy="12" r="7.6" fill="none" stroke="#A9B2CC" stroke-width="1.4" stroke-dasharray="2.6 2.2"/><path d="M6.2 17.8L17.8 6.2" stroke="#D68AA8" stroke-width="1.7" stroke-linecap="round"/></symbol>
+<symbol id="g-hild" viewBox="0 0 24 24"><path d="M7.5 5H16.5V14H7.5Z" fill="#1E2437" stroke="#DDE3F0" stroke-width="1.2"/><path d="M4 14.2H20" stroke="#DDE3F0" stroke-width="1.4" stroke-linecap="round"/><path d="M7.5 11.6H16.5" stroke="#F2D27A" stroke-width="1.4"/><circle cx="15.2" cy="18.6" r="2.6" fill="none" stroke="#A9B2CC" stroke-width="1.1"/></symbol>
+<symbol id="g-moonlit" viewBox="0 0 24 24"><circle cx="12" cy="14" r="8" fill="url(#g-gold)" mask="url(#mk-gmoon)"/><path d="M12 3L15.6 7.4L12 13L8.4 7.4Z" fill="#DDE3F0"/></symbol>
+<symbol id="g-festival" viewBox="0 0 24 24"><path d="M8.5 5H15.5M8.5 19H15.5" stroke="#DDE3F0" stroke-width="1.3" stroke-linecap="round"/><path d="M8.8 5.4Q5.6 12 8.8 18.6H15.2Q18.4 12 15.2 5.4Z" fill="#1E2437" stroke="#DDE3F0" stroke-width="1.2"/><ellipse cx="12" cy="12" rx="2.4" ry="4" fill="#F2D27A"/></symbol>
+<symbol id="g-sigil" viewBox="0 0 12 12"><path d="M6 .5L7.1 4.9L11.5 6L7.1 7.1L6 11.5L4.9 7.1L.5 6L4.9 4.9Z" fill="#D9BE82"/><circle cx="6" cy="6" r="1" fill="#FFF0BE"/></symbol>
+<symbol id="g-corner" viewBox="0 0 12 12"><path d="M1.5 11.5V1.5H11.5" fill="none" stroke="#A88B52"/><path d="M4 8.5V4H8.5" fill="none" stroke="#A88B52" stroke-width=".6" opacity=".6"/><path d="M1.5-.3L3.3 1.5L1.5 3.3L-.3 1.5Z" fill="#D9BE82"/></symbol>
+<symbol id="g-crest" viewBox="0 0 40 40"><circle cx="20" cy="20" r="18.5" fill="none" stroke="#A88B52" opacity=".75"/><circle cx="20" cy="20" r="16.6" fill="none" stroke="#A88B52" stroke-width=".5" opacity=".4"/><circle cx="20" cy="15" r="12" fill="url(#g-halo)" opacity=".7"/><circle cx="20" cy="15" r="8.2" fill="url(#g-gold)" mask="url(#mk-crest)"/><path d="M5.5 25.5H34.5" stroke="#DDE3F0" opacity=".55"/><path d="M14.5 28.2H25.5" stroke="#F2D27A" stroke-width="1.3" stroke-linecap="round"/><path d="M16.2 30.8H23.8" stroke="#F2D27A" stroke-width="1.2" stroke-linecap="round" opacity=".8"/><path d="M17.6 33.2H22.4" stroke="#F2D27A" stroke-width="1.1" stroke-linecap="round" opacity=".6"/><path d="M18.8 35.4H21.2" stroke="#F2D27A" stroke-linecap="round" opacity=".4"/><path d="M8 28.4H11M29 28.4H32M10 31H12M28 31H30" stroke="#6F8FD0" stroke-width=".8" stroke-linecap="round" opacity=".55"/></symbol>
+<symbol id="g-divider" viewBox="0 0 240 12"><rect x="0" y="5.5" width="100" height="1" fill="url(#g-fade)"/><rect x="140" y="5.5" width="100" height="1" fill="url(#g-fade)"/><circle cx="108" cy="6" r="2.6" fill="#D9BE82" mask="url(#mk-cres-l)"/><circle cx="120" cy="6" r="3.4" fill="url(#g-gold)"/><circle cx="132" cy="6" r="2.6" fill="#D9BE82" mask="url(#mk-cres-r)"/></symbol>
+
+<!-- UI icons (drawn; the plugin uses FontAwesome for these) -->
+<symbol id="u-chev" viewBox="0 0 10 10"><path d="M3 1.5L7.5 5L3 8.5Z" fill="currentColor"/></symbol>
+<symbol id="u-search" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10.4 10.4L14 14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+<symbol id="u-filter" viewBox="0 0 16 16"><path d="M2 4h12M4 8h8M6 12h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+<symbol id="u-flag" viewBox="0 0 16 16"><path d="M4 14V2.5M4 3h8l-2 3 2 3H4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></symbol>
+<symbol id="u-book" viewBox="0 0 16 16"><path d="M2 3.5q3-1 6 .5 3-1.5 6-.5v9q-3-1-6 .5-3-1.5-6-.5z M8 4v9" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></symbol>
+<symbol id="u-link" viewBox="0 0 16 16"><path d="M7 9.5L9.5 7M6 7.5L4.5 9a2.5 2.5 0 0 0 3.5 3.5L9.5 11M10 8.5L11.5 7A2.5 2.5 0 0 0 8 3.5L6.5 5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
+<symbol id="u-copy" viewBox="0 0 16 16"><rect x="5" y="5" width="8.5" height="8.5" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M3 10.5V3.5A1 1 0 0 1 4 2.5h6.5" fill="none" stroke="currentColor" stroke-width="1.4"/></symbol>
+<symbol id="u-more" viewBox="0 0 16 16"><circle cx="3.5" cy="8" r="1.4" fill="currentColor"/><circle cx="8" cy="8" r="1.4" fill="currentColor"/><circle cx="12.5" cy="8" r="1.4" fill="currentColor"/></symbol>
+<symbol id="u-gear" viewBox="0 0 16 16"><circle cx="8" cy="8" r="2.3" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M3.4 12.6l1.4-1.4M11.2 4.8l1.4-1.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></symbol>
+<symbol id="u-help" viewBox="0 0 16 16"><path d="M5.5 6a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .8-1 1.5v.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="13" r="1" fill="currentColor"/></symbol>
+<symbol id="u-tele" viewBox="0 0 16 16"><path d="M2 8L14 2L10 14L8 9Z" fill="currentColor"/></symbol>
+<symbol id="u-pin" viewBox="0 0 16 16"><path d="M8 14.5s-4.5-4.6-4.5-8a4.5 4.5 0 0 1 9 0c0 3.4-4.5 8-4.5 8z" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="8" cy="6.5" r="1.6" fill="currentColor"/></symbol>
+<symbol id="u-eye" viewBox="0 0 16 16"><path d="M1.5 8S4 3.5 8 3.5 14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8z" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="8" cy="8" r="2" fill="currentColor"/></symbol>
+<symbol id="u-check" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="rgba(242,210,122,.14)"/><path d="M4.6 8.2l2.3 2.3 4.6-4.9" fill="none" stroke="#F2D27A" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="u-info" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M8 7.2v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="4.9" r=".9" fill="currentColor"/></symbol>
+<symbol id="u-wind" viewBox="0 0 16 16"><path d="M2 6h8a2 2 0 1 0-2-2M2 10h10a2 2 0 1 1-2 2" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></symbol>
+</svg>
+
+<div class="page">
+
+<header class="intro">
+  <svg viewBox="0 0 40 40" aria-hidden="true"><use href="#g-crest"/></svg>
+  <div>
+    <h1>Tsukimichi: the Moon Road</h1>
+    <p>Design v4 mockup by Mirei and Theo. Tsukimichi is the road of light the moon lays on night water. Everything you have walked is lit gold; everything ahead is dark water. Game art (icons, journal banners, zone art) is read from your own install at runtime. Here it is drawn as labelled stand-ins.</p>
+  </div>
+</header>
+<div class="legend">
+  <span><b>M PLUS 1p</b> stands in for AXIS (body, captions)</span>
+  <span><b style="font-family:var(--f-eyebrow);letter-spacing:.1em">SAIRA EXTRA CONDENSED</b> for TrumpGothic (eyebrows, rail, headers)</span>
+  <span><b style="font-family:var(--f-title)">Cinzel</b> for Jupiter (titles)</span>
+  <span><b style="font-family:var(--f-num)">Rajdhani 118/160</b> for MiedingerMid (numerals)</span>
+  <span>Square game icons are simplified stand-ins of the official ones (tribe emblems, expansion rings, quest-kind marks, job tiles).</span>
+</div>
+
+<h2 class="band"><svg class="sigil" viewBox="0 0 12 12"><use href="#g-sigil"/></svg>Main window · 1400 × 870 · Journal, Seventh Umbral Era, Lady of the Vortex selected</h2>
+<p class="band-note">Rail 64 px (was 136), then the tree 300 (its Full tier), the table (stretch, all columns at 646 px) and the detail 372, with PaneSplit handles between them. Scroll sideways on a small screen.</p>
+
+<div class="scroller" tabindex="0" aria-label="Main window mockup, scrolls horizontally">
+<div class="win" role="img" aria-label="Redesigned Tsukimichi main window">
+  <div class="titlebar"><span>Tsukimichi</span><span class="dots"><span>–</span><span>□</span><span>×</span></span></div>
+
+  <div class="toolbar">
+    <div class="search"><svg width="14" height="14"><use href="#u-search"/></svg><span>Search quests, rewards, NPCs or ids</span></div>
+    <div class="seg" role="group" aria-label="Quick views">
+      <button aria-pressed="true">All</button><button aria-pressed="false">Ready now</button><button aria-pressed="false">Level band</button><button aria-pressed="false">Stalled</button><button aria-pressed="false">Sprout</button>
+    </div>
+    <button class="btn"><svg width="14" height="14"><use href="#u-filter"/></svg>Filters<span class="count">2</span></button>
+    <div class="chip-char"><svg width="24" height="24"><use href="#i-job"/></svg><span class="who">Michiru Tsukikage <span>· Balmung</span></span><span class="live" title="live"></span></div>
+  </div>
+
+  <div class="body">
+    <!-- RAIL -->
+    <nav class="rail" aria-label="Tabs">
+      <button class="crest" title="All quests"><svg viewBox="0 0 40 40" width="40" height="40"><use href="#g-crest"/></svg></button>
+      <div class="crest-rule"></div>
+      <div class="stations">
+        <button class="station on" aria-current="page"><span class="ic"><svg class="orb" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="#3A4363"/><path d="M12 3a9 9 0 0 1 0 18a6.3 9 0 0 1 0-18z" fill="url(#g-gold)"/><circle cx="12" cy="12" r="9" fill="none" stroke="#7C86A8" stroke-width="1"/></svg></span><span class="badge">99+</span><span class="lbl">Journal</span></button>
+        <button class="station"><span class="ic"><svg viewBox="0 0 24 24"><use href="#g-moonlit"/></svg></span><span class="lbl">Moonlit</span></button>
+        <button class="station"><span class="ic"><svg viewBox="0 0 24 24"><use href="#i-job"/></svg></span><span class="lbl">Characters</span></button>
+        <button class="station"><span class="ic"><svg viewBox="0 0 24 24"><use href="#i-current"/></svg></span><span class="lbl">Flight</span></button>
+        <button class="station"><span class="ic"><svg viewBox="0 0 24 24"><use href="#i-feature"/></svg></span><span class="badge" style="background:var(--tide);color:var(--night)">14</span><span class="lbl">My blues</span></button>
+      </div>
+      <svg class="stars" viewBox="0 0 64 200" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <g fill="#DDE3F0"><circle cx="12" cy="20" r=".8" opacity=".5"/><circle cx="44" cy="38" r="1.1" opacity=".7"/><circle cx="26" cy="62" r=".6" opacity=".4"/><circle cx="52" cy="84" r=".8" opacity=".5"/><circle cx="18" cy="104" r="1.2" opacity=".6"/><circle cx="38" cy="128" r=".6" opacity=".35"/><circle cx="8" cy="150" r=".8" opacity=".4"/><circle cx="48" cy="168" r=".7" opacity=".3"/><circle cx="30" cy="186" r=".6" opacity=".25"/></g>
+        <path d="M44 34v8M40 38h8" stroke="#D9BE82" stroke-width=".6" opacity=".5"/>
+      </svg>
+      <div class="foot">
+        <svg class="orb" viewBox="0 0 32 32" style="--p:34;width:38px;height:38px" aria-label="34 percent of all quests">
+          <circle class="trk" cx="16" cy="16" r="14"/><circle class="arc" cx="16" cy="16" r="14" pathLength="100"/>
+          <circle cx="16" cy="16" r="8.5" fill="#3A4363"/><path d="M16 7.5a8.5 8.5 0 0 1 0 17a5.4 8.5 0 0 0 0-17z" fill="url(#g-gold)"/>
+          <g class="bead"><circle class="bh" cx="16" cy="2" r="2.8"/><circle class="bd" cx="16" cy="2" r="2"/></g>
+        </svg>
+        <span class="pct">34%</span>
+        <button class="round" title="Help"><svg><use href="#u-help"/></svg></button>
+        <button class="round" title="Settings"><svg><use href="#u-gear"/></svg></button>
+      </div>
+    </nav>
+    <div class="split" aria-hidden="true"></div>
+
+    <!-- TREE -->
+    <section class="pane" aria-label="Journal tree">
+      <div class="tree">
+        <div class="eyebrow"><svg class="sigil" viewBox="0 0 12 12"><use href="#g-sigil"/></svg>Journal<span class="rule"></span><span class="cap num">1,672 / 4,824</span></div>
+
+        <button class="node" style="--p:34"><svg class="chev leaf"><use href="#u-chev"/></svg>
+          <svg class="orb" viewBox="0 0 32 32" style="--p:34"><circle class="trk" cx="16" cy="16" r="14"/><circle class="arc" cx="16" cy="16" r="14" pathLength="100"/><use class="icon" href="#g-all" x="6" y="6" width="20" height="20"/><g class="bead"><circle class="bh" cx="16" cy="2" r="2.8"/><circle class="bd" cx="16" cy="2" r="2"/></g></svg>
+          <span class="nm">All quests</span><span class="rdy">762</span><span class="ct">1,672/4,824</span><i class="road"></i></button>
+
+        <button class="node sec" style="--p:91"><svg class="chev open"><use href="#u-chev"/></svg>
+          <svg class="orb" viewBox="0 0 32 32" style="--p:91"><circle class="trk" cx="16" cy="16" r="14"/><circle class="arc" cx="16" cy="16" r="14" pathLength="100"/><use class="icon" href="#i-msq" x="6" y="6" width="20" height="20"/><g class="bead"><circle class="bh" cx="16" cy="2" r="2.8"/><circle class="bd" cx="16" cy="2" r="2"/></g></svg>
+          <span class="nm">Main Scenario</span><span class="xp">ARR–EW</span><span class="rdy">2</span><span class="ct">779/852</span><i class="road"></i></button>
+
+        <button class="node sel" style="--d:1;--p:75"><svg class="chev leaf"><use href="#u-chev"/></svg>
+          <svg class="orb" viewBox="0 0 32 32" style="--p:75"><circle class="trk" cx="16" cy="16" r="14"/><circle class="arc" cx="16" cy="16" r="14" pathLength="100"/><use class="icon" href="#i-exp" x="6" y="6" width="20" height="20" style="color:#7FB0FF"/><g class="bead"><circle class="bh" cx="16" cy="2" r="2.8"/><circle class="bd" cx="16" cy="2" r="2"/></g></svg>
+          <span class="nm">Seventh Umbral Era</span><span class="rdy">2</span><span class="ct">118/160</span><i class="road"></i></button>
+
+        <button class="node done" style="--d:1;--p:100"><svg class="chev leaf"><use href="#u-chev"/></svg>
+          <svg class="orb full" viewBox="0 0 32 32" style="--p:100"><circle class="trk" cx="16" cy="16" r="14"/><use class="icon" href="#i-exp" x="6" y="6" width="20" height="20" style="color:#7FB0FF"/><circle cx="16" cy="2" r="2.8" fill="#0F1424"/><circle cx="16" cy="2" r="2.2" fill="url(#g-gold)"/></svg>
+          <span class="nm">Seventh Astral Era</span><span class="ct">80/80</span><i class="road"></i></button>
+
+        <button class="node done" style="--d:1;--p:100"><svg class="chev leaf"><use href="#u-chev"/></svg>
+          <svg class="orb full" viewBox="0 0 32 32"><circle class="trk" cx="16" cy="16" r="14"/><use class="icon" href="#i-exp" x="6" y="6" width="20" height="20" style="color:#9FD4FF"/><circle cx="16" cy="2" r="2.8" fill="#0F1424"/><circle cx="16" cy="2" r="2.2" fill="url(#g-gold)"/></svg>
+          <span class="nm">Heavensward</span><span class="pc">3.0</span><span class="ct">94/94</span><i class="road"></i></button>
+
+        <button class="node done" style="--d:1;--p:100"><svg class="chev leaf"><use href="#u-chev"/></svg>
+          <svg class="orb full" viewBox="0 0 32 32"><circle class="trk" cx="16" cy="16" r="14"/><use class="icon" href="#i-exp" x="6" y="6" width="20" height="20" style="color:#9FD4FF"/><circle cx="16" cy="2" r="2.8" fill="#0F1424"/><circle cx="16" cy="2" r="2.2" fill="url(#g-gold)"/></svg>
+          <span class="nm">Dragonsong</span><span class="pc">3.1–3.3</span><span class="ct">25/25</span><i class="road"></i></button>
+
+        <button class="node done" style="--d:1;--p:100"><svg class="chev leaf"><use href="#u-chev"/></svg>
+          <svg class="orb full" viewBox="0 0 32 32"><circle class="trk" cx="16" cy="16" r="14"/><use class="icon" href="#i-exp" x="6" y="6" width="20" height="20" style="color:#FF6B5E"/><circle cx="16" cy="2" r="2.8" fill="#0F1424"/><circle cx="16" cy="2" r="2.2" fill="url(#g-gold)"/></svg>
+          <span class="nm">Stormblood</span><span class="pc">4.0</span><span class="ct">122/122</span><i class="road"></i></button>
+
+        <button class="node done" style="--d:1;--p:100"><svg class="chev leaf"><use href="#u-chev"/></svg>
+          <svg class="orb full" viewBox="0 0 32 32"><circle class="trk" cx="16" cy="16" r="14"/><use class="icon" href="#i-exp" x="6" y="6" width="20" height="20" style="color:#B28CFF"/><circle cx="16" cy="2" r="2.8" fill="#0F1424"/><circle cx="16" cy="2" r="2.2" fill="url(#g-gold)"/></svg>
+          <span class="nm">Post-Shadowbringers II</span><span class="ct">19/19</span><i class="road"></i></button>
+
+        <button class="node" style="--d:1;--p:34"><svg class="chev leaf"><use href="#u-chev"/></svg>
+          <svg class="orb" viewBox="0 0 32 32" style="--p:34"><circle class="trk" cx="16" cy="16" r="14"/><circle class="arc" cx="16" cy="16" r="14" pathLength="100"/><use class="icon" href="#i-exp" x="6" y="6" width="20" height="20" style="color:#D8E6B0"/><g class="bead"><circle class="bh" cx="16" cy="2" r="2.8"/><circle class="bd" cx="16" cy="2" r="2"/></g></svg>
+          <span class="nm">Post-Endwalker</span><span class="pc">6.1–6.55</span><span class="ct">16/47</span><i class="road"></i></button>
+
+        <button class="node sec" style="--p:0"><svg class="chev"><use href="#u-chev"/></svg>
+          <svg class="orb zero" viewBox="0 0 32 32" style="--p:0"><circle class="trk" cx="16" cy="16" r="14"/><circle class="arc" cx="16" cy="16" r="14" pathLength="100"/><use class="icon" href="#i-msq" x="6" y="6" width="20" height="20"/></svg>
+          <span class="nm">Main Scenario</span><span class="xp">DT</span><span class="ct">0/143</span><i class="road"></i></button>
+
+        <button class="node sec" style="--p:65"><svg class="chev"><use href="#u-chev"/></svg>
+          <svg class="orb" viewBox="0 0 32 32" style="--p:65"><circle class="trk" cx="16" cy="16" r="14"/><circle class="arc" cx="16" cy="16" r="14" pathLength="100"/><use class="icon" href="#g-chron" x="6" y="6" width="20" height="20"/><g class="bead"><circle class="bh" cx="16" cy="2" r="2.8"/><circle class="bd" cx="16" cy="2" r="2"/></g></svg>
+          <span class="nm">Chronicles of a New Era</span><span class="rdy">6</span><span class="ct">128/198</span><i class="road"></i></button>
+
+        <svg class="divider" viewBox="0 0 240 12" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="width:100%"><use href="#g-divider"/></svg>
+
+        <button class="node sec" style="--p:24"><svg class="chev open"><use href="#u-chev"/></svg>
+          <svg class="orb" viewBox="0 0 32 32" style="--p:24"><circle class="trk" cx="16" cy="16" r="14"/><circle class="arc" cx="16" cy="16" r="14" pathLength="100"/><use class="icon" href="#i-side" x="6" y="6" width="20" height="20"/><g class="bead"><circle class="bh" cx="16" cy="2" r="2.8"/><circle class="bd" cx="16" cy="2" r="2"/></g></svg>
+          <span class="nm">Sidequests</span><span class="rdy">674</span><span class="ct">495/2,063</span><i class="road"></i></button>
+
+        <button class="node" style="--d:1;--p:9"><svg class="chev"><use href="#u-chev"/></svg>
+          <svg class="orb" viewBox="0 0 32 32" style="--p:9"><circle class="trk" cx="16" cy="16" r="14"/><circle class="arc" cx="16" cy="16" r="14" pathLength="100"/><use class="icon" href="#g-hild" x="6" y="6" width="20" height="20"/><g class="bead"><circle class="bh" cx="16" cy="2" r="2.8"/><circle class="bd" cx="16" cy="2" r="2"/></g></svg>
+          <span class="nm">Hildibrand</span><span class="rdy">1</span><span class="ct">6/65</span><i class="road"></i></button>
+
+        <button class="node" style="--d:1;--p:45"><svg class="chev leaf"><use href="#u-chev"/></svg>
+          <svg class="orb" viewBox="0 0 32 32" style="--p:45"><circle class="trk" cx="16" cy="16" r="14"/><circle class="arc" cx="16" cy="16" r="14" pathLength="100"/><use class="icon" href="#i-exp" x="6" y="6" width="20" height="20" style="color:#7FB0FF"/><g class="bead"><circle class="bh" cx="16" cy="2" r="2.8"/><circle class="bd" cx="16" cy="2" r="2"/></g></svg>
+          <span class="nm">Lominsan</span><span class="rdy">14</span><span class="ct">58/129</span><i class="road"></i></button>
+
+        <button class="node" style="--p:3"><svg class="chev"><use href="#u-chev"/></svg>
+          <svg class="orb" viewBox="0 0 32 32" style="--p:3"><circle class="trk" cx="16" cy="16" r="14"/><circle class="arc" cx="16" cy="16" r="14" pathLength="100"/><use class="icon" href="#i-allied" x="6" y="6" width="20" height="20"/><g class="bead"><circle class="bh" cx="16" cy="2" r="2.8"/><circle class="bd" cx="16" cy="2" r="2"/></g></svg>
+          <span class="nm">Allied Societies</span><span class="xp">ARR–EW</span><span class="ct">17/612</span><i class="road"></i></button>
+
+        <button class="node" style="--d:1;--p:100"><svg class="chev"><use href="#u-chev"/></svg>
+          <svg class="orb full" viewBox="0 0 32 32"><circle class="trk" cx="16" cy="16" r="14"/><use class="icon" href="#i-tribe-a" x="7" y="7" width="18" height="18"/><circle cx="16" cy="2" r="2.8" fill="#0F1424"/><circle cx="16" cy="2" r="2.2" fill="url(#g-gold)"/></svg>
+          <span class="nm">Amalj'aa</span><span class="ct" style="color:var(--moon-dim)">35/35</span><i class="road"></i></button>
+
+        <button class="node" style="--p:21"><svg class="chev"><use href="#u-chev"/></svg>
+          <svg class="orb" viewBox="0 0 32 32" style="--p:21"><circle class="trk" cx="16" cy="16" r="14"/><circle class="arc" cx="16" cy="16" r="14" pathLength="100"/><use class="icon" href="#i-dow" x="6" y="6" width="20" height="20"/><g class="bead"><circle class="bh" cx="16" cy="2" r="2.8"/><circle class="bd" cx="16" cy="2" r="2"/></g></svg>
+          <span class="nm">Class &amp; Job</span><span class="rdy">31</span><span class="ct">185/858</span><i class="road"></i></button>
+
+        <button class="node" style="--p:7"><svg class="chev"><use href="#u-chev"/></svg>
+          <svg class="orb" viewBox="0 0 32 32" style="--p:7"><circle class="trk" cx="16" cy="16" r="14"/><circle class="arc" cx="16" cy="16" r="14" pathLength="100"/><use class="icon" href="#g-other" x="6" y="6" width="20" height="20"/><g class="bead"><circle class="bh" cx="16" cy="2" r="2.8"/><circle class="bd" cx="16" cy="2" r="2"/></g></svg>
+          <span class="nm">Other Quests</span><span class="ct">22/329</span><i class="road"></i></button>
+
+        <svg class="divider" viewBox="0 0 240 12" aria-hidden="true" style="width:100%"><use href="#g-divider"/></svg>
+
+        <button class="node" style="--p:36"><svg class="chev leaf"><use href="#u-chev"/></svg>
+          <svg class="orb" viewBox="0 0 32 32" style="--p:36"><circle class="trk" cx="16" cy="16" r="14"/><circle class="arc" cx="16" cy="16" r="14" pathLength="100"/><use class="icon" href="#i-feature" x="6" y="6" width="20" height="20"/><g class="bead"><circle class="bh" cx="16" cy="2" r="2.8"/><circle class="bd" cx="16" cy="2" r="2"/></g></svg>
+          <span class="nm">Feature Unlocks</span><span class="ct">615/1,694</span><i class="road"></i></button>
+        <div class="fade"></div>
+      </div>
+    </section>
+    <div class="split" aria-hidden="true"></div>
+
+    <!-- TABLE -->
+    <section class="pane center" aria-label="Quest table">
+      <div class="ptitle">
+        <div class="crumb">Main Scenario · ARR–EW ›</div>
+        <div class="row1"><h3>Seventh Umbral Era</h3><span class="sum"><span class="num">118</span> of <span class="num">160</span> · <span class="gold"><span class="num">2</span> ready</span></span></div>
+        <div class="rule"></div>
+      </div>
+      <div class="qt" role="table" aria-label="Quests">
+        <div class="qh" role="row"><span></span><span>Name</span><span class="sorted">Lv</span><span>Job</span><span>Status</span><span>Exp</span><span>Rewards</span></div>
+        <button class="qr s-done" role="row"><span class="mn"><svg><use href="#m-done"/></svg></span><span class="name">The Heretic among Us</span><span><span class="lv">40</span></span><span class="job">Any</span><span class="st t-done">Completed</span><span><span class="xpp">ARR</span></span><span class="rw"><svg><use href="#i-gil"/></svg></span></button>
+        <button class="qr s-done" role="row"><span class="mn"><svg><use href="#m-done"/></svg></span><span class="name">In Pursuit of the Past</span><span><span class="lv">41</span></span><span class="job">Any</span><span class="st t-done">Completed</span><span><span class="xpp">ARR</span></span><span class="rw"><svg><use href="#i-gil"/></svg></span></button>
+        <button class="qr s-done" role="row"><span class="mn"><svg><use href="#m-done"/></svg></span><span class="name">Into the Eye of the Storm</span><span><span class="lv">41</span></span><span class="job">Any</span><span class="st t-done">Completed</span><span><span class="xpp">ARR</span></span><span class="rw"><svg><use href="#i-gil"/></svg></span></button>
+        <button class="qr s-done" role="row"><span class="mn"><svg><use href="#m-done"/></svg></span><span class="name">Sealed with Science</span><span><span class="lv">41</span></span><span class="job">Any</span><span class="st t-done">Completed</span><span><span class="xpp">ARR</span></span><span class="rw"><svg><use href="#i-gil"/></svg></span></button>
+        <button class="qr s-done" role="row"><span class="mn"><svg><use href="#m-done"/></svg></span><span class="name">History Repeating</span><span><span class="lv">42</span></span><span class="job">Any</span><span class="st t-done">Completed</span><span><span class="xpp">ARR</span></span><span class="rw"><svg><use href="#i-gil"/></svg></span></button>
+        <button class="qr s-done" role="row"><span class="mn"><svg><use href="#m-done"/></svg></span><span class="name">The Curious Case of Giggity</span><span><span class="lv">43</span></span><span class="job">Any</span><span class="st t-done">Completed</span><span><span class="xpp">ARR</span></span><span class="rw"><svg><use href="#i-gil"/></svg></span></button>
+        <button class="qr s-done" role="row"><span class="mn"><svg><use href="#m-done"/></svg></span><span class="name">Better Late than Never</span><span><span class="lv">43</span></span><span class="job">Any</span><span class="st t-done">Completed</span><span><span class="xpp">ARR</span></span><span class="rw"></span></button>
+        <button class="qr s-ready sel" role="row" aria-selected="true"><span class="mn"><svg><use href="#m-ready"/></svg></span><span class="name">Lady of the Vortex</span><span><span class="lv">44</span></span><span class="job">Any</span><span class="st"><b class="t-ready">Ready</b> <span class="r">· from Cid, Gridania</span></span><span><span class="xpp">ARR</span></span><span class="rw"><svg><use href="#i-gil"/></svg><svg><use href="#i-xp"/></svg></span><i class="road"></i></button>
+        <button class="qr s-blocked" role="row"><span class="mn"><svg><use href="#m-blocked"/></svg></span><span class="name">Reclamation</span><span><span class="lv">44</span></span><span class="job">Any</span><span class="st"><b class="t-blocked">Blocked</b> <span class="r">· after Lady of the Vortex</span></span><span><span class="xpp">ARR</span></span><span class="rw"></span></button>
+        <button class="qr s-blocked" role="row"><span class="mn"><svg><use href="#m-blocked"/></svg></span><span class="name">Casing the Castrum</span><span><span class="lv">44</span></span><span class="job">Any</span><span class="st"><b class="t-blocked">Blocked</b> <span class="r">· after Reclamation</span></span><span><span class="xpp">ARR</span></span><span class="rw"><svg><use href="#i-gil"/></svg></span></button>
+        <button class="qr s-blocked" role="row"><span class="mn"><svg><use href="#m-blocked"/></svg></span><span class="name">Eyes on the Empire</span><span><span class="lv">44</span></span><span class="job">Any</span><span class="st"><b class="t-blocked">Blocked</b> <span class="r">· after Casing the Castrum</span></span><span><span class="xpp">ARR</span></span><span class="rw"><svg><use href="#i-gil"/></svg></span></button>
+        <button class="qr s-blocked" role="row"><span class="mn"><svg><use href="#m-blocked"/></svg></span><span class="name">Footprints in the Snow</span><span><span class="lv">44</span></span><span class="job">Any</span><span class="st"><b class="t-blocked">Blocked</b> <span class="r">· after Eyes on the Empire</span></span><span><span class="xpp">ARR</span></span><span class="rw"><svg><use href="#i-gil"/></svg></span></button>
+        <button class="qr s-blocked" role="row"><span class="mn"><svg><use href="#m-blocked"/></svg></span><span class="name">Monumental Hopes</span><span><span class="lv">44</span></span><span class="job">Any</span><span class="st"><b class="t-blocked">Blocked</b> <span class="r">· after Footprints in the Snow</span></span><span><span class="xpp">ARR</span></span><span class="rw"><svg><use href="#i-gil"/></svg></span></button>
+        <button class="qr s-blocked" role="row"><span class="mn"><svg><use href="#m-blocked"/></svg></span><span class="name">Notorious Biggs</span><span><span class="lv">44</span></span><span class="job">Any</span><span class="st"><b class="t-blocked">Blocked</b> <span class="r">· after Monumental Hopes</span></span><span><span class="xpp">ARR</span></span><span class="rw"><svg><use href="#i-gil"/></svg></span></button>
+        <button class="qr s-blocked" role="row"><span class="mn"><svg><use href="#m-blocked"/></svg></span><span class="name">Come-Into-My-Castrum</span><span><span class="lv">44</span></span><span class="job">Any</span><span class="st"><b class="t-blocked">Blocked</b> <span class="r">· after Notorious Biggs</span></span><span><span class="xpp">ARR</span></span><span class="rw"></span></button>
+      </div>
+    </section>
+    <div class="split" aria-hidden="true"></div>
+
+    <!-- DETAIL -->
+    <section class="pane detail" aria-label="Quest detail">
+      <div class="dscroll">
+        <div class="hero"><div class="bwrap">
+          <div class="banner">
+            <svg viewBox="0 0 376 120" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+              <defs><linearGradient id="sky1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3E5E66"/><stop offset=".55" stop-color="#22343F"/><stop offset="1" stop-color="#0F1424"/></linearGradient></defs>
+              <rect width="376" height="120" fill="url(#sky1)"/>
+              <g fill="none" stroke="#CFE7DF" stroke-linecap="round">
+                <ellipse cx="236" cy="52" rx="90" ry="22" opacity=".14" transform="rotate(-8 236 52)"/>
+                <ellipse cx="236" cy="52" rx="64" ry="15" opacity=".2" transform="rotate(-8 236 52)"/>
+                <ellipse cx="236" cy="52" rx="40" ry="9" opacity=".28" transform="rotate(-8 236 52)"/>
+                <ellipse cx="236" cy="52" rx="18" ry="4" opacity=".4" transform="rotate(-8 236 52)"/>
+                <path d="M150 30q60-24 170 6M170 80q50 18 150-8" opacity=".18"/>
+              </g>
+              <path d="M0 120V92l30-20 18 12 26-38 22 30 30-10 26 26 40-44 24 36 36-12 30 20 40-30 30 26 24-10v52z" fill="#0B111C"/>
+              <path d="M0 120v-14l60-10 50 8 80-16 70 14 60-10 56 12v16z" fill="#080C15"/>
+            </svg>
+            <div class="scrim"></div>
+            <span class="tag">journal banner (game art at runtime)</span>
+            <div class="corners" aria-hidden="true"><svg class="tl" viewBox="0 0 12 12"><use href="#g-corner"/></svg><svg class="tr" viewBox="0 0 12 12"><use href="#g-corner"/></svg><svg class="bl" viewBox="0 0 12 12"><use href="#g-corner"/></svg><svg class="br" viewBox="0 0 12 12"><use href="#g-corner"/></svg></div>
+          </div>
+          <div class="rise" title="Ready"><svg viewBox="0 0 24 24"><use href="#m-ready"/></svg></div></div>
+          <div class="htext"><h4>Lady of the Vortex</h4>
+        <div class="chips">
+          <span class="chip" title="Seventh Umbral Era Main Scenario Quests"><svg><use href="#i-msq"/></svg>Seventh Umbral Era</span>
+          <span class="chip">Lv <span class="num">44</span></span>
+          <span class="chip">ARR</span>
+          <span class="chip" title="All classes and jobs (excluding limited jobs)">All jobs</span>
+          <span class="chip">Patch <span class="num">2.0</span></span>
+        </div>
+        <div class="state-line"><b class="t-ready">Ready now</b> <span class="r">· from Cid, Gridania</span></div>
+        </div></div>
+
+        <svg class="moondiv" viewBox="0 0 240 12" aria-hidden="true" style="width:100%"><use href="#g-divider"/></svg>
+
+        <div class="eyebrow"><svg class="sigil" viewBox="0 0 12 12"><use href="#g-sigil"/></svg>Requirements<span class="rule"></span><span class="cap good">all met</span></div>
+        <div class="req">
+          <span class="mk"><svg><use href="#u-check"/></svg></span><span class="k">Level</span><span class="v">44 <small>· you are 90</small></span>
+          <span class="mk"><svg><use href="#u-check"/></svg></span><span class="k">Class or job</span><span class="v">All jobs <small>· excluding limited jobs</small></span>
+          <span class="mk"><svg><use href="#u-check"/></svg></span><span class="k">Previous quest</span><span class="v">Better Late than Never</span>
+        </div>
+
+        <div class="eyebrow"><svg class="sigil" viewBox="0 0 12 12"><use href="#g-sigil"/></svg>Rewards<span class="rule"></span><span class="cap">duty · gil · exp</span></div>
+        <div class="rewards">
+          <span class="pillv"><svg width="16" height="16"><use href="#i-gil"/></svg><span class="num">3,208</span> gil</span>
+          <span class="pillv"><svg width="18" height="18"><use href="#i-xp"/></svg>EXP</span>
+        </div>
+        <div class="duty">
+          <span class="thumb"><svg viewBox="0 0 376 120" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="sky2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5D8C86"/><stop offset="1" stop-color="#1A2A30"/></linearGradient></defs><rect width="376" height="120" fill="url(#sky2)"/><ellipse cx="190" cy="54" rx="120" ry="26" fill="none" stroke="#E0F2EC" stroke-width="6" opacity=".25"/><path d="M0 120l60-50 40 30 60-70 50 60 60-30 60 40 46-20v40z" fill="#0B121A"/></svg></span>
+          <span>The Howling Eye<small>duty banner (game art at runtime)</small></span>
+        </div>
+
+        <div class="eyebrow" style="margin-top:6px"><svg class="sigil" viewBox="0 0 12 12"><use href="#g-sigil"/></svg>Path<span class="rule"></span><span class="cap">step 41 of 53</span></div>
+        <div class="chart">
+          <svg viewBox="0 0 344 214" aria-label="Path from Lord of Crags to Lady of the Vortex">
+            <rect x="0" y="0" width="344" height="214" fill="rgba(221,227,240,.025)"/>
+            <g fill="#DDE3F0"><circle cx="300" cy="18" r=".9" opacity=".6"/><circle cx="250" cy="60" r=".6" opacity=".4"/><circle cx="320" cy="96" r="1" opacity=".5"/><circle cx="210" cy="140" r=".6" opacity=".35"/><circle cx="290" cy="176" r=".8" opacity=".4"/><circle cx="330" cy="200" r=".6" opacity=".3"/></g>
+            <path d="M20 14l1 3 3 1-3 1-1 3-1-3-3-1 3-1z" fill="#D9BE82"/>
+            <text x="30" y="21" font-size="10.5" letter-spacing="1.4" fill="#A9B2CC" font-family="Saira Extra Condensed,Arial Narrow,sans-serif" font-weight="600">A REALM REBORN</text>
+            <rect x="112" y="17" width="150" height="1" fill="url(#g-fade)"/>
+            <!-- thread -->
+            <path d="M20 30V150" stroke="#F2D27A" stroke-width="2"/><path d="M20 30V150" stroke="#F2D27A" stroke-width="6" opacity=".1"/>
+            <path d="M20 160V204" stroke="#DDE3F0" stroke-width="1.4" stroke-dasharray="3 3" opacity=".45"/>
+            <!-- Lord of Crags -->
+            <use href="#m-done" x="12" y="30" width="16" height="16"/><text x="36" y="42" font-size="12.5" fill="#C3AD72">Lord of Crags</text><text x="330" y="42" font-size="11" fill="#7C86A8" text-anchor="end">Lv 34</text>
+            <!-- bead -->
+            <rect x="13" y="54" width="14" height="24" rx="7" fill="#1E2437" stroke="#F2D27A" stroke-width="1"/><circle cx="20" cy="60" r="1.6" fill="#F2D27A"/><circle cx="20" cy="66" r="1.6" fill="#F2D27A"/><circle cx="20" cy="72" r="1.6" fill="#F2D27A"/>
+            <text x="36" y="70" font-size="12" fill="#A9B2CC">32 moons walked</text><text x="330" y="70" font-size="11" fill="#7C86A8" text-anchor="end">Lv 34–42</text>
+            <use href="#m-done" x="12" y="86" width="16" height="16"/><text x="36" y="98" font-size="12.5" fill="#C3AD72">History Repeating</text><text x="330" y="98" font-size="11" fill="#7C86A8" text-anchor="end">Lv 42</text>
+            <use href="#m-done" x="12" y="110" width="16" height="16"/><text x="36" y="122" font-size="12.5" fill="#C3AD72">Better Late than Never</text><text x="330" y="122" font-size="11" fill="#7C86A8" text-anchor="end">Lv 43</text>
+            <!-- target -->
+            <rect x="0" y="136" width="344" height="30" fill="url(#g-fade)" opacity=".18"/>
+            <circle cx="20" cy="151" r="19" fill="url(#g-halo)"/><circle cx="20" cy="151" r="14" fill="none" stroke="#F2D27A" stroke-opacity=".45"/>
+            <use href="#m-ready" x="8" y="139" width="24" height="24"/><text x="40" y="156" font-size="14" font-weight="700" fill="#DDE3F0">Lady of the Vortex</text><text x="330" y="156" font-size="11" fill="#F2D27A" text-anchor="end">Ready</text>
+            <!-- unlocks next -->
+            <path d="M20 180l4 4-4 4-4-4z" fill="none" stroke="#DDE3F0" stroke-opacity=".6"/>
+            <text x="36" y="188" font-size="10.5" letter-spacing="1.2" fill="#7C86A8" font-family="Saira Extra Condensed,Arial Narrow,sans-serif" font-weight="600">UNLOCKS NEXT</text>
+            <path d="M20 188q0 14 18 14" fill="none" stroke="#7C86A8"/><use href="#m-blocked" x="40" y="195" width="14" height="14"/><text x="60" y="206" font-size="12.5" fill="#DDE3F0">Reclamation</text><text x="330" y="206" font-size="11" fill="#7C86A8" text-anchor="end">Lv 44</text>
+          </svg>
+        </div>
+
+        <div class="eyebrow"><svg class="sigil" viewBox="0 0 12 12"><use href="#g-sigil"/></svg>Giver<span class="rule"></span></div>
+        <div style="font-size:13px;margin-bottom:12px">Cid <span style="color:var(--mist)">· Gridania</span></div>
+      </div>
+      <div class="actions">
+        <button class="primary"><svg><use href="#u-tele"/></svg>Teleport · Gridania</button>
+        <button class="icb" title="Flag on map"><svg><use href="#u-flag"/></svg></button>
+        <button class="icb" title="Open in journal"><svg><use href="#u-book"/></svg></button>
+        <button class="icb" title="Show path"><svg><use href="#u-pin"/></svg></button>
+        <button class="icb" title="More: link in chat, copy coordinates"><svg><use href="#u-more"/></svg></button>
+      </div>
+      <div class="prov">Checked 2 min ago · live</div>
+    </section>
+  </div>
+
+  <div class="status">
+    <span class="num">5,373</span> quests <span class="dot">·</span> showing <span class="num">160</span> of <span class="num">5,073</span> <span class="dot">·</span> <span class="live" style="display:inline-block"></span> live <span class="dot">·</span>
+    <span class="msq"><svg><use href="#i-msq"/></svg>MSQ · Lady of the Vortex ›</span>
+    <span class="ver">v1.2.0</span>
+  </div>
+</div>
+</div>
+
+<!-- NARROW -->
+<h2 class="band"><svg class="sigil" viewBox="0 0 12 12"><use href="#g-sigil"/></svg>Narrow widths · nothing overlaps, nothing wraps by letters</h2>
+<p class="band-note">RowFit drops parts right to left. PaneSplit holds the floors (tree 180, table 320, detail 260). Dragging the tree below 150 snaps it to a 56 px strip of orbits. These are the widths of the owner's screenshots 6–8, redone.</p>
+
+<div class="cards">
+  <div class="frame tiers" style="width:min(100%,340px)">
+    <div class="cap">Tree row by tier <i>RowFit</i></div>
+    <div class="tier"><div class="tl">Full ≥ 300 · 320 px</div>
+      <div class="node sel" style="--d:0;--p:75;width:308px"><svg class="chev leaf"><use href="#u-chev"/></svg><svg class="orb" viewBox="0 0 32 32" style="--p:75"><circle class="trk" cx="16" cy="16" r="14"/><circle class="arc" cx="16" cy="16" r="14" pathLength="100"/><use class="icon" href="#i-exp" x="6" y="6" width="20" height="20" style="color:#7FB0FF"/><g class="bead"><circle class="bh" cx="16" cy="2" r="2.8"/><circle class="bd" cx="16" cy="2" r="2"/></g></svg><span class="nm">Seventh Umbral Era</span><span class="pc">2.0</span><span class="rdy">2</span><span class="ct">118/160</span><i class="road"></i></div></div>
+    <div class="tier"><div class="tl">Trim 240–299 · 280 px: caption goes, name stays whole</div>
+      <div class="node sel" style="--p:75;width:268px"><svg class="chev leaf"><use href="#u-chev"/></svg><svg class="orb" viewBox="0 0 32 32" style="--p:75"><circle class="trk" cx="16" cy="16" r="14"/><circle class="arc" cx="16" cy="16" r="14" pathLength="100"/><use class="icon" href="#i-exp" x="6" y="6" width="20" height="20" style="color:#7FB0FF"/><g class="bead"><circle class="bh" cx="16" cy="2" r="2.8"/><circle class="bd" cx="16" cy="2" r="2"/></g></svg><span class="nm">Seventh Umbral Era</span><span class="rdy">2</span><span class="ct">118/160</span><i class="road"></i></div></div>
+    <div class="tier"><div class="tl">Compact 200–239 · 230 px: count → percent</div>
+      <div class="node sel" style="--p:75;width:218px"><svg class="chev leaf"><use href="#u-chev"/></svg><svg class="orb" viewBox="0 0 32 32" style="--p:75"><circle class="trk" cx="16" cy="16" r="14"/><circle class="arc" cx="16" cy="16" r="14" pathLength="100"/><use class="icon" href="#i-exp" x="6" y="6" width="20" height="20" style="color:#7FB0FF"/><g class="bead"><circle class="bh" cx="16" cy="2" r="2.8"/><circle class="bd" cx="16" cy="2" r="2"/></g></svg><span class="nm">Seventh Umbral Era</span><span class="rdy">2</span><span class="ct" style="min-width:34px">75%</span><i class="road"></i></div></div>
+    <div class="tier"><div class="tl">Slim 180–199 · 190 px: the ring carries it</div>
+      <div class="node sel" style="--p:75;width:178px"><svg class="chev leaf"><use href="#u-chev"/></svg><svg class="orb" viewBox="0 0 32 32" style="--p:75"><circle class="trk" cx="16" cy="16" r="14"/><circle class="arc" cx="16" cy="16" r="14" pathLength="100"/><use class="icon" href="#i-exp" x="6" y="6" width="20" height="20" style="color:#7FB0FF"/><g class="bead"><circle class="bh" cx="16" cy="2" r="2.8"/><circle class="bd" cx="16" cy="2" r="2"/></g><circle class="rdot" cx="28.1" cy="9" r="3"/></svg><span class="nm">Seventh Umbral Era</span><i class="road"></i></div></div>
+    <div class="tier"><div class="tl">Icon strip · 56 px: name in the header and tooltip</div>
+      <div style="display:flex;gap:6px;padding:4px"><svg class="orb" viewBox="0 0 32 32" style="--p:75"><circle class="trk" cx="16" cy="16" r="14"/><circle class="arc" cx="16" cy="16" r="14" pathLength="100"/><use class="icon" href="#i-exp" x="6" y="6" width="20" height="20" style="color:#7FB0FF"/><g class="bead"><circle class="bh" cx="16" cy="2" r="2.8"/><circle class="bd" cx="16" cy="2" r="2"/></g><circle class="rdot" cx="28.1" cy="9" r="3"/></svg><span style="color:var(--dusk);font-size:12px;align-self:center">Before: the count slid over the moon (screenshot 6).</span></div></div>
+  </div>
+
+  <div class="frame" style="width:min(100%,318px)">
+    <div class="cap">Tree strip 56 + detail at D3 (260) <i>PaneSplit</i></div>
+    <div class="duo">
+      <div class="strip">
+        <div class="hd">SEVENTH UMBRAL ERA</div>
+        <div class="orbwrap"><svg class="orb" viewBox="0 0 32 32" style="--p:34"><circle class="trk" cx="16" cy="16" r="14"/><circle class="arc" cx="16" cy="16" r="14" pathLength="100"/><use class="icon" href="#g-all" x="6" y="6" width="20" height="20"/><g class="bead"><circle class="bh" cx="16" cy="2" r="2.8"/><circle class="bd" cx="16" cy="2" r="2"/></g></svg></div>
+        <div class="orbwrap"><svg class="orb" viewBox="0 0 32 32" style="--p:91"><circle class="trk" cx="16" cy="16" r="14"/><circle class="arc" cx="16" cy="16" r="14" pathLength="100"/><use class="icon" href="#i-msq" x="6" y="6" width="20" height="20"/><g class="bead"><circle class="bh" cx="16" cy="2" r="2.8"/><circle class="bd" cx="16" cy="2" r="2"/></g></svg></div>
+        <div class="orbwrap sel"><svg class="orb" viewBox="0 0 32 32" style="--p:75"><circle class="trk" cx="16" cy="16" r="14"/><circle class="arc" cx="16" cy="16" r="14" pathLength="100"/><use class="icon" href="#i-exp" x="6" y="6" width="20" height="20" style="color:#7FB0FF"/><g class="bead"><circle class="bh" cx="16" cy="2" r="2.8"/><circle class="bd" cx="16" cy="2" r="2"/></g><circle class="rdot" cx="28.1" cy="9" r="3"/></svg></div>
+        <div class="orbwrap"><svg class="orb full" viewBox="0 0 32 32"><circle class="trk" cx="16" cy="16" r="14"/><use class="icon" href="#i-exp" x="6" y="6" width="20" height="20" style="color:#9FD4FF"/><circle cx="16" cy="2" r="2.8" fill="#0F1424"/><circle cx="16" cy="2" r="2.2" fill="url(#g-gold)"/></svg></div>
+        <div class="orbwrap"><svg class="orb full" viewBox="0 0 32 32"><circle class="trk" cx="16" cy="16" r="14"/><use class="icon" href="#i-exp" x="6" y="6" width="20" height="20" style="color:#FF6B5E"/><circle cx="16" cy="2" r="2.8" fill="#0F1424"/><circle cx="16" cy="2" r="2.2" fill="url(#g-gold)"/></svg></div>
+        <div class="orbwrap"><svg class="orb" viewBox="0 0 32 32" style="--p:65"><circle class="trk" cx="16" cy="16" r="14"/><circle class="arc" cx="16" cy="16" r="14" pathLength="100"/><use class="icon" href="#g-chron" x="6" y="6" width="20" height="20"/><g class="bead"><circle class="bh" cx="16" cy="2" r="2.8"/><circle class="bd" cx="16" cy="2" r="2"/></g></svg></div>
+        <div class="orbwrap"><svg class="orb" viewBox="0 0 32 32" style="--p:24"><circle class="trk" cx="16" cy="16" r="14"/><circle class="arc" cx="16" cy="16" r="14" pathLength="100"/><use class="icon" href="#i-side" x="6" y="6" width="20" height="20"/><g class="bead"><circle class="bh" cx="16" cy="2" r="2.8"/><circle class="bd" cx="16" cy="2" r="2"/></g></svg></div>
+        <div class="orbwrap"><svg class="orb" viewBox="0 0 32 32" style="--p:3"><circle class="trk" cx="16" cy="16" r="14"/><circle class="arc" cx="16" cy="16" r="14" pathLength="100"/><use class="icon" href="#i-allied" x="6" y="6" width="20" height="20"/><g class="bead"><circle class="bh" cx="16" cy="2" r="2.8"/><circle class="bd" cx="16" cy="2" r="2"/></g></svg></div>
+      </div>
+      <div class="dn">
+        <div class="hero"><div class="bwrap">
+          <div class="banner">
+            <svg viewBox="0 0 376 145" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><linearGradient id="sky3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4B6E8C"/><stop offset=".6" stop-color="#23344D"/><stop offset="1" stop-color="#0F1424"/></linearGradient></defs><rect width="376" height="145" fill="url(#sky3)"/><g fill="#EAF2FF" opacity=".8"><ellipse cx="80" cy="96" rx="70" ry="10"/><ellipse cx="300" cy="104" rx="90" ry="12"/></g><path d="M150 70l20-26 16 10 14-18 20 30z" fill="#16202E"/><path d="M160 70q40 16 70 0l-6 14q-28 10-58 0z" fill="#1E2A38"/><path d="M0 145v-22q90-14 188 0t188 0v22z" fill="#EAF2FF" opacity=".25"/></svg>
+            <div class="scrim"></div>
+            <span class="tag">journal banner</span>
+            <div class="corners" aria-hidden="true"><svg class="tl" viewBox="0 0 12 12"><use href="#g-corner"/></svg><svg class="tr" viewBox="0 0 12 12"><use href="#g-corner"/></svg><svg class="bl" viewBox="0 0 12 12"><use href="#g-corner"/></svg><svg class="br" viewBox="0 0 12 12"><use href="#g-corner"/></svg></div>
+          </div>
+          <div class="rise"><svg viewBox="0 0 24 24"><use href="#m-blocked"/></svg></div></div>
+          <div class="htext"><h4>Search and Rescue</h4></div>
+        </div>
+        <div class="chips"><span class="chip" title="Abalathian Sidequests"><svg><use href="#i-exp" style="color:#9FD4FF"/></svg>Abalathian</span><span class="chip">Lv <span class="num">56</span></span><span class="chip" title="Any Disciple of War or Magic (excluding limited jobs)">DoW/DoM</span><span class="chip">Patch <span class="num">3.0</span></span></div>
+        <div class="state-line"><b class="t-blocked">Blocked</b> <span class="r">· after He Who Would Not Be Denied</span></div>
+        <div class="eyebrow"><svg class="sigil" viewBox="0 0 12 12"><use href="#g-sigil"/></svg>Requirements<span class="rule"></span></div>
+        <div class="stack">
+          <div class="it"><svg width="14" height="14"><use href="#u-check"/></svg><span class="k">Class or job</span><span class="v">Available on the current job</span></div>
+          <div class="it"><svg width="14" height="14"><use href="#u-check"/></svg><span class="k">Level</span><span class="v">56</span></div>
+          <div class="it"><svg width="14" height="14" style="color:var(--mist)"><use href="#u-info"/></svg><span class="k">Previous quests · 1 of 2</span><span class="v">He Who Would Not Be Denied <small style="color:var(--dusk)">· not done</small></span></div>
+        </div>
+        <div class="eyebrow"><svg class="sigil" viewBox="0 0 12 12"><use href="#g-sigil"/></svg>Rewards<span class="rule"></span></div>
+        <div class="rewards"><span class="pillv"><svg width="16" height="16"><use href="#i-gil"/></svg><span class="num">496</span></span></div>
+        <div class="actions">
+          <button class="primary"><svg><use href="#u-tele"/></svg>Teleport · Camp Cloudtop</button>
+          <button class="icb" title="Flag on map"><svg><use href="#u-flag"/></svg></button><button class="icb" title="Open in journal"><svg><use href="#u-book"/></svg></button><button class="icb" title="Show path"><svg><use href="#u-pin"/></svg></button><button class="icb" title="More actions"><svg><use href="#u-more"/></svg></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="frame two" style="width:min(100%,340px)">
+    <div class="cap">Quest table at 340 px <i>two-line rows</i></div>
+    <div class="qr2" style="--stripe:var(--moon-deep)"><span class="mn"><svg><use href="#m-done"/></svg></span><span class="n">Close to Home <em>· Gridania</em></span><span class="lv">1</span><span class="l2"><span class="t-done">Completed</span></span></div>
+    <div class="qr2"><span class="mn"><svg><use href="#m-fore"/></svg></span><span class="n">Close to Home <em>· Limsa Lominsa</em></span><span class="lv">1</span><span class="l2"><span class="t-fore">Locked out</span> <span class="r">· another city's start</span></span></div>
+    <div class="qr2"><span class="mn"><svg><use href="#m-fore"/></svg></span><span class="n">Close to Home <em>· Ul'dah</em></span><span class="lv">1</span><span class="l2"><span class="t-fore">Locked out</span> <span class="r">· you started in Gridania</span></span></div>
+    <div class="qr2" style="--stripe:var(--moon)"><span class="mn"><svg><use href="#m-ready"/></svg></span><span class="n">Lady of the Vortex</span><span class="lv">44</span><span class="l2"><span class="t-ready">Ready</span> <span class="r">· from Cid, Gridania</span></span></div>
+    <div class="qr2" style="--stripe:rgba(124,134,168,.6)"><span class="mn"><svg><use href="#m-blocked"/></svg></span><span class="n">Reclamation</span><span class="lv">44</span><span class="l2"><span class="t-blocked">Blocked</span> <span class="r">· after Lady of the Vortex</span></span></div>
+  </div>
+
+  <div class="frame blues" style="width:min(100%,360px)">
+    <div class="cap">My blues at 360 px <i>no status column</i></div>
+    <div class="zone"><div class="eyebrow">Ishgard<span class="rule"></span></div></div>
+    <div class="br"><span class="mn"><svg><use href="#m-blocked"/></svg></span><span class="n"><span>Blood on the Sands</span><svg><use href="#i-job"/></svg></span><button class="icb more" title="Flag, Reveal"><svg><use href="#u-more"/></svg></button><span class="l2"><span class="t-blocked">Blocked</span> <span class="r">· after So You Want to Be a Machinist</span></span></div>
+    <div class="br"><span class="mn"><svg><use href="#m-ready"/></svg></span><span class="n"><span>So You Want to Be a Machinist</span><svg><use href="#i-job"/></svg></span><button class="icb more" title="Flag, Reveal"><svg><use href="#u-more"/></svg></button><span class="l2"><span class="t-ready">Ready</span> <span class="r">· from Stephanivien, the Forgotten Knight</span></span></div>
+    <div class="br"><span class="mn"><svg><use href="#m-blocked"/></svg></span><span class="n"><span>The Gigi Situation</span><svg><use href="#i-feature"/></svg></span><button class="icb more" title="Flag, Reveal"><svg><use href="#u-more"/></svg></button><span class="l2"><span class="t-blocked">Blocked</span> <span class="r">· after A Gazebo to Call Our Own</span></span></div>
+  </div>
+</div>
+
+<!-- FLIGHT & MOONLIT -->
+<h2 class="band"><svg class="sigil" viewBox="0 0 12 12"><use href="#g-sigil"/></svg>Flight and Moonlit · zone art, countable currents, treasures</h2>
+<div class="cards">
+<div class="panel" role="img" aria-label="Flight tab mockup">
+  <div class="lst">
+    <div class="eyebrow"><svg width="16" height="16"><use href="#i-exp" style="color:#9FD4FF"/></svg>Heavensward<span class="rule"></span></div>
+    <button class="zrow"><svg class="beads" viewBox="0 0 24 24"><g fill="none" stroke-width="2.2" stroke-linecap="round"><path d="M14.30 2.78A9.5 9.5 0 0 1 20.06 6.97" stroke="#F2D27A"/><path d="M21.48 11.34A9.5 9.5 0 0 1 19.28 18.11" stroke="#F2D27A"/><path d="M15.56 20.81A9.5 9.5 0 0 1 8.44 20.81" stroke="#F2D27A"/><path d="M4.72 18.11A9.5 9.5 0 0 1 2.52 11.34" stroke="#F2D27A"/><path d="M3.94 6.97A9.5 9.5 0 0 1 9.70 2.78" stroke="#F2D27A"/></g></svg><span class="nm">Coerthas Western Highlands</span><span class="ct">5/5</span></button>
+    <button class="zrow"><svg class="beads" viewBox="0 0 24 24"><g fill="none" stroke-width="2.2" stroke-linecap="round"><path d="M14.30 2.78A9.5 9.5 0 0 1 20.06 6.97" stroke="#F2D27A"/><path d="M21.48 11.34A9.5 9.5 0 0 1 19.28 18.11" stroke="#F2D27A"/><path d="M15.56 20.81A9.5 9.5 0 0 1 8.44 20.81" stroke="#F2D27A"/><path d="M4.72 18.11A9.5 9.5 0 0 1 2.52 11.34" stroke="#F2D27A"/><path d="M3.94 6.97A9.5 9.5 0 0 1 9.70 2.78" stroke="#F2D27A"/></g></svg><span class="nm">The Dravanian Forelands</span><span class="ct">5/5</span></button>
+    <button class="zrow sel"><svg class="beads" viewBox="0 0 24 24"><g fill="none" stroke-width="2.2" stroke-linecap="round"><path d="M14.30 2.78A9.5 9.5 0 0 1 20.06 6.97" stroke="#F2D27A"/><path d="M21.48 11.34A9.5 9.5 0 0 1 19.28 18.11" stroke="#F2D27A"/><path d="M15.56 20.81A9.5 9.5 0 0 1 8.44 20.81" stroke="#F2D27A"/><path d="M4.72 18.11A9.5 9.5 0 0 1 2.52 11.34" stroke="#F2D27A"/><path d="M3.94 6.97A9.5 9.5 0 0 1 9.70 2.78" stroke="#F2D27A"/></g></svg><span class="nm">The Sea of Clouds</span><span class="ct">5/5</span></button>
+    <button class="zrow"><svg class="beads" viewBox="0 0 24 24"><g fill="none" stroke-width="2.2" stroke-linecap="round"><path d="M14.30 2.78A9.5 9.5 0 0 1 20.06 6.97" stroke="#F2D27A"/><path d="M21.48 11.34A9.5 9.5 0 0 1 19.28 18.11" stroke="#F2D27A"/><path d="M15.56 20.81A9.5 9.5 0 0 1 8.44 20.81" stroke="#F2D27A"/><path d="M4.72 18.11A9.5 9.5 0 0 1 2.52 11.34" stroke="#F2D27A"/><path d="M3.94 6.97A9.5 9.5 0 0 1 9.70 2.78" stroke="#F2D27A"/></g></svg><span class="nm">The Churning Mists</span><span class="ct">5/5</span></button>
+    <button class="zrow"><svg class="beads" viewBox="0 0 24 24"><g fill="none" stroke-width="2.2" stroke-linecap="round"><path d="M14.30 2.78A9.5 9.5 0 0 1 20.06 6.97" stroke="#F2D27A"/><path d="M21.48 11.34A9.5 9.5 0 0 1 19.28 18.11" stroke="#F2D27A"/><path d="M15.56 20.81A9.5 9.5 0 0 1 8.44 20.81" stroke="#F2D27A"/><path d="M4.72 18.11A9.5 9.5 0 0 1 2.52 11.34" stroke="#F2D27A"/><path d="M3.94 6.97A9.5 9.5 0 0 1 9.70 2.78" stroke="#F2D27A"/></g></svg><span class="nm">Azys Lla</span><span class="ct">5/5</span></button>
+  </div>
+  <div class="mainp">
+    <div class="zbanner">
+      <svg viewBox="0 0 600 150" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><linearGradient id="sky4" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4E7DB8"/><stop offset=".6" stop-color="#9BB7DC"/><stop offset="1" stop-color="#DCE7F5"/></linearGradient></defs><rect width="600" height="150" fill="url(#sky4)"/><g fill="#FFFFFF" opacity=".85"><ellipse cx="90" cy="118" rx="140" ry="22"/><ellipse cx="420" cy="126" rx="220" ry="26"/><ellipse cx="260" cy="140" rx="200" ry="20"/></g><path d="M200 70l30-34 22 12 18-22 30 44q-40 30-100 0z" fill="#3B4A5E"/><path d="M200 70q50 26 100 0l-14 24q-36 16-72 0z" fill="#56657A"/><path d="M430 50l16-14 16 8 12-10 18 16q-30 18-62 0z" fill="#46556A"/><path d="M430 50q31 16 62 0l-10 14q-22 10-42 0z" fill="#627188"/></svg>
+      <div class="scrim"></div><span class="tag">zone loading image (game art at runtime)</span>
+      <div class="zt"><svg width="26" height="26"><use href="#i-exp" style="color:#9FD4FF"/></svg><div><h4>The Sea of Clouds</h4><div class="s">Quest currents <span class="num" style="color:var(--silver)">5 of 5</span> · field currents <span class="num" style="color:var(--silver)">5 of 5</span></div></div></div>
+    </div>
+    <div class="eyebrow" style="margin-top:8px"><svg class="sigil" viewBox="0 0 12 12"><use href="#g-sigil"/></svg>Quest currents<span class="rule"></span></div>
+    <div class="cur"><span class="mn"><svg><use href="#m-done"/></svg></span><span>Clipped Wings <span class="r">· Lv 50</span></span><span class="att y">Attuned</span><button class="icb" title="Flag on map"><svg><use href="#u-flag"/></svg></button></div>
+    <div class="cur"><span class="mn"><svg><use href="#m-done"/></svg></span><span>Honoring the Past <span class="r">· Lv 56</span></span><span class="att y">Attuned</span><button class="icb" title="Flag on map"><svg><use href="#u-flag"/></svg></button></div>
+    <div class="cur"><span class="mn"><svg><use href="#m-done"/></svg></span><span>Bolt, Chain, and Island <span class="r">· Lv 57</span></span><span class="att y">Attuned</span><button class="icb" title="Flag on map"><svg><use href="#u-flag"/></svg></button></div>
+    <div class="cur"><span class="mn"><svg><use href="#m-done"/></svg></span><span>Sleepless in Ok' Zundu <span class="r">· Lv 57</span></span><span class="att y">Attuned</span><button class="icb" title="Flag on map"><svg><use href="#u-flag"/></svg></button></div>
+    <div class="cur"><span class="mn"><svg><use href="#m-done"/></svg></span><span>Flying the Nest <span class="r">· Lv 57</span></span><span class="att y">Attuned</span><button class="icb" title="Flag on map"><svg><use href="#u-flag"/></svg></button></div>
+    <div class="fline"><svg width="14" height="14"><use href="#u-wind"/></svg>All field currents attuned. The Aether Compass finds any you are missing.</div>
+    <div class="mapbox">
+      <svg viewBox="0 0 600 150" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><rect width="600" height="150" fill="#3F5566"/><g fill="none" stroke="#7F99A8" stroke-width="1" opacity=".5"><path d="M40 90q80-60 200-30t220 10 120-20"/><path d="M60 110q100-50 220-20t200 0"/><path d="M120 40q60-20 140 10t140-10"/></g><g fill="#4E6878"><ellipse cx="160" cy="80" rx="70" ry="30"/><ellipse cx="420" cy="70" rx="90" ry="34"/></g>
+        <g><circle cx="140" cy="70" r="6" fill="#F2D27A"/><circle cx="210" cy="92" r="6" fill="#F2D27A"/><circle cx="380" cy="56" r="6" fill="#F2D27A"/><circle cx="450" cy="84" r="6" fill="#F2D27A"/><circle cx="500" cy="60" r="6" fill="#F2D27A"/></g>
+        <rect x="0" y="0" width="600" height="150" fill="none" stroke="#0B0F1C" stroke-width="2"/></svg>
+      <span class="tag" style="position:absolute;top:8px;right:8px;font-size:10px;color:var(--mist);background:rgba(8,11,22,.72);padding:2px 7px;border-radius:9px;border:1px dashed var(--veil-line)">zone map (game art at runtime) · Could</span>
+    </div>
+  </div>
+</div>
+
+<div class="panel" role="img" aria-label="Moonlit tab mockup">
+  <div class="lst">
+    <div class="eyebrow"><svg class="sigil" viewBox="0 0 12 12"><use href="#g-sigil"/></svg>Reward kinds<span class="rule"></span></div>
+    <button class="zrow sel"><svg class="orb" viewBox="0 0 32 32" style="--p:5;width:24px;height:24px"><circle class="trk" cx="16" cy="16" r="14"/><circle class="arc" cx="16" cy="16" r="14" pathLength="100"/><use href="#i-kind" x="6" y="6" width="20" height="20"/><g class="bead"><circle class="bh" cx="16" cy="2" r="2.8"/><circle class="bd" cx="16" cy="2" r="2"/></g></svg><span class="nm">Mounts</span><span class="ct">2/38</span></button>
+    <button class="zrow"><svg class="orb" viewBox="0 0 32 32" style="--p:17;width:24px;height:24px"><circle class="trk" cx="16" cy="16" r="14"/><circle class="arc" cx="16" cy="16" r="14" pathLength="100"/><use href="#i-kind" x="6" y="6" width="20" height="20"/><g class="bead"><circle class="bh" cx="16" cy="2" r="2.8"/><circle class="bd" cx="16" cy="2" r="2"/></g></svg><span class="nm">Minions</span><span class="ct">11/64</span></button>
+    <button class="zrow"><svg class="orb" viewBox="0 0 32 32" style="--p:16;width:24px;height:24px"><circle class="trk" cx="16" cy="16" r="14"/><circle class="arc" cx="16" cy="16" r="14" pathLength="100"/><use href="#i-kind" x="6" y="6" width="20" height="20"/><g class="bead"><circle class="bh" cx="16" cy="2" r="2.8"/><circle class="bd" cx="16" cy="2" r="2"/></g></svg><span class="nm">Emotes</span><span class="ct">9/56</span></button>
+    <button class="zrow"><svg class="orb" viewBox="0 0 32 32" style="--p:30;width:24px;height:24px"><circle class="trk" cx="16" cy="16" r="14"/><circle class="arc" cx="16" cy="16" r="14" pathLength="100"/><use href="#i-kind" x="6" y="6" width="20" height="20"/><g class="bead"><circle class="bh" cx="16" cy="2" r="2.8"/><circle class="bd" cx="16" cy="2" r="2"/></g></svg><span class="nm">Orchestrion</span><span class="ct">24/79</span></button>
+    <button class="zrow"><svg class="orb zero" viewBox="0 0 32 32" style="--p:0;width:24px;height:24px"><circle class="trk" cx="16" cy="16" r="14"/><use class="icon" href="#i-kind" x="6" y="6" width="20" height="20"/></svg><span class="nm">Fashion accessories</span><span class="ct">0/4</span></button>
+    <p style="color:var(--dusk);font-size:11.5px;margin:8px 4px 0">Kind icons are the game's own menu icons at runtime.</p>
+  </div>
+  <div class="mainp">
+    <div class="ptitle" style="padding:0"><div class="row1"><h3>Mounts &amp; minions</h3><span class="sum"><span class="num">13</span> of <span class="num">102</span> found</span></div><div class="rule"></div></div>
+    <div class="gallery">
+      <button class="treasure"><span class="ti got"><svg><use href="#i-mount"/></svg><span class="pip"><svg><use href="#m-done"/></svg></span></span>Unicorn<small>Unicorn Power · Lv 30</small></button>
+      <button class="treasure"><span class="ti"><svg><use href="#i-kirin"/></svg><span class="pip"><svg><use href="#m-ready"/></svg></span></span>Kirin<small>A Legend for a Legend</small></button>
+      <button class="treasure"><span class="ti got"><svg><use href="#i-bird"/></svg><span class="pip"><svg><use href="#m-done"/></svg></span></span>Firebird<small>Fiery Wings, Fiery Hearts</small></button>
+      <button class="treasure"><span class="ti"><svg><use href="#i-minion"/></svg><span class="pip"><svg><use href="#m-blocked"/></svg></span></span>Tender lamb<small>All's Wool That Ends Wool · Lv 15</small></button>
+      <button class="treasure"><span class="ti got"><svg><use href="#i-gent"/></svg><span class="pip"><svg><use href="#m-done"/></svg></span></span>Wind-up gentleman<small>Her Last Vow · Lv 50</small></button>
+      <button class="treasure"><span class="ti got"><svg><use href="#i-goob"/></svg><span class="pip"><svg><use href="#m-done"/></svg></span></span>Goobbue sproutling<small>It Was a Very Good Year · Lv 33</small></button>
+      <button class="treasure"><span class="ti"><svg><use href="#i-larva"/></svg><span class="pip"><svg><use href="#m-unk"/></svg></span></span>Chigoe larva<small>Occupational Hazards · Lv 22</small></button>
+    </div>
+    <p style="color:var(--dusk);font-size:11.5px;margin:10px 0 0">Item art is the game's 64 px hi-res icon at runtime. Gold frame and full-moon pip: yours. Otherwise the pip is the quest's state moon, so a Ready treasure glows.</p>
+  </div>
+</div>
+
+</div>
+
+<!-- ORNAMENT KIT -->
+<h2 class="band"><svg class="sigil" viewBox="0 0 12 12"><use href="#g-sigil"/></svg>Ornament kit · original art, sources in ornaments/ at 1x and 2x</h2>
+<div class="kit">
+  <figure><svg viewBox="0 0 40 40" width="80" height="80"><use href="#g-crest"/></svg><figcaption>Rail crest: the moon, the horizon, and the road of light on the water</figcaption></figure>
+  <figure style="flex:1;min-width:260px"><svg viewBox="0 0 240 12" style="width:100%;max-width:360px;height:18px"><use href="#g-divider"/></svg><div class="eyebrow" style="width:100%;max-width:360px"><svg class="sigil" viewBox="0 0 12 12"><use href="#g-sigil"/></svg>Requirements<span class="rule"></span><span class="cap">all met</span></div><figcaption>Moon-road divider (between the story, side and virtual blocks) and the section header treatment that replaces cards</figcaption></figure>
+  <figure><svg viewBox="0 0 12 12" width="48" height="48"><use href="#g-corner"/></svg><figcaption>Corner mark: only on the hero frame and one card per pane</figcaption></figure>
+  <figure><svg viewBox="0 0 32 32" width="64" height="64" class="orb" style="--p:72;width:64px;height:64px"><circle class="trk" cx="16" cy="16" r="14"/><circle class="arc" cx="16" cy="16" r="14" pathLength="100"/><use href="#i-tribe-b" x="7" y="7" width="18" height="18"/><g class="bead"><circle class="bh" cx="16" cy="2" r="2.8"/><circle class="bd" cx="16" cy="2" r="2"/></g></svg><figcaption>Orbit: the official icon inside, completion as the arc, the moon bead at its head</figcaption></figure>
+  <figure><div class="row">
+    <svg viewBox="0 0 24 24"><use href="#g-all"/></svg><svg viewBox="0 0 24 24"><use href="#g-chron"/></svg><svg viewBox="0 0 24 24"><use href="#g-hild"/></svg><svg viewBox="0 0 24 24"><use href="#g-festival"/></svg><svg viewBox="0 0 24 24"><use href="#g-other"/></svg><svg viewBox="0 0 24 24"><use href="#g-removed"/></svg><svg viewBox="0 0 24 24"><use href="#g-moonlit"/></svg>
+  </div><figcaption>Gap glyphs (17 in the kit): only where the game has no legible icon</figcaption></figure>
+</div>
+
+</div>

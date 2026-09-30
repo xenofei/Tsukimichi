@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24">
+<title>glyph-hildibrand (2x)</title>
+<desc>Hildibrand: the gentleman inspector's top hat (gold band) and a magnifier. Original Tsukimichi art; rasterize into assets/ui/ornaments@2x.png.</desc>
+<path d="M7.5 5 H16.5 V14 H7.5 Z" fill="#1E2437" stroke="#DDE3F0" stroke-width="1.2" stroke-linejoin="round"/>
+<path d="M4 14.2 H20" stroke="#DDE3F0" stroke-width="1.4" stroke-linecap="round"/>
+<path d="M7.5 11.6 H16.5" stroke="#F2D27A" stroke-width="1.4"/>
+<circle cx="15.2" cy="18.6" r="2.6" fill="none" stroke="#A9B2CC" stroke-width="1.1"/>
+<path d="M17 20.4 L18.8 22" stroke="#A9B2CC" stroke-width="1.1" stroke-linecap="round"/>
+</svg>

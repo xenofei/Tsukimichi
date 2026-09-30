@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+<title>crest (1x)</title>
+<desc>Rail crest: the moon over night water and the road of light it lays on the sea (tsukimichi). Top of the tab rail. Original Tsukimichi art; rasterize into assets/ui/ornaments.png.</desc>
+<defs><linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF0BE"/><stop offset=".45" stop-color="#F2D27A"/><stop offset="1" stop-color="#D6B25A"/></linearGradient><mask id="cut"><rect width="40" height="40" fill="#fff"/><circle cx="24.2" cy="11.6" r="7.4" fill="#000"/></mask>
+<radialGradient id="glow" cx="20" cy="15" r="14" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#F2D27A" stop-opacity=".22"/><stop offset="1" stop-color="#F2D27A" stop-opacity="0"/></radialGradient></defs>
+<circle cx="20" cy="20" r="18.5" fill="none" stroke="#A88B52" stroke-width="1" opacity=".75"/>
+<circle cx="20" cy="20" r="16.6" fill="none" stroke="#A88B52" stroke-width=".5" opacity=".4"/>
+<circle cx="20" cy="15" r="13" fill="url(#glow)"/>
+<circle cx="20" cy="15" r="8.2" fill="url(#gold)" mask="url(#cut)"/>
+<path d="M5.5 25.5 H34.5" stroke="#DDE3F0" stroke-width="1" opacity=".55"/>
+<path d="M14.5 28.2 H25.5" stroke="#F2D27A" stroke-width="1.3" stroke-linecap="round"/>
+<path d="M16.2 30.8 H23.8" stroke="#F2D27A" stroke-width="1.2" stroke-linecap="round" opacity=".8"/>
+<path d="M17.6 33.2 H22.4" stroke="#F2D27A" stroke-width="1.1" stroke-linecap="round" opacity=".6"/>
+<path d="M18.8 35.4 H21.2" stroke="#F2D27A" stroke-width="1" stroke-linecap="round" opacity=".4"/>
+<path d="M8 28.4 H11 M29 28.4 H32 M10 31 H12 M28 31 H30" stroke="#6F8FD0" stroke-width=".8" stroke-linecap="round" opacity=".55"/>
+</svg>

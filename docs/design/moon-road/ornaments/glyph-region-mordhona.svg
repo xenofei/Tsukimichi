@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+<title>glyph-region-mordhona (1x)</title>
+<desc>Mor Dhona (spans ARR and HW): the great crystal with shards either side. Original Tsukimichi art; rasterize into assets/ui/ornaments.png.</desc>
+<path d="M12 2.8 L15.6 9.5 L12 21 L8.4 9.5 Z" fill="#1E2437" stroke="#DDE3F0" stroke-width="1.2" stroke-linejoin="round"/>
+<path d="M8.4 9.5 H15.6 M12 2.8 V21" stroke="#A9B2CC" stroke-width=".7"/>
+<path d="M5 14 L7.2 11 L8.6 16.5 Z M19 14 L16.8 11 L15.4 16.5 Z" fill="#6F8FD0" opacity=".85"/>
+<circle cx="12" cy="9.5" r="1.2" fill="#F2D27A"/>
+</svg>

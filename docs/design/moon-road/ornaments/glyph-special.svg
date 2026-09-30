@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+<title>glyph-special (1x)</title>
+<desc>Special quests: the sigil star inside a ring. Original Tsukimichi art; rasterize into assets/ui/ornaments.png.</desc>
+<circle cx="12" cy="12" r="8.6" fill="none" stroke="#A88B52" stroke-width="1.1"/>
+<path d="M12 4.6 L13.5 10.5 L19.4 12 L13.5 13.5 L12 19.4 L10.5 13.5 L4.6 12 L10.5 10.5 Z" fill="#F2D27A"/>
+<circle cx="12" cy="12" r="1.2" fill="#FFF0BE"/>
+</svg>

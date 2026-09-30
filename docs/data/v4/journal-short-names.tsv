@@ -1,0 +1,308 @@
+kind	id	parent	before	after	before_px	after_px	flag
+section	s0		Main Scenario (A Realm Reborn through Endwalker)	Main Scenario · ARR–EW	454	216	
+folded-category-leaf	c1+g1	Main Scenario (A Realm Reborn through Endwalker)	Seventh Umbral Era Main Scenario Quests	Seventh Umbral Era	369	176	
+folded-category-leaf	c2+g2	Main Scenario (A Realm Reborn through Endwalker)	Seventh Astral Era Main Scenario Quests	Seventh Astral Era	354	161	
+folded-category-leaf	c3+g3	Main Scenario (A Realm Reborn through Endwalker)	Heavensward Main Scenario Quests	Heavensward	313	120	
+folded-category-leaf	c4+g4	Main Scenario (A Realm Reborn through Endwalker)	Dragonsong Main Scenario Quests	Dragonsong	300	107	
+folded-category-leaf	c5+g5	Main Scenario (A Realm Reborn through Endwalker)	Post-Dragonsong Main Scenario Quests	Post-Dragonsong	345	153	
+folded-category-leaf	c6+g6	Main Scenario (A Realm Reborn through Endwalker)	Stormblood Main Scenario Quests	Stormblood	299	106	
+folded-category-leaf	c7+g7	Main Scenario (A Realm Reborn through Endwalker)	Post-Stormblood Main Scenario Quests	Post-Stormblood	345	152	
+folded-category-leaf	c8+g8	Main Scenario (A Realm Reborn through Endwalker)	Shadowbringers Main Scenario Quests	Shadowbringers	337	145	
+folded-category-leaf	c9+g9	Main Scenario (A Realm Reborn through Endwalker)	Post-Shadowbringers Main Scenario Quests	Post-Shadowbringers	383	190	
+folded-category-leaf	c10+g10	Main Scenario (A Realm Reborn through Endwalker)	Post-Shadowbringers Main Scenario Quests II	Post-Shadowbringers II	399	206	
+folded-category-leaf	c11+g11	Main Scenario (A Realm Reborn through Endwalker)	Endwalker Main Scenario Quests	Endwalker	287	94	
+folded-category-leaf	c12+g12	Main Scenario (A Realm Reborn through Endwalker)	Post-Endwalker Main Scenario Quests	Post-Endwalker	333	140	
+section	s1		Main Scenario (Dawntrail)	Main Scenario · DT	228	167	
+folded-category-leaf	c13+g13	Main Scenario (Dawntrail)	Dawntrail Main Scenario Quests	Dawntrail	279	86	
+folded-category-leaf	c14+g14	Main Scenario (Dawntrail)	Post-Dawntrail Main Scenario Quests	Post-Dawntrail	325	132	
+folded-category-leaf	c15+g15	Main Scenario (Dawntrail)	Post-Dawntrail Main Scenario Quests II	Post-Dawntrail II	341	148	
+section	s2		Chronicles of a New Era	Chronicles of a New Era	206	206	
+folded-category-leaf	c16+g16	Chronicles of a New Era	Chronicles of a New Era - Primals	Primals	288	67	
+folded-category-leaf	c17+g17	Chronicles of a New Era	Chronicles of a New Era - Bahamut	Bahamut	302	81	
+folded-category-leaf	c18+g18	Chronicles of a New Era	Chronicles of a New Era - The Crystal Tower	The Crystal Tower	380	159	
+folded-category-leaf	c19+g19	Chronicles of a New Era	Chronicles of a New Era - Alexander	Alexander	310	89	
+folded-category-leaf	c20+g20	Chronicles of a New Era	Chronicles of a New Era - The Warring Triad	The Warring Triad	378	157	
+folded-category-leaf	c21+g21	Chronicles of a New Era	Chronicles of a New Era - The Shadow of Mhach	The Shadow of Mhach	414	193	
+category	s2/c22	Chronicles of a New Era	Chronicles of a New Era - Omega	Omega	284	63	
+genre	c22/g22	Chronicles of a New Era - Omega	Omega Quests	Story	128	47	was same as parent; renamed
+genre	c22/g23	Chronicles of a New Era - Omega	Omega: Beyond the Rift	Beyond the Rift	208	135	
+folded-category-leaf	c23+g24	Chronicles of a New Era	Chronicles of a New Era - Return to Ivalice	Return to Ivalice	365	144	
+folded-category-leaf	c24+g25	Chronicles of a New Era	Chronicles of a New Era - The Four Lords	The Four Lords	353	131	
+folded-category-leaf	c25+g26	Chronicles of a New Era	Chronicles of a New Era - Eden	Eden	266	45	
+folded-category-leaf	c26+g27	Chronicles of a New Era	YoRHa: Dark Apocalypse	YoRHa: Dark Apocalypse	214	214	
+folded-category-leaf	c27+g28	Chronicles of a New Era	Chronicles of a New Era - The Sorrow of Werlyt	The Sorrow of Werlyt	405	184	
+category	s2/c28	Chronicles of a New Era	Chronicles of a New Era - Pandæmonium	Pandæmonium	357	136	
+genre	c28/g29	Chronicles of a New Era - Pandæmonium	Pandæmonium	Story	136	47	was same as parent; renamed
+genre	c28/g30	Chronicles of a New Era - Pandæmonium	Pandæmonium: Epilogue	Epilogue	223	77	
+folded-category-leaf	c29+g31	Chronicles of a New Era	Chronicles of a New Era - Myths of the Realm	Myths of the Realm	389	168	
+folded-category-leaf	c30+g32	Chronicles of a New Era	Chronicles of a New Era - The Arcadion	The Arcadion	337	116	
+folded-category-leaf	c31+g33	Chronicles of a New Era	Chronicles of a New Era - Echoes of Vana'diel	Echoes of Vana'diel	391	170	
+section	s3		Sidequests	Sidequests	97	97	
+category	s3/c54	Sidequests	Chronicles of Light	Chronicles of Light	164	164	
+genre	c54/g79	Chronicles of Light	Tales of the Dragonsong War	Tales of the Dragonsong War	251	251	
+genre	c54/g80	Chronicles of Light	Tales from the Shadows	Tales from the Shadows	211	211	
+genre	c54/g81	Chronicles of Light	Tales of Newfound Adventure	Tales of Newfound Adventure	259	259	
+category	s3/c55	Sidequests	Hildibrand Sidequests	Hildibrand	195	94	
+genre	c55/g82	Hildibrand Sidequests	Hildibrand Adventures	Adventures	199	100	
+genre	c55/g83	Hildibrand Sidequests	Further Hildibrand Adventures	Further Adventures	269	171	
+genre	c55/g84	Hildibrand Sidequests	Even Further Hildibrand Adventures	Even Further Adventures	316	218	
+genre	c55/g85	Hildibrand Sidequests	Somehow Further Hildibrand Adventures	Somehow Further Adventures	361	263	
+genre	c55/g86	Hildibrand Sidequests	Manderville Weapons	Manderville Weapons	188	188	
+genre	c55/g87	Hildibrand Sidequests	Inconceivably Further Hildibrand Adventures	Inconceivably Further Adventures	395	297	
+category	s3/c56	Sidequests	Weapon Enhancement Sidequests	Relic Weapons	299	128	
+genre	c56/g88	Weapon Enhancement Sidequests	Zodiac Weapons	Zodiac	144	59	
+genre	c56/g89	Weapon Enhancement Sidequests	Anima Weapons	Anima	141	56	
+genre	c56/g90	Weapon Enhancement Sidequests	The Forbidden Land, Eureka	Eureka	248	62	
+genre	c56/g91	Weapon Enhancement Sidequests	Resistance Weapons	Resistance	179	95	
+genre	c56/g92	Weapon Enhancement Sidequests	Phantom Weapons	Phantom	166	81	
+category	s3/c57	Sidequests	Records of Unusual Endeavors	Unusual Endeavors	267	170	
+genre	c57/g98	Records of Unusual Endeavors	Doman Adventurers' Guild Quests	Doman Adventurers' Guild	297	232	
+genre	c57/g99	Records of Unusual Endeavors	Doman Reconstruction Quests	Doman Reconstruction	267	202	
+genre	c57/g100	Records of Unusual Endeavors	Ishgardian Restoration Main Quests	Ishgardian Restoration (Main)	313	261	
+genre	c57/g101	Records of Unusual Endeavors	Ishgardian Restoration Sidequests	Ishgardian Restoration	302	201	
+genre	c57/g102	Records of Unusual Endeavors	Splendorous Tools	Splendorous Tools	164	164	
+genre	c57/g103	Records of Unusual Endeavors	Palace of the Dead	Palace of the Dead	163	163	
+genre	c57/g104	Records of Unusual Endeavors	Heaven-on-High	Heaven-on-High	143	143	
+genre	c57/g105	Records of Unusual Endeavors	Eureka Orthos	Eureka Orthos	126	126	
+genre	c57/g106	Records of Unusual Endeavors	Pilgrim's Traverse	Pilgrim's Traverse	158	158	
+genre	c57/g107	Records of Unusual Endeavors	Island Sanctuary Quests	Island Sanctuary	212	147	
+genre	c57/g108	Records of Unusual Endeavors	Variant Dungeons	Variant Dungeons	156	156	
+genre	c57/g109	Records of Unusual Endeavors	Cosmic Exploration Main Quests	Cosmic Exploration (Main)	282	231	
+genre	c57/g110	Records of Unusual Endeavors	Cosmic Exploration Sidequests	Cosmic Exploration	272	171	
+genre	c57/g111	Records of Unusual Endeavors	The Occult Crescent	The Occult Crescent	176	176	
+category	s3/c58	Sidequests	Side Story Quests	Side Stories	155	104	
+genre	c58/g93	Side Story Quests	Tales from the Calamity	Tales from the Calamity	209	209	
+genre	c58/g94	Side Story Quests	Delivery Moogle Quests	Delivery Moogle	205	141	
+genre	c58/g95	Side Story Quests	Scholasticate Quests	Scholasticate	183	119	
+genre	c58/g96	Side Story Quests	Void Quests	Void	104	39	
+genre	c58/g97	Side Story Quests	Tataru's Grand Endeavor	Tataru's Grand Endeavor	219	219	
+folded-category-leaf	c59+g112	Sidequests	Lominsan Sidequests	Lominsan	187	87	
+folded-category-leaf	c60+g113	Sidequests	Gridanian Sidequests	Gridanian	188	87	
+folded-category-leaf	c61+g114	Sidequests	Ul'dahn Sidequests	Ul'dahn	170	70	
+folded-category-leaf	c62+g115	Sidequests	Coerthan Sidequests	Coerthan	183	82	
+folded-category-leaf	c63+g116	Sidequests	Mor Dhonan Sidequests	Mor Dhonan	208	107	
+folded-category-leaf	c64+g117	Sidequests	Ishgardian Sidequests	Ishgardian	195	94	
+folded-category-leaf	c65+g118	Sidequests	Abalathian Sidequests	Abalathian	197	96	
+category	s3/c66	Sidequests	Dravanian Sidequests	Dravanian	191	90	
+genre	c66/g119	Dravanian Sidequests	Dravanian Forelands Sidequests	Forelands	283	88	
+genre	c66/g120	Dravanian Sidequests	Dravanian Hinterlands Sidequests	Hinterlands	299	104	
+genre	c66/g121	Dravanian Sidequests	Churning Mists Sidequests	Churning Mists	232	131	
+genre	c66/g122	Dravanian Sidequests	Idyllshire Sidequests	Idyllshire	183	82	
+folded-category-leaf	c67+g123	Sidequests	Azys Lla Sidequests	Azys Lla	171	70	
+category	s3/c68	Sidequests	Gyr Abanian Sidequests	Gyr Abanian	208	107	
+genre	c68/g124	Gyr Abanian Sidequests	Rhalgr's Reach Sidequests	Rhalgr's Reach	231	130	
+genre	c68/g125	Gyr Abanian Sidequests	Fringes Sidequests	Fringes	166	65	
+genre	c68/g126	Gyr Abanian Sidequests	Peaks Sidequests	Peaks	153	52	
+genre	c68/g127	Gyr Abanian Sidequests	Lochs Sidequests	Lochs	152	51	
+category	s3/c69	Sidequests	Othardian Sidequests	Othardian	191	90	
+genre	c69/g129	Othardian Sidequests	Ruby Sea Sidequests	Ruby Sea	182	81	
+genre	c69/g130	Othardian Sidequests	Yanxia Sidequests	Yanxia	159	58	
+genre	c69/g131	Othardian Sidequests	Azim Steppe Sidequests	Azim Steppe	211	110	
+folded-category-leaf	c70+g128	Sidequests	Hingan Sidequests	Hingan	164	63	
+category	s3/c71	Sidequests	Lakeland Sidequests	Lakeland	182	81	
+genre	c71/g132	Lakeland Sidequests	Crystarium Sidequests	Crystarium	199	98	
+genre	c71/g134	Lakeland Sidequests	Lakeland Sidequests	Sidequests	182	97	same as parent (zone vs region); keep, tooltip disambiguates
+category	s3/c72	Sidequests	Kholusian Sidequests	Kholusian	189	88	
+genre	c72/g133	Kholusian Sidequests	Eulmore Sidequests	Eulmore	175	74	
+genre	c72/g135	Kholusian Sidequests	Kholusia Sidequests	Kholusia	177	77	
+folded-category-leaf	c73+g136	Sidequests	Amh Araeng Sidequests	Amh Araeng	207	106	
+folded-category-leaf	c74+g137	Sidequests	Il Mheg Sidequests	Il Mheg	164	63	
+folded-category-leaf	c75+g138	Sidequests	Rak'tika Sidequests	Rak'tika	173	72	
+folded-category-leaf	c76+g139	Sidequests	Tempest Sidequests	Tempest	178	77	
+category	s3/c77	Sidequests	Sharlayan Sidequests	Sharlayan	190	89	
+genre	c77/g140	Sharlayan Sidequests	Old Sharlayan Sidequests	Old Sharlayan	225	124	
+genre	c77/g142	Sharlayan Sidequests	Labyrinthos Sidequests	Labyrinthos	207	106	
+category	s3/c78	Sidequests	Thavnairian Sidequests	Thavnair	206	78	
+genre	c78/g141	Thavnairian Sidequests	Radz-at-Han Sidequests	Radz-at-Han	211	110	
+genre	c78/g143	Thavnairian Sidequests	Thavnairian Sidequests	Thavnair	206	78	same as parent
+folded-category-leaf	c79+g144	Sidequests	Garlean Sidequests	Garlean	170	69	
+folded-category-leaf	c80+g145	Sidequests	Mare Lamentorum Sidequests	Mare Lamentorum	264	163	
+folded-category-leaf	c81+g146	Sidequests	Elpis Sidequests	Elpis	143	42	
+folded-category-leaf	c82+g147	Sidequests	Ultima Thule Sidequests	Ultima Thule	214	114	
+category	s3/c83	Sidequests	Yok Tural Sidequests	Yok Tural	183	82	
+genre	c83/g148	Yok Tural Sidequests	Tuliyollal Sidequests	Tuliyollal	183	82	
+genre	c83/g149	Yok Tural Sidequests	Urqopacha Sidequests	Urqopacha	199	98	
+genre	c83/g150	Yok Tural Sidequests	Kozama'uka Sidequests	Kozama'uka	210	109	
+genre	c83/g151	Yok Tural Sidequests	Yak T'el Sidequests	Yak T'el	169	68	
+category	s3/c84	Sidequests	Xak Tural Sidequests	Xak Tural	183	82	
+genre	c84/g152	Xak Tural Sidequests	Shaaloani Sidequests	Shaaloani	189	88	
+genre	c84/g153	Xak Tural Sidequests	Heritage Found Sidequests	Heritage Found	237	136	
+genre	c84/g154	Xak Tural Sidequests	Solution Nine Sidequests	Solution Nine	220	120	
+folded-category-leaf	c85+g155	Sidequests	Unlost World Sidequests	Unlost World	215	114	
+section	s4		Allied Society Quests (A Realm Reborn through Endwalker)	Allied Societies · ARR–EW	514	225	
+category	s4/c36	Allied Society Quests (A Realm Reborn through Endwalker)	Amalj'aa Quests	Amalj'aa	142	77	
+genre	c36/g40	Amalj'aa Quests	Main Quests	Main	107	43	
+genre	c36/g41	Amalj'aa Quests	Daily Quests	Daily	109	44	
+category	s4/c37	Allied Society Quests (A Realm Reborn through Endwalker)	Sylph Quests	Sylph	114	50	
+genre	c37/g42	Sylph Quests	Main Quests	Main	107	43	
+genre	c37/g43	Sylph Quests	Daily Quests	Daily	109	44	
+category	s4/c38	Allied Society Quests (A Realm Reborn through Endwalker)	Kobold Quests	Kobold	128	63	
+genre	c38/g44	Kobold Quests	Main Quests	Main	107	43	
+genre	c38/g45	Kobold Quests	Daily Quests	Daily	109	44	
+category	s4/c39	Allied Society Quests (A Realm Reborn through Endwalker)	Sahagin Quests	Sahagin	136	71	
+genre	c39/g46	Sahagin Quests	Main Quests	Main	107	43	
+genre	c39/g47	Sahagin Quests	Daily Quests	Daily	109	44	
+category	s4/c40	Allied Society Quests (A Realm Reborn through Endwalker)	Ixal Quests	Ixal	96	31	
+genre	c40/g48	Ixal Quests	Main Quests	Main	107	43	
+genre	c40/g49	Ixal Quests	Daily Quests	Daily	109	44	
+category	s4/c41	Allied Society Quests (A Realm Reborn through Endwalker)	Vanu Vanu Quests	Vanu Vanu	158	93	
+genre	c41/g50	Vanu Vanu Quests	Main Quests	Main	107	43	
+genre	c41/g51	Vanu Vanu Quests	Daily Quests	Daily	109	44	
+category	s4/c42	Allied Society Quests (A Realm Reborn through Endwalker)	Vath Quests	Vath	105	40	
+genre	c42/g52	Vath Quests	Main Quests	Main	107	43	
+genre	c42/g53	Vath Quests	Daily Quests	Daily	109	44	
+category	s4/c43	Allied Society Quests (A Realm Reborn through Endwalker)	Moogle Quests	Moogle	129	64	
+genre	c43/g54	Moogle Quests	Main Quests	Main	107	43	
+genre	c43/g55	Moogle Quests	Daily Quests	Daily	109	44	
+category	s4/c44	Allied Society Quests (A Realm Reborn through Endwalker)	Kojin Quests	Kojin	110	46	
+genre	c44/g56	Kojin Quests	Main Quests	Main	107	43	
+genre	c44/g57	Kojin Quests	Daily Quests	Daily	109	44	
+category	s4/c45	Allied Society Quests (A Realm Reborn through Endwalker)	Ananta Quests	Ananta	128	63	
+genre	c45/g58	Ananta Quests	Main Quests	Main	107	43	
+genre	c45/g59	Ananta Quests	Daily Quests	Daily	109	44	
+category	s4/c46	Allied Society Quests (A Realm Reborn through Endwalker)	Namazu Quests	Namazu	137	72	
+genre	c46/g60	Namazu Quests	Main Quests	Main	107	43	
+genre	c46/g61	Namazu Quests	Daily Quests	Daily	109	44	
+category	s4/c47	Allied Society Quests (A Realm Reborn through Endwalker)	Pixie Quests	Pixie	107	43	
+genre	c47/g62	Pixie Quests	Main Quests	Main	107	43	
+genre	c47/g63	Pixie Quests	Daily Quests	Daily	109	44	
+category	s4/c48	Allied Society Quests (A Realm Reborn through Endwalker)	Qitari Quests	Qitari	115	50	
+genre	c48/g64	Qitari Quests	Main Quests	Main	107	43	
+genre	c48/g65	Qitari Quests	Daily Quests	Daily	109	44	
+category	s4/c49	Allied Society Quests (A Realm Reborn through Endwalker)	Dwarf Quests	Dwarf	117	53	
+genre	c49/g66	Dwarf Quests	Main Quests	Main	107	43	
+genre	c49/g67	Dwarf Quests	Daily Quests	Daily	109	44	
+category	s4/c50	Allied Society Quests (A Realm Reborn through Endwalker)	Arkasodara Quests	Arkasodara	165	101	
+genre	c50/g68	Arkasodara Quests	Main Quests	Main	107	43	
+genre	c50/g69	Arkasodara Quests	Daily Quests	Daily	109	44	
+category	s4/c51	Allied Society Quests (A Realm Reborn through Endwalker)	Omicron Quests	Omicron	141	76	
+genre	c51/g70	Omicron Quests	Main Quests	Main	107	43	
+genre	c51/g71	Omicron Quests	Daily Quests	Daily	109	44	
+category	s4/c52	Allied Society Quests (A Realm Reborn through Endwalker)	Loporrit Quests	Loporrit	137	72	
+genre	c52/g72	Loporrit Quests	Main Quests	Main	107	43	
+genre	c52/g73	Loporrit Quests	Daily Quests	Daily	109	44	
+category	s4/c53	Allied Society Quests (A Realm Reborn through Endwalker)	Intersocietal Quests	Intersocietal	176	111	
+genre	c53/g74	Intersocietal Quests	A Realm Reborn Allied Society Quests	A Realm Reborn	328	140	
+genre	c53/g75	Intersocietal Quests	Heavensward Allied Society Quests	Heavensward	308	120	
+genre	c53/g76	Intersocietal Quests	Stormblood Allied Society Quests	Stormblood	294	106	
+genre	c53/g77	Intersocietal Quests	Endwalker Allied Society Quests	Endwalker	282	94	
+section	s5		Allied Society Quests (Dawntrail)	Allied Societies · DT	287	176	
+category	s5/c32	Allied Society Quests (Dawntrail)	Yok Huy Quests	Yok Huy	136	71	
+genre	c32/g34	Yok Huy Quests	Main Quests	Main	107	43	
+genre	c32/g35	Yok Huy Quests	Daily Quests	Daily	109	44	
+category	s5/c33	Allied Society Quests (Dawntrail)	Mamool Ja Quests	Mamool Ja	161	96	
+genre	c33/g36	Mamool Ja Quests	Main Quests	Main	107	43	
+genre	c33/g37	Mamool Ja Quests	Daily Quests	Daily	109	44	
+category	s5/c34	Allied Society Quests (Dawntrail)	Pelupelu Quests	Pelupelu	143	78	
+genre	c34/g38	Pelupelu Quests	Main Quests	Main	107	43	
+genre	c34/g39	Pelupelu Quests	Daily Quests	Daily	109	44	
+folded-category-leaf	c35+g78	Allied Society Quests (Dawntrail)	Intersocietal Quests	Intersocietal	176	111	
+section	s6		Class & Job Quests	Class & Job	165	100	
+category	s6/c86	Class & Job Quests	Disciple of War Quests	Disciple of War	194	130	
+genre	c86/g156	Disciple of War Quests	Gladiator Quests	Gladiator	147	83	
+genre	c86/g157	Disciple of War Quests	Pugilist Quests	Pugilist	131	66	
+genre	c86/g158	Disciple of War Quests	Marauder Quests	Marauder	150	85	
+genre	c86/g159	Disciple of War Quests	Lancer Quests	Lancer	125	60	
+genre	c86/g160	Disciple of War Quests	Archer Quests	Archer	123	58	
+genre	c86/g161	Disciple of War Quests	Rogue Quests	Rogue	121	56	
+category	s6/c87	Class & Job Quests	Disciple of Magic Quests	Disciple of Magic	211	146	
+genre	c87/g162	Disciple of Magic Quests	Conjurer Quests	Conjurer	142	77	
+genre	c87/g163	Disciple of Magic Quests	Thaumaturge Quests	Thaumaturge	185	120	
+genre	c87/g164	Disciple of Magic Quests	Arcanist Quests	Arcanist	137	72	
+category	s6/c88	Class & Job Quests	Disciple of the Hand Quests	Disciple of the Hand	240	176	
+genre	c88/g165	Disciple of the Hand Quests	Carpenter Quests	Carpenter	153	89	
+genre	c88/g166	Disciple of the Hand Quests	Blacksmith Quests	Blacksmith	163	99	
+genre	c88/g167	Disciple of the Hand Quests	Armorer Quests	Armorer	138	73	
+genre	c88/g168	Disciple of the Hand Quests	Goldsmith Quests	Goldsmith	156	91	
+genre	c88/g169	Disciple of the Hand Quests	Leatherworker Quests	Leatherworker	195	130	
+genre	c88/g170	Disciple of the Hand Quests	Weaver Quests	Weaver	130	65	
+genre	c88/g171	Disciple of the Hand Quests	Alchemist Quests	Alchemist	152	87	
+genre	c88/g172	Disciple of the Hand Quests	Culinarian Quests	Culinarian	156	91	
+category	s6/c89	Class & Job Quests	Disciple of the Land Quests	Disciple of the Land	237	172	
+genre	c89/g173	Disciple of the Land Quests	Miner Quests	Miner	115	50	
+genre	c89/g174	Disciple of the Land Quests	Botanist Quests	Botanist	139	74	
+genre	c89/g175	Disciple of the Land Quests	Fisher Quests	Fisher	119	54	
+category	s6/c90	Class & Job Quests	Crystalline Mean Quests	Crystalline Mean	211	146	
+genre	c90/g199	Crystalline Mean Quests	Facet of Forging Quests	Forging	206	67	
+genre	c90/g200	Crystalline Mean Quests	Facet of Crafting Quests	Crafting	210	71	
+genre	c90/g201	Crystalline Mean Quests	Facet of Nourishing Quests	Nourishing	236	97	
+genre	c90/g202	Crystalline Mean Quests	Facet of Gathering Quests	Gathering	226	88	
+genre	c90/g203	Crystalline Mean Quests	Facet of Fishing Quests	Fishing	202	63	
+genre	c90/g204	Crystalline Mean Quests	Crystalline Mean Quests	General	211	69	was same as parent; renamed
+category	s6/c91	Class & Job Quests	Studium Quests	Studium	140	75	
+genre	c91/g205	Studium Quests	Faculty of Archaeology Quests	Archaeology	265	110	
+genre	c91/g206	Studium Quests	Faculty of Astronomy Quests	Astronomy	252	97	
+genre	c91/g207	Studium Quests	Faculty of Medicine Quests	Medicine	235	79	
+genre	c91/g208	Studium Quests	Faculty of Anthropology Quests	Anthropology	276	121	
+genre	c91/g209	Studium Quests	Faculty of Aetherology Quests	Aetherology	263	107	
+genre	c91/g210	Studium Quests	Studium Quests	General	140	69	was same as parent; renamed
+category	s6/c92	Class & Job Quests	Wachumeqimeqi Quests	Wachumeqimeqi	213	149	
+genre	c92/g211	Wachumeqimeqi Quests	XRral Soj Metalwares Quests	XRral Soj Metalwares	249	184	
+genre	c92/g212	Wachumeqimeqi Quests	Epistles by Pameka Quests	Epistles by Pameka	235	170	
+genre	c92/g213	Wachumeqimeqi Quests	Xeerol Ja Juicecraft Quests	Xeerol Ja Juicecraft	238	173	
+genre	c92/g214	Wachumeqimeqi Quests	Shunye's Apothecary Quests	Shunye's Apothecary	250	185	
+genre	c92/g215	Wachumeqimeqi Quests	Fish Fancies Donuhanu Quests	Fish Fancies Donuhanu	267	203	
+genre	c92/g216	Wachumeqimeqi Quests	Wachumeqimeqi Quests	General	213	69	was same as parent; renamed
+category	s6/c93	Class & Job Quests	Disciple of War Job Quests	Disciple of War Jobs	232	176	
+genre	c93/g176	Disciple of War Job Quests	Paladin Quests	Paladin	132	67	
+genre	c93/g177	Disciple of War Job Quests	Monk Quests	Monk	113	49	
+genre	c93/g178	Disciple of War Job Quests	Warrior Quests	Warrior	131	66	
+genre	c93/g179	Disciple of War Job Quests	Dragoon Quests	Dragoon	140	76	
+genre	c93/g180	Disciple of War Job Quests	Bard Quests	Bard	107	42	
+genre	c93/g181	Disciple of War Job Quests	Ninja Quests	Ninja	111	46	
+genre	c93/g186	Disciple of War Job Quests	Dark Knight Quests	Dark Knight	169	104	
+genre	c93/g187	Disciple of War Job Quests	Machinist Quests	Machinist	150	85	
+genre	c93/g189	Disciple of War Job Quests	Samurai Quests	Samurai	139	74	
+genre	c93/g191	Disciple of War Job Quests	Gunbreaker Quests	Gunbreaker	169	104	
+genre	c93/g192	Disciple of War Job Quests	Dancer Quests	Dancer	127	62	
+genre	c93/g194	Disciple of War Job Quests	Reaper Quests	Reaper	127	63	
+genre	c93/g195	Disciple of War Job Quests	Viper Quests	Viper	110	46	
+genre	c93/g198	Disciple of War Job Quests	Beastmaster Quests	Beastmaster	176	111	
+category	s6/c94	Class & Job Quests	Disciple of Magic Job Quests	Disciple of Magic Jobs	248	192	
+genre	c94/g182	Disciple of Magic Job Quests	White Mage Quests	White Mage	167	102	
+genre	c94/g183	Disciple of Magic Job Quests	Black Mage Quests	Black Mage	164	99	
+genre	c94/g184	Disciple of Magic Job Quests	Summoner Quests	Summoner	163	98	
+genre	c94/g185	Disciple of Magic Job Quests	Scholar Quests	Scholar	132	67	
+genre	c94/g188	Disciple of Magic Job Quests	Astrologian Quests	Astrologian	166	101	
+genre	c94/g190	Disciple of Magic Job Quests	Red Mage Quests	Red Mage	150	85	
+genre	c94/g193	Disciple of Magic Job Quests	Sage Quests	Sage	108	43	
+genre	c94/g196	Disciple of Magic Job Quests	Pictomancer Quests	Pictomancer	177	112	
+genre	c94/g197	Disciple of Magic Job Quests	Blue Mage Quests	Blue Mage	155	91	
+category	s6/c95	Class & Job Quests	Role Quests	Role	104	39	
+genre	c95/g217	Role Quests	Tank Role Quests (Shadowbringers)	Tank · ShB	314	98	
+genre	c95/g218	Role Quests	Healer Role Quests (Shadowbringers)	Healer · ShB	328	112	
+genre	c95/g219	Role Quests	Physical DPS Role Quests (Shadowbringers)	Physical DPS · ShB	383	167	
+genre	c95/g220	Role Quests	Magical Ranged DPS Role Quests (Shadowbringers)	Magical Ranged DPS · ShB	448	232	
+genre	c95/g221	Role Quests	Role Quests (Shadowbringers)	(Shadowbringers)	266	158	
+genre	c95/g222	Role Quests	Tank Role Quests (Endwalker)	Tank · EW	263	90	
+genre	c95/g223	Role Quests	Healer Role Quests (Endwalker)	Healer · EW	277	104	
+genre	c95/g224	Role Quests	Melee DPS Role Quests (Endwalker)	Melee DPS · EW	311	138	
+genre	c95/g225	Role Quests	Physical Ranged DPS Role Quests (Endwalker)	Physical Ranged DPS · EW	403	230	
+genre	c95/g226	Role Quests	Magical Ranged DPS Role Quests (Endwalker)	Magical Ranged DPS · EW	398	225	
+genre	c95/g227	Role Quests	Role Quests (Endwalker)	(Endwalker)	215	107	
+genre	c95/g228	Role Quests	Tank Role Quests (Dawntrail)	Tank · DT	256	87	
+genre	c95/g229	Role Quests	Healer Role Quests (Dawntrail)	Healer · DT	270	101	
+genre	c95/g230	Role Quests	Melee DPS Role Quests (Dawntrail)	Melee DPS · DT	304	135	
+genre	c95/g231	Role Quests	Physical Ranged DPS Role Quests (Dawntrail)	Physical Ranged DPS · DT	396	227	
+genre	c95/g232	Role Quests	Magical Ranged DPS Role Quests (Dawntrail)	Magical Ranged DPS · DT	390	221	
+genre	c95/g233	Role Quests	Role Quests (Dawntrail)	(Dawntrail)	208	99	
+section	s7		Other Quests	Other	115	51	
+category	s7/c96	Other Quests	Grand Company Quests	Grand Company	207	142	
+genre	c96/g234	Grand Company Quests	Maelstrom Quests	Maelstrom	159	94	
+genre	c96/g235	Grand Company Quests	Order of the Twin Adder Quests	Twin Adder	275	100	
+genre	c96/g236	Grand Company Quests	Immortal Flames Quests	Immortal Flames	214	150	
+category	s7/c97	Other Quests	Seasonal Events	Seasonal	143	80	
+genre	c97/g238	Seasonal Events	Heavensturn Events	Heavensturn	176	113	
+genre	c97/g240	Seasonal Events	Valentione's Day Events	Valentione's Day	210	147	
+genre	c97/g241	Seasonal Events	Valentione's & Little Ladies' Day Events	Valentione's & Little Ladies' Day	344	280	
+genre	c97/g242	Seasonal Events	Little Ladies' Day Events	Little Ladies' Day	213	150	
+genre	c97/g243	Seasonal Events	Little Ladies' & Hatching-tide Events	Little Ladies' & Hatching-tide	318	255	
+genre	c97/g244	Seasonal Events	Hatching-tide Events	Hatching-tide	184	121	
+genre	c97/g245	Seasonal Events	Gold Saucer Festivities	Gold Saucer Festivities	199	199	
+genre	c97/g246	Seasonal Events	Moonfire Faire Events	Moonfire Faire	190	127	
+genre	c97/g247	Seasonal Events	Rising Events	Rising	117	54	
+genre	c97/g248	Seasonal Events	All Saints' Wake Events	All Saints' Wake	202	139	
+genre	c97/g249	Seasonal Events	Starlight Celebration Events	Starlight Celebration	247	184	
+category	s7/c98	Other Quests	Special Quests	Special	129	64	
+genre	c98/g251	Special Quests	Special Quests	General	129	69	was same as parent; renamed
+genre	c98/g252	Special Quests	Collaboration Quests	Collaborations	186	130	

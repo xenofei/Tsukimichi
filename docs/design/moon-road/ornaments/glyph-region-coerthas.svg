@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+<title>glyph-region-coerthas (1x)</title>
+<desc>Coerthas (spans ARR and HW): a snow-capped range under a small moon. Original Tsukimichi art; rasterize into assets/ui/ornaments.png.</desc>
+<path d="M2.5 19.5 L9.5 8 L13 13.5 L15.5 10 L21.5 19.5 Z" fill="#1E2437" stroke="#DDE3F0" stroke-width="1.2" stroke-linejoin="round"/>
+<path d="M7.6 11.2 L9.5 8 L11.4 11 L10 10.2 L9 11.4 Z M14.3 11.8 L15.5 10 L16.8 12 Z" fill="#DDE3F0"/>
+<circle cx="18" cy="5" r="2" fill="#F2D27A"/>
+</svg>

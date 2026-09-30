@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+<title>glyph-chronicles-of-light (1x)</title>
+<desc>Chronicles of Light: a page with a star of light at its heart. Original Tsukimichi art; rasterize into assets/ui/ornaments.png.</desc>
+<path d="M5 5.5 H15 L19 9.5 V19.5 H5 Z" fill="#1E2437" stroke="#DDE3F0" stroke-width="1.2" stroke-linejoin="round"/>
+<path d="M15 5.5 V9.5 H19" fill="none" stroke="#DDE3F0" stroke-width="1"/>
+<path d="M12 10.2 L12.8 13.2 L15.8 14 L12.8 14.8 L12 17.8 L11.2 14.8 L8.2 14 L11.2 13.2 Z" fill="#F2D27A"/>
+<path d="M12 8 V9 M12 19 V20 M6.8 14 H7.6 M16.4 14 H17.2" stroke="#D9BE82" stroke-width=".8" stroke-linecap="round"/>
+</svg>

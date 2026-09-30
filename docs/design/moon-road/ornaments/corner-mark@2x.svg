@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 12 12">
+<title>corner-mark (2x)</title>
+<desc>Corner mark (top-left; the other three corners are the same texture with flipped UVs). Hero banner frame, the selected Characters card, empty states. Never on every card. Original Tsukimichi art; rasterize into assets/ui/ornaments@2x.png.</desc>
+<path d="M1.5 11.5 V1.5 H11.5" fill="none" stroke="#A88B52" stroke-width="1"/>
+<path d="M4 8.5 V4 H8.5" fill="none" stroke="#A88B52" stroke-width=".6" opacity=".6"/>
+<path d="M1.5 -.3 L3.3 1.5 L1.5 3.3 L-.3 1.5 Z" fill="#D9BE82"/>
+</svg>

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 12 12">
+<title>sigil-star (2x)</title>
+<desc>Four-point star sigil: section eyebrows, the path chart's band marks. Shared with the existing path chart. Original Tsukimichi art; rasterize into assets/ui/ornaments@2x.png.</desc>
+<path d="M6 .5 L7.1 4.9 L11.5 6 L7.1 7.1 L6 11.5 L4.9 7.1 L.5 6 L4.9 4.9 Z" fill="#D9BE82"/>
+<circle cx="6" cy="6" r="1" fill="#FFF0BE"/>
+</svg>

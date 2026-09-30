@@ -1,0 +1,344 @@
+UNRESOLVED 67876 ra Alexander: The Creator (Savage)
+UNRESOLVED 67064 pvp Frontline
+UNRESOLVED 67063 pvp Frontline
+UNRESOLVED 67065 pvp Frontline
+UNRESOLVED 70199 dd Eureka Orthos
+UNRESOLVED 65594 gh Guildhests
+UNRESOLVED 65596 gh Guildhests
+UNRESOLVED 65595 gh Guildhests
+UNRESOLVED 67790 ra Alexander: Midas (Savage)
+UNRESOLVED 70121 pvp Crystalline Conflict
+UNRESOLVED 67092 dd Palace of the Dead
+UNRESOLVED 68476 sss The Circles of Answering
+UNRESOLVED 67644 ra Alexander: Gordias (Savage)
+UNRESOLVED 67819 pvp The Feast
+UNRESOLVED 66640 pvp PvP
+UNRESOLVED 66641 pvp PvP
+UNRESOLVED 66642 pvp PvP
+UNRESOLVED 69709 sss The Burning Field
+UNRESOLVED 68543 pvp Rival Wings
+UNRESOLVED 70541 sss The Spire of Trial
+UNRESOLVED 67654 sss Stone%2C Sky%2C Sea
+UNRESOLVED 70941 dd Pilgrim's Traverse
+UNRESOLVED 69137 sss The Lawns
+UNRESOLVED 67095 ra The Second Coil of Bahamut (Savage)
+UNRESOLVED 68667 dd Heaven-on-High
+wiki pairs 308 plugin pairs 226 missing 201 extra 115 duties with NO plugin unlock quest 177
+== MISSING (wiki unlock not in plugin DutyUnlockIndex); * = duty has no plugin quest at all
+* 65902 GaiUse504_00366 'The Rising Chorus' [Main Scenari] -> CFC 32 the Keeper of the Lake | plugin for quest: [] | plugin quests for duty: []
+* 67152 HeaVna315_01616 'Lord of the Hive' [Main Scenari] -> CFC 86 Thok ast Thok (Hard) | plugin for quest: [] | plugin quests for duty: []
+* 67153 HeaVna316_01617 'Mourn in Passing' [Main Scenari] -> CFC 37 Sohm Al | plugin for quest: [] | plugin quests for duty: []
+* 67170 HeaVna333_01634 'Into the Aery' [Main Scenari] -> CFC 39 the Aery | plugin for quest: [] | plugin quests for duty: []
+* 67176 HeaVna404_01640 "A Knight's Calling" [Main Scenari] -> CFC 34 the Vault | plugin for quest: [] | plugin quests for duty: []
+* 67196 HeaVna611_01660 'Forbidden Knowledge' [Main Scenari] -> CFC 31 the Great Gubal Library | plugin for quest: [] | plugin quests for duty: []
+* 67205 HeaVna707_01669 'Heavensward' [Main Scenari] -> CFC 38 the Aetherochemical Research Facility | plugin for quest: ['the Diadem - Trials of the Fury', 'the Diadem (Easy)', 'the Diadem', 'the Diadem (Hard)', 'the Diadem Hunting Grounds (Easy)', 'the Diadem Hunting Grounds', 'the Diadem - Trials of the Matron'] | plugin quests for duty: []
+* 67205 HeaVna707_01669 'Heavensward' [Main Scenari] -> CFC 90 the Singularity Reactor | plugin for quest: ['the Diadem - Trials of the Fury', 'the Diadem (Easy)', 'the Diadem', 'the Diadem (Hard)', 'the Diadem Hunting Grounds (Easy)', 'the Diadem Hunting Grounds', 'the Diadem - Trials of the Matron'] | plugin quests for duty: []
+* 67768 HeaVnc102_02232 'The Word of the Mother' [Main Scenari] -> CFC 141 the Antitower | plugin for quest: [] | plugin quests for duty: []
+* 67780 HeaVnd103_02244 'Winning Over the Wyrm' [Main Scenari] -> CFC 171 Sohr Khai | plugin for quest: [] | plugin quests for duty: []
+* 67781 HeaVnd104_02245 'An End to the Song' [Main Scenari] -> CFC 169 the Final Steps of Faith | plugin for quest: [] | plugin quests for duty: []
+* 67878 HeaVne102_02342 'Shadows of the First' [Main Scenari] -> CFC 182 Xelphatol | plugin for quest: [] | plugin quests for duty: []
+* 67890 HeaVnf104_02354 'Griffin, Griffin on the Wall' [Main Scenari] -> CFC 219 Baelsar's Wall | plugin for quest: [] | plugin quests for duty: []
+* 68005 StmBda139_02469 'Not without Incident' [Main Scenari] -> CFC 238 the Sirensong Sea | plugin for quest: [] | plugin quests for duty: []
+* 68025 StmBda313_02489 'The Lord of the Revel' [Main Scenari] -> CFC 243 the Pool of Tribute | plugin for quest: [] | plugin quests for duty: []
+* 68060 StmBda506_02524 'The Die Is Cast' [Main Scenari] -> CFC 241 Doma Castle | plugin for quest: [] | plugin quests for duty: []
+* 68068 StmBda606_02532 'The Lady of Bliss' [Main Scenari] -> CFC 263 Emanation | plugin for quest: [] | plugin quests for duty: []
+* 68080 StmBda618_02544 'The Price of Freedom' [Main Scenari] -> CFC 242 Castrum Abania | plugin for quest: [] | plugin quests for duty: []
+* 68089 StmBda706_02553 'Stormblood' [Main Scenari] -> CFC 247 Ala Mhigo | plugin for quest: [] | plugin quests for duty: []
+* 68089 StmBda706_02553 'Stormblood' [Main Scenari] -> CFC 239 the Royal Menagerie | plugin for quest: [] | plugin quests for duty: []
+* 68500 StmBdb103_02964 "The Mad King's Trove" [Main Scenari] -> CFC 279 the Drowned City of Skalla | plugin for quest: [] | plugin quests for duty: []
+* 68610 StmBdd105_03074 'The Primary Agreement' [Main Scenari] -> CFC 537 Castrum Fluminis | plugin for quest: [] | plugin quests for duty: []
+* 68680 StmBde102_03144 'Feel the Burn' [Main Scenari] -> CFC 585 the Burn | plugin for quest: [] | plugin quests for duty: []
+* 68719 StmBdf105_03183 'The Face of War' [Main Scenari] -> CFC 611 the Ghimlyt Dark | plugin for quest: [] | plugin quests for duty: []
+* 68836 LucKma401_03300 'The Lightwardens' [Main Scenari] -> CFC 676 Holminster Switch | plugin for quest: [] | plugin quests for duty: []
+* 68848 LucKmb111_03312 'The Key to the Castle' [Main Scenari] -> CFC 649 Dohn Mheg | plugin for quest: [] | plugin quests for duty: []
+* 68856 LucKmb119_03320 'Acht-la Ormh Inn' [Main Scenari] -> CFC 657 the Dancing Plague | plugin for quest: [] | plugin quests for duty: []
+* 68876 LucKmc119_03340 'The Burden of Knowledge' [Main Scenari] -> CFC 651 the Qitana Ravel | plugin for quest: [] | plugin quests for duty: []
+* 69157 LucKmd116_03621 'A Fresh Start' [Main Scenari] -> CFC 656 Malikah's Well | plugin for quest: [] | plugin quests for duty: []
+* 69179 LucKme114_03643 'Extinguishing the Last Light' [Main Scenari] -> CFC 659 Mt. Gulg | plugin for quest: [] | plugin quests for duty: []
+* 69179 LucKme114_03643 'Extinguishing the Last Light' [Main Scenari] -> CFC 666 the Crown of the Immaculate | plugin for quest: [] | plugin quests for duty: []
+* 69190 LucKmf111_03654 'Shadowbringers' [Main Scenari] -> CFC 652 Amaurot | plugin for quest: [] | plugin quests for duty: []
+* 69190 LucKmf111_03654 'Shadowbringers' [Main Scenari] -> CFC 687 the Dying Gasp | plugin for quest: [] | plugin quests for duty: []
+* 69210 LucKmg102_03674 'A Grand Adventure' [Main Scenari] -> CFC 692 the Grand Cosmos | plugin for quest: [] | plugin quests for duty: []
+* 69305 LucKmh109_03769 'Beneath the Surface' [Main Scenari] -> CFC 714 Anamnesis Anyder | plugin for quest: [] | plugin quests for duty: []
+* 69313 LucKmi107_03777 'The Converging Light' [Main Scenari] -> CFC 737 the Heroes' Gauntlet | plugin for quest: [] | plugin quests for duty: []
+* 69314 LucKmi108_03778 "Hope's Confluence" [Main Scenari] -> CFC 738 the Seat of Sacrifice | plugin for quest: [] | plugin quests for duty: []
+* 69547 LucKmj105_04011 'Like Master, Like Pupil' [Main Scenari] -> CFC 746 Matoya's Relict | plugin for quest: [] | plugin quests for duty: []
+* 69598 LucKmk105_04062 'The Flames of War' [Main Scenari] -> CFC 777 Paglth'an | plugin for quest: [] | plugin quests for duty: []
+* 69913 AktKma121_04377 'In the Dark of the Tower' [Main Scenari] -> CFC 783 the Tower of Zot | plugin for quest: [] | plugin quests for duty: []
+* 69931 AktKmb116_04395 'Gateway of the Gods' [Main Scenari] -> CFC 785 the Tower of Babil | plugin for quest: [] | plugin quests for duty: []
+* 69934 AktKmb119_04398 'The Martyr' [Main Scenari] -> CFC 802 the Dark Inside | plugin for quest: [] | plugin quests for duty: []
+* 69945 AktKmd101_04409 'Skies Aflame' [Main Scenari] -> CFC 789 Vanaspati | plugin for quest: [] | plugin quests for duty: []
+* 69973 AktKme119_04437 'Caging the Messenger' [Main Scenari] -> CFC 787 Ktisis Hyperboreia | plugin for quest: [] | plugin quests for duty: []
+* 69985 AktKmf111_04449 'Her Children, One and All' [Main Scenari] -> CFC 786 the Aitiascope | plugin for quest: [] | plugin quests for duty: []
+* 69985 AktKmf111_04449 'Her Children, One and All' [Main Scenari] -> CFC 790 the Mothercrystal | plugin for quest: [] | plugin quests for duty: []
+* 70000 AktKmg115_04464 'Endwalker' [Main Scenari] -> CFC 792 the Dead Ends | plugin for quest: [] | plugin quests for duty: []
+* 70000 AktKmg115_04464 'Endwalker' [Main Scenari] -> CFC 796 the Final Day | plugin for quest: [] | plugin quests for duty: []
+* 70065 AktKmh104_04529 "Alzadaal's Legacy" [Main Scenari] -> CFC 844 Alzadaal's Legacy | plugin for quest: [] | plugin quests for duty: []
+* 70128 AktKmi101_04592 'In Search of Azdaja' [Main Scenari] -> CFC 869 the Fell Court of Troia | plugin for quest: [] | plugin quests for duty: []
+* 70133 AktKmi106_04597 'The Wind Rises' [Main Scenari] -> CFC 870 Storm's Crown | plugin for quest: [] | plugin quests for duty: []
+* 70210 AktKmj105_04674 'King of the Mountain' [Main Scenari] -> CFC 896 Lapis Manalis | plugin for quest: [] | plugin quests for duty: []
+* 70213 AktKmj108_04677 'Desires Untold' [Main Scenari] -> CFC 886 Mount Ordeals | plugin for quest: [] | plugin quests for duty: []
+* 70272 AktKmk102_04736 'Going Haam' [Main Scenari] -> CFC 822 the Aetherfont | plugin for quest: [] | plugin quests for duty: []
+* 70278 AktKmk108_04742 'Abyssal Dark' [Main Scenari] -> CFC 949 the Voidcast Dais | plugin for quest: [] | plugin quests for duty: []
+* 70284 AktKml105_04748 'Down in the Dark' [Main Scenari] -> CFC 964 the Abyssal Fracture | plugin for quest: [] | plugin quests for duty: []
+* 70284 AktKml105_04748 'Down in the Dark' [Main Scenari] -> CFC 823 the Lunar Subterrane | plugin for quest: [] | plugin quests for duty: []
+* 70430 KinGmb115_04894 'The Skyruin' [Main Scenari] -> CFC 832 Worqor Lar Dor | plugin for quest: [] | plugin quests for duty: []
+* 70481 KinGme114_04945 'The Resilient Son' [Main Scenari] -> CFC 995 Everkeep | plugin for quest: ['Origenics'] | plugin quests for duty: []
+* 70495 KinGmf114_04959 'Dawntrail' [Main Scenari] -> CFC 984 the Interphos | plugin for quest: ['Alexandria'] | plugin quests for duty: []
+* 70782 KinGmg103_05246 'In Search of the Past' [Main Scenari] -> CFC 1008 Yuweyawata Field Station | plugin for quest: [] | plugin quests for duty: []
+* 70840 KinGmh106_05304 'Descent to the Foundation' [Main Scenari] -> CFC 1030 Recollection | plugin for quest: [] | plugin quests for duty: []
+* 70840 KinGmh106_05304 'Descent to the Foundation' [Main Scenari] -> CFC 1027 the Underkeep | plugin for quest: [] | plugin quests for duty: []
+* 70907 KinGmi108_05371 'A Terminal Invitation' [Main Scenari] -> CFC 1028 the Meso Terminal | plugin for quest: [] | plugin quests for duty: []
+* 70907 KinGmi108_05371 'A Terminal Invitation' [Main Scenari] -> CFC 1061 the Ageless Necropolis | plugin for quest: [] | plugin quests for duty: []
+* 70964 KinGmj103_05428 'Beyond the Mountains' [Main Scenari] -> CFC 1064 Mistwake | plugin for quest: [] | plugin quests for duty: []
+* 70969 KinGmj108_05433 'Where We Call Home' [Main Scenari] -> CFC 1076 Hell on Rails | plugin for quest: [] | plugin quests for duty: []
+* 71007 KinGmk102_05471 'Two Worlds Entwined' [Main Scenari] -> CFC 1011 the Clyteum | plugin for quest: [] | plugin quests for duty: []
+* 71008 KinGmk103_05472 'A Grave Presentiment' [Main Scenari] -> CFC 1115 the Unmaking | plugin for quest: [] | plugin quests for duty: []
+* 65579 GaiUsd501_00043 'Fragments of Truth' [Chronicles o] -> CFC 110 the Final Coil of Bahamut - Turn 4 | plugin for quest: ['the Final Coil of Bahamut - Turn 1'] | plugin quests for duty: []
+* 65579 GaiUsd501_00043 'Fragments of Truth' [Chronicles o] -> CFC 109 the Final Coil of Bahamut - Turn 3 | plugin for quest: ['the Final Coil of Bahamut - Turn 1'] | plugin quests for duty: []
+* 65579 GaiUsd501_00043 'Fragments of Truth' [Chronicles o] -> CFC 108 the Final Coil of Bahamut - Turn 2 | plugin for quest: ['the Final Coil of Bahamut - Turn 1'] | plugin quests for duty: []
+* 65969 SubCts902_00433 'Fear and Odin in the Shroud' [Chronicles o] -> CFC 82 Urth's Fount | plugin for quest: [] | plugin quests for duty: []
+* 66695 GaiUsd101_01159 'Primal Awakening' [Chronicles o] -> CFC 97 the Binding Coil of Bahamut - Turn 5 | plugin for quest: ['the Binding Coil of Bahamut - Turn 1'] | plugin quests for duty: []
+* 66695 GaiUsd101_01159 'Primal Awakening' [Chronicles o] -> CFC 96 the Binding Coil of Bahamut - Turn 4 | plugin for quest: ['the Binding Coil of Bahamut - Turn 1'] | plugin quests for duty: []
+* 66695 GaiUsd101_01159 'Primal Awakening' [Chronicles o] -> CFC 95 the Binding Coil of Bahamut - Turn 3 | plugin for quest: ['the Binding Coil of Bahamut - Turn 1'] | plugin quests for duty: []
+* 66695 GaiUsd101_01159 'Primal Awakening' [Chronicles o] -> CFC 94 the Binding Coil of Bahamut - Turn 2 | plugin for quest: ['the Binding Coil of Bahamut - Turn 1'] | plugin quests for duty: []
+* 66849 GaiUsd301_01313 'Another Turn in the Coil' [Chronicles o] -> CFC 100 the Second Coil of Bahamut - Turn 3 | plugin for quest: ['the Second Coil of Bahamut - Turn 1'] | plugin quests for duty: []
+* 66849 GaiUsd301_01313 'Another Turn in the Coil' [Chronicles o] -> CFC 99 the Second Coil of Bahamut - Turn 2 | plugin for quest: ['the Second Coil of Bahamut - Turn 1'] | plugin quests for duty: []
+* 66849 GaiUsd301_01313 'Another Turn in the Coil' [Chronicles o] -> CFC 101 the Second Coil of Bahamut - Turn 4 | plugin for quest: ['the Second Coil of Bahamut - Turn 1'] | plugin quests for duty: []
+* 67626 HeaVnr101_02090 'Disarmed' [Chronicles o] -> CFC 112 Alexander - The Fist of the Father | plugin for quest: [] | plugin quests for duty: []
+* 67651 HeaVny202_02115 'The Diabolical Bismarck' [Chronicles o] -> CFC 89 the Limitless Blue (Extreme) | plugin for quest: [] | plugin quests for duty: []
+* 67652 HeaVny203_02116 'Thok Around the Clock' [Chronicles o] -> CFC 87 Thok ast Thok (Extreme) | plugin for quest: [] | plugin quests for duty: []
+* 67766 HeaVny211_02230 'When the Bough Wakes' [Chronicles o] -> CFC 134 Containment Bay S1T7 | plugin for quest: [] | plugin quests for duty: []
+* 67785 HeaVnr201_02249 'Rearmed' [Chronicles o] -> CFC 136 Alexander - The Fist of the Son | plugin for quest: [] | plugin quests for duty: []
+* 67868 HeaVny231_02332 'Balance unto All' [Chronicles o] -> CFC 183 Containment Bay P1T6 | plugin for quest: [] | plugin quests for duty: []
+* 67871 HeaVnr301_02335 'The Coeurl and the Colossus' [Chronicles o] -> CFC 186 Alexander - The Eyes of the Creator | plugin for quest: [] | plugin quests for duty: []
+* 67872 HeaVnr302_02336 "Biggs and Wedge's Excellent Adventure" [Chronicles o] -> CFC 187 Alexander - The Breath of the Creator | plugin for quest: [] | plugin quests for duty: []
+* 67873 HeaVnr303_02337 'Thus Spake Quickthinx' [Chronicles o] -> CFC 188 Alexander - The Heart of the Creator | plugin for quest: [] | plugin quests for duty: []
+* 67874 HeaVnr304_02338 'Judgment Day' [Chronicles o] -> CFC 189 Alexander - The Soul of the Creator | plugin for quest: [] | plugin quests for duty: []
+* 67909 HeaVnm301_02373 'Where Shadows Reign' [Chronicles o] -> CFC 220 Dun Scaith | plugin for quest: [] | plugin quests for duty: []
+* 67930 HeaVny241_02394 'The Last Pillar to Fall' [Chronicles o] -> CFC 223 Containment Bay Z1T9 | plugin for quest: [] | plugin quests for duty: []
+* 68540 StmBdi102_03004 'A City Fallen' [Chronicles o] -> CFC 281 the Royal City of Rabanastre | plugin for quest: [] | plugin quests for duty: []
+* 68551 StmBdy301_03015 'An Auspicious Encounter' [Chronicles o] -> CFC 290 the Jade Stoa | plugin for quest: [] | plugin quests for duty: []
+* 68551 StmBdy301_03015 'An Auspicious Encounter' [Chronicles o] -> CFC 284 Hells' Lid | plugin for quest: [] | plugin quests for duty: []
+* 68552 StmBdy311_03016 'Tortoise in Time' [Chronicles o] -> CFC 536 the Swallow's Compass | plugin for quest: [] | plugin quests for duty: []
+* 68568 StmBdr202_03032 'No Slowing Down' [Chronicles o] -> CFC 286 Sigmascape V1.0 | plugin for quest: [] | plugin quests for duty: []
+* 68569 StmBdr203_03033 'An Unfinished Masterpiece' [Chronicles o] -> CFC 287 Sigmascape V2.0 | plugin for quest: [] | plugin quests for duty: []
+* 68570 StmBdr204_03034 "Won't Let You Pass" [Chronicles o] -> CFC 288 Sigmascape V3.0 | plugin for quest: [] | plugin quests for duty: []
+* 68571 StmBdr205_03035 'Test World of Ruin' [Chronicles o] -> CFC 289 Sigmascape V4.0 | plugin for quest: [] | plugin quests for duty: []
+* 68628 StmBdi204_03092 'Annihilation' [Chronicles o] -> CFC 550 the Ridorana Lighthouse | plugin for quest: [] | plugin quests for duty: []
+* 68688 StmBdy321_03152 'The Fire-bird Down Below' [Chronicles o] -> CFC 596 Hells' Kier | plugin for quest: [] | plugin quests for duty: []
+* 68690 StmBdr301_03154 'In the Beginning, There Was Chaos' [Chronicles o] -> CFC 587 Alphascape V1.0 | plugin for quest: [] | plugin quests for duty: []
+* 68691 StmBdr302_03155 'And Like Fire Was His Mane' [Chronicles o] -> CFC 588 Alphascape V2.0 | plugin for quest: [] | plugin quests for duty: []
+* 68692 StmBdr303_03156 'In the End, There Is Omega' [Chronicles o] -> CFC 590 Alphascape V4.0 | plugin for quest: [] | plugin quests for duty: []
+* 68692 StmBdr303_03156 'In the End, There Is Omega' [Chronicles o] -> CFC 589 Alphascape V3.0 | plugin for quest: [] | plugin quests for duty: []
+* 68701 StmBdy331_03165 'Surpassing the Samurai' [Chronicles o] -> CFC 637 the Wreath of Snakes | plugin for quest: [] | plugin quests for duty: []
+* 68725 StmBdi303_03189 'The City of Lost Angels' [Chronicles o] -> CFC 636 the Orbonne Monastery | plugin for quest: [] | plugin quests for duty: []
+* 68792 LucKra102_03256 'Deploy the Core' [Chronicles o] -> CFC 653 Eden's Gate: Resurrection | plugin for quest: [] | plugin quests for duty: []
+* 68793 LucKra103_03257 'One Fell Swoop' [Chronicles o] -> CFC 684 Eden's Gate: Descent | plugin for quest: [] | plugin quests for duty: []
+* 68794 LucKra104_03258 'Nor Any Drop to Drink' [Chronicles o] -> CFC 682 Eden's Gate: Inundation | plugin for quest: [] | plugin quests for duty: []
+* 68795 LucKra105_03259 'Super Seismic' [Chronicles o] -> CFC 689 Eden's Gate: Sepulture | plugin for quest: [] | plugin quests for duty: []
+* 69254 LucKta002_03718 'On the Threshold' [Chronicles o] -> CFC 700 the Copied Factory | plugin for quest: [] | plugin quests for duty: []
+* 69319 LucKyw101_03783 'Ruby Doomsday' [Chronicles o] -> CFC 717 Cinder Drift | plugin for quest: [] | plugin quests for duty: []
+* 69324 LucKra202_03788 'Blood and Thunder' [Chronicles o] -> CFC 715 Eden's Verse: Fulmination | plugin for quest: [] | plugin quests for duty: []
+* 69325 LucKra203_03789 'Into the Firestorm' [Chronicles o] -> CFC 719 Eden's Verse: Furor | plugin for quest: [] | plugin quests for duty: []
+* 69326 LucKra204_03790 'Heart of Darkness' [Chronicles o] -> CFC 726 Eden's Verse: Iconoclasm | plugin for quest: [] | plugin quests for duty: []
+* 69327 LucKra205_03791 'On Thin Ice' [Chronicles o] -> CFC 728 Eden's Verse: Refulgence | plugin for quest: [] | plugin quests for duty: []
+* 69489 LucKta302_03953 'Everything You Know Is Wrong' [Chronicles o] -> CFC 736 the Puppets' Bunker | plugin for quest: [] | plugin quests for duty: []
+* 69512 LucKra302_03976 'Fear of the Dark' [Chronicles o] -> CFC 749 Eden's Promise: Umbra | plugin for quest: [] | plugin quests for duty: []
+* 69513 LucKra303_03977 'Shadows of the Past' [Chronicles o] -> CFC 747 Eden's Promise: Litany | plugin for quest: [] | plugin quests for duty: []
+* 69514 LucKra304_03978 'Voice of the Soul' [Chronicles o] -> CFC 751 Eden's Promise: Anamorphosis | plugin for quest: [] | plugin quests for duty: []
+* 69514 LucKra304_03978 'Voice of the Soul' [Chronicles o] -> CFC 758 Eden's Promise: Eternity | plugin for quest: [] | plugin quests for duty: []
+* 69516 LucKyw301_03980 'Blood of Emerald' [Chronicles o] -> CFC 762 Castrum Marinum | plugin for quest: [] | plugin quests for duty: []
+* 69567 LucKyw401_04031 'Duty in the Sky with Diamond' [Chronicles o] -> CFC 781 the Cloud Deck | plugin for quest: [] | plugin quests for duty: []
+* 69571 LucKta502_04035 'Brave New World' [Chronicles o] -> CFC 779 the Tower at Paradigm's Breach | plugin for quest: [] | plugin quests for duty: []
+* 70013 AktKra103_04477 'Under the Surface' [Chronicles o] -> CFC 810 Asphodelos: The Second Circle | plugin for quest: [] | plugin quests for duty: []
+* 70014 AktKra104_04478 'The Fires of Creation' [Chronicles o] -> CFC 806 Asphodelos: The Third Circle | plugin for quest: [] | plugin quests for duty: []
+* 70015 AktKra105_04479 'Who Wards the Warders?' [Chronicles o] -> CFC 800 Asphodelos: The Fourth Circle | plugin for quest: [] | plugin quests for duty: []
+* 70073 AktKea102_04537 'The Realm of the Gods' [Chronicles o] -> CFC 866 Aglaia | plugin for quest: [] | plugin quests for duty: []
+* 70172 AktKra202_04636 'Masks of the Father' [Chronicles o] -> CFC 872 Abyssos: The Fifth Circle | plugin for quest: [] | plugin quests for duty: []
+* 70173 AktKra203_04637 "A Keyward's Gaol" [Chronicles o] -> CFC 880 Abyssos: The Sixth Circle | plugin for quest: [] | plugin quests for duty: []
+* 70174 AktKra204_04638 'Servant of Violence' [Chronicles o] -> CFC 876 Abyssos: The Seventh Circle | plugin for quest: [] | plugin quests for duty: []
+* 70175 AktKra205_04639 'One Final Wish' [Chronicles o] -> CFC 883 Abyssos: The Eighth Circle | plugin for quest: [] | plugin quests for duty: []
+* 70202 AktKea201_04666 'Return to the Phantom Realm' [Chronicles o] -> CFC 911 Euphrosyne | plugin for quest: [] | plugin quests for duty: []
+* 70292 AktKra301_04756 'Eater of Souls' [Chronicles o] -> CFC 936 Anabaseios: The Ninth Circle | plugin for quest: [] | plugin quests for duty: []
+* 70293 AktKra302_04757 'Pandæmonium Awakens' [Chronicles o] -> CFC 938 Anabaseios: The Tenth Circle | plugin for quest: [] | plugin quests for duty: []
+* 70294 AktKra303_04758 "The Emissary's Judgment" [Chronicles o] -> CFC 940 Anabaseios: The Eleventh Circle | plugin for quest: [] | plugin quests for duty: []
+* 70295 AktKra304_04759 "A Mother's Touch" [Chronicles o] -> CFC 942 Anabaseios: The Twelfth Circle | plugin for quest: [] | plugin quests for duty: []
+* 70327 AktKea301_04791 'The Heart of the Myth' [Chronicles o] -> CFC 962 Thaleia | plugin for quest: [] | plugin quests for duty: []
+* 70497 KinGra102_04961 'The Claw in the Dark' [Chronicles o] -> CFC 985 AAC Light-heavyweight M1 | plugin for quest: [] | plugin quests for duty: []
+* 70498 KinGra103_04962 'Sweet Poison' [Chronicles o] -> CFC 987 AAC Light-heavyweight M2 | plugin for quest: [] | plugin quests for duty: []
+* 70500 KinGra105_04964 'Vile Heat' [Chronicles o] -> CFC 989 AAC Light-heavyweight M3 | plugin for quest: [] | plugin quests for duty: []
+* 70501 KinGra106_04965 'The Neoteric Witch' [Chronicles o] -> CFC 991 AAC Light-heavyweight M4 | plugin for quest: [] | plugin quests for duty: []
+* 70769 KinGea101_05233 'An Otherworldly Encounter' [Chronicles o] -> CFC 1015 Jeuno: The First Walk | plugin for quest: [] | plugin quests for duty: []
+* 70826 KinGra202_05290 'The Dancing King' [Chronicles o] -> CFC 1019 AAC Cruiserweight M1 | plugin for quest: [] | plugin quests for duty: []
+* 70827 KinGra203_05291 'Art at War' [Chronicles o] -> CFC 1021 AAC Cruiserweight M2 | plugin for quest: [] | plugin quests for duty: []
+* 70828 KinGra204_05292 'Twisted Vengeance' [Chronicles o] -> CFC 1023 AAC Cruiserweight M3 | plugin for quest: [] | plugin quests for duty: []
+* 70830 KinGra206_05294 'The Lone Wolf' [Chronicles o] -> CFC 1025 AAC Cruiserweight M4 | plugin for quest: [] | plugin quests for duty: []
+* 70862 KinGea201_05326 'Dreams of Paradise' [Chronicles o] -> CFC 1058 San d'Oria: The Second Walk | plugin for quest: [] | plugin quests for duty: []
+* 70972 KinGra302_05436 'The Breathtaker' [Chronicles o] -> CFC 1068 AAC Heavyweight M1 | plugin for quest: [] | plugin quests for duty: []
+* 70973 KinGra303_05437 'Daring Devils' [Chronicles o] -> CFC 1070 AAC Heavyweight M2 | plugin for quest: [] | plugin quests for duty: []
+* 70975 KinGra305_05439 'Iron Fist' [Chronicles o] -> CFC 1072 AAC Heavyweight M3 | plugin for quest: [] | plugin quests for duty: []
+* 70976 KinGra306_05440 'Glory Incarnate' [Chronicles o] -> CFC 1074 AAC Heavyweight M4 | plugin for quest: [] | plugin quests for duty: []
+* 71015 KinGea301_05479 'The Hollow Promise' [Chronicles o] -> CFC 1117 Windurst: The Third Walk | plugin for quest: [] | plugin quests for duty: []
+* 65966 SubCts109_00430 "For Keep's Sake" [Sidequests] -> CFC 29 Amdapor Keep (Hard) | plugin for quest: [] | plugin quests for duty: []
+* 65967 SubCts110_00431 'Not Easy Being Green' [Sidequests] -> CFC 30 the Wanderer's Palace (Hard) | plugin for quest: [] | plugin quests for duty: []
+* 68169 StmBdy002_02633 'To Kill a Coeurl' [Sidequests] -> CFC 236 the Temple of the Fist | plugin for quest: [] | plugin quests for duty: []
+* 68170 StmBdy003_02634 'King of the Castle' [Sidequests] -> CFC 262 Kugane Castle | plugin for quest: [] | plugin quests for duty: []
+* 68613 StmBdy004_03077 'An Unwanted Truth' [Sidequests] -> CFC 285 the Fractal Continuum (Hard) | plugin for quest: [] | plugin quests for duty: []
+* 68678 StmBdy005_03142 'Secret of the Ooze' [Sidequests] -> CFC 584 Saint Mocianne's Arboretum (Hard) | plugin for quest: [] | plugin quests for duty: []
+* 68703 ChrHdb751_03167 'The Past Is Never Past' [Sidequests] -> CFC 595 Kugane Ohashi | plugin for quest: [] | plugin quests for duty: []
+* 69131 LucKya001_03595 'By the Time You Hear This' [Sidequests] -> CFC 655 the Twinning | plugin for quest: [] | plugin quests for duty: []
+* 69132 LucKya002_03596 'Akadaemia Anyder' [Sidequests] -> CFC 661 Akadaemia Anyder | plugin for quest: [] | plugin quests for duty: []
+* 69501 LucKyb815_03965 'Fantastic Mr. Faux' [Sidequests] -> CFC 1118 Shinryu's Domain (Unreal) | plugin for quest: [] | plugin quests for duty: []
+* 69563 LucKsa211_04027 'A Seaside Story' [Sidequests] -> CFC 761 Delubrum Reginae (Savage) | plugin for quest: [] | plugin quests for duty: []
+* 69703 AktKyx101_04167 'Cutting the Cheese' [Sidequests] -> CFC 794 Smileton | plugin for quest: [] | plugin quests for duty: []
+* 69704 AktKyx201_04168 'Where No Loporrit Has Gone Before' [Sidequests] -> CFC 784 the Stigma Dreamscape | plugin for quest: [] | plugin quests for duty: []
+* 70336 ChrHdb852_04800 'Gentlemen at Heart' [Sidequests] -> CFC 69 The Gilded Araya | plugin for quest: [] | plugin quests for duty: []
+* 70336 ChrHdb852_04800 'Gentlemen at Heart' [Sidequests] -> CFC 944 the Gilded Araya | plugin for quest: [] | plugin quests for duty: []
+* 70549 KinGyx101_05013 'It Belongs in a Museum' [Sidequests] -> CFC 834 Tender Valley | plugin for quest: [] | plugin quests for duty: []
+* 70550 KinGyx102_05014 'Something Stray in the Neighborhood' [Sidequests] -> CFC 981 The Strayborough Deadwalk | plugin for quest: [] | plugin quests for duty: []
+* 66655 JobWar001_01119 'A Relic Reborn (Bravura)' [Class & Job ] -> CFC 75 A Relic Reborn: the Hydra | plugin for quest: [] | plugin quests for duty: []
+* 66655 JobWar001_01119 'A Relic Reborn (Bravura)' [Class & Job ] -> CFC 74 A Relic Reborn: the Chimera | plugin for quest: [] | plugin quests for duty: []
+* 66656 JobPld001_01120 'A Relic Reborn (Curtana)' [Class & Job ] -> CFC 75 A Relic Reborn: the Hydra | plugin for quest: [] | plugin quests for duty: []
+* 66656 JobPld001_01120 'A Relic Reborn (Curtana)' [Class & Job ] -> CFC 74 A Relic Reborn: the Chimera | plugin for quest: [] | plugin quests for duty: []
+* 66657 JobMnk001_01121 'A Relic Reborn (Sphairai)' [Class & Job ] -> CFC 75 A Relic Reborn: the Hydra | plugin for quest: [] | plugin quests for duty: []
+* 66657 JobMnk001_01121 'A Relic Reborn (Sphairai)' [Class & Job ] -> CFC 74 A Relic Reborn: the Chimera | plugin for quest: [] | plugin quests for duty: []
+* 66658 JobDrg001_01122 'A Relic Reborn (Gae Bolg)' [Class & Job ] -> CFC 75 A Relic Reborn: the Hydra | plugin for quest: [] | plugin quests for duty: []
+* 66658 JobDrg001_01122 'A Relic Reborn (Gae Bolg)' [Class & Job ] -> CFC 74 A Relic Reborn: the Chimera | plugin for quest: [] | plugin quests for duty: []
+* 66659 JobBlm001_01123 'A Relic Reborn (Stardust Rod)' [Class & Job ] -> CFC 75 A Relic Reborn: the Hydra | plugin for quest: [] | plugin quests for duty: []
+* 66659 JobBlm001_01123 'A Relic Reborn (Stardust Rod)' [Class & Job ] -> CFC 74 A Relic Reborn: the Chimera | plugin for quest: [] | plugin quests for duty: []
+* 66660 JobWhm001_01124 'A Relic Reborn (Thyrus)' [Class & Job ] -> CFC 75 A Relic Reborn: the Hydra | plugin for quest: [] | plugin quests for duty: []
+* 66660 JobWhm001_01124 'A Relic Reborn (Thyrus)' [Class & Job ] -> CFC 74 A Relic Reborn: the Chimera | plugin for quest: [] | plugin quests for duty: []
+* 66661 JobBrd001_01125 'A Relic Reborn (Artemis Bow)' [Class & Job ] -> CFC 75 A Relic Reborn: the Hydra | plugin for quest: [] | plugin quests for duty: []
+* 66661 JobBrd001_01125 'A Relic Reborn (Artemis Bow)' [Class & Job ] -> CFC 74 A Relic Reborn: the Chimera | plugin for quest: [] | plugin quests for duty: []
+* 66662 JobSmn001_01126 'A Relic Reborn (The Veil of Wiyu)' [Class & Job ] -> CFC 75 A Relic Reborn: the Hydra | plugin for quest: [] | plugin quests for duty: []
+* 66662 JobSmn001_01126 'A Relic Reborn (The Veil of Wiyu)' [Class & Job ] -> CFC 74 A Relic Reborn: the Chimera | plugin for quest: [] | plugin quests for duty: []
+* 66663 JobSch001_01127 'A Relic Reborn (Omnilex)' [Class & Job ] -> CFC 75 A Relic Reborn: the Hydra | plugin for quest: [] | plugin quests for duty: []
+* 66663 JobSch001_01127 'A Relic Reborn (Omnilex)' [Class & Job ] -> CFC 74 A Relic Reborn: the Chimera | plugin for quest: [] | plugin quests for duty: []
+* 67115 JobNin001_01579 'A Relic Reborn (Yoshimitsu)' [Class & Job ] -> CFC 74 A Relic Reborn: the Chimera | plugin for quest: [] | plugin quests for duty: []
+* 67115 JobNin001_01579 'A Relic Reborn (Yoshimitsu)' [Class & Job ] -> CFC 75 A Relic Reborn: the Hydra | plugin for quest: [] | plugin quests for duty: []
+  67084 FesHlw301_01548 'In a Manor of Spooking' [Other Quests] -> CFC 181 the Haunted Manor | plugin for quest: [] | plugin quests for duty: [69206]
+* 67090 StmBdy991_01554 'The New King on the Block' [Other Quests] -> CFC 474 the Great Hunt | plugin for quest: [] | plugin quests for duty: []
+  68549 FesHlw403_03013 'Mind Their Manor' [Other Quests] -> CFC 181 the Haunted Manor | plugin for quest: [] | plugin quests for duty: [69206]
+  68708 FesHlw504_03172 'The Macabre Manor' [Other Quests] -> CFC 181 the Haunted Manor | plugin for quest: [] | plugin quests for duty: [69206]
+  68741 FesVlt501_03205 'A Many-splendored Thing' [Other Quests] -> CFC 473 the Valentione's Ceremony | plugin for quest: [] | plugin quests for duty: [70190]
+  70056 FesHlw702_04520 'A Feast to Remember' [Other Quests] -> CFC 797 The Phantoms' Feast | plugin for quest: [] | plugin quests for duty: [69531]
+* 70861 FesVlx201_05325 'The Icing on the Cake' [Other Quests] -> CFC 1045 the Pâtisserie | plugin for quest: [] | plugin quests for duty: []
+* 70910 KinGyx901_05374 'The White Wanderer' [Other Quests] -> CFC 1043 the Windward Wilds | plugin for quest: [] | plugin quests for duty: []
+  66718 GaiUse108_01182 'Rock-solid Protection' [] -> CFC 9 the Sunken Temple of Qarn | plugin for quest: [] | plugin quests for duty: [66300]
+== EXTRA (plugin says quest unlocks duty; wiki page for quest does not)
+  65594 SubWil154_00058 'Simply the Hest' -> CFC 42 Basic Training: Enemy Parties | wiki unlocks: gh Guildhests
+  65595 SubSea906_00059 'Simply the Hest' -> CFC 42 Basic Training: Enemy Parties | wiki unlocks: gh Guildhests
+  65596 SubFst121_00060 'Simply the Hest' -> CFC 42 Basic Training: Enemy Parties | wiki unlocks: gh Guildhests
+  67063 ComGrd002_01527 'Like Civilized Men and Women (Twin Adder)' -> CFC 127 the Borderland Ruins (Secure) | wiki unlocks: pvp Frontline
+  67064 ComLim002_01528 'Like Civilized Men and Women (Maelstrom)' -> CFC 127 the Borderland Ruins (Secure) | wiki unlocks: pvp Frontline
+  67065 ComUld002_01529 'Like Civilized Men and Women (Immortal Flames)' -> CFC 127 the Borderland Ruins (Secure) | wiki unlocks: pvp Frontline
+  67092 SubCts701_01556 'The House That Death Built' -> CFC 174 the Palace of the Dead (Floors 1-10) | wiki unlocks: dd Palace of the Dead
+  67092 SubCts701_01556 'The House That Death Built' -> CFC 175 the Palace of the Dead (Floors 11-20) | wiki unlocks: dd Palace of the Dead
+  67092 SubCts701_01556 'The House That Death Built' -> CFC 176 the Palace of the Dead (Floors 21-30) | wiki unlocks: dd Palace of the Dead
+  67092 SubCts701_01556 'The House That Death Built' -> CFC 177 the Palace of the Dead (Floors 31-40) | wiki unlocks: dd Palace of the Dead
+  67092 SubCts701_01556 'The House That Death Built' -> CFC 178 the Palace of the Dead (Floors 41-50) | wiki unlocks: dd Palace of the Dead
+  67095 SubCts820_01559 'Sing Me Another Song' -> CFC 103 the Second Coil of Bahamut (Savage) - Turn 1 | wiki unlocks: ra The Second Coil of Bahamut (Savage)
+  67205 HeaVna707_01669 'Heavensward' -> CFC 131 the Diadem (Easy) | wiki unlocks: dg The Aetherochemical Research Facility, tr The Singularity Reactor, ach Looking Up, ms Mount Speed Increase, ngp Heavensward - Part 1, ngp Heavenswa
+  67205 HeaVna707_01669 'Heavensward' -> CFC 132 the Diadem | wiki unlocks: dg The Aetherochemical Research Facility, tr The Singularity Reactor, ach Looking Up, ms Mount Speed Increase, ngp Heavensward - Part 1, ngp Heavenswa
+  67205 HeaVna707_01669 'Heavensward' -> CFC 133 the Diadem (Hard) | wiki unlocks: dg The Aetherochemical Research Facility, tr The Singularity Reactor, ach Looking Up, ms Mount Speed Increase, ngp Heavensward - Part 1, ngp Heavenswa
+  67205 HeaVna707_01669 'Heavensward' -> CFC 202 the Diadem Hunting Grounds (Easy) | wiki unlocks: dg The Aetherochemical Research Facility, tr The Singularity Reactor, ach Looking Up, ms Mount Speed Increase, ngp Heavensward - Part 1, ngp Heavenswa
+  67205 HeaVna707_01669 'Heavensward' -> CFC 203 the Diadem Hunting Grounds | wiki unlocks: dg The Aetherochemical Research Facility, tr The Singularity Reactor, ach Looking Up, ms Mount Speed Increase, ngp Heavensward - Part 1, ngp Heavenswa
+  67205 HeaVna707_01669 'Heavensward' -> CFC 225 the Diadem - Trials of the Fury | wiki unlocks: dg The Aetherochemical Research Facility, tr The Singularity Reactor, ach Looking Up, ms Mount Speed Increase, ngp Heavensward - Part 1, ngp Heavenswa
+  67205 HeaVna707_01669 'Heavensward' -> CFC 234 the Diadem - Trials of the Matron | wiki unlocks: dg The Aetherochemical Research Facility, tr The Singularity Reactor, ach Looking Up, ms Mount Speed Increase, ngp Heavensward - Part 1, ngp Heavenswa
+  67644 HeaVnr191_02108 'A Song of Steam and Steel' -> CFC 116 Alexander - The Fist of the Father (Savage) | wiki unlocks: ra Alexander: Gordias (Savage)
+  67790 HeaVnr291_02254 'A Refrain for the Undaunted' -> CFC 147 Alexander - The Fist of the Son (Savage) | wiki unlocks: ra Alexander: Midas (Savage)
+  67876 HeaVnr391_02340 'Who Lives, Who Dies, Who Retells Your Story' -> CFC 190 Alexander - The Eyes of the Creator (Savage) | wiki unlocks: ra Alexander: The Creator (Savage)
+  67923 SubCts711_02387 'What Lies Beneath' -> CFC 204 the Palace of the Dead (Floors 51-60) | wiki unlocks: 
+  67923 SubCts711_02387 'What Lies Beneath' -> CFC 205 the Palace of the Dead (Floors 61-70) | wiki unlocks: 
+  67923 SubCts711_02387 'What Lies Beneath' -> CFC 206 the Palace of the Dead (Floors 71-80) | wiki unlocks: 
+  67923 SubCts711_02387 'What Lies Beneath' -> CFC 207 the Palace of the Dead (Floors 81-90) | wiki unlocks: 
+  67923 SubCts711_02387 'What Lies Beneath' -> CFC 208 the Palace of the Dead (Floors 91-100) | wiki unlocks: 
+  67923 SubCts711_02387 'What Lies Beneath' -> CFC 209 the Palace of the Dead (Floors 101-110) | wiki unlocks: 
+  67923 SubCts711_02387 'What Lies Beneath' -> CFC 210 the Palace of the Dead (Floors 111-120) | wiki unlocks: 
+  67923 SubCts711_02387 'What Lies Beneath' -> CFC 211 the Palace of the Dead (Floors 121-130) | wiki unlocks: 
+  67923 SubCts711_02387 'What Lies Beneath' -> CFC 212 the Palace of the Dead (Floors 131-140) | wiki unlocks: 
+  67923 SubCts711_02387 'What Lies Beneath' -> CFC 213 the Palace of the Dead (Floors 141-150) | wiki unlocks: 
+  67923 SubCts711_02387 'What Lies Beneath' -> CFC 214 the Palace of the Dead (Floors 151-160) | wiki unlocks: 
+  67923 SubCts711_02387 'What Lies Beneath' -> CFC 215 the Palace of the Dead (Floors 161-170) | wiki unlocks: 
+  67923 SubCts711_02387 'What Lies Beneath' -> CFC 216 the Palace of the Dead (Floors 171-180) | wiki unlocks: 
+  67923 SubCts711_02387 'What Lies Beneath' -> CFC 217 the Palace of the Dead (Floors 181-190) | wiki unlocks: 
+  67923 SubCts711_02387 'What Lies Beneath' -> CFC 218 the Palace of the Dead (Floors 191-200) | wiki unlocks: 
+  68148 StmBdy403_02612 'And We Shall Call It Pyros' -> CFC 598 the Forbidden Land, Eureka Pyros | wiki unlocks: lc The Forbidden Land Eureka Pyros
+  68149 StmBdy404_02613 'And We Shall Call It Hydatos' -> CFC 639 the Forbidden Land, Eureka Hydatos | wiki unlocks: lc The Forbidden Land Eureka Hydatos
+  68478 StmBdy402_02942 'And We Shall Call It Pagos' -> CFC 581 the Forbidden Land, Eureka Pagos | wiki unlocks: lc The Forbidden Land Eureka Pagos
+  68543 ComAll002_03007 'Earning Your Wings' -> CFC 277 Astragalos | wiki unlocks: pvp Rival Wings
+  68614 StmBdy401_03078 'And We Shall Call It Eureka' -> CFC 283 the Forbidden Land, Eureka Anemos | wiki unlocks: lc The Forbidden Land Eureka Anemos
+  68667 StmBdy701_03131 "Knocking on Heaven's Door" -> CFC 540 Heaven-on-High  (Floors 1-10) | wiki unlocks: dd Heaven-on-High
+  68667 StmBdy701_03131 "Knocking on Heaven's Door" -> CFC 541 Heaven-on-High  (Floors 11-20) | wiki unlocks: dd Heaven-on-High
+  68667 StmBdy701_03131 "Knocking on Heaven's Door" -> CFC 542 Heaven-on-High  (Floors 21-30) | wiki unlocks: dd Heaven-on-High
+  68668 StmBdy702_03132 'On the Shoulders of Giants' -> CFC 543 Heaven-on-High  (Floors 31-40) | wiki unlocks: 
+  68668 StmBdy702_03132 'On the Shoulders of Giants' -> CFC 544 Heaven-on-High  (Floors 41-50) | wiki unlocks: 
+  68668 StmBdy702_03132 'On the Shoulders of Giants' -> CFC 545 Heaven-on-High  (Floors 51-60) | wiki unlocks: 
+  68668 StmBdy702_03132 'On the Shoulders of Giants' -> CFC 546 Heaven-on-High  (Floors 61-70) | wiki unlocks: 
+  68668 StmBdy702_03132 'On the Shoulders of Giants' -> CFC 547 Heaven-on-High  (Floors 71-80) | wiki unlocks: 
+  68668 StmBdy702_03132 'On the Shoulders of Giants' -> CFC 548 Heaven-on-High  (Floors 81-90) | wiki unlocks: 
+  68668 StmBdy702_03132 'On the Shoulders of Giants' -> CFC 549 Heaven-on-High  (Floors 91-100) | wiki unlocks: 
+  68737 SubGsc107_03201 'Every Little Thing She Does Is Mahjong' -> CFC 643 Novice Mahjong (Full Ranked Match) | wiki unlocks: ot Doman Mahjong
+  69208 LucKha001_03672 'Towards the Firmament' -> CFC 722 the Diadem | wiki unlocks: ot Ishgardian Restoration, lc The Firmament, lc The Diadem
+  69272 JobAoz600_03736 'Blue Scream of Death' -> CFC 695 Papa Mia | wiki unlocks: 
+  69272 JobAoz600_03736 'Blue Scream of Death' -> CFC 696 Lock up Your Snorters | wiki unlocks: 
+  69272 JobAoz600_03736 'Blue Scream of Death' -> CFC 697 Dangerous When Dead | wiki unlocks: 
+  69272 JobAoz600_03736 'Blue Scream of Death' -> CFC 698 Red, Fraught, and Blue | wiki unlocks: 
+  69272 JobAoz600_03736 'Blue Scream of Death' -> CFC 699 The Catch of the Siegfried | wiki unlocks: 
+  69379 SubCts826_03843 'All the Fish in the Sea' -> CFC 721 Ocean Fishing | wiki unlocks: ot Ocean Fishing
+  69379 SubCts826_03843 'All the Fish in the Sea' -> CFC 730 Ocean Fishing | wiki unlocks: ot Ocean Fishing
+  69379 SubCts826_03843 'All the Fish in the Sea' -> CFC 731 Ocean Fishing | wiki unlocks: ot Ocean Fishing
+  69379 SubCts826_03843 'All the Fish in the Sea' -> CFC 732 Ocean Fishing | wiki unlocks: ot Ocean Fishing
+  69379 SubCts826_03843 'All the Fish in the Sea' -> CFC 733 Ocean Fishing | wiki unlocks: ot Ocean Fishing
+  69379 SubCts826_03843 'All the Fish in the Sea' -> CFC 734 Ocean Fishing | wiki unlocks: ot Ocean Fishing
+  69379 SubCts826_03843 'All the Fish in the Sea' -> CFC 770 Ocean Fishing | wiki unlocks: ot Ocean Fishing
+  69379 SubCts826_03843 'All the Fish in the Sea' -> CFC 771 Ocean Fishing | wiki unlocks: ot Ocean Fishing
+  69379 SubCts826_03843 'All the Fish in the Sea' -> CFC 772 Ocean Fishing | wiki unlocks: ot Ocean Fishing
+  69379 SubCts826_03843 'All the Fish in the Sea' -> CFC 773 Ocean Fishing | wiki unlocks: ot Ocean Fishing
+  69379 SubCts826_03843 'All the Fish in the Sea' -> CFC 774 Ocean Fishing | wiki unlocks: ot Ocean Fishing
+  69379 SubCts826_03843 'All the Fish in the Sea' -> CFC 775 Ocean Fishing | wiki unlocks: ot Ocean Fishing
+  69379 SubCts826_03843 'All the Fish in the Sea' -> CFC 952 Ocean Fishing | wiki unlocks: ot Ocean Fishing
+  69379 SubCts826_03843 'All the Fish in the Sea' -> CFC 953 Ocean Fishing | wiki unlocks: ot Ocean Fishing
+  69379 SubCts826_03843 'All the Fish in the Sea' -> CFC 954 Ocean Fishing | wiki unlocks: ot Ocean Fishing
+  69379 SubCts826_03843 'All the Fish in the Sea' -> CFC 955 Ocean Fishing | wiki unlocks: ot Ocean Fishing
+  69379 SubCts826_03843 'All the Fish in the Sea' -> CFC 956 Ocean Fishing | wiki unlocks: ot Ocean Fishing
+  69379 SubCts826_03843 'All the Fish in the Sea' -> CFC 957 Ocean Fishing | wiki unlocks: ot Ocean Fishing
+  69379 SubCts826_03843 'All the Fish in the Sea' -> CFC 1098 Ocean Fishing | wiki unlocks: ot Ocean Fishing
+  69379 SubCts826_03843 'All the Fish in the Sea' -> CFC 1099 Ocean Fishing | wiki unlocks: ot Ocean Fishing
+  69379 SubCts826_03843 'All the Fish in the Sea' -> CFC 1100 Ocean Fishing | wiki unlocks: ot Ocean Fishing
+  69529 JobAoz700_03993 'Master of Mimicry' -> CFC 754 Anything Gogo's | wiki unlocks: 
+  69531 FesHlw701_03995 "All Clowns' Wake" -> CFC 797 The Phantoms' Feast | wiki unlocks: 
+  70057 XxcUsc901_04521 'Operation Archon' -> CFC 865 Cape Westwind | wiki unlocks: 
+  70190 FesVlt901_04654 'Suited for Affection' -> CFC 473 the Valentione's Ceremony | wiki unlocks: ach To Thine Own Self Be True
+  70199 AktKdd101_04663 'Delve into Myth' -> CFC 897 Eureka Orthos (Floors 1-10) | wiki unlocks: dd Eureka Orthos
+  70199 AktKdd101_04663 'Delve into Myth' -> CFC 898 Eureka Orthos (Floors 11-20) | wiki unlocks: dd Eureka Orthos
+  70199 AktKdd101_04663 'Delve into Myth' -> CFC 899 Eureka Orthos (Floors 21-30) | wiki unlocks: dd Eureka Orthos
+  70200 AktKdd102_04664 'Rage Extinguished' -> CFC 900 Eureka Orthos (Floors 31-40) | wiki unlocks: 
+  70200 AktKdd102_04664 'Rage Extinguished' -> CFC 901 Eureka Orthos (Floors 41-50) | wiki unlocks: 
+  70200 AktKdd102_04664 'Rage Extinguished' -> CFC 902 Eureka Orthos (Floors 51-60) | wiki unlocks: 
+  70200 AktKdd102_04664 'Rage Extinguished' -> CFC 903 Eureka Orthos (Floors 61-70) | wiki unlocks: 
+  70200 AktKdd102_04664 'Rage Extinguished' -> CFC 904 Eureka Orthos (Floors 71-80) | wiki unlocks: 
+  70200 AktKdd102_04664 'Rage Extinguished' -> CFC 905 Eureka Orthos (Floors 81-90) | wiki unlocks: 
+  70200 AktKdd102_04664 'Rage Extinguished' -> CFC 906 Eureka Orthos (Floors 91-100) | wiki unlocks: 
+  70313 JobAoz800_04777 'A New Gold Standard' -> CFC 948 A Golden Opportunity | wiki unlocks: 
+  70337 SubGsc901_04801 'Just Crowning Around' -> CFC 958 Blunderville | wiki unlocks: ot Blunderville
+  70847 KinGkd003_05311 'Unfamiliar Territory' -> CFC 1018 the Occult Crescent: South Horn | wiki unlocks: lc Occult Crescent: South Horn, ot Occult Record: Iris
+  70941 KinGdd101_05405 'Pilgrimage of Light' -> CFC 1032 Pilgrim's Traverse (Stones 1-10) | wiki unlocks: dd Pilgrim's Traverse
+  70941 KinGdd101_05405 'Pilgrimage of Light' -> CFC 1033 Pilgrim's Traverse (Stones 11-20) | wiki unlocks: dd Pilgrim's Traverse
+  70941 KinGdd101_05405 'Pilgrimage of Light' -> CFC 1034 Pilgrim's Traverse (Stones 21-30) | wiki unlocks: dd Pilgrim's Traverse
+  70942 KinGdd102_05406 'Faerie Tale' -> CFC 1035 Pilgrim's Traverse (Stones 31-40) | wiki unlocks: 
+  70942 KinGdd102_05406 'Faerie Tale' -> CFC 1036 Pilgrim's Traverse (Stones 41-50) | wiki unlocks: 
+  70942 KinGdd102_05406 'Faerie Tale' -> CFC 1037 Pilgrim's Traverse (Stones 51-60) | wiki unlocks: 
+  70942 KinGdd102_05406 'Faerie Tale' -> CFC 1038 Pilgrim's Traverse (Stones 61-70) | wiki unlocks: 
+  70942 KinGdd102_05406 'Faerie Tale' -> CFC 1039 Pilgrim's Traverse (Stones 71-80) | wiki unlocks: 
+  70942 KinGdd102_05406 'Faerie Tale' -> CFC 1040 Pilgrim's Traverse (Stones 81-90) | wiki unlocks: 
+  70942 KinGdd102_05406 'Faerie Tale' -> CFC 1041 Pilgrim's Traverse (Stones 91-100) | wiki unlocks: 
+  71002 SubGsc801_05466 'Keyward Bound' -> CFC 1095 Keybound Brawler | wiki unlocks: 
+  71030 JobXbm131_05494 'Into the Crucible' -> CFC 1088 First Board of the Unbroken | wiki unlocks: cru First Board of the Unbroken
+  71032 JobXbm141_05496 'Gobsmacked' -> CFC 1089 Second Board of the Unbroken | wiki unlocks: cru Second Board of the Unbroken
+  71034 JobXbm151_05498 "A Beastmaster's Path" -> CFC 1090 Third Board of the Unbroken | wiki unlocks: cru Third Board of the Unbroken
+  71036 JobXbm191_05500 'Free for All' -> CFC 1091 First Master's Board | wiki unlocks: cru First Master's Board
+  71037 JobXbm192_05501 'Mastery Rematch' -> CFC 1092 Second Master's Board | wiki unlocks: cru Second Master's Board
+  71047 KinGkd101_05511 'Occult Reunion' -> CFC 1093 the Occult Crescent: North Horn | wiki unlocks: lc The Occult Crescent: North Horn
+  71053 KinGkd107_05517 'In the Shadow of the Tower' -> CFC 1114 the Occult Crescent: North Horn - The Forked Tower: Magic (Extreme) | wiki unlocks: ot The Forked Tower: Magic, ot The Forked Tower: Magic (Extreme)

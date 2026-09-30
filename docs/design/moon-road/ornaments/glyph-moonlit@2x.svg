@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24">
+<title>glyph-moonlit (2x)</title>
+<desc>Moonlit tab: a crescent cradling a treasure (rewards found nowhere else). Original Tsukimichi art; rasterize into assets/ui/ornaments@2x.png.</desc>
+<defs><linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF0BE"/><stop offset=".45" stop-color="#F2D27A"/><stop offset="1" stop-color="#D6B25A"/></linearGradient><mask id="c"><rect width="24" height="24" fill="#fff"/><circle cx="12" cy="11.2" r="7.4" fill="#000"/></mask></defs>
+<circle cx="12" cy="14" r="8" fill="url(#gold)" mask="url(#c)"/>
+<path d="M12 3 L15.6 7.4 L12 13 L8.4 7.4 Z" fill="#DDE3F0"/>
+<path d="M8.4 7.4 H15.6 M12 3 L10.6 7.4 L12 13 L13.4 7.4 Z" fill="none" stroke="#B9C2D8" stroke-width=".6"/>
+</svg>

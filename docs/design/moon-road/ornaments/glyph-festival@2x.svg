@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24">
+<title>glyph-festival (2x)</title>
+<desc>Seasonal events: a paper lantern lit gold. Original Tsukimichi art; rasterize into assets/ui/ornaments@2x.png.</desc>
+<path d="M12 2.5 V5" stroke="#A9B2CC" stroke-width="1"/>
+<path d="M8.5 5 H15.5 M8.5 19 H15.5" stroke="#DDE3F0" stroke-width="1.3" stroke-linecap="round"/>
+<path d="M8.8 5.4 Q5.6 12 8.8 18.6 H15.2 Q18.4 12 15.2 5.4 Z" fill="#1E2437" stroke="#DDE3F0" stroke-width="1.2" stroke-linejoin="round"/>
+<ellipse cx="12" cy="12" rx="2.4" ry="4" fill="#F2D27A" opacity=".9"/>
+<path d="M12 19 V21.5" stroke="#D9BE82" stroke-width="1"/>
+</svg>

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+<title>glyph-removed (1x)</title>
+<desc>Removed from the game: a veiled moon behind a broken ring, struck through (Eclipse text tone). Original Tsukimichi art; rasterize into assets/ui/ornaments.png.</desc>
+<circle cx="12" cy="12" r="7.6" fill="#3A4363" opacity=".6"/>
+<circle cx="12" cy="12" r="7.6" fill="none" stroke="#A9B2CC" stroke-width="1.4" stroke-dasharray="2.6 2.2"/>
+<path d="M6.2 17.8 L17.8 6.2" stroke="#D68AA8" stroke-width="1.7" stroke-linecap="round"/>
+</svg>

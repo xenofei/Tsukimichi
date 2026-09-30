@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24">
+<title>glyph-side-story (2x)</title>
+<desc>Side story quests: a scroll sealed with a small moon. Original Tsukimichi art; rasterize into assets/ui/ornaments@2x.png.</desc>
+<path d="M6 4.5 H17 Q19 4.5 19 6.5 V18.5 H8 Q6 18.5 6 16.5 Z" fill="#1E2437" stroke="#DDE3F0" stroke-width="1.2" stroke-linejoin="round"/>
+<path d="M4.5 16.5 Q4.5 19.5 7.5 19.5 H17.5 Q15.8 19 15.8 16.8" fill="none" stroke="#DDE3F0" stroke-width="1.2" stroke-linejoin="round"/>
+<path d="M9 8.5 H16 M9 11 H16 M9 13.5 H13.5" stroke="#A9B2CC" stroke-width=".9"/>
+<circle cx="16" cy="14.2" r="1.8" fill="#F2D27A"/>
+</svg>
