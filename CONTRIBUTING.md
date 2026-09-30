@@ -159,6 +159,35 @@ A patch that also changes quest data needs `tools/regen.ps1` as well; the two ar
 - **Every later game patch (offline).** `tools/regen.ps1 -Patch <x.y>` runs `Tsukimichi.DataGen --patches Tsukimichi/Data/quest_patches.json --game <sqpack> --patch <x.y>`, which stamps every quest id the file does not list yet with that patch. The file lists every quest id the catalog held at its last write (unknown ones included), so "not listed" means "new since then". A hotfix that adds quests takes its own number (`-Patch 7.51`).
 - **Corrections** go in `docs/data/quest-patch-corrections.json` (`{ "<questRowId>": { "name", "patch", "reason", "evidence" } }` under `entries`; `evidence` is an https page stating the patch, usually the wiki quest infobox) and the same line of `quest_patches.json`. The seed lays the corrections over Garland's values, so a rerun keeps them and reports each one as `corrected`; `QuestPatchesFixtureTests` fails when the shipped file disagrees with a correction. The first eight: the ARR class-starting quests Garland dates 3.1 are 2.0 launch quests.
 
+## Translations
+
+Tsukimichi's text is English first, with Japanese, German and French translations in `Tsukimichi/Localization/`. The three translations are **drafts**: machine-assisted and not yet read through by players of each language, so corrections are very welcome, from a single wrong word to a whole help topic. How the text is wired (keys, format strings, what stays English, the layout checks) is in [docs/localization.md](docs/localization.md).
+
+**What to edit.** One XML file per language: `Strings.ja.resx`, `Strings.de.resx`, `Strings.fr.resx`. Each entry is
+
+```xml
+<data name="ConfigLanguage" xml:space="preserve">
+  <value>Plugin-Sprache</value>
+</data>
+```
+
+The `name` is the key (never change it); only the `<value>` is yours. `Strings.resx` holds the English source and a `<comment>` explaining what each placeholder is and where the text appears; the in-game Settings › Display › Plugin language switch shows your change after a reload of the plugin. A key missing from a translation reads in English, so a partial fix is fine.
+
+**Rules the tests enforce** (`dotnet test`; they read the files, no game needed):
+
+- Keep every placeholder exactly as the English has it: `{0}`, `{1:N0}`, `{0:0.0}`, `%d`, `%.2f`. You may reorder them (`{1} … {0}`) to suit the sentence.
+- Keep anything from `##` or `###` to the end of a value unchanged (`Tsukimichi-Hilfe###TsukimichiHelp`): it is how the game's UI toolkit recognises the window.
+- Do not add keys English does not have; do not translate `Core.Culture` (a culture name such as `de-DE`) or the date formats beyond their .NET pattern (`d. MMM`).
+- Short labels have room limits: tab names, table column headers, quick views and state names are measured against the layout in `LayoutBudgetTests`; a label that would need the tab rail wider than 200 px, a column wider than 120 px or the quick views wider than the smallest window fails and needs a shorter word.
+
+**Style.** Calm, precise, short, no exclamation marks; labels are nouns. Use the FFXIV client's own terms for your language (quest, main scenario, Grand Company, allied society, aether current, Duty Finder…). Use one name for each quest state everywhere: the table of names per language is in [docs/glossary.md](docs/glossary.md#translated-display-names), and a change there is a change to every surface, so change the key and the glossary together. Help texts quote UI labels ("Hide completed"); quote the label exactly as its own key translates it.
+
+**Marking a translation reviewed.** When players of the language have read the whole file, set its `Meta.TranslationStatus` value from `draft` to `reviewed`: the draft notice in Settings goes away. Mention it in the pull request.
+
+**Not in the files.** Quest, item, NPC, place, job and duty names come from the game in the client's language; curated notes (Known quirks, "Before you continue") and the diagnostic block stay English on purpose.
+
+**A new language** needs a resource file `Strings.<code>.resx` with the two-letter code Dalamud uses (`it`, `es`, `ko`…), the code added to `Loc.Resolve` and `Loc.Shipped` (`Tsukimichi/Localization/Loc.cs`) and to `ResxFiles.Translations` (the tests), a plural rule in `Loc.IsOne`, and fonts that can draw it (Korean and Chinese need Dalamud's extra glyphs, which the plugin already merges).
+
 ## Ground rules
 
 - No network code in the plugin, and no automation: it never moves the character, accepts quests or presses anything.

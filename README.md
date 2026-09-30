@@ -84,6 +84,12 @@ It has no network code. Nothing leaves your machine. Snapshots and settings live
 - **Questionable**: when it is loaded, the detail pane says whether Questionable's own lock check agrees with Tsukimichi ("Questionable agrees", or "Questionable says: …" with its reason), and Report this quest records both answers. Settings › Integrations › "Show Questionable hand-off" (off by default) adds "Add to Questionable priority" to the detail pane's "…" menu; it only puts the quest on Questionable's list, and nothing starts until you run Questionable yourself. The gates used are listed in [docs/ipc.md](docs/ipc.md#consumed-ipc).
 - **Your plugin**: Tsukimichi answers over Dalamud IPC whether a quest can be picked up now, its state, why it is blocked, the next main scenario quest, and "open this quest", with a message when the logged-in character's states change. The gates, their threading and a C# example are in [docs/ipc.md](docs/ipc.md); request a new one with the **IPC request** issue template.
 
+## Languages and translations
+
+Quest, item, NPC, place and duty names always come from the game in your client's language. Tsukimichi's own text (menus, help, the tour, tooltips) follows Dalamud's language: English, and **draft** translations into Japanese (日本語), German (Deutsch) and French (Français). Any other Dalamud language reads in English. Settings › Display › Plugin language switches between following Dalamud and English.
+
+The three translations are drafts, made with machine assistance and not yet read through by players; Settings says so while you use one. Corrections from players of each language are very welcome: a word, a sentence or a whole help topic. [CONTRIBUTING.md › Translations](CONTRIBUTING.md#translations) explains the files and the few rules, and a pull request or an issue quoting the text and your correction both work. Report this quest and the export files stay in English on purpose (they are read by maintainers and tools).
+
 ## Verification and releases
 
 - Every push and pull request builds the whole solution with warnings as errors and runs the test suite ([CI workflow](.github/workflows/ci.yml)).

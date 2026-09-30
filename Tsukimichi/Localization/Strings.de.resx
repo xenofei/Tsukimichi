@@ -4320,4 +4320,292 @@
   <data name="Meta.TranslationStatus" xml:space="preserve">
     <value>draft</value>
   </data>
+  <data name="Core.Blocker.Step" xml:space="preserve">
+    <value>Schritt {0}</value>
+  </data>
+  <data name="Core.Blocker.StepOf" xml:space="preserve">
+    <value>Schritt {0} von {1}</value>
+  </data>
+  <data name="Core.Blocker.NotChecked" xml:space="preserve">
+    <value>Ungeprüft: {0}</value>
+  </data>
+  <data name="Core.Blocker.ClosedBy" xml:space="preserve">
+    <value>ausgeschlossen durch: {0}</value>
+  </data>
+  <data name="Core.Blocker.Expansion" xml:space="preserve">
+    <value>Erweiterung: {0}</value>
+  </data>
+  <data name="Core.Blocker.LevelCap" xml:space="preserve">
+    <value>St. {0}, über deiner Obergrenze</value>
+  </data>
+  <data name="Core.Blocker.GrandCompany" xml:space="preserve">
+    <value>Staatliche Gesellschaft: {0}</value>
+  </data>
+  <data name="Core.Blocker.TribeRankWith" xml:space="preserve">
+    <value>Rang: {0} bei {1}</value>
+  </data>
+  <data name="Core.Blocker.TribeRank" xml:space="preserve">
+    <value>Rang: {0}</value>
+  </data>
+  <data name="Core.Blocker.ReputationWith" xml:space="preserve">
+    <value>Ansehen: noch {0} bei {1}</value>
+  </data>
+  <data name="Core.Blocker.Reputation" xml:space="preserve">
+    <value>Ansehen: noch {0}</value>
+  </data>
+  <data name="Core.Blocker.CarrierLevel" xml:space="preserve">
+    <value>Mogry-Post: Zustellerstufe {0}</value>
+  </data>
+  <data name="Core.Blocker.Level" xml:space="preserve">
+    <value>St. {0}</value>
+  </data>
+  <data name="Core.Blocker.LevelOn" xml:space="preserve">
+    <value>St. {0} als {1}</value>
+  </data>
+  <data name="Core.Blocker.JobAnyYouAre" xml:space="preserve">
+    <value>Job: jeder {0}, du bist {1}</value>
+  </data>
+  <data name="Core.Blocker.JobAny" xml:space="preserve">
+    <value>Job: jeder {0}</value>
+  </data>
+  <data name="Core.Blocker.JobYouAre" xml:space="preserve">
+    <value>Job: {0}, du bist {1}</value>
+  </data>
+  <data name="Core.Blocker.Job" xml:space="preserve">
+    <value>Job: {0}</value>
+  </data>
+  <data name="Core.Blocker.After" xml:space="preserve">
+    <value>nach: {0}</value>
+  </data>
+  <data name="Core.Blocker.AfterMsq" xml:space="preserve">
+    <value>nach MSQ: {0}</value>
+  </data>
+  <data name="Core.Blocker.CustomDeliveryWith" xml:space="preserve">
+    <value>Sonderauftrag: Rang {0} bei {1}</value>
+  </data>
+  <data name="Core.Blocker.CustomDelivery" xml:space="preserve">
+    <value>Sonderauftrag: Rang {0}</value>
+  </data>
+  <data name="Core.Blocker.Duty" xml:space="preserve">
+    <value>Inhalt: {0}</value>
+  </data>
+  <data name="Core.Blocker.DutiesToClear" xml:space="preserve">
+    <value>Inhalt: {0} abschließen</value>
+  </data>
+  <data name="Core.Blocker.QuestId" xml:space="preserve">
+    <value>Auftrag {0}</value>
+  </data>
+  <data name="Core.Req.Retired" xml:space="preserve">
+    <value>aus dem Spiel entfernt</value>
+  </data>
+  <data name="Core.Req.NoConflict" xml:space="preserve">
+    <value>kein ausschließender Auftrag abgeschlossen</value>
+  </data>
+  <data name="Core.Req.LockedOutBy" xml:space="preserve">
+    <value>ausgeschlossen durch {0}</value>
+  </data>
+  <data name="Core.Req.RequiresExpansion" xml:space="preserve">
+    <value>erfordert {0}</value>
+  </data>
+  <data name="Core.Req.LevelCap" xml:space="preserve">
+    <value>Stufe {0} liegt über deiner Obergrenze von {1}</value>
+  </data>
+  <data name="Core.Req.AvailableCurrentJob" xml:space="preserve">
+    <value>auf dem aktuellen Job verfügbar</value>
+  </data>
+  <data name="Core.Req.AvailableThisJob" xml:space="preserve">
+    <value>auf diesem Job verfügbar</value>
+  </data>
+  <data name="Core.Req.NotAvailableCurrentJob" xml:space="preserve">
+    <value>auf dem aktuellen Job nicht verfügbar</value>
+  </data>
+  <data name="Core.Req.NotAvailableThisJob" xml:space="preserve">
+    <value>auf diesem Job nicht verfügbar</value>
+  </data>
+  <data name="Core.Req.Level" xml:space="preserve">
+    <value>Stufe {0}</value>
+  </data>
+  <data name="Core.Req.NeedsLevel" xml:space="preserve">
+    <value>braucht Stufe {0}, du bist {1}</value>
+  </data>
+  <data name="Core.Req.RequiresGrandCompany" xml:space="preserve">
+    <value>erfordert {0}</value>
+  </data>
+  <data name="Core.Req.GrandCompanyRank" xml:space="preserve">
+    <value>{0} Rang {1}</value>
+  </data>
+  <data name="Core.Req.NeedsGrandCompanyRank" xml:space="preserve">
+    <value>braucht {0} Rang {1}, du hast Rang {2}</value>
+  </data>
+  <data name="Core.Req.NeedsTribeRank" xml:space="preserve">
+    <value>braucht {0}, du bist {1}</value>
+  </data>
+  <data name="Core.Req.Reputation" xml:space="preserve">
+    <value>{0} Ansehen</value>
+  </data>
+  <data name="Core.Req.NeedsReputation" xml:space="preserve">
+    <value>braucht {0} Ansehen, du hast {1}</value>
+  </data>
+  <data name="Core.Req.AllowancesLeft" xml:space="preserve">
+    <value>{0} Kontingente übrig</value>
+  </data>
+  <data name="Core.Req.NoAllowances" xml:space="preserve">
+    <value>heute kein Kontingent mehr</value>
+  </data>
+  <data name="Core.Req.OfferedToday" xml:space="preserve">
+    <value>heute angeboten</value>
+  </data>
+  <data name="Core.Req.NotOfferedToday" xml:space="preserve">
+    <value>heute nicht angeboten</value>
+  </data>
+  <data name="Core.Req.NeedsCarrierNotChecked" xml:space="preserve">
+    <value>braucht Zustellerstufe {0}, ungeprüft</value>
+  </data>
+  <data name="Core.Req.CarrierLevel" xml:space="preserve">
+    <value>Zustellerstufe {0}</value>
+  </data>
+  <data name="Core.Req.NeedsCarrierLevel" xml:space="preserve">
+    <value>braucht Zustellerstufe {0}, du hast Stufe {1}</value>
+  </data>
+  <data name="Core.Req.DutiesDoneOneNeeded" xml:space="preserve">
+    <value>{0} von {1} Inhalten abgeschlossen, einer nötig</value>
+  </data>
+  <data name="Core.Req.DutiesDone" xml:space="preserve">
+    <value>{0} von {1} Inhalten abgeschlossen</value>
+  </data>
+  <data name="Core.Req.AcceptConditionOne" xml:space="preserve">
+    <value>1 Annahmebedingung ungeprüft</value>
+  </data>
+  <data name="Core.Req.AcceptConditions" xml:space="preserve">
+    <value>{0} Annahmebedingungen ungeprüft</value>
+  </data>
+  <data name="Core.Req.MountAvailable" xml:space="preserve">
+    <value>Reittier vorhanden</value>
+  </data>
+  <data name="Core.Req.RequiresMount" xml:space="preserve">
+    <value>erfordert ein Reittier</value>
+  </data>
+  <data name="Core.Req.RequiresMountNotChecked" xml:space="preserve">
+    <value>erfordert ein Reittier, ungeprüft</value>
+  </data>
+  <data name="Core.Req.HouseAvailable" xml:space="preserve">
+    <value>Haus vorhanden</value>
+  </data>
+  <data name="Core.Req.RequiresHouse" xml:space="preserve">
+    <value>erfordert ein Haus</value>
+  </data>
+  <data name="Core.Req.RequiresHouseNotChecked" xml:space="preserve">
+    <value>erfordert ein Haus, ungeprüft</value>
+  </data>
+  <data name="Core.Req.Achievement" xml:space="preserve">
+    <value>Errungenschaft nötig, siehe Tagebuch</value>
+  </data>
+  <data name="Core.Req.AchievementsNotLoaded" xml:space="preserve">
+    <value>Errungenschaften nicht geladen</value>
+  </data>
+  <data name="Core.Req.QuestDone" xml:space="preserve">
+    <value>{0} erledigt</value>
+  </data>
+  <data name="Core.Req.NeedsQuest" xml:space="preserve">
+    <value>braucht {0}</value>
+  </data>
+  <data name="Core.Req.PrerequisitesDoneOneNeeded" xml:space="preserve">
+    <value>{0} von {1} Voraussetzungen erledigt, eine nötig</value>
+  </data>
+  <data name="Core.Req.PrerequisitesDone" xml:space="preserve">
+    <value>{0} von {1} Voraussetzungen erledigt</value>
+  </data>
+  <data name="Core.Req.NeedsSatisfactionWithNotChecked" xml:space="preserve">
+    <value>braucht Zufriedenheitsrang {0} bei {1}, ungeprüft</value>
+  </data>
+  <data name="Core.Req.NeedsSatisfactionNotChecked" xml:space="preserve">
+    <value>braucht Zufriedenheitsrang {0}, ungeprüft</value>
+  </data>
+  <data name="Core.Req.SatisfactionWith" xml:space="preserve">
+    <value>Zufriedenheitsrang {0} bei {1}</value>
+  </data>
+  <data name="Core.Req.Satisfaction" xml:space="preserve">
+    <value>Zufriedenheitsrang {0}</value>
+  </data>
+  <data name="Core.Req.NeedsSatisfactionWith" xml:space="preserve">
+    <value>braucht Zufriedenheitsrang {0} bei {1}, du hast Rang {2}</value>
+  </data>
+  <data name="Core.Req.NeedsSatisfaction" xml:space="preserve">
+    <value>braucht Zufriedenheitsrang {0}, du hast Rang {1}</value>
+  </data>
+  <data name="Core.Req.SeasonalNotActive" xml:space="preserve">
+    <value>saisonales Event nicht aktiv</value>
+  </data>
+  <data name="Core.Req.ChapterNotOpen" xml:space="preserve">
+    <value>Kapitel öffnet in Phase {0}, das Event ist in Phase {1}</value>
+  </data>
+  <data name="Core.Req.ChapterOver" xml:space="preserve">
+    <value>Kapitel endete nach Phase {0}, das Event ist in Phase {1}</value>
+  </data>
+  <data name="Core.Req.SeasonalActivePhase" xml:space="preserve">
+    <value>saisonales Event aktiv, Phase {0}</value>
+  </data>
+  <data name="Core.Req.SeasonalActive" xml:space="preserve">
+    <value>saisonales Event aktiv</value>
+  </data>
+  <data name="Core.Req.QuestId" xml:space="preserve">
+    <value>Auftrag {0}</value>
+  </data>
+  <data name="Core.Filter.HideCompleted" xml:space="preserve">
+    <value>Abgeschlossene ausblenden</value>
+  </data>
+  <data name="Core.Filter.AvailableOnly" xml:space="preserve">
+    <value>Jetzt verfügbar</value>
+  </data>
+  <data name="Core.Filter.State" xml:space="preserve">
+    <value>Zustand</value>
+  </data>
+  <data name="Core.Filter.Expansion" xml:space="preserve">
+    <value>Erweiterung</value>
+  </data>
+  <data name="Core.Filter.AddedIn" xml:space="preserve">
+    <value>Hinzugefügt in</value>
+  </data>
+  <data name="Core.Filter.LevelRange" xml:space="preserve">
+    <value>Stufenbereich</value>
+  </data>
+  <data name="Core.Filter.JobCategory" xml:space="preserve">
+    <value>Jobkategorie</value>
+  </data>
+  <data name="Core.Filter.RewardKinds" xml:space="preserve">
+    <value>Belohnungsarten</value>
+  </data>
+  <data name="Core.Filter.Repeatable" xml:space="preserve">
+    <value>Nur wiederholbare</value>
+  </data>
+  <data name="Core.Filter.SeasonalActive" xml:space="preserve">
+    <value>Nur aktive saisonale</value>
+  </data>
+  <data name="Core.Filter.IncludeUnlisted" xml:space="preserve">
+    <value>Entfernte einbeziehen</value>
+  </data>
+  <data name="Core.Filter.Pinned" xml:space="preserve">
+    <value>Nur angeheftete</value>
+  </data>
+  <data name="Core.Filter.Abandoned" xml:space="preserve">
+    <value>Nur abgebrochene</value>
+  </data>
+  <data name="Core.Filter.Search" xml:space="preserve">
+    <value>Suche</value>
+  </data>
+  <data name="Core.Filter.FeatureQuests" xml:space="preserve">
+    <value>Freischaltung</value>
+  </data>
+  <data name="Core.Filter.LevelBand" xml:space="preserve">
+    <value>Meine Stufe</value>
+  </data>
+  <data name="Core.Filter.Stalled" xml:space="preserve">
+    <value>Stockend</value>
+  </data>
+  <data name="Core.Filter.Sprout" xml:space="preserve">
+    <value>Neulingsmodus</value>
+  </data>
+  <data name="Core.Filter.StorySidequests" xml:space="preserve">
+    <value>Geschichten</value>
+  </data>
 </root>

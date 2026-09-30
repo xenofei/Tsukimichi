@@ -4,6 +4,8 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+### Added
+- Languages: Tsukimichi's own text now follows Dalamud's language, with draft Japanese, German and French translations (English elsewhere); Settings › Display › Plugin language switches between following Dalamud and English, and the change applies at once. The translations are drafts made with machine assistance, and Settings says so: corrections from players are very welcome (CONTRIBUTING.md › Translations). Quest, item, NPC and place names already came from the game in your client's language, and now the Moonlit reward names and the role quest ladders do too (Japanese, German and French clients had no role quests on the Characters tab before). Long words get room: the tab rail, the quest table's column headers and the Status column widen to fit them. Report this quest and the export files stay in English on purpose.
 
 
 ## [1.0.0] - 2026-09-30
