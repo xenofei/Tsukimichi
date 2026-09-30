@@ -191,11 +191,11 @@ public sealed class FlightPane
         var center = pos + new Vector2(box * 0.5f, box * 0.5f);
         if (zone.AllUnknown)
         {
-            MoonGlyph.Draw(ImGui.GetWindowDrawList(), center, radius, QuestState.Unknown);
+            Marks.Draw(ImGui.GetWindowDrawList(), center, box, Mark.Unknown);
         }
         else
         {
-            MoonGlyph.DrawFilling(ImGui.GetWindowDrawList(), center, radius, zone.Fraction);
+            MoonGlyph.DrawHalo(ImGui.GetWindowDrawList(), center, radius, zone.Fraction);
         }
 
         if (ImGui.IsItemHovered())
@@ -264,7 +264,7 @@ public sealed class FlightPane
 
         // Attuned.
         ImGui.TableNextColumn();
-        MoonGlyph.DrawInline(row.AttunedGlyph, UiMetrics.InlineGlyphSize(line));
+        Marks.DrawInline(row.AttunedGlyph, UiMetrics.InlineGlyphSize(line));
         if (ImGui.IsItemHovered())
         {
             UiMetrics.Tooltip(row.AttunedText);
@@ -370,14 +370,14 @@ public sealed class FlightPane
         using var id = ImRaii.PushId((int)zone.TerritoryId);
         ImGui.TableNextRow();
         ImGui.TableNextColumn();
-        var glyph = UiMetrics.InlineGlyphSize(line);
+        var glyph = UiMetrics.HaloBoxSize(line);
         if (zone.AllUnknown)
         {
-            MoonGlyph.DrawInline(QuestState.Unknown, glyph);
+            Marks.DrawInline(Mark.Unknown, glyph);
         }
         else
         {
-            MoonGlyph.DrawFillingInline(zone.Fraction, glyph);
+            MoonGlyph.DrawHaloInline(zone.Fraction, glyph);
         }
 
         if (ImGui.IsItemHovered())
@@ -682,7 +682,7 @@ public sealed class FlightPane
         public QuestRecord? Quest { get; } = quest;
         /// <summary>The quest's name as the spoiler shield prints it; refreshed with the state each session version.</summary>
         public string QuestName { get; private set; } = quest?.Name ?? Strings.FlightQuestPrefix + current.QuestRowId.ToString(CultureInfo.InvariantCulture);
-        public QuestState AttunedGlyph { get; private set; } = QuestState.Unknown;
+        public Mark AttunedGlyph { get; private set; } = Mark.Unknown;
         public string AttunedText { get; private set; } = Strings.FlightAttunedUnknown;
 
         /// <summary>The viewed character's evaluation of the quest; null when it has none (no snapshot, unknown quest).</summary>
@@ -697,9 +697,9 @@ public sealed class FlightPane
         {
             (AttunedGlyph, AttunedText) = attuned switch
             {
-                true => (QuestState.Completed, Strings.FlightAttunedYes),
-                false => (QuestState.Blocked, Strings.FlightAttunedNo),
-                null => (QuestState.Unknown, Strings.FlightAttunedUnknown),
+                true => (Mark.Check, Strings.FlightAttunedYes),
+                false => (Mark.Cross, Strings.FlightAttunedNo),
+                null => (Mark.Unknown, Strings.FlightAttunedUnknown),
             };
         }
 

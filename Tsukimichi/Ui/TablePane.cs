@@ -155,7 +155,7 @@ public sealed class TablePane : IDisposable
         UiMetrics.ApplyFontScale();
         var style = ImGui.GetStyle();
         var lineHeight = ImGui.GetTextLineHeight();
-        var rowContent = UiMetrics.RowContentHeight(lineHeight);
+        var rowContent = UiMetrics.TableRowContentHeight(lineHeight, style.CellPadding.Y);
         var rowHeight = rowContent + style.CellPadding.Y * 2f;
         var glyphBox = UiMetrics.RowGlyphRadius * 2.4f;
         var glyphColumn = UiMetrics.Px(GlyphColumnLead) + glyphBox + UiMetrics.Px(2f);

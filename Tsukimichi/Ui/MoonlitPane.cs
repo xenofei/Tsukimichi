@@ -433,8 +433,8 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         if (item.AllUnknown)
         {
             // Nothing readable for this kind on the viewed character (logged out, a stored snapshot, or a kind the
-            // reader cannot answer): a veiled moon says so instead of a misleading empty one.
-            MoonGlyph.DrawInline(QuestState.Unknown, UiMetrics.InlineGlyphSize(ImGui.GetTextLineHeight()));
+            // reader cannot answer): a dash says so instead of a misleading empty gauge.
+            Marks.DrawInline(Mark.Unknown, UiMetrics.InlineGlyphSize(ImGui.GetTextLineHeight()));
             if (ImGui.IsItemHovered())
             {
                 UiMetrics.Tooltip(Strings.MoonlitObtainedUnknown);
@@ -442,7 +442,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         }
         else
         {
-            MoonGlyph.DrawFillingInline(item.Fraction, UiMetrics.InlineGlyphSize(ImGui.GetTextLineHeight()));
+            MoonGlyph.DrawHaloInline(item.Fraction, UiMetrics.InlineGlyphSize(ImGui.GetTextLineHeight()));
             if (ImGui.IsItemHovered())
             {
                 UiMetrics.Tooltip(item.TooltipText);
@@ -467,7 +467,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 
         // Obtained.
         ImGui.TableNextColumn();
-        MoonGlyph.DrawInline(row.ObtainedGlyph, UiMetrics.InlineGlyphSize(line));
+        Marks.DrawInline(row.ObtainedGlyph, UiMetrics.InlineGlyphSize(line));
         if (ImGui.IsItemHovered())
         {
             UiMetrics.Tooltip(row.ObtainedText);
@@ -1004,7 +1004,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         public RewardRef? Reward { get; }
 
         public bool? Obtained { get; private set; }
-        public QuestState ObtainedGlyph { get; private set; } = QuestState.Unknown;
+        public Mark ObtainedGlyph { get; private set; } = Mark.Unknown;
         public string ObtainedText { get; private set; } = Strings.MoonlitObtainedUnknown;
 
         public void SetObtained(bool? obtained)
@@ -1012,9 +1012,9 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             Obtained = obtained;
             (ObtainedGlyph, ObtainedText) = obtained switch
             {
-                true => (QuestState.Completed, Strings.MoonlitObtainedYes),
-                false => (QuestState.Blocked, Strings.MoonlitObtainedNo),
-                null => (QuestState.Unknown, Strings.MoonlitObtainedUnknown),
+                true => (Mark.Check, Strings.MoonlitObtainedYes),
+                false => (Mark.Cross, Strings.MoonlitObtainedNo),
+                null => (Mark.Unknown, Strings.MoonlitObtainedUnknown),
             };
         }
 

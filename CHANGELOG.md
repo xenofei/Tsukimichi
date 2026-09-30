@@ -14,6 +14,14 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 - Settings › Spoilers: "Hide main scenario names ahead of me", "Quests ahead to reveal" (0 to 10, default 3), "Hide journal artwork until a quest is in my journal", and a choice for the character shown (use the settings, always shield, or show everything), so a character who finished the story can see it all while an alt stays shielded.
 - Sprout mode, a new quick view in the filter panel: the table keeps to the expansions your main scenario has reached, with a line saying how many quests are in your reach ("412 quests in your reach"), and the tree's later sections fold to their counts.
 - Help › Spoilers explains the shield, the artwork card, Sprout mode and the settings; the tour's table step mentions the placeholder.
+- Settings › Display › Table rows: Comfortable (the default, taller rows) or Dense. Only the quest table changes.
+- Reduce motion now follows Windows' "Show animations" setting until you set it yourself in Settings.
+
+### Changed
+- New moons. Accepted is now an early gibbous (a little more than half lit) with a silver rim and a small dark seal on its lit side, so it no longer reads as a full moon at row size. Larger moons (the detail pane header, the Help legend, tooltips) show a lunar surface: soft seas, a few craters, a glow along the terminator and a darker limb; small moons stay clean. A moon now only ever means a quest state or a completion: met and unmet requirements are a check and a cross, rewards you own or not are a check and a cross (a dash when unreadable), and the live indicator is a small dot, filled when live and hollow on a snapshot.
+- Progress is now a halo: a ring that fills clockwise from the top around a small moon that fills with it. Even 17 of 612 shows a gold pip and 611 of 612 a visible gap; the ring closes and glows only when everything is done. It replaces the filling moon in the Journal tree, the status bar, the Characters dashboard, Moonlit reward kinds and Flight zones; where the ring is small the number sits beside it.
+- Larger Journal tree rows (at least 30 px) with a 24 px halo, "done / total" with a small bar before it (the percentage is in the tooltip), a thin rule under each section, an expansion tag on nodes that belong to one expansion, and a gold count of quests you can accept now on any node that has some. The Journal tab shows that count too. Finished chapters are drawn in a quieter gold; the selected row has a gold edge.
+- Status bar: the overall halo with its percentage, the quest counts, a still dot with "live" or the snapshot time, the main scenario quest as a gold pill (click it to select the quest), and the version at the right.
 
 ## [0.6.2] - 2026-09-29
 

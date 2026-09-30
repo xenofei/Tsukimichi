@@ -84,9 +84,19 @@ public sealed class MainWindow : Window, IDisposable
     // Status bar string, rebuilt when its inputs change.
     private (int Catalog, int Rows, int Total, bool Live, long SnapshotMinute) statusKey = (-1, -1, -1, false, -1);
     private string status = string.Empty;
+    private string statusMode = string.Empty;
+    private string versionText = string.Empty;
+
+    // The overall halo's percentage and its tooltip, rebuilt when the overall count changes.
+    private NodeCount statusOverall = new(-1, -1, -1);
+    private string statusPercent = string.Empty;
+    private string statusProgress = string.Empty;
 
     /// <summary>The least width the status text keeps when the MSQ segment crowds it, in logical pixels.</summary>
     private const float StatusMinLogical = 120f;
+
+    /// <summary>The MSQ pill's fill: Moon at 10 % (ui-revamp §2.6).</summary>
+    private static readonly uint MsqPillFill = Theme.WithAlpha(Theme.Moon, 0.10f);
 
     /// <summary>The data version stamp the status text shows on hover (the same line as Settings › About); null shows no tooltip.</summary>
     public string? DataStamp { get; set; }
@@ -543,7 +553,7 @@ public sealed class MainWindow : Window, IDisposable
             ImGui.SetCursorPosX(ImGui.GetCursorPosX() + avail - rightWidth);
         }
 
-        MoonGlyph.DrawInline(session.IsLive && session.PollerHealthy ? QuestState.Completed : QuestState.Unknown, glyphSize);
+        Marks.DrawInline(session.IsLive && session.PollerHealthy ? Mark.LivePip : Mark.SnapshotPip, glyphSize);
         ui.RecordItem(UiRects.Sync);
         if (ImGui.IsItemHovered())
         {
@@ -724,11 +734,32 @@ public sealed class MainWindow : Window, IDisposable
         // write itself back into ui.Tab while the request is pending.
         var requested = ui.Tab;
         var force = requested != drawnTab;
-        DrawTab(NavTab.Journal, Strings.TabJournal, requested, force, session, bundle);
+        DrawTab(NavTab.Journal, JournalTabLabel(), requested, force, session, bundle);
         DrawTab(NavTab.Moonlit, Strings.TabMoonlit, requested, force, session, bundle);
         DrawTab(NavTab.Characters, Strings.TabCharacters, requested, force, session, bundle);
         DrawTab(NavTab.Flight, Strings.TabFlight, requested, force, session, bundle);
     }
+
+    /// <summary>
+    /// The Journal tab's label with its badge: the number of Ready quests for the viewed character (T11), rebuilt only
+    /// when that number changes. The "###" id keeps the tab the same item as the count comes and goes.
+    /// </summary>
+    private string JournalTabLabel()
+    {
+        var ready = runner.Counts?.OverallReady ?? 0;
+        if (ready != journalTabReady)
+        {
+            journalTabReady = ready;
+            journalTabLabel = ready > 0
+                ? string.Format(CultureInfo.CurrentCulture, Strings.TreeTabJournalReadyFormat, ready)
+                : Strings.TreeTabJournal;
+        }
+
+        return journalTabLabel;
+    }
+
+    private int journalTabReady = -1;
+    private string journalTabLabel = Strings.TreeTabJournal;
 
     private void DrawTab(NavTab tab, string label, NavTab requested, bool force, SessionState session, CatalogBundle bundle)
     {
@@ -785,6 +816,13 @@ public sealed class MainWindow : Window, IDisposable
         }
     }
 
+    /// <summary>
+    /// The status bar (T12, ui-revamp §2.6), left to right: the overall halo with its percentage beside it, the catalog
+    /// counts, a static pip with "live" or the snapshot time, the MSQ pill (click selects the next quest), and the
+    /// version right-aligned in Dusk. Segments are separated by a Veil "·". When the line is too narrow the counts and
+    /// then the MSQ pill end in an ellipsis; the halo, the pip and the version always show. Strings are rebuilt only
+    /// when their inputs change.
+    /// </summary>
     private void DrawStatusBar(SessionState session, CatalogBundle bundle)
     {
         var snapshot = session.ViewedSnapshot;
@@ -797,12 +835,26 @@ public sealed class MainWindow : Window, IDisposable
         if (key != statusKey)
         {
             statusKey = key;
-            var mode = session.IsLive
+            statusMode = session.IsLive
                 ? Strings.StatusLive
                 : snapshot is null
                     ? Strings.StatusNoSnapshot
                     : string.Format(CultureInfo.CurrentCulture, Strings.StatusSnapshotFormat, UiFormat.Time(snapshot.TakenUtc));
-            status = string.Format(CultureInfo.CurrentCulture, Strings.StatusFormat, bundle.Catalog.Count, runner.Rows.Length, runner.TotalInScope, mode, version);
+            status = string.Format(CultureInfo.CurrentCulture, Strings.StatusFormat, bundle.Catalog.Count, runner.Rows.Length, runner.TotalInScope);
+        }
+
+        if (versionText.Length == 0)
+        {
+            versionText = string.Format(CultureInfo.InvariantCulture, Strings.StatusVersionFormat, version);
+        }
+
+        var overall = runner.Counts?.Overall ?? default;
+        if (overall != statusOverall)
+        {
+            statusOverall = overall;
+            var percent = overall.Total <= 0 ? 0 : (int)MathF.Floor(100f * overall.Done / overall.Total);
+            statusPercent = string.Format(CultureInfo.CurrentCulture, Strings.StatusPercentFormat, percent);
+            statusProgress = UiFormat.Progress(overall.Done, overall.Total);
         }
 
         RefreshMsq(session, bundle);
@@ -810,69 +862,151 @@ public sealed class MainWindow : Window, IDisposable
         var barMin = ImGui.GetCursorScreenPos();
         ImGui.Separator();
 
-        // A tiny filling moon of overall completion leads the line.
-        var lineHeight = ImGui.GetTextLineHeight();
-        var moonBox = MathF.Max(lineHeight, UiMetrics.StatusMoonRadius * 2.4f);
-        var moonPos = ImGui.GetCursorScreenPos();
-        ImGui.Dummy(new Vector2(moonBox, lineHeight));
-        MoonGlyph.DrawFilling(ImGui.GetWindowDrawList(), moonPos + new Vector2(moonBox * 0.5f, lineHeight * 0.5f), UiMetrics.StatusMoonRadius, runner.Counts?.Overall.Fraction ?? 0f);
-        ImGui.SameLine();
-        var avail = ImGui.GetContentRegionAvail().X;
-        var statusWidth = ImGui.CalcTextSize(status).X;
-        var msqTextWidth = msqStatus.Length > 0 ? ImGui.CalcTextSize(msqStatus).X : 0f;
-        var msqRoom = msqTextWidth;
-        if (statusWidth + msqTextWidth <= avail)
+        var dl = ImGui.GetWindowDrawList();
+        var line = ImGui.GetTextLineHeight();
+        var haloRadius = UiMetrics.StatusHaloRadius;
+        var rowHeight = MathF.Max(line, 2f * haloRadius);
+        var origin = ImGui.GetCursorScreenPos();
+        var right = origin.X + ImGui.GetContentRegionAvail().X;
+        var textY = origin.Y + (rowHeight - line) * 0.5f;
+        var midY = origin.Y + rowHeight * 0.5f;
+        var gap = UiMetrics.Px(6f);
+        var separatorWidth = ImGui.CalcTextSize(StatusSeparator).X + 2f * gap;
+        var x = origin.X;
+
+        // Overall halo (track and arc; the number beside it, never a gauge under 16 px).
+        if (GaugeGeometry.ModeFor(haloRadius) != HaloMode.NumberOnly)
         {
-            ImGui.TextDisabled(status);
-        }
-        else
-        {
-            // Too narrow for both: the status keeps at least its floor and the MSQ segment gets the rest; whichever
-            // does not fit ends in an ellipsis instead of running past the window edge.
-            var statusRoom = MathF.Max(MathF.Min(statusWidth, UiMetrics.Px(StatusMinLogical)), avail - msqTextWidth);
-            statusRoom = MathF.Min(statusRoom, avail);
-            EllipsisText(status, statusRoom, statusWidth);
-            msqRoom = MathF.Max(0f, avail - statusRoom);
+            ImGui.SetCursorScreenPos(new Vector2(x, origin.Y));
+            ImGui.Dummy(new Vector2(2f * haloRadius, rowHeight));
+            MoonGlyph.DrawHalo(dl, new Vector2(x + haloRadius, midY), haloRadius, overall.Fraction);
+            if (ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(Strings.FillingMoonTooltip, statusProgress);
+            }
+
+            x += 2f * haloRadius + UiMetrics.Px(4f);
         }
 
-        // The status text carries the data stamp on hover, so "which data is this" is one hover away from any tab.
+        x = StatusText(x, textY, statusPercent, Theme.SilverU32);
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.FillingMoonTooltip, statusProgress);
+        }
+
+        // Version, right-aligned in Dusk; it carries the data stamp on hover.
+        var versionWidth = ImGui.CalcTextSize(versionText).X;
+        var versionX = MathF.Max(x, right - versionWidth);
+        StatusText(versionX, textY, versionText, Theme.DuskU32);
         if (DataStamp is { } stamp && ImGui.IsItemHovered())
         {
             UiMetrics.Tooltip(stamp);
         }
 
-        if (msqStatus.Length > 0)
+        // The middle: counts, pip + mode, MSQ pill, fitted into what is left before the version.
+        var pipSize = line;
+        var modeWidth = pipSize + UiMetrics.Px(2f) + ImGui.CalcTextSize(statusMode).X;
+        var pillPad = UiMetrics.Px(7f);
+        var msqTextWidth = msqStatus.Length > 0 ? ImGui.CalcTextSize(msqStatus).X : 0f;
+        var msqWidth = msqStatus.Length > 0 ? msqTextWidth + 2f * pillPad : 0f;
+        var statusWidth = ImGui.CalcTextSize(status).X;
+        var room = versionX - gap - x;
+
+        var fixedWidth = separatorWidth + modeWidth + (msqWidth > 0f ? separatorWidth : 0f);
+        var statusRoom = statusWidth;
+        var msqRoom = msqWidth;
+        if (separatorWidth + statusWidth + fixedWidth + msqWidth > room)
         {
-            // The MSQ position follows the status text as its own item so it can carry a tooltip and a click.
-            ImGui.SameLine(0f, 0f);
-            if (msqTextWidth <= msqRoom)
+            // Too narrow for everything: the counts keep at least their floor, the MSQ pill gets the rest, and
+            // whichever does not fit ends in an ellipsis instead of running into the version.
+            statusRoom = MathF.Max(0f, MathF.Min(MathF.Max(MathF.Min(statusWidth, UiMetrics.Px(StatusMinLogical)), room - separatorWidth - fixedWidth - msqWidth), statusWidth));
+            msqRoom = MathF.Max(0f, room - separatorWidth - statusRoom - fixedWidth);
+        }
+
+        if (statusRoom > 0f)
+        {
+            x = StatusSeparatorAt(dl, x, textY, gap);
+            ImGui.SetCursorScreenPos(new Vector2(x, textY));
+            EllipsisText(status, statusRoom, statusWidth, ImGui.GetColorU32(ImGuiCol.TextDisabled));
+            if (DataStamp is { } stampAgain && ImGui.IsItemHovered())
             {
-                ImGui.TextDisabled(msqStatus);
-            }
-            else
-            {
-                EllipsisText(msqStatus, msqRoom, msqTextWidth);
+                UiMetrics.Tooltip(stampAgain);
             }
 
+            x += statusRoom;
+        }
+
+        if (x + separatorWidth + modeWidth <= versionX)
+        {
+            // Static pip (accessibility B5: nothing here moves) and the live / snapshot words.
+            x = StatusSeparatorAt(dl, x, textY, gap);
+            ImGui.SetCursorScreenPos(new Vector2(x, textY));
+            Marks.DrawInline(session.IsLive && session.PollerHealthy ? Mark.LivePip : Mark.SnapshotPip, pipSize);
             if (ImGui.IsItemHovered())
             {
+                UiMetrics.Tooltip(syncTooltip);
+            }
+
+            x = StatusText(x + pipSize + UiMetrics.Px(2f), textY, statusMode, ImGui.GetColorU32(ImGuiCol.TextDisabled));
+        }
+
+        if (msqWidth > 0f && msqRoom > 2f * pillPad && x + separatorWidth + msqRoom <= versionX + 0.5f)
+        {
+            x = StatusSeparatorAt(dl, x, textY, gap);
+            var pillMin = new Vector2(x, textY - UiMetrics.Px(1f));
+            var pillMax = new Vector2(x + msqRoom, textY + line + UiMetrics.Px(1f));
+            dl.AddRectFilled(pillMin, pillMax, MsqPillFill, (pillMax.Y - pillMin.Y) * 0.5f);
+            ImGui.SetCursorScreenPos(new Vector2(x + pillPad, textY));
+            EllipsisText(msqStatus, msqRoom - 2f * pillPad, msqTextWidth, Theme.MoonU32);
+            if (ImGui.IsMouseHoveringRect(pillMin, pillMax))
+            {
                 UiMetrics.Tooltip(msqTooltip);
-                if (msq?.Next is { } next && ImGui.IsItemClicked())
+                if (msq?.Next is { } next)
                 {
-                    SelectMsq(next);
+                    ImGui.SetMouseCursor(ImGuiMouseCursor.Hand);
+                    if (ImGui.IsMouseClicked(ImGuiMouseButton.Left) && ImGui.IsWindowHovered())
+                    {
+                        SelectMsq(next);
+                    }
                 }
             }
         }
 
+        // One item spanning the bar so the layout advances past it.
+        ImGui.SetCursorScreenPos(origin);
+        ImGui.Dummy(new Vector2(MathF.Max(0f, right - origin.X), rowHeight));
+
         var windowX = ImGui.GetWindowPos().X;
-        ui.RecordRect(UiRects.StatusBar, new Vector2(windowX + ImGui.GetWindowContentRegionMin().X, barMin.Y), new Vector2(windowX + ImGui.GetWindowContentRegionMax().X, ImGui.GetItemRectMax().Y));
+        ui.RecordRect(UiRects.StatusBar, new Vector2(windowX + ImGui.GetWindowContentRegionMin().X, barMin.Y), new Vector2(windowX + ImGui.GetWindowContentRegionMax().X, origin.Y + rowHeight));
+    }
+
+    /// <summary>The status bar's segment separator, a Veil "·" with a gap either side.</summary>
+    private const string StatusSeparator = "·";
+
+    /// <summary>Draws a separator at <paramref name="x"/> and returns where the next segment starts.</summary>
+    private static float StatusSeparatorAt(ImDrawListPtr dl, float x, float y, float gap)
+    {
+        dl.AddText(new Vector2(x + gap, y), Theme.VeilU32, StatusSeparator);
+        return x + gap + ImGui.CalcTextSize(StatusSeparator).X + gap;
+    }
+
+    /// <summary>One status text as an item (so it can carry a tooltip) at a fixed position; returns its right edge.</summary>
+    private static float StatusText(float x, float y, string text, uint color)
+    {
+        ImGui.SetCursorScreenPos(new Vector2(x, y));
+        using (ImRaii.PushColor(ImGuiCol.Text, color))
+        {
+            ImGui.TextUnformatted(text);
+        }
+
+        return ImGui.GetItemRectMax().X;
     }
 
     /// <summary>
-    /// Disabled-coloured text clipped to <paramref name="width"/> with an ellipsis, as one item (a Dummy) so hover and
+    /// Text in <paramref name="textColor"/> clipped to <paramref name="width"/> with an ellipsis, as one item (a Dummy) so hover and
     /// click tests still work on it. Nothing is allocated: ImGui renders the ellipsis itself.
     /// </summary>
-    private static void EllipsisText(string text, float width, float textWidth)
+    private static void EllipsisText(string text, float width, float textWidth, uint textColor)
     {
         var min = ImGui.GetCursorScreenPos();
         var max = min + new Vector2(MathF.Max(0f, width), ImGui.GetTextLineHeight());
@@ -882,7 +1016,7 @@ public sealed class MainWindow : Window, IDisposable
             return;
         }
 
-        using var color = ImRaii.PushColor(ImGuiCol.Text, ImGui.GetColorU32(ImGuiCol.TextDisabled));
+        using var color = ImRaii.PushColor(ImGuiCol.Text, textColor);
         Vector2? size = new Vector2(textWidth, max.Y - min.Y);
         ImGuiP.RenderTextEllipsis(ImGui.GetWindowDrawList(), in min, in max, max.X, max.X, text, in size);
     }

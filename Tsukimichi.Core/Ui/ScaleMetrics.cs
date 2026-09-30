@@ -3,6 +3,16 @@ using System.Numerics;
 
 namespace Tsukimichi.Core.Ui;
 
+/// <summary>Quest table row density (Settings › Display). Only the table's rows change; the tree keeps its 30 px floor.</summary>
+public enum RowDensity
+{
+    /// <summary>32 px rows, the default.</summary>
+    Comfortable = 0,
+
+    /// <summary>24 px rows.</summary>
+    Dense = 1,
+}
+
 /// <summary>
 /// The pure arithmetic behind the main window's size system: the user's UI scale multiplies Dalamud's global scale
 /// for every layout pixel and the font, and the icon scale multiplies that again for moons and icons. Lives in Core
@@ -56,6 +66,52 @@ public static class ScaleMetrics
     {
         var scale = ClampUiScale(uiScale);
         return new Vector2((LeftColumnLogical + RightColumnLogical + CentreFloorLogical) * scale, MinWindowHeightLogical * scale);
+    }
+
+    /// <summary>Smallest halo half-size in the Journal tree: a 24 px box (accessibility A4), whatever the icon scale.</summary>
+    public const float TreeGlyphMinRadius = 12f;
+
+    /// <summary>Largest halo half-size in the Journal tree.</summary>
+    public const float TreeGlyphMaxRadius = 18f;
+
+    /// <summary>Smallest Journal tree row in pixels, in every density.</summary>
+    public const float TreeRowMinHeight = 30f;
+
+    /// <summary>Logical padding around the tree halo inside its row.</summary>
+    public const float TreeRowPaddingLogical = 6f;
+
+    /// <summary>
+    /// The tree halo's half-size for a text line of <paramref name="lineHeight"/> px: clamp(0.5 · L · icon scale, 12, 18)
+    /// (glyph proposal §3.5). The line already carries the global and UI scales, so only the user's icon scale is applied.
+    /// </summary>
+    public static float TreeGlyphRadius(float lineHeight, float iconScale)
+    {
+        var line = float.IsFinite(lineHeight) && lineHeight > 0f ? lineHeight : 0f;
+        return Math.Clamp(0.5f * line * ClampIconScale(iconScale), TreeGlyphMinRadius, TreeGlyphMaxRadius);
+    }
+
+    /// <summary>A tree row's height: max(30 px, the line, the halo box plus 6 logical px).</summary>
+    public static float TreeRowHeight(float lineHeight, float glyphRadius, float layoutScale)
+    {
+        var line = float.IsFinite(lineHeight) ? lineHeight : 0f;
+        var scale = float.IsFinite(layoutScale) && layoutScale > 0f ? layoutScale : 1f;
+        return MathF.Max(TreeRowMinHeight, MathF.Max(line, 2f * glyphRadius + TreeRowPaddingLogical * scale));
+    }
+
+    /// <summary>Quest table row height in Dalamud-scaled pixels for each density (T12): Dense 24, Comfortable 32.</summary>
+    public static float TableRowTarget(RowDensity density) => density == RowDensity.Dense ? 24f : 32f;
+
+    /// <summary>
+    /// A quest table row's content height (the row minus its cell padding): the density's target at the host's global
+    /// scale, never less than what the moon, icon and text need (<paramref name="minContent"/>), so large UI scales
+    /// still fit. Unknown density values read as Comfortable.
+    /// </summary>
+    public static float TableRowContent(RowDensity density, float globalScale, float minContent, float cellPaddingY)
+    {
+        var target = TableRowTarget(Enum.IsDefined(density) ? density : RowDensity.Comfortable) * SafeGlobalScale(globalScale);
+        var padding = float.IsFinite(cellPaddingY) ? MathF.Max(0f, cellPaddingY) : 0f;
+        var floor = float.IsFinite(minContent) ? MathF.Max(0f, minContent) : 0f;
+        return MathF.Max(floor, target - 2f * padding);
     }
 
     /// <summary>

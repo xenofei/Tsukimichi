@@ -118,7 +118,7 @@ public static class StateNames
     {
         QuestState.Ready => "first quarter, glow",
         QuestState.ReadyOnOtherJob => "first quarter, silver, gold ring",
-        QuestState.Accepted => "waxing gibbous, gold ring",
+        QuestState.Accepted => "waxing gibbous, sealed, silver ring",
         QuestState.Blocked => "new moon, silver ring",
         QuestState.DoneThisCycle => "waning gibbous, silver",
         QuestState.Completed => "full moon",

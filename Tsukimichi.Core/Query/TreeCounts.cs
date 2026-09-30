@@ -27,6 +27,10 @@ public readonly record struct NodeCount(int Done, int Total, int Excluded)
 /// join <see cref="Overall"/> only when included. That bucket counts every row, exclusions aside: a removed quest
 /// evaluates Locked out, and "118 of 179 done before they went" is the number the bucket is for. A listed quest with
 /// <see cref="QuestRecord.CountsInTotals"/> false (the class intros) is in no count at all, done or not.
+///
+/// Alongside the progress, each node also carries how many of its counted quests are <see cref="QuestState.Ready"/>
+/// (<see cref="SectionReady"/>, <see cref="CategoryReady"/>, <see cref="GenreReady"/>, <see cref="OverallReady"/>): the
+/// tree's Ready badge and the Journal tab's badge (T11). Removed quests are never Ready and are not counted.
 /// </summary>
 public sealed class TreeCounts
 {
@@ -35,14 +39,18 @@ public sealed class TreeCounts
         Dictionary<uint, NodeCount> categories,
         Dictionary<uint, NodeCount> genres,
         NodeCount unlisted,
-        NodeCount overall)
+        NodeCount overall,
+        ReadyCounts ready)
     {
         Sections = sections;
         Categories = categories;
         Genres = genres;
         Unlisted = unlisted;
         Overall = overall;
+        this.ready = ready;
     }
+
+    private readonly ReadyCounts ready;
 
     public IReadOnlyDictionary<uint, NodeCount> Sections { get; }
     public IReadOnlyDictionary<uint, NodeCount> Categories { get; }
@@ -59,6 +67,15 @@ public sealed class TreeCounts
     public NodeCount Category(uint id) => Categories.GetValueOrDefault(id);
 
     public NodeCount Genre(uint id) => Genres.GetValueOrDefault(id);
+
+    /// <summary>Ready quests across every listed, counted quest.</summary>
+    public int OverallReady => ready.Overall;
+
+    public int SectionReady(uint id) => ready.Sections.GetValueOrDefault(id);
+
+    public int CategoryReady(uint id) => ready.Categories.GetValueOrDefault(id);
+
+    public int GenreReady(uint id) => ready.Genres.GetValueOrDefault(id);
 
     /// <summary>Counts from evaluator output; each quest's state is read from its <see cref="QuestEvaluation"/>.</summary>
     public static TreeCounts Compute(QuestCatalog catalog, IReadOnlyDictionary<uint, QuestEvaluation> evaluations, bool includeUnlisted)
@@ -84,10 +101,12 @@ public sealed class TreeCounts
         var genres = new Dictionary<uint, NodeCount>(catalog.ByGenre.Count);
         var unlisted = default(NodeCount);
         var overall = default(NodeCount);
+        var ready = new ReadyCounts();
 
         foreach (var quest in catalog.All)
         {
-            var done = source.StateOf(quest.RowId) == QuestState.Completed ? 1 : 0;
+            var state = source.StateOf(quest.RowId);
+            var done = state == QuestState.Completed ? 1 : 0;
 
             if (quest.IsRemoved)
             {
@@ -112,9 +131,31 @@ public sealed class TreeCounts
             Bump(categories, quest.Journal.CategoryId, done, excluded);
             Bump(genres, quest.Journal.GenreId, done, excluded);
             overall = Add(overall, done, excluded);
+
+            if (state == QuestState.Ready)
+            {
+                ready.Add(quest.Journal);
+            }
         }
 
-        return new TreeCounts(sections, categories, genres, unlisted, overall);
+        return new TreeCounts(sections, categories, genres, unlisted, overall, ready);
+    }
+
+    /// <summary>Ready tallies per node; only nodes with at least one Ready quest get an entry.</summary>
+    private sealed class ReadyCounts
+    {
+        public Dictionary<uint, int> Sections { get; } = new();
+        public Dictionary<uint, int> Categories { get; } = new();
+        public Dictionary<uint, int> Genres { get; } = new();
+        public int Overall { get; private set; }
+
+        public void Add(JournalRef journal)
+        {
+            CollectionsMarshal.GetValueRefOrAddDefault(Sections, journal.SectionId, out _)++;
+            CollectionsMarshal.GetValueRefOrAddDefault(Categories, journal.CategoryId, out _)++;
+            CollectionsMarshal.GetValueRefOrAddDefault(Genres, journal.GenreId, out _)++;
+            Overall++;
+        }
     }
 
     private static NodeCount Add(NodeCount count, int done, int excluded) =>

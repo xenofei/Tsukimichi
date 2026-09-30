@@ -282,7 +282,7 @@ public sealed partial class CharactersPane
         {
             ImGui.TableNextRow();
             ImGui.TableNextColumn();
-            MoonGlyph.DrawFillingInline(row.Fraction, UiMetrics.InlineGlyphSize(line));
+            MoonGlyph.DrawHaloInline(row.Fraction, UiMetrics.InlineGlyphSize(line));
             if (ImGui.IsItemHovered())
             {
                 FillingMoonTooltip(row.Count, row.Percent);
@@ -361,7 +361,7 @@ public sealed partial class CharactersPane
             ImGui.TableNextColumn();
             ImGui.TextUnformatted(row.Level);
             ImGui.TableNextColumn();
-            MoonGlyph.DrawFillingInline(row.Fraction, UiMetrics.InlineGlyphSize(line));
+            MoonGlyph.DrawHaloInline(row.Fraction, UiMetrics.InlineGlyphSize(line));
             if (ImGui.IsItemHovered())
             {
                 FillingMoonTooltip(row.Count);
@@ -425,7 +425,7 @@ public sealed partial class CharactersPane
             using var rowId = ImRaii.PushId(i);
             ImGui.TableNextRow();
             ImGui.TableNextColumn();
-            MoonGlyph.DrawFillingInline(row.Fraction, UiMetrics.InlineGlyphSize(line));
+            MoonGlyph.DrawHaloInline(row.Fraction, UiMetrics.InlineGlyphSize(line));
             if (ImGui.IsItemHovered())
             {
                 FillingMoonTooltip(row.Count);
@@ -498,7 +498,7 @@ public sealed partial class CharactersPane
             ImGui.TableNextColumn();
             if (row.AllUnknown)
             {
-                MoonGlyph.DrawInline(QuestState.Unknown, UiMetrics.InlineGlyphSize(line));
+                Marks.DrawInline(Mark.Unknown, UiMetrics.InlineGlyphSize(line));
                 if (ImGui.IsItemHovered())
                 {
                     UiMetrics.Tooltip(Strings.MoonlitObtainedUnknown);
@@ -506,7 +506,7 @@ public sealed partial class CharactersPane
             }
             else
             {
-                MoonGlyph.DrawFillingInline(row.Fraction, UiMetrics.InlineGlyphSize(line));
+                MoonGlyph.DrawHaloInline(row.Fraction, UiMetrics.InlineGlyphSize(line));
                 if (ImGui.IsItemHovered())
                 {
                     FillingMoonTooltip(row.Count);

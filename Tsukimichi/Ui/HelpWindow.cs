@@ -53,7 +53,8 @@ public sealed class HelpWindow : Window
     private const float Pad = 10f;
     private const float BarWidth = 3f;
     private const float PhaseGlyphRadius = 18f;
-    private const float FillingGlyphRadius = 11f;
+    /// <summary>Halo half-size in the legend card: a 32 px box at scale 1, so the core and its moon show.</summary>
+    private const float FillingGlyphRadius = 16f;
     private const float StepRadius = 11f;
     private const float TitleScale = 1.4f;
     private const int SearchMaxLength = 64;
@@ -190,7 +191,7 @@ public sealed class HelpWindow : Window
         FontAwesomeIcon.Seedling,
         FontAwesomeIcon.SlidersH);
 
-    private static readonly float[] FillingFractions = [0f, 0.5f, 1f];
+    private static readonly float[] FillingFractions = [0f, 0.03f, 0.25f, 0.66f, 1f];
 
     private readonly HelpActions actions;
     private readonly IFontHandle iconFont;
@@ -697,7 +698,7 @@ public sealed class HelpWindow : Window
             {
                 var pos = ImGui.GetCursorScreenPos();
                 ImGui.Dummy(new Vector2(box, box));
-                MoonGlyph.DrawFilling(dl, pos + new Vector2(box * 0.5f), radius, fraction);
+                MoonGlyph.DrawHalo(dl, pos + new Vector2(box * 0.5f), radius, fraction, onCard: true);
                 ImGui.SameLine(0f, 6f * scale);
             }
 

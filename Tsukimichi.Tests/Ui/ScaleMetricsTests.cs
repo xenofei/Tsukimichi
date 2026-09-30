@@ -180,4 +180,47 @@ public class ScaleMetricsTests
         Assert.Equal(Vector2.Zero, uv0);
         Assert.Equal(Vector2.One, uv1);
     }
+
+    // imgui-notes §4 table: (UiScale, IconScale, L) → halo R and row height (layout scale = UiScale at global 1).
+    [Theory]
+    [InlineData(1.00f, 0.80f, 16.0f, 12.0f, 30f)]
+    [InlineData(1.00f, 1.00f, 16.0f, 12.0f, 30f)]
+    [InlineData(1.15f, 1.00f, 18.4f, 12.0f, 30.9f)]
+    [InlineData(1.15f, 1.25f, 18.4f, 12.0f, 30.9f)]
+    [InlineData(1.15f, 1.60f, 18.4f, 14.72f, 36.34f)]
+    [InlineData(1.40f, 1.25f, 22.4f, 14.0f, 36.4f)]
+    [InlineData(1.60f, 2.00f, 25.6f, 18.0f, 45.6f)]
+    public void Tree_glyph_is_never_under_a_24_px_box_and_rows_never_under_30_px(float uiScale, float iconScale, float line, float radius, float row)
+    {
+        var r = ScaleMetrics.TreeGlyphRadius(line, iconScale);
+        Assert.Equal(radius, r, 2);
+        Assert.Equal(row, ScaleMetrics.TreeRowHeight(line, r, uiScale), 1);
+    }
+
+    [Theory]
+    [InlineData(RowDensity.Dense, 1f, 20.7f, 2f, 20.7f)]        // content already fills 24 px with padding
+    [InlineData(RowDensity.Dense, 1f, 16f, 2f, 20f)]
+    [InlineData(RowDensity.Comfortable, 1f, 20.7f, 2f, 28f)]
+    [InlineData(RowDensity.Comfortable, 2f, 20.7f, 4f, 56f)]    // 4K: the host's global scale doubles the target
+    [InlineData(RowDensity.Comfortable, 1f, 40f, 2f, 40f)]       // UiScale 1.6 + IconScale 2: content wins
+    [InlineData((RowDensity)7, 1f, 16f, 2f, 28f)]                // an unknown value reads as Comfortable
+    public void Table_rows_follow_the_density_but_never_clip_their_content(RowDensity density, float global, float content, float padding, float expected)
+    {
+        Assert.Equal(expected, ScaleMetrics.TableRowContent(density, global, content, padding), 3);
+    }
+
+    [Fact]
+    public void Comfortable_is_the_default_density()
+    {
+        Assert.Equal(RowDensity.Comfortable, default(RowDensity));
+        Assert.Equal(24f, ScaleMetrics.TableRowTarget(RowDensity.Dense));
+        Assert.Equal(32f, ScaleMetrics.TableRowTarget(RowDensity.Comfortable));
+    }
+
+    [Fact]
+    public void Tree_glyph_guards_bad_input()
+    {
+        Assert.Equal(ScaleMetrics.TreeGlyphMinRadius, ScaleMetrics.TreeGlyphRadius(float.NaN, 1.25f));
+        Assert.Equal(ScaleMetrics.TreeRowMinHeight, ScaleMetrics.TreeRowHeight(float.NaN, 12f, float.NaN) - 0f, 1);
+    }
 }

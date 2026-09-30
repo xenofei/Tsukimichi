@@ -46,8 +46,13 @@ public static partial class Strings
     public const string SettingsButtonTooltip = "Settings";
     public const string ActionUnavailable = "Not available yet";
 
-    // Status bar: {0} = catalog count, {1} = rows shown, {2} = total in scope, {3} = live/snapshot text, {4} = version.
-    public const string StatusFormat = "{0:N0} quests · showing {1:N0} of {2:N0} · {3} · v{4}";
+    // Status bar: {0} = catalog count, {1} = rows shown, {2} = total in scope. The live/snapshot text follows its pip,
+    // the MSQ pill and the version (right-aligned) are separate segments (T12).
+    public const string StatusFormat = "{0:N0} quests · showing {1:N0} of {2:N0}";
+    /// <summary>{0} = plugin version.</summary>
+    public const string StatusVersionFormat = "v{0}";
+    /// <summary>{0} = whole percent of every counted quest done.</summary>
+    public const string StatusPercentFormat = "{0}%";
     public const string StatusLive = "live";
     /// <summary>{0} = time.</summary>
     public const string StatusSnapshotFormat = "snapshot {0}";
@@ -55,8 +60,8 @@ public static partial class Strings
 
     // Main scenario position (status bar and Characters dashboard)
     /// <summary>{0} = quest name.</summary>
-    public const string StatusMsqFormat = " · MSQ: {0}";
-    public const string StatusMsqComplete = " · MSQ: complete";
+    public const string StatusMsqFormat = "MSQ · {0} ›";
+    public const string StatusMsqComplete = "MSQ · complete";
     /// <summary>{0} = expansion, {1} = done, {2} = total.</summary>
     public const string MsqProgressFormat = "{0} · {1:N0} of {2:N0} main scenario quests done";
     /// <summary>{0} = done, {1} = total.</summary>

@@ -182,10 +182,21 @@ public sealed class Configuration : IPluginConfiguration
 
     // ---- 0.5.1: motion ----
     /// <summary>
-    /// Replace the hold-to-confirm arc with a text countdown (and, later, other animation with a cut). Off by default;
-    /// a later release follows the OS animation setting instead.
+    /// Replace the hold-to-confirm arc with a text countdown (and, later, other animation with a cut). Until the user
+    /// sets it in Settings (<see cref="ReduceMotionChosen"/>), every load follows Windows' "Show animations" setting
+    /// (<see cref="OsMotion"/>), so it is on by default for players who turned animations off system-wide.
     /// </summary>
     public bool ReduceMotion { get; set; }
+
+    // ---- 0.7.0: motion default and density ----
+    /// <summary>
+    /// Whether the user set <see cref="ReduceMotion"/> in Settings. Every config saved since 0.5.1 carries
+    /// <c>ReduceMotion: false</c> whether chosen or not, so the choice is recorded separately; false means "follow the OS".
+    /// </summary>
+    public bool ReduceMotionChosen { get; set; }
+
+    /// <summary>Quest table row height: Comfortable (32 px, default) or Dense (24 px). Only the table's rows change.</summary>
+    public RowDensity Density { get; set; } = RowDensity.Comfortable;
 
     /// <summary>Poll interval as a <see cref="TimeSpan"/> within the allowed bounds.</summary>
     public TimeSpan PollInterval
@@ -252,6 +263,17 @@ public sealed class Configuration : IPluginConfiguration
             // Legacy while neither radio button showed selected. The default filing stands.
             log?.Warning("Saved JournalFiling {Value} is not a known mode; using {Default}", (int)config.JournalFiling, JournalFiling.Refiled);
             config.JournalFiling = JournalFiling.Refiled;
+        }
+
+        if (!Enum.IsDefined(config.Density))
+        {
+            config.Density = RowDensity.Comfortable;
+        }
+
+        // Read once per load: while the user has not chosen, Reduce motion mirrors the OS animation setting.
+        if (!config.ReduceMotionChosen && OsMotion.AnimationsOff() is { } animationsOff)
+        {
+            config.ReduceMotion = animationsOff;
         }
 
         config.HasPriorConfig = hadFile;

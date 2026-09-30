@@ -77,6 +77,7 @@ public class StateNamesTests
         Assert.Equal("full moon", StateNames.GlyphSubtitle(QuestState.Completed));
         Assert.StartsWith("first quarter", StateNames.GlyphSubtitle(QuestState.Ready), StringComparison.Ordinal);
         Assert.StartsWith("new moon", StateNames.GlyphSubtitle(QuestState.Blocked), StringComparison.Ordinal);
+        Assert.Contains("sealed", StateNames.GlyphSubtitle(QuestState.Accepted), StringComparison.Ordinal);
         foreach (var state in Enum.GetValues<QuestState>())
         {
             Assert.NotEqual(StateNames.GlyphSubtitle(state), StateNames.Name(state));

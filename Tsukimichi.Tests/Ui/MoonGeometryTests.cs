@@ -64,20 +64,31 @@ public class MoonGeometryTests
     }
 
     [Fact]
-    public void Gibbous_moons_match_the_approved_two_disc_construction()
+    public void Waning_gibbous_matches_the_approved_two_disc_construction()
     {
-        // Spec: "disc lit ~75%": the lit width at the equator is 75% of the diameter. The lit region is the lens of two
-        // equal discs offset by GibbousOffset·r (assets/icons/render_icons.py), whose area is 2·acos(u) − 2·u·sqrt(1 − u²)
-        // with u = offset / 2, i.e. about 0.685 of the disc. Both the analytic value and the coarse ~three-quarters band hold.
+        // DoneThisCycle: the lens of two equal discs offset by GibbousOffset·r (assets/icons/render_icons.py), whose area
+        // is 2·acos(u) − 2·u·sqrt(1 − u²) with u = offset / 2, i.e. about 0.685 of the disc.
         var u = MoonGeometry.GibbousOffset / 2f;
         var expected = (2f * MathF.Acos(u) - 2f * u * MathF.Sqrt(1f - u * u)) / MathF.PI;
 
-        var waxing = Fraction(MoonPhase.WaxingGibbous, 24f);
         var waning = Fraction(MoonPhase.WaningGibbous, 24f);
+        Assert.InRange(waning, expected - 0.02f, expected + 0.02f);
+        Assert.InRange(waning, 0.65f, 0.75f);
+    }
 
-        Assert.InRange(waxing, expected - 0.02f, expected + 0.02f);
-        Assert.InRange(waxing, 0.65f, 0.75f);
-        Assert.InRange(waning, waxing - 0.005f, waxing + 0.005f);
+    [Fact]
+    public void Accepted_is_the_sixty_percent_early_gibbous_not_the_mirror_of_done_this_cycle()
+    {
+        // Proposal v2.1 §3.1a: lit width 60 % at the equator (terminator at x = −0.20 r), so the dark side stays wide at
+        // 12 px; the lit area sits between the first quarter and DoneThisCycle's lens.
+        var layers = MoonGeometry.ForPhase(Center, 24f, MoonPhase.WaxingGibbous);
+        Assert.False(layers.BaseLit);
+        Assert.InRange(layers.LitEquatorWidth, 0.60f * 48f - 0.2f, 0.60f * 48f + 0.2f);   // polygon chords
+
+        var waxing = Fraction(MoonPhase.WaxingGibbous, 24f);
+        Assert.InRange(waxing, 0.55f, 0.66f);
+        Assert.True(waxing < Fraction(MoonPhase.WaningGibbous, 24f) - 0.03f);
+        Assert.True(waxing > Fraction(MoonPhase.FirstQuarter, 24f) + 0.05f);
     }
 
     [Fact]

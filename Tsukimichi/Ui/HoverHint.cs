@@ -232,7 +232,7 @@ public sealed class HoverHint
             if (line.HasObtained)
             {
                 ImGui.Indent(indent);
-                MoonGlyph.DrawInline(line.ObtainedGlyph, glyph);
+                Marks.DrawInline(line.ObtainedGlyph, glyph);
                 ImGui.SameLine();
                 using (Theme.PushText(line.ObtainedColor))
                 {
@@ -301,7 +301,7 @@ public sealed class HoverHint
         public bool StoreResell { get; } = storeResell;
 
         public bool HasObtained { get; private set; }
-        public QuestState ObtainedGlyph { get; private set; } = QuestState.Unknown;
+        public Mark ObtainedGlyph { get; private set; } = Mark.Unknown;
         public string ObtainedText { get; private set; } = string.Empty;
         public Vector4 ObtainedColor { get; private set; } = Theme.Dusk;
 
@@ -310,9 +310,9 @@ public sealed class HoverHint
             HasObtained = true;
             (ObtainedGlyph, ObtainedText, ObtainedColor) = obtained switch
             {
-                true => (QuestState.Completed, Strings.ItemsOwned, Theme.Moon),
-                false => (QuestState.Blocked, Strings.ItemsNotOwned, Theme.Dusk),
-                null => (QuestState.Unknown, Strings.ItemsVeiled, Theme.Dusk),
+                true => (Mark.Check, Strings.ItemsOwned, Theme.Moon),
+                false => (Mark.Cross, Strings.ItemsNotOwned, Theme.Dusk),
+                null => (Mark.Unknown, Strings.ItemsVeiled, Theme.Dusk),
             };
         }
     }

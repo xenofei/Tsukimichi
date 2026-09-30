@@ -322,7 +322,11 @@ static partial class Strings
     public const string ConfigIconScale = "Icon scale";
     public const string ConfigIconScaleHint = "Moon glyphs, reward icons and toolbar buttons.";
     public const string ConfigReduceMotion = "Reduce motion";
-    public const string ConfigReduceMotionHint = "Hold-to-confirm buttons count down in text instead of filling an arc.";
+    public const string ConfigReduceMotionHint = "Hold-to-confirm buttons count down in text instead of filling an arc. Until you change it here, it follows Windows' \"Show animations\" setting.";
+    public const string ConfigDensity = "Table rows";
+    public const string ConfigDensityComfortable = "Comfortable";
+    public const string ConfigDensityDense = "Dense";
+    public const string ConfigDensityHint = "Height of the quest table's rows; the Journal tree keeps its size.";
     public const string ConfigSectionHelp = "Help";
     public const string ConfigShowHelp = "Show help";
     public const string ConfigStartTutorial = "Start tutorial";
@@ -427,8 +431,8 @@ static partial class Strings
         public const string ChipNotInTotals = "Left out of totals";
         public const string ChipStatePrefix = "State: ";
 
-        public const string FillingTitle = "The filling moon";
-        public const string FillingBody = "Tree nodes, Moonlit kinds and the Characters dashboard show a moon whose lit fraction is the completion ratio: new at none, half at half, full only when everything is done. Locked out quests are left out of the total.";
+        public const string FillingTitle = "The halo";
+        public const string FillingBody = "Tree nodes, Moonlit kinds, flying zones and the Characters dashboard show a ring that fills clockwise from the top with the completion ratio, around a small moon that fills with it. Even one quest shows a gold pip, and the ring closes and glows only when everything is done. Where the ring is small the number sits beside it. Locked out quests are left out of the total.";
 
         // ---- Filters and chips ----
         public static readonly string[] FilterCardTitles =
@@ -484,7 +488,7 @@ static partial class Strings
         public const string ConfidenceCuratedMeaning = "checked by hand and shipped with the plugin";
         public const string ConfidenceUserMeaning = "your own override";
         public const string HaveTitle = "Have";
-        public const string HaveBody = "Whether the viewed character owns the reward. Emotes, mounts, minions, rolls, cards and duties are read from the live client, so a stored snapshot shows a veiled moon for them.";
+        public const string HaveBody = "Whether the viewed character owns the reward. Emotes, mounts, minions, rolls, cards and duties are read from the live client, so a stored snapshot shows a dash for them.";
         public const string OverridesTitle = "Overrides";
         public const string OverridesBody = "Not unique (hide) in a row's context menu removes a quest from Moonlit; Mark as unique in the detail pane adds one, with a note naming the reward. Both ask first: press and hold the confirm button until its arc closes, or hold Shift and click. Enter in the note field confirms too. An Undo line stays for eight seconds.";
         public const string RestoreTitle = "Restore";
@@ -504,7 +508,7 @@ static partial class Strings
         public static readonly string[] CharacterCardBodies =
         [
             "Everything read from a character: completed quests, journal, job levels, Grand Company, allied societies and unlocked duties. One per character, refreshed while you play and again on logout.",
-            "Pick a stored character to browse the catalog as that character. The toolbar's sync moon goes veiled and a banner names the snapshot.",
+            "Pick a stored character to browse the catalog as that character. The toolbar's live pip turns hollow and a banner names the snapshot.",
             "Completion per journal section, Moonlit progress, pins, recent activity, job levels by role, Grand Company and society standings.",
             "At the bottom: every character's state for the quest selected in the Journal, without switching characters.",
             "Export JSON writes the snapshot to the exports folder in the config directory. For a spreadsheet or a collection tracker, Settings › Data › Export (or /tsuki export) writes the completed quests or the Moonlit collection as JSON or CSV, without your name unless you tick Include character name; nothing is ever uploaded. Forget deletes a stored character. Settings can delete everything.",
@@ -523,7 +527,7 @@ static partial class Strings
 
         public static readonly string[] FlightCardBodies =
         [
-            "Every zone you can fly in, under its expansion, with a moon that fills as you attune its currents; the zone you stand in is marked ● and selected first. Pick a zone and the table lists its quest currents: attuned or not, the quest's state and status, and Flag or Teleport to the giver.",
+            "Every zone you can fly in, under its expansion, with a halo that fills as you attune its currents; the zone you stand in is marked ● and selected first. Pick a zone and the table lists its quest currents: attuned or not, the quest's state and status, and Flag or Teleport to the giver.",
             "Quest currents come from quests, five per zone in most expansions, and completing the quest attunes them. Field currents are touched in the world; the tab counts them but never locates them. Use the Aether Compass, a General Action under Actions & Traits, to point at the nearest one.",
             "/tsuki nearby opens a small window with the quests you can start in the current zone: state moon, level, job, Flag and Teleport, and a click on the name shows it in the Journal. Also in your journal here folds out the quests in your journal whose giver stands in the zone. The cog holds its settings.",
             "☾ N in the server info bar is the count of quests you can start here. Hover it for the first five names; click it to open Nearby quests. It hides at zero unless Keep the entry visible is on, and the cog in Nearby quests can turn it off entirely.",
@@ -579,7 +583,7 @@ static partial class Strings
         [
             "Quests the game removed in later patches (the A Realm Reborn trim in 5.3, the Summoner rework, the Crystal Tower rewrite, a few deleted sidequests) sit under the Removed from the game node, off by default, and never count toward any total; a completed one still shows Completed when the node or Include removed reveals it, and its detail pane says which patch removed it where that is known. Quests the game's journal hides but still hands out (So You Want to Be a Gladiator, Leves of Kugane, Sights of the North, the Eureka entry quests, hidden steps of YoRHa and the Resistance Weapons) are filed under the genre their links point at, so a class's quests start with its intro and a zone's sidequests include its leve unlock; the detail pane says which rule filed them. The class intros (So You Want to Be a Gladiator and the other A Realm Reborn classes) are listed but never counted: the class you started as hands you \"Way of the …\" directly and never offers its intro, so counting it would keep that class one short for good; the job intros (A Dark Spectacle, So You Want to Be a Machinist, What's Your Sign) count as usual. Settings › Display › Journal filing › Legacy puts every one of them back in the single bucket releases before 0.6.1 showed.",
             "A seasonal quest of an event that is not running shows Blocked with \"seasonal event not active\", and is left out of its genre's total the way a locked-out quest is, so the moon can fill without it; it counts again while the event runs. An event whose end date is known and past locks its quests out for good.",
-            "A quest locked out by a choice, such as the other two Grand Companies' quests once you have joined one, is Locked out and left out of the total. A category can reach a full moon with them undone, while a wiki's count per genre includes them.",
+            "A quest locked out by a choice, such as the other two Grand Companies' quests once you have joined one, is Locked out and left out of the total. A category can reach 100% with them undone, while a wiki's count per genre includes them.",
             "Unlock quests is not a journal category. It gathers every quest the game draws with the blue + icon, the curated duty and system unlocks, and quests that reward a duty, job, action, trait, aether current or blue magic spell; main scenario and repeatable quests are left out. Its total matches no page of the journal and moves when the curated lists do.",
             "A daily or weekly quest is one row and one count however many times you have turned it in. Done today or Done this week marks the ones already handed in; they are still counted as completed.",
         ];
@@ -636,7 +640,7 @@ static partial class Strings
             "The path is clickable: select any earlier step to see its own requirements.",
             "Scope the tree to a genre and sort by level to run a zone's side quests in order.",
             "Reward kind filters are three-state: require, exclude or ignore each kind.",
-            "The toolbar's sync moon is full when live and veiled on a snapshot; hover it for the time.",
+            "The toolbar's pip is filled when live and hollow on a snapshot; hover it for the time.",
             "Chat notices for newly available quests are off by default; turn them on in Settings, main scenario excluded.",
             "Locked out quests are left out of totals, so a category can reach 100% without them.",
             "Settings shows how long each poll takes; 1 s is the default and is safe.",
@@ -669,7 +673,7 @@ static partial class Strings
         public const string TabsTitle = "Four tabs";
         public const string TabsBody = "Journal is the catalog. Moonlit collects quests with unique rewards. Characters holds every snapshot on the account. Flight shows the aether current quests of each flying zone.";
         public const string TreeTitle = "Journal tree";
-        public const string TreeBody = "Section, category and genre scope the table. Each node shows done/total and a moon that fills with completion; Unlock quests and Removed from the game are virtual nodes.";
+        public const string TreeBody = "Section, category and genre scope the table. Each node shows a halo that fills with completion, done / total and, when some can be accepted now, a gold count; Unlock quests and Removed from the game are virtual nodes.";
         public const string TableTitle = "Quest table";
         public const string TableBody = "One row per quest. The moon is its state (hover it for the name; Help lists all eight) and Status says what blocks it. Click a header to sort; right-click a row for pin, map flag and journal. Main scenario quests far ahead of you read \"Main scenario quest (Lv 83)\" until you reach them; Settings > Spoilers changes that.";
         public const string RequirementsTitle = "Requirements";
@@ -683,7 +687,7 @@ static partial class Strings
         public const string CharactersTitle = "Characters";
         public const string CharactersBody = "Every stored snapshot on the left. The dashboard shows completion by section, Moonlit progress, pins, recent activity, job levels and standings for the viewed character.";
         public const string FlightTitle = "Flight";
-        public const string FlightBody = "Every flying zone, under its expansion, with a moon of attuned currents. Pick one: the table lists its five quest currents, whether each is attuned, the quest that blocks it and its status, plus Flag and Teleport for where to fly next.";
+        public const string FlightBody = "Every flying zone, under its expansion, with a halo of attuned currents. Pick one: the table lists its five quest currents, whether each is attuned, the quest that blocks it and its status, plus Flag and Teleport for where to fly next.";
         public const string HelpTitle = "Help, tour and settings";
         public const string HelpBody = "The book reopens the guide, the graduation cap replays this tour, and the cog opens Settings: poll interval, display scale and data controls.";
         public const string FinishTitle = "That is the road";
