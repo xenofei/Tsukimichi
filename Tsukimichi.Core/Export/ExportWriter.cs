@@ -295,15 +295,49 @@ public static class ExportWriter
         return relative.Length == 0 ? defaultDirectory : Path.Combine(configDirectory, relative);
     }
 
-    /// <summary>Writes an export into <paramref name="directory"/> (created when missing) and returns the full path.</summary>
-    public static string Write(string directory, string fileName, string content)
+    /// <summary>
+    /// Writes an export into <paramref name="directory"/> (created when missing) and returns the full path. The file is
+    /// first written to a uniquely named temporary file in <paramref name="stagingDirectory"/> (the plugin's config
+    /// directory; <paramref name="directory"/> itself when null) and then moved into place, so the user's folder never
+    /// holds a half-written export or a leftover <c>.tmp</c>: a failed write or move deletes the temporary file
+    /// before the exception propagates.
+    /// </summary>
+    public static string Write(string directory, string fileName, string content, string? stagingDirectory = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(directory);
         ArgumentException.ThrowIfNullOrWhiteSpace(fileName);
         ArgumentNullException.ThrowIfNull(content);
         var path = Path.GetFullPath(Path.Combine(directory, fileName));
-        AtomicFile.Write(path, content);
+        var staging = Path.GetFullPath(string.IsNullOrWhiteSpace(stagingDirectory) ? directory : stagingDirectory);
+        Directory.CreateDirectory(staging);
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+
+        var tmp = Path.Combine(staging, "tsukimichi-export-" + Guid.NewGuid().ToString("N") + ".tmp");
+        try
+        {
+            // A single BOM comes from the content itself (the CSV writers add one); the file is written without another.
+            File.WriteAllText(tmp, content, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+            File.Move(tmp, path, overwrite: true);
+        }
+        catch
+        {
+            TryDelete(tmp);
+            throw;
+        }
+
         return path;
+    }
+
+    private static void TryDelete(string path)
+    {
+        try
+        {
+            File.Delete(path);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // Best effort: a temporary file left in the plugin's own directory harms nothing.
+        }
     }
 
     /// <summary>Replaces spaces and characters a file name cannot hold with underscores.</summary>

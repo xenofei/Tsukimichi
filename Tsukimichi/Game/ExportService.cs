@@ -68,7 +68,8 @@ public sealed class ExportService(
 
         try
         {
-            var path = ExportWriter.Write(Folder, ExportWriter.FileName(kind, format, header), content);
+            // Staged in the plugin's own directory, so a failed move leaves nothing in the user's folder.
+            var path = ExportWriter.Write(Folder, ExportWriter.FileName(kind, format, header), content, paths.ConfigDir);
             LastPath = path;
             log.Information("Exported {Kind} as {Format} to {Path}", kind, format, path);
             return new ExportResult(true, path, Strings.ExportWrittenPrefix + path);
