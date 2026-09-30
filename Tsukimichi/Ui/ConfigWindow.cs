@@ -672,11 +672,7 @@ public sealed class ConfigWindow : Window
         session.RefreshSpoilers();
     }
 
-    /// <summary>
-    /// The todo overlay: on/off, lock, an opacity slider (saved when released), the four section toggles and a
-    /// "Reset position" button. The overlay reads the configuration every frame, so every change shows at once.
-    /// </summary>
-    /// <summary>The todo overlay's "Clear my blues" section (P3): its toggle and which expansion is pinned.</summary>
+    /// <summary>The Todo overlay's "Clear my blues" section (P3): its toggle, which expansion is pinned and Unpin.</summary>
     private void DrawTodoPlanToggle()
     {
         var plan = settings.TodoShowPlan;
@@ -722,6 +718,10 @@ public sealed class ConfigWindow : Window
         }
     }
 
+    /// <summary>
+    /// The Todo overlay: on/off, lock, compact mode, an opacity slider (saved when released), the section toggles and a
+    /// "Reset position" button. The overlay reads the configuration every frame, so every change shows at once.
+    /// </summary>
     private void DrawTodoOverlay()
     {
         Header(Strings.TodoConfigSection);

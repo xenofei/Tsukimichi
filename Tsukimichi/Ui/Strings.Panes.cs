@@ -605,7 +605,7 @@ static partial class Strings
             "every quest the targeted NPC hands out, with its state",
             "why the selected quest (or the named one) is not offered: its state and blocker, then one line per requirement with met or unmet and the values compared, then the curated note where the game is known to behave differently; a Ready quest says whom to talk to, with a map link. The same list opens in the Journal from an NPC's target-bar menu (\"Tsukimichi: quests here\")",
             "open or close the Nearby quests window: what you can start in the current zone",
-            "show or hide the todo overlay: pins, Event quests running now, Unlocks you can start here, the next main scenario quest and job quests",
+            "show or hide the Todo overlay: pins, Event quests running now, Unlocks you can start here, the next main scenario quest and job quests",
             "copy a diagnostic block for the selected quest (or the named one) to the clipboard, ready to paste into a GitHub issue; the Report button in the detail pane does the same",
             "write the viewed character's completed quests, its Moonlit collection, or both to the exports folder as JSON or CSV (the Settings format when none is named) and print where; see docs/export-format.md. No content id, account or world, and the name only when Settings › Data › Export › Include character name is ticked",
             "put the caret in the search, while the window has focus",

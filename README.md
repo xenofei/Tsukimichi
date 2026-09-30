@@ -53,7 +53,7 @@ Updates arrive through the plugin installer like any other plugin.
 | `/tsuki which` | every quest the targeted NPC hands out, with its state |
 | `/tsuki why [quest name]` | why the selected or named quest is not offered: its state and blocker, one line per requirement, and the curated note where the game is known to skip a step; a Ready quest says whom to talk to, with a map link |
 | `/tsuki nearby` | open or close the Nearby quests window |
-| `/tsuki todo` | show or hide the todo overlay |
+| `/tsuki todo` | show or hide the Todo overlay |
 | `/tsuki export [quests\|moonlit] [json\|csv]` | write your completed quests, your Moonlit collection, or both to the exports folder (see [docs/export-format.md](docs/export-format.md)) |
 | `/tsuki config` or `/tsuki settings` | open Settings |
 | `/tsuki help` | open the help window |

@@ -61,9 +61,18 @@ public sealed partial class CharactersPane
         }
     }
 
-    /// <summary>The right-click menu on a Jobs table row: "Route to unlock &lt;job&gt;" for each locked job the class grows into.</summary>
+    /// <summary>
+    /// The right-click menu on a Jobs table row: "Route to unlock &lt;job&gt;" for each locked job the class grows into.
+    /// A row with no such job (a job, or a class whose jobs are all unlocked) gets no menu at all.
+    /// </summary>
     private void DrawJobRowRouteMenu(UiState ui, Dashboard d, uint jobId)
     {
+        var locked = LockedJobs(d);
+        if (!HasLockedJobFrom(locked, jobId))
+        {
+            return;
+        }
+
         using var menu = ImRaii.ContextPopupItem(JobRouteMenuId);
         if (!menu)
         {
@@ -71,25 +80,31 @@ public sealed partial class CharactersPane
         }
 
         UiMetrics.ApplyFontScale();
-        var any = false;
-        foreach (var job in LockedJobs(d))
+        foreach (var job in locked)
         {
             if (job.ParentId != jobId || job.JobId == jobId)
             {
                 continue;
             }
 
-            any = true;
             if (ImGui.MenuItem(job.MenuLabel))
             {
                 ui.OpenRoute(RouteTarget.ForJob(job.Name, job.UnlockQuestRowId));
             }
         }
+    }
 
-        if (!any)
+    private static bool HasLockedJobFrom(LockedJob[] locked, uint jobId)
+    {
+        foreach (var job in locked)
         {
-            ImGui.TextDisabled(Strings.RouteToUnlockNothingHere);
+            if (job.ParentId == jobId && job.JobId != jobId)
+            {
+                return true;
+            }
         }
+
+        return false;
     }
 
     /// <summary>Jobs with an unlock quest the viewed character has not completed, in sheet order; built once per dashboard.</summary>

@@ -349,7 +349,7 @@ public static partial class Strings
     public const string ConfigItemContextMenuHint = "Right-click an item to reveal the quest that rewards it";
 
     // Command help
-    public const string CommandHelp = "Open Tsukimichi (also /tsuki). search <text> (or just <text>) prints matching quest links; zone lists quests you can start here; which lists the targeted NPC's quests; why [quest name] says what blocks the selected or named quest; nearby and todo toggle the Nearby quests window and the todo overlay; report [quest name] copies a diagnostic block for the selected or named quest; export [quests|moonlit] [json|csv] writes your completed quests or Moonlit collection to a file; settings (or config), help and glyphs open those windows.";
+    public const string CommandHelp = "Open Tsukimichi (also /tsuki). search <text> (or just <text>) prints matching quest links; zone lists quests you can start here; which lists the targeted NPC's quests; why [quest name] says what blocks the selected or named quest; nearby and todo toggle the Nearby quests window and the Todo overlay; report [quest name] copies a diagnostic block for the selected or named quest; export [quests|moonlit] [json|csv] writes your completed quests or Moonlit collection to a file; settings (or config), help and glyphs open those windows.";
     public const string CommandAliasHelp = "Short form of /tsukimichi.";
 
     // Time

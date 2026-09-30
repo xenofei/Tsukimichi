@@ -93,5 +93,4 @@ static partial class Strings
     public const string RouteToUnlockMenu = "Route to unlock…";
     public const string RouteToUnlockMenuTooltip = "Pick a job this character has not unlocked yet and see the quests still to do for it";
     public const string RouteToUnlockNone = "Every job is unlocked.";
-    public const string RouteToUnlockNothingHere = "No job left to unlock from this one.";
 }
