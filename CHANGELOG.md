@@ -4,10 +4,12 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+### Added
+- Every one of the 5,373 quests was checked against the Lodestone and the wiki, and every quest-only reward against FFXIV Collect, the wiki and the Lodestone; 45 discrepancies were found and are listed in docs/data/verification-full.md (44 accessories from A Realm Reborn quests that also drop in dungeons, and one hairstyle the Online Store also sells, still shown as quest-only until the fix ships; no quest fact was found wrong).
+
 ## [0.6.2] - 2026-09-29
 
 ### Added
-- Every one of the 5,373 quests was checked against the Lodestone and the wiki, and every quest-only reward against FFXIV Collect, the wiki and the Lodestone; 45 discrepancies were found and are listed in docs/data/verification-full.md (44 accessories from A Realm Reborn quests that also drop in dungeons, and one hairstyle the Online Store also sells, still shown as quest-only until the fix ships; no quest fact was found wrong).
 - "Why isn't this NPC giving me the quest?": target a quest-giving NPC and open the target bar's menu, and a new entry, "Tsukimichi: quests here (N)", opens the Journal on that NPC's quests with the Status column saying what blocks each one ("Blocked · after: Peace for Thanalan", "Blocked · Lv 50", "Ready"). The view shows as a chip, "Quests from Gerolt", that clears back to the whole journal. It reads only the NPC's kind and id (never a player's) and stores nothing; Settings › Integrations › "NPC context menu" turns it off.
 - `/tsuki why <quest name>` (or `/tsuki why` for the selected quest) answers in chat: the quest with its state and blocker, then one line per requirement with met or unmet and the values compared ("Level: met (24 ≤ 31)", "PreviousQuests: unmet (Peace for Thanalan: not done)"), the same lines Report this quest copies. A quest you can take says whom to talk to, with the giver's zone and coordinates as a map link. Help › Commands lists it.
 - Curated notes for the quirks the game data cannot express, shown in the detail pane under the requirements as "Note: …", printed by `/tsuki why` and carried in the diagnostic block: Up in Arms is optional once the Zenith is in hand (Gerolt offers the next Zodiac Weapons step without it); the allied-society quests that raise your standing to Allied, the rank patch 7.0 renamed from Bloodsworn; and the eleven crafter and gatherer sidequests whose prerequisite patch 7.5 moved from Go West, Craftsman to Inscrutable Tastes. Each note cites the forum thread, Reddit thread or Lodestone patch note it comes from; Help › Known quirks points at them.
