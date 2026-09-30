@@ -301,6 +301,40 @@ public class SpoilerMaskTests
     }
 
     [Fact]
+    public void Masking_names_in_text_replaces_longest_names_first_on_word_boundaries()
+    {
+        var catalog = QuestCatalog.Build(
+        [
+            Quest(1, "Start", section: 0, category: 1, genre: 1, sortKey: 10, level: 1),
+            Quest(2, "Endwalker Prologue", section: 0, category: 1, genre: 1, sortKey: 20, level: 80),
+            Quest(3, "Endwalker", section: 0, category: 1, genre: 1, sortKey: 30, level: 90),
+            Quest(4, "Endwalker Finale", section: 0, category: 1, genre: 1, sortKey: 40, level: 100),
+            Quest(5, "Home", section: 0, category: 1, genre: 1, sortKey: 50, level: 95),
+        ]);
+        var states = States((1, QuestState.Ready), (2, QuestState.Blocked), (3, QuestState.Blocked), (4, QuestState.Blocked), (5, QuestState.Blocked));
+        var mask = SpoilerMask.Build(catalog, states, SpoilerOptions.Default with { Ahead = 1 });
+        Assert.False(mask.IsMasked(2));
+        Assert.True(mask.IsMasked(3));
+        Assert.True(mask.IsMasked(4));
+        Assert.True(mask.IsMasked(5));
+
+        // Masked "Endwalker" inside masked "Endwalker Finale": the longer name wins whatever the list order.
+        Assert.Equal(
+            "needs Main scenario quest (Lv 100) and Main scenario quest (Lv 90)",
+            mask.MaskNamesIn("needs Endwalker Finale and Endwalker", catalog, [3u, 4u]));
+
+        // Masked "Endwalker" inside a listed name that is not masked stays as it is.
+        Assert.Equal(
+            "needs Endwalker Prologue and Main scenario quest (Lv 90)",
+            mask.MaskNamesIn("needs Endwalker Prologue and Endwalker", catalog, [3u, 2u]));
+
+        // Only whole words: "Home" inside "Homestead" is not a quest name.
+        Assert.Equal(
+            "Homestead, then Main scenario quest (Lv 95).",
+            mask.MaskNamesIn("Homestead, then Home.", catalog, [5u]));
+    }
+
+    [Fact]
     public void Blocker_names_route_quest_names_through_the_mask()
     {
         var states = States((1, QuestState.Ready));
