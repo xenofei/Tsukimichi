@@ -5,11 +5,11 @@ Written by `tools/regen.ps1`; do not edit by hand. The reports under `docs/data`
 | Field | Value |
 |---|---|
 | Game version | `2026.09.15.0000.0000` |
-| Generated (UTC) | `2026-09-30T18:03:28Z` |
-| Curated revision | `3efc12a` (last commit touching a data file under `Tsukimichi/Data/curated`) |
+| Generated (UTC) | `2026-09-30T18:04:41Z` |
+| Curated revision | `fc22c73` (last commit touching a data file under `Tsukimichi/Data/curated`) |
 | Catalog fixture | `catalog-2026.09.15.0000.0000.json.gz` |
 | unique_quests.json entries | 2891 across 1198 quests |
-| feature_quests.json (derived) | 1730 quests |
+| feature_quests.json (derived) | 1722 quests |
 | quest_patches.json | 5373 of 5373 quests with a patch, newest 7.56 |
 | Online Store re-sells | 69 entries |
 | Dungeon drops | 44 entries |
