@@ -5,7 +5,10 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 ## [Unreleased]
 
 ### Added
-- Every one of the 5,373 quests was checked against the Lodestone and the wiki, and every quest-only reward against FFXIV Collect, the wiki and the Lodestone; 45 discrepancies were found and are listed in docs/data/verification-full.md (44 accessories from A Realm Reborn quests that also drop in dungeons, and one hairstyle the Online Store also sells, still shown as quest-only until the fix ships; no quest fact was found wrong).
+- Every one of the 5,373 quests was checked against the Lodestone and the wiki, and every quest-only reward against FFXIV Collect, the wiki and the Lodestone; 45 discrepancies were found and are now marked in Moonlit (no quest fact was found wrong): the 44 Darklight and Hero's accessories from A Realm Reborn quests that also drop in dungeons carry a new "Also drops" mark whose tooltip names the dungeons ("Also drops in Snowcloak, Sastasha (Hard) and The Sunken Temple of Qarn (Hard)"), shown too in the reward tooltip and the item hover hint, and the Clowning Around face paint from A Feast to Remember joins the rewards marked "Store only". The full list is in docs/data/verification-full.md.
+
+### Changed
+- Moonlit: the "Hide store re-sells" checkbox is now "Hide rewards found elsewhere" and hides the dungeon drops as well as the store re-sells, from the list and from the obtained/total counts; a setting saved by an older version carries over.
 
 ## [0.6.2] - 2026-09-29
 
