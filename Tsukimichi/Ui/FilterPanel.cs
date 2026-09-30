@@ -182,6 +182,8 @@ public sealed class FilterPanel
         var first = true;
         PresetChip(Strings.PresetFeatureQuests, Strings.PresetFeatureQuestsTooltip, Preset.FeatureQuests, f, enabled: true, ref first);
         PresetChip(Strings.PresetLevelBand, Strings.PresetLevelBandTooltip, Preset.LevelBand, f, hasSnapshot, ref first);
+        // Sprout mode (T19): without a character only A Realm Reborn is in reach, which is still a useful view.
+        PresetChip(Strings.PresetSprout, Strings.PresetSproutTooltip, Preset.Sprout, f, enabled: true, ref first);
         PresetChip(Strings.PresetStalled, Strings.PresetStalledTooltip, Preset.Stalled, f, hasSnapshot, ref first);
 
         // The Stalled threshold; a change re-runs the query and is saved with the settings.

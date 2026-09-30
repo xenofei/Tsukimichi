@@ -132,6 +132,11 @@ public sealed class TablePane : IDisposable
         }
 
         var rows = runner.Rows;
+        if (runner.SproutCaption is { } caption)
+        {
+            // Sprout mode (T19): how much of the game is in reach, instead of the whole catalog.
+            ImGui.TextDisabled(caption);
+        }
 
         // SortTristate lets the header cycle back to "no sort" (journal order) and stops ImGui from picking the first
         // sortable column (the glyph) as an implicit default on the first frame.
@@ -401,7 +406,7 @@ public sealed class TablePane : IDisposable
         var nameCellMin = ImGui.GetCursorScreenPos();
         var nameCellWidth = ImGui.GetContentRegionAvail().X;
         var selected = ui.SelectedRowId == quest.RowId;
-        if (ImGui.Selectable(quest.Name, selected, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowDoubleClick | ImGuiSelectableFlags.AllowItemOverlap, new Vector2(0f, layout.RowContent)))
+        if (ImGui.Selectable(runner.Spoilers.DisplayName(quest), selected, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowDoubleClick | ImGuiSelectableFlags.AllowItemOverlap, new Vector2(0f, layout.RowContent)))
         {
             SelectFromTable(quest.RowId);
             // The game journal only knows accepted and completed quests; for the rest a double-click just selects.
@@ -433,7 +438,7 @@ public sealed class TablePane : IDisposable
             var mouseX = ImGui.GetMousePos().X;
             if (mouseX >= nameCellMin.X && mouseX <= nameCellMin.X + nameCellWidth)
             {
-                DrawNameTooltip(quest);
+                DrawNameTooltip(quest, row.State);
             }
         }
 
@@ -506,19 +511,26 @@ public sealed class TablePane : IDisposable
     /// <summary>
     /// Hover card for a quest name: the journal banner (when the quest has one and it is loaded) about 240 px wide,
     /// the name, then genre, expansion and level. Textures come from the provider's per-frame cache, nothing is kept.
+    /// The spoiler shield hides the banner of a quest not yet in the journal (a line says so) and masks the name.
     /// </summary>
-    private void DrawNameTooltip(QuestRecord quest)
+    private void DrawNameTooltip(QuestRecord quest, QuestState state)
     {
         using var tooltip = ImRaii.Tooltip();
         UiMetrics.ApplyFontScale();
         var width = UiMetrics.BannerTooltipWidth;
-        if (quest.Icon != 0 && textures.GetFromGameIcon(new GameIconLookup(quest.Icon)).TryGetWrap(out var wrap, out _) && wrap.Width > 0 && wrap.Height > 0)
+        var spoilers = runner.Spoilers;
+        var showArtwork = spoilers.ShowArtwork(quest, state);
+        if (quest.Icon != 0 && !showArtwork)
+        {
+            ArtworkPlaceholder.Draw(width);
+        }
+        else if (quest.Icon != 0 && textures.GetFromGameIcon(new GameIconLookup(quest.Icon)).TryGetWrap(out var wrap, out _) && wrap.Width > 0 && wrap.Height > 0)
         {
             ImGui.Image(wrap.Handle, new Vector2(width, width * wrap.Height / wrap.Width));
         }
 
         using var wrapPos = ImRaii.TextWrapPos(ImGui.GetCursorPosX() + width);
-        ImGui.TextWrapped(quest.Name);
+        ImGui.TextWrapped(spoilers.DisplayName(quest));
         ImGui.TextDisabled(quest.Journal.GenreName);
         ImGui.TextDisabled(runner.ExpansionShort(quest.Expansion));
         ImGui.SameLine();
@@ -586,7 +598,7 @@ public sealed class TablePane : IDisposable
 
         if (ImGui.MenuItem(Strings.CopyName))
         {
-            ImGui.SetClipboardText(quest.Name);
+            ImGui.SetClipboardText(runner.Spoilers.DisplayName(quest));
         }
 
         var canCopyCoordinates = links.MapCoordinates(quest) is not null;

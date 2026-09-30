@@ -80,6 +80,9 @@ public sealed class QueryRunner : IDisposable
 
     public int TotalInScope { get; private set; }
 
+    /// <summary>"412 quests in your reach" while the Sprout mode quick view is on; null otherwise.</summary>
+    public string? SproutCaption { get; private set; }
+
     /// <summary>Null until a catalog exists.</summary>
     public TreeCounts? Counts { get; private set; }
 
@@ -100,6 +103,12 @@ public sealed class QueryRunner : IDisposable
 
     /// <summary>Bumped whenever <see cref="Pinned"/> changes: a toggle, a character switch, a reload or a delete.</summary>
     public int PinsVersion { get; private set; }
+
+    /// <summary>
+    /// The viewed character's spoiler shield (<see cref="SessionState.Spoilers"/>); <see cref="SpoilerMask.None"/> before
+    /// the session exists. The table prints <see cref="SpoilerMask.DisplayName(QuestRecord)"/> for every name.
+    /// </summary>
+    public SpoilerMask Spoilers => plugin.Session?.Spoilers ?? SpoilerMask.None;
 
     /// <summary>Search text the current rows were computed with (after debounce).</summary>
     public string AppliedSearch => appliedSearch;
@@ -381,7 +390,8 @@ public sealed class QueryRunner : IDisposable
             NowUtc: nowUtc,
             CurrentLevel: CurrentLevel(snapshot),
             StalledDays: plugin.Settings.StalledDaysClamped,
-            Names: session.Names);
+            Names: session.Names,
+            Spoilers: session.Spoilers);
 
         // The Unlocks quick view reads best with what can be picked up now on top; the other presets keep the table's sort.
         var effectiveSort = ui.Sort with { AvailableFirst = ui.Filters.Preset == Preset.FeatureQuests };
@@ -390,6 +400,9 @@ public sealed class QueryRunner : IDisposable
         Rows = result.Rows;
         Empty = result.Empty;
         TotalInScope = result.TotalInScope;
+        SproutCaption = ui.Filters.Preset == Preset.Sprout
+            ? string.Format(CultureInfo.CurrentCulture, Strings.SproutReachFormat, Rows.Length)
+            : null;
 
         sessionVersion = session.Version;
         queryVersion = ui.QueryVersion;
