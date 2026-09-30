@@ -241,10 +241,10 @@ public static partial class Strings
     public const string ColumnStatus = "Status";
     public const string ColumnExpansion = "Exp";
     public const string ColumnRewards = "Rewards";
-    public const string ColumnGlyphTooltip = "Quest state as a moon phase; click to sort by state";
+    public const string ColumnGlyphTooltip = "Quest state as a moon phase, and as the pattern of the stripe at the row's edge (hover it for its name); click to sort by state";
     public const string ColumnNameTooltip = "Quest name; click to sort, right-click a header to hide columns";
     public const string ColumnLevelTooltip = "Quest level; click to sort";
-    public const string ColumnJobTooltip = "Who can take it: Any, one job, or a discipline";
+    public const string ColumnJobTooltip = "Who can take it: Any, one job (with its icon), or a discipline; hover for the name";
     public const string ColumnStatusTooltip = "Why the quest is not ready yet: the first unmet requirement, or what to do next";
     public const string ColumnExpansionTooltip = "Expansion the quest belongs to; click to sort";
     public const string ColumnRewardsTooltip = "Up to four reward icons; hover one for details";
