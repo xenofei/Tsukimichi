@@ -150,16 +150,13 @@ public sealed class WhatsNewCard
 
     private void DrawBody(ChangelogSection current, float pad)
     {
-        using (Theme.PushText(Theme.Moon))
-        {
-            ImGui.TextUnformatted(title?.Value ?? string.Empty);
-        }
-
-        ImGui.SameLine();
+        // The title, then Help and Close at the right end of the line, never over the title: on the next line,
+        // right-aligned, when the two would run into it (feature plan v4 L6).
+        Chrome.FitText(title?.Value ?? string.Empty, Theme.U32(Theme.Moon));
         var closeWidth = ImGuiHelpers.GetButtonSize(Strings.WhatsNew.Close).X;
         var helpWidth = ImGuiHelpers.GetButtonSize(Strings.WhatsNew.Help).X;
         var spacing = ImGui.GetStyle().ItemSpacing.X;
-        ImGui.SetCursorPosX(ImGui.GetWindowContentRegionMax().X - closeWidth - helpWidth - spacing);
+        Chrome.SameLineRightOrWrap(closeWidth + helpWidth + spacing);
         if (ImGui.SmallButton(Strings.WhatsNew.Help))
         {
             openHelp();

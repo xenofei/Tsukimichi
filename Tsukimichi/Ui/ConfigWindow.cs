@@ -213,8 +213,14 @@ public sealed partial class ConfigWindow : Window
     private void DrawPolling()
     {
         Header(Strings.ConfigSectionPolling);
-        ImGui.SetNextItemWidth(220f * ImGuiHelpers.GlobalScale);
-        if (ImGui.SliderFloat(Strings.ConfigPollInterval, ref pollSeconds, (float)Configuration.MinPollIntervalSeconds, (float)Configuration.MaxPollIntervalSeconds, "%.1f s", ImGuiSliderFlags.AlwaysClamp))
+        bool moved;
+        ImGui.SetNextItemWidth(SliderWidth());
+        using (ImRaii.PushId(Strings.ConfigPollInterval))
+        {
+            moved = ImGui.SliderFloat("##slider", ref pollSeconds, (float)Configuration.MinPollIntervalSeconds, (float)Configuration.MaxPollIntervalSeconds, "%.1f s", ImGuiSliderFlags.AlwaysClamp);
+        }
+
+        if (moved)
         {
             settings.PollIntervalSeconds = Math.Round(pollSeconds, 1);
             pollDirty = true;
@@ -226,9 +232,10 @@ public sealed partial class ConfigWindow : Window
             Save();
         }
 
-        ImGui.TextDisabled(Strings.ConfigPollIntervalHint);
+        Chrome.TrailingLabel(Strings.ConfigPollInterval);
+        Chrome.Hint(Strings.ConfigPollIntervalHint);
         RefreshPollTiming();
-        ImGui.TextDisabled(pollCostLine);
+        Chrome.Hint(pollCostLine);
     }
 
     /// <summary>Copies the slider-backed values out of the configuration (on construction and each time the window opens).</summary>
@@ -247,48 +254,60 @@ public sealed partial class ConfigWindow : Window
     private void DrawDisplay()
     {
         Header(Strings.ConfigSectionDisplay);
-        var width = 220f * ImGuiHelpers.GlobalScale;
         DrawLanguage();
 
         var uiScale = ScaleMetrics.ClampUiScale(settings.UiScale);
-        ImGui.SetNextItemWidth(width);
-        if (ImGui.SliderFloat(Strings.ConfigUiScale, ref uiScale, ScaleMetrics.MinUiScale, ScaleMetrics.MaxUiScale, "%.2f", ImGuiSliderFlags.AlwaysClamp))
+        bool moved;
+        ImGui.SetNextItemWidth(SliderWidth());
+        using (ImRaii.PushId(Strings.ConfigUiScale))
+        {
+            moved = ImGui.SliderFloat("##slider", ref uiScale, ScaleMetrics.MinUiScale, ScaleMetrics.MaxUiScale, "%.2f", ImGuiSliderFlags.AlwaysClamp);
+        }
+
+        if (moved)
         {
             settings.UiScale = uiScale;
             scaleDirty = true;
         }
 
         SaveWhenReleased();
-        ImGui.TextDisabled(Strings.ConfigUiScaleHint);
+        Chrome.TrailingLabel(Strings.ConfigUiScale);
+        Chrome.Hint(Strings.ConfigUiScaleHint);
 
         var iconScale = ScaleMetrics.ClampIconScale(settings.IconScale);
-        ImGui.SetNextItemWidth(width);
-        if (ImGui.SliderFloat(Strings.ConfigIconScale, ref iconScale, ScaleMetrics.MinIconScale, ScaleMetrics.MaxIconScale, "%.2f", ImGuiSliderFlags.AlwaysClamp))
+        ImGui.SetNextItemWidth(SliderWidth());
+        using (ImRaii.PushId(Strings.ConfigIconScale))
+        {
+            moved = ImGui.SliderFloat("##slider", ref iconScale, ScaleMetrics.MinIconScale, ScaleMetrics.MaxIconScale, "%.2f", ImGuiSliderFlags.AlwaysClamp);
+        }
+
+        if (moved)
         {
             settings.IconScale = iconScale;
             scaleDirty = true;
         }
 
         SaveWhenReleased();
-        ImGui.TextDisabled(Strings.ConfigIconScaleHint);
+        Chrome.TrailingLabel(Strings.ConfigIconScale);
+        Chrome.Hint(Strings.ConfigIconScaleHint);
 
         // Density: the quest table's row height only (T12).
         ImGui.TextUnformatted(Strings.ConfigDensity);
-        ImGui.SameLine();
+        Chrome.SameLineOrWrap(RadioWidth(Strings.ConfigDensityComfortable));
         if (ImGui.RadioButton(Strings.ConfigDensityComfortable, settings.Density == RowDensity.Comfortable))
         {
             settings.Density = RowDensity.Comfortable;
             Save();
         }
 
-        ImGui.SameLine();
+        Chrome.SameLineOrWrap(RadioWidth(Strings.ConfigDensityDense));
         if (ImGui.RadioButton(Strings.ConfigDensityDense, settings.Density == RowDensity.Dense))
         {
             settings.Density = RowDensity.Dense;
             Save();
         }
 
-        ImGui.TextDisabled(Strings.ConfigDensityHint);
+        Chrome.Hint(Strings.ConfigDensityHint);
 
         var reduceMotion = settings.ReduceMotion;
         if (ImGui.Checkbox(Strings.ConfigReduceMotion, ref reduceMotion))
@@ -329,7 +348,7 @@ public sealed partial class ConfigWindow : Window
         Header(Strings.ConfigSectionKeyboard);
         using (ImRaii.TextWrapPos(0f))
         {
-            ImGui.TextDisabled(Strings.ConfigKeyboardAlwaysOn);
+            Chrome.Hint(Strings.ConfigKeyboardAlwaysOn);
             using (Theme.PushText(Theme.Surface.TextSecondary))
             {
                 ImGui.TextWrapped(Strings.ConfigKeyboardGameSeesKeys);
@@ -419,7 +438,7 @@ public sealed partial class ConfigWindow : Window
         {
             if (Loc.TranslatedCount == 0)
             {
-                ImGui.TextDisabled(Strings.ConfigLanguageNotLoaded);
+                Chrome.Hint(Strings.ConfigLanguageNotLoaded);
             }
             else if (Loc.IsDraft)
             {
@@ -430,9 +449,7 @@ public sealed partial class ConfigWindow : Window
                     languageNote = string.Format(CultureInfo.CurrentCulture, Strings.ConfigLanguageDraftFormat, Loc.NativeName(Loc.Language), percent);
                 }
 
-                ImGui.PushTextWrapPos(0f);
-                ImGui.TextDisabled(languageNote);
-                ImGui.PopTextWrapPos();
+                Chrome.Hint(languageNote);
             }
         }
     }
@@ -444,6 +461,12 @@ public sealed partial class ConfigWindow : Window
     private int followLabelLanguage = -1;
     private string? followLabelDalamud;
     private string followLabel = string.Empty;
+
+    /// <summary>A setting slider's width: 220 px, or the room left when the window is narrower.</summary>
+    private static float SliderWidth() => Chrome.FitWidth(220f * ImGuiHelpers.GlobalScale);
+
+    /// <summary>The Moonlit verdicts table's column plan (<see cref="PaneFit.VerdictColumns"/>).</summary>
+    private readonly ColumnFit verdictColumns = new(5);
 
     /// <summary>A radio button's width: the circle, the inner spacing and the label.</summary>
     private static float RadioWidth(string label) =>
@@ -502,7 +525,7 @@ public sealed partial class ConfigWindow : Window
     private void DrawGlyphPalette()
     {
         ImGui.TextUnformatted(Strings.ConfigGlyphPalette);
-        ImGui.SameLine();
+        Chrome.SameLineOrWrap(RadioWidth(Strings.ConfigGlyphPaletteStandard));
         if (ImGui.RadioButton(Strings.ConfigGlyphPaletteStandard, settings.GlyphPalette == GlyphPaletteKind.Standard))
         {
             settings.GlyphPalette = GlyphPaletteKind.Standard;
@@ -510,7 +533,7 @@ public sealed partial class ConfigWindow : Window
         }
 
         HintOnHover(Strings.ConfigGlyphPaletteHint);
-        ImGui.SameLine();
+        Chrome.SameLineOrWrap(RadioWidth(Strings.ConfigGlyphPaletteHighContrast));
         if (ImGui.RadioButton(Strings.ConfigGlyphPaletteHighContrast, settings.GlyphPalette == GlyphPaletteKind.HighContrast))
         {
             settings.GlyphPalette = GlyphPaletteKind.HighContrast;
@@ -556,7 +579,7 @@ public sealed partial class ConfigWindow : Window
             changed = true;
         }
 
-        ImGui.SameLine();
+        Chrome.SameLineOrWrap(RadioWidth(Strings.ConfigJournalFilingLegacy));
         if (ImGui.RadioButton(Strings.ConfigJournalFilingLegacy, filing == JournalFiling.Legacy))
         {
             filing = JournalFiling.Legacy;
@@ -570,7 +593,7 @@ public sealed partial class ConfigWindow : Window
             JournalFilingChanged?.Invoke(filing);
         }
 
-        ImGui.TextDisabled(Strings.ConfigJournalFilingHint);
+        Chrome.Hint(Strings.ConfigJournalFilingHint);
     }
 
     private void SaveWhenReleased()
@@ -715,7 +738,7 @@ public sealed partial class ConfigWindow : Window
     private void DrawWelcomeBackDays()
     {
         var days = Math.Clamp(settings.WelcomeBackDays, 0, Core.Return.WelcomeBackTrigger.MaxDays);
-        ImGui.SetNextItemWidth(160f * ImGuiHelpers.GlobalScale);
+        ImGui.SetNextItemWidth(Chrome.FitWidth(160f * ImGuiHelpers.GlobalScale));
         if (ImGui.SliderInt("##welcomeBackDays", ref days, 0, Core.Return.WelcomeBackTrigger.MaxDays, days == 0 ? Strings.WelcomeBackConfigOff : Strings.WelcomeBackConfigDaysFormat, ImGuiSliderFlags.AlwaysClamp))
         {
             settings.WelcomeBackDays = days;
@@ -730,11 +753,8 @@ public sealed partial class ConfigWindow : Window
 
         HintOnHover(Strings.WelcomeBackConfigHint);
 
-        // The label beside the slider wraps at the content edge instead of running past it (French at 400 px).
-        ImGui.SameLine(0f, ImGui.GetStyle().ItemInnerSpacing.X);
-        ImGui.PushTextWrapPos(0f);
-        ImGui.TextUnformatted(Strings.WelcomeBackConfigDays);
-        ImGui.PopTextWrapPos();
+        // The label beside the slider, or under it wrapped between words when it would run past the edge.
+        Chrome.TrailingLabel(Strings.WelcomeBackConfigDays);
         HintOnHover(Strings.WelcomeBackConfigHint);
     }
 
@@ -749,7 +769,7 @@ public sealed partial class ConfigWindow : Window
             onShowUnlistedChanged(unlisted);
         }
 
-        ImGui.TextDisabled(Strings.ConfigShowUnlistedHint);
+        Chrome.Hint(Strings.ConfigShowUnlistedHint);
     }
 
     /// <summary>
@@ -782,8 +802,14 @@ public sealed partial class ConfigWindow : Window
         using (ImRaii.Disabled(!effectiveHide))
         {
             var ahead = Math.Clamp(settings.SpoilerRevealAhead, 0, SpoilerOptions.MaxAhead);
-            ImGui.SetNextItemWidth(160f * ImGuiHelpers.GlobalScale);
-            if (ImGui.SliderInt(Strings.SpoilerAhead, ref ahead, 0, SpoilerOptions.MaxAhead, "%d", ImGuiSliderFlags.AlwaysClamp))
+            bool moved;
+            ImGui.SetNextItemWidth(Chrome.FitWidth(160f * ImGuiHelpers.GlobalScale));
+            using (ImRaii.PushId(Strings.SpoilerAhead))
+            {
+                moved = ImGui.SliderInt("##slider", ref ahead, 0, SpoilerOptions.MaxAhead, "%d", ImGuiSliderFlags.AlwaysClamp);
+            }
+
+            if (moved)
             {
                 settings.SpoilerRevealAhead = ahead;
                 spoilerAheadDirty = true;
@@ -800,6 +826,9 @@ public sealed partial class ConfigWindow : Window
             {
                 UiMetrics.Tooltip(Strings.SpoilerAheadHelp);
             }
+
+            Chrome.TrailingLabel(Strings.SpoilerAhead);
+            HintOnHover(Strings.SpoilerAheadHelp);
         }
 
         var hideArtwork = settings.SpoilerHideArtwork;
@@ -837,7 +866,7 @@ public sealed partial class ConfigWindow : Window
 
         if (spoilerCountLine.Length > 0)
         {
-            ImGui.TextDisabled(spoilerCountLine);
+            Chrome.Hint(spoilerCountLine);
         }
     }
 
@@ -846,7 +875,7 @@ public sealed partial class ConfigWindow : Window
     {
         if (session.ViewedContentId is not { } contentId)
         {
-            ImGui.TextDisabled(Strings.SpoilerCharacterNone);
+            Chrome.Hint(Strings.SpoilerCharacterNone);
             return;
         }
 
@@ -872,13 +901,13 @@ public sealed partial class ConfigWindow : Window
             choice = 0;
         }
 
-        ImGui.SameLine();
+        Chrome.SameLineOrWrap(RadioWidth(Strings.SpoilerCharacterOn));
         if (ImGui.RadioButton(Strings.SpoilerCharacterOn, current == 1))
         {
             choice = 1;
         }
 
-        ImGui.SameLine();
+        Chrome.SameLineOrWrap(RadioWidth(Strings.SpoilerCharacterOff));
         if (ImGui.RadioButton(Strings.SpoilerCharacterOff, current == 2))
         {
             choice = 2;
@@ -935,14 +964,14 @@ public sealed partial class ConfigWindow : Window
                 : Strings.PlanTodoConfigNone;
         }
 
-        ImGui.SameLine();
-        ImGui.TextDisabled(planPinnedLabel);
+        Chrome.SameLineOrWrap(ImGui.CalcTextSize(planPinnedLabel).X);
+        Chrome.Hint(planPinnedLabel);
         if (!pinned)
         {
             return;
         }
 
-        ImGui.SameLine();
+        Chrome.SameLineOrWrap(ImGui.CalcTextSize(UnpinPlanLabel.Value).X + (ImGui.GetStyle().FramePadding.X * 2f));
         if (ImGui.SmallButton(UnpinPlanLabel.Value))
         {
             settings.TodoPlanExpansion = -1;
@@ -1014,8 +1043,14 @@ public sealed partial class ConfigWindow : Window
         }
 
         var opacity = TodoOverlay.ClampOpacity(settings.TodoOverlayOpacity);
-        ImGui.SetNextItemWidth(220f * ImGuiHelpers.GlobalScale);
-        if (ImGui.SliderFloat(Strings.TodoConfigOpacity, ref opacity, TodoOverlay.MinOpacity, TodoOverlay.MaxOpacity, "%.2f", ImGuiSliderFlags.AlwaysClamp))
+        bool moved;
+        ImGui.SetNextItemWidth(SliderWidth());
+        using (ImRaii.PushId(Strings.TodoConfigOpacity))
+        {
+            moved = ImGui.SliderFloat("##slider", ref opacity, TodoOverlay.MinOpacity, TodoOverlay.MaxOpacity, "%.2f", ImGuiSliderFlags.AlwaysClamp);
+        }
+
+        if (moved)
         {
             settings.TodoOverlayOpacity = opacity;
             todoDirty = true;
@@ -1026,6 +1061,8 @@ public sealed partial class ConfigWindow : Window
             todoDirty = false;
             Save();
         }
+
+        Chrome.TrailingLabel(Strings.TodoConfigOpacity);
 
         ImGui.TextDisabled(Strings.TodoConfigSectionsLabel);
         var pins = settings.TodoShowPins;
@@ -1215,7 +1252,7 @@ public sealed partial class ConfigWindow : Window
 
         if (gate.Decision.Verdict == HookGateVerdict.Overridden)
         {
-            ImGui.TextDisabled(Strings.HooksRunningUntested);
+            Chrome.Hint(Strings.HooksRunningUntested);
         }
     }
 
@@ -1266,37 +1303,60 @@ public sealed partial class ConfigWindow : Window
             return;
         }
 
-        var scale = ImGuiHelpers.GlobalScale;
-        var restoreWidth = ImGui.CalcTextSize(Strings.ConfigVerdictRestore).X + ImGui.GetStyle().FramePadding.X * 2f + 4f * scale;
-        const ImGuiTableFlags Flags = ImGuiTableFlags.RowBg | ImGuiTableFlags.BordersInnerH | ImGuiTableFlags.SizingStretchProp;
-        using (var table = ImRaii.Table("##verdicts", 5, Flags))
+        // Restore always shows: the note hides first, then the date, and the quest and the note end in an ellipsis
+        // (feature plan v4 L6).
+        var style = ImGui.GetStyle();
+        var restoreWidth = ImGui.CalcTextSize(Strings.ConfigVerdictRestore).X + (style.FramePadding.X * 2f);
+        var verdictWidth = MathF.Max(ImGui.CalcTextSize(Strings.ConfigVerdictUnique).X, ImGui.CalcTextSize(Strings.ConfigVerdictNotUnique).X);
+        Span<ColumnSpec> specs = stackalloc ColumnSpec[5];
+        PaneFit.VerdictColumns(UiMetrics.Px(LayoutBudgets.RowNameMinLogical), verdictWidth, ImGui.CalcTextSize("0000-00-00").X, restoreWidth, specs);
+        ColumnFit.FitHeader(specs, 1, Strings.ConfigVerdictColumnVerdict);
+        ColumnFit.FitHeader(specs, 3, Strings.ConfigVerdictColumnDate);
+        verdictColumns.Plan(ImGui.GetContentRegionAvail().X, specs);
+        const ImGuiTableFlags Flags = ImGuiTableFlags.RowBg | ImGuiTableFlags.BordersInnerH | ImGuiTableFlags.SizingFixedFit;
+        using (var table = verdictColumns.Begin("##verdicts", Flags))
         {
-            if (table)
+            if (table.Success)
             {
-                ImGui.TableSetupColumn(Strings.ConfigVerdictColumnQuest, ImGuiTableColumnFlags.WidthStretch, 3f);
-                ImGui.TableSetupColumn(Strings.ConfigVerdictColumnVerdict, ImGuiTableColumnFlags.WidthFixed, 80f * scale);
-                ImGui.TableSetupColumn(Strings.ConfigVerdictColumnNote, ImGuiTableColumnFlags.WidthStretch, 3f);
-                ImGui.TableSetupColumn(Strings.ConfigVerdictColumnDate, ImGuiTableColumnFlags.WidthFixed, 80f * scale);
-                ImGui.TableSetupColumn(Strings.ConfigVerdictColumnRestore, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoHeaderLabel, restoreWidth);
+                verdictColumns.Setup(0, Strings.ConfigVerdictColumnQuest);
+                verdictColumns.Setup(1, Strings.ConfigVerdictColumnVerdict);
+                verdictColumns.Setup(2, Strings.ConfigVerdictColumnNote);
+                verdictColumns.Setup(3, Strings.ConfigVerdictColumnDate);
+                verdictColumns.Setup(4, Strings.ConfigVerdictColumnRestore, ImGuiTableColumnFlags.NoHeaderLabel);
                 ImGui.TableHeadersRow();
 
                 foreach (var row in verdictRows)
                 {
                     using var id = ImRaii.PushId((int)row.RowId);
                     ImGui.TableNextRow();
-                    ImGui.TableNextColumn();
-                    ImGui.TextUnformatted(row.QuestName);
-                    ImGui.TableNextColumn();
-                    using (Theme.PushText(row.Color))
+                    if (verdictColumns.Next(0))
                     {
-                        ImGui.TextUnformatted(row.Verdict);
+                        Chrome.FitText(row.QuestName, ImGui.GetColorU32(ImGuiCol.Text));
                     }
 
-                    ImGui.TableNextColumn();
-                    ImGui.TextUnformatted(row.Note);
-                    ImGui.TableNextColumn();
-                    ImGui.TextDisabled(row.Date);
-                    ImGui.TableNextColumn();
+                    if (verdictColumns.Next(1))
+                    {
+                        using (Theme.PushText(row.Color))
+                        {
+                            ImGui.TextUnformatted(row.Verdict);
+                        }
+                    }
+
+                    if (verdictColumns.Next(2))
+                    {
+                        Chrome.FitText(row.Note, ImGui.GetColorU32(ImGuiCol.Text));
+                    }
+
+                    if (verdictColumns.Next(3))
+                    {
+                        ImGui.TextDisabled(row.Date);
+                    }
+
+                    if (!verdictColumns.Next(4))
+                    {
+                        continue;
+                    }
+
                     if (ImGui.SmallButton(Strings.ConfigVerdictRestore))
                     {
                         // The row cache refreshes next frame from the bumped version; the array is not touched here.

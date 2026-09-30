@@ -5,6 +5,7 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility.Raii;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Runtime;
+using Tsukimichi.Core.Ui;
 using Tsukimichi.GameData;
 
 namespace Tsukimichi.Ui;
@@ -53,56 +54,178 @@ public sealed partial class CharactersPane
             UiMetrics.Tooltip(Strings.AbandonedShowInJournalTooltip);
         }
 
-        using var table = ImRaii.Table("##abandoned", 4, ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.RowBg | ImGuiTableFlags.BordersInnerH);
-        if (!table)
+        const ImGuiTableFlags Flags = ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.RowBg | ImGuiTableFlags.BordersInnerH;
+        var line = ImGui.GetTextLineHeight();
+        var width = ImGui.GetContentRegionAvail().X;
+
+        // Flag, Teleport and Reveal fold into one "…" in a narrow pane (as Flight's); the actions and the status never
+        // give way to the name, which ends in an ellipsis instead (feature plan v4 L6).
+        var fold = PaneFit.FoldActions(width / UiMetrics.Scale);
+        var moreSize = MoreSize(line);
+        var glyph = MathF.Max(line * 1.4f, UiMetrics.InlineGlyphSize(line));
+        var nameMin = UiMetrics.Px(LayoutBudgets.RowNameMinLogical);
+        var statusMin = AbandonedStatusMin();
+        var actions = fold ? moreSize : AbandonedActionsWidth();
+        Span<ColumnSpec> specs = stackalloc ColumnSpec[4];
+        specs[AbandonedState] = new ColumnSpec(0, glyph, glyph);
+        specs[AbandonedQuest] = new ColumnSpec(0, nameMin, nameMin, 3f);
+        specs[AbandonedStatus] = new ColumnSpec(0, statusMin, statusMin, 2f);
+        specs[AbandonedActions] = new ColumnSpec(0, actions, actions);
+        abandonedColumns.Plan(width, specs);
+        using var table = abandonedColumns.Begin("##abandoned", Flags);
+        if (!table.Success)
         {
             return;
         }
 
-        var line = ImGui.GetTextLineHeight();
-        ImGui.TableSetupColumn("##state", ImGuiTableColumnFlags.WidthFixed, line * 1.4f);
-        ImGui.TableSetupColumn(Strings.CharactersColumnQuest, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(260f));
-        ImGui.TableSetupColumn(Strings.CharactersColumnStatus, ImGuiTableColumnFlags.WidthStretch);
-        ImGui.TableSetupColumn("##actions", ImGuiTableColumnFlags.WidthFixed);
+        abandonedColumns.Setup(AbandonedState, "##state");
+        abandonedColumns.Setup(AbandonedQuest, Strings.CharactersColumnQuest);
+        abandonedColumns.Setup(AbandonedStatus, Strings.CharactersColumnStatus);
+        abandonedColumns.Setup(AbandonedActions, "##actions");
 
         for (var i = 0; i < abandonedRows.Length; i++)
         {
             var row = abandonedRows[i];
             using var rowId = ImRaii.PushId(i);
             ImGui.TableNextRow();
-            ImGui.TableNextColumn();
-            MoonGlyph.DrawInline(row.State, UiMetrics.InlineGlyphSize(line));
-            if (ImGui.IsItemHovered())
+            if (abandonedColumns.Next(AbandonedState))
             {
-                UiMetrics.Tooltip(Strings.StateTooltip(row.State, row.Quest));
-            }
-
-            ImGui.TableNextColumn();
-            if (row.Quest is { } quest)
-            {
-                if (ImGui.Selectable(row.Name))
-                {
-                    Reveal(ui, quest);
-                }
-
+                MoonGlyph.DrawInline(row.State, UiMetrics.InlineGlyphSize(line));
                 if (ImGui.IsItemHovered())
                 {
-                    UiMetrics.Tooltip(row.Tooltip);
+                    UiMetrics.Tooltip(Strings.StateTooltip(row.State, row.Quest));
                 }
             }
-            else
+
+            if (abandonedColumns.Next(AbandonedQuest))
             {
-                ImGui.TextDisabled(row.Name);
+                if (row.Quest is { } quest)
+                {
+                    if (Chrome.EllipsisSelectable(row.Name, false, 0f, out var cut))
+                    {
+                        Reveal(ui, quest);
+                    }
+
+                    if (ImGui.IsItemHovered())
+                    {
+                        UiMetrics.Tooltip(cut ? row.NameAndTooltip : row.Tooltip);
+                    }
+                }
+                else
+                {
+                    Chrome.FitText(row.Name, ImGui.GetColorU32(ImGuiCol.TextDisabled));
+                }
             }
 
-            ImGui.TableNextColumn();
-            ImGui.TextUnformatted(row.Detail);
-
-            ImGui.TableNextColumn();
-            if (row.Quest is { } target)
+            if (abandonedColumns.Next(AbandonedStatus))
             {
-                DrawAbandonedActions(ui, target);
+                var s = Theme.Surface;
+                Chrome.StatusText(row.Detail, ImGui.GetContentRegionAvail().X, s.Text, s.TextSecondary);
             }
+
+            if (abandonedColumns.Next(AbandonedActions) && row.Quest is { } target)
+            {
+                if (fold)
+                {
+                    DrawAbandonedMenu(ui, target, moreSize);
+                }
+                else
+                {
+                    DrawAbandonedActions(ui, target);
+                }
+            }
+        }
+    }
+
+    // The Abandoned table's columns, in display order.
+    private const int AbandonedState = 0;
+    private const int AbandonedQuest = 1;
+    private const int AbandonedStatus = 2;
+    private const int AbandonedActions = 3;
+    private const string AbandonedMenuId = "##abandonedMenu";
+    private readonly ColumnFit abandonedColumns = new(4);
+
+    /// <summary>The "…" button's side in a table row.</summary>
+    private static float MoreSize(float line) => MathF.Min(UiMetrics.MinTarget, MathF.Max(line, UiMetrics.RowIconSize));
+
+    /// <summary>The status' least width: the widest step ("step 3 of 5", never cut) and a little of the age after it.</summary>
+    private float AbandonedStatusMin()
+    {
+        var widest = 0f;
+        foreach (var row in abandonedRows)
+        {
+            widest = MathF.Max(widest, ImGui.CalcTextSize(row.Detail.AsSpan(0, TableGeometry.StateWordLength(row.Detail))).X);
+        }
+
+        return widest + UiMetrics.Px(24f);
+    }
+
+    /// <summary>Flag, Teleport (with Lifestream) and Reveal side by side.</summary>
+    private float AbandonedActionsWidth()
+    {
+        var style = ImGui.GetStyle();
+        var padding = style.FramePadding.X * 2f;
+        var width = ImGui.CalcTextSize(Strings.AbandonedReveal).X + padding;
+        if (Links is { } links)
+        {
+            width += ImGui.CalcTextSize(Strings.AbandonedFlag).X + padding + style.ItemSpacing.X;
+            if (links.TeleportAvailable)
+            {
+                width += ImGui.CalcTextSize(Strings.AbandonedTeleport).X + padding + style.ItemSpacing.X;
+            }
+        }
+
+        return width;
+    }
+
+    /// <summary>The row's actions folded into one "…" button and its menu (a narrow pane).</summary>
+    private void DrawAbandonedMenu(UiState ui, QuestRecord quest, float size)
+    {
+        Keyboard.MoreButton("##more", AbandonedMenuId, ImGui.GetCursorScreenPos(), size);
+        using var popup = ImRaii.Popup(AbandonedMenuId);
+        if (!popup)
+        {
+            return;
+        }
+
+        // Opened from the centre column (own font scale 1), so the menu scales itself.
+        UiMetrics.ApplyFontScale();
+        if (Links is { } links)
+        {
+            if (ImGui.MenuItem(Strings.AbandonedFlag, enabled: links.CanFlagMap(quest)))
+            {
+                links.FlagMap(quest);
+            }
+
+            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+            {
+                UiMetrics.Tooltip(Strings.AbandonedFlagTooltip);
+            }
+
+            if (links.TeleportAvailable)
+            {
+                var aetheryte = links.NearestAetheryte(quest);
+                var busy = links.TeleportBusy;
+                if (ImGui.MenuItem(Strings.AbandonedTeleport, enabled: aetheryte is not null && !busy))
+                {
+                    links.TeleportToGiver(quest);
+                }
+
+                if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+                {
+                    UiMetrics.Tooltip(TeleportTooltip(aetheryte, busy));
+                }
+            }
+        }
+
+        if (ImGui.MenuItem(Strings.AbandonedReveal))
+        {
+            Reveal(ui, quest);
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.AbandonedRevealTooltip);
         }
     }
 
@@ -139,9 +262,7 @@ public sealed partial class CharactersPane
 
                 if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
                 {
-                    UiMetrics.Tooltip(aetheryte is not { } target ? Strings.TeleportNoAetheryte
-                        : busy ? Strings.TeleportBusy
-                        : string.Format(CultureInfo.CurrentCulture, Strings.TeleportTooltipFormat, target.Name));
+                    UiMetrics.Tooltip(TeleportTooltip(aetheryte, busy));
                 }
             }
 
@@ -158,6 +279,12 @@ public sealed partial class CharactersPane
             UiMetrics.Tooltip(Strings.AbandonedRevealTooltip);
         }
     }
+
+    /// <summary>A Teleport action's tooltip: the aetheryte it goes to, or why it cannot.</summary>
+    private static string TeleportTooltip((uint Id, string Name)? aetheryte, bool busy) =>
+        aetheryte is not { } target ? Strings.TeleportNoAetheryte
+        : busy ? Strings.TeleportBusy
+        : string.Format(CultureInfo.CurrentCulture, Strings.TeleportTooltipFormat, target.Name);
 
     /// <summary>Rebuilds the rows from the viewed character's ledger when the session changed or a minute passed.</summary>
     private void RefreshAbandoned()
@@ -184,7 +311,7 @@ public sealed partial class CharactersPane
             var tooltip = quest?.Issuer is { } issuer && issuer.Name.Length > 0
                 ? string.Format(CultureInfo.CurrentCulture, Strings.AbandonedGiverFormat, issuer.Name) + "\n" + when
                 : when;
-            rows.Add(new AbandonedRow(quest, name, state, AbandonedLedger.Describe(entry, now), tooltip));
+            rows.Add(new AbandonedRow(quest, name, state, AbandonedLedger.Describe(entry, now), tooltip, name + "\n" + tooltip));
         }
 
         abandonedRows = rows.ToArray();
@@ -196,5 +323,6 @@ public sealed partial class CharactersPane
         return string.Format(CultureInfo.CurrentCulture, Strings.AbandonedHeaderFormat, count) + "###abandonedHeader";
     }
 
-    private sealed record AbandonedRow(QuestRecord? Quest, string Name, QuestState State, string Detail, string Tooltip);
+    /// <param name="NameAndTooltip">The name over the tooltip, the hover text of a name cut short.</param>
+    private sealed record AbandonedRow(QuestRecord? Quest, string Name, QuestState State, string Detail, string Tooltip, string NameAndTooltip);
 }

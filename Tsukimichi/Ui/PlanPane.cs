@@ -6,8 +6,10 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
 using Tsukimichi.Config;
+using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Plan;
 using Tsukimichi.Core.Query;
+using Tsukimichi.Core.Ui;
 using Tsukimichi.Game;
 
 namespace Tsukimichi.Ui;
@@ -59,6 +61,7 @@ public sealed class PlanPane
     private string hiddenText = string.Empty;
     private string summary = string.Empty;
     private string showing = string.Empty;
+    // Per expansion: the card title, its Ready count, the left list's count and the left list row's id.
     private readonly Dictionary<byte, (string Header, string Ready, string Count, string Label)> cardText = [];
     private readonly Dictionary<uint, string> zoneNames = [];
 
@@ -131,24 +134,50 @@ public sealed class PlanPane
         ImGui.Spacing();
         Chrome.Hairline();
         ImGui.TextDisabled(Strings.PlanExpansions);
-        foreach (var block in view.Expansions)
+        // Name, then the count at the right edge (UI audit §3): the name ends in an ellipsis before the count, and the
+        // count gives way (to the tooltip) only when the name would keep less than a few letters.
+        var gap = ImGui.GetStyle().ItemSpacing.X;
+        Span<float> countPart = stackalloc float[1];
+        Span<bool> countShown = stackalloc bool[1];
+        for (var i = 0; i < view.Expansions.Count; i++)
         {
+            var block = view.Expansions[i];
             var text = cardText[block.Expansion];
             var isOpen = IsOpen(block);
-            if (ImGui.Selectable(text.Label, isOpen))
+            var rowMin = ImGui.GetCursorScreenPos();
+            var room = Chrome.RoomX();
+            var countWidth = ImGui.CalcTextSize(text.Count).X;
+            countPart[0] = countWidth + gap;
+            var fit = RowFit.Fit(room, ImGui.CalcTextSize(block.Name).X, UiMetrics.Px(LayoutBudgets.RowNameMinLogical), countPart, countShown);
+            if (ImGui.Selectable(text.Label, isOpen, ImGuiSelectableFlags.None, new Vector2(MathF.Max(1f, room), 0f)))
             {
                 open[block.Expansion] = true;
                 scrollTo = block.Expansion;
             }
 
-            if (ImGui.IsItemHovered())
+            var hovered = ImGui.IsItemHovered();
+            var dl = ImGui.GetWindowDrawList();
+            var cut = Chrome.EllipsisTextAt(dl, rowMin, fit.NameRoom, block.Name, ImGui.GetColorU32(ImGuiCol.Text));
+            if (countShown[0])
             {
-                UiMetrics.Tooltip(Strings.PlanExpansionClickHint);
+                dl.AddText(new Vector2(rowMin.X + room - countWidth, rowMin.Y), ImGui.GetColorU32(ImGuiCol.TextDisabled), text.Count);
             }
 
-            var countWidth = ImGui.CalcTextSize(text.Count).X;
-            ImGui.SameLine(MathF.Max(ImGui.GetCursorPosX(), ImGui.GetWindowContentRegionMax().X - countWidth));
-            ImGui.TextDisabled(text.Count);
+            if (hovered)
+            {
+                if (!countShown[0])
+                {
+                    UiMetrics.Tooltip(block.Name, text.Count);
+                }
+                else if (cut)
+                {
+                    UiMetrics.Tooltip(block.Name, Strings.PlanExpansionClickHint);
+                }
+                else
+                {
+                    UiMetrics.Tooltip(Strings.PlanExpansionClickHint);
+                }
+            }
         }
 
         if (hiddenExpansions > 0)
@@ -184,8 +213,9 @@ public sealed class PlanPane
             UiMetrics.Tooltip(Strings.PlanCopyTooltip);
         }
 
-        ImGui.SameLine();
-        if (ImGui.GetTime() - copiedAt < CopiedSeconds)
+        var justCopied = ImGui.GetTime() - copiedAt < CopiedSeconds;
+        Chrome.SameLineOrWrap(ImGui.CalcTextSize(justCopied ? copied : showing).X);
+        if (justCopied)
         {
             using var confirmation = Theme.PushText(Theme.Surface.Text);
             ImGui.TextUnformatted(copied);
@@ -210,8 +240,9 @@ public sealed class PlanPane
 
         ui.RecordWindow(UiRects.PlanCards);
 
-        foreach (var block in view.Expansions)
+        for (var b = 0; b < view.Expansions.Count; b++)
         {
+            var block = view.Expansions[b];
             if (scrollTo == block.Expansion)
             {
                 ImGui.SetScrollHereY(0f);
@@ -244,10 +275,6 @@ public sealed class PlanPane
 
         var hovered = ImGui.IsItemHovered();
         Chrome.FocusRing();
-        if (hovered)
-        {
-            UiMetrics.Tooltip(Strings.PlanCardToggleTooltip);
-        }
 
         var min = ImGui.GetItemRectMin();
         var dl = ImGui.GetWindowDrawList();
@@ -256,12 +283,33 @@ public sealed class PlanPane
         dl.AddText(new Vector2(min.X, textY), Theme.U32(Theme.Surface.TextSecondary), isOpen ? OpenGlyph : FoldedGlyph);
         ImGui.PopFont();
 
+        // The title ends in an ellipsis short of Pin (UI audit §3); the Ready count after it gives way first.
         var x = min.X + UiMetrics.Px(16f);
-        dl.AddText(new Vector2(x, textY), Theme.U32(Theme.Surface.Text), text.Header);
-        x += ImGui.CalcTextSize(text.Header).X + UiMetrics.Px(10f);
-        if (block.ReadyCount > 0)
+        Span<float> readyPart = stackalloc float[1];
+        Span<bool> readyShown = stackalloc bool[1];
+        readyPart[0] = block.ReadyCount > 0 ? ImGui.CalcTextSize(text.Ready).X + UiMetrics.Px(10f) : 0f;
+        var headerWidth = ImGui.CalcTextSize(text.Header).X;
+        var fit = RowFit.Fit(min.X + titleWidth - x, headerWidth, UiMetrics.Px(LayoutBudgets.RowNameMinLogical), readyPart, readyShown);
+        var cut = Chrome.EllipsisTextAt(dl, new Vector2(x, textY), fit.NameRoom, text.Header, Theme.U32(Theme.Surface.Text), headerWidth);
+        if (block.ReadyCount > 0 && readyShown[0])
         {
-            dl.AddText(new Vector2(x, textY), Theme.AccentU32, text.Ready);
+            dl.AddText(new Vector2(x + MathF.Min(headerWidth, fit.NameRoom) + UiMetrics.Px(10f), textY), Theme.AccentU32, text.Ready);
+        }
+
+        if (hovered)
+        {
+            if (block.ReadyCount > 0 && !readyShown[0])
+            {
+                UiMetrics.Tooltip(text.Header, text.Ready);
+            }
+            else if (cut)
+            {
+                UiMetrics.Tooltip(text.Header, Strings.PlanCardToggleTooltip);
+            }
+            else
+            {
+                UiMetrics.Tooltip(Strings.PlanCardToggleTooltip);
+            }
         }
 
         ImGui.SetCursorPos(new Vector2(right - pinWidth, headerStart.Y));
@@ -288,13 +336,11 @@ public sealed class PlanPane
 
         if (isOpen)
         {
-            foreach (var zone in block.Zones)
+            for (var z = 0; z < block.Zones.Count; z++)
             {
+                var zone = block.Zones[z];
                 ImGui.Spacing();
-                using (Theme.PushText(Theme.Surface.TextTertiary))
-                {
-                    ImGui.TextUnformatted(ZoneLabel(zone));
-                }
+                Chrome.FitText(ZoneLabel(zone), Theme.U32(Theme.Surface.TextTertiary));
 
                 for (var i = 0; i < zone.Entries.Count; i++)
                 {
@@ -306,14 +352,31 @@ public sealed class PlanPane
         Chrome.EndCard();
     }
 
+    /// <summary>The "…" menu of a row whose Flag and Reveal folded (under <see cref="LayoutBudgets.PlanMenuLogical"/>).</summary>
+    private const string RowMenuId = "##planRowMenu";
+
+    /// <summary>Kinds a plan row can show at most (every unlock kind).</summary>
+    private static readonly int MaxKinds = UnlockKinds.All.Length;
+
+    /// <summary>
+    /// One quest (design v4 §7.8, the mockup's "My blues at 360 px"): from <see cref="LayoutBudgets.PlanOneLineLogical"/>
+    /// the moon, name, kind pills, status, Flag and Reveal on one line; under it two lines, the status (state word
+    /// never cut, the reason ellipsised) under the name and the buttons centred on the right; under
+    /// <see cref="LayoutBudgets.PlanMenuLogical"/> the buttons fold into one "…" menu. Pills are sized to their text
+    /// and, once two-line and under <see cref="PaneFit.PlanAllKindsLogical"/>, only the primary kind shows.
+    /// </summary>
     private void DrawRow(UiState ui, PlanEntry entry)
     {
         var quest = entry.Quest;
         var line = ImGui.GetTextLineHeight();
         var glyph = UiMetrics.InlineGlyphSize(line);
-        var height = MathF.Max(ImGui.GetFrameHeight(), glyph) + UiMetrics.Px(2f);
+        var frame = ImGui.GetFrameHeight();
+        var firstLine = MathF.Max(frame, glyph) + UiMetrics.Px(2f);
         var start = ImGui.GetCursorScreenPos();
         var width = MathF.Max(1f, ImGui.GetWindowPos().X + ImGui.GetWindowContentRegionMax().X - UiMetrics.Px(10f) - start.X);
+        var logical = width / UiMetrics.Scale;
+        var tier = PaneFit.PlanTier(logical);
+        var height = tier == PlanRowTier.OneLine ? firstLine : firstLine + line + UiMetrics.Px(4f);
         var size = new Vector2(width, height);
         if (!ImGui.IsRectVisible(size))
         {
@@ -324,17 +387,18 @@ public sealed class PlanPane
         using var id = ImRaii.PushId((int)quest.RowId);
         var style = ImGui.GetStyle();
         var gap = UiMetrics.Px(8f);
-        var padding = style.FramePadding.X * 2f;
-        var actionsWidth = ImGui.CalcTextSize(Strings.PlanFlag).X + ImGui.CalcTextSize(Strings.PlanReveal).X + padding * 2f + style.ItemSpacing.X;
-        var nameWidth = MathF.Max(UiMetrics.Px(80f), width * 0.36f);
-        var pillsWidth = MathF.Max(UiMetrics.Px(60f), width * 0.22f);
-        var statusX = start.X + glyph + gap + nameWidth + gap + pillsWidth + gap;
+        var menu = tier == PlanRowTier.TwoLineMenu;
+        var moreSize = MathF.Min(UiMetrics.MinTarget, height);
+        var actionsWidth = menu
+            ? moreSize
+            : ImGui.CalcTextSize(Strings.PlanFlag).X + ImGui.CalcTextSize(Strings.PlanReveal).X + (style.FramePadding.X * 4f) + style.ItemSpacing.X;
         var actionsX = start.X + width - actionsWidth;
-        var textY = start.Y + (height - line) * 0.5f;
+        var nameX = start.X + glyph + gap;
+        var textY = start.Y + ((firstLine - line) * 0.5f);
         var dl = ImGui.GetWindowDrawList();
 
-        // State moon.
-        ImGui.SetCursorScreenPos(new Vector2(start.X, start.Y + (height - glyph) * 0.5f));
+        // State moon, on the first line.
+        ImGui.SetCursorScreenPos(new Vector2(start.X, start.Y + ((firstLine - glyph) * 0.5f)));
         MoonGlyph.DrawInline(entry.State, glyph);
         if (ImGui.IsItemHovered())
         {
@@ -342,9 +406,48 @@ public sealed class PlanPane
             UiMetrics.StateTooltip(entry.State, evaluation, quest, session.Names, session.States);
         }
 
-        // Name: selects the quest for the detail pane.
-        ImGui.SetCursorScreenPos(new Vector2(start.X + glyph + gap, textY));
-        if (ImGui.Selectable(entry.Name, ui.SelectedRowId == quest.RowId, ImGuiSelectableFlags.None, new Vector2(nameWidth, line)))
+        // Kind pills, sized to their text: every distinct kind, or the primary one alone once two-line and narrow.
+        Span<UnlockKind> kinds = stackalloc UnlockKind[MaxKinds];
+        Span<float> parts = stackalloc float[MaxKinds];
+        Span<bool> shown = stackalloc bool[MaxKinds];
+        var kindCount = Kinds(entry, tier == PlanRowTier.OneLine || PaneFit.PlanAllKinds(logical) ? MaxKinds : 1, kinds);
+        using (Typography.Caption())
+        {
+            for (var i = 0; i < kindCount; i++)
+            {
+                parts[i] = PillSize(Strings.PlanKindName(kinds[i])).X + (i == 0 ? gap : UiMetrics.Px(4f));
+            }
+        }
+
+        float nameRoom, pillEnd, statusX, statusY, statusWidth;
+        if (tier == PlanRowTier.OneLine)
+        {
+            // Name, pills and status in columns that line up from row to row; the status keeps its state word.
+            var stateWord = entry.StatusText.AsSpan(0, TableGeometry.StateWordLength(entry.StatusText));
+            var statusMin = ImGui.CalcTextSize(stateWord).X + UiMetrics.Px(24f);
+            var (name, pills, status) = PaneFit.PlanOneLine(actionsX - nameX - (gap * 3f), statusMin);
+            nameRoom = name;
+            pillEnd = nameX + name + gap + pills;
+            statusX = pillEnd + gap;
+            statusY = textY;
+            statusWidth = status;
+        }
+        else
+        {
+            // The name and the pills after it share the first line (RowFit drops pills before the name gets short);
+            // the status has the second line, up to the buttons.
+            var nameWidth = ImGui.CalcTextSize(entry.Name).X;
+            var fit = RowFit.Fit(actionsX - gap - nameX, nameWidth, UiMetrics.Px(LayoutBudgets.RowNameMinLogical), parts[..kindCount], shown);
+            nameRoom = MathF.Min(nameWidth, fit.NameRoom);
+            pillEnd = nameX + nameRoom + fit.PartsWidth;
+            statusX = nameX;
+            statusY = start.Y + firstLine + UiMetrics.Px(1f);
+            statusWidth = actionsX - gap - nameX;
+        }
+
+        // Name: selects the quest for the detail pane; the tooltip carries the whole name.
+        ImGui.SetCursorScreenPos(new Vector2(nameX, textY));
+        if (Chrome.EllipsisSelectable(entry.Name, ui.SelectedRowId == quest.RowId, MathF.Max(1f, nameRoom), out _))
         {
             ui.SelectedRowId = quest.RowId;
         }
@@ -354,61 +457,88 @@ public sealed class PlanPane
             UiMetrics.Tooltip(entry.Name, Strings.PlanRowClickHint);
         }
 
-        // Kind pills (painted; one tooltip lists every unlock).
-        var pillX = start.X + glyph + gap + nameWidth + gap;
-        var pillEnd = pillX + pillsWidth;
-        var pillMin = new Vector2(pillX, start.Y);
-        using (Typography.Caption())
+        // The painted pills get an invisible item, so their tooltip honours popups, window hover and keyboard focus.
+        var pillX = nameX + nameRoom;
+        var pillsEnd = DrawPills(dl, kinds[..kindCount], parts, pillX, pillEnd, start.Y, firstLine);
+        if (pillsEnd > pillX)
         {
-            var last = (UnlockKind?)null;
-            var tone = Theme.Surface.TextSecondary;
-            foreach (var unlock in entry.Unlocks)
-            {
-                if (unlock.Kind == last)
-                {
-                    continue;
-                }
-
-                last = unlock.Kind;
-                var label = Strings.PlanKindName(unlock.Kind);
-                var pill = ImGui.CalcTextSize(label) + new Vector2(UiMetrics.Px(7f) * 2f, UiMetrics.Px(2f) * 2f);
-                if (pillX + pill.X > pillEnd)
-                {
-                    break;
-                }
-
-                Chrome.PillAt(dl, new Vector2(pillX, start.Y + (height - pill.Y) * 0.5f), pill, label,
-                    Theme.WithAlpha(tone, 0.12f), Theme.WithAlpha(tone, 0.45f), Theme.U32(tone));
-                pillX += pill.X + UiMetrics.Px(4f);
-            }
-        }
-
-        // The painted pills and the status line get an invisible item each, so their tooltips honour popups, window
-        // hover and keyboard focus like every other tooltip.
-        ImGui.SetCursorScreenPos(pillMin);
-        ImGui.InvisibleButton("##pills", new Vector2(MathF.Max(1f, pillsWidth), height));
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(UnlocksTooltip(entry));
-        }
-
-        // Status line, clipped short of the buttons.
-        var statusEnd = actionsX - gap;
-        if (statusEnd > statusX && entry.StatusText.Length > 0)
-        {
-            dl.PushClipRect(new Vector2(statusX, start.Y), new Vector2(statusEnd, start.Y + height), true);
-            dl.AddText(new Vector2(statusX, textY), Theme.U32(Theme.Surface.TextTertiary), entry.StatusText);
-            dl.PopClipRect();
-            ImGui.SetCursorScreenPos(new Vector2(statusX, start.Y));
-            ImGui.InvisibleButton("##status", new Vector2(statusEnd - statusX, height));
+            ImGui.SetCursorScreenPos(new Vector2(pillX, start.Y));
+            ImGui.InvisibleButton("##pills", new Vector2(pillsEnd - pillX, firstLine));
             if (ImGui.IsItemHovered())
             {
-                UiMetrics.Tooltip(entry.StatusText);
+                UiMetrics.Tooltip(UnlocksTooltip(entry));
             }
         }
 
-        // Flag the giver; Reveal in the Journal.
-        ImGui.SetCursorScreenPos(new Vector2(actionsX, start.Y + (height - ImGui.GetFrameHeight()) * 0.5f));
+        // Status: the state word never cut, the reason ellipsised, the whole line on hover when cut.
+        if (entry.StatusText.Length > 0 && statusWidth > 0f)
+        {
+            var s = Theme.Surface;
+            var live = session.ViewedSnapshot is not null;
+            ImGui.SetCursorScreenPos(new Vector2(statusX, statusY));
+            Chrome.StatusText(entry.StatusText, statusWidth, live ? s.Text : s.TextTertiary, live ? s.TextSecondary : s.TextTertiary);
+        }
+
+        if (menu)
+        {
+            DrawRowMenu(ui, quest, new Vector2(actionsX, start.Y + ((height - moreSize) * 0.5f)), moreSize);
+        }
+        else
+        {
+            DrawRowButtons(ui, quest, new Vector2(actionsX, start.Y + ((height - frame) * 0.5f)));
+        }
+
+        ImGui.SetCursorScreenPos(start);
+        ImGui.Dummy(size);
+    }
+
+    /// <summary>The row's distinct kinds in precedence order, at most <paramref name="max"/>, into <paramref name="kinds"/>; returns the count.</summary>
+    private static int Kinds(PlanEntry entry, int max, Span<UnlockKind> kinds)
+    {
+        var count = 0;
+        var unlocks = entry.Unlocks;
+        for (var i = 0; i < unlocks.Count && count < max && count < kinds.Length; i++)
+        {
+            var kind = unlocks[i].Kind;
+            if (count > 0 && kinds[count - 1] == kind)
+            {
+                continue;
+            }
+
+            kinds[count++] = kind;
+        }
+
+        return count;
+    }
+
+    /// <summary>A kind pill's size; measure in the caption role.</summary>
+    private static Vector2 PillSize(string label) =>
+        ImGui.CalcTextSize(label) + new Vector2(UiMetrics.Px(7f) * 2f, UiMetrics.Px(2f) * 2f);
+
+    /// <summary>
+    /// Paints the kind pills from <paramref name="x"/>, each after its gap (<paramref name="parts"/> holds gap and
+    /// pill), while they end by <paramref name="end"/>. Returns where the last pill drawn ends.
+    /// </summary>
+    private static float DrawPills(ImDrawListPtr dl, ReadOnlySpan<UnlockKind> kinds, ReadOnlySpan<float> parts, float x, float end, float top, float height)
+    {
+        using var caption = Typography.Caption();
+        var tone = Theme.Surface.TextSecondary;
+        for (var i = 0; i < kinds.Length && x + parts[i] <= end + 0.5f; i++)
+        {
+            var label = Strings.PlanKindName(kinds[i]);
+            var pill = PillSize(label);
+            Chrome.PillAt(dl, new Vector2(x + parts[i] - pill.X, top + ((height - pill.Y) * 0.5f)), pill, label,
+                Theme.WithAlpha(tone, 0.12f), Theme.WithAlpha(tone, 0.45f), Theme.U32(tone));
+            x += parts[i];
+        }
+
+        return x;
+    }
+
+    /// <summary>Flag the giver and Reveal in the Journal, side by side from <paramref name="min"/>.</summary>
+    private void DrawRowButtons(UiState ui, QuestRecord quest, Vector2 min)
+    {
+        ImGui.SetCursorScreenPos(min);
         using (ImRaii.Disabled(!links.CanFlagMap(quest)))
         {
             if (ImGui.SmallButton(Strings.PlanFlag))
@@ -432,9 +562,39 @@ public sealed class PlanPane
         {
             UiMetrics.Tooltip(Strings.PlanRevealTooltip);
         }
+    }
 
-        ImGui.SetCursorScreenPos(start);
-        ImGui.Dummy(size);
+    /// <summary>Flag and Reveal folded into one "…" button at <paramref name="min"/> and its menu (a narrow pane).</summary>
+    private void DrawRowMenu(UiState ui, QuestRecord quest, Vector2 min, float size)
+    {
+        Keyboard.MoreButton("##more", RowMenuId, min, size);
+        using var popup = ImRaii.Popup(RowMenuId);
+        if (!popup)
+        {
+            return;
+        }
+
+        // Opened from the cards' child window (own font scale 1), so the menu scales itself.
+        UiMetrics.ApplyFontScale();
+        if (ImGui.MenuItem(Strings.PlanFlag, enabled: links.CanFlagMap(quest)))
+        {
+            links.FlagMap(quest);
+        }
+
+        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+        {
+            UiMetrics.Tooltip(Strings.PlanFlagTooltip);
+        }
+
+        if (ImGui.MenuItem(Strings.PlanReveal))
+        {
+            ui.Reveal(quest);
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.PlanRevealTooltip);
+        }
     }
 
     private static string UnlocksTooltip(PlanEntry entry)
@@ -620,7 +780,7 @@ public sealed class PlanPane
                 string.Format(CultureInfo.CurrentCulture, Strings.PlanCardFormat, block.Name, block.Count),
                 string.Format(CultureInfo.CurrentCulture, Strings.PlanCardReadyFormat, block.ReadyCount),
                 string.Format(CultureInfo.CurrentCulture, Strings.PlanExpansionCountFormat, block.Count, block.ReadyCount),
-                block.Name + "##exp" + block.Expansion.ToString(CultureInfo.InvariantCulture));
+                "##exp" + block.Expansion.ToString(CultureInfo.InvariantCulture));
         }
     }
 }

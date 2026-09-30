@@ -79,7 +79,7 @@ public sealed partial class TonightCard
         if (!hasSnapshot)
         {
             using var mist = Theme.PushText(Theme.Surface.TextSecondary);
-            ImGui.TextWrapped(Strings.TonightLogIn);
+            TextFlow.Wrapped(Strings.TonightLogIn, Chrome.RoomX());
         }
         else
         {
@@ -90,7 +90,7 @@ public sealed partial class TonightCard
             {
                 Chrome.Hairline();
                 using var mist = Theme.PushText(Theme.Surface.TextSecondary);
-                ImGui.TextWrapped(events);
+                TextFlow.Wrapped(events, Chrome.RoomX());
             }
 
             DrawPinned(bundle);
@@ -100,7 +100,7 @@ public sealed partial class TonightCard
         ImGui.Spacing();
         using (Theme.PushText(Theme.Surface.TextTertiary))
         {
-            ImGui.TextWrapped(Strings.TonightPickHint);
+            TextFlow.Wrapped(Strings.TonightPickHint);
         }
     }
 
@@ -108,7 +108,7 @@ public sealed partial class TonightCard
     {
         using (Theme.PushText(ready > 0 ? Theme.Surface.Text : Theme.Surface.TextSecondary))
         {
-            ImGui.TextWrapped(readyText);
+            TextFlow.Wrapped(readyText, Chrome.RoomX());
         }
 
         if (ready == 0)
@@ -189,9 +189,11 @@ public sealed partial class TonightCard
             UiMetrics.Tooltip(Strings.StateTooltip(row.State));
         }
 
+        // The name stays inside the card, ending in an ellipsis (the tooltip then carries it whole), and the hint
+        // under it wraps between words (feature plan v4 L6).
         ImGui.SameLine();
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + ((glyph - lineHeight) * 0.5f));
-        if (ImGui.Selectable(row.Name))
+        if (Chrome.EllipsisSelectable(row.Name, false, 0f, out var cut))
         {
             if (bundle.Catalog.GetByRowId(row.RowId) is { } quest)
             {
@@ -205,7 +207,14 @@ public sealed partial class TonightCard
 
         if (ImGui.IsItemHovered())
         {
-            UiMetrics.Tooltip(Strings.TonightRowTooltip);
+            if (cut)
+            {
+                UiMetrics.Tooltip(row.Name, Strings.TonightRowTooltip);
+            }
+            else
+            {
+                UiMetrics.Tooltip(Strings.TonightRowTooltip);
+            }
         }
 
         ImGui.PopID();
@@ -213,7 +222,7 @@ public sealed partial class TonightCard
         {
             ImGui.SetCursorPosX(ImGui.GetCursorPosX() + glyph + ImGui.GetStyle().ItemSpacing.X);
             using var mist = Theme.PushText(Theme.Surface.TextSecondary);
-            ImGui.TextWrapped(row.Hint);
+            TextFlow.Wrapped(row.Hint, Chrome.RoomX());
         }
     }
 

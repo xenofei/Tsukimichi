@@ -150,9 +150,124 @@ public static partial class Chrome
     public static void SameLineOrWrap(float width)
     {
         ImGui.SameLine();
-        if (ImGui.GetCursorScreenPos().X + width > ImGui.GetWindowPos().X + ImGui.GetWindowContentRegionMax().X)
+        if (ImGui.GetCursorScreenPos().X + width > ContentRight())
         {
             ImGui.NewLine();
         }
+    }
+
+    /// <summary>
+    /// Puts the next items, <paramref name="width"/> wide together, at the right end of the line (a card's title
+    /// buttons): beside what the line already holds when they fit, never over it, else right-aligned on a line of
+    /// their own (feature plan v4 L6).
+    /// </summary>
+    public static void SameLineRightOrWrap(float width)
+    {
+        SameLineOrWrap(width);
+        var right = ContentRight() - ImGui.GetWindowPos().X + ImGui.GetScrollX();
+        ImGui.SetCursorPosX(MathF.Max(ImGui.GetCursorPosX(), right - width));
+    }
+
+    /// <summary>
+    /// The room right of the cursor, in pixels: to the open card's inner edge inside a card (<see cref="BeginCard(string, string?, string?, CardKind, Vector4?)"/>),
+    /// else to the content region's edge.
+    /// </summary>
+    public static float RoomX() => MathF.Max(0f, ContentRight() - ImGui.GetCursorScreenPos().X);
+
+    /// <summary>
+    /// The screen x the current line may run to: the open card's inner edge, else the content region's (a table
+    /// cell's own edge inside a table, which <c>GetWindowContentRegionMax</c> would not know).
+    /// </summary>
+    private static float ContentRight()
+    {
+        var region = ImGui.GetCursorScreenPos().X + ImGui.GetContentRegionAvail().X;
+        return cardOpen ? MathF.Min(region, cardStart.X + cardWidth - UiMetrics.Px(CardPadX)) : region;
+    }
+
+    /// <summary>
+    /// The width for a control that would like <paramref name="ideal"/> pixels (a slider, a combo): that, or the room
+    /// left on the line when it is less (<see cref="PaneFit.ControlWidth"/>). Pass it to <c>SetNextItemWidth</c>.
+    /// </summary>
+    public static float FitWidth(float ideal) => PaneFit.ControlWidth(ideal, RoomX());
+
+    /// <summary>
+    /// The label of the item just drawn (a slider's, a combo's): beside it when it fits, else on the next line,
+    /// wrapped between words (<see cref="TextFlow.Wrapped(string, float)"/>), in the current text colour.
+    /// </summary>
+    public static void TrailingLabel(string label)
+    {
+        ArgumentNullException.ThrowIfNull(label);
+        ImGui.SameLine(0f, ImGui.GetStyle().ItemInnerSpacing.X);
+        if (ImGui.CalcTextSize(label).X > RoomX())
+        {
+            ImGui.NewLine();
+        }
+
+        TextFlow.Wrapped(label, RoomX());
+    }
+
+    /// <summary>
+    /// A hint line under a setting: <paramref name="text"/> in the disabled tone, wrapped between words in the room
+    /// left (<see cref="TextFlow.Wrapped(string, float)"/>) instead of running past the edge.
+    /// </summary>
+    public static void Hint(string text)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        TextFlow.Wrapped(text, RoomX(), ImGui.GetColorU32(ImGuiCol.TextDisabled));
+    }
+
+    /// <summary>
+    /// <paramref name="text"/> filling the room left on the line (a table cell, a card row), ending in an ellipsis
+    /// when it is longer, with the whole text as the tooltip then. Returns whether it was cut.
+    /// </summary>
+    public static bool FitText(string text, uint color)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        var room = RoomX();
+        var width = ImGui.CalcTextSize(text).X;
+        if (width <= room + 0.5f)
+        {
+            using (ImRaii.PushColor(ImGuiCol.Text, color))
+            {
+                ImGui.TextUnformatted(text);
+            }
+
+            return false;
+        }
+
+        EllipsisText(text, room, color, width);
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(text);
+        }
+
+        return true;
+    }
+
+    /// <inheritdoc cref="FitText(string, uint)"/>
+    public static bool FitText(string text, Vector4 color) => FitText(text, ImGui.GetColorU32(color));
+
+    /// <summary>
+    /// A selectable <paramref name="width"/> wide whose <paramref name="text"/> ends in an ellipsis when it is longer
+    /// (a plain selectable cuts it hard at the edge), in the current text colour. The id is the text's, as a plain
+    /// selectable's would be. <paramref name="cut"/> says whether the text was cut, so the caller's tooltip can carry
+    /// the whole name. Returns whether it was clicked.
+    /// </summary>
+    /// <param name="width">The selectable's width; 0 or less fills the room left (<see cref="RoomX"/>).</param>
+    public static bool EllipsisSelectable(string text, bool selected, float width, out bool cut, ImGuiSelectableFlags flags = ImGuiSelectableFlags.None)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        var room = width > 0f ? width : RoomX();
+        var pos = ImGui.GetCursorScreenPos();
+        bool clicked;
+        using (ImRaii.PushId(text))
+        {
+            clicked = ImGui.Selectable("##fit", selected, flags, new Vector2(MathF.Max(1f, room), 0f));
+        }
+
+        cut = ImGui.IsItemVisible()
+            ? EllipsisTextAt(ImGui.GetWindowDrawList(), pos, room, text, ImGui.GetColorU32(ImGuiCol.Text))
+            : ImGui.CalcTextSize(text).X > room + 0.5f;
+        return clicked;
     }
 }

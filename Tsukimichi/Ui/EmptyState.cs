@@ -4,6 +4,7 @@ using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
+using Tsukimichi.Core.Ui;
 
 namespace Tsukimichi.Ui;
 
@@ -32,7 +33,7 @@ public static class EmptyState
         var avail = ImGui.GetContentRegionAvail();
         var radius = UiMetrics.EmptyStateMoonRadius;
         var gap = UiMetrics.Px(14f);
-        var wrap = MathF.Max(UiMetrics.Px(80f), MathF.Min(avail.X - UiMetrics.Px(16f), UiMetrics.Px(MaxColumn)));
+        var wrap = PaneFit.Column(avail.X, UiMetrics.Px(80f), UiMetrics.Px(MaxColumn), UiMetrics.Px(16f));
         var textSize = ImGui.CalcTextSize(guidance, false, wrap);
         var blockHeight = radius * 2f + gap + textSize.Y;
 
@@ -59,17 +60,18 @@ public static class EmptyState
         var avail = ImGui.GetContentRegionAvail();
         var radius = UiMetrics.EmptyStateMoonRadius;
         var gap = UiMetrics.Px(12f);
-        var column = MathF.Max(UiMetrics.Px(120f), MathF.Min(avail.X - UiMetrics.Px(16f), UiMetrics.Px(MaxColumn)));
+        // The column keeps its floor only while the pane has room for it (feature plan v4 L6); the heading wraps in it.
+        var column = PaneFit.Column(avail.X, UiMetrics.Px(120f), UiMetrics.Px(MaxColumn), UiMetrics.Px(16f));
         var font = ImGui.GetFont();
         var fontSize = ImGui.GetFontSize();
         Vector2 headingSize;
         using (Typography.Display())
         {
-            headingSize = ImGui.CalcTextSize(heading);
+            headingSize = ImGui.CalcTextSize(heading, false, column);
         }
 
         var bodySize = ImGui.CalcTextSize(body, false, column);
-        var chipHeight = MathF.Max(UiMetrics.Px(22f), ImGui.GetTextLineHeight() + UiMetrics.Px(4f));
+        var chipHeight = Chrome.ChipHeightPx();
         var chipRows = ChipRows(chips, column);
         var chipsHeight = chipRows == 0 ? 0f : (chipRows * chipHeight) + ((chipRows - 1) * UiMetrics.Px(6f)) + gap;
         var buttonHeight = UiMetrics.MinTarget;
@@ -84,7 +86,7 @@ public static class EmptyState
         using (Typography.Display())
         {
             // The display role's font is pushed (with its atlas texture) while the heading is drawn.
-            dl.AddText(ImGui.GetFont(), ImGui.GetFontSize(), new Vector2(centerX - (headingSize.X * 0.5f), y), Theme.U32(s.Text), heading);
+            dl.AddText(ImGui.GetFont(), ImGui.GetFontSize(), new Vector2(centerX - (headingSize.X * 0.5f), y), Theme.U32(s.Text), heading, column);
         }
 
         y += headingSize.Y + UiMetrics.Px(4f);
@@ -98,7 +100,7 @@ public static class EmptyState
             var spacing = UiMetrics.Px(6f);
             for (var i = 0; i < chips.Count; i++)
             {
-                var width = ChipWidth(chips[i]);
+                var width = Chrome.ChipWidth(chips[i]);
                 if (x > left && x + width > left + column)
                 {
                     x = left;
@@ -213,11 +215,6 @@ public static class EmptyState
         }
     }
 
-    private static float ChipWidth(string label)
-    {
-        var padX = UiMetrics.Px(9f);
-        return padX + ImGui.CalcTextSize(label).X + (padX * 0.7f) + UiMetrics.Px(8f) + (padX * 0.7f);
-    }
 
     private static int ChipRows(IReadOnlyList<string>? chips, float column)
     {
@@ -229,9 +226,9 @@ public static class EmptyState
         var rows = 1;
         var x = 0f;
         var spacing = UiMetrics.Px(6f);
-        foreach (var chip in chips)
+        for (var i = 0; i < chips.Count; i++)
         {
-            var width = ChipWidth(chip);
+            var width = Chrome.ChipWidth(chips[i]);
             if (x > 0f && x + width > column)
             {
                 rows++;

@@ -20,7 +20,7 @@ public sealed partial class CharactersPane
             return;
         }
 
-        ImGui.SameLine();
+        Chrome.SameLineOrWrap(ImGui.CalcTextSize(Strings.WelcomeBackOpen).X + (ImGui.GetStyle().FramePadding.X * 2f));
         if (ImGui.SmallButton(Strings.WelcomeBackOpen))
         {
             open(snapshot.ContentId);
