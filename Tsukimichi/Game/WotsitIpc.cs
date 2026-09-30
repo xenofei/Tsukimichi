@@ -20,19 +20,28 @@ public sealed record WotsitEntry(string DisplayName, string SearchText, uint Ico
 /// <summary>
 /// Registers every catalog quest and every Moonlit reward with Wotsit (internal name <c>Dalamud.FindAnything</c>)
 /// through its IPC: <c>FA.RegisterWithSearch(pluginName, displayName, searchText, iconId) -> guid</c>,
-/// <c>FA.UnregisterAll(pluginName)</c>, <c>FA.Invoke</c> (message carrying the guid of the picked entry) and
-/// <c>FA.Available</c> (message sent when Wotsit loads). Picking an entry reveals the quest in the Journal.
+/// <c>FA.UnregisterOne(pluginName, guid)</c>, <c>FA.UnregisterAll(pluginName)</c>, <c>FA.Invoke</c> (message carrying
+/// the guid of the picked entry) and <c>FA.Available</c> (message sent when Wotsit loads). Picking an entry reveals
+/// the quest in the Journal.
 /// <para>
 /// Registration is batched on the framework thread: each tick registers as many entries as fit in
 /// <see cref="TickBudgetMs"/>, so a few thousand calls never stall a frame, and the total is logged once. A call that
 /// throws is retried from the same entry on the next tick (<see cref="BatchCursor"/>); after
 /// <see cref="MaxRegisterAttempts"/> failures on one entry the rest of the batch is abandoned with a warning. The
 /// entries are rebuilt (after an <c>UnregisterAll</c>) whenever the catalog or the Moonlit catalog is a new instance,
-/// and again whenever Wotsit announces itself, since a reloaded Wotsit has forgotten them, or whenever the masked set
-/// of the logged-in character's spoiler shield changes (<see cref="SpoilerMask.Fingerprint"/>; viewing another
-/// character changes nothing here): a masked main scenario quest is registered
-/// under its placeholder, without its banner, so Wotsit never finds it by name. Dalamud's plugin-list
-/// event and Wotsit's messages may arrive off the framework thread, so they only raise flags that the next tick acts on.
+/// and again whenever Wotsit announces itself, since a reloaded Wotsit has forgotten them.
+/// </para>
+/// <para>
+/// A masked main scenario quest is registered under its placeholder, without its banner, so Wotsit never finds it by
+/// name. When the masked set of the logged-in character's spoiler shield changes (<see cref="SpoilerMask.Fingerprint"/>;
+/// viewing another character changes nothing here), only the entries whose text or icon changed are replaced, each
+/// through <c>FA.UnregisterOne</c> and a new registration (<see cref="RegistrationDiff"/>): an MSQ completion moves
+/// the mask by one quest, which touches a few entries, not the thousands in the catalog. A Wotsit without
+/// <c>FA.UnregisterOne</c> gets the full rebuild instead.
+/// </para>
+/// <para>
+/// Dalamud's plugin-list event and Wotsit's messages may arrive off the framework thread, so they only raise flags
+/// that the next tick acts on.
 /// </para>
 /// <para>
 /// <see cref="Enabled"/> follows the <c>Configuration.WotsitIntegration</c> setting: the plugin sets it after
@@ -51,6 +60,7 @@ public sealed class WotsitIpc : IDisposable
     public const int MaxRegisterAttempts = BatchCursor.DefaultMaxAttempts;
 
     private const string RegisterWithSearchGate = "FA.RegisterWithSearch";
+    private const string UnregisterOneGate = "FA.UnregisterOne";
     private const string UnregisterAllGate = "FA.UnregisterAll";
     private const string InvokeGate = "FA.Invoke";
     private const string AvailableGate = "FA.Available";
@@ -60,6 +70,7 @@ public sealed class WotsitIpc : IDisposable
     private readonly IFramework framework;
     private readonly IPluginLog log;
     private readonly ICallGateSubscriber<string, string, string, uint, string>? registerWithSearch;
+    private readonly ICallGateSubscriber<string, string, bool>? unregisterOne;
     private readonly ICallGateSubscriber<string, bool>? unregisterAll;
     private readonly ICallGateSubscriber<string, bool>? invoke;
     private readonly ICallGateSubscriber<bool>? available;
@@ -77,11 +88,21 @@ public sealed class WotsitIpc : IDisposable
     private CatalogBundle? registeredBundle;
     private UniqueRewardCatalog? registeredRewards;
     private int registeredSpoilers;
-    private List<WotsitEntry>? pending;
+
+    // The entries registered (or being registered) and each one's guid, by position; a null guid was never
+    // registered (the batch gave up) or is between its unregister and its re-registration.
+    private List<WotsitEntry>? entries;
+    private string?[] guids = [];
+
+    // The positions the current batch still has to (re)register, and where it is.
+    private List<int>? pending;
     private BatchCursor? cursor;
     private int pendingTicks;
     private double pendingMs;
     private bool registered;
+
+    // FA.UnregisterOne failed (a Wotsit without it): spoiler changes rebuild everything until Wotsit reloads.
+    private bool unregisterOneUnsupported;
     private bool wotsitLoaded;
     private bool warned;
     private bool disposed;
@@ -100,6 +121,7 @@ public sealed class WotsitIpc : IDisposable
         try
         {
             registerWithSearch = pluginInterface.GetIpcSubscriber<string, string, string, uint, string>(RegisterWithSearchGate);
+            unregisterOne = pluginInterface.GetIpcSubscriber<string, string, bool>(UnregisterOneGate);
             unregisterAll = pluginInterface.GetIpcSubscriber<string, bool>(UnregisterAllGate);
             invoke = pluginInterface.GetIpcSubscriber<string, bool>(InvokeGate);
             available = pluginInterface.GetIpcSubscriber<bool>(AvailableGate);
@@ -111,6 +133,7 @@ public sealed class WotsitIpc : IDisposable
         {
             log.Warning(ex, "Wotsit IPC subscribers unavailable");
             registerWithSearch = null;
+            unregisterOne = null;
             unregisterAll = null;
             invoke = null;
             available = null;
@@ -303,28 +326,63 @@ public sealed class WotsitIpc : IDisposable
             return;
         }
 
-        // A new catalog (or a Moonlit rebuild after an override, or a spoiler mask that hides other names) replaces
-        // every entry; the old guids die with UnregisterAll.
+        var next = BuildEntries(currentBundle, currentRewards, rewardIcon, reveal, currentSpoilers);
+
+        // Same catalogs, another mask: the list has the same shape, so only the entries whose text or icon changed
+        // are replaced (an MSQ completion unmasks one quest and the reward entries that name it).
+        if (registered && entries is not null && !unregisterOneUnsupported && unregisterOne is not null
+            && ReferenceEquals(currentBundle, registeredBundle) && ReferenceEquals(currentRewards, registeredRewards)
+            && RegistrationDiff.ChangedIndices(entries, next, SameEntry) is { } changed)
+        {
+            registeredSpoilers = currentSpoilers.Fingerprint;
+            entries = next;
+            StartBatch(changed);
+            return;
+        }
+
+        // A new catalog (or a Moonlit rebuild after an override) replaces every entry; the old guids die with
+        // UnregisterAll.
         Unregister();
         registeredBundle = currentBundle;
         registeredRewards = currentRewards;
         registeredSpoilers = currentSpoilers.Fingerprint;
-        pending = BuildEntries(currentBundle, currentRewards, rewardIcon, reveal, currentSpoilers);
-        cursor = new BatchCursor(pending.Count, MaxRegisterAttempts);
-        pendingTicks = 0;
-        pendingMs = 0;
+        entries = next;
+        guids = new string?[next.Count];
+        var all = new List<int>(next.Count);
+        for (var i = 0; i < next.Count; i++)
+        {
+            all.Add(i);
+        }
+
+        StartBatch(all);
         registered = true;
     }
 
+    /// <summary>Two entries register the same way in Wotsit: same text, search text and icon. The action is not compared (same target by position).</summary>
+    private static bool SameEntry(WotsitEntry a, WotsitEntry b) =>
+        a.IconId == b.IconId
+        && string.Equals(a.DisplayName, b.DisplayName, StringComparison.Ordinal)
+        && string.Equals(a.SearchText, b.SearchText, StringComparison.Ordinal);
+
+    private void StartBatch(List<int> positions)
+    {
+        pending = positions.Count > 0 ? positions : null;
+        cursor = pending is null ? null : new BatchCursor(pending.Count, MaxRegisterAttempts);
+        pendingTicks = 0;
+        pendingMs = 0;
+    }
+
     /// <summary>
-    /// Registers entries until the tick budget is spent; finishes the list over as many ticks as needed. A call that
-    /// throws ends the tick and is retried from that entry next tick; once the cursor gives up on an entry, the
-    /// batch is dropped with the entries registered so far kept (a partial list beats none) until the catalog or
-    /// Wotsit itself changes.
+    /// Registers the pending positions until the tick budget is spent; finishes the list over as many ticks as needed.
+    /// A position that still holds a guid (a spoiler update) is first unregistered with <c>FA.UnregisterOne</c>. A
+    /// register call that throws ends the tick and is retried from that entry next tick; once the cursor gives up on
+    /// an entry, the batch is dropped with the entries registered so far kept (a partial list beats none) until the
+    /// catalog or Wotsit itself changes. An <c>FA.UnregisterOne</c> that throws turns partial updates off and queues a
+    /// full rebuild.
     /// </summary>
     private void RegisterBatch()
     {
-        if (pending is null || cursor is null || registerWithSearch is null)
+        if (pending is null || cursor is null || entries is null || registerWithSearch is null)
         {
             return;
         }
@@ -333,13 +391,37 @@ public sealed class WotsitIpc : IDisposable
         pendingTicks++;
         while (!cursor.IsDone)
         {
-            var entry = pending[cursor.Index];
+            var position = pending[cursor.Index];
+            var entry = entries[position];
+            if (guids[position] is { } old)
+            {
+                try
+                {
+                    unregisterOne?.InvokeFunc(PluginName, old);
+                }
+                catch (Exception ex)
+                {
+                    // An older Wotsit without FA.UnregisterOne (or one that went away: the full rebuild's
+                    // UnregisterAll finds that out). Either way everything is registered again from scratch.
+                    log.Debug(ex, "Wotsit FA.UnregisterOne failed; rebuilding every entry");
+                    unregisterOneUnsupported = true;
+                    pending = null;
+                    cursor = null;
+                    registered = false;
+                    return;
+                }
+
+                actions.Remove(old);
+                guids[position] = null;
+            }
+
             try
             {
                 var guid = registerWithSearch.InvokeFunc(PluginName, entry.DisplayName, entry.SearchText, entry.IconId);
                 if (!string.IsNullOrEmpty(guid))
                 {
                     actions[guid] = entry.Invoke;
+                    guids[position] = guid;
                 }
             }
             catch (IpcNotReadyError)
@@ -389,6 +471,8 @@ public sealed class WotsitIpc : IDisposable
         pending = null;
         cursor = null;
         actions.Clear();
+        entries = null;
+        guids = [];
         if (unregisterAll is null || !wotsitLoaded)
         {
             return;
@@ -449,13 +533,19 @@ public sealed class WotsitIpc : IDisposable
     /// <summary>Dalamud's plugin list changed: the next tick re-checks whether Wotsit is loaded.</summary>
     private void OnActivePluginsChanged(IActivePluginsChangedEventArgs args) => pluginListDirty = true;
 
-    /// <summary>Forgets every registered guid and queues a full rebuild on the next tick (framework thread only).</summary>
+    /// <summary>
+    /// Forgets every registered guid and queues a full rebuild on the next tick (framework thread only). A reloaded
+    /// Wotsit may be a newer one, so partial updates are tried again.
+    /// </summary>
     private void ResetRegistration()
     {
         actions.Clear();
         pending = null;
         cursor = null;
+        entries = null;
+        guids = [];
         registered = false;
+        unregisterOneUnsupported = false;
     }
 
     private bool IsWotsitLoaded()
