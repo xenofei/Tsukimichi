@@ -207,12 +207,26 @@ public sealed class GlyphDebugWindow : Window
             ImGui.TableNextColumn();
             HaloCell(testRadius * 2f, f, haloOnCard);
         }
+
+        // The Journal tree's complete node: MoonDim ring and flat core, beside the bright 1.00 row above.
+        ImGui.TableNextRow();
+        ImGui.TableNextColumn();
+        ImGui.AlignTextToFramePadding();
+        ImGui.TextUnformatted("1.00 tree");
+        foreach (var (box, _) in HaloBoxes)
+        {
+            ImGui.TableNextColumn();
+            HaloCell(box, 1f, haloOnCard, dimComplete: true);
+        }
+
+        ImGui.TableNextColumn();
+        HaloCell(testRadius * 2f, 1f, haloOnCard, dimComplete: true);
     }
 
     /// <summary>A halo at exactly <paramref name="box"/> px with the number beside it where the rules ask for one.</summary>
-    private static void HaloCell(float box, float fraction, bool onCard)
+    private static void HaloCell(float box, float fraction, bool onCard, bool dimComplete = false)
     {
-        var mode = MoonGlyph.DrawHaloInline(fraction, box, onCard);
+        var mode = MoonGlyph.DrawHaloInline(fraction, box, onCard, dimComplete);
         if (mode == HaloMode.Core) return;
         ImGui.SameLine(0f, 4f);
         ImGui.TextDisabled($"{fraction:P0}");

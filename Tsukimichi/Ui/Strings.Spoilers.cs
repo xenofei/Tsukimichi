@@ -20,7 +20,7 @@ static partial class Strings
     // ---- Settings › Spoilers ----
     public const string SettingsSpoilers = "Spoilers";
     public const string SpoilerHideNames = "Hide main scenario names ahead of me";
-    public const string SpoilerHideNamesHelp = "Main scenario quests further along the story than you read \"Main scenario quest (Lv 83)\" everywhere: the tree, the table, the detail pane, the status bar, the Todo overlay, chat, Wotsit and search.";
+    public const string SpoilerHideNamesHelp = "Main scenario quests further along the story than you read \"Main scenario quest (Lv 83)\" everywhere: the table, the detail pane, the status bar, the Todo overlay, chat, Wotsit and search.";
     public const string SpoilerAhead = "Quests ahead to reveal";
     public const string SpoilerAheadHelp = "How many main scenario quests past your current one keep their names (0 to 10).";
     public const string SpoilerHideArtwork = "Hide journal artwork until a quest is in my journal";

@@ -55,6 +55,11 @@ public sealed class ConfigWindow : Window
     // Spoilers: the "N names hidden" line, rebuilt once per session version.
     private int spoilerCountVersion = -1;
     private string spoilerCountLine = string.Empty;
+
+    // Spoilers: the "Shield for {name}" label, rebuilt when the viewed character or its name changes.
+    private ulong spoilerLabelContentId;
+    private string? spoilerLabelName;
+    private string spoilerLabel = string.Empty;
     private string? toast;
     private DateTime toastUntilUtc;
 
@@ -438,8 +443,14 @@ public sealed class ConfigWindow : Window
             UiMetrics.Tooltip(Strings.SpoilerHideNamesHelp);
         }
 
+        // The slider applies whenever the viewed character's effective options hide names: the global setting, or
+        // that character's override (Always shield hides them even with the global setting off). Mirrors
+        // Configuration.SpoilerOptionsFor without building the options record each frame.
+        var effectiveHide = session.ViewedContentId is { } viewedId && settings.SpoilerShieldByCharacter.TryGetValue(viewedId, out var shielded)
+            ? shielded
+            : hideNames;
         using (ImRaii.PushIndent())
-        using (ImRaii.Disabled(!hideNames))
+        using (ImRaii.Disabled(!effectiveHide))
         {
             var ahead = Math.Clamp(settings.SpoilerRevealAhead, 0, SpoilerOptions.MaxAhead);
             ImGui.SetNextItemWidth(160f * ImGuiHelpers.GlobalScale);
@@ -499,7 +510,14 @@ public sealed class ConfigWindow : Window
         }
 
         var name = session.ViewedSnapshot?.Name;
-        ImGui.TextUnformatted(string.IsNullOrEmpty(name) ? Strings.SpoilerCharacterLabel : string.Format(CultureInfo.CurrentCulture, Strings.SpoilerCharacterFormat, name));
+        if (spoilerLabel.Length == 0 || spoilerLabelContentId != contentId || !string.Equals(spoilerLabelName, name, StringComparison.Ordinal))
+        {
+            spoilerLabelContentId = contentId;
+            spoilerLabelName = name;
+            spoilerLabel = string.IsNullOrEmpty(name) ? Strings.SpoilerCharacterLabel : string.Format(CultureInfo.CurrentCulture, Strings.SpoilerCharacterFormat, name);
+        }
+
+        ImGui.TextUnformatted(spoilerLabel);
         if (ImGui.IsItemHovered())
         {
             UiMetrics.Tooltip(Strings.SpoilerCharacterHelp);

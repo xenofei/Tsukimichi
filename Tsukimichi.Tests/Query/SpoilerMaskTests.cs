@@ -235,7 +235,8 @@ public class SpoilerMaskFixtureTests(FixtureCatalog fixture) : IClassFixture<Fix
 
         Assert.True(mask.ShowArtwork(quest, QuestState.Accepted));
         Assert.True(mask.ShowArtwork(quest, QuestState.Completed));
-        foreach (var state in new[] { QuestState.Ready, QuestState.ReadyOnOtherJob, QuestState.Blocked, QuestState.DoneThisCycle, QuestState.Foreclosed, QuestState.Unknown })
+        Assert.True(mask.ShowArtwork(quest, QuestState.DoneThisCycle));
+        foreach (var state in new[] { QuestState.Ready, QuestState.ReadyOnOtherJob, QuestState.Blocked, QuestState.Foreclosed, QuestState.Unknown })
         {
             Assert.False(mask.ShowArtwork(quest, state));
         }

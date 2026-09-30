@@ -23,6 +23,10 @@ public sealed class ExportSection(Configuration settings, ExportService exports,
     private string? line;
     private bool lineOk;
 
+    // The folder field's hint (the resolved export folder), rebuilt when the folder text changes rather than per frame.
+    private string? hintFolder;
+    private string hint = string.Empty;
+
     public void Draw()
     {
         using var id = ImRaii.PushId("export");
@@ -53,7 +57,7 @@ public sealed class ExportSection(Configuration settings, ExportService exports,
 
         if (ImGui.IsItemHovered())
         {
-            ImGui.SetTooltip(Strings.ExportIncludeNameHint);
+            UiMetrics.Tooltip(Strings.ExportIncludeNameHint);
         }
 
         var incomplete = settings.ExportIncludeIncomplete;
@@ -65,7 +69,7 @@ public sealed class ExportSection(Configuration settings, ExportService exports,
 
         if (ImGui.IsItemHovered())
         {
-            ImGui.SetTooltip(Strings.ExportIncludeIncompleteHint);
+            UiMetrics.Tooltip(Strings.ExportIncludeIncompleteHint);
         }
 
         DrawFolder();
@@ -87,8 +91,14 @@ public sealed class ExportSection(Configuration settings, ExportService exports,
     private void DrawFolder()
     {
         var folder = settings.ExportFolder ?? string.Empty;
+        if (hintFolder is null || !string.Equals(hintFolder, folder, StringComparison.Ordinal))
+        {
+            hintFolder = folder;
+            hint = exports.Folder;
+        }
+
         ImGui.SetNextItemWidth(260f * ImGuiHelpers.GlobalScale);
-        if (ImGui.InputTextWithHint(Strings.ExportFolderLabel + "##folder", exports.Folder, ref folder, FolderMaxLength))
+        if (ImGui.InputTextWithHint(Strings.ExportFolderLabel + "##folder", hint, ref folder, FolderMaxLength))
         {
             settings.ExportFolder = folder;
         }
@@ -112,7 +122,7 @@ public sealed class ExportSection(Configuration settings, ExportService exports,
 
         if (ImGui.IsItemHovered())
         {
-            ImGui.SetTooltip(Strings.ExportFolderDefaultTooltip);
+            UiMetrics.Tooltip(Strings.ExportFolderDefaultTooltip);
         }
     }
 
@@ -146,13 +156,19 @@ public sealed class ExportSection(Configuration settings, ExportService exports,
         lineOk = result.Ok;
     }
 
+    /// <summary>
+    /// Opens <paramref name="folder"/> in Explorer: explorer.exe with the path as its one argument, so no shell verb or
+    /// file association is involved. Any failure lands in the status line instead of escaping into the draw.
+    /// </summary>
     private void OpenFolder(string folder)
     {
         try
         {
-            Process.Start(new ProcessStartInfo { FileName = folder, UseShellExecute = true });
+            var start = new ProcessStartInfo { FileName = "explorer.exe", UseShellExecute = false };
+            start.ArgumentList.Add(folder);
+            using var process = Process.Start(start);
         }
-        catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception or IOException)
+        catch (Exception ex)
         {
             log.Warning(ex, "Could not open {Folder}", folder);
             line = Strings.ExportOpenFolderFailed + ex.Message;
