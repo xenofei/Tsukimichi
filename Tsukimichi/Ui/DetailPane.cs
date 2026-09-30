@@ -871,12 +871,15 @@ public sealed class DetailPane
         return total <= width ? 1 : 2;
     }
 
-    /// <summary>Height under the scrolling stack: hairline, the action rows, the provenance line and paddings.</summary>
+    /// <summary>
+    /// Height under the scrolling stack, as laid out: the spacing after the body child, the hairline and its spacing,
+    /// each action row and its spacing, then the provenance line (a caption).
+    /// </summary>
     private float ActionBarHeight()
     {
         var spacing = ImGui.GetStyle().ItemSpacing.Y;
         var rows = ActionRows(ImGui.GetContentRegionAvail().X);
-        return UiMetrics.Hairline + spacing + (rows * UiMetrics.MinTarget) + ((rows - 1) * spacing) + spacing + Typography.CaptionSize + UiMetrics.Px(2f);
+        return UiMetrics.Hairline + ((rows + 2) * spacing) + (rows * UiMetrics.MinTarget) + Typography.CaptionSize;
     }
 
     /// <summary>
