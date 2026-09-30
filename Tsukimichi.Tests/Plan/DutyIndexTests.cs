@@ -84,4 +84,48 @@ public class DutyIndexTests(GameDataFixture game) : IClassFixture<GameDataFixtur
             Assert.Contains(plan.Entries, e => e.PrimaryKind == kind);
         }
     }
+
+    [GameDataFact]
+    public void Over_the_live_sheets_no_plan_quest_that_opens_a_dungeon_trial_or_raid_is_only_Other()
+    {
+        var bundle = game.Bundle;
+        var curated = CuratedData.Load(FixtureCatalog.CuratedDir());
+        var unique = UniqueRewardsFile.Load(Path.Combine(FixtureCatalog.ShippedDataDir(), "unique_quests.json"));
+        var features = FeaturePresets.Derive(bundle.Catalog, curated, unique.Entries);
+        var rewards = UniqueRewardCatalog.Build(unique, new Dictionary<uint, UniqueOverride>(), curated);
+        var duties = DutyIndex.Build(game.Game.Excel, Language.English);
+        var tags = UnlockTags.Build(bundle.Catalog, features, rewards, duties, bundle.BlockerNames().Tribe);
+
+        var wrong = new List<string>();
+        var dutyQuests = 0;
+        foreach (var quest in tags.Quests)
+        {
+            var kinds = rewards.ForQuest(quest.RowId)
+                .Where(e => e.Kind == Tsukimichi.Core.Model.RewardKind.DutyUnlock && duties.TryGetCondition(e.RewardId, out var d) && d.Kind <= UnlockKind.AllianceRaid)
+                .Select(e => { duties.TryGetCondition(e.RewardId, out var d); return d.Kind; })
+                .Distinct()
+                .ToList();
+            if (kinds.Count == 0)
+            {
+                continue;
+            }
+
+            dutyQuests++;
+            var unlocks = tags.For(quest.RowId);
+            if (unlocks.All(u => u.Kind == UnlockKind.Other) || kinds.Any(k => !unlocks.Any(u => u.Kind == k)))
+            {
+                wrong.Add($"{quest.RowId} {quest.Name}: opens {string.Join(", ", kinds)} but is tagged {string.Join("; ", unlocks.Select(u => u.Label))}");
+            }
+        }
+
+        Assert.True(dutyQuests > 150, $"only {dutyQuests} plan quests open a dungeon, trial or raid");
+        Assert.True(wrong.Count == 0, string.Join("\n", wrong));
+
+        // A quasi-quest is never only Other; A Relic Reborn is Trial and Job.
+        Assert.All(tags.Quests.Where(q => q.EventIconType == FeaturePresets.QuasiQuestEventIconType), q =>
+            Assert.Contains(tags.For(q.RowId), u => u.Kind != UnlockKind.Other));
+        var relic = tags.For(66655);
+        Assert.Contains(relic, u => u.Kind == UnlockKind.Trial);
+        Assert.Contains(relic, u => u.Kind == UnlockKind.Job);
+    }
 }

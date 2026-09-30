@@ -1,5 +1,7 @@
 using System.Collections.Frozen;
+using Tsukimichi.Core.Jobs;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Unique;
 
 namespace Tsukimichi.Core.Plan;
@@ -34,11 +36,18 @@ public sealed record PlanUnlock(UnlockKind Kind, string Name, bool Inherited = f
 /// is System; a named <c>Quest.OtherReward</c> is Other;</item>
 /// <item>an allied society quest (<see cref="QuestRecord.BeastTribe"/> set) is Society;</item>
 /// <item>a quest with no duty yet whose name is a duty's name ("Labyrinth of the Ancients") unlocks that duty;</item>
-/// <item>a quest with nothing but Other so far takes its journal genre's kind when every direct unlock in the genre is
-/// of that one kind and the kind is inheritable (<see cref="IsInheritable"/>: duty content, Job, Society): the Primal
-/// Quests are all trials, a job's quests all Job; marked <see cref="PlanUnlock.Inherited"/>;</item>
+/// <item>a quest of the Class &amp; Job journal section (<see cref="JobLadder.ClassJobSectionId"/>) is Job, inherited
+/// when its data names no job unlock, besides whatever else it opens: A Relic Reborn is Trial (the Chimera, the Hydra)
+/// and Job;</item>
+/// <item>a quasi-quest (<see cref="FeaturePresets.QuasiQuestEventIconType"/>) with nothing but Other so far is System:
+/// the one-off talks that switch on the Cactpot, levequests or a scrip exchange;</item>
+/// <item>any other quest with nothing but Other so far takes its journal genre's kind when every direct unlock in the
+/// genre is of that one kind and the kind is inheritable (<see cref="IsInheritable"/>: duty content, Job, Society): the
+/// Primal Quests are all trials; marked <see cref="PlanUnlock.Inherited"/>;</item>
 /// <item>otherwise it is Other.</item>
 /// </list>
+/// A deep dungeon's floor sets are named once (<see cref="ContentName"/>), and two unlocks of one kind whose names differ
+/// only by a leading "the" are one.
 /// Other is dropped from a quest that has any other kind. A quest's unlocks are ordered by kind precedence
 /// (<see cref="UnlockKind"/>), duplicates removed, so the first is its primary kind. Immutable.
 /// </summary>
@@ -49,7 +58,7 @@ public sealed class UnlockTags
 
     /// <summary>Curated system-unlock labels that open a field operation (Eureka, Bozja, the Occult Crescent).</summary>
     public static readonly FrozenSet<string> FieldOperationLabels =
-        new[] { "Eureka (Forbidden Land)", "Bozjan Southern Front", "Occult Crescent" }.ToFrozenSet(StringComparer.OrdinalIgnoreCase);
+        new[] { "Eureka (Forbidden Land)", "Bozjan Southern Front", "Delubrum Reginae", "Occult Crescent" }.ToFrozenSet(StringComparer.OrdinalIgnoreCase);
 
     public static readonly UnlockTags Empty = new([], FrozenDictionary<uint, IReadOnlyList<PlanUnlock>>.Empty);
 
@@ -134,6 +143,22 @@ public sealed class UnlockTags
         {
             var unlocks = direct[quest.RowId];
             var specific = unlocks.Exists(static u => u.Kind != UnlockKind.Other);
+            if (quest.Journal.SectionId == JobLadder.ClassJobSectionId && !unlocks.Exists(static u => u.Kind == UnlockKind.Job))
+            {
+                // A job's quest line: its steps are Job even when one of them also opens a duty (A Relic Reborn's
+                // Chimera and Hydra), so a relic step reads Trial and Job rather than Trial alone.
+                unlocks.Add(new PlanUnlock(UnlockKind.Job, string.Empty, Inherited: true));
+                specific = true;
+            }
+
+            if (!specific && quest.EventIconType == FeaturePresets.QuasiQuestEventIconType)
+            {
+                // A quasi-quest is a one-off talk that switches a feature on (the Cactpot, a scrip exchange, levequests):
+                // a system, never a step of its genre's series.
+                unlocks.Insert(0, new PlanUnlock(UnlockKind.System, string.Empty));
+                specific = true;
+            }
+
             if (!specific
                 && genreKinds.TryGetValue(quest.Journal.GenreId, out var kinds)
                 && kinds.Count == 1
@@ -244,13 +269,31 @@ public sealed class UnlockTags
         }
     }
 
-    private static PlanUnlock DutyUnlock(PlanDuty duty) => new(duty.Kind, Capitalize(duty.Name));
+    private static PlanUnlock DutyUnlock(PlanDuty duty) => new(duty.Kind, Capitalize(ContentName(duty.Name)));
+
+    /// <summary>
+    /// A deep dungeon's floor sets are one piece of content to the plan: "the Palace of the Dead (Floors 51-60)" and
+    /// "Heaven-on-High  (Floors 1-10)" read "the Palace of the Dead" and "Heaven-on-High", so a quest that opens fifteen
+    /// floor sets lists the dungeon once (the Duty Finder hint still knows each floor set).
+    /// </summary>
+    internal static string ContentName(string name)
+    {
+        var open = name.LastIndexOf(" (", StringComparison.Ordinal);
+        if (open <= 0 || !name.EndsWith(')')
+            || !(name.AsSpan(open + 2).StartsWith("Floors ", StringComparison.Ordinal) || name.AsSpan(open + 2).StartsWith("Stones ", StringComparison.Ordinal)))
+        {
+            return name;
+        }
+
+        return name[..open].TrimEnd();
+    }
 
     private static void Add(List<PlanUnlock> unlocks, PlanUnlock unlock, bool first = false)
     {
         foreach (var existing in unlocks)
         {
-            if (existing.Kind == unlock.Kind && string.Equals(existing.Name, unlock.Name, StringComparison.OrdinalIgnoreCase))
+            // "the Palace of the Dead" (the duty) and "Palace of the Dead" (the curated system unlock) are one unlock.
+            if (existing.Kind == unlock.Kind && string.Equals(PlanDuties.NameKey(existing.Name), PlanDuties.NameKey(unlock.Name), StringComparison.Ordinal))
             {
                 return;
             }

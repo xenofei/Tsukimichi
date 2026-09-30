@@ -49,8 +49,12 @@ public sealed class PlanFixture
         new PlanDuty(59, 0, UnlockKind.Trial, "the Bowl of Embers (Hard)"),
         new PlanDuty(60, 0, UnlockKind.Trial, "the Navel (Hard)"),
         new PlanDuty(61, 0, UnlockKind.Trial, "the Howling Eye (Hard)"),
+        new PlanDuty(74, 0, UnlockKind.Trial, "A Relic Reborn: the Chimera"),
+        new PlanDuty(75, 0, UnlockKind.Trial, "A Relic Reborn: the Hydra"),
         new PlanDuty(92, 0, UnlockKind.AllianceRaid, "the Labyrinth of the Ancients"),
         new PlanDuty(93, 0, UnlockKind.NormalRaid, "the Binding Coil of Bahamut - Turn 1"),
+        new PlanDuty(204, 0, UnlockKind.System, "the Palace of the Dead (Floors 51-60)"),
+        new PlanDuty(205, 0, UnlockKind.System, "the Palace of the Dead (Floors 61-70)"),
     ]);
 
     public CatalogBundle Bundle => Catalog.Bundle;
@@ -97,6 +101,12 @@ public class UnlockPlanTests(PlanFixture fixture) : IClassFixture<PlanFixture>
     private const uint BrotherhoodOfAsh = 66754;
     private const uint PeaceForThanalan = 66753;
     private const uint AnIllConceivedVenture = 66970;
+
+    // A job quest that also opens a duty, quasi-quests and a deep dungeon's later floors.
+    private const uint ARelicRebornBravura = 66655;
+    private const uint ScratchItRich = 66024;
+    private const uint LevesOfKugane = 68457;
+    private const uint WhatLiesBeneath = 67923;
 
     // Heavensward aether current sidequests.
     private const uint BridgeOverFrozenWater = 67280;
@@ -180,6 +190,32 @@ public class UnlockPlanTests(PlanFixture fixture) : IClassFixture<PlanFixture>
 
         // A system unlock from system_unlocks.json.
         Assert.Contains(new PlanUnlock(UnlockKind.System, "Retainers"), tags.For(AnIllConceivedVenture));
+    }
+
+    [Fact]
+    public void A_relic_step_is_Trial_and_Job_a_quasi_quest_is_a_system_and_floor_sets_are_one_dungeon()
+    {
+        var tags = fixture.Tags;
+
+        // A Relic Reborn opens the Chimera and the Hydra (curated/duty_unlocks.json) and is a step of the warrior's
+        // quest line: Trial first, Job with it.
+        Assert.Equal(
+            [
+                new PlanUnlock(UnlockKind.Trial, "A Relic Reborn: the Chimera"),
+                new PlanUnlock(UnlockKind.Trial, "A Relic Reborn: the Hydra"),
+                new PlanUnlock(UnlockKind.Job, string.Empty, Inherited: true),
+            ],
+            tags.For(ARelicRebornBravura));
+
+        // Quasi-quests: named by system_unlocks.json when curated, System by default otherwise, never Other.
+        Assert.Equal(new PlanUnlock(UnlockKind.System, "Mini Cactpot"), Only(tags.For(ScratchItRich)));
+        Assert.Equal(new PlanUnlock(UnlockKind.System, string.Empty), Only(tags.For(LevesOfKugane)));
+        Assert.All(
+            tags.Quests.Where(q => q.EventIconType == FeaturePresets.QuasiQuestEventIconType),
+            q => Assert.Contains(tags.For(q.RowId), u => u.Kind != UnlockKind.Other));
+
+        // What Lies Beneath opens fifteen floor sets of the Palace of the Dead: the plan names the dungeon once.
+        Assert.Equal(new PlanUnlock(UnlockKind.System, "The Palace of the Dead"), Only(tags.For(WhatLiesBeneath)));
     }
 
     [Fact]
