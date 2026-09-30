@@ -31,6 +31,7 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] internal static ICondition Condition { get; private set; } = null!;
     [PluginService] internal static IKeyState KeyState { get; private set; } = null!;
     [PluginService] internal static IAddonLifecycle AddonLifecycle { get; private set; } = null!;
+    [PluginService] internal static ISeStringEvaluator SeStringEvaluator { get; private set; } = null!;
     // /UI
 
     private static readonly TimeSpan DisposeWait = TimeSpan.FromSeconds(5);
@@ -174,6 +175,9 @@ public sealed class Plugin : IDalamudPlugin
     internal Game.SessionState Session { get; private set; } = null!;
     internal Game.SnapshotService Snapshots { get; private set; } = null!;
     internal Game.StatePoller Poller { get; private set; } = null!;
+
+    /// <summary>The journal text reader and its opt-in search index (P9); null until the constructor creates it.</summary>
+    internal Game.QuestTextService? QuestText { get; private set; }
 
     /// <summary>Read from the catalog continuation off-thread, so it must be volatile.</summary>
     private volatile bool gameStateDisposed;
@@ -494,6 +498,11 @@ public sealed class Plugin : IDalamudPlugin
             diagnostics.CrossCheck = quest => questionableIpc.Check(quest, Session);
             mainWindow.AttachQuestionable(questionableIpc, () => Settings.QuestionableHandoff);
             mainWindow.AttachDiagnostics(diagnostics);
+
+            // Journal text (P9): the detail pane's Journal card, and with Settings › Journal text the search box's journal
+            // words, from an index kept per game version under the config directory.
+            QuestText = new Game.QuestTextService(DataManager, SeStringEvaluator, Log, Paths.ConfigDir, clientGameVersion);
+            mainWindow.AttachQuestText(QuestText);
             var report = new ReportCommand(Session, ui, gameLinks, diagnostics, Log);
             command.Report = report.Run;
 
@@ -696,6 +705,7 @@ public sealed class Plugin : IDalamudPlugin
         moonlitPane?.Dispose();
         chatNotifier?.Dispose();
         queryRunner.Dispose();
+        QuestText?.Dispose();
         lifestream.Dispose();
         // /UI
 
@@ -759,6 +769,7 @@ public sealed class Plugin : IDalamudPlugin
         Unwind("moonlit pane", () => moonlitPane?.Dispose());
         Unwind("chat notifier", () => chatNotifier?.Dispose());
         Unwind("query runner", () => queryRunner?.Dispose());
+        Unwind("journal text", () => QuestText?.Dispose());
         Unwind("lifestream ipc", () => lifestream?.Dispose());
         Unwind("game state", DisposeGameState);
         Unwind("catalog build", StopCatalogBuild);
