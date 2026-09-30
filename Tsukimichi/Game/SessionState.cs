@@ -129,6 +129,9 @@ public sealed class SessionState
     /// </summary>
     public IReadOnlyDictionary<ushort, AbandonedEntry> Abandoned { get; private set; } = NoAbandoned;
 
+    /// <summary>The logged-in character's abandoned ledger, whichever character is viewed; empty when logged out.</summary>
+    public IReadOnlyDictionary<ushort, AbandonedEntry> LiveAbandoned => liveAbandoned;
+
     public UniqueRewardsData UniqueRewards { get; }
 
     public CuratedData Curated { get; }

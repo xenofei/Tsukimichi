@@ -278,7 +278,7 @@ static partial class Strings
     /// <summary>The map link's text on a Ready line: {0} place name, {1} x, {2} y.</summary>
     public const string WhyGiverPlaceFormat = "{0} ({1:0.0}, {2:0.0})";
     public const string ConfigSectionData = "Data";
-    public const string ConfigDataRetention = "Tsukimichi keeps one snapshot per character, your pins and your unique-reward overrides in its config directory. Forget a single character from the Characters tab.";
+    public const string ConfigDataRetention = "Tsukimichi keeps one snapshot per character (with when each quest entered the journal and the quests you abandoned), your pins and your unique-reward overrides in its config directory. Forget a single character from the Characters tab.";
     public const string ConfigDeleteAll = "Delete all Tsukimichi data";
     public const string ConfigDeleteStep1Popup = "Delete all data###TsukimichiDeleteAll1";
     public const string ConfigDeleteStep1Text = "Every stored character snapshot, all pins and all overrides will be removed. Settings stay.";

@@ -29,7 +29,8 @@ namespace Tsukimichi.Ui;
 /// Characters (spec §7, F-50..F-61, F-73). <see cref="DrawLeft"/> lists every stored snapshot (the live one marked ●)
 /// and switches the viewed character; <see cref="DrawMain"/> is a dashboard for the viewed character, top to bottom:
 /// header, completion per journal section (filling moons), job and role quest ladders, curated story chains, a
-/// comparison with another stored character (the alt diff, V2-12), the Moonlit summary, pinned quests, recent activity, jobs
+/// comparison with another stored character (the alt diff, V2-12), the Moonlit summary, pinned quests, abandoned quests
+/// (P10, <c>CharactersPane.Abandoned.cs</c>), recent activity, jobs
 /// grouped by role with the game's job icons, Grand Company and allied societies, Export JSON and Forget (with a
 /// confirm popup), and the Account view: the state of <see cref="UiState.SelectedRowId"/> on every character,
 /// evaluated offline from their snapshots.
@@ -39,7 +40,7 @@ namespace Tsukimichi.Ui;
 /// through <c>loadSnapshot</c> only when their capture time changed, and their evaluations are memoized per version.
 /// </para>
 /// </summary>
-public sealed class CharactersPane
+public sealed partial class CharactersPane
 {
     private const string ExportsFolder = "exports";
     private const int MaxRecentRows = 10;
@@ -231,6 +232,8 @@ public sealed class CharactersPane
         DrawMoonlitSummary(d);
         Gap();
         DrawPinned(ui, d);
+        Gap();
+        DrawAbandoned(ui);
         Gap();
         DrawRecent(d);
         Gap();

@@ -408,6 +408,7 @@ public sealed class Plugin : IDalamudPlugin
             charactersPane.MoonlitCounts = moonlitPane.CountsFor;
             charactersPane.UniqueRewards = () => moonlit.Catalog;
             charactersPane.Pins = queryRunner;
+            charactersPane.Links = gameLinks;
             mainWindow.AttachPanes(moonlitPane, charactersPane);
             mainWindow.AttachOverrides(moonlitPane);
             // The flight index (a few small sheets) is built on the pane's first draw, on the framework thread.

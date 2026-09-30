@@ -14,6 +14,7 @@ public sealed class NoticeTracker
 {
     private readonly HashSet<uint> notified = [];
     private readonly HashSet<uint> jobNudged = [];
+    private readonly HashSet<uint> abandonNoticed = [];
     private QuestEvent? lastSeen;
     private ulong? sessionContentId;
     private bool started;
@@ -24,6 +25,9 @@ public sealed class NoticeTracker
     /// <summary>Row ids announced as a level-up nudge this session; a separate set, since a job quest may also be a feature quest.</summary>
     public IReadOnlySet<uint> JobNudged => jobNudged;
 
+    /// <summary>Row ids announced as abandoned this session; a quest abandoned, taken up and dropped again is announced once.</summary>
+    public IReadOnlySet<uint> AbandonNoticed => abandonNoticed;
+
     /// <summary>
     /// Row ids of <see cref="QuestEventKind.NewlyAvailable"/> events added since the previous call, earlier polls
     /// before later ones (events of one poll share a timestamp, so their order among themselves is not significant).
@@ -31,6 +35,25 @@ public sealed class NoticeTracker
     /// last time resets the announced set.
     /// </summary>
     public List<uint> Scan(IReadOnlyList<QuestEvent> recentNewestFirst, ulong? liveContentId)
+    {
+        var result = new List<uint>();
+        foreach (var e in ScanEvents(recentNewestFirst, liveContentId))
+        {
+            if (e.Kind == QuestEventKind.NewlyAvailable)
+            {
+                result.Add(e.RowId);
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Every event added since the previous call, of every kind, earlier polls before later ones; the same walk and
+    /// session rules as <see cref="Scan"/>, which is this list narrowed to <see cref="QuestEventKind.NewlyAvailable"/>.
+    /// Use one or the other: each call moves the same "last seen" mark.
+    /// </summary>
+    public List<QuestEvent> ScanEvents(IReadOnlyList<QuestEvent> recentNewestFirst, ulong? liveContentId)
     {
         ArgumentNullException.ThrowIfNull(recentNewestFirst);
 
@@ -40,10 +63,11 @@ public sealed class NoticeTracker
             sessionContentId = liveContentId;
             notified.Clear();
             jobNudged.Clear();
+            abandonNoticed.Clear();
             lastSeen = null;
         }
 
-        var result = new List<uint>();
+        var result = new List<QuestEvent>();
         if (recentNewestFirst.Count == 0)
         {
             lastSeen = null;
@@ -68,11 +92,7 @@ public sealed class NoticeTracker
         lastSeen = recentNewestFirst[0];
         for (var i = end - 1; i >= 0; i--)
         {
-            var e = recentNewestFirst[i];
-            if (e.Kind == QuestEventKind.NewlyAvailable)
-            {
-                result.Add(e.RowId);
-            }
+            result.Add(recentNewestFirst[i]);
         }
 
         return result;
@@ -87,6 +107,9 @@ public sealed class NoticeTracker
 
     /// <summary>Records a level-up nudge; false when the quest was already nudged this session.</summary>
     public bool MarkJobNudged(uint rowId) => jobNudged.Add(rowId);
+
+    /// <summary>Records an "Abandoned:" line; false when the quest was already announced as abandoned this session.</summary>
+    public bool MarkAbandonNoticed(uint rowId) => abandonNoticed.Add(rowId);
 
     /// <summary>
     /// Whether a newly available quest deserves a line: it must be pinned or a feature quest, and a main scenario

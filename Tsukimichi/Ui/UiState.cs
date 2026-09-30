@@ -140,6 +140,23 @@ public sealed class UiState
     }
 
     /// <summary>
+    /// Switch to the Journal tab on the whole journal filtered to the viewed character's abandoned quests (the
+    /// Characters dashboard's "Show in Journal"): the other narrowing filters are cleared as a reveal clears them,
+    /// then the Abandoned filter is turned on; its chip clears it.
+    /// </summary>
+    public void ShowAbandoned()
+    {
+        Tab = NavTab.Journal;
+        Scope = QuestScope.None;
+        SelectedRowId = null;
+        RevealPending = false;
+        ClearNarrowingFilters(includeUnlisted: false);
+        Filters.AbandonedOnly = true;
+        FiltersChanged?.Invoke();
+        MarkQueryDirty();
+    }
+
+    /// <summary>
     /// Turns off the state-based narrowing filters and the active preset (and turns Include removed on when asked);
     /// true when anything changed and the window should persist the filters.
     /// </summary>
@@ -164,6 +181,12 @@ public sealed class UiState
         if (f.PinnedOnly)
         {
             f.PinnedOnly = false;
+            changed = true;
+        }
+
+        if (f.AbandonedOnly)
+        {
+            f.AbandonedOnly = false;
             changed = true;
         }
 

@@ -37,6 +37,10 @@ public sealed class Configuration : IPluginConfiguration
     /// <summary>Print a chat line when a level-up opens the next job or role quest (see <c>Game.ChatNotifier</c>). On by default.</summary>
     public bool JobQuestNudge { get; set; } = true;
 
+    // ---- 0.7.0: abandoned ledger (P10) ----
+    /// <summary>Print "Abandoned: [quest] (step 3 of 5)" when a quest leaves the journal uncompleted (see <c>Game.ChatNotifier</c>). On by default.</summary>
+    public bool ChatNoticeAbandoned { get; set; } = true;
+
     /// <summary>Show the "Removed from the game" tree node (retired quests and those with no journal genre). Off by default.</summary>
     public bool ShowUnlisted { get; set; }
 

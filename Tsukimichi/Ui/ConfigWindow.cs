@@ -357,6 +357,18 @@ public sealed class ConfigWindow : Window
             settings.JobQuestNudge = nudge;
             Save();
         }
+
+        var abandoned = settings.ChatNoticeAbandoned;
+        if (ImGui.Checkbox(Strings.AbandonedConfigNotice, ref abandoned))
+        {
+            settings.ChatNoticeAbandoned = abandoned;
+            Save();
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip(Strings.AbandonedConfigNoticeHint);
+        }
     }
 
     private void DrawJournal()
