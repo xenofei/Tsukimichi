@@ -5,8 +5,8 @@ namespace Tsukimichi.Core.Runtime;
 
 /// <summary>
 /// What the poller keeps between polls for the live character: the last committed capture, its evaluations, the
-/// catalog they were resolved against, the accepted-time map and the two dirty flags that drive the snapshot file
-/// and its <c>.accepted.json</c> sidecar. Keeping it together makes the rules that tie memory and disk explicit:
+/// catalog they were resolved against, the accepted-time map, the abandoned ledger and the dirty flags that drive the
+/// snapshot file and its <c>.accepted.json</c> and <c>.abandoned.json</c> sidecars. Keeping it together makes the rules that tie memory and disk explicit:
 /// deleting all data forgets the character so the next poll starts over and writes both files afresh; forgetting the
 /// live character marks both files dirty so the next flush rewrites both, never an orphan sidecar; a catalog swap
 /// makes the next poll a first pass rather than an empty diff against evaluations of another catalog.
@@ -36,6 +36,12 @@ public sealed class PollerMemory
 
     /// <summary>The sidecar differs from <see cref="AcceptedSince"/> and is rewritten on the next flush.</summary>
     public bool AcceptedSinceDirty { get; set; }
+
+    /// <summary>Quests the character abandoned, by runtime quest id; the <c>.abandoned.json</c> sidecar's contents.</summary>
+    public Dictionary<ushort, AbandonedEntry> Abandoned { get; private set; } = [];
+
+    /// <summary>The abandoned sidecar differs from <see cref="Abandoned"/> and is rewritten on the next flush.</summary>
+    public bool AbandonedDirty { get; set; }
 
     /// <summary>True while nothing is committed: the next poll is a first pass.</summary>
     public bool IsEmpty => Last is null;
@@ -71,6 +77,14 @@ public sealed class PollerMemory
         AcceptedSinceDirty = dirty;
     }
 
+    /// <summary>Replaces the abandoned ledger (loaded from its sidecar on a first pass).</summary>
+    public void SetAbandoned(Dictionary<ushort, AbandonedEntry> ledger, bool dirty)
+    {
+        ArgumentNullException.ThrowIfNull(ledger);
+        Abandoned = ledger;
+        AbandonedDirty = dirty;
+    }
+
     /// <summary>Forgets everything; the next poll is a first pass. The save debouncer keeps its cadence.</summary>
     public void Reset()
     {
@@ -79,6 +93,8 @@ public sealed class PollerMemory
         Catalog = null;
         AcceptedSince = [];
         AcceptedSinceDirty = false;
+        Abandoned = [];
+        AbandonedDirty = false;
     }
 
     /// <summary>
@@ -97,6 +113,7 @@ public sealed class PollerMemory
         {
             Saves.MarkDirty();
             AcceptedSinceDirty = true;
+            AbandonedDirty = true;
         }
     }
 }
