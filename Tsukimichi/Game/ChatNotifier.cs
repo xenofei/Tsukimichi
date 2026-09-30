@@ -57,6 +57,10 @@ public sealed class ChatNotifier : IDisposable
     private CharacterSnapshot? lastSnapshot;
     private readonly Dictionary<byte, short> lastLevels = [];
 
+    // Seasonal notice: the live capture and evaluations last scanned for Ready event quests.
+    private CharacterSnapshot? seasonalScannedSnapshot;
+    private IReadOnlyDictionary<uint, QuestEvaluation>? seasonalScannedStates;
+
     public ChatNotifier(SessionState session, Configuration config, PluginPaths paths, GameLinks links, IChatGui chat, IPluginLog log)
     {
         this.session = session ?? throw new ArgumentNullException(nameof(session));
@@ -199,6 +203,17 @@ public sealed class ChatNotifier : IDisposable
         {
             return;
         }
+
+        // Changed fires on every session bump, most of which (a view switch, a revealed name, a pin) leave the live
+        // evaluations alone. The running events' Ready sets only change with them, so the catalog is scanned once per
+        // live capture and evaluation; an event with no quest, or none Ready, is not rescanned until they change.
+        if (ReferenceEquals(snapshot, seasonalScannedSnapshot) && ReferenceEquals(session.LiveStates, seasonalScannedStates))
+        {
+            return;
+        }
+
+        seasonalScannedSnapshot = snapshot;
+        seasonalScannedStates = session.LiveStates;
 
         var all = true;
         foreach (var id in snapshot.ActiveFestivals)
