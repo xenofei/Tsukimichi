@@ -505,9 +505,14 @@ public sealed class TodoOverlay : Window, IDisposable
             UiMetrics.Tooltip(row.Tooltip);
         }
 
-        // The "…" opens the same menu as the right-click, for keyboard, controller and one-handed players (A6).
-        ImGui.SetCursorScreenPos(new Vector2(textX + layout.TextWidth + style.ItemSpacing.X, start.Y + (layout.RowHeight - UiMetrics.MinTarget) * 0.5f));
-        openMenu |= Chrome.IconButtonRound("##more", MoreGlyph, Strings.TodoRowMoreTooltip);
+        // The "…" opens the same menu as the right-click, for keyboard, controller and one-handed players (A6). While
+        // locked the panel is click-through, so the buttons would only be clutter.
+        if (!settings.TodoOverlayLocked)
+        {
+            ImGui.SetCursorScreenPos(new Vector2(textX + layout.TextWidth + style.ItemSpacing.X, start.Y + (layout.RowHeight - UiMetrics.MinTarget) * 0.5f));
+            openMenu |= Chrome.IconButtonRound("##more", MoreGlyph, Strings.TodoRowMoreTooltip);
+        }
+
         if (openMenu)
         {
             ImGui.OpenPopup(RowMenuId);
