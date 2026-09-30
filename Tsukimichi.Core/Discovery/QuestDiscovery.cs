@@ -79,8 +79,11 @@ public static class QuestDiscovery
 
     /// <summary>
     /// Quests whose issuer is the NPC with this id (ENpcResident row id, the game object's base id), in journal order.
-    /// Removed quests (<see cref="QuestRecord.IsRemoved"/>) are left out: the NPC no longer hands them out. Backs
-    /// <c>/tsuki which</c>, the NPC context menu's count and the <see cref="Query.QuestScope.Issuer"/> scope.
+    /// Retired quests (<see cref="QuestRecord.IsRetired"/>) are left out: the NPC no longer hands them out. A live
+    /// quest with no journal genre (<see cref="QuestRecord.IsUnlisted"/>; under <see cref="JournalFiling.Legacy"/> all
+    /// 180 genre-0 rows) stays, since the NPC still gives it; <see cref="Query.QuestQuery"/> decides whether the
+    /// <see cref="Query.QuestScope.Issuer"/> scope shows it. Backs <c>/tsuki which</c>, the NPC context menu's count
+    /// and that scope.
     /// </summary>
     public static List<QuestRecord> IssuedBy(QuestCatalog catalog, uint npcId)
     {
@@ -94,7 +97,7 @@ public static class QuestDiscovery
 
         foreach (var quest in catalog.All)
         {
-            if (!quest.IsRemoved && quest.Issuer is { } issuer && issuer.NpcId == npcId)
+            if (!quest.IsRetired && quest.Issuer is { } issuer && issuer.NpcId == npcId)
             {
                 matches.Add(quest);
             }

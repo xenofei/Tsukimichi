@@ -8,16 +8,16 @@ namespace Tsukimichi.Tests.Query;
 
 /// <summary>
 /// <see cref="QuestScope.Issuer"/>: the scope the NPC context menu opens the Journal on (feature plan v3 P2). It lists
-/// what one NPC hands out, in journal order, removed quests left out, and behaves like a journal node for the
-/// Include removed toggle.
+/// what one NPC hands out, in journal order: retired quests left out, an unlisted live quest (genre 0, as every
+/// genre-0 row is under Journal filing = Legacy) kept, and the Include removed toggle has no say.
 /// </summary>
 public class IssuerScopeTests
 {
     private const uint Gerolt = 1003075;
     private const uint Rowena = 1003076;
 
-    private static QuestRecord Issued(uint rowId, string name, uint npcId, string npcName, int sortKey, bool retired = false) =>
-        Quest(rowId, name, section: 1, category: 10, genre: 100, sortKey: sortKey) with
+    private static QuestRecord Issued(uint rowId, string name, uint npcId, string npcName, int sortKey, bool retired = false, uint genre = 100) =>
+        Quest(rowId, name, section: 1, category: 10, genre: genre, sortKey: sortKey) with
         {
             Issuer = new Issuer(npcId, npcName, 140, 20, 0f, 0f, 0f),
             IsRetired = retired,
@@ -56,6 +56,31 @@ public class IssuerScopeTests
 
         Assert.Equal(new uint[] { 2, 1 }, RowIds(result));
         Assert.Equal(2, result.TotalInScope);
+    }
+
+    [Fact]
+    public void Issuer_scope_keeps_an_unlisted_live_quest_the_npc_still_hands_out()
+    {
+        var catalog = QuestCatalog.Build(
+        [
+            Issued(1, "Up in Arms", Gerolt, "Gerolt", sortKey: 30),
+            Issued(3, "Old and Retired", Gerolt, "Gerolt", sortKey: 20, retired: true),
+            Issued(6, "Unfiled but Live", Gerolt, "Gerolt", sortKey: 25, genre: 0),
+            Issued(7, "Unfiled and Retired", Gerolt, "Gerolt", sortKey: 26, retired: true, genre: 0),
+        ]);
+        var states = States((1, QuestState.Ready), (3, QuestState.Completed), (6, QuestState.Ready), (7, QuestState.Completed));
+        Assert.True(catalog.GetByRowId(6)!.IsRemoved);
+
+        Assert.Equal(new uint[] { 6, 1 }, QuestDiscovery.IssuedBy(catalog, Gerolt).Select(q => q.RowId));
+        foreach (var include in new[] { false, true })
+        {
+            var result = Run(catalog, states, new FilterSet { IncludeUnlisted = include }, scope: QuestScope.Issuer(Gerolt));
+            Assert.Equal(new uint[] { 6, 1 }, RowIds(result));
+            Assert.Equal(2, result.TotalInScope);
+        }
+
+        // The whole journal still hides it unless Include removed is on.
+        Assert.DoesNotContain(6u, RowIds(Run(catalog, states)));
     }
 
     [Fact]
@@ -124,6 +149,39 @@ public class IssuerScopeFixtureTests(FixtureCatalog fixture) : IClassFixture<Fix
 
         // The same list /tsuki which prints, in the same order.
         Assert.Equal(QuestDiscovery.IssuedBy(catalog, VorsaileHeuloix).Select(q => q.RowId), RowIds(result));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void An_npc_lists_the_same_live_quests_under_either_journal_filing(bool legacy)
+    {
+        // Reach Long and Prosper (68477) is genre 0 in the sheet: under Legacy it is unlisted but live, under
+        // Refiled it is filed. Either way its NPC still hands it out, so /tsuki which, the menu count and the scope
+        // all list it.
+        const uint ReachLongAndProsper = 68477;
+        var catalog = legacy ? fixture.LegacyBundle.Catalog : fixture.Bundle.Catalog;
+        var quest = catalog.GetByRowId(ReachLongAndProsper)!;
+        Assert.Equal(legacy, quest.IsUnlisted);
+        Assert.False(quest.IsRetired);
+        var npc = quest.Issuer!.NpcId;
+
+        var issued = QuestDiscovery.IssuedBy(catalog, npc);
+        Assert.Contains(issued, q => q.RowId == ReachLongAndProsper);
+        Assert.DoesNotContain(issued, q => q.IsRetired);
+
+        var result = Run(catalog, States(catalog, QuestState.Ready), scope: QuestScope.Issuer(npc));
+        Assert.Equal(issued.Select(q => q.RowId), RowIds(result));
+        Assert.Equal(issued.Count, result.TotalInScope);
+    }
+
+    [Fact]
+    public void Under_legacy_filing_every_unlisted_live_quest_is_listed_by_its_npc()
+    {
+        var catalog = fixture.LegacyBundle.Catalog;
+        var live = catalog.All.Where(q => q.IsUnlisted && !q.IsRetired && q.Issuer is { NpcId: > 0 }).ToList();
+        Assert.NotEmpty(live);
+        Assert.All(live, q => Assert.Contains(QuestDiscovery.IssuedBy(catalog, q.Issuer!.NpcId), r => r.RowId == q.RowId));
     }
 
     [Fact]
