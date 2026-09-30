@@ -196,6 +196,13 @@ public sealed class Configuration : IPluginConfiguration
     /// </summary>
     public bool ReduceMotionChosen { get; set; }
 
+    /// <summary>
+    /// Newtonsoft's ShouldSerialize convention: <see cref="ReduceMotion"/> is written only once the user chose it.
+    /// A value that merely mirrors the OS stays out of the file, so a saved <c>ReduceMotion: true</c> without
+    /// <see cref="ReduceMotionChosen"/> can only come from a build before 0.7.0 and is read as the user's choice.
+    /// </summary>
+    public bool ShouldSerializeReduceMotion() => ReduceMotionChosen;
+
     /// <summary>Quest table row height: Comfortable (32 px, default) or Dense (24 px). Only the table's rows change.</summary>
     public RowDensity Density { get; set; } = RowDensity.Comfortable;
 
@@ -269,6 +276,14 @@ public sealed class Configuration : IPluginConfiguration
         if (!Enum.IsDefined(config.Density))
         {
             config.Density = RowDensity.Comfortable;
+        }
+
+        // Before 0.7.0 ReduceMotion defaulted to false and had no Chosen flag, so a saved true was the user's choice;
+        // the OS default must not overwrite it. (A value that only mirrored the OS is never saved: see
+        // ShouldSerializeReduceMotion.)
+        if (config.ReduceMotion && !config.ReduceMotionChosen)
+        {
+            config.ReduceMotionChosen = true;
         }
 
         // Read once per load: while the user has not chosen, Reduce motion mirrors the OS animation setting.
