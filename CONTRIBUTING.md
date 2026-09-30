@@ -26,7 +26,7 @@ To load a build in game: Dalamud Settings (`/xlsettings`) › Experimental › D
 | `Tsukimichi.Tests` | xunit tests for Core and GameData, with frozen fixtures under `Fixtures/`. |
 | `assets/` | The icon (SVG source, renderer, PNG). |
 | `docs/` | Feasibility report, plans, design spec, review panel, data reports. |
-| `tools/` | `make_pluginmaster.py` (the repository index) and curated-data helpers. |
+| `tools/` | `make_pluginmaster.py` (the repository index), `set-tested-version.ps1` (patch day) and curated-data helpers. |
 
 ## Curated data
 
@@ -41,7 +41,20 @@ dotnet run --project Tsukimichi.DataGen -- --verify --game "<path to sqpack>"
 
 ## Releases
 
-A release is a tag `vX.Y.Z` whose version equals the csproj `<Version>` and has a `## [X.Y.Z]` section in [CHANGELOG.md](CHANGELOG.md). GitHub Actions builds `latest.zip` from the tagged commit, attaches it to the GitHub Release and regenerates `pluginmaster.json` on `main` ([release workflow](.github/workflows/release.yml)). Nothing is built or uploaded from a developer machine.
+A release is a tag `vX.Y.Z` whose version equals the csproj `<Version>`, whose csproj carries a non-empty `<TsukimichiTestedGameVersion>` (see Patch day below), and has a `## [X.Y.Z]` section in [CHANGELOG.md](CHANGELOG.md). GitHub Actions builds `latest.zip` from the tagged commit, attaches it to the GitHub Release and regenerates `pluginmaster.json` on `main` ([release workflow](.github/workflows/release.yml)). Nothing is built or uploaded from a developer machine.
+
+## Patch day
+
+The game hooks (the item tooltip panel, the item and NPC context-menu entries and the server info bar entry) sit beside game UI that a patch can move or change. Each build records the game version they were play-tested on, `<TsukimichiTestedGameVersion>` in `Tsukimichi/Tsukimichi.csproj` (the text of `ffxivgame.ver`, for example `2026.09.15.0000.0000`), and on any newer game they pause themselves: one chat line at login and a notice in Settings › Integrations, while the quest journal keeps working. Players can tick "Enable game hooks on untested versions" to run them anyway. Anything new that draws beside a game addon (the Duty Finder unlock hint in 0.9.0) takes the same `HookGate` (`Tsukimichi.Core/Runtime/HookGate.cs`).
+
+When a patch lands:
+
+1. Update the client and load a dev build with "Enable game hooks on untested versions" ticked (or with the version already bumped locally).
+2. Play-test each hook on the new client: hover a quest-exclusive reward in the inventory (the panel sits beside the game tooltip, not over it); right-click it (the "Tsukimichi: quest reward" entry opens the quest); open the target bar menu on a quest-giving NPC ("Tsukimichi: quests here (N)"); check the "☾ N" server info bar entry and its tooltip and click.
+3. Fix whatever broke, then run `pwsh tools/set-tested-version.ps1` (reads `ffxivgame.ver` beside the sqpack directory; `-GamePath` or `-Version` to override) and commit the csproj.
+4. Add a changelog line such as "Game hooks tested on patch 7.x (game 2026.10.28)", bump `<Version>` and release as usual. The release workflow refuses a tag whose tested version is empty.
+
+A patch that also changes quest data needs `tools/regen.ps1` as well; the two are independent.
 
 ## Ground rules
 
