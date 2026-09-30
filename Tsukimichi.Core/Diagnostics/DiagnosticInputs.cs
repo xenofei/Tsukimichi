@@ -17,7 +17,8 @@ public sealed record DiagnosticInputs
     /// <summary>
     /// The filing text for a quest: "sheet" when the sheet's own genre stands, "rule N" for a refiled quest, "retired
     /// (rule 1)" or "retired (curated)" for a removed one, "curated" for an override, followed by the filing mode
-    /// ("rule 4, Refiled"; "sheet, Legacy"), so a bug report says which rule and which setting produced the genre.
+    /// ("rule 4, Refiled"; "sheet, Legacy"), so a bug report says which rule and which setting produced the genre. A
+    /// hidden progress tracker reads "tracker (rule 9)".
     /// </summary>
     public static string DescribeFiling(QuestRecord quest, JournalFiling filing)
     {
@@ -28,6 +29,7 @@ public sealed record DiagnosticInputs
             1 => "retired (rule 1)",
             8 when quest.IsRetired => "retired (curated)",
             8 => "curated",
+            QuestRecord.ProgressTrackerRule => "tracker (rule 9)",
             var n => "rule " + n.ToString(System.Globalization.CultureInfo.InvariantCulture),
         };
         return rule + ", " + filing;

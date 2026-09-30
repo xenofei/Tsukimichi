@@ -4,6 +4,14 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+### Fixed
+- Allied society dailies no longer read "Done today" for good once you have turned them in once: "Done today" now comes only from the dailies you turned in since the last reset. In the counts, a daily counts as done once you have done it at least once, so a Daily Quests section fills up as you try each one and stays filled.
+- Finished Chronicles of a New Era series and relic lines now reach 100 %: repeatable quests (Primal Focus, Unidentified Flying Object, the YoRHa weeklies, the relic repeatables) stay listed but no longer count, and a chain's next quest is never one of them or a quest you are locked out of. Primals read 14/14 and The Shadow of Mhach 6/6 when you have finished them.
+- Hidden progress rows the game keeps behind the scenes (six in YoRHa: Dark Apocalypse, two in the Resistance weapons, four in Ishgardian Restoration, Recondition the Anima and Forged Anew) no longer count towards their section, no longer show in My blues or as unlock quests, and are no longer chain steps.
+- The Job column reads "Any" for quests every class and job can take, where 216 main scenario quests read "Multi".
+- What Lies Beneath (Palace of the Dead, floors 51–200) is filed under Palace of the Dead, not Gridanian Sidequests.
+- Chain steps now follow the order you play them in, where a few quests the game files without a place came before the quest that unlocks them.
+
 ## [1.1.0] - 2026-09-30
 
 ### Added

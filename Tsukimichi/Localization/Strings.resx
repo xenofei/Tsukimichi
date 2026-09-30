@@ -3527,6 +3527,10 @@
   <data name="FilingReason.7" xml:space="preserve">
     <value>no signal</value>
   </data>
+  <data name="FilingReason.9" xml:space="preserve">
+    <value>hidden progress tracker, not counted</value>
+    <comment>A row the game sets behind the scenes; listed under the genre but in no done/total count.</comment>
+  </data>
   <data name="FilingReason.Other" xml:space="preserve">
     <value>rule {0}</value>
     <comment>{0} = rule number, for a rule with no short reason.</comment>

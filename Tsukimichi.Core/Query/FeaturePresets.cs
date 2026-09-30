@@ -11,7 +11,8 @@ namespace Tsukimichi.Core.Query;
 /// feature list or a system or duty unlock entry), when the shipped unique-reward data records an unlock for it, or
 /// when its own rewards unlock something: a duty, a class or job, an action, a general action, a trait, an aether
 /// current, a blue magic spell, a system unlock, or a named <c>Quest.OtherReward</c>. Main scenario quests,
-/// repeatables and retired quests are never feature quests, whatever they reward or show.
+/// repeatables, retired quests and hidden progress trackers (<see cref="QuestRecord.IsProgressTracker"/>) are never
+/// feature quests, whatever they reward or show.
 /// </summary>
 public static class FeaturePresets
 {
@@ -57,7 +58,7 @@ public static class FeaturePresets
         ArgumentNullException.ThrowIfNull(quest);
         ArgumentNullException.ThrowIfNull(curated);
 
-        if (quest.IsRetired || quest.IsRepeatable || IsMainScenario(quest))
+        if (quest.IsRetired || quest.IsRepeatable || quest.IsProgressTracker || IsMainScenario(quest))
         {
             return false;
         }

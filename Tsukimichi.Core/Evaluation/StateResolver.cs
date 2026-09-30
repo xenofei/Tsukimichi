@@ -145,7 +145,19 @@ public static class StateResolver
         return false;
     }
 
+    /// <summary>
+    /// The rules, plus <see cref="QuestEvaluation.RepeatableDoneBefore"/> on a repeatable the character has completed
+    /// at least once: its completion bit stays set after the first time, and the day's turn-in is in the cycle data.
+    /// </summary>
     private static QuestEvaluation ResolveCore(QuestRecord q, CharacterSnapshot s, QuestCatalog c, EvalContext ctx, Func<ushort, bool> festivalIsPast)
+    {
+        var evaluation = ResolveRules(q, s, c, ctx, festivalIsPast);
+        return q.IsRepeatable && evaluation.State != QuestState.Completed && (s.IsCompleted(q.QuestId) || s.DailyDone.ContainsKey(q.QuestId))
+            ? evaluation with { RepeatableDoneBefore = true }
+            : evaluation;
+    }
+
+    private static QuestEvaluation ResolveRules(QuestRecord q, CharacterSnapshot s, QuestCatalog c, EvalContext ctx, Func<ushort, bool> festivalIsPast)
     {
         var completed = s.IsCompleted(q.QuestId);
         var requirements = RequirementEvaluator.Evaluate(q, s, c, ctx);
@@ -193,8 +205,10 @@ public static class StateResolver
             }
         }
 
-        // 5. Repeatable already done this cycle: the daily flag, or the completion bit on a repeatable that resets.
-        if (q.IsRepeatable && ((completed && q.RepeatInterval != 0) || s.DailyDone.ContainsKey(q.QuestId)))
+        // 5. Repeatable already done this cycle: only the client's cycle data (the allied society daily slots) says so.
+        //    The completion bit of a repeatable that resets stays set after the first time, so it means "done before",
+        //    not "done today" (ResolveCore records it as RepeatableDoneBefore).
+        if (q.IsRepeatable && s.DailyDone.ContainsKey(q.QuestId))
         {
             return new(QuestState.DoneThisCycle, requirements, null, null, null);
         }

@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Tsukimichi.Core.Model;
 
 /// <summary>
@@ -108,9 +110,9 @@ public sealed record QuestRecord
     public uint IconSpecial { get; init; }
 
     /// <summary>
-    /// Journal icon family from <c>Quest.EventIconType</c>: 3 is the ordinary side quest, 8 the blue "+" feature
-    /// quest and 10 the quasi-quest that shares its icon (see <c>FeaturePresets.HasFeatureIcon</c>); zero when the
-    /// sheet has none.
+    /// Journal icon family from <c>Quest.EventIconType</c>: 1 is the ordinary side quest, 3 the main scenario quest,
+    /// 8 the blue "+" feature quest and 10 the quasi-quest that shares its icon (see <c>FeaturePresets.HasFeatureIcon</c>);
+    /// zero when the sheet has none.
     /// </summary>
     public byte EventIconType { get; init; }
 
@@ -172,6 +174,35 @@ public sealed record QuestRecord
     /// queries, the main scenario line, ladders, chains, Compare, search and the integrations all test this one flag.
     /// </summary>
     public bool IsRemoved => IsRetired || IsUnlisted;
+
+    /// <summary><see cref="RefiledFrom"/> of a hidden progress tracker (<c>JournalRefiler.TrackerRule</c>).</summary>
+    public const byte ProgressTrackerRule = 9;
+
+    /// <summary>
+    /// A hidden progress-tracker row the refiler recognised (<see cref="ProgressTrackerRule"/>): a genre-0 row the
+    /// game sets behind the scenes, which neither the Lodestone nor the wiki lists as a quest (the YoRHa, Resistance
+    /// and Ishgardian Restoration markers, the anima and Resistance weapon service rows). Filed under its genre for
+    /// the table and search, but never counted (<see cref="CountsInTotals"/> is false), never a feature quest and
+    /// never a chain step.
+    /// </summary>
+    [JsonIgnore]
+    public bool IsProgressTracker => RefiledFrom == ProgressTrackerRule;
+
+    /// <summary>
+    /// An allied society daily: a repeatable offered by an allied society (<see cref="BeastTribe"/> set). The only
+    /// repeatables in the done/total counts, where one counts as done once the character has completed it at least
+    /// once (docs/glossary.md, "Counting repeatables"); every other repeatable stays out of the counts and out of
+    /// chain progress.
+    /// </summary>
+    [JsonIgnore]
+    public bool IsAlliedSocietyDaily => IsRepeatable && BeastTribe != 0;
+
+    /// <summary>
+    /// Whether the quest enters done/total counts at all: <see cref="CountsInTotals"/>, and not a repeatable other
+    /// than an <see cref="IsAlliedSocietyDaily"/>. Removed quests are kept out before this is read.
+    /// </summary>
+    [JsonIgnore]
+    public bool EntersCounts => CountsInTotals && (!IsRepeatable || IsAlliedSocietyDaily);
 
     /// <summary>Computes the runtime quest id from a Quest sheet row id.</summary>
     public static ushort ToQuestId(uint rowId) => (ushort)(rowId & 0xFFFF);

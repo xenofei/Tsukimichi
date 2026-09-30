@@ -21,16 +21,20 @@ public readonly record struct NodeCount(int Done, int Total, int Excluded)
 }
 
 /// <summary>
-/// Done/total per section, category and genre for the tree labels. Done counts only <see cref="QuestState.Completed"/>.
+/// Done/total per section, category and genre for the tree labels. Done counts <see cref="QuestState.Completed"/>, and an
+/// allied society daily the character has completed at least once (<see cref="QuestEvaluation.CountsAsDone"/>).
 /// Removed quests (<see cref="QuestRecord.IsRemoved"/>: retired rows and the genre-0 leftovers) never enter a
 /// section, category or genre node, whatever ids the sheet gave them; they always land in <see cref="Unlisted"/> and
 /// join <see cref="Overall"/> only when included. That bucket counts every row, exclusions aside: a removed quest
 /// evaluates Locked out, and "118 of 179 done before they went" is the number the bucket is for. A listed quest with
-/// <see cref="QuestRecord.CountsInTotals"/> false (the class intros) is in no count at all, done or not.
+/// <see cref="QuestRecord.CountsInTotals"/> false (the class intros, the hidden progress trackers) is in no count at all,
+/// done or not, and neither is a repeatable other than an allied society daily (<see cref="QuestRecord.EntersCounts"/>:
+/// a weekly, a relic or seasonal repeatable, Primal Focus), which a finished section would otherwise never close.
 ///
 /// Alongside the progress, each node also carries how many of its counted quests are <see cref="QuestState.Ready"/>
 /// (<see cref="SectionReady"/>, <see cref="CategoryReady"/>, <see cref="GenreReady"/>, <see cref="OverallReady"/>): the
-/// tree's Ready badge and the Journal tab's badge (T11). Removed quests are never Ready and are not counted.
+/// tree's Ready badge and the Journal tab's badge (T11). Removed quests are never Ready and are not counted, and neither
+/// is a daily already counted as done.
 /// </summary>
 public sealed class TreeCounts
 {
@@ -106,7 +110,7 @@ public sealed class TreeCounts
         foreach (var quest in catalog.All)
         {
             var state = source.StateOf(quest.RowId);
-            var done = state == QuestState.Completed ? 1 : 0;
+            var done = source.CountsAsDone(quest.RowId) ? 1 : 0;
 
             if (quest.IsRemoved)
             {
@@ -119,9 +123,10 @@ public sealed class TreeCounts
                 continue;
             }
 
-            if (!quest.CountsInTotals)
+            if (!quest.EntersCounts)
             {
-                // A class intro: listed under its genre, never in its numbers (done or total).
+                // A class intro, a progress tracker or a repeatable other than an allied society daily: listed under
+                // its genre, never in its numbers (done or total).
                 continue;
             }
 
@@ -132,7 +137,7 @@ public sealed class TreeCounts
             Bump(genres, quest.Journal.GenreId, done, excluded);
             overall = Add(overall, done, excluded);
 
-            if (state == QuestState.Ready)
+            if (state == QuestState.Ready && done == 0)
             {
                 ready.Add(quest.Journal);
             }

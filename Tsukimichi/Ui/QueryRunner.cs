@@ -463,44 +463,28 @@ public sealed class QueryRunner : IDisposable
     /// <summary>First id of the game's job icon set (062101 Gladiator …), offset by ClassJob row id (<see cref="ClassJobInfo.IconId"/>).</summary>
     private const uint JobIconBase = 62100u;
 
+    /// <summary>The Job column's short label for a category (<see cref="CatalogBundle.ClassifyJobs"/>), and the job when it admits one.</summary>
     private static (string Label, byte? Single) ComputeJobShort(CatalogBundle b, uint category)
     {
-        var count = 0;
-        var hand = 0;
-        var land = 0;
-        byte single = 0;
-        foreach (var job in b.Jobs.JobsIn(category))
+        var (group, single) = b.ClassifyJobs(category);
+        switch (group)
         {
-            count++;
-            single = job;
-            if (job is >= 8 and <= 15)
-            {
-                hand++;
-            }
-            else if (job is >= 16 and <= 18)
-            {
-                land++;
-            }
+            case JobGroup.Any:
+                return (Strings.JobAny, null);
+            case JobGroup.Single:
+                var abbreviation = b.Names.ClassJobAbbreviation(single);
+                return abbreviation.Length > 0 ? (abbreviation, single) : (Strings.JobMulti, null);
+            case JobGroup.Land:
+                return (Strings.JobDol, null);
+            case JobGroup.Hand:
+                return (Strings.JobDoh, null);
+            case JobGroup.HandAndLand:
+                return (Strings.JobDohDol, null);
+            case JobGroup.WarAndMagic:
+                return (Strings.JobDowDom, null);
+            default:
+                return (Strings.JobMulti, null);
         }
-
-        if (count == 0 || (b.Jobs.JobColumns > 0 && count >= b.Jobs.JobColumns - 1))
-        {
-            return (Strings.JobAny, null);
-        }
-
-        if (count == 1)
-        {
-            var abbreviation = b.Names.ClassJobAbbreviation(single);
-            return abbreviation.Length > 0 ? (abbreviation, single) : (Strings.JobMulti, null);
-        }
-
-        var war = count - hand - land;
-        if (war == 0)
-        {
-            return (hand == 0 ? Strings.JobDol : land == 0 ? Strings.JobDoh : Strings.JobDohDol, null);
-        }
-
-        return (hand + land == 0 ? Strings.JobDowDom : Strings.JobMulti, null);
     }
 
     /// <summary>The viewed character's abandoned quest ids for the Abandoned filter; a copy, since the live ledger changes in place.</summary>

@@ -57,7 +57,7 @@ public class ChainCatalogDataTests(GameDataFixture fixture, ITestOutputHelper ou
         {
             var chain = chains.Chains.First(c => c.Name == entry.Name);
             output.WriteLine($"{chain.Name}: genres [{string.Join(", ", entry.GenreIds)}], {chain.RowIds.Count} quests");
-            Assert.Equal(entry.GenreIds.Sum(id => Catalog.ByGenre[id].Count(q => !q.IsRetired)), chain.RowIds.Count);
+            Assert.Equal(entry.GenreIds.Sum(id => Catalog.ByGenre[id].Count(q => !q.IsRetired && !q.IsProgressTracker)), chain.RowIds.Count);
             Assert.All(chain.RowIds, id => Assert.Same(chain, chains.ForQuest(id)));
         }
 

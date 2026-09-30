@@ -438,7 +438,8 @@ public static class CatalogMapper
                 job.Role,
                 IsCrafter: id != 0 && jobs.Admits(DisciplesOfTheHandCategory, id),
                 IsGatherer: id != 0 && jobs.Admits(DisciplesOfTheLandCategory, id),
-                job.ExpArrayIndex));
+                job.ExpArrayIndex,
+                IsLimited: job.IsLimitedJob));
         }
 
         return new GameNames(

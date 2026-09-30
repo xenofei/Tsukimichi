@@ -11,7 +11,7 @@ namespace Tsukimichi.DataGen;
 internal static class FeatureQuestsFile
 {
     public const string Note =
-        "Written by Tsukimichi.DataGen (tools/regen.ps1); do not edit by hand. Derived by FeaturePresets.Derive over the refiled catalog: quests with the blue EventIconType 8 journal icon or the quasi-quest type 10 that shares it, quests in system_unlocks.json or duty_unlocks.json, quests the unique-reward data credits with an unlock, and quests whose own rewards unlock something; never main scenario, repeatable or retired quests. Seeds the Unlock quests virtual category; CuratedInvariantsTests fails when this file differs from the derived set.";
+        "Written by Tsukimichi.DataGen (tools/regen.ps1); do not edit by hand. Derived by FeaturePresets.Derive over the refiled catalog: quests with the blue EventIconType 8 journal icon or the quasi-quest type 10 that shares it, quests in system_unlocks.json or duty_unlocks.json, quests the unique-reward data credits with an unlock, and quests whose own rewards unlock something; never main scenario, repeatable, retired or hidden progress-tracker quests. Seeds the Unlock quests virtual category; CuratedInvariantsTests fails when this file differs from the derived set.";
 
     private static readonly JsonSerializerOptions Options = new() { WriteIndented = true };
 

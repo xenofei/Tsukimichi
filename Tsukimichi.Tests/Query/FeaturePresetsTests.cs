@@ -260,7 +260,7 @@ public class FeaturePresetsDataTests(GameDataFixture fixture, ITestOutputHelper 
             {
                 entry.Derived++;
             }
-            else if (icon is 8 or 10 && !quest.IsRemoved && !FeaturePresets.IsMainScenario(quest) && !quest.IsRepeatable && missing.Count < 10)
+            else if (icon is 8 or 10 && !quest.IsRemoved && !FeaturePresets.IsMainScenario(quest) && !quest.IsRepeatable && !quest.IsProgressTracker && missing.Count < 10)
             {
                 missing.Add($"{quest.RowId} {quest.Name} [{quest.Journal.SectionName} › {quest.Journal.CategoryName}] rewards: {string.Join(", ", quest.Rewards.Select(r => r.Kind + ":" + r.Name))}");
             }
@@ -289,13 +289,13 @@ public class FeaturePresetsDataTests(GameDataFixture fixture, ITestOutputHelper 
         // Every live, non-repeatable blue-icon quest (feature or quasi-quest) outside the main scenario is in.
         foreach (var quest in catalog.All)
         {
-            if (FeaturePresets.HasFeatureIcon(quest) && !quest.IsRetired && !quest.IsRepeatable && !FeaturePresets.IsMainScenario(quest))
+            if (FeaturePresets.HasFeatureIcon(quest) && !quest.IsRetired && !quest.IsRepeatable && !quest.IsProgressTracker && !FeaturePresets.IsMainScenario(quest))
             {
                 Assert.Contains(quest.RowId, ids);
             }
         }
 
-        // Landmarks: the MSQ dungeon unlock and "Close to Home" (65621, an ordinary icon-3 side quest) stay out;
+        // Landmarks: the MSQ dungeon unlock and "Close to Home" (65621, an icon-3 main scenario quest) stay out;
         // "Hallo Halatali" (66233, Instance reward), "Ifrit Bleeds, We Can Kill It" (66584, hard-mode trial unlock)
         // and the Crystal Tower opener "Legacy of Allag" (Chronicles of a New Era, blue icon, no unlock reward) are in.
         Assert.DoesNotContain(catalog.All.First(q => q.Name == "It's Probably Pirates" && !q.IsUnlisted).RowId, ids);
