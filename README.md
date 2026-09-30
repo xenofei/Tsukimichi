@@ -31,7 +31,7 @@ Updates arrive through the plugin installer like any other plugin.
 - **Export**: your completed quests and your Moonlit collection as JSON or CSV for a spreadsheet or a collection tracker (Settings › Data › Export or `/tsuki export`; format in [docs/export-format.md](docs/export-format.md)). No content id, account or world, and your character's name only if you tick it. Local files only; nothing is uploaded.
 - **Flight tab**: every flying zone with its aether current quests, attunement, the quest that blocks each, and Flag or Teleport to the giver.
 - **Nearby quests** (`/tsuki nearby`): the quests you can start in the current zone, with a "☾ N" count in the server info bar.
-- **Todo overlay** (`/tsuki todo`): a small always-visible panel with your pins, the feature quests you can start here, the next main scenario quest and the current job's next job and role quest.
+- **Todo overlay** (`/tsuki todo`): a small always-visible panel with your pins, the feature quests you can start here, the next main scenario quest and the current job's next job and role quest. Its text is outlined so it reads over bright scenes; Compact mode shows one line per quest, and Locked makes it click-through.
 - **Item hints**: hovering an item that is a quest-exclusive reward shows which quest gives it and whether it is done; right-clicking such an item in the inventory adds "Tsukimichi: quest reward" to its context menu.
 - **Chains and ladders**: Hildibrand, the relic lines, the raid stories and every job and role quest ladder with "N of M" and the next quest.
 - **Notices**: an optional chat line when a pinned or feature quest becomes available, when a level-up opens the next job or role quest, and when you abandon a quest.

@@ -614,6 +614,18 @@ public sealed class ConfigWindow : Window
             ImGui.SetTooltip(Strings.TodoConfigLockedHint);
         }
 
+        var compact = settings.TodoOverlayCompact;
+        if (ImGui.Checkbox(Strings.TodoConfigCompact, ref compact))
+        {
+            settings.TodoOverlayCompact = compact;
+            Save();
+        }
+
+        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+        {
+            ImGui.SetTooltip(Strings.TodoConfigCompactHint);
+        }
+
         var opacity = TodoOverlay.ClampOpacity(settings.TodoOverlayOpacity);
         ImGui.SetNextItemWidth(220f * ImGuiHelpers.GlobalScale);
         if (ImGui.SliderFloat(Strings.TodoConfigOpacity, ref opacity, TodoOverlay.MinOpacity, TodoOverlay.MaxOpacity, "%.2f", ImGuiSliderFlags.AlwaysClamp))

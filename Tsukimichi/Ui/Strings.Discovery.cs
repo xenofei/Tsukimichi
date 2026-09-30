@@ -33,10 +33,12 @@ static partial class Strings
     /// <summary>{0} quest level.</summary>
     public const string DiscoveryLevelFormat = "Lv {0}";
 
-    public const string DiscoveryFlag = "Flag";
-    public const string DiscoveryFlagTooltip = "Flag the giver on the map";
-    public const string DiscoveryTeleport = "Teleport";
-    public const string DiscoveryRevealTooltip = "Show in the Journal";
+    public const string DiscoveryRevealInJournal = "Show in the Journal";
+    public const string DiscoveryRowTooltip = "Click: show in the Journal · double-click: flag the giver on the map · right-click or …: more";
+    public const string DiscoveryRowMoreTooltip = "More: show in the Journal, flag, teleport, link in chat";
+
+    /// <summary>Tooltip on the "Also in your journal here" caption.</summary>
+    public const string DiscoveryAcceptedToggleTooltip = "Click to fold or unfold the quests already in your journal";
 
     // Settings popup (cog at the top right).
     public const string DiscoverySettingsPopup = "##nearbySettings";

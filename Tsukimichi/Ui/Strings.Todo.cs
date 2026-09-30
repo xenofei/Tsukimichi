@@ -11,7 +11,6 @@ static partial class Strings
     // ---- Overlay window ----
     public const string TodoWindowTitle = "Tsukimichi Todo###TsukimichiTodo";
     public const string TodoHeader = "☾ Tsukimichi";
-    public const string TodoLockedTooltip = "Locked: the overlay stays where it is. Unlock it from this menu or in Settings.";
     public const string TodoEmpty = "Nothing to do here";
     public const string TodoNoSections = "No sections enabled";
 
@@ -23,12 +22,18 @@ static partial class Strings
     /// <summary>{0} = section name, {1} = row count.</summary>
     public const string TodoSectionFormat = "{0} ({1})";
 
-    public const string TodoRowClickHint = "Click: show in Tsukimichi · double-click: flag the giver on the map · right-click: more";
+    public const string TodoRowClickHint = "Click: show in Tsukimichi · double-click: flag the giver on the map · right-click or …: more";
+    public const string TodoRowMoreTooltip = "More: reveal, flag, teleport, link in chat";
+    public const string TodoHeaderMoreTooltip = "Overlay options: lock, compact, reset position, hide";
+
+    /// <summary>{0} = section name. Tooltip on a section header.</summary>
+    public const string TodoSectionToggleFormat = "Click to fold or unfold {0}";
     public const string TodoRevealInTsukimichi = "Reveal in Tsukimichi";
 
     // Header context menu (right-click on the title).
-    public const string TodoMenuLock = "Lock position";
-    public const string TodoMenuUnlock = "Unlock position";
+    public const string TodoMenuLock = "Lock (click-through)";
+    public const string TodoMenuLockTooltip = "The overlay stops taking clicks so the game behind it gets them. Unlock it again in Settings › Todo overlay.";
+    public const string TodoMenuCompact = "Compact";
     public const string TodoMenuResetPosition = "Reset position";
     public const string TodoMenuHide = "Hide overlay";
 
@@ -45,8 +50,10 @@ static partial class Strings
     public const string TodoConfigSection = "Todo overlay";
     public const string TodoConfigEnabled = "Show the todo overlay";
     public const string TodoConfigEnabledHint = "A small always-visible panel: your pins, unlock quests you can start here, the next main scenario quest and your job quests. /tsuki todo toggles it.";
-    public const string TodoConfigLocked = "Lock position";
-    public const string TodoConfigLockedHint = "The overlay cannot be dragged; rows stay clickable.";
+    public const string TodoConfigLocked = "Locked (click-through)";
+    public const string TodoConfigLockedHint = "The overlay cannot be moved and ignores the mouse: clicks go to the game behind it. Untick this to use its rows and menu again.";
+    public const string TodoConfigCompact = "Compact";
+    public const string TodoConfigCompactHint = "Moon and name only, one line per row, at a fixed width.";
     public const string TodoConfigOpacity = "Background opacity";
     public const string TodoConfigSectionsLabel = "Sections";
     public const string TodoConfigShowPins = "Pinned quests";

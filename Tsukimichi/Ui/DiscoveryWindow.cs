@@ -5,7 +5,6 @@ using System.IO;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
-using Dalamud.Interface.Components;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin.Services;
@@ -18,8 +17,12 @@ using Tsukimichi.Game;
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// Nearby quests (F-76 companion): the quests the viewed character can start in the current zone, with a Flag and a
-/// Teleport button per row, plus the accepted quests whose giver stands here. The row model is rebuilt only on
+/// Nearby quests (F-76 companion): the quests the viewed character can start in the current zone, plus the accepted
+/// quests whose giver stands here. It is read while playing, so it sits on the Chrome like the Todo overlay (T13):
+/// Night chrome, names outlined in the primary tone and level / job in the secondary, moons never under 14 px, and a
+/// "…" button per row with the same menu as a right-click (Show in the Journal, Flag, Teleport through Lifestream,
+/// Link in chat). A click shows the quest in the Journal; the map is flagged on a double-click or from the menu, never
+/// on a single click (accessibility A6/A8). The row model is rebuilt only on
 /// <see cref="SessionState.Changed"/> and <see cref="IClientState.TerritoryChanged"/> (and when a setting flips), and
 /// a notification that changed neither the session version, the catalog nor the territory is skipped outright;
 /// nothing is looked up per frame beyond the visible rows' teleport gating. <see cref="Changed"/> fires after a
@@ -32,6 +35,21 @@ public sealed class DiscoveryWindow : Window, IDisposable
     private readonly record struct Row(QuestRecord Quest, QuestState State, string Level, string Job, string StateText);
 
     private const ImGuiTableFlags TableFlags = ImGuiTableFlags.RowBg | ImGuiTableFlags.BordersInnerH | ImGuiTableFlags.SizingStretchProp;
+
+    /// <summary>The row menu's popup id, shared by the right-click and the "…" button (same id scope, the row's).</summary>
+    private const string RowMenuId = "##nearbyRowMenu";
+
+    private static readonly string CogGlyph = Chrome.Icon(FontAwesomeIcon.Cog);
+    private static readonly string MoreGlyph = Chrome.Icon(FontAwesomeIcon.EllipsisH);
+    private static readonly string FoldedGlyph = Chrome.Icon(FontAwesomeIcon.CaretRight);
+    private static readonly string OpenGlyph = Chrome.Icon(FontAwesomeIcon.CaretDown);
+
+    private Theme.StyleScope nightChrome;
+    private bool acceptedOpen;
+
+    // A clicked row whose reveal waits out the double-click window (ImGui time of the click); see DrawRow.
+    private QuestRecord? pendingReveal;
+    private double pendingRevealTime;
 
     /// <summary>Logical minimum size of the window, scaled by the UI scale each frame.</summary>
     private const float MinWidthLogical = 320f;
@@ -144,6 +162,13 @@ public sealed class DiscoveryWindow : Window, IDisposable
             MinimumSize = new Vector2(MinWidthLogical, MinHeightLogical) * UiMetrics.FontScale,
             MaximumSize = new Vector2(float.MaxValue, float.MaxValue),
         };
+        nightChrome = Theme.PushNightWindow();
+    }
+
+    public override void PostDraw()
+    {
+        nightChrome.Dispose();
+        nightChrome = default;
     }
 
     public override void Draw()
@@ -163,18 +188,19 @@ public sealed class DiscoveryWindow : Window, IDisposable
 
     private void DrawContent()
     {
+        FireDueReveal();
         DrawHeader();
-        ImGui.Separator();
+        Chrome.Hairline();
 
         if (session.Bundle is null)
         {
-            ImGui.TextDisabled(session.CatalogLoading ? Strings.CatalogNotReady : Strings.CatalogUnavailable);
+            Chrome.OutlinedText(session.CatalogLoading ? Strings.CatalogNotReady : Strings.CatalogUnavailable, Theme.Surface.TextSecondary);
             return;
         }
 
         if (session.ViewedSnapshot is null)
         {
-            ImGui.TextDisabled(Strings.ZoneNoCharacter);
+            Chrome.OutlinedText(Strings.ZoneNoCharacter, Theme.Surface.TextSecondary);
             return;
         }
 
@@ -193,7 +219,8 @@ public sealed class DiscoveryWindow : Window, IDisposable
         }
 
         ImGui.Spacing();
-        if (ImGui.CollapsingHeader(acceptedHeader))
+        DrawAcceptedHeader();
+        if (acceptedOpen)
         {
             DrawTable("##nearbyAccepted", accepted);
         }
@@ -202,23 +229,36 @@ public sealed class DiscoveryWindow : Window, IDisposable
     private void DrawHeader()
     {
         var line = ImGui.GetTextLineHeight();
-        MoonGlyph.DrawInline(QuestState.Ready, UiMetrics.InlineGlyphSize(line));
+        var button = UiMetrics.MinTarget;
+        var start = ImGui.GetCursorScreenPos();
+        var glyph = UiMetrics.PlayingGlyphSize(line);
+        var rowHeight = MathF.Max(glyph, button);
+        ImGui.SetCursorScreenPos(new Vector2(start.X, start.Y + (rowHeight - glyph) * 0.5f));
+        MoonGlyph.DrawInline(QuestState.Ready, glyph);
         ImGui.SameLine();
-        ImGui.TextUnformatted(header);
+        ImGui.SetCursorScreenPos(new Vector2(ImGui.GetCursorScreenPos().X, start.Y + (rowHeight - line) * 0.5f));
+        Chrome.OutlinedText(header, Theme.Surface.Text);
 
-        // Cog at the right edge, never under the minimum click target; the popup below hangs off it.
-        var buttonSize = UiMetrics.Square(MathF.Max(ImGui.GetFrameHeight(), UiMetrics.MinTarget));
-        ImGui.SameLine(ImGui.GetWindowContentRegionMax().X - buttonSize.X);
-        if (ImGuiComponents.IconButton("##nearbyCog", FontAwesomeIcon.Cog, buttonSize))
+        // Cog at the right edge, a round button never under the minimum target; the popup below hangs off it.
+        ImGui.SetCursorScreenPos(new Vector2(ImGui.GetWindowPos().X + ImGui.GetWindowContentRegionMax().X - button, start.Y + (rowHeight - button) * 0.5f));
+        if (Chrome.IconButtonRound("##nearbyCog", CogGlyph, Strings.DiscoverySettingsTooltip))
         {
             ImGui.OpenPopup(Strings.DiscoverySettingsPopup);
         }
 
-        if (ImGui.IsItemHovered())
+        ImGui.SetCursorScreenPos(new Vector2(start.X, start.Y + rowHeight));
+        ImGui.Dummy(Vector2.Zero);
+        DrawSettingsPopup();
+    }
+
+    private void DrawSettingsPopup()
+    {
+        if (!ImGui.IsPopupOpen(Strings.DiscoverySettingsPopup))
         {
-            UiMetrics.Tooltip(Strings.DiscoverySettingsTooltip);
+            return;
         }
 
+        using var style = Theme.PushPopup();
         using var popup = ImRaii.Popup(Strings.DiscoverySettingsPopup);
         if (!popup)
         {
@@ -255,9 +295,36 @@ public sealed class DiscoveryWindow : Window, IDisposable
 
     private void DrawEmpty()
     {
-        MoonGlyph.DrawInline(QuestState.Blocked, UiMetrics.InlineGlyphSize(ImGui.GetTextLineHeight()));
+        var glyph = UiMetrics.PlayingGlyphSize(ImGui.GetTextLineHeight());
+        MoonGlyph.DrawInline(QuestState.Blocked, glyph);
         ImGui.SameLine();
-        ImGui.TextDisabled(emptyText);
+        Chrome.OutlinedText(emptyText, Theme.Surface.TextSecondary);
+    }
+
+    /// <summary>"Also in your journal here (N)" as an outlined caption with a caret over a hairline; a click folds it.</summary>
+    private void DrawAcceptedHeader()
+    {
+        var start = ImGui.GetCursorScreenPos();
+        var width = ImGui.GetContentRegionAvail().X;
+        if (ImGui.InvisibleButton("##acceptedToggle", new Vector2(width, ImGui.GetTextLineHeight())))
+        {
+            acceptedOpen = !acceptedOpen;
+        }
+
+        var hovered = ImGui.IsItemHovered();
+        Chrome.FocusRing();
+        var dl = ImGui.GetWindowDrawList();
+        var ink = Theme.U32(hovered ? Theme.Surface.Text : Theme.Surface.TextSecondary);
+        ImGui.PushFont(UiBuilder.IconFont);
+        Chrome.OutlinedTextAt(dl, start, acceptedOpen ? OpenGlyph : FoldedGlyph, ink);
+        ImGui.PopFont();
+        Chrome.OutlinedTextAt(dl, new Vector2(start.X + ImGui.GetFontSize(), start.Y), acceptedHeader, ink);
+        if (hovered)
+        {
+            UiMetrics.Tooltip(Strings.DiscoveryAcceptedToggleTooltip);
+        }
+
+        Chrome.Hairline();
     }
 
     private void DrawTable(string id, Row[] rows)
@@ -269,20 +336,13 @@ public sealed class DiscoveryWindow : Window, IDisposable
         }
 
         var line = ImGui.GetTextLineHeight();
-        var glyphSize = UiMetrics.InlineGlyphSize(line);
-        var padding = ImGui.GetStyle().FramePadding.X * 2f;
-        var spacing = ImGui.GetStyle().ItemSpacing.X;
-        var actionsWidth = ImGui.CalcTextSize(Strings.DiscoveryFlag).X + padding;
-        if (links.TeleportAvailable)
-        {
-            actionsWidth += spacing + ImGui.CalcTextSize(Strings.DiscoveryTeleport).X + padding;
-        }
-
-        ImGui.TableSetupColumn(Strings.DiscoveryColumnState, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, glyphSize * 1.4f);
+        var glyphSize = UiMetrics.PlayingGlyphSize(line);
+        var button = UiMetrics.MinTarget;
+        ImGui.TableSetupColumn(Strings.DiscoveryColumnState, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, glyphSize * 1.2f);
         ImGui.TableSetupColumn(Strings.DiscoveryColumnQuest, ImGuiTableColumnFlags.WidthStretch, 1f);
         ImGui.TableSetupColumn(Strings.DiscoveryColumnLevel, ImGuiTableColumnFlags.WidthFixed, ImGui.CalcTextSize("Lv 100").X);
         ImGui.TableSetupColumn(Strings.DiscoveryColumnJob, ImGuiTableColumnFlags.WidthFixed, ImGui.CalcTextSize("WWWW").X);
-        ImGui.TableSetupColumn(Strings.DiscoveryColumnActions, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, actionsWidth);
+        ImGui.TableSetupColumn(Strings.DiscoveryColumnActions, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, button);
         ImGui.TableHeadersRow();
 
         if (!clipperCreated)
@@ -291,24 +351,28 @@ public sealed class DiscoveryWindow : Window, IDisposable
             clipperCreated = true;
         }
 
-        clipper.Begin(rows.Length);
+        var rowHeight = MathF.Max(glyphSize, button);
+        clipper.Begin(rows.Length, rowHeight + ImGui.GetStyle().CellPadding.Y * 2f);
         while (clipper.Step())
         {
             for (var i = clipper.DisplayStart; i < clipper.DisplayEnd; i++)
             {
-                DrawRow(rows[i], i, glyphSize);
+                DrawRow(rows[i], i, glyphSize, rowHeight);
             }
         }
 
         clipper.End();
     }
 
-    private void DrawRow(Row row, int index, float glyphSize)
+    private void DrawRow(Row row, int index, float glyphSize, float rowHeight)
     {
         using var id = ImRaii.PushId(index);
-        ImGui.TableNextRow();
+        ImGui.TableNextRow(ImGuiTableRowFlags.None, rowHeight);
+        var line = ImGui.GetTextLineHeight();
 
         ImGui.TableNextColumn();
+        var cell = ImGui.GetCursorScreenPos();
+        ImGui.SetCursorScreenPos(new Vector2(cell.X, cell.Y + (rowHeight - glyphSize) * 0.5f));
         MoonGlyph.DrawInline(row.State, glyphSize);
         if (ImGui.IsItemHovered())
         {
@@ -316,75 +380,133 @@ public sealed class DiscoveryWindow : Window, IDisposable
             UiMetrics.Tooltip(Strings.StateTooltip(row.State, row.Quest), row.State == QuestState.ReadyOnOtherJob ? row.StateText : null);
         }
 
+        // Name: the selectable spans the cell with the name painted over it, outlined. A click shows it in the
+        // Journal after the double-click window passes (FireDueReveal); a double-click flags the giver instead.
         ImGui.TableNextColumn();
-        if (ImGui.Selectable(session.Spoilers.DisplayName(row.Quest)))
+        var nameMin = ImGui.GetCursorScreenPos();
+        var nameWidth = ImGui.GetContentRegionAvail().X;
+        if (ImGui.Selectable("##row", false, ImGuiSelectableFlags.AllowDoubleClick, new Vector2(0f, rowHeight)))
         {
-            reveal(row.Quest);
+            if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
+            {
+                pendingReveal = null;
+                FlagOrReveal(row.Quest);
+            }
+            else
+            {
+                pendingReveal = row.Quest;
+                pendingRevealTime = ImGui.GetTime();
+            }
         }
 
-        if (ImGui.IsItemHovered())
+        var hovered = ImGui.IsItemHovered();
+        var openMenu = hovered && ImGui.IsMouseReleased(ImGuiMouseButton.Right);
+        var dl = ImGui.GetWindowDrawList();
+        var textY = nameMin.Y + (rowHeight - line) * 0.5f;
+        dl.PushClipRect(nameMin, new Vector2(nameMin.X + nameWidth, nameMin.Y + rowHeight), true);
+        Chrome.OutlinedTextAt(dl, new Vector2(nameMin.X, textY), session.Spoilers.DisplayName(row.Quest), Theme.U32(Theme.Surface.Text));
+        dl.PopClipRect();
+        if (hovered)
         {
-            UiMetrics.Tooltip(Strings.DiscoveryRevealTooltip);
+            UiMetrics.Tooltip(Strings.DiscoveryRowTooltip);
         }
 
         ImGui.TableNextColumn();
-        ImGui.TextUnformatted(row.Level);
+        Chrome.OutlinedTextAt(dl, new Vector2(ImGui.GetCursorScreenPos().X, textY), row.Level, Theme.U32(Theme.Surface.TextSecondary));
 
         ImGui.TableNextColumn();
-        ImGui.TextUnformatted(row.Job);
+        Chrome.OutlinedTextAt(dl, new Vector2(ImGui.GetCursorScreenPos().X, textY), row.Job, Theme.U32(Theme.Surface.TextSecondary));
 
+        // The "…" opens the same menu as the right-click, for keyboard, controller and one-handed players (A6).
         ImGui.TableNextColumn();
-        DrawActions(row.Quest);
+        openMenu |= Chrome.IconButtonRound("##more", MoreGlyph, Strings.DiscoveryRowMoreTooltip);
+        if (openMenu)
+        {
+            ImGui.OpenPopup(RowMenuId);
+        }
+
+        DrawRowMenu(row.Quest, row.State);
     }
 
-    private void DrawActions(QuestRecord quest)
+    /// <summary>The single-click reveal, once a double-click window has passed since the click without a second press.</summary>
+    private void FireDueReveal()
     {
-        using (ImRaii.Disabled(!links.CanFlagMap(quest)))
-        {
-            if (ImGui.SmallButton(Strings.DiscoveryFlag))
-            {
-                links.FlagMap(quest);
-            }
-        }
-
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(Strings.DiscoveryFlagTooltip);
-        }
-
-        // Hidden without Lifestream; disabled, with the reason on hover, while it is busy or the giver's zone has no aetheryte.
-        if (!links.TeleportAvailable)
+        if (pendingReveal is not { } quest || ImGui.GetTime() - pendingRevealTime <= ImGui.GetIO().MouseDoubleClickTime)
         {
             return;
         }
 
-        ImGui.SameLine();
-        var aetheryte = links.NearestAetheryte(quest);
-        var busy = links.TeleportBusy;
-        using (ImRaii.Disabled(aetheryte is null || busy))
-        {
-            if (ImGui.SmallButton(Strings.DiscoveryTeleport))
-            {
-                links.TeleportToGiver(quest);
-            }
-        }
+        pendingReveal = null;
+        reveal(quest);
+    }
 
-        if (!ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+    /// <summary>Double-click flags the giver; a quest without a mappable giver is shown in the Journal instead.</summary>
+    private void FlagOrReveal(QuestRecord quest)
+    {
+        if (links.CanFlagMap(quest))
         {
-            return;
-        }
-
-        if (aetheryte is not { } target)
-        {
-            UiMetrics.Tooltip(Strings.TeleportNoAetheryte);
-        }
-        else if (busy)
-        {
-            UiMetrics.Tooltip(Strings.TeleportBusy);
+            links.FlagMap(quest);
         }
         else
         {
-            UiMetrics.Tooltip(string.Format(CultureInfo.CurrentCulture, Strings.TeleportTooltipFormat, target.Name));
+            reveal(quest);
+        }
+    }
+
+    /// <summary>Show in the Journal, Flag, Teleport (only with Lifestream; disabled with the reason when it cannot) and Link in chat.</summary>
+    private void DrawRowMenu(QuestRecord quest, QuestState state)
+    {
+        if (!ImGui.IsPopupOpen(RowMenuId))
+        {
+            return;
+        }
+
+        using var style = Theme.PushPopup();
+        using var popup = ImRaii.Popup(RowMenuId);
+        if (!popup)
+        {
+            return;
+        }
+
+        if (ImGui.MenuItem(Strings.DiscoveryRevealInJournal))
+        {
+            reveal(quest);
+        }
+
+        if (ImGui.MenuItem(Strings.FlagOnMap, enabled: links.CanFlagMap(quest)))
+        {
+            links.FlagMap(quest);
+        }
+
+        if (links.TeleportAvailable)
+        {
+            var aetheryte = links.NearestAetheryte(quest);
+            var busy = links.TeleportBusy;
+            if (ImGui.MenuItem(Strings.TeleportToGiver, enabled: aetheryte is not null && !busy))
+            {
+                links.TeleportToGiver(quest);
+            }
+
+            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+            {
+                if (aetheryte is not { } target)
+                {
+                    UiMetrics.Tooltip(Strings.TeleportNoAetheryte);
+                }
+                else if (busy)
+                {
+                    UiMetrics.Tooltip(Strings.TeleportBusy);
+                }
+                else
+                {
+                    UiMetrics.Tooltip(string.Format(CultureInfo.CurrentCulture, Strings.TeleportTooltipFormat, target.Name));
+                }
+            }
+        }
+
+        if (ImGui.MenuItem(Strings.LinkInChat))
+        {
+            links.PrintQuestLink(quest, Strings.StateName(state, quest));
         }
     }
 
@@ -447,7 +569,7 @@ public sealed class DiscoveryWindow : Window, IDisposable
             ? string.Format(CultureInfo.CurrentCulture, Strings.DiscoveryHeaderOneFormat, zoneLabel)
             : string.Format(CultureInfo.CurrentCulture, Strings.DiscoveryHeaderFormat, zoneLabel, startable.Length);
         emptyText = string.Format(CultureInfo.CurrentCulture, Strings.DiscoveryEmptyFormat, zoneLabel);
-        acceptedHeader = string.Format(CultureInfo.CurrentCulture, Strings.DiscoveryAcceptedHeaderFormat, accepted.Length) + "###nearbyAccepted";
+        acceptedHeader = string.Format(CultureInfo.CurrentCulture, Strings.DiscoveryAcceptedHeaderFormat, accepted.Length);
         Changed?.Invoke();
     }
 
