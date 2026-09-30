@@ -295,7 +295,7 @@ internal sealed class PatchSeeder(GameCatalog game, GarlandPatchSource garland, 
         }
         else
         {
-            sb.AppendLine("Quests Garland could not place (no patch document lists them and their quest document has no patch, or was not fetched yet). They read as unknown in the plugin: no \"Added in\" line, never in an \"Added in\" filter or the New this patch group.");
+            sb.AppendLine("Quests Garland could not place (no patch document lists them and their quest document has no patch, or was not fetched yet). They read as unknown in the plugin: no \"Added in\" line, never in an \"Added in\" filter or the Unlocks quick view's \"New in 7.5x\" group.");
             sb.AppendLine();
             sb.AppendLine("| Row id | Quest | Expansion | Removed from the game |");
             sb.AppendLine("|---:|---|---:|---|");

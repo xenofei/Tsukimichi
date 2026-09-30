@@ -9,7 +9,7 @@ namespace Tsukimichi.Tests.Data;
 
 /// <summary>
 /// The shipped <c>quest_patches.json</c> (P8) over the frozen catalog: the file itself, the mapping into
-/// <see cref="QuestRecord.AddedIn"/>, and the Unlocks quick view's "New this patch" group on real data.
+/// <see cref="QuestRecord.AddedIn"/>, and the Unlocks quick view's "New in 7.5x" group on real data.
 /// </summary>
 public class QuestPatchesFixtureTests(FixtureCatalog fixture) : IClassFixture<FixtureCatalog>
 {
@@ -92,23 +92,28 @@ public class QuestPatchesFixtureTests(FixtureCatalog fixture) : IClassFixture<Fi
     }
 
     [Fact]
-    public void Unlocks_view_leads_with_the_newest_patch_on_the_fixture()
+    public void Unlocks_view_leads_with_its_unlocks_from_the_newest_series_on_the_fixture()
     {
         var bundle = Dated();
         var catalog = bundle.Catalog;
         var index = PatchIndex.For(catalog);
-        var ctx = QueryContext.Empty with { FeatureQuestIds = fixture.Curated.FeatureQuests };
+        var unlocks = fixture.Curated.FeatureQuests;
+        var ctx = QueryContext.Empty with { FeatureQuestIds = unlocks };
         var sort = SortSpec.Default with { AvailableFirst = true, NewThisPatchFirst = true };
 
         var result = Run(catalog, States(catalog, QuestState.Ready), new FilterSet { Preset = Preset.FeatureQuests }, sort: sort, ctx: ctx);
 
-        Assert.Equal(Shipped.Value.Newest, index.Newest);
-        Assert.True(PatchVersion.Compare(index.Newest, "7.5") >= 0, $"newest patch {index.Newest}");
-        Assert.True(result.NewThisPatch > 0);
-        Assert.Equal(index.NewestCount, result.NewThisPatch);
-        Assert.All(result.Rows.Take(result.NewThisPatch), r => Assert.Equal(0, PatchVersion.Compare(r.Quest.AddedIn, index.Newest)));
-        Assert.All(result.Rows.Skip(result.NewThisPatch), r => Assert.True(fixture.Curated.FeatureQuests.Contains(r.Quest.RowId)));
-        Assert.Equal(fixture.Curated.FeatureQuests.Count(id => catalog.GetByRowId(id) is { IsRemoved: false } q && !index.IsNew(q)), result.Rows.Length - result.NewThisPatch);
+        Assert.Equal(PatchVersion.Series(Shipped.Value.Newest), index.NewestSeries);
+        Assert.True(PatchVersion.Compare(index.NewestSeries, "7.5") >= 0, $"newest series {index.NewestSeries}");
+
+        // Only unlocks: the group is the view's own quests from the newest series, and the view adds nothing.
+        Assert.All(result.Rows, r => Assert.Contains(r.Quest.RowId, unlocks));
+        var expectedNew = unlocks.Count(id => catalog.GetByRowId(id) is { } q && index.IsNew(q));
+        Assert.True(expectedNew > 0, $"no unlock quest in {index.NewestSeries}x on the fixture");
+        Assert.Equal(expectedNew, result.NewThisPatch);
+        Assert.All(result.Rows.Take(result.NewThisPatch), r => Assert.True(PatchVersion.InSeries(r.Quest.AddedIn, index.NewestSeries)));
+        Assert.All(result.Rows.Skip(result.NewThisPatch), r => Assert.False(index.IsNew(r.Quest)));
+        Assert.Equal(unlocks.Count(id => catalog.GetByRowId(id) is { IsRemoved: false }), result.Rows.Length);
     }
 
     [GameDataFact]

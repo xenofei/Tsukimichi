@@ -15,19 +15,26 @@ public sealed class PatchIndex
 {
     private static readonly ConditionalWeakTable<QuestCatalog, PatchIndex> Cache = [];
 
-    private PatchIndex(string newest, int newestCount, IReadOnlyList<PatchSeries> series, int known)
+    private PatchIndex(string newest, IReadOnlyList<PatchSeries> series, int known)
     {
         Newest = newest;
-        NewestCount = newestCount;
+        NewestSeries = PatchVersion.Series(newest);
         Series = series;
         Known = known;
+        NewestSeriesCount = series.Count > 0 && series[0].Series == NewestSeries ? series[0].Quests : 0;
     }
 
     /// <summary>The newest patch any quest in the game carries ("7.56"); empty when no quest has a patch.</summary>
     public string Newest { get; }
 
-    /// <summary>How many quests in the game were added in <see cref="Newest"/>.</summary>
-    public int NewestCount { get; }
+    /// <summary>
+    /// The series of <see cref="Newest"/> ("7.5", shown "7.5x": 7.5, 7.51, 7.55, 7.56): what "new" means for the
+    /// Unlocks quick view's first group, the same unit as the "Added in" filter. Empty when no quest has a patch.
+    /// </summary>
+    public string NewestSeries { get; }
+
+    /// <summary>How many quests in the game were added in <see cref="NewestSeries"/>.</summary>
+    public int NewestSeriesCount { get; }
 
     /// <summary>Every series some quest was added in, newest first ("7.5", "7.4" … "2.0").</summary>
     public IReadOnlyList<PatchSeries> Series { get; }
@@ -35,11 +42,11 @@ public sealed class PatchIndex
     /// <summary>Quests in the game with a known patch.</summary>
     public int Known { get; }
 
-    /// <summary>Whether the quest belongs to the "New this patch" group: added in exactly <see cref="Newest"/>.</summary>
+    /// <summary>Whether the quest is new: still in the game and added in <see cref="NewestSeries"/>.</summary>
     public bool IsNew(QuestRecord quest)
     {
         ArgumentNullException.ThrowIfNull(quest);
-        return Newest.Length > 0 && !quest.IsRemoved && PatchVersion.Compare(quest.AddedIn, Newest) == 0;
+        return NewestSeries.Length > 0 && !quest.IsRemoved && PatchVersion.InSeries(quest.AddedIn, NewestSeries);
     }
 
     /// <summary>The index for <paramref name="catalog"/>, built on first use and kept while the catalog lives.</summary>
@@ -71,19 +78,7 @@ public sealed class PatchIndex
             counts[series] = counts.GetValueOrDefault(series) + 1;
         }
 
-        var newestCount = 0;
-        if (newest.Length > 0)
-        {
-            foreach (var quest in catalog.All)
-            {
-                if (!quest.IsRemoved && PatchVersion.Compare(quest.AddedIn, newest) == 0)
-                {
-                    newestCount++;
-                }
-            }
-        }
-
         var list = counts.Select(kv => new PatchSeries(kv.Key, kv.Value)).OrderBy(s => s.Series, PatchVersion.NewestFirst).ToArray();
-        return new PatchIndex(newest, newestCount, list, known);
+        return new PatchIndex(newest, list, known);
     }
 }

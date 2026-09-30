@@ -132,7 +132,7 @@ public sealed class TablePane : IDisposable
 
     private ImGuiListClipperPtr clipper;
 
-    /// <summary>Row id of the last "New this patch" row under the Unlocks quick view (a rule is drawn under it); null when there is no group, or nothing after it.</summary>
+    /// <summary>Row id of the last "New in 7.5x" row under the Unlocks quick view (a rule is drawn under it); null when there is no group, or nothing after it.</summary>
     private uint? newGroupEnd;
     private bool clipperCreated;
 
@@ -725,7 +725,7 @@ public sealed class TablePane : IDisposable
     }
 
     /// <summary>
-    /// The line under the last row of the Unlocks quick view's "New this patch" group (P8): a moon-gold rule across
+    /// The line under the last row of the Unlocks quick view's "New in 7.5x" group (P8): a moon-gold rule across
     /// every column on the background channel, so the group reads as one block above the rest.
     /// </summary>
     private static void DrawGroupEnd(Vector2 rowMin, Vector2 rowMax)

@@ -5,7 +5,7 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 ## [Unreleased]
 
 ### Added
-- Patch of origin: every quest now knows the patch it came with. The detail pane says so after the level ("Dawntrail · Lv 100 · Any · Added in 7.5"); a new "Added in" filter (filter panel › Advanced, chip "Added in 7.5x") keeps one patch series, 7.5x meaning 7.5, 7.51, 7.55 and the rest, newest first in the list; and the Unlocks quick view opens with a "New this patch" group, the quests the latest patch added (7.56 today), unlocks or not, above everything else. The patch numbers come from Garland Tools' patch data for all 5,373 quests, checked against the game's own expansion for each quest, and future patches are added from the game data alone.
+- Patch of origin: every quest now knows the patch it came with. The detail pane says so after the level ("Dawntrail · Lv 100 · Any · Added in 7.5"); a new "Added in" filter (filter panel › Advanced, chip "Added in 7.5x") keeps one patch series, 7.5x meaning 7.5, 7.51, 7.55 and the rest, newest first in the list; and the Unlocks quick view opens with a "New in 7.5x" group, the unlock quests of the newest patch series (7.5, 7.51, 7.55 and 7.56 today), above everything else. The patch numbers come from Garland Tools' patch data for all 5,373 quests, checked against the game's own expansion for each quest, and future patches are added from the game data alone.
 
 ## [0.8.0] - 2026-09-29
 

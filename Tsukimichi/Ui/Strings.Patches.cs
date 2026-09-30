@@ -3,8 +3,8 @@ using Tsukimichi.Core.Query;
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// UI strings for the patch of origin (P8): the "Added in" filter and its chip, and the Unlocks quick view's "New this
-/// patch" group. The detail pane's "Added in" line lives with the hero's strings (<c>DetailAddedInFormat</c>).
+/// UI strings for the patch of origin (P8): the "Added in" filter and its chip, and the Unlocks quick view's "New in
+/// 7.5x" group. The detail pane's "Added in" line lives with the hero's strings (<c>DetailAddedInFormat</c>).
 /// </summary>
 static partial class Strings
 {
@@ -18,7 +18,7 @@ static partial class Strings
     /// <summary>The chip: {0} = series ("7.5").</summary>
     public const string AddedInChipFormat = "Added in {0}x";
 
-    /// <summary>Above the Unlocks quick view: {0} = the newest patch in the data, {1} = its quests in the table.</summary>
-    public const string NewThisPatchCaptionFormat = "New this patch ({0}): {1} quests, listed first";
-    public const string NewThisPatchCaptionOneFormat = "New this patch ({0}): 1 quest, listed first";
+    /// <summary>Above the Unlocks quick view: {0} = the newest patch series in the data ("7.5"), {1} = its unlock quests in the table.</summary>
+    public const string NewThisPatchCaptionFormat = "New in {0}x: {1} unlock quests, listed first";
+    public const string NewThisPatchCaptionOneFormat = "New in {0}x: 1 unlock quest, listed first";
 }
