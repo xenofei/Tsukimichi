@@ -1,5 +1,5 @@
 {
-  "$schema_note": "festivalId -> { name, start, end (UTC), evidence (the Lodestone announcement or special-site page), note }. Seeded from docs/data/festival-end-dates.json (Tsukimichi.Verify, game 2026.09.15) after checking each id's quests against the catalog. A past end turns that festival's undone quests Locked out while it is not running; the plugin shows 'ends <date> (Lodestone)' only for an end still ahead with an https evidence URL. Collaboration events rerun under the same Festival id, so their entries carry a name and evidence but no dates. Festival ids with no Lodestone link (the 2023-2026 editions without one, Heavensturn and Hatching-tide 2014 whose wiki dates did not validate) are left out; the plugin then shows 'running now' only.",
+  "$schema_note": "festivalId -> { name, start, end (UTC), evidence (the Lodestone announcement or special-site page), note }. Seeded from docs/data/festival-end-dates.json (Tsukimichi.Verify, game 2026.09.15) after checking each id's quests against the catalog. A past end turns that festival's undone quests Locked out while it is not running; the plugin shows 'ends <date> (Lodestone)' only for an end still ahead with an https evidence URL. Collaboration events rerun under the same Festival id, so their entries carry a name without an edition year, evidence and no dates; such an entry never locks its quests out. An edition without a Lodestone window in docs/data/festival-end-dates.json may still carry its name with the year (\"The Rising (2024)\") and evidence (the Lodestone page, or the wiki's event page for one not yet announced) but no dates, so the plugin reads its real name and leaves it to the completed-quest rule. Festival ids with no Lodestone link (the 2023-2026 editions without one, Heavensturn and Hatching-tide 2014 whose wiki dates did not validate) are left out; the plugin then shows 'running now' only.",
   "entries": {
     "2": {
       "name": "All Saints' Wake (2013)",
@@ -563,6 +563,11 @@
       "evidence": "https://eu.finalfantasyxiv.com/lodestone/special/2023/Hatching_tide/gkonsy0g3l",
       "note": "Lodestone window March 27, 2023 to April 10, 2023; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 2 quest(s) in Hatching-tide Events (Chaos, Carnage, Eggs, Get Along and Play Knife)."
     },
+    "139": {
+      "name": "The Make It Rain Campaign (2023)",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2023/the_make_it_rain_campaign/6x2dhiqdfv",
+      "note": "No dates are shipped: the name is the event's own, so the running-now lines and the login notice read it instead of the journal genre's (\"Gold Saucer Festivities\"); the edition year keeps it a past edition, so its undone quests are left to the completed-quest rule. Lodestone window June 30, 2023 to July 17, 2023. Quests: A Golden Opportunity, Hearts of Gold."
+    },
     "140": {
       "name": "Moonfire Faire (2023)",
       "start": "2023-08-10T00:00:00Z",
@@ -577,6 +582,16 @@
       "evidence": "https://eu.finalfantasyxiv.com/lodestone/special/2023/The_Rising/eykg76bc2d",
       "note": "Lodestone window August 27, 2023 to October 3, 2023; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 2 quest(s) in Rising Events (Siblings Rising, What Drives Us)."
     },
+    "145": {
+      "name": "Little Ladies' Day & Hatching-tide (2024)",
+      "evidence": "https://eu.finalfantasyxiv.com/lodestone/special/2024/Little_Ladies_Day_Hatching_tide/fnvycqn3ol",
+      "note": "No dates are shipped: the name is the event's own, so the running-now lines and the login notice read it instead of the journal genre's (\"Little Ladies' & Hatching-tide Events\", which drops \"Day\"); the edition year keeps it a past edition, so its undone quests are left to the completed-quest rule. The two festivals ran as one event: Lodestone window March 14, 2024 to April 1, 2024. Quests: The Princesses and the Eggs, Peatie in Pink."
+    },
+    "146": {
+      "name": "The Make It Rain Campaign (2024)",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2024/the_make_it_rain_campaign/jgmo8djkm5",
+      "note": "No dates are shipped: the name is the event's own, so the running-now lines and the login notice read it instead of the journal genre's (\"Gold Saucer Festivities\"); the edition year keeps it a past edition, so its undone quests are left to the completed-quest rule. Lodestone window May 15, 2024 to May 31, 2024. Quests: Of Impish Importance."
+    },
     "147": {
       "name": "Final Fantasy XVI Collaboration: The Path Infernal",
       "evidence": "https://na.finalfantasyxiv.com/lodestone/special/ffxvi/",
@@ -586,6 +601,21 @@
       "name": "Blunderville",
       "evidence": "https://na.finalfantasyxiv.com/lodestone/special/fallguys/",
       "note": "Collaboration event; the game reuses Festival id 148 for its reruns (it ran October 31 to December 31, 2023 (the window the Lodestone link gives), then May 23 to June 10, 2024, October 23 to November 11, 2024 and November 6 to November 27, 2025, per the wiki). No dates: a past end would read Locked out between runs, and a running rerun must not show an old end date. Quests: Just Crowning Around."
+    },
+    "151": {
+      "name": "The Rising (2024)",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2024/The_Rising/kx9ry8yeix",
+      "note": "No dates are shipped: the name is the event's own, so the running-now lines and the login notice read it instead of the journal genre's (\"Rising\"); the edition year keeps it a past edition, so its undone quests are left to the completed-quest rule. Lodestone window August 27, 2024 to September 11, 2024. Quests: Rising to the Call, We Who Are About to Set Sail Salute You."
+    },
+    "161": {
+      "name": "The Make It Rain Campaign (2025)",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2025/the_make_it_rain_campaign/pP1HUSgIHI",
+      "note": "No dates are shipped: the name is the event's own, so the running-now lines and the login notice read it instead of the journal genre's (\"Gold Saucer Festivities\"); the edition year keeps it a past edition, so its undone quests are left to the completed-quest rule. Lodestone window May 19, 2025 to June 11, 2025. Quests: Royal Rumblings."
+    },
+    "162": {
+      "name": "The Rising (2025)",
+      "evidence": "https://eu.finalfantasyxiv.com/lodestone/special/2025/The_Rising/6s3bvkhk74",
+      "note": "No dates are shipped: the name is the event's own, so the running-now lines and the login notice read it instead of the journal genre's (\"Rising\"); the edition year keeps it a past edition, so its undone quests are left to the completed-quest rule. Lodestone window August 27, 2025 to September 11, 2025. Quests: An Adventurous Ambition, A Light That Ever Burns."
     },
     "169": {
       "name": "Little Ladies' Day (2026)",
@@ -621,6 +651,21 @@
       "end": "2026-09-10T23:59:59Z",
       "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2026/The_Rising/cula62e5jx",
       "note": "Lodestone window '''August 27, 2026''' to '''September 10, 2026'''; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 2 quest(s) in Rising Events (Prelude's Call, The Symphony of Life)."
+    },
+    "176": {
+      "name": "All Saints' Wake (2026)",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/All_Saints%27_Wake_(2026)",
+      "note": "Upcoming edition (October 2026, not yet announced on the Lodestone when this entry was written); the wiki's event page lists its quests. No dates until the Lodestone gives them; the edition year keeps it an edition, not a rerun. Quests: We Scare Bears, Grim and Grisly Games."
+    },
+    "257": {
+      "name": "Keybound Brawler",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/topics/detail/cf77677d0ea64209f5614a170cefd1925e8dff23",
+      "note": "Collaboration event: the FINAL FANTASY VII typing game at the Gold Saucer (patch 7.5 special site, arriving around October 28, 2026), filed under Collaboration Quests; the journal genre would name it \"Collaboration Quests\". Collaboration events rerun under their own Festival id (A Nocturne for Heroes, Yo-kai Watch and Blunderville did), so no dates are shipped. Quests: Keyward Bound."
+    },
+    "258": {
+      "name": "Starlight Celebration (2026)",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Starlight_Celebration_(2026)",
+      "note": "Upcoming edition (December 2026, not yet announced on the Lodestone when this entry was written); the wiki's event page lists its quests. No dates until the Lodestone gives them; the edition year keeps it an edition, not a rerun. Quests: Dashing through the Starlight, Sleigh Bells Ring."
     }
   }
 }
