@@ -71,6 +71,37 @@ public class PaneArtTests
         Assert.Equal(4 * BeadRingMath.StepSeconds, BeadRingMath.SequenceSeconds(1, 4), 5);
     }
 
+    [Fact]
+    public void Beads_light_in_sequence_only_for_a_rise_between_real_reads_of_one_character()
+    {
+        var live = new BeadReading(1, Live: true, AllUnknown: false, HasStates: true);
+
+        // The same character read the same way, count rising: the sequence plays. Level or falling: it does not.
+        Assert.True(BeadRingMath.ShouldSequence(live, live, 2, 4));
+        Assert.False(BeadRingMath.ShouldSequence(live, live, 4, 4));
+        Assert.False(BeadRingMath.ShouldSequence(live, live, 4, 2));
+
+        // No read yet (the pane's first counts).
+        Assert.False(BeadRingMath.ShouldSequence(default, live, 0, 4));
+
+        // A character switch.
+        Assert.False(BeadRingMath.ShouldSequence(live, live with { ContentId = 2 }, 1, 4));
+
+        // The first real read after login: the previous one had no quest states.
+        Assert.False(BeadRingMath.ShouldSequence(live with { HasStates = false }, live, 0, 4));
+
+        // Attunement becoming readable: the previous read had none.
+        Assert.False(BeadRingMath.ShouldSequence(live with { AllUnknown = true }, live, 1, 4));
+
+        // The same character going from its stored snapshot to live (or back).
+        Assert.False(BeadRingMath.ShouldSequence(live with { Live = false }, live, 1, 4));
+        Assert.False(BeadRingMath.ShouldSequence(live, live with { Live = false }, 1, 4));
+
+        // Nothing readable now.
+        Assert.False(BeadRingMath.ShouldSequence(live, live with { AllUnknown = true }, 1, 4));
+        Assert.False(BeadRingMath.ShouldSequence(live with { ContentId = null }, live with { ContentId = null }, 1, 4));
+    }
+
     [Theory]
     [InlineData(100f, 2)]
     [InlineData(191f, 2)]
@@ -105,6 +136,18 @@ public class PaneArtTests
         Assert.Equal(PaneGrid.BannerMaxLogical, PaneGrid.BannerHeight(900f));
         Assert.Equal(0f, PaneGrid.BannerHeight(float.NaN));
         Assert.Equal(0f, PaneGrid.BannerHeight(-1f));
+    }
+
+    [Fact]
+    public void Capped_grids_show_at_most_the_rows_asked_for()
+    {
+        // Ten section rings in two columns at 320 px: two rows show four.
+        Assert.Equal(4, PaneGrid.Capped(10, 2, 2));
+        Assert.Equal(3, PaneGrid.Capped(3, 2, 2));
+        Assert.Equal(8, PaneGrid.Capped(10, 4, 2));
+        Assert.Equal(0, PaneGrid.Capped(0, 2, 2));
+        Assert.Equal(10, PaneGrid.Capped(10, 0, 2));
+        Assert.Equal(10, PaneGrid.Capped(10, 2, 0));
     }
 
     [Fact]

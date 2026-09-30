@@ -689,7 +689,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         var line = ImGui.GetTextLineHeight();
 
         // At Full and Quiet the row is as tall as the orbit and its text is centred on it.
-        var lift = art ? MathF.Max(0f, (orbit - line) * 0.5f) : 0f;
+        var lift = art ? MathF.Floor(MathF.Max(0f, (orbit - line) * 0.5f)) : 0f;
         if (item.AllUnknown)
         {
             // Nothing readable for this kind on the viewed character (logged out, a stored snapshot, or a kind the
@@ -720,14 +720,12 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             }
         }
 
+        // The selectable spans every column and the row's whole height, so a click on the orbit selects the kind too;
+        // the name is centred on it.
         ImGui.TableNextColumn();
-        if (lift > 0f)
-        {
-            ImGui.SetCursorPosY(ImGui.GetCursorPosY() + lift);
-        }
-
         var selected = ui.MoonlitKind == item.Kind;
-        if (Chrome.EllipsisSelectable(item.Name, selected, 0f, out var cut, ImGuiSelectableFlags.SpanAllColumns))
+        var rowHeight = art ? MathF.Max(line, orbit) : 0f;
+        if (Chrome.EllipsisSelectable(item.Name, selected, 0f, out var cut, ImGuiSelectableFlags.SpanAllColumns, rowHeight))
         {
             ui.MoonlitKind = item.Kind;
         }
@@ -928,7 +926,18 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             var tileMax = tileMin + tileSize;
             ImGui.SetCursorScreenPos(tileMin);
             var questId = row.Entry.QuestRowId;
-            if (ImGui.Selectable("##tile", ui.SelectedRowId == questId, ImGuiSelectableFlags.AllowItemOverlap, tileSize))
+            var dl = ImGui.GetWindowDrawList();
+            var firstVertex = dl.VtxBuffer.Size;
+
+            // No item spacing around the tile's selectable: its highlight would pad out by half of it and overlap the
+            // neighbours' by a few pixels.
+            bool clicked;
+            using (ImRaii.PushStyle(ImGuiStyleVar.ItemSpacing, Vector2.Zero))
+            {
+                clicked = ImGui.Selectable("##tile", ui.SelectedRowId == questId, ImGuiSelectableFlags.AllowItemOverlap, tileSize);
+            }
+
+            if (clicked)
             {
                 ui.SelectedRowId = questId;
             }
@@ -948,7 +957,6 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
                 return;
             }
 
-            var dl = ImGui.GetWindowDrawList();
             var s = Theme.Surface;
             var highContrast = Theme.Glyphs.HighContrast;
 
@@ -981,7 +989,8 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
                 dl.AddRect(iconMin, iconMax, highContrast ? Theme.VeilLineU32 : Theme.U32(s.Line), rounding, ImDrawFlags.None, UiMetrics.Hairline);
             }
 
-            // The pip on the frame's corner: a checked full moon when obtained, else the quest's state moon.
+            // The pip on the frame's corner: a checked full moon when obtained, the unknown dash in a ring when it cannot
+            // be read (a stored snapshot), else the quest's state moon.
             var pipRadius = MathF.Round(MathF.Max(UiMetrics.Px(6f), icon * 0.11f));
             var pip = iconMax - new Vector2(pipRadius * 0.55f);
             var state = session.States.TryGetValue(questId, out var evaluation) ? evaluation.State : QuestState.Unknown;
@@ -989,6 +998,11 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             if (obtained)
             {
                 ObtainedPip(dl, pip, pipRadius);
+            }
+            else if (row.Obtained is null)
+            {
+                dl.AddCircle(pip, pipRadius, highContrast ? Theme.VeilLineU32 : Theme.DuskU32, 0, MathF.Max(1f, UiMetrics.Hairline));
+                Marks.Draw(dl, pip, pipRadius * 2.5f, Mark.Unknown);
             }
             else
             {
@@ -1000,13 +1014,8 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             var textWidth = MathF.Max(1f, tileSize.X - (2f * pad));
             var nameY = iconMax.Y + UiMetrics.Px(6f);
             var nameInk = row.Hidden ? Theme.DuskU32 : Theme.U32(s.Text);
-            var nameCut = TextFlow.DrawClamped(dl, new Vector2(textX, nameY), row.Name, textWidth, 2, nameInk, center: true);
-            if (row.Hidden)
-            {
-                // Hidden by the user's verdict: struck through, as in the table (not colour alone).
-                var y = MathF.Round(nameY + (line * 0.5f));
-                dl.AddLine(new Vector2(textX, y), new Vector2(textX + textWidth, y), Theme.DuskU32, UiMetrics.Hairline);
-            }
+            // Hidden by the user's verdict: struck through across the name's own width, as in the table (not colour alone).
+            var nameCut = TextFlow.DrawClamped(dl, new Vector2(textX, nameY), row.Name, textWidth, 2, nameInk, center: true, strike: row.Hidden);
 
             using (Typography.Caption())
             {
@@ -1015,7 +1024,8 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
                 Chrome.EllipsisTextAt(dl, new Vector2(questX, nameY + (2f * line)), textWidth, row.QuestName, Theme.U32(s.TextSecondary), questWidth);
             }
 
-            // Fades in once, from the window colour, the first time the tile shows (Full flair, motion on).
+            // Fades in once, the first time the tile shows (Full flair, motion on): everything the tile drew so far takes
+            // the fade's alpha, so the pane's gradient shows through rather than a flat window-coloured veil.
             var key = Motion.Key(GalleryTag, (uint)row.Index);
             if (!tileSeen[row.Index])
             {
@@ -1028,7 +1038,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 
             if (Theme.FlairMotion && Motion.Pulse(key, TileFadeSeconds) is var fade and >= 0f)
             {
-                dl.AddRectFilled(tileMin, tileMax, Theme.WithAlpha(s.Window, 1f - MotionMath.EaseOutCubic(fade)));
+                Chrome.FadeVertices(dl, firstVertex, MotionMath.EaseOutCubic(fade));
             }
 
             // Hover: the pip says what it means; elsewhere the reward's tooltip (the name when cut, the verdict when hidden).
@@ -1037,13 +1047,14 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
                 var pipHalf = new Vector2(pipRadius + UiMetrics.Px(2f));
                 if (ImGui.IsMouseHoveringRect(pip - pipHalf, pip + pipHalf))
                 {
-                    if (obtained)
+                    if (row.Obtained is false)
                     {
-                        UiMetrics.Tooltip(row.ObtainedText);
+                        // The obtained answer first, as the table's column says it; the state moon's meaning under it.
+                        UiMetrics.Tooltip(row.ObtainedText, Strings.StateTooltip(state, row.Quest));
                     }
                     else
                     {
-                        UiMetrics.StateTooltip(state, evaluation, row.Quest, session.Names, session.States);
+                        UiMetrics.Tooltip(row.ObtainedText);
                     }
                 }
                 else if (row.Hidden)

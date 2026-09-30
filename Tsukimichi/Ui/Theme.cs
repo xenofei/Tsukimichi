@@ -176,6 +176,12 @@ public static class Theme
     /// </summary>
     public static Flair Flair { get; private set; } = Flair.Full;
 
+    /// <summary>
+    /// Settings › Display › Flair as chosen, before the high-contrast cap: for the art that high contrast keeps with a
+    /// solid band behind its text instead of dropping it (Flight's zone banner, like the detail hero).
+    /// </summary>
+    public static Flair FlairSetting { get; private set; } = Flair.Full;
+
     /// <summary>Whether the pane gradient draws this frame (Full only).</summary>
     public static bool ShowPaneGradient => FlairRules.PaneGradient(Flair);
 
@@ -260,6 +266,7 @@ public static class Theme
         }
 
         Flair = FlairRules.Effective(flair, Glyphs.HighContrast);
+        FlairSetting = FlairRules.Effective(flair, highContrast: false);
         DeepU32 = Pack(s.Deep);
         TopU32 = Pack(s.Top);
         OrnamentU32 = Pack(s.Ornament);

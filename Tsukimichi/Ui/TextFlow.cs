@@ -103,10 +103,12 @@ public static class TextFlow
     /// <summary>
     /// <paramref name="text"/> wrapped between words in <paramref name="width"/> pixels and drawn at
     /// <paramref name="pos"/> on <paramref name="dl"/> (no item), at most <paramref name="maxLines"/> lines, each centred
-    /// when <paramref name="center"/> is set; what does not fit ends the last line in an ellipsis (a gallery tile's name).
-    /// Returns whether anything was cut, so the caller can show the whole text on hover.
+    /// when <paramref name="center"/> is set (an ellipsised line too); what does not fit ends the last line in an
+    /// ellipsis (a gallery tile's name). With <paramref name="strike"/> each drawn line is struck through across its own
+    /// width (a row hidden by the user's verdict). Returns whether anything was cut, so the caller can show the whole
+    /// text on hover.
     /// </summary>
-    public static bool DrawClamped(ImDrawListPtr dl, Vector2 pos, string text, float width, int maxLines, uint color, bool center = false)
+    public static bool DrawClamped(ImDrawListPtr dl, Vector2 pos, string text, float width, int maxLines, uint color, bool center = false, bool strike = false)
     {
         ArgumentNullException.ThrowIfNull(text);
         if (text.Length == 0 || maxLines <= 0 || !(width > 0f))
@@ -122,28 +124,35 @@ public static class TextFlow
         {
             var line = lines[i];
             var at = new Vector2(pos.X, pos.Y + (i * lineHeight));
-            if (i == shown - 1 && lines.Length > shown)
+
+            // The rest of the text on the last line when more follows (ellipsised), else the line itself.
+            var last = i == shown - 1 && lines.Length > shown;
+            var span = last ? text.AsSpan(line.Start).TrimEnd() : text.AsSpan(line.Start, line.Length);
+            if (span.IsEmpty)
             {
-                // The rest of the text on the last line, ellipsised.
-                var rest = text.AsSpan(line.Start).TrimEnd();
-                cut |= Chrome.EllipsisTextAt(dl, at, width, rest, color);
                 continue;
             }
 
-            if (line.Cut)
+            var full = last ? ImGui.CalcTextSize(span).X : line.Width;
+            var drawn = MathF.Min(full, width);
+            if (center)
             {
-                cut |= Chrome.EllipsisTextAt(dl, at, width, text.AsSpan(line.Start, line.Length), color, line.Width);
-                continue;
+                at.X += MathF.Floor(MathF.Max(0f, width - drawn) * 0.5f);
             }
 
-            if (line.Length > 0)
+            if (last || line.Cut)
             {
-                if (center)
-                {
-                    at.X += MathF.Floor(MathF.Max(0f, width - line.Width) * 0.5f);
-                }
+                cut |= Chrome.EllipsisTextAt(dl, at, width, span, color, full);
+            }
+            else
+            {
+                dl.AddText(at, color, span);
+            }
 
-                dl.AddText(at, color, text.AsSpan(line.Start, line.Length));
+            if (strike)
+            {
+                var y = MathF.Round(at.Y + (lineHeight * 0.5f));
+                dl.AddLine(new Vector2(at.X, y), new Vector2(at.X + drawn, y), color, UiMetrics.Hairline);
             }
         }
 

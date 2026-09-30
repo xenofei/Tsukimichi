@@ -51,6 +51,16 @@ public static class BeadRingMath
     /// <summary>Whether a ring of <paramref name="count"/> segments is drawn as beads rather than one arc.</summary>
     public static bool Segmented(int count) => count is > 1 and <= MaxSegments;
 
+    /// <summary>
+    /// Whether a ring whose lit count went from <paramref name="previousLit"/> (read as <paramref name="previous"/>) to
+    /// <paramref name="lit"/> (read as <paramref name="current"/>) plays the lighting sequence: only a rise between two
+    /// real reads of the same character with the same readability. A character switch, a read that was not real (no
+    /// quest states yet, or no attunement readable: the first read after login, a stored snapshot) or attunement
+    /// becoming readable sets the new count at once, so none of them plays as progress.
+    /// </summary>
+    public static bool ShouldSequence(BeadReading previous, BeadReading current, int previousLit, int lit) =>
+        lit > previousLit && previous.IsReal && current.IsReal && previous == current;
+
     /// <summary>How long the lighting sequence from <paramref name="from"/> to <paramref name="to"/> lit segments runs.</summary>
     public static float SequenceSeconds(int from, int to) => to > from ? (to - from + 1) * StepSeconds : 0f;
 
@@ -77,6 +87,17 @@ public static class BeadRingMath
         // Segment from + whole + 1 is fading in; the ones before it are lit.
         return (from + whole + 1, t - whole);
     }
+}
+
+/// <summary>
+/// Whose counts a bead ring shows and how they were read (<see cref="BeadRingMath.ShouldSequence"/>): the viewed
+/// character's content id (null when none), whether it is the live character, whether every current's attunement was
+/// unreadable and whether the character had any quest states. The default is no read at all.
+/// </summary>
+public readonly record struct BeadReading(ulong? ContentId, bool Live, bool AllUnknown, bool HasStates)
+{
+    /// <summary>A read with something in it: quest states, and at least one attunement readable.</summary>
+    public bool IsReal => ContentId is not null && HasStates && !AllUnknown;
 }
 
 /// <summary>
@@ -112,6 +133,13 @@ public static class PaneGrid
 
     /// <summary>How many tile rows <paramref name="items"/> tiles take in <paramref name="columns"/> columns.</summary>
     public static int Rows(int items, int columns) => items <= 0 || columns <= 0 ? 0 : ((items - 1) / columns) + 1;
+
+    /// <summary>
+    /// How many of <paramref name="items"/> tiles show in <paramref name="columns"/> columns when at most
+    /// <paramref name="maxRows"/> rows do (the Characters section rings until "Show all sections").
+    /// </summary>
+    public static int Capped(int items, int columns, int maxRows) =>
+        items <= 0 ? 0 : columns <= 0 || maxRows <= 0 ? items : Math.Min(items, columns * maxRows);
 
     /// <summary>The zone banner's height for a pane <paramref name="widthLogical"/> wide: min(160, 0.35 w).</summary>
     public static float BannerHeight(float widthLogical) =>

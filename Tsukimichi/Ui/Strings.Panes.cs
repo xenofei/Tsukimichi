@@ -249,6 +249,8 @@ static partial class Strings
     // Characters dashboard
     public static string CharactersSectionCompletion => Loc.Get("CharactersSectionCompletion");
     public static string CharactersNoSections => Loc.Get("CharactersNoSections");
+    public static string CharactersSectionRingsAll => Loc.Get("CharactersSectionRingsAll");
+    public static string CharactersSectionRingsFewer => Loc.Get("CharactersSectionRingsFewer");
     public static string CharactersAllQuests => Loc.Get("CharactersAllQuests");
     /// <summary>{0} = journal section id, for a section with no name.</summary>
     public static string CharactersSectionFormat => Loc.Get("CharactersSectionFormat");
@@ -387,6 +389,7 @@ static partial class Strings
     public static string ConfigFlairHint => Loc.Get("ConfigFlairHint");
     public static string ConfigGameHeadingFonts => Loc.Get("ConfigGameHeadingFonts");
     public static string ConfigGameHeadingFontsHint => Loc.Get("ConfigGameHeadingFontsHint");
+    public static string ConfigFlairPreviewPlainNote => Loc.Get("ConfigFlairPreviewPlainNote");
     public static string ConfigFollowDalamudColours => Loc.Get("ConfigFollowDalamudColours");
     public static string ConfigFollowDalamudColoursHint => Loc.Get("ConfigFollowDalamudColoursHint");
     public static string ConfigGlyphPalette => Loc.Get("ConfigGlyphPalette");

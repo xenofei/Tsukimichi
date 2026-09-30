@@ -276,16 +276,23 @@ public static partial class Chrome
     /// the whole name. Returns whether it was clicked.
     /// </summary>
     /// <param name="width">The selectable's width; 0 or less fills the room left (<see cref="RoomX"/>).</param>
-    public static bool EllipsisSelectable(string text, bool selected, float width, out bool cut, ImGuiSelectableFlags flags = ImGuiSelectableFlags.None)
+    /// <param name="height">The selectable's height when taller than a line (a row as tall as its icon), the text centred on it; 0 or less for one line.</param>
+    public static bool EllipsisSelectable(string text, bool selected, float width, out bool cut, ImGuiSelectableFlags flags = ImGuiSelectableFlags.None, float height = 0f)
     {
         ArgumentNullException.ThrowIfNull(text);
         var room = width > 0f ? width : RoomX();
         var pos = ImGui.GetCursorScreenPos();
+        var line = ImGui.GetTextLineHeight();
+        if (height > line)
+        {
+            pos.Y += MathF.Floor((height - line) * 0.5f);
+        }
+
         bool clicked;
         ImGui.PushID(text);
         try
         {
-            clicked = ImGui.Selectable("##fit", selected, flags, new Vector2(MathF.Max(1f, room), 0f));
+            clicked = ImGui.Selectable("##fit", selected, flags, new Vector2(MathF.Max(1f, room), height > line ? height : 0f));
         }
         finally
         {
