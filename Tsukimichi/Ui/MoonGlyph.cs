@@ -217,11 +217,15 @@ public static class MoonGlyph
     {
         var pos = ImGui.GetCursorScreenPos();
         ImGui.Dummy(new Vector2(size, size));
-        var radius = size * InlineRadiusFraction;
+        DrawVeiled(ImGui.GetWindowDrawList(), pos + new Vector2(size * 0.5f), size * InlineRadiusFraction, alpha);
+    }
+
+    /// <summary>The veiled stand-in of <see cref="DrawVeiledInline"/> drawn at <paramref name="center"/> without an item (a gallery tile).</summary>
+    public static void DrawVeiled(ImDrawListPtr dl, Vector2 center, float radius, float alpha)
+    {
         if (!(radius > 0.5f)) return;
 
-        var dl = ImGui.GetWindowDrawList();
-        var center = Snap(pos + new Vector2(size * 0.5f), radius);
+        center = Snap(center, radius);
         var segments = MoonGeometry.SegmentsFor(radius);
         var rim = Rim(radius);
         FillDisc(dl, center, radius, segments, Theme.WithAlpha(Theme.Shadow, 0.60f * alpha));

@@ -262,6 +262,23 @@ public class FlightIndexGameDataTests(GameDataFixture fixture, ITestOutputHelper
         Assert.Null(index.ZoneFor(1036));
     }
 
+    [GameDataFact]
+    public void Every_zone_has_its_loading_art_and_expansion_icon_in_the_game_data()
+    {
+        var index = FlightIndex.Build(fixture.Game.Excel, Language.English);
+        Assert.All(index.Zones, zone =>
+        {
+            Assert.NotNull(zone.LoadingImagePath);
+            Assert.StartsWith("ui/loadingimage/", zone.LoadingImagePath, StringComparison.Ordinal);
+            Assert.EndsWith("_hr1.tex", zone.LoadingImagePath, StringComparison.Ordinal);
+            Assert.True(fixture.Game.FileExists(zone.LoadingImagePath), $"{zone.Name}: {zone.LoadingImagePath} is not in the game data");
+            Assert.NotEqual(0u, zone.ExpansionIcon);
+        });
+
+        // Zones of one expansion share its ring; the six expansions have six.
+        Assert.Equal(6, index.Zones.Select(z => z.ExpansionIcon).Distinct().Count());
+    }
+
     /// <summary>The seventeen A Realm Reborn field territories, all naming AetherCurrentCompFlgSet 19.</summary>
     private static readonly uint[] ArrFieldZones = [134, 135, 137, 138, 139, 140, 141, 145, 146, 147, 148, 152, 153, 154, 155, 156, 180];
 

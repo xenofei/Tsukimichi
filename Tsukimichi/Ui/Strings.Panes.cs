@@ -82,6 +82,8 @@ static partial class Strings
     // One toggle hides both (the persisted setting keeps its 0.6.0 name, MoonlitHideStoreResells)
     public static string MoonlitHideStoreResellsLabel => Loc.Get("MoonlitHideStoreResellsLabel");
     public static string MoonlitHideStoreResellsTooltip => Loc.Get("MoonlitHideStoreResellsTooltip");
+    public static string MoonlitViewTable => Loc.Get("MoonlitViewTable");
+    public static string MoonlitViewGallery => Loc.Get("MoonlitViewGallery");
 
     // Confidence filter next to "Hide obtained"
     public static string MoonlitConfidenceFilterTooltip => Loc.Get("MoonlitConfidenceFilterTooltip");
@@ -134,6 +136,7 @@ static partial class Strings
     public static string FlightFieldUnknownFormat => Loc.Get("FlightFieldUnknownFormat");
     public static string FlightFieldNone => Loc.Get("FlightFieldNone");
     public static string FlightFieldTooltip => Loc.Get("FlightFieldTooltip");
+    public static string FlightFieldCurrents => Loc.Get("FlightFieldCurrents");
 
     // ---- Discovery commands ----
     public static string ZoneNoCharacter => Loc.Get("ZoneNoCharacter");

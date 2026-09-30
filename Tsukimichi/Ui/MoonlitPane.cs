@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface;
 using Dalamud.Interface.Textures;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin;
@@ -38,6 +39,16 @@ namespace Tsukimichi.Ui;
 /// when <see cref="SessionState.Version"/>, the kind, the toggles or the filter text change. Nothing allocates per frame
 /// in the table body except tooltips on hover. The list clipper lives as long as the pane; <see cref="Dispose"/>
 /// destroys it and unsubscribes from the session.
+/// </para>
+/// <para>
+/// The Moon Road look (feature plan v4 V5, proposal §7.5): the kinds list draws each kind's official menu icon (the
+/// MainCommand icon, else an atlas glyph) inside an orbit of obtained/total at Flair Full and Quiet, and the centre
+/// column opens with the kind in the Title role over a brass rule. A toggle beside it switches to the gallery
+/// (remembered in <c>Configuration.MoonlitGallery</c>): 64 px hi-res reward icons on the sunken ground in columns of
+/// 96 px, the name under each in two lines at most and the quest in the secondary tone; an obtained reward has a gold
+/// frame and a checked full-moon pip, any other the quest's state moon as its pip (a shape, never colour alone). Tiles
+/// are real, focusable items with the same click, context menu and "…" menu as the table rows, so verdicts and their
+/// undo work in either view. At Full each tile fades in once (never under Reduce motion).
 /// </para>
 /// </summary>
 public sealed class MoonlitPane : IDisposable, IUniqueOverrides
@@ -111,7 +122,16 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     private int obtainedBuild = -1;
     private int obtainedAchievementState = -1;
     private bool countsHideStore;
-    private KindItem allItem = new(null, Strings.MoonlitAllKinds);
+    private KindItem allItem = new(null, Strings.MoonlitAllKinds, NodeIcon.Of(MoonlitKindIcons.Glyph(null)));
+
+    /// <summary>Motion tag of the gallery tiles' fade-in ("GALL"); the row index is the low half.</summary>
+    private const uint GalleryTag = 0x4741_4C4C;
+
+    /// <summary>How long a gallery tile takes to fade in the first time it shows (Flair Full).</summary>
+    private const float TileFadeSeconds = 0.3f;
+
+    /// <summary>Per row: whether its gallery tile has been shown since the rows were built (it fades in once).</summary>
+    private bool[] tileSeen = [];
     private KindItem[] kindItems = [];
     private int kindsBuild = -1;
     private int kindsLanguage = -1;
@@ -343,14 +363,22 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         var width = ImGui.GetContentRegionAvail().X;
 
         // The count column is as wide as the widest count; in a pane too narrow for it beside a few letters of the
-        // name it gives way to the name's tooltip rather than be crushed (feature plan v4 L6).
-        var countWidth = ImGui.CalcTextSize(allItem.CountText).X;
-        for (var i = 0; i < kindItems.Length; i++)
+        // name it gives way to the name's tooltip rather than be crushed (feature plan v4 L6). At Full and Quiet the
+        // counts are in the Numeral role and each kind wears its icon in an orbit.
+        var art = Theme.ShowRules;
+        float countWidth;
+        if (art)
         {
-            countWidth = MathF.Max(countWidth, ImGui.CalcTextSize(kindItems[i].CountText).X);
+            using var numeral = Typography.Numeral(default);
+            countWidth = WidestCount();
+        }
+        else
+        {
+            countWidth = WidestCount();
         }
 
-        var moonWidth = MathF.Max(line * 1.4f, UiMetrics.InlineGlyphSize(line));
+        var orbit = OrbitBox(line);
+        var moonWidth = MathF.Max(line * 1.4f, art ? orbit : UiMetrics.InlineGlyphSize(line));
         var padding = ImGui.GetStyle().CellPadding.X * 2f;
         var showCount = width - moonWidth - countWidth - (padding * 2f) >= UiMetrics.Px(LayoutBudgets.RowNameMinLogical);
         using (var table = ImRaii.Table(showCount ? "##moonlitKinds" : "##moonlitKindsNarrow", showCount ? 3 : 2, ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.NoPadOuterX))
@@ -367,15 +395,30 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
                 ImGui.TableSetupColumn("##count", ImGuiTableColumnFlags.WidthFixed, countWidth);
             }
 
-            DrawKindRow(ui, allItem, -1, showCount);
+            DrawKindRow(ui, allItem, -1, showCount, art, orbit);
             for (var i = 0; i < kindItems.Length; i++)
             {
-                DrawKindRow(ui, kindItems[i], i, showCount);
+                DrawKindRow(ui, kindItems[i], i, showCount, art, orbit);
             }
         }
 
         ui.RecordSpan(UiRects.MoonlitKinds, start, width);
     }
+
+    /// <summary>The widest count of the kinds list in the current font.</summary>
+    private float WidestCount()
+    {
+        var widest = ImGui.CalcTextSize(allItem.CountText).X;
+        for (var i = 0; i < kindItems.Length; i++)
+        {
+            widest = MathF.Max(widest, ImGui.CalcTextSize(kindItems[i].CountText).X);
+        }
+
+        return widest;
+    }
+
+    /// <summary>A kind's orbit in the list: a little taller than the line, as the tree's (proposal §6.3).</summary>
+    private static float OrbitBox(float line) => MathF.Round(MathF.Max(UiMetrics.InlineGlyphSize(line), UiMetrics.Icon(22f)));
 
     /// <summary>
     /// Whether rows found elsewhere (sold on the Online Store, or dropping in a duty) are dropped from the table and the
@@ -390,10 +433,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         using var id = ImRaii.PushId("moonlitMain");
         Refresh();
 
-        using (Theme.PushText(Theme.Dusk))
-        {
-            ImGui.TextUnformatted(Strings.MoonlitSubtitle);
-        }
+        DrawTitle(ui);
 
         // The toolbar flows: under MoonlitTwoRowToolbarLogical the two checkboxes take the first row and the rest the
         // second, and any item that would run past the edge starts a new row (feature plan v4 L6).
@@ -472,6 +512,12 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         if (visibleCount == 0)
         {
             ImGui.TextDisabled(Strings.MoonlitNothingMatches);
+            return;
+        }
+
+        if (settings.MoonlitGallery)
+        {
+            DrawGallery(ui);
             return;
         }
 
@@ -635,24 +681,39 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         }
     }
 
-    private void DrawKindRow(UiState ui, KindItem item, int index, bool showCount)
+    private void DrawKindRow(UiState ui, KindItem item, int index, bool showCount, bool art, float orbit)
     {
         using var id = ImRaii.PushId(index);
         ImGui.TableNextRow();
         ImGui.TableNextColumn();
+        var line = ImGui.GetTextLineHeight();
+
+        // At Full and Quiet the row is as tall as the orbit and its text is centred on it.
+        var lift = art ? MathF.Max(0f, (orbit - line) * 0.5f) : 0f;
         if (item.AllUnknown)
         {
             // Nothing readable for this kind on the viewed character (logged out, a stored snapshot, or a kind the
             // reader cannot answer): a dash says so instead of a misleading empty gauge.
-            Marks.DrawInline(Mark.Unknown, UiMetrics.InlineGlyphSize(ImGui.GetTextLineHeight()));
+            Marks.DrawInline(Mark.Unknown, art ? orbit : UiMetrics.InlineGlyphSize(line));
             if (ImGui.IsItemHovered())
             {
                 UiMetrics.Tooltip(Strings.MoonlitObtainedUnknown);
             }
         }
+        else if (art)
+        {
+            // The kind's own menu icon keeps its identity; the orbit round it is obtained/total (proposal §6.3).
+            var min = ImGui.GetCursorScreenPos();
+            ImGui.Dummy(new Vector2(orbit, orbit));
+            Orbit.Draw(ImGui.GetWindowDrawList(), textures, min, orbit, item.Icon, item.Fraction, highContrast: Theme.Glyphs.HighContrast);
+            if (ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(item.TooltipText);
+            }
+        }
         else
         {
-            MoonGlyph.DrawHaloInline(item.Fraction, UiMetrics.InlineGlyphSize(ImGui.GetTextLineHeight()));
+            MoonGlyph.DrawHaloInline(item.Fraction, UiMetrics.InlineGlyphSize(line));
             if (ImGui.IsItemHovered())
             {
                 UiMetrics.Tooltip(item.TooltipText);
@@ -660,6 +721,11 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         }
 
         ImGui.TableNextColumn();
+        if (lift > 0f)
+        {
+            ImGui.SetCursorPosY(ImGui.GetCursorPosY() + lift);
+        }
+
         var selected = ui.MoonlitKind == item.Kind;
         if (Chrome.EllipsisSelectable(item.Name, selected, 0f, out var cut, ImGuiSelectableFlags.SpanAllColumns))
         {
@@ -674,8 +740,357 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         if (showCount)
         {
             ImGui.TableNextColumn();
-            ImGui.TextDisabled(item.CountText);
+            if (art)
+            {
+                ImGui.SetCursorPosY(ImGui.GetCursorPosY() + lift);
+                using var numeral = Typography.Numeral(item.CountText);
+                ImGui.TextDisabled(item.CountText);
+            }
+            else
+            {
+                ImGui.TextDisabled(item.CountText);
+            }
         }
+    }
+
+    /// <summary>
+    /// The centre column's first line: at Full and Quiet the shown kind in the Title role (the pane's one title) with
+    /// the subtitle beside it and a brass rule under both; under Plain the subtitle alone, as before 1.4. The view
+    /// toggle (table or gallery) sits at the line's right end.
+    /// </summary>
+    private void DrawTitle(UiState ui)
+    {
+        var art = Theme.ShowRules;
+        var start = ImGui.GetCursorScreenPos();
+        var room = ImGui.GetContentRegionAvail().X;
+        var toggle = (UiMetrics.MinTarget * 2f) + ImGui.GetStyle().ItemSpacing.X;
+        if (art)
+        {
+            var title = ui.MoonlitKind is { } kind ? Strings.MoonlitKindName(kind) : Strings.TabMoonlit;
+            float titleWidth;
+            float titleLine;
+            using (Typography.Title(title))
+            {
+                titleWidth = ImGui.CalcTextSize(title).X;
+                titleLine = ImGui.GetTextLineHeight();
+            }
+
+            var targetLine = MathF.Max(titleLine, UiMetrics.MinTarget);
+            ImGui.SetCursorPosY(ImGui.GetCursorPosY() + MathF.Max(0f, (targetLine - titleLine) * 0.5f));
+            if (SectionHeading.Title(title, MathF.Max(0f, MathF.Min(titleWidth, room - toggle - ImGui.GetStyle().ItemSpacing.X))) && ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(title);
+            }
+
+            var subtitle = ImGui.CalcTextSize(Strings.MoonlitSubtitle).X;
+            if (ImGui.GetItemRectMax().X + ImGui.GetStyle().ItemSpacing.X + subtitle + toggle <= start.X + room)
+            {
+                ImGui.SameLine();
+                ImGui.SetCursorPosY(ImGui.GetCursorPosY() + MathF.Max(0f, titleLine - ImGui.GetTextLineHeight()) * 0.7f);
+                using (Theme.PushText(Theme.Dusk))
+                {
+                    ImGui.TextUnformatted(Strings.MoonlitSubtitle);
+                }
+            }
+        }
+        else
+        {
+            using (Theme.PushText(Theme.Dusk))
+            {
+                ImGui.TextUnformatted(Strings.MoonlitSubtitle);
+            }
+        }
+
+        // The toggle at the line's right end, or at the right of the next line when the line has no room left.
+        var toggleX = MathF.Max(start.X, start.X + room - toggle);
+        if (ImGui.GetItemRectMax().X + ImGui.GetStyle().ItemSpacing.X <= toggleX)
+        {
+            ImGui.SameLine();
+            ImGui.SetCursorScreenPos(new Vector2(toggleX, start.Y));
+        }
+        else
+        {
+            ImGui.SetCursorScreenPos(new Vector2(toggleX, ImGui.GetCursorScreenPos().Y));
+        }
+
+        DrawViewToggle();
+        if (art)
+        {
+            var y = ImGui.GetCursorScreenPos().Y;
+            Ornament.Rule(ImGui.GetWindowDrawList(), new Vector2(start.X, y), room);
+            ImGui.Dummy(new Vector2(room, UiMetrics.Px(4f)));
+        }
+    }
+
+    /// <summary>Table or gallery: two round icon buttons, the current view's held; the choice is saved at once.</summary>
+    private void DrawViewToggle()
+    {
+        var gallery = settings.MoonlitGallery;
+        if (Chrome.IconButtonRound("##viewTable", Chrome.Icon(FontAwesomeIcon.List), Strings.MoonlitViewTable, active: !gallery) && gallery)
+        {
+            settings.MoonlitGallery = false;
+            settings.Save(pluginInterface);
+        }
+
+        ImGui.SameLine();
+        if (Chrome.IconButtonRound("##viewGallery", Chrome.Icon(FontAwesomeIcon.ThLarge), Strings.MoonlitViewGallery, active: gallery) && !gallery)
+        {
+            settings.MoonlitGallery = true;
+            settings.Save(pluginInterface);
+        }
+    }
+
+    /// <summary>
+    /// The gallery (proposal §7.5): the visible rows as tiles, ⌊width / 96⌋ columns (at least two), in their own
+    /// scrolling child with a list clipper over the tile rows, so only visible tiles are drawn and only their icons asked
+    /// for. Allocation-free per frame.
+    /// </summary>
+    private void DrawGallery(UiState ui)
+    {
+        ImGui.BeginChild("##moonlitGallery", new Vector2(-1f, -1f));
+        try
+        {
+            // The child sits inside the centre column (own font scale 1), so it scales itself before measuring.
+            ui.RecordWindow(UiRects.MoonlitTable);
+            UiMetrics.ApplyFontScale();
+            var width = ImGui.GetContentRegionAvail().X;
+            var columns = PaneGrid.GalleryColumns(width / UiMetrics.Scale);
+            var cell = MathF.Floor(width / columns);
+            var pad = UiMetrics.Px(6f);
+            var icon = MathF.Round(MathF.Max(UiMetrics.Px(24f), MathF.Min(UiMetrics.Icon(PaneGrid.GalleryIconLogical), cell - (pad * 2f))));
+            var line = ImGui.GetTextLineHeight();
+            float captionLine;
+            using (Typography.Caption())
+            {
+                captionLine = ImGui.GetTextLineHeight();
+            }
+
+            var tileHeight = MathF.Ceiling(pad + icon + UiMetrics.Px(6f) + (2f * line) + captionLine + pad);
+            var spacing = ImGui.GetStyle().ItemSpacing.Y;
+            if (tileSeen.Length < rows.Length)
+            {
+                tileSeen = new bool[rows.Length];
+            }
+
+            if (!clipperCreated)
+            {
+                clipper = ImGui.ImGuiListClipper();
+                clipperCreated = true;
+            }
+
+            moreFocusedNext = -1;
+            var origin = ImGui.GetCursorScreenPos();
+            clipper.Begin(PaneGrid.Rows(visibleCount, columns), tileHeight + spacing);
+            while (clipper.Step())
+            {
+                for (var r = clipper.DisplayStart; r < clipper.DisplayEnd; r++)
+                {
+                    var rowStart = new Vector2(origin.X, ImGui.GetCursorScreenPos().Y);
+                    for (var c = 0; c < columns; c++)
+                    {
+                        var i = (r * columns) + c;
+                        if (i >= visibleCount)
+                        {
+                            break;
+                        }
+
+                        DrawTile(ui, rows[visible[i]], new Vector2(rowStart.X + (c * cell), rowStart.Y), new Vector2(cell, tileHeight), icon, pad, line);
+                    }
+
+                    ImGui.SetCursorScreenPos(rowStart);
+                    ImGui.Dummy(new Vector2(width, tileHeight));
+                }
+            }
+
+            clipper.End();
+            moreFocusedRow = moreFocusedNext;
+        }
+        finally
+        {
+            ImGui.EndChild();
+        }
+    }
+
+    /// <summary>
+    /// One gallery tile at <paramref name="min"/>: a selectable the size of the cell (a click selects the quest, as a
+    /// table row's name does; right-click, the Menu key or the "…" button opens the row's menu), the reward's hi-res
+    /// icon on the sunken ground in a gold frame when obtained, its pip, the name in two lines and the quest in the
+    /// caption role. Fades in once at Full flair.
+    /// </summary>
+    private void DrawTile(UiState ui, Row row, Vector2 min, Vector2 size, float icon, float pad, float line)
+    {
+        ImGui.PushID(row.Index);
+        try
+        {
+            var inset = MathF.Max(1f, UiMetrics.Px(2f));
+            var tileMin = min + new Vector2(inset, 0f);
+            var tileSize = new Vector2(MathF.Max(1f, size.X - (2f * inset)), size.Y);
+            var tileMax = tileMin + tileSize;
+            ImGui.SetCursorScreenPos(tileMin);
+            var questId = row.Entry.QuestRowId;
+            if (ImGui.Selectable("##tile", ui.SelectedRowId == questId, ImGuiSelectableFlags.AllowItemOverlap, tileSize))
+            {
+                ui.SelectedRowId = questId;
+            }
+
+            var tileHovered = ImGui.IsItemHovered();
+            var tileFocused = ImGui.IsItemFocused();
+            var tileVisible = ImGui.IsItemVisible();
+            Keyboard.OpenMenuOnKey(RowMenuId);
+            if (ImGui.BeginPopupContextItem(RowMenuId))
+            {
+                DrawContextMenu(ui, row);
+                ImGui.EndPopup();
+            }
+
+            if (!tileVisible)
+            {
+                return;
+            }
+
+            var dl = ImGui.GetWindowDrawList();
+            var s = Theme.Surface;
+            var highContrast = Theme.Glyphs.HighContrast;
+
+            // The icon on the sunken ground; a gold frame when the reward is yours.
+            var iconMin = new Vector2(min.X + MathF.Floor((size.X - icon) * 0.5f), min.Y + pad);
+            var iconMax = iconMin + new Vector2(icon, icon);
+            var rounding = MathF.Round(icon * 0.125f);
+            var obtained = row.Obtained == true;
+            dl.AddRectFilled(iconMin, iconMax, Theme.U32(s.Sunken), rounding);
+            var art = MathF.Round(icon * 6f / 64f);
+            if (row.Reward is not null)
+            {
+                var hiRes = icon - (2f * art) > Orbit.LowResMaxPx;
+                if (textures.GetFromGameIcon(new GameIconLookup(row.Icon, false, hiRes)).TryGetWrap(out var wrap, out _))
+                {
+                    dl.AddImageRounded(wrap.Handle, iconMin + new Vector2(art), iconMax - new Vector2(art), Vector2.Zero, Vector2.One, 0xFFFFFFFFu, rounding * 0.5f);
+                }
+            }
+            else
+            {
+                MoonGlyph.DrawVeiled(dl, (iconMin + iconMax) * 0.5f, icon * 0.28f, NoIconAlpha);
+            }
+
+            if (obtained)
+            {
+                dl.AddRect(iconMin, iconMax, Theme.MoonU32, rounding, ImDrawFlags.None, MathF.Max(1.5f, UiMetrics.Px(highContrast ? 2.5f : 1.5f)));
+            }
+            else
+            {
+                dl.AddRect(iconMin, iconMax, highContrast ? Theme.VeilLineU32 : Theme.U32(s.Line), rounding, ImDrawFlags.None, UiMetrics.Hairline);
+            }
+
+            // The pip on the frame's corner: a checked full moon when obtained, else the quest's state moon.
+            var pipRadius = MathF.Round(MathF.Max(UiMetrics.Px(6f), icon * 0.11f));
+            var pip = iconMax - new Vector2(pipRadius * 0.55f);
+            var state = session.States.TryGetValue(questId, out var evaluation) ? evaluation.State : QuestState.Unknown;
+            dl.AddCircleFilled(pip, pipRadius + MathF.Max(1.5f, UiMetrics.Px(1.5f)), Theme.U32(s.Window));
+            if (obtained)
+            {
+                ObtainedPip(dl, pip, pipRadius);
+            }
+            else
+            {
+                MoonGlyph.Draw(dl, pip, pipRadius, state);
+            }
+
+            // The name in two lines at most, centred; the quest under it in the caption role.
+            var textX = tileMin.X + pad;
+            var textWidth = MathF.Max(1f, tileSize.X - (2f * pad));
+            var nameY = iconMax.Y + UiMetrics.Px(6f);
+            var nameInk = row.Hidden ? Theme.DuskU32 : Theme.U32(s.Text);
+            var nameCut = TextFlow.DrawClamped(dl, new Vector2(textX, nameY), row.Name, textWidth, 2, nameInk, center: true);
+            if (row.Hidden)
+            {
+                // Hidden by the user's verdict: struck through, as in the table (not colour alone).
+                var y = MathF.Round(nameY + (line * 0.5f));
+                dl.AddLine(new Vector2(textX, y), new Vector2(textX + textWidth, y), Theme.DuskU32, UiMetrics.Hairline);
+            }
+
+            using (Typography.Caption())
+            {
+                var questWidth = ImGui.CalcTextSize(row.QuestName).X;
+                var questX = textX + MathF.Floor(MathF.Max(0f, textWidth - questWidth) * 0.5f);
+                Chrome.EllipsisTextAt(dl, new Vector2(questX, nameY + (2f * line)), textWidth, row.QuestName, Theme.U32(s.TextSecondary), questWidth);
+            }
+
+            // Fades in once, from the window colour, the first time the tile shows (Full flair, motion on).
+            var key = Motion.Key(GalleryTag, (uint)row.Index);
+            if (!tileSeen[row.Index])
+            {
+                tileSeen[row.Index] = true;
+                if (Theme.FlairMotion)
+                {
+                    Motion.Trigger(key);
+                }
+            }
+
+            if (Theme.FlairMotion && Motion.Pulse(key, TileFadeSeconds) is var fade and >= 0f)
+            {
+                dl.AddRectFilled(tileMin, tileMax, Theme.WithAlpha(s.Window, 1f - MotionMath.EaseOutCubic(fade)));
+            }
+
+            // Hover: the pip says what it means; elsewhere the reward's tooltip (the name when cut, the verdict when hidden).
+            if (tileHovered)
+            {
+                var pipHalf = new Vector2(pipRadius + UiMetrics.Px(2f));
+                if (ImGui.IsMouseHoveringRect(pip - pipHalf, pip + pipHalf))
+                {
+                    if (obtained)
+                    {
+                        UiMetrics.Tooltip(row.ObtainedText);
+                    }
+                    else
+                    {
+                        UiMetrics.StateTooltip(state, evaluation, row.Quest, session.Names, session.States);
+                    }
+                }
+                else if (row.Hidden)
+                {
+                    UiMetrics.Tooltip(row.Name, Strings.MoonlitHiddenTooltip);
+                }
+                else if (row.Reward is { } reward)
+                {
+                    RewardTooltip.Draw(reward, links, textures, row.SourceText);
+                }
+                else
+                {
+                    UiMetrics.Tooltip(nameCut ? row.Name : row.ObtainedText, nameCut ? row.ObtainedText : null);
+                }
+            }
+
+            // The "…" button in the tile's top-right corner while it is hovered or focused (accessibility A6).
+            var more = MoreSize(line);
+            if (tileFocused || moreFocusedRow == row.Index || (ImGui.IsWindowHovered() && ImGui.IsMouseHoveringRect(tileMin, tileMax)))
+            {
+                Keyboard.MoreButton("##more", RowMenuId, new Vector2(tileMax.X - more - inset, tileMin.Y + inset), more);
+                if (ImGui.IsItemFocused())
+                {
+                    moreFocusedNext = row.Index;
+                }
+            }
+        }
+        finally
+        {
+            ImGui.PopID();
+        }
+    }
+
+    /// <summary>
+    /// The obtained pip: a full gold moon with a check cut into it in the window colour, a shape no state moon has (a
+    /// completed quest's full moon carries no check), so obtained never rests on colour alone (proposal §10.3).
+    /// </summary>
+    private static void ObtainedPip(ImDrawListPtr dl, Vector2 center, float radius)
+    {
+        dl.AddCircleFilled(center, radius, Theme.MoonU32);
+        var ink = Theme.U32(Theme.Surface.Window);
+        var t = MathF.Max(1.2f, radius * 0.24f);
+        var a = center + new Vector2(-radius * 0.45f, radius * 0.02f);
+        var b = center + new Vector2(-radius * 0.1f, radius * 0.38f);
+        var c = center + new Vector2(radius * 0.5f, -radius * 0.34f);
+        dl.AddLine(a, b, ink, t);
+        dl.AddLine(b, c, ink, t);
     }
 
     private void DrawRow(UiState ui, Row row, float line)
@@ -963,6 +1378,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 
         uniqueCount = all.Count;
         elsewhereCount = 0;
+        tileSeen = new bool[built.Length];
         for (var i = 0; i < all.Count; i++)
         {
             if (built[i].FoundElsewhere)
@@ -1021,11 +1437,11 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         {
             kindsBuild = rowsBuild;
             kindsLanguage = Localization.Loc.Version;
-            allItem = new KindItem(null, Strings.MoonlitAllKinds);
+            allItem = new KindItem(null, Strings.MoonlitAllKinds, Icons.KindIcon(null));
             kindItems = new KindItem[kinds.Count];
             for (var i = 0; i < kindItems.Length; i++)
             {
-                kindItems[i] = new KindItem(kinds[i].Kind, Strings.MoonlitKindName(kinds[i].Kind));
+                kindItems[i] = new KindItem(kinds[i].Kind, Strings.MoonlitKindName(kinds[i].Kind), Icons.KindIcon(kinds[i].Kind));
             }
         }
 
@@ -1205,11 +1621,14 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         _ => Theme.Veil,
     };
 
-    /// <summary>One left-column line: a kind (null for All), its name and the current counts.</summary>
-    private sealed class KindItem(RewardKind? kind, string name)
+    /// <summary>One left-column line: a kind (null for All), its name, its identity icon and the current counts.</summary>
+    private sealed class KindItem(RewardKind? kind, string name, NodeIcon icon)
     {
         public RewardKind? Kind { get; } = kind;
         public string Name { get; } = name;
+
+        /// <summary>The kind's menu icon (MainCommand) or atlas glyph, inside its orbit at Full and Quiet flair.</summary>
+        public NodeIcon Icon { get; } = icon;
         public string CountText { get; private set; } = "0/0";
 
         /// <summary>Obtained over every entry of the kind (unknown entries count as not obtained).</summary>
@@ -1363,6 +1782,7 @@ public sealed class MoonlitIconResolver(IDataManager data, IPluginLog log)
     private const byte InstanceContentLink = 1;
 
     private readonly Dictionary<(RewardKind Kind, uint Id), uint> memo = [];
+    private readonly Dictionary<RewardKind, NodeIcon> kindIcons = [];
     private Dictionary<uint, uint>? contentTypeIconByCondition;
     private Dictionary<uint, uint>? conditionByInstance;
     private bool warned;
@@ -1409,6 +1829,44 @@ public sealed class MoonlitIconResolver(IDataManager data, IPluginLog log)
         }
 
         memo[key] = icon;
+        return icon;
+    }
+
+    /// <summary>
+    /// The identity icon of a reward kind in the kinds list (proposal §7.5): the game's own menu icon
+    /// (<c>MainCommand.Icon</c> of <see cref="MoonlitKindIcons.MainCommandRow"/>), else the kind's atlas glyph; the
+    /// Moonlit glyph for All (null). Memoized per kind.
+    /// </summary>
+    public NodeIcon KindIcon(RewardKind? kind)
+    {
+        if (kind is not { } k)
+        {
+            return NodeIcon.Of(MoonlitKindIcons.Glyph(null));
+        }
+
+        if (kindIcons.TryGetValue(k, out var known))
+        {
+            return known;
+        }
+
+        var icon = NodeIcon.Of(MoonlitKindIcons.Glyph(k));
+        var row = MoonlitKindIcons.MainCommandRow(k);
+        if (row != 0)
+        {
+            try
+            {
+                if (data.GetExcelSheet<MainCommand>()?.GetRowOrDefault(row) is { } command && command.Icon > 0)
+                {
+                    icon = NodeIcon.Game((uint)command.Icon);
+                }
+            }
+            catch (Exception ex)
+            {
+                WarnOnce(ex, k);
+            }
+        }
+
+        kindIcons[k] = icon;
         return icon;
     }
 

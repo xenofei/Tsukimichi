@@ -306,6 +306,12 @@ public sealed class Configuration : IPluginConfiguration
     /// </summary>
     public bool GameHeadingFonts { get; set; } = true;
 
+    /// <summary>
+    /// Moonlit's view (feature plan v4 V5, proposal §7.5): a gallery of reward icons instead of the table. Off (the
+    /// table) by default; remembered once switched.
+    /// </summary>
+    public bool MoonlitGallery { get; set; }
+
     // ---- 0.8.0: chrome (T13) ----
     /// <summary>
     /// Draw the windows in the user's Dalamud colours instead of the Night palette: the same layout, with the surface
