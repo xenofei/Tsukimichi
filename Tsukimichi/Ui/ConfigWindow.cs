@@ -274,7 +274,7 @@ public sealed class ConfigWindow : Window
 
         if (ImGui.IsItemHovered())
         {
-            ImGui.SetTooltip(Strings.ConfigReduceMotionHint);
+            UiMetrics.Tooltip(Strings.ConfigReduceMotionHint);
         }
 
         // One layout, two palettes (T13): Night, or the surfaces mapped from the user's Dalamud style.
@@ -287,7 +287,7 @@ public sealed class ConfigWindow : Window
 
         if (ImGui.IsItemHovered())
         {
-            ImGui.SetTooltip(Strings.ConfigFollowDalamudColoursHint);
+            UiMetrics.Tooltip(Strings.ConfigFollowDalamudColoursHint);
         }
 
         DrawJournalFiling();
@@ -428,7 +428,7 @@ public sealed class ConfigWindow : Window
 
         if (ImGui.IsItemHovered())
         {
-            ImGui.SetTooltip(Strings.ConfigOfferTutorialHint);
+            UiMetrics.Tooltip(Strings.ConfigOfferTutorialHint);
         }
     }
 
@@ -490,7 +490,7 @@ public sealed class ConfigWindow : Window
 
         if (ImGui.IsItemHovered())
         {
-            ImGui.SetTooltip(Strings.AbandonedConfigNoticeHint);
+            UiMetrics.Tooltip(Strings.AbandonedConfigNoticeHint);
         }
 
         var seasonal = settings.ChatNoticeSeasonal;
@@ -502,7 +502,7 @@ public sealed class ConfigWindow : Window
 
         if (ImGui.IsItemHovered())
         {
-            ImGui.SetTooltip(Strings.SeasonalConfigNoticeHint);
+            UiMetrics.Tooltip(Strings.SeasonalConfigNoticeHint);
         }
     }
 
@@ -680,7 +680,7 @@ public sealed class ConfigWindow : Window
 
         if (ImGui.IsItemHovered())
         {
-            ImGui.SetTooltip(Strings.TodoConfigEnabledHint);
+            UiMetrics.Tooltip(Strings.TodoConfigEnabledHint);
         }
 
         using var indent = ImRaii.PushIndent();
@@ -695,7 +695,7 @@ public sealed class ConfigWindow : Window
 
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
-            ImGui.SetTooltip(Strings.TodoConfigLockedHint);
+            UiMetrics.Tooltip(Strings.TodoConfigLockedHint);
         }
 
         var compact = settings.TodoOverlayCompact;
@@ -707,7 +707,7 @@ public sealed class ConfigWindow : Window
 
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
-            ImGui.SetTooltip(Strings.TodoConfigCompactHint);
+            UiMetrics.Tooltip(Strings.TodoConfigCompactHint);
         }
 
         var opacity = TodoOverlay.ClampOpacity(settings.TodoOverlayOpacity);
@@ -741,7 +741,7 @@ public sealed class ConfigWindow : Window
 
         if (ImGui.IsItemHovered())
         {
-            ImGui.SetTooltip(Strings.TodoConfigShowSeasonalHint);
+            UiMetrics.Tooltip(Strings.TodoConfigShowSeasonalHint);
         }
 
         var nearby = settings.TodoShowNearbyFeature;
@@ -777,7 +777,7 @@ public sealed class ConfigWindow : Window
 
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
-            ImGui.SetTooltip(Strings.TodoConfigResetPositionHint);
+            UiMetrics.Tooltip(Strings.TodoConfigResetPositionHint);
         }
     }
 
@@ -795,7 +795,7 @@ public sealed class ConfigWindow : Window
 
         if (ImGui.IsItemHovered())
         {
-            ImGui.SetTooltip(Strings.ConfigItemHintsHint);
+            UiMetrics.Tooltip(Strings.ConfigItemHintsHint);
         }
 
         var contextMenu = settings.ItemContextMenuEnabled;
@@ -808,7 +808,7 @@ public sealed class ConfigWindow : Window
 
         if (ImGui.IsItemHovered())
         {
-            ImGui.SetTooltip(Strings.ConfigItemContextMenuHint);
+            UiMetrics.Tooltip(Strings.ConfigItemContextMenuHint);
         }
     }
 
@@ -825,7 +825,7 @@ public sealed class ConfigWindow : Window
 
         if (ImGui.IsItemHovered())
         {
-            ImGui.SetTooltip(Strings.ConfigWotsitIntegrationHint);
+            UiMetrics.Tooltip(Strings.ConfigWotsitIntegrationHint);
         }
 
         var npcMenu = settings.NpcContextMenuEnabled;
@@ -838,7 +838,7 @@ public sealed class ConfigWindow : Window
 
         if (ImGui.IsItemHovered())
         {
-            ImGui.SetTooltip(Strings.ConfigNpcContextMenuHint);
+            UiMetrics.Tooltip(Strings.ConfigNpcContextMenuHint);
         }
 
         DrawHookGate();
@@ -879,7 +879,7 @@ public sealed class ConfigWindow : Window
 
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
-            ImGui.SetTooltip(Strings.HooksEnableUntestedHint);
+            UiMetrics.Tooltip(Strings.HooksEnableUntestedHint);
         }
 
         if (gate.Decision.Verdict == HookGateVerdict.Overridden)
@@ -974,7 +974,7 @@ public sealed class ConfigWindow : Window
 
                     if (ImGui.IsItemHovered())
                     {
-                        ImGui.SetTooltip(Strings.ConfigVerdictRestoreTooltip);
+                        UiMetrics.Tooltip(Strings.ConfigVerdictRestoreTooltip);
                     }
                 }
             }
@@ -989,7 +989,7 @@ public sealed class ConfigWindow : Window
 
         if (ImGui.IsItemHovered())
         {
-            ImGui.SetTooltip(Strings.ConfigVerdictRestoreAllTooltip);
+            UiMetrics.Tooltip(Strings.ConfigVerdictRestoreAllTooltip);
         }
     }
 
