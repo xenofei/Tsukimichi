@@ -129,6 +129,9 @@ public sealed class ConfigWindow : Window
     /// <summary>Called with the new value after <see cref="Configuration.NpcContextMenuEnabled"/> is toggled and saved; the NPC menu hook wires it.</summary>
     public Action<bool>? NpcContextMenuToggled { get; set; }
 
+    /// <summary>Called with the new value after <see cref="Configuration.DutyFinderHintEnabled"/> is toggled and saved; the Duty Finder hint wires it.</summary>
+    public Action<bool>? DutyFinderHintToggled { get; set; }
+
     /// <summary>
     /// The shared addon kill switch (T20) behind Integrations' paused notice and "Enable game hooks on this untested
     /// version"; set by the plugin. Null hides both.
@@ -851,6 +854,19 @@ public sealed class ConfigWindow : Window
         if (ImGui.IsItemHovered())
         {
             UiMetrics.Tooltip(Strings.ConfigNpcContextMenuHint);
+        }
+
+        var dutyHint = settings.DutyFinderHintEnabled;
+        if (ImGui.Checkbox(Strings.DutyHintSetting, ref dutyHint))
+        {
+            settings.DutyFinderHintEnabled = dutyHint;
+            Save();
+            DutyFinderHintToggled?.Invoke(dutyHint);
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.DutyHintSettingHint);
         }
 
         DrawHookGate();

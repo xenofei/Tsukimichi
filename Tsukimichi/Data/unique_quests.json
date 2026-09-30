@@ -1,6 +1,6 @@
 {
   "gameVersion": "2026.09.15.0000.0000",
-  "generatedUtc": "2026-09-30T04:28:35Z",
+  "generatedUtc": "2026-09-30T05:05:16Z",
   "entries": [
     {
       "questRowId": 65545,
@@ -230,6 +230,36 @@
       "rewardName": "Icebreaker",
       "confidence": "Static",
       "source": "Achievement.Key;achievement=1029;type=6",
+      "otherSources": []
+    },
+    {
+      "questRowId": 65626,
+      "kind": "DutyUnlock",
+      "rewardId": 80,
+      "itemId": 0,
+      "rewardName": "the Akh Afah Amphitheatre (Extreme)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 65630,
+      "kind": "DutyUnlock",
+      "rewardId": 28,
+      "itemId": 0,
+      "rewardName": "Sastasha (Hard)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 65632,
+      "kind": "DutyUnlock",
+      "rewardId": 26,
+      "itemId": 0,
+      "rewardName": "the Sunken Temple of Qarn (Hard)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -1406,6 +1436,16 @@
       "rewardName": "Seeker of Truth",
       "confidence": "Static",
       "source": "Achievement.Data;achievement=315;type=6",
+      "otherSources": []
+    },
+    {
+      "questRowId": 66030,
+      "kind": "DutyUnlock",
+      "rewardId": 111,
+      "itemId": 0,
+      "rewardName": "the World of Darkness",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -3680,6 +3720,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 66738,
+      "kind": "DutyUnlock",
+      "rewardId": 92,
+      "itemId": 0,
+      "rewardName": "the Labyrinth of the Ancients",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 66744,
       "kind": "DutyUnlock",
       "rewardId": 17,
@@ -3831,6 +3881,16 @@
       "rewardName": "Pretty in Pink",
       "confidence": "Static",
       "source": "Achievement.Key;type=6",
+      "otherSources": []
+    },
+    {
+      "questRowId": 66844,
+      "kind": "DutyUnlock",
+      "rewardId": 68,
+      "itemId": 0,
+      "rewardName": "the Minstrel's Ballad: Ultima's Bane",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -4300,6 +4360,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 67010,
+      "kind": "DutyUnlock",
+      "rewardId": 102,
+      "itemId": 0,
+      "rewardName": "Syrcus Tower",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 67015,
       "kind": "Emote",
       "rewardId": 127,
@@ -4340,6 +4410,36 @@
       "otherSources": []
     },
     {
+      "questRowId": 67060,
+      "kind": "DutyUnlock",
+      "rewardId": 24,
+      "itemId": 0,
+      "rewardName": "the Tam-Tara Deepcroft (Hard)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 67061,
+      "kind": "DutyUnlock",
+      "rewardId": 25,
+      "itemId": 0,
+      "rewardName": "the Stone Vigil (Hard)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 67062,
+      "kind": "DutyUnlock",
+      "rewardId": 23,
+      "itemId": 0,
+      "rewardName": "Hullbreaker Isle",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 67063,
       "kind": "DutyUnlock",
       "rewardId": 127,
@@ -4367,6 +4467,16 @@
       "rewardName": "the Borderland Ruins (Secure)",
       "confidence": "Static",
       "source": "Quest.InstanceContentUnlock;InstanceContent=41001",
+      "otherSources": []
+    },
+    {
+      "questRowId": 67066,
+      "kind": "DutyUnlock",
+      "rewardId": 78,
+      "itemId": 0,
+      "rewardName": "the Striking Tree (Extreme)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -6868,6 +6978,26 @@
       "otherSources": []
     },
     {
+      "questRowId": 67647,
+      "kind": "DutyUnlock",
+      "rewardId": 36,
+      "itemId": 0,
+      "rewardName": "the Dusk Vigil",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 67648,
+      "kind": "DutyUnlock",
+      "rewardId": 33,
+      "itemId": 0,
+      "rewardName": "Neverreap",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 67649,
       "kind": "Minion",
       "rewardId": 149,
@@ -6875,6 +7005,16 @@
       "rewardName": "accompaniment node",
       "confidence": "Static",
       "source": "Quest.Reward;ItemAction=853",
+      "otherSources": []
+    },
+    {
+      "questRowId": 67649,
+      "kind": "DutyUnlock",
+      "rewardId": 35,
+      "itemId": 0,
+      "rewardName": "the Fractal Continuum",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -7132,6 +7272,26 @@
       "otherSources": []
     },
     {
+      "questRowId": 67737,
+      "kind": "DutyUnlock",
+      "rewardId": 40,
+      "itemId": 0,
+      "rewardName": "Pharos Sirius (Hard)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 67738,
+      "kind": "DutyUnlock",
+      "rewardId": 41,
+      "itemId": 0,
+      "rewardName": "Saint Mocianne's Arboretum",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 67739,
       "kind": "DutyUnlock",
       "rewardId": 91,
@@ -7149,6 +7309,16 @@
       "rewardName": "Sky Pirate",
       "confidence": "Static",
       "source": "Achievement.Key;achievement=1388;type=6",
+      "otherSources": []
+    },
+    {
+      "questRowId": 67741,
+      "kind": "DutyUnlock",
+      "rewardId": 120,
+      "itemId": 0,
+      "rewardName": "the Void Ark",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -7864,6 +8034,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 67784,
+      "kind": "DutyUnlock",
+      "rewardId": 172,
+      "itemId": 0,
+      "rewardName": "Hullbreaker Isle (Hard)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 67789,
       "kind": "Title",
       "rewardId": 290,
@@ -7891,6 +8071,16 @@
       "rewardName": "Containment Bay S1T7 (Extreme)",
       "confidence": "Static",
       "source": "Quest.InstanceContentUnlock;InstanceContent=20038",
+      "otherSources": []
+    },
+    {
+      "questRowId": 67818,
+      "kind": "DutyUnlock",
+      "rewardId": 140,
+      "itemId": 0,
+      "rewardName": "the Lost City of Amdapor (Hard)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -8161,6 +8351,16 @@
       "rewardName": "Hyper Animaniac: Deneb",
       "confidence": "Static",
       "source": "Achievement.Key;type=24",
+      "otherSources": []
+    },
+    {
+      "questRowId": 67821,
+      "kind": "DutyUnlock",
+      "rewardId": 168,
+      "itemId": 0,
+      "rewardName": "the Weeping City of Mhach",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -9156,6 +9356,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 67922,
+      "kind": "DutyUnlock",
+      "rewardId": 196,
+      "itemId": 0,
+      "rewardName": "the Great Gubal Library (Hard)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 67923,
       "kind": "DutyUnlock",
       "rewardId": 204,
@@ -9663,6 +9873,16 @@
       "rewardName": "Quicksand",
       "confidence": "Static",
       "source": "Quest.Reward;ItemAction=25183;AdditionalData=131",
+      "otherSources": []
+    },
+    {
+      "questRowId": 67938,
+      "kind": "DutyUnlock",
+      "rewardId": 221,
+      "itemId": 0,
+      "rewardName": "Sohm Al (Hard)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {

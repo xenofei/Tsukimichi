@@ -112,6 +112,10 @@ public sealed class Configuration : IPluginConfiguration
     /// <summary>Add a "Tsukimichi: quests here (N)" entry to the target bar's menu on a quest-giving NPC.</summary>
     public bool NpcContextMenuEnabled { get; set; } = true;
 
+    // ---- 0.9.0: Duty Finder unlock hint (P13) ----
+    /// <summary>Show the quest that unlocks a padlocked duty beside the Duty Finder when that duty is selected.</summary>
+    public bool DutyFinderHintEnabled { get; set; } = true;
+
     // ---- 0.8.0: addon kill switch (T20) ----
     /// <summary>
     /// The game version (ffxivgame.ver text) on which the player let the game hooks (item tooltip panel, item and NPC

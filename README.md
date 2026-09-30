@@ -57,14 +57,15 @@ Updates arrive through the plugin installer like any other plugin.
 
 ## What it hooks, and what it never does
 
-Tsukimichi reads the game's quest sheets from your installed client and your character's own quest flags, journal, levels and standings through Dalamud. Beyond ordinary Dalamud windows it touches four places in the game UI:
+Tsukimichi reads the game's quest sheets from your installed client and your character's own quest flags, journal, levels and standings through Dalamud. Beyond ordinary Dalamud windows it touches five places in the game UI:
 
 - the **item tooltip**: it reads which item is hovered and draws its own small panel beside the game's tooltip (Settings › Item hints);
 - the **item context menu**: it adds a "Tsukimichi: quest reward" entry (Settings › Item hints);
 - the **target bar's menu on an NPC**: it adds a "Tsukimichi: quests here (N)" entry on a quest-giving NPC that opens the Journal on that NPC's quests (Settings › Integrations); it reads only the NPC's kind and id, never a player's, and stores nothing;
-- the **server info bar**: a "☾ N" entry with the count of quests you can start here (Nearby quests › cog).
+- the **server info bar**: a "☾ N" entry with the count of quests you can start here (Nearby quests › cog);
+- the **Duty Finder**: while it is open it reads which duty is selected and whether you have unlocked it, and beside a padlocked one draws a small panel naming the quest that unlocks it, with its state and what it waits for (Settings › Integrations › "Duty Finder unlock hint"); it never queues or opens a duty.
 
-All four are tested on a specific game version, recorded in each release. After a game patch they pause themselves until a Tsukimichi update has been tested on the new version, so a patch that moves the game's interface cannot leave a panel or menu entry misbehaving; a chat line and a notice in Settings › Integrations say so, and the quest journal and everything else keep working. Settings › Integrations › "Enable game hooks on this untested version" runs them anyway on the game version you are on; the next patch pauses them again.
+All five are tested on a specific game version, recorded in each release. After a game patch they pause themselves until a Tsukimichi update has been tested on the new version, so a patch that moves the game's interface cannot leave a panel or menu entry misbehaving; a chat line and a notice in Settings › Integrations say so, and the quest journal and everything else keep working. Settings › Integrations › "Enable game hooks on this untested version" runs them anyway on the game version you are on; the next patch pauses them again.
 
 Everything else is a Dalamud window. It also talks to two other plugins over Dalamud IPC when they are present: Wotsit (to register searchable entries) and Lifestream (to teleport when you click Teleport), and it answers other plugins' questions about quests (below).
 

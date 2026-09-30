@@ -30,6 +30,7 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] internal static IContextMenu ContextMenu { get; private set; } = null!;
     [PluginService] internal static ICondition Condition { get; private set; } = null!;
     [PluginService] internal static IKeyState KeyState { get; private set; } = null!;
+    [PluginService] internal static IAddonLifecycle AddonLifecycle { get; private set; } = null!;
     // /UI
 
     private static readonly TimeSpan DisposeWait = TimeSpan.FromSeconds(5);
@@ -75,6 +76,8 @@ public sealed class Plugin : IDalamudPlugin
     private HoverHint? hoverHint;
     private Game.ItemHooks? itemHooks;
     private Game.NpcHooks? npcHooks;
+    private Game.DutyFinderHint? dutyFinderHint;
+    private DutyFinderPanel? dutyFinderPanel;
     private Game.HookGateNotice? hookGateNotice;
     private Game.TodoLockNotice? todoLockNotice;
     private Game.IpcProvider? ipcProvider;
@@ -401,8 +404,8 @@ public sealed class Plugin : IDalamudPlugin
             // Item hover hints and context-menu links (V2-14). The lookup follows the Moonlit catalog reference (rebuilt
             // after an override change) and the quest catalog (set once the build finishes); both are read per use.
             var rewardLookup = new Core.Unique.RewardLookupSource(() => moonlit.Catalog, () => Session.Bundle?.Catalog);
-            // Addon kill switch (T20): the four game hooks below (hover hint, item and NPC menu entries, server info
-            // bar entry) run only while this gate allows them, that is on the game version they were play-tested on
+            // Addon kill switch (T20): the five game hooks below (hover hint, item and NPC menu entries, Duty Finder
+            // unlock hint, server info bar entry) run only while this gate allows them, that is on the game version they were play-tested on
             // (the csproj's TsukimichiTestedGameVersion) or with "Enable game hooks on this untested version" ticked for the running version. It is
             // one shared service: anything else drawn beside a game addon, the Duty Finder unlock hint of 0.9.0 (P13)
             // first, takes this instance and follows its Changed event. The client version is read once here.
@@ -428,6 +431,17 @@ public sealed class Plugin : IDalamudPlugin
                 mainWindow.BringToFront();
                 ui.ShowIssuer(npcId);
             }, gate, Log) { Enabled = Settings.NpcContextMenuEnabled };
+            // Duty Finder unlock hint (P13): the quest behind a padlocked duty, beside the Duty Finder. Its listeners take
+            // the same kill switch; the lookup follows the curated overlay and the Moonlit catalog like the item hint's.
+            var dutyUnlocks = new Core.Unique.DutyUnlockIndexSource(() => Session.Curated, () => moonlit.Catalog);
+            dutyFinderHint = new Game.DutyFinderHint(AddonLifecycle, GameGui, DataManager, Session, dutyUnlocks, gate, Log) { Enabled = Settings.DutyFinderHintEnabled };
+            dutyFinderPanel = new DutyFinderPanel(dutyFinderHint, gameLinks, quest =>
+            {
+                mainWindow.IsOpen = true;
+                mainWindow.BringToFront();
+                MoonlitPane.Reveal(ui, quest);
+            });
+            PluginInterface.UiBuilder.Draw += dutyFinderPanel.Draw;
             var why = new WhyCommand(Session, ui, gameLinks);
             command.Why = why.Run;
 
@@ -487,6 +501,7 @@ public sealed class Plugin : IDalamudPlugin
             if (hoverHint is { } hint) { configWindow.ItemHintsToggled = enabled => hint.Enabled = enabled; }
             if (itemHooks is { } hooks) { configWindow.ItemContextMenuToggled = enabled => hooks.Enabled = enabled; }
             if (npcHooks is { } npcMenu) { configWindow.NpcContextMenuToggled = enabled => npcMenu.Enabled = enabled; }
+            if (dutyFinderHint is { } dutyHint) { configWindow.DutyFinderHintToggled = enabled => dutyHint.Enabled = enabled; }
             configWindow.HookGate = gate;
             windowSystem.AddWindow(configWindow);
             PluginInterface.UiBuilder.OpenConfigUi += configWindow.Toggle;
@@ -597,8 +612,14 @@ public sealed class Plugin : IDalamudPlugin
             PluginInterface.UiBuilder.Draw -= hoverHint.Draw;
         }
 
+        if (dutyFinderPanel is not null)
+        {
+            PluginInterface.UiBuilder.Draw -= dutyFinderPanel.Draw;
+        }
+
         itemHooks?.Dispose();
         npcHooks?.Dispose();
+        dutyFinderHint?.Dispose();
         hookGateNotice?.Dispose();
         todoLockNotice?.Dispose();
         PluginInterface.UiBuilder.OpenMainUi -= mainWindow.Toggle;
@@ -653,6 +674,11 @@ public sealed class Plugin : IDalamudPlugin
                 PluginInterface.UiBuilder.Draw -= hoverHint.Draw;
             }
 
+            if (dutyFinderPanel is not null)
+            {
+                PluginInterface.UiBuilder.Draw -= dutyFinderPanel.Draw;
+            }
+
             PluginInterface.UiBuilder.Draw -= windowSystem.Draw;
             PluginInterface.UiBuilder.Draw -= UpdateUiMetrics;
             windowSystem.RemoveAllWindows();
@@ -660,6 +686,7 @@ public sealed class Plugin : IDalamudPlugin
         });
         Unwind("item hooks", () => itemHooks?.Dispose());
         Unwind("npc hooks", () => npcHooks?.Dispose());
+        Unwind("duty finder hint", () => dutyFinderHint?.Dispose());
         Unwind("hook gate notice", () => hookGateNotice?.Dispose());
         Unwind("todo lock notice", () => todoLockNotice?.Dispose());
         Unwind("command", () => command?.Dispose());
