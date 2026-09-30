@@ -29,6 +29,11 @@ namespace Tsukimichi.Ui;
 /// Show path, Route to this (the unlock route window), Link in chat, Copy coordinates, Open journal and Report, and a plain provenance line. Every action is a
 /// focusable item, so the pane works without a mouse (accessibility A6). Everything shown is materialized when the
 /// selection or the session version changes, so drawing allocates nothing.
+/// <para>
+/// At Flair Full and Quiet (feature plan V4) the hero is the Moon Road hero and the cards are open sections
+/// (DetailPane.Hero.cs), with a moon-road divider between them; Plain keeps the look above. Every quest has a banner at
+/// every level, from the fallback chain.
+/// </para>
 /// </summary>
 public sealed partial class DetailPane
 {
@@ -76,8 +81,11 @@ public sealed partial class DetailPane
         /// <summary>The shield masks the name; the pane offers "Reveal this name".</summary>
         public bool NameMasked;
 
-        /// <summary>The quest has a banner the shield hides; the Night card says the art comes later.</summary>
-        public bool ArtworkHidden;
+        /// <summary>
+        /// The spoiler shield lets the quest's game art show (<see cref="Core.Query.SpoilerMask.ShowArtwork"/>); when it
+        /// does not, the hero shows the quest's bundled category art instead, which spoils nothing.
+        /// </summary>
+        public bool ShowArtwork = true;
 
         /// <summary>Provenance of a refiled or removed quest ("Filed under … (rule 4: …)", "Removed from the game in patch 6.3"); null for an ordinary quest.</summary>
         public string? FilingLine;
@@ -103,6 +111,9 @@ public sealed partial class DetailPane
 
         /// <summary>What the state pill cannot say: the blocker, the step, the date; empty when the state says it all.</summary>
         public string StatusReason = string.Empty;
+
+        /// <summary>" · " and <see cref="StatusReason"/>, after the state word on the Moon Road state line; empty for none.</summary>
+        public string StatusTail = string.Empty;
         public string? StateNote;
 
         /// <summary>"Note: …" from <c>curated/quirks.json</c>, drawn under the requirements; null for a quest without one.</summary>
@@ -222,32 +233,36 @@ public sealed partial class DetailPane
     {
         var width = ImGui.GetContentRegionAvail().X;
         bodyRight = ImGui.GetCursorScreenPos().X + width;
-        cardRight = bodyRight - UiMetrics.Px(10f);
+
+        // Flair Full and Quiet: open sections, their content running to the body's edge; Plain: the 1.3 cards.
+        var open = Theme.ShowRules;
+        cardRight = open ? bodyRight : bodyRight - UiMetrics.Px(10f);
         DrawHero(quest);
         DrawNotYet(quest);
         DrawUnderHero(session, rowId);
+        if (open)
+        {
+            MoonRoadDivider();
+        }
 
         Gap();
         var start = ImGui.GetCursorScreenPos();
-        Chrome.BeginCard("##requirements", Strings.Requirements, RequirementsIcon, eyebrow: true);
-        CardCaption(model.RequirementsCaption, start.X + width, model.UnmetCount > 0 ? Theme.EclipseText : Theme.Surface.TextTertiary);
+        BeginSection("##requirements", Strings.Requirements, RequirementsEyebrow, RequirementsIcon, model.RequirementsCaption, model.UnmetCount > 0 ? Theme.EclipseText : Theme.Surface.TextTertiary);
         DrawRequirements(start.X);
-        Chrome.EndCard();
+        EndSection();
         ui.RecordItem(UiRects.DetailRequirements);
 
         Gap();
-        start = ImGui.GetCursorScreenPos();
-        Chrome.BeginCard("##rewards", Strings.Rewards, RewardsIcon, eyebrow: true);
-        CardCaption(model.RewardsCaption, start.X + width, Theme.Surface.TextTertiary);
-        DrawRewards(start.X + width - UiMetrics.Px(10f));
-        Chrome.EndCard();
+        BeginSection("##rewards", Strings.Rewards, RewardsEyebrow, RewardsIcon, model.RewardsCaption, Theme.Surface.TextTertiary);
+        DrawRewards(cardRight);
+        EndSection();
 
         if (Overrides is { } overrides)
         {
             Gap();
-            Chrome.BeginCard("##moonlit", Strings.UniqueSection, MoonlitIcon, eyebrow: true);
+            BeginSection("##moonlit", Strings.UniqueSection, MoonlitEyebrow, MoonlitIcon);
             DrawUnique(overrides, rowId);
-            Chrome.EndCard();
+            EndSection();
         }
 
         Gap();
@@ -257,19 +272,20 @@ public sealed partial class DetailPane
             ImGui.SetScrollHereY(0f);
         }
 
-        start = ImGui.GetCursorScreenPos();
         var pad = UiMetrics.Px(10f);
-        Chrome.BeginCard("##path", Strings.Path, PathIcon, eyebrow: true);
-        CardCaption(chart.HeaderCaption, start.X + width, Theme.Surface.TextTertiary);
+        BeginSection("##path", Strings.Path, PathEyebrow, PathIcon, chart.HeaderCaption, Theme.Surface.TextTertiary);
         DrawChain();
-        chart.Draw(width - (2f * pad), 0.4f * detailHeight, pad);
-        Chrome.EndCard();
+
+        // The chart ends at the card's inner edge, or a gutter short of the body's (the minimap draws in the gutter).
+        var chartRight = open ? bodyRight - pad : cardRight;
+        chart.Draw(MathF.Max(1f, chartRight - ImGui.GetCursorScreenPos().X), 0.4f * detailHeight, pad);
+        EndSection();
         ui.RecordItem(UiRects.DetailPath);
 
         Gap();
-        Chrome.BeginCard("##giver", Strings.Giver, GiverIcon, eyebrow: true);
+        BeginSection("##giver", Strings.Giver, GiverEyebrow, GiverIcon);
         DrawGiver();
-        Chrome.EndCard();
+        EndSection();
         ui.RecordItem(UiRects.DetailGiver);
         DrawJournalCard(session, quest);
         Gap();
@@ -307,10 +323,20 @@ public sealed partial class DetailPane
 
     // ------------------------------------------------------------------ hero
 
-    /// <summary>The banner hero, or the Night card when the artwork is hidden, missing or still loading.</summary>
+    /// <summary>
+    /// The hero. At Flair Full and Quiet the Moon Road hero (DetailPane.Hero.cs): every quest's banner from the fallback
+    /// chain in its frame, the state moon rising on its edge, the title and the chips under it. At Plain the 1.3 hero:
+    /// the banner (from the same chain) with the state pill and the name on it, or the Night card while it loads.
+    /// </summary>
     private void DrawHero(QuestRecord quest)
     {
-        if (model.ArtworkHidden || !DrawBanner(quest))
+        if (Theme.ShowRules)
+        {
+            DrawMoonRoadHero(quest);
+            return;
+        }
+
+        if (!DrawBanner(quest))
         {
             DrawHeaderCard(quest);
         }
@@ -320,11 +346,13 @@ public sealed partial class DetailPane
     /// The journal banner at the column's width and at most 96 px tall, cover-cropped, a scrim from 30 % of its height
     /// to the bottom, the state pill top left (clamped, with an ellipsis), the special badge top right, and the name
     /// bottom left while it fits under the pill, else under the banner; the caption line follows under the banner as
-    /// whole segments that wrap (L5). False when the quest has no banner or it is not loaded yet.
+    /// whole segments that wrap (L5). The banner is the quest's from the fallback chain (<see cref="CurrentBanner"/>),
+    /// its source in the tooltip. False while it is not loaded yet.
     /// </summary>
     private bool DrawBanner(QuestRecord quest)
     {
-        if (quest.Icon == 0 || !textures.GetFromGameIcon(new GameIconLookup(quest.Icon)).TryGetWrap(out var wrap, out _) || wrap.Width <= 0 || wrap.Height <= 0)
+        var choice = CurrentBanner(quest);
+        if (!BannerArtwork.TryGetWrap(textures, in choice, out var wrap, out var shown) || wrap.Width <= 0 || wrap.Height <= 0)
         {
             return false;
         }
@@ -388,6 +416,9 @@ public sealed partial class DetailPane
             using var display = Typography.Display();
             TextFlow.Wrapped(model.DisplayName, width, Theme.U32(Theme.Surface.Text));
         }
+
+        // The banner's source, where nothing else on it is hovered.
+        BannerTooltip(min, max, shown);
 
         // The caption line under the banner, its segments whole and wrapping.
         SegmentFlow(model.HeaderSegments, BlockerText.Separator, width, Theme.Surface.TextSecondary);
@@ -507,7 +538,7 @@ public sealed partial class DetailPane
             }
 
             SegmentFlow(model.HeaderSegments, BlockerText.Separator, room, Theme.Surface.TextSecondary);
-            if (model.ArtworkHidden)
+            if (ArtworkWithheld(quest))
             {
                 TextFlow.Wrapped(Strings.ArtworkHidden, room, Theme.U32(Theme.Surface.TextSecondary));
             }
@@ -541,8 +572,13 @@ public sealed partial class DetailPane
             }
         }
 
-        // The "Not yet" callout already says why a quest cannot be taken (L8); the status line is for the rest.
-        if (model.Callout is null && (model.StatusReason.Length > 0 || model.StateNote is not null))
+        // The "Not yet" callout already says why a quest cannot be taken (L8); the status line is for the rest. With
+        // the Moon Road hero there is no state pill: the line spells the state out beside the rising moon.
+        if (model.Callout is null && Theme.ShowRules)
+        {
+            DrawStateLine();
+        }
+        else if (model.Callout is null && (model.StatusReason.Length > 0 || model.StateNote is not null))
         {
             TextFlow.Wrapped(model.StatusReason.Length > 0 ? model.StatusReason : model.StateNote!, RoomTo(bodyRight), Theme.U32(StateTextColor(model.State)));
             if (model.StatusReason.Length > 0 && model.StateNote is { } note)
@@ -645,6 +681,7 @@ public sealed partial class DetailPane
         var iconSize = tile - UiMetrics.Px(8f);
         var gap = UiMetrics.Px(6f);
         var markSize = ImGui.GetFontSize() * MarkScale;
+        var obtained = Theme.ShowRules && model.State is QuestState.Completed or QuestState.DoneThisCycle;
         var rowStart = ImGui.GetCursorScreenPos();
         var x = rowStart.X;
         var y = rowStart.Y;
@@ -682,6 +719,11 @@ public sealed partial class DetailPane
             {
                 dl.AddRect(min, max, Theme.MoonU32, rounding, ImDrawFlags.None, MathF.Max(1.5f, UiMetrics.Px(1.5f)));
                 Crescent(dl, new Vector2(max.X - UiMetrics.Px(1f), min.Y + UiMetrics.Px(1f)), MathF.Max(3f, UiMetrics.Px(4f)));
+            }
+            else if (obtained)
+            {
+                // A completed quest's rewards are the character's: a brass frame (the moon and the state line say it too).
+                dl.AddRect(min, max, Theme.WithAlpha(Theme.Surface.Ornament, Theme.OrnamentAlpha(0.8f)), rounding, ImDrawFlags.None, UiMetrics.Hairline);
             }
             else
             {
@@ -1205,6 +1247,7 @@ public sealed partial class DetailPane
         model.PlaceLine = null;
         model.CoordinateText = null;
         model.StatusReason = string.Empty;
+        model.StatusTail = string.Empty;
         model.RequirementsCaption = string.Empty;
         model.RewardsCaption = string.Empty;
         model.Evaluation = null;
@@ -1231,11 +1274,12 @@ public sealed partial class DetailPane
         var spoilers = session.Spoilers;
         model.DisplayName = spoilers.DisplayName(quest);
         model.NameMasked = spoilers.IsMasked(quest);
-        model.ArtworkHidden = quest.Icon != 0 && !spoilers.ShowArtwork(quest, model.State);
+        model.ShowArtwork = spoilers.ShowArtwork(quest, model.State);
         model.StateName = Strings.StateName(model.State, quest);
         var status = BlockerText.StatusText(evaluation, quest, session.Names, session.States);
         var prefix = model.StateName + BlockerText.Separator;
         model.StatusReason = status.StartsWith(prefix, StringComparison.Ordinal) ? status[prefix.Length..] : status == model.StateName ? string.Empty : status;
+        model.StatusTail = model.StatusReason.Length > 0 ? BlockerText.Separator + model.StatusReason : string.Empty;
         model.HasUniqueEntries = HasShippedUniqueEntry(session.UniqueRewards, rowId);
 
         model.JournalSegments = quest.IsUnlisted ? [Strings.RemovedFromGame] : [quest.Journal.GenreName, quest.Journal.CategoryName];

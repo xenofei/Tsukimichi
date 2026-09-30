@@ -84,6 +84,21 @@
   <data name="DetailSpecialBadgeTooltip" xml:space="preserve">
     <value>Special</value>
   </data>
+  <data name="DetailBannerOwn" xml:space="preserve">
+    <value>Journal art</value>
+  </data>
+  <data name="DetailBannerSibling" xml:space="preserve">
+    <value>From a related quest</value>
+  </data>
+  <data name="DetailBannerDuty" xml:space="preserve">
+    <value>Duty art</value>
+  </data>
+  <data name="DetailBannerZone" xml:space="preserve">
+    <value>Zone art</value>
+  </data>
+  <data name="DetailBannerCategory" xml:space="preserve">
+    <value>Tsukimichi art</value>
+  </data>
   <data name="DetailChainFormat" xml:space="preserve">
     <value>Chain: {0} · {1} of {2} done</value>
     <comment>{0} = chain name, {1} = quests done, {2} = quests in the chain.</comment>

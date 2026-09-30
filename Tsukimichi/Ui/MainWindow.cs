@@ -191,6 +191,12 @@ public sealed class MainWindow : Window, IDisposable
         detailPane.QuestionableHandoff = handoff ?? throw new ArgumentNullException(nameof(handoff));
     }
 
+    /// <summary>The detail pane's hero banners (V4); without it a quest shows its own banner or its category art.</summary>
+    public void AttachBanners(BannerIndexSource<Core.Unique.DutyUnlockIndex> banners)
+    {
+        detailPane.Banners = banners ?? throw new ArgumentNullException(nameof(banners));
+    }
+
     /// <summary>The detail pane's Journal card (P9); without it the card is hidden.</summary>
     public void AttachQuestText(QuestTextService questText)
     {

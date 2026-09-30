@@ -43,7 +43,7 @@ public sealed partial class DetailPane
         }
 
         Gap();
-        Chrome.BeginCard("##journalText", Strings.JournalTextCard, JournalTextIcon, eyebrow: true);
+        BeginSection("##journalText", Strings.JournalTextCard, JournalEyebrow, JournalTextIcon);
         if (journalOpenRowId != quest.RowId)
         {
             using (Theme.PushText(Theme.Surface.TextSecondary))
@@ -61,7 +61,7 @@ public sealed partial class DetailPane
                 UiMetrics.Tooltip(Strings.JournalTextReadTooltip);
             }
 
-            Chrome.EndCard();
+            EndSection();
             return;
         }
 
@@ -86,7 +86,7 @@ public sealed partial class DetailPane
             journalOpenRowId = uint.MaxValue;
         }
 
-        Chrome.EndCard();
+        EndSection();
     }
 
     private void DrawJournalEntries(uint rowId, JournalView view, bool live)
