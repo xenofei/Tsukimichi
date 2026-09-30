@@ -197,6 +197,43 @@ public class TreeCountsTests
     }
 
     [Fact]
+    public void Ready_quests_are_counted_per_node_for_the_tree_badges()
+    {
+        var catalog = QuestCatalog.Build(
+        [
+            Quest(1, "A", section: 1, category: 10, genre: 100),
+            Quest(2, "B", section: 1, category: 10, genre: 100),
+            Quest(3, "C", section: 1, category: 10, genre: 101),
+            Quest(4, "D", section: 1, category: 11, genre: 102),
+            Quest(5, "E", section: 2, category: 12, genre: 103),
+            Quest(6, "Removed", section: 2, category: 12, genre: 0),
+            Quest(65713, "Class intro", section: 2, category: 12, genre: 103) with { CountsInTotals = false },
+        ]);
+        var states = States(
+            (1, QuestState.Ready),
+            (2, QuestState.Ready),
+            (3, QuestState.ReadyOnOtherJob),
+            (4, QuestState.Ready),
+            (5, QuestState.Completed),
+            (6, QuestState.Ready),
+            (65713, QuestState.Ready));
+
+        var counts = TreeCounts.Compute(catalog, states, includeUnlisted: true);
+
+        Assert.Equal(3, counts.OverallReady);
+        Assert.Equal(3, counts.SectionReady(1));
+        Assert.Equal(0, counts.SectionReady(2));        // removed and uncounted quests never badge
+        Assert.Equal(2, counts.CategoryReady(10));
+        Assert.Equal(1, counts.CategoryReady(11));
+        Assert.Equal(2, counts.GenreReady(100));
+        Assert.Equal(0, counts.GenreReady(101));        // Ready on another job is not Ready
+        Assert.Equal(0, counts.GenreReady(999));
+
+        // The progress numbers are untouched by the Ready tally.
+        Assert.Equal(new NodeCount(0, 4, 0), counts.Section(1));
+    }
+
+    [Fact]
     public void Missing_nodes_read_as_zero()
     {
         var counts = TreeCounts.Compute(Catalog, AllStates, includeUnlisted: false);
