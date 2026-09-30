@@ -10,8 +10,12 @@ public sealed record SystemUnlock(string Label, string Kind, string? Note);
 /// <summary>A quest that unlocks duties, from <c>curated/duty_unlocks.json</c>.</summary>
 public sealed record DutyUnlock(IReadOnlyList<uint> ContentFinderConditionIds, string? Note);
 
-/// <summary>A seasonal event window, from <c>curated/festivals.json</c>. Null dates mean "unknown; use the live flag only".</summary>
-public sealed record FestivalInfo(string Name, DateTime? Start, DateTime? End, bool MogStation);
+/// <summary>
+/// A seasonal event window, from <c>curated/festivals.json</c>. Null dates mean "unknown; use the live flag only".
+/// <paramref name="Evidence"/> is the announcement the dates were read from (the Lodestone page); the plugin shows an
+/// end date only when it has one, so a date is never shown that cannot be attributed.
+/// </summary>
+public sealed record FestivalInfo(string Name, DateTime? Start, DateTime? End, bool MogStation, string? Evidence = null, string? Note = null);
 
 /// <summary>A named quest chain assembled from journal genres in the listed order, from <c>curated/chains.json</c>.</summary>
 public sealed record CuratedChain(string Name, IReadOnlyList<uint> GenreIds, string? Note);
@@ -63,7 +67,7 @@ public sealed record QuestQuirk(string Note, string Evidence);
 /// system_unlocks.json  { "66038": { "label": "Glamour Dresser", "kind": "system", "note": "..." } }
 /// duty_unlocks.json    { "66038": [ 4, 5 ] }  or  { "66038": { "contentFinderConditionIds": [ 4, 5 ], "note": "..." } }
 /// feature_quests.json  [ 66038, 66039 ]  or  { "questRowIds": [ 66038, 66039 ], "note": "..." }   (written by DataGen, not by hand)
-/// festivals.json       { "1": { "name": "Starlight Celebration", "start": "2025-12-15T08:00:00Z", "end": "...", "mogStation": false } }
+/// festivals.json       { "1": { "name": "Starlight Celebration", "start": "2025-12-15T08:00:00Z", "end": "...", "mogStation": false, "evidence": "https://...", "note": "..." } }
 ///                      or  { "entries": { "1": { ... } } }
 /// chains.json          { "chains": [ { "name": "Hildibrand", "genreIds": [ 93, 94 ], "note": "..." } ] }
 /// online_store.json    { "schema": 1, "note": "...", "entries": { "22437": { "name": "Starlight Bear", "kind": "Mount", "rewardId": 99, "evidence": "https://...", "note": "..." } } }
@@ -344,7 +348,15 @@ public sealed class CuratedData
                 }
             }
 
-            festivals[festivalId] = new FestivalInfo(name, start, end, mogStation);
+            var evidence = StorageJson.ReadString(obj, "evidence");
+            var note = StorageJson.ReadString(obj, "note");
+            festivals[festivalId] = new FestivalInfo(
+                name,
+                start,
+                end,
+                mogStation,
+                string.IsNullOrWhiteSpace(evidence) ? null : evidence,
+                string.IsNullOrWhiteSpace(note) ? null : note);
         });
 
         LoadChains(Path.Combine(dir, ChainsFileName), chains, warnings);

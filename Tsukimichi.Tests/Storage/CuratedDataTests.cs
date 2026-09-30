@@ -400,7 +400,32 @@ public sealed class CuratedDataTests : IDisposable
         Assert.NotEmpty(data.Chains);
         Assert.NotEmpty(data.OnlineStore);
         Assert.NotEmpty(data.OtherSources);
-        Assert.Empty(data.Festivals);
+        // Seeded from the verification run's Lodestone windows (P11); CuratedInvariantsTests checks each entry.
+        Assert.NotEmpty(data.Festivals);
+        Assert.All(data.Festivals.Values, f => Assert.NotNull(f.Evidence));
+    }
+
+    [Fact]
+    public void Festivals_read_evidence_and_note_and_leave_them_null_when_absent()
+    {
+        WriteCurated("festivals.json",
+            """
+            {
+              "entries": {
+                "174": { "name": "Moonfire Faire (2026)", "start": "2026-08-12T00:00:00Z", "end": "2026-08-28T23:59:59Z", "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2026/Moonfire_Faire/", "note": "Lodestone window" },
+                "84": { "name": "A Nocturne for Heroes", "evidence": " " }
+              }
+            }
+            """);
+
+        var data = CuratedData.Load(tmp.File("curated"));
+
+        Assert.Empty(data.Warnings);
+        Assert.Equal("https://na.finalfantasyxiv.com/lodestone/special/2026/Moonfire_Faire/", data.Festivals[174].Evidence);
+        Assert.Equal("Lodestone window", data.Festivals[174].Note);
+        Assert.Null(data.Festivals[84].Evidence);
+        Assert.Null(data.Festivals[84].Note);
+        Assert.Null(data.Festivals[84].End);
     }
 
     [Fact]

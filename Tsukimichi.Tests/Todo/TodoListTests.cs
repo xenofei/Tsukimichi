@@ -2,6 +2,7 @@ using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Jobs;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
+using Tsukimichi.Core.Seasonal;
 using Tsukimichi.Core.Todo;
 using Tsukimichi.GameData;
 
@@ -361,5 +362,64 @@ public sealed class TodoListTests
         var quest = Catalog.GetByRowId(FeatureA)! with { LevelOffset = 2 };
 
         Assert.Equal("Lv 17 · Nedrick", TodoList.Hint(Inputs(), quest, QuestState.Ready));
+    }
+
+    // ---- Event quests running now (P11) ----
+
+    private static readonly DateTime Now = new(2026, 8, 20, 12, 0, 0, DateTimeKind.Utc);
+
+    private static RunningFestival Festival(ushort id, string name, DateTime? end, params (uint RowId, QuestState State)[] quests) =>
+        new(id, name, quests.Select(q => new SeasonalQuest(Catalog.GetByRowId(q.RowId)!, q.State)).ToList(), quests.Count(q => q.State == QuestState.Ready), end, end is null ? null : "https://na.finalfantasyxiv.com/lodestone/");
+
+    private static TodoInputs SeasonalInputs(IReadOnlyList<RunningFestival>? running, Dictionary<uint, QuestEvaluation>? states = null, bool seasonal = true) =>
+        Inputs(states) with { Running = running, ShowSeasonal = seasonal, NowUtc = Now };
+
+    [Fact]
+    public void Seasonal_lists_the_ready_and_in_journal_event_quests_between_pins_and_unlocks_with_their_giver()
+    {
+        var states = States((FeatureFar, Eval(QuestState.Accepted, sequence: 2)));
+        var moonfire = Festival(174, "Moonfire Faire", new DateTime(2026, 8, 28, 23, 59, 59, DateTimeKind.Utc),
+            (SideQuest, QuestState.Ready), (FeatureFar, QuestState.Accepted), (FeatureBlocked, QuestState.Blocked), (MsqOne, QuestState.Completed));
+
+        var model = TodoList.Build(SeasonalInputs([moonfire], states) with { Pinned = new HashSet<uint> { FeatureA } });
+
+        Assert.Equal([TodoSection.Pinned, TodoSection.Seasonal, TodoSection.NearbyFeature, TodoSection.Msq, TodoSection.JobQuests], model.Sections.Select(s => s.Section));
+        Assert.Equal(5, model.EnabledSections);
+        var section = Section(model, TodoSection.Seasonal)!;
+        Assert.Equal([SideQuest, FeatureFar], section.Rows.Select(r => r.RowId));
+        Assert.All(section.Rows, r => Assert.Equal(TodoRowKind.Seasonal, r.Kind));
+        Assert.Equal("Lv 5 · Leonnie", section.Rows[0].Hint);
+        Assert.Equal("step 2 · Baderon", section.Rows[1].Hint);
+        Assert.Equal(["Ends Aug 28 (Lodestone)"], section.Notes);
+    }
+
+    [Fact]
+    public void Seasonal_shows_no_end_line_without_an_announced_end_and_names_events_when_several_list_rows()
+    {
+        var undated = Festival(84, "A Nocturne for Heroes", null, (SideQuest, QuestState.Ready));
+        var single = Section(TodoList.Build(SeasonalInputs([undated])), TodoSection.Seasonal)!;
+        Assert.Empty(single.Notes);
+
+        var dated = Festival(174, "Moonfire Faire", new DateTime(2026, 8, 28, 23, 59, 59, DateTimeKind.Utc), (FeatureFar, QuestState.Ready));
+        var both = Section(TodoList.Build(SeasonalInputs([undated, dated])), TodoSection.Seasonal)!;
+        Assert.Equal([SideQuest, FeatureFar], both.Rows.Select(r => r.RowId));
+        Assert.Equal(["Moonfire Faire: ends Aug 28 (Lodestone)"], both.Notes);
+    }
+
+    [Fact]
+    public void Seasonal_is_absent_when_nothing_is_actionable_disabled_or_not_supplied()
+    {
+        var done = Festival(174, "Moonfire Faire", null, (SideQuest, QuestState.Completed), (FeatureFar, QuestState.Blocked));
+        var nothing = TodoList.Build(SeasonalInputs([done]));
+        Assert.Null(Section(nothing, TodoSection.Seasonal));
+        Assert.Equal(5, nothing.EnabledSections);
+
+        var ready = Festival(174, "Moonfire Faire", null, (SideQuest, QuestState.Ready));
+        var off = TodoList.Build(SeasonalInputs([ready], seasonal: false));
+        Assert.Null(Section(off, TodoSection.Seasonal));
+        Assert.Equal(4, off.EnabledSections);
+
+        // A caller that does not supply the running events (null) keeps the four sections it had.
+        Assert.Equal(4, TodoList.Build(SeasonalInputs(null)).EnabledSections);
     }
 }

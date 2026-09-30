@@ -427,6 +427,18 @@ public sealed class ConfigWindow : Window
         {
             ImGui.SetTooltip(Strings.AbandonedConfigNoticeHint);
         }
+
+        var seasonal = settings.ChatNoticeSeasonal;
+        if (ImGui.Checkbox(Strings.SeasonalConfigNotice, ref seasonal))
+        {
+            settings.ChatNoticeSeasonal = seasonal;
+            Save();
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip(Strings.SeasonalConfigNoticeHint);
+        }
     }
 
     private void DrawJournal()
@@ -653,6 +665,18 @@ public sealed class ConfigWindow : Window
         {
             settings.TodoShowPins = pins;
             Save();
+        }
+
+        var seasonal = settings.TodoShowSeasonal;
+        if (ImGui.Checkbox(Strings.TodoConfigShowSeasonal, ref seasonal))
+        {
+            settings.TodoShowSeasonal = seasonal;
+            Save();
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip(Strings.TodoConfigShowSeasonalHint);
         }
 
         var nearby = settings.TodoShowNearbyFeature;

@@ -150,7 +150,8 @@ public sealed class HelpWindow : Window
         FontAwesomeIcon.Table,
         FontAwesomeIcon.LayerGroup,
         FontAwesomeIcon.Download,
-        FontAwesomeIcon.Undo);
+        FontAwesomeIcon.Undo,
+        FontAwesomeIcon.CalendarAlt);
 
     private static readonly CardItem[] FlightCards = Cards(
         Strings.Help.FlightCardTitles,

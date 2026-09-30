@@ -30,7 +30,7 @@ namespace Tsukimichi.Ui;
 /// and switches the viewed character; <see cref="DrawMain"/> is a dashboard for the viewed character, top to bottom:
 /// header, completion per journal section (filling moons), job and role quest ladders, curated story chains, a
 /// comparison with another stored character (the alt diff, V2-12), the Moonlit summary, pinned quests, abandoned quests
-/// (P10, <c>CharactersPane.Abandoned.cs</c>), recent activity, jobs
+/// (P10, <c>CharactersPane.Abandoned.cs</c>), seasonal events and history (P11, <c>CharactersPane.Seasonal.cs</c>), recent activity, jobs
 /// grouped by role with the game's job icons, Grand Company and allied societies, Export JSON and Forget (with a
 /// confirm popup), and the Account view: the state of <see cref="UiState.SelectedRowId"/> on every character,
 /// evaluated offline from their snapshots.
@@ -234,6 +234,8 @@ public sealed partial class CharactersPane
         DrawPinned(ui, d);
         Gap();
         DrawAbandoned(ui);
+        Gap();
+        DrawSeasonal(ui);
         Gap();
         DrawRecent(d);
         Gap();

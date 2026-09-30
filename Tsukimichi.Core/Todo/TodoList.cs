@@ -3,17 +3,22 @@ using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Jobs;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
+using Tsukimichi.Core.Seasonal;
 using Tsukimichi.Core.Ui;
 
 namespace Tsukimichi.Core.Todo;
 
-/// <summary>The parts of the todo overlay, in display order.</summary>
+/// <summary>
+/// The parts of the todo overlay. Display order is Pinned, Seasonal, NearbyFeature, Msq, JobQuests; Seasonal was added
+/// last (0.8.0), so the stored values of the others did not move.
+/// </summary>
 public enum TodoSection : byte
 {
     Pinned,
     NearbyFeature,
     Msq,
     JobQuests,
+    Seasonal,
 }
 
 /// <summary>Why a quest is on the list; one kind per section except job quests, which tell a job's own line from its role's.</summary>
@@ -24,13 +29,18 @@ public enum TodoRowKind : byte
     Msq,
     JobQuest,
     RoleQuest,
+    Seasonal,
 }
 
 /// <summary>One line of the overlay: the quest, its state for the character and a short hint (the next step, or where to start it).</summary>
 public sealed record TodoRow(uint RowId, string Name, QuestState State, string Hint, TodoRowKind Kind);
 
 /// <summary>A non-empty section of the overlay.</summary>
-public sealed record TodoSectionModel(TodoSection Section, IReadOnlyList<TodoRow> Rows);
+public sealed record TodoSectionModel(TodoSection Section, IReadOnlyList<TodoRow> Rows)
+{
+    /// <summary>Lines shown under the section's header before its rows ("Ends Aug 28 (Lodestone)"); usually none.</summary>
+    public IReadOnlyList<string> Notes { get; init; } = [];
+}
 
 /// <summary>What the overlay shows: the non-empty sections in display order, plus how many sections were enabled at all.</summary>
 /// <param name="Sections">Only sections with at least one row; a disabled or empty section is left out.</param>
@@ -75,6 +85,9 @@ public sealed record TodoModel(IReadOnlyList<TodoSectionModel> Sections, int Ena
 /// <param name="ShowMsq">Include the MSQ section.</param>
 /// <param name="ShowJobQuests">Include the Job quests section.</param>
 /// <param name="Names">Name lookups for the blocker hints (<see cref="BlockerText"/>); null names quests from <paramref name="Catalog"/> only.</param>
+/// <param name="Running">The seasonal events running for the character (<see cref="SeasonalNow.Running"/>); null leaves the section out.</param>
+/// <param name="ShowSeasonal">Include the "Event quests running now" section.</param>
+/// <param name="NowUtc">Clock for the section's end-date line; null reads <see cref="DateTime.UtcNow"/>.</param>
 public sealed record TodoInputs(
     QuestCatalog Catalog,
     IReadOnlyDictionary<uint, QuestEvaluation> States,
@@ -89,12 +102,16 @@ public sealed record TodoInputs(
     bool ShowNearbyFeature = true,
     bool ShowMsq = true,
     bool ShowJobQuests = true,
-    BlockerNames? Names = null);
+    BlockerNames? Names = null,
+    IReadOnlyList<RunningFestival>? Running = null,
+    bool ShowSeasonal = true,
+    DateTime? NowUtc = null);
 
 /// <summary>
-/// Pure builder for the todo overlay (V2-13). Four sections, each only when enabled and non-empty: the character's
+/// Pure builder for the todo overlay (V2-13). Five sections, each only when enabled and non-empty: the character's
 /// pins that are still to do (Ready first, then Ready on another job, Accepted, Blocked, Unknown; by level then name
-/// within a state), the feature quests startable in the current zone (at most <see cref="MaxNearby"/>, by level then
+/// within a state), the quests of the seasonal events running now that can be started or are in the journal (P11,
+/// with an "Ends Aug 28 (Lodestone)" line only when curated data announces the end), the feature quests startable in the current zone (at most <see cref="MaxNearby"/>, by level then
 /// name), the next main scenario quest with its blocker, and for the current job the next quest of its ladder and of
 /// its role's ladder when either is open now (Ready, Ready on another job or Accepted). Completed, done-this-cycle and
 /// foreclosed pins are not todos and are left out. Hints are the evaluator's next-step clause when something blocks,
@@ -122,12 +139,18 @@ public static class TodoList
         ArgumentNullException.ThrowIfNull(inputs.Ladder);
         ArgumentNullException.ThrowIfNull(inputs.JobNames);
 
-        var sections = new List<TodoSectionModel>(4);
+        var sections = new List<TodoSectionModel>(5);
         var enabled = 0;
         if (inputs.ShowPins)
         {
             enabled++;
             Add(sections, TodoSection.Pinned, BuildPinned(inputs));
+        }
+
+        if (inputs.ShowSeasonal && inputs.Running is { } running)
+        {
+            enabled++;
+            AddSeasonal(sections, inputs, running);
         }
 
         if (inputs.ShowNearbyFeature)
@@ -215,6 +238,69 @@ public static class TodoList
 
         return rows;
     }
+
+    /// <summary>
+    /// "Event quests running now": every quest of a running event that can be started now (here or on another job) or
+    /// is in the journal, event by event in <see cref="SeasonalNow.Running"/>'s order. One line per event with an
+    /// announced end heads the rows ("Ends Aug 28 (Lodestone)", named when several events have rows).
+    /// </summary>
+    private static void AddSeasonal(List<TodoSectionModel> sections, TodoInputs inputs, IReadOnlyList<RunningFestival> running)
+    {
+        var rows = new List<TodoRow>();
+        var contributing = new List<RunningFestival>();
+        foreach (var festival in running)
+        {
+            var before = rows.Count;
+            foreach (var entry in festival.Quests)
+            {
+                if (SeasonalNow.IsActionable(entry.State))
+                {
+                    rows.Add(new TodoRow(entry.Quest.RowId, QuestName(inputs, entry.Quest), entry.State, SeasonalHint(inputs, entry.Quest, entry.State), TodoRowKind.Seasonal));
+                }
+            }
+
+            if (rows.Count > before)
+            {
+                contributing.Add(festival);
+            }
+        }
+
+        if (rows.Count == 0)
+        {
+            return;
+        }
+
+        var now = inputs.NowUtc ?? DateTime.UtcNow;
+        var notes = new List<string>();
+        foreach (var festival in contributing)
+        {
+            if (SeasonalNow.EndsLine(festival, contributing.Count > 1, now) is { } line)
+            {
+                notes.Add(line);
+            }
+        }
+
+        sections.Add(new TodoSectionModel(TodoSection.Seasonal, rows) { Notes = notes });
+    }
+
+    /// <summary>
+    /// An event quest's hint always names its giver, since event givers stand in unusual places: "Lv 30 · Mayaru Moyaru"
+    /// when it can be started, "step 2 of 3 · giver" in the journal, "Ready on DRG · giver" on another job.
+    /// </summary>
+    public static string SeasonalHint(TodoInputs inputs, QuestRecord quest, QuestState state)
+    {
+        ArgumentNullException.ThrowIfNull(inputs);
+        ArgumentNullException.ThrowIfNull(quest);
+        var hint = Hint(inputs, quest, state);
+        if (state == QuestState.Ready || quest.Issuer is not { Name.Length: > 0 } issuer)
+        {
+            return hint;
+        }
+
+        return hint.Length == 0 ? issuer.Name : hint + Separator + issuer.Name;
+    }
+
+    private static string QuestName(TodoInputs inputs, QuestRecord quest) => inputs.Names is { } names ? names.QuestName(quest) : quest.Name;
 
     private static List<TodoRow> BuildNearby(TodoInputs inputs)
     {
@@ -305,7 +391,7 @@ public static class TodoList
         states.TryGetValue(rowId, out var evaluation) ? evaluation.State : QuestState.Unknown;
 
     private static TodoRow Row(TodoInputs inputs, QuestRecord quest, QuestState state, TodoRowKind kind) =>
-        new(quest.RowId, inputs.Names is { } names ? names.QuestName(quest) : quest.Name, state, Hint(inputs, quest, state), kind);
+        new(quest.RowId, QuestName(inputs, quest), state, Hint(inputs, quest, state), kind);
 
     /// <summary>
     /// The row's hint: the decisive blocker (<see cref="BlockerText.For"/>) when the quest is blocked or not checked,

@@ -525,6 +525,7 @@ static partial class Strings
             "Account view",
             "Export and forget",
             "Abandoned quests",
+            "Seasonal events",
         ];
 
         public static readonly string[] CharacterCardBodies =
@@ -535,6 +536,7 @@ static partial class Strings
             "At the bottom: every character's state for the quest selected in the Journal, without switching characters.",
             "Export JSON writes the snapshot to the exports folder in the config directory. For a spreadsheet or a collection tracker, Settings › Data › Export (or /tsuki export) writes the completed quests or the Moonlit collection as JSON or CSV, without your name unless you tick Include character name; nothing is ever uploaded. Forget deletes a stored character. Settings can delete everything.",
             "A quest that leaves your journal without being completed is listed under Abandoned (N) with the step it had reached and when (\"step 3 of 5 · 2 days ago\"), with Flag, Teleport and Reveal to go and take it up again; Show in Journal turns on the Abandoned filter. Chat says \"Abandoned: [quest] (step 3 of 5)\" the moment it happens (Settings › Notices). Taking the quest up again or completing it clears the row.",
+            "While a seasonal event runs, Seasonal events lists its quests with their moon, state and giver, and the Todo overlay shows the ones you can start or have in your journal under Event quests running now. At login, chat says \"Moonfire Faire is running: 2 quests ready\" once per event (Settings › Notices). An end date appears (\"ends Aug 28 (Lodestone)\") only when the Lodestone announced it; otherwise it says running now, never a guess. Completed seasonal quests by year keeps your history; the year is the one the Lodestone gave the event, or counted from the nearest announced one.",
         ];
 
         // ---- Flight and nearby ----
@@ -586,7 +588,7 @@ static partial class Strings
             "every quest the targeted NPC hands out, with its state",
             "why the selected quest (or the named one) is not offered: its state and blocker, then one line per requirement with met or unmet and the values compared, then the curated note where the game is known to behave differently; a Ready quest says whom to talk to, with a map link. The same list opens in the Journal from an NPC's target-bar menu (\"Tsukimichi: quests here\")",
             "open or close the Nearby quests window: what you can start in the current zone",
-            "show or hide the todo overlay: pins, feature quests here, the next main scenario quest and job quests",
+            "show or hide the todo overlay: pins, event quests running now, feature quests here, the next main scenario quest and job quests",
             "copy a diagnostic block for the selected quest (or the named one) to the clipboard, ready to paste into a GitHub issue; the Report button in the detail pane does the same",
             "write the viewed character's completed quests, its Moonlit collection, or both to the exports folder as JSON or CSV (the Settings format when none is named) and print where; see docs/export-format.md. No content id, account or world, and the name only when Settings › Data › Export › Include character name is ticked",
         ];
