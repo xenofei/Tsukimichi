@@ -543,7 +543,8 @@ public static class QuestQuery
                 return false;
             }
 
-            if (skip != Filter.Search && index is not null && !index.Matches(quest.RowId, query, ctx.Spoilers))
+            if (skip != Filter.Search && index is not null && !index.Matches(quest.RowId, query, ctx.Spoilers)
+                && ctx.JournalHits?.Contains(quest.RowId) != true)
             {
                 return false;
             }

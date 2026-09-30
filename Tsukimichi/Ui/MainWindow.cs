@@ -198,6 +198,12 @@ public sealed class MainWindow : Window, IDisposable
         detailPane.QuestionableHandoff = handoff ?? throw new ArgumentNullException(nameof(handoff));
     }
 
+    /// <summary>The detail pane's Journal card (P9); without it the card is hidden.</summary>
+    public void AttachQuestText(QuestTextService questText)
+    {
+        detailPane.QuestText = questText ?? throw new ArgumentNullException(nameof(questText));
+    }
+
     /// <summary>The detail pane's Report button and the status bar's data stamp tooltip.</summary>
     public void AttachDiagnostics(DiagnosticBuilder diagnostics)
     {

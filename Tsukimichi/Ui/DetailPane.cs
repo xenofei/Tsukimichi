@@ -247,6 +247,7 @@ public sealed partial class DetailPane
         DrawGiver();
         Chrome.EndCard();
         ui.RecordItem(UiRects.DetailGiver);
+        DrawJournalCard(session, quest);
         Gap();
     }
 

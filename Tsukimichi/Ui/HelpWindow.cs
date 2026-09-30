@@ -127,7 +127,8 @@ public sealed class HelpWindow : Window
         FontAwesomeIcon.Route,
         FontAwesomeIcon.Link,
         FontAwesomeIcon.MapMarkerAlt,
-        FontAwesomeIcon.History);
+        FontAwesomeIcon.History,
+        FontAwesomeIcon.BookOpen);
 
     private static readonly CardItem[] MoonlitCards =
     [

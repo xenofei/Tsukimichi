@@ -504,6 +504,7 @@ static partial class Strings
             "Unlocks next",
             "Action bar",
             "Provenance",
+            "Journal",
         ];
 
         public static readonly string[] QuestCardBodies =
@@ -513,6 +514,7 @@ static partial class Strings
             "Under this quest the thread branches into what it opens once turned in. Click an entry to jump to it.",
             "Along the bottom of the pane: Flag on map (Teleport instead when Lifestream is installed), then Pin, Show path, Link in chat, Copy coordinates, Open journal and Report. Every button works from the keyboard; a greyed one says why on hover. The Giver card above names the NPC, the zone and the coordinates.",
             "The last line says where the state came from: \"Checked just now · live\" for the character you are logged in as, \"From Michiru's snapshot, 2 d ago\" for a stored one, or \"Log in to check this quest\" before the first login.",
+            "For a quest you have completed, the Journal card at the bottom of the pane reads its journal entries as the game wrote them, from the game's own files, with its objectives: Read the journal opens it and Copy entry copies one entry. For a quest in your journal it shows the entries up to the step you are on, never further, and nothing for a quest you have not taken. On the character you are logged in as the text reads as the game showed it to you; on a stored character, words that depend on who reads them show both versions (he/she). Settings › Journal text › \"Search journal text of completed quests\" (off by default) lets the search box find quests by the words of their journal entries, among the quests the character shown has completed only. The first time, the plugin reads every quest's text in the background (a few seconds) and keeps a word index, not the text, in its config folder; it is rebuilt after a game patch.",
         ];
 
         public const string QuestTip = "With no quest selected, the pane shows Tonight: how many quests you can pick up now (Show them filters the table to them), the next main scenario quest and what blocks it, the events running now and your pinned quests that are ready. A table row's right-click menu has pin, map flag, journal, copy name, show path and chat link too.";
