@@ -67,6 +67,7 @@ public sealed class Plugin : IDalamudPlugin
     private Game.WotsitIpc? wotsit;
     private CharactersPane? charactersPane;
     private FlightPane? flightPane;
+    private PlanSource? planSource;
     private ConfigWindow? configWindow;
     private HelpWindow? helpWindow;
     private ITutorial? tutorial;
@@ -495,6 +496,9 @@ public sealed class Plugin : IDalamudPlugin
             // The flight index (a few small sheets) is built on the pane's first draw, on the framework thread.
             flightPane = new FlightPane(Session, unlockReader, gameLinks, TextureProvider, Log, () => ClientState.TerritoryType, () => FlightIndex.Build(DataManager.Excel, Dalamud.Utility.ClientLanguageExtensions.ToLumina(DataManager.Language)));
             mainWindow.AttachFlight(flightPane);
+            // Clear my blues (P3): the duty kinds (ContentFinderCondition) are read on the plan's first use.
+            planSource = new PlanSource(Session, () => DutyIndex.Build(DataManager.Excel, Dalamud.Utility.ClientLanguageExtensions.ToLumina(DataManager.Language)), Log);
+            mainWindow.AttachPlan(new PlanPane(Session, planSource, gameLinks, Settings, () => Settings.Save(PluginInterface)));
             chatNotifier = new Game.ChatNotifier(Session, Settings, Paths, gameLinks, ChatGui, Log);
 
             configWindow = new ConfigWindow(Settings, Session, PluginInterface, diagnostics, _ => ui.MarkQueryDirty());
@@ -523,6 +527,7 @@ public sealed class Plugin : IDalamudPlugin
                 mainWindow.BringToFront();
                 MoonlitPane.Reveal(ui, quest);
             }, ClientState, Condition, Paths, PluginInterface, Log);
+            todoOverlay.Plan = planSource;
             windowSystem.AddWindow(todoOverlay);
             // 0.8.0: Locked became click-through; a player who upgraded with it on is told once in chat.
             todoLockNotice = new Game.TodoLockNotice(Settings, ClientState, ChatGui, PluginInterface, Log);

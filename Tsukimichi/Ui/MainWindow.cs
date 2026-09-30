@@ -55,6 +55,7 @@ public sealed class MainWindow : Window, IDisposable
     private MoonlitPane? moonlitPane;
     private CharactersPane? charactersPane;
     private FlightPane? flightPane;
+    private PlanPane? planPane;
 
     // Toolbar actions and the tutorial overlay, attached by the plugin once those windows exist.
     private Action? openSettings;
@@ -166,6 +167,12 @@ public sealed class MainWindow : Window, IDisposable
     public void AttachFlight(FlightPane flight)
     {
         flightPane = flight ?? throw new ArgumentNullException(nameof(flight));
+    }
+
+    /// <summary>Attaches the My blues tab ("Clear my blues", P3); the tab shows a placeholder until then.</summary>
+    public void AttachPlan(PlanPane plan)
+    {
+        planPane = plan ?? throw new ArgumentNullException(nameof(plan));
     }
 
     /// <summary>Gives the detail pane the user's unique-reward verdicts so it can show and change them.</summary>
@@ -1220,6 +1227,9 @@ public sealed class MainWindow : Window, IDisposable
                     case NavTab.Flight when flightPane is not null:
                         flightPane.DrawMain(ui);
                         break;
+                    case NavTab.Plan when planPane is not null:
+                        planPane.DrawMain(ui);
+                        break;
                     default:
                         tablePane.Draw(session.ViewedSnapshot is not null);
                         break;
@@ -1288,6 +1298,10 @@ public sealed class MainWindow : Window, IDisposable
 
             case NavTab.Flight when flightPane is not null:
                 flightPane.DrawLeft(ui);
+                break;
+
+            case NavTab.Plan when planPane is not null:
+                planPane.DrawLeft(ui);
                 break;
 
             default:

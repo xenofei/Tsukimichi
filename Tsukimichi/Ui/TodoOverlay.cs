@@ -628,6 +628,9 @@ public sealed class TodoOverlay : Window, IDisposable
         }
     }
 
+    /// <summary>The "Clear my blues" plan (P3) the pinned-expansion section reads; null leaves the section out.</summary>
+    public PlanSource? Plan { get; set; }
+
     private void OnSessionChanged() => dirty = true;
 
     private void OnTerritoryChanged(uint territory) => dirty = true;
@@ -635,7 +638,7 @@ public sealed class TodoOverlay : Window, IDisposable
     /// <summary>Section toggles as one integer, compared per frame so a change in the settings window rebuilds at once.</summary>
     private int SettingsSignature() =>
         (settings.TodoShowPins ? 1 : 0) | (settings.TodoShowNearbyFeature ? 2 : 0) | (settings.TodoShowMsq ? 4 : 0) | (settings.TodoShowJobQuests ? 8 : 0)
-        | (settings.TodoShowSeasonal ? 16 : 0);
+        | (settings.TodoShowSeasonal ? 16 : 0) | (settings.TodoShowPlan ? 32 : 0) | ((settings.TodoPlanExpansion + 1) << 6);
 
     /// <summary>Once per frame: notices a changed pins file on a timer, then rebuilds when any input moved.</summary>
     private void Refresh()
@@ -672,7 +675,7 @@ public sealed class TodoOverlay : Window, IDisposable
         var bundle = session.Bundle;
         catalogReady = bundle is not null;
         enabledSections = (settings.TodoShowPins ? 1 : 0) + (settings.TodoShowNearbyFeature ? 1 : 0) + (settings.TodoShowMsq ? 1 : 0) + (settings.TodoShowJobQuests ? 1 : 0)
-                          + (settings.TodoShowSeasonal ? 1 : 0);
+                          + (settings.TodoShowSeasonal ? 1 : 0) + (settings.TodoShowPlan && settings.TodoPlanExpansion >= 0 && Plan is not null ? 1 : 0);
 
         if (bundle is null || session.ViewedSnapshot is not { } snapshot)
         {
@@ -711,7 +714,10 @@ public sealed class TodoOverlay : Window, IDisposable
             session.Names,
             running,
             settings.TodoShowSeasonal,
-            now));
+            now,
+            Plan?.Plan,
+            settings.TodoPlanExpansion,
+            settings.TodoShowPlan));
 
         enabledSections = model.EnabledSections;
         if (model.Sections.Count == 0)
