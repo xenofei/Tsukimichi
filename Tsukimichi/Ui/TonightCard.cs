@@ -141,7 +141,7 @@ public sealed class TonightCard
 
         if (msq is null)
         {
-            using var dim = Theme.PushText(Theme.MoonDim);
+            using var dim = Theme.PushText(Theme.AccentDim);
             ImGui.TextUnformatted(Strings.TonightMsqDone);
             return;
         }

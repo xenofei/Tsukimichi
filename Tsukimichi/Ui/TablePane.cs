@@ -848,7 +848,7 @@ public sealed class TablePane : IDisposable
         ImGui.PushFont(UiBuilder.IconFont);
         var size = ImGui.CalcTextSize(StoryBadgeIcon);
         var x = MathF.Max(cellMin.X, MathF.Min(afterName, cellMin.X + cellWidth - size.X));
-        dl.AddText(new Vector2(x, cellMin.Y + (rowContent - size.Y) * 0.5f), Theme.DuskU32, StoryBadgeIcon);
+        dl.AddText(new Vector2(x, cellMin.Y + (rowContent - size.Y) * 0.5f), Theme.U32(Theme.Surface.TextTertiary), StoryBadgeIcon);
         ImGui.PopFont();
         return new Vector2(x, size.X);
     }

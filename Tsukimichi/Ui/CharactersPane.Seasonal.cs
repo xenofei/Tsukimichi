@@ -54,7 +54,7 @@ public sealed partial class CharactersPane
 
     private void DrawRunningFestival(UiState ui, SeasonalFestivalView festival)
     {
-        using (Theme.PushText(Theme.Silver))
+        using (Theme.PushText(Theme.Surface.Text))
         {
             ImGui.TextUnformatted(festival.Name);
         }
