@@ -4,6 +4,10 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+### Changed
+- The Journal tree reads shorter names: "Eden" for Chronicles of a New Era - Eden, "Hildibrand" for Hildibrand Sidequests, "Seventh Umbral Era" without "Main Scenario Quests", "Main Scenario" with an ARR–EW tag, "Allied Societies · DT" and "Class & Job". Hover a row to see its full name and where it sits in the journal; a name too long for the tree ends in "…" and does the same. On a narrow tree, rows give up their extras in turn instead of drawing over each other: the expansion tag goes first, then the small progress bar, then the count becomes a percentage, and at the narrowest the moon alone shows progress, with a gold dot where quests are Ready. The shorter names are English only for now; other game languages keep the full names.
+- The tabs on the left are a slimmer rail, 64 px instead of 136, with each tab's name under its icon, a moon crest on top (click it for All quests) and, at the bottom, your overall completion with Help and Settings. These moved there from the toolbar and the status bar rather than being shown twice; the tour is in Help. On a window narrower than about 1,040 px, or with Settings › Display › Compact rail, the rail shrinks to 44 px of icons with their names on hover. The width it frees goes to the Journal tree.
+
 ## [1.2.0] - 2026-09-30
 
 ### Added

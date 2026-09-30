@@ -19,6 +19,9 @@ public class LayoutBudgetTests(ITestOutputHelper output)
     /// <summary>Header labels are captions: 0.85 of the body size, never under 12 px (Typography.Caption).</summary>
     private const float CaptionPx = LayoutBudgets.BodyFontPx * 0.85f;
 
+    /// <summary>The rail's station labels are drawn at <see cref="LayoutBudgets.RailLabelFraction"/> of the body size.</summary>
+    private const float RailLabelPx = LayoutBudgets.BodyFontPx * LayoutBudgets.RailLabelFraction;
+
     /// <summary>The Rewards column's icons at UI scale 1 and the default icon scale: four 17.5 px icons, gaps and margin.</summary>
     private const float RewardsContentLogical = (14f * ScaleMetrics.DefaultIconScale * 4f) + (2f * 3f) + 8f;
 
@@ -64,8 +67,9 @@ public class LayoutBudgetTests(ITestOutputHelper output)
         var labels = Labels("en");
         foreach (var key in TabKeys)
         {
-            var room = key == "TabJournal" ? LayoutBudgets.TabLabelRoomLogical - LayoutBudgets.TabBadgeReserveLogical : LayoutBudgets.TabLabelRoomLogical;
-            Assert.True(Width(labels[key], LayoutBudgets.BodyFontPx) <= room, $"{key} \"{labels[key]}\" is wider than its {room} px");
+            // Every English tab label shows whole under its icon on the 64 px rail (feature plan v4 L7).
+            var width = Width(labels[key], RailLabelPx);
+            Assert.True(width <= LayoutBudgets.RailLabelRoomLogical, $"{key} \"{labels[key]}\" is {width:0.0} px, wider than the rail's {LayoutBudgets.RailLabelRoomLogical} px of label room");
         }
 
         foreach (var (key, content, sortable) in FixedColumns)
@@ -77,32 +81,27 @@ public class LayoutBudgetTests(ITestOutputHelper output)
 
         var widestState = StateKeys.Max(k => Width(labels[k], LayoutBudgets.BodyFontPx) + (ReasonStates.Contains(k) ? Width(" · …", LayoutBudgets.BodyFontPx) : 0f));
         Assert.Equal(LayoutBudgets.StatusMinLogical, LayoutBudgets.StatusMin(widestState));
-
-        var railNeed = LayoutBudgets.RailWidth(TabKeys.Max(k => Width(labels[k], LayoutBudgets.BodyFontPx)), Width(labels["TabJournal"], LayoutBudgets.BodyFontPx));
-        Assert.Equal(ScaleMetrics.RailLogical, railNeed);
     }
 
     [Theory]
     [MemberData(nameof(AllLanguages))]
-    public void The_tab_rail_shows_every_label_whole(string language)
+    public void The_tab_rail_keeps_its_width_and_ellipsises_a_long_label(string language)
     {
+        // The rail no longer widens for a translation (feature plan v4 L7): a label wider than its station ends in
+        // an ellipsis and the station's tooltip names the tab. Listed here so a translator can see what is cut.
         var labels = Labels(language);
-        var widest = TabKeys.Max(k => Width(labels[k], LayoutBudgets.BodyFontPx));
-        var journal = Width(labels["TabJournal"], LayoutBudgets.BodyFontPx);
-        var need = MathF.Max(widest, journal + LayoutBudgets.TabBadgeReserveLogical) + LayoutBudgets.TabChromeLogical;
-        var rail = LayoutBudgets.RailWidth(widest, journal);
         foreach (var key in TabKeys)
         {
-            var room = key == "TabJournal" ? LayoutBudgets.TabLabelRoomLogical - LayoutBudgets.TabBadgeReserveLogical : LayoutBudgets.TabLabelRoomLogical;
-            var width = Width(labels[key], LayoutBudgets.BodyFontPx);
-            if (width > room)
+            var width = Width(labels[key], RailLabelPx);
+            if (width > LayoutBudgets.RailLabelRoomLogical)
             {
-                output.WriteLine($"{language}: tab {key} \"{labels[key]}\" is {width:0} px, {room:0} px at the default rail; the rail widens to {rail:0}");
+                output.WriteLine($"{language}: tab {key} \"{labels[key]}\" is {width:0} px of the rail's {LayoutBudgets.RailLabelRoomLogical:0}; it ends in an ellipsis");
             }
+
+            Assert.False(string.IsNullOrWhiteSpace(labels[key]), $"{language}: {key} is empty, so a cut station would have no name in its tooltip");
         }
 
-        Assert.True(need <= LayoutBudgets.MaxRailLogical, $"{language}: the tab labels need a {need:0} px rail, more than {LayoutBudgets.MaxRailLogical}; shorten the widest");
-        Assert.True(rail >= need - 0.5f, $"{language}: the rail is {rail} px for {need} px");
+        Assert.Equal(ScaleMetrics.RailLogical - (2f * LayoutBudgets.RailLabelPadLogical), LayoutBudgets.RailLabelRoomLogical);
     }
 
     [Theory]

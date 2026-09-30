@@ -9,11 +9,15 @@ using Tsukimichi.GameData;
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// The Journal tree as a strip of icons (feature plan v4 L1): what the tree becomes when its handle is dragged under
-/// <see cref="PaneLayout.StripSnapLogical"/>. A placeholder until the tree's own narrow tiers arrive (L3, design v4
-/// §8.2): one halo per top-level node (All quests, each section, the Unlock quests and Removed from the game nodes),
-/// the name and count on hover, a click selecting the node. The section holding the selected scope carries the
-/// selection's gold rule. Nothing is allocated: the names and counts are the nodes' own strings.
+/// The Journal tree as a strip of icons (feature plan v4 L1/L3, design v4 §8.2 "Icon strip"): what the tree becomes
+/// when its handle is dragged under <see cref="PaneLayout.StripSnapLogical"/>. One row per top-level node the full
+/// tree would show (All quests, each section, Unlock quests, and Removed from the game and Other paths when the tree
+/// lists them), each its node glyph (<see cref="DrawNodeGlyph"/>, where the orbit icon will plug in) with the gold
+/// Ready dot when something under it is Ready. Hovering a row names the node in full with its progress and Ready
+/// count; a click selects it, and the rows are real items, so keyboard navigation reaches them. The row holding the
+/// selected scope carries the selection's wash and gold rule. A reveal made while the strip shows is left pending for
+/// the full tree, which opens and scrolls to it when the pane is widened again. Nothing is allocated: the names and
+/// counts are the nodes' own strings.
 /// </summary>
 public sealed partial class TreePane
 {
@@ -44,6 +48,12 @@ public sealed partial class TreePane
             if (showUnlisted || ui.Scope == QuestScope.VirtualUnlisted)
             {
                 DrawStripNode(unlistedNode, width, rowHeight);
+            }
+
+            // As in the full tree: quests on paths the character did not take, while there are any (or it is selected).
+            if (otherPathsTotal > 0 || ui.Scope == QuestScope.VirtualOtherPaths)
+            {
+                DrawStripNode(otherPathsNode, width, rowHeight);
             }
         }
 
@@ -79,17 +89,34 @@ public sealed partial class TreePane
         }
 
         var center = new Vector2(MathF.Round((min.X + max.X) * 0.5f), MathF.Round((min.Y + max.Y) * 0.5f));
-        MoonGlyph.DrawHalo(dl, center, glyphRadius, node.Count.Fraction, onCard: false, dimComplete: node.Complete);
-        if (node.Ready > 0)
-        {
-            // Something is Ready under this node: a small gold dot on the ring's upper right.
-            var dot = center + (new Vector2(0.7071f, -0.7071f) * glyphRadius);
-            dl.AddCircleFilled(dot, MathF.Max(2.5f, UiMetrics.Px(3f)), Theme.MoonU32);
-        }
+        DrawNodeGlyph(dl, node, center, glyphRadius, node.Count.Fraction, readyDot: node.Ready > 0);
+        Chrome.FocusRing();
 
         if (hovered)
         {
-            UiMetrics.Tooltip(node.Name, node.ProgressText);
+            DrawStripTooltip(node);
+        }
+    }
+
+    /// <summary>A strip row's hover: the node's full name, its progress (with the other-path tally), and its Ready count.</summary>
+    private static void DrawStripTooltip(Node node)
+    {
+        using var tooltipStyle = Theme.PushTooltip();
+        using var tooltip = ImRaii.Tooltip();
+        UiMetrics.ApplyFontScale();
+        ImGui.TextUnformatted(node.FullName);
+        var progress = node.HoverText.Length > 0 ? node.HoverText : node.ProgressText;
+        if (progress.Length > 0)
+        {
+            ImGui.TextDisabled(progress);
+        }
+
+        if (node.Ready > 0)
+        {
+            using (ImRaii.PushColor(ImGuiCol.Text, Theme.Moon))
+            {
+                ImGui.TextUnformatted(node.ReadyTooltip);
+            }
         }
     }
 }

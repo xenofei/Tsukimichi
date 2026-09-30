@@ -105,49 +105,53 @@ public class ScaleMetricsTests
     public void Min_window_size_at_scale_one_is_the_rail_the_pane_floors_the_gutters_and_the_padding()
     {
         var size = ScaleMetrics.MinWindowSize(1f);
-        Assert.Equal(136f + 180f + 320f + 260f + (3f * 6f) + 16f + PaneLayout.RoundingReservePx, size.X);
+        Assert.Equal(64f + 180f + 320f + 260f + (3f * 6f) + 16f + PaneLayout.RoundingReservePx, size.X);
         Assert.Equal(500f, size.Y);
     }
 
     [Fact]
     public void Min_window_size_at_the_default_ui_scale_is_narrower_than_before_the_splitter()
     {
-        // 1,076 before L1 (rail 136 + columns 240 and 360 + a 200 centre floor, at 1.15); the floors and gutters of
-        // the splitter at the same rail need about 1,067 (1,071 with the whole-pixel reserve), and the 64 px rail of L7
-        // takes it to about 984.
+        // 1,076 before L1 (rail 136 + columns 240 and 360 + a 200 centre floor, at 1.15); the splitter's floors and
+        // gutters beside the 64 px rail of L7 need about 984 (988 with the whole-pixel reserve), and about 965 while the rail is compact.
         var size = ScaleMetrics.MinWindowSize(ScaleMetrics.DefaultUiScale);
-        Assert.InRange(size.X, 1060f, 1075f);
-        Assert.InRange(((64f + PaneLayout.MinContentLogical) * ScaleMetrics.DefaultUiScale) + ScaleMetrics.WindowPaddingX, 980f, 990f);
+        Assert.InRange(size.X, 980f, 995f);
+        Assert.InRange(ScaleMetrics.MinWindowSize(ScaleMetrics.DefaultUiScale, ScaleMetrics.RailCompactLogical).X, 955f, 970f);
     }
 
     [Theory]
-    [InlineData(1f, 200f)]
-    [InlineData(1.6f, 170f)]
-    public void A_rail_widened_for_a_translation_widens_the_min_window_instead_of_the_centre_losing_it(float uiScale, float rail)
-    {
-        var size = ScaleMetrics.MinWindowSize(uiScale, rail);
-        var fixedPart = ((rail + PaneLayout.FloorsLogical + (PaneLayout.GutterCount * PaneLayout.GutterLogical)) * uiScale) + ScaleMetrics.WindowPaddingX + PaneLayout.RoundingReservePx;
-        Assert.Equal(fixedPart, size.X, 3);
-        Assert.Equal(ScaleMetrics.MinWindowSize(uiScale).X + (rail - ScaleMetrics.RailLogical) * uiScale, size.X, 3);
-    }
-
-    [Theory]
-    [InlineData(100f)]
-    [InlineData(float.NaN)]
-    public void A_rail_under_the_default_or_unknown_keeps_the_default_min_window(float rail)
-    {
-        Assert.Equal(ScaleMetrics.MinWindowSize(1f), ScaleMetrics.MinWindowSize(1f, rail));
-    }
-
-    [Theory]
-    [InlineData(0.9f)]
+    [InlineData(1f)]
     [InlineData(1.15f)]
     [InlineData(1.3f)]
     [InlineData(1.6f)]
-    public void Min_window_size_leaves_every_pane_its_floor_at_every_ui_scale(float uiScale)
+    public void The_compact_rail_lets_the_window_narrow_by_what_it_gave_up(float uiScale)
     {
-        var size = ScaleMetrics.MinWindowSize(uiScale);
-        var widths = PaneLayout.Solve(size.X - ScaleMetrics.WindowPaddingX, ScaleMetrics.RailLogical * uiScale, PaneLayout.TreeDefaultLogical, PaneLayout.DetailDefaultLogical, uiScale);
+        var size = ScaleMetrics.MinWindowSize(uiScale, ScaleMetrics.RailCompactLogical);
+        var fixedPart = ((ScaleMetrics.RailCompactLogical + PaneLayout.FloorsLogical + (PaneLayout.GutterCount * PaneLayout.GutterLogical)) * uiScale) + ScaleMetrics.WindowPaddingX;
+        Assert.Equal(fixedPart, size.X, 3);
+        Assert.Equal(ScaleMetrics.MinWindowSize(uiScale).X - ((ScaleMetrics.RailLogical - ScaleMetrics.RailCompactLogical) * uiScale), size.X, 3);
+    }
+
+    [Theory]
+    [InlineData(100f, 64f)]
+    [InlineData(10f, 44f)]
+    [InlineData(float.NaN, 64f)]
+    public void A_rail_width_outside_the_two_modes_is_taken_as_the_nearer_one(float rail, float taken)
+    {
+        Assert.Equal(ScaleMetrics.MinWindowSize(1f, taken), ScaleMetrics.MinWindowSize(1f, rail));
+    }
+
+    [Theory]
+    [InlineData(0.9f, ScaleMetrics.RailLogical)]
+    [InlineData(1.15f, ScaleMetrics.RailLogical)]
+    [InlineData(1.6f, ScaleMetrics.RailLogical)]
+    [InlineData(0.9f, ScaleMetrics.RailCompactLogical)]
+    [InlineData(1.15f, ScaleMetrics.RailCompactLogical)]
+    [InlineData(1.6f, ScaleMetrics.RailCompactLogical)]
+    public void Min_window_size_leaves_every_pane_its_floor_at_every_ui_scale(float uiScale, float rail)
+    {
+        var size = ScaleMetrics.MinWindowSize(uiScale, rail);
+        var widths = PaneLayout.Solve(size.X - ScaleMetrics.WindowPaddingX, rail * uiScale, PaneLayout.TreeDefaultLogical, PaneLayout.DetailDefaultLogical, uiScale);
         Assert.False(widths.TreeStrip);
         // The tree gives way last of the sides, so it keeps what the rounding reserve leaves over.
         Assert.InRange(widths.Tree, (PaneLayout.TreeFloorLogical * uiScale) - 0.01f, (PaneLayout.TreeFloorLogical * uiScale) + PaneLayout.RoundingReservePx + 1f);

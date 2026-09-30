@@ -46,10 +46,17 @@ public static class ScaleMetrics
     public static float IconFactor(float globalScale, float uiScale, float iconScale) => LayoutFactor(globalScale, uiScale) * ClampIconScale(iconScale);
 
     /// <summary>
-    /// Logical width of the main window's tab rail (T14): its own column left of the tree. Holds a 16 px icon, the
-    /// longest tab label and the Journal badge.
+    /// Logical width of the main window's tab rail (feature plan v4 L7, design v4 §7.1): its own column left of the
+    /// tree, a crest on top, one 54 px station per tab (a 22 px icon over a small label) and the overall gauge, Help
+    /// and Settings at its foot. A label wider than the station ends in an ellipsis and its tooltip carries it.
     /// </summary>
-    public const float RailLogical = 136f;
+    public const float RailLogical = 64f;
+
+    /// <summary>
+    /// The compact rail: icons only, the labels in tooltips. It turns on by itself on a narrow window
+    /// (<see cref="LayoutBudgets.CompactRail"/>) or always by Settings › Display › Compact rail.
+    /// </summary>
+    public const float RailCompactLogical = 44f;
 
     /// <summary>
     /// Dalamud's window padding on both sides of the main window together, in Dalamud-scaled units (8 each side; the
@@ -76,8 +83,9 @@ public static class ScaleMetrics
     /// </summary>
     /// <param name="uiScale">The UI scale.</param>
     /// <param name="railLogical">
-    /// The rail's logical width when a translated tab label widened it (<see cref="LayoutBudgets.RailWidth"/>), so the
-    /// wider rail does not come out of the centre floor; never less than <see cref="RailLogical"/>.
+    /// The rail's logical width this frame: <see cref="RailLogical"/>, or <see cref="RailCompactLogical"/> while the rail
+    /// is compact, so a compact rail lets the window narrow by what it gave up. A width outside the two (or unreadable)
+    /// is taken as the nearer of them (<see cref="RailLogical"/> when unreadable).
     /// </param>
     public static Vector2 MinWindowSize(float uiScale, float railLogical = RailLogical) =>
         MinWindowSize(uiScale, railLogical, PaneLayout.RoundingReservePx);
@@ -94,7 +102,7 @@ public static class ScaleMetrics
     private static Vector2 MinWindowSize(float uiScale, float railLogical, float reserve)
     {
         var scale = ClampUiScale(uiScale);
-        var rail = float.IsFinite(railLogical) ? MathF.Max(railLogical, RailLogical) : RailLogical;
+        var rail = float.IsFinite(railLogical) ? Math.Clamp(railLogical, RailCompactLogical, RailLogical) : RailLogical;
         return new Vector2(((rail + PaneLayout.MinContentLogical) * scale) + WindowPaddingX + reserve, MinWindowHeightLogical * scale);
     }
 

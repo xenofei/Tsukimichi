@@ -1,6 +1,32 @@
 namespace Tsukimichi.Core.Ui;
 
 /// <summary>
+/// The Journal tree's width tiers (feature plan v4 L3, UI audit §4.3, design v4 §8.2), widest first. Each row is then
+/// fitted by <see cref="RowFit"/> within its tier, so a long name can still push a part out of its own row.
+/// </summary>
+public enum TreeTier
+{
+    /// <summary>At least <see cref="LayoutBudgets.TreeFullLogical"/>: name, expansion pill, Ready pill, mini bar and count.</summary>
+    Full = 0,
+
+    /// <summary>The expansion pill goes; the mini bar goes too where the name needs its room.</summary>
+    Trim = 1,
+
+    /// <summary>The mini bar goes and the count becomes a percentage; complete nodes show no count.</summary>
+    Compact = 2,
+
+    /// <summary>No count (the ring alone carries progress); the Ready pill becomes a gold dot on the glyph.</summary>
+    Slim = 3,
+}
+
+/// <summary>How the rail fills its height this frame (<see cref="LayoutBudgets.FitRail"/>), in logical pixels.</summary>
+/// <param name="Crest">The crest's size; 0 hides it.</param>
+/// <param name="Station">Each station's height.</param>
+/// <param name="Percent">Whether the gauge's percentage shows under it.</param>
+/// <param name="FootAnchored">Whether the foot sits at the bottom; false when the rail is taller than its pane and scrolls.</param>
+public readonly record struct RailFit(float Crest, float Station, bool Percent, bool FootAnchored);
+
+/// <summary>
 /// The fixed-width places a translated label has to fit (V2-19), in logical pixels at UI scale 1: the tab rail's
 /// label room, the quest table's fixed columns and the quick-view segments. The plugin draws with these numbers
 /// (<c>TabStrip</c>, <c>TablePane</c>, <c>Chrome.SegmentedControl</c>) and the layout tests measure every language's
@@ -9,48 +35,147 @@ namespace Tsukimichi.Core.Ui;
 /// </summary>
 public static class LayoutBudgets
 {
-    // ---- Tab rail (TabStrip) ----
+    // ---- Tab rail (TabStrip; feature plan v4 L7, design v4 §7.1) ----
 
-    /// <summary>Height of one tab row.</summary>
-    public const float TabRowLogical = 30f;
+    /// <summary>A station of the labelled rail: a 22 px icon with the tab's label under it.</summary>
+    public const float StationLogical = 54f;
 
-    /// <summary>Space right of a tab's label.</summary>
-    public const float TabPadLogical = 6f;
+    /// <summary>The shortest a labelled station gets when the window is too short for the whole rail.</summary>
+    public const float StationMinLogical = 44f;
 
-    /// <summary>Space left of a tab's icon.</summary>
-    public const float TabInsetLogical = 10f;
+    /// <summary>A station of the compact rail: the icon alone.</summary>
+    public const float CompactStationLogical = 40f;
 
-    /// <summary>A tab's icon.</summary>
-    public const float TabIconLogical = 16f;
+    /// <summary>The shortest a compact station gets (still at least the 26 px click target).</summary>
+    public const float CompactStationMinLogical = 30f;
 
-    /// <summary>Between a tab's icon and its label.</summary>
-    public const float TabGapLogical = 8f;
+    /// <summary>A station's icon box.</summary>
+    public const float StationIconLogical = 22f;
 
-    /// <summary>What the Journal tab's Ready badge takes from its label's room (a three-digit badge and its gap).</summary>
-    public const float TabBadgeReserveLogical = 34f;
+    /// <summary>Between a station's icon and its label.</summary>
+    public const float StationGapLogical = 4f;
 
-    /// <summary>The widest the rail may grow for a long label: beyond this a translation must be shortened.</summary>
-    public const float MaxRailLogical = 200f;
+    /// <summary>The rail's labels (and the gauge's percentage) are drawn at this fraction of the body font.</summary>
+    public const float RailLabelFraction = 0.7f;
 
-    /// <summary>Everything in a tab row that is not its label.</summary>
-    public const float TabChromeLogical = TabInsetLogical + TabIconLogical + TabGapLogical + TabPadLogical;
+    /// <summary>Space either side of a station's label.</summary>
+    public const float RailLabelPadLogical = 2f;
 
-    /// <summary>The label room of a tab at the default rail width (<see cref="ScaleMetrics.RailLogical"/>).</summary>
-    public const float TabLabelRoomLogical = ScaleMetrics.RailLogical - TabChromeLogical;
+    /// <summary>A station label's room (the rail less its pads); the label is measured at its own, smaller size.</summary>
+    public const float RailLabelRoomLogical = ScaleMetrics.RailLogical - (2f * RailLabelPadLogical);
+
+    /// <summary>The crest on top of the rail, and its size when the window is short.</summary>
+    public const float CrestLogical = 40f;
+
+    /// <summary>The crest on a short window or the compact rail.</summary>
+    public const float CrestSmallLogical = 28f;
+
+    /// <summary>The overall gauge at the rail's foot.</summary>
+    public const float RailGaugeLogical = 36f;
+
+    /// <summary>A round button at the rail's foot (Help, Settings): the minimum click target.</summary>
+    public const float RailButtonLogical = 26f;
+
+    /// <summary>Between the parts of the rail (crest, stations, foot) and inside the foot.</summary>
+    public const float RailGapLogical = 6f;
+
+    /// <summary>Above the crest and below the foot.</summary>
+    public const float RailPadLogical = 8f;
 
     /// <summary>
-    /// The rail width that shows every label whole: <see cref="ScaleMetrics.RailLogical"/>, or wider when the widest
-    /// label (or the Journal label beside its badge) needs it, never beyond <see cref="MaxRailLogical"/>.
+    /// Main windows narrower than this (Dalamud-scaled units at the default UI scale, scaling with it) get the compact
+    /// rail by themselves.
     /// </summary>
-    /// <param name="widestLabel">The widest tab label, in logical pixels.</param>
-    /// <param name="journalLabel">The Journal tab's label, which shares its row with the Ready badge.</param>
-    public static float RailWidth(float widestLabel, float journalLabel)
+    public const float CompactRailWindowLogical = 1040f;
+
+    /// <summary>
+    /// Whether the rail is compact this frame: always when the user chose it, else when the window is narrower than
+    /// <see cref="CompactRailWindowLogical"/> (× the UI scale over the default); once compact it widens again only past
+    /// that plus <see cref="HysteresisLogical"/>, so a window resting on the threshold does not flicker. An unreadable
+    /// width keeps the current state.
+    /// </summary>
+    /// <param name="windowWidth">The main window's width in Dalamud-scaled units (pixels over the global scale).</param>
+    /// <param name="uiScale">The UI scale.</param>
+    /// <param name="wasCompact">Whether the rail was compact last frame.</param>
+    /// <param name="forced">Settings › Display › Compact rail.</param>
+    public static bool CompactRail(float windowWidth, float uiScale, bool wasCompact, bool forced)
     {
-        // An unreadable measurement counts as no label: the default rail, never NaN.
-        var widest = float.IsNaN(widestLabel) ? 0f : widestLabel;
-        var journal = float.IsNaN(journalLabel) ? 0f : journalLabel;
-        var need = MathF.Max(widest, journal + TabBadgeReserveLogical) + TabChromeLogical;
-        return Math.Clamp(MathF.Ceiling(need), ScaleMetrics.RailLogical, MaxRailLogical);
+        if (forced)
+        {
+            return true;
+        }
+
+        if (!float.IsFinite(windowWidth))
+        {
+            return wasCompact;
+        }
+
+        var factor = ScaleMetrics.ClampUiScale(uiScale) / ScaleMetrics.DefaultUiScale;
+        var threshold = CompactRailWindowLogical * factor;
+        return wasCompact ? windowWidth < threshold + (HysteresisLogical * factor) : windowWidth < threshold;
+    }
+
+    /// <summary>
+    /// How the rail fills a pane <paramref name="heightLogical"/> tall with <paramref name="stations"/> stations: the
+    /// crest, the stations, and the foot (gauge, its percentage, Help and Settings) held to the bottom. When the
+    /// height runs short the rail gives up, in order: the crest's full size, the percentage (the gauge's tooltip still
+    /// has it), the stations' spare height, the crest; past that the foot follows the stations and the rail scrolls.
+    /// </summary>
+    public static RailFit FitRail(float heightLogical, int stations, bool compact)
+    {
+        var height = float.IsFinite(heightLogical) ? MathF.Max(0f, heightLogical) : 0f;
+        var count = Math.Max(0, stations);
+        var station = compact ? CompactStationLogical : StationLogical;
+        var stationMin = compact ? CompactStationMinLogical : StationMinLogical;
+        var crest = compact ? CrestSmallLogical : CrestLogical;
+
+        var fit = new RailFit(crest, station, Percent: true, FootAnchored: true);
+        if (RailHeight(fit, count, compact) <= height)
+        {
+            return fit;
+        }
+
+        fit = fit with { Crest = CrestSmallLogical };
+        if (RailHeight(fit, count, compact) <= height)
+        {
+            return fit;
+        }
+
+        fit = fit with { Percent = false };
+        if (RailHeight(fit, count, compact) <= height)
+        {
+            return fit;
+        }
+
+        // The stations give up their spare height, as far as their minimum.
+        var spare = RailHeight(fit, count, compact) - height;
+        var give = count > 0 ? MathF.Min(station - stationMin, spare / count) : 0f;
+        fit = fit with { Station = station - give };
+        if (RailHeight(fit, count, compact) <= height + 0.01f)
+        {
+            return fit;
+        }
+
+        fit = fit with { Crest = 0f };
+        return RailHeight(fit, count, compact) <= height + 0.01f ? fit : fit with { FootAnchored = false };
+    }
+
+    /// <summary>The height a rail laid out as <paramref name="fit"/> needs, from the top pad to the bottom pad.</summary>
+    public static float RailHeight(RailFit fit, int stations, bool compact)
+    {
+        var crest = fit.Crest > 0f ? fit.Crest + RailGapLogical : 0f;
+        return RailPadLogical + crest + (Math.Max(0, stations) * fit.Station) + RailGapLogical + FootHeight(fit.Percent, compact) + RailPadLogical;
+    }
+
+    /// <summary>
+    /// The foot's height: the gauge, the percentage under it (a line at the label size), and the two buttons side by
+    /// side on the labelled rail or one above the other on the compact rail.
+    /// </summary>
+    public static float FootHeight(bool percent, bool compact)
+    {
+        var percentLine = percent ? (BodyFontPx * RailLabelFraction) + RailGapLogical : 0f;
+        var buttons = compact ? (2f * RailButtonLogical) + RailGapLogical : RailButtonLogical;
+        return RailGaugeLogical + RailGapLogical + percentLine + buttons;
     }
 
     // ---- Quest table (TablePane) ----
@@ -104,7 +229,7 @@ public static class LayoutBudgets
     /// window padding: the rail, the panes' floors and the gutters): the quick views, on a row of their own when they
     /// must be, fit in it.
     /// </summary>
-    public const float MinToolbarLogical = ScaleMetrics.RailLogical + PaneLayout.MinContentLogical;
+    public const float MinToolbarLogical = ScaleMetrics.RailCompactLogical + PaneLayout.MinContentLogical;
 
     /// <summary>The quick views' width: "All" and each view, every segment padded.</summary>
     public static float SegmentsWidth(IEnumerable<float> labels)
@@ -148,6 +273,41 @@ public static class LayoutBudgets
 
     /// <summary>Tree: the ring alone carries progress and the Ready pill becomes a dot; the tree's floor.</summary>
     public const float TreeSlimLogical = PaneLayout.TreeFloorLogical;
+
+    /// <summary>
+    /// The tree's tier for a pane <paramref name="widthLogical"/> wide: it narrows as soon as the width goes under a
+    /// breakpoint and widens again only at the breakpoint plus <see cref="HysteresisLogical"/>, so a pane resting on a
+    /// threshold does not flicker. An unreadable width keeps <paramref name="previous"/>.
+    /// </summary>
+    public static TreeTier TreeTierFor(float widthLogical, TreeTier previous)
+    {
+        if (!float.IsFinite(widthLogical))
+        {
+            return previous;
+        }
+
+        var tier = previous is < TreeTier.Full or > TreeTier.Slim ? TreeTier.Full : previous;
+        while (tier > TreeTier.Full && widthLogical >= TreeTierFloor(tier - 1) + HysteresisLogical)
+        {
+            tier--;
+        }
+
+        while (tier < TreeTier.Slim && widthLogical < TreeTierFloor(tier))
+        {
+            tier++;
+        }
+
+        return tier;
+    }
+
+    /// <summary>The narrowest pane a tier holds at (its breakpoint); the last tier has none.</summary>
+    public static float TreeTierFloor(TreeTier tier) => tier switch
+    {
+        TreeTier.Full => TreeFullLogical,
+        TreeTier.Trim => TreeTrimLogical,
+        TreeTier.Compact => TreeCompactLogical,
+        _ => 0f,
+    };
 
     /// <summary>Quest table: every column shows; Name and Status stretch 3 : 2.</summary>
     public const float TableFullLogical = 640f;
