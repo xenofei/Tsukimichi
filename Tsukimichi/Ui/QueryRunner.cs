@@ -70,7 +70,7 @@ public sealed class QueryRunner : IDisposable
     // String caches for the table body.
     private readonly string?[] levelText = new string?[256];
     private readonly string?[] expansionText = new string?[256];
-    private readonly Dictionary<uint, string> jobShort = [];
+    private readonly Dictionary<uint, JobLabel> jobShort = [];
 
     public QueryRunner(Plugin plugin, UiState ui, IPluginLog log)
     {
@@ -277,12 +277,18 @@ public sealed class QueryRunner : IDisposable
     /// Short label for a quest's ClassJobCategory: "Any" for everyone, a job abbreviation for a single job, else the
     /// discipline group. Cached per category id.
     /// </summary>
-    public string JobShort(QuestRecord quest)
+    public string JobShort(QuestRecord quest) => Job(quest).Short;
+
+    /// <summary>
+    /// <see cref="JobShort"/> with the game icon of a quest limited to one job (0 otherwise) and a hover name: the
+    /// job's name, or the category's for a group (empty for everyone). Cached per category id.
+    /// </summary>
+    public JobLabel Job(QuestRecord quest)
     {
         var category = quest.ClassJobCategory;
         if (category <= 1 || bundle is not { } b)
         {
-            return Strings.JobAny;
+            return JobLabel.Any;
         }
 
         if (jobShort.TryGetValue(category, out var cached))
@@ -290,7 +296,7 @@ public sealed class QueryRunner : IDisposable
             return cached;
         }
 
-        var label = ComputeJobShort(b, category);
+        var label = ComputeJob(b, category);
         jobShort[category] = label;
         return label;
     }
@@ -365,7 +371,23 @@ public sealed class QueryRunner : IDisposable
         pinsDirtyAtUtc = DateTime.UtcNow;
     }
 
-    private static string ComputeJobShort(CatalogBundle b, uint category)
+    private static JobLabel ComputeJob(CatalogBundle b, uint category)
+    {
+        var groupName = b.Names.ClassJobCategory(category);
+        var (label, single) = ComputeJobShort(b, category);
+        if (single is not { } job)
+        {
+            return new JobLabel(label, 0, ReferenceEquals(label, Strings.JobAny) ? string.Empty : groupName);
+        }
+
+        var name = b.Names.ClassJobs.GetValueOrDefault(job, string.Empty);
+        return new JobLabel(label, name.Length > 0 ? JobIconBase + job : 0u, name.Length > 0 ? name : groupName);
+    }
+
+    /// <summary>First id of the game's job icon set (062101 Gladiator …), offset by ClassJob row id (<see cref="ClassJobInfo.IconId"/>).</summary>
+    private const uint JobIconBase = 62100u;
+
+    private static (string Label, byte? Single) ComputeJobShort(CatalogBundle b, uint category)
     {
         var count = 0;
         var hand = 0;
@@ -387,22 +409,22 @@ public sealed class QueryRunner : IDisposable
 
         if (count == 0 || (b.Jobs.JobColumns > 0 && count >= b.Jobs.JobColumns - 1))
         {
-            return Strings.JobAny;
+            return (Strings.JobAny, null);
         }
 
         if (count == 1)
         {
             var abbreviation = b.Names.ClassJobAbbreviation(single);
-            return abbreviation.Length > 0 ? abbreviation : Strings.JobMulti;
+            return abbreviation.Length > 0 ? (abbreviation, single) : (Strings.JobMulti, null);
         }
 
         var war = count - hand - land;
         if (war == 0)
         {
-            return hand == 0 ? Strings.JobDol : land == 0 ? Strings.JobDoh : Strings.JobDohDol;
+            return (hand == 0 ? Strings.JobDol : land == 0 ? Strings.JobDoh : Strings.JobDohDol, null);
         }
 
-        return hand + land == 0 ? Strings.JobDowDom : Strings.JobMulti;
+        return (hand + land == 0 ? Strings.JobDowDom : Strings.JobMulti, null);
     }
 
     /// <summary>The viewed character's abandoned quest ids for the Abandoned filter; a copy, since the live ledger changes in place.</summary>
@@ -583,4 +605,10 @@ public sealed class QueryRunner : IDisposable
             log.Warning(ex, "Pins could not be saved");
         }
     }
+}
+
+/// <summary>A quest's Job column: the short label, the game icon of its one job (0 for a group or everyone) and the name its hover shows (empty for everyone).</summary>
+public readonly record struct JobLabel(string Short, uint IconId, string Name)
+{
+    public static readonly JobLabel Any = new(Strings.JobAny, 0, string.Empty);
 }

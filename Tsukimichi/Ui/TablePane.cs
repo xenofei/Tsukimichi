@@ -10,6 +10,7 @@ using Dalamud.Plugin.Ipc;
 using Dalamud.Plugin.Services;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
+using Tsukimichi.Core.Ui;
 
 namespace Tsukimichi.Ui;
 
@@ -17,7 +18,14 @@ namespace Tsukimichi.Ui;
 /// The quest table: glyph, name, level, job, status, expansion, reward icons; sortable, reorderable, hideable,
 /// clipped with <see cref="ImGuiListClipperPtr"/>. Row click selects, double-click opens the journal, right-click
 /// opens the context menu. The body allocates nothing: every string it shows is pre-materialized by
-/// <see cref="QueryRunner"/> or the query rows.
+/// <see cref="QueryRunner"/> or the query rows, and style pushes inside a row are raw ImGui pushes.
+///
+/// Row chrome (feature plan v3 T15, ui-revamp §2.4): a 3 px state stripe on the row's left edge whose pattern, not
+/// only its colour, names the state (<see cref="StripePattern"/>, accessibility A3); a hover fill and two-line
+/// <see cref="Chrome.Lift"/> on the row hovered the previous frame (the binding has no <c>TableGetHoveredRow</c>);
+/// a neutral selection wash with a 1 px ring (never gold); level and expansion pills; the job's game icon. Fills go
+/// through <c>TableSetBgColor</c> with the selectable's own Header colours pushed transparent so it does not paint
+/// over them; lines go on the table's background channel so they span every column under the text.
 /// </summary>
 public sealed class TablePane : IDisposable
 {
@@ -25,7 +33,7 @@ public sealed class TablePane : IDisposable
     private const string QuestMapIpcName = "QuestMap.ShowGraphByQuestId";
     private const int MaxRewardIcons = 4;
 
-    /// <summary>Logical space left of the state moon for the pinned dot.</summary>
+    /// <summary>Logical space left of the state moon for the pinned dot; also the state stripe's hover zone.</summary>
     private const float GlyphColumnLead = 8f;
 
     /// <summary>Initial logical width of the Name column; the player can drag it, and long names clip.</summary>
@@ -37,7 +45,37 @@ public sealed class TablePane : IDisposable
     /// <summary>Logical gap between a story sidequest's name and its book badge.</summary>
     private const float StoryBadgeGap = 6f;
 
+    /// <summary>Logical width of the state stripe.</summary>
+    private const float StripeWidth = 3f;
+
+    /// <summary>Level pill (ui-revamp §2.4): at least 28 × 16 logical, text padded 6 each side.</summary>
+    private const float LevelPillMinWidth = 28f;
+    private const float PillHeight = 16f;
+    private const float PillPadX = 6f;
+    private const float ExpansionPillPadX = 5f;
+
+    /// <summary>Job icon side and the gap before the label, logical.</summary>
+    private const float JobIconSide = 16f;
+    private const float JobIconGap = 5f;
+
+    /// <summary>Initial logical width of the Job column: icon, gap and "DoH/DoL".</summary>
+    private const float JobColumnWidth = 76f;
+
+    /// <summary>Selection: the wash's alpha of the text colour, the ring's alpha and its logical rounding.</summary>
+    private const float SelectionWashAlpha = 0.10f;
+    private const float SelectionRingAlpha = 0.45f;
+    private const float SelectionRounding = 4f;
+
+    /// <summary>Row separators in Comfortable (zebra off): the line colour at this alpha.</summary>
+    private const float SeparatorAlpha = 0.5f;
+
+    /// <summary>High bits of the <see cref="Motion"/> key of a row's hover fade, so row ids never meet ImGui ids.</summary>
+    private const ulong HoverKeyTag = 0x7461_6200_0000_0000UL;
+
     private static readonly string StoryBadgeIcon = FontAwesomeIcon.BookOpen.ToIconString();
+
+    /// <summary>The widest level a pill is sized for when the Level column is first laid out.</summary>
+    private const string WidestLevel = "100";
 
     private enum Column
     {
@@ -91,6 +129,11 @@ public sealed class TablePane : IDisposable
     private uint? lastSelection;
     private bool tableInitialized;
 
+    // Hover lift (dalamud-developer panel §4: no TableGetHoveredRow in the binding): the quest hovered on the previous
+    // frame gets the fill and the lift this frame; hoveredNext collects this frame's for the next.
+    private uint? hoveredRow;
+    private uint? hoveredNext;
+
     // FitStatusColumn state (see the method): the columns it hid, whether a re-show by hand suspended it, each
     // hideable column's enabled flag last frame (null before the first) and whether a re-show is the fit's own; the
     // Status width each hide gained, measured on the frame the hide took effect (widthBeforeHide is the width the
@@ -133,6 +176,7 @@ public sealed class TablePane : IDisposable
     {
         if (runner.Empty is { } empty)
         {
+            hoveredRow = null;
             DrawEmpty(empty);
             return;
         }
@@ -149,9 +193,13 @@ public sealed class TablePane : IDisposable
         const ImGuiTableFlags flags = ImGuiTableFlags.RowBg | ImGuiTableFlags.Sortable | ImGuiTableFlags.SortTristate | ImGuiTableFlags.ScrollY
             | ImGuiTableFlags.Resizable | ImGuiTableFlags.Reorderable | ImGuiTableFlags.Hideable | ImGuiTableFlags.SizingFixedFit;
 
+        // The header's fill is painted when its row ends, which is when the clipper begins, so the push spans the table.
+        ImGui.PushStyleColor(ImGuiCol.TableHeaderBg, Theme.Surface.Raised);
+        using var headerBg = new Theme.StyleScope(1, 0);
         using var table = ImRaii.Table("##quests", 7, flags, ImGui.GetContentRegionAvail());
         if (!table)
         {
+            hoveredRow = null;
             return;
         }
 
@@ -161,19 +209,23 @@ public sealed class TablePane : IDisposable
         UiMetrics.ApplyFontScale();
         var style = ImGui.GetStyle();
         var lineHeight = ImGui.GetTextLineHeight();
-        var rowContent = UiMetrics.TableRowContentHeight(lineHeight, style.CellPadding.Y);
-        var rowHeight = rowContent + style.CellPadding.Y * 2f;
-        var glyphBox = UiMetrics.RowGlyphRadius * 2.4f;
+        var padY = style.CellPadding.Y;
+        var rowContent = UiMetrics.TableRowContentHeight(lineHeight, padY);
+        var rowHeight = rowContent + padY * 2f;
+        // The moon, and with it the Glyph column, follows the row height (r 9 Comfortable, r 6.4 Dense at scale 1).
+        var glyphRadius = TableGeometry.GlyphRadius(rowContent, UiMetrics.RowGlyphRadius);
+        var glyphBox = glyphRadius * TableGeometry.GlyphBoxPerRadius;
         var glyphColumn = UiMetrics.Px(GlyphColumnLead) + glyphBox + UiMetrics.Px(2f);
         var rewardsColumn = UiMetrics.RowIconSize * MaxRewardIcons + UiMetrics.Px(2f) * (MaxRewardIcons - 1) + UiMetrics.Px(8f);
+        var levelColumn = MathF.Max(UiMetrics.Px(34f), PillWidth(WidestLevel, UiMetrics.Px(LevelPillMinWidth), UiMetrics.Px(PillPadX)));
 
         ImGui.TableSetupColumn(Strings.ColumnGlyph, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize | ImGuiTableColumnFlags.NoHide | ImGuiTableColumnFlags.NoHeaderLabel, glyphColumn);
         // Status is the one stretch column (feature plan v3 P1): it holds the answer to "why not", so it takes the
         // width the others leave, and FitStatusColumn hides Rewards, then Expansion, before it drops under its minimum.
         var expansionColumn = UiMetrics.Px(40f);
         ImGui.TableSetupColumn(Strings.ColumnName, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoHide, UiMetrics.Px(NameColumnWidth));
-        ImGui.TableSetupColumn(Strings.ColumnLevel, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(34f));
-        ImGui.TableSetupColumn(Strings.ColumnJob, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoSort, UiMetrics.Px(64f));
+        ImGui.TableSetupColumn(Strings.ColumnLevel, ImGuiTableColumnFlags.WidthFixed, levelColumn);
+        ImGui.TableSetupColumn(Strings.ColumnJob, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoSort, UiMetrics.Px(JobColumnWidth));
         ImGui.TableSetupColumn(Strings.ColumnStatus, ImGuiTableColumnFlags.WidthStretch | ImGuiTableColumnFlags.NoSort, 1f);
         // Expansion is a four-letter tag: NoResize keeps its width the setup width, so hiding it frees exactly that.
         ImGui.TableSetupColumn(Strings.ColumnExpansion, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, expansionColumn);
@@ -193,7 +245,7 @@ public sealed class TablePane : IDisposable
         // The two icon-derived widths are re-asserted every frame (imgui.ini restores font-tracked widths, not IconScale).
         ImGuiP.TableSetColumnWidth((int)Column.Glyph, glyphColumn);
         ImGuiP.TableSetColumnWidth((int)Column.Rewards, rewardsColumn);
-        var statusWidth = DrawHeaders();
+        var statusWidth = DrawHeaders(SortedColumn(ui.Sort));
         FitStatusColumn(statusWidth, expansionColumn, rewardsColumn);
 
         ApplySortSpecs();
@@ -206,24 +258,31 @@ public sealed class TablePane : IDisposable
         }
 
         // Rows can be taller than the text when icons are scaled up; the selectable fills the row and centres its label.
-        using var textAlign = ImRaii.PushStyle(ImGuiStyleVar.SelectableTextAlign, new Vector2(0f, 0.5f));
-        // Zebra rows: every other row tinted so long lists stay easy to track across columns.
-        using var zebra = ImRaii.PushColor(ImGuiCol.TableRowBgAlt, Theme.ZebraRow);
-        var layout = new RowLayout(lineHeight, rowContent, glyphBox);
+        // Dense keeps the zebra so long lists stay easy to track across columns; Comfortable trades it for a faint
+        // separator under each row (ui-revamp §2.4), which with the hover fill keeps the eye on the row. Raw pushes in a
+        // struct scope: nothing allocates per frame.
+        var dense = UiMetrics.Density == RowDensity.Dense;
+        ImGui.PushStyleVar(ImGuiStyleVar.SelectableTextAlign, new Vector2(0f, 0.5f));
+        ImGui.PushStyleColor(ImGuiCol.TableRowBgAlt, dense ? Theme.ZebraRow : Vector4.Zero);
+        using var rowStyle = new Theme.StyleScope(1, 1);
+        var layout = new RowLayout(lineHeight, rowContent, rowHeight, padY, glyphBox, glyphRadius, dense);
+        var liftRow = hoveredRow;
+        hoveredNext = null;
         clipper.Begin(rows.Length, rowHeight);
         while (clipper.Step())
         {
             for (var i = clipper.DisplayStart; i < clipper.DisplayEnd && i < rows.Length; i++)
             {
-                DrawRow(in rows[i], hasSnapshot, in layout);
+                DrawRow(in rows[i], hasSnapshot, in layout, liftRow);
             }
         }
 
         clipper.End();
+        hoveredRow = hoveredNext;
     }
 
     /// <summary>Per-frame row measurements, computed once per draw.</summary>
-    private readonly record struct RowLayout(float LineHeight, float RowContent, float GlyphBox)
+    private readonly record struct RowLayout(float LineHeight, float RowContent, float RowHeight, float PadY, float GlyphBox, float GlyphRadius, bool Dense)
     {
         /// <summary>Offset that centres a text line in the row.</summary>
         public float TextOffset => MathF.Max(0f, (RowContent - LineHeight) * 0.5f);
@@ -247,10 +306,15 @@ public sealed class TablePane : IDisposable
         }
     }
 
-    /// <summary>What TableHeadersRow does, one header at a time, so each can carry a tooltip. Returns the Status column's laid-out width (0 when hidden).</summary>
-    private static float DrawHeaders()
+    /// <summary>
+    /// What TableHeadersRow does, one header at a time, so each can carry a tooltip. Labels are in the secondary tone
+    /// on the raised fill; the sorted column's label and its arrow are in the primary text colour (a sort is not a call
+    /// to action, so never gold). Returns the Status column's laid-out width (0 when hidden).
+    /// </summary>
+    private static float DrawHeaders(int sortedColumn)
     {
         var statusWidth = 0f;
+        var s = Theme.Surface;
         ImGui.TableNextRow(ImGuiTableRowFlags.Headers);
         for (var i = 0; i < HeaderTooltips.Length; i++)
         {
@@ -264,8 +328,11 @@ public sealed class TablePane : IDisposable
                 statusWidth = ImGui.GetContentRegionAvail().X;
             }
 
-            using var id = ImRaii.PushId(i);
+            ImGui.PushID(i);
+            ImGui.PushStyleColor(ImGuiCol.Text, i == sortedColumn ? s.Text : s.TextSecondary);
             ImGui.TableHeader(HeaderLabels[i]);
+            ImGui.PopStyleColor();
+            ImGui.PopID();
             if (ImGui.IsItemHovered())
             {
                 UiMetrics.Tooltip(HeaderTooltips[i]);
@@ -274,6 +341,16 @@ public sealed class TablePane : IDisposable
 
         return statusWidth;
     }
+
+    /// <summary>The column index the persisted sort puts its arrow on, or -1 for journal order.</summary>
+    private static int SortedColumn(SortSpec sort) => sort.Column switch
+    {
+        SortColumn.State => (int)Column.Glyph,
+        SortColumn.Name => (int)Column.Name,
+        SortColumn.Level => (int)Column.Level,
+        SortColumn.Expansion => (int)Column.Expansion,
+        _ => -1,
+    };
 
     /// <summary>
     /// Keeps the Status column at least <see cref="StatusMinWidth"/> wide: when the laid-out width falls short, Rewards
@@ -377,11 +454,28 @@ public sealed class TablePane : IDisposable
     private static bool IsColumnEnabled(Column column) =>
         (ImGui.TableGetColumnFlags((int)column) & ImGuiTableColumnFlags.IsEnabled) != 0;
 
-    private void DrawRow(in QuestRow row, bool hasSnapshot, in RowLayout layout)
+    private void DrawRow(in QuestRow row, bool hasSnapshot, in RowLayout layout, uint? liftRow)
     {
         var quest = row.Quest;
-        using var id = ImRaii.PushId((int)quest.RowId);
+        ImGui.PushID((int)quest.RowId);
         ImGui.TableNextRow();
+
+        var s = Theme.Surface;
+        var state = hasSnapshot ? row.State : QuestState.Unknown;
+        var selected = ui.SelectedRowId == quest.RowId;
+
+        // Fills are the row's own background (painted when the row ends, behind every cell): the selection wash in
+        // RowBg0 (it replaces the zebra), the hover fill over it in RowBg1, easing in and out through Motion.
+        var hover = Motion.Lerp(HoverKeyTag | quest.RowId, liftRow == quest.RowId ? 1f : 0f);
+        if (selected)
+        {
+            ImGui.TableSetBgColor(ImGuiTableBgTarget.RowBg0, Theme.WithAlpha(s.Text, SelectionWashAlpha));
+        }
+
+        if (hover > 0.004f)
+        {
+            ImGui.TableSetBgColor(ImGuiTableBgTarget.RowBg1, Theme.WithAlpha(s.Hover, hover * s.Hover.W));
+        }
 
         // Glyph column: pinned dot at the left edge, state moon centred in the rest.
         ImGui.TableNextColumn();
@@ -390,30 +484,38 @@ public sealed class TablePane : IDisposable
         ImGui.Dummy(new Vector2(lead + layout.GlyphBox, layout.RowContent));
         var dl = ImGui.GetWindowDrawList();
         var centerY = cell.Y + layout.RowContent * 0.5f;
-        var state = hasSnapshot ? row.State : QuestState.Unknown;
-
-        // A thin stripe on the row's left edge: Moon for Ready, Silver for Accepted, so the actionable rows stand out.
-        if (state is QuestState.Ready or QuestState.Accepted)
-        {
-            var padding = ImGui.GetStyle().CellPadding;
-            var stripeMin = new Vector2(cell.X - padding.X, cell.Y - padding.Y);
-            dl.AddRectFilled(stripeMin, new Vector2(stripeMin.X + UiMetrics.Stripe, cell.Y + layout.RowContent + padding.Y), state == QuestState.Ready ? Theme.MoonU32 : Theme.SilverU32);
-        }
 
         if (runner.IsPinned(quest.RowId))
         {
             dl.AddCircleFilled(cell + new Vector2(UiMetrics.Px(3f), centerY - cell.Y), UiMetrics.Px(2.5f), Theme.MoonU32);
         }
 
-        MoonGlyph.Draw(dl, new Vector2(cell.X + lead + layout.GlyphBox * 0.5f, centerY), UiMetrics.RowGlyphRadius, state);
+        MoonGlyph.Draw(dl, new Vector2(cell.X + lead + layout.GlyphBox * 0.5f, centerY), layout.GlyphRadius, state);
 
-        // Name column carries the row-wide selectable and the context menu.
+        // Name column carries the row-wide selectable and the context menu. Its Header colours are transparent so it
+        // paints neither hover nor selection over the fills above (keyboard focus still gets ImGui's nav frame).
         ImGui.TableNextColumn();
         var nameCellMin = ImGui.GetCursorScreenPos();
         var nameCellWidth = ImGui.GetContentRegionAvail().X;
-        var selected = ui.SelectedRowId == quest.RowId;
         var name = runner.Spoilers.DisplayName(quest);
-        if (ImGui.Selectable(name, selected, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowDoubleClick | ImGuiSelectableFlags.AllowItemOverlap, new Vector2(0f, layout.RowContent)))
+        ImGui.PushStyleColor(ImGuiCol.Header, Vector4.Zero);
+        ImGui.PushStyleColor(ImGuiCol.HeaderHovered, Vector4.Zero);
+        ImGui.PushStyleColor(ImGuiCol.HeaderActive, Vector4.Zero);
+        var clicked = ImGui.Selectable(name, selected, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowDoubleClick | ImGuiSelectableFlags.AllowItemOverlap, new Vector2(0f, layout.RowContent));
+        ImGui.PopStyleColor(3);
+
+        // The selectable spans the table's width: its rectangle gives the row's left and right edges.
+        var rowHovered = ImGui.IsItemHovered();
+        var rowMin = new Vector2(ImGui.GetItemRectMin().X, nameCellMin.Y - layout.PadY);
+        var rowMax = new Vector2(ImGui.GetItemRectMax().X, rowMin.Y + layout.RowHeight);
+        if (rowHovered)
+        {
+            hoveredNext = quest.RowId;
+        }
+
+        DrawRowChrome(rowMin, rowMax, state, selected, liftRow == quest.RowId && hover > 0.5f, in layout);
+
+        if (clicked)
         {
             SelectFromTable(quest.RowId);
             // The game journal only knows accepted and completed quests; for the rest a double-click just selects.
@@ -437,16 +539,19 @@ public sealed class TablePane : IDisposable
             }
         }
 
-        // The selectable spans every column; the banner tooltip belongs to the name cell only, so the reward icons
-        // keep their own tooltips.
-        var rowHovered = ImGui.IsItemHovered();
+        // The selectable spans every column; the banner tooltip belongs to the name cell only, the stripe's to the
+        // row's left edge, so the reward and job icons keep their own tooltips.
         var badge = runner.Stories.Contains(quest.RowId)
             ? DrawStoryBadge(ImGui.GetWindowDrawList(), nameCellMin, nameCellWidth, layout.RowContent, name)
             : default;
+        var mouseX = ImGui.GetMousePos().X;
         if (rowHovered)
         {
-            var mouseX = ImGui.GetMousePos().X;
-            if (badge.Y > 0f && mouseX >= badge.X && mouseX <= badge.X + badge.Y)
+            if (mouseX >= rowMin.X && mouseX <= rowMin.X + MathF.Max(lead, StripeThickness()))
+            {
+                UiMetrics.Tooltip(StripePattern.Tooltip(state, quest.RepeatInterval));
+            }
+            else if (badge.Y > 0f && mouseX >= badge.X && mouseX <= badge.X + badge.Y)
             {
                 UiMetrics.Tooltip(runner.StoryBadgeText(quest.RowId));
             }
@@ -457,43 +562,152 @@ public sealed class TablePane : IDisposable
         }
 
         ImGui.TableNextColumn();
-        CenterText(in layout);
-        ImGui.TextUnformatted(runner.LevelText(quest.DisplayLevel));
+        DrawPill(runner.LevelText(quest.DisplayLevel), UiMetrics.Px(LevelPillMinWidth), UiMetrics.Px(PillPadX), s.TextSecondary, in layout);
 
         ImGui.TableNextColumn();
-        CenterText(in layout);
-        ImGui.TextUnformatted(runner.JobShort(quest));
+        DrawJob(runner.Job(quest), rowHovered, mouseX, in layout);
 
         ImGui.TableNextColumn();
         CenterText(in layout);
         var statusCellMin = ImGui.GetCursorScreenPos();
         var statusCellWidth = ImGui.GetContentRegionAvail().X;
-        if (hasSnapshot)
-        {
-            DrawStatus(row.Status);
-        }
-        else
-        {
-            ImGui.TextDisabled(row.Status);
-        }
+        var cut = DrawStatus(row.Status, hasSnapshot, statusCellWidth, layout.LineHeight);
 
-        // The cell clips rather than ellipsises, so the state word (first) always survives; the full line is a tooltip
-        // whenever the tail was cut.
-        if (rowHovered && row.Status.Length > 0 && ImGui.CalcTextSize(row.Status).X > statusCellWidth)
+        // The state word is never cut; when the reason after it was ellipsised, the whole line is the cell's tooltip.
+        if (cut && rowHovered && mouseX >= statusCellMin.X && mouseX <= statusCellMin.X + statusCellWidth)
         {
-            var mouseX = ImGui.GetMousePos().X;
-            if (mouseX >= statusCellMin.X && mouseX <= statusCellMin.X + statusCellWidth)
-            {
-                UiMetrics.Tooltip(row.Status);
-            }
+            UiMetrics.Tooltip(row.Status);
         }
 
         ImGui.TableNextColumn();
-        CenterText(in layout);
-        ImGui.TextUnformatted(runner.ExpansionShort(quest.Expansion));
+        DrawPill(runner.ExpansionShort(quest.Expansion), 0f, UiMetrics.Px(ExpansionPillPadX), s.TextTertiary, in layout);
 
         ImGui.TableNextColumn();
         DrawRewardIcons(quest, in layout);
+        ImGui.PopID();
+    }
+
+    /// <summary>Width of the state stripe in pixels: 3 logical, never under 2.</summary>
+    private static float StripeThickness() => MathF.Max(2f, MathF.Round(UiMetrics.Px(StripeWidth)));
+
+    /// <summary>
+    /// The row's lines, on the table's background channel so they span every column under the text: the separator
+    /// (Comfortable), the selection ring (1 px, the text colour at 0.45, rounded, inset 1 px: a selection, not gold),
+    /// the hover lift, and the state stripe on top of them at the left edge.
+    /// </summary>
+    private static void DrawRowChrome(Vector2 rowMin, Vector2 rowMax, QuestState state, bool selected, bool lifted, in RowLayout layout)
+    {
+        var s = Theme.Surface;
+        ImGuiP.TablePushBackgroundChannel();
+        var dl = ImGui.GetWindowDrawList();
+        var hairline = UiMetrics.Hairline;
+        if (!layout.Dense)
+        {
+            var y = rowMax.Y - hairline * 0.5f;
+            dl.AddLine(new Vector2(rowMin.X, y), new Vector2(rowMax.X, y), Theme.WithAlpha(s.Line, SeparatorAlpha * s.Line.W), hairline);
+        }
+
+        if (lifted)
+        {
+            Chrome.Lift(dl, rowMin, rowMax);
+        }
+
+        if (selected)
+        {
+            var inset = new Vector2(hairline * 0.5f + UiMetrics.Px(1f));
+            dl.AddRect(rowMin + inset, rowMax - inset, Theme.WithAlpha(s.Text, SelectionRingAlpha), UiMetrics.Px(SelectionRounding), ImDrawFlags.None, hairline);
+        }
+
+        DrawStripe(dl, rowMin.X, rowMin.Y, rowMax.Y - rowMin.Y, state);
+        ImGuiP.TablePopBackgroundChannel();
+    }
+
+    /// <summary>The state stripe: <see cref="StripePattern"/>'s runs for the state, snapped to whole pixels, in the state's colour.</summary>
+    private static void DrawStripe(ImDrawListPtr dl, float x, float top, float height, QuestState state)
+    {
+        var segments = StripePattern.Segments(state);
+        if (segments.IsEmpty || height <= 0f)
+        {
+            return;
+        }
+
+        var color = StripeColor(state);
+        var right = x + StripeThickness();
+        foreach (var segment in segments)
+        {
+            var y0 = MathF.Round(top + segment.Start * height);
+            var y1 = MathF.Max(y0 + 1f, MathF.Round(top + segment.End * height));
+            dl.AddRectFilled(new Vector2(x, y0), new Vector2(right, y1), color);
+        }
+    }
+
+    /// <summary>
+    /// The stripe's colour, from the Theme tokens the moons use: gold for what can be acted on (Ready, In journal), the
+    /// quieter gold for Completed, silver for Ready on another job and Done (the palette's text colour in a light
+    /// Dalamud theme, where silver would vanish), Eclipse for Locked out and VeilText for Not checked. The pattern,
+    /// not the colour, carries the state.
+    /// </summary>
+    private static uint StripeColor(QuestState state) => state switch
+    {
+        QuestState.Ready or QuestState.Accepted => Theme.MoonU32,
+        QuestState.Completed => Theme.MoonDimU32,
+        QuestState.ReadyOnOtherJob or QuestState.DoneThisCycle => Theme.Surface.Light ? Theme.U32(Theme.Surface.Text) : Theme.SilverU32,
+        QuestState.Foreclosed => Theme.EclipseU32,
+        _ => Theme.VeilTextU32,
+    };
+
+    /// <summary>Width of a pill holding <paramref name="text"/>: the text padded each side, at least <paramref name="minWidth"/>.</summary>
+    private static float PillWidth(string text, float minWidth, float padX) => MathF.Max(minWidth, ImGui.CalcTextSize(text).X + padX * 2f);
+
+    /// <summary>
+    /// A level or expansion pill (ui-revamp §2.4): the palette's sunken fill with the text in <paramref name="ink"/>,
+    /// vertically centred in the row and never wider than the cell. A dummy of the pill's width is the cell's item.
+    /// </summary>
+    private static void DrawPill(string text, float minWidth, float padX, Vector4 ink, in RowLayout layout)
+    {
+        if (text.Length == 0)
+        {
+            return;
+        }
+
+        var pos = ImGui.GetCursorScreenPos();
+        var avail = ImGui.GetContentRegionAvail().X;
+        var textSize = ImGui.CalcTextSize(text);
+        var height = MathF.Min(layout.RowContent, MathF.Max(UiMetrics.Px(PillHeight), textSize.Y + UiMetrics.Px(2f)));
+        var width = MathF.Max(1f, MathF.Min(avail, MathF.Max(minWidth, textSize.X + padX * 2f)));
+        ImGui.Dummy(new Vector2(width, layout.RowContent));
+        var s = Theme.Surface;
+        var min = new Vector2(pos.X, pos.Y + MathF.Round((layout.RowContent - height) * 0.5f));
+        Chrome.PillAt(ImGui.GetWindowDrawList(), min, new Vector2(width, height), text, Theme.U32(s.Sunken), 0u, Theme.U32(ink));
+    }
+
+    /// <summary>
+    /// The Job cell: a quest limited to one job shows the job's game icon (16 px at scale 1) before its abbreviation;
+    /// groups and "Any" keep the icon's slot so the labels line up. Hovering it names the job, or the group.
+    /// </summary>
+    private void DrawJob(JobLabel job, bool rowHovered, float mouseX, in RowLayout layout)
+    {
+        var pos = ImGui.GetCursorScreenPos();
+        var icon = MathF.Min(UiMetrics.Icon(JobIconSide), layout.RowContent);
+        var gap = UiMetrics.Px(JobIconGap);
+        var textSize = ImGui.CalcTextSize(job.Short);
+        var width = icon + gap + textSize.X;
+        ImGui.Dummy(new Vector2(width, layout.RowContent));
+
+        var dl = ImGui.GetWindowDrawList();
+        if (job.IconId != 0)
+        {
+            var iconMin = new Vector2(pos.X, pos.Y + MathF.Round((layout.RowContent - icon) * 0.5f));
+            var wrap = textures.GetFromGameIcon(new GameIconLookup(job.IconId)).GetWrapOrEmpty();
+            dl.AddImage(wrap.Handle, iconMin, iconMin + new Vector2(icon, icon));
+        }
+
+        dl.AddText(new Vector2(pos.X + icon + gap, pos.Y + layout.TextOffset), Theme.U32(Theme.Surface.TextSecondary), job.Short);
+
+        if (rowHovered && job.Name.Length > 0 && mouseX >= pos.X && mouseX <= pos.X + width)
+        {
+            UiMetrics.Tooltip(job.Name);
+        }
     }
 
     /// <summary>
@@ -503,37 +717,58 @@ public sealed class TablePane : IDisposable
     private static Vector2 DrawStoryBadge(ImDrawListPtr dl, Vector2 cellMin, float cellWidth, float rowContent, string name)
     {
         var afterName = cellMin.X + ImGui.CalcTextSize(name).X + UiMetrics.Px(StoryBadgeGap);
-        using var font = ImRaii.PushFont(UiBuilder.IconFont);
+        ImGui.PushFont(UiBuilder.IconFont);
         var size = ImGui.CalcTextSize(StoryBadgeIcon);
         var x = MathF.Max(cellMin.X, MathF.Min(afterName, cellMin.X + cellWidth - size.X));
         dl.AddText(new Vector2(x, cellMin.Y + (rowContent - size.Y) * 0.5f), Theme.DuskU32, StoryBadgeIcon);
+        ImGui.PopFont();
         return new Vector2(x, size.X);
     }
 
     /// <summary>
-    /// Status text: the state name (everything before the separator) in Silver, the reason after it in Dusk, so the
-    /// state reads at a glance and the blocker sits beside it; spans only, no new strings.
+    /// Status text (P1): the state word first in the primary text colour, then the reason after the separator in the
+    /// secondary tone (Mist: Dusk fails AA on a hovered row), spans only, no new strings. The state word is never cut
+    /// short; a reason too long for the cell is ellipsised in the room the state word leaves. In browse mode (no
+    /// snapshot) the whole line is in the tertiary tone. Returns whether the reason was cut.
     /// </summary>
-    private static void DrawStatus(string text)
+    private static bool DrawStatus(string text, bool hasSnapshot, float cellWidth, float lineHeight)
     {
-        var split = text.IndexOf(Strings.StateReasonSeparator, StringComparison.Ordinal);
-        if (split <= 0)
+        var s = Theme.Surface;
+        var stateInk = hasSnapshot ? s.Text : s.TextTertiary;
+        var reasonInk = hasSnapshot ? s.TextSecondary : s.TextTertiary;
+        var split = TableGeometry.StateWordLength(text);
+        var state = text.AsSpan(0, split);
+        ImGui.PushStyleColor(ImGuiCol.Text, stateInk);
+        ImGui.TextUnformatted(state);
+        ImGui.PopStyleColor();
+        if (split >= text.Length)
         {
-            using var silver = Theme.PushText(Theme.Silver);
-            ImGui.TextUnformatted(text);
-            return;
+            return false;
         }
 
-        using (Theme.PushText(Theme.Silver))
-        {
-            ImGui.TextUnformatted(text.AsSpan(0, split));
-        }
-
+        var reason = text.AsSpan(split);
+        var room = TableGeometry.ReasonWidth(cellWidth, ImGui.CalcTextSize(state).X);
+        var reasonSize = ImGui.CalcTextSize(reason);
         ImGui.SameLine(0f, 0f);
-        using (Theme.PushText(Theme.Dusk))
+        ImGui.PushStyleColor(ImGuiCol.Text, reasonInk);
+        if (!TableGeometry.ReasonNeedsEllipsis(reasonSize.X, room))
         {
-            ImGui.TextUnformatted(text.AsSpan(split));
+            ImGui.TextUnformatted(reason);
+            ImGui.PopStyleColor();
+            return false;
         }
+
+        var min = ImGui.GetCursorScreenPos();
+        ImGui.Dummy(new Vector2(room, lineHeight));
+        if (room > 1f)
+        {
+            var max = new Vector2(min.X + room, min.Y + lineHeight);
+            Vector2? known = reasonSize;
+            ImGuiP.RenderTextEllipsis(ImGui.GetWindowDrawList(), in min, in max, max.X, max.X, reason, in known);
+        }
+
+        ImGui.PopStyleColor();
+        return true;
     }
 
     /// <summary>
