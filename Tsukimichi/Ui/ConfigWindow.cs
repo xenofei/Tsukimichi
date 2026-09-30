@@ -61,6 +61,11 @@ public sealed class ConfigWindow : Window
     private ulong spoilerLabelContentId;
     private string? spoilerLabelName;
     private string spoilerLabel = string.Empty;
+
+    // Todo overlay: the "Pinned: {expansion}" line, rebuilt when the pinned expansion or the names change.
+    private int planPinnedExpansion = int.MinValue;
+    private Core.Evaluation.BlockerNames? planPinnedNames;
+    private string planPinnedLabel = string.Empty;
     private string? toast;
     private DateTime toastUntilUtc;
 
@@ -667,11 +672,7 @@ public sealed class ConfigWindow : Window
         session.RefreshSpoilers();
     }
 
-    /// <summary>
-    /// The todo overlay: on/off, lock, an opacity slider (saved when released), the four section toggles and a
-    /// "Reset position" button. The overlay reads the configuration every frame, so every change shows at once.
-    /// </summary>
-    /// <summary>The todo overlay's "Clear my blues" section (P3): its toggle and which expansion is pinned.</summary>
+    /// <summary>The Todo overlay's "Clear my blues" section (P3): its toggle, which expansion is pinned and Unpin.</summary>
     private void DrawTodoPlanToggle()
     {
         var plan = settings.TodoShowPlan;
@@ -686,12 +687,41 @@ public sealed class ConfigWindow : Window
             UiMetrics.Tooltip(Strings.PlanTodoConfigHint);
         }
 
+        var expansion = settings.TodoPlanExpansion;
+        var pinned = expansion is >= 0 and <= byte.MaxValue;
+        if (expansion != planPinnedExpansion || !ReferenceEquals(session.Names, planPinnedNames))
+        {
+            planPinnedExpansion = expansion;
+            planPinnedNames = session.Names;
+            planPinnedLabel = pinned
+                ? string.Format(CultureInfo.CurrentCulture, Strings.PlanTodoConfigPinnedFormat, session.Names.Expansion((byte)expansion))
+                : Strings.PlanTodoConfigNone;
+        }
+
         ImGui.SameLine();
-        ImGui.TextDisabled(settings.TodoPlanExpansion is >= 0 and <= byte.MaxValue
-            ? string.Format(CultureInfo.CurrentCulture, Strings.PlanTodoConfigPinnedFormat, session.Names.Expansion((byte)settings.TodoPlanExpansion))
-            : Strings.PlanTodoConfigNone);
+        ImGui.TextDisabled(planPinnedLabel);
+        if (!pinned)
+        {
+            return;
+        }
+
+        ImGui.SameLine();
+        if (ImGui.SmallButton(Strings.Unpin + "##todoPlanUnpin"))
+        {
+            settings.TodoPlanExpansion = -1;
+            Save();
+        }
+
+        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+        {
+            UiMetrics.Tooltip(Strings.PlanUnpinTooltip);
+        }
     }
 
+    /// <summary>
+    /// The Todo overlay: on/off, lock, compact mode, an opacity slider (saved when released), the section toggles and a
+    /// "Reset position" button. The overlay reads the configuration every frame, so every change shows at once.
+    /// </summary>
     private void DrawTodoOverlay()
     {
         Header(Strings.TodoConfigSection);

@@ -2,6 +2,7 @@ using System;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility;
+using Dalamud.Interface.Utility.Raii;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Ui;
 using Tsukimichi.Game;
@@ -12,12 +13,13 @@ namespace Tsukimichi.Ui;
 /// The Duty Finder unlock hint (P13), drawn side: a small borderless window beside the game's Duty Finder while a
 /// padlocked duty is selected (<see cref="DutyFinderHint.Current"/>): "Locked duty", the duty's name, then per quest that
 /// unlocks it "Unlocked by:" with its state moon and name, <see cref="Core.Evaluation.BlockerText.StatusText"/> under it
-/// in Dusk (the quest done: in Moon), and the buttons Reveal in Tsukimichi and Flag giver.
+/// in Dusk (the quest done: in the quieter MoonDim), and the buttons Reveal in Tsukimichi and Flag giver.
 /// <para>
 /// Drawn from <c>UiBuilder.Draw</c>, outside the window system, so it has no chrome; unlike the item hover hint it takes
 /// clicks. Placed by <see cref="BesidePlacement"/>: right of the Duty Finder, else left, below or above, sliding along
 /// that side to stay on screen, and not drawn at all when no side has room, so it never covers the game window. A new
-/// model is drawn transparent for <see cref="SettleFrames"/> frames while ImGui settles its auto-resized size.
+/// duty, or a new number of quests, is drawn transparent for <see cref="SettleFrames"/> frames while ImGui settles its
+/// auto-resized size; a session change that keeps both redraws in place.
 /// Allocation-free per frame: every string is built by <see cref="DutyFinderHint"/> when the model changes.
 /// </para>
 /// </summary>
@@ -41,7 +43,10 @@ public sealed class DutyFinderPanel
     private readonly GameLinks links;
     private readonly Action<QuestRecord> reveal;
 
-    private DutyHintModel? drawn;
+    // The shape last measured: a new duty or another number of quests changes the size; a session change that only
+    // rewords a status line does not, so it keeps the panel visible and clickable.
+    private uint drawnCondition;
+    private int drawnCount = -1;
     private Vector2 size;
     private int settled;
 
@@ -60,13 +65,15 @@ public sealed class DutyFinderPanel
         var model = hint.Current();
         if (model is null || !hint.TryGetWindowRect(out var target))
         {
-            drawn = null;
+            drawnCondition = 0;
+            drawnCount = -1;
             return;
         }
 
-        if (!ReferenceEquals(model, drawn))
+        if (model.ContentFinderConditionId != drawnCondition || model.Quests.Count != drawnCount)
         {
-            drawn = model;
+            drawnCondition = model.ContentFinderConditionId;
+            drawnCount = model.Quests.Count;
             settled = 0;
         }
 
@@ -98,18 +105,26 @@ public sealed class DutyFinderPanel
         ImGui.PushStyleVar(ImGuiStyleVar.Alpha, settled < SettleFrames ? 0f : 1f);
         try
         {
-            if (ImGui.Begin(Strings.DutyHintWindowId, PanelFlags))
+            // Drawn from a raw UiBuilder.Draw handler, so nothing rebalances a Begin left open: End runs whatever
+            // Begin returned and whatever DrawContent throws.
+            var visible = ImGui.Begin(Strings.DutyHintWindowId, PanelFlags);
+            try
             {
-                size = ImGui.GetWindowSize();
-                if (settled < SettleFrames)
+                if (visible)
                 {
-                    settled++;
+                    size = ImGui.GetWindowSize();
+                    if (settled < SettleFrames)
+                    {
+                        settled++;
+                    }
+
+                    DrawContent(model);
                 }
-
-                DrawContent(model);
             }
-
-            ImGui.End();
+            finally
+            {
+                ImGui.End();
+            }
         }
         finally
         {
@@ -133,7 +148,7 @@ public sealed class DutyFinderPanel
         for (var i = 0; i < quests.Count; i++)
         {
             var line = quests[i];
-            ImGui.PushID(i);
+            using var id = ImRaii.PushId(i);
             ImGui.Spacing();
             ImGui.TextDisabled(Strings.DutyHintUnlockedBy);
             ImGui.SameLine();
@@ -141,10 +156,11 @@ public sealed class DutyFinderPanel
             ImGui.SameLine();
             ImGui.TextUnformatted(line.Name);
 
-            ImGui.Indent(indent);
-            ImGui.PushStyleColor(ImGuiCol.Text, line.Done ? Theme.Moon : Theme.Dusk);
-            ImGui.TextUnformatted(line.StatusText);
-            ImGui.PopStyleColor();
+            using var indented = ImRaii.PushIndent(indent, scaled: false);
+            using (ImRaii.PushColor(ImGuiCol.Text, line.Done ? Theme.MoonDim : Theme.Dusk))
+            {
+                ImGui.TextUnformatted(line.StatusText);
+            }
 
             if (ImGui.SmallButton(Strings.DutyHintReveal) && interactive)
             {
@@ -158,20 +174,18 @@ public sealed class DutyFinderPanel
 
             ImGui.SameLine();
             var canFlag = links.CanFlagMap(line.Quest);
-            ImGui.BeginDisabled(!canFlag);
-            if (ImGui.SmallButton(Strings.DutyHintFlagGiver) && interactive)
+            using (ImRaii.Disabled(!canFlag))
             {
-                links.FlagMap(line.Quest);
+                if (ImGui.SmallButton(Strings.DutyHintFlagGiver) && interactive)
+                {
+                    links.FlagMap(line.Quest);
+                }
             }
 
-            ImGui.EndDisabled();
             if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
             {
                 UiMetrics.Tooltip(canFlag ? Strings.DutyHintFlagGiverHint : Strings.DutyHintNoGiver);
             }
-
-            ImGui.Unindent(indent);
-            ImGui.PopID();
         }
 
         if (model.MoreText.Length > 0)

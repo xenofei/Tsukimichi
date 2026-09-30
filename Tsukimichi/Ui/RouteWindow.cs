@@ -46,9 +46,17 @@ public sealed class RouteWindow : Window
     private View view = View.Empty;
     private Theme.StyleScope nightChrome;
 
-    private IReadOnlyList<uint> undo = [];
+    private readonly QueryRunner runner;
+
+    // What the last Pin all added and for whom; dropped with its note when the viewed character changes.
+    private RoutePinBatch undo = RoutePinBatch.Empty;
     private string note = string.Empty;
     private double noteUntil = -1.0;
+
+    // "Pin all (N)" counts the steps not pinned yet; rebuilt when the view or the pins change.
+    private View? pinLabelView;
+    private int pinLabelPins = -1;
+    private string pinLabel = string.Empty;
 
     /// <param name="runner">The pin list "Pin all" adds to (the viewed character's).</param>
     /// <param name="showQuest">Brings the main window forward and shows a quest in the Journal.</param>
@@ -56,7 +64,8 @@ public sealed class RouteWindow : Window
         : base(Strings.RouteWindowTitle)
     {
         this.session = session ?? throw new ArgumentNullException(nameof(session));
-        pins = new PinStore(runner ?? throw new ArgumentNullException(nameof(runner)));
+        this.runner = runner ?? throw new ArgumentNullException(nameof(runner));
+        pins = new PinStore(runner);
         this.showQuest = showQuest ?? throw new ArgumentNullException(nameof(showQuest));
         Size = new Vector2(560f, 620f);
         SizeCondition = ImGuiCond.FirstUseEver;
@@ -69,7 +78,7 @@ public sealed class RouteWindow : Window
         target = routeTarget ?? throw new ArgumentNullException(nameof(routeTarget));
         builtVersion = -1;
         pinGate.Cancel();
-        undo = [];
+        undo = RoutePinBatch.Empty;
         noteUntil = -1.0;
         IsOpen = true;
         BringToFront();
@@ -121,7 +130,7 @@ public sealed class RouteWindow : Window
         var v = view;
 
         ImGui.PushFont(UiBuilder.IconFont);
-        using (Theme.PushText(Theme.Accent))
+        using (Theme.PushText(Theme.Surface.TextSecondary))
         {
             ImGui.TextUnformatted(RouteIcon);
         }
@@ -165,10 +174,18 @@ public sealed class RouteWindow : Window
 
     private void DrawActions(CatalogBundle bundle, View v)
     {
+        // The pins follow the viewed character; a Pin all made for someone else can no longer be undone from here.
+        runner.SyncPins();
+        if (undo.Added.Count > 0 && !RoutePins.CanUndo(undo, pins))
+        {
+            undo = RoutePinBatch.Empty;
+            noteUntil = -1.0;
+        }
+
         if (ImGui.Button(Strings.RouteCopy))
         {
             ImGui.SetClipboardText(RouteMarkdown.Write(v.Route, bundle.Catalog, session.Spoilers.DisplayName));
-            Note(Strings.RouteCopied, []);
+            Note(Strings.RouteCopied, RoutePinBatch.Empty);
         }
 
         if (ImGui.IsItemHovered())
@@ -179,7 +196,7 @@ public sealed class RouteWindow : Window
         ImGui.SameLine();
         var canPin = pins.CanPin && v.Route.Steps.Count > 0;
         ImGui.BeginDisabled(!canPin);
-        var confirmed = Chrome.HoldButton(v.PinAllLabel, pinGate);
+        var confirmed = Chrome.HoldButton(PinAllLabel(v), pinGate);
         ImGui.EndDisabled();
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
@@ -189,10 +206,11 @@ public sealed class RouteWindow : Window
         if (confirmed && canPin)
         {
             var added = RoutePins.PinAll(v.Route, pins);
+            var count = added.Added.Count;
             Note(
-                added.Count == 0 ? Strings.RouteAllPinnedAlready
-                : added.Count == 1 ? Strings.RoutePinnedOne
-                : string.Format(CultureInfo.CurrentCulture, Strings.RoutePinnedFormat, added.Count),
+                count == 0 ? Strings.RouteAllPinnedAlready
+                : count == 1 ? Strings.RoutePinnedOne
+                : string.Format(CultureInfo.CurrentCulture, Strings.RoutePinnedFormat, count),
                 added);
         }
 
@@ -204,12 +222,12 @@ public sealed class RouteWindow : Window
 
         ImGui.SameLine();
         ImGui.AlignTextToFramePadding();
-        using (Theme.PushText(Theme.Accent))
+        using (Theme.PushText(Theme.Surface.Text))
         {
             ImGui.TextUnformatted(note);
         }
 
-        if (undo.Count == 0)
+        if (undo.Added.Count == 0)
         {
             return;
         }
@@ -220,7 +238,7 @@ public sealed class RouteWindow : Window
         if (ImGui.SmallButton(Strings.RouteUndo))
         {
             RoutePins.Undo(undo, pins);
-            undo = [];
+            undo = RoutePinBatch.Empty;
             noteUntil = -1.0;
         }
         else if (ImGui.IsItemHovered())
@@ -229,11 +247,26 @@ public sealed class RouteWindow : Window
         }
     }
 
-    private void Note(string text, IReadOnlyList<uint> added)
+    private void Note(string text, RoutePinBatch added)
     {
         note = text;
         undo = added;
         noteUntil = ImGui.GetTime() + NoteSeconds;
+    }
+
+    /// <summary>"Pin all (N)" with N the steps not pinned yet (every step when there is nobody to pin for); composed only when the route or the pins change.</summary>
+    private string PinAllLabel(View v)
+    {
+        if (ReferenceEquals(pinLabelView, v) && pinLabelPins == runner.PinsVersion)
+        {
+            return pinLabel;
+        }
+
+        var count = pins.CanPin ? RoutePins.CountUnpinned(v.Route, pins) : v.Route.Steps.Count;
+        pinLabelView = v;
+        pinLabelPins = runner.PinsVersion;
+        pinLabel = string.Format(CultureInfo.CurrentCulture, Strings.RoutePinAllFormat, count) + PinAllLabelSuffix;
+        return pinLabel;
     }
 
     /// <summary>
@@ -303,7 +336,7 @@ public sealed class RouteWindow : Window
                     UiMetrics.Tooltip(Strings.RouteGateTooltip);
                 }
 
-                dl.AddText(new Vector2(min.X + UiMetrics.Px(IndentLogical), textY), Theme.AccentU32, l.Text);
+                dl.AddText(new Vector2(min.X + UiMetrics.Px(IndentLogical), textY), Theme.U32(Theme.Surface.TextSecondary), l.Text);
                 return;
             }
         }
@@ -344,11 +377,13 @@ public sealed class RouteWindow : Window
             dl.AddText(new Vector2(x, textY), Theme.U32(Theme.Surface.TextSecondary), l.Level);
             x += ImGui.CalcTextSize("Lv 000").X + UiMetrics.Px(6f);
 
-            dl.AddText(new Vector2(x, textY), Theme.U32(l.IsTarget ? Theme.Accent : Theme.Surface.Text), l.Text);
+            // Gold only for a target the character can act on now; a Blocked or locked-out target reads like any step.
+            var gold = l.IsTarget && l.State is QuestState.Ready or QuestState.ReadyOnOtherJob or QuestState.Accepted;
+            dl.AddText(new Vector2(x, textY), Theme.U32(gold ? Theme.Accent : Theme.Surface.Text), l.Text);
             x += ImGui.CalcTextSize(l.Text).X + UiMetrics.Px(8f);
             if (l.Mark.Length > 0)
             {
-                dl.AddText(new Vector2(x, textY), l.IsTarget ? Theme.AccentU32 : Theme.U32(Theme.Surface.TextTertiary), l.Mark);
+                dl.AddText(new Vector2(x, textY), gold ? Theme.AccentU32 : Theme.U32(l.IsTarget ? Theme.Surface.TextSecondary : Theme.Surface.TextTertiary), l.Mark);
                 x += ImGui.CalcTextSize(l.Mark).X + UiMetrics.Px(8f);
             }
 
@@ -376,6 +411,14 @@ public sealed class RouteWindow : Window
         var states = session.States;
         var snapshot = session.ViewedSnapshot;
         var levelOf = snapshot is null ? null : RouteLevels.For(snapshot, session.Context);
+
+        // A quest target's name goes through the viewed character's shield again on every rebuild: the label passed at
+        // click time belongs to whoever was viewed then, and the title and the copied header both print it.
+        if (routeTarget.Kind == RouteTargetKind.Quest && routeTarget.QuestRowIds.Count > 0)
+        {
+            routeTarget = routeTarget with { Label = session.Spoilers.DisplayName(catalog, routeTarget.QuestRowIds[0], routeTarget.Label) };
+        }
+
         var route = UnlockRoute.Build(routeTarget, catalog, states, session.Names, levelOf);
 
         var caption = snapshot is null
@@ -437,8 +480,7 @@ public sealed class RouteWindow : Window
         }
 
         var title = string.Format(CultureInfo.CurrentCulture, Strings.RouteTitleFormat, routeTarget.Label);
-        var pinLabel = string.Format(CultureInfo.CurrentCulture, Strings.RoutePinAllFormat, route.Steps.Count) + PinAllLabelSuffix;
-        view = new View(route, title, caption, route.Summary.Text, also.Length == 0 ? string.Empty : string.Format(CultureInfo.CurrentCulture, Strings.RouteAlsoUnlockedByFormat, also), pinLabel, lines.ToArray());
+        view = new View(route, title, caption, route.Summary.Text, also.Length == 0 ? string.Empty : string.Format(CultureInfo.CurrentCulture, Strings.RouteAlsoUnlockedByFormat, also), lines.ToArray());
     }
 
     private string NameOf(QuestCatalog catalog, uint rowId) =>
@@ -468,11 +510,10 @@ public sealed class RouteWindow : Window
         public bool IsTarget { get; init; }
     }
 
-    private sealed record View(UnlockRoute Route, string Title, string Caption, string Summary, string AlsoUnlockedBy, string PinAllLabel, Line[] Lines)
+    private sealed record View(UnlockRoute Route, string Title, string Caption, string Summary, string AlsoUnlockedBy, Line[] Lines)
     {
         public static readonly View Empty = new(
             UnlockRoute.Build(RouteTarget.ForQuest(0, string.Empty), QuestCatalog.Empty, new Dictionary<uint, Core.Evaluation.QuestEvaluation>()),
-            string.Empty,
             string.Empty,
             string.Empty,
             string.Empty,
@@ -487,6 +528,8 @@ public sealed class RouteWindow : Window
     private sealed class PinStore(QueryRunner runner) : IRoutePinStore
     {
         public bool CanPin => runner.CanPin;
+
+        public ulong? Owner => runner.PinOwner;
 
         public bool IsPinned(uint rowId) => runner.IsPinned(rowId);
 

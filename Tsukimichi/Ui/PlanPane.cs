@@ -56,9 +56,10 @@ public sealed class PlanPane
     private readonly int[] kindCounts = new int[UnlockKinds.All.Length];
     private readonly string[] kindLabels = new string[UnlockKinds.All.Length];
     private int hiddenExpansions;
+    private string hiddenText = string.Empty;
     private string summary = string.Empty;
     private string showing = string.Empty;
-    private readonly Dictionary<byte, (string Header, string Ready, string Count)> cardText = [];
+    private readonly Dictionary<byte, (string Header, string Ready, string Count, string Label)> cardText = [];
     private readonly Dictionary<uint, string> zoneNames = [];
 
     private string copied = string.Empty;
@@ -134,7 +135,7 @@ public sealed class PlanPane
         {
             var text = cardText[block.Expansion];
             var isOpen = IsOpen(block);
-            if (ImGui.Selectable(block.Name + "##exp" + block.Expansion.ToString(CultureInfo.InvariantCulture), isOpen))
+            if (ImGui.Selectable(text.Label, isOpen))
             {
                 open[block.Expansion] = true;
                 scrollTo = block.Expansion;
@@ -152,8 +153,8 @@ public sealed class PlanPane
 
         if (hiddenExpansions > 0)
         {
-            using var dusk = Theme.PushText(Theme.Dusk);
-            ImGui.TextWrapped(string.Format(CultureInfo.CurrentCulture, Strings.PlanSproutHiddenFormat, hiddenExpansions));
+            using var note = Theme.PushText(Theme.Surface.TextTertiary);
+            ImGui.TextWrapped(hiddenText);
         }
     }
 
@@ -186,7 +187,7 @@ public sealed class PlanPane
         ImGui.SameLine();
         if (ImGui.GetTime() - copiedAt < CopiedSeconds)
         {
-            using var gold = Theme.PushText(Theme.Accent);
+            using var confirmation = Theme.PushText(Theme.Surface.Text);
             ImGui.TextUnformatted(copied);
         }
         else
@@ -206,6 +207,8 @@ public sealed class PlanPane
         {
             return;
         }
+
+        ui.RecordWindow(UiRects.PlanCards);
 
         foreach (var block in view.Expansions)
         {
@@ -288,7 +291,7 @@ public sealed class PlanPane
             foreach (var zone in block.Zones)
             {
                 ImGui.Spacing();
-                using (Theme.PushText(Theme.Dusk))
+                using (Theme.PushText(Theme.Surface.TextTertiary))
                 {
                     ImGui.TextUnformatted(ZoneLabel(zone));
                 }
@@ -380,7 +383,11 @@ public sealed class PlanPane
             }
         }
 
-        if (ImGui.IsMouseHoveringRect(pillMin, new Vector2(pillEnd, start.Y + height)) && ImGui.IsWindowHovered())
+        // The painted pills and the status line get an invisible item each, so their tooltips honour popups, window
+        // hover and keyboard focus like every other tooltip.
+        ImGui.SetCursorScreenPos(pillMin);
+        ImGui.InvisibleButton("##pills", new Vector2(MathF.Max(1f, pillsWidth), height));
+        if (ImGui.IsItemHovered())
         {
             UiMetrics.Tooltip(UnlocksTooltip(entry));
         }
@@ -390,9 +397,11 @@ public sealed class PlanPane
         if (statusEnd > statusX && entry.StatusText.Length > 0)
         {
             dl.PushClipRect(new Vector2(statusX, start.Y), new Vector2(statusEnd, start.Y + height), true);
-            dl.AddText(new Vector2(statusX, textY), Theme.DuskU32, entry.StatusText);
+            dl.AddText(new Vector2(statusX, textY), Theme.U32(Theme.Surface.TextTertiary), entry.StatusText);
             dl.PopClipRect();
-            if (ImGui.IsMouseHoveringRect(new Vector2(statusX, start.Y), new Vector2(statusEnd, start.Y + height)) && ImGui.IsWindowHovered())
+            ImGui.SetCursorScreenPos(new Vector2(statusX, start.Y));
+            ImGui.InvisibleButton("##status", new Vector2(statusEnd - statusX, height));
+            if (ImGui.IsItemHovered())
             {
                 UiMetrics.Tooltip(entry.StatusText);
             }
@@ -435,7 +444,7 @@ public sealed class PlanPane
     }
 
     /// <summary>
-    /// A toggle chip flowing onto the next line when the row is full: a pill painted gold-tinted when on, raised when
+    /// A toggle chip flowing onto the next line when the row is full: a pill painted silver-tinted when on, raised when
     /// off, with the focus ring; returns true on the click that flips it.
     /// </summary>
     private static bool FlowChip(string id, string label, bool on, string tooltip, ref bool first, bool enabled = true)
@@ -465,8 +474,9 @@ public sealed class PlanPane
         uint fill, border, ink;
         if (on)
         {
-            fill = Theme.WithAlpha(Theme.Accent, 0.16f + 0.08f * hover);
-            border = Theme.WithAlpha(Theme.Accent, 0.6f);
+            // A selection, not a call to action: silver, like the other active segments.
+            fill = Theme.WithAlpha(s.Text, 0.14f + 0.08f * hover);
+            border = Theme.WithAlpha(s.Text, 0.55f);
             ink = Theme.U32(s.Text);
         }
         else
@@ -597,6 +607,7 @@ public sealed class PlanPane
             }
         }
 
+        hiddenText = hiddenExpansions > 0 ? string.Format(CultureInfo.CurrentCulture, Strings.PlanSproutHiddenFormat, hiddenExpansions) : string.Empty;
         summary = session.ViewedSnapshot is null
             ? Strings.PlanSummaryBrowse
             : string.Format(CultureInfo.CurrentCulture, Strings.PlanSummaryFormat, plan.Count, plan.ReadyCount);
@@ -608,7 +619,8 @@ public sealed class PlanPane
             cardText[block.Expansion] = (
                 string.Format(CultureInfo.CurrentCulture, Strings.PlanCardFormat, block.Name, block.Count),
                 string.Format(CultureInfo.CurrentCulture, Strings.PlanCardReadyFormat, block.ReadyCount),
-                string.Format(CultureInfo.CurrentCulture, Strings.PlanExpansionCountFormat, block.Count, block.ReadyCount));
+                string.Format(CultureInfo.CurrentCulture, Strings.PlanExpansionCountFormat, block.Count, block.ReadyCount),
+                block.Name + "##exp" + block.Expansion.ToString(CultureInfo.InvariantCulture));
         }
     }
 }

@@ -391,6 +391,7 @@ static partial class Strings
             HelpTopic.Moonlit => "Moonlit treasures",
             HelpTopic.Characters => "Characters and snapshots",
             HelpTopic.Flight => "Flight and nearby",
+            HelpTopic.Plan => "My blues",
             HelpTopic.Commands => "Commands",
             HelpTopic.CountsDiffer => "Why my counts differ from the journal",
             HelpTopic.KnownQuirks => "Known quirks",
@@ -409,6 +410,7 @@ static partial class Strings
             HelpTopic.Moonlit => "Rewards that exist nowhere else, with how sure the plugin is about each.",
             HelpTopic.Characters => "One snapshot per character keeps the whole account in view, even logged out.",
             HelpTopic.Flight => "Which quests stand between you and flying, and what you can start where you are.",
+            HelpTopic.Plan => "Every blue unlock quest you have left, in the order the story reaches them.",
             HelpTopic.Commands => "Everything the chat command can do.",
             HelpTopic.CountsDiffer => "Four reasons a done/total here is not the number in the game's journal or on a wiki.",
             HelpTopic.KnownQuirks => "Things the plugin gets wrong on purpose or cannot know yet, so you need not report them.",
@@ -432,6 +434,8 @@ static partial class Strings
         public const string StepCharactersBody = "The Characters tab keeps a snapshot per character. Pick one to browse the whole catalog as that character, with a dashboard of its progress.";
         public const string StepFlightTitle = "Unlock flying";
         public const string StepFlightBody = "The Flight tab lists every zone you can fly in. Pick one to see its quest currents, the quest that blocks each and where to fly next.";
+        public const string StepPlanTitle = "Clear your unlock quests";
+        public const string StepPlanBody = "The My blues tab lists every blue unlock quest you have left, by expansion and zone, with what each one unlocks. Copy it as a checklist, or pin an expansion to the Todo overlay.";
         public const string StepTourTitle = "Take the tour";
         public const string StepTourBody = "The tour has three short chapters, Find, Read and Beyond, each pointing at the real window. Jump between chapters on the card; Enter moves on and Esc closes.";
         public const string QuickStartTip = "Select any row to read its requirements, path and giver in the detail pane. Right-click a row for pin, map flag and journal.";
@@ -556,7 +560,6 @@ static partial class Strings
             "Nearby quests window",
             "Server bar entry",
             "/tsuki zone and /tsuki which",
-            PlanHelpTitle,
         ];
 
         public static readonly string[] FlightCardBodies =
@@ -566,7 +569,6 @@ static partial class Strings
             "/tsuki nearby opens a small window with the quests you can start in the current zone: state moon, level and job. A click on the name shows it in the Journal, a double-click flags the giver on the map, and right-click or … opens Flag, Teleport and Link in chat. Also in your journal here folds out the quests in your journal whose giver stands in the zone. The cog holds its settings.",
             "☾ N in the server info bar is the count of quests you can start here. Hover it for the first five names; click it to open Nearby quests. It hides at zero unless Keep the entry visible is on, and the cog in Nearby quests can turn it off entirely.",
             "/tsuki zone prints chat links for the quests you can start in the current zone, by level, up to ten. /tsuki which prints every quest the targeted NPC hands out with its state. Both need an evaluated character; the Nearby quests window keeps the same list on screen.",
-            PlanHelpBody,
         ];
 
         // ---- Commands ----
@@ -588,7 +590,7 @@ static partial class Strings
             "Ctrl+F",
             "Esc",
             "Menu key, Shift+F10, …",
-            "Ctrl+1 to 4, F, Enter, P",
+            "Ctrl+1 to 5, F, Enter, P",
         ];
 
         public static readonly string[] CommandMeanings =
@@ -603,13 +605,13 @@ static partial class Strings
             "every quest the targeted NPC hands out, with its state",
             "why the selected quest (or the named one) is not offered: its state and blocker, then one line per requirement with met or unmet and the values compared, then the curated note where the game is known to behave differently; a Ready quest says whom to talk to, with a map link. The same list opens in the Journal from an NPC's target-bar menu (\"Tsukimichi: quests here\")",
             "open or close the Nearby quests window: what you can start in the current zone",
-            "show or hide the todo overlay: pins, Event quests running now, Unlocks you can start here, the next main scenario quest and job quests",
+            "show or hide the Todo overlay: pins, Event quests running now, Unlocks you can start here, the next main scenario quest and job quests",
             "copy a diagnostic block for the selected quest (or the named one) to the clipboard, ready to paste into a GitHub issue; the Report button in the detail pane does the same",
             "write the viewed character's completed quests, its Moonlit collection, or both to the exports folder as JSON or CSV (the Settings format when none is named) and print where; see docs/export-format.md. No content id, account or world, and the name only when Settings › Data › Export › Include character name is ticked",
             "put the caret in the search, while the window has focus",
             "close the open menu or the filter panel; with neither open, close the window",
             "open the focused row's menu in the quest table and the Moonlit list, the same menu a right-click opens; the … button at a row's right end (shown on hover or focus) opens it with a left click",
-            "off unless turned on in Settings › Keyboard: switch tabs, flag the selected quest's giver, show it in the Journal, pin it. The game sees these keys too: Ctrl+1 to 4 are hotbar 2 by default",
+            "off unless turned on in Settings › Keyboard: switch tabs, flag the selected quest's giver, show it in the Journal, pin it. The game sees these keys too: Ctrl+1 to 5 are hotbar 2 by default",
         ];
 
         // ---- Why my counts differ from the journal ----

@@ -34,6 +34,7 @@ public static class UiRects
     public const string CharactersDashboard = "characters.dashboard";
     public const string FlightZones = "flight.zones";
     public const string FlightTable = "flight.table";
+    public const string PlanCards = "plan.cards";
 
     /// <summary>Records the rectangle of the item drawn last.</summary>
     public static void RecordItem(this UiState ui, string key) =>

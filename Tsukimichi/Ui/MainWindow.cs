@@ -435,8 +435,8 @@ public sealed class MainWindow : Window, IDisposable
         }
     }
 
-    /// <summary>Ctrl+1..4 in <see cref="NavTab"/> order.</summary>
-    private static readonly ImGuiKey[] TabKeys = [ImGuiKey.Key1, ImGuiKey.Key2, ImGuiKey.Key3, ImGuiKey.Key4];
+    /// <summary>Ctrl+1..5 in <see cref="NavTab"/> order.</summary>
+    private static readonly ImGuiKey[] TabKeys = [ImGuiKey.Key1, ImGuiKey.Key2, ImGuiKey.Key3, ImGuiKey.Key4, ImGuiKey.Key5];
 
     private void DrawContent(SessionState session)
     {

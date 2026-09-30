@@ -157,19 +157,48 @@ public class UnlockRouteTests
         var catalog = Catalog(Needs(A, 1, JoinKind.All), Needs(B, 2, JoinKind.All, A), Needs(Target, 3, JoinKind.All, B));
         var route = UnlockRoute.Build(RouteTarget.ForQuest(Target, "target"), catalog, States(catalog));
         var store = new FakePins { Pinned = [B] };
+        Assert.Equal(2, RoutePins.CountUnpinned(route, store));
 
         var added = RoutePins.PinAll(route, store);
 
-        Assert.Equal([A, Target], added);
+        Assert.Equal([A, Target], added.Added);
+        Assert.Equal(1UL, added.Owner);
         Assert.Equal([B, A, Target], store.Pinned);
+        Assert.Equal(0, RoutePins.CountUnpinned(route, store));
 
         // The player unpins A meanwhile: Undo leaves it unpinned and removes only the target.
         store.TogglePin(A);
+        Assert.True(RoutePins.CanUndo(added, store));
         Assert.Equal(1, RoutePins.Undo(added, store));
         Assert.Equal([B], store.Pinned);
 
         // Nobody to pin for (browse mode): nothing happens.
-        Assert.Empty(RoutePins.PinAll(route, new FakePins { CanPin = false }));
+        var browse = new FakePins { CanPin = false, Owner = null };
+        Assert.Empty(RoutePins.PinAll(route, browse).Added);
+        Assert.Equal(0, RoutePins.CountUnpinned(route, browse));
+    }
+
+    [Fact]
+    public void Undo_after_a_character_switch_removes_nothing()
+    {
+        var catalog = Catalog(Needs(A, 1, JoinKind.All), Needs(B, 2, JoinKind.All, A), Needs(Target, 3, JoinKind.All, B));
+        var route = UnlockRoute.Build(RouteTarget.ForQuest(Target, "target"), catalog, States(catalog));
+        var store = new FakePins { Owner = 1 };
+        var added = RoutePins.PinAll(route, store);
+        Assert.Equal([A, B, Target], added.Added);
+
+        // The view switches to another character who pinned two of the same quests herself.
+        store.Owner = 2;
+        store.Pinned = [A, Target];
+
+        Assert.False(RoutePins.CanUndo(added, store));
+        Assert.Equal(0, RoutePins.Undo(added, store));
+        Assert.Equal([A, Target], store.Pinned);
+
+        // Browse mode has no owner to match either.
+        store.Owner = null;
+        Assert.Equal(0, RoutePins.Undo(added, store));
+        Assert.Equal([A, Target], store.Pinned);
     }
 
     [Fact]
@@ -205,11 +234,14 @@ public class UnlockRouteTests
         Assert.Equal(RouteTargetKind.Duty, duty.Kind);
     }
 
+    /// <summary>One character's pins at a time: set <see cref="Owner"/> and <see cref="Pinned"/> together to switch the viewed character.</summary>
     private sealed class FakePins : IRoutePinStore
     {
-        public List<uint> Pinned { get; init; } = [];
+        public List<uint> Pinned { get; set; } = [];
 
         public bool CanPin { get; init; } = true;
+
+        public ulong? Owner { get; set; } = 1;
 
         public bool IsPinned(uint rowId) => Pinned.Contains(rowId);
 

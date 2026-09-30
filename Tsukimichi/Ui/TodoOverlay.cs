@@ -715,7 +715,9 @@ public sealed class TodoOverlay : Window, IDisposable
             running,
             settings.TodoShowSeasonal,
             now,
-            Plan?.Plan,
+            // Built only when the Clear my blues block can show: the plan costs a sheet read and a pass over every
+            // unlock quest, and nothing is pinned by default.
+            settings.TodoShowPlan && settings.TodoPlanExpansion >= 0 ? Plan?.Plan : null,
             settings.TodoPlanExpansion,
             settings.TodoShowPlan));
 

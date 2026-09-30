@@ -174,10 +174,31 @@ public sealed class QueryRunner : IDisposable
     /// <summary>Search text the current rows were computed with (after debounce).</summary>
     public string AppliedSearch => appliedSearch;
 
-    public bool IsPinned(uint rowId) => pinned.Contains(rowId);
+    /// <summary>
+    /// Whether the viewed character pinned <paramref name="rowId"/>. Re-syncs the pinned set to the viewed character
+    /// first (one compare when it is unchanged), so a window drawn while the main window is closed never answers from
+    /// the previous character's pins.
+    /// </summary>
+    public bool IsPinned(uint rowId)
+    {
+        SyncPins();
+        return pinned.Contains(rowId);
+    }
+
+    /// <summary>Loads the viewed character's pins if the view moved since the last sync; bumps <see cref="PinsVersion"/> when it does.</summary>
+    public void SyncPins()
+    {
+        if (plugin.Session is { } session)
+        {
+            EnsurePins(session);
+        }
+    }
 
     /// <summary>False in browse mode: pins are per character, so there is nobody to pin for.</summary>
     public bool CanPin => plugin.Session?.ViewedContentId is not null;
+
+    /// <summary>The character <see cref="IsPinned"/> and <see cref="TogglePin"/> act on (the viewed one); null in browse mode.</summary>
+    public ulong? PinOwner => plugin.Session?.ViewedContentId;
 
     /// <summary>
     /// Pins or unpins a quest for the viewed character; saved after <see cref="PinsSaveDebounce"/> and on dispose.
