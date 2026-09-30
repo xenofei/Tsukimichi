@@ -409,6 +409,14 @@ public sealed class RouteWindow : Window
         var states = session.States;
         var snapshot = session.ViewedSnapshot;
         var levelOf = snapshot is null ? null : RouteLevels.For(snapshot, session.Context);
+
+        // A quest target's name goes through the viewed character's shield again on every rebuild: the label passed at
+        // click time belongs to whoever was viewed then, and the title and the copied header both print it.
+        if (routeTarget.Kind == RouteTargetKind.Quest && routeTarget.QuestRowIds.Count > 0)
+        {
+            routeTarget = routeTarget with { Label = session.Spoilers.DisplayName(catalog, routeTarget.QuestRowIds[0], routeTarget.Label) };
+        }
+
         var route = UnlockRoute.Build(routeTarget, catalog, states, session.Names, levelOf);
 
         var caption = snapshot is null
