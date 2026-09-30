@@ -1,0 +1,135 @@
+{
+  "size": [
+    256,
+    128
+  ],
+  "note": "Rectangles are [x, y, w, h] in 1x pixels; ornaments@2x.png is the same layout at twice the size.",
+  "sprites": {
+    "crest": [
+      2,
+      2,
+      40,
+      40
+    ],
+    "corner-mark": [
+      46,
+      2,
+      12,
+      12
+    ],
+    "sigil-star": [
+      62,
+      2,
+      12,
+      12
+    ],
+    "divider-phases": [
+      78,
+      2,
+      40,
+      12
+    ],
+    "glyph-all-quests": [
+      2,
+      46,
+      24,
+      24
+    ],
+    "glyph-removed": [
+      30,
+      46,
+      24,
+      24
+    ],
+    "glyph-chronicles": [
+      58,
+      46,
+      24,
+      24
+    ],
+    "glyph-chronicles-of-light": [
+      86,
+      46,
+      24,
+      24
+    ],
+    "glyph-hildibrand": [
+      114,
+      46,
+      24,
+      24
+    ],
+    "glyph-side-story": [
+      142,
+      46,
+      24,
+      24
+    ],
+    "glyph-relic": [
+      170,
+      46,
+      24,
+      24
+    ],
+    "glyph-endeavors": [
+      198,
+      46,
+      24,
+      24
+    ],
+    "glyph-other": [
+      2,
+      74,
+      24,
+      24
+    ],
+    "glyph-special": [
+      30,
+      74,
+      24,
+      24
+    ],
+    "glyph-festival": [
+      58,
+      74,
+      24,
+      24
+    ],
+    "glyph-deep-dungeon": [
+      86,
+      74,
+      24,
+      24
+    ],
+    "glyph-region-coerthas": [
+      114,
+      74,
+      24,
+      24
+    ],
+    "glyph-region-mordhona": [
+      142,
+      74,
+      24,
+      24
+    ],
+    "glyph-moonlit": [
+      170,
+      74,
+      24,
+      24
+    ],
+    "glyph-flight": [
+      198,
+      74,
+      24,
+      24
+    ],
+    "glyph-plan-fallback": [
+      2,
+      102,
+      24,
+      24
+    ]
+  }
+}
