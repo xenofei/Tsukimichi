@@ -483,7 +483,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
                                       | ImGuiTableFlags.Resizable | ImGuiTableFlags.Reorderable | ImGuiTableFlags.Hideable
                                       | ImGuiTableFlags.SizingStretchProp;
         var tableWidth = ImGui.GetContentRegionAvail().X;
-        using var table = ImRaii.Table("##moonlitTable", 6, Flags, new Vector2(-1f, -1f));
+        using var table = ImRaii.Table(TableId, 6, Flags, new Vector2(-1f, -1f));
         if (!table)
         {
             return;
@@ -495,18 +495,19 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         UiMetrics.ApplyFontScale();
         var line = ImGui.GetTextLineHeight();
         var glyphColumn = MathF.Max(UiMetrics.InlineGlyphSize(line) * 2f, UiMetrics.Px(44f));
+        FitColumns(tableWidth, glyphColumn, line);
         ImGui.TableSetupScrollFreeze(0, 1);
         ImGui.TableSetupColumn(Strings.MoonlitColumnObtained, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, glyphColumn);
         ImGui.TableSetupColumn(Strings.MoonlitColumnReward, ImGuiTableColumnFlags.WidthStretch, 3f);
-        ImGui.TableSetupColumn(Strings.MoonlitColumnKind, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(110f));
+        ImGui.TableSetupColumn(Strings.MoonlitColumnKind, ImGuiTableColumnFlags.WidthFixed | Planned(KindColumn), UiMetrics.Px(110f));
         ImGui.TableSetupColumn(Strings.MoonlitColumnQuest, ImGuiTableColumnFlags.WidthStretch, 3f);
         ImGui.TableSetupColumn(Strings.MoonlitColumnState, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, glyphColumn);
-        ImGui.TableSetupColumn(Strings.MoonlitColumnConfidence, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(80f));
+        ImGui.TableSetupColumn(Strings.MoonlitColumnConfidence, ImGuiTableColumnFlags.WidthFixed | Planned(ConfidenceColumn), UiMetrics.Px(80f));
         // The glyph columns follow IconScale, which imgui.ini's saved widths do not track; re-asserted every frame
         // (a no-op once they agree) so a changed IconScale never clips the moons.
         ImGuiP.TableSetColumnWidth(0, glyphColumn);
         ImGuiP.TableSetColumnWidth(4, glyphColumn);
-        FitColumns(tableWidth, glyphColumn, line);
+        RecordPlayerHidden();
         ImGui.TableHeadersRow();
 
         if (!clipperCreated)
@@ -529,21 +530,26 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         moreFocusedRow = moreFocusedNext;
     }
 
-    // The table's narrow-width plan (feature plan v4 L6): Confidence hides first, then Kind; State never. Only the
-    // columns the plan hid are shown again; a column the player shows again by hand while it would not fit suspends the
-    // plan for that column until the table is wide enough for it.
+    /// <summary>
+    /// The table's ImGui id. It changed when the narrow-width plan stopped hiding columns through the player's own
+    /// hide state (1.3): imgui.ini kept Kind or Confidence hidden under the old id whenever the pane had been narrow,
+    /// which would otherwise read as hidden by the player forever.
+    /// </summary>
+    private const string TableId = "##moonlitRewards";
+
+    // The table's narrow-width plan (feature plan v4 L6): Confidence hides first, then Kind; State never. The plan hides
+    // a column with ImGuiTableColumnFlags.Disabled, which ImGui neither saves nor lists in the header menu, so a column
+    // the player hides from that menu stays theirs and stays hidden, and one the plan hid comes back when there is room.
     private const int KindColumn = 2;
     private const int ConfidenceColumn = 5;
     private readonly bool[] columnsShown = new bool[6];
     private readonly bool[] columnsWere = new bool[6];
     private readonly float[] columnWidths = new float[6];
+    private readonly bool[] playerHidden = new bool[6];
+    private readonly bool[] autoHidden = new bool[6];
     private bool columnsPlanned;
-    private bool kindAutoHidden;
-    private bool kindSuspended;
-    private bool confidenceAutoHidden;
-    private bool confidenceSuspended;
 
-    /// <summary>Plans the table's columns for its width and hides or re-shows Kind and Confidence to match (next frame).</summary>
+    /// <summary>Plans the table's columns for its width, before they are set up; a column the player hid takes no room.</summary>
     private void FitColumns(float tableWidth, float glyphColumn, float line)
     {
         var padding = ImGui.GetStyle().CellPadding.X * 2f;
@@ -557,44 +563,39 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             nameMin + padding,
             UiMetrics.Px(80f) + padding,
             specs);
+        for (var i = 0; i < specs.Length; i++)
+        {
+            if (playerHidden[i])
+            {
+                specs[i] = specs[i] with { Min = 0f, Ideal = 0f };
+            }
+        }
+
         TableGeometry.PlanColumns(tableWidth, specs, columnsPlanned ? columnsWere : [], columnsShown, columnWidths, UiMetrics.Px(LayoutBudgets.HysteresisLogical));
         columnsPlanned = true;
         Array.Copy(columnsShown, columnsWere, columnsShown.Length);
-        FitColumn(ConfidenceColumn, columnsShown[ConfidenceColumn], ref confidenceAutoHidden, ref confidenceSuspended);
-        FitColumn(KindColumn, columnsShown[KindColumn], ref kindAutoHidden, ref kindSuspended);
+        for (var i = 0; i < autoHidden.Length; i++)
+        {
+            autoHidden[i] = !columnsShown[i] && !playerHidden[i];
+        }
     }
 
-    private static void FitColumn(int column, bool fits, ref bool autoHidden, ref bool suspended)
+    /// <summary>The Disabled flag for a column the plan hides this frame.</summary>
+    private ImGuiTableColumnFlags Planned(int column) => autoHidden[column] ? ImGuiTableColumnFlags.Disabled : ImGuiTableColumnFlags.None;
+
+    /// <summary>After setup: which of the plan's columns the player hid from the header menu (the plan's hides never touch that).</summary>
+    private void RecordPlayerHidden()
     {
-        var enabled = (ImGui.TableGetColumnFlags(column) & ImGuiTableColumnFlags.IsEnabled) != 0;
-        if (fits)
+        foreach (var column in PlannedColumns)
         {
-            suspended = false;
-            if (autoHidden)
+            if (!autoHidden[column])
             {
-                autoHidden = false;
-                if (!enabled)
-                {
-                    ImGui.TableSetColumnEnabled(column, true);
-                }
+                playerHidden[column] = (ImGui.TableGetColumnFlags(column) & ImGuiTableColumnFlags.IsEnabled) == 0;
             }
-
-            return;
-        }
-
-        if (autoHidden && enabled)
-        {
-            // Shown again by hand from the header menu: the player's choice stands while the width stays short.
-            autoHidden = false;
-            suspended = true;
-        }
-
-        if (!suspended && enabled)
-        {
-            ImGui.TableSetColumnEnabled(column, false);
-            autoHidden = true;
         }
     }
+
+    private static readonly int[] PlannedColumns = [KindColumn, ConfidenceColumn];
 
     /// <summary>The "…" button's side in a row.</summary>
     private static float MoreSize(float line) => MathF.Min(UiMetrics.MinTarget, MathF.Max(line, UiMetrics.RowIconSize));

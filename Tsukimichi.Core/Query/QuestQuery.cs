@@ -200,6 +200,83 @@ public static class QuestQuery
         return new QueryResult(sorted, null, totalInScope, newCount);
     }
 
+    /// <summary>
+    /// For a reveal (a jump from the detail pane, a "Show in Journal"): turns off each filter that keeps
+    /// <paramref name="quest"/> out of the table whatever its state, the ones a reveal does not clear already (the
+    /// expansions, the patch, the level range, the job category, the reward kinds, Repeatable only and Seasonal
+    /// active only); a filter the quest passes stays as it is. Returns whether any changed.
+    /// </summary>
+    /// <param name="activeFestivals">The festivals running (<see cref="QueryContext.ActiveFestivals"/>); null reads as none.</param>
+    public static bool ClearFiltersHiding(QuestRecord quest, FilterSet filters, IReadOnlySet<ushort>? activeFestivals)
+    {
+        ArgumentNullException.ThrowIfNull(quest);
+        ArgumentNullException.ThrowIfNull(filters);
+        var changed = false;
+        if (filters.Expansions.Count > 0 && !filters.Expansions.Contains(quest.Expansion))
+        {
+            filters.Expansions.Clear();
+            changed = true;
+        }
+
+        if (filters.AddedInEngaged() && !PatchVersion.InSeries(quest.AddedIn, PatchVersion.Normalize(filters.AddedIn)))
+        {
+            filters.AddedIn = string.Empty;
+            changed = true;
+        }
+
+        if (filters.LevelRangeEngaged() && (quest.DisplayLevel < filters.LevelMin || quest.DisplayLevel > filters.LevelMax))
+        {
+            filters.LevelMin = FilterSet.NoLevelMin;
+            filters.LevelMax = FilterSet.NoLevelMax;
+            changed = true;
+        }
+
+        if (filters.ClassJobCategoryId is { } job && quest.ClassJobCategory != job && quest.ClassJobCategory1 != job)
+        {
+            filters.ClassJobCategoryId = null;
+            changed = true;
+        }
+
+        if (filters.RewardKindsEngaged() && !new Plan(filters, QueryContext.Empty, null, string.Empty, QuestScope.None).PassesRewardKinds(quest))
+        {
+            filters.RewardKinds.Clear();
+            changed = true;
+        }
+
+        if (filters.RepeatableOnly && !quest.IsRepeatable)
+        {
+            filters.RepeatableOnly = false;
+            changed = true;
+        }
+
+        if (filters.SeasonalActiveOnly && (quest.Festival == 0 || activeFestivals?.Contains(quest.Festival) != true))
+        {
+            filters.SeasonalActiveOnly = false;
+            changed = true;
+        }
+
+        return changed;
+    }
+
+    /// <summary>
+    /// Whether <paramref name="search"/> keeps <paramref name="quest"/> out of the table: the quest's name, as the
+    /// spoiler shield prints it, and its other searchable words do not match, nor does its journal text (<see
+    /// cref="QueryContext.JournalHits"/>, when that search is on). False for an empty search; true for any other when
+    /// <paramref name="ctx"/> has no search index to ask.
+    /// </summary>
+    public static bool SearchHides(QuestRecord quest, string? search, QueryContext? ctx)
+    {
+        ArgumentNullException.ThrowIfNull(quest);
+        var query = SearchIndex.Normalize(search);
+        if (query.Length == 0)
+        {
+            return false;
+        }
+
+        return ctx?.SearchIndex is not { } index
+            || (!index.Matches(quest.RowId, query, ctx.Spoilers) && ctx.JournalHits?.Contains(quest.RowId) != true);
+    }
+
     private static IReadOnlyList<QuestRecord> Candidates(QuestCatalog catalog, QuestScope scope, QueryContext ctx)
     {
         switch (scope.Kind)
@@ -619,7 +696,7 @@ public static class QuestQuery
             _ => true,
         };
 
-        private bool PassesRewardKinds(QuestRecord quest)
+        public bool PassesRewardKinds(QuestRecord quest)
         {
             if ((hiddenRewardMask | onlyRewardMask) == 0)
             {
