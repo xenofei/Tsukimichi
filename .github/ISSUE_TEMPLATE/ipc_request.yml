@@ -1,0 +1,73 @@
+name: IPC request (plugin authors)
+description: A new IPC gate or message, a change to an existing one, or a question about Tsukimichi's IPC from another plugin's author.
+title: "[IPC] "
+labels: ["ipc"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Tsukimichi's IPC gates are documented in [docs/ipc.md](https://github.com/xenofei/Tsukimichi/blob/main/docs/ipc.md): signatures, id spaces, what they answer before the character is ready, threading and the versioning policy. New gates are added without bumping `Tsukimichi.ApiVersion`; a change to an existing gate's types or meaning bumps it, so it needs a strong reason.
+
+        Tsukimichi stays read-only over IPC apart from opening its own window: requests for gates that move the character, accept quests or press anything for the player are declined.
+  - type: input
+    id: plugin
+    attributes:
+      label: Your plugin
+      description: Name, and a link to its repository or listing if it is public.
+      placeholder: "QuestOverlay (https://github.com/…)"
+    validations:
+      required: true
+  - type: dropdown
+    id: request
+    attributes:
+      label: Request
+      options:
+        - A new gate or message
+        - A change to an existing gate
+        - A question about an existing gate
+        - A bug in an existing gate
+    validations:
+      required: true
+  - type: textarea
+    id: gate
+    attributes:
+      label: The gate
+      description: The name and signature you have in mind, or the existing gate this is about, with example arguments and the answer you expect.
+      render: csharp
+      placeholder: |
+        // Tsukimichi.GetUnlocks(uint questId) -> string[]
+        // 66236 -> ["Chocobo companion"]
+    validations:
+      required: true
+  - type: textarea
+    id: use
+    attributes:
+      label: What it is for
+      description: What your plugin shows or does with the answer, and why the current gates (GetState, GetBlockers, IsQuestAvailable, GetMsqPosition, OpenQuest, StatesChanged) do not cover it.
+    validations:
+      required: true
+  - type: dropdown
+    id: thread
+    attributes:
+      label: Where you call it from
+      description: Every gate may be called from any thread; this helps size the answer (a per-frame draw call wants something cheap).
+      options:
+        - Every frame, from a draw handler
+        - From Framework.Update
+        - On a StatesChanged message
+        - From a background task
+        - On a click or command
+        - Not sure yet
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: The Tsukimichi version and the `Tsukimichi.ApiVersion` you are testing against.
+      placeholder: "Tsukimichi 0.9.0, ApiVersion 1"
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else
+      description: For a bug, what you called, what came back, and any exception from `InvokeFunc` (an `IpcNotReadyError` means Tsukimichi was not loaded at that moment).

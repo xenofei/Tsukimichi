@@ -28,16 +28,111 @@ To load a build in game: Dalamud Settings (`/xlsettings`) › Experimental › D
 | `docs/` | Feasibility report, plans, design spec, review panel, data reports. |
 | `tools/` | `make_pluginmaster.py` (the repository index), `set-tested-version.ps1` (patch day) and curated-data helpers. |
 
-## Curated data
+## Correcting curated data
 
-Facts the game sheets do not hold (duty and system unlock quests, story chains, seasonal windows, store re-sells) live in `Tsukimichi/Data/curated/`. Every key is a Quest row id, every entry carries a note, and every id is verified before it is written. The rules, the file shapes and the verification recipe are in [Tsukimichi/Data/curated/README.md](Tsukimichi/Data/curated/README.md); the curated-data tests (`dotnet test Tsukimichi.Tests --filter "Category=Curated"`) check the files on every build.
+Facts the game sheets do not hold (duty and system unlock quests, story chains, seasonal windows, store re-sells, quirks) live in `Tsukimichi/Data/curated/`. A player who spots a wrong one can file the **Data correction** issue template; this section is for fixing it in a pull request. The per-file reference (every field, the key conventions, the xivapi recipe for checking an id) is [Tsukimichi/Data/curated/README.md](Tsukimichi/Data/curated/README.md).
 
-Regenerate the reward database after a game patch or after editing the curated files:
+### Which file holds what
+
+| File | Keyed by | Holds | Change it when |
+|---|---|---|---|
+| `duty_unlocks.json` | Quest row id | the `ContentFinderCondition` ids the quest unlocks | a duty is unlocked by a different quest, or an unlock quest is missing |
+| `system_unlocks.json` | Quest row id | the system or feature the quest unlocks (`label`) | a system unlock (retainers, Gold Saucer, desynthesis, …) points at the wrong quest |
+| `chains.json` | `JournalGenre` row ids | named chains as genres in order | a chain is missing a genre or lists them out of order |
+| `festivals.json` | `Festival` id | the event's name, Lodestone window and evidence | a seasonal event's dates or name are wrong |
+| `refile_overrides.json` | Quest row id | the `JournalGenre` a quest is filed under after the refiling rules | an unlisted quest lands in the wrong journal genre |
+| `retired_quests.json` | Quest row id | quests the game removed that the sheets do not mark, and the patch | a removed quest still counts, or the patch is wrong |
+| `quirks.json` | Quest row id | a note where the game behaves differently from its data | the NPC offers a quest the plugin shows Blocked (or the reverse) and the data cannot say why |
+| `online_store.json` | store `Item` row id | quest rewards the Online Store also sells | a Moonlit reward is sold on the Mog Station |
+| `other_sources.json` | reward `Item` row id | quest rewards that also drop in duties | a Moonlit reward drops in a duty |
+| `feature_quests.json` | none | **generated**; never edit it | (regenerate instead) |
+| `VERSION.json` | none | **written by `tools/regen.ps1`**; never edit it | (regenerate instead) |
+
+A wrong quest *state* that no curated file explains is a bug in the evaluator, not a data correction: use the **Wrong quest state** template with the diagnostic block.
+
+### The shape of each file
+
+All files are strict JSON: no comments, no trailing commas, keys as decimal strings sorted ascending, and every entry with a `note` in your own words. The sketches below use `…` for text and omit repetition; they are not valid JSON as written.
 
 ```
-dotnet run --project Tsukimichi.DataGen -- --game "<path to sqpack>" --out Tsukimichi/Data/unique_quests.json --curated Tsukimichi/Data/curated
-dotnet run --project Tsukimichi.DataGen -- --verify --game "<path to sqpack>"
+duty_unlocks.json
+{ "<questRowId>": { "contentFinderConditionIds": [4], "note": "…" } }
+
+system_unlocks.json
+{ "<questRowId>": { "label": "Gold Saucer", "kind": "system", "note": "…" } }
+
+chains.json
+{ "$schema_note": "…", "chains": [ { "name": "Hildibrand", "genreIds": [82, 83], "note": "…" } ] }
+
+festivals.json: a dated edition, then an undated collaboration (no year in the name, no dates)
+{ "$schema_note": "…", "entries": {
+    "<festivalId>": { "name": "All Saints' Wake (2013)", "start": "2013-10-18T00:00:00Z", "end": "2013-11-01T23:59:59Z", "evidence": "https://…", "note": "…" },
+    "<festivalId>": { "name": "Lightning Strikes", "evidence": "https://…", "note": "…" } } }
+
+refile_overrides.json ("genre" is a JournalGenre row id)
+{ "schema": 1, "note": "…", "entries": { "<questRowId>": { "genre": 117, "note": "…", "evidence": "https://…" } } }
+
+retired_quests.json ("patch" is optional)
+{ "schema": 1, "note": "…", "entries": { "<questRowId>": { "note": "…", "evidence": "https://…", "patch": "3.05" } } }
+
+quirks.json
+{ "schema": 1, "note": "…", "entries": { "<questRowId>": { "note": "…", "evidence": "https://…" } } }
+
+online_store.json ("kind" is the FFXIV Collect collection: Mount, Minion, Emote, Orchestrion, Barding, Hairstyle, Ornament; "rewardId" its id there)
+{ "schema": 1, "note": "…", "entries": { "<itemId>": { "name": "Tender lamb", "kind": "Minion", "rewardId": 46, "evidence": "https://ffxivcollect.com/api/minions/46", "note": "…" } } }
+
+other_sources.json ("source" is DungeonDrop today)
+{ "schema": 1, "note": "…", "entries": { "<itemId>": { "name": "…", "source": "DungeonDrop", "where": "Snowcloak and Sastasha (Hard)", "evidence": "https://…", "note": "…" } } }
 ```
+
+Quest keys are Quest **row ids** (65536 and up), never the runtime quest id, a name or the script id (`SubCts811_01432`). Where a quest has start-city or Grand Company variants, list every variant. `contentFinderConditionIds` are `ContentFinderCondition` rows, not `InstanceContent` or `TerritoryType` rows. Check every id with xivapi before writing it (the curated README has the queries); never write one from memory.
+
+### Evidence
+
+- Every `evidence` is an **https** URL a maintainer can open. The tests reject anything else.
+- **The Lodestone first**: the Eorzea Database page for a quest or item, or the official announcement for an event window or a patch change. A dated `festivals.json` entry must cite the Lodestone.
+- **The wiki second** ([Console Games Wiki](https://ffxiv.consolegameswiki.com/)) when the Lodestone does not show the fact: an unlisted quest's filing, a removed quest, an event edition not announced yet.
+- File-specific sources where the file calls for one: the FFXIV Collect API entry listing "Premium: Online Store" for `online_store.json`; the Lodestone item page's "Obtained From" for `other_sources.json`; the forum or Reddit thread the quirk was reported in, or the Lodestone patch notes, for `quirks.json`.
+- Notes are your own words. Never paste wiki text (CC BY-NC-SA) or quest text into a note.
+
+### Check the change offline
+
+```
+dotnet build Tsukimichi.sln -c Release -warnaserror
+dotnet test Tsukimichi.Tests -c Release --no-build --filter "Category=Curated"
+```
+
+The curated tests run from committed fixtures (`Tsukimichi.Tests/Fixtures/catalog-*.json.gz` and the shipped `unique_quests.json`), so they need neither the game nor the network. With the game installed, regenerate everything the change touches and run the whole suite:
+
+```
+pwsh tools/regen.ps1 -NoXivApi
+pwsh tools/regen.ps1 -NoXivApi -GamePath "D:\FFXIV\game\sqpack"
+```
+
+`regen.ps1` builds, regenerates `unique_quests.json` and `feature_quests.json`, runs DataGen's verification (`-NoXivApi` skips its xivapi spot checks, so it runs offline), refreshes the catalog fixture and the data-version stamps, runs the tests and ends on `git diff --stat`. Commit what it wrote together with your edit. After touching `refile_overrides.json` or `retired_quests.json`, also run the tests once with `TSUKIMICHI_REGEN_GOLDEN=1` and review the rows that moved in `docs/data/refile-expected.csv`.
+
+The external verifier (`tools/Tsukimichi.Verify`, built with the solution) cross-checks the catalog against the Lodestone, the wiki, FFXIV Collect and Garland Tools. A full online run takes hours, so re-derive its verdicts from its cache instead:
+
+```
+dotnet tools/Tsukimichi.Verify/bin/Release/net10.0/Tsukimichi.Verify.dll quests --offline
+dotnet tools/Tsukimichi.Verify/bin/Release/net10.0/Tsukimichi.Verify.dll rewards --offline
+dotnet tools/Tsukimichi.Verify/bin/Release/net10.0/Tsukimichi.Verify.dll summary
+```
+
+`--offline` never fetches: a URL missing from the cache (`%LOCALAPPDATA%\Tsukimichi.Verify\<gameVersion>`) becomes a status-0 row that says so. `summary` exits 1 when a row is `unresolved` or `catalogWrong` outside the allowlist. [tools/Tsukimichi.Verify/README.md](tools/Tsukimichi.Verify/README.md) explains the verdicts.
+
+### When the invariants fail
+
+`CuratedInvariantsTests` and the loader tests beside it (`dotnet test … --filter "Category=Curated"`) fail with a message that names the file and the key, for example:
+
+- `curated quest ids missing from the catalog: duty_unlocks.json:67999` or `duty_unlocks.json:700 is not a Quest sheet row id`: a wrong id, or a runtime quest id where the row id belongs; check it on xivapi.
+- `quirks 67999 is not a row of the catalog fixture`, `refile_overrides 67752 names genre 999, which no listed quest holds`: a wrong id or genre.
+- An `Assert.StartsWith() Failure` on an `evidence` value, or `festivals.json 2 evidence is not an https URL`: the evidence rule above.
+- `festivals.json 2 runs backwards`, `festival 3 (…) is a collaboration event and must not carry an end date`: a festival window that cannot be right.
+- `Every_curated_file_parses_as_strict_json_and_loads_without_warnings`: a comment, a trailing comma, or an entry the loader skipped because it lacks `note`, `evidence` or another required field; the warning in the failure names it.
+- `feature_quests.json differs from the derived set … regenerate with tools/regen.ps1`: an unlock file changed and the derived list did not; run the script, do not edit the list.
+- `Version_json_names_the_last_commit_that_changed_the_curated_data`: commit the data change, then run `tools/regen.ps1` (`-NoXivApi` is enough) so `VERSION.json` names that commit, and commit `VERSION.json` and `docs/data/DATA-VERSION.md`.
+- An `Assert.Equal() Failure` on a key list: sort the entries by id.
 
 ## Releases
 

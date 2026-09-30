@@ -77,6 +77,7 @@ public sealed class Plugin : IDalamudPlugin
     private Game.NpcHooks? npcHooks;
     private Game.HookGateNotice? hookGateNotice;
     private Game.TodoLockNotice? todoLockNotice;
+    private Game.IpcProvider? ipcProvider;
     private TodoOverlay? todoOverlay;
 
     /// <summary>
@@ -555,6 +556,15 @@ public sealed class Plugin : IDalamudPlugin
 
             // Toolbar buttons on the main window (help, tutorial, settings).
             mainWindow.AttachActions(configWindow.Toggle, helpWindow.Toggle, helpActions.StartTutorial);
+
+            // Tsukimichi's own IPC gates (V2-16, docs/ipc.md): other plugins read the logged-in character's states
+            // and blockers and can open a quest here.
+            ipcProvider = new Game.IpcProvider(PluginInterface, Framework, Log, Session, quest =>
+            {
+                mainWindow.IsOpen = true;
+                mainWindow.BringToFront();
+                MoonlitPane.Reveal(ui, quest);
+            });
             // /UI
         }
         catch (Exception ex)
@@ -567,6 +577,8 @@ public sealed class Plugin : IDalamudPlugin
 
     public void Dispose()
     {
+        // Other plugins stop reaching in first, before anything they could reach is torn down.
+        ipcProvider?.Dispose();
         // UI
         command.Dispose();
         if (configWindow is not null)
@@ -616,6 +628,7 @@ public sealed class Plugin : IDalamudPlugin
     /// <summary>Best-effort teardown after a failed constructor; every step is isolated so one failure cannot hide another.</summary>
     private void AbortLoad()
     {
+        Unwind("tsukimichi ipc", () => ipcProvider?.Dispose());
         Unwind("draw hook", () =>
         {
             if (configWindow is not null)
