@@ -196,6 +196,51 @@ public sealed class TsukimichiIpc : IDisposable
 }
 ```
 
+## Consumed IPC
+
+Tsukimichi also calls three other plugins' gates when they are loaded. Each is optional: a plugin that is absent, not loaded, or whose gate is missing or throws reads as unavailable, the first failure is logged once, and the feature that needed it simply does not show. Detection goes through Dalamud's installed plugin list (`IDalamudPluginInterface.InstalledPlugins`, loaded state, re-read when the list changes), never through a per-frame IPC call.
+
+### Lifestream (internal name `Lifestream`)
+
+| Gate | Signature | Used for |
+|---|---|---|
+| `Lifestream.Teleport` | `(uint aetheryteId, byte subIndex) -> bool` | the detail pane's Teleport button, the Todo overlay's and Nearby's "Teleport with Lifestream" |
+| `Lifestream.IsBusy` | `() -> bool` | greying Teleport while Lifestream is busy (cached for 250 ms) |
+
+Source: `Game/LifestreamIpc.cs`.
+
+### Wotsit (internal name `Dalamud.FindAnything`)
+
+| Gate | Signature | Used for |
+|---|---|---|
+| `FA.RegisterWithSearch` | `(string plugin, string display, string search, uint iconId) -> string guid` | one search entry per quest and Moonlit reward |
+| `FA.UnregisterOne` | `(string plugin, string guid) -> bool` | replacing the entries the spoiler shield changes |
+| `FA.UnregisterAll` | `(string plugin) -> bool` | turning the integration off, or a new catalog |
+| `FA.Invoke` | message `(string guid)` | an entry was picked: reveal it in the Journal |
+| `FA.Available` | message, no arguments | Wotsit (re)loaded: register again |
+| `FA.IsAvailable` | `() -> bool` | whether Wotsit is ready when the plugin list lags |
+
+Source: `Game/WotsitIpc.cs`. Settings › Integrations › "Register quests and rewards with Wotsit" (on by default).
+
+### Questionable (internal name `Questionable`, since 1.0.0)
+
+Read from Questionable's provider class, `Questionable/External/QuestionableIpc.cs`, at [github.com/PunishXIV/Questionable](https://github.com/PunishXIV/Questionable) commit `0bd61efe8a6806a7a8010741c0c46b7dea153709` (branch `new-main`, 2026-09-30). The WigglyMuffin fork ([github.com/WigglyMuffin/Questionable](https://github.com/WigglyMuffin/Questionable), commit `4f2909b7bc9e6ec65e63c4b71f4fb7f523688b46`) registers `IsQuestLocked` and `AddQuestPriority` but not `IsQuestLockedReason`.
+
+| Gate | Signature | Used for |
+|---|---|---|
+| `Questionable.IsQuestLockedReason` | `(string questId) -> (bool locked, string reasons)` | the cross-check: the detail pane's "Questionable agrees" / "Questionable says: …" line and the "questionable:" line of Report this quest |
+| `Questionable.IsQuestLocked` | `(string questId) -> bool` | the same, without a reason, when the reason gate is absent or fails |
+| `Questionable.AddQuestPriority` | `(string questId) -> bool` | "Add to Questionable priority" in the detail pane's "…" menu, only with Settings › Integrations › "Show Questionable hand-off" ticked (off by default) |
+
+Source: `Game/QuestionableIpc.cs`; the comparison is `Tsukimichi.Core/Ipc/QuestionableCrossCheck.cs`.
+
+- The quest id is the Quest row id's low 16 bits in decimal (row 65964 is `"428"`), the form Questionable's `ElementId.FromString` reads as a quest.
+- Questionable is asked when a quest is selected or the character's state changes, one call per quest per session version, never per frame, and only about the character logged in: a stored character is not compared.
+- Both lock gates answer locked for a quest Questionable has no path for; the reason gate then gives an empty reason. Tsukimichi reads a locked answer without a reason as "no answer", not a disagreement.
+- Questionable's lock does not check the level of an ordinary quest, the job, the account caps, or whether the quest is done or in the journal, so only Ready, Available on another job and Blocked are compared, and a quest Blocked only by level or job is compared as open. Its reasons are the English ones ("Prev quest (2)", "Aetheryte locked: …", "Low level (GLA)").
+- Tsukimichi never asks about Gold Saucer quest 4081 or Palace of the Dead quest 2387, whose lock check makes Questionable open the Achievements window.
+- `AddQuestPriority` answers true even for a quest Questionable does not know, so the menu item is enabled only when the reason gate named a path for the quest. It adds the quest to Questionable's list and nothing else: Questionable does not start, and Tsukimichi never calls `StartQuest`, `Stop` or any other gate.
+
 ## Versioning
 
 - `Tsukimichi.ApiVersion` returns the API version, `1` today.

@@ -39,7 +39,7 @@ Updates arrive through the plugin installer like any other plugin.
 - **Item hints**: hovering an item that is a quest-exclusive reward shows which quest gives it and whether it is done; right-clicking such an item in the inventory adds "Tsukimichi: quest reward" to its context menu.
 - **Chains and ladders**: Hildibrand, the relic lines, the raid stories and every job and role quest ladder with "N of M" and the next quest.
 - **Notices**: an optional chat line when a pinned or feature quest becomes available, when a level-up opens the next job or role quest, and when you abandon a quest.
-- **Integrations**: every quest and Moonlit reward is registered with the Wotsit search plugin; Teleport to the giver goes through the Lifestream plugin when it is installed. Both are optional. Other plugins can ask Tsukimichi over an IPC API whether a quest can be picked up now, its state, what blocks it and the next main scenario quest, or open a quest in it (see [Works with other plugins](#works-with-other-plugins) and [docs/ipc.md](docs/ipc.md)).
+- **Integrations**: every quest and Moonlit reward is registered with the Wotsit search plugin; Teleport to the giver goes through the Lifestream plugin when it is installed; with Questionable loaded, the detail pane says whether its lock check agrees. All are optional. Other plugins can ask Tsukimichi over an IPC API whether a quest can be picked up now, its state, what blocks it and the next main scenario quest, or open a quest in it (see [Works with other plugins](#works-with-other-plugins) and [docs/ipc.md](docs/ipc.md)).
 - **Help, tour and settings** from the toolbar: a searchable help window, an interactive tour that points at each part of the window, UI and icon scale, reduce motion.
 
 ## Commands
@@ -71,7 +71,7 @@ Tsukimichi reads the game's quest sheets from your installed client and your cha
 
 All five are tested on a specific game version, recorded in each release. After a game patch they pause themselves until a Tsukimichi update has been tested on the new version, so a patch that moves the game's interface cannot leave a panel or menu entry misbehaving; a chat line and a notice in Settings › Integrations say so, and the quest journal and everything else keep working. Settings › Integrations › "Enable game hooks on this untested version" runs them anyway on the game version you are on; the next patch pauses them again.
 
-Everything else is a Dalamud window. It also talks to two other plugins over Dalamud IPC when they are present: Wotsit (to register searchable entries) and Lifestream (to teleport when you click Teleport), and it answers other plugins' questions about quests (below).
+Everything else is a Dalamud window. It also talks to three other plugins over Dalamud IPC when they are present: Wotsit (to register searchable entries), Lifestream (to teleport when you click Teleport) and Questionable (to compare its lock check with Tsukimichi's, and, if you turn it on, to add a quest to its priority list when you click), and it answers other plugins' questions about quests (below).
 
 It never automates anything: it does not move your character, accept or turn in quests, skip dialogue or press anything for you. Teleport to the giver is a button you click, handed to Lifestream. Map flags, journal pages and chat links use the game's own functions.
 
@@ -81,6 +81,7 @@ It has no network code. Nothing leaves your machine. Snapshots and settings live
 
 - **Wotsit**: every quest and Moonlit reward is searchable from Wotsit; picking one opens it in Tsukimichi.
 - **Lifestream**: Teleport to the giver hands the teleport to Lifestream when it is installed.
+- **Questionable**: when it is loaded, the detail pane says whether Questionable's own lock check agrees with Tsukimichi ("Questionable agrees", or "Questionable says: …" with its reason), and Report this quest records both answers. Settings › Integrations › "Show Questionable hand-off" (off by default) adds "Add to Questionable priority" to the detail pane's "…" menu; it only puts the quest on Questionable's list, and nothing starts until you run Questionable yourself. The gates used are listed in [docs/ipc.md](docs/ipc.md#consumed-ipc).
 - **Your plugin**: Tsukimichi answers over Dalamud IPC whether a quest can be picked up now, its state, why it is blocked, the next main scenario quest, and "open this quest", with a message when the logged-in character's states change. The gates, their threading and a C# example are in [docs/ipc.md](docs/ipc.md); request a new one with the **IPC request** issue template.
 
 ## Verification and releases

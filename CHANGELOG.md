@@ -4,6 +4,9 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+### Added
+- Questionable cross-check: when the Questionable plugin is loaded, the detail pane says under a quest's status whether Questionable's own lock check agrees with Tsukimichi ("Questionable agrees") or not ("Questionable says: Prev quest (1)"), for the character you are logged in on, and Report this quest adds a "questionable:" line with both answers, so a quest shown in the wrong state is easier to pin down. Questionable is asked when you select a quest, not every frame. Settings › Integrations › "Show Questionable hand-off" (off by default) adds a "…" button to the detail pane's action bar with "Add to Questionable priority", which only puts the quest on Questionable's priority list: nothing starts, and Tsukimichi never moves your character.
+
 ## [0.9.0] - 2026-09-30
 
 ### Added
