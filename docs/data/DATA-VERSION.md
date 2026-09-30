@@ -5,11 +5,12 @@ Written by `tools/regen.ps1`; do not edit by hand. The reports under `docs/data`
 | Field | Value |
 |---|---|
 | Game version | `2026.09.15.0000.0000` |
-| Generated (UTC) | `2026-09-30T05:05:16Z` |
-| Curated revision | `14a1d37` (last commit touching a data file under `Tsukimichi/Data/curated`) |
+| Generated (UTC) | `2026-09-30T05:51:38Z` |
+| Curated revision | `11858fc` (last commit touching a data file under `Tsukimichi/Data/curated`) |
 | Catalog fixture | `catalog-2026.09.15.0000.0000.json.gz` |
-| unique_quests.json entries | 3486 across 1191 quests |
+| unique_quests.json entries | 3516 across 1216 quests |
 | feature_quests.json (derived) | 1734 quests |
+| quest_patches.json | 5373 of 5373 quests with a patch, newest 7.56 |
 | Online Store re-sells | 69 entries |
 | Dungeon drops | 44 entries |
 
@@ -24,7 +25,7 @@ Written by `tools/regen.ps1`; do not edit by hand. The reports under `docs/data`
 | Barding | 6 |
 | BlueMageSpell | 16 |
 | ClassJob | 48 |
-| DutyUnlock | 196 |
+| DutyUnlock | 226 |
 | Emote | 56 |
 | GeneralAction | 12 |
 | Hairstyle | 1 |
