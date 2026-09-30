@@ -255,16 +255,24 @@ public sealed class Plugin : IDalamudPlugin
         }
     }
 
-    /// <summary>A forgotten character takes its spoiler override with it.</summary>
+    /// <summary>
+    /// A forgotten character takes its spoiler override with it. The session bumped before this ran (or, for the live
+    /// character, not at all), so the masks are refreshed to drop the override now rather than at the next change.
+    /// </summary>
     private void ForgetSpoilerOverride(ulong contentId)
     {
         if (Settings.SpoilerShieldByCharacter.Remove(contentId))
         {
             Settings.Save(PluginInterface);
+            Session.RefreshSpoilers();
         }
     }
 
-    /// <summary>"Delete all data" drops every per-character spoiler override.</summary>
+    /// <summary>
+    /// "Delete all data" drops every per-character spoiler override. <see cref="Game.SessionState.DeleteAllData"/>
+    /// raises this before it follows the live character, and that bump is the refresh: every listener rebuilds with
+    /// the overrides already gone.
+    /// </summary>
     private void ClearSpoilerOverrides()
     {
         if (Settings.SpoilerShieldByCharacter.Count > 0)

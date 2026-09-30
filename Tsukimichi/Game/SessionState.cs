@@ -326,8 +326,10 @@ public sealed class SessionState
         DeleteIfExists(paths.PinsFile);
         DeleteIfExists(paths.OverridesFile);
         recentEvents.Clear();
-        FollowLive();
+        // Listeners drop their in-memory copies (pins, overrides, spoiler overrides) first, so the bump in FollowLive
+        // is the last one: whatever rebuilds on it, the spoiler masks included, sees the data already gone.
         DataDeleted?.Invoke();
+        FollowLive();
     }
 
     internal void SetCatalog(CatalogBundle bundle)
