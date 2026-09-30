@@ -287,6 +287,13 @@ public sealed class Configuration : IPluginConfiguration
     /// </summary>
     public GlyphPaletteKind GlyphPalette { get; set; } = GlyphPaletteKind.Standard;
 
+    // ---- 1.1: localization (V2-19) ----
+    /// <summary>
+    /// Settings › Display › Plugin language: follow Dalamud's UI language (the default; English where Tsukimichi has
+    /// no translation) or always English. <see cref="Localization.PluginLanguage.Pseudo"/> is the layout check.
+    /// </summary>
+    public Localization.PluginLanguage PluginLanguage { get; set; } = Localization.PluginLanguage.FollowDalamud;
+
     /// <summary>The todo overlay's Compact mode: moon and name only, one line per row, no hints. Off by default.</summary>
     public bool TodoOverlayCompact { get; set; }
 
@@ -434,6 +441,11 @@ public sealed class Configuration : IPluginConfiguration
         if (!Enum.IsDefined(config.GlyphPalette))
         {
             config.GlyphPalette = GlyphPaletteKind.Standard;
+        }
+
+        if (!Enum.IsDefined(config.PluginLanguage))
+        {
+            config.PluginLanguage = Localization.PluginLanguage.FollowDalamud;
         }
 
         // Before 0.7.0 ReduceMotion defaulted to false and had no Chosen flag, so a saved true was the user's choice;

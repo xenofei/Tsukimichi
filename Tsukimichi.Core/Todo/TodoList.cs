@@ -6,6 +6,7 @@ using Tsukimichi.Core.Plan;
 using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Seasonal;
 using Tsukimichi.Core.Ui;
+using Tsukimichi.Core.Localization;
 
 namespace Tsukimichi.Core.Todo;
 
@@ -139,8 +140,8 @@ public static class TodoList
 
     // Hint fragments in the display vocabulary (English in Core; the overlay shows them as is). The row's moon already
     // carries the state, so a hint never repeats the state name: a blocked row shows its blocker, an accepted one its step.
-    private const string ReadyOnJobPrefix = "Ready on ";
-    private const string LevelPrefix = "Lv ";
+    private static string ReadyOnJobFormat => CoreText.T("Core.Todo.ReadyOnJob", "Ready on {0}");
+    private static string LevelFormat => CoreText.T("Core.Todo.Level", "Lv {0}");
     private const string Separator = " · ";
 
     public static TodoModel Build(TodoInputs inputs)
@@ -459,18 +460,18 @@ public static class TodoList
 
         if (rows.Count > 0)
         {
-            var note = block.Name + Separator + block.Count.ToString(System.Globalization.CultureInfo.InvariantCulture) + PlanLeftSuffix;
+            var note = block.Name + Separator + string.Format(System.Globalization.CultureInfo.CurrentCulture, PlanLeftFormat, block.Count);
             sections.Add(new TodoSectionModel(TodoSection.Plan, rows) { Notes = [note] });
         }
     }
 
-    private const string PlanLeftSuffix = " left";
+    private static string PlanLeftFormat => CoreText.T("Core.Todo.PlanLeft", "{0} left");
 
     /// <summary>"Lv 20 · Dungeon: Halatali": the level and the entry's first unlock.</summary>
     public static string PlanHint(PlanEntry entry)
     {
         ArgumentNullException.ThrowIfNull(entry);
-        var level = LevelPrefix + entry.Quest.DisplayLevel.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        var level = string.Format(System.Globalization.CultureInfo.InvariantCulture, LevelFormat, entry.Quest.DisplayLevel);
         return entry.Unlocks.Count > 0 ? level + Separator + entry.Unlocks[0].Label : level;
     }
 
@@ -499,7 +500,7 @@ public static class TodoList
             case QuestState.ReadyOnOtherJob:
                 if (evaluation?.ReadyOnJob is { } jobId && inputs.JobNames.TryGetValue(jobId, out var jobName) && jobName.Length > 0)
                 {
-                    return ReadyOnJobPrefix + jobName;
+                    return string.Format(System.Globalization.CultureInfo.CurrentCulture, ReadyOnJobFormat, jobName);
                 }
 
                 return StateNames.ReadyOnOtherJob;
@@ -524,7 +525,7 @@ public static class TodoList
 
     private static string LevelAndGiver(QuestRecord quest)
     {
-        var level = LevelPrefix + quest.DisplayLevel.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        var level = string.Format(System.Globalization.CultureInfo.InvariantCulture, LevelFormat, quest.DisplayLevel);
         return quest.Issuer is { Name.Length: > 0 } issuer ? level + Separator + issuer.Name : level;
     }
 }

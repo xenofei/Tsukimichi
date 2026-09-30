@@ -1218,11 +1218,13 @@ public sealed partial class DetailPane
             foreach (var result in evaluation.Requirements)
             {
                 // The evaluator wrote the prerequisite's or lock's real name into the detail; the shield masks it here.
+                // In the UI language: the evaluator's own detail is English, and stays so for the diagnostic block.
+                var clause = RequirementDetail.Text(result, session.Names, snapshot?.CurrentJob);
                 var detail = result.Req switch
                 {
-                    PreviousQuestsRequirement p => spoilers.MaskNamesIn(result.Detail, bundle.Catalog, p.QuestIds),
-                    ForeclosureRequirement f => spoilers.MaskNamesIn(result.Detail, bundle.Catalog, f.CompletedLockIds),
-                    _ => result.Detail,
+                    PreviousQuestsRequirement p => spoilers.MaskNamesIn(clause, bundle.Catalog, p.QuestIds),
+                    ForeclosureRequirement f => spoilers.MaskNamesIn(clause, bundle.Catalog, f.CompletedLockIds),
+                    _ => clause,
                 };
                 model.Requirements.Add(new RequirementLine(result.Met, ReferenceEquals(result, evaluation.NextStep), Strings.RequirementName(result.Req.Kind), detail));
                 unmet += result.Met ? 0 : 1;

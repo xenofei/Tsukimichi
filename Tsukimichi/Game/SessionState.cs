@@ -244,6 +244,12 @@ public sealed class SessionState
     /// <summary>A spoiler setting changed: every surface re-reads the mask.</summary>
     public void RefreshSpoilers() => Bump();
 
+    /// <summary>
+    /// The UI language changed (V2-19): every cache keyed by <see cref="Version"/> (the panes' labels, the spoiler
+    /// masks' placeholders, the query's status texts) rebuilds on its next read.
+    /// </summary>
+    public void RefreshText() => Bump();
+
     /// <summary>Wall time of the last poll (capture, diff and resolve) in milliseconds; 0 before the first poll.</summary>
     public double LastPollMs { get; private set; }
 

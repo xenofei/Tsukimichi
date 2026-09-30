@@ -1,4 +1,5 @@
 using Tsukimichi.Core.Query;
+using Tsukimichi.Localization;
 
 namespace Tsukimichi.Ui;
 
@@ -10,33 +11,33 @@ namespace Tsukimichi.Ui;
 static partial class Strings
 {
     // ---- Artwork ----
-    public const string ArtworkHidden = "Artwork appears once the quest is in your journal";
+    public static string ArtworkHidden => Loc.Get("ArtworkHidden");
 
     // ---- Detail pane ----
-    public const string SpoilerRevealName = "Reveal this name";
-    public const string SpoilerRevealNameTooltip = "Show this main scenario quest's real name everywhere until the plugin reloads";
-    public const string SpoilerMaskedNote = "Name hidden: this main scenario quest is further ahead than you are";
+    public static string SpoilerRevealName => Loc.Get("SpoilerRevealName");
+    public static string SpoilerRevealNameTooltip => Loc.Get("SpoilerRevealNameTooltip");
+    public static string SpoilerMaskedNote => Loc.Get("SpoilerMaskedNote");
 
     // ---- Settings › Spoilers ----
-    public const string SettingsSpoilers = "Spoilers";
-    public const string SpoilerHideNames = "Hide main scenario names ahead of me";
-    public const string SpoilerHideNamesHelp = "Main scenario quests further along the story than you read \"Main scenario quest (Lv 83)\" everywhere: the table, the detail pane, the status bar, the Todo overlay, chat, Wotsit and search.";
-    public const string SpoilerAhead = "Quests ahead to reveal";
-    public const string SpoilerAheadHelp = "How many main scenario quests past your current one keep their names (0 to 10).";
-    public const string SpoilerHideArtwork = "Hide journal artwork until a quest is in my journal";
-    public const string SpoilerHideArtworkHelp = "The banner art sums up a quest; it shows once you accept or complete the quest.";
-    public const string SpoilerCharacterLabel = "For this character";
-    public const string SpoilerCharacterFormat = "For {0}";
-    public const string SpoilerCharacterNone = "No character is shown; the settings above apply.";
-    public const string SpoilerCharacterDefault = "Use the settings above";
-    public const string SpoilerCharacterOn = "Always shield";
-    public const string SpoilerCharacterOff = "Show everything";
-    public const string SpoilerCharacterHelp = "A character who finished the story can show everything while an alt stays shielded.";
-    public const string SpoilerMaskedCountFormat = "{0:N0} main scenario names hidden for the character shown.";
+    public static string SettingsSpoilers => Loc.Get("SettingsSpoilers");
+    public static string SpoilerHideNames => Loc.Get("SpoilerHideNames");
+    public static string SpoilerHideNamesHelp => Loc.Get("SpoilerHideNamesHelp");
+    public static string SpoilerAhead => Loc.Get("SpoilerAhead");
+    public static string SpoilerAheadHelp => Loc.Get("SpoilerAheadHelp");
+    public static string SpoilerHideArtwork => Loc.Get("SpoilerHideArtwork");
+    public static string SpoilerHideArtworkHelp => Loc.Get("SpoilerHideArtworkHelp");
+    public static string SpoilerCharacterLabel => Loc.Get("SpoilerCharacterLabel");
+    public static string SpoilerCharacterFormat => Loc.Get("SpoilerCharacterFormat");
+    public static string SpoilerCharacterNone => Loc.Get("SpoilerCharacterNone");
+    public static string SpoilerCharacterDefault => Loc.Get("SpoilerCharacterDefault");
+    public static string SpoilerCharacterOn => Loc.Get("SpoilerCharacterOn");
+    public static string SpoilerCharacterOff => Loc.Get("SpoilerCharacterOff");
+    public static string SpoilerCharacterHelp => Loc.Get("SpoilerCharacterHelp");
+    public static string SpoilerMaskedCountFormat => Loc.Get("SpoilerMaskedCountFormat");
 
     // ---- Sprout mode quick view ----
-    public const string PresetSprout = FilterNames.Sprout;
-    public const string PresetSproutTooltip = "Only the quests of the expansions your main scenario has reached; later sections of the tree fold to their counts";
-    public const string SproutReachFormat = "{0:N0} quests in your reach";
-    public const string SproutFoldedTooltip = "Beyond your main scenario: folded in Sprout mode";
+    public static string PresetSprout => FilterNames.Display(FilterNames.Sprout);
+    public static string PresetSproutTooltip => Loc.Get("PresetSproutTooltip");
+    public static string SproutReachFormat => Loc.Get("SproutReachFormat");
+    public static string SproutFoldedTooltip => Loc.Get("SproutFoldedTooltip");
 }

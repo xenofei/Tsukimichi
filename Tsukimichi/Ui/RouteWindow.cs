@@ -255,12 +255,16 @@ public sealed class RouteWindow : Window
     }
 
     /// <summary>"Pin all (N)" with N the steps not pinned yet (every step when there is nobody to pin for); composed only when the route or the pins change.</summary>
+    private int pinLabelLanguage = -1;
+
     private string PinAllLabel(View v)
     {
-        if (ReferenceEquals(pinLabelView, v) && pinLabelPins == runner.PinsVersion)
+        if (ReferenceEquals(pinLabelView, v) && pinLabelPins == runner.PinsVersion && pinLabelLanguage == Localization.Loc.Version)
         {
             return pinLabel;
         }
+
+        pinLabelLanguage = Localization.Loc.Version;
 
         var count = pins.CanPin ? RoutePins.CountUnpinned(v.Route, pins) : v.Route.Steps.Count;
         pinLabelView = v;
@@ -375,7 +379,7 @@ public sealed class RouteWindow : Window
             x += glyph + UiMetrics.Px(6f);
 
             dl.AddText(new Vector2(x, textY), Theme.U32(Theme.Surface.TextSecondary), l.Level);
-            x += ImGui.CalcTextSize("Lv 000").X + UiMetrics.Px(6f);
+            x += ImGui.CalcTextSize(string.Format(CultureInfo.CurrentCulture, Strings.RouteLevelFormat, 100)).X + UiMetrics.Px(6f);
 
             // Gold only for a target the character can act on now; a Blocked or locked-out target reads like any step.
             var gold = l.IsTarget && l.State is QuestState.Ready or QuestState.ReadyOnOtherJob or QuestState.Accepted;

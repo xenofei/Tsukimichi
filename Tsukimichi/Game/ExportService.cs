@@ -72,12 +72,12 @@ public sealed class ExportService(
             var path = ExportWriter.Write(Folder, ExportWriter.FileName(kind, format, header), content, paths.ConfigDir);
             LastPath = path;
             log.Information("Exported {Kind} as {Format} to {Path}", kind, format, path);
-            return new ExportResult(true, path, Strings.ExportWrittenPrefix + path);
+            return new ExportResult(true, path, string.Format(System.Globalization.CultureInfo.CurrentCulture, Strings.ExportWrittenFormat, path));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException or ArgumentException)
         {
             log.Warning(ex, "Export of {Kind} failed", kind);
-            return new ExportResult(false, null, Strings.ExportFailedPrefix + ex.Message);
+            return new ExportResult(false, null, string.Format(System.Globalization.CultureInfo.CurrentCulture, Strings.ExportFailedFormat, ex.Message));
         }
     }
 }

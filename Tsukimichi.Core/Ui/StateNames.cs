@@ -1,3 +1,4 @@
+using Tsukimichi.Core.Localization;
 using Tsukimichi.Core.Model;
 
 namespace Tsukimichi.Core.Ui;
@@ -7,20 +8,24 @@ namespace Tsukimichi.Core.Ui;
 /// Moonlit, Compare, the todo overlay, Nearby, chat, help and the tutorial), and the moon-phase subtitle each glyph
 /// carries in the Help legend and the glyph window. The enum keeps its internal spellings; nothing user-facing
 /// spells a state any other way (docs/glossary.md, feature plan v3 T23).
+/// <para>
+/// Each name is English here and follows the UI language through <see cref="CoreText"/> (keys <c>Core.State.*</c>,
+/// <c>Core.Glyph.*</c>, <c>Core.HighContrast.*</c>); the composed tooltips are cached per language.
+/// </para>
 /// </summary>
 public static class StateNames
 {
-    public const string Ready = "Ready";
-    public const string ReadyOnOtherJob = "Ready on another job";
-    public const string Accepted = "In journal";
-    public const string Blocked = "Blocked";
-    public const string DoneToday = "Done today";
-    public const string DoneThisWeek = "Done this week";
+    public static string Ready => CoreText.T("Core.State.Ready", "Ready");
+    public static string ReadyOnOtherJob => CoreText.T("Core.State.ReadyOnOtherJob", "Ready on another job");
+    public static string Accepted => CoreText.T("Core.State.Accepted", "In journal");
+    public static string Blocked => CoreText.T("Core.State.Blocked", "Blocked");
+    public static string DoneToday => CoreText.T("Core.State.DoneToday", "Done today");
+    public static string DoneThisWeek => CoreText.T("Core.State.DoneThisWeek", "Done this week");
     /// <summary>Fallback for a repeatable whose reset is neither daily nor weekly, and for surfaces with no quest at hand.</summary>
-    public const string DoneThisCycle = "Done this cycle";
-    public const string Completed = "Completed";
-    public const string Foreclosed = "Locked out";
-    public const string Unknown = "Not checked";
+    public static string DoneThisCycle => CoreText.T("Core.State.DoneThisCycle", "Done this cycle");
+    public static string Completed => CoreText.T("Core.State.Completed", "Completed");
+    public static string Foreclosed => CoreText.T("Core.State.Foreclosed", "Locked out");
+    public static string Unknown => CoreText.T("Core.State.Unknown", "Not checked");
 
     /// <summary><see cref="QuestRecord.RepeatInterval"/> of a quest that resets daily (the allied society dailies).</summary>
     public const byte DailyInterval = 1;
@@ -61,28 +66,46 @@ public static class StateNames
     /// <summary>Between the display name and the shape hint in a moon's tooltip.</summary>
     public const string TooltipSeparator = " · ";
 
-    /// <summary>One tooltip per state, composed once; indexed by the enum value.</summary>
-    private static readonly string[] Tooltips = BuildTooltips();
+    /// <summary>
+    /// The tooltips of one palette, composed once per language: one per state indexed by the enum value, then the
+    /// done-today and done-this-week variants.
+    /// </summary>
+    private sealed record TooltipSet(string[] States, string DoneToday, string DoneThisWeek);
 
-    private static readonly string DoneTodayTooltip = ComposeTooltip(DoneToday, GlyphSubtitle(QuestState.DoneThisCycle));
-    private static readonly string DoneThisWeekTooltip = ComposeTooltip(DoneThisWeek, GlyphSubtitle(QuestState.DoneThisCycle));
+    private static readonly TextCache<TooltipSet> StandardTooltips = new(static () => BuildSet(GlyphSubtitle));
+    private static readonly TextCache<TooltipSet> HighContrastSet = new(static () => BuildSet(HighContrastSubtitle));
+
+    private static TooltipSet BuildSet(Func<QuestState, string> subtitle) => new(
+        BuildTooltips(subtitle),
+        ComposeTooltip(DoneToday, subtitle(QuestState.DoneThisCycle)),
+        ComposeTooltip(DoneThisWeek, subtitle(QuestState.DoneThisCycle)));
 
     /// <summary>
     /// What a state moon says on hover, wherever one is drawn: the display name, then the glyph's shape so the moon
     /// can be told apart next time ("Blocked · new moon, silver ring"). Precomposed per state; allocates nothing.
     /// </summary>
-    public static string Tooltip(QuestState state) =>
-        (uint)state < (uint)Tooltips.Length ? Tooltips[(int)state] : ComposeTooltip(Name(state), GlyphSubtitle(state));
+    public static string Tooltip(QuestState state)
+    {
+        var tooltips = StandardTooltips.Value.States;
+        return (uint)state < (uint)tooltips.Length ? tooltips[(int)state] : ComposeTooltip(Name(state), GlyphSubtitle(state));
+    }
 
     /// <summary>Tooltip of a state for a quest with the given repeat interval: a done repeatable says today or this week.</summary>
-    public static string Tooltip(QuestState state, byte repeatInterval) => state == QuestState.DoneThisCycle
-        ? repeatInterval switch
+    public static string Tooltip(QuestState state, byte repeatInterval)
+    {
+        if (state != QuestState.DoneThisCycle)
         {
-            DailyInterval => DoneTodayTooltip,
-            WeeklyInterval => DoneThisWeekTooltip,
-            _ => Tooltips[(int)QuestState.DoneThisCycle],
+            return Tooltip(state);
         }
-        : Tooltip(state);
+
+        var set = StandardTooltips.Value;
+        return repeatInterval switch
+        {
+            DailyInterval => set.DoneToday,
+            WeeklyInterval => set.DoneThisWeek,
+            _ => set.States[(int)QuestState.DoneThisCycle],
+        };
+    }
 
     /// <summary>Tooltip of a state for a quest; null quest falls back to <see cref="Tooltip(QuestState)"/>.</summary>
     public static string Tooltip(QuestState state, QuestRecord? quest) =>
@@ -91,8 +114,6 @@ public static class StateNames
     /// <summary>"Name · subtitle", or the name alone when there is no subtitle.</summary>
     public static string ComposeTooltip(string name, string subtitle) =>
         string.IsNullOrEmpty(subtitle) ? name : name + TooltipSeparator + subtitle;
-
-    private static string[] BuildTooltips() => BuildTooltips(GlyphSubtitle);
 
     private static string[] BuildTooltips(Func<QuestState, string> subtitle)
     {
@@ -112,10 +133,6 @@ public static class StateNames
         return table;
     }
 
-    private static readonly string[] HighContrastTooltips = BuildTooltips(HighContrastSubtitle);
-    private static readonly string HighContrastDoneTodayTooltip = ComposeTooltip(DoneToday, HighContrastSubtitle(QuestState.DoneThisCycle));
-    private static readonly string HighContrastDoneThisWeekTooltip = ComposeTooltip(DoneThisWeek, HighContrastSubtitle(QuestState.DoneThisCycle));
-
     /// <summary>
     /// A state moon's tooltip in the glyph palette in use: <see cref="Tooltip(QuestState, byte)"/> for Standard, the
     /// same name with <see cref="HighContrastSubtitle"/> as the shape hint for the high-contrast palette.
@@ -127,18 +144,19 @@ public static class StateNames
             return Tooltip(state, repeatInterval);
         }
 
+        var set = HighContrastSet.Value;
         if (state == QuestState.DoneThisCycle)
         {
             return repeatInterval switch
             {
-                DailyInterval => HighContrastDoneTodayTooltip,
-                WeeklyInterval => HighContrastDoneThisWeekTooltip,
-                _ => HighContrastTooltips[(int)QuestState.DoneThisCycle],
+                DailyInterval => set.DoneToday,
+                WeeklyInterval => set.DoneThisWeek,
+                _ => set.States[(int)QuestState.DoneThisCycle],
             };
         }
 
-        return (uint)state < (uint)HighContrastTooltips.Length
-            ? HighContrastTooltips[(int)state]
+        return (uint)state < (uint)set.States.Length
+            ? set.States[(int)state]
             : ComposeTooltip(Name(state), HighContrastSubtitle(state));
     }
 
@@ -152,14 +170,14 @@ public static class StateNames
     /// </summary>
     public static string HighContrastSubtitle(QuestState state) => state switch
     {
-        QuestState.Ready => "bright half, bold bar",
-        QuestState.ReadyOnOtherJob => "dim half, hollow bar",
-        QuestState.Accepted => "bright gibbous, large seal",
-        QuestState.Blocked => "empty disc, thick rim",
-        QuestState.DoneThisCycle => "dim gibbous, check",
-        QuestState.Completed => "solid bright disc",
-        QuestState.Foreclosed => "thick diagonal bar",
-        QuestState.Unknown => "dashed rim",
+        QuestState.Ready => CoreText.T("Core.HighContrast.Ready", "bright half, bold bar"),
+        QuestState.ReadyOnOtherJob => CoreText.T("Core.HighContrast.ReadyOnOtherJob", "dim half, hollow bar"),
+        QuestState.Accepted => CoreText.T("Core.HighContrast.Accepted", "bright gibbous, large seal"),
+        QuestState.Blocked => CoreText.T("Core.HighContrast.Blocked", "empty disc, thick rim"),
+        QuestState.DoneThisCycle => CoreText.T("Core.HighContrast.DoneThisCycle", "dim gibbous, check"),
+        QuestState.Completed => CoreText.T("Core.HighContrast.Completed", "solid bright disc"),
+        QuestState.Foreclosed => CoreText.T("Core.HighContrast.Foreclosed", "thick diagonal bar"),
+        QuestState.Unknown => CoreText.T("Core.HighContrast.Unknown", "dashed rim"),
         _ => string.Empty,
     };
 
@@ -169,14 +187,14 @@ public static class StateNames
     /// </summary>
     public static string GlyphSubtitle(QuestState state) => state switch
     {
-        QuestState.Ready => "first quarter, glow",
-        QuestState.ReadyOnOtherJob => "first quarter, silver, gold ring",
-        QuestState.Accepted => "waxing gibbous, sealed, silver ring",
-        QuestState.Blocked => "new moon, silver ring",
-        QuestState.DoneThisCycle => "waning gibbous, silver",
-        QuestState.Completed => "full moon",
-        QuestState.Foreclosed => "eclipsed",
-        QuestState.Unknown => "veiled",
+        QuestState.Ready => CoreText.T("Core.Glyph.Ready", "first quarter, glow"),
+        QuestState.ReadyOnOtherJob => CoreText.T("Core.Glyph.ReadyOnOtherJob", "first quarter, silver, gold ring"),
+        QuestState.Accepted => CoreText.T("Core.Glyph.Accepted", "waxing gibbous, sealed, silver ring"),
+        QuestState.Blocked => CoreText.T("Core.Glyph.Blocked", "new moon, silver ring"),
+        QuestState.DoneThisCycle => CoreText.T("Core.Glyph.DoneThisCycle", "waning gibbous, silver"),
+        QuestState.Completed => CoreText.T("Core.Glyph.Completed", "full moon"),
+        QuestState.Foreclosed => CoreText.T("Core.Glyph.Foreclosed", "eclipsed"),
+        QuestState.Unknown => CoreText.T("Core.Glyph.Unknown", "veiled"),
         _ => string.Empty,
     };
 }

@@ -4,6 +4,7 @@ using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Ui;
+using Tsukimichi.Core.Localization;
 
 namespace Tsukimichi.Core.Diagnostics;
 
@@ -12,7 +13,7 @@ namespace Tsukimichi.Core.Diagnostics;
 /// composed on click only. It carries the plugin, client and data versions, the quest, its display state with the
 /// blocker line, one line per requirement in the evaluator's order with the verdict and the values compared, the
 /// curated quirk note when the quest has one, the character inputs the evaluation used, and when they were
-/// captured. It never carries the content id, the character's name, the world or the account: the fields the
+/// captured. It is always English, whatever the UI language (<see cref="CoreText.English"/>). It never carries the content id, the character's name, the world or the account: the fields the
 /// composer reads from the snapshot are gameplay ones.
 /// <code>
 /// ```tsukimichi-diagnostic
@@ -55,6 +56,8 @@ public static class QuestDiagnostic
     /// <summary>The block, lines joined by '\n' and wrapped in the fence.</summary>
     public static string Compose(DiagnosticInputs inputs)
     {
+        // For bug reports and tools: English whatever the UI language (docs/localization.md).
+        using var english = CoreText.English();
         ArgumentNullException.ThrowIfNull(inputs);
         ArgumentNullException.ThrowIfNull(inputs.Quest);
         ArgumentNullException.ThrowIfNull(inputs.Names);

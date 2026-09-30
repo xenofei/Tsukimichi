@@ -232,7 +232,7 @@ public sealed class ChainCatalog
     public static string DisplayName(Chain chain, Func<uint, string> questName)
     {
         ArgumentNullException.ThrowIfNull(chain);
-        return chain.IsStory ? StorySidequests.ChainNamePrefix + Title(chain, questName) : chain.Name;
+        return chain.IsStory ? StorySidequests.StoryName(Title(chain, questName)) : chain.Name;
     }
 
     /// <summary>Zero-based place of a quest in a chain's play order; -1 when the chain does not list it.</summary>

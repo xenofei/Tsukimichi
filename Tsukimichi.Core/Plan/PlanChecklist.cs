@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using Tsukimichi.Core.Localization;
 
 namespace Tsukimichi.Core.Plan;
 
@@ -19,8 +20,8 @@ public static class PlanChecklist
     /// <summary>Names printed per kind before "+N more".</summary>
     public const int MaxNamesPerKind = 3;
 
-    public const string Title = "# Clear my blues";
-    public const string Footer = "_Made with Tsukimichi (Dalamud plugin)_";
+    public static string Title => "# " + CoreText.T("Core.Plan.Title", "Clear my blues");
+    public static string Footer => "_" + CoreText.T("Core.Plan.Footer", "Made with Tsukimichi (Dalamud plugin)") + "_";
 
     /// <param name="plan">The plan as shown (already filtered).</param>
     /// <param name="zoneName">The zone's name for the line ("Western Thanalan"); empty prints the level alone.</param>
@@ -109,10 +110,10 @@ public static class PlanChecklist
             }
 
             var shown = names.Count <= MaxNamesPerKind ? names : names.GetRange(0, MaxNamesPerKind);
-            var text = UnlockKinds.Name(kind) + ": " + string.Join(", ", shown);
+            var text = string.Format(CultureInfo.CurrentCulture, CoreText.T("Core.Plan.KindNames", "{0}: {1}"), UnlockKinds.Name(kind), string.Join(", ", shown));
             if (names.Count > shown.Count)
             {
-                text += string.Format(CultureInfo.InvariantCulture, " +{0} more", names.Count - shown.Count);
+                text += string.Format(CultureInfo.CurrentCulture, CoreText.T("Core.Plan.More", " +{0} more"), names.Count - shown.Count);
             }
 
             parts.Add(text);
@@ -120,16 +121,18 @@ public static class PlanChecklist
 
         if (parts.Count > 0)
         {
-            return "unlocks: " + string.Join("; ", parts);
+            return string.Format(CultureInfo.CurrentCulture, CoreText.T("Core.Plan.Unlocks", "unlocks: {0}"), string.Join("; ", parts));
         }
 
-        return inherited.Count > 0 ? "leads to: " + string.Join("; ", inherited) : string.Empty;
+        return inherited.Count > 0
+            ? string.Format(CultureInfo.CurrentCulture, CoreText.T("Core.Plan.LeadsTo", "leads to: {0}"), string.Join("; ", inherited))
+            : string.Empty;
     }
 
     private static void AppendLine(StringBuilder sb, PlanEntry entry, string zone)
     {
-        sb.Append("- [ ] ").Append(Escape(entry.Name)).Append(" (Lv ")
-            .Append(entry.Quest.DisplayLevel.ToString(CultureInfo.InvariantCulture));
+        sb.Append("- [ ] ").Append(Escape(entry.Name)).Append(" (")
+            .Append(string.Format(CultureInfo.CurrentCulture, CoreText.T("Core.Plan.Level", "Lv {0}"), entry.Quest.DisplayLevel));
         if (zone.Length > 0)
         {
             sb.Append(", ").Append(Escape(zone));

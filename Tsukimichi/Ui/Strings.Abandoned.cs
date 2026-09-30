@@ -1,4 +1,5 @@
 using Tsukimichi.Core.Query;
+using Tsukimichi.Localization;
 
 namespace Tsukimichi.Ui;
 
@@ -11,29 +12,32 @@ static partial class Strings
 {
     // ---- Characters dashboard ----
     /// <summary>{0} = number of abandoned quests.</summary>
-    public const string AbandonedHeaderFormat = "Abandoned ({0})";
-    public const string AbandonedNone = "No abandoned quests recorded. When a quest leaves your journal without being completed, it is listed here with the step it had reached.";
-    public const string AbandonedShowInJournal = "Show in Journal";
-    public const string AbandonedShowInJournalTooltip = "Open the Journal filtered to these quests";
-    public const string AbandonedFlag = "Flag";
-    public const string AbandonedFlagTooltip = "Flag the quest giver on the map";
-    public const string AbandonedTeleport = "Teleport";
-    public const string AbandonedReveal = "Reveal";
-    public const string AbandonedRevealTooltip = "Show in the Journal";
-    public const string AbandonedGiverPrefix = "Giver: ";
-    public const string AbandonedAtPrefix = "Abandoned ";
+    public static string AbandonedHeaderFormat => Loc.Get("AbandonedHeaderFormat");
+    public static string AbandonedNone => Loc.Get("AbandonedNone");
+    public static string AbandonedShowInJournal => Loc.Get("AbandonedShowInJournal");
+    public static string AbandonedShowInJournalTooltip => Loc.Get("AbandonedShowInJournalTooltip");
+    public static string AbandonedFlag => Loc.Get("AbandonedFlag");
+    public static string AbandonedFlagTooltip => Loc.Get("AbandonedFlagTooltip");
+    public static string AbandonedTeleport => Loc.Get("AbandonedTeleport");
+    public static string AbandonedReveal => Loc.Get("AbandonedReveal");
+    public static string AbandonedRevealTooltip => Loc.Get("AbandonedRevealTooltip");
+    /// <summary>{0} = NPC name.</summary>
+    public static string AbandonedGiverFormat => Loc.Get("AbandonedGiverFormat");
+    /// <summary>{0} = date and time.</summary>
+    public static string AbandonedAtFormat => Loc.Get("AbandonedAtFormat");
 
     // ---- Filter ----
-    public const string AbandonedOnly = "Abandoned only";
-    public const string AbandonedOnlyTooltip = "Keep only quests this character abandoned and has not taken up again";
-    public const string AbandonedChip = FilterNames.Abandoned;
+    public static string AbandonedOnly => Loc.Get("AbandonedOnly");
+    public static string AbandonedOnlyTooltip => Loc.Get("AbandonedOnlyTooltip");
+    public static string AbandonedChip => FilterNames.Display(FilterNames.Abandoned);
 
     // ---- Chat ----
-    public const string AbandonedChatPrefix = "Abandoned: ";
+    /// <summary>{0} = the quest link; " (step 3 of 5)" follows the line.</summary>
+    public static string AbandonedChatFormat => Loc.Get("AbandonedChatFormat");
 
     /// <summary>{0} = "step 3 of 5".</summary>
     public const string AbandonedChatStepFormat = " ({0})";
 
-    public const string AbandonedConfigNotice = "Chat line when you abandon a quest";
-    public const string AbandonedConfigNoticeHint = "\"Abandoned: [quest] (step 3 of 5)\", once per quest per session, so a mis-click is noticed. The Characters tab lists every abandoned quest either way.";
+    public static string AbandonedConfigNotice => Loc.Get("AbandonedConfigNotice");
+    public static string AbandonedConfigNoticeHint => Loc.Get("AbandonedConfigNoticeHint");
 }

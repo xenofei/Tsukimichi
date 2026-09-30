@@ -79,6 +79,7 @@ public sealed class FilterPanel
     private string stateChip = string.Empty;
     private string stateChipTooltip = string.Empty;
     private QuestStateMask stateChipMask = QuestStateMask.All;
+    private int stateChipLanguage = -1;
     // The scope chip's label, memoized per (scope, catalog): naming a node is a scan of the whole catalog.
     private string scopeChip = string.Empty;
     private QuestScope scopeChipScope = QuestScope.None;
@@ -200,6 +201,7 @@ public sealed class FilterPanel
     {
         var f = ui.Filters;
         var selected = Array.IndexOf(QuickViewPresets, f.Preset);
+        quickViewTooltips[0] = Strings.QuickViewAllTooltip;
         for (var i = 0; i < QuickViewPresets.Length; i++)
         {
             quickViewEnabled[i] = hasSnapshot || !QuickViewNeedsSnapshot[i];
@@ -221,16 +223,22 @@ public sealed class FilterPanel
     /// <summary>Quick views in toolbar order (the segment after "All" is index 0).</summary>
     private static readonly Preset[] QuickViewPresets = [Preset.FeatureQuests, Preset.LevelBand, Preset.Stalled, Preset.StorySidequests, Preset.Sprout];
 
-    private static readonly string[] QuickViewLabels =
-        [Strings.PresetFeatureQuests, Strings.PresetLevelBand, Strings.PresetStalled, Strings.PresetStorySidequests, Strings.PresetSprout];
+    private static string[] QuickViewLabels => quickViewLabelsText.Value;
 
-    private static readonly string[] QuickViewTooltips =
-        [Strings.PresetFeatureQuestsTooltip, Strings.PresetLevelBandTooltip, Strings.PresetStalledTooltip, Strings.PresetStorySidequestsTooltip, Strings.PresetSproutTooltip];
+    private static readonly Localization.LocArray quickViewLabelsText = new(static () =>
+        [Strings.PresetFeatureQuests, Strings.PresetLevelBand, Strings.PresetStalled, Strings.PresetStorySidequests, Strings.PresetSprout]);
+
+    private static string[] QuickViewTooltips => quickViewTooltipsText.Value;
+
+    private static readonly Localization.LocArray quickViewTooltipsText = new(static () =>
+        [Strings.PresetFeatureQuestsTooltip, Strings.PresetLevelBandTooltip, Strings.PresetStalledTooltip, Strings.PresetStorySidequestsTooltip, Strings.PresetSproutTooltip]);
 
     // Sprout mode (T19): without a character only A Realm Reborn is in reach, which is still a useful view.
     private static readonly bool[] QuickViewNeedsSnapshot = [false, true, true, false, false];
 
-    private static readonly string[] QuickViewDisabledTooltips = BuildDisabledTooltips();
+    private static string[] QuickViewDisabledTooltips => quickViewDisabledTooltipsText.Value;
+
+    private static readonly Localization.LocArray quickViewDisabledTooltipsText = new(BuildDisabledTooltips);
 
     private readonly bool[] quickViewEnabled = new bool[QuickViewPresets.Length];
 
@@ -733,14 +741,15 @@ public sealed class FilterPanel
     /// <summary>"States: −Completed, −Locked out", naming up to <see cref="MaxStateChipNames"/> excluded states then "+N"; rebuilt when the mask changes.</summary>
     private string StateChipText(FilterSet f)
     {
-        if (stateChipMask == f.StateMask && stateChip.Length > 0)
+        if (stateChipMask == f.StateMask && stateChipLanguage == Localization.Loc.Version && stateChip.Length > 0)
         {
             return stateChip;
         }
 
         stateChipMask = f.StateMask;
-        var text = Strings.ChipStatePrefix;
-        var tooltip = Strings.ChipStateTooltipPrefix;
+        stateChipLanguage = Localization.Loc.Version;
+        var text = string.Empty;
+        var tooltip = string.Empty;
         var named = 0;
         var excluded = 0;
         foreach (var state in StateOrder)
@@ -765,8 +774,8 @@ public sealed class FilterPanel
             text += string.Format(CultureInfo.CurrentCulture, Strings.ChipStateMoreFormat, excluded - named);
         }
 
-        stateChip = text;
-        stateChipTooltip = tooltip;
+        stateChip = string.Format(CultureInfo.CurrentCulture, Strings.ChipStateFormat, text);
+        stateChipTooltip = string.Format(CultureInfo.CurrentCulture, Strings.ChipStateTooltipFormat, tooltip);
         return stateChip;
     }
 
@@ -775,13 +784,16 @@ public sealed class FilterPanel
     /// category under its section, a genre under its category, the virtual nodes by their tree names, an NPC's quests
     /// as "Quests from Gerolt"). Memoized per (scope, catalog): naming a node scans the catalog once.
     /// </summary>
+    private int scopeChipLanguage = -1;
+
     private string ScopeChipText(QuestScope scope, QuestCatalog? catalog)
     {
-        if (scopeChip.Length > 0 && scope == scopeChipScope && ReferenceEquals(catalog, scopeChipCatalog))
+        if (scopeChip.Length > 0 && scope == scopeChipScope && ReferenceEquals(catalog, scopeChipCatalog) && scopeChipLanguage == Localization.Loc.Version)
         {
             return scopeChip;
         }
 
+        scopeChipLanguage = Localization.Loc.Version;
         scopeChipScope = scope;
         scopeChipCatalog = catalog;
         scopeChip = string.Format(CultureInfo.CurrentCulture, Strings.ScopeChipFormat, ScopeName(scope, catalog));
@@ -907,13 +919,16 @@ public sealed class FilterPanel
         return currentJobCategory;
     }
 
+    private int listsLanguage = -1;
+
     private void EnsureLists(CatalogBundle current)
     {
-        if (ReferenceEquals(bundle, current))
+        if (ReferenceEquals(bundle, current) && listsLanguage == Localization.Loc.Version)
         {
             return;
         }
 
+        listsLanguage = Localization.Loc.Version;
         bundle = current;
         categories.Clear();
         var seen = new HashSet<uint>();

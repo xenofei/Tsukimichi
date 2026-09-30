@@ -101,19 +101,22 @@ public sealed class PayoffGateLines
         }
     }
 
+    private int builtLanguage = -1;
+
     private void Refresh(IReadOnlyList<ActivePayoffGate> gates)
     {
-        if (ReferenceEquals(gates, builtFor))
+        if (ReferenceEquals(gates, builtFor) && builtLanguage == Localization.Loc.Version)
         {
             return;
         }
 
+        builtLanguage = Localization.Loc.Version;
         builtFor = gates;
         lines = new string[gates.Count];
         tooltips = new string[gates.Count];
         for (var i = 0; i < gates.Count; i++)
         {
-            lines[i] = Strings.PayoffPrefix + gates[i].Gate.Instruction;
+            lines[i] = string.Format(CultureInfo.CurrentCulture, Strings.PayoffFormat, gates[i].Gate.Instruction);
             tooltips[i] = string.Format(CultureInfo.CurrentCulture, Strings.PayoffProgressFormat, gates[i].Done, gates[i].Total);
         }
     }

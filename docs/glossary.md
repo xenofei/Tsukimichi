@@ -69,3 +69,79 @@ One phrase per quest that is not Ready, from `BlockerText` in Core: the single r
 | Provenance line of a retired quest | Removed from the game / Removed from the game in patch {patch} | – | Detail pane, under the journal path |
 
 "Unlisted" no longer appears on any surface (`StringsVocabularyTests` lints it). The rule reasons are: class or job intro (2), Grand Company (3), nearest listed prerequisite (4), nearest listed successor (5), issuer's zone (6), no signal (7).
+
+## Translated display names
+
+Since 1.1 (V2-19) the display names follow the plugin language (Settings › Display › Plugin language; [docs/localization.md](localization.md)). English is the source and owns the concepts above; the Japanese (ja), German (de) and French (fr) names below are the **draft** translations' choices, and players of each language are invited to correct them ([CONTRIBUTING.md › Translations](../CONTRIBUTING.md#translations)). One name per concept per language, as in English: change the resource key (named in the first column) and this table together. Core's names are keys `Core.*` in `Tsukimichi/Localization/Strings*.resx`; the English stays written at its call site in Core (`CoreText.T`), which the tests keep equal to `Strings.resx`.
+
+### Quest states
+
+| Concept (key) | English | 日本語 (ja) | Deutsch (de) | Français (fr) |
+|---|---|---|---|---|
+| `Ready` (`Core.State.Ready`) | Ready | 受注可能 | Bereit | Prête |
+| `ReadyOnOtherJob` | Ready on another job | 他ジョブで受注可能 | Bereit (anderer Job) | Prête (autre job) |
+| … naming the job (`ReadyOnJobFormat`) | Ready on {JOB} | {JOB}で受注可能 | Bereit als {JOB} | Prête sur {JOB} |
+| `Accepted` | In journal | 受注中 | Im Tagebuch | En cours |
+| … with the step (`Core.Blocker.StepOf`) | step {n} of {m} | {m}段階中{n}段階目 | Schritt {n} von {m} | étape {n} sur {m} |
+| `Blocked` | Blocked | 条件未達 | Blockiert | Bloquée |
+| `DoneThisCycle`, daily | Done today | 今日は完了 | Heute erledigt | Faite aujourd'hui |
+| `DoneThisCycle`, weekly | Done this week | 今週は完了 | Diese Woche erledigt | Faite cette semaine |
+| `DoneThisCycle`, other | Done this cycle | 今期は完了 | Diesen Zyklus erledigt | Faite ce cycle |
+| `Completed` | Completed | 完了済み | Abgeschlossen | Terminée |
+| `Foreclosed` | Locked out | 受注不可 | Ausgeschlossen | Exclue |
+| `Unknown` | Not checked | 未確認 | Ungeprüft | Non vérifiée |
+
+### Glyph subtitles (`Core.Glyph.*`)
+
+| State | English | 日本語 | Deutsch | Français |
+|---|---|---|---|---|
+| Ready | first quarter, glow | 上弦の月、輝き | zunehmender Halbmond, leuchtend | premier quartier, lueur |
+| Ready on another job | first quarter, silver, gold ring | 上弦の月、銀、金の輪 | zunehmender Halbmond, silbern, goldener Ring | premier quartier, argent, anneau d'or |
+| In journal | waxing gibbous, sealed, silver ring | 満ちゆく月、封印、銀の輪 | zunehmender Dreiviertelmond, versiegelt, silberner Ring | gibbeuse croissante, scellée, anneau d'argent |
+| Blocked | new moon, silver ring | 新月、銀の輪 | Neumond, silberner Ring | nouvelle lune, anneau d'argent |
+| Done | waning gibbous, silver | 欠けゆく月、銀 | abnehmender Dreiviertelmond, silbern | gibbeuse décroissante, argent |
+| Completed | full moon | 満月 | Vollmond | pleine lune |
+| Locked out | eclipsed | 月食 | Finsternis | éclipsée |
+| Not checked | veiled | 朧月 | verschleiert | voilée |
+
+### Blocker phrases (`Core.Blocker.*`)
+
+| Requirement | English | 日本語 | Deutsch | Français |
+|---|---|---|---|---|
+| Completed lock | closed by: {quest} | {quest}により受注不可 | ausgeschlossen durch: {quest} | fermée par : {quest} |
+| Expansion | Expansion: {expansion} | 拡張パッケージ: {expansion} | Erweiterung: {expansion} | Extension : {expansion} |
+| Level cap | Lv {n}, above your cap | Lv{n}（レベル上限超過） | St. {n}, über deiner Obergrenze | Niv. {n}, au-dessus de votre plafond |
+| Prerequisite | after: {quest} / after MSQ: {quest} | 前提: {quest} / 前提（メイン）: {quest} | nach: {quest} / nach MSQ: {quest} | après : {quest} / après le MSQ : {quest} |
+| Pinned job | Lv {n} on {JOB} | {JOB}でLv{n} | St. {n} als {JOB} | Niv. {n} ({JOB}) |
+| Job category | Job: any {category}, you are {JOB} | ジョブ: {category}のいずれか（現在は{JOB}） | Job: jeder {category}, du bist {JOB} | Job : {category} au choix, vous êtes {JOB} |
+| Level | Lv {n} | Lv{n} | St. {n} | Niv. {n} |
+| Grand Company | Grand Company: {company or rank} | グランドカンパニー: {…} | Staatliche Gesellschaft: {…} | Grande Compagnie : {…} |
+| Allied society rank | Rank: {rank} with the {society} | {society}とのランク: {rank} | Rang: {rank} bei {society} | Rang : {rank} auprès des {society} |
+| Allied society reputation | Reputation: {n} more with the {society} | {society}との友好度: あと{n} | Ansehen: noch {n} bei {society} | Réputation : encore {n} auprès des {society} |
+| Allowances / today's offer | Allowance: none left today / Not offered today | 受注権: 本日の残りなし / 本日は依頼なし | Kontingent: heute keins mehr / Heute nicht angeboten | Quota : aucun restant aujourd'hui / Pas proposée aujourd'hui |
+| Custom delivery | Custom delivery: rank {n} with {client} | カスタムデリバリー: {client}の満足度ランク{n} | Sonderauftrag: Rang {n} bei {client} | Livraison spéciale : rang {n} avec {client} |
+| Delivery Moogle | Delivery Moogle: carrier level {n} | モグレター配達: 配達士レベル{n} | Mogry-Post: Zustellerstufe {n} | Mog-poste : niveau de facteur {n} |
+| Duty | Duty: {duty} / Duty: {n} to clear | コンテンツ: {duty} / コンテンツ: {n}をクリア | Inhalt: {duty} / Inhalt: {n} abschließen | Mission : {duty} / Mission : {n} à terminer |
+| Mount / house | Mount / House | マウント / ハウス | Reittier / Haus | Monture / Maison |
+| Seasonal | Seasonal: not running / Seasonal: ended | シーズナル: 開催期間外 / シーズナル: 終了 | Saisonal: läuft nicht / Saisonal: beendet | Événement : pas en cours / Événement : terminé |
+| Not judged | Not checked: achievements / accept condition / mount / house | 未確認: アチーブメント / 受注条件 / マウント / ハウス | Ungeprüft: Errungenschaften / Annahmebedingung / Reittier / Haus | Non vérifiée : hauts faits / condition d'acceptation / monture / maison |
+| Removed | removed from the game | ゲームから削除 | aus dem Spiel entfernt | retirée du jeu |
+
+### Labels
+
+| Concept (key) | English | 日本語 | Deutsch | Français |
+|---|---|---|---|---|
+| Tabs (`TabJournal`, `TabMoonlit`, `TabCharacters`, `TabFlight`, `PlanTab`) | Journal · Moonlit · Characters · Flight · My blues | ジャーナル · 月明かり · キャラクター · 飛行 · 青クエ | Tagebuch · Mondlicht · Charaktere · Fliegen · Meine Blauen | Journal · Moonlit · Personnages · Vol · Mes bleues |
+| Moonlit pane subtitle (`MoonlitSubtitle`) | rewards only a quest gives | クエストでしか得られない報酬 | Belohnungen, die nur ein Auftrag gibt | récompenses que seule une quête donne |
+| Group of the quick views (`Presets`) | Quick views | クイックビュー | Schnellansichten | Vues rapides |
+| Quick views (`QuickViewAll`, `Core.Filter.*`) | All · Unlocks · My level · Stalled · Story sidequests · Sprout mode | すべて · 解放 · 適正レベル · 停滞中 · 物語サブクエ · 若葉モード | Alle · Freischaltung · Meine Stufe · Stockend · Geschichten · Neulingsmodus | Toutes · Déblocages · Mon niveau · En suspens · Récits annexes · Mode novice |
+| Tree node of unlock quests (`FeatureUnlocks`) | Unlock quests | 解放クエスト | Freischaltaufträge | Quêtes de déblocage |
+| Table column after Job (`ColumnStatus`) | Status | 状況 | Status | Statut |
+| Todo overlay section (`TodoSectionNearby`) | Unlocks you can start here | ここで開始できる解放クエスト | Freischaltungen hier | Déblocages à commencer ici |
+| Removed node, setting, filter (`RemovedFromGame`, `ConfigShowUnlisted`, `Core.Filter.IncludeUnlisted`) | Removed from the game · Show removed quests · Include removed | ゲームから削除 · 削除されたクエストを表示 · 削除済みを含める | Aus dem Spiel entfernt · Entfernte Aufträge zeigen · Entfernte einbeziehen | Retirées du jeu · Afficher les quêtes retirées · Inclure les retirées |
+| Journal filing (`ConfigJournalFiling*`) | Journal filing: Refiled / Legacy | ジャーナル分類: 再分類 / 従来 | Tagebuch-Einordnung: Neu eingeordnet / Klassisch | Classement du journal : Reclassé / Ancien |
+| Allied society requirements (`RequirementName.Tribe*`) | Allied Society rank / reputation | 友好部族のランク / 友好度 | Rang / Ansehen der Verbündeten Gesellschaft | Rang / Réputation de tribu alliée |
+| Spoiler placeholder (`Core.Spoiler.Placeholder`) | Main scenario quest (Lv 83) | メインクエスト（Lv83） | Hauptszenario-Auftrag (St. 83) | Quête du scénario principal (niv. 83) |
+| Filters (`Core.Filter.HideCompleted`, `Core.Filter.AvailableOnly`) | Hide completed · Available now | 完了済みを隠す · 今すぐ着手可能 | Abgeschlossene ausblenden · Jetzt verfügbar | Masquer les terminées · Disponibles maintenant |
+
+Filter identities (`FilterNames.HideCompleted` and the rest) stay English in code: the empty-result guard names filters by them, and only `FilterNames.Display` translates what a chip prints.

@@ -74,7 +74,7 @@ public class StorySidequestsFixtureTests(FixtureCatalog fixture, ITestOutputHelp
             Assert.NotEqual(0u, quest.Icon);
             Assert.Equal(StorySidequests.SidequestSectionId, quest.Journal.SectionId);
         });
-        Assert.All(stories.Chains, chain => Assert.StartsWith(StorySidequests.ChainNamePrefix, chain.Name, StringComparison.Ordinal));
+        Assert.All(stories.Chains, chain => Assert.StartsWith("Story: ", chain.Name, StringComparison.Ordinal));
     }
 
     [Fact]
@@ -110,7 +110,7 @@ public class StorySidequestsFixtureTests(FixtureCatalog fixture, ITestOutputHelp
         output.WriteLine($"{zone}: {chain.Name}: {string.Join(", ", chain.RowIds)}");
 
         // Named after the true first quest, the one that grants the first line's aether current.
-        Assert.Equal(StorySidequests.ChainNamePrefix + Catalog.ByRowId[firstLine].Name, chain.Name);
+        Assert.Equal(StorySidequests.StoryName(Catalog.ByRowId[firstLine].Name), chain.Name);
         Assert.Contains(firstLine, features);
 
         // Four quests of the first line, four of the second, then the one that requires the end of both.

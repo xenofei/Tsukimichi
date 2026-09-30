@@ -181,10 +181,13 @@ public static class UiMetrics
     /// </summary>
     /// <param name="names">Name lookups for the blocker line, normally the session's.</param>
     /// <param name="states">Every quest's evaluation for the same character when at hand; null for another character's evaluation.</param>
+    private static int reasonLanguage = -1;
+
     public static void StateTooltip(QuestState state, QuestEvaluation? evaluation, QuestRecord? quest, BlockerNames names, IReadOnlyDictionary<uint, QuestEvaluation>? states)
     {
-        if (!ReferenceEquals(evaluation, reasonEvaluation) || !ReferenceEquals(quest, reasonQuest) || !ReferenceEquals(states, reasonStates))
+        if (!ReferenceEquals(evaluation, reasonEvaluation) || !ReferenceEquals(quest, reasonQuest) || !ReferenceEquals(states, reasonStates) || reasonLanguage != Localization.Loc.Version)
         {
+            reasonLanguage = Localization.Loc.Version;
             reasonEvaluation = evaluation;
             reasonQuest = quest;
             reasonStates = states;

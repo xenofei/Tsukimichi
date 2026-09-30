@@ -813,7 +813,7 @@ public sealed partial class CharactersPane
             if (ImGui.Button(Strings.CharactersForget))
             {
                 forgetTarget = snapshot.ContentId;
-                forgetQuestion = Strings.CharactersForgetQuestionPrefix + snapshot.Name + Strings.CharactersForgetQuestionSuffix;
+                forgetQuestion = string.Format(CultureInfo.CurrentCulture, Strings.CharactersForgetQuestionFormat, snapshot.Name);
                 ImGui.OpenPopup(Strings.CharactersForgetPopup);
             }
         }
@@ -1176,7 +1176,7 @@ public sealed partial class CharactersPane
         for (var i = 0; i < sections.Length; i++)
         {
             var s = diff.Sections[i];
-            var name = s.SectionName.Length == 0 ? Strings.CharactersSectionPrefix + s.SectionId.ToString(CultureInfo.InvariantCulture) : s.SectionName;
+            var name = s.SectionName.Length == 0 ? string.Format(CultureInfo.InvariantCulture, Strings.CharactersSectionFormat, s.SectionId) : s.SectionName;
             sections[i] = new DiffSectionRow(name, s.OnlyA.ToString(CultureInfo.InvariantCulture), s.OnlyB.ToString(CultureInfo.InvariantCulture));
         }
 
@@ -1470,12 +1470,12 @@ public sealed partial class CharactersPane
             File.WriteAllText(file, text);
 
             log.Information("Exported {Name} to {Path}", snapshot.Name, file);
-            ShowToast(Strings.CharactersExportedPrefix + file);
+            ShowToast(string.Format(CultureInfo.CurrentCulture, Strings.CharactersExportedFormat, file));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException)
         {
             log.Error(ex, "Export of {Name} failed", snapshot.Name);
-            ShowToast(Strings.CharactersExportFailedPrefix + ex.Message);
+            ShowToast(string.Format(CultureInfo.CurrentCulture, Strings.CharactersExportFailedFormat, ex.Message));
         }
     }
 
@@ -1521,7 +1521,7 @@ public sealed partial class CharactersPane
             var live = c.ContentId == session.LiveContentId;
             var label = (live ? Strings.CharactersLiveMarker : string.Empty) + c.Name;
             var detailText = WorldName(c.World) + " · " + (live ? Strings.CharactersLive : Age(c.TakenUtc)) + " · "
-                             + c.CompletedCount.ToString(CultureInfo.InvariantCulture) + Strings.CharactersCompletedSuffix;
+                             + Strings.CharactersCompleted(c.CompletedCount);
             built[i] = new CharacterItem(c.ContentId, c.Name, c.TakenUtc, label, detailText);
         }
 
@@ -1553,7 +1553,7 @@ public sealed partial class CharactersPane
         var taken = snapshot.TakenUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture);
         var takenLine = session.IsLive
             ? Strings.CharactersLive + " · " + taken
-            : Strings.CharactersSnapshotPrefix + taken + " (" + Age(snapshot.TakenUtc) + ")";
+            : string.Format(CultureInfo.CurrentCulture, Strings.CharactersSnapshotFormat, taken, Age(snapshot.TakenUtc));
 
         var completed = 0;
         foreach (var b in snapshot.CompletedBits)
@@ -1562,8 +1562,8 @@ public sealed partial class CharactersPane
         }
 
         var currentJob = JobName(names, snapshot.CurrentJob);
-        var countsLine = completed.ToString(CultureInfo.InvariantCulture) + Strings.CharactersCompletedSuffix + " · "
-                         + snapshot.Accepted.Count.ToString(CultureInfo.InvariantCulture) + Strings.CharactersAcceptedSuffix + " · " + currentJob;
+        var countsLine = Strings.CharactersCompleted(completed) + " · "
+                         + string.Format(CultureInfo.CurrentCulture, Strings.CharactersAcceptedFormat, snapshot.Accepted.Count) + " · " + currentJob;
 
         string gcLine;
         if (snapshot.GrandCompany == 0)
@@ -1574,7 +1574,7 @@ public sealed partial class CharactersPane
         {
             var gcName = names?.GrandCompany(snapshot.GrandCompany) is { Length: > 0 } n ? n : GrandCompanies.Name(snapshot.GrandCompany);
             var rank = snapshot.GrandCompany < snapshot.GcRanks.Length ? snapshot.GcRanks[snapshot.GrandCompany] : (byte)0;
-            gcLine = gcName + " · " + Strings.CharactersRankPrefix + rank.ToString(CultureInfo.InvariantCulture);
+            gcLine = string.Format(CultureInfo.CurrentCulture, Strings.CharactersGcRankFormat, gcName, rank);
         }
 
         var tribes = new List<(byte Id, TribeStanding Standing)>(snapshot.Tribes.Count);
@@ -1588,13 +1588,12 @@ public sealed partial class CharactersPane
         for (var i = 0; i < tribeRows.Length; i++)
         {
             var (id, standing) = tribes[i];
-            var tribeName = names?.Tribe(id) is { Length: > 0 } t ? t : Strings.CharactersTribePrefix + id.ToString(CultureInfo.InvariantCulture);
+            var tribeName = names?.Tribe(id) is { Length: > 0 } t ? t : string.Format(CultureInfo.InvariantCulture, Strings.CharactersTribeFormat, id);
             var rankName = names?.TribeRank(standing.Rank) is { Length: > 0 } r ? r : TribeRanks.Name(standing.Rank);
             tribeRows[i] = (tribeName, rankName, standing.Value.ToString(CultureInfo.InvariantCulture));
         }
 
-        var allowances = Strings.CharactersAllowancesPrefix + snapshot.TribeAllowance.ToString(CultureInfo.InvariantCulture) + Strings.CharactersTribeAllowanceSuffix
-                         + snapshot.LeveAllowance.ToString(CultureInfo.InvariantCulture) + Strings.CharactersLeveAllowanceSuffix;
+        var allowances = string.Format(CultureInfo.CurrentCulture, Strings.CharactersAllowancesFormat, snapshot.TribeAllowance, snapshot.LeveAllowance);
 
         var (msqLine, msqQuest) = BuildMsq(bundle);
         RefreshDerived(bundle);
@@ -1757,7 +1756,7 @@ public sealed partial class CharactersPane
                 progress.Fraction,
                 string.Format(CultureInfo.CurrentCulture, Strings.JobsChainCountFormat, progress.Done, progress.Total),
                 next,
-                next is null ? Strings.JobsChainComplete : Strings.JobsChainNextPrefix + session.Spoilers.DisplayName(next));
+                next is null ? Strings.JobsChainComplete : string.Format(CultureInfo.CurrentCulture, Strings.JobsChainNextFormat, session.Spoilers.DisplayName(next)));
             (progress.Done > 0 ? started : notStarted).Add(row);
         }
 
@@ -1866,7 +1865,7 @@ public sealed partial class CharactersPane
             }
 
             var name = quests[0].Journal.SectionName;
-            sections.Add((id, name.Length == 0 ? Strings.CharactersSectionPrefix + id.ToString(CultureInfo.InvariantCulture) : name));
+            sections.Add((id, name.Length == 0 ? string.Format(CultureInfo.InvariantCulture, Strings.CharactersSectionFormat, id) : name));
         }
 
         sections.Sort((a, b) => a.Id.CompareTo(b.Id));
@@ -1945,7 +1944,7 @@ public sealed partial class CharactersPane
             var evaluation = session.States.TryGetValue(rowId, out var e) ? e : null;
             rows.Add(new PinnedRow(
                 quest,
-                quest is null ? Strings.MoonlitQuestPrefix + rowId.ToString(CultureInfo.InvariantCulture) : session.Spoilers.DisplayName(quest),
+                quest is null ? string.Format(CultureInfo.InvariantCulture, Strings.MoonlitQuestFormat, rowId) : session.Spoilers.DisplayName(quest),
                 evaluation?.State ?? QuestState.Unknown,
                 quest is null ? string.Empty : BlockerText.StatusText(evaluation, quest, session.Names, session.States)));
         }
@@ -1971,7 +1970,7 @@ public sealed partial class CharactersPane
                 ev.TimeUtc.ToLocalTime().ToString("HH:mm", CultureInfo.InvariantCulture),
                 Strings.CharactersEventName(ev.Kind),
                 EventColor(ev.Kind),
-                quest is null ? Strings.MoonlitQuestPrefix + ev.RowId.ToString(CultureInfo.InvariantCulture) : session.Spoilers.DisplayName(quest));
+                quest is null ? string.Format(CultureInfo.InvariantCulture, Strings.MoonlitQuestFormat, ev.RowId) : session.Spoilers.DisplayName(quest));
         }
 
         return rows;
@@ -2095,11 +2094,11 @@ public sealed partial class CharactersPane
     {
         if (job == 0)
         {
-            return Strings.CharactersJobPrefix + "0";
+            return string.Format(CultureInfo.InvariantCulture, Strings.CharactersJobFormat, 0);
         }
 
         var name = names?.ClassJob(job);
-        return string.IsNullOrEmpty(name) ? Strings.CharactersJobPrefix + job.ToString(CultureInfo.InvariantCulture) : DisplayName(name);
+        return string.IsNullOrEmpty(name) ? string.Format(CultureInfo.InvariantCulture, Strings.CharactersJobFormat, job) : DisplayName(name);
     }
 
     private string WorldName(uint world)
@@ -2127,7 +2126,7 @@ public sealed partial class CharactersPane
             }
         }
 
-        return worldNames.TryGetValue(world, out var known) ? known : Strings.CharactersWorldPrefix + world.ToString(CultureInfo.InvariantCulture);
+        return worldNames.TryGetValue(world, out var known) ? known : string.Format(CultureInfo.InvariantCulture, Strings.CharactersWorldFormat, world);
     }
 
     private static string Age(DateTime takenUtc)
@@ -2135,20 +2134,20 @@ public sealed partial class CharactersPane
         var age = DateTime.UtcNow - takenUtc;
         if (age < TimeSpan.FromMinutes(1))
         {
-            return Strings.CharactersAgeJustNow;
+            return Strings.JustNow;
         }
 
         if (age < TimeSpan.FromHours(1))
         {
-            return ((int)age.TotalMinutes).ToString(CultureInfo.InvariantCulture) + Strings.CharactersAgeMinutesSuffix;
+            return string.Format(CultureInfo.CurrentCulture, Strings.MinutesAgoFormat, (int)age.TotalMinutes);
         }
 
         if (age < TimeSpan.FromDays(2))
         {
-            return ((int)age.TotalHours).ToString(CultureInfo.InvariantCulture) + Strings.CharactersAgeHoursSuffix;
+            return string.Format(CultureInfo.CurrentCulture, Strings.HoursAgoFormat, (int)age.TotalHours);
         }
 
-        return ((int)age.TotalDays).ToString(CultureInfo.InvariantCulture) + Strings.CharactersAgeDaysSuffix;
+        return string.Format(CultureInfo.CurrentCulture, Strings.DaysAgoFormat, (int)age.TotalDays);
     }
 
     /// <summary>Role groups in display order.</summary>

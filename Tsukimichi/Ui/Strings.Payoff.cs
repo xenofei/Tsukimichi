@@ -1,3 +1,5 @@
+using Tsukimichi.Localization;
+
 namespace Tsukimichi.Ui;
 
 /// <summary>
@@ -9,26 +11,28 @@ namespace Tsukimichi.Ui;
 static partial class Strings
 {
     /// <summary>Prefix of the line; the curated instruction follows ("Before you continue: Finish the Eden raid series first.").</summary>
-    public const string PayoffPrefix = "Before you continue: ";
+    /// <summary>{0} = the curated instruction ("Finish the Eden raid series first.").</summary>
+    public static string PayoffFormat => Loc.Get("PayoffFormat");
 
     /// <summary>The closed disclosure; the reason shows only after a click, and stays open for that character until closed.</summary>
-    public const string PayoffWhyClosed = "why? (spoiler)";
+    public static string PayoffWhyClosed => Loc.Get("PayoffWhyClosed");
 
-    public const string PayoffWhyOpen = "hide why";
+    public static string PayoffWhyOpen => Loc.Get("PayoffWhyOpen");
 
-    public const string PayoffWhyTooltip = "Shows why this matters. It names what the story ahead does with it: a spoiler.";
+    public static string PayoffWhyTooltip => Loc.Get("PayoffWhyTooltip");
 
     /// <summary>{0} = content quests done, {1} = content quests in all.</summary>
-    public const string PayoffProgressFormat = "Optional content that changes a scene in the story ahead. {0} of {1} done. Click to select the first one left.";
+    public static string PayoffProgressFormat => Loc.Get("PayoffProgressFormat");
 
     // ---- Chat ----
     /// <summary>After the instruction, before the link to the first content quest left.</summary>
-    public const string PayoffChatNextPrefix = " Next: ";
+    /// <summary>{0} = the curated instruction, {1} = the link to the first content quest left.</summary>
+    public static string PayoffChatFormat => Loc.Get("PayoffChatFormat");
 
     // ---- Settings › Spoilers ----
-    public const string PayoffConfigShow = "Show \"Before you continue\" notes";
-    public const string PayoffConfigShowHint = "When your story reaches a point where optional content changes a scene, a line under the MSQ line on the Characters tab and in the Tonight card says what to do first. Off hides the line and the chat notice.";
+    public static string PayoffConfigShow => Loc.Get("PayoffConfigShow");
+    public static string PayoffConfigShowHint => Loc.Get("PayoffConfigShowHint");
 
-    public const string PayoffConfigNotice = "Chat line when optional content pays off in the story ahead";
-    public const string PayoffConfigNoticeHint = "\"Before you continue: Finish the Eden raid series first.\", once per character, when the main scenario reaches the point where it matters. It never says why; the Characters tab and the Tonight card keep the line, with the reason behind \"why? (spoiler)\".";
+    public static string PayoffConfigNotice => Loc.Get("PayoffConfigNotice");
+    public static string PayoffConfigNoticeHint => Loc.Get("PayoffConfigNoticeHint");
 }

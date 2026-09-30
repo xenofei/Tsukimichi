@@ -1,3 +1,5 @@
+using Tsukimichi.Localization;
+
 namespace Tsukimichi.Ui;
 
 /// <summary>
@@ -8,52 +10,52 @@ namespace Tsukimichi.Ui;
 static partial class Strings
 {
     // ---- Detail pane: Journal card ----
-    public const string JournalTextCard = "Journal";
+    public static string JournalTextCard => Loc.Get("JournalTextCard");
 
-    public const string JournalTextRead = "Read the journal";
+    public static string JournalTextRead => Loc.Get("JournalTextRead");
 
-    public const string JournalTextHide = "Hide the journal";
+    public static string JournalTextHide => Loc.Get("JournalTextHide");
 
-    public const string JournalTextClosedCompleted = "The journal entries of this quest, as the game wrote them while you played it.";
+    public static string JournalTextClosedCompleted => Loc.Get("JournalTextClosedCompleted");
 
-    public const string JournalTextClosedAccepted = "The journal entries so far, up to the step you are on. Later entries appear as the quest goes on.";
+    public static string JournalTextClosedAccepted => Loc.Get("JournalTextClosedAccepted");
 
-    public const string JournalTextReadTooltip = "Shows the text the game's journal showed for this quest. Nothing beyond the step you have reached.";
+    public static string JournalTextReadTooltip => Loc.Get("JournalTextReadTooltip");
 
-    public const string JournalTextNoText = "The game has no journal text for this quest.";
+    public static string JournalTextNoText => Loc.Get("JournalTextNoText");
 
-    public const string JournalTextCopy = "Copy entry";
+    public static string JournalTextCopy => Loc.Get("JournalTextCopy");
 
-    public const string JournalTextCopyTooltip = "Copies this entry to the clipboard.";
+    public static string JournalTextCopyTooltip => Loc.Get("JournalTextCopyTooltip");
 
-    public const string JournalTextCopied = "Copied";
+    public static string JournalTextCopied => Loc.Get("JournalTextCopied");
 
-    public const string JournalTextObjectives = "Objectives";
+    public static string JournalTextObjectives => Loc.Get("JournalTextObjectives");
 
-    public const string JournalTextLater = "Later entries appear as the quest goes on.";
+    public static string JournalTextLater => Loc.Get("JournalTextLater");
 
-    public const string JournalTextNeutral = "Shown for a stored character: where the text depends on who reads it, both versions are shown (he/she).";
+    public static string JournalTextNeutral => Loc.Get("JournalTextNeutral");
 
     // ---- Settings › Journal text ----
-    public const string JournalTextSettingsSection = "Journal text";
+    public static string JournalTextSettingsSection => Loc.Get("JournalTextSettingsSection");
 
-    public const string JournalTextSearchSetting = "Search journal text of completed quests";
+    public static string JournalTextSearchSetting => Loc.Get("JournalTextSearchSetting");
 
-    public const string JournalTextSearchHint = "The search box also finds quests by the words of their journal entries, among the quests the character shown has completed; never a quest it has not played. The first time, the plugin reads every quest's text from the game files in the background (a few seconds) and keeps a word index, not the text, in its config folder; it is rebuilt after a game patch.";
+    public static string JournalTextSearchHint => Loc.Get("JournalTextSearchHint");
 
-    public const string JournalTextStatusWaiting = "Waiting for the quest catalog…";
+    public static string JournalTextStatusWaiting => Loc.Get("JournalTextStatusWaiting");
 
-    public const string JournalTextStatusLoading = "Reading the saved index…";
+    public static string JournalTextStatusLoading => Loc.Get("JournalTextStatusLoading");
 
     /// <summary>{0} = percent done.</summary>
-    public const string JournalTextStatusBuildingFormat = "Building the index… {0}%";
+    public static string JournalTextStatusBuildingFormat => Loc.Get("JournalTextStatusBuildingFormat");
 
     /// <summary>{0} = quests indexed, {1} = size on disk in KiB.</summary>
-    public const string JournalTextStatusReadyFormat = "Index ready: {0:N0} quests, {1:N0} KiB on disk.";
+    public static string JournalTextStatusReadyFormat => Loc.Get("JournalTextStatusReadyFormat");
 
     /// <summary>{0} = seconds.</summary>
-    public const string JournalTextStatusBuiltFormat = " Built in {0:0.0} s.";
+    public static string JournalTextStatusBuiltFormat => Loc.Get("JournalTextStatusBuiltFormat");
 
     /// <summary>{0} = the error.</summary>
-    public const string JournalTextStatusFailedFormat = "The index could not be built: {0}. Turn the setting off and on to try again.";
+    public static string JournalTextStatusFailedFormat => Loc.Get("JournalTextStatusFailedFormat");
 }

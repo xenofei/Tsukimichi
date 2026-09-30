@@ -1,4 +1,5 @@
 using System.Globalization;
+using Tsukimichi.Localization;
 
 namespace Tsukimichi.Ui;
 
@@ -9,39 +10,44 @@ namespace Tsukimichi.Ui;
 static partial class Strings
 {
     // ---- Characters dashboard: Compare with ----
-    public const string DiffSection = "Compare with";
-    public const string DiffNeedsTwo = "Log in on another character to compare.";
-    public const string DiffNeedsCatalog = "The comparison appears once the catalog is built.";
-    public const string DiffOtherUnreadable = "That character's snapshot could not be read.";
-    public const string DiffComboTooltip = "Which stored character the viewed one is compared with; the most recently captured one is chosen at first";
-    public const string DiffColumnQuest = "Quest";
-    public const string DiffColumnValue = "Value";
-    public const string DiffColumnWhy = "Why";
-    public const string DiffColumnSection = "Section";
+    public static string DiffSection => Loc.Get("DiffSection");
+    public static string DiffNeedsTwo => Loc.Get("DiffNeedsTwo");
+    public static string DiffNeedsCatalog => Loc.Get("DiffNeedsCatalog");
+    public static string DiffOtherUnreadable => Loc.Get("DiffOtherUnreadable");
+    public static string DiffComboTooltip => Loc.Get("DiffComboTooltip");
+    public static string DiffColumnQuest => Loc.Get("DiffColumnQuest");
+    public static string DiffColumnValue => Loc.Get("DiffColumnValue");
+    public static string DiffColumnWhy => Loc.Get("DiffColumnWhy");
+    public static string DiffColumnSection => Loc.Get("DiffColumnSection");
     /// <summary>{0} = character name; header of a per-section count column.</summary>
-    public const string DiffOnlyColumnFormat = "Only {0}";
-    public const string DiffValueTooltip = "Unlock value: 1 for any quest, +3 main scenario, +5 unlock quest, +2 per unique reward. Higher first.";
+    public static string DiffOnlyColumnFormat => Loc.Get("DiffOnlyColumnFormat");
+    public static string DiffValueTooltip => Loc.Get("DiffValueTooltip");
     /// <summary>{0} = the character that has the quests, {1} = the one that lacks them.</summary>
-    public const string DiffOnlyFormat = "Done on {0}, not on {1}";
-    public const string DiffNone = "None.";
+    public static string DiffOnlyFormat => Loc.Get("DiffOnlyFormat");
+    public static string DiffNone => Loc.Get("DiffNone");
     /// <summary>{0} = rows beyond the shown cap.</summary>
-    public const string DiffMoreFormat = "and {0} more";
+    public static string DiffMoreFormat => Loc.Get("DiffMoreFormat");
     /// <summary>{0} = viewed character, {1} = "N quests", {2} = other character.</summary>
-    public const string DiffAheadFormat = "{0} is {1} ahead of {2}";
+    public static string DiffAheadFormat => Loc.Get("DiffAheadFormat");
     /// <summary>{0} = viewed character, {1} = "N quests", {2} = other character.</summary>
-    public const string DiffBehindFormat = "{0} is {1} behind {2}";
+    public static string DiffBehindFormat => Loc.Get("DiffBehindFormat");
     /// <summary>{0} = viewed character, {1} = other character.</summary>
-    public const string DiffLevelFormat = "{0} and {1} are level";
+    public static string DiffLevelFormat => Loc.Get("DiffLevelFormat");
     /// <summary>{0} = done on both, {1} = done on neither.</summary>
-    public const string DiffCountsFormat = "{0} done on both · {1} done on neither";
-    public const string DiffCopyList = "Copy list";
-    public const string DiffCopyListTooltip = "Copies every quest of this list as \"name (value)\" lines, not only the rows shown";
+    public static string DiffCountsFormat => Loc.Get("DiffCountsFormat");
+    public static string DiffCopyList => Loc.Get("DiffCopyList");
+    public static string DiffCopyListTooltip => Loc.Get("DiffCopyListTooltip");
     /// <summary>{0} = quests copied.</summary>
-    public const string DiffCopiedFormat = "Copied {0} to the clipboard";
+    public static string DiffCopiedFormat => Loc.Get("DiffCopiedFormat");
     /// <summary>{0} = quest name, {1} = value; one line of the copied list.</summary>
     public const string DiffClipboardLineFormat = "{0} ({1})";
 
-    /// <summary>"1 quest" or "N quests".</summary>
-    public static string DiffQuestCount(int count) =>
-        count.ToString(CultureInfo.InvariantCulture) + (count == 1 ? " quest" : " quests");
+    /// <summary>{0} = quests, one form.</summary>
+    public static string DiffQuestCountOneFormat => Loc.Get("DiffQuestCountOneFormat");
+
+    /// <summary>{0} = quests, plural form.</summary>
+    public static string DiffQuestCountFormat => Loc.Get("DiffQuestCountFormat");
+
+    /// <summary>"1 quest" or "N quests", by the language's plural rule.</summary>
+    public static string DiffQuestCount(int count) => Loc.Plural(count, DiffQuestCountOneFormat, DiffQuestCountFormat);
 }

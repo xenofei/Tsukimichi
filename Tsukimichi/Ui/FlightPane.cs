@@ -681,7 +681,7 @@ public sealed class FlightPane
         public FlightCurrent Current { get; } = current;
         public QuestRecord? Quest { get; } = quest;
         /// <summary>The quest's name as the spoiler shield prints it; refreshed with the state each session version.</summary>
-        public string QuestName { get; private set; } = quest?.Name ?? Strings.FlightQuestPrefix + current.QuestRowId.ToString(CultureInfo.InvariantCulture);
+        public string QuestName { get; private set; } = quest?.Name ?? string.Format(CultureInfo.InvariantCulture, Strings.FlightQuestFormat, current.QuestRowId);
         public Mark AttunedGlyph { get; private set; } = Mark.Unknown;
         public string AttunedText { get; private set; } = Strings.FlightAttunedUnknown;
 

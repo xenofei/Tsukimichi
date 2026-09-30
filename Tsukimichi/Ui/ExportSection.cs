@@ -171,7 +171,7 @@ public sealed class ExportSection(Configuration settings, ExportService exports,
         catch (Exception ex)
         {
             log.Warning(ex, "Could not open {Folder}", folder);
-            line = Strings.ExportOpenFolderFailed + ex.Message;
+            line = string.Format(System.Globalization.CultureInfo.CurrentCulture, Strings.ExportOpenFolderFailedFormat, ex.Message);
             lineOk = false;
         }
     }

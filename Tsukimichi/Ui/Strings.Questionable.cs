@@ -1,3 +1,5 @@
+using Tsukimichi.Localization;
+
 namespace Tsukimichi.Ui;
 
 /// <summary>
@@ -8,34 +10,34 @@ namespace Tsukimichi.Ui;
 static partial class Strings
 {
     /// <summary>Both say the quest can be picked up, or both say it cannot.</summary>
-    public const string QuestionableAgrees = "Questionable agrees";
+    public static string QuestionableAgrees => Loc.Get("QuestionableAgrees");
 
     /// <summary>Agreement on a quest Tsukimichi holds back only for level or job, which Questionable's lock does not check.</summary>
-    public const string QuestionableAgreesLevelAside = "Questionable agrees (it does not check level or job)";
+    public static string QuestionableAgreesLevelAside => Loc.Get("QuestionableAgreesLevelAside");
 
     /// <summary>Questionable's answer differs; {0} is its reason ("Prev quest (1), Aetheryte locked: Ul'dah") or "not locked".</summary>
-    public const string QuestionableSaysFormat = "Questionable says: {0}";
+    public static string QuestionableSaysFormat => Loc.Get("QuestionableSaysFormat");
 
     /// <summary>What Questionable says when it would start a quest Tsukimichi has blocked.</summary>
-    public const string QuestionableNotLocked = "not locked";
+    public static string QuestionableNotLocked => Loc.Get("QuestionableNotLocked");
 
-    public const string QuestionableLineTooltip = "Questionable's own lock check for this quest, beside Tsukimichi's. When they differ, Report this quest records both, which helps find which one is wrong.";
+    public static string QuestionableLineTooltip => Loc.Get("QuestionableLineTooltip");
 
     /// <summary>The round "…" button at the end of the action bar and its tooltip.</summary>
-    public const string QuestionableMoreTooltip = "More actions";
+    public static string QuestionableMoreTooltip => Loc.Get("QuestionableMoreTooltip");
 
-    public const string QuestionableAddToPriority = "Add to Questionable priority";
+    public static string QuestionableAddToPriority => Loc.Get("QuestionableAddToPriority");
 
-    public const string QuestionableAddToPriorityTooltip = "Put this quest on Questionable's priority list. Nothing starts: Questionable picks it up the next time you run it yourself.";
+    public static string QuestionableAddToPriorityTooltip => Loc.Get("QuestionableAddToPriorityTooltip");
 
-    public const string QuestionableAddToPriorityNoPath = "Questionable has no path for this quest.";
+    public static string QuestionableAddToPriorityNoPath => Loc.Get("QuestionableAddToPriorityNoPath");
 
     /// <summary>Shown for a few seconds in place of the Questionable line after the hand-off.</summary>
-    public const string QuestionableAdded = "Added to Questionable's priority list";
+    public static string QuestionableAdded => Loc.Get("QuestionableAdded");
 
-    public const string QuestionableAddFailed = "Questionable did not take the quest; see /xllog";
+    public static string QuestionableAddFailed => Loc.Get("QuestionableAddFailed");
 
-    public const string ConfigQuestionableHandoff = "Show Questionable hand-off";
+    public static string ConfigQuestionableHandoff => Loc.Get("ConfigQuestionableHandoff");
 
-    public const string ConfigQuestionableHandoffHint = "When Questionable is loaded, the detail pane's \"…\" button offers \"Add to Questionable priority\". It only calls Questionable's own priority list; Tsukimichi never starts Questionable or moves your character. The \"Questionable agrees\" line under a quest shows whether this is on or not.";
+    public static string ConfigQuestionableHandoffHint => Loc.Get("ConfigQuestionableHandoffHint");
 }

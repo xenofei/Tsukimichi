@@ -1,4 +1,5 @@
 using Tsukimichi.Core.Jobs;
+using Tsukimichi.Localization;
 
 namespace Tsukimichi.Ui;
 
@@ -9,52 +10,53 @@ namespace Tsukimichi.Ui;
 static partial class Strings
 {
     // ---- Characters dashboard: Job quests ----
-    public const string JobsSection = "Job quests";
-    public const string JobsNone = "Job quests appear once the catalog is built and a character with job levels is evaluated.";
-    public const string JobsColumnJob = "Job";
-    public const string JobsColumnLevel = "Level";
-    public const string JobsColumnDone = "Done";
-    public const string JobsColumnNext = "Next";
+    public static string JobsSection => Loc.Get("JobsSection");
+    public static string JobsNone => Loc.Get("JobsNone");
+    public static string JobsColumnJob => Loc.Get("JobsColumnJob");
+    public static string JobsColumnLevel => Loc.Get("JobsColumnLevel");
+    public static string JobsColumnDone => Loc.Get("JobsColumnDone");
+    public static string JobsColumnNext => Loc.Get("JobsColumnNext");
     /// <summary>{0} = quest name, {1} = its level; the quest can be taken now.</summary>
-    public const string JobsNextReadyFormat = "next: {0} · Lv {1}";
+    public static string JobsNextReadyFormat => Loc.Get("JobsNextReadyFormat");
     /// <summary>{0} = quest name, {1} = its level; the quest is not open yet and nothing more precise is known.</summary>
-    public const string JobsNextLaterFormat = "next: {0} · at Lv {1}";
+    public static string JobsNextLaterFormat => Loc.Get("JobsNextLaterFormat");
     /// <summary>{0} = quest name, {1} = its decisive blocker (<see cref="Core.Evaluation.BlockerText"/>).</summary>
-    public const string JobsNextBlockedFormat = "next: {0} · {1}";
-    public const string JobsAllDone = "all done";
+    public static string JobsNextBlockedFormat => Loc.Get("JobsNextBlockedFormat");
+    public static string JobsAllDone => Loc.Get("JobsAllDone");
     /// <summary>{0} = role name.</summary>
-    public const string JobsRoleRowFormat = "{0} role quests";
+    public static string JobsRoleRowFormat => Loc.Get("JobsRoleRowFormat");
     /// <summary>{0} = done, {1} = total.</summary>
     public const string JobsCountFormat = "{0}/{1}";
 
     public static string JobsRoleName(JobRole role) => role switch
     {
-        JobRole.Tank => "Tank",
-        JobRole.Healer => "Healer",
-        JobRole.Melee => "Melee DPS",
-        JobRole.PhysicalRanged => "Physical ranged DPS",
-        JobRole.MagicalRanged => "Magical ranged DPS",
-        _ => "Role",
+        JobRole.Tank => Loc.Get("JobsRoleName.Tank"),
+        JobRole.Healer => Loc.Get("JobsRoleName.Healer"),
+        JobRole.Melee => Loc.Get("JobsRoleName.Melee"),
+        JobRole.PhysicalRanged => Loc.Get("JobsRoleName.PhysicalRanged"),
+        JobRole.MagicalRanged => Loc.Get("JobsRoleName.MagicalRanged"),
+        _ => Loc.Get("JobsRoleName.Default"),
     };
 
     // ---- Characters dashboard: Story chains ----
-    public const string JobsChainsSection = "Story chains";
-    public const string JobsChainsNone = "Story chains appear once the catalog is built and a character is evaluated.";
-    public const string JobsColumnChain = "Chain";
+    public static string JobsChainsSection => Loc.Get("JobsChainsSection");
+    public static string JobsChainsNone => Loc.Get("JobsChainsNone");
+    public static string JobsColumnChain => Loc.Get("JobsColumnChain");
     /// <summary>{0} = done, {1} = total.</summary>
-    public const string JobsChainCountFormat = "{0} of {1}";
-    public const string JobsChainComplete = "complete";
-    public const string JobsChainNextPrefix = "next: ";
+    public static string JobsChainCountFormat => Loc.Get("JobsChainCountFormat");
+    public static string JobsChainComplete => Loc.Get("JobsChainComplete");
+    /// <summary>{0} = the next quest of the chain.</summary>
+    public static string JobsChainNextFormat => Loc.Get("JobsChainNextFormat");
     /// <summary>{0} = number of chains with nothing done yet.</summary>
-    public const string JobsChainsNotStartedFormat = "Not started ({0})###notStartedChains";
+    public static string JobsChainsNotStartedFormat => Loc.Get("JobsChainsNotStartedFormat");
 
     // ---- Chat: level-up nudge ----
     /// <summary>{0} = level reached, {1} = job name; followed by the quest link and <see cref="JobsNudgeSuffix"/>.</summary>
-    public const string JobsNudgePrefixFormat = "Level {0} {1}: ";
-    public const string JobsNudgeSuffix = " is available";
+    public static string JobsNudgeFormat => Loc.Get("JobsNudgeFormat");
+    public static string JobsNudgeBlockerFormat => Loc.Get("JobsNudgeBlockerFormat");
     /// <summary>After the quest link when the level was reached but the quest is still blocked and no blocker could be named.</summary>
-    public const string JobsNudgeBlockedSuffix = " is not open yet";
+    public static string JobsNudgeBlockedFormat => Loc.Get("JobsNudgeBlockedFormat");
 
     // ---- Settings › Notices ----
-    public const string JobsConfigNudge = "Chat notice when a job or role quest becomes available after a level-up";
+    public static string JobsConfigNudge => Loc.Get("JobsConfigNudge");
 }

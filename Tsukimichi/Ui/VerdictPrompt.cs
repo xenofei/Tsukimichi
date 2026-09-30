@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility.Raii;
 using Tsukimichi.Core.Ui;
@@ -18,8 +19,12 @@ internal sealed class VerdictPrompt(string popupId)
     private const int NoteLength = 120;
     private const double UndoSeconds = 8.0;
 
-    private static readonly string ConfirmUniqueLabel = Strings.MarkUniqueConfirm + Chrome.HoldIdSuffix;
-    private static readonly string ConfirmHideLabel = Strings.MarkNotUniqueConfirm + Chrome.HoldIdSuffix;
+    private static string ConfirmUniqueLabel => confirmUniqueLabelText.Value;
+
+    private static readonly Localization.LocText confirmUniqueLabelText = new(static () => Strings.MarkUniqueConfirm + Chrome.HoldIdSuffix);
+    private static string ConfirmHideLabel => confirmHideLabelText.Value;
+
+    private static readonly Localization.LocText confirmHideLabelText = new(static () => Strings.MarkNotUniqueConfirm + Chrome.HoldIdSuffix);
 
     private readonly string popupId = popupId ?? throw new ArgumentNullException(nameof(popupId));
     private readonly ConfirmGate gate = new();
@@ -41,8 +46,8 @@ internal sealed class VerdictPrompt(string popupId)
         this.rowId = rowId;
         this.unique = unique;
         question = unique
-            ? Strings.VerdictQuestionUniquePrefix + questName + Strings.VerdictQuestionUniqueSuffix
-            : Strings.VerdictQuestionHidePrefix + questName + Strings.VerdictQuestionHideSuffix;
+            ? string.Format(CultureInfo.CurrentCulture, Strings.VerdictQuestionUniqueFormat, questName)
+            : string.Format(CultureInfo.CurrentCulture, Strings.VerdictQuestionHideFormat, questName);
         noteBuffer = string.Empty;
         gate.Cancel();
         pendingOpen = true;

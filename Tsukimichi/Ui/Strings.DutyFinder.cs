@@ -1,3 +1,5 @@
+using Tsukimichi.Localization;
+
 namespace Tsukimichi.Ui;
 
 /// <summary>
@@ -11,25 +13,25 @@ static partial class Strings
     public const string DutyHintWindowId = "##tsukimichi-duty-finder-hint";
 
     /// <summary>Caption above the duty name.</summary>
-    public const string DutyHintCaption = "Locked duty";
+    public static string DutyHintCaption => Loc.Get("DutyHintCaption");
 
     /// <summary>Opens the quest block; the quest name follows on the same line.</summary>
-    public const string DutyHintUnlockedBy = "Unlocked by:";
+    public static string DutyHintUnlockedBy => Loc.Get("DutyHintUnlockedBy");
 
-    public const string DutyHintReveal = "Reveal in Tsukimichi";
+    public static string DutyHintReveal => Loc.Get("DutyHintReveal");
 
-    public const string DutyHintRevealHint = "Open Tsukimichi's Journal on this quest: its requirements, the path to it and where to pick it up.";
+    public static string DutyHintRevealHint => Loc.Get("DutyHintRevealHint");
 
-    public const string DutyHintFlagGiver = "Flag giver";
+    public static string DutyHintFlagGiver => Loc.Get("DutyHintFlagGiver");
 
-    public const string DutyHintFlagGiverHint = "Open the map with a flag on the NPC who gives this quest.";
+    public static string DutyHintFlagGiverHint => Loc.Get("DutyHintFlagGiverHint");
 
-    public const string DutyHintNoGiver = "The quest giver has no map position to flag.";
+    public static string DutyHintNoGiver => Loc.Get("DutyHintNoGiver");
 
     /// <summary>Folded quest count: {0} is how many more quests also unlock the duty.</summary>
-    public const string DutyHintMoreFormat = "and {0} more";
+    public static string DutyHintMoreFormat => Loc.Get("DutyHintMoreFormat");
 
-    public const string DutyHintSetting = "Duty Finder unlock hint";
+    public static string DutyHintSetting => Loc.Get("DutyHintSetting");
 
-    public const string DutyHintSettingHint = "When you select a padlocked duty in the Duty Finder or Raid Finder, a small panel beside the window names the quest that unlocks it, its state and what it is waiting for, with buttons to reveal it in Tsukimichi or flag its giver. Nothing shows for a duty you have unlocked, or one no known quest unlocks. It reads the selected duty only; it never queues or opens one.";
+    public static string DutyHintSettingHint => Loc.Get("DutyHintSettingHint");
 }

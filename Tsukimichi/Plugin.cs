@@ -86,6 +86,8 @@ public sealed class Plugin : IDalamudPlugin
     private Game.WelcomeBackSource? welcomeBack;
     private Game.IpcProvider? ipcProvider;
     private TodoOverlay? todoOverlay;
+    private Localization.LocService? loc;
+    private RouteWindow? routeWindow;
 
     /// <summary>
     /// Rebuilds the catalog under the current <see cref="Config.Configuration.JournalFiling"/> and hands it to the
@@ -270,6 +272,46 @@ public sealed class Plugin : IDalamudPlugin
             TaskScheduler.Default);
     }
 
+    /// <summary>
+    /// After a language switch (framework thread): the session bumps so every label cached per session version is
+    /// rebuilt, the query re-runs (its status texts are composed), and the windows take their titles in the new
+    /// language. The window ids after "###" never change, so ImGui keeps positions and sizes.
+    /// </summary>
+    private void OnTextChanged()
+    {
+        Session?.RefreshText();
+        ui?.MarkQueryDirty();
+        if (mainWindow is not null)
+        {
+            mainWindow.WindowName = Strings.MainWindowTitle;
+        }
+
+        if (configWindow is not null)
+        {
+            configWindow.WindowName = Strings.ConfigWindowTitle;
+        }
+
+        if (helpWindow is not null)
+        {
+            helpWindow.WindowName = Strings.Help.WindowTitle;
+        }
+
+        if (discoveryWindow is not null)
+        {
+            discoveryWindow.WindowName = Strings.DiscoveryWindowTitle;
+        }
+
+        if (todoOverlay is not null)
+        {
+            todoOverlay.WindowName = Strings.TodoWindowTitle;
+        }
+
+        if (routeWindow is not null)
+        {
+            routeWindow.WindowName = Strings.RouteWindowTitle;
+        }
+    }
+
     /// <summary>Remembers an explicit character choice across sessions; following the live character stores null.</summary>
     /// <summary>
     /// Once per frame, before the window system draws: the scale factors every window reads, the palette (Night or the
@@ -367,6 +409,9 @@ public sealed class Plugin : IDalamudPlugin
 
         // The catalog build reads the filing setting and the curated overlay, so those come before it starts.
         LoadSettingsAndCurated();
+
+        // The UI language (V2-19) before any window is built, so every title and label starts in it.
+        loc = new Localization.LocService(PluginInterface, Settings, Framework, Log);
         var loader = new LuminaCatalogLoader(DataManager, Log, curated, questPatches);
         var (initialGeneration, initialToken) = StartCatalogBuild();
         initialCatalogGeneration = initialGeneration;
@@ -534,7 +579,7 @@ public sealed class Plugin : IDalamudPlugin
             mainWindow.AttachPanes(moonlitPane, charactersPane);
             mainWindow.AttachOverrides(moonlitPane);
             // Unlock route (P6): the detail pane, a Moonlit row's menu and the Characters job rows ask UiState for it.
-            var routeWindow = new RouteWindow(Session, queryRunner, quest =>
+            routeWindow = new RouteWindow(Session, queryRunner, quest =>
             {
                 mainWindow.IsOpen = true;
                 mainWindow.BringToFront();
@@ -558,6 +603,7 @@ public sealed class Plugin : IDalamudPlugin
             chatNotifier.SaveSettings = () => Settings.Save(PluginInterface);
 
             configWindow = new ConfigWindow(Settings, Session, PluginInterface, diagnostics, _ => ui.MarkQueryDirty());
+            configWindow.Language = loc;
             configWindow.Overrides = moonlitPane;
             configWindow.QuestText = QuestText;
             // Exports (P12): Settings › Data › Export and /tsuki export write local files; nothing is uploaded.
@@ -630,6 +676,8 @@ public sealed class Plugin : IDalamudPlugin
                 OpenSettings: configWindow.Toggle);
             helpWindow = new HelpWindow(helpActions, PluginInterface);
             windowSystem.AddWindow(helpWindow);
+            // Every window exists now: a language switch retitles them and refreshes the session's caches.
+            Localization.Loc.Changed += OnTextChanged;
             tutorial.OpenHelp = helpWindow.Show;
             configWindow.ShowHelp = helpWindow.Show;
             configWindow.StartTutorial = helpActions.StartTutorial;
@@ -672,6 +720,8 @@ public sealed class Plugin : IDalamudPlugin
     {
         // Other plugins stop reaching in first, before anything they could reach is torn down.
         ipcProvider?.Dispose();
+        Localization.Loc.Changed -= OnTextChanged;
+        loc?.Dispose();
         // UI
         command.Dispose();
         if (configWindow is not null)
@@ -731,6 +781,11 @@ public sealed class Plugin : IDalamudPlugin
     private void AbortLoad()
     {
         Unwind("tsukimichi ipc", () => ipcProvider?.Dispose());
+        Unwind("localization", () =>
+        {
+            Localization.Loc.Changed -= OnTextChanged;
+            loc?.Dispose();
+        });
         Unwind("draw hook", () =>
         {
             if (configWindow is not null)

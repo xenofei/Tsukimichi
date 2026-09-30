@@ -2,6 +2,7 @@ using System.Globalization;
 using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Ui;
+using Tsukimichi.Core.Localization;
 
 namespace Tsukimichi.Core.Diagnostics;
 
@@ -23,12 +24,8 @@ public static class WhyText
     /// <summary>Before each requirement line; the same indent the diagnostic block uses.</summary>
     public const string Indent = "  - ";
 
-    public const string NotePrefix = "Note: ";
-
     /// <summary>The headline when the character has no evaluation yet (logged out, catalog not built).</summary>
-    public const string NoEvaluation = "Not checked · no character evaluated yet";
-
-    private const string TalkTo = " — talk to ";
+    public static string NoEvaluation => CoreText.T("Core.Why.NoEvaluation", "Not checked · no character evaluated yet");
 
     /// <summary>
     /// The first line. Ready or Ready on another job: the state name, then where to go ("Ready — talk to Gerolt in
@@ -70,18 +67,16 @@ public static class WhyText
             return line;
         }
 
-        line += TalkTo + giver.Name;
-        if (place is { Length: > 0 })
-        {
-            line += " in " + place;
-        }
-
+        var where = place is { Length: > 0 } ? place : string.Empty;
         if (coordinates is { } c)
         {
-            line += string.Format(CultureInfo.InvariantCulture, " ({0:0.0}, {1:0.0})", c.X, c.Y);
+            var at = string.Format(CultureInfo.InvariantCulture, "({0:0.0}, {1:0.0})", c.X, c.Y);
+            where = where.Length > 0 ? where + " " + at : at;
         }
 
-        return line;
+        return where.Length > 0
+            ? string.Format(CultureInfo.CurrentCulture, CoreText.T("Core.Why.TalkToIn", "{0} — talk to {1} in {2}"), line, giver.Name, where)
+            : string.Format(CultureInfo.CurrentCulture, CoreText.T("Core.Why.TalkTo", "{0} — talk to {1}"), line, giver.Name);
     }
 
     /// <summary>One indented line per requirement, in the evaluator's order: "  - Level: met (24 ≤ 31)".</summary>
@@ -103,7 +98,7 @@ public static class WhyText
     public static string NoteLine(string note)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(note);
-        return NotePrefix + note.Trim();
+        return string.Format(CultureInfo.CurrentCulture, CoreText.T("Core.Why.Note", "Note: {0}"), note.Trim());
     }
 
     /// <summary>

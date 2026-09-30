@@ -1,3 +1,5 @@
+using Tsukimichi.Localization;
+
 namespace Tsukimichi.Ui;
 
 /// <summary>
@@ -8,12 +10,12 @@ namespace Tsukimichi.Ui;
 static partial class Strings
 {
     /// <summary>The one chat line (once per load) and the Settings notice while the hooks are paused.</summary>
-    public const string HooksPausedNotice = "Tsukimichi's game hooks (item tooltip, item and NPC menus, server info bar, Duty Finder hint) are paused on this game version until an update is tested. The quest journal works as usual.";
+    public static string HooksPausedNotice => Loc.Get("HooksPausedNotice");
 
-    public const string HooksEnableUntested = "Enable game hooks on this untested version";
+    public static string HooksEnableUntested => Loc.Get("HooksEnableUntested");
 
-    public const string HooksEnableUntestedHint = "After a game patch the item tooltip panel, the item and NPC menu entries, the server info bar entry and the Duty Finder unlock hint pause until a Tsukimichi update has been tested on the new version. Tick this to run them anyway on the game version you are on now; the next patch pauses them again. If one draws in the wrong place or misbehaves, untick it. The quest journal is not affected either way.";
+    public static string HooksEnableUntestedHint => Loc.Get("HooksEnableUntestedHint");
 
     /// <summary>Shown under the setting while it keeps the hooks running on an untested version.</summary>
-    public const string HooksRunningUntested = "Game hooks are running on an untested game version.";
+    public static string HooksRunningUntested => Loc.Get("HooksRunningUntested");
 }

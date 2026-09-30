@@ -88,7 +88,10 @@ public sealed class TutorialOverlay : ITutorial
 
     private static readonly string[] NoKeys = [];
 
-    private static readonly string[] ChapterNames = [Strings.Tutorial.ChapterFind, Strings.Tutorial.ChapterRead, Strings.Tutorial.ChapterBeyond];
+    private static string[] ChapterNames => chapterNamesText.Value;
+
+    private static readonly Localization.LocArray chapterNamesText = new(static () =>
+        [Strings.Tutorial.ChapterFind, Strings.Tutorial.ChapterRead, Strings.Tutorial.ChapterBeyond]);
 
     private static readonly string[] ChapterIds = ["##chapterFind", "##chapterRead", "##chapterBeyond"];
 
@@ -113,8 +116,10 @@ public sealed class TutorialOverlay : ITutorial
     /// </summary>
     private readonly record struct Step(Chapter Chapter, StepKind Kind, string Title, string Body, string[] Keys, string[] FallbackKeys, Action<UiState>? OnShow);
 
-    private static readonly Step[] Steps =
-    [
+    private static Step[] Steps => stepsCache.Value;
+
+    private static readonly Localization.LocCache<Step[]> stepsCache = new(static () =>
+        [
         // Find
         new(Chapter.Find, StepKind.Welcome, Strings.Tutorial.WelcomeTitle, Strings.Tutorial.WelcomeBody, NoKeys, NoKeys, ShowJournal),
         new(Chapter.Find, StepKind.Normal, Strings.Tutorial.SearchTitle, Strings.Tutorial.SearchBody, [UiRects.Search], [UiRects.Toolbar], ShowJournal),
@@ -142,7 +147,7 @@ public sealed class TutorialOverlay : ITutorial
         new(Chapter.Beyond, StepKind.Normal, Strings.Tutorial.PlayTitle, Strings.Tutorial.PlayBody, [UiRects.SettingsButton], [UiRects.Toolbar], null),
         new(Chapter.Beyond, StepKind.Normal, Strings.Tutorial.HelpTitle, Strings.Tutorial.HelpBody, [UiRects.HelpButton, UiRects.TutorialButton, UiRects.SettingsButton], [UiRects.Toolbar], null),
         new(Chapter.Beyond, StepKind.Finish, Strings.Tutorial.FinishTitle, Strings.Tutorial.FinishBody, NoKeys, NoKeys, null),
-    ];
+    ]);
 
     /// <summary>First step of each chapter, by <see cref="Chapter"/>.</summary>
     private static readonly int[] ChapterStart = BuildChapterStarts();
@@ -151,8 +156,10 @@ public sealed class TutorialOverlay : ITutorial
     private readonly IDalamudPluginInterface pluginInterface;
     private readonly UiState ui;
 
-    /// <summary>"Find · step 3 of 7" per step, built once.</summary>
-    private readonly string[] progress;
+    /// <summary>"Find · step 3 of 7" per step, built once per UI language.</summary>
+    private string[] Progress => progressCache.Value;
+
+    private static readonly Localization.LocArray progressCache = new(BuildProgress);
 
     private int index = -1;
     private bool offering;
@@ -178,7 +185,11 @@ public sealed class TutorialOverlay : ITutorial
         this.pluginInterface = pluginInterface ?? throw new ArgumentNullException(nameof(pluginInterface));
         this.ui = ui ?? throw new ArgumentNullException(nameof(ui));
 
-        progress = new string[Steps.Length];
+    }
+
+    private static string[] BuildProgress()
+    {
+        var progress = new string[Steps.Length];
         for (var i = 0; i < Steps.Length; i++)
         {
             var chapter = (int)Steps[i].Chapter;
@@ -186,6 +197,8 @@ public sealed class TutorialOverlay : ITutorial
             var end = chapter + 1 < ChapterStart.Length ? ChapterStart[chapter + 1] : Steps.Length;
             progress[i] = string.Format(CultureInfo.CurrentCulture, Strings.Tutorial.ProgressFormat, ChapterNames[chapter], i - start + 1, end - start);
         }
+
+        return progress;
     }
 
     /// <summary>The main window, watched by <see cref="CheckFirstRun"/> for its first opening.</summary>
@@ -638,7 +651,7 @@ public sealed class TutorialOverlay : ITutorial
         DrawChapterStrip(step.Chapter);
         if (!offering)
         {
-            ImGui.TextDisabled(progress[index]);
+            ImGui.TextDisabled(Progress[index]);
         }
 
         using (Typography.Display())

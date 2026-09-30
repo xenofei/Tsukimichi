@@ -176,6 +176,9 @@ public sealed class WotsitIpc : IDisposable
     /// <summary>Entries currently registered (or queued), for diagnostics.</summary>
     public int EntryCount => actions.Count;
 
+    /// <summary>The UI language the registered entries were written in.</summary>
+    private int registeredLanguage = -1;
+
     /// <summary>
     /// Sources for the entries. <paramref name="bundle"/> and <paramref name="rewards"/> are polled each tick and a
     /// new instance of either triggers a rebuild; <paramref name="rewardIcon"/> answers the icon for a reward entry;
@@ -247,7 +250,7 @@ public sealed class WotsitIpc : IDisposable
             var expansion = bundle.Names.Expansion(quest.Expansion);
             var name = spoilers.DisplayName(quest);
             entries.Add(new WotsitEntry(
-                Strings.WotsitQuestPrefix + name,
+                string.Format(System.Globalization.CultureInfo.CurrentCulture, Strings.WotsitQuestFormat, name),
                 name + " " + quest.Journal.GenreName + " " + expansion,
                 spoilers.IsMasked(quest) ? 0 : quest.Icon,
                 () => reveal(target)));
@@ -262,9 +265,10 @@ public sealed class WotsitIpc : IDisposable
 
             var target = quest;
             var kind = Strings.MoonlitKindName(entry.Kind);
-            var name = string.IsNullOrWhiteSpace(entry.RewardName) ? kind : entry.RewardName;
+            var rewardName = Core.Unique.RewardNames.Display(entry, quest, bundle.Language);
+            var name = string.IsNullOrWhiteSpace(rewardName) ? kind : rewardName;
             entries.Add(new WotsitEntry(
-                Strings.WotsitRewardPrefix + name + " (" + kind + ")",
+                string.Format(System.Globalization.CultureInfo.CurrentCulture, Strings.WotsitRewardFormat, name, kind),
                 name + " " + kind + " " + spoilers.DisplayName(quest),
                 rewardIcon(quest, entry),
                 () => reveal(target)));
@@ -321,10 +325,13 @@ public sealed class WotsitIpc : IDisposable
         var currentRewards = rewards();
         var currentSpoilers = spoilers?.Invoke() ?? SpoilerMask.None;
         if (registered && ReferenceEquals(currentBundle, registeredBundle) && ReferenceEquals(currentRewards, registeredRewards)
-            && currentSpoilers.Fingerprint == registeredSpoilers)
+            && currentSpoilers.Fingerprint == registeredSpoilers && registeredLanguage == Localization.Loc.Version)
         {
             return;
         }
+
+        // A language switch (V2-19) changes the entries' "Quest: …" and "Reward: …" text, and so takes the same paths.
+        registeredLanguage = Localization.Loc.Version;
 
         var next = BuildEntries(currentBundle, currentRewards, rewardIcon, reveal, currentSpoilers);
 

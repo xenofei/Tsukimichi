@@ -1,3 +1,5 @@
+using Tsukimichi.Localization;
+
 namespace Tsukimichi.Ui;
 
 /// <summary>
@@ -7,29 +9,29 @@ namespace Tsukimichi.Ui;
 static partial class Strings
 {
     // Quick views (the segmented control on the toolbar)
-    public const string QuickViewAll = "All";
-    public const string QuickViewAllTooltip = "No quick view: the table follows the tree and the filters alone";
-    public const string QuickViewsPanelTooltip = "The quick views sit on the toolbar; the Stalled view reads the number of days set here";
+    public static string QuickViewAll => Loc.Get("QuickViewAll");
+    public static string QuickViewAllTooltip => Loc.Get("QuickViewAllTooltip");
+    public static string QuickViewsPanelTooltip => Loc.Get("QuickViewsPanelTooltip");
 
     // Filters button and its badge (Core.Query.FilterBadge decides what counts)
-    public const string FiltersBadgeOne = "1 filter narrows the table; its chip under the toolbar clears it";
+    public static string FiltersBadgeOne => Loc.Get("FiltersBadgeOne");
     /// <summary>{0} = engaged filters.</summary>
-    public const string FiltersBadgeFormat = "{0} filters narrow the table; each chip under the toolbar clears one";
+    public static string FiltersBadgeFormat => Loc.Get("FiltersBadgeFormat");
 
     // Character chip
-    public const string CharacterChipTooltip = "Whose progress is shown. A filled pip is the logged-in character, a hollow one a stored snapshot. Click to switch";
+    public static string CharacterChipTooltip => Loc.Get("CharacterChipTooltip");
 
     // Chip row: the tree scope comes first
     /// <summary>{0} = the scope's name, such as "Sidequests › Gridania".</summary>
-    public const string ScopeChipFormat = "Scope: {0}";
+    public static string ScopeChipFormat => Loc.Get("ScopeChipFormat");
     /// <summary>{0} = parent node, {1} = the selected node.</summary>
     public const string FoldedScopeFormat = "{0} › {1}";
-    public const string ScopeUnnamed = "this node";
-    public const string ScopeChipTooltip = "The tree selection narrowing the table; clearing it shows All quests";
+    public static string ScopeUnnamed => Loc.Get("ScopeUnnamed");
+    public static string ScopeChipTooltip => Loc.Get("ScopeChipTooltip");
 
     // Tab rail
-    public const string TabJournalTooltip = "Every quest in the game, filed as the journal files it";
-    public const string TabMoonlitTooltip = "Quest rewards that exist nowhere else, and which you already own";
-    public const string TabCharactersTooltip = "Every stored character, with a dashboard of its progress";
-    public const string TabFlightTooltip = "The aether current quests of each flying zone";
+    public static string TabJournalTooltip => Loc.Get("TabJournalTooltip");
+    public static string TabMoonlitTooltip => Loc.Get("TabMoonlitTooltip");
+    public static string TabCharactersTooltip => Loc.Get("TabCharactersTooltip");
+    public static string TabFlightTooltip => Loc.Get("TabFlightTooltip");
 }

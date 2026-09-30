@@ -1,3 +1,4 @@
+using Tsukimichi.Core.Localization;
 using Tsukimichi.Core.Model;
 
 namespace Tsukimichi.Core.Ui;
@@ -37,9 +38,8 @@ public static class StripePattern
     /// <summary>Between the state name and the pattern name in <see cref="Tooltip(QuestState, byte)"/>.</summary>
     public const string Separator = StateNames.TooltipSeparator;
 
-    private static readonly string[] Tooltips = BuildTooltips();
-    private static readonly string DoneTodayTooltip = StateNames.DoneToday + Separator + Name(QuestState.DoneThisCycle);
-    private static readonly string DoneThisWeekTooltip = StateNames.DoneThisWeek + Separator + Name(QuestState.DoneThisCycle);
+    /// <summary>The tooltips per state, then the done-today and done-this-week variants; composed once per language.</summary>
+    private static readonly TextCache<string[]> Tooltips = new(BuildTooltips);
 
     /// <summary>The lit runs of a state's stripe, top to bottom; empty for Blocked (and for a value outside the enum).</summary>
     public static ReadOnlySpan<StripeSegment> Segments(QuestState state) => state switch
@@ -58,14 +58,14 @@ public static class StripePattern
     /// <summary>The pattern's name as the stripe's tooltip says it ("short bar").</summary>
     public static string Name(QuestState state) => state switch
     {
-        QuestState.Completed => "full bar",
-        QuestState.Accepted => "two bars",
-        QuestState.Ready => "short bar",
-        QuestState.ReadyOnOtherJob => "centre tick",
-        QuestState.DoneThisCycle => "lower half",
-        QuestState.Blocked => "no bar",
-        QuestState.Foreclosed => "dashed",
-        QuestState.Unknown => "dotted",
+        QuestState.Completed => CoreText.T("Core.Stripe.Completed", "full bar"),
+        QuestState.Accepted => CoreText.T("Core.Stripe.Accepted", "two bars"),
+        QuestState.Ready => CoreText.T("Core.Stripe.Ready", "short bar"),
+        QuestState.ReadyOnOtherJob => CoreText.T("Core.Stripe.ReadyOnOtherJob", "centre tick"),
+        QuestState.DoneThisCycle => CoreText.T("Core.Stripe.DoneThisCycle", "lower half"),
+        QuestState.Blocked => CoreText.T("Core.Stripe.Blocked", "no bar"),
+        QuestState.Foreclosed => CoreText.T("Core.Stripe.Foreclosed", "dashed"),
+        QuestState.Unknown => CoreText.T("Core.Stripe.Unknown", "dotted"),
         _ => string.Empty,
     };
 
@@ -75,17 +75,19 @@ public static class StripePattern
     /// </summary>
     public static string Tooltip(QuestState state, byte repeatInterval = 0)
     {
+        var tooltips = Tooltips.Value;
+        var states = tooltips.Length - 2;
         if (state == QuestState.DoneThisCycle)
         {
             return repeatInterval switch
             {
-                StateNames.DailyInterval => DoneTodayTooltip,
-                StateNames.WeeklyInterval => DoneThisWeekTooltip,
-                _ => Tooltips[(int)QuestState.DoneThisCycle],
+                StateNames.DailyInterval => tooltips[states],
+                StateNames.WeeklyInterval => tooltips[states + 1],
+                _ => tooltips[(int)QuestState.DoneThisCycle],
             };
         }
 
-        return (uint)state < (uint)Tooltips.Length ? Tooltips[(int)state] : StateNames.Name(state);
+        return (uint)state < (uint)states ? tooltips[(int)state] : StateNames.Name(state);
     }
 
     private static StripeSegment[] BuildDots(int count, float length)
@@ -110,12 +112,14 @@ public static class StripePattern
             max = Math.Max(max, (int)state);
         }
 
-        var table = new string[max + 1];
+        var table = new string[max + 3];
         foreach (var state in states)
         {
             table[(int)state] = StateNames.Name(state) + Separator + Name(state);
         }
 
+        table[max + 1] = StateNames.DoneToday + Separator + Name(QuestState.DoneThisCycle);
+        table[max + 2] = StateNames.DoneThisWeek + Separator + Name(QuestState.DoneThisCycle);
         return table;
     }
 }

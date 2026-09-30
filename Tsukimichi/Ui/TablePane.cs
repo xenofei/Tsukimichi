@@ -40,7 +40,39 @@ public sealed class TablePane : IDisposable
     private const float NameColumnWidth = 240f;
 
     /// <summary>Logical width under which the Status column sheds Rewards, then Expansion: room for "Ready on another job".</summary>
-    private const float StatusMinWidth = 170f;
+    private const float StatusMinWidth = LayoutBudgets.StatusMinLogical;
+
+    // The status column's minimum for the current language (V2-19): the widest state name must show whole.
+    private int statusMinLanguage = -1;
+    private float statusMinFont = -1f;
+    private float statusMin;
+
+    /// <summary>
+    /// <see cref="StatusMinWidth"/>, or wider for a language whose longest state name (with " · …" after the states that
+    /// carry a reason) would not fit it (<see cref="LayoutBudgets.StatusMin"/>); measured again on a language or font change.
+    /// </summary>
+    private float StatusMin()
+    {
+        var font = ImGui.GetFontSize();
+        if (statusMinLanguage != Localization.Loc.Version || statusMinFont != font)
+        {
+            statusMinLanguage = Localization.Loc.Version;
+            statusMinFont = font;
+            var unit = MathF.Max(UiMetrics.Px(1f), 0.01f);
+            var ellipsis = ImGui.CalcTextSize(Strings.StateReasonSeparator + "…").X;
+            var widest = 0f;
+            foreach (var state in Enum.GetValues<QuestState>())
+            {
+                var reason = state is QuestState.Blocked or QuestState.Foreclosed or QuestState.Unknown or QuestState.Accepted ? ellipsis : 0f;
+                widest = MathF.Max(widest, ImGui.CalcTextSize(Strings.StateName(state)).X + reason);
+            }
+
+            widest = MathF.Max(widest, ImGui.CalcTextSize(Strings.StateName(QuestState.DoneThisCycle, null)).X);
+            statusMin = UiMetrics.Px(LayoutBudgets.StatusMin(widest / unit));
+        }
+
+        return statusMin;
+    }
 
     /// <summary>Logical gap between a story sidequest's name and its book badge.</summary>
     private const float StoryBadgeGap = 6f;
@@ -95,8 +127,10 @@ public sealed class TablePane : IDisposable
     }
 
     /// <summary>Header label per <see cref="Column"/>; the glyph column keeps its name for the hide/show menu but shows none.</summary>
-    private static readonly string[] HeaderLabels =
-    [
+    private static string[] HeaderLabels => headerLabelsText.Value;
+
+    private static readonly Localization.LocArray headerLabelsText = new(static () =>
+        [
         string.Empty,
         Strings.ColumnName,
         Strings.ColumnLevel,
@@ -104,11 +138,13 @@ public sealed class TablePane : IDisposable
         Strings.ColumnStatus,
         Strings.ColumnExpansion,
         Strings.ColumnRewards,
-    ];
+    ]);
 
     /// <summary>Header tooltip per <see cref="Column"/>, in column order.</summary>
-    private static readonly string[] HeaderTooltips =
-    [
+    private static string[] HeaderTooltips => headerTooltipsText.Value;
+
+    private static readonly Localization.LocArray headerTooltipsText = new(static () =>
+        [
         Strings.ColumnGlyphTooltip,
         Strings.ColumnNameTooltip,
         Strings.ColumnLevelTooltip,
@@ -116,7 +152,7 @@ public sealed class TablePane : IDisposable
         Strings.ColumnStatusTooltip,
         Strings.ColumnExpansionTooltip,
         Strings.ColumnRewardsTooltip,
-    ];
+    ]);
 
     private readonly UiState ui;
     private readonly QueryRunner runner;
@@ -142,6 +178,12 @@ public sealed class TablePane : IDisposable
     // The Job column's minimum, re-asserted once per table init: measured on the first frame, applied on the next.
     private bool measureJobWidth;
     private float jobWidthFix;
+
+    // The Level column's width raised to a longer translated header on the frame after it was measured (V2-19).
+    private float levelWidthFix;
+
+    // The UI language the header widths were last checked in.
+    private int headerLanguage = -1;
 
     // Hover lift (dalamud-developer panel §4: no TableGetHoveredRow in the binding): the quest hovered on the previous
     // frame gets the fill and the lift this frame; hoveredNext collects this frame's for the next.
@@ -270,13 +312,22 @@ public sealed class TablePane : IDisposable
         var glyphRadius = TableGeometry.GlyphRadius(rowContent, UiMetrics.RowGlyphRadius);
         var glyphBox = glyphRadius * TableGeometry.GlyphBoxPerRadius;
         var glyphColumn = UiMetrics.Px(GlyphColumnLead) + glyphBox + UiMetrics.Px(2f);
-        var rewardsColumn = UiMetrics.RowIconSize * MaxRewardIcons + UiMetrics.Px(2f) * (MaxRewardIcons - 1) + UiMetrics.Px(8f);
-        var levelColumn = MathF.Max(UiMetrics.Px(34f), PillWidth(WidestLevel, UiMetrics.Px(LevelPillMinWidth), UiMetrics.Px(PillPadX)));
+        // A translated header is never cut (V2-19, LayoutBudgets): each fixed column is at least its header label wide,
+        // with the cell padding and, where the column sorts, the arrow.
+        var headerPad = ImGui.GetStyle().CellPadding.X * 2f;
+        var sortArrow = UiMetrics.Px(LayoutBudgets.SortArrowLogical);
+        float HeaderFloor(string label, bool sortable) => ImGui.CalcTextSize(label).X + headerPad + (sortable ? sortArrow : 0f);
+        var rewardsColumn = MathF.Max(
+            UiMetrics.RowIconSize * MaxRewardIcons + UiMetrics.Px(2f) * (MaxRewardIcons - 1) + UiMetrics.Px(8f),
+            HeaderFloor(Strings.ColumnRewards, sortable: false));
+        var levelColumn = MathF.Max(
+            MathF.Max(UiMetrics.Px(LayoutBudgets.LevelColumnLogical), PillWidth(WidestLevel, UiMetrics.Px(LevelPillMinWidth), UiMetrics.Px(PillPadX))),
+            HeaderFloor(Strings.ColumnLevel, sortable: true));
 
         ImGui.TableSetupColumn(Strings.ColumnGlyph, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize | ImGuiTableColumnFlags.NoHide | ImGuiTableColumnFlags.NoHeaderLabel, glyphColumn);
         // Status is the one stretch column (feature plan v3 P1): it holds the answer to "why not", so it takes the
         // width the others leave, and FitStatusColumn hides Rewards, then Expansion, before it drops under its minimum.
-        var expansionColumn = UiMetrics.Px(40f);
+        var expansionColumn = MathF.Max(UiMetrics.Px(LayoutBudgets.ExpansionColumnLogical), HeaderFloor(Strings.ColumnExpansion, sortable: true));
         ImGui.TableSetupColumn(Strings.ColumnName, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoHide, UiMetrics.Px(NameColumnWidth));
         ImGui.TableSetupColumn(Strings.ColumnLevel, ImGuiTableColumnFlags.WidthFixed, levelColumn);
         ImGui.TableSetupColumn(Strings.ColumnJob, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoSort, UiMetrics.Px(JobColumnWidth));
@@ -289,6 +340,13 @@ public sealed class TablePane : IDisposable
         // The persisted sort is written straight into the column state on the table's first frame: ImGui's own saved
         // settings (imgui.ini) would otherwise win over DefaultSort and hand their sort back through SpecsDirty. It is
         // written again on the frame the sorted column comes back from a FitStatusColumn hide (ImGui dropped it).
+        if (headerLanguage != Localization.Loc.Version)
+        {
+            // A new language: the saved Level and Job widths are checked against the new headers (below).
+            headerLanguage = Localization.Loc.Version;
+            measureJobWidth = true;
+        }
+
         if (!tableInitialized || restoreSort)
         {
             // Once per table init the Job column's saved width is checked against its widest label (below).
@@ -306,17 +364,31 @@ public sealed class TablePane : IDisposable
             jobWidthFix = 0f;
         }
 
+        if (levelWidthFix > 0f)
+        {
+            ImGuiP.TableSetColumnWidth((int)Column.Level, levelWidthFix);
+            levelWidthFix = 0f;
+        }
+
         // The two icon-derived widths are re-asserted every frame (imgui.ini restores font-tracked widths, not IconScale).
         ImGuiP.TableSetColumnWidth((int)Column.Glyph, glyphColumn);
         ImGuiP.TableSetColumnWidth((int)Column.Rewards, rewardsColumn);
-        var statusWidth = DrawHeaders(SortedColumn(ui.Sort), out var jobWidth);
+        var statusWidth = DrawHeaders(SortedColumn(ui.Sort), out var jobWidth, out var levelWidth);
         if (measureJobWidth)
         {
             measureJobWidth = false;
-            var jobMin = MathF.Min(UiMetrics.Icon(JobIconSide), rowContent) + UiMetrics.Px(JobIconGap) + ImGui.CalcTextSize(Strings.JobDohDol).X;
+            var jobMin = MathF.Max(
+                MathF.Min(UiMetrics.Icon(JobIconSide), rowContent) + UiMetrics.Px(JobIconGap) + ImGui.CalcTextSize(Strings.JobDohDol).X,
+                HeaderFloor(Strings.ColumnJob, sortable: false) - headerPad);
             if (jobWidth > 0f && jobWidth + 0.5f < jobMin)
             {
-                jobWidthFix = MathF.Max(jobMin, UiMetrics.Px(JobColumnWidth));
+                jobWidthFix = MathF.Max(jobMin, UiMetrics.Px(JobColumnWidth)) + headerPad;
+            }
+
+            var levelMin = levelColumn - headerPad;
+            if (levelWidth > 0f && levelWidth + 0.5f < levelMin)
+            {
+                levelWidthFix = levelColumn;
             }
         }
 
@@ -387,10 +459,11 @@ public sealed class TablePane : IDisposable
     /// on the raised fill; the sorted column's label and its arrow are in the primary text colour (a sort is not a call
     /// to action, so never gold). Returns the Status column's laid-out width (0 when hidden).
     /// </summary>
-    private static float DrawHeaders(int sortedColumn, out float jobWidth)
+    private static float DrawHeaders(int sortedColumn, out float jobWidth, out float levelWidth)
     {
         var statusWidth = 0f;
         jobWidth = 0f;
+        levelWidth = 0f;
         var s = Theme.Surface;
 
         // Header labels are captions (ui-revamp §4.2): 0.85× the body, never under 12 px, in the caption game font.
@@ -410,6 +483,10 @@ public sealed class TablePane : IDisposable
             else if (i == (int)Column.Job)
             {
                 jobWidth = ImGui.GetContentRegionAvail().X;
+            }
+            else if (i == (int)Column.Level)
+            {
+                levelWidth = ImGui.GetContentRegionAvail().X;
             }
 
             ImGui.PushID(i);
@@ -452,7 +529,7 @@ public sealed class TablePane : IDisposable
             return;
         }
 
-        var min = UiMetrics.Px(StatusMinWidth);
+        var min = StatusMin();
         var padding = ImGui.GetStyle().CellPadding.X * 2f;
         var rewardsEnabled = IsColumnEnabled(Column.Rewards);
         var expansionEnabled = IsColumnEnabled(Column.Expansion);
@@ -1076,6 +1153,32 @@ public sealed class TablePane : IDisposable
         }
     }
 
+    /// <summary>
+    /// The chips' labels in the UI language: the guard names filters by their English identities
+    /// (<see cref="FilterNames"/>), which clearing one still switches on. Rebuilt when the list or the language changes.
+    /// </summary>
+    private System.Collections.Generic.IReadOnlyList<string> EmptyChipLabels(System.Collections.Generic.IReadOnlyList<string> filters)
+    {
+        if (!ReferenceEquals(filters, emptyChipSource) || emptyChipLanguage != Localization.Loc.Version)
+        {
+            emptyChipSource = filters;
+            emptyChipLanguage = Localization.Loc.Version;
+            var labels = new string[filters.Count];
+            for (var i = 0; i < labels.Length; i++)
+            {
+                labels[i] = FilterNames.Display(filters[i]);
+            }
+
+            emptyChipLabels = labels;
+        }
+
+        return emptyChipLabels;
+    }
+
+    private System.Collections.Generic.IReadOnlyList<string>? emptyChipSource;
+    private int emptyChipLanguage = -1;
+    private System.Collections.Generic.IReadOnlyList<string> emptyChipLabels = [];
+
     private void DrawEmpty(EmptyReason empty)
     {
         ui.RecordWindow(UiRects.Table);
@@ -1087,7 +1190,7 @@ public sealed class TablePane : IDisposable
 
         // Heading, one line, the offending filters as chips (each clears only itself) and Reset (T16, ui-revamp §2.8).
         var body = empty.Filters.Count > 0 ? Strings.EmptyFiltersHiding : Strings.NothingMatchesCombination;
-        var clicked = EmptyState.DrawWithAction(Strings.EmptyNothingMatchesHeading, body, Strings.ResetFilters, empty.Filters, QuestState.Blocked);
+        var clicked = EmptyState.DrawWithAction(Strings.EmptyNothingMatchesHeading, body, Strings.ResetFilters, EmptyChipLabels(empty.Filters), QuestState.Blocked);
         if (clicked == EmptyState.ActionClicked)
         {
             resetFilters();

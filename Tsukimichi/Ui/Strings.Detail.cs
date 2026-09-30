@@ -1,3 +1,5 @@
+using Tsukimichi.Localization;
+
 namespace Tsukimichi.Ui;
 
 /// <summary>
@@ -10,114 +12,115 @@ static partial class Strings
 {
     // ---- Hero and cards ----
     /// <summary>{0} = unmet requirements, {1} = all requirements.</summary>
-    public const string DetailRequirementsUnmetFormat = "{0} of {1} unmet";
-    public const string DetailRequirementsAllMet = "All met";
+    public static string DetailRequirementsUnmetFormat => Loc.Get("DetailRequirementsUnmetFormat");
+    public static string DetailRequirementsAllMet => Loc.Get("DetailRequirementsAllMet");
 
     /// <summary>{0} = rewards that exist nowhere else.</summary>
-    public const string DetailRewardsUniqueFormat = "{0} unique";
-    public const string DetailUniqueRewardTooltip = "Unique: this quest is the only way to get it";
-    public const string DetailNoGiverPlace = "No map position recorded";
+    public static string DetailRewardsUniqueFormat => Loc.Get("DetailRewardsUniqueFormat");
+    public static string DetailUniqueRewardTooltip => Loc.Get("DetailUniqueRewardTooltip");
+    public static string DetailNoGiverPlace => Loc.Get("DetailNoGiverPlace");
 
     /// <summary>Appended to the hero's caption line (P8): {0} = the patch the quest was added in, as the game writes it.</summary>
-    public const string DetailAddedInFormat = " · Added in {0}";
+    public static string DetailAddedInFormat => Loc.Get("DetailAddedInFormat");
 
     /// <summary>The header badge's tooltip for <c>QuestRecord.IconSpecial</c>: a seasonal event quest, or another special one (a promotion).</summary>
-    public const string DetailSeasonalBadgeTooltip = "Seasonal event quest";
-    public const string DetailSpecialBadgeTooltip = "Special";
+    public static string DetailSeasonalBadgeTooltip => Loc.Get("DetailSeasonalBadgeTooltip");
+    public static string DetailSpecialBadgeTooltip => Loc.Get("DetailSpecialBadgeTooltip");
 
     // ---- Chain line at the top of the Path card ----
     /// <summary>{0} = chain name, {1} = quests done, {2} = quests in the chain.</summary>
-    public const string DetailChainFormat = "Chain: {0} · {1} of {2} done";
+    public static string DetailChainFormat => Loc.Get("DetailChainFormat");
 
     /// <summary>A side story: {0} = the story's name ("Story: …"), {1} = quests done, {2} = quests in it.</summary>
-    public const string DetailStoryFormat = "{0} · {1} of {2} done";
-    public const string DetailChainNext = "· next:";
-    public const string DetailChainComplete = "· complete";
-    public const string DetailChainNextTooltip = "Select the next quest in this chain";
+    public static string DetailStoryFormat => Loc.Get("DetailStoryFormat");
+    public static string DetailChainNext => Loc.Get("DetailChainNext");
+    public static string DetailChainComplete => Loc.Get("DetailChainComplete");
+    public static string DetailChainNextTooltip => Loc.Get("DetailChainNextTooltip");
 
     /// <summary>The chain halo's tooltip: {0} = quests done, {1} = quests in the chain.</summary>
-    public const string DetailChainHaloTooltipFormat = "{0} of {1} quests done";
+    public static string DetailChainHaloTooltipFormat => Loc.Get("DetailChainHaloTooltipFormat");
 
     // ---- Path (star chart) ----
     /// <summary>{0} = steps on the path, {1} = steps done.</summary>
-    public const string PathCaptionFormat = "{0} steps · {1} done";
-    public const string PathCaptionOne = "1 step";
+    public static string PathCaptionFormat => Loc.Get("PathCaptionFormat");
+    public static string PathCaptionOne => Loc.Get("PathCaptionOne");
 
     /// <summary>{0} = completed steps folded into one bead.</summary>
-    public const string PathMoonsWalkedFormat = "{0} moons walked";
-    public const string PathAlternativePrefix = "or via ";
+    public static string PathMoonsWalkedFormat => Loc.Get("PathMoonsWalkedFormat");
+    /// <summary>{0} = the other quest that leads here.</summary>
+    public static string PathAlternativeFormat => Loc.Get("PathAlternativeFormat");
 
     /// <summary>{0} = quests still to do on the alternative's own path.</summary>
-    public const string PathAlternativeStepsFormat = " · {0} steps";
-    public const string PathAlternativeOneStep = " · 1 step";
-    public const string PathAlternativeDone = " · done";
+    public static string PathAlternativeStepsFormat => Loc.Get("PathAlternativeStepsFormat");
+    public static string PathAlternativeOneStep => Loc.Get("PathAlternativeOneStep");
+    public static string PathAlternativeDone => Loc.Get("PathAlternativeDone");
 
     /// <summary>{0} = quests still to do on the alternative's own path.</summary>
-    public const string PathAlternativeTooltipFormat = "Another way in · {0} steps to go. Click to see its path.";
-    public const string PathAlternativeTooltipDone = "Another way in, already walked. Click to see its path.";
+    public static string PathAlternativeTooltipFormat => Loc.Get("PathAlternativeTooltipFormat");
+    public static string PathAlternativeTooltipDone => Loc.Get("PathAlternativeTooltipDone");
 
     /// <summary>{0} = level, {1} = expansion.</summary>
-    public const string PathStepDetailFormat = "Lv {0} · {1}";
-    public const string PathSingleCaption = "Starts its own path: no previous quests.";
-    public const string PathAloneCaption = "Stands alone: no previous quests, unlocks nothing.";
-    public const string PathNotCheckedCaption = "Not checked yet: log in to light the path.";
+    public static string PathStepDetailFormat => Loc.Get("PathStepDetailFormat");
+    public static string PathSingleCaption => Loc.Get("PathSingleCaption");
+    public static string PathAloneCaption => Loc.Get("PathAloneCaption");
+    public static string PathNotCheckedCaption => Loc.Get("PathNotCheckedCaption");
 
     /// <summary>{0} = how many quests this one opens.</summary>
-    public const string PathUnlocksHeaderFormat = "UNLOCKS NEXT · {0}";
-    public const string PathUnlocksHeaderNone = "UNLOCKS NEXT · none";
-    public const string PathJumpToTarget = "target";
-    public const string PathJumpToTargetTooltip = "Scroll back to this quest";
-    public const string PathMinimapTooltip = "The whole path: gold is walked, the dot is this quest. Click to scroll there.";
+    public static string PathUnlocksHeaderFormat => Loc.Get("PathUnlocksHeaderFormat");
+    public static string PathUnlocksHeaderNone => Loc.Get("PathUnlocksHeaderNone");
+    public static string PathJumpToTarget => Loc.Get("PathJumpToTarget");
+    public static string PathJumpToTargetTooltip => Loc.Get("PathJumpToTargetTooltip");
+    public static string PathMinimapTooltip => Loc.Get("PathMinimapTooltip");
 
     // ---- Action bar ----
-    public const string ActionTeleport = "Teleport";
+    public static string ActionTeleport => Loc.Get("ActionTeleport");
 
     /// <summary>{0} = the aetheryte.</summary>
-    public const string ActionTeleportTooltipFormat = "Teleport to {0} with Lifestream";
-    public const string ActionFlagUnavailable = "No map position is recorded for the giver.";
-    public const string ActionPinTooltip = "Pin: keep this quest on the Todo overlay and at the top of the table";
-    public const string ActionUnpinTooltip = "Unpin this quest";
-    public const string ActionPinUnavailable = "Pins belong to a character: log in or pick one first.";
-    public const string ActionShowPathTooltip = "Show path: scroll to the Path card and light this quest";
-    public const string ActionCopyCoordinatesUnavailable = "No map position is recorded for the giver.";
+    public static string ActionTeleportTooltipFormat => Loc.Get("ActionTeleportTooltipFormat");
+    public static string ActionFlagUnavailable => Loc.Get("ActionFlagUnavailable");
+    public static string ActionPinTooltip => Loc.Get("ActionPinTooltip");
+    public static string ActionUnpinTooltip => Loc.Get("ActionUnpinTooltip");
+    public static string ActionPinUnavailable => Loc.Get("ActionPinUnavailable");
+    public static string ActionShowPathTooltip => Loc.Get("ActionShowPathTooltip");
+    public static string ActionCopyCoordinatesUnavailable => Loc.Get("ActionCopyCoordinatesUnavailable");
 
     // ---- Provenance ----
     /// <summary>{0} = how long ago ("just now", "5 min ago").</summary>
-    public const string ProvenanceLiveFormat = "Checked {0} · live";
+    public static string ProvenanceLiveFormat => Loc.Get("ProvenanceLiveFormat");
 
     /// <summary>{0} = the character's first name, {1} = how long ago.</summary>
-    public const string ProvenanceSnapshotFormat = "From {0}'s snapshot, {1}";
-    public const string ProvenanceLogIn = "Log in to check this quest";
+    public static string ProvenanceSnapshotFormat => Loc.Get("ProvenanceSnapshotFormat");
+    public static string ProvenanceLogIn => Loc.Get("ProvenanceLogIn");
 
     // ---- Empty states ----
-    public const string EmptyNothingMatchesHeading = "Nothing matches";
+    public static string EmptyNothingMatchesHeading => Loc.Get("EmptyNothingMatchesHeading");
 
-    public const string EmptyFiltersHiding = "Each of these filters hides every quest here; click one to clear it.";
-    public const string EmptyChipTooltip = "Clear this filter";
-    public const string EmptyNotInCatalogHeading = "Quest not found";
-    public const string EmptyNotInCatalogBody = "This quest is not in the catalog Tsukimichi loaded.";
-    public const string EmptyClearSelection = "Clear selection";
+    public static string EmptyFiltersHiding => Loc.Get("EmptyFiltersHiding");
+    public static string EmptyChipTooltip => Loc.Get("EmptyChipTooltip");
+    public static string EmptyNotInCatalogHeading => Loc.Get("EmptyNotInCatalogHeading");
+    public static string EmptyNotInCatalogBody => Loc.Get("EmptyNotInCatalogBody");
+    public static string EmptyClearSelection => Loc.Get("EmptyClearSelection");
 
     // ---- Tonight ----
-    public const string TonightTitle = "Tonight";
+    public static string TonightTitle => Loc.Get("TonightTitle");
 
     /// <summary>{0} = quests Ready now.</summary>
-    public const string TonightReadyFormat = "{0} quests you can pick up now";
-    public const string TonightReadyOne = "1 quest you can pick up now";
-    public const string TonightReadyNone = "Nothing to pick up right now";
-    public const string TonightShowReady = "Show them";
-    public const string TonightShowReadyTooltip = "Open the Journal showing just these Ready quests (clears the search, the quick view and the other filters)";
-    public const string TonightMsqLabel = "Main scenario";
-    public const string TonightMsqDone = "Main scenario complete";
+    public static string TonightReadyFormat => Loc.Get("TonightReadyFormat");
+    public static string TonightReadyOne => Loc.Get("TonightReadyOne");
+    public static string TonightReadyNone => Loc.Get("TonightReadyNone");
+    public static string TonightShowReady => Loc.Get("TonightShowReady");
+    public static string TonightShowReadyTooltip => Loc.Get("TonightShowReadyTooltip");
+    public static string TonightMsqLabel => Loc.Get("TonightMsqLabel");
+    public static string TonightMsqDone => Loc.Get("TonightMsqDone");
 
     /// <summary>{0} = the running events, joined.</summary>
-    public const string TonightEventsFormat = "Events now: {0}";
+    public static string TonightEventsFormat => Loc.Get("TonightEventsFormat");
 
     /// <summary>{0} = the event's name, {1} = its quests Ready now.</summary>
-    public const string TonightEventReadyFormat = "{0} ({1} ready)";
-    public const string TonightEventFallback = "Seasonal event";
-    public const string TonightPinnedTitle = "Pinned and ready";
-    public const string TonightPickHint = "Pick a quest to see what blocks it and what it gives.";
-    public const string TonightLogIn = "Log in and Tsukimichi reads your journal. Nothing in the game changes.";
-    public const string TonightRowTooltip = "Select this quest";
+    public static string TonightEventReadyFormat => Loc.Get("TonightEventReadyFormat");
+    public static string TonightEventFallback => Loc.Get("TonightEventFallback");
+    public static string TonightPinnedTitle => Loc.Get("TonightPinnedTitle");
+    public static string TonightPickHint => Loc.Get("TonightPickHint");
+    public static string TonightLogIn => Loc.Get("TonightLogIn");
+    public static string TonightRowTooltip => Loc.Get("TonightRowTooltip");
 }

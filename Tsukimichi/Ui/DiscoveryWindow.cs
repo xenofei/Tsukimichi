@@ -340,7 +340,7 @@ public sealed class DiscoveryWindow : Window, IDisposable
         var button = UiMetrics.MinTarget;
         ImGui.TableSetupColumn(Strings.DiscoveryColumnState, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, glyphSize * 1.2f);
         ImGui.TableSetupColumn(Strings.DiscoveryColumnQuest, ImGuiTableColumnFlags.WidthStretch, 1f);
-        ImGui.TableSetupColumn(Strings.DiscoveryColumnLevel, ImGuiTableColumnFlags.WidthFixed, ImGui.CalcTextSize("Lv 100").X);
+        ImGui.TableSetupColumn(Strings.DiscoveryColumnLevel, ImGuiTableColumnFlags.WidthFixed, ImGui.CalcTextSize(string.Format(CultureInfo.CurrentCulture, Strings.DiscoveryLevelFormat, 100)).X);
         ImGui.TableSetupColumn(Strings.DiscoveryColumnJob, ImGuiTableColumnFlags.WidthFixed, ImGui.CalcTextSize("WWWW").X);
         ImGui.TableSetupColumn(Strings.DiscoveryColumnActions, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, button);
         ImGui.TableHeadersRow();
