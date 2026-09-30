@@ -29,6 +29,7 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] internal static IDtrBar DtrBar { get; private set; } = null!;
     [PluginService] internal static IContextMenu ContextMenu { get; private set; } = null!;
     [PluginService] internal static ICondition Condition { get; private set; } = null!;
+    [PluginService] internal static IKeyState KeyState { get; private set; } = null!;
     // /UI
 
     private static readonly TimeSpan DisposeWait = TimeSpan.FromSeconds(5);
@@ -504,6 +505,9 @@ public sealed class Plugin : IDalamudPlugin
             this.tutorial = tutorial;
             tutorial.WatchedWindow = mainWindow;
             PluginInterface.UiBuilder.Draw += tutorial.CheckFirstRun;
+            // The tour's keys (Enter, arrows, Backspace, Esc) are kept from the game while the tour has the keyboard.
+            tutorial.KeyState = KeyState;
+            Framework.Update += tutorial.ConsumeKeys;
             mainWindow.AttachTutorial(tutorial);
 
             // Each action opens the main window in front of the help window it was clicked in.
@@ -565,6 +569,7 @@ public sealed class Plugin : IDalamudPlugin
         if (tutorial is TutorialOverlay overlay)
         {
             PluginInterface.UiBuilder.Draw -= overlay.CheckFirstRun;
+            Framework.Update -= overlay.ConsumeKeys;
         }
 
         if (hoverHint is not null)
@@ -610,6 +615,7 @@ public sealed class Plugin : IDalamudPlugin
             if (tutorial is TutorialOverlay overlay)
             {
                 PluginInterface.UiBuilder.Draw -= overlay.CheckFirstRun;
+                Framework.Update -= overlay.ConsumeKeys;
             }
 
             if (mainWindow is not null)

@@ -653,7 +653,7 @@ public sealed class MainWindow : Window, IDisposable
     private void DrawSearchPill(Vector2 min, float width, float height)
     {
         var io = ImGui.GetIO();
-        if (io.KeyCtrl && ImGui.IsKeyPressed(ImGuiKey.F, false) && ImGui.IsWindowFocused(ImGuiFocusedFlags.RootAndChildWindows))
+        if (io.KeyCtrl && !io.WantTextInput && ImGui.IsKeyPressed(ImGuiKey.F, false) && ImGui.IsWindowFocused(ImGuiFocusedFlags.RootAndChildWindows))
         {
             focusSearch = true;
         }
@@ -755,12 +755,15 @@ public sealed class MainWindow : Window, IDisposable
         var count = FilterBadge.Count(ui.Filters);
         var size = new Vector2(width, height);
         ImGui.SetCursorScreenPos(min);
+
+        // The panel lives on the Journal tab: from another tab the click opens it there rather than closing it unseen.
+        var open = ui.FilterPanelOpen && ui.Tab == NavTab.Journal;
         if (ImGui.InvisibleButton("##filters", size))
         {
-            ui.FilterPanelOpen = !ui.FilterPanelOpen;
-            if (ui.FilterPanelOpen)
+            open = !open;
+            ui.FilterPanelOpen = open;
+            if (open)
             {
-                // The panel lives on the Journal tab.
                 ui.Tab = NavTab.Journal;
             }
         }
@@ -770,7 +773,6 @@ public sealed class MainWindow : Window, IDisposable
         var dl = ImGui.GetWindowDrawList();
         var max = min + size;
         var rounding = height * 0.5f;
-        var open = ui.FilterPanelOpen && ui.Tab == NavTab.Journal;
         if (open)
         {
             dl.AddRectFilled(min, max, Theme.WithAlpha(s.Text, 0.12f), rounding);

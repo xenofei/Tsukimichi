@@ -2,10 +2,12 @@ using System;
 using System.Globalization;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
+using Dalamud.Game.ClientState.Keys;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin;
+using Dalamud.Plugin.Services;
 using Tsukimichi.Config;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Ui;
@@ -22,8 +24,9 @@ namespace Tsukimichi.Ui;
 /// 70 % except for a rounded cutout around the target and around the card; the target gets a Moon border with a soft
 /// glow; the card is a small ImGui window beside the target, flipping sides near the screen edge. The card carries a
 /// chapter strip (click to jump), the step within its chapter, title, body and Back / Next / Close.
-/// Keys while the tour runs and a plugin window has focus (not while typing): Enter or → next, ← or Backspace back,
-/// Esc closes (on the first-run offer, Esc means Later).
+/// Keys while the tour runs and the card or the main window has focus (not while typing): Enter or → next, ← or
+/// Backspace back, Esc closes (on the first-run offer, Esc means Later). <see cref="ConsumeKeys"/> keeps those keys
+/// from the game meanwhile, so Enter does not also open the chat box.
 /// On first run the welcome card offers the tour with "Take the tour", "Later" (offered again next session, up to
 /// <see cref="LaterLimit"/> times) and "Don't offer again". The tab, the filter panel and the other window state the
 /// tour changes are put back when it ends. Sizes follow <see cref="UiMetrics.Scale"/> and the card's text follows the
@@ -279,13 +282,16 @@ public sealed class TutorialOverlay : ITutorial
             DrawHighlight(in target, scale);
         }
 
-        DrawCard(cardPos, in step, screen);
+        // Called from the end of the main window's Draw, so this is the main window's focus.
+        var mainFocused = ImGui.IsWindowFocused(ImGuiFocusedFlags.RootAndChildWindows);
+        DrawCard(cardPos, in step, screen, mainFocused);
 
         // A click in the main window gives it focus; its NoBringToFrontOnFocus flag (set by MainWindow while the tour
-        // runs) already keeps the card in front. As a second guard the card asks for focus again on the frame after any
-        // release, but not while a widget is active or a popup is open (focusing would deactivate the widget or close
-        // the popup, and the window underneath must stay usable).
-        if (Active && AnyMouseReleased() && !ImGui.IsAnyItemActive() && !AnyPopupOpen())
+        // runs) already keeps the card in front. As a second guard the card asks for focus again on the frame after a
+        // release over a plugin window, but not while a widget is active or a popup is open (focusing would deactivate
+        // the widget or close the popup, and the window underneath must stay usable), and not after a click on the
+        // game, which takes the keyboard back.
+        if (Active && AnyMouseReleased() && ImGui.GetIO().WantCaptureMouse && !ImGui.IsAnyItemActive() && !AnyPopupOpen())
         {
             focusCard = true;
         }
@@ -337,6 +343,7 @@ public sealed class TutorialOverlay : ITutorial
         index = -1;
         offering = false;
         stepChanged = true;
+        keysOwned = false;
         if (seen && !settings.TutorialCompleted)
         {
             settings.TutorialCompleted = true;
@@ -389,19 +396,56 @@ public sealed class TutorialOverlay : ITutorial
     }
 
     /// <summary>
-    /// The tour's keys, applied after the card's buttons so a key that also activated a focused button counts once.
-    /// Only while a plugin window has focus (so the game keeps its keys) and nothing is being typed or edited.
-    /// While they apply, the keyboard is claimed for the plugin so Enter does not also open the game's chat.
+    /// <c>Framework.Update</c> handler: while the tour owns the keyboard (<see cref="keysOwned"/>, decided on the last
+    /// draw), clears its keys from the game's key state before the game reads them, so Enter does not also open the
+    /// chat box and Esc does not also open the system menu. Dalamud passes keys to the game unless a text input is
+    /// active; ImGui still receives them through its own window messages.
     /// </summary>
-    private void HandleKeys()
+    public void ConsumeKeys(IFramework framework)
     {
-        if (!Active || stepChanged || ImGui.GetIO().WantTextInput || ImGui.IsAnyItemActive() || AnyPopupOpen()
-            || !ImGui.IsWindowFocused(ImGuiFocusedFlags.AnyWindow))
+        // Only right after a draw that owned them: a tour paused by closing the main window gives the keys back.
+        if (!keysOwned || Environment.TickCount64 - keysOwnedAt > KeysOwnedGraceMs || KeyState is not { } keys)
         {
             return;
         }
 
-        ImGui.SetNextFrameWantCaptureKeyboard(true);
+        foreach (var key in TourKeys)
+        {
+            if (keys[key])
+            {
+                keys[key] = false;
+            }
+        }
+    }
+
+    /// <summary>The game's key state, for <see cref="ConsumeKeys"/>; null leaves the game's keys alone.</summary>
+    public IKeyState? KeyState { get; set; }
+
+    private static readonly VirtualKey[] TourKeys = [VirtualKey.RETURN, VirtualKey.ESCAPE, VirtualKey.LEFT, VirtualKey.RIGHT, VirtualKey.BACK];
+
+    /// <summary>Whether the tour answered keys on the last draw: the card or the main window had focus and nothing was being typed.</summary>
+    private bool keysOwned;
+
+    /// <summary>When <see cref="keysOwned"/> was last decided (<see cref="Environment.TickCount64"/>).</summary>
+    private long keysOwnedAt;
+
+    /// <summary>How long a draw's <see cref="keysOwned"/> stays good for <see cref="ConsumeKeys"/>.</summary>
+    private const long KeysOwnedGraceMs = 250;
+
+    /// <summary>
+    /// The tour's keys, applied after the card's buttons so a key that also activated a focused button counts once.
+    /// Only while the card or the main window has focus (a click on the game gives the keys back to it) and nothing is
+    /// being typed or edited.
+    /// </summary>
+    private void HandleKeys(bool mainFocused)
+    {
+        keysOwned = Active && !ImGui.GetIO().WantTextInput && (mainFocused || ImGui.IsWindowFocused(ImGuiFocusedFlags.RootAndChildWindows));
+        keysOwnedAt = Environment.TickCount64;
+        if (!keysOwned || stepChanged || ImGui.IsAnyItemActive() || AnyPopupOpen())
+        {
+            return;
+        }
+
         if (ImGui.IsKeyPressed(ImGuiKey.Escape, false))
         {
             Close();
@@ -518,7 +562,7 @@ public sealed class TutorialOverlay : ITutorial
         dl.AddRect(target.Min, target.Max, Theme.MoonU32, rounding, ImDrawFlags.RoundCornersAll, BorderThickness * scale);
     }
 
-    private void DrawCard(Vector2 pos, in Step step, in ScreenRect screen)
+    private void DrawCard(Vector2 pos, in Step step, in ScreenRect screen, bool mainFocused)
     {
         var scale = UiMetrics.Scale;
         var width = CardWidthPx(screen);
@@ -561,7 +605,7 @@ public sealed class TutorialOverlay : ITutorial
                 }
 
                 DrawCardContent(in step);
-                HandleKeys();
+                HandleKeys(mainFocused);
             }
         }
         finally
