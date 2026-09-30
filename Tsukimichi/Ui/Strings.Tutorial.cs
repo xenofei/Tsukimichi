@@ -43,7 +43,7 @@ static partial class Strings
         public const string FiltersTitle = "Narrow it further";
         public const string FiltersBody = "Filters opens this panel beside the tree. The badge counts what narrows the table, and each chip under the toolbar clears one; the first chip is the tree scope.";
         public const string TabsTitle = "Where things live";
-        public const string TabsBody = "Journal holds every quest; its badge counts the quests you can pick up now. Moonlit, Characters and Flight come in the last chapter.";
+        public const string TabsBody = "Journal holds every quest; its badge counts the quests you can pick up now. Moonlit, Characters, Flight and My blues come in the last chapter.";
         public const string TreeTitle = "Pick a part of the journal";
         public const string TreeBody = "Sections, categories and genres narrow the table. Each ring fills as you complete its quests; a gold count means quests you can accept now.";
         public const string TableTitle = "Every quest, one row each";
@@ -66,6 +66,8 @@ static partial class Strings
         public const string CharactersBody = "Each character you log in keeps a snapshot here. Pick one to browse the journal as that character, with a dashboard of its progress.";
         public const string FlightTitle = "Unlock flying";
         public const string FlightBody = "Pick a zone to see its aether current quests, what blocks each one, and where to fly next.";
+        public const string PlanTitle = "Unlock quests left to clear";
+        public const string PlanBody = "My blues lists every blue unlock quest you have left, by expansion and zone, with what each one opens. Copy it as a checklist or pin an expansion to the Todo overlay.";
         public const string PlayTitle = "While you play";
         public const string PlayBody = "The Todo overlay keeps pins and nearby unlocks on screen; Nearby lists what you can start in this zone. Turn them on in Settings, or type /tsuki todo and /tsuki nearby.";
         public const string HelpTitle = "Help, tour and settings";

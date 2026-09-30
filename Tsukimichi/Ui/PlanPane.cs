@@ -208,6 +208,8 @@ public sealed class PlanPane
             return;
         }
 
+        ui.RecordWindow(UiRects.PlanCards);
+
         foreach (var block in view.Expansions)
         {
             if (scrollTo == block.Expansion)

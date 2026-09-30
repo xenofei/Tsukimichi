@@ -391,6 +391,7 @@ static partial class Strings
             HelpTopic.Moonlit => "Moonlit treasures",
             HelpTopic.Characters => "Characters and snapshots",
             HelpTopic.Flight => "Flight and nearby",
+            HelpTopic.Plan => "My blues",
             HelpTopic.Commands => "Commands",
             HelpTopic.CountsDiffer => "Why my counts differ from the journal",
             HelpTopic.KnownQuirks => "Known quirks",
@@ -409,6 +410,7 @@ static partial class Strings
             HelpTopic.Moonlit => "Rewards that exist nowhere else, with how sure the plugin is about each.",
             HelpTopic.Characters => "One snapshot per character keeps the whole account in view, even logged out.",
             HelpTopic.Flight => "Which quests stand between you and flying, and what you can start where you are.",
+            HelpTopic.Plan => "Every blue unlock quest you have left, in the order the story reaches them.",
             HelpTopic.Commands => "Everything the chat command can do.",
             HelpTopic.CountsDiffer => "Four reasons a done/total here is not the number in the game's journal or on a wiki.",
             HelpTopic.KnownQuirks => "Things the plugin gets wrong on purpose or cannot know yet, so you need not report them.",
@@ -432,6 +434,8 @@ static partial class Strings
         public const string StepCharactersBody = "The Characters tab keeps a snapshot per character. Pick one to browse the whole catalog as that character, with a dashboard of its progress.";
         public const string StepFlightTitle = "Unlock flying";
         public const string StepFlightBody = "The Flight tab lists every zone you can fly in. Pick one to see its quest currents, the quest that blocks each and where to fly next.";
+        public const string StepPlanTitle = "Clear your unlock quests";
+        public const string StepPlanBody = "The My blues tab lists every blue unlock quest you have left, by expansion and zone, with what each one unlocks. Copy it as a checklist, or pin an expansion to the Todo overlay.";
         public const string StepTourTitle = "Take the tour";
         public const string StepTourBody = "The tour has three short chapters, Find, Read and Beyond, each pointing at the real window. Jump between chapters on the card; Enter moves on and Esc closes.";
         public const string QuickStartTip = "Select any row to read its requirements, path and giver in the detail pane. Right-click a row for pin, map flag and journal.";
@@ -556,7 +560,6 @@ static partial class Strings
             "Nearby quests window",
             "Server bar entry",
             "/tsuki zone and /tsuki which",
-            PlanHelpTitle,
         ];
 
         public static readonly string[] FlightCardBodies =
@@ -566,7 +569,6 @@ static partial class Strings
             "/tsuki nearby opens a small window with the quests you can start in the current zone: state moon, level and job. A click on the name shows it in the Journal, a double-click flags the giver on the map, and right-click or … opens Flag, Teleport and Link in chat. Also in your journal here folds out the quests in your journal whose giver stands in the zone. The cog holds its settings.",
             "☾ N in the server info bar is the count of quests you can start here. Hover it for the first five names; click it to open Nearby quests. It hides at zero unless Keep the entry visible is on, and the cog in Nearby quests can turn it off entirely.",
             "/tsuki zone prints chat links for the quests you can start in the current zone, by level, up to ten. /tsuki which prints every quest the targeted NPC hands out with its state. Both need an evaluated character; the Nearby quests window keeps the same list on screen.",
-            PlanHelpBody,
         ];
 
         // ---- Commands ----

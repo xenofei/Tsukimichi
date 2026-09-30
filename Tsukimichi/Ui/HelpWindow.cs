@@ -23,6 +23,9 @@ public enum HelpTopic
     Moonlit,
     Characters,
     Flight,
+
+    /// <summary>The My blues tab (P3): the unlock quests left and the Todo overlay's Clear my blues section.</summary>
+    Plan,
     Commands,
     CountsDiffer,
     KnownQuirks,
@@ -84,6 +87,7 @@ public sealed class HelpWindow : Window
         FontAwesomeIcon.Gem.ToIconString(),
         FontAwesomeIcon.Users.ToIconString(),
         FontAwesomeIcon.Plane.ToIconString(),
+        FontAwesomeIcon.ClipboardList.ToIconString(),
         FontAwesomeIcon.Terminal.ToIconString(),
         FontAwesomeIcon.Calculator.ToIconString(),
         FontAwesomeIcon.ExclamationTriangle.ToIconString(),
@@ -162,8 +166,12 @@ public sealed class HelpWindow : Window
         FontAwesomeIcon.Compass,
         FontAwesomeIcon.MapMarkerAlt,
         FontAwesomeIcon.Moon,
-        FontAwesomeIcon.Terminal,
-        FontAwesomeIcon.ClipboardList);
+        FontAwesomeIcon.Terminal);
+
+    private static readonly CardItem[] PlanCards =
+    [
+        new(FontAwesomeIcon.ClipboardList.ToIconString(), Strings.PlanHelpTitle, Strings.PlanHelpBody),
+    ];
 
     private static readonly CardItem[] CountsCards = Cards(
         Strings.Help.CountsCardTitles,
@@ -228,7 +236,8 @@ public sealed class HelpWindow : Window
             new("5", Strings.Help.StepMoonlitTitle, Strings.Help.StepMoonlitBody, () => actions.ShowTab(NavTab.Moonlit)),
             new("6", Strings.Help.StepCharactersTitle, Strings.Help.StepCharactersBody, () => actions.ShowTab(NavTab.Characters)),
             new("7", Strings.Help.StepFlightTitle, Strings.Help.StepFlightBody, () => actions.ShowTab(NavTab.Flight)),
-            new("8", Strings.Help.StepTourTitle, Strings.Help.StepTourBody, actions.StartTutorial),
+            new("8", Strings.Help.StepPlanTitle, Strings.Help.StepPlanBody, () => actions.ShowTab(NavTab.Plan)),
+            new("9", Strings.Help.StepTourTitle, Strings.Help.StepTourBody, actions.StartTutorial),
         ];
 
         BuildSearchText();
@@ -432,6 +441,9 @@ public sealed class HelpWindow : Window
                 case HelpTopic.Flight:
                     AppendCards(sb, FlightCards);
                     break;
+                case HelpTopic.Plan:
+                    AppendCards(sb, PlanCards);
+                    break;
                 case HelpTopic.Commands:
                     for (var c = 0; c < Strings.Help.CommandKeys.Length; c++)
                     {
@@ -515,6 +527,9 @@ public sealed class HelpWindow : Window
                 break;
             case HelpTopic.Flight:
                 DrawCards(FlightCards);
+                break;
+            case HelpTopic.Plan:
+                DrawCards(PlanCards);
                 break;
             case HelpTopic.Commands:
                 DrawCommands(scale);
