@@ -4,6 +4,8 @@ Status: **approved by the owner on 2026-09-30** ("Mockup looks good … Execute 
 
 Three additions came with the approval: D11 multibox, L8 requirement visuals, and the V4 banner fallback with original category art.
 
+**Complete (2026-09-30): 1.2.0, 1.3.0 and 1.4.0 are released.**
+
 **Release numbering as shipped (2026-09-30):**
 - **1.2.0** shipped D1–D11: honest counts, complete tags and multibox, together with L1–L2 (the pane floors and text helpers).
 - **1.3** is the layout release: L3–L8.
@@ -181,3 +183,14 @@ The detailed reports are in `docs/data/v4/`:
 - `duty-unlock-diff.txt`
 
 The design is in `docs/design/moon-road-proposal.md`, `docs/design/mockups/moon-road.html` and `docs/design/moon-road/ornaments/`.
+
+## Follow-ups after 1.4
+
+- **Icon lookups:** seven older `GetFromGameIcon(...).GetWrapOrEmpty()` call sites (DetailPane reward icons, FlightPane, MoonlitPane table, RewardTooltip, TablePane job and reward icons, CharactersPane:1118) would throw on a missing game icon. No icon is missing in the 2026.09.15 data. Move them to `TryGetFromGameIcon` with a drawn fallback.
+- **Casing:** `PathChart.cs:201` upper-cases with `CurrentCulture` (pre-1.4). Route it through `HeadingCase`.
+- **Owner checks in game:**
+  - the Moon Road look at Flair Full, Quiet and Plain, and with the high-contrast palette;
+  - multibox with two clients (docs/multibox.md);
+  - achievement and title state after a character switch;
+  - the three other-path inferences (starter "Way of", Call of the Wild, My Little Chocobo after switching company);
+  - the 25 wiki-only prerequisites (allowlist until 1.5.0).
