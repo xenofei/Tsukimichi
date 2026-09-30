@@ -70,15 +70,16 @@ public class CatalogFixtureTests(FixtureCatalog fixture, ITestOutputHelper outpu
         var states = Catalog.All.ToDictionary(q => q.RowId, _ => QuestState.Ready);
         var counts = TreeCounts.Compute(Catalog, states, includeUnlisted: true);
 
-        // The class intros are listed under their genre but in no count (QuestRecord.CountsInTotals).
-        var uncounted = Catalog.All.Count(q => !q.IsRemoved && !q.CountsInTotals);
-        Assert.Equal(ExpectedCounts.UncountedClassIntros, uncounted);
+        // The class intros, the hidden progress trackers and the repeatables other than the allied society dailies are
+        // listed under their genre but in no count (QuestRecord.EntersCounts).
+        var uncounted = Catalog.All.Count(q => !q.IsRemoved && !q.EntersCounts);
+        Assert.Equal(ExpectedCounts.UncountedClassIntros + ExpectedCounts.ProgressTrackers + ExpectedCounts.UncountedRepeatables, uncounted);
 
         Assert.Equal(removed.Count, counts.Unlisted.Total);
         Assert.Equal(Catalog.Count - uncounted, counts.Overall.Total);
         foreach (var (section, quests) in Catalog.BySection)
         {
-            var listed = quests.Count(q => !q.IsRemoved && q.CountsInTotals);
+            var listed = quests.Count(q => !q.IsRemoved && q.EntersCounts);
             output.WriteLine($"section {section}: {listed} counted of {quests.Count}");
             Assert.Equal(listed, counts.Section(section).Total);
         }
@@ -107,7 +108,7 @@ public class CatalogFixtureTests(FixtureCatalog fixture, ITestOutputHelper outpu
         // Every live, non-repeatable blue-icon quest (feature or quasi-quest) outside the main scenario is in.
         foreach (var quest in Catalog.All)
         {
-            if (FeaturePresets.HasFeatureIcon(quest) && !quest.IsRetired && !quest.IsRepeatable && !FeaturePresets.IsMainScenario(quest))
+            if (FeaturePresets.HasFeatureIcon(quest) && !quest.IsRetired && !quest.IsRepeatable && !quest.IsProgressTracker && !FeaturePresets.IsMainScenario(quest))
             {
                 Assert.Contains(quest.RowId, ids);
             }
@@ -147,7 +148,7 @@ public class CatalogFixtureTests(FixtureCatalog fixture, ITestOutputHelper outpu
         foreach (var entry in curated.Chains)
         {
             var chain = chains.Chains.First(c => c.Name == entry.Name);
-            Assert.Equal(entry.GenreIds.Sum(id => Catalog.ByGenre[id].Count(q => !q.IsRetired)), chain.RowIds.Count);
+            Assert.Equal(entry.GenreIds.Sum(id => Catalog.ByGenre[id].Count(q => !q.IsRetired && !q.IsProgressTracker)), chain.RowIds.Count);
             Assert.All(chain.RowIds, id => Assert.Same(chain, chains.ForQuest(id)));
         }
 

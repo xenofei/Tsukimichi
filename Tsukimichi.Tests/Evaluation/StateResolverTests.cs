@@ -343,11 +343,55 @@ public class StateResolverTests
     }
 
     [Fact]
-    public void Repeatable_with_interval_and_completed_bit_is_DoneThisCycle_not_Completed()
+    public void Repeatable_with_interval_and_completed_bit_is_done_before_not_done_this_cycle()
+    {
+        // The completion bit of a daily stays set after the first turn-in; "done today" lives only in DailyDone
+        // (docs/data/v4/tagging-audit.md finding 1: 39 allied society dailies read Done this cycle for good).
+        var quest = Quest(Target) with { IsRepeatable = true, RepeatInterval = 1 };
+
+        var result = Resolve(quest, Snapshot(Target));
+
+        Assert.Equal(QuestState.Ready, result.State);
+        Assert.True(result.RepeatableDoneBefore);
+        Assert.True(result.CountsAsDone);
+    }
+
+    [Fact]
+    public void Daily_in_DailyDone_is_DoneThisCycle_and_done_before()
+    {
+        var quest = Quest(Target) with { IsRepeatable = true, RepeatInterval = 1 };
+        var snapshot = Snapshot(Target) with { DailyDone = new Dictionary<ushort, byte> { [quest.QuestId] = 1 } };
+
+        var result = Resolve(quest, snapshot);
+
+        Assert.Equal(QuestState.DoneThisCycle, result.State);
+        Assert.True(result.RepeatableDoneBefore);
+    }
+
+    [Fact]
+    public void Daily_never_done_is_not_done_before()
     {
         var quest = Quest(Target) with { IsRepeatable = true, RepeatInterval = 1 };
 
-        Assert.Equal(QuestState.DoneThisCycle, Resolve(quest, Snapshot(Target)).State);
+        var result = Resolve(quest, Snapshot());
+
+        Assert.Equal(QuestState.Ready, result.State);
+        Assert.False(result.RepeatableDoneBefore);
+        Assert.False(result.CountsAsDone);
+    }
+
+    [Fact]
+    public void Completed_quests_are_done_but_not_repeatables_done_before()
+    {
+        var once = Resolve(Quest(Target), Snapshot(Target));
+        Assert.Equal(QuestState.Completed, once.State);
+        Assert.False(once.RepeatableDoneBefore);
+        Assert.True(once.CountsAsDone);
+
+        // A repeatable whose flag never resets reads Completed under rule 1, done like any other quest.
+        var final = Resolve(Quest(Target) with { IsRepeatable = true, RepeatInterval = 0 }, Snapshot(Target));
+        Assert.Equal(QuestState.Completed, final.State);
+        Assert.False(final.RepeatableDoneBefore);
     }
 
     [Fact]
@@ -372,8 +416,9 @@ public class StateResolverTests
     {
         var quest = Quest(Target) with { IsRepeatable = true, RepeatInterval = 1 };
         var ctx = new EvalContext { IsAchievementGated = _ => true };
+        var snapshot = Snapshot(Target) with { AchievementsLoaded = false, DailyDone = new Dictionary<ushort, byte> { [quest.QuestId] = 1 } };
 
-        Assert.Equal(QuestState.DoneThisCycle, Resolve(quest, Snapshot(Target) with { AchievementsLoaded = false }, ctx: ctx).State);
+        Assert.Equal(QuestState.DoneThisCycle, Resolve(quest, snapshot, ctx: ctx).State);
     }
 
     // Rule 6

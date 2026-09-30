@@ -1255,7 +1255,6 @@
     69436,
     69437,
     69477,
-    69478,
     69479,
     69480,
     69481,
@@ -1309,12 +1308,6 @@
     69573,
     69575,
     69579,
-    69580,
-    69581,
-    69582,
-    69583,
-    69584,
-    69585,
     69589,
     69603,
     69604,
@@ -1337,7 +1330,6 @@
     69624,
     69628,
     69629,
-    69630,
     69632,
     69633,
     69634,
@@ -1731,5 +1723,5 @@
     71053,
     71054
   ],
-  "note": "Written by Tsukimichi.DataGen (tools/regen.ps1); do not edit by hand. Derived by FeaturePresets.Derive over the refiled catalog: quests with the blue EventIconType 8 journal icon or the quasi-quest type 10 that shares it, quests in system_unlocks.json or duty_unlocks.json, quests the unique-reward data credits with an unlock, and quests whose own rewards unlock something; never main scenario, repeatable or retired quests. Seeds the Unlock quests virtual category; CuratedInvariantsTests fails when this file differs from the derived set."
+  "note": "Written by Tsukimichi.DataGen (tools/regen.ps1); do not edit by hand. Derived by FeaturePresets.Derive over the refiled catalog: quests with the blue EventIconType 8 journal icon or the quasi-quest type 10 that shares it, quests in system_unlocks.json or duty_unlocks.json, quests the unique-reward data credits with an unlock, and quests whose own rewards unlock something; never main scenario, repeatable, retired or hidden progress-tracker quests. Seeds the Unlock quests virtual category; CuratedInvariantsTests fails when this file differs from the derived set."
 }

@@ -44,14 +44,30 @@ internal static class ExpectedCounts
     public const int UncountedClassIntros = 20;
     public const int CountedJobIntros = 3;
     public const int RefiledByRule3 = 3;
-    public const int RefiledByRule4 = 24;
+    /// <summary>Rule 4 after the tracker rule took its 14 rows (<see cref="ProgressTrackers"/>): 24 before 1.2.</summary>
+    public const int RefiledByRule4 = 10;
+
+    /// <summary>
+    /// Hidden progress trackers (<c>JournalRefiler.TrackerRule</c>, docs/data/v4/tagging-audit.md finding 2): YoRHa
+    /// 69580–69585, Resistance 69478 and 69630, Ishgardian Restoration 69296, 69377, 69508 and 69578, and the weapon
+    /// service rows Recondition the Anima (67870) and Forged Anew (69577). Filed where rule 4 would file them, out of
+    /// every count.
+    /// </summary>
+    public const int ProgressTrackers = 14;
     public const int RefiledByRule5 = 3;
     public const int RefiledByRule6 = 27;
     public const int LeftByRule7 = 1;
-    public const int RefiledByRules = RefiledByRule2 + RefiledByRule3 + RefiledByRule4 + RefiledByRule5 + RefiledByRule6;
+    public const int RefiledByRules = RefiledByRule2 + RefiledByRule3 + RefiledByRule4 + ProgressTrackers + RefiledByRule5 + RefiledByRule6;
 
-    /// <summary>Curated overrides applied to genre-0 rows: the three Eureka entry quests, Seeing the Cieldalaes, The New Frontier.</summary>
-    public const int OverriddenUnlisted = 5;
+    /// <summary>
+    /// Listed repeatables other than the allied society dailies, trackers aside: the weeklies, relic and seasonal
+    /// repeatables, Primal Focus and the like. They stay under their genre but out of every done/total count
+    /// (<c>QuestRecord.EntersCounts</c>), so a finished section can read x/x.
+    /// </summary>
+    public const int UncountedRepeatables = 90;
+
+    /// <summary>Curated overrides applied to genre-0 rows: the three Eureka entry quests, Seeing the Cieldalaes, The New Frontier, What Lies Beneath.</summary>
+    public const int OverriddenUnlisted = 6;
 
     /// <summary>
     /// Listed rows retired_quests.json names: the 3.05 trio the sheet does not mark (<see cref="CuratedOnlyRetiredListed"/>)
@@ -83,13 +99,17 @@ internal static class ExpectedCounts
     /// set of 1,699 plus the 43 quasi-quests the icon rule newly admits (the other 15 of the 58, the class intros
     /// among them, were in through their unlock rewards already), minus the 8 retired rows the rule now drops (1,734),
     /// minus the four Heavensward quests the AetherCurrent sheet named instead of the quest that awards the current
-    /// (67328, 67334, 67365, 67437; docs/data/v4/flight-currents.md). The awarding quests were in already through their
-    /// "Aether Current" quest reward, and Thavnair's listed 70030 stays in on its own merits.
+    /// (67328, 67334, 67365, 67437; docs/data/v4/flight-currents.md; the awarding quests were in already through their
+    /// "Aether Current" quest reward, and Thavnair's listed 70030 stays in on its own merits), minus the 8 hidden
+    /// progress trackers that carry the blue icon (YoRHa 69580–69585, Resistance 69478 and 69630).
     /// </summary>
-    public const int FeatureQuests = 1730;
+    public const int FeatureQuests = 1722;
 
     /// <summary>Retired rows that carry an unlock reward or the blue icon and so derived as feature quests in 0.6.0.</summary>
     public const int RetiredFeatureRows = 8;
+
+    /// <summary>Hidden progress trackers with the blue icon, feature quests until 1.2: YoRHa 69580–69585, Resistance 69478 and 69630.</summary>
+    public const int TrackerFeatureRows = 8;
 
     // ---- Lodestone (verification-report-2 section 5) ----
 

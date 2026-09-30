@@ -162,4 +162,18 @@ public sealed record QuestEvaluation(
     /// which they cannot do now. A section whose remainder is all of these reads as complete.
     /// </summary>
     public bool LeavesTotals => State == QuestState.Foreclosed || IsOutOfSeason;
+
+    /// <summary>
+    /// A repeatable the character has completed at least once (its completion bit is set, or it is done this cycle)
+    /// while its <see cref="State"/> reads something else: Ready again the next day, Done this cycle, or blocked by a
+    /// requirement that changed since. Always false on a quest that is not repeatable, and on a Completed one.
+    /// </summary>
+    public bool RepeatableDoneBefore { get; init; }
+
+    /// <summary>
+    /// What done/total counts as done: <see cref="QuestState.Completed"/>, or a repeatable completed at least once
+    /// (<see cref="RepeatableDoneBefore"/>; only the allied society dailies enter the counts, see
+    /// <see cref="QuestRecord.IsAlliedSocietyDaily"/>).
+    /// </summary>
+    public bool CountsAsDone => State == QuestState.Completed || RepeatableDoneBefore;
 }

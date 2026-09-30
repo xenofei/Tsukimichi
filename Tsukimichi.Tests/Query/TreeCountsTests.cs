@@ -234,6 +234,42 @@ public class TreeCountsTests
     }
 
     [Fact]
+    public void Repeatables_leave_the_counts_except_allied_society_dailies_which_count_once_done()
+    {
+        var catalog = QuestCatalog.Build(
+        [
+            Quest(1, "Story", section: 1, category: 10, genre: 100),
+            Quest(2, "Primal Focus", section: 1, category: 10, genre: 100) with { IsRepeatable = true },
+            Quest(3, "Weekly", section: 1, category: 10, genre: 100) with { IsRepeatable = true, RepeatInterval = 2 },
+            Quest(4, "Daily done before", section: 2, category: 20, genre: 200) with { IsRepeatable = true, RepeatInterval = 1, BeastTribe = 1 },
+            Quest(5, "Daily never done", section: 2, category: 20, genre: 200) with { IsRepeatable = true, RepeatInterval = 1, BeastTribe = 1 },
+            Quest(6, "Daily done today", section: 2, category: 20, genre: 200) with { IsRepeatable = true, RepeatInterval = 1, BeastTribe = 1 },
+        ]);
+        var evaluations = new Dictionary<uint, QuestEvaluation>
+        {
+            [1] = Evaluation(QuestState.Completed),
+            [2] = Evaluation(QuestState.Ready),
+            [3] = Evaluation(QuestState.Ready) with { RepeatableDoneBefore = true },
+            [4] = Evaluation(QuestState.Ready) with { RepeatableDoneBefore = true },
+            [5] = Evaluation(QuestState.Ready),
+            [6] = Evaluation(QuestState.DoneThisCycle) with { RepeatableDoneBefore = true },
+        };
+
+        var counts = TreeCounts.Compute(catalog, evaluations, includeUnlisted: false);
+
+        // The story is finished: the repeatables beside it are in no number.
+        Assert.Equal(new NodeCount(1, 1, 0), counts.Genre(100));
+        Assert.Equal(0, counts.GenreReady(100));
+
+        // Dailies count, done once turned in at least once; the one done before is not Ready-badged again.
+        Assert.Equal(new NodeCount(2, 3, 0), counts.Genre(200));
+        Assert.Equal(1, counts.GenreReady(200));
+        Assert.Equal(new NodeCount(3, 4, 0), counts.Overall);
+
+        static QuestEvaluation Evaluation(QuestState state) => new(state, [], null, null, null);
+    }
+
+    [Fact]
     public void Missing_nodes_read_as_zero()
     {
         var counts = TreeCounts.Compute(Catalog, AllStates, includeUnlisted: false);

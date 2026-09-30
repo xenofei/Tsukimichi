@@ -280,6 +280,62 @@ public class JournalRefilerTests
     }
 
     [Fact]
+    public void A_level_1_all_classes_row_behind_a_high_level_prerequisite_is_a_progress_tracker()
+    {
+        var listed = Quest(69579, "Komra Wasn't Built in a Day", genre: G27, section: 2, category: 19, expansion: 3) with { Level = 80 };
+        var first = Quest(69580, "A Message from Konogg", expansion: 3, previous: [69579], eventIcon: FeaturePresets.FeatureEventIconType) with { Level = 1, ClassJobCategory = JournalRefiler.AllClassesCategory };
+        var second = Quest(69581, "Dwarves of a Beard", expansion: 3, previous: [69580], eventIcon: FeaturePresets.FeatureEventIconType) with { Level = 1, ClassJobCategory = JournalRefiler.AllClassesCategory };
+
+        // A Seaside Story's shape: level 1 behind a level-80 quest, but open to Disciples of War and Magic only.
+        var seaside = Quest(69563, "A Seaside Story", expansion: 3, previous: [69579], eventIcon: FeaturePresets.FeatureEventIconType) with { Level = 1, ClassJobCategory = 142 };
+
+        // A level-1 all-classes row behind a low-level prerequisite is an ordinary quest.
+        var lowListed = Quest(66000, "Starter", genre: G27, section: 2, category: 19, expansion: 3) with { Level = 15 };
+        var starter = Quest(66001, "Follow-up", expansion: 3, previous: [66000]) with { Level = 1, ClassJobCategory = JournalRefiler.AllClassesCategory };
+
+        var filed = Refile(null, listed, first, second, seaside, lowListed, starter);
+
+        foreach (var tracker in new[] { filed[69580], filed[69581] })
+        {
+            Assert.Equal(JournalRefiler.TrackerRule, tracker.RefiledFrom);
+            Assert.True(tracker.IsProgressTracker);
+            Assert.Equal(G27, tracker.Journal.GenreId);
+            Assert.False(tracker.CountsInTotals);
+            Assert.False(tracker.EntersCounts);
+            Assert.False(FeaturePresets.IsFeatureQuest(tracker, CuratedData.Empty), "a tracker is never blue, whatever its icon");
+        }
+
+        Assert.Equal(4, filed[69563].RefiledFrom);
+        Assert.True(filed[69563].CountsInTotals);
+        Assert.True(FeaturePresets.IsFeatureQuest(filed[69563], CuratedData.Empty));
+        Assert.Equal(4, filed[66001].RefiledFrom);
+        Assert.True(filed[66001].CountsInTotals);
+
+        var catalog = QuestCatalog.Build(filed.Values);
+        var states = catalog.All.ToDictionary(q => q.RowId, q => q.RowId == 69579 ? QuestState.Completed : QuestState.Ready);
+        states[66000] = QuestState.Completed;
+        states[66001] = QuestState.Completed;
+        states[69563] = QuestState.Completed;
+        Assert.Equal(new NodeCount(4, 4, 0), TreeCounts.Compute(catalog, states, includeUnlisted: false).Genre(G27));
+    }
+
+    [Fact]
+    public void A_repeatable_with_no_steps_and_no_reward_is_a_service_row_not_a_quest()
+    {
+        var relic = Quest(67864, "A Dream Fulfilled", genre: 89, section: 2, category: 55, expansion: 1) with { Level = 60 };
+        var service = Quest(67870, "Recondition the Anima", expansion: 1, previous: [67864]) with { Level = 60, ClassJobCategory = 1, IsRepeatable = true };
+        var withSteps = Quest(67871, "A Repeatable Turn-in", expansion: 1, previous: [67864]) with { Level = 60, IsRepeatable = true, StepCount = 2 };
+
+        var filed = Refile(null, relic, service, withSteps);
+
+        Assert.Equal(JournalRefiler.TrackerRule, filed[67870].RefiledFrom);
+        Assert.Equal(89u, filed[67870].Journal.GenreId);
+        Assert.False(filed[67870].CountsInTotals);
+        Assert.Equal(4, filed[67871].RefiledFrom);
+        Assert.True(filed[67871].CountsInTotals);
+    }
+
+    [Fact]
     public void Rule4_skips_main_scenario_prerequisites()
     {
         var filed = Refile(

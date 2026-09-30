@@ -18,6 +18,9 @@ namespace Tsukimichi.GameData;
 /// <item>Else the dominant genre of the listed regional sidequests (categories 59–85) issued from the same territory; a tie stays unlisted.</item>
 /// <item>Else unlisted.</item>
 /// </list>
+/// A row rule 4 files that is a hidden progress tracker (<see cref="IsProgressTracker"/>) is filed there as
+/// <see cref="TrackerRule"/> instead: listed under the genre, but out of every count, never a feature quest and never
+/// a chain step (<see cref="QuestRecord.IsProgressTracker"/>).
 /// Curated <c>retired_quests.json</c> retires rows the sheet does not mark (they keep their genre) and carries the
 /// patch note for the ones rule 1 already retires; curated <c>refile_overrides.json</c> pins a quest to a genre after
 /// the rules. A quest a curated file decided marks <see cref="QuestRecord.RefiledFrom"/> with <see cref="CuratedRule"/>.
@@ -50,6 +53,18 @@ public static partial class JournalRefiler
     /// starts as a job, so every character can complete them.
     /// </summary>
     public const byte ClassIntroRule = 2;
+
+    /// <summary>
+    /// A hidden progress tracker (<see cref="IsProgressTracker"/>), filed under the genre rule 4 finds and kept out of
+    /// the counts; see <see cref="QuestRecord.IsProgressTracker"/>.
+    /// </summary>
+    public const byte TrackerRule = QuestRecord.ProgressTrackerRule;
+
+    /// <summary>ClassJobCategory row "All Classes": every class and job, the adventurer and the limited jobs included.</summary>
+    public const uint AllClassesCategory = 1;
+
+    /// <summary>The lowest prerequisite level that marks a level-1 row behind it as a tracker rather than a starter quest.</summary>
+    public const byte TrackerPrerequisiteLevel = 50;
 
     /// <summary>The genre rank sits above the sheet's own SortKey in <see cref="JournalRef.SortKey"/>; see <c>CatalogMapper</c>.</summary>
     private const int SortKeyGenreShift = 16;
@@ -136,7 +151,7 @@ public static partial class JournalRefiler
         // Rules 2, 4, 5 and 6 read the genre off a listed quest, so a template exists; rule 3 computes it and the
         // Grand Company genre may hold no listed quest in a future sheet.
         return index.Assign(quest, genre) is { } journal
-            ? quest with { Journal = journal, RefiledFrom = rule, CountsInTotals = !(rule == ClassIntroRule && IsStartingClassIntro(quest.InternalId)) }
+            ? quest with { Journal = journal, RefiledFrom = rule, CountsInTotals = rule != TrackerRule && !(rule == ClassIntroRule && IsStartingClassIntro(quest.InternalId)) }
             : quest with { RefiledFrom = UnlistedRule };
     }
 
@@ -147,7 +162,30 @@ public static partial class JournalRefiler
         return quest.IsHidden || quest.Issuer is { NpcId: PlaceholderIssuer };
     }
 
-    /// <summary>Rules 2–7 for a genre-0 quest that is not retired: the rule that fired and the genre it chose (0 for rule 7).</summary>
+    /// <summary>
+    /// Whether a genre-0 row whose rule-4 prerequisite is <paramref name="lender"/> is a hidden progress tracker
+    /// rather than a quest (docs/data/v4/tagging-audit.md finding 2). Two shapes, neither listed by the Lodestone (it
+    /// lists journal categories, and the row has none) nor by the wiki (docs/data/quest-verification.csv):
+    /// <list type="bullet">
+    /// <item>A level-1 row open to <see cref="AllClassesCategory"/> behind a prerequisite of level
+    /// <see cref="TrackerPrerequisiteLevel"/> or more: the YoRHa: Dark Apocalypse markers (A Message from Konogg …
+    /// All's Well That Ends with Ale), the Resistance ones (Memoirs from the Front, An Honor to Serve) and the
+    /// Ishgardian Restoration phases (The Mendicant's Court, The New Nest, Featherfall, The Risensong Quarter). No
+    /// real quest takes a level-50 prerequisite and then asks for level 1; A Seaside Story, the level-1 Save the Queen
+    /// quest behind Fit for a Queen, is open to Disciples of War and Magic only and stays a quest.</item>
+    /// <item>A repeatable with no journal steps and no reward: the weapon service rows Recondition the Anima and
+    /// Forged Anew, a dialogue the relic NPC repeats rather than a quest.</item>
+    /// </list>
+    /// </summary>
+    public static bool IsProgressTracker(QuestRecord quest, QuestRecord lender)
+    {
+        ArgumentNullException.ThrowIfNull(quest);
+        ArgumentNullException.ThrowIfNull(lender);
+        return (quest.Level == 1 && quest.ClassJobCategory == AllClassesCategory && lender.Level >= TrackerPrerequisiteLevel)
+            || (quest.IsRepeatable && quest.StepCount == 0 && quest.Rewards.Count == 0);
+    }
+
+    /// <summary>Rules 2–7 for a genre-0 quest that is not retired: the rule that fired (<see cref="TrackerRule"/> for a tracker rule 4 files) and the genre it chose (0 for rule 7).</summary>
     private static (byte Rule, uint Genre) Decide(QuestRecord quest, Index index)
     {
         if (IsClassIntro(quest.InternalId) && index.FirstListedSuccessorGenre(quest) is { } intro)
@@ -160,9 +198,9 @@ public static partial class JournalRefiler
             return (3, GrandCompanyGenreBase + quest.GrandCompany);
         }
 
-        if (index.PrerequisiteGenre(quest) is { } prerequisite)
+        if (index.PrerequisiteLender(quest) is { } prerequisite)
         {
-            return (4, prerequisite);
+            return (IsProgressTracker(quest, prerequisite) ? TrackerRule : (byte)4, prerequisite.Journal.GenreId);
         }
 
         if (index.SuccessorOrLockGenre(quest) is { } successor)
@@ -277,8 +315,8 @@ public static partial class JournalRefiler
             return null;
         }
 
-        /// <summary>Rule 4: depth-first through the prerequisite slots, descending only through unlisted ones.</summary>
-        public uint? PrerequisiteGenre(QuestRecord quest)
+        /// <summary>Rule 4: depth-first through the prerequisite slots, descending only through unlisted ones; the listed quest that lends its genre.</summary>
+        public QuestRecord? PrerequisiteLender(QuestRecord quest)
         {
             var visited = new HashSet<uint> { quest.RowId };
             return Walk(quest, quest.PreviousQuests.QuestIds, visited, static (q, index) => q.PreviousQuests.QuestIds);
@@ -288,9 +326,9 @@ public static partial class JournalRefiler
         public uint? SuccessorOrLockGenre(QuestRecord quest)
         {
             var visited = new HashSet<uint> { quest.RowId };
-            if (Walk(quest, SuccessorsOf(quest.RowId), visited, static (q, index) => index.SuccessorsOf(q.RowId)) is { } genre)
+            if (Walk(quest, SuccessorsOf(quest.RowId), visited, static (q, index) => index.SuccessorsOf(q.RowId)) is { } successor)
             {
-                return genre;
+                return successor.Journal.GenreId;
             }
 
             foreach (var id in quest.QuestLocks.Concat(lockedBy.GetValueOrDefault(quest.RowId) ?? []))
@@ -338,7 +376,7 @@ public static partial class JournalRefiler
         /// First listed record that fits, in slot order, descending through unlisted records only; a listed record
         /// that does not fit ends its branch.
         /// </summary>
-        private uint? Walk(QuestRecord quest, IReadOnlyList<uint> ids, HashSet<uint> visited, Func<QuestRecord, Index, IReadOnlyList<uint>> next)
+        private QuestRecord? Walk(QuestRecord quest, IReadOnlyList<uint> ids, HashSet<uint> visited, Func<QuestRecord, Index, IReadOnlyList<uint>> next)
         {
             foreach (var id in ids)
             {
@@ -351,15 +389,15 @@ public static partial class JournalRefiler
                 {
                     if (Fits(candidate, quest))
                     {
-                        return candidate.Journal.GenreId;
+                        return candidate;
                     }
 
                     continue;
                 }
 
-                if (Walk(quest, next(candidate, this), visited, next) is { } genre)
+                if (Walk(quest, next(candidate, this), visited, next) is { } found)
                 {
-                    return genre;
+                    return found;
                 }
             }
 

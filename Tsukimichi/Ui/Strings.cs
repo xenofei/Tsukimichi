@@ -128,6 +128,7 @@ public static partial class Strings
         5 => Loc.Get("FilingReason.5"),
         6 => Loc.Get("FilingReason.6"),
         7 => Loc.Get("FilingReason.7"),
+        9 => Loc.Get("FilingReason.9"),
         _ => string.Format(System.Globalization.CultureInfo.CurrentCulture, Loc.Get("FilingReason.Other"), rule),
     };
     /// <summary>{0} = done, {1} = total.</summary>

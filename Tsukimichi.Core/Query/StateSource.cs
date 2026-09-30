@@ -14,6 +14,9 @@ internal interface IStateSource
     /// <summary>Whether the quest leaves done/total counts; see <see cref="QuestEvaluation.LeavesTotals"/>.</summary>
     bool LeavesTotals(uint rowId);
 
+    /// <summary>Whether done/total counts the quest as done; see <see cref="QuestEvaluation.CountsAsDone"/>.</summary>
+    bool CountsAsDone(uint rowId);
+
     /// <summary>The Status column text for a quest: <see cref="BlockerText.StatusText"/>, or empty when the quest has no evaluation.</summary>
     string StatusOf(QuestRecord quest);
 }
@@ -25,6 +28,9 @@ internal readonly struct StateMapSource(IReadOnlyDictionary<uint, QuestState> st
 
     /// <summary>A plain state carries no requirement, so only <see cref="QuestState.Foreclosed"/> leaves the totals here.</summary>
     public bool LeavesTotals(uint rowId) => StateOf(rowId) == QuestState.Foreclosed;
+
+    /// <summary>A plain state carries no completion history, so only <see cref="QuestState.Completed"/> is done here.</summary>
+    public bool CountsAsDone(uint rowId) => StateOf(rowId) == QuestState.Completed;
 
     public string StatusOf(QuestRecord quest) => statusTexts?.GetValueOrDefault(quest.RowId) ?? string.Empty;
 }
@@ -40,6 +46,9 @@ internal readonly struct EvaluationSource(IReadOnlyDictionary<uint, QuestEvaluat
 
     public bool LeavesTotals(uint rowId) =>
         evaluations.TryGetValue(rowId, out var evaluation) && evaluation.LeavesTotals;
+
+    public bool CountsAsDone(uint rowId) =>
+        evaluations.TryGetValue(rowId, out var evaluation) && evaluation.CountsAsDone;
 
     public string StatusOf(QuestRecord quest) =>
         evaluations.TryGetValue(quest.RowId, out var evaluation) ? BlockerText.StatusText(evaluation, quest, names ?? BlockerNames.Default, evaluations) : string.Empty;

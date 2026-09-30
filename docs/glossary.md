@@ -68,7 +68,20 @@ One phrase per quest that is not Ready, from `BlockerText` in Core: the single r
 | Provenance line of a refiled quest | Filed under {genre} (rule N: {reason}) / Filed under {genre} (curated override) | – | Detail pane, under the journal path |
 | Provenance line of a retired quest | Removed from the game / Removed from the game in patch {patch} | – | Detail pane, under the journal path |
 
-"Unlisted" no longer appears on any surface (`StringsVocabularyTests` lints it). The rule reasons are: class or job intro (2), Grand Company (3), nearest listed prerequisite (4), nearest listed successor (5), issuer's zone (6), no signal (7).
+"Unlisted" no longer appears on any surface (`StringsVocabularyTests` lints it). The rule reasons are: class or job intro (2), Grand Company (3), nearest listed prerequisite (4), nearest listed successor (5), issuer's zone (6), no signal (7), hidden progress tracker, not counted (9).
+
+## 1.2: what the counts count
+
+Every done/total on screen (tree nodes, the Characters dashboard, the tab badges, chain progress) follows these rules. Owners: `QuestRecord.EntersCounts`, `QuestEvaluation.CountsAsDone` and `TreeCounts`; `ChainCatalog.Progress` for chains.
+
+| Concept | Rule | Why |
+|---|---|---|
+| Done today / Done this week (`DoneThisCycle`) | Only from the client's cycle data (`CharacterSnapshot.DailyDone`, the allied society daily slots). A repeatable's completion bit never means "done today". | The game never clears a daily's completion bit, so reading it as "today" left 39 dailies reading done forever. Repeatables without cycle data (weeklies, seasonal gifts) read Ready or Blocked; nothing says whether they were done this week. |
+| Allied society daily (`QuestRecord.IsAlliedSocietyDaily`: repeatable, offered by an allied society) | In the counts. Counts as done once the character has completed it at least once (`QuestEvaluation.RepeatableDoneBefore`), whatever it reads today; then it no longer adds to the Ready badge. | A "Daily Quests" genre fills as the dailies are tried once, and never empties again at the daily reset. |
+| Every other repeatable (weeklies, relic and seasonal repeatables, Primal Focus, Unidentified Flying Object) | Listed under its genre, in no count, not a chain step's progress (`Chain.Uncounted`), never a chain's "next". | They never finish, so a finished chronicle stayed at 14/15 for good. |
+| Hidden progress tracker (`QuestRecord.IsProgressTracker`, refiling rule 9) | Listed under the genre rule 4 finds, in no count, never an unlock quest, never a chain step. | Rows the game sets behind the scenes, which neither the Lodestone nor the wiki lists: the YoRHa, Resistance and Ishgardian Restoration markers, Recondition the Anima, Forged Anew. |
+| Locked out, or out of season (`QuestEvaluation.LeavesTotals`) | Leaves the total, the chain's included. | As before, and now in chain progress too. |
+| Class intro ("So You Want to Be a …") | Listed, in no count. | Unchanged since 0.6.1. |
 
 ## Translated display names
 

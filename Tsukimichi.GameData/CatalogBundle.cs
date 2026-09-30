@@ -28,6 +28,76 @@ public sealed record CatalogBundle(QuestCatalog Catalog, GameNames Names, ClassJ
         SatisfactionNpc = id => Names.SatisfactionNpc(id),
     };
 
+    /// <summary>
+    /// Whether a ClassJobCategory admits every class and job a character levels normally: every named ClassJob row
+    /// that is not a limited job (<see cref="ClassJobInfo.IsLimited"/>). True for "All Classes" (1) and for "All classes
+    /// and jobs (excluding limited jobs)" (130), which leaves out Blue Mage and Beastmaster and so falls short of the
+    /// sheet's column count; the Job column reads "Any" for both. False when the bundle has no ClassJob rows.
+    /// </summary>
+    public bool AdmitsEveryJob(uint category)
+    {
+        var any = false;
+        foreach (var info in Names.ClassJobInfos)
+        {
+            if (info.IsLimited || info.RowId is 0 or > byte.MaxValue)
+            {
+                continue;
+            }
+
+            any = true;
+            if (!Jobs.Admits(category, (byte)info.RowId))
+            {
+                return false;
+            }
+        }
+
+        return any;
+    }
+
+    /// <summary>
+    /// How the Job column groups a ClassJobCategory: <see cref="JobGroup.Any"/> when it admits every job
+    /// (<see cref="AdmitsEveryJob"/>) or none is listed, <see cref="JobGroup.Single"/> with the job when it admits one,
+    /// else the Disciples it spans. The plugin maps the group to its label.
+    /// </summary>
+    public (JobGroup Group, byte Single) ClassifyJobs(uint category)
+    {
+        var count = 0;
+        var hand = 0;
+        var land = 0;
+        byte single = 0;
+        foreach (var job in Jobs.JobsIn(category))
+        {
+            count++;
+            single = job;
+            if (job is >= 8 and <= 15)
+            {
+                hand++;
+            }
+            else if (job is >= 16 and <= 18)
+            {
+                land++;
+            }
+        }
+
+        if (count == 0 || AdmitsEveryJob(category))
+        {
+            return (JobGroup.Any, 0);
+        }
+
+        if (count == 1)
+        {
+            return (JobGroup.Single, single);
+        }
+
+        var war = count - hand - land;
+        if (war == 0)
+        {
+            return (hand == 0 ? JobGroup.Land : land == 0 ? JobGroup.Hand : JobGroup.HandAndLand, 0);
+        }
+
+        return (hand + land == 0 ? JobGroup.WarAndMagic : JobGroup.Multi, 0);
+    }
+
     /// <summary>The per-job quest ladders over this catalog's ClassJob rows; the callers memoize one per bundle.</summary>
     public JobLadder BuildJobLadder()
     {
@@ -59,11 +129,38 @@ public sealed record CatalogBundle(QuestCatalog Catalog, GameNames Names, ClassJ
     }
 }
 
+/// <summary>How the Job column groups the jobs a ClassJobCategory admits (<see cref="CatalogBundle.ClassifyJobs"/>).</summary>
+public enum JobGroup
+{
+    /// <summary>Every job a character levels normally (the limited jobs aside), or no job listed.</summary>
+    Any,
+
+    /// <summary>Exactly one class or job.</summary>
+    Single,
+
+    /// <summary>Disciples of the Land only.</summary>
+    Land,
+
+    /// <summary>Disciples of the Hand only.</summary>
+    Hand,
+
+    /// <summary>Disciples of the Hand and the Land, no combat job.</summary>
+    HandAndLand,
+
+    /// <summary>Disciples of War and Magic only.</summary>
+    WarAndMagic,
+
+    /// <summary>Combat jobs with crafters or gatherers, short of every job.</summary>
+    Multi,
+}
+
 /// <summary>
 /// One ClassJob sheet row the UI can group and decorate: the base class a job grew out of (<see cref="ParentRowId"/>
 /// equals <see cref="RowId"/> for classes and for jobs without a class), the quest that unlocks the job, the sheet's
 /// role byte (1 tank, 2 melee, 3 ranged or caster, 4 healer, 0 none) and the crafter/gatherer flags from
 /// ClassJobCategory 33 and 32 membership. <see cref="ExpArrayIndex"/> is the PlayerState level slot; −1 when none.
+/// <see cref="IsLimited"/> is the sheet's <c>IsLimitedJob</c> (Blue Mage, Beastmaster): the jobs the "excluding limited
+/// jobs" categories leave out. A frozen catalog written before the column was read has it false everywhere.
 /// </summary>
 public sealed record ClassJobInfo(
     uint RowId,
@@ -74,7 +171,8 @@ public sealed record ClassJobInfo(
     byte Role,
     bool IsCrafter,
     bool IsGatherer,
-    int ExpArrayIndex)
+    int ExpArrayIndex,
+    bool IsLimited = false)
 {
     /// <summary>Icon id in the game's 062000 icon set (062101 Gladiator … 062142 Pictomancer).</summary>
     public uint IconId => 62100u + RowId;

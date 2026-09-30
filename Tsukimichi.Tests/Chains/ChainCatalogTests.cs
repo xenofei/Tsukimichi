@@ -228,6 +228,44 @@ public sealed class ChainCatalogTests
     }
 
     [Fact]
+    public void Progress_leaves_out_repeatables_and_locked_out_quests_and_never_points_at_them()
+    {
+        var catalog = QuestCatalog.Build(
+        [
+            Quest(A, 10, 1),
+            Quest(B, 10, 2, [A]) with { IsRepeatable = true },
+            Quest(C, 10, 3, [A]),
+            Quest(D, 10, 4, [C]),
+        ]);
+        var chain = Assert.Single(ChainCatalog.Build(catalog, Curated(new CuratedChain("Chronicle", [10], null))).Chains);
+        Assert.Equal([B], chain.Uncounted);
+
+        var progress = ChainCatalog.Progress(chain, States((A, QuestState.Completed), (B, QuestState.Ready), (C, QuestState.Foreclosed), (D, QuestState.Completed)));
+
+        Assert.Equal(new ChainProgress(2, 2, null), progress);
+        Assert.True(progress.IsComplete);
+    }
+
+    [Fact]
+    public void A_curated_genre_orders_its_steps_by_the_prerequisite_graph()
+    {
+        // B was refiled into the genre and keeps the sheet's SortKey 0, which sorts it before its prerequisite C.
+        var catalog = QuestCatalog.Build(
+        [
+            Quest(A, 10, 1),
+            Quest(B, 10, 0, [C]),
+            Quest(C, 10, 3, [A]),
+            Quest(D, 10, 4, [B]),
+        ]);
+        Assert.Equal([B, A, C, D], catalog.ByGenre[10].Select(q => q.RowId));
+
+        var chain = Assert.Single(ChainCatalog.Build(catalog, Curated(new CuratedChain("Relic", [10], null))).Chains);
+
+        Assert.Equal([A, C, B, D], chain.RowIds);
+        Assert.Equal([A, C, D], ChainCatalog.InPrerequisiteOrder([A, C, D], catalog));
+    }
+
+    [Fact]
     public void Progress_without_evaluations_is_zero_with_the_first_quest_next()
     {
         var progress = ChainCatalog.Progress(new Chain("Story", [A, B]), States());

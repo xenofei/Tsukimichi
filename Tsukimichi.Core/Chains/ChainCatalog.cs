@@ -16,12 +16,18 @@ public sealed record Chain(string Name, IReadOnlyList<uint> RowIds)
     /// through the caller's spoiler shield.
     /// </summary>
     public bool IsStory { get; init; }
+
+    /// <summary>
+    /// Steps that stay out of <see cref="ChainCatalog.Progress"/>: the chain's repeatables (Primal Focus, the relic
+    /// and YoRHa weeklies), which it lists in play order but which never finish, so "next" never points at one.
+    /// </summary>
+    public IReadOnlySet<uint> Uncounted { get; init; } = FrozenSet<uint>.Empty;
 }
 
 /// <summary>Where a character stands in a chain.</summary>
 /// <param name="Done">Completed quests.</param>
-/// <param name="Total">Quests in the chain.</param>
-/// <param name="NextRowId">The first quest in chain order that is not completed; null once the chain is finished.</param>
+/// <param name="Total">Quests in the chain that count: not <see cref="Chain.Uncounted"/>, and not leaving the totals (<see cref="QuestEvaluation.LeavesTotals"/>).</param>
+/// <param name="NextRowId">The first counted quest in chain order that is not completed; null once the chain is finished.</param>
 public readonly record struct ChainProgress(int Done, int Total, uint? NextRowId)
 {
     public bool IsComplete => Done >= Total;
@@ -34,7 +40,9 @@ public readonly record struct ChainProgress(int Done, int Total, uint? NextRowId
 /// (named lists of journal genres concatenated in order), derived chains, one per journal genre whose quests form a
 /// single previous-quest line (each quest after the first requires exactly the quest before it), and, when given,
 /// the side stories of <see cref="StorySidequests"/>. A quest belongs to at most one chain; curated chains win, then
-/// the first derived chain that lists it, then its side story.
+/// the first derived chain that lists it, then its side story. Retired rows and hidden progress trackers
+/// (<see cref="QuestRecord.IsProgressTracker"/>) are never steps; within each genre of a curated chain the steps follow
+/// the prerequisite graph (a refiled row keeps the sheet's SortKey, which can put it before its own prerequisite).
 /// </summary>
 public sealed class ChainCatalog
 {
@@ -84,16 +92,21 @@ public sealed class ChainCatalog
                 }
 
                 // A curated genre need not be linear (branching side stories are still one story); its quests keep
-                // journal order either way, which is the play order for every linear genre. A retired row the genre
-                // still carries (two Crystal Tower quests the 6.3 rewrite removed) is no longer a step of the story.
+                // journal order either way, which is the play order for every linear genre, except that a refiled row
+                // keeps the sheet's SortKey and can sort before its own prerequisite: within the genre, the prerequisite
+                // graph decides. A retired row the genre still carries (two Crystal Tower quests the 6.3 rewrite removed)
+                // is no longer a step of the story, and a hidden progress tracker never was one.
                 claimedGenres.Add(genreId);
+                var steps = new List<uint>(quests.Count);
                 foreach (var quest in quests)
                 {
-                    if (!quest.IsRetired)
+                    if (IsStep(quest))
                     {
-                        rowIds.Add(quest.RowId);
+                        steps.Add(quest.RowId);
                     }
                 }
+
+                rowIds.AddRange(InPrerequisiteOrder(steps, catalog));
             }
 
             if (rowIds.Count == 0)
@@ -101,7 +114,7 @@ public sealed class ChainCatalog
                 continue;
             }
 
-            Add(chains, byRowId, new Chain(entry.Name, rowIds.ToArray()));
+            Add(chains, byRowId, new Chain(entry.Name, rowIds.ToArray()), catalog);
         }
 
         var derived = new List<IReadOnlyList<QuestRecord>>();
@@ -132,7 +145,7 @@ public sealed class ChainCatalog
                 rowIds[i] = quests[i].RowId;
             }
 
-            Add(chains, byRowId, new Chain(DerivedName(quests[0].Journal, nameCounts), rowIds));
+            Add(chains, byRowId, new Chain(DerivedName(quests[0].Journal, nameCounts), rowIds), catalog);
         }
 
         if (stories is not null)
@@ -142,7 +155,7 @@ public sealed class ChainCatalog
             {
                 if (story.RowIds.Any(id => !byRowId.ContainsKey(id)))
                 {
-                    Add(chains, byRowId, story);
+                    Add(chains, byRowId, story, catalog);
                 }
             }
         }
@@ -150,13 +163,16 @@ public sealed class ChainCatalog
         return new ChainCatalog(chains, byRowId.ToFrozenDictionary(), warnings);
     }
 
-    /// <summary>The genre's quests without its retired rows; the same list when it has none.</summary>
+    /// <summary>Whether a quest can be a chain step: not retired, and not a hidden progress tracker.</summary>
+    private static bool IsStep(QuestRecord quest) => !quest.IsRetired && !quest.IsProgressTracker;
+
+    /// <summary>The genre's quests that can be steps (<see cref="IsStep"/>); the same list when all can.</summary>
     private static IReadOnlyList<QuestRecord> Live(IReadOnlyList<QuestRecord> quests)
     {
         List<QuestRecord>? live = null;
         for (var i = 0; i < quests.Count; i++)
         {
-            if (quests[i].IsRetired)
+            if (!IsStep(quests[i]))
             {
                 live ??= [.. quests.Take(i)];
             }
@@ -194,17 +210,35 @@ public sealed class ChainCatalog
         return true;
     }
 
-    /// <summary>Counts completed quests and finds the first one still to do; a quest without an evaluation is not done.</summary>
+    /// <summary>
+    /// Counts completed quests and finds the first one still to do; a quest without an evaluation is not done. The
+    /// chain's repeatables (<see cref="Chain.Uncounted"/>) and the quests that leave the totals
+    /// (<see cref="QuestEvaluation.LeavesTotals"/>: locked out, or out of season) are in neither number and are never
+    /// "next".
+    /// </summary>
     public static ChainProgress Progress(Chain chain, IReadOnlyDictionary<uint, QuestEvaluation> states)
     {
         ArgumentNullException.ThrowIfNull(chain);
         ArgumentNullException.ThrowIfNull(states);
 
         var done = 0;
+        var total = 0;
         uint? next = null;
         foreach (var rowId in chain.RowIds)
         {
-            if (states.TryGetValue(rowId, out var evaluation) && evaluation.State == QuestState.Completed)
+            if (chain.Uncounted.Contains(rowId))
+            {
+                continue;
+            }
+
+            states.TryGetValue(rowId, out var evaluation);
+            if (evaluation is { LeavesTotals: true })
+            {
+                continue;
+            }
+
+            total++;
+            if (evaluation is { State: QuestState.Completed })
             {
                 done++;
             }
@@ -214,7 +248,59 @@ public sealed class ChainCatalog
             }
         }
 
-        return new ChainProgress(done, chain.RowIds.Count, next);
+        return new ChainProgress(done, total, next);
+    }
+
+    /// <summary>
+    /// <paramref name="rowIds"/> reordered so that every quest comes after the chain's quests it lists as previous
+    /// quests, keeping the given (journal) order wherever the prerequisites allow; the given order when it already
+    /// does. A prerequisite cycle, which the sheets do not have, keeps its quests in the given order.
+    /// </summary>
+    public static uint[] InPrerequisiteOrder(IReadOnlyList<uint> rowIds, QuestCatalog catalog)
+    {
+        ArgumentNullException.ThrowIfNull(rowIds);
+        ArgumentNullException.ThrowIfNull(catalog);
+
+        var inChain = new HashSet<uint>(rowIds);
+        var placed = new HashSet<uint>();
+        var remaining = new List<uint>(rowIds);
+        var ordered = new uint[remaining.Count];
+        for (var n = 0; n < ordered.Length; n++)
+        {
+            var pick = 0;
+            for (var i = 0; i < remaining.Count; i++)
+            {
+                if (PrerequisitesPlaced(remaining[i], catalog, inChain, placed))
+                {
+                    pick = i;
+                    break;
+                }
+            }
+
+            ordered[n] = remaining[pick];
+            placed.Add(remaining[pick]);
+            remaining.RemoveAt(pick);
+        }
+
+        return ordered;
+    }
+
+    private static bool PrerequisitesPlaced(uint rowId, QuestCatalog catalog, HashSet<uint> inChain, HashSet<uint> placed)
+    {
+        if (catalog.GetByRowId(rowId) is not { } quest)
+        {
+            return true;
+        }
+
+        foreach (var previous in quest.PreviousQuests.QuestIds)
+        {
+            if (previous != rowId && inChain.Contains(previous) && !placed.Contains(previous))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /// <summary>
@@ -259,8 +345,15 @@ public sealed class ChainCatalog
             ? $"{journal.GenreName} ({journal.CategoryName})"
             : journal.GenreName;
 
-    private static void Add(List<Chain> chains, Dictionary<uint, Chain> byRowId, Chain chain)
+    /// <summary>Adds a chain, marking its repeatables <see cref="Chain.Uncounted"/>.</summary>
+    private static void Add(List<Chain> chains, Dictionary<uint, Chain> byRowId, Chain chain, QuestCatalog catalog)
     {
+        var repeatables = chain.RowIds.Where(id => catalog.GetByRowId(id) is { IsRepeatable: true }).ToArray();
+        if (repeatables.Length > 0)
+        {
+            chain = chain with { Uncounted = repeatables.ToFrozenSet() };
+        }
+
         chains.Add(chain);
         foreach (var rowId in chain.RowIds)
         {

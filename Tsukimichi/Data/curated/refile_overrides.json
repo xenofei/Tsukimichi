@@ -7,6 +7,11 @@
       "note": "The New Frontier (Diadem unlock quasi-quest). Its issuer Aurvael has no IssuerLocation, so rule 6 has no territory to vote with and no rule places it; the Diadem is Ishgard's, so it joins Ishgardian Sidequests like Leves of Ishgard.",
       "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_New_Frontier"
     },
+    "67923": {
+      "genre": 103,
+      "note": "What Lies Beneath (Palace of the Dead floors 51-200 quasi-quest). It follows The House That Death Built (67092, Palace of the Dead), but that quest carries Expansion 0 and this one Expansion 1, so rule 4's expansion constraint fails and rule 6 lands it in Gridanian Sidequests by its issuer's zone; it belongs with the other Palace of the Dead quests.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/What_Lies_Beneath"
+    },
     "68148": {
       "genre": 90,
       "note": "And We Shall Call It Pyros (Eureka Pyros entry quasi-quest). Rule 6 files it under Kugane Sidequests by Rodney's zone; it belongs with And We Shall Call It Eureka (68614) under The Forbidden Land, Eureka.",

@@ -66,7 +66,7 @@ public class RefilingFixtureTests(FixtureCatalog fixture, ITestOutputHelper outp
         {
             var text = new StringBuilder();
             text.Append("# Refiling outcome per touched quest, generated from the catalog fixture by RefilingFixtureTests (set ").Append(RegenerateEnvVar).Append(" to rewrite).\n");
-            text.Append("# rule: 1 retired, 2 class or job intro, 3 Grand Company, 4 nearest listed prerequisite, 5 nearest listed successor or lock, 6 issuer's zone, 7 no signal, 8 curated file. genreId 0 = stays unlisted.\n");
+            text.Append("# rule: 1 retired, 2 class or job intro, 3 Grand Company, 4 nearest listed prerequisite, 5 nearest listed successor or lock, 6 issuer's zone, 7 no signal, 8 curated file, 9 hidden progress tracker (filed, not counted). genreId 0 = stays unlisted.\n");
             text.Append("rowId,name,rule,genreId\n");
             foreach (var line in actual)
             {
@@ -130,6 +130,7 @@ public class RefilingFixtureTests(FixtureCatalog fixture, ITestOutputHelper outp
         Assert.Equal(ExpectedCounts.RefiledByRule2, byRule.GetValueOrDefault((byte)2));
         Assert.Equal(ExpectedCounts.RefiledByRule3, byRule.GetValueOrDefault((byte)3));
         Assert.Equal(ExpectedCounts.RefiledByRule4, byRule.GetValueOrDefault((byte)4));
+        Assert.Equal(ExpectedCounts.ProgressTrackers, byRule.GetValueOrDefault(JournalRefiler.TrackerRule));
         Assert.Equal(ExpectedCounts.RefiledByRule5, byRule.GetValueOrDefault((byte)5));
         Assert.Equal(ExpectedCounts.RefiledByRule6, byRule.GetValueOrDefault((byte)6));
         Assert.Equal(ExpectedCounts.LeftByRule7, byRule.GetValueOrDefault((byte)7));
@@ -137,7 +138,7 @@ public class RefilingFixtureTests(FixtureCatalog fixture, ITestOutputHelper outp
         Assert.Equal(ExpectedCounts.RefiledByRules, rulesOnly.Count(q => !q.IsUnlisted));
         Assert.Equal(ExpectedCounts.RetiredByRule1 + ExpectedCounts.LeftByRule7, rulesOnly.Count(q => q.IsUnlisted));
 
-        // With the shipped overrides: five genre-0 rows move by the curated file, the last unlisted one among them.
+        // With the shipped overrides: six genre-0 rows move by the curated file, the last unlisted one among them.
         var shipped = Catalog.All.Where(q => Legacy.ByRowId[q.RowId].IsUnlisted).ToList();
         Assert.Equal(ExpectedCounts.OverriddenUnlisted, shipped.Count(q => q.RefiledFrom == JournalRefiler.CuratedRule));
         Assert.Equal(ExpectedCounts.RetiredByRule1, shipped.Count(q => q.IsRetired));
@@ -148,6 +149,7 @@ public class RefilingFixtureTests(FixtureCatalog fixture, ITestOutputHelper outp
         Assert.Equal(90u, Catalog.ByRowId[68149].Journal.GenreId);
         Assert.Equal(107u, Catalog.ByRowId[70180].Journal.GenreId);
         Assert.Equal(117u, Catalog.ByRowId[67752].Journal.GenreId);
+        Assert.Equal(103u, Catalog.ByRowId[67923].Journal.GenreId); // What Lies Beneath, Palace of the Dead
         Assert.Equal("The Forbidden Land, Eureka", Catalog.ByRowId[68478].Journal.GenreName);
 
         // The eight curated retired rows keep their genre and read retired: the five the sheet marks by rule 1
@@ -177,8 +179,10 @@ public class RefilingFixtureTests(FixtureCatalog fixture, ITestOutputHelper outp
     {
         Assert.Equal((156u, (byte)2), Where(65713)); // So You Want to Be a Gladiator
         Assert.Equal((234u, (byte)3), Where(67926)); // Squadron and Commander (Maelstrom)
-        Assert.Equal((27u, (byte)4), Where(69580)); // A Message from Konogg
-        Assert.Equal((100u, (byte)4), Where(69296)); // The Mendicant's Court
+        Assert.Equal((27u, JournalRefiler.TrackerRule), Where(69580)); // A Message from Konogg (a YoRHa progress tracker)
+        Assert.Equal((100u, JournalRefiler.TrackerRule), Where(69296)); // The Mendicant's Court (an Ishgardian Restoration tracker)
+        Assert.Equal((91u, (byte)4), Where(69563)); // A Seaside Story: level 1 behind a level-80 quest, but a real quest (Disciples of War and Magic)
+        Assert.Equal((103u, JournalRefiler.CuratedRule), Where(67923)); // What Lies Beneath
         Assert.Equal((198u, (byte)4), Where(71036)); // Free for All
         Assert.Equal((108u, (byte)5), Where(70187)); // An Odd Job
         Assert.Equal((124u, (byte)5), Where(68477)); // Reach Long and Prosper
@@ -208,18 +212,28 @@ public class RefilingFixtureTests(FixtureCatalog fixture, ITestOutputHelper outp
         var states = Catalog.All.ToDictionary(q => q.RowId, _ => QuestState.Ready);
         var counts = TreeCounts.Compute(Catalog, states, includeUnlisted: true);
 
-        // The class intros sit in a genre node but in none of its numbers (QuestRecord.CountsInTotals); the three
-        // job intros filed by the same rule count like any other quest.
-        var uncounted = Catalog.All.Where(q => !q.CountsInTotals).ToList();
-        Assert.Equal(ExpectedCounts.UncountedClassIntros, uncounted.Count);
-        Assert.All(uncounted, q => Assert.Equal(JournalRefiler.ClassIntroRule, q.RefiledFrom));
-        Assert.All(uncounted, q => Assert.True(JournalRefiler.IsStartingClassIntro(q.InternalId), $"{q.RowId} {q.InternalId}"));
+        // The class intros and the hidden progress trackers sit in a genre node but in none of its numbers
+        // (QuestRecord.CountsInTotals); the three job intros filed by the same rule count like any other quest.
+        var intros = Catalog.All.Where(q => !q.CountsInTotals && q.RefiledFrom == JournalRefiler.ClassIntroRule).ToList();
+        Assert.Equal(ExpectedCounts.UncountedClassIntros, intros.Count);
+        Assert.All(intros, q => Assert.True(JournalRefiler.IsStartingClassIntro(q.InternalId), $"{q.RowId} {q.InternalId}"));
+        var trackers = Catalog.All.Where(q => q.IsProgressTracker).ToList();
+        Assert.Equal(ExpectedCounts.ProgressTrackers, trackers.Count);
+        Assert.All(trackers, q => Assert.False(q.CountsInTotals, $"{q.RowId} {q.Name}"));
+        Assert.Equal(intros.Count + trackers.Count, Catalog.All.Count(q => !q.CountsInTotals));
         var jobIntros = Catalog.All.Where(q => q.RefiledFrom == JournalRefiler.ClassIntroRule && !JournalRefiler.IsStartingClassIntro(q.InternalId)).ToList();
         Assert.Equal(ExpectedCounts.CountedJobIntros, jobIntros.Count);
         Assert.Equal([67645u, 67646u, 67659u], jobIntros.Select(q => q.RowId).OrderBy(id => id));
         Assert.All(jobIntros, q => Assert.True(q.CountsInTotals, $"{q.RowId} {q.Name}"));
-        Assert.Equal(ExpectedCounts.RefiledByRule2, uncounted.Count + jobIntros.Count);
-        Assert.All(Catalog.All.Where(q => q.RefiledFrom != JournalRefiler.ClassIntroRule), q => Assert.True(q.CountsInTotals, $"{q.RowId} {q.Name}"));
+        Assert.Equal(ExpectedCounts.RefiledByRule2, intros.Count + jobIntros.Count);
+        Assert.All(Catalog.All.Where(q => q.RefiledFrom is not (JournalRefiler.ClassIntroRule or JournalRefiler.TrackerRule)), q => Assert.True(q.CountsInTotals, $"{q.RowId} {q.Name}"));
+
+        // The repeatables other than the allied society dailies are listed but in no count either.
+        var repeatables = Catalog.All.Where(q => !q.IsRemoved && q.CountsInTotals && !q.EntersCounts).ToList();
+        Assert.Equal(ExpectedCounts.UncountedRepeatables, repeatables.Count);
+        Assert.All(repeatables, q => Assert.True(q.IsRepeatable && !q.IsAlliedSocietyDaily, $"{q.RowId} {q.Name}"));
+        var uncounted = Catalog.All.Where(q => !q.IsRemoved && !q.EntersCounts).ToList();
+        Assert.Equal(ExpectedCounts.UncountedClassIntros + ExpectedCounts.ProgressTrackers + ExpectedCounts.UncountedRepeatables, uncounted.Count);
 
         var inGenres = counts.Genres.Values.Sum(c => c.Total);
         Assert.Equal(Catalog.Count, inGenres + counts.Unlisted.Total + uncounted.Count);
@@ -258,11 +272,11 @@ public class RefilingFixtureTests(FixtureCatalog fixture, ITestOutputHelper outp
         var states = Catalog.All.ToDictionary(q => q.RowId, _ => QuestState.Ready);
 
         var counts = TreeCounts.Compute(Catalog, states, includeUnlisted: false);
-        var uncounted = Catalog.All.Count(q => !q.CountsInTotals);
+        var uncounted = Catalog.All.Count(q => !q.IsRemoved && !q.EntersCounts);
         Assert.Equal(Catalog.Count - retired.Count - uncounted, counts.Overall.Total);
         Assert.Equal(Catalog.Count - retired.Count - uncounted, counts.Sections.Values.Sum(c => c.Total));
         Assert.Equal(retired.Count, counts.Unlisted.Total);
-        Assert.Equal(Catalog.ByGenre[18].Count(q => !q.IsRetired), counts.Genre(18).Total);
+        Assert.Equal(Catalog.ByGenre[18].Count(q => !q.IsRetired && q.EntersCounts), counts.Genre(18).Total);
 
         var all = QuestQuery.Apply(Catalog, states, new FilterSet(), QuestScope.None, SortSpec.Default, null, QueryContext.Empty);
         Assert.Equal(Catalog.Count - retired.Count, all.Rows.Length);
@@ -334,13 +348,20 @@ public class RefilingFixtureTests(FixtureCatalog fixture, ITestOutputHelper outp
         Assert.All(Legacy.All, q => Assert.Equal(0, q.RefiledFrom));
         Assert.All(Legacy.All, q => Assert.False(q.IsRetired));
 
-        var states = Legacy.All.ToDictionary(q => q.RowId, _ => QuestState.Ready);
-        var counts = TreeCounts.Compute(Legacy, states, includeUnlisted: false);
-        Assert.Equal(ExpectedCounts.LegacyListed, counts.Overall.Total);
-        Assert.Equal(ExpectedCounts.LegacyUnlisted, counts.Unlisted.Total);
+        // The listing is 0.6.0's; the counts leave out the repeatables other than the allied society dailies (1.2).
+        Assert.Equal(ExpectedCounts.LegacyListed, Legacy.All.Count(q => !q.IsRemoved));
         foreach (var (section, total) in ExpectedCounts.LegacySectionTotals)
         {
-            Assert.Equal(total, counts.Section(section).Total);
+            Assert.Equal(total, Legacy.BySection[section].Count(q => !q.IsRemoved));
+        }
+
+        var states = Legacy.All.ToDictionary(q => q.RowId, _ => QuestState.Ready);
+        var counts = TreeCounts.Compute(Legacy, states, includeUnlisted: false);
+        Assert.Equal(ExpectedCounts.LegacyListed - Legacy.All.Count(q => !q.IsRemoved && !q.EntersCounts), counts.Overall.Total);
+        Assert.Equal(ExpectedCounts.LegacyUnlisted, counts.Unlisted.Total);
+        foreach (var section in ExpectedCounts.LegacySectionTotals.Keys)
+        {
+            Assert.Equal(Legacy.BySection[section].Count(q => !q.IsRemoved && q.EntersCounts), counts.Section(section).Total);
         }
 
         Assert.Equal(ExpectedCounts.LegacyUnlisted, Legacy.Removed.Count);
@@ -363,18 +384,22 @@ public class RefilingFixtureTests(FixtureCatalog fixture, ITestOutputHelper outp
             }
 
             var lag = lagRows.Length + ExpectedCounts.LodestoneLagSectionCounts.GetValueOrDefault(section);
-            var refiled = Catalog.BySection[section].Count(q => !q.IsRemoved && q.RefiledFrom != 0 && q.CountsInTotals);
-            output.WriteLine($"section {section}: lodestone {lodestone} + lag {lag} + refiled {refiled} = {lodestone + lag + refiled}; catalog {counts.Section(section).Total}");
-            Assert.True(lodestone + lag + refiled == counts.Section(section).Total, $"section {section}: lodestone {lodestone} + lag {lag} + refiled {refiled} != catalog {counts.Section(section).Total}");
+            var refiled = Catalog.BySection[section].Count(q => !q.IsRemoved && q.RefiledFrom != 0 && q.EntersCounts);
+
+            // The Lodestone lists the repeatables; the counts leave out all but the allied society dailies.
+            var repeatables = Catalog.BySection[section].Count(q => !q.IsRemoved && q.RefiledFrom == 0 && !q.EntersCounts);
+            output.WriteLine($"section {section}: lodestone {lodestone} + lag {lag} + refiled {refiled} - repeatables {repeatables} = {lodestone + lag + refiled - repeatables}; catalog {counts.Section(section).Total}");
+            Assert.True(lodestone + lag + refiled - repeatables == counts.Section(section).Total, $"section {section}: lodestone {lodestone} + lag {lag} + refiled {refiled} - repeatables {repeatables} != catalog {counts.Section(section).Total}");
         }
 
         var lagByCategory = ExpectedCounts.LodestoneLag.Values.SelectMany(ids => ids).ToLookup(id => Catalog.ByRowId[id].Journal.CategoryId);
         foreach (var (category, lodestone) in ExpectedCounts.LodestoneCategoryTotals)
         {
             var lag = lagByCategory[category].Count() + ExpectedCounts.LodestoneLagCategoryCounts.GetValueOrDefault(category);
-            var refiled = Catalog.ByCategory[category].Count(q => !q.IsRemoved && q.RefiledFrom != 0 && q.CountsInTotals);
-            output.WriteLine($"category {category}: lodestone {lodestone} + lag {lag} + refiled {refiled} = {lodestone + lag + refiled}; catalog {counts.Category(category).Total}");
-            Assert.True(lodestone + lag + refiled == counts.Category(category).Total, $"category {category}: lodestone {lodestone} + lag {lag} + refiled {refiled} != catalog {counts.Category(category).Total}");
+            var refiled = Catalog.ByCategory[category].Count(q => !q.IsRemoved && q.RefiledFrom != 0 && q.EntersCounts);
+            var repeatables = Catalog.ByCategory[category].Count(q => !q.IsRemoved && q.RefiledFrom == 0 && !q.EntersCounts);
+            output.WriteLine($"category {category}: lodestone {lodestone} + lag {lag} + refiled {refiled} - repeatables {repeatables} = {lodestone + lag + refiled - repeatables}; catalog {counts.Category(category).Total}");
+            Assert.True(lodestone + lag + refiled - repeatables == counts.Category(category).Total, $"category {category}: lodestone {lodestone} + lag {lag} + refiled {refiled} - repeatables {repeatables} != catalog {counts.Category(category).Total}");
         }
     }
 
@@ -400,13 +425,14 @@ public class RefilingFixtureTests(FixtureCatalog fixture, ITestOutputHelper outp
 
         Assert.Equal(ExpectedCounts.FeatureQuests, ids.Count);
 
-        // Under Legacy nothing is retired, so the same rule keeps the removed rows that carry an unlock or the icon;
-        // every other member is the same quest, filed elsewhere.
+        // Under Legacy nothing is retired or a tracker, so the same rule keeps the removed rows and the trackers that
+        // carry an unlock or the icon; every other member is the same quest, filed elsewhere.
         IReadOnlySet<uint> legacyIds = FeaturePresets.Derive(Legacy, fixture.Curated.WithoutFeatureQuests(), unique.Entries);
         var legacyOnly = legacyIds.Where(id => !ids.Contains(id)).OrderBy(id => id).ToList();
         output.WriteLine($"legacy set {legacyIds.Count}; legacy-only: {string.Join(", ", legacyOnly.Select(id => $"{id} {Catalog.ByRowId[id].Name}"))}");
-        Assert.All(legacyOnly, id => Assert.True(Catalog.ByRowId[id].IsRetired, $"{id} {Catalog.ByRowId[id].Name} left the feature set without being retired"));
+        Assert.All(legacyOnly, id => Assert.True(Catalog.ByRowId[id].IsRetired || Catalog.ByRowId[id].IsProgressTracker, $"{id} {Catalog.ByRowId[id].Name} left the feature set without being retired or a tracker"));
         Assert.DoesNotContain(ids, id => !legacyIds.Contains(id));
-        Assert.Equal(ExpectedCounts.RetiredFeatureRows, legacyOnly.Count);
+        Assert.Equal(ExpectedCounts.RetiredFeatureRows, legacyOnly.Count(id => Catalog.ByRowId[id].IsRetired));
+        Assert.Equal(ExpectedCounts.TrackerFeatureRows, legacyOnly.Count(id => Catalog.ByRowId[id].IsProgressTracker));
     }
 }
