@@ -848,7 +848,12 @@ public sealed class PathChart
         ImGui.PushID(index);
         var clicked = ImGui.InvisibleButton("##row", new Vector2(MathF.Max(1f, width - x0), row.H));
         var hovered = ImGui.IsItemHovered();
+
+        // The ring on the rows' channel, over the hover fill and the threads (a ring on channel 0 hid under them).
+        var dl = ImGui.GetWindowDrawList();
+        dl.ChannelsSetCurrent(2);
         Chrome.FocusRing(Px(4f));
+        dl.ChannelsSetCurrent(0);
         ImGui.PopID();
         if (hovered)
         {
@@ -1203,7 +1208,6 @@ public sealed class PathChart
             UiMetrics.Tooltip(Strings.PathJumpToTargetTooltip);
         }
 
-        Chrome.FocusRing(height * 0.5f);
         dl.ChannelsSetCurrent(3);
         var max = min + size;
         dl.AddRectFilled(min, max, Theme.WithAlpha(Theme.Surface.Window, 0.9f), height * 0.5f);
@@ -1220,6 +1224,9 @@ public sealed class PathChart
         }
 
         dl.AddText(ImGui.GetFont(), captionSize, new Vector2(cx + arrow + Px(4f), cy - (captionSize * 0.5f)), Theme.MoonU32, Strings.PathJumpToTarget);
+
+        // The pill's ring on its own channel, after its fill (the button is still the last item).
+        Chrome.FocusRing(height * 0.5f);
         dl.ChannelsSetCurrent(0);
     }
 
