@@ -14,7 +14,19 @@ Moonlit treasures collects quests with unique rewards, and per-character snapsho
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Copyright>Copyright (c) 2026 Michiru Tsukikage</Copyright>
     <RootNamespace>Tsukimichi</RootNamespace>
+    <!--
+      The game version (ffxivgame.ver) the game hooks were play-tested on: the item tooltip panel, the item and NPC
+      context-menu entries and the server info bar entry pause themselves on a newer game (Core/Runtime/HookGate.cs)
+      until a release bumps this. Set it with tools/set-tested-version.ps1 on patch day (CONTRIBUTING.md); the release
+      workflow refuses a tag whose value is empty.
+    -->
+    <TsukimichiTestedGameVersion>2026.09.15.0000.0000</TsukimichiTestedGameVersion>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Read at load by DiagnosticBuilder.TestedGameVersionText() for the hook gate. -->
+    <AssemblyMetadata Include="TestedGameVersion" Value="$(TsukimichiTestedGameVersion)" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Tsukimichi.Core\Tsukimichi.Core.csproj" />
