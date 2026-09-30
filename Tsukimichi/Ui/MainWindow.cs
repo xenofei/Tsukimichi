@@ -1223,7 +1223,8 @@ public sealed class MainWindow : Window, IDisposable
 
         // The rail is its own fixed column (not resizable, so it follows the UI scale every frame); the navigation
         // column beside it keeps its full width for the tree.
-        ImGui.TableSetupColumn("##rail", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, UiMetrics.Px(ScaleMetrics.RailLogical));
+        // It widens past RailLogical only when a translated tab label needs it (TabStrip.RailWidth, V2-19).
+        ImGui.TableSetupColumn("##rail", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, TabStrip.RailWidth());
         ImGui.TableSetupColumn("##left", ImGuiTableColumnFlags.WidthFixed, UiMetrics.LeftColumnWidth);
         ImGui.TableSetupColumn("##center", ImGuiTableColumnFlags.WidthStretch);
         ImGui.TableSetupColumn("##right", ImGuiTableColumnFlags.WidthFixed, UiMetrics.RightColumnWidth);

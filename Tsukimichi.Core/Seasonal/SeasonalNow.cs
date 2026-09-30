@@ -76,7 +76,21 @@ public static class SeasonalNow
     private static string NoticeEndFormat => CoreText.T("Core.Seasonal.NoticeEnd", " (ends {0})");
 
     /// <summary>The culture dates print in: the UI language's ("en-US" in English, where "Aug 28" reads as before).</summary>
-    private static CultureInfo DateCulture => CultureInfo.GetCultureInfo(CoreText.T("Core.Culture", "en-US"));
+    private static CultureInfo DateCulture
+    {
+        get
+        {
+            try
+            {
+                return CultureInfo.GetCultureInfo(CoreText.T("Core.Culture", "en-US"));
+            }
+            catch (CultureNotFoundException)
+            {
+                // A translation naming a culture the system lacks prints its dates the English way.
+                return CultureInfo.GetCultureInfo("en-US");
+            }
+        }
+    }
 
     /// <summary>
     /// The events <paramref name="snapshot"/> was captured with as running: right for the live character only. For a

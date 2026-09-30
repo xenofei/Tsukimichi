@@ -147,6 +147,12 @@ public sealed class TablePane : IDisposable
     private bool measureJobWidth;
     private float jobWidthFix;
 
+    // The Level column's width raised to a longer translated header on the frame after it was measured (V2-19).
+    private float levelWidthFix;
+
+    // The UI language the header widths were last checked in.
+    private int headerLanguage = -1;
+
     // Hover lift (dalamud-developer panel §4: no TableGetHoveredRow in the binding): the quest hovered on the previous
     // frame gets the fill and the lift this frame; hoveredNext collects this frame's for the next.
     private uint? hoveredRow;
@@ -274,13 +280,22 @@ public sealed class TablePane : IDisposable
         var glyphRadius = TableGeometry.GlyphRadius(rowContent, UiMetrics.RowGlyphRadius);
         var glyphBox = glyphRadius * TableGeometry.GlyphBoxPerRadius;
         var glyphColumn = UiMetrics.Px(GlyphColumnLead) + glyphBox + UiMetrics.Px(2f);
-        var rewardsColumn = UiMetrics.RowIconSize * MaxRewardIcons + UiMetrics.Px(2f) * (MaxRewardIcons - 1) + UiMetrics.Px(8f);
-        var levelColumn = MathF.Max(UiMetrics.Px(34f), PillWidth(WidestLevel, UiMetrics.Px(LevelPillMinWidth), UiMetrics.Px(PillPadX)));
+        // A translated header is never cut (V2-19, LayoutBudgets): each fixed column is at least its header label wide,
+        // with the cell padding and, where the column sorts, the arrow.
+        var headerPad = ImGui.GetStyle().CellPadding.X * 2f;
+        var sortArrow = UiMetrics.Px(LayoutBudgets.SortArrowLogical);
+        float HeaderFloor(string label, bool sortable) => ImGui.CalcTextSize(label).X + headerPad + (sortable ? sortArrow : 0f);
+        var rewardsColumn = MathF.Max(
+            UiMetrics.RowIconSize * MaxRewardIcons + UiMetrics.Px(2f) * (MaxRewardIcons - 1) + UiMetrics.Px(8f),
+            HeaderFloor(Strings.ColumnRewards, sortable: false));
+        var levelColumn = MathF.Max(
+            MathF.Max(UiMetrics.Px(LayoutBudgets.LevelColumnLogical), PillWidth(WidestLevel, UiMetrics.Px(LevelPillMinWidth), UiMetrics.Px(PillPadX))),
+            HeaderFloor(Strings.ColumnLevel, sortable: true));
 
         ImGui.TableSetupColumn(Strings.ColumnGlyph, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize | ImGuiTableColumnFlags.NoHide | ImGuiTableColumnFlags.NoHeaderLabel, glyphColumn);
         // Status is the one stretch column (feature plan v3 P1): it holds the answer to "why not", so it takes the
         // width the others leave, and FitStatusColumn hides Rewards, then Expansion, before it drops under its minimum.
-        var expansionColumn = UiMetrics.Px(40f);
+        var expansionColumn = MathF.Max(UiMetrics.Px(LayoutBudgets.ExpansionColumnLogical), HeaderFloor(Strings.ColumnExpansion, sortable: true));
         ImGui.TableSetupColumn(Strings.ColumnName, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoHide, UiMetrics.Px(NameColumnWidth));
         ImGui.TableSetupColumn(Strings.ColumnLevel, ImGuiTableColumnFlags.WidthFixed, levelColumn);
         ImGui.TableSetupColumn(Strings.ColumnJob, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoSort, UiMetrics.Px(JobColumnWidth));
@@ -293,6 +308,13 @@ public sealed class TablePane : IDisposable
         // The persisted sort is written straight into the column state on the table's first frame: ImGui's own saved
         // settings (imgui.ini) would otherwise win over DefaultSort and hand their sort back through SpecsDirty. It is
         // written again on the frame the sorted column comes back from a FitStatusColumn hide (ImGui dropped it).
+        if (headerLanguage != Localization.Loc.Version)
+        {
+            // A new language: the saved Level and Job widths are checked against the new headers (below).
+            headerLanguage = Localization.Loc.Version;
+            measureJobWidth = true;
+        }
+
         if (!tableInitialized || restoreSort)
         {
             // Once per table init the Job column's saved width is checked against its widest label (below).
@@ -310,17 +332,31 @@ public sealed class TablePane : IDisposable
             jobWidthFix = 0f;
         }
 
+        if (levelWidthFix > 0f)
+        {
+            ImGuiP.TableSetColumnWidth((int)Column.Level, levelWidthFix);
+            levelWidthFix = 0f;
+        }
+
         // The two icon-derived widths are re-asserted every frame (imgui.ini restores font-tracked widths, not IconScale).
         ImGuiP.TableSetColumnWidth((int)Column.Glyph, glyphColumn);
         ImGuiP.TableSetColumnWidth((int)Column.Rewards, rewardsColumn);
-        var statusWidth = DrawHeaders(SortedColumn(ui.Sort), out var jobWidth);
+        var statusWidth = DrawHeaders(SortedColumn(ui.Sort), out var jobWidth, out var levelWidth);
         if (measureJobWidth)
         {
             measureJobWidth = false;
-            var jobMin = MathF.Min(UiMetrics.Icon(JobIconSide), rowContent) + UiMetrics.Px(JobIconGap) + ImGui.CalcTextSize(Strings.JobDohDol).X;
+            var jobMin = MathF.Max(
+                MathF.Min(UiMetrics.Icon(JobIconSide), rowContent) + UiMetrics.Px(JobIconGap) + ImGui.CalcTextSize(Strings.JobDohDol).X,
+                HeaderFloor(Strings.ColumnJob, sortable: false) - headerPad);
             if (jobWidth > 0f && jobWidth + 0.5f < jobMin)
             {
-                jobWidthFix = MathF.Max(jobMin, UiMetrics.Px(JobColumnWidth));
+                jobWidthFix = MathF.Max(jobMin, UiMetrics.Px(JobColumnWidth)) + headerPad;
+            }
+
+            var levelMin = levelColumn - headerPad;
+            if (levelWidth > 0f && levelWidth + 0.5f < levelMin)
+            {
+                levelWidthFix = levelColumn;
             }
         }
 
@@ -391,10 +427,11 @@ public sealed class TablePane : IDisposable
     /// on the raised fill; the sorted column's label and its arrow are in the primary text colour (a sort is not a call
     /// to action, so never gold). Returns the Status column's laid-out width (0 when hidden).
     /// </summary>
-    private static float DrawHeaders(int sortedColumn, out float jobWidth)
+    private static float DrawHeaders(int sortedColumn, out float jobWidth, out float levelWidth)
     {
         var statusWidth = 0f;
         jobWidth = 0f;
+        levelWidth = 0f;
         var s = Theme.Surface;
 
         // Header labels are captions (ui-revamp §4.2): 0.85× the body, never under 12 px, in the caption game font.
@@ -414,6 +451,10 @@ public sealed class TablePane : IDisposable
             else if (i == (int)Column.Job)
             {
                 jobWidth = ImGui.GetContentRegionAvail().X;
+            }
+            else if (i == (int)Column.Level)
+            {
+                levelWidth = ImGui.GetContentRegionAvail().X;
             }
 
             ImGui.PushID(i);

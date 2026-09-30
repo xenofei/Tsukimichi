@@ -740,7 +740,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         {
             var entry = all[i];
             var quest = bundle?.Catalog.GetByRowId(entry.QuestRowId);
-            built[i] = new Row(i, entry, quest, Icons.Resolve(quest, entry), hidden: false, spoilers);
+            built[i] = new Row(i, entry, quest, Icons.Resolve(quest, entry), hidden: false, spoilers, bundle?.Language);
         }
 
         // Rows hidden by a "not unique" verdict follow the view so the Yours filter can list them for Restore.
@@ -749,7 +749,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             var i = all.Count + j;
             var entry = hidden[j];
             var quest = bundle?.Catalog.GetByRowId(entry.QuestRowId);
-            built[i] = new Row(i, entry, quest, Icons.Resolve(quest, entry), hidden: true, spoilers);
+            built[i] = new Row(i, entry, quest, Icons.Resolve(quest, entry), hidden: true, spoilers, bundle?.Language);
         }
 
         uniqueCount = all.Count;
@@ -990,7 +990,8 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     private sealed class Row
     {
         /// <param name="spoilers">The viewed character's shield: a masked quest's name is its placeholder here too.</param>
-        public Row(int index, UniqueRewardEntry entry, QuestRecord? quest, uint icon, bool hidden, SpoilerMask spoilers)
+        /// <param name="catalogLanguage">The catalog's language: a non-English client prints the sheet's reward name (<see cref="RewardNames"/>).</param>
+        public Row(int index, UniqueRewardEntry entry, QuestRecord? quest, uint icon, bool hidden, SpoilerMask spoilers, string? catalogLanguage)
         {
             Index = index;
             Entry = entry;
@@ -998,9 +999,10 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             Icon = icon;
             Hidden = hidden;
             KindName = Strings.MoonlitKindName(entry.Kind);
-            Name = string.IsNullOrWhiteSpace(entry.RewardName)
+            var rewardName = RewardNames.Display(entry, quest, catalogLanguage);
+            Name = string.IsNullOrWhiteSpace(rewardName)
                 ? KindName + " #" + entry.RewardId.ToString(CultureInfo.InvariantCulture)
-                : entry.RewardName;
+                : rewardName;
             QuestName = quest is null ? string.Format(CultureInfo.InvariantCulture, Strings.MoonlitQuestFormat, entry.QuestRowId) : spoilers.DisplayName(quest);
             QuestLabel = QuestName + "##q";
             ConfidenceLabel = hidden ? Strings.MoonlitConfidenceUser : MoonlitPane.ConfidenceLabel(entry.Confidence);

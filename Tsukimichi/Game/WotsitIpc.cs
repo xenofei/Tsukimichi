@@ -262,7 +262,8 @@ public sealed class WotsitIpc : IDisposable
 
             var target = quest;
             var kind = Strings.MoonlitKindName(entry.Kind);
-            var name = string.IsNullOrWhiteSpace(entry.RewardName) ? kind : entry.RewardName;
+            var rewardName = Core.Unique.RewardNames.Display(entry, quest, bundle.Language);
+            var name = string.IsNullOrWhiteSpace(rewardName) ? kind : rewardName;
             entries.Add(new WotsitEntry(
                 string.Format(System.Globalization.CultureInfo.CurrentCulture, Strings.WotsitRewardFormat, name, kind),
                 name + " " + kind + " " + spoilers.DisplayName(quest),

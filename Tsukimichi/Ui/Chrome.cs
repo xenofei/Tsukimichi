@@ -46,7 +46,7 @@ public static class Chrome
     private const float ChipHeight = 22f;
     private const float ChipPadX = 9f;
     private const float ChipGlyph = 8f;
-    private const float SegmentPadX = 10f;
+    private const float SegmentPadX = Core.Ui.LayoutBudgets.SegmentPadLogical;
     private const float BadgeMin = 14f;
     private const float FocusThickness = 1.5f;
     private const float HoldOutset = 2f;

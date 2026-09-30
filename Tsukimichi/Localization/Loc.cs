@@ -4,8 +4,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Resources;
-using System.Text;
-using System.Text.RegularExpressions;
 using Tsukimichi.Core.Localization;
 
 namespace Tsukimichi.Localization;
@@ -199,7 +197,10 @@ public static class Loc
         {
             foreach (var (key, value) in english)
             {
-                merged[key] = Pseudo(value);
+                if (!PseudoText.IsMachineKey(key))
+                {
+                    merged[key] = PseudoText.Stretch(value);
+                }
             }
         }
         else if (language != English)
@@ -253,92 +254,8 @@ public static class Loc
         return result;
     }
 
-    // Spans pseudo-localization must keep as they are: composite format items, printf specifiers, ImGui ids, the
-    // combo separator and line breaks.
-    private static readonly Regex Protected = new(@"\{[^{}]*\}|%[-+#0]*\d*(?:\.\d+)?[dfsuxXi%]|##.*$|\0|\n", RegexOptions.Compiled | RegexOptions.Singleline);
-
-    /// <summary>
-    /// English stretched by 40 % and bracketed: letters swap to accented look-alikes, a run of "·" pads the end, and
-    /// placeholders, printf specifiers and ImGui ids stay intact so every format call and window id still works.
-    /// An empty string stays empty; an ImGui "###id" suffix stays outside the brackets.
-    /// </summary>
-    public static string Pseudo(string english)
-    {
-        if (english.Length == 0)
-        {
-            return english;
-        }
-
-        var visible = english;
-        var id = string.Empty;
-        var idAt = english.IndexOf("##", StringComparison.Ordinal);
-        if (idAt >= 0)
-        {
-            visible = english[..idAt];
-            id = english[idAt..];
-        }
-
-        if (visible.Length == 0)
-        {
-            return english;
-        }
-
-        // Combo item lists ("Inherit\0On\0Off\0") stretch each item on its own.
-        if (visible.Contains('\0', StringComparison.Ordinal))
-        {
-            var parts = visible.Split('\0');
-            for (var i = 0; i < parts.Length; i++)
-            {
-                parts[i] = parts[i].Length == 0 ? parts[i] : Pseudo(parts[i]);
-            }
-
-            return string.Join('\0', parts) + id;
-        }
-
-        var sb = new StringBuilder(visible.Length * 2);
-        sb.Append('[');
-        var last = 0;
-        foreach (Match match in Protected.Matches(visible))
-        {
-            Accent(sb, visible, last, match.Index);
-            sb.Append(match.Value);
-            last = match.Index + match.Length;
-        }
-
-        Accent(sb, visible, last, visible.Length);
-        var pad = (int)Math.Ceiling(visible.Length * 0.4);
-        sb.Append(' ').Append('·', Math.Max(1, pad - 1));
-        sb.Append(']');
-        sb.Append(id);
-        return sb.ToString();
-    }
-
-    private static void Accent(StringBuilder sb, string text, int from, int to)
-    {
-        for (var i = from; i < to; i++)
-        {
-            var c = text[i];
-            sb.Append(c switch
-            {
-                'a' => 'á',
-                'e' => 'é',
-                'i' => 'í',
-                'o' => 'ö',
-                'u' => 'ü',
-                'c' => 'ç',
-                'n' => 'ñ',
-                'y' => 'ý',
-                'A' => 'Å',
-                'E' => 'É',
-                'I' => 'Î',
-                'O' => 'Ø',
-                'U' => 'Ü',
-                'C' => 'Ç',
-                'N' => 'Ñ',
-                _ => c,
-            });
-        }
-    }
+    /// <summary>English stretched for the layout check (<see cref="PseudoText.Stretch"/>).</summary>
+    public static string Pseudo(string english) => PseudoText.Stretch(english);
 
     /// <summary>Serves Core's keys from the merged table; null (English) where the table has none.</summary>
     private sealed class CoreProvider : ITextProvider

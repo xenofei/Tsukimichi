@@ -4,6 +4,8 @@ using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 
+using Tsukimichi.Core.Ui;
+
 namespace Tsukimichi.Ui;
 
 /// <summary>
@@ -20,11 +22,11 @@ namespace Tsukimichi.Ui;
 /// </summary>
 public sealed class TabStrip
 {
-    private const float RowLogical = 30f;
-    private const float PadLogical = 6f;
-    private const float InsetLogical = 10f;
-    private const float IconLogical = 16f;
-    private const float GapLogical = 8f;
+    private const float RowLogical = LayoutBudgets.TabRowLogical;
+    private const float PadLogical = LayoutBudgets.TabPadLogical;
+    private const float InsetLogical = LayoutBudgets.TabInsetLogical;
+    private const float IconLogical = LayoutBudgets.TabIconLogical;
+    private const float GapLogical = LayoutBudgets.TabGapLogical;
     private const float BarLogical = 3f;
 
     private static readonly NavTab[] Tabs = [NavTab.Journal, NavTab.Moonlit, NavTab.Characters, NavTab.Flight, NavTab.Plan];
@@ -54,6 +56,37 @@ public sealed class TabStrip
     public TabStrip(UiState ui)
     {
         this.ui = ui ?? throw new ArgumentNullException(nameof(ui));
+    }
+
+    private static int railLanguage = -1;
+    private static float railFontSize = -1f;
+    private static float railWidth;
+
+    /// <summary>
+    /// The rail's width in pixels (V2-19): <see cref="ScaleMetrics.RailLogical"/>, or wider when a translated tab label
+    /// (or the Journal label beside its badge) would otherwise be cut, up to <see cref="LayoutBudgets.MaxRailLogical"/>
+    /// (<see cref="LayoutBudgets.RailWidth"/>). Measured again only when the language or the font size changes.
+    /// </summary>
+    public static float RailWidth()
+    {
+        var fontSize = ImGui.GetFontSize();
+        if (railLanguage != Localization.Loc.Version || railFontSize != fontSize)
+        {
+            railLanguage = Localization.Loc.Version;
+            railFontSize = fontSize;
+            var unit = MathF.Max(UiMetrics.Px(1f), 0.01f);
+            var labels = Labels;
+            var widest = 0f;
+            for (var i = 0; i < labels.Length; i++)
+            {
+                widest = MathF.Max(widest, ImGui.CalcTextSize(labels[i]).X);
+            }
+
+            var journal = ImGui.CalcTextSize(labels[Array.IndexOf(Tabs, NavTab.Journal)]).X;
+            railWidth = UiMetrics.Px(LayoutBudgets.RailWidth(widest / unit, journal / unit));
+        }
+
+        return railWidth;
     }
 
     /// <summary>Height of one tab row: 30 logical px, never under the minimum click target.</summary>
