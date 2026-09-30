@@ -20,7 +20,7 @@ public readonly record struct ColumnSpec(int Priority, float Min, float Ideal, f
 /// the Status cell's fit, where the state word is never cut (P1, game UX panel finding 3) and only the reason after
 /// it gives way to an ellipsis.
 /// </summary>
-public static class TableGeometry
+public static partial class TableGeometry
 {
     /// <summary>Moon radius per pixel of row content: r 9 in a Comfortable row (28 px of content), r 6.4 in a Dense one (20 px), ui-revamp §2.4.</summary>
     public const float GlyphRadiusPerContent = 0.32f;
