@@ -3473,6 +3473,10 @@
   <data name="AllQuests" xml:space="preserve">
     <value>All quests</value>
   </data>
+  <data name="PaneDividerTooltip" xml:space="preserve">
+    <value>Drag to resize. Double-click to reset.</value>
+    <comment>Tooltip of the dividers between the main window's panes.</comment>
+  </data>
   <data name="FeatureUnlocks" xml:space="preserve">
     <value>Unlock quests</value>
   </data>

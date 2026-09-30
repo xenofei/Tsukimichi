@@ -22,7 +22,8 @@ using Tsukimichi.GameData;
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// The main window (spec §2.4): toolbar, three resizable columns (navigation, quest table, detail) and a status bar.
+/// The main window (spec §2.4): toolbar, the tab rail and three resizable panes (navigation, quest table, detail; see
+/// <see cref="PaneSplit"/>) and a status bar.
 /// Owns the per-window <see cref="UiState"/> contract for its panes and persists the filters into the configuration.
 /// Reads <see cref="Plugin.Session"/>, <see cref="Plugin.Settings"/> and <see cref="Plugin.Paths"/> lazily because the
 /// window is constructed before the game-state block initializes them.
@@ -50,6 +51,7 @@ public sealed class MainWindow : Window, IDisposable
     private readonly TablePane tablePane;
     private readonly DetailPane detailPane;
     private readonly TonightCard tonightCard;
+    private readonly PaneSplit paneSplit = new();
 
     // Attached after the game state exists (they need the session); null until then.
     private MoonlitPane? moonlitPane;
@@ -286,9 +288,10 @@ public sealed class MainWindow : Window, IDisposable
         EnsureInitialized();
         UiMetrics.Update(plugin.Settings);
 
-        // The rail and the fixed side columns grow with the UI scale, so the minimum size must too or the centre column
-        // collapses; it never exceeds the viewport, so the window can always be placed whole. A rail a translated tab
-        // label widened (TabStrip.RailWidth) adds its extra width, rather than taking it from the centre floor.
+        // The rail and the panes' floors grow with the UI scale, so the minimum size must too or a pane goes under its
+        // floor (ScaleMetrics.MinWindowSize, PaneLayout); it never exceeds the viewport, so the window can always be
+        // placed whole. A rail a translated tab label widened (TabStrip.RailWidth) adds its extra width, rather than
+        // taking it from the centre floor.
         SizeConstraints = new WindowSizeConstraints
         {
             MinimumSize = ScaleMetrics.MinWindowSize(UiMetrics.FontScale, ImGuiHelpers.GlobalScale, ImGuiHelpers.MainViewport.WorkSize, TabStrip.RailLogicalWidth),
@@ -1208,31 +1211,28 @@ public sealed class MainWindow : Window, IDisposable
         }
     }
 
+    /// <summary>
+    /// The body (feature plan v4 L1): rail · tree · centre · detail side by side, their widths from
+    /// <see cref="PaneSplit"/> (floors that hold, widths in logical units, a double-click to reset). Each pane is a child
+    /// window of its width placed on one line; the detail column is a group so the What's new and Since you were away
+    /// cards stack above the detail pane inside it.
+    /// </summary>
     private void DrawBody(SessionState session, CatalogBundle bundle)
     {
         var style = ImGui.GetStyle();
         var statusHeight = ImGui.GetTextLineHeightWithSpacing() + style.ItemSpacing.Y * 2f;
-        var bodyHeight = MathF.Max(UiMetrics.MinBodyHeight, ImGui.GetContentRegionAvail().Y - statusHeight);
-        var cellHeight = bodyHeight - style.CellPadding.Y * 2f;
+        var height = MathF.Max(UiMetrics.MinBodyHeight, ImGui.GetContentRegionAvail().Y - statusHeight);
+        var total = ImGui.GetContentRegionAvail().X;
+        var settings = plugin.Settings;
 
-        // A new id for the four-column layout (T14): the three-column table's saved widths must not land on the rail.
-        using var layout = ImRaii.Table("##body", 4, ImGuiTableFlags.Resizable | ImGuiTableFlags.BordersInnerV | ImGuiTableFlags.NoPadOuterX, new Vector2(0f, bodyHeight));
-        if (!layout)
-        {
-            return;
-        }
+        // The strip is the Journal tree's alone for now: the other tabs' lists (and the filter panel) keep their width.
+        var stripAllowed = ui.Tab == NavTab.Journal && !ui.FilterPanelOpen;
 
-        // The rail is its own fixed column (not resizable, so it follows the UI scale every frame); the navigation
-        // column beside it keeps its full width for the tree.
-        // It widens past RailLogical only when a translated tab label needs it (TabStrip.RailWidth, V2-19).
-        ImGui.TableSetupColumn("##rail", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, TabStrip.RailWidth());
-        ImGui.TableSetupColumn("##left", ImGuiTableColumnFlags.WidthFixed, UiMetrics.LeftColumnWidth);
-        ImGui.TableSetupColumn("##center", ImGuiTableColumnFlags.WidthStretch);
-        ImGui.TableSetupColumn("##right", ImGuiTableColumnFlags.WidthFixed, UiMetrics.RightColumnWidth);
-        ImGui.TableNextRow();
+        // The rail keeps its own width (it follows the UI scale every frame, and widens past RailLogical only when a
+        // translated tab label needs it: TabStrip.RailWidth, V2-19).
+        var widths = PaneSplit.Solve(settings, total, TabStrip.RailWidth(), stripAllowed);
 
-        ImGui.TableNextColumn();
-        using (var rail = ImRaii.Child("##rail", new Vector2(0f, cellHeight)))
+        using (var rail = ImRaii.Child("##rail", new Vector2(widths.Rail, height)))
         {
             if (rail)
             {
@@ -1242,11 +1242,17 @@ public sealed class MainWindow : Window, IDisposable
             }
         }
 
-        ImGui.TableNextColumn();
-        DrawNavigation(session, bundle, cellHeight);
+        ImGui.SameLine(0f, 0f);
+        PaneSplit.Divider("##railLine", in widths, height);
 
-        ImGui.TableNextColumn();
-        using (var center = ImRaii.Child("##center", new Vector2(0f, cellHeight)))
+        ImGui.SameLine(0f, 0f);
+        DrawNavigation(session, bundle, in widths, height);
+
+        ImGui.SameLine(0f, 0f);
+        var changed = paneSplit.Handle(PaneSide.Tree, settings, in widths, height, total, stripAllowed);
+
+        ImGui.SameLine(0f, 0f);
+        using (var center = ImRaii.Child("##center", new Vector2(widths.Centre, height)))
         {
             if (center)
             {
@@ -1271,15 +1277,24 @@ public sealed class MainWindow : Window, IDisposable
             }
         }
 
-        ImGui.TableNextColumn();
-        var detailHeight = cellHeight;
+        ImGui.SameLine(0f, 0f);
+        changed |= paneSplit.Handle(PaneSide.Detail, settings, in widths, height, total, stripAllowed);
+        if (changed)
+        {
+            settingsDirtyAtUtc ??= DateTime.UtcNow;
+        }
+
+        // The detail column runs to the window's edge: its children take the content region's width.
+        ImGui.SameLine(0f, 0f);
+        using var detailColumn = ImRaii.Group();
+        var detailHeight = height;
         if (whatsNew is { Visible: true } card)
         {
-            detailHeight -= card.Draw(cellHeight);
+            detailHeight -= card.Draw(height);
         }
         else if (welcomeBack is { Visible: true } back)
         {
-            detailHeight -= back.Draw(cellHeight, bundle);
+            detailHeight -= back.Draw(height, bundle);
         }
 
         // Nothing selected: the Tonight card answers "what now" in the detail column (game UX panel finding 1).
@@ -1297,11 +1312,19 @@ public sealed class MainWindow : Window, IDisposable
     /// The navigation column: the body of the tab the rail selected (<see cref="UiState.Tab"/> is the single source
     /// of truth, so a programmatic switch shows on the next frame with nothing to reconcile).
     /// </summary>
-    private void DrawNavigation(SessionState session, CatalogBundle bundle, float height)
+    private void DrawNavigation(SessionState session, CatalogBundle bundle, in PaneWidths widths, float height)
     {
-        using var left = ImRaii.Child("##left", new Vector2(0f, height));
+        using var left = ImRaii.Child("##left", new Vector2(widths.Tree, height));
         if (!left)
         {
+            return;
+        }
+
+        if (widths.TreeStrip)
+        {
+            // Dragged shut: the Journal tree as a strip of icons (only ever on the Journal tab without the filter panel).
+            ui.Rects.Remove(UiRects.FilterPanel);
+            treePane.DrawStrip(bundle, runner, plugin.Settings.ShowUnlisted);
             return;
         }
 
@@ -1461,7 +1484,7 @@ public sealed class MainWindow : Window, IDisposable
         {
             x = StatusSeparatorAt(dl, x, textY, gap);
             ImGui.SetCursorScreenPos(new Vector2(x, textY));
-            EllipsisText(status, statusRoom, statusWidth, ImGui.GetColorU32(ImGuiCol.TextDisabled));
+            Chrome.EllipsisText(status, statusRoom, ImGui.GetColorU32(ImGuiCol.TextDisabled), statusWidth);
             if (DataStamp is { } stampAgain && ImGui.IsItemHovered())
             {
                 UiMetrics.Tooltip(stampAgain);
@@ -1491,7 +1514,7 @@ public sealed class MainWindow : Window, IDisposable
             var pillMax = new Vector2(x + msqRoom, textY + line + UiMetrics.Px(1f));
             dl.AddRectFilled(pillMin, pillMax, MsqPillFill, (pillMax.Y - pillMin.Y) * 0.5f);
             ImGui.SetCursorScreenPos(new Vector2(x + pillPad, textY));
-            EllipsisText(msqStatus, msqRoom - 2f * pillPad, msqTextWidth, Theme.AccentU32);
+            Chrome.EllipsisText(msqStatus, msqRoom - 2f * pillPad, Theme.AccentU32, msqTextWidth);
             // Only while this window is the one under the mouse: another window (Settings, the Todo overlay, a popup)
             // covering the bar gets neither the tooltip nor the hand.
             if (ImGui.IsWindowHovered() && ImGui.IsMouseHoveringRect(pillMin, pillMax))
@@ -1536,25 +1559,6 @@ public sealed class MainWindow : Window, IDisposable
         }
 
         return ImGui.GetItemRectMax().X;
-    }
-
-    /// <summary>
-    /// Text in <paramref name="textColor"/> clipped to <paramref name="width"/> with an ellipsis, as one item (a Dummy) so hover and
-    /// click tests still work on it. Nothing is allocated: ImGui renders the ellipsis itself.
-    /// </summary>
-    private static void EllipsisText(string text, float width, float textWidth, uint textColor)
-    {
-        var min = ImGui.GetCursorScreenPos();
-        var max = min + new Vector2(MathF.Max(0f, width), ImGui.GetTextLineHeight());
-        ImGui.Dummy(max - min);
-        if (width <= 0f)
-        {
-            return;
-        }
-
-        using var color = ImRaii.PushColor(ImGuiCol.Text, textColor);
-        Vector2? size = new Vector2(textWidth, max.Y - min.Y);
-        ImGuiP.RenderTextEllipsis(ImGui.GetWindowDrawList(), in min, in max, max.X, max.X, text, in size);
     }
 
     /// <summary>

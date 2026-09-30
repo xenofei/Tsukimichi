@@ -98,9 +98,10 @@ public static class LayoutBudgets
 
     /// <summary>
     /// The toolbar's width at the smallest main window (<see cref="ScaleMetrics.MinWindowSize(float, float)"/> less the
-    /// window padding): the quick views, on a row of their own when they must be, fit in it.
+    /// window padding: the rail, the panes' floors and the gutters): the quick views, on a row of their own when they
+    /// must be, fit in it.
     /// </summary>
-    public const float MinToolbarLogical = ScaleMetrics.RailLogical + ScaleMetrics.LeftColumnLogical + ScaleMetrics.RightColumnLogical + ScaleMetrics.CentreFloorLogical - 16f;
+    public const float MinToolbarLogical = ScaleMetrics.RailLogical + PaneLayout.MinContentLogical;
 
     /// <summary>The quick views' width: "All" and each view, every segment padded.</summary>
     public static float SegmentsWidth(IEnumerable<float> labels)
@@ -119,4 +120,88 @@ public static class LayoutBudgets
 
     /// <summary>The body font's size at UI scale 1 and Dalamud's global scale 1 (Dalamud's 12 pt default).</summary>
     public const float BodyFontPx = 16f;
+
+    // ---- Responsive breakpoints (feature plan v4 L2; UI audit §4, design v4 §8.2) ----
+    // Logical pixels of the pane's own width. The pane floors themselves live in PaneLayout; the lowest tier of each
+    // pane starts at its floor, which the layout tests check.
+
+    /// <summary>
+    /// How far past a breakpoint a width must move back before a hidden part (a table column, a row part) returns,
+    /// so a width resting on a threshold does not make it flicker.
+    /// </summary>
+    public const float HysteresisLogical = 16f;
+
+    /// <summary>The least room a row keeps for its name before a row part is dropped (RowFit).</summary>
+    public const float RowNameMinLogical = 48f;
+
+    /// <summary>Tree: every part of a row shows (name, patch caption, expansion pill, Ready pill, count, bar).</summary>
+    public const float TreeFullLogical = 300f;
+
+    /// <summary>Tree: the expansion pill, then the mini bar, go.</summary>
+    public const float TreeTrimLogical = 240f;
+
+    /// <summary>Tree: the count becomes a percentage; complete nodes show no count.</summary>
+    public const float TreeCompactLogical = 200f;
+
+    /// <summary>Tree: the ring alone carries progress and the Ready pill becomes a dot; the tree's floor.</summary>
+    public const float TreeSlimLogical = PaneLayout.TreeFloorLogical;
+
+    /// <summary>Quest table: every column shows; Name and Status stretch 3 : 2.</summary>
+    public const float TableFullLogical = 640f;
+
+    /// <summary>Quest table: under this Rewards hides.</summary>
+    public const float TableNoRewardsLogical = 560f;
+
+    /// <summary>Quest table: under this the expansion column hides too.</summary>
+    public const float TableNoExpansionLogical = 480f;
+
+    /// <summary>Quest table: under this the job column shows its icon only, then hides.</summary>
+    public const float TableNoJobLogical = 400f;
+
+    /// <summary>Quest table: under this the level column hides and the status keeps its state word.</summary>
+    public const float TableNoLevelLogical = 360f;
+
+    /// <summary>Quest table: under <see cref="TableNoLevelLogical"/> rows become two lines, down to the centre's floor.</summary>
+    public const float TableTwoLineLogical = PaneLayout.CentreFloorLogical;
+
+    /// <summary>Detail pane D1: the full hero, requirements as a grid.</summary>
+    public const float DetailFullLogical = 340f;
+
+    /// <summary>Detail pane D2: a smaller moon, chips wrap by segment, the action extras fold into "…".</summary>
+    public const float DetailMediumLogical = 320f;
+
+    /// <summary>Detail pane D3: the moon above the title, requirements label over value; the pane's floor.</summary>
+    public const float DetailNarrowLogical = PaneLayout.DetailFloorLogical;
+
+    /// <summary>My blues: one line per row at or above this.</summary>
+    public const float PlanOneLineLogical = 560f;
+
+    /// <summary>My blues: under this Flag and Reveal fold into one "…" menu.</summary>
+    public const float PlanMenuLogical = 420f;
+
+    /// <summary>Moonlit: under this the toolbar takes two rows.</summary>
+    public const float MoonlitTwoRowToolbarLogical = 560f;
+
+    /// <summary>
+    /// Label beside value (<c>Chrome.LabelValue</c>) while the value keeps at least this many ems of room; under it the
+    /// label goes above the value.
+    /// </summary>
+    public const float LabelValueMinEm = 10f;
+
+    /// <summary>
+    /// Whether a label and its value stack (label above value) in <paramref name="available"/> pixels: the label takes
+    /// <paramref name="labelWidth"/> and <paramref name="gap"/>, and the value would be left under
+    /// <see cref="LabelValueMinEm"/> ems of <paramref name="em"/> pixels. Unreadable widths stack.
+    /// </summary>
+    public static bool StackLabelValue(float available, float labelWidth, float gap, float em)
+    {
+        if (!float.IsFinite(available) || !float.IsFinite(labelWidth))
+        {
+            return true;
+        }
+
+        var room = available - MathF.Max(0f, labelWidth) - (float.IsFinite(gap) ? MathF.Max(0f, gap) : 0f);
+        var need = LabelValueMinEm * (float.IsFinite(em) && em > 0f ? em : BodyFontPx);
+        return room < need;
+    }
 }

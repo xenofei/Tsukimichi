@@ -4,6 +4,9 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+### Changed
+- Panes keep a minimum width: however you drag the dividers or size the window, the Journal tree stays at least 180 px wide, the quest list 320 and the details 260, so nothing is squeezed to a sliver; when the window gets narrow the details give way first, then the tree. The widths you drag to follow Settings › Display › UI scale, and double-click a divider to reset that pane to its default width (the tree now starts at 300 px, a little wider than before). Drag the tree's divider far to the left and the tree folds into a narrow strip of moons, one per section (hover for the name and count, click to show that section); drag it back out or double-click the divider to open it again. The main window can now be a little narrower. Pane widths set in earlier versions are not carried over.
+
 ## [1.1.0] - 2026-09-30
 
 ### Added

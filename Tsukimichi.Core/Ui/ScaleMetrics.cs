@@ -45,20 +45,17 @@ public static class ScaleMetrics
     /// <summary>Pixels per logical unit for moons and icons: the layout factor × clamped icon scale.</summary>
     public static float IconFactor(float globalScale, float uiScale, float iconScale) => LayoutFactor(globalScale, uiScale) * ClampIconScale(iconScale);
 
-    /// <summary>Logical width of the main window's fixed navigation column.</summary>
-    public const float LeftColumnLogical = 240f;
-
-    /// <summary>Logical width of the main window's fixed detail column.</summary>
-    public const float RightColumnLogical = 360f;
-
-    /// <summary>The least logical width the centre column (the quest table) may be squeezed to.</summary>
-    public const float CentreFloorLogical = 200f;
-
     /// <summary>
-    /// Logical width of the main window's tab rail (T14): its own fixed column left of the navigation column, so the
-    /// tree keeps <see cref="LeftColumnLogical"/>. Holds a 16 px icon, the longest tab label and the Journal badge.
+    /// Logical width of the main window's tab rail (T14): its own column left of the tree. Holds a 16 px icon, the
+    /// longest tab label and the Journal badge.
     /// </summary>
     public const float RailLogical = 136f;
+
+    /// <summary>
+    /// Dalamud's window padding on both sides of the main window together, in Dalamud-scaled units (8 each side; the
+    /// UI scale does not change it): the minimum width adds it so the panes' floors hold inside the padding.
+    /// </summary>
+    public const float WindowPaddingX = 16f;
 
     /// <summary>Logical height floor of the main window.</summary>
     public const float MinWindowHeightLogical = 500f;
@@ -70,9 +67,11 @@ public static class ScaleMetrics
     public const float ViewportMarginPx = 48f;
 
     /// <summary>
-    /// The main window's minimum size in Dalamud-scaled units for a UI scale: the tab rail, the two fixed side columns
-    /// and the centre floor, and the height floor, each multiplied by the clamped UI scale. Dalamud multiplies the
-    /// result by its global scale, so the window can never shrink below what the fixed columns need.
+    /// The main window's minimum size in Dalamud-scaled units for a UI scale (feature plan v4 L1): the tab rail, the
+    /// floors of the tree, the centre and the detail pane and the gutters between them
+    /// (<see cref="PaneLayout.MinContentLogical"/>), each multiplied by the clamped UI scale, plus the window's padding;
+    /// and the height floor. Dalamud multiplies the result by its global scale, so no pane is ever squeezed under its
+    /// floor by the window alone.
     /// </summary>
     /// <param name="uiScale">The UI scale.</param>
     /// <param name="railLogical">
@@ -83,7 +82,7 @@ public static class ScaleMetrics
     {
         var scale = ClampUiScale(uiScale);
         var rail = float.IsFinite(railLogical) ? MathF.Max(railLogical, RailLogical) : RailLogical;
-        return new Vector2((rail + LeftColumnLogical + RightColumnLogical + CentreFloorLogical) * scale, MinWindowHeightLogical * scale);
+        return new Vector2(((rail + PaneLayout.MinContentLogical) * scale) + WindowPaddingX, MinWindowHeightLogical * scale);
     }
 
     /// <summary>
