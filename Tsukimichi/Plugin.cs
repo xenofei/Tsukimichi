@@ -418,6 +418,10 @@ public sealed class Plugin : IDalamudPlugin
 
             configWindow = new ConfigWindow(Settings, Session, PluginInterface, diagnostics, _ => ui.MarkQueryDirty());
             configWindow.Overrides = moonlitPane;
+            // Exports (P12): Settings › Data › Export and /tsuki export write local files; nothing is uploaded.
+            var exportService = new Game.ExportService(Session, Settings, Paths, unlockReader, () => moonlit.Catalog, diagnostics.PluginVersion, diagnostics.ClientGameVersion, Log);
+            configWindow.Export = new ExportSection(Settings, exportService, () => Settings.Save(PluginInterface), Log);
+            command.Export = new ExportCommand(exportService, Settings, gameLinks).Run;
             // A filing change rebuilds the catalog off-thread; the session swaps it in on the framework thread.
             configWindow.JournalFilingChanged = filing => _ = RetryCatalogAsync();
             Game.WotsitIpc wotsitIpc = wotsit;

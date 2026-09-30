@@ -2,6 +2,7 @@ using System;
 using Dalamud.Configuration;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
+using Tsukimichi.Core.Export;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Storage;
@@ -40,6 +41,19 @@ public sealed class Configuration : IPluginConfiguration
     // ---- 0.7.0: abandoned ledger (P10) ----
     /// <summary>Print "Abandoned: [quest] (step 3 of 5)" when a quest leaves the journal uncompleted (see <c>Game.ChatNotifier</c>). On by default.</summary>
     public bool ChatNoticeAbandoned { get; set; } = true;
+
+    // ---- 0.7.0: export (P12) ----
+    /// <summary>Format of Settings › Data › Export and of <c>/tsuki export</c> without a format word. JSON by default.</summary>
+    public ExportFormat ExportFormat { get; set; } = ExportFormat.Json;
+
+    /// <summary>Put the character's name in the export's header and file name. Off by default: an export carries no identifier.</summary>
+    public bool ExportIncludeCharacterName { get; set; }
+
+    /// <summary>The quest export lists every quest with its completed flag instead of the completed ones only. Off by default.</summary>
+    public bool ExportIncludeIncomplete { get; set; }
+
+    /// <summary>Folder exports are written to; empty uses <c>exports</c> in the plugin's config directory.</summary>
+    public string ExportFolder { get; set; } = string.Empty;
 
     /// <summary>Show the "Removed from the game" tree node (retired quests and those with no journal genre). Off by default.</summary>
     public bool ShowUnlisted { get; set; }
@@ -196,6 +210,11 @@ public sealed class Configuration : IPluginConfiguration
 
         config.Filters ??= new FilterSet();
         config.LastSeenVersion ??= string.Empty;
+        config.ExportFolder ??= string.Empty;
+        if (!Enum.IsDefined(config.ExportFormat))
+        {
+            config.ExportFormat = ExportFormat.Json;
+        }
         if (!Enum.IsDefined(config.JournalFiling))
         {
             // A hand-edited integer, or a value a newer build wrote before a downgrade: the mapper would read it as

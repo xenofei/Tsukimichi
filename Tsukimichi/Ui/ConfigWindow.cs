@@ -115,6 +115,9 @@ public sealed class ConfigWindow : Window
     /// <summary>Called with the new value after <see cref="Configuration.NpcContextMenuEnabled"/> is toggled and saved; the NPC menu hook wires it.</summary>
     public Action<bool>? NpcContextMenuToggled { get; set; }
 
+    /// <summary>Settings › Data › Export (P12); set by the plugin once the export service exists. Null hides it.</summary>
+    public ExportSection? Export { get; set; }
+
     /// <summary>The user's Moonlit verdicts for the Data section; set by the plugin once the Moonlit pane exists. Null shows a placeholder.</summary>
     public IUniqueOverrides? Overrides { get; set; }
 
@@ -546,6 +549,12 @@ public sealed class ConfigWindow : Window
         ImGui.Spacing();
         DrawVerdicts();
         ImGui.Spacing();
+        if (Export is { } export)
+        {
+            export.Draw();
+            ImGui.Spacing();
+        }
+
 
         using (Theme.PushDestructiveButton())
         {
