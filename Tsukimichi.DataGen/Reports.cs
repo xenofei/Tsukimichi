@@ -118,6 +118,21 @@ internal static class Reports
             sb.AppendLine($"| {d.QuestRowId} {Md(QuestName(g, d.QuestRowId))} | {d.ItemId} {Md(d.Name)} | {Md(d.Reason)} |");
         sb.AppendLine();
 
+        sb.AppendLine("## Achievements credited to no quest");
+        sb.AppendLine();
+        sb.AppendLine("Achievements that name quests but that no single quest earns (Tsukimichi.GameData.AchievementQuests): relic weapon achievements (type 24) need the quest done as one particular job, and an all-of-N set (type 6) is credited only to the quest that has all the others as prerequisites, or to none.");
+        sb.AppendLine();
+        sb.AppendLine("| Type | Achievements |");
+        sb.AppendLine("|---:|---:|");
+        foreach (var grp in gen.SkippedAchievements.GroupBy(s => s.Type).OrderBy(x => x.Key))
+            sb.AppendLine($"| {grp.Key} | {grp.Count()} |");
+        sb.AppendLine();
+        sb.AppendLine("| Achievement | Type | Quests |");
+        sb.AppendLine("|---|---:|---|");
+        foreach (var s in gen.SkippedAchievements.Where(s => s.Type != Tsukimichi.GameData.AchievementQuests.TypeRelicWeapon).OrderBy(s => s.AchievementId))
+            sb.AppendLine($"| {s.AchievementId} {Md(s.Name)} | {s.Type} | {Md(string.Join(", ", s.Quests.Select(q => $"{q} {QuestName(g, q)}")))} |");
+        sb.AppendLine();
+
         return sb.ToString();
     }
 

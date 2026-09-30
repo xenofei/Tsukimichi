@@ -102,6 +102,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 
     private int obtainedVersion = -1;
     private int obtainedBuild = -1;
+    private int obtainedAchievementState = -1;
     private bool countsHideStore;
     private KindItem allItem = new(null, Strings.MoonlitAllKinds);
     private KindItem[] kindItems = [];
@@ -407,6 +408,15 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         // The verdict popup is begun here, in the centre column's scope, because the context menu that requests it
         // lives inside the table's inner window and closes before the popup could be shown from there.
         verdict.Draw(this);
+
+        // Until the client has loaded the title or achievement list, those obtained marks are worked out from quests.
+        if (session.IsLive && ui.MoonlitKind is { } shownKind && (shownKind is RewardKind.Title or RewardKind.Achievement) && !unlocks.ReadsExactly(shownKind))
+        {
+            using (Theme.PushText(Theme.Dusk))
+            {
+                ImGui.TextWrapped(Strings.MoonlitAchievementsFromQuests);
+            }
+        }
 
         if (rows.Length == 0)
         {
@@ -769,8 +779,13 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             BuildRows();
         }
 
-        if (obtainedVersion != session.Version || obtainedBuild != rowsBuild || countsHideStore != settings.MoonlitHideStoreResells)
+        // Titles and achievements switch to the game's own state once the client has loaded it (opening the Titles or
+        // Achievements window); that bumps no session version, so the reader's own counter is watched too.
+        var achievementState = unlocks.AchievementStateVersion;
+        if (obtainedVersion != session.Version || obtainedBuild != rowsBuild || countsHideStore != settings.MoonlitHideStoreResells
+            || obtainedAchievementState != achievementState)
         {
+            obtainedAchievementState = achievementState;
             RefreshObtained();
         }
     }

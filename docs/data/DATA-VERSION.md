@@ -5,11 +5,11 @@ Written by `tools/regen.ps1`; do not edit by hand. The reports under `docs/data`
 | Field | Value |
 |---|---|
 | Game version | `2026.09.15.0000.0000` |
-| Generated (UTC) | `2026-09-30T17:55:36Z` |
-| Curated revision | `fc22c73` (last commit touching a data file under `Tsukimichi/Data/curated`) |
+| Generated (UTC) | `2026-09-30T18:03:28Z` |
+| Curated revision | `3efc12a` (last commit touching a data file under `Tsukimichi/Data/curated`) |
 | Catalog fixture | `catalog-2026.09.15.0000.0000.json.gz` |
-| unique_quests.json entries | 3516 across 1211 quests |
-| feature_quests.json (derived) | 1722 quests |
+| unique_quests.json entries | 2891 across 1198 quests |
+| feature_quests.json (derived) | 1730 quests |
 | quest_patches.json | 5373 of 5373 quests with a patch, newest 7.56 |
 | Online Store re-sells | 69 entries |
 | Dungeon drops | 44 entries |
@@ -18,7 +18,7 @@ Written by `tools/regen.ps1`; do not edit by hand. The reports under `docs/data`
 
 | Kind | Entries |
 |---|---:|
-| Achievement | 664 |
+| Achievement | 210 |
 | Action | 250 |
 | AetherCurrent | 151 |
 | ArtifactGear | 1175 |
@@ -35,9 +35,9 @@ Written by `tools/regen.ps1`; do not edit by hand. The reports under `docs/data`
 | OptionalItem | 53 |
 | Orchestrion | 79 |
 | Ornament | 4 |
-| Other | 163 |
+| Other | 13 |
 | SystemUnlock | 65 |
-| Title | 220 |
+| Title | 199 |
 | Trait | 54 |
 | TripleTriadCard | 6 |
 

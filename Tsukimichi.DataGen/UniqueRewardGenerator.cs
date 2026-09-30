@@ -46,6 +46,9 @@ internal sealed class UniqueRewardGenerator
     /// <summary>Plain item rewards the exclusivity rule (or the unnamed-item rule) refused, for the review report.</summary>
     public List<DroppedItem> Dropped { get; } = new();
 
+    /// <summary>Achievements that name quests but no single quest earns (relic weapons, all-of-N sets), for the review report.</summary>
+    public List<SkippedAchievement> SkippedAchievements { get; } = new();
+
     /// <summary>
     /// When true (the default), a plain untradable item is only shipped as a unique Item/OptionalItem when nothing else hands
     /// it out (no special shop, recipe or gathering node; no gil shop other than a Calamity Salvager) and it is not in a
@@ -538,22 +541,24 @@ internal sealed class UniqueRewardGenerator
             Add(aoz.RequiredForQuest.RowId, RewardKind.BlueMageSpell, aoz.RowId, 0, NameOr(spell?.Name, $"Blue mage spell #{aoz.Number}"), "AozActionTransient.RequiredForQuest");
         }
 
+        // Only the quests that earn the achievement by themselves (Tsukimichi.GameData.AchievementQuests): relic weapon
+        // achievements (type 24) need the job too, and an all-of-N set (type 6) goes to its last quest or nowhere.
         foreach (var ach in g.Achievements)
         {
-            var quests = new List<(uint Quest, string Field)>();
-            if (ach.Key.RowId != 0 && ach.Key.Is<Quest>())
-                quests.Add((ach.Key.RowId, "Achievement.Key"));
-            foreach (var data in ach.Data)
-            {
-                if (data.RowId != 0 && data.Is<Quest>())
-                    quests.Add((data.RowId, "Achievement.Data"));
-            }
-            if (quests.Count == 0)
+            var listed = Tsukimichi.GameData.AchievementQuests.QuestsOf(ach);
+            if (listed.Count == 0)
                 continue;
+            var credited = Tsukimichi.GameData.AchievementQuests.CreditedQuests(ach, g.Quests);
+            if (credited.Count == 0)
+            {
+                SkippedAchievements.Add(new SkippedAchievement(ach.RowId, ach.Type, Text(ach.Name), listed.ToArray()));
+                continue;
+            }
 
             var title = ach.Title.RowId != 0 ? ach.Title.ValueNullable : null;
-            foreach (var (questId, field) in quests.DistinctBy(q => q.Quest))
+            foreach (var questId in credited)
             {
+                var field = ach.Key.RowId == questId ? "Achievement.Key" : "Achievement.Data";
                 if (title is { } t)
                     Add(questId, RewardKind.Title, t.RowId, 0, Text(t.Masculine), $"{field};achievement={ach.RowId};type={ach.Type}");
                 else
@@ -566,6 +571,26 @@ internal sealed class UniqueRewardGenerator
             if (cfc.UnlockType != UnlockTypeQuest || cfc.UnlockCriteria.RowId == 0 || !cfc.UnlockCriteria.Is<Quest>() || Text(cfc.Name).Length == 0)
                 continue;
             Add(cfc.UnlockCriteria.RowId, RewardKind.DutyUnlock, cfc.RowId, 0, Text(cfc.Name), "ContentFinderCondition.UnlockCriteria");
+        }
+
+        DropDuplicateAetherCurrents();
+    }
+
+    /// <summary>
+    /// A quest that awards an aether current carries <c>Quest.OtherReward</c> "Aether Current" as well; once the
+    /// AetherCurrent entry sits on that quest, the Other entry is the same reward counted twice, so it goes.
+    /// </summary>
+    private void DropDuplicateAetherCurrents()
+    {
+        var currentQuests = entries.Values.Where(e => e.Kind == RewardKind.AetherCurrent).Select(e => e.QuestRowId).ToHashSet();
+        foreach (var key in entries.Keys.ToList())
+        {
+            if (key.Kind == RewardKind.Other
+                && key.RewardId == Tsukimichi.GameData.AetherCurrentQuests.OtherRewardAetherCurrent
+                && currentQuests.Contains(key.Quest))
+            {
+                entries.Remove(key);
+            }
         }
     }
 
@@ -618,3 +643,6 @@ internal sealed class UniqueRewardGenerator
 
 /// <summary>A plain item reward the generator refused, with the rule that refused it.</summary>
 internal sealed record DroppedItem(uint QuestRowId, uint ItemId, string Name, string Reason);
+
+/// <summary>An achievement that names quests but is credited to none of them, with its type and the quests it lists.</summary>
+internal sealed record SkippedAchievement(uint AchievementId, byte Type, string Name, uint[] Quests);

@@ -1,17 +1,7 @@
 {
   "gameVersion": "2026.09.15.0000.0000",
-  "generatedUtc": "2026-09-30T17:55:36Z",
+  "generatedUtc": "2026-09-30T18:03:28Z",
   "entries": [
-    {
-      "questRowId": 65545,
-      "kind": "Title",
-      "rewardId": 48,
-      "itemId": 0,
-      "rewardName": "Seeker of Bounty",
-      "confidence": "Static",
-      "source": "Achievement.Data;achievement=317;type=6",
-      "otherSources": []
-    },
     {
       "questRowId": 65549,
       "kind": "Item",
@@ -151,16 +141,6 @@
       "otherSources": []
     },
     {
-      "questRowId": 65597,
-      "kind": "Title",
-      "rewardId": 47,
-      "itemId": 0,
-      "rewardName": "Seeker of Skill",
-      "confidence": "Static",
-      "source": "Achievement.Data;achievement=316;type=6",
-      "otherSources": []
-    },
-    {
       "questRowId": 65602,
       "kind": "Item",
       "rewardId": 2429,
@@ -210,16 +190,6 @@
       "rewardName": "This One Time, at Level Thirty...",
       "confidence": "Static",
       "source": "Achievement.Data;type=9",
-      "otherSources": []
-    },
-    {
-      "questRowId": 65612,
-      "kind": "Title",
-      "rewardId": 45,
-      "itemId": 0,
-      "rewardName": "Seeker of Blood",
-      "confidence": "Static",
-      "source": "Achievement.Data;achievement=314;type=6",
       "otherSources": []
     },
     {
@@ -402,16 +372,6 @@
       "rewardName": "Sightseeing Log",
       "confidence": "Curated",
       "source": "curated/system_unlocks.json",
-      "otherSources": []
-    },
-    {
-      "questRowId": 65705,
-      "kind": "Title",
-      "rewardId": 47,
-      "itemId": 0,
-      "rewardName": "Seeker of Skill",
-      "confidence": "Static",
-      "source": "Achievement.Key;achievement=316;type=6",
       "otherSources": []
     },
     {
@@ -867,26 +827,6 @@
       "otherSources": []
     },
     {
-      "questRowId": 65801,
-      "kind": "Title",
-      "rewardId": 45,
-      "itemId": 0,
-      "rewardName": "Seeker of Blood",
-      "confidence": "Static",
-      "source": "Achievement.Key;achievement=314;type=6",
-      "otherSources": []
-    },
-    {
-      "questRowId": 65802,
-      "kind": "Title",
-      "rewardId": 47,
-      "itemId": 0,
-      "rewardName": "Seeker of Skill",
-      "confidence": "Static",
-      "source": "Achievement.Data;achievement=316;type=6",
-      "otherSources": []
-    },
-    {
       "questRowId": 65806,
       "kind": "Item",
       "rewardId": 2506,
@@ -897,16 +837,6 @@
       "otherSources": [
         "GilShopItem"
       ]
-    },
-    {
-      "questRowId": 65816,
-      "kind": "Title",
-      "rewardId": 47,
-      "itemId": 0,
-      "rewardName": "Seeker of Skill",
-      "confidence": "Static",
-      "source": "Achievement.Data;achievement=316;type=6",
-      "otherSources": []
     },
     {
       "questRowId": 65820,
@@ -940,16 +870,6 @@
       "rewardName": "On the Lamb",
       "confidence": "Static",
       "source": "Achievement.Key;type=6",
-      "otherSources": []
-    },
-    {
-      "questRowId": 65834,
-      "kind": "Title",
-      "rewardId": 47,
-      "itemId": 0,
-      "rewardName": "Seeker of Skill",
-      "confidence": "Static",
-      "source": "Achievement.Data;achievement=316;type=6",
       "otherSources": []
     },
     {
@@ -1014,16 +934,6 @@
       "rewardName": "This One Time, at Level Thirty...",
       "confidence": "Static",
       "source": "Achievement.Data;type=9",
-      "otherSources": []
-    },
-    {
-      "questRowId": 65855,
-      "kind": "Title",
-      "rewardId": 45,
-      "itemId": 0,
-      "rewardName": "Seeker of Blood",
-      "confidence": "Static",
-      "source": "Achievement.Data;achievement=314;type=6",
       "otherSources": []
     },
     {
@@ -1098,16 +1008,6 @@
       "rewardName": "This One Time, at Level Thirty...",
       "confidence": "Static",
       "source": "Achievement.Data;type=9",
-      "otherSources": []
-    },
-    {
-      "questRowId": 65889,
-      "kind": "Title",
-      "rewardId": 46,
-      "itemId": 0,
-      "rewardName": "Seeker of Truth",
-      "confidence": "Static",
-      "source": "Achievement.Data;achievement=315;type=6",
       "otherSources": []
     },
     {
@@ -1303,16 +1203,6 @@
       "otherSources": []
     },
     {
-      "questRowId": 65975,
-      "kind": "Title",
-      "rewardId": 45,
-      "itemId": 0,
-      "rewardName": "Seeker of Blood",
-      "confidence": "Static",
-      "source": "Achievement.Data;achievement=314;type=6",
-      "otherSources": []
-    },
-    {
       "questRowId": 65977,
       "kind": "Action",
       "rewardId": 135,
@@ -1330,16 +1220,6 @@
       "rewardName": "This One Time, at Level Thirty...",
       "confidence": "Static",
       "source": "Achievement.Data;type=9",
-      "otherSources": []
-    },
-    {
-      "questRowId": 65977,
-      "kind": "Title",
-      "rewardId": 46,
-      "itemId": 0,
-      "rewardName": "Seeker of Truth",
-      "confidence": "Static",
-      "source": "Achievement.Key;achievement=315;type=6",
       "otherSources": []
     },
     {
@@ -1456,16 +1336,6 @@
       "rewardName": "This One Time, at Level Thirty...",
       "confidence": "Static",
       "source": "Achievement.Data;type=9",
-      "otherSources": []
-    },
-    {
-      "questRowId": 65997,
-      "kind": "Title",
-      "rewardId": 46,
-      "itemId": 0,
-      "rewardName": "Seeker of Truth",
-      "confidence": "Static",
-      "source": "Achievement.Data;achievement=315;type=6",
       "otherSources": []
     },
     {
@@ -1824,16 +1694,6 @@
       "otherSources": []
     },
     {
-      "questRowId": 66103,
-      "kind": "Title",
-      "rewardId": 45,
-      "itemId": 0,
-      "rewardName": "Seeker of Blood",
-      "confidence": "Static",
-      "source": "Achievement.Data;achievement=314;type=6",
-      "otherSources": []
-    },
-    {
       "questRowId": 66104,
       "kind": "ClassJob",
       "rewardId": 1,
@@ -1864,16 +1724,6 @@
       "otherSources": []
     },
     {
-      "questRowId": 66120,
-      "kind": "Title",
-      "rewardId": 47,
-      "itemId": 0,
-      "rewardName": "Seeker of Skill",
-      "confidence": "Static",
-      "source": "Achievement.Data;achievement=316;type=6",
-      "otherSources": []
-    },
-    {
       "questRowId": 66124,
       "kind": "Action",
       "rewardId": 3549,
@@ -1891,16 +1741,6 @@
       "rewardName": "Inner Beast Mastery",
       "confidence": "Static",
       "source": "Trait.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 66129,
-      "kind": "Title",
-      "rewardId": 47,
-      "itemId": 0,
-      "rewardName": "Seeker of Skill",
-      "confidence": "Static",
-      "source": "Achievement.Data;achievement=316;type=6",
       "otherSources": []
     },
     {
@@ -1951,26 +1791,6 @@
       "rewardName": "The Mythril Heart",
       "confidence": "Static",
       "source": "Achievement.Key;achievement=1143;type=6",
-      "otherSources": []
-    },
-    {
-      "questRowId": 66142,
-      "kind": "Title",
-      "rewardId": 48,
-      "itemId": 0,
-      "rewardName": "Seeker of Bounty",
-      "confidence": "Static",
-      "source": "Achievement.Key;achievement=317;type=6",
-      "otherSources": []
-    },
-    {
-      "questRowId": 66153,
-      "kind": "Title",
-      "rewardId": 47,
-      "itemId": 0,
-      "rewardName": "Seeker of Skill",
-      "confidence": "Static",
-      "source": "Achievement.Data;achievement=316;type=6",
       "otherSources": []
     },
     {
@@ -3305,16 +3125,6 @@
       "rewardName": "PvP",
       "confidence": "Curated",
       "source": "curated/system_unlocks.json",
-      "otherSources": []
-    },
-    {
-      "questRowId": 66650,
-      "kind": "Title",
-      "rewardId": 48,
-      "itemId": 0,
-      "rewardName": "Seeker of Bounty",
-      "confidence": "Static",
-      "source": "Achievement.Data;achievement=317;type=6",
       "otherSources": []
     },
     {
@@ -4959,16 +4769,6 @@
     },
     {
       "questRowId": 67144,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67144,
       "kind": "AetherCurrent",
       "rewardId": 2818048,
       "itemId": 0,
@@ -4979,32 +4779,12 @@
     },
     {
       "questRowId": 67153,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67153,
       "kind": "AetherCurrent",
       "rewardId": 2818063,
       "itemId": 0,
       "rewardName": "Aether Current (The Dravanian Forelands)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67170,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -5049,16 +4829,6 @@
     },
     {
       "questRowId": 67183,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67183,
       "kind": "AetherCurrent",
       "rewardId": 2818108,
       "itemId": 0,
@@ -5099,16 +4869,6 @@
     },
     {
       "questRowId": 67196,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67196,
       "kind": "AetherCurrent",
       "rewardId": 2818078,
       "itemId": 0,
@@ -5129,32 +4889,12 @@
     },
     {
       "questRowId": 67200,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67200,
       "kind": "AetherCurrent",
       "rewardId": 2818124,
       "itemId": 0,
       "rewardName": "Aether Current (Azys Lla)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67201,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -5169,16 +4909,6 @@
     },
     {
       "questRowId": 67202,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67202,
       "kind": "AetherCurrent",
       "rewardId": 2818126,
       "itemId": 0,
@@ -5189,32 +4919,12 @@
     },
     {
       "questRowId": 67203,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67203,
       "kind": "AetherCurrent",
       "rewardId": 2818127,
       "itemId": 0,
       "rewardName": "Aether Current (Azys Lla)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67204,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -5849,32 +5559,12 @@
     },
     {
       "questRowId": 67280,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67280,
       "kind": "AetherCurrent",
       "rewardId": 2818049,
       "itemId": 0,
       "rewardName": "Aether Current (Coerthas Western Highlands)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67284,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -5889,32 +5579,12 @@
     },
     {
       "questRowId": 67295,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67295,
       "kind": "AetherCurrent",
       "rewardId": 2818050,
       "itemId": 0,
       "rewardName": "Aether Current (Coerthas Western Highlands)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67296,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -5929,32 +5599,12 @@
     },
     {
       "questRowId": 67307,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67307,
       "kind": "AetherCurrent",
       "rewardId": 2818064,
       "itemId": 0,
       "rewardName": "Aether Current (The Dravanian Forelands)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67326,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -5969,32 +5619,12 @@
     },
     {
       "questRowId": 67333,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67333,
       "kind": "AetherCurrent",
       "rewardId": 2818066,
       "itemId": 0,
       "rewardName": "Aether Current (The Dravanian Forelands)",
       "confidence": "Static",
       "source": "Quest.OtherReward (AetherCurrent.Quest lists 67334)",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67338,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -6009,32 +5639,12 @@
     },
     {
       "questRowId": 67355,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67355,
       "kind": "AetherCurrent",
       "rewardId": 2818094,
       "itemId": 0,
       "rewardName": "Aether Current (The Churning Mists)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67359,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -6049,32 +5659,12 @@
     },
     {
       "questRowId": 67364,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67364,
       "kind": "AetherCurrent",
       "rewardId": 2818096,
       "itemId": 0,
       "rewardName": "Aether Current (The Churning Mists)",
       "confidence": "Static",
       "source": "Quest.OtherReward (AetherCurrent.Quest lists 67365)",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67371,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -6089,32 +5679,12 @@
     },
     {
       "questRowId": 67410,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67410,
       "kind": "AetherCurrent",
       "rewardId": 2818110,
       "itemId": 0,
       "rewardName": "Aether Current (The Sea of Clouds)",
       "confidence": "Static",
       "source": "Quest.OtherReward (AetherCurrent.Quest lists 67437)",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67445,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -6129,32 +5699,12 @@
     },
     {
       "questRowId": 67446,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67446,
       "kind": "AetherCurrent",
       "rewardId": 2818112,
       "itemId": 0,
       "rewardName": "Aether Current (The Sea of Clouds)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67472,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -6169,16 +5719,6 @@
     },
     {
       "questRowId": 67481,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67481,
       "kind": "AetherCurrent",
       "rewardId": 2818080,
       "itemId": 0,
@@ -6189,32 +5729,12 @@
     },
     {
       "questRowId": 67499,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67499,
       "kind": "AetherCurrent",
       "rewardId": 2818081,
       "itemId": 0,
       "rewardName": "Aether Current (The Dravanian Hinterlands)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67502,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -7119,16 +6639,6 @@
     },
     {
       "questRowId": 67647,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67647,
       "kind": "AetherCurrent",
       "rewardId": 2818052,
       "itemId": 0,
@@ -7175,26 +6685,6 @@
       "rewardName": "the Fractal Continuum",
       "confidence": "Curated",
       "source": "curated/duty_unlocks.json",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67651,
-      "kind": "Title",
-      "rewardId": 236,
-      "itemId": 0,
-      "rewardName": "Finder of False Gods",
-      "confidence": "Static",
-      "source": "Achievement.Key;achievement=1165;type=6",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67652,
-      "kind": "Title",
-      "rewardId": 236,
-      "itemId": 0,
-      "rewardName": "Finder of False Gods",
-      "confidence": "Static",
-      "source": "Achievement.Data;achievement=1165;type=6",
       "otherSources": []
     },
     {
@@ -7933,136 +7423,6 @@
     },
     {
       "questRowId": 67750,
-      "kind": "Achievement",
-      "rewardId": 1406,
-      "itemId": 0,
-      "rewardName": "Animaniac: Ancile & Almace",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67750,
-      "kind": "Achievement",
-      "rewardId": 1407,
-      "itemId": 0,
-      "rewardName": "Animaniac: Verethragna",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67750,
-      "kind": "Achievement",
-      "rewardId": 1408,
-      "itemId": 0,
-      "rewardName": "Animaniac: Ukonvasara",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67750,
-      "kind": "Achievement",
-      "rewardId": 1409,
-      "itemId": 0,
-      "rewardName": "Animaniac: Rhongomiant",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67750,
-      "kind": "Achievement",
-      "rewardId": 1410,
-      "itemId": 0,
-      "rewardName": "Animaniac: Gandiva",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67750,
-      "kind": "Achievement",
-      "rewardId": 1411,
-      "itemId": 0,
-      "rewardName": "Animaniac: Majestas",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67750,
-      "kind": "Achievement",
-      "rewardId": 1412,
-      "itemId": 0,
-      "rewardName": "Animaniac: Hvergelmir",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67750,
-      "kind": "Achievement",
-      "rewardId": 1413,
-      "itemId": 0,
-      "rewardName": "Animaniac: The Draconomicon",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67750,
-      "kind": "Achievement",
-      "rewardId": 1414,
-      "itemId": 0,
-      "rewardName": "Animaniac: Tetrabiblos",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67750,
-      "kind": "Achievement",
-      "rewardId": 1415,
-      "itemId": 0,
-      "rewardName": "Animaniac: Kannagi",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67750,
-      "kind": "Achievement",
-      "rewardId": 1416,
-      "itemId": 0,
-      "rewardName": "Animaniac: Armageddon",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67750,
-      "kind": "Achievement",
-      "rewardId": 1417,
-      "itemId": 0,
-      "rewardName": "Animaniac: Nothung",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67750,
-      "kind": "Achievement",
-      "rewardId": 1418,
-      "itemId": 0,
-      "rewardName": "Animaniac: Deneb",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67750,
       "kind": "Title",
       "rewardId": 273,
       "itemId": 0,
@@ -8414,136 +7774,6 @@
       "otherSources": []
     },
     {
-      "questRowId": 67820,
-      "kind": "Achievement",
-      "rewardId": 1499,
-      "itemId": 0,
-      "rewardName": "Hyper Animaniac: Ancile & Almace",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67820,
-      "kind": "Achievement",
-      "rewardId": 1500,
-      "itemId": 0,
-      "rewardName": "Hyper Animaniac: Verethragna",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67820,
-      "kind": "Achievement",
-      "rewardId": 1501,
-      "itemId": 0,
-      "rewardName": "Hyper Animaniac: Ukonvasara",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67820,
-      "kind": "Achievement",
-      "rewardId": 1502,
-      "itemId": 0,
-      "rewardName": "Hyper Animaniac: Rhongomiant",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67820,
-      "kind": "Achievement",
-      "rewardId": 1503,
-      "itemId": 0,
-      "rewardName": "Hyper Animaniac: Gandiva",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67820,
-      "kind": "Achievement",
-      "rewardId": 1504,
-      "itemId": 0,
-      "rewardName": "Hyper Animaniac: Majestas",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67820,
-      "kind": "Achievement",
-      "rewardId": 1505,
-      "itemId": 0,
-      "rewardName": "Hyper Animaniac: Hvergelmir",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67820,
-      "kind": "Achievement",
-      "rewardId": 1506,
-      "itemId": 0,
-      "rewardName": "Hyper Animaniac: The Draconomicon",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67820,
-      "kind": "Achievement",
-      "rewardId": 1507,
-      "itemId": 0,
-      "rewardName": "Hyper Animaniac: Tetrabiblos",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67820,
-      "kind": "Achievement",
-      "rewardId": 1508,
-      "itemId": 0,
-      "rewardName": "Hyper Animaniac: Kannagi",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67820,
-      "kind": "Achievement",
-      "rewardId": 1509,
-      "itemId": 0,
-      "rewardName": "Hyper Animaniac: Armageddon",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67820,
-      "kind": "Achievement",
-      "rewardId": 1510,
-      "itemId": 0,
-      "rewardName": "Hyper Animaniac: Nothung",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67820,
-      "kind": "Achievement",
-      "rewardId": 1511,
-      "itemId": 0,
-      "rewardName": "Hyper Animaniac: Deneb",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
       "questRowId": 67821,
       "kind": "DutyUnlock",
       "rewardId": 168,
@@ -8721,136 +7951,6 @@
       "rewardName": "Shield of the Twin Thegns",
       "confidence": "Static",
       "source": "Quest.Reward;QuestClassJobReward;ItemRewardType=6",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67864,
-      "kind": "Achievement",
-      "rewardId": 1605,
-      "itemId": 0,
-      "rewardName": "It's Alive: The Twin Thegns",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67864,
-      "kind": "Achievement",
-      "rewardId": 1606,
-      "itemId": 0,
-      "rewardName": "It's Alive: The Sultan",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67864,
-      "kind": "Achievement",
-      "rewardId": 1607,
-      "itemId": 0,
-      "rewardName": "It's Alive: The Blood Emperor",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67864,
-      "kind": "Achievement",
-      "rewardId": 1608,
-      "itemId": 0,
-      "rewardName": "It's Alive: The Overlord",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67864,
-      "kind": "Achievement",
-      "rewardId": 1609,
-      "itemId": 0,
-      "rewardName": "It's Alive: The Autarch",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67864,
-      "kind": "Achievement",
-      "rewardId": 1610,
-      "itemId": 0,
-      "rewardName": "It's Alive: The White Tsar",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67864,
-      "kind": "Achievement",
-      "rewardId": 1611,
-      "itemId": 0,
-      "rewardName": "It's Alive: The Black Khan",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67864,
-      "kind": "Achievement",
-      "rewardId": 1612,
-      "itemId": 0,
-      "rewardName": "It's Alive: The Mad Queen",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67864,
-      "kind": "Achievement",
-      "rewardId": 1613,
-      "itemId": 0,
-      "rewardName": "It's Alive: The Magnate",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67864,
-      "kind": "Achievement",
-      "rewardId": 1614,
-      "itemId": 0,
-      "rewardName": "It's Alive: The Thorn Prince",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67864,
-      "kind": "Achievement",
-      "rewardId": 1615,
-      "itemId": 0,
-      "rewardName": "It's Alive: The Dynast",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67864,
-      "kind": "Achievement",
-      "rewardId": 1616,
-      "itemId": 0,
-      "rewardName": "It's Alive: The Tyrant",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67864,
-      "kind": "Achievement",
-      "rewardId": 1617,
-      "itemId": 0,
-      "rewardName": "It's Alive: The Last Heir",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
       "otherSources": []
     },
     {
@@ -9396,136 +8496,6 @@
       "otherSources": []
     },
     {
-      "questRowId": 67915,
-      "kind": "Achievement",
-      "rewardId": 1667,
-      "itemId": 0,
-      "rewardName": "It's Smart: The Twin Thegns",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67915,
-      "kind": "Achievement",
-      "rewardId": 1668,
-      "itemId": 0,
-      "rewardName": "It's Smart: The Sultan",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67915,
-      "kind": "Achievement",
-      "rewardId": 1669,
-      "itemId": 0,
-      "rewardName": "It's Smart: The Blood Emperor",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67915,
-      "kind": "Achievement",
-      "rewardId": 1670,
-      "itemId": 0,
-      "rewardName": "It's Smart: The Overlord",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67915,
-      "kind": "Achievement",
-      "rewardId": 1671,
-      "itemId": 0,
-      "rewardName": "It's Smart: The Autarch",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67915,
-      "kind": "Achievement",
-      "rewardId": 1672,
-      "itemId": 0,
-      "rewardName": "It's Smart: The White Tsar",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67915,
-      "kind": "Achievement",
-      "rewardId": 1673,
-      "itemId": 0,
-      "rewardName": "It's Smart: The Black Khan",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67915,
-      "kind": "Achievement",
-      "rewardId": 1674,
-      "itemId": 0,
-      "rewardName": "It's Smart: The Mad Queen",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67915,
-      "kind": "Achievement",
-      "rewardId": 1675,
-      "itemId": 0,
-      "rewardName": "It's Smart: The Magnate",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67915,
-      "kind": "Achievement",
-      "rewardId": 1676,
-      "itemId": 0,
-      "rewardName": "It's Smart: The Thorn Prince",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67915,
-      "kind": "Achievement",
-      "rewardId": 1677,
-      "itemId": 0,
-      "rewardName": "It's Smart: The Dynast",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67915,
-      "kind": "Achievement",
-      "rewardId": 1678,
-      "itemId": 0,
-      "rewardName": "It's Smart: The Tyrant",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67915,
-      "kind": "Achievement",
-      "rewardId": 1679,
-      "itemId": 0,
-      "rewardName": "It's Smart: The Last Heir",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
       "questRowId": 67921,
       "kind": "Emote",
       "rewardId": 145,
@@ -9916,136 +8886,6 @@
       "otherSources": []
     },
     {
-      "questRowId": 67932,
-      "kind": "Achievement",
-      "rewardId": 1695,
-      "itemId": 0,
-      "rewardName": "It's Done: Aettir & Priwen",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67932,
-      "kind": "Achievement",
-      "rewardId": 1696,
-      "itemId": 0,
-      "rewardName": "It's Done: Nyepels",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67932,
-      "kind": "Achievement",
-      "rewardId": 1697,
-      "itemId": 0,
-      "rewardName": "It's Done: Minos",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67932,
-      "kind": "Achievement",
-      "rewardId": 1698,
-      "itemId": 0,
-      "rewardName": "It's Done: Areadbhar",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67932,
-      "kind": "Achievement",
-      "rewardId": 1699,
-      "itemId": 0,
-      "rewardName": "It's Done: Terpander",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67932,
-      "kind": "Achievement",
-      "rewardId": 1700,
-      "itemId": 0,
-      "rewardName": "It's Done: Sindri",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67932,
-      "kind": "Achievement",
-      "rewardId": 1701,
-      "itemId": 0,
-      "rewardName": "It's Done: Kaladanda",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67932,
-      "kind": "Achievement",
-      "rewardId": 1702,
-      "itemId": 0,
-      "rewardName": "It's Done: Mimesis",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67932,
-      "kind": "Achievement",
-      "rewardId": 1703,
-      "itemId": 0,
-      "rewardName": "It's Done: Anabasis",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67932,
-      "kind": "Achievement",
-      "rewardId": 1704,
-      "itemId": 0,
-      "rewardName": "It's Done: Sandungs",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67932,
-      "kind": "Achievement",
-      "rewardId": 1705,
-      "itemId": 0,
-      "rewardName": "It's Done: Deathlocke",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67932,
-      "kind": "Achievement",
-      "rewardId": 1706,
-      "itemId": 0,
-      "rewardName": "It's Done: Cronus",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67932,
-      "kind": "Achievement",
-      "rewardId": 1707,
-      "itemId": 0,
-      "rewardName": "It's Done: Canopus",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
       "questRowId": 67934,
       "kind": "Minion",
       "rewardId": 231,
@@ -10213,136 +9053,6 @@
       "rewardName": "Priwen Lux",
       "confidence": "Static",
       "source": "Quest.Reward;QuestClassJobReward;ItemRewardType=6",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67940,
-      "kind": "Achievement",
-      "rewardId": 1708,
-      "itemId": 0,
-      "rewardName": "It's Really Done: Aettir Lux & Priwen Lux",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67940,
-      "kind": "Achievement",
-      "rewardId": 1709,
-      "itemId": 0,
-      "rewardName": "It's Really Done: Nyepels Lux",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67940,
-      "kind": "Achievement",
-      "rewardId": 1710,
-      "itemId": 0,
-      "rewardName": "It's Really Done: Minos Lux",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67940,
-      "kind": "Achievement",
-      "rewardId": 1711,
-      "itemId": 0,
-      "rewardName": "It's Really Done: Areadbhar Lux",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67940,
-      "kind": "Achievement",
-      "rewardId": 1712,
-      "itemId": 0,
-      "rewardName": "It's Really Done: Terpander Lux",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67940,
-      "kind": "Achievement",
-      "rewardId": 1713,
-      "itemId": 0,
-      "rewardName": "It's Really Done: Sindri Lux",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67940,
-      "kind": "Achievement",
-      "rewardId": 1714,
-      "itemId": 0,
-      "rewardName": "It's Really Done: Kaladanda Lux",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67940,
-      "kind": "Achievement",
-      "rewardId": 1715,
-      "itemId": 0,
-      "rewardName": "It's Really Done: Mimesis Lux",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67940,
-      "kind": "Achievement",
-      "rewardId": 1716,
-      "itemId": 0,
-      "rewardName": "It's Really Done: Anabasis Lux",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67940,
-      "kind": "Achievement",
-      "rewardId": 1717,
-      "itemId": 0,
-      "rewardName": "It's Really Done: Sandungs Lux",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67940,
-      "kind": "Achievement",
-      "rewardId": 1718,
-      "itemId": 0,
-      "rewardName": "It's Really Done: Deathlocke Lux",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67940,
-      "kind": "Achievement",
-      "rewardId": 1719,
-      "itemId": 0,
-      "rewardName": "It's Really Done: Cronus Lux",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67940,
-      "kind": "Achievement",
-      "rewardId": 1720,
-      "itemId": 0,
-      "rewardName": "It's Really Done: Canopus Lux",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
       "otherSources": []
     },
     {
@@ -10573,16 +9283,6 @@
     },
     {
       "questRowId": 68026,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 68026,
       "kind": "AetherCurrent",
       "rewardId": 2818173,
       "itemId": 0,
@@ -10599,16 +9299,6 @@
       "rewardName": "Confederate",
       "confidence": "Static",
       "source": "Achievement.Key;achievement=1789;type=6",
-      "otherSources": []
-    },
-    {
-      "questRowId": 68035,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -10653,16 +9343,6 @@
     },
     {
       "questRowId": 68052,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 68052,
       "kind": "AetherCurrent",
       "rewardId": 2818203,
       "itemId": 0,
@@ -10693,32 +9373,12 @@
     },
     {
       "questRowId": 68069,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 68069,
       "kind": "AetherCurrent",
       "rewardId": 2818128,
       "itemId": 0,
       "rewardName": "Aether Current (The Fringes)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 68082,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -10752,16 +9412,6 @@
       "otherSources": [
         "GilShopItem"
       ]
-    },
-    {
-      "questRowId": 68089,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
     },
     {
       "questRowId": 68089,
@@ -11195,16 +9845,6 @@
     },
     {
       "questRowId": 68168,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 68168,
       "kind": "AetherCurrent",
       "rewardId": 2818177,
       "itemId": 0,
@@ -11225,32 +9865,12 @@
     },
     {
       "questRowId": 68175,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 68175,
       "kind": "AetherCurrent",
       "rewardId": 2818129,
       "itemId": 0,
       "rewardName": "Aether Current (The Fringes)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 68191,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -11265,32 +9885,12 @@
     },
     {
       "questRowId": 68197,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 68197,
       "kind": "AetherCurrent",
       "rewardId": 2818130,
       "itemId": 0,
       "rewardName": "Aether Current (The Fringes)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 68209,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -11305,32 +9905,12 @@
     },
     {
       "questRowId": 68223,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 68223,
       "kind": "AetherCurrent",
       "rewardId": 2818175,
       "itemId": 0,
       "rewardName": "Aether Current (The Ruby Sea)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 68229,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -11345,32 +9925,12 @@
     },
     {
       "questRowId": 68260,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 68260,
       "kind": "AetherCurrent",
       "rewardId": 2818189,
       "itemId": 0,
       "rewardName": "Aether Current (Yanxia)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 68264,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -11385,32 +9945,12 @@
     },
     {
       "questRowId": 68266,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 68266,
       "kind": "AetherCurrent",
       "rewardId": 2818191,
       "itemId": 0,
       "rewardName": "Aether Current (Yanxia)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 68269,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -11425,32 +9965,12 @@
     },
     {
       "questRowId": 68296,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 68296,
       "kind": "AetherCurrent",
       "rewardId": 2818204,
       "itemId": 0,
       "rewardName": "Aether Current (The Azim Steppe)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 68307,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -11465,32 +9985,12 @@
     },
     {
       "questRowId": 68318,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 68318,
       "kind": "AetherCurrent",
       "rewardId": 2818206,
       "itemId": 0,
       "rewardName": "Aether Current (The Azim Steppe)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 68327,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -11505,32 +10005,12 @@
     },
     {
       "questRowId": 68352,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 68352,
       "kind": "AetherCurrent",
       "rewardId": 2818131,
       "itemId": 0,
       "rewardName": "Aether Current (The Fringes)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 68357,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -11545,16 +10025,6 @@
     },
     {
       "questRowId": 68378,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 68378,
       "kind": "AetherCurrent",
       "rewardId": 2818145,
       "itemId": 0,
@@ -11565,32 +10035,12 @@
     },
     {
       "questRowId": 68387,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 68387,
       "kind": "AetherCurrent",
       "rewardId": 2818146,
       "itemId": 0,
       "rewardName": "Aether Current (The Peaks)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 68396,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -11617,32 +10067,12 @@
     },
     {
       "questRowId": 68413,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 68413,
       "kind": "AetherCurrent",
       "rewardId": 2818159,
       "itemId": 0,
       "rewardName": "Aether Current (The Lochs)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 68416,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -11657,32 +10087,12 @@
     },
     {
       "questRowId": 68417,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 68417,
       "kind": "AetherCurrent",
       "rewardId": 2818161,
       "itemId": 0,
       "rewardName": "Aether Current (The Lochs)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 68419,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -16243,16 +14653,6 @@
     },
     {
       "questRowId": 68840,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 68840,
       "kind": "AetherCurrent",
       "rewardId": 2818218,
       "itemId": 0,
@@ -16311,16 +14711,6 @@
     },
     {
       "questRowId": 68856,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 68856,
       "kind": "AetherCurrent",
       "rewardId": 2818263,
       "itemId": 0,
@@ -16337,16 +14727,6 @@
       "rewardName": "The Fae-touched",
       "confidence": "Static",
       "source": "Achievement.Key;achievement=2294;type=6",
-      "otherSources": []
-    },
-    {
-      "questRowId": 68876,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -16371,32 +14751,12 @@
     },
     {
       "questRowId": 68896,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 68896,
       "kind": "AetherCurrent",
       "rewardId": 2818234,
       "itemId": 0,
       "rewardName": "Aether Current (Kholusia)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 68907,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -16411,32 +14771,12 @@
     },
     {
       "questRowId": 68911,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 68911,
       "kind": "AetherCurrent",
       "rewardId": 2818249,
       "itemId": 0,
       "rewardName": "Aether Current (Amh Araeng)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 68916,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -16451,32 +14791,12 @@
     },
     {
       "questRowId": 68920,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 68920,
       "kind": "AetherCurrent",
       "rewardId": 2818220,
       "itemId": 0,
       "rewardName": "Aether Current (Lakeland)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 68921,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -16491,32 +14811,12 @@
     },
     {
       "questRowId": 68922,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 68922,
       "kind": "AetherCurrent",
       "rewardId": 2818222,
       "itemId": 0,
       "rewardName": "Aether Current (Lakeland)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 68931,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -16531,32 +14831,12 @@
     },
     {
       "questRowId": 68934,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 68934,
       "kind": "AetherCurrent",
       "rewardId": 2818265,
       "itemId": 0,
       "rewardName": "Aether Current (Il Mheg)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 68940,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -16571,32 +14851,12 @@
     },
     {
       "questRowId": 68963,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 68963,
       "kind": "AetherCurrent",
       "rewardId": 2818267,
       "itemId": 0,
       "rewardName": "Aether Current (Il Mheg)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 68980,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -16611,32 +14871,12 @@
     },
     {
       "questRowId": 69003,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69003,
       "kind": "AetherCurrent",
       "rewardId": 2818281,
       "itemId": 0,
       "rewardName": "Aether Current (The Rak'tika Greatwood)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69014,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -16661,32 +14901,12 @@
     },
     {
       "questRowId": 69039,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69039,
       "kind": "AetherCurrent",
       "rewardId": 2818250,
       "itemId": 0,
       "rewardName": "Aether Current (Amh Araeng)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69047,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -16701,16 +14921,6 @@
     },
     {
       "questRowId": 69061,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69061,
       "kind": "AetherCurrent",
       "rewardId": 2818252,
       "itemId": 0,
@@ -16721,32 +14931,12 @@
     },
     {
       "questRowId": 69073,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69073,
       "kind": "AetherCurrent",
       "rewardId": 2818236,
       "itemId": 0,
       "rewardName": "Aether Current (Kholusia)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69092,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -16771,32 +14961,12 @@
     },
     {
       "questRowId": 69124,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69124,
       "kind": "AetherCurrent",
       "rewardId": 2818294,
       "itemId": 0,
       "rewardName": "Aether Current (The Tempest)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69128,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -16811,32 +14981,12 @@
     },
     {
       "questRowId": 69129,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69129,
       "kind": "AetherCurrent",
       "rewardId": 2818296,
       "itemId": 0,
       "rewardName": "Aether Current (The Tempest)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69130,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -16857,16 +15007,6 @@
       "rewardName": "Hunts (Shadowbringers)",
       "confidence": "Curated",
       "source": "curated/system_unlocks.json",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69157,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -16911,16 +15051,6 @@
     },
     {
       "questRowId": 69179,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69179,
       "kind": "AetherCurrent",
       "rewardId": 2818233,
       "itemId": 0,
@@ -16937,16 +15067,6 @@
       "rewardName": "Enemy of Innocence",
       "confidence": "Static",
       "source": "Achievement.Key;achievement=2297;type=6",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69189,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -16987,16 +15107,6 @@
       "rewardName": "Shadowbringer",
       "confidence": "Static",
       "source": "Achievement.Key;achievement=2298;type=6",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69192,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -17786,176 +15896,6 @@
       "otherSources": []
     },
     {
-      "questRowId": 69380,
-      "kind": "Achievement",
-      "rewardId": 2569,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Honorbound & Tenacity",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69380,
-      "kind": "Achievement",
-      "rewardId": 2570,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Skullrender",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69380,
-      "kind": "Achievement",
-      "rewardId": 2571,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Woeborn",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69380,
-      "kind": "Achievement",
-      "rewardId": 2572,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Crownsblade",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69380,
-      "kind": "Achievement",
-      "rewardId": 2573,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Dreizack",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69380,
-      "kind": "Achievement",
-      "rewardId": 2574,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Samsara",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69380,
-      "kind": "Achievement",
-      "rewardId": 2575,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Honeshirazu",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69380,
-      "kind": "Achievement",
-      "rewardId": 2576,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Hoshikiri",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69380,
-      "kind": "Achievement",
-      "rewardId": 2577,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Brilliance",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69380,
-      "kind": "Achievement",
-      "rewardId": 2578,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Lawman",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69380,
-      "kind": "Achievement",
-      "rewardId": 2579,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Enchufla",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69380,
-      "kind": "Achievement",
-      "rewardId": 2580,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Soulscourge",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69380,
-      "kind": "Achievement",
-      "rewardId": 2581,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Espiritus",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69380,
-      "kind": "Achievement",
-      "rewardId": 2582,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Talekeeper",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69380,
-      "kind": "Achievement",
-      "rewardId": 2583,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Ingrimm",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69380,
-      "kind": "Achievement",
-      "rewardId": 2584,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Akademos",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69380,
-      "kind": "Achievement",
-      "rewardId": 2585,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Solstice",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
       "questRowId": 69381,
       "kind": "ArtifactGear",
       "rewardId": 30228,
@@ -18133,176 +16073,6 @@
       "rewardName": "Tenacity",
       "confidence": "Static",
       "source": "Quest.Reward;QuestClassJobReward;ItemRewardType=6",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69381,
-      "kind": "Achievement",
-      "rewardId": 2569,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Honorbound & Tenacity",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69381,
-      "kind": "Achievement",
-      "rewardId": 2570,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Skullrender",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69381,
-      "kind": "Achievement",
-      "rewardId": 2571,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Woeborn",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69381,
-      "kind": "Achievement",
-      "rewardId": 2572,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Crownsblade",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69381,
-      "kind": "Achievement",
-      "rewardId": 2573,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Dreizack",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69381,
-      "kind": "Achievement",
-      "rewardId": 2574,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Samsara",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69381,
-      "kind": "Achievement",
-      "rewardId": 2575,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Honeshirazu",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69381,
-      "kind": "Achievement",
-      "rewardId": 2576,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Hoshikiri",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69381,
-      "kind": "Achievement",
-      "rewardId": 2577,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Brilliance",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69381,
-      "kind": "Achievement",
-      "rewardId": 2578,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Lawman",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69381,
-      "kind": "Achievement",
-      "rewardId": 2579,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Enchufla",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69381,
-      "kind": "Achievement",
-      "rewardId": 2580,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Soulscourge",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69381,
-      "kind": "Achievement",
-      "rewardId": 2581,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Espiritus",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69381,
-      "kind": "Achievement",
-      "rewardId": 2582,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Talekeeper",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69381,
-      "kind": "Achievement",
-      "rewardId": 2583,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Ingrimm",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69381,
-      "kind": "Achievement",
-      "rewardId": 2584,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Akademos",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69381,
-      "kind": "Achievement",
-      "rewardId": 2585,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Solstice",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
       "otherSources": []
     },
     {
@@ -19037,116 +16807,6 @@
       "rewardName": "Skysung Fishing Rod",
       "confidence": "Static",
       "source": "Quest.Reward;QuestClassJobReward;ItemRewardType=6",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69430,
-      "kind": "Achievement",
-      "rewardId": 2659,
-      "itemId": 0,
-      "rewardName": "Old and Improved: Skysung Saw",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69430,
-      "kind": "Achievement",
-      "rewardId": 2660,
-      "itemId": 0,
-      "rewardName": "Old and Improved: Skysung Cross-pein Hammer",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69430,
-      "kind": "Achievement",
-      "rewardId": 2661,
-      "itemId": 0,
-      "rewardName": "Old and Improved: Skysung Raising Hammer",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69430,
-      "kind": "Achievement",
-      "rewardId": 2662,
-      "itemId": 0,
-      "rewardName": "Old and Improved: Skysung Lapidary Hammer",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69430,
-      "kind": "Achievement",
-      "rewardId": 2663,
-      "itemId": 0,
-      "rewardName": "Old and Improved: Skysung Round Knife",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69430,
-      "kind": "Achievement",
-      "rewardId": 2664,
-      "itemId": 0,
-      "rewardName": "Old and Improved: Skysung Needle",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69430,
-      "kind": "Achievement",
-      "rewardId": 2665,
-      "itemId": 0,
-      "rewardName": "Old and Improved: Skysung Alembic",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69430,
-      "kind": "Achievement",
-      "rewardId": 2666,
-      "itemId": 0,
-      "rewardName": "Old and Improved: Skysung Frypan",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69430,
-      "kind": "Achievement",
-      "rewardId": 2667,
-      "itemId": 0,
-      "rewardName": "Old and Improved: Skysung Pickaxe",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69430,
-      "kind": "Achievement",
-      "rewardId": 2668,
-      "itemId": 0,
-      "rewardName": "Old and Improved: Skysung Hatchet",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69430,
-      "kind": "Achievement",
-      "rewardId": 2669,
-      "itemId": 0,
-      "rewardName": "Old and Improved: Skysung Fishing Rod",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
       "otherSources": []
     },
     {
@@ -21594,176 +19254,6 @@
       "otherSources": []
     },
     {
-      "questRowId": 69507,
-      "kind": "Achievement",
-      "rewardId": 2694,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Honorbound & Tenacity Recollections",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69507,
-      "kind": "Achievement",
-      "rewardId": 2695,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Skullrender Recollection",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69507,
-      "kind": "Achievement",
-      "rewardId": 2696,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Woeborn Recollection",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69507,
-      "kind": "Achievement",
-      "rewardId": 2697,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Crownsblade Recollection",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69507,
-      "kind": "Achievement",
-      "rewardId": 2698,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Dreizack Recollection",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69507,
-      "kind": "Achievement",
-      "rewardId": 2699,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Samsara Recollection",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69507,
-      "kind": "Achievement",
-      "rewardId": 2700,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Honeshirazu Recollection",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69507,
-      "kind": "Achievement",
-      "rewardId": 2701,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Hoshikiri Recollection",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69507,
-      "kind": "Achievement",
-      "rewardId": 2702,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Brilliance Recollection",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69507,
-      "kind": "Achievement",
-      "rewardId": 2703,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Lawman Recollection",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69507,
-      "kind": "Achievement",
-      "rewardId": 2704,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Enchufla Recollection",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69507,
-      "kind": "Achievement",
-      "rewardId": 2705,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Soulscourge Recollection",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69507,
-      "kind": "Achievement",
-      "rewardId": 2706,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Espiritus Recollection",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69507,
-      "kind": "Achievement",
-      "rewardId": 2707,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Talekeeper Recollection",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69507,
-      "kind": "Achievement",
-      "rewardId": 2708,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Ingrimm Recollection",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69507,
-      "kind": "Achievement",
-      "rewardId": 2709,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Akademos Recollection",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69507,
-      "kind": "Achievement",
-      "rewardId": 2710,
-      "itemId": 0,
-      "rewardName": "Pièce de Résistance: Solstice Recollection",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
       "questRowId": 69510,
       "kind": "Minion",
       "rewardId": 382,
@@ -21893,116 +19383,6 @@
       "rewardName": "Skybuilders' Fishing Rod",
       "confidence": "Static",
       "source": "Quest.Reward;QuestClassJobReward;ItemRewardType=6",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69519,
-      "kind": "Achievement",
-      "rewardId": 2787,
-      "itemId": 0,
-      "rewardName": "Tool Order: Skybuilders' Saw",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69519,
-      "kind": "Achievement",
-      "rewardId": 2788,
-      "itemId": 0,
-      "rewardName": "Tool Order: Skybuilders' Cross-pein Hammer",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69519,
-      "kind": "Achievement",
-      "rewardId": 2789,
-      "itemId": 0,
-      "rewardName": "Tool Order: Skybuilders' Raising Hammer",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69519,
-      "kind": "Achievement",
-      "rewardId": 2790,
-      "itemId": 0,
-      "rewardName": "Tool Order: Skybuilders' Lapidary Hammer",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69519,
-      "kind": "Achievement",
-      "rewardId": 2791,
-      "itemId": 0,
-      "rewardName": "Tool Order: Skybuilders' Round Knife",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69519,
-      "kind": "Achievement",
-      "rewardId": 2792,
-      "itemId": 0,
-      "rewardName": "Tool Order: Skybuilders' Needle",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69519,
-      "kind": "Achievement",
-      "rewardId": 2793,
-      "itemId": 0,
-      "rewardName": "Tool Order: Skybuilders' Alembic",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69519,
-      "kind": "Achievement",
-      "rewardId": 2794,
-      "itemId": 0,
-      "rewardName": "Tool Order: Skybuilders' Frypan",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69519,
-      "kind": "Achievement",
-      "rewardId": 2795,
-      "itemId": 0,
-      "rewardName": "Tool Order: Skybuilders' Pickaxe",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69519,
-      "kind": "Achievement",
-      "rewardId": 2796,
-      "itemId": 0,
-      "rewardName": "Tool Order: Skybuilders' Hatchet",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69519,
-      "kind": "Achievement",
-      "rewardId": 2797,
-      "itemId": 0,
-      "rewardName": "Tool Order: Skybuilders' Fishing Rod",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
       "otherSources": []
     },
     {
@@ -22702,176 +20082,6 @@
       "otherSources": []
     },
     {
-      "questRowId": 69576,
-      "kind": "Achievement",
-      "rewardId": 2768,
-      "itemId": 0,
-      "rewardName": "Quick to Judge: Law's Order Bastard Sword & Kite Shield",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69576,
-      "kind": "Achievement",
-      "rewardId": 2769,
-      "itemId": 0,
-      "rewardName": "Quick to Judge: Law's Order Labrys",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69576,
-      "kind": "Achievement",
-      "rewardId": 2770,
-      "itemId": 0,
-      "rewardName": "Quick to Judge: Law's Order Zweihander",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69576,
-      "kind": "Achievement",
-      "rewardId": 2771,
-      "itemId": 0,
-      "rewardName": "Quick to Judge: Law's Order Manatrigger",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69576,
-      "kind": "Achievement",
-      "rewardId": 2772,
-      "itemId": 0,
-      "rewardName": "Quick to Judge: Law's Order Spear",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69576,
-      "kind": "Achievement",
-      "rewardId": 2773,
-      "itemId": 0,
-      "rewardName": "Quick to Judge: Law's Order Knuckles",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69576,
-      "kind": "Achievement",
-      "rewardId": 2774,
-      "itemId": 0,
-      "rewardName": "Quick to Judge: Law's Order Knives",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69576,
-      "kind": "Achievement",
-      "rewardId": 2775,
-      "itemId": 0,
-      "rewardName": "Quick to Judge: Law's Order Samurai Blade",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69576,
-      "kind": "Achievement",
-      "rewardId": 2776,
-      "itemId": 0,
-      "rewardName": "Quick to Judge: Law's Order Composite Bow",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69576,
-      "kind": "Achievement",
-      "rewardId": 2777,
-      "itemId": 0,
-      "rewardName": "Quick to Judge: Law's Order Revolver",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69576,
-      "kind": "Achievement",
-      "rewardId": 2778,
-      "itemId": 0,
-      "rewardName": "Quick to Judge: Law's Order Chakrams",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69576,
-      "kind": "Achievement",
-      "rewardId": 2779,
-      "itemId": 0,
-      "rewardName": "Quick to Judge: Law's Order Rod",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69576,
-      "kind": "Achievement",
-      "rewardId": 2780,
-      "itemId": 0,
-      "rewardName": "Quick to Judge: Law's Order Index",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69576,
-      "kind": "Achievement",
-      "rewardId": 2781,
-      "itemId": 0,
-      "rewardName": "Quick to Judge: Law's Order Rapier",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69576,
-      "kind": "Achievement",
-      "rewardId": 2782,
-      "itemId": 0,
-      "rewardName": "Quick to Judge: Law's Order Cane",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69576,
-      "kind": "Achievement",
-      "rewardId": 2783,
-      "itemId": 0,
-      "rewardName": "Quick to Judge: Law's Order Codex",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69576,
-      "kind": "Achievement",
-      "rewardId": 2784,
-      "itemId": 0,
-      "rewardName": "Quick to Judge: Law's Order Astrometer",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
       "questRowId": 69589,
       "kind": "Orchestrion",
       "rewardId": 469,
@@ -23388,176 +20598,6 @@
       "otherSources": []
     },
     {
-      "questRowId": 69637,
-      "kind": "Achievement",
-      "rewardId": 2857,
-      "itemId": 0,
-      "rewardName": "Fit for a Queen: Blade's Honor & Blade's Fortitude",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69637,
-      "kind": "Achievement",
-      "rewardId": 2858,
-      "itemId": 0,
-      "rewardName": "Fit for a Queen: Blade's Valor",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69637,
-      "kind": "Achievement",
-      "rewardId": 2859,
-      "itemId": 0,
-      "rewardName": "Fit for a Queen: Blade's Justice",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69637,
-      "kind": "Achievement",
-      "rewardId": 2860,
-      "itemId": 0,
-      "rewardName": "Fit for a Queen: Blade's Resolve",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69637,
-      "kind": "Achievement",
-      "rewardId": 2861,
-      "itemId": 0,
-      "rewardName": "Fit for a Queen: Blade's Glory",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69637,
-      "kind": "Achievement",
-      "rewardId": 2862,
-      "itemId": 0,
-      "rewardName": "Fit for a Queen: Blade's Serenity",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69637,
-      "kind": "Achievement",
-      "rewardId": 2863,
-      "itemId": 0,
-      "rewardName": "Fit for a Queen: Blade's Subtlety",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69637,
-      "kind": "Achievement",
-      "rewardId": 2864,
-      "itemId": 0,
-      "rewardName": "Fit for a Queen: Blade's Fealty",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69637,
-      "kind": "Achievement",
-      "rewardId": 2865,
-      "itemId": 0,
-      "rewardName": "Fit for a Queen: Blade's Muse",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69637,
-      "kind": "Achievement",
-      "rewardId": 2866,
-      "itemId": 0,
-      "rewardName": "Fit for a Queen: Blade's Ingenuity",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69637,
-      "kind": "Achievement",
-      "rewardId": 2867,
-      "itemId": 0,
-      "rewardName": "Fit for a Queen: Blade's Euphoria",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69637,
-      "kind": "Achievement",
-      "rewardId": 2868,
-      "itemId": 0,
-      "rewardName": "Fit for a Queen: Blade's Fury",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69637,
-      "kind": "Achievement",
-      "rewardId": 2869,
-      "itemId": 0,
-      "rewardName": "Fit for a Queen: Blade's Acumen",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69637,
-      "kind": "Achievement",
-      "rewardId": 2870,
-      "itemId": 0,
-      "rewardName": "Fit for a Queen: Blade's Temperance",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69637,
-      "kind": "Achievement",
-      "rewardId": 2871,
-      "itemId": 0,
-      "rewardName": "Fit for a Queen: Blade's Mercy",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69637,
-      "kind": "Achievement",
-      "rewardId": 2872,
-      "itemId": 0,
-      "rewardName": "Fit for a Queen: Blade's Wisdom",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69637,
-      "kind": "Achievement",
-      "rewardId": 2873,
-      "itemId": 0,
-      "rewardName": "Fit for a Queen: Blade's Providence",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
       "questRowId": 69643,
       "kind": "Achievement",
       "rewardId": 2961,
@@ -23669,32 +20709,12 @@
     },
     {
       "questRowId": 69739,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69739,
       "kind": "AetherCurrent",
       "rewardId": 2818325,
       "itemId": 0,
       "rewardName": "Aether Current (Thavnair)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69752,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -23709,32 +20729,12 @@
     },
     {
       "questRowId": 69768,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69768,
       "kind": "AetherCurrent",
       "rewardId": 2818342,
       "itemId": 0,
       "rewardName": "Aether Current (Garlemald)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69776,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -23749,32 +20749,12 @@
     },
     {
       "questRowId": 69777,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69777,
       "kind": "AetherCurrent",
       "rewardId": 2818356,
       "itemId": 0,
       "rewardName": "Aether Current (Mare Lamentorum)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69789,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -23789,32 +20769,12 @@
     },
     {
       "questRowId": 69793,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69793,
       "kind": "AetherCurrent",
       "rewardId": 2818328,
       "itemId": 0,
       "rewardName": "Aether Current (Thavnair)",
       "confidence": "Static",
       "source": "AetherCurrentQuests.Overrides (AetherCurrent.Quest lists 70030)",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69795,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -23829,32 +20789,12 @@
     },
     {
       "questRowId": 69824,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69824,
       "kind": "AetherCurrent",
       "rewardId": 2818370,
       "itemId": 0,
       "rewardName": "Aether Current (Elpis)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69849,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -23869,32 +20809,12 @@
     },
     {
       "questRowId": 69856,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69856,
       "kind": "AetherCurrent",
       "rewardId": 2818312,
       "itemId": 0,
       "rewardName": "Aether Current (Labyrinthos)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69865,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -23909,32 +20829,12 @@
     },
     {
       "questRowId": 69878,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69878,
       "kind": "AetherCurrent",
       "rewardId": 2818385,
       "itemId": 0,
       "rewardName": "Aether Current (Ultima Thule)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69882,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -23949,32 +20849,12 @@
     },
     {
       "questRowId": 69890,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69890,
       "kind": "AetherCurrent",
       "rewardId": 2818388,
       "itemId": 0,
       "rewardName": "Aether Current (Ultima Thule)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69891,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -24011,16 +20891,6 @@
     },
     {
       "questRowId": 69931,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69931,
       "kind": "AetherCurrent",
       "rewardId": 2818339,
       "itemId": 0,
@@ -24041,16 +20911,6 @@
     },
     {
       "questRowId": 69943,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69943,
       "kind": "AetherCurrent",
       "rewardId": 2818354,
       "itemId": 0,
@@ -24067,16 +20927,6 @@
       "rewardName": "Lightingway",
       "confidence": "Static",
       "source": "Achievement.Key;achievement=2954;type=6",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69952,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -24137,16 +20987,6 @@
     },
     {
       "questRowId": 69973,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69973,
       "kind": "AetherCurrent",
       "rewardId": 2818369,
       "itemId": 0,
@@ -24167,16 +21007,6 @@
     },
     {
       "questRowId": 69984,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69984,
       "kind": "AetherCurrent",
       "rewardId": 2818309,
       "itemId": 0,
@@ -24193,16 +21023,6 @@
       "rewardName": "Hope's Legacy",
       "confidence": "Static",
       "source": "Achievement.Key;achievement=2957;type=6",
-      "otherSources": []
-    },
-    {
-      "questRowId": 69999,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -24363,32 +21183,12 @@
     },
     {
       "questRowId": 70016,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70016,
       "kind": "AetherCurrent",
       "rewardId": 2818310,
       "itemId": 0,
       "rewardName": "Aether Current (Labyrinthos)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70020,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -24403,32 +21203,12 @@
     },
     {
       "questRowId": 70025,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70025,
       "kind": "AetherCurrent",
       "rewardId": 2818326,
       "itemId": 0,
       "rewardName": "Aether Current (Thavnair)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70034,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -24443,32 +21223,12 @@
     },
     {
       "questRowId": 70038,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70038,
       "kind": "AetherCurrent",
       "rewardId": 2818343,
       "itemId": 0,
       "rewardName": "Aether Current (Garlemald)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70043,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -24483,32 +21243,12 @@
     },
     {
       "questRowId": 70047,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70047,
       "kind": "AetherCurrent",
       "rewardId": 2818373,
       "itemId": 0,
       "rewardName": "Aether Current (Elpis)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70052,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -25121,196 +21861,6 @@
     },
     {
       "questRowId": 70188,
-      "kind": "Achievement",
-      "rewardId": 3128,
-      "itemId": 0,
-      "rewardName": "Hamm(er)ing It Up: Manderville Sword & Shield",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70188,
-      "kind": "Achievement",
-      "rewardId": 3129,
-      "itemId": 0,
-      "rewardName": "Hamm(er)ing It Up: Manderville Axe",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70188,
-      "kind": "Achievement",
-      "rewardId": 3130,
-      "itemId": 0,
-      "rewardName": "Hamm(er)ing It Up: Manderville Zweihander",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70188,
-      "kind": "Achievement",
-      "rewardId": 3131,
-      "itemId": 0,
-      "rewardName": "Hamm(er)ing It Up: Manderville Gunblade",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70188,
-      "kind": "Achievement",
-      "rewardId": 3132,
-      "itemId": 0,
-      "rewardName": "Hamm(er)ing It Up: Manderville Spear",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70188,
-      "kind": "Achievement",
-      "rewardId": 3133,
-      "itemId": 0,
-      "rewardName": "Hamm(er)ing It Up: Manderville Knuckles",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70188,
-      "kind": "Achievement",
-      "rewardId": 3134,
-      "itemId": 0,
-      "rewardName": "Hamm(er)ing It Up: Manderville Knives",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70188,
-      "kind": "Achievement",
-      "rewardId": 3135,
-      "itemId": 0,
-      "rewardName": "Hamm(er)ing It Up: Manderville Samurai Blade",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70188,
-      "kind": "Achievement",
-      "rewardId": 3136,
-      "itemId": 0,
-      "rewardName": "Hamm(er)ing It Up: Manderville Scythe",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70188,
-      "kind": "Achievement",
-      "rewardId": 3137,
-      "itemId": 0,
-      "rewardName": "Hamm(er)ing It Up: Manderville Harp Bow",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70188,
-      "kind": "Achievement",
-      "rewardId": 3138,
-      "itemId": 0,
-      "rewardName": "Hamm(er)ing It Up: Manderville Revolver",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70188,
-      "kind": "Achievement",
-      "rewardId": 3139,
-      "itemId": 0,
-      "rewardName": "Hamm(er)ing It Up: Manderville Chakrams",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70188,
-      "kind": "Achievement",
-      "rewardId": 3140,
-      "itemId": 0,
-      "rewardName": "Hamm(er)ing It Up: Manderville Rod",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70188,
-      "kind": "Achievement",
-      "rewardId": 3141,
-      "itemId": 0,
-      "rewardName": "Hamm(er)ing It Up: Manderville Index",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70188,
-      "kind": "Achievement",
-      "rewardId": 3142,
-      "itemId": 0,
-      "rewardName": "Hamm(er)ing It Up: Manderville Rapier",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70188,
-      "kind": "Achievement",
-      "rewardId": 3143,
-      "itemId": 0,
-      "rewardName": "Hamm(er)ing It Up: Manderville Cane",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70188,
-      "kind": "Achievement",
-      "rewardId": 3144,
-      "itemId": 0,
-      "rewardName": "Hamm(er)ing It Up: Manderville Codex",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70188,
-      "kind": "Achievement",
-      "rewardId": 3145,
-      "itemId": 0,
-      "rewardName": "Hamm(er)ing It Up: Manderville Torquetum",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70188,
-      "kind": "Achievement",
-      "rewardId": 3146,
-      "itemId": 0,
-      "rewardName": "Hamm(er)ing It Up: Manderville Milpreves",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70188,
       "kind": "SystemUnlock",
       "rewardId": 0,
       "itemId": 0,
@@ -25517,196 +22067,6 @@
       "rewardName": "Manderville Kite Shield",
       "confidence": "Static",
       "source": "Quest.Reward;QuestClassJobReward;ItemRewardType=6",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70189,
-      "kind": "Achievement",
-      "rewardId": 3128,
-      "itemId": 0,
-      "rewardName": "Hamm(er)ing It Up: Manderville Sword & Shield",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70189,
-      "kind": "Achievement",
-      "rewardId": 3129,
-      "itemId": 0,
-      "rewardName": "Hamm(er)ing It Up: Manderville Axe",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70189,
-      "kind": "Achievement",
-      "rewardId": 3130,
-      "itemId": 0,
-      "rewardName": "Hamm(er)ing It Up: Manderville Zweihander",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70189,
-      "kind": "Achievement",
-      "rewardId": 3131,
-      "itemId": 0,
-      "rewardName": "Hamm(er)ing It Up: Manderville Gunblade",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70189,
-      "kind": "Achievement",
-      "rewardId": 3132,
-      "itemId": 0,
-      "rewardName": "Hamm(er)ing It Up: Manderville Spear",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70189,
-      "kind": "Achievement",
-      "rewardId": 3133,
-      "itemId": 0,
-      "rewardName": "Hamm(er)ing It Up: Manderville Knuckles",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70189,
-      "kind": "Achievement",
-      "rewardId": 3134,
-      "itemId": 0,
-      "rewardName": "Hamm(er)ing It Up: Manderville Knives",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70189,
-      "kind": "Achievement",
-      "rewardId": 3135,
-      "itemId": 0,
-      "rewardName": "Hamm(er)ing It Up: Manderville Samurai Blade",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70189,
-      "kind": "Achievement",
-      "rewardId": 3136,
-      "itemId": 0,
-      "rewardName": "Hamm(er)ing It Up: Manderville Scythe",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70189,
-      "kind": "Achievement",
-      "rewardId": 3137,
-      "itemId": 0,
-      "rewardName": "Hamm(er)ing It Up: Manderville Harp Bow",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70189,
-      "kind": "Achievement",
-      "rewardId": 3138,
-      "itemId": 0,
-      "rewardName": "Hamm(er)ing It Up: Manderville Revolver",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70189,
-      "kind": "Achievement",
-      "rewardId": 3139,
-      "itemId": 0,
-      "rewardName": "Hamm(er)ing It Up: Manderville Chakrams",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70189,
-      "kind": "Achievement",
-      "rewardId": 3140,
-      "itemId": 0,
-      "rewardName": "Hamm(er)ing It Up: Manderville Rod",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70189,
-      "kind": "Achievement",
-      "rewardId": 3141,
-      "itemId": 0,
-      "rewardName": "Hamm(er)ing It Up: Manderville Index",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70189,
-      "kind": "Achievement",
-      "rewardId": 3142,
-      "itemId": 0,
-      "rewardName": "Hamm(er)ing It Up: Manderville Rapier",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70189,
-      "kind": "Achievement",
-      "rewardId": 3143,
-      "itemId": 0,
-      "rewardName": "Hamm(er)ing It Up: Manderville Cane",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70189,
-      "kind": "Achievement",
-      "rewardId": 3144,
-      "itemId": 0,
-      "rewardName": "Hamm(er)ing It Up: Manderville Codex",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70189,
-      "kind": "Achievement",
-      "rewardId": 3145,
-      "itemId": 0,
-      "rewardName": "Hamm(er)ing It Up: Manderville Torquetum",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70189,
-      "kind": "Achievement",
-      "rewardId": 3146,
-      "itemId": 0,
-      "rewardName": "Hamm(er)ing It Up: Manderville Milpreves",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
       "otherSources": []
     },
     {
@@ -28208,196 +24568,6 @@
       "otherSources": []
     },
     {
-      "questRowId": 70261,
-      "kind": "Achievement",
-      "rewardId": 3224,
-      "itemId": 0,
-      "rewardName": "Well-oiled: Amazing Manderville Sword & Shield",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70261,
-      "kind": "Achievement",
-      "rewardId": 3225,
-      "itemId": 0,
-      "rewardName": "Well-oiled: Amazing Manderville Axe",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70261,
-      "kind": "Achievement",
-      "rewardId": 3226,
-      "itemId": 0,
-      "rewardName": "Well-oiled: Amazing Manderville Zweihander",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70261,
-      "kind": "Achievement",
-      "rewardId": 3227,
-      "itemId": 0,
-      "rewardName": "Well-oiled: Amazing Manderville Gunblade",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70261,
-      "kind": "Achievement",
-      "rewardId": 3228,
-      "itemId": 0,
-      "rewardName": "Well-oiled: Amazing Manderville Spear",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70261,
-      "kind": "Achievement",
-      "rewardId": 3229,
-      "itemId": 0,
-      "rewardName": "Well-oiled: Amazing Manderville Knuckles",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70261,
-      "kind": "Achievement",
-      "rewardId": 3230,
-      "itemId": 0,
-      "rewardName": "Well-oiled: Amazing Manderville Knives",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70261,
-      "kind": "Achievement",
-      "rewardId": 3231,
-      "itemId": 0,
-      "rewardName": "Well-oiled: Amazing Manderville Samurai Blade",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70261,
-      "kind": "Achievement",
-      "rewardId": 3232,
-      "itemId": 0,
-      "rewardName": "Well-oiled: Amazing Manderville Scythe",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70261,
-      "kind": "Achievement",
-      "rewardId": 3233,
-      "itemId": 0,
-      "rewardName": "Well-oiled: Amazing Manderville Harp Bow",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70261,
-      "kind": "Achievement",
-      "rewardId": 3234,
-      "itemId": 0,
-      "rewardName": "Well-oiled: Amazing Manderville Revolver",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70261,
-      "kind": "Achievement",
-      "rewardId": 3235,
-      "itemId": 0,
-      "rewardName": "Well-oiled: Amazing Manderville Chakrams",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70261,
-      "kind": "Achievement",
-      "rewardId": 3236,
-      "itemId": 0,
-      "rewardName": "Well-oiled: Amazing Manderville Rod",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70261,
-      "kind": "Achievement",
-      "rewardId": 3237,
-      "itemId": 0,
-      "rewardName": "Well-oiled: Amazing Manderville Index",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70261,
-      "kind": "Achievement",
-      "rewardId": 3238,
-      "itemId": 0,
-      "rewardName": "Well-oiled: Amazing Manderville Rapier",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70261,
-      "kind": "Achievement",
-      "rewardId": 3239,
-      "itemId": 0,
-      "rewardName": "Well-oiled: Amazing Manderville Cane",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70261,
-      "kind": "Achievement",
-      "rewardId": 3240,
-      "itemId": 0,
-      "rewardName": "Well-oiled: Amazing Manderville Codex",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70261,
-      "kind": "Achievement",
-      "rewardId": 3241,
-      "itemId": 0,
-      "rewardName": "Well-oiled: Amazing Manderville Torquetum",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70261,
-      "kind": "Achievement",
-      "rewardId": 3242,
-      "itemId": 0,
-      "rewardName": "Well-oiled: Amazing Manderville Milpreves",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
       "questRowId": 70262,
       "kind": "ArtifactGear",
       "rewardId": 39144,
@@ -28595,196 +24765,6 @@
       "rewardName": "Amazing Manderville Kite Shield",
       "confidence": "Static",
       "source": "Quest.Reward;QuestClassJobReward;ItemRewardType=6",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70262,
-      "kind": "Achievement",
-      "rewardId": 3224,
-      "itemId": 0,
-      "rewardName": "Well-oiled: Amazing Manderville Sword & Shield",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70262,
-      "kind": "Achievement",
-      "rewardId": 3225,
-      "itemId": 0,
-      "rewardName": "Well-oiled: Amazing Manderville Axe",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70262,
-      "kind": "Achievement",
-      "rewardId": 3226,
-      "itemId": 0,
-      "rewardName": "Well-oiled: Amazing Manderville Zweihander",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70262,
-      "kind": "Achievement",
-      "rewardId": 3227,
-      "itemId": 0,
-      "rewardName": "Well-oiled: Amazing Manderville Gunblade",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70262,
-      "kind": "Achievement",
-      "rewardId": 3228,
-      "itemId": 0,
-      "rewardName": "Well-oiled: Amazing Manderville Spear",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70262,
-      "kind": "Achievement",
-      "rewardId": 3229,
-      "itemId": 0,
-      "rewardName": "Well-oiled: Amazing Manderville Knuckles",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70262,
-      "kind": "Achievement",
-      "rewardId": 3230,
-      "itemId": 0,
-      "rewardName": "Well-oiled: Amazing Manderville Knives",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70262,
-      "kind": "Achievement",
-      "rewardId": 3231,
-      "itemId": 0,
-      "rewardName": "Well-oiled: Amazing Manderville Samurai Blade",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70262,
-      "kind": "Achievement",
-      "rewardId": 3232,
-      "itemId": 0,
-      "rewardName": "Well-oiled: Amazing Manderville Scythe",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70262,
-      "kind": "Achievement",
-      "rewardId": 3233,
-      "itemId": 0,
-      "rewardName": "Well-oiled: Amazing Manderville Harp Bow",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70262,
-      "kind": "Achievement",
-      "rewardId": 3234,
-      "itemId": 0,
-      "rewardName": "Well-oiled: Amazing Manderville Revolver",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70262,
-      "kind": "Achievement",
-      "rewardId": 3235,
-      "itemId": 0,
-      "rewardName": "Well-oiled: Amazing Manderville Chakrams",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70262,
-      "kind": "Achievement",
-      "rewardId": 3236,
-      "itemId": 0,
-      "rewardName": "Well-oiled: Amazing Manderville Rod",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70262,
-      "kind": "Achievement",
-      "rewardId": 3237,
-      "itemId": 0,
-      "rewardName": "Well-oiled: Amazing Manderville Index",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70262,
-      "kind": "Achievement",
-      "rewardId": 3238,
-      "itemId": 0,
-      "rewardName": "Well-oiled: Amazing Manderville Rapier",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70262,
-      "kind": "Achievement",
-      "rewardId": 3239,
-      "itemId": 0,
-      "rewardName": "Well-oiled: Amazing Manderville Cane",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70262,
-      "kind": "Achievement",
-      "rewardId": 3240,
-      "itemId": 0,
-      "rewardName": "Well-oiled: Amazing Manderville Codex",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70262,
-      "kind": "Achievement",
-      "rewardId": 3241,
-      "itemId": 0,
-      "rewardName": "Well-oiled: Amazing Manderville Torquetum",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70262,
-      "kind": "Achievement",
-      "rewardId": 3242,
-      "itemId": 0,
-      "rewardName": "Well-oiled: Amazing Manderville Milpreves",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
       "otherSources": []
     },
     {
@@ -29097,116 +25077,6 @@
       "rewardName": "Crystal Accord",
       "confidence": "Static",
       "source": "Achievement.Key;type=6",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70268,
-      "kind": "Achievement",
-      "rewardId": 3193,
-      "itemId": 0,
-      "rewardName": "Splendid: Crystalline Saw",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70268,
-      "kind": "Achievement",
-      "rewardId": 3194,
-      "itemId": 0,
-      "rewardName": "Splendid: Crystalline Cross-pein Hammer",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70268,
-      "kind": "Achievement",
-      "rewardId": 3195,
-      "itemId": 0,
-      "rewardName": "Splendid: Crystalline Raising Hammer",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70268,
-      "kind": "Achievement",
-      "rewardId": 3196,
-      "itemId": 0,
-      "rewardName": "Splendid: Crystalline Mallet",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70268,
-      "kind": "Achievement",
-      "rewardId": 3197,
-      "itemId": 0,
-      "rewardName": "Splendid: Crystalline Round Knife",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70268,
-      "kind": "Achievement",
-      "rewardId": 3198,
-      "itemId": 0,
-      "rewardName": "Splendid: Crystalline Needle",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70268,
-      "kind": "Achievement",
-      "rewardId": 3199,
-      "itemId": 0,
-      "rewardName": "Splendid: Crystalline Alembic",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70268,
-      "kind": "Achievement",
-      "rewardId": 3200,
-      "itemId": 0,
-      "rewardName": "Splendid: Crystalline Frypan",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70268,
-      "kind": "Achievement",
-      "rewardId": 3201,
-      "itemId": 0,
-      "rewardName": "Splendid: Crystalline Pickaxe",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70268,
-      "kind": "Achievement",
-      "rewardId": 3202,
-      "itemId": 0,
-      "rewardName": "Splendid: Crystalline Hatchet",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70268,
-      "kind": "Achievement",
-      "rewardId": 3203,
-      "itemId": 0,
-      "rewardName": "Splendid: Crystalline Fishing Rod",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
       "otherSources": []
     },
     {
@@ -29614,116 +25484,6 @@
       "otherSources": []
     },
     {
-      "questRowId": 70305,
-      "kind": "Achievement",
-      "rewardId": 3305,
-      "itemId": 0,
-      "rewardName": "Resplendent: Brilliant Saw",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70305,
-      "kind": "Achievement",
-      "rewardId": 3306,
-      "itemId": 0,
-      "rewardName": "Resplendent: Brilliant Cross-pein Hammer",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70305,
-      "kind": "Achievement",
-      "rewardId": 3307,
-      "itemId": 0,
-      "rewardName": "Resplendent: Brilliant Raising Hammer",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70305,
-      "kind": "Achievement",
-      "rewardId": 3308,
-      "itemId": 0,
-      "rewardName": "Resplendent: Brilliant Mallet",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70305,
-      "kind": "Achievement",
-      "rewardId": 3309,
-      "itemId": 0,
-      "rewardName": "Resplendent: Brilliant Round Knife",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70305,
-      "kind": "Achievement",
-      "rewardId": 3310,
-      "itemId": 0,
-      "rewardName": "Resplendent: Brilliant Needle",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70305,
-      "kind": "Achievement",
-      "rewardId": 3311,
-      "itemId": 0,
-      "rewardName": "Resplendent: Brilliant Alembic",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70305,
-      "kind": "Achievement",
-      "rewardId": 3312,
-      "itemId": 0,
-      "rewardName": "Resplendent: Brilliant Frypan",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70305,
-      "kind": "Achievement",
-      "rewardId": 3313,
-      "itemId": 0,
-      "rewardName": "Resplendent: Brilliant Pickaxe",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70305,
-      "kind": "Achievement",
-      "rewardId": 3314,
-      "itemId": 0,
-      "rewardName": "Resplendent: Brilliant Hatchet",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70305,
-      "kind": "Achievement",
-      "rewardId": 3315,
-      "itemId": 0,
-      "rewardName": "Resplendent: Brilliant Fishing Rod",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
       "questRowId": 70306,
       "kind": "Achievement",
       "rewardId": 3304,
@@ -29934,196 +25694,6 @@
       "otherSources": []
     },
     {
-      "questRowId": 70307,
-      "kind": "Achievement",
-      "rewardId": 3285,
-      "itemId": 0,
-      "rewardName": "Reforged: Majestic Manderville Sword & Shield",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70307,
-      "kind": "Achievement",
-      "rewardId": 3286,
-      "itemId": 0,
-      "rewardName": "Reforged: Majestic Manderville Bardiche",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70307,
-      "kind": "Achievement",
-      "rewardId": 3287,
-      "itemId": 0,
-      "rewardName": "Reforged: Majestic Manderville Greatsword",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70307,
-      "kind": "Achievement",
-      "rewardId": 3288,
-      "itemId": 0,
-      "rewardName": "Reforged: Majestic Manderville Bayonet",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70307,
-      "kind": "Achievement",
-      "rewardId": 3289,
-      "itemId": 0,
-      "rewardName": "Reforged: Majestic Manderville Spear",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70307,
-      "kind": "Achievement",
-      "rewardId": 3290,
-      "itemId": 0,
-      "rewardName": "Reforged: Majestic Manderville Fists",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70307,
-      "kind": "Achievement",
-      "rewardId": 3291,
-      "itemId": 0,
-      "rewardName": "Reforged: Majestic Manderville Knives",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70307,
-      "kind": "Achievement",
-      "rewardId": 3292,
-      "itemId": 0,
-      "rewardName": "Reforged: Majestic Manderville Samurai Blade",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70307,
-      "kind": "Achievement",
-      "rewardId": 3293,
-      "itemId": 0,
-      "rewardName": "Reforged: Majestic Manderville War Scythe",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70307,
-      "kind": "Achievement",
-      "rewardId": 3294,
-      "itemId": 0,
-      "rewardName": "Reforged: Majestic Manderville Harp Bow",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70307,
-      "kind": "Achievement",
-      "rewardId": 3295,
-      "itemId": 0,
-      "rewardName": "Reforged: Majestic Manderville Pistol",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70307,
-      "kind": "Achievement",
-      "rewardId": 3296,
-      "itemId": 0,
-      "rewardName": "Reforged: Majestic Manderville Chakrams",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70307,
-      "kind": "Achievement",
-      "rewardId": 3297,
-      "itemId": 0,
-      "rewardName": "Reforged: Majestic Manderville Staff",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70307,
-      "kind": "Achievement",
-      "rewardId": 3298,
-      "itemId": 0,
-      "rewardName": "Reforged: Majestic Manderville Index",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70307,
-      "kind": "Achievement",
-      "rewardId": 3299,
-      "itemId": 0,
-      "rewardName": "Reforged: Majestic Manderville Degen",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70307,
-      "kind": "Achievement",
-      "rewardId": 3300,
-      "itemId": 0,
-      "rewardName": "Reforged: Majestic Manderville Wand",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70307,
-      "kind": "Achievement",
-      "rewardId": 3301,
-      "itemId": 0,
-      "rewardName": "Reforged: Majestic Manderville Codex",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70307,
-      "kind": "Achievement",
-      "rewardId": 3302,
-      "itemId": 0,
-      "rewardName": "Reforged: Majestic Manderville Orrery",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70307,
-      "kind": "Achievement",
-      "rewardId": 3303,
-      "itemId": 0,
-      "rewardName": "Reforged: Majestic Manderville Wings",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
       "questRowId": 70308,
       "kind": "ArtifactGear",
       "rewardId": 39920,
@@ -30321,196 +25891,6 @@
       "rewardName": "Majestic Manderville Shield",
       "confidence": "Static",
       "source": "Quest.Reward;QuestClassJobReward;ItemRewardType=6",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70308,
-      "kind": "Achievement",
-      "rewardId": 3285,
-      "itemId": 0,
-      "rewardName": "Reforged: Majestic Manderville Sword & Shield",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70308,
-      "kind": "Achievement",
-      "rewardId": 3286,
-      "itemId": 0,
-      "rewardName": "Reforged: Majestic Manderville Bardiche",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70308,
-      "kind": "Achievement",
-      "rewardId": 3287,
-      "itemId": 0,
-      "rewardName": "Reforged: Majestic Manderville Greatsword",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70308,
-      "kind": "Achievement",
-      "rewardId": 3288,
-      "itemId": 0,
-      "rewardName": "Reforged: Majestic Manderville Bayonet",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70308,
-      "kind": "Achievement",
-      "rewardId": 3289,
-      "itemId": 0,
-      "rewardName": "Reforged: Majestic Manderville Spear",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70308,
-      "kind": "Achievement",
-      "rewardId": 3290,
-      "itemId": 0,
-      "rewardName": "Reforged: Majestic Manderville Fists",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70308,
-      "kind": "Achievement",
-      "rewardId": 3291,
-      "itemId": 0,
-      "rewardName": "Reforged: Majestic Manderville Knives",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70308,
-      "kind": "Achievement",
-      "rewardId": 3292,
-      "itemId": 0,
-      "rewardName": "Reforged: Majestic Manderville Samurai Blade",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70308,
-      "kind": "Achievement",
-      "rewardId": 3293,
-      "itemId": 0,
-      "rewardName": "Reforged: Majestic Manderville War Scythe",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70308,
-      "kind": "Achievement",
-      "rewardId": 3294,
-      "itemId": 0,
-      "rewardName": "Reforged: Majestic Manderville Harp Bow",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70308,
-      "kind": "Achievement",
-      "rewardId": 3295,
-      "itemId": 0,
-      "rewardName": "Reforged: Majestic Manderville Pistol",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70308,
-      "kind": "Achievement",
-      "rewardId": 3296,
-      "itemId": 0,
-      "rewardName": "Reforged: Majestic Manderville Chakrams",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70308,
-      "kind": "Achievement",
-      "rewardId": 3297,
-      "itemId": 0,
-      "rewardName": "Reforged: Majestic Manderville Staff",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70308,
-      "kind": "Achievement",
-      "rewardId": 3298,
-      "itemId": 0,
-      "rewardName": "Reforged: Majestic Manderville Index",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70308,
-      "kind": "Achievement",
-      "rewardId": 3299,
-      "itemId": 0,
-      "rewardName": "Reforged: Majestic Manderville Degen",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70308,
-      "kind": "Achievement",
-      "rewardId": 3300,
-      "itemId": 0,
-      "rewardName": "Reforged: Majestic Manderville Wand",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70308,
-      "kind": "Achievement",
-      "rewardId": 3301,
-      "itemId": 0,
-      "rewardName": "Reforged: Majestic Manderville Codex",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70308,
-      "kind": "Achievement",
-      "rewardId": 3302,
-      "itemId": 0,
-      "rewardName": "Reforged: Majestic Manderville Orrery",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70308,
-      "kind": "Achievement",
-      "rewardId": 3303,
-      "itemId": 0,
-      "rewardName": "Reforged: Majestic Manderville Wings",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
       "otherSources": []
     },
     {
@@ -31058,116 +26438,6 @@
       "otherSources": []
     },
     {
-      "questRowId": 70340,
-      "kind": "Achievement",
-      "rewardId": 3362,
-      "itemId": 0,
-      "rewardName": "Vrandtastic: Lodestar Saw",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70340,
-      "kind": "Achievement",
-      "rewardId": 3363,
-      "itemId": 0,
-      "rewardName": "Vrandtastic: Lodestar Cross-pein Hammer",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70340,
-      "kind": "Achievement",
-      "rewardId": 3364,
-      "itemId": 0,
-      "rewardName": "Vrandtastic: Lodestar Raising Hammer",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70340,
-      "kind": "Achievement",
-      "rewardId": 3365,
-      "itemId": 0,
-      "rewardName": "Vrandtastic: Lodestar Mallet",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70340,
-      "kind": "Achievement",
-      "rewardId": 3366,
-      "itemId": 0,
-      "rewardName": "Vrandtastic: Lodestar Round Knife",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70340,
-      "kind": "Achievement",
-      "rewardId": 3367,
-      "itemId": 0,
-      "rewardName": "Vrandtastic: Lodestar Needle",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70340,
-      "kind": "Achievement",
-      "rewardId": 3368,
-      "itemId": 0,
-      "rewardName": "Vrandtastic: Lodestar Alembic",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70340,
-      "kind": "Achievement",
-      "rewardId": 3369,
-      "itemId": 0,
-      "rewardName": "Vrandtastic: Lodestar Frypan",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70340,
-      "kind": "Achievement",
-      "rewardId": 3370,
-      "itemId": 0,
-      "rewardName": "Vrandtastic: Lodestar Pickaxe",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70340,
-      "kind": "Achievement",
-      "rewardId": 3371,
-      "itemId": 0,
-      "rewardName": "Vrandtastic: Lodestar Hatchet",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70340,
-      "kind": "Achievement",
-      "rewardId": 3372,
-      "itemId": 0,
-      "rewardName": "Vrandtastic: Lodestar Fishing Rod",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
       "questRowId": 70341,
       "kind": "Title",
       "rewardId": 724,
@@ -31379,196 +26649,6 @@
     },
     {
       "questRowId": 70342,
-      "kind": "Achievement",
-      "rewardId": 3380,
-      "itemId": 0,
-      "rewardName": "Perfect: Mandervillous Falchion & Kite Shield",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70342,
-      "kind": "Achievement",
-      "rewardId": 3381,
-      "itemId": 0,
-      "rewardName": "Perfect: Mandervillous Battleaxe",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70342,
-      "kind": "Achievement",
-      "rewardId": 3382,
-      "itemId": 0,
-      "rewardName": "Perfect: Mandervillous Greatsword",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70342,
-      "kind": "Achievement",
-      "rewardId": 3383,
-      "itemId": 0,
-      "rewardName": "Perfect: Mandervillous Gunblade",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70342,
-      "kind": "Achievement",
-      "rewardId": 3384,
-      "itemId": 0,
-      "rewardName": "Perfect: Mandervillous Trident",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70342,
-      "kind": "Achievement",
-      "rewardId": 3385,
-      "itemId": 0,
-      "rewardName": "Perfect: Mandervillous Fists",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70342,
-      "kind": "Achievement",
-      "rewardId": 3386,
-      "itemId": 0,
-      "rewardName": "Perfect: Mandervillous Knives",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70342,
-      "kind": "Achievement",
-      "rewardId": 3387,
-      "itemId": 0,
-      "rewardName": "Perfect: Mandervillous Samurai Blade",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70342,
-      "kind": "Achievement",
-      "rewardId": 3388,
-      "itemId": 0,
-      "rewardName": "Perfect: Mandervillous Zaghnal",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70342,
-      "kind": "Achievement",
-      "rewardId": 3389,
-      "itemId": 0,
-      "rewardName": "Perfect: Mandervillous Compound Bow",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70342,
-      "kind": "Achievement",
-      "rewardId": 3390,
-      "itemId": 0,
-      "rewardName": "Perfect: Mandervillous Revolver",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70342,
-      "kind": "Achievement",
-      "rewardId": 3391,
-      "itemId": 0,
-      "rewardName": "Perfect: Mandervillous Chakrams",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70342,
-      "kind": "Achievement",
-      "rewardId": 3392,
-      "itemId": 0,
-      "rewardName": "Perfect: Mandervillous Rod",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70342,
-      "kind": "Achievement",
-      "rewardId": 3393,
-      "itemId": 0,
-      "rewardName": "Perfect: Mandervillous Index",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70342,
-      "kind": "Achievement",
-      "rewardId": 3394,
-      "itemId": 0,
-      "rewardName": "Perfect: Mandervillous Rapier",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70342,
-      "kind": "Achievement",
-      "rewardId": 3395,
-      "itemId": 0,
-      "rewardName": "Perfect: Mandervillous Cane",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70342,
-      "kind": "Achievement",
-      "rewardId": 3396,
-      "itemId": 0,
-      "rewardName": "Perfect: Mandervillous Codex",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70342,
-      "kind": "Achievement",
-      "rewardId": 3397,
-      "itemId": 0,
-      "rewardName": "Perfect: Mandervillous Torquetum",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70342,
-      "kind": "Achievement",
-      "rewardId": 3398,
-      "itemId": 0,
-      "rewardName": "Perfect: Mandervillous Wings",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70342,
       "kind": "Title",
       "rewardId": 701,
       "itemId": 0,
@@ -31775,196 +26855,6 @@
       "rewardName": "Mandervillous Kite Shield",
       "confidence": "Static",
       "source": "Quest.Reward;QuestClassJobReward;ItemRewardType=6",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70343,
-      "kind": "Achievement",
-      "rewardId": 3380,
-      "itemId": 0,
-      "rewardName": "Perfect: Mandervillous Falchion & Kite Shield",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70343,
-      "kind": "Achievement",
-      "rewardId": 3381,
-      "itemId": 0,
-      "rewardName": "Perfect: Mandervillous Battleaxe",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70343,
-      "kind": "Achievement",
-      "rewardId": 3382,
-      "itemId": 0,
-      "rewardName": "Perfect: Mandervillous Greatsword",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70343,
-      "kind": "Achievement",
-      "rewardId": 3383,
-      "itemId": 0,
-      "rewardName": "Perfect: Mandervillous Gunblade",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70343,
-      "kind": "Achievement",
-      "rewardId": 3384,
-      "itemId": 0,
-      "rewardName": "Perfect: Mandervillous Trident",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70343,
-      "kind": "Achievement",
-      "rewardId": 3385,
-      "itemId": 0,
-      "rewardName": "Perfect: Mandervillous Fists",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70343,
-      "kind": "Achievement",
-      "rewardId": 3386,
-      "itemId": 0,
-      "rewardName": "Perfect: Mandervillous Knives",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70343,
-      "kind": "Achievement",
-      "rewardId": 3387,
-      "itemId": 0,
-      "rewardName": "Perfect: Mandervillous Samurai Blade",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70343,
-      "kind": "Achievement",
-      "rewardId": 3388,
-      "itemId": 0,
-      "rewardName": "Perfect: Mandervillous Zaghnal",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70343,
-      "kind": "Achievement",
-      "rewardId": 3389,
-      "itemId": 0,
-      "rewardName": "Perfect: Mandervillous Compound Bow",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70343,
-      "kind": "Achievement",
-      "rewardId": 3390,
-      "itemId": 0,
-      "rewardName": "Perfect: Mandervillous Revolver",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70343,
-      "kind": "Achievement",
-      "rewardId": 3391,
-      "itemId": 0,
-      "rewardName": "Perfect: Mandervillous Chakrams",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70343,
-      "kind": "Achievement",
-      "rewardId": 3392,
-      "itemId": 0,
-      "rewardName": "Perfect: Mandervillous Rod",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70343,
-      "kind": "Achievement",
-      "rewardId": 3393,
-      "itemId": 0,
-      "rewardName": "Perfect: Mandervillous Index",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70343,
-      "kind": "Achievement",
-      "rewardId": 3394,
-      "itemId": 0,
-      "rewardName": "Perfect: Mandervillous Rapier",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70343,
-      "kind": "Achievement",
-      "rewardId": 3395,
-      "itemId": 0,
-      "rewardName": "Perfect: Mandervillous Cane",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70343,
-      "kind": "Achievement",
-      "rewardId": 3396,
-      "itemId": 0,
-      "rewardName": "Perfect: Mandervillous Codex",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70343,
-      "kind": "Achievement",
-      "rewardId": 3397,
-      "itemId": 0,
-      "rewardName": "Perfect: Mandervillous Torquetum",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70343,
-      "kind": "Achievement",
-      "rewardId": 3398,
-      "itemId": 0,
-      "rewardName": "Perfect: Mandervillous Wings",
-      "confidence": "Static",
-      "source": "Achievement.Data;type=24",
       "otherSources": []
     },
     {
@@ -32265,16 +27155,6 @@
     },
     {
       "questRowId": 70424,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70424,
       "kind": "AetherCurrent",
       "rewardId": 2818414,
       "itemId": 0,
@@ -32295,16 +27175,6 @@
     },
     {
       "questRowId": 70431,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70431,
       "kind": "AetherCurrent",
       "rewardId": 2818399,
       "itemId": 0,
@@ -32321,16 +27191,6 @@
       "rewardName": "Herald of Peace",
       "confidence": "Static",
       "source": "Achievement.Key;achievement=3492;type=6",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70445,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -32375,16 +27235,6 @@
     },
     {
       "questRowId": 70461,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70461,
       "kind": "AetherCurrent",
       "rewardId": 2818444,
       "itemId": 0,
@@ -32415,16 +27265,6 @@
     },
     {
       "questRowId": 70480,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70480,
       "kind": "AetherCurrent",
       "rewardId": 2818459,
       "itemId": 0,
@@ -32451,16 +27291,6 @@
       "rewardName": "Origenics",
       "confidence": "Curated",
       "source": "curated/duty_unlocks.json",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70494,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -32619,32 +27449,12 @@
     },
     {
       "questRowId": 70575,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70575,
       "kind": "AetherCurrent",
       "rewardId": 2818400,
       "itemId": 0,
       "rewardName": "Aether Current (Urqopacha)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70583,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -32659,32 +27469,12 @@
     },
     {
       "questRowId": 70587,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70587,
       "kind": "AetherCurrent",
       "rewardId": 2818401,
       "itemId": 0,
       "rewardName": "Aether Current (Urqopacha)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70591,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -32699,32 +27489,12 @@
     },
     {
       "questRowId": 70600,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70600,
       "kind": "AetherCurrent",
       "rewardId": 2818415,
       "itemId": 0,
       "rewardName": "Aether Current (Kozama'uka)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70610,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -32739,32 +27509,12 @@
     },
     {
       "questRowId": 70617,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70617,
       "kind": "AetherCurrent",
       "rewardId": 2818416,
       "itemId": 0,
       "rewardName": "Aether Current (Kozama'uka)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70621,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -32789,32 +27539,12 @@
     },
     {
       "questRowId": 70630,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70630,
       "kind": "AetherCurrent",
       "rewardId": 2818430,
       "itemId": 0,
       "rewardName": "Aether Current (Yak T'el)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70639,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -32829,32 +27559,12 @@
     },
     {
       "questRowId": 70646,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70646,
       "kind": "AetherCurrent",
       "rewardId": 2818431,
       "itemId": 0,
       "rewardName": "Aether Current (Yak T'el)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70650,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -32879,32 +27589,12 @@
     },
     {
       "questRowId": 70666,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70666,
       "kind": "AetherCurrent",
       "rewardId": 2818445,
       "itemId": 0,
       "rewardName": "Aether Current (Shaaloani)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70674,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -32919,32 +27609,12 @@
     },
     {
       "questRowId": 70676,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70676,
       "kind": "AetherCurrent",
       "rewardId": 2818447,
       "itemId": 0,
       "rewardName": "Aether Current (Shaaloani)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70680,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -32959,32 +27629,12 @@
     },
     {
       "questRowId": 70689,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70689,
       "kind": "AetherCurrent",
       "rewardId": 2818460,
       "itemId": 0,
       "rewardName": "Aether Current (Heritage Found)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70692,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -32999,32 +27649,12 @@
     },
     {
       "questRowId": 70695,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70695,
       "kind": "AetherCurrent",
       "rewardId": 2818462,
       "itemId": 0,
       "rewardName": "Aether Current (Heritage Found)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70696,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -33059,32 +27689,12 @@
     },
     {
       "questRowId": 70710,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70710,
       "kind": "AetherCurrent",
       "rewardId": 2818475,
       "itemId": 0,
       "rewardName": "Aether Current (Living Memory)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70712,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -33099,32 +27709,12 @@
     },
     {
       "questRowId": 70714,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70714,
       "kind": "AetherCurrent",
       "rewardId": 2818477,
       "itemId": 0,
       "rewardName": "Aether Current (Living Memory)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70715,
-      "kind": "Other",
-      "rewardId": 2,
-      "itemId": 0,
-      "rewardName": "Aether Current",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -33722,216 +28312,6 @@
       "otherSources": [
         "SpecialShop"
       ]
-    },
-    {
-      "questRowId": 70856,
-      "kind": "Achievement",
-      "rewardId": 3638,
-      "itemId": 0,
-      "rewardName": "The Might Phantastick: Sword & Kite Shield Penumbrae",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70856,
-      "kind": "Achievement",
-      "rewardId": 3639,
-      "itemId": 0,
-      "rewardName": "The Might Phantastick: Bardiche Penumbrae",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70856,
-      "kind": "Achievement",
-      "rewardId": 3640,
-      "itemId": 0,
-      "rewardName": "The Might Phantastick: Guillotine Penumbrae",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70856,
-      "kind": "Achievement",
-      "rewardId": 3641,
-      "itemId": 0,
-      "rewardName": "The Might Phantastick: Bayonet Penumbrae",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70856,
-      "kind": "Achievement",
-      "rewardId": 3642,
-      "itemId": 0,
-      "rewardName": "The Might Phantastick: Spear Penumbrae",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70856,
-      "kind": "Achievement",
-      "rewardId": 3643,
-      "itemId": 0,
-      "rewardName": "The Might Phantastick: Knuckles Penumbrae",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70856,
-      "kind": "Achievement",
-      "rewardId": 3644,
-      "itemId": 0,
-      "rewardName": "The Might Phantastick: Cleavers Penumbrae",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70856,
-      "kind": "Achievement",
-      "rewardId": 3645,
-      "itemId": 0,
-      "rewardName": "The Might Phantastick: Twinfangs Penumbrae",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70856,
-      "kind": "Achievement",
-      "rewardId": 3646,
-      "itemId": 0,
-      "rewardName": "The Might Phantastick: Blade Penumbrae",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70856,
-      "kind": "Achievement",
-      "rewardId": 3647,
-      "itemId": 0,
-      "rewardName": "The Might Phantastick: War Scythe Penumbrae",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70856,
-      "kind": "Achievement",
-      "rewardId": 3648,
-      "itemId": 0,
-      "rewardName": "The Might Phantastick: Harp Bow Penumbrae",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70856,
-      "kind": "Achievement",
-      "rewardId": 3649,
-      "itemId": 0,
-      "rewardName": "The Might Phantastick: Arquebus Penumbrae",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70856,
-      "kind": "Achievement",
-      "rewardId": 3650,
-      "itemId": 0,
-      "rewardName": "The Might Phantastick: Terpna Penumbrae",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70856,
-      "kind": "Achievement",
-      "rewardId": 3651,
-      "itemId": 0,
-      "rewardName": "The Might Phantastick: Staff Penumbrae",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70856,
-      "kind": "Achievement",
-      "rewardId": 3652,
-      "itemId": 0,
-      "rewardName": "The Might Phantastick: Index Penumbrae",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70856,
-      "kind": "Achievement",
-      "rewardId": 3653,
-      "itemId": 0,
-      "rewardName": "The Might Phantastick: Rapier Penumbrae",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70856,
-      "kind": "Achievement",
-      "rewardId": 3654,
-      "itemId": 0,
-      "rewardName": "The Might Phantastick: Flat Brush Penumbrae",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70856,
-      "kind": "Achievement",
-      "rewardId": 3655,
-      "itemId": 0,
-      "rewardName": "The Might Phantastick: Crook Penumbrae",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70856,
-      "kind": "Achievement",
-      "rewardId": 3656,
-      "itemId": 0,
-      "rewardName": "The Might Phantastick: Codex Penumbrae",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70856,
-      "kind": "Achievement",
-      "rewardId": 3657,
-      "itemId": 0,
-      "rewardName": "The Might Phantastick: Star Globe Penumbrae",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70856,
-      "kind": "Achievement",
-      "rewardId": 3658,
-      "itemId": 0,
-      "rewardName": "The Might Phantastick: Pendulums Penumbrae",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
     },
     {
       "questRowId": 70857,
@@ -36122,216 +30502,6 @@
       ]
     },
     {
-      "questRowId": 70918,
-      "kind": "Achievement",
-      "rewardId": 3752,
-      "itemId": 0,
-      "rewardName": "Phantom of the Umbra: Sword & Kite Shield Umbrae",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70918,
-      "kind": "Achievement",
-      "rewardId": 3753,
-      "itemId": 0,
-      "rewardName": "Phantom of the Umbra: Bardiche Umbrae",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70918,
-      "kind": "Achievement",
-      "rewardId": 3754,
-      "itemId": 0,
-      "rewardName": "Phantom of the Umbra: Guillotine Umbrae",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70918,
-      "kind": "Achievement",
-      "rewardId": 3755,
-      "itemId": 0,
-      "rewardName": "Phantom of the Umbra: Bayonet Umbrae",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70918,
-      "kind": "Achievement",
-      "rewardId": 3756,
-      "itemId": 0,
-      "rewardName": "Phantom of the Umbra: Spear Umbrae",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70918,
-      "kind": "Achievement",
-      "rewardId": 3757,
-      "itemId": 0,
-      "rewardName": "Phantom of the Umbra: Knuckles Umbrae",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70918,
-      "kind": "Achievement",
-      "rewardId": 3758,
-      "itemId": 0,
-      "rewardName": "Phantom of the Umbra: Cleavers Umbrae",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70918,
-      "kind": "Achievement",
-      "rewardId": 3759,
-      "itemId": 0,
-      "rewardName": "Phantom of the Umbra: Twinfangs Umbrae",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70918,
-      "kind": "Achievement",
-      "rewardId": 3760,
-      "itemId": 0,
-      "rewardName": "Phantom of the Umbra: Blade Umbrae",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70918,
-      "kind": "Achievement",
-      "rewardId": 3761,
-      "itemId": 0,
-      "rewardName": "Phantom of the Umbra: War Scythe Umbrae",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70918,
-      "kind": "Achievement",
-      "rewardId": 3762,
-      "itemId": 0,
-      "rewardName": "Phantom of the Umbra: Harp Bow Umbrae",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70918,
-      "kind": "Achievement",
-      "rewardId": 3763,
-      "itemId": 0,
-      "rewardName": "Phantom of the Umbra: Arquebus Umbrae",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70918,
-      "kind": "Achievement",
-      "rewardId": 3764,
-      "itemId": 0,
-      "rewardName": "Phantom of the Umbra: Terpna Umbrae",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70918,
-      "kind": "Achievement",
-      "rewardId": 3765,
-      "itemId": 0,
-      "rewardName": "Phantom of the Umbra: Staff Umbrae",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70918,
-      "kind": "Achievement",
-      "rewardId": 3766,
-      "itemId": 0,
-      "rewardName": "Phantom of the Umbra: Index Umbrae",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70918,
-      "kind": "Achievement",
-      "rewardId": 3767,
-      "itemId": 0,
-      "rewardName": "Phantom of the Umbra: Rapier Umbrae",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70918,
-      "kind": "Achievement",
-      "rewardId": 3768,
-      "itemId": 0,
-      "rewardName": "Phantom of the Umbra: Flat Brush Umbrae",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70918,
-      "kind": "Achievement",
-      "rewardId": 3769,
-      "itemId": 0,
-      "rewardName": "Phantom of the Umbra: Crook Umbrae",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70918,
-      "kind": "Achievement",
-      "rewardId": 3770,
-      "itemId": 0,
-      "rewardName": "Phantom of the Umbra: Codex Umbrae",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70918,
-      "kind": "Achievement",
-      "rewardId": 3771,
-      "itemId": 0,
-      "rewardName": "Phantom of the Umbra: Star Globe Umbrae",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70918,
-      "kind": "Achievement",
-      "rewardId": 3772,
-      "itemId": 0,
-      "rewardName": "Phantom of the Umbra: Pendulums Umbrae",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
       "questRowId": 70941,
       "kind": "DutyUnlock",
       "rewardId": 1032,
@@ -36874,216 +31044,6 @@
       "otherSources": [
         "SpecialShop"
       ]
-    },
-    {
-      "questRowId": 70992,
-      "kind": "Achievement",
-      "rewardId": 3842,
-      "itemId": 0,
-      "rewardName": "Clare Obscurum: Sword & Shield Obscurum",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70992,
-      "kind": "Achievement",
-      "rewardId": 3843,
-      "itemId": 0,
-      "rewardName": "Clare Obscurum: Bardiche Obscurum",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70992,
-      "kind": "Achievement",
-      "rewardId": 3844,
-      "itemId": 0,
-      "rewardName": "Clare Obscurum: Guillotine Obscurum",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70992,
-      "kind": "Achievement",
-      "rewardId": 3845,
-      "itemId": 0,
-      "rewardName": "Clare Obscurum: Gunblade Obscurum",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70992,
-      "kind": "Achievement",
-      "rewardId": 3846,
-      "itemId": 0,
-      "rewardName": "Clare Obscurum: Fork Obscurum",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70992,
-      "kind": "Achievement",
-      "rewardId": 3847,
-      "itemId": 0,
-      "rewardName": "Clare Obscurum: Jamadhars Obscurum",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70992,
-      "kind": "Achievement",
-      "rewardId": 3848,
-      "itemId": 0,
-      "rewardName": "Clare Obscurum: Khukuri Obscurum",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70992,
-      "kind": "Achievement",
-      "rewardId": 3849,
-      "itemId": 0,
-      "rewardName": "Clare Obscurum: Twinfangs Obscurum",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70992,
-      "kind": "Achievement",
-      "rewardId": 3850,
-      "itemId": 0,
-      "rewardName": "Clare Obscurum: Blade Obscurum",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70992,
-      "kind": "Achievement",
-      "rewardId": 3851,
-      "itemId": 0,
-      "rewardName": "Clare Obscurum: War Scythe Obscurum",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70992,
-      "kind": "Achievement",
-      "rewardId": 3852,
-      "itemId": 0,
-      "rewardName": "Clare Obscurum: Longbow Obscurum",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70992,
-      "kind": "Achievement",
-      "rewardId": 3853,
-      "itemId": 0,
-      "rewardName": "Clare Obscurum: Musketoon Obscurum",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70992,
-      "kind": "Achievement",
-      "rewardId": 3854,
-      "itemId": 0,
-      "rewardName": "Clare Obscurum: Tathlums Obscurum",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70992,
-      "kind": "Achievement",
-      "rewardId": 3855,
-      "itemId": 0,
-      "rewardName": "Clare Obscurum: Longpole Obscurum",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70992,
-      "kind": "Achievement",
-      "rewardId": 3856,
-      "itemId": 0,
-      "rewardName": "Clare Obscurum: Index Obscurum",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70992,
-      "kind": "Achievement",
-      "rewardId": 3857,
-      "itemId": 0,
-      "rewardName": "Clare Obscurum: Hanger Obscurum",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70992,
-      "kind": "Achievement",
-      "rewardId": 3858,
-      "itemId": 0,
-      "rewardName": "Clare Obscurum: Round Brush Obscurum",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70992,
-      "kind": "Achievement",
-      "rewardId": 3859,
-      "itemId": 0,
-      "rewardName": "Clare Obscurum: Cane Obscurum",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70992,
-      "kind": "Achievement",
-      "rewardId": 3860,
-      "itemId": 0,
-      "rewardName": "Clare Obscurum: Codex Obscurum",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70992,
-      "kind": "Achievement",
-      "rewardId": 3861,
-      "itemId": 0,
-      "rewardName": "Clare Obscurum: Star Pendant Obscurum",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70992,
-      "kind": "Achievement",
-      "rewardId": 3862,
-      "itemId": 0,
-      "rewardName": "Clare Obscurum: Wings Obscurum",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
     },
     {
       "questRowId": 70993,
@@ -38278,216 +32238,6 @@
       "otherSources": [
         "SpecialShop"
       ]
-    },
-    {
-      "questRowId": 71041,
-      "kind": "Achievement",
-      "rewardId": 3949,
-      "itemId": 0,
-      "rewardName": "Cut Above the Rest: Sword & Shield Occultum",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 71041,
-      "kind": "Achievement",
-      "rewardId": 3950,
-      "itemId": 0,
-      "rewardName": "Cut Above the Rest: War Hammer Occultum",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 71041,
-      "kind": "Achievement",
-      "rewardId": 3951,
-      "itemId": 0,
-      "rewardName": "Cut Above the Rest: Guillotine Occultum",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 71041,
-      "kind": "Achievement",
-      "rewardId": 3952,
-      "itemId": 0,
-      "rewardName": "Cut Above the Rest: Gunblade Occultum",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 71041,
-      "kind": "Achievement",
-      "rewardId": 3953,
-      "itemId": 0,
-      "rewardName": "Cut Above the Rest: Spear Occultum",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 71041,
-      "kind": "Achievement",
-      "rewardId": 3954,
-      "itemId": 0,
-      "rewardName": "Cut Above the Rest: Tonfa Occultum",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 71041,
-      "kind": "Achievement",
-      "rewardId": 3955,
-      "itemId": 0,
-      "rewardName": "Cut Above the Rest: Knives Occultum",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 71041,
-      "kind": "Achievement",
-      "rewardId": 3956,
-      "itemId": 0,
-      "rewardName": "Cut Above the Rest: Twinfangs Occultum",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 71041,
-      "kind": "Achievement",
-      "rewardId": 3957,
-      "itemId": 0,
-      "rewardName": "Cut Above the Rest: Blade Occultum",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 71041,
-      "kind": "Achievement",
-      "rewardId": 3958,
-      "itemId": 0,
-      "rewardName": "Cut Above the Rest: War Scythe Occultum",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 71041,
-      "kind": "Achievement",
-      "rewardId": 3959,
-      "itemId": 0,
-      "rewardName": "Cut Above the Rest: Harp Bow Occultum",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 71041,
-      "kind": "Achievement",
-      "rewardId": 3960,
-      "itemId": 0,
-      "rewardName": "Cut Above the Rest: Revolver Occultum",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 71041,
-      "kind": "Achievement",
-      "rewardId": 3961,
-      "itemId": 0,
-      "rewardName": "Cut Above the Rest: Fans Occultum",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 71041,
-      "kind": "Achievement",
-      "rewardId": 3962,
-      "itemId": 0,
-      "rewardName": "Cut Above the Rest: Staff Occultum",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 71041,
-      "kind": "Achievement",
-      "rewardId": 3963,
-      "itemId": 0,
-      "rewardName": "Cut Above the Rest: Index Occultum",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 71041,
-      "kind": "Achievement",
-      "rewardId": 3964,
-      "itemId": 0,
-      "rewardName": "Cut Above the Rest: Degen Occultum",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 71041,
-      "kind": "Achievement",
-      "rewardId": 3965,
-      "itemId": 0,
-      "rewardName": "Cut Above the Rest: Round Brush Occultum",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 71041,
-      "kind": "Achievement",
-      "rewardId": 3966,
-      "itemId": 0,
-      "rewardName": "Cut Above the Rest: Cane Occultum",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 71041,
-      "kind": "Achievement",
-      "rewardId": 3967,
-      "itemId": 0,
-      "rewardName": "Cut Above the Rest: Codex Occultum",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 71041,
-      "kind": "Achievement",
-      "rewardId": 3968,
-      "itemId": 0,
-      "rewardName": "Cut Above the Rest: Star Globe Occultum",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
-    },
-    {
-      "questRowId": 71041,
-      "kind": "Achievement",
-      "rewardId": 3969,
-      "itemId": 0,
-      "rewardName": "Cut Above the Rest: Pendulums Occultum",
-      "confidence": "Static",
-      "source": "Achievement.Key;type=24",
-      "otherSources": []
     },
     {
       "questRowId": 71042,

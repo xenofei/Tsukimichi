@@ -19,6 +19,7 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 - What Lies Beneath (Palace of the Dead, floors 51–200) is filed under Palace of the Dead, not Gridanian Sidequests.
 - Chain steps now follow the order you play them in, where a few quests the game files without a place came before the quest that unlocks them.
 - Two game clients saving at the same time can no longer leave a half-written file or lose each other's changes: every file is written whole and then swapped into place, and pins and Moonlit verdicts made in one client are merged with those made in the other instead of being saved over. Two clients in different languages no longer delete each other's journal word index, and one starting up no longer removes the index the other is building.
+- Moonlit: relic weapon achievements are gone from the relic quests (one quest showed up to 21 of them, all obtained as soon as you finished it once), and titles that need several quests, such as Seeker of Bounty, are no longer listed under each of those quests as obtained after the first one. Each aether current is counted once, where it was counted twice before. Titles and achievements now follow the game's own record once it is loaded, which happens when you open the Achievements window in game; until then, and for characters you are not logged in on, they are worked out from the quests each one asks for.
 
 ## [1.1.0] - 2026-09-30
 
