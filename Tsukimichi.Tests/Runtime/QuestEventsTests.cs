@@ -46,6 +46,28 @@ public sealed class QuestEventsTests
     }
 
     [Fact]
+    public void A_seasonal_quest_cleared_at_the_end_of_its_event_is_not_Abandoned()
+    {
+        const ushort Festival = 9;
+        var catalog = Fixture.Catalog(Fixture.Quest(Fixture.A) with { Festival = Festival }, Fixture.Quest(Fixture.B) with { Festival = Festival });
+        var old = Fixture.Snapshot() with { Accepted = [Fixture.Accepted(Fixture.A, 2)], ActiveFestivals = [Festival] };
+
+        // The event ended and the game took the quest out of the journal: the evaluator reads the festival inactive.
+        var ended = Fixture.Snapshot() with { ActiveFestivals = [] };
+        var endedStates = StateResolver.ResolveAll(catalog, ended, EvalContext.Default);
+        Assert.Empty(QuestEvents.Derive(SnapshotDiff.Compute(old, ended), old, ended, catalog, States(), endedStates, Now));
+
+        // Without an evaluation for the row, the snapshot's running festivals decide the same way.
+        Assert.Empty(QuestEvents.Derive(SnapshotDiff.Compute(old, ended), old, ended, catalog, States(), States(), Now));
+
+        // While the event runs, dropping the quest is the player's doing.
+        var running = Fixture.Snapshot() with { ActiveFestivals = [Festival] };
+        var runningStates = StateResolver.ResolveAll(catalog, running, EvalContext.Default);
+        var e = Assert.Single(QuestEvents.Derive(SnapshotDiff.Compute(old, running), old, running, catalog, States(), runningStates, Now));
+        Assert.Equal(new QuestEvent(QuestEventKind.Abandoned, Fixture.A, Now), e);
+    }
+
+    [Fact]
     public void Turning_in_a_quest_is_Completed_not_Abandoned()
     {
         var catalog = Fixture.Catalog(Fixture.Quest(Fixture.A));

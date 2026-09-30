@@ -141,6 +141,23 @@ public sealed class AbandonedLedgerTests : IDisposable
     }
 
     [Fact]
+    public void A_seasonal_quest_removed_when_its_event_ends_is_not_recorded()
+    {
+        var catalog = Fixture.Catalog(Fixture.Quest(Fixture.A) with { Festival = 9, StepCount = 3 });
+        var old = Journal([], (Fixture.A, 2)) with { ActiveFestivals = [9] };
+        var ended = Journal([]) with { ActiveFestivals = [] };
+        var ledger = new Dictionary<ushort, AbandonedEntry>();
+
+        Assert.False(Poll(ledger, catalog, old, ended, T1));
+        Assert.Empty(ledger);
+
+        // Dropped while the event still runs, it is recorded as usual.
+        var dropped = Journal([]) with { ActiveFestivals = [9] };
+        Assert.True(Poll(ledger, catalog, old, dropped, T1));
+        Assert.Equal(new AbandonedEntry(Id(Fixture.A), T1, 2, 3), Assert.Single(ledger.Values));
+    }
+
+    [Fact]
     public void Save_then_Load_round_trips_the_entries_newest_first()
     {
         var path = AbandonedLedger.PathFor(tmp.File("characters"), 7);
