@@ -107,6 +107,10 @@ public sealed class TreePane
     /// <summary>Sprout mode's reach this frame: nodes wholly beyond it fold to their counts; null when Sprout mode is off.</summary>
     private byte? sproutReach;
 
+    /// <summary>The scope and reach last checked against Sprout's folds, so the check runs only when either changes.</summary>
+    private QuestScope sproutCheckedScope = QuestScope.None;
+    private byte? sproutCheckedReach;
+
     // Per-frame row geometry, set once in Draw.
     private float lineHeight;
     private float rowPadY;
@@ -127,6 +131,7 @@ public sealed class TreePane
         revealing = ui.RevealPending;
         ui.RevealPending = false;
         sproutReach = ui.Filters.Preset == Preset.Sprout ? runner.Spoilers.ReachExpansion : null;
+        KeepSelectionVisible();
 
         lineHeight = ImGui.GetTextLineHeight();
         glyphRadius = UiMetrics.TreeGlyphRadius(lineHeight);
@@ -154,6 +159,67 @@ public sealed class TreePane
 
         revealing = false;
         ui.RecordSpan(UiRects.Tree, start, width);
+    }
+
+    /// <summary>Whether Sprout mode folds <paramref name="node"/>: every quest under it lies beyond the reach.</summary>
+    private static bool IsSproutFolded(Node node, byte reach) =>
+        node.MinExpansion != byte.MaxValue && node.MinExpansion > reach;
+
+    /// <summary>
+    /// Sprout mode folds nodes to their counts, so a scope selected inside one would leave no row selected. When the
+    /// selection or the reach changes, a scope hidden under a folded node moves to that node (its nearest visible
+    /// ancestor, always drawn since its parent is not folded), and the frame opens and scrolls to it.
+    /// </summary>
+    private void KeepSelectionVisible()
+    {
+        if (sproutReach is not { } reach)
+        {
+            sproutCheckedReach = null;
+            return;
+        }
+
+        if (sproutCheckedReach == reach && sproutCheckedScope == ui.Scope)
+        {
+            return;
+        }
+
+        var target = ui.Scope;
+        foreach (var section in sections)
+        {
+            if (FoldedHolder(section, reach, ui.Scope) is { } holder)
+            {
+                target = holder.Scope;
+                break;
+            }
+        }
+
+        if (target != ui.Scope)
+        {
+            Select(target);
+            revealing = true;
+        }
+
+        sproutCheckedReach = reach;
+        sproutCheckedScope = ui.Scope;
+    }
+
+    /// <summary>The outermost Sprout-folded node that hides <paramref name="scope"/> under it, or null when the scope's row is drawn.</summary>
+    private static Node? FoldedHolder(Node node, byte reach, QuestScope scope)
+    {
+        if (IsSproutFolded(node, reach))
+        {
+            return node.Scope != scope && Contains(node, scope) ? node : null;
+        }
+
+        foreach (var child in node.Children)
+        {
+            if (FoldedHolder(child, reach, scope) is { } holder)
+            {
+                return holder;
+            }
+        }
+
+        return null;
     }
 
     /// <summary>Whether <paramref name="node"/> or one of its descendants carries <paramref name="scope"/>.</summary>
@@ -184,7 +250,7 @@ public sealed class TreePane
     {
         var flags = ImGuiTreeNodeFlags.SpanFullWidth | ImGuiTreeNodeFlags.FramePadding | ImGuiTreeNodeFlags.OpenOnArrow | ImGuiTreeNodeFlags.OpenOnDoubleClick;
         // Sprout mode (T19): a node wholly beyond the character's story folds to its count, children unlisted.
-        var sproutFolded = sproutReach is { } reach && node.MinExpansion != byte.MaxValue && node.MinExpansion > reach;
+        var sproutFolded = sproutReach is { } reach && IsSproutFolded(node, reach);
         if (node.Leaf || sproutFolded)
         {
             flags |= ImGuiTreeNodeFlags.Leaf | ImGuiTreeNodeFlags.NoTreePushOnOpen;
@@ -501,6 +567,7 @@ public sealed class TreePane
         bundle = current;
         counts = null;
         featureReady = -1;
+        sproutCheckedReach = null;
         sections.Clear();
 
         var ordered = new List<QuestRecord>(current.Catalog.All);
