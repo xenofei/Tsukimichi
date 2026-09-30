@@ -552,14 +552,13 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         var cellMax = new Vector2(cellMin.X + cellWidth, cellMin.Y + size);
         if (nameFocused || moreFocusedRow == row.Index || (ImGui.IsWindowHovered() && ImGui.IsMouseHoveringRect(cellMin, cellMax)))
         {
-            var after = ImGui.GetCursorScreenPos();
+            // No cursor restore afterwards: TableNextColumn follows at once, and a set position folded into the
+            // cell's CursorMaxPos would make the row taller while the button shows.
             Keyboard.MoreButton("##more", RowMenuId, new Vector2(cellMax.X - size, cellMin.Y), size);
             if (ImGui.IsItemFocused())
             {
                 moreFocusedNext = row.Index;
             }
-
-            ImGui.SetCursorScreenPos(after);
         }
 
         // Kind.
