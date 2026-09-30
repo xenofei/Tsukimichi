@@ -20,10 +20,11 @@ The export is always of the character shown in the window (the logged-in one, or
 - The files are written to your computer only. Tsukimichi has no network code and never uploads anything.
 - No content id, account id or home world is ever written.
 - The character's name is left out unless **Include character name** is ticked in Settings › Data › Export. When it is, the name goes in the JSON header (`character`) and in the file name of both formats; CSV rows never carry it.
+- Quest names are written in full. The spoiler shield (Settings › Spoilers) masks names in the window, chat and menus, but not in files: with **List every quest with a completed flag** ticked, the file names every main scenario quest, including the ones you have not reached.
 
 ## Where the files go
 
-`exports` in the plugin's config directory by default (`%APPDATA%\XIVLauncher\pluginConfigs\Tsukimichi\exports`). Settings › Data › Export › Output folder changes it; a relative folder is taken under the config directory. After an export the path is shown with an **Open folder** button, and the command prints it to chat.
+`exports` in the plugin's config directory by default (`%APPDATA%\XIVLauncher\pluginConfigs\Tsukimichi\exports`). Settings › Data › Export › Output folder changes it; a relative folder (including `\exports` or `D:exports`, which depend on the current drive or directory) is taken under the config directory. After an export the path is shown with an **Open folder** button, and the command prints it to chat.
 
 File names: `tsukimichi-<kind>[-<character>]-<yyyyMMdd>-<HHmmss>.<json|csv>`, with the local time of the export, for example `tsukimichi-quests-20260929-201500.json`.
 

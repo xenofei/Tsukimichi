@@ -16,7 +16,7 @@ static partial class Strings
     public const string ExportIncludeName = "Include character name";
     public const string ExportIncludeNameHint = "Off by default. When on, the character's name goes in the JSON header and in the file name. Content id, account and world are never written.";
     public const string ExportIncludeIncomplete = "List every quest with a completed flag";
-    public const string ExportIncludeIncompleteHint = "Off: only completed quests. On: every quest the journal knows, each marked completed true or false.";
+    public const string ExportIncludeIncompleteHint = "Off: only completed quests. On: every quest the journal knows, each marked completed true or false. Files use real quest names: the spoiler shield does not apply to them, so this lists main scenario quests you have not reached.";
     public const string ExportFolderLabel = "Output folder";
     public const string ExportFolderDefault = "Default";
     public const string ExportFolderDefaultTooltip = "Use exports in the plugin's config directory";
