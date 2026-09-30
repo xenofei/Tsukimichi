@@ -32,7 +32,7 @@ public sealed class GameStateReader
     /// </summary>
     public const int SatisfactionNpcSlots = 12;
 
-    /// <summary>Prefix of the once-per-login log line comparing the three festival arrays the client keeps.</summary>
+    /// <summary>Prefix of the log line comparing the three festival arrays the client keeps (see <see cref="LogFestivalProbe"/>).</summary>
     public const string FestivalProbePrefix = "[festival probe]";
 
     /// <summary>Grand Companies (Maelstrom, Twin Adder, Immortal Flames); ids are 1-based.</summary>
