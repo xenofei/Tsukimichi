@@ -101,7 +101,7 @@ public static class Program
 
     private static string UserAgent => $"Tsukimichi.Verify/{ToolVersion} (+https://github.com/xenofei/Tsukimichi)";
 
-    private sealed record Context(GameCatalog Game, PoliteHttp Http, LodestoneSource Lodestone, WikiSource Wiki, CollectSource Collect, GarlandSource Garland, IReadOnlyDictionary<uint, List<uint>> CuratedDutyUnlocks, IReadOnlyList<UniqueRewardEntry> UniqueEntries, string OutDir, Stopwatch Clock) : IDisposable
+    private sealed record Context(GameCatalog Game, PoliteHttp Http, LodestoneSource Lodestone, WikiSource Wiki, CollectSource Collect, GarlandSource Garland, IReadOnlyDictionary<uint, List<uint>> CuratedDutyUnlocks, IReadOnlyDictionary<uint, string> CuratedSystemUnlocks, IReadOnlyList<UniqueRewardEntry> UniqueEntries, string OutDir, Stopwatch Clock) : IDisposable
     {
         public void Dispose() => Http.Dispose();
     }
@@ -131,9 +131,10 @@ public static class Program
 
         var http = new PoliteHttp(cacheRoot, UserAgent, opts.RateSeconds, opts.Offline, log);
         var curated = LoadCuratedDutyUnlocks(Path.Combine(opts.CuratedDir, "duty_unlocks.json"));
+        var systems = LoadCuratedSystemUnlocks(Path.Combine(opts.CuratedDir, "system_unlocks.json"));
         var entries = LoadUniqueEntries(opts.DataFile);
-        log.WriteLine($"data:    {entries.Count} unique-reward entries, {curated.Count} curated duty unlocks");
-        return new Context(catalog, http, new LodestoneSource(http, log), new WikiSource(http, log), new CollectSource(http, log), new GarlandSource(http), curated, entries, opts.OutDir, clock);
+        log.WriteLine($"data:    {entries.Count} unique-reward entries, {curated.Count} curated duty unlocks, {systems.Count} curated system unlocks");
+        return new Context(catalog, http, new LodestoneSource(http, log), new WikiSource(http, log), new CollectSource(http, log), new GarlandSource(http), curated, systems, entries, opts.OutDir, clock);
     }
 
     private static async Task<int> QuestsAsync(VerifyOptions opts, CancellationToken ct)
@@ -147,7 +148,7 @@ public static class Program
         }
 
         log.WriteLine($"quests:  verifying {selection.Count} of {c.Game.Catalog.Count}");
-        var verifier = new QuestVerifier(c.Game, c.Lodestone, c.Wiki, c.Garland, c.CuratedDutyUnlocks, c.UniqueEntries, log);
+        var verifier = new QuestVerifier(c.Game, c.Lodestone, c.Wiki, c.Garland, c.CuratedDutyUnlocks, c.CuratedSystemUnlocks, c.UniqueEntries, log);
         var questCsv = Path.Combine(c.OutDir, "quest-verification.csv");
         var summaryCsv = Path.Combine(c.OutDir, "quest-verification-summary.csv");
         List<QuestRow> rows;
@@ -187,7 +188,7 @@ public static class Program
         var rewardCsv = Path.Combine(c.OutDir, "reward-verification.csv");
         var rewards = File.Exists(rewardCsv) ? Csv.ReadRewardRows(rewardCsv) : [];
         WriteReport(c, opts, "quests", rows, rewards, allowlistPath, log, [
-            $"Lodestone: {verifier.LodestoneListed} ids enumerated from the category listings, {verifier.LodestonePagesFetched} quest pages parsed; wiki: {verifier.WikiPagesFound} quest pages matched",
+            $"Lodestone: {verifier.LodestoneListed} ids enumerated from the category listings, {verifier.LodestonePagesFetched} quest pages parsed; wiki: {verifier.WikiPagesFound} quest pages matched, {verifier.NameAliasesResolved} prerequisite spellings resolved through the wiki's id-gt",
         ]);
         PrintTotals(rows.Select(r => r.Verdict), "quest rows", log);
         log.WriteLine($"done in {PoliteHttp.Elapsed(c.Clock)}; {c.Http.LiveRequests} live requests, {c.Http.CacheHits} cache hits, {c.Http.RobotsRefusals} robots refusals");
@@ -340,8 +341,10 @@ public static class Program
 
     private static void WriteFestivalSeed(string path, IReadOnlyDictionary<ushort, FestivalWindow> festivals, string gameVersion)
     {
+        // Only windows with an official announcement are kept: P11 shows "announced to end <date> (Lodestone)" and must not quote a wiki-only date.
         var entries = new JsonObject();
-        foreach (var f in festivals.Values.OrderBy(f => f.FestivalId))
+        var seen = festivals.Count;
+        foreach (var f in festivals.Values.Where(f => f.LodestoneUrl is not null && f.End.Length > 0).OrderBy(f => f.FestivalId))
         {
             var o = new JsonObject
             {
@@ -350,8 +353,8 @@ public static class Program
                 ["end"] = IsoDate(f.End),
                 ["startText"] = f.Start,
                 ["endText"] = f.End,
-                ["source"] = f.LodestoneUrl ?? f.WikiUrl,
-                ["sourceKind"] = f.LodestoneUrl is null ? "wiki" : "lodestone",
+                ["source"] = f.LodestoneUrl,
+                ["sourceKind"] = "lodestone",
                 ["wiki"] = f.WikiUrl,
                 ["questRowIds"] = new JsonArray(f.QuestRowIds.Distinct().OrderBy(i => i).Select(i => (JsonNode)i).ToArray()),
             };
@@ -360,8 +363,9 @@ public static class Program
 
         var root = new JsonObject
         {
-            ["$schema_note"] = "Seed for curated/festivals.json (P11): festivalId -> { name, start, end (ISO dates when the text parsed), startText, endText (as announced), source (Lodestone announcement when found, else the wiki page that records the dates), sourceKind, wiki, questRowIds }. Generated by Tsukimichi.Verify; review before promoting into curated/.",
+            ["$schema_note"] = "Sourced seasonal-event windows for curated/festivals.json, which P11 (feature plan v3 §3, 0.8.0) consumes: festivalId -> { name, start, end (ISO dates when the announced text parsed), startText, endText (as announced), source (the Lodestone announcement or special-site page), sourceKind (always lodestone), wiki (the page the dates and the announcement link were read from), questRowIds (Quest rows carrying this Festival id) }. Only festivals with an official Lodestone URL are listed; festivals the wiki dates without an announcement link are left out. Generated by Tsukimichi.Verify quests; facts only.",
             ["gameVersion"] = gameVersion,
+            ["festivalIdsSeen"] = seen,
             ["entries"] = entries,
         };
         Csv.Atomic(path, root.ToJsonString(new JsonSerializerOptions { WriteIndented = true, Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }) + "\n");
@@ -406,6 +410,27 @@ public static class Program
             }
 
             result[questId] = ids.Select(n => n is JsonValue v && v.TryGetValue<uint>(out var id) ? id : 0u).Where(id => id != 0).ToList();
+        }
+
+        return result;
+    }
+
+    /// <summary>curated/system_unlocks.json: quest row id → label of the system the quest unlocks.</summary>
+    private static IReadOnlyDictionary<uint, string> LoadCuratedSystemUnlocks(string path)
+    {
+        var result = new Dictionary<uint, string>();
+        if (!File.Exists(path))
+        {
+            return result;
+        }
+
+        var root = JsonNode.Parse(File.ReadAllText(path), documentOptions: new JsonDocumentOptions { CommentHandling = JsonCommentHandling.Skip, AllowTrailingCommas = true })?.AsObject();
+        foreach (var (key, value) in root ?? [])
+        {
+            if (uint.TryParse(key, out var questId) && value is JsonObject o)
+            {
+                result[questId] = o["label"]?.GetValue<string>() ?? "system";
+            }
         }
 
         return result;

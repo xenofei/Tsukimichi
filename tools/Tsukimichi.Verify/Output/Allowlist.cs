@@ -7,12 +7,13 @@ namespace Tsukimichi.Verify.Output;
 /// <summary>
 /// docs/data/verification-allowlist.json: entries <c>{ rowId, fact, source?, verdict, reason, until }</c> that excuse a
 /// gate-failing row until the named release. <c>rowId</c> may be a quest row id or <c>"*"</c>; <c>fact</c> may name a
-/// reward kind (<c>reward:Mount</c>) for reward rows. An entry has expired when <c>until</c> is a version at or below
-/// the current plugin version.
+/// reward kind (<c>reward:Mount</c>) for reward rows; <c>fix</c> (optional) names where a confirmed catalogWrong is
+/// corrected (a mapper rule, a curated file, or data) and feeds the "Discrepancies to fix" section of the report. An
+/// entry has expired when <c>until</c> is a version at or below the current plugin version.
 /// </summary>
 internal sealed class Allowlist
 {
-    public sealed record Entry(string RowId, string Fact, string? Source, string Verdict, string Reason, string Until, string? Evidence);
+    public sealed record Entry(string RowId, string Fact, string? Source, string Verdict, string Reason, string Until, string? Evidence, string? Fix);
 
     public IReadOnlyList<Entry> Entries { get; }
 
@@ -38,7 +39,8 @@ internal sealed class Allowlist
                     node["verdict"]?.GetValue<string>() ?? "*",
                     node["reason"]?.GetValue<string>() ?? string.Empty,
                     node["until"]?.GetValue<string>() ?? string.Empty,
-                    node["evidence"]?.GetValue<string>()));
+                    node["evidence"]?.GetValue<string>(),
+                    node["fix"]?.GetValue<string>()));
             }
         }
 
@@ -92,7 +94,7 @@ internal sealed class Allowlist
     {
         var root = new JsonObject
         {
-            ["$schema_note"] = "entries: { rowId (quest row id or \"*\"), fact (fact name, or reward:<Kind> for reward rows), source (optional), verdict, reason, evidence (URL), until (release in which the fix lands; the entry expires once the plugin version reaches it) }",
+            ["$schema_note"] = "entries: { rowId (quest row id or \"*\"), fact (fact name, or reward:<Kind> for reward rows), source (optional), verdict, reason, evidence (URL), fix (optional: mapper rule, curated file or data change that corrects a catalogWrong), until (release in which the fix lands; the entry expires once the plugin version reaches it) }",
             ["entries"] = new JsonArray(),
         };
         File.WriteAllText(path, root.ToJsonString(new JsonSerializerOptions { WriteIndented = true }) + "\n");

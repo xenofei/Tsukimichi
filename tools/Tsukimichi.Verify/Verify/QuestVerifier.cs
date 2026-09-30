@@ -39,6 +39,7 @@ internal sealed partial class QuestVerifier(
     WikiSource wiki,
     GarlandSource garland,
     IReadOnlyDictionary<uint, List<uint>> curatedDutyUnlocks,
+    IReadOnlyDictionary<uint, string> curatedSystemUnlocks,
     IReadOnlyList<UniqueRewardEntry> uniqueEntries,
     TextWriter log)
 {
@@ -47,10 +48,14 @@ internal sealed partial class QuestVerifier(
     private readonly Dictionary<uint, string> wikiMissing = [];
     private readonly Dictionary<uint, LodestoneListing> listingByRow = [];
     private readonly Dictionary<uint, string> lodestoneAmbiguity = [];
+    private readonly Dictionary<uint, string> twinNotes = [];
     private readonly Dictionary<(uint Section, uint Category), (List<LodestoneListing>? Rows, int Total, string Url)> listings = [];
     private readonly Dictionary<uint, LodestonePage?> pagesByRow = [];
     private readonly Dictionary<uint, GarlandQuest?> garlandByRow = [];
     private readonly Dictionary<string, List<uint>> rowsByName = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, List<uint>> rowsByBaseName = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, List<uint>> rowsByLooseName = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, string> nameAliases = new(StringComparer.Ordinal);
     private readonly HashSet<string> cfcNames = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<ushort, FestivalWindow> festivals = [];
 
@@ -58,6 +63,7 @@ internal sealed partial class QuestVerifier(
     public int LodestoneListed { get; private set; }
     public int LodestonePagesFetched { get; private set; }
     public int WikiPagesFound { get; private set; }
+    public int NameAliasesResolved => nameAliases.Count;
 
     [GeneratedRegex(@"https?://[a-z]{2}\.finalfantasyxiv\.com/lodestone/(?:special|topics)/[^\s\]|<>""']+")]
     private static partial Regex LodestoneAnnouncement();
@@ -69,13 +75,9 @@ internal sealed partial class QuestVerifier(
     {
         foreach (var q in game.Catalog.All)
         {
-            var key = Names.Canon(q.Name);
-            if (!rowsByName.TryGetValue(key, out var list))
-            {
-                rowsByName[key] = list = [];
-            }
-
-            list.Add(q.RowId);
+            Index(rowsByName, Names.Canon(q.Name), q.RowId);
+            Index(rowsByBaseName, Names.Canon(Names.Base(q.Name)), q.RowId);
+            Index(rowsByLooseName, Names.LooseKey(q.Name), q.RowId);
         }
 
         foreach (var name in game.ContentFinderConditionNames.Values)
@@ -84,6 +86,7 @@ internal sealed partial class QuestVerifier(
         }
 
         await WikiPassAsync(selection, ct);
+        await UnknownNamesPassAsync(selection, ct);
         await LodestoneListingsAsync(selection, ct);
         await FestivalPassAsync(selection, ct);
         await GarlandPassAsync(selection, ct);
@@ -223,6 +226,70 @@ internal sealed partial class QuestVerifier(
         log.WriteLine($"wiki: {wikiByRow.Count} quests matched, {wikiAmbiguity.Count} ambiguous, {wikiMissing.Count} missing");
     }
 
+    private static void Index(Dictionary<string, List<uint>> map, string key, uint rowId)
+    {
+        if (key.Length == 0)
+        {
+            return;
+        }
+
+        if (!map.TryGetValue(key, out var list))
+        {
+            map[key] = list = [];
+        }
+
+        list.Add(rowId);
+    }
+
+    /// <summary>
+    /// Prerequisite names the wiki uses that no catalog row carries (renamed quests, special-character titles, the
+    /// wiki's own disambiguation spellings): their wiki pages name the row through <c>id-gt</c>, which becomes an alias.
+    /// </summary>
+    private async Task UnknownNamesPassAsync(IReadOnlyList<QuestRecord> selection, CancellationToken ct)
+    {
+        var unknown = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var quest in selection)
+        {
+            if (!wikiByRow.TryGetValue(quest.RowId, out var page))
+            {
+                continue;
+            }
+
+            var box = page.QuestInfobox;
+            foreach (var name in WikiSource.SplitNames(box.GetValueOrDefault("prev-quest")).Concat(WikiSource.SplitNames(box.GetValueOrDefault("req-quest"))))
+            {
+                // Anything but an exact catalog name: a disambiguated title ("Cleaning House (Level 56)") may be a renamed row, not the base-named one.
+                if (!rowsByName.ContainsKey(Names.Canon(name)))
+                {
+                    unknown.Add(name);
+                }
+            }
+        }
+
+        if (unknown.Count == 0)
+        {
+            return;
+        }
+
+        log.WriteLine($"wiki: looking up {unknown.Count} prerequisite names that are not exact catalog names");
+        var pages = await wiki.GetPagesAsync(unknown, ct);
+        foreach (var name in unknown)
+        {
+            if (!pages.TryGetValue(Names.WikiTitle(name), out var page) || page.Missing)
+            {
+                continue;
+            }
+
+            var id = page.QuestInfobox.Count > 0 ? page.IdGt : 0;
+            if (id != 0 && game.Catalog.GetByRowId(id) is { } row && Names.Canon(row.Name) != Names.Canon(name))
+            {
+                nameAliases[Names.Canon(name)] = Names.Canon(row.Name);
+            }
+        }
+
+        log.WriteLine($"wiki: {nameAliases.Count} of {unknown.Count} resolved to another row name through the page's id-gt");
+    }
+
     private static Dictionary<uint, WikiPage> IndexByGt(IEnumerable<WikiPage> pages)
     {
         var byGt = new Dictionary<uint, WikiPage>();
@@ -281,9 +348,15 @@ internal sealed partial class QuestVerifier(
             .ToDictionary(g => g.Key, g => g.ToList());
         var claimed = new Dictionary<string, uint>(StringComparer.Ordinal);
 
-        // First the rows whose wiki page names the Lodestone id.
+        // First the rows whose wiki page names the Lodestone id, when the catalog has one row of that name: a wiki page
+        // shared by same-name twins names one twin's id-edb for both (Way of the Archer: id-gt 65557, id-edb of 65667).
         foreach (var quest in selection)
         {
+            if (rowsByName.GetValueOrDefault(Names.Canon(quest.Name), []).Count > 1)
+            {
+                continue;
+            }
+
             if (wikiByRow.TryGetValue(quest.RowId, out var page) && page.QuestInfobox.TryGetValue("id-edb", out var edb))
             {
                 var id = edb.Trim().ToLowerInvariant();
@@ -294,15 +367,17 @@ internal sealed partial class QuestVerifier(
             }
         }
 
-        // Then by (category, name), narrowed by level and area when the name repeats inside the category.
-        foreach (var quest in selection)
+        // Then by (category, name). Where the name repeats inside the category the candidate pages are fetched and
+        // scored on level, class line, starting class, rewards, area and Grand Company; a row takes a page only when
+        // it is that page's best row and the page is that row's best page.
+        var groups = selection
+            .Where(q => !listingByRow.ContainsKey(q.RowId) && !q.IsUnlisted)
+            .GroupBy(q => (q.Journal.CategoryId, Name: Names.Canon(q.Name)));
+        var scored = 0;
+        foreach (var group in groups)
         {
-            if (listingByRow.ContainsKey(quest.RowId) || quest.IsUnlisted)
-            {
-                continue;
-            }
-
-            if (!byCategoryName.TryGetValue((quest.Journal.CategoryId, Names.Canon(quest.Name)), out var candidates))
+            var quests = group.ToList();
+            if (!byCategoryName.TryGetValue(group.Key, out var candidates))
             {
                 continue;
             }
@@ -310,38 +385,145 @@ internal sealed partial class QuestVerifier(
             var free = candidates.Where(c => !claimed.ContainsKey(c.LodestoneId)).ToList();
             if (free.Count == 0)
             {
-                lodestoneAmbiguity[quest.RowId] = $"the {candidates.Count} listing(s) of this name in category {quest.Journal.CategoryId} are claimed by other rows";
+                foreach (var quest in quests)
+                {
+                    lodestoneAmbiguity[quest.RowId] = $"the {candidates.Count} listing(s) of this name in category {quest.Journal.CategoryId} are claimed by other rows";
+                }
+
                 continue;
             }
 
-            if (free.Count > 1)
+            if (quests.Count == 1 && free.Count == 1)
             {
-                var level = GameCatalog.DisplayLevel(quest);
-                var narrowed = free.Where(c => c.Level == level).ToList();
-                if (narrowed.Count > 1)
-                {
-                    var area = Names.Canon(game.ExtrasOf(quest.RowId).PlaceName);
-                    var byArea = narrowed.Where(c => Names.Canon(c.Area) == area).ToList();
-                    if (byArea.Count >= 1)
-                    {
-                        narrowed = byArea;
-                    }
-                }
+                claimed[free[0].LodestoneId] = quests[0].RowId;
+                listingByRow[quests[0].RowId] = free[0];
+                continue;
+            }
 
-                if (narrowed.Count != 1)
+            var pages = new Dictionary<string, LodestonePage?>(StringComparer.Ordinal);
+            foreach (var c in free)
+            {
+                pages[c.LodestoneId] = await lodestone.GetPageAsync(c.LodestoneId, ct);
+                scored++;
+            }
+
+            var scores = quests.ToDictionary(q => q.RowId, q => free.ToDictionary(c => c.LodestoneId, c => Score(q, c, pages[c.LodestoneId]), StringComparer.Ordinal));
+            var open = quests.Select(q => q.RowId).ToHashSet();
+            var progress = true;
+            while (progress && open.Count > 0)
+            {
+                progress = false;
+                foreach (var rowId in open.ToList())
                 {
-                    lodestoneAmbiguity[quest.RowId] = $"{free.Count} listings share this name in category {quest.Journal.CategoryId}; level/area do not single one out";
+                    var mine = scores[rowId].Where(kv => !claimed.ContainsKey(kv.Key)).OrderByDescending(kv => kv.Value).ToList();
+                    if (mine.Count == 0)
+                    {
+                        break;
+                    }
+
+                    var best = mine[0];
+                    if (mine.Count > 1 && mine[1].Value == best.Value)
+                    {
+                        continue;
+                    }
+
+                    // The page must prefer this row too.
+                    var rivals = open.Where(r => r != rowId).Select(r => scores[r][best.Key]).ToList();
+                    if (rivals.Count > 0 && rivals.Max() >= best.Value)
+                    {
+                        continue;
+                    }
+
+                    claimed[best.Key] = rowId;
+                    listingByRow[rowId] = free.First(c => c.LodestoneId == best.Key);
+                    pagesByRow[rowId] = pages[best.Key];
+                    open.Remove(rowId);
+                    progress = true;
+                }
+            }
+
+            // Rows identical in every modeled fact (the city-start variants of Close to Home differ only by InternalId) tie on
+            // every page. Any pairing checks the same facts, so a twin group takes its best pages in id order and says so.
+            foreach (var twins in open.GroupBy(r => string.Join(",", free.Select(c => scores[r][c.LodestoneId]))).Select(g => g.OrderBy(r => r).ToList()).ToList())
+            {
+                var first = scores[twins[0]];
+                var best = first.Where(kv => !claimed.ContainsKey(kv.Key)).Select(kv => kv.Value).DefaultIfEmpty(int.MinValue).Max();
+                var pages0 = first.Where(kv => !claimed.ContainsKey(kv.Key) && kv.Value == best).Select(kv => kv.Key).OrderBy(k => k, StringComparer.Ordinal).ToList();
+                if (best <= 0 || pages0.Count < twins.Count)
+                {
                     continue;
                 }
 
-                free = narrowed;
+                for (var i = 0; i < twins.Count; i++)
+                {
+                    claimed[pages0[i]] = twins[i];
+                    listingByRow[twins[i]] = free.First(c => c.LodestoneId == pages0[i]);
+                    pagesByRow[twins[i]] = pages[pages0[i]];
+                    twinNotes[twins[i]] = $"{twins.Count} rows of this name are identical in every modeled fact and tie on {pages0.Count} pages; paired in id order";
+                    open.Remove(twins[i]);
+                }
             }
 
-            claimed[free[0].LodestoneId] = quest.RowId;
-            listingByRow[quest.RowId] = free[0];
+            foreach (var rowId in open)
+            {
+                var quest = quests.First(q => q.RowId == rowId);
+                lodestoneAmbiguity[rowId] = $"{free.Count} listings share this name in category {quest.Journal.CategoryId}; level, class, starting class, rewards and area do not single one out";
+            }
         }
 
-        log.WriteLine($"lodestone: {all.Count} listed ids, {listingByRow.Count} mapped to rows, {lodestoneAmbiguity.Count} ambiguous");
+        log.WriteLine($"lodestone: {all.Count} listed ids, {listingByRow.Count} mapped to rows ({scored} candidate pages scored for repeated names), {lodestoneAmbiguity.Count} ambiguous");
+    }
+
+    /// <summary>How well one Lodestone page fits a catalog row; used only when several rows share a name inside one journal category.</summary>
+    private int Score(QuestRecord q, LodestoneListing l, LodestonePage? p)
+    {
+        if (p is null || !p.Parsed)
+        {
+            return -100;
+        }
+
+        var x = game.ExtrasOf(q.RowId);
+        var s = l.Level == GameCatalog.DisplayLevel(q) ? 2 : -3;
+        s += Names.Canon(l.Area) == Names.Canon(x.PlaceName) ? 1 : 0;
+        var classOk = x.ClassJobRequiredName.Length > 0
+            ? Names.Canon(p.ClassJobText) == Names.Canon(x.ClassJobRequiredName) || Names.Canon(p.ClassJobText) == Names.Canon(x.ClassJobRequiredAbbreviation)
+            : SameClassCategory(p.ClassJobText, x.ClassJobCategoryName) || Names.Canon(p.ClassJobText) == Names.Canon(x.ClassJobCategoryName);
+        s += classOk ? 2 : -2;
+        var expectedStart = x.ClassJobRequiredName.Length > 0 ? x.ClassJobRequiredName : SingleClassOf(x.ClassJobCategoryName);
+        s += Names.Canon(p.StartingClass) == Names.Canon(expectedStart) ? 2 : -2;
+        var rewardNames = q.Rewards.Where(r => r.Kind is RewardKind.Item or RewardKind.OptionalItem or RewardKind.ArtifactGear).Select(r => r.Name).ToList();
+        var pageRewards = p.Rewards.Concat(p.OptionalRewards).Where(r => !IsCrystal(r)).ToList();
+        s += Names.SameSet(rewardNames, pageRewards) ? 2 : RewardsConsistent(rewardNames, pageRewards, out _) ? 0 : -2;
+        var gcOk = x.GrandCompanyName.Length == 0 ? p.GrandCompany.Length == 0 : Names.Canon(p.GrandCompany).StartsWith(Names.Canon(x.GrandCompanyName), StringComparison.Ordinal);
+        s += gcOk ? 1 : -2;
+        // Identical twins (a legacy duplicate row) tie on every fact; the wiki's id-edb for the row it carries breaks the tie.
+        if (wikiByRow.TryGetValue(q.RowId, out var w) && w.QuestInfobox.TryGetValue("id-edb", out var edb) && string.Equals(edb.Trim(), l.LodestoneId, StringComparison.OrdinalIgnoreCase))
+        {
+            s += 1;
+        }
+
+        return s;
+    }
+
+    /// <summary>The class a single-class ClassJobCategory ("ARC", "Lancer") names, or empty for a multi-class category.</summary>
+    private string SingleClassOf(string categoryName)
+    {
+        var c = Names.Canon(categoryName);
+        if (c.Length == 0)
+        {
+            return string.Empty;
+        }
+
+        foreach (var (id, abbreviation) in game.Bundle.Names.ClassJobAbbreviations)
+        {
+            var full = game.Bundle.Names.ClassJob(id);
+            if (Names.Canon(abbreviation) == c || Names.Canon(full) == c)
+            {
+                return full;
+            }
+        }
+
+        return string.Empty;
     }
 
     /// <summary>Highest row id mapped to a listing in the quest's category; a higher unmapped row is a Lodestone lag, not an omission.</summary>
@@ -472,10 +654,12 @@ internal sealed partial class QuestVerifier(
         var extras = game.ExtrasOf(quest.RowId);
         var displayLevel = GameCatalog.DisplayLevel(quest);
         var prereqNames = quest.PreviousQuests.QuestIds.Select(id => game.Catalog.GetByRowId(id)?.Name ?? $"row {id}").ToList();
-        var prereqCatalog = (quest.PreviousQuests.IsEmpty ? string.Empty : (quest.PreviousQuests.Join == JoinKind.Any ? "any:" : "all:")) + Names.Join(quest.PreviousQuests.QuestIds);
+        var acceptQuests = AcceptQuests(quest);
+        var prereqCatalog = (quest.PreviousQuests.IsEmpty ? string.Empty : (quest.PreviousQuests.Join == JoinKind.Any ? "any:" : "all:")) + Names.Join(quest.PreviousQuests.QuestIds)
+            + (acceptQuests.Count > 0 ? (quest.PreviousQuests.IsEmpty ? string.Empty : " ") + "accept:" + Names.Join(acceptQuests) : string.Empty);
         var dutyCatalog = (quest.InstanceContentRequired.Length > 1 ? (quest.InstanceJoin == JoinKind.Any ? "any:" : "all:") : string.Empty) + Names.Join(extras.InstanceContentNames);
         var rewardNames = quest.Rewards.Where(r => r.Kind is RewardKind.Item or RewardKind.OptionalItem or RewardKind.ArtifactGear).Select(r => r.Name).ToList();
-        var unlockNames = uniqueEntries.Where(e => e.QuestRowId == quest.RowId && e.Kind == RewardKind.DutyUnlock).Select(e => e.RewardName).ToList();
+        var unlockNames = DutyUnlocksOf(quest);
         var unlockCatalog = Names.Join(unlockNames);
 
         // ---- Lodestone
@@ -500,7 +684,7 @@ internal sealed partial class QuestVerifier(
             }
             else
             {
-                drafts.Add(new Draft(Facts.Listed, "listed", SourceNames.Lodestone, listing.LodestoneId, lodestoneRef, Verdict.Match, string.Empty));
+                drafts.Add(new Draft(Facts.Listed, "listed", SourceNames.Lodestone, listing.LodestoneId, lodestoneRef, Verdict.Match, twinNotes.GetValueOrDefault(quest.RowId, string.Empty)));
             }
         }
         else
@@ -514,6 +698,11 @@ internal sealed partial class QuestVerifier(
             else if (listings.TryGetValue((quest.Journal.SectionId, quest.Journal.CategoryId), out var l) && l.Rows is null)
             {
                 drafts.Add(new Draft(Facts.Listed, "listed", SourceNames.Lodestone, string.Empty, l.Url, Verdict.Unresolved, "category listing could not be fetched"));
+            }
+            else if (wikiByRow.TryGetValue(quest.RowId, out var retiredPage) && retiredPage.RetiredPatch is { } retiredIn)
+            {
+                drafts.Add(new Draft(Facts.Listed, "listed", SourceNames.Lodestone, string.Empty, url ?? LodestoneSource.Base, Verdict.NotListed,
+                    $"not in the Lodestone listing for section {quest.Journal.SectionId} category {quest.Journal.CategoryId}; the wiki marks the quest retired in patch {retiredIn} (see the retired row)"));
             }
             else
             {
@@ -555,10 +744,18 @@ internal sealed partial class QuestVerifier(
 
             // City-start MSQ variants carry no ClassJobRequired; their single-class ClassJobCategory ("LNC") is what the Lodestone prints as Starting Class.
             var startIsCategory = page.StartingClass.Length > 0 && extras.ClassJobRequiredName.Length == 0
-                && (Names.Canon(page.StartingClass) == Names.Canon(extras.ClassJobCategoryName) || Names.Canon(game.Bundle.Names.ClassJobAbbreviations.FirstOrDefault(kv => Names.Canon(game.Bundle.Names.ClassJob(kv.Key)) == Names.Canon(page.StartingClass)).Value ?? "\0") == Names.Canon(extras.ClassJobCategoryName));
+                && Names.Canon(page.StartingClass) == Names.Canon(SingleClassOf(extras.ClassJobCategoryName));
             var startOk = Names.Canon(page.StartingClass) == Names.Canon(extras.ClassJobRequiredName) || (page.StartingClass.Length == 0 && classShownAsRequired) || startIsCategory;
-            drafts.Add(Compare(Facts.StartingClass, extras.ClassJobRequiredName.Length > 0 ? extras.ClassJobRequiredName : (startIsCategory ? "(category " + extras.ClassJobCategoryName + ")" : string.Empty), SourceNames.Lodestone, page.StartingClass.Length > 0 ? page.StartingClass : (classShownAsRequired ? page.ClassJobText : string.Empty), lodestoneRef, startOk,
-                classShownAsRequired ? "required class shown in the Class/Job line" : startIsCategory ? "no ClassJobRequired; the single-class ClassJobCategory is the starting class" : string.Empty));
+            if (!startOk && page.StartingClass.Length > 0 && extras.ClassJobRequiredName.Length == 0 && SingleClassOf(extras.ClassJobCategoryName).Length == 0)
+            {
+                // The city-start variants (Close to Home ×3 per city) carry ClassJobCategory "All Classes" and no ClassJobRequired; the sheet has no field that names the starting class the script assigns.
+                drafts.Add(new Draft(Facts.StartingClass, string.Empty, SourceNames.Lodestone, page.StartingClass, lodestoneRef, Verdict.NotModeled, $"the sheet has no starting-class field for this variant (ClassJobCategory {extras.ClassJobCategoryName}, no ClassJobRequired; the variants differ only by InternalId {quest.InternalId})"));
+            }
+            else
+            {
+                drafts.Add(Compare(Facts.StartingClass, extras.ClassJobRequiredName.Length > 0 ? extras.ClassJobRequiredName : (startIsCategory ? "(category " + extras.ClassJobCategoryName + ")" : string.Empty), SourceNames.Lodestone, page.StartingClass.Length > 0 ? page.StartingClass : (classShownAsRequired ? page.ClassJobText : string.Empty), lodestoneRef, startOk,
+                    classShownAsRequired ? "required class shown in the Class/Job line" : startIsCategory ? "no ClassJobRequired; the single-class ClassJobCategory is the starting class" : string.Empty));
+            }
 
             var gcOk = extras.GrandCompanyName.Length == 0
                 ? page.GrandCompany.Length == 0
@@ -641,17 +838,30 @@ internal sealed partial class QuestVerifier(
             }
             else
             {
-                drafts.Add(Compare(Facts.Expansion, $"{quest.Expansion} {extras.ExpansionName}", SourceNames.Wiki, $"{expansion} ({Names.Clean(box.GetValueOrDefault("release", string.Empty))} / patch {Names.Clean(box.GetValueOrDefault("patch", string.Empty))})", wref, expansion == quest.Expansion));
+                var wikiExpansion = $"{expansion} ({Names.Clean(box.GetValueOrDefault("release", string.Empty))} / patch {Names.Clean(box.GetValueOrDefault("patch", string.Empty))})";
+                if (expansion > quest.Expansion)
+                {
+                    // The sheet's Expansion column is the era of the quest's zone and journal home (seasonal quests in the
+                    // ARR cities, Blue Mage quests, patch-added sidequests in old zones keep the older value); the wiki
+                    // records the release patch. The plugin files by the sheet's value, so the two are different facts.
+                    drafts.Add(new Draft(Facts.Expansion, $"{quest.Expansion} {extras.ExpansionName}", SourceNames.Wiki, wikiExpansion, wref, Verdict.NotModeled,
+                        "wiki records the release patch; the sheet's Expansion column is the content era of the quest's zone, which the plugin files by"));
+                }
+                else
+                {
+                    drafts.Add(Compare(Facts.Expansion, $"{quest.Expansion} {extras.ExpansionName}", SourceNames.Wiki, wikiExpansion, wref, expansion == quest.Expansion));
+                }
             }
 
             var wikiPrereqs = WikiSource.SplitNames(box.GetValueOrDefault("prev-quest")).Concat(WikiSource.SplitNames(box.GetValueOrDefault("req-quest"))).ToList();
-            if (wikiPrereqs.Count == 0 && !quest.PreviousQuests.IsEmpty)
+            if (wikiPrereqs.Count == 0 && (!quest.PreviousQuests.IsEmpty || acceptQuests.Count > 0))
             {
                 drafts.Add(new Draft(Facts.Prereqs, prereqCatalog, SourceNames.Wiki, string.Empty, wref, Verdict.NotModeled, "infobox prev-quest/req-quest not filled in"));
             }
             else
             {
-                drafts.Add(Compare(Facts.Prereqs, prereqCatalog, SourceNames.Wiki, Names.Join(wikiPrereqs), wref, PrereqsConsistent(quest, wikiPrereqs, out var prereqWhy), prereqWhy));
+                drafts.Add(SharedPage(quest, Compare(Facts.Prereqs, prereqCatalog, SourceNames.Wiki, Names.Join(wikiPrereqs), wref, PrereqsConsistent(quest, wikiPrereqs, out var prereqWhy), prereqWhy),
+                    sibling => PrereqsConsistent(sibling, wikiPrereqs, out _) == Consistency.Agree));
             }
 
             var wikiDuties = WikiSource.LinkedNames(box.GetValueOrDefault("requirements")).Where(n => cfcNames.Contains(n)).ToList();
@@ -677,12 +887,13 @@ internal sealed partial class QuestVerifier(
                 }
             }
 
-            drafts.Add(Compare(Facts.Rewards, Names.Join(rewardNames), SourceNames.Wiki, Names.Join(wikiRewards), wref, RewardsConsistent(rewardNames, wikiRewards, out var wikiRewardWhy), wikiRewardWhy));
+            drafts.Add(SharedPage(quest, Compare(Facts.Rewards, Names.Join(rewardNames), SourceNames.Wiki, Names.Join(wikiRewards), wref, RewardsConsistent(rewardNames, wikiRewards, out var wikiRewardWhy), wikiRewardWhy),
+                sibling => RewardsConsistent(sibling.Rewards.Where(r => r.Kind is RewardKind.Item or RewardKind.OptionalItem or RewardKind.ArtifactGear).Select(r => r.Name).ToList(), wikiRewards, out _)));
 
             var wikiUnlocks = WikiSource.Unlocks(box.GetValueOrDefault("unlocks")).Where(u => WikiSource.DutyCodes.Contains(u.Code)).Select(u => u.Name).ToList();
             if (wikiUnlocks.Count > 0 || unlockNames.Count > 0)
             {
-                drafts.Add(Compare(Facts.DutyUnlock, unlockCatalog, SourceNames.Wiki, Names.Join(wikiUnlocks), wref, DutyUnlockConsistent(unlockNames, wikiUnlocks, out var unlockWhy), unlockWhy));
+                drafts.Add(Compare(Facts.DutyUnlock, unlockCatalog, SourceNames.Wiki, Names.Join(wikiUnlocks), wref, DutyUnlockConsistent(quest, unlockNames, wikiUnlocks, out var unlockWhy), unlockWhy));
             }
 
             var retired = wikiPage.RetiredPatch;
@@ -728,8 +939,16 @@ internal sealed partial class QuestVerifier(
             }
             else
             {
-                var ok = curatedNames.Any(n => Names.Canon(n) == Names.Canon(g.InstanceName));
-                drafts.Add(Compare(Facts.DutyUnlock, Names.Join(curatedNames), SourceNames.Garland, g.InstanceName, gref, ok, ok ? string.Empty : $"Garland reward.instance {g.InstanceId} = {g.InstanceName}"));
+                var ok = curatedNames.Any(n => DutyNames.Same(n, g.InstanceName));
+                if (!ok && WikiDutyUnlocksOf(quest.RowId).Any(w => DutyNames.Same(w, g.InstanceName)))
+                {
+                    drafts.Add(new Draft(Facts.DutyUnlock, Names.Join(curatedNames), SourceNames.Garland, g.InstanceName, gref, Verdict.NotModeled,
+                        $"Garland reward.instance {g.InstanceId} and the wiki both name {g.InstanceName} as a further unlock of this quest; curated/duty_unlocks.json lists only {Names.Join(curatedNames)} (candidate addition for duty_unlocks.json)"));
+                }
+                else
+                {
+                    drafts.Add(Compare(Facts.DutyUnlock, Names.Join(curatedNames), SourceNames.Garland, g.InstanceName, gref, ok, ok ? string.Empty : $"Garland reward.instance {g.InstanceId} = {g.InstanceName}"));
+                }
             }
         }
 
@@ -740,6 +959,13 @@ internal sealed partial class QuestVerifier(
                 ? d
                 : d with { Verdict = Verdict.NotModeled, Disagree = false, Reason = "unlisted row; only identity facts are compared (" + d.Reason + ")" }).ToList();
         }
+        else if (wikiByRow.TryGetValue(quest.RowId, out var stubPage) && stubPage.RetiredPatch is { } stubRetiredIn)
+        {
+            // A row the wiki marks retired but the sheet still files: the sheet keeps a stub (rewards and duties stripped). The retired row carries the finding.
+            drafts = drafts.Select(d => d.Fact is Facts.Listed or Facts.Name or Facts.DisplayLevel or Facts.Retired || !d.Disagree
+                ? d
+                : d with { Verdict = Verdict.NotModeled, Disagree = false, Reason = $"retired per the wiki (patch {stubRetiredIn}); the sheet row is a stub, see the retired row (" + d.Reason + ")" }).ToList();
+        }
 
         return drafts.Select(d => (quest, d)).ToList();
     }
@@ -748,6 +974,38 @@ internal sealed partial class QuestVerifier(
         => ok
             ? new Draft(fact, catalog, source, sourceValue, sourceRef, Verdict.Match, reason)
             : new Draft(fact, catalog, source, sourceValue, sourceRef, Verdict.Unresolved, reason.Length > 0 ? reason : "source disagrees with the catalog", Disagree: true);
+
+    /// <summary>
+    /// The wiki keeps one page for same-name variants (the start-as-archer and join-as-archer "Way of the Archer") and
+    /// its <c>id-gt</c> names one of them. A disagreement on such a page whose value fits a sibling row is the sibling's
+    /// fact, not a finding against this row: ambiguous, with the sibling named.
+    /// </summary>
+    private Draft SharedPage(QuestRecord quest, Draft draft, Func<QuestRecord, bool> siblingAgrees)
+    {
+        if (!draft.Disagree)
+        {
+            return draft;
+        }
+
+        var siblings = rowsByName.GetValueOrDefault(Names.Canon(quest.Name), []).Where(id => id != quest.RowId).Select(game.Catalog.GetByRowId).OfType<QuestRecord>().ToList();
+        var fits = siblings.FirstOrDefault(siblingAgrees);
+        return fits is null
+            ? draft
+            : draft with { Verdict = Verdict.Ambiguous, Disagree = false, Reason = $"wiki page is shared by {siblings.Count + 1} rows of this name; its value fits row {fits.RowId} ({fits.InternalId}), not this one ({quest.InternalId})" };
+    }
+
+    /// <summary>Outcome of a rule: the source agrees, disagrees, or describes something the sheet expresses differently (reported as notModeled with the reason).</summary>
+    private enum Consistency
+    {
+        Agree,
+        Disagree,
+        NotModeled,
+    }
+
+    private static Draft Compare(string fact, string catalog, string source, string sourceValue, string sourceRef, Consistency c, string reason = "")
+        => c == Consistency.NotModeled
+            ? new Draft(fact, catalog, source, sourceValue, sourceRef, Verdict.NotModeled, reason)
+            : Compare(fact, catalog, source, sourceValue, sourceRef, c == Consistency.Agree, reason);
 
     private static bool SameJournalName(string wikiName, string sheetName)
     {
@@ -794,7 +1052,7 @@ internal sealed partial class QuestVerifier(
         return Norm(lodestoneText) == Norm(sheetName);
     }
 
-    private static string BaseName(string name) => Regex.Replace(name, @"\s*\([^)]*\)\s*$", string.Empty);
+    private static string BaseName(string name) => Names.Base(name);
 
     /// <summary>Shards, crystals and clusters: the mapper files crystal reward slots as nameless Other rewards, so they are excluded from the item comparison on both sides (noted in verification-full.md).</summary>
     private static bool IsCrystal(string name)
@@ -803,86 +1061,252 @@ internal sealed partial class QuestVerifier(
         return n.EndsWith(" shard", StringComparison.Ordinal) || n.EndsWith(" crystal", StringComparison.Ordinal) || n.EndsWith(" cluster", StringComparison.Ordinal);
     }
 
-    /// <summary>A source's quest name resolved against the catalog: as written, else without the wiki's disambiguation suffix ("Close to Home (Gridania)", "Brotherhood of Ash (Quest)").</summary>
-    private string ResolveName(string name)
+    /// <summary>
+    /// Canonical catalog names a source's quest name may denote: as written; through a wiki alias (a renamed or
+    /// special-character title whose page names the row); without the wiki's disambiguation suffix ("Close to Home
+    /// (Gridania)", "Brotherhood of Ash (Quest)"); as the base of several variant rows ("A Pup No Longer" for the three
+    /// Grand Company rows); or by loose key ("Α Test of Wιll", "Best-laid Schemes"). Empty when nothing in the catalog matches.
+    /// </summary>
+    private List<string> ResolveNames(string name)
     {
         var c = Names.Canon(name);
         if (rowsByName.ContainsKey(c))
         {
-            return c;
+            return [c];
         }
 
-        var b = Names.Canon(BaseName(name));
-        return rowsByName.ContainsKey(b) ? b : c;
+        if (nameAliases.TryGetValue(c, out var alias))
+        {
+            return [alias];
+        }
+
+        var b = Names.Canon(Names.Base(name));
+        if (rowsByName.ContainsKey(b))
+        {
+            return [b];
+        }
+
+        if (rowsByBaseName.TryGetValue(b, out var variants))
+        {
+            return variants.Select(id => Names.Canon(game.Catalog.GetByRowId(id)?.Name ?? string.Empty)).Where(n => n.Length > 0).Distinct().ToList();
+        }
+
+        var a = Names.LooseKey(name);
+        if (a.Length > 0 && rowsByLooseName.TryGetValue(a, out var folded))
+        {
+            return folded.Select(id => Names.Canon(game.Catalog.GetByRowId(id)?.Name ?? string.Empty)).Where(n => n.Length > 0).Distinct().ToList();
+        }
+
+        return [];
     }
 
+    private HashSet<uint>? msqSections;
+
+    /// <summary>Journal sections "Main Scenario (A Realm Reborn through Endwalker)" and "Main Scenario (Dawntrail)".</summary>
+    private bool IsMainScenario(QuestRecord q)
+    {
+        msqSections ??= game.SectionNames.Where(kv => Names.Canon(kv.Value).StartsWith("main scenario", StringComparison.Ordinal)).Select(kv => kv.Key).ToHashSet();
+        return msqSections.Contains(q.Journal.SectionId) && !q.IsUnlisted;
+    }
+
+    /// <summary>Quest rows named by QuestAcceptAdditionCondition: further quests that must be complete before the quest is offered, in addition to PreviousQuest.</summary>
+    private List<uint> AcceptQuests(QuestRecord q) => q.AcceptConditions.Where(id => game.Catalog.GetByRowId(id) is not null).ToList();
+
+    /// <summary>Every duty the catalog says a quest unlocks: the sheet's InstanceContentUnlock, the ContentFinderCondition unlock criteria and curated/duty_unlocks.json (all three reach unique_quests.json).</summary>
+    private List<string> DutyUnlocksOf(QuestRecord q)
+    {
+        var names = q.Rewards.Where(r => r.Kind == RewardKind.Instance && r.Name.Length > 0).Select(r => r.Name).ToList();
+        names.AddRange(uniqueEntries.Where(e => e.QuestRowId == q.RowId && e.Kind == RewardKind.DutyUnlock).Select(e => e.RewardName));
+        if (curatedDutyUnlocks.TryGetValue(q.RowId, out var cfcIds))
+        {
+            names.AddRange(cfcIds.Select(id => game.ContentFinderConditionNames.GetValueOrDefault(id, string.Empty)).Where(n => n.Length > 0));
+        }
+
+        return names.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+    }
+
+    /// <summary>Duties the wiki says a quest unlocks (its <c>unlocks</c> field), for script-driven unlocks the sheet does not link.</summary>
+    private List<string> WikiDutyUnlocksOf(uint rowId)
+        => wikiByRow.TryGetValue(rowId, out var page)
+            ? WikiSource.Unlocks(page.QuestInfobox.GetValueOrDefault("unlocks")).Where(u => WikiSource.DutyCodes.Contains(u.Code)).Select(u => u.Name).ToList()
+            : [];
+
     /// <summary>
-    /// A source's prerequisite list agrees with the catalog when it names the same quests (All join), any subset of an
-    /// Any join, or only quests that are transitive prerequisites of the catalog's set (the wiki often names the story
-    /// predecessor rather than the sheet's hard requirement). Anything the catalog cannot reach is a disagreement.
+    /// A source's prerequisite list against the sheet's PreviousQuest. Agrees when it names the same quests (All join),
+    /// any subset of an Any join, or only quests that are transitive prerequisites of the catalog's set (the wiki often
+    /// names the story predecessor rather than the sheet's hard requirement). Names the sheet expresses through another
+    /// requirement kind (allied-society rank, a required duty's unlock quest, main-scenario area access, custom delivery
+    /// unlocks) are notModeled with the reason. Anything else the catalog cannot reach is a disagreement.
     /// </summary>
-    private bool PrereqsConsistent(QuestRecord quest, List<string> sourceNames, out string reason)
+    private Consistency PrereqsConsistent(QuestRecord quest, List<string> sourceNames, out string reason)
     {
         reason = string.Empty;
-        var source = sourceNames.Select(ResolveName).Where(n => n.Length > 0).Distinct().ToList();
-        var catalog = quest.PreviousQuests.QuestIds.Select(id => Names.Canon(game.Catalog.GetByRowId(id)?.Name ?? string.Empty)).Where(n => n.Length > 0).Distinct().ToHashSet();
+        var resolved = sourceNames.Select(n => (Name: n, Rows: ResolveNames(n))).ToList();
+        var unknown = resolved.Where(r => r.Rows.Count == 0).Select(r => r.Name).Distinct().ToList();
+        var source = resolved.Where(r => r.Rows.Count > 0).ToList();
+        var accept = AcceptQuests(quest);
+        var catalog = quest.PreviousQuests.QuestIds.Concat(accept).Select(id => Names.Canon(game.Catalog.GetByRowId(id)?.Name ?? string.Empty)).Where(n => n.Length > 0).Distinct().ToHashSet();
+        var extras = game.ExtrasOf(quest.RowId);
 
-        if (source.Count == 0)
+        if (source.Count == 0 && unknown.Count == 0)
         {
             if (catalog.Count == 0)
             {
-                return true;
+                return Consistency.Agree;
             }
 
             reason = "source lists no prerequisite; catalog has " + catalog.Count;
-            return false;
+            return Consistency.Disagree;
         }
 
         if (catalog.Count == 0)
         {
-            reason = "catalog has no PreviousQuest; source names " + string.Join("; ", sourceNames);
-            return false;
-        }
-
-        var unknown = source.Where(n => !rowsByName.ContainsKey(n)).ToList();
-        var extra = source.Where(n => !catalog.Contains(n) && rowsByName.ContainsKey(n)).ToList();
-        var missing = catalog.Where(n => !source.Contains(n)).ToList();
-
-        if (extra.Count > 0)
-        {
-            var ancestors = AncestorNames(quest);
-            var unreachable = extra.Where(n => !ancestors.Contains(n)).ToList();
-            if (unreachable.Count > 0)
+            var named = string.Join("; ", sourceNames);
+            if (quest.BeastTribe != 0)
             {
-                reason = "source names quests the catalog does not require, directly or transitively: " + string.Join("; ", unreachable);
-                return false;
+                reason = $"sheet gates this quest by allied-society rank ({game.Bundle.Names.Tribe(quest.BeastTribe)} rank {quest.BeastRank}), not PreviousQuest; the wiki names the story predecessor ({named})";
+                return Consistency.NotModeled;
             }
 
-            reason = "source names transitive prerequisites (" + string.Join("; ", extra) + ")";
+            if (extras.SatisfactionNpc != 0 || extras.DeliveryQuest != 0)
+            {
+                reason = $"sheet gates this quest by the custom-delivery client (SatisfactionNpc {extras.SatisfactionNpc}, DeliveryQuest {extras.DeliveryQuest}; requirement kind mapped in T3), not PreviousQuest; the wiki names {named}";
+                return Consistency.NotModeled;
+            }
+
+            if (quest.GrandCompany != 0)
+            {
+                reason = $"sheet gates this quest by Grand Company membership ({extras.GrandCompanyName}, rank {quest.GrandCompanyRank}), not PreviousQuest; the wiki names the company's story predecessor ({named})";
+                return Consistency.NotModeled;
+            }
+
+            var namedRows = source.SelectMany(r => r.Rows).SelectMany(n => rowsByName.GetValueOrDefault(n, [])).Select(game.Catalog.GetByRowId).OfType<QuestRecord>().ToList();
+            if (namedRows.Count > 0 && namedRows.All(IsMainScenario) && !IsMainScenario(quest))
+            {
+                reason = $"sheet has no PreviousQuest; the wiki names main-scenario progress ({named}) that opens the area or NPC, which the sheet does not express";
+                return Consistency.NotModeled;
+            }
+
+            var systems = namedRows.Where(r => curatedSystemUnlocks.ContainsKey(r.RowId)).Select(r => curatedSystemUnlocks[r.RowId]).Distinct().ToList();
+            if (namedRows.Count > 0 && namedRows.All(r => curatedSystemUnlocks.ContainsKey(r.RowId)))
+            {
+                reason = $"sheet has no PreviousQuest; the wiki names the quest that unlocks the system this quest builds on ({string.Join("; ", systems)}; curated/system_unlocks.json), which the sheet gates through the system";
+                return Consistency.NotModeled;
+            }
+
+            reason = "catalog has no PreviousQuest; source names " + named;
+            return Consistency.Disagree;
+        }
+
+        HashSet<string>? ancestors = null;
+        var direct = new List<string>();
+        var transitive = new List<string>();
+        var explained = new List<string>();
+        var unreachable = new List<string>();
+        var requiredDuties = extras.InstanceContentNames;
+        foreach (var (name, rows) in source)
+        {
+            if (rows.Any(catalog.Contains))
+            {
+                direct.Add(name);
+                continue;
+            }
+
+            ancestors ??= AncestorNames(quest);
+            if (rows.Any(ancestors.Contains))
+            {
+                transitive.Add(name);
+                continue;
+            }
+
+            var rowRecords = rows.SelectMany(n => rowsByName.GetValueOrDefault(n, [])).Select(game.Catalog.GetByRowId).OfType<QuestRecord>().ToList();
+            var unlocksRequiredDuty = requiredDuties.Count > 0 && rowRecords.Any(r => DutyUnlocksOf(r).Concat(WikiDutyUnlocksOf(r.RowId)).Any(d => requiredDuties.Any(rd => DutyNames.Same(d, rd))));
+            if (unlocksRequiredDuty)
+            {
+                explained.Add($"{name} unlocks the duty the sheet requires");
+                continue;
+            }
+
+            var system = rowRecords.Select(r => curatedSystemUnlocks.GetValueOrDefault(r.RowId)).FirstOrDefault(l => l is not null);
+            if (system is not null)
+            {
+                explained.Add($"{name} unlocks the system this quest builds on ({system}; curated/system_unlocks.json), which the sheet gates through the system");
+                continue;
+            }
+
+            if (rowRecords.Any(IsMainScenario) && !IsMainScenario(quest))
+            {
+                explained.Add($"{name} is main-scenario progress the sheet does not require (area or NPC access is not modeled)");
+                continue;
+            }
+
+            if (quest.BeastTribe != 0)
+            {
+                explained.Add($"{name} precedes an allied-society quest the sheet gates by rank ({game.Bundle.Names.Tribe(quest.BeastTribe)} rank {quest.BeastRank})");
+                continue;
+            }
+
+            if (extras.SatisfactionNpc != 0 || extras.DeliveryQuest != 0)
+            {
+                explained.Add($"{name} precedes a custom-delivery quest the sheet gates by client (T3)");
+                continue;
+            }
+
+            unreachable.Add(name);
+        }
+
+        if (unreachable.Count > 0)
+        {
+            reason = "source names quests the catalog does not require, directly or transitively: " + string.Join("; ", unreachable);
+            return Consistency.Disagree;
         }
 
         if (unknown.Count > 0)
         {
             reason = "source names quests not in the catalog: " + string.Join("; ", unknown);
-            return false;
+            return Consistency.Disagree;
+        }
+
+        var notes = new List<string>();
+        if (transitive.Count > 0)
+        {
+            notes.Add("source names transitive prerequisites (" + string.Join("; ", transitive) + ")");
+        }
+
+        var covered = source.Where(s => direct.Contains(s.Name)).SelectMany(s => s.Rows).ToHashSet();
+        var acceptNames = accept.Select(id => Names.Canon(game.Catalog.GetByRowId(id)!.Name)).ToHashSet();
+        var missing = catalog.Where(n => !covered.Contains(n)).ToList();
+        if (accept.Count > 0 && direct.Any(d => source.First(s => s.Name == d).Rows.Any(acceptNames.Contains)))
+        {
+            notes.Add("source names accept conditions (QuestAcceptAdditionCondition) as well as PreviousQuest");
         }
 
         if (missing.Count > 0)
         {
-            if (quest.PreviousQuests.Join == JoinKind.Any)
+            if (quest.PreviousQuests.Join == JoinKind.Any && missing.All(m => !acceptNames.Contains(m)))
             {
-                reason = (reason.Length > 0 ? reason + "; " : string.Empty) + "any-join: source names " + (source.Count) + " of " + catalog.Count;
-                return source.Any(catalog.Contains) || extra.Count > 0;
+                notes.Add($"any-join: source names {direct.Count} of {catalog.Count}");
+                if (direct.Count == 0 && transitive.Count == 0 && explained.Count == 0)
+                {
+                    reason = string.Join("; ", notes);
+                    return Consistency.Disagree;
+                }
             }
-
-            if (source.All(catalog.Contains) || extra.Count > 0)
+            else
             {
-                reason = (reason.Length > 0 ? reason + "; " : string.Empty) + "source lists a subset (" + missing.Count + " catalog prerequisite(s) not named)";
-                return true;
+                notes.Add($"source lists a subset ({missing.Count} catalog prerequisite(s) not named)");
             }
         }
 
-        return true;
+        if (explained.Count > 0)
+        {
+            notes.Insert(0, string.Join("; ", explained));
+            reason = string.Join("; ", notes);
+            return Consistency.NotModeled;
+        }
+
+        reason = string.Join("; ", notes);
+        return Consistency.Agree;
     }
 
     private HashSet<string> AncestorNames(QuestRecord quest)
@@ -899,7 +1323,7 @@ internal sealed partial class QuestVerifier(
             }
 
             names.Add(Names.Canon(q.Name));
-            foreach (var p in q.PreviousQuests.QuestIds)
+            foreach (var p in q.PreviousQuests.QuestIds.Concat(AcceptQuests(q)))
             {
                 stack.Push(p);
             }
@@ -908,12 +1332,12 @@ internal sealed partial class QuestVerifier(
         return names;
     }
 
-    /// <summary>Item rewards: exact set, or the source lists a subset of the catalog's (class-variant gear is often abbreviated).</summary>
+    /// <summary>Item rewards: exact set, or the source lists a subset of the catalog's (class-variant gear is often abbreviated). A wiki "(Item)" disambiguation suffix is ignored.</summary>
     private static bool RewardsConsistent(List<string> catalog, List<string> source, out string reason)
     {
         reason = string.Empty;
         var c = catalog.Select(Names.Canon).Where(n => n.Length > 0).ToHashSet();
-        var s = source.Select(Names.Canon).Where(n => n.Length > 0).ToHashSet();
+        var s = source.Select(n => c.Contains(Names.Canon(n)) ? Names.Canon(n) : c.Contains(Names.Canon(Names.Base(n))) ? Names.Canon(Names.Base(n)) : Names.Canon(n)).Where(n => n.Length > 0).ToHashSet();
         if (c.SetEquals(s))
         {
             return true;
@@ -930,33 +1354,94 @@ internal sealed partial class QuestVerifier(
         return false;
     }
 
-    private static bool DutyUnlockConsistent(List<string> catalog, List<string> source, out string reason)
+    private HashSet<string>? cfcKeys;
+
+    private bool IsDutyName(string name)
+    {
+        cfcKeys ??= cfcNames.Select(DutyNames.Key).ToHashSet(StringComparer.Ordinal);
+        return cfcKeys.Contains(DutyNames.Key(name));
+    }
+
+    /// <summary>
+    /// The wiki's <c>unlocks</c> duties against the catalog's. A wiki name that matches a catalog duty or its series
+    /// covers it; a wiki name that is no ContentFinderCondition at all (the "PvP" system, "Frontline" as a family) is
+    /// ignored. A quest the sheet links to no duty at all is notModeled: the unlock is script-driven and the wiki's
+    /// name is a candidate for curated/duty_unlocks.json.
+    /// </summary>
+    private Consistency DutyUnlockConsistent(QuestRecord quest, List<string> catalog, List<string> source, out string reason)
     {
         reason = string.Empty;
-        var c = catalog.Select(Names.Canon).Where(n => n.Length > 0).ToHashSet();
-        var s = source.Select(Names.Canon).Where(n => n.Length > 0).ToHashSet();
-        if (c.SetEquals(s))
+        var linked = quest.Rewards.Where(r => r.Kind == RewardKind.Instance).Select(r => r.Name)
+            .Concat(curatedDutyUnlocks.TryGetValue(quest.RowId, out var cfcIds) ? cfcIds.Select(id => game.ContentFinderConditionNames.GetValueOrDefault(id, string.Empty)) : [])
+            .Concat(uniqueEntries.Where(e => e.QuestRowId == quest.RowId && e.Kind == RewardKind.DutyUnlock && !e.Source.StartsWith("ContentFinderCondition.UnlockCriteria", StringComparison.Ordinal)).Select(e => e.RewardName))
+            .Select(Names.Canon).ToHashSet();
+        var criteriaOnly = catalog.Where(c => !linked.Contains(Names.Canon(c))).ToHashSet(StringComparer.Ordinal);
+        var covered = new HashSet<string>(StringComparer.Ordinal);
+        var extraDuties = new List<string>();
+        var ignored = new List<string>();
+        foreach (var name in source.Distinct(StringComparer.OrdinalIgnoreCase))
         {
-            return true;
+            var hits = catalog.Where(c => DutyNames.Same(c, name) || DutyNames.Series(c, name)).ToList();
+            if (hits.Count > 0)
+            {
+                foreach (var h in hits)
+                {
+                    covered.Add(DutyNames.Key(h));
+                }
+            }
+            else if (IsDutyName(name))
+            {
+                extraDuties.Add(name);
+            }
+            else
+            {
+                ignored.Add(name);
+            }
         }
 
-        var extra = s.Where(n => !c.Contains(n)).ToList();
-        var missing = c.Where(n => !s.Contains(n)).ToList();
-        if (extra.Count == 0)
+        var missing = catalog.Where(c => !covered.Contains(DutyNames.Key(c))).ToList();
+        var ignoredNote = ignored.Count > 0 ? "not a duty name, ignored: " + string.Join("; ", ignored) : string.Empty;
+        if (extraDuties.Count == 0)
         {
-            reason = "wiki names " + s.Count + " of the catalog's " + c.Count + " duty unlocks";
-            return true;
+            var parts = new List<string>();
+            if (missing.Count > 0)
+            {
+                parts.Add($"wiki names {covered.Count} of the catalog's {catalog.Count} duty unlocks");
+            }
+
+            if (ignoredNote.Length > 0)
+            {
+                parts.Add(ignoredNote);
+            }
+
+            reason = string.Join("; ", parts);
+            return Consistency.Agree;
         }
 
-        if (missing.Count == 0 && c.Count > 0)
+        var tail = ignoredNote.Length > 0 ? "; " + ignoredNote : string.Empty;
+        if (catalog.Count == 0)
+        {
+            reason = "the sheet links no InstanceContentUnlock or unlock criteria to this quest and curated/duty_unlocks.json has no entry; the wiki names " + string.Join("; ", extraDuties) + " (script-driven unlock; candidate for duty_unlocks.json)" + tail;
+            return Consistency.NotModeled;
+        }
+
+        if (missing.Count == 0)
         {
             // The wiki lists the whole series (Coil turns 1-4) where the sheet's InstanceContentUnlock names the first; later turns unlock on clears.
-            reason = "wiki also names " + string.Join("; ", extra) + " (progressive unlocks beyond the catalog's " + string.Join("; ", c) + ")";
-            return true;
+            reason = "wiki also names " + string.Join("; ", extraDuties) + " (progressive unlocks beyond the catalog's " + string.Join("; ", catalog) + ")" + tail;
+            return Consistency.Agree;
         }
 
-        reason = "wiki names duty unlocks the catalog lacks: " + string.Join("; ", extra) + (missing.Count > 0 ? "; catalog-only: " + string.Join("; ", missing) : string.Empty);
-        return false;
+        if (missing.All(criteriaOnly.Contains))
+        {
+            // The catalog's entries come from ContentFinderCondition.UnlockCriteria (a duty that needs this quest done, not one the quest opens),
+            // and the wiki's are the script-driven unlocks the sheet does not link: two facts the two sides model differently.
+            reason = "catalog names duties whose ContentFinderCondition unlock criteria require this quest (" + string.Join("; ", missing) + "); the wiki names the script-driven unlocks " + string.Join("; ", extraDuties) + " (candidates for duty_unlocks.json)" + tail;
+            return Consistency.NotModeled;
+        }
+
+        reason = "wiki names duty unlocks the catalog lacks: " + string.Join("; ", extraDuties) + "; catalog-only: " + string.Join("; ", missing) + tail;
+        return Consistency.Disagree;
     }
 
     /// <summary>§1.4: a disagreement becomes sourceWrong when another independent source agrees with the catalog, catalogWrong when two sources agree against it, else unresolved.</summary>

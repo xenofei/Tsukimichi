@@ -103,10 +103,13 @@ internal static class FullReport
         sb.AppendLine($"- `summary` exit code: {(questOpen.Count + rewardOpen.Count == 0 ? 0 : 1)}");
         sb.AppendLine();
 
+        Discrepancies(sb, quests, rewards, allowlist, current);
         Section(sb, "## catalogWrong (quest facts)", quests.Where(r => r.Verdict == Verdict.CatalogWrong), allowlist, current);
-        Section(sb, "## unresolved (quest facts)", quests.Where(r => r.Verdict == Verdict.Unresolved), allowlist, current);
+        Section(sb, "## unresolved (quest facts): human review", quests.Where(r => r.Verdict == Verdict.Unresolved), allowlist, current);
         RewardSection(sb, "## catalogWrong (unique rewards)", rewards.Where(r => r.Verdict == Verdict.CatalogWrong), allowlist, current);
         RewardSection(sb, "## unresolved (unique rewards)", rewards.Where(r => r.Verdict == Verdict.Unresolved), allowlist, current);
+        Candidates(sb, quests);
+        AllowlistSummary(sb, allowlist, current);
 
         sb.AppendLine("## sourceLagging and notListed (Lodestone)");
         sb.AppendLine();
@@ -141,6 +144,109 @@ internal static class FullReport
         Csv.Atomic(path, sb.ToString());
     }
 
+    /// <summary>Every confirmed catalogWrong, one line per (row, fact) with all source values, the evidence and where the fix lands (the allowlist entry's <c>fix</c>, else the row's fixedIn).</summary>
+    private static void Discrepancies(StringBuilder sb, IReadOnlyList<QuestRow> quests, IReadOnlyList<RewardRow> rewards, Allowlist allowlist, Version? current)
+    {
+        sb.AppendLine("## Discrepancies to fix");
+        sb.AppendLine();
+        sb.AppendLine("Rows where two independent sources agree against the catalog (quest facts) or the source shows a non-quest way to obtain a reward the catalog calls quest-only. Each names where the fix lands; the allowlist excuses the row until that release.");
+        sb.AppendLine();
+        var questGroups = quests.Where(r => r.Verdict == Verdict.CatalogWrong).GroupBy(r => (r.RowId, r.Fact)).OrderBy(g => g.Key.RowId).ThenBy(g => g.Key.Fact, StringComparer.Ordinal).ToList();
+        sb.AppendLine($"### Quest facts ({questGroups.Count})");
+        sb.AppendLine();
+        if (questGroups.Count == 0)
+        {
+            sb.AppendLine("None.");
+        }
+        else
+        {
+            sb.AppendLine("| Row | Name | Fact | Catalog | Sources | Evidence | Fix | Allowlisted |");
+            sb.AppendLine("|---:|---|---|---|---|---|---|---|");
+            foreach (var g in questGroups)
+            {
+                var first = g.First();
+                var allow = g.Select(r => allowlist.Covering(r, current)).FirstOrDefault(a => a is not null);
+                var sources = string.Join("; ", g.Select(r => $"{r.Source}: {(r.SourceValue.Length > 0 ? r.SourceValue : "(absent)")}"));
+                var evidence = string.Join(" ", g.Select(r => Link(r.SourceRef)).Distinct());
+                var fix = allow?.Fix ?? (first.FixedIn.Length > 0 ? first.FixedIn : "(unassigned)");
+                sb.AppendLine($"| {first.RowId} | {Md(first.Name)} | {first.Fact} | {Md(first.CatalogValue.Length > 0 ? first.CatalogValue : "(absent)")} | {Md(sources)} | {evidence} | {Md(fix)} | {(allow is null ? "no" : "until " + allow.Until)} |");
+            }
+        }
+
+        sb.AppendLine();
+        var rewardGroups = rewards.Where(r => r.Verdict == Verdict.CatalogWrong).GroupBy(r => (r.QuestRowId, r.Kind, r.RewardId, r.ItemId)).OrderBy(g => g.Key.QuestRowId).ThenBy(g => g.Key.Kind, StringComparer.Ordinal).ThenBy(g => g.Key.RewardId).ToList();
+        sb.AppendLine($"### Unique rewards ({rewardGroups.Count})");
+        sb.AppendLine();
+        if (rewardGroups.Count == 0)
+        {
+            sb.AppendLine("None.");
+        }
+        else
+        {
+            sb.AppendLine("| Quest | Name | Kind | Reward | Claim | Sources | Evidence | Fix | Allowlisted |");
+            sb.AppendLine("|---:|---|---|---|---|---|---|---|---|");
+            foreach (var g in rewardGroups)
+            {
+                var first = g.First();
+                var allow = g.Select(r => allowlist.Covering(r, current)).FirstOrDefault(a => a is not null);
+                var sources = string.Join("; ", g.Select(r => $"{r.Source}: {r.SourceValue}"));
+                var evidence = string.Join(" ", g.Select(r => Link(r.SourceRef)).Distinct());
+                var fix = allow?.Fix ?? (first.FixedIn.Length > 0 ? first.FixedIn : "(unassigned)");
+                sb.AppendLine($"| {first.QuestRowId} | {Md(first.QuestName)} | {first.Kind} | {first.RewardId}{(first.ItemId != 0 ? "/item " + first.ItemId : string.Empty)} {Md(first.RewardName)} | {Md(first.CatalogClaim)} | {Md(sources)} | {evidence} | {Md(fix)} | {(allow is null ? "no" : "until " + allow.Until)} |");
+            }
+        }
+
+        sb.AppendLine();
+    }
+
+    /// <summary>Duty unlocks the wiki names for quests the sheet links to no duty: script-driven unlocks, the input list for curated/duty_unlocks.json.</summary>
+    private static void Candidates(StringBuilder sb, IReadOnlyList<QuestRow> quests)
+    {
+        var rows = quests.Where(r => r.Fact == Facts.DutyUnlock && r.Verdict == Verdict.NotModeled && r.Reason.Contains("candidate", StringComparison.Ordinal)).OrderBy(r => r.RowId).ThenBy(r => r.Source, StringComparer.Ordinal).ToList();
+        sb.AppendLine("## Duty unlocks the catalog does not model (candidates for curated/duty_unlocks.json)");
+        sb.AppendLine();
+        sb.AppendLine($"{rows.Count} rows. The sheet's InstanceContentUnlock and the ContentFinderCondition unlock criteria cover a minority of duty unlocks; the rest are script-driven and reach unique_quests.json only through curated/duty_unlocks.json. These are the wiki's (and, where fetched, Garland's) names for quests that file has no entry for, or an incomplete one. Not a gate failure: absence is not a claim. Review before promoting; ContentFinderCondition row ids are looked up as the curated README describes.");
+        sb.AppendLine();
+        if (rows.Count == 0)
+        {
+            sb.AppendLine("None.");
+            sb.AppendLine();
+            return;
+        }
+
+        sb.AppendLine("| Row | Name | Catalog | Source | Source duties | Evidence |");
+        sb.AppendLine("|---:|---|---|---|---|---|");
+        foreach (var r in rows)
+        {
+            sb.AppendLine($"| {r.RowId} | {Md(r.Name)} | {Md(r.CatalogValue.Length > 0 ? r.CatalogValue : "(none)")} | {r.Source} | {Md(r.SourceValue)} | {Link(r.SourceRef)} |");
+        }
+
+        sb.AppendLine();
+    }
+
+    private static void AllowlistSummary(StringBuilder sb, Allowlist allowlist, Version? current)
+    {
+        sb.AppendLine("## Allowlist");
+        sb.AppendLine();
+        sb.AppendLine($"{allowlist.Entries.Count} entries in `verification-allowlist.json`; each expires when the plugin version reaches `until`, after which `summary` fails until the row is re-verified or the entry renewed.");
+        sb.AppendLine();
+        if (allowlist.Entries.Count == 0)
+        {
+            sb.AppendLine("None.");
+            sb.AppendLine();
+            return;
+        }
+
+        sb.AppendLine("| Row | Fact | Source | Verdict | Until | Fix | Reason |");
+        sb.AppendLine("|---:|---|---|---|---|---|---|");
+        foreach (var e in allowlist.Entries.OrderBy(e => e.RowId == "*" ? 0 : uint.TryParse(e.RowId, out var id) ? id : 0).ThenBy(e => e.Fact, StringComparer.Ordinal).ThenBy(e => e.Source, StringComparer.Ordinal))
+        {
+            sb.AppendLine($"| {e.RowId} | {e.Fact} | {e.Source ?? "*"} | {e.Verdict} | {e.Until}{(Allowlist.Expired(e, current) ? " (expired)" : string.Empty)} | {Md(e.Fix ?? string.Empty)} | {Md(e.Reason)} |");
+        }
+
+        sb.AppendLine();
+    }
+
     private static void Totals(StringBuilder sb, List<(string Source, Verdict Verdict)> rows)
     {
         var verdictOrder = Enum.GetValues<Verdict>();
@@ -169,12 +275,12 @@ internal static class FullReport
             return;
         }
 
-        sb.AppendLine("| Row | Name | Fact | Catalog | Source | Source value | Reason | Fixed in | Allowlisted | Evidence |");
-        sb.AppendLine("|---:|---|---|---|---|---|---|---|---|---|");
+        sb.AppendLine("| Row | Name | Fact | Catalog | Source | Source value | Reason | Fixed in | Allowlisted | Allowlist reason | Evidence |");
+        sb.AppendLine("|---:|---|---|---|---|---|---|---|---|---|---|");
         foreach (var r in list)
         {
             var allow = allowlist.Covering(r, current);
-            sb.AppendLine($"| {r.RowId} | {Md(r.Name)} | {r.Fact} | {Md(r.CatalogValue)} | {r.Source} | {Md(r.SourceValue)} | {Md(r.Reason)} | {Md(r.FixedIn)} | {(allow is null ? "no" : "until " + allow.Until)} | {Link(r.SourceRef)} |");
+            sb.AppendLine($"| {r.RowId} | {Md(r.Name)} | {r.Fact} | {Md(r.CatalogValue)} | {r.Source} | {Md(r.SourceValue)} | {Md(r.Reason)} | {Md(r.FixedIn)} | {(allow is null ? "no" : "until " + allow.Until)} | {Md(allow?.Reason ?? string.Empty)} | {Link(r.SourceRef)} |");
         }
 
         sb.AppendLine();

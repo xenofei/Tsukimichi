@@ -16,7 +16,9 @@ internal sealed record QuestExtras(
     string GrandCompanyName,
     IReadOnlyList<string> InstanceContentNames,
     string ExpansionName,
-    uint SystemRewardUnlock);
+    uint SystemRewardUnlock,
+    uint SatisfactionNpc,
+    uint DeliveryQuest);
 
 /// <summary>
 /// Opens the local install through Lumina, maps the catalog with the plugin's own <see cref="CatalogMapper"/> (so the
@@ -116,13 +118,15 @@ internal sealed class GameCatalog
                 quest.GrandCompany.RowId != 0 ? Bundle.Names.GrandCompany(quest.GrandCompany.RowId) : string.Empty,
                 instanceNames,
                 Bundle.Names.Expansion(quest.Expansion.RowId),
-                quest.SystemReward.Count > 1 ? quest.SystemReward[1] : 0u);
+                quest.SystemReward.Count > 1 ? quest.SystemReward[1] : 0u,
+                quest.SatisfactionNpc.RowId,
+                quest.DeliveryQuest.RowId);
         }
 
         Extras = extras;
     }
 
-    public QuestExtras ExtrasOf(uint rowId) => Extras.TryGetValue(rowId, out var e) ? e : new QuestExtras(string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, [], string.Empty, 0);
+    public QuestExtras ExtrasOf(uint rowId) => Extras.TryGetValue(rowId, out var e) ? e : new QuestExtras(string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, [], string.Empty, 0, 0, 0);
 
     /// <summary>Display level as feature plan T2 defines it.</summary>
     public static int DisplayLevel(QuestRecord q) => q.Level + q.LevelOffset;

@@ -123,15 +123,38 @@ internal sealed partial class WikiSource(PoliteHttp http, TextWriter log)
 
     public static string RawUrl(string title) => PageUrl(title) + "?action=raw";
 
-    /// <summary>Fetches every title (batched). The result is keyed by the requested title; normalized/redirected titles are resolved back.</summary>
+    /// <summary>Requested title → page, built once from every cached batch so a title is found whichever batch fetched it.</summary>
+    private Dictionary<string, WikiPage>? index;
+
+    /// <summary>
+    /// Fetches every title (batched). The result is keyed by the requested title; normalized/redirected titles are
+    /// resolved back. Titles already in the cache index are served from it; only the misses go out in batches, so the
+    /// cache stays valid when the set of titles changes between runs.
+    /// </summary>
     public async Task<Dictionary<string, WikiPage>> GetPagesAsync(IEnumerable<string> titles, CancellationToken ct)
     {
+        index ??= BuildIndex();
         var result = new Dictionary<string, WikiPage>(StringComparer.Ordinal);
         var distinct = titles.Select(Names.WikiTitle).Where(t => t.Length > 0).Distinct(StringComparer.Ordinal).OrderBy(t => t, StringComparer.Ordinal).ToList();
-        foreach (var chunk in distinct.Chunk(BatchSize))
+        var misses = new List<string>();
+        foreach (var t in distinct)
+        {
+            if (index.TryGetValue(t, out var cached))
+            {
+                result[t] = cached;
+                result.TryAdd(cached.Title, cached);
+                http.CountCacheHit();
+            }
+            else
+            {
+                misses.Add(t);
+            }
+        }
+
+        foreach (var chunk in misses.Chunk(BatchSize))
         {
             var query = string.Join("|", chunk);
-            var url = $"{Api}?action=query&format=json&formatversion=2&prop=revisions&rvprop=content&rvslots=main&redirects=1&maxlag=5&titles={Uri.EscapeDataString(query)}";
+            var url = BatchUrl(query);
             var fetched = await http.GetAsync(url, ct);
             if (!fetched.Ok)
             {
@@ -139,52 +162,21 @@ internal sealed partial class WikiSource(PoliteHttp http, TextWriter log)
                 continue;
             }
 
-            JsonObject? root;
-            try
+            var pages = ParseBatch(fetched.Body, out var error);
+            if (pages is null)
             {
-                root = JsonNode.Parse(fetched.Body)?.AsObject();
-            }
-            catch (System.Text.Json.JsonException)
-            {
-                log.WriteLine("wiki: batch response was not JSON");
+                log.WriteLine($"wiki: {error}");
                 continue;
             }
 
-            if (root?["query"] is not JsonObject q)
+            foreach (var (requested, page) in pages)
             {
-                if (root?["error"] is JsonObject err)
-                {
-                    log.WriteLine($"wiki: API error {err["code"]}: {err["info"]}");
-                }
-
-                continue;
-            }
-
-            // Map the served title back to what we asked for: normalization (case, underscores) then redirects.
-            var back = new Dictionary<string, string>(StringComparer.Ordinal);
-            foreach (var n in (q["normalized"] as JsonArray ?? []).OfType<JsonObject>())
-            {
-                back[n["to"]!.GetValue<string>()] = n["from"]!.GetValue<string>();
-            }
-
-            foreach (var r in (q["redirects"] as JsonArray ?? []).OfType<JsonObject>())
-            {
-                var from = r["from"]!.GetValue<string>();
-                var to = r["to"]!.GetValue<string>();
-                back[to] = back.TryGetValue(from, out var orig) ? orig : from;
-            }
-
-            foreach (var p in (q["pages"] as JsonArray ?? []).OfType<JsonObject>())
-            {
-                var served = p["title"]!.GetValue<string>();
-                var requested = back.TryGetValue(served, out var orig) ? orig : served;
-                var missing = p["missing"] is JsonValue mv && mv.TryGetValue<bool>(out var b) && b;
-                var content = p["revisions"]?[0]?["slots"]?["main"]?["content"]?.GetValue<string>() ?? string.Empty;
-                var page = new WikiPage(served, PageUrl(served), missing, content);
                 result[requested] = page;
-                if (!string.Equals(requested, served, StringComparison.Ordinal))
+                index[requested] = page;
+                if (!string.Equals(requested, page.Title, StringComparison.Ordinal))
                 {
-                    result.TryAdd(served, page);
+                    result.TryAdd(page.Title, page);
+                    index.TryAdd(page.Title, page);
                 }
             }
         }
@@ -196,6 +188,84 @@ internal sealed partial class WikiSource(PoliteHttp http, TextWriter log)
         }
 
         return result;
+    }
+
+    private static string BatchUrl(string query) => $"{Api}?action=query&format=json&formatversion=2&prop=revisions&rvprop=content&rvslots=main&redirects=1&maxlag=5&titles={Uri.EscapeDataString(query)}";
+
+    private Dictionary<string, WikiPage> BuildIndex()
+    {
+        var built = new Dictionary<string, WikiPage>(StringComparer.Ordinal);
+        var batches = 0;
+        foreach (var (_, body, _) in http.EnumerateCached("ffxiv.consolegameswiki.com", Api + "?action=query"))
+        {
+            var pages = ParseBatch(body, out _);
+            if (pages is null)
+            {
+                continue;
+            }
+
+            batches++;
+            foreach (var (requested, page) in pages)
+            {
+                // Newest batch first, so the first sighting of a title wins.
+                built.TryAdd(requested, page);
+                built.TryAdd(page.Title, page);
+            }
+        }
+
+        if (batches > 0)
+        {
+            log.WriteLine($"wiki: {built.Count} titles indexed from {batches} cached batches");
+        }
+
+        return built;
+    }
+
+    /// <summary>One API batch response → (requested title, page) pairs, with normalization and redirects mapped back to the requested spelling.</summary>
+    private static List<(string Requested, WikiPage Page)>? ParseBatch(string body, out string error)
+    {
+        error = string.Empty;
+        JsonObject? root;
+        try
+        {
+            root = JsonNode.Parse(body)?.AsObject();
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            error = "batch response was not JSON";
+            return null;
+        }
+
+        if (root?["query"] is not JsonObject q)
+        {
+            error = root?["error"] is JsonObject err ? $"API error {err["code"]}: {err["info"]}" : "batch response has no query object";
+            return null;
+        }
+
+        var back = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var n in (q["normalized"] as JsonArray ?? []).OfType<JsonObject>())
+        {
+            back[n["to"]!.GetValue<string>()] = n["from"]!.GetValue<string>();
+        }
+
+        foreach (var r in (q["redirects"] as JsonArray ?? []).OfType<JsonObject>())
+        {
+            var from = r["from"]!.GetValue<string>();
+            var to = r["to"]!.GetValue<string>();
+            back[to] = back.TryGetValue(from, out var orig) ? orig : from;
+        }
+
+        var list = new List<(string, WikiPage)>();
+        foreach (var p in (q["pages"] as JsonArray ?? []).OfType<JsonObject>())
+        {
+            var served = p["title"]!.GetValue<string>();
+            var requested = back.TryGetValue(served, out var orig) ? orig : served;
+            var missing = p["missing"] is JsonValue mv && mv.TryGetValue<bool>(out var b) && b;
+            var content = p["revisions"]?[0]?["slots"]?["main"]?["content"]?.GetValue<string>() ?? string.Empty;
+            list.Add((requested, new WikiPage(served, PageUrl(served), missing, content)));
+        }
+
+        return list;
     }
 
     /// <summary>
@@ -412,7 +482,14 @@ internal sealed partial class WikiSource(PoliteHttp http, TextWriter log)
                 continue;
             }
 
-            list.Add(StripMarkup(t));
+            // "Target{{!}}Label" is the wiki's escaped link pipe inside a template argument; the target is the page name.
+            var pipe = t.IndexOf("{{!}}", StringComparison.Ordinal);
+            if (pipe > 0)
+            {
+                t = t[..pipe];
+            }
+
+            list.Add(StripMarkup(t).Replace('_', ' '));
         }
 
         return list.Where(v => v.Length > 0).ToList();

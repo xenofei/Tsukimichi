@@ -163,6 +163,53 @@ internal sealed class PoliteHttp : IDisposable
         }
     }
 
+    /// <summary>
+    /// Every successfully cached fetch for one host whose URL starts with <paramref name="urlPrefix"/>, newest first.
+    /// Lets a source index responses that carry several records (the wiki's 50-title batches) by record rather than by
+    /// request URL, so an <c>--offline</c> run finds a page whichever batch fetched it.
+    /// </summary>
+    public IEnumerable<(string Url, string Body, string FetchedUtc)> EnumerateCached(string host, string urlPrefix)
+    {
+        var dir = Path.Combine(cacheRoot, host);
+        if (!Directory.Exists(dir))
+        {
+            yield break;
+        }
+
+        var entries = new List<(string Url, string BodyPath, string FetchedUtc)>();
+        foreach (var metaPath in Directory.EnumerateFiles(dir, "*.meta.json"))
+        {
+            JsonObject? meta;
+            try
+            {
+                meta = JsonNode.Parse(File.ReadAllText(metaPath)) as JsonObject;
+            }
+            catch (JsonException)
+            {
+                continue;
+            }
+
+            var url = meta?["url"]?.GetValue<string>() ?? string.Empty;
+            if (!url.StartsWith(urlPrefix, StringComparison.Ordinal) || meta?["status"] is not JsonValue sv || !sv.TryGetValue<int>(out var status) || status is < 200 or >= 300)
+            {
+                continue;
+            }
+
+            entries.Add((url, metaPath[..^".meta.json".Length] + ".body", meta["fetchedUtc"]?.GetValue<string>() ?? string.Empty));
+        }
+
+        foreach (var (url, bodyPath, fetchedUtc) in entries.OrderByDescending(e => e.FetchedUtc, StringComparer.Ordinal))
+        {
+            if (File.Exists(bodyPath))
+            {
+                yield return (url, File.ReadAllText(bodyPath), fetchedUtc);
+            }
+        }
+    }
+
+    /// <summary>Counts a hit served from a source's own index over the cache (see <see cref="EnumerateCached"/>).</summary>
+    public void CountCacheHit() => CacheHits++;
+
     /// <summary>Writes the manifest: one entry per cached fetch (url, status, fetchedUtc, etag, sha256), no content. Sorted by URL.</summary>
     public void WriteManifest(string path, string gameVersion)
     {

@@ -266,32 +266,17 @@ internal sealed class RewardVerifier(
         }
 
         var cfcName = game.ContentFinderConditionNames.GetValueOrDefault(e.RewardId, e.RewardName);
-        var ok = unlocks.Any(u => SameDuty(u, cfcName) || SameDuty(u, e.RewardName));
+        var ok = unlocks.Any(u => DutyNames.Same(u, cfcName) || DutyNames.Same(u, e.RewardName));
         if (ok)
         {
             return new RewardRow(e.QuestRowId, questName, kind, e.RewardId, e.ItemId, e.RewardName, Claim(e), SourceNames.Wiki, value, url, Verdict.Match, variantNote, string.Empty);
         }
 
         // "Palace of the Dead" for "the Palace of the Dead (Floors 1-10)", "Frontline" for "the Borderland Ruins (Secure)": the wiki names the series.
-        var series = unlocks.Any(u => DutyPrefix(cfcName).StartsWith(DutyPrefix(u), StringComparison.Ordinal) || DutyPrefix(u).StartsWith(DutyPrefix(cfcName), StringComparison.Ordinal));
+        var series = unlocks.Any(u => DutyNames.Series(u, cfcName));
         return series
             ? new RewardRow(e.QuestRowId, questName, kind, e.RewardId, e.ItemId, e.RewardName, Claim(e), SourceNames.Wiki, value, url, Verdict.Match, "wiki names the duty series rather than the ContentFinderCondition" + (variantNote.Length > 0 ? "; " + variantNote : string.Empty), string.Empty)
             : new RewardRow(e.QuestRowId, questName, kind, e.RewardId, e.ItemId, e.RewardName, Claim(e), SourceNames.Wiki, value, url, Verdict.Ambiguous, $"wiki names a different duty or a series name that does not contain the catalog's ({cfcName}); needs a human look", string.Empty);
-    }
-
-    private static bool SameDuty(string a, string b) => DutyKey(a) == DutyKey(b);
-
-    private static string DutyKey(string s)
-    {
-        var k = Names.Canon(s).Replace("(duty)", string.Empty).Replace("  ", " ").Trim();
-        return k.StartsWith("the ", StringComparison.Ordinal) ? k[4..] : k;
-    }
-
-    private static string DutyPrefix(string s)
-    {
-        var k = DutyKey(s);
-        var paren = k.IndexOf('(');
-        return (paren > 0 ? k[..paren] : k).Trim();
     }
 
     private async Task<RewardRow> CompareDutyUnlockGarlandAsync(UniqueRewardEntry e, string questName, bool wikiConfirms, CancellationToken ct)
@@ -315,7 +300,7 @@ internal sealed class RewardVerifier(
         }
 
         var cfcName = game.ContentFinderConditionNames.GetValueOrDefault(e.RewardId, e.RewardName);
-        var ok = SameDuty(g.InstanceName, cfcName) || SameDuty(g.InstanceName, e.RewardName);
+        var ok = DutyNames.Same(g.InstanceName, cfcName) || DutyNames.Same(g.InstanceName, e.RewardName);
         if (ok)
         {
             return new RewardRow(e.QuestRowId, questName, kind, e.RewardId, e.ItemId, e.RewardName, Claim(e), SourceNames.Garland, g.InstanceName, url, Verdict.Match, string.Empty, string.Empty);
