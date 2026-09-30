@@ -51,6 +51,9 @@ public sealed record PathRow(PathRowKind Kind)
 
     /// <summary>The Any join an alternative (or its "and N more") leads into.</summary>
     public uint JoinRowId { get; init; }
+
+    /// <summary>The quests a <see cref="PathRowKind.MoreAlternatives"/> line stands for (<see cref="JoinAlternatives.Overflow"/>); empty otherwise.</summary>
+    public IReadOnlyList<uint> OverflowRowIds { get; init; } = [];
 }
 
 /// <summary>
@@ -255,7 +258,13 @@ public static class PathRows
 
             if (join.More > 0)
             {
-                rows.Add(new PathRow(PathRowKind.MoreAlternatives) { Expansion = expansion, Count = join.More, JoinRowId = joinRowId });
+                var overflow = new uint[join.Overflow.Count];
+                for (var i = 0; i < overflow.Length; i++)
+                {
+                    overflow[i] = join.Overflow[i].RowId;
+                }
+
+                rows.Add(new PathRow(PathRowKind.MoreAlternatives) { Expansion = expansion, Count = join.More, JoinRowId = joinRowId, OverflowRowIds = overflow });
             }
 
             return;

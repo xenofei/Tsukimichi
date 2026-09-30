@@ -16,7 +16,11 @@ public sealed record PathStep(uint RowId, QuestState State, int Depth)
 public sealed record PathAlternative(uint RowId, QuestState State, int RemainingCount);
 
 /// <summary>The alternatives into one Any join: the listed ones (at most <see cref="PathFinder.MaxAlternatives"/>) and how many more there are.</summary>
-public sealed record JoinAlternatives(uint JoinRowId, IReadOnlyList<PathAlternative> Alternatives, int More);
+public sealed record JoinAlternatives(uint JoinRowId, IReadOnlyList<PathAlternative> Alternatives, int More)
+{
+    /// <summary>The <see cref="More"/> alternatives that are not listed, in the same order (the "and N more" tooltip names them).</summary>
+    public IReadOnlyList<PathAlternative> Overflow { get; init; } = [];
+}
 
 /// <summary>
 /// Walks a quest's previous quests to the first step. Through an Any join it takes the branch with the fewest
@@ -120,7 +124,7 @@ public static class PathFinder
 
             found.Sort(static (a, b) => a.RemainingCount != b.RemainingCount ? a.RemainingCount.CompareTo(b.RemainingCount) : a.RowId.CompareTo(b.RowId));
             var shown = Math.Min(max, found.Count);
-            (joins ??= []).Add(new JoinAlternatives(step.RowId, found.GetRange(0, shown), found.Count - shown));
+            (joins ??= []).Add(new JoinAlternatives(step.RowId, found.GetRange(0, shown), found.Count - shown) { Overflow = found.GetRange(shown, found.Count - shown) });
         }
 
         return joins ?? (IReadOnlyList<JoinAlternatives>)[];

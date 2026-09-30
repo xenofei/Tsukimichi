@@ -211,6 +211,7 @@ public sealed class PathChart
                     break;
                 case PathRowKind.MoreAlternatives:
                     rowLabels[i] = string.Format(CultureInfo.CurrentCulture, Strings.AndMoreFormat, row.Count);
+                    rowTooltips[i] = OverflowNames(row, catalog, spoilers);
                     break;
             }
         }
@@ -224,6 +225,28 @@ public sealed class PathChart
             : unlocks.Count == 0 ? Strings.PathAloneCaption
             : Strings.PathSingleCaption;
         layoutDirty = true;
+    }
+
+    /// <summary>The names an "and N more" alternatives line stands for, one per line, through the spoiler shield.</summary>
+    private static string OverflowNames(PathRow row, QuestCatalog catalog, Core.Query.SpoilerMask spoilers)
+    {
+        if (row.OverflowRowIds.Count == 0)
+        {
+            return string.Empty;
+        }
+
+        var names = new StringBuilder();
+        foreach (var id in row.OverflowRowIds)
+        {
+            if (names.Length > 0)
+            {
+                names.Append('\n');
+            }
+
+            names.Append(spoilers.DisplayName(catalog, id, id.ToString(CultureInfo.InvariantCulture)));
+        }
+
+        return names.ToString();
     }
 
     /// <summary>Scrolls the chart so the target sits at 60 %; with <paramref name="pulse"/> its ring pulses (the "Show path" reveal).</summary>
@@ -812,6 +835,7 @@ public sealed class PathChart
             case VKind.Alternative:
             case VKind.Unlock:
             case VKind.UnlocksMore:
+            case VKind.MoreAlternatives:
                 x0 = ghostX - UiMetrics.Icon(6f) - Px(2f);
                 break;
             default:
@@ -826,7 +850,7 @@ public sealed class PathChart
         ImGui.PopID();
         if (hovered)
         {
-            ImGui.SetMouseCursor(row.Kind == VKind.UnlocksMore ? ImGuiMouseCursor.Arrow : ImGuiMouseCursor.Hand);
+            ImGui.SetMouseCursor(row.Kind is VKind.UnlocksMore or VKind.MoreAlternatives ? ImGuiMouseCursor.Arrow : ImGuiMouseCursor.Hand);
         }
 
         var focused = ImGui.GetIO().NavVisible && ImGui.IsItemFocused();
@@ -864,6 +888,9 @@ public sealed class PathChart
                 break;
             case VKind.UnlocksMore when unlocksMoreTooltip is { Length: > 0 } names:
                 UiMetrics.Tooltip(names);
+                break;
+            case VKind.MoreAlternatives when rowTooltips[row.Core] is { Length: > 0 } others:
+                UiMetrics.Tooltip(others);
                 break;
         }
     }
@@ -974,7 +1001,7 @@ public sealed class PathChart
             }
 
             case VKind.MoreAlternatives:
-                dl.AddText(font, captionSize, new Vector2(origin.X + ghostLabelX, captionY), Theme.U32(s.TextTertiary), rowLabels[row.Core]);
+                dl.AddText(font, captionSize, new Vector2(origin.X + ghostLabelX, captionY), Theme.U32(hovered ? s.TextSecondary : s.TextTertiary), rowLabels[row.Core]);
                 break;
 
             case VKind.Caption:

@@ -220,6 +220,7 @@ public class PathFinderTests
         Assert.Equal([D, E, 65605u], join.Alternatives.Select(a => a.RowId));
         Assert.All(join.Alternatives, a => Assert.Equal(1, a.RemainingCount));
         Assert.Equal(1, join.More);
+        Assert.Equal([B], join.Overflow.Select(a => a.RowId));
     }
 
     [Fact]

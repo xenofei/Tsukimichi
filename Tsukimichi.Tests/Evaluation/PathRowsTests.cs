@@ -110,7 +110,10 @@ public class PathRowsTests
         var (path, expansion) = Path([Done, Ready, Blocked]);
         var joins = new[]
         {
-            new JoinAlternatives(3, [new PathAlternative(40, Blocked, 3), new PathAlternative(41, Ready, 1)], 2),
+            new JoinAlternatives(3, [new PathAlternative(40, Blocked, 3), new PathAlternative(41, Ready, 1)], 2)
+            {
+                Overflow = [new PathAlternative(43, Blocked, 4), new PathAlternative(44, Blocked, 5)],
+            },
             new JoinAlternatives(99, [new PathAlternative(42, Ready, 1)], 0),
         };
 
@@ -123,6 +126,7 @@ public class PathRowsTests
         Assert.Equal(3, alternative.RemainingCount);
         Assert.Equal(Blocked, alternative.State);
         Assert.Equal(2, rows[5].Count);
+        Assert.Equal([43u, 44u], rows[5].OverflowRowIds);
     }
 
     [Fact]
