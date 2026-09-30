@@ -101,11 +101,12 @@ public sealed partial class CharactersPane
     private int accountVersion = -1;
 
     // Compare with (V2-12): the chosen other character (null follows the most recent capture), the other characters'
-    // offline evaluations memoized per capture time and bundle, and the view model with its key.
+    // offline evaluations memoized per capture time, bundle and the server festivals they were resolved with (Live
+    // says those were the live character's flags, which change under a stored character), and the view model with its key.
     private ulong? compareTarget;
     private Compare? compare;
     private CompareKey compareKey;
-    private readonly Dictionary<ulong, (DateTime Taken, CatalogBundle Bundle, IReadOnlyDictionary<uint, QuestEvaluation>? States)> compareStates = [];
+    private readonly Dictionary<ulong, (DateTime Taken, CatalogBundle Bundle, ServerFestivals? Live, IReadOnlyDictionary<uint, QuestEvaluation>? States)> compareStates = [];
     private UniqueRewardCatalog? fallbackRewards;
 
     private string? toast;
@@ -1235,7 +1236,11 @@ public sealed partial class CharactersPane
             return session.LiveStates;
         }
 
-        if (compareStates.TryGetValue(item.ContentId, out var cached) && cached.Taken == item.TakenUtc && ReferenceEquals(cached.Bundle, bundle))
+        // Festivals run server-wide: while someone is logged in the live flags decide for every stored character, so a
+        // change of them (a login, a logout, an event starting) resolves the other character again.
+        var live = session.LiveSnapshot is { } liveSnapshot ? ServerFestivals.Of(liveSnapshot) : null;
+        if (compareStates.TryGetValue(item.ContentId, out var cached) && cached.Taken == item.TakenUtc && ReferenceEquals(cached.Bundle, bundle)
+            && (live is null ? cached.Live is null : live.SameAs(cached.Live)))
         {
             return cached.States;
         }
@@ -1245,7 +1250,7 @@ public sealed partial class CharactersPane
         {
             try
             {
-                states = StateResolver.ResolveAll(bundle.Catalog, snapshot, session.Context);
+                states = StateResolver.ResolveAll(bundle.Catalog, snapshot, ContextFor(snapshot));
             }
             catch (Exception ex)
             {
@@ -1253,9 +1258,17 @@ public sealed partial class CharactersPane
             }
         }
 
-        compareStates[item.ContentId] = (item.TakenUtc, bundle, states);
+        compareStates[item.ContentId] = (item.TakenUtc, bundle, live, states);
         return states;
     }
+
+    /// <summary>
+    /// The context another stored character is resolved with: the session's, with the festivals running on the server
+    /// for that character (<see cref="ServerFestivals.For"/>: the live flags while someone is logged in, else its own
+    /// less the stale ones) instead of the viewed character's.
+    /// </summary>
+    private EvalContext ContextFor(CharacterSnapshot snapshot) =>
+        session.Context with { ServerFestivals = ServerFestivals.For(snapshot, session.LiveSnapshot, session.Curated.Festivals, DateTime.UtcNow) };
 
     /// <summary>The Moonlit pane's merged catalog when attached; otherwise the shipped data and curated files, built once.</summary>
     private UniqueRewardCatalog RewardsCatalog()
@@ -1385,7 +1398,7 @@ public sealed partial class CharactersPane
         {
             try
             {
-                evaluation = StateResolver.Resolve(quest, snapshot, bundle.Catalog, session.Context);
+                evaluation = StateResolver.Resolve(quest, snapshot, bundle.Catalog, ContextFor(snapshot));
             }
             catch (Exception ex)
             {
