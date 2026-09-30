@@ -513,12 +513,20 @@ internal sealed class UniqueRewardGenerator
             Add(job.UnlockQuest.RowId, RewardKind.ClassJob, job.RowId, 0, Text(job.Name), "ClassJob.UnlockQuest");
         }
 
+        // The awarding quest, not always the one AetherCurrent.Quest lists (five currents name the wrong quest); the
+        // resolver is shared with the Flight view (Tsukimichi.GameData.AetherCurrentQuests).
         foreach (var current in g.AetherCurrents)
         {
-            if (current.Quest.RowId == 0)
+            if (Tsukimichi.GameData.AetherCurrentQuests.Resolve(current, g.Quests) is not { } awarding)
                 continue;
             var name = aetherCurrentZone.TryGetValue(current.RowId, out var zone) ? $"Aether Current ({zone})" : "Aether Current";
-            Add(current.Quest.RowId, RewardKind.AetherCurrent, current.RowId, 0, name, "AetherCurrent.Quest");
+            var source = awarding.Source switch
+            {
+                Tsukimichi.GameData.AetherCurrentQuestSource.PreviousQuest => $"Quest.OtherReward (AetherCurrent.Quest lists {awarding.ListedQuestRowId})",
+                Tsukimichi.GameData.AetherCurrentQuestSource.Override => $"AetherCurrentQuests.Overrides (AetherCurrent.Quest lists {awarding.ListedQuestRowId})",
+                _ => "AetherCurrent.Quest",
+            };
+            Add(awarding.QuestRowId, RewardKind.AetherCurrent, current.RowId, 0, name, source);
         }
 
         foreach (var aoz in g.AozActionTransients)

@@ -1,6 +1,6 @@
 {
   "gameVersion": "2026.09.15.0000.0000",
-  "generatedUtc": "2026-09-30T05:51:38Z",
+  "generatedUtc": "2026-09-30T17:43:21Z",
   "entries": [
     {
       "questRowId": 65545,
@@ -5958,13 +5958,13 @@
       "otherSources": []
     },
     {
-      "questRowId": 67328,
+      "questRowId": 67326,
       "kind": "AetherCurrent",
       "rewardId": 2818065,
       "itemId": 0,
       "rewardName": "Aether Current (The Dravanian Forelands)",
       "confidence": "Static",
-      "source": "AetherCurrent.Quest",
+      "source": "Quest.OtherReward (AetherCurrent.Quest lists 67328)",
       "otherSources": []
     },
     {
@@ -5978,13 +5978,13 @@
       "otherSources": []
     },
     {
-      "questRowId": 67334,
+      "questRowId": 67333,
       "kind": "AetherCurrent",
       "rewardId": 2818066,
       "itemId": 0,
       "rewardName": "Aether Current (The Dravanian Forelands)",
       "confidence": "Static",
-      "source": "AetherCurrent.Quest",
+      "source": "Quest.OtherReward (AetherCurrent.Quest lists 67334)",
       "otherSources": []
     },
     {
@@ -6058,13 +6058,13 @@
       "otherSources": []
     },
     {
-      "questRowId": 67365,
+      "questRowId": 67364,
       "kind": "AetherCurrent",
       "rewardId": 2818096,
       "itemId": 0,
       "rewardName": "Aether Current (The Churning Mists)",
       "confidence": "Static",
-      "source": "AetherCurrent.Quest",
+      "source": "Quest.OtherReward (AetherCurrent.Quest lists 67365)",
       "otherSources": []
     },
     {
@@ -6098,13 +6098,13 @@
       "otherSources": []
     },
     {
-      "questRowId": 67437,
+      "questRowId": 67410,
       "kind": "AetherCurrent",
       "rewardId": 2818110,
       "itemId": 0,
       "rewardName": "Aether Current (The Sea of Clouds)",
       "confidence": "Static",
-      "source": "AetherCurrent.Quest",
+      "source": "Quest.OtherReward (AetherCurrent.Quest lists 67437)",
       "otherSources": []
     },
     {
@@ -23798,6 +23798,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 69793,
+      "kind": "AetherCurrent",
+      "rewardId": 2818328,
+      "itemId": 0,
+      "rewardName": "Aether Current (Thavnair)",
+      "confidence": "Static",
+      "source": "AetherCurrentQuests.Overrides (AetherCurrent.Quest lists 70030)",
+      "otherSources": []
+    },
+    {
       "questRowId": 69795,
       "kind": "Other",
       "rewardId": 2,
@@ -24405,16 +24415,6 @@
       "questRowId": 70025,
       "kind": "AetherCurrent",
       "rewardId": 2818326,
-      "itemId": 0,
-      "rewardName": "Aether Current (Thavnair)",
-      "confidence": "Static",
-      "source": "AetherCurrent.Quest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70030,
-      "kind": "AetherCurrent",
-      "rewardId": 2818328,
       "itemId": 0,
       "rewardName": "Aether Current (Thavnair)",
       "confidence": "Static",

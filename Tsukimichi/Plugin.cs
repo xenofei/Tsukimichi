@@ -588,7 +588,7 @@ public sealed class Plugin : IDalamudPlugin
             windowSystem.AddWindow(routeWindow);
             ui.RouteRequested += routeWindow.Show;
             // The flight index (a few small sheets) is built on the pane's first draw, on the framework thread.
-            flightPane = new FlightPane(Session, unlockReader, gameLinks, TextureProvider, Log, () => ClientState.TerritoryType, () => FlightIndex.Build(DataManager.Excel, Dalamud.Utility.ClientLanguageExtensions.ToLumina(DataManager.Language)));
+            flightPane = new FlightPane(Session, unlockReader, gameLinks, TextureProvider, Log, () => ClientState.TerritoryType, () => FlightIndex.Build(DataManager.Excel, Dalamud.Utility.ClientLanguageExtensions.ToLumina(DataManager.Language), Strings.FlightAllZonesFormat));
             mainWindow.AttachFlight(flightPane);
             // Clear my blues (P3): the duty kinds (ContentFinderCondition) are read on the plan's first use.
             planSource = new PlanSource(Session, () => DutyIndex.Build(DataManager.Excel, Dalamud.Utility.ClientLanguageExtensions.ToLumina(DataManager.Language)), Log);

@@ -116,7 +116,8 @@ public sealed class FlightPane
             return;
         }
 
-        var here = currentTerritory();
+        // Every A Realm Reborn field zone answers the one A Realm Reborn entry.
+        var here = Index.ZoneFor(currentTerritory());
         var line = ImGui.GetTextLineHeight();
         var countWidth = ImGui.CalcTextSize("99/99").X;
         using (var table = ImRaii.Table("##flightZones", 3, ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.NoPadOuterX))
@@ -142,7 +143,7 @@ public sealed class FlightPane
 
                 foreach (var zone in group.Zones)
                 {
-                    DrawZoneRow(ui, zone, zone.TerritoryId == here, line);
+                    DrawZoneRow(ui, zone, ReferenceEquals(zone.Zone, here), line);
                 }
             }
         }
@@ -494,9 +495,11 @@ public sealed class FlightPane
                 return;
             }
 
+            // Any A Realm Reborn field zone asks for the one A Realm Reborn entry.
+            var wantedZone = Index.ZoneFor(wanted);
             foreach (var zone in zones)
             {
-                if (zone.TerritoryId == wanted)
+                if (ReferenceEquals(zone.Zone, wantedZone))
                 {
                     Select(ui, zone);
                     return;
@@ -504,10 +507,10 @@ public sealed class FlightPane
             }
         }
 
-        var here = currentTerritory();
+        var here = Index.ZoneFor(currentTerritory());
         foreach (var zone in zones)
         {
-            if (zone.TerritoryId == here)
+            if (ReferenceEquals(zone.Zone, here))
             {
                 Select(ui, zone);
                 return;
@@ -565,7 +568,11 @@ public sealed class FlightPane
     private static string ExpansionName(CatalogBundle? bundle, byte expansion) =>
         bundle?.Names.Expansion(expansion) is { Length: > 0 } named ? named : Expansions.Name(expansion);
 
-    /// <summary>Attunement per current, quest state and status line per row, once per session version; count strings follow.</summary>
+    /// <summary>
+    /// Attunement per current, quest state and status line per row, once per session version; count strings follow. A
+    /// quest current counts as done by its attunement flag, or by its awarding quest's completion only when the flag
+    /// cannot be read (<see cref="FlightProgress.QuestCurrentDone"/>).
+    /// </summary>
     private void RefreshCounts()
     {
         var states = session.States;
@@ -590,7 +597,7 @@ public sealed class FlightPane
 
                 states.TryGetValue(row.Current.QuestRowId, out var evaluation);
                 row.SetState(evaluation, session.Names, states);
-                if (evaluation?.State == QuestState.Completed)
+                if (FlightProgress.QuestCurrentDone(flag, evaluation?.State))
                 {
                     questsDone++;
                 }

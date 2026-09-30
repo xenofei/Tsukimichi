@@ -4,6 +4,9 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+### Fixed
+- Flight: The Churning Mists, The Dravanian Forelands and The Sea of Clouds counted the wrong quests, because the game's own data names the next quest instead of the one that gives the current (and an unrelated quest for one Thavnair current). The zone count now follows the currents you have attuned, and falls back to completed quests only for a character you are not logged in on. The Flag and Teleport buttons point at the right quests. A Realm Reborn shows as one entry for all its zones, marked "you are here" in any of them.
+
 ## [1.1.0] - 2026-09-30
 
 ### Added
