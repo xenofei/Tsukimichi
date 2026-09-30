@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Numerics;
+using System.Runtime.InteropServices;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using Lumina.Excel.Sheets;
@@ -25,7 +27,8 @@ namespace Tsukimichi.Game;
 /// characters, they are derived from the quests the achievement names (<see cref="AchievementQuests.EarnedFromQuests"/>):
 /// all of them done for a "complete every quest" achievement, any one for "complete any one"; only when the sheet
 /// cannot tell does the entry's own quest bit decide. <see cref="AchievementStateVersion"/> moves when the live state
-/// loads, so the Moonlit pane reads them again.
+/// loads and whenever the number of completed achievements changes (one earned while the pane is open), so the
+/// Moonlit pane reads them again.
 /// </para>
 /// <para>
 /// Results are memoized per (kind, reward id, quest) and dropped whenever <see cref="SessionState.Version"/> changes.
@@ -50,7 +53,7 @@ public sealed class RewardUnlockReader
     private Dictionary<uint, List<uint>>? achievementsByTitle;
     private int memoVersion = -1;
     private bool warned;
-    private (bool Achievements, bool Titles) liveAchievementState;
+    private (bool Achievements, bool Titles, int Completed) liveAchievementState;
     private int achievementStateVersion;
 
     public RewardUnlockReader(SessionState session, IDataManager data, IFramework framework, IPluginLog log)
@@ -115,9 +118,10 @@ public sealed class RewardUnlockReader
     public void InvalidateAetherCurrents() => DropMemo(RewardKind.AetherCurrent, RewardKind.AetherCurrent);
 
     /// <summary>
-    /// Moves whenever the live character's title list or achievement list finishes loading (or goes away), and drops
-    /// the memoized title and achievement answers so the next read uses the game's state. Cheap: two flags read on
-    /// the framework thread; the Moonlit pane checks it every frame.
+    /// Moves whenever the live character's title list or achievement list finishes loading (or goes away), or the
+    /// number of completed achievements changes, and drops the memoized title and achievement answers so the next read
+    /// uses the game's state. Cheap: two flags and a population count over the completed-achievement bitmap (a few
+    /// hundred bytes), read on the framework thread only; the Moonlit pane checks it every frame.
     /// </summary>
     public int AchievementStateVersion
     {
@@ -264,7 +268,7 @@ public sealed class RewardUnlockReader
         return AchievementQuests.EarnedFromQuests(info.Type, info.Quests, q => snapshot.IsCompleted(QuestRecord.ToQuestId(q)));
     }
 
-    private unsafe (bool Achievements, bool Titles) ReadAchievementState()
+    private unsafe (bool Achievements, bool Titles, int Completed) ReadAchievementState()
     {
         if (!CanReadLive)
         {
@@ -275,13 +279,33 @@ public sealed class RewardUnlockReader
         {
             var ui = UIState.Instance();
             var achievement = FFXIVClientStructs.FFXIV.Client.Game.UI.Achievement.Instance();
-            return (achievement != null && achievement->IsLoaded(), ui != null && ui->TitleList.DataReceived);
+            var loaded = achievement != null && achievement->IsLoaded();
+            var completed = loaded ? CountBits(achievement->CompletedAchievements) : 0;
+            return (loaded, ui != null && ui->TitleList.DataReceived, completed);
         }
         catch (Exception ex)
         {
             WarnOnce(ex);
             return default;
         }
+    }
+
+    /// <summary>How many bits are set: eight bytes at a time, then the rest.</summary>
+    private static int CountBits(ReadOnlySpan<byte> bits)
+    {
+        var count = 0;
+        var words = MemoryMarshal.Cast<byte, ulong>(bits);
+        foreach (var word in words)
+        {
+            count += BitOperations.PopCount(word);
+        }
+
+        for (var i = words.Length * sizeof(ulong); i < bits.Length; i++)
+        {
+            count += BitOperations.PopCount(bits[i]);
+        }
+
+        return count;
     }
 
     private void DropMemo(RewardKind first, RewardKind second)
