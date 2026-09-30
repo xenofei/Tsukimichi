@@ -130,7 +130,7 @@ public sealed class QueryRunner : IDisposable
 
     /// <summary>
     /// The book badge's hover line for a story sidequest: "Part of a side story: &lt;chain&gt; (3 of 7)", the chain
-    /// named through the spoiler shield, or the one-quest line. Built on hover only.
+    /// named through the spoiler shield, or the one-quest line. Built on the first hovered frame and cached.
     /// </summary>
     public string StoryBadgeText(uint rowId)
     {
@@ -139,9 +139,26 @@ public sealed class QueryRunner : IDisposable
             return Strings.StoryBadgeLone;
         }
 
+        // Built once per row and session version (spoiler reveals bump it too), so a hover held over the badge
+        // allocates nothing after its first frame.
+        if (storyBadgeText is { } cached && storyBadgeRowId == rowId && storyBadgeVersion == session.Version && ReferenceEquals(storyBadgeBundle, bundle))
+        {
+            return cached;
+        }
+
         var title = ChainCatalog.Title(chain, id => session.Spoilers.DisplayName(bundle.Catalog, id, id.ToString(CultureInfo.InvariantCulture)));
-        return string.Format(CultureInfo.CurrentCulture, Strings.StoryBadgeFormat, title, ChainCatalog.IndexOf(chain, rowId) + 1, chain.RowIds.Count);
+        storyBadgeRowId = rowId;
+        storyBadgeVersion = session.Version;
+        storyBadgeBundle = bundle;
+        storyBadgeText = string.Format(CultureInfo.CurrentCulture, Strings.StoryBadgeFormat, title, ChainCatalog.IndexOf(chain, rowId) + 1, chain.RowIds.Count);
+        return storyBadgeText;
     }
+
+    // StoryBadgeText's one-entry cache: the row, session version and catalog it was built for.
+    private uint storyBadgeRowId;
+    private int storyBadgeVersion = -1;
+    private CatalogBundle? storyBadgeBundle;
+    private string? storyBadgeText;
 
     /// <summary>Search text the current rows were computed with (after debounce).</summary>
     public string AppliedSearch => appliedSearch;
