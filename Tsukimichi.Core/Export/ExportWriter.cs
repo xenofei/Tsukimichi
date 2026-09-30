@@ -268,6 +268,33 @@ public static class ExportWriter
         return sb.ToString();
     }
 
+    /// <summary>
+    /// The folder exports go to: <paramref name="defaultDirectory"/> when <paramref name="configured"/> is blank, the
+    /// configured folder when it is a fully qualified path, else the configured folder under
+    /// <paramref name="configDirectory"/>. <c>\exports</c> and <c>D:exports</c> are rooted but not fully qualified
+    /// (they depend on the current drive or directory), so they count as relative and never resolve against the
+    /// game's working directory.
+    /// </summary>
+    public static string ResolveFolder(string? configured, string configDirectory, string defaultDirectory)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(configDirectory);
+        ArgumentException.ThrowIfNullOrWhiteSpace(defaultDirectory);
+        var folder = configured?.Trim();
+        if (string.IsNullOrEmpty(folder))
+        {
+            return defaultDirectory;
+        }
+
+        if (Path.IsPathFullyQualified(folder))
+        {
+            return folder;
+        }
+
+        // Path.Combine would keep a rooted second part as is, so the partial root ("\", "D:") is dropped first.
+        var relative = folder[(Path.GetPathRoot(folder)?.Length ?? 0)..].TrimStart('\\', '/');
+        return relative.Length == 0 ? defaultDirectory : Path.Combine(configDirectory, relative);
+    }
+
     /// <summary>Writes an export into <paramref name="directory"/> (created when missing) and returns the full path.</summary>
     public static string Write(string directory, string fileName, string content)
     {

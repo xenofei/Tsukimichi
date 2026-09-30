@@ -232,4 +232,23 @@ public sealed class ExportWriterTests(FixtureCatalog fixture) : IClassFixture<Fi
         Assert.Equal(Path.Combine(Path.GetFullPath(dir), fileName), path);
         Assert.Equal("a,b\r\n", File.ReadAllText(path));
     }
+
+    [Theory]
+    [InlineData("", @"C:\cfg\exports")]
+    [InlineData("   ", @"C:\cfg\exports")]
+    [InlineData(@"E:\My exports", @"E:\My exports")]
+    [InlineData(@"\\server\share\x", @"\\server\share\x")]
+    [InlineData("mine", @"C:\cfg\mine")]
+    [InlineData(@"\saved", @"C:\cfg\saved")]
+    [InlineData(@"D:saved", @"C:\cfg\saved")]
+    [InlineData(@"D:", @"C:\cfg\exports")]
+    public void Folder_resolves_rooted_but_relative_paths_under_the_config_directory(string configured, string expected)
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        Assert.Equal(expected, ExportWriter.ResolveFolder(configured, @"C:\cfg", @"C:\cfg\exports"));
+    }
 }
