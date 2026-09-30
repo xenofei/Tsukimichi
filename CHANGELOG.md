@@ -18,6 +18,12 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 - Todo overlay: Locked now means click-through. A locked overlay cannot be moved and lets every click through to the game; set it from the title's menu, and unlock it in Settings › Todo overlay.
 - Nearby quests: a click shows the quest in the Journal and a double-click flags the giver on the map; Flag and Teleport moved from buttons on each row into the "…" and right-click menu, so a stray click never plants a flag or starts a teleport.
 - Reduce motion also turns off hover fades. Nothing in Tsukimichi moves on its own; hover fades pause while you scroll.
+- A new toolbar: a rounded search box (Ctrl+F puts the cursor in it), the quick views as one control with All first (Unlocks, My level, Stalled, Story sidequests, Sprout mode), a Filters button whose number counts the filters narrowing the table, your character as a chip with the job icon, world and a live or snapshot dot (click it to switch character), and round Help, Tour and Settings buttons. On a narrow window or at a large UI scale it takes two rows instead of hiding anything. The filter panel keeps the Stalled days setting.
+- A row of chips under the toolbar, only while something narrows the table: the tree selection first ("Scope: Sidequests › Gridania"; click it to go back to All quests), then one chip per filter, each clearing its filter. The search and the quick view are no longer chips, since the search box and the Quick views control already show them.
+- The tabs run down the left edge in a column of their own, each with an icon, and Journal shows the number of quests you can pick up now. The Journal tree keeps its full width.
+- The main window opens at a size that fits your screen at every UI scale (up to 1.6), and its smallest size makes room for the tab column.
+- The tour is shorter and comes in three chapters you can jump between: Find, Read and Beyond. Read shows all eight quest moons side by side with their names. Enter or the right arrow moves on, the left arrow goes back and Esc closes; the card follows your UI scale, and the tab and the filter panel go back to how you left them when the tour ends. The first-run offer now has "Later" (asked again next session, up to three times) and "Don't offer again".
+- Help › Quick start follows the tour: find, narrow, read why, then Moonlit, Characters and Flight.
 
 ## [0.7.0] - 2026-09-29
 
