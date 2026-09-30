@@ -76,6 +76,7 @@ public sealed class Plugin : IDalamudPlugin
     private Game.ItemHooks? itemHooks;
     private Game.NpcHooks? npcHooks;
     private Game.HookGateNotice? hookGateNotice;
+    private Game.TodoLockNotice? todoLockNotice;
     private TodoOverlay? todoOverlay;
 
     /// <summary>
@@ -498,6 +499,8 @@ public sealed class Plugin : IDalamudPlugin
                 MoonlitPane.Reveal(ui, quest);
             }, ClientState, Condition, Paths, PluginInterface, Log);
             windowSystem.AddWindow(todoOverlay);
+            // 0.8.0: Locked became click-through; a player who upgraded with it on is told once in chat.
+            todoLockNotice = new Game.TodoLockNotice(Settings, ClientState, ChatGui, PluginInterface, Log);
             command.ToggleTodoOverlay = todoOverlay.ToggleEnabled;
             configWindow.ResetTodoPosition = todoOverlay.ResetPosition;
 
@@ -585,6 +588,7 @@ public sealed class Plugin : IDalamudPlugin
         itemHooks?.Dispose();
         npcHooks?.Dispose();
         hookGateNotice?.Dispose();
+        todoLockNotice?.Dispose();
         PluginInterface.UiBuilder.OpenMainUi -= mainWindow.Toggle;
         Framework.Update -= mainWindow.ConsumeEscape;
         PluginInterface.UiBuilder.Draw -= windowSystem.Draw;
@@ -644,6 +648,7 @@ public sealed class Plugin : IDalamudPlugin
         Unwind("item hooks", () => itemHooks?.Dispose());
         Unwind("npc hooks", () => npcHooks?.Dispose());
         Unwind("hook gate notice", () => hookGateNotice?.Dispose());
+        Unwind("todo lock notice", () => todoLockNotice?.Dispose());
         Unwind("command", () => command?.Dispose());
         Unwind("todo overlay", () => todoOverlay?.Dispose());
         Unwind("server bar entry", () => dtrEntry?.Dispose());
