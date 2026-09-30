@@ -498,7 +498,8 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         {
             // The highlight follows the global selection, as in the Flight pane, so a quest picked from the detail
             // pane's path, another pane or chat lights its Moonlit row too, and an override never wipes it.
-            if (ImGui.Selectable(row.Name, ui.SelectedRowId == row.Entry.QuestRowId))
+            // AllowItemOverlap lets the "…" button drawn over the cell's right end take the hover and the click.
+            if (ImGui.Selectable(row.Name, ui.SelectedRowId == row.Entry.QuestRowId, ImGuiSelectableFlags.AllowItemOverlap))
             {
                 ui.SelectedRowId = row.Entry.QuestRowId;
             }
