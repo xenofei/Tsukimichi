@@ -133,4 +133,32 @@ public class ConfirmGateTests
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => new ConfirmGate(seconds));
     }
+
+    [Fact]
+    public void Countdown_tenths_follow_the_hold_and_vanish_when_idle_or_fired()
+    {
+        var gate = new ConfirmGate();
+        Assert.Equal(6, gate.HoldTenths);
+        Assert.Equal(0, gate.RemainingTenths);
+
+        gate.Update(chordHeld: false, pressed: true, 0.05f);
+        Assert.Equal(6, gate.RemainingTenths); // 0.55 s left rounds up
+
+        gate.Update(chordHeld: false, pressed: true, 0.5f);
+        Assert.Equal(1, gate.RemainingTenths); // 0.05 s left never shows as zero
+
+        gate.Update(chordHeld: false, pressed: true, 0.1f);
+        Assert.True(gate.Confirmed);
+        Assert.Equal(0, gate.RemainingTenths);
+    }
+
+    [Fact]
+    public void Countdown_tenths_scale_with_a_custom_hold()
+    {
+        var gate = new ConfirmGate(1.2f);
+        gate.Update(chordHeld: false, pressed: true, 0.01f);
+
+        Assert.Equal(12, gate.HoldTenths);
+        Assert.Equal(12, gate.RemainingTenths);
+    }
 }

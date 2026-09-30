@@ -119,32 +119,25 @@ public static class ScaleMetrics
     /// <paramref name="boxWidth"/> × <paramref name="boxHeight"/> box at the image's own aspect, cropping the excess
     /// evenly at both ends (an object-fit "cover"). Non-positive sizes yield the full image.
     /// </summary>
-    public static (Vector2 Uv0, Vector2 Uv1) CenterCropUv(float boxWidth, float boxHeight, float textureWidth, float textureHeight)
+    public static (Vector2 Uv0, Vector2 Uv1) CenterCropUv(float boxWidth, float boxHeight, float textureWidth, float textureHeight) =>
+        ImageCover.Uv(boxWidth, boxHeight, textureWidth, textureHeight);
+
+    /// <summary>Smallest moon diameter, in pixels, on the surfaces read while playing (the Todo overlay, Nearby): 14 px (glyph proposal floor, UX panel finding 5).</summary>
+    public const float PlayingGlyphMinDiameter = 14f;
+
+    /// <summary>
+    /// An inline glyph box grown, if needed, so the moon it holds (radius = box × <paramref name="radiusFraction"/>) is
+    /// at least <paramref name="minDiameter"/> pixels across. A non-positive fraction leaves the box as it is.
+    /// </summary>
+    public static float GlyphBoxWithFloor(float box, float radiusFraction, float minDiameter = PlayingGlyphMinDiameter)
     {
-        if (!(boxWidth > 0f) || !(boxHeight > 0f) || !(textureWidth > 0f) || !(textureHeight > 0f))
+        if (!(radiusFraction > 0f) || !float.IsFinite(minDiameter))
         {
-            return (Vector2.Zero, Vector2.One);
+            return box;
         }
 
-        var boxAspect = boxWidth / boxHeight;
-        var textureAspect = textureWidth / textureHeight;
-        if (textureAspect > boxAspect)
-        {
-            // Image wider than the box: keep the full height, trim the sides.
-            var visible = boxAspect / textureAspect;
-            var trim = (1f - visible) * 0.5f;
-            return (new Vector2(trim, 0f), new Vector2(1f - trim, 1f));
-        }
-
-        if (textureAspect < boxAspect)
-        {
-            // Image taller than the box: keep the full width, trim top and bottom.
-            var visible = textureAspect / boxAspect;
-            var trim = (1f - visible) * 0.5f;
-            return (new Vector2(0f, trim), new Vector2(1f, 1f - trim));
-        }
-
-        return (Vector2.Zero, Vector2.One);
+        var floor = minDiameter / (2f * radiusFraction);
+        return float.IsFinite(box) ? MathF.Max(box, floor) : floor;
     }
 
     private static float Clamp(float value, float min, float max, float fallback) =>
