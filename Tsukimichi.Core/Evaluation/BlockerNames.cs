@@ -16,6 +16,13 @@ public sealed record BlockerNames
     /// <summary>Names prerequisite, lock and main-scenario quests; <see cref="QuestCatalog.Empty"/> prints "quest N".</summary>
     public QuestCatalog Catalog { get; init; } = QuestCatalog.Empty;
 
+    /// <summary>
+    /// The name a quest prints under: its own by default; the plugin routes it through the spoiler shield
+    /// (<see cref="Query.SpoilerMask.DisplayName(QuestRecord)"/>) so a masked main scenario quest reads
+    /// "Main scenario quest (Lv 83)" in every blocker, status line, todo row and diagnostic.
+    /// </summary>
+    public Func<QuestRecord, string> QuestName { get; init; } = static quest => quest.Name;
+
     /// <summary>Allied society name by BeastTribe row id ("Pelupelu"); empty leaves the society out of the phrase.</summary>
     public Func<byte, string> Tribe { get; init; } = static _ => string.Empty;
 

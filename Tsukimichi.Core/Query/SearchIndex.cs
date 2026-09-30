@@ -7,7 +7,9 @@ namespace Tsukimichi.Core.Query;
 /// <summary>
 /// Lowercased search text per quest, built in one pass over a catalog. A query is a set of space-separated terms that
 /// must all match: text terms match the name, reward names or internal id by substring; all-digit terms match the
-/// row id or quest id exactly, or digits inside the name. Matching allocates nothing.
+/// row id or quest id exactly, or digits inside the name. Matching allocates nothing. A quest the spoiler shield masks
+/// is matched by its placeholder ("main scenario quest (lv 83)") in place of its name, so typing a hidden name never
+/// finds the quest.
 /// </summary>
 public sealed class SearchIndex
 {
@@ -55,7 +57,13 @@ public sealed class SearchIndex
     }
 
     /// <summary>True when every term of a normalized query matches the quest; an empty query matches everything.</summary>
-    public bool Matches(uint rowId, string normalizedQuery)
+    public bool Matches(uint rowId, string normalizedQuery) => Matches(rowId, normalizedQuery, null);
+
+    /// <summary>
+    /// <see cref="Matches(uint, string)"/> under a spoiler shield: a masked quest's name is left out of the match and
+    /// its lowercased placeholder (<see cref="SpoilerMask.SearchName"/>) is matched in its place.
+    /// </summary>
+    public bool Matches(uint rowId, string normalizedQuery, SpoilerMask? spoilers)
     {
         if (normalizedQuery.Length == 0)
         {
@@ -66,6 +74,8 @@ public sealed class SearchIndex
         {
             return false;
         }
+
+        var maskedName = spoilers?.SearchName(rowId);
 
         var rest = normalizedQuery.AsSpan();
         while (!rest.IsEmpty)
@@ -78,7 +88,7 @@ public sealed class SearchIndex
                 continue;
             }
 
-            if (!entry.MatchesTerm(term))
+            if (!entry.MatchesTerm(term, maskedName))
             {
                 return false;
             }
@@ -117,8 +127,10 @@ public sealed class SearchIndex
                 quest.QuestId.ToString(CultureInfo.InvariantCulture));
         }
 
-        public bool MatchesTerm(ReadOnlySpan<char> term)
+        /// <param name="maskedName">The lowercased placeholder matched instead of the name; null matches the name.</param>
+        public bool MatchesTerm(ReadOnlySpan<char> term, string? maskedName)
         {
+            var name = maskedName ?? this.name;
             if (IsAllDigits(term))
             {
                 return term.SequenceEqual(rowIdText)

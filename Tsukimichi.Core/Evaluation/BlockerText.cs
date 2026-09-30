@@ -364,5 +364,5 @@ public static class BlockerText
     }
 
     private static string QuestName(BlockerNames names, uint rowId) =>
-        names.Catalog.GetByRowId(rowId)?.Name is { Length: > 0 } name ? name : "quest " + rowId.ToString(CultureInfo.InvariantCulture);
+        names.Catalog.GetByRowId(rowId) is { Name.Length: > 0 } quest ? names.QuestName(quest) : "quest " + rowId.ToString(CultureInfo.InvariantCulture);
 }

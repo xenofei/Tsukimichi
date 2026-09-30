@@ -151,7 +151,7 @@ public static class QuestQuery
             return new QueryResult(NoRows, reason, totalInScope);
         }
 
-        var sorted = Sort(rows, sort);
+        var sorted = Sort(rows, sort, ctx.Spoilers);
         if (sort.AvailableFirst)
         {
             sorted = Partition(sorted, static row => IsAvailable(row.State));
@@ -237,7 +237,7 @@ public static class QuestQuery
         return blamed is null ? EmptyReason.Combination : new EmptyReason(blamed, false);
     }
 
-    private static QuestRow[] Sort(List<QuestRow> rows, SortSpec sort)
+    private static QuestRow[] Sort(List<QuestRow> rows, SortSpec sort, SpoilerMask? spoilers)
     {
         var result = rows.ToArray();
         if (sort.Column == SortColumn.Journal)
@@ -258,7 +258,7 @@ public static class QuestQuery
             order[i] = i;
         }
 
-        Array.Sort(order, new RowComparer(result, sort));
+        Array.Sort(order, new RowComparer(result, sort, spoilers ?? SpoilerMask.None));
 
         var sorted = new QuestRow[result.Length];
         for (var i = 0; i < order.Length; i++)
@@ -306,7 +306,8 @@ public static class QuestQuery
         return result;
     }
 
-    private sealed class RowComparer(QuestRow[] rows, SortSpec sort) : IComparer<int>
+    /// <summary>Orders rows by the sort column; names compare as printed, so a masked quest sorts by its placeholder.</summary>
+    private sealed class RowComparer(QuestRow[] rows, SortSpec sort, SpoilerMask spoilers) : IComparer<int>
     {
         public int Compare(int x, int y)
         {
@@ -319,7 +320,7 @@ public static class QuestQuery
             ref readonly var b = ref rows[y];
             var c = sort.Column switch
             {
-                SortColumn.Name => string.Compare(a.Quest.Name, b.Quest.Name, StringComparison.OrdinalIgnoreCase),
+                SortColumn.Name => string.Compare(spoilers.DisplayName(a.Quest), spoilers.DisplayName(b.Quest), StringComparison.OrdinalIgnoreCase),
                 SortColumn.Level => a.Quest.DisplayLevel.CompareTo(b.Quest.DisplayLevel),
                 SortColumn.State => ((int)a.State).CompareTo((int)b.State),
                 SortColumn.Expansion => a.Quest.Expansion.CompareTo(b.Quest.Expansion),
@@ -350,6 +351,7 @@ public static class QuestQuery
         private readonly int bandMin;
         private readonly int bandMax;
         private readonly DateTime stalledBeforeUtc;
+        private readonly byte reachExpansion;
 
         public Plan(FilterSet filters, QueryContext ctx, SearchIndex? index, string query, QuestScope scope)
         {
@@ -362,6 +364,7 @@ public static class QuestQuery
             bandMax = ctx.CurrentLevel + LevelBandRadius;
             var days = Math.Max(0, ctx.StalledDays);
             stalledBeforeUtc = ctx.NowUtc > DateTime.MinValue + TimeSpan.FromDays(days) ? ctx.NowUtc - TimeSpan.FromDays(days) : DateTime.MinValue;
+            reachExpansion = ctx.Spoilers?.ReachExpansion ?? byte.MaxValue;
             UnlistedToggleable = scope.Kind is ScopeKind.None or ScopeKind.VirtualFeature;
             IncludeUnlisted = scope.Kind switch
             {
@@ -483,7 +486,7 @@ public static class QuestQuery
                 return false;
             }
 
-            if (skip != Filter.Search && index is not null && !index.Matches(quest.RowId, query))
+            if (skip != Filter.Search && index is not null && !index.Matches(quest.RowId, query, ctx.Spoilers))
             {
                 return false;
             }
@@ -494,7 +497,8 @@ public static class QuestQuery
         /// <summary>
         /// Feature quests: membership in the derived set. Around my level: quest level within
         /// <see cref="LevelBandRadius"/> of the current level (nothing when the level is unknown). Stalled: in the
-        /// journal, with a known accepted time at least <see cref="QueryContext.StalledDays"/> days before now.
+        /// journal, with a known accepted time at least <see cref="QueryContext.StalledDays"/> days before now. Sprout
+        /// mode: the quest's expansion at or below the one the character's main scenario has reached.
         /// </summary>
         private bool PassesPreset(QuestRecord quest, QuestState state) => Preset switch
         {
@@ -505,6 +509,7 @@ public static class QuestQuery
                 && ctx.AcceptedSince is { } since
                 && since.TryGetValue(quest.QuestId, out var acceptedUtc)
                 && acceptedUtc <= stalledBeforeUtc,
+            Preset.Sprout => quest.Expansion <= reachExpansion,
             _ => true,
         };
 
