@@ -461,6 +461,8 @@ public sealed class ConfigWindow : Window
         pollCostLine = string.Format(CultureInfo.InvariantCulture, Strings.ConfigPollCostFormat, session.AveragePollMs);
     }
 
+    private bool welcomeBackDaysDirty;
+
     private void DrawNotices()
     {
         Header(Strings.ConfigSectionNotices);
@@ -526,6 +528,31 @@ public sealed class ConfigWindow : Window
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
             UiMetrics.Tooltip(Strings.PayoffConfigNoticeHint);
+        }
+
+        DrawWelcomeBackDays();
+    }
+
+    /// <summary>"Show 'Since you were away' after N days" (P7): 0 turns the card off; saved when the slider is let go.</summary>
+    private void DrawWelcomeBackDays()
+    {
+        var days = Math.Clamp(settings.WelcomeBackDays, 0, Core.Return.WelcomeBackTrigger.MaxDays);
+        ImGui.SetNextItemWidth(160f * ImGuiHelpers.GlobalScale);
+        if (ImGui.SliderInt(Strings.WelcomeBackConfigDays, ref days, 0, Core.Return.WelcomeBackTrigger.MaxDays, days == 0 ? Strings.WelcomeBackConfigOff : Strings.WelcomeBackConfigDaysFormat, ImGuiSliderFlags.AlwaysClamp))
+        {
+            settings.WelcomeBackDays = days;
+            welcomeBackDaysDirty = true;
+        }
+
+        if (welcomeBackDaysDirty && ImGui.IsItemDeactivatedAfterEdit())
+        {
+            welcomeBackDaysDirty = false;
+            Save();
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.WelcomeBackConfigHint);
         }
     }
 

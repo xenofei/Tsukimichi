@@ -82,6 +82,7 @@ public sealed class Plugin : IDalamudPlugin
     private DutyFinderPanel? dutyFinderPanel;
     private Game.HookGateNotice? hookGateNotice;
     private Game.TodoLockNotice? todoLockNotice;
+    private Game.WelcomeBackSource? welcomeBack;
     private Game.IpcProvider? ipcProvider;
     private TodoOverlay? todoOverlay;
 
@@ -628,6 +629,13 @@ public sealed class Plugin : IDalamudPlugin
             // "What's new" after an update: decided on the main window's first draw, drawn above the detail pane.
             mainWindow.AttachWhatsNew(new WhatsNewCard(Settings, PluginInterface, Log, helpWindow.Show));
 
+            // "Since you were away" (P7): the stored captures are kept from before this login's first save; the card
+            // sits above the detail pane (after What's new) and the Characters dashboard opens it for any character.
+            welcomeBack = new Game.WelcomeBackSource(Session, Snapshots, ClientState, Settings, Log);
+            mainWindow.AttachWelcomeBack(welcomeBack, Session);
+            Game.WelcomeBackSource welcomeBackSource = welcomeBack;
+            charactersPane.OpenWelcomeBack = welcomeBackSource.Open;
+
             // Toolbar buttons on the main window (help, tutorial, settings).
             mainWindow.AttachActions(configWindow.Toggle, helpWindow.Toggle, helpActions.StartTutorial);
 
@@ -681,6 +689,7 @@ public sealed class Plugin : IDalamudPlugin
         dutyFinderHint?.Dispose();
         hookGateNotice?.Dispose();
         todoLockNotice?.Dispose();
+        welcomeBack?.Dispose();
         PluginInterface.UiBuilder.OpenMainUi -= mainWindow.Toggle;
         Framework.Update -= mainWindow.ConsumeEscape;
         PluginInterface.UiBuilder.Draw -= windowSystem.Draw;
@@ -749,6 +758,7 @@ public sealed class Plugin : IDalamudPlugin
         Unwind("duty finder hint", () => dutyFinderHint?.Dispose());
         Unwind("hook gate notice", () => hookGateNotice?.Dispose());
         Unwind("todo lock notice", () => todoLockNotice?.Dispose());
+        Unwind("since you were away", () => welcomeBack?.Dispose());
         Unwind("command", () => command?.Dispose());
         Unwind("todo overlay", () => todoOverlay?.Dispose());
         Unwind("server bar entry", () => dtrEntry?.Dispose());

@@ -318,6 +318,14 @@ public sealed class Configuration : IPluginConfiguration
     /// <summary>Gate ids whose "why? (spoiler)" the player opened, by character content id; closed by default. Dropped with the character.</summary>
     public Dictionary<ulong, HashSet<string>> PayoffWhyOpenByCharacter { get; set; } = [];
 
+    // ---- 1.1: "Since you were away" (P7) ----
+    /// <summary>
+    /// Settings › Notices "Show 'Since you were away' after N days": the card opens at a login when every stored
+    /// character's newest capture is at least this many days old (see <c>Core.Return.WelcomeBackTrigger</c>). 0 turns
+    /// it off; clamped to 0–180 on load. Per-character "Don't show again" lives in the character's sidecar.
+    /// </summary>
+    public int WelcomeBackDays { get; set; } = Core.Return.WelcomeBackTrigger.DefaultDays;
+
     /// <summary>Drops a forgotten character's payoff gate state; true when there was any.</summary>
     public bool ForgetPayoffGates(ulong contentId) =>
         PayoffGatesNoticedByCharacter.Remove(contentId) | PayoffWhyOpenByCharacter.Remove(contentId);
@@ -388,6 +396,7 @@ public sealed class Configuration : IPluginConfiguration
         config.PayoffGatesNoticedByCharacter ??= [];
         config.PayoffWhyOpenByCharacter ??= [];
         config.ExportFolder ??= string.Empty;
+        config.WelcomeBackDays = Math.Clamp(config.WelcomeBackDays, 0, Core.Return.WelcomeBackTrigger.MaxDays);
         if (!Enum.IsDefined(config.ExportFormat))
         {
             config.ExportFormat = ExportFormat.Json;

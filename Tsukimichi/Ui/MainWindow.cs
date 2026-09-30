@@ -63,6 +63,7 @@ public sealed class MainWindow : Window, IDisposable
     private Action? startTutorial;
     private ITutorial? tutorial;
     private WhatsNewCard? whatsNew;
+    private WelcomeBackCard? welcomeBack;
 
     private Task? retryTask;
     private bool initialized;
@@ -229,6 +230,15 @@ public sealed class MainWindow : Window, IDisposable
     public void AttachWhatsNew(WhatsNewCard card)
     {
         whatsNew = card ?? throw new ArgumentNullException(nameof(card));
+    }
+
+    /// <summary>
+    /// Attaches "Since you were away" (P7): drawn above the detail pane while <paramref name="source"/> has something to
+    /// show, after the What's-new card when both are due.
+    /// </summary>
+    public void AttachWelcomeBack(WelcomeBackSource source, SessionState session)
+    {
+        welcomeBack = new WelcomeBackCard(source, session, ui, OnFiltersChanged);
     }
 
     /// <summary>
@@ -1258,6 +1268,10 @@ public sealed class MainWindow : Window, IDisposable
         if (whatsNew is { Visible: true } card)
         {
             detailHeight -= card.Draw(cellHeight);
+        }
+        else if (welcomeBack is { Visible: true } back)
+        {
+            detailHeight -= back.Draw(cellHeight, bundle);
         }
 
         // Nothing selected: the Tonight card answers "what now" in the detail column (game UX panel finding 1).
