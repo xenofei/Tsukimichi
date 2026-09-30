@@ -23,7 +23,9 @@ namespace Tsukimichi.Game;
 /// the capture stale; the next framework tick captures again, and a gate called on the framework thread in between
 /// captures first, so a caller there never reads a frame-old answer. A caller elsewhere reads the last capture
 /// through a volatile reference. <c>OpenQuest</c> only resolves the id off the framework thread and hands the window
-/// work to <see cref="IFramework.RunOnFrameworkThread(Action)"/>.
+/// work to <see cref="IFramework.RunOnFrameworkThread(Action)"/>. The live spoiler mask (quest names in
+/// <c>GetBlockers</c>) is only built into a capture once a gate was called or <c>StatesChanged</c> has a subscriber, so a
+/// session change costs nothing extra while no plugin uses the gates.
 /// </para>
 /// <para>
 /// <b>Changes.</b> After a tick that captured, <c>StatesChanged</c> is sent on the framework thread when the logged-in
@@ -53,12 +55,17 @@ public sealed class IpcProvider : IDisposable
     private readonly ICallGateProvider<uint, bool>? openQuestGate;
     private readonly ICallGateProvider<object>? statesChanged;
 
-    // Written on the framework thread only; read from any thread.
+    // Written on the framework thread only; read from any thread. `masked` says whether `view`'s quest names go
+    // through the live spoiler mask; a capture skips the mask until something reads the gates (see MaskWanted).
     private volatile IpcView view = IpcView.Empty;
+    private volatile bool masked = true;
 
     // Set by SessionState.Changed (framework thread); cleared by the capture.
     private volatile bool stale = true;
     private volatile bool disposed;
+
+    // Set by the first gate call from any thread and never cleared: from then on every capture builds the mask.
+    private volatile bool consumed;
     private int warned;
 
     // Framework thread only: what StatesChanged last announced.
@@ -92,7 +99,7 @@ public sealed class IpcProvider : IDisposable
             isQuestAvailable.RegisterFunc(id => Answer(IpcChannels.IsQuestAvailableGate, false, v => v.IsQuestAvailable(id)));
             getState.RegisterFunc(id => Answer(IpcChannels.GetStateGate, string.Empty, v => v.State(id)));
             getStateName.RegisterFunc(id => Answer(IpcChannels.GetStateNameGate, string.Empty, v => v.StateName(id)));
-            getBlockers.RegisterFunc(id => Answer(IpcChannels.GetBlockersGate, [], v => v.Blockers(id)));
+            getBlockers.RegisterFunc(id => Answer(IpcChannels.GetBlockersGate, [], v => v.Blockers(id), needsNames: true));
             getMsqPosition.RegisterFunc(() => Answer(IpcChannels.GetMsqPositionGate, 0u, static v => v.MsqNext()));
             openQuestGate.RegisterFunc(OpenQuest);
         }
@@ -120,17 +127,54 @@ public sealed class IpcProvider : IDisposable
         view = IpcView.Empty;
     }
 
-    /// <summary>The capture the gates answer from; a framework-thread caller refreshes a stale one first.</summary>
+    /// <summary>
+    /// The capture the gates answer from; a framework-thread caller refreshes a stale one first, or one taken
+    /// without the spoiler mask. Marks the provider as consumed, so every later capture builds the mask.
+    /// </summary>
     internal IpcView Current
     {
         get
         {
-            if (stale && !disposed && framework.IsInFrameworkUpdateThread)
+            if (!consumed)
+            {
+                consumed = true;
+                if (!masked)
+                {
+                    // Off the framework thread the next tick captures with the mask; on it, the capture below does.
+                    stale = true;
+                }
+            }
+
+            if ((stale || !masked) && !disposed && framework.IsInFrameworkUpdateThread)
             {
                 Capture();
             }
 
             return view;
+        }
+    }
+
+    /// <summary>
+    /// Whether a capture needs the live spoiler mask (built per session <see cref="SessionState.Version"/>, so costly
+    /// to take on every change for nobody): once any gate was called, or while StatesChanged has a subscriber.
+    /// </summary>
+    private bool MaskWanted
+    {
+        get
+        {
+            if (consumed)
+            {
+                return true;
+            }
+
+            try
+            {
+                return statesChanged is { SubscriptionCount: > 0 };
+            }
+            catch (Exception)
+            {
+                return true;
+            }
         }
     }
 
@@ -165,16 +209,28 @@ public sealed class IpcProvider : IDisposable
         capturedContentId = session.LiveContentId;
         if (session.Bundle is not { } bundle)
         {
+            // The empty view names nothing, so it needs no mask.
             view = IpcView.Empty;
+            masked = true;
             return;
         }
 
         var states = session.LiveContentId is null ? null : session.LiveStates;
+        if (!MaskWanted)
+        {
+            // Nobody reads the names yet: skip rebuilding the mask. The first gate call recaptures (Current), and
+            // GetBlockers, the one answer that prints quest names, never reads this view (Answer).
+            masked = false;
+            view = new IpcView(bundle.Catalog, states, bundle.BlockerNames());
+            return;
+        }
+
         // The mask is immutable; binding its DisplayName (not session.LiveNames, whose lookup reads the session on
         // each call) keeps the view safe to read from any thread.
         var mask = session.LiveSpoilers;
         var names = bundle.BlockerNames() with { QuestName = mask.DisplayName };
         view = new IpcView(bundle.Catalog, states, names);
+        masked = true;
     }
 
     /// <summary>Framework thread: sends StatesChanged when the captured states or character differ from the last announced.</summary>
@@ -205,7 +261,10 @@ public sealed class IpcProvider : IDisposable
         }
     }
 
-    private T Answer<T>(string gate, T fallback, Func<IpcView, T> answer)
+    /// <param name="needsNames">The answer prints quest names: never taken from a view captured without the spoiler
+    /// mask (only possible off the framework thread, until the tick after the first gate call), which answers
+    /// <paramref name="fallback"/> instead, as before the catalog is ready.</param>
+    private T Answer<T>(string gate, T fallback, Func<IpcView, T> answer, bool needsNames = false)
     {
         if (disposed)
         {
@@ -214,7 +273,15 @@ public sealed class IpcProvider : IDisposable
 
         try
         {
-            return answer(Current);
+            var current = Current;
+            // Read after the view: Capture clears `masked` before publishing a maskless view and sets it after a masked
+            // one, so a view read here is never taken for masked when it is not.
+            if (needsNames && !masked)
+            {
+                return fallback;
+            }
+
+            return answer(current);
         }
         catch (Exception ex)
         {
