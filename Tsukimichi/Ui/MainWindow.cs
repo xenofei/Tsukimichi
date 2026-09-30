@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Numerics;
 using System.Threading.Tasks;
 using Dalamud.Bindings.ImGui;
+using Dalamud.Game.ClientState.Keys;
 using Dalamud.Interface;
 using Dalamud.Interface.Textures;
 using Dalamud.Interface.Utility;
@@ -261,6 +262,11 @@ public sealed class MainWindow : Window, IDisposable
             var panelOpen = ui.FilterPanelOpen && ui.Tab == NavTab.Journal;
             var popupOpen = popupDepthAtEnd > 0 || ImGui.IsPopupOpen(string.Empty, ImGuiPopupFlags.AnyPopupId | ImGuiPopupFlags.AnyPopupLevel);
             RespectCloseHotkey = !popupOpen && !panelOpen;
+            if ((popupOpen || panelOpen) && Keyboard.WindowHasKeys())
+            {
+                escOwnedAt = Environment.TickCount64;
+            }
+
             HandleEscape(panelOpen);
             HandleShortcuts(session);
         }
@@ -293,6 +299,38 @@ public sealed class MainWindow : Window, IDisposable
 
     /// <summary>How many popups were open when the last frame's Draw ended (ImGui's own Esc may close one before the next Draw).</summary>
     private int popupDepthAtEnd;
+
+    /// <summary>
+    /// When a draw last found the Esc ladder owning Esc (a popup or the filter panel open, this window with the keys;
+    /// <see cref="Environment.TickCount64"/>), for <see cref="ConsumeEscape"/>. Long ago means never.
+    /// </summary>
+    private long escOwnedAt = long.MinValue / 2;
+
+    /// <summary>How long a draw's claim on Esc stays good for <see cref="ConsumeEscape"/>.</summary>
+    private const long EscOwnedGraceMs = 250;
+
+    /// <summary>The game's key state, for <see cref="ConsumeEscape"/>; null leaves the game's keys alone.</summary>
+    public IKeyState? KeyState { get; set; }
+
+    /// <summary>
+    /// <c>Framework.Update</c> handler: while the Esc ladder owns Esc (decided on a recent draw), clears Esc from the
+    /// game's key state before the game reads it. With <see cref="Window.RespectCloseHotkey"/> off Dalamud no longer
+    /// redirects Esc to the window, so without this the press that closes the filter panel or a popup would also
+    /// close the game's top window, clear the target or open the system menu. Same mechanism as
+    /// <see cref="TutorialOverlay.ConsumeKeys"/>.
+    /// </summary>
+    public void ConsumeEscape(IFramework framework)
+    {
+        if (Environment.TickCount64 - escOwnedAt > EscOwnedGraceMs || KeyState is not { } keys)
+        {
+            return;
+        }
+
+        if (keys[VirtualKey.ESCAPE])
+        {
+            keys[VirtualKey.ESCAPE] = false;
+        }
+    }
 
     /// <summary>
     /// Esc while this window has the keys and no text field is active: closes the topmost popup (a modal handles its

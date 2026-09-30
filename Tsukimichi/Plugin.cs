@@ -511,6 +511,9 @@ public sealed class Plugin : IDalamudPlugin
             tutorial.KeyState = KeyState;
             Framework.Update += tutorial.ConsumeKeys;
             mainWindow.AttachTutorial(tutorial);
+            // Esc that closes a popup or the filter panel is kept from the game (the Esc ladder, T17).
+            mainWindow.KeyState = KeyState;
+            Framework.Update += mainWindow.ConsumeEscape;
 
             // Each action opens the main window in front of the help window it was clicked in.
             var helpActions = new HelpActions(
@@ -583,6 +586,7 @@ public sealed class Plugin : IDalamudPlugin
         npcHooks?.Dispose();
         hookGateNotice?.Dispose();
         PluginInterface.UiBuilder.OpenMainUi -= mainWindow.Toggle;
+        Framework.Update -= mainWindow.ConsumeEscape;
         PluginInterface.UiBuilder.Draw -= windowSystem.Draw;
         PluginInterface.UiBuilder.Draw -= UpdateUiMetrics;
         windowSystem.RemoveAllWindows();
@@ -624,6 +628,7 @@ public sealed class Plugin : IDalamudPlugin
             if (mainWindow is not null)
             {
                 PluginInterface.UiBuilder.OpenMainUi -= mainWindow.Toggle;
+                Framework.Update -= mainWindow.ConsumeEscape;
             }
 
             if (hoverHint is not null)
