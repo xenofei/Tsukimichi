@@ -27,6 +27,13 @@ static partial class Strings
     public static string DetailSeasonalBadgeTooltip => Loc.Get("DetailSeasonalBadgeTooltip");
     public static string DetailSpecialBadgeTooltip => Loc.Get("DetailSpecialBadgeTooltip");
 
+    // ---- Hero banner source (V4), the banner's tooltip ----
+    public static string DetailBannerOwn => Loc.Get("DetailBannerOwn");
+    public static string DetailBannerSibling => Loc.Get("DetailBannerSibling");
+    public static string DetailBannerDuty => Loc.Get("DetailBannerDuty");
+    public static string DetailBannerZone => Loc.Get("DetailBannerZone");
+    public static string DetailBannerCategory => Loc.Get("DetailBannerCategory");
+
     // ---- Chain line at the top of the Path card ----
     /// <summary>{0} = chain name, {1} = quests done, {2} = quests in the chain.</summary>
     public static string DetailChainFormat => Loc.Get("DetailChainFormat");

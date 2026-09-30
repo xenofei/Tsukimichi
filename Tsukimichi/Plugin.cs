@@ -564,6 +564,13 @@ public sealed class Plugin : IDalamudPlugin
             // the same kill switch; the lookup follows the curated overlay and the Moonlit catalog like the item hint's.
             var dutyUnlocks = new Core.Unique.DutyUnlockIndexSource(() => Session.Curated, () => moonlit.Catalog);
             dutyFinderHint = new Game.DutyFinderHint(AddonLifecycle, GameGui, DataManager, Session, dutyUnlocks, gate, Log) { Enabled = Settings.DutyFinderHintEnabled };
+            // Hero banners (V4): every quest's banner through the fallback chain, resolved off the frame once per catalog
+            // and duty unlock index; the duty step reads the same index as the Duty Finder hint.
+            mainWindow.AttachBanners(new Core.Ui.BannerIndexSource<Core.Unique.DutyUnlockIndex>(
+                () => Session.Bundle?.Catalog,
+                () => dutyUnlocks.Current,
+                (catalog, duties) => BannerSources.Build(DataManager.Excel, catalog, duties).Resolve(catalog),
+                onError: ex => Log.Warning(ex, "Hero banners unavailable; quests show their own banner or category art")));
             dutyFinderPanel = new DutyFinderPanel(dutyFinderHint, gameLinks, quest =>
             {
                 mainWindow.IsOpen = true;

@@ -1080,7 +1080,8 @@ public sealed class PathChart
         {
             case VKind.Band:
             {
-                FourPointStar(dl, node, UiMetrics.Icon(4f), UiMetrics.Icon(1.6f), Theme.U32(s.TextTertiary), filled: true);
+                // Moon Road (Flair Full and Quiet): the band's star in the brass highlight, its rule in brass.
+                FourPointStar(dl, node, UiMetrics.Icon(4f), UiMetrics.Icon(1.6f), Theme.ShowRules ? Theme.OrnamentHighU32 : Theme.U32(s.TextTertiary), filled: true);
                 var label = rowLabels[row.Core];
                 dl.AddText(font, captionSize, new Vector2(origin.X + labelX, captionY), Theme.U32(s.TextSecondary), label);
                 FadingRule(dl, origin.X + labelX + (ImGui.CalcTextSize(label).X * CaptionScale) + Px(8f), origin.X + width - Px(4f), node.Y);
@@ -1462,11 +1463,17 @@ public sealed class PathChart
         dl.PathStroke(color, ImDrawFlags.Closed, 1f);
     }
 
-    /// <summary>A 1 px rule fading from VeilLine at 0.6 to nothing, after a caption.</summary>
+    /// <summary>A 1 px rule fading from VeilLine at 0.6 to nothing, after a caption; brass at Flair Full and Quiet (<see cref="Ornament.Rule"/>).</summary>
     private void FadingRule(ImDrawListPtr dl, float x0, float x1, float y)
     {
         if (x1 <= x0)
         {
+            return;
+        }
+
+        if (Theme.ShowRules)
+        {
+            Ornament.Rule(dl, new Vector2(x0, y), x1 - x0, thickness: UiMetrics.Hairline);
             return;
         }
 
@@ -1476,10 +1483,13 @@ public sealed class PathChart
         dl.AddRectFilledMultiColor(new Vector2(x0, y), new Vector2(x1, y + UiMetrics.Hairline), from, to, to, from);
     }
 
-    /// <summary>A step's name colour by state (§4.5): done recedes to Mist, the rest Silver, Locked out and Not checked their text tones.</summary>
+    /// <summary>
+    /// A step's name colour by state (§4.5): done recedes to Mist (at Flair Full and Quiet to the dimmed gold of the
+    /// walked road, as the tree's completed nodes), the rest Silver, Locked out and Not checked their text tones.
+    /// </summary>
     private static Vector4 NameColor(QuestState state) => state switch
     {
-        QuestState.Completed => Theme.Surface.TextSecondary,
+        QuestState.Completed => Theme.ShowRules && !Theme.Surface.Light ? Theme.MoonDim : Theme.Surface.TextSecondary,
         QuestState.Foreclosed => Theme.EclipseText,
         QuestState.Unknown => Theme.VeilText,
         _ => Theme.Surface.Text,
