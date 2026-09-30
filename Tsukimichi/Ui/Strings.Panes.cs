@@ -19,6 +19,7 @@ static partial class Strings
     /// <summary>Subtitle under the Moonlit pane header; the tab keeps the brand word.</summary>
     public static string MoonlitSubtitle => Loc.Get("MoonlitSubtitle");
     public static string MoonlitOfflineHint => Loc.Get("MoonlitOfflineHint");
+    public static string MoonlitAchievementsFromQuests => Loc.Get("MoonlitAchievementsFromQuests");
     public static string MoonlitColumnObtained => Loc.Get("MoonlitColumnObtained");
     public static string MoonlitColumnReward => Loc.Get("MoonlitColumnReward");
     public static string MoonlitColumnKind => Loc.Get("MoonlitColumnKind");

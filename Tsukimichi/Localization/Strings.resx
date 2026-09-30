@@ -809,6 +809,10 @@
   <data name="MoonlitOfflineHint" xml:space="preserve">
     <value>Obtained states need the live character.</value>
   </data>
+  <data name="MoonlitAchievementsFromQuests" xml:space="preserve">
+    <value>Worked out from your quests for now. Open the Achievements window in game once this session to read them exactly.</value>
+    <comment>Shown above the Moonlit table when the Titles or Achievements kind is picked and the game has not loaded its achievement list yet.</comment>
+  </data>
   <data name="MoonlitColumnObtained" xml:space="preserve">
     <value>Have</value>
   </data>

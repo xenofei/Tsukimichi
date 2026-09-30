@@ -9,6 +9,7 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ### Fixed
 - Flight: The Churning Mists, The Dravanian Forelands and The Sea of Clouds counted the wrong quests, because the game's own data names the next quest instead of the one that gives the current (and an unrelated quest for one Thavnair current). The zone count now follows the currents you have attuned, and falls back to completed quests only for a character you are not logged in on. The Flag and Teleport buttons point at the right quests. A Realm Reborn shows as one entry for all its zones, marked "you are here" in any of them.
+- Moonlit: relic weapon achievements are gone from the relic quests (one quest showed up to 21 of them, all obtained as soon as you finished it once), and titles that need several quests, such as Seeker of Bounty, are no longer listed under each of those quests as obtained after the first one. Each aether current is counted once, where it was counted twice before. Titles and achievements now follow the game's own record once it is loaded, which happens when you open the Achievements window in game; until then, and for characters you are not logged in on, they are worked out from the quests each one asks for.
 
 ## [1.1.0] - 2026-09-30
 

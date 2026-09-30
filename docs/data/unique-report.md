@@ -2,7 +2,7 @@
 
 Generated from game version `2026.09.15.0000.0000` by Tsukimichi.DataGen (see docs/data/DATA-VERSION.md for when).
 
-- Entries: **3516** across **1211** quests.
+- Entries: **2891** across **1198** quests.
 - Entries whose reward is also obtainable elsewhere (`otherSources` non-empty): **913**. They keep confidence Static in V1; the UI shows the source and marks Online Store re-sells and dungeon drops.
   - `SpecialShop`: 605
   - `Tradable`: 555
@@ -24,7 +24,7 @@ Generated from game version `2026.09.15.0000.0000` by Tsukimichi.DataGen (see do
 | Action | 250 | 0 | 0 | 0 | 250 |
 | GeneralAction | 12 | 0 | 0 | 0 | 12 |
 | ClassJob | 48 | 0 | 0 | 0 | 48 |
-| Other | 163 | 0 | 0 | 0 | 163 |
+| Other | 13 | 0 | 0 | 0 | 13 |
 | ArtifactGear | 1175 | 0 | 0 | 0 | 1175 |
 | Mount | 38 | 0 | 0 | 0 | 38 |
 | Minion | 64 | 0 | 0 | 0 | 64 |
@@ -36,11 +36,11 @@ Generated from game version `2026.09.15.0000.0000` by Tsukimichi.DataGen (see do
 | AetherCurrent | 151 | 0 | 0 | 0 | 151 |
 | BlueMageSpell | 16 | 0 | 0 | 0 | 16 |
 | Trait | 54 | 0 | 0 | 0 | 54 |
-| Achievement | 664 | 0 | 0 | 0 | 664 |
-| Title | 220 | 0 | 0 | 0 | 220 |
+| Achievement | 210 | 0 | 0 | 0 | 210 |
+| Title | 199 | 0 | 0 | 0 | 199 |
 | DutyUnlock | 135 | 0 | 91 | 0 | 226 |
 | SystemUnlock | 0 | 0 | 65 | 0 | 65 |
-| **Total** | 3360 | 0 | 156 | 0 | 3516 |
+| **Total** | 2735 | 0 | 156 | 0 | 2891 |
 
 ## Examples per kind
 
@@ -134,7 +134,7 @@ Generated from game version `2026.09.15.0000.0000` by Tsukimichi.DataGen (see do
 | 65660 Close to Home | conjurer | 6 | 0 | Static | `Quest.ClassJobUnlock` |
 | 65713 So You Want to Be a Gladiator | gladiator | 1 | 0 | Static | `Quest.ClassJobUnlock` |
 
-### Other (163)
+### Other (13)
 
 | Quest | Reward | Reward id | Item id | Confidence | Source |
 |---|---|---:|---:|---|---|
@@ -146,8 +146,8 @@ Generated from game version `2026.09.15.0000.0000` by Tsukimichi.DataGen (see do
 | 66615 Seer Folly | Soul of the White Mage | 15 | 0 | Static | `Quest.OtherReward` |
 | 66621 A Song of Bards and Bowmen | Soul of the Bard | 14 | 0 | Static | `Quest.OtherReward` |
 | 67133 Divine Intervention | Aether Compass | 5 | 0 | Static | `Quest.OtherReward` |
-| 67144 Purple Flame, Purple Flame | Aether Current | 2 | 0 | Static | `Quest.OtherReward` |
-| 67153 Mourn in Passing | Aether Current | 2 | 0 | Static | `Quest.OtherReward` |
+| 67631 Inscrutable Tastes | Collectable Action | 3 | 0 | Static | `Quest.OtherReward` |
+| 67632 Beloved of the Builder | Specialist Action | 4 | 0 | Static | `Quest.OtherReward` |
 
 ### ArtifactGear (1175)
 
@@ -291,7 +291,7 @@ Generated from game version `2026.09.15.0000.0000` by Tsukimichi.DataGen (see do
 | 66631 Austerities of Wind | Emerald Summoning Mastery | 470 | 0 | Static | `Trait.Quest` |
 | 66632 Primal Burdens | Enkindle | 471 | 0 | Static | `Trait.Quest` |
 
-### Achievement (664)
+### Achievement (210)
 
 | Quest | Reward | Reward id | Item id | Confidence | Source |
 |---|---|---:|---:|---|---|
@@ -306,20 +306,20 @@ Generated from game version `2026.09.15.0000.0000` by Tsukimichi.DataGen (see do
 | 65890 Going the Extra Smile | Smile-high | 1056 | 0 | Static | `Achievement.Key;type=6` |
 | 65897 His Dark Materia | What's Nexus | 1058 | 0 | Static | `Achievement.Key;type=6` |
 
-### Title (220)
+### Title (199)
 
 | Quest | Reward | Reward id | Item id | Confidence | Source |
 |---|---|---:|---:|---|---|
-| 65545 What Nature Giveth | Seeker of Bounty | 48 | 0 | Static | `Achievement.Data;achievement=317;type=6` |
 | 65580 Alisaie's Path | The Final Witness | 178 | 0 | Static | `Achievement.Key;achievement=1030;type=6` |
-| 65597 Toadskins of the Father | Seeker of Skill | 47 | 0 | Static | `Achievement.Data;achievement=316;type=6` |
-| 65612 The One That Got Away | Seeker of Blood | 45 | 0 | Static | `Achievement.Data;achievement=314;type=6` |
 | 65625 Let Us Cling Together | Icebreaker | 183 | 0 | Static | `Achievement.Key;achievement=1029;type=6` |
-| 65705 Between Captain and Conjurer | Seeker of Skill | 47 | 0 | Static | `Achievement.Key;achievement=316;type=6` |
 | 65782 Feast of Famine | Of Dragons Deep | 179 | 0 | Static | `Achievement.Key;achievement=1031;type=6` |
-| 65801 The Rematch | Seeker of Blood | 45 | 0 | Static | `Achievement.Key;achievement=314;type=6` |
-| 65802 The Chefsbane Cometh | Seeker of Skill | 47 | 0 | Static | `Achievement.Data;achievement=316;type=6` |
-| 65816 May the Best Armorer Win | Seeker of Skill | 47 | 0 | Static | `Achievement.Data;achievement=316;type=6` |
+| 65898 The Little Postmoogle That Could | Postmaster | 212 | 0 | Static | `Achievement.Key;achievement=1130;type=6` |
+| 65964 Before the Dawn | Bearer of the Torch | 211 | 0 | Static | `Achievement.Key;achievement=1129;type=6` |
+| 65968 A Legend for a Legend | Tamer of Steeds | 187 | 0 | Static | `Achievement.Key;achievement=1063;type=6` |
+| 66031 The Light of Hope | Of the Silver Lining | 184 | 0 | Static | `Achievement.Key;achievement=1060;type=6` |
+| 66037 A Father's Folly | Golemancer | 194 | 0 | Static | `Achievement.Key;achievement=1082;type=6` |
+| 66038 Her Last Vow | Gentleman | 185 | 0 | Static | `Achievement.Key;achievement=1061;type=6` |
+| 66083 Now That We've Found Love | Cupid | 186 | 0 | Static | `Achievement.Key;achievement=1062;type=6` |
 
 ### DutyUnlock (226)
 
@@ -353,7 +353,7 @@ Generated from game version `2026.09.15.0000.0000` by Tsukimichi.DataGen (see do
 
 ## Quests with rewards but no unique classification
 
-Named quests that hand out at least one reward signal (item, emote, action, unlock or other) but produced no entry: **1981** of 3015.
+Named quests that hand out at least one reward signal (item, emote, action, unlock or other) but produced no entry: **1992** of 3015.
 Most of them only give tradable gear or consumables. The list below is restricted to the ones worth a second look: at least one reward item is untradable, or carries an ItemAction and is not sold on the market board, yet no rule claimed it.
 
 Quests to review: **364**.
@@ -1474,4 +1474,21 @@ Untradable, non-marketable item rewards that are nevertheless not quest-only col
 | 71030 Into the Crucible | 52650 Beast Tamer's Coffer (IL 30) | ItemUICategory Miscellany |
 | 71032 Gobsmacked | 52651 Beastwarden's Coffer (IL 40) | ItemUICategory Miscellany |
 | 71034 A Beastmaster's Path | 52652 Beastmaster's Coffer (IL 90) | ItemUICategory Miscellany |
+
+## Achievements credited to no quest
+
+Achievements that name quests but that no single quest earns (Tsukimichi.GameData.AchievementQuests): relic weapon achievements (type 24) need the quest done as one particular job, and an all-of-N set (type 6) is credited only to the quest that has all the others as prerequisites, or to none.
+
+| Type | Achievements |
+|---:|---:|
+| 6 | 5 |
+| 24 | 361 |
+
+| Achievement | Type | Quests |
+|---|---:|---|
+| 314 Tales of War | 6 | 65801 The Rematch, 66103 Return of the Holyfist, 65855 Bringing Down the Mountain, 65975 Proof of Might, 65612 The One That Got Away |
+| 315 Tales of Magic | 6 | 65977 In Nature's Embrace, 65889 Facing Your Demons, 65997 Sinking Doesmaga |
+| 316 Tales of the Hand | 6 | 65705 Between Captain and Conjurer, 65834 As Iron Sharpens Iron, 65816 May the Best Armorer Win, 66153 Serendipity Now, 65597 Toadskins of the Father, 66129 Miner on a Mission, 66120 Baleful Brews, 65802 The Chefsbane Cometh |
+| 317 Tales of the Land | 6 | 66142 Obsidian Race, 65545 What Nature Giveth, 66650 Like Fish Passing in the Night |
+| 1165 The War Still Wageth On | 6 | 67651 The Diabolical Bismarck, 67652 Thok Around the Clock |
 
