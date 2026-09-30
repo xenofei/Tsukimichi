@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Moon Road Banners</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600&family=M+PLUS+1p:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0F1424;--abyss:#080B16;--raised:#1E2437;--line:#2A3149;--text:#DDE3F0;--mist:#A9B2CC;--dusk:#7C86A8;--gilt:#A88B52;--moon:#F2D27A}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#F4F2EC;--abyss:#E6E2D8;--raised:#FFFFFF;--line:#D8D2C4;--text:#1C2338;--mist:#4A5270;--dusk:#5C6584;--gilt:#8A6E36;--moon:#8A6A10}}
+:root[data-theme="light"]{--bg:#F4F2EC;--abyss:#E6E2D8;--raised:#FFFFFF;--line:#D8D2C4;--text:#1C2338;--mist:#4A5270;--dusk:#5C6584;--gilt:#8A6E36;--moon:#8A6A10}
+:root[data-theme="dark"]{--bg:#0F1424;--abyss:#080B16;--raised:#1E2437;--line:#2A3149;--text:#DDE3F0;--mist:#A9B2CC;--dusk:#7C86A8;--gilt:#A88B52;--moon:#F2D27A}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.55 "M PLUS 1p",system-ui,sans-serif}
+main{max-width:1180px;margin:0 auto;padding:28px 16px 64px}
+h1{font:600 28px/1.2 Cinzel,serif;letter-spacing:.03em;margin:0 0 6px}
+h2{font:600 13px/1 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--mist);margin:40px 0 14px;display:flex;align-items:center;gap:10px}
+h2::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--gilt),transparent)}
+p.lede{color:var(--mist);max-width:760px;margin:0}
+.controls{margin:18px 0 0;display:flex;gap:16px;flex-wrap:wrap;color:var(--mist);font-size:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,376px),1fr));gap:22px}
+.card{margin:0}
+.hero{position:relative;aspect-ratio:376/120;border-radius:6px;overflow:hidden;background:#080B16;box-shadow:inset 0 0 0 1px #080B16}
+.hero img{display:block;width:100%;height:100%;object-fit:cover}
+.scrim{position:absolute;inset:0;background:linear-gradient(transparent 35%,rgba(15,20,36,.94)),linear-gradient(90deg,rgba(8,11,22,.55),transparent 60%)}
+body.noscrim .scrim,body.noscrim .title{display:none}
+body.nocorners .c{display:none}
+.c{position:absolute;width:12px;height:12px;background:url("../ornaments/corner-mark@2x.svg") center/contain no-repeat}
+.c.tl{top:4px;left:4px}.c.tr{top:4px;right:4px;transform:scaleX(-1)}.c.br{bottom:4px;right:4px;transform:scale(-1,-1)}.c.bl{bottom:4px;left:4px;transform:scaleY(-1)}
+.title{position:absolute;left:16px;bottom:12px;right:16px;display:flex;flex-direction:column;gap:2px}
+.title b{font:600 19px/1.15 Cinzel,serif;color:#DDE3F0;letter-spacing:.02em}
+.title span{font-size:12px;color:#A9B2CC}
+figcaption{display:flex;flex-direction:column;gap:2px;padding:8px 2px 0;font-size:13px;color:var(--mist)}
+figcaption code{color:var(--text);font-size:12.5px}
+.atlas{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start}
+.sheet{background:#0F1424;border:1px solid var(--line);border-radius:6px;padding:12px}
+.sheet img{display:block;image-rendering:auto;max-width:100%;height:auto}
+.sheet small{display:block;color:#A9B2CC;margin-top:6px;font-size:12px}
+ul.glyphs{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;flex:1;min-width:260px}
+ul.glyphs li{display:flex;align-items:center;gap:10px;background:#0F1424;border:1px solid var(--line);border-radius:6px;padding:6px 8px;color:#A9B2CC}
+.g{width:24px;height:24px;flex:none;background:url("../../../../Tsukimichi/assets/ui/ornaments@2x.png") no-repeat;background-size:256px 128px}
+</style></head>
+<body><main>
+<h1>Moon Road banners</h1>
+<p class="lede">Original category art for the detail hero (feature plan V4, step 5 of the banner chain): night water, the moon and its road of light, one motif per category. Each is 752 × 240 (2x of the hero's 376 × 120), quantised PNG, embedded in the plugin. Shown here as the hero draws it: the bottom and side scrims, corner marks, and a title over the bottom-left.</p>
+<div class="controls"><label><input type="checkbox" id="scrim" checked> Hero scrim and title</label><label><input type="checkbox" id="corners" checked> Corner marks</label></div>
+<h2>Category banners · 23</h2>
+<div class="grid">
+<figure class="card">
+  <div class="hero"><img src="../../../../Tsukimichi/assets/ui/banners/msq-arr@2x.png" alt="Main Scenario: A Realm Reborn" width="752" height="240">
+    <div class="scrim"></div><i class="c tl"></i><i class="c tr"></i><i class="c br"></i><i class="c bl"></i>
+    <div class="title"><b>A Realm Reborn</b><span>Sample quest · Lv 50</span></div></div>
+  <figcaption><code>msq-arr@2x.png</code><span>A coast of old stone under a blue night; the lesser moon broken into falling embers, a crystal spire on the far shore.</span></figcaption>
+</figure>
+<figure class="card">
+  <div class="hero"><img src="../../../../Tsukimichi/assets/ui/banners/msq-hw@2x.png" alt="Main Scenario: Heavensward" width="752" height="240">
+    <div class="scrim"></div><i class="c tl"></i><i class="c tr"></i><i class="c br"></i><i class="c bl"></i>
+    <div class="title"><b>Heavensward</b><span>Sample quest · Lv 50</span></div></div>
+  <figcaption><code>msq-hw@2x.png</code><span>Gothic spires of a holy city above snow, a great winged shape crossing the moon, falling snow.</span></figcaption>
+</figure>
+<figure class="card">
+  <div class="hero"><img src="../../../../Tsukimichi/assets/ui/banners/msq-sb@2x.png" alt="Main Scenario: Stormblood" width="752" height="240">
+    <div class="scrim"></div><i class="c tl"></i><i class="c tr"></i><i class="c br"></i><i class="c bl"></i>
+    <div class="title"><b>Stormblood</b><span>Sample quest · Lv 50</span></div></div>
+  <figcaption><code>msq-sb@2x.png</code><span>A crimson night over a lakeside fortress and a far eastern tower across the water; a war banner lifts in the wind.</span></figcaption>
+</figure>
+<figure class="card">
+  <div class="hero"><img src="../../../../Tsukimichi/assets/ui/banners/msq-shb@2x.png" alt="Main Scenario: Shadowbringers" width="752" height="240">
+    <div class="scrim"></div><i class="c tl"></i><i class="c tr"></i><i class="c br"></i><i class="c bl"></i>
+    <div class="title"><b>Shadowbringers</b><span>Sample quest · Lv 50</span></div></div>
+  <figcaption><code>msq-shb@2x.png</code><span>Night returning to a sky drowned in light: violet dark breaking through a white glare, a crystal tower rising over a lake.</span></figcaption>
+</figure>
+<figure class="card">
+  <div class="hero"><img src="../../../../Tsukimichi/assets/ui/banners/msq-ew@2x.png" alt="Main Scenario: Endwalker" width="752" height="240">
+    <div class="scrim"></div><i class="c tl"></i><i class="c tr"></i><i class="c br"></i><i class="c bl"></i>
+    <div class="title"><b>Endwalker</b><span>Sample quest · Lv 50</span></div></div>
+  <figcaption><code>msq-ew@2x.png</code><span>A blue world's limb rising beyond the moon, a colonnade of learning on the shore, a pale gold dawn at the edge of night.</span></figcaption>
+</figure>
+<figure class="card">
+  <div class="hero"><img src="../../../../Tsukimichi/assets/ui/banners/msq-dt@2x.png" alt="Main Scenario: Dawntrail" width="752" height="240">
+    <div class="scrim"></div><i class="c tl"></i><i class="c tr"></i><i class="c br"></i><i class="c bl"></i>
+    <div class="title"><b>Dawntrail</b><span>Sample quest · Lv 50</span></div></div>
+  <figcaption><code>msq-dt@2x.png</code><span>A stepped golden pyramid above a green lowland, its stair a road of light, the sky warm at the horizon.</span></figcaption>
+</figure>
+<figure class="card">
+  <div class="hero"><img src="../../../../Tsukimichi/assets/ui/banners/side-la-noscea@2x.png" alt="Sidequests: La Noscea" width="752" height="240">
+    <div class="scrim"></div><i class="c tl"></i><i class="c tr"></i><i class="c br"></i><i class="c bl"></i>
+    <div class="title"><b>La Noscea</b><span>Sample quest · Lv 50</span></div></div>
+  <figcaption><code>side-la-noscea@2x.png</code><span>Sea cliffs and a sailing ship at anchor under a teal night; the harbour lamps low on the water.</span></figcaption>
+</figure>
+<figure class="card">
+  <div class="hero"><img src="../../../../Tsukimichi/assets/ui/banners/side-black-shroud@2x.png" alt="Sidequests: The Black Shroud" width="752" height="240">
+    <div class="scrim"></div><i class="c tl"></i><i class="c tr"></i><i class="c br"></i><i class="c bl"></i>
+    <div class="title"><b>The Black Shroud</b><span>Sample quest · Lv 50</span></div></div>
+  <figcaption><code>side-black-shroud@2x.png</code><span>A deep forest of giant trees at the water's edge, fireflies drifting over a still pool.</span></figcaption>
+</figure>
+<figure class="card">
+  <div class="hero"><img src="../../../../Tsukimichi/assets/ui/banners/side-thanalan@2x.png" alt="Sidequests: Thanalan" width="752" height="240">
+    <div class="scrim"></div><i class="c tl"></i><i class="c tr"></i><i class="c br"></i><i class="c bl"></i>
+    <div class="title"><b>Thanalan</b><span>Sample quest · Lv 50</span></div></div>
+  <figcaption><code>side-thanalan@2x.png</code><span>Warm desert night: mesas and dunes, a domed city of merchants glowing gold on the far shore.</span></figcaption>
+</figure>
+<figure class="card">
+  <div class="hero"><img src="../../../../Tsukimichi/assets/ui/banners/side-coerthas@2x.png" alt="Sidequests: Coerthas and Ishgard" width="752" height="240">
+    <div class="scrim"></div><i class="c tl"></i><i class="c tr"></i><i class="c br"></i><i class="c bl"></i>
+    <div class="title"><b>Coerthas and Ishgard</b><span>Sample quest · Lv 50</span></div></div>
+  <figcaption><code>side-coerthas@2x.png</code><span>Snowbound highlands under a pale moon: a lone watchtower on a white ridge, snow on the wind.</span></figcaption>
+</figure>
+<figure class="card">
+  <div class="hero"><img src="../../../../Tsukimichi/assets/ui/banners/side-dravania@2x.png" alt="Sidequests: Dravania and Abalathia" width="752" height="240">
+    <div class="scrim"></div><i class="c tl"></i><i class="c tr"></i><i class="c br"></i><i class="c bl"></i>
+    <div class="title"><b>Dravania and Abalathia</b><span>Sample quest · Lv 50</span></div></div>
+  <figcaption><code>side-dravania@2x.png</code><span>Islands adrift in a sea of cloud, rookery spires of rock, a long-winged shape far off.</span></figcaption>
+</figure>
+<figure class="card">
+  <div class="hero"><img src="../../../../Tsukimichi/assets/ui/banners/side-gyr-abania-othard@2x.png" alt="Sidequests: Gyr Abania and Othard" width="752" height="240">
+    <div class="scrim"></div><i class="c tl"></i><i class="c tr"></i><i class="c br"></i><i class="c bl"></i>
+    <div class="title"><b>Gyr Abania and Othard</b><span>Sample quest · Lv 50</span></div></div>
+  <figcaption><code>side-gyr-abania-othard@2x.png</code><span>Tall karst peaks over a rose-dusk sea, a gate standing in the shallows, lanterns on a far pier.</span></figcaption>
+</figure>
+<figure class="card">
+  <div class="hero"><img src="../../../../Tsukimichi/assets/ui/banners/side-norvrandt@2x.png" alt="Sidequests: Norvrandt" width="752" height="240">
+    <div class="scrim"></div><i class="c tl"></i><i class="c tr"></i><i class="c br"></i><i class="c bl"></i>
+    <div class="title"><b>Norvrandt</b><span>Sample quest · Lv 50</span></div></div>
+  <figcaption><code>side-norvrandt@2x.png</code><span>Lakeland shallows under a violet night: trees of crystal, fae lights and petals on the water.</span></figcaption>
+</figure>
+<figure class="card">
+  <div class="hero"><img src="../../../../Tsukimichi/assets/ui/banners/side-ilsabard@2x.png" alt="Sidequests: Ilsabard, Sharlayan and Thavnair" width="752" height="240">
+    <div class="scrim"></div><i class="c tl"></i><i class="c tr"></i><i class="c br"></i><i class="c bl"></i>
+    <div class="title"><b>Ilsabard, Sharlayan and Thavnair</b><span>Sample quest · Lv 50</span></div></div>
+  <figcaption><code>side-ilsabard@2x.png</code><span>A port city of onion domes and a scholar's tower across a still harbour, a cold northern ridge behind.</span></figcaption>
+</figure>
+<figure class="card">
+  <div class="hero"><img src="../../../../Tsukimichi/assets/ui/banners/side-tural@2x.png" alt="Sidequests: Tural" width="752" height="240">
+    <div class="scrim"></div><i class="c tl"></i><i class="c tr"></i><i class="c br"></i><i class="c bl"></i>
+    <div class="title"><b>Tural</b><span>Sample quest · Lv 50</span></div></div>
+  <figcaption><code>side-tural@2x.png</code><span>Jungle highlands and a falling cascade under a warm teal night, palms leaning over the river mouth.</span></figcaption>
+</figure>
+<figure class="card">
+  <div class="hero"><img src="../../../../Tsukimichi/assets/ui/banners/allied-societies@2x.png" alt="Allied Societies" width="752" height="240">
+    <div class="scrim"></div><i class="c tl"></i><i class="c tr"></i><i class="c br"></i><i class="c bl"></i>
+    <div class="title"><b>Allied Societies</b><span>Sample quest · Lv 50</span></div></div>
+  <figcaption><code>allied-societies@2x.png</code><span>A night gathering by the water: tents and hide pennants round a fire, its sparks rising toward the moon.</span></figcaption>
+</figure>
+<figure class="card">
+  <div class="hero"><img src="../../../../Tsukimichi/assets/ui/banners/class-job@2x.png" alt="Class and Job Quests" width="752" height="240">
+    <div class="scrim"></div><i class="c tl"></i><i class="c tr"></i><i class="c br"></i><i class="c bl"></i>
+    <div class="title"><b>Class and Job Quests</b><span>Sample quest · Lv 50</span></div></div>
+  <figcaption><code>class-job@2x.png</code><span>A training ground on a knoll by the water: a sword and a staff crossed and planted, a hammer and a fishing rod beside them.</span></figcaption>
+</figure>
+<figure class="card">
+  <div class="hero"><img src="../../../../Tsukimichi/assets/ui/banners/grand-company@2x.png" alt="Grand Company" width="752" height="240">
+    <div class="scrim"></div><i class="c tl"></i><i class="c tr"></i><i class="c br"></i><i class="c bl"></i>
+    <div class="title"><b>Grand Company</b><span>Sample quest · Lv 50</span></div></div>
+  <figcaption><code>grand-company@2x.png</code><span>A watchtower and rampart above a harbour, three company standards in storm red, serpent gold and flame black.</span></figcaption>
+</figure>
+<figure class="card">
+  <div class="hero"><img src="../../../../Tsukimichi/assets/ui/banners/seasonal@2x.png" alt="Seasonal Events" width="752" height="240">
+    <div class="scrim"></div><i class="c tl"></i><i class="c tr"></i><i class="c br"></i><i class="c bl"></i>
+    <div class="title"><b>Seasonal Events</b><span>Sample quest · Lv 50</span></div></div>
+  <figcaption><code>seasonal@2x.png</code><span>A festival night: paper lanterns drifting on the water, fireworks opening over the far shore under a crescent.</span></figcaption>
+</figure>
+<figure class="card">
+  <div class="hero"><img src="../../../../Tsukimichi/assets/ui/banners/chronicles@2x.png" alt="Chronicles of a New Era" width="752" height="240">
+    <div class="scrim"></div><i class="c tl"></i><i class="c tr"></i><i class="c br"></i><i class="c bl"></i>
+    <div class="title"><b>Chronicles of a New Era</b><span>Sample quest · Lv 50</span></div></div>
+  <figcaption><code>chronicles@2x.png</code><span>A colossal ancient guardian half sunk in the sea, a ring of ruined arches beside it, the old tales written in the stars.</span></figcaption>
+</figure>
+<figure class="card">
+  <div class="hero"><img src="../../../../Tsukimichi/assets/ui/banners/hildibrand@2x.png" alt="Hildibrand Adventures" width="752" height="240">
+    <div class="scrim"></div><i class="c tl"></i><i class="c tr"></i><i class="c br"></i><i class="c bl"></i>
+    <div class="title"><b>Hildibrand Adventures</b><span>Sample quest · Lv 50</span></div></div>
+  <figcaption><code>hildibrand@2x.png</code><span>A gentleman inspector's evening: a gas lamp on the quay, a top hat left on a bollard, a magnifier catching the crescent.</span></figcaption>
+</figure>
+<figure class="card">
+  <div class="hero"><img src="../../../../Tsukimichi/assets/ui/banners/relic@2x.png" alt="Relic Weapons and Unusual Endeavours" width="752" height="240">
+    <div class="scrim"></div><i class="c tl"></i><i class="c tr"></i><i class="c br"></i><i class="c bl"></i>
+    <div class="title"><b>Relic Weapons and Unusual Endeavours</b><span>Sample quest · Lv 50</span></div></div>
+  <figcaption><code>relic@2x.png</code><span>An anvil on a stone shelf by the water, a blade standing in it and glowing, sparks climbing toward the moon.</span></figcaption>
+</figure>
+<figure class="card">
+  <div class="hero"><img src="../../../../Tsukimichi/assets/ui/banners/other@2x.png" alt="Other Quests" width="752" height="240">
+    <div class="scrim"></div><i class="c tl"></i><i class="c tr"></i><i class="c br"></i><i class="c bl"></i>
+    <div class="title"><b>Other Quests</b><span>Sample quest · Lv 50</span></div></div>
+  <figcaption><code>other@2x.png</code><span>The moon road itself: calm water, a low far shore and a wide sky of stars.</span></figcaption>
+</figure>
+</div>
+<h2>Ornament atlas</h2>
+<div class="atlas">
+  <div class="sheet"><img src="../../../../Tsukimichi/assets/ui/ornaments@2x.png" width="512" height="256" alt="ornaments@2x.png"><small>ornaments@2x.png · 512 × 256</small></div>
+  <div class="sheet"><img src="../../../../Tsukimichi/assets/ui/ornaments.png" width="256" height="128" alt="ornaments.png"><small>ornaments.png · 256 × 128</small></div>
+  <ul class="glyphs"><li><span class="g" style="background-position:-2px -46px"></span><code>all-quests</code></li><li><span class="g" style="background-position:-30px -46px"></span><code>removed</code></li><li><span class="g" style="background-position:-58px -46px"></span><code>chronicles</code></li><li><span class="g" style="background-position:-86px -46px"></span><code>chronicles-of-light</code></li><li><span class="g" style="background-position:-114px -46px"></span><code>hildibrand</code></li><li><span class="g" style="background-position:-142px -46px"></span><code>side-story</code></li><li><span class="g" style="background-position:-170px -46px"></span><code>relic</code></li><li><span class="g" style="background-position:-198px -46px"></span><code>endeavors</code></li><li><span class="g" style="background-position:-2px -74px"></span><code>other</code></li><li><span class="g" style="background-position:-30px -74px"></span><code>special</code></li><li><span class="g" style="background-position:-58px -74px"></span><code>festival</code></li><li><span class="g" style="background-position:-86px -74px"></span><code>deep-dungeon</code></li><li><span class="g" style="background-position:-114px -74px"></span><code>region-coerthas</code></li><li><span class="g" style="background-position:-142px -74px"></span><code>region-mordhona</code></li><li><span class="g" style="background-position:-170px -74px"></span><code>moonlit</code></li><li><span class="g" style="background-position:-198px -74px"></span><code>flight</code></li><li><span class="g" style="background-position:-2px -102px"></span><code>plan-fallback</code></li></ul>
+</div>
+</main>
+<script>
+for (const [id, cls] of [["scrim", "noscrim"], ["corners", "nocorners"]]) {
+  const box = document.getElementById(id);
+  box.addEventListener("change", () => document.body.classList.toggle(cls, !box.checked));
+}
+</script>
+</body></html>
