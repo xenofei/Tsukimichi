@@ -507,7 +507,7 @@ public sealed class Plugin : IDalamudPlugin
             this.tutorial = tutorial;
             tutorial.WatchedWindow = mainWindow;
             PluginInterface.UiBuilder.Draw += tutorial.CheckFirstRun;
-            // The tour's keys (Enter, arrows, Backspace, Esc) are kept from the game while the tour has the keyboard.
+            // Enter, Backspace and Esc are kept from the game while the tour card has the keyboard (the arrows never are).
             tutorial.KeyState = KeyState;
             Framework.Update += tutorial.ConsumeKeys;
             mainWindow.AttachTutorial(tutorial);
