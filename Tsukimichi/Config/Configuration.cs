@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Dalamud.Configuration;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
@@ -96,6 +97,34 @@ public sealed class Configuration : IPluginConfiguration
 
     /// <summary><see cref="StalledDays"/> within the allowed bounds.</summary>
     public int StalledDaysClamped => Math.Clamp(StalledDays, MinStalledDays, MaxStalledDays);
+
+    // ---- 0.7.0: spoiler shield (T19) ----
+    /// <summary>Print main scenario quests further ahead than <see cref="SpoilerRevealAhead"/> as "Main scenario quest (Lv 83)". On by default.</summary>
+    public bool SpoilerHideMsqNames { get; set; } = true;
+
+    /// <summary>Main scenario quests past the character's position whose names stay visible; 0–10, default 3.</summary>
+    public int SpoilerRevealAhead { get; set; } = SpoilerOptions.DefaultAhead;
+
+    /// <summary>Show journal artwork only for quests in the journal or completed. On by default.</summary>
+    public bool SpoilerHideArtwork { get; set; } = true;
+
+    /// <summary>
+    /// Per-character override of the shield, by content id: true shields that character whatever the settings above
+    /// say, false shows it everything; a character without an entry follows the settings. Dropped with the character.
+    /// </summary>
+    public Dictionary<ulong, bool> SpoilerShieldByCharacter { get; set; } = [];
+
+    /// <summary>The shield for a character (null in browse mode): the settings above, with its override applied.</summary>
+    public SpoilerOptions SpoilerOptionsFor(ulong? contentId)
+    {
+        var ahead = Math.Clamp(SpoilerRevealAhead, 0, SpoilerOptions.MaxAhead);
+        if (contentId is { } id && SpoilerShieldByCharacter.TryGetValue(id, out var shielded))
+        {
+            return shielded ? new SpoilerOptions(true, ahead, true) : SpoilerOptions.Off with { Ahead = ahead };
+        }
+
+        return new SpoilerOptions(SpoilerHideMsqNames, ahead, SpoilerHideArtwork);
+    }
 
     /// <summary>Last table filters, restored on load.</summary>
     public FilterSet Filters { get; set; } = new();
@@ -210,11 +239,13 @@ public sealed class Configuration : IPluginConfiguration
 
         config.Filters ??= new FilterSet();
         config.LastSeenVersion ??= string.Empty;
+        config.SpoilerShieldByCharacter ??= [];
         config.ExportFolder ??= string.Empty;
         if (!Enum.IsDefined(config.ExportFormat))
         {
             config.ExportFormat = ExportFormat.Json;
         }
+
         if (!Enum.IsDefined(config.JournalFiling))
         {
             // A hand-edited integer, or a value a newer build wrote before a downgrade: the mapper would read it as

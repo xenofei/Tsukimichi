@@ -6,6 +6,7 @@ using Dalamud.Plugin.Ipc;
 using Dalamud.Plugin.Ipc.Exceptions;
 using Dalamud.Plugin.Services;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Runtime;
 using Tsukimichi.Core.Unique;
 using Tsukimichi.GameData;
@@ -27,7 +28,9 @@ public sealed record WotsitEntry(string DisplayName, string SearchText, uint Ico
 /// throws is retried from the same entry on the next tick (<see cref="BatchCursor"/>); after
 /// <see cref="MaxRegisterAttempts"/> failures on one entry the rest of the batch is abandoned with a warning. The
 /// entries are rebuilt (after an <c>UnregisterAll</c>) whenever the catalog or the Moonlit catalog is a new instance,
-/// and again whenever Wotsit announces itself, since a reloaded Wotsit has forgotten them. Dalamud's plugin-list
+/// and again whenever Wotsit announces itself, since a reloaded Wotsit has forgotten them, or whenever the spoiler
+/// shield's masked set changes (<see cref="SpoilerMask.Fingerprint"/>): a masked main scenario quest is registered
+/// under its placeholder, without its banner, so Wotsit never finds it by name. Dalamud's plugin-list
 /// event and Wotsit's messages may arrive off the framework thread, so they only raise flags that the next tick acts on.
 /// </para>
 /// <para>
@@ -68,9 +71,11 @@ public sealed class WotsitIpc : IDisposable
     private Func<UniqueRewardCatalog>? rewards;
     private Func<QuestRecord?, UniqueRewardEntry, uint>? rewardIcon;
     private Action<QuestRecord>? reveal;
+    private Func<SpoilerMask>? spoilers;
 
     private CatalogBundle? registeredBundle;
     private UniqueRewardCatalog? registeredRewards;
+    private int registeredSpoilers;
     private List<WotsitEntry>? pending;
     private BatchCursor? cursor;
     private int pendingTicks;
@@ -150,10 +155,12 @@ public sealed class WotsitIpc : IDisposable
     /// <summary>
     /// Sources for the entries. <paramref name="bundle"/> and <paramref name="rewards"/> are polled each tick and a
     /// new instance of either triggers a rebuild; <paramref name="rewardIcon"/> answers the icon for a reward entry;
-    /// <paramref name="reveal"/> runs on the framework thread when an entry is picked.
+    /// <paramref name="reveal"/> runs on the framework thread when an entry is picked; <paramref name="spoilers"/> is
+    /// polled each tick too, and a change of its masked set re-registers the entries.
     /// </summary>
-    public void Attach(Func<CatalogBundle?> bundle, Func<UniqueRewardCatalog> rewards, Func<QuestRecord?, UniqueRewardEntry, uint> rewardIcon, Action<QuestRecord> reveal)
+    public void Attach(Func<CatalogBundle?> bundle, Func<UniqueRewardCatalog> rewards, Func<QuestRecord?, UniqueRewardEntry, uint> rewardIcon, Action<QuestRecord> reveal, Func<SpoilerMask>? spoilers = null)
     {
+        this.spoilers = spoilers;
         this.bundle = bundle ?? throw new ArgumentNullException(nameof(bundle));
         this.rewards = rewards ?? throw new ArgumentNullException(nameof(rewards));
         this.rewardIcon = rewardIcon ?? throw new ArgumentNullException(nameof(rewardIcon));
@@ -184,17 +191,22 @@ public sealed class WotsitIpc : IDisposable
         Unregister();
     }
 
-    /// <summary>Builds the entry list from the catalog and the Moonlit catalog. Pure; exposed for tests of the labels.</summary>
+    /// <summary>
+    /// Builds the entry list from the catalog and the Moonlit catalog. Pure; exposed for tests of the labels. A quest
+    /// <paramref name="spoilers"/> masks is listed under its placeholder, searchable by it alone, and without its banner.
+    /// </summary>
     public static List<WotsitEntry> BuildEntries(
         CatalogBundle bundle,
         UniqueRewardCatalog rewards,
         Func<QuestRecord?, UniqueRewardEntry, uint> rewardIcon,
-        Action<QuestRecord> reveal)
+        Action<QuestRecord> reveal,
+        SpoilerMask? spoilers = null)
     {
         ArgumentNullException.ThrowIfNull(bundle);
         ArgumentNullException.ThrowIfNull(rewards);
         ArgumentNullException.ThrowIfNull(rewardIcon);
         ArgumentNullException.ThrowIfNull(reveal);
+        spoilers ??= SpoilerMask.None;
 
         var catalog = bundle.Catalog;
         var entries = new List<WotsitEntry>(catalog.Count + rewards.Count);
@@ -209,10 +221,11 @@ public sealed class WotsitIpc : IDisposable
 
             var target = quest;
             var expansion = bundle.Names.Expansion(quest.Expansion);
+            var name = spoilers.DisplayName(quest);
             entries.Add(new WotsitEntry(
-                Strings.WotsitQuestPrefix + quest.Name,
-                quest.Name + " " + quest.Journal.GenreName + " " + expansion,
-                quest.Icon,
+                Strings.WotsitQuestPrefix + name,
+                name + " " + quest.Journal.GenreName + " " + expansion,
+                spoilers.IsMasked(quest) ? 0 : quest.Icon,
                 () => reveal(target)));
         }
 
@@ -228,7 +241,7 @@ public sealed class WotsitIpc : IDisposable
             var name = string.IsNullOrWhiteSpace(entry.RewardName) ? kind : entry.RewardName;
             entries.Add(new WotsitEntry(
                 Strings.WotsitRewardPrefix + name + " (" + kind + ")",
-                name + " " + kind + " " + quest.Name,
+                name + " " + kind + " " + spoilers.DisplayName(quest),
                 rewardIcon(quest, entry),
                 () => reveal(target)));
         }
@@ -282,16 +295,20 @@ public sealed class WotsitIpc : IDisposable
         }
 
         var currentRewards = rewards();
-        if (registered && ReferenceEquals(currentBundle, registeredBundle) && ReferenceEquals(currentRewards, registeredRewards))
+        var currentSpoilers = spoilers?.Invoke() ?? SpoilerMask.None;
+        if (registered && ReferenceEquals(currentBundle, registeredBundle) && ReferenceEquals(currentRewards, registeredRewards)
+            && currentSpoilers.Fingerprint == registeredSpoilers)
         {
             return;
         }
 
-        // A new catalog (or a Moonlit rebuild after an override) replaces every entry; the old guids die with UnregisterAll.
+        // A new catalog (or a Moonlit rebuild after an override, or a spoiler mask that hides other names) replaces
+        // every entry; the old guids die with UnregisterAll.
         Unregister();
         registeredBundle = currentBundle;
         registeredRewards = currentRewards;
-        pending = BuildEntries(currentBundle, currentRewards, rewardIcon, reveal);
+        registeredSpoilers = currentSpoilers.Fingerprint;
+        pending = BuildEntries(currentBundle, currentRewards, rewardIcon, reveal, currentSpoilers);
         cursor = new BatchCursor(pending.Count, MaxRegisterAttempts);
         pendingTicks = 0;
         pendingMs = 0;

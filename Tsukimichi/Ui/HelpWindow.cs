@@ -25,6 +25,7 @@ public enum HelpTopic
     Commands,
     CountsDiffer,
     KnownQuirks,
+    Spoilers,
     Tips,
 }
 
@@ -90,6 +91,7 @@ public sealed class HelpWindow : Window
         FontAwesomeIcon.Terminal.ToIconString(),
         FontAwesomeIcon.Calculator.ToIconString(),
         FontAwesomeIcon.ExclamationTriangle.ToIconString(),
+        FontAwesomeIcon.EyeSlash.ToIconString(),
         FontAwesomeIcon.Lightbulb.ToIconString(),
     ];
 
@@ -179,6 +181,14 @@ public sealed class HelpWindow : Window
         FontAwesomeIcon.ExchangeAlt,
         FontAwesomeIcon.Clock,
         FontAwesomeIcon.ShoppingCart);
+
+    private static readonly CardItem[] SpoilerCards = Cards(
+        Strings.Help.SpoilerCardTitles,
+        Strings.Help.SpoilerCardBodies,
+        FontAwesomeIcon.EyeSlash,
+        FontAwesomeIcon.Image,
+        FontAwesomeIcon.Seedling,
+        FontAwesomeIcon.SlidersH);
 
     private static readonly float[] FillingFractions = [0f, 0.5f, 1f];
 
@@ -417,6 +427,10 @@ public sealed class HelpWindow : Window
                     AppendCards(sb, QuirkCards);
                     sb.Append(Strings.Help.QuirksTip);
                     break;
+                case HelpTopic.Spoilers:
+                    AppendCards(sb, SpoilerCards);
+                    sb.Append(Strings.Help.SpoilersTip);
+                    break;
                 case HelpTopic.Tips:
                     foreach (var tip in Strings.Help.Tips)
                     {
@@ -492,6 +506,10 @@ public sealed class HelpWindow : Window
             case HelpTopic.KnownQuirks:
                 DrawCards(QuirkCards);
                 Tip(100, Strings.Help.QuirksTip);
+                break;
+            case HelpTopic.Spoilers:
+                DrawCards(SpoilerCards);
+                Tip(100, Strings.Help.SpoilersTip);
                 break;
             case HelpTopic.Tips:
                 for (var i = 0; i < Strings.Help.Tips.Length; i++)

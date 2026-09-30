@@ -45,6 +45,14 @@ public sealed class SessionState
     private bool followLive = true;
     private ulong? viewedContentId;
 
+    // Spoiler shield (T19): the viewed character's mask, rebuilt at most once per Version, and the names the player
+    // revealed one by one this session.
+    private SpoilerMask spoilers = SpoilerMask.None;
+    private int spoilersVersion = -1;
+    private SpoilerMask liveSpoilers = SpoilerMask.None;
+    private int liveSpoilersVersion = -1;
+    private readonly HashSet<uint> revealedNames = [];
+
     public SessionState(SnapshotService snapshots, PluginPaths paths, UniqueRewardsData uniqueRewards, CuratedData curated, IPluginLog? log = null)
     {
         this.snapshots = snapshots ?? throw new ArgumentNullException(nameof(snapshots));
@@ -154,6 +162,69 @@ public sealed class SessionState
     /// <summary>Increments on every change; the UI compares it to rebuild its query.</summary>
     public int Version { get; private set; }
 
+    /// <summary>
+    /// The spoiler options for a character (content id; null in browse mode): the Settings › Spoilers values with the
+    /// character's own override applied. The plugin points it at the configuration; the default shields everything.
+    /// </summary>
+    internal Func<ulong?, SpoilerOptions> SpoilerOptionsFor { get; set; } = static _ => SpoilerOptions.Default;
+
+    /// <summary>
+    /// The viewed character's spoiler shield: which main scenario names print as "Main scenario quest (Lv 83)" and
+    /// which banners stay hidden. Rebuilt on first read after any change (<see cref="Version"/>), so a settings change
+    /// or a reveal goes through <see cref="RefreshSpoilers"/> or <see cref="RevealName"/>, which bump it.
+    /// <see cref="SpoilerMask.None"/> until the catalog is built.
+    /// </summary>
+    public SpoilerMask Spoilers
+    {
+        get
+        {
+            if (spoilersVersion != Version)
+            {
+                spoilersVersion = Version;
+                spoilers = Bundle is { } bundle
+                    ? SpoilerMask.Build(bundle.Catalog, States, SpoilerOptionsFor(ViewedContentId), revealedNames, Abandoned)
+                    : SpoilerMask.None;
+            }
+
+            return spoilers;
+        }
+    }
+
+    /// <summary>
+    /// The logged-in character's shield, for chat notices about that character while another one is viewed; the
+    /// same instance as <see cref="Spoilers"/> when the live character is the one shown.
+    /// </summary>
+    public SpoilerMask LiveSpoilers
+    {
+        get
+        {
+            if (IsLive || LiveContentId is not { } live || Bundle is not { } bundle)
+            {
+                return Spoilers;
+            }
+
+            if (liveSpoilersVersion != Version)
+            {
+                liveSpoilersVersion = Version;
+                liveSpoilers = SpoilerMask.Build(bundle.Catalog, liveStates, SpoilerOptionsFor(live), revealedNames, liveAbandoned);
+            }
+
+            return liveSpoilers;
+        }
+    }
+
+    /// <summary>"Reveal this name": the quest's real name shows everywhere until the plugin unloads.</summary>
+    public void RevealName(uint rowId)
+    {
+        if (revealedNames.Add(rowId))
+        {
+            Bump();
+        }
+    }
+
+    /// <summary>A spoiler setting changed: every surface re-reads the mask.</summary>
+    public void RefreshSpoilers() => Bump();
+
     /// <summary>Wall time of the last poll (capture, diff and resolve) in milliseconds; 0 before the first poll.</summary>
     public double LastPollMs { get; private set; }
 
@@ -258,7 +329,8 @@ public sealed class SessionState
         CatalogLoading = false;
         Index = ReversePrereqIndex.Build(bundle.Catalog);
         FeatureQuestIds = FeaturePresets.Derive(bundle.Catalog, Curated, UniqueRewards.Entries);
-        Names = bundle.BlockerNames();
+        // Every blocker, status line, todo row and diagnostic names quests through the viewed character's shield.
+        Names = bundle.BlockerNames() with { QuestName = quest => Spoilers.DisplayName(quest) };
         baseContext = EvalContextBuilder.Build(
             Curated.Festivals,
             bundle.Jobs,

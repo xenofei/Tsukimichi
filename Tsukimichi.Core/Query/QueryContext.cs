@@ -18,6 +18,11 @@ namespace Tsukimichi.Core.Query;
 /// <param name="StalledDays">Age in days from which an accepted quest counts as stalled.</param>
 /// <param name="Abandoned">Runtime quest ids the viewed character abandoned (<see cref="Runtime.AbandonedLedger"/>), for the Abandoned filter; null keeps nothing under that filter.</param>
 /// <param name="Names">Name lookups for the Status text of each row (<see cref="Evaluation.BlockerText.StatusText"/>); null uses <see cref="BlockerNames.Default"/>, which names quests from the catalog only.</param>
+/// <param name="Spoilers">
+/// The viewed character's spoiler shield: search matches a masked quest by its placeholder, the Name sort orders it
+/// by the placeholder, and Sprout mode reads <see cref="SpoilerMask.ReachExpansion"/>. Null masks nothing and leaves
+/// Sprout mode without a limit.
+/// </param>
 public sealed record QueryContext(
     IReadOnlySet<ushort> ActiveFestivals,
     IReadOnlySet<uint> Pinned,
@@ -30,7 +35,8 @@ public sealed record QueryContext(
     byte CurrentLevel = 0,
     int StalledDays = QueryContext.DefaultStalledDays,
     BlockerNames? Names = null,
-    IReadOnlySet<ushort>? Abandoned = null)
+    IReadOnlySet<ushort>? Abandoned = null,
+    SpoilerMask? Spoilers = null)
 {
     public const int DefaultStalledDays = 7;
 

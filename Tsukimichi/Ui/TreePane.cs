@@ -33,6 +33,9 @@ public sealed class TreePane
         /// <summary>Full journal path of a folded node, shown on hover; null for ordinary nodes.</summary>
         public string? FoldedPath { get; set; }
 
+        /// <summary>Lowest expansion among the node's quests; Sprout mode folds a node whose lowest lies beyond the story.</summary>
+        public byte MinExpansion { get; set; } = byte.MaxValue;
+
         public NodeCount Count { get; set; }
         public string CountText { get; set; } = string.Empty;
 
@@ -51,6 +54,9 @@ public sealed class TreePane
     private NodeCount featureCount;
     private bool revealing;
 
+    /// <summary>Sprout mode's reach this frame: nodes wholly beyond it fold to their counts; null when Sprout mode is off.</summary>
+    private byte? sproutReach;
+
     public TreePane(UiState ui)
     {
         this.ui = ui ?? throw new ArgumentNullException(nameof(ui));
@@ -65,6 +71,7 @@ public sealed class TreePane
         // ancestors may be collapsed: this frame opens them and scrolls the selected node into view.
         revealing = ui.RevealPending;
         ui.RevealPending = false;
+        sproutReach = ui.Filters.Preset == Preset.Sprout ? runner.Spoilers.ReachExpansion : null;
 
         var start = ImGui.GetCursorScreenPos();
         var width = ImGui.GetContentRegionAvail().X;
@@ -112,7 +119,9 @@ public sealed class TreePane
     private void DrawNode(Node node, bool section)
     {
         var flags = ImGuiTreeNodeFlags.SpanAvailWidth | ImGuiTreeNodeFlags.OpenOnArrow | ImGuiTreeNodeFlags.OpenOnDoubleClick;
-        if (node.Leaf)
+        // Sprout mode (T19): a node wholly beyond the character's story folds to its count, children unlisted.
+        var sproutFolded = sproutReach is { } reach && node.MinExpansion != byte.MaxValue && node.MinExpansion > reach;
+        if (node.Leaf || sproutFolded)
         {
             flags |= ImGuiTreeNodeFlags.Leaf | ImGuiTreeNodeFlags.NoTreePushOnOpen;
         }
@@ -146,13 +155,17 @@ public sealed class TreePane
             {
                 UiMetrics.Tooltip(Strings.FillingMoonTooltip, node.ProgressText);
             }
+            else if (sproutFolded)
+            {
+                UiMetrics.Tooltip(Strings.SproutFoldedTooltip);
+            }
             else if (node.FoldedPath is { } path)
             {
                 UiMetrics.Tooltip(path);
             }
         }
 
-        if (open && !node.Leaf)
+        if (open && !node.Leaf && !sproutFolded)
         {
             foreach (var child in node.Children)
             {
@@ -313,12 +326,16 @@ public sealed class TreePane
                 section.Children.Add(category);
             }
 
-            if (!genreById.ContainsKey(j.GenreId))
+            if (!genreById.TryGetValue(j.GenreId, out var genre))
             {
-                var genre = new Node(QuestScope.Genre(j.GenreId), "##g" + j.GenreId.ToString(CultureInfo.InvariantCulture), j.GenreName, leaf: true);
+                genre = new Node(QuestScope.Genre(j.GenreId), "##g" + j.GenreId.ToString(CultureInfo.InvariantCulture), j.GenreName, leaf: true);
                 genreById[j.GenreId] = genre;
                 category.Children.Add(genre);
             }
+
+            section.MinExpansion = Math.Min(section.MinExpansion, quest.Expansion);
+            category.MinExpansion = Math.Min(category.MinExpansion, quest.Expansion);
+            genre.MinExpansion = Math.Min(genre.MinExpansion, quest.Expansion);
         }
 
         for (var i = 0; i < sections.Count; i++)
@@ -343,13 +360,14 @@ public sealed class TreePane
                 section.Children[i] = new Node(genre.Scope, category.Id, category.Name, leaf: true)
                 {
                     FoldedPath = string.Format(CultureInfo.CurrentCulture, Strings.FoldedPathFormat, section.Name, category.Name, genre.Name),
+                    MinExpansion = category.MinExpansion,
                 };
             }
         }
 
         if (section.Children.Count == 1 && section.Children[0] is { Leaf: true } only)
         {
-            return new Node(only.Scope, section.Id, section.Name, leaf: true) { FoldedPath = only.FoldedPath };
+            return new Node(only.Scope, section.Id, section.Name, leaf: true) { FoldedPath = only.FoldedPath, MinExpansion = section.MinExpansion };
         }
 
         return section;

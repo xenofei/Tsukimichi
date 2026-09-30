@@ -81,6 +81,15 @@ public sealed class DetailPane
         public CatalogBundle? Bundle;
         public QuestRecord? Quest;
         public QuestState State;
+
+        /// <summary>The quest's name as the spoiler shield prints it (<see cref="Core.Query.SpoilerMask.DisplayName(QuestRecord)"/>).</summary>
+        public string DisplayName = string.Empty;
+
+        /// <summary>The shield masks the name; the header offers "Reveal this name".</summary>
+        public bool NameMasked;
+
+        /// <summary>The quest has a banner the shield hides; the header card says the art comes later.</summary>
+        public bool ArtworkHidden;
         public string JournalPath = string.Empty;
 
         /// <summary>Provenance of a refiled or removed quest ("Filed under … (rule 4: …)", "Removed from the game in patch 6.3"); null for an ordinary quest.</summary>
@@ -192,6 +201,10 @@ public sealed class DetailPane
 
         var width = ImGui.GetContentRegionAvail().X;
         DrawHeader(quest);
+        if (model.NameMasked)
+        {
+            DrawRevealName(session, rowId);
+        }
 
         var start = ImGui.GetCursorScreenPos();
         Section(Strings.Requirements, RequirementsIcon);
@@ -234,7 +247,7 @@ public sealed class DetailPane
     /// </summary>
     private void DrawHeader(QuestRecord quest)
     {
-        if (!DrawBanner(quest))
+        if (model.ArtworkHidden || !DrawBanner(quest))
         {
             DrawHeaderCard(quest);
         }
@@ -265,6 +278,24 @@ public sealed class DetailPane
         }
 
         DrawChain();
+    }
+
+    /// <summary>
+    /// The spoiler shield masks this quest's name: a line saying so and "Reveal this name", which shows the real name
+    /// everywhere for the rest of the session.
+    /// </summary>
+    private static void DrawRevealName(SessionState session, uint rowId)
+    {
+        ImGui.TextDisabled(Strings.SpoilerMaskedNote);
+        if (ImGui.SmallButton(Strings.SpoilerRevealName))
+        {
+            session.RevealName(rowId);
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.SpoilerRevealNameTooltip);
+        }
     }
 
     /// <summary>
@@ -372,7 +403,7 @@ public sealed class DetailPane
         var moonBox = radius * 2.4f;
         var badge = quest.IconSpecial != 0 ? UiMetrics.BannerBadgeSize + pad : 0f;
         var textWrap = MathF.Max(UiMetrics.Px(40f), width - pad * 3f - moonBox - badge);
-        var textHeight = ImGui.CalcTextSize(quest.Name, false, textWrap).Y;
+        var textHeight = ImGui.CalcTextSize(model.DisplayName, false, textWrap).Y;
         var stripHeight = MathF.Min(height, MathF.Max(textHeight + pad * 2f, moonBox + pad));
         var stripTop = max.Y - stripHeight;
         var fade = MathF.Min(UiMetrics.Px(28f), stripTop - min.Y);
@@ -384,7 +415,7 @@ public sealed class DetailPane
         }
 
         dl.AddRectFilled(new Vector2(min.X, stripTop), max, solid);
-        dl.AddText(ImGui.GetFont(), ImGui.GetFontSize(), new Vector2(min.X + pad, max.Y - pad - textHeight), Theme.SilverU32, quest.Name, textWrap);
+        dl.AddText(ImGui.GetFont(), ImGui.GetFontSize(), new Vector2(min.X + pad, max.Y - pad - textHeight), Theme.SilverU32, model.DisplayName, textWrap);
         var moonCenter = new Vector2(max.X - pad - moonBox * 0.5f, max.Y - stripHeight * 0.5f);
         MoonGlyph.Draw(dl, moonCenter, radius, model.State);
 
@@ -437,7 +468,10 @@ public sealed class DetailPane
     /// <summary>What the special badge means.</summary>
     private static string BadgeTooltip(QuestRecord quest) => quest.Festival != 0 ? SeasonalBadgeTooltip : SpecialBadgeTooltip;
 
-    /// <summary>Raised Night card with the state moon and the name, for quests without a banner.</summary>
+    /// <summary>
+    /// Raised Night card with the state moon and the name, for quests without a banner, and for quests whose banner
+    /// the spoiler shield hides (the card then says the artwork appears once the quest is in the journal).
+    /// </summary>
     private void DrawHeaderCard(QuestRecord quest)
     {
         var dl = ImGui.GetWindowDrawList();
@@ -478,8 +512,16 @@ public sealed class DetailPane
             }
 
             using var wrap = ImRaii.TextWrapPos(ImGui.GetCursorPosX() + width - box - badge - pad * 3f);
-            using var silver = Theme.PushText(Theme.Silver);
-            ImGui.TextWrapped(quest.Name);
+            using (Theme.PushText(Theme.Silver))
+            {
+                ImGui.TextWrapped(model.DisplayName);
+            }
+
+            if (model.ArtworkHidden)
+            {
+                using var dusk = Theme.PushText(Theme.Dusk);
+                ImGui.TextWrapped(Strings.ArtworkHidden);
+            }
         }
 
         var max = new Vector2(min.X + width, ImGui.GetItemRectMax().Y + pad);
@@ -634,7 +676,7 @@ public sealed class DetailPane
             ImGui.SameLine();
             if (ImGui.SmallButton(Strings.MarkUnique))
             {
-                verdict.Open(rowId, true, model.Quest?.Name ?? string.Empty);
+                verdict.Open(rowId, true, model.DisplayName);
             }
 
             if (ImGui.IsItemHovered())
@@ -988,6 +1030,10 @@ public sealed class DetailPane
         model.HasSnapshot = snapshot is not null;
         session.States.TryGetValue(rowId, out var evaluation);
         model.State = evaluation?.State ?? QuestState.Unknown;
+        var spoilers = session.Spoilers;
+        model.DisplayName = spoilers.DisplayName(quest);
+        model.NameMasked = spoilers.IsMasked(quest);
+        model.ArtworkHidden = quest.Icon != 0 && !spoilers.ShowArtwork(quest, model.State);
         model.StateText = BlockerText.StatusText(evaluation, quest, session.Names, session.States);
         model.HasUniqueEntries = HasShippedUniqueEntry(session.UniqueRewards, rowId);
 
@@ -1015,7 +1061,14 @@ public sealed class DetailPane
 
             foreach (var result in evaluation.Requirements)
             {
-                model.Requirements.Add(new RequirementLine(result.Met, ReferenceEquals(result, evaluation.NextStep), Strings.RequirementName(result.Req.Kind), result.Detail));
+                // The evaluator wrote the prerequisite's or lock's real name into the detail; the shield masks it here.
+                var detail = result.Req switch
+                {
+                    PreviousQuestsRequirement p => spoilers.MaskNamesIn(result.Detail, bundle.Catalog, p.QuestIds),
+                    ForeclosureRequirement f => spoilers.MaskNamesIn(result.Detail, bundle.Catalog, f.CompletedLockIds),
+                    _ => result.Detail,
+                };
+                model.Requirements.Add(new RequirementLine(result.Met, ReferenceEquals(result, evaluation.NextStep), Strings.RequirementName(result.Req.Kind), detail));
             }
         }
 
@@ -1030,7 +1083,7 @@ public sealed class DetailPane
         foreach (var step in PathFinder.PathTo(rowId, bundle.Catalog, session.States))
         {
             var stepQuest = bundle.Catalog.GetByRowId(step.RowId);
-            var name = stepQuest?.Name ?? step.RowId.ToString(CultureInfo.InvariantCulture);
+            var name = stepQuest is null ? step.RowId.ToString(CultureInfo.InvariantCulture) : spoilers.DisplayName(stepQuest);
             model.Path.Add(new PathLine(step.RowId, name, step.State, step.RowId == rowId, stepQuest?.Expansion ?? quest.Expansion));
         }
 
@@ -1156,7 +1209,7 @@ public sealed class DetailPane
         if (progress.NextRowId is { } next)
         {
             model.ChainNextRowId = next;
-            model.ChainNextName = bundle.Catalog.GetByRowId(next)?.Name ?? next.ToString(CultureInfo.InvariantCulture);
+            model.ChainNextName = session.Spoilers.DisplayName(bundle.Catalog, next, next.ToString(CultureInfo.InvariantCulture));
         }
     }
 
@@ -1184,7 +1237,7 @@ public sealed class DetailPane
             }
 
             var state = session.States.TryGetValue(dependentId, out var evaluation) ? evaluation.State : QuestState.Unknown;
-            model.Unlocks.Add(new PathLine(dependentId, dependent.Name, state, false, dependent.Expansion));
+            model.Unlocks.Add(new PathLine(dependentId, session.Spoilers.DisplayName(dependent), state, false, dependent.Expansion));
         }
 
         if (more > 0)

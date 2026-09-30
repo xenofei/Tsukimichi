@@ -305,7 +305,7 @@ public static class TodoList
         states.TryGetValue(rowId, out var evaluation) ? evaluation.State : QuestState.Unknown;
 
     private static TodoRow Row(TodoInputs inputs, QuestRecord quest, QuestState state, TodoRowKind kind) =>
-        new(quest.RowId, quest.Name, state, Hint(inputs, quest, state), kind);
+        new(quest.RowId, inputs.Names is { } names ? names.QuestName(quest) : quest.Name, state, Hint(inputs, quest, state), kind);
 
     /// <summary>
     /// The row's hint: the decisive blocker (<see cref="BlockerText.For"/>) when the quest is blocked or not checked,

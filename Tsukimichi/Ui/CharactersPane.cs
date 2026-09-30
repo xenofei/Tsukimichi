@@ -1153,19 +1153,23 @@ public sealed partial class CharactersPane
             viewedHeader,
             otherHeader,
             sections,
-            BuildDiffList(diff.OnlyA, otherStates, d.Name, other.Name, bundle),
-            BuildDiffList(diff.OnlyB, session.States, other.Name, d.Name, bundle));
+            BuildDiffList(diff.OnlyA, otherStates, d.Name, other.Name, bundle, session.Spoilers),
+            BuildDiffList(diff.OnlyB, session.States, other.Name, d.Name, bundle, session.Spoilers));
     }
 
-    /// <summary>One side's list: the first <see cref="MaxDiffRows"/> as rows (moon from the lacking side), every entry as clipboard text.</summary>
+    /// <summary>
+    /// One side's list: the first <see cref="MaxDiffRows"/> as rows (moon from the lacking side), every entry as
+    /// clipboard text. Names go through the viewed character's spoiler shield, the clipboard's too.
+    /// </summary>
     private static DiffList BuildDiffList(
         IReadOnlyList<DiffEntry> entries,
         IReadOnlyDictionary<uint, QuestEvaluation> lackingStates,
         string has,
         string lacks,
-        CatalogBundle bundle)
+        CatalogBundle bundle,
+        SpoilerMask spoilers)
     {
-        var names = bundle.BlockerNames();
+        var names = bundle.BlockerNames() with { QuestName = spoilers.DisplayName };
         var header = string.Format(CultureInfo.CurrentCulture, Strings.DiffOnlyFormat, has, lacks) + " · " + Strings.DiffQuestCount(entries.Count);
         var rows = new List<DiffRow>(Math.Min(entries.Count, MaxDiffRows));
         var clipboard = new StringBuilder();
@@ -1181,7 +1185,7 @@ public sealed partial class CharactersPane
                 clipboard.Append('\n');
             }
 
-            clipboard.AppendFormat(CultureInfo.CurrentCulture, Strings.DiffClipboardLineFormat, quest.Name, entry.Value);
+            clipboard.AppendFormat(CultureInfo.CurrentCulture, Strings.DiffClipboardLineFormat, spoilers.DisplayName(quest), entry.Value);
             if (rows.Count >= MaxDiffRows)
             {
                 continue;
@@ -1190,7 +1194,7 @@ public sealed partial class CharactersPane
             var state = lackingStates.TryGetValue(entry.RowId, out var evaluation) ? evaluation.State : QuestState.Unknown;
             rows.Add(new DiffRow(
                 quest,
-                quest.Name,
+                spoilers.DisplayName(quest),
                 state,
                 lacks + ": " + BlockerText.StatusText(evaluation, quest, names, lackingStates),
                 entry.Value.ToString(CultureInfo.InvariantCulture),
@@ -1278,7 +1282,7 @@ public sealed partial class CharactersPane
             accountVersion = session.Version;
         }
 
-        ImGui.TextUnformatted(quest.Name);
+        ImGui.TextUnformatted(session.Spoilers.DisplayName(quest));
         RefreshItems();
 
         using var table = ImRaii.Table("##account", 3, ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.RowBg | ImGuiTableFlags.BordersInnerH);
@@ -1658,7 +1662,7 @@ public sealed partial class CharactersPane
         }
         else if (progress.IsReadyNow)
         {
-            text = string.Format(CultureInfo.CurrentCulture, Strings.JobsNextReadyFormat, next.Name, next.DisplayLevel);
+            text = string.Format(CultureInfo.CurrentCulture, Strings.JobsNextReadyFormat, session.Spoilers.DisplayName(next), next.DisplayLevel);
         }
         else
         {
@@ -1666,8 +1670,8 @@ public sealed partial class CharactersPane
             // gated by the main scenario says so; the level is the fallback when nothing else is known.
             var blocker = session.States.TryGetValue(next.RowId, out var evaluation) ? BlockerText.For(evaluation, next, session.Names, session.States) : string.Empty;
             text = blocker.Length > 0
-                ? string.Format(CultureInfo.CurrentCulture, Strings.JobsNextBlockedFormat, next.Name, blocker)
-                : string.Format(CultureInfo.CurrentCulture, Strings.JobsNextLaterFormat, next.Name, next.DisplayLevel);
+                ? string.Format(CultureInfo.CurrentCulture, Strings.JobsNextBlockedFormat, session.Spoilers.DisplayName(next), blocker)
+                : string.Format(CultureInfo.CurrentCulture, Strings.JobsNextLaterFormat, session.Spoilers.DisplayName(next), next.DisplayLevel);
         }
 
         return new LadderRow(iconId, name, level, isRole, progress.Fraction, count, next, text, progress.IsReadyNow);
@@ -1704,7 +1708,7 @@ public sealed partial class CharactersPane
                 progress.Fraction,
                 string.Format(CultureInfo.CurrentCulture, Strings.JobsChainCountFormat, progress.Done, progress.Total),
                 next,
-                next is null ? Strings.JobsChainComplete : Strings.JobsChainNextPrefix + next.Name);
+                next is null ? Strings.JobsChainComplete : Strings.JobsChainNextPrefix + session.Spoilers.DisplayName(next));
             (progress.Done > 0 ? started : notStarted).Add(row);
         }
 
@@ -1743,12 +1747,12 @@ public sealed partial class CharactersPane
         var expansion = bundle.Names.Expansion(next.Expansion) is { Length: > 0 } named ? named : Expansions.Name(next.Expansion);
         if (next.Issuer is not { } issuer)
         {
-            return (string.Format(CultureInfo.CurrentCulture, Strings.CharactersMsqNoGiverFormat, expansion, next.Name), next);
+            return (string.Format(CultureInfo.CurrentCulture, Strings.CharactersMsqNoGiverFormat, expansion, session.Spoilers.DisplayName(next)), next);
         }
 
         var zone = ZoneName(issuer.MapId);
         var giver = zone.Length > 0 ? string.Format(CultureInfo.CurrentCulture, Strings.MsqGiverFormat, issuer.Name, zone) : issuer.Name;
-        return (string.Format(CultureInfo.CurrentCulture, Strings.CharactersMsqFormat, expansion, next.Name, giver), next);
+        return (string.Format(CultureInfo.CurrentCulture, Strings.CharactersMsqFormat, expansion, session.Spoilers.DisplayName(next), giver), next);
     }
 
     /// <summary>Place name of a map from the Map sheet; empty without game data or for an unknown id.</summary>
@@ -1885,7 +1889,7 @@ public sealed partial class CharactersPane
             var evaluation = session.States.TryGetValue(rowId, out var e) ? e : null;
             rows.Add(new PinnedRow(
                 quest,
-                quest?.Name ?? Strings.MoonlitQuestPrefix + rowId.ToString(CultureInfo.InvariantCulture),
+                quest is null ? Strings.MoonlitQuestPrefix + rowId.ToString(CultureInfo.InvariantCulture) : session.Spoilers.DisplayName(quest),
                 evaluation?.State ?? QuestState.Unknown,
                 quest is null ? string.Empty : BlockerText.StatusText(evaluation, quest, session.Names, session.States)));
         }
@@ -1911,7 +1915,7 @@ public sealed partial class CharactersPane
                 ev.TimeUtc.ToLocalTime().ToString("HH:mm", CultureInfo.InvariantCulture),
                 Strings.CharactersEventName(ev.Kind),
                 EventColor(ev.Kind),
-                quest?.Name ?? Strings.MoonlitQuestPrefix + ev.RowId.ToString(CultureInfo.InvariantCulture));
+                quest is null ? Strings.MoonlitQuestPrefix + ev.RowId.ToString(CultureInfo.InvariantCulture) : session.Spoilers.DisplayName(quest));
         }
 
         return rows;

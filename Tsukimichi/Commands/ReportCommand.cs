@@ -35,7 +35,7 @@ public sealed class ReportCommand(SessionState session, UiState ui, GameLinks li
         }
         else
         {
-            quest = FindByName(bundle.Catalog, text);
+            quest = FindByName(bundle.Catalog, text, session.Spoilers);
             if (quest is null)
             {
                 links.PrintText(string.Format(CultureInfo.CurrentCulture, Strings.ReportNoMatchFormat, text));
@@ -50,19 +50,21 @@ public sealed class ReportCommand(SessionState session, UiState ui, GameLinks li
             return;
         }
 
-        links.PrintText(string.Format(CultureInfo.CurrentCulture, Strings.ReportCopiedChatFormat, quest.Name));
+        links.PrintText(string.Format(CultureInfo.CurrentCulture, Strings.ReportCopiedChatFormat, links.NameOf(quest)));
     }
 
     /// <summary>
     /// A quest by name: an exact match first (case-insensitive, live quests before removed ones), else the first
-    /// live quest the search index matches in catalog order; null when nothing matches.
+    /// live quest the search index matches in catalog order; null when nothing matches. A name the spoiler shield
+    /// hides matches neither way (its placeholder does), as in the table's search.
     /// </summary>
-    internal static QuestRecord? FindByName(QuestCatalog catalog, string name)
+    internal static QuestRecord? FindByName(QuestCatalog catalog, string name, SpoilerMask? spoilers = null)
     {
+        spoilers ??= SpoilerMask.None;
         QuestRecord? exact = null;
         foreach (var quest in catalog.All)
         {
-            if (!string.Equals(quest.Name, name, StringComparison.OrdinalIgnoreCase))
+            if (!string.Equals(spoilers.DisplayName(quest), name, StringComparison.OrdinalIgnoreCase))
             {
                 continue;
             }
@@ -84,7 +86,7 @@ public sealed class ReportCommand(SessionState session, UiState ui, GameLinks li
         var normalized = SearchIndex.Normalize(name);
         foreach (var quest in catalog.All)
         {
-            if (!quest.IsRemoved && index.Matches(quest.RowId, normalized))
+            if (!quest.IsRemoved && index.Matches(quest.RowId, normalized, spoilers))
             {
                 return quest;
             }

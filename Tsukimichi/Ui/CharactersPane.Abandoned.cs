@@ -177,7 +177,8 @@ public sealed partial class CharactersPane
         {
             var quest = catalog?.GetByRowId(entry.RowId);
             var state = session.States.TryGetValue(entry.RowId, out var evaluation) ? evaluation.State : QuestState.Unknown;
-            var name = quest?.Name ?? Strings.MoonlitQuestPrefix + entry.RowId.ToString(CultureInfo.InvariantCulture);
+            // Through the spoiler shield (T19): an abandoned main scenario quest far ahead reads as its placeholder.
+            var name = quest is null ? Strings.MoonlitQuestPrefix + entry.RowId.ToString(CultureInfo.InvariantCulture) : session.Spoilers.DisplayName(quest);
             var when = Strings.AbandonedAtPrefix + entry.AbandonedUtc.ToLocalTime().ToString(Strings.DateTimeFormat, CultureInfo.CurrentCulture);
             var tooltip = quest?.Issuer is { } issuer && issuer.Name.Length > 0
                 ? Strings.AbandonedGiverPrefix + issuer.Name + "\n" + when

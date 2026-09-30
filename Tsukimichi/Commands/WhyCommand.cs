@@ -36,7 +36,7 @@ public sealed class WhyCommand(SessionState session, UiState ui, GameLinks links
         }
         else
         {
-            quest = ReportCommand.FindByName(bundle.Catalog, text);
+            quest = ReportCommand.FindByName(bundle.Catalog, text, session.Spoilers);
             if (quest is null)
             {
                 links.PrintText(string.Format(CultureInfo.CurrentCulture, Strings.ReportNoMatchFormat, text));

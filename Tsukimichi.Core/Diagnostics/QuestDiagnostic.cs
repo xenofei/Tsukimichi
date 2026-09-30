@@ -70,7 +70,7 @@ public static class QuestDiagnostic
             .Append(", curated ").Append(Or(inputs.CuratedRevision))
             .Append(", schema ").Append(inputs.SnapshotSchema.ToString(CultureInfo.InvariantCulture)).Append('\n');
 
-        sb.Append("quest: ").Append(quest.RowId.ToString(CultureInfo.InvariantCulture)).Append(" \"").Append(quest.Name).Append("\" (genre ")
+        sb.Append("quest: ").Append(quest.RowId.ToString(CultureInfo.InvariantCulture)).Append(" \"").Append(names.QuestName(quest)).Append("\" (genre ")
             .Append(quest.Journal.GenreId.ToString(CultureInfo.InvariantCulture))
             .Append(", lvl ").Append(quest.Level.ToString(CultureInfo.InvariantCulture))
             .Append(" / display ").Append(quest.DisplayLevel.ToString(CultureInfo.InvariantCulture))
@@ -564,9 +564,9 @@ public static class QuestDiagnostic
     private static void AppendQuest(StringBuilder sb, uint rowId, BlockerNames names)
     {
         sb.Append(rowId.ToString(CultureInfo.InvariantCulture));
-        if (names.Catalog.GetByRowId(rowId)?.Name is { Length: > 0 } name)
+        if (names.Catalog.GetByRowId(rowId) is { Name.Length: > 0 } quest)
         {
-            sb.Append(' ').Append(name);
+            sb.Append(' ').Append(names.QuestName(quest));
         }
     }
 

@@ -317,7 +317,7 @@ public sealed class DiscoveryWindow : Window, IDisposable
         }
 
         ImGui.TableNextColumn();
-        if (ImGui.Selectable(row.Quest.Name))
+        if (ImGui.Selectable(session.Spoilers.DisplayName(row.Quest)))
         {
             reveal(row.Quest);
         }
@@ -440,7 +440,7 @@ public sealed class DiscoveryWindow : Window, IDisposable
         startableNames = new string[startable.Length];
         for (var i = 0; i < startable.Length; i++)
         {
-            startableNames[i] = startable[i].Quest.Name;
+            startableNames[i] = session.Spoilers.DisplayName(startable[i].Quest);
         }
 
         header = startable.Length == 1

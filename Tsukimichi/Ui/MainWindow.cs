@@ -280,12 +280,14 @@ public sealed class MainWindow : Window, IDisposable
 
         var index = SearchIndex.For(bundle.Catalog);
         var normalized = SearchIndex.Normalize(text);
+        // A name the spoiler shield hides never matches; its placeholder does.
+        var spoilers = plugin.Session.Spoilers;
         // Chat results mirror the table: removed quests only when the Include removed filter is on.
         var showUnlisted = ui.Filters.IncludeUnlisted;
         var count = 0;
         foreach (var quest in bundle.Catalog.All)
         {
-            if ((quest.IsRemoved && !showUnlisted) || !index.Matches(quest.RowId, normalized))
+            if ((quest.IsRemoved && !showUnlisted) || !index.Matches(quest.RowId, normalized, spoilers))
             {
                 continue;
             }
@@ -913,7 +915,7 @@ public sealed class MainWindow : Window, IDisposable
             return;
         }
 
-        msqStatus = string.Format(CultureInfo.CurrentCulture, Strings.StatusMsqFormat, next.Name);
+        msqStatus = string.Format(CultureInfo.CurrentCulture, Strings.StatusMsqFormat, session.Spoilers.DisplayName(next));
         var expansion = bundle.Names.Expansion(next.Expansion) is { Length: > 0 } named ? named : Expansions.Name(next.Expansion);
         var tooltip = string.Format(CultureInfo.CurrentCulture, Strings.MsqProgressFormat, expansion, position.Done, position.Total);
         if (next.Issuer is { } issuer)

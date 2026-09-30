@@ -210,6 +210,10 @@ public sealed class Plugin : IDalamudPlugin
         var reader = new Game.GameStateReader(Framework, PlayerState, DataManager, Log);
         Snapshots = new Game.SnapshotService(new Core.Storage.JsonSnapshotStore(Paths.ConfigDir), ClientState, Framework, Log, reader);
         Session = new Game.SessionState(Snapshots, Paths, uniqueRewards, curated, Log);
+        // Spoiler shield (T19): Settings > Spoilers with the viewed character's override.
+        Session.SpoilerOptionsFor = Settings.SpoilerOptionsFor;
+        Session.CharacterForgotten += ForgetSpoilerOverride;
+        Session.DataDeleted += ClearSpoilerOverrides;
         if (Settings.ViewedContentId is { } viewed && !Session.ViewCharacter(viewed))
         {
             Settings.ViewedContentId = null;
@@ -251,6 +255,25 @@ public sealed class Plugin : IDalamudPlugin
         }
     }
 
+    /// <summary>A forgotten character takes its spoiler override with it.</summary>
+    private void ForgetSpoilerOverride(ulong contentId)
+    {
+        if (Settings.SpoilerShieldByCharacter.Remove(contentId))
+        {
+            Settings.Save(PluginInterface);
+        }
+    }
+
+    /// <summary>"Delete all data" drops every per-character spoiler override.</summary>
+    private void ClearSpoilerOverrides()
+    {
+        if (Settings.SpoilerShieldByCharacter.Count > 0)
+        {
+            Settings.SpoilerShieldByCharacter.Clear();
+            Settings.Save(PluginInterface);
+        }
+    }
+
     private void PersistViewedCharacter()
     {
         var explicitId = Session.IsFollowingLive ? null : Session.ViewedContentId;
@@ -270,6 +293,8 @@ public sealed class Plugin : IDalamudPlugin
         if (Session is not null)
         {
             Session.Changed -= PersistViewedCharacter;
+            Session.CharacterForgotten -= ForgetSpoilerOverride;
+            Session.DataDeleted -= ClearSpoilerOverrides;
         }
 
         Poller?.Dispose();
@@ -341,6 +366,8 @@ public sealed class Plugin : IDalamudPlugin
             MoonlitPane moonlit = moonlitPane;
             // Reward tooltips (table icons, detail rows) say "Store only" for rewards the Online Store also sells.
             gameLinks.IsStoreResell = reward => Session.StoreResells.Contains(reward);
+            // Chat links print a masked main scenario quest under its placeholder (T19).
+            gameLinks.QuestName = quest => Session.Spoilers.DisplayName(quest);
             wotsit = new Game.WotsitIpc(PluginInterface, Framework, Log);
             wotsit.Enabled = Settings.WotsitIntegration;
             wotsit.Attach(() => Session.Bundle, () => moonlit.Catalog, moonlit.Icons.Resolve, quest =>
@@ -348,7 +375,7 @@ public sealed class Plugin : IDalamudPlugin
                 mainWindow.IsOpen = true;
                 mainWindow.BringToFront();
                 MoonlitPane.Reveal(ui, quest);
-            });
+            }, () => Session.Spoilers);
             // Item hover hints and context-menu links (V2-14). The lookup follows the Moonlit catalog reference (rebuilt
             // after an override change) and the quest catalog (set once the build finishes); both are read per use.
             var rewardLookup = new Core.Unique.RewardLookupSource(() => moonlit.Catalog, () => Session.Bundle?.Catalog);
@@ -359,7 +386,7 @@ public sealed class Plugin : IDalamudPlugin
                 mainWindow.IsOpen = true;
                 mainWindow.BringToFront();
                 MoonlitPane.Reveal(ui, quest);
-            }, Log) { Enabled = Settings.ItemContextMenuEnabled };
+            }, Log) { Enabled = Settings.ItemContextMenuEnabled, QuestName = quest => Session.Spoilers.DisplayName(quest) };
             var discovery = new DiscoveryCommands(Session, ClientState, TargetManager, gameLinks);
             command.ListZoneQuests = discovery.Zone;
             command.ListTargetQuests = discovery.Which;

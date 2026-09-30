@@ -370,6 +370,7 @@ static partial class Strings
             HelpTopic.Commands => "Commands",
             HelpTopic.CountsDiffer => "Why my counts differ from the journal",
             HelpTopic.KnownQuirks => "Known quirks",
+            HelpTopic.Spoilers => "Spoilers",
             HelpTopic.Tips => "Tips",
             _ => topic.ToString(),
         };
@@ -387,6 +388,7 @@ static partial class Strings
             HelpTopic.Commands => "Everything the chat command can do.",
             HelpTopic.CountsDiffer => "Four reasons a done/total here is not the number in the game's journal or on a wiki.",
             HelpTopic.KnownQuirks => "Things the plugin gets wrong on purpose or cannot know yet, so you need not report them.",
+            HelpTopic.Spoilers => "The spoiler shield keeps the story ahead of you out of sight, on by default.",
             HelpTopic.Tips => "Small habits that make the catalog faster.",
             _ => string.Empty,
         };
@@ -605,6 +607,25 @@ static partial class Strings
 
         public const string QuirksTip = "A quest in the wrong state that is not one of these? Report this quest in the detail pane copies a diagnostic block with the quest id, the state and every requirement's verdict, and no character identifiers; paste it into a GitHub issue.";
 
+        // ---- Spoilers ----
+        public static readonly string[] SpoilerCardTitles =
+        [
+            "Main scenario names ahead of you",
+            "Journal artwork",
+            "Sprout mode",
+            "Your settings, per character",
+        ];
+
+        public static readonly string[] SpoilerCardBodies =
+        [
+            "A main scenario quest more than three quests past your current one reads \"Main scenario quest (Lv 83)\" everywhere a name prints: the tree, the table, the detail pane, the status bar, the Todo overlay, Characters, chat links, Wotsit and the diagnostic block. Search finds it only by that placeholder. Quests you have accepted or completed always show their names. Reveal this name in the detail pane shows one quest's name until the plugin reloads.",
+            "A quest's banner art sums up the quest, so it shows only once the quest is in your journal or done; until then the detail pane and the name tooltip show a card saying so.",
+            "The Sprout mode quick view in the filter panel keeps the table to the expansions your main scenario has reached, with a count of the quests in your reach, and folds the tree's later sections to their counts.",
+            "Settings > Spoilers turns the names or the artwork off, sets how many quests ahead keep their names (0 to 10), and holds an override for the character shown: a character who finished the story can show everything while an alt stays shielded.",
+        ];
+
+        public const string SpoilersTip = "Without a character (or a stored one with no data yet) there is no position to measure from, so every main scenario name after the first quest stays hidden until the first capture.";
+
         // ---- Tips ----
         public static readonly string[] Tips =
         [
@@ -650,7 +671,7 @@ static partial class Strings
         public const string TreeTitle = "Journal tree";
         public const string TreeBody = "Section, category and genre scope the table. Each node shows done/total and a moon that fills with completion; Unlock quests and Removed from the game are virtual nodes.";
         public const string TableTitle = "Quest table";
-        public const string TableBody = "One row per quest. The moon is its state (hover it for the name; Help lists all eight) and Status says what blocks it. Click a header to sort; right-click a row for pin, map flag and journal.";
+        public const string TableBody = "One row per quest. The moon is its state (hover it for the name; Help lists all eight) and Status says what blocks it. Click a header to sort; right-click a row for pin, map flag and journal. Main scenario quests far ahead of you read \"Main scenario quest (Lv 83)\" until you reach them; Settings > Spoilers changes that.";
         public const string RequirementsTitle = "Requirements";
         public const string RequirementsBody = "Select a row and the detail pane lists every requirement with ✓ or ✗. The ▶ marks the one blocking you; hover it for the exact gap.";
         public const string PathTitle = "Path and unlocks next";

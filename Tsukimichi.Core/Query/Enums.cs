@@ -45,4 +45,10 @@ public enum Preset
 
     /// <summary>Accepted quests whose journal entry is <see cref="QueryContext.StalledDays"/> days old or older.</summary>
     Stalled,
+
+    /// <summary>
+    /// Sprout mode: quests of the expansions the character's main scenario has reached
+    /// (<see cref="SpoilerMask.ReachExpansion"/> of <see cref="QueryContext.Spoilers"/>) and none beyond.
+    /// </summary>
+    Sprout,
 }

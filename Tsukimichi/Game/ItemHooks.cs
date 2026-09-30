@@ -43,6 +43,12 @@ public sealed class ItemHooks : IDisposable
         this.log = log ?? throw new ArgumentNullException(nameof(log));
     }
 
+    /// <summary>
+    /// The name a quest prints in the menu (the session's spoiler shield), attached by the plugin; the quest's own name
+    /// until then.
+    /// </summary>
+    public Func<QuestRecord, string>? QuestName { get; set; }
+
     /// <summary>Whether the handler is subscribed (default off until the plugin applies the setting).</summary>
     public bool Enabled
     {
@@ -149,7 +155,7 @@ public sealed class ItemHooks : IDisposable
             var quest = quests[0];
             return new MenuItem
             {
-                Name = string.Format(CultureInfo.CurrentCulture, Strings.ItemsMenuSingleFormat, quest.Name),
+                Name = string.Format(CultureInfo.CurrentCulture, Strings.ItemsMenuSingleFormat, QuestName?.Invoke(quest) ?? quest.Name),
                 PrefixChar = PrefixLetter,
                 OnClicked = _ => reveal(quest),
             };
@@ -161,7 +167,7 @@ public sealed class ItemHooks : IDisposable
             var quest = quests[i];
             subItems[i] = new MenuItem
             {
-                Name = quest.Name,
+                Name = QuestName?.Invoke(quest) ?? quest.Name,
                 PrefixChar = PrefixLetter,
                 OnClicked = _ => reveal(quest),
             };

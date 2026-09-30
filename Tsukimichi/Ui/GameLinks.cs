@@ -33,6 +33,15 @@ public sealed class GameLinks(IGameGui gameGui, IChatGui chat, IDataManager data
     /// </summary>
     public Func<RewardRef, bool>? IsStoreResell { get; set; }
 
+    /// <summary>
+    /// The name a quest link prints (the session's spoiler shield, <see cref="Core.Query.SpoilerMask.DisplayName(QuestRecord)"/>),
+    /// attached by the plugin; the quest's own name until then. A masked quest's link still points at the quest.
+    /// </summary>
+    public Func<QuestRecord, string>? QuestName { get; set; }
+
+    /// <summary>The name to print for a quest: <see cref="QuestName"/> when attached, else the quest's own name.</summary>
+    public string NameOf(QuestRecord quest) => QuestName?.Invoke(quest) ?? quest.Name;
+
     /// <summary>Teleportable aetherytes by territory, read from the sheets on first use; empty when the read fails.</summary>
     public AetheryteIndex Aetherytes
     {
@@ -300,7 +309,7 @@ public sealed class GameLinks(IGameGui gameGui, IChatGui chat, IDataManager data
         {
             var builder = new SeStringBuilder()
                 .Add(new QuestPayload(quest.RowId))
-                .AddText(quest.Name)
+                .AddText(NameOf(quest))
                 .Add(RawPayload.LinkTerminator)
                 .AddText(Strings.ChatSuffixSeparator + headline);
 
@@ -429,7 +438,7 @@ public sealed class GameLinks(IGameGui gameGui, IChatGui chat, IDataManager data
     {
         var builder = new SeStringBuilder()
             .Add(new QuestPayload(quest.RowId))
-            .AddText(quest.Name)
+            .AddText(NameOf(quest))
             .Add(RawPayload.LinkTerminator);
 
         if (MapLink(quest) is { } link)

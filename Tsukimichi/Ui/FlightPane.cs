@@ -680,7 +680,8 @@ public sealed class FlightPane
     {
         public FlightCurrent Current { get; } = current;
         public QuestRecord? Quest { get; } = quest;
-        public string QuestName { get; } = quest?.Name ?? Strings.FlightQuestPrefix + current.QuestRowId.ToString(CultureInfo.InvariantCulture);
+        /// <summary>The quest's name as the spoiler shield prints it; refreshed with the state each session version.</summary>
+        public string QuestName { get; private set; } = quest?.Name ?? Strings.FlightQuestPrefix + current.QuestRowId.ToString(CultureInfo.InvariantCulture);
         public QuestState AttunedGlyph { get; private set; } = QuestState.Unknown;
         public string AttunedText { get; private set; } = Strings.FlightAttunedUnknown;
 
@@ -705,6 +706,12 @@ public sealed class FlightPane
         public void SetState(QuestEvaluation? evaluation, BlockerNames names, IReadOnlyDictionary<uint, QuestEvaluation> states)
         {
             Evaluation = evaluation;
+            if (Quest is { } named)
+            {
+                // Many aether currents come from main scenario quests; a masked one reads as its placeholder (T19).
+                QuestName = names.QuestName(named);
+            }
+
             if (evaluation is null)
             {
                 State = QuestState.Unknown;
