@@ -148,6 +148,14 @@ public sealed record QuestRecord
     /// </summary>
     public bool CountsInTotals { get; init; } = true;
 
+    /// <summary>
+    /// The patch the quest was added in, as the game writes it ("2.0", "6.55", "7.5"; compare with
+    /// <see cref="PatchVersion"/>), from <c>quest_patches.json</c> at catalog build (P8). Empty when unknown: the file
+    /// has no patch for the quest, or the catalog was built without the file (the test fixture holds the sheet's own
+    /// data; the patches are laid over it on read, as the curated overlay is).
+    /// </summary>
+    public string AddedIn { get; init; } = string.Empty;
+
     public IReadOnlyList<RewardRef> Rewards { get; init; } = [];
     public uint ExpFactor { get; init; }
     public uint Gil { get; init; }
