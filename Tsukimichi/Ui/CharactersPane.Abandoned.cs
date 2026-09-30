@@ -19,7 +19,8 @@ namespace Tsukimichi.Ui;
 public sealed partial class CharactersPane
 {
     private AbandonedRow[] abandonedRows = [];
-    private string abandonedHeader = string.Format(CultureInfo.CurrentCulture, Strings.AbandonedHeaderFormat, 0);
+    /// <summary>"Abandoned (N)" with its stable "###abandonedHeader" id, built when the rows are, not per frame.</summary>
+    private string abandonedHeader = HeaderLabel(0);
     private int abandonedVersion = -1;
     private long abandonedMinute = -1;
 
@@ -30,7 +31,7 @@ public sealed partial class CharactersPane
     {
         RefreshAbandoned();
         using var id = ImRaii.PushId("abandoned");
-        var open = ImGui.CollapsingHeader(abandonedHeader + "###abandonedHeader", ImGuiTreeNodeFlags.DefaultOpen);
+        var open = ImGui.CollapsingHeader(abandonedHeader, ImGuiTreeNodeFlags.DefaultOpen);
         if (!open)
         {
             return;
@@ -187,7 +188,12 @@ public sealed partial class CharactersPane
         }
 
         abandonedRows = rows.ToArray();
-        abandonedHeader = string.Format(CultureInfo.CurrentCulture, Strings.AbandonedHeaderFormat, abandonedRows.Length);
+        abandonedHeader = HeaderLabel(abandonedRows.Length);
+    }
+
+    private static string HeaderLabel(int count)
+    {
+        return string.Format(CultureInfo.CurrentCulture, Strings.AbandonedHeaderFormat, count) + "###abandonedHeader";
     }
 
     private sealed record AbandonedRow(QuestRecord? Quest, string Name, QuestState State, string Detail, string Tooltip);
