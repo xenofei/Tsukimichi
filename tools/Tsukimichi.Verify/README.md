@@ -1,7 +1,8 @@
 # Tsukimichi.Verify
 
 A standalone console (feature plan v3, T2a) that checks every named quest in the catalog the plugin ships against
-external references, and every `unique_quests.json` entry's "only a quest gives this" claim. It is not part of the
+external references, and every `unique_quests.json` entry's "only a quest gives this" claim. Its `patches` command
+also seeds the patch each quest was added in (P8). It is not part of the
 plugin and never runs in CI. It commits facts only (ids, levels, names, counts, URLs), never quest or description text.
 
 Sources, in order of authority:
@@ -11,7 +12,7 @@ Sources, in order of authority:
 | Lodestone Eorzea Database (official) | category listings (which quests exist per journal category), quest pages (name, level, class, Grand Company, Quest/Duty requirements, rewards), item pages ("Obtained From") to confirm a reward finding |
 | consolegameswiki | quest infobox (name, level, journal, release patch, prerequisites, required duties, rewards, unlocks, retired marker), item Acquisition sections, seasonal event pages |
 | FFXIV Collect | the full dumps of mounts, minions, emotes, orchestrion rolls, bardings, hairstyles, fashion accessories and cards |
-| Garland Tools | only `reward.instance` for the quests in `curated/duty_unlocks.json` |
+| Garland Tools | `reward.instance` for the quests in `curated/duty_unlocks.json`; the patch each quest was added in (`patches`, below) |
 
 The catalog is mapped with the plugin's own `CatalogMapper` and the curated overlay (`Tsukimichi/Data/curated`), so the
 tool verifies exactly what players see, refiling and retired quests included. The Lodestone and wiki journal
@@ -33,6 +34,28 @@ dotnet tools/Tsukimichi.Verify/bin/Release/net10.0/Tsukimichi.Verify.dll summary
 | `quests` | every named quest; writes `quest-verification.csv`, `quest-verification-summary.csv`, `festival-end-dates.json`, `verification-full.md`, `verification-manifest.json` |
 | `rewards` | every `unique_quests.json` entry; writes `reward-verification.csv`, `verification-full.md`, `verification-manifest.json` |
 | `summary` | reads the committed CSVs and the allowlist; prints totals and every row that fails the gate; exits 1 when a row is `unresolved` or `catalogWrong` outside the allowlist, else 0 |
+| `patches` | P8 seed: the patch every named quest was added in, from Garland Tools; writes `Tsukimichi/Data/quest_patches.json` and `docs/data/quest-patches-report.md` |
+
+### patches
+
+`dotnet tools/Tsukimichi.Verify/bin/Release/net10.0/Tsukimichi.Verify.dll patches [--offline] [--limit N] [--no-quest-documents] [--patches <file>]`
+
+Garland's core document (`db/doc/core/en/3/data.json`) names the patch series it tracks; one document per series
+(`db/doc/patch/en/2/<series>.json`) lists every quest first seen in each patch of the series (7.5, 7.51, 7.55, ...).
+That is 39 requests for the whole catalog (about 80 seconds at the default rate) rather than one per quest. A quest
+no series document lists is looked up in Garland's per-quest document (`quest.patch`): read from the cache when an
+earlier `quests` run fetched it, otherwise fetched, at most `--limit N` of them per run (`--no-quest-documents` reads
+the cache only). A quest Garland cannot place keeps the value the previous file gave it, else stays `""` (unknown).
+Rerunning is safe: the cache answers everything already fetched, and the file's `history` keeps one `garland` line per
+game version.
+
+The Quest sheet has no patch column, so the game data can only refute, not state, a patch. The report lists: a patch
+older than the quest's `Quest.Expansion` allows, a Garland name that is not the catalog's (a reused row id), the
+per-quest and patch documents disagreeing, a quest under two patches (the older is kept), and a change from the
+committed file. The first seed (game 2026.09.15) placed all 5,373 named quests with none of these findings.
+
+After a game patch this command is not needed: `tools/regen.ps1 -Patch <x.y>` stamps new quest ids offline
+(`Tsukimichi.DataGen --patches`). Rerun the seed only to re-check old quests against Garland.
 
 Options (`quests` and `rewards`):
 

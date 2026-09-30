@@ -22,7 +22,7 @@ To load a build in game: Dalamud Settings (`/xlsettings`) › Experimental › D
 | `Tsukimichi.Core` | Domain model, state evaluation, query, storage, unique-reward catalog. net10.0, no Dalamud reference. |
 | `Tsukimichi.GameData` | Lumina mapping from game sheets to the Core model. Shared by the plugin and the tests. |
 | `Tsukimichi` | The Dalamud plugin (`Dalamud.NET.Sdk/15.0.0`): runtime state reader, poller, snapshots, ImGui UI. |
-| `Tsukimichi.DataGen` | Console tool that turns local game files into `Tsukimichi/Data/unique_quests.json` and verifies it. |
+| `Tsukimichi.DataGen` | Console tool that turns local game files into `Tsukimichi/Data/unique_quests.json` and verifies it, and stamps new quest ids in `Tsukimichi/Data/quest_patches.json`. |
 | `Tsukimichi.Tests` | xunit tests for Core and GameData, with frozen fixtures under `Fixtures/`. |
 | `assets/` | The icon (SVG source, renderer, PNG). |
 | `docs/` | Feasibility report, plans, design spec, review panel, data reports. |
@@ -54,7 +54,15 @@ When a patch lands:
 3. Fix whatever broke, then run `pwsh tools/set-tested-version.ps1` (reads `ffxivgame.ver` beside the sqpack directory; `-GamePath` or `-Version` to override) and commit the csproj.
 4. Add a changelog line such as "Game hooks tested on patch 7.x (game 2026.10.28)", bump `<Version>` and release as usual. The release workflow refuses a tag whose tested version is empty or older than the game version the shipped data was generated from.
 
-A patch that also changes quest data needs `tools/regen.ps1` as well; the two are independent.
+A patch that also changes quest data needs `tools/regen.ps1` as well; the two are independent. When the patch added quests, pass the patch number: `pwsh tools/regen.ps1 -Patch 7.6` (see Patch of origin below; the script stops if new quests appear without it).
+
+## Patch of origin
+
+`Tsukimichi/Data/quest_patches.json` maps every Quest row id to the patch the quest was added in, as the game writes it (`"2.0"`, `"6.55"`, `"7.5"`; `""` when unknown). The plugin reads it at catalog build into `QuestRecord.AddedIn` for the "Added in" filter, the New this patch group of the Unlocks quick view and the detail pane's "Added in" line. Patch numbers compare as the game writes them (`PatchVersion`: 7.5 < 7.51 < 7.55 < 7.6).
+
+- **Seed (once, networked).** `dotnet tools/Tsukimichi.Verify/bin/Release/net10.0/Tsukimichi.Verify.dll patches` reads Garland Tools' patch documents (about forty requests at one per two seconds, identifying User-Agent, cache under `%LOCALAPPDATA%\Tsukimichi.Verify`), fills any gap from Garland's per-quest documents (cached first, then fetched; resumable) and writes the file plus `docs/data/quest-patches-report.md` (coverage and the cross-checks against the game data). See [tools/Tsukimichi.Verify/README.md](tools/Tsukimichi.Verify/README.md). No wiki text is read.
+- **Every later game patch (offline).** `tools/regen.ps1 -Patch <x.y>` runs `Tsukimichi.DataGen --patches Tsukimichi/Data/quest_patches.json --game <sqpack> --patch <x.y>`, which stamps every quest id the file does not list yet with that patch. The file lists every quest id the catalog held at its last write (unknown ones included), so "not listed" means "new since then". A hotfix that adds quests takes its own number (`-Patch 7.51`).
+- **Corrections** are a hand edit of one line with the reason in the commit message; a rerun of the seed keeps them only where Garland has no value.
 
 ## Ground rules
 

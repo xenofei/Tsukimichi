@@ -185,7 +185,7 @@ public sealed class QuestPatches
     /// dropped keeps its line too, so a later return is not mistaken for new). The result carries
     /// <paramref name="gameVersion"/> and, when anything was new, a <see cref="SourceDiff"/> history line.
     /// </summary>
-    /// <exception cref="ArgumentException">New ids were found and <paramref name="patch"/> is not a patch number.</exception>
+    /// <exception cref="InvalidOperationException">New ids were found and <paramref name="patch"/> is not a patch number.</exception>
     public QuestPatchesDiff Diff(IEnumerable<uint> catalogRowIds, string gameVersion, string? patch)
     {
         ArgumentNullException.ThrowIfNull(catalogRowIds);
@@ -198,9 +198,8 @@ public sealed class QuestPatches
         var stamp = PatchVersion.Normalize(patch);
         if (!PatchVersion.IsPatch(stamp))
         {
-            throw new ArgumentException(
-                $"{fresh.Count} quest id(s) are new since {FileName} was last written (game {GameVersion} -> {gameVersion}); pass the patch this game version ships as --patch <x.y> (tools/regen.ps1 -Patch <x.y>).",
-                nameof(patch));
+            throw new InvalidOperationException(
+                $"{fresh.Count} quest id(s) are new since {FileName} was last written (game {GameVersion} -> {gameVersion}); pass the patch this game version ships as --patch <x.y> (tools/regen.ps1 -Patch <x.y>).");
         }
 
         var merged = new Dictionary<uint, string>(byRowId);
