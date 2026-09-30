@@ -4,6 +4,8 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-09-30
+
 ### Added
 - Works with other plugins: other Dalamud plugins can now ask Tsukimichi about your quests over IPC: whether a quest can be picked up now, its state, what blocks it (the same lines as `/tsuki why`), the next main scenario quest, and "open this quest in Tsukimichi", with a message when your quests change. Answers are about the character you are logged in on, and quest names follow your spoiler settings. Nothing changes for you unless another plugin uses it; plugin authors find the details in `docs/ipc.md`.
 - Correcting curated data: CONTRIBUTING.md explains which data file holds what, the evidence each correction needs (the Lodestone first, the wiki second) and how to check a change without the game. The Data correction issue form now asks for the file, the quest or item id, the evidence link and the diagnostic block, and a new IPC request form is there for plugin authors.
