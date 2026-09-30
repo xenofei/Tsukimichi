@@ -39,6 +39,27 @@ public static class Theme
     /// <summary>Dark disc of the unlit glyph states. Now <see cref="Shadow"/>; the name stays so callers compile.</summary>
     public static readonly Vector4 UnlitDisc = Shadow;
 
+    /// <summary>#2C334A – the old unlit disc, kept as the maria, crater and vignette tint of the moons' interior detail only (glyph proposal §3.6).</summary>
+    public static readonly Vector4 Umbra = Rgb(0x2C334A);
+
+    /// <summary>#FFF0BE – the highlight stop of the gold gradient (glyph proposal §3.1); also the terminator glow on gold.</summary>
+    public static readonly Vector4 MoonHigh = Rgb(0xFFF0BE);
+
+    /// <summary>#D6B25A – the deep stop of the gold gradient, at the limb away from the light.</summary>
+    public static readonly Vector4 MoonDeep = Rgb(0xD6B25A);
+
+    /// <summary>#FFFFFF – the highlight stop of the silver gradient.</summary>
+    public static readonly Vector4 SilverHigh = Rgb(0xFFFFFF);
+
+    /// <summary>#B9C2D8 – the deep stop of the silver gradient.</summary>
+    public static readonly Vector4 SilverDeep = Rgb(0xB9C2D8);
+
+    /// <summary>
+    /// Moon dimmed toward Dusk, for the name and count of a completed tree node: still reads as gold, but quieter than
+    /// a Ready row's glyph so finished chapters recede (ui-revamp §2.3, T11).
+    /// </summary>
+    public static readonly Vector4 MoonDim = Vector4.Lerp(Moon, Dusk, 0.35f);
+
     /// <summary>A panel one step above Night (a quarter of the way to Veil), for header cards on the Night background.</summary>
     public static readonly Vector4 NightRaised = Vector4.Lerp(Night, Veil, 0.25f);
 
@@ -54,6 +75,12 @@ public static class Theme
     public static readonly uint ShadowU32 = Pack(Shadow);
     public static readonly uint VeilLineU32 = Pack(VeilLine);
     public static readonly uint UnlitDiscU32 = Pack(UnlitDisc);
+    public static readonly uint UmbraU32 = Pack(Umbra);
+    public static readonly uint MoonHighU32 = Pack(MoonHigh);
+    public static readonly uint MoonDeepU32 = Pack(MoonDeep);
+    public static readonly uint SilverHighU32 = Pack(SilverHigh);
+    public static readonly uint SilverDeepU32 = Pack(SilverDeep);
+    public static readonly uint MoonDimU32 = Pack(MoonDim);
     public static readonly uint NightRaisedU32 = Pack(NightRaised);
 
     /// <summary>Text color for a state badge next to a glyph.</summary>
