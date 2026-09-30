@@ -133,20 +133,21 @@ public static class QuestionableCrossCheck
     }
 
     /// <summary>
-    /// Compares the two answers. <paramref name="theirs"/> is null when Questionable did not answer;
-    /// <paramref name="live"/> is false when the evaluation is a stored character's, which Questionable cannot speak for.
+    /// Compares the two answers. <paramref name="theirs"/> is null when Questionable did not answer (or was not asked);
+    /// <paramref name="live"/> is false when the evaluation is a stored character's, which Questionable cannot speak
+    /// for, so the caller need not ask it.
     /// </summary>
     public static CrossCheckResult Compare(QuestEvaluation? ours, QuestionableAnswer? theirs, bool live = true)
     {
         var state = ours?.State;
-        if (theirs is null)
-        {
-            return new CrossCheckResult(CrossCheckOutcome.Unavailable, null, state);
-        }
-
         if (!live)
         {
             return new CrossCheckResult(CrossCheckOutcome.OtherCharacter, theirs, state);
+        }
+
+        if (theirs is null)
+        {
+            return new CrossCheckResult(CrossCheckOutcome.Unavailable, null, state);
         }
 
         if (ours is null

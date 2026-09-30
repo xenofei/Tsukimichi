@@ -147,9 +147,12 @@ public class QuestionableCrossCheckTests
     public void A_stored_character_is_not_compared()
     {
         var result = QuestionableCrossCheck.Compare(Ready, LockedPrev, live: false);
+        var unasked = QuestionableCrossCheck.Compare(Ready, null, live: false);
 
         Assert.Equal(CrossCheckOutcome.OtherCharacter, result.Outcome);
         Assert.False(result.Disagrees);
+        Assert.Equal(CrossCheckOutcome.OtherCharacter, unasked.Outcome);
+        Assert.Equal("not compared (viewing a stored character)", QuestionableCrossCheck.DiagnosticText(unasked));
     }
 
     [Theory]
