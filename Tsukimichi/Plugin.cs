@@ -375,7 +375,7 @@ public sealed class Plugin : IDalamudPlugin
                 mainWindow.IsOpen = true;
                 mainWindow.BringToFront();
                 MoonlitPane.Reveal(ui, quest);
-            });
+            }, () => Session.Spoilers);
             // Item hover hints and context-menu links (V2-14). The lookup follows the Moonlit catalog reference (rebuilt
             // after an override change) and the quest catalog (set once the build finishes); both are read per use.
             var rewardLookup = new Core.Unique.RewardLookupSource(() => moonlit.Catalog, () => Session.Bundle?.Catalog);
@@ -386,7 +386,7 @@ public sealed class Plugin : IDalamudPlugin
                 mainWindow.IsOpen = true;
                 mainWindow.BringToFront();
                 MoonlitPane.Reveal(ui, quest);
-            }, Log) { Enabled = Settings.ItemContextMenuEnabled };
+            }, Log) { Enabled = Settings.ItemContextMenuEnabled, QuestName = quest => Session.Spoilers.DisplayName(quest) };
             var discovery = new DiscoveryCommands(Session, ClientState, TargetManager, gameLinks);
             command.ListZoneQuests = discovery.Zone;
             command.ListTargetQuests = discovery.Which;

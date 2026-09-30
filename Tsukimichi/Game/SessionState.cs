@@ -47,6 +47,8 @@ public sealed class SessionState
     // revealed one by one this session.
     private SpoilerMask spoilers = SpoilerMask.None;
     private int spoilersVersion = -1;
+    private SpoilerMask liveSpoilers = SpoilerMask.None;
+    private int liveSpoilersVersion = -1;
     private readonly HashSet<uint> revealedNames = [];
 
     public SessionState(SnapshotService snapshots, PluginPaths paths, UniqueRewardsData uniqueRewards, CuratedData curated, IPluginLog? log = null)
@@ -173,6 +175,29 @@ public sealed class SessionState
             }
 
             return spoilers;
+        }
+    }
+
+    /// <summary>
+    /// The logged-in character's shield, for chat notices about that character while another one is viewed; the
+    /// same instance as <see cref="Spoilers"/> when the live character is the one shown.
+    /// </summary>
+    public SpoilerMask LiveSpoilers
+    {
+        get
+        {
+            if (IsLive || LiveContentId is not { } live || Bundle is not { } bundle)
+            {
+                return Spoilers;
+            }
+
+            if (liveSpoilersVersion != Version)
+            {
+                liveSpoilersVersion = Version;
+                liveSpoilers = SpoilerMask.Build(bundle.Catalog, liveStates, SpoilerOptionsFor(live), revealedNames);
+            }
+
+            return liveSpoilers;
         }
     }
 

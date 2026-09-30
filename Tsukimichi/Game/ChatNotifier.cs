@@ -229,7 +229,7 @@ public sealed class ChatNotifier : IDisposable
         var builder = new SeStringBuilder()
             .AddText(prefix)
             .Add(new QuestPayload(quest.RowId))
-            .AddText(quest.Name)
+            .AddText(session.LiveSpoilers.DisplayName(quest))
             .Add(RawPayload.LinkTerminator);
 
         if (suffix.Length > 0)

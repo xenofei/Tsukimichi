@@ -9,6 +9,7 @@ using Dalamud.Interface.Windowing;
 using Dalamud.Plugin;
 using Tsukimichi.Config;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Ui;
 using Tsukimichi.Game;
 using Tsukimichi.GameData;
@@ -18,7 +19,8 @@ namespace Tsukimichi.Ui;
 /// <summary>
 /// Settings (spec §7): poll interval (with the measured cost of a poll under it), display scale sliders
 /// (<see cref="Configuration.UiScale"/>, <see cref="Configuration.IconScale"/>), Reduce motion and the journal
-/// filing, chat notices, the Removed from the game node, the todo overlay (on/off, lock, opacity, sections, reset position), item hints, the Wotsit
+/// filing, chat notices, the Removed from the game node, the spoiler shield (T19: names ahead, how many to reveal,
+/// artwork, the viewed character's override), the todo overlay (on/off, lock, opacity, sections, reset position), item hints, the Wotsit
 /// integration, help (open it, start the tutorial, offer it on first run), the user's Moonlit verdicts with Restore
 /// and a hold-to-confirm Restore all, data deletion with a double confirm, and an About section with the plugin,
 /// reward-data and catalog stamps plus the poll timing. Every change is saved as it happens; sliders save when
@@ -47,7 +49,12 @@ public sealed class ConfigWindow : Window
     private bool pollDirty;
     private bool scaleDirty;
     private bool todoDirty;
+    private bool spoilerAheadDirty;
     private bool openSecondConfirm;
+
+    // Spoilers: the "N names hidden" line, rebuilt once per session version.
+    private int spoilerCountVersion = -1;
+    private string spoilerCountLine = string.Empty;
     private string? toast;
     private DateTime toastUntilUtc;
 
@@ -56,6 +63,7 @@ public sealed class ConfigWindow : Window
     private VerdictRow[] verdictRows = [];
     private int verdictVersion = -1;
     private CatalogBundle? verdictBundle;
+    private int verdictSpoilers;
     private string verdictsHeader = string.Empty;
 
     // Poll timing lines, rebuilt only when another poll completed.
@@ -125,11 +133,12 @@ public sealed class ConfigWindow : Window
 
     public override void OnClose()
     {
-        if (pollDirty || scaleDirty || todoDirty)
+        if (pollDirty || scaleDirty || todoDirty || spoilerAheadDirty)
         {
             pollDirty = false;
             scaleDirty = false;
             todoDirty = false;
+            spoilerAheadDirty = false;
             Save();
         }
     }
@@ -143,6 +152,8 @@ public sealed class ConfigWindow : Window
         DrawNotices();
         ImGui.Spacing();
         DrawJournal();
+        ImGui.Spacing();
+        DrawSpoilers();
         ImGui.Spacing();
         DrawTodoOverlay();
         ImGui.Spacing();
@@ -371,6 +382,137 @@ public sealed class ConfigWindow : Window
         }
 
         ImGui.TextDisabled(Strings.ConfigShowUnlistedHint);
+    }
+
+    /// <summary>
+    /// Spoilers (T19): hide main scenario names ahead of the character, how many quests ahead keep their names (saved
+    /// when the slider is released), hide journal artwork until a quest is in the journal, and an override for the
+    /// character shown. Every change bumps the session so each surface re-reads the mask at once.
+    /// </summary>
+    private void DrawSpoilers()
+    {
+        Header(Strings.SettingsSpoilers);
+        var hideNames = settings.SpoilerHideMsqNames;
+        if (ImGui.Checkbox(Strings.SpoilerHideNames, ref hideNames))
+        {
+            settings.SpoilerHideMsqNames = hideNames;
+            SpoilersChanged();
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.SpoilerHideNamesHelp);
+        }
+
+        using (ImRaii.PushIndent())
+        using (ImRaii.Disabled(!hideNames))
+        {
+            var ahead = Math.Clamp(settings.SpoilerRevealAhead, 0, SpoilerOptions.MaxAhead);
+            ImGui.SetNextItemWidth(160f * ImGuiHelpers.GlobalScale);
+            if (ImGui.SliderInt(Strings.SpoilerAhead, ref ahead, 0, SpoilerOptions.MaxAhead, "%d", ImGuiSliderFlags.AlwaysClamp))
+            {
+                settings.SpoilerRevealAhead = ahead;
+                spoilerAheadDirty = true;
+                session.RefreshSpoilers();
+            }
+
+            if (spoilerAheadDirty && ImGui.IsItemDeactivatedAfterEdit())
+            {
+                spoilerAheadDirty = false;
+                Save();
+            }
+
+            if (ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(Strings.SpoilerAheadHelp);
+            }
+        }
+
+        var hideArtwork = settings.SpoilerHideArtwork;
+        if (ImGui.Checkbox(Strings.SpoilerHideArtwork, ref hideArtwork))
+        {
+            settings.SpoilerHideArtwork = hideArtwork;
+            SpoilersChanged();
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.SpoilerHideArtworkHelp);
+        }
+
+        DrawSpoilerOverride();
+        if (spoilerCountVersion != session.Version)
+        {
+            spoilerCountVersion = session.Version;
+            spoilerCountLine = session.Bundle is null
+                ? string.Empty
+                : string.Format(CultureInfo.CurrentCulture, Strings.SpoilerMaskedCountFormat, session.Spoilers.MaskedCount);
+        }
+
+        if (spoilerCountLine.Length > 0)
+        {
+            ImGui.TextDisabled(spoilerCountLine);
+        }
+    }
+
+    /// <summary>The viewed character's own shield: follow the settings, always shield, or show everything.</summary>
+    private void DrawSpoilerOverride()
+    {
+        if (session.ViewedContentId is not { } contentId)
+        {
+            ImGui.TextDisabled(Strings.SpoilerCharacterNone);
+            return;
+        }
+
+        var name = session.ViewedSnapshot?.Name;
+        ImGui.TextUnformatted(string.IsNullOrEmpty(name) ? Strings.SpoilerCharacterLabel : string.Format(CultureInfo.CurrentCulture, Strings.SpoilerCharacterFormat, name));
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.SpoilerCharacterHelp);
+        }
+
+        var current = settings.SpoilerShieldByCharacter.TryGetValue(contentId, out var shielded) ? (shielded ? 1 : 2) : 0;
+        using var indent = ImRaii.PushIndent();
+        var choice = current;
+        if (ImGui.RadioButton(Strings.SpoilerCharacterDefault, current == 0))
+        {
+            choice = 0;
+        }
+
+        ImGui.SameLine();
+        if (ImGui.RadioButton(Strings.SpoilerCharacterOn, current == 1))
+        {
+            choice = 1;
+        }
+
+        ImGui.SameLine();
+        if (ImGui.RadioButton(Strings.SpoilerCharacterOff, current == 2))
+        {
+            choice = 2;
+        }
+
+        if (choice == current)
+        {
+            return;
+        }
+
+        if (choice == 0)
+        {
+            settings.SpoilerShieldByCharacter.Remove(contentId);
+        }
+        else
+        {
+            settings.SpoilerShieldByCharacter[contentId] = choice == 1;
+        }
+
+        SpoilersChanged();
+    }
+
+    /// <summary>Saves a spoiler setting and makes every surface re-read the mask.</summary>
+    private void SpoilersChanged()
+    {
+        Save();
+        session.RefreshSpoilers();
     }
 
     /// <summary>
@@ -630,18 +772,20 @@ public sealed class ConfigWindow : Window
     private void RefreshVerdictRows(IUniqueOverrides overrides)
     {
         var bundle = session.Bundle;
-        if (overrides.Version == verdictVersion && ReferenceEquals(bundle, verdictBundle))
+        var spoilers = session.Spoilers;
+        if (overrides.Version == verdictVersion && ReferenceEquals(bundle, verdictBundle) && spoilers.Fingerprint == verdictSpoilers)
         {
             return;
         }
 
         verdictVersion = overrides.Version;
         verdictBundle = bundle;
+        verdictSpoilers = spoilers.Fingerprint;
         var all = overrides.All;
         var list = new List<VerdictRow>(all.Count);
         foreach (var (rowId, stored) in all)
         {
-            var name = bundle?.Catalog.GetByRowId(rowId)?.Name ?? Strings.MoonlitQuestPrefix + rowId.ToString(CultureInfo.InvariantCulture);
+            var name = bundle?.Catalog.GetByRowId(rowId) is { } quest ? spoilers.DisplayName(quest) : Strings.MoonlitQuestPrefix + rowId.ToString(CultureInfo.InvariantCulture);
             list.Add(new VerdictRow(
                 rowId,
                 name,

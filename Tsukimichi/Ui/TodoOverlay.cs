@@ -63,7 +63,8 @@ public sealed class TodoOverlay : Window, IDisposable
     private static readonly Vector2 DefaultOffset = new(24f, 96f);
     private static readonly string LockGlyph = FontAwesomeIcon.Lock.ToIconString();
 
-    private readonly record struct Row(QuestRecord Quest, QuestState State, string Hint, string Tooltip);
+    /// <param name="Name">The quest's name as the spoiler shield prints it.</param>
+    private readonly record struct Row(QuestRecord Quest, string Name, QuestState State, string Hint, string Tooltip);
 
     /// <summary><paramref name="HeaderId"/> is the label-less "###" id the collapsing header keeps its open state under; <paramref name="HeaderText"/> is painted over it.</summary>
     private sealed record SectionView(TodoSection Section, string HeaderId, string HeaderText, Row[] Rows);
@@ -334,7 +335,7 @@ public sealed class TodoOverlay : Window, IDisposable
         // map (a game action with no undo), so a slip of the mouse never plants a flag. The selectable reports the
         // first press of a double-click as a click, so the reveal waits one double-click window (FireDueReveal) and
         // the second press cancels it: a double-click flags without opening the main window over the overlay first.
-        var nameWidth = ImGui.CalcTextSize(row.Quest.Name).X;
+        var nameWidth = ImGui.CalcTextSize(row.Name).X;
         if (ImGui.Selectable(RowSelectableId, false, ImGuiSelectableFlags.AllowDoubleClick, new Vector2(nameWidth, 0f)))
         {
             if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
@@ -349,7 +350,7 @@ public sealed class TodoOverlay : Window, IDisposable
             }
         }
 
-        ShadowedTextAt(ImGui.GetItemRectMin(), row.Quest.Name, ImGui.GetColorU32(ImGuiCol.Text));
+        ShadowedTextAt(ImGui.GetItemRectMin(), row.Name, ImGui.GetColorU32(ImGuiCol.Text));
         var hovered = ImGui.IsItemHovered();
         DrawRowMenu(row);
 
@@ -540,7 +541,9 @@ public sealed class TodoOverlay : Window, IDisposable
             settings.TodoShowPins,
             settings.TodoShowNearbyFeature,
             settings.TodoShowMsq,
-            settings.TodoShowJobQuests));
+            settings.TodoShowJobQuests,
+            // The session's names: blocker hints name quests, masked ones by their placeholder (T19).
+            session.Names));
 
         enabledSections = model.EnabledSections;
         if (model.Sections.Count == 0)
@@ -564,7 +567,7 @@ public sealed class TodoOverlay : Window, IDisposable
                 var tooltip = row.Hint.Length > 0
                     ? Strings.StateName(row.State, quest) + Strings.StateReasonSeparator + row.Hint + "\n" + Strings.TodoRowClickHint
                     : Strings.StateName(row.State, quest) + "\n" + Strings.TodoRowClickHint;
-                rows.Add(new Row(quest, row.State, row.Hint, tooltip));
+                rows.Add(new Row(quest, row.Name, row.State, row.Hint, tooltip));
             }
 
             var headerText = string.Format(CultureInfo.CurrentCulture, Strings.TodoSectionFormat, Strings.TodoSectionName(section.Section), rows.Count);

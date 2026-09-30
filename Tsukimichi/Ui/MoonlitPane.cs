@@ -91,6 +91,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     private int storeCount;
     private int rowsBuild = -1;
     private CatalogBundle? rowsBundle;
+    private int rowsSpoilers;
 
     private int obtainedVersion = -1;
     private int obtainedBuild = -1;
@@ -647,7 +648,8 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     private void Refresh()
     {
         EnsureCatalog();
-        if (rowsBuild != catalogBuild || !ReferenceEquals(rowsBundle, session.Bundle))
+        // The quest names are baked into the rows, so a spoiler mask that hides other names rebuilds them (T19).
+        if (rowsBuild != catalogBuild || !ReferenceEquals(rowsBundle, session.Bundle) || rowsSpoilers != session.Spoilers.Fingerprint)
         {
             BuildRows();
         }
@@ -673,6 +675,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     private void BuildRows()
     {
         var bundle = session.Bundle;
+        var spoilers = session.Spoilers;
         var all = catalog.All;
         var hidden = catalog.Hidden;
         var built = new Row[all.Count + hidden.Count];
@@ -680,7 +683,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         {
             var entry = all[i];
             var quest = bundle?.Catalog.GetByRowId(entry.QuestRowId);
-            built[i] = new Row(i, entry, quest, Icons.Resolve(quest, entry), hidden: false);
+            built[i] = new Row(i, entry, quest, Icons.Resolve(quest, entry), hidden: false, spoilers);
         }
 
         // Rows hidden by a "not unique" verdict follow the view so the Yours filter can list them for Restore.
@@ -689,7 +692,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             var i = all.Count + j;
             var entry = hidden[j];
             var quest = bundle?.Catalog.GetByRowId(entry.QuestRowId);
-            built[i] = new Row(i, entry, quest, Icons.Resolve(quest, entry), hidden: true);
+            built[i] = new Row(i, entry, quest, Icons.Resolve(quest, entry), hidden: true, spoilers);
         }
 
         uniqueCount = all.Count;
@@ -705,6 +708,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         rows = built;
         rowsBuild = catalogBuild;
         rowsBundle = bundle;
+        rowsSpoilers = spoilers.Fingerprint;
         obtainedVersion = -1;
     }
 
@@ -928,7 +932,8 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     /// </summary>
     private sealed class Row
     {
-        public Row(int index, UniqueRewardEntry entry, QuestRecord? quest, uint icon, bool hidden)
+        /// <param name="spoilers">The viewed character's shield: a masked quest's name is its placeholder here too.</param>
+        public Row(int index, UniqueRewardEntry entry, QuestRecord? quest, uint icon, bool hidden, SpoilerMask spoilers)
         {
             Index = index;
             Entry = entry;
@@ -939,7 +944,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             Name = string.IsNullOrWhiteSpace(entry.RewardName)
                 ? KindName + " #" + entry.RewardId.ToString(CultureInfo.InvariantCulture)
                 : entry.RewardName;
-            QuestName = quest?.Name ?? Strings.MoonlitQuestPrefix + entry.QuestRowId.ToString(CultureInfo.InvariantCulture);
+            QuestName = quest is null ? Strings.MoonlitQuestPrefix + entry.QuestRowId.ToString(CultureInfo.InvariantCulture) : spoilers.DisplayName(quest);
             QuestLabel = QuestName + "##q";
             ConfidenceLabel = hidden ? Strings.MoonlitConfidenceUser : MoonlitPane.ConfidenceLabel(entry.Confidence);
             ConfidenceColor = hidden ? Theme.Eclipse : MoonlitPane.ConfidenceColor(entry.Confidence);
