@@ -237,9 +237,9 @@ internal sealed class Verifier
         md.AppendLine();
 
         // The source text's ";otherSource=" suffix is provenance only; the structured field is what the plugin reads.
-        var disagree = entries.Count(e => e.Source.Contains(";otherSource=", StringComparison.Ordinal) != e.OtherSources.Any(s => s != OtherSource.OnlineStore));
+        var disagree = entries.Count(e => e.Source.Contains(";otherSource=", StringComparison.Ordinal) != e.OtherSources.Any(s => !OtherSource.IsCurated(s)));
         if (disagree > 0)
-            failures.Add($"structural: {disagree} entries whose source text and otherSources disagree about non-store sources");
+            failures.Add($"structural: {disagree} entries whose source text and otherSources disagree about sheet-derived sources");
     }
 
     /// <summary>
@@ -535,9 +535,16 @@ internal sealed class Verifier
             bombDance.Any(e => e.SoldOnOnlineStore),
             Join(bombDance));
         var store = entries.Where(e => e.SoldOnOnlineStore).ToList();
-        Check("Exactly 68 entries carry OnlineStore (25 Minion, 21 Emote, 11 Mount, 5 Barding, 4 Orchestrion, 2 Ornament)",
-            store.Count == 68,
+        Check("Exactly 69 entries carry OnlineStore (25 Minion, 21 Emote, 11 Mount, 5 Barding, 4 Orchestrion, 2 Ornament, 1 Hairstyle)",
+            store.Count == 69,
             string.Join(", ", store.GroupBy(e => e.Kind).OrderBy(x => x.Key).Select(x => $"{x.Key} {x.Count()}")));
+
+        // curated/other_sources.json (verification-full.md, T2a): the Darklight and Hero's accessories that also drop in
+        // A Realm Reborn dungeons carry DungeonDrop and the duties they drop in.
+        var drops = entries.Where(e => e.DropsInDuty).ToList();
+        Check("Exactly 44 entries carry DungeonDrop (all OptionalItem, each naming its duties)",
+            drops.Count == 44 && drops.All(e => e.Kind == RewardKind.OptionalItem && e.DropWhere.Length > 0),
+            string.Join(", ", drops.GroupBy(e => e.Kind).OrderBy(x => x.Key).Select(x => $"{x.Key} {x.Count()}")) + $"; without duties {drops.Count(e => e.DropWhere.Length == 0)}");
 
         md.AppendLine();
         md.AppendLine("Ye Olde Faux Hollows: skipped (unsure of the expected entry).");

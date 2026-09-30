@@ -364,10 +364,12 @@ public sealed class Plugin : IDalamudPlugin
             var unlockReader = new Game.RewardUnlockReader(Session, DataManager, Framework, Log);
             moonlitPane = new MoonlitPane(Session, TextureProvider, unlockReader, Paths, Log, DataManager, Settings, PluginInterface, gameLinks);
             MoonlitPane moonlit = moonlitPane;
-            // Reward tooltips (table icons, detail rows) say "Store only" for rewards the Online Store also sells.
+            // Reward tooltips (table icons, detail rows) say "Store only" for rewards the Online Store also sells and
+            // "Also drops in …" for rewards a duty also drops.
             gameLinks.IsStoreResell = reward => Session.StoreResells.Contains(reward);
             // Chat links print a masked main scenario quest under its placeholder (T19).
             gameLinks.QuestName = quest => Session.Spoilers.DisplayName(quest);
+            gameLinks.DropWhere = reward => Session.StoreResells.DropWhere(reward);
             wotsit = new Game.WotsitIpc(PluginInterface, Framework, Log);
             wotsit.Enabled = Settings.WotsitIntegration;
             wotsit.Attach(() => Session.Bundle, () => moonlit.Catalog, moonlit.Icons.Resolve, quest =>

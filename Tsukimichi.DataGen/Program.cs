@@ -301,8 +301,10 @@ public static class Program
             "70011 The Crystal from Beyond must not yield DutyUnlock 808 (it only starts the chain; verification-report-2 row 5)");
         Require(entries.Any(e => e is { QuestRowId: 68546, Kind: RewardKind.Mount, RewardId: 99 } && e.SoldOnOnlineStore),
             "68546 Starlight Stakeout's Mount 99 should carry OnlineStore from curated/online_store.json");
-        Require(entries.All(e => e.Source.Contains(";otherSource=", StringComparison.Ordinal) == e.OtherSources.Any(s => s != OtherSource.OnlineStore)),
-            "source text ;otherSource= and the structured otherSources must agree (store aside)");
+        Require(entries.Any(e => e is { QuestRowId: 66711, Kind: RewardKind.OptionalItem, ItemId: 4520 } && e.DropsInDuty && e.DropWhere.Length > 0),
+            "66711 The Price of Principles' Darklight Band of Striking (item 4520) should carry DungeonDrop and its duties from curated/other_sources.json");
+        Require(entries.All(e => e.Source.Contains(";otherSource=", StringComparison.Ordinal) == e.OtherSources.Any(s => !OtherSource.IsCurated(s))),
+            "source text ;otherSource= and the structured otherSources must agree (curated store and drop sources aside)");
 
         var mounts = entries.Count(e => e.Kind == RewardKind.Mount);
         var minions = entries.Count(e => e.Kind == RewardKind.Minion);

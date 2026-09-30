@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "note": "Quest rewards the FFXIV Online Store (Mog Station) also sells, so they are not exclusive to the quest. Keyed by the store item's Item row id; kind and rewardId name the collectible that item unlocks (the game's Mount/Companion/Emote/Orchestrion/BuddyEquip/Ornament row id, which FFXIV Collect shares), so a reward a quest grants directly (an emote with no item) still matches. DataGen marks every unique_quests.json entry delivered as the item or granting the collectible with otherSources OnlineStore; the plugin shows those as store re-sells. Source: FFXIV Collect entries with a quest source and a Premium: Online Store source (docs/data/verification-report-2.md row 8); name is the collectible's name as FFXIV Collect lists it. Strict JSON; keep sorted by item id; every entry needs name, kind, rewardId, evidence and note.",
+  "note": "Quest rewards the FFXIV Online Store (Mog Station) also sells, so they are not exclusive to the quest. Keyed by the store item's Item row id; kind and rewardId name the collectible that item unlocks (the game's Mount/Companion/Emote/Orchestrion/BuddyEquip/Ornament row id or the hairstyle's unlock link, which FFXIV Collect shares), so a reward a quest grants directly (an emote with no item) still matches. DataGen marks every unique_quests.json entry delivered as the item or granting the collectible with otherSources OnlineStore; the plugin shows those as store re-sells. Source: FFXIV Collect entries with a quest source and a Premium: Online Store source (docs/data/verification-report-2.md row 8); name is the collectible's name as FFXIV Collect lists it. Strict JSON; keep sorted by item id; every entry needs name, kind, rewardId, evidence and note.",
   "entries": {
     "6207": {
       "name": "Tender lamb",
@@ -337,6 +337,13 @@
       "rewardId": 84,
       "evidence": "https://ffxivcollect.com/api/bardings/84",
       "note": "Valentione's Day (2022) reward of quest 70002 Love's Labors; FFXIV Collect lists Premium: Online Store"
+    },
+    "36618": {
+      "name": "Clowning Around",
+      "kind": "Hairstyle",
+      "rewardId": 239,
+      "evidence": "https://ffxivcollect.com/api/hairstyles/239",
+      "note": "All Saints' Wake (2021) face paint reward of quest 70056 A Feast to Remember (item Modern Cosmetics - Clowning Around); FFXIV Collect lists Premium: Online Store and the wiki lists an Online Store purchase (https://ffxiv.consolegameswiki.com/wiki/Modern_Cosmetics_-_Clowning_Around); verification-full.md T2a"
     },
     "36857": {
       "name": "Hatching bunny",

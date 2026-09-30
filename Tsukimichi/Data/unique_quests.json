@@ -1,6 +1,6 @@
 {
   "gameVersion": "2026.09.15.0000.0000",
-  "generatedUtc": "2026-09-29T01:32:46Z",
+  "generatedUtc": "2026-09-30T01:46:43Z",
   "entries": [
     {
       "questRowId": 65545,
@@ -3557,7 +3557,12 @@
       "rewardName": "Darklight Band of Striking",
       "confidence": "Static",
       "source": "Quest.OptionalItemReward;untradable",
-      "otherSources": []
+      "otherSources": [
+        "DungeonDrop"
+      ],
+      "otherSourceNotes": {
+        "DungeonDrop": "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)"
+      }
     },
     {
       "questRowId": 66711,
@@ -3567,7 +3572,12 @@
       "rewardName": "Darklight Band of Fending",
       "confidence": "Static",
       "source": "Quest.OptionalItemReward;untradable",
-      "otherSources": []
+      "otherSources": [
+        "DungeonDrop"
+      ],
+      "otherSourceNotes": {
+        "DungeonDrop": "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)"
+      }
     },
     {
       "questRowId": 66711,
@@ -3577,7 +3587,12 @@
       "rewardName": "Darklight Band of Maiming",
       "confidence": "Static",
       "source": "Quest.OptionalItemReward;untradable",
-      "otherSources": []
+      "otherSources": [
+        "DungeonDrop"
+      ],
+      "otherSourceNotes": {
+        "DungeonDrop": "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)"
+      }
     },
     {
       "questRowId": 66725,
@@ -3587,7 +3602,12 @@
       "rewardName": "Darklight Bracelet of Aiming",
       "confidence": "Static",
       "source": "Quest.OptionalItemReward;untradable",
-      "otherSources": []
+      "otherSources": [
+        "DungeonDrop"
+      ],
+      "otherSourceNotes": {
+        "DungeonDrop": "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)"
+      }
     },
     {
       "questRowId": 66725,
@@ -3597,7 +3617,12 @@
       "rewardName": "Darklight Bracelet of Healing",
       "confidence": "Static",
       "source": "Quest.OptionalItemReward;untradable",
-      "otherSources": []
+      "otherSources": [
+        "DungeonDrop"
+      ],
+      "otherSourceNotes": {
+        "DungeonDrop": "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)"
+      }
     },
     {
       "questRowId": 66725,
@@ -3607,7 +3632,12 @@
       "rewardName": "Darklight Bracelet of Casting",
       "confidence": "Static",
       "source": "Quest.OptionalItemReward;untradable",
-      "otherSources": []
+      "otherSources": [
+        "DungeonDrop"
+      ],
+      "otherSourceNotes": {
+        "DungeonDrop": "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)"
+      }
     },
     {
       "questRowId": 66729,
@@ -3871,7 +3901,12 @@
       "rewardName": "Hero's Earrings of Casting",
       "confidence": "Static",
       "source": "Quest.OptionalItemReward;untradable",
-      "otherSources": []
+      "otherSources": [
+        "DungeonDrop"
+      ],
+      "otherSourceNotes": {
+        "DungeonDrop": "Snowcloak, Sastasha (Hard) and The Sunken Temple of Qarn (Hard)"
+      }
     },
     {
       "questRowId": 66882,
@@ -3881,7 +3916,12 @@
       "rewardName": "Hero's Earrings of Healing",
       "confidence": "Static",
       "source": "Quest.OptionalItemReward;untradable",
-      "otherSources": []
+      "otherSources": [
+        "DungeonDrop"
+      ],
+      "otherSourceNotes": {
+        "DungeonDrop": "Snowcloak, Sastasha (Hard) and The Sunken Temple of Qarn (Hard)"
+      }
     },
     {
       "questRowId": 66888,
@@ -3891,7 +3931,12 @@
       "rewardName": "Hero's Necklace of Fending",
       "confidence": "Static",
       "source": "Quest.OptionalItemReward;untradable",
-      "otherSources": []
+      "otherSources": [
+        "DungeonDrop"
+      ],
+      "otherSourceNotes": {
+        "DungeonDrop": "Snowcloak, Sastasha (Hard) and The Sunken Temple of Qarn (Hard)"
+      }
     },
     {
       "questRowId": 66888,
@@ -3901,7 +3946,12 @@
       "rewardName": "Hero's Necklace of Slaying",
       "confidence": "Static",
       "source": "Quest.OptionalItemReward;untradable",
-      "otherSources": []
+      "otherSources": [
+        "DungeonDrop"
+      ],
+      "otherSourceNotes": {
+        "DungeonDrop": "Snowcloak, Sastasha (Hard) and The Sunken Temple of Qarn (Hard)"
+      }
     },
     {
       "questRowId": 66888,
@@ -3911,7 +3961,12 @@
       "rewardName": "Hero's Necklace of Aiming",
       "confidence": "Static",
       "source": "Quest.OptionalItemReward;untradable",
-      "otherSources": []
+      "otherSources": [
+        "DungeonDrop"
+      ],
+      "otherSourceNotes": {
+        "DungeonDrop": "Snowcloak, Sastasha (Hard) and The Sunken Temple of Qarn (Hard)"
+      }
     },
     {
       "questRowId": 66892,
@@ -3921,7 +3976,12 @@
       "rewardName": "Hero's Necklace of Casting",
       "confidence": "Static",
       "source": "Quest.OptionalItemReward;untradable",
-      "otherSources": []
+      "otherSources": [
+        "DungeonDrop"
+      ],
+      "otherSourceNotes": {
+        "DungeonDrop": "Snowcloak, Sastasha (Hard) and The Sunken Temple of Qarn (Hard)"
+      }
     },
     {
       "questRowId": 66892,
@@ -3931,7 +3991,12 @@
       "rewardName": "Hero's Necklace of Healing",
       "confidence": "Static",
       "source": "Quest.OptionalItemReward;untradable",
-      "otherSources": []
+      "otherSources": [
+        "DungeonDrop"
+      ],
+      "otherSourceNotes": {
+        "DungeonDrop": "Snowcloak, Sastasha (Hard) and The Sunken Temple of Qarn (Hard)"
+      }
     },
     {
       "questRowId": 66894,
@@ -3941,7 +4006,12 @@
       "rewardName": "Hero's Bracelet of Fending",
       "confidence": "Static",
       "source": "Quest.OptionalItemReward;untradable",
-      "otherSources": []
+      "otherSources": [
+        "DungeonDrop"
+      ],
+      "otherSourceNotes": {
+        "DungeonDrop": "Snowcloak, Sastasha (Hard) and The Sunken Temple of Qarn (Hard)"
+      }
     },
     {
       "questRowId": 66894,
@@ -3951,7 +4021,12 @@
       "rewardName": "Hero's Bracelet of Slaying",
       "confidence": "Static",
       "source": "Quest.OptionalItemReward;untradable",
-      "otherSources": []
+      "otherSources": [
+        "DungeonDrop"
+      ],
+      "otherSourceNotes": {
+        "DungeonDrop": "Snowcloak, Sastasha (Hard) and The Sunken Temple of Qarn (Hard)"
+      }
     },
     {
       "questRowId": 66894,
@@ -3961,7 +4036,12 @@
       "rewardName": "Hero's Bracelet of Aiming",
       "confidence": "Static",
       "source": "Quest.OptionalItemReward;untradable",
-      "otherSources": []
+      "otherSources": [
+        "DungeonDrop"
+      ],
+      "otherSourceNotes": {
+        "DungeonDrop": "Snowcloak, Sastasha (Hard) and The Sunken Temple of Qarn (Hard)"
+      }
     },
     {
       "questRowId": 66895,
@@ -3971,7 +4051,12 @@
       "rewardName": "Hero's Bracelet of Casting",
       "confidence": "Static",
       "source": "Quest.OptionalItemReward;untradable",
-      "otherSources": []
+      "otherSources": [
+        "DungeonDrop"
+      ],
+      "otherSourceNotes": {
+        "DungeonDrop": "Snowcloak, Sastasha (Hard) and The Sunken Temple of Qarn (Hard)"
+      }
     },
     {
       "questRowId": 66895,
@@ -3981,7 +4066,12 @@
       "rewardName": "Hero's Bracelet of Healing",
       "confidence": "Static",
       "source": "Quest.OptionalItemReward;untradable",
-      "otherSources": []
+      "otherSources": [
+        "DungeonDrop"
+      ],
+      "otherSourceNotes": {
+        "DungeonDrop": "Snowcloak, Sastasha (Hard) and The Sunken Temple of Qarn (Hard)"
+      }
     },
     {
       "questRowId": 66899,
@@ -17807,7 +17897,12 @@
       "rewardName": "Darklight Earrings of Striking",
       "confidence": "Static",
       "source": "Quest.OptionalItemReward;untradable",
-      "otherSources": []
+      "otherSources": [
+        "DungeonDrop"
+      ],
+      "otherSourceNotes": {
+        "DungeonDrop": "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)"
+      }
     },
     {
       "questRowId": 69408,
@@ -17817,7 +17912,12 @@
       "rewardName": "Darklight Earrings of Fending",
       "confidence": "Static",
       "source": "Quest.OptionalItemReward;untradable",
-      "otherSources": []
+      "otherSources": [
+        "DungeonDrop"
+      ],
+      "otherSourceNotes": {
+        "DungeonDrop": "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)"
+      }
     },
     {
       "questRowId": 69408,
@@ -17827,7 +17927,12 @@
       "rewardName": "Darklight Earrings of Maiming",
       "confidence": "Static",
       "source": "Quest.OptionalItemReward;untradable",
-      "otherSources": []
+      "otherSources": [
+        "DungeonDrop"
+      ],
+      "otherSourceNotes": {
+        "DungeonDrop": "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)"
+      }
     },
     {
       "questRowId": 69409,
@@ -17837,7 +17942,12 @@
       "rewardName": "Darklight Earrings of Aiming",
       "confidence": "Static",
       "source": "Quest.OptionalItemReward;untradable",
-      "otherSources": []
+      "otherSources": [
+        "DungeonDrop"
+      ],
+      "otherSourceNotes": {
+        "DungeonDrop": "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)"
+      }
     },
     {
       "questRowId": 69409,
@@ -17847,7 +17957,12 @@
       "rewardName": "Darklight Earrings of Healing",
       "confidence": "Static",
       "source": "Quest.OptionalItemReward;untradable",
-      "otherSources": []
+      "otherSources": [
+        "DungeonDrop"
+      ],
+      "otherSourceNotes": {
+        "DungeonDrop": "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)"
+      }
     },
     {
       "questRowId": 69409,
@@ -17857,7 +17972,12 @@
       "rewardName": "Darklight Earrings of Casting",
       "confidence": "Static",
       "source": "Quest.OptionalItemReward;untradable",
-      "otherSources": []
+      "otherSources": [
+        "DungeonDrop"
+      ],
+      "otherSourceNotes": {
+        "DungeonDrop": "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)"
+      }
     },
     {
       "questRowId": 69410,
@@ -17867,7 +17987,12 @@
       "rewardName": "Darklight Band of Aiming",
       "confidence": "Static",
       "source": "Quest.OptionalItemReward;untradable",
-      "otherSources": []
+      "otherSources": [
+        "DungeonDrop"
+      ],
+      "otherSourceNotes": {
+        "DungeonDrop": "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)"
+      }
     },
     {
       "questRowId": 69410,
@@ -17877,7 +18002,12 @@
       "rewardName": "Darklight Band of Healing",
       "confidence": "Static",
       "source": "Quest.OptionalItemReward;untradable",
-      "otherSources": []
+      "otherSources": [
+        "DungeonDrop"
+      ],
+      "otherSourceNotes": {
+        "DungeonDrop": "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)"
+      }
     },
     {
       "questRowId": 69410,
@@ -17887,7 +18017,12 @@
       "rewardName": "Darklight Band of Casting",
       "confidence": "Static",
       "source": "Quest.OptionalItemReward;untradable",
-      "otherSources": []
+      "otherSources": [
+        "DungeonDrop"
+      ],
+      "otherSourceNotes": {
+        "DungeonDrop": "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)"
+      }
     },
     {
       "questRowId": 69411,
@@ -17897,7 +18032,12 @@
       "rewardName": "Darklight Choker of Striking",
       "confidence": "Static",
       "source": "Quest.OptionalItemReward;untradable",
-      "otherSources": []
+      "otherSources": [
+        "DungeonDrop"
+      ],
+      "otherSourceNotes": {
+        "DungeonDrop": "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)"
+      }
     },
     {
       "questRowId": 69411,
@@ -17907,7 +18047,12 @@
       "rewardName": "Darklight Choker of Fending",
       "confidence": "Static",
       "source": "Quest.OptionalItemReward;untradable",
-      "otherSources": []
+      "otherSources": [
+        "DungeonDrop"
+      ],
+      "otherSourceNotes": {
+        "DungeonDrop": "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)"
+      }
     },
     {
       "questRowId": 69411,
@@ -17917,7 +18062,12 @@
       "rewardName": "Darklight Choker of Maiming",
       "confidence": "Static",
       "source": "Quest.OptionalItemReward;untradable",
-      "otherSources": []
+      "otherSources": [
+        "DungeonDrop"
+      ],
+      "otherSourceNotes": {
+        "DungeonDrop": "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)"
+      }
     },
     {
       "questRowId": 69412,
@@ -17927,7 +18077,12 @@
       "rewardName": "Darklight Choker of Aiming",
       "confidence": "Static",
       "source": "Quest.OptionalItemReward;untradable",
-      "otherSources": []
+      "otherSources": [
+        "DungeonDrop"
+      ],
+      "otherSourceNotes": {
+        "DungeonDrop": "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)"
+      }
     },
     {
       "questRowId": 69412,
@@ -17937,7 +18092,12 @@
       "rewardName": "Darklight Choker of Healing",
       "confidence": "Static",
       "source": "Quest.OptionalItemReward;untradable",
-      "otherSources": []
+      "otherSources": [
+        "DungeonDrop"
+      ],
+      "otherSourceNotes": {
+        "DungeonDrop": "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)"
+      }
     },
     {
       "questRowId": 69412,
@@ -17947,7 +18107,12 @@
       "rewardName": "Darklight Choker of Casting",
       "confidence": "Static",
       "source": "Quest.OptionalItemReward;untradable",
-      "otherSources": []
+      "otherSources": [
+        "DungeonDrop"
+      ],
+      "otherSourceNotes": {
+        "DungeonDrop": "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)"
+      }
     },
     {
       "questRowId": 69413,
@@ -17957,7 +18122,12 @@
       "rewardName": "Darklight Bracelet of Striking",
       "confidence": "Static",
       "source": "Quest.OptionalItemReward;untradable",
-      "otherSources": []
+      "otherSources": [
+        "DungeonDrop"
+      ],
+      "otherSourceNotes": {
+        "DungeonDrop": "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)"
+      }
     },
     {
       "questRowId": 69413,
@@ -17967,7 +18137,12 @@
       "rewardName": "Darklight Bracelet of Fending",
       "confidence": "Static",
       "source": "Quest.OptionalItemReward;untradable",
-      "otherSources": []
+      "otherSources": [
+        "DungeonDrop"
+      ],
+      "otherSourceNotes": {
+        "DungeonDrop": "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)"
+      }
     },
     {
       "questRowId": 69413,
@@ -17977,7 +18152,12 @@
       "rewardName": "Darklight Bracelet of Maiming",
       "confidence": "Static",
       "source": "Quest.OptionalItemReward;untradable",
-      "otherSources": []
+      "otherSources": [
+        "DungeonDrop"
+      ],
+      "otherSourceNotes": {
+        "DungeonDrop": "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)"
+      }
     },
     {
       "questRowId": 69413,
@@ -18007,7 +18187,12 @@
       "rewardName": "Hero's Earrings of Fending",
       "confidence": "Static",
       "source": "Quest.OptionalItemReward;untradable",
-      "otherSources": []
+      "otherSources": [
+        "DungeonDrop"
+      ],
+      "otherSourceNotes": {
+        "DungeonDrop": "Snowcloak, Sastasha (Hard) and The Sunken Temple of Qarn (Hard)"
+      }
     },
     {
       "questRowId": 69415,
@@ -18017,7 +18202,12 @@
       "rewardName": "Hero's Earrings of Slaying",
       "confidence": "Static",
       "source": "Quest.OptionalItemReward;untradable",
-      "otherSources": []
+      "otherSources": [
+        "DungeonDrop"
+      ],
+      "otherSourceNotes": {
+        "DungeonDrop": "Snowcloak, Sastasha (Hard) and The Sunken Temple of Qarn (Hard)"
+      }
     },
     {
       "questRowId": 69415,
@@ -18027,7 +18217,12 @@
       "rewardName": "Hero's Earrings of Aiming",
       "confidence": "Static",
       "source": "Quest.OptionalItemReward;untradable",
-      "otherSources": []
+      "otherSources": [
+        "DungeonDrop"
+      ],
+      "otherSourceNotes": {
+        "DungeonDrop": "Snowcloak, Sastasha (Hard) and The Sunken Temple of Qarn (Hard)"
+      }
     },
     {
       "questRowId": 69415,
@@ -18047,7 +18242,12 @@
       "rewardName": "Hero's Ring of Fending",
       "confidence": "Static",
       "source": "Quest.OptionalItemReward;untradable",
-      "otherSources": []
+      "otherSources": [
+        "DungeonDrop"
+      ],
+      "otherSourceNotes": {
+        "DungeonDrop": "Snowcloak, Sastasha (Hard) and The Sunken Temple of Qarn (Hard)"
+      }
     },
     {
       "questRowId": 69416,
@@ -18057,7 +18257,12 @@
       "rewardName": "Hero's Ring of Slaying",
       "confidence": "Static",
       "source": "Quest.OptionalItemReward;untradable",
-      "otherSources": []
+      "otherSources": [
+        "DungeonDrop"
+      ],
+      "otherSourceNotes": {
+        "DungeonDrop": "Snowcloak, Sastasha (Hard) and The Sunken Temple of Qarn (Hard)"
+      }
     },
     {
       "questRowId": 69416,
@@ -18067,7 +18272,12 @@
       "rewardName": "Hero's Ring of Aiming",
       "confidence": "Static",
       "source": "Quest.OptionalItemReward;untradable",
-      "otherSources": []
+      "otherSources": [
+        "DungeonDrop"
+      ],
+      "otherSourceNotes": {
+        "DungeonDrop": "Snowcloak, Sastasha (Hard) and The Sunken Temple of Qarn (Hard)"
+      }
     },
     {
       "questRowId": 69417,
@@ -18077,7 +18287,12 @@
       "rewardName": "Hero's Ring of Casting",
       "confidence": "Static",
       "source": "Quest.OptionalItemReward;untradable",
-      "otherSources": []
+      "otherSources": [
+        "DungeonDrop"
+      ],
+      "otherSourceNotes": {
+        "DungeonDrop": "Snowcloak, Sastasha (Hard) and The Sunken Temple of Qarn (Hard)"
+      }
     },
     {
       "questRowId": 69417,
@@ -18087,7 +18302,12 @@
       "rewardName": "Hero's Ring of Healing",
       "confidence": "Static",
       "source": "Quest.OptionalItemReward;untradable",
-      "otherSources": []
+      "otherSources": [
+        "DungeonDrop"
+      ],
+      "otherSourceNotes": {
+        "DungeonDrop": "Snowcloak, Sastasha (Hard) and The Sunken Temple of Qarn (Hard)"
+      }
     },
     {
       "questRowId": 69425,
@@ -23819,7 +24039,9 @@
       "rewardName": "Modern Cosmetics - Clowning Around",
       "confidence": "Static",
       "source": "Quest.Reward;ItemAction=2633;unlockLink=239",
-      "otherSources": []
+      "otherSources": [
+        "OnlineStore"
+      ]
     },
     {
       "questRowId": 70056,

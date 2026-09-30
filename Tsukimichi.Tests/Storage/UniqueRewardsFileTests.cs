@@ -64,6 +64,52 @@ public sealed class UniqueRewardsFileTests : IDisposable
     }
 
     [Fact]
+    public void Other_source_notes_compare_by_value_and_carry_the_drop_duties()
+    {
+        var plain = new UniqueRewardEntry(66711, RewardKind.OptionalItem, 4520, 4520, "Darklight Band of Striking", Confidence.Static, "s");
+        var drop = plain.WithOtherSource(OtherSource.DungeonDrop, "The Lost City of Amdapor");
+
+        Assert.Equal([OtherSource.DungeonDrop], drop.OtherSources);
+        Assert.True(drop.DropsInDuty);
+        Assert.False(plain.DropsInDuty);
+        Assert.Equal("The Lost City of Amdapor", drop.DropWhere);
+        Assert.Equal(string.Empty, plain.DropWhere);
+        Assert.Equal(string.Empty, drop.OtherSourceNote(OtherSource.OnlineStore));
+        Assert.Same(drop, drop.WithOtherSource(OtherSource.DungeonDrop, "The Lost City of Amdapor"));
+        Assert.Same(drop, drop.WithOtherSource(OtherSource.DungeonDrop));
+        Assert.Equal(drop, plain.WithOtherSource(OtherSource.DungeonDrop, "The Lost City of Amdapor"));
+        Assert.NotEqual(drop, plain.WithOtherSource(OtherSource.DungeonDrop, "Snowcloak"));
+        Assert.NotEqual(drop, plain.WithOtherSource(OtherSource.DungeonDrop));
+        Assert.Equal("Snowcloak", drop.WithOtherSource(OtherSource.DungeonDrop, "Snowcloak").DropWhere);
+        Assert.Equal([OtherSource.DungeonDrop], drop.WithOtherSource(OtherSource.DungeonDrop, "Snowcloak").OtherSources);
+        Assert.True(OtherSource.IsCurated(OtherSource.DungeonDrop));
+        Assert.True(OtherSource.IsCurated(OtherSource.OnlineStore));
+        Assert.False(OtherSource.IsCurated(OtherSource.Tradable));
+    }
+
+    [Fact]
+    public void Other_source_notes_round_trip_and_are_omitted_when_empty_or_absent()
+    {
+        var path = tmp.File("unique_quests.json");
+        var drop = new UniqueRewardEntry(66711, RewardKind.OptionalItem, 4520, 4520, "Darklight Band of Striking", Confidence.Static, "s")
+            .WithOtherSource(OtherSource.DungeonDrop, "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)");
+        var data = Sample() with { Entries = [.. Sample().Entries, drop] };
+
+        UniqueRewardsFile.Write(path, data);
+        var json = JsonNode.Parse(File.ReadAllText(path))!.AsObject();
+        var loaded = UniqueRewardsFile.Load(path);
+
+        Assert.Null(json["entries"]![0]!["otherSourceNotes"]);
+        Assert.Null(json["entries"]![1]!["otherSourceNotes"]);
+        var notes = json["entries"]![2]!["otherSourceNotes"]!.AsObject();
+        Assert.Equal("DungeonDrop", Assert.Single(notes).Key);
+        Assert.Equal("The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)", (string?)notes["DungeonDrop"]);
+        Assert.Equal(data.Entries, loaded.Entries);
+        Assert.Equal("The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)", loaded.Entries[2].DropWhere);
+        Assert.Empty(loaded.Entries[0].OtherSourceNotes);
+    }
+
+    [Fact]
     public void Write_then_Load_round_trips()
     {
         var path = tmp.File("unique_quests.json");

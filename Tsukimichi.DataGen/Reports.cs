@@ -20,7 +20,7 @@ internal static class Reports
         var questCount = entries.Select(e => e.QuestRowId).Distinct().Count();
         var flagged = entries.Count(e => e.OtherSources.Count > 0);
         sb.AppendLine($"- Entries: **{entries.Count}** across **{questCount}** quests.");
-        sb.AppendLine($"- Entries whose reward is also obtainable elsewhere (`otherSources` non-empty): **{flagged}**. They keep confidence Static in V1; the UI shows the source and marks Online Store re-sells.");
+        sb.AppendLine($"- Entries whose reward is also obtainable elsewhere (`otherSources` non-empty): **{flagged}**. They keep confidence Static in V1; the UI shows the source and marks Online Store re-sells and dungeon drops.");
         foreach (var grp in entries.SelectMany(e => e.OtherSources).GroupBy(s => s).OrderByDescending(x => x.Count()).ThenBy(x => x.Key, StringComparer.Ordinal))
             sb.AppendLine($"  - `{grp.Key}`: {grp.Count()}");
         sb.AppendLine($"- Plain item rewards refused by the exclusivity rule ({(gen.StrictItemExclusivity ? "strict" : "legacy, --keep-nonexclusive-items")}): **{gen.Dropped.Count}** (listed at the end).");

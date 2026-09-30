@@ -71,7 +71,7 @@ Entries: **3464** across **1173** quests. Problems found: **0**.
 | Kind | Static | Community | Curated | UserOverride | Total | With `otherSources` |
 |---|---:|---:|---:|---:|---:|---:|
 | Item | 165 | 0 | 0 | 0 | 165 | 127 |
-| OptionalItem | 53 | 0 | 0 | 0 | 53 | 9 |
+| OptionalItem | 53 | 0 | 0 | 0 | 53 | 53 |
 | Emote | 56 | 0 | 0 | 0 | 56 | 21 |
 | Action | 250 | 0 | 0 | 0 | 250 | 0 |
 | GeneralAction | 12 | 0 | 0 | 0 | 12 | 0 |
@@ -84,7 +84,7 @@ Entries: **3464** across **1173** quests. Problems found: **0**.
 | TripleTriadCard | 6 | 0 | 0 | 0 | 6 | 1 |
 | Ornament | 4 | 0 | 0 | 0 | 4 | 2 |
 | Barding | 6 | 0 | 0 | 0 | 6 | 5 |
-| Hairstyle | 1 | 0 | 0 | 0 | 1 | 0 |
+| Hairstyle | 1 | 0 | 0 | 0 | 1 | 1 |
 | AetherCurrent | 151 | 0 | 0 | 0 | 151 | 0 |
 | BlueMageSpell | 16 | 0 | 0 | 0 | 16 | 0 |
 | Trait | 54 | 0 | 0 | 0 | 54 | 0 |
@@ -92,13 +92,14 @@ Entries: **3464** across **1173** quests. Problems found: **0**.
 | Title | 220 | 0 | 0 | 0 | 220 | 0 |
 | DutyUnlock | 135 | 0 | 39 | 0 | 174 | 0 |
 | SystemUnlock | 0 | 0 | 65 | 0 | 65 | 0 |
-| **Total** | 3360 | 0 | 104 | 0 | 3464 | 868 |
+| **Total** | 3360 | 0 | 104 | 0 | 3464 | 913 |
 
 ### `otherSources` breakdown
 
 | Kind | otherSources | Entries |
 |---|---|---:|
 | Item | GilShopItem | 127 |
+| OptionalItem | DungeonDrop | 44 |
 | OptionalItem | GilShopItem | 9 |
 | Emote | OnlineStore | 21 |
 | ArtifactGear | Tradable,Marketable,SpecialShop,GatheringItem | 468 |
@@ -115,6 +116,7 @@ Entries: **3464** across **1173** quests. Problems found: **0**.
 | Ornament | OnlineStore | 2 |
 | Barding | OnlineStore | 3 |
 | Barding | Tradable,Marketable,OnlineStore | 2 |
+| Hairstyle | OnlineStore | 1 |
 
 ## 2. Icon checks
 
@@ -226,11 +228,14 @@ Banner dimensions for well-known quests (the journal banner is a wide image, 376
 | The Crystal from Beyond (70011) has no DutyUnlock 808 | pass | (none) |
 | Starlight Stakeout (68546) -> Mount 99 Starlight bear carries OnlineStore | pass | Mount 99 'Starlight bear' item 21050 [Static] otherSources=OnlineStore |
 | Remember Me This Moonfire Faire (67079) -> Emote 109 Bomb Dance (no item) carries OnlineStore | pass | Emote 109 'Bomb Dance' item 0 [Static] |
-| Exactly 68 entries carry OnlineStore (25 Minion, 21 Emote, 11 Mount, 5 Barding, 4 Orchestrion, 2 Ornament) | pass | Emote 21, Mount 11, Minion 25, Orchestrion 4, Ornament 2, Barding 5 |
+| Exactly 69 entries carry OnlineStore (25 Minion, 21 Emote, 11 Mount, 5 Barding, 4 Orchestrion, 2 Ornament, 1 Hairstyle) | pass | Emote 21, Mount 11, Minion 25, Orchestrion 4, Ornament 2, Barding 5, Hairstyle 1 |
+| Exactly 44 entries carry DungeonDrop (all OptionalItem, each naming its duties) | pass | OptionalItem 44; without duties 0 |
 
 Ye Olde Faux Hollows: skipped (unsure of the expected entry).
 
 ## 4. Semantic spot checks (xivapi v2)
+
+_Carried over unchanged from the previous online run: this regeneration (0.7.0 curated other sources) ran with `-NoXivApi`, and none of the fields checked here changed._
 
 Sample: **64** entries (seed 20260927, up to 3 per kind then filled at random), **197** checks, **0** failed. xivapi version `541c0c12e07da325`, 21 requests, 0 request errors.
 

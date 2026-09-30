@@ -100,7 +100,14 @@ internal sealed class UniqueRewardGenerator
     /// the second match catches rewards a quest grants directly, such as an emote with no item. Returns how many
     /// entries were marked.
     /// </summary>
-    public int MarkOtherSource(uint itemId, RewardKind kind, uint rewardId, string name)
+    public int MarkOtherSource(uint itemId, RewardKind kind, uint rewardId, string name) => MarkOtherSource(itemId, kind, rewardId, name, null);
+
+    /// <summary>
+    /// <see cref="MarkOtherSource(uint, RewardKind, uint, string)"/> that also stores <paramref name="note"/> (when not
+    /// blank) under <paramref name="name"/> in <see cref="UniqueRewardEntry.OtherSourceNotes"/>, such as the duties a
+    /// dungeon drop comes from. Pass <paramref name="rewardId"/> 0 to match by item only.
+    /// </summary>
+    public int MarkOtherSource(uint itemId, RewardKind kind, uint rewardId, string name, string? note)
     {
         var marked = 0;
         foreach (var key in entries.Keys.ToList())
@@ -110,7 +117,7 @@ internal sealed class UniqueRewardGenerator
             var byReward = rewardId != 0 && entry.Kind == kind && entry.RewardId == rewardId;
             if (!byItem && !byReward)
                 continue;
-            entries[key] = entry.WithOtherSource(name);
+            entries[key] = entry.WithOtherSource(name, note);
             marked++;
         }
         return marked;

@@ -57,8 +57,26 @@ static partial class Strings
     public const string MoonlitStoreOnlyTooltip = "Also sold on the FFXIV Online Store; not exclusive to the quest";
     /// <summary>The same as the second line of the reward tooltip, after "Store only": composed once, since the tooltip draws every hovered frame.</summary>
     public const string MoonlitStoreOnlyTooltipLine = "· " + MoonlitStoreOnlyTooltip;
-    public const string MoonlitHideStoreResellsLabel = "Hide store re-sells";
-    public const string MoonlitHideStoreResellsTooltip = "Leave out rewards the FFXIV Online Store also sells; the obtained/total counts leave them out too while this is on";
+
+    // Rewards a duty also drops (curated/other_sources.json; entry OtherSources carries DungeonDrop, OtherSourceNotes the duties)
+    public const string MoonlitAlsoDrops = "Also drops";
+    private const string AlsoDropsInPrefix = "Also drops in ";
+    private const string AlsoDropsInADuty = "Also drops in a duty";
+    private const string NotExclusiveSuffix = "; not exclusive to the quest";
+
+    /// <summary>
+    /// "Also drops in Snowcloak, …": the line the reward tooltip and the item hover hint show for a reward a duty also
+    /// drops; <paramref name="where"/> empty (the data names no duty) reads "Also drops in a duty".
+    /// </summary>
+    public static string AlsoDropsLine(string? where) =>
+        string.IsNullOrWhiteSpace(where) ? AlsoDropsInADuty : AlsoDropsInPrefix + where;
+
+    /// <summary>The "Also drops" mark's tooltip: <see cref="AlsoDropsLine"/> plus "; not exclusive to the quest".</summary>
+    public static string MoonlitAlsoDropsTooltip(string? where) => AlsoDropsLine(where) + NotExclusiveSuffix;
+
+    // One toggle hides both (the persisted setting keeps its 0.6.0 name, MoonlitHideStoreResells)
+    public const string MoonlitHideStoreResellsLabel = "Hide rewards found elsewhere";
+    public const string MoonlitHideStoreResellsTooltip = "Leave out rewards the FFXIV Online Store also sells or a duty also drops; the obtained/total counts leave them out too while this is on";
 
     // Confidence filter next to "Hide obtained"
     public const string MoonlitConfidenceFilterTooltip = "Show only rows with this confidence, or only rows whose obtained state the plugin cannot read";

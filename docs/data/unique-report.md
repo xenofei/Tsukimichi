@@ -3,13 +3,14 @@
 Generated from game version `2026.09.15.0000.0000` by Tsukimichi.DataGen (see docs/data/DATA-VERSION.md for when).
 
 - Entries: **3464** across **1173** quests.
-- Entries whose reward is also obtainable elsewhere (`otherSources` non-empty): **868**. They keep confidence Static in V1; the UI shows the source and marks Online Store re-sells.
+- Entries whose reward is also obtainable elsewhere (`otherSources` non-empty): **913**. They keep confidence Static in V1; the UI shows the source and marks Online Store re-sells and dungeon drops.
   - `SpecialShop`: 605
   - `Tradable`: 555
   - `Marketable`: 495
   - `GatheringItem`: 468
   - `GilShopItem`: 136
-  - `OnlineStore`: 68
+  - `OnlineStore`: 69
+  - `DungeonDrop`: 44
   - `Recipe`: 22
 - Plain item rewards refused by the exclusivity rule (strict): **713** (listed at the end).
 

@@ -311,6 +311,57 @@ public sealed class CuratedDataTests : IDisposable
     }
 
     [Fact]
+    public void Other_sources_parse_source_where_note_and_evidence_by_item_id()
+    {
+        WriteCurated("other_sources.json",
+            """
+            {
+              "schema": 1,
+              "note": "dungeon drops",
+              "entries": {
+                "4520": { "name": "Darklight Band of Striking", "source": "DungeonDrop", "where": "The Lost City of Amdapor", "evidence": "https://na.finalfantasyxiv.com/lodestone/playguide/db/item/1a08ceb6404/", "note": "quest 66711" },
+                "$comment": { "note": "skipped silently" }
+              }
+            }
+            """);
+
+        var data = CuratedData.Load(tmp.File("curated"));
+
+        Assert.Empty(data.Warnings);
+        var (itemId, item) = Assert.Single(data.OtherSources);
+        Assert.Equal(4520u, itemId);
+        Assert.Equal(new OtherSourceItem("Darklight Band of Striking", OtherSource.DungeonDrop, "The Lost City of Amdapor", "https://na.finalfantasyxiv.com/lodestone/playguide/db/item/1a08ceb6404/", "quest 66711"), item);
+    }
+
+    [Fact]
+    public void Other_sources_require_a_known_source_where_note_and_evidence()
+    {
+        WriteCurated("other_sources.json",
+            """
+            {
+              "schema": 1,
+              "entries": {
+                "1": { "name": "Good", "source": "DungeonDrop", "where": "Snowcloak", "evidence": "https://x", "note": "n" },
+                "abc": { "name": "Bad key", "source": "DungeonDrop", "where": "Snowcloak", "evidence": "https://x", "note": "n" },
+                "0": { "name": "Zero", "source": "DungeonDrop", "where": "Snowcloak", "evidence": "https://x", "note": "n" },
+                "2": { "source": "DungeonDrop", "where": "Snowcloak", "evidence": "https://x", "note": "n" },
+                "3": { "name": "Store", "source": "OnlineStore", "where": "Mog Station", "evidence": "https://x", "note": "n" },
+                "4": { "name": "No where", "source": "DungeonDrop", "evidence": "https://x", "note": "n" },
+                "5": { "name": "No evidence", "source": "DungeonDrop", "where": "Snowcloak", "note": "n" },
+                "6": { "name": "No note", "source": "DungeonDrop", "where": "Snowcloak", "evidence": "https://x" },
+                "7": "not an object"
+              }
+            }
+            """);
+
+        var data = CuratedData.Load(tmp.File("curated"));
+
+        Assert.Equal([1u], data.OtherSources.Keys);
+        Assert.Equal(8, data.Warnings.Count);
+        Assert.All(data.Warnings, w => Assert.StartsWith("other_sources.json", w));
+    }
+
+    [Fact]
     public void Curated_files_are_parsed_strictly_so_comments_and_trailing_commas_are_errors()
     {
         WriteCurated("feature_quests.json", "[ 66038, 66039, ]");
@@ -348,6 +399,7 @@ public sealed class CuratedDataTests : IDisposable
         Assert.NotEmpty(data.DutyUnlocks);
         Assert.NotEmpty(data.Chains);
         Assert.NotEmpty(data.OnlineStore);
+        Assert.NotEmpty(data.OtherSources);
         Assert.Empty(data.Festivals);
     }
 
