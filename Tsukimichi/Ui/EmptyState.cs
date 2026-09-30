@@ -149,7 +149,8 @@ public static class EmptyState
 
     /// <summary>
     /// Clears the filter the empty-result guard named <paramref name="name"/> (<see cref="EmptyReason.Filters"/>, the
-    /// <see cref="FilterNames"/> labels); true when something changed. The search chip clears the search text.
+    /// <see cref="FilterNames"/> labels); true when something changed. The search chip clears the search text; the
+    /// "Include removed" and "Include other paths" chips turn their toggle on.
     /// </summary>
     public static bool ClearFilter(UiState ui, string name)
     {
@@ -190,8 +191,12 @@ public static class EmptyState
             case FilterNames.SeasonalActive:
                 f.SeasonalActiveOnly = false;
                 return true;
+            // The two widening toggles are named while off; their chip turns them on.
             case FilterNames.IncludeUnlisted:
-                f.IncludeUnlisted = false;
+                f.IncludeUnlisted = true;
+                return true;
+            case FilterNames.IncludeOtherPaths:
+                f.IncludeOtherPaths = true;
                 return true;
             case FilterNames.Pinned:
                 f.PinnedOnly = false;

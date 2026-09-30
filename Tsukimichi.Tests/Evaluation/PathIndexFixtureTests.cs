@@ -34,6 +34,13 @@ public sealed class PathIndexFixtureTests(FixtureCatalog fixture, ITestOutputHel
     private const uint MyLittleChocoboMaelstrom = 66237;
     private const uint ReturnFromTheVoid = 70134;
     private const uint SeventhUmbralEra = 1;
+    private const uint WeMustRebuild = 66131;
+    private const uint NothingToSeeHere = 66207;
+    private const uint UnderneathTheSultantree = 66086;
+    private const uint CallOfTheWildTwinAdder = 67001;
+    private const uint CallOfTheWildMaelstrom = 67002;
+    private const uint CallOfTheWildImmortalFlames = 67003;
+    private const byte Lancer = 4;
 
     private QuestCatalog Catalog => fixture.Bundle.Catalog;
 
@@ -223,5 +230,103 @@ public sealed class PathIndexFixtureTests(FixtureCatalog fixture, ITestOutputHel
         Assert.False(states[CloseToHomeArcher].IsSpareAlternative);
         Assert.True(states[CloseToHomeLancer].IsSpareAlternative);
         Assert.EndsWith("Choose one of 3", BlockerText.StatusText(states[CloseToHomeArcher], Catalog.ByRowId[CloseToHomeArcher], fixture.Bundle.BlockerNames(), states));
+    }
+
+    private string LabelOf(PathKind kind, PathChoice choice, bool chosen)
+    {
+        var group = Index.Groups.Single(g => g.Kind == kind);
+        var option = chosen ? choice.Chosen[group.Id] : choice.Presumed[group.Id];
+        return option < 0 ? "-" : group.Options[option].Label;
+    }
+
+    [Fact]
+    public void Quests_done_on_a_city_s_line_decide_the_city_without_its_first_quest()
+    {
+        // An old Ul'dah Gladiator whose "Coming to Ul'dah" bit is not set: its "Close to Home", two Ul'dah main
+        // scenario quests and "Way of the Gladiator" are done. They agree on Ul'dah, so the city is decided.
+        var snapshot = Snapshot(CloseToHomeGladiator, WeMustRebuild, NothingToSeeHere, WayOfTheGladiator) with { JobLevels = Levels((Gladiator, 5)) };
+        var states = StateResolver.ResolveAll(Catalog, snapshot, Context);
+        var choice = Index.Resolve(snapshot);
+
+        Assert.Equal("Ul'dah", LabelOf(PathKind.StartCity, choice, chosen: true));
+        Assert.Equal("Gladiator", LabelOf(PathKind.StartClass, choice, chosen: true));
+        Assert.Equal(QuestState.Ready, states[UnderneathTheSultantree].State);
+        Assert.False(states[UnderneathTheSultantree].LeavesTotals);
+        Assert.False(states[ComingToUldah].IsSpareAlternative);
+        Assert.NotEqual(QuestState.Ready, states[ComingToGridania].State);
+        Assert.True(states[ComingToGridania].IsOtherPath);
+        Assert.Equal(UnderneathTheSultantree, MsqProgress.Compute(Catalog, states)!.Next!.RowId);
+    }
+
+    [Fact]
+    public void A_new_character_s_class_is_guessed_before_the_city_and_picks_the_city()
+    {
+        // A Gladiator with nothing in the journal: the class it plays presumes Gladiator, and Gladiator presumes Ul'dah.
+        var snapshot = Snapshot() with { JobLevels = Levels((Gladiator, 1)) };
+        var states = StateResolver.ResolveAll(Catalog, snapshot, Context);
+        var choice = Index.Resolve(snapshot);
+
+        Assert.Equal("Gladiator", LabelOf(PathKind.StartClass, choice, chosen: false));
+        Assert.Equal("Ul'dah", LabelOf(PathKind.StartCity, choice, chosen: false));
+        Assert.False(states[ComingToUldah].IsSpareAlternative);
+        Assert.True(states[ComingToGridania].IsSpareAlternative);
+        Assert.Equal(3, states[ComingToUldah].ChoiceOf);
+        Assert.False(states[CloseToHomeGladiator].IsSpareAlternative);
+        Assert.True(states[CloseToHomeLancer].IsSpareAlternative);
+    }
+
+    [Fact]
+    public void Undecided_company_choices_presume_one_company()
+    {
+        var snapshot = Snapshot() with { Accepted = [Accepted(ComingToGridania)], CurrentJob = Lancer, JobLevels = Levels((Lancer, 1)) };
+        var choice = Index.Resolve(snapshot);
+        var companies = Index.Groups.Where(g => g.Kind == PathKind.GrandCompany).Select(g => g.Options[choice.Presumed[g.Id]].GrandCompany).Distinct().ToList();
+        var company = Assert.Single(companies);
+        Assert.NotEqual((byte)0, company);
+    }
+
+    [Fact]
+    public void Resolving_only_the_dependents_of_a_tagged_quest_matches_resolving_everything()
+    {
+        // Any quest a group tags can decide it now (its options narrow the group), so its change resolves everything.
+        var reverse = ReversePrereqIndex.Build(Catalog);
+        var tagged = Catalog.All.Where(q => Index.TagsOf(q.RowId).Count > 0 && q.Journal.GenreId == SeventhUmbralEra).Select(q => q.RowId).Where((_, i) => i % 3 == 0).ToList();
+        Assert.NotEmpty(tagged);
+        var baseline = Snapshot() with { CurrentJob = Lancer, JobLevels = Levels((Lancer, 1)) };
+        var before = StateResolver.ResolveAll(Catalog, baseline, Context);
+        static string Sig(QuestEvaluation e) => $"{e.State}|{e.NextStep?.Req.Kind}|{e.IsSpareAlternative}|{e.ChoiceOf}|{e.RepeatableDoneBefore}";
+        foreach (var rowId in tagged)
+        {
+            Assert.True(Index.IsAnchor(rowId), $"{rowId} is tagged but not an anchor");
+            var changed = baseline with { CompletedBits = Bits(rowId) };
+            var incremental = StateResolver.ResolveDependents(before, [rowId], reverse, Catalog, changed, Context);
+            var full = StateResolver.ResolveAll(Catalog, changed, Context);
+            var differing = full.Where(kv => Sig(kv.Value) != Sig(incremental[kv.Key])).Select(kv => kv.Key).ToList();
+            Assert.True(differing.Count == 0, $"completing {rowId}: {differing.Count} rows differ, e.g. {string.Join(", ", differing.Take(3))}");
+        }
+    }
+
+    [Fact]
+    public void Another_company_s_call_of_the_wild_needs_that_company()
+    {
+        // The sheet leaves Call of the Wild's company at 0; the curated tag says whose officer offers it.
+        var snapshot = Snapshot(ComingToGridania, CloseToHomeLancer, 65559, CompanyYouKeepTwinAdder) with { GrandCompany = 2 };
+        var states = StateResolver.ResolveAll(Catalog, snapshot, Context);
+        var names = fixture.Bundle.BlockerNames();
+        var view = new IpcView(Catalog, states, names);
+
+        foreach (var other in new[] { CallOfTheWildMaelstrom, CallOfTheWildImmortalFlames })
+        {
+            Assert.Equal(QuestState.Blocked, states[other].State);
+            Assert.Equal(RequirementKind.GrandCompany, states[other].NextStep!.Req.Kind);
+            Assert.StartsWith("Blocked · ", BlockerText.StatusText(states[other], Catalog.ByRowId[other], names, states), StringComparison.Ordinal);
+            Assert.False(view.IsQuestAvailable(other));
+        }
+
+        Assert.True(Only(states[CallOfTheWildTwinAdder].Requirements, RequirementKind.GrandCompany).Met);
+
+        // The main scenario's company choice is how a character joins one: never gated on a company.
+        var newcomer = StateResolver.ResolveAll(Catalog, Snapshot(ComingToGridania), Context);
+        Assert.DoesNotContain(newcomer[CompanyYouKeepMaelstrom].Requirements, r => r.Req.Kind == RequirementKind.GrandCompany);
     }
 }

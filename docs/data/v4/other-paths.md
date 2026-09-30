@@ -97,5 +97,5 @@ Seventh Umbral Era after the GC choice is 160 (Gridania), 160 (Limsa) and 161 (U
 ## Unverified in game
 
 - Starting-class "Way of" quests for classes you didn't start as can't be taken.
-- Call of the Wild is offered only by your own company's officer.
+- Call of the Wild is offered only by your own company's officer. Since 1.2 the evaluator acts on it: a quest whose sheet row leaves GrandCompany at 0 and that `path_choices.json` tags with a company (67001–67003) gets a Grand Company requirement from the tag (`PathIndex.MembershipCompany`), so the other companies' versions read "Blocked · Grand Company" and are not announced. The main scenario's company choice (The Company You Keep, 66216–66218) is left alone, since it is how a character joins a company. **The owner still has to confirm this in game.**
 - My Little Chocobo (Maelstrom) stays locked after switching company.

@@ -40,8 +40,9 @@ public static class StateResolver
     /// Re-resolves only the rows a change can affect: the changed quests, quests that list them as previous quests or
     /// locks, quests sharing a changed quest's festival, and, when given, quests at changed levels or of changed festivals.
     /// Untouched rows keep their previous <see cref="QuestEvaluation"/> instance. A change to a choice group's anchor
-    /// quest (<see cref="PathIndex.IsAnchor"/>: a start city's first quest, a "Close to Home", a set member) can move
-    /// the character's path choices, so it resolves everything, as <see cref="ResolveAll"/> does.
+    /// quest or any quest a group tags (<see cref="PathIndex.IsAnchor"/>: a start city's first quest, a "Close to Home",
+    /// a set member, a quest on one city's line) can move the character's path choices, so it resolves everything, as
+    /// <see cref="ResolveAll"/> does.
     /// </summary>
     /// <param name="previousResults">Result of an earlier <see cref="ResolveAll"/> or this method, keyed by row id.</param>
     /// <param name="changedRowIds">Quest sheet <b>row ids</b> (65536 + n) whose completion changed. Ids the catalog does not know are ignored.
@@ -160,27 +161,33 @@ public static class StateResolver
     }
 
     /// <summary>
-    /// The rules, plus <see cref="QuestEvaluation.RepeatableDoneBefore"/> on a repeatable the character has completed
-    /// at least once (its completion bit stays set after the first time, and the day's turn-in is in the cycle data),
-    /// then the path tags of a choice not made yet (<see cref="PathChoice"/>): a spare alternative leaves the totals
-    /// and an option quest says how many options are open. A completed quest or one in the journal carries neither.
+    /// The rules, then the path tags of a choice not made yet (<see cref="PathChoice"/>): a spare alternative leaves the
+    /// totals and an option quest says how many options are open (a completed quest or one in the journal carries
+    /// neither), then <see cref="QuestEvaluation.RepeatableDoneBefore"/> on a repeatable the character has completed at
+    /// least once (its completion bit stays set after the first time, and the day's turn-in is in the cycle data). Not on
+    /// one that leaves the totals (locked out, out of season, a spare alternative): it would count as done while out of
+    /// the total.
     /// </summary>
     private static QuestEvaluation ResolveCore(QuestRecord q, CharacterSnapshot s, QuestCatalog c, EvalContext ctx, Func<ushort, bool> festivalIsPast, PathChoice paths)
     {
         var evaluation = ResolveRules(q, s, c, ctx, festivalIsPast, paths);
-        if (q.IsRepeatable && evaluation.State != QuestState.Completed && (s.IsCompleted(q.QuestId) || s.DailyDone.ContainsKey(q.QuestId)))
+        if (evaluation.State is not (QuestState.Completed or QuestState.Accepted))
+        {
+            var spare = paths.IsSpare(q.RowId);
+            var of = paths.ChoiceCount(q.RowId);
+            if (spare || of > 0)
+            {
+                evaluation = evaluation with { IsSpareAlternative = spare, ChoiceOf = of };
+            }
+        }
+
+        if (q.IsRepeatable && evaluation.State != QuestState.Completed && !evaluation.LeavesTotals
+            && (s.IsCompleted(q.QuestId) || s.DailyDone.ContainsKey(q.QuestId)))
         {
             evaluation = evaluation with { RepeatableDoneBefore = true };
         }
 
-        if (evaluation.State is QuestState.Completed or QuestState.Accepted)
-        {
-            return evaluation;
-        }
-
-        var spare = paths.IsSpare(q.RowId);
-        var of = paths.ChoiceCount(q.RowId);
-        return spare || of > 0 ? evaluation with { IsSpareAlternative = spare, ChoiceOf = of } : evaluation;
+        return evaluation;
     }
 
     private static QuestEvaluation ResolveRules(QuestRecord q, CharacterSnapshot s, QuestCatalog c, EvalContext ctx, Func<ushort, bool> festivalIsPast, PathChoice paths)

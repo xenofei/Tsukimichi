@@ -55,6 +55,27 @@ public sealed class SeasonalNowTests(FixtureCatalog fixture) : IClassFixture<Fix
     }
 
     [Fact]
+    public void A_spare_alternative_is_listed_but_never_counted_ready()
+    {
+        // A city's version of an event quest while the choice is open: in the list, out of the ready count.
+        const ushort Festival = 9;
+        var catalog = QuestCatalog.Build([Fixture.Quest(Fixture.A) with { Festival = Festival }, Fixture.Quest(Fixture.B) with { Festival = Festival }]);
+        var states = new Dictionary<uint, QuestEvaluation>
+        {
+            [Fixture.A] = new QuestEvaluation(QuestState.Ready, [], null, null, null) { IsSpareAlternative = true, ChoiceOf = 2 },
+            [Fixture.B] = new QuestEvaluation(QuestState.Ready, [], null, null, null),
+        };
+
+        var festival = Assert.Single(SeasonalNow.Running(catalog, Character(Festival), states, new Dictionary<ushort, FestivalInfo>(), DuringMoonfire));
+
+        Assert.Equal(1, festival.ReadyCount);
+        var spare = festival.Quests.Single(q => q.Quest.RowId == Fixture.A);
+        Assert.True(spare.IsSpareAlternative);
+        Assert.False(spare.IsActionable);
+        Assert.True(festival.Quests.Single(q => q.Quest.RowId == Fixture.B).IsActionable);
+    }
+
+    [Fact]
     public void An_end_that_has_passed_is_never_shown_even_while_the_game_still_runs_the_event()
     {
         // The flag says running; the curated end is behind us (a late close, or a rerun of the id): "running now" only.

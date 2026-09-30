@@ -18,7 +18,7 @@ public enum QuestEventKind
     /// </summary>
     Abandoned,
 
-    /// <summary>The quest moved into Ready or ReadyOnOtherJob from any other state.</summary>
+    /// <summary>The quest moved into Ready or ReadyOnOtherJob from any other state, and is not a spare alternative.</summary>
     NewlyAvailable,
 }
 
@@ -92,7 +92,8 @@ public static class QuestEvents
         var newlyAvailable = new List<uint>();
         foreach (var (rowId, eval) in newStates)
         {
-            if (!IsAvailable(eval.State))
+            // A spare alternative (another city's version of a quest while the choice is open) is not news.
+            if (!IsAvailable(eval.State) || eval.IsSpareAlternative)
             {
                 continue;
             }

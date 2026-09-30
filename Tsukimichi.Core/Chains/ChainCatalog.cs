@@ -30,7 +30,14 @@ public sealed record Chain(string Name, IReadOnlyList<uint> RowIds)
 /// <param name="NextRowId">The first counted quest in chain order that is not completed; null once the chain is finished.</param>
 public readonly record struct ChainProgress(int Done, int Total, uint? NextRowId)
 {
-    public bool IsComplete => Done >= Total;
+    /// <summary>Every counted quest done; false for a chain with nothing to count (<see cref="IsEmpty"/>).</summary>
+    public bool IsComplete => Total > 0 && Done >= Total;
+
+    /// <summary>
+    /// Nothing in the chain counts for this character (every step locked out, out of season or a repeatable): nothing
+    /// to do and nothing done, so the chain shows neither a progress line nor "complete".
+    /// </summary>
+    public bool IsEmpty => Total == 0;
 
     public float Fraction => Total == 0 ? 0f : (float)Done / Total;
 }

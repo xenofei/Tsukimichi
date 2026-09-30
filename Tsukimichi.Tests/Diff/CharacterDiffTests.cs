@@ -71,6 +71,38 @@ public class CharacterDiffTests
     }
 
     [Fact]
+    public void Only_counted_quests_enter_and_a_daily_done_before_counts_as_done()
+    {
+        // A weekly and a class intro never enter the counts; an allied society daily done before counts as done (D3/D5).
+        var catalog = QuestCatalog.Build(
+        [
+            Quest(1, "Story", section: 0, category: 1, genre: 1, sortKey: 10),
+            Quest(20, "Weekly", section: 2, category: 10, genre: 100, sortKey: 200, repeatable: true),
+            Quest(21, "Allied society daily", section: 2, category: 10, genre: 100, sortKey: 210, repeatable: true) with { BeastTribe = 1 },
+            Quest(22, "Class intro", section: 2, category: 10, genre: 100, sortKey: 220) with { CountsInTotals = false },
+        ]);
+        var ctx = DiffContext.For(catalog, new HashSet<uint>(), _ => 0);
+        static QuestEvaluation Eval(QuestState state, bool doneBefore = false) => new(state, [], null, null, null) { RepeatableDoneBefore = doneBefore };
+        var a = new Dictionary<uint, QuestEvaluation>
+        {
+            [1] = Eval(QuestState.Completed),
+            [20] = Eval(QuestState.Ready, doneBefore: true),
+            [21] = Eval(QuestState.Ready, doneBefore: true),
+            [22] = Eval(QuestState.Completed),
+        };
+        var b = catalog.All.ToDictionary(q => q.RowId, _ => Eval(QuestState.Ready));
+
+        var diff = CharacterDiff.Compute(catalog, a, b, ctx);
+
+        Assert.Equal([1u, 21u], diff.OnlyA.Select(e => e.RowId));
+        Assert.Empty(diff.OnlyB);
+        Assert.Equal(0, diff.NeitherDone);
+
+        var shared = CharacterDiff.Compute(catalog, a, a, ctx);
+        Assert.Equal(2, shared.SharedDone);
+    }
+
+    [Fact]
     public void Value_adds_base_main_scenario_feature_and_two_per_unique_reward()
     {
         Assert.Equal(1, CharacterDiff.ValueOf(10, Ctx));

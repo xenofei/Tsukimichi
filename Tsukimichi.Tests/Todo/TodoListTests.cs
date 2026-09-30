@@ -394,6 +394,25 @@ public sealed class TodoListTests
     }
 
     [Fact]
+    public void Spare_alternatives_are_not_todos_among_pins_nearby_quests_or_event_quests()
+    {
+        // An open choice's options other than the presumed one leave the counts, so no list offers them as a to-do.
+        var spare = Eval(QuestState.Ready) with { IsSpareAlternative = true, ChoiceOf = 3 };
+        var states = States((FeatureA, spare), (SideQuest, spare));
+        var moonfire = new RunningFestival(174, "Moonfire Faire",
+            [new SeasonalQuest(Catalog.GetByRowId(SideQuest)!, QuestState.Ready) { IsSpareAlternative = true }, new SeasonalQuest(Catalog.GetByRowId(FeatureFar)!, QuestState.Ready)],
+            1, null, null);
+
+        var model = TodoList.Build(SeasonalInputs([moonfire], states) with { Pinned = new HashSet<uint> { FeatureA, FeatureB } });
+
+        Assert.Equal([FeatureB], Section(model, TodoSection.Pinned)!.Rows.Select(r => r.RowId));
+        Assert.Equal([FeatureB], Section(model, TodoSection.NearbyFeature)!.Rows.Select(r => r.RowId));
+        Assert.Equal([FeatureFar], Section(model, TodoSection.Seasonal)!.Rows.Select(r => r.RowId));
+        Assert.False(TodoList.IsTodo(spare));
+        Assert.True(TodoList.IsTodo((QuestEvaluation?)null));
+    }
+
+    [Fact]
     public void Seasonal_shows_no_end_line_without_an_announced_end_and_names_events_when_several_list_rows()
     {
         var undated = Festival(84, "A Nocturne for Heroes", null, (SideQuest, QuestState.Ready));

@@ -85,9 +85,12 @@ public sealed record ClassTrack(uint Starter, uint Switcher, uint Join, uint Gen
 /// </para>
 /// <para>
 /// <b>A character's choice</b> (<see cref="Resolve"/>): a group is decided by the one option whose anchor quest the
-/// character completed (a start city also by the city's first quest in the journal). Two completed options make the
-/// group not exclusive for that character. An undecided group presumes an option (the character's Grand Company or
-/// current class where that picks one, else the first open option in journal order).
+/// character completed. Two completed options make the group not exclusive for that character. Without a completed
+/// anchor, the quests the character completed or holds in the journal decide it when their tags agree on one option
+/// (a city's first quest in the journal; a "Close to Home" of Ul'dah done when "Coming to Ul'dah" left no bit). An
+/// undecided group presumes an option: the class the character is playing first (and the city its "Close to Home"
+/// belongs to), then the character's Grand Company or the company already presumed, else the first open option in
+/// journal order.
 /// </para>
 /// </summary>
 public sealed class PathIndex
@@ -97,6 +100,7 @@ public sealed class PathIndex
     private static readonly PathTag[] NoTags = [];
 
     private readonly QuestCatalog catalog;
+    private readonly IReadOnlyDictionary<uint, GrandCompanyTag> companyTags;
     private readonly Dictionary<uint, PathTag[]> tags;
     private readonly HashSet<uint> anchors = [];
     private readonly Dictionary<uint, int> order = [];
@@ -105,6 +109,7 @@ public sealed class PathIndex
     private PathIndex(QuestCatalog catalog, PathChoices choices)
     {
         this.catalog = catalog;
+        companyTags = choices.GrandCompanies;
         for (var i = 0; i < catalog.All.Count; i++)
         {
             order.TryAdd(catalog.All[i].RowId, i);
@@ -192,11 +197,27 @@ public sealed class PathIndex
     /// <summary>The groups a quest belongs to with the options it can be done on; empty for a quest no group constrains.</summary>
     public IReadOnlyList<PathTag> TagsOf(uint rowId) => tags.TryGetValue(rowId, out var list) ? list : NoTags;
 
+    /// <summary>
+    /// The Grand Company a character must serve to take a quest whose sheet row leaves GrandCompany at 0, by its curated
+    /// tag (<see cref="PathChoices.GrandCompanies"/>: Call of the Wild, offered only by the character's own company's
+    /// officer); 0 when the sheet says it, when nothing is curated, and for the main scenario's company choice (The
+    /// Company You Keep), which is how a character joins a company. Not confirmed in game yet
+    /// (docs/data/v4/other-paths.md, "Unverified in game").
+    /// </summary>
+    public byte MembershipCompany(QuestRecord quest)
+    {
+        ArgumentNullException.ThrowIfNull(quest);
+        return quest.GrandCompany == 0 && quest.Journal.SectionId != 0 && companyTags.TryGetValue(quest.RowId, out var tag) ? tag.GrandCompany : (byte)0;
+    }
+
     /// <summary>The quest's place in journal order; past the end for a row the catalog does not hold.</summary>
     internal int OrderOf(uint rowId) => order.TryGetValue(rowId, out var at) ? at : int.MaxValue;
 
-    /// <summary>Whether a completion change of <paramref name="rowId"/> can change a character's choice.</summary>
-    public bool IsAnchor(uint rowId) => anchors.Contains(rowId);
+    /// <summary>
+    /// Whether a completion or journal change of <paramref name="rowId"/> can change a character's choice: an anchor
+    /// quest, or any quest a group tags (its options narrow the group, <see cref="PathChoice"/>).
+    /// </summary>
+    public bool IsAnchor(uint rowId) => anchors.Contains(rowId) || tags.ContainsKey(rowId);
 
     /// <summary>The character's choices over this catalog, computed once per snapshot instance.</summary>
     public PathChoice Resolve(CharacterSnapshot snapshot)
@@ -690,9 +711,13 @@ public sealed class PathChoice
     private readonly HashSet<uint> spare = [];
     private readonly Dictionary<uint, int> choiceCounts = [];
 
+    /// <summary>The most quests named as evidence for a group decided by the quests on its paths rather than an anchor.</summary>
+    private const int MaxEvidence = 3;
+
     private readonly int[] chosen;
     private readonly int[] presumed;
     private readonly bool[] notExclusive;
+    private readonly PathIndex? index;
 
     private PathChoice()
     {
@@ -703,6 +728,7 @@ public sealed class PathChoice
 
     internal PathChoice(PathIndex index, QuestCatalog catalog, CharacterSnapshot s)
     {
+        this.index = index;
         var groups = index.Groups;
         chosen = new int[groups.Count];
         presumed = new int[groups.Count];
@@ -722,6 +748,29 @@ public sealed class PathChoice
             }
 
             return false;
+        }
+
+        // Every tagged quest the character completed or holds narrows the options of each group that tags it: a
+        // completed "Close to Home" of Ul'dah says Ul'dah even when "Coming to Ul'dah" left no completion bit.
+        var narrowed = new ulong[groups.Count];
+        var witnesses = new List<uint>?[groups.Count];
+        for (var g = 0; g < groups.Count; g++)
+        {
+            narrowed[g] = groups[g].AllOptions;
+        }
+
+        foreach (var (rowId, tags) in index.AllTags)
+        {
+            if (!Done(rowId) && !InJournal(rowId))
+            {
+                continue;
+            }
+
+            foreach (var tag in tags)
+            {
+                narrowed[tag.Group] &= tag.Options;
+                (witnesses[tag.Group] ??= []).Add(rowId);
+            }
         }
 
         for (var g = 0; g < groups.Count; g++)
@@ -764,15 +813,13 @@ public sealed class PathChoice
                 continue;
             }
 
-            if (group.Kind == PathKind.StartCity)
+            // No anchor done: the quests the character completed or holds on the group's paths decide it when they
+            // agree on one option (a new character holds its city's first quest in the journal from the start).
+            // Evidence that agrees on none is left to the guess below. The first few in journal order are the evidence.
+            if (witnesses[g] is { } seen && System.Numerics.BitOperations.PopCount(narrowed[g]) == 1)
             {
-                // A new character holds its city's first quest in the journal from the start.
-                var held = group.Options.Where(o => o.Anchors.Any(InJournal)).ToList();
-                if (held.Count == 1)
-                {
-                    chosen[g] = held[0].Index;
-                    evidence[g] = [.. held[0].Anchors];
-                }
+                chosen[g] = System.Numerics.BitOperations.TrailingZeroCount(narrowed[g]);
+                evidence[g] = [.. seen.OrderBy(index.OrderOf).ThenBy(id => id).Take(MaxEvidence)];
             }
         }
 
@@ -818,7 +865,29 @@ public sealed class PathChoice
             }
         }
 
+        // The options each group is still allowed by the options presumed before it (a Gladiator start implies Ul'dah:
+        // the Gladiator's "Close to Home" is on Ul'dah's line).
+        var implied = new ulong[groups.Count];
         for (var g = 0; g < groups.Count; g++)
+        {
+            implied[g] = groups[g].AllOptions;
+        }
+
+        bool IsOpen(PathOption option) => !excluded.ContainsKey(option.Anchors[0]);
+
+        // Group order, except that the class the character is playing is guessed before the city, so the class
+        // picks the city rather than the first city ruling the class out.
+        var guessOrder = Enumerable.Range(0, groups.Count).ToList();
+        var playing = guessOrder.FindIndex(g => groups[g].Kind == PathKind.StartClass && chosen[g] < 0 && !notExclusive[g]
+            && s.CurrentJob != 0 && groups[g].Options.Any(o => o.ClassJob == s.CurrentJob && IsOpen(o)));
+        if (playing > 0)
+        {
+            var classGroup = guessOrder[playing];
+            guessOrder.RemoveAt(playing);
+            guessOrder.Insert(0, classGroup);
+        }
+
+        foreach (var g in guessOrder)
         {
             if (chosen[g] >= 0 || notExclusive[g])
             {
@@ -828,16 +897,16 @@ public sealed class PathChoice
             var group = groups[g];
             // An option is open while its first anchor (the city's first quest, the class's "Close to Home", the
             // set's member) is not on a path already excluded.
-            var open = group.Options.Where(o => !excluded.ContainsKey(o.Anchors[0])).ToList();
-            var consistent = open.Where(o => !presumedOff.Contains(o.Anchors[0])).ToList();
+            var open = group.Options.Where(IsOpen).ToList();
+            if (open.Count < 2)
+            {
+                continue;
+            }
+
+            var consistent = open.Where(o => !presumedOff.Contains(o.Anchors[0]) && (implied[g] & (1UL << o.Index)) != 0).ToList();
             if (consistent.Count == 0)
             {
                 consistent = open;
-            }
-
-            if (consistent.Count < 2)
-            {
-                continue;
             }
 
             // The cities keep the pin's order; every other group goes by journal order of its options.
@@ -851,13 +920,34 @@ public sealed class PathChoice
                 ?? (group.Kind == PathKind.StartClass ? consistent.FirstOrDefault(o => o.ClassJob == s.CurrentJob) : null)
                 ?? consistent[0];
             presumed[g] = guess.Index;
-            foreach (var option in consistent)
+
+            // Once one company version is presumed, the other company choices presume the same company.
+            if (group.Kind == PathKind.GrandCompany && company == 0)
+            {
+                company = guess.GrandCompany;
+            }
+
+            // "Choose one of N" counts the options in keeping with the presumptions, or every open one when the
+            // presumptions leave only the guess (the city a class implies is still one of three).
+            var choices = consistent.Count >= 2 ? consistent : open;
+            foreach (var option in choices)
             {
                 foreach (var anchor in option.Anchors)
                 {
                     if (!excluded.ContainsKey(anchor))
                     {
-                        choiceCounts[anchor] = consistent.Count;
+                        choiceCounts[anchor] = choices.Count;
+                    }
+                }
+            }
+
+            foreach (var anchor in guess.Anchors)
+            {
+                foreach (var tag in index.TagsOf(anchor))
+                {
+                    if (tag.Group != g)
+                    {
+                        implied[tag.Group] &= tag.Options;
                     }
                 }
             }
@@ -922,6 +1012,9 @@ public sealed class PathChoice
 
     /// <summary>For an option quest of an undecided group, how many options are still open ("Choose one of 3"); 0 otherwise.</summary>
     public int ChoiceCount(uint rowId) => choiceCounts.GetValueOrDefault(rowId);
+
+    /// <summary>The company a quest's curated tag requires (<see cref="PathIndex.MembershipCompany"/>); 0 for none.</summary>
+    public byte MembershipCompany(QuestRecord quest) => index?.MembershipCompany(quest) ?? 0;
 
     private IReadOnlyList<PathFacet> Facets(IReadOnlyList<PathGroup> groups, PathTag[] tags)
     {

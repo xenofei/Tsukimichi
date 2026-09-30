@@ -106,16 +106,18 @@ public static class RequirementEvaluator
             results.Add(new(new PreviousQuestsRequirement(ids, join, done, doneIds), met, detail));
         }
 
-        if (q.GrandCompany != 0)
+        // The sheet's company, else the curated one of a quest whose row leaves it 0 (Call of the Wild).
+        var company = q.GrandCompany != 0 ? q.GrandCompany : paths.MembershipCompany(q);
+        if (company != 0)
         {
-            var met = s.GrandCompany == q.GrandCompany;
-            var name = ctx.GrandCompanyName(q.GrandCompany);
-            results.Add(new(new GrandCompanyRequirement(q.GrandCompany, s.GrandCompany), met, met ? name : $"requires {name}"));
+            var met = s.GrandCompany == company;
+            var name = ctx.GrandCompanyName(company);
+            results.Add(new(new GrandCompanyRequirement(company, s.GrandCompany), met, met ? name : $"requires {name}"));
         }
 
         if (q.GrandCompanyRank != 0)
         {
-            var gc = q.GrandCompany != 0 ? q.GrandCompany : s.GrandCompany;
+            var gc = company != 0 ? company : s.GrandCompany;
             var actual = gc < s.GcRanks.Length ? s.GcRanks[gc] : (byte)0;
             var met = actual >= q.GrandCompanyRank;
             var name = ctx.GrandCompanyName(gc);

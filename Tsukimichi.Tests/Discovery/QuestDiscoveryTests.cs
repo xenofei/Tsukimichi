@@ -52,6 +52,18 @@ public class QuestDiscoveryTests
     }
 
     [Fact]
+    public void StartableInZone_leaves_out_spare_alternatives()
+    {
+        var states = new Dictionary<uint, QuestEvaluation>(States)
+        {
+            [65604] = Eval(QuestState.Ready) with { IsSpareAlternative = true, ChoiceOf = 3 },
+            [65602] = Eval(QuestState.ReadyOnOtherJob) with { IsSpareAlternative = true },
+        };
+
+        Assert.Equal(["Zephyr"], QuestDiscovery.StartableInZone(Catalog, states, Gridania, includeOtherJob: true).Select(q => q.Name));
+    }
+
+    [Fact]
     public void StartableInZone_sorts_by_the_displayed_level()
     {
         var catalog = QuestCatalog.Build(
