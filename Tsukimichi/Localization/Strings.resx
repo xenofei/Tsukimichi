@@ -105,6 +105,10 @@
     <value>{0} of {1} quests done</value>
     <comment>The chain halo's tooltip: {0} = quests done, {1} = quests in the chain.</comment>
   </data>
+  <data name="DetailJumpTooltipFormat" xml:space="preserve">
+    <value>Go to {0}</value>
+    <comment>A jump button beside a requirement you do not meet: {0} = the quest that clears it.</comment>
+  </data>
   <data name="PathCaptionFormat" xml:space="preserve">
     <value>{0} steps · {1} done</value>
     <comment>{0} = steps on the path, {1} = steps done.</comment>
@@ -5029,6 +5033,150 @@
   <data name="Core.Req.QuestId" xml:space="preserve">
     <value>quest {0}</value>
     <comment>Core: RequirementDetail.cs.</comment>
+  </data>
+  <data name="Core.NotYet.Lead" xml:space="preserve">
+    <value>Not yet</value>
+    <comment>Core: NotYetText.cs.</comment>
+  </data>
+  <data name="Core.NotYet.OtherJobLead" xml:space="preserve">
+    <value>Not on this job</value>
+    <comment>Core: NotYetText.cs.</comment>
+  </data>
+  <data name="Core.NotYet.ReadyOn" xml:space="preserve">
+    <value>ready on {0}</value>
+    <comment>Core: NotYetText.cs.</comment>
+  </data>
+  <data name="Core.NotYet.More" xml:space="preserve">
+    <value>{0} more</value>
+    <comment>Core: NotYetText.cs.</comment>
+  </data>
+  <data name="Core.NotYet.ListSeparator" xml:space="preserve">
+    <value>, </value>
+    <comment>Core: NotYetText.cs.</comment>
+  </data>
+  <data name="Core.NotYet.And" xml:space="preserve">
+    <value>{0} and {1}</value>
+    <comment>Core: NotYetText.cs.</comment>
+  </data>
+  <data name="Core.NotYet.Expansion" xml:space="preserve">
+    <value>{0} (not owned)</value>
+    <comment>Core: NotYetText.cs.</comment>
+  </data>
+  <data name="Core.NotYet.LevelCap" xml:space="preserve">
+    <value>level cap {0} (yours is {1})</value>
+    <comment>Core: NotYetText.cs.</comment>
+  </data>
+  <data name="Core.NotYet.GrandCompany" xml:space="preserve">
+    <value>joining the {0}</value>
+    <comment>Core: NotYetText.cs.</comment>
+  </data>
+  <data name="Core.NotYet.GrandCompanyRank" xml:space="preserve">
+    <value>{0} (you're {1})</value>
+    <comment>Core: NotYetText.cs.</comment>
+  </data>
+  <data name="Core.NotYet.TribeRankWith" xml:space="preserve">
+    <value>{0} with the {1} (you're {2})</value>
+    <comment>Core: NotYetText.cs.</comment>
+  </data>
+  <data name="Core.NotYet.TribeRank" xml:space="preserve">
+    <value>{0} (you're {1})</value>
+    <comment>Core: NotYetText.cs.</comment>
+  </data>
+  <data name="Core.NotYet.Reputation" xml:space="preserve">
+    <value>{0} more reputation</value>
+    <comment>Core: NotYetText.cs.</comment>
+  </data>
+  <data name="Core.NotYet.Allowance" xml:space="preserve">
+    <value>an allowance (none left today)</value>
+    <comment>Core: NotYetText.cs.</comment>
+  </data>
+  <data name="Core.NotYet.NotOffered" xml:space="preserve">
+    <value>today's offer</value>
+    <comment>Core: NotYetText.cs.</comment>
+  </data>
+  <data name="Core.NotYet.Satisfaction" xml:space="preserve">
+    <value>satisfaction rank {0} (you're {1})</value>
+    <comment>Core: NotYetText.cs.</comment>
+  </data>
+  <data name="Core.NotYet.SatisfactionNotChecked" xml:space="preserve">
+    <value>satisfaction rank {0}</value>
+    <comment>Core: NotYetText.cs.</comment>
+  </data>
+  <data name="Core.NotYet.CarrierLevel" xml:space="preserve">
+    <value>carrier level {0} (you're {1})</value>
+    <comment>Core: NotYetText.cs.</comment>
+  </data>
+  <data name="Core.NotYet.CarrierLevelNotChecked" xml:space="preserve">
+    <value>carrier level {0}</value>
+    <comment>Core: NotYetText.cs.</comment>
+  </data>
+  <data name="Core.NotYet.ChapterNotOpen" xml:space="preserve">
+    <value>its chapter to open</value>
+    <comment>Core: NotYetText.cs.</comment>
+  </data>
+  <data name="Core.NotYet.ChapterOver" xml:space="preserve">
+    <value>a chapter that is over</value>
+    <comment>Core: NotYetText.cs.</comment>
+  </data>
+  <data name="Core.NotYet.Seasonal" xml:space="preserve">
+    <value>its seasonal event</value>
+    <comment>Core: NotYetText.cs.</comment>
+  </data>
+  <data name="Core.NotYet.Mount" xml:space="preserve">
+    <value>a mount</value>
+    <comment>Core: NotYetText.cs.</comment>
+  </data>
+  <data name="Core.NotYet.House" xml:space="preserve">
+    <value>a house</value>
+    <comment>Core: NotYetText.cs.</comment>
+  </data>
+  <data name="Core.NotYet.Achievement" xml:space="preserve">
+    <value>an achievement</value>
+    <comment>Core: NotYetText.cs.</comment>
+  </data>
+  <data name="Core.NotYet.AcceptCondition" xml:space="preserve">
+    <value>an accept condition</value>
+    <comment>Core: NotYetText.cs.</comment>
+  </data>
+  <data name="Core.NotYet.LevelOn" xml:space="preserve">
+    <value>level {0} on {1} (you're {2})</value>
+    <comment>Core: NotYetText.cs.</comment>
+  </data>
+  <data name="Core.NotYet.Level" xml:space="preserve">
+    <value>level {0} (you're {1})</value>
+    <comment>Core: NotYetText.cs.</comment>
+  </data>
+  <data name="Core.NotYet.JobYouAre" xml:space="preserve">
+    <value>{0} (you're {1})</value>
+    <comment>Core: NotYetText.cs.</comment>
+  </data>
+  <data name="Core.NotYet.AnotherJobYouAre" xml:space="preserve">
+    <value>another job (you're {0})</value>
+    <comment>Core: NotYetText.cs.</comment>
+  </data>
+  <data name="Core.NotYet.AnotherJob" xml:space="preserve">
+    <value>another job</value>
+    <comment>Core: NotYetText.cs.</comment>
+  </data>
+  <data name="Core.NotYet.PreviousOne" xml:space="preserve">
+    <value>1 previous quest</value>
+    <comment>Core: NotYetText.cs.</comment>
+  </data>
+  <data name="Core.NotYet.PreviousMany" xml:space="preserve">
+    <value>{0} previous quests</value>
+    <comment>Core: NotYetText.cs.</comment>
+  </data>
+  <data name="Core.NotYet.DutyOne" xml:space="preserve">
+    <value>1 duty</value>
+    <comment>Core: NotYetText.cs.</comment>
+  </data>
+  <data name="Core.NotYet.DutyMany" xml:space="preserve">
+    <value>{0} duties</value>
+    <comment>Core: NotYetText.cs.</comment>
+  </data>
+  <data name="Core.Gap.Arrow" xml:space="preserve">
+    <value>{0} → {1}</value>
+    <comment>Core: NotYetText.cs.</comment>
   </data>
   <data name="Core.Filter.HideCompleted" xml:space="preserve">
     <value>Hide completed</value>

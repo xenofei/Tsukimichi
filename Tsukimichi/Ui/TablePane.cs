@@ -656,7 +656,7 @@ public sealed class TablePane : IDisposable
             var gap = UiMetrics.Px(StoryBadgeGap);
             ImGui.SetCursorScreenPos(new Vector2(nameCellMin.X, secondLineY));
             using var caption = Typography.Caption();
-            statusCut = DrawStatus(row.Status, hasSnapshot, nameCellWidth - (moreShown ? moreSize + gap : 0f));
+            statusCut = DrawStatus(row.Status, row.State, hasSnapshot, nameCellWidth - (moreShown ? moreSize + gap : 0f));
         }
 
         // The selectable spans every column; the banner tooltip belongs to the name cell only, the stripe's to the
@@ -700,7 +700,7 @@ public sealed class TablePane : IDisposable
             CenterText(in layout);
             var statusCellMin = ImGui.GetCursorScreenPos();
             var statusCellWidth = ImGui.GetContentRegionAvail().X;
-            var cut = DrawStatus(row.Status, hasSnapshot, statusCellWidth);
+            var cut = DrawStatus(row.Status, row.State, hasSnapshot, statusCellWidth);
 
             // The state word is never cut; when the reason after it was ellipsised, the whole line is the cell's tooltip.
             if (cut && rowHovered && mouseX >= statusCellMin.X && mouseX <= statusCellMin.X + statusCellWidth)
@@ -953,7 +953,7 @@ public sealed class TablePane : IDisposable
     /// snapshot) the whole line is in the tertiary tone. Returns whether the reason was cut. The rule is
     /// <see cref="Chrome.StatusText"/>'s, drawn with raw colour pushes so a row allocates nothing.
     /// </summary>
-    private static bool DrawStatus(string text, bool hasSnapshot, float cellWidth)
+    private static bool DrawStatus(string text, QuestState state, bool hasSnapshot, float cellWidth)
     {
         var s = Theme.Surface;
         var split = TableGeometry.StateWordLength(text);
@@ -967,7 +967,7 @@ public sealed class TablePane : IDisposable
         }
 
         var reason = text.AsSpan(split);
-        var reasonInk = hasSnapshot ? s.TextSecondary : s.TextTertiary;
+        var reasonInk = !hasSnapshot ? s.TextTertiary : state is QuestState.Blocked or QuestState.Foreclosed ? Theme.EclipseText : s.TextSecondary;
         var room = TableGeometry.ReasonWidth(cellWidth, ImGui.CalcTextSize(stateWord).X);
         var reasonWidth = ImGui.CalcTextSize(reason).X;
         ImGui.SameLine(0f, 0f);

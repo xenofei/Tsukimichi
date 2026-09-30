@@ -48,7 +48,7 @@ public sealed partial class DetailPane
         {
             using (Theme.PushText(Theme.Surface.TextSecondary))
             {
-                ImGui.TextWrapped(model.State == QuestState.Accepted ? Strings.JournalTextClosedAccepted : Strings.JournalTextClosedCompleted);
+                TextFlow.Wrapped(model.State == QuestState.Accepted ? Strings.JournalTextClosedAccepted : Strings.JournalTextClosedCompleted, RoomTo(cardRight));
             }
 
             if (ImGui.SmallButton(JournalReadLabel.Value))
@@ -75,7 +75,7 @@ public sealed partial class DetailPane
             default:
                 using (Theme.PushText(Theme.Surface.TextSecondary))
                 {
-                    ImGui.TextWrapped(Strings.JournalTextNoText);
+                    TextFlow.Wrapped(Strings.JournalTextNoText, RoomTo(cardRight));
                 }
 
                 break;
@@ -95,7 +95,7 @@ public sealed partial class DetailPane
         for (var i = 0; i < view.Entries.Count; i++)
         {
             using var id = ImRaii.PushId(i);
-            ImGui.TextWrapped(view.Entries[i]);
+            TextFlow.Wrapped(view.Entries[i], RoomTo(cardRight));
             var copied = journalCopiedRowId == rowId && journalCopiedIndex == i && now < journalCopiedUntil;
             if (copied)
             {
@@ -125,12 +125,12 @@ public sealed partial class DetailPane
         {
             if (view.Withheld > 0)
             {
-                ImGui.TextWrapped(Strings.JournalTextLater);
+                TextFlow.Wrapped(Strings.JournalTextLater, RoomTo(cardRight));
             }
 
             if (!live)
             {
-                ImGui.TextWrapped(Strings.JournalTextNeutral);
+                TextFlow.Wrapped(Strings.JournalTextNeutral, RoomTo(cardRight));
             }
         }
 
@@ -149,7 +149,7 @@ public sealed partial class DetailPane
         {
             ImGui.Bullet();
             ImGui.SameLine();
-            ImGui.TextWrapped(objective);
+            TextFlow.Wrapped(objective, RoomTo(cardRight));
         }
     }
 }

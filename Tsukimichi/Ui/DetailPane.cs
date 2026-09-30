@@ -21,8 +21,9 @@ namespace Tsukimichi.Ui;
 /// <summary>
 /// The detail pane for <see cref="UiState.SelectedRowId"/> as a card stack on a Night panel (ui-revamp §2.5, game UX
 /// panel finding 8): a hero at most 96 px tall (the journal banner cover-cropped under a scrim, the state pill and the
-/// special badge, the name and a caption line; the Night card when the artwork is hidden or missing), then the
-/// Requirements card first with one next-step marker, Rewards as tiles, the Moonlit verdict, the Path card (the chain
+/// special badge, the name and a caption line; the Night card when the artwork is hidden or missing), the "Not yet"
+/// callout for a quest the character cannot take (DetailPane.Unmet.cs), then the
+/// Requirements card first with one marker on the blocking line, Rewards as tiles, the Moonlit verdict, the Path card (the chain
 /// line once, then the star chart, <see cref="PathChart"/>), the Giver card; under the scrolling stack a sticky action
 /// bar with one labelled primary action (Flag on map, or Teleport when Lifestream is loaded) and round buttons for Pin,
 /// Show path, Route to this (the unlock route window), Link in chat, Copy coordinates, Open journal and Report, and a plain provenance line. Every action is a
@@ -50,7 +51,12 @@ public sealed partial class DetailPane
     // "Copied · paste it into a GitHub issue" in place of the provenance line for a few seconds after Report.
     private const double ReportNoteSeconds = 5.0;
 
-    private sealed record RequirementLine(bool Met, bool IsNext, string Label, string Detail);
+    /// <summary>
+    /// One requirement line. An unmet numeric requirement carries its gap meter (<paramref name="GapFraction"/>, 0 to 1,
+    /// and <paramref name="GapText"/>, "52 → 56"); an unmet one a quest clears carries that quest
+    /// (<paramref name="JumpRowId"/>, 0 for none) and the jump button's tooltip.
+    /// </summary>
+    private sealed record RequirementLine(bool Met, bool IsNext, string Label, string Detail, float GapFraction = 0f, string? GapText = null, uint JumpRowId = 0, string? JumpTooltip = null);
 
     /// <summary>A reward tile: unique rewards wear the gold ring and crescent; a mark says when the store sells it or a duty drops it.</summary>
     private sealed record RewardTile(RewardRef Reward, bool Unique, string? Mark);
@@ -72,13 +78,27 @@ public sealed partial class DetailPane
 
         /// <summary>The quest has a banner the shield hides; the Night card says the art comes later.</summary>
         public bool ArtworkHidden;
-        public string JournalPath = string.Empty;
 
         /// <summary>Provenance of a refiled or removed quest ("Filed under … (rule 4: …)", "Removed from the game in patch 6.3"); null for an ordinary quest.</summary>
         public string? FilingLine;
 
         /// <summary>"Expansion · Lv N · job", the hero's caption.</summary>
         public string HeaderLine = string.Empty;
+
+        /// <summary><see cref="HeaderLine"/> cut at its separators, laid out as whole segments that wrap (L5).</summary>
+        public string[] HeaderSegments = [];
+
+        /// <summary>The journal path's genre and category, laid out as whole segments that wrap on the "›" (L5).</summary>
+        public string[] JournalSegments = [];
+
+        /// <summary>The "Not yet" callout (L8) for a quest the character cannot take on the current job; null otherwise.</summary>
+        public NotYetCallout? Callout;
+
+        /// <summary>The callout's second line: who a quest on another path is for (D1); null for none.</summary>
+        public string? CalloutDetail;
+
+        /// <summary>How many requirements are unmet; the Requirements caption turns to the unmet tone above 0.</summary>
+        public int UnmetCount;
         public string StateName = string.Empty;
 
         /// <summary>What the state pill cannot say: the blocker, the step, the date; empty when the state says it all.</summary>
@@ -158,6 +178,7 @@ public sealed partial class DetailPane
         }
 
         ui.RecordWindow(UiRects.Detail);
+        tier = DetailTiers.For(MathF.Round(ImGui.GetWindowWidth() / MathF.Max(0.01f, UiMetrics.Scale)));
         if (ui.SelectedRowId is not { } rowId)
         {
             EmptyState.Draw(Strings.SelectQuest);
@@ -199,14 +220,17 @@ public sealed partial class DetailPane
 
     private void DrawBody(SessionState session, QuestRecord quest, uint rowId, float detailHeight)
     {
+        var width = ImGui.GetContentRegionAvail().X;
+        bodyRight = ImGui.GetCursorScreenPos().X + width;
+        cardRight = bodyRight - UiMetrics.Px(10f);
         DrawHero(quest);
+        DrawNotYet(quest);
         DrawUnderHero(session, rowId);
 
         Gap();
-        var width = ImGui.GetContentRegionAvail().X;
         var start = ImGui.GetCursorScreenPos();
         Chrome.BeginCard("##requirements", Strings.Requirements, RequirementsIcon);
-        CardCaption(model.RequirementsCaption, start.X + width);
+        CardCaption(model.RequirementsCaption, start.X + width, model.UnmetCount > 0 ? Theme.EclipseText : Theme.Surface.TextTertiary);
         DrawRequirements(start.X);
         Chrome.EndCard();
         ui.RecordItem(UiRects.DetailRequirements);
@@ -214,7 +238,7 @@ public sealed partial class DetailPane
         Gap();
         start = ImGui.GetCursorScreenPos();
         Chrome.BeginCard("##rewards", Strings.Rewards, RewardsIcon);
-        CardCaption(model.RewardsCaption, start.X + width);
+        CardCaption(model.RewardsCaption, start.X + width, Theme.Surface.TextTertiary);
         DrawRewards(start.X + width - UiMetrics.Px(10f));
         Chrome.EndCard();
 
@@ -236,7 +260,7 @@ public sealed partial class DetailPane
         start = ImGui.GetCursorScreenPos();
         var pad = UiMetrics.Px(10f);
         Chrome.BeginCard("##path", Strings.Path, PathIcon);
-        CardCaption(chart.HeaderCaption, start.X + width);
+        CardCaption(chart.HeaderCaption, start.X + width, Theme.Surface.TextTertiary);
         DrawChain();
         chart.Draw(width - (2f * pad), 0.4f * detailHeight, pad);
         Chrome.EndCard();
@@ -253,8 +277,11 @@ public sealed partial class DetailPane
 
     private static void Gap() => ImGui.Dummy(new Vector2(0f, UiMetrics.Px(2f)));
 
-    /// <summary>A card header's right-aligned caption (Dusk, 0.85×) on the title line; draw-list only, so the layout is untouched.</summary>
-    private static void CardCaption(string caption, float cardRight)
+    /// <summary>
+    /// A card header's caption (0.85×): right-aligned on the title line, draw-list only, while it clears the title;
+    /// else on a line of its own under the title, wrapped between words (L5: "RequirementsAll met" collided).
+    /// </summary>
+    private static void CardCaption(string caption, float cardRight, Vector4 color)
     {
         if (caption.Length == 0)
         {
@@ -262,12 +289,20 @@ public sealed partial class DetailPane
         }
 
         var titleMin = ImGui.GetItemRectMin();
-        var titleHeight = ImGui.GetItemRectSize().Y;
+        var titleMax = ImGui.GetItemRectMax();
+        var titleHeight = titleMax.Y - titleMin.Y;
         using var role = Typography.Caption();
         var size = ImGui.GetFontSize();
         var width = ImGui.CalcTextSize(caption).X;
-        var pos = new Vector2(cardRight - UiMetrics.Px(10f) - width, titleMin.Y + ((titleHeight - size) * 0.5f));
-        ImGui.GetWindowDrawList().AddText(pos, Theme.U32(Theme.Surface.TextTertiary), caption);
+        var right = cardRight - UiMetrics.Px(10f);
+        var x = right - width;
+        if (x >= titleMax.X + UiMetrics.Px(8f))
+        {
+            ImGui.GetWindowDrawList().AddText(new Vector2(x, titleMin.Y + ((titleHeight - size) * 0.5f)), Theme.U32(color), caption);
+            return;
+        }
+
+        TextFlow.Wrapped(caption, MathF.Max(1f, right - ImGui.GetCursorScreenPos().X), Theme.U32(color));
     }
 
     // ------------------------------------------------------------------ hero
@@ -283,8 +318,9 @@ public sealed partial class DetailPane
 
     /// <summary>
     /// The journal banner at the column's width and at most 96 px tall, cover-cropped, a scrim from 30 % of its height
-    /// to the bottom, the state pill top left, the special badge top right, and the name over its caption line bottom
-    /// left. False when the quest has no banner or it is not loaded yet.
+    /// to the bottom, the state pill top left (clamped, with an ellipsis), the special badge top right, and the name
+    /// bottom left while it fits under the pill, else under the banner; the caption line follows under the banner as
+    /// whole segments that wrap (L5). False when the quest has no banner or it is not loaded yet.
     /// </summary>
     private bool DrawBanner(QuestRecord quest)
     {
@@ -304,26 +340,12 @@ public sealed partial class DetailPane
         Chrome.Scrim(dl, new Vector2(min.X, min.Y + (height * 0.3f)), max, 0f, 0.92f);
 
         var pad = UiMetrics.Px(8f);
+        var badgeSize = MathF.Min(UiMetrics.BannerBadgeSize, UiMetrics.Px(22f));
 
-        // Name (display role) over the caption line (caption role), bottom left.
-        var wrapWidth = MathF.Max(UiMetrics.Px(40f), width - (pad * 2f));
-        float captionY;
-        using (Typography.Caption())
-        {
-            captionY = max.Y - pad - ImGui.GetFontSize();
-            dl.AddText(new Vector2(min.X + pad, captionY), Theme.U32(Theme.Surface.TextSecondary), model.HeaderLine);
-        }
-
-        using (Typography.Display())
-        {
-            var nameHeight = ImGui.CalcTextSize(model.DisplayName, false, wrapWidth).Y;
-            var nameY = captionY - UiMetrics.Px(2f) - nameHeight;
-            dl.AddText(ImGui.GetFont(), ImGui.GetFontSize(), new Vector2(min.X + pad, nameY), Theme.U32(Theme.Surface.Text), model.DisplayName, wrapWidth);
-        }
-
-        // State pill top left; its item carries the state tooltip.
+        // State pill top left, clamped to the room the special badge leaves; its item carries the state tooltip.
         var pillMin = min + new Vector2(pad, pad);
-        var pillSize = StatePill(dl, pillMin);
+        var pillRoom = width - (pad * 2f) - (quest.IconSpecial != 0 ? badgeSize + pad : 0f);
+        var pillSize = StatePill(dl, pillMin, pillRoom);
         ImGui.SetCursorScreenPos(pillMin);
         ImGui.InvisibleButton("##heroState", pillSize);
         if (ImGui.IsItemHovered())
@@ -333,12 +355,11 @@ public sealed partial class DetailPane
 
         if (quest.IconSpecial != 0)
         {
-            var size = MathF.Min(UiMetrics.BannerBadgeSize, UiMetrics.Px(22f));
-            var badgeMin = new Vector2(max.X - pad - size, min.Y + pad);
-            if (DrawSpecialBadge(dl, quest, badgeMin, size))
+            var badgeMin = new Vector2(max.X - pad - badgeSize, min.Y + pad);
+            if (DrawSpecialBadge(dl, quest, badgeMin, badgeSize))
             {
                 ImGui.SetCursorScreenPos(badgeMin);
-                ImGui.InvisibleButton("##heroBadge", new Vector2(size, size));
+                ImGui.InvisibleButton("##heroBadge", new Vector2(badgeSize, badgeSize));
                 if (ImGui.IsItemHovered())
                 {
                     UiMetrics.Tooltip(BadgeTooltip(quest));
@@ -346,7 +367,30 @@ public sealed partial class DetailPane
             }
         }
 
+        // The name (display role) on the banner's foot while it fits under the pill; a longer one goes under the
+        // banner, so it never grows upward over the pill (L5).
+        var nameWidth = MathF.Max(UiMetrics.Px(40f), width - (pad * 2f));
+        var nameOnBanner = false;
+        using (Typography.Display())
+        {
+            var nameHeight = TextFlow.Height(model.DisplayName, nameWidth);
+            if (nameHeight <= height - pillSize.Y - (pad * 3f))
+            {
+                ImGui.SetCursorScreenPos(new Vector2(min.X + pad, max.Y - pad - nameHeight));
+                TextFlow.Wrapped(model.DisplayName, nameWidth, Theme.U32(Theme.Surface.Text));
+                nameOnBanner = true;
+            }
+        }
+
         ImGui.SetCursorScreenPos(after);
+        if (!nameOnBanner)
+        {
+            using var display = Typography.Display();
+            TextFlow.Wrapped(model.DisplayName, width, Theme.U32(Theme.Surface.Text));
+        }
+
+        // The caption line under the banner, its segments whole and wrapping.
+        SegmentFlow(model.HeaderSegments, BlockerText.Separator, width, Theme.Surface.TextSecondary);
         return true;
     }
 
@@ -358,16 +402,18 @@ public sealed partial class DetailPane
 
     /// <summary>
     /// The state pill (ui-revamp §2.5): the state colour at 18 % over a dark base, a 1 px border at 70 %, a 12 px moon and
-    /// the state's name in its text tone. Returns its size.
+    /// the state's name in its text tone. At most <paramref name="maxWidth"/> wide: a longer name ends in an ellipsis
+    /// (the pill's tooltip names the state in full). Returns its size.
     /// </summary>
-    private Vector2 StatePill(ImDrawListPtr dl, Vector2 min)
+    private Vector2 StatePill(ImDrawListPtr dl, Vector2 min, float maxWidth)
     {
         using var caption = Typography.Caption();
         var captionSize = ImGui.GetFontSize();
         var moon = UiMetrics.Icon(6f);
         var height = MathF.Max(UiMetrics.Px(20f), MathF.Max(captionSize + UiMetrics.Px(6f), (moon * 2f) + UiMetrics.Px(6f)));
         var textWidth = ImGui.CalcTextSize(model.StateName).X;
-        var size = new Vector2(UiMetrics.Px(5f) + (moon * 2f) + UiMetrics.Px(6f) + textWidth + UiMetrics.Px(8f), height);
+        var chrome = UiMetrics.Px(5f) + (moon * 2f) + UiMetrics.Px(6f) + UiMetrics.Px(8f);
+        var size = new Vector2(MathF.Min(chrome + textWidth, MathF.Max(height, maxWidth)), height);
         var max = min + size;
         var tone = Theme.StateColor(model.State);
         var rounding = height * 0.5f;
@@ -376,7 +422,13 @@ public sealed partial class DetailPane
         dl.AddRect(min, max, Theme.WithAlpha(tone, 0.7f), rounding, ImDrawFlags.None, UiMetrics.Hairline);
         var center = new Vector2(min.X + UiMetrics.Px(5f) + moon, min.Y + (height * 0.5f));
         MoonGlyph.Draw(dl, center, moon, model.State);
-        dl.AddText(new Vector2(center.X + moon + UiMetrics.Px(6f), min.Y + ((height - captionSize) * 0.5f)), Theme.U32(StateTextColor(model.State)), model.StateName);
+        var textRoom = size.X - chrome;
+        if (textRoom > 0f)
+        {
+            var textPos = new Vector2(center.X + moon + UiMetrics.Px(6f), min.Y + ((height - captionSize) * 0.5f));
+            Chrome.EllipsisTextAt(dl, textPos, textRoom, model.StateName, Theme.U32(StateTextColor(model.State)), textWidth);
+        }
+
         return size;
     }
 
@@ -415,8 +467,11 @@ public sealed partial class DetailPane
     {
         var dl = ImGui.GetWindowDrawList();
         Chrome.BeginCard("##headerCard");
-        var radius = UiMetrics.Icon(20f);
-        var box = radius * 2.3f;
+
+        // Below 320 the moon (28 px) sits above the title, which then takes the card's whole width (L5).
+        var stacked = DetailTiers.Stacks(tier);
+        var radius = stacked ? UiMetrics.Icon(14f) : UiMetrics.Icon(20f);
+        var box = stacked ? radius * 2f : radius * 2.3f;
         var pos = ImGui.GetCursorScreenPos();
         ImGui.Dummy(new Vector2(box, box));
         MoonGlyph.Draw(dl, pos + new Vector2(box * 0.5f), radius, model.State);
@@ -425,9 +480,9 @@ public sealed partial class DetailPane
             UiMetrics.StateTooltip(model.State, model.Evaluation, quest, BlockerNamesOf(), lastStates);
         }
 
-        ImGui.SameLine();
         if (quest.IconSpecial != 0)
         {
+            ImGui.SameLine();
             var size = MathF.Min(UiMetrics.BannerBadgeSize, UiMetrics.Px(22f));
             var badgeMin = ImGui.GetCursorScreenPos() + new Vector2(0f, (box - size) * 0.5f);
             ImGui.Dummy(new Vector2(size, box));
@@ -435,30 +490,30 @@ public sealed partial class DetailPane
             {
                 UiMetrics.Tooltip(BadgeTooltip(quest));
             }
+        }
 
+        if (!stacked)
+        {
             ImGui.SameLine();
         }
 
-        // The name wraps at the card's inner edge (Chrome pushes the wrap position).
+        // The name wraps between words at the card's inner edge; the caption line's segments wrap whole.
         using (ImRaii.Group())
         {
+            var room = RoomTo(cardRight);
             using (Typography.Display())
-            using (Theme.PushText(Theme.Surface.Text))
             {
-                ImGui.TextWrapped(model.DisplayName);
+                TextFlow.Wrapped(model.DisplayName, room, Theme.U32(Theme.Surface.Text));
             }
 
-            using (Theme.PushText(Theme.Surface.TextSecondary))
+            SegmentFlow(model.HeaderSegments, BlockerText.Separator, room, Theme.Surface.TextSecondary);
+            if (model.ArtworkHidden)
             {
-                ImGui.TextWrapped(model.HeaderLine);
-                if (model.ArtworkHidden)
-                {
-                    ImGui.TextWrapped(Strings.ArtworkHidden);
-                }
+                TextFlow.Wrapped(Strings.ArtworkHidden, room, Theme.U32(Theme.Surface.TextSecondary));
             }
 
             var pillPos = ImGui.GetCursorScreenPos();
-            var pillSize = StatePill(dl, pillPos);
+            var pillSize = StatePill(dl, pillPos, room);
             ImGui.Dummy(pillSize);
         }
 
@@ -473,8 +528,8 @@ public sealed partial class DetailPane
     {
         if (model.NameMasked)
         {
-            ImGui.TextDisabled(Strings.SpoilerMaskedNote);
-            ImGui.SameLine();
+            TextFlow.Wrapped(Strings.SpoilerMaskedNote, RoomTo(bodyRight), Theme.U32(Theme.Surface.TextDisabled));
+            SameLineOrWrap(SmallButtonWidth(Strings.SpoilerRevealName), bodyRight);
             if (ImGui.SmallButton(Strings.SpoilerRevealName))
             {
                 session.RevealName(rowId);
@@ -486,24 +541,21 @@ public sealed partial class DetailPane
             }
         }
 
-        if (model.StatusReason.Length > 0 || model.StateNote is not null)
+        // The "Not yet" callout already says why a quest cannot be taken (L8); the status line is for the rest.
+        if (model.Callout is null && (model.StatusReason.Length > 0 || model.StateNote is not null))
         {
-            using (Theme.PushText(StateTextColor(model.State)))
-            {
-                ImGui.TextWrapped(model.StatusReason.Length > 0 ? model.StatusReason : model.StateNote!);
-            }
-
+            TextFlow.Wrapped(model.StatusReason.Length > 0 ? model.StatusReason : model.StateNote!, RoomTo(bodyRight), Theme.U32(StateTextColor(model.State)));
             if (model.StatusReason.Length > 0 && model.StateNote is { } note)
             {
-                ImGui.TextDisabled(note);
+                TextFlow.Wrapped(note, RoomTo(bodyRight), Theme.U32(Theme.Surface.TextDisabled));
             }
         }
 
-        ImGui.TextDisabled(model.JournalPath);
+        // The journal path wraps on its "›", never inside a name (L5).
+        SegmentFlow(model.JournalSegments, JournalSeparator, RoomTo(bodyRight), Theme.Surface.TextDisabled);
         if (model.FilingLine is { } filing)
         {
-            using var mist = Theme.PushText(Theme.Surface.TextSecondary);
-            ImGui.TextWrapped(filing);
+            TextFlow.Wrapped(filing, RoomTo(bodyRight), Theme.U32(Theme.Surface.TextSecondary));
         }
 
         if (model.Quest is { } quest)
@@ -556,8 +608,7 @@ public sealed partial class DetailPane
     {
         if (!model.HasSnapshot)
         {
-            using var mist = Theme.PushText(Theme.Surface.TextSecondary);
-            ImGui.TextWrapped(Strings.RequirementsNeedSnapshot);
+            TextFlow.Wrapped(Strings.RequirementsNeedSnapshot, RoomTo(cardRight), Theme.U32(Theme.Surface.TextSecondary));
         }
         else if (model.Requirements.Count == 0)
         {
@@ -572,47 +623,7 @@ public sealed partial class DetailPane
         {
             // The curated quirk: what the game does that its data does not say. Shown whatever the state, since it is
             // the answer to "the NPC offers this while the plugin shows it Blocked".
-            using var dusk = Theme.PushText(Theme.Surface.TextSecondary);
-            ImGui.TextWrapped(note);
-        }
-    }
-
-    private void DrawRequirementLines(float cardLeft)
-    {
-        var dl = ImGui.GetWindowDrawList();
-        var lineHeight = ImGui.GetTextLineHeight();
-        var mark = UiMetrics.RequirementMarkSize;
-        var box = MathF.Max(lineHeight, mark);
-        foreach (var line in model.Requirements)
-        {
-            // Met is a check, unmet a cross: a moon means a quest state or a fraction only (accessibility B2).
-            var pos = ImGui.GetCursorScreenPos();
-            ImGui.Dummy(new Vector2(box, lineHeight));
-            Marks.Draw(dl, pos + new Vector2(box * 0.5f, lineHeight * 0.5f), mark, line.Met ? Mark.Check : Mark.Cross);
-            if (ImGui.IsItemHovered())
-            {
-                UiMetrics.Tooltip(line.Met ? Strings.MetTooltip : Strings.UnmetTooltip);
-            }
-
-            ImGui.SameLine();
-            using (Theme.PushText(line.IsNext ? Theme.Moon : Theme.Surface.Text))
-            {
-                ImGui.TextUnformatted(line.Label);
-            }
-
-            if (line.Detail.Length > 0)
-            {
-                ImGui.SameLine();
-                using var mist = Theme.PushText(Theme.Surface.TextSecondary);
-                ImGui.TextWrapped(line.Detail);
-            }
-
-            if (line.IsNext)
-            {
-                var bottom = ImGui.GetItemRectMax().Y;
-                var x = cardLeft + UiMetrics.Px(1f);
-                dl.AddRectFilled(new Vector2(x, pos.Y - UiMetrics.Px(1f)), new Vector2(x + MathF.Max(2f, UiMetrics.Px(2f)), bottom + UiMetrics.Px(1f)), Theme.MoonU32);
-            }
+            TextFlow.Wrapped(note, RoomTo(cardRight), Theme.U32(Theme.Surface.TextSecondary));
         }
     }
 
@@ -712,20 +723,16 @@ public sealed partial class DetailPane
     /// </summary>
     private void DrawUnique(IUniqueOverrides overrides, uint rowId)
     {
+        // Every line wraps between words and each button moves to the next line rather than run off the card (L5).
         if (overrides.Get(rowId) is { } stored)
         {
-            using (Theme.PushText(stored.Unique ? Theme.Surface.Text : Theme.Surface.TextSecondary))
-            {
-                ImGui.TextUnformatted(stored.Unique ? Strings.MarkedUniqueByYou : Strings.MarkedNotUniqueByYou);
-            }
-
+            TextFlow.Wrapped(stored.Unique ? Strings.MarkedUniqueByYou : Strings.MarkedNotUniqueByYou, RoomTo(cardRight), Theme.U32(stored.Unique ? Theme.Surface.Text : Theme.Surface.TextSecondary));
             if (stored.Note is { Length: > 0 } note)
             {
-                ImGui.SameLine();
-                ImGui.TextDisabled(note);
+                TextFlow.Wrapped(note, RoomTo(cardRight), Theme.U32(Theme.Surface.TextDisabled));
             }
 
-            ImGui.SameLine();
+            SameLineOrWrap(SmallButtonWidth(Strings.RestoreOverride), cardRight);
             if (ImGui.SmallButton(Strings.RestoreOverride))
             {
                 overrides.Clear(rowId);
@@ -738,12 +745,12 @@ public sealed partial class DetailPane
         }
         else if (model.HasUniqueEntries)
         {
-            ImGui.TextDisabled(Strings.ListedInMoonlit);
+            TextFlow.Wrapped(Strings.ListedInMoonlit, RoomTo(cardRight), Theme.U32(Theme.Surface.TextDisabled));
         }
         else
         {
-            ImGui.TextDisabled(Strings.NotListedInMoonlit);
-            ImGui.SameLine();
+            TextFlow.Wrapped(Strings.NotListedInMoonlit, RoomTo(cardRight), Theme.U32(Theme.Surface.TextDisabled));
+            SameLineOrWrap(SmallButtonWidth(Strings.MarkUnique), cardRight);
             if (ImGui.SmallButton(Strings.MarkUnique))
             {
                 verdict.Open(rowId, true, model.DisplayName);
@@ -762,7 +769,9 @@ public sealed partial class DetailPane
 
     /// <summary>
     /// "Chain: name · N of M done · next: quest" with a filling halo at its left, at the top of the Path card (the only
-    /// place the chain is shown); the next quest's name selects it. Nothing is drawn for a quest outside every chain.
+    /// place the chain is shown); the next quest's name selects it. The chain text wraps between words beside the halo,
+    /// and "next: quest" follows on the same line while it fits, else on its own line under the text, the name ending
+    /// in an ellipsis when even that is too narrow (L5). Nothing is drawn for a quest outside every chain.
     /// </summary>
     private void DrawChain()
     {
@@ -779,16 +788,29 @@ public sealed partial class DetailPane
             UiMetrics.Tooltip(model.ChainHaloTooltip);
         }
 
-        // The glyph box is taller than a text line; centre the text on it.
+        // The glyph box is taller than a text line; centre the text's first line on it.
         ImGui.SameLine();
+        var textLeft = ImGui.GetCursorScreenPos().X;
+        var room = RoomTo(cardRight);
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + ((size - lineHeight) * 0.5f));
-        using (Theme.PushText(Theme.Surface.TextSecondary))
+        TextFlow.Wrapped(text, room, Theme.U32(Theme.Surface.TextSecondary));
+        var oneLine = ImGui.GetItemRectSize().Y <= lineHeight + 0.5f;
+        var textEnd = ImGui.GetItemRectMax().X;
+
+        var spacing = ImGui.GetStyle().ItemSpacing.X;
+        var tail = model.ChainNextName is { } next
+            ? ImGui.CalcTextSize(Strings.DetailChainNext).X + spacing + MathF.Min(ImGui.CalcTextSize(next).X, UiMetrics.Px(80f))
+            : ImGui.CalcTextSize(Strings.DetailChainComplete).X;
+        if (oneLine && textEnd + spacing + tail <= cardRight)
         {
-            ImGui.TextUnformatted(text);
+            ImGui.SameLine();
+        }
+        else
+        {
+            ImGui.SetCursorScreenPos(new Vector2(textLeft, ImGui.GetCursorScreenPos().Y));
         }
 
-        ImGui.SameLine();
-        if (model.ChainNextName is not { } next)
+        if (model.ChainNextName is not { } nextName)
         {
             using var done = Theme.PushText(Theme.AccentDim);
             ImGui.TextUnformatted(Strings.DetailChainComplete);
@@ -797,39 +819,48 @@ public sealed partial class DetailPane
 
         ImGui.TextDisabled(Strings.DetailChainNext);
         ImGui.SameLine();
-        using (Theme.PushText(Theme.Moon))
+        var nameWidth = ImGui.CalcTextSize(nextName).X;
+        var nameRoom = MathF.Max(UiMetrics.Px(24f), MathF.Min(nameWidth, RoomTo(cardRight)));
+        var min = ImGui.GetCursorScreenPos();
+        var clicked = ImGui.InvisibleButton("##chainNext", new Vector2(nameRoom, lineHeight));
+        var hovered = ImGui.IsItemHovered();
+        var ink = hovered ? Theme.Surface.Text : Theme.Moon;
+        var cut = Chrome.EllipsisTextAt(ImGui.GetWindowDrawList(), min, nameRoom, nextName, Theme.U32(ink), nameWidth);
+        Chrome.FocusRing(UiMetrics.Px(3f));
+        if (clicked)
         {
-            if (ImGui.Selectable(next, false, ImGuiSelectableFlags.None, ImGui.CalcTextSize(next)))
-            {
-                RevealRow(model.ChainNextRowId);
-            }
+            RevealRow(model.ChainNextRowId);
         }
 
-        if (ImGui.IsItemHovered())
+        if (hovered)
         {
             ImGui.SetMouseCursor(ImGuiMouseCursor.Hand);
-            UiMetrics.Tooltip(Strings.DetailChainNextTooltip);
+            if (cut)
+            {
+                UiMetrics.Tooltip(nextName, Strings.DetailChainNextTooltip);
+            }
+            else
+            {
+                UiMetrics.Tooltip(Strings.DetailChainNextTooltip);
+            }
         }
     }
 
     private void DrawGiver()
     {
-        if (model.GiverName is null)
+        if (model.GiverName is not { } giver)
         {
             ImGui.TextDisabled(Strings.NoGiver);
             return;
         }
 
-        ImGui.TextUnformatted(model.GiverName);
-        using var mist = Theme.PushText(Theme.Surface.TextSecondary);
-        if (model.PlaceLine is { } place)
+        // The giver's name ends in an ellipsis when it is too long for the card, with the whole name on hover (L5).
+        if (Chrome.EllipsisText(giver, RoomTo(cardRight), Theme.U32(Theme.Surface.Text)) && ImGui.IsItemHovered())
         {
-            ImGui.TextWrapped(place);
+            UiMetrics.Tooltip(giver);
         }
-        else
-        {
-            ImGui.TextUnformatted(Strings.DetailNoGiverPlace);
-        }
+
+        TextFlow.Wrapped(model.PlaceLine ?? Strings.DetailNoGiverPlace, RoomTo(cardRight), Theme.U32(Theme.Surface.TextSecondary));
     }
 
     // ------------------------------------------------------------------ action bar
@@ -850,8 +881,16 @@ public sealed partial class DetailPane
     /// <summary>Round buttons after the primary action: Pin, Show path, Route to this, Link, Copy, Journal, Report (when attached), Flag (when Teleport leads), "…" (the Questionable hand-off, when shown).</summary>
     private int IconButtonCount => 6 + (Diagnostics is null ? 0 : 1) + (links.TeleportAvailable ? 1 : 0) + (ShowsQuestionableMore ? 1 : 0);
 
+    /// <summary>Under the pane's floor (<see cref="DetailTier.Compact"/>) the primary action is an icon button, its label in the tooltip (L5).</summary>
+    private bool PrimaryIconOnly => tier == DetailTier.Compact;
+
     private float PrimaryWidth()
     {
+        if (PrimaryIconOnly)
+        {
+            return UiMetrics.MinTarget;
+        }
+
         var label = links.TeleportAvailable ? Strings.ActionTeleport : Strings.FlagOnMap;
         ImGui.PushFont(UiBuilder.IconFont);
         var icon = ImGui.CalcTextSize(TeleportIcon).X;
@@ -945,7 +984,7 @@ public sealed partial class DetailPane
             }
 
             var tip = links.TeleportBusy ? Strings.TeleportBusy : teleportTip;
-            if (PrimaryButton("##teleport", TeleportIcon, Strings.ActionTeleport, canTeleport, tip))
+            if (PrimaryButton("##teleport", TeleportIcon, PrimaryIconOnly ? null : Strings.ActionTeleport, canTeleport, tip))
             {
                 links.TeleportToGiver(quest);
             }
@@ -953,7 +992,7 @@ public sealed partial class DetailPane
         else
         {
             var canFlag = links.CanFlagMap(quest);
-            if (PrimaryButton("##flag", FlagIcon, Strings.FlagOnMap, canFlag, canFlag ? Strings.FlagOnMap : Strings.ActionFlagUnavailable))
+            if (PrimaryButton("##flag", FlagIcon, PrimaryIconOnly ? null : Strings.FlagOnMap, canFlag, canFlag ? Strings.FlagOnMap : Strings.ActionFlagUnavailable))
             {
                 links.FlagMap(quest);
             }
@@ -1027,16 +1066,17 @@ public sealed partial class DetailPane
     /// <summary>
     /// The labelled primary action: a pill of <see cref="UiMetrics.MinTarget"/> height, Moon at 16 % with Moon text
     /// (22 % hovered, 28 % held); disabled, a neutral pill with the reason in the tooltip. Focusable, with the ring.
+    /// Without a <paramref name="label"/> it is a round icon button of the same height (the compact tier).
     /// </summary>
-    private static bool PrimaryButton(string id, string icon, string label, bool enabled, string tooltip)
+    private static bool PrimaryButton(string id, string icon, string? label, bool enabled, string tooltip)
     {
         var height = UiMetrics.MinTarget;
         ImGui.PushFont(UiBuilder.IconFont);
         var iconSize = ImGui.CalcTextSize(icon);
         ImGui.PopFont();
-        var labelSize = ImGui.CalcTextSize(label);
-        var padX = UiMetrics.Px(12f);
-        var size = new Vector2(padX + iconSize.X + UiMetrics.Px(6f) + labelSize.X + UiMetrics.Px(14f), height);
+        var labelSize = label is null ? Vector2.Zero : ImGui.CalcTextSize(label);
+        var padX = label is null ? (height - iconSize.X) * 0.5f : UiMetrics.Px(12f);
+        var size = label is null ? new Vector2(height, height) : new Vector2(padX + iconSize.X + UiMetrics.Px(6f) + labelSize.X + UiMetrics.Px(14f), height);
         var min = ImGui.GetCursorScreenPos();
         ImGui.BeginDisabled(!enabled);
         var clicked = ImGui.InvisibleButton(id, size);
@@ -1062,7 +1102,11 @@ public sealed partial class DetailPane
         ImGui.PushFont(UiBuilder.IconFont);
         dl.AddText(new Vector2(min.X + padX, min.Y + ((height - iconSize.Y) * 0.5f)), ink, icon);
         ImGui.PopFont();
-        dl.AddText(new Vector2(min.X + padX + iconSize.X + UiMetrics.Px(6f), min.Y + ((height - labelSize.Y) * 0.5f)), ink, label);
+        if (label is not null)
+        {
+            dl.AddText(new Vector2(min.X + padX + iconSize.X + UiMetrics.Px(6f), min.Y + ((height - labelSize.Y) * 0.5f)), ink, label);
+        }
+
         Chrome.FocusRing(rounding);
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
@@ -1103,9 +1147,11 @@ public sealed partial class DetailPane
             provenance = BuildProvenance(session);
         }
 
-        ImGui.PushStyleColor(ImGuiCol.Text, Theme.Surface.TextTertiary);
-        ImGui.TextUnformatted(provenance);
-        ImGui.PopStyleColor();
+        // One line whatever the width (the bar's height counts one caption line): ellipsised, whole on hover.
+        if (Chrome.EllipsisText(provenance, ImGui.GetContentRegionAvail().X, Theme.U32(Theme.Surface.TextTertiary)) && ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(provenance);
+        }
     }
 
     /// <summary>What the provenance line depends on; a new key composes the line again.</summary>
@@ -1162,6 +1208,11 @@ public sealed partial class DetailPane
         model.RequirementsCaption = string.Empty;
         model.RewardsCaption = string.Empty;
         model.Evaluation = null;
+        model.Callout = null;
+        model.CalloutDetail = null;
+        model.UnmetCount = 0;
+        model.HeaderSegments = [];
+        model.JournalSegments = [];
         lastNames = session.Names;
         lastStates = session.States;
 
@@ -1187,9 +1238,7 @@ public sealed partial class DetailPane
         model.StatusReason = status.StartsWith(prefix, StringComparison.Ordinal) ? status[prefix.Length..] : status == model.StateName ? string.Empty : status;
         model.HasUniqueEntries = HasShippedUniqueEntry(session.UniqueRewards, rowId);
 
-        model.JournalPath = quest.IsUnlisted
-            ? Strings.RemovedFromGame
-            : string.Format(CultureInfo.CurrentCulture, Strings.JournalPathFormat, quest.Journal.GenreName, quest.Journal.CategoryName);
+        model.JournalSegments = quest.IsUnlisted ? [Strings.RemovedFromGame] : [quest.Journal.GenreName, quest.Journal.CategoryName];
         model.FilingLine = FilingLine(quest, session.Curated);
         model.QuirkNote = session.Curated.Quirks.TryGetValue(rowId, out var quirk) ? WhyText.NoteLine(quirk.Note) : null;
         var jobName = quest.ClassJobCategory <= 1 ? Strings.JobAny : links.ClassJobCategoryName(quest.ClassJobCategory);
@@ -1205,6 +1254,9 @@ public sealed partial class DetailPane
             model.HeaderLine += string.Format(CultureInfo.CurrentCulture, Strings.DetailAddedInFormat, quest.AddedIn);
         }
 
+        // The caption line as whole segments ("Heavensward", "Lv 56", the job, "Added in 3.0") that wrap apart (L5).
+        model.HeaderSegments = model.HeaderLine.Split(BlockerText.Separator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
         if (evaluation is not null)
         {
             // The status line already carries the step ("In journal · step 3 of 7") and the blocker; only the job
@@ -1219,6 +1271,10 @@ public sealed partial class DetailPane
                 model.StateNote = PathText.Detail(path, session.Names.GrandCompany);
             }
 
+            // What stands in the way, in one line at the top (L8); a path not taken keeps its D1 line under it.
+            model.Callout = NotYetText.Callout(evaluation, quest, session.Names, session.States);
+            model.CalloutDetail = model.Callout is not null && evaluation.OtherPath is not null ? model.StateNote : null;
+
             var unmet = 0;
             foreach (var result in evaluation.Requirements)
             {
@@ -1231,10 +1287,11 @@ public sealed partial class DetailPane
                     ForeclosureRequirement f => spoilers.MaskNamesIn(clause, bundle.Catalog, f.CompletedLockIds),
                     _ => clause,
                 };
-                model.Requirements.Add(new RequirementLine(result.Met, ReferenceEquals(result, evaluation.NextStep), Strings.RequirementName(result.Req.Kind), detail));
+                model.Requirements.Add(UnmetLine(session, bundle, quest, result, ReferenceEquals(result, evaluation.NextStep), detail));
                 unmet += result.Met ? 0 : 1;
             }
 
+            model.UnmetCount = unmet;
             if (model.Requirements.Count > 0)
             {
                 model.RequirementsCaption = unmet == 0

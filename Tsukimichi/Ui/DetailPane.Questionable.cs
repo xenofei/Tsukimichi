@@ -110,7 +110,7 @@ public sealed partial class DetailPane
         if (questionableNote is { } note && questionableNoteRowId == quest.RowId && ImGui.GetTime() < questionableNoteUntil)
         {
             using var mist = Theme.PushText(Theme.Surface.TextSecondary);
-            ImGui.TextWrapped(note);
+            TextFlow.Wrapped(note, RoomTo(bodyRight));
             return;
         }
 
@@ -121,7 +121,7 @@ public sealed partial class DetailPane
 
         using (Theme.PushText(questionableDisagrees ? Theme.Surface.Text : Theme.Surface.TextSecondary))
         {
-            ImGui.TextWrapped(line);
+            TextFlow.Wrapped(line, RoomTo(bodyRight));
         }
 
         if (ImGui.IsItemHovered())

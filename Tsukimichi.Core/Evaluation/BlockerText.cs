@@ -312,10 +312,26 @@ public static class BlockerText
             return F("Core.Blocker.After", "after: {0}", AnotherChoice);
         }
 
-        var chosen = ids[0];
-        var found = false;
+        var chosen = NearestPrerequisite(p, names.Catalog, states) ?? ids[0];
+        var quest = names.Catalog.GetByRowId(chosen);
+        return quest is not null && FeaturePresets.IsMainScenario(quest)
+            ? F("Core.Blocker.AfterMsq", "after MSQ: {0}", QuestName(names, chosen))
+            : F("Core.Blocker.After", "after: {0}", QuestName(names, chosen));
+    }
+
+    /// <summary>
+    /// The prerequisite the blocker line names, and the one the detail pane's jump button selects: the first listed
+    /// one still to do; through an Any join, with <paramref name="states"/> at hand, the one whose path has the fewest
+    /// quests left (ties to the lowest row id), another path's line last. Null when every prerequisite is done or
+    /// there is none.
+    /// </summary>
+    public static uint? NearestPrerequisite(PreviousQuestsRequirement p, QuestCatalog catalog, IReadOnlyDictionary<uint, QuestEvaluation>? states)
+    {
+        ArgumentNullException.ThrowIfNull(p);
+        ArgumentNullException.ThrowIfNull(catalog);
+        uint? chosen = null;
         var bestRemaining = int.MaxValue;
-        foreach (var id in ids)
+        foreach (var id in p.QuestIds)
         {
             if (IsDone(id, p, states))
             {
@@ -324,26 +340,21 @@ public static class BlockerText
 
             if (p.Join != JoinKind.Any || states is null)
             {
-                chosen = id;
-                break;
+                return id;
             }
 
             // Another city's or class's line is never the one to name while the character's own is open.
             var remaining = states.TryGetValue(id, out var evaluation) && evaluation.IsOtherPath ? int.MaxValue - 1
-                : names.Catalog.ByRowId.ContainsKey(id) ? PathFinder.RemainingCount(id, names.Catalog, states)
+                : catalog.ByRowId.ContainsKey(id) ? PathFinder.RemainingCount(id, catalog, states)
                 : int.MaxValue;
-            if (!found || remaining < bestRemaining || (remaining == bestRemaining && id < chosen))
+            if (chosen is not { } best || remaining < bestRemaining || (remaining == bestRemaining && id < best))
             {
                 chosen = id;
                 bestRemaining = remaining;
-                found = true;
             }
         }
 
-        var quest = names.Catalog.GetByRowId(chosen);
-        return quest is not null && FeaturePresets.IsMainScenario(quest)
-            ? F("Core.Blocker.AfterMsq", "after MSQ: {0}", QuestName(names, chosen))
-            : F("Core.Blocker.After", "after: {0}", QuestName(names, chosen));
+        return chosen;
     }
 
     private static bool IsDone(uint rowId, PreviousQuestsRequirement p, IReadOnlyDictionary<uint, QuestEvaluation>? states)

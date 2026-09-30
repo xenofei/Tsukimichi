@@ -40,6 +40,10 @@ static partial class Strings
     /// <summary>The chain halo's tooltip: {0} = quests done, {1} = quests in the chain.</summary>
     public static string DetailChainHaloTooltipFormat => Loc.Get("DetailChainHaloTooltipFormat");
 
+    // ---- Requirements you do not meet (L8) ----
+    /// <summary>A jump button's tooltip: {0} = the quest that clears the requirement.</summary>
+    public static string DetailJumpTooltipFormat => Loc.Get("DetailJumpTooltipFormat");
+
     // ---- Path (star chart) ----
     /// <summary>{0} = steps on the path, {1} = steps done.</summary>
     public static string PathCaptionFormat => Loc.Get("PathCaptionFormat");
