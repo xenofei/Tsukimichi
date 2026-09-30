@@ -853,12 +853,55 @@ public sealed class DetailPane
         return UiMetrics.Px(12f) + icon + UiMetrics.Px(6f) + ImGui.CalcTextSize(label).X + UiMetrics.Px(14f);
     }
 
-    /// <summary>The bar's rows: one when everything fits the pane's width, else the round buttons wrap to a second.</summary>
+    /// <summary>
+    /// The gap between round buttons: half the usual item spacing, so the primary action and every round button fit
+    /// one row at the default right-column width (each button keeps its full <see cref="UiMetrics.MinTarget"/>).
+    /// </summary>
+    private static float RoundGap => UiMetrics.Px(4f);
+
+    /// <summary>
+    /// The bar's rows as <see cref="DrawActionBar"/> flows them: the round buttons follow the primary action and wrap
+    /// onto as many rows as the pane's width needs, so on a narrow column every button stays reachable.
+    /// </summary>
     private int ActionRows(float width)
     {
-        var spacing = ImGui.GetStyle().ItemSpacing.X;
-        var total = PrimaryWidth() + (IconButtonCount * (UiMetrics.MinTarget + spacing));
-        return total <= width ? 1 : 2;
+        var rows = 1;
+        var used = PrimaryWidth();
+        for (var i = 0; i < IconButtonCount; i++)
+        {
+            if (!FitsOnRow(ref used, width))
+            {
+                rows++;
+            }
+        }
+
+        return rows;
+    }
+
+    /// <summary>
+    /// Whether the next round button fits after <paramref name="used"/> on the current row; advances
+    /// <paramref name="used"/> either way (to the new row's first button when it does not fit).
+    /// </summary>
+    private static bool FitsOnRow(ref float used, float width)
+    {
+        var need = RoundGap + UiMetrics.MinTarget;
+        if (used + need <= width)
+        {
+            used += need;
+            return true;
+        }
+
+        used = UiMetrics.MinTarget;
+        return false;
+    }
+
+    /// <summary>Places the next round button: beside the previous item when it fits, else at the start of a new row.</summary>
+    private static void NextRound(ref float used, float width)
+    {
+        if (FitsOnRow(ref used, width))
+        {
+            ImGui.SameLine(0f, RoundGap);
+        }
     }
 
     /// <summary>
@@ -881,7 +924,7 @@ public sealed class DetailPane
     {
         Chrome.Hairline();
         var width = ImGui.GetContentRegionAvail().X;
-        var wrap = ActionRows(width) > 1;
+        var used = PrimaryWidth();
         var teleportLeads = links.TeleportAvailable;
         if (teleportLeads)
         {
@@ -910,11 +953,7 @@ public sealed class DetailPane
             }
         }
 
-        if (!wrap)
-        {
-            ImGui.SameLine();
-        }
-
+        NextRound(ref used, width);
         var pinned = model.Pinned;
         var canPin = runner.CanPin;
         if (Chrome.IconButtonRound("##pin", PinIcon, !canPin ? Strings.ActionPinUnavailable : pinned ? Strings.ActionUnpinTooltip : Strings.ActionPinTooltip, pinned, canPin))
@@ -922,25 +961,25 @@ public sealed class DetailPane
             runner.TogglePin(rowId);
         }
 
-        ImGui.SameLine();
+        NextRound(ref used, width);
         if (Chrome.IconButtonRound("##showPath", ShowPathIcon, Strings.ActionShowPathTooltip))
         {
             ui.ShowPath(rowId);
         }
 
-        ImGui.SameLine();
+        NextRound(ref used, width);
         if (Chrome.IconButtonRound("##route", RouteIcon, Strings.RouteToThisTooltip))
         {
             ui.OpenRoute(Core.Route.RouteTarget.ForQuest(rowId, model.DisplayName));
         }
 
-        ImGui.SameLine();
+        NextRound(ref used, width);
         if (Chrome.IconButtonRound("##link", LinkIcon, Strings.LinkInChat))
         {
             links.PrintQuestLink(quest);
         }
 
-        ImGui.SameLine();
+        NextRound(ref used, width);
         var hasCoordinates = model.CoordinateText is not null;
         if (Chrome.IconButtonRound("##copy", CopyIcon, hasCoordinates ? Strings.CopyCoordinatesTooltip : Strings.ActionCopyCoordinatesUnavailable, enabled: hasCoordinates)
             && links.CoordinateText(quest) is { } coordinates)
@@ -948,7 +987,7 @@ public sealed class DetailPane
             ImGui.SetClipboardText(coordinates);
         }
 
-        ImGui.SameLine();
+        NextRound(ref used, width);
         var canOpen = GameLinks.CanOpenJournal(quest, model.State);
         if (Chrome.IconButtonRound("##journal", JournalIcon, canOpen ? Strings.OpenJournal : Strings.OpenJournalUnavailable, enabled: canOpen))
         {
@@ -957,7 +996,7 @@ public sealed class DetailPane
 
         if (Diagnostics is { } diagnostics)
         {
-            ImGui.SameLine();
+            NextRound(ref used, width);
             if (Chrome.IconButtonRound("##report", ReportIcon, Strings.ReportTooltip))
             {
                 var copied = DiagnosticBuilder.TryCopy(diagnostics.Compose(quest), log ?? Plugin.Log);
@@ -968,7 +1007,7 @@ public sealed class DetailPane
 
         if (teleportLeads)
         {
-            ImGui.SameLine();
+            NextRound(ref used, width);
             var canFlag = links.CanFlagMap(quest);
             if (Chrome.IconButtonRound("##flagIcon", FlagIcon, canFlag ? Strings.FlagOnMap : Strings.ActionFlagUnavailable, enabled: canFlag))
             {
