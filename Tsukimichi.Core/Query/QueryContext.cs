@@ -25,6 +25,11 @@ namespace Tsukimichi.Core.Query;
 /// Sprout mode without a limit.
 /// </param>
 /// <param name="Stories">The story sidequests and side stories for the Story sidequests preset; null keeps nothing under it.</param>
+/// <param name="JournalHits">
+/// Row ids whose journal text matches the whole search (P9, <see cref="Text.JournalTextIndex"/>), already limited to
+/// the quests the viewed character completed; such a quest passes the search even when its name does not match. Null
+/// when journal search is off, not ready, or the query has nothing to look for in the journal.
+/// </param>
 public sealed record QueryContext(
     IReadOnlySet<ushort> ActiveFestivals,
     IReadOnlySet<uint> Pinned,
@@ -39,7 +44,8 @@ public sealed record QueryContext(
     BlockerNames? Names = null,
     IReadOnlySet<ushort>? Abandoned = null,
     SpoilerMask? Spoilers = null,
-    StorySidequests? Stories = null)
+    StorySidequests? Stories = null,
+    IReadOnlySet<uint>? JournalHits = null)
 {
     public const int DefaultStalledDays = 7;
 

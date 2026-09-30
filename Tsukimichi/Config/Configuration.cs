@@ -324,6 +324,14 @@ public sealed class Configuration : IPluginConfiguration
         return any;
     }
 
+    // ---- 1.1: journal text (P9) ----
+    /// <summary>
+    /// Settings › Journal text › "Search journal text of completed quests": the search box also matches the words of
+    /// the journal entries of quests the viewed character completed, through a word index built once per game version
+    /// (<c>Game.QuestTextService</c>). Off by default.
+    /// </summary>
+    public bool JournalTextSearch { get; set; }
+
     /// <summary>Poll interval as a <see cref="TimeSpan"/> within the allowed bounds.</summary>
     public TimeSpan PollInterval
     {

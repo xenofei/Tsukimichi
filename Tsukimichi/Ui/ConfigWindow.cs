@@ -27,7 +27,7 @@ namespace Tsukimichi.Ui;
 /// reward-data and catalog stamps plus the poll timing. Every change is saved as it happens; sliders save when
 /// released.
 /// </summary>
-public sealed class ConfigWindow : Window
+public sealed partial class ConfigWindow : Window
 {
     private static readonly TimeSpan ToastDuration = TimeSpan.FromSeconds(8);
     private static readonly string RestoreAllLabel = Strings.ConfigVerdictRestoreAll + Chrome.HoldIdSuffix;
@@ -177,6 +177,8 @@ public sealed class ConfigWindow : Window
         DrawNotices();
         ImGui.Spacing();
         DrawJournal();
+        ImGui.Spacing();
+        DrawJournalText();
         ImGui.Spacing();
         DrawSpoilers();
         ImGui.Spacing();

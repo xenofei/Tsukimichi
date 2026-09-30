@@ -44,6 +44,9 @@ public sealed class QueryRunner : IDisposable
     private bool searchDirty;
     private long ranStalledHour;
 
+    // The journal search index version the rows were computed with (P9); a newly ready or dropped index re-runs the query.
+    private int journalVersion = -1;
+
     // Counts cache keys.
     private int countsVersion = -1;
     private bool countsIncludeUnlisted;
@@ -282,6 +285,9 @@ public sealed class QueryRunner : IDisposable
             jobShort.Clear();
         }
 
+        // Journal text (P9): loads or builds the search index once it is wanted and the catalog exists.
+        plugin.QuestText?.Update(current.Catalog);
+
         var includeUnlisted = ui.Filters.IncludeUnlisted;
         if (catalogChanged || countsVersion != session.Version || countsIncludeUnlisted != includeUnlisted || Counts is null)
         {
@@ -300,6 +306,7 @@ public sealed class QueryRunner : IDisposable
             || sort != ui.Sort
             || searchDirty
             || stalledHour != ranStalledHour
+            || journalVersion != (plugin.QuestText?.Version ?? 0)
             || !filtersSnapshot.Equals(ui.Filters);
 
         if (dirty)
@@ -505,7 +512,8 @@ public sealed class QueryRunner : IDisposable
             Names: session.Names,
             Abandoned: AbandonedIds(session),
             Spoilers: session.Spoilers,
-            Stories: session.Stories);
+            Stories: session.Stories,
+            JournalHits: plugin.Settings.JournalTextSearch ? plugin.QuestText?.MatchCompleted(appliedSearch, session.States) : null);
 
         // The Unlocks quick view reads best with its unlocks from the newest patch series on top (P8), then what can be picked up
         // now; the other presets keep the table's sort.
@@ -527,6 +535,7 @@ public sealed class QueryRunner : IDisposable
                 result.NewThisPatch);
 
         sessionVersion = session.Version;
+        journalVersion = plugin.QuestText?.Version ?? 0;
         queryVersion = ui.QueryVersion;
         scope = ui.Scope;
         sort = ui.Sort;

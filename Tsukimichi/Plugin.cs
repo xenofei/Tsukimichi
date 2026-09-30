@@ -502,6 +502,7 @@ public sealed class Plugin : IDalamudPlugin
             // Journal text (P9): the detail pane's Journal card, and with Settings › Journal text the search box's journal
             // words, from an index kept per game version under the config directory.
             QuestText = new Game.QuestTextService(DataManager, SeStringEvaluator, Log, Paths.ConfigDir, clientGameVersion);
+            QuestText.SetEnabled(Settings.JournalTextSearch);
             mainWindow.AttachQuestText(QuestText);
             var report = new ReportCommand(Session, ui, gameLinks, diagnostics, Log);
             command.Report = report.Run;
@@ -557,6 +558,7 @@ public sealed class Plugin : IDalamudPlugin
 
             configWindow = new ConfigWindow(Settings, Session, PluginInterface, diagnostics, _ => ui.MarkQueryDirty());
             configWindow.Overrides = moonlitPane;
+            configWindow.QuestText = QuestText;
             // Exports (P12): Settings › Data › Export and /tsuki export write local files; nothing is uploaded.
             var exportService = new Game.ExportService(Session, Settings, Paths, unlockReader, () => moonlit.Catalog, diagnostics.PluginVersion, diagnostics.ClientGameVersion, Log);
             configWindow.Export = new ExportSection(Settings, exportService, () => Settings.Save(PluginInterface), Log);
