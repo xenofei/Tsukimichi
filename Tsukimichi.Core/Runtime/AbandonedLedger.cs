@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Storage;
@@ -15,10 +16,12 @@ namespace Tsukimichi.Core.Runtime;
 /// <param name="StepCount">The quest's step count (<see cref="QuestRecord.StepCount"/>) when it was recorded; 0 when the sheet lists none.</param>
 public sealed record AbandonedEntry(ushort QuestId, DateTime AbandonedUtc, byte Sequence, byte StepCount)
 {
-    /// <summary>Catalog row id of <see cref="QuestId"/>.</summary>
+    /// <summary>Catalog row id of <see cref="QuestId"/>. Derived, so never written to the sidecar.</summary>
+    [JsonIgnore]
     public uint RowId => 0x10000u | QuestId;
 
-    /// <summary>"step 3 of 5", "step 3" without a step count, or empty when the step was not known.</summary>
+    /// <summary>"step 3 of 5", "step 3" without a step count, or empty when the step was not known. Derived, so never written to the sidecar.</summary>
+    [JsonIgnore]
     public string StepText => Sequence == 0 ? string.Empty : BlockerText.StepText(Sequence, StepCount);
 }
 

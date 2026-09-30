@@ -1,5 +1,6 @@
 using System.Collections.Frozen;
 using System.Globalization;
+using System.Text;
 using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Runtime;
@@ -109,6 +110,23 @@ public sealed class SpoilerMask
     }
 
     /// <summary>
+    /// Compares two quests by the name they print, case-insensitively: the order of the table's Name column. Two
+    /// masked quests compare by their placeholders' display level as a number, so "Main scenario quest (Lv 90)"
+    /// comes before "(Lv 100)"; placeholders of one level keep their journal order (0 here, the caller's tiebreak).
+    /// </summary>
+    public int CompareDisplayNames(QuestRecord a, QuestRecord b)
+    {
+        ArgumentNullException.ThrowIfNull(a);
+        ArgumentNullException.ThrowIfNull(b);
+        if (masked.TryGetValue(a.RowId, out var levelA) && masked.TryGetValue(b.RowId, out var levelB))
+        {
+            return levelA.CompareTo(levelB);
+        }
+
+        return string.Compare(DisplayName(a), DisplayName(b), StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
     /// The lowercased placeholder a masked quest is searched by, or null when the quest is not masked and its own
     /// name is searched (<see cref="SearchIndex.Matches(uint, string, SpoilerMask?)"/>).
     /// </summary>
@@ -136,26 +154,97 @@ public sealed class SpoilerMask
     /// Replaces every masked quest name among <paramref name="rowIds"/> inside <paramref name="text"/> with its
     /// placeholder: for text built before the mask (a requirement's detail line naming its prerequisite). Returns the
     /// input when nothing is masked.
+    /// <para>
+    /// The text is scanned once, left to right, trying the listed names longest first and only where a name stands
+    /// on word boundaries. So a masked name inside a longer listed name ("Endwalker" in "Endwalker - The Final
+    /// Days", masked or not) or inside a word is left alone, and one replacement never feeds the next.
+    /// </para>
     /// </summary>
     public string MaskNamesIn(string text, QuestCatalog catalog, IReadOnlyList<uint> rowIds)
     {
         ArgumentNullException.ThrowIfNull(text);
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(rowIds);
-        if (masked.Count == 0)
+        if (masked.Count == 0 || text.Length == 0)
         {
             return text;
         }
 
+        // Every listed name, masked (with its placeholder) or not (kept as is, so a masked name inside it is not
+        // touched), longest first.
+        var names = new List<(string Name, string? Placeholder)>(rowIds.Count);
+        var anyMasked = false;
         foreach (var rowId in rowIds)
         {
-            if (masked.TryGetValue(rowId, out var level) && catalog.GetByRowId(rowId) is { Name.Length: > 0 } quest)
+            if (catalog.GetByRowId(rowId) is not { Name.Length: > 0 } quest)
             {
-                text = text.Replace(quest.Name, PlaceholderFor(level), StringComparison.Ordinal);
+                continue;
+            }
+
+            string? placeholder = masked.TryGetValue(rowId, out var level) ? PlaceholderFor(level) : null;
+            anyMasked |= placeholder is not null;
+            names.Add((quest.Name, placeholder));
+        }
+
+        if (!anyMasked)
+        {
+            return text;
+        }
+
+        names.Sort(static (a, b) => b.Name.Length != a.Name.Length ? b.Name.Length.CompareTo(a.Name.Length) : string.CompareOrdinal(a.Name, b.Name));
+
+        StringBuilder? sb = null;
+        var copied = 0;
+        var i = 0;
+        while (i < text.Length)
+        {
+            var matched = false;
+            foreach (var (name, placeholder) in names)
+            {
+                if (!MatchesAt(text, i, name))
+                {
+                    continue;
+                }
+
+                if (placeholder is not null)
+                {
+                    sb ??= new StringBuilder(text.Length);
+                    sb.Append(text, copied, i - copied).Append(placeholder);
+                    copied = i + name.Length;
+                }
+
+                i += name.Length;
+                matched = true;
+                break;
+            }
+
+            if (!matched)
+            {
+                i++;
             }
         }
 
-        return text;
+        return sb is null ? text : sb.Append(text, copied, text.Length - copied).ToString();
+    }
+
+    /// <summary>
+    /// Whether <paramref name="name"/> occurs at <paramref name="index"/> as a whole: a name that starts (ends) with a
+    /// letter or digit must not be preceded (followed) by one.
+    /// </summary>
+    private static bool MatchesAt(string text, int index, string name)
+    {
+        if (index + name.Length > text.Length || string.CompareOrdinal(text, index, name, 0, name.Length) != 0)
+        {
+            return false;
+        }
+
+        if (char.IsLetterOrDigit(name[0]) && index > 0 && char.IsLetterOrDigit(text[index - 1]))
+        {
+            return false;
+        }
+
+        var end = index + name.Length;
+        return !(char.IsLetterOrDigit(name[^1]) && end < text.Length && char.IsLetterOrDigit(text[end]));
     }
 
     /// <summary>The mask over evaluator output.</summary>

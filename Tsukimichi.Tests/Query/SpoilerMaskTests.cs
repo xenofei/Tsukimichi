@@ -296,9 +296,66 @@ public class SpoilerMaskTests
 
         var result = Run(Catalog, states, scope: QuestScope.Section(1), sort: SortSpec.Default with { Column = SortColumn.Name }, ctx: ctx);
 
-        // By name 6 ("A Vow…") leads; masked, "Main scenario quest (Lv 100)" leads "(Lv 90)" as text ('1' < '9').
-        Assert.Equal([7u, 6u], RowIds(result));
+        // Masked, both print as placeholders and order by their level as a number: "(Lv 90)" before "(Lv 100)",
+        // not as text, where '1' < '9' would put Lv 100 first.
+        Assert.Equal([6u, 7u], RowIds(result));
+        Assert.Equal([7u, 6u], RowIds(Run(Catalog, states, scope: QuestScope.Section(1), sort: SortSpec.Default with { Column = SortColumn.Name, Descending = true }, ctx: ctx)));
+
+        // Unmasked, by name: "A Vow of Virtue" (6) before "Secret Finale" (7).
         Assert.Equal([6u, 7u], RowIds(Run(Catalog, states, scope: QuestScope.Section(1), sort: SortSpec.Default with { Column = SortColumn.Name })));
+
+        // Placeholders sort among real names as text: "Coming to Gridania" (1, shown) before "Main scenario quest (…)".
+        var all = RowIds(Run(Catalog, states, scope: QuestScope.Section(0), sort: SortSpec.Default with { Column = SortColumn.Name }, ctx: ctx));
+        Assert.Equal(1u, all[0]);
+    }
+
+    [Fact]
+    public void Masked_names_compare_by_level_and_among_real_names_as_text()
+    {
+        var states = States((1, QuestState.Ready), (2, QuestState.Blocked), (3, QuestState.Blocked), (4, QuestState.Blocked), (5, QuestState.Blocked), (6, QuestState.Blocked), (7, QuestState.Blocked));
+        var mask = SpoilerMask.Build(Catalog, states, SpoilerOptions.Default with { Ahead = 0 });
+        var q = (uint id) => Catalog.GetByRowId(id)!;
+        Assert.True(mask.IsMasked(6) && mask.IsMasked(7) && !mask.IsMasked(1));
+
+        Assert.True(mask.CompareDisplayNames(q(6), q(7)) < 0);
+        Assert.True(mask.CompareDisplayNames(q(7), q(6)) > 0);
+        Assert.Equal(0, mask.CompareDisplayNames(q(6), q(6)));
+        Assert.True(mask.CompareDisplayNames(q(1), q(7)) < 0);
+        Assert.True(mask.CompareDisplayNames(q(20), q(7)) > 0);
+    }
+
+    [Fact]
+    public void Masking_names_in_text_replaces_longest_names_first_on_word_boundaries()
+    {
+        var catalog = QuestCatalog.Build(
+        [
+            Quest(1, "Start", section: 0, category: 1, genre: 1, sortKey: 10, level: 1),
+            Quest(2, "Endwalker Prologue", section: 0, category: 1, genre: 1, sortKey: 20, level: 80),
+            Quest(3, "Endwalker", section: 0, category: 1, genre: 1, sortKey: 30, level: 90),
+            Quest(4, "Endwalker Finale", section: 0, category: 1, genre: 1, sortKey: 40, level: 100),
+            Quest(5, "Home", section: 0, category: 1, genre: 1, sortKey: 50, level: 95),
+        ]);
+        var states = States((1, QuestState.Ready), (2, QuestState.Blocked), (3, QuestState.Blocked), (4, QuestState.Blocked), (5, QuestState.Blocked));
+        var mask = SpoilerMask.Build(catalog, states, SpoilerOptions.Default with { Ahead = 1 });
+        Assert.False(mask.IsMasked(2));
+        Assert.True(mask.IsMasked(3));
+        Assert.True(mask.IsMasked(4));
+        Assert.True(mask.IsMasked(5));
+
+        // Masked "Endwalker" inside masked "Endwalker Finale": the longer name wins whatever the list order.
+        Assert.Equal(
+            "needs Main scenario quest (Lv 100) and Main scenario quest (Lv 90)",
+            mask.MaskNamesIn("needs Endwalker Finale and Endwalker", catalog, [3u, 4u]));
+
+        // Masked "Endwalker" inside a listed name that is not masked stays as it is.
+        Assert.Equal(
+            "needs Endwalker Prologue and Main scenario quest (Lv 90)",
+            mask.MaskNamesIn("needs Endwalker Prologue and Endwalker", catalog, [3u, 2u]));
+
+        // Only whole words: "Home" inside "Homestead" is not a quest name.
+        Assert.Equal(
+            "Homestead, then Main scenario quest (Lv 95).",
+            mask.MaskNamesIn("Homestead, then Home.", catalog, [5u]));
     }
 
     [Fact]

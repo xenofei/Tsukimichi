@@ -232,4 +232,50 @@ public sealed class ExportWriterTests(FixtureCatalog fixture) : IClassFixture<Fi
         Assert.Equal(Path.Combine(Path.GetFullPath(dir), fileName), path);
         Assert.Equal("a,b\r\n", File.ReadAllText(path));
     }
+
+    [Fact]
+    public void Write_stages_in_the_staging_folder_and_leaves_no_temporary_file()
+    {
+        var dir = tmp.File("exports");
+        var staging = tmp.File("config");
+
+        var path = ExportWriter.Write(dir, "out.csv", "a,b\r\n", staging);
+
+        Assert.Equal("a,b\r\n", File.ReadAllText(path));
+        Assert.Equal([path], Directory.GetFiles(Path.GetFullPath(dir)));
+        Assert.Empty(Directory.GetFiles(staging));
+    }
+
+    [Fact]
+    public void A_failed_move_deletes_the_temporary_file()
+    {
+        var dir = tmp.File("exports");
+        var staging = tmp.File("config");
+        // The target name is taken by a folder, so the move into place fails after the temporary file was written.
+        Directory.CreateDirectory(Path.Combine(dir, "out.csv"));
+
+        Assert.ThrowsAny<Exception>(() => ExportWriter.Write(dir, "out.csv", "a,b\r\n", staging));
+
+        Assert.Empty(Directory.GetFiles(staging));
+        Assert.Empty(Directory.GetFiles(dir));
+    }
+
+    [Theory]
+    [InlineData("", @"C:\cfg\exports")]
+    [InlineData("   ", @"C:\cfg\exports")]
+    [InlineData(@"E:\My exports", @"E:\My exports")]
+    [InlineData(@"\\server\share\x", @"\\server\share\x")]
+    [InlineData("mine", @"C:\cfg\mine")]
+    [InlineData(@"\saved", @"C:\cfg\saved")]
+    [InlineData(@"D:saved", @"C:\cfg\saved")]
+    [InlineData(@"D:", @"C:\cfg\exports")]
+    public void Folder_resolves_rooted_but_relative_paths_under_the_config_directory(string configured, string expected)
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        Assert.Equal(expected, ExportWriter.ResolveFolder(configured, @"C:\cfg", @"C:\cfg\exports"));
+    }
 }

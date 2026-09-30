@@ -151,11 +151,15 @@ public sealed class HoverHint
                 continue;
             }
 
-            var evaluation = session.States.GetValueOrDefault(quest.RowId);
+            // The item is in the logged-in character's inventory: its state and blocker follow that character (and its
+            // spoiler shield), falling back to the viewed character when nobody is logged in.
+            var states = session.LiveStates.Count > 0 ? session.LiveStates : session.States;
+            var names = session.LiveStates.Count > 0 ? session.LiveNames : session.Names;
+            var evaluation = states.GetValueOrDefault(quest.RowId);
             var state = evaluation?.State ?? QuestState.Unknown;
             var done = state == QuestState.Completed;
-            var status = done ? Strings.ItemsDone : BlockerText.StatusText(evaluation, quest, session.Names, session.States);
-            var line = new Line(quest.RowId, state, string.Format(CultureInfo.CurrentCulture, Strings.ItemsQuestRewardFormat, session.Spoilers.DisplayName(quest)), status, done, entry.SoldOnOnlineStore,
+            var status = done ? Strings.ItemsDone : BlockerText.StatusText(evaluation, quest, names, states);
+            var line = new Line(quest.RowId, state, string.Format(CultureInfo.CurrentCulture, Strings.ItemsQuestRewardFormat, session.LiveSpoilers.DisplayName(quest)), status, done, entry.SoldOnOnlineStore,
                 entry.DropsInDuty ? Strings.AlsoDropsLine(entry.DropWhere) : string.Empty);
             if (IsUnlockable(entry.Kind))
             {

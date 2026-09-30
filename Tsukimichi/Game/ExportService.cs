@@ -34,21 +34,10 @@ public sealed class ExportService(
 
     /// <summary>
     /// The folder exports go to: the configured one, or <see cref="PluginPaths.ExportsDir"/> when none is set. A
-    /// relative folder is taken under the plugin's config directory, never the game's working directory.
+    /// relative folder (including a drive- or directory-relative one such as <c>\exports</c> or <c>D:exports</c>) is
+    /// taken under the plugin's config directory, never the game's working directory (<see cref="ExportWriter.ResolveFolder"/>).
     /// </summary>
-    public string Folder
-    {
-        get
-        {
-            var folder = settings.ExportFolder?.Trim();
-            if (string.IsNullOrEmpty(folder))
-            {
-                return paths.ExportsDir;
-            }
-
-            return Path.IsPathRooted(folder) ? folder : Path.Combine(paths.ConfigDir, folder);
-        }
-    }
+    public string Folder => ExportWriter.ResolveFolder(settings.ExportFolder, paths.ConfigDir, paths.ExportsDir);
 
     public ExportResult Export(ExportKind kind) => Export(kind, settings.ExportFormat);
 
@@ -79,7 +68,8 @@ public sealed class ExportService(
 
         try
         {
-            var path = ExportWriter.Write(Folder, ExportWriter.FileName(kind, format, header), content);
+            // Staged in the plugin's own directory, so a failed move leaves nothing in the user's folder.
+            var path = ExportWriter.Write(Folder, ExportWriter.FileName(kind, format, header), content, paths.ConfigDir);
             LastPath = path;
             log.Information("Exported {Kind} as {Format} to {Path}", kind, format, path);
             return new ExportResult(true, path, Strings.ExportWrittenPrefix + path);

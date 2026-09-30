@@ -141,6 +141,23 @@ public sealed class AbandonedLedgerTests : IDisposable
     }
 
     [Fact]
+    public void A_seasonal_quest_removed_when_its_event_ends_is_not_recorded()
+    {
+        var catalog = Fixture.Catalog(Fixture.Quest(Fixture.A) with { Festival = 9, StepCount = 3 });
+        var old = Journal([], (Fixture.A, 2)) with { ActiveFestivals = [9] };
+        var ended = Journal([]) with { ActiveFestivals = [] };
+        var ledger = new Dictionary<ushort, AbandonedEntry>();
+
+        Assert.False(Poll(ledger, catalog, old, ended, T1));
+        Assert.Empty(ledger);
+
+        // Dropped while the event still runs, it is recorded as usual.
+        var dropped = Journal([]) with { ActiveFestivals = [9] };
+        Assert.True(Poll(ledger, catalog, old, dropped, T1));
+        Assert.Equal(new AbandonedEntry(Id(Fixture.A), T1, 2, 3), Assert.Single(ledger.Values));
+    }
+
+    [Fact]
     public void Save_then_Load_round_trips_the_entries_newest_first()
     {
         var path = AbandonedLedger.PathFor(tmp.File("characters"), 7);
@@ -162,6 +179,33 @@ public sealed class AbandonedLedgerTests : IDisposable
         Assert.Contains("\"questId\"", text);
         Assert.Contains("\"abandonedUtc\"", text);
         Assert.Contains("\"stepCount\"", text);
+        // Derived properties stay out of the file.
+        Assert.DoesNotContain("\"rowId\"", text);
+        Assert.DoesNotContain("\"stepText\"", text);
+    }
+
+    [Fact]
+    public void A_ledger_written_with_the_derived_properties_still_loads()
+    {
+        // Files written before RowId and StepText were ignored carry both; they are read past, not trusted.
+        var path = tmp.File("old.abandoned.json");
+        File.WriteAllText(path, """
+            {
+              "version": 1,
+              "entries": [
+                { "questId": 1, "abandonedUtc": "2026-09-20T08:00:00Z", "sequence": 3, "stepCount": 5, "rowId": 99, "stepText": "step 9 of 9" }
+              ]
+            }
+            """);
+
+        var warnings = new List<string>();
+        var back = AbandonedLedger.Load(path, warnings);
+
+        Assert.Empty(warnings);
+        var entry = Assert.Single(back.Values);
+        Assert.Equal(new AbandonedEntry(1, T0, 3, 5), entry);
+        Assert.Equal(0x10001u, entry.RowId);
+        Assert.Equal(BlockerText.StepText(3, 5), entry.StepText);
     }
 
     [Fact]
