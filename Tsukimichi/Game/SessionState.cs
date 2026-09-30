@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using Dalamud.Plugin.Services;
+using Tsukimichi.Core.Chains;
 using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
@@ -160,6 +161,15 @@ public sealed class SessionState
     /// curated files and the quests' rewards. Backs the Unlock quests node, the Unlocks quick view and chat notices.
     /// </summary>
     public IReadOnlySet<uint> FeatureQuestIds { get; private set; } = FrozenSet<uint>.Empty;
+
+    /// <summary>
+    /// Story sidequests (artwork sidequests that are not unlock quests, plus the aether current story lines) and their
+    /// side stories, derived once per catalog after <see cref="FeatureQuestIds"/>. Backs the Story sidequests quick view and the table's book badge.
+    /// </summary>
+    public StorySidequests Stories { get; private set; } = StorySidequests.Empty;
+
+    /// <summary>Every chain of the catalog, the side stories of <see cref="Stories"/> included; the detail pane's chain line and the book badge read it.</summary>
+    public ChainCatalog Chains { get; private set; } = ChainCatalog.Empty;
 
     /// <summary>False while the poller is backing off after an exception; the sync glyph shows veiled.</summary>
     public bool PollerHealthy { get; private set; } = true;
@@ -332,6 +342,26 @@ public sealed class SessionState
         FollowLive();
     }
 
+    /// <summary>Story sidequests and the chain catalog for a new bundle; a failure leaves both empty rather than failing the load.</summary>
+    private void BuildChains(CatalogBundle bundle)
+    {
+        try
+        {
+            Stories = StorySidequests.Build(bundle.Catalog, FeatureQuestIds, Curated, UniqueRewards.Entries);
+            Chains = ChainCatalog.Build(bundle.Catalog, Curated, Stories);
+            foreach (var warning in Chains.Warnings)
+            {
+                log?.Warning("Chains: {Warning}", warning);
+            }
+        }
+        catch (Exception ex)
+        {
+            Stories = StorySidequests.Empty;
+            Chains = ChainCatalog.Empty;
+            log?.Warning(ex, "Story sidequests or chains could not be built");
+        }
+    }
+
     internal void SetCatalog(CatalogBundle bundle)
     {
         ArgumentNullException.ThrowIfNull(bundle);
@@ -340,6 +370,7 @@ public sealed class SessionState
         CatalogLoading = false;
         Index = ReversePrereqIndex.Build(bundle.Catalog);
         FeatureQuestIds = FeaturePresets.Derive(bundle.Catalog, Curated, UniqueRewards.Entries);
+        BuildChains(bundle);
         // Every blocker, status line, todo row and diagnostic names quests through the viewed character's shield.
         Names = bundle.BlockerNames() with { QuestName = quest => Spoilers.DisplayName(quest) };
         // Chat, item menus and hints speak for the logged-in character, whichever one the window shows.

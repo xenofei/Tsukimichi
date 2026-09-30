@@ -1,4 +1,5 @@
 using System.Collections.Frozen;
+using Tsukimichi.Core.Chains;
 using Tsukimichi.Core.Evaluation;
 
 namespace Tsukimichi.Core.Query;
@@ -23,6 +24,7 @@ namespace Tsukimichi.Core.Query;
 /// by the placeholder, and Sprout mode reads <see cref="SpoilerMask.ReachExpansion"/>. Null masks nothing and leaves
 /// Sprout mode without a limit.
 /// </param>
+/// <param name="Stories">The story sidequests and side stories for the Story sidequests preset; null keeps nothing under it.</param>
 public sealed record QueryContext(
     IReadOnlySet<ushort> ActiveFestivals,
     IReadOnlySet<uint> Pinned,
@@ -36,7 +38,8 @@ public sealed record QueryContext(
     int StalledDays = QueryContext.DefaultStalledDays,
     BlockerNames? Names = null,
     IReadOnlySet<ushort>? Abandoned = null,
-    SpoilerMask? Spoilers = null)
+    SpoilerMask? Spoilers = null,
+    StorySidequests? Stories = null)
 {
     public const int DefaultStalledDays = 7;
 

@@ -6,9 +6,17 @@ using Tsukimichi.Core.Storage;
 namespace Tsukimichi.Core.Chains;
 
 /// <summary>A named, ordered run of quests: a side story, a relic line, a raid tier's story.</summary>
-/// <param name="Name">Display name: the curated name, or the journal genre's name for a derived chain.</param>
+/// <param name="Name">Display name: the curated name, the journal genre's name for a derived chain, or "Story: &lt;first quest&gt;" for a side story.</param>
 /// <param name="RowIds">Quest sheet row ids in play order.</param>
-public sealed record Chain(string Name, IReadOnlyList<uint> RowIds);
+public sealed record Chain(string Name, IReadOnlyList<uint> RowIds)
+{
+    /// <summary>
+    /// A side story derived by <see cref="StorySidequests"/>. Its name holds its first quest's sheet name; wherever a
+    /// name prints, use <see cref="ChainCatalog.Title"/> or <see cref="ChainCatalog.DisplayName"/> so the name goes
+    /// through the caller's spoiler shield.
+    /// </summary>
+    public bool IsStory { get; init; }
+}
 
 /// <summary>Where a character stands in a chain.</summary>
 /// <param name="Done">Completed quests.</param>
@@ -22,10 +30,11 @@ public readonly record struct ChainProgress(int Done, int Total, uint? NextRowId
 }
 
 /// <summary>
-/// Every chain a catalog holds, built once per catalog. Two sources: curated chains from <c>curated/chains.json</c>
-/// (named lists of journal genres concatenated in order), and derived chains, one per journal genre whose quests
-/// form a single previous-quest line (each quest after the first requires exactly the quest before it). A quest
-/// belongs to at most one chain; curated chains win, then the first derived chain that lists it.
+/// Every chain a catalog holds, built once per catalog. Three sources: curated chains from <c>curated/chains.json</c>
+/// (named lists of journal genres concatenated in order), derived chains, one per journal genre whose quests form a
+/// single previous-quest line (each quest after the first requires exactly the quest before it), and, when given,
+/// the side stories of <see cref="StorySidequests"/>. A quest belongs to at most one chain; curated chains win, then
+/// the first derived chain that lists it, then its side story.
 /// </summary>
 public sealed class ChainCatalog
 {
@@ -52,7 +61,8 @@ public sealed class ChainCatalog
     /// <summary>The chain a quest belongs to, or null.</summary>
     public Chain? ForQuest(uint rowId) => byRowId.GetValueOrDefault(rowId);
 
-    public static ChainCatalog Build(QuestCatalog catalog, CuratedData curated)
+    /// <param name="stories">The side stories to add after the genre chains; null (or <see cref="StorySidequests.Empty"/>) adds none.</param>
+    public static ChainCatalog Build(QuestCatalog catalog, CuratedData curated, StorySidequests? stories = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(curated);
@@ -125,6 +135,18 @@ public sealed class ChainCatalog
             Add(chains, byRowId, new Chain(DerivedName(quests[0].Journal, nameCounts), rowIds));
         }
 
+        if (stories is not null)
+        {
+            // A side story wholly inside a curated or genre chain (a stretch of Hildibrand) adds nothing.
+            foreach (var story in stories.Chains)
+            {
+                if (story.RowIds.Any(id => !byRowId.ContainsKey(id)))
+                {
+                    Add(chains, byRowId, story);
+                }
+            }
+        }
+
         return new ChainCatalog(chains, byRowId.ToFrozenDictionary(), warnings);
     }
 
@@ -193,6 +215,39 @@ public sealed class ChainCatalog
         }
 
         return new ChainProgress(done, chain.RowIds.Count, next);
+    }
+
+    /// <summary>
+    /// What a chain is called in a sentence: a side story by its first quest's name as <paramref name="questName"/>
+    /// prints it (the spoiler shield's name), any other chain by its name. "Part of a side story: {title}".
+    /// </summary>
+    public static string Title(Chain chain, Func<uint, string> questName)
+    {
+        ArgumentNullException.ThrowIfNull(chain);
+        ArgumentNullException.ThrowIfNull(questName);
+        return chain.IsStory && chain.RowIds.Count > 0 ? questName(chain.RowIds[0]) : chain.Name;
+    }
+
+    /// <summary>A chain's label: "Story: " and the shielded first quest name for a side story, the name for any other chain.</summary>
+    public static string DisplayName(Chain chain, Func<uint, string> questName)
+    {
+        ArgumentNullException.ThrowIfNull(chain);
+        return chain.IsStory ? StorySidequests.ChainNamePrefix + Title(chain, questName) : chain.Name;
+    }
+
+    /// <summary>Zero-based place of a quest in a chain's play order; -1 when the chain does not list it.</summary>
+    public static int IndexOf(Chain chain, uint rowId)
+    {
+        ArgumentNullException.ThrowIfNull(chain);
+        for (var i = 0; i < chain.RowIds.Count; i++)
+        {
+            if (chain.RowIds[i] == rowId)
+            {
+                return i;
+            }
+        }
+
+        return -1;
     }
 
     /// <summary>

@@ -45,6 +45,7 @@ public sealed class DetailPane
 
     // Chain progress line under the header.
     private const string ChainFormat = "Chain: {0} · {1} of {2} done";
+    private const string StoryFormat = "{0} · {1} of {2} done";
     private const string ChainNextLabel = "· next:";
     private const string ChainCompleteLabel = "· complete";
     private const string ChainNextTooltip = "Select the next quest in this chain";
@@ -137,10 +138,6 @@ public sealed class DetailPane
     private UniqueRewardsData? uniqueData;
     private readonly HashSet<uint> uniqueQuests = [];
 
-    // Named and derived chains, built once per catalog bundle.
-    private ChainCatalog chains = ChainCatalog.Empty;
-    private CatalogBundle? chainsBundle;
-
     // The "Mark as unique…" confirm popup and its eight-second Undo line.
     private readonly VerdictPrompt verdict = new(Strings.MarkUniquePopup);
 
@@ -153,7 +150,7 @@ public sealed class DetailPane
     private const double ReportNoteSeconds = 5.0;
     private double reportNoteUntil;
 
-    /// <param name="log">Receives the chain catalog's warnings once per rebuild; null logs nothing.</param>
+    /// <param name="log">Receives a failed diagnostic copy; null uses the plugin log.</param>
     public DetailPane(UiState ui, QueryRunner runner, GameLinks links, ITextureProvider textures, IPluginLog? log = null)
     {
         this.ui = ui ?? throw new ArgumentNullException(nameof(ui));
@@ -1180,23 +1177,13 @@ public sealed class DetailPane
         Flush();
     }
 
-    /// <summary>The chain line for a quest that belongs to one, with the chains rebuilt only when the bundle changes.</summary>
+    /// <summary>
+    /// The chain line for a quest that belongs to one: a curated or genre chain ("Chain: Hildibrand · 12 of 57 done")
+    /// or a side story ("Story: &lt;first quest&gt; · 3 of 7 done"), from the session's chain catalog.
+    /// </summary>
     private void BuildChain(SessionState session, CatalogBundle bundle, uint rowId)
     {
-        if (!ReferenceEquals(chainsBundle, bundle))
-        {
-            chains = ChainCatalog.Build(bundle.Catalog, session.Curated);
-            chainsBundle = bundle;
-            if (log is not null)
-            {
-                foreach (var warning in chains.Warnings)
-                {
-                    log.Warning("Chains: {Warning}", warning);
-                }
-            }
-        }
-
-        if (chains.ForQuest(rowId) is not { } chain)
+        if (session.Chains.ForQuest(rowId) is not { } chain)
         {
             return;
         }
@@ -1205,7 +1192,8 @@ public sealed class DetailPane
         model.ChainDone = progress.Done;
         model.ChainTotal = progress.Total;
         model.ChainFraction = progress.Fraction;
-        model.ChainText = string.Format(CultureInfo.CurrentCulture, ChainFormat, chain.Name, progress.Done, progress.Total);
+        var name = ChainCatalog.DisplayName(chain, id => session.Spoilers.DisplayName(bundle.Catalog, id, id.ToString(CultureInfo.InvariantCulture)));
+        model.ChainText = string.Format(CultureInfo.CurrentCulture, chain.IsStory ? StoryFormat : ChainFormat, name, progress.Done, progress.Total);
         if (progress.NextRowId is { } next)
         {
             model.ChainNextRowId = next;

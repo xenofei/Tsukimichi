@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using Dalamud.Plugin.Services;
+using Tsukimichi.Core.Chains;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Storage;
@@ -120,6 +121,27 @@ public sealed class QueryRunner : IDisposable
     /// the session exists. The table prints <see cref="SpoilerMask.DisplayName(QuestRecord)"/> for every name.
     /// </summary>
     public SpoilerMask Spoilers => plugin.Session?.Spoilers ?? SpoilerMask.None;
+
+    /// <summary>Story sidequests of the catalog (<see cref="SessionState.Stories"/>); the table's book badge reads it.</summary>
+    public StorySidequests Stories => plugin.Session?.Stories ?? StorySidequests.Empty;
+
+    /// <summary>Every chain of the catalog, side stories included (<see cref="SessionState.Chains"/>).</summary>
+    public ChainCatalog Chains => plugin.Session?.Chains ?? ChainCatalog.Empty;
+
+    /// <summary>
+    /// The book badge's hover line for a story sidequest: "Part of a side story: &lt;chain&gt; (3 of 7)", the chain
+    /// named through the spoiler shield, or the one-quest line. Built on hover only.
+    /// </summary>
+    public string StoryBadgeText(uint rowId)
+    {
+        if (plugin.Session is not { Bundle: { } bundle } session || session.Chains.ForQuest(rowId) is not { } chain)
+        {
+            return Strings.StoryBadgeLone;
+        }
+
+        var title = ChainCatalog.Title(chain, id => session.Spoilers.DisplayName(bundle.Catalog, id, id.ToString(CultureInfo.InvariantCulture)));
+        return string.Format(CultureInfo.CurrentCulture, Strings.StoryBadgeFormat, title, ChainCatalog.IndexOf(chain, rowId) + 1, chain.RowIds.Count);
+    }
 
     /// <summary>Search text the current rows were computed with (after debounce).</summary>
     public string AppliedSearch => appliedSearch;
@@ -407,7 +429,8 @@ public sealed class QueryRunner : IDisposable
             StalledDays: plugin.Settings.StalledDaysClamped,
             Names: session.Names,
             Abandoned: AbandonedIds(session),
-            Spoilers: session.Spoilers);
+            Spoilers: session.Spoilers,
+            Stories: session.Stories);
 
         // The Unlocks quick view reads best with what can be picked up now on top; the other presets keep the table's sort.
         var effectiveSort = ui.Sort with { AvailableFirst = ui.Filters.Preset == Preset.FeatureQuests };

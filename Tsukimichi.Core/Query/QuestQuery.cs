@@ -1,3 +1,4 @@
+using Tsukimichi.Core.Chains;
 using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
 
@@ -153,7 +154,9 @@ public static class QuestQuery
             return new QueryResult(NoRows, reason, totalInScope);
         }
 
-        var sorted = Sort(rows, sort, ctx.Spoilers);
+        var sorted = filters.Preset == Preset.StorySidequests && sort.Column == SortColumn.Journal && ctx.Stories is { } stories
+            ? StoryOrder(rows, stories, sort.Descending)
+            : Sort(rows, sort, ctx.Spoilers);
         if (sort.AvailableFirst)
         {
             sorted = Partition(sorted, static row => IsAvailable(row.State));
@@ -269,6 +272,29 @@ public static class QuestQuery
         }
 
         return sorted;
+    }
+
+    /// <summary>
+    /// The Story sidequests preset under the journal sort: reading order (<see cref="StorySidequests.OrderOf"/>), so a
+    /// side story reads top to bottom in play order where the journal would list its two lines apart.
+    /// </summary>
+    private static QuestRow[] StoryOrder(List<QuestRow> rows, StorySidequests stories, bool descending)
+    {
+        var result = rows.ToArray();
+        var keys = new int[result.Length];
+        for (var i = 0; i < keys.Length; i++)
+        {
+            keys[i] = stories.OrderOf(result[i].Quest.RowId);
+        }
+
+        // Every row passed the preset, so every key is distinct: an unstable sort is still deterministic.
+        Array.Sort(keys, result);
+        if (descending)
+        {
+            Array.Reverse(result);
+        }
+
+        return result;
     }
 
     private static bool IsAvailable(QuestState state) => state is QuestState.Ready or QuestState.ReadyOnOtherJob or QuestState.Accepted;
@@ -507,7 +533,8 @@ public static class QuestQuery
         /// Feature quests: membership in the derived set. Around my level: quest level within
         /// <see cref="LevelBandRadius"/> of the current level (nothing when the level is unknown). Stalled: in the
         /// journal, with a known accepted time at least <see cref="QueryContext.StalledDays"/> days before now. Sprout
-        /// mode: the quest's expansion at or below the one the character's main scenario has reached.
+        /// mode: the quest's expansion at or below the one the character's main scenario has reached. Story sidequests:
+        /// membership in <see cref="QueryContext.Stories"/>.
         /// </summary>
         private bool PassesPreset(QuestRecord quest, QuestState state) => Preset switch
         {
@@ -519,6 +546,7 @@ public static class QuestQuery
                 && since.TryGetValue(quest.QuestId, out var acceptedUtc)
                 && acceptedUtc <= stalledBeforeUtc,
             Preset.Sprout => quest.Expansion <= reachExpansion,
+            Preset.StorySidequests => ctx.Stories is { } stories && stories.Contains(quest.RowId),
             _ => true,
         };
 
