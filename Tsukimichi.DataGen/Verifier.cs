@@ -535,8 +535,8 @@ internal sealed class Verifier
             bombDance.Any(e => e.SoldOnOnlineStore),
             Join(bombDance));
         var store = entries.Where(e => e.SoldOnOnlineStore).ToList();
-        Check("Exactly 68 entries carry OnlineStore (25 Minion, 21 Emote, 11 Mount, 5 Barding, 4 Orchestrion, 2 Ornament)",
-            store.Count == 68,
+        Check("Exactly 69 entries carry OnlineStore (25 Minion, 21 Emote, 11 Mount, 5 Barding, 4 Orchestrion, 2 Ornament, 1 Hairstyle)",
+            store.Count == 69,
             string.Join(", ", store.GroupBy(e => e.Kind).OrderBy(x => x.Key).Select(x => $"{x.Key} {x.Count()}")));
 
         md.AppendLine();

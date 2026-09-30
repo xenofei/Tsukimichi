@@ -101,7 +101,7 @@ public sealed class CuratedInvariantsTests(FixtureCatalog fixture) : IClassFixtu
     {
         var curated = Curated();
         var unique = Unique();
-        Assert.Equal(68, curated.OnlineStore.Count);
+        Assert.Equal(69, curated.OnlineStore.Count);
 
         // Raw file: every entry has name, kind, rewardId, evidence (an https URL) and a note; keys ascend.
         var root = JsonNode.Parse(File.ReadAllText(Path.Combine(CuratedDir, CuratedData.OnlineStoreFileName)), documentOptions: CuratedData.StrictOptions)!.AsObject();
@@ -142,11 +142,11 @@ public sealed class CuratedInvariantsTests(FixtureCatalog fixture) : IClassFixtu
         Assert.True(unmarked.Count == 0, "entries the store sells but not marked OnlineStore (stale regen?): " + string.Join(", ", unmarked));
 
         var marked = unique.Entries.Where(e => e.SoldOnOnlineStore).ToList();
-        Assert.Equal(68, marked.Count);
+        Assert.Equal(69, marked.Count);
         Assert.All(marked, e => Assert.True(curated.OnlineStore.ContainsKey(e.ItemId) || curated.OnlineStore.Values.Any(s => s.Kind == e.Kind && s.RewardId == e.RewardId),
             $"{e.QuestRowId} {e.Kind} {e.RewardId} is marked OnlineStore but no curated store item explains it"));
         Assert.Equal(
-            new Dictionary<RewardKind, int> { [RewardKind.Minion] = 25, [RewardKind.Emote] = 21, [RewardKind.Mount] = 11, [RewardKind.Barding] = 5, [RewardKind.Orchestrion] = 4, [RewardKind.Ornament] = 2 },
+            new Dictionary<RewardKind, int> { [RewardKind.Minion] = 25, [RewardKind.Emote] = 21, [RewardKind.Mount] = 11, [RewardKind.Barding] = 5, [RewardKind.Orchestrion] = 4, [RewardKind.Ornament] = 2, [RewardKind.Hairstyle] = 1 },
             marked.GroupBy(e => e.Kind).ToDictionary(g => g.Key, g => g.Count()));
     }
 
