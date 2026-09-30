@@ -30,7 +30,7 @@ public static class WelcomeBackTrigger
     public const int DefaultDays = 14;
 
     /// <summary>The slider's upper end.</summary>
-    public const int MaxDays = 365;
+    public const int MaxDays = 180;
 
     /// <summary>The decision for <paramref name="contentId"/>'s login.</summary>
     /// <param name="contentId">The character that logged in.</param>
