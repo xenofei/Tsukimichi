@@ -53,6 +53,8 @@ public sealed class GameStateReader
     private bool satisfactionWarned;
     private bool outOfRangeLogged;
     private ulong festivalProbeContentId;
+    private IReadOnlyList<ushort> festivalProbeIds = [];
+    private IReadOnlyList<ushort> festivalProbePhases = [];
 
     public GameStateReader(IFramework framework, IPlayerState playerState, IDataManager data, IPluginLog log)
     {
@@ -131,12 +133,6 @@ public sealed class GameStateReader
 
         var ids = IdsFor(catalog);
         var stopwatch = measured ? null : Stopwatch.StartNew();
-
-        if (festivalProbeContentId != contentId)
-        {
-            festivalProbeContentId = contentId;
-            LogFestivalProbe(ps);
-        }
 
         // Completion bits. The client mask is finite; ids past its end are not completable and must not be looked up,
         // since IsQuestComplete does no bounds check of its own.
@@ -272,6 +268,18 @@ public sealed class GameStateReader
 
         var (festivalIds, festivalPhases) = ReadActiveFestivals();
 
+        // The probe: once per character, and again whenever the captured (id, phase) pairs change within the session
+        // (a chapter opening mid-event is the case it exists for).
+        if (festivalProbeContentId != contentId
+            || !Same(festivalIds, festivalProbeIds)
+            || !Same(festivalPhases, festivalProbePhases))
+        {
+            festivalProbeContentId = contentId;
+            festivalProbeIds = festivalIds;
+            festivalProbePhases = festivalPhases;
+            LogFestivalProbe(ps);
+        }
+
         var snapshot = new CharacterSnapshot
         {
             ContentId = contentId,
@@ -382,9 +390,9 @@ public sealed class GameStateReader
     }
 
     /// <summary>
-    /// Once per login, the three festival arrays the client keeps, with phases, so the owner can compare them during a
-    /// phased event and pick the one the quest givers follow: <c>GameMain.ActiveFestivals</c> (what the snapshot
-    /// reads), <c>PlayerState.ActiveFestivalIds</c> / <c>ActiveFestivalPhases</c> (the server-sent per-character
+    /// Once per character and again whenever the captured (id, phase) pairs change, the three festival arrays the
+    /// client keeps, with phases, so the owner can compare them during a phased event and pick the one the quest
+    /// givers follow: <c>GameMain.ActiveFestivals</c> (what the snapshot reads), <c>PlayerState.ActiveFestivalIds</c> / <c>ActiveFestivalPhases</c> (the server-sent per-character
     /// state) and <c>EventFramework.Festivals</c>. Logged at Information under <see cref="FestivalProbePrefix"/>.
     /// </summary>
     private unsafe void LogFestivalProbe(PlayerState* ps)
@@ -400,6 +408,24 @@ public sealed class GameStateReader
             gameMain,
             playerStateText,
             eventFramework);
+    }
+
+    private static bool Same(IReadOnlyList<ushort> a, IReadOnlyList<ushort> b)
+    {
+        if (a.Count != b.Count)
+        {
+            return false;
+        }
+
+        for (var i = 0; i < a.Count; i++)
+        {
+            if (a[i] != b[i])
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static string FormatFestivals(Span<GameMain.Festival> festivals)
