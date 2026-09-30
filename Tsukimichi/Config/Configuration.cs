@@ -291,6 +291,21 @@ public sealed class Configuration : IPluginConfiguration
     /// </summary>
     public bool CompactRail { get; set; }
 
+    // ---- 1.4: the Moon Road look (feature plan v4 V1, V3) ----
+    /// <summary>
+    /// Settings › Display › Look › Flair: how much of the Moon Road ornament shows. Full (the default) draws all of it,
+    /// Quiet keeps the section rules and dividers only, Plain is the look before 1.4. The high-contrast glyph palette
+    /// draws at most Quiet (<see cref="Core.Ui.FlairRules.Effective"/>).
+    /// </summary>
+    public Flair Flair { get; set; } = Flair.Full;
+
+    /// <summary>
+    /// Settings › Display › Look › Game fonts for headings: section headings, titles and counts in the game's own
+    /// display fonts (TrumpGothic, Jupiter, MiedingerMid). On by default; off, or with Flair set to Plain, headings use
+    /// the Caption and Display roles as before.
+    /// </summary>
+    public bool GameHeadingFonts { get; set; } = true;
+
     // ---- 0.8.0: chrome (T13) ----
     /// <summary>
     /// Draw the windows in the user's Dalamud colours instead of the Night palette: the same layout, with the surface
@@ -464,6 +479,11 @@ public sealed class Configuration : IPluginConfiguration
         if (!Enum.IsDefined(config.GlyphPalette))
         {
             config.GlyphPalette = GlyphPaletteKind.Standard;
+        }
+
+        if (!Enum.IsDefined(config.Flair))
+        {
+            config.Flair = Flair.Full;
         }
 
         if (!Enum.IsDefined(config.PluginLanguage))

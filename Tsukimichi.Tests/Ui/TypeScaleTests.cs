@@ -62,4 +62,56 @@ public class TypeScaleTests
             Assert.InRange(display / displayFont, 0.8f, 1.4f);
         }
     }
+
+    [Fact]
+    public void Heading_game_font_sizes_are_the_game_points_in_pixels()
+    {
+        // TrumpGothic 18.4 / 23 / 34 / 68, Jupiter 16 / 20 / 23 / 46 (45 and 90 are digits only), MiedingerMid 10–36.
+        Assert.Equal([18.4f * 4f / 3f, 23f * 4f / 3f, 34f * 4f / 3f, 68f * 4f / 3f], TypeScale.EyebrowGameFontSizesPx.ToArray());
+        Assert.Equal([16f * 4f / 3f, 20f * 4f / 3f, 23f * 4f / 3f, 46f * 4f / 3f], TypeScale.TitleGameFontSizesPx.ToArray());
+        Assert.Equal([10f * 4f / 3f, 12f * 4f / 3f, 14f * 4f / 3f, 18f * 4f / 3f, 36f * 4f / 3f], TypeScale.NumeralGameFontSizesPx.ToArray());
+    }
+
+    [Theory]
+    [InlineData(16f)]
+    [InlineData(17f)]
+    public void The_default_body_size_lands_on_the_proposal_sizes_at_ui_scale_1(float body)
+    {
+        var bucket = TypeScale.Bucket(1f);
+
+        // Proposal §4: TrumpGothic 18.4, Jupiter 20, MiedingerMid 12 at the default bucket.
+        Assert.Equal(0, TypeScale.EyebrowGameFont(bucket, body));
+        Assert.Equal(1, TypeScale.TitleGameFont(bucket, body));
+        Assert.Equal(1, TypeScale.NumeralGameFont(bucket, body));
+    }
+
+    [Theory]
+    [InlineData(16f)]
+    [InlineData(17f)]
+    public void Every_bucket_gets_a_heading_font_near_its_role_size(float body)
+    {
+        for (var bucket = 0; bucket < TypeScale.Buckets.Length; bucket++)
+        {
+            var scaled = body * TypeScale.Buckets[bucket];
+            var eyebrow = TypeScale.EyebrowGameFontSizesPx[TypeScale.EyebrowGameFont(bucket, body)];
+            var title = TypeScale.TitleGameFontSizesPx[TypeScale.TitleGameFont(bucket, body)];
+            var numeral = TypeScale.NumeralGameFontSizesPx[TypeScale.NumeralGameFont(bucket, body)];
+
+            // TrumpGothic jumps from 23 to 34 pt and Jupiter from 23 to 46 pt, so at the largest bucket the remainder is
+            // wider than the Axis roles'; the window scale still makes up the difference.
+            Assert.InRange(TypeScale.EyebrowPxFor(scaled) / eyebrow, 0.8f, 1.25f);
+            Assert.InRange(TypeScale.TitlePxFor(scaled) / title, 0.7f, 1.45f);
+            Assert.InRange(TypeScale.NumeralPxFor(scaled) / numeral, 0.8f, 1.2f);
+        }
+    }
+
+    [Fact]
+    public void Heading_sizes_follow_the_body_and_reject_nonsense()
+    {
+        Assert.Equal(17f * TypeScale.EyebrowFactor, TypeScale.EyebrowPxFor(17f), 3);
+        Assert.Equal(17f * TypeScale.TitleFactor, TypeScale.TitlePxFor(17f), 3);
+        Assert.Equal(17f, TypeScale.NumeralPxFor(17f), 3);
+        Assert.Equal(0f, TypeScale.EyebrowPxFor(float.NaN));
+        Assert.Equal(1, TypeScale.NumeralGameFont(1, float.NaN));
+    }
 }

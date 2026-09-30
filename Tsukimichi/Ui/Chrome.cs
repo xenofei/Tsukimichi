@@ -91,19 +91,23 @@ public static partial class Chrome
     /// </summary>
     /// <param name="id">Pushed as an id scope for the card's content.</param>
     /// <param name="accent">The callout rule's colour; default is VeilLine (neutral). Ignored by the other kinds.</param>
-    public static void BeginCard(string id, string? title = null, string? icon = null, CardKind kind = CardKind.Raised, Vector4? accent = null)
+    /// <param name="eyebrow">
+    /// The title in the Eyebrow role (TrumpGothic, moon-road proposal §4) rather than the caption role, with the icon at
+    /// caption size centred on it; the caption role still stands in while game heading fonts are off.
+    /// </param>
+    public static void BeginCard(string id, string? title = null, string? icon = null, CardKind kind = CardKind.Raised, Vector4? accent = null, bool eyebrow = false)
     {
         OpenCard(kind, accent);
         ImGui.PushID(id);
-        CardContent(title, icon);
+        CardContent(title, icon, eyebrow);
     }
 
-    /// <summary><see cref="BeginCard(string, string?, string?, CardKind, Vector4?)"/> with an integer id (no string to build per card).</summary>
-    public static void BeginCard(int id, string? title = null, string? icon = null, CardKind kind = CardKind.Raised, Vector4? accent = null)
+    /// <summary><see cref="BeginCard(string, string?, string?, CardKind, Vector4?, bool)"/> with an integer id (no string to build per card).</summary>
+    public static void BeginCard(int id, string? title = null, string? icon = null, CardKind kind = CardKind.Raised, Vector4? accent = null, bool eyebrow = false)
     {
         OpenCard(kind, accent);
         ImGui.PushID(id);
-        CardContent(title, icon);
+        CardContent(title, icon, eyebrow);
     }
 
     private static void OpenCard(CardKind kind, Vector4? accent)
@@ -124,7 +128,7 @@ public static partial class Chrome
         cardWidth = MathF.Max(0f, ImGui.GetContentRegionAvail().X);
     }
 
-    private static void CardContent(string? title, string? icon)
+    private static void CardContent(string? title, string? icon, bool eyebrow)
     {
         var dl = ImGui.GetWindowDrawList();
         dl.ChannelsSplit(2);
@@ -139,6 +143,12 @@ public static partial class Chrome
             return;
         }
 
+        if (eyebrow)
+        {
+            EyebrowTitle(title, icon);
+            return;
+        }
+
         // The title in the caption role (ui-revamp §4.2 "Section title": 0.85× + icon, same as Caption), the icon at
         // the same size, so the header row is one size.
         using var caption = Typography.Caption();
@@ -150,6 +160,37 @@ public static partial class Chrome
             ImGui.SameLine(0f, UiMetrics.Px(6f));
         }
 
+        ImGui.PushStyleColor(ImGuiCol.Text, Theme.Surface.Text);
+        ImGui.TextUnformatted(title);
+        ImGui.PopStyleColor();
+    }
+
+    /// <summary>
+    /// A card title in the Eyebrow role: the icon at caption size in the secondary tone, centred on the title's line,
+    /// then the title in the primary tone. The title's item is the last, so a caption placed from its rect lines up.
+    /// When the eyebrow falls back to the caption role both are one size and this draws as the caption title does.
+    /// </summary>
+    private static void EyebrowTitle(string title, string? icon)
+    {
+        var y = ImGui.GetCursorPosY();
+        float line;
+        using (Typography.Eyebrow(title))
+        {
+            line = ImGui.GetTextLineHeight();
+        }
+
+        if (icon is not null)
+        {
+            using var caption = Typography.Caption();
+            ImGui.SetCursorPosY(y + MathF.Max(0f, (line - ImGui.GetTextLineHeight()) * 0.5f));
+            ImGui.PushStyleColor(ImGuiCol.Text, Theme.Surface.TextSecondary);
+            Typography.Icon(icon);
+            ImGui.PopStyleColor();
+            ImGui.SameLine(0f, UiMetrics.Px(6f));
+            ImGui.SetCursorPosY(y);
+        }
+
+        using var role = Typography.Eyebrow(title);
         ImGui.PushStyleColor(ImGuiCol.Text, Theme.Surface.Text);
         ImGui.TextUnformatted(title);
         ImGui.PopStyleColor();

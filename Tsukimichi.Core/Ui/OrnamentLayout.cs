@@ -133,17 +133,3 @@ public static class OrnamentLayout
         _ => string.Empty,
     };
 }
-
-/// <summary>
-/// The Moon Road ornament colours (proposal §3) as hex, for the ornament and orbit primitives. The palette task adds
-/// the same six to <see cref="GlyphTokens"/> and <c>Theme</c>; until then the primitives read them from here.
-/// </summary>
-public static class OrnamentTokens
-{
-    public const uint AbyssHex = 0x080B16;
-    public const uint NightTopHex = 0x151C33;
-    public const uint GiltHex = 0xA88B52;
-    public const uint GiltHighHex = 0xD9BE82;
-    public const uint TideHex = 0x6F8FD0;
-    public const uint TideDeepHex = 0x24345C;
-}

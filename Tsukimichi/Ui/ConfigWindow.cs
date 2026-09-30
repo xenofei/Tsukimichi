@@ -254,6 +254,7 @@ public sealed partial class ConfigWindow : Window
     private void DrawDisplay()
     {
         Header(Strings.ConfigSectionDisplay);
+        DrawLook();
         DrawLanguage();
 
         var uiScale = ScaleMetrics.ClampUiScale(settings.UiScale);
@@ -309,19 +310,6 @@ public sealed partial class ConfigWindow : Window
 
         Chrome.Hint(Strings.ConfigDensityHint);
 
-        var reduceMotion = settings.ReduceMotion;
-        if (ImGui.Checkbox(Strings.ConfigReduceMotion, ref reduceMotion))
-        {
-            settings.ReduceMotion = reduceMotion;
-            settings.ReduceMotionChosen = true;
-            Save();
-        }
-
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(Strings.ConfigReduceMotionHint);
-        }
-
         // The main window's rail: 64 px stations with labels, or 44 px icons (feature plan v4 L7).
         var compactRail = settings.CompactRail;
         if (ImGui.Checkbox(Strings.ConfigCompactRail, ref compactRail))
@@ -350,6 +338,66 @@ public sealed partial class ConfigWindow : Window
 
         DrawGlyphPalette();
         DrawJournalFiling();
+    }
+
+    /// <summary>
+    /// Settings › Display › Look (moon-road proposal §7.9, feature plan v4 V1/V3): Flair (Full / Quiet / Plain), Game
+    /// fonts for headings (off under Plain, which is the look before 1.4) and Reduce motion. Saved at once and applied
+    /// from the next frame (<see cref="Theme.Refresh"/>, <see cref="Typography.Update"/>).
+    /// </summary>
+    private void DrawLook()
+    {
+        using (Theme.PushText(Theme.Surface.TextSecondary))
+        {
+            ImGui.TextUnformatted(Strings.ConfigLook);
+        }
+
+        ImGui.TextUnformatted(Strings.ConfigFlair);
+        FlairRadio(Strings.ConfigFlairFull, Flair.Full);
+        FlairRadio(Strings.ConfigFlairQuiet, Flair.Quiet);
+        FlairRadio(Strings.ConfigFlairPlain, Flair.Plain);
+
+        using (ImRaii.Disabled(settings.Flair == Flair.Plain))
+        {
+            var headingFonts = settings.GameHeadingFonts;
+            if (ImGui.Checkbox(Strings.ConfigGameHeadingFonts, ref headingFonts))
+            {
+                settings.GameHeadingFonts = headingFonts;
+                Save();
+            }
+        }
+
+        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+        {
+            UiMetrics.Tooltip(Strings.ConfigGameHeadingFontsHint);
+        }
+
+        var reduceMotion = settings.ReduceMotion;
+        if (ImGui.Checkbox(Strings.ConfigReduceMotion, ref reduceMotion))
+        {
+            settings.ReduceMotion = reduceMotion;
+            settings.ReduceMotionChosen = true;
+            Save();
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.ConfigReduceMotionHint);
+        }
+
+        ImGui.Spacing();
+    }
+
+    private void FlairRadio(string label, Flair flair)
+    {
+        Chrome.SameLineOrWrap(RadioWidth(label));
+        if (ImGui.RadioButton(label, settings.Flair == flair))
+        {
+            settings.Flair = flair;
+            Save();
+        }
+
+        HintOnHover(Strings.ConfigFlairHint);
     }
 
     /// <summary>

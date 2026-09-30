@@ -1249,6 +1249,7 @@ public sealed class MainWindow : Window, IDisposable
         var changed = paneSplit.Handle(PaneSide.Tree, settings, in widths, height, total, stripAllowed);
 
         ImGui.SameLine(0f, 0f);
+        PaneGradientAtCursor(widths.Centre, height);
         // 0 would mean "fill the rest" to ImGui: a pane squeezed to nothing stays 1 px wide instead of covering the detail pane.
         using (var center = ImRaii.Child("##center", new Vector2(MathF.Max(1f, widths.Centre), height)))
         {
@@ -1282,8 +1283,20 @@ public sealed class MainWindow : Window, IDisposable
             settingsDirtyAtUtc ??= DateTime.UtcNow;
         }
 
-        // The detail column runs to the window's edge: its children take the content region's width.
+        // The detail column runs to the window's edge: its children take the content region's width. With the pane
+        // gradient its Night backdrop is painted here, under the gradient, and the panels inside leave their own clear.
         ImGui.SameLine(0f, 0f);
+        var gradient = Theme.ShowPaneGradient;
+        if (gradient)
+        {
+            var min = ImGui.GetCursorScreenPos();
+            var max = min + new Vector2(ImGui.GetContentRegionAvail().X, height);
+            var dl = ImGui.GetWindowDrawList();
+            dl.AddRectFilled(min, max, Theme.U32(Theme.Surface.Window), style.ChildRounding);
+            Ornament.PaneGradient(dl, min, max);
+        }
+
+        using var backdrop = Theme.PushPaneBackdrop(gradient);
         using var detailColumn = ImRaii.Group();
         var detailHeight = height;
         if (whatsNew is { Visible: true } card)
@@ -1312,6 +1325,7 @@ public sealed class MainWindow : Window, IDisposable
     /// </summary>
     private void DrawNavigation(SessionState session, CatalogBundle bundle, in PaneWidths widths, float height)
     {
+        PaneGradientAtCursor(widths.Tree, height);
         using var left = ImRaii.Child("##left", new Vector2(MathF.Max(1f, widths.Tree), height));
         if (!left)
         {
@@ -1327,6 +1341,21 @@ public sealed class MainWindow : Window, IDisposable
         }
 
         DrawTabBody(ui.Tab, session, bundle);
+    }
+
+    /// <summary>
+    /// The pane gradient (moon-road proposal §5, sky over water) behind a column about to be drawn at the cursor, on the
+    /// window's draw list under the column's clear child background, at the user's window opacity. Full flair only.
+    /// </summary>
+    private static void PaneGradientAtCursor(float width, float height)
+    {
+        if (!Theme.ShowPaneGradient || !(width > 1f))
+        {
+            return;
+        }
+
+        var min = ImGui.GetCursorScreenPos();
+        Ornament.PaneGradient(ImGui.GetWindowDrawList(), min, min + new Vector2(width, height), alpha: Theme.WindowAlpha);
     }
 
     /// <summary>Left-column body of the active navigation tab.</summary>
