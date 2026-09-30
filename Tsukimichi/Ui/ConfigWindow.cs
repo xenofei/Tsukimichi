@@ -61,6 +61,11 @@ public sealed class ConfigWindow : Window
     private ulong spoilerLabelContentId;
     private string? spoilerLabelName;
     private string spoilerLabel = string.Empty;
+
+    // Todo overlay: the "Pinned: {expansion}" line, rebuilt when the pinned expansion or the names change.
+    private int planPinnedExpansion = int.MinValue;
+    private Core.Evaluation.BlockerNames? planPinnedNames;
+    private string planPinnedLabel = string.Empty;
     private string? toast;
     private DateTime toastUntilUtc;
 
@@ -686,10 +691,35 @@ public sealed class ConfigWindow : Window
             UiMetrics.Tooltip(Strings.PlanTodoConfigHint);
         }
 
+        var expansion = settings.TodoPlanExpansion;
+        var pinned = expansion is >= 0 and <= byte.MaxValue;
+        if (expansion != planPinnedExpansion || !ReferenceEquals(session.Names, planPinnedNames))
+        {
+            planPinnedExpansion = expansion;
+            planPinnedNames = session.Names;
+            planPinnedLabel = pinned
+                ? string.Format(CultureInfo.CurrentCulture, Strings.PlanTodoConfigPinnedFormat, session.Names.Expansion((byte)expansion))
+                : Strings.PlanTodoConfigNone;
+        }
+
         ImGui.SameLine();
-        ImGui.TextDisabled(settings.TodoPlanExpansion is >= 0 and <= byte.MaxValue
-            ? string.Format(CultureInfo.CurrentCulture, Strings.PlanTodoConfigPinnedFormat, session.Names.Expansion((byte)settings.TodoPlanExpansion))
-            : Strings.PlanTodoConfigNone);
+        ImGui.TextDisabled(planPinnedLabel);
+        if (!pinned)
+        {
+            return;
+        }
+
+        ImGui.SameLine();
+        if (ImGui.SmallButton(Strings.Unpin + "##todoPlanUnpin"))
+        {
+            settings.TodoPlanExpansion = -1;
+            Save();
+        }
+
+        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+        {
+            UiMetrics.Tooltip(Strings.PlanUnpinTooltip);
+        }
     }
 
     private void DrawTodoOverlay()

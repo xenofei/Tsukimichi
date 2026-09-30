@@ -56,9 +56,10 @@ public sealed class PlanPane
     private readonly int[] kindCounts = new int[UnlockKinds.All.Length];
     private readonly string[] kindLabels = new string[UnlockKinds.All.Length];
     private int hiddenExpansions;
+    private string hiddenText = string.Empty;
     private string summary = string.Empty;
     private string showing = string.Empty;
-    private readonly Dictionary<byte, (string Header, string Ready, string Count)> cardText = [];
+    private readonly Dictionary<byte, (string Header, string Ready, string Count, string Label)> cardText = [];
     private readonly Dictionary<uint, string> zoneNames = [];
 
     private string copied = string.Empty;
@@ -134,7 +135,7 @@ public sealed class PlanPane
         {
             var text = cardText[block.Expansion];
             var isOpen = IsOpen(block);
-            if (ImGui.Selectable(block.Name + "##exp" + block.Expansion.ToString(CultureInfo.InvariantCulture), isOpen))
+            if (ImGui.Selectable(text.Label, isOpen))
             {
                 open[block.Expansion] = true;
                 scrollTo = block.Expansion;
@@ -153,7 +154,7 @@ public sealed class PlanPane
         if (hiddenExpansions > 0)
         {
             using var dusk = Theme.PushText(Theme.Dusk);
-            ImGui.TextWrapped(string.Format(CultureInfo.CurrentCulture, Strings.PlanSproutHiddenFormat, hiddenExpansions));
+            ImGui.TextWrapped(hiddenText);
         }
     }
 
@@ -597,6 +598,7 @@ public sealed class PlanPane
             }
         }
 
+        hiddenText = hiddenExpansions > 0 ? string.Format(CultureInfo.CurrentCulture, Strings.PlanSproutHiddenFormat, hiddenExpansions) : string.Empty;
         summary = session.ViewedSnapshot is null
             ? Strings.PlanSummaryBrowse
             : string.Format(CultureInfo.CurrentCulture, Strings.PlanSummaryFormat, plan.Count, plan.ReadyCount);
@@ -608,7 +610,8 @@ public sealed class PlanPane
             cardText[block.Expansion] = (
                 string.Format(CultureInfo.CurrentCulture, Strings.PlanCardFormat, block.Name, block.Count),
                 string.Format(CultureInfo.CurrentCulture, Strings.PlanCardReadyFormat, block.ReadyCount),
-                string.Format(CultureInfo.CurrentCulture, Strings.PlanExpansionCountFormat, block.Count, block.ReadyCount));
+                string.Format(CultureInfo.CurrentCulture, Strings.PlanExpansionCountFormat, block.Count, block.ReadyCount),
+                block.Name + "##exp" + block.Expansion.ToString(CultureInfo.InvariantCulture));
         }
     }
 }
