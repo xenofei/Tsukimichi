@@ -25,7 +25,7 @@ namespace Tsukimichi.Ui;
 /// Requirements card first with one next-step marker, Rewards as tiles, the Moonlit verdict, the Path card (the chain
 /// line once, then the star chart, <see cref="PathChart"/>), the Giver card; under the scrolling stack a sticky action
 /// bar with one labelled primary action (Flag on map, or Teleport when Lifestream is loaded) and round buttons for Pin,
-/// Show path, Link in chat, Copy coordinates, Open journal and Report, and a plain provenance line. Every action is a
+/// Show path, Route to this (the unlock route window), Link in chat, Copy coordinates, Open journal and Report, and a plain provenance line. Every action is a
 /// focusable item, so the pane works without a mouse (accessibility A6). Everything shown is materialized when the
 /// selection or the session version changes, so drawing allocates nothing.
 /// </summary>
@@ -832,6 +832,7 @@ public sealed class DetailPane
     private static readonly string TeleportIcon = FontAwesomeIcon.PaperPlane.ToIconString();
     private static readonly string PinIcon = FontAwesomeIcon.Thumbtack.ToIconString();
     private static readonly string ShowPathIcon = FontAwesomeIcon.Route.ToIconString();
+    private static readonly string RouteIcon = FontAwesomeIcon.MapSigns.ToIconString();
     private static readonly string LinkIcon = FontAwesomeIcon.Link.ToIconString();
     private static readonly string CopyIcon = FontAwesomeIcon.Copy.ToIconString();
     private static readonly string JournalIcon = FontAwesomeIcon.BookOpen.ToIconString();
@@ -840,8 +841,8 @@ public sealed class DetailPane
     private uint teleportTipRowId = uint.MaxValue;
     private string teleportTip = string.Empty;
 
-    /// <summary>Round buttons after the primary action: Pin, Show path, Link, Copy, Journal, Report (when attached), Flag (when Teleport leads).</summary>
-    private int IconButtonCount => 5 + (Diagnostics is null ? 0 : 1) + (links.TeleportAvailable ? 1 : 0);
+    /// <summary>Round buttons after the primary action: Pin, Show path, Route to this, Link, Copy, Journal, Report (when attached), Flag (when Teleport leads).</summary>
+    private int IconButtonCount => 6 + (Diagnostics is null ? 0 : 1) + (links.TeleportAvailable ? 1 : 0);
 
     private float PrimaryWidth()
     {
@@ -873,7 +874,7 @@ public sealed class DetailPane
 
     /// <summary>
     /// The sticky action bar: one labelled primary action, gold (Flag on map, or Teleport when Lifestream is loaded),
-    /// then round buttons for Pin, Show path, Link in chat, Copy coordinates, Open journal, Report and, with Teleport
+    /// then round buttons for Pin, Show path, Route to this, Link in chat, Copy coordinates, Open journal, Report and, with Teleport
     /// leading, Flag on map. Disabled buttons say why on hover. All are focusable items (accessibility A6).
     /// </summary>
     private void DrawActionBar(QuestRecord quest, uint rowId)
@@ -925,6 +926,12 @@ public sealed class DetailPane
         if (Chrome.IconButtonRound("##showPath", ShowPathIcon, Strings.ActionShowPathTooltip))
         {
             ui.ShowPath(rowId);
+        }
+
+        ImGui.SameLine();
+        if (Chrome.IconButtonRound("##route", RouteIcon, Strings.RouteToThisTooltip))
+        {
+            ui.OpenRoute(Core.Route.RouteTarget.ForQuest(rowId, model.DisplayName));
         }
 
         ImGui.SameLine();

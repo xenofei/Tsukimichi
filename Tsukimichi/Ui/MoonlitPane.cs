@@ -650,6 +650,11 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             Reveal(ui, quest);
         }
 
+        if (ImGui.MenuItem(Strings.RouteToThisReward))
+        {
+            ui.OpenRoute(Core.Route.RouteTarget.ForReward(row.Entry, catalog.All));
+        }
+
         ImGui.Separator();
         if (overrides.ContainsKey(rowId))
         {

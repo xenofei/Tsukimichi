@@ -468,6 +468,15 @@ public sealed class Plugin : IDalamudPlugin
             charactersPane.Links = gameLinks;
             mainWindow.AttachPanes(moonlitPane, charactersPane);
             mainWindow.AttachOverrides(moonlitPane);
+            // Unlock route (P6): the detail pane, a Moonlit row's menu and the Characters job rows ask UiState for it.
+            var routeWindow = new RouteWindow(Session, queryRunner, quest =>
+            {
+                mainWindow.IsOpen = true;
+                mainWindow.BringToFront();
+                MoonlitPane.Reveal(ui, quest);
+            });
+            windowSystem.AddWindow(routeWindow);
+            ui.RouteRequested += routeWindow.Show;
             // The flight index (a few small sheets) is built on the pane's first draw, on the framework thread.
             flightPane = new FlightPane(Session, unlockReader, gameLinks, TextureProvider, Log, () => ClientState.TerritoryType, () => FlightIndex.Build(DataManager.Excel, Dalamud.Utility.ClientLanguageExtensions.ToLumina(DataManager.Language)));
             mainWindow.AttachFlight(flightPane);
