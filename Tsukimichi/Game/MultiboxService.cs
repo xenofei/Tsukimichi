@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Dalamud.Plugin.Services;
@@ -42,6 +43,9 @@ public sealed class MultiboxService : IDisposable
     private static readonly TimeSpan DisposeWait = TimeSpan.FromSeconds(2);
     private static readonly TimeSpan LoopWarningInterval = TimeSpan.FromMinutes(1);
 
+    /// <summary>How often one skipped file (a newer plugin's snapshot, a corrupt or locked one) is warned about.</summary>
+    private static readonly TimeSpan ScanWarningInterval = TimeSpan.FromMinutes(10);
+
     private readonly IFramework framework;
     private readonly IPluginLog log;
     private readonly SessionState session;
@@ -74,12 +78,21 @@ public sealed class MultiboxService : IDisposable
     private readonly Dictionary<string, FileStamp?> userStamps = new(StringComparer.OrdinalIgnoreCase);
     private ulong? beatContentId;
     private DateTime beatSinceUtc;
-    private DateTime nextBeatUtc;
-    private DateTime nextScanUtc;
-    private DateTime nextTempSweepUtc;
-    private DateTime nextWatcherRetryUtc;
+
+    // The loop's schedule runs on the monotonic tick count (Environment.TickCount64, ms): a wall clock set back would
+    // otherwise stop heartbeats and polling until it caught up. The wall clock is only stamped into heartbeat files.
+    private long nextBeatMs;
+    private long nextScanMs;
+    private long nextTempSweepMs;
+    private long nextWatcherRetryMs;
     private bool duplicateWarned;
-    private DateTime lastLoopWarningUtc = DateTime.MinValue;
+    private long lastLoopWarningMs = long.MinValue;
+    private readonly Dictionary<string, long> scanWarnedMs = new(StringComparer.Ordinal);
+
+    // Watchers are started by the constructor and by the loop's retry, and stopped by Dispose: under watcherGate, and
+    // never started again once watchersStopped is set, so a retry racing Dispose cannot leave one running.
+    private readonly object watcherGate = new();
+    private bool watchersStopped;
     private FileSystemWatcher? charactersWatcher;
     private FileSystemWatcher? userWatcher;
 
@@ -98,6 +111,7 @@ public sealed class MultiboxService : IDisposable
         workerStore = new JsonSnapshotStore(paths.ConfigDir);
 
         snapshots.MayWrite = MayWrite;
+        snapshots.LiveElsewhere = session.IsLiveElsewhere;
         session.DataDeleted += OnDataDeleted;
         framework.Update += OnUpdate;
         StartWatchers();
@@ -118,36 +132,35 @@ public sealed class MultiboxService : IDisposable
         framework.Update -= OnUpdate;
         session.DataDeleted -= OnDataDeleted;
         snapshots.MayWrite = null;
+        snapshots.LiveElsewhere = null;
+
+        // Unloading: this client no longer holds anyone. Cleared before the cancel so a loop still in a tick writes no
+        // heartbeat; the loop deletes its own heartbeat as it exits (RunAsync), late or not.
+        Volatile.Write(ref live, null);
         lifetime.Cancel();
+        StopWatchers(final: true);
+
+        var stopped = false;
         try
         {
-            if (!loop.Wait(DisposeWait))
-            {
-                log.Warning("Multibox loop did not stop within {Seconds} s", DisposeWait.TotalSeconds);
-            }
+            stopped = loop.Wait(DisposeWait);
         }
         catch (AggregateException)
         {
             // Cancelled; anything else was logged by the loop.
+            stopped = true;
         }
 
-        StopWatchers();
-
-        // Unloading: this client no longer holds anyone. Its own heartbeat goes; another client's never does.
-        var own = beatContentId ?? Volatile.Read(ref live)?.ContentId;
-        if (own is { } id)
+        if (stopped)
         {
-            try
-            {
-                HeartbeatFile.DeleteIfAllowed(paths.CharactersDir, id, me, DateTime.UtcNow);
-            }
-            catch (Exception ex)
-            {
-                log.Debug(ex, "Heartbeat of {ContentId} not removed at unload", id);
-            }
+            lifetime.Dispose();
         }
-
-        lifetime.Dispose();
+        else
+        {
+            // A late loop (a slow disk) still holds the token: it finishes its tick, deletes its heartbeat and exits.
+            log.Warning("Multibox loop did not stop within {Seconds} s; it stops on its own", DisposeWait.TotalSeconds);
+            loop.ContinueWith(_ => lifetime.Dispose(), CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Default);
+        }
     }
 
     /// <summary>Whether this client may write a character's files: false only while another client holds its own character with a newer claim.</summary>
@@ -190,9 +203,15 @@ public sealed class MultiboxService : IDisposable
     {
         var snapshot = session.LiveSnapshot;
         var current = snapshot is null ? null : new LiveInfo(snapshot.ContentId, snapshot.Name, snapshot.World);
-        if (current != Volatile.Read(ref live))
+        var previous = Volatile.Read(ref live);
+        if (current != previous)
         {
             Volatile.Write(ref live, current);
+            if (current is not null && current.ContentId != previous?.ContentId)
+            {
+                // Now live here: a copy another client saved while it was live there is older than this one's own.
+                snapshots.ForgetExternal(current.ContentId);
+            }
         }
     }
 
@@ -252,14 +271,14 @@ public sealed class MultiboxService : IDisposable
         {
             try
             {
-                Tick(DateTime.UtcNow);
+                Tick(DateTime.UtcNow, Environment.TickCount64, token);
             }
             catch (Exception ex)
             {
-                var now = DateTime.UtcNow;
-                if (now - lastLoopWarningUtc >= LoopWarningInterval)
+                var nowMs = Environment.TickCount64;
+                if (lastLoopWarningMs == long.MinValue || nowMs - lastLoopWarningMs >= (long)LoopWarningInterval.TotalMilliseconds)
                 {
-                    lastLoopWarningUtc = now;
+                    lastLoopWarningMs = nowMs;
                     log.Warning(ex, "Multibox: reading or writing the shared folder failed; retrying");
                 }
             }
@@ -273,15 +292,31 @@ public sealed class MultiboxService : IDisposable
                 break;
             }
         }
+
+        // Unloading: this client no longer holds anyone. Its own heartbeat goes, here and not in Dispose, so a loop that
+        // outlived Dispose's wait still removes it and never writes one after; another client's heartbeat never goes.
+        if (beatContentId is { } own)
+        {
+            try
+            {
+                HeartbeatFile.DeleteIfAllowed(paths.CharactersDir, own, me, DateTime.UtcNow);
+            }
+            catch (Exception ex)
+            {
+                log.Debug(ex, "Heartbeat of {ContentId} not removed at unload", own);
+            }
+        }
     }
 
-    private void Tick(DateTime now)
+    /// <param name="now">The wall clock, stamped into heartbeats and compared with other clients' stamps.</param>
+    /// <param name="nowMs">The monotonic tick count every interval here is scheduled on.</param>
+    private void Tick(DateTime now, long nowMs, CancellationToken token)
     {
-        Beat(now);
-        if (Interlocked.Exchange(ref charactersDirty, 0) == 1 || now >= nextScanUtc)
+        Beat(now, nowMs, token);
+        if (Interlocked.Exchange(ref charactersDirty, 0) == 1 || nowMs >= nextScanMs)
         {
-            nextScanUtc = now + PollInterval;
-            Scan(now);
+            nextScanMs = nowMs + (long)PollInterval.TotalMilliseconds;
+            Scan(now, nowMs);
             PollUserFiles();
         }
 
@@ -290,23 +325,23 @@ public sealed class MultiboxService : IDisposable
             Interlocked.Exchange(ref userChanged, 1);
         }
 
-        if (now >= nextTempSweepUtc)
+        if (nowMs >= nextTempSweepMs)
         {
-            nextTempSweepUtc = now + TempSweepInterval;
+            nextTempSweepMs = nowMs + (long)TempSweepInterval.TotalMilliseconds;
             AtomicFile.DeleteStaleTemps(paths.CharactersDir, TempMaxAge, now);
             AtomicFile.DeleteStaleTemps(paths.UserDir, TempMaxAge, now);
         }
 
-        if (Volatile.Read(ref watcherBroken) == 1 && now >= nextWatcherRetryUtc)
+        if (Volatile.Read(ref watcherBroken) == 1 && nowMs >= nextWatcherRetryMs)
         {
-            nextWatcherRetryUtc = now + WatcherRetry;
-            StopWatchers();
+            nextWatcherRetryMs = nowMs + (long)WatcherRetry.TotalMilliseconds;
+            StopWatchers(final: false);
             StartWatchers();
         }
     }
 
     /// <summary>Keeps this client's heartbeat: switches it with the logged-in character, refreshes it, and settles a clash.</summary>
-    private void Beat(DateTime now)
+    private void Beat(DateTime now, long nowMs, CancellationToken token)
     {
         var current = Volatile.Read(ref live);
         if (current?.ContentId != beatContentId)
@@ -320,22 +355,22 @@ public sealed class MultiboxService : IDisposable
 
             beatContentId = current?.ContentId;
             beatSinceUtc = now;
-            nextBeatUtc = DateTime.MinValue;
+            nextBeatMs = 0;
             duplicateWarned = false;
             Volatile.Write(ref blockedContentId, 0UL);
         }
 
         if (Interlocked.Exchange(ref forceBeat, 0) == 1)
         {
-            nextBeatUtc = DateTime.MinValue;
+            nextBeatMs = 0;
         }
 
-        if (current is null || now < nextBeatUtc)
+        if (current is null || nowMs < nextBeatMs || token.IsCancellationRequested)
         {
             return;
         }
 
-        nextBeatUtc = now + LiveClients.RefreshInterval;
+        nextBeatMs = nowMs + (long)LiveClients.RefreshInterval.TotalMilliseconds;
         var onDisk = HeartbeatFile.TryRead(paths.CharactersDir, current.ContentId);
         if (LiveClients.Decide(onDisk, me, beatSinceUtc, now) == Ownership.Theirs)
         {
@@ -360,18 +395,21 @@ public sealed class MultiboxService : IDisposable
         }
 
         Volatile.Write(ref blockedContentId, 0UL);
+        if (token.IsCancellationRequested || Volatile.Read(ref live) is null)
+        {
+            // Dispose ran while the file was read: no heartbeat is written after it (the exit path deletes this one).
+            return;
+        }
+
         HeartbeatFile.Write(paths.CharactersDir, new Heartbeat(current.ContentId, current.Name, current.World, me.ProcessId, me.ClientId, beatSinceUtc, now));
     }
 
-    private void Scan(DateTime now)
+    private void Scan(DateTime now, long nowMs)
     {
         var skip = beatContentId is { } own ? new HashSet<ulong> { own } : [];
         var result = FolderScan.Run(paths.CharactersDir, known, workerStore, skip);
         known = new Dictionary<ulong, FileStamp>(result.Stamps);
-        foreach (var warning in result.Warnings)
-        {
-            log.Warning("Multibox: {Warning}", warning);
-        }
+        WarnSkipped(result.Warnings, nowMs);
 
         var liveElsewhere = LiveClients.LiveElsewhere(result.Heartbeats, me, now, beatContentId);
         var sameLive = LiveClients.SameCharacters(liveElsewhere, lastPublished);
@@ -390,6 +428,33 @@ public sealed class MultiboxService : IDisposable
 
         lastPublished = liveElsewhere;
         outcomes.Enqueue(new ScanOutcome(liveElsewhere, result.Changed, result.Removed));
+    }
+
+    /// <summary>
+    /// Logs what the scan skipped (a newer plugin's snapshot, a corrupt or locked file), each distinct warning at most
+    /// once per <see cref="ScanWarningInterval"/>: another client saving such a file every few seconds must not flood the log.
+    /// </summary>
+    private void WarnSkipped(IReadOnlyList<string> warnings, long nowMs)
+    {
+        var interval = (long)ScanWarningInterval.TotalMilliseconds;
+        foreach (var warning in warnings)
+        {
+            if (scanWarnedMs.TryGetValue(warning, out var last) && nowMs - last < interval)
+            {
+                continue;
+            }
+
+            scanWarnedMs[warning] = nowMs;
+            log.Warning("Multibox: {Warning}", warning);
+        }
+
+        if (scanWarnedMs.Count > 256)
+        {
+            foreach (var key in scanWarnedMs.Where(p => nowMs - p.Value >= interval).Select(static p => p.Key).ToList())
+            {
+                scanWarnedMs.Remove(key);
+            }
+        }
     }
 
     /// <summary>The polling fallback for <c>user/</c>: a pins or overrides file whose stamp moved counts as changed.</summary>
@@ -424,30 +489,43 @@ public sealed class MultiboxService : IDisposable
 
     private void StartWatchers()
     {
-        Volatile.Write(ref watcherBroken, 0);
-        charactersWatcher = Watch(paths.CharactersDir, name =>
+        lock (watcherGate)
         {
-            if (name.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
+            if (watchersStopped)
             {
-                Interlocked.Exchange(ref charactersDirty, 1);
+                return;
             }
-        });
-        userWatcher = Watch(paths.UserDir, name =>
-        {
-            if (string.Equals(name, Path.GetFileName(paths.PinsFile), StringComparison.OrdinalIgnoreCase)
-                || string.Equals(name, Path.GetFileName(paths.OverridesFile), StringComparison.OrdinalIgnoreCase))
+
+            Volatile.Write(ref watcherBroken, 0);
+            charactersWatcher = Watch(paths.CharactersDir, name =>
             {
-                Interlocked.Exchange(ref userDirty, 1);
-            }
-        });
+                if (name.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
+                {
+                    Interlocked.Exchange(ref charactersDirty, 1);
+                }
+            });
+            userWatcher = Watch(paths.UserDir, name =>
+            {
+                if (string.Equals(name, Path.GetFileName(paths.PinsFile), StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(name, Path.GetFileName(paths.OverridesFile), StringComparison.OrdinalIgnoreCase))
+                {
+                    Interlocked.Exchange(ref userDirty, 1);
+                }
+            });
+        }
     }
 
-    private void StopWatchers()
+    /// <param name="final">Dispose: no watcher is started again afterwards, whatever the loop is doing.</param>
+    private void StopWatchers(bool final)
     {
-        charactersWatcher?.Dispose();
-        charactersWatcher = null;
-        userWatcher?.Dispose();
-        userWatcher = null;
+        lock (watcherGate)
+        {
+            watchersStopped |= final;
+            charactersWatcher?.Dispose();
+            charactersWatcher = null;
+            userWatcher?.Dispose();
+            userWatcher = null;
+        }
     }
 
     /// <summary>A watcher on one folder (created if missing); null when the system refuses one, the polling then does the work.</summary>

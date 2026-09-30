@@ -661,7 +661,8 @@ public sealed class DiscoveryWindow : Window, IDisposable
     {
         try
         {
-            settings.Save(settingsPath);
+            // Framework thread: a few milliseconds at most; the next change saves again.
+            settings.Save(settingsPath, Core.Storage.AtomicFile.QuickAttempts);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {

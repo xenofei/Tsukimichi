@@ -7,6 +7,7 @@ using Tsukimichi.Config;
 using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Runtime;
+using Tsukimichi.Core.Storage;
 using Tsukimichi.GameData;
 
 namespace Tsukimichi.Game;
@@ -45,6 +46,7 @@ public sealed class StatePoller : IDisposable
     private readonly SnapshotService snapshots;
     private readonly SessionState session;
     private readonly Configuration config;
+    private readonly SerialWriter writer;
 
     private readonly PollerMemory memory = new(SaveInterval);
     private readonly PollSchedule schedule = new(TimeSpan.FromSeconds(2), MaxBackoff);
@@ -61,6 +63,13 @@ public sealed class StatePoller : IDisposable
     private bool saveWarned;
     private bool disposed;
 
+    /// <summary>Flushes on the writer that have not landed yet; a periodic flush waits for them.</summary>
+    private int flushesInFlight;
+
+    /// <summary>The capture the newest flush in flight writes; a final flush does not queue the same one again.</summary>
+    private CharacterSnapshot? queuedSnapshot;
+
+    /// <param name="writer">The background queue every snapshot and sidecar save goes through; the framework thread never writes a file.</param>
     public StatePoller(
         IFramework framework,
         IClientState clientState,
@@ -68,8 +77,10 @@ public sealed class StatePoller : IDisposable
         GameStateReader reader,
         SnapshotService snapshots,
         SessionState session,
-        Configuration config)
+        Configuration config,
+        SerialWriter writer)
     {
+        this.writer = writer ?? throw new ArgumentNullException(nameof(writer));
         this.framework = framework ?? throw new ArgumentNullException(nameof(framework));
         this.clientState = clientState ?? throw new ArgumentNullException(nameof(clientState));
         this.log = log ?? throw new ArgumentNullException(nameof(log));
@@ -85,12 +96,18 @@ public sealed class StatePoller : IDisposable
     }
 
     /// <summary>
-    /// Writes the last capture if it changed since the last save, then the accepted-time sidecar if it changed. A
-    /// failure is warned once, retried no sooner than <see cref="SaveInterval"/> later, and the recovery is logged.
+    /// Hands the last capture (if it changed since the last save) and the accepted-time and abandoned sidecars (if
+    /// they changed) to the background writer: the framework thread never waits on the disk or on another client
+    /// reading the file. The outcome lands in <see cref="FlushLanded"/> on the framework thread. A failure is warned
+    /// once, retried no sooner than <see cref="SaveInterval"/> later, and the recovery is logged.
     /// </summary>
-    public void Flush()
+    /// <param name="final">
+    /// Logout, unload or another character: queued even while an earlier flush is on the writer (the writer keeps
+    /// them in order). A periodic flush waits for the one in flight instead of piling up behind a slow disk.
+    /// </param>
+    public void Flush(bool final = false)
     {
-        if (memory.Last is not { } last)
+        if (memory.Last is not { } last || (flushesInFlight > 0 && !final))
         {
             return;
         }
@@ -102,70 +119,132 @@ public sealed class StatePoller : IDisposable
             return;
         }
 
-        var now = DateTime.UtcNow;
-        var saves = memory.Saves;
-        if (saves.Pending)
+        var saveSnapshot = memory.Saves.Pending && !ReferenceEquals(last, queuedSnapshot);
+        // Copies: the poller keeps changing its own maps while the writer serializes these.
+        var accepted = memory.AcceptedSinceDirty ? new Dictionary<ushort, DateTime>(memory.AcceptedSince) : null;
+        var abandoned = memory.AbandonedDirty ? new Dictionary<ushort, AbandonedEntry>(memory.Abandoned) : null;
+        if (!saveSnapshot && accepted is null && abandoned is null)
         {
-            try
+            return;
+        }
+
+        // Cleared now so the next change marks them again; a failed write sets them back when it lands.
+        memory.AcceptedSinceDirty = false;
+        memory.AbandonedDirty = false;
+        var acceptedPath = AcceptedSincePath(last.ContentId);
+        var abandonedPath = AbandonedPath(last.ContentId);
+        flushesInFlight++;
+        if (saveSnapshot)
+        {
+            queuedSnapshot = last;
+        }
+
+        writer.Enqueue(
+            () => new FlushOutcome(
+                saveSnapshot ? Attempt(() => snapshots.WriteToStore(last)) : null,
+                accepted is null ? null : Attempt(() => AcceptedSince.Save(acceptedPath, accepted)),
+                abandoned is null ? null : Attempt(() => AbandonedLedger.Save(abandonedPath, abandoned))),
+            (outcome, error) => FlushLanded(last, saveSnapshot, accepted is not null, abandoned is not null, outcome, error));
+    }
+
+    /// <summary>Runs one write on the writer; its exception, or null when it succeeded.</summary>
+    private static Exception? Attempt(Action write)
+    {
+        try
+        {
+            write();
+            return null;
+        }
+        catch (Exception ex)
+        {
+            return ex;
+        }
+    }
+
+    /// <summary>Framework thread: a flush landed. The debouncer, the dirty flags and the warnings follow its outcome.</summary>
+    private void FlushLanded(CharacterSnapshot saved, bool snapshotQueued, bool acceptedQueued, bool abandonedQueued, FlushOutcome? outcome, Exception? error)
+    {
+        flushesInFlight = Math.Max(0, flushesInFlight - 1);
+        if (snapshotQueued && ReferenceEquals(queuedSnapshot, saved))
+        {
+            queuedSnapshot = null;
+        }
+
+        if (disposed)
+        {
+            return;
+        }
+
+        var now = DateTime.UtcNow;
+        var sameCharacter = memory.Last?.ContentId == saved.ContentId;
+        if (snapshotQueued)
+        {
+            var snapshotError = error ?? outcome?.Snapshot;
+            var saves = memory.Saves;
+            if (snapshotError is null)
             {
-                snapshots.Save(last);
                 saves.MarkSaved(now);
+                snapshots.Record(saved);
+                if (memory.Last is { } newer && !ReferenceEquals(newer, saved))
+                {
+                    // A later capture was committed while this one was on the writer: it is still to be written.
+                    saves.MarkDirty();
+                }
+
                 if (saveWarned)
                 {
                     saveWarned = false;
-                    log.Information("Snapshot save recovered for {ContentId}", last.ContentId);
+                    log.Information("Snapshot save recovered for {ContentId}", saved.ContentId);
                 }
             }
-            catch (Exception ex)
+            else
             {
                 saves.MarkFailed(now);
                 if (!saveWarned)
                 {
                     saveWarned = true;
-                    log.Warning(ex, "Snapshot save failed for {ContentId}; retrying every {Seconds} s until it succeeds", last.ContentId, SaveInterval.TotalSeconds);
+                    log.Warning(snapshotError, "Snapshot save failed for {ContentId}; retrying every {Seconds} s until it succeeds", saved.ContentId, SaveInterval.TotalSeconds);
                 }
                 else
                 {
-                    log.Debug(ex, "Snapshot save still failing for {ContentId} ({Failures} attempts)", last.ContentId, saves.Failures);
+                    log.Debug(snapshotError, "Snapshot save still failing for {ContentId} ({Failures} attempts)", saved.ContentId, saves.Failures);
                 }
             }
         }
 
-        if (memory.AcceptedSinceDirty)
+        if (acceptedQueued)
         {
-            try
+            if ((error ?? outcome?.Accepted) is { } acceptedError)
             {
-                AcceptedSince.Save(AcceptedSincePath(last.ContentId), memory.AcceptedSince);
-                memory.AcceptedSinceDirty = false;
-                acceptedSinceWarned = false;
-            }
-            catch (Exception ex)
-            {
-                // Derived data: the next journal change retries; the Stalled preset just reads a stale file until then.
+                // Derived data: the next flush retries; the Stalled preset just reads a stale file until then.
+                memory.AcceptedSinceDirty |= sameCharacter;
                 if (!acceptedSinceWarned)
                 {
                     acceptedSinceWarned = true;
-                    log.Warning(ex, "Accepted-time sidecar save failed for {ContentId}", last.ContentId);
+                    log.Warning(acceptedError, "Accepted-time sidecar save failed for {ContentId}", saved.ContentId);
                 }
+            }
+            else
+            {
+                acceptedSinceWarned = false;
             }
         }
 
-        if (memory.AbandonedDirty)
+        if (abandonedQueued)
         {
-            try
-            {
-                AbandonedLedger.Save(AbandonedPath(last.ContentId), memory.Abandoned);
-                memory.AbandonedDirty = false;
-                abandonedWarned = false;
-            }
-            catch (Exception ex)
+            if ((error ?? outcome?.Abandoned) is { } abandonedError)
             {
                 // Stays dirty: the next flush retries.
+                memory.AbandonedDirty |= sameCharacter;
                 if (!abandonedWarned)
                 {
                     abandonedWarned = true;
-                    log.Warning(ex, "Abandoned-quest sidecar save failed for {ContentId}", last.ContentId);
+                    log.Warning(abandonedError, "Abandoned-quest sidecar save failed for {ContentId}", saved.ContentId);
                 }
+            }
+            else
+            {
+                abandonedWarned = false;
             }
         }
     }
@@ -187,7 +266,7 @@ public sealed class StatePoller : IDisposable
         session.CharacterForgotten -= OnCharacterForgotten;
         session.DataDeleted -= OnDataDeleted;
         DiscardFirstPass();
-        Flush();
+        Flush(final: true);
     }
 
     private void OnUpdate(IFramework _)
@@ -204,7 +283,7 @@ public sealed class StatePoller : IDisposable
             {
                 wasReady = false;
                 DiscardFirstPass();
-                Flush();
+                Flush(final: true);
                 memory.Reset();
                 readiness.Reset();
                 Notify(session.ClearLive);
@@ -298,7 +377,7 @@ public sealed class StatePoller : IDisposable
             // A catalog retry replaced the bundle: the committed evaluations belong to the old one, so a diff against
             // them would find nothing and never re-resolve. Persist what there is and start over with a first pass.
             log.Debug("Catalog instance changed; the next poll is a first pass");
-            Flush();
+            Flush(final: true);
             memory.Reset();
         }
 
@@ -324,7 +403,7 @@ public sealed class StatePoller : IDisposable
             if (last is not null && last.ContentId != snapshot.ContentId)
             {
                 // Another character arrived without a not-ready gap in between: persist the previous one before dropping it.
-                Flush();
+                Flush(final: true);
             }
 
             memory.Reset();
@@ -602,7 +681,7 @@ public sealed class StatePoller : IDisposable
             }
         }
 
-        Flush();
+        Flush(final: true);
     }
 
     /// <summary>
@@ -645,6 +724,9 @@ public sealed class StatePoller : IDisposable
         Task<FirstPassResult> Task,
         long StartedTimestamp,
         double CaptureMs);
+
+    /// <summary>What each part of a flush threw on the writer; null for a part that was written or not queued.</summary>
+    private sealed record FlushOutcome(Exception? Snapshot, Exception? Accepted, Exception? Abandoned);
 
     private sealed record FirstPassResult(
         Dictionary<uint, QuestEvaluation> States,

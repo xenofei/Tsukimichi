@@ -78,10 +78,16 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     private readonly IDalamudPluginInterface pluginInterface;
     private readonly Dictionary<uint, UniqueOverride> overrides;
 
-    /// <summary>Multibox (D11): quests whose verdict changed here since the last save; a save merges only these into the file on disk.</summary>
+    /// <summary>Multibox (D11): quests whose verdict changed here and is not queued for a save yet; a save merges only these into the file on disk.</summary>
     private readonly HashSet<uint> overridesTouched = [];
     private readonly VerdictPrompt verdict = new(Strings.MoonlitVerdictPopup);
     private int overridesVersion;
+
+    /// <summary>The quests of the save on the background writer; null while none is. One save is in flight at a time.</summary>
+    private HashSet<uint>? overridesInFlight;
+
+    /// <summary>Bumped by "Delete all data": a save or reload queued before it is ignored when it lands.</summary>
+    private int overridesGeneration;
 
     /// <summary>Session-only: which confidence (or the unreadable rows) the table shows.</summary>
     private ConfidenceFilter confidenceFilter = ConfidenceFilter.Any;
@@ -139,13 +145,19 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             log.Warning("Overrides: {Warning}", warning);
         }
 
-        // "Delete all data" removes user/overrides.json; re-read it so hidden quests reappear.
-        session.DataDeleted += ReloadOverrides;
+        // "Delete all data" empties user/overrides.json; the verdicts held here go with it so hidden quests reappear.
+        session.DataDeleted += OnDataDeleted;
     }
+
+    /// <summary>
+    /// The background queue verdicts are saved and re-read on (D11), so the framework thread never waits on the disk or
+    /// the cross-client lock. Without one, saves run at once.
+    /// </summary>
+    public SerialWriter? Writer { get; set; }
 
     public void Dispose()
     {
-        session.DataDeleted -= ReloadOverrides;
+        session.DataDeleted -= OnDataDeleted;
         if (clipperCreated)
         {
             clipper.Destroy();
@@ -220,23 +232,52 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     /// <summary>
     /// Multibox (D11): <c>user/overrides.json</c> changed on disk (another game client's verdict, or "Delete all data"
     /// there). The file is merged into the verdicts held here, keeping any change here not saved yet; the catalog
-    /// rebuilds only when something changed.
+    /// rebuilds only when something changed. Read on the background writer, after any save queued before it, and never
+    /// quarantined: a file that cannot be read or parsed right now leaves the verdicts held here as they are.
     /// </summary>
     public void MergeOverridesFromDisk()
     {
-        var warnings = new List<string>();
-        var disk = OverridesFile.Load(paths.OverridesFile, warnings);
-        foreach (var warning in warnings)
+        var generation = overridesGeneration;
+        var path = paths.OverridesFile;
+        SerialWriter.Submit(Writer, () => OverridesFile.LoadShared(path), (read, error) =>
         {
-            log.Warning("Overrides: {Warning}", warning);
-        }
+            if (generation != overridesGeneration)
+            {
+                return;
+            }
 
-        if (warnings.Count > 0)
-        {
-            return;
-        }
+            if (error is not null || read.Status is SharedLoad.Unreadable or SharedLoad.Invalid)
+            {
+                log.Debug(error, "Overrides not merged from disk: {Problem}", read.Problem ?? error?.Message ?? string.Empty);
+                return;
+            }
 
-        AdoptOverrides(KeyedMerge.Apply(disk, overrides, overridesTouched));
+            // A missing file (nothing saved yet, or moved away) is no reason to forget the verdicts held here.
+            if (!read.IsLoaded)
+            {
+                return;
+            }
+
+            // Verdicts changed here and not saved yet (queued or in flight) keep what this client holds.
+            var keep = new HashSet<uint>(overridesTouched);
+            if (overridesInFlight is { } inFlight)
+            {
+                keep.UnionWith(inFlight);
+            }
+
+            AdoptOverrides(KeyedMerge.Apply(read.Value!, overrides, keep));
+        });
+    }
+
+    /// <summary>"Delete all data" emptied the file: the verdicts held here go, and saves or reloads queued before are ignored.</summary>
+    private void OnDataDeleted()
+    {
+        overridesGeneration++;
+        overridesInFlight = null;
+        overridesTouched.Clear();
+        overrides.Clear();
+        catalogDirty = true;
+        overridesVersion++;
     }
 
     /// <summary>Takes a merged verdict map as the one held here; marks the catalog for a rebuild when it differs.</summary>
@@ -281,27 +322,6 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         return (uint)k < KindCount
             ? new UniqueRewardCounts(kindObtained[k], kindTotal[k], kindUnknown[k])
             : default;
-    }
-
-    /// <summary>Re-reads <c>user/overrides.json</c>, e.g. after the file was deleted or replaced outside the pane.</summary>
-    public void ReloadOverrides()
-    {
-        var warnings = new List<string>();
-        var loaded = OverridesFile.Load(paths.OverridesFile, warnings);
-        foreach (var warning in warnings)
-        {
-            log.Warning("Overrides: {Warning}", warning);
-        }
-
-        overrides.Clear();
-        overridesTouched.Clear();
-        foreach (var (rowId, stored) in loaded)
-        {
-            overrides[rowId] = stored;
-        }
-
-        catalogDirty = true;
-        overridesVersion++;
     }
 
     /// <summary>Left column: reward kinds with obtained/total and a filling moon; "All" on top.</summary>
@@ -993,30 +1013,55 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         _ => true,
     };
 
+    /// <summary>
+    /// Queues the verdicts changed here on the background writer (the catalog rebuilds at once from the verdicts held
+    /// here). Multibox (D11): only those quests are written; the others keep what is on disk, which another game client
+    /// may have changed since this one read it. One save is in flight at a time; changes made meanwhile follow it.
+    /// </summary>
     private void SaveOverrides()
     {
-        // Multibox (D11): only the verdicts changed here are written; the others keep what is on disk, which another
-        // game client may have changed since this one read it.
-        var warnings = new List<string>();
-        try
-        {
-            var merged = OverridesFile.SaveMerged(paths.OverridesFile, overrides, overridesTouched, warnings);
-            overridesTouched.Clear();
-            AdoptOverrides(merged);
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            // Still touched: the next verdict saves it too.
-            log.Error(ex, "Could not save {Path}", paths.OverridesFile);
-        }
-
-        foreach (var warning in warnings)
-        {
-            log.Warning("Overrides: {Warning}", warning);
-        }
-
         catalogDirty = true;
         overridesVersion++;
+        if (overridesTouched.Count == 0 || overridesInFlight is not null)
+        {
+            return;
+        }
+
+        var touched = new HashSet<uint>(overridesTouched);
+        overridesTouched.Clear();
+        overridesInFlight = touched;
+        var local = new Dictionary<uint, UniqueOverride>(overrides);
+        var generation = overridesGeneration;
+        var path = paths.OverridesFile;
+        var warnings = new List<string>();
+        SerialWriter.Submit(Writer, () => OverridesFile.SaveMerged(path, local, touched, warnings), (merged, error) =>
+        {
+            if (generation != overridesGeneration)
+            {
+                return;
+            }
+
+            overridesInFlight = null;
+            foreach (var warning in warnings)
+            {
+                log.Warning("Overrides: {Warning}", warning);
+            }
+
+            if (error is not null || merged is null)
+            {
+                // Still touched: the next verdict saves it too.
+                overridesTouched.UnionWith(touched);
+                log.Error(error, "Could not save {Path}", path);
+                return;
+            }
+
+            // The saved file, with the verdicts changed here since it was queued.
+            AdoptOverrides(KeyedMerge.Apply(merged, overrides, overridesTouched));
+            if (overridesTouched.Count > 0)
+            {
+                SaveOverrides();
+            }
+        });
     }
 
     private static readonly int KindCount = Enum.GetValues<RewardKind>().Length;

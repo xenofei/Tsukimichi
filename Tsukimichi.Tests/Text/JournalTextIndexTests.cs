@@ -235,11 +235,17 @@ public sealed class JournalTextIndexTests
         JournalIndexStore.Save(dir.Path, japanese);
         var older = new JournalTextIndex.Builder().Build("2026.08.01.0000.0000", "en");
         JournalIndexStore.Save(dir.Path, older);
+        File.SetLastWriteTimeUtc(JournalIndexStore.PathFor(dir.Path, older.GameVersion, older.Language), DateTime.UtcNow.AddDays(-31));
+        // Another game install at another patch level, built recently: its index stays too.
+        var otherInstall = new JournalTextIndex.Builder().Build("2026.07.01.0000.0000", "en");
+        JournalIndexStore.Save(dir.Path, otherInstall);
 
         // After a build, only other game versions go: the other client's language stays.
         Assert.Equal(1, JournalIndexStore.DeleteOtherVersions(dir.Path, english.GameVersion));
         Assert.NotNull(JournalIndexStore.Load(dir.Path, english.GameVersion, english.Language));
         Assert.NotNull(JournalIndexStore.Load(dir.Path, japanese.GameVersion, japanese.Language));
+        Assert.NotNull(JournalIndexStore.Load(dir.Path, otherInstall.GameVersion, otherInstall.Language));
+        Assert.Null(JournalIndexStore.Load(dir.Path, older.GameVersion, older.Language));
 
         // A startup sweep with an age leaves a fresh temporary file (another client's build) and takes an old one.
         var path = JournalIndexStore.PathFor(dir.Path, english.GameVersion, english.Language);

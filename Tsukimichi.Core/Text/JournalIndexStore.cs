@@ -90,18 +90,25 @@ public static class JournalIndexStore
             !file.EndsWith(TempSuffix, StringComparison.OrdinalIgnoreCase)
             && (keepPath is null || !string.Equals(Path.GetFullPath(file), Path.GetFullPath(keepPath), StringComparison.OrdinalIgnoreCase)));
 
+    /// <summary>How long the index of another game version is kept: another install at another patch level may use it.</summary>
+    public static readonly TimeSpan OtherVersionKeep = TimeSpan.FromDays(30);
+
     /// <summary>
-    /// Deletes the index files of other game versions; the files of every language of <paramref name="gameVersion"/>
-    /// stay, since two game clients sharing the config folder (D11) may run in different languages and would otherwise
-    /// delete each other's index after every build. Temporary files are left alone. Returns how many went.
+    /// Deletes the index files of other game versions older than <paramref name="keepFor"/> (default
+    /// <see cref="OtherVersionKeep"/>); the files of every language of <paramref name="gameVersion"/> stay, since two
+    /// game clients sharing the config folder (D11) may run in different languages, and so do recent files of other
+    /// versions, since two game installs at different patch levels may share it too: either would otherwise delete the
+    /// other's index after every build. Temporary files are left alone. Returns how many went.
     /// </summary>
-    public static int DeleteOtherVersions(string configDir, string gameVersion)
+    public static int DeleteOtherVersions(string configDir, string gameVersion, TimeSpan? keepFor = null, DateTime? nowUtc = null)
     {
         ArgumentNullException.ThrowIfNull(gameVersion);
         var keep = FilePrefix + Slug(gameVersion) + ".";
+        var cutoff = (nowUtc ?? DateTime.UtcNow) - (keepFor ?? OtherVersionKeep);
         return Delete(configDir, file =>
             !file.EndsWith(TempSuffix, StringComparison.OrdinalIgnoreCase)
-            && !Path.GetFileName(file).StartsWith(keep, StringComparison.OrdinalIgnoreCase));
+            && !Path.GetFileName(file).StartsWith(keep, StringComparison.OrdinalIgnoreCase)
+            && WrittenBefore(file, cutoff));
     }
 
     /// <summary>

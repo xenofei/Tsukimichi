@@ -15,9 +15,22 @@ public static class AtomicFile
 
     /// <summary>
     /// How many times a rename over the target is tried before its error propagates: about a second in all
-    /// (<see cref="Pause"/>), far longer than any reader here holds a file.
+    /// (<see cref="Pause"/>), far longer than any reader here holds a file. Meant for a background writer: the
+    /// framework thread passes <see cref="QuickAttempts"/>.
     /// </summary>
-    private const int Attempts = 50;
+    public const int DefaultAttempts = 50;
+
+    /// <summary>
+    /// The budget of a save on the framework thread: a few milliseconds of retries, never a frame. A save it cannot
+    /// finish fails, and the caller's own retry schedule (a save interval, the next change) tries again later.
+    /// </summary>
+    public const int QuickAttempts = 3;
+
+    /// <summary>
+    /// How many times a rename refused with "access denied" is tried. Windows reports a file whose delete is pending
+    /// that way for a moment, but a read-only or ACL-protected target says the same forever, so it is not waited out.
+    /// </summary>
+    public const int AccessDeniedAttempts = 3;
 
     /// <summary>
     /// How many times a read refused by a sharing violation is tried: about a tenth of a second. Nothing here holds a
@@ -36,10 +49,17 @@ public static class AtomicFile
     /// rename refused because a reader in another process has the file open is retried for a moment
     /// (<see cref="MoveOver"/>). A failed write deletes its temporary file before the exception propagates.
     /// </summary>
-    public static void Write(string path, string contents)
+    public static void Write(string path, string contents) => Write(path, contents, DefaultAttempts);
+
+    /// <summary>
+    /// <see cref="Write(string, string)"/> with at most <paramref name="attempts"/> renames over the target
+    /// (<see cref="QuickAttempts"/> on the framework thread).
+    /// </summary>
+    public static void Write(string path, string contents, int attempts)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
         ArgumentNullException.ThrowIfNull(contents);
+        ArgumentOutOfRangeException.ThrowIfLessThan(attempts, 1);
 
         var full = Path.GetFullPath(path);
         var dir = Path.GetDirectoryName(full);
@@ -52,7 +72,7 @@ public static class AtomicFile
         try
         {
             File.WriteAllText(tmp, contents, Utf8NoBom);
-            MoveOver(tmp, full);
+            MoveOver(tmp, full, attempts);
         }
         catch
         {
@@ -205,10 +225,18 @@ public static class AtomicFile
     /// has it open, even a reader that shares delete access, so a refusal is retried for a few hundred milliseconds:
     /// every reader here holds a file only for the moment it takes to read it.
     /// </summary>
-    public static void MoveOver(string source, string target)
+    public static void MoveOver(string source, string target) => MoveOver(source, target, DefaultAttempts);
+
+    /// <summary>
+    /// <see cref="MoveOver(string, string)"/> with at most <paramref name="attempts"/> tries. A read-only target fails
+    /// at once, and "access denied" is tried at most <see cref="AccessDeniedAttempts"/> times (<see cref="ShouldRetry"/>).
+    /// </summary>
+    public static void MoveOver(string source, string target, int attempts)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(source);
         ArgumentException.ThrowIfNullOrWhiteSpace(target);
+        ArgumentOutOfRangeException.ThrowIfLessThan(attempts, 1);
+        var denied = 0;
         for (var attempt = 1; ; attempt++)
         {
             try
@@ -216,10 +244,114 @@ public static class AtomicFile
                 File.Move(source, target, overwrite: true);
                 return;
             }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException && ex is not FileNotFoundException && attempt < Attempts)
+            catch (Exception ex) when (ShouldRetry(ex, attempt, attempts, Classify(ex, target, ref denied), denied))
             {
-                Pause(attempt);
+                if (attempts <= QuickAttempts)
+                {
+                    // The framework thread's budget: a yield, not a sleep, which Windows rounds up to a whole 15.6 ms
+                    // timer tick; the caller's own schedule retries a save that cannot land now.
+                    Thread.Sleep(0);
+                }
+                else
+                {
+                    Pause(attempt);
+                }
             }
+        }
+    }
+
+    /// <summary>Why a rename over a target was refused, as far as the target tells.</summary>
+    public enum Refusal
+    {
+        /// <summary>A sharing violation, or "access denied" while another handle has the target open.</summary>
+        InUse,
+
+        /// <summary>"Access denied" on a target nobody holds: permissions, or a delete still pending.</summary>
+        Denied,
+
+        /// <summary>The target has the read-only attribute.</summary>
+        ReadOnly,
+    }
+
+    /// <summary>
+    /// Whether a failed rename is tried again. Windows answers "access denied" both when a reader has the target open
+    /// (the usual case here: another client reading it for a moment) and when the target is read-only or its ACL
+    /// refuses the replace, which no wait can change. So a refusal while the target is in use is retried until
+    /// <paramref name="attempts"/> run out; a read-only target never; any other "access denied" until it has been met
+    /// <see cref="AccessDeniedAttempts"/> times (<paramref name="deniedSoFar"/>, this one included); a missing source or
+    /// folder never.
+    /// </summary>
+    public static bool ShouldRetry(Exception error, int attempt, int attempts, Refusal refusal, int deniedSoFar)
+    {
+        ArgumentNullException.ThrowIfNull(error);
+        if (error is FileNotFoundException or DirectoryNotFoundException || error is not (IOException or UnauthorizedAccessException))
+        {
+            return false;
+        }
+
+        return refusal switch
+        {
+            Refusal.ReadOnly => false,
+            Refusal.Denied => deniedSoFar < AccessDeniedAttempts && attempt < attempts,
+            _ => attempt < attempts,
+        };
+    }
+
+    /// <summary>Classifies a refused rename by probing the target; counts the refusals that are not about sharing.</summary>
+    private static Refusal Classify(Exception error, string target, ref int denied)
+    {
+        if (error is not UnauthorizedAccessException)
+        {
+            return Refusal.InUse;
+        }
+
+        if (IsReadOnly(target))
+        {
+            return Refusal.ReadOnly;
+        }
+
+        if (!IsWriteDenied(target))
+        {
+            // Writable: the refusal was another handle (a reader, another client's rename in flight), and it passes.
+            return Refusal.InUse;
+        }
+
+        denied++;
+        return Refusal.Denied;
+    }
+
+    /// <summary>True when <paramref name="path"/> exists with the read-only attribute; false when that cannot be told.</summary>
+    private static bool IsReadOnly(string path)
+    {
+        try
+        {
+            return File.Exists(path) && (File.GetAttributes(path) & FileAttributes.ReadOnly) != 0;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// True when <paramref name="path"/> refuses to be opened for writing with "access denied": its ACL, or a delete
+    /// still pending on it. A file that opens (sharing everything, so no reader or writer is disturbed), is missing, or
+    /// is merely in use (a sharing violation) is not denied: the refused rename was about another handle.
+    /// </summary>
+    private static bool IsWriteDenied(string path)
+    {
+        try
+        {
+            using var probe = new FileStream(path, FileMode.Open, FileAccess.Write, FileShare.ReadWrite | FileShare.Delete, 1, FileOptions.None);
+            return false;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return true;
+        }
+        catch (IOException)
+        {
+            return false;
         }
     }
 

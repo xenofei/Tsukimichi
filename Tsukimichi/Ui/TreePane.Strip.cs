@@ -22,8 +22,9 @@ public sealed partial class TreePane
     {
         EnsureNodes(current);
         RefreshCounts(runner);
+        // The strip has no rows to open or scroll to: a pending reveal is left for the full tree, which opens the
+        // node's ancestors and scrolls to it once the pane is wide again (a scope change drops it meanwhile).
         revealing = false;
-        ui.RevealPending = false;
 
         lineHeight = ImGui.GetTextLineHeight();
         glyphRadius = UiMetrics.TreeGlyphRadius(lineHeight);

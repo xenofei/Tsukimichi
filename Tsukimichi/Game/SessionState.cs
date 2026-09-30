@@ -343,7 +343,8 @@ public sealed partial class SessionState
     /// <summary>
     /// Removes every stored snapshot plus pins and overrides. See <see cref="ForgetCharacter"/> for the live character.
     /// Multibox (D11): the snapshot, sidecars and heartbeat of a character live in another game client stay (that
-    /// client owns them); every other heartbeat this client may delete goes (<see cref="DeleteHeartbeats"/>).
+    /// client owns them), and so do its pins; every other heartbeat this client may delete goes (<see cref="DeleteHeartbeats"/>).
+    /// Pins and overrides are rewritten under the cross-client lock rather than deleted (<see cref="ResetUserFiles"/>).
     /// </summary>
     public void DeleteAllData()
     {
@@ -360,8 +361,7 @@ public sealed partial class SessionState
 
         DeleteHeartbeats();
 
-        DeleteIfExists(paths.PinsFile);
-        DeleteIfExists(paths.OverridesFile);
+        ResetUserFiles();
         DeleteJournalIndex();
         recentEvents.Clear();
         // Listeners drop their in-memory copies (pins, overrides, spoiler overrides) first, so the bump in FollowLive

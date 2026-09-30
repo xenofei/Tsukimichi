@@ -36,6 +36,6 @@ public sealed class DiscoverySettings
     public static DiscoverySettings Load(string path, IList<string>? warnings = null) =>
         UserFile.Load<DiscoverySettings>(path, warnings) ?? new DiscoverySettings();
 
-    /// <summary>Writes the settings atomically, creating the parent directory.</summary>
-    public void Save(string path) => AtomicFile.Write(path, JsonSerializer.Serialize(this, StorageJson.Options));
+    /// <summary>Writes the settings atomically, creating the parent directory; <paramref name="attempts"/> renames at most (<see cref="AtomicFile.QuickAttempts"/> on the framework thread).</summary>
+    public void Save(string path, int attempts = AtomicFile.DefaultAttempts) => AtomicFile.Write(path, JsonSerializer.Serialize(this, StorageJson.Options), attempts);
 }

@@ -108,15 +108,43 @@ public sealed class SnapshotService : IDisposable
             return cached;
         }
 
-        var snapshot = store.Load(contentId);
+        // A character live in another game client is that client's file: a corrupt copy is left for it to replace
+        // rather than quarantined here (a file a newer plugin wrote is never quarantined by anyone).
+        var snapshot = store.Load(contentId, quarantine: LiveElsewhere?.Invoke(contentId) != true);
         LogStoreWarnings();
         return snapshot;
     }
+
+    /// <summary>Multibox (D11): whether a character is live in another game client right now. Set by the multibox service.</summary>
+    public Func<ulong, bool>? LiveElsewhere { get; set; }
 
     public void Save(CharacterSnapshot snapshot)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
         store.Save(snapshot);
+        Record(snapshot);
+    }
+
+    /// <summary>
+    /// Writes a snapshot to the store and nothing else: safe on the background writer, which is the only caller.
+    /// <see cref="Record"/> updates the list on the framework thread once the write landed.
+    /// </summary>
+    public void WriteToStore(CharacterSnapshot snapshot)
+    {
+        ArgumentNullException.ThrowIfNull(snapshot);
+        store.Save(snapshot);
+    }
+
+    /// <summary>
+    /// Multibox (D11), framework thread: the character is now logged in here. A copy another client saved while it was
+    /// live there is dropped, so <see cref="Load"/> reads this client's file rather than that older copy.
+    /// </summary>
+    public void ForgetExternal(ulong contentId) => external.Remove(contentId);
+
+    /// <summary>Framework thread: a snapshot this client wrote is on disk; the list follows it.</summary>
+    public void Record(CharacterSnapshot snapshot)
+    {
+        ArgumentNullException.ThrowIfNull(snapshot);
         external.Remove(snapshot.ContentId);
         characters.RemoveAll(c => c.ContentId == snapshot.ContentId);
         characters.Add(Summarize(snapshot));
