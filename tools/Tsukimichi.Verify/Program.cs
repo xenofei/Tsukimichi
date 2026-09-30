@@ -19,7 +19,7 @@ namespace Tsukimichi.Verify;
 /// Tsukimichi.Verify quests  [--game &lt;sqpack&gt;] [--cache &lt;dir&gt;] [--offline] [--since &lt;csv&gt;] [--rate &lt;seconds&gt;] [--limit N] [--out &lt;dir&gt;]
 /// Tsukimichi.Verify rewards [same options]
 /// Tsukimichi.Verify summary [--out &lt;dir&gt;]       exits 1 when any row is unresolved or catalogWrong outside the allowlist
-/// Tsukimichi.Verify patches [--game, --cache, --offline, --rate, --limit N, --out] [--patches &lt;file&gt;] [--no-quest-documents]
+/// Tsukimichi.Verify patches [--game, --cache, --offline, --rate, --limit N, --out] [--patches &lt;file&gt;] [--patch-corrections &lt;file&gt;] [--no-quest-documents]
 /// </code>
 /// </summary>
 public static class Program
@@ -100,6 +100,7 @@ public static class Program
         Console.Error.WriteLine("  --curated <dir>    curated directory (default: <repo>/Tsukimichi/Data/curated)");
         Console.Error.WriteLine("  patches only:");
         Console.Error.WriteLine("  --patches <file>   quest_patches.json to write (default: <repo>/Tsukimichi/Data/quest_patches.json); its values fill what Garland cannot");
+        Console.Error.WriteLine("  --patch-corrections <file>  hand corrections laid over Garland's values (default: <repo>/docs/data/quest-patch-corrections.json)");
         Console.Error.WriteLine("  --no-quest-documents  read Garland's per-quest documents from the cache only; never fetch one");
         Console.Error.WriteLine("  (with patches, --limit N caps the per-quest fetches of one run; the rest wait for the next)");
     }
@@ -264,7 +265,14 @@ public static class Program
         }
 
         log.WriteLine($"patches: previous file {(previous.ByRowId.Count == 0 ? "none" : $"{previous.KnownCount} known of {previous.ByRowId.Count} listed (game {previous.GameVersion})")}");
-        var seeder = new PatchSeeder(c.Game, new GarlandPatchSource(c.Http, log), previous, log);
+        var corrections = QuestPatchCorrections.Load(opts.PatchCorrectionsFile);
+        foreach (var warning in corrections.Warnings)
+        {
+            log.WriteLine("patches: " + warning);
+        }
+
+        log.WriteLine($"patches: {corrections.ByRowId.Count} hand corrections from {opts.PatchCorrectionsFile}");
+        var seeder = new PatchSeeder(c.Game, new GarlandPatchSource(c.Http, log), previous, corrections, log);
         // verification-manifest.json is left alone: it audits the quests and rewards runs, and the report names every
         // Garland document this one read.
         var result = await seeder.RunAsync(!opts.Offline && opts.FetchQuestDocuments, opts.Limit, ct);
@@ -554,6 +562,7 @@ internal sealed record VerifyOptions
     public string DataFile { get; init; } = Path.Combine(FindRepoRoot(), "Tsukimichi", "Data", "unique_quests.json");
     public string CuratedDir { get; init; } = Path.Combine(FindRepoRoot(), "Tsukimichi", "Data", "curated");
     public string PatchesFile { get; init; } = Path.Combine(FindRepoRoot(), "Tsukimichi", "Data", QuestPatches.FileName);
+    public string PatchCorrectionsFile { get; init; } = Path.Combine(FindRepoRoot(), "docs", "data", QuestPatchCorrections.FileName);
     public bool FetchQuestDocuments { get; init; } = true;
 
     public static VerifyOptions Parse(string[] args)
@@ -593,6 +602,9 @@ internal sealed record VerifyOptions
                     break;
                 case "--patches":
                     o = o with { PatchesFile = Path.GetFullPath(Next()) };
+                    break;
+                case "--patch-corrections":
+                    o = o with { PatchCorrectionsFile = Path.GetFullPath(Next()) };
                     break;
                 case "--no-quest-documents":
                     o = o with { FetchQuestDocuments = false };

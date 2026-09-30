@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "note": "Hand corrections of quest_patches.json: the patch a quest was added in where Garland Tools gives another. `Tsukimichi.Verify patches` lays these over Garland's values when it (re)seeds Tsukimichi/Data/quest_patches.json, so a re-seed keeps them; QuestPatchesFixtureTests fails when the shipped file disagrees. Each entry names the quest, the patch, the reason and an https evidence page (the wiki quest infobox).",
+  "entries": {
+    "65557": {
+      "name": "Way of the Archer",
+      "patch": "2.0",
+      "reason": "A 2.0 launch quest: its row id sits among the 2.0 rows and the wiki infobox says patch 2.0. Garland's patch documents list it under 3.1, so the \"Added in\" filter showed it under 3.1 and not under 2.0.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Way_of_the_Archer"
+    },
+    "65558": {
+      "name": "Way of the Conjurer",
+      "patch": "2.0",
+      "reason": "A 2.0 launch quest: its row id sits among the 2.0 rows and the wiki infobox says patch 2.0. Garland's patch documents list it under 3.1, so the \"Added in\" filter showed it under 3.1 and not under 2.0.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Way_of_the_Conjurer"
+    },
+    "65559": {
+      "name": "Way of the Lancer",
+      "patch": "2.0",
+      "reason": "A 2.0 launch quest: its row id sits among the 2.0 rows and the wiki infobox says patch 2.0. Garland's patch documents list it under 3.1, so the \"Added in\" filter showed it under 3.1 and not under 2.0.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Way_of_the_Lancer"
+    },
+    "65789": {
+      "name": "Way of the Gladiator",
+      "patch": "2.0",
+      "reason": "A 2.0 launch quest: its row id sits among the 2.0 rows and the wiki infobox says patch 2.0. Garland's patch documents list it under 3.1, so the \"Added in\" filter showed it under 3.1 and not under 2.0.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Way_of_the_Gladiator"
+    },
+    "65846": {
+      "name": "Way of the Marauder",
+      "patch": "2.0",
+      "reason": "A 2.0 launch quest: its row id sits among the 2.0 rows and the wiki infobox says patch 2.0. Garland's patch documents list it under 3.1, so the \"Added in\" filter showed it under 3.1 and not under 2.0.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Way_of_the_Marauder"
+    },
+    "65880": {
+      "name": "Way of the Thaumaturge",
+      "patch": "2.0",
+      "reason": "A 2.0 launch quest: its row id sits among the 2.0 rows and the wiki infobox says patch 2.0. Garland's patch documents list it under 3.1, so the \"Added in\" filter showed it under 3.1 and not under 2.0.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Way_of_the_Thaumaturge"
+    },
+    "66068": {
+      "name": "Way of the Pugilist",
+      "patch": "2.0",
+      "reason": "A 2.0 launch quest: its row id sits among the 2.0 rows and the wiki infobox says patch 2.0. Garland's patch documents list it under 3.1, so the \"Added in\" filter showed it under 3.1 and not under 2.0.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Way_of_the_Pugilist"
+    },
+    "66091": {
+      "name": "Burning Up the Quarter Malm",
+      "patch": "2.0",
+      "reason": "A 2.0 launch quest: its row id sits among the 2.0 rows and the wiki infobox says patch 2.0. Garland's patch documents list it under 3.1, so the \"Added in\" filter showed it under 3.1 and not under 2.0.",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Burning_Up_the_Quarter_Malm"
+    }
+  }
+}

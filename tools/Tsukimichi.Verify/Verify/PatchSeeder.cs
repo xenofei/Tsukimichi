@@ -15,6 +15,7 @@ internal enum PatchOrigin
     GarlandPatchDocument,
     GarlandQuestDocument,
     PreviousFile,
+    Correction,
 }
 
 /// <summary>One quest's outcome in a seed run.</summary>
@@ -35,8 +36,12 @@ internal sealed record PatchFinding(string Kind, uint RowId, string Name, string
 /// name Garland lists must be the catalog's (a reused row id would not be), and the per-quest document must agree
 /// with the patch document.
 /// </para>
+/// <para>
+/// <paramref name="corrections"/> (<c>docs/data/quest-patch-corrections.json</c>) win over every other source, so a
+/// re-seed keeps the patches corrected by hand; each one Garland disagrees with is reported as <c>corrected</c>.
+/// </para>
 /// </summary>
-internal sealed class PatchSeeder(GameCatalog game, GarlandPatchSource garland, QuestPatches previous, TextWriter log)
+internal sealed class PatchSeeder(GameCatalog game, GarlandPatchSource garland, QuestPatches previous, QuestPatchCorrections corrections, TextWriter log)
 {
     public List<PatchSeedRow> Rows { get; } = [];
     public List<PatchFinding> Findings { get; } = [];
@@ -172,6 +177,21 @@ internal sealed class PatchSeeder(GameCatalog game, GarlandPatchSource garland, 
                 (patch, origin) = (string.Empty, PatchOrigin.None);
             }
 
+            if (corrections.ByRowId.TryGetValue(quest.RowId, out var correction))
+            {
+                if (correction.Name.Length > 0 && !SameName(correction.Name, quest.Name))
+                {
+                    Findings.Add(new PatchFinding("correctionNameDiffers", quest.RowId, quest.Name, $"the correction names row {quest.RowId} \"{correction.Name}\"; applied anyway"));
+                }
+
+                if (PatchVersion.Compare(patch, correction.Patch) != 0)
+                {
+                    Findings.Add(new PatchFinding("corrected", quest.RowId, quest.Name, $"{(patch.Length > 0 ? patch : "unknown")} ({Origin(origin)}) corrected to {correction.Patch}: {correction.Reason}"));
+                }
+
+                (patch, origin) = (correction.Patch, PatchOrigin.Correction);
+            }
+
             var before = previous.For(quest.RowId);
             if (before.Length > 0 && patch.Length > 0 && PatchVersion.Compare(before, patch) != 0)
             {
@@ -225,6 +245,7 @@ internal sealed class PatchSeeder(GameCatalog game, GarlandPatchSource garland, 
         sb.AppendLine(CultureInfo.InvariantCulture, $"| From Garland's patch documents | {Rows.Count(r => r.Origin == PatchOrigin.GarlandPatchDocument)} |");
         sb.AppendLine(CultureInfo.InvariantCulture, $"| From Garland's quest documents | {Rows.Count(r => r.Origin == PatchOrigin.GarlandQuestDocument)} ({QuestDocumentsCached} quest documents were already cached, {QuestDocumentsFetched} fetched this run, {QuestDocumentsPending} still to fetch) |");
         sb.AppendLine(CultureInfo.InvariantCulture, $"| Kept from the previous file | {Rows.Count(r => r.Origin == PatchOrigin.PreviousFile)} |");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"| Hand corrections (`docs/data/{QuestPatchCorrections.FileName}`) | {Rows.Count(r => r.Origin == PatchOrigin.Correction)} |");
         sb.AppendLine(CultureInfo.InvariantCulture, $"| Unknown | {total - known} |");
         sb.AppendLine(CultureInfo.InvariantCulture, $"| Cached quest documents that agree with the patch documents | {QuestDocumentsAgree} |");
         sb.AppendLine();
@@ -238,11 +259,12 @@ internal sealed class PatchSeeder(GameCatalog game, GarlandPatchSource garland, 
         sb.AppendLine("- **documentsDisagree**: Garland's per-quest document and its patch document give different patches for one quest.");
         sb.AppendLine("- **listedTwice**: a quest under two patches in Garland's patch documents; the older is kept (first seen).");
         sb.AppendLine("- **changedFromPrevious**: the committed file had another patch for the quest.");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"- **corrected**: a hand correction (`docs/data/{QuestPatchCorrections.FileName}`, with its reason and evidence) replaced Garland's patch. **correctionNameDiffers**: the correction names another quest than the row id's.");
         sb.AppendLine();
         var byKind = Findings.GroupBy(f => f.Kind).ToDictionary(g => g.Key, g => g.ToList());
         sb.AppendLine("| Check | Findings |");
         sb.AppendLine("|---|---:|");
-        foreach (var kind in new[] { "olderThanExpansion", "nameDiffers", "documentsDisagree", "listedTwice", "changedFromPrevious" })
+        foreach (var kind in new[] { "olderThanExpansion", "nameDiffers", "documentsDisagree", "listedTwice", "changedFromPrevious", "corrected", "correctionNameDiffers" })
         {
             sb.AppendLine(CultureInfo.InvariantCulture, $"| {kind} | {byKind.GetValueOrDefault(kind)?.Count ?? 0} |");
         }
@@ -267,7 +289,7 @@ internal sealed class PatchSeeder(GameCatalog game, GarlandPatchSource garland, 
         }
 
         sb.AppendLine();
-        foreach (var kind in new[] { "olderThanExpansion", "nameDiffers", "documentsDisagree", "listedTwice", "changedFromPrevious" })
+        foreach (var kind in new[] { "olderThanExpansion", "nameDiffers", "documentsDisagree", "listedTwice", "changedFromPrevious", "corrected", "correctionNameDiffers" })
         {
             if (!byKind.TryGetValue(kind, out var list) || list.Count == 0)
             {
@@ -313,6 +335,7 @@ internal sealed class PatchSeeder(GameCatalog game, GarlandPatchSource garland, 
         PatchOrigin.GarlandPatchDocument => "Garland patch document",
         PatchOrigin.GarlandQuestDocument => "Garland quest document",
         PatchOrigin.PreviousFile => "previous file",
+        PatchOrigin.Correction => "hand correction",
         _ => "none",
     };
 
