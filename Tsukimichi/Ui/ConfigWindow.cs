@@ -164,6 +164,8 @@ public sealed class ConfigWindow : Window
         ImGui.Spacing();
         DrawDisplay();
         ImGui.Spacing();
+        DrawKeyboard();
+        ImGui.Spacing();
         DrawNotices();
         ImGui.Spacing();
         DrawJournal();
@@ -289,6 +291,68 @@ public sealed class ConfigWindow : Window
         }
 
         DrawJournalFiling();
+    }
+
+    /// <summary>
+    /// Settings › Keyboard (T17, accessibility A7): what is always bound, the warning that the game sees the keys too,
+    /// and the opt-in shortcuts, all off by default. Saved at once.
+    /// </summary>
+    private void DrawKeyboard()
+    {
+        Header(Strings.ConfigSectionKeyboard);
+        using (ImRaii.TextWrapPos(0f))
+        {
+            ImGui.TextDisabled(Strings.ConfigKeyboardAlwaysOn);
+            using (Theme.PushText(Theme.Surface.TextSecondary))
+            {
+                ImGui.TextWrapped(Strings.ConfigKeyboardGameSeesKeys);
+            }
+        }
+
+        var tabs = settings.ShortcutTabs;
+        if (ImGui.Checkbox(Strings.ConfigShortcutTabs, ref tabs))
+        {
+            settings.ShortcutTabs = tabs;
+            Save();
+        }
+
+        HintOnHover(Strings.ConfigShortcutTabsHint);
+
+        var flag = settings.ShortcutFlag;
+        if (ImGui.Checkbox(Strings.ConfigShortcutFlag, ref flag))
+        {
+            settings.ShortcutFlag = flag;
+            Save();
+        }
+
+        HintOnHover(Strings.ConfigShortcutFlagHint);
+
+        var reveal = settings.ShortcutReveal;
+        if (ImGui.Checkbox(Strings.ConfigShortcutReveal, ref reveal))
+        {
+            settings.ShortcutReveal = reveal;
+            Save();
+        }
+
+        HintOnHover(Strings.ConfigShortcutRevealHint);
+
+        var pin = settings.ShortcutPin;
+        if (ImGui.Checkbox(Strings.ConfigShortcutPin, ref pin))
+        {
+            settings.ShortcutPin = pin;
+            Save();
+        }
+
+        HintOnHover(Strings.ConfigShortcutPinHint);
+    }
+
+    /// <summary>The last item's hint as a Night tooltip while it is hovered.</summary>
+    private static void HintOnHover(string hint)
+    {
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(hint);
+        }
     }
 
     /// <summary>

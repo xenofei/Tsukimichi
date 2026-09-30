@@ -255,6 +255,22 @@ public sealed class Configuration : IPluginConfiguration
     /// <summary>The todo overlay's Compact mode: moon and name only, one line per row, no hints. Off by default.</summary>
     public bool TodoOverlayCompact { get; set; }
 
+    // ---- 0.8.0: keyboard (T17, accessibility A7) ----
+    // The game sees every key the plugin reads (only a text field swallows them), so beyond Ctrl+F and Esc every
+    // shortcut is opt-in: Ctrl+1..4 are hotbar 2 in the default keybinds and single letters are often bound.
+
+    /// <summary>Ctrl+1..4 switch the main window's tabs while it has focus. Off by default.</summary>
+    public bool ShortcutTabs { get; set; }
+
+    /// <summary>F flags the selected quest's giver on the map while the main window has focus. Off by default.</summary>
+    public bool ShortcutFlag { get; set; }
+
+    /// <summary>Enter shows the selected quest in the Journal while the main window has focus. Off by default.</summary>
+    public bool ShortcutReveal { get; set; }
+
+    /// <summary>P pins or unpins the selected quest while the main window has focus. Off by default.</summary>
+    public bool ShortcutPin { get; set; }
+
     /// <summary>Poll interval as a <see cref="TimeSpan"/> within the allowed bounds.</summary>
     public TimeSpan PollInterval
     {

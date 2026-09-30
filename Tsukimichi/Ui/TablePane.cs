@@ -80,6 +80,9 @@ public sealed class TablePane : IDisposable
 
     private static readonly string StoryBadgeIcon = FontAwesomeIcon.BookOpen.ToIconString();
 
+    /// <summary>The row's context menu, opened by a right-click, the Menu key or Shift+F10, or the "…" button.</summary>
+    private const string RowMenuId = "##ctx";
+
     /// <summary>The widest level a pill is sized for when the Level column is first laid out.</summary>
     private const string WidestLevel = "100";
 
@@ -139,6 +142,10 @@ public sealed class TablePane : IDisposable
     // frame gets the fill and the lift this frame; hoveredNext collects this frame's for the next.
     private uint? hoveredRow;
     private uint? hoveredNext;
+
+    // The row whose "…" button had keyboard focus last frame (it stays drawn while focused), and this frame's.
+    private uint? moreFocusedRow;
+    private uint? moreFocusedNext;
 
     // Reveal pulse (T17): the last UiState.RevealSerial seen, and the row still waiting to be drawn to start its pulse.
     private int revealSeen;
@@ -286,6 +293,7 @@ public sealed class TablePane : IDisposable
         var layout = new RowLayout(lineHeight, rowContent, rowHeight, padY, glyphBox, glyphRadius, dense);
         var liftRow = hoveredRow;
         hoveredNext = null;
+        moreFocusedNext = null;
         clipper.Begin(rows.Length, rowHeight);
         while (clipper.Step())
         {
@@ -297,6 +305,7 @@ public sealed class TablePane : IDisposable
 
         clipper.End();
         hoveredRow = hoveredNext;
+        moreFocusedRow = moreFocusedNext;
     }
 
     /// <summary>Per-frame row measurements, computed once per draw.</summary>
@@ -527,6 +536,14 @@ public sealed class TablePane : IDisposable
 
         // The selectable spans the table's width: its rectangle gives the row's left and right edges.
         var rowHovered = ImGui.IsItemHovered();
+        var rowFocused = ImGui.IsItemFocused();
+
+        // The Menu key or Shift+F10 on the focused row opens its menu (accessibility A6).
+        if (rowFocused && Keyboard.OpenMenuOnKey(RowMenuId))
+        {
+            SelectFromTable(quest.RowId);
+        }
+
         var rowMin = new Vector2(ImGui.GetItemRectMin().X, nameCellMin.Y - layout.PadY);
         var rowMax = new Vector2(ImGui.GetItemRectMax().X, rowMin.Y + layout.RowHeight);
         if (rowHovered)
@@ -556,7 +573,7 @@ public sealed class TablePane : IDisposable
             }
         }
 
-        using (var popup = ImRaii.ContextPopupItem("##ctx"))
+        using (var popup = ImRaii.ContextPopupItem(RowMenuId))
         {
             if (popup)
             {
@@ -567,6 +584,25 @@ public sealed class TablePane : IDisposable
                 }
 
                 DrawContextMenu(quest, row.State);
+            }
+        }
+
+        // The "…" button at the name cell's right end, shown while the mouse is over the row or the row (or the button
+        // itself) has keyboard focus: a left click, Enter or Space opens the same menu, so no action needs the right
+        // button (accessibility A6).
+        var mouseInRow = ImGui.IsWindowHovered() && ImGui.IsMouseHoveringRect(rowMin, rowMax);
+        if (mouseInRow || rowFocused || moreFocusedRow == quest.RowId)
+        {
+            var size = MathF.Min(layout.RowHeight, UiMetrics.MinTarget);
+            var moreMin = new Vector2(nameCellMin.X + nameCellWidth - size, rowMin.Y + ((layout.RowHeight - size) * 0.5f));
+            if (Keyboard.MoreButton("##more", RowMenuId, moreMin, size))
+            {
+                SelectFromTable(quest.RowId);
+            }
+
+            if (ImGui.IsItemFocused())
+            {
+                moreFocusedNext = quest.RowId;
             }
         }
 

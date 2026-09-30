@@ -394,6 +394,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             clipperCreated = true;
         }
 
+        moreFocusedNext = -1;
         clipper.Begin(visibleCount);
         while (clipper.Step())
         {
@@ -404,7 +405,15 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         }
 
         clipper.End();
+        moreFocusedRow = moreFocusedNext;
     }
+
+    /// <summary>The row's context menu, opened by a right-click, the Menu key or Shift+F10, or the "…" button.</summary>
+    private const string RowMenuId = "ctx";
+
+    // The row whose "…" button had keyboard focus last frame (it stays drawn while focused), and this frame's; -1 none.
+    private int moreFocusedRow = -1;
+    private int moreFocusedNext = -1;
 
     /// <summary>The confidence filter; its popup opens from the centre column (own font scale 1), so it scales itself.</summary>
     private void DrawConfidenceCombo()
@@ -481,6 +490,8 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         // Icon and reward name; the row's context menu hangs off the name. A row hidden by the user's verdict is
         // Dusk and struck through, and says so on hover.
         ImGui.TableNextColumn();
+        var cellMin = ImGui.GetCursorScreenPos();
+        var cellWidth = ImGui.GetContentRegionAvail().X;
         DrawIcon(row, UiMetrics.RowIconSize);
         ImGui.SameLine();
         using (Theme.PushText(Theme.Dusk, row.Hidden))
@@ -493,6 +504,10 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             }
         }
 
+        // The Menu key or Shift+F10 on the focused name opens its menu (accessibility A6).
+        var nameFocused = ImGui.IsItemFocused();
+        Keyboard.OpenMenuOnKey(RowMenuId);
+
         if (row.Hidden)
         {
             StrikeThrough(row.Name);
@@ -502,7 +517,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             }
         }
 
-        using (var menu = ImRaii.ContextPopupItem("ctx"))
+        using (var menu = ImRaii.ContextPopupItem(RowMenuId))
         {
             if (menu)
             {
@@ -528,6 +543,22 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             {
                 UiMetrics.Tooltip(row.DropTooltip);
             }
+        }
+
+        // The "…" button at the reward cell's right end while the mouse is over the cell or the name (or the button)
+        // has keyboard focus: a left click, Enter or Space opens the same menu (accessibility A6).
+        var size = MathF.Min(UiMetrics.MinTarget, MathF.Max(line, UiMetrics.RowIconSize));
+        var cellMax = new Vector2(cellMin.X + cellWidth, cellMin.Y + size);
+        if (nameFocused || moreFocusedRow == row.Index || (ImGui.IsWindowHovered() && ImGui.IsMouseHoveringRect(cellMin, cellMax)))
+        {
+            var after = ImGui.GetCursorScreenPos();
+            Keyboard.MoreButton("##more", RowMenuId, new Vector2(cellMax.X - size, cellMin.Y), size);
+            if (ImGui.IsItemFocused())
+            {
+                moreFocusedNext = row.Index;
+            }
+
+            ImGui.SetCursorScreenPos(after);
         }
 
         // Kind.
