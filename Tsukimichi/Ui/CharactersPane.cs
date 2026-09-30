@@ -38,6 +38,14 @@ namespace Tsukimichi.Ui;
 /// confirm popup), and the Account view: the state of <see cref="UiState.SelectedRowId"/> on every character,
 /// evaluated offline from their snapshots.
 /// <para>
+/// The Moon Road look (feature plan v4 V5, proposal §7.6), at Flair Full and Quiet: a framed header (the current job's
+/// icon in a frame with corner marks at Full, the name in the Title role, the world in the secondary tone and the overall
+/// orbit gauge on the right, under the name below 360 px), a grid of section rings above the completion table (one orbit
+/// per journal section with its official icon, its count in the Numeral role and its name, ⌊width / 120⌋ columns), and
+/// open-section headings (sigil, eyebrow, fading rule) in place of the separators. Every table stays. Plain keeps the
+/// look before 1.4.
+/// </para>
+/// <para>
 /// Every label, count and icon id is built once per <see cref="SessionState.Version"/> or viewed character (and once
 /// a minute for the ages); nothing allocates per frame in the table bodies. Snapshots of other characters are loaded
 /// through <c>loadSnapshot</c> only when their capture time changed, and their evaluations are memoized per version.
@@ -83,6 +91,12 @@ public sealed partial class CharactersPane
     private const uint ChainGauges = 0x3_0000;
     private const uint NotStartedGauges = 0x4_0000;
     private const uint MoonlitGauges = 0x5_0000;
+    private const uint SectionGridGauges = 0x6_0000;
+    private const uint HeaderGauge = 0x7_0000;
+
+    // The journal sections' official icons for the section rings, resolved once per catalog bundle.
+    private NodeIconMap sectionIcons = NodeIconMap.Empty;
+    private CatalogBundle? sectionIconsBundle;
 
     /// <summary>Reward kinds the dashboard summarizes, in display order.</summary>
     private static readonly RewardKind[] SummaryKinds =
@@ -253,10 +267,18 @@ public sealed partial class CharactersPane
         var d = RefreshDashboard(snapshot);
 
         // (a) Header. The lines wrap between words and the world and the button move to the next line rather than
-        // run past the edge (feature plan v4 L6).
-        Chrome.FitText(d.Name, ImGui.GetColorU32(ImGuiCol.Text));
-        Chrome.SameLineOrWrap(ImGui.CalcTextSize(d.World).X);
-        Chrome.FitText(d.World, ImGui.GetColorU32(ImGuiCol.TextDisabled));
+        // run past the edge (feature plan v4 L6). At Full and Quiet flair the name and world sit in a framed block.
+        if (Theme.ShowRules)
+        {
+            DrawFramedHeader(d);
+        }
+        else
+        {
+            Chrome.FitText(d.Name, ImGui.GetColorU32(ImGuiCol.Text));
+            Chrome.SameLineOrWrap(ImGui.CalcTextSize(d.World).X);
+            Chrome.FitText(d.World, ImGui.GetColorU32(ImGuiCol.TextDisabled));
+        }
+
         TextFlow.Wrapped(d.TakenLine, 0f, ImGui.GetColorU32(ImGuiCol.TextDisabled));
         if (!session.IsLive && session.IsLiveElsewhere(snapshot.ContentId) && ImGui.IsItemHovered())
         {
@@ -321,21 +343,137 @@ public sealed partial class CharactersPane
         }
     }
 
+    /// <summary>Between two blocks: a separator, or at Full and Quiet flair only air (the next heading's rule is the line).</summary>
     private static void Gap()
     {
         ImGui.Spacing();
-        ImGui.Separator();
+        if (Theme.ShowRules)
+        {
+            ImGui.Spacing();
+        }
+        else
+        {
+            ImGui.Separator();
+        }
+
         ImGui.Spacing();
     }
 
-    /// <summary>(b) One row per journal section: filling moon, done/total and percent; All quests on top.</summary>
-    private static void DrawSections(Dashboard d)
+    /// <summary>
+    /// The framed header (proposal §7.6, Flair Full and Quiet): the current job's icon at 40 px on the sunken ground in
+    /// a frame (corner marks at Full: the one framed object of this pane), the name in the Title role and the world
+    /// under it, the overall orbit gauge at 48 px on the right, or on its own line under the name in a pane under
+    /// 360 px. One block item; the name's item carries its tooltip when cut.
+    /// </summary>
+    private void DrawFramedHeader(Dashboard d)
     {
-        ImGui.TextDisabled(Strings.CharactersSectionCompletion);
+        var start = ImGui.GetCursorScreenPos();
+        var room = ImGui.GetContentRegionAvail().X;
+        var dl = ImGui.GetWindowDrawList();
+        var s = Theme.Surface;
+        var highContrast = Theme.Glyphs.HighContrast;
+        var frame = MathF.Round(UiMetrics.Icon(40f));
+        var gauge = MathF.Round(UiMetrics.Icon(48f));
+        var gap = UiMetrics.Px(10f);
+        var mark = MathF.Round(UiMetrics.Px(8f));
+        var outset = MathF.Round(UiMetrics.Px(3f));
+        var wide = room / UiMetrics.Scale >= 360f && d.Sections.Length > 0;
+
+        // The job icon in its frame.
+        var frameMin = start + new Vector2(outset);
+        var frameMax = frameMin + new Vector2(frame);
+        var rounding = UiMetrics.Px(4f);
+        dl.AddRectFilled(frameMin, frameMax, Theme.U32(s.Sunken), rounding);
+        if (textures is not null && d.JobIconId != 0)
+        {
+            var inset = new Vector2(MathF.Round(UiMetrics.Px(3f)));
+            var hiRes = frame > Orbit.LowResMaxPx;
+            if (textures.GetFromGameIcon(new GameIconLookup(d.JobIconId, false, hiRes)).TryGetWrap(out var wrap, out _))
+            {
+                dl.AddImage(wrap.Handle, frameMin + inset, frameMax - inset);
+            }
+        }
+
+        dl.AddRect(frameMin, frameMax, highContrast ? Theme.VeilLineU32 : Theme.U32(s.Line), rounding, ImDrawFlags.None, UiMetrics.Hairline);
+        if (Theme.ShowCornerMarks)
+        {
+            OrnamentAtlas.Corners(dl, frameMin - new Vector2(outset), frameMax + new Vector2(outset), mark, 0f, Theme.OrnamentU32);
+        }
+
+        // Name (Title role) and world.
+        var textX = frameMax.X + outset + gap;
+        var textRoom = MathF.Max(0f, start.X + room - textX - (wide ? gauge + gap : 0f));
+        float titleLine;
+        using (Typography.Title(d.Name))
+        {
+            titleLine = ImGui.GetTextLineHeight();
+        }
+
+        var line = ImGui.GetTextLineHeight();
+        var block = MathF.Max(frame + (2f * outset), titleLine + line);
+        var textY = start.Y + MathF.Max(0f, (block - titleLine - line) * 0.5f);
+        ImGui.SetCursorScreenPos(new Vector2(textX, textY));
+        if (SectionHeading.Title(d.Name, textRoom) && ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(d.Name);
+        }
+
+        ImGui.SetCursorScreenPos(new Vector2(textX, textY + titleLine));
+        if (Chrome.EllipsisText(d.World, textRoom, Theme.U32(s.TextSecondary)) && ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(d.World);
+        }
+
+        // The overall gauge: right of the block, or under it in a narrow pane.
+        ImGui.SetCursorScreenPos(start);
+        ImGui.Dummy(new Vector2(room, block));
+        if (d.Sections.Length == 0)
+        {
+            return;
+        }
+
+        Vector2 gaugeMin;
+        if (wide)
+        {
+            gaugeMin = new Vector2(start.X + room - gauge, start.Y + MathF.Max(0f, (block - gauge) * 0.5f));
+        }
+        else
+        {
+            gaugeMin = ImGui.GetCursorScreenPos();
+            ImGui.Dummy(new Vector2(gauge, gauge));
+        }
+
+        var overall = d.Sections[0];
+        var fraction = Motion.Gauge(Motion.Key(DashboardGaugeTag, HeaderGauge), overall.Fraction);
+        if (textures is not null)
+        {
+            Orbit.Draw(dl, textures, gaugeMin, gauge, overall.Icon, fraction, highContrast: highContrast);
+        }
+        else
+        {
+            MoonGlyph.DrawHalo(dl, gaugeMin + new Vector2(gauge * 0.5f), gauge * 0.5f, fraction);
+        }
+
+        if (ImGui.IsWindowHovered() && ImGui.IsMouseHoveringRect(gaugeMin, gaugeMin + new Vector2(gauge)))
+        {
+            FillingMoonTooltip(overall.Count, overall.Percent);
+        }
+    }
+
+    /// <summary>(b) One row per journal section: filling moon, done/total and percent; All quests on top.</summary>
+    private void DrawSections(Dashboard d)
+    {
+        SectionHeading.Draw(Strings.CharactersSectionCompletion);
         if (d.Sections.Length == 0)
         {
             ImGui.TextDisabled(Strings.CharactersNoSections);
             return;
+        }
+
+        if (Theme.ShowRules)
+        {
+            DrawSectionGrid(d);
+            ImGui.Spacing();
         }
 
         using var table = ImRaii.Table("##sections", 4, ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.RowBg | ImGuiTableFlags.BordersInnerH);
@@ -389,15 +527,117 @@ public sealed partial class CharactersPane
     }
 
     /// <summary>
+    /// The section rings (proposal §7.6, Flair Full and Quiet): one orbit per journal section, All quests first, with the
+    /// section's official icon inside, its count in the Numeral role and its name in the caption role, in ⌊width / 120⌋
+    /// columns. The fill eases when it changes, as the table's moons do. Drawn on the draw list over one block item;
+    /// hovering a ring names its section with the count and percent.
+    /// </summary>
+    private void DrawSectionGrid(Dashboard d)
+    {
+        var origin = ImGui.GetCursorScreenPos();
+        var room = ImGui.GetContentRegionAvail().X;
+        var columns = PaneGrid.SectionColumns(room / UiMetrics.Scale);
+        var cell = MathF.Floor(room / columns);
+        var pad = UiMetrics.Px(4f);
+        var orbit = MathF.Round(MathF.Max(UiMetrics.Px(20f), MathF.Min(UiMetrics.Icon(PaneGrid.SectionOrbitLogical), cell - (2f * pad))));
+        float numeralLine;
+        using (Typography.Numeral(default))
+        {
+            numeralLine = ImGui.GetTextLineHeight();
+        }
+
+        float captionLine;
+        using (Typography.Caption())
+        {
+            captionLine = ImGui.GetTextLineHeight();
+        }
+
+        var height = MathF.Ceiling(orbit + pad + numeralLine + captionLine + (2f * pad));
+        var rows = PaneGrid.Rows(d.Sections.Length, columns);
+        ImGui.Dummy(new Vector2(room, rows * height));
+        if (!ImGui.IsItemVisible())
+        {
+            return;
+        }
+
+        var dl = ImGui.GetWindowDrawList();
+        var s = Theme.Surface;
+        var highContrast = Theme.Glyphs.HighContrast;
+        var hoverable = ImGui.IsItemHovered();
+        for (var i = 0; i < d.Sections.Length; i++)
+        {
+            var row = d.Sections[i];
+            var min = origin + new Vector2((i % columns) * cell, (i / columns) * height);
+            var centerX = min.X + (cell * 0.5f);
+            var orbitMin = new Vector2(MathF.Floor(centerX - (orbit * 0.5f)), min.Y + pad);
+            var fraction = Motion.Gauge(Motion.Key(DashboardGaugeTag, SectionGridGauges | (uint)i), row.Fraction);
+            if (textures is not null)
+            {
+                Orbit.Draw(dl, textures, orbitMin, orbit, row.Icon, fraction, highContrast: highContrast);
+            }
+            else
+            {
+                MoonGlyph.DrawHalo(dl, orbitMin + new Vector2(orbit * 0.5f), orbit * 0.5f, fraction);
+            }
+
+            var y = orbitMin.Y + orbit + pad;
+            using (Typography.Numeral(row.Count))
+            {
+                var width = ImGui.CalcTextSize(row.Count).X;
+                dl.AddText(new Vector2(MathF.Floor(centerX - (width * 0.5f)), y), Theme.U32(row.Overall ? s.Text : s.TextSecondary), row.Count);
+            }
+
+            y += numeralLine;
+            using (Typography.Caption())
+            {
+                var textRoom = MathF.Max(1f, cell - (2f * pad));
+                var width = ImGui.CalcTextSize(row.Name).X;
+                var x = MathF.Floor(centerX - (MathF.Min(width, textRoom) * 0.5f));
+                Chrome.EllipsisTextAt(dl, new Vector2(x, y), textRoom, row.Name, Theme.U32(row.Overall ? s.Text : s.TextSecondary), width);
+            }
+
+            if (hoverable && ImGui.IsMouseHoveringRect(min, min + new Vector2(cell, height)))
+            {
+                SectionTooltip(row);
+            }
+        }
+    }
+
+    /// <summary>A section ring's tooltip: the section's name, then the filling moon's count and percent.</summary>
+    private static void SectionTooltip(SectionRow row)
+    {
+        using var tooltipStyle = Theme.PushTooltip();
+        using var tooltip = ImRaii.Tooltip();
+        UiMetrics.ApplyFontScale();
+        ImGui.TextUnformatted(row.Name);
+        ImGui.TextDisabled(row.Count);
+        ImGui.SameLine();
+        ImGui.TextDisabled(Strings.StateReasonSeparator);
+        ImGui.SameLine();
+        ImGui.TextDisabled(row.Percent);
+    }
+
+    /// <summary>
     /// Job quests (V2-11): one row per leveled job with its icon, level, a filling moon over its ladder and the next
     /// quest ("Lv N" in Moon when it can be taken now, its decisive blocker in Dusk otherwise), then one row per role the
     /// character has a job in. The next quest's name reveals it in the Journal.
     /// </summary>
     private void DrawJobQuests(UiState ui, Dashboard d)
     {
-        ImGui.AlignTextToFramePadding();
-        ImGui.TextDisabled(Strings.JobsSection);
-        Chrome.SameLineOrWrap(ImGui.CalcTextSize(Strings.RouteToUnlockMenu).X + (ImGui.GetStyle().FramePadding.X * 2f));
+        var routeButton = ImGui.CalcTextSize(Strings.RouteToUnlockMenu).X + (ImGui.GetStyle().FramePadding.X * 2f);
+        if (Theme.ShowRules)
+        {
+            // The open-section heading leaves room for the button at the end of its line.
+            SectionHeading.Draw(Strings.JobsSection, reserve: routeButton + ImGui.GetStyle().ItemSpacing.X);
+            ImGui.SameLine();
+        }
+        else
+        {
+            ImGui.AlignTextToFramePadding();
+            ImGui.TextDisabled(Strings.JobsSection);
+            Chrome.SameLineOrWrap(routeButton);
+        }
+
         DrawRouteToUnlockButton(ui, d);
         if (d.JobQuests.Length == 0)
         {
@@ -467,7 +707,7 @@ public sealed partial class CharactersPane
     /// </summary>
     private void DrawChains(UiState ui, Dashboard d)
     {
-        ImGui.TextDisabled(Strings.JobsChainsSection);
+        SectionHeading.Draw(Strings.JobsChainsSection);
         if (d.Chains.Length == 0 && d.ChainsNotStarted.Length == 0)
         {
             ImGui.TextDisabled(Strings.JobsChainsNone);
@@ -562,7 +802,7 @@ public sealed partial class CharactersPane
     /// <summary>(c) Obtained/total for the collectible reward kinds, with the Moonlit pane's own counts.</summary>
     private void DrawMoonlitSummary(Dashboard d)
     {
-        ImGui.TextDisabled(Strings.CharactersMoonlitSummary);
+        SectionHeading.Draw(Strings.CharactersMoonlitSummary);
         if (d.Moonlit.Length == 0)
         {
             ImGui.TextDisabled(Strings.CharactersMoonlitUnavailable);
@@ -631,7 +871,7 @@ public sealed partial class CharactersPane
     /// <summary>(d) The viewed character's pins with glyph, name and next step; clicking reveals the quest in the Journal.</summary>
     private static void DrawPinned(UiState ui, Dashboard d)
     {
-        ImGui.TextDisabled(Strings.CharactersPinned);
+        SectionHeading.Draw(Strings.CharactersPinned);
         if (d.Pinned.Length == 0)
         {
             ImGui.TextDisabled(Strings.CharactersNoPins);
@@ -714,7 +954,7 @@ public sealed partial class CharactersPane
     /// <summary>(e) The last few quest events of the live character: kind, quest and local time.</summary>
     private void DrawRecent(Dashboard d)
     {
-        ImGui.TextDisabled(Strings.CharactersRecent);
+        SectionHeading.Draw(Strings.CharactersRecent);
         if (!session.IsLive)
         {
             ImGui.TextDisabled(Strings.CharactersRecentNeedsLive);
@@ -773,7 +1013,7 @@ public sealed partial class CharactersPane
     /// </summary>
     private void DrawJobs(UiState ui, Dashboard d)
     {
-        ImGui.TextDisabled(Strings.CharactersJobs);
+        SectionHeading.Draw(Strings.CharactersJobs);
         if (d.Jobs.Length == 0)
         {
             ImGui.TextDisabled(Strings.CharactersNoJobs);
@@ -888,11 +1128,11 @@ public sealed partial class CharactersPane
 
     private static void DrawGrandCompanyAndTribes(Dashboard d)
     {
-        ImGui.TextDisabled(Strings.CharactersGrandCompany);
+        SectionHeading.Draw(Strings.CharactersGrandCompany);
         TextFlow.Wrapped(d.GrandCompanyLine);
         ImGui.Spacing();
 
-        ImGui.TextDisabled(Strings.CharactersTribes);
+        SectionHeading.Draw(Strings.CharactersTribes);
         TextFlow.Wrapped(d.AllowancesLine);
         if (d.Tribes.Length == 0)
         {
@@ -1028,7 +1268,7 @@ public sealed partial class CharactersPane
     /// </summary>
     private void DrawCompare(UiState ui, Dashboard d)
     {
-        ImGui.TextDisabled(Strings.DiffSection);
+        SectionHeading.Draw(Strings.DiffSection);
         RefreshItems();
         if (items.Length < 2)
         {
@@ -1547,7 +1787,7 @@ public sealed partial class CharactersPane
     /// <summary>Every character × the selected quest's state, evaluated offline for characters other than the viewed one.</summary>
     private void DrawAccountView(UiState ui)
     {
-        ImGui.TextDisabled(Strings.CharactersAccountView);
+        SectionHeading.Draw(Strings.CharactersAccountView);
         if (ui.SelectedRowId is not { } rowId)
         {
             ImGui.TextWrapped(Strings.CharactersAccountNoQuest);
@@ -1879,6 +2119,16 @@ public sealed partial class CharactersPane
             ? string.Empty
             : string.Format(CultureInfo.CurrentCulture, Strings.JobsChainsNotStartedFormat, notStarted.Length);
 
+        var jobIcon = snapshot.CurrentJob == 0 ? 0u : MoonlitIconResolver.ClassJobIconBase + snapshot.CurrentJob;
+        foreach (var job in jobs)
+        {
+            if (job.JobId == snapshot.CurrentJob && job.IconId != 0)
+            {
+                jobIcon = job.IconId;
+                break;
+            }
+        }
+
         return new Dashboard(
             snapshot,
             bundle,
@@ -1899,7 +2149,8 @@ public sealed partial class CharactersPane
             jobs,
             gcLine,
             tribeRows,
-            allowances);
+            allowances,
+            jobIcon);
     }
 
     /// <summary>
@@ -2151,14 +2402,46 @@ public sealed partial class CharactersPane
         }
 
         sections.Sort((a, b) => a.Id.CompareTo(b.Id));
+        var icons = SectionIcons(bundle);
         var rows = new SectionRow[sections.Count + 1];
-        rows[0] = SectionRow.From(Strings.CharactersAllQuests, counts.Overall, overall: true);
+        rows[0] = SectionRow.From(Strings.CharactersAllQuests, counts.Overall, overall: true, NodeIcon.Of(OrnamentGlyph.AllQuests));
         for (var i = 0; i < sections.Count; i++)
         {
-            rows[i + 1] = SectionRow.From(sections[i].Name, counts.Section(sections[i].Id), overall: false);
+            var scope = QuestScope.Section(sections[i].Id);
+            rows[i + 1] = SectionRow.From(sections[i].Name, counts.Section(sections[i].Id), overall: false, icons.For(scope));
         }
 
         return rows;
+    }
+
+    /// <summary>
+    /// The journal's node icons for this bundle (the sheets' own icons through <see cref="NodeIconResolver"/>), read once
+    /// per bundle; empty (every section the Other glyph) without the data manager or when the sheets cannot be read.
+    /// </summary>
+    private NodeIconMap SectionIcons(CatalogBundle bundle)
+    {
+        if (ReferenceEquals(sectionIconsBundle, bundle))
+        {
+            return sectionIcons;
+        }
+
+        sectionIconsBundle = bundle;
+        sectionIcons = NodeIconMap.Empty;
+        if (data is null)
+        {
+            return sectionIcons;
+        }
+
+        try
+        {
+            sectionIcons = NodeIconResolver.Build(data.Excel).Resolve(bundle.Catalog);
+        }
+        catch (Exception ex)
+        {
+            log.Warning(ex, "Journal section icons could not be read; the section rings show glyphs");
+        }
+
+        return sectionIcons;
     }
 
     private MoonlitRow[] BuildMoonlit()
@@ -2450,9 +2733,10 @@ public sealed partial class CharactersPane
 
     private readonly record struct DashboardKey(int Version, ulong ContentId, bool Live, long Minute, bool HasMoonlit, int PinsVersion);
 
-    private sealed record SectionRow(string Name, string Count, string Percent, float Fraction, bool Overall)
+    /// <param name="Icon">The section's official icon (or glyph) inside its ring; the crest glyph for All quests.</param>
+    private sealed record SectionRow(string Name, string Count, string Percent, float Fraction, bool Overall, NodeIcon Icon)
     {
-        public static SectionRow From(string name, NodeCount count, bool overall)
+        public static SectionRow From(string name, NodeCount count, bool overall, NodeIcon icon)
         {
             var percent = count.Total == 0 ? 0 : (int)MathF.Round(100f * count.Done / count.Total);
             return new SectionRow(
@@ -2460,7 +2744,8 @@ public sealed partial class CharactersPane
                 count.Done.ToString(CultureInfo.InvariantCulture) + "/" + count.Total.ToString(CultureInfo.InvariantCulture),
                 percent.ToString(CultureInfo.InvariantCulture) + "%",
                 count.Fraction,
-                overall);
+                overall,
+                icon);
         }
     }
 
@@ -2529,5 +2814,6 @@ public sealed partial class CharactersPane
         JobRow[] Jobs,
         string GrandCompanyLine,
         (string Tribe, string Rank, string Value)[] Tribes,
-        string AllowancesLine);
+        string AllowancesLine,
+        uint JobIconId);
 }

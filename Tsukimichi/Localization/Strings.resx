@@ -943,6 +943,14 @@
   <data name="MoonlitHideStoreResellsTooltip" xml:space="preserve">
     <value>Leave out rewards the FFXIV Online Store also sells or a duty also drops; the obtained/total counts leave them out too while this is on</value>
   </data>
+  <data name="MoonlitViewTable" xml:space="preserve">
+    <value>Table</value>
+    <comment>Tooltip of the Moonlit view toggle's first button.</comment>
+  </data>
+  <data name="MoonlitViewGallery" xml:space="preserve">
+    <value>Gallery: the rewards as icons</value>
+    <comment>Tooltip of the Moonlit view toggle's second button.</comment>
+  </data>
   <data name="MoonlitConfidenceFilterTooltip" xml:space="preserve">
     <value>Show only rows with this confidence, or only rows whose obtained state the plugin cannot read</value>
   </data>
@@ -1056,6 +1064,10 @@
   </data>
   <data name="FlightFieldTooltip" xml:space="preserve">
     <value>Field currents are attuned by touching them in the world. The Aether Compass (Actions &amp; Traits › General) points at the nearest one; Tsukimichi does not track their positions.</value>
+  </data>
+  <data name="FlightFieldCurrents" xml:space="preserve">
+    <value>Field currents</value>
+    <comment>Label before the field currents' count on the Flight zone banner.</comment>
   </data>
   <data name="ZoneNoCharacter" xml:space="preserve">
     <value>No character evaluated yet; log in first.</value>

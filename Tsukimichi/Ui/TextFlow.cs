@@ -100,6 +100,56 @@ public static class TextFlow
     /// </summary>
     public static bool LastItemWrapped() => lastMultiLine && ImGui.GetItemRectMin() == lastMin;
 
+    /// <summary>
+    /// <paramref name="text"/> wrapped between words in <paramref name="width"/> pixels and drawn at
+    /// <paramref name="pos"/> on <paramref name="dl"/> (no item), at most <paramref name="maxLines"/> lines, each centred
+    /// when <paramref name="center"/> is set; what does not fit ends the last line in an ellipsis (a gallery tile's name).
+    /// Returns whether anything was cut, so the caller can show the whole text on hover.
+    /// </summary>
+    public static bool DrawClamped(ImDrawListPtr dl, Vector2 pos, string text, float width, int maxLines, uint color, bool center = false)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        if (text.Length == 0 || maxLines <= 0 || !(width > 0f))
+        {
+            return false;
+        }
+
+        var lines = Lines(text, width);
+        var lineHeight = ImGui.GetTextLineHeight();
+        var shown = Math.Min(lines.Length, maxLines);
+        var cut = false;
+        for (var i = 0; i < shown; i++)
+        {
+            var line = lines[i];
+            var at = new Vector2(pos.X, pos.Y + (i * lineHeight));
+            if (i == shown - 1 && lines.Length > shown)
+            {
+                // The rest of the text on the last line, ellipsised.
+                var rest = text.AsSpan(line.Start).TrimEnd();
+                cut |= Chrome.EllipsisTextAt(dl, at, width, rest, color);
+                continue;
+            }
+
+            if (line.Cut)
+            {
+                cut |= Chrome.EllipsisTextAt(dl, at, width, text.AsSpan(line.Start, line.Length), color, line.Width);
+                continue;
+            }
+
+            if (line.Length > 0)
+            {
+                if (center)
+                {
+                    at.X += MathF.Floor(MathF.Max(0f, width - line.Width) * 0.5f);
+                }
+
+                dl.AddText(at, color, text.AsSpan(line.Start, line.Length));
+            }
+        }
+
+        return cut || lines.Length > shown;
+    }
+
     /// <summary>The height <paramref name="text"/> takes wrapped in <paramref name="width"/> pixels, in the current font.</summary>
     public static float Height(string text, float width)
     {

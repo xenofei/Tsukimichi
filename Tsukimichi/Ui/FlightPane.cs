@@ -21,6 +21,14 @@ namespace Tsukimichi.Ui;
 /// state, next step and Flag / Teleport buttons, then one line pointing field currents at the Aether Compass. Field
 /// currents are counted, never located.
 /// <para>
+/// The Moon Road look (feature plan v4 V5, proposal §7.7): at Flair Full the selected zone's loading-screen art is a
+/// banner over the centre column (only that one texture is asked for, through the shared cache, with a drawn night sky
+/// while it loads), the zone name on it in the Title role over a scrim and the counts in the Numeral role. At Full and
+/// Quiet each zone in the list carries a bead ring, one segment per quest current, lit when done, whose new segments
+/// light one after another at Full (never under Reduce motion); the expansion headers and the currents heading are open
+/// sections. Plain keeps the look before 1.4.
+/// </para>
+/// <para>
 /// The <see cref="FlightIndex"/> is built on the first draw through the factory the plugin hands in (a handful of
 /// small sheets). Zone and row models are built once per catalog; attunement and quest counts, and every count string,
 /// refresh when <see cref="SessionState.Version"/> changes and, because attuning a current changes nothing in the
@@ -34,6 +42,12 @@ public sealed class FlightPane
 {
     /// <summary>How often the live character's attunements are re-read while the tab is visible.</summary>
     public const int LiveAttunementRefreshMs = 5000;
+
+    /// <summary>Motion tag of the zones' bead rings ("BEAD"); the territory id is the low half.</summary>
+    private const uint BeadTag = 0x4245_4144;
+
+    /// <summary>The widest count the zone list reserves room for.</summary>
+    private const string CountSample = "99/99";
 
     private readonly SessionState session;
     private readonly RewardUnlockReader unlocks;
@@ -120,7 +134,8 @@ public sealed class FlightPane
         // Every A Realm Reborn field zone answers the one A Realm Reborn entry.
         var here = Index.ZoneFor(currentTerritory());
         var line = ImGui.GetTextLineHeight();
-        var countWidth = ImGui.CalcTextSize("99/99").X;
+        var art = Theme.ShowRules;
+        var countWidth = CountWidth(art);
         using (var table = ImRaii.Table("##flightZones", 3, ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.NoPadOuterX))
         {
             if (!table)
@@ -136,15 +151,32 @@ public sealed class FlightPane
             {
                 ImGui.TableNextRow();
                 ImGui.TableNextColumn();
-                ImGui.TableNextColumn();
-                using (Theme.PushText(Theme.Dusk))
+                if (art)
                 {
-                    ImGui.TextUnformatted(group.Header);
+                    // The expansion's ring beside an open-section heading (proposal §7.7).
+                    if (group.Icon != 0)
+                    {
+                        var size = MathF.Min(line, UiMetrics.HaloBoxSize(line));
+                        var min = ImGui.GetCursorScreenPos();
+                        ImGui.Dummy(new Vector2(size, size));
+                        Orbit.DrawIcon(ImGui.GetWindowDrawList(), textures, NodeIcon.Game(group.Icon), min, min + new Vector2(size, size));
+                    }
+
+                    ImGui.TableNextColumn();
+                    SectionHeading.Draw(group.Header, sigil: group.Icon == 0);
+                }
+                else
+                {
+                    ImGui.TableNextColumn();
+                    using (Theme.PushText(Theme.Dusk))
+                    {
+                        ImGui.TextUnformatted(group.Header);
+                    }
                 }
 
                 foreach (var zone in group.Zones)
                 {
-                    DrawZoneRow(ui, zone, ReferenceEquals(zone.Zone, here), line);
+                    DrawZoneRow(ui, zone, ReferenceEquals(zone.Zone, here), line, art);
                 }
             }
         }
@@ -171,7 +203,15 @@ public sealed class FlightPane
             return;
         }
 
-        DrawHeader(zone);
+        if (Theme.Flair == Flair.Full && zone.Zone.LoadingImagePath is not null)
+        {
+            DrawBanner(zone);
+        }
+        else
+        {
+            DrawHeader(zone);
+        }
+
         if (!session.IsLive)
         {
             using var dusk = Theme.PushText(Theme.Dusk);
@@ -231,7 +271,7 @@ public sealed class FlightPane
 
     private void DrawQuestTable(UiState ui, ZoneItem zone)
     {
-        ImGui.TextDisabled(Strings.FlightQuestCurrents);
+        SectionHeading.Draw(Strings.FlightQuestCurrents);
         var start = ImGui.GetCursorScreenPos();
         var width = ImGui.GetContentRegionAvail().X;
 
@@ -461,7 +501,7 @@ public sealed class FlightPane
         }
     }
 
-    private void DrawZoneRow(UiState ui, ZoneItem zone, bool here, float line)
+    private void DrawZoneRow(UiState ui, ZoneItem zone, bool here, float line, bool art)
     {
         using var id = ImRaii.PushId((int)zone.TerritoryId);
         ImGui.TableNextRow();
@@ -470,6 +510,10 @@ public sealed class FlightPane
         if (zone.AllUnknown)
         {
             Marks.DrawInline(Mark.Unknown, glyph);
+        }
+        else if (art)
+        {
+            DrawBeads(zone, glyph);
         }
         else
         {
@@ -493,8 +537,194 @@ public sealed class FlightPane
             UiMetrics.Tooltip(here ? Strings.FlightCurrentZoneTooltip : zone.TooltipText);
         }
 
+        if (art && isSelected)
+        {
+            // The selected zone's gold edge (the mockup's inset rule), at the row's left.
+            var min = ImGui.GetItemRectMin();
+            var max = ImGui.GetItemRectMax();
+            ImGui.GetWindowDrawList().AddRectFilled(min, new Vector2(min.X + MathF.Max(2f, UiMetrics.Px(2f)), max.Y), Theme.MoonU32);
+        }
+
         ImGui.TableNextColumn();
-        ImGui.TextDisabled(zone.CountText);
+        if (art)
+        {
+            using var numeral = Typography.Numeral(zone.CountText);
+            ImGui.TextDisabled(zone.CountText);
+        }
+        else
+        {
+            ImGui.TextDisabled(zone.CountText);
+        }
+    }
+
+    /// <summary>The count column's width: the widest count, in the Numeral role at Full and Quiet.</summary>
+    private static float CountWidth(bool art)
+    {
+        if (!art)
+        {
+            return ImGui.CalcTextSize(CountSample).X;
+        }
+
+        using var numeral = Typography.Numeral(CountSample);
+        return ImGui.CalcTextSize(CountSample).X;
+    }
+
+    /// <summary>
+    /// The zone's bead ring in a <paramref name="box"/> square item: one segment per quest current, the done ones lit;
+    /// segments that just became done light one after another at Full flair (<see cref="BeadRingMath.Shown"/>).
+    /// </summary>
+    private static void DrawBeads(ZoneItem zone, float box)
+    {
+        var min = ImGui.GetCursorScreenPos();
+        ImGui.Dummy(new Vector2(box, box));
+        var progress = Theme.FlairMotion ? Motion.Pulse(zone.BeadKey, BeadRingMath.SequenceSeconds(zone.LitFrom, zone.QuestsDone)) : -1f;
+        var (lit, head) = BeadRingMath.Shown(zone.LitFrom, zone.QuestsDone, progress);
+        var center = min + new Vector2(box * 0.5f);
+        BeadRing.Draw(ImGui.GetWindowDrawList(), center, box * 0.40f, zone.Rows.Length, lit, MathF.Max(1.5f, box * 0.09f), head);
+    }
+
+    /// <summary>
+    /// The zone banner (Flair Full): the zone's loading-screen art cover-cropped to min(160, 0.35 × width), a scrim, the
+    /// expansion's ring, the zone's name in the Title role and the counts in the Numeral role. Only the selected zone's
+    /// texture is asked for; while it loads (or if it cannot) a drawn night sky stands in. One item, hovered for the
+    /// zone's counts. Too narrow a pane for a banner of 56 px gets the header the other flair levels draw.
+    /// </summary>
+    private void DrawBanner(ZoneItem zone)
+    {
+        var width = ImGui.GetContentRegionAvail().X;
+        var height = MathF.Round(UiMetrics.Px(PaneGrid.BannerHeight(width / UiMetrics.Scale)));
+        if (height < UiMetrics.Px(56f))
+        {
+            DrawHeader(zone);
+            return;
+        }
+
+        var min = ImGui.GetCursorScreenPos();
+        var max = min + new Vector2(width, height);
+        ImGui.Dummy(new Vector2(width, height));
+        var hovered = ImGui.IsItemHovered();
+        if (!ImGui.IsItemVisible())
+        {
+            return;
+        }
+
+        var dl = ImGui.GetWindowDrawList();
+        var highContrast = Theme.Glyphs.HighContrast;
+        if (textures.GetFromGame(zone.Zone.LoadingImagePath!).TryGetWrap(out var wrap, out _))
+        {
+            Chrome.ImageCoverAt(dl, wrap.Handle, min, max, wrap.Size);
+        }
+        else
+        {
+            // Loading, or no such file: the drawn night sky (NightTop over TideDeep).
+            dl.AddRectFilledMultiColor(min, max, Theme.NightTopU32, Theme.NightTopU32, Theme.TideDeepU32, Theme.TideDeepU32);
+        }
+
+        // Scrims: the bottom one under the text, the side one keeps the title legible over bright art (proposal §3,
+        // §10.1); high contrast has a deeper bottom scrim and no side one (§10.2).
+        Chrome.Scrim(dl, new Vector2(min.X, min.Y + (height * 0.35f)), max, 0f, highContrast ? 0.97f : 0.94f);
+        if (!highContrast)
+        {
+            var side = Theme.WithAlpha(Theme.Surface.Deep, 0.55f);
+            var clear = Theme.WithAlpha(Theme.Surface.Deep, 0f);
+            dl.AddRectFilledMultiColor(min, new Vector2(min.X + (width * 0.6f), max.Y), side, clear, clear, side);
+        }
+
+        dl.AddRect(min, max, highContrast ? Theme.VeilLineU32 : Theme.U32(Theme.Surface.Line), 0f, ImDrawFlags.None, UiMetrics.Hairline);
+
+        var s = Theme.Surface;
+        var pad = UiMetrics.Px(12f);
+        var body = ImGui.GetTextLineHeight();
+        float titleLine;
+        using (Typography.Title(zone.Name))
+        {
+            titleLine = ImGui.GetTextLineHeight();
+        }
+
+        var countsY = max.Y - pad - body;
+        var titleY = countsY - titleLine;
+        var x = min.X + pad;
+        var icon = zone.Zone.ExpansionIcon;
+        if (icon != 0)
+        {
+            var size = MathF.Min(UiMetrics.Icon(26f), titleLine + body);
+            var iconMin = new Vector2(x, titleY + MathF.Max(0f, (titleLine + body - size) * 0.5f));
+            Orbit.DrawIcon(dl, textures, NodeIcon.Game(icon), iconMin, iconMin + new Vector2(size, size));
+            x += size + UiMetrics.Px(10f);
+        }
+
+        var room = MathF.Max(0f, max.X - pad - x);
+        bool nameCut;
+        using (Typography.Title(zone.Name))
+        {
+            nameCut = Chrome.EllipsisTextAt(dl, new Vector2(x, titleY), room, zone.Name, Theme.U32(s.Text));
+        }
+
+        // "Quest currents 3/5 · Field currents 2/4": the labels in the body font, the counts in the Numeral role.
+        var at = new Vector2(x, countsY);
+        var right = max.X - pad;
+        var labelInk = Theme.U32(s.TextSecondary);
+        var numberInk = Theme.U32(s.Text);
+        at.X = CountPart(dl, at, right, Strings.FlightQuestCurrents, zone.CountText, labelInk, numberInk);
+        if (zone.FieldCountText.Length > 0 && at.X < right)
+        {
+            var dot = Strings.StateReasonSeparator;
+            var dotWidth = ImGui.CalcTextSize(dot).X;
+            if (at.X + dotWidth < right)
+            {
+                dl.AddText(at, labelInk, dot);
+                at.X += dotWidth;
+                CountPart(dl, at, right, Strings.FlightFieldCurrents, zone.FieldCountText, labelInk, numberInk);
+            }
+        }
+
+        if (hovered)
+        {
+            var counts = zone.AllUnknown ? Strings.StateTooltip(QuestState.Unknown) : zone.TooltipText;
+            if (nameCut)
+            {
+                UiMetrics.Tooltip(zone.Name, counts);
+            }
+            else
+            {
+                UiMetrics.Tooltip(counts);
+            }
+        }
+    }
+
+    /// <summary>
+    /// One "label count" pair of the banner's counts line at <paramref name="at"/>, stopping at <paramref name="right"/>
+    /// (a label with no room is ellipsised and its count dropped). Returns where the next part starts.
+    /// </summary>
+    private static float CountPart(ImDrawListPtr dl, Vector2 at, float right, string label, string count, uint labelInk, uint numberInk)
+    {
+        var body = ImGui.GetTextLineHeight();
+        var gap = ImGui.CalcTextSize(" ").X;
+        var labelWidth = ImGui.CalcTextSize(label).X;
+        float countWidth;
+        float countLine;
+        using (Typography.Numeral(count))
+        {
+            countWidth = ImGui.CalcTextSize(count).X;
+            countLine = ImGui.GetTextLineHeight();
+        }
+
+        if (at.X + labelWidth + gap + countWidth > right)
+        {
+            Chrome.EllipsisTextAt(dl, at, MathF.Max(0f, right - at.X), label, labelInk, labelWidth);
+            return right;
+        }
+
+        dl.AddText(at, labelInk, label);
+
+        // The numeral centred on the body line (its face may be shorter or taller).
+        var countAt = new Vector2(at.X + labelWidth + gap, at.Y + MathF.Round((body - countLine) * 0.5f));
+        using (Typography.Numeral(count))
+        {
+            dl.AddText(countAt, numberInk, count);
+        }
+
+        return countAt.X + countWidth;
     }
 
     private void Select(UiState ui, ZoneItem zone)
@@ -637,7 +867,7 @@ public sealed class FlightPane
             {
                 if (groupZones.Count > 0)
                 {
-                    groupList.Add(new ExpansionGroup(ExpansionName(bundle, (byte)groupExpansion), groupZones.ToArray()));
+                    groupList.Add(new ExpansionGroup(ExpansionName(bundle, (byte)groupExpansion), groupZones.ToArray(), groupZones[0].Zone.ExpansionIcon));
                     groupZones.Clear();
                 }
 
@@ -649,7 +879,7 @@ public sealed class FlightPane
 
         if (groupZones.Count > 0)
         {
-            groupList.Add(new ExpansionGroup(ExpansionName(bundle, (byte)groupExpansion), groupZones.ToArray()));
+            groupList.Add(new ExpansionGroup(ExpansionName(bundle, (byte)groupExpansion), groupZones.ToArray(), groupZones[0].Zone.ExpansionIcon));
         }
 
         zones = built;
@@ -720,11 +950,12 @@ public sealed class FlightPane
         headerVersion = -1;
     }
 
-    /// <summary>Zones of one expansion under a header, in index order.</summary>
-    private sealed class ExpansionGroup(string header, ZoneItem[] zones)
+    /// <summary>Zones of one expansion under a header, in index order, with the expansion's ring icon (0 when unknown).</summary>
+    private sealed class ExpansionGroup(string header, ZoneItem[] zones, uint icon)
     {
         public string Header { get; } = header;
         public ZoneItem[] Zones { get; } = zones;
+        public uint Icon { get; } = icon;
     }
 
     /// <summary>One flying zone with its quest rows; counts and their strings change once per session version.</summary>
@@ -738,7 +969,22 @@ public sealed class FlightPane
             HereLabel = Strings.FlightCurrentZoneMarker + zone.Name;
             CountText = string.Format(CultureInfo.InvariantCulture, Strings.FlightZoneCountFormat, 0, rows.Length);
             TooltipText = string.Empty;
+            BeadKey = Motion.Key(BeadTag, zone.TerritoryId);
         }
+
+        /// <summary>The bead ring's motion key: its lighting sequence plays under it.</summary>
+        public ulong BeadKey { get; }
+
+        /// <summary>Quest currents done (attuned, or their quest complete where attunement cannot be read): the lit beads.</summary>
+        public int QuestsDone { get; private set; }
+
+        /// <summary>The lit beads before the last rise, where the lighting sequence starts.</summary>
+        public int LitFrom { get; private set; }
+
+        /// <summary>The field currents' count for the banner ("2/4"); empty when the zone has none or none is readable.</summary>
+        public string FieldCountText { get; private set; } = string.Empty;
+
+        private bool countsSet;
 
         public FlightZone Zone { get; }
         public QuestRow[] Rows { get; }
@@ -761,6 +1007,20 @@ public sealed class FlightPane
 
         public void SetCounts(int attuned, int fieldAttuned, int unknown, int questsDone)
         {
+            // A rise after the first count lights the new beads one after another (Full flair, motion on); the first
+            // count, a fall, or a rise with the motion off shows at once.
+            if (countsSet && questsDone > QuestsDone && Theme.FlairMotion)
+            {
+                LitFrom = QuestsDone;
+                Motion.Trigger(BeadKey);
+            }
+            else
+            {
+                LitFrom = questsDone;
+            }
+
+            countsSet = true;
+            QuestsDone = questsDone;
             var total = Zone.TotalCurrents;
             Attuned = attuned;
             FieldAttuned = fieldAttuned;
@@ -768,6 +1028,8 @@ public sealed class FlightPane
             AllUnknown = total > 0 && unknown == total;
             Complete = total > 0 && attuned == total;
             CountText = string.Format(CultureInfo.InvariantCulture, Strings.FlightZoneCountFormat, questsDone, Rows.Length);
+            var field = Zone.FieldCurrentCount;
+            FieldCountText = field == 0 || AllUnknown ? string.Empty : string.Format(CultureInfo.InvariantCulture, Strings.FlightZoneCountFormat, fieldAttuned, field);
             TooltipText = AllUnknown
                 ? string.Format(CultureInfo.CurrentCulture, Strings.FlightZoneTooltipUnknownFormat, total, questsDone, Rows.Length)
                 : string.Format(CultureInfo.CurrentCulture, Strings.FlightZoneTooltipFormat, attuned, total, questsDone, Rows.Length);

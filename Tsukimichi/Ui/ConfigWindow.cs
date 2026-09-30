@@ -356,6 +356,7 @@ public sealed partial class ConfigWindow : Window
         FlairRadio(Strings.ConfigFlairFull, Flair.Full);
         FlairRadio(Strings.ConfigFlairQuiet, Flair.Quiet);
         FlairRadio(Strings.ConfigFlairPlain, Flair.Plain);
+        DrawFlairPreviews();
 
         using (ImRaii.Disabled(settings.Flair == Flair.Plain))
         {
@@ -386,6 +387,138 @@ public sealed partial class ConfigWindow : Window
         }
 
         ImGui.Spacing();
+    }
+
+    /// <summary>
+    /// Live previews of the three Flair levels (proposal §7.9), side by side when the window is wide enough and stacked
+    /// otherwise: each a section heading and a small journal row drawn exactly as that level draws them (the pane
+    /// gradient behind at Full; the heading's sigil and rule, the orbit, the road and the Numeral count at Full and
+    /// Quiet; the filling moon and the plain heading at Plain). Under the high-contrast palette Full previews as Quiet,
+    /// as it draws. The level in use is outlined; a click on a preview chooses it. Drawn only while the window is open.
+    /// </summary>
+    private void DrawFlairPreviews()
+    {
+        var room = ImGui.GetContentRegionAvail().X;
+        var gap = UiMetrics.Px(10f);
+        var side = room >= UiMetrics.Px(480f);
+        var cell = side ? MathF.Floor((room - (2f * gap)) / 3f) : MathF.Min(room, UiMetrics.Px(260f));
+        var origin = ImGui.GetCursorScreenPos();
+        var contentRight = origin.X + room;
+        var bottom = origin.Y;
+        var dl = ImGui.GetWindowDrawList();
+        var pad = UiMetrics.Px(6f);
+        var levels = PreviewLevels;
+        for (var i = 0; i < levels.Length; i++)
+        {
+            var level = levels[i];
+            var flair = FlairRules.Effective(level, Theme.Glyphs.HighContrast);
+            var min = side ? new Vector2(origin.X + (i * (cell + gap)), origin.Y) : new Vector2(origin.X, bottom);
+            ImGui.PushID(i);
+            dl.ChannelsSplit(2);
+            dl.ChannelsSetCurrent(1);
+            ImGui.SetCursorScreenPos(min + new Vector2(pad));
+            ImGui.BeginGroup();
+            using (Typography.Caption())
+            {
+                ImGui.TextDisabled(level switch
+                {
+                    Flair.Full => Strings.ConfigFlairFull,
+                    Flair.Quiet => Strings.ConfigFlairQuiet,
+                    _ => Strings.ConfigFlairPlain,
+                });
+            }
+
+            SectionHeading.Draw(Strings.CharactersSectionCompletion, null, contentRight - (min.X + cell - pad), true, flair);
+            PreviewRow(dl, flair, cell - (2f * pad));
+            ImGui.EndGroup();
+            var max = new Vector2(min.X + cell, ImGui.GetItemRectMax().Y + pad);
+
+            // Behind the content: the pane gradient at Full, the outline of the level in use.
+            dl.ChannelsSetCurrent(0);
+            dl.AddRectFilled(min, max, Theme.U32(Theme.Surface.Window), UiMetrics.Px(4f));
+            if (FlairRules.PaneGradient(flair))
+            {
+                Ornament.PaneGradient(dl, min, max);
+            }
+
+            var chosen = settings.Flair == level;
+            dl.AddRect(min, max, chosen ? Theme.U32(Theme.Surface.Text) : Theme.U32(Theme.Surface.Line), UiMetrics.Px(4f), ImDrawFlags.None, chosen ? MathF.Max(1.5f, UiMetrics.Px(1.5f)) : UiMetrics.Hairline);
+            dl.ChannelsMerge();
+
+            ImGui.SetCursorScreenPos(min);
+            if (ImGui.InvisibleButton("##flairPreview", max - min) && !chosen)
+            {
+                settings.Flair = level;
+                Save();
+            }
+
+            HintOnHover(Strings.ConfigFlairHint);
+            ImGui.PopID();
+            bottom = side ? MathF.Max(bottom, max.Y) : max.Y + gap;
+        }
+
+        ImGui.SetCursorScreenPos(new Vector2(origin.X, bottom + (side ? gap : 0f)));
+        ImGui.Dummy(Vector2.Zero);
+    }
+
+    private static readonly Flair[] PreviewLevels = [Flair.Full, Flair.Quiet, Flair.Plain];
+
+    /// <summary>A small journal row drawn as <paramref name="flair"/> draws it: an orbit, the name, the count and the road, or the filling moon at Plain.</summary>
+    private static void PreviewRow(ImDrawListPtr dl, Flair flair, float width)
+    {
+        const float Fraction = 0.65f;
+        var line = ImGui.GetTextLineHeight();
+        var box = MathF.Round(MathF.Max(line, UiMetrics.Icon(22f)));
+        var road = MathF.Max(1f, UiMetrics.Px(2f));
+        var min = ImGui.GetCursorScreenPos();
+        ImGui.Dummy(new Vector2(MathF.Max(1f, width), box + (2f * road)));
+        var art = FlairRules.Rules(flair);
+        var textures = Plugin.TextureProvider;
+        if (art && textures is not null)
+        {
+            Orbit.Draw(dl, textures, min, box, NodeIcon.Of(OrnamentGlyph.AllQuests), Fraction, highContrast: Theme.Glyphs.HighContrast);
+        }
+        else
+        {
+            MoonGlyph.DrawHalo(dl, min + new Vector2(box * 0.5f), box * 0.5f, Fraction);
+        }
+
+        var s = Theme.Surface;
+        var textX = min.X + box + UiMetrics.Px(6f);
+        var textY = min.Y + MathF.Max(0f, (box - line) * 0.5f);
+        const string Count = "65%";
+        float countWidth;
+        if (art)
+        {
+            using var numeral = Typography.Numeral(Count);
+            countWidth = ImGui.CalcTextSize(Count).X;
+            dl.AddText(new Vector2(min.X + width - countWidth, textY), Theme.U32(s.TextSecondary), Count);
+        }
+        else
+        {
+            countWidth = ImGui.CalcTextSize(Count).X;
+            dl.AddText(new Vector2(min.X + width - countWidth, textY), Theme.U32(s.TextSecondary), Count);
+        }
+
+        Chrome.EllipsisTextAt(dl, new Vector2(textX, textY), MathF.Max(0f, min.X + width - countWidth - UiMetrics.Px(6f) - textX), Strings.CharactersAllQuests, Theme.U32(s.Text));
+        if (!art)
+        {
+            return;
+        }
+
+        // The road under the row: the walked part gold, the rest the track (solid colours under high contrast).
+        var y = min.Y + box + road;
+        var walked = textX + ((min.X + width - textX) * Fraction);
+        var highContrast = Theme.Glyphs.HighContrast;
+        dl.AddRectFilled(new Vector2(textX, y), new Vector2(min.X + width, y + road), highContrast ? Theme.VeilLineU32 : Theme.NightLineU32);
+        if (highContrast)
+        {
+            dl.AddRectFilled(new Vector2(textX, y), new Vector2(walked, y + road), Theme.MoonU32);
+        }
+        else
+        {
+            dl.AddRectFilledMultiColor(new Vector2(textX, y), new Vector2(walked, y + road), Theme.MoonDeepU32, Theme.MoonU32, Theme.MoonU32, Theme.MoonDeepU32);
+        }
     }
 
     private void FlairRadio(string label, Flair flair)

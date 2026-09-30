@@ -34,13 +34,20 @@ public sealed record FlightCurrent(uint AetherCurrentId, uint QuestRowId, uint L
 /// Further territories whose <c>TerritoryType.AetherCurrentCompFlgSet</c> is this set: the sixteen other A Realm Reborn
 /// field zones share Mor Dhona's set. Null or empty for every later zone.
 /// </param>
+/// <param name="LoadingImagePath">
+/// The territory's loading-screen art (<c>TerritoryType.LoadingImage</c> → <c>LoadingImage.FileName</c> →
+/// <see cref="BannerSources.LoadingImagePathFormat"/>), the Flight banner; null when the territory has none.
+/// </param>
+/// <param name="ExpansionIcon">The expansion's ring icon (<c>ExVersion.Icon</c>); 0 when unknown.</param>
 public sealed record FlightZone(
     uint TerritoryId,
     string Name,
     byte Expansion,
     IReadOnlyList<FlightCurrent> QuestCurrents,
     IReadOnlyList<uint> FieldCurrentIds,
-    IReadOnlyList<uint>? OtherTerritoryIds = null)
+    IReadOnlyList<uint>? OtherTerritoryIds = null,
+    string? LoadingImagePath = null,
+    uint ExpansionIcon = 0)
 {
     /// <summary>How many currents in the zone are found in the field rather than granted by a quest.</summary>
     public int FieldCurrentCount => FieldCurrentIds.Count;
@@ -133,7 +140,7 @@ public sealed class FlightIndex
 
     /// <summary>
     /// Reads the sheets: one zone per AetherCurrentCompFlgSet row with a territory, its currents split by whether
-    /// <c>AetherCurrent.Quest</c> is set. Rows without a territory or without a single current are skipped. The set is
+    /// <c>AetherCurrent.Quest</c> is set, with the territory's loading-screen art and the expansion's icon. Rows without a territory or without a single current are skipped. The set is
     /// what the game's own Aether Currents window and completion flag use: since patch 6.0 the Heavensward to
     /// Endwalker zones list five quest currents and four field currents (the other field rows stay in the AetherCurrent
     /// sheet unreferenced), Dawntrail zones five and ten, and A Realm Reborn's set (its territory is Mor Dhona) carries
@@ -200,13 +207,16 @@ public sealed class FlightIndex
                 name = "Territory " + territory.RowId;
             }
 
+            var loadingFile = territory.LoadingImage.ValueNullable?.FileName.ExtractText() ?? string.Empty;
             zones.Add(new FlightZone(
                 territory.RowId,
                 name,
                 expansion <= byte.MaxValue ? (byte)expansion : byte.MaxValue,
                 questCurrents.ToArray(),
                 fieldCurrents.ToArray(),
-                others));
+                others,
+                loadingFile.Length == 0 ? null : string.Format(CultureInfo.InvariantCulture, BannerSources.LoadingImagePathFormat, loadingFile),
+                expansions.GetRowOrDefault(expansion)?.Icon ?? 0u));
         }
 
         var compass = excel.GetSheet<Lumina.Excel.Sheets.Action>(language).GetRowOrDefault(AetherCompassAction);
