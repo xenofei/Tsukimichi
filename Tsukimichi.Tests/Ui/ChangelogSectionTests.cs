@@ -171,6 +171,45 @@ public class ChangelogSectionTests
         }
     }
 
+    [Tsukimichi.Tests.Data.GitHistoryFact]
+    public void Released_changelog_sections_match_what_their_tag_shipped()
+    {
+        // A merge that files a new bullet under an already released version (or drops one) must fail here: every
+        // vX.Y.Z tag's own section is compared with the working copy's, line for line.
+        var tags = Tsukimichi.Tests.Data.GitHistoryFactAttribute.Git("tag", "--list", "v*");
+        Assert.NotNull(tags);
+        var current = Normalize(File.ReadAllText(Path.Combine(RepoRoot(), "CHANGELOG.md")));
+        foreach (var tag in tags.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            if (!System.Text.RegularExpressions.Regex.IsMatch(tag, @"^v\d+\.\d+\.\d+$"))
+            {
+                continue;
+            }
+
+            var shipped = Tsukimichi.Tests.Data.GitHistoryFactAttribute.Git("show", tag + ":CHANGELOG.md");
+            var version = tag[1..];
+            var then = shipped is null ? null : Section(Normalize(shipped), version);
+            if (then is null)
+            {
+                continue; // before the changelog existed
+            }
+
+            Assert.True(then == Section(current, version), $"CHANGELOG.md section [{version}] differs from what {tag} shipped");
+        }
+    }
+
+    private static string Normalize(string text) =>
+        string.Join('\n', text.Replace("\r\n", "\n", StringComparison.Ordinal).Split('\n').Select(l => l.TrimEnd()));
+
+    private static string? Section(string text, string version)
+    {
+        var match = System.Text.RegularExpressions.Regex.Match(
+            text,
+            @"^## \[" + System.Text.RegularExpressions.Regex.Escape(version) + @"\][^\n]*\n.*?(?=^## \[|\z)",
+            System.Text.RegularExpressions.RegexOptions.Singleline | System.Text.RegularExpressions.RegexOptions.Multiline);
+        return match.Success ? match.Value.Trim() : null;
+    }
+
     private static string RepoRoot()
     {
         var dir = AppContext.BaseDirectory;

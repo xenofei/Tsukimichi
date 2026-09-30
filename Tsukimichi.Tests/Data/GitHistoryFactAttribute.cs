@@ -37,6 +37,7 @@ public sealed class GitHistoryFactAttribute : FactAttribute
                 WorkingDirectory = RepositoryRoot(),
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
+                StandardOutputEncoding = System.Text.Encoding.UTF8, // git writes file contents as UTF-8, not the console code page
                 UseShellExecute = false,
                 CreateNoWindow = true,
             };
