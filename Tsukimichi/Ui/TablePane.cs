@@ -639,8 +639,10 @@ public sealed class TablePane : IDisposable
         var mouseInRow = ImGui.IsWindowHovered() && ImGui.IsMouseHoveringRect(rowMin, rowMax);
         if (mouseInRow || rowFocused || moreFocusedRow == quest.RowId)
         {
-            var size = MathF.Min(layout.RowHeight, UiMetrics.MinTarget);
-            var moreMin = new Vector2(nameCellMin.X + nameCellWidth - size, rowMin.Y + ((layout.RowHeight - size) * 0.5f));
+            // Sized to the row's content, not its padded height: a button reaching into the cell padding would push
+            // the cell's CursorMaxPos down and make the hovered or focused row taller.
+            var size = MathF.Min(layout.RowContent, UiMetrics.MinTarget);
+            var moreMin = new Vector2(nameCellMin.X + nameCellWidth - size, nameCellMin.Y + ((layout.RowContent - size) * 0.5f));
             if (Keyboard.MoreButton("##more", RowMenuId, moreMin, size))
             {
                 SelectFromTable(quest.RowId);
