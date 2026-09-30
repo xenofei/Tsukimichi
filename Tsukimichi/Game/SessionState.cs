@@ -295,8 +295,8 @@ public sealed class SessionState
         followLive = false;
         viewedContentId = contentId;
         ViewedSnapshot = snapshot;
-        Context = baseContext;
-        States = Bundle is { } bundle ? StateResolver.ResolveAll(bundle.Catalog, snapshot, baseContext) : NoStates;
+        Context = StoredContext(snapshot);
+        States = Bundle is { } bundle ? StateResolver.ResolveAll(bundle.Catalog, snapshot, Context) : NoStates;
         // Derived data: a sidecar that cannot be read simply reads as unknown accepted times.
         AcceptedSince = AcceptedSinceFile.Load(AcceptedSinceFile.PathFor(paths.CharactersDir, contentId));
         Abandoned = AbandonedLedger.Load(AbandonedLedger.PathFor(paths.CharactersDir, contentId));
@@ -389,8 +389,8 @@ public sealed class SessionState
         liveStates = NoStates;
         if (ViewedSnapshot is { } viewed && !IsLive)
         {
-            Context = baseContext;
-            States = StateResolver.ResolveAll(bundle.Catalog, viewed, baseContext);
+            Context = StoredContext(viewed);
+            States = StateResolver.ResolveAll(bundle.Catalog, viewed, Context);
         }
         else if (IsLive)
         {
@@ -433,7 +433,9 @@ public sealed class SessionState
 
         liveSnapshot = snapshot;
         liveStates = states;
-        liveContext = context;
+        // The live flags are the server's: the same context then resolves any stored character (the Characters
+        // comparison) against what runs now, not what ran when it was saved. The live states are unchanged by it.
+        liveContext = context with { ServerFestivals = ServerFestivals.Of(snapshot) };
         liveAcceptedSince = acceptedSince ?? liveAcceptedSince;
         liveAbandoned = abandoned ?? liveAbandoned;
         LiveContentId = snapshot.ContentId;
@@ -446,9 +448,13 @@ public sealed class SessionState
             viewedContentId = snapshot.ContentId;
             ViewedSnapshot = snapshot;
             States = states;
-            Context = context;
+            Context = liveContext;
             AcceptedSince = liveAcceptedSince;
             Abandoned = liveAbandoned;
+        }
+        else
+        {
+            RefreshStoredFestivals();
         }
 
         Bump();
@@ -464,7 +470,41 @@ public sealed class SessionState
         liveAcceptedSince = NoAcceptedSince;
         liveAbandoned = NoAbandoned;
         recentEvents.Clear();
+        RefreshStoredFestivals();
         Bump();
+    }
+
+    /// <summary>
+    /// The seasonal events running on the server for the viewed character (<see cref="ServerFestivals.For"/>): the
+    /// live character's flags while someone is logged in, else the viewed snapshot's less those a passed curated end
+    /// shows to be stale. The Todo overlay and the Characters dashboard list running events from it; the viewed
+    /// character's <see cref="States"/> are resolved with the same set.
+    /// </summary>
+    public ServerFestivals ServerFestivals => ServerFestivals.For(ViewedSnapshot, liveSnapshot, Curated.Festivals, DateTime.UtcNow);
+
+    /// <summary>The context a stored character is resolved with: the base context and the festivals running on the server now.</summary>
+    private EvalContext StoredContext(CharacterSnapshot snapshot) =>
+        baseContext with { ServerFestivals = ServerFestivals.For(snapshot, liveSnapshot, Curated.Festivals, DateTime.UtcNow) };
+
+    /// <summary>
+    /// A stored character on view is resolved again when the server's running festivals changed under it (a login, a
+    /// logout, an event starting or ending on the live character); nothing else about it can change here.
+    /// </summary>
+    private void RefreshStoredFestivals()
+    {
+        if (IsLive || ViewedSnapshot is not { } viewed || Bundle is not { } bundle)
+        {
+            return;
+        }
+
+        var server = ServerFestivals.For(viewed, liveSnapshot, Curated.Festivals, DateTime.UtcNow);
+        if (server.SameAs(Context.ServerFestivals))
+        {
+            return;
+        }
+
+        Context = baseContext with { ServerFestivals = server };
+        States = StateResolver.ResolveAll(bundle.Catalog, viewed, Context);
     }
 
     /// <summary>One poll's events for the character they belong to; events of another character are dropped first.</summary>

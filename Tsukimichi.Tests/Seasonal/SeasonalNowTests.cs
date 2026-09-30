@@ -156,12 +156,12 @@ public sealed class SeasonalNowTests(FixtureCatalog fixture) : IClassFixture<Fix
         Assert.Equal(2025, years[165]);  // Starlight Celebration after 2022
         Assert.Equal(2026, years[258]);
 
-        // Two directions disagree (the 2024 edition sits in the combined Little Ladies' & Hatching-tide genre), a
-        // combined genre with no curated edition, and collaborations (rerun under one id): not known.
+        // Two directions disagree (the 2024 edition sits in the combined Little Ladies' & Hatching-tide genre) and
+        // collaborations (rerun under one id): not known. The combined 2024 edition itself carries its curated year.
         Assert.False(years.ContainsKey(138));
         Assert.False(years.ContainsKey(155));
         Assert.False(years.ContainsKey(156));
-        Assert.False(years.ContainsKey(145));
+        Assert.Equal(2024, years[145]);
         Assert.False(years.ContainsKey(84));
         Assert.False(years.ContainsKey(257));
     }

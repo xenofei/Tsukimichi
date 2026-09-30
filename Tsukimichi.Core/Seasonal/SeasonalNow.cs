@@ -42,9 +42,11 @@ public sealed record SeasonalHistoryYear(int? Year, IReadOnlyList<SeasonalHistor
 /// character's seasonal history by year. Pure over the catalog, a snapshot's running festivals, the evaluations and
 /// the curated festival windows; the Todo overlay, the Characters dashboard and the login notice all read it.
 /// <para>
-/// Running events come from the snapshot's <see cref="CharacterSnapshot.ActiveFestivals"/>, the same flag the
-/// evaluator's <see cref="SeasonalRequirement.Active"/> is built from; never from a date. An event's end is shown only
-/// from curated data with evidence.
+/// Running events come from the game's festival flags (<see cref="CharacterSnapshot.ActiveFestivals"/>), the same flags
+/// the evaluator's <see cref="SeasonalRequirement.Active"/> is built from; never from a date. Festivals run
+/// server-wide, so for a stored character the caller passes <see cref="ServerFestivals.For"/>: the live character's
+/// flags while someone is logged in, else the stored flags less those a passed curated end shows to be stale. An
+/// event's end is shown only from curated data with evidence.
 /// </para>
 /// <para>
 /// Edition year (<see cref="EditionYears"/>): the game's <c>Festival</c> sheet carries no name or year, and a journal
@@ -72,9 +74,8 @@ public static class SeasonalNow
     private const string NoticeEndFormat = " (ends {0})";
 
     /// <summary>
-    /// The events running for <paramref name="snapshot"/>, by Festival id, each with its listed quests and their
-    /// states from <paramref name="states"/> (a quest without an evaluation reads <see cref="QuestState.Unknown"/>).
-    /// A running id with no listed quest in the catalog is left out.
+    /// The events <paramref name="snapshot"/> was captured with as running: right for the live character only. For a
+    /// character that may be a stored one, pass <see cref="ServerFestivals.For"/> to the other overload.
     /// </summary>
     public static IReadOnlyList<RunningFestival> Running(
         QuestCatalog catalog,
@@ -83,17 +84,33 @@ public static class SeasonalNow
         IReadOnlyDictionary<ushort, FestivalInfo> curated,
         DateTime nowUtc)
     {
-        ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(snapshot);
+        return Running(catalog, ServerFestivals.Of(snapshot), states, curated, nowUtc);
+    }
+
+    /// <summary>
+    /// The events running on the server (<paramref name="running"/>, see <see cref="ServerFestivals.For"/>), by Festival
+    /// id, each with its listed quests and their states from <paramref name="states"/> (a quest without an evaluation
+    /// reads <see cref="QuestState.Unknown"/>). A running id with no listed quest in the catalog is left out.
+    /// </summary>
+    public static IReadOnlyList<RunningFestival> Running(
+        QuestCatalog catalog,
+        ServerFestivals running,
+        IReadOnlyDictionary<uint, QuestEvaluation> states,
+        IReadOnlyDictionary<ushort, FestivalInfo> curated,
+        DateTime nowUtc)
+    {
+        ArgumentNullException.ThrowIfNull(catalog);
+        ArgumentNullException.ThrowIfNull(running);
         ArgumentNullException.ThrowIfNull(states);
         ArgumentNullException.ThrowIfNull(curated);
 
-        if (snapshot.ActiveFestivals.Count == 0)
+        if (running.Ids.Count == 0)
         {
             return [];
         }
 
-        var active = new HashSet<ushort>(snapshot.ActiveFestivals);
+        var active = new HashSet<ushort>(running.Ids);
         active.Remove(0);
         var quests = new Dictionary<ushort, List<SeasonalQuest>>();
         foreach (var quest in catalog.All)

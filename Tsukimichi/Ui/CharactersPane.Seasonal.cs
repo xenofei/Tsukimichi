@@ -178,7 +178,7 @@ public sealed partial class CharactersPane
 
         var catalog = bundle.Catalog;
         var curated = session.Curated.Festivals;
-        var running = SeasonalNow.Running(catalog, snapshot, session.States, curated, now);
+        var running = SeasonalNow.Running(catalog, session.ServerFestivals, session.States, curated, now);
         var festivals = new SeasonalFestivalView[running.Count];
         for (var i = 0; i < running.Count; i++)
         {
