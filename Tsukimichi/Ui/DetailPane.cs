@@ -784,7 +784,7 @@ public sealed class DetailPane
         ImGui.SameLine();
         if (model.ChainNextName is not { } next)
         {
-            using var done = Theme.PushText(Theme.MoonDim);
+            using var done = Theme.PushText(Theme.AccentDim);
             ImGui.TextUnformatted(Strings.DetailChainComplete);
             return;
         }
