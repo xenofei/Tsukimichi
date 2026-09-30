@@ -922,6 +922,19 @@ public sealed class ConfigWindow : Window
             UiMetrics.Tooltip(Strings.DutyHintSettingHint);
         }
 
+        // Read per use by the detail pane, so no callback is needed.
+        var questionable = settings.QuestionableHandoff;
+        if (ImGui.Checkbox(Strings.ConfigQuestionableHandoff, ref questionable))
+        {
+            settings.QuestionableHandoff = questionable;
+            Save();
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.ConfigQuestionableHandoffHint);
+        }
+
         DrawHookGate();
     }
 

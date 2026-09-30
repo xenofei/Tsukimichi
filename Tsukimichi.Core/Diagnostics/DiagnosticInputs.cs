@@ -77,4 +77,10 @@ public sealed record DiagnosticInputs
 
     /// <summary>True when <see cref="Snapshot"/> is the poller's live capture rather than a stored one.</summary>
     public bool IsLive { get; init; }
+
+    /// <summary>
+    /// Questionable's answer for the quest compared with Tsukimichi's (V2-17), printed as a "questionable:" line; null
+    /// when Questionable is not loaded, which leaves the line out.
+    /// </summary>
+    public Ipc.CrossCheckResult? Questionable { get; init; }
 }

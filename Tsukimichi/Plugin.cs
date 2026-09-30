@@ -65,6 +65,7 @@ public sealed class Plugin : IDalamudPlugin
     private readonly MainWindow mainWindow;
     private MoonlitPane? moonlitPane;
     private Game.WotsitIpc? wotsit;
+    private Game.QuestionableIpc? questionable;
     private CharactersPane? charactersPane;
     private FlightPane? flightPane;
     private PlanSource? planSource;
@@ -464,6 +465,12 @@ public sealed class Plugin : IDalamudPlugin
                 Log.Warning("{Warning}", versionWarning);
             }
 
+            // Questionable cross-check (V2-17): the detail pane's "Questionable agrees" line, the diagnostic block's
+            // "questionable:" line, and the opt-in "Add to Questionable priority" behind Settings › Integrations.
+            questionable = new Game.QuestionableIpc(PluginInterface, Log);
+            Game.QuestionableIpc questionableIpc = questionable;
+            diagnostics.CrossCheck = quest => questionableIpc.Check(quest, Session);
+            mainWindow.AttachQuestionable(questionableIpc, () => Settings.QuestionableHandoff);
             mainWindow.AttachDiagnostics(diagnostics);
             var report = new ReportCommand(Session, ui, gameLinks, diagnostics, Log);
             command.Report = report.Run;
@@ -656,6 +663,7 @@ public sealed class Plugin : IDalamudPlugin
         discoveryWindow?.Dispose();
         mainWindow.Dispose();
         wotsit?.Dispose();
+        questionable?.Dispose();
         moonlitPane?.Dispose();
         chatNotifier?.Dispose();
         queryRunner.Dispose();
@@ -718,6 +726,7 @@ public sealed class Plugin : IDalamudPlugin
         Unwind("nearby window", () => discoveryWindow?.Dispose());
         Unwind("main window", () => mainWindow?.Dispose());
         Unwind("wotsit ipc", () => wotsit?.Dispose());
+        Unwind("questionable ipc", () => questionable?.Dispose());
         Unwind("moonlit pane", () => moonlitPane?.Dispose());
         Unwind("chat notifier", () => chatNotifier?.Dispose());
         Unwind("query runner", () => queryRunner?.Dispose());

@@ -26,6 +26,7 @@ namespace Tsukimichi.Core.Diagnostics;
 ///   - PreviousQuests: unmet (66753 Peace for Thanalan: not done)
 ///   - TribeRank: met (Amalj'aa Recognized ≥ Recognized)
 /// quirk: Up in Arms is optional once the Zenith is in hand …   (only when curated/quirks.json names the quest)
+/// questionable: agrees; not locked   (only when Questionable is loaded)
 /// inputs: job WHM 31, msq 66043, tribe 1 rank 2 rep 0
 /// captured: 2026-09-28T21:14:02Z live
 /// ```
@@ -79,6 +80,7 @@ public static class QuestDiagnostic
         AppendState(sb, inputs);
         AppendRequirements(sb, inputs);
         AppendQuirk(sb, inputs);
+        AppendQuestionable(sb, inputs);
         AppendInputs(sb, inputs);
 
         sb.Append("captured: ");
@@ -137,6 +139,19 @@ public static class QuestDiagnostic
         if (inputs.QuirkNote is { Length: > 0 } quirk)
         {
             sb.Append("quirk: ").Append(quirk).Append('\n');
+        }
+    }
+
+    /// <summary>
+    /// Questionable's answer beside Tsukimichi's, when Questionable is loaded (V2-17): "questionable: agrees; not
+    /// locked", "questionable: disagrees; locked: Prev quest (1); tsukimichi Ready". A disagreement is the line a
+    /// triager looks for.
+    /// </summary>
+    private static void AppendQuestionable(StringBuilder sb, DiagnosticInputs inputs)
+    {
+        if (inputs.Questionable is { } check)
+        {
+            sb.Append("questionable: ").Append(Ipc.QuestionableCrossCheck.DiagnosticText(check)).Append('\n');
         }
     }
 

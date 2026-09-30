@@ -70,6 +70,12 @@ public sealed class Configuration : IPluginConfiguration
     /// <summary>Register every quest and Moonlit reward with Wotsit when it is loaded (see <c>Game.WotsitIpc</c>). On by default.</summary>
     public bool WotsitIntegration { get; set; } = true;
 
+    /// <summary>
+    /// Offer "Add to Questionable priority" in the detail pane's "…" menu when Questionable is loaded (V2-17). Off by
+    /// default: the hand-off is opt-in, and it only ever calls Questionable's own gate.
+    /// </summary>
+    public bool QuestionableHandoff { get; set; }
+
     // ---- 0.5.0: todo overlay ----
     /// <summary>Show the small always-on todo overlay (pins, nearby feature quests, MSQ, job quests).</summary>
     public bool TodoOverlayEnabled { get; set; } = false;
