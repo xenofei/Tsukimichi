@@ -39,18 +39,20 @@ public sealed class SpoilerMask
     public const string PlaceholderFormat = "Main scenario quest (Lv {0})";
 
     /// <summary>Masks nothing and shows every banner: no catalog yet, or the shield turned off.</summary>
-    public static readonly SpoilerMask None = new(SpoilerOptions.Off, FrozenDictionary<uint, string>.Empty, byte.MaxValue, 0);
+    public static readonly SpoilerMask None = new(SpoilerOptions.Off, FrozenDictionary<uint, byte>.Empty, byte.MaxValue, 0);
 
-    private readonly FrozenDictionary<uint, string> placeholders;
-    private readonly FrozenDictionary<uint, string> searchNames;
+    // One placeholder (and its lowercased search form) per display level, shared by every mask: a rebuild per session
+    // version allocates no strings. Written racily at worst with equal values.
+    private static readonly string?[] PlaceholderByLevel = new string?[byte.MaxValue + 1];
+    private static readonly string?[] SearchNameByLevel = new string?[byte.MaxValue + 1];
 
-    private SpoilerMask(SpoilerOptions options, FrozenDictionary<uint, string> placeholders, byte reachExpansion, int fingerprint)
+    /// <summary>Masked row id to the display level its placeholder prints.</summary>
+    private readonly IReadOnlyDictionary<uint, byte> masked;
+
+    private SpoilerMask(SpoilerOptions options, IReadOnlyDictionary<uint, byte> masked, byte reachExpansion, int fingerprint)
     {
         Options = options;
-        this.placeholders = placeholders;
-        searchNames = placeholders.Count == 0
-            ? FrozenDictionary<uint, string>.Empty
-            : placeholders.ToFrozenDictionary(pair => pair.Key, pair => pair.Value.ToLowerInvariant());
+        this.masked = masked;
         ReachExpansion = reachExpansion;
         Fingerprint = fingerprint;
     }
@@ -59,7 +61,7 @@ public sealed class SpoilerMask
     public SpoilerOptions Options { get; }
 
     /// <summary>How many quest names are masked.</summary>
-    public int MaskedCount => placeholders.Count;
+    public int MaskedCount => masked.Count;
 
     /// <summary>
     /// The expansion of the character's next main scenario quest: the furthest expansion the story has reached. 0 (A
@@ -78,31 +80,37 @@ public sealed class SpoilerMask
     public static string Placeholder(QuestRecord quest)
     {
         ArgumentNullException.ThrowIfNull(quest);
-        return string.Format(CultureInfo.InvariantCulture, PlaceholderFormat, quest.DisplayLevel);
+        return PlaceholderFor(quest.DisplayLevel);
     }
+
+    private static string PlaceholderFor(byte level) =>
+        PlaceholderByLevel[level] ??= string.Format(CultureInfo.InvariantCulture, PlaceholderFormat, level);
+
+    private static string SearchNameFor(byte level) =>
+        SearchNameByLevel[level] ??= PlaceholderFor(level).ToLowerInvariant();
 
     /// <summary>Whether the quest's name is hidden.</summary>
     public bool IsMasked(QuestRecord quest)
     {
         ArgumentNullException.ThrowIfNull(quest);
-        return placeholders.ContainsKey(quest.RowId);
+        return masked.ContainsKey(quest.RowId);
     }
 
     /// <summary>Whether the quest with this row id has its name hidden.</summary>
-    public bool IsMasked(uint rowId) => placeholders.ContainsKey(rowId);
+    public bool IsMasked(uint rowId) => masked.ContainsKey(rowId);
 
     /// <summary>The name to print: <see cref="Placeholder"/> for a masked quest, the quest's own name otherwise.</summary>
     public string DisplayName(QuestRecord quest)
     {
         ArgumentNullException.ThrowIfNull(quest);
-        return placeholders.TryGetValue(quest.RowId, out var placeholder) ? placeholder : quest.Name;
+        return masked.TryGetValue(quest.RowId, out var level) ? PlaceholderFor(level) : quest.Name;
     }
 
     /// <summary>
     /// The lowercased placeholder a masked quest is searched by, or null when the quest is not masked and its own
     /// name is searched (<see cref="SearchIndex.Matches(uint, string, SpoilerMask?)"/>).
     /// </summary>
-    public string? SearchName(uint rowId) => searchNames.TryGetValue(rowId, out var name) ? name : null;
+    public string? SearchName(uint rowId) => masked.TryGetValue(rowId, out var level) ? SearchNameFor(level) : null;
 
     /// <summary>The name to print for a row id; <paramref name="fallback"/> when the catalog does not know it.</summary>
     public string DisplayName(QuestCatalog catalog, uint rowId, string fallback)
@@ -131,16 +139,16 @@ public sealed class SpoilerMask
         ArgumentNullException.ThrowIfNull(text);
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(rowIds);
-        if (placeholders.Count == 0)
+        if (masked.Count == 0)
         {
             return text;
         }
 
         foreach (var rowId in rowIds)
         {
-            if (placeholders.TryGetValue(rowId, out var placeholder) && catalog.GetByRowId(rowId) is { Name.Length: > 0 } quest)
+            if (masked.TryGetValue(rowId, out var level) && catalog.GetByRowId(rowId) is { Name.Length: > 0 } quest)
             {
-                text = text.Replace(quest.Name, placeholder, StringComparison.Ordinal);
+                text = text.Replace(quest.Name, PlaceholderFor(level), StringComparison.Ordinal);
             }
         }
 
@@ -171,7 +179,7 @@ public sealed class SpoilerMask
 
         // Without states there is no position: only the very first quest of the story keeps its name.
         var ahead = noStates ? 0 : options.AheadClamped;
-        var placeholders = new Dictionary<uint, string>();
+        var masked = new Dictionary<uint, byte>();
         var hash = new HashCode();
         hash.Add(options.HideNames);
         byte? reach = null;
@@ -214,12 +222,12 @@ public sealed class SpoilerMask
                     continue;
                 }
 
-                placeholders[quest.RowId] = Placeholder(quest);
+                masked[quest.RowId] = quest.DisplayLevel;
                 hash.Add(quest.RowId);
             }
         }
 
         var reachExpansion = !any ? byte.MaxValue : noStates ? (byte)0 : reach ?? byte.MaxValue;
-        return new SpoilerMask(options, placeholders.ToFrozenDictionary(), reachExpansion, hash.ToHashCode());
+        return new SpoilerMask(options, masked, reachExpansion, hash.ToHashCode());
     }
 }
