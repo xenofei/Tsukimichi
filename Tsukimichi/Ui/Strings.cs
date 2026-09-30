@@ -196,7 +196,7 @@ public static partial class Strings
 
     // Filter panel tooltips
     public const string HideCompletedTooltip = "Remove Completed and Locked out quests from the table";
-    public const string AvailableOnlyTooltip = "Keep only quests you can pick up now: Ready, Ready on another job and In journal";
+    public const string AvailableOnlyTooltip = "Keep only quests you can work on now: Ready, Ready on another job and In journal";
     public const string OverridesTooltip = "Turn this filter on or off for single categories";
     public const string PinnedFirstTooltip = "Keep pinned quests at the top of the table whatever the sort";
     public const string StatesTooltip = "Untick a state to hide quests in it";

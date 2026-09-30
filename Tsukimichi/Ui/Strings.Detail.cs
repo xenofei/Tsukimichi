@@ -86,7 +86,7 @@ static partial class Strings
     public const string TonightReadyOne = "1 quest you can pick up now";
     public const string TonightReadyNone = "Nothing to pick up right now";
     public const string TonightShowReady = "Show them";
-    public const string TonightShowReadyTooltip = "Open the Journal with the Available now filter on";
+    public const string TonightShowReadyTooltip = "Open the Journal showing just these Ready quests (clears the search, the quick view and the other filters)";
     public const string TonightMsqLabel = "Main scenario";
     public const string TonightMsqDone = "Main scenario complete";
 

@@ -17,8 +17,8 @@ namespace Tsukimichi.Ui;
 
 /// <summary>
 /// The detail column when no quest is selected (game UX panel finding 1): a "Tonight" card that answers "what can I do
-/// now" before the catalog does. How many quests are Ready, with a button that opens the Journal under the Available
-/// now filter; the next main scenario quest with its blocker; the seasonal events running now on one line; and up to
+/// now" before the catalog does. How many quests are Ready, with a button that opens the Journal showing exactly those
+/// (All quests, Ready only, no search, no other filter); the next main scenario quest with its blocker; the seasonal events running now on one line; and up to
 /// three pinned quests that are Ready. Rows come from the Todo overlay's model (<see cref="TodoList"/>), rebuilt when
 /// the session version, the pins or the catalog change, so drawing allocates nothing. Every line is a focusable item
 /// that selects its quest.
@@ -36,7 +36,6 @@ public sealed class TonightCard
     // Memo keys.
     private int builtVersion = -1;
     private int builtPins = -1;
-    private int builtReady = -1;
     private CatalogBundle? builtBundle;
 
     // Job ladders are only needed because TodoInputs asks for one; built once per catalog.
@@ -114,10 +113,15 @@ public sealed class TonightCard
 
         if (ImGui.Button(Strings.TonightShowReady))
         {
-            // The whole journal, narrowed to what can be picked up now; its chip clears it.
+            // Exactly the quests counted above: the whole journal, Ready only, with the quick view, the search and
+            // every other narrowing filter cleared (Include removed only widens, so it stays). The state chip clears it.
             ui.Tab = NavTab.Journal;
             ui.Scope = QuestScope.None;
-            ui.Filters.AvailableOnly = true;
+            var includeUnlisted = ui.Filters.IncludeUnlisted;
+            ui.Filters.Reset();
+            ui.Filters.IncludeUnlisted = includeUnlisted;
+            ui.Filters.StateMask = QuestStateMask.Ready;
+            ui.SearchText = string.Empty;
             filtersChanged();
         }
 
@@ -206,8 +210,7 @@ public sealed class TonightCard
 
     private void Refresh(SessionState session, CatalogBundle bundle)
     {
-        var readyNow = runner.Counts?.OverallReady ?? 0;
-        if (builtVersion == session.Version && builtPins == runner.PinsVersion && ReferenceEquals(builtBundle, bundle) && builtReady == readyNow)
+        if (builtVersion == session.Version && builtPins == runner.PinsVersion && ReferenceEquals(builtBundle, bundle))
         {
             return;
         }
@@ -215,7 +218,7 @@ public sealed class TonightCard
         builtVersion = session.Version;
         builtPins = runner.PinsVersion;
         builtBundle = bundle;
-        builtReady = readyNow;
+        var readyNow = CountReady(session, bundle);
         ready = readyNow;
         readyText = readyNow switch
         {
@@ -275,6 +278,24 @@ public sealed class TonightCard
         }
 
         events = EventsLine(session, bundle, snapshot);
+    }
+
+    /// <summary>
+    /// The Ready quests "Show them" lists: every Ready quest of the catalog, the class intros included (the tree's
+    /// Ready badges leave those out, but the Ready-only table shows them). Removed quests are never Ready.
+    /// </summary>
+    private static int CountReady(SessionState session, CatalogBundle bundle)
+    {
+        var count = 0;
+        foreach (var quest in bundle.Catalog.All)
+        {
+            if (!quest.IsRemoved && session.States.TryGetValue(quest.RowId, out var evaluation) && evaluation.State == QuestState.Ready)
+            {
+                count++;
+            }
+        }
+
+        return count;
     }
 
     /// <summary>"Events now: Starlight Celebration (3 ready)" from the festivals the client reports running; null when none is.</summary>
