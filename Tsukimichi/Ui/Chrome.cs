@@ -249,11 +249,12 @@ public static class Chrome
     /// </summary>
     public static bool Chip(string id, string label)
     {
-        var height = MathF.Max(UiMetrics.Px(ChipHeight), ImGui.GetTextLineHeight() + UiMetrics.Px(4f));
+        // The whole chip is a click target, so it never stands under the minimum target (T14).
+        var height = ChipHeightPx();
         var padX = UiMetrics.Px(ChipPadX);
         var glyph = UiMetrics.Px(ChipGlyph);
         var labelSize = ImGui.CalcTextSize(label);
-        var size = new Vector2(padX + labelSize.X + padX * 0.7f + glyph + padX * 0.7f, height);
+        var size = new Vector2(ChipWidth(label), height);
         var pos = ImGui.GetCursorScreenPos();
 
         var clicked = ImGui.InvisibleButton(id, size);
@@ -277,6 +278,16 @@ public static class Chrome
         FocusRing(rounding);
         return clicked;
     }
+
+    /// <summary>The width a <see cref="Chip"/> with this label takes at the current font, for callers that flow chips onto lines.</summary>
+    public static float ChipWidth(string label)
+    {
+        var padX = UiMetrics.Px(ChipPadX);
+        return padX + ImGui.CalcTextSize(label).X + padX * 0.7f + UiMetrics.Px(ChipGlyph) + padX * 0.7f;
+    }
+
+    private static float ChipHeightPx() =>
+        MathF.Max(MathF.Max(UiMetrics.Px(ChipHeight), ImGui.GetTextLineHeight() + UiMetrics.Px(4f)), UiMetrics.MinTarget);
 
     /// <summary>
     /// A count badge centred on <paramref name="center"/> (draw list only): a circle, or a pill once the number is wide.
@@ -460,6 +471,19 @@ public static class Chrome
         ImGui.SetCursorScreenPos(origin);
         ImGui.Dummy(max - origin);
         return changed;
+    }
+
+    /// <summary>The width <see cref="SegmentedControl"/> takes for these labels at the current font, for layouts that place it first.</summary>
+    public static float SegmentedControlWidth(string allLabel, ReadOnlySpan<string> labels)
+    {
+        var padX = UiMetrics.Px(SegmentPadX);
+        var total = SegmentWidth(allLabel, padX);
+        foreach (var label in labels)
+        {
+            total += SegmentWidth(label, padX);
+        }
+
+        return total;
     }
 
     private static float SegmentWidth(string label, float padX) => ImGui.CalcTextSize(label).X + padX * 2f;

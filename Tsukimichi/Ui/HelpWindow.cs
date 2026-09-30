@@ -216,12 +216,15 @@ public sealed class HelpWindow : Window
 
         steps =
         [
+            // Find, Read, Beyond: the order of the tour's chapters (T14).
             new("1", Strings.Help.StepOpenTitle, Strings.Help.StepOpenBody, null),
-            new("2", Strings.Help.StepFiltersTitle, Strings.Help.StepFiltersBody, actions.OpenFilters),
-            new("3", Strings.Help.StepMoonlitTitle, Strings.Help.StepMoonlitBody, () => actions.ShowTab(NavTab.Moonlit)),
-            new("4", Strings.Help.StepCharactersTitle, Strings.Help.StepCharactersBody, () => actions.ShowTab(NavTab.Characters)),
-            new("5", Strings.Help.StepFlightTitle, Strings.Help.StepFlightBody, () => actions.ShowTab(NavTab.Flight)),
-            new("6", Strings.Help.StepTourTitle, Strings.Help.StepTourBody, actions.StartTutorial),
+            new("2", Strings.Help.StepFindTitle, Strings.Help.StepFindBody, () => actions.ShowTab(NavTab.Journal)),
+            new("3", Strings.Help.StepFiltersTitle, Strings.Help.StepFiltersBody, actions.OpenFilters),
+            new("4", Strings.Help.StepReadTitle, Strings.Help.StepReadBody, () => actions.ShowTab(NavTab.Journal)),
+            new("5", Strings.Help.StepMoonlitTitle, Strings.Help.StepMoonlitBody, () => actions.ShowTab(NavTab.Moonlit)),
+            new("6", Strings.Help.StepCharactersTitle, Strings.Help.StepCharactersBody, () => actions.ShowTab(NavTab.Characters)),
+            new("7", Strings.Help.StepFlightTitle, Strings.Help.StepFlightBody, () => actions.ShowTab(NavTab.Flight)),
+            new("8", Strings.Help.StepTourTitle, Strings.Help.StepTourBody, actions.StartTutorial),
         ];
 
         BuildSearchText();

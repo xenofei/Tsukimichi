@@ -2,37 +2,50 @@ using System;
 using System.Globalization;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
+using Dalamud.Game.ClientState.Keys;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin;
+using Dalamud.Plugin.Services;
 using Tsukimichi.Config;
+using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Ui;
 
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// The interactive tour (<see cref="ITutorial"/>): fifteen steps, each pointing at a region the main window
-/// recorded in <see cref="UiState.Rects"/>. Drawn on the foreground draw list at the end of the main window's
-/// Draw: the window area (union of every recorded rect, or the screen) is dimmed with Night at 70 % except for a
-/// rounded cutout around the target and around the card; the target gets a Moon border with a soft glow; the card
-/// is a small ImGui window placed beside the target, flipping sides near the screen edge, with the step number,
-/// title, body and Back / Next / Skip. Esc skips while the card is focused. A step whose region is not on screen
-/// shows without a highlight.
-/// On first run (<see cref="Configuration.TutorialCompleted"/> false) the welcome card offers the tour when the
-/// main window first opens; finishing or declining sets the flag. Sizes go through
-/// <see cref="ImGuiHelpers.GlobalScale"/> (the main window's UiMetrics is not used here).
+/// The interactive tour (<see cref="ITutorial"/>, T14, accessibility C1, game UX panel finding 6), in three chapters:
+/// <b>Find</b> (search, quick views, filters and chips, the tab rail, the tree, the table), <b>Read</b> (the detail
+/// pane, the Status column, a legend of all eight states with their glyphs drawn in the card, the path and giver) and
+/// <b>Beyond</b> (Moonlit, Characters, Flight, the Todo overlay and Nearby, help and settings). Each step points at a
+/// region the main window recorded in <see cref="UiState.Rects"/> from the real items; its body is at most 35 words.
+/// Drawn on the foreground draw list at the end of the main window's Draw: the window area is dimmed with Night at
+/// 70 % except for a rounded cutout around the target and around the card; the target gets a Moon border with a soft
+/// glow; the card is a small ImGui window beside the target, flipping sides near the screen edge. The card carries a
+/// chapter strip (click to jump), the step within its chapter, title, body and Back / Next / Close.
+/// Keys while the tour runs and the card or the main window has focus (not while typing): Enter or → next, ← or
+/// Backspace back, Esc closes (on the first-run offer, Esc means Later). <see cref="ConsumeKeys"/> keeps those keys
+/// from the game meanwhile, so Enter does not also open the chat box.
+/// On first run the welcome card offers the tour with "Take the tour", "Later" (offered again next session, up to
+/// <see cref="LaterLimit"/> times) and "Don't offer again". The tab, the filter panel and the other window state the
+/// tour changes are put back when it ends. Sizes follow <see cref="UiMetrics.Scale"/> and the card's text follows the
+/// UI scale, so a player at UiScale 1.6 gets a 1.6 card (accessibility B6).
 /// </summary>
 public sealed class TutorialOverlay : ITutorial
 {
+    /// <summary>"Later" answers after which the first-run offer stops coming back.</summary>
+    public const int LaterLimit = 3;
+
     private const float CutoutPad = 6f;
     private const float BorderRounding = 8f;
     private const float BorderThickness = 2f;
     private const float GlowStep = 3f;
     private const int GlowLayers = 3;
     private const float Gap = 14f;
-    private const float CardWidth = 330f;
-    private const float CardHeightGuess = 160f;
+    private const float CardWidth = 400f;
+    private const float CardHeightGuess = 220f;
+    private const float LegendGlyphRadius = 9f;
 
     /// <summary>
     /// Frames a step is drawn before the card's measured size is trusted: the auto-resized card takes its size from
@@ -51,51 +64,93 @@ public sealed class TutorialOverlay : ITutorial
     private static readonly Vector4 CardButton = Vector4.Lerp(Theme.Night, Theme.Veil, 0.45f) with { W = 1f };
     private static readonly Vector4 CardButtonHovered = Theme.Veil;
     private static readonly Vector4 CardButtonActive = Theme.Dusk;
+    private static readonly Vector4 ChapterActive = Theme.WithAlphaVector(Theme.Moon, 0.22f);
 
     private const ImGuiWindowFlags CardFlags =
         ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.AlwaysAutoResize |
         ImGuiWindowFlags.NoSavedSettings | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoDocking |
         ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoCollapse;
 
+    private enum Chapter
+    {
+        Find,
+        Read,
+        Beyond,
+    }
+
+    private enum StepKind
+    {
+        Normal,
+        Welcome,
+        Legend,
+        Finish,
+    }
+
     private static readonly string[] NoKeys = [];
 
-    /// <summary>Steps 2–10 point at Journal regions, so entering them (forwards or with Back) shows that tab.</summary>
+    private static readonly string[] ChapterNames = [Strings.Tutorial.ChapterFind, Strings.Tutorial.ChapterRead, Strings.Tutorial.ChapterBeyond];
+
+    private static readonly string[] ChapterIds = ["##chapterFind", "##chapterRead", "##chapterBeyond"];
+
+    /// <summary>The legend's order: what you can do, what you are doing, what stops you, what is behind you.</summary>
+    private static readonly QuestState[] LegendStates =
+    [
+        QuestState.Ready,
+        QuestState.ReadyOnOtherJob,
+        QuestState.Accepted,
+        QuestState.Blocked,
+        QuestState.DoneThisCycle,
+        QuestState.Completed,
+        QuestState.Foreclosed,
+        QuestState.Unknown,
+    ];
+
     private static readonly Action<UiState> ShowJournal = static ui => ui.Tab = NavTab.Journal;
 
     /// <summary>
-    /// One step: the rect keys whose union is highlighted (empty for the welcome and finish cards), keys tried
-    /// when none of the first set is recorded, and what to change when the step is shown.
+    /// One step: its chapter, what the card shows, the rect keys whose union is highlighted (empty for a card with no
+    /// target), keys tried when none of the first set is recorded, and what to change when the step is shown.
     /// </summary>
-    private readonly record struct Step(string Title, string Body, string[] Keys, string[] FallbackKeys, Action<UiState>? OnShow);
+    private readonly record struct Step(Chapter Chapter, StepKind Kind, string Title, string Body, string[] Keys, string[] FallbackKeys, Action<UiState>? OnShow);
 
     private static readonly Step[] Steps =
     [
-        new(Strings.Tutorial.WelcomeTitle, Strings.Tutorial.WelcomeBody, NoKeys, NoKeys, null),
-        new(Strings.Tutorial.SearchTitle, Strings.Tutorial.SearchBody, ["search"], ["toolbar"], ShowJournal),
-        new(Strings.Tutorial.FiltersTitle, Strings.Tutorial.FiltersBody, ["filterPanel", "filtersButton"], NoKeys, static ui =>
+        // Find
+        new(Chapter.Find, StepKind.Welcome, Strings.Tutorial.WelcomeTitle, Strings.Tutorial.WelcomeBody, NoKeys, NoKeys, ShowJournal),
+        new(Chapter.Find, StepKind.Normal, Strings.Tutorial.SearchTitle, Strings.Tutorial.SearchBody, [UiRects.Search], [UiRects.Toolbar], ShowJournal),
+        new(Chapter.Find, StepKind.Normal, Strings.Tutorial.QuickViewsTitle, Strings.Tutorial.QuickViewsBody, [UiRects.QuickViews], [UiRects.Toolbar], ShowJournal),
+        new(Chapter.Find, StepKind.Normal, Strings.Tutorial.FiltersTitle, Strings.Tutorial.FiltersBody, [UiRects.FilterPanel, UiRects.FiltersButton], [UiRects.FiltersButton], static ui =>
         {
             ui.Tab = NavTab.Journal;
             ui.FilterPanelOpen = true;
         }),
-        new(Strings.Tutorial.ChipsTitle, Strings.Tutorial.ChipsBody, ["chips"], ["search"], ShowJournal),
-        new(Strings.Tutorial.TabsTitle, Strings.Tutorial.TabsBody, ["tabs"], NoKeys, ShowJournal),
-        new(Strings.Tutorial.TreeTitle, Strings.Tutorial.TreeBody, ["tree"], NoKeys, ShowJournal),
-        new(Strings.Tutorial.TableTitle, Strings.Tutorial.TableBody, ["table"], NoKeys, ShowJournal),
-        new(Strings.Tutorial.RequirementsTitle, Strings.Tutorial.RequirementsBody, ["detail.requirements"], ["detail"], ShowJournal),
-        new(Strings.Tutorial.PathTitle, Strings.Tutorial.PathBody, ["detail.path"], ["detail"], ShowJournal),
-        new(Strings.Tutorial.GiverTitle, Strings.Tutorial.GiverBody, ["detail.giver"], ["detail"], ShowJournal),
-        new(Strings.Tutorial.MoonlitTitle, Strings.Tutorial.MoonlitBody, ["moonlit.kinds", "moonlit.table"], NoKeys, static ui => ui.Tab = NavTab.Moonlit),
-        new(Strings.Tutorial.CharactersTitle, Strings.Tutorial.CharactersBody, ["characters.dashboard"], ["characters.list"], static ui => ui.Tab = NavTab.Characters),
-        new(Strings.Tutorial.FlightTitle, Strings.Tutorial.FlightBody, ["flight.table"], ["flight.zones"], static ui => ui.Tab = NavTab.Flight),
-        new(Strings.Tutorial.HelpTitle, Strings.Tutorial.HelpBody, ["helpButton", "tutorialButton", "settingsButton"], ["toolbar"], null),
-        new(Strings.Tutorial.FinishTitle, Strings.Tutorial.FinishBody, NoKeys, NoKeys, null),
+        new(Chapter.Find, StepKind.Normal, Strings.Tutorial.TabsTitle, Strings.Tutorial.TabsBody, [UiRects.Tabs], NoKeys, ShowJournal),
+        new(Chapter.Find, StepKind.Normal, Strings.Tutorial.TreeTitle, Strings.Tutorial.TreeBody, [UiRects.Tree], NoKeys, ShowJournal),
+        new(Chapter.Find, StepKind.Normal, Strings.Tutorial.TableTitle, Strings.Tutorial.TableBody, [UiRects.Table], NoKeys, ShowJournal),
+
+        // Read
+        new(Chapter.Read, StepKind.Normal, Strings.Tutorial.DetailTitle, Strings.Tutorial.DetailBody, [UiRects.DetailRequirements], [UiRects.Detail], ShowJournal),
+        new(Chapter.Read, StepKind.Normal, Strings.Tutorial.StatusTitle, Strings.Tutorial.StatusBody, [UiRects.Table], NoKeys, ShowJournal),
+        new(Chapter.Read, StepKind.Legend, Strings.Tutorial.LegendTitle, Strings.Tutorial.LegendBody, [UiRects.Table], NoKeys, ShowJournal),
+        new(Chapter.Read, StepKind.Normal, Strings.Tutorial.PathTitle, Strings.Tutorial.PathBody, [UiRects.DetailPath, UiRects.DetailGiver], [UiRects.Detail], ShowJournal),
+
+        // Beyond
+        new(Chapter.Beyond, StepKind.Normal, Strings.Tutorial.MoonlitTitle, Strings.Tutorial.MoonlitBody, [UiRects.MoonlitKinds, UiRects.MoonlitTable], [UiRects.Tabs], static ui => ui.Tab = NavTab.Moonlit),
+        new(Chapter.Beyond, StepKind.Normal, Strings.Tutorial.CharactersTitle, Strings.Tutorial.CharactersBody, [UiRects.CharactersDashboard], [UiRects.CharactersList], static ui => ui.Tab = NavTab.Characters),
+        new(Chapter.Beyond, StepKind.Normal, Strings.Tutorial.FlightTitle, Strings.Tutorial.FlightBody, [UiRects.FlightTable], [UiRects.FlightZones], static ui => ui.Tab = NavTab.Flight),
+        new(Chapter.Beyond, StepKind.Normal, Strings.Tutorial.PlayTitle, Strings.Tutorial.PlayBody, [UiRects.SettingsButton], [UiRects.Toolbar], null),
+        new(Chapter.Beyond, StepKind.Normal, Strings.Tutorial.HelpTitle, Strings.Tutorial.HelpBody, [UiRects.HelpButton, UiRects.TutorialButton, UiRects.SettingsButton], [UiRects.Toolbar], null),
+        new(Chapter.Beyond, StepKind.Finish, Strings.Tutorial.FinishTitle, Strings.Tutorial.FinishBody, NoKeys, NoKeys, null),
     ];
+
+    /// <summary>First step of each chapter, by <see cref="Chapter"/>.</summary>
+    private static readonly int[] ChapterStart = BuildChapterStarts();
 
     private readonly Configuration settings;
     private readonly IDalamudPluginInterface pluginInterface;
     private readonly UiState ui;
 
-    /// <summary>"3 of 15" per step, built once.</summary>
+    /// <summary>"Find · step 3 of 7" per step, built once.</summary>
     private readonly string[] progress;
 
     private int index = -1;
@@ -108,6 +163,14 @@ public sealed class TutorialOverlay : ITutorial
     /// <summary>Frames drawn on the current step; the card is placed from an estimate until <see cref="CardSettleFrames"/>.</summary>
     private int stepFrames;
 
+    /// <summary>Set when a button changed the step this frame, so a key press that also activated it is not applied twice.</summary>
+    private bool stepChanged;
+
+    // Window state the tour changes, put back when it ends.
+    private bool stateSaved;
+    private NavTab savedTab;
+    private bool savedFilterPanelOpen;
+
     public TutorialOverlay(Configuration settings, IDalamudPluginInterface pluginInterface, UiState ui)
     {
         this.settings = settings ?? throw new ArgumentNullException(nameof(settings));
@@ -117,7 +180,10 @@ public sealed class TutorialOverlay : ITutorial
         progress = new string[Steps.Length];
         for (var i = 0; i < Steps.Length; i++)
         {
-            progress[i] = string.Format(CultureInfo.InvariantCulture, Strings.Tutorial.ProgressFormat, i + 1, Steps.Length);
+            var chapter = (int)Steps[i].Chapter;
+            var start = ChapterStart[chapter];
+            var end = chapter + 1 < ChapterStart.Length ? ChapterStart[chapter + 1] : Steps.Length;
+            progress[i] = string.Format(CultureInfo.CurrentCulture, Strings.Tutorial.ProgressFormat, ChapterNames[chapter], i - start + 1, end - start);
         }
     }
 
@@ -135,27 +201,25 @@ public sealed class TutorialOverlay : ITutorial
 
     public int StepCount => Steps.Length;
 
-    /// <summary>True while the first-run welcome card is showing "Take the tour" / "Not now".</summary>
+    /// <summary>True while the first-run welcome card is showing "Take the tour" / "Later" / "Don't offer again".</summary>
     public bool Offering => offering;
 
     /// <inheritdoc/>
     public void Start()
     {
-        offering = false;
-        ui.Tab = NavTab.Journal;
-        GoTo(0);
+        Begin(0);
     }
 
     /// <inheritdoc/>
     public void Stop()
     {
-        index = -1;
-        offering = false;
+        End(seen: false);
     }
 
     /// <summary>
-    /// <c>UiBuilder.Draw</c> handler: the first time <see cref="WatchedWindow"/> is seen open while
-    /// <see cref="Configuration.TutorialCompleted"/> is false, shows the welcome card with the offer. Once per session.
+    /// <c>UiBuilder.Draw</c> handler: the first time <see cref="WatchedWindow"/> is seen open while the tour was
+    /// neither finished nor declined (and "Later" was not answered <see cref="LaterLimit"/> times), shows the welcome
+    /// card with the offer. Once per session.
     /// </summary>
     public void CheckFirstRun()
     {
@@ -165,7 +229,7 @@ public sealed class TutorialOverlay : ITutorial
         }
 
         var open = window.IsOpen;
-        if (open && !mainWasOpen && !offeredThisSession && !settings.TutorialCompleted && !Active)
+        if (open && !mainWasOpen && !offeredThisSession && !settings.TutorialCompleted && settings.TutorialLaterCount < LaterLimit && !Active)
         {
             offeredThisSession = true;
             offering = true;
@@ -185,7 +249,8 @@ public sealed class TutorialOverlay : ITutorial
             return;
         }
 
-        var scale = ImGuiHelpers.GlobalScale;
+        stepChanged = false;
+        var scale = UiMetrics.Scale;
         ref readonly var step = ref Steps[index];
 
         var viewport = ImGuiHelpers.MainViewport;
@@ -205,7 +270,7 @@ public sealed class TutorialOverlay : ITutorial
         // Right after a step change the card is placed from a conservative estimate and gets no hole in the dim;
         // once it has settled, its measured size is used.
         var cardMeasured = stepFrames >= CardSettleFrames;
-        var size = cardMeasured ? cardSize : new Vector2(CardWidth * scale, CardHeightGuess * scale);
+        var size = cardMeasured ? cardSize : new Vector2(CardWidthPx(screen), CardHeightGuess * scale);
         var cardPos = hasTarget
             ? OverlayGeometry.PlaceCard(in target, size, in screen, Gap * scale, out _)
             : OverlayGeometry.CenterIn(in area, size);
@@ -217,13 +282,16 @@ public sealed class TutorialOverlay : ITutorial
             DrawHighlight(in target, scale);
         }
 
-        DrawCard(cardPos, in step, scale);
+        // Called from the end of the main window's Draw, so this is the main window's focus.
+        var mainFocused = ImGui.IsWindowFocused(ImGuiFocusedFlags.RootAndChildWindows);
+        DrawCard(cardPos, in step, screen, mainFocused);
 
         // A click in the main window gives it focus; its NoBringToFrontOnFocus flag (set by MainWindow while the tour
-        // runs) already keeps the card in front. As a second guard the card asks for focus again on the frame after any
-        // release, but not while a widget is active or a popup is open (focusing would deactivate the widget or close
-        // the popup, and the window underneath must stay usable).
-        if (Active && AnyMouseReleased() && !ImGui.IsAnyItemActive() && !ImGui.IsPopupOpen(string.Empty, ImGuiPopupFlags.AnyPopupId | ImGuiPopupFlags.AnyPopupLevel))
+        // runs) already keeps the card in front. As a second guard the card asks for focus again on the frame after a
+        // release over a plugin window, but not while a widget is active or a popup is open (focusing would deactivate
+        // the widget or close the popup, and the window underneath must stay usable), and not after a click on the
+        // game, which takes the keyboard back.
+        if (Active && AnyMouseReleased() && ImGui.GetIO().WantCaptureMouse && !ImGui.IsAnyItemActive() && !AnyPopupOpen())
         {
             focusCard = true;
         }
@@ -232,25 +300,170 @@ public sealed class TutorialOverlay : ITutorial
     private static bool AnyMouseReleased() =>
         ImGui.IsMouseReleased(ImGuiMouseButton.Left) || ImGui.IsMouseReleased(ImGuiMouseButton.Right) || ImGui.IsMouseReleased(ImGuiMouseButton.Middle);
 
+    private static bool AnyPopupOpen() => ImGui.IsPopupOpen(string.Empty, ImGuiPopupFlags.AnyPopupId | ImGuiPopupFlags.AnyPopupLevel);
+
     // ------------------------------------------------------------------ steps
+
+    /// <summary>Starts the tour at <paramref name="step"/>, remembering the window state it will change.</summary>
+    private void Begin(int step)
+    {
+        offering = false;
+        if (!stateSaved)
+        {
+            stateSaved = true;
+            savedTab = ui.Tab;
+            savedFilterPanelOpen = ui.FilterPanelOpen;
+        }
+
+        GoTo(step);
+    }
 
     private void GoTo(int i)
     {
-        index = i;
+        index = Math.Clamp(i, 0, Steps.Length - 1);
         focusCard = true;
         stepFrames = 0;
-        Steps[i].OnShow?.Invoke(ui);
+        stepChanged = true;
+        Steps[index].OnShow?.Invoke(ui);
     }
 
-    /// <summary>Finishing the tour or declining the first-run offer both stop it and remember that it need not be offered again.</summary>
-    private void Complete()
+    /// <summary>
+    /// Ends the tour or the offer and puts the window back as it was. <paramref name="seen"/> records that the tour
+    /// need not be offered again (finished, closed after taking it, or "Don't offer again").
+    /// </summary>
+    private void End(bool seen)
     {
-        settings.TutorialCompleted = true;
+        if (stateSaved)
+        {
+            stateSaved = false;
+            ui.Tab = savedTab;
+            ui.FilterPanelOpen = savedFilterPanelOpen;
+        }
+
+        index = -1;
+        offering = false;
+        stepChanged = true;
+        keysOwned = false;
+        if (seen && !settings.TutorialCompleted)
+        {
+            settings.TutorialCompleted = true;
+            settings.Save(pluginInterface);
+        }
+    }
+
+    /// <summary>"Later": no tour now, the offer comes back next session (up to <see cref="LaterLimit"/> times).</summary>
+    private void Later()
+    {
+        settings.TutorialLaterCount = Math.Min(LaterLimit, settings.TutorialLaterCount + 1);
         settings.Save(pluginInterface);
-        Stop();
+        End(seen: false);
+    }
+
+    private void Next()
+    {
+        if (offering)
+        {
+            Begin(1);
+        }
+        else if (index >= Steps.Length - 1)
+        {
+            End(seen: true);
+        }
+        else
+        {
+            GoTo(index + 1);
+        }
+    }
+
+    private void Back()
+    {
+        if (!offering && index > 0)
+        {
+            GoTo(index - 1);
+        }
+    }
+
+    private void Close()
+    {
+        if (offering)
+        {
+            Later();
+        }
+        else
+        {
+            End(seen: true);
+        }
+    }
+
+    /// <summary>
+    /// <c>Framework.Update</c> handler: while the tour owns the keyboard (<see cref="keysOwned"/>, decided on the last
+    /// draw), clears its keys from the game's key state before the game reads them, so Enter does not also open the
+    /// chat box and Esc does not also open the system menu. Dalamud passes keys to the game unless a text input is
+    /// active; ImGui still receives them through its own window messages.
+    /// </summary>
+    public void ConsumeKeys(IFramework framework)
+    {
+        // Only right after a draw that owned them: a tour paused by closing the main window gives the keys back.
+        if (!keysOwned || Environment.TickCount64 - keysOwnedAt > KeysOwnedGraceMs || KeyState is not { } keys)
+        {
+            return;
+        }
+
+        foreach (var key in TourKeys)
+        {
+            if (keys[key])
+            {
+                keys[key] = false;
+            }
+        }
+    }
+
+    /// <summary>The game's key state, for <see cref="ConsumeKeys"/>; null leaves the game's keys alone.</summary>
+    public IKeyState? KeyState { get; set; }
+
+    private static readonly VirtualKey[] TourKeys = [VirtualKey.RETURN, VirtualKey.ESCAPE, VirtualKey.LEFT, VirtualKey.RIGHT, VirtualKey.BACK];
+
+    /// <summary>Whether the tour answered keys on the last draw: the card or the main window had focus and nothing was being typed.</summary>
+    private bool keysOwned;
+
+    /// <summary>When <see cref="keysOwned"/> was last decided (<see cref="Environment.TickCount64"/>).</summary>
+    private long keysOwnedAt;
+
+    /// <summary>How long a draw's <see cref="keysOwned"/> stays good for <see cref="ConsumeKeys"/>.</summary>
+    private const long KeysOwnedGraceMs = 250;
+
+    /// <summary>
+    /// The tour's keys, applied after the card's buttons so a key that also activated a focused button counts once.
+    /// Only while the card or the main window has focus (a click on the game gives the keys back to it) and nothing is
+    /// being typed or edited.
+    /// </summary>
+    private void HandleKeys(bool mainFocused)
+    {
+        keysOwned = Active && !ImGui.GetIO().WantTextInput && (mainFocused || ImGui.IsWindowFocused(ImGuiFocusedFlags.RootAndChildWindows));
+        keysOwnedAt = Environment.TickCount64;
+        if (!keysOwned || stepChanged || ImGui.IsAnyItemActive() || AnyPopupOpen())
+        {
+            return;
+        }
+
+        if (ImGui.IsKeyPressed(ImGuiKey.Escape, false))
+        {
+            Close();
+        }
+        else if (ImGui.IsKeyPressed(ImGuiKey.Enter, false) || ImGui.IsKeyPressed(ImGuiKey.KeypadEnter, false) || ImGui.IsKeyPressed(ImGuiKey.RightArrow, false))
+        {
+            Next();
+        }
+        else if (ImGui.IsKeyPressed(ImGuiKey.LeftArrow, false) || ImGui.IsKeyPressed(ImGuiKey.Backspace, false))
+        {
+            Back();
+        }
     }
 
     // ------------------------------------------------------------------ geometry
+
+    private static float CardWidthPx(in ScreenRect screen) =>
+        MathF.Min(CardWidth * UiMetrics.Scale, MathF.Max(1f, screen.Max.X - screen.Min.X - 2f * Gap * UiMetrics.Scale));
 
     private static ScreenRect UnionOfRects(UiState ui)
     {
@@ -294,10 +507,21 @@ public sealed class TutorialOverlay : ITutorial
         return found;
     }
 
+    private static int[] BuildChapterStarts()
+    {
+        var starts = new int[ChapterNames.Length];
+        for (var c = 0; c < starts.Length; c++)
+        {
+            starts[c] = Array.FindIndex(Steps, s => (int)s.Chapter == c);
+        }
+
+        return starts;
+    }
+
     // ------------------------------------------------------------------ drawing
 
     /// <summary>Night at 70 % over the area, as bands around the target and the card (ImGui has no cutouts).</summary>
-    private void DrawDim(in ScreenRect area, bool hasTarget, in ScreenRect target, in ScreenRect card, bool cardMeasured)
+    private static void DrawDim(in ScreenRect area, bool hasTarget, in ScreenRect target, in ScreenRect card, bool cardMeasured)
     {
         Span<ScreenRect> holes = stackalloc ScreenRect[2];
         var holeCount = 0;
@@ -338,9 +562,10 @@ public sealed class TutorialOverlay : ITutorial
         dl.AddRect(target.Min, target.Max, Theme.MoonU32, rounding, ImDrawFlags.RoundCornersAll, BorderThickness * scale);
     }
 
-    private void DrawCard(Vector2 pos, in Step step, float scale)
+    private void DrawCard(Vector2 pos, in Step step, in ScreenRect screen, bool mainFocused)
     {
-        var width = CardWidth * scale;
+        var scale = UiMetrics.Scale;
+        var width = CardWidthPx(screen);
         ImGui.SetNextWindowPos(pos, ImGuiCond.Always);
         ImGui.SetNextWindowSizeConstraints(new Vector2(width, 0f), new Vector2(width, float.MaxValue));
         if (focusCard)
@@ -352,20 +577,26 @@ public sealed class TutorialOverlay : ITutorial
         using var colors = ImRaii.PushColor(ImGuiCol.WindowBg, Theme.Night)
                                  .Push(ImGuiCol.Border, CardBorder)
                                  .Push(ImGuiCol.Text, Theme.Silver)
-                                 .Push(ImGuiCol.TextDisabled, Theme.Dusk)
+                                 .Push(ImGuiCol.TextDisabled, Theme.Mist)
                                  .Push(ImGuiCol.Separator, Theme.Veil)
                                  .Push(ImGuiCol.Button, CardButton)
                                  .Push(ImGuiCol.ButtonHovered, CardButtonHovered)
                                  .Push(ImGuiCol.ButtonActive, CardButtonActive);
         using var styles = ImRaii.PushStyle(ImGuiStyleVar.WindowRounding, BorderRounding * scale)
                                  .Push(ImGuiStyleVar.WindowBorderSize, 1f)
-                                 .Push(ImGuiStyleVar.WindowPadding, new Vector2(16f, 14f) * scale);
+                                 .Push(ImGuiStyleVar.WindowPadding, new Vector2(16f, 14f) * scale)
+                                 .Push(ImGuiStyleVar.FrameRounding, 4f * scale)
+                                 .Push(ImGuiStyleVar.FramePadding, new Vector2(10f, 4f) * scale)
+                                 .Push(ImGuiStyleVar.ItemSpacing, new Vector2(8f, 6f) * scale);
 
         var visible = ImGui.Begin(Strings.Tutorial.CardId, CardFlags);
         try
         {
             if (visible)
             {
+                // The card is a top-level window, so it takes the UI scale itself (accessibility B6).
+                UiMetrics.ApplyFontScale();
+
                 // Measured before the content, whose buttons may move to another step and restart the count.
                 cardSize = ImGui.GetWindowSize();
                 if (stepFrames < CardSettleFrames)
@@ -373,14 +604,8 @@ public sealed class TutorialOverlay : ITutorial
                     stepFrames++;
                 }
 
-                DrawCardContent(in step, scale);
-
-                // Esc skips only while the card itself has focus; with the main window focused it does nothing (the
-                // window's own close hotkey is suspended by MainWindow for the tour).
-                if (Active && ImGui.IsWindowFocused(ImGuiFocusedFlags.RootAndChildWindows) && ImGui.IsKeyPressed(ImGuiKey.Escape, false))
-                {
-                    Stop();
-                }
+                DrawCardContent(in step);
+                HandleKeys(mainFocused);
             }
         }
         finally
@@ -389,82 +614,188 @@ public sealed class TutorialOverlay : ITutorial
         }
     }
 
-    private void DrawCardContent(in Step step, float scale)
+    private void DrawCardContent(in Step step)
     {
-        ImGui.TextDisabled(progress[index]);
-        ImGui.SetWindowFontScale(TitleScale);
+        var gap = UiMetrics.Px(8f);
+        DrawChapterStrip(step.Chapter);
+        if (!offering)
+        {
+            ImGui.TextDisabled(progress[index]);
+        }
+
+        ImGui.SetWindowFontScale(UiMetrics.FontScale * TitleScale);
         using (Theme.PushText(Theme.Moon))
         {
             ImGui.TextUnformatted(step.Title);
         }
 
-        ImGui.SetWindowFontScale(1f);
-        ImGui.Spacing();
+        ImGui.SetWindowFontScale(UiMetrics.FontScale);
         ImGui.TextWrapped(step.Body);
+        if (step.Kind == StepKind.Legend)
+        {
+            ImGui.Spacing();
+            DrawLegend();
+        }
+
         ImGui.Spacing();
         ImGui.Separator();
         ImGui.Spacing();
 
-        var last = index == Steps.Length - 1;
+        var buttonHeight = UiMetrics.MinTarget;
         if (offering)
         {
-            if (ImGui.Button(Strings.Tutorial.TakeTour))
+            if (Button(Strings.Tutorial.TakeTour, buttonHeight))
             {
-                offering = false;
-                ui.Tab = NavTab.Journal;
-                GoTo(1);
+                Begin(1);
             }
 
-            ImGui.SameLine(0f, 8f * scale);
-            if (ImGui.Button(Strings.Tutorial.NotNow))
+            ImGui.SetItemDefaultFocus();
+            ImGui.SameLine(0f, gap);
+            if (Button(Strings.Tutorial.Later, buttonHeight))
             {
-                Complete();
+                Later();
             }
 
-            return;
-        }
-
-        if (last)
-        {
-            if (OpenHelp is { } openHelp)
+            Tip(Strings.Tutorial.LaterTooltip);
+            ImGui.SameLine(0f, gap);
+            if (Button(Strings.Tutorial.DontOffer, buttonHeight))
             {
-                if (ImGui.Button(Strings.Tutorial.OpenHelp))
-                {
-                    openHelp();
-                    Complete();
-                }
-
-                ImGui.SameLine(0f, 8f * scale);
+                End(seen: true);
             }
 
-            if (ImGui.Button(Strings.Tutorial.Done))
-            {
-                Complete();
-            }
-
+            Tip(Strings.Tutorial.DontOfferTooltip);
+            ImGui.TextDisabled(Strings.Tutorial.OfferKeysHint);
             return;
         }
 
         if (index > 0)
         {
-            if (ImGui.Button(Strings.Tutorial.Back))
+            if (Button(Strings.Tutorial.Back, buttonHeight))
             {
-                GoTo(index - 1);
+                Back();
             }
 
-            ImGui.SameLine(0f, 8f * scale);
+            ImGui.SameLine(0f, gap);
         }
 
-        if (ImGui.Button(Strings.Tutorial.Next))
+        if (step.Kind == StepKind.Finish)
         {
-            GoTo(index + 1);
+            if (Button(Strings.Tutorial.Done, buttonHeight))
+            {
+                End(seen: true);
+            }
+
+            ImGui.SetItemDefaultFocus();
+            if (OpenHelp is { } openHelp)
+            {
+                ImGui.SameLine(0f, gap);
+                if (Button(Strings.Tutorial.OpenHelp, buttonHeight))
+                {
+                    End(seen: true);
+                    openHelp();
+                }
+            }
+        }
+        else
+        {
+            if (Button(Strings.Tutorial.Next, buttonHeight))
+            {
+                Next();
+            }
+
+            ImGui.SetItemDefaultFocus();
+            var closeWidth = ImGui.CalcTextSize(Strings.Tutorial.Close).X + ImGui.GetStyle().FramePadding.X * 2f;
+            ImGui.SameLine(ImGui.GetWindowContentRegionMax().X - closeWidth);
+            if (Button(Strings.Tutorial.Close, buttonHeight))
+            {
+                Close();
+            }
         }
 
-        var skipWidth = ImGuiHelpers.GetButtonSize(Strings.Tutorial.Skip).X;
-        ImGui.SameLine(ImGui.GetWindowContentRegionMax().X - skipWidth);
-        if (ImGui.Button(Strings.Tutorial.Skip))
+        ImGui.TextDisabled(Strings.Tutorial.KeysHint);
+    }
+
+    /// <summary>
+    /// Find · Read · Beyond as buttons: the current chapter is washed in Moon; a click jumps to the chapter's first step
+    /// (on the first-run offer, it takes the tour from there).
+    /// </summary>
+    private void DrawChapterStrip(Chapter current)
+    {
+        var height = UiMetrics.MinTarget;
+        for (var c = 0; c < ChapterNames.Length; c++)
         {
-            Stop();
+            if (c > 0)
+            {
+                ImGui.SameLine(0f, UiMetrics.Px(4f));
+            }
+
+            var active = !offering && (int)current == c;
+            using (ImRaii.PushId(ChapterIds[c]))
+            using (ImRaii.PushColor(ImGuiCol.Button, ChapterActive, active).Push(ImGuiCol.Text, Theme.Moon, active))
+            {
+                if (ImGui.Button(ChapterNames[c], new Vector2(0f, height)))
+                {
+                    if (offering)
+                    {
+                        Begin(Math.Max(1, ChapterStart[c]));
+                    }
+                    else if (ChapterStart[c] != index)
+                    {
+                        GoTo(ChapterStart[c]);
+                    }
+                }
+            }
+
+            Tip(Strings.Tutorial.ChapterTooltip);
+        }
+    }
+
+    /// <summary>
+    /// All eight states in two columns: each moon drawn at a readable size with its name in the state's colour; hover
+    /// a row for the glyph's shape ("new moon, silver ring"). Items, so hover works; nothing allocates.
+    /// </summary>
+    private static void DrawLegend()
+    {
+        var dl = ImGui.GetWindowDrawList();
+        var radius = UiMetrics.Px(LegendGlyphRadius);
+        var line = ImGui.GetTextLineHeight();
+        var rowHeight = MathF.Max(line, 2f * radius) + UiMetrics.Px(6f);
+        var start = ImGui.GetCursorScreenPos();
+        var columnWidth = ImGui.GetContentRegionAvail().X * 0.5f;
+        var perColumn = (LegendStates.Length + 1) / 2;
+        for (var i = 0; i < LegendStates.Length; i++)
+        {
+            var state = LegendStates[i];
+            var column = i / perColumn;
+            var row = i % perColumn;
+            var min = start + new Vector2(column * columnWidth, row * rowHeight);
+            ImGui.SetCursorScreenPos(min);
+            using (ImRaii.PushId(i))
+            {
+                ImGui.Dummy(new Vector2(columnWidth - UiMetrics.Px(4f), rowHeight));
+            }
+
+            var center = new Vector2(min.X + radius + UiMetrics.Px(2f), min.Y + rowHeight * 0.5f);
+            MoonGlyph.Draw(dl, center, radius, state);
+            var textPos = new Vector2(center.X + radius + UiMetrics.Px(8f), min.Y + (rowHeight - line) * 0.5f);
+            dl.AddText(textPos, Theme.StateColorU32(state), StateNames.Name(state));
+            if (ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(StateNames.Tooltip(state));
+            }
+        }
+
+        ImGui.SetCursorScreenPos(start + new Vector2(0f, perColumn * rowHeight));
+        ImGui.Dummy(new Vector2(2f * columnWidth - UiMetrics.Px(4f), 0f));
+    }
+
+    private static bool Button(string label, float height) => ImGui.Button(label, new Vector2(0f, height));
+
+    private static void Tip(string text)
+    {
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(text);
         }
     }
 }

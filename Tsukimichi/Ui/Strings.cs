@@ -22,11 +22,10 @@ public static partial class Strings
 
     // Toolbar
     public const string SearchHint = "Search quests, rewards or ids";
-    public const string SearchTooltip = "Matches quest names, reward names and numeric ids; applied 150 ms after you stop typing";
-    public const string CharacterComboTooltip = "Which character's progress is shown: ● is the logged-in character, the others are stored snapshots";
+    public const string SearchTooltip = "Matches quest names, reward names and numeric ids. Ctrl+F jumps here";
     public const string ClearSearch = "Clear search";
     public const string Filters = "Filters";
-    public const string FiltersTooltip = "Show or hide the filter panel";
+    public const string FiltersTooltip = "Show or hide the filter panel beside the tree";
     public const string NoCharacter = "No character";
     public const string NoSnapshots = "No snapshots yet";
     public const string LiveMarker = "● ";

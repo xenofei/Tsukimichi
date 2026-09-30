@@ -11,6 +11,7 @@ public static class UiRects
 {
     public const string Toolbar = "toolbar";
     public const string Search = "search";
+    public const string QuickViews = "quickViews";
     public const string FiltersButton = "filtersButton";
     public const string Chips = "chips";
     public const string Character = "character";

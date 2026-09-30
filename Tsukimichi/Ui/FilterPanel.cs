@@ -14,9 +14,9 @@ using Tsukimichi.GameData;
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// The filter panel (spec §7) drawn in the left column above the tree, plus the active-filter chips under the search
-/// box. Binds straight to <see cref="UiState.Filters"/>; every change calls <c>changed</c> so the window can mark the
-/// query dirty and persist the filters.
+/// The filter panel (spec §7) drawn in the left column above the tree, plus the toolbar's Quick views control and the
+/// chip row under the toolbar (T14). Binds straight to <see cref="UiState.Filters"/>; every change calls
+/// <c>changed</c> so the window can mark the query dirty and persist the filters.
 /// </summary>
 public sealed class FilterPanel
 {
@@ -63,10 +63,10 @@ public sealed class FilterPanel
     private string stateChip = string.Empty;
     private string stateChipTooltip = string.Empty;
     private QuestStateMask stateChipMask = QuestStateMask.All;
-    // The issuer chip's label, memoized per (NPC id, catalog): naming the NPC is a scan of the whole catalog.
-    private string issuerChip = string.Empty;
-    private uint issuerChipId;
-    private QuestCatalog? issuerChipCatalog;
+    // The scope chip's label, memoized per (scope, catalog): naming a node is a scan of the whole catalog.
+    private string scopeChip = string.Empty;
+    private QuestScope scopeChipScope = QuestScope.None;
+    private QuestCatalog? scopeChipCatalog;
     private string levelChip = string.Empty;
     private byte levelChipMin = byte.MaxValue;
     private byte levelChipMax;
@@ -96,7 +96,7 @@ public sealed class FilterPanel
         var start = ImGui.GetCursorScreenPos();
         var width = ImGui.GetContentRegionAvail().X;
 
-        DrawPresets(f, hasSnapshot, settings);
+        DrawPresets(settings);
         ImGui.Separator();
         DrawRuntimeToggle(Strings.HideCompleted, Strings.HideCompletedTooltip, "##hideCompleted", hasSnapshot, f.HideCompleted, v => f.HideCompleted = v, f.PerCategoryHideCompleted);
         DrawRuntimeToggle(Strings.AvailableOnly, Strings.AvailableOnlyTooltip, "##availableOnly", hasSnapshot, f.AvailableOnly, v => f.AvailableOnly = v, f.PerCategoryAvailableOnly);
@@ -174,19 +174,79 @@ public sealed class FilterPanel
     }
 
     /// <summary>
-    /// One-click presets as toggle chips at the head of the panel; at most one is on, and clicking the active one
-    /// turns it off. My level and Stalled read the snapshot, so they are disabled in browse mode.
+    /// The Quick views control on the toolbar (T14, game UX panel finding 7): a segmented control whose first segment
+    /// is an explicit "All" (no quick view), then Unlocks, My level, Stalled, Story sidequests and Sprout mode. Exactly
+    /// one segment is always on. My level and Stalled read the snapshot, so they are disabled in browse mode (an
+    /// active one stays shown as active). Records <see cref="UiRects.QuickViews"/>.
     /// </summary>
-    private void DrawPresets(FilterSet f, bool hasSnapshot, Configuration settings)
+    public void DrawQuickViews(bool hasSnapshot)
+    {
+        var f = ui.Filters;
+        var selected = Array.IndexOf(QuickViewPresets, f.Preset);
+        for (var i = 0; i < QuickViewPresets.Length; i++)
+        {
+            quickViewEnabled[i] = hasSnapshot || !QuickViewNeedsSnapshot[i];
+            quickViewTooltips[i + 1] = quickViewEnabled[i] ? QuickViewTooltips[i] : QuickViewDisabledTooltips[i];
+        }
+
+        if (Chrome.SegmentedControl("##quickViews", ref selected, Strings.QuickViewAll, QuickViewLabels, quickViewEnabled, quickViewTooltips))
+        {
+            f.Preset = selected < 0 ? Preset.None : QuickViewPresets[selected];
+            changed();
+        }
+
+        ui.RecordItem(UiRects.QuickViews);
+    }
+
+    /// <summary>The width <see cref="DrawQuickViews"/> takes at the current font.</summary>
+    public static float QuickViewsWidth() => Chrome.SegmentedControlWidth(Strings.QuickViewAll, QuickViewLabels);
+
+    /// <summary>Quick views in toolbar order (the segment after "All" is index 0).</summary>
+    private static readonly Preset[] QuickViewPresets = [Preset.FeatureQuests, Preset.LevelBand, Preset.Stalled, Preset.StorySidequests, Preset.Sprout];
+
+    private static readonly string[] QuickViewLabels =
+        [Strings.PresetFeatureQuests, Strings.PresetLevelBand, Strings.PresetStalled, Strings.PresetStorySidequests, Strings.PresetSprout];
+
+    private static readonly string[] QuickViewTooltips =
+        [Strings.PresetFeatureQuestsTooltip, Strings.PresetLevelBandTooltip, Strings.PresetStalledTooltip, Strings.PresetStorySidequestsTooltip, Strings.PresetSproutTooltip];
+
+    // Sprout mode (T19): without a character only A Realm Reborn is in reach, which is still a useful view.
+    private static readonly bool[] QuickViewNeedsSnapshot = [false, true, true, false, false];
+
+    private static readonly string[] QuickViewDisabledTooltips = BuildDisabledTooltips();
+
+    private readonly bool[] quickViewEnabled = new bool[QuickViewPresets.Length];
+
+    /// <summary>Index 0 is the All segment's; the rest follow <see cref="QuickViewPresets"/>, swapped for the disabled text in browse mode.</summary>
+    private readonly string[] quickViewTooltips = BuildTooltipSlots();
+
+    private static string[] BuildDisabledTooltips()
+    {
+        var tips = new string[QuickViewTooltips.Length];
+        for (var i = 0; i < tips.Length; i++)
+        {
+            tips[i] = QuickViewTooltips[i] + "\n" + Strings.NeedsSnapshot;
+        }
+
+        return tips;
+    }
+
+    private static string[] BuildTooltipSlots()
+    {
+        var tips = new string[QuickViewPresets.Length + 1];
+        tips[0] = Strings.QuickViewAllTooltip;
+        Array.Copy(QuickViewTooltips, 0, tips, 1, QuickViewTooltips.Length);
+        return tips;
+    }
+
+    /// <summary>
+    /// The Quick views heading of the panel: the views themselves sit on the toolbar; the panel keeps the Stalled
+    /// threshold they read.
+    /// </summary>
+    private void DrawPresets(Configuration settings)
     {
         ImGui.TextDisabled(Strings.Presets);
-        var first = true;
-        PresetChip(Strings.PresetFeatureQuests, Strings.PresetFeatureQuestsTooltip, Preset.FeatureQuests, f, enabled: true, ref first);
-        PresetChip(Strings.PresetStorySidequests, Strings.PresetStorySidequestsTooltip, Preset.StorySidequests, f, enabled: true, ref first);
-        PresetChip(Strings.PresetLevelBand, Strings.PresetLevelBandTooltip, Preset.LevelBand, f, hasSnapshot, ref first);
-        // Sprout mode (T19): without a character only A Realm Reborn is in reach, which is still a useful view.
-        PresetChip(Strings.PresetSprout, Strings.PresetSproutTooltip, Preset.Sprout, f, enabled: true, ref first);
-        PresetChip(Strings.PresetStalled, Strings.PresetStalledTooltip, Preset.Stalled, f, hasSnapshot, ref first);
+        Tip(Strings.QuickViewsPanelTooltip);
 
         // The Stalled threshold; a change re-runs the query and is saved with the settings.
         var days = settings.StalledDaysClamped;
@@ -200,35 +260,6 @@ public sealed class FilterPanel
         Tip(Strings.StalledDaysTooltip);
         ImGui.SameLine();
         ImGui.TextUnformatted(Strings.StalledDaysLabel);
-    }
-
-    private void PresetChip(string label, string tooltip, Preset preset, FilterSet f, bool enabled, ref bool first)
-    {
-        // Chips share a line while they fit the column and flow onto the next one otherwise.
-        if (!first)
-        {
-            var style = ImGui.GetStyle();
-            var needed = ImGui.CalcTextSize(label).X + style.FramePadding.X * 2f + style.ItemSpacing.X;
-            var limit = ImGui.GetWindowPos().X + ImGui.GetWindowContentRegionMax().X;
-            if (ImGui.GetItemRectMax().X + needed <= limit)
-            {
-                ImGui.SameLine();
-            }
-        }
-
-        first = false;
-        var active = f.Preset == preset;
-        using (ImRaii.Disabled(!enabled))
-        using (ImRaii.PushColor(ImGuiCol.Button, ImGui.GetColorU32(ImGuiCol.ButtonActive), active))
-        {
-            if (ImGui.SmallButton(label))
-            {
-                f.Preset = active ? Preset.None : preset;
-                changed();
-            }
-        }
-
-        Tip(enabled ? tooltip : Strings.NeedsSnapshot);
     }
 
     /// <summary>The sort's pinned-first flag lives beside the filters; MainWindow persists it with the sort.</summary>
@@ -253,106 +284,117 @@ public sealed class FilterPanel
     }
 
     /// <summary>
-    /// Chips for every engaged filter on one line; clicking one clears that filter. Drawn inside the toolbar's
-    /// fixed-height strip, so it never wraps and draws nothing when none is engaged. The NPC scope from the context
-    /// menu (<see cref="QuestScope.Issuer"/>) has no tree node, so it is the first chip: "Quests from Gerolt", named
-    /// from <paramref name="current"/>; clearing it shows the whole journal again.
+    /// Whether the chip row under the toolbar has anything to show: a tree scope other than All quests, or any filter
+    /// the Filters badge counts (<see cref="FilterBadge"/>). The row is not drawn at all otherwise.
     /// </summary>
-    /// <param name="current">The catalog, for the NPC's name; null while it is loading.</param>
+    public bool HasChips() => ui.Scope != QuestScope.None || FilterBadge.Count(ui.Filters) > 0;
+
+    /// <summary>
+    /// The chip row (T14, ui-revamp §2.1): the scope first ("Scope: Sidequests › Gridania", or the NPC from the context
+    /// menu), clearing to All quests, then one <see cref="Chrome.Chip"/> per filter the Filters badge counts, each
+    /// clearing its filter. The search and the quick view are not chips: the search pill and the Quick views control
+    /// already show them, each with its own way out. Chips flow onto another line when the row is full. Records
+    /// <see cref="UiRects.Chips"/>.
+    /// </summary>
+    /// <param name="current">The catalog, for the scope's names; null while it is loading.</param>
     public void DrawChips(CatalogBundle? current)
     {
         var f = ui.Filters;
+        var start = ImGui.GetCursorScreenPos();
+        var width = ImGui.GetContentRegionAvail().X;
         var any = false;
+        var filtersChanged = false;
 
-        // Small buttons are text-high; centre them on the toolbar's frame-high row.
-        ImGui.SetCursorPosY(ImGui.GetCursorPosY() + MathF.Max(0f, (ImGui.GetFrameHeight() - ImGui.GetTextLineHeight()) * 0.5f));
-
-        if (ui.Scope.Kind == ScopeKind.VirtualIssuer)
+        if (ui.Scope != QuestScope.None
+            && Chip("##chipScope", ScopeChipText(ui.Scope, current?.Catalog), ref any, ui.Scope.Kind == ScopeKind.VirtualIssuer ? Strings.ChipIssuerTooltip : Strings.ScopeChipTooltip))
         {
             // The scope is not a filter and is not persisted; the query re-runs on the dirty mark alone.
-            Chip(IssuerChipText(ui.Scope.Id, current?.Catalog), ref any, () =>
-            {
-                ui.Scope = QuestScope.None;
-                ui.MarkQueryDirty();
-            }, notify: false, explanation: Strings.ChipIssuerTooltip);
+            ui.Scope = QuestScope.None;
+            ui.MarkQueryDirty();
         }
 
-        if (ui.SearchText.Length > 0)
+        if (f.HideCompletedEngaged() && Chip("##chipHideCompleted", Strings.HideCompleted, ref any))
         {
-            // The search is not persisted and QueryRunner applies an emptied search on its own, so no changed() here.
-            Chip(Strings.ChipSearch, ref any, () => ui.SearchText = string.Empty, notify: false);
+            f.HideCompleted = false;
+            f.PerCategoryHideCompleted.Clear();
+            filtersChanged = true;
         }
 
-        if (f.Preset != Preset.None)
+        if (f.AvailableOnlyEngaged() && Chip("##chipAvailable", Strings.AvailableOnly, ref any))
         {
-            Chip(FilterNames.PresetName(f.Preset), ref any, () => f.Preset = Preset.None);
+            f.AvailableOnly = false;
+            f.PerCategoryAvailableOnly.Clear();
+            filtersChanged = true;
         }
 
-        if (f.HideCompletedEngaged())
+        if (f.StateMask != QuestStateMask.All && Chip("##chipStates", StateChipText(f), ref any, stateChipTooltip))
         {
-            Chip(Strings.HideCompleted, ref any, () =>
-            {
-                f.HideCompleted = false;
-                f.PerCategoryHideCompleted.Clear();
-            });
+            f.StateMask = QuestStateMask.All;
+            filtersChanged = true;
         }
 
-        if (f.AvailableOnlyEngaged())
+        if (f.Expansions.Count > 0 && Chip("##chipExpansion", Strings.ChipExpansion, ref any))
         {
-            Chip(Strings.AvailableOnly, ref any, () =>
-            {
-                f.AvailableOnly = false;
-                f.PerCategoryAvailableOnly.Clear();
-            });
+            f.Expansions.Clear();
+            filtersChanged = true;
         }
 
-        if (f.StateMask != QuestStateMask.All)
+        if (f.LevelRangeEngaged() && Chip("##chipLevel", LevelChipText(f), ref any))
         {
-            Chip(StateChipText(f), ref any, () => f.StateMask = QuestStateMask.All, explanation: stateChipTooltip);
+            f.LevelMin = FilterSet.NoLevelMin;
+            f.LevelMax = FilterSet.NoLevelMax;
+            filtersChanged = true;
         }
 
-        if (f.Expansions.Count > 0)
+        if (f.ClassJobCategoryId is not null && Chip("##chipJob", JobPreview(f), ref any))
         {
-            Chip(Strings.ChipExpansion, ref any, () => f.Expansions.Clear());
+            f.ClassJobCategoryId = null;
+            filtersChanged = true;
         }
 
-        if (f.LevelRangeEngaged())
+        if (f.RewardKindsEngaged() && Chip("##chipRewards", Strings.RewardKinds, ref any))
         {
-            Chip(LevelChipText(f), ref any, () =>
-            {
-                f.LevelMin = FilterSet.NoLevelMin;
-                f.LevelMax = FilterSet.NoLevelMax;
-            });
+            f.RewardKinds.Clear();
+            filtersChanged = true;
         }
 
-        if (f.ClassJobCategoryId is not null)
+        if (f.RepeatableOnly && Chip("##chipRepeatable", Strings.ChipRepeatable, ref any))
         {
-            Chip(JobPreview(f), ref any, () => f.ClassJobCategoryId = null);
+            f.RepeatableOnly = false;
+            filtersChanged = true;
         }
 
-        if (f.RewardKindsEngaged())
+        if (f.SeasonalActiveOnly && Chip("##chipSeasonal", Strings.ChipSeasonal, ref any))
         {
-            Chip(Strings.RewardKinds, ref any, () => f.RewardKinds.Clear());
+            f.SeasonalActiveOnly = false;
+            filtersChanged = true;
         }
 
-        if (f.RepeatableOnly)
+        if (f.PinnedOnly && Chip("##chipPinned", Strings.ChipPinned, ref any))
         {
-            Chip(Strings.ChipRepeatable, ref any, () => f.RepeatableOnly = false);
+            f.PinnedOnly = false;
+            filtersChanged = true;
         }
 
-        if (f.SeasonalActiveOnly)
+        if (f.AbandonedOnly && Chip("##chipAbandoned", Strings.AbandonedChip, ref any))
         {
-            Chip(Strings.ChipSeasonal, ref any, () => f.SeasonalActiveOnly = false);
+            f.AbandonedOnly = false;
+            filtersChanged = true;
         }
 
-        if (f.PinnedOnly)
+        if (filtersChanged)
         {
-            Chip(Strings.ChipPinned, ref any, () => f.PinnedOnly = false);
+            changed();
         }
 
-        if (f.AbandonedOnly)
+        if (any)
         {
-            Chip(Strings.AbandonedChip, ref any, () => f.AbandonedOnly = false);
+            var end = ImGui.GetItemRectMax();
+            ui.RecordRect(UiRects.Chips, start, new Vector2(start.X + width, end.Y));
+        }
+        else
+        {
+            ui.Rects.Remove(UiRects.Chips);
         }
     }
 
@@ -365,28 +407,24 @@ public sealed class FilterPanel
     }
 
     /// <summary>
-    /// One active-filter chip. <paramref name="explanation"/>, when given, says what the chip's text means (the state
-    /// chip names only a few excluded states and counts the rest) above the "click to clear" line.
+    /// One chip of the chip row, flowing onto the next line when the row is full; true on the click that clears it.
+    /// <paramref name="explanation"/>, when given, says what the chip's text means (the state chip names only a few
+    /// excluded states and counts the rest) above the "click to clear" line.
     /// </summary>
-    private void Chip(string label, ref bool any, Action clear, bool notify = true, string? explanation = null)
+    private static bool Chip(string id, string label, ref bool any, string? explanation = null)
     {
         if (any)
         {
-            ImGui.SameLine();
-        }
-
-        any = true;
-        using var id = ImRaii.PushId(label);
-        // The whole chip is its own close target, so it stands at least the minimum target tall.
-        if (ImGui.Button(label, new Vector2(0f, UiMetrics.MinTarget)))
-        {
-            clear();
-            if (notify)
+            var needed = Chrome.ChipWidth(label) + ImGui.GetStyle().ItemSpacing.X;
+            var limit = ImGui.GetWindowPos().X + ImGui.GetWindowContentRegionMax().X;
+            if (ImGui.GetItemRectMax().X + needed <= limit)
             {
-                changed();
+                ImGui.SameLine();
             }
         }
 
+        any = true;
+        var clicked = Chrome.Chip(id, label);
         if (ImGui.IsItemHovered())
         {
             if (explanation is { Length: > 0 })
@@ -398,6 +436,8 @@ public sealed class FilterPanel
                 UiMetrics.Tooltip(Strings.ChipTooltip);
             }
         }
+
+        return clicked;
     }
 
     private void DrawRuntimeToggle(string label, string tooltip, string popupId, bool hasSnapshot, bool value, Action<bool> set, Dictionary<uint, bool> overrides)
@@ -657,18 +697,62 @@ public sealed class FilterPanel
         return stateChip;
     }
 
-    private string IssuerChipText(uint npcId, QuestCatalog? catalog)
+    /// <summary>
+    /// "Scope: Sidequests › Gridania": the tree node narrowing the table, named from the catalog (a section alone, a
+    /// category under its section, a genre under its category, the virtual nodes by their tree names, an NPC's quests
+    /// as "Quests from Gerolt"). Memoized per (scope, catalog): naming a node scans the catalog once.
+    /// </summary>
+    private string ScopeChipText(QuestScope scope, QuestCatalog? catalog)
     {
-        if (issuerChip.Length == 0 || npcId != issuerChipId || !ReferenceEquals(catalog, issuerChipCatalog))
+        if (scopeChip.Length > 0 && scope == scopeChipScope && ReferenceEquals(catalog, scopeChipCatalog))
         {
-            var name = catalog is null ? null : QuestDiscovery.IssuerName(catalog, npcId);
-            issuerChip = name is null ? Strings.ChipIssuerUnknown : string.Format(CultureInfo.CurrentCulture, Strings.ChipIssuerFormat, name);
-            issuerChipId = npcId;
-            issuerChipCatalog = catalog;
+            return scopeChip;
         }
 
-        return issuerChip;
+        scopeChipScope = scope;
+        scopeChipCatalog = catalog;
+        scopeChip = string.Format(CultureInfo.CurrentCulture, Strings.ScopeChipFormat, ScopeName(scope, catalog));
+        return scopeChip;
     }
+
+    private static string ScopeName(QuestScope scope, QuestCatalog? catalog)
+    {
+        switch (scope.Kind)
+        {
+            case ScopeKind.VirtualFeature:
+                return Strings.FeatureUnlocks;
+            case ScopeKind.VirtualUnlisted:
+                return Strings.RemovedFromGame;
+            case ScopeKind.VirtualIssuer:
+                var npc = catalog is null ? null : QuestDiscovery.IssuerName(catalog, scope.Id);
+                return npc is null ? Strings.ChipIssuerUnknown : string.Format(CultureInfo.CurrentCulture, Strings.ChipIssuerFormat, npc);
+        }
+
+        if (catalog is not null)
+        {
+            foreach (var quest in catalog.All)
+            {
+                var j = quest.Journal;
+                switch (scope.Kind)
+                {
+                    case ScopeKind.Section when j.SectionId == scope.Id:
+                        return j.SectionName;
+                    case ScopeKind.Category when j.CategoryId == scope.Id:
+                        return ScopePath(j.SectionName, j.CategoryName);
+                    case ScopeKind.Genre when j.GenreId == scope.Id:
+                        return ScopePath(j.CategoryName, j.GenreName);
+                }
+            }
+        }
+
+        return Strings.ScopeUnnamed;
+    }
+
+    /// <summary>"Parent › Child", or the child alone when the two carry the same name (a folded tree node).</summary>
+    private static string ScopePath(string parent, string child) =>
+        parent.Length == 0 || string.Equals(parent, child, StringComparison.Ordinal)
+            ? child
+            : string.Format(CultureInfo.CurrentCulture, Strings.FoldedScopeFormat, parent, child);
 
     private string LevelChipText(FilterSet f)
     {

@@ -402,7 +402,7 @@ static partial class Strings
         /// <summary>One sentence under the topic title.</summary>
         public static string TopicLede(HelpTopic topic) => topic switch
         {
-            HelpTopic.QuickStart => "Six steps from an empty window to a plan for the evening.",
+            HelpTopic.QuickStart => "From an empty window to a plan for the evening.",
             HelpTopic.MoonPhases => "A quest's state is a moon phase; eight glyphs carry the meaning without text.",
             HelpTopic.Filters => "Narrow the table, see what is narrowing it, and clear it with one click.",
             HelpTopic.ReadingAQuest => "The detail pane answers what blocks a quest, what leads to it and what it opens.",
@@ -419,9 +419,13 @@ static partial class Strings
 
         // ---- Quick start: the "Try it" action of each step is attached by the window ----
         public const string StepOpenTitle = "Open the window";
-        public const string StepOpenBody = "Type /tsukimichi or /tsuki, or pick Tsukimichi in the plugin list. The navigation sits on the left, the quest table in the middle and the detail pane on the right.";
+        public const string StepOpenBody = "Type /tsukimichi or /tsuki, or pick Tsukimichi in the plugin list. The tabs run down the left edge beside the journal tree, the quest table sits in the middle and the detail pane on the right.";
+        public const string StepFindTitle = "Find what you can do now";
+        public const string StepFindBody = "Search by quest, reward or id (Ctrl+F), or pick a quick view on the toolbar: Unlocks, My level, Stalled, Story sidequests or Sprout mode. All turns the view off.";
         public const string StepFiltersTitle = "Narrow with filters";
-        public const string StepFiltersBody = "Filters opens a panel beside the tree. Hide completed and Available now are the two you will use most; every active filter shows as a chip under the search box.";
+        public const string StepFiltersBody = "Filters opens a panel beside the tree; the number on the button counts the filters narrowing the table. Each one shows as a chip under the toolbar, the tree scope first; click a chip to clear it.";
+        public const string StepReadTitle = "Read why a quest is locked";
+        public const string StepReadBody = "Select a row: the detail pane lists every requirement and marks the one that blocks you, and the Status column says it in one clause. The moon's shape is its state.";
         public const string StepMoonlitTitle = "Find Moonlit treasures";
         public const string StepMoonlitBody = "The Moonlit tab lists quests whose reward exists nowhere else, grouped by kind, with whether you already have each one.";
         public const string StepCharactersTitle = "Browse other characters";
@@ -429,7 +433,7 @@ static partial class Strings
         public const string StepFlightTitle = "Unlock flying";
         public const string StepFlightBody = "The Flight tab lists every zone you can fly in. Pick one to see its quest currents, the quest that blocks each and where to fly next.";
         public const string StepTourTitle = "Take the tour";
-        public const string StepTourBody = "The interactive tour points at each part of the window in turn and explains it in a sentence or two.";
+        public const string StepTourBody = "The tour has three short chapters, Find, Read and Beyond, each pointing at the real window. Jump between chapters on the card; Enter moves on and Esc closes.";
         public const string QuickStartTip = "Select any row to read its requirements, path and giver in the detail pane. Right-click a row for pin, map flag and journal.";
         public const string QuickStartSettingsTip = "Text too small? Settings has a Display section with a window scale and an icon scale.";
 
@@ -472,8 +476,8 @@ static partial class Strings
             "Keeps only Ready, Ready on another job and In journal: the quests you can act on now. Takes the same per-category overrides.",
             "All eight phases as checkboxes for fine control. Untick a phase to hide its quests.",
             "Expansion, level range, job category, reward kind (three-state per kind), Repeatable, Seasonal active, Pinned only and Abandoned only narrow the table further; Include removed widens it to quests the game deleted.",
-            "One-click views at the top of the panel: Unlocks, Story sidequests, My level, Sprout mode and Stalled. Story sidequests lists the sidequests with journal artwork, the ones that tell a small story, zone by zone, with each side story in the order you play it; a book after the name marks them in any view, and its tooltip says which story and how far in (\"3 of 9\"). The detail pane shows the story's progress as \"Story: <first quest> · 3 of 9 done · next: …\". The blue aether current quests that open a zone's story lines are part of it; other blue unlock quests (dungeons, systems, jobs) are left out.",
-            "Every active filter shows as a chip under the search box. Click a chip to clear it; Reset clears them all and the search.",
+            "One-click views on the toolbar, with All first to turn them off: Unlocks, My level, Stalled, Story sidequests and Sprout mode; the filter panel keeps the number of days Stalled waits. Story sidequests lists the sidequests with journal artwork, the ones that tell a small story, zone by zone, with each side story in the order you play it; a book after the name marks them in any view, and its tooltip says which story and how far in (\"3 of 9\"). The detail pane shows the story's progress as \"Story: <first quest> · 3 of 9 done · next: …\". The blue aether current quests that open a zone's story lines are part of it; other blue unlock quests (dungeons, systems, jobs) are left out.",
+            "While something narrows the table, a row of chips sits under the toolbar: the tree scope first, then one chip per filter, which the Filters button's number counts. Click a chip to clear it; Reset clears them all and the search.",
             "When the table empties, it names the filters responsible as chips: click one to clear only that filter, or Reset filters to clear them all.",
         ];
 
@@ -672,51 +676,5 @@ static partial class Strings
             "Settings shows how long each poll takes; 1 s is the default and is safe.",
             "Delete all data in Settings removes snapshots, pins and overrides but keeps your settings.",
         ];
-    }
-
-    /// <summary>Interactive tutorial text: one title and one body (under fifty words) per step, plus the card buttons.</summary>
-    public static class Tutorial
-    {
-        public const string CardId = "##TsukimichiTutorialCard";
-        public const string TakeTour = "Take the tour";
-        public const string NotNow = "Not now";
-        public const string Back = "Back";
-        public const string Next = "Next";
-        public const string Skip = "Skip";
-        public const string Done = "Done";
-        public const string OpenHelp = "Open help";
-        /// <summary>{0} = step number, {1} = step count.</summary>
-        public const string ProgressFormat = "{0} of {1}";
-
-        public const string WelcomeTitle = "Welcome to Tsukimichi";
-        public const string WelcomeBody = "Tsukimichi is the road you walk by moonlight: every quest is a step, and the moon fills as you complete it. This tour points at each part of the window. Nothing in it changes your game.";
-        public const string SearchTitle = "Search";
-        public const string SearchBody = "Type a quest name, a reward name or a numeric id. The table narrows 150 ms after you stop typing; the × clears it.";
-        public const string FiltersTitle = "Filters";
-        public const string FiltersBody = "Filters opens this panel. Hide completed and Available now are the two you will use most; both take per-category overrides. States, expansions, level, job and reward kind sit below.";
-        public const string ChipsTitle = "Chips";
-        public const string ChipsBody = "Every active filter shows here as a chip. Click a chip to clear that filter; Reset clears them all together with the search.";
-        public const string TabsTitle = "Four tabs";
-        public const string TabsBody = "Journal is the catalog. Moonlit collects quests with unique rewards. Characters holds every snapshot on the account. Flight shows the aether current quests of each flying zone.";
-        public const string TreeTitle = "Journal tree";
-        public const string TreeBody = "Section, category and genre scope the table. Each node shows a halo that fills with completion, done / total and, when some can be accepted now, a gold count; Unlock quests and Removed from the game are virtual nodes.";
-        public const string TableTitle = "Quest table";
-        public const string TableBody = "One row per quest. The moon is its state (hover it for the name; Help lists all eight) and Status says what blocks it. Click a header to sort; right-click a row for pin, map flag and journal. Main scenario quests far ahead of you read \"Main scenario quest (Lv 83)\" until you reach them; Settings › Spoilers changes that.";
-        public const string RequirementsTitle = "Requirements";
-        public const string RequirementsBody = "Select a row: the detail pane opens on its requirements, each with ✓ or ✗. A gold bar marks the one blocking you; hover its ✗ for the exact gap.";
-        public const string PathTitle = "Path and unlocks next";
-        public const string PathBody = "The Path card draws the prerequisite chain as moons on a thread, gold where walked. Finished stretches fold into a bead; under this quest, what it unlocks next.";
-        public const string GiverTitle = "Giver and actions";
-        public const string GiverBody = "The Giver card names the NPC and zone. The bar at the bottom flags the giver, pins the quest, shows the path and more; the last line says where the state came from.";
-        public const string MoonlitTitle = "Moonlit treasures";
-        public const string MoonlitBody = "Reward kinds on the left with obtained/total; the table lists each treasure, its quest, whether you have it and a confidence badge. Hover a badge for its source. Right-click a row to hide it as not unique: press and hold to confirm, or hold Shift and click.";
-        public const string CharactersTitle = "Characters";
-        public const string CharactersBody = "Every stored snapshot on the left. The dashboard shows completion by section, Moonlit progress, pins, recent activity, job levels and standings for the viewed character.";
-        public const string FlightTitle = "Flight";
-        public const string FlightBody = "Every flying zone, under its expansion, with a halo of attuned currents. Pick one: the table lists its five quest currents, whether each is attuned, the quest that blocks it and its status, plus Flag and Teleport for where to fly next.";
-        public const string HelpTitle = "Help, tour and settings";
-        public const string HelpBody = "The book reopens the guide, the graduation cap replays this tour, and the cog opens Settings: poll interval, display scale and data controls.";
-        public const string FinishTitle = "That is the road";
-        public const string FinishBody = "Reopen this tour any time from the toolbar or Settings. The help window has more on every topic, with buttons that take you straight to each part.";
     }
 }

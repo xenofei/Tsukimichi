@@ -178,6 +178,13 @@ public sealed class Configuration : IPluginConfiguration
     public bool TutorialCompleted { get; set; }
 
     /// <summary>
+    /// How many times the player answered the first-run offer with "Later" (0.8.0): the offer comes back next session
+    /// until this reaches <c>Ui.TutorialOverlay.LaterLimit</c>. "Don't offer again" sets <see cref="TutorialCompleted"/>
+    /// instead; turning the offer back on in Settings resets both.
+    /// </summary>
+    public int TutorialLaterCount { get; set; }
+
+    /// <summary>
     /// Text and layout scale of the main window on top of Dalamud's global scale; 0.9–1.6, default 1.15. Clamped by
     /// <see cref="ScaleMetrics.ClampUiScale"/> when read.
     /// </summary>

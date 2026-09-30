@@ -5,7 +5,8 @@ using System.Numerics;
 using System.Threading.Tasks;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
-using Dalamud.Interface.Components;
+using Dalamud.Interface.Textures;
+using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin;
@@ -27,10 +28,7 @@ namespace Tsukimichi.Ui;
 /// </summary>
 public sealed class MainWindow : Window, IDisposable
 {
-    public const float DefaultWidth = 1100f;
-    public const float DefaultHeight = 700f;
     public const int MaxChatMatches = 5;
-    public const int ToolbarButtonCount = 3;
 
     private static readonly TimeSpan SettingsSaveDebounce = TimeSpan.FromSeconds(1);
     private static readonly string[] LoadingDots = ["", ".", "..", "..."];
@@ -44,7 +42,9 @@ public sealed class MainWindow : Window, IDisposable
     private readonly Func<Task> retryCatalog;
     private readonly string version;
 
+    private readonly ITextureProvider textures;
     private readonly FilterPanel filterPanel;
+    private readonly TabStrip tabStrip;
     private readonly TreePane treePane;
     private readonly TablePane tablePane;
     private readonly DetailPane detailPane;
@@ -67,7 +67,7 @@ public sealed class MainWindow : Window, IDisposable
     private DateTime? settingsDirtyAtUtc;
     private SortSpec persistedSort = SortSpec.Default;
     private string searchBuffer = string.Empty;
-    private NavTab drawnTab = NavTab.Journal;
+    private bool sizeChosen;
 
     // While the tour runs the window must not climb over the tutorial card when clicked, and Esc belongs to the
     // card; both settings are restored from these copies when the tour ends.
@@ -77,7 +77,10 @@ public sealed class MainWindow : Window, IDisposable
 
     // Toolbar strings, rebuilt when the session version changes.
     private int toolbarVersion = -1;
-    private string characterPreview = Strings.NoCharacter;
+    private string characterName = Strings.NoCharacter;
+    private string characterWorld = string.Empty;
+    private uint characterJobIcon;
+    private string characterTooltip = Strings.CharacterChipTooltip;
     private string staleBanner = string.Empty;
     private string syncTooltip = Strings.NoCharacter;
     private readonly List<(ulong Id, string Label)> characterLabels = [];
@@ -127,14 +130,16 @@ public sealed class MainWindow : Window, IDisposable
         this.pluginInterface = pluginInterface ?? throw new ArgumentNullException(nameof(pluginInterface));
         this.log = log ?? throw new ArgumentNullException(nameof(log));
         this.retryCatalog = retryCatalog ?? throw new ArgumentNullException(nameof(retryCatalog));
-        ArgumentNullException.ThrowIfNull(textures);
+        this.textures = textures ?? throw new ArgumentNullException(nameof(textures));
 
-        Size = new Vector2(DefaultWidth, DefaultHeight);
+        // The first-use size is chosen on the first PreDraw, when the viewport and the UI scale are known.
+        Size = ScaleMetrics.DefaultWindowLogical;
         SizeCondition = ImGuiCond.FirstUseEver;
         SizeConstraints = new WindowSizeConstraints { MinimumSize = ScaleMetrics.MinWindowSize(ScaleMetrics.DefaultUiScale) };
 
         filterPanel = new FilterPanel(ui, OnFiltersChanged, OnDisplayChanged);
         ui.FiltersChanged += OnFiltersChanged;
+        tabStrip = new TabStrip(ui);
         treePane = new TreePane(ui);
         tablePane = new TablePane(ui, runner, links, textures, pluginInterface, log, filterPanel.ResetAll);
         detailPane = new DetailPane(ui, runner, links, textures, log);
@@ -207,6 +212,15 @@ public sealed class MainWindow : Window, IDisposable
     /// </summary>
     public override void PreDraw()
     {
+        // First use: 1100 × 700 at the default UI scale, scaled with it and fitted to the viewport (accessibility B6).
+        // Dalamud multiplies Size by its global scale; ImGui applies it only when no saved size exists.
+        if (!sizeChosen)
+        {
+            sizeChosen = true;
+            var uiScale = plugin.Settings?.UiScale ?? ScaleMetrics.DefaultUiScale;
+            Size = ScaleMetrics.DefaultWindowSize(uiScale, ImGuiHelpers.GlobalScale, ImGuiHelpers.MainViewport.WorkSize);
+        }
+
         nightChrome = Theme.PushNightWindow();
     }
 
@@ -229,8 +243,12 @@ public sealed class MainWindow : Window, IDisposable
         EnsureInitialized();
         UiMetrics.Update(plugin.Settings);
 
-        // The fixed side columns grow with the UI scale, so the minimum size must too or the centre column collapses.
-        SizeConstraints = new WindowSizeConstraints { MinimumSize = ScaleMetrics.MinWindowSize(UiMetrics.FontScale) };
+        // The rail and the fixed side columns grow with the UI scale, so the minimum size must too or the centre column
+        // collapses; it never exceeds the viewport, so the window can always be placed whole.
+        SizeConstraints = new WindowSizeConstraints
+        {
+            MinimumSize = ScaleMetrics.MinWindowSize(UiMetrics.FontScale, ImGuiHelpers.GlobalScale, ImGuiHelpers.MainViewport.WorkSize),
+        };
 
         // Dalamud closes the window on Esc while it or one of its popups is focused; while a popup (verdict prompt,
         // context menu) is open Esc belongs to the popup. The tour manages the flag itself while it runs.
@@ -276,6 +294,7 @@ public sealed class MainWindow : Window, IDisposable
         runner.Update(now);
         RefreshToolbarStrings(session);
         DrawToolbar(session);
+        DrawChipRow(session);
         DrawBanners(session);
         DrawBody(session, bundle);
         DrawStatusBar(session, bundle);
@@ -466,14 +485,18 @@ public sealed class MainWindow : Window, IDisposable
         var snapshot = session.ViewedSnapshot;
         if (snapshot is null)
         {
-            characterPreview = Strings.NoCharacter;
+            characterName = Strings.NoCharacter;
+            characterWorld = string.Empty;
+            characterJobIcon = 0;
             staleBanner = string.Empty;
             syncTooltip = Strings.NoCharacter;
+            characterTooltip = Strings.CharacterChipTooltip;
             return;
         }
 
-        var name = string.Format(CultureInfo.CurrentCulture, Strings.CharacterNameFormat, snapshot.Name, links.WorldName(snapshot.World));
-        characterPreview = session.IsLive ? Strings.LiveMarker + name : name;
+        characterName = snapshot.Name;
+        characterWorld = links.WorldName(snapshot.World);
+        characterJobIcon = snapshot.CurrentJob == 0 ? 0u : MoonlitIconResolver.ClassJobIconBase + snapshot.CurrentJob;
         if (session.IsLive)
         {
             staleBanner = string.Empty;
@@ -485,8 +508,39 @@ public sealed class MainWindow : Window, IDisposable
             staleBanner = string.Format(CultureInfo.CurrentCulture, Strings.StaleBannerFormat, snapshot.Name, links.WorldName(snapshot.World), time);
             syncTooltip = string.Format(CultureInfo.CurrentCulture, Strings.SyncSnapshotFormat, time);
         }
+
+        characterTooltip = syncTooltip + "\n" + Strings.CharacterChipTooltip;
     }
 
+    // ------------------------------------------------------------------ toolbar (T14, ui-revamp §2.1)
+
+    /// <summary>Logical height of one toolbar row.</summary>
+    private const float ToolbarRowLogical = 36f;
+
+    /// <summary>Below this much available width (pixels) the toolbar always takes two rows (accessibility B6).</summary>
+    private const float ToolbarReflowPx = 1000f;
+
+    private const float ToolbarGapLogical = 8f;
+    private const float SearchLogical = 280f;
+    private const float SearchMinLogical = 160f;
+    private const float CharacterMinLogical = 120f;
+    private const string CharacterPopupId = "##characterMenu";
+
+    private static readonly string SearchIcon = FontAwesomeIcon.Search.ToIconString();
+    private static readonly string FiltersIcon = FontAwesomeIcon.SlidersH.ToIconString();
+    private static readonly string ChevronIcon = FontAwesomeIcon.ChevronDown.ToIconString();
+    private static readonly string HelpIcon = FontAwesomeIcon.QuestionCircle.ToIconString();
+    private static readonly string TutorialIcon = FontAwesomeIcon.GraduationCap.ToIconString();
+    private static readonly string SettingsIcon = FontAwesomeIcon.Cog.ToIconString();
+
+    /// <summary>
+    /// The toolbar (T14): a NightRaised strip, 36 px a row, flush with the title bar and edge to edge, with a hairline
+    /// under it. Left to right: the search pill, the Quick views segmented control, the Filters button with its badge,
+    /// the character chip, and the round Help, Tutorial and Settings buttons right-aligned. Below 1000 px of available
+    /// width, or whenever one row cannot hold everything, it reflows to two rows (search and quick views / filters,
+    /// character and buttons) instead of hiding anything; a row that still cannot fit shrinks the search pill and the
+    /// character chip to their floors, and the quick views take a row of their own as the last resort.
+    /// </summary>
     private void DrawToolbar(SessionState session)
     {
         if (!string.Equals(searchBuffer, ui.SearchText, StringComparison.Ordinal))
@@ -494,145 +548,399 @@ public sealed class MainWindow : Window, IDisposable
             searchBuffer = ui.SearchText;
         }
 
-        var toolbarMin = ImGui.GetCursorScreenPos();
-        ImGui.SetNextItemWidth(UiMetrics.SearchWidth);
-        if (ImGui.InputTextWithHint("##search", Strings.SearchHint, ref searchBuffer, 200))
+        var style = ImGui.GetStyle();
+        var origin = ImGui.GetCursorScreenPos();
+        var avail = MathF.Max(1f, ImGui.GetContentRegionAvail().X);
+        var rowHeight = MathF.Max(UiMetrics.Px(ToolbarRowLogical), UiMetrics.MinTarget + UiMetrics.Px(6f));
+        var control = UiMetrics.MinTarget;
+        var gap = UiMetrics.Px(ToolbarGapLogical);
+        var clusterGap = UiMetrics.Px(4f);
+
+        var searchWidth = UiMetrics.Px(SearchLogical);
+        var quickWidth = FilterPanel.QuickViewsWidth();
+        var filtersWidth = FiltersButtonWidth();
+        var characterWidth = CharacterChipWidth();
+        var clusterWidth = 3f * control + 2f * clusterGap;
+        var oneRow = searchWidth + quickWidth + filtersWidth + characterWidth + clusterWidth + 4f * gap;
+
+        // Row layout: row 0 holds the search (and the quick views when they fit beside it); the last row holds the
+        // filters, the character chip and the buttons.
+        var twoRows = avail < ToolbarReflowPx || oneRow > avail;
+        var quickOwnRow = false;
+        if (twoRows)
         {
-            ui.SearchText = searchBuffer;
+            var searchMin = UiMetrics.Px(SearchMinLogical);
+            searchWidth = MathF.Min(searchWidth, avail - gap - quickWidth);
+            if (searchWidth < searchMin)
+            {
+                quickOwnRow = true;
+                searchWidth = MathF.Min(UiMetrics.Px(SearchLogical), avail);
+            }
+
+            characterWidth = MathF.Max(MathF.Min(characterWidth, avail - filtersWidth - clusterWidth - 2f * gap), UiMetrics.Px(CharacterMinLogical));
         }
 
-        ui.RecordItem(UiRects.Search);
+        var rows = twoRows ? (quickOwnRow ? 3 : 2) : 1;
+
+        // The strip starts at the top of the content (the window padding above the cursor belongs to it).
+        var top = origin.Y - style.WindowPadding.Y;
+        var stripHeight = rows * rowHeight;
+        PaintToolbarStrip(top, stripHeight);
+
+        float RowY(int row) => top + row * rowHeight + (rowHeight - control) * 0.5f;
+
+        // Row 0: search, then the quick views beside it (or on row 1).
+        var x = origin.X;
+        DrawSearchPill(new Vector2(x, RowY(0)), searchWidth, control);
+        x += searchWidth + gap;
+        if (quickOwnRow)
+        {
+            x = origin.X;
+        }
+
+        ImGui.SetCursorScreenPos(new Vector2(x, RowY(quickOwnRow ? 1 : 0)));
+        filterPanel.DrawQuickViews(session.ViewedSnapshot is not null);
+        x += quickWidth + gap;
+
+        // Last row (or the same row): filters, character, then the buttons right-aligned.
+        var lastRow = rows - 1;
+        if (twoRows)
+        {
+            x = origin.X;
+        }
+
+        DrawFiltersButton(new Vector2(x, RowY(lastRow)), filtersWidth, control);
+        x += filtersWidth + gap;
+        DrawCharacterChip(session, new Vector2(x, RowY(lastRow)), characterWidth, control);
+        x += characterWidth + gap;
+
+        var clusterX = MathF.Max(x, origin.X + avail - clusterWidth);
+        var y = RowY(lastRow);
+        ImGui.SetCursorScreenPos(new Vector2(clusterX, y));
+        ToolbarButton("##help", HelpIcon, Strings.HelpButtonTooltip, openHelp, UiRects.HelpButton);
+        ImGui.SetCursorScreenPos(new Vector2(clusterX + control + clusterGap, y));
+        ToolbarButton("##tutorial", TutorialIcon, Strings.TutorialButtonTooltip, startTutorial, UiRects.TutorialButton);
+        ImGui.SetCursorScreenPos(new Vector2(clusterX + 2f * (control + clusterGap), y));
+        ToolbarButton("##settings", SettingsIcon, Strings.SettingsButtonTooltip, openSettings, UiRects.SettingsButton);
+
+        // The whole strip, then one item spanning it so the layout continues underneath.
+        ui.RecordRect(UiRects.Toolbar, new Vector2(origin.X, top), new Vector2(origin.X + avail, top + stripHeight));
+        ImGui.SetCursorScreenPos(new Vector2(origin.X, top));
+        ImGui.Dummy(new Vector2(avail, stripHeight));
+    }
+
+    /// <summary>The raised strip behind the toolbar rows, edge to edge, with a hairline under it.</summary>
+    private static void PaintToolbarStrip(float top, float height)
+    {
+        var windowPos = ImGui.GetWindowPos();
+        var windowMax = windowPos + ImGui.GetWindowSize();
+        var dl = ImGui.GetWindowDrawList();
+        var s = Theme.Surface;
+        var min = new Vector2(windowPos.X, top);
+        var max = new Vector2(windowMax.X, top + height);
+
+        // The window clips its padding; the strip belongs to the whole width.
+        dl.PushClipRect(windowPos, windowMax, false);
+        dl.AddRectFilled(min, max, Theme.U32(s.Raised));
+        var line = UiMetrics.Hairline;
+        dl.AddLine(new Vector2(min.X, max.Y - line * 0.5f), new Vector2(max.X, max.Y - line * 0.5f), Theme.U32(s.Line), line);
+        dl.PopClipRect();
+    }
+
+    /// <summary>
+    /// The search pill: a sunken rounded field with a magnifier on the left and, while it holds text, a × clear target
+    /// on the right (at least the minimum target). Ctrl+F while the window has focus puts the caret in it. The input
+    /// itself is transparent inside the pill, so ImGui's own text editing and keyboard focus work as before.
+    /// </summary>
+    private void DrawSearchPill(Vector2 min, float width, float height)
+    {
+        var io = ImGui.GetIO();
+        if (io.KeyCtrl && !io.WantTextInput && ImGui.IsKeyPressed(ImGuiKey.F, false) && ImGui.IsWindowFocused(ImGuiFocusedFlags.RootAndChildWindows))
+        {
+            focusSearch = true;
+        }
+
+        var s = Theme.Surface;
+        var dl = ImGui.GetWindowDrawList();
+        var max = min + new Vector2(width, height);
+        var rounding = height * 0.5f;
+        dl.AddRectFilled(min, max, Theme.U32(s.Sunken), rounding);
+        dl.AddRect(min, max, searchActive ? Theme.WithAlpha(s.Text, 0.6f) : Theme.U32(s.Line), rounding, ImDrawFlags.None, UiMetrics.Hairline);
+
+        // Magnifier.
+        var padLeft = UiMetrics.Px(10f);
+        ImGui.PushFont(UiBuilder.IconFont);
+        var iconSize = ImGui.CalcTextSize(SearchIcon);
+        dl.AddText(new Vector2(min.X + padLeft, min.Y + (height - iconSize.Y) * 0.5f), Theme.U32(s.TextTertiary), SearchIcon);
+        ImGui.PopFont();
+
+        // The input, transparent, between the magnifier and the clear target.
+        var clearSize = height;
+        var inputX = min.X + padLeft + iconSize.X + UiMetrics.Px(6f);
+        var inputWidth = MathF.Max(1f, max.X - clearSize - inputX);
+        ImGui.SetCursorScreenPos(new Vector2(inputX, min.Y));
+        using (ImRaii.PushColor(ImGuiCol.FrameBg, Vector4.Zero)
+                   .Push(ImGuiCol.FrameBgHovered, Vector4.Zero)
+                   .Push(ImGuiCol.FrameBgActive, Vector4.Zero)
+                   .Push(ImGuiCol.TextDisabled, s.TextTertiary))
+        using (ImRaii.PushStyle(ImGuiStyleVar.FramePadding, new Vector2(0f, MathF.Max(0f, (height - ImGui.GetFontSize()) * 0.5f)))
+                   .Push(ImGuiStyleVar.FrameBorderSize, 0f))
+        {
+            if (focusSearch)
+            {
+                ImGui.SetKeyboardFocusHere();
+                focusSearch = false;
+            }
+
+            ImGui.SetNextItemWidth(inputWidth);
+            if (ImGui.InputTextWithHint("##search", Strings.SearchHint, ref searchBuffer, 200))
+            {
+                ui.SearchText = searchBuffer;
+            }
+        }
+
+        searchActive = ImGui.IsItemActive();
         if (ImGui.IsItemHovered())
         {
             UiMetrics.Tooltip(Strings.SearchTooltip);
         }
 
-        ImGui.SameLine();
-        using (ImRaii.Disabled(searchBuffer.Length == 0))
+        ui.RecordRect(UiRects.Search, min, max);
+
+        // Clear target, only while there is something to clear.
+        if (searchBuffer.Length == 0)
         {
-            if (ImGuiComponents.IconButton("##clearSearch", FontAwesomeIcon.Times, UiMetrics.Square(UiMetrics.MinTarget)))
-            {
-                searchBuffer = string.Empty;
-                ui.SearchText = string.Empty;
-            }
-        }
-
-        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
-        {
-            UiMetrics.Tooltip(Strings.ClearSearch);
-        }
-
-        ImGui.SameLine();
-        using (ImRaii.PushColor(ImGuiCol.Button, ImGui.GetColorU32(ImGuiCol.ButtonActive), ui.FilterPanelOpen))
-        {
-            if (ImGui.Button(Strings.Filters))
-            {
-                ui.FilterPanelOpen = !ui.FilterPanelOpen;
-            }
-        }
-
-        ui.RecordItem(UiRects.FiltersButton);
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(Strings.FiltersTooltip);
-        }
-
-        ImGui.SameLine();
-        DrawCharacterCombo(session);
-
-        // Active-filter chips live on the toolbar row itself, in a fixed-height strip clipped horizontally, so toggling
-        // a filter never moves the layout below. The strip stays empty when nothing is engaged.
-        ImGui.SameLine();
-        // The icon buttons (and so the strip) never go under the minimum click target.
-        var glyphSize = MathF.Max(UiMetrics.ChipHeight, UiMetrics.MinTarget);
-        var spacing = ImGui.GetStyle().ItemSpacing.X;
-        // Right block: sync glyph plus three square icon buttons (help, tutorial, settings).
-        var rightWidth = glyphSize * (1 + ToolbarButtonCount) + spacing * ToolbarButtonCount;
-        var chipsWidth = ImGui.GetContentRegionAvail().X - rightWidth - spacing;
-        if (chipsWidth > UiMetrics.MinChipStripWidth)
-        {
-            using (var strip = ImRaii.Child("##chips", new Vector2(chipsWidth, glyphSize), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse))
-            {
-                if (strip)
-                {
-                    ui.RecordWindow(UiRects.Chips);
-                    filterPanel.DrawChips(session.Bundle);
-                }
-            }
-
-            ImGui.SameLine();
-        }
-        else
-        {
-            ui.Rects.Remove(UiRects.Chips);
-        }
-
-        // Sync glyph and the action buttons, right-aligned.
-        var avail = ImGui.GetContentRegionAvail().X;
-        if (avail > rightWidth)
-        {
-            ImGui.SetCursorPosX(ImGui.GetCursorPosX() + avail - rightWidth);
-        }
-
-        Marks.DrawInline(session.IsLive && session.PollerHealthy ? Mark.LivePip : Mark.SnapshotPip, glyphSize);
-        ui.RecordItem(UiRects.Sync);
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(syncTooltip);
-        }
-
-        var buttonSize = new Vector2(glyphSize, glyphSize);
-        ImGui.SameLine();
-        ToolbarButton("##help", FontAwesomeIcon.QuestionCircle, Strings.HelpButtonTooltip, openHelp, buttonSize, UiRects.HelpButton);
-        ImGui.SameLine();
-        ToolbarButton("##tutorial", FontAwesomeIcon.GraduationCap, Strings.TutorialButtonTooltip, startTutorial, buttonSize, UiRects.TutorialButton);
-        ImGui.SameLine();
-        ToolbarButton("##settings", FontAwesomeIcon.Cog, Strings.SettingsButtonTooltip, openSettings, buttonSize, UiRects.SettingsButton);
-
-        // The whole row, from the search box to the last button.
-        var lastMax = ImGui.GetItemRectMax();
-        ui.RecordRect(UiRects.Toolbar, toolbarMin, new Vector2(lastMax.X, MathF.Max(lastMax.Y, toolbarMin.Y + glyphSize)));
-    }
-
-    /// <summary>A square icon button; disabled (with a tooltip saying so) until its action is attached.</summary>
-    private void ToolbarButton(string id, FontAwesomeIcon icon, string tooltip, Action? action, Vector2 size, string rectKey)
-    {
-        using (ImRaii.Disabled(action is null))
-        {
-            if (ImGuiComponents.IconButton(id, icon, size))
-            {
-                action?.Invoke();
-            }
-        }
-
-        ui.RecordItem(rectKey);
-        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
-        {
-            UiMetrics.Tooltip(action is null ? Strings.ActionUnavailable : tooltip);
-        }
-    }
-
-    private void DrawCharacterCombo(SessionState session)
-    {
-        ImGui.SetNextItemWidth(UiMetrics.CharacterComboWidth);
-        using var combo = ImRaii.Combo("##character", characterPreview);
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(Strings.CharacterComboTooltip);
-        }
-
-        if (!combo)
-        {
-            // While the popup is open the last item belongs to it; the closed frame's rectangle stays recorded.
-            ui.RecordItem(UiRects.Character);
             return;
         }
 
-        if (ImGui.IsWindowAppearing())
+        var clearMin = new Vector2(max.X - clearSize, min.Y);
+        ImGui.SetCursorScreenPos(clearMin);
+        if (ImGui.InvisibleButton("##clearSearch", new Vector2(clearSize, height)))
         {
-            RebuildCharacterLabels(session);
+            searchBuffer = string.Empty;
+            ui.SearchText = string.Empty;
         }
 
+        var hovered = ImGui.IsItemHovered();
+        var center = clearMin + new Vector2(clearSize * 0.5f, height * 0.5f);
+        var half = UiMetrics.Px(4f);
+        var cross = Theme.U32(hovered ? s.Text : s.TextTertiary);
+        var thickness = MathF.Max(1f, UiMetrics.Px(1.5f));
+        dl.AddLine(center - new Vector2(half), center + new Vector2(half), cross, thickness);
+        dl.AddLine(center + new Vector2(-half, half), center + new Vector2(half, -half), cross, thickness);
+        Chrome.FocusRing(rounding);
+        if (hovered)
+        {
+            UiMetrics.Tooltip(Strings.ClearSearch);
+        }
+    }
+
+    private bool focusSearch;
+    private bool searchActive;
+
+    /// <summary>The Filters button's width: icon, label and room for the badge, so the layout does not move as it appears.</summary>
+    private static float FiltersButtonWidth()
+    {
+        ImGui.PushFont(UiBuilder.IconFont);
+        var icon = ImGui.CalcTextSize(FiltersIcon).X;
+        ImGui.PopFont();
+        return UiMetrics.Px(10f) + icon + UiMetrics.Px(6f) + ImGui.CalcTextSize(Strings.Filters).X + UiMetrics.Px(18f);
+    }
+
+    /// <summary>
+    /// The Filters button: a pill with the sliders icon and "Filters", a neutral wash while the panel is open, and a
+    /// badge at its top-right counting the engaged narrowing filters (<see cref="FilterBadge"/>; the chips under the
+    /// toolbar list them). Opens and closes the filter panel beside the tree.
+    /// </summary>
+    private void DrawFiltersButton(Vector2 min, float width, float height)
+    {
+        var count = FilterBadge.Count(ui.Filters);
+        var size = new Vector2(width, height);
+        ImGui.SetCursorScreenPos(min);
+
+        // The panel lives on the Journal tab: from another tab the click opens it there rather than closing it unseen.
+        var open = ui.FilterPanelOpen && ui.Tab == NavTab.Journal;
+        if (ImGui.InvisibleButton("##filters", size))
+        {
+            open = !open;
+            ui.FilterPanelOpen = open;
+            if (open)
+            {
+                ui.Tab = NavTab.Journal;
+            }
+        }
+
+        var hovered = ImGui.IsItemHovered();
+        var s = Theme.Surface;
+        var dl = ImGui.GetWindowDrawList();
+        var max = min + size;
+        var rounding = height * 0.5f;
+        if (open)
+        {
+            dl.AddRectFilled(min, max, Theme.WithAlpha(s.Text, 0.12f), rounding);
+        }
+        else if (hovered)
+        {
+            dl.AddRectFilled(min, max, Theme.U32(s.Hover), rounding);
+        }
+
+        var ink = Theme.U32(open || hovered ? s.Text : s.TextSecondary);
+        var x = min.X + UiMetrics.Px(10f);
+        ImGui.PushFont(UiBuilder.IconFont);
+        var iconSize = ImGui.CalcTextSize(FiltersIcon);
+        dl.AddText(new Vector2(x, min.Y + (height - iconSize.Y) * 0.5f), ink, FiltersIcon);
+        ImGui.PopFont();
+        x += iconSize.X + UiMetrics.Px(6f);
+        var labelSize = ImGui.CalcTextSize(Strings.Filters);
+        dl.AddText(new Vector2(x, min.Y + (height - labelSize.Y) * 0.5f), ink, Strings.Filters);
+
+        if (count > 0)
+        {
+            var badge = UiMetrics.Px(14f);
+            Chrome.Badge(dl, new Vector2(max.X - badge * 0.6f, min.Y + badge * 0.35f), count, actionable: false);
+        }
+
+        Chrome.FocusRing(rounding);
+        ui.RecordRect(UiRects.FiltersButton, min, max);
+        if (hovered)
+        {
+            UiMetrics.Tooltip(Strings.FiltersTooltip, FiltersBadgeText(count));
+        }
+    }
+
+    /// <summary>The badge's meaning under the Filters tooltip, rebuilt only when the count changes; null with no badge.</summary>
+    private string? FiltersBadgeText(int count)
+    {
+        if (count != filtersBadgeCount)
+        {
+            filtersBadgeCount = count;
+            filtersBadgeText = count switch
+            {
+                0 => null,
+                1 => Strings.FiltersBadgeOne,
+                _ => string.Format(CultureInfo.CurrentCulture, Strings.FiltersBadgeFormat, count),
+            };
+        }
+
+        return filtersBadgeText;
+    }
+
+    private int filtersBadgeCount = -1;
+    private string? filtersBadgeText;
+
+    /// <summary>The character chip's natural width: job icon, name, world, pip and chevron.</summary>
+    private float CharacterChipWidth()
+    {
+        var width = UiMetrics.Px(4f) + UiMetrics.Px(18f) + UiMetrics.Px(7f) + ImGui.CalcTextSize(characterName).X;
+        if (characterWorld.Length > 0)
+        {
+            width += UiMetrics.Px(6f) + ImGui.CalcTextSize(characterWorld).X;
+        }
+
+        ImGui.PushFont(UiBuilder.IconFont);
+        var chevron = ImGui.CalcTextSize(ChevronIcon).X * 0.7f;
+        ImGui.PopFont();
+        return width + UiMetrics.Px(8f) + UiMetrics.Px(8f) + UiMetrics.Px(6f) + chevron + UiMetrics.Px(10f);
+    }
+
+    /// <summary>
+    /// The character chip (ui-revamp §2.1): a sunken pill with the current job's icon in a circle, the name, the world
+    /// in the secondary tone, a static pip (filled Moon for the live character, hollow for a snapshot; accessibility
+    /// B5, nothing breathes) and a chevron. Click, Enter or Space opens the character list under it. When the chip is
+    /// narrower than its content the name is clipped; the pip and the chevron always show.
+    /// </summary>
+    private void DrawCharacterChip(SessionState session, Vector2 min, float width, float height)
+    {
+        var size = new Vector2(width, height);
+        var max = min + size;
+        ImGui.SetCursorScreenPos(min);
+        if (ImGui.InvisibleButton("##character", size))
+        {
+            RebuildCharacterLabels(session);
+            ImGui.OpenPopup(CharacterPopupId);
+        }
+
+        var hovered = ImGui.IsItemHovered();
+        var s = Theme.Surface;
+        var dl = ImGui.GetWindowDrawList();
+        var rounding = height * 0.5f;
+        dl.AddRectFilled(min, max, Theme.U32(hovered ? s.Hover : s.Sunken), rounding);
+        dl.AddRect(min, max, Theme.U32(s.Line), rounding, ImDrawFlags.None, UiMetrics.Hairline);
+        Chrome.FocusRing(rounding);
+        ui.RecordRect(UiRects.Character, min, max);
+
+        // Right end first: chevron, then the pip before it; the text gets what is left.
+        ImGui.PushFont(UiBuilder.IconFont);
+        var chevronSize = ImGui.CalcTextSize(ChevronIcon) * 0.7f;
+        var chevronPos = new Vector2(max.X - UiMetrics.Px(10f) - chevronSize.X, min.Y + (height - chevronSize.Y) * 0.5f);
+        dl.AddText(UiBuilder.IconFont, ImGui.GetFontSize() * 0.7f, chevronPos, Theme.U32(s.TextTertiary), ChevronIcon);
+        ImGui.PopFont();
+
+        var hasCharacter = session.ViewedSnapshot is not null;
+        var pipBox = UiMetrics.Px(14f);
+        var pipCenter = new Vector2(chevronPos.X - UiMetrics.Px(6f) - pipBox * 0.5f, min.Y + height * 0.5f);
+        if (hasCharacter)
+        {
+            Marks.Draw(dl, pipCenter, pipBox, session.IsLive && session.PollerHealthy ? Mark.LivePip : Mark.SnapshotPip);
+            ui.RecordRect(UiRects.Sync, pipCenter - new Vector2(pipBox * 0.5f), pipCenter + new Vector2(pipBox * 0.5f));
+        }
+        else
+        {
+            ui.Rects.Remove(UiRects.Sync);
+        }
+
+        // Job icon in a circle.
+        var iconSize = UiMetrics.Px(18f);
+        var iconMin = new Vector2(min.X + UiMetrics.Px(4f), min.Y + (height - iconSize) * 0.5f);
+        var iconMax = iconMin + new Vector2(iconSize);
+        if (characterJobIcon != 0 && textures.GetFromGameIcon(new GameIconLookup(characterJobIcon)).TryGetWrap(out var wrap, out _))
+        {
+            dl.AddImageRounded(wrap.Handle, iconMin, iconMax, Vector2.Zero, Vector2.One, 0xFFFFFFFFu, iconSize * 0.5f);
+        }
+        else
+        {
+            dl.AddCircleFilled(iconMin + new Vector2(iconSize * 0.5f), iconSize * 0.5f, Theme.U32(s.StrongLine));
+        }
+
+        // Name and world, clipped short of the pip.
+        var textX = iconMax.X + UiMetrics.Px(7f);
+        var textRight = pipCenter.X - pipBox * 0.5f - UiMetrics.Px(4f);
+        var nameSize = ImGui.CalcTextSize(characterName);
+        var textY = min.Y + (height - nameSize.Y) * 0.5f;
+        dl.PushClipRect(new Vector2(textX, min.Y), new Vector2(MathF.Max(textX, textRight), max.Y), true);
+        dl.AddText(new Vector2(textX, textY), Theme.U32(s.Text), characterName);
+        if (characterWorld.Length > 0)
+        {
+            dl.AddText(new Vector2(textX + nameSize.X + UiMetrics.Px(6f), textY), Theme.U32(s.TextSecondary), characterWorld);
+        }
+
+        dl.PopClipRect();
+
+        if (hovered)
+        {
+            UiMetrics.Tooltip(characterTooltip);
+        }
+
+        DrawCharacterMenu(session, new Vector2(min.X, max.Y + UiMetrics.Px(4f)));
+    }
+
+    /// <summary>The character list opened from the chip, placed under it; the popup scales its own font.</summary>
+    private void DrawCharacterMenu(SessionState session, Vector2 position)
+    {
+        // Next-window data must only be set when the popup will begin, or it would land on the next child window.
+        if (!ImGui.IsPopupOpen(CharacterPopupId))
+        {
+            return;
+        }
+
+        ImGui.SetNextWindowPos(position, ImGuiCond.Appearing);
+        using var popup = ImRaii.Popup(CharacterPopupId);
+        if (!popup)
+        {
+            return;
+        }
+
+        UiMetrics.ApplyFontScale();
         if (characterLabels.Count == 0)
         {
             ImGui.TextDisabled(Strings.NoSnapshots);
@@ -648,6 +956,17 @@ public sealed class MainWindow : Window, IDisposable
         }
     }
 
+    /// <summary>A round icon button on the toolbar; disabled (with a tooltip saying so) until its action is attached.</summary>
+    private void ToolbarButton(string id, string icon, string tooltip, Action? action, string rectKey)
+    {
+        if (Chrome.IconButtonRound(id, icon, action is null ? Strings.ActionUnavailable : tooltip, enabled: action is not null))
+        {
+            action?.Invoke();
+        }
+
+        ui.RecordItem(rectKey);
+    }
+
     private void RebuildCharacterLabels(SessionState session)
     {
         characterLabels.Clear();
@@ -661,6 +980,21 @@ public sealed class MainWindow : Window, IDisposable
             // The content id keeps the ImGui id unique when two snapshots share a name and world.
             characterLabels.Add((summary.ContentId, label + "##" + summary.ContentId.ToString(CultureInfo.InvariantCulture)));
         }
+    }
+
+    /// <summary>
+    /// The chip row under the toolbar (ui-revamp §2.1), drawn only while the scope or a filter narrows the table:
+    /// the scope first, then one chip per engaged filter (<see cref="FilterPanel.DrawChips"/>).
+    /// </summary>
+    private void DrawChipRow(SessionState session)
+    {
+        if (!filterPanel.HasChips())
+        {
+            ui.Rects.Remove(UiRects.Chips);
+            return;
+        }
+
+        filterPanel.DrawChips(session.Bundle);
     }
 
     private void DrawBanners(SessionState session)
@@ -684,16 +1018,31 @@ public sealed class MainWindow : Window, IDisposable
         var bodyHeight = MathF.Max(UiMetrics.MinBodyHeight, ImGui.GetContentRegionAvail().Y - statusHeight);
         var cellHeight = bodyHeight - style.CellPadding.Y * 2f;
 
-        using var layout = ImRaii.Table("##layout", 3, ImGuiTableFlags.Resizable | ImGuiTableFlags.BordersInnerV | ImGuiTableFlags.NoPadOuterX, new Vector2(0f, bodyHeight));
+        // A new id for the four-column layout (T14): the three-column table's saved widths must not land on the rail.
+        using var layout = ImRaii.Table("##body", 4, ImGuiTableFlags.Resizable | ImGuiTableFlags.BordersInnerV | ImGuiTableFlags.NoPadOuterX, new Vector2(0f, bodyHeight));
         if (!layout)
         {
             return;
         }
 
+        // The rail is its own fixed column (not resizable, so it follows the UI scale every frame); the navigation
+        // column beside it keeps its full width for the tree.
+        ImGui.TableSetupColumn("##rail", ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, UiMetrics.Px(ScaleMetrics.RailLogical));
         ImGui.TableSetupColumn("##left", ImGuiTableColumnFlags.WidthFixed, UiMetrics.LeftColumnWidth);
         ImGui.TableSetupColumn("##center", ImGuiTableColumnFlags.WidthStretch);
         ImGui.TableSetupColumn("##right", ImGuiTableColumnFlags.WidthFixed, UiMetrics.RightColumnWidth);
         ImGui.TableNextRow();
+
+        ImGui.TableNextColumn();
+        using (var rail = ImRaii.Child("##rail", new Vector2(0f, cellHeight)))
+        {
+            if (rail)
+            {
+                ImGui.Dummy(new Vector2(0f, UiMetrics.Px(2f)));
+                var counts = runner.Counts;
+                tabStrip.Draw(counts?.Overall.Fraction ?? 0f, counts?.OverallReady ?? 0);
+            }
+        }
 
         ImGui.TableNextColumn();
         DrawNavigation(session, bundle, cellHeight);
@@ -739,6 +1088,10 @@ public sealed class MainWindow : Window, IDisposable
         }
     }
 
+    /// <summary>
+    /// The navigation column: the body of the tab the rail selected (<see cref="UiState.Tab"/> is the single source
+    /// of truth, so a programmatic switch shows on the next frame with nothing to reconcile).
+    /// </summary>
     private void DrawNavigation(SessionState session, CatalogBundle bundle, float height)
     {
         using var left = ImRaii.Child("##left", new Vector2(0f, height));
@@ -747,66 +1100,7 @@ public sealed class MainWindow : Window, IDisposable
             return;
         }
 
-        var tabsMin = ImGui.GetCursorScreenPos();
-        var tabsWidth = ImGui.GetContentRegionAvail().X;
-        using var bar = ImRaii.TabBar("##navTabs");
-        if (!bar)
-        {
-            return;
-        }
-
-        // BeginTabBar leaves the cursor under the tab row.
-        ui.RecordRect(UiRects.Tabs, tabsMin, new Vector2(tabsMin.X + tabsWidth, ImGui.GetCursorScreenPos().Y));
-
-        // A programmatic switch (ui.Tab set by the tutorial, help or a command) is requested once for the whole row:
-        // ImGui applies SetSelected a frame late, so the old tab is still the visible one this frame and must not
-        // write itself back into ui.Tab while the request is pending.
-        var requested = ui.Tab;
-        var force = requested != drawnTab;
-        DrawTab(NavTab.Journal, JournalTabLabel(), requested, force, session, bundle);
-        DrawTab(NavTab.Moonlit, Strings.TabMoonlit, requested, force, session, bundle);
-        DrawTab(NavTab.Characters, Strings.TabCharacters, requested, force, session, bundle);
-        DrawTab(NavTab.Flight, Strings.TabFlight, requested, force, session, bundle);
-    }
-
-    /// <summary>
-    /// The Journal tab's label with its badge: the number of Ready quests for the viewed character (T11), rebuilt only
-    /// when that number changes. The "###" id keeps the tab the same item as the count comes and goes.
-    /// </summary>
-    private string JournalTabLabel()
-    {
-        var ready = runner.Counts?.OverallReady ?? 0;
-        if (ready != journalTabReady)
-        {
-            journalTabReady = ready;
-            journalTabLabel = ready > 0
-                ? string.Format(CultureInfo.CurrentCulture, Strings.TreeTabJournalReadyFormat, ready)
-                : Strings.TreeTabJournal;
-        }
-
-        return journalTabLabel;
-    }
-
-    private int journalTabReady = -1;
-    private string journalTabLabel = Strings.TreeTabJournal;
-
-    private void DrawTab(NavTab tab, string label, NavTab requested, bool force, SessionState session, CatalogBundle bundle)
-    {
-        var flags = force && requested == tab ? ImGuiTabItemFlags.SetSelected : ImGuiTabItemFlags.None;
-        using var item = ImRaii.TabItem(label, flags);
-        if (!item)
-        {
-            return;
-        }
-
-        drawnTab = tab;
-        if (!force)
-        {
-            // The user clicked a tab: the visible item is the source of truth.
-            ui.Tab = tab;
-        }
-
-        DrawTabBody(tab, session, bundle);
+        DrawTabBody(ui.Tab, session, bundle);
     }
 
     /// <summary>Left-column body of the active navigation tab.</summary>

@@ -354,10 +354,11 @@ public sealed class ConfigWindow : Window
             }
         }
 
-        var offer = !settings.TutorialCompleted;
+        var offer = !settings.TutorialCompleted && settings.TutorialLaterCount < TutorialOverlay.LaterLimit;
         if (ImGui.Checkbox(Strings.ConfigOfferTutorial, ref offer))
         {
             settings.TutorialCompleted = !offer;
+            settings.TutorialLaterCount = 0;
             Save();
         }
 
