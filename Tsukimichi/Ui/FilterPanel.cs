@@ -114,6 +114,7 @@ public sealed class FilterPanel
             Toggle(Strings.SeasonalActiveOnly, Strings.SeasonalActiveOnlyTooltip, f.SeasonalActiveOnly, v => f.SeasonalActiveOnly = v, hasSnapshot);
             Toggle(Strings.IncludeUnlisted, Strings.IncludeUnlistedTooltip, f.IncludeUnlisted, v => f.IncludeUnlisted = v);
             Toggle(Strings.PinnedOnly, Strings.PinnedOnlyTooltip, f.PinnedOnly, v => f.PinnedOnly = v);
+            Toggle(Strings.AbandonedOnly, Strings.AbandonedOnlyTooltip, f.AbandonedOnly, v => f.AbandonedOnly = v, hasSnapshot);
         }
 
         if (ImGui.SmallButton(Strings.Reset))
@@ -346,6 +347,11 @@ public sealed class FilterPanel
         if (f.PinnedOnly)
         {
             Chip(Strings.ChipPinned, ref any, () => f.PinnedOnly = false);
+        }
+
+        if (f.AbandonedOnly)
+        {
+            Chip(Strings.AbandonedChip, ref any, () => f.AbandonedOnly = false);
         }
     }
 

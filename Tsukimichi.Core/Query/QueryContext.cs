@@ -16,6 +16,7 @@ namespace Tsukimichi.Core.Query;
 /// <param name="NowUtc">Clock the Stalled preset measures against.</param>
 /// <param name="CurrentLevel">Unsynced level of the current job for the Around-my-level preset; 0 means unknown and the preset keeps nothing.</param>
 /// <param name="StalledDays">Age in days from which an accepted quest counts as stalled.</param>
+/// <param name="Abandoned">Runtime quest ids the viewed character abandoned (<see cref="Runtime.AbandonedLedger"/>), for the Abandoned filter; null keeps nothing under that filter.</param>
 /// <param name="Names">Name lookups for the Status text of each row (<see cref="Evaluation.BlockerText.StatusText"/>); null uses <see cref="BlockerNames.Default"/>, which names quests from the catalog only.</param>
 /// <param name="Spoilers">
 /// The viewed character's spoiler shield: search matches a masked quest by its placeholder, the Name sort orders it
@@ -34,6 +35,7 @@ public sealed record QueryContext(
     byte CurrentLevel = 0,
     int StalledDays = QueryContext.DefaultStalledDays,
     BlockerNames? Names = null,
+    IReadOnlySet<ushort>? Abandoned = null,
     SpoilerMask? Spoilers = null)
 {
     public const int DefaultStalledDays = 7;

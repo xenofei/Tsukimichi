@@ -40,6 +40,7 @@ public static class QuestQuery
         SeasonalActive,
         IncludeUnlisted,
         Pinned,
+        Abandoned,
         Search,
     }
 
@@ -58,6 +59,7 @@ public static class QuestQuery
         (Filter.SeasonalActive, FilterNames.SeasonalActive),
         (Filter.IncludeUnlisted, FilterNames.IncludeUnlisted),
         (Filter.Pinned, FilterNames.Pinned),
+        (Filter.Abandoned, FilterNames.Abandoned),
         (Filter.Search, FilterNames.Search),
     ];
 
@@ -415,6 +417,7 @@ public static class QuestQuery
             Filter.SeasonalActive => filters.SeasonalActiveOnly,
             Filter.IncludeUnlisted => UnlistedToggleable && !IncludeUnlisted,
             Filter.Pinned => filters.PinnedOnly,
+            Filter.Abandoned => filters.AbandonedOnly,
             Filter.Search => query.Length > 0,
             _ => false,
         };
@@ -482,6 +485,12 @@ public static class QuestQuery
             }
 
             if (skip != Filter.Pinned && filters.PinnedOnly && !ctx.Pinned.Contains(quest.RowId))
+            {
+                return false;
+            }
+
+            if (skip != Filter.Abandoned && filters.AbandonedOnly
+                && (ctx.Abandoned is not { } abandoned || !abandoned.Contains(quest.QuestId)))
             {
                 return false;
             }

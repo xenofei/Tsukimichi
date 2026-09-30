@@ -28,6 +28,11 @@ namespace Tsukimichi.Game;
 /// available" is printed, once per quest per session, while <see cref="Configuration.JobQuestNudge"/> is on. The
 /// first capture of a character is a baseline, not a level-up.
 /// </para>
+/// <para>
+/// And the abandoned notice (P10): an <see cref="QuestEventKind.Abandoned"/> event prints "Abandoned: [quest] (step 3
+/// of 5)" with the step from the live ledger, once per quest per session, while
+/// <see cref="Configuration.ChatNoticeAbandoned"/> is on (the default), so a mis-click in the journal is noticed.
+/// </para>
 /// </summary>
 public sealed class ChatNotifier : IDisposable
 {
@@ -98,8 +103,24 @@ public sealed class ChatNotifier : IDisposable
 
     private void Announce()
     {
-        var newlyAvailable = tracker.Scan(session.RecentEvents, session.LiveContentId);
-        if (newlyAvailable.Count == 0 || !config.ChatNoticeNewlyAvailable || session.Bundle is not { } bundle)
+        var fresh = tracker.ScanEvents(session.RecentEvents, session.LiveContentId);
+        if (fresh.Count == 0 || session.Bundle is not { } bundle)
+        {
+            return;
+        }
+
+        AnnounceAbandoned(fresh, bundle);
+
+        var newlyAvailable = new List<uint>();
+        foreach (var e in fresh)
+        {
+            if (e.Kind == QuestEventKind.NewlyAvailable)
+            {
+                newlyAvailable.Add(e.RowId);
+            }
+        }
+
+        if (newlyAvailable.Count == 0 || !config.ChatNoticeNewlyAvailable)
         {
             return;
         }
@@ -127,6 +148,32 @@ public sealed class ChatNotifier : IDisposable
 
             tracker.MarkNotified(rowId);
             Print(Strings.ChatNewlyAvailablePrefix, quest, string.Empty);
+        }
+    }
+
+    /// <summary>
+    /// "Abandoned: [quest] (step 3 of 5)" for each quest that left the journal uncompleted in the events just scanned,
+    /// once per quest per session. Events are consumed whether or not the setting is on.
+    /// </summary>
+    private void AnnounceAbandoned(List<QuestEvent> fresh, CatalogBundle bundle)
+    {
+        if (!config.ChatNoticeAbandoned)
+        {
+            return;
+        }
+
+        foreach (var e in fresh)
+        {
+            if (e.Kind != QuestEventKind.Abandoned
+                || bundle.Catalog.GetByRowId(e.RowId) is not { } quest
+                || !tracker.MarkAbandonNoticed(e.RowId))
+            {
+                continue;
+            }
+
+            var step = session.LiveAbandoned.TryGetValue(quest.QuestId, out var entry) ? entry.StepText : string.Empty;
+            var suffix = step.Length == 0 ? string.Empty : string.Format(CultureInfo.CurrentCulture, Strings.AbandonedChatStepFormat, step);
+            Print(Strings.AbandonedChatPrefix, quest, suffix);
         }
     }
 

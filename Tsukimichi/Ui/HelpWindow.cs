@@ -152,7 +152,8 @@ public sealed class HelpWindow : Window
         FontAwesomeIcon.Users,
         FontAwesomeIcon.Table,
         FontAwesomeIcon.LayerGroup,
-        FontAwesomeIcon.Download);
+        FontAwesomeIcon.Download,
+        FontAwesomeIcon.Undo);
 
     private static readonly CardItem[] FlightCards = Cards(
         Strings.Help.FlightCardTitles,

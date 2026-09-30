@@ -14,6 +14,7 @@ public static class FilterNames
     public const string SeasonalActive = "Seasonal active";
     public const string IncludeUnlisted = "Include removed";
     public const string Pinned = "Pinned";
+    public const string Abandoned = "Abandoned";
     public const string Search = "Search";
 
     // Quick views (presets)

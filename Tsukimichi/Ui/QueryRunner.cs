@@ -372,6 +372,10 @@ public sealed class QueryRunner : IDisposable
         return hand + land == 0 ? Strings.JobDowDom : Strings.JobMulti;
     }
 
+    /// <summary>The viewed character's abandoned quest ids for the Abandoned filter; a copy, since the live ledger changes in place.</summary>
+    private static IReadOnlySet<ushort> AbandonedIds(SessionState session) =>
+        session.Abandoned.Count == 0 ? NoFestivals : new HashSet<ushort>(session.Abandoned.Keys);
+
     private void Run(SessionState session, CatalogBundle current, DateTime nowUtc)
     {
         var snapshot = session.ViewedSnapshot;
@@ -391,6 +395,7 @@ public sealed class QueryRunner : IDisposable
             CurrentLevel: CurrentLevel(snapshot),
             StalledDays: plugin.Settings.StalledDaysClamped,
             Names: session.Names,
+            Abandoned: AbandonedIds(session),
             Spoilers: session.Spoilers);
 
         // The Unlocks quick view reads best with what can be picked up now on top; the other presets keep the table's sort.

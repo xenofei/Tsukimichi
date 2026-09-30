@@ -28,6 +28,9 @@ public sealed class PluginPaths
     public string PinsFile => Path.Combine(UserDir, "pins.json");
     public string OverridesFile => Path.Combine(UserDir, "overrides.json");
 
+    /// <summary>Default folder of Settings › Data › Export and <c>/tsuki export</c>.</summary>
+    public string ExportsDir => Path.Combine(ConfigDir, "exports");
+
     public string UniqueRewardsFile => Path.Combine(PluginDir, "unique_quests.json");
     public string CuratedDir => Path.Combine(PluginDir, "curated");
     public string SystemUnlocksFile => Path.Combine(CuratedDir, CuratedData.SystemUnlocksFileName);

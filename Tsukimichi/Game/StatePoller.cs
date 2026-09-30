@@ -55,6 +55,7 @@ public sealed class StatePoller : IDisposable
 
     private bool firstCaptureLogged;
     private bool acceptedSinceWarned;
+    private bool abandonedWarned;
     private DateTime lastListenerWarningUtc = DateTime.MinValue;
     private bool wasReady;
     private bool saveWarned;
@@ -141,9 +142,30 @@ public sealed class StatePoller : IDisposable
                 }
             }
         }
+
+        if (memory.AbandonedDirty)
+        {
+            try
+            {
+                AbandonedLedger.Save(AbandonedPath(last.ContentId), memory.Abandoned);
+                memory.AbandonedDirty = false;
+                abandonedWarned = false;
+            }
+            catch (Exception ex)
+            {
+                // Stays dirty: the next flush retries.
+                if (!abandonedWarned)
+                {
+                    abandonedWarned = true;
+                    log.Warning(ex, "Abandoned-quest sidecar save failed for {ContentId}", last.ContentId);
+                }
+            }
+        }
     }
 
     private string AcceptedSincePath(ulong contentId) => AcceptedSince.PathFor(session.Paths.CharactersDir, contentId);
+
+    private string AbandonedPath(ulong contentId) => AbandonedLedger.PathFor(session.Paths.CharactersDir, contentId);
 
     public void Dispose()
     {
@@ -322,6 +344,9 @@ public sealed class StatePoller : IDisposable
             : StateResolver.ResolveDependents(states, ChangedRows(diff, catalog, session.Index!), session.Index!, catalog, snapshot, context, changedFestivals: diff.ChangedFestivals);
 
         var events = QuestEvents.Derive(diff, last, snapshot, catalog, states, resolved, now);
+        // Abandoned quests are recorded (and re-accepted or completed ones dropped) with the step they had reached; the
+        // sidecar goes to disk with the snapshot the commit below marks dirty, through the same save debouncer.
+        memory.AbandonedDirty |= AbandonedLedger.Apply(memory.Abandoned, events, last, catalog);
 
         memory.Commit(snapshot, resolved, bundle);
         return new PollResult(snapshot, resolved, context, events);
@@ -336,6 +361,7 @@ public sealed class StatePoller : IDisposable
     {
         var catalog = bundle.Catalog;
         var sidecarPath = AcceptedSincePath(snapshot.ContentId);
+        var abandonedPath = AbandonedPath(snapshot.ContentId);
         var task = Task.Run(() =>
         {
             var started = Stopwatch.GetTimestamp();
@@ -346,7 +372,8 @@ public sealed class StatePoller : IDisposable
             // plugin was not watching are stamped at commit time, the earliest moment they are known to be there.
             var warnings = new List<string>();
             var acceptedSince = AcceptedSince.Load(sidecarPath, warnings);
-            return new FirstPassResult(states, acceptedSince, warnings, resolveMs);
+            var abandoned = AbandonedLedger.Load(abandonedPath, warnings);
+            return new FirstPassResult(states, acceptedSince, abandoned, warnings, resolveMs);
         });
 
         pendingFirst = new FirstPass(snapshot, bundle, context, task, Stopwatch.GetTimestamp(), captureMs);
@@ -387,13 +414,15 @@ public sealed class StatePoller : IDisposable
         var result = pending.Task.Result;
         foreach (var warning in result.Warnings)
         {
-            log.Warning("Accepted times: {Warning}", warning);
+            log.Warning("Character sidecar: {Warning}", warning);
         }
 
         var snapshot = pending.Snapshot;
         var dirty = AcceptedSince.Reconcile(result.AcceptedSince, snapshot, now);
         memory.Commit(snapshot, result.States, pending.Bundle);
         memory.SetAcceptedSince(result.AcceptedSince, dirty);
+        // Quests abandoned earlier and taken up again, or completed, while the plugin was not watching leave the list.
+        memory.SetAbandoned(result.Abandoned, AbandonedLedger.Reconcile(result.Abandoned, snapshot));
 
         var sinceCaptureMs = Stopwatch.GetElapsedTime(pending.StartedTimestamp).TotalMilliseconds + pending.CaptureMs;
         if (!firstCaptureLogged)
@@ -444,7 +473,7 @@ public sealed class StatePoller : IDisposable
 
     private void Publish(PollResult result)
     {
-        session.SetLive(result.Snapshot, result.States, result.Context, memory.AcceptedSince);
+        session.SetLive(result.Snapshot, result.States, result.Context, memory.AcceptedSince, memory.Abandoned);
         session.AddEvents(result.Snapshot.ContentId, result.Events);
     }
 
@@ -613,6 +642,7 @@ public sealed class StatePoller : IDisposable
     private sealed record FirstPassResult(
         Dictionary<uint, QuestEvaluation> States,
         Dictionary<ushort, DateTime> AcceptedSince,
+        Dictionary<ushort, AbandonedEntry> Abandoned,
         List<string> Warnings,
         double ResolveMs);
 }
