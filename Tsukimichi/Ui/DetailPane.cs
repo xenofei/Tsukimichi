@@ -114,8 +114,10 @@ public sealed class DetailPane
         public readonly List<RewardTile> Rewards = [];
         public string RewardsCaption = string.Empty;
         public string? GiverName;
-        public string? PlaceText;
         public string? CoordinateText;
+
+        /// <summary>"Region › Place (x, y)" for the Giver card; null when the giver's map is unknown.</summary>
+        public string? PlaceLine;
         public string Provenance = string.Empty;
         public double ProvenanceBuiltAt;
     }
@@ -819,9 +821,9 @@ public sealed class DetailPane
 
         ImGui.TextUnformatted(model.GiverName);
         using var mist = Theme.PushText(Theme.Surface.TextSecondary);
-        if (model.PlaceText is { } place)
+        if (model.PlaceLine is { } place)
         {
-            ImGui.TextWrapped(model.CoordinateText is { } coords ? place + " " + coords : place);
+            ImGui.TextWrapped(place);
         }
         else
         {
@@ -839,6 +841,9 @@ public sealed class DetailPane
     private static readonly string CopyIcon = FontAwesomeIcon.Copy.ToIconString();
     private static readonly string JournalIcon = FontAwesomeIcon.BookOpen.ToIconString();
     private static readonly string ReportIcon = FontAwesomeIcon.Bug.ToIconString();
+
+    private uint teleportTipRowId = uint.MaxValue;
+    private string teleportTip = string.Empty;
 
     /// <summary>Round buttons after the primary action: Pin, Show path, Link, Copy, Journal, Report (when attached), Flag (when Teleport leads).</summary>
     private int IconButtonCount => 5 + (Diagnostics is null ? 0 : 1) + (links.TeleportAvailable ? 1 : 0);
@@ -882,9 +887,16 @@ public sealed class DetailPane
         if (teleportLeads)
         {
             var canTeleport = links.CanTeleport(quest);
-            var tip = links.TeleportBusy ? Strings.TeleportBusy
-                : links.NearestAetheryte(quest) is { } aetheryte ? string.Format(CultureInfo.CurrentCulture, Strings.ActionTeleportTooltipFormat, aetheryte.Name)
-                : Strings.TeleportNoAetheryte;
+            if (teleportTipRowId != rowId)
+            {
+                // The aetheryte is fixed per quest: named once per selection, not per frame.
+                teleportTipRowId = rowId;
+                teleportTip = links.NearestAetheryte(quest) is { } aetheryte
+                    ? string.Format(CultureInfo.CurrentCulture, Strings.ActionTeleportTooltipFormat, aetheryte.Name)
+                    : Strings.TeleportNoAetheryte;
+            }
+
+            var tip = links.TeleportBusy ? Strings.TeleportBusy : teleportTip;
             if (PrimaryButton("##teleport", TeleportIcon, Strings.ActionTeleport, canTeleport, tip))
             {
                 links.TeleportToGiver(quest);
@@ -1072,7 +1084,7 @@ public sealed class DetailPane
         model.ChainText = null;
         model.ChainNextName = null;
         model.GiverName = null;
-        model.PlaceText = null;
+        model.PlaceLine = null;
         model.CoordinateText = null;
         model.StatusReason = string.Empty;
         model.RequirementsCaption = string.Empty;
@@ -1154,16 +1166,17 @@ public sealed class DetailPane
         if (quest.Issuer is { } issuer)
         {
             model.GiverName = issuer.Name.Length > 0 ? issuer.Name : Strings.NoGiver;
-            if (links.Map(issuer.MapId) is { } map)
-            {
-                model.PlaceText = map.Region.Length > 0 && map.Region != map.PlaceName
-                    ? string.Format(CultureInfo.CurrentCulture, Strings.JournalPathFormat, map.Region, map.PlaceName)
-                    : map.PlaceName;
-            }
-
             if (links.MapCoordinates(quest) is { } coords)
             {
                 model.CoordinateText = string.Format(CultureInfo.CurrentCulture, Strings.CoordinatesFormat, coords.X, coords.Y);
+            }
+
+            if (links.Map(issuer.MapId) is { } map)
+            {
+                var place = map.Region.Length > 0 && map.Region != map.PlaceName
+                    ? string.Format(CultureInfo.CurrentCulture, Strings.JournalPathFormat, map.Region, map.PlaceName)
+                    : map.PlaceName;
+                model.PlaceLine = model.CoordinateText is { } text ? place + " " + text : place;
             }
         }
 
