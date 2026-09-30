@@ -1552,6 +1552,12 @@
   <data name="ConfigReduceMotionHint" xml:space="preserve">
     <value>No hover fades or pulses anywhere, and hold-to-confirm buttons count down in text instead of filling an arc. Until you change it here, it follows Windows' "Show animations" setting.</value>
   </data>
+  <data name="ConfigCompactRail" xml:space="preserve">
+    <value>Compact rail</value>
+  </data>
+  <data name="ConfigCompactRailHint" xml:space="preserve">
+    <value>Show the tabs on the left as icons only, with their names on hover. On a window narrower than about 1,040 pixels they are always shown this way.</value>
+  </data>
   <data name="ConfigFollowDalamudColours" xml:space="preserve">
     <value>Follow Dalamud colours</value>
   </data>
@@ -2994,7 +3000,7 @@
     <value>Offer the tour again next session</value>
   </data>
   <data name="Tutorial.DontOfferTooltip" xml:space="preserve">
-    <value>Never offer it again; the toolbar's cap and Settings still start it</value>
+    <value>Never offer it again; Help and Settings still start it</value>
   </data>
   <data name="Tutorial.Back" xml:space="preserve">
     <value>Back</value>
@@ -3133,13 +3139,13 @@
     <value>Help, tour and settings</value>
   </data>
   <data name="Tutorial.HelpBody" xml:space="preserve">
-    <value>The question mark opens the guide, the cap replays this tour, and the cog opens Settings for text size, colours and spoilers.</value>
+    <value>At the foot of the tabs, the question mark opens the guide, where you can replay this tour, and the cog opens Settings for text size, colours and spoilers.</value>
   </data>
   <data name="Tutorial.FinishTitle" xml:space="preserve">
     <value>That is the road</value>
   </data>
   <data name="Tutorial.FinishBody" xml:space="preserve">
-    <value>Every quest is a step, and the moon fills as you walk. Reopen this tour from the toolbar or Settings; Help has more on every topic.</value>
+    <value>Every quest is a step, and the moon fills as you walk. Reopen this tour from Help or Settings; Help has more on every topic.</value>
   </data>
   <data name="WelcomeBackTitle" xml:space="preserve">
     <value>Since you were away</value>
@@ -4303,6 +4309,14 @@
   <data name="Core.Blocker.SeasonalNotRunning" xml:space="preserve">
     <value>Seasonal: not running</value>
     <comment>Core: BlockerText.cs.</comment>
+  </data>
+  <data name="Core.Journal.Story" xml:space="preserve">
+    <value>Story</value>
+    <comment>Core: JournalNames.cs.</comment>
+  </data>
+  <data name="Core.Journal.General" xml:space="preserve">
+    <value>General</value>
+    <comment>Core: JournalNames.cs.</comment>
   </data>
   <data name="Core.State.Ready" xml:space="preserve">
     <value>Ready</value>

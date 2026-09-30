@@ -59,10 +59,9 @@ public sealed class MainWindow : Window, IDisposable
     private FlightPane? flightPane;
     private PlanPane? planPane;
 
-    // Toolbar actions and the tutorial overlay, attached by the plugin once those windows exist.
+    // The rail foot's actions and the tutorial overlay, attached by the plugin once those windows exist.
     private Action? openSettings;
     private Action? openHelp;
-    private Action? startTutorial;
     private ITutorial? tutorial;
     private WhatsNewCard? whatsNew;
     private WelcomeBackCard? welcomeBack;
@@ -96,16 +95,8 @@ public sealed class MainWindow : Window, IDisposable
     private string statusMode = string.Empty;
     private string versionText = string.Empty;
 
-    // The overall halo's percentage and its tooltip, rebuilt when the overall count changes.
-    private NodeCount statusOverall = new(-1, -1, -1);
-    private string statusPercent = string.Empty;
-    private string statusProgress = string.Empty;
-
     /// <summary>The least width the status text keeps when the MSQ segment crowds it, in logical pixels.</summary>
     private const float StatusMinLogical = 120f;
-
-    /// <summary>Motion key of the status bar's overall halo: its fill eases only when the overall count changes.</summary>
-    private static readonly ulong StatusGaugeKey = Motion.Key(0x5354_4147, 0); // "STAG"
 
     /// <summary>The MSQ pill's fill: Moon at 10 % (ui-revamp §2.6).</summary>
     private static readonly uint MsqPillFill = Theme.WithAlpha(Theme.Moon, 0.10f);
@@ -215,14 +206,15 @@ public sealed class MainWindow : Window, IDisposable
     }
 
     /// <summary>
-    /// Wires the toolbar's Settings, Help and Tutorial buttons. Until this is called the buttons are drawn disabled,
-    /// so the toolbar layout never changes.
+    /// Wires the rail foot's Help and Settings buttons (feature plan v4 L7). Until this is called the buttons are drawn
+    /// disabled, so the rail's layout never changes. The tour has no button of its own any more: Help lists it
+    /// (design v4 §7.10), so <paramref name="startTutorial"/> is only checked.
     /// </summary>
     public void AttachActions(Action openSettings, Action openHelp, Action startTutorial)
     {
         this.openSettings = openSettings ?? throw new ArgumentNullException(nameof(openSettings));
         this.openHelp = openHelp ?? throw new ArgumentNullException(nameof(openHelp));
-        this.startTutorial = startTutorial ?? throw new ArgumentNullException(nameof(startTutorial));
+        ArgumentNullException.ThrowIfNull(startTutorial);
     }
 
     /// <summary>
@@ -290,11 +282,11 @@ public sealed class MainWindow : Window, IDisposable
 
         // The rail and the panes' floors grow with the UI scale, so the minimum size must too or a pane goes under its
         // floor (ScaleMetrics.MinWindowSize, PaneLayout); it never exceeds the viewport, so the window can always be
-        // placed whole. A rail a translated tab label widened (TabStrip.RailWidth) adds its extra width, rather than
-        // taking it from the centre floor.
+        // placed whole. The rail is 64 logical px, or 44 while compact (TabStrip.UpdateMode: on a narrow window or by
+        // setting), and the minimum follows it.
         SizeConstraints = new WindowSizeConstraints
         {
-            MinimumSize = ScaleMetrics.MinWindowSize(UiMetrics.FontScale, ImGuiHelpers.GlobalScale, ImGuiHelpers.MainViewport.WorkSize, TabStrip.RailLogicalWidth),
+            MinimumSize = ScaleMetrics.MinWindowSize(UiMetrics.FontScale, ImGuiHelpers.GlobalScale, ImGuiHelpers.MainViewport.WorkSize, tabStrip.RailLogicalWidth),
         };
 
         // Dalamud closes the window on Esc while it or one of its popups is focused. Esc closes the topmost thing first
@@ -736,16 +728,13 @@ public sealed class MainWindow : Window, IDisposable
     private static readonly string SearchIcon = FontAwesomeIcon.Search.ToIconString();
     private static readonly string FiltersIcon = FontAwesomeIcon.SlidersH.ToIconString();
     private static readonly string ChevronIcon = FontAwesomeIcon.ChevronDown.ToIconString();
-    private static readonly string HelpIcon = FontAwesomeIcon.QuestionCircle.ToIconString();
-    private static readonly string TutorialIcon = FontAwesomeIcon.GraduationCap.ToIconString();
-    private static readonly string SettingsIcon = FontAwesomeIcon.Cog.ToIconString();
 
     /// <summary>
     /// The toolbar (T14): a NightRaised strip, 36 px a row, flush with the title bar and edge to edge, with a hairline
-    /// under it. Left to right: the search pill, the Quick views segmented control, the Filters button with its badge,
-    /// the character chip, and the round Help, Tutorial and Settings buttons right-aligned. Below 1000 px of available
-    /// width, or whenever one row cannot hold everything, it reflows to two rows (search and quick views / filters,
-    /// character and buttons) instead of hiding anything; a row that still cannot fit shrinks the search pill and the
+    /// under it. Left to right: the search pill, the Quick views segmented control, the Filters button with its badge
+    /// and the character chip; Help and Settings are at the rail's foot (feature plan v4 L7). Below 1000 px of
+    /// available width, or whenever one row cannot hold everything, it reflows to two rows (search and quick views /
+    /// filters and character) instead of hiding anything; a row that still cannot fit shrinks the search pill and the
     /// character chip to their floors, and the quick views take a row of their own as the last resort.
     /// </summary>
     private void DrawToolbar(SessionState session)
@@ -761,17 +750,15 @@ public sealed class MainWindow : Window, IDisposable
         var rowHeight = MathF.Max(UiMetrics.Px(ToolbarRowLogical), UiMetrics.MinTarget + UiMetrics.Px(6f));
         var control = UiMetrics.MinTarget;
         var gap = UiMetrics.Px(ToolbarGapLogical);
-        var clusterGap = UiMetrics.Px(4f);
 
         var searchWidth = UiMetrics.Px(SearchLogical);
         var quickWidth = FilterPanel.QuickViewsWidth();
         var filtersWidth = FiltersButtonWidth();
         var characterWidth = CharacterChipWidth();
-        var clusterWidth = 3f * control + 2f * clusterGap;
-        var oneRow = searchWidth + quickWidth + filtersWidth + characterWidth + clusterWidth + 4f * gap;
+        var oneRow = searchWidth + quickWidth + filtersWidth + characterWidth + 3f * gap;
 
         // Row layout: row 0 holds the search (and the quick views when they fit beside it); the last row holds the
-        // filters, the character chip and the buttons.
+        // filters and the character chip.
         var twoRows = avail < ToolbarReflowPx || oneRow > avail;
         var quickOwnRow = false;
         if (twoRows)
@@ -784,7 +771,7 @@ public sealed class MainWindow : Window, IDisposable
                 searchWidth = MathF.Min(UiMetrics.Px(SearchLogical), avail);
             }
 
-            characterWidth = MathF.Max(MathF.Min(characterWidth, avail - filtersWidth - clusterWidth - 2f * gap), UiMetrics.Px(CharacterMinLogical));
+            characterWidth = MathF.Max(MathF.Min(characterWidth, avail - filtersWidth - gap), UiMetrics.Px(CharacterMinLogical));
         }
 
         var rows = twoRows ? (quickOwnRow ? 3 : 2) : 1;
@@ -819,16 +806,6 @@ public sealed class MainWindow : Window, IDisposable
         DrawFiltersButton(new Vector2(x, RowY(lastRow)), filtersWidth, control);
         x += filtersWidth + gap;
         DrawCharacterChip(session, new Vector2(x, RowY(lastRow)), characterWidth, control);
-        x += characterWidth + gap;
-
-        var clusterX = MathF.Max(x, origin.X + avail - clusterWidth);
-        var y = RowY(lastRow);
-        ImGui.SetCursorScreenPos(new Vector2(clusterX, y));
-        ToolbarButton("##help", HelpIcon, Strings.HelpButtonTooltip, openHelp, UiRects.HelpButton);
-        ImGui.SetCursorScreenPos(new Vector2(clusterX + control + clusterGap, y));
-        ToolbarButton("##tutorial", TutorialIcon, Strings.TutorialButtonTooltip, startTutorial, UiRects.TutorialButton);
-        ImGui.SetCursorScreenPos(new Vector2(clusterX + 2f * (control + clusterGap), y));
-        ToolbarButton("##settings", SettingsIcon, Strings.SettingsButtonTooltip, openSettings, UiRects.SettingsButton);
 
         // The whole strip, then one item spanning it so the layout continues underneath.
         ui.RecordRect(UiRects.Toolbar, new Vector2(origin.X, top), new Vector2(origin.X + avail, top + stripHeight));
@@ -1168,17 +1145,6 @@ public sealed class MainWindow : Window, IDisposable
         }
     }
 
-    /// <summary>A round icon button on the toolbar; disabled (with a tooltip saying so) until its action is attached.</summary>
-    private void ToolbarButton(string id, string icon, string tooltip, Action? action, string rectKey)
-    {
-        if (Chrome.IconButtonRound(id, icon, action is null ? Strings.ActionUnavailable : tooltip, enabled: action is not null))
-        {
-            action?.Invoke();
-        }
-
-        ui.RecordItem(rectKey);
-    }
-
     /// <summary>
     /// The chip's and status bar's pip: filled for the character live here, a ringed dot for one live in another game
     /// client (multibox, D11), hollow for a stored snapshot.
@@ -1256,17 +1222,18 @@ public sealed class MainWindow : Window, IDisposable
         // The strip is the Journal tree's alone for now: the other tabs' lists (and the filter panel) keep their width.
         var stripAllowed = ui.Tab == NavTab.Journal && !ui.FilterPanelOpen;
 
-        // The rail keeps its own width (it follows the UI scale every frame, and widens past RailLogical only when a
-        // translated tab label needs it: TabStrip.RailWidth, V2-19).
-        var widths = PaneSplit.Solve(settings, total, TabStrip.RailWidth(), stripAllowed);
+        // The rail keeps its own width (it follows the UI scale every frame): 64 logical px with labels, or the 44 px
+        // compact rail on a narrow window or by setting (feature plan v4 L7).
+        tabStrip.UpdateMode(ImGui.GetWindowSize().X / ImGuiHelpers.GlobalScale, UiMetrics.FontScale, settings.CompactRail);
+        var widths = PaneSplit.Solve(settings, total, tabStrip.RailWidth, stripAllowed);
 
-        using (var rail = ImRaii.Child("##rail", new Vector2(widths.Rail, height)))
+        // A rail taller than a short window scrolls with the wheel, without a scrollbar eating its width.
+        using (var rail = ImRaii.Child("##rail", new Vector2(widths.Rail, height), false, ImGuiWindowFlags.NoScrollbar))
         {
             if (rail)
             {
-                ImGui.Dummy(new Vector2(0f, UiMetrics.Px(2f)));
                 var counts = runner.Counts;
-                tabStrip.Draw(counts?.Overall.Fraction ?? 0f, counts?.OverallReady ?? 0);
+                tabStrip.Draw(counts?.Overall ?? default, counts?.OverallReady ?? 0, openHelp, openSettings);
             }
         }
 
@@ -1400,10 +1367,10 @@ public sealed class MainWindow : Window, IDisposable
     }
 
     /// <summary>
-    /// The status bar (T12, ui-revamp §2.6), left to right: the overall halo with its percentage beside it, the catalog
-    /// counts, a static pip with "live" or the snapshot time, the MSQ pill (click selects the next quest), and the
-    /// version right-aligned in Dusk. Segments are separated by a Veil "·". When the line is too narrow the counts and
-    /// then the MSQ pill end in an ellipsis; the halo, the pip and the version always show. Strings are rebuilt only
+    /// The status bar (T12, ui-revamp §2.6), left to right: the catalog counts, a static pip with "live" or the snapshot
+    /// time, the MSQ pill (click selects the next quest), and the version right-aligned in Dusk. The overall gauge is at
+    /// the rail's foot (feature plan v4 L7). Segments are separated by a Veil "·". When the line is too narrow the
+    /// counts and then the MSQ pill end in an ellipsis; the pip and the version always show. Strings are rebuilt only
     /// when their inputs change.
     /// </summary>
     private void DrawStatusBar(SessionState session, CatalogBundle bundle)
@@ -1431,15 +1398,6 @@ public sealed class MainWindow : Window, IDisposable
             versionText = string.Format(CultureInfo.InvariantCulture, Strings.StatusVersionFormat, version);
         }
 
-        var overall = runner.Counts?.Overall ?? default;
-        if (overall != statusOverall)
-        {
-            statusOverall = overall;
-            var percent = overall.Total <= 0 ? 0 : (int)MathF.Floor(100f * overall.Done / overall.Total);
-            statusPercent = string.Format(CultureInfo.CurrentCulture, Strings.StatusPercentFormat, percent);
-            statusProgress = UiFormat.Progress(overall.Done, overall.Total);
-        }
-
         RefreshMsq(session, bundle);
 
         // The whole bar is in the caption role (ui-revamp §4.2): 0.85× the body, never under 12 px.
@@ -1449,35 +1407,13 @@ public sealed class MainWindow : Window, IDisposable
 
         var dl = ImGui.GetWindowDrawList();
         var line = ImGui.GetTextLineHeight();
-        var haloRadius = UiMetrics.StatusHaloRadius;
-        var rowHeight = MathF.Max(line, 2f * haloRadius);
+        var rowHeight = line;
         var origin = ImGui.GetCursorScreenPos();
         var right = origin.X + ImGui.GetContentRegionAvail().X;
         var textY = origin.Y + (rowHeight - line) * 0.5f;
-        var midY = origin.Y + rowHeight * 0.5f;
         var gap = UiMetrics.Px(6f);
         var separatorWidth = ImGui.CalcTextSize(StatusSeparator).X + 2f * gap;
         var x = origin.X;
-
-        // Overall halo (track and arc; the number beside it, never a gauge under 16 px).
-        if (GaugeGeometry.ModeFor(haloRadius) != HaloMode.NumberOnly)
-        {
-            ImGui.SetCursorScreenPos(new Vector2(x, origin.Y));
-            ImGui.Dummy(new Vector2(2f * haloRadius, rowHeight));
-            MoonGlyph.DrawHalo(dl, new Vector2(x + haloRadius, midY), haloRadius, Motion.Gauge(StatusGaugeKey, overall.Fraction));
-            if (ImGui.IsItemHovered())
-            {
-                UiMetrics.Tooltip(Strings.FillingMoonTooltip, statusProgress);
-            }
-
-            x += 2f * haloRadius + UiMetrics.Px(4f);
-        }
-
-        x = StatusText(x, textY, statusPercent, Theme.U32(Theme.Surface.Text));
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(Strings.FillingMoonTooltip, statusProgress);
-        }
 
         // Version, right-aligned in Dusk; it carries the data stamp on hover.
         var versionWidth = ImGui.CalcTextSize(versionText).X;
@@ -1500,17 +1436,17 @@ public sealed class MainWindow : Window, IDisposable
         var fixedWidth = separatorWidth + modeWidth + (msqWidth > 0f ? separatorWidth : 0f);
         var statusRoom = statusWidth;
         var msqRoom = msqWidth;
-        if (separatorWidth + statusWidth + fixedWidth + msqWidth > room)
+        if (statusWidth + fixedWidth + msqWidth > room)
         {
             // Too narrow for everything: the counts keep at least their floor, the MSQ pill gets the rest, and
             // whichever does not fit ends in an ellipsis instead of running into the version.
-            statusRoom = MathF.Max(0f, MathF.Min(MathF.Max(MathF.Min(statusWidth, UiMetrics.Px(StatusMinLogical)), room - separatorWidth - fixedWidth - msqWidth), statusWidth));
-            msqRoom = MathF.Max(0f, room - separatorWidth - statusRoom - fixedWidth);
+            statusRoom = MathF.Max(0f, MathF.Min(MathF.Max(MathF.Min(statusWidth, UiMetrics.Px(StatusMinLogical)), room - fixedWidth - msqWidth), statusWidth));
+            msqRoom = MathF.Max(0f, room - statusRoom - fixedWidth);
         }
 
+        // The counts open the bar, so no separator comes before them.
         if (statusRoom > 0f)
         {
-            x = StatusSeparatorAt(dl, x, textY, gap);
             ImGui.SetCursorScreenPos(new Vector2(x, textY));
             Chrome.EllipsisText(status, statusRoom, ImGui.GetColorU32(ImGuiCol.TextDisabled), statusWidth);
             if (DataStamp is { } stampAgain && ImGui.IsItemHovered())
@@ -1524,7 +1460,7 @@ public sealed class MainWindow : Window, IDisposable
         if (x + separatorWidth + modeWidth <= versionX)
         {
             // Static pip (accessibility B5: nothing here moves) and the live / snapshot words.
-            x = StatusSeparatorAt(dl, x, textY, gap);
+            x = x > origin.X ? StatusSeparatorAt(dl, x, textY, gap) : x;
             ImGui.SetCursorScreenPos(new Vector2(x, textY));
             Marks.DrawInline(PipFor(session), pipSize);
             if (ImGui.IsItemHovered())
@@ -1537,7 +1473,7 @@ public sealed class MainWindow : Window, IDisposable
 
         if (msqWidth > 0f && msqRoom > 2f * pillPad && x + separatorWidth + msqRoom <= versionX + 0.5f)
         {
-            x = StatusSeparatorAt(dl, x, textY, gap);
+            x = x > origin.X ? StatusSeparatorAt(dl, x, textY, gap) : x;
             var pillMin = new Vector2(x, textY - UiMetrics.Px(1f));
             var pillMax = new Vector2(x + msqRoom, textY + line + UiMetrics.Px(1f));
             dl.AddRectFilled(pillMin, pillMax, MsqPillFill, (pillMax.Y - pillMin.Y) * 0.5f);

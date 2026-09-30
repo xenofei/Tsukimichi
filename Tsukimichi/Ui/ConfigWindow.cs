@@ -303,6 +303,19 @@ public sealed partial class ConfigWindow : Window
             UiMetrics.Tooltip(Strings.ConfigReduceMotionHint);
         }
 
+        // The main window's rail: 64 px stations with labels, or 44 px icons (feature plan v4 L7).
+        var compactRail = settings.CompactRail;
+        if (ImGui.Checkbox(Strings.ConfigCompactRail, ref compactRail))
+        {
+            settings.CompactRail = compactRail;
+            Save();
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.ConfigCompactRailHint);
+        }
+
         // One layout, two palettes (T13): Night, or the surfaces mapped from the user's Dalamud style.
         var followDalamud = settings.FollowDalamudColours;
         if (ImGui.Checkbox(Strings.ConfigFollowDalamudColours, ref followDalamud))

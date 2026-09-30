@@ -285,6 +285,12 @@ public sealed class Configuration : IPluginConfiguration
     /// <summary>The Journal tree was dragged shut to its strip of icons; a drag outwards or a double-click opens it.</summary>
     public bool TreePaneStrip { get; set; }
 
+    /// <summary>
+    /// Settings › Display › Compact rail (feature plan v4 L7): the 44 px rail of icons, their labels in tooltips, at every
+    /// window width. Off by default, when the rail is compact only on windows under about 1,040 px.
+    /// </summary>
+    public bool CompactRail { get; set; }
+
     // ---- 0.8.0: chrome (T13) ----
     /// <summary>
     /// Draw the windows in the user's Dalamud colours instead of the Night palette: the same layout, with the surface

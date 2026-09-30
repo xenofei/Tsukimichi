@@ -374,6 +374,8 @@ static partial class Strings
     public static string ConfigIconScaleHint => Loc.Get("ConfigIconScaleHint");
     public static string ConfigReduceMotion => Loc.Get("ConfigReduceMotion");
     public static string ConfigReduceMotionHint => Loc.Get("ConfigReduceMotionHint");
+    public static string ConfigCompactRail => Loc.Get("ConfigCompactRail");
+    public static string ConfigCompactRailHint => Loc.Get("ConfigCompactRailHint");
     public static string ConfigFollowDalamudColours => Loc.Get("ConfigFollowDalamudColours");
     public static string ConfigFollowDalamudColoursHint => Loc.Get("ConfigFollowDalamudColoursHint");
     public static string ConfigGlyphPalette => Loc.Get("ConfigGlyphPalette");

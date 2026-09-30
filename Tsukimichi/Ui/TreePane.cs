@@ -20,6 +20,14 @@ namespace Tsukimichi.Ui;
 /// A category with a single genre is folded into one leaf (the category's name, the genre's scope and counts), and a
 /// section whose only category folded likewise becomes a single leaf, so no node ever expands to just one child.
 /// The node list is built once per catalog; count labels are re-materialized only when the counts instance changes.
+/// <para>
+/// Rows read the short names of <see cref="JournalNames.Short"/> ("Eden", "Hildibrand", "Main Scenario" with an
+/// ARR–EW pill), and a row whose name is shortened or cut names the node in full, with its journal path, on hover.
+/// Each row is fitted by <see cref="RowFit"/> within the tree's <see cref="TreeTier"/> (feature plan v4 L3): the
+/// expansion pill goes first, then the mini bar, then the count becomes a percentage, and in the narrowest tier the
+/// ring alone carries progress and the Ready pill becomes a gold dot on the glyph, so nothing ever overlaps. Texts
+/// are measured once per font size, so a row does no measuring per frame.
+/// </para>
 ///
 /// Rows are <c>TreeNodeEx</c> items (keyboard navigation, open-on-arrow, the reveal logic) with
 /// <see cref="ImGuiTreeNodeFlags.FramePadding"/> and a pushed vertical frame padding so each row is
@@ -38,13 +46,57 @@ public sealed partial class TreePane
     {
         public QuestScope Scope { get; } = scope;
         public string Id { get; } = id;
-        /// <summary>The label; the three virtual nodes take theirs again after a language switch.</summary>
+
+        /// <summary>
+        /// The row's label: the short name (<see cref="JournalNames.Short"/>) without an expansion suffix the row draws
+        /// as a pill (<see cref="Suffix"/>); the virtual nodes take theirs again after a language switch.
+        /// </summary>
         public string Name { get; set; } = name;
+
+        /// <summary>The game's full name, for the tooltip; the virtual nodes' label.</summary>
+        public string FullName { get; set; } = name;
+
+        /// <summary>The short name with its expansion suffix ("Main Scenario · DT"): the label where the pill does not show.</summary>
+        public string NameWithSuffix { get; set; } = name;
+
+        /// <summary>The short name's expansion suffix ("ARR–EW"), drawn as the row's pill; empty when it has none.</summary>
+        public string Suffix { get; set; } = string.Empty;
+
+        /// <summary>Whether the label is not the full name, so hovering the row names it in full.</summary>
+        public bool Shortened { get; set; }
+
+        /// <summary>The journal path down to the node ("Sidequests › Hildibrand Sidequests"), for the tooltip; empty for the virtual nodes.</summary>
+        public string Path { get; set; } = string.Empty;
+
+        /// <summary>
+        /// The node's official icon for the orbit (design v4 §6.2-6.3), resolved once per catalog by the icon task; 0
+        /// draws the moon halo. Read only by <see cref="DrawNodeGlyph"/>.
+        /// </summary>
+        public uint IconId { get; set; }
+
         public bool Leaf { get; } = leaf;
         public List<Node> Children { get; } = [];
 
         /// <summary>Full journal path of a folded node, shown on hover; null for ordinary nodes.</summary>
         public string? FoldedPath { get; set; }
+
+        /// <summary>The count is a number of quests rather than progress (the Other paths node): no percentage form.</summary>
+        public bool CountIsTally { get; set; }
+
+        /// <summary>The completion as "82 %", the count's form in the Compact tier.</summary>
+        public string PercentText { get; set; } = string.Empty;
+
+        // Measured widths, kept for the font size they were measured at; any text change resets MeasuredAt.
+        public float MeasuredAt { get; set; } = -1f;
+        public float NameWidth { get; set; }
+        public float NameWithSuffixWidth { get; set; }
+        public float CountWidth { get; set; }
+        public float PercentWidth { get; set; }
+        public float ReadyWidth { get; set; }
+        public float PillWidth { get; set; }
+
+        /// <summary>The pill after the name: the short name's expansion suffix, else the single expansion of its quests.</summary>
+        public string PillText => Suffix.Length > 0 ? Suffix : ExpansionText;
 
         /// <summary>Lowest expansion among the node's quests; Sprout mode folds a node whose lowest lies beyond the story.</summary>
         public byte MinExpansion { get; set; } = byte.MaxValue;
@@ -93,13 +145,22 @@ public sealed partial class TreePane
     private static readonly Vector4 ActiveWash = Theme.WithAlphaVector(Theme.Silver, 0.09f);
     private static readonly uint ReadyBadgeFill = Theme.WithAlpha(Theme.Moon, 0.16f);
 
-    /// <summary>Logical sizes: the mini bar (44 × 3, 12 before the count), pill paddings and the narrowest pane that shows pills.</summary>
+    /// <summary>Logical sizes: the mini bar (44 × 3, 12 before the count) and the pill paddings.</summary>
     private const float BarWidthLogical = 44f;
     private const float BarHeightLogical = 3f;
     private const float BarGapLogical = 12f;
     private const float PillPadLogical = 5f;
-    private const float PillMinPaneLogical = 200f;
     private const float PillFontFraction = 0.72f;
+
+    /// <summary>A row's parts in <see cref="RowFit"/> priority order: the count goes last, the expansion pill first.</summary>
+    private const int CountPart = 0;
+    private const int ReadyPart = 1;
+    private const int BarPart = 2;
+    private const int PillPart = 3;
+    private const int PartCount = 4;
+
+    /// <summary>The tree's width tier, kept from frame to frame for its hysteresis.</summary>
+    private TreeTier tier = TreeTier.Full;
 
     // Motion keys on a node's ImGui id (T17): the chevron's turn, the halo's fill, the reveal pulse.
     private const uint ChevronTag = 0x5452_4543; // "TREC"
@@ -155,6 +216,7 @@ public sealed partial class TreePane
 
         var start = ImGui.GetCursorScreenPos();
         var width = ImGui.GetContentRegionAvail().X;
+        tier = LayoutBudgets.TreeTierFor(width / MathF.Max(UiMetrics.Scale, 0.01f), tier);
 
         // Rows touch: the washes of neighbouring rows meet, and each row is exactly its own height.
         using (ImRaii.PushStyle(ImGuiStyleVar.ItemSpacing, new Vector2(ImGui.GetStyle().ItemSpacing.X, 0f)))
@@ -319,9 +381,10 @@ public sealed partial class TreePane
         // The overlay paints on the node item; its tooltip depends on the part under the mouse. Rows scrolled out of
         // view skip the painting (a fully open tree is hundreds of halos); a hidden row cannot be hovered anyway.
         var hover = Hover.None;
+        var row = default(RowOutcome);
         if (ImGui.IsItemVisible())
         {
-            hover = DrawNodeOverlay(node, section, selected, indentX, itemId);
+            hover = DrawNodeOverlay(node, section, selected, indentX, itemId, out row);
             if (expandable)
             {
                 DrawChevron(indentX, Motion.Lerp(Motion.Key(ChevronTag, itemId), open ? 1f : 0f, MotionMath.ChevronRate), arrowColor);
@@ -331,11 +394,18 @@ public sealed partial class TreePane
         {
             if (sproutFolded && hover is not (Hover.Halo or Hover.Progress or Hover.Ready))
             {
-                UiMetrics.Tooltip(Strings.SproutFoldedTooltip);
+                if (row.NameCut || node.Shortened)
+                {
+                    UiMetrics.Tooltip(node.FullName, Strings.SproutFoldedTooltip);
+                }
+                else
+                {
+                    UiMetrics.Tooltip(Strings.SproutFoldedTooltip);
+                }
             }
             else
             {
-                DrawTooltip(node, hover);
+                DrawTooltip(node, hover, row);
             }
         }
 
@@ -350,11 +420,20 @@ public sealed partial class TreePane
         }
     }
 
+    /// <summary>What a row's overlay decided, for its tooltip.</summary>
+    /// <param name="NameCut">The label ended in an ellipsis.</param>
+    /// <param name="ReadyDot">The Ready count showed as a gold dot on the glyph rather than a pill.</param>
+    private readonly record struct RowOutcome(bool NameCut, bool ReadyDot);
+
     /// <summary>
     /// Halo, name, pills, mini bar and count painted on the node's row; drawn without items so layout is untouched.
-    /// Returns which part the mouse is over, for the caller's item-hover tooltip (the node is the item).
+    /// The parts are fitted right to left by <see cref="RowFit"/> within the tree's <see cref="TreeTier"/> (feature
+    /// plan v4 L3): the name keeps at least <see cref="LayoutBudgets.RowNameMinLogical"/> and ends in an ellipsis,
+    /// and a part that does not fit is not drawn, so nothing overlaps the glyph or the chevron at any width. Where the
+    /// Ready pill cannot show, a gold dot on the glyph carries it. Returns which part the mouse is over, for the
+    /// caller's item-hover tooltip (the node is the item).
     /// </summary>
-    private Hover DrawNodeOverlay(Node node, bool section, bool selected, float indentX, uint itemId)
+    private Hover DrawNodeOverlay(Node node, bool section, bool selected, float indentX, uint itemId, out RowOutcome outcome)
     {
         var dl = ImGui.GetWindowDrawList();
         var min = ImGui.GetItemRectMin();
@@ -365,7 +444,7 @@ public sealed partial class TreePane
         var rowCenterY = (min.Y + max.Y) * 0.5f;
         var textY = rowCenterY - lineHeight * 0.5f;
         var complete = node.Complete;
-        var paneWidth = max.X - min.X;
+        Measure(node, section);
 
         // The selected row's one gold element: a 2 px Moon rule on the left edge.
         if (selected)
@@ -373,81 +452,113 @@ public sealed partial class TreePane
             dl.AddRectFilled(min, new Vector2(min.X + MathF.Max(2f, MathF.Round(UiMetrics.Px(2f))), max.Y), Theme.MoonU32);
         }
 
-        // Count, right-aligned: Dusk, Silver on the selected row, MoonDim once complete.
-        var countColor = complete ? Theme.MoonDimU32 : selected ? Theme.SilverU32 : Theme.DuskU32;
-        var countSize = ImGui.CalcTextSize(node.CountText);
-        var countPos = new Vector2(max.X - pad - countSize.X, textY);
-        dl.AddText(countPos, countColor, node.CountText);
-
         // Where TreeNodeEx puts its label: after the arrow slot (one font size plus twice the frame padding).
         var labelX = indentX + ImGui.GetFontSize() + style.FramePadding.X * 2f;
         var haloCenter = new Vector2(labelX + radius, rowCenterY);
-        // The fill moves only when the count changes (a quest completed, another character viewed), never on its own.
-        MoonGlyph.DrawHalo(dl, haloCenter, radius, Motion.Gauge(Motion.Key(GaugeTag, itemId), node.Count.Fraction), onCard: false, dimComplete: complete);
-        if (selected)
+        var namePos = new Vector2(labelX + radius * 2f + pad, textY);
+        var right = max.X - pad;
+
+        // The tier sets each part's form: the count as "done / total", as a percentage (none once complete), or gone.
+        var (countText, countWidth) = tier switch
         {
-            // The reveal pulse (a reveal from another pane landed here): around the row, inside the pane's edges.
-            Motion.DrawRevealPulse(dl, Motion.Key(RevealTag, itemId), new Vector2(indentX, min.Y + 1f), new Vector2(max.X - pad, max.Y - 1f), UiMetrics.Px(4f));
+            TreeTier.Full or TreeTier.Trim => (node.CountText, node.CountWidth),
+            TreeTier.Compact when node.CountIsTally => (node.CountText, node.CountWidth),
+            TreeTier.Compact when !complete => (node.PercentText, node.PercentWidth),
+            _ => (string.Empty, 0f),
+        };
+
+        var barWidth = UiMetrics.Px(BarWidthLogical);
+        var barGap = UiMetrics.Px(BarGapLogical);
+        var pillText = node.PillText;
+        Span<float> parts = stackalloc float[PartCount];
+        Span<bool> visible = stackalloc bool[PartCount];
+        parts[CountPart] = countWidth > 0f ? countWidth + pad : 0f;
+        parts[ReadyPart] = node.Ready > 0 && tier != TreeTier.Slim ? node.ReadyWidth + pad : 0f;
+        parts[BarPart] = tier <= TreeTier.Trim && !node.CountIsTally ? barWidth + barGap : 0f;
+        parts[PillPart] = tier == TreeTier.Full && pillText.Length > 0 ? node.PillWidth + pad : 0f;
+
+        var nameMin = UiMetrics.Px(LayoutBudgets.RowNameMinLogical);
+        // Where the tier offers no pill the label carries the expansion suffix, so the fit measures that label.
+        var fitName = parts[PillPart] > 0f ? node.NameWidth : node.NameWithSuffixWidth;
+        var fit = RowFit.Fit(right - namePos.X, fitName, nameMin, parts, visible);
+        var showCount = visible[CountPart] && parts[CountPart] > 0f;
+        var showReady = visible[ReadyPart] && parts[ReadyPart] > 0f;
+        var showBar = visible[BarPart] && parts[BarPart] > 0f;
+        var showPill = visible[PillPart] && parts[PillPart] > 0f;
+
+        // Count, right-aligned: Dusk, Silver on the selected row, MoonDim once complete.
+        var progressLeft = right;
+        if (showCount)
+        {
+            var countColor = complete ? Theme.MoonDimU32 : selected ? Theme.SilverU32 : Theme.DuskU32;
+            progressLeft = right - countWidth;
+            dl.AddText(new Vector2(progressLeft, textY), countColor, countText);
         }
 
-        // Mini bar 12 px before the count, dropped when the name would have less than a few characters of room.
-        var namePos = new Vector2(labelX + radius * 2f + pad, textY);
-        var barWidth = UiMetrics.Px(BarWidthLogical);
-        var barRight = countPos.X - UiMetrics.Px(BarGapLogical);
-        var barLeft = barRight - barWidth;
-        var showBar = barLeft - pad - namePos.X >= UiMetrics.Px(60f);
+        // Mini bar 12 px before the count.
         if (showBar)
         {
-            DrawMiniBar(dl, new Vector2(barLeft, rowCenterY), barWidth, node.Count, complete);
+            var barRight = showCount ? progressLeft - barGap : right;
+            progressLeft = barRight - barWidth;
+            DrawMiniBar(dl, new Vector2(progressLeft, rowCenterY), barWidth, node.Count, complete);
         }
 
-        var textRight = (showBar ? barLeft : countPos.X) - pad;
-
-        // Pills after the name: the expansion (wide panes only) and the Ready count (only when some are Ready).
-        var pillFont = ImGui.GetFontSize() * PillFontFraction;
-        var pillPad = UiMetrics.Px(PillPadLogical);
-        var showExpansion = node.ExpansionText.Length > 0 && paneWidth >= UiMetrics.Px(PillMinPaneLogical);
-        var expansionWidth = showExpansion ? ImGui.CalcTextSize(node.ExpansionText).X * PillFontFraction + 2f * pillPad : 0f;
-        var readyWidth = node.Ready > 0 ? ImGui.CalcTextSize(node.ReadyText).X + 2f * pillPad : 0f;
-        var pillsWidth = (showExpansion ? expansionWidth + pad : 0f) + (node.Ready > 0 ? readyWidth + pad : 0f);
-
+        // The name in the room the parts leave, with an ellipsis when cut. A section whose expansion pill did not fit
+        // names its expansion in the label instead ("Main Scenario · DT"), so the two Main Scenario rows stay apart.
+        var suffixInName = node.Suffix.Length > 0 && !showPill;
+        var name = suffixInName ? node.NameWithSuffix : node.Name;
+        var nameWidth = suffixInName ? node.NameWithSuffixWidth : node.NameWidth;
         var nameColor = complete ? Theme.MoonDimU32 : ImGui.GetColorU32(ImGuiCol.Text);
-        var nameWidth = ImGui.CalcTextSize(node.Name).X + (section ? UiMetrics.Hairline : 0f);
-        var nameRoom = MathF.Max(0f, textRight - pillsWidth - namePos.X);
-        var nameEnd = namePos.X + MathF.Min(nameWidth, nameRoom);
-        dl.PushClipRect(namePos, new Vector2(namePos.X + nameRoom, max.Y), true);
-        dl.AddText(namePos, nameColor, node.Name);
-        if (section)
+        var nameRoom = fit.NameRoom;
+        var bold = section ? UiMetrics.Hairline : 0f;
+        var textRoom = MathF.Max(0f, nameRoom - bold);
+        var cut = name.Length > 0 && textRoom <= 0f;
+        if (textRoom > 0f)
         {
-            // No bold face in Dalamud: a second pass one scaled pixel to the right thickens the strokes.
-            dl.AddText(namePos + new Vector2(UiMetrics.Hairline, 0f), nameColor, node.Name);
+            cut = Chrome.EllipsisTextAt(dl, namePos, textRoom, name, nameColor, nameWidth - bold);
+            if (section)
+            {
+                // No bold face in Dalamud: a second pass one scaled pixel to the right thickens the strokes.
+                Chrome.EllipsisTextAt(dl, namePos + new Vector2(bold, 0f), textRoom, name, nameColor, nameWidth - bold);
+            }
         }
 
-        dl.PopClipRect();
+        var nameEnd = namePos.X + MathF.Min(nameWidth, nameRoom);
 
         var hover = Hover.None;
         var pillX = nameEnd + pad;
-        var pillHeight = MathF.Min(max.Y - min.Y - 4f, pillFont + 2f * UiMetrics.Px(2f));
-        if (showExpansion && pillX + expansionWidth <= textRight)
+        if (showPill)
         {
+            var pillFont = ImGui.GetFontSize() * PillFontFraction;
+            var pillHeight = MathF.Min(max.Y - min.Y - 4f, pillFont + 2f * UiMetrics.Px(2f));
             var pillMin = new Vector2(pillX, rowCenterY - pillHeight * 0.5f);
-            var pillMax = new Vector2(pillX + expansionWidth, rowCenterY + pillHeight * 0.5f);
+            var pillMax = new Vector2(pillX + node.PillWidth, rowCenterY + pillHeight * 0.5f);
             dl.AddRect(pillMin, pillMax, Theme.VeilU32, pillHeight * 0.5f, ImDrawFlags.None, 1f);
-            dl.AddText(ImGui.GetFont(), pillFont, new Vector2(pillX + pillPad, rowCenterY - pillFont * 0.5f), Theme.DuskU32, node.ExpansionText);
+            dl.AddText(ImGui.GetFont(), pillFont, new Vector2(pillX + UiMetrics.Px(PillPadLogical), rowCenterY - pillFont * 0.5f), Theme.DuskU32, pillText);
             pillX = pillMax.X + pad;
         }
 
-        if (node.Ready > 0 && pillX + readyWidth <= textRight)
+        if (showReady)
         {
             var badgeHeight = MathF.Min(max.Y - min.Y - 4f, lineHeight + 2f);
             var badgeMin = new Vector2(pillX, rowCenterY - badgeHeight * 0.5f);
-            var badgeMax = new Vector2(pillX + readyWidth, rowCenterY + badgeHeight * 0.5f);
+            var badgeMax = new Vector2(pillX + node.ReadyWidth, rowCenterY + badgeHeight * 0.5f);
             dl.AddRectFilled(badgeMin, badgeMax, ReadyBadgeFill, badgeHeight * 0.5f);
-            dl.AddText(new Vector2(pillX + pillPad, textY), Theme.MoonU32, node.ReadyText);
+            dl.AddText(new Vector2(pillX + UiMetrics.Px(PillPadLogical), textY), Theme.MoonU32, node.ReadyText);
             if (ImGui.IsMouseHoveringRect(badgeMin, badgeMax, false))
             {
                 hover = Hover.Ready;
             }
+        }
+
+        // The glyph, with the Ready dot when the pill could not show. The fill moves only when the count changes (a
+        // quest completed, another character viewed), never on its own.
+        var readyDot = node.Ready > 0 && !showReady;
+        DrawNodeGlyph(dl, node, haloCenter, radius, Motion.Gauge(Motion.Key(GaugeTag, itemId), node.Count.Fraction), readyDot);
+        if (selected)
+        {
+            // The reveal pulse (a reveal from another pane landed here): around the row, inside the pane's edges.
+            Motion.DrawRevealPulse(dl, Motion.Key(RevealTag, itemId), new Vector2(indentX, min.Y + 1f), new Vector2(max.X - pad, max.Y - 1f), UiMetrics.Px(4f));
         }
 
         // Section rows read as chapters: a 1 px VeilLine rule under the row, indented past the arrow.
@@ -457,6 +568,7 @@ public sealed partial class TreePane
             dl.AddLine(new Vector2(labelX, y), new Vector2(max.X - pad, y), Theme.VeilLineU32, 1f);
         }
 
+        outcome = new RowOutcome(cut, readyDot);
         if (hover != Hover.None)
         {
             return hover;
@@ -468,8 +580,30 @@ public sealed partial class TreePane
             return Hover.Halo;
         }
 
-        var progressLeft = showBar ? barLeft : countPos.X;
-        return ImGui.IsMouseHoveringRect(new Vector2(progressLeft, min.Y), max, false) ? Hover.Progress : Hover.None;
+        return progressLeft < right && ImGui.IsMouseHoveringRect(new Vector2(progressLeft, min.Y), max, false) ? Hover.Progress : Hover.None;
+    }
+
+    /// <summary>
+    /// Measures the node's texts at the current font size, once: again only when the font size (the UI scale) or one
+    /// of the texts changed, so a row costs no text measuring per frame.
+    /// </summary>
+    private static void Measure(Node node, bool section)
+    {
+        var fontSize = ImGui.GetFontSize();
+        if (node.MeasuredAt == fontSize)
+        {
+            return;
+        }
+
+        var bold = section ? UiMetrics.Hairline : 0f;
+        var pillPad = 2f * UiMetrics.Px(PillPadLogical);
+        node.NameWidth = ImGui.CalcTextSize(node.Name).X + bold;
+        node.NameWithSuffixWidth = ReferenceEquals(node.NameWithSuffix, node.Name) ? node.NameWidth : ImGui.CalcTextSize(node.NameWithSuffix).X + bold;
+        node.CountWidth = node.CountText.Length > 0 ? ImGui.CalcTextSize(node.CountText).X : 0f;
+        node.PercentWidth = node.PercentText.Length > 0 ? ImGui.CalcTextSize(node.PercentText).X : 0f;
+        node.ReadyWidth = node.Ready > 0 ? ImGui.CalcTextSize(node.ReadyText).X + pillPad : 0f;
+        node.PillWidth = node.PillText.Length > 0 ? (ImGui.CalcTextSize(node.PillText).X * PillFontFraction) + pillPad : 0f;
+        node.MeasuredAt = fontSize;
     }
 
     /// <summary>The 44 × 3 mini bar: Veil track, Moon fill (MoonDim once complete), at least 2 px of fill above 0.</summary>
@@ -509,9 +643,11 @@ public sealed partial class TreePane
 
     /// <summary>
     /// Hover text by row part: the Ready badge names its count; the halo and the count give done/total with the
-    /// percentage; elsewhere a folded node shows its full path under a 32 px halo and the exact fraction (T8, §4.7).
+    /// percentage (and the Ready count where it shows as a dot); elsewhere a folded node shows its full path under a
+    /// 32 px halo and the exact fraction (T8, §4.7), and a node whose label is cut or shortened shows its full name and
+    /// its journal path (feature plan v4 L3).
     /// </summary>
-    private static void DrawTooltip(Node node, Hover hover)
+    private static void DrawTooltip(Node node, Hover hover, RowOutcome row)
     {
         switch (hover)
         {
@@ -520,12 +656,33 @@ public sealed partial class TreePane
                 return;
             case Hover.Halo:
             case Hover.Progress:
-                UiMetrics.Tooltip(Strings.FillingMoonTooltip, node.HoverText.Length > 0 ? node.HoverText : node.ProgressText);
+                var progress = node.HoverText.Length > 0 ? node.HoverText : node.ProgressText;
+                if (row.ReadyDot)
+                {
+                    using var readyStyle = Theme.PushTooltip();
+                    using var readyTip = ImRaii.Tooltip();
+                    UiMetrics.ApplyFontScale();
+                    ImGui.TextUnformatted(Strings.FillingMoonTooltip);
+                    ImGui.TextDisabled(progress);
+                    using (ImRaii.PushColor(ImGuiCol.Text, Theme.Moon))
+                    {
+                        ImGui.TextUnformatted(node.ReadyTooltip);
+                    }
+
+                    return;
+                }
+
+                UiMetrics.Tooltip(Strings.FillingMoonTooltip, progress);
                 return;
         }
 
         if (node.FoldedPath is not { } path)
         {
+            if (row.NameCut || node.Shortened)
+            {
+                UiMetrics.Tooltip(node.FullName, node.Path.Length > 0 && node.Path != node.FullName ? node.Path : null);
+            }
+
             return;
         }
 
@@ -592,6 +749,7 @@ public sealed partial class TreePane
         otherPathsNode.CountText = paths.Total.ToString("N0", CultureInfo.CurrentCulture);
         otherPathsNode.ProgressText = Core.Evaluation.PathText.Tally(paths);
         otherPathsNode.HoverText = otherPathsNode.ProgressText;
+        otherPathsNode.MeasuredAt = -1f;
     }
 
     /// <summary>The node's other-path tally and the halo tooltip that carries it.</summary>
@@ -630,7 +788,11 @@ public sealed partial class TreePane
             node.CountText = string.Format(CultureInfo.CurrentCulture, Strings.TreeCountFormat, count.Done, count.Total);
             node.ProgressText = UiFormat.Progress(count.Done, count.Total);
             node.FractionText = string.Format(CultureInfo.CurrentCulture, Strings.TreeFractionFormat, count.Fraction);
+            // Floored, like the status bar: a node reads 100 % only once complete (and then the Compact tier hides it).
+            var percent = count.Total <= 0 ? 0 : (int)MathF.Floor(100f * count.Done / count.Total);
+            node.PercentText = string.Format(CultureInfo.CurrentCulture, Strings.StatusPercentFormat, percent);
             node.HoverText = string.Empty;
+            node.MeasuredAt = -1f;
         }
 
         if (node.Ready != ready || node.ReadyText.Length == 0)
@@ -638,6 +800,7 @@ public sealed partial class TreePane
             node.Ready = ready;
             node.ReadyText = ready.ToString("N0", CultureInfo.CurrentCulture);
             node.ReadyTooltip = string.Format(CultureInfo.CurrentCulture, Strings.TreeReadyBadgeFormat, ready);
+            node.MeasuredAt = -1f;
         }
     }
 
@@ -652,10 +815,11 @@ public sealed partial class TreePane
         }
 
         nodesLanguage = Localization.Loc.Version;
-        allNode.Name = Strings.AllQuests;
-        featureNode.Name = Strings.FeatureUnlocks;
-        unlistedNode.Name = Strings.RemovedFromGame;
-        otherPathsNode.Name = Strings.OtherPaths;
+        NameVirtual(allNode, Strings.AllQuests);
+        NameVirtual(featureNode, Strings.FeatureUnlocks);
+        NameVirtual(unlistedNode, Strings.RemovedFromGame);
+        NameVirtual(otherPathsNode, Strings.OtherPaths);
+        otherPathsNode.CountIsTally = true;
         bundle = current;
         counts = null;
         featureReady = -1;
@@ -714,6 +878,56 @@ public sealed partial class TreePane
         for (var i = 0; i < sections.Count; i++)
         {
             sections[i] = Fold(sections[i]);
+            NameTree(sections[i], parent: null, sections[i].FullName, current.Language, string.Empty);
+        }
+    }
+
+    /// <summary>Between the names of a journal path in the tooltip, as in <see cref="Strings.FoldedPathFormat"/>.</summary>
+    private const string PathSeparator = " › ";
+
+    /// <summary>A virtual node's label (All quests, Unlock quests, …): its own name, never shortened.</summary>
+    private static void NameVirtual(Node node, string name)
+    {
+        node.Name = name;
+        node.FullName = name;
+        node.NameWithSuffix = name;
+        node.MeasuredAt = -1f;
+    }
+
+    /// <summary>
+    /// Gives a node and its children their labels (feature plan v4 L3): the short name (<see cref="JournalNames.Short"/>,
+    /// English catalogs only), a top-level node's expansion suffix split off for its pill, and the full journal path
+    /// for the tooltip. Once per catalog and language, never per frame.
+    /// </summary>
+    private static void NameTree(Node node, Node? parent, string section, string language, string parentPath)
+    {
+        var full = node.FullName;
+        var shortName = JournalNames.Short(full, parent?.FullName, section, language);
+        var (head, suffix) = JournalNames.SplitExpansion(shortName);
+        if (parent is null)
+        {
+            // A section: "Main Scenario" with an "ARR–EW" pill that yields to the name when room runs short.
+            node.Name = head;
+            node.Suffix = suffix;
+        }
+        else
+        {
+            // A role genre ("Tank · ShB") keeps its expansion in the label, so its one-expansion pill would repeat it.
+            node.Name = shortName;
+            node.Suffix = string.Empty;
+            if (suffix.Length > 0)
+            {
+                node.ExpansionText = string.Empty;
+            }
+        }
+
+        node.NameWithSuffix = shortName;
+        node.Shortened = !string.Equals(shortName, full, StringComparison.Ordinal);
+        node.Path = parentPath.Length == 0 ? full : parentPath + PathSeparator + full;
+        node.MeasuredAt = -1f;
+        foreach (var child in node.Children)
+        {
+            NameTree(child, node, section, language, node.Path);
         }
     }
 
