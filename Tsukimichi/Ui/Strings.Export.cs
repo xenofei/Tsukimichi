@@ -1,3 +1,5 @@
+using Tsukimichi.Localization;
+
 namespace Tsukimichi.Ui;
 
 /// <summary>
@@ -6,30 +8,30 @@ namespace Tsukimichi.Ui;
 /// </summary>
 static partial class Strings
 {
-    public const string ExportHeader = "Export";
-    public const string ExportIntro = "Write the viewed character's completed quests or Moonlit collection to a file for a spreadsheet or a collection tracker. The file stays on your computer; Tsukimichi never uploads anything.";
-    public const string ExportQuests = "Export completed quests";
-    public const string ExportMoonlit = "Export Moonlit collection";
-    public const string ExportFormatLabel = "Format:";
+    public static string ExportHeader => Loc.Get("ExportHeader");
+    public static string ExportIntro => Loc.Get("ExportIntro");
+    public static string ExportQuests => Loc.Get("ExportQuests");
+    public static string ExportMoonlit => Loc.Get("ExportMoonlit");
+    public static string ExportFormatLabel => Loc.Get("ExportFormatLabel");
     public const string ExportFormatJson = "JSON";
     public const string ExportFormatCsv = "CSV";
-    public const string ExportIncludeName = "Include character name";
-    public const string ExportIncludeNameHint = "Off by default. When on, the character's name goes in the JSON header and in the file name. Content id, account and world are never written.";
-    public const string ExportIncludeIncomplete = "List every quest with a completed flag";
-    public const string ExportIncludeIncompleteHint = "Off: only completed quests. On: every quest the journal knows, each marked completed true or false. Files use real quest names: the spoiler shield does not apply to them, so this lists main scenario quests you have not reached.";
-    public const string ExportFolderLabel = "Output folder";
-    public const string ExportFolderDefault = "Default";
-    public const string ExportFolderDefaultTooltip = "Use exports in the plugin's config directory";
-    public const string ExportOpenFolder = "Open folder";
-    public const string ExportOpenFolderFailed = "Could not open the folder: ";
-    public const string ExportWrittenPrefix = "Written: ";
-    public const string ExportFailedPrefix = "Export failed: ";
-    public const string ExportNoCharacter = "No character to export: log in, or pick a stored character on the Characters tab.";
-    public const string ExportCatalogLoading = "The quest catalog is still loading; try again in a moment.";
+    public static string ExportIncludeName => Loc.Get("ExportIncludeName");
+    public static string ExportIncludeNameHint => Loc.Get("ExportIncludeNameHint");
+    public static string ExportIncludeIncomplete => Loc.Get("ExportIncludeIncomplete");
+    public static string ExportIncludeIncompleteHint => Loc.Get("ExportIncludeIncompleteHint");
+    public static string ExportFolderLabel => Loc.Get("ExportFolderLabel");
+    public static string ExportFolderDefault => Loc.Get("ExportFolderDefault");
+    public static string ExportFolderDefaultTooltip => Loc.Get("ExportFolderDefaultTooltip");
+    public static string ExportOpenFolder => Loc.Get("ExportOpenFolder");
+    public static string ExportOpenFolderFailed => Loc.Get("ExportOpenFolderFailed");
+    public static string ExportWrittenPrefix => Loc.Get("ExportWrittenPrefix");
+    public static string ExportFailedPrefix => Loc.Get("ExportFailedPrefix");
+    public static string ExportNoCharacter => Loc.Get("ExportNoCharacter");
+    public static string ExportCatalogLoading => Loc.Get("ExportCatalogLoading");
 
     /// <summary>{0} = file path.</summary>
-    public const string ExportChatWrittenFormat = "Exported to {0}";
+    public static string ExportChatWrittenFormat => Loc.Get("ExportChatWrittenFormat");
 
     /// <summary>{0} = the word not understood.</summary>
-    public const string ExportChatUsageFormat = "Unknown export option \"{0}\". Use /tsuki export [quests|moonlit] [json|csv].";
+    public static string ExportChatUsageFormat => Loc.Get("ExportChatUsageFormat");
 }

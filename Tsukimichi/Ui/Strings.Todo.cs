@@ -1,4 +1,5 @@
 using Tsukimichi.Core.Todo;
+using Tsukimichi.Localization;
 
 namespace Tsukimichi.Ui;
 
@@ -9,34 +10,34 @@ namespace Tsukimichi.Ui;
 static partial class Strings
 {
     // ---- Overlay window ----
-    public const string TodoWindowTitle = "Tsukimichi Todo###TsukimichiTodo";
-    public const string TodoHeader = "☾ Tsukimichi";
-    public const string TodoEmpty = "Nothing to do here";
-    public const string TodoNoSections = "No sections enabled";
+    public static string TodoWindowTitle => Loc.Get("TodoWindowTitle");
+    public static string TodoHeader => Loc.Get("TodoHeader");
+    public static string TodoEmpty => Loc.Get("TodoEmpty");
+    public static string TodoNoSections => Loc.Get("TodoNoSections");
 
-    public const string TodoSectionPinned = "Pinned";
-    public const string TodoSectionSeasonal = "Event quests running now";
-    public const string TodoSectionNearby = "Unlocks you can start here";
-    public const string TodoSectionMsq = "Main scenario";
-    public const string TodoSectionJobQuests = "Job quests";
+    public static string TodoSectionPinned => Loc.Get("TodoSectionPinned");
+    public static string TodoSectionSeasonal => Loc.Get("TodoSectionSeasonal");
+    public static string TodoSectionNearby => Loc.Get("TodoSectionNearby");
+    public static string TodoSectionMsq => Loc.Get("TodoSectionMsq");
+    public static string TodoSectionJobQuests => Loc.Get("TodoSectionJobQuests");
 
     /// <summary>{0} = section name, {1} = row count.</summary>
     public const string TodoSectionFormat = "{0} ({1})";
 
-    public const string TodoRowClickHint = "Click: show in Tsukimichi · double-click: flag the giver on the map · right-click or …: more";
-    public const string TodoRowMoreTooltip = "More: reveal, flag, teleport, link in chat";
-    public const string TodoHeaderMoreTooltip = "Overlay options: lock, compact, reset position, hide";
+    public static string TodoRowClickHint => Loc.Get("TodoRowClickHint");
+    public static string TodoRowMoreTooltip => Loc.Get("TodoRowMoreTooltip");
+    public static string TodoHeaderMoreTooltip => Loc.Get("TodoHeaderMoreTooltip");
 
     /// <summary>{0} = section name. Tooltip on a section header.</summary>
-    public const string TodoSectionToggleFormat = "Click to fold or unfold {0}";
-    public const string TodoRevealInTsukimichi = "Reveal in Tsukimichi";
+    public static string TodoSectionToggleFormat => Loc.Get("TodoSectionToggleFormat");
+    public static string TodoRevealInTsukimichi => Loc.Get("TodoRevealInTsukimichi");
 
     // Header context menu (right-click on the title).
-    public const string TodoMenuLock = "Lock (click-through)";
-    public const string TodoMenuLockTooltip = "The overlay stops taking clicks so the game behind it gets them. Unlock it again in Settings › Todo overlay.";
-    public const string TodoMenuCompact = "Compact";
-    public const string TodoMenuResetPosition = "Reset position";
-    public const string TodoMenuHide = "Hide overlay";
+    public static string TodoMenuLock => Loc.Get("TodoMenuLock");
+    public static string TodoMenuLockTooltip => Loc.Get("TodoMenuLockTooltip");
+    public static string TodoMenuCompact => Loc.Get("TodoMenuCompact");
+    public static string TodoMenuResetPosition => Loc.Get("TodoMenuResetPosition");
+    public static string TodoMenuHide => Loc.Get("TodoMenuHide");
 
     public static string TodoSectionName(TodoSection section) => section switch
     {
@@ -50,25 +51,25 @@ static partial class Strings
     };
 
     // ---- Settings › Todo overlay ----
-    public const string TodoConfigSection = "Todo overlay";
-    public const string TodoConfigEnabled = "Show the Todo overlay";
-    public const string TodoConfigEnabledHint = "A small always-visible panel: your pins, event quests running now, unlock quests you can start here, the next main scenario quest and your job quests. /tsuki todo toggles it.";
-    public const string TodoConfigLocked = "Locked (click-through)";
-    public const string TodoConfigLockedHint = "The overlay cannot be moved and ignores the mouse: clicks go to the game behind it. Untick this to use its rows and menu again.";
+    public static string TodoConfigSection => Loc.Get("TodoConfigSection");
+    public static string TodoConfigEnabled => Loc.Get("TodoConfigEnabled");
+    public static string TodoConfigEnabledHint => Loc.Get("TodoConfigEnabledHint");
+    public static string TodoConfigLocked => Loc.Get("TodoConfigLocked");
+    public static string TodoConfigLockedHint => Loc.Get("TodoConfigLockedHint");
     /// <summary>Settings › Todo overlay, under Locked, for a player who upgraded with the overlay locked (shown until they unlock it).</summary>
-    public const string TodoLockUpgradeNotice = "Since 0.8.0, Locked means click-through: your locked overlay lets every click through to the game, so its rows and menu do not respond. Untick Locked above to use them again.";
+    public static string TodoLockUpgradeNotice => Loc.Get("TodoLockUpgradeNotice");
     /// <summary>The one chat line at login for a player who upgraded with the overlay locked.</summary>
-    public const string TodoLockUpgradeChat = "Your Todo overlay is locked, and since 0.8.0 Locked means click-through: clicks go to the game behind it. To use its rows and menu again, untick Settings › Todo overlay › Locked (click-through).";
-    public const string TodoConfigCompact = "Compact";
-    public const string TodoConfigCompactHint = "Moon and name only, one line per row, at a fixed width.";
-    public const string TodoConfigOpacity = "Background opacity";
-    public const string TodoConfigSectionsLabel = "Sections";
-    public const string TodoConfigShowPins = "Pinned quests";
-    public const string TodoConfigShowSeasonal = "Event quests running now";
-    public const string TodoConfigShowSeasonalHint = "Quests of the seasonal events running now that you can start or have in your journal, with their giver. An end date shows only when the Lodestone announced it (\"Ends Aug 28 (Lodestone)\").";
-    public const string TodoConfigShowNearby = "Unlock quests you can start in this zone";
-    public const string TodoConfigShowMsq = "Next main scenario quest";
-    public const string TodoConfigShowJobQuests = "Job and role quests for the current job";
-    public const string TodoConfigResetPosition = "Reset position";
-    public const string TodoConfigResetPositionHint = "Move the overlay back to the top left of the screen";
+    public static string TodoLockUpgradeChat => Loc.Get("TodoLockUpgradeChat");
+    public static string TodoConfigCompact => Loc.Get("TodoConfigCompact");
+    public static string TodoConfigCompactHint => Loc.Get("TodoConfigCompactHint");
+    public static string TodoConfigOpacity => Loc.Get("TodoConfigOpacity");
+    public static string TodoConfigSectionsLabel => Loc.Get("TodoConfigSectionsLabel");
+    public static string TodoConfigShowPins => Loc.Get("TodoConfigShowPins");
+    public static string TodoConfigShowSeasonal => Loc.Get("TodoConfigShowSeasonal");
+    public static string TodoConfigShowSeasonalHint => Loc.Get("TodoConfigShowSeasonalHint");
+    public static string TodoConfigShowNearby => Loc.Get("TodoConfigShowNearby");
+    public static string TodoConfigShowMsq => Loc.Get("TodoConfigShowMsq");
+    public static string TodoConfigShowJobQuests => Loc.Get("TodoConfigShowJobQuests");
+    public static string TodoConfigResetPosition => Loc.Get("TodoConfigResetPosition");
+    public static string TodoConfigResetPositionHint => Loc.Get("TodoConfigResetPositionHint");
 }

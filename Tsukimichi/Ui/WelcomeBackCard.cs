@@ -33,7 +33,7 @@ public sealed class WelcomeBackCard
     private const float MaxHeightPx = 460f;
     private const float Pad = 8f;
     private const int MaxJournalRows = 8;
-    private const string MsqShowLabel = Strings.WelcomeBackShowInJournal + "##msq";
+    private static readonly Localization.LocText MsqShowLabel = new(static () => Strings.WelcomeBackShowInJournal + "##msq");
 
     private static readonly string JournalIcon = Chrome.Icon(FontAwesomeIcon.Book);
     private static readonly string MsqIcon = Chrome.Icon(FontAwesomeIcon.Moon);
@@ -337,7 +337,7 @@ public sealed class WelcomeBackCard
 
         if (msqNext is { } next)
         {
-            if (ImGui.SmallButton(MsqShowLabel))
+            if (ImGui.SmallButton(MsqShowLabel.Value))
             {
                 ui.Reveal(next);
             }

@@ -3,6 +3,7 @@ using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Ui;
+using Tsukimichi.Localization;
 
 namespace Tsukimichi.Ui;
 
@@ -14,113 +15,113 @@ namespace Tsukimichi.Ui;
 public static partial class Strings
 {
     // Window
-    public const string MainWindowTitle = "Tsukimichi###TsukimichiMain";
-    public const string LoadingCatalog = "Loading catalog";
-    public const string CatalogUnavailable = "Catalog unavailable";
-    public const string Retry = "Retry";
-    public const string Retrying = "Retrying";
+    public static string MainWindowTitle => Loc.Get("MainWindowTitle");
+    public static string LoadingCatalog => Loc.Get("LoadingCatalog");
+    public static string CatalogUnavailable => Loc.Get("CatalogUnavailable");
+    public static string Retry => Loc.Get("Retry");
+    public static string Retrying => Loc.Get("Retrying");
 
     // Toolbar
-    public const string SearchHint = "Search quests, rewards or ids";
-    public const string SearchTooltip = "Matches quest names, reward names and numeric ids. Ctrl+F jumps here";
-    public const string ClearSearch = "Clear search";
-    public const string Filters = "Filters";
-    public const string FiltersTooltip = "Show or hide the filter panel beside the tree";
-    public const string NoCharacter = "No character";
-    public const string NoSnapshots = "No snapshots yet";
+    public static string SearchHint => Loc.Get("SearchHint");
+    public static string SearchTooltip => Loc.Get("SearchTooltip");
+    public static string ClearSearch => Loc.Get("ClearSearch");
+    public static string Filters => Loc.Get("Filters");
+    public static string FiltersTooltip => Loc.Get("FiltersTooltip");
+    public static string NoCharacter => Loc.Get("NoCharacter");
+    public static string NoSnapshots => Loc.Get("NoSnapshots");
     public const string LiveMarker = "● ";
-    public const string SyncLive = "Live";
-    public const string SyncPollerPaused = "Game reads paused after an error; retrying";
+    public static string SyncLive => Loc.Get("SyncLive");
+    public static string SyncPollerPaused => Loc.Get("SyncPollerPaused");
     /// <summary>{0} = snapshot time.</summary>
-    public const string SyncSnapshotFormat = "Snapshot from {0}";
+    public static string SyncSnapshotFormat => Loc.Get("SyncSnapshotFormat");
     /// <summary>{0} = name, {1} = world, {2} = time.</summary>
-    public const string StaleBannerFormat = "Snapshot: {0}@{1}, {2}";
+    public static string StaleBannerFormat => Loc.Get("StaleBannerFormat");
     /// <summary>{0} = name, {1} = world, {2} = age.</summary>
     public const string CharacterEntryFormat = "{0}@{1} · {2}";
     /// <summary>{0} = name, {1} = world.</summary>
     public const string CharacterNameFormat = "{0}@{1}";
-    public const string BrowseModeNotice = "No character snapshot: states, blockers and availability are not evaluated.";
-    public const string HelpButtonTooltip = "Help";
-    public const string TutorialButtonTooltip = "Tour: a guided walk through the window";
-    public const string SettingsButtonTooltip = "Settings";
-    public const string ActionUnavailable = "Not available yet";
+    public static string BrowseModeNotice => Loc.Get("BrowseModeNotice");
+    public static string HelpButtonTooltip => Loc.Get("HelpButtonTooltip");
+    public static string TutorialButtonTooltip => Loc.Get("TutorialButtonTooltip");
+    public static string SettingsButtonTooltip => Loc.Get("SettingsButtonTooltip");
+    public static string ActionUnavailable => Loc.Get("ActionUnavailable");
 
     // Status bar: {0} = catalog count, {1} = rows shown, {2} = total in scope. The live/snapshot text follows its pip,
     // the MSQ pill and the version (right-aligned) are separate segments (T12).
-    public const string StatusFormat = "{0:N0} quests · showing {1:N0} of {2:N0}";
+    public static string StatusFormat => Loc.Get("StatusFormat");
     /// <summary>{0} = plugin version.</summary>
-    public const string StatusVersionFormat = "v{0}";
+    public static string StatusVersionFormat => Loc.Get("StatusVersionFormat");
     /// <summary>{0} = whole percent of every counted quest done.</summary>
     public const string StatusPercentFormat = "{0}%";
-    public const string StatusLive = "live";
+    public static string StatusLive => Loc.Get("StatusLive");
     /// <summary>{0} = time.</summary>
-    public const string StatusSnapshotFormat = "snapshot {0}";
-    public const string StatusNoSnapshot = "no snapshot";
+    public static string StatusSnapshotFormat => Loc.Get("StatusSnapshotFormat");
+    public static string StatusNoSnapshot => Loc.Get("StatusNoSnapshot");
 
     // Main scenario position (status bar and Characters dashboard)
     /// <summary>{0} = quest name.</summary>
-    public const string StatusMsqFormat = "MSQ · {0} ›";
-    public const string StatusMsqComplete = "MSQ · complete";
+    public static string StatusMsqFormat => Loc.Get("StatusMsqFormat");
+    public static string StatusMsqComplete => Loc.Get("StatusMsqComplete");
     /// <summary>{0} = the routes of a branched main scenario, "route A 3/9 · route B —" (<c>MsqText.Compact</c>).</summary>
-    public const string StatusMsqRoutesFormat = "MSQ · {0}";
+    public static string StatusMsqRoutesFormat => Loc.Get("StatusMsqRoutesFormat");
     /// <summary>{0} = expansion, {1} = the routes, "route A 3 of 9 · route B not started" (<c>MsqText.Spelled</c>).</summary>
-    public const string CharactersMsqRoutesFormat = "MSQ: {0} · {1}";
+    public static string CharactersMsqRoutesFormat => Loc.Get("CharactersMsqRoutesFormat");
     /// <summary>{0} = expansion, {1} = done, {2} = total.</summary>
-    public const string MsqProgressFormat = "{0} · {1:N0} of {2:N0} main scenario quests done";
+    public static string MsqProgressFormat => Loc.Get("MsqProgressFormat");
     /// <summary>{0} = done, {1} = total.</summary>
-    public const string MsqCompleteFormat = "Main scenario complete · {0:N0} of {1:N0}";
+    public static string MsqCompleteFormat => Loc.Get("MsqCompleteFormat");
     /// <summary>{0} = NPC, {1} = zone.</summary>
     public const string MsqGiverFormat = "{0}, {1}";
-    public const string MsqClickHint = "Click to select";
+    public static string MsqClickHint => Loc.Get("MsqClickHint");
     /// <summary>{0} = expansion, {1} = quest, {2} = giver ("NPC, zone").</summary>
-    public const string CharactersMsqFormat = "MSQ: {0} · next: {1} ({2})";
+    public static string CharactersMsqFormat => Loc.Get("CharactersMsqFormat");
     /// <summary>{0} = expansion, {1} = quest.</summary>
-    public const string CharactersMsqNoGiverFormat = "MSQ: {0} · next: {1}";
-    public const string CharactersMsqComplete = "MSQ: complete";
+    public static string CharactersMsqNoGiverFormat => Loc.Get("CharactersMsqNoGiverFormat");
+    public static string CharactersMsqComplete => Loc.Get("CharactersMsqComplete");
 
     // Tabs
-    public const string TabJournal = "Journal";
-    public const string TabMoonlit = "Moonlit";
-    public const string TabCharacters = "Characters";
-    public const string Placeholder = "Coming in the next merge";
+    public static string TabJournal => Loc.Get("TabJournal");
+    public static string TabMoonlit => Loc.Get("TabMoonlit");
+    public static string TabCharacters => Loc.Get("TabCharacters");
+    public static string Placeholder => Loc.Get("Placeholder");
 
     // Tree
-    public const string AllQuests = "All quests";
-    public const string FeatureUnlocks = "Unlock quests";
-    public const string RemovedFromGame = "Removed from the game";
+    public static string AllQuests => Loc.Get("AllQuests");
+    public static string FeatureUnlocks => Loc.Get("FeatureUnlocks");
+    public static string RemovedFromGame => Loc.Get("RemovedFromGame");
 
     // Journal filing provenance (detail pane, under the journal path)
     /// <summary>{0} = genre name, {1} = rule number, {2} = <see cref="FilingReason"/>.</summary>
-    public const string FilingRuleFormat = "Filed under {0} (rule {1}: {2})";
+    public static string FilingRuleFormat => Loc.Get("FilingRuleFormat");
     /// <summary>{0} = genre name.</summary>
-    public const string FilingCuratedFormat = "Filed under {0} (curated override)";
+    public static string FilingCuratedFormat => Loc.Get("FilingCuratedFormat");
     /// <summary>{0} = the patch the curated note names.</summary>
-    public const string RemovedInPatchFormat = "Removed from the game in patch {0}";
+    public static string RemovedInPatchFormat => Loc.Get("RemovedInPatchFormat");
     /// <summary>
     /// The sheet's own signal behind a rule-1 retirement, under a journal path that already reads "Removed from the
     /// game" (an unlisted row): {0} = <see cref="RetiredReason"/>.
     /// </summary>
-    public const string RetiredRuleFormat = "Rule 1: {0}";
+    public static string RetiredRuleFormat => Loc.Get("RetiredRuleFormat");
     /// <summary>The same signal for a retired row the journal still lists, whose path is its genre: {0} = <see cref="RetiredReason"/>.</summary>
-    public const string RemovedByRuleFormat = "Removed from the game (rule 1: {0})";
+    public static string RemovedByRuleFormat => Loc.Get("RemovedByRuleFormat");
 
     /// <summary>Which sheet signal retired a row under rule 1 (docs/data/unlisted-report.md section 4).</summary>
     public static string RetiredReason(bool placeholderIssuer, bool hiddenFlag) => (placeholderIssuer, hiddenFlag) switch
     {
         (true, true) => "placeholder issuer, hidden flag",
         (_, true) => "hidden flag",
-        _ => "placeholder issuer",
+        _ => Loc.Get("RetiredReason.Default"),
     };
 
     /// <summary>The short reason behind a refiling rule (docs/data/unlisted-report.md section 4).</summary>
     public static string FilingReason(byte rule) => rule switch
     {
-        2 => "class or job intro",
-        3 => "Grand Company",
-        4 => "nearest listed prerequisite",
-        5 => "nearest listed successor",
-        6 => "issuer's zone",
-        7 => "no signal",
+        2 => Loc.Get("FilingReason.2"),
+        3 => Loc.Get("FilingReason.3"),
+        4 => Loc.Get("FilingReason.4"),
+        5 => Loc.Get("FilingReason.5"),
+        6 => Loc.Get("FilingReason.6"),
+        7 => Loc.Get("FilingReason.7"),
         _ => "rule " + rule.ToString(System.Globalization.CultureInfo.InvariantCulture),
     };
     /// <summary>{0} = done, {1} = total.</summary>
@@ -131,52 +132,52 @@ public static partial class Strings
     public const string FoldedPathFormat = "{0} › {1} › {2}";
 
     // Quick views (one-click presets at the top of the filter panel)
-    public const string Presets = "Quick views";
+    public static string Presets => Loc.Get("Presets");
     public const string PresetFeatureQuests = FilterNames.FeatureQuests;
     public const string PresetLevelBand = FilterNames.LevelBand;
     public const string PresetStalled = FilterNames.Stalled;
-    public const string PresetFeatureQuestsTooltip = "Unlock quests: duties, jobs, actions, aether currents, systems. Those from the newest patch series come first, then quests you can act on now";
-    public const string PresetLevelBandTooltip = "Quests within five levels of your current job's level";
-    public const string PresetStalledTooltip = "Quests that have sat in your journal for the number of days below";
+    public static string PresetFeatureQuestsTooltip => Loc.Get("PresetFeatureQuestsTooltip");
+    public static string PresetLevelBandTooltip => Loc.Get("PresetLevelBandTooltip");
+    public static string PresetStalledTooltip => Loc.Get("PresetStalledTooltip");
     public const string PresetStorySidequests = FilterNames.StorySidequests;
-    public const string PresetStorySidequestsTooltip = "Sidequests with journal artwork, the ones that tell a small story, zone by zone; each side story in the order you play it";
+    public static string PresetStorySidequestsTooltip => Loc.Get("PresetStorySidequestsTooltip");
 
     // The book badge on a story sidequest's table row. {0} = the side story (its first quest's name), {1} = place, {2} = length.
-    public const string StoryBadgeFormat = "Part of a side story: {0} ({1} of {2})";
-    public const string StoryBadgeLone = "A side story in one quest: it carries journal artwork";
-    public const string StalledDaysFormat = "%d days";
-    public const string StalledDaysLabel = "Stalled after";
-    public const string StalledDaysTooltip = "How long an accepted quest sits untouched before Stalled lists it";
+    public static string StoryBadgeFormat => Loc.Get("StoryBadgeFormat");
+    public static string StoryBadgeLone => Loc.Get("StoryBadgeLone");
+    public static string StalledDaysFormat => Loc.Get("StalledDaysFormat");
+    public static string StalledDaysLabel => Loc.Get("StalledDaysLabel");
+    public static string StalledDaysTooltip => Loc.Get("StalledDaysTooltip");
 
     // Filter panel
     public const string HideCompleted = FilterNames.HideCompleted;
     public const string AvailableOnly = FilterNames.AvailableOnly;
-    public const string Overrides = "Overrides";
-    public const string OverrideInherit = "Inherit";
-    public const string OverrideOn = "On";
-    public const string OverrideOff = "Off";
+    public static string Overrides => Loc.Get("Overrides");
+    public static string OverrideInherit => Loc.Get("OverrideInherit");
+    public static string OverrideOn => Loc.Get("OverrideOn");
+    public static string OverrideOff => Loc.Get("OverrideOff");
     public const string OverrideOptions = "Inherit\0On\0Off\0";
-    public const string NeedsSnapshot = "Needs a character snapshot";
-    public const string Advanced = "Advanced";
-    public const string States = "States";
-    public const string Expansions = "Expansions";
+    public static string NeedsSnapshot => Loc.Get("NeedsSnapshot");
+    public static string Advanced => Loc.Get("Advanced");
+    public static string States => Loc.Get("States");
+    public static string Expansions => Loc.Get("Expansions");
     public const string LevelRange = FilterNames.LevelRange;
-    public const string LevelFormat = "Lv %d";
-    public const string LevelMaxFormat = "to %d";
+    public static string LevelFormat => Loc.Get("LevelFormat");
+    public static string LevelMaxFormat => Loc.Get("LevelMaxFormat");
 
     /// <summary>The level range filter's chip: {0} = lowest level, {1} = highest.</summary>
-    public const string LevelRangeChipFormat = "Lv {0}–{1}";
+    public static string LevelRangeChipFormat => Loc.Get("LevelRangeChipFormat");
     public const string JobCategory = FilterNames.JobCategory;
-    public const string JobAll = "All";
-    public const string JobDowDom = "DoW/DoM";
-    public const string JobDoh = "DoH";
-    public const string JobDol = "DoL";
-    public const string JobCurrentOnly = "Current job only";
-    public const string JobCurrentOnlyTooltip = "Quests restricted to the current job";
+    public static string JobAll => Loc.Get("JobAll");
+    public static string JobDowDom => Loc.Get("JobDowDom");
+    public static string JobDoh => Loc.Get("JobDoh");
+    public static string JobDol => Loc.Get("JobDol");
+    public static string JobCurrentOnly => Loc.Get("JobCurrentOnly");
+    public static string JobCurrentOnlyTooltip => Loc.Get("JobCurrentOnlyTooltip");
     public const string RewardKinds = FilterNames.RewardKinds;
-    public const string RewardHidden = "Hidden";
-    public const string RewardShow = "Show";
-    public const string RewardOnly = "Only";
+    public static string RewardHidden => Loc.Get("RewardHidden");
+    public static string RewardShow => Loc.Get("RewardShow");
+    public static string RewardOnly => Loc.Get("RewardOnly");
 
     public static string RewardOptionName(TriState option) => option switch
     {
@@ -184,42 +185,42 @@ public static partial class Strings
         TriState.Only => RewardOnly,
         _ => RewardShow,
     };
-    public const string RepeatableOnly = "Repeatable only";
-    public const string SeasonalActiveOnly = "Seasonal active only";
+    public static string RepeatableOnly => Loc.Get("RepeatableOnly");
+    public static string SeasonalActiveOnly => Loc.Get("SeasonalActiveOnly");
     public const string IncludeUnlisted = FilterNames.IncludeUnlisted;
-    public const string PinnedOnly = "Pinned only";
-    public const string PinnedFirst = "Pinned first";
-    public const string Reset = "Reset";
+    public static string PinnedOnly => Loc.Get("PinnedOnly");
+    public static string PinnedFirst => Loc.Get("PinnedFirst");
+    public static string Reset => Loc.Get("Reset");
 
     // Display (size sliders at the bottom of the filter panel)
-    public const string Display = "Display";
-    public const string UiScale = "UI scale";
-    public const string UiScaleTooltip = "Text and layout size of this window on top of Dalamud's global scale";
-    public const string IconScale = "Icon scale";
-    public const string IconScaleTooltip = "Size of moons, reward icons and banners relative to the text";
+    public static string Display => Loc.Get("Display");
+    public static string UiScale => Loc.Get("UiScale");
+    public static string UiScaleTooltip => Loc.Get("UiScaleTooltip");
+    public static string IconScale => Loc.Get("IconScale");
+    public static string IconScaleTooltip => Loc.Get("IconScaleTooltip");
     public const string ScaleFormat = "%.2f×";
-    public const string ResetDisplay = "Default sizes";
-    public const string ResetDisplayTooltip = "Back to the default UI and icon scale";
+    public static string ResetDisplay => Loc.Get("ResetDisplay");
+    public static string ResetDisplayTooltip => Loc.Get("ResetDisplayTooltip");
 
     // Filter panel tooltips
-    public const string HideCompletedTooltip = "Remove Completed and Locked out quests from the table";
-    public const string AvailableOnlyTooltip = "Keep only quests you can act on now: Ready, Ready on another job and In journal";
-    public const string OverridesTooltip = "Turn this filter on or off for single categories";
-    public const string PinnedFirstTooltip = "Keep pinned quests at the top of the table whatever the sort";
-    public const string StatesTooltip = "Untick a state to hide quests in it";
-    public const string ExpansionsTooltip = "Tick expansions to keep only their quests; none ticked keeps all";
-    public const string LevelRangeTooltip = "Keep quests whose level is inside the range; drag the top to 100 for no upper bound";
-    public const string JobCategoryTooltip = "Keep quests restricted to a discipline, or to exactly the current job";
-    public const string RewardKindsTooltip = "Per reward kind: Hidden removes quests giving it, Only keeps just those";
-    public const string RepeatableOnlyTooltip = "Keep only repeatable quests such as dailies and weeklies";
-    public const string SeasonalActiveOnlyTooltip = "Keep only seasonal-event quests whose event is running right now";
-    public const string IncludeUnlistedTooltip = "Also show quests removed from the game under All quests and Unlock quests";
-    public const string PinnedOnlyTooltip = "Keep only quests you pinned";
-    public const string ResetTooltip = "Clear every filter and the search";
-    public const string ResetFilters = "Reset filters";
-    public const string NothingMatchesCombination = "No single filter is to blame; loosen several or reset.";
-    public const string ScopeEmpty = "This node has no quests.";
-    public const string ChipStatePrefix = "States: ";
+    public static string HideCompletedTooltip => Loc.Get("HideCompletedTooltip");
+    public static string AvailableOnlyTooltip => Loc.Get("AvailableOnlyTooltip");
+    public static string OverridesTooltip => Loc.Get("OverridesTooltip");
+    public static string PinnedFirstTooltip => Loc.Get("PinnedFirstTooltip");
+    public static string StatesTooltip => Loc.Get("StatesTooltip");
+    public static string ExpansionsTooltip => Loc.Get("ExpansionsTooltip");
+    public static string LevelRangeTooltip => Loc.Get("LevelRangeTooltip");
+    public static string JobCategoryTooltip => Loc.Get("JobCategoryTooltip");
+    public static string RewardKindsTooltip => Loc.Get("RewardKindsTooltip");
+    public static string RepeatableOnlyTooltip => Loc.Get("RepeatableOnlyTooltip");
+    public static string SeasonalActiveOnlyTooltip => Loc.Get("SeasonalActiveOnlyTooltip");
+    public static string IncludeUnlistedTooltip => Loc.Get("IncludeUnlistedTooltip");
+    public static string PinnedOnlyTooltip => Loc.Get("PinnedOnlyTooltip");
+    public static string ResetTooltip => Loc.Get("ResetTooltip");
+    public static string ResetFilters => Loc.Get("ResetFilters");
+    public static string NothingMatchesCombination => Loc.Get("NothingMatchesCombination");
+    public static string ScopeEmpty => Loc.Get("ScopeEmpty");
+    public static string ChipStatePrefix => Loc.Get("ChipStatePrefix");
     public const string ChipStateExcludedMarker = "−";
     public const string ChipStateSeparator = ", ";
     /// <summary>{0} = number of excluded states beyond the named ones.</summary>
@@ -228,142 +229,142 @@ public static partial class Strings
     public const string ChipRepeatable = FilterNames.Repeatable;
     public const string ChipSeasonal = FilterNames.SeasonalActive;
     public const string ChipPinned = FilterNames.Pinned;
-    public const string ChipTooltip = "Click to clear";
+    public static string ChipTooltip => Loc.Get("ChipTooltip");
     /// <summary>First line of the state chip's tooltip; the excluded states follow, all of them, however many the chip names.</summary>
-    public const string ChipStateTooltipPrefix = "Hiding: ";
+    public static string ChipStateTooltipPrefix => Loc.Get("ChipStateTooltipPrefix");
 
     /// <summary>First line of a filling moon's tooltip; the done/total (and percent where shown) follows.</summary>
-    public const string FillingMoonTooltip = "Done of total";
+    public static string FillingMoonTooltip => Loc.Get("FillingMoonTooltip");
 
     // Table
-    public const string ColumnGlyph = "State";
-    public const string ColumnName = "Name";
-    public const string ColumnLevel = "Lv";
-    public const string ColumnJob = "Job";
-    public const string ColumnStatus = "Status";
-    public const string ColumnExpansion = "Exp";
-    public const string ColumnRewards = "Rewards";
-    public const string ColumnGlyphTooltip = "Quest state as a moon phase, and as the pattern of the stripe at the row's edge (hover it for its name); click to sort by state";
-    public const string ColumnNameTooltip = "Quest name; click to sort, right-click a header to hide columns";
-    public const string ColumnLevelTooltip = "Quest level; click to sort";
-    public const string ColumnJobTooltip = "Who can take it: Any, one job (with its icon), or a discipline; hover for the name";
-    public const string ColumnStatusTooltip = "Why the quest is not ready yet: the first unmet requirement, or what to do next";
-    public const string ColumnExpansionTooltip = "Expansion the quest belongs to; click to sort";
-    public const string ColumnRewardsTooltip = "Up to four reward icons; hover one for details";
-    public const string JobAny = "Any";
-    public const string JobMulti = "Multi";
-    public const string JobDohDol = "DoH/DoL";
-    public const string Pin = "Pin";
-    public const string Unpin = "Unpin";
-    public const string FlagOnMap = "Flag on map";
-    public const string OpenJournal = "Open journal";
-    public const string OpenJournalUnavailable = "Only quests in your journal (accepted or completed) can be opened in the game journal.";
-    public const string CopyName = "Copy name";
-    public const string CopyCoordinates = "Copy coordinates";
-    public const string CopyCoordinatesTooltip = "Copy \"Place (x.x, y.y)\" to the clipboard, ready to paste into chat";
+    public static string ColumnGlyph => Loc.Get("ColumnGlyph");
+    public static string ColumnName => Loc.Get("ColumnName");
+    public static string ColumnLevel => Loc.Get("ColumnLevel");
+    public static string ColumnJob => Loc.Get("ColumnJob");
+    public static string ColumnStatus => Loc.Get("ColumnStatus");
+    public static string ColumnExpansion => Loc.Get("ColumnExpansion");
+    public static string ColumnRewards => Loc.Get("ColumnRewards");
+    public static string ColumnGlyphTooltip => Loc.Get("ColumnGlyphTooltip");
+    public static string ColumnNameTooltip => Loc.Get("ColumnNameTooltip");
+    public static string ColumnLevelTooltip => Loc.Get("ColumnLevelTooltip");
+    public static string ColumnJobTooltip => Loc.Get("ColumnJobTooltip");
+    public static string ColumnStatusTooltip => Loc.Get("ColumnStatusTooltip");
+    public static string ColumnExpansionTooltip => Loc.Get("ColumnExpansionTooltip");
+    public static string ColumnRewardsTooltip => Loc.Get("ColumnRewardsTooltip");
+    public static string JobAny => Loc.Get("JobAny");
+    public static string JobMulti => Loc.Get("JobMulti");
+    public static string JobDohDol => Loc.Get("JobDohDol");
+    public static string Pin => Loc.Get("Pin");
+    public static string Unpin => Loc.Get("Unpin");
+    public static string FlagOnMap => Loc.Get("FlagOnMap");
+    public static string OpenJournal => Loc.Get("OpenJournal");
+    public static string OpenJournalUnavailable => Loc.Get("OpenJournalUnavailable");
+    public static string CopyName => Loc.Get("CopyName");
+    public static string CopyCoordinates => Loc.Get("CopyCoordinates");
+    public static string CopyCoordinatesTooltip => Loc.Get("CopyCoordinatesTooltip");
     /// <summary>{0} = place name, {1} = x, {2} = y.</summary>
     public const string CoordinateClipboardFormat = "{0} ({1:0.0}, {2:0.0})";
-    public const string ShowPath = "Show path";
-    public const string QuestMapGraph = "Quest Map graph";
-    public const string LinkInChat = "Link in chat";
-    public const string Report = "Report";
-    public const string ReportTooltip = "Copy a diagnostic block for this quest to the clipboard, ready to paste into a GitHub issue: versions, the quest, its state, every requirement's verdict and the inputs it was judged from. No character identifiers.";
-    public const string ReportCopied = "Copied · paste it into a GitHub issue";
-    public const string ReportClipboardFailed = "The clipboard refused the text; try again.";
+    public static string ShowPath => Loc.Get("ShowPath");
+    public static string QuestMapGraph => Loc.Get("QuestMapGraph");
+    public static string LinkInChat => Loc.Get("LinkInChat");
+    public static string Report => Loc.Get("Report");
+    public static string ReportTooltip => Loc.Get("ReportTooltip");
+    public static string ReportCopied => Loc.Get("ReportCopied");
+    public static string ReportClipboardFailed => Loc.Get("ReportClipboardFailed");
     /// <summary>{0} = quest name.</summary>
-    public const string ReportCopiedChatFormat = "Copied the diagnostic block for {0} to the clipboard; paste it into a GitHub issue.";
-    public const string ReportNoSelection = "Select a quest first, or name one: /tsuki report <quest name>";
+    public static string ReportCopiedChatFormat => Loc.Get("ReportCopiedChatFormat");
+    public static string ReportNoSelection => Loc.Get("ReportNoSelection");
     /// <summary>{0} = the text given.</summary>
-    public const string ReportNoMatchFormat = "No quest matches \"{0}\".";
+    public static string ReportNoMatchFormat => Loc.Get("ReportNoMatchFormat");
     /// <summary>{0} = reward name, {1} = count.</summary>
     public const string RewardCountFormat = "{0} ×{1}";
     /// <summary>Reward tooltip item line: {0} = item level, {1} = ItemUICategory name.</summary>
-    public const string ItemSummaryFormat = "iLv {0} · {1}";
+    public static string ItemSummaryFormat => Loc.Get("ItemSummaryFormat");
     /// <summary>{0} = item level.</summary>
-    public const string ItemLevelFormat = "iLv {0}";
+    public static string ItemLevelFormat => Loc.Get("ItemLevelFormat");
 
     // Detail pane
-    public const string SelectQuest = "Select a quest in the table to see its requirements, rewards and path.";
-    public const string QuestNotInCatalog = "Quest not in catalog";
-    public const string Requirements = "Requirements";
-    public const string NoRequirements = "Nothing gates this quest.";
-    public const string RequirementsNeedSnapshot = "Requirements are evaluated once a character snapshot exists.";
-    public const string Rewards = "Rewards";
-    public const string NoRewards = "No listed rewards.";
-    public const string Path = "Path";
-    public const string FoldedRunExpandTooltip = "Show the completed steps";
-    public const string FoldedRunCollapseTooltip = "Fold the completed steps away";
-    public const string UniqueSection = "Moonlit";
-    public const string MarkedUniqueByYou = "Marked unique by you";
-    public const string MarkedNotUniqueByYou = "Marked not unique by you";
-    public const string RestoreOverride = "Restore";
-    public const string RestoreOverrideTooltip = "Forget your verdict; the shipped reward data applies again";
-    public const string ListedInMoonlit = "Listed in Moonlit treasures.";
-    public const string NotListedInMoonlit = "Not listed in Moonlit treasures.";
-    public const string MarkUnique = "Mark as unique…";
-    public const string MarkUniqueTooltip = "Add this quest to Moonlit treasures as a unique reward you vouch for";
+    public static string SelectQuest => Loc.Get("SelectQuest");
+    public static string QuestNotInCatalog => Loc.Get("QuestNotInCatalog");
+    public static string Requirements => Loc.Get("Requirements");
+    public static string NoRequirements => Loc.Get("NoRequirements");
+    public static string RequirementsNeedSnapshot => Loc.Get("RequirementsNeedSnapshot");
+    public static string Rewards => Loc.Get("Rewards");
+    public static string NoRewards => Loc.Get("NoRewards");
+    public static string Path => Loc.Get("Path");
+    public static string FoldedRunExpandTooltip => Loc.Get("FoldedRunExpandTooltip");
+    public static string FoldedRunCollapseTooltip => Loc.Get("FoldedRunCollapseTooltip");
+    public static string UniqueSection => Loc.Get("UniqueSection");
+    public static string MarkedUniqueByYou => Loc.Get("MarkedUniqueByYou");
+    public static string MarkedNotUniqueByYou => Loc.Get("MarkedNotUniqueByYou");
+    public static string RestoreOverride => Loc.Get("RestoreOverride");
+    public static string RestoreOverrideTooltip => Loc.Get("RestoreOverrideTooltip");
+    public static string ListedInMoonlit => Loc.Get("ListedInMoonlit");
+    public static string NotListedInMoonlit => Loc.Get("NotListedInMoonlit");
+    public static string MarkUnique => Loc.Get("MarkUnique");
+    public static string MarkUniqueTooltip => Loc.Get("MarkUniqueTooltip");
     public const string MarkUniquePopup = "##markUnique";
-    public const string MarkUniqueNoteHint = "Note: which reward is unique";
-    public const string MarkUniqueConfirm = "Mark as unique";
-    public const string MarkNotUniqueNoteHint = "Note: why it is not unique (optional)";
-    public const string MarkNotUniqueConfirm = "Hide as not unique";
-    public const string VerdictQuestionUniquePrefix = "Add ";
-    public const string VerdictQuestionUniqueSuffix = " to Moonlit treasures?";
-    public const string VerdictQuestionHidePrefix = "Hide ";
-    public const string VerdictQuestionHideSuffix = " from Moonlit treasures?";
-    public const string VerdictConfirmTooltip = "Hold Shift and click, or press and hold";
+    public static string MarkUniqueNoteHint => Loc.Get("MarkUniqueNoteHint");
+    public static string MarkUniqueConfirm => Loc.Get("MarkUniqueConfirm");
+    public static string MarkNotUniqueNoteHint => Loc.Get("MarkNotUniqueNoteHint");
+    public static string MarkNotUniqueConfirm => Loc.Get("MarkNotUniqueConfirm");
+    public static string VerdictQuestionUniquePrefix => Loc.Get("VerdictQuestionUniquePrefix");
+    public static string VerdictQuestionUniqueSuffix => Loc.Get("VerdictQuestionUniqueSuffix");
+    public static string VerdictQuestionHidePrefix => Loc.Get("VerdictQuestionHidePrefix");
+    public static string VerdictQuestionHideSuffix => Loc.Get("VerdictQuestionHideSuffix");
+    public static string VerdictConfirmTooltip => Loc.Get("VerdictConfirmTooltip");
     /// <summary>{0} = seconds left, shown instead of the hold arc under Reduce motion.</summary>
-    public const string VerdictHoldCountdownFormat = "Hold… ({0:0.0} s)";
-    public const string VerdictUndoMarkedUnique = "Marked unique";
-    public const string VerdictUndoMarkedNotUnique = "Hidden as not unique";
+    public static string VerdictHoldCountdownFormat => Loc.Get("VerdictHoldCountdownFormat");
+    public static string VerdictUndoMarkedUnique => Loc.Get("VerdictUndoMarkedUnique");
+    public static string VerdictUndoMarkedNotUnique => Loc.Get("VerdictUndoMarkedNotUnique");
     public const string VerdictUndoSeparator = " · ";
-    public const string VerdictUndo = "Undo";
-    public const string VerdictUndoTooltip = "Forget that verdict again";
-    public const string Cancel = "Cancel";
-    public const string Giver = "Giver";
-    public const string NoGiver = "No issuer recorded.";
+    public static string VerdictUndo => Loc.Get("VerdictUndo");
+    public static string VerdictUndoTooltip => Loc.Get("VerdictUndoTooltip");
+    public static string Cancel => Loc.Get("Cancel");
+    public static string Giver => Loc.Get("Giver");
+    public static string NoGiver => Loc.Get("NoGiver");
     public const string Met = "✓";
     public const string Unmet = "✗";
-    public const string MetTooltip = "Met";
-    public const string UnmetTooltip = "Not met";
+    public static string MetTooltip => Loc.Get("MetTooltip");
+    public static string UnmetTooltip => Loc.Get("UnmetTooltip");
     /// <summary>{0} = x, {1} = y.</summary>
     public const string CoordinatesFormat = "({0:0.0}, {1:0.0})";
     /// <summary>{0} = genre, {1} = category.</summary>
     public const string JournalPathFormat = "{0} › {1}";
     /// <summary>{0} = expansion, {1} = level, {2} = job category.</summary>
-    public const string HeaderLineFormat = "{0} · Lv {1} · {2}";
+    public static string HeaderLineFormat => Loc.Get("HeaderLineFormat");
     /// <summary>{0} = job abbreviation.</summary>
-    public const string ReadyOnJobFormat = "Ready on {0}";
+    public static string ReadyOnJobFormat => Loc.Get("ReadyOnJobFormat");
     /// <summary>{0} = sequence.</summary>
-    public const string Pinned = "Pinned";
+    public static string Pinned => Loc.Get("Pinned");
 
     // Chat
     /// <summary>{0} = remaining count.</summary>
-    public const string AndMoreFormat = "and {0} more";
-    public const string NoMatches = "No quests match.";
-    public const string CatalogNotReady = "The catalog is still loading.";
+    public static string AndMoreFormat => Loc.Get("AndMoreFormat");
+    public static string NoMatches => Loc.Get("NoMatches");
+    public static string CatalogNotReady => Loc.Get("CatalogNotReady");
     public const string ChatTag = "Tsukimichi";
-    public const string ChatNewlyAvailablePrefix = "Now available: ";
+    public static string ChatNewlyAvailablePrefix => Loc.Get("ChatNewlyAvailablePrefix");
 
     // Settings › Item hints (the hooks themselves are wired by the item-hint feature)
-    public const string ConfigSectionItemHints = "Item hints";
-    public const string ConfigItemHints = "Show a hint when hovering an item that is a quest reward";
-    public const string ConfigItemHintsHint = "A small line near the cursor naming the quest and whether it is done";
-    public const string ConfigItemContextMenu = "Add a Tsukimichi entry to item context menus";
-    public const string ConfigItemContextMenuHint = "Right-click an item to reveal the quest that rewards it";
+    public static string ConfigSectionItemHints => Loc.Get("ConfigSectionItemHints");
+    public static string ConfigItemHints => Loc.Get("ConfigItemHints");
+    public static string ConfigItemHintsHint => Loc.Get("ConfigItemHintsHint");
+    public static string ConfigItemContextMenu => Loc.Get("ConfigItemContextMenu");
+    public static string ConfigItemContextMenuHint => Loc.Get("ConfigItemContextMenuHint");
 
     // Command help
-    public const string CommandHelp = "Open Tsukimichi (also /tsuki). search <text> (or just <text>) prints matching quest links; zone lists quests you can start here; which lists the targeted NPC's quests; why [quest name] says what blocks the selected or named quest; nearby and todo toggle the Nearby quests window and the Todo overlay; report [quest name] copies a diagnostic block for the selected or named quest; export [quests|moonlit] [json|csv] writes your completed quests or Moonlit collection to a file; settings (or config), help and glyphs open those windows.";
-    public const string CommandAliasHelp = "Short form of /tsukimichi.";
+    public static string CommandHelp => Loc.Get("CommandHelp");
+    public static string CommandAliasHelp => Loc.Get("CommandAliasHelp");
 
     // Time
-    public const string JustNow = "just now";
+    public static string JustNow => Loc.Get("JustNow");
     /// <summary>{0} = minutes.</summary>
-    public const string MinutesAgoFormat = "{0} min ago";
+    public static string MinutesAgoFormat => Loc.Get("MinutesAgoFormat");
     /// <summary>{0} = hours.</summary>
-    public const string HoursAgoFormat = "{0} h ago";
+    public static string HoursAgoFormat => Loc.Get("HoursAgoFormat");
     /// <summary>{0} = days.</summary>
-    public const string DaysAgoFormat = "{0} d ago";
+    public static string DaysAgoFormat => Loc.Get("DaysAgoFormat");
     public const string TimeFormat = "HH:mm";
     public const string DateTimeFormat = "yyyy-MM-dd HH:mm";
 
@@ -412,67 +413,67 @@ public static partial class Strings
 
     public static string RequirementName(RequirementKind kind) => kind switch
     {
-        RequirementKind.Retired => "Removed",
-        RequirementKind.Foreclosure => "Foreclosure",
-        RequirementKind.ExpansionCap => "Expansion",
-        RequirementKind.LevelCap => "Level cap",
-        RequirementKind.ClassJob => "Class or job",
-        RequirementKind.Level => "Level",
-        RequirementKind.PreviousQuests => "Previous quests",
-        RequirementKind.GrandCompany => "Grand Company",
-        RequirementKind.GrandCompanyRank => "Grand Company rank",
-        RequirementKind.TribeRank => "Allied Society rank",
-        RequirementKind.TribeReputation => "Allied Society reputation",
-        RequirementKind.TribeAllowance => "Allowance",
-        RequirementKind.TribeDailyOffer => "Daily offer",
-        RequirementKind.DutyCompletion => "Duty",
-        RequirementKind.Seasonal => "Seasonal",
-        RequirementKind.AcceptCondition => "Condition",
-        RequirementKind.Mount => "Mount",
-        RequirementKind.House => "House",
-        RequirementKind.Achievement => "Achievement",
-        RequirementKind.CustomDeliveryRank => "Custom delivery",
-        RequirementKind.CarrierLevel => "Carrier level",
+        RequirementKind.Retired => Loc.Get("RequirementName.Retired"),
+        RequirementKind.Foreclosure => Loc.Get("RequirementName.Foreclosure"),
+        RequirementKind.ExpansionCap => Loc.Get("RequirementName.ExpansionCap"),
+        RequirementKind.LevelCap => Loc.Get("RequirementName.LevelCap"),
+        RequirementKind.ClassJob => Loc.Get("RequirementName.ClassJob"),
+        RequirementKind.Level => Loc.Get("RequirementName.Level"),
+        RequirementKind.PreviousQuests => Loc.Get("RequirementName.PreviousQuests"),
+        RequirementKind.GrandCompany => Loc.Get("RequirementName.GrandCompany"),
+        RequirementKind.GrandCompanyRank => Loc.Get("RequirementName.GrandCompanyRank"),
+        RequirementKind.TribeRank => Loc.Get("RequirementName.TribeRank"),
+        RequirementKind.TribeReputation => Loc.Get("RequirementName.TribeReputation"),
+        RequirementKind.TribeAllowance => Loc.Get("RequirementName.TribeAllowance"),
+        RequirementKind.TribeDailyOffer => Loc.Get("RequirementName.TribeDailyOffer"),
+        RequirementKind.DutyCompletion => Loc.Get("RequirementName.DutyCompletion"),
+        RequirementKind.Seasonal => Loc.Get("RequirementName.Seasonal"),
+        RequirementKind.AcceptCondition => Loc.Get("RequirementName.AcceptCondition"),
+        RequirementKind.Mount => Loc.Get("RequirementName.Mount"),
+        RequirementKind.House => Loc.Get("RequirementName.House"),
+        RequirementKind.Achievement => Loc.Get("RequirementName.Achievement"),
+        RequirementKind.CustomDeliveryRank => Loc.Get("RequirementName.CustomDeliveryRank"),
+        RequirementKind.CarrierLevel => Loc.Get("RequirementName.CarrierLevel"),
         _ => kind.ToString(),
     };
 
     public static string RewardKindName(RewardKind kind) => kind switch
     {
-        RewardKind.Item => "Item",
-        RewardKind.OptionalItem => "Optional item",
-        RewardKind.Emote => "Emote",
-        RewardKind.Action => "Action",
-        RewardKind.GeneralAction => "General action",
-        RewardKind.Instance => "Instance",
-        RewardKind.ClassJob => "Class or job",
-        RewardKind.Other => "Other",
-        RewardKind.ArtifactGear => "Artifact gear",
-        RewardKind.Mount => "Mount",
-        RewardKind.Minion => "Minion",
-        RewardKind.Orchestrion => "Orchestrion roll",
-        RewardKind.TripleTriadCard => "Triple Triad card",
-        RewardKind.Ornament => "Fashion accessory",
-        RewardKind.Barding => "Barding",
-        RewardKind.Hairstyle => "Hairstyle",
-        RewardKind.AetherCurrent => "Aether current",
-        RewardKind.BlueMageSpell => "Blue magic spell",
-        RewardKind.Trait => "Trait",
-        RewardKind.Achievement => "Achievement",
-        RewardKind.Title => "Title",
-        RewardKind.DutyUnlock => "Duty unlock",
-        RewardKind.SystemUnlock => "System unlock",
+        RewardKind.Item => Loc.Get("RewardKindName.Item"),
+        RewardKind.OptionalItem => Loc.Get("RewardKindName.OptionalItem"),
+        RewardKind.Emote => Loc.Get("RewardKindName.Emote"),
+        RewardKind.Action => Loc.Get("RewardKindName.Action"),
+        RewardKind.GeneralAction => Loc.Get("RewardKindName.GeneralAction"),
+        RewardKind.Instance => Loc.Get("RewardKindName.Instance"),
+        RewardKind.ClassJob => Loc.Get("RewardKindName.ClassJob"),
+        RewardKind.Other => Loc.Get("RewardKindName.Other"),
+        RewardKind.ArtifactGear => Loc.Get("RewardKindName.ArtifactGear"),
+        RewardKind.Mount => Loc.Get("RewardKindName.Mount"),
+        RewardKind.Minion => Loc.Get("RewardKindName.Minion"),
+        RewardKind.Orchestrion => Loc.Get("RewardKindName.Orchestrion"),
+        RewardKind.TripleTriadCard => Loc.Get("RewardKindName.TripleTriadCard"),
+        RewardKind.Ornament => Loc.Get("RewardKindName.Ornament"),
+        RewardKind.Barding => Loc.Get("RewardKindName.Barding"),
+        RewardKind.Hairstyle => Loc.Get("RewardKindName.Hairstyle"),
+        RewardKind.AetherCurrent => Loc.Get("RewardKindName.AetherCurrent"),
+        RewardKind.BlueMageSpell => Loc.Get("RewardKindName.BlueMageSpell"),
+        RewardKind.Trait => Loc.Get("RewardKindName.Trait"),
+        RewardKind.Achievement => Loc.Get("RewardKindName.Achievement"),
+        RewardKind.Title => Loc.Get("RewardKindName.Title"),
+        RewardKind.DutyUnlock => Loc.Get("RewardKindName.DutyUnlock"),
+        RewardKind.SystemUnlock => Loc.Get("RewardKindName.SystemUnlock"),
         _ => kind.ToString(),
     };
 
     /// <summary>Short expansion label for the table column.</summary>
     public static string ExpansionShort(byte expansion) => expansion switch
     {
-        0 => "ARR",
-        1 => "HW",
-        2 => "StB",
-        3 => "ShB",
-        4 => "EW",
-        5 => "DT",
+        0 => Loc.Get("ExpansionShort.0"),
+        1 => Loc.Get("ExpansionShort.1"),
+        2 => Loc.Get("ExpansionShort.2"),
+        3 => Loc.Get("ExpansionShort.3"),
+        4 => Loc.Get("ExpansionShort.4"),
+        5 => Loc.Get("ExpansionShort.5"),
         _ => expansion.ToString(System.Globalization.CultureInfo.InvariantCulture),
     };
 }

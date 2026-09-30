@@ -1,3 +1,5 @@
+using Tsukimichi.Localization;
+
 namespace Tsukimichi.Ui;
 
 /// <summary>
@@ -7,18 +9,18 @@ namespace Tsukimichi.Ui;
 static partial class Strings
 {
     // Row "…" button (accessibility A6)
-    public const string RowMenuButtonTooltip = "More actions. Right-click the row, or press the Menu key or Shift+F10 on it, for the same menu";
+    public static string RowMenuButtonTooltip => Loc.Get("RowMenuButtonTooltip");
 
     // Settings › Keyboard
-    public const string ConfigSectionKeyboard = "Keyboard";
-    public const string ConfigKeyboardAlwaysOn = "Always on while this window has focus: Ctrl+F puts the caret in the search; Esc closes the open menu or the filter panel, then the window; the Menu key or Shift+F10 opens the focused row's menu.";
-    public const string ConfigKeyboardGameSeesKeys = "The game sees these keys too: Ctrl+1 to Ctrl+5 are hotbar 2 in the default keybinds, and many players bind single letters. Turn one on only if the game does nothing with it.";
-    public const string ConfigShortcutTabs = "Ctrl+1 to Ctrl+5 switch tabs";
-    public const string ConfigShortcutTabsHint = "Journal, Moonlit, Characters, Flight, My blues, while this window has focus";
-    public const string ConfigShortcutFlag = "F flags the selected quest's giver on the map";
-    public const string ConfigShortcutFlagHint = "The same as the detail pane's Flag on map";
-    public const string ConfigShortcutReveal = "Enter shows the selected quest in the Journal";
-    public const string ConfigShortcutRevealHint = "On the Moonlit, Characters and Flight tabs: switches to the Journal with the quest's category open in the tree and its row selected";
-    public const string ConfigShortcutPin = "P pins or unpins the selected quest";
-    public const string ConfigShortcutPinHint = "The same as the detail pane's Pin";
+    public static string ConfigSectionKeyboard => Loc.Get("ConfigSectionKeyboard");
+    public static string ConfigKeyboardAlwaysOn => Loc.Get("ConfigKeyboardAlwaysOn");
+    public static string ConfigKeyboardGameSeesKeys => Loc.Get("ConfigKeyboardGameSeesKeys");
+    public static string ConfigShortcutTabs => Loc.Get("ConfigShortcutTabs");
+    public static string ConfigShortcutTabsHint => Loc.Get("ConfigShortcutTabsHint");
+    public static string ConfigShortcutFlag => Loc.Get("ConfigShortcutFlag");
+    public static string ConfigShortcutFlagHint => Loc.Get("ConfigShortcutFlagHint");
+    public static string ConfigShortcutReveal => Loc.Get("ConfigShortcutReveal");
+    public static string ConfigShortcutRevealHint => Loc.Get("ConfigShortcutRevealHint");
+    public static string ConfigShortcutPin => Loc.Get("ConfigShortcutPin");
+    public static string ConfigShortcutPinHint => Loc.Get("ConfigShortcutPinHint");
 }

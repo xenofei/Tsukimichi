@@ -1,3 +1,5 @@
+using Tsukimichi.Localization;
+
 namespace Tsukimichi.Ui;
 
 /// <summary>
@@ -9,23 +11,23 @@ static partial class Strings
 {
     // ---- Characters dashboard ----
     /// <summary>{0} = number of running events.</summary>
-    public const string SeasonalHeaderFormat = "Seasonal events ({0} running)";
-    public const string SeasonalHeader = "Seasonal events";
-    public const string SeasonalNoneRunning = "No seasonal event is running.";
+    public static string SeasonalHeaderFormat => Loc.Get("SeasonalHeaderFormat");
+    public static string SeasonalHeader => Loc.Get("SeasonalHeader");
+    public static string SeasonalNoneRunning => Loc.Get("SeasonalNoneRunning");
 
     /// <summary>{0} = capture time. A stored character's events are the ones running when it was last captured.</summary>
-    public const string SeasonalAtCaptureFormat = "As of this character's last capture ({0}).";
+    public static string SeasonalAtCaptureFormat => Loc.Get("SeasonalAtCaptureFormat");
 
-    public const string SeasonalEvidenceTooltipPrefix = "Announced on the Lodestone: ";
-    public const string SeasonalRunningNowTooltip = "The game says this event is running. Tsukimichi shows an end date only when the Lodestone announced one; it never guesses.";
-    public const string SeasonalGiverPrefix = "Giver: ";
-    public const string SeasonalNoQuests = "No quests of this event are listed in the journal.";
+    public static string SeasonalEvidenceTooltipPrefix => Loc.Get("SeasonalEvidenceTooltipPrefix");
+    public static string SeasonalRunningNowTooltip => Loc.Get("SeasonalRunningNowTooltip");
+    public static string SeasonalGiverPrefix => Loc.Get("SeasonalGiverPrefix");
+    public static string SeasonalNoQuests => Loc.Get("SeasonalNoQuests");
 
     /// <summary>{0} = completed seasonal quests of the character.</summary>
-    public const string SeasonalHistoryFormat = "Completed seasonal quests by year ({0})";
-    public const string SeasonalHistoryNone = "No seasonal quests completed yet.";
-    public const string SeasonalHistoryTooltip = "Each event's year is the one the Lodestone gave its edition (\"Moonfire Faire (2014)\"). An edition without an announcement is counted from the nearest announced edition of the same event, one per year; when that is not certain, or for collaboration events that come back again and again, it is listed under \"Year not known\".";
-    public const string SeasonalYearUnknown = "Year not known";
+    public static string SeasonalHistoryFormat => Loc.Get("SeasonalHistoryFormat");
+    public static string SeasonalHistoryNone => Loc.Get("SeasonalHistoryNone");
+    public static string SeasonalHistoryTooltip => Loc.Get("SeasonalHistoryTooltip");
+    public static string SeasonalYearUnknown => Loc.Get("SeasonalYearUnknown");
 
     /// <summary>{0} = year (or "Year not known"), {1} = completed quests that year.</summary>
     public const string SeasonalYearFormat = "{0} ({1})";
@@ -35,6 +37,6 @@ static partial class Strings
 
     // ---- Chat ----
     public const string SeasonalChatNextPrefix = " · ";
-    public const string SeasonalConfigNotice = "Chat line at login when a seasonal event has quests ready";
-    public const string SeasonalConfigNoticeHint = "\"Moonfire Faire is running: 2 quests ready (ends Aug 28)\", once per login per event, with a link to the first quest. The end date shows only when the Lodestone announced it.";
+    public static string SeasonalConfigNotice => Loc.Get("SeasonalConfigNotice");
+    public static string SeasonalConfigNoticeHint => Loc.Get("SeasonalConfigNoticeHint");
 }

@@ -1,4 +1,5 @@
 using Tsukimichi.Core.Query;
+using Tsukimichi.Localization;
 
 namespace Tsukimichi.Ui;
 
@@ -9,16 +10,16 @@ namespace Tsukimichi.Ui;
 static partial class Strings
 {
     public const string AddedIn = FilterNames.AddedIn;
-    public const string AddedInTooltip = "Keep only the quests one patch series added: 7.5x is 7.5, 7.51, 7.55 and the rest of 7.5. Quests whose patch is not known are hidden while it is set";
-    public const string AddedInAny = "Any patch";
+    public static string AddedInTooltip => Loc.Get("AddedInTooltip");
+    public static string AddedInAny => Loc.Get("AddedInAny");
 
     /// <summary>A series in the combo: {0} = series ("7.5"), {1} = quests it added.</summary>
-    public const string AddedInOptionFormat = "{0}x  ({1})";
+    public static string AddedInOptionFormat => Loc.Get("AddedInOptionFormat");
 
     /// <summary>The chip: {0} = series ("7.5").</summary>
-    public const string AddedInChipFormat = "Added in {0}x";
+    public static string AddedInChipFormat => Loc.Get("AddedInChipFormat");
 
     /// <summary>Above the Unlocks quick view: {0} = the newest patch series in the data ("7.5"), {1} = its unlock quests in the table.</summary>
-    public const string NewThisPatchCaptionFormat = "New in {0}x: {1} unlock quests, listed first";
-    public const string NewThisPatchCaptionOneFormat = "New in {0}x: 1 unlock quest, listed first";
+    public static string NewThisPatchCaptionFormat => Loc.Get("NewThisPatchCaptionFormat");
+    public static string NewThisPatchCaptionOneFormat => Loc.Get("NewThisPatchCaptionOneFormat");
 }

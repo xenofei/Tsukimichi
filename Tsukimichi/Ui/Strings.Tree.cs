@@ -1,3 +1,5 @@
+using Tsukimichi.Localization;
+
 namespace Tsukimichi.Ui;
 
 /// <summary>
@@ -10,8 +12,8 @@ static partial class Strings
     public const string TreeCountFormat = "{0:N0} / {1:N0}";
 
     /// <summary>The folded-path and halo tooltip header: the exact completion to two decimals.</summary>
-    public const string TreeFractionFormat = "{0:P2} complete";
+    public static string TreeFractionFormat => Loc.Get("TreeFractionFormat");
 
     /// <summary>Hover text of a node's Ready badge.</summary>
-    public const string TreeReadyBadgeFormat = "{0:N0} ready to accept now";
+    public static string TreeReadyBadgeFormat => Loc.Get("TreeReadyBadgeFormat");
 }
