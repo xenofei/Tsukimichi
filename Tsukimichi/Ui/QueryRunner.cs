@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using Dalamud.Plugin.Services;
 using Tsukimichi.Core.Chains;
 using Tsukimichi.Core.Evaluation;
@@ -67,6 +68,10 @@ public sealed class QueryRunner : IDisposable
     private readonly HashSet<uint> pinned = [];
     private bool pinsDirty;
     private DateTime pinsDirtyAtUtc;
+
+    // Multibox (D11): the characters whose pins changed here since the last save. A save merges only these into the
+    // file as it is on disk, so another game client's pins for other characters are never saved over.
+    private readonly HashSet<ulong> pinsTouched = [];
 
     // The session whose data events are subscribed; it exists only after the plugin's game state initialized.
     private SessionState? subscribed;
@@ -235,6 +240,7 @@ public sealed class QueryRunner : IDisposable
         }
 
         PinsVersion++;
+        pinsTouched.Add(key);
         MarkPinsDirty();
         ui.MarkQueryDirty();
         return true;
@@ -380,7 +386,7 @@ public sealed class QueryRunner : IDisposable
     public void Dispose()
     {
         Unsubscribe();
-        if (pinsDirty)
+        if (pinsDirty || pinsTouched.Count > 0)
         {
             SavePins();
         }
@@ -418,6 +424,7 @@ public sealed class QueryRunner : IDisposable
         pinsKey = NoPinsKey;
         pinned.Clear();
         pinsDirty = false;
+        pinsTouched.Clear();
         PinsVersion++;
         ui.MarkQueryDirty();
     }
@@ -429,6 +436,8 @@ public sealed class QueryRunner : IDisposable
         {
             return;
         }
+
+        pinsTouched.Add(contentId);
 
         if (pinsKey == contentId)
         {
@@ -679,23 +688,83 @@ public sealed class QueryRunner : IDisposable
             return;
         }
 
+        // Multibox (D11): only the characters pinned or unpinned here are written; the others keep what is on disk,
+        // which another game client may have changed since this one read it.
+        var touched = new List<ulong>(pinsTouched);
+        var warnings = new List<string>();
         try
         {
-            var toSave = new Dictionary<ulong, List<uint>>();
-            foreach (var (key, list) in pinsFile)
-            {
-                if (list.Count > 0)
-                {
-                    toSave[key] = list;
-                }
-            }
-
-            PinsFile.Save(plugin.Paths.PinsFile, toSave);
+            var merged = PinsFile.SaveMerged(plugin.Paths.PinsFile, pinsFile, touched, warnings);
+            pinsTouched.Clear();
+            AdoptPins(merged);
         }
         catch (Exception ex)
         {
+            // Still touched: the next save (the next pin, or unload) tries again.
             log.Warning(ex, "Pins could not be saved");
         }
+
+        foreach (var warning in warnings)
+        {
+            log.Warning("Pins: {Warning}", warning);
+        }
+    }
+
+    /// <summary>
+    /// Multibox (D11): <c>user/pins.json</c> changed on disk (another game client pinned, or "Delete all data" ran
+    /// there). The file is merged into the pins held here; pins changed here and not saved yet stay as they are.
+    /// </summary>
+    public void ReloadPinsFromDisk()
+    {
+        if (pinsFile is null)
+        {
+            // Never loaded here: the first use reads the file as it is.
+            return;
+        }
+
+        var warnings = new List<string>();
+        var disk = PinsFile.Load(plugin.Paths.PinsFile, warnings);
+        foreach (var warning in warnings)
+        {
+            log.Warning("Pins: {Warning}", warning);
+        }
+
+        if (warnings.Count > 0)
+        {
+            // Unreadable right now: keep what is held; the next change or the polling reads it again.
+            return;
+        }
+
+        AdoptPins(KeyedMerge.Apply(disk, pinsFile, pinsTouched));
+    }
+
+    /// <summary>Takes a merged pins map as the one held here, refreshing the viewed character's pinned set when it changed.</summary>
+    private void AdoptPins(Dictionary<ulong, List<uint>> merged)
+    {
+        var before = pinsKey is not (0 or NoPinsKey) && pinsFile is not null && pinsFile.TryGetValue(pinsKey, out var old) ? old : null;
+        pinsFile = merged;
+        if (pinsKey is 0 or NoPinsKey)
+        {
+            return;
+        }
+
+        var after = merged.TryGetValue(pinsKey, out var list) ? list : null;
+        if (ReferenceEquals(before, after) || (before is not null && after is not null && before.SequenceEqual(after)) || (before is null && after is { Count: 0 }) || (after is null && before is { Count: 0 }))
+        {
+            return;
+        }
+
+        pinned.Clear();
+        if (after is not null)
+        {
+            foreach (var rowId in after)
+            {
+                pinned.Add(rowId);
+            }
+        }
+
+        PinsVersion++;
+        ui.MarkQueryDirty();
     }
 }
 

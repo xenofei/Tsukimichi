@@ -3368,6 +3368,20 @@
   <data name="NoCharacter" xml:space="preserve">
     <value>No character</value>
   </data>
+  <data name="Multibox.LiveElsewhere" xml:space="preserve">
+    <value>live in another client</value>
+    <comment>Badge beside a character logged in on another game client (multibox). Lower case: it follows the name.</comment>
+  </data>
+  <data name="Multibox.LiveElsewhereTooltip" xml:space="preserve">
+    <value>Logged in on another game client. This shows what that client last saved, and it updates each time that client saves.</value>
+  </data>
+  <data name="Multibox.BannerFormat" xml:space="preserve">
+    <value>{0} ({1}) is live in another client · last saved {2}</value>
+    <comment>{0} = character name, {1} = world, {2} = time of the last save.</comment>
+  </data>
+  <data name="Multibox.ForgetHint" xml:space="preserve">
+    <value>This character is logged in on another game client. Log out there first.</value>
+  </data>
   <data name="NoSnapshots" xml:space="preserve">
     <value>No snapshots yet</value>
   </data>

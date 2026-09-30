@@ -114,10 +114,11 @@ public sealed class QuestTextService : IDisposable
         language = clientLanguage.ToLumina();
         files = new QuestTextFiles(data.GetFile<ExcelHeaderFile>, data.GetFile<ExcelDataFile>);
 
-        // No build runs yet, so any temporary index file is left over from a crash or an unload mid-write.
+        // No build of this client runs yet, so an old temporary index file is left over from a crash or an unload
+        // mid-write; a recent one may be another game client's build in flight in the same folder (D11) and stays.
         try
         {
-            JournalIndexStore.DeleteTemp(configDir);
+            JournalIndexStore.DeleteTemp(configDir, TimeSpan.FromMinutes(10));
         }
         catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException)
         {
@@ -421,7 +422,7 @@ public sealed class QuestTextService : IDisposable
             stopwatch.Stop();
             token.ThrowIfCancellationRequested();
             FileBytes = JournalIndexStore.Save(configDir, built);
-            var removed = JournalIndexStore.DeleteOthers(configDir, path);
+            var removed = JournalIndexStore.DeleteOtherVersions(configDir, gameVersion);
             BuildTime = stopwatch.Elapsed;
             Publish(built, token);
             log.Information(

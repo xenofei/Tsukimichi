@@ -699,6 +699,13 @@ public sealed class MainWindow : Window, IDisposable
             staleBanner = string.Empty;
             syncTooltip = session.PollerHealthy ? Strings.SyncLive : Strings.SyncPollerPaused;
         }
+        else if (session.IsLiveElsewhere(snapshot.ContentId))
+        {
+            // Multibox (D11): logged in on another game client; what shows is that client's latest save.
+            var time = UiFormat.Time(snapshot.TakenUtc);
+            staleBanner = string.Format(CultureInfo.CurrentCulture, Strings.MultiboxBannerFormat, snapshot.Name, links.WorldName(snapshot.World), time);
+            syncTooltip = Strings.MultiboxLiveElsewhereTooltip + "\n" + string.Format(CultureInfo.CurrentCulture, Strings.SyncSnapshotFormat, time);
+        }
         else
         {
             var time = UiFormat.Time(snapshot.TakenUtc);
@@ -1078,7 +1085,7 @@ public sealed class MainWindow : Window, IDisposable
         var pipCenter = new Vector2(chevronPos.X - UiMetrics.Px(6f) - pipBox * 0.5f, min.Y + height * 0.5f);
         if (hasCharacter)
         {
-            Marks.Draw(dl, pipCenter, pipBox, session.IsLive && session.PollerHealthy ? Mark.LivePip : Mark.SnapshotPip);
+            Marks.Draw(dl, pipCenter, pipBox, PipFor(session));
             ui.RecordRect(UiRects.Sync, pipCenter - new Vector2(pipBox * 0.5f), pipCenter + new Vector2(pipBox * 0.5f));
         }
         else
@@ -1150,6 +1157,11 @@ public sealed class MainWindow : Window, IDisposable
             {
                 session.ViewCharacter(id);
             }
+
+            if (session.IsLiveElsewhere(id) && ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(Strings.MultiboxLiveElsewhereTooltip);
+            }
         }
     }
 
@@ -1164,6 +1176,20 @@ public sealed class MainWindow : Window, IDisposable
         ui.RecordItem(rectKey);
     }
 
+    /// <summary>
+    /// The chip's and status bar's pip: filled for the character live here, a ringed dot for one live in another game
+    /// client (multibox, D11), hollow for a stored snapshot.
+    /// </summary>
+    private static Mark PipFor(SessionState session)
+    {
+        if (session.IsLive)
+        {
+            return session.PollerHealthy ? Mark.LivePip : Mark.SnapshotPip;
+        }
+
+        return session.ViewedContentId is { } viewed && session.IsLiveElsewhere(viewed) ? Mark.ElsewherePip : Mark.SnapshotPip;
+    }
+
     private void RebuildCharacterLabels(SessionState session)
     {
         characterLabels.Clear();
@@ -1173,7 +1199,9 @@ public sealed class MainWindow : Window, IDisposable
             var name = string.Format(CultureInfo.CurrentCulture, Strings.CharacterNameFormat, summary.Name, links.WorldName(summary.World));
             var label = summary.ContentId == session.LiveContentId
                 ? Strings.LiveMarker + name
-                : string.Format(CultureInfo.CurrentCulture, Strings.CharacterEntryFormat, summary.Name, links.WorldName(summary.World), UiFormat.Age(summary.TakenUtc, now));
+                : session.IsLiveElsewhere(summary.ContentId)
+                    ? Strings.MultiboxMarker + name + " · " + Strings.MultiboxLiveElsewhere
+                    : string.Format(CultureInfo.CurrentCulture, Strings.CharacterEntryFormat, summary.Name, links.WorldName(summary.World), UiFormat.Age(summary.TakenUtc, now));
             // The content id keeps the ImGui id unique when two snapshots share a name and world.
             characterLabels.Add((summary.ContentId, label + "##" + summary.ContentId.ToString(CultureInfo.InvariantCulture)));
         }
@@ -1475,7 +1503,7 @@ public sealed class MainWindow : Window, IDisposable
             // Static pip (accessibility B5: nothing here moves) and the live / snapshot words.
             x = StatusSeparatorAt(dl, x, textY, gap);
             ImGui.SetCursorScreenPos(new Vector2(x, textY));
-            Marks.DrawInline(session.IsLive && session.PollerHealthy ? Mark.LivePip : Mark.SnapshotPip, pipSize);
+            Marks.DrawInline(PipFor(session), pipSize);
             if (ImGui.IsItemHovered())
             {
                 UiMetrics.Tooltip(syncTooltip);

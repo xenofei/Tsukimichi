@@ -4,6 +4,12 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+### Added
+- Several game clients at once: when you play two or more characters in separate game clients, each client's Tsukimichi now shows the others' characters as "live in another client" (a ◎ dot and badge) in the character switcher, on the Characters tab, in Compare with and in the account view, with their latest progress, updated within seconds each time the other client saves. It works through the shared config folder only, so both clients must use the same Dalamud config folder; it never reads another game process or sends it anything. Forget character is not offered for a character logged in on another client, and Delete all data leaves that character's files to its own client. docs/multibox.md explains how it works and what it can't do.
+
+### Fixed
+- Two game clients saving at the same time can no longer leave a half-written file or lose each other's changes: every file is written whole and then swapped into place, and pins and Moonlit verdicts made in one client are merged with those made in the other instead of being saved over. Two clients in different languages no longer delete each other's journal word index, and one starting up no longer removes the index the other is building.
+
 ## [1.1.0] - 2026-09-30
 
 ### Added

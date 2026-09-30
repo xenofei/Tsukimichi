@@ -45,7 +45,9 @@ public static class JournalIndexStore
             return null;
         }
 
-        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 1 << 16);
+        // Every share mode open: another game client sharing the config folder may rename a fresh build over this file
+        // while it is read (D11); the read keeps the version it opened.
+        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, 1 << 16);
         return JournalTextIndex.Read(stream, gameVersion, language);
     }
 
@@ -67,7 +69,8 @@ public static class JournalIndexStore
                 stream.Flush(flushToDisk: true);
             }
 
-            File.Move(temp, path, overwrite: true);
+            // Retried while another game client is reading the file it replaces (D11).
+            Storage.AtomicFile.MoveOver(temp, path);
         }
         catch
         {
@@ -88,11 +91,46 @@ public static class JournalIndexStore
             && (keepPath is null || !string.Equals(Path.GetFullPath(file), Path.GetFullPath(keepPath), StringComparison.OrdinalIgnoreCase)));
 
     /// <summary>
-    /// Deletes the temporary files a save left behind (a crash or an unload mid-write); returns how many went. Called
-    /// when no build runs: at startup, and with <see cref="DeleteOthers"/> for "Delete all data".
+    /// Deletes the index files of other game versions; the files of every language of <paramref name="gameVersion"/>
+    /// stay, since two game clients sharing the config folder (D11) may run in different languages and would otherwise
+    /// delete each other's index after every build. Temporary files are left alone. Returns how many went.
     /// </summary>
-    public static int DeleteTemp(string configDir) =>
-        Delete(configDir, file => file.EndsWith(TempSuffix, StringComparison.OrdinalIgnoreCase));
+    public static int DeleteOtherVersions(string configDir, string gameVersion)
+    {
+        ArgumentNullException.ThrowIfNull(gameVersion);
+        var keep = FilePrefix + Slug(gameVersion) + ".";
+        return Delete(configDir, file =>
+            !file.EndsWith(TempSuffix, StringComparison.OrdinalIgnoreCase)
+            && !Path.GetFileName(file).StartsWith(keep, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
+    /// Deletes the temporary files a save left behind (a crash or an unload mid-write); returns how many went. Called
+    /// at startup, and with <see cref="DeleteOthers"/> for "Delete all data". With <paramref name="olderThan"/>, only
+    /// files older than that go, so a build another game client has in flight in the same folder keeps its file.
+    /// </summary>
+    public static int DeleteTemp(string configDir, TimeSpan? olderThan = null)
+    {
+        var cutoff = olderThan is { } age ? DateTime.UtcNow - age : DateTime.MaxValue;
+        return Delete(configDir, file => file.EndsWith(TempSuffix, StringComparison.OrdinalIgnoreCase) && WrittenBefore(file, cutoff));
+    }
+
+    private static bool WrittenBefore(string file, DateTime cutoffUtc)
+    {
+        if (cutoffUtc == DateTime.MaxValue)
+        {
+            return true;
+        }
+
+        try
+        {
+            return File.GetLastWriteTimeUtc(file) < cutoffUtc;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return false;
+        }
+    }
 
     private static int Delete(string configDir, Func<string, bool> which)
     {

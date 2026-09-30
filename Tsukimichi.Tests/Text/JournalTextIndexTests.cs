@@ -225,6 +225,50 @@ public sealed class JournalTextIndexTests
         Assert.Empty(Directory.GetFiles(JournalIndexStore.Folder(dir.Path)));
     }
 
+    [Fact]
+    public void Two_clients_in_different_languages_keep_each_others_index_and_build_in_flight()
+    {
+        using var dir = new TempDir();
+        var english = Sample();
+        JournalIndexStore.Save(dir.Path, english);
+        var japanese = new JournalTextIndex.Builder().Build(english.GameVersion, "ja");
+        JournalIndexStore.Save(dir.Path, japanese);
+        var older = new JournalTextIndex.Builder().Build("2026.08.01.0000.0000", "en");
+        JournalIndexStore.Save(dir.Path, older);
+
+        // After a build, only other game versions go: the other client's language stays.
+        Assert.Equal(1, JournalIndexStore.DeleteOtherVersions(dir.Path, english.GameVersion));
+        Assert.NotNull(JournalIndexStore.Load(dir.Path, english.GameVersion, english.Language));
+        Assert.NotNull(JournalIndexStore.Load(dir.Path, japanese.GameVersion, japanese.Language));
+
+        // A startup sweep with an age leaves a fresh temporary file (another client's build) and takes an old one.
+        var path = JournalIndexStore.PathFor(dir.Path, english.GameVersion, english.Language);
+        var fresh = path + ".fresh" + JournalIndexStore.TempSuffix;
+        var stale = path + ".stale" + JournalIndexStore.TempSuffix;
+        File.WriteAllBytes(fresh, [1]);
+        File.WriteAllBytes(stale, [2]);
+        File.SetLastWriteTimeUtc(stale, DateTime.UtcNow.AddHours(-1));
+        Assert.Equal(1, JournalIndexStore.DeleteTemp(dir.Path, TimeSpan.FromMinutes(10)));
+        Assert.True(File.Exists(fresh));
+        Assert.False(File.Exists(stale));
+    }
+
+    [Fact]
+    public async Task A_build_waits_out_another_client_reading_the_index()
+    {
+        using var dir = new TempDir();
+        var index = Sample();
+        JournalIndexStore.Save(dir.Path, index);
+        var path = JournalIndexStore.PathFor(dir.Path, index.GameVersion, index.Language);
+
+        var reader = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+        var release = Task.Delay(50).ContinueWith(_ => reader.Dispose(), TaskScheduler.Default);
+        JournalIndexStore.Save(dir.Path, index);
+        await release;
+
+        Assert.NotNull(JournalIndexStore.Load(dir.Path, index.GameVersion, index.Language));
+    }
+
     [Theory]
     [InlineData(QuestState.Completed, null, 5, JournalVisibility.All)]
     [InlineData(QuestState.DoneThisCycle, null, 5, JournalVisibility.All)]
