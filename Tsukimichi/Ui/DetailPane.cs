@@ -100,10 +100,11 @@ public sealed class DetailPane
         /// <summary>"Note: …" from <c>curated/quirks.json</c>, drawn under the requirements; null for a quest without one.</summary>
         public string? QuirkNote;
         public string? ChainText;
+
+        /// <summary>The chain halo's tooltip ("3 of 7 quests done"), composed with <see cref="ChainText"/>.</summary>
+        public string ChainHaloTooltip = string.Empty;
         public string? ChainNextName;
         public uint ChainNextRowId;
-        public int ChainDone;
-        public int ChainTotal;
         public float ChainFraction;
         public bool HasSnapshot;
         public bool Pinned;
@@ -781,7 +782,7 @@ public sealed class DetailPane
         MoonGlyph.DrawHaloInline(model.ChainFraction, size, onCard: true);
         if (ImGui.IsItemHovered())
         {
-            UiMetrics.Tooltip(string.Format(CultureInfo.CurrentCulture, ChainMoonTooltipFormat, model.ChainDone, model.ChainTotal));
+            UiMetrics.Tooltip(model.ChainHaloTooltip);
         }
 
         // The glyph box is taller than a text line; centre the text on it.
@@ -1253,11 +1254,10 @@ public sealed class DetailPane
         }
 
         var progress = ChainCatalog.Progress(chain, session.States);
-        model.ChainDone = progress.Done;
-        model.ChainTotal = progress.Total;
         model.ChainFraction = progress.Fraction;
         var name = ChainCatalog.DisplayName(chain, id => session.Spoilers.DisplayName(bundle.Catalog, id, id.ToString(CultureInfo.InvariantCulture)));
         model.ChainText = string.Format(CultureInfo.CurrentCulture, chain.IsStory ? StoryFormat : ChainFormat, name, progress.Done, progress.Total);
+        model.ChainHaloTooltip = string.Format(CultureInfo.CurrentCulture, ChainMoonTooltipFormat, progress.Done, progress.Total);
         if (progress.NextRowId is { } next)
         {
             model.ChainNextRowId = next;
