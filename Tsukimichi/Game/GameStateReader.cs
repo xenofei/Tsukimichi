@@ -361,11 +361,11 @@ public sealed class GameStateReader
     /// <summary>
     /// Custom delivery satisfaction rank per client from <c>SatisfactionSupplyManager.SatisfactionRanks</c>, keyed by
     /// SatisfactionNpc row id (slot + 1), every slot included so a client not yet unlocked reads rank 0. Empty when the
-    /// manager is not available, which the evaluator reads as "not checked".
+    /// manager is not available or every slot reads 0 (the server may not have sent the ranks yet; see
+    /// <see cref="SatisfactionRankSlots.ToRanks"/>), which the evaluator reads as "not checked".
     /// </summary>
     private unsafe Dictionary<byte, byte> ReadSatisfactionRanks()
     {
-        var result = new Dictionary<byte, byte>(SatisfactionNpcSlots);
         var manager = SatisfactionSupplyManager.Instance();
         if (manager == null)
         {
@@ -375,16 +375,10 @@ public sealed class GameStateReader
                 log.Warning("SatisfactionSupplyManager is not available; custom delivery ranks will read as not checked");
             }
 
-            return result;
+            return new Dictionary<byte, byte>(SatisfactionNpcSlots);
         }
 
-        var ranks = manager->SatisfactionRanks;
-        for (var slot = 0; slot < ranks.Length && slot < byte.MaxValue; slot++)
-        {
-            result[(byte)(slot + 1)] = ranks[slot];
-        }
-
-        return result;
+        return SatisfactionRankSlots.ToRanks(manager->SatisfactionRanks);
     }
 
     /// <summary>

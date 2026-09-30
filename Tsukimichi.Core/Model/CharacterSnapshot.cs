@@ -64,7 +64,8 @@ public sealed record CharacterSnapshot
     /// <summary>
     /// Custom delivery satisfaction rank per client, keyed by SatisfactionNpc row id (1-based; every slot the client
     /// holds, rank 0 included, so a client not yet unlocked reads rank 0). Additive at schema v1: empty when the
-    /// plugin did not read the ranks, and a missing client is "not checked". Not written while empty.
+    /// plugin did not read the ranks or every slot read 0 (see <see cref="Runtime.SatisfactionRankSlots"/>), and a
+    /// missing client is "not checked". Not written while empty.
     /// </summary>
     [OmitWhenEmpty]
     public IReadOnlyDictionary<byte, byte> SatisfactionRanks { get; init; } = new Dictionary<byte, byte>();
