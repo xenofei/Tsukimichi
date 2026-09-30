@@ -33,7 +33,9 @@ public sealed record SpoilerOptions(bool HideNames = true, int Ahead = SpoilerOp
 /// position (walked as <see cref="MsqProgress"/> walks it: sections 0 then 1 in journal order, removed rows left out,
 /// the journal's hide state ignored). A main scenario quest is masked when it lies more than
 /// <see cref="SpoilerOptions.Ahead"/> quests past the position and is neither completed, in the journal nor once
-/// abandoned from it (the game has shown all three names). Inside a routed branch region (<see cref="MsqGraph"/>)
+/// abandoned from it (the game has shown all three names), nor on a path the character did not take (another city's
+/// or class's start, another Grand Company's quest: it tells nothing of the character's own story, and the
+/// Locked-out row names it for what it is). Inside a routed branch region (<see cref="MsqGraph"/>)
 /// every route is a position of its own: a route quest is "N ahead" along its route from that route's next quest,
 /// the reconvergence quest lies as far ahead as the quests still needed before it (every open route's for an All
 /// join, the shortest route's for an Any join), and the story after it counts on from there. A
@@ -345,6 +347,7 @@ public sealed class SpoilerMask
             if (!options.HideNames
                 || distance <= ahead
                 || state is QuestState.Completed or QuestState.Accepted
+                || source.OtherPathKind(quest.RowId) is not null
                 || (revealed is not null && revealed.Contains(quest.RowId))
                 || (abandoned is not null && abandoned.ContainsKey(quest.QuestId)))
             {

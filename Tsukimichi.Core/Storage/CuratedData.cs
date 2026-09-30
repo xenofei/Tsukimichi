@@ -112,6 +112,9 @@ public sealed record PayoffGate(
 /// retired_quests.json  { "schema": 1, "entries": { "66033": { "note": "...", "evidence": "https://...", "patch": "6.3" } } }   (patch optional)
 /// quirks.json          { "schema": 1, "entries": { "66971": { "note": "...", "evidence": "https://..." } } }
 /// payoff_gates.json    { "schema": 1, "review": "...", "entries": { "eden": { "milestone": 70286, "before": "Eden" or [ 69515 ], "instruction": "...", "why": "...", "evidence": [ "https://..." ], "note": "..." } } }
+/// path_choices.json    { "schema": 1, "cities": { "65575": { "label": "Gridania", "note": "..." } },
+///                        "classes": { "1": { "label": "Gladiator", "closeToHome": 66104, "starter": 65789, "note": "..." } },
+///                        "grandCompanies": { "66216": { "grandCompany": 2, "note": "..." } } }   (classes keyed by ClassJob row id)
 /// VERSION.json         { "curatedRevision": "573d225" }   (written by tools/regen.ps1; absent in a checkout that never ran it)
 /// </code>
 /// Every file must be strict JSON (no comments, no trailing commas), as the curated README requires.
@@ -129,6 +132,7 @@ public sealed class CuratedData
     public const string RetiredQuestsFileName = "retired_quests.json";
     public const string QuirksFileName = "quirks.json";
     public const string PayoffGatesFileName = "payoff_gates.json";
+    public const string PathChoicesFileName = "path_choices.json";
 
     /// <summary>The <see cref="OtherSource"/> names <see cref="OtherSourcesFileName"/> may use; any other is a skipped entry.</summary>
     public static readonly IReadOnlyList<string> OtherSourcesFileSources = [OtherSource.DungeonDrop];
@@ -225,6 +229,9 @@ public sealed class CuratedData
     /// <summary>"Before you continue" payoff gates in file order (P5); milestones and content are not checked against the catalog here.</summary>
     public IReadOnlyList<PayoffGate> PayoffGates { get; private init; } = [];
 
+    /// <summary>City and class labels, the city pin and the Grand Company tags the choice groups read (<c>Evaluation.PathIndex</c>).</summary>
+    public PathChoices PathChoices { get; private init; } = PathChoices.Empty;
+
     /// <summary>
     /// Short git hash of the last commit touching the overlay, from <see cref="VersionFileName"/> ("573d225", or
     /// "573d225-dirty" when regenerated with uncommitted changes); empty when the file is absent or has no value.
@@ -239,7 +246,7 @@ public sealed class CuratedData
     /// what the invariants test compares the shipped file against, so the file never feeds its own derivation.
     /// </summary>
     public CuratedData WithoutFeatureQuests() =>
-        FeatureQuests.Count == 0 ? this : new CuratedData(SystemUnlocks, DutyUnlocks, new HashSet<uint>(), Festivals, Chains, OnlineStore, OtherSources, RefileOverrides, RetiredQuests, Quirks, CuratedRevision, Warnings) { PayoffGates = PayoffGates };
+        FeatureQuests.Count == 0 ? this : new CuratedData(SystemUnlocks, DutyUnlocks, new HashSet<uint>(), Festivals, Chains, OnlineStore, OtherSources, RefileOverrides, RetiredQuests, Quirks, CuratedRevision, Warnings) { PayoffGates = PayoffGates, PathChoices = PathChoices };
 
     /// <summary>Loads every curated file under <paramref name="dir"/>. A missing directory or file yields empty collections.</summary>
     public static CuratedData Load(string dir)
@@ -562,13 +569,137 @@ public sealed class CuratedData
         });
 
         var payoffGates = LoadPayoffGates(Path.Combine(dir, PayoffGatesFileName), warnings);
+        var pathChoices = LoadPathChoices(Path.Combine(dir, PathChoicesFileName), warnings);
 
         var curatedRevision = LoadRevision(Path.Combine(dir, VersionFileName), warnings);
 
         return new CuratedData(systemUnlocks, dutyUnlocks, featureQuests, festivals, chains, onlineStore, otherSources, refileOverrides, retiredQuests, quirks, curatedRevision, warnings)
         {
             PayoffGates = payoffGates,
+            PathChoices = pathChoices,
         };
+    }
+
+    /// <summary>
+    /// path_choices.json: an object with "cities" (keyed by the city's first quest row id: label, note), "classes"
+    /// (keyed by ClassJob row id: label, closeToHome, starter, note) and "grandCompanies" (keyed by quest row id:
+    /// grandCompany 1 to 3, note). Every entry needs its note; one without it, or with a bad id, is skipped with a
+    /// warning. Cities and classes keep the file's order.
+    /// </summary>
+    private static PathChoices LoadPathChoices(string path, List<string> warnings)
+    {
+        if (ParseRoot(path, warnings) is not { } root)
+        {
+            return PathChoices.Empty;
+        }
+
+        var fileName = Path.GetFileName(path);
+        if (root is not JsonObject obj)
+        {
+            warnings.Add($"{fileName}: root is not a JSON object; file ignored.");
+            return PathChoices.Empty;
+        }
+
+        var cities = new List<CityPin>();
+        var classes = new List<ClassPin>();
+        var grandCompanies = new Dictionary<uint, GrandCompanyTag>();
+
+        void Each(string section, Action<string, JsonObject, Action<string>> handle)
+        {
+            if (!obj.TryGetPropertyValue(section, out var node) || node is null)
+            {
+                return;
+            }
+
+            if (node is not JsonObject entries)
+            {
+                warnings.Add($"{fileName}: \"{section}\" is not an object; section ignored.");
+                return;
+            }
+
+            foreach (var pair in entries)
+            {
+                if (IsCommentKey(pair.Key))
+                {
+                    continue;
+                }
+
+                void Warn(string reason) => warnings.Add($"{fileName}: {section} entry \"{pair.Key}\" skipped: {reason}");
+                if (pair.Value is not JsonObject entry)
+                {
+                    Warn("value is not an object");
+                    continue;
+                }
+
+                if (string.IsNullOrWhiteSpace(StorageJson.ReadString(entry, "note")))
+                {
+                    Warn("note is missing");
+                    continue;
+                }
+
+                handle(pair.Key, entry, Warn);
+            }
+        }
+
+        Each("cities", (key, entry, warn) =>
+        {
+            var label = StorageJson.ReadString(entry, "label")?.Trim();
+            if (!StorageJson.TryParseKey(key, out uint root) || root == 0)
+            {
+                warn("key is not a quest row id");
+            }
+            else if (string.IsNullOrEmpty(label))
+            {
+                warn("label is missing");
+            }
+            else
+            {
+                cities.Add(new CityPin(root, label, StorageJson.ReadString(entry, "note")!.Trim()));
+            }
+        });
+
+        Each("classes", (key, entry, warn) =>
+        {
+            var label = StorageJson.ReadString(entry, "label")?.Trim();
+            if (!StorageJson.TryParseKey(key, out uint classJob) || classJob is 0 or > byte.MaxValue)
+            {
+                warn("key is not a ClassJob row id");
+            }
+            else if (string.IsNullOrEmpty(label))
+            {
+                warn("label is missing");
+            }
+            else if (!entry.TryGetPropertyValue("closeToHome", out var homeNode) || !StorageJson.TryReadId(homeNode, out var home) || home == 0)
+            {
+                warn("closeToHome is not a quest row id");
+            }
+            else if (!entry.TryGetPropertyValue("starter", out var starterNode) || !StorageJson.TryReadId(starterNode, out var starter) || starter == 0)
+            {
+                warn("starter is not a quest row id");
+            }
+            else
+            {
+                classes.Add(new ClassPin((byte)classJob, label, home, starter, StorageJson.ReadString(entry, "note")!.Trim()));
+            }
+        });
+
+        Each("grandCompanies", (key, entry, warn) =>
+        {
+            if (!StorageJson.TryParseKey(key, out uint rowId) || rowId == 0)
+            {
+                warn("key is not a quest row id");
+            }
+            else if (!entry.TryGetPropertyValue("grandCompany", out var gcNode) || !StorageJson.TryReadId(gcNode, out var gc) || gc is 0 or > 3)
+            {
+                warn("grandCompany is not 1, 2 or 3");
+            }
+            else
+            {
+                grandCompanies[rowId] = new GrandCompanyTag((byte)gc, StorageJson.ReadString(entry, "note")!.Trim());
+            }
+        });
+
+        return new PathChoices(cities, classes, grandCompanies);
     }
 
     /// <summary>

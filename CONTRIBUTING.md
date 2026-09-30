@@ -45,6 +45,7 @@ Facts the game sheets do not hold (duty and system unlock quests, story chains, 
 | `quirks.json` | Quest row id | a note where the game behaves differently from its data | the NPC offers a quest the plugin shows Blocked (or the reverse) and the data cannot say why |
 | `online_store.json` | store `Item` row id | quest rewards the Online Store also sells | a Moonlit reward is sold on the Mog Station |
 | `other_sources.json` | reward `Item` row id | quest rewards that also drop in duties | a Moonlit reward drops in a duty |
+| `path_choices.json` | Quest row id (cities, companies), `ClassJob` row id (classes) | the start cities' names (a pin the rule that finds them must match), each starting class's "Close to Home" and starter "Way of", the Grand Company of quests whose sheet row leaves it 0 | another city's, class's or company's quests are counted or read Ready, or a label is wrong |
 | `feature_quests.json` | none | **generated**; never edit it | (regenerate instead) |
 | `VERSION.json` | none | **written by `tools/regen.ps1`**; never edit it | (regenerate instead) |
 
@@ -83,6 +84,12 @@ online_store.json ("kind" is the FFXIV Collect collection: Mount, Minion, Emote,
 
 other_sources.json ("source" is DungeonDrop today)
 { "schema": 1, "note": "…", "entries": { "<itemId>": { "name": "…", "source": "DungeonDrop", "where": "Snowcloak and Sastasha (Hard)", "evidence": "https://…", "note": "…" } } }
+
+path_choices.json (classes keyed by ClassJob row id; "grandCompany" is 1 Maelstrom, 2 Twin Adder, 3 Immortal Flames)
+{ "schema": 1, "note": "…",
+  "cities": { "<questRowId>": { "label": "Gridania", "note": "…" } },
+  "classes": { "<classJobId>": { "label": "Lancer", "closeToHome": 65621, "starter": 65559, "note": "…" } },
+  "grandCompanies": { "<questRowId>": { "grandCompany": 2, "note": "…" } } }
 ```
 
 Quest keys are Quest **row ids** (65536 and up), never the runtime quest id, a name or the script id (`SubCts811_01432`). Where a quest has start-city or Grand Company variants, list every variant. `contentFinderConditionIds` are `ContentFinderCondition` rows, not `InstanceContent` or `TerritoryType` rows. Check every id with xivapi before writing it (the curated README has the queries); never write one from memory.

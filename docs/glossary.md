@@ -14,7 +14,7 @@ Owner of the names: `Tsukimichi.Core/Ui/StateNames.cs` (`StateNames.Name`, `Stat
 | `Blocked` | Blocked · {blocker} (always paired with the decisive blocker where one exists; see the blocker phrases below) | same surfaces | new moon, silver ring |
 | `DoneThisCycle` | Done today (daily, `RepeatInterval` 1) / Done this week (weekly, `RepeatInterval` 2) / Done this cycle (any other reset, and surfaces with no quest at hand such as the filter checkboxes and the Help legend) | same surfaces | waning gibbous, silver |
 | `Completed` | Completed | same surfaces; item hover hint says "done" | full moon |
-| `Foreclosed` | Locked out · {reason} ("closed by: {quest}" for a completed lock, "Seasonal: ended" for an event the character already saw) | same surfaces; Help › Totals ("Locked out quests are left out of totals") | eclipsed |
+| `Foreclosed` | Locked out · {reason} ("closed by: {quest}" for a completed lock, "Seasonal: ended" for an event the character already saw, "Another city's start (Ul'dah)" for a path the character did not take) | same surfaces; Help › Totals ("Locked out quests are left out of totals") | eclipsed |
 | `Unknown` | Not checked · {reason} where the evaluation has one ("Not checked · achievements") | same surfaces; the Browse-mode notice explains why states are not evaluated | veiled |
 
 "Veiled" keeps one other meaning: a moon whose data cannot be read live (the toolbar sync moon on a stored snapshot, an item's obtained state for a stored character). It is never a quest-state label.
@@ -25,6 +25,7 @@ One phrase per quest that is not Ready, from `BlockerText` in Core: the single r
 
 | Requirement | Phrase | Notes |
 |---|---|---|
+| Path not taken (`RequirementKind.OtherPath`) | Another city's start ({city}) / Another starting class ({class}) / Another Grand Company ({company}) / Another choice ({option taken}) | Locked out only; outranks a completed lock; see "1.2: paths not taken" |
 | Completed lock | closed by: {quest} | Locked out only |
 | Expansion above the account's | Expansion: {expansion} | |
 | Level above the account's cap | Lv {n}, above your cap | |
@@ -81,7 +82,22 @@ Every done/total on screen (tree nodes, the Characters dashboard, the tab badges
 | Every other repeatable (weeklies, relic and seasonal repeatables, Primal Focus, Unidentified Flying Object) | Listed under its genre, in no count, not a chain step's progress (`Chain.Uncounted`), never a chain's "next". | They never finish, so a finished chronicle stayed at 14/15 for good. |
 | Hidden progress tracker (`QuestRecord.IsProgressTracker`, refiling rule 9) | Listed under the genre rule 4 finds, in no count, never an unlock quest, never a chain step. | Rows the game sets behind the scenes, which neither the Lodestone nor the wiki lists: the YoRHa, Resistance and Ishgardian Restoration markers, Recondition the Anima, Forged Anew. |
 | Locked out, or out of season (`QuestEvaluation.LeavesTotals`) | Leaves the total, the chain's included. | As before, and now in chain progress too. |
+| On a path not taken (another city's start, another starting class, another Grand Company, another choice) | Locked out, so it leaves the total; tallied per node for the tree tooltip and listed under Other paths. | A finished Seventh Umbral Era read 160/213: 53 of its quests belong to the other cities, classes and companies. |
+| An option of a choice not made yet, other than the one presumed (`QuestEvaluation.IsSpareAlternative`) | Leaves the total until the choice is made. | The choice counts once, not once per option. |
 | Class intro ("So You Want to Be a …") | Listed, in no count. | Unchanged since 0.6.1. |
+
+## 1.2: paths not taken
+
+A character takes one start city, one starting class and one Grand Company, and one quest of each set that locks itself (feature plan v4 D1). Owners: `PathIndex` and `PathChoice` (Core), labels in `curated/path_choices.json`.
+
+| Concept | Display name | Where it appears |
+|---|---|---|
+| A quest on a path the character did not take (`QuestEvaluation.IsOtherPath`: Locked out with `RequirementKind.OtherPath`) | Locked out · Another city's start ({city}) · Another starting class ({class}) · Another Grand Company ({company}) · Another choice ({option taken}) | Status column, blocker line, `/tsuki why`, IPC (`GetState` "Foreclosed", `GetBlockers` "OtherPath: …"). The name is the quest's own, never masked |
+| Its detail line | Only for {city} {class} starters · you started in {city} as a {class} / Not for {class} starters / For the {company} · you chose the {company} / Only one of these can be done · you did {quest} | Detail pane under the status, requirement "Other path" |
+| Virtual tree node of those quests | Other paths | Journal tree, after Removed from the game, only while there are some; rows grouped by kind of path |
+| Filter that lists them in their journal nodes too | Include other paths (off by default) | Filters › Advanced |
+| Tree tooltip tally | {n} on other paths: another city's start {n}, another starting class {n}, … | Halo and count hover of every node |
+| An option of a choice not made yet (`QuestEvaluation.ChoiceOf`) | … · Choose one of {n} | Status column; the options not presumed (`IsSpareAlternative`) leave the totals so the choice counts once |
 
 ## Translated display names
 

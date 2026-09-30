@@ -49,6 +49,13 @@ public enum RequirementKind
 
     /// <summary>Delivery Moogle carrier level (<see cref="QuestRecord.CarrierLevel"/>).</summary>
     CarrierLevel,
+
+    /// <summary>
+    /// The quest lies on a path the character did not take: another city's start, another starting class, another
+    /// Grand Company or another choice of a set only one of which can be done (<c>Evaluation.PathIndex</c>). Listed
+    /// right after <see cref="Retired"/>; unmet, it makes the quest Locked out.
+    /// </summary>
+    OtherPath,
 }
 
 /// <summary>What a quest hands out. The first block mirrors the Quest sheet reward slots; the rest are resolved links.</summary>

@@ -157,11 +157,36 @@ public sealed record QuestEvaluation(
     public bool IsOutOfSeason => State == QuestState.Blocked && NextStep is { Req.Kind: RequirementKind.Seasonal };
 
     /// <summary>
-    /// The quest leaves every done/total count (tree nodes, dashboard sections, tab badges, Compare's "neither done"):
-    /// it is <see cref="QuestState.Foreclosed"/>, which the character can never do, or <see cref="IsOutOfSeason"/>,
-    /// which they cannot do now. A section whose remainder is all of these reads as complete.
+    /// Locked out because it lies on a path the character did not take (feature plan v4 D1): another city's start,
+    /// another starting class, another Grand Company or another choice of a set (<see cref="PathIndex"/>). The
+    /// requirement (<see cref="OtherPath"/>) names which.
     /// </summary>
-    public bool LeavesTotals => State == QuestState.Foreclosed || IsOutOfSeason;
+    public bool IsOtherPath => State == QuestState.Foreclosed && NextStep is { Req: OtherPathRequirement };
+
+    /// <summary>The path requirement of a quest on another path (<see cref="IsOtherPath"/>); null otherwise.</summary>
+    public OtherPathRequirement? OtherPath => IsOtherPath ? (OtherPathRequirement)NextStep!.Req : null;
+
+    /// <summary>
+    /// One of the options of a choice the character has not made yet (a Grand Company's version of a quest, one of
+    /// two stelae) that is not the one presumed (<see cref="PathChoice.Presumed"/>), or a quest that follows only from
+    /// such an option: the choice counts once, so this leaves the totals. Never set on a completed quest or one in
+    /// the journal.
+    /// </summary>
+    public bool IsSpareAlternative { get; init; }
+
+    /// <summary>
+    /// For an option of a choice the character has not made yet, how many options are open ("Choose one of 3"); 0
+    /// for any other quest.
+    /// </summary>
+    public int ChoiceOf { get; init; }
+
+    /// <summary>
+    /// The quest leaves every done/total count (tree nodes, dashboard sections, tab badges, Compare's "neither done"):
+    /// it is <see cref="QuestState.Foreclosed"/>, which the character can never do (a path not taken among them),
+    /// <see cref="IsOutOfSeason"/>, which they cannot do now, or <see cref="IsSpareAlternative"/>, an option of a
+    /// choice not made yet that counts once. A section whose remainder is all of these reads as complete.
+    /// </summary>
+    public bool LeavesTotals => State == QuestState.Foreclosed || IsOutOfSeason || IsSpareAlternative;
 
     /// <summary>
     /// A repeatable the character has completed at least once (its completion bit is set, or it is done this cycle)

@@ -1213,6 +1213,11 @@ public sealed partial class DetailPane
             {
                 model.StateNote = string.Format(CultureInfo.CurrentCulture, Strings.ReadyOnJobFormat, bundle.Names.ClassJobAbbreviation(job));
             }
+            else if (evaluation.OtherPath is { } path)
+            {
+                // A path not taken: who the quest is for, and the character's own path (feature plan v4 D1).
+                model.StateNote = PathText.Detail(path, session.Names.GrandCompany);
+            }
 
             var unmet = 0;
             foreach (var result in evaluation.Requirements)

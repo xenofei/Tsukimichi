@@ -18,7 +18,8 @@ namespace Tsukimichi.Core.Evaluation;
 /// character has yet to reach, which outranks a rank, and a seasonal event that is not running comes last (the
 /// player can do everything else meanwhile). The order is:
 /// <list type="number">
-/// <item>Removed from the game, then locked out by a completed lock (nothing can be done)</item>
+/// <item>Removed from the game, then on a path the character did not take ("Another city's start (Ul'dah)"), then
+/// locked out by a completed lock (nothing can be done)</item>
 /// <item>Expansion the account does not own; level above the account's cap</item>
 /// <item>Prerequisite quests: the nearest unmet one, "after MSQ:" when it is a main scenario quest; through an
 /// Any join, the prerequisite with the fewest quests left on its path</item>
@@ -61,6 +62,7 @@ public static class BlockerText
     private static readonly RequirementKind[] Priority =
     [
         RequirementKind.Retired,
+        RequirementKind.OtherPath,
         RequirementKind.Foreclosure,
         RequirementKind.ExpansionCap,
         RequirementKind.LevelCap,
@@ -124,13 +126,21 @@ public static class BlockerText
 
     /// <summary>
     /// What follows the state name: the blocker from <see cref="For"/>, or "step 3 of 7" for a quest in the journal.
+    /// An option of a choice the character has not made yet adds "Choose one of 3" (<see cref="QuestEvaluation.ChoiceOf"/>).
     /// Empty when there is nothing to add.
     /// </summary>
     public static string Reason(QuestEvaluation evaluation, QuestRecord quest, BlockerNames names, IReadOnlyDictionary<uint, QuestEvaluation>? states = null)
     {
         ArgumentNullException.ThrowIfNull(evaluation);
         ArgumentNullException.ThrowIfNull(quest);
-        return evaluation.State == QuestState.Accepted ? StepText(evaluation.Sequence, quest.StepCount) : For(evaluation, quest, names, states);
+        var reason = evaluation.State == QuestState.Accepted ? StepText(evaluation.Sequence, quest.StepCount) : For(evaluation, quest, names, states);
+        if (evaluation.ChoiceOf > 1 && evaluation.State is QuestState.Ready or QuestState.ReadyOnOtherJob or QuestState.Blocked or QuestState.Unknown)
+        {
+            var choose = PathText.ChooseOne(evaluation.ChoiceOf);
+            reason = reason.Length == 0 ? choose : reason + Separator + choose;
+        }
+
+        return reason;
     }
 
     /// <summary>
@@ -153,7 +163,7 @@ public static class BlockerText
         if (evaluation.State == QuestState.Unknown && Decide(evaluation) is { } decisive && NotCheckedItem(decisive.Req) is { } item)
         {
             // "Not checked · achievements", not "Not checked · Not checked: achievements".
-            reason = item;
+            reason = evaluation.ChoiceOf > 1 ? item + Separator + PathText.ChooseOne(evaluation.ChoiceOf) : item;
         }
 
         return reason.Length == 0 ? name : name + Separator + reason;
@@ -206,6 +216,7 @@ public static class BlockerText
         return result.Req switch
         {
             RetiredRequirement => RemovedFromGame,
+            OtherPathRequirement o => PathText.Reason(o, names.GrandCompany),
             ForeclosureRequirement f => F("Core.Blocker.ClosedBy", "closed by: {0}", f.CompletedLockIds.Length > 0 ? QuestName(names, f.CompletedLockIds[0]) : AnotherChoice),
             ExpansionCapRequirement e => F("Core.Blocker.Expansion", "Expansion: {0}", names.Expansion(e.Expansion)),
             LevelCapRequirement l => F("Core.Blocker.LevelCap", "Lv {0}, above your cap", l.Level),
@@ -317,7 +328,10 @@ public static class BlockerText
                 break;
             }
 
-            var remaining = names.Catalog.ByRowId.ContainsKey(id) ? PathFinder.RemainingCount(id, names.Catalog, states) : int.MaxValue;
+            // Another city's or class's line is never the one to name while the character's own is open.
+            var remaining = states.TryGetValue(id, out var evaluation) && evaluation.IsOtherPath ? int.MaxValue - 1
+                : names.Catalog.ByRowId.ContainsKey(id) ? PathFinder.RemainingCount(id, names.Catalog, states)
+                : int.MaxValue;
             if (!found || remaining < bestRemaining || (remaining == bestRemaining && id < chosen))
             {
                 chosen = id;

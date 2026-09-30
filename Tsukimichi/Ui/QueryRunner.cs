@@ -89,6 +89,7 @@ public sealed class QueryRunner : IDisposable
         this.plugin = plugin ?? throw new ArgumentNullException(nameof(plugin));
         this.ui = ui ?? throw new ArgumentNullException(nameof(ui));
         this.log = log ?? throw new ArgumentNullException(nameof(log));
+        ui.IsOtherPath = rowId => plugin.Session?.States is { } states && states.TryGetValue(rowId, out var evaluation) && evaluation.IsOtherPath;
     }
 
     public QuestRow[] Rows { get; private set; } = NoRows;

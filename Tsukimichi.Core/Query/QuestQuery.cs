@@ -17,6 +17,11 @@ namespace Tsukimichi.Core.Query;
 /// shows the unlisted live ones among them (every genre-0 quest under <see cref="JournalFiling.Legacy"/>), so the
 /// scope matches the menu's count and <c>/tsuki which</c> under either filing.
 /// </para>
+/// <para>
+/// Quests on a path the character did not take (<see cref="QuestEvaluation.IsOtherPath"/>) are listed under
+/// <see cref="QuestScope.VirtualOtherPaths"/>, grouped by the kind of path (city, class, Grand Company, other
+/// choices) in journal order within each, and elsewhere only when <see cref="FilterSet.IncludeOtherPaths"/> is on.
+/// </para>
 /// </summary>
 public static class QuestQuery
 {
@@ -120,7 +125,7 @@ public static class QuestQuery
         ArgumentNullException.ThrowIfNull(filters);
         ArgumentNullException.ThrowIfNull(ctx);
 
-        var candidates = Candidates(catalog, scope, ctx);
+        var candidates = scope.Kind == ScopeKind.VirtualOtherPaths ? OtherPathCandidates(catalog, source) : Candidates(catalog, scope, ctx);
         if (candidates.Count == 0)
         {
             return new QueryResult(NoRows, EmptyReason.Scope, 0);
@@ -135,6 +140,11 @@ public static class QuestQuery
         foreach (var quest in candidates)
         {
             if (quest.IsRemoved && !plan.IncludeUnlisted)
+            {
+                continue;
+            }
+
+            if (!plan.IncludeOtherPaths && source.OtherPathKind(quest.RowId) is not null)
             {
                 continue;
             }
@@ -226,6 +236,27 @@ public static class QuestQuery
         }
     }
 
+    /// <summary>
+    /// The Other paths node's quests: every listed quest on a path the character did not take, grouped by the kind of
+    /// path in <see cref="PathKind"/> order, journal order within each kind.
+    /// </summary>
+    private static List<QuestRecord> OtherPathCandidates<TSource>(QuestCatalog catalog, TSource source)
+        where TSource : struct, IStateSource
+    {
+        var picked = new List<(PathKind Kind, int Order, QuestRecord Quest)>();
+        for (var i = 0; i < catalog.All.Count; i++)
+        {
+            var quest = catalog.All[i];
+            if (!quest.IsRemoved && source.OtherPathKind(quest.RowId) is { } kind)
+            {
+                picked.Add((kind, i, quest));
+            }
+        }
+
+        picked.Sort(static (a, b) => a.Kind != b.Kind ? a.Kind.CompareTo(b.Kind) : a.Order.CompareTo(b.Order));
+        return picked.ConvertAll(static p => p.Quest);
+    }
+
     /// <summary>Names each engaged filter whose removal alone would restore at least one row. Runs only on empty results.</summary>
     private static EmptyReason Diagnose<TSource>(IReadOnlyList<QuestRecord> candidates, TSource source, Plan plan)
         where TSource : struct, IStateSource
@@ -240,7 +271,8 @@ public static class QuestQuery
 
             foreach (var quest in candidates)
             {
-                if (quest.IsRemoved && !plan.IncludeUnlisted && filter != Filter.IncludeUnlisted)
+                if ((quest.IsRemoved && !plan.IncludeUnlisted && filter != Filter.IncludeUnlisted)
+                    || (!plan.IncludeOtherPaths && source.OtherPathKind(quest.RowId) is not null))
                 {
                     continue;
                 }
@@ -408,6 +440,7 @@ public static class QuestQuery
             stalledBeforeUtc = ctx.NowUtc > DateTime.MinValue + TimeSpan.FromDays(days) ? ctx.NowUtc - TimeSpan.FromDays(days) : DateTime.MinValue;
             reachExpansion = ctx.Spoilers?.ReachExpansion ?? byte.MaxValue;
             UnlistedToggleable = scope.Kind is ScopeKind.None or ScopeKind.VirtualFeature;
+            IncludeOtherPaths = scope.Kind == ScopeKind.VirtualOtherPaths || filters.IncludeOtherPaths;
             IncludeUnlisted = scope.Kind switch
             {
                 // The issuer's candidates are never retired, so "removed" there can only mean an unlisted live quest
@@ -439,6 +472,9 @@ public static class QuestQuery
 
         /// <summary>Whether removed quests pass under this scope.</summary>
         public bool IncludeUnlisted { get; }
+
+        /// <summary>Whether quests on another path pass under this scope: always under the Other paths node, elsewhere when <see cref="FilterSet.IncludeOtherPaths"/> is on.</summary>
+        public bool IncludeOtherPaths { get; }
 
         /// <summary>Whether <see cref="FilterSet.IncludeUnlisted"/> has any say under this scope (it never does under a journal node).</summary>
         public bool UnlistedToggleable { get; }

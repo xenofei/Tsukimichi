@@ -89,7 +89,7 @@ public sealed class CuratedInvariantsTests(FixtureCatalog fixture) : IClassFixtu
             CuratedData.SystemUnlocksFileName, CuratedData.DutyUnlocksFileName, CuratedData.FeatureQuestsFileName,
             CuratedData.FestivalsFileName, CuratedData.ChainsFileName, CuratedData.OnlineStoreFileName, CuratedData.OtherSourcesFileName,
             CuratedData.RefileOverridesFileName, CuratedData.RetiredQuestsFileName, CuratedData.QuirksFileName, CuratedData.PayoffGatesFileName,
-            CuratedData.VersionFileName,
+            CuratedData.PathChoicesFileName, CuratedData.VersionFileName,
         };
         Assert.Equal(known.OrderBy(n => n, StringComparer.Ordinal), files.Select(Path.GetFileName).OrderBy(n => n, StringComparer.Ordinal));
         Assert.Empty(Curated().Warnings);
@@ -529,6 +529,61 @@ public sealed class CuratedInvariantsTests(FixtureCatalog fixture) : IClassFixtu
             Assert.Equal(84, rest.Festival);
             Assert.NotEqual(QuestState.Foreclosed, StateResolver.Resolve(rest, partial, catalog, context).State);
             Assert.NotEqual(QuestState.Foreclosed, StateResolver.ResolveAll(catalog, partial, context)[rowId].State);
+        }
+    }
+
+    [Fact]
+    public void Path_choices_pin_the_cities_the_rule_finds_and_name_real_class_and_company_quests()
+    {
+        // Feature plan v4 D1: path_choices.json only names and guards what PathIndex finds in the sheets.
+        var choices = Curated().PathChoices;
+        var catalog = fixture.Bundle.Catalog;
+        var index = PathIndex.For(catalog);
+
+        // The three cities: the pin and the rule agree exactly, and each root opens a level-1 main scenario line.
+        Assert.Equal(["Gridania", "Limsa Lominsa", "Ul'dah"], choices.Cities.Select(c => c.Label));
+        Assert.Equal(choices.Cities.Select(c => c.Root).Order(), index.RuleCityRoots.Order());
+        Assert.All(choices.Cities, c => Assert.StartsWith("Coming to ", catalog.ByRowId[c.Root].Name, StringComparison.Ordinal));
+
+        // The eight classes: each "Close to Home" follows one pinned root and sits in a sibling set, each starter has no
+        // previous quest, opens a class track and is the class's own "Way of".
+        Assert.Equal([1, 2, 3, 4, 5, 6, 7, 26], choices.Classes.Select(c => (int)c.ClassJob).Order());
+        foreach (var pin in choices.Classes)
+        {
+            var home = catalog.ByRowId[pin.CloseToHome];
+            Assert.Equal("Close to Home", home.Name);
+            Assert.Equal(0u, home.Journal.SectionId);
+            Assert.Contains(Assert.Single(home.PreviousQuests.QuestIds), choices.Cities.Select(c => c.Root));
+            Assert.Contains(index.SiblingSets, set => set.Contains(pin.CloseToHome));
+
+            var starter = catalog.ByRowId[pin.Starter];
+            Assert.Empty(starter.PreviousQuests.QuestIds);
+            Assert.Equal("Way of the " + pin.Label, starter.Name);
+            Assert.Contains(index.ClassTracks, t => t.Starter == pin.Starter);
+        }
+
+        Assert.Equal(8, choices.Classes.Select(c => c.CloseToHome).Distinct().Count());
+
+        // The company tags: only where the sheet's column says nothing, on quests named after that company, each in a
+        // Grand Company choice group.
+        var companyNames = new Dictionary<byte, string> { [1] = "(Maelstrom)", [2] = "(Twin Adder)", [3] = "(Immortal Flames)" };
+        Assert.Equal(6, choices.GrandCompanies.Count);
+        foreach (var (rowId, tag) in choices.GrandCompanies)
+        {
+            var quest = catalog.ByRowId[rowId];
+            Assert.Equal(0, quest.GrandCompany);
+            Assert.EndsWith(companyNames[tag.GrandCompany], quest.Name, StringComparison.Ordinal);
+            Assert.Contains(index.Groups, g => g.Kind == PathKind.GrandCompany && g.Options.Any(o => o.Anchors.Contains(rowId) && o.GrandCompany == tag.GrandCompany));
+        }
+
+        // The raw file: every entry carries a note, keys ascend in each section.
+        var root = JsonNode.Parse(File.ReadAllText(Path.Combine(CuratedDir, CuratedData.PathChoicesFileName)), documentOptions: CuratedData.StrictOptions)!.AsObject();
+        Assert.Equal(1, (int)root["schema"]!);
+        foreach (var section in new[] { "cities", "classes", "grandCompanies" })
+        {
+            var keys = root[section]!.AsObject().Select(kv => uint.Parse(kv.Key, CultureInfo.InvariantCulture)).ToList();
+            Assert.Equal(keys.Order(), keys);
+            Assert.All(root[section]!.AsObject(), kv => Assert.False(string.IsNullOrWhiteSpace((string?)kv.Value!["note"]), $"{section} {kv.Key} has no note"));
         }
     }
 }

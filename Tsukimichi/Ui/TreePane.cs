@@ -12,7 +12,8 @@ using Tsukimichi.GameData;
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// The Journal tree: All quests, then Section → Category → Genre, then the Unlock quests and Removed from the game virtual nodes.
+/// The Journal tree: All quests, then Section → Category → Genre, then the Unlock quests, Removed from the game and
+/// Other paths virtual nodes (Other paths only while the viewed character has quests on paths not taken).
 /// Each node shows a halo gauge, its name, an expansion pill when every quest under it belongs to one expansion, a
 /// Ready badge when any quest under it can be accepted now, and "done / total" in Dusk with a 44 × 3 mini bar
 /// (glyph proposal §4, T11). Selecting a node scopes the table through <see cref="UiState.Scope"/>.
@@ -60,6 +61,12 @@ public sealed partial class TreePane
         /// <summary>The halo's hover text: done/total and the percent, rebuilt with <see cref="CountText"/>.</summary>
         public string ProgressText { get; set; } = string.Empty;
 
+        /// <summary>"53 on other paths: another city's start 49, …" under the node; empty when none.</summary>
+        public string OtherPathsText { get; set; } = string.Empty;
+
+        /// <summary>The halo tooltip's second line: <see cref="ProgressText"/>, then <see cref="OtherPathsText"/> when there is one.</summary>
+        public string HoverText { get; set; } = string.Empty;
+
         /// <summary>The exact completion to two decimals, the folded-path tooltip's header.</summary>
         public string FractionText { get; set; } = string.Empty;
 
@@ -106,6 +113,8 @@ public sealed partial class TreePane
     private readonly Node allNode = new(QuestScope.None, "##all", Strings.AllQuests, leaf: true);
     private readonly Node featureNode = new(QuestScope.VirtualFeature, "##feature", Strings.FeatureUnlocks, leaf: true);
     private readonly Node unlistedNode = new(QuestScope.VirtualUnlisted, "##unlisted", Strings.RemovedFromGame, leaf: true);
+    private readonly Node otherPathsNode = new(QuestScope.VirtualOtherPaths, "##otherpaths", Strings.OtherPaths, leaf: true);
+    private int otherPathsTotal;
     private TreeCounts? counts;
     private NodeCount featureCount;
     private int featureReady = -1;
@@ -161,6 +170,12 @@ public sealed partial class TreePane
             if (showUnlisted || ui.Scope == QuestScope.VirtualUnlisted)
             {
                 DrawNode(unlistedNode, section: true);
+            }
+
+            // Quests on paths the character did not take: listed here only (unless the filter brings them back).
+            if (otherPathsTotal > 0 || ui.Scope == QuestScope.VirtualOtherPaths)
+            {
+                DrawNode(otherPathsNode, section: true);
             }
         }
 
@@ -505,7 +520,7 @@ public sealed partial class TreePane
                 return;
             case Hover.Halo:
             case Hover.Progress:
-                UiMetrics.Tooltip(Strings.FillingMoonTooltip, node.ProgressText);
+                UiMetrics.Tooltip(Strings.FillingMoonTooltip, node.HoverText.Length > 0 ? node.HoverText : node.ProgressText);
                 return;
         }
 
@@ -563,10 +578,30 @@ public sealed partial class TreePane
 
         counts = current;
         Apply(allNode, current.Overall, current.OverallReady);
+        ApplyOtherPaths(allNode, current.OtherPathsIn(QuestScope.None));
         Apply(unlistedNode, current.Unlisted, 0);
         foreach (var section in sections)
         {
             ApplyTree(section, current);
+        }
+
+        // The Other paths node counts its quests; nothing there is to do, so it has no progress and no Ready badge.
+        var paths = current.OtherPathsNode;
+        otherPathsTotal = paths.Total;
+        otherPathsNode.Count = default;
+        otherPathsNode.CountText = paths.Total.ToString("N0", CultureInfo.CurrentCulture);
+        otherPathsNode.ProgressText = Core.Evaluation.PathText.Tally(paths);
+        otherPathsNode.HoverText = otherPathsNode.ProgressText;
+    }
+
+    /// <summary>The node's other-path tally and the halo tooltip that carries it.</summary>
+    private static void ApplyOtherPaths(Node node, Core.Evaluation.PathTally tally)
+    {
+        var text = Core.Evaluation.PathText.Tally(tally);
+        if (text != node.OtherPathsText || node.HoverText.Length == 0)
+        {
+            node.OtherPathsText = text;
+            node.HoverText = text.Length == 0 ? node.ProgressText : node.ProgressText + "\n" + text;
         }
     }
 
@@ -580,6 +615,7 @@ public sealed partial class TreePane
             _ => (current.Genre(node.Scope.Id), current.GenreReady(node.Scope.Id)),
         };
         Apply(node, count, ready);
+        ApplyOtherPaths(node, current.OtherPathsIn(node.Scope));
         foreach (var child in node.Children)
         {
             ApplyTree(child, current);
@@ -594,6 +630,7 @@ public sealed partial class TreePane
             node.CountText = string.Format(CultureInfo.CurrentCulture, Strings.TreeCountFormat, count.Done, count.Total);
             node.ProgressText = UiFormat.Progress(count.Done, count.Total);
             node.FractionText = string.Format(CultureInfo.CurrentCulture, Strings.TreeFractionFormat, count.Fraction);
+            node.HoverText = string.Empty;
         }
 
         if (node.Ready != ready || node.ReadyText.Length == 0)
@@ -618,6 +655,7 @@ public sealed partial class TreePane
         allNode.Name = Strings.AllQuests;
         featureNode.Name = Strings.FeatureUnlocks;
         unlistedNode.Name = Strings.RemovedFromGame;
+        otherPathsNode.Name = Strings.OtherPaths;
         bundle = current;
         counts = null;
         featureReady = -1;

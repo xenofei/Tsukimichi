@@ -101,9 +101,12 @@ public sealed class ClassIntroSnapshotTests(FixtureCatalog fixture, ITestOutputH
         var states = StateResolver.ResolveAll(catalog, snapshot, context);
         var counts = TreeCounts.Compute(catalog, states, includeUnlisted: false);
 
-        // The intro evaluates Ready for her (nothing gates it), and would sit in the genre's total for good.
-        Assert.Equal(QuestState.Ready, states[LancerIntro].State);
-        Assert.False(states[LancerIntro].LeavesTotals);
+        // Nothing on the sheet gates the intro, but it opens the switcher's track, which a Lancer starter never walks
+        // (feature plan v4 D1): it reads Locked out on another path, and would otherwise sit in the total for good.
+        Assert.Equal(QuestState.Foreclosed, states[LancerIntro].State);
+        Assert.Equal(PathKind.StartClass, states[LancerIntro].OtherPath!.Path);
+        Assert.Equal("Not for Lancer starters · you started as a Lancer", states[LancerIntro].NextStep!.Detail);
+        Assert.True(states[LancerIntro].LeavesTotals);
 
         var genre = catalog.ByGenre[LancerGenre];
         Assert.Contains(genre, q => q.RowId == LancerIntro);
@@ -112,9 +115,13 @@ public sealed class ClassIntroSnapshotTests(FixtureCatalog fixture, ITestOutputH
         Assert.Equal(counted.Count(q => !states[q.RowId].LeavesTotals), counts.Genre(LancerGenre).Total);
         Assert.Equal(counted.Count(q => states[q.RowId].State == QuestState.Completed), counts.Genre(LancerGenre).Done);
 
-        // Still a row of the genre for the table, search and reveal, and still an unlock quest.
+        // Listed under Other paths, and in its genre when other paths are included; still an unlock quest.
         var rows = QuestQuery.Apply(catalog, states, new FilterSet(), QuestScope.Genre(LancerGenre), SortSpec.Default, null, QueryContext.Empty);
-        Assert.Contains(rows.Rows, r => r.Quest.RowId == LancerIntro);
+        Assert.DoesNotContain(rows.Rows, r => r.Quest.RowId == LancerIntro);
+        var included = QuestQuery.Apply(catalog, states, new FilterSet { IncludeOtherPaths = true }, QuestScope.Genre(LancerGenre), SortSpec.Default, null, QueryContext.Empty);
+        Assert.Contains(included.Rows, r => r.Quest.RowId == LancerIntro);
+        var otherPaths = QuestQuery.Apply(catalog, states, new FilterSet(), QuestScope.VirtualOtherPaths, SortSpec.Default, null, QueryContext.Empty);
+        Assert.Contains(otherPaths.Rows, r => r.Quest.RowId == LancerIntro);
         IReadOnlySet<uint> features = FeaturePresets.Derive(catalog, fixture.Curated);
         Assert.Contains(LancerIntro, features);
         output.WriteLine($"Lancer genre: {genre.Count} rows, {counts.Genre(LancerGenre).Done}/{counts.Genre(LancerGenre).Total} counted");

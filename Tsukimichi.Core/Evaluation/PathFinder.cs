@@ -24,7 +24,9 @@ public sealed record JoinAlternatives(uint JoinRowId, IReadOnlyList<PathAlternat
 
 /// <summary>
 /// Walks a quest's previous quests to the first step. Through an Any join it takes the branch with the fewest
-/// incomplete quests (ties to the lowest row id); cycles are cut and ids missing from the catalog are skipped.
+/// incomplete quests (ties to the lowest row id); cycles are cut and ids missing from the catalog are skipped. A
+/// branch on a path the character did not take (<see cref="QuestEvaluation.IsOtherPath"/>: another city's start,
+/// another class's track) is never taken while another is open, and is never offered as an alternative.
 /// </summary>
 public static class PathFinder
 {
@@ -102,7 +104,7 @@ public static class PathFinder
             List<PathAlternative>? found = null;
             foreach (var id in prereqs.Distinct())
             {
-                if (id == step.RowId || onPath.Contains(id) || !c.ByRowId.ContainsKey(id))
+                if (id == step.RowId || onPath.Contains(id) || !c.ByRowId.ContainsKey(id) || walk.IsOtherPath(id))
                 {
                     continue;
                 }
@@ -138,6 +140,9 @@ public static class PathFinder
         public QuestState StateOf(uint rowId) =>
             states.TryGetValue(rowId, out var evaluation) ? evaluation.State : QuestState.Unknown;
 
+        public bool IsOtherPath(uint rowId) =>
+            states.TryGetValue(rowId, out var evaluation) && evaluation.IsOtherPath;
+
         /// <summary>Post-order path ending at <paramref name="rowId"/>, depths relative to it. Empty when re-entered (cycle).</summary>
         public List<(uint RowId, int Depth)> SubPath(uint rowId)
         {
@@ -160,7 +165,14 @@ public static class PathFinder
             {
                 List<(uint RowId, int Depth)>? best = null;
                 var bestCost = int.MaxValue;
-                foreach (var prereq in prereqs.OrderBy(id => id))
+                var ordered = prereqs.OrderBy(id => id).ToList();
+                if (ordered.Exists(id => !IsOtherPath(id)))
+                {
+                    // Another city's or class's line is never the way there while the character's own is open.
+                    ordered.RemoveAll(IsOtherPath);
+                }
+
+                foreach (var prereq in ordered)
                 {
                     var branch = SubPath(prereq);
                     if (branch.Count == 0)

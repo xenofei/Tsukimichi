@@ -11,6 +11,9 @@ public readonly record struct QuestScope(ScopeKind Kind, uint Id)
     /// <summary>The "Removed from the game" virtual node: retired quests and those with no journal genre (<see cref="Model.QuestRecord.IsRemoved"/>), shown regardless of <see cref="FilterSet.IncludeUnlisted"/>.</summary>
     public static readonly QuestScope VirtualUnlisted = new(ScopeKind.VirtualUnlisted, 0);
 
+    /// <summary>The "Other paths" virtual node: quests on a path the character did not take, shown regardless of <see cref="FilterSet.IncludeOtherPaths"/>.</summary>
+    public static readonly QuestScope VirtualOtherPaths = new(ScopeKind.VirtualOtherPaths, 0);
+
     public static QuestScope Section(uint id) => new(ScopeKind.Section, id);
 
     public static QuestScope Category(uint id) => new(ScopeKind.Category, id);

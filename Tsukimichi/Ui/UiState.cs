@@ -225,11 +225,23 @@ public sealed class UiState
         return changed;
     }
 
-    /// <summary>Reveals a catalog quest: its genre's scope, or the "Removed from the game" scope for a removed quest.</summary>
+    /// <summary>
+    /// Whether a quest lies on a path the viewed character did not take (its rows are listed under Other paths only,
+    /// unless Include other paths is on); set by the query runner. Null reads as no.
+    /// </summary>
+    public Func<uint, bool>? IsOtherPath { get; set; }
+
+    /// <summary>
+    /// Reveals a catalog quest: its genre's scope, the "Removed from the game" scope for a removed quest, or the
+    /// "Other paths" scope for a quest on a path the character did not take while those are listed there only.
+    /// </summary>
     public void Reveal(QuestRecord quest)
     {
         ArgumentNullException.ThrowIfNull(quest);
-        Reveal(quest.RowId, quest.IsRemoved ? QuestScope.VirtualUnlisted : QuestScope.Genre(quest.Journal.GenreId), quest.IsRemoved);
+        var scope = quest.IsRemoved ? QuestScope.VirtualUnlisted
+            : !Filters.IncludeOtherPaths && IsOtherPath?.Invoke(quest.RowId) == true ? QuestScope.VirtualOtherPaths
+            : QuestScope.Genre(quest.Journal.GenreId);
+        Reveal(quest.RowId, scope, quest.IsRemoved);
     }
 
     /// <summary>Raised by <see cref="OpenRoute"/>; the plugin opens the route window on the target.</summary>

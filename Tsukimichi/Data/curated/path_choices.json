@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "note": "Labels and guards for the choice groups (Tsukimichi.Core/Evaluation/PathIndex.cs, feature plan v4 D1). The groups themselves are found from the sheets; this file only names the start cities (and pins them: a root counts only when the rule finds it too), maps each A Realm Reborn starting class to its Close to Home row and its starter Way of quest, and gives the Grand Company of the quests whose sheet row leaves GrandCompany at 0. Investigation: docs/data/v4/other-paths.md.",
+  "cities": {
+    "65575": { "label": "Gridania", "note": "Coming to Gridania (ManFst001): the Gridania start's first quest." },
+    "65643": { "label": "Limsa Lominsa", "note": "Coming to Limsa Lominsa (ManSea001): the Limsa Lominsa start's first quest." },
+    "66130": { "label": "Ul'dah", "note": "Coming to Ul'dah (ManWil001): the Ul'dah start's first quest." }
+  },
+  "classes": {
+    "1": { "label": "Gladiator", "closeToHome": 66104, "starter": 65789, "note": "Ul'dah Close to Home ManWil002, its guild actor (ACTOR1 1002277) is Way of the Gladiator's issuer." },
+    "2": { "label": "Pugilist", "closeToHome": 66105, "starter": 66069, "note": "Ul'dah Close to Home ManWil003, its guild actor (ACTOR1 1001286) is Way of the Pugilist's issuer." },
+    "3": { "label": "Marauder", "closeToHome": 65644, "starter": 65847, "note": "Limsa Lominsa Close to Home ManSea002, its guild actor (ACTOR2 1000926) is Way of the Marauder's issuer." },
+    "4": { "label": "Lancer", "closeToHome": 65621, "starter": 65559, "note": "Gridania Close to Home ManFst002, its guild actor (ACTOR2 1000251) is Way of the Lancer's issuer." },
+    "5": { "label": "Archer", "closeToHome": 65659, "starter": 65557, "note": "Gridania Close to Home ManFst003, its guild actor (ACTOR2 1000197) is Way of the Archer's issuer." },
+    "6": { "label": "Conjurer", "closeToHome": 65660, "starter": 65558, "note": "Gridania Close to Home ManFst004, its guild actor (ACTOR2 1000323) is Way of the Conjurer's issuer." },
+    "7": { "label": "Thaumaturge", "closeToHome": 66106, "starter": 65881, "note": "Ul'dah Close to Home ManWil004, its guild actor (ACTOR1 1002279) is Way of the Thaumaturge's issuer." },
+    "26": { "label": "Arcanist", "closeToHome": 65645, "starter": 65989, "note": "Limsa Lominsa Close to Home ManSea003, its guild actor (ACTOR2 1000895) is Way of the Arcanist's issuer." }
+  },
+  "grandCompanies": {
+    "66216": { "grandCompany": 2, "note": "The Company You Keep (Twin Adder): the main scenario's Grand Company choice; the sheet leaves GrandCompany at 0." },
+    "66217": { "grandCompany": 1, "note": "The Company You Keep (Maelstrom): the main scenario's Grand Company choice; the sheet leaves GrandCompany at 0." },
+    "66218": { "grandCompany": 3, "note": "The Company You Keep (Immortal Flames): the main scenario's Grand Company choice; the sheet leaves GrandCompany at 0." },
+    "67001": { "grandCompany": 2, "note": "Call of the Wild (Twin Adder), issued by the Twin Adder's officer; the sheet leaves GrandCompany at 0." },
+    "67002": { "grandCompany": 1, "note": "Call of the Wild (Maelstrom), issued by the Maelstrom's officer; the sheet leaves GrandCompany at 0." },
+    "67003": { "grandCompany": 3, "note": "Call of the Wild (Immortal Flames), issued by the Immortal Flames' officer; the sheet leaves GrandCompany at 0." }
+  }
+}

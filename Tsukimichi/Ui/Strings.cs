@@ -198,6 +198,10 @@ public static partial class Strings
     public static string RepeatableOnly => Loc.Get("RepeatableOnly");
     public static string SeasonalActiveOnly => Loc.Get("SeasonalActiveOnly");
     public static string IncludeUnlisted => FilterNames.Display(FilterNames.IncludeUnlisted);
+    public static string IncludeOtherPaths => FilterNames.Display(FilterNames.IncludeOtherPaths);
+
+    /// <summary>The "Other paths" virtual tree node (feature plan v4 D1).</summary>
+    public static string OtherPaths => Core.Evaluation.PathText.NodeName;
     public static string PinnedOnly => Loc.Get("PinnedOnly");
     public static string PinnedFirst => Loc.Get("PinnedFirst");
     public static string Reset => Loc.Get("Reset");
@@ -225,6 +229,7 @@ public static partial class Strings
     public static string RepeatableOnlyTooltip => Loc.Get("RepeatableOnlyTooltip");
     public static string SeasonalActiveOnlyTooltip => Loc.Get("SeasonalActiveOnlyTooltip");
     public static string IncludeUnlistedTooltip => Loc.Get("IncludeUnlistedTooltip");
+    public static string IncludeOtherPathsTooltip => Loc.Get("IncludeOtherPathsTooltip");
     public static string PinnedOnlyTooltip => Loc.Get("PinnedOnlyTooltip");
     public static string ResetTooltip => Loc.Get("ResetTooltip");
     public static string ResetFilters => Loc.Get("ResetFilters");
@@ -475,6 +480,7 @@ public static partial class Strings
         RequirementKind.Achievement => Loc.Get("RequirementName.Achievement"),
         RequirementKind.CustomDeliveryRank => Loc.Get("RequirementName.CustomDeliveryRank"),
         RequirementKind.CarrierLevel => Loc.Get("RequirementName.CarrierLevel"),
+        RequirementKind.OtherPath => Loc.Get("RequirementName.OtherPath"),
         _ => kind.ToString(),
     };
 
