@@ -4,6 +4,12 @@ Status: **approved by the owner on 2026-09-30** ("Mockup looks good … Execute 
 
 Three additions came with the approval: D11 multibox, L8 requirement visuals, and the V4 banner fallback with original category art.
 
+**Release numbering as shipped (2026-09-30):**
+- **1.2.0** shipped D1–D11: honest counts, complete tags and multibox, together with L1–L2 (the pane floors and text helpers).
+- **1.3** is the layout release: L3–L8.
+- **1.4** is the Moon Road look: V1–V6. The art foundations (category banners, ornament atlas, banner resolver, node icons, orbit) are already on main but not drawn yet.
+
+
 Sources:
 - the owner's feedback of 2026-09-30, with screenshots of the quest table, Journal tree, rail, narrow panes and Flight tab;
 - five investigations (reports in `docs/data/v4/`, design in `docs/design/moon-road-proposal.md`);
