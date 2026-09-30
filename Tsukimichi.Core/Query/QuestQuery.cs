@@ -34,6 +34,7 @@ public static class QuestQuery
         AvailableOnly,
         State,
         Expansion,
+        AddedIn,
         LevelRange,
         JobCategory,
         RewardKinds,
@@ -53,6 +54,7 @@ public static class QuestQuery
         (Filter.AvailableOnly, FilterNames.AvailableOnly),
         (Filter.State, FilterNames.State),
         (Filter.Expansion, FilterNames.Expansion),
+        (Filter.AddedIn, FilterNames.AddedIn),
         (Filter.LevelRange, FilterNames.LevelRange),
         (Filter.JobCategory, FilterNames.JobCategory),
         (Filter.RewardKinds, FilterNames.RewardKinds),
@@ -168,7 +170,19 @@ public static class QuestQuery
             sorted = Partition(sorted, row => pinned.Contains(row.Quest.RowId));
         }
 
-        return new QueryResult(sorted, null, totalInScope);
+        var newCount = 0;
+        if (sort.NewThisPatchFirst)
+        {
+            // The Unlocks quick view's first group (P8): its quests from the newest patch series in the data.
+            var patches = PatchIndex.For(catalog);
+            sorted = Partition(sorted, row => patches.IsNew(row.Quest));
+            while (newCount < sorted.Length && patches.IsNew(sorted[newCount].Quest))
+            {
+                newCount++;
+            }
+        }
+
+        return new QueryResult(sorted, null, totalInScope, newCount);
     }
 
     private static IReadOnlyList<QuestRecord> Candidates(QuestCatalog catalog, QuestScope scope, QueryContext ctx)
@@ -376,11 +390,11 @@ public static class QuestQuery
         private readonly bool hideCompletedEngaged;
         private readonly bool availableOnlyEngaged;
         private readonly bool levelRangeEngaged;
+        private readonly string addedIn;
         private readonly int bandMin;
         private readonly int bandMax;
         private readonly DateTime stalledBeforeUtc;
         private readonly byte reachExpansion;
-
         public Plan(FilterSet filters, QueryContext ctx, SearchIndex? index, string query, QuestScope scope)
         {
             this.filters = filters;
@@ -405,6 +419,8 @@ public static class QuestQuery
             hideCompletedEngaged = filters.HideCompletedEngaged();
             availableOnlyEngaged = filters.AvailableOnlyEngaged();
             levelRangeEngaged = filters.LevelRangeEngaged();
+            // Normalized once, so a hand-edited "7.50" still reads as the 7.5 series.
+            addedIn = filters.AddedInEngaged() ? PatchVersion.Normalize(filters.AddedIn) : string.Empty;
 
             foreach (var (kind, state) in filters.RewardKinds)
             {
@@ -436,6 +452,7 @@ public static class QuestQuery
             Filter.AvailableOnly => availableOnlyEngaged,
             Filter.State => filters.StateMask != QuestStateMask.All,
             Filter.Expansion => filters.Expansions.Count > 0,
+            Filter.AddedIn => addedIn.Length > 0,
             Filter.LevelRange => levelRangeEngaged,
             Filter.JobCategory => filters.ClassJobCategoryId is not null,
             Filter.RewardKinds => (hiddenRewardMask | onlyRewardMask) != 0,
@@ -478,6 +495,11 @@ public static class QuestQuery
             }
 
             if (skip != Filter.Expansion && filters.Expansions.Count > 0 && !filters.Expansions.Contains(quest.Expansion))
+            {
+                return false;
+            }
+
+            if (skip != Filter.AddedIn && addedIn.Length > 0 && !PatchVersion.InSeries(quest.AddedIn, addedIn))
             {
                 return false;
             }

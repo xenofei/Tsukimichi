@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Storage;
 using Tsukimichi.Verify.Game;
 using Tsukimichi.Verify.Net;
 using Tsukimichi.Verify.Output;
@@ -18,6 +19,7 @@ namespace Tsukimichi.Verify;
 /// Tsukimichi.Verify quests  [--game &lt;sqpack&gt;] [--cache &lt;dir&gt;] [--offline] [--since &lt;csv&gt;] [--rate &lt;seconds&gt;] [--limit N] [--out &lt;dir&gt;]
 /// Tsukimichi.Verify rewards [same options]
 /// Tsukimichi.Verify summary [--out &lt;dir&gt;]       exits 1 when any row is unresolved or catalogWrong outside the allowlist
+/// Tsukimichi.Verify patches [--game, --cache, --offline, --rate, --limit N, --out] [--patches &lt;file&gt;] [--no-quest-documents]
 /// </code>
 /// </summary>
 public static class Program
@@ -60,6 +62,7 @@ public static class Program
                 "quests" => await QuestsAsync(opts, cts.Token),
                 "rewards" => await RewardsAsync(opts, cts.Token),
                 "summary" => Summary(opts),
+                "patches" => await PatchesAsync(opts, cts.Token),
                 _ => Unknown(command),
             };
         }
@@ -85,7 +88,7 @@ public static class Program
 
     private static void Usage()
     {
-        Console.Error.WriteLine("usage: Tsukimichi.Verify <quests|rewards|summary> [options]");
+        Console.Error.WriteLine("usage: Tsukimichi.Verify <quests|rewards|summary|patches> [options]");
         Console.Error.WriteLine("  --game <sqpack>    game sqpack directory (default: the Steam install)");
         Console.Error.WriteLine("  --cache <dir>      fetch cache (default: %LOCALAPPDATA%\\Tsukimichi.Verify\\<gameVersion>); never inside the repo");
         Console.Error.WriteLine("  --offline          never fetch; a cache miss is an unresolved row");
@@ -95,6 +98,10 @@ public static class Program
         Console.Error.WriteLine("  --out <dir>        output directory (default: <repo>/docs/data)");
         Console.Error.WriteLine("  --data <file>      unique_quests.json (default: <repo>/Tsukimichi/Data/unique_quests.json)");
         Console.Error.WriteLine("  --curated <dir>    curated directory (default: <repo>/Tsukimichi/Data/curated)");
+        Console.Error.WriteLine("  patches only:");
+        Console.Error.WriteLine("  --patches <file>   quest_patches.json to write (default: <repo>/Tsukimichi/Data/quest_patches.json); its values fill what Garland cannot");
+        Console.Error.WriteLine("  --no-quest-documents  read Garland's per-quest documents from the cache only; never fetch one");
+        Console.Error.WriteLine("  (with patches, --limit N caps the per-quest fetches of one run; the rest wait for the next)");
     }
 
     private static string ToolVersion => Assembly.GetExecutingAssembly().GetName().Version is { } v ? $"{v.Major}.{v.Minor}.{v.Build}" : "0.0.0";
@@ -237,6 +244,41 @@ public static class Program
         var quests = File.Exists(questCsv) ? Csv.ReadQuestRows(questCsv) : [];
         WriteReport(c, opts, "rewards", quests, rows, allowlistPath, log, [], verifier.SystemRewardCoverage(c.UniqueEntries).ToList());
         PrintTotals(rows.Select(r => r.Verdict), "reward rows", log);
+        log.WriteLine($"done in {PoliteHttp.Elapsed(c.Clock)}; {c.Http.LiveRequests} live requests, {c.Http.CacheHits} cache hits");
+        return 0;
+    }
+
+    /// <summary>
+    /// P8 seed: Garland's patch data for every named quest into <c>quest_patches.json</c>, with
+    /// <c>quest-patches-report.md</c> beside the other reports. Resumable: everything fetched is cached, and a rerun
+    /// fetches only what is missing.
+    /// </summary>
+    private static async Task<int> PatchesAsync(VerifyOptions opts, CancellationToken ct)
+    {
+        using var c = Open(opts);
+        var log = Console.Out;
+        var previous = File.Exists(opts.PatchesFile) ? QuestPatches.Load(opts.PatchesFile) : QuestPatches.Empty;
+        foreach (var warning in previous.Warnings)
+        {
+            log.WriteLine("patches: " + warning);
+        }
+
+        log.WriteLine($"patches: previous file {(previous.ByRowId.Count == 0 ? "none" : $"{previous.KnownCount} known of {previous.ByRowId.Count} listed (game {previous.GameVersion})")}");
+        var seeder = new PatchSeeder(c.Game, new GarlandPatchSource(c.Http, log), previous, log);
+        // verification-manifest.json is left alone: it audits the quests and rewards runs, and the report names every
+        // Garland document this one read.
+        var result = await seeder.RunAsync(!opts.Offline && opts.FetchQuestDocuments, opts.Limit, ct);
+        result.Write(opts.PatchesFile);
+        var reportPath = Path.Combine(c.OutDir, "quest-patches-report.md");
+        seeder.WriteReport(reportPath, result, DateTime.UtcNow.ToString("yyyy-MM-dd"), UserAgent, opts.RateSeconds, opts.Offline);
+        var known = seeder.Rows.Count(r => r.Patch.Length > 0);
+        log.WriteLine($"wrote:   {opts.PatchesFile} ({known} of {seeder.Rows.Count} named quests with a patch, newest {result.Newest})");
+        log.WriteLine($"wrote:   {reportPath} ({seeder.Findings.Count} findings)");
+        if (seeder.QuestDocumentsPending > 0)
+        {
+            log.WriteLine($"patches: {seeder.QuestDocumentsPending} quest documents still to fetch; rerun to resume");
+        }
+
         log.WriteLine($"done in {PoliteHttp.Elapsed(c.Clock)}; {c.Http.LiveRequests} live requests, {c.Http.CacheHits} cache hits");
         return 0;
     }
@@ -511,6 +553,8 @@ internal sealed record VerifyOptions
     public string OutDir { get; init; } = Path.Combine(FindRepoRoot(), "docs", "data");
     public string DataFile { get; init; } = Path.Combine(FindRepoRoot(), "Tsukimichi", "Data", "unique_quests.json");
     public string CuratedDir { get; init; } = Path.Combine(FindRepoRoot(), "Tsukimichi", "Data", "curated");
+    public string PatchesFile { get; init; } = Path.Combine(FindRepoRoot(), "Tsukimichi", "Data", QuestPatches.FileName);
+    public bool FetchQuestDocuments { get; init; } = true;
 
     public static VerifyOptions Parse(string[] args)
     {
@@ -546,6 +590,12 @@ internal sealed record VerifyOptions
                     break;
                 case "--curated":
                     o = o with { CuratedDir = Path.GetFullPath(Next()) };
+                    break;
+                case "--patches":
+                    o = o with { PatchesFile = Path.GetFullPath(Next()) };
+                    break;
+                case "--no-quest-documents":
+                    o = o with { FetchQuestDocuments = false };
                     break;
                 default:
                     throw new ArgumentException($"unknown option {args[i]}");

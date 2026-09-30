@@ -171,6 +171,9 @@ public static class EmptyState
             case FilterNames.Expansion:
                 f.Expansions.Clear();
                 return true;
+            case FilterNames.AddedIn:
+                f.AddedIn = string.Empty;
+                return true;
             case FilterNames.LevelRange:
                 f.LevelMin = FilterSet.NoLevelMin;
                 f.LevelMax = FilterSet.NoLevelMax;

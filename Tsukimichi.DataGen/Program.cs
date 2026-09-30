@@ -12,6 +12,7 @@ namespace Tsukimichi.DataGen;
 /// Usage: Tsukimichi.DataGen --game "<sqpack path>" --out <unique_quests.json> [--curated <dir>] [--reports <dir>] [--keep-nonexclusive-items]
 ///        Tsukimichi.DataGen --verify --game "<sqpack path>" [--data <unique_quests.json>] [--report <verification-report.md>] [--no-xivapi] [--sample N] [--seed N]
 ///        Tsukimichi.DataGen --dump-catalog <file.json.gz or directory> --game "<sqpack path>"
+///        Tsukimichi.DataGen --patches <quest_patches.json> --game "<sqpack path>" [--patch <x.y>]
 /// </summary>
 public static class Program
 {
@@ -24,6 +25,8 @@ public static class Program
             return Verify(args);
         if (args.Contains("--dump-catalog"))
             return DumpCatalog(args);
+        if (args.Contains("--patches"))
+            return StampPatches(args);
 
         string? game = null;
         string? output = null;
@@ -273,6 +276,97 @@ public static class Program
         return 0;
     }
 
+    /// <summary>
+    /// The P8 diff: every named quest id <c>quest_patches.json</c> does not list is new since the file was last
+    /// written, and is stamped with <c>--patch</c> (the patch this game version ships). No network: the Garland seed
+    /// (<c>Tsukimichi.Verify patches</c>) runs once; every later game patch is a diff. Exits 1 when new ids appear
+    /// without <c>--patch</c>, so a regeneration never ships them as unknown by accident.
+    /// </summary>
+    private static int StampPatches(string[] args)
+    {
+        string? game = null;
+        string? file = null;
+        string? patch = null;
+
+        for (var i = 0; i < args.Length; i++)
+        {
+            switch (args[i])
+            {
+                case "--game" when i + 1 < args.Length:
+                    game = args[++i];
+                    break;
+                case "--patches" when i + 1 < args.Length:
+                    file = args[++i];
+                    break;
+                case "--patch" when i + 1 < args.Length:
+                    patch = args[++i];
+                    break;
+                case "--help" or "-h":
+                    PrintUsage();
+                    return 0;
+                default:
+                    Console.Error.WriteLine($"Unknown or incomplete argument: {args[i]}");
+                    PrintUsage();
+                    return 2;
+            }
+        }
+
+        if (game is null || !Directory.Exists(game) || file is null)
+        {
+            Console.Error.WriteLine("--patches needs the quest_patches.json path and --game pointing at an existing sqpack directory.");
+            PrintUsage();
+            return 2;
+        }
+
+        if (!File.Exists(file))
+        {
+            Console.Error.WriteLine($"{file} not found: seed it once with `Tsukimichi.Verify patches` (tools/Tsukimichi.Verify/README.md).");
+            return 2;
+        }
+
+        if (patch is not null && !PatchVersion.IsPatch(PatchVersion.Normalize(patch)))
+        {
+            Console.Error.WriteLine($"--patch {patch} is not a patch number (7.5, 7.51, 7.55).");
+            return 2;
+        }
+
+        var clock = Stopwatch.StartNew();
+        var previous = QuestPatches.Load(file);
+        foreach (var warning in previous.Warnings)
+            Console.WriteLine($"patches: {warning}");
+
+        var gameVersion = GameSheets.ReadGameVersion(game);
+        using var data = new Lumina.GameData(game, new Lumina.LuminaOptions
+        {
+            DefaultExcelLanguage = Language.English,
+            PanicOnSheetChecksumMismatch = false,
+        });
+        var bundle = CatalogMapper.Map(data.Excel, Language.English, filing: JournalFiling.Legacy);
+
+        QuestPatchesDiff diff;
+        try
+        {
+            diff = previous.Diff(bundle.Catalog.All.Select(q => q.RowId), gameVersion, patch);
+        }
+        catch (InvalidOperationException ex)
+        {
+            Console.Error.WriteLine($"patches: {ex.Message}");
+            foreach (var quest in bundle.Catalog.All.Where(q => !previous.Lists(q.RowId)).Take(20))
+                Console.Error.WriteLine($"  new: {quest.RowId} {quest.Name}");
+            return 1;
+        }
+
+        diff.Updated.Write(file);
+        Console.WriteLine($"game:    {gameVersion} (file was {previous.GameVersion})");
+        Console.WriteLine(diff.NewRowIds.Count == 0
+            ? "patches: no quest id is new since the last write"
+            : $"patches: {diff.NewRowIds.Count} new quest id(s) stamped {PatchVersion.Normalize(patch)}");
+        foreach (var id in diff.NewRowIds)
+            Console.WriteLine($"  {id} {bundle.Catalog.GetByRowId(id)?.Name}");
+        Console.WriteLine($"wrote:   {file} ({diff.Updated.KnownCount} of {diff.Updated.ByRowId.Count} listed quests with a patch, newest {diff.Updated.Newest}) in {clock.Elapsed.TotalSeconds:F1} s");
+        return 0;
+    }
+
     /// <summary>Known facts the output must reproduce. A failure means the sheet layout or a rule regressed.</summary>
     private static List<string> SanityChecks(IReadOnlyList<UniqueRewardEntry> entries)
     {
@@ -324,5 +418,7 @@ public static class Program
         Console.WriteLine("       a verification-notes.md next to the report is inserted after the header (hand-written findings).");
         Console.WriteLine("       Tsukimichi.DataGen --dump-catalog <file.json.gz or directory> --game <sqpack path>");
         Console.WriteLine("       freezes the mapped catalog (the sheet's own journal filing) for the tests (Tsukimichi.Tests/Fixtures/catalog-<gameVersion>.json.gz).");
+        Console.WriteLine("       Tsukimichi.DataGen --patches <quest_patches.json> --game <sqpack path> [--patch <x.y>]");
+        Console.WriteLine("       stamps every quest id the file does not list yet with --patch (required when there is one); offline.");
     }
 }

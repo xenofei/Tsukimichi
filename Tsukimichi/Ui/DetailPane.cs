@@ -1152,6 +1152,11 @@ public sealed class DetailPane
         }
 
         model.HeaderLine = string.Format(CultureInfo.CurrentCulture, Strings.HeaderLineFormat, bundle.Names.Expansion(quest.Expansion), quest.DisplayLevel, jobName);
+        if (quest.AddedIn.Length > 0)
+        {
+            // P8: the patch of origin closes the hero's caption ("Dawntrail · Lv 100 · Any · Added in 7.5").
+            model.HeaderLine += string.Format(CultureInfo.CurrentCulture, Strings.DetailAddedInFormat, quest.AddedIn);
+        }
 
         if (evaluation is not null)
         {

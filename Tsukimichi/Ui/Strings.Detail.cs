@@ -18,6 +18,9 @@ static partial class Strings
     public const string DetailUniqueRewardTooltip = "Unique: this quest is the only way to get it";
     public const string DetailNoGiverPlace = "No map position recorded";
 
+    /// <summary>Appended to the hero's caption line (P8): {0} = the patch the quest was added in, as the game writes it.</summary>
+    public const string DetailAddedInFormat = " · Added in {0}";
+
     /// <summary>The header badge's tooltip for <c>QuestRecord.IconSpecial</c>: a seasonal event quest, or another special one (a promotion).</summary>
     public const string DetailSeasonalBadgeTooltip = "Seasonal event quest";
     public const string DetailSpecialBadgeTooltip = "Special";

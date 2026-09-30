@@ -93,6 +93,16 @@ public sealed class QueryRunner : IDisposable
     /// </summary>
     public string? SproutCaption { get; private set; }
 
+    /// <summary>
+    /// Under the Unlocks quick view, how many leading <see cref="Rows"/> are the "New in 7.5x" group (P8: its unlock
+    /// quests from the newest patch series); 0 when none or another view is on. <see cref="NewThisPatchCaption"/> names
+    /// the group above the table.
+    /// </summary>
+    public int NewThisPatch { get; private set; }
+
+    /// <summary>"New in 7.5x: 12 unlock quests, listed first", or null when <see cref="NewThisPatch"/> is 0.</summary>
+    public string? NewThisPatchCaption { get; private set; }
+
     /// <summary>Null until a catalog exists.</summary>
     public TreeCounts? Counts { get; private set; }
 
@@ -476,14 +486,24 @@ public sealed class QueryRunner : IDisposable
             Spoilers: session.Spoilers,
             Stories: session.Stories);
 
-        // The Unlocks quick view reads best with what can be picked up now on top; the other presets keep the table's sort.
-        var effectiveSort = ui.Sort with { AvailableFirst = ui.Filters.Preset == Preset.FeatureQuests };
+        // The Unlocks quick view reads best with its unlocks from the newest patch series on top (P8), then what can be picked up
+        // now; the other presets keep the table's sort.
+        var unlocks = ui.Filters.Preset == Preset.FeatureQuests;
+        var effectiveSort = ui.Sort with { AvailableFirst = unlocks, NewThisPatchFirst = unlocks };
         var result = QuestQuery.Apply(current.Catalog, session.States, ui.Filters, ui.Scope, effectiveSort, appliedSearch, ctx);
 
         Rows = result.Rows;
         Empty = result.Empty;
         TotalInScope = result.TotalInScope;
         SproutCaption = ui.Filters.Preset == Preset.Sprout ? SproutReach(session, current) : null;
+        NewThisPatch = result.NewThisPatch;
+        NewThisPatchCaption = result.NewThisPatch == 0
+            ? null
+            : string.Format(
+                CultureInfo.CurrentCulture,
+                result.NewThisPatch == 1 ? Strings.NewThisPatchCaptionOneFormat : Strings.NewThisPatchCaptionFormat,
+                PatchIndex.For(current.Catalog).NewestSeries,
+                result.NewThisPatch);
 
         sessionVersion = session.Version;
         queryVersion = ui.QueryVersion;

@@ -32,6 +32,9 @@ public sealed class PluginPaths
     public string ExportsDir => Path.Combine(ConfigDir, "exports");
 
     public string UniqueRewardsFile => Path.Combine(PluginDir, "unique_quests.json");
+
+    /// <summary>The patch each quest was added in (P8), read at catalog build.</summary>
+    public string QuestPatchesFile => Path.Combine(PluginDir, QuestPatches.FileName);
     public string CuratedDir => Path.Combine(PluginDir, "curated");
     public string SystemUnlocksFile => Path.Combine(CuratedDir, CuratedData.SystemUnlocksFileName);
     public string DutyUnlocksFile => Path.Combine(CuratedDir, CuratedData.DutyUnlocksFileName);

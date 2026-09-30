@@ -7,22 +7,31 @@
       1. dotnet build of the solution (Release).
       2. Tsukimichi.DataGen generate: Tsukimichi/Data/unique_quests.json, the derived
          Tsukimichi/Data/curated/feature_quests.json and the reports under docs/data.
-      3. Tsukimichi.DataGen --verify: docs/data/verification-report.md (hard checks fail the script).
-      4. Tsukimichi.DataGen --dump-catalog: the test fixture Tsukimichi.Tests/Fixtures/catalog-<gameVersion>.json.gz
+      3. Tsukimichi.DataGen --patches: Tsukimichi/Data/quest_patches.json gains every quest id it does not list yet,
+         stamped with -Patch (the patch this game version ships). Offline; the file was seeded once from Garland Tools
+         by `Tsukimichi.Verify patches`. New ids without -Patch fail the script, so they never ship as unknown.
+      4. Tsukimichi.DataGen --verify: docs/data/verification-report.md (hard checks fail the script).
+      5. Tsukimichi.DataGen --dump-catalog: the test fixture Tsukimichi.Tests/Fixtures/catalog-<gameVersion>.json.gz
          (the previous fixture is removed once the new one is written, so exactly one remains; a failed dump
-         leaves the old one in place).
-      5. docs/data/DATA-VERSION.md: game version, generation time, curated revision (short git hash of the last
+         leaves the old one in place). The fixture holds the sheet's own data; the tests lay quest_patches.json over
+         it on read, as the plugin does at catalog build.
+      6. docs/data/DATA-VERSION.md: game version, generation time, curated revision (short git hash of the last
          commit touching a data file under Tsukimichi/Data/curated, README.md and VERSION.json excluded, "-dirty"
          when those files have uncommitted changes) and counts;
          the same revision goes into Tsukimichi/Data/curated/VERSION.json, which the plugin shows in Settings > About
          and in the "Report this quest" diagnostic block.
-      6. dotnet test Tsukimichi.Tests (the curated invariants run without the game; with the game path they all run).
-      7. git diff --stat, so the reviewed diff is the last thing on screen.
+      7. dotnet test Tsukimichi.Tests (the curated invariants run without the game; with the game path they all run).
+      8. git diff --stat, so the reviewed diff is the last thing on screen.
 
     The reports carry no timestamps; only DATA-VERSION.md changes when nothing else did.
 
 .PARAMETER GamePath
     The game's sqpack directory. Defaults to the Steam install path.
+
+.PARAMETER Patch
+    The patch the game data is from, as the game writes it ("7.6", "7.61", "7.65"). Required after a game patch
+    that added quests: every quest id quest_patches.json does not list yet is stamped with it. Not needed when no
+    quest is new (a rerun on the same game version).
 
 .PARAMETER NoXivApi
     Skip the verifier's xivapi spot checks (offline run).
@@ -33,10 +42,12 @@
 .EXAMPLE
     pwsh tools/regen.ps1
     pwsh tools/regen.ps1 -NoXivApi -GamePath "D:\FFXIV\game\sqpack"
+    pwsh tools/regen.ps1 -Patch 7.6
 #>
 [CmdletBinding()]
 param(
     [string] $GamePath = "C:\Program Files (x86)\Steam\steamapps\common\FINAL FANTASY XIV Online\game\sqpack",
+    [string] $Patch,
     [switch] $NoXivApi,
     [switch] $SkipTests
 )
@@ -49,6 +60,7 @@ $dataFile = "Tsukimichi/Data/unique_quests.json"
 $curatedDir = "Tsukimichi/Data/curated"
 $fixturesDir = "Tsukimichi.Tests/Fixtures"
 $versionFile = "docs/data/DATA-VERSION.md"
+$patchesFile = "Tsukimichi/Data/quest_patches.json"
 
 if (-not (Test-Path $GamePath)) {
     throw "sqpack directory not found: $GamePath (pass -GamePath)"
@@ -68,6 +80,12 @@ $datagen = @("run", "--project", "Tsukimichi.DataGen", "-c", "Release", "--no-bu
 Step "generate $dataFile and $curatedDir/feature_quests.json"
 & dotnet @datagen --game $GamePath --out $dataFile --curated $curatedDir
 if ($LASTEXITCODE -ne 0) { throw "generation failed (sanity checks)" }
+
+Step "stamp new quest ids in $patchesFile"
+$patchArgs = @("--patches", $patchesFile, "--game", $GamePath)
+if ($Patch) { $patchArgs += @("--patch", $Patch) }
+& dotnet @datagen @patchArgs
+if ($LASTEXITCODE -ne 0) { throw "quest_patches.json: new quest ids need -Patch <x.y> (the patch this game version ships)" }
 
 Step "verify"
 $verifyArgs = @("--verify", "--game", $GamePath, "--data", $dataFile)
@@ -100,6 +118,7 @@ $curatedChanged = $LASTEXITCODE -ne 0
 $curatedUntracked = (git ls-files --others --exclude-standard -- @curatedPathspec | Measure-Object).Count -gt 0
 if ($curatedChanged -or $curatedUntracked) { $curatedRevision += "-dirty" }
 $fixture = (Get-ChildItem $fixturesDir -Filter "catalog-*.json.gz" | Select-Object -First 1).Name
+$patches = Get-Content $patchesFile -Raw | ConvertFrom-Json
 
 # The plugin reads the revision from VERSION.json (CuratedData.CuratedRevision) for Settings > About and the diagnostic block.
 $versionJson = @(
@@ -130,6 +149,7 @@ $lines = @(
     "| Catalog fixture | ``$fixture`` |",
     "| unique_quests.json entries | $($data.entries.Count) across $questCount quests |",
     "| feature_quests.json (derived) | $($curated.questRowIds.Count) quests |",
+    "| quest_patches.json | $($patches.known) of $($patches.listed) quests with a patch, newest $($patches.newestPatch) |",
     "| Online Store re-sells | $storeCount entries |",
     "| Dungeon drops | $dropCount entries |",
     "",

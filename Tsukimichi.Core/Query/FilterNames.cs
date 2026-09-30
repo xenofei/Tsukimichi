@@ -7,6 +7,7 @@ public static class FilterNames
     public const string AvailableOnly = "Available now";
     public const string State = "State";
     public const string Expansion = "Expansion";
+    public const string AddedIn = "Added in";
     public const string LevelRange = "Level range";
     public const string JobCategory = "Job category";
     public const string RewardKinds = "Reward kinds";
