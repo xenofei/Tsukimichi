@@ -228,4 +228,14 @@ public sealed class UiState
         ArgumentNullException.ThrowIfNull(quest);
         Reveal(quest.RowId, quest.IsRemoved ? QuestScope.VirtualUnlisted : QuestScope.Genre(quest.Journal.GenreId), quest.IsRemoved);
     }
+
+    /// <summary>Raised by <see cref="OpenRoute"/>; the plugin opens the route window on the target.</summary>
+    public event Action<Tsukimichi.Core.Route.RouteTarget>? RouteRequested;
+
+    /// <summary>Opens the unlock route (P6) to a job, duty, system, reward or quest for the viewed character. Safe from inside a menu.</summary>
+    public void OpenRoute(Tsukimichi.Core.Route.RouteTarget target)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        RouteRequested?.Invoke(target);
+    }
 }

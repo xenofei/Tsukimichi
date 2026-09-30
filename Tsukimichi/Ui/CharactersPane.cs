@@ -248,7 +248,7 @@ public sealed partial class CharactersPane
         Gap();
         DrawRecent(d);
         Gap();
-        DrawJobs(d);
+        DrawJobs(ui, d);
         ImGui.Spacing();
         DrawGrandCompanyAndTribes(d);
         Gap();
@@ -328,7 +328,10 @@ public sealed partial class CharactersPane
     /// </summary>
     private void DrawJobQuests(UiState ui, Dashboard d)
     {
+        ImGui.AlignTextToFramePadding();
         ImGui.TextDisabled(Strings.JobsSection);
+        ImGui.SameLine();
+        DrawRouteToUnlockButton(ui, d);
         if (d.JobQuests.Length == 0)
         {
             ImGui.TextDisabled(Strings.JobsNone);
@@ -632,8 +635,11 @@ public sealed partial class CharactersPane
         }
     }
 
-    /// <summary>(f) Job levels grouped by role, each with the game's job icon; base classes hidden once their job is unlocked.</summary>
-    private void DrawJobs(Dashboard d)
+    /// <summary>
+    /// (f) Job levels grouped by role, each with the game's job icon; base classes hidden once their job is unlocked.
+    /// A right-click on a class offers the unlock route to the jobs it grows into (P6).
+    /// </summary>
+    private void DrawJobs(UiState ui, Dashboard d)
     {
         ImGui.TextDisabled(Strings.CharactersJobs);
         if (d.Jobs.Length == 0)
@@ -673,6 +679,7 @@ public sealed partial class CharactersPane
             }
 
             ImGui.TableNextRow();
+            using var rowId = ImRaii.PushId((int)row.JobId);
             ImGui.TableNextColumn();
             DrawJobIcon(row.IconId, iconSize, row.Name, row.Level);
             ImGui.TableNextColumn();
@@ -681,6 +688,8 @@ public sealed partial class CharactersPane
             {
                 UiMetrics.Tooltip(row.Abbreviation);
             }
+
+            DrawJobRowRouteMenu(ui, d, row.JobId);
 
             ImGui.TableNextColumn();
             ImGui.TextUnformatted(row.Level);
