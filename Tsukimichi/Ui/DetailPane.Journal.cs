@@ -21,6 +21,9 @@ public sealed partial class DetailPane
 
     private static readonly string JournalTextIcon = FontAwesomeIcon.BookOpen.ToIconString();
 
+    private static readonly Localization.LocText JournalReadLabel = new(static () => Strings.JournalTextRead + "##journalRead");
+    private static readonly Localization.LocText JournalHideLabel = new(static () => Strings.JournalTextHide + "##journalHide");
+
     // The quest whose journal is open; uint.MaxValue when none. A new selection starts closed.
     private uint journalOpenRowId = uint.MaxValue;
 
@@ -48,7 +51,7 @@ public sealed partial class DetailPane
                 ImGui.TextWrapped(model.State == QuestState.Accepted ? Strings.JournalTextClosedAccepted : Strings.JournalTextClosedCompleted);
             }
 
-            if (ImGui.SmallButton(Strings.JournalTextRead + "##journalRead"))
+            if (ImGui.SmallButton(JournalReadLabel.Value))
             {
                 journalOpenRowId = quest.RowId;
             }
@@ -78,7 +81,7 @@ public sealed partial class DetailPane
                 break;
         }
 
-        if (ImGui.SmallButton(Strings.JournalTextHide + "##journalHide"))
+        if (ImGui.SmallButton(JournalHideLabel.Value))
         {
             journalOpenRowId = uint.MaxValue;
         }

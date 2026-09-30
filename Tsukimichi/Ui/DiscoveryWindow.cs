@@ -44,6 +44,9 @@ public sealed class DiscoveryWindow : Window, IDisposable
     private static readonly string FoldedGlyph = Chrome.Icon(FontAwesomeIcon.CaretRight);
     private static readonly string OpenGlyph = Chrome.Icon(FontAwesomeIcon.CaretDown);
 
+    /// <summary>The widest level label ("Lv 100"), which sizes the Level column.</summary>
+    private static readonly Localization.LocText LevelColumnSample = new(static () => string.Format(CultureInfo.CurrentCulture, Strings.DiscoveryLevelFormat, 100));
+
     private Theme.StyleScope nightChrome;
     private bool acceptedOpen;
 
@@ -71,6 +74,7 @@ public sealed class DiscoveryWindow : Window, IDisposable
     private string[] startableNames = [];
     private uint territoryId;
     private int rowsVersion = -1;
+    private int rowsLanguage = -1;
     private GameData.CatalogBundle? rowsBundle;
     private string zoneName = string.Empty;
     private string zoneLabel = Strings.DiscoveryUnknownZone;
@@ -340,7 +344,7 @@ public sealed class DiscoveryWindow : Window, IDisposable
         var button = UiMetrics.MinTarget;
         ImGui.TableSetupColumn(Strings.DiscoveryColumnState, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, glyphSize * 1.2f);
         ImGui.TableSetupColumn(Strings.DiscoveryColumnQuest, ImGuiTableColumnFlags.WidthStretch, 1f);
-        ImGui.TableSetupColumn(Strings.DiscoveryColumnLevel, ImGuiTableColumnFlags.WidthFixed, ImGui.CalcTextSize(string.Format(CultureInfo.CurrentCulture, Strings.DiscoveryLevelFormat, 100)).X);
+        ImGui.TableSetupColumn(Strings.DiscoveryColumnLevel, ImGuiTableColumnFlags.WidthFixed, ImGui.CalcTextSize(LevelColumnSample.Value).X);
         ImGui.TableSetupColumn(Strings.DiscoveryColumnJob, ImGuiTableColumnFlags.WidthFixed, ImGui.CalcTextSize("WWWW").X);
         ImGui.TableSetupColumn(Strings.DiscoveryColumnActions, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, button);
         ImGui.TableHeadersRow();
@@ -526,7 +530,8 @@ public sealed class DiscoveryWindow : Window, IDisposable
         var territory = clientState.TerritoryType;
         var version = session.Version;
         var sessionBundle = session.Bundle;
-        var unchanged = territory == territoryId && ReferenceEquals(sessionBundle, rowsBundle);
+        // A language switch rebuilds every label (and the server bar entry, through Changed) even when no quest moved.
+        var unchanged = territory == territoryId && ReferenceEquals(sessionBundle, rowsBundle) && rowsLanguage == Localization.Loc.Version;
         if (!force && unchanged && version == rowsVersion)
         {
             return;
@@ -555,6 +560,7 @@ public sealed class DiscoveryWindow : Window, IDisposable
 
         territoryId = territory;
         rowsBundle = sessionBundle;
+        rowsLanguage = Localization.Loc.Version;
         zoneName = ZoneNameFor(territory);
         zoneLabel = zoneName.Length > 0 ? zoneName : Strings.DiscoveryUnknownZone;
         startable = BuildRows(startNow, states, bundle);

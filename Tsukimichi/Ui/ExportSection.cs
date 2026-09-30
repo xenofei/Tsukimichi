@@ -20,6 +20,8 @@ public sealed class ExportSection(Configuration settings, ExportService exports,
 {
     private const int FolderMaxLength = 512;
 
+    private static readonly Localization.LocText FolderLabel = new(static () => Strings.ExportFolderLabel + "##folder");
+
     private string? line;
     private bool lineOk;
 
@@ -98,7 +100,7 @@ public sealed class ExportSection(Configuration settings, ExportService exports,
         }
 
         ImGui.SetNextItemWidth(260f * ImGuiHelpers.GlobalScale);
-        if (ImGui.InputTextWithHint(Strings.ExportFolderLabel + "##folder", hint, ref folder, FolderMaxLength))
+        if (ImGui.InputTextWithHint(FolderLabel.Value, hint, ref folder, FolderMaxLength))
         {
             settings.ExportFolder = folder;
         }

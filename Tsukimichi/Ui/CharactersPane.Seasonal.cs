@@ -267,11 +267,14 @@ public sealed partial class CharactersPane
 
     private sealed record SeasonalView(string Header, string CaptureNote, SeasonalFestivalView[] Running, string HistoryLabel, SeasonalYearView[] History)
     {
-        public static readonly SeasonalView Empty = new(
+        private static readonly Localization.LocCache<SeasonalView> EmptyView = new(static () => new(
             Strings.SeasonalHeader + "###seasonalHeader",
             string.Empty,
             [],
             string.Format(CultureInfo.CurrentCulture, Strings.SeasonalHistoryFormat, 0) + "###seasonalHistory",
-            []);
+            []));
+
+        /// <summary>No character: the headers alone, in the current language.</summary>
+        public static SeasonalView Empty => EmptyView.Value;
     }
 }

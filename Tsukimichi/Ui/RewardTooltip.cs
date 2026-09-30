@@ -20,9 +20,10 @@ public static class RewardTooltip
 {
     public const float WrapWidthEm = 26f;
 
-    private static readonly Dictionary<(RewardKind Kind, uint Count), string> KindLines = [];
+    // Both caches start empty again after a language switch (LocCache rebuilds them on Loc.Version).
+    private static readonly Localization.LocCache<Dictionary<(RewardKind Kind, uint Count), string>> KindLines = new(static () => []);
 
-    private static readonly Dictionary<string, string> DropLines = new(StringComparer.Ordinal);
+    private static readonly Localization.LocCache<Dictionary<string, string>> DropLines = new(static () => new(StringComparer.Ordinal));
 
     /// <summary>
     /// Draws the tooltip; call only while the reward's item is hovered. <paramref name="source"/>, when given, closes
@@ -107,10 +108,11 @@ public static class RewardTooltip
     /// <summary>"Also drops in …", cached per duty text (a handful of distinct values) so hovering allocates nothing after the first time.</summary>
     private static string DropLine(string where)
     {
-        if (!DropLines.TryGetValue(where, out var line))
+        var lines = DropLines.Value;
+        if (!lines.TryGetValue(where, out var line))
         {
             line = Strings.AlsoDropsLine(where);
-            DropLines[where] = line;
+            lines[where] = line;
         }
 
         return line;
@@ -120,11 +122,12 @@ public static class RewardTooltip
     private static string KindLine(RewardRef reward)
     {
         var key = (reward.Kind, reward.Count);
-        if (!KindLines.TryGetValue(key, out var line))
+        var lines = KindLines.Value;
+        if (!lines.TryGetValue(key, out var line))
         {
             var kind = Strings.RewardKindName(reward.Kind);
             line = reward.Count > 1 ? string.Format(CultureInfo.CurrentCulture, Strings.RewardCountFormat, kind, reward.Count) : kind;
-            KindLines[key] = line;
+            lines[key] = line;
         }
 
         return line;

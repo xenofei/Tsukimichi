@@ -511,9 +511,32 @@ public sealed class WelcomeBackCard
         levels = text.ToString();
     }
 
-    /// <summary>The shield of the character the card speaks for: the viewed one's, or the logged-in one's.</summary>
-    private SpoilerMask Shield(WelcomeBackView view) =>
-        view.ContentId == session.ViewedContentId ? session.Spoilers : session.LiveSpoilers;
+    // The shield of the card's character, kept from when it was the viewed one: a stored character's card stays open
+    // while another character is viewed, and must not fall back to someone else's shield.
+    private ulong keptShieldFor;
+    private SpoilerMask? keptShield;
+
+    /// <summary>
+    /// The shield of the character the card speaks for: the viewed one's while it is viewed, the logged-in one's for
+    /// the logged-in character, else the shield it had when it was last viewed (the card opens only for the viewed or
+    /// the logged-in character).
+    /// </summary>
+    private SpoilerMask Shield(WelcomeBackView view)
+    {
+        if (view.ContentId == session.ViewedContentId)
+        {
+            keptShieldFor = view.ContentId;
+            keptShield = session.Spoilers;
+            return keptShield;
+        }
+
+        if (view.ContentId == session.LiveContentId)
+        {
+            return session.LiveSpoilers;
+        }
+
+        return keptShieldFor == view.ContentId && keptShield is { } kept ? kept : session.LiveSpoilers;
+    }
 
     private void BuildHeader(WelcomeBackSummary summary)
     {

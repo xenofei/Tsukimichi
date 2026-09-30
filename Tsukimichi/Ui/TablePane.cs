@@ -313,10 +313,10 @@ public sealed class TablePane : IDisposable
         var glyphBox = glyphRadius * TableGeometry.GlyphBoxPerRadius;
         var glyphColumn = UiMetrics.Px(GlyphColumnLead) + glyphBox + UiMetrics.Px(2f);
         // A translated header is never cut (V2-19, LayoutBudgets): each fixed column is at least its header label wide,
-        // with the cell padding and, where the column sorts, the arrow.
-        var headerPad = ImGui.GetStyle().CellPadding.X * 2f;
+        // with, where the column sorts, the arrow. These are content widths: ImGui adds the cell padding either side of
+        // a TableSetupColumn / TableSetColumnWidth width itself, so it is not added here.
         var sortArrow = UiMetrics.Px(LayoutBudgets.SortArrowLogical);
-        float HeaderFloor(string label, bool sortable) => ImGui.CalcTextSize(label).X + headerPad + (sortable ? sortArrow : 0f);
+        float HeaderFloor(string label, bool sortable) => ImGui.CalcTextSize(label).X + (sortable ? sortArrow : 0f);
         var rewardsColumn = MathF.Max(
             UiMetrics.RowIconSize * MaxRewardIcons + UiMetrics.Px(2f) * (MaxRewardIcons - 1) + UiMetrics.Px(8f),
             HeaderFloor(Strings.ColumnRewards, sortable: false));
@@ -379,13 +379,13 @@ public sealed class TablePane : IDisposable
             measureJobWidth = false;
             var jobMin = MathF.Max(
                 MathF.Min(UiMetrics.Icon(JobIconSide), rowContent) + UiMetrics.Px(JobIconGap) + ImGui.CalcTextSize(Strings.JobDohDol).X,
-                HeaderFloor(Strings.ColumnJob, sortable: false) - headerPad);
+                HeaderFloor(Strings.ColumnJob, sortable: false));
             if (jobWidth > 0f && jobWidth + 0.5f < jobMin)
             {
-                jobWidthFix = MathF.Max(jobMin, UiMetrics.Px(JobColumnWidth)) + headerPad;
+                jobWidthFix = MathF.Max(jobMin, UiMetrics.Px(JobColumnWidth));
             }
 
-            var levelMin = levelColumn - headerPad;
+            var levelMin = levelColumn;
             if (levelWidth > 0f && levelWidth + 0.5f < levelMin)
             {
                 levelWidthFix = levelColumn;

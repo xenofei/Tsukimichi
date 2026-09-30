@@ -34,6 +34,9 @@ public sealed class RouteWindow : Window
     private static readonly string RouteIcon = FontAwesomeIcon.MapSigns.ToIconString();
     private static readonly string PinAllLabelSuffix = Chrome.HoldIdSuffix;
 
+    /// <summary>The widest level label ("Lv 100"), which sets where a step's text starts.</summary>
+    private static readonly Localization.LocText LevelSample = new(static () => string.Format(CultureInfo.CurrentCulture, Strings.RouteLevelFormat, 100));
+
     private readonly SessionState session;
     private readonly Action<QuestRecord> showQuest;
     private readonly PinStore pins;
@@ -379,7 +382,7 @@ public sealed class RouteWindow : Window
             x += glyph + UiMetrics.Px(6f);
 
             dl.AddText(new Vector2(x, textY), Theme.U32(Theme.Surface.TextSecondary), l.Level);
-            x += ImGui.CalcTextSize(string.Format(CultureInfo.CurrentCulture, Strings.RouteLevelFormat, 100)).X + UiMetrics.Px(6f);
+            x += ImGui.CalcTextSize(LevelSample.Value).X + UiMetrics.Px(6f);
 
             // Gold only for a target the character can act on now; a Blocked or locked-out target reads like any step.
             var gold = l.IsTarget && l.State is QuestState.Ready or QuestState.ReadyOnOtherJob or QuestState.Accepted;

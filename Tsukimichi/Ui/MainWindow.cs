@@ -287,10 +287,11 @@ public sealed class MainWindow : Window, IDisposable
         UiMetrics.Update(plugin.Settings);
 
         // The rail and the fixed side columns grow with the UI scale, so the minimum size must too or the centre column
-        // collapses; it never exceeds the viewport, so the window can always be placed whole.
+        // collapses; it never exceeds the viewport, so the window can always be placed whole. A rail a translated tab
+        // label widened (TabStrip.RailWidth) adds its extra width, rather than taking it from the centre floor.
         SizeConstraints = new WindowSizeConstraints
         {
-            MinimumSize = ScaleMetrics.MinWindowSize(UiMetrics.FontScale, ImGuiHelpers.GlobalScale, ImGuiHelpers.MainViewport.WorkSize),
+            MinimumSize = ScaleMetrics.MinWindowSize(UiMetrics.FontScale, ImGuiHelpers.GlobalScale, ImGuiHelpers.MainViewport.WorkSize, TabStrip.RailLogicalWidth),
         };
 
         // Dalamud closes the window on Esc while it or one of its popups is focused. Esc closes the topmost thing first

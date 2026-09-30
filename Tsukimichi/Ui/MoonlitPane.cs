@@ -100,9 +100,10 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     private int obtainedVersion = -1;
     private int obtainedBuild = -1;
     private bool countsHideStore;
-    private readonly KindItem allItem = new(null, Strings.MoonlitAllKinds);
+    private KindItem allItem = new(null, Strings.MoonlitAllKinds);
     private KindItem[] kindItems = [];
     private int kindsBuild = -1;
+    private int kindsLanguage = -1;
 
     // Per-kind counts from the last RefreshObtained, indexed by RewardKind; CountsFor reads them.
     private readonly int[] kindObtained = new int[KindCount];
@@ -808,9 +809,11 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         var allTotal = 0;
         var allUnknown = 0;
         var kinds = catalog.Kinds;
-        if (kindsBuild != rowsBuild)
+        if (kindsBuild != rowsBuild || kindsLanguage != Localization.Loc.Version)
         {
             kindsBuild = rowsBuild;
+            kindsLanguage = Localization.Loc.Version;
+            allItem = new KindItem(null, Strings.MoonlitAllKinds);
             kindItems = new KindItem[kinds.Count];
             for (var i = 0; i < kindItems.Length; i++)
             {

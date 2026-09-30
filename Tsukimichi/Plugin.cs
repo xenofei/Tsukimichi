@@ -604,6 +604,7 @@ public sealed class Plugin : IDalamudPlugin
 
             configWindow = new ConfigWindow(Settings, Session, PluginInterface, diagnostics, _ => ui.MarkQueryDirty());
             configWindow.Language = loc;
+            configWindow.RunNextTick = action => _ = Framework.RunOnTick(action);
             configWindow.Overrides = moonlitPane;
             configWindow.QuestText = QuestText;
             // Exports (P12): Settings › Data › Export and /tsuki export write local files; nothing is uploaded.
