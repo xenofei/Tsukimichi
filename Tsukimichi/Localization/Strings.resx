@@ -5088,4 +5088,98 @@
     <value>Story sidequests</value>
     <comment>Core: FilterNames.cs.</comment>
   </data>
+  <data name="Core.Path.ChooseOne" xml:space="preserve">
+    <value>Choose one of {0}</value>
+    <comment>Core: PathText.cs.</comment>
+  </data>
+  <data name="Core.Path.KindCity" xml:space="preserve">
+    <value>another city's start</value>
+    <comment>Core: PathText.cs.</comment>
+  </data>
+  <data name="Core.Path.KindClass" xml:space="preserve">
+    <value>another starting class</value>
+    <comment>Core: PathText.cs.</comment>
+  </data>
+  <data name="Core.Path.KindGrandCompany" xml:space="preserve">
+    <value>another Grand Company</value>
+    <comment>Core: PathText.cs.</comment>
+  </data>
+  <data name="Core.Path.KindChoice" xml:space="preserve">
+    <value>another choice</value>
+    <comment>Core: PathText.cs.</comment>
+  </data>
+  <data name="Core.Path.NodeName" xml:space="preserve">
+    <value>Other paths</value>
+    <comment>Core: PathText.cs.</comment>
+  </data>
+  <data name="Core.Path.City" xml:space="preserve">
+    <value>Another city's start ({0})</value>
+    <comment>Core: PathText.cs.</comment>
+  </data>
+  <data name="Core.Path.Class" xml:space="preserve">
+    <value>Another starting class ({0})</value>
+    <comment>Core: PathText.cs.</comment>
+  </data>
+  <data name="Core.Path.GrandCompany" xml:space="preserve">
+    <value>Another Grand Company ({0})</value>
+    <comment>Core: PathText.cs.</comment>
+  </data>
+  <data name="Core.Path.Choice" xml:space="preserve">
+    <value>Another choice ({0})</value>
+    <comment>Core: PathText.cs.</comment>
+  </data>
+  <data name="Core.Path.GrandCompanyDetail" xml:space="preserve">
+    <value>For the {0} · you chose the {1}</value>
+    <comment>Core: PathText.cs.</comment>
+  </data>
+  <data name="Core.Path.ChoiceDetail" xml:space="preserve">
+    <value>Only one of these can be done · you did {0}</value>
+    <comment>Core: PathText.cs.</comment>
+  </data>
+  <data name="Core.Path.TallyItem" xml:space="preserve">
+    <value>{0} {1}</value>
+    <comment>Core: PathText.cs.</comment>
+  </data>
+  <data name="Core.Path.Tally" xml:space="preserve">
+    <value>{0} on other paths: {1}</value>
+    <comment>Core: PathText.cs.</comment>
+  </data>
+  <data name="Core.Path.Not" xml:space="preserve">
+    <value>not {0}</value>
+    <comment>Core: PathText.cs.</comment>
+  </data>
+  <data name="Core.Path.Or" xml:space="preserve">
+    <value>{0} or {1}</value>
+    <comment>Core: PathText.cs.</comment>
+  </data>
+  <data name="Core.Path.OnlyFor" xml:space="preserve">
+    <value>Only for {0} starters</value>
+    <comment>Core: PathText.cs.</comment>
+  </data>
+  <data name="Core.Path.NotFor" xml:space="preserve">
+    <value>Not for {0} starters</value>
+    <comment>Core: PathText.cs.</comment>
+  </data>
+  <data name="Core.Path.YouStartedInAs" xml:space="preserve">
+    <value>you started in {0} as {1}</value>
+    <comment>Core: PathText.cs.</comment>
+  </data>
+  <data name="Core.Path.YouStartedIn" xml:space="preserve">
+    <value>you started in {0}</value>
+    <comment>Core: PathText.cs.</comment>
+  </data>
+  <data name="Core.Path.YouStartedAs" xml:space="preserve">
+    <value>you started as {0}</value>
+    <comment>Core: PathText.cs.</comment>
+  </data>
+  <data name="Core.Filter.IncludeOtherPaths" xml:space="preserve">
+    <value>Include other paths</value>
+    <comment>Core: FilterNames.cs.</comment>
+  </data>
+  <data name="RequirementName.OtherPath" xml:space="preserve">
+    <value>Other path</value>
+  </data>
+  <data name="IncludeOtherPathsTooltip" xml:space="preserve">
+    <value>Also show quests on paths you did not take (another city's start, another starting class, another Grand Company, another choice) in their journal sections; they are always listed under Other paths</value>
+  </data>
 </root>

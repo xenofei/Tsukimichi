@@ -117,10 +117,11 @@ public class QuestDiagnosticTests
         var lines = Lines(block);
 
         // One line per kind, in the evaluator's order, and every kind of the enum is represented; Retired is the one
-        // gate a live quest cannot carry, so it has its own test below.
+        // gate a live quest cannot carry and OtherPath needs a choice the character made elsewhere, so each has its own
+        // test below.
         var requirementLines = lines.Where(l => l.StartsWith("  - ", StringComparison.Ordinal)).ToArray();
         var kinds = requirementLines.Select(l => l[4..l.IndexOf(':', StringComparison.Ordinal)]).ToArray();
-        Assert.Equal(Enum.GetValues<RequirementKind>().Where(k => k != RequirementKind.Retired).Select(k => k.ToString()).OrderBy(k => k, StringComparer.Ordinal), kinds.OrderBy(k => k, StringComparer.Ordinal));
+        Assert.Equal(Enum.GetValues<RequirementKind>().Where(k => k is not (RequirementKind.Retired or RequirementKind.OtherPath)).Select(k => k.ToString()).OrderBy(k => k, StringComparer.Ordinal), kinds.OrderBy(k => k, StringComparer.Ordinal));
         Assert.Equal(kinds, RequirementEvaluator.Evaluate(quest, Character(), catalog, Context(quest.QuestId)).Select(r => r.Req.Kind.ToString()));
 
         Assert.Contains("  - Foreclosure: unmet (locks 65600 Lock A; completed 65600 Lock A)", requirementLines);
@@ -165,6 +166,25 @@ public class QuestDiagnosticTests
         var unknown = Lines(QuestDiagnostic.Compose(Inputs(quest, catalog, noPhase, Context(quest.QuestId))));
         Assert.Contains("  - Seasonal: met (festival 1 active, window 2-5, phase unknown)", unknown);
         Assert.Contains("festivals [1],", unknown[^3]);
+    }
+
+    [Fact]
+    public void A_quest_on_another_path_lists_the_path_gate_first_with_the_choice_and_the_quest_that_made_it()
+    {
+        // Two quests that lock each other are a choice; the character did the other one.
+        var quest = Quest(Target, "Heads") with { QuestLocks = [A] };
+        var other = Quest(A, "Tails") with { QuestLocks = [Target] };
+        var catalog = Catalog(quest, other);
+        var snapshot = Character() with { CompletedBits = Bits(A) };
+        var evaluation = StateResolver.Resolve(quest, snapshot, catalog, Context(quest.QuestId));
+        var lines = Lines(QuestDiagnostic.Compose(Inputs(quest, catalog, snapshot, Context(quest.QuestId)) with { Evaluation = evaluation }));
+
+        Assert.Equal(QuestState.Foreclosed, evaluation.State);
+        Assert.True(evaluation.IsOtherPath);
+        Assert.Contains("state: Locked out · Another choice (Tails)", lines);
+        Assert.Equal("requirements:", lines[Array.IndexOf(lines, "state: Locked out · Another choice (Tails)") + 1]);
+        Assert.Equal("  - OtherPath: unmet (Choice Heads, chosen Tails; by 65600 Tails)", lines[Array.IndexOf(lines, "requirements:") + 1]);
+        Assert.Contains("  - Foreclosure: unmet (locks 65600 Tails; completed 65600 Tails)", lines);
     }
 
     [Fact]

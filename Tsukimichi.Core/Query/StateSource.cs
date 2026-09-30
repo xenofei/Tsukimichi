@@ -19,6 +19,9 @@ internal interface IStateSource
 
     /// <summary>The Status column text for a quest: <see cref="BlockerText.StatusText"/>, or empty when the quest has no evaluation.</summary>
     string StatusOf(QuestRecord quest);
+
+    /// <summary>The kind of path a quest on another path lies on (<see cref="QuestEvaluation.IsOtherPath"/>); null for any other quest.</summary>
+    PathKind? OtherPathKind(uint rowId);
 }
 
 /// <summary>Plain state map plus an optional status text map (the pre-evaluation shape).</summary>
@@ -33,6 +36,9 @@ internal readonly struct StateMapSource(IReadOnlyDictionary<uint, QuestState> st
     public bool CountsAsDone(uint rowId) => StateOf(rowId) == QuestState.Completed;
 
     public string StatusOf(QuestRecord quest) => statusTexts?.GetValueOrDefault(quest.RowId) ?? string.Empty;
+
+    /// <summary>A plain state does not say why a quest is locked out, so no quest reads as on another path here.</summary>
+    public PathKind? OtherPathKind(uint rowId) => null;
 }
 
 /// <summary>
@@ -52,4 +58,7 @@ internal readonly struct EvaluationSource(IReadOnlyDictionary<uint, QuestEvaluat
 
     public string StatusOf(QuestRecord quest) =>
         evaluations.TryGetValue(quest.RowId, out var evaluation) ? BlockerText.StatusText(evaluation, quest, names ?? BlockerNames.Default, evaluations) : string.Empty;
+
+    public PathKind? OtherPathKind(uint rowId) =>
+        evaluations.TryGetValue(rowId, out var evaluation) && evaluation.OtherPath is { } path ? path.Path : null;
 }

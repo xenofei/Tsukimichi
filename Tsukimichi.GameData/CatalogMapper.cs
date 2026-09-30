@@ -74,6 +74,8 @@ public static class CatalogMapper
         IReadOnlyList<QuestRecord> dated = patches is null ? records : patches.Apply(records);
         IReadOnlyList<QuestRecord> filed = filing == JournalFiling.Refiled ? JournalRefiler.Apply(dated, curated ?? CuratedData.Empty) : dated;
         var catalog = QuestCatalog.Build(filed);
+        // The choice groups' labels and guards (feature plan v4 D1); without curated data only the rule-found sets.
+        Core.Evaluation.PathIndex.Attach(catalog, curated?.PathChoices);
         var jobs = ClassJobCategoryLookup.Build(excel, language);
         ct.ThrowIfCancellationRequested();
         var names = ReadNames(excel, language, jobs);

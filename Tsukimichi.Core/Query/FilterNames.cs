@@ -19,6 +19,7 @@ public static class FilterNames
     public const string Repeatable = "Repeatable";
     public const string SeasonalActive = "Seasonal active";
     public const string IncludeUnlisted = "Include removed";
+    public const string IncludeOtherPaths = "Include other paths";
     public const string Pinned = "Pinned";
     public const string Abandoned = "Abandoned";
     public const string Search = "Search";
@@ -44,6 +45,7 @@ public static class FilterNames
         Repeatable => CoreText.T("Core.Filter.Repeatable", "Repeatable"),
         SeasonalActive => CoreText.T("Core.Filter.SeasonalActive", "Seasonal active"),
         IncludeUnlisted => CoreText.T("Core.Filter.IncludeUnlisted", "Include removed"),
+        IncludeOtherPaths => CoreText.T("Core.Filter.IncludeOtherPaths", "Include other paths"),
         Pinned => CoreText.T("Core.Filter.Pinned", "Pinned"),
         Abandoned => CoreText.T("Core.Filter.Abandoned", "Abandoned"),
         Search => CoreText.T("Core.Filter.Search", "Search"),

@@ -74,7 +74,7 @@ When Tsukimichi is not installed or not loaded (or is reloading), Dalamud itself
 | `Blocked` | something is still missing; `GetBlockers` says what | Blocked |
 | `DoneThisCycle` | a repeatable done until its reset | Done today, Done this week, Done this cycle |
 | `Completed` | done for good | Completed |
-| `Foreclosed` | can never be done by this character (another Grand Company's quest, a path not taken, removed from the game, a seasonal event that ended) | Locked out |
+| `Foreclosed` | can never be done by this character (another city's start, another starting class, another Grand Company's quest, another choice of a set only one of which can be done, removed from the game, a seasonal event that ended) | Locked out |
 | `Unknown` | Tsukimichi cannot judge it (achievements not loaded, a condition the game does not expose) | Not checked |
 
 Empty string when there is no answer. A future version may add a state; treat a name you do not know as `Unknown`.
@@ -101,9 +101,21 @@ Empty string when there is no answer. A future version may add a state; treat a 
 
 A Ready quest still lists its (met) requirements after `"Ready"`; a quest with no requirements returns the status line alone. Empty array when there is no answer. The lines are for display; parse `GetState`, not these.
 
+A quest on a path the character did not take (since 1.2) reads `Foreclosed`, and its first requirement line is `OtherPath`: each choice the quest belongs to with its options and the character's own, then the quests that decided it. Its name is never masked (it tells nothing of the character's own story).
+
+```
+[
+  "Locked out · Another starting class (Archer)",
+  "OtherPath: unmet (StartCity Gridania, chosen Gridania; StartClass Archer, chosen Lancer; by 65621 Close to Home, 65559 Way of the Lancer)",
+  …
+]
+```
+
+An option of a choice the character has not made yet (one company's version of a quest, one of two stelae) keeps its own state and gains `Choose one of 3` at the end of its status line.
+
 ### Tsukimichi.GetMsqPosition
 
-`() -> uint`. The Quest row id of the logged-in character's next main scenario quest: the first one in journal order (A Realm Reborn through Dawntrail) that is neither completed nor on a branch the character did not take. Its state may be Ready, In journal or Blocked (a level gate between patches); ask `GetState`. 0 when every main scenario quest is done, and 0 when there is no answer.
+`() -> uint`. The Quest row id of the logged-in character's next main scenario quest: the first one in journal order (A Realm Reborn through Dawntrail) that is neither completed nor on a branch the character did not take (since 1.2 that includes the other start cities' and starting classes' lines, so it never stops at another city's "Close to Home"). Its state may be Ready, In journal or Blocked (a level gate between patches); ask `GetState`. 0 when every main scenario quest is done, and 0 when there is no answer.
 
 Inside a branch region of the main scenario (from Evercold, 8.0, on: routes that run in parallel from a shared quest and meet again later), this is the **first route's** next quest: the first route in journal order that is not done yet. The quest where the routes meet is never returned while a route it needs is still open; once the game opens it (or no route is left to play), it is the answer again. To see every route, call `GetMsqPositions`.
 

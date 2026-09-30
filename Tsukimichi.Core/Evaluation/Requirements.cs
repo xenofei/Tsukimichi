@@ -14,6 +14,35 @@ public sealed record RetiredRequirement : Requirement
     }
 }
 
+/// <summary>
+/// The quest lies on a path the character did not take (<see cref="PathIndex"/>): another city's start, another
+/// starting class, another Grand Company, or another option of a set only one of which can be done.
+/// <paramref name="Path"/> is the decisive kind (the first excluding facet in <see cref="PathKind"/> order);
+/// <paramref name="Facets"/> lists every choice group the quest belongs to, excluding or not, which the detail line
+/// reads ("Only for Ul'dah Gladiator starters · you started in Gridania as a Lancer"); <paramref name="Evidence"/> holds
+/// the completed quests (row ids) that decided the character's choice.
+/// </summary>
+public sealed record OtherPathRequirement(PathKind Path, IReadOnlyList<PathFacet> Facets, uint[] Evidence) : Requirement(RequirementKind.OtherPath)
+{
+    /// <summary>The facet that names the reason: the first one that excludes the quest, in <see cref="PathKind"/> order.</summary>
+    public PathFacet? Decisive
+    {
+        get
+        {
+            PathFacet? best = null;
+            foreach (var facet in Facets)
+            {
+                if (facet.Excludes && (best is null || facet.Kind < best.Kind))
+                {
+                    best = facet;
+                }
+            }
+
+            return best;
+        }
+    }
+}
+
 /// <summary>Quests that foreclose this one once completed, and which of them the character has completed.</summary>
 public sealed record ForeclosureRequirement(uint[] LockIds, uint[] CompletedLockIds) : Requirement(RequirementKind.Foreclosure);
 

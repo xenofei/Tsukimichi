@@ -336,6 +336,8 @@ public sealed class UnlockRoute
 
         public bool Done(uint rowId) => StateOf(rowId) == QuestState.Completed;
 
+        public bool IsOtherPath(uint rowId) => states.TryGetValue(rowId, out var evaluation) && evaluation.IsOtherPath;
+
         public bool Dead(uint rowId) =>
             StateOf(rowId) == QuestState.Foreclosed || (catalog.ByRowId.TryGetValue(rowId, out var quest) && quest.IsRetired);
 
@@ -539,10 +541,15 @@ public sealed class UnlockRoute
                 }
 
                 ranked.Sort(static (a, b) => a.Cost != b.Cost ? a.Cost.CompareTo(b.Cost) : a.RowId.CompareTo(b.RowId));
-                var others = new PathAlternative[ranked.Count - 1];
+                // A branch on a path the character did not take (another city's start, another class's track) is
+                // no alternative worth naming.
+                var others = new List<PathAlternative>(ranked.Count - 1);
                 for (var i = 1; i < ranked.Count; i++)
                 {
-                    others[i - 1] = new PathAlternative(ranked[i].RowId, StateOf(ranked[i].RowId), ranked[i].Count);
+                    if (!IsOtherPath(ranked[i].RowId))
+                    {
+                        others.Add(new PathAlternative(ranked[i].RowId, StateOf(ranked[i].RowId), ranked[i].Count));
+                    }
                 }
 
                 choice = new Choice(ranked[0].RowId, others);

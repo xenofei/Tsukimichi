@@ -15,7 +15,7 @@ public static class StateResolver
         ArgumentNullException.ThrowIfNull(c);
         ArgumentNullException.ThrowIfNull(ctx);
 
-        return ResolveCore(q, s, c, ctx, id => FestivalIsPast(id, s, c, ctx));
+        return ResolveCore(q, s, c, ctx, id => FestivalIsPast(id, s, c, ctx), PathIndex.For(c).Resolve(s));
     }
 
     /// <summary>Resolves every quest in the catalog, keyed by row id.</summary>
@@ -26,10 +26,11 @@ public static class StateResolver
         ArgumentNullException.ThrowIfNull(ctx);
 
         var festivalIsPast = MemoizedFestivalIsPast(s, c, ctx);
+        var paths = PathIndex.For(c).Resolve(s);
         var results = new Dictionary<uint, QuestEvaluation>(c.Count);
         foreach (var quest in c.All)
         {
-            results[quest.RowId] = ResolveCore(quest, s, c, ctx, festivalIsPast);
+            results[quest.RowId] = ResolveCore(quest, s, c, ctx, festivalIsPast, paths);
         }
 
         return results;
@@ -38,7 +39,9 @@ public static class StateResolver
     /// <summary>
     /// Re-resolves only the rows a change can affect: the changed quests, quests that list them as previous quests or
     /// locks, quests sharing a changed quest's festival, and, when given, quests at changed levels or of changed festivals.
-    /// Untouched rows keep their previous <see cref="QuestEvaluation"/> instance.
+    /// Untouched rows keep their previous <see cref="QuestEvaluation"/> instance. A change to a choice group's anchor
+    /// quest (<see cref="PathIndex.IsAnchor"/>: a start city's first quest, a "Close to Home", a set member) can move
+    /// the character's path choices, so it resolves everything, as <see cref="ResolveAll"/> does.
     /// </summary>
     /// <param name="previousResults">Result of an earlier <see cref="ResolveAll"/> or this method, keyed by row id.</param>
     /// <param name="changedRowIds">Quest sheet <b>row ids</b> (65536 + n) whose completion changed. Ids the catalog does not know are ignored.
@@ -62,8 +65,18 @@ public static class StateResolver
         ArgumentNullException.ThrowIfNull(s);
         ArgumentNullException.ThrowIfNull(ctx);
 
+        var changedRows = changedRowIds as IReadOnlyCollection<uint> ?? changedRowIds.ToList();
+        var paths = PathIndex.For(c);
+        foreach (var rowId in changedRows)
+        {
+            if (paths.IsAnchor(rowId))
+            {
+                return ResolveAll(c, s, ctx);
+            }
+        }
+
         var affected = new HashSet<uint>();
-        foreach (var rowId in changedRowIds)
+        foreach (var rowId in changedRows)
         {
             if (c.GetByRowId(rowId) is not { } changed)
             {
@@ -95,9 +108,10 @@ public static class StateResolver
         }
 
         var festivalIsPast = MemoizedFestivalIsPast(s, c, ctx);
+        var choice = paths.Resolve(s);
         foreach (var rowId in affected)
         {
-            results[rowId] = ResolveCore(c.ByRowId[rowId], s, c, ctx, festivalIsPast);
+            results[rowId] = ResolveCore(c.ByRowId[rowId], s, c, ctx, festivalIsPast, choice);
         }
 
         return results;
@@ -147,20 +161,32 @@ public static class StateResolver
 
     /// <summary>
     /// The rules, plus <see cref="QuestEvaluation.RepeatableDoneBefore"/> on a repeatable the character has completed
-    /// at least once: its completion bit stays set after the first time, and the day's turn-in is in the cycle data.
+    /// at least once (its completion bit stays set after the first time, and the day's turn-in is in the cycle data),
+    /// then the path tags of a choice not made yet (<see cref="PathChoice"/>): a spare alternative leaves the totals
+    /// and an option quest says how many options are open. A completed quest or one in the journal carries neither.
     /// </summary>
-    private static QuestEvaluation ResolveCore(QuestRecord q, CharacterSnapshot s, QuestCatalog c, EvalContext ctx, Func<ushort, bool> festivalIsPast)
+    private static QuestEvaluation ResolveCore(QuestRecord q, CharacterSnapshot s, QuestCatalog c, EvalContext ctx, Func<ushort, bool> festivalIsPast, PathChoice paths)
     {
-        var evaluation = ResolveRules(q, s, c, ctx, festivalIsPast);
-        return q.IsRepeatable && evaluation.State != QuestState.Completed && (s.IsCompleted(q.QuestId) || s.DailyDone.ContainsKey(q.QuestId))
-            ? evaluation with { RepeatableDoneBefore = true }
-            : evaluation;
+        var evaluation = ResolveRules(q, s, c, ctx, festivalIsPast, paths);
+        if (q.IsRepeatable && evaluation.State != QuestState.Completed && (s.IsCompleted(q.QuestId) || s.DailyDone.ContainsKey(q.QuestId)))
+        {
+            evaluation = evaluation with { RepeatableDoneBefore = true };
+        }
+
+        if (evaluation.State is QuestState.Completed or QuestState.Accepted)
+        {
+            return evaluation;
+        }
+
+        var spare = paths.IsSpare(q.RowId);
+        var of = paths.ChoiceCount(q.RowId);
+        return spare || of > 0 ? evaluation with { IsSpareAlternative = spare, ChoiceOf = of } : evaluation;
     }
 
-    private static QuestEvaluation ResolveRules(QuestRecord q, CharacterSnapshot s, QuestCatalog c, EvalContext ctx, Func<ushort, bool> festivalIsPast)
+    private static QuestEvaluation ResolveRules(QuestRecord q, CharacterSnapshot s, QuestCatalog c, EvalContext ctx, Func<ushort, bool> festivalIsPast, PathChoice paths)
     {
         var completed = s.IsCompleted(q.QuestId);
-        var requirements = RequirementEvaluator.Evaluate(q, s, c, ctx);
+        var requirements = RequirementEvaluator.EvaluateForJob(q, s, c, ctx, s.CurrentJob, paths);
 
         // 1. Completed. A repeatable whose flag never resets (RepeatInterval 0) is final too; the ones that cycle
         //    belong to rule 5.
@@ -176,9 +202,16 @@ public static class StateResolver
             return new(QuestState.Foreclosed, requirements, FirstOfKind(requirements, RequirementKind.Retired), null, null);
         }
 
-        // 2. A completed lock forecloses, except for a Grand Company quest the character could still switch to.
+        // 2. A path the character did not take: another city's start, another starting class, another Grand Company,
+        //    another choice of a set (PathIndex). Never a completed quest (rule 1) or one in the journal.
+        if (FirstOfKind(requirements, RequirementKind.OtherPath) is { } otherPath)
+        {
+            return new(QuestState.Foreclosed, requirements, otherPath, null, null);
+        }
+
+        // 2. A completed lock forecloses, a Grand Company's own version of a quest included: once one company's is
+        //    done, switching companies does not open another's.
         if (q.QuestLocks.Length > 0
-            && !RequirementEvaluator.IsSwitchableGrandCompanyQuest(q, s)
             && q.QuestLocks.Any(id => s.IsCompleted(QuestRecord.ToQuestId(id))))
         {
             return new(QuestState.Foreclosed, requirements, FirstOfKind(requirements, RequirementKind.Foreclosure), null, null);

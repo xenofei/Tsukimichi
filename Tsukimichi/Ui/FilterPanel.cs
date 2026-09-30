@@ -46,6 +46,7 @@ public sealed class FilterPanel
     private static readonly Action<FilterSet, bool> SetRepeatableOnly = static (f, v) => f.RepeatableOnly = v;
     private static readonly Action<FilterSet, bool> SetSeasonalActiveOnly = static (f, v) => f.SeasonalActiveOnly = v;
     private static readonly Action<FilterSet, bool> SetIncludeUnlisted = static (f, v) => f.IncludeUnlisted = v;
+    private static readonly Action<FilterSet, bool> SetIncludeOtherPaths = static (f, v) => f.IncludeOtherPaths = v;
     private static readonly Action<FilterSet, bool> SetPinnedOnly = static (f, v) => f.PinnedOnly = v;
     private static readonly Action<FilterSet, bool> SetAbandonedOnly = static (f, v) => f.AbandonedOnly = v;
 
@@ -134,6 +135,7 @@ public sealed class FilterPanel
             Toggle(Strings.RepeatableOnly, Strings.RepeatableOnlyTooltip, f.RepeatableOnly, f, SetRepeatableOnly);
             Toggle(Strings.SeasonalActiveOnly, Strings.SeasonalActiveOnlyTooltip, f.SeasonalActiveOnly, f, SetSeasonalActiveOnly, hasSnapshot);
             Toggle(Strings.IncludeUnlisted, Strings.IncludeUnlistedTooltip, f.IncludeUnlisted, f, SetIncludeUnlisted);
+            Toggle(Strings.IncludeOtherPaths, Strings.IncludeOtherPathsTooltip, f.IncludeOtherPaths, f, SetIncludeOtherPaths, hasSnapshot);
             Toggle(Strings.PinnedOnly, Strings.PinnedOnlyTooltip, f.PinnedOnly, f, SetPinnedOnly);
             Toggle(Strings.AbandonedOnly, Strings.AbandonedOnlyTooltip, f.AbandonedOnly, f, SetAbandonedOnly, hasSnapshot);
         }
@@ -814,6 +816,8 @@ public sealed class FilterPanel
                 return Strings.FeatureUnlocks;
             case ScopeKind.VirtualUnlisted:
                 return Strings.RemovedFromGame;
+            case ScopeKind.VirtualOtherPaths:
+                return Strings.OtherPaths;
             case ScopeKind.VirtualIssuer:
                 var npc = catalog is null ? null : QuestDiscovery.IssuerName(catalog, scope.Id);
                 return npc is null ? Strings.ChipIssuerUnknown : string.Format(CultureInfo.CurrentCulture, Strings.ChipIssuerFormat, npc);

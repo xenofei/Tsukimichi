@@ -67,16 +67,29 @@ public class StateResolverTests
     }
 
     [Fact]
-    public void GC_specific_quest_in_another_GC_is_Blocked_not_Foreclosed()
+    public void GC_specific_quest_in_another_GC_with_a_completed_lock_is_Foreclosed_too()
     {
+        // Feature plan v4 D1: once one company's version is done, switching companies does not open another's (the
+        // exemption that read these "Blocked · Grand Company" is gone).
         var quest = Quest(Target) with { GrandCompany = 1, QuestLocks = [B] };
 
         var result = Resolve(quest, Snapshot(B) with { GrandCompany = 2 });
 
+        Assert.Equal(QuestState.Foreclosed, result.State);
+        Assert.Equal(RequirementKind.Foreclosure, result.NextStep!.Req.Kind);
+        Assert.Contains(result.Requirements, r => r.Req.Kind == RequirementKind.GrandCompany && !r.Met);
+    }
+
+    [Fact]
+    public void GC_specific_quest_in_another_GC_without_a_completed_lock_is_Blocked_on_the_company()
+    {
+        var quest = Quest(Target) with { GrandCompany = 1, QuestLocks = [B] };
+
+        var result = Resolve(quest, Snapshot() with { GrandCompany = 2 });
+
         Assert.Equal(QuestState.Blocked, result.State);
         Assert.Equal(RequirementKind.GrandCompany, result.NextStep!.Req.Kind);
         Assert.Equal("requires Maelstrom", result.NextStep.Detail);
-        Assert.DoesNotContain(result.Requirements, r => r.Req.Kind == RequirementKind.Foreclosure);
     }
 
     [Fact]

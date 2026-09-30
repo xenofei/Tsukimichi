@@ -1,3 +1,4 @@
+using Tsukimichi.Core.Localization;
 using Tsukimichi.Core.Model;
 
 namespace Tsukimichi.Core.Evaluation;
@@ -15,6 +16,14 @@ public static class RequirementEvaluator
     /// <summary>Evaluates as if <paramref name="job"/> were active; class/job and level checks use that job.</summary>
     public static IReadOnlyList<RequirementResult> EvaluateForJob(QuestRecord q, CharacterSnapshot s, QuestCatalog catalog, EvalContext ctx, byte job)
     {
+        ArgumentNullException.ThrowIfNull(catalog);
+        ArgumentNullException.ThrowIfNull(s);
+        return EvaluateForJob(q, s, catalog, ctx, job, PathIndex.For(catalog).Resolve(s));
+    }
+
+    /// <summary><see cref="EvaluateForJob(QuestRecord, CharacterSnapshot, QuestCatalog, EvalContext, byte)"/> with the character's path choices already resolved.</summary>
+    internal static IReadOnlyList<RequirementResult> EvaluateForJob(QuestRecord q, CharacterSnapshot s, QuestCatalog catalog, EvalContext ctx, byte job, PathChoice paths)
+    {
         ArgumentNullException.ThrowIfNull(q);
         ArgumentNullException.ThrowIfNull(s);
         ArgumentNullException.ThrowIfNull(catalog);
@@ -27,7 +36,19 @@ public static class RequirementEvaluator
             results.Add(new(new RetiredRequirement(), false, "removed from the game"));
         }
 
-        if (q.QuestLocks.Length > 0 && !IsSwitchableGrandCompanyQuest(q, s))
+        // A path the character did not take (feature plan v4 D1); never a completed quest or one in the journal.
+        if (!q.IsRemoved && paths.OtherPath(q.RowId) is { } path)
+        {
+            string detail;
+            using (CoreText.English())
+            {
+                detail = PathText.Detail(path, ctx.GrandCompanyName);
+            }
+
+            results.Add(new(path, false, detail));
+        }
+
+        if (q.QuestLocks.Length > 0)
         {
             var completedLocks = q.QuestLocks.Where(id => s.IsCompleted(QuestRecord.ToQuestId(id))).ToArray();
             var detail = completedLocks.Length == 0
@@ -254,13 +275,6 @@ public static class RequirementEvaluator
 
         return results;
     }
-
-    /// <summary>
-    /// A Grand Company quest for a company the character is not in. Its locks (the other companies' quests) do not
-    /// foreclose it because the character can switch companies; the Grand Company requirement carries the message.
-    /// </summary>
-    internal static bool IsSwitchableGrandCompanyQuest(QuestRecord q, CharacterSnapshot s) =>
-        q.GrandCompany != 0 && s.GrandCompany != q.GrandCompany;
 
     /// <summary>Unsynced level of a job; zero when the snapshot has none for it.</summary>
     internal static byte LevelOf(CharacterSnapshot s, byte job) =>

@@ -57,6 +57,13 @@ public sealed class FilterSet : IEquatable<FilterSet>
     /// <summary>Whether quests with no journal genre appear outside the Unlisted virtual node.</summary>
     public bool IncludeUnlisted { get; set; }
 
+    /// <summary>
+    /// Whether quests on a path the character did not take (another city's start, another starting class, another
+    /// Grand Company, another choice) appear in their journal nodes too; off by default, so they are listed only
+    /// under the "Other paths" virtual node.
+    /// </summary>
+    public bool IncludeOtherPaths { get; set; }
+
     /// <summary>Keeps only quests pinned in the query context.</summary>
     public bool PinnedOnly { get; set; }
 
@@ -66,7 +73,7 @@ public sealed class FilterSet : IEquatable<FilterSet>
     /// <summary>The active one-click preset (feature quests, level band, stalled); <see cref="Preset.None"/> when none.</summary>
     public Preset Preset { get; set; }
 
-    /// <summary>True when any narrowing filter is engaged. <see cref="IncludeUnlisted"/> widens, so it does not count.</summary>
+    /// <summary>True when any narrowing filter is engaged. <see cref="IncludeUnlisted"/> and <see cref="IncludeOtherPaths"/> widen, so they do not count.</summary>
     public bool IsActive() =>
         Preset != Preset.None
         || HideCompletedEngaged()
@@ -128,6 +135,7 @@ public sealed class FilterSet : IEquatable<FilterSet>
         RepeatableOnly = RepeatableOnly,
         SeasonalActiveOnly = SeasonalActiveOnly,
         IncludeUnlisted = IncludeUnlisted,
+        IncludeOtherPaths = IncludeOtherPaths,
         PinnedOnly = PinnedOnly,
         AbandonedOnly = AbandonedOnly,
         Preset = Preset,
@@ -150,6 +158,7 @@ public sealed class FilterSet : IEquatable<FilterSet>
         RepeatableOnly = false;
         SeasonalActiveOnly = false;
         IncludeUnlisted = false;
+        IncludeOtherPaths = false;
         PinnedOnly = false;
         AbandonedOnly = false;
         Preset = Preset.None;
@@ -176,6 +185,7 @@ public sealed class FilterSet : IEquatable<FilterSet>
             && RepeatableOnly == other.RepeatableOnly
             && SeasonalActiveOnly == other.SeasonalActiveOnly
             && IncludeUnlisted == other.IncludeUnlisted
+            && IncludeOtherPaths == other.IncludeOtherPaths
             && PinnedOnly == other.PinnedOnly
             && AbandonedOnly == other.AbandonedOnly
             && Preset == other.Preset
@@ -200,6 +210,7 @@ public sealed class FilterSet : IEquatable<FilterSet>
         hash.Add(RepeatableOnly);
         hash.Add(SeasonalActiveOnly);
         hash.Add(IncludeUnlisted);
+        hash.Add(IncludeOtherPaths);
         hash.Add(PinnedOnly);
         hash.Add(AbandonedOnly);
         hash.Add(Preset);

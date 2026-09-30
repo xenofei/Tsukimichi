@@ -76,7 +76,7 @@ Nothing needs switching on: the catalog rebuild picks up the Evercold quests wit
 
 1. **Journal section.** Main scenario quests are read from sections 0 and 1 (`MsqProgress.MainScenarioSections`, `FeaturePresets.IsMainScenario`). If Evercold's main scenario arrives in a new section, add its id to both, or no Evercold quest is main scenario at all.
 2. **How the routes are wired.** Detection needs the three routes' first quests to name the shared quest in `PreviousQuests`, and the reconvergence quest to name the routes' last quests. If instead the routes are gated by something else (an accept condition, a level, a quest the player picks up in a hub with no prerequisite link), no region is found and the position falls back to journal order: harmless, but not routed.
-3. **Exclusive routes.** If choosing a route locks the others out (`QuestLocks`, as the Grand Company choice does), the evaluator marks the others Foreclosed, they become locked-out routes and drop out; the display then shows the one route taken.
+3. **Exclusive routes.** If choosing a route locks the others out (`QuestLocks`, as the Grand Company choice does), the routes' first quests form a choice group (`PathIndex`, feature plan v4 D1): once one is done the others and everything that follows only from them read Locked out on another path, become locked-out routes and drop out; the display then shows the one route taken. Before the choice the options not presumed are spare alternatives, out of the totals, so the region counts one route.
 4. **Join kind.** If the reconvergence quest is an Any join, one route opens it and the others become optional; confirm in game that the story really lets you skip them.
 
 ## What to verify on 8.0 day

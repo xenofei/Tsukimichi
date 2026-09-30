@@ -37,6 +37,7 @@ public static class RequirementDetail
         return result.Req switch
         {
             RetiredRequirement => T("Core.Req.Retired", "removed from the game"),
+            OtherPathRequirement o => PathText.Detail(o, names.GrandCompany),
             ForeclosureRequirement f => f.CompletedLockIds.Length == 0
                 ? T("Core.Req.NoConflict", "no conflicting quest completed")
                 : F("Core.Req.LockedOutBy", "locked out by {0}", string.Join(", ", f.CompletedLockIds.Select(id => QuestName(names, id)))),

@@ -199,6 +199,28 @@ public static class QuestDiagnostic
     {
         switch (result.Req)
         {
+            case OtherPathRequirement o:
+                // "StartCity Ul'dah, chosen Gridania; StartClass Gladiator, chosen Lancer; by 65575 Coming to Gridania"
+                for (var i = 0; i < o.Facets.Count; i++)
+                {
+                    var facet = o.Facets[i];
+                    if (i > 0)
+                    {
+                        sb.Append("; ");
+                    }
+
+                    sb.Append(facet.Kind.ToString()).Append(' ').Append(PathText.Options(facet, names.GrandCompany));
+                    sb.Append(", chosen ").Append(facet.Chosen is { } chosen ? (chosen.GrandCompany != 0 ? names.GrandCompany(chosen.GrandCompany) : chosen.Text) : "none");
+                }
+
+                if (o.Evidence.Length > 0)
+                {
+                    sb.Append("; by ");
+                    AppendQuestList(sb, o.Evidence, names);
+                }
+
+                break;
+
             case ForeclosureRequirement f:
                 sb.Append("locks ");
                 AppendQuestList(sb, f.LockIds, names);

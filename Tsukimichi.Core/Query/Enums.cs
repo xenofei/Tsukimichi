@@ -30,6 +30,12 @@ public enum ScopeKind
 
     /// <summary>The quests one NPC hands out (<see cref="QuestScope.Id"/> is the ENpcResident row id); reached from the NPC context menu, not the tree.</summary>
     VirtualIssuer,
+
+    /// <summary>
+    /// The "Other paths" virtual node: quests on a path the character did not take (feature plan v4 D1), grouped by
+    /// the kind of path, shown here whatever <see cref="FilterSet.IncludeOtherPaths"/> says.
+    /// </summary>
+    VirtualOtherPaths,
 }
 
 /// <summary>One-click table presets from the filter panel; at most one is active at a time.</summary>
