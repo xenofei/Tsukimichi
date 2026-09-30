@@ -119,11 +119,12 @@
     ],
     "note": "Dishonor Before Death -> Cutter's Cry (optional side quest)."
   },
-  "66476": {
+  "66488": {
     "contentFinderConditionIds": [
       11
     ],
-    "note": "Blood for Blood -> the Stone Vigil (MSQ)."
+    "note": "In Pursuit of the Past -> the Stone Vigil (MSQ); quest script INSTANCEDUNGEON0 is InstanceContent 11 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 11 (it also names CONTENT_START 11). Not 66476 Blood for Blood, two quests earlier in the chain (66476 -> 66477 The Heretic among Us -> 66488), whose script names no duty; the wiki quest page lists the Stone Vigil under unlocks and Garland gives reward.instance 11.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/In_Pursuit_of_the_Past ; https://www.garlandtools.org/db/doc/quest/en/2/66488.json"
   },
   "66515": {
     "contentFinderConditionIds": [
