@@ -41,7 +41,7 @@ public static partial class Strings
     public const string CharacterNameFormat = "{0}@{1}";
     public const string BrowseModeNotice = "No character snapshot: states, blockers and availability are not evaluated.";
     public const string HelpButtonTooltip = "Help";
-    public const string TutorialButtonTooltip = "Interactive tutorial: a guided walk through the window";
+    public const string TutorialButtonTooltip = "Tour: a guided walk through the window";
     public const string SettingsButtonTooltip = "Settings";
     public const string ActionUnavailable = "Not available yet";
 

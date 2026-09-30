@@ -349,8 +349,8 @@ static partial class Strings
     public const string ConfigDensityHint = "Height of the quest table's rows; the Journal tree keeps its size.";
     public const string ConfigSectionHelp = "Help";
     public const string ConfigShowHelp = "Show help";
-    public const string ConfigStartTutorial = "Start tutorial";
-    public const string ConfigOfferTutorial = "Offer the tutorial on first run";
+    public const string ConfigStartTutorial = "Start the tour";
+    public const string ConfigOfferTutorial = "Offer the tour on first run";
     public const string ConfigOfferTutorialHint = "Shows the tour's welcome card the next time the main window opens.";
     public const string ConfigPollTimingNone = "No polls yet";
     /// <summary>{0} = last ms, {1} = average ms, {2} = poll count.</summary>
