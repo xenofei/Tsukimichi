@@ -291,7 +291,8 @@ public sealed partial class CharactersPane
             ImGui.TableNextColumn();
             if (row.Overall)
             {
-                using (Theme.PushText(Theme.Moon))
+                // A heading, not a call to action: Silver, not gold (game UX panel finding 2).
+                using (Theme.PushText(Theme.Silver))
                 {
                     ImGui.TextUnformatted(row.Name);
                 }
@@ -695,6 +696,7 @@ public sealed partial class CharactersPane
     /// <summary>Job icon tooltip: the job's name, then "Level N" under it; a role row has no level and shows the name alone.</summary>
     private static void JobTooltip(string name, string level)
     {
+        using var tooltipStyle = Theme.PushTooltip();
         using var tooltip = ImRaii.Tooltip();
         UiMetrics.ApplyFontScale();
         ImGui.TextUnformatted(name);
@@ -709,6 +711,7 @@ public sealed partial class CharactersPane
     /// <summary>Filling moon tooltip: what the moon shows, then the row's done/total (and percent where the row has one).</summary>
     private static void FillingMoonTooltip(string count, string? percent = null)
     {
+        using var tooltipStyle = Theme.PushTooltip();
         using var tooltip = ImRaii.Tooltip();
         UiMetrics.ApplyFontScale();
         ImGui.TextUnformatted(Strings.FillingMoonTooltip);
@@ -837,7 +840,7 @@ public sealed partial class CharactersPane
             return;
         }
 
-        using (Theme.PushText(Theme.Moon))
+        using (Theme.PushText(Theme.Silver))
         {
             ImGui.TextWrapped(toast);
         }
@@ -1029,16 +1032,16 @@ public sealed partial class CharactersPane
         }
     }
 
-    /// <summary>The unlock value as a small pill: Moon text on a raised night rounded rectangle.</summary>
+    /// <summary>The unlock value as a small pill: Silver text on a raised rounded rectangle (information, not a call to action, so not gold).</summary>
     private static void DrawValueBadge(string value)
     {
         var pad = UiMetrics.Px(5f);
         var height = ImGui.GetTextLineHeight();
         var min = ImGui.GetCursorScreenPos();
         var max = new Vector2(min.X + ImGui.CalcTextSize(value).X + pad * 2f, min.Y + height);
-        ImGui.GetWindowDrawList().AddRectFilled(min, max, Theme.NightRaisedU32, height * 0.35f);
+        ImGui.GetWindowDrawList().AddRectFilled(min, max, Theme.U32(Theme.Surface.Raised), height * 0.35f);
         ImGui.SetCursorScreenPos(new Vector2(min.X + pad, min.Y));
-        using (Theme.PushText(Theme.Moon))
+        using (Theme.PushText(Theme.Silver))
         {
             ImGui.TextUnformatted(value);
         }
@@ -2028,7 +2031,7 @@ public sealed partial class CharactersPane
 
     private static Vector4 EventColor(QuestEventKind kind) => kind switch
     {
-        QuestEventKind.Completed => Theme.Moon,
+        QuestEventKind.Completed => Theme.MoonDim,
         QuestEventKind.Accepted => Theme.Silver,
         QuestEventKind.NewlyAvailable => Theme.Moon,
         QuestEventKind.Abandoned => Theme.Eclipse,

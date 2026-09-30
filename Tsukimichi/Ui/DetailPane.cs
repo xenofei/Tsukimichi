@@ -321,7 +321,7 @@ public sealed class DetailPane
         ImGui.SameLine();
         if (model.ChainNextName is not { } next)
         {
-            using var done = Theme.PushText(Theme.Moon);
+            using var done = Theme.PushText(Theme.MoonDim);
             ImGui.TextUnformatted(ChainCompleteLabel);
             return;
         }
@@ -390,8 +390,7 @@ public sealed class DetailPane
         var min = ImGui.GetCursorScreenPos();
         var max = min + new Vector2(width, height);
         // When the height clamp bites, the image is cropped to the box (top and bottom trimmed evenly), not squashed.
-        var (uv0, uv1) = ScaleMetrics.CenterCropUv(width, height, wrap.Width, wrap.Height);
-        ImGui.Image(wrap.Handle, new Vector2(width, height), uv0, uv1);
+        Chrome.ImageCover(wrap.Handle, new Vector2(width, height), new Vector2(wrap.Width, wrap.Height));
 
         // Name strip: a Night gradient over the lower part of the image, the name in Silver at its left and the
         // large state moon at its right.
@@ -404,15 +403,13 @@ public sealed class DetailPane
         var stripHeight = MathF.Min(height, MathF.Max(textHeight + pad * 2f, moonBox + pad));
         var stripTop = max.Y - stripHeight;
         var fade = MathF.Min(UiMetrics.Px(28f), stripTop - min.Y);
-        var solid = Theme.WithAlpha(Theme.Night, 0.84f);
-        var clear = Theme.WithAlpha(Theme.Night, 0f);
         if (fade > 0f)
         {
-            dl.AddRectFilledMultiColor(new Vector2(min.X, stripTop - fade), new Vector2(max.X, stripTop), clear, clear, solid, solid);
+            Chrome.Scrim(dl, new Vector2(min.X, stripTop - fade), new Vector2(max.X, stripTop), 0f, 0.84f);
         }
 
-        dl.AddRectFilled(new Vector2(min.X, stripTop), max, solid);
-        dl.AddText(ImGui.GetFont(), ImGui.GetFontSize(), new Vector2(min.X + pad, max.Y - pad - textHeight), Theme.SilverU32, model.DisplayName, textWrap);
+        dl.AddRectFilled(new Vector2(min.X, stripTop), max, Theme.WithAlpha(Theme.Surface.Window, 0.84f));
+        dl.AddText(ImGui.GetFont(), ImGui.GetFontSize(), new Vector2(min.X + pad, max.Y - pad - textHeight), Theme.U32(Theme.Surface.Text), model.DisplayName, textWrap);
         var moonCenter = new Vector2(max.X - pad - moonBox * 0.5f, max.Y - stripHeight * 0.5f);
         MoonGlyph.Draw(dl, moonCenter, radius, model.State);
 
@@ -472,60 +469,49 @@ public sealed class DetailPane
     private void DrawHeaderCard(QuestRecord quest)
     {
         var dl = ImGui.GetWindowDrawList();
-        var width = ImGui.GetContentRegionAvail().X;
-        var pad = UiMetrics.Px(8f);
-        var min = ImGui.GetCursorScreenPos();
 
-        // Content first on its own channel, the card underneath on channel 0 once its height is known.
-        dl.ChannelsSplit(2);
-        dl.ChannelsSetCurrent(1);
-        ImGui.SetCursorScreenPos(min + new Vector2(pad, pad));
-        using (ImRaii.Group())
+        // A Chrome card (raised surface under the content, painted once its height is known).
+        Chrome.BeginCard("##headerCard");
+        var radius = UiMetrics.HeaderMoonRadius;
+        var box = radius * 2.6f;
+        var pos = ImGui.GetCursorScreenPos();
+        ImGui.Dummy(new Vector2(box, box));
+        MoonGlyph.Draw(dl, pos + new Vector2(box * 0.5f), radius, model.State);
+        if (ImGui.IsItemHovered())
         {
-            var radius = UiMetrics.HeaderMoonRadius;
-            var box = radius * 2.6f;
-            var pos = ImGui.GetCursorScreenPos();
-            ImGui.Dummy(new Vector2(box, box));
-            MoonGlyph.Draw(dl, pos + new Vector2(box * 0.5f), radius, model.State);
-            if (ImGui.IsItemHovered())
+            UiMetrics.Tooltip(Strings.StateTooltip(model.State, quest));
+        }
+
+        ImGui.SameLine();
+        if (quest.IconSpecial != 0)
+        {
+            var size = UiMetrics.BannerBadgeSize;
+            var badgeMin = ImGui.GetCursorScreenPos() + new Vector2(0f, (box - size) * 0.5f);
+            ImGui.Dummy(new Vector2(size, box));
+            if (DrawSpecialBadge(dl, quest, badgeMin, size) && ImGui.IsItemHovered())
             {
-                UiMetrics.Tooltip(Strings.StateTooltip(model.State, quest));
+                UiMetrics.Tooltip(BadgeTooltip(quest));
             }
 
             ImGui.SameLine();
-            var badge = 0f;
-            if (quest.IconSpecial != 0)
-            {
-                var size = UiMetrics.BannerBadgeSize;
-                badge = size + pad;
-                var badgeMin = ImGui.GetCursorScreenPos() + new Vector2(0f, (box - size) * 0.5f);
-                ImGui.Dummy(new Vector2(size, box));
-                if (DrawSpecialBadge(dl, quest, badgeMin, size) && ImGui.IsItemHovered())
-                {
-                    UiMetrics.Tooltip(BadgeTooltip(quest));
-                }
+        }
 
-                ImGui.SameLine();
-            }
-
-            using var wrap = ImRaii.TextWrapPos(ImGui.GetCursorPosX() + width - box - badge - pad * 3f);
-            using (Theme.PushText(Theme.Silver))
+        // The name wraps at the card's inner edge (Chrome pushes the wrap position).
+        using (ImRaii.Group())
+        {
+            using (Theme.PushText(Theme.Surface.Text))
             {
                 ImGui.TextWrapped(model.DisplayName);
             }
 
             if (model.ArtworkHidden)
             {
-                using var dusk = Theme.PushText(Theme.Dusk);
+                using var secondary = Theme.PushText(Theme.Surface.TextSecondary);
                 ImGui.TextWrapped(Strings.ArtworkHidden);
             }
         }
 
-        var max = new Vector2(min.X + width, ImGui.GetItemRectMax().Y + pad);
-        dl.ChannelsSetCurrent(0);
-        dl.AddRectFilled(min, max, Theme.NightRaisedU32, UiMetrics.Px(4f));
-        dl.ChannelsMerge();
-        ImGui.SetCursorScreenPos(new Vector2(min.X, max.Y));
+        Chrome.EndCard();
         ImGui.Spacing();
     }
 
@@ -641,7 +627,7 @@ public sealed class DetailPane
     {
         if (overrides.Get(rowId) is { } stored)
         {
-            using (Theme.PushText(stored.Unique ? Theme.Moon : Theme.Dusk))
+            using (Theme.PushText(stored.Unique ? Theme.Silver : Theme.Dusk))
             {
                 ImGui.TextUnformatted(stored.Unique ? Strings.MarkedUniqueByYou : Strings.MarkedNotUniqueByYou);
             }
@@ -683,7 +669,7 @@ public sealed class DetailPane
         }
 
         // Begun on every path so a popup opened for one quest is not orphaned when the selection moves on.
-        verdict.Draw(overrides, UiMetrics.Scale);
+        verdict.Draw(overrides);
         verdict.DrawUndo(overrides, rowId);
     }
 
@@ -957,7 +943,7 @@ public sealed class DetailPane
         if (ImGui.GetTime() < reportNoteUntil)
         {
             ImGui.SameLine();
-            using var moon = Theme.PushText(Theme.Moon);
+            using var moon = Theme.PushText(Theme.Silver);
             ImGui.TextUnformatted(Strings.ReportCopied);
         }
     }

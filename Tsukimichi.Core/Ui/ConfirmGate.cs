@@ -42,6 +42,15 @@ public sealed class ConfirmGate
     /// <summary>True while a press is accumulating towards the hold (not idle, not yet fired).</summary>
     public bool Holding => !latched && Elapsed > 0f;
 
+    /// <summary>The hold in whole tenths of a second (6 for the default 600 ms): the longest countdown label.</summary>
+    public int HoldTenths => Math.Max(1, (int)MathF.Round(HoldSeconds * 10f));
+
+    /// <summary>
+    /// Tenths of a second still to hold, rounded up and never below one, while <see cref="Holding"/>; 0 otherwise. The
+    /// countdown label shown in place of the hold arc under Reduce motion ("Hold… (0.4 s)").
+    /// </summary>
+    public int RemainingTenths => Holding ? Math.Clamp((int)MathF.Ceiling(Remaining * 10f - 0.0001f), 1, HoldTenths) : 0;
+
     /// <summary>
     /// Advances the gate one frame. Returns true on the frame the action is confirmed.
     /// </summary>

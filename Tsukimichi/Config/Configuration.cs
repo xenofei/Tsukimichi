@@ -73,9 +73,12 @@ public sealed class Configuration : IPluginConfiguration
     // ---- 0.5.0: todo overlay ----
     /// <summary>Show the small always-on todo overlay (pins, nearby feature quests, MSQ, job quests).</summary>
     public bool TodoOverlayEnabled { get; set; } = false;
-    /// <summary>When true the overlay cannot be moved or resized and ignores clicks on its frame.</summary>
+    /// <summary>
+    /// Locked = click-through (0.8.0): the overlay cannot be moved or resized and takes no mouse or keyboard input at
+    /// all, so clicks go to the game behind it. Unlocked again from Settings (its own menu is unreachable while locked).
+    /// </summary>
     public bool TodoOverlayLocked { get; set; } = false;
-    /// <summary>Background opacity of the overlay, 0.2–1.0.</summary>
+    /// <summary>Background opacity of the overlay, 0.6–1.0 (clamped when read).</summary>
     public float TodoOverlayOpacity { get; set; } = 0.85f;
     public bool TodoShowPins { get; set; } = true;
     public bool TodoShowNearbyFeature { get; set; } = true;
@@ -226,6 +229,17 @@ public sealed class Configuration : IPluginConfiguration
 
     /// <summary>Quest table row height: Comfortable (32 px, default) or Dense (24 px). Only the table's rows change.</summary>
     public RowDensity Density { get; set; } = RowDensity.Comfortable;
+
+    // ---- 0.8.0: chrome (T13) ----
+    /// <summary>
+    /// Draw the windows in the user's Dalamud colours instead of the Night palette: the same layout, with the surface
+    /// and text roles mapped from the Dalamud style (<c>Ui.Theme.Refresh</c>). Gold, Eclipse and the moons keep their
+    /// colours. Off by default.
+    /// </summary>
+    public bool FollowDalamudColours { get; set; }
+
+    /// <summary>The todo overlay's Compact mode: moon and name only, one line per row, no hints. Off by default.</summary>
+    public bool TodoOverlayCompact { get; set; }
 
     /// <summary>Poll interval as a <see cref="TimeSpan"/> within the allowed bounds.</summary>
     public TimeSpan PollInterval

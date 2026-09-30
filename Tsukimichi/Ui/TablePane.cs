@@ -543,6 +543,7 @@ public sealed class TablePane : IDisposable
     /// </summary>
     private void DrawNameTooltip(QuestRecord quest, QuestState state)
     {
+        using var tooltipStyle = Theme.PushTooltip();
         using var tooltip = ImRaii.Tooltip();
         UiMetrics.ApplyFontScale();
         var width = UiMetrics.BannerTooltipWidth;

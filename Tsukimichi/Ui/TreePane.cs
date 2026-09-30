@@ -468,6 +468,7 @@ public sealed class TreePane
             return;
         }
 
+        using var tooltipStyle = Theme.PushTooltip();
         using var tooltip = ImRaii.Tooltip();
         UiMetrics.ApplyFontScale();
         var box = 2f * MathF.Max(16f, UiMetrics.Icon(11f));

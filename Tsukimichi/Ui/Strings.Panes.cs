@@ -340,7 +340,9 @@ static partial class Strings
     public const string ConfigIconScale = "Icon scale";
     public const string ConfigIconScaleHint = "Moon glyphs, reward icons and toolbar buttons.";
     public const string ConfigReduceMotion = "Reduce motion";
-    public const string ConfigReduceMotionHint = "Hold-to-confirm buttons count down in text instead of filling an arc. Until you change it here, it follows Windows' \"Show animations\" setting.";
+    public const string ConfigReduceMotionHint = "No hover fades or pulses anywhere, and hold-to-confirm buttons count down in text instead of filling an arc. Until you change it here, it follows Windows' \"Show animations\" setting.";
+    public const string ConfigFollowDalamudColours = "Follow Dalamud colours";
+    public const string ConfigFollowDalamudColoursHint = "Draw Tsukimichi's windows in your Dalamud theme's colours instead of the Night palette. The layout, the moons and the gold stay the same.";
     public const string ConfigDensity = "Table rows";
     public const string ConfigDensityComfortable = "Comfortable";
     public const string ConfigDensityDense = "Dense";
@@ -549,7 +551,7 @@ static partial class Strings
         [
             "Every zone you can fly in, under its expansion, with a halo that fills as you attune its currents; the zone you stand in is marked ● and selected first. Pick a zone and the table lists its quest currents: attuned or not, the quest's state and status, and Flag or Teleport to the giver.",
             "Quest currents come from quests, five per zone in most expansions, and completing the quest attunes them. Field currents are touched in the world; the tab counts them but never locates them. Use the Aether Compass, a General Action under Actions & Traits, to point at the nearest one.",
-            "/tsuki nearby opens a small window with the quests you can start in the current zone: state moon, level, job, Flag and Teleport, and a click on the name shows it in the Journal. Also in your journal here folds out the quests in your journal whose giver stands in the zone. The cog holds its settings.",
+            "/tsuki nearby opens a small window with the quests you can start in the current zone: state moon, level and job. A click on the name shows it in the Journal, a double-click flags the giver on the map, and right-click or … opens Flag, Teleport and Link in chat. Also in your journal here folds out the quests in your journal whose giver stands in the zone. The cog holds its settings.",
             "☾ N in the server info bar is the count of quests you can start here. Hover it for the first five names; click it to open Nearby quests. It hides at zero unless Keep the entry visible is on, and the cog in Nearby quests can turn it off entirely.",
             "/tsuki zone prints chat links for the quests you can start in the current zone, by level, up to ten. /tsuki which prints every quest the targeted NPC hands out with its state. Both need an evaluated character; the Nearby quests window keeps the same list on screen.",
         ];

@@ -22,34 +22,44 @@ using Tsukimichi.GameData;
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// Todo overlay (feature plan V2-13): a small always-visible panel, DailyDuty style, with one collapsible section per
-/// enabled part of <see cref="TodoList"/> (pins, feature quests startable here, the next main scenario quest, the
-/// current job's next job and role quest). Each row is a state moon, the quest name (click shows it in the main
-/// window, double-click flags the giver on the map; right-click offers Reveal in Tsukimichi, Flag, Teleport through
-/// Lifestream and a chat link) and a Dusk hint; hovering shows the state and the next step. The panel draws at the
-/// main window's UI scale; below <see cref="ShadowBelowOpacity"/> every text gets a one-pixel Night shadow so it
-/// still reads over snow, sand and sky. <see cref="Window.IsOpen"/> follows
-/// <see cref="Configuration.TodoOverlayEnabled"/>; the window is not drawn while logged out, in a duty or in a
-/// cutscene. The rows are rebuilt on <see cref="SessionState.Changed"/>, <see cref="IClientState.TerritoryChanged"/>,
-/// when a section toggle flips and when <c>user/pins.json</c> changes (its write time is checked every
-/// <see cref="PinsCheckInterval"/>); drawing allocates nothing. Locked (<see cref="Configuration.TodoOverlayLocked"/>)
-/// only takes NoMove and NoResize so rows stay clickable; the background alpha is
-/// <see cref="Configuration.TodoOverlayOpacity"/>. <see cref="ResetPosition"/> moves the panel back to the top left
-/// on the next frame.
+/// Todo overlay (feature plan V2-13), the surface read while playing (game UX panel finding 5, accessibility A6/A8):
+/// a small always-visible panel with one section per enabled part of <see cref="TodoList"/> (pins, unlock quests
+/// startable here, the next main scenario quest, the current job's next job and role quest). It draws on the Night
+/// chrome (<see cref="Theme.PushNightWindow"/>) at <see cref="Configuration.TodoOverlayOpacity"/>, and every text is
+/// outlined in the window colour (<see cref="Chrome.OutlinedText"/>) so it reads over snow, sand and sky; hints are in
+/// the secondary tone (Mist, 8.7 : 1 against its outline), moons never under 14 px
+/// (<see cref="UiMetrics.PlayingGlyphSize"/>). Section headers are outlined captions over a hairline, click to fold.
+///
+/// Rows: the state moon, the quest name and its hint, and a "…" button that opens the same menu as a right-click
+/// (Reveal in Tsukimichi, Flag, Teleport through Lifestream, Link in chat). A click shows the quest in the main window;
+/// the map is flagged only on a double-click or from the menu, never on a single click. Compact mode
+/// (<see cref="Configuration.TodoOverlayCompact"/>) keeps the moon and the name on one line at a fixed width.
+///
+/// Locked (<see cref="Configuration.TodoOverlayLocked"/>) is click-through: NoMove, NoResize and NoInputs, so the game
+/// behind gets every click; the lock is set from the title's menu (or its "…") and cleared from Settings. The window is
+/// not drawn while logged out, in a duty or in a cutscene. Rows are rebuilt on <see cref="SessionState.Changed"/>,
+/// <see cref="IClientState.TerritoryChanged"/>, when a section toggle flips and when <c>user/pins.json</c> changes (its
+/// write time is checked every <see cref="PinsCheckInterval"/>); drawing allocates nothing. <see cref="ResetPosition"/>
+/// moves the panel back to the top left on the next frame.
 /// </summary>
 public sealed class TodoOverlay : Window, IDisposable
 {
     public const float MinOpacity = 0.6f;
     public const float MaxOpacity = 1f;
 
-    /// <summary>Below this background opacity the texts get a Night drop shadow.</summary>
-    public const float ShadowBelowOpacity = 0.9f;
-
     /// <summary>Logical minimum width of the panel.</summary>
     private const float MinWidthLogical = 180f;
 
-    /// <summary>The row's selectable has no visible label; the name is painted over it (with its shadow) instead.</summary>
+    /// <summary>Logical width of the panel in Compact mode (fixed; long names are clipped).</summary>
+    private const float CompactWidthLogical = 260f;
+
+    /// <summary>The row's selectable has no visible label; the name is painted over it (with its outline) instead.</summary>
     private const string RowSelectableId = "##row";
+
+    /// <summary>The row menu's popup id, shared by the right-click and the "…" button (same id scope, the row's).</summary>
+    private const string RowMenuId = "##todoRowMenu";
+
+    private const string HeaderMenuId = "##todoHeaderMenu";
 
     /// <summary>How often the pins file's write time is checked while the overlay is drawn.</summary>
     public static readonly TimeSpan PinsCheckInterval = TimeSpan.FromSeconds(2);
@@ -57,17 +67,22 @@ public sealed class TodoOverlay : Window, IDisposable
     private const ImGuiWindowFlags BaseFlags = ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.AlwaysAutoResize
                                                | ImGuiWindowFlags.NoFocusOnAppearing | ImGuiWindowFlags.NoDocking;
 
-    private const ImGuiWindowFlags LockedFlags = BaseFlags | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoResize;
+    /// <summary>Locked = click-through (accessibility A8): nothing of the panel takes the mouse or keyboard.</summary>
+    private const ImGuiWindowFlags LockedFlags = BaseFlags | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoInputs;
 
     /// <summary>Offset from the main viewport's work area the panel returns to on <see cref="ResetPosition"/>, in logical pixels.</summary>
     private static readonly Vector2 DefaultOffset = new(24f, 96f);
-    private static readonly string LockGlyph = FontAwesomeIcon.Lock.ToIconString();
+
+    private static readonly string LockGlyph = Chrome.Icon(FontAwesomeIcon.Lock);
+    private static readonly string MoreGlyph = Chrome.Icon(FontAwesomeIcon.EllipsisH);
+    private static readonly string FoldedGlyph = Chrome.Icon(FontAwesomeIcon.CaretRight);
+    private static readonly string OpenGlyph = Chrome.Icon(FontAwesomeIcon.CaretDown);
 
     /// <param name="Name">The quest's name as the spoiler shield prints it.</param>
     private readonly record struct Row(QuestRecord Quest, string Name, QuestState State, string Hint, string Tooltip);
 
-    /// <summary><paramref name="HeaderId"/> is the label-less "###" id the collapsing header keeps its open state under; <paramref name="HeaderText"/> is painted over it.</summary>
-    private sealed record SectionView(TodoSection Section, string HeaderId, string HeaderText, Row[] Rows);
+    /// <summary><paramref name="HeaderText"/> is the caption; <paramref name="ToggleTooltip"/> says a click folds it.</summary>
+    private sealed record SectionView(TodoSection Section, string HeaderText, string ToggleTooltip, Row[] Rows);
 
     private readonly Configuration settings;
     private readonly SessionState session;
@@ -87,6 +102,9 @@ public sealed class TodoOverlay : Window, IDisposable
     private uint builtTerritory;
     private int builtSettings = -1;
 
+    // Folded sections, by TodoSection value (not persisted; the old collapsing headers were not either).
+    private readonly bool[] folded = new bool[Enum.GetValues<TodoSection>().Length + 1];
+
     // Pins: the file's write time (checked on a timer) and the set loaded for the viewed character.
     private readonly HashSet<uint> pinned = [];
     private DateTime pinsStamp;
@@ -99,7 +117,7 @@ public sealed class TodoOverlay : Window, IDisposable
     private CatalogBundle? ladderBundle;
     private bool resetPosition;
     private bool disposed;
-    private bool shadowText;
+    private Theme.StyleScope nightChrome;
 
     // A clicked row whose reveal waits out the double-click window (ImGui time of the click); see DrawRow.
     private QuestRecord? pendingReveal;
@@ -197,13 +215,13 @@ public sealed class TodoOverlay : Window, IDisposable
     public override void PreDraw()
     {
         Flags = settings.TodoOverlayLocked ? LockedFlags : BaseFlags;
-        var opacity = ClampOpacity(settings.TodoOverlayOpacity);
-        BgAlpha = opacity;
-        shadowText = opacity < ShadowBelowOpacity;
+        // The overlay's own opacity setting; the Night chrome keeps this alpha (it never touches BgAlpha).
+        BgAlpha = ClampOpacity(settings.TodoOverlayOpacity);
+        var compactWidth = CompactWidthLogical * UiMetrics.FontScale;
         SizeConstraints = new WindowSizeConstraints
         {
-            MinimumSize = new Vector2(MinWidthLogical * UiMetrics.FontScale, 0f),
-            MaximumSize = new Vector2(float.MaxValue, float.MaxValue),
+            MinimumSize = new Vector2(settings.TodoOverlayCompact ? compactWidth : MinWidthLogical * UiMetrics.FontScale, 0f),
+            MaximumSize = new Vector2(settings.TodoOverlayCompact ? compactWidth : float.MaxValue, float.MaxValue),
         };
         if (resetPosition)
         {
@@ -212,6 +230,13 @@ public sealed class TodoOverlay : Window, IDisposable
         }
 
         Refresh();
+        nightChrome = Theme.PushNightWindow();
+    }
+
+    public override void PostDraw()
+    {
+        nightChrome.Dispose();
+        nightChrome = default;
     }
 
     public override void Draw()
@@ -232,29 +257,39 @@ public sealed class TodoOverlay : Window, IDisposable
     private void DrawContent()
     {
         FireDueReveal();
-        DrawHeader();
+        var compact = settings.TodoOverlayCompact;
+        var layout = Measure(compact);
+        DrawHeader(layout);
         if (!catalogReady)
         {
-            ShadowedText(session.CatalogLoading ? Strings.CatalogNotReady : Strings.CatalogUnavailable, ImGui.GetStyle().Colors[(int)ImGuiCol.TextDisabled]);
+            Chrome.OutlinedText(session.CatalogLoading ? Strings.CatalogNotReady : Strings.CatalogUnavailable, Theme.Surface.TextSecondary);
             return;
         }
 
         if (sections.Length == 0)
         {
-            ShadowedText(enabledSections > 0 ? Strings.TodoEmpty : Strings.TodoNoSections, Theme.Dusk);
+            Chrome.OutlinedText(enabledSections > 0 ? Strings.TodoEmpty : Strings.TodoNoSections, Theme.Surface.TextSecondary);
             return;
         }
 
-        var glyphSize = UiMetrics.InlineGlyphSize(ImGui.GetTextLineHeight());
-        var style = ImGui.GetStyle();
-        foreach (var section in sections)
+        for (var s = 0; s < sections.Length; s++)
         {
+            var section = sections[s];
             using var id = ImRaii.PushId((int)section.Section);
-            // The header's own label is empty and its text painted over the frame, so it can carry the shadow too;
-            // the text sits where TreeNodeBehavior puts a framed node's label (after the arrow slot).
-            var open = ImGui.CollapsingHeader(section.HeaderId, ImGuiTreeNodeFlags.DefaultOpen);
-            var headerMin = ImGui.GetItemRectMin();
-            ShadowedTextAt(headerMin + new Vector2(ImGui.GetFontSize() + style.FramePadding.X * 3f, style.FramePadding.Y), section.HeaderText, ImGui.GetColorU32(ImGuiCol.Text));
+            var open = compact || !folded[(int)section.Section];
+            if (compact)
+            {
+                // Compact: no captions, a hairline between sections.
+                if (s > 0)
+                {
+                    Chrome.Hairline(width: layout.RowWidth);
+                }
+            }
+            else
+            {
+                DrawSectionHeader(section, layout, open);
+            }
+
             if (!open)
             {
                 continue;
@@ -262,48 +297,119 @@ public sealed class TodoOverlay : Window, IDisposable
 
             for (var i = 0; i < section.Rows.Length; i++)
             {
-                DrawRow(section.Rows[i], i, glyphSize);
+                DrawRow(section.Rows[i], i, layout, compact);
             }
         }
     }
 
-    /// <summary>"☾ Tsukimichi" in Moon, a small lock when locked; right-click for lock, reset position and hide.</summary>
-    private void DrawHeader()
+    /// <summary>Per-frame layout: the moon box, the row height (never under the "…" target) and the text column's width.</summary>
+    private readonly record struct RowLayout(float Glyph, float RowHeight, float TextWidth, float RowWidth);
+
+    /// <summary>
+    /// The text column is as wide as the widest name (and hint) this frame, so every "…" lines up in one column; in
+    /// Compact mode it is what the fixed width leaves. Allocation-free: a few dozen CalcTextSize calls.
+    /// </summary>
+    private RowLayout Measure(bool compact)
     {
-        ShadowedText(Strings.TodoHeader, Theme.Moon);
+        var line = ImGui.GetTextLineHeight();
+        var glyph = UiMetrics.PlayingGlyphSize(line);
+        var button = UiMetrics.MinTarget;
+        var spacing = ImGui.GetStyle().ItemSpacing.X;
+        var rowHeight = MathF.Max(glyph, button);
+        float text;
+        if (compact)
+        {
+            text = MathF.Max(UiMetrics.Px(40f), ImGui.GetContentRegionAvail().X - glyph - button - 2f * spacing);
+        }
+        else
+        {
+            text = ImGui.CalcTextSize(Strings.TodoHeader).X;
+            foreach (var section in sections)
+            {
+                text = MathF.Max(text, ImGui.CalcTextSize(section.HeaderText).X + ImGui.GetFontSize());
+                foreach (var row in section.Rows)
+                {
+                    var width = ImGui.CalcTextSize(row.Name).X;
+                    if (row.Hint.Length > 0)
+                    {
+                        width += spacing + ImGui.CalcTextSize(row.Hint).X;
+                    }
+
+                    text = MathF.Max(text, width);
+                }
+            }
+        }
+
+        return new RowLayout(glyph, rowHeight, text, glyph + spacing + text + spacing + button);
+    }
+
+    /// <summary>
+    /// "☾ Tsukimichi" outlined in the primary tone, a lock glyph while locked, and a "…" with the overlay's options
+    /// (the same menu as a right-click on the title): Lock (click-through), Compact, Reset position, Hide.
+    /// </summary>
+    private void DrawHeader(in RowLayout layout)
+    {
+        var start = ImGui.GetCursorScreenPos();
+        var textY = start.Y + (layout.RowHeight - ImGui.GetTextLineHeight()) * 0.5f;
+        ImGui.SetCursorScreenPos(new Vector2(start.X, textY));
+        Chrome.OutlinedText(Strings.TodoHeader, Theme.Surface.Text);
+        var openMenu = ImGui.IsItemHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Right);
+
+        if (settings.TodoOverlayLocked)
+        {
+            ImGui.SameLine();
+            ImGui.SetWindowFontScale(0.75f * UiMetrics.FontScale);
+            ImGui.PushFont(UiBuilder.IconFont);
+            Chrome.OutlinedText(LockGlyph, Theme.Surface.TextSecondary);
+            ImGui.PopFont();
+            UiMetrics.ApplyFontScale();
+        }
+        else
+        {
+            // The "…" sits in the rows' button column; while locked nothing can be clicked, so it is not drawn.
+            ImGui.SetCursorScreenPos(new Vector2(start.X + layout.RowWidth - UiMetrics.MinTarget, start.Y));
+            openMenu |= Chrome.IconButtonRound("##headerMore", MoreGlyph, Strings.TodoHeaderMoreTooltip);
+        }
+
+        ImGui.SetCursorScreenPos(new Vector2(start.X, start.Y + layout.RowHeight));
+        ImGui.Dummy(Vector2.Zero);
+        if (openMenu)
+        {
+            ImGui.OpenPopup(HeaderMenuId);
+        }
+
         DrawHeaderMenu();
-
-        if (!settings.TodoOverlayLocked)
-        {
-            return;
-        }
-
-        ImGui.SameLine();
-        ImGui.SetWindowFontScale(0.75f * UiMetrics.FontScale);
-        using (ImRaii.PushFont(UiBuilder.IconFont))
-        using (Theme.PushText(Theme.Dusk))
-        {
-            ImGui.TextUnformatted(LockGlyph);
-        }
-
-        UiMetrics.ApplyFontScale();
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(Strings.TodoLockedTooltip);
-        }
     }
 
     private void DrawHeaderMenu()
     {
-        using var popup = ImRaii.ContextPopupItem("##todoHeaderMenu");
+        if (!ImGui.IsPopupOpen(HeaderMenuId))
+        {
+            return;
+        }
+
+        using var style = Theme.PushPopup();
+        using var popup = ImRaii.Popup(HeaderMenuId);
         if (!popup)
         {
             return;
         }
 
-        if (ImGui.MenuItem(settings.TodoOverlayLocked ? Strings.TodoMenuUnlock : Strings.TodoMenuLock))
+        // Only reachable while unlocked: once locked the panel takes no input, and Settings unlocks it.
+        if (ImGui.MenuItem(Strings.TodoMenuLock, string.Empty, settings.TodoOverlayLocked))
         {
-            settings.TodoOverlayLocked = !settings.TodoOverlayLocked;
+            settings.TodoOverlayLocked = true;
+            Save();
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.TodoMenuLockTooltip);
+        }
+
+        if (ImGui.MenuItem(Strings.TodoMenuCompact, string.Empty, settings.TodoOverlayCompact))
+        {
+            settings.TodoOverlayCompact = !settings.TodoOverlayCompact;
             Save();
         }
 
@@ -319,24 +425,54 @@ public sealed class TodoOverlay : Window, IDisposable
         }
     }
 
-    private void DrawRow(Row row, int index, float glyphSize)
+    /// <summary>A section caption (caret, name and count) outlined in the secondary tone over a hairline; a click folds it.</summary>
+    private void DrawSectionHeader(SectionView section, in RowLayout layout, bool open)
+    {
+        var start = ImGui.GetCursorScreenPos();
+        var line = ImGui.GetTextLineHeight();
+        if (ImGui.InvisibleButton("##section", new Vector2(layout.RowWidth, line)))
+        {
+            folded[(int)section.Section] = open;
+        }
+
+        var hovered = ImGui.IsItemHovered();
+        Chrome.FocusRing();
+        var dl = ImGui.GetWindowDrawList();
+        var ink = Theme.U32(hovered ? Theme.Surface.Text : Theme.Surface.TextSecondary);
+        ImGui.PushFont(UiBuilder.IconFont);
+        Chrome.OutlinedTextAt(dl, start, open ? OpenGlyph : FoldedGlyph, ink);
+        ImGui.PopFont();
+        Chrome.OutlinedTextAt(dl, new Vector2(start.X + ImGui.GetFontSize(), start.Y), section.HeaderText, ink);
+        if (hovered)
+        {
+            UiMetrics.Tooltip(section.ToggleTooltip);
+        }
+
+        Chrome.Hairline(width: layout.RowWidth);
+    }
+
+    private void DrawRow(Row row, int index, in RowLayout layout, bool compact)
     {
         using var id = ImRaii.PushId(index);
-        MoonGlyph.DrawInline(row.State, glyphSize);
+        var style = ImGui.GetStyle();
+        var start = ImGui.GetCursorScreenPos();
+        var line = ImGui.GetTextLineHeight();
+        var textY = start.Y + (layout.RowHeight - line) * 0.5f;
+
+        ImGui.SetCursorScreenPos(new Vector2(start.X, start.Y + (layout.RowHeight - layout.Glyph) * 0.5f));
+        MoonGlyph.DrawInline(row.State, layout.Glyph);
         if (ImGui.IsItemHovered())
         {
             UiMetrics.Tooltip(Strings.StateTooltip(row.State, row.Quest), row.Hint);
         }
 
-        ImGui.SameLine();
-
-        // The selectable is sized to the name so the hint can follow on the same line; the name itself is painted over
-        // it so it can carry the shadow. A click shows the quest in the main window; only a double-click flags the
-        // map (a game action with no undo), so a slip of the mouse never plants a flag. The selectable reports the
-        // first press of a double-click as a click, so the reveal waits one double-click window (FireDueReveal) and
-        // the second press cancels it: a double-click flags without opening the main window over the overlay first.
-        var nameWidth = ImGui.CalcTextSize(row.Name).X;
-        if (ImGui.Selectable(RowSelectableId, false, ImGuiSelectableFlags.AllowDoubleClick, new Vector2(nameWidth, 0f)))
+        // The selectable spans the text column; the name and hint are painted over it with their outline. A click
+        // shows the quest in the main window; only a double-click (or the menu) flags the map, a game action with no
+        // undo, so a slip of the mouse never plants a flag. The selectable reports the first press of a double-click
+        // as a click, so the reveal waits one double-click window (FireDueReveal) and the second press cancels it.
+        var textX = start.X + layout.Glyph + style.ItemSpacing.X;
+        ImGui.SetCursorScreenPos(new Vector2(textX, start.Y));
+        if (ImGui.Selectable(RowSelectableId, false, ImGuiSelectableFlags.AllowDoubleClick, new Vector2(layout.TextWidth, layout.RowHeight)))
         {
             if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
             {
@@ -350,20 +486,42 @@ public sealed class TodoOverlay : Window, IDisposable
             }
         }
 
-        ShadowedTextAt(ImGui.GetItemRectMin(), row.Name, ImGui.GetColorU32(ImGuiCol.Text));
         var hovered = ImGui.IsItemHovered();
-        DrawRowMenu(row);
-
-        if (row.Hint.Length > 0)
+        var openMenu = hovered && ImGui.IsMouseReleased(ImGuiMouseButton.Right);
+        var dl = ImGui.GetWindowDrawList();
+        var textMax = new Vector2(textX + layout.TextWidth, start.Y + layout.RowHeight);
+        dl.PushClipRect(new Vector2(textX, start.Y), textMax, true);
+        var name = new Vector2(textX, textY);
+        Chrome.OutlinedTextAt(dl, name, row.Name, Theme.U32(Theme.Surface.Text));
+        if (!compact && row.Hint.Length > 0)
         {
-            ImGui.SameLine();
-            ShadowedText(row.Hint, Theme.Dusk);
+            var hintX = textX + ImGui.CalcTextSize(row.Name).X + style.ItemSpacing.X;
+            Chrome.OutlinedTextAt(dl, new Vector2(hintX, textY), row.Hint, Theme.U32(Theme.Surface.TextSecondary));
         }
 
+        dl.PopClipRect();
         if (hovered)
         {
             UiMetrics.Tooltip(row.Tooltip);
         }
+
+        // The "…" opens the same menu as the right-click, for keyboard, controller and one-handed players (A6). While
+        // locked the panel is click-through, so the buttons would only be clutter.
+        if (!settings.TodoOverlayLocked)
+        {
+            ImGui.SetCursorScreenPos(new Vector2(textX + layout.TextWidth + style.ItemSpacing.X, start.Y + (layout.RowHeight - UiMetrics.MinTarget) * 0.5f));
+            openMenu |= Chrome.IconButtonRound("##more", MoreGlyph, Strings.TodoRowMoreTooltip);
+        }
+
+        if (openMenu)
+        {
+            ImGui.OpenPopup(RowMenuId);
+        }
+
+        DrawRowMenu(row);
+        // Close the row with an item at its bottom edge, so the next one starts one item spacing below it.
+        ImGui.SetCursorScreenPos(new Vector2(start.X, start.Y + layout.RowHeight));
+        ImGui.Dummy(Vector2.Zero);
     }
 
     /// <summary>
@@ -394,34 +552,15 @@ public sealed class TodoOverlay : Window, IDisposable
         }
     }
 
-    /// <summary>A text item in <paramref name="color"/>, over a one-pixel Night shadow while the panel is translucent.</summary>
-    private void ShadowedText(string text, Vector4 color)
-    {
-        if (shadowText)
-        {
-            var pos = ImGui.GetCursorScreenPos();
-            ImGui.GetWindowDrawList().AddText(pos + new Vector2(UiMetrics.Hairline), Theme.NightU32, text);
-        }
-
-        using var push = Theme.PushText(color);
-        ImGui.TextUnformatted(text);
-    }
-
-    /// <summary>Draw-list text at <paramref name="pos"/> (no item), with the same shadow rule.</summary>
-    private void ShadowedTextAt(Vector2 pos, string text, uint color)
-    {
-        var dl = ImGui.GetWindowDrawList();
-        if (shadowText)
-        {
-            dl.AddText(pos + new Vector2(UiMetrics.Hairline), Theme.NightU32, text);
-        }
-
-        dl.AddText(pos, color, text);
-    }
-
     private void DrawRowMenu(Row row)
     {
-        using var popup = ImRaii.ContextPopupItem("##todoRowMenu");
+        if (!ImGui.IsPopupOpen(RowMenuId))
+        {
+            return;
+        }
+
+        using var style = Theme.PushPopup();
+        using var popup = ImRaii.Popup(RowMenuId);
         if (!popup)
         {
             return;
@@ -570,8 +709,10 @@ public sealed class TodoOverlay : Window, IDisposable
                 rows.Add(new Row(quest, row.Name, row.State, row.Hint, tooltip));
             }
 
-            var headerText = string.Format(CultureInfo.CurrentCulture, Strings.TodoSectionFormat, Strings.TodoSectionName(section.Section), rows.Count);
-            views[i] = new SectionView(section.Section, "###todo" + section.Section, headerText, rows.ToArray());
+            var name = Strings.TodoSectionName(section.Section);
+            var headerText = string.Format(CultureInfo.CurrentCulture, Strings.TodoSectionFormat, name, rows.Count);
+            var toggle = string.Format(CultureInfo.CurrentCulture, Strings.TodoSectionToggleFormat, name);
+            views[i] = new SectionView(section.Section, headerText, toggle, rows.ToArray());
         }
 
         sections = views;

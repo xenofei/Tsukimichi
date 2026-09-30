@@ -247,12 +247,17 @@ public sealed class Plugin : IDalamudPlugin
     }
 
     /// <summary>Remembers an explicit character choice across sessions; following the live character stores null.</summary>
-    /// <summary>Once per frame, before the window system draws: the scale factors every window reads.</summary>
+    /// <summary>
+    /// Once per frame, before the window system draws: the scale factors every window reads, the palette (Night or the
+    /// user's Dalamud colours, read while nothing is pushed yet) and the motion clock (scroll pause, key pruning).
+    /// </summary>
     private void UpdateUiMetrics()
     {
         if (Settings is { } settings)
         {
             Ui.UiMetrics.Update(settings);
+            Ui.Theme.Refresh(settings.FollowDalamudColours);
+            Ui.Motion.BeginFrame();
         }
     }
 

@@ -61,16 +61,10 @@ public sealed class HelpWindow : Window
 
     private static readonly HelpTopic[] Topics = Enum.GetValues<HelpTopic>();
 
-    /// <summary>Card background: Night lifted a little toward Veil, so cards read as raised on the panel.</summary>
-    private static readonly uint CardBgU32 = Theme.WithAlpha(Vector4.Lerp(Theme.Night, Theme.Veil, 0.22f), 1f);
+    /// <summary>Body text: the primary tone at 85 %, in whichever palette is active.</summary>
+    private static Vector4 BodyText => Theme.WithAlphaVector(Theme.Surface.Text, 0.85f);
 
-    private static readonly uint TipBgU32 = Theme.WithAlpha(Theme.Moon, 0.07f);
-    private static readonly uint KeyBgU32 = Theme.WithAlpha(Vector4.Lerp(Theme.Night, Theme.Veil, 0.35f), 1f);
-    private static readonly uint HairlineU32 = Theme.WithAlpha(Theme.Veil, 0.6f);
-    private static readonly Vector4 BodyText = Theme.WithAlphaVector(Theme.Silver, 0.85f);
-    private static readonly Vector4 RowHeader = Theme.WithAlphaVector(Theme.Moon, 0.18f);
-    private static readonly Vector4 RowHeaderHovered = Theme.WithAlphaVector(Theme.Moon, 0.12f);
-    private static readonly Vector4 RowHeaderActive = Theme.WithAlphaVector(Theme.Moon, 0.26f);
+    private Theme.StyleScope nightChrome;
 
     private readonly record struct CardItem(string Icon, string Title, string Body);
 
@@ -141,10 +135,11 @@ public sealed class HelpWindow : Window
 
     private static readonly BadgeItem[] Badges =
     [
-        new(Strings.MoonlitConfidenceStatic, Theme.Silver, Strings.Help.ConfidenceStaticMeaning),
-        new(Strings.MoonlitConfidenceCommunity, Theme.Dusk, Strings.Help.ConfidenceCommunityMeaning),
-        new(Strings.MoonlitConfidenceCurated, Theme.Moon, Strings.Help.ConfidenceCuratedMeaning),
-        new(Strings.MoonlitConfidenceUser, Theme.Eclipse, Strings.Help.ConfidenceUserMeaning),
+        // The same tones as the Moonlit table's badge column (never gold: a badge is not a call to action).
+        new(Strings.MoonlitConfidenceStatic, Theme.Mist, Strings.Help.ConfidenceStaticMeaning),
+        new(Strings.MoonlitConfidenceCommunity, Theme.VeilText, Strings.Help.ConfidenceCommunityMeaning),
+        new(Strings.MoonlitConfidenceCurated, Theme.Silver, Strings.Help.ConfidenceCuratedMeaning),
+        new(Strings.MoonlitConfidenceUser, Theme.EclipseText, Strings.Help.ConfidenceUserMeaning),
     ];
 
     private static readonly CardItem[] CharacterCards = Cards(
@@ -250,6 +245,18 @@ public sealed class HelpWindow : Window
         Show();
     }
 
+    /// <summary>Night chrome around the whole window (rail included); nothing is pushed while following Dalamud's colours.</summary>
+    public override void PreDraw()
+    {
+        nightChrome = Theme.PushNightWindow();
+    }
+
+    public override void PostDraw()
+    {
+        nightChrome.Dispose();
+        nightChrome = default;
+    }
+
     public override void Draw()
     {
         var scale = ImGuiHelpers.GlobalScale;
@@ -311,15 +318,11 @@ public sealed class HelpWindow : Window
         var rowHeight = ImGui.GetFrameHeight() * 1.35f;
         var min = ImGui.GetCursorScreenPos();
 
+        // The selection wash comes from the Night chrome (neutral, never gold); the Moon bar is the selected row's rule.
         using var id = ImRaii.PushId(index);
-        using (ImRaii.PushColor(ImGuiCol.Header, RowHeader)
-                     .Push(ImGuiCol.HeaderHovered, RowHeaderHovered)
-                     .Push(ImGuiCol.HeaderActive, RowHeaderActive))
+        if (ImGui.Selectable("##topic", selected, ImGuiSelectableFlags.None, new Vector2(0f, rowHeight)))
         {
-            if (ImGui.Selectable("##topic", selected, ImGuiSelectableFlags.None, new Vector2(0f, rowHeight)))
-            {
-                topic = t;
-            }
+            topic = t;
         }
 
         var max = ImGui.GetItemRectMax();
@@ -333,7 +336,7 @@ public sealed class HelpWindow : Window
         var textY = min.Y + (rowHeight - ImGui.GetTextLineHeight()) * 0.5f;
         ImGui.SetCursorScreenPos(new Vector2(min.X + 12f * scale, textY));
         using (iconFont.Push())
-        using (Theme.PushText(selected ? Theme.Moon : Theme.Dusk))
+        using (Theme.PushText(selected ? Theme.Surface.Text : Theme.Surface.TextTertiary))
         {
             ImGui.TextUnformatted(TopicIcons[index]);
         }
@@ -460,13 +463,13 @@ public sealed class HelpWindow : Window
     private void DrawContent(float scale)
     {
         ImGui.SetWindowFontScale(TitleScale);
-        using (Theme.PushText(Theme.Moon))
+        using (Theme.PushText(Theme.Surface.Text))
         {
             ImGui.TextUnformatted(Strings.Help.TopicName(topic));
         }
 
         ImGui.SetWindowFontScale(1f);
-        using (Theme.PushText(Theme.Dusk))
+        using (Theme.PushText(Theme.Surface.TextSecondary))
         {
             ImGui.TextWrapped(Strings.Help.TopicLede(topic));
         }
@@ -555,7 +558,7 @@ public sealed class HelpWindow : Window
         {
             foreach (var badge in Badges)
             {
-                Chip(badge.Label, badge.Color, scale);
+                Chrome.Pill(badge.Label, badge.Color);
                 ImGui.SameLine(0f, 8f * scale);
                 using (Theme.PushText(BodyText))
                 {
@@ -589,56 +592,26 @@ public sealed class HelpWindow : Window
 
     // ------------------------------------------------------------------ blocks
 
-    /// <summary>A rounded, bordered box with an icon and title on the first line and a wrapped body under them.</summary>
-    private void Card(int id, in CardItem card)
+    /// <summary>A Chrome card: the icon and title on the first line and the wrapped body under them.</summary>
+    private static void Card(int id, in CardItem card)
     {
-        var scale = ImGuiHelpers.GlobalScale;
-        var pad = Pad * scale;
-        var dl = ImGui.GetWindowDrawList();
-        var start = ImGui.GetCursorScreenPos();
-        var width = ImGui.GetContentRegionAvail().X;
-
-        using var idScope = ImRaii.PushId(id);
-        dl.ChannelsSplit(2);
-        dl.ChannelsSetCurrent(1);
-        ImGui.SetCursorScreenPos(new Vector2(start.X + pad, start.Y + pad));
-        using (ImRaii.Group())
+        Chrome.BeginCard(id, card.Title, card.Icon);
+        using (Theme.PushText(BodyText))
         {
-            using (iconFont.Push())
-            using (Theme.PushText(Theme.Moon))
-            {
-                ImGui.TextUnformatted(card.Icon);
-            }
-
-            ImGui.SameLine(0f, 8f * scale);
-            ImGui.TextUnformatted(card.Title);
-            using (ImRaii.TextWrapPos(ImGui.GetCursorPosX() + width - 2f * pad))
-            using (Theme.PushText(BodyText))
-            {
-                ImGui.TextUnformatted(card.Body);
-            }
+            ImGui.TextUnformatted(card.Body);
         }
 
-        var groupMax = ImGui.GetItemRectMax();
-        var max = new Vector2(start.X + width, groupMax.Y + pad);
-        dl.ChannelsSetCurrent(0);
-        dl.AddRectFilled(start, max, CardBgU32, Rounding * scale);
-        dl.AddRect(start, max, Theme.VeilU32, Rounding * scale);
-        dl.ChannelsMerge();
-
-        ImGui.SetCursorScreenPos(new Vector2(start.X, groupMax.Y));
-        ImGui.Dummy(new Vector2(width, pad));
+        Chrome.EndCard();
         ImGui.Spacing();
     }
 
-    /// <summary>The glyph at <see cref="PhaseGlyphRadius"/>, the state name in its colour, the glyph name, the meaning and the "shown by" chips.</summary>
+    /// <summary>The glyph at <see cref="PhaseGlyphRadius"/>, the state name in its colour, the glyph name, the meaning and the "shown by" pills.</summary>
     private void PhaseRow(int id, in PhaseItem phase, float scale)
     {
         var radius = PhaseGlyphRadius * scale;
         var box = radius * 3.2f;
         var dl = ImGui.GetWindowDrawList();
         var pos = ImGui.GetCursorScreenPos();
-        var width = ImGui.GetContentRegionAvail().X;
 
         using var idScope = ImRaii.PushId(id);
         ImGui.Dummy(new Vector2(box, box));
@@ -653,7 +626,7 @@ public sealed class HelpWindow : Window
             }
 
             ImGui.SameLine(0f, 6f * scale);
-            using (Theme.PushText(Theme.Dusk))
+            using (Theme.PushText(Theme.Surface.TextSecondary))
             {
                 ImGui.TextUnformatted(phase.Name);
             }
@@ -663,7 +636,7 @@ public sealed class HelpWindow : Window
                 ImGui.TextWrapped(phase.Meaning);
             }
 
-            using (Theme.PushText(Theme.Dusk))
+            using (Theme.PushText(Theme.Surface.TextSecondary))
             {
                 ImGui.TextUnformatted(Strings.Help.ShownBy);
             }
@@ -671,61 +644,43 @@ public sealed class HelpWindow : Window
             foreach (var chip in phase.Chips)
             {
                 ImGui.SameLine(0f, 6f * scale);
-                Chip(chip, Theme.Dusk, scale);
+                Chrome.Pill(chip, Theme.Surface.TextTertiary, wrap: true);
             }
         }
 
         ImGui.Spacing();
-        var y = ImGui.GetCursorScreenPos().Y;
-        dl.AddLine(new Vector2(pos.X, y), new Vector2(pos.X + width, y), HairlineU32);
+        Chrome.Hairline();
         ImGui.Spacing();
     }
 
-    /// <summary>Three filling moons (new, half, full) beside the explanation of the progress moon.</summary>
-    private void FillingCard(float scale)
+    /// <summary>Five filling moons (new to full) beside the explanation of the progress moon, on a Chrome card.</summary>
+    private static void FillingCard(float scale)
     {
-        var pad = Pad * scale;
         var radius = FillingGlyphRadius * scale;
         var box = radius * 2.4f;
         var dl = ImGui.GetWindowDrawList();
-        var start = ImGui.GetCursorScreenPos();
-        var width = ImGui.GetContentRegionAvail().X;
 
-        dl.ChannelsSplit(2);
-        dl.ChannelsSetCurrent(1);
-        ImGui.SetCursorScreenPos(new Vector2(start.X + pad, start.Y + pad));
-        using (ImRaii.Group())
+        Chrome.BeginCard("##filling");
+        foreach (var fraction in FillingFractions)
         {
-            foreach (var fraction in FillingFractions)
-            {
-                var pos = ImGui.GetCursorScreenPos();
-                ImGui.Dummy(new Vector2(box, box));
-                MoonGlyph.DrawHalo(dl, pos + new Vector2(box * 0.5f), radius, fraction, onCard: true);
-                ImGui.SameLine(0f, 6f * scale);
-            }
-
-            ImGui.NewLine();
-            using (Theme.PushText(Theme.Moon))
-            {
-                ImGui.TextUnformatted(Strings.Help.FillingTitle);
-            }
-
-            using (ImRaii.TextWrapPos(ImGui.GetCursorPosX() + width - 2f * pad))
-            using (Theme.PushText(BodyText))
-            {
-                ImGui.TextUnformatted(Strings.Help.FillingBody);
-            }
+            var pos = ImGui.GetCursorScreenPos();
+            ImGui.Dummy(new Vector2(box, box));
+            MoonGlyph.DrawHalo(dl, pos + new Vector2(box * 0.5f), radius, fraction, onCard: true);
+            ImGui.SameLine(0f, 6f * scale);
         }
 
-        var groupMax = ImGui.GetItemRectMax();
-        var max = new Vector2(start.X + width, groupMax.Y + pad);
-        dl.ChannelsSetCurrent(0);
-        dl.AddRectFilled(start, max, CardBgU32, Rounding * scale);
-        dl.AddRect(start, max, Theme.VeilU32, Rounding * scale);
-        dl.ChannelsMerge();
+        ImGui.NewLine();
+        using (Theme.PushText(Theme.Surface.Text))
+        {
+            ImGui.TextUnformatted(Strings.Help.FillingTitle);
+        }
 
-        ImGui.SetCursorScreenPos(new Vector2(start.X, groupMax.Y));
-        ImGui.Dummy(new Vector2(width, pad));
+        using (Theme.PushText(BodyText))
+        {
+            ImGui.TextUnformatted(Strings.Help.FillingBody);
+        }
+
+        Chrome.EndCard();
         ImGui.Spacing();
     }
 
@@ -774,52 +729,35 @@ public sealed class HelpWindow : Window
         ImGui.Spacing();
     }
 
-    /// <summary>A callout on a faint Moon wash with a Moon bar on the left, a lightbulb and the text; optionally a button under it.</summary>
-    private void Tip(int id, string body, Action? action = null, string? label = null)
+    /// <summary>
+    /// A callout card (a faint wash with a neutral rule on the left: advice, not a call to action) holding a lightbulb
+    /// and the text; optionally a button under it.
+    /// </summary>
+    private static void Tip(int id, string body, Action? action = null, string? label = null)
     {
-        var scale = ImGuiHelpers.GlobalScale;
-        var pad = Pad * scale;
-        var dl = ImGui.GetWindowDrawList();
-        var start = ImGui.GetCursorScreenPos();
-        var width = ImGui.GetContentRegionAvail().X;
+        Chrome.BeginCard(id, kind: CardKind.Callout);
+        ImGui.PushFont(UiBuilder.IconFont);
+        using (Theme.PushText(Theme.Surface.TextSecondary))
+        {
+            ImGui.TextUnformatted(LightbulbIcon);
+        }
 
-        using var idScope = ImRaii.PushId(id);
-        dl.ChannelsSplit(2);
-        dl.ChannelsSetCurrent(1);
-        ImGui.SetCursorScreenPos(new Vector2(start.X + pad + BarWidth * scale, start.Y + pad * 0.7f));
+        ImGui.PopFont();
+        ImGui.SameLine(0f, UiMetrics.Px(8f));
         using (ImRaii.Group())
         {
-            using (iconFont.Push())
-            using (Theme.PushText(Theme.Moon))
+            using (Theme.PushText(BodyText))
             {
-                ImGui.TextUnformatted(LightbulbIcon);
+                ImGui.TextUnformatted(body);
             }
 
-            ImGui.SameLine(0f, 8f * scale);
-            using (ImRaii.Group())
+            if (action is not null && label is not null && ImGui.Button(label))
             {
-                using (ImRaii.TextWrapPos(ImGui.GetCursorPosX() + width - 3f * pad))
-                using (Theme.PushText(BodyText))
-                {
-                    ImGui.TextUnformatted(body);
-                }
-
-                if (action is not null && label is not null && ImGui.Button(label))
-                {
-                    action();
-                }
+                action();
             }
         }
 
-        var groupMax = ImGui.GetItemRectMax();
-        var max = new Vector2(start.X + width, groupMax.Y + pad * 0.7f);
-        dl.ChannelsSetCurrent(0);
-        dl.AddRectFilled(start, max, TipBgU32, Rounding * scale);
-        dl.AddRectFilled(start, new Vector2(start.X + BarWidth * scale, max.Y), Theme.MoonU32, Rounding * scale, ImDrawFlags.RoundCornersLeft);
-        dl.ChannelsMerge();
-
-        ImGui.SetCursorScreenPos(new Vector2(start.X, groupMax.Y));
-        ImGui.Dummy(new Vector2(width, pad * 0.7f));
+        Chrome.EndCard();
         ImGui.Spacing();
     }
 
@@ -837,15 +775,16 @@ public sealed class HelpWindow : Window
             textSize = ImGui.CalcTextSize(command);
         }
 
+        var s = Theme.Surface;
         var size = textSize + new Vector2(padX * 2f, padY * 2f + 2f * scale);
         var pos = ImGui.GetCursorScreenPos();
         ImGui.Dummy(size);
-        dl.AddRectFilled(pos, pos + size, KeyBgU32, rounding);
-        dl.AddRect(pos, pos + size, Theme.VeilU32, rounding);
-        dl.AddLine(new Vector2(pos.X + rounding, pos.Y + size.Y - 1.5f * scale), new Vector2(pos.X + size.X - rounding, pos.Y + size.Y - 1.5f * scale), Theme.DuskU32, 2f * scale);
+        dl.AddRectFilled(pos, pos + size, Theme.U32(s.Hover), rounding);
+        dl.AddRect(pos, pos + size, Theme.U32(s.StrongLine), rounding);
+        dl.AddLine(new Vector2(pos.X + rounding, pos.Y + size.Y - 1.5f * scale), new Vector2(pos.X + size.X - rounding, pos.Y + size.Y - 1.5f * scale), Theme.U32(s.TextTertiary), 2f * scale);
         using (monoFont.Push())
         {
-            dl.AddText(pos + new Vector2(padX, padY), Theme.SilverU32, command);
+            dl.AddText(pos + new Vector2(padX, padY), Theme.U32(s.Text), command);
         }
 
         ImGui.SameLine(0f, 10f * scale);
@@ -856,28 +795,6 @@ public sealed class HelpWindow : Window
         }
 
         ImGui.Spacing();
-    }
-
-    /// <summary>A small rounded pill with the text in <paramref name="color"/>; wraps to the next line when it would overflow.</summary>
-    private static void Chip(string text, Vector4 color, float scale)
-    {
-        var padX = 7f * scale;
-        var padY = 2f * scale;
-        var size = ImGui.CalcTextSize(text) + new Vector2(padX * 2f, padY * 2f);
-        var pos = ImGui.GetCursorScreenPos();
-        var right = ImGui.GetWindowPos().X + ImGui.GetWindowContentRegionMax().X;
-        if (pos.X + size.X > right)
-        {
-            ImGui.NewLine();
-            pos = ImGui.GetCursorScreenPos();
-        }
-
-        ImGui.Dummy(size);
-        var dl = ImGui.GetWindowDrawList();
-        var rounding = size.Y * 0.5f;
-        dl.AddRectFilled(pos, pos + size, Theme.WithAlpha(color, 0.16f), rounding);
-        dl.AddRect(pos, pos + size, Theme.WithAlpha(color, 0.65f), rounding);
-        dl.AddText(pos + new Vector2(padX, padY), Theme.WithAlpha(color, 1f), text);
     }
 
     // ------------------------------------------------------------------ static data helpers

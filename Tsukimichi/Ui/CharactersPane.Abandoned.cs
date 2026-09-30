@@ -106,7 +106,7 @@ public sealed partial class CharactersPane
         }
     }
 
-    /// <summary>Flag (when the giver has a map spot), Teleport (only with Lifestream) and Reveal, like the Nearby window's row.</summary>
+    /// <summary>Flag (when the giver has a map spot), Teleport (only with Lifestream) and Reveal, the actions of the Nearby window's row menu.</summary>
     private void DrawAbandonedActions(UiState ui, QuestRecord quest)
     {
         if (Links is { } links)

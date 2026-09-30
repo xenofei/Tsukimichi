@@ -23,7 +23,7 @@ internal static class ArtworkPlaceholder
         var height = MathF.Max(width * Aspect, text.Y + pad * 2f);
         var min = ImGui.GetCursorScreenPos();
         var max = min + new Vector2(width, height);
-        dl.AddRectFilled(min, max, Theme.NightRaisedU32, UiMetrics.Px(4f));
+        dl.AddRectFilled(min, max, Theme.U32(Theme.Surface.Raised), UiMetrics.Px(4f));
         var textPos = new Vector2(min.X + MathF.Max(pad, (width - text.X) * 0.5f), min.Y + (height - text.Y) * 0.5f);
         dl.AddText(ImGui.GetFont(), ImGui.GetFontSize(), textPos, Theme.DuskU32, Strings.ArtworkHidden, wrap);
         ImGui.Dummy(new Vector2(width, height));

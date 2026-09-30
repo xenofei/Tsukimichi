@@ -2,13 +2,22 @@ using System;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility.Raii;
+using Tsukimichi.Config;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Ui;
 
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// Color tokens (spec §2.3). Pushed only where the default Dalamud style is insufficient: glyphs, badges and the
-/// Night panels. Everything else keeps the user's style so the window does not look foreign.
+/// Colour tokens (spec §2.3, ui-revamp §4.3) and the style pushes built from them. The fixed tokens (Night … Eclipse,
+/// the glyph gradients) never change; the surface and text roles the chrome draws with live in <see cref="Surface"/>,
+/// which is the Night palette or, with <see cref="Configuration.FollowDalamudColours"/> on, a palette mapped from the
+/// user's Dalamud style (one layout, two palettes: game UX panel finding 9). <see cref="Refresh"/> picks the palette
+/// once per frame, before any window draws.
+///
+/// Gold discipline (game UX panel finding 2): Moon is for what the player can act on now (Ready, Accepted, the next
+/// step, pins, the MSQ pill, primary buttons, progress) and the selected tree row's rule; chrome that is not a call to
+/// action (sort arrows, selection outlines, focus rings, generic badges, active segments) uses Silver or VeilLine.
 /// </summary>
 public static class Theme
 {
@@ -21,7 +30,7 @@ public static class Theme
     /// <summary>#DDE3F0 – primary text on Night, silver glyphs.</summary>
     public static readonly Vector4 Silver = Rgb(0xDDE3F0);
 
-    /// <summary>#7C86A8 – secondary text, rings, separators.</summary>
+    /// <summary>#7C86A8 – tertiary text, rings, separators (5.1 : 1 on Night; fails AA on raised surfaces, so never body text on cards).</summary>
     public static readonly Vector4 Dusk = Rgb(0x7C86A8);
 
     /// <summary>#B25C7F – Foreclosed, destructive actions.</summary>
@@ -60,8 +69,26 @@ public static class Theme
     /// </summary>
     public static readonly Vector4 MoonDim = Vector4.Lerp(Moon, Dusk, 0.35f);
 
-    /// <summary>A panel one step above Night (a quarter of the way to Veil), for header cards on the Night background.</summary>
+    /// <summary>A panel one step above Night (a quarter of the way to Veil, #1E2437), for cards and header cards on the Night background.</summary>
     public static readonly Vector4 NightRaised = Vector4.Lerp(Night, Veil, 0.25f);
+
+    /// <summary>#0B0F1C – wells below the window: search pill, gauge wells, level pills, the title bar (ui-revamp §4.3).</summary>
+    public static readonly Vector4 NightSunken = Rgb(0x0B0F1C);
+
+    /// <summary>#262D45 – hover fill for rows, tabs and buttons.</summary>
+    public static readonly Vector4 NightHover = Rgb(0x262D45);
+
+    /// <summary>#2A3149 – hairlines, card borders, row separators (subtle; <see cref="VeilLine"/> where 3 : 1 is needed).</summary>
+    public static readonly Vector4 NightLine = Rgb(0x2A3149);
+
+    /// <summary>#A9B2CC – secondary text: hints, captions, chip labels (8.7 : 1 on Night, 7.3 on NightRaised). Dusk stays tertiary.</summary>
+    public static readonly Vector4 Mist = Rgb(0xA9B2CC);
+
+    /// <summary>#8A93B0 – the Unknown state's text and dashed ring (Veil itself fails AA for text).</summary>
+    public static readonly Vector4 VeilText = Rgb(0x8A93B0);
+
+    /// <summary>#D68AA8 – Foreclosed text and state-pill text (Eclipse fails 4.5 : 1 for text).</summary>
+    public static readonly Vector4 EclipseText = Rgb(0xD68AA8);
 
     /// <summary>Alternate table row tint for zebra striping: Veil at low alpha, readable on Night and on the default style alike.</summary>
     public static readonly Vector4 ZebraRow = Veil with { W = 0.16f };
@@ -82,6 +109,48 @@ public static class Theme
     public static readonly uint SilverDeepU32 = Pack(SilverDeep);
     public static readonly uint MoonDimU32 = Pack(MoonDim);
     public static readonly uint NightRaisedU32 = Pack(NightRaised);
+    public static readonly uint NightSunkenU32 = Pack(NightSunken);
+    public static readonly uint NightHoverU32 = Pack(NightHover);
+    public static readonly uint NightLineU32 = Pack(NightLine);
+    public static readonly uint MistU32 = Pack(Mist);
+    public static readonly uint VeilTextU32 = Pack(VeilText);
+    public static readonly uint EclipseTextU32 = Pack(EclipseText);
+
+    /// <summary>The Night palette as surface roles: what <see cref="Surface"/> is unless the user follows Dalamud's colours.</summary>
+    public static readonly SurfaceColors NightSurface = new(Night, NightSunken, NightRaised, NightHover, NightLine, VeilLine, Silver, Mist, Dusk, Veil, Light: false);
+
+    /// <summary>The surface and text roles in effect this frame (see <see cref="Refresh"/>).</summary>
+    public static SurfaceColors Surface { get; private set; } = NightSurface;
+
+    /// <summary>Whether <see cref="Surface"/> is mapped from the user's Dalamud style this frame.</summary>
+    public static bool FollowingDalamud { get; private set; }
+
+    /// <summary>The host style's window background alpha as of the last <see cref="Refresh"/>; <see cref="PushNightWindow"/> keeps it.</summary>
+    private static float hostWindowAlpha = 1f;
+
+    private static readonly Vector4 Transparent = Vector4.Zero;
+
+    /// <summary>
+    /// Picks this frame's palette. Call once per frame before any window draws (nothing is pushed then, so the style
+    /// read is the user's own): with <paramref name="followDalamud"/> the surface roles are mapped from the Dalamud
+    /// style (<see cref="SurfaceColors.FromHost"/>), otherwise they are the Night tokens. Allocates nothing.
+    /// </summary>
+    public static void Refresh(bool followDalamud)
+    {
+        var colors = ImGui.GetStyle().Colors;
+        var windowBg = colors[(int)ImGuiCol.WindowBg];
+        hostWindowAlpha = float.IsFinite(windowBg.W) ? Math.Clamp(windowBg.W, 0f, 1f) : 1f;
+        FollowingDalamud = followDalamud;
+        Surface = followDalamud
+            ? SurfaceColors.FromHost(
+                windowBg,
+                colors[(int)ImGuiCol.FrameBg],
+                colors[(int)ImGuiCol.FrameBgHovered],
+                colors[(int)ImGuiCol.Border],
+                colors[(int)ImGuiCol.Text],
+                colors[(int)ImGuiCol.TextDisabled])
+            : NightSurface;
+    }
 
     /// <summary>Text color for a state badge next to a glyph.</summary>
     public static Vector4 StateColor(QuestState state) => state switch
@@ -104,18 +173,168 @@ public static class Theme
 
     public static Vector4 WithAlphaVector(Vector4 color, float alpha) => color with { W = Math.Clamp(alpha, 0f, 1f) };
 
+    /// <summary>A colour packed for ImDrawList calls (IM_COL32, no style alpha applied); allocation-free.</summary>
+    public static uint U32(Vector4 color) => Pack(color);
+
+    /// <summary>The outline behind text drawn over game scenes (<c>Chrome.OutlinedText</c>): the palette's window colour, opaque.</summary>
+    public static uint OutlineU32 => Pack(Surface.Window with { W = 1f });
+
     /// <summary>
-    /// Night panel colors for the detail pane, path view and similar: child background Night, text Silver, secondary
-    /// text Dusk, borders and separators Veil. Dispose to pop.
+    /// Night panel colours for the detail pane, path view and similar: child background, text, secondary text, borders
+    /// and separators from <see cref="Surface"/> (Night unless following Dalamud's colours). Dispose to pop.
     /// </summary>
     public static ImRaii.ColorDisposable PushNightPanel(bool condition = true) =>
-        ImRaii.PushColor(ImGuiCol.ChildBg, Night, condition)
-              .Push(ImGuiCol.Text, Silver, condition)
-              .Push(ImGuiCol.TextDisabled, Dusk, condition)
-              .Push(ImGuiCol.Border, Veil, condition)
-              .Push(ImGuiCol.Separator, Veil, condition)
-              .Push(ImGuiCol.TableBorderLight, Veil, condition)
-              .Push(ImGuiCol.TableBorderStrong, Dusk, condition);
+        ImRaii.PushColor(ImGuiCol.ChildBg, Surface.Window, condition)
+              .Push(ImGuiCol.Text, Surface.Text, condition)
+              .Push(ImGuiCol.TextDisabled, Surface.TextSecondary, condition)
+              .Push(ImGuiCol.Border, Surface.Line, condition)
+              .Push(ImGuiCol.Separator, Surface.Line, condition)
+              .Push(ImGuiCol.TableBorderLight, Surface.Line, condition)
+              .Push(ImGuiCol.TableBorderStrong, Surface.StrongLine, condition);
+
+    /// <summary>
+    /// A count of pushed style colours and variables, popped on <see cref="Dispose"/>. A struct, so <c>using</c> on it
+    /// allocates nothing; <c>default</c> pops nothing. Dispose exactly once.
+    /// </summary>
+    public readonly struct StyleScope(int colors, int vars) : IDisposable
+    {
+        public int Colors { get; } = colors;
+
+        public int Vars { get; } = vars;
+
+        public void Dispose()
+        {
+            if (Vars > 0)
+            {
+                ImGui.PopStyleVar(Vars);
+            }
+
+            if (Colors > 0)
+            {
+                ImGui.PopStyleColor(Colors);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Window-wide Night chrome, for <c>Window.PreDraw</c> (dispose the returned scope in <c>PostDraw</c>): window,
+    /// title bar, child, frame, button, header, tab, table, scrollbar, separator and resize-grip colours plus text,
+    /// check marks, slider grabs and the nav highlight, all from <see cref="Surface"/>. The window background keeps the
+    /// host style's alpha and <c>Window.BgAlpha</c> is never touched, so the user's Dalamud opacity still applies
+    /// (Dalamud panel §4).
+    ///
+    /// Popups and tooltips, decided explicitly: a colour pushed before Begin is still on the stack while Draw runs, so
+    /// every popup, combo and tooltip begun inside the window inherits it. <c>PopupBg</c> is therefore pushed as well,
+    /// so they read as Night as a whole rather than half-Night by accident; <see cref="PushTooltip"/> (every
+    /// <see cref="UiMetrics.Tooltip(string)"/>) and <see cref="PushPopup"/> restyle them explicitly on top, which is
+    /// also what windows without this push (the Todo overlay's menus, Nearby, Settings) get. The title bar and
+    /// Dalamud's own title-bar buttons take <c>TitleBg*</c> from here. With <see cref="FollowingDalamud"/> nothing is
+    /// pushed: the host style already is the palette.
+    /// </summary>
+    public static StyleScope PushNightWindow()
+    {
+        if (FollowingDalamud)
+        {
+            return default;
+        }
+
+        var s = Surface;
+        var count = 0;
+        Push(ImGuiCol.WindowBg, s.Window with { W = hostWindowAlpha }, ref count);
+        Push(ImGuiCol.ChildBg, Transparent, ref count);
+        Push(ImGuiCol.PopupBg, s.Window with { W = 0.97f }, ref count);
+        Push(ImGuiCol.Border, s.Line, ref count);
+        Push(ImGuiCol.BorderShadow, Transparent, ref count);
+        Push(ImGuiCol.Text, s.Text, ref count);
+        Push(ImGuiCol.TextDisabled, s.TextSecondary, ref count);
+        Push(ImGuiCol.TextSelectedBg, WithAlphaVector(s.Text, 0.20f), ref count);
+        Push(ImGuiCol.TitleBg, s.Sunken, ref count);
+        Push(ImGuiCol.TitleBgActive, s.Raised, ref count);
+        Push(ImGuiCol.TitleBgCollapsed, WithAlphaVector(s.Sunken, 0.75f), ref count);
+        Push(ImGuiCol.MenuBarBg, s.Raised, ref count);
+        Push(ImGuiCol.FrameBg, s.Sunken, ref count);
+        Push(ImGuiCol.FrameBgHovered, s.Hover, ref count);
+        Push(ImGuiCol.FrameBgActive, Vector4.Lerp(s.Hover, s.Text, 0.08f) with { W = 1f }, ref count);
+        Push(ImGuiCol.Button, s.Raised, ref count);
+        Push(ImGuiCol.ButtonHovered, s.Hover, ref count);
+        Push(ImGuiCol.ButtonActive, Vector4.Lerp(s.Hover, s.Text, 0.12f) with { W = 1f }, ref count);
+        // Selection is not a call to action: a neutral wash, never gold (the tree keeps its own gold rule).
+        Push(ImGuiCol.Header, SelectionWash, ref count);
+        Push(ImGuiCol.HeaderHovered, s.Hover, ref count);
+        Push(ImGuiCol.HeaderActive, SelectionWashActive, ref count);
+        Push(ImGuiCol.Tab, s.Sunken, ref count);
+        Push(ImGuiCol.TabHovered, s.Hover, ref count);
+        Push(ImGuiCol.TabActive, s.Raised, ref count);
+        Push(ImGuiCol.TabUnfocused, s.Sunken, ref count);
+        Push(ImGuiCol.TabUnfocusedActive, s.Raised, ref count);
+        Push(ImGuiCol.TableHeaderBg, s.Raised, ref count);
+        Push(ImGuiCol.TableBorderStrong, s.StrongLine, ref count);
+        Push(ImGuiCol.TableBorderLight, s.Line, ref count);
+        Push(ImGuiCol.TableRowBg, Transparent, ref count);
+        Push(ImGuiCol.TableRowBgAlt, ZebraRow, ref count);
+        Push(ImGuiCol.ScrollbarBg, WithAlphaVector(s.Sunken, 0.5f), ref count);
+        Push(ImGuiCol.ScrollbarGrab, WithAlphaVector(s.StrongLine, 0.7f), ref count);
+        Push(ImGuiCol.ScrollbarGrabHovered, s.StrongLine, ref count);
+        Push(ImGuiCol.ScrollbarGrabActive, s.TextTertiary, ref count);
+        Push(ImGuiCol.Separator, s.Line, ref count);
+        Push(ImGuiCol.SeparatorHovered, s.StrongLine, ref count);
+        Push(ImGuiCol.SeparatorActive, s.TextTertiary, ref count);
+        Push(ImGuiCol.ResizeGrip, WithAlphaVector(s.StrongLine, 0.35f), ref count);
+        Push(ImGuiCol.ResizeGripHovered, s.StrongLine, ref count);
+        Push(ImGuiCol.ResizeGripActive, s.TextTertiary, ref count);
+        Push(ImGuiCol.CheckMark, s.Text, ref count);
+        Push(ImGuiCol.SliderGrab, s.StrongLine, ref count);
+        Push(ImGuiCol.SliderGrabActive, s.Text, ref count);
+        Push(ImGuiCol.NavHighlight, s.Text, ref count);
+        return new StyleScope(count, 0);
+    }
+
+    /// <summary>
+    /// A tooltip in the active palette (ui-revamp §3 "Tooltip"): fill at 0.96, a hairline border, primary text, the
+    /// secondary tone for <c>TextDisabled</c> lines, rounding 6 and padding 10 × 8. Push before <c>BeginTooltip</c>
+    /// (<see cref="UiMetrics.Tooltip(string)"/> does), dispose after it ends.
+    /// </summary>
+    public static StyleScope PushTooltip()
+    {
+        var s = Surface;
+        var count = 0;
+        Push(ImGuiCol.PopupBg, s.Window with { W = 0.96f }, ref count);
+        Push(ImGuiCol.Border, s.Line, ref count);
+        Push(ImGuiCol.Text, s.Text, ref count);
+        Push(ImGuiCol.TextDisabled, s.TextSecondary, ref count);
+        Push(ImGuiCol.Separator, s.Line, ref count);
+        ImGui.PushStyleVar(ImGuiStyleVar.PopupRounding, UiMetrics.Px(6f));
+        ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1f);
+        ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(UiMetrics.Px(10f), UiMetrics.Px(8f)));
+        return new StyleScope(count, 3);
+    }
+
+    /// <summary>
+    /// A popup or context menu in the active palette: the tooltip's surface plus menu-item, frame, button and check
+    /// colours, rounding 6. Push before <c>BeginPopup…</c>, dispose after it ends; the items inside draw with it.
+    /// </summary>
+    public static StyleScope PushPopup()
+    {
+        var s = Surface;
+        var count = 0;
+        Push(ImGuiCol.PopupBg, s.Window with { W = 0.98f }, ref count);
+        Push(ImGuiCol.Border, s.Line, ref count);
+        Push(ImGuiCol.Text, s.Text, ref count);
+        Push(ImGuiCol.TextDisabled, s.TextSecondary, ref count);
+        Push(ImGuiCol.Separator, s.Line, ref count);
+        Push(ImGuiCol.Header, SelectionWash, ref count);
+        Push(ImGuiCol.HeaderHovered, s.Hover, ref count);
+        Push(ImGuiCol.HeaderActive, SelectionWashActive, ref count);
+        Push(ImGuiCol.FrameBg, s.Sunken, ref count);
+        Push(ImGuiCol.FrameBgHovered, s.Hover, ref count);
+        Push(ImGuiCol.Button, s.Raised, ref count);
+        Push(ImGuiCol.ButtonHovered, s.Hover, ref count);
+        Push(ImGuiCol.CheckMark, s.Text, ref count);
+        Push(ImGuiCol.NavHighlight, s.Text, ref count);
+        ImGui.PushStyleVar(ImGuiStyleVar.PopupRounding, UiMetrics.Px(6f));
+        ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1f);
+        return new StyleScope(count, 2);
+    }
 
     /// <summary>Eclipse-toned button for destructive actions (Forget character, Delete all data). Dispose to pop.</summary>
     public static ImRaii.ColorDisposable PushDestructiveButton(bool condition = true) =>
@@ -127,6 +346,17 @@ public static class Theme
     /// <summary>Text in the token color, for badges. Dispose to pop.</summary>
     public static ImRaii.ColorDisposable PushText(Vector4 color, bool condition = true) =>
         ImRaii.PushColor(ImGuiCol.Text, color, condition);
+
+    /// <summary>Selected rows and menu items: a neutral wash of the text colour (never gold).</summary>
+    private static Vector4 SelectionWash => WithAlphaVector(Surface.Text, 0.10f);
+
+    private static Vector4 SelectionWashActive => WithAlphaVector(Surface.Text, 0.16f);
+
+    private static void Push(ImGuiCol idx, Vector4 color, ref int count)
+    {
+        ImGui.PushStyleColor(idx, color);
+        count++;
+    }
 
     private static Vector4 Rgb(uint hex) => new(
         ((hex >> 16) & 0xFF) / 255f,

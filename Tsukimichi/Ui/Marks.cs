@@ -7,7 +7,7 @@ namespace Tsukimichi.Ui;
 /// <summary>A non-moon mark: yes / no / not known, and the live or snapshot pip.</summary>
 public enum Mark
 {
-    /// <summary>Met, obtained, attuned: a Moon check.</summary>
+    /// <summary>Met, obtained, attuned: a MoonDim check (done, so quieter than actionable gold).</summary>
     Check,
 
     /// <summary>Unmet, not obtained, not attuned: a Dusk cross.</summary>
@@ -51,7 +51,7 @@ public static class Marks
                 dl.PathLineTo(center + CheckA * size);
                 dl.PathLineTo(center + CheckB * size);
                 dl.PathLineTo(center + CheckC * size);
-                dl.PathStroke(Theme.MoonU32, ImDrawFlags.None, stroke);
+                dl.PathStroke(Theme.MoonDimU32, ImDrawFlags.None, stroke);
                 break;
 
             case Mark.Cross:
