@@ -53,6 +53,9 @@ public sealed class FilterSet : IEquatable<FilterSet>
     /// <summary>Keeps only quests pinned in the query context.</summary>
     public bool PinnedOnly { get; set; }
 
+    /// <summary>Keeps only quests the viewed character abandoned (<see cref="QueryContext.Abandoned"/>) and has not taken up again.</summary>
+    public bool AbandonedOnly { get; set; }
+
     /// <summary>The active one-click preset (feature quests, level band, stalled); <see cref="Preset.None"/> when none.</summary>
     public Preset Preset { get; set; }
 
@@ -68,7 +71,8 @@ public sealed class FilterSet : IEquatable<FilterSet>
         || RewardKindsEngaged()
         || RepeatableOnly
         || SeasonalActiveOnly
-        || PinnedOnly;
+        || PinnedOnly
+        || AbandonedOnly;
 
     public bool HideCompletedEngaged() => HideCompleted || PerCategoryHideCompleted.ContainsValue(true);
 
@@ -113,6 +117,7 @@ public sealed class FilterSet : IEquatable<FilterSet>
         SeasonalActiveOnly = SeasonalActiveOnly,
         IncludeUnlisted = IncludeUnlisted,
         PinnedOnly = PinnedOnly,
+        AbandonedOnly = AbandonedOnly,
         Preset = Preset,
     };
 
@@ -133,6 +138,7 @@ public sealed class FilterSet : IEquatable<FilterSet>
         SeasonalActiveOnly = false;
         IncludeUnlisted = false;
         PinnedOnly = false;
+        AbandonedOnly = false;
         Preset = Preset.None;
     }
 
@@ -158,6 +164,7 @@ public sealed class FilterSet : IEquatable<FilterSet>
             && SeasonalActiveOnly == other.SeasonalActiveOnly
             && IncludeUnlisted == other.IncludeUnlisted
             && PinnedOnly == other.PinnedOnly
+            && AbandonedOnly == other.AbandonedOnly
             && Preset == other.Preset
             && Expansions.SetEquals(other.Expansions)
             && SameEntries(PerCategoryHideCompleted, other.PerCategoryHideCompleted)
@@ -180,6 +187,7 @@ public sealed class FilterSet : IEquatable<FilterSet>
         hash.Add(SeasonalActiveOnly);
         hash.Add(IncludeUnlisted);
         hash.Add(PinnedOnly);
+        hash.Add(AbandonedOnly);
         hash.Add(Preset);
         hash.Add(OrderInsensitiveHash(Expansions));
         hash.Add(OrderInsensitiveHash(PerCategoryHideCompleted));
