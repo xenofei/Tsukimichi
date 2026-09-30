@@ -378,6 +378,23 @@ public class MsqBranchTests
     }
 
     [Fact]
+    public void Spoiler_mask_does_not_count_quests_done_out_of_order_toward_the_join()
+    {
+        // Route B done out of order (B2 skipped for now, B3 to B5 completed) and route C not started: B2 is the one
+        // quest left on B, C1 and C2 on C, so J is 3 ahead, not 6.
+        var states = States(AllJoin, Done([L1, L2], RouteA, [B1, B3, B4, B5]));
+        Assert.Equal(QuestState.Completed, states[B4]);
+        Assert.Equal(QuestState.Blocked, states[J]);
+
+        var three = SpoilerMask.Build(AllJoin, states, SpoilerOptions.Default with { Ahead = 3 });
+        Assert.False(three.IsMasked(J));
+        Assert.True(three.IsMasked(P1));
+
+        var two = SpoilerMask.Build(AllJoin, states, SpoilerOptions.Default with { Ahead = 2 });
+        Assert.True(two.IsMasked(J));
+    }
+
+    [Fact]
     public void Spoiler_mask_counts_the_shortest_route_to_an_any_join()
     {
         // C1 done: C2 is the one quest left before J on the shortest route, so J is 1 ahead and P1 2.

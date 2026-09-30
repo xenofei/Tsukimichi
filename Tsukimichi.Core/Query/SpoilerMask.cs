@@ -360,9 +360,9 @@ public sealed class SpoilerMask
 
     /// <summary>
     /// Inside a branch region: how far ahead each route quest lies along its own route (the route's next quest at
-    /// 0, the quests before it negative, a locked-out quest sharing the distance of the one before it), and how far
-    /// ahead the reconvergence quest lies (the quests left on every open route for an All join, on the shortest for
-    /// an Any join).
+    /// 0, the quests before it negative, a locked-out quest or one completed out of order sharing the distance of the
+    /// one before it), and how far ahead the reconvergence quest lies (the quests not completed on every open route
+    /// for an All join, on the shortest for an Any join).
     /// </summary>
     private sealed class RouteDistances
     {
@@ -396,8 +396,9 @@ public sealed class SpoilerMask
                     {
                         byRowId[quests[i].RowId] = i - nextAt;
                     }
-                    else if (source.LeavesTotals(quests[i].RowId))
+                    else if (source.LeavesTotals(quests[i].RowId) || source.StateOf(quests[i].RowId) == QuestState.Completed)
                     {
+                        // Locked out, or already done out of order: not a quest left before the join.
                         byRowId[quests[i].RowId] = Math.Max(left - 1, 0);
                     }
                     else
