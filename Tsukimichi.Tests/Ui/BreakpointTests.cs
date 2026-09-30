@@ -84,9 +84,7 @@ public class BreakpointTests
     {
         Assert.Equal(LayoutBudgets.StatusMinLogical, LayoutBudgets.StatusMin(float.NaN));
         Assert.Equal(LayoutBudgets.MaxStatusMinLogical, LayoutBudgets.StatusMin(float.PositiveInfinity));
-        Assert.Equal(ScaleMetrics.RailLogical, LayoutBudgets.RailWidth(float.NaN, float.NaN));
-        Assert.Equal(ScaleMetrics.RailLogical, LayoutBudgets.RailWidth(float.NaN, 20f));
-        Assert.Equal(LayoutBudgets.MaxRailLogical, LayoutBudgets.RailWidth(float.PositiveInfinity, float.NaN));
+        Assert.False(LayoutBudgets.CompactRail(float.NaN, float.NaN, wasCompact: false, forced: false));
     }
 
     [Fact]

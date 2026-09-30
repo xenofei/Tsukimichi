@@ -127,7 +127,7 @@ public class ScaleMetricsTests
     public void The_compact_rail_lets_the_window_narrow_by_what_it_gave_up(float uiScale)
     {
         var size = ScaleMetrics.MinWindowSize(uiScale, ScaleMetrics.RailCompactLogical);
-        var fixedPart = ((ScaleMetrics.RailCompactLogical + PaneLayout.FloorsLogical + (PaneLayout.GutterCount * PaneLayout.GutterLogical)) * uiScale) + ScaleMetrics.WindowPaddingX;
+        var fixedPart = ((ScaleMetrics.RailCompactLogical + PaneLayout.FloorsLogical + (PaneLayout.GutterCount * PaneLayout.GutterLogical)) * uiScale) + ScaleMetrics.WindowPaddingX + PaneLayout.RoundingReservePx;
         Assert.Equal(fixedPart, size.X, 3);
         Assert.Equal(ScaleMetrics.MinWindowSize(uiScale).X - ((ScaleMetrics.RailLogical - ScaleMetrics.RailCompactLogical) * uiScale), size.X, 3);
     }
