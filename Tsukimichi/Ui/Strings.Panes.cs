@@ -554,6 +554,7 @@ static partial class Strings
             "Nearby quests window",
             "Server bar entry",
             "/tsuki zone and /tsuki which",
+            PlanHelpTitle,
         ];
 
         public static readonly string[] FlightCardBodies =
@@ -563,6 +564,7 @@ static partial class Strings
             "/tsuki nearby opens a small window with the quests you can start in the current zone: state moon, level and job. A click on the name shows it in the Journal, a double-click flags the giver on the map, and right-click or … opens Flag, Teleport and Link in chat. Also in your journal here folds out the quests in your journal whose giver stands in the zone. The cog holds its settings.",
             "☾ N in the server info bar is the count of quests you can start here. Hover it for the first five names; click it to open Nearby quests. It hides at zero unless Keep the entry visible is on, and the cog in Nearby quests can turn it off entirely.",
             "/tsuki zone prints chat links for the quests you can start in the current zone, by level, up to ten. /tsuki which prints every quest the targeted NPC hands out with its state. Both need an evaluated character; the Nearby quests window keeps the same list on screen.",
+            PlanHelpBody,
         ];
 
         // ---- Commands ----

@@ -69,6 +69,10 @@ static partial class Strings
     public const string PlanRevealTooltip = "Show the quest in the Journal";
     public const string PlanRowClickHint = "Click to show the quest in the detail pane";
 
+    // ---- Help › Flight and nearby ----
+    public const string PlanHelpTitle = "My blues: clear your unlock quests";
+    public const string PlanHelpBody = "The My blues tab is every blue unlock quest you have left, by expansion and then zone, zones in the order the story reaches them and quests by level. Each row shows its moon, what it unlocks (Dungeon, Trial, Raid, Alliance raid, Field operation, Job, Allied society, Flying, System, Other; \"leads to\" when the quest is a step towards it), its status and what blocks it, with Flag and Reveal. Filter by kind, Ready only, or Sprout mode to hide expansions your story has not reached. Copy as checklist puts the list as shown on the clipboard as Markdown, ready for Discord (\"- [ ] Hallo Halatali (Lv 20, Western Thanalan) — unlocks: Dungeon: Halatali\"), with nothing that names you. Pin to overlay on an expansion shows its Ready unlock quests in the todo overlay; Settings › Todo overlay turns that section off. Seasonal event quests are not in the plan.";
+
     // ---- Todo overlay ----
     public const string PlanTodoSection = "Clear my blues";
 

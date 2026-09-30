@@ -4,6 +4,9 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+### Added
+- Clear my blues, a new My blues tab: every blue unlock quest your character has left, by expansion and then zone in story order, each with its moon, what it unlocks (Dungeon, Trial, Raid, Alliance raid, Field operation, Job, Allied society, Flying, System; "leads to" for the steps of a raid series or a job line), its status and what blocks it, and Flag and Reveal buttons. Filter by kind, "Ready only" or Sprout mode (expansions your story has not reached are hidden; it turns on with the Journal's Sprout mode quick view). "Copy as checklist" copies the list as shown as Markdown for Discord or a document ("- [ ] Hallo Halatali (Lv 20, Western Thanalan) — unlocks: Dungeon: Halatali"), spoiler shield applied and nothing naming your character. "Pin to overlay" on an expansion adds a "Clear my blues" section with its Ready unlock quests to the Todo overlay; Settings › Todo overlay turns it off. Seasonal event quests are left out. Help › Flight and nearby explains it.
+
 ## [0.8.0] - 2026-09-29
 
 ### Added

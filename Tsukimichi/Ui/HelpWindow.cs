@@ -161,7 +161,8 @@ public sealed class HelpWindow : Window
         FontAwesomeIcon.Compass,
         FontAwesomeIcon.MapMarkerAlt,
         FontAwesomeIcon.Moon,
-        FontAwesomeIcon.Terminal);
+        FontAwesomeIcon.Terminal,
+        FontAwesomeIcon.ClipboardList);
 
     private static readonly CardItem[] CountsCards = Cards(
         Strings.Help.CountsCardTitles,
