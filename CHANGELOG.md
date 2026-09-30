@@ -4,6 +4,13 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+### Added
+- Spoiler shield, on by default: a main scenario quest more than three quests past where you are reads "Main scenario quest (Lv 83)" everywhere a quest name prints: the tree, the table and its tooltip, the detail pane (header, path, what it unlocks, the chain line, the requirements), the status bar, the Todo overlay, Characters (the main scenario line, pins, recent activity, Compare, the job ladders and chains), Nearby, item hints, chat links and every `/tsuki` answer, chat notices, Wotsit and the Report this quest block (which keeps the quest id). Searching for a hidden name finds nothing; the placeholder is what search matches. Quests you have accepted or completed always show their names, and "Reveal this name" in the detail pane shows one quest's name until the plugin reloads.
+- Journal artwork shows only once a quest is in your journal or done; until then the detail pane and the name tooltip show a card saying "Artwork appears once the quest is in your journal".
+- Settings › Spoilers: "Hide main scenario names ahead of me", "Quests ahead to reveal" (0 to 10, default 3), "Hide journal artwork until a quest is in my journal", and a choice for the character shown (use the settings, always shield, or show everything), so a character who finished the story can see it all while an alt stays shielded.
+- Sprout mode, a new quick view in the filter panel: the table keeps to the expansions your main scenario has reached, with a line saying how many quests are in your reach ("412 quests in your reach"), and the tree's later sections fold to their counts.
+- Help › Spoilers explains the shield, the artwork card, Sprout mode and the settings; the tour's table step mentions the placeholder.
+
 ## [0.6.2] - 2026-09-29
 
 ### Added
