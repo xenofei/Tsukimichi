@@ -117,8 +117,6 @@ public sealed class DetailPane
 
         /// <summary>"Region › Place (x, y)" for the Giver card; null when the giver's map is unknown.</summary>
         public string? PlaceLine;
-        public string Provenance = string.Empty;
-        public double ProvenanceBuiltAt;
     }
 
     private readonly UiState ui;
@@ -142,6 +140,7 @@ public sealed class DetailPane
     // content size measured in the previous frame, which does not yet include a freshly selected quest's sections.
     private int pathScrollFrames;
     private double reportNoteUntil;
+    private uint reportNoteRowId;
 
     /// <param name="log">Receives a failed diagnostic copy; null uses the plugin log.</param>
     public DetailPane(UiState ui, QueryRunner runner, GameLinks links, ITextureProvider textures, IPluginLog? log = null)
@@ -964,6 +963,7 @@ public sealed class DetailPane
             {
                 var copied = DiagnosticBuilder.TryCopy(diagnostics.Compose(quest), log ?? Plugin.Log);
                 reportNoteUntil = copied ? ImGui.GetTime() + ReportNoteSeconds : 0.0;
+                reportNoteRowId = rowId;
             }
         }
 
@@ -1026,47 +1026,64 @@ public sealed class DetailPane
         return clicked && enabled;
     }
 
-    /// <summary>The plain provenance line under the bar ("Checked just now · live"), or the Report confirmation for a few seconds.</summary>
+    /// <summary>
+    /// The plain provenance line under the bar ("Checked just now · live"), or, for a few seconds after Report on the
+    /// quest shown, the Report confirmation. The line is composed only when its inputs change: the 30-second bucket
+    /// (the age), the viewed character, live or stored, and the minute the snapshot was taken; the quest shown does
+    /// not change it. Nothing allocates on the frames between.
+    /// </summary>
     private void DrawProvenance(SessionState session)
     {
         var now = ImGui.GetTime();
-        if (now < reportNoteUntil)
+        if (now < reportNoteUntil && reportNoteRowId == model.RowId)
         {
-            using var silver = Theme.PushText(Theme.Surface.Text);
+            ImGui.PushStyleColor(ImGuiCol.Text, Theme.Surface.Text);
             ImGui.TextUnformatted(Strings.ReportCopied);
+            ImGui.PopStyleColor();
             return;
         }
 
-        if (now - model.ProvenanceBuiltAt > ProvenanceRefreshSeconds || now < model.ProvenanceBuiltAt)
+        var snapshot = session.ViewedSnapshot;
+        var key = new ProvenanceKey(
+            (long)Math.Floor(now / ProvenanceRefreshSeconds),
+            snapshot?.ContentId ?? 0UL,
+            snapshot is not null && session.IsLive,
+            snapshot is null ? -1L : snapshot.TakenUtc.Ticks / TimeSpan.TicksPerMinute);
+        if (key != provenanceKey)
         {
-            BuildProvenance(session, now);
+            provenanceKey = key;
+            provenance = BuildProvenance(session);
         }
 
-        using var dusk = Theme.PushText(Theme.Surface.TextTertiary);
-        ImGui.TextUnformatted(model.Provenance);
+        ImGui.PushStyleColor(ImGuiCol.Text, Theme.Surface.TextTertiary);
+        ImGui.TextUnformatted(provenance);
+        ImGui.PopStyleColor();
     }
 
+    /// <summary>What the provenance line depends on; a new key composes the line again.</summary>
+    private readonly record struct ProvenanceKey(long Bucket, ulong ContentId, bool Live, long TakenMinute);
+
+    private ProvenanceKey provenanceKey = new(-1, 0, false, -1);
+    private string provenance = string.Empty;
+
     /// <summary>"Checked just now · live" for the logged-in character, "From Michiru's snapshot, 2 d ago" for a stored one.</summary>
-    private void BuildProvenance(SessionState session, double now)
+    private static string BuildProvenance(SessionState session)
     {
-        model.ProvenanceBuiltAt = now;
         if (session.ViewedSnapshot is not { } snapshot)
         {
-            model.Provenance = Strings.ProvenanceLogIn;
-            return;
+            return Strings.ProvenanceLogIn;
         }
 
         var age = UiFormat.Age(snapshot.TakenUtc);
         if (session.IsLive)
         {
-            model.Provenance = string.Format(CultureInfo.CurrentCulture, Strings.ProvenanceLiveFormat, age);
-            return;
+            return string.Format(CultureInfo.CurrentCulture, Strings.ProvenanceLiveFormat, age);
         }
 
         var name = snapshot.Name;
         var space = name.IndexOf(' ', StringComparison.Ordinal);
         var first = space > 0 ? name[..space] : name;
-        model.Provenance = string.Format(CultureInfo.CurrentCulture, Strings.ProvenanceSnapshotFormat, first, age);
+        return string.Format(CultureInfo.CurrentCulture, Strings.ProvenanceSnapshotFormat, first, age);
     }
 
     // ------------------------------------------------------------------ model
@@ -1186,8 +1203,6 @@ public sealed class DetailPane
                 model.PlaceLine = model.CoordinateText is { } text ? place + " " + text : place;
             }
         }
-
-        BuildProvenance(session, ImGui.GetTime());
     }
 
     /// <summary>The reward tiles: which rewards are unique for this quest (shipped entries), and which the store sells or a duty drops.</summary>

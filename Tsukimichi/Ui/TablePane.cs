@@ -128,6 +128,7 @@ public sealed class TablePane : IDisposable
     private readonly IDalamudPluginInterface pluginInterface;
     private readonly IPluginLog log;
     private readonly Action resetFilters;
+    private readonly Action filtersChanged;
 
     private ImGuiListClipperPtr clipper;
     private bool clipperCreated;
@@ -137,6 +138,10 @@ public sealed class TablePane : IDisposable
 
     private uint? lastSelection;
     private bool tableInitialized;
+
+    // The Job column's minimum, re-asserted once per table init: measured on the first frame, applied on the next.
+    private bool measureJobWidth;
+    private float jobWidthFix;
 
     // Hover lift (dalamud-developer panel §4: no TableGetHoveredRow in the binding): the quest hovered on the previous
     // frame gets the fill and the lift this frame; hoveredNext collects this frame's for the next.
@@ -168,7 +173,7 @@ public sealed class TablePane : IDisposable
     private float expansionGain;
     private bool restoreSort;
 
-    public TablePane(UiState ui, QueryRunner runner, GameLinks links, ITextureProvider textures, IDalamudPluginInterface pluginInterface, IPluginLog log, Action resetFilters)
+    public TablePane(UiState ui, QueryRunner runner, GameLinks links, ITextureProvider textures, IDalamudPluginInterface pluginInterface, IPluginLog log, Action resetFilters, Action filtersChanged)
     {
         this.ui = ui ?? throw new ArgumentNullException(nameof(ui));
         this.runner = runner ?? throw new ArgumentNullException(nameof(runner));
@@ -177,6 +182,7 @@ public sealed class TablePane : IDisposable
         this.pluginInterface = pluginInterface ?? throw new ArgumentNullException(nameof(pluginInterface));
         this.log = log ?? throw new ArgumentNullException(nameof(log));
         this.resetFilters = resetFilters ?? throw new ArgumentNullException(nameof(resetFilters));
+        this.filtersChanged = filtersChanged ?? throw new ArgumentNullException(nameof(filtersChanged));
 
         try
         {
@@ -262,15 +268,35 @@ public sealed class TablePane : IDisposable
         // written again on the frame the sorted column comes back from a FitStatusColumn hide (ImGui dropped it).
         if (!tableInitialized || restoreSort)
         {
+            // Once per table init the Job column's saved width is checked against its widest label (below).
+            measureJobWidth |= !tableInitialized;
             tableInitialized = true;
             restoreSort = false;
             ApplyInitialSort(ui.Sort);
         }
 
+        // Players with saved widths from before T15 keep a 64 px Job column, which clips "DoH/DoL" beside the icon:
+        // the width measured on the table's first frame is raised to the minimum on the next (before the layout locks).
+        if (jobWidthFix > 0f)
+        {
+            ImGuiP.TableSetColumnWidth((int)Column.Job, jobWidthFix);
+            jobWidthFix = 0f;
+        }
+
         // The two icon-derived widths are re-asserted every frame (imgui.ini restores font-tracked widths, not IconScale).
         ImGuiP.TableSetColumnWidth((int)Column.Glyph, glyphColumn);
         ImGuiP.TableSetColumnWidth((int)Column.Rewards, rewardsColumn);
-        var statusWidth = DrawHeaders(SortedColumn(ui.Sort));
+        var statusWidth = DrawHeaders(SortedColumn(ui.Sort), out var jobWidth);
+        if (measureJobWidth)
+        {
+            measureJobWidth = false;
+            var jobMin = MathF.Min(UiMetrics.Icon(JobIconSide), rowContent) + UiMetrics.Px(JobIconGap) + ImGui.CalcTextSize(Strings.JobDohDol).X;
+            if (jobWidth > 0f && jobWidth + 0.5f < jobMin)
+            {
+                jobWidthFix = MathF.Max(jobMin, UiMetrics.Px(JobColumnWidth));
+            }
+        }
+
         FitStatusColumn(statusWidth, expansionColumn, rewardsColumn);
 
         ApplySortSpecs();
@@ -338,9 +364,10 @@ public sealed class TablePane : IDisposable
     /// on the raised fill; the sorted column's label and its arrow are in the primary text colour (a sort is not a call
     /// to action, so never gold). Returns the Status column's laid-out width (0 when hidden).
     /// </summary>
-    private static float DrawHeaders(int sortedColumn)
+    private static float DrawHeaders(int sortedColumn, out float jobWidth)
     {
         var statusWidth = 0f;
+        jobWidth = 0f;
         var s = Theme.Surface;
 
         // Header labels are captions (ui-revamp §4.2): 0.85× the body, never under 12 px, in the caption game font.
@@ -356,6 +383,10 @@ public sealed class TablePane : IDisposable
             if (i == (int)Column.Status)
             {
                 statusWidth = ImGui.GetContentRegionAvail().X;
+            }
+            else if (i == (int)Column.Job)
+            {
+                jobWidth = ImGui.GetContentRegionAvail().X;
             }
 
             ImGui.PushID(i);
@@ -719,7 +750,7 @@ public sealed class TablePane : IDisposable
     /// Dalamud theme, where silver would vanish), Eclipse for Locked out and VeilText for Not checked. The pattern,
     /// not the colour, carries the state.
     /// </summary>
-    private static uint StripeColor(QuestState state) => state switch
+    internal static uint StripeColor(QuestState state) => state switch
     {
         QuestState.Ready or QuestState.Accepted => Theme.MoonU32,
         QuestState.Completed => Theme.MoonDimU32,
@@ -1013,7 +1044,8 @@ public sealed class TablePane : IDisposable
         }
         else if (clicked >= 0 && EmptyState.ClearFilter(ui, empty.Filters[clicked]))
         {
-            ui.MarkQueryDirty();
+            // Re-runs the query and saves the filters, as every other filter change does.
+            filtersChanged();
         }
     }
 

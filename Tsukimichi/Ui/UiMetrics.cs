@@ -122,12 +122,9 @@ public static class UiMetrics
         ScaleMetrics.TableRowContent(Density, GlobalScale, RowContentHeight(lineHeight), cellPaddingY);
 
     // Layout.
-    public static float ChipHeight => ImGui.GetFrameHeight();
     public static float LeftColumnWidth => Px(ScaleMetrics.LeftColumnLogical);
     public static float RightColumnWidth => Px(ScaleMetrics.RightColumnLogical);
-    public static float SearchWidth => Px(280f);
     public static float CharacterComboWidth => Px(240f);
-    public static float MinChipStripWidth => Px(40f);
     public static float MinBodyHeight => Px(120f);
     public static float Stripe => MathF.Max(1f, Px(2f));
     public static float Hairline => MathF.Max(1f, Px(1f));

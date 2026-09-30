@@ -144,7 +144,7 @@ public sealed class MainWindow : Window, IDisposable
         ui.FiltersChanged += OnFiltersChanged;
         tabStrip = new TabStrip(ui);
         treePane = new TreePane(ui);
-        tablePane = new TablePane(ui, runner, links, textures, pluginInterface, log, filterPanel.ResetAll);
+        tablePane = new TablePane(ui, runner, links, textures, pluginInterface, log, filterPanel.ResetAll, OnFiltersChanged);
         detailPane = new DetailPane(ui, runner, links, textures, log);
         tonightCard = new TonightCard(ui, runner, OnFiltersChanged);
 

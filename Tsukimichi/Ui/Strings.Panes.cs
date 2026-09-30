@@ -455,6 +455,9 @@ static partial class Strings
         public const string ChipNotInTotals = "Left out of totals";
         public const string ChipStatePrefix = "State: ";
 
+        public const string StripeTitle = "The table's state stripe";
+        public const string StripeBody = "The thin bar on the left edge of each quest table row repeats the row's state as a pattern, so it reads without colour too: in a greyscale stream, through a colour filter or with colour blindness. Hover the stripe for the state and the pattern's name.";
+
         public const string FillingTitle = "The halo";
         public const string FillingBody = "Tree nodes, Moonlit kinds, flying zones and the Characters dashboard show a ring that fills clockwise from the top with the completion ratio, around a small moon that fills with it. Even one quest shows a gold pip, and the ring closes only when everything is done. Where the ring is small the number sits beside it. Locked out quests are left out of the total.";
 

@@ -9,6 +9,7 @@ using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Ui;
 
 namespace Tsukimichi.Ui;
 
@@ -398,7 +399,13 @@ public sealed class HelpWindow : Window
                         }
                     }
 
-                    sb.Append(Strings.Help.FillingTitle).Append('\n').Append(Strings.Help.FillingBody);
+                    sb.Append(Strings.Help.FillingTitle).Append('\n').Append(Strings.Help.FillingBody).Append('\n');
+                    sb.Append(Strings.Help.StripeTitle).Append('\n').Append(Strings.Help.StripeBody).Append('\n');
+                    foreach (var phase in Phases)
+                    {
+                        sb.Append(StripePattern.Name(phase.State)).Append('\n');
+                    }
+
                     break;
                 case HelpTopic.Filters:
                     AppendCards(sb, FilterCards);
@@ -552,6 +559,7 @@ public sealed class HelpWindow : Window
 
         ImGui.Spacing();
         FillingCard(scale);
+        StripeCard(scale);
     }
 
     private void DrawMoonlit(float scale)
@@ -682,6 +690,57 @@ public sealed class HelpWindow : Window
         using (Theme.PushText(BodyText))
         {
             ImGui.TextUnformatted(Strings.Help.FillingBody);
+        }
+
+        Chrome.EndCard();
+        ImGui.Spacing();
+    }
+
+    /// <summary>
+    /// The quest table's state stripe as a legend (T15, accessibility A3): for each of the eight states a sample of its
+    /// stripe as the table draws it (<see cref="StripePattern"/>'s runs in the table's colour), the state's name and the
+    /// pattern's name, so the patterns can be learnt without colour.
+    /// </summary>
+    private static void StripeCard(float scale)
+    {
+        Chrome.BeginCard("##stripes", Strings.Help.StripeTitle);
+        using (Theme.PushText(BodyText))
+        {
+            ImGui.TextUnformatted(Strings.Help.StripeBody);
+        }
+
+        ImGui.Spacing();
+        var dl = ImGui.GetWindowDrawList();
+        var height = MathF.Round(24f * scale);
+        var thickness = MathF.Max(2f, MathF.Round(3f * scale));
+        var line = ImGui.GetTextLineHeight();
+        foreach (var phase in Phases)
+        {
+            var pos = ImGui.GetCursorScreenPos();
+            ImGui.Dummy(new Vector2(thickness + (10f * scale), height));
+            var color = TablePane.StripeColor(phase.State);
+            foreach (var segment in StripePattern.Segments(phase.State))
+            {
+                var y0 = MathF.Round(pos.Y + (segment.Start * height));
+                var y1 = MathF.Max(y0 + 1f, MathF.Round(pos.Y + (segment.End * height)));
+                dl.AddRectFilled(new Vector2(pos.X, y0), new Vector2(pos.X + thickness, y1), color);
+            }
+
+            // A faint rail shows where the stripe would be, so "no bar" still reads as a pattern.
+            dl.AddRect(new Vector2(pos.X - 1f, pos.Y), new Vector2(pos.X + thickness + 1f, pos.Y + height), Theme.U32(Theme.Surface.Line), 0f, ImDrawFlags.None, 1f);
+
+            ImGui.SameLine();
+            ImGui.SetCursorPosY(ImGui.GetCursorPosY() + ((height - line) * 0.5f));
+            using (Theme.PushText(Theme.StateColor(phase.State)))
+            {
+                ImGui.TextUnformatted(Strings.StateName(phase.State));
+            }
+
+            ImGui.SameLine(0f, 6f * scale);
+            using (Theme.PushText(Theme.Surface.TextSecondary))
+            {
+                ImGui.TextUnformatted(StripePattern.Name(phase.State));
+            }
         }
 
         Chrome.EndCard();

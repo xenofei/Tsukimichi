@@ -210,12 +210,8 @@ public static partial class Strings
     public const string PinnedOnlyTooltip = "Keep only quests you pinned";
     public const string ResetTooltip = "Clear every filter and the search";
     public const string ResetFilters = "Reset filters";
-    public const string NothingMatches = "Nothing matches";
-    public const string NothingMatchesHint = "Remove one of these filters:";
     public const string NothingMatchesCombination = "No single filter is to blame; loosen several or reset.";
     public const string ScopeEmpty = "This node has no quests.";
-    public const string ChipSearch = FilterNames.Search;
-    public const string ChipState = FilterNames.State;
     public const string ChipStatePrefix = "States: ";
     public const string ChipStateExcludedMarker = "−";
     public const string ChipStateSeparator = ", ";
@@ -288,15 +284,8 @@ public static partial class Strings
     public const string Rewards = "Rewards";
     public const string NoRewards = "No listed rewards.";
     public const string Path = "Path";
-    public const string PathSingle = "This quest starts its own path.";
-    /// <summary>{0} = number of folded completed steps.</summary>
-    public const string FoldedRunCollapsedFormat = "▸ {0} completed steps";
-    /// <summary>{0} = number of folded completed steps.</summary>
-    public const string FoldedRunExpandedFormat = "▾ {0} completed steps";
     public const string FoldedRunExpandTooltip = "Show the completed steps";
     public const string FoldedRunCollapseTooltip = "Fold the completed steps away";
-    public const string UnlocksNext = "Unlocks next";
-    public const string UnlocksNone = "No quest lists this one as a previous quest.";
     public const string UniqueSection = "Moonlit";
     public const string MarkedUniqueByYou = "Marked unique by you";
     public const string MarkedNotUniqueByYou = "Marked not unique by you";
@@ -330,18 +319,12 @@ public static partial class Strings
     public const string Unmet = "✗";
     public const string MetTooltip = "Met";
     public const string UnmetTooltip = "Not met";
-    public const string NextStepMarker = "▶";
     /// <summary>{0} = x, {1} = y.</summary>
     public const string CoordinatesFormat = "({0:0.0}, {1:0.0})";
     /// <summary>{0} = genre, {1} = category.</summary>
     public const string JournalPathFormat = "{0} › {1}";
     /// <summary>{0} = expansion, {1} = level, {2} = job category.</summary>
     public const string HeaderLineFormat = "{0} · Lv {1} · {2}";
-    /// <summary>{0} = time.</summary>
-    public const string ProvenanceCompletedFormat = "Completed per client flags at {0}";
-    /// <summary>{0} = time.</summary>
-    public const string ProvenanceEvaluatedFormat = "Evaluated from snapshot taken {0}";
-    public const string ProvenanceNoSnapshot = "No snapshot; state unknown";
     /// <summary>{0} = job abbreviation.</summary>
     public const string ReadyOnJobFormat = "Ready on {0}";
     /// <summary>{0} = sequence.</summary>
