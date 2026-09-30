@@ -415,6 +415,13 @@ public static class QuestDiagnostic
             && MsqProgress.Compute(names.Catalog, states) is { } msq)
         {
             sb.Append(", msq ").Append(msq.Next is { } next ? next.RowId.ToString(CultureInfo.InvariantCulture) : "complete");
+            foreach (var route in msq.Routes)
+            {
+                // Inside a branch region: "route 70011 2/3" per route, by its first quest's row id.
+                sb.Append(" route ").Append(route.Route.First.RowId.ToString(CultureInfo.InvariantCulture))
+                    .Append(' ').Append(route.Done.ToString(CultureInfo.InvariantCulture))
+                    .Append('/').Append(route.Total.ToString(CultureInfo.InvariantCulture));
+            }
         }
 
         if (Has(kinds, RequirementKind.GrandCompany) || Has(kinds, RequirementKind.GrandCompanyRank))

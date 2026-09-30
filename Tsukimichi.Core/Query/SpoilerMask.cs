@@ -32,7 +32,10 @@ public sealed record SpoilerOptions(bool HideNames = true, int Ahead = SpoilerOp
 /// position (walked as <see cref="MsqProgress"/> walks it: sections 0 then 1 in journal order, removed rows left out,
 /// the journal's hide state ignored). A main scenario quest is masked when it lies more than
 /// <see cref="SpoilerOptions.Ahead"/> quests past the position and is neither completed, in the journal nor once
-/// abandoned from it (the game has shown all three names). A
+/// abandoned from it (the game has shown all three names). Inside a routed branch region (<see cref="MsqGraph"/>)
+/// every route is a position of its own: a route quest is "N ahead" along its route from that route's next quest,
+/// the reconvergence quest lies as far ahead as the quests still needed before it (every open route's for an All
+/// join, the shortest route's for an Any join), and the story after it counts on from there. A
 /// character without states (browse mode, a stored view without data) has no position: every main scenario quest
 /// after the first is masked. Immutable; <see cref="DisplayName"/> allocates nothing.
 /// </summary>
@@ -295,53 +298,142 @@ public sealed class SpoilerMask
         var masked = new Dictionary<uint, byte>();
         var hash = new HashCode();
         hash.Add(options.HideNames);
-        byte? reach = null;
+        var graph = MsqGraph.For(catalog);
+        var msq = graph.Position(source);
+        var positionRowId = msq?.Next?.RowId;
+        var routes = msq is { IsBranched: true } ? new RouteDistances(msq, source) : null;
         var ordinal = -1;
         int? position = null;
-        var any = false;
-        foreach (var section in MsqProgress.MainScenarioSections)
+        int? joinOrdinal = null;
+        foreach (var quest in graph.Story)
         {
-            if (catalog.BySection.GetValueOrDefault(section) is not { } quests)
+            var state = source.StateOf(quest.RowId);
+            // A branch the character did not take holds no place in the story's order (MsqProgress skips it too).
+            if (!source.LeavesTotals(quest.RowId))
+            {
+                ordinal++;
+                if (position is null && quest.RowId == positionRowId)
+                {
+                    position = ordinal;
+                }
+            }
+
+            int distance;
+            if (routes is null)
+            {
+                // A linear stretch: quests at or before the position are never masked.
+                distance = position is { } at ? ordinal - at : int.MinValue;
+            }
+            else if (routes.TryRoute(quest.RowId, out var onRoute))
+            {
+                // Inside a branch region "N ahead" counts along each route from its own next quest.
+                distance = onRoute;
+            }
+            else
+            {
+                // The reconvergence quest lies as many quests ahead as must be done before it; the story after it
+                // follows on from there.
+                if (joinOrdinal is null && quest.RowId == routes.JoinRowId)
+                {
+                    joinOrdinal = ordinal;
+                }
+
+                distance = joinOrdinal is { } join ? routes.ToJoin + ordinal - join : int.MinValue;
+            }
+
+            if (!options.HideNames
+                || distance <= ahead
+                || state is QuestState.Completed or QuestState.Accepted
+                || (revealed is not null && revealed.Contains(quest.RowId))
+                || (abandoned is not null && abandoned.ContainsKey(quest.QuestId)))
             {
                 continue;
             }
 
-            foreach (var quest in quests)
+            masked[quest.RowId] = quest.DisplayLevel;
+            hash.Add(quest.RowId);
+        }
+
+        var reachExpansion = msq is null ? byte.MaxValue : noStates ? (byte)0 : msq.Next?.Expansion ?? byte.MaxValue;
+        return new SpoilerMask(options, masked, reachExpansion, hash.ToHashCode());
+    }
+
+    /// <summary>
+    /// Inside a branch region: how far ahead each route quest lies along its own route (the route's next quest at
+    /// 0, the quests before it negative, a locked-out quest sharing the distance of the one before it), and how far
+    /// ahead the reconvergence quest lies (the quests left on every open route for an All join, on the shortest for
+    /// an Any join).
+    /// </summary>
+    private sealed class RouteDistances
+    {
+        private readonly Dictionary<uint, int> byRowId = [];
+
+        public RouteDistances(MsqPosition position, IStateSource source)
+        {
+            var branch = position.Branch!;
+            JoinRowId = branch.Join.RowId;
+            var sum = 0;
+            var shortest = int.MaxValue;
+            foreach (var progress in position.Routes)
             {
-                if (quest.IsRemoved)
+                var quests = progress.Route.Quests;
+                if (progress.Status == MsqRouteStatus.LockedOut)
                 {
+                    // A route the character cannot take reveals nothing.
+                    foreach (var quest in quests)
+                    {
+                        byRowId[quest.RowId] = int.MaxValue;
+                    }
+
                     continue;
                 }
 
-                any = true;
-                var state = source.StateOf(quest.RowId);
-                // A branch the character did not take holds no place in the story's order (MsqProgress skips it too).
-                if (!source.LeavesTotals(quest.RowId))
+                var nextAt = progress.Next is { } next ? IndexOf(quests, next.RowId) : quests.Count;
+                var left = 0;
+                for (var i = 0; i < quests.Count; i++)
                 {
-                    ordinal++;
-                    if (position is null && state != QuestState.Completed)
+                    if (i < nextAt)
                     {
-                        position = ordinal;
-                        reach = quest.Expansion;
+                        byRowId[quests[i].RowId] = i - nextAt;
+                    }
+                    else if (source.LeavesTotals(quests[i].RowId))
+                    {
+                        byRowId[quests[i].RowId] = Math.Max(left - 1, 0);
+                    }
+                    else
+                    {
+                        byRowId[quests[i].RowId] = left++;
                     }
                 }
 
-                if (!options.HideNames
-                    || position is not { } at
-                    || ordinal - at <= ahead
-                    || state is QuestState.Completed or QuestState.Accepted
-                    || (revealed is not null && revealed.Contains(quest.RowId))
-                    || (abandoned is not null && abandoned.ContainsKey(quest.QuestId)))
+                if (progress.Status is MsqRouteStatus.NotStarted or MsqRouteStatus.InProgress)
                 {
-                    continue;
+                    sum += left;
+                    shortest = Math.Min(shortest, left);
                 }
-
-                masked[quest.RowId] = quest.DisplayLevel;
-                hash.Add(quest.RowId);
             }
+
+            ToJoin = branch.JoinKind == JoinKind.Any ? (shortest == int.MaxValue ? 0 : shortest) : sum;
         }
 
-        var reachExpansion = !any ? byte.MaxValue : noStates ? (byte)0 : reach ?? byte.MaxValue;
-        return new SpoilerMask(options, masked, reachExpansion, hash.ToHashCode());
+        public uint JoinRowId { get; }
+
+        /// <summary>How many quests ahead the reconvergence quest lies.</summary>
+        public int ToJoin { get; }
+
+        public bool TryRoute(uint rowId, out int distance) => byRowId.TryGetValue(rowId, out distance);
+
+        private static int IndexOf(IReadOnlyList<QuestRecord> quests, uint rowId)
+        {
+            for (var i = 0; i < quests.Count; i++)
+            {
+                if (quests[i].RowId == rowId)
+                {
+                    return i;
+                }
+            }
+
+            return quests.Count;
+        }
     }
 }

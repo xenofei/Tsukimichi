@@ -356,7 +356,26 @@ public static class TodoList
             return rows;
         }
 
-        rows.Add(Row(inputs, next, position.State, TodoRowKind.Msq));
+        if (!position.IsBranched)
+        {
+            rows.Add(Row(inputs, next, position.State, TodoRowKind.Msq));
+            return rows;
+        }
+
+        // Inside a branch region: one row per route still open, in route order, its hint led by the route and how
+        // far along it is ("route The Ember Road · 2 of 3 · Lv 41 · …").
+        foreach (var route in position.Routes)
+        {
+            if (route.Next is not { } routeNext)
+            {
+                continue;
+            }
+
+            var row = Row(inputs, routeNext, route.State, TodoRowKind.Msq);
+            var prefix = MsqText.RowPrefix(route, quest => QuestName(inputs, quest));
+            rows.Add(row with { Hint = row.Hint.Length > 0 ? prefix + MsqText.Separator + row.Hint : prefix });
+        }
+
         return rows;
     }
 

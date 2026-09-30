@@ -27,8 +27,18 @@ public static class IpcChannels
     /// <summary><c>(uint questId) -> string[]</c>: the status line, then one line per requirement; empty when there is no answer.</summary>
     public const string GetBlockersGate = "Tsukimichi.GetBlockers";
 
-    /// <summary><c>() -> uint</c>: the Quest row id of the next main scenario quest; 0 when the story is done or there is no answer.</summary>
+    /// <summary>
+    /// <c>() -> uint</c>: the Quest row id of the next main scenario quest (inside a branch region, the first route's);
+    /// 0 when the story is done or there is no answer.
+    /// </summary>
     public const string GetMsqPositionGate = "Tsukimichi.GetMsqPosition";
+
+    /// <summary>
+    /// <c>() -> uint[]</c>: the Quest row ids of every main scenario position: the next quest alone on a linear
+    /// stretch, each open route's next quest (in route order) inside a branch region; empty when the story is done or
+    /// there is no answer. Since 1.0.0.
+    /// </summary>
+    public const string GetMsqPositionsGate = "Tsukimichi.GetMsqPositions";
 
     /// <summary><c>(uint questId) -> bool</c>: opens the main window on the quest; false for a quest the catalog does not hold.</summary>
     public const string OpenQuestGate = "Tsukimichi.OpenQuest";

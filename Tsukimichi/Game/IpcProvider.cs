@@ -14,7 +14,7 @@ namespace Tsukimichi.Game;
 /// <summary>
 /// Tsukimichi's own IPC gates (feature plan V2-16, docs/ipc.md), so overlays and other quest plugins can build on the
 /// evaluator: <c>Tsukimichi.ApiVersion</c>, <c>IsReady</c>, <c>IsQuestAvailable</c>, <c>GetState</c>,
-/// <c>GetStateName</c>, <c>GetBlockers</c>, <c>GetMsqPosition</c>, <c>OpenQuest</c> and the
+/// <c>GetStateName</c>, <c>GetBlockers</c>, <c>GetMsqPosition</c>, <c>GetMsqPositions</c>, <c>OpenQuest</c> and the
 /// <c>StatesChanged</c> message (<see cref="IpcChannels"/>). Registered in the constructor, unregistered on dispose.
 /// <para>
 /// <b>Threads.</b> A gate runs on whatever thread its caller is on. Every answer comes from an <see cref="IpcView"/>:
@@ -52,6 +52,7 @@ public sealed class IpcProvider : IDisposable
     private readonly ICallGateProvider<uint, string>? getStateName;
     private readonly ICallGateProvider<uint, string[]>? getBlockers;
     private readonly ICallGateProvider<uint>? getMsqPosition;
+    private readonly ICallGateProvider<uint[]>? getMsqPositions;
     private readonly ICallGateProvider<uint, bool>? openQuestGate;
     private readonly ICallGateProvider<object>? statesChanged;
 
@@ -91,6 +92,7 @@ public sealed class IpcProvider : IDisposable
             getStateName = pluginInterface.GetIpcProvider<uint, string>(IpcChannels.GetStateNameGate);
             getBlockers = pluginInterface.GetIpcProvider<uint, string[]>(IpcChannels.GetBlockersGate);
             getMsqPosition = pluginInterface.GetIpcProvider<uint>(IpcChannels.GetMsqPositionGate);
+            getMsqPositions = pluginInterface.GetIpcProvider<uint[]>(IpcChannels.GetMsqPositionsGate);
             openQuestGate = pluginInterface.GetIpcProvider<uint, bool>(IpcChannels.OpenQuestGate);
             statesChanged = pluginInterface.GetIpcProvider<object>(IpcChannels.StatesChangedGate);
 
@@ -101,6 +103,7 @@ public sealed class IpcProvider : IDisposable
             getStateName.RegisterFunc(id => Answer(IpcChannels.GetStateNameGate, string.Empty, v => v.StateName(id)));
             getBlockers.RegisterFunc(id => Answer(IpcChannels.GetBlockersGate, [], v => v.Blockers(id), needsNames: true));
             getMsqPosition.RegisterFunc(() => Answer(IpcChannels.GetMsqPositionGate, 0u, static v => v.MsqNext()));
+            getMsqPositions.RegisterFunc(() => Answer(IpcChannels.GetMsqPositionsGate, [], static v => v.MsqPositions()));
             openQuestGate.RegisterFunc(OpenQuest);
         }
         catch (Exception ex)
@@ -329,6 +332,7 @@ public sealed class IpcProvider : IDisposable
         Unregister(getStateName);
         Unregister(getBlockers);
         Unregister(getMsqPosition);
+        Unregister(getMsqPositions);
         Unregister(openQuestGate);
     }
 

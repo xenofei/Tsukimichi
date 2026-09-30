@@ -1563,9 +1563,19 @@ public sealed class MainWindow : Window, IDisposable
             return;
         }
 
-        msqStatus = string.Format(CultureInfo.CurrentCulture, Strings.StatusMsqFormat, session.Spoilers.DisplayName(next));
+        var spoilers = session.Spoilers;
         var expansion = bundle.Names.Expansion(next.Expansion) is { Length: > 0 } named ? named : Expansions.Name(next.Expansion);
         var tooltip = string.Format(CultureInfo.CurrentCulture, Strings.MsqProgressFormat, expansion, position.Done, position.Total);
+        if (position.IsBranched)
+        {
+            // Inside a branch region: every route with its progress; a click selects the first route's next quest.
+            msqStatus = string.Format(CultureInfo.CurrentCulture, Strings.StatusMsqRoutesFormat, MsqText.Compact(position, spoilers.DisplayName));
+            msqTooltip = tooltip + "\n" + string.Join("\n", MsqText.Lines(position, spoilers.DisplayName)) + "\n"
+                + MsqText.JoinLine(position, spoilers.DisplayName) + "\n" + Strings.MsqClickHint;
+            return;
+        }
+
+        msqStatus = string.Format(CultureInfo.CurrentCulture, Strings.StatusMsqFormat, spoilers.DisplayName(next));
         if (next.Issuer is { } issuer)
         {
             var zone = links.Map(issuer.MapId)?.PlaceName ?? string.Empty;

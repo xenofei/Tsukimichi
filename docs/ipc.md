@@ -14,7 +14,8 @@ Everything here is read-only except `Tsukimichi.OpenQuest`, which opens Tsukimic
 | `Tsukimichi.GetState` | `(uint questId) -> string` | the state's enum name (`"Ready"`, `"Blocked"`, …) | 0.9.0 |
 | `Tsukimichi.GetStateName` | `(uint questId) -> string` | the state as the window shows it (`"In journal"`, `"Done today"`, …) | 0.9.0 |
 | `Tsukimichi.GetBlockers` | `(uint questId) -> string[]` | the status line, then one line per requirement | 0.9.0 |
-| `Tsukimichi.GetMsqPosition` | `() -> uint` | Quest row id of the next main scenario quest; 0 when the story is done | 0.9.0 |
+| `Tsukimichi.GetMsqPosition` | `() -> uint` | Quest row id of the next main scenario quest (inside a branch region, the first route's); 0 when the story is done | 0.9.0 |
+| `Tsukimichi.GetMsqPositions` | `() -> uint[]` | Quest row ids of every main scenario position: the next quest, or one per open route inside a branch region; empty when the story is done | 1.0.0 |
 | `Tsukimichi.OpenQuest` | `(uint questId) -> bool` | true when the quest exists and the window was asked to show it | 0.9.0 |
 | `Tsukimichi.StatesChanged` | message, no arguments | sent after a poll changed the logged-in character's states | 0.9.0 |
 
@@ -29,7 +30,7 @@ The plugin's internal name is `Tsukimichi`.
 - a **Quest sheet row id**, 65536 and up (`66236`), the id xivapi, Garland Tools, FFXIV Collect and Lumina's `Quest` sheet use;
 - a **runtime quest id**, 1 to 65535 (`700`), the low 16 bits of the row id, which `QuestManager`, the journal and the completion flags use.
 
-`0`, an id past the sheet and a quest Tsukimichi's catalog does not hold all read as unknown. Ids that come back (`GetMsqPosition`, the ids inside requirement lines) are always row ids.
+`0`, an id past the sheet and a quest Tsukimichi's catalog does not hold all read as unknown. Ids that come back (`GetMsqPosition`, `GetMsqPositions`, the ids inside requirement lines) are always row ids.
 
 **The spoiler shield.** Quest names inside `GetBlockers` go through the logged-in character's spoiler settings (Settings › Spoilers), exactly as Tsukimichi's own chat lines do: a main scenario quest the player has not reached prints as `Main scenario quest (Lv 83)`. Show the lines as they come and the player's choice is kept.
 
@@ -43,7 +44,7 @@ The gates never throw on Tsukimichi's side. Until they can answer they return:
 | Catalog built, nobody logged in or the first evaluation after login still running | false | false | `""` | `[]` | 0 | true for a known quest |
 | Unknown id | (unchanged) | false | `""` | `[]` | (unchanged) | false |
 
-`GetMsqPosition` returns 0 both when the story is complete and when there is no answer; `IsReady` tells the two apart. The first evaluation after login runs on a worker and lands a moment after the character loads; `StatesChanged` is sent when it does.
+`GetMsqPosition` returns 0 both when the story is complete and when there is no answer; `IsReady` tells the two apart. `GetMsqPositions` returns an empty array in every case where `GetMsqPosition` returns 0. The first evaluation after login runs on a worker and lands a moment after the character loads; `StatesChanged` is sent when it does.
 
 When Tsukimichi is not installed or not loaded (or is reloading), Dalamud itself throws `IpcNotReadyError` from `InvokeFunc`. Catch it and treat the plugin as absent.
 
@@ -104,6 +105,18 @@ A Ready quest still lists its (met) requirements after `"Ready"`; a quest with n
 
 `() -> uint`. The Quest row id of the logged-in character's next main scenario quest: the first one in journal order (A Realm Reborn through Dawntrail) that is neither completed nor on a branch the character did not take. Its state may be Ready, In journal or Blocked (a level gate between patches); ask `GetState`. 0 when every main scenario quest is done, and 0 when there is no answer.
 
+Inside a branch region of the main scenario (from Evercold, 8.0, on: routes that run in parallel from a shared quest and meet again later), this is the **first route's** next quest: the first route in journal order that is not done yet. The quest where the routes meet is never returned while a route it needs is still open. To see every route, call `GetMsqPositions`.
+
+### Tsukimichi.GetMsqPositions
+
+`() -> uint[]`. Every main scenario position of the logged-in character, as Quest row ids. On a linear stretch of the story (all of A Realm Reborn through Dawntrail) it holds one id, the same one `GetMsqPosition` returns. Inside a branch region it holds each open route's next quest, in route order (routes are ordered by where their first quest sits in the journal); a finished route has no entry, and the first entry is always `GetMsqPosition`'s answer. Empty when the story is done and when there is no answer. Each call returns a new array. Added in 1.0.0; on an older Tsukimichi the call throws `IpcNotReadyError`, so fall back to `GetMsqPosition`.
+
+```
+[70011, 70021, 70031]   // three routes open, none started
+[70023]                 // two routes done, the third at its third quest
+[70040]                 // every route done: the quest where they meet
+```
+
 ### Tsukimichi.OpenQuest
 
 `(uint questId) -> bool`. Opens Tsukimichi's main window on the quest (the Journal tab, scoped to the quest's genre, the quest selected and scrolled into view; narrowing filters that would hide it are cleared). Returns true when the catalog holds the quest and the request was queued, false for an unknown id or while the catalog is still building. It works while logged out: the window can show any quest. Call it from a click, not on your own schedule; opening a window the player did not ask for is not welcome.
@@ -138,6 +151,7 @@ public sealed class TsukimichiIpc : IDisposable
     private readonly ICallGateSubscriber<uint, string> getState;
     private readonly ICallGateSubscriber<uint, string[]> getBlockers;
     private readonly ICallGateSubscriber<uint> getMsqPosition;
+    private readonly ICallGateSubscriber<uint[]> getMsqPositions;
     private readonly ICallGateSubscriber<uint, bool> openQuest;
     private readonly ICallGateSubscriber<object> statesChanged;
 
@@ -149,6 +163,7 @@ public sealed class TsukimichiIpc : IDisposable
         getState = pluginInterface.GetIpcSubscriber<uint, string>("Tsukimichi.GetState");
         getBlockers = pluginInterface.GetIpcSubscriber<uint, string[]>("Tsukimichi.GetBlockers");
         getMsqPosition = pluginInterface.GetIpcSubscriber<uint>("Tsukimichi.GetMsqPosition");
+        getMsqPositions = pluginInterface.GetIpcSubscriber<uint[]>("Tsukimichi.GetMsqPositions");
         openQuest = pluginInterface.GetIpcSubscriber<uint, bool>("Tsukimichi.OpenQuest");
         statesChanged = pluginInterface.GetIpcSubscriber<object>("Tsukimichi.StatesChanged");
 
@@ -173,6 +188,9 @@ public sealed class TsukimichiIpc : IDisposable
 
     /// <summary>Row id of the next main scenario quest; 0 when complete or not ready (check <see cref="Ready"/>).</summary>
     public uint NextMsq => Try(() => getMsqPosition.InvokeFunc(), 0u);
+
+    /// <summary>Every main scenario position (one per open route inside a branch region); empty when complete, not ready, or on Tsukimichi before 1.0.0.</summary>
+    public uint[] MsqPositions => Try(() => getMsqPositions.InvokeFunc(), Array.Empty<uint>());
 
     /// <summary>Opens Tsukimichi's window on the quest; call it from a click.</summary>
     public bool Open(uint questId) => Try(() => openQuest.InvokeFunc(questId), false);

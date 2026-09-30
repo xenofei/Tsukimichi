@@ -61,6 +61,10 @@ public static partial class Strings
     /// <summary>{0} = quest name.</summary>
     public const string StatusMsqFormat = "MSQ · {0} ›";
     public const string StatusMsqComplete = "MSQ · complete";
+    /// <summary>{0} = the routes of a branched main scenario, "route A 3/9 · route B —" (<c>MsqText.Compact</c>).</summary>
+    public const string StatusMsqRoutesFormat = "MSQ · {0}";
+    /// <summary>{0} = expansion, {1} = the routes, "route A 3 of 9 · route B not started" (<c>MsqText.Spelled</c>).</summary>
+    public const string CharactersMsqRoutesFormat = "MSQ: {0} · {1}";
     /// <summary>{0} = expansion, {1} = done, {2} = total.</summary>
     public const string MsqProgressFormat = "{0} · {1:N0} of {2:N0} main scenario quests done";
     /// <summary>{0} = done, {1} = total.</summary>

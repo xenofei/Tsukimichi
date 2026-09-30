@@ -19,6 +19,7 @@ using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Runtime;
 using Tsukimichi.Core.Storage;
+using Tsukimichi.Core.Ui;
 using Tsukimichi.Core.Unique;
 using Tsukimichi.Game;
 using Tsukimichi.GameData;
@@ -215,19 +216,7 @@ public sealed partial class CharactersPane
         ImGui.TextDisabled(d.World);
         ImGui.TextDisabled(d.TakenLine);
         ImGui.TextUnformatted(d.CountsLine);
-        if (d.MsqLine.Length > 0)
-        {
-            // Independent of the journal's hide state: the first main scenario quest not yet completed.
-            ImGui.TextUnformatted(d.MsqLine);
-            if (d.MsqQuest is { } msqQuest && ImGui.IsItemHovered())
-            {
-                UiMetrics.Tooltip(Strings.MsqClickHint);
-                if (ImGui.IsItemClicked())
-                {
-                    ui.Reveal(msqQuest);
-                }
-            }
-        }
+        DrawMsqLine(ui, d);
 
         DrawPayoffGates(ui);
         Gap();
@@ -258,6 +247,29 @@ public sealed partial class CharactersPane
         DrawToast();
         Gap();
         DrawAccountView(ui);
+    }
+
+    /// <summary>
+    /// The main scenario line under the header: "MSQ: Dawntrail · next: …", or every route inside a branch region
+    /// ("MSQ: Evercold · route A 3 of 9 · route B not started"). Independent of the journal's hide state; a click
+    /// selects the next quest (the first route's).
+    /// </summary>
+    private static void DrawMsqLine(UiState ui, Dashboard d)
+    {
+        if (d.MsqLine.Length == 0)
+        {
+            return;
+        }
+
+        ImGui.TextUnformatted(d.MsqLine);
+        if (d.MsqQuest is { } msqQuest && ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.MsqClickHint);
+            if (ImGui.IsItemClicked())
+            {
+                ui.Reveal(msqQuest);
+            }
+        }
     }
 
     private static void Gap()
@@ -1781,6 +1793,13 @@ public sealed partial class CharactersPane
         }
 
         var expansion = bundle.Names.Expansion(next.Expansion) is { Length: > 0 } named ? named : Expansions.Name(next.Expansion);
+        if (position.IsBranched)
+        {
+            // Inside a branch region: "MSQ: Evercold · route A 3 of 9 · route B not started · route C done"; a click
+            // selects the first route's next quest.
+            return (string.Format(CultureInfo.CurrentCulture, Strings.CharactersMsqRoutesFormat, expansion, MsqText.Spelled(position, session.Spoilers.DisplayName)), next);
+        }
+
         if (next.Issuer is not { } issuer)
         {
             return (string.Format(CultureInfo.CurrentCulture, Strings.CharactersMsqNoGiverFormat, expansion, session.Spoilers.DisplayName(next)), next);
