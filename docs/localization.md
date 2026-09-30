@@ -51,11 +51,22 @@ A switch applies at once: the session bumps its version, so every label cached p
 
 ## Layout for long strings
 
-Measured at UI scale 1 against the German draft: the tab rail's labels "Tagebuch" (beside the Ready badge) and "Meine Blauen" do not fit the 136 px rail, and the Level ("St."), Expansion ("Erw.") and Rewards ("Belohnungen") headers do not fit their columns. The fixes:
+Measured at UI scale 1 (`LayoutBudgetTests` prints the list), these did not fit before the fixes below:
+
+| Place (default room) | English | 日本語 | Deutsch | Français | Pseudo |
+|---|---|---|---|---|---|
+| Tab rail label (96 px; 62 px for Journal beside its badge) | fits | ジャーナル 80 px | Tagebuch 75 px, Meine Blauen 103 px | Personnages 99 px | three labels |
+| Level column (34 px) | Lv, when sorted (arrow) | Lv, when sorted | St. 41 px | Niv. 48 px | yes |
+| Expansion column (40 px) | Exp, when sorted (arrow) | 拡張 50 px | Erw. 52 px | Ext. 48 px | yes |
+| Rewards column (84 px) | fits | fits | Belohnungen 95 px | Récompenses 98 px | yes |
+| Status column's state word (170 px) | fits | fits | fits | fits | Ready on another job, Not checked |
+| Quick views (920 px toolbar at the smallest window) | 544 px | 504 px | 630 px | 644 px | 753 px |
+
+The fixes:
 
 - The tab rail widens to the widest label (`LayoutBudgets.RailWidth`, at most 200 px); English keeps 136 px.
 - Each fixed quest-table column is at least its header's width with padding and sort arrow (`LayoutBudgets.FixedColumnWidth`, at most 120 px), re-checked after a language switch.
-- The status column's minimum grows to the widest state name ("Bereit (anderer Job)", "Diesen Zyklus erledigt"; `LayoutBudgets.StatusMin`, at most 260 px) before Rewards and Expansion are hidden to make room.
+- The status column's minimum grows to the widest state name (`LayoutBudgets.StatusMin`, at most 260 px) before Rewards and Expansion are hidden to make room; the shipped languages fit 170 px, the pseudo language needs the growth.
 - The quick views already move to a row of their own when the toolbar is narrow; every language fits the smallest window's toolbar.
 
 ## Adding a string

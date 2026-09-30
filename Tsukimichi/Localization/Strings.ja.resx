@@ -1,0 +1,4611 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Tsukimichi: Japanese translation. DRAFT: machine-assisted, not yet reviewed by players.
+  Corrections are welcome: see CONTRIBUTING.md, section "Translations". English (Strings.resx) is the source;
+  a key missing here reads in English. Keep every {0}-style placeholder, %d, and "###Id" suffix exactly.
+-->
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="AbandonedHeaderFormat" xml:space="preserve">
+    <value>破棄したクエスト（{0}）</value>
+  </data>
+  <data name="AbandonedNone" xml:space="preserve">
+    <value>破棄したクエストの記録はありません。完了せずにジャーナルから外れたクエストは、到達していた段階とともにここに表示されます。</value>
+  </data>
+  <data name="AbandonedShowInJournal" xml:space="preserve">
+    <value>ジャーナルで表示</value>
+  </data>
+  <data name="AbandonedShowInJournalTooltip" xml:space="preserve">
+    <value>これらのクエストに絞り込んでジャーナルを開きます</value>
+  </data>
+  <data name="AbandonedFlag" xml:space="preserve">
+    <value>フラグ</value>
+  </data>
+  <data name="AbandonedFlagTooltip" xml:space="preserve">
+    <value>マップ上の依頼人にフラグを立てます</value>
+  </data>
+  <data name="AbandonedTeleport" xml:space="preserve">
+    <value>テレポ</value>
+  </data>
+  <data name="AbandonedReveal" xml:space="preserve">
+    <value>表示</value>
+  </data>
+  <data name="AbandonedRevealTooltip" xml:space="preserve">
+    <value>ジャーナルで表示します</value>
+  </data>
+  <data name="AbandonedGiverFormat" xml:space="preserve">
+    <value>依頼人: {0}</value>
+  </data>
+  <data name="AbandonedAtFormat" xml:space="preserve">
+    <value>{0}に破棄</value>
+  </data>
+  <data name="AbandonedOnly" xml:space="preserve">
+    <value>破棄のみ</value>
+  </data>
+  <data name="AbandonedOnlyTooltip" xml:space="preserve">
+    <value>このキャラクターが破棄し、まだ再受注していないクエストだけを残します</value>
+  </data>
+  <data name="AbandonedChatFormat" xml:space="preserve">
+    <value>破棄: {0}</value>
+  </data>
+  <data name="AbandonedConfigNotice" xml:space="preserve">
+    <value>クエスト破棄時のチャット通知</value>
+  </data>
+  <data name="AbandonedConfigNoticeHint" xml:space="preserve">
+    <value>「破棄: [クエスト]（5段階中3段階目）」をセッション中にクエストごとに1回表示し、誤操作に気づけるようにします。どちらの設定でも、キャラクタータブには破棄したクエストがすべて表示されます。</value>
+  </data>
+  <data name="DetailRequirementsUnmetFormat" xml:space="preserve">
+    <value>{1}件中{0}件が未達</value>
+  </data>
+  <data name="DetailRequirementsAllMet" xml:space="preserve">
+    <value>すべて達成</value>
+  </data>
+  <data name="DetailRewardsUniqueFormat" xml:space="preserve">
+    <value>ユニーク{0}件</value>
+  </data>
+  <data name="DetailUniqueRewardTooltip" xml:space="preserve">
+    <value>ユニーク: このクエストでしか入手できません</value>
+  </data>
+  <data name="DetailNoGiverPlace" xml:space="preserve">
+    <value>マップ上の位置が記録されていません</value>
+  </data>
+  <data name="DetailAddedInFormat" xml:space="preserve">
+    <value> · {0}で追加</value>
+  </data>
+  <data name="DetailSeasonalBadgeTooltip" xml:space="preserve">
+    <value>シーズナルイベントのクエスト</value>
+  </data>
+  <data name="DetailSpecialBadgeTooltip" xml:space="preserve">
+    <value>特別</value>
+  </data>
+  <data name="DetailChainFormat" xml:space="preserve">
+    <value>連続クエスト: {0} · {2}件中{1}件完了</value>
+  </data>
+  <data name="DetailStoryFormat" xml:space="preserve">
+    <value>{0} · {2}件中{1}件完了</value>
+  </data>
+  <data name="DetailChainNext" xml:space="preserve">
+    <value>· 次:</value>
+  </data>
+  <data name="DetailChainComplete" xml:space="preserve">
+    <value>· 完了</value>
+  </data>
+  <data name="DetailChainNextTooltip" xml:space="preserve">
+    <value>この連続クエストの次のクエストを選択します</value>
+  </data>
+  <data name="DetailChainHaloTooltipFormat" xml:space="preserve">
+    <value>{1}件中{0}件のクエストが完了</value>
+  </data>
+  <data name="PathCaptionFormat" xml:space="preserve">
+    <value>{0}ステップ · {1}件完了</value>
+  </data>
+  <data name="PathCaptionOne" xml:space="preserve">
+    <value>1ステップ</value>
+  </data>
+  <data name="PathMoonsWalkedFormat" xml:space="preserve">
+    <value>踏破した月 {0}</value>
+  </data>
+  <data name="PathAlternativeFormat" xml:space="preserve">
+    <value>または {0} 経由</value>
+  </data>
+  <data name="PathAlternativeStepsFormat" xml:space="preserve">
+    <value> · {0}ステップ</value>
+  </data>
+  <data name="PathAlternativeOneStep" xml:space="preserve">
+    <value> · 1ステップ</value>
+  </data>
+  <data name="PathAlternativeDone" xml:space="preserve">
+    <value> · 完了</value>
+  </data>
+  <data name="PathAlternativeTooltipFormat" xml:space="preserve">
+    <value>別の入口 · 残り{0}ステップ。クリックでその道筋を表示します。</value>
+  </data>
+  <data name="PathAlternativeTooltipDone" xml:space="preserve">
+    <value>別の入口（踏破済み）。クリックでその道筋を表示します。</value>
+  </data>
+  <data name="PathStepDetailFormat" xml:space="preserve">
+    <value>Lv{0} · {1}</value>
+  </data>
+  <data name="PathSingleCaption" xml:space="preserve">
+    <value>ここから始まる道筋です。前提クエストはありません。</value>
+  </data>
+  <data name="PathAloneCaption" xml:space="preserve">
+    <value>単独のクエストです。前提クエストも、解放するクエストもありません。</value>
+  </data>
+  <data name="PathNotCheckedCaption" xml:space="preserve">
+    <value>未確認です。ログインすると道筋が照らされます。</value>
+  </data>
+  <data name="PathUnlocksHeaderFormat" xml:space="preserve">
+    <value>次に解放 · {0}</value>
+  </data>
+  <data name="PathUnlocksHeaderNone" xml:space="preserve">
+    <value>次に解放 · なし</value>
+  </data>
+  <data name="PathJumpToTarget" xml:space="preserve">
+    <value>対象</value>
+  </data>
+  <data name="PathJumpToTargetTooltip" xml:space="preserve">
+    <value>このクエストまでスクロールして戻ります</value>
+  </data>
+  <data name="PathMinimapTooltip" xml:space="preserve">
+    <value>道筋の全体図です。金色は踏破済み、点はこのクエストです。クリックでその位置へスクロールします。</value>
+  </data>
+  <data name="ActionTeleport" xml:space="preserve">
+    <value>テレポ</value>
+  </data>
+  <data name="ActionTeleportTooltipFormat" xml:space="preserve">
+    <value>Lifestreamで{0}へテレポします</value>
+  </data>
+  <data name="ActionFlagUnavailable" xml:space="preserve">
+    <value>依頼人のマップ上の位置が記録されていません。</value>
+  </data>
+  <data name="ActionPinTooltip" xml:space="preserve">
+    <value>ピン留め: このクエストをTodoオーバーレイと一覧の先頭に表示します</value>
+  </data>
+  <data name="ActionUnpinTooltip" xml:space="preserve">
+    <value>このクエストのピン留めを解除します</value>
+  </data>
+  <data name="ActionPinUnavailable" xml:space="preserve">
+    <value>ピン留めはキャラクターごとです。先にログインするか、キャラクターを選んでください。</value>
+  </data>
+  <data name="ActionShowPathTooltip" xml:space="preserve">
+    <value>道筋を表示: 道筋カードまでスクロールし、このクエストを強調します</value>
+  </data>
+  <data name="ActionCopyCoordinatesUnavailable" xml:space="preserve">
+    <value>依頼人のマップ上の位置が記録されていません。</value>
+  </data>
+  <data name="ProvenanceLiveFormat" xml:space="preserve">
+    <value>確認: {0} · ライブ</value>
+  </data>
+  <data name="ProvenanceSnapshotFormat" xml:space="preserve">
+    <value>{0}のスナップショットより（{1}）</value>
+  </data>
+  <data name="ProvenanceLogIn" xml:space="preserve">
+    <value>ログインするとこのクエストを確認できます</value>
+  </data>
+  <data name="EmptyNothingMatchesHeading" xml:space="preserve">
+    <value>該当なし</value>
+  </data>
+  <data name="EmptyFiltersHiding" xml:space="preserve">
+    <value>以下のフィルターはそれぞれ、ここにあるすべてのクエストを隠しています。クリックすると解除されます。</value>
+  </data>
+  <data name="EmptyChipTooltip" xml:space="preserve">
+    <value>このフィルターを解除</value>
+  </data>
+  <data name="EmptyNotInCatalogHeading" xml:space="preserve">
+    <value>クエストが見つかりません</value>
+  </data>
+  <data name="EmptyNotInCatalogBody" xml:space="preserve">
+    <value>このクエストはTsukimichiが読み込んだカタログにありません。</value>
+  </data>
+  <data name="EmptyClearSelection" xml:space="preserve">
+    <value>選択を解除</value>
+  </data>
+  <data name="TonightTitle" xml:space="preserve">
+    <value>今夜</value>
+  </data>
+  <data name="TonightReadyFormat" xml:space="preserve">
+    <value>今すぐ受注できるクエスト {0}件</value>
+  </data>
+  <data name="TonightReadyOne" xml:space="preserve">
+    <value>今すぐ受注できるクエスト 1件</value>
+  </data>
+  <data name="TonightReadyNone" xml:space="preserve">
+    <value>今すぐ受注できるクエストはありません</value>
+  </data>
+  <data name="TonightShowReady" xml:space="preserve">
+    <value>表示する</value>
+  </data>
+  <data name="TonightShowReadyTooltip" xml:space="preserve">
+    <value>受注可能なクエストだけに絞ってジャーナルを開きます（検索、クイックビュー、その他のフィルターは解除されます）</value>
+  </data>
+  <data name="TonightMsqLabel" xml:space="preserve">
+    <value>メインクエスト</value>
+  </data>
+  <data name="TonightMsqDone" xml:space="preserve">
+    <value>メインクエスト完了</value>
+  </data>
+  <data name="TonightEventsFormat" xml:space="preserve">
+    <value>開催中のイベント: {0}</value>
+  </data>
+  <data name="TonightEventReadyFormat" xml:space="preserve">
+    <value>{0}（受注可能 {1}件）</value>
+  </data>
+  <data name="TonightEventFallback" xml:space="preserve">
+    <value>シーズナルイベント</value>
+  </data>
+  <data name="TonightPinnedTitle" xml:space="preserve">
+    <value>ピン留め中で受注可能</value>
+  </data>
+  <data name="TonightPickHint" xml:space="preserve">
+    <value>クエストを選ぶと、何が妨げているか、何が得られるかを表示します。</value>
+  </data>
+  <data name="TonightLogIn" xml:space="preserve">
+    <value>ログインすると、Tsukimichiがジャーナルを読み取ります。ゲーム内の状態は何も変わりません。</value>
+  </data>
+  <data name="TonightRowTooltip" xml:space="preserve">
+    <value>このクエストを選択</value>
+  </data>
+  <data name="DiffSection" xml:space="preserve">
+    <value>比較対象</value>
+  </data>
+  <data name="DiffNeedsTwo" xml:space="preserve">
+    <value>比較するには別のキャラクターでログインしてください。</value>
+  </data>
+  <data name="DiffNeedsCatalog" xml:space="preserve">
+    <value>カタログの構築後に比較が表示されます。</value>
+  </data>
+  <data name="DiffOtherUnreadable" xml:space="preserve">
+    <value>そのキャラクターのスナップショットを読み込めませんでした。</value>
+  </data>
+  <data name="DiffComboTooltip" xml:space="preserve">
+    <value>表示中のキャラクターと比較する保存済みキャラクター。最初は最も新しく記録されたキャラクターが選ばれます</value>
+  </data>
+  <data name="DiffColumnQuest" xml:space="preserve">
+    <value>クエスト</value>
+  </data>
+  <data name="DiffColumnValue" xml:space="preserve">
+    <value>価値</value>
+  </data>
+  <data name="DiffColumnWhy" xml:space="preserve">
+    <value>理由</value>
+  </data>
+  <data name="DiffColumnSection" xml:space="preserve">
+    <value>セクション</value>
+  </data>
+  <data name="DiffOnlyColumnFormat" xml:space="preserve">
+    <value>{0}のみ</value>
+  </data>
+  <data name="DiffValueTooltip" xml:space="preserve">
+    <value>解放価値: 各クエスト1、メインクエスト+3、解放クエスト+5、ユニーク報酬1件につき+2。高い順に表示します。</value>
+  </data>
+  <data name="DiffOnlyFormat" xml:space="preserve">
+    <value>{0}は完了、{1}は未完了</value>
+  </data>
+  <data name="DiffNone" xml:space="preserve">
+    <value>なし。</value>
+  </data>
+  <data name="DiffMoreFormat" xml:space="preserve">
+    <value>ほか{0}件</value>
+  </data>
+  <data name="DiffAheadFormat" xml:space="preserve">
+    <value>{0}は{2}より{1}進んでいます</value>
+  </data>
+  <data name="DiffBehindFormat" xml:space="preserve">
+    <value>{0}は{2}より{1}遅れています</value>
+  </data>
+  <data name="DiffLevelFormat" xml:space="preserve">
+    <value>{0}と{1}は同じ進行度です</value>
+  </data>
+  <data name="DiffCountsFormat" xml:space="preserve">
+    <value>両方で完了 {0} · どちらも未完了 {1}</value>
+  </data>
+  <data name="DiffCopyList" xml:space="preserve">
+    <value>リストをコピー</value>
+  </data>
+  <data name="DiffCopyListTooltip" xml:space="preserve">
+    <value>表示中の行だけでなく、このリストのすべてのクエストを「名前（価値）」の形式でコピーします</value>
+  </data>
+  <data name="DiffCopiedFormat" xml:space="preserve">
+    <value>{0}件をクリップボードにコピーしました</value>
+  </data>
+  <data name="DiffQuestCountOneFormat" xml:space="preserve">
+    <value>{0}件</value>
+  </data>
+  <data name="DiffQuestCountFormat" xml:space="preserve">
+    <value>{0}件</value>
+  </data>
+  <data name="DiscoveryWindowTitle" xml:space="preserve">
+    <value>周辺のクエスト###TsukimichiNearby</value>
+  </data>
+  <data name="DiscoveryHeaderFormat" xml:space="preserve">
+    <value>{0} · 開始できるクエスト {1}件</value>
+  </data>
+  <data name="DiscoveryHeaderOneFormat" xml:space="preserve">
+    <value>{0} · 開始できるクエスト 1件</value>
+  </data>
+  <data name="DiscoveryEmptyFormat" xml:space="preserve">
+    <value>{0}で開始できるクエストはありません</value>
+  </data>
+  <data name="DiscoveryUnknownZone" xml:space="preserve">
+    <value>このエリア</value>
+  </data>
+  <data name="DiscoveryAcceptedHeaderFormat" xml:space="preserve">
+    <value>このエリアで受注中（{0}）</value>
+  </data>
+  <data name="DiscoveryColumnState" xml:space="preserve">
+    <value>状態</value>
+  </data>
+  <data name="DiscoveryColumnQuest" xml:space="preserve">
+    <value>クエスト</value>
+  </data>
+  <data name="DiscoveryColumnLevel" xml:space="preserve">
+    <value>Lv</value>
+  </data>
+  <data name="DiscoveryColumnJob" xml:space="preserve">
+    <value>ジョブ</value>
+  </data>
+  <data name="DiscoveryLevelFormat" xml:space="preserve">
+    <value>Lv{0}</value>
+  </data>
+  <data name="DiscoveryRevealInJournal" xml:space="preserve">
+    <value>ジャーナルで表示</value>
+  </data>
+  <data name="DiscoveryRowTooltip" xml:space="preserve">
+    <value>クリック: ジャーナルで表示 · ダブルクリック: マップ上の依頼人にフラグ · 右クリックまたは…: その他</value>
+  </data>
+  <data name="DiscoveryRowMoreTooltip" xml:space="preserve">
+    <value>その他: ジャーナルで表示、フラグ、テレポ、チャットにリンク</value>
+  </data>
+  <data name="DiscoveryAcceptedToggleTooltip" xml:space="preserve">
+    <value>クリックで受注中のクエストを折りたたみ／展開します</value>
+  </data>
+  <data name="DiscoverySettingsTooltip" xml:space="preserve">
+    <value>周辺のクエストの設定</value>
+  </data>
+  <data name="DiscoveryShowDtrLabel" xml:space="preserve">
+    <value>サーバー情報バーに件数を表示</value>
+  </data>
+  <data name="DiscoveryDtrShowWhenEmptyLabel" xml:space="preserve">
+    <value>開始できるものがなくても項目を表示</value>
+  </data>
+  <data name="DiscoveryIncludeOtherJobLabel" xml:space="preserve">
+    <value>他ジョブで受注可能なクエストも含める</value>
+  </data>
+  <data name="DiscoveryDtrTooltipHeaderFormat" xml:space="preserve">
+    <value>{1}で受注可能なクエスト {0}件</value>
+  </data>
+  <data name="DiscoveryDtrTooltipHeaderOneFormat" xml:space="preserve">
+    <value>{0}で受注可能なクエスト 1件</value>
+  </data>
+  <data name="DiscoveryDtrTooltipEmptyFormat" xml:space="preserve">
+    <value>{0}で受注可能なクエストはありません</value>
+  </data>
+  <data name="DiscoveryDtrTooltipClick" xml:space="preserve">
+    <value>クリックで周辺のクエストを開きます</value>
+  </data>
+  <data name="DutyHintCaption" xml:space="preserve">
+    <value>未解放のコンテンツ</value>
+  </data>
+  <data name="DutyHintUnlockedBy" xml:space="preserve">
+    <value>解放クエスト:</value>
+  </data>
+  <data name="DutyHintReveal" xml:space="preserve">
+    <value>Tsukimichiで表示</value>
+  </data>
+  <data name="DutyHintRevealHint" xml:space="preserve">
+    <value>Tsukimichiのジャーナルでこのクエストを開きます。受注条件、そこに至る道筋、受注場所を確認できます。</value>
+  </data>
+  <data name="DutyHintFlagGiver" xml:space="preserve">
+    <value>依頼人にフラグ</value>
+  </data>
+  <data name="DutyHintFlagGiverHint" xml:space="preserve">
+    <value>このクエストの依頼人にフラグを立ててマップを開きます。</value>
+  </data>
+  <data name="DutyHintNoGiver" xml:space="preserve">
+    <value>このクエストの依頼人には、フラグを立てられるマップ上の位置がありません。</value>
+  </data>
+  <data name="DutyHintMoreFormat" xml:space="preserve">
+    <value>ほか{0}件</value>
+  </data>
+  <data name="DutyHintSetting" xml:space="preserve">
+    <value>コンテンツファインダー解放ヒント</value>
+  </data>
+  <data name="DutyHintSettingHint" xml:space="preserve">
+    <value>コンテンツファインダーまたはレイドファインダーで鍵マークの付いたコンテンツを選ぶと、ウィンドウの横に小さなパネルが表示され、それを解放するクエスト、その状態、何を待っているかを示します。Tsukimichiで表示したり、依頼人にフラグを立てたりするボタンもあります。解放済みのコンテンツや、解放クエストが不明なコンテンツでは何も表示されません。読み取るのは選択中のコンテンツだけで、申請したり開いたりすることはありません。</value>
+  </data>
+  <data name="ExportHeader" xml:space="preserve">
+    <value>エクスポート</value>
+  </data>
+  <data name="ExportIntro" xml:space="preserve">
+    <value>表示中のキャラクターの完了済みクエスト、または月明かりのコレクションを、表計算ソフトやコレクション管理ツール向けのファイルに書き出します。ファイルはお使いのPCに保存され、Tsukimichiが何かをアップロードすることはありません。</value>
+  </data>
+  <data name="ExportQuests" xml:space="preserve">
+    <value>完了済みクエストをエクスポート</value>
+  </data>
+  <data name="ExportMoonlit" xml:space="preserve">
+    <value>月明かりのコレクションをエクスポート</value>
+  </data>
+  <data name="ExportFormatLabel" xml:space="preserve">
+    <value>形式:</value>
+  </data>
+  <data name="ExportIncludeName" xml:space="preserve">
+    <value>キャラクター名を含める</value>
+  </data>
+  <data name="ExportIncludeNameHint" xml:space="preserve">
+    <value>初期設定ではオフです。オンにすると、キャラクター名がJSONのヘッダーとファイル名に入ります。コンテンツID、アカウント、ワールドは書き出されません。</value>
+  </data>
+  <data name="ExportIncludeIncomplete" xml:space="preserve">
+    <value>すべてのクエストを完了フラグ付きで出力</value>
+  </data>
+  <data name="ExportIncludeIncompleteHint" xml:space="preserve">
+    <value>オフ: 完了済みクエストのみ。オン: ジャーナルが把握しているすべてのクエストを、完了のtrue/falseとともに出力します。ファイルには実際のクエスト名が使われ、ネタバレ防止は適用されないため、未到達のメインクエストも含まれます。</value>
+  </data>
+  <data name="ExportFolderLabel" xml:space="preserve">
+    <value>出力フォルダー</value>
+  </data>
+  <data name="ExportFolderDefault" xml:space="preserve">
+    <value>既定</value>
+  </data>
+  <data name="ExportFolderDefaultTooltip" xml:space="preserve">
+    <value>プラグインの設定フォルダー内のexportsを使います</value>
+  </data>
+  <data name="ExportOpenFolder" xml:space="preserve">
+    <value>フォルダーを開く</value>
+  </data>
+  <data name="ExportOpenFolderFailedFormat" xml:space="preserve">
+    <value>フォルダーを開けませんでした: {0}</value>
+  </data>
+  <data name="ExportWrittenFormat" xml:space="preserve">
+    <value>書き出しました: {0}</value>
+  </data>
+  <data name="ExportFailedFormat" xml:space="preserve">
+    <value>エクスポートに失敗しました: {0}</value>
+  </data>
+  <data name="ExportNoCharacter" xml:space="preserve">
+    <value>エクスポートするキャラクターがいません。ログインするか、キャラクタータブで保存済みのキャラクターを選んでください。</value>
+  </data>
+  <data name="ExportCatalogLoading" xml:space="preserve">
+    <value>クエストカタログを読み込み中です。しばらくしてからもう一度お試しください。</value>
+  </data>
+  <data name="ExportChatWrittenFormat" xml:space="preserve">
+    <value>{0}にエクスポートしました</value>
+  </data>
+  <data name="ExportChatUsageFormat" xml:space="preserve">
+    <value>不明なエクスポートオプション「{0}」です。/tsuki export [quests|moonlit] [json|csv] を使ってください。</value>
+  </data>
+  <data name="HooksPausedNotice" xml:space="preserve">
+    <value>このゲームバージョンでは、アップデートの検証が済むまでTsukimichiのゲームフック（アイテムのツールチップ、アイテムとNPCのメニュー、サーバー情報バー、コンテンツファインダーのヒント）を停止しています。クエストジャーナルは通常どおり動作します。</value>
+  </data>
+  <data name="HooksEnableUntested" xml:space="preserve">
+    <value>未検証のバージョンでゲームフックを有効化</value>
+  </data>
+  <data name="HooksEnableUntestedHint" xml:space="preserve">
+    <value>ゲームのパッチ後、アイテムのツールチップパネル、アイテムとNPCのメニュー項目、サーバー情報バーの項目、コンテンツファインダー解放ヒントは、新しいバージョンでTsukimichiのアップデートが検証されるまで停止します。チェックを入れると、現在のゲームバージョンでそれらを動作させます。次のパッチで再び停止します。表示位置がずれたり動作がおかしくなったりした場合は、チェックを外してください。クエストジャーナルはどちらの場合も影響を受けません。</value>
+  </data>
+  <data name="HooksRunningUntested" xml:space="preserve">
+    <value>未検証のゲームバージョンでゲームフックが動作中です。</value>
+  </data>
+  <data name="ItemsQuestRewardFormat" xml:space="preserve">
+    <value>クエスト報酬: {0}</value>
+  </data>
+  <data name="ItemsDone" xml:space="preserve">
+    <value>完了</value>
+  </data>
+  <data name="ItemsOwned" xml:space="preserve">
+    <value>所持</value>
+  </data>
+  <data name="ItemsNotOwned" xml:space="preserve">
+    <value>未所持</value>
+  </data>
+  <data name="ItemsVeiled" xml:space="preserve">
+    <value>非表示</value>
+  </data>
+  <data name="ItemsMoreFormat" xml:space="preserve">
+    <value>ほか{0}件</value>
+  </data>
+  <data name="ItemsStoreOnly" xml:space="preserve">
+    <value>ストア販売あり: FFXIVオンラインストアでも販売されています</value>
+  </data>
+  <data name="ItemsMenuSingleFormat" xml:space="preserve">
+    <value>Tsukimichi: クエスト報酬（{0}）</value>
+  </data>
+  <data name="ItemsMenuManyFormat" xml:space="preserve">
+    <value>Tsukimichi: クエスト報酬（{0}件）</value>
+  </data>
+  <data name="NpcMenuFormat" xml:space="preserve">
+    <value>Tsukimichi: このNPCのクエスト（{0}）</value>
+  </data>
+  <data name="ChipIssuerFormat" xml:space="preserve">
+    <value>{0}のクエスト</value>
+  </data>
+  <data name="ChipIssuerUnknown" xml:space="preserve">
+    <value>このNPCのクエスト</value>
+  </data>
+  <data name="ChipIssuerTooltip" xml:space="preserve">
+    <value>このNPCが依頼するクエストと、それぞれを妨げている条件。解除するとジャーナル全体に戻ります</value>
+  </data>
+  <data name="JobsSection" xml:space="preserve">
+    <value>ジョブクエスト</value>
+  </data>
+  <data name="JobsNone" xml:space="preserve">
+    <value>カタログが構築され、ジョブレベルのあるキャラクターが評価されると、ジョブクエストが表示されます。</value>
+  </data>
+  <data name="JobsColumnJob" xml:space="preserve">
+    <value>ジョブ</value>
+  </data>
+  <data name="JobsColumnLevel" xml:space="preserve">
+    <value>レベル</value>
+  </data>
+  <data name="JobsColumnDone" xml:space="preserve">
+    <value>完了</value>
+  </data>
+  <data name="JobsColumnNext" xml:space="preserve">
+    <value>次</value>
+  </data>
+  <data name="JobsNextReadyFormat" xml:space="preserve">
+    <value>次: {0} · Lv{1}</value>
+  </data>
+  <data name="JobsNextLaterFormat" xml:space="preserve">
+    <value>次: {0} · Lv{1}で受注可能</value>
+  </data>
+  <data name="JobsNextBlockedFormat" xml:space="preserve">
+    <value>次: {0} · {1}</value>
+  </data>
+  <data name="JobsAllDone" xml:space="preserve">
+    <value>すべて完了</value>
+  </data>
+  <data name="JobsRoleRowFormat" xml:space="preserve">
+    <value>{0}のロールクエスト</value>
+  </data>
+  <data name="JobsRoleName.Tank" xml:space="preserve">
+    <value>タンク</value>
+  </data>
+  <data name="JobsRoleName.Healer" xml:space="preserve">
+    <value>ヒーラー</value>
+  </data>
+  <data name="JobsRoleName.Melee" xml:space="preserve">
+    <value>近接物理DPS</value>
+  </data>
+  <data name="JobsRoleName.PhysicalRanged" xml:space="preserve">
+    <value>遠隔物理DPS</value>
+  </data>
+  <data name="JobsRoleName.MagicalRanged" xml:space="preserve">
+    <value>遠隔魔法DPS</value>
+  </data>
+  <data name="JobsRoleName.Default" xml:space="preserve">
+    <value>ロール</value>
+  </data>
+  <data name="JobsChainsSection" xml:space="preserve">
+    <value>連続クエスト</value>
+  </data>
+  <data name="JobsChainsNone" xml:space="preserve">
+    <value>カタログが構築され、キャラクターが評価されると、連続クエストが表示されます。</value>
+  </data>
+  <data name="JobsColumnChain" xml:space="preserve">
+    <value>連続クエスト</value>
+  </data>
+  <data name="JobsChainCountFormat" xml:space="preserve">
+    <value>{0}/{1}</value>
+  </data>
+  <data name="JobsChainComplete" xml:space="preserve">
+    <value>完了</value>
+  </data>
+  <data name="JobsChainNextFormat" xml:space="preserve">
+    <value>次: {0}</value>
+  </data>
+  <data name="JobsChainsNotStartedFormat" xml:space="preserve">
+    <value>未着手（{0}）###notStartedChains</value>
+  </data>
+  <data name="JobsNudgeFormat" xml:space="preserve">
+    <value>{1} レベル{0}: {2}が受注可能になりました</value>
+  </data>
+  <data name="JobsNudgeBlockerFormat" xml:space="preserve">
+    <value>{1} レベル{0}: {2} · {3}</value>
+  </data>
+  <data name="JobsNudgeBlockedFormat" xml:space="preserve">
+    <value>{1} レベル{0}: {2}はまだ受注できません</value>
+  </data>
+  <data name="JobsConfigNudge" xml:space="preserve">
+    <value>レベルアップでジョブクエストやロールクエストが受注可能になったらチャットで通知</value>
+  </data>
+  <data name="JournalTextCard" xml:space="preserve">
+    <value>ジャーナル</value>
+  </data>
+  <data name="JournalTextRead" xml:space="preserve">
+    <value>ジャーナルを読む</value>
+  </data>
+  <data name="JournalTextHide" xml:space="preserve">
+    <value>ジャーナルを閉じる</value>
+  </data>
+  <data name="JournalTextClosedCompleted" xml:space="preserve">
+    <value>このクエストのジャーナルの記述です。プレイ中にゲームが記したとおりに表示します。</value>
+  </data>
+  <data name="JournalTextClosedAccepted" xml:space="preserve">
+    <value>現在の段階までのジャーナルの記述です。以降の記述はクエストの進行に合わせて表示されます。</value>
+  </data>
+  <data name="JournalTextReadTooltip" xml:space="preserve">
+    <value>このクエストについてゲームのジャーナルに表示された文章を表示します。到達した段階より先は表示しません。</value>
+  </data>
+  <data name="JournalTextNoText" xml:space="preserve">
+    <value>このクエストにはゲーム内のジャーナル本文がありません。</value>
+  </data>
+  <data name="JournalTextCopy" xml:space="preserve">
+    <value>記述をコピー</value>
+  </data>
+  <data name="JournalTextCopyTooltip" xml:space="preserve">
+    <value>この記述をクリップボードにコピーします。</value>
+  </data>
+  <data name="JournalTextCopied" xml:space="preserve">
+    <value>コピーしました</value>
+  </data>
+  <data name="JournalTextObjectives" xml:space="preserve">
+    <value>目的</value>
+  </data>
+  <data name="JournalTextLater" xml:space="preserve">
+    <value>以降の記述はクエストの進行に合わせて表示されます。</value>
+  </data>
+  <data name="JournalTextNeutral" xml:space="preserve">
+    <value>保存済みキャラクターとして表示しています。読み手によって変わる箇所は、両方の表記を示します（彼/彼女）。</value>
+  </data>
+  <data name="JournalTextSettingsSection" xml:space="preserve">
+    <value>ジャーナル本文</value>
+  </data>
+  <data name="JournalTextSearchSetting" xml:space="preserve">
+    <value>完了済みクエストのジャーナル本文を検索</value>
+  </data>
+  <data name="JournalTextSearchHint" xml:space="preserve">
+    <value>検索ボックスで、ジャーナルの記述に含まれる語句からもクエストを探せるようになります。対象は表示中のキャラクターが完了したクエストだけで、未プレイのクエストは対象外です。初回はプラグインがバックグラウンドでゲームファイルから全クエストの本文を読み込み（数秒）、本文ではなく語句の索引を設定フォルダーに保存します。索引はゲームのパッチ後に再構築されます。</value>
+  </data>
+  <data name="JournalTextStatusWaiting" xml:space="preserve">
+    <value>クエストカタログを待っています…</value>
+  </data>
+  <data name="JournalTextStatusLoading" xml:space="preserve">
+    <value>保存済みの索引を読み込み中…</value>
+  </data>
+  <data name="JournalTextStatusBuildingFormat" xml:space="preserve">
+    <value>索引を構築中… {0}%</value>
+  </data>
+  <data name="JournalTextStatusReadyFormat" xml:space="preserve">
+    <value>索引の準備完了: {0:N0}件のクエスト、ディスク上 {1:N0} KiB。</value>
+  </data>
+  <data name="JournalTextStatusBuiltFormat" xml:space="preserve">
+    <value> 構築時間 {0:0.0}秒。</value>
+  </data>
+  <data name="JournalTextStatusFailedFormat" xml:space="preserve">
+    <value>索引を構築できませんでした: {0}。設定をオフにしてからオンに戻すと再試行します。</value>
+  </data>
+  <data name="RowMenuButtonTooltip" xml:space="preserve">
+    <value>その他の操作。行を右クリックするか、行でメニューキーまたはShift+F10を押しても同じメニューが開きます</value>
+  </data>
+  <data name="ConfigSectionKeyboard" xml:space="preserve">
+    <value>キーボード</value>
+  </data>
+  <data name="ConfigKeyboardAlwaysOn" xml:space="preserve">
+    <value>このウィンドウにフォーカスがある間は常に有効です。Ctrl+Fで検索欄にカーソルを移動し、Escで開いているメニューやフィルターパネルを閉じ、次にウィンドウを閉じます。メニューキーまたはShift+F10でフォーカス中の行のメニューを開きます。</value>
+  </data>
+  <data name="ConfigKeyboardGameSeesKeys" xml:space="preserve">
+    <value>これらのキーはゲームにも伝わります。初期設定のキーバインドではCtrl+1～Ctrl+5はホットバー2に割り当てられており、単一の文字キーを割り当てているプレイヤーも多くいます。ゲーム側で使っていないキーだけを有効にしてください。</value>
+  </data>
+  <data name="ConfigShortcutTabs" xml:space="preserve">
+    <value>Ctrl+1～Ctrl+5でタブを切り替え</value>
+  </data>
+  <data name="ConfigShortcutTabsHint" xml:space="preserve">
+    <value>このウィンドウにフォーカスがある間、ジャーナル、月明かり、キャラクター、飛行、青クエ</value>
+  </data>
+  <data name="ConfigShortcutFlag" xml:space="preserve">
+    <value>Fキーで選択中のクエストの依頼人にマップでフラグ</value>
+  </data>
+  <data name="ConfigShortcutFlagHint" xml:space="preserve">
+    <value>詳細ペインの「マップにフラグ」と同じです</value>
+  </data>
+  <data name="ConfigShortcutReveal" xml:space="preserve">
+    <value>Enterで選択中のクエストをジャーナルで表示</value>
+  </data>
+  <data name="ConfigShortcutRevealHint" xml:space="preserve">
+    <value>月明かり、キャラクター、飛行タブで有効: ジャーナルに切り替え、ツリーでクエストのカテゴリーを開いて行を選択します</value>
+  </data>
+  <data name="ConfigShortcutPin" xml:space="preserve">
+    <value>Pキーで選択中のクエストをピン留め／解除</value>
+  </data>
+  <data name="ConfigShortcutPinHint" xml:space="preserve">
+    <value>詳細ペインの「ピン留め」と同じです</value>
+  </data>
+  <data name="MoonlitAllKinds" xml:space="preserve">
+    <value>すべて</value>
+  </data>
+  <data name="MoonlitNoData" xml:space="preserve">
+    <value>このビルドには報酬データが含まれていません。</value>
+  </data>
+  <data name="MoonlitNothingMatches" xml:space="preserve">
+    <value>該当する報酬はありません。</value>
+  </data>
+  <data name="MoonlitHideObtainedLabel" xml:space="preserve">
+    <value>入手済みを隠す</value>
+  </data>
+  <data name="MoonlitFilterHint" xml:space="preserve">
+    <value>報酬を絞り込む</value>
+  </data>
+  <data name="MoonlitSubtitle" xml:space="preserve">
+    <value>クエストでしか得られない報酬</value>
+  </data>
+  <data name="MoonlitOfflineHint" xml:space="preserve">
+    <value>入手状況はログイン中のキャラクターでのみ確認できます。</value>
+  </data>
+  <data name="MoonlitColumnObtained" xml:space="preserve">
+    <value>所持</value>
+  </data>
+  <data name="MoonlitColumnReward" xml:space="preserve">
+    <value>報酬</value>
+  </data>
+  <data name="MoonlitColumnKind" xml:space="preserve">
+    <value>種類</value>
+  </data>
+  <data name="MoonlitColumnQuest" xml:space="preserve">
+    <value>クエスト</value>
+  </data>
+  <data name="MoonlitColumnState" xml:space="preserve">
+    <value>状態</value>
+  </data>
+  <data name="MoonlitColumnConfidence" xml:space="preserve">
+    <value>確度</value>
+  </data>
+  <data name="MoonlitObtainedYes" xml:space="preserve">
+    <value>入手済み</value>
+  </data>
+  <data name="MoonlitObtainedNo" xml:space="preserve">
+    <value>未入手</value>
+  </data>
+  <data name="MoonlitObtainedUnknown" xml:space="preserve">
+    <value>未確認: この報酬の種類またはキャラクターでは読み取れません</value>
+  </data>
+  <data name="MoonlitShowInJournal" xml:space="preserve">
+    <value>ジャーナルで表示</value>
+  </data>
+  <data name="MoonlitMarkNotUnique" xml:space="preserve">
+    <value>ユニークではない（非表示）…</value>
+  </data>
+  <data name="MoonlitRestoreOverride" xml:space="preserve">
+    <value>同梱の判定に戻す</value>
+  </data>
+  <data name="MoonlitHiddenTooltip" xml:space="preserve">
+    <value>あなたの判定で非表示にしています。右クリックで「同梱の判定に戻す」を選べます</value>
+  </data>
+  <data name="MoonlitConfidenceStatic" xml:space="preserve">
+    <value>静的</value>
+  </data>
+  <data name="MoonlitConfidenceCommunity" xml:space="preserve">
+    <value>コミュニティ</value>
+  </data>
+  <data name="MoonlitConfidenceCurated" xml:space="preserve">
+    <value>精査済み</value>
+  </data>
+  <data name="MoonlitConfidenceUser" xml:space="preserve">
+    <value>自分</value>
+  </data>
+  <data name="MoonlitSourceUnknown" xml:space="preserve">
+    <value>出典の記録なし</value>
+  </data>
+  <data name="MoonlitBadgeStatic" xml:space="preserve">
+    <value>静的: ゲームデータのみから、他では入手できない報酬と判定</value>
+  </data>
+  <data name="MoonlitBadgeCommunity" xml:space="preserve">
+    <value>コミュニティ: プレイヤーからの報告。未検証</value>
+  </data>
+  <data name="MoonlitBadgeCurated" xml:space="preserve">
+    <value>精査済み: 手作業で確認し、プラグインに同梱</value>
+  </data>
+  <data name="MoonlitBadgeUser" xml:space="preserve">
+    <value>自分: このクエストの報酬をユニークとして登録しました</value>
+  </data>
+  <data name="MoonlitBadgeHidden" xml:space="preserve">
+    <value>自分: この報酬をユニークではないとして非表示にしました</value>
+  </data>
+  <data name="MoonlitNoIconTooltip" xml:space="preserve">
+    <value>この種類の報酬にはアイコンがありません</value>
+  </data>
+  <data name="MoonlitKindCountTooltipFormat" xml:space="preserve">
+    <value>{0} 入手済み</value>
+  </data>
+  <data name="MoonlitQuestFormat" xml:space="preserve">
+    <value>クエスト {0}</value>
+  </data>
+  <data name="MoonlitStoreOnly" xml:space="preserve">
+    <value>ストア販売あり</value>
+  </data>
+  <data name="MoonlitStoreOnlyTooltip" xml:space="preserve">
+    <value>FFXIVオンラインストアでも販売されています。クエスト限定ではありません</value>
+  </data>
+  <data name="MoonlitStoreOnlyTooltipLine" xml:space="preserve">
+    <value>· FFXIVオンラインストアでも販売されています。クエスト限定ではありません</value>
+  </data>
+  <data name="MoonlitAlsoDrops" xml:space="preserve">
+    <value>他でもドロップ</value>
+  </data>
+  <data name="AlsoDropsInFormat" xml:space="preserve">
+    <value>{0}でもドロップ</value>
+  </data>
+  <data name="AlsoDropsInADuty" xml:space="preserve">
+    <value>コンテンツでもドロップ</value>
+  </data>
+  <data name="NotExclusiveFormat" xml:space="preserve">
+    <value>{0}。クエスト限定ではありません</value>
+  </data>
+  <data name="MoonlitHideStoreResellsLabel" xml:space="preserve">
+    <value>他で入手できる報酬を隠す</value>
+  </data>
+  <data name="MoonlitHideStoreResellsTooltip" xml:space="preserve">
+    <value>FFXIVオンラインストアでも販売されている報酬や、コンテンツでもドロップする報酬を除外します。オンの間は入手済み/総数の集計からも除外されます</value>
+  </data>
+  <data name="MoonlitConfidenceFilterTooltip" xml:space="preserve">
+    <value>この確度の行だけ、またはプラグインが入手状況を読み取れない行だけを表示します</value>
+  </data>
+  <data name="MoonlitConfidenceAny" xml:space="preserve">
+    <value>すべての確度</value>
+  </data>
+  <data name="MoonlitConfidenceStaticOnly" xml:space="preserve">
+    <value>静的のみ</value>
+  </data>
+  <data name="MoonlitConfidenceCuratedOnly" xml:space="preserve">
+    <value>精査済みのみ</value>
+  </data>
+  <data name="MoonlitConfidenceYoursOnly" xml:space="preserve">
+    <value>自分のみ</value>
+  </data>
+  <data name="MoonlitConfidenceUnknownObtained" xml:space="preserve">
+    <value>入手状況未確認</value>
+  </data>
+  <data name="TabFlight" xml:space="preserve">
+    <value>飛行</value>
+  </data>
+  <data name="FlightNoData" xml:space="preserve">
+    <value>ゲームから風脈のデータを読み取れなかったため、飛行ビューは空です。</value>
+  </data>
+  <data name="FlightNoZone" xml:space="preserve">
+    <value>左側でエリアを選んでください。</value>
+  </data>
+  <data name="FlightOfflineHint" xml:space="preserve">
+    <value>交感状況はログイン中のキャラクターでのみ読み取ります。クエストの状態は表示中のキャラクターのものです。</value>
+  </data>
+  <data name="FlightCurrentZoneTooltip" xml:space="preserve">
+    <value>現在地</value>
+  </data>
+  <data name="FlightZoneTooltipFormat" xml:space="preserve">
+    <value>風脈 {1}中{0}交感済み · クエスト風脈 {3}中{2}完了</value>
+  </data>
+  <data name="FlightZoneTooltipUnknownFormat" xml:space="preserve">
+    <value>風脈 {0} · クエスト風脈 {2}中{1}完了 · 交感状況の確認にはログイン中のキャラクターが必要</value>
+  </data>
+  <data name="FlightHeaderFormat" xml:space="preserve">
+    <value>{0}の飛行: 風脈 {2}中{1}交感済み</value>
+  </data>
+  <data name="FlightHeaderUnknownFormat" xml:space="preserve">
+    <value>{0}の飛行: 風脈 {1}</value>
+  </data>
+  <data name="FlightHeaderComplete" xml:space="preserve">
+    <value>このエリアは飛行できます。</value>
+  </data>
+  <data name="FlightQuestCurrents" xml:space="preserve">
+    <value>クエスト風脈</value>
+  </data>
+  <data name="FlightColumnAttuned" xml:space="preserve">
+    <value>交感</value>
+  </data>
+  <data name="FlightColumnQuest" xml:space="preserve">
+    <value>クエスト</value>
+  </data>
+  <data name="FlightColumnState" xml:space="preserve">
+    <value>状態</value>
+  </data>
+  <data name="FlightColumnStatus" xml:space="preserve">
+    <value>状況</value>
+  </data>
+  <data name="FlightAttunedYes" xml:space="preserve">
+    <value>交感済み</value>
+  </data>
+  <data name="FlightAttunedNo" xml:space="preserve">
+    <value>未交感: クエストを完了すると交感します</value>
+  </data>
+  <data name="FlightAttunedUnknown" xml:space="preserve">
+    <value>未確認: 交感状況はログイン中のキャラクターでのみ読み取ります</value>
+  </data>
+  <data name="FlightQuestClickHint" xml:space="preserve">
+    <value>詳細ペインでクエストの受注条件と道筋を表示します</value>
+  </data>
+  <data name="FlightQuestFormat" xml:space="preserve">
+    <value>クエスト {0}</value>
+  </data>
+  <data name="FlightFlag" xml:space="preserve">
+    <value>フラグ</value>
+  </data>
+  <data name="FlightFlagTooltip" xml:space="preserve">
+    <value>マップ上の依頼人にフラグを立てます</value>
+  </data>
+  <data name="FlightTeleport" xml:space="preserve">
+    <value>テレポ</value>
+  </data>
+  <data name="FlightFieldFormat" xml:space="preserve">
+    <value>風脈の泉: {1}中{0}交感済み · 残りは汎用アクション「風脈計」で探してください</value>
+  </data>
+  <data name="FlightFieldAllFormat" xml:space="preserve">
+    <value>風脈の泉: {0}すべて交感済み</value>
+  </data>
+  <data name="FlightFieldUnknownFormat" xml:space="preserve">
+    <value>風脈の泉: このエリアに{0} · 汎用アクション「風脈計」で探してください</value>
+  </data>
+  <data name="FlightFieldNone" xml:space="preserve">
+    <value>このエリアに風脈の泉はありません。上のクエストだけで飛行できます。</value>
+  </data>
+  <data name="FlightFieldTooltip" xml:space="preserve">
+    <value>風脈の泉はフィールドで触れると交感できます。汎用アクション「風脈計」（アクション＆特性 › 汎用）で最寄りの泉の方向がわかります。Tsukimichiは泉の位置を記録していません。</value>
+  </data>
+  <data name="ZoneNoCharacter" xml:space="preserve">
+    <value>評価済みのキャラクターがまだいません。先にログインしてください。</value>
+  </data>
+  <data name="ZoneNoQuests" xml:space="preserve">
+    <value>このエリアで開始できるクエストはありません。</value>
+  </data>
+  <data name="WhichNoTarget" xml:space="preserve">
+    <value>先にNPCをターゲットしてください。</value>
+  </data>
+  <data name="WhichNoQuestsFormat" xml:space="preserve">
+    <value>{0}はカタログ上のクエストを依頼しません。</value>
+  </data>
+  <data name="WotsitQuestFormat" xml:space="preserve">
+    <value>クエスト: {0}</value>
+  </data>
+  <data name="WotsitRewardFormat" xml:space="preserve">
+    <value>報酬: {0}（{1}）</value>
+  </data>
+  <data name="TeleportToGiver" xml:space="preserve">
+    <value>依頼人の近くへテレポ（Lifestream）</value>
+  </data>
+  <data name="TeleportBusy" xml:space="preserve">
+    <value>Lifestreamが処理中です。完了までお待ちください。</value>
+  </data>
+  <data name="TeleportNoAetheryte" xml:space="preserve">
+    <value>依頼人のエリアに対応するエーテライトが不明です。</value>
+  </data>
+  <data name="TeleportTooltipFormat" xml:space="preserve">
+    <value>依頼人に最も近いエーテライト、{0}へテレポします</value>
+  </data>
+  <data name="MoonlitKindName.Item" xml:space="preserve">
+    <value>アイテム</value>
+  </data>
+  <data name="MoonlitKindName.OptionalItem" xml:space="preserve">
+    <value>選択報酬</value>
+  </data>
+  <data name="MoonlitKindName.Emote" xml:space="preserve">
+    <value>エモート</value>
+  </data>
+  <data name="MoonlitKindName.Action" xml:space="preserve">
+    <value>アクション</value>
+  </data>
+  <data name="MoonlitKindName.GeneralAction" xml:space="preserve">
+    <value>汎用アクション</value>
+  </data>
+  <data name="MoonlitKindName.Instance" xml:space="preserve">
+    <value>インスタンス</value>
+  </data>
+  <data name="MoonlitKindName.ClassJob" xml:space="preserve">
+    <value>ジョブ</value>
+  </data>
+  <data name="MoonlitKindName.Other" xml:space="preserve">
+    <value>その他</value>
+  </data>
+  <data name="MoonlitKindName.ArtifactGear" xml:space="preserve">
+    <value>AF装備</value>
+  </data>
+  <data name="MoonlitKindName.Mount" xml:space="preserve">
+    <value>マウント</value>
+  </data>
+  <data name="MoonlitKindName.Minion" xml:space="preserve">
+    <value>ミニオン</value>
+  </data>
+  <data name="MoonlitKindName.Orchestrion" xml:space="preserve">
+    <value>オーケストリオン譜</value>
+  </data>
+  <data name="MoonlitKindName.TripleTriadCard" xml:space="preserve">
+    <value>トリプルトライアドカード</value>
+  </data>
+  <data name="MoonlitKindName.Ornament" xml:space="preserve">
+    <value>ファッションアクセサリー</value>
+  </data>
+  <data name="MoonlitKindName.Barding" xml:space="preserve">
+    <value>バーディング</value>
+  </data>
+  <data name="MoonlitKindName.Hairstyle" xml:space="preserve">
+    <value>髪型</value>
+  </data>
+  <data name="MoonlitKindName.AetherCurrent" xml:space="preserve">
+    <value>風脈</value>
+  </data>
+  <data name="MoonlitKindName.BlueMageSpell" xml:space="preserve">
+    <value>青魔法</value>
+  </data>
+  <data name="MoonlitKindName.Trait" xml:space="preserve">
+    <value>特性</value>
+  </data>
+  <data name="MoonlitKindName.Achievement" xml:space="preserve">
+    <value>アチーブメント</value>
+  </data>
+  <data name="MoonlitKindName.Title" xml:space="preserve">
+    <value>称号</value>
+  </data>
+  <data name="MoonlitKindName.DutyUnlock" xml:space="preserve">
+    <value>コンテンツ解放</value>
+  </data>
+  <data name="MoonlitKindName.SystemUnlock" xml:space="preserve">
+    <value>システム解放</value>
+  </data>
+  <data name="CharactersNoneStored" xml:space="preserve">
+    <value>保存済みのキャラクターはまだいません。一度ログインすると記録されます。</value>
+  </data>
+  <data name="CharactersNoneViewed" xml:space="preserve">
+    <value>キャラクターがいません。ログインするか、左側で保存済みのキャラクターを選んでください。</value>
+  </data>
+  <data name="CharactersLive" xml:space="preserve">
+    <value>ライブ</value>
+  </data>
+  <data name="CharactersSnapshotFormat" xml:space="preserve">
+    <value>スナップショット取得: {0}（{1}）</value>
+  </data>
+  <data name="CharactersCompletedFormat" xml:space="preserve">
+    <value>{0}件のクエストを完了</value>
+  </data>
+  <data name="CharactersCompletedOneFormat" xml:space="preserve">
+    <value>{0}件のクエストを完了</value>
+  </data>
+  <data name="CharactersAcceptedFormat" xml:space="preserve">
+    <value>受注中 {0}件</value>
+  </data>
+  <data name="CharactersExport" xml:space="preserve">
+    <value>JSONをエクスポート…</value>
+  </data>
+  <data name="CharactersExportedFormat" xml:space="preserve">
+    <value>{0}にエクスポートしました</value>
+  </data>
+  <data name="CharactersExportFailedFormat" xml:space="preserve">
+    <value>エクスポートに失敗しました: {0}</value>
+  </data>
+  <data name="CharactersForget" xml:space="preserve">
+    <value>このキャラクターの記録を削除</value>
+  </data>
+  <data name="CharactersForgetLiveHint" xml:space="preserve">
+    <value>ログイン中のキャラクターは次に変化があったときに再び記録されます。先にログアウトしてください。</value>
+  </data>
+  <data name="CharactersForgetPopup" xml:space="preserve">
+    <value>キャラクターの記録を削除###TsukimichiForgetCharacter</value>
+  </data>
+  <data name="CharactersForgetQuestionFormat" xml:space="preserve">
+    <value>{0}の記録を削除しますか？保存済みのスナップショットが削除されます。ゲーム内では何も変わりません。</value>
+  </data>
+  <data name="CharactersForgetConfirm" xml:space="preserve">
+    <value>削除</value>
+  </data>
+  <data name="CharactersCancel" xml:space="preserve">
+    <value>キャンセル</value>
+  </data>
+  <data name="CharactersJobs" xml:space="preserve">
+    <value>ジョブレベル</value>
+  </data>
+  <data name="CharactersNoJobs" xml:space="preserve">
+    <value>ジョブレベルの記録はありません。</value>
+  </data>
+  <data name="CharactersColumnJob" xml:space="preserve">
+    <value>ジョブ</value>
+  </data>
+  <data name="CharactersColumnLevel" xml:space="preserve">
+    <value>レベル</value>
+  </data>
+  <data name="CharactersGrandCompany" xml:space="preserve">
+    <value>グランドカンパニー</value>
+  </data>
+  <data name="CharactersNoGrandCompany" xml:space="preserve">
+    <value>グランドカンパニー未所属</value>
+  </data>
+  <data name="CharactersGcRankFormat" xml:space="preserve">
+    <value>{0} · 階級{1}</value>
+  </data>
+  <data name="CharactersTribes" xml:space="preserve">
+    <value>友好部族</value>
+  </data>
+  <data name="CharactersNoTribes" xml:space="preserve">
+    <value>友好部族の友好度の記録はありません。</value>
+  </data>
+  <data name="CharactersColumnTribe" xml:space="preserve">
+    <value>友好部族</value>
+  </data>
+  <data name="CharactersColumnRank" xml:space="preserve">
+    <value>ランク</value>
+  </data>
+  <data name="CharactersColumnReputation" xml:space="preserve">
+    <value>友好度</value>
+  </data>
+  <data name="CharactersAllowancesFormat" xml:space="preserve">
+    <value>受注権: 友好部族 {0}、リーヴ {1}</value>
+  </data>
+  <data name="CharactersAccountView" xml:space="preserve">
+    <value>アカウント一覧</value>
+  </data>
+  <data name="CharactersAccountNoQuest" xml:space="preserve">
+    <value>ジャーナルでクエストを選ぶと、そのクエストについて全キャラクターの状態を表示します。</value>
+  </data>
+  <data name="CharactersAccountUnknownQuest" xml:space="preserve">
+    <value>選択中のクエストはカタログにありません。</value>
+  </data>
+  <data name="CharactersColumnCharacter" xml:space="preserve">
+    <value>キャラクター</value>
+  </data>
+  <data name="CharactersColumnState" xml:space="preserve">
+    <value>状態</value>
+  </data>
+  <data name="CharactersColumnStatus" xml:space="preserve">
+    <value>状況</value>
+  </data>
+  <data name="CharactersSnapshotUnreadable" xml:space="preserve">
+    <value>スナップショット読み込み不可</value>
+  </data>
+  <data name="CharactersWorldFormat" xml:space="preserve">
+    <value>ワールド {0}</value>
+  </data>
+  <data name="CharactersJobFormat" xml:space="preserve">
+    <value>ジョブ {0}</value>
+  </data>
+  <data name="CharactersTribeFormat" xml:space="preserve">
+    <value>友好部族 {0}</value>
+  </data>
+  <data name="CharactersSectionCompletion" xml:space="preserve">
+    <value>ジャーナルのセクション別達成状況</value>
+  </data>
+  <data name="CharactersNoSections" xml:space="preserve">
+    <value>カタログが構築され、キャラクターが評価されると、セクションごとの件数が表示されます。</value>
+  </data>
+  <data name="CharactersAllQuests" xml:space="preserve">
+    <value>すべてのクエスト</value>
+  </data>
+  <data name="CharactersSectionFormat" xml:space="preserve">
+    <value>セクション {0}</value>
+  </data>
+  <data name="CharactersColumnSection" xml:space="preserve">
+    <value>セクション</value>
+  </data>
+  <data name="CharactersColumnDone" xml:space="preserve">
+    <value>完了</value>
+  </data>
+  <data name="CharactersMoonlitSummary" xml:space="preserve">
+    <value>月明かりの宝物</value>
+  </data>
+  <data name="CharactersMoonlitUnavailable" xml:space="preserve">
+    <value>報酬データがありません。</value>
+  </data>
+  <data name="CharactersColumnKind" xml:space="preserve">
+    <value>種類</value>
+  </data>
+  <data name="CharactersColumnObtained" xml:space="preserve">
+    <value>入手済み</value>
+  </data>
+  <data name="CharactersPinned" xml:space="preserve">
+    <value>ピン留めしたクエスト</value>
+  </data>
+  <data name="CharactersNoPins" xml:space="preserve">
+    <value>ピン留めしたクエストはありません。クエスト一覧のコンテキストメニューからピン留めできます。</value>
+  </data>
+  <data name="CharactersColumnQuest" xml:space="preserve">
+    <value>クエスト</value>
+  </data>
+  <data name="CharactersRecent" xml:space="preserve">
+    <value>最近の活動</value>
+  </data>
+  <data name="CharactersRecentNeedsLive" xml:space="preserve">
+    <value>活動はログイン中のキャラクターについてのみ記録されます。</value>
+  </data>
+  <data name="CharactersNoRecent" xml:space="preserve">
+    <value>このセッションではまだ何もありません。クエストを報告または受注すると、ここに表示されます。</value>
+  </data>
+  <data name="CharactersColumnTime" xml:space="preserve">
+    <value>時刻</value>
+  </data>
+  <data name="CharactersColumnEvent" xml:space="preserve">
+    <value>出来事</value>
+  </data>
+  <data name="CharactersEventName.Completed" xml:space="preserve">
+    <value>完了</value>
+  </data>
+  <data name="CharactersEventName.Accepted" xml:space="preserve">
+    <value>受注</value>
+  </data>
+  <data name="CharactersEventName.Abandoned" xml:space="preserve">
+    <value>破棄</value>
+  </data>
+  <data name="CharactersEventName.NewlyAvailable" xml:space="preserve">
+    <value>受注可能に</value>
+  </data>
+  <data name="CharactersJobGroupName.Tank" xml:space="preserve">
+    <value>タンク</value>
+  </data>
+  <data name="CharactersJobGroupName.Healer" xml:space="preserve">
+    <value>ヒーラー</value>
+  </data>
+  <data name="CharactersJobGroupName.Melee" xml:space="preserve">
+    <value>近接物理DPS</value>
+  </data>
+  <data name="CharactersJobGroupName.Ranged" xml:space="preserve">
+    <value>遠隔物理DPS</value>
+  </data>
+  <data name="CharactersJobGroupName.Caster" xml:space="preserve">
+    <value>遠隔魔法DPS</value>
+  </data>
+  <data name="CharactersJobGroupName.Crafter" xml:space="preserve">
+    <value>クラフター</value>
+  </data>
+  <data name="CharactersJobGroupName.Gatherer" xml:space="preserve">
+    <value>ギャザラー</value>
+  </data>
+  <data name="CharactersJobGroupName.Default" xml:space="preserve">
+    <value>その他</value>
+  </data>
+  <data name="ConfigSectionPolling" xml:space="preserve">
+    <value>ポーリング</value>
+  </data>
+  <data name="ConfigWindowTitle" xml:space="preserve">
+    <value>Tsukimichi 設定###TsukimichiConfig</value>
+  </data>
+  <data name="UnknownError" xml:space="preserve">
+    <value>不明なエラー</value>
+  </data>
+  <data name="ConfigPollInterval" xml:space="preserve">
+    <value>ポーリング間隔</value>
+  </data>
+  <data name="ConfigPollIntervalHint" xml:space="preserve">
+    <value>ログイン中のキャラクターを読み直す間隔です。短いほど反応が速くなりますが、1秒で十分です。</value>
+  </data>
+  <data name="ConfigSectionNotices" xml:space="preserve">
+    <value>通知</value>
+  </data>
+  <data name="ConfigChatNotice" xml:space="preserve">
+    <value>新たに受注可能になったクエストをチャットで通知</value>
+  </data>
+  <data name="ConfigIncludeMsq" xml:space="preserve">
+    <value>メインクエストを含める</value>
+  </data>
+  <data name="ConfigSectionJournal" xml:space="preserve">
+    <value>ジャーナル</value>
+  </data>
+  <data name="ConfigShowUnlisted" xml:space="preserve">
+    <value>削除されたクエストを表示</value>
+  </data>
+  <data name="ConfigShowUnlistedHint" xml:space="preserve">
+    <value>ツリーに「ゲームから削除」ノードを追加します。後のパッチでゲームから削除されたクエストです。合計には一切数えませんが、完了したものは「完了済み」と表示されます。</value>
+  </data>
+  <data name="ConfigJournalFiling" xml:space="preserve">
+    <value>ジャーナル分類</value>
+  </data>
+  <data name="ConfigJournalFilingRefiled" xml:space="preserve">
+    <value>再分類</value>
+  </data>
+  <data name="ConfigJournalFilingLegacy" xml:space="preserve">
+    <value>従来</value>
+  </data>
+  <data name="ConfigJournalFilingHint" xml:space="preserve">
+    <value>「再分類」では、ゲームが一覧に出さない隠しクエスト（クラスの導入、Leves of…、Sights of…、エウレカの導入、連続クエストの隠しステップ）をリンク先のジャンルに振り分け、削除されたクエストはどの合計にも含めません。「従来」では、0.6.1より前のリリースと同じく、それらをひとまとめに表示します。変更するとカタログを再構築します。</value>
+  </data>
+  <data name="ConfigSectionIntegrations" xml:space="preserve">
+    <value>連携</value>
+  </data>
+  <data name="ConfigWotsitIntegration" xml:space="preserve">
+    <value>クエストと報酬をWotsitに登録</value>
+  </data>
+  <data name="ConfigWotsitIntegrationHint" xml:space="preserve">
+    <value>すべてのクエストと月明かりの報酬がWotsitの検索項目になり、選ぶとジャーナルで表示します。Wotsitのインストールが必要です。</value>
+  </data>
+  <data name="ConfigNpcContextMenu" xml:space="preserve">
+    <value>NPCのコンテキストメニュー</value>
+  </data>
+  <data name="ConfigNpcContextMenuHint" xml:space="preserve">
+    <value>クエストを依頼するNPCをターゲットしてターゲットバーのメニューを開くと、「Tsukimichi: このNPCのクエスト（N）」でそのNPCのクエストを、それぞれを妨げている条件とともにジャーナルに表示します。NPCに関する情報は保存しません。</value>
+  </data>
+  <data name="WhyNoSelection" xml:space="preserve">
+    <value>先にクエストを選択するか、名前を指定してください: /tsuki why &lt;quest name&gt;</value>
+  </data>
+  <data name="WhyGiverIn" xml:space="preserve">
+    <value>、場所: </value>
+  </data>
+  <data name="ConfigSectionData" xml:space="preserve">
+    <value>データ</value>
+  </data>
+  <data name="ConfigDataRetention" xml:space="preserve">
+    <value>Tsukimichiは、キャラクターごとに1つのスナップショット（各クエストがジャーナルに入った時期と、破棄したクエストを含む）、ピン留め、ユニーク報酬の上書きを設定フォルダーに保存します。個々のキャラクターの記録はキャラクタータブから削除できます。</value>
+  </data>
+  <data name="ConfigDeleteAll" xml:space="preserve">
+    <value>Tsukimichiのデータをすべて削除</value>
+  </data>
+  <data name="ConfigDeleteStep1Popup" xml:space="preserve">
+    <value>すべてのデータを削除###TsukimichiDeleteAll1</value>
+  </data>
+  <data name="ConfigDeleteStep1Text" xml:space="preserve">
+    <value>保存済みのキャラクターのスナップショット、すべてのピン留め、すべての上書きが削除されます。設定は残ります。</value>
+  </data>
+  <data name="ConfigDeleteContinue" xml:space="preserve">
+    <value>続ける</value>
+  </data>
+  <data name="ConfigDeleteStep2Popup" xml:space="preserve">
+    <value>削除の確認###TsukimichiDeleteAll2</value>
+  </data>
+  <data name="ConfigDeleteStep2Text" xml:space="preserve">
+    <value>この操作は取り消せません。すべて削除しますか？</value>
+  </data>
+  <data name="ConfigDeleteConfirm" xml:space="preserve">
+    <value>すべて削除</value>
+  </data>
+  <data name="ConfigDeleteDone" xml:space="preserve">
+    <value>Tsukimichiのデータをすべて削除しました。</value>
+  </data>
+  <data name="ConfigCancel" xml:space="preserve">
+    <value>キャンセル</value>
+  </data>
+  <data name="ConfigVerdictsHeaderFormat" xml:space="preserve">
+    <value>月明かりの判定（{0}）</value>
+  </data>
+  <data name="ConfigVerdictsNone" xml:space="preserve">
+    <value>判定はまだありません。クエストの詳細ペインから登録するか、月明かりの行から非表示にしてください。</value>
+  </data>
+  <data name="ConfigVerdictsUnavailable" xml:space="preserve">
+    <value>月明かりのペインが読み込まれると、判定が一覧表示されます。</value>
+  </data>
+  <data name="ConfigVerdictColumnQuest" xml:space="preserve">
+    <value>クエスト</value>
+  </data>
+  <data name="ConfigVerdictColumnVerdict" xml:space="preserve">
+    <value>判定</value>
+  </data>
+  <data name="ConfigVerdictColumnNote" xml:space="preserve">
+    <value>メモ</value>
+  </data>
+  <data name="ConfigVerdictColumnDate" xml:space="preserve">
+    <value>日付</value>
+  </data>
+  <data name="ConfigVerdictUnique" xml:space="preserve">
+    <value>ユニーク</value>
+  </data>
+  <data name="ConfigVerdictNotUnique" xml:space="preserve">
+    <value>ユニークではない</value>
+  </data>
+  <data name="ConfigVerdictRestore" xml:space="preserve">
+    <value>元に戻す</value>
+  </data>
+  <data name="ConfigVerdictRestoreTooltip" xml:space="preserve">
+    <value>この判定を破棄し、同梱の報酬データを再び適用します</value>
+  </data>
+  <data name="ConfigVerdictRestoreAll" xml:space="preserve">
+    <value>すべて元に戻す</value>
+  </data>
+  <data name="ConfigVerdictRestoreAllTooltip" xml:space="preserve">
+    <value>すべての判定を破棄します。Shiftを押しながらクリックするか、長押ししてください。</value>
+  </data>
+  <data name="ConfigVerdictsRestored" xml:space="preserve">
+    <value>すべての判定を元に戻しました。同梱の報酬データが再び適用されます。</value>
+  </data>
+  <data name="ConfigSectionAbout" xml:space="preserve">
+    <value>情報</value>
+  </data>
+  <data name="ConfigPluginVersionFormat" xml:space="preserve">
+    <value>Tsukimichi {0}</value>
+  </data>
+  <data name="ConfigCuratedFormat" xml:space="preserve">
+    <value>精査済み: システム解放 {0}、コンテンツ解放 {1}、解放クエスト {2}、シーズナルイベント {3}</value>
+  </data>
+  <data name="ConfigDataStampTooltip" xml:space="preserve">
+    <value>報酬データの生成元のゲームバージョン、項目数と生成日時、精査データのリビジョンです。同じ情報はすべての診断ブロックにも含まれます。</value>
+  </data>
+  <data name="ConfigCatalogFormat" xml:space="preserve">
+    <value>カタログ: {0}件のクエスト、{1}</value>
+  </data>
+  <data name="ConfigCatalogLoading" xml:space="preserve">
+    <value>カタログ: 読み込み中</value>
+  </data>
+  <data name="ConfigCatalogUnavailableFormat" xml:space="preserve">
+    <value>カタログを利用できません: {0}</value>
+  </data>
+  <data name="ConfigSectionDisplay" xml:space="preserve">
+    <value>表示</value>
+  </data>
+  <data name="ConfigUiScale" xml:space="preserve">
+    <value>ウィンドウの拡大率</value>
+  </data>
+  <data name="ConfigUiScaleHint" xml:space="preserve">
+    <value>Tsukimichiのウィンドウ内の文字と余白の大きさです。Dalamud全体の拡大率に上乗せされます。</value>
+  </data>
+  <data name="ConfigIconScale" xml:space="preserve">
+    <value>アイコンの拡大率</value>
+  </data>
+  <data name="ConfigIconScaleHint" xml:space="preserve">
+    <value>月のグリフ、報酬アイコン、ツールバーのボタン。</value>
+  </data>
+  <data name="ConfigReduceMotion" xml:space="preserve">
+    <value>動きを減らす</value>
+  </data>
+  <data name="ConfigReduceMotionHint" xml:space="preserve">
+    <value>ホバー時のフェードや明滅をすべて無効にし、長押しで確定するボタンは円弧の代わりに文字でカウントダウンします。ここで変更するまでは、Windowsの「アニメーションを表示する」設定に従います。</value>
+  </data>
+  <data name="ConfigFollowDalamudColours" xml:space="preserve">
+    <value>Dalamudの配色に合わせる</value>
+  </data>
+  <data name="ConfigFollowDalamudColoursHint" xml:space="preserve">
+    <value>Tsukimichiのウィンドウを「夜」配色の代わりにDalamudテーマの配色で描画します。レイアウト、月、金色はそのままです。</value>
+  </data>
+  <data name="ConfigGlyphPalette" xml:space="preserve">
+    <value>グリフ配色</value>
+  </data>
+  <data name="ConfigGlyphPaletteStandard" xml:space="preserve">
+    <value>標準</value>
+  </data>
+  <data name="ConfigGlyphPaletteHighContrast" xml:space="preserve">
+    <value>ハイコントラスト</value>
+  </data>
+  <data name="ConfigGlyphPaletteHint" xml:space="preserve">
+    <value>ハイコントラストでは、月を明るさの段階が異なる単色で描き、縁を太くし、それぞれの内側に印を付けます。受注可能は太いバー、他ジョブで受注可能は中抜きのバー、受注中は大きな印章、「今日は完了」などはチェック、完了済みは塗りつぶしの円、条件未達は太い縁、受注不可は太い斜線、未確認は破線です。これにより、グレースケールでも色覚特性があっても、すべての状態を見分けられます。一覧のストライプ、光輪、チェックマークもこれに従い、「夜」配色でもDalamudの配色でも同様です。</value>
+  </data>
+  <data name="ConfigDensity" xml:space="preserve">
+    <value>一覧の行</value>
+  </data>
+  <data name="ConfigDensityComfortable" xml:space="preserve">
+    <value>ゆったり</value>
+  </data>
+  <data name="ConfigDensityDense" xml:space="preserve">
+    <value>高密度</value>
+  </data>
+  <data name="ConfigDensityHint" xml:space="preserve">
+    <value>クエスト一覧の行の高さです。ジャーナルのツリーの大きさは変わりません。</value>
+  </data>
+  <data name="ConfigLanguage" xml:space="preserve">
+    <value>プラグインの言語</value>
+  </data>
+  <data name="ConfigLanguageFollowFormat" xml:space="preserve">
+    <value>Dalamudに合わせる（{0}）</value>
+  </data>
+  <data name="ConfigLanguageEnglish" xml:space="preserve">
+    <value>英語</value>
+  </data>
+  <data name="ConfigLanguagePseudo" xml:space="preserve">
+    <value>疑似言語（レイアウト確認）</value>
+  </data>
+  <data name="ConfigLanguageHint" xml:space="preserve">
+    <value>Tsukimichi自体のテキストは、翻訳がある場合はDalamudの言語設定（Dalamud設定 › 一般 › 言語）に従い、ない場合は英語で表示します。クエスト、アイテム、NPC、地名は常にゲームから、クライアントの言語で取得します。</value>
+  </data>
+  <data name="ConfigLanguageDraftFormat" xml:space="preserve">
+    <value>{0}の翻訳は草稿です。テキストの{1}%が翻訳済みで、修正を歓迎します（GitHubのCONTRIBUTING.md › Translations）。</value>
+  </data>
+  <data name="ConfigLanguageNotLoaded" xml:space="preserve">
+    <value>この言語のリソースファイルを読み込めなかったため、英語で表示しています。プラグインを再インストールすると通常は解決します。</value>
+  </data>
+  <data name="ConfigSectionHelp" xml:space="preserve">
+    <value>ヘルプ</value>
+  </data>
+  <data name="ConfigShowHelp" xml:space="preserve">
+    <value>ヘルプを表示</value>
+  </data>
+  <data name="ConfigStartTutorial" xml:space="preserve">
+    <value>ツアーを始める</value>
+  </data>
+  <data name="ConfigOfferTutorial" xml:space="preserve">
+    <value>初回起動時にツアーを案内</value>
+  </data>
+  <data name="ConfigOfferTutorialHint" xml:space="preserve">
+    <value>次にメインウィンドウを開いたときに、ツアーの案内カードを表示します。</value>
+  </data>
+  <data name="ConfigPollTimingNone" xml:space="preserve">
+    <value>まだポーリングしていません</value>
+  </data>
+  <data name="ConfigPollTimingFormat" xml:space="preserve">
+    <value>前回: {0:0.00} ms · 平均 {1:0.00} ms · {2:N0}回</value>
+  </data>
+  <data name="ConfigPollCostFormat" xml:space="preserve">
+    <value>1回のポーリングにかかる時間は約{0:0.0} msです。初期値の1秒で問題ありません。</value>
+  </data>
+  <data name="ConfigPollCostUnknown" xml:space="preserve">
+    <value>1回のポーリングには数ミリ秒かかります。初期値の1秒で問題ありません。</value>
+  </data>
+  <data name="WhatsNew.TitleFormat" xml:space="preserve">
+    <value>{0}の新機能</value>
+  </data>
+  <data name="WhatsNew.Close" xml:space="preserve">
+    <value>閉じる</value>
+  </data>
+  <data name="WhatsNew.Help" xml:space="preserve">
+    <value>ヘルプ</value>
+  </data>
+  <data name="Help.WindowTitle" xml:space="preserve">
+    <value>Tsukimichi ヘルプ###TsukimichiHelp</value>
+  </data>
+  <data name="Help.SearchHint" xml:space="preserve">
+    <value>ヘルプを検索</value>
+  </data>
+  <data name="Help.NoTopicMatches" xml:space="preserve">
+    <value>該当するトピックはありません。</value>
+  </data>
+  <data name="Help.TryIt" xml:space="preserve">
+    <value>試してみる</value>
+  </data>
+  <data name="Help.OpenSettings" xml:space="preserve">
+    <value>設定を開く</value>
+  </data>
+  <data name="Help.ShownBy" xml:space="preserve">
+    <value>表示条件</value>
+  </data>
+  <data name="Help.TopicName.QuickStart" xml:space="preserve">
+    <value>クイックスタート</value>
+  </data>
+  <data name="Help.TopicName.MoonPhases" xml:space="preserve">
+    <value>月の満ち欠け</value>
+  </data>
+  <data name="Help.TopicName.Filters" xml:space="preserve">
+    <value>フィルターとチップ</value>
+  </data>
+  <data name="Help.TopicName.ReadingAQuest" xml:space="preserve">
+    <value>クエストの読み方</value>
+  </data>
+  <data name="Help.TopicName.Moonlit" xml:space="preserve">
+    <value>月明かりの宝物</value>
+  </data>
+  <data name="Help.TopicName.Characters" xml:space="preserve">
+    <value>キャラクターとスナップショット</value>
+  </data>
+  <data name="Help.TopicName.Flight" xml:space="preserve">
+    <value>飛行と周辺</value>
+  </data>
+  <data name="Help.TopicName.Plan" xml:space="preserve">
+    <value>青クエ</value>
+  </data>
+  <data name="Help.TopicName.Commands" xml:space="preserve">
+    <value>コマンド</value>
+  </data>
+  <data name="Help.TopicName.CountsDiffer" xml:space="preserve">
+    <value>件数がジャーナルと異なる理由</value>
+  </data>
+  <data name="Help.TopicName.KnownQuirks" xml:space="preserve">
+    <value>既知の仕様</value>
+  </data>
+  <data name="Help.TopicName.Spoilers" xml:space="preserve">
+    <value>ネタバレ</value>
+  </data>
+  <data name="Help.TopicName.Tips" xml:space="preserve">
+    <value>ヒント</value>
+  </data>
+  <data name="Help.TopicLede.QuickStart" xml:space="preserve">
+    <value>空のウィンドウから、今夜の予定を立てるまで。</value>
+  </data>
+  <data name="Help.TopicLede.MoonPhases" xml:space="preserve">
+    <value>クエストの状態は月の満ち欠けで表します。8つのグリフが文字なしで意味を伝えます。</value>
+  </data>
+  <data name="Help.TopicLede.Filters" xml:space="preserve">
+    <value>一覧を絞り込み、何が絞り込んでいるかを確認し、ワンクリックで解除します。</value>
+  </data>
+  <data name="Help.TopicLede.ReadingAQuest" xml:space="preserve">
+    <value>詳細ペインは、クエストを妨げているもの、そこに至る道筋、解放するものを示します。</value>
+  </data>
+  <data name="Help.TopicLede.Moonlit" xml:space="preserve">
+    <value>他では手に入らない報酬と、それぞれの判定の確かさ。</value>
+  </data>
+  <data name="Help.TopicLede.Characters" xml:space="preserve">
+    <value>キャラクターごとのスナップショットで、ログアウト中もアカウント全体を見渡せます。</value>
+  </data>
+  <data name="Help.TopicLede.Flight" xml:space="preserve">
+    <value>飛行までに必要なクエストと、今いる場所で始められるもの。</value>
+  </data>
+  <data name="Help.TopicLede.Plan" xml:space="preserve">
+    <value>残っている青い解放クエストすべてを、ストーリーで到達する順に。</value>
+  </data>
+  <data name="Help.TopicLede.Commands" xml:space="preserve">
+    <value>チャットコマンドでできることのすべて。</value>
+  </data>
+  <data name="Help.TopicLede.CountsDiffer" xml:space="preserve">
+    <value>ここでの完了数/総数が、ゲームのジャーナルやWikiの数と異なる4つの理由。</value>
+  </data>
+  <data name="Help.TopicLede.KnownQuirks" xml:space="preserve">
+    <value>プラグインが意図的に異なる扱いをしている点や、まだ把握できない点です。報告は不要です。</value>
+  </data>
+  <data name="Help.TopicLede.Spoilers" xml:space="preserve">
+    <value>ネタバレ防止は、この先のストーリーを見えないようにします。初期設定でオンです。</value>
+  </data>
+  <data name="Help.TopicLede.Tips" xml:space="preserve">
+    <value>カタログを素早く使うための小さな習慣。</value>
+  </data>
+  <data name="Help.StepOpenTitle" xml:space="preserve">
+    <value>ウィンドウを開く</value>
+  </data>
+  <data name="Help.StepOpenBody" xml:space="preserve">
+    <value>/tsukimichi または /tsuki と入力するか、プラグイン一覧からTsukimichiを選びます。左端にはジャーナルのツリーと並んでタブがあり、中央にクエスト一覧、右に詳細ペインがあります。</value>
+  </data>
+  <data name="Help.StepFindTitle" xml:space="preserve">
+    <value>今できることを探す</value>
+  </data>
+  <data name="Help.StepFindBody" xml:space="preserve">
+    <value>クエスト名、報酬、IDで検索する（Ctrl+F）か、ツールバーのクイックビューを選びます: 解放、適正レベル、停滞中、物語サブクエ、若葉モード。「すべて」でビューを解除します。</value>
+  </data>
+  <data name="Help.StepFiltersTitle" xml:space="preserve">
+    <value>フィルターで絞り込む</value>
+  </data>
+  <data name="Help.StepFiltersBody" xml:space="preserve">
+    <value>「フィルター」でツリーの横にパネルが開きます。ボタンの数字は、一覧を絞り込んでいるフィルターの数です。それぞれがツールバーの下にチップとして表示され、先頭はツリーの範囲です。チップをクリックすると解除できます。</value>
+  </data>
+  <data name="Help.StepReadTitle" xml:space="preserve">
+    <value>受注できない理由を読む</value>
+  </data>
+  <data name="Help.StepReadBody" xml:space="preserve">
+    <value>行を選ぶと、詳細ペインにすべての受注条件が表示され、妨げている条件に印が付きます。状況の列はそれを一言で示します。月の形が状態を表します。</value>
+  </data>
+  <data name="Help.StepMoonlitTitle" xml:space="preserve">
+    <value>月明かりの宝物を探す</value>
+  </data>
+  <data name="Help.StepMoonlitBody" xml:space="preserve">
+    <value>月明かりタブには、報酬が他では手に入らないクエストが種類別に並び、それぞれ入手済みかどうかも表示されます。</value>
+  </data>
+  <data name="Help.StepCharactersTitle" xml:space="preserve">
+    <value>他のキャラクターを見る</value>
+  </data>
+  <data name="Help.StepCharactersBody" xml:space="preserve">
+    <value>キャラクタータブはキャラクターごとにスナップショットを保存します。1人選ぶと、そのキャラクターとしてカタログ全体を閲覧でき、進行状況のダッシュボードも表示されます。</value>
+  </data>
+  <data name="Help.StepFlightTitle" xml:space="preserve">
+    <value>飛行を解放する</value>
+  </data>
+  <data name="Help.StepFlightBody" xml:space="preserve">
+    <value>飛行タブには、飛行できるすべてのエリアが並びます。エリアを選ぶと、そのクエスト風脈、それぞれを妨げているクエスト、次に飛べる場所がわかります。</value>
+  </data>
+  <data name="Help.StepPlanTitle" xml:space="preserve">
+    <value>解放クエストを片付ける</value>
+  </data>
+  <data name="Help.StepPlanBody" xml:space="preserve">
+    <value>青クエタブには、残っている青い解放クエストが拡張パッケージとエリアごとに、それぞれが解放するものとともに並びます。チェックリストとしてコピーしたり、拡張パッケージをTodoオーバーレイにピン留めしたりできます。</value>
+  </data>
+  <data name="Help.StepTourTitle" xml:space="preserve">
+    <value>ツアーを見る</value>
+  </data>
+  <data name="Help.StepTourBody" xml:space="preserve">
+    <value>ツアーは「探す」「読む」「その先」の3つの短い章で構成され、実際のウィンドウを指し示しながら進みます。カードで章を移動でき、Enterで次へ進み、Escで閉じます。</value>
+  </data>
+  <data name="Help.QuickStartTip" xml:space="preserve">
+    <value>行を選ぶと、詳細ペインで受注条件、道筋、依頼人を確認できます。行を右クリックすると、ピン留め、マップのフラグ、ジャーナルを利用できます。</value>
+  </data>
+  <data name="Help.QuickStartSettingsTip" xml:space="preserve">
+    <value>文字が小さすぎる場合は、設定の「表示」セクションでウィンドウとアイコンの拡大率を変更できます。</value>
+  </data>
+  <data name="Help.PhaseCompletedMeaning" xml:space="preserve">
+    <value>このキャラクターで報告済みです。</value>
+  </data>
+  <data name="Help.PhaseAcceptedMeaning" xml:space="preserve">
+    <value>現在ジャーナルにあります。詳細ペインに進行段階が表示されます。</value>
+  </data>
+  <data name="Help.PhaseReadyMeaning" xml:space="preserve">
+    <value>現在のジョブですべての受注条件を満たしています。受注しに行けます。</value>
+  </data>
+  <data name="Help.PhaseReadyOtherJobMeaning" xml:space="preserve">
+    <value>別のジョブで条件を満たしています。詳細ペインにそのジョブが表示されます。</value>
+  </data>
+  <data name="Help.PhaseDoneThisCycleMeaning" xml:space="preserve">
+    <value>前回のリセット以降に報告済みのリピートクエストです。デイリーは「今日は完了」、ウィークリーは「今週は完了」と表示されます。</value>
+  </data>
+  <data name="Help.PhaseBlockedMeaning" xml:space="preserve">
+    <value>満たしていない受注条件があります。状況の列がそれを一言で示します。</value>
+  </data>
+  <data name="Help.PhaseForeclosedMeaning" xml:space="preserve">
+    <value>恒久的に受注できません。多くは別のクエストでの選択によるものです。状況の列が原因を示します。</value>
+  </data>
+  <data name="Help.PhaseUnknownMeaning" xml:space="preserve">
+    <value>未評価です。スナップショットがないか、このキャラクターでは読み取れないデータです。</value>
+  </data>
+  <data name="Help.ChipHideCompletedOff" xml:space="preserve">
+    <value>「完了済みを隠す」オフ</value>
+  </data>
+  <data name="Help.ChipAvailableNow" xml:space="preserve">
+    <value>今すぐ着手可能</value>
+  </data>
+  <data name="Help.ChipAvailableNowOff" xml:space="preserve">
+    <value>「今すぐ着手可能」オフ</value>
+  </data>
+  <data name="Help.ChipNotInTotals" xml:space="preserve">
+    <value>合計から除外</value>
+  </data>
+  <data name="Help.ChipStateFormat" xml:space="preserve">
+    <value>状態: {0}</value>
+  </data>
+  <data name="Help.HighContrastLegendNote" xml:space="preserve">
+    <value>ハイコントラストのグリフを表示しています（設定 › 表示 › グリフ配色）。各月は形に加えて印を持ち、同じ形の状態は明るさではっきり区別できます。</value>
+  </data>
+  <data name="Help.StripeTitle" xml:space="preserve">
+    <value>一覧の状態ストライプ</value>
+  </data>
+  <data name="Help.StripeBody" xml:space="preserve">
+    <value>クエスト一覧の各行の左端にある細いバーは、行の状態を模様で繰り返し示すので、色がなくても読み取れます。グレースケールの配信、カラーフィルター越し、色覚特性がある場合でも同様です。ストライプにマウスを合わせると、状態と模様の名前が表示されます。</value>
+  </data>
+  <data name="Help.FillingTitle" xml:space="preserve">
+    <value>光輪</value>
+  </data>
+  <data name="Help.FillingBody" xml:space="preserve">
+    <value>ツリーのノード、月明かりの種類、飛行エリア、キャラクターのダッシュボードには、達成率に応じて上から時計回りに満ちていく輪が表示され、その中の小さな月も一緒に満ちていきます。1件でも完了すると金色の点が付き、すべて完了したときだけ輪が閉じます。輪が小さい場所では、数字が横に表示されます。受注不可のクエストは合計から除外されます。</value>
+  </data>
+  <data name="Help.FilterCardTitles.0" xml:space="preserve">
+    <value>完了済みを隠す</value>
+  </data>
+  <data name="Help.FilterCardTitles.1" xml:space="preserve">
+    <value>今すぐ着手可能</value>
+  </data>
+  <data name="Help.FilterCardTitles.2" xml:space="preserve">
+    <value>状態</value>
+  </data>
+  <data name="Help.FilterCardTitles.3" xml:space="preserve">
+    <value>その他のフィルター</value>
+  </data>
+  <data name="Help.FilterCardTitles.4" xml:space="preserve">
+    <value>クイックビュー</value>
+  </data>
+  <data name="Help.FilterCardTitles.5" xml:space="preserve">
+    <value>チップ</value>
+  </data>
+  <data name="Help.FilterCardTitles.6" xml:space="preserve">
+    <value>該当なし</value>
+  </data>
+  <data name="Help.FilterCardBodies.0" xml:space="preserve">
+    <value>完了済みと受注不可のクエストを除外します。カテゴリー別の個別設定で、たとえばメインクエスト以外では完了済みを隠す、といった指定ができます。</value>
+  </data>
+  <data name="Help.FilterCardBodies.1" xml:space="preserve">
+    <value>受注可能、他ジョブで受注可能、受注中だけを残します。今すぐ行動できるクエストです。同じくカテゴリー別の個別設定が使えます。</value>
+  </data>
+  <data name="Help.FilterCardBodies.2" xml:space="preserve">
+    <value>8つの状態すべてをチェックボックスで細かく指定できます。チェックを外すと、その状態のクエストを隠します。</value>
+  </data>
+  <data name="Help.FilterCardBodies.3" xml:space="preserve">
+    <value>拡張パッケージ、追加パッチ（クエストが追加されたパッチ系列。7.5xは7.5、7.51、7.55などを含み、新しい順に並びます）、レベル範囲、ジョブ区分、報酬の種類（種類ごとに3段階）、「リピート可能」「開催中イベント」「ピン留めのみ」「破棄のみ」で一覧をさらに絞り込みます。「削除済みを含める」では、ゲームから削除されたクエストまで範囲を広げます。</value>
+  </data>
+  <data name="Help.FilterCardBodies.4" xml:space="preserve">
+    <value>ツールバーにあるワンクリックのビューで、先頭の「すべて」で解除します: 解放、適正レベル、停滞中、物語サブクエ、若葉モード。停滞中が待つ日数はフィルターパネルで設定します。「解放」では、最新のパッチ系列の解放クエスト（「7.5xの新規」: 7.5、7.51、7.55など）が金色の線より上に表示されます。詳細ペインには、各クエストが追加されたパッチが表示されます（「7.5で追加」）。「物語サブクエ」は、ジャーナルのアートワークがある、小さな物語を描くサブクエストをエリアごとに並べ、各サイドストーリーはプレイする順に並びます。名前の後ろの本のアイコンはどのビューでもそれを示し、ツールチップにはどのストーリーのどこまでか（「9件中3件目」）が表示されます。詳細ペインにはストーリーの進行が「ストーリー: &lt;最初のクエスト&gt; · 9件中3件完了 · 次: …」と表示されます。エリアのストーリーを開く青い風脈クエストはこれに含まれ、その他の青い解放クエスト（ダンジョン、システム、ジョブ）は除外されます。</value>
+  </data>
+  <data name="Help.FilterCardBodies.5" xml:space="preserve">
+    <value>何かが一覧を絞り込んでいる間は、ツールバーの下にチップが並びます。先頭はツリーの範囲で、続いてフィルターごとに1つずつ表示され、その数が「フィルター」ボタンの数字です。チップをクリックすると解除され、「リセット」ですべてのチップと検索を解除します。</value>
+  </data>
+  <data name="Help.FilterCardBodies.6" xml:space="preserve">
+    <value>一覧が空になると、原因のフィルターをチップで示します。クリックするとそのフィルターだけを解除でき、「フィルターをリセット」ですべて解除します。</value>
+  </data>
+  <data name="Help.FiltersTip" xml:space="preserve">
+    <value>フィルター、並び順、表示中のキャラクターは、セッションをまたいで記憶されます。</value>
+  </data>
+  <data name="Help.QuestCardTitles.0" xml:space="preserve">
+    <value>受注条件</value>
+  </data>
+  <data name="Help.QuestCardTitles.1" xml:space="preserve">
+    <value>道筋</value>
+  </data>
+  <data name="Help.QuestCardTitles.2" xml:space="preserve">
+    <value>次に解放</value>
+  </data>
+  <data name="Help.QuestCardTitles.3" xml:space="preserve">
+    <value>操作バー</value>
+  </data>
+  <data name="Help.QuestCardTitles.4" xml:space="preserve">
+    <value>情報元</value>
+  </data>
+  <data name="Help.QuestCardTitles.5" xml:space="preserve">
+    <value>ジャーナル</value>
+  </data>
+  <data name="Help.QuestCardBodies.0" xml:space="preserve">
+    <value>クエストの画像の下にある最初のカードです。すべての受注条件に✓または✗が付き、妨げている条件には金色のバーとラベルが付きます。✗にマウスを合わせると、必要なランクやレベルなど、足りない内容が正確に表示されます。一覧の下の「注記:」は、条件を満たさなくてもゲームが受注させる一部のクエストについて説明します。</value>
+  </data>
+  <data name="Help.QuestCardBodies.1" xml:space="preserve">
+    <value>前提クエストの連なりを星図で示します。クエストごとに月が糸でつながり、踏破した部分は金色、未踏破の部分は破線で、拡張パッケージごとに帯が分かれます。完了した区間はビーズにまとめられ（「踏破した月 12」）、クリックすると展開します。2つの前提クエストのどちらでもよいクエストでは、もう一方の入口が糸の横に中抜きの月として表示され、クリックするとその道筋を表示します。このクエストは光輪付きの大きな月です。スクロールで見えなくなったときは「対象」ボタンで戻れます。どのステップもクリックで確認できます。</value>
+  </data>
+  <data name="Help.QuestCardBodies.2" xml:space="preserve">
+    <value>このクエストの下で糸が枝分かれし、報告後に解放されるものを示します。項目をクリックするとそこへ移動します。</value>
+  </data>
+  <data name="Help.QuestCardBodies.3" xml:space="preserve">
+    <value>ペインの下部には「マップにフラグ」（Lifestreamがインストールされている場合は代わりに「テレポ」）、続いて「ピン留め」「道筋を表示」「チャットにリンク」「座標をコピー」「ジャーナルを開く」「レポート」が並びます。すべてのボタンはキーボードで操作でき、グレー表示のボタンはマウスを合わせると理由を表示します。上の依頼人カードには、NPC、エリア、座標が表示されます。</value>
+  </data>
+  <data name="Help.QuestCardBodies.4" xml:space="preserve">
+    <value>最後の行は状態の情報元を示します。ログイン中のキャラクターなら「確認: たった今 · ライブ」、保存済みのキャラクターなら「Michiruのスナップショットより（2日前）」、初回ログイン前なら「ログインするとこのクエストを確認できます」です。</value>
+  </data>
+  <data name="Help.QuestCardBodies.5" xml:space="preserve">
+    <value>完了したクエストでは、ペイン下部のジャーナルカードが、ゲーム自身のファイルから、ゲームが記したとおりのジャーナルの記述と目的を表示します。「ジャーナルを読む」で開き、「記述をコピー」で1つの記述をコピーします。受注中のクエストでは現在の段階までの記述を表示し、それより先は表示しません。受注していないクエストでは何も表示しません。ログイン中のキャラクターでは、ゲームで表示されたとおりの文章になります。保存済みのキャラクターでは、読み手によって変わる語句を両方の表記（彼/彼女）で表示します。設定 › ジャーナル本文 › 「完了済みクエストのジャーナル本文を検索」（初期設定はオフ）をオンにすると、検索ボックスでジャーナルの記述の語句からもクエストを探せます。対象は表示中のキャラクターが完了したクエストだけです。初回はプラグインがバックグラウンドで全クエストの本文を読み込み（数秒）、本文ではなく語句の索引を設定フォルダーに保存します。索引はゲームのパッチ後に再構築されます。</value>
+  </data>
+  <data name="Help.QuestTip" xml:space="preserve">
+    <value>クエストを選んでいないときは、ペインに「今夜」が表示されます。今すぐ受注できるクエストの数（「表示する」で一覧をそれらに絞り込みます）、次のメインクエストとそれを妨げているもの、開催中のイベント、受注可能なピン留めクエストです。一覧の行の右クリックメニューからも、ピン留め、マップのフラグ、ジャーナル、名前をコピー、道筋を表示、チャットにリンクを利用できます。</value>
+  </data>
+  <data name="Help.UniqueTitle" xml:space="preserve">
+    <value>ユニークとは</value>
+  </data>
+  <data name="Help.UniqueBody" xml:space="preserve">
+    <value>月明かりの宝物とは、他では手に入らない報酬です。この道でしか見つからないエモート、マウント、ミニオン、オーケストリオン譜、カード、コンテンツ、機能などです。トレード、ショップ、アチーブメントでも手に入るものはユニークではありません。オンラインストアでも販売されている報酬や、コンテンツでもドロップする報酬の一部は、「ストア販売あり」または「他でもドロップ」の印付きで一覧に残ります（マウスを合わせると入手先が表示されます）。「他で入手できる報酬を隠す」にチェックを入れると、一覧と集計から除外されます。</value>
+  </data>
+  <data name="Help.ConfidenceTitle" xml:space="preserve">
+    <value>確度バッジ</value>
+  </data>
+  <data name="Help.ConfidenceBody" xml:space="preserve">
+    <value>各行には、判定の根拠を示すバッジが付きます。一覧でバッジにマウスを合わせると出典が表示されます。</value>
+  </data>
+  <data name="Help.ConfidenceStaticMeaning" xml:space="preserve">
+    <value>ゲームデータのみに基づく</value>
+  </data>
+  <data name="Help.ConfidenceCommunityMeaning" xml:space="preserve">
+    <value>プレイヤーからの報告。未検証</value>
+  </data>
+  <data name="Help.ConfidenceCuratedMeaning" xml:space="preserve">
+    <value>手作業で確認し、プラグインに同梱</value>
+  </data>
+  <data name="Help.ConfidenceUserMeaning" xml:space="preserve">
+    <value>自分で行った上書き</value>
+  </data>
+  <data name="Help.HaveTitle" xml:space="preserve">
+    <value>所持</value>
+  </data>
+  <data name="Help.HaveBody" xml:space="preserve">
+    <value>表示中のキャラクターが報酬を所持しているかどうかです。エモート、マウント、ミニオン、オーケストリオン譜、カード、コンテンツはログイン中のクライアントから読み取るため、保存済みのスナップショットではダッシュが表示されます。</value>
+  </data>
+  <data name="Help.OverridesTitle" xml:space="preserve">
+    <value>上書き</value>
+  </data>
+  <data name="Help.OverridesBody" xml:space="preserve">
+    <value>行のコンテキストメニューの「ユニークではない（非表示）」でクエストを月明かりから外し、詳細ペインの「ユニークとして登録」で報酬名を記したメモとともに追加します。どちらも確認があります。確定ボタンを円弧が閉じるまで長押しするか、Shiftを押しながらクリックしてください。メモ欄でEnterを押しても確定します。「取り消し」の行が8秒間表示されます。</value>
+  </data>
+  <data name="Help.RestoreTitle" xml:space="preserve">
+    <value>元に戻す</value>
+  </data>
+  <data name="Help.RestoreBody" xml:space="preserve">
+    <value>行のコンテキストメニューまたは詳細ペインの「同梱の判定に戻す」で、どちらの操作も元に戻せます。非表示にしたクエストは確度フィルター「自分」の下に取り消し線付きで残り、元に戻せます。設定 › データにはすべての判定が「元に戻す」「すべて元に戻す」とともに一覧表示されます。上書きは user/overrides.json に保存され、アップデート後も残ります。</value>
+  </data>
+  <data name="Help.CharacterCardTitles.0" xml:space="preserve">
+    <value>スナップショット</value>
+  </data>
+  <data name="Help.CharacterCardTitles.1" xml:space="preserve">
+    <value>他のキャラクターを見る</value>
+  </data>
+  <data name="Help.CharacterCardTitles.2" xml:space="preserve">
+    <value>ダッシュボード</value>
+  </data>
+  <data name="Help.CharacterCardTitles.3" xml:space="preserve">
+    <value>アカウント一覧</value>
+  </data>
+  <data name="Help.CharacterCardTitles.4" xml:space="preserve">
+    <value>エクスポートと削除</value>
+  </data>
+  <data name="Help.CharacterCardTitles.5" xml:space="preserve">
+    <value>破棄したクエスト</value>
+  </data>
+  <data name="Help.CharacterCardTitles.6" xml:space="preserve">
+    <value>シーズナルイベント</value>
+  </data>
+  <data name="Help.CharacterCardTitles.7" xml:space="preserve">
+    <value>解放ルート</value>
+  </data>
+  <data name="Help.CharacterCardTitles.8" xml:space="preserve">
+    <value>不在の間に</value>
+  </data>
+  <data name="Help.CharacterCardBodies.0" xml:space="preserve">
+    <value>キャラクターから読み取ったすべての情報です。完了済みクエスト、ジャーナル、ジョブレベル、グランドカンパニー、友好部族、解放済みのコンテンツを含みます。キャラクターごとに1つ保存され、プレイ中とログアウト時に更新されます。</value>
+  </data>
+  <data name="Help.CharacterCardBodies.1" xml:space="preserve">
+    <value>保存済みのキャラクターを選ぶと、そのキャラクターとしてカタログを閲覧できます。ツールバーのライブ表示の丸印が中抜きになり、バナーにスナップショットの名前が表示されます。</value>
+  </data>
+  <data name="Help.CharacterCardBodies.2" xml:space="preserve">
+    <value>ジャーナルのセクション別達成状況、月明かりの進行状況、ピン留め、最近の活動、ロール別のジョブレベル、グランドカンパニーと友好部族の状況。</value>
+  </data>
+  <data name="Help.CharacterCardBodies.3" xml:space="preserve">
+    <value>下部には、ジャーナルで選択中のクエストについて、キャラクターを切り替えずに全キャラクターの状態を表示します。</value>
+  </data>
+  <data name="Help.CharacterCardBodies.4" xml:space="preserve">
+    <value>「JSONをエクスポート」は、設定フォルダー内のexportsフォルダーにスナップショットを書き出します。表計算ソフトやコレクション管理ツール向けには、設定 › データ › エクスポート（または /tsuki export）で、完了済みクエストや月明かりのコレクションをJSONまたはCSVで書き出せます。「キャラクター名を含める」にチェックを入れない限り名前は含まれず、何もアップロードされません。「削除」は保存済みのキャラクターを削除します。設定からはすべてのデータを削除できます。</value>
+  </data>
+  <data name="Help.CharacterCardBodies.5" xml:space="preserve">
+    <value>完了せずにジャーナルから外れたクエストは、「破棄したクエスト（N）」に、到達していた段階と時期（「5段階中3段階目 · 2日前」）とともに表示され、「フラグ」「テレポ」「表示」で再受注に向かえます。「ジャーナルで表示」は破棄のフィルターをオンにします。破棄した時点でチャットに「破棄: [クエスト]（5段階中3段階目）」と表示されます（設定 › 通知）。再受注するか完了すると、その行は消えます。</value>
+  </data>
+  <data name="Help.CharacterCardBodies.6" xml:space="preserve">
+    <value>シーズナルイベントの開催中は、「シーズナルイベント」にそのクエストが月、状態、依頼人とともに表示され、Todoオーバーレイでは開始できるものや受注中のものが「開催中のイベントクエスト」に表示されます。ログイン時には、イベントごとに1回、チャットに「紅蓮祭開催中: 受注可能なクエスト2件」と表示されます（設定 › 通知）。終了日（「8月28日終了（ロードストーン）」）は、ロードストーンで告知された場合にだけ表示されます。それ以外は「開催中」と表示し、推測はしません。「年別の完了済みシーズナルクエスト」には履歴が残ります。年は、ロードストーンがそのイベントに付けた年か、最も近い告知済みの回から数えた年です。</value>
+  </data>
+  <data name="Help.CharacterCardBodies.7" xml:space="preserve">
+    <value>1つの目的のためにキャラクターがまだ必要なすべてのクエストを、順番に表示します。クエストの下の道標ボタン（「ここへのルート」）、月明かりの行のメニューの「この報酬へのルート」、ジョブクエストの横の「解放ルート…」（またはジョブの下のクラスを右クリック）から、青魔道士などのジョブへのルートを表示できます。各クエストは必要なクエストの後に並び、選択肢がある場合は低いレベルから並びます。レベルの壁はレベル上げが必要な位置を示し、メインクエストの節目でリストが区切られます。2つの前提クエストのどちらでもよいクエストでは短いほうの道を使い、もう一方を件数とともに表示します。保存済みのサブキャラクターを表示中なら、そのキャラクターのルートになります。「ルートをコピー」は名前を含まないMarkdownのリストとしてコピーします。「すべてピン留め」（長押し、またはShiftを押しながらクリック）は、すべてのステップをTodoオーバーレイ用にピン留めし、取り消しもできます。</value>
+  </data>
+  <data name="Help.CharacterCardBodies.8" xml:space="preserve">
+    <value>14日以上間が空いたあと（設定 › 通知）、詳細ペインの上にカードが表示され、当時ジャーナルにあったクエストとそれぞれの現在の状況、メインクエストの当時と現在、それ以降にゲームで追加されたもの（パッチ系列別。「ジャーナルで表示」で追加パッチのフィルターを設定します）、開催中のイベント、上がったレベルを示します。すべてのキャラクターがそれだけの期間離れているときだけ表示されるので、放置中のサブキャラクターで表示されることはなく、セッションごとに1回だけ開きます。以前の記録がない場合は、最後にプレイした時期を尋ねます。記録の行の横にある「不在の間に…」でいつでも開くことができ、「今後表示しない」でそのキャラクターでは表示しなくなります。</value>
+  </data>
+  <data name="Help.FlightCardTitles.0" xml:space="preserve">
+    <value>飛行タブ</value>
+  </data>
+  <data name="Help.FlightCardTitles.1" xml:space="preserve">
+    <value>クエスト風脈と風脈の泉</value>
+  </data>
+  <data name="Help.FlightCardTitles.2" xml:space="preserve">
+    <value>周辺のクエストウィンドウ</value>
+  </data>
+  <data name="Help.FlightCardTitles.3" xml:space="preserve">
+    <value>サーバー情報バーの項目</value>
+  </data>
+  <data name="Help.FlightCardTitles.4" xml:space="preserve">
+    <value>/tsuki zone と /tsuki which</value>
+  </data>
+  <data name="Help.FlightCardBodies.0" xml:space="preserve">
+    <value>飛行できるすべてのエリアが拡張パッケージごとに並び、風脈に交感するにつれて満ちる光輪が付きます。現在いるエリアには●が付き、最初に選択されます。エリアを選ぶと、一覧にそのクエスト風脈が並びます。交感済みかどうか、クエストの状態と状況、依頼人への「フラグ」または「テレポ」です。</value>
+  </data>
+  <data name="Help.FlightCardBodies.1" xml:space="preserve">
+    <value>クエスト風脈はクエストから得られ、多くの拡張パッケージでは1エリアに5つあり、クエストを完了すると交感します。風脈の泉はフィールドで触れて交感します。このタブは数を数えますが、位置は示しません。最寄りの泉の方向は、アクション＆特性の汎用アクションにある「風脈計」で確認してください。</value>
+  </data>
+  <data name="Help.FlightCardBodies.2" xml:space="preserve">
+    <value>/tsuki nearby で、現在のエリアで開始できるクエストを表示する小さなウィンドウが開きます。状態の月、レベル、ジョブが表示されます。名前をクリックするとジャーナルで表示し、ダブルクリックするとマップ上の依頼人にフラグを立て、右クリックまたは…で「フラグ」「テレポ」「チャットにリンク」を開きます。「このエリアで受注中」を展開すると、依頼人がこのエリアにいる受注中のクエストが表示されます。歯車から設定を変更できます。</value>
+  </data>
+  <data name="Help.FlightCardBodies.3" xml:space="preserve">
+    <value>サーバー情報バーの ☾ N は、ここで開始できるクエストの数です。マウスを合わせると最初の5件の名前が表示され、クリックすると周辺のクエストが開きます。「開始できるものがなくても項目を表示」がオンでない限り、0件のときは非表示になります。周辺のクエストの歯車から完全にオフにすることもできます。</value>
+  </data>
+  <data name="Help.FlightCardBodies.4" xml:space="preserve">
+    <value>/tsuki zone は、現在のエリアで開始できるクエストを、レベル順に最大10件までチャットにリンクで表示します。/tsuki which は、ターゲット中のNPCが依頼するすべてのクエストを状態とともに表示します。どちらも評価済みのキャラクターが必要です。周辺のクエストウィンドウは、同じリストを画面に表示し続けます。</value>
+  </data>
+  <data name="Help.CommandKeys.0" xml:space="preserve">
+    <value>/tsukimichi</value>
+  </data>
+  <data name="Help.CommandKeys.1" xml:space="preserve">
+    <value>/tsuki</value>
+  </data>
+  <data name="Help.CommandKeys.2" xml:space="preserve">
+    <value>/tsukimichi search &lt;text&gt;</value>
+  </data>
+  <data name="Help.CommandKeys.3" xml:space="preserve">
+    <value>/tsukimichi settings</value>
+  </data>
+  <data name="Help.CommandKeys.4" xml:space="preserve">
+    <value>/tsukimichi help</value>
+  </data>
+  <data name="Help.CommandKeys.5" xml:space="preserve">
+    <value>/tsukimichi glyphs</value>
+  </data>
+  <data name="Help.CommandKeys.6" xml:space="preserve">
+    <value>/tsuki zone</value>
+  </data>
+  <data name="Help.CommandKeys.7" xml:space="preserve">
+    <value>/tsuki which</value>
+  </data>
+  <data name="Help.CommandKeys.8" xml:space="preserve">
+    <value>/tsuki why [quest name]</value>
+  </data>
+  <data name="Help.CommandKeys.9" xml:space="preserve">
+    <value>/tsuki nearby</value>
+  </data>
+  <data name="Help.CommandKeys.10" xml:space="preserve">
+    <value>/tsuki todo</value>
+  </data>
+  <data name="Help.CommandKeys.11" xml:space="preserve">
+    <value>/tsuki report [quest name]</value>
+  </data>
+  <data name="Help.CommandKeys.12" xml:space="preserve">
+    <value>/tsuki export [quests|moonlit] [json|csv]</value>
+  </data>
+  <data name="Help.CommandKeys.13" xml:space="preserve">
+    <value>Ctrl+F</value>
+  </data>
+  <data name="Help.CommandKeys.14" xml:space="preserve">
+    <value>Esc</value>
+  </data>
+  <data name="Help.CommandKeys.15" xml:space="preserve">
+    <value>メニューキー、Shift+F10、…</value>
+  </data>
+  <data name="Help.CommandKeys.16" xml:space="preserve">
+    <value>Ctrl+1～5、F、Enter、P</value>
+  </data>
+  <data name="Help.CommandMeanings.0" xml:space="preserve">
+    <value>ウィンドウを開く／閉じる</value>
+  </data>
+  <data name="Help.CommandMeanings.1" xml:space="preserve">
+    <value>同上の短縮形。すべてのサブコマンドはどちらでも使えます</value>
+  </data>
+  <data name="Help.CommandMeanings.2" xml:space="preserve">
+    <value>検索して、該当するクエストをリンクとしてチャットに表示します。/tsukimichi &lt;text&gt; でも同じです</value>
+  </data>
+  <data name="Help.CommandMeanings.3" xml:space="preserve">
+    <value>設定を開きます（/tsukimichi config でも同じです）</value>
+  </data>
+  <data name="Help.CommandMeanings.4" xml:space="preserve">
+    <value>このウィンドウを開きます</value>
+  </data>
+  <data name="Help.CommandMeanings.5" xml:space="preserve">
+    <value>グリフ一覧: すべてのサイズのすべての月</value>
+  </data>
+  <data name="Help.CommandMeanings.6" xml:space="preserve">
+    <value>現在のエリアで開始できるクエストを、レベル順にチャットリンクで表示します</value>
+  </data>
+  <data name="Help.CommandMeanings.7" xml:space="preserve">
+    <value>ターゲット中のNPCが依頼するすべてのクエストを、状態とともに表示します</value>
+  </data>
+  <data name="Help.CommandMeanings.8" xml:space="preserve">
+    <value>選択中のクエスト（または指定したクエスト）が受注できない理由を表示します。状態と妨げている条件、続いて受注条件ごとに達成／未達と比較した値を1行ずつ、さらにゲームの挙動が異なることが知られている場合は精査済みの注記を表示します。受注可能なクエストでは、話しかける相手をマップリンク付きで示します。NPCのターゲットバーのメニュー（「Tsukimichi: このNPCのクエスト」）からも、同じ一覧をジャーナルで開けます</value>
+  </data>
+  <data name="Help.CommandMeanings.9" xml:space="preserve">
+    <value>周辺のクエストウィンドウを開く／閉じる: 現在のエリアで開始できるもの</value>
+  </data>
+  <data name="Help.CommandMeanings.10" xml:space="preserve">
+    <value>Todoオーバーレイを表示／非表示: ピン留め、開催中のイベントクエスト、ここで開始できる解放クエスト、次のメインクエスト、ジョブクエスト</value>
+  </data>
+  <data name="Help.CommandMeanings.11" xml:space="preserve">
+    <value>選択中のクエスト（または指定したクエスト）の診断ブロックをクリップボードにコピーします。GitHubのissueにそのまま貼り付けられます。詳細ペインの「レポート」ボタンも同じです</value>
+  </data>
+  <data name="Help.CommandMeanings.12" xml:space="preserve">
+    <value>表示中のキャラクターの完了済みクエスト、月明かりのコレクション、またはその両方を、JSONまたはCSV（指定がなければ設定の形式）でexportsフォルダーに書き出し、保存先を表示します。docs/export-format.md を参照してください。コンテンツID、アカウント、ワールドは含まれず、名前は設定 › データ › エクスポート › 「キャラクター名を含める」にチェックがある場合のみ含まれます</value>
+  </data>
+  <data name="Help.CommandMeanings.13" xml:space="preserve">
+    <value>ウィンドウにフォーカスがある間、検索欄にカーソルを移動します</value>
+  </data>
+  <data name="Help.CommandMeanings.14" xml:space="preserve">
+    <value>開いているメニューまたはフィルターパネルを閉じます。どちらも開いていなければウィンドウを閉じます</value>
+  </data>
+  <data name="Help.CommandMeanings.15" xml:space="preserve">
+    <value>クエスト一覧と月明かりの一覧で、フォーカス中の行のメニューを開きます。右クリックで開くものと同じメニューです。行の右端の…ボタン（マウスを合わせるかフォーカスすると表示）を左クリックしても開きます</value>
+  </data>
+  <data name="Help.CommandMeanings.16" xml:space="preserve">
+    <value>設定 › キーボードで有効にしない限りオフ: タブの切り替え、選択中のクエストの依頼人にフラグ、ジャーナルで表示、ピン留め。これらのキーはゲームにも伝わります。初期設定ではCtrl+1～5はホットバー2です</value>
+  </data>
+  <data name="Help.CountsCardTitles.0" xml:space="preserve">
+    <value>削除されたクエストと隠しクエスト</value>
+  </data>
+  <data name="Help.CountsCardTitles.1" xml:space="preserve">
+    <value>開催期間外のシーズナルクエスト</value>
+  </data>
+  <data name="Help.CountsCardTitles.2" xml:space="preserve">
+    <value>選択による受注不可</value>
+  </data>
+  <data name="Help.CountsCardTitles.3" xml:space="preserve">
+    <value>「解放クエスト」は独自の分類</value>
+  </data>
+  <data name="Help.CountsCardTitles.4" xml:space="preserve">
+    <value>リピートクエストは1件と数える</value>
+  </data>
+  <data name="Help.CountsCardBodies.0" xml:space="preserve">
+    <value>後のパッチでゲームから削除されたクエスト（5.3での新生エオルゼアの整理、召喚士の刷新、クリスタルタワーの書き直し、いくつかの削除されたサブクエスト）は、初期設定でオフの「ゲームから削除」ノードに置かれ、どの合計にも数えません。完了したものは、ノードまたは「削除済みを含める」で表示したときに「完了済み」と表示され、わかっている場合は詳細ペインに削除されたパッチが表示されます。ゲームのジャーナルには表示されないものの受注はできるクエスト（So You Want to Be a Gladiator、Leves of Kugane、Sights of the North、エウレカの導入クエスト、ヨルハやレジスタンスウェポンの隠しステップ）は、リンク先のジャンルに振り分けられるため、クラスのクエストはその導入から始まり、エリアのサブクエストにはそのリーヴ解放が含まれます。どのルールで振り分けたかは詳細ペインに表示されます。クラスの導入クエスト（So You Want to Be a Gladiatorなど、新生エオルゼアの各クラス）は一覧には表示されますが数えません。最初に選んだクラスでは「Way of the …」が直接渡され、導入クエストが提示されないため、数えるとそのクラスが永久に1件足りなくなるからです。ジョブの導入クエスト（A Dark Spectacle、So You Want to Be a Machinist、What's Your Sign）は通常どおり数えます。設定 › 表示 › ジャーナル分類 › 「従来」を選ぶと、それらをすべて0.6.1より前のリリースと同じひとまとめの分類に戻します。</value>
+  </data>
+  <data name="Help.CountsCardBodies.1" xml:space="preserve">
+    <value>開催されていないイベントのシーズナルクエストは「シーズナルイベント開催期間外」として条件未達と表示され、受注不可のクエストと同じくジャンルの合計から除外されるので、それがなくても光輪は閉じます。イベントの開催中は再び数えます。終了日がわかっていて既に過ぎたイベントのクエストは、恒久的に受注不可になります。</value>
+  </data>
+  <data name="Help.CountsCardBodies.2" xml:space="preserve">
+    <value>選択によって受注できなくなったクエスト（グランドカンパニーに入隊した後の、他の2つのグランドカンパニーのクエストなど）は受注不可となり、合計から除外されます。そのためカテゴリーはそれらが未完了でも100%になりますが、Wikiのジャンル別の件数にはそれらが含まれます。</value>
+  </data>
+  <data name="Help.CountsCardBodies.3" xml:space="preserve">
+    <value>「解放クエスト」はジャーナルのカテゴリーではありません。ゲームが青い＋アイコンで表示するすべてのクエスト、精査済みのコンテンツ解放とシステム解放、そしてコンテンツ、ジョブ、アクション、特性、風脈、青魔法を報酬とするクエストを集めたものです。メインクエストとリピートクエストは除外されます。その合計はジャーナルのどのページとも一致せず、精査済みの一覧が変わると変動します。</value>
+  </data>
+  <data name="Help.CountsCardBodies.4" xml:space="preserve">
+    <value>デイリーやウィークリーのクエストは、何回報告しても1行・1件と数えます。「今日は完了」や「今週は完了」は、既に報告したものを示します。これらも完了済みとして数えます。</value>
+  </data>
+  <data name="Help.CountsTip" xml:space="preserve">
+    <value>「状態」フィルターで受注不可やシーズナルのクエストを再表示でき、「ゲームから削除」ノードと「削除済みを含める」で削除されたクエストを表示できます。どちらもオンの間は件数が変わります。</value>
+  </data>
+  <data name="Help.QuirkCardTitles.0" xml:space="preserve">
+    <value>ゲームが省略する前提</value>
+  </data>
+  <data name="Help.QuirkCardTitles.1" xml:space="preserve">
+    <value>友好部族の最高ランクの名称</value>
+  </data>
+  <data name="Help.QuirkCardTitles.2" xml:space="preserve">
+    <value>7.5で変わった前提クエスト</value>
+  </data>
+  <data name="Help.QuirkCardTitles.3" xml:space="preserve">
+    <value>カスタムデリバリーのランクとイベントの章</value>
+  </data>
+  <data name="Help.QuirkCardTitles.4" xml:space="preserve">
+    <value>月明かりでのストア再販</value>
+  </data>
+  <data name="Help.QuirkCardTitles.5" xml:space="preserve">
+    <value>パッチ後に停止するゲームフック</value>
+  </data>
+  <data name="Help.QuirkCardTitles.6" xml:space="preserve">
+    <value>コンテンツファインダー解放ヒント</value>
+  </data>
+  <data name="Help.QuirkCardBodies.0" xml:space="preserve">
+    <value>プラグインは、ゲームのデータに記録されたすべての前提条件を表示します。一部のクエストでは、ゲームがそのうち1つを免除します。たとえば「Up in Arms」はゼニスを入手済みなら任意となるため、Tsukimichiが「Up in Arms」を未完了と表示していても、その次のクエストは受注できます。既知のケースには精査済みの注記があり、詳細ペインの受注条件の下に「注記: …」として表示され、/tsuki why でも表示され、「レポート」にも含まれます。ここで条件未達と表示されているクエストをNPCが提示し、注記もない場合は、「レポート」を使ってください。例外として追加できます。</value>
+  </data>
+  <data name="Help.QuirkCardBodies.1" xml:space="preserve">
+    <value>パッチ7.0で「蛮族」は「友好部族」に改称され、最高ランクの名称も変わりました（英語版ではBloodsworn → Allied）。Tsukimichiは現在の名称を使うため、古い攻略情報や7.0以前に書かれたクエスト文とは、受注条件のランク名が異なることがあります。どちらも同じランクで、そのランクを与えるクエストにはその旨の注記があります。</value>
+  </data>
+  <data name="Help.QuirkCardBodies.2" xml:space="preserve">
+    <value>パッチ7.5で、11件のクラフター・ギャザラーのサブクエスト（スプレンダーツール、コスモエクスプローラー、クガネ、クリスタリウム、オールド・シャーレアン、トライヨラのスクリップ交換など）の前提クエストが、「Go West, Craftsman」から「Inscrutable Tastes」（イシュガルド：下層のMorgayneから受注するレベル50のクエスト）に変わりました。Tsukimichiは現在のゲームデータに従うため、古い攻略情報が「Go West, Craftsman」と記しているところで「Inscrutable Tastes」を表示します。影響を受ける各クエストには、パッチノートを根拠とする注記があります。</value>
+  </data>
+  <data name="Help.QuirkCardBodies.3" xml:space="preserve">
+    <value>カスタムデリバリーの依頼主の満足度ランク、モグレター配達の配達士レベル、段階的に進むシーズナルイベントの現在の章は、0.6.2から判定しています。M'naagoとの満足度ランク4、配達士レベル7、まだ始まっていない章を必要とするクエストは、その理由とともに条件未達と表示されます。章で判定するのは、段階ごとにクエストが開放される7つのイベント（エッグハント2014など）だけで、その他のシーズナルクエストは、ゲームが報告する段階にかかわらず、イベントの開催中は常に受注可能です。以前のバージョンで書かれたキャラクターファイルにはこれらの値がないため、次に記録されるまでは以前と同じように表示されます。ゲームはイベントの章を3か所に保持しており、依頼人がどれに従うかはまだわかっていません。プラグインは1つ目（GameMain）を読み取り、3つすべてをDalamudのログに書き出します。記録はキャラクターごとに1回、およびイベントの開始・終了・段階の変更のたびに、「[festival probe]」の下に残ります。イベント中に章の判定がおかしいと思われる場合は、そのログ行をレポートに添えて送ってください。</value>
+  </data>
+  <data name="Help.QuirkCardBodies.4" xml:space="preserve">
+    <value>過去のシーズナル報酬の一部（ミニオン、エモート、マウント、バーディング、オーケストリオン譜、ファッションアクセサリー）はオンラインストアで再販されていますが、ゲームファイルからはそれを知ることができません。月明かりでは、精査済みの一覧が扱う行にその旨を表示します。一覧にないものを見つけた場合は、ストアのページを根拠としてデータ修正のissueを作成してください。</value>
+  </data>
+  <data name="Help.QuirkCardBodies.5" xml:space="preserve">
+    <value>アイテムのツールチップパネル、アイテムとNPCのメニュー項目、サーバー情報バーの項目、コンテンツファインダー解放ヒントは、ゲーム自身のインターフェースに沿って表示されるため、パッチで位置が変わることがあります。Tsukimichiの各リリースは、それらを検証したゲームバージョンを記録しています。より新しいゲームでは、そのバージョンでアップデートが検証されるまで停止し、ログイン時のチャットと設定 › 連携の通知でその旨を知らせます。ジャーナル、月明かり、キャラクター、周辺、Todoオーバーレイ、すべての /tsuki コマンドは通常どおり動作します。それでもフックを使う場合は、設定 › 連携 › 「未検証のバージョンでゲームフックを有効化」にチェックを入れてください。これは現在のゲームバージョンにのみ適用され、次のパッチで再び停止します。表示位置がずれた場合は、チェックを外すとすぐに停止します。</value>
+  </data>
+  <data name="Help.QuirkCardBodies.6" xml:space="preserve">
+    <value>コンテンツファインダーまたはレイドファインダーで鍵マークの付いたコンテンツを選ぶと、ウィンドウの横に小さなパネルが表示され、それを解放するクエストを、月、待っている条件、ここで表示するボタン、依頼人にフラグを立てるボタンとともに示します。マウスの下のコンテンツではなく選択したコンテンツに従い、ログイン中のキャラクターについて表示します。ゲームデータがリンクしている解放、精査済みの一覧（新生エオルゼアと黄金のレガシーのリリース時のダンジョン、クリスタルタワーとシャドウ・オブ・マハのアライアンスレイド、蒼天のイシュガルドの任意ダンジョンなど）、月明かりのコンテンツ解放を把握しています。それ以外の鍵付きコンテンツでは、推測せずに何も表示しません。パネルが誤ったクエストを示す場合や、解放クエストがわかっている鍵付きコンテンツで何も表示されない場合は、コンテンツ名を添えてデータ修正のissueを作成してください。設定 › 連携 › 「コンテンツファインダー解放ヒント」でオフにできます。</value>
+  </data>
+  <data name="Help.QuirksTip" xml:space="preserve">
+    <value>これらに当てはまらないのに状態がおかしいクエストがありますか？詳細ペインの「レポート」で、クエストID、状態、すべての受注条件の判定を含み、キャラクターを特定する情報を含まない診断ブロックをコピーできます。GitHubのissueに貼り付けてください。</value>
+  </data>
+  <data name="Help.SpoilerCardTitles.0" xml:space="preserve">
+    <value>この先のメインクエスト名</value>
+  </data>
+  <data name="Help.SpoilerCardTitles.1" xml:space="preserve">
+    <value>ジャーナルのアートワーク</value>
+  </data>
+  <data name="Help.SpoilerCardTitles.2" xml:space="preserve">
+    <value>若葉モード</value>
+  </data>
+  <data name="Help.SpoilerCardTitles.3" xml:space="preserve">
+    <value>キャラクターごとの設定</value>
+  </data>
+  <data name="Help.SpoilerCardTitles.4" xml:space="preserve">
+    <value>先に進む前に</value>
+  </data>
+  <data name="Help.SpoilerCardBodies.0" xml:space="preserve">
+    <value>現在のメインクエストより一定数（初期設定は3件）以上先にあるメインクエストは、名前が表示されるすべての場所で「メインクエスト（Lv83）」と表示されます。一覧、詳細ペイン、ステータスバー、Todoオーバーレイ、キャラクター、チャットリンク、Wotsit、診断ブロックです。検索でもこの仮の名前でしか見つかりません。受注済みまたは完了済みのクエストは常に名前が表示されます。詳細ペインの「この名前を表示」で、プラグインが再読み込みされるまで1つのクエストの名前を表示できます。</value>
+  </data>
+  <data name="Help.SpoilerCardBodies.1" xml:space="preserve">
+    <value>クエストのバナーアートはクエストの内容を表すため、クエストがジャーナルにあるか完了してからのみ表示されます。それまでは、詳細ペインと名前のツールチップにその旨のカードが表示されます。</value>
+  </data>
+  <data name="Help.SpoilerCardBodies.2" xml:space="preserve">
+    <value>フィルターパネルの若葉モードのクイックビューは、一覧をメインクエストが到達した拡張パッケージに限定し、手の届くクエストの数を表示して、ツリーの以降のセクションを件数だけに折りたたみます。</value>
+  </data>
+  <data name="Help.SpoilerCardBodies.3" xml:space="preserve">
+    <value>設定 › ネタバレで、名前やアートワークの非表示をオフにしたり、名前を表示する先のクエスト数（0～10）を設定したりでき、表示中のキャラクター用の個別設定もあります。ストーリーを終えたキャラクターではすべてを表示し、サブキャラクターは保護したままにできます。</value>
+  </data>
+  <data name="Help.SpoilerCardBodies.4" xml:space="preserve">
+    <value>一部の任意コンテンツはストーリーの後の場面を変えますが、ゲームはそれを知らせません。メインクエスト（一部はサイドストーリー）がそうした地点に到達し、そのコンテンツが未完了の場合、キャラクタータブのメインクエストの行の下と「今夜」カードに次の行が表示されます: 「先に進む前に: 先に希望の園エデンのレイドシリーズを終えてください。」何をすべきかだけを示し、何が変わるかは示しません。また、そのクエストが受注可能か受注中の間だけ表示され、それより前や後には表示されません。下の「理由？（ネタバレ）」はクリックしたときだけ理由を表示し、閉じるまでそのキャラクターでは開いたままになります。チャットにはキャラクターごとに1回表示されます（設定 › 通知）。設定 › ネタバレ › 「「先に進む前に」の注記を表示」で、これらの行とチャットの通知をオフにできます。組み合わせはプレイヤーの報告をもとに精査しています。おかしいと思われる場合は、データ修正のissueを作成してください。</value>
+  </data>
+  <data name="Help.SpoilersTip" xml:space="preserve">
+    <value>キャラクターがいない場合（またはまだデータのない保存済みキャラクターの場合）は基準となる位置がないため、最初の記録までは、最初のクエスト以降のすべてのメインクエスト名が非表示になります。</value>
+  </data>
+  <data name="Help.Tips.0" xml:space="preserve">
+    <value>「完了済みを隠す」と「今すぐ着手可能」を組み合わせると、次にすべきことを最も早く確認できます。</value>
+  </data>
+  <data name="Help.Tips.1" xml:space="preserve">
+    <value>クエストをピン留めすると、キャラクターのダッシュボードにその状況とともに表示され、ワンクリックで開けます。</value>
+  </data>
+  <data name="Help.Tips.2" xml:space="preserve">
+    <value>検索ボックスはクエストIDも受け付けます。Wikiからコピーして貼り付けてください。</value>
+  </data>
+  <data name="Help.Tips.3" xml:space="preserve">
+    <value>受注条件の✗にマウスを合わせると、必要なランクやレベルなど、足りない内容が正確に表示されます。</value>
+  </data>
+  <data name="Help.Tips.4" xml:space="preserve">
+    <value>道筋はクリックできます。前のステップを選ぶと、その受注条件を確認できます。</value>
+  </data>
+  <data name="Help.Tips.5" xml:space="preserve">
+    <value>ツリーの範囲をジャンルに絞り、レベル順に並べると、エリアのサブクエストを順番に進められます。</value>
+  </data>
+  <data name="Help.Tips.6" xml:space="preserve">
+    <value>報酬の種類のフィルターは3段階です。種類ごとに、必須、除外、無視を選べます。</value>
+  </data>
+  <data name="Help.Tips.7" xml:space="preserve">
+    <value>ツールバーの丸印は、ライブのときは塗りつぶし、スナップショットのときは中抜きです。マウスを合わせると時刻が表示されます。</value>
+  </data>
+  <data name="Help.Tips.8" xml:space="preserve">
+    <value>新たに受注可能になったクエストのチャット通知は、初期設定ではオフです。設定でオンにできます（メインクエストは除外）。</value>
+  </data>
+  <data name="Help.Tips.9" xml:space="preserve">
+    <value>受注不可のクエストは合計から除外されるため、それらがなくてもカテゴリーは100%に達します。</value>
+  </data>
+  <data name="Help.Tips.10" xml:space="preserve">
+    <value>設定には1回のポーリングにかかる時間が表示されます。初期値の1秒で問題ありません。</value>
+  </data>
+  <data name="Help.Tips.11" xml:space="preserve">
+    <value>設定の「すべてのデータを削除」は、スナップショット、ピン留め、上書きを削除しますが、設定は残します。</value>
+  </data>
+  <data name="AddedInTooltip" xml:space="preserve">
+    <value>1つのパッチ系列で追加されたクエストだけを残します。7.5xは7.5、7.51、7.55など、7.5系のすべてです。設定中は、追加パッチが不明なクエストは非表示になります</value>
+  </data>
+  <data name="AddedInAny" xml:space="preserve">
+    <value>すべてのパッチ</value>
+  </data>
+  <data name="AddedInOptionFormat" xml:space="preserve">
+    <value>{0}x  （{1}件）</value>
+  </data>
+  <data name="AddedInChipFormat" xml:space="preserve">
+    <value>追加パッチ: {0}x</value>
+  </data>
+  <data name="NewThisPatchCaptionFormat" xml:space="preserve">
+    <value>{0}xの新規: 解放クエスト{1}件（先頭に表示）</value>
+  </data>
+  <data name="NewThisPatchCaptionOneFormat" xml:space="preserve">
+    <value>{0}xの新規: 解放クエスト1件（先頭に表示）</value>
+  </data>
+  <data name="PayoffFormat" xml:space="preserve">
+    <value>先に進む前に: {0}</value>
+  </data>
+  <data name="PayoffWhyClosed" xml:space="preserve">
+    <value>理由？（ネタバレ）</value>
+  </data>
+  <data name="PayoffWhyOpen" xml:space="preserve">
+    <value>理由を隠す</value>
+  </data>
+  <data name="PayoffWhyTooltip" xml:space="preserve">
+    <value>これが重要な理由を表示します。この先のストーリーでどう扱われるかを明かすため、ネタバレになります。</value>
+  </data>
+  <data name="PayoffProgressFormat" xml:space="preserve">
+    <value>この先のストーリーの場面を変える任意コンテンツです。{1}件中{0}件完了。クリックすると残りの最初の1件を選択します。</value>
+  </data>
+  <data name="PayoffChatFormat" xml:space="preserve">
+    <value>先に進む前に: {0} 次: {1}</value>
+  </data>
+  <data name="PayoffConfigShow" xml:space="preserve">
+    <value>「先に進む前に」の注記を表示</value>
+  </data>
+  <data name="PayoffConfigShowHint" xml:space="preserve">
+    <value>任意コンテンツによって場面が変わる地点にストーリーが到達すると、キャラクタータブのメインクエストの行の下と「今夜」カードに、先にすべきことを示す行が表示されます。オフにすると、この行とチャットの通知を非表示にします。</value>
+  </data>
+  <data name="PayoffConfigNotice" xml:space="preserve">
+    <value>この先のストーリーに関わる任意コンテンツをチャットで通知</value>
+  </data>
+  <data name="PayoffConfigNoticeHint" xml:space="preserve">
+    <value>「先に進む前に: 先に希望の園エデンのレイドシリーズを終えてください。」を、メインクエストが該当する地点に到達したときにキャラクターごとに1回表示します。理由は示しません。キャラクタータブと「今夜」カードには、「理由？（ネタバレ）」の奥に理由を添えて行が残ります。</value>
+  </data>
+  <data name="PlanTab" xml:space="preserve">
+    <value>青クエ</value>
+  </data>
+  <data name="PlanTabTooltip" xml:space="preserve">
+    <value>青クエ消化: 残っているすべての解放クエストを、拡張パッケージとエリアごとにストーリー順で</value>
+  </data>
+  <data name="PlanTitle" xml:space="preserve">
+    <value>青クエ消化</value>
+  </data>
+  <data name="PlanSummaryFormat" xml:space="preserve">
+    <value>残りの解放クエスト {0:N0}件 · 受注可能 {1:N0}件</value>
+  </data>
+  <data name="PlanSummaryBrowse" xml:space="preserve">
+    <value>ゲーム内のすべての解放クエストです。キャラクターを選ぶと残りを表示します。</value>
+  </data>
+  <data name="PlanKinds" xml:space="preserve">
+    <value>解放されるもの</value>
+  </data>
+  <data name="PlanShow" xml:space="preserve">
+    <value>表示</value>
+  </data>
+  <data name="PlanAllKinds" xml:space="preserve">
+    <value>すべての種類</value>
+  </data>
+  <data name="PlanAllKindsTooltip" xml:space="preserve">
+    <value>すべての種類の解放を再び表示します</value>
+  </data>
+  <data name="PlanKindChipTooltip" xml:space="preserve">
+    <value>クリックでこの種類を表示／非表示</value>
+  </data>
+  <data name="PlanReadyOnly" xml:space="preserve">
+    <value>受注可能のみ</value>
+  </data>
+  <data name="PlanReadyOnlyTooltip" xml:space="preserve">
+    <value>このジョブまたは他のジョブで今すぐ受注できるクエストのみ</value>
+  </data>
+  <data name="PlanSprout" xml:space="preserve">
+    <value>若葉モード</value>
+  </data>
+  <data name="PlanSproutTooltip" xml:space="preserve">
+    <value>メインクエストが到達した拡張パッケージのみ。ジャーナルの若葉モードのクイックビューがオンのときは自動でオンになります。</value>
+  </data>
+  <data name="PlanSproutHiddenFormat" xml:space="preserve">
+    <value>若葉モードで以降の拡張パッケージ{0}個を非表示</value>
+  </data>
+  <data name="PlanExpansions" xml:space="preserve">
+    <value>拡張パッケージ</value>
+  </data>
+  <data name="PlanExpansionCountFormat" xml:space="preserve">
+    <value>{0:N0} · 受注可能 {1:N0}</value>
+  </data>
+  <data name="PlanExpansionClickHint" xml:space="preserve">
+    <value>クリックでこの拡張パッケージのブロックを開きます</value>
+  </data>
+  <data name="PlanCopy" xml:space="preserve">
+    <value>チェックリストとしてコピー</value>
+  </data>
+  <data name="PlanCopyTooltip" xml:space="preserve">
+    <value>表示中の計画（フィルター適用後）を、DiscordやドキュメントにそのままMarkdownのチェックリストとしてコピーします。クエスト名はネタバレ防止に従い、キャラクター名は含まれません。</value>
+  </data>
+  <data name="PlanCopiedFormat" xml:space="preserve">
+    <value>{0:N0}件のクエストをコピーしました</value>
+  </data>
+  <data name="PlanShowingFormat" xml:space="preserve">
+    <value>{1:N0}件中{0:N0}件を表示</value>
+  </data>
+  <data name="PlanEmptyAllDone" xml:space="preserve">
+    <value>すべての解放クエストを完了しました。青いクエストは残っていません。</value>
+  </data>
+  <data name="PlanEmptyFiltered" xml:space="preserve">
+    <value>これらのフィルターに該当する解放クエストはありません。</value>
+  </data>
+  <data name="PlanLoading" xml:space="preserve">
+    <value>カタログを読み込み中…</value>
+  </data>
+  <data name="PlanCardFormat" xml:space="preserve">
+    <value>{0}  ·  残り{1:N0}件</value>
+  </data>
+  <data name="PlanCardReadyFormat" xml:space="preserve">
+    <value>受注可能 {0:N0}件</value>
+  </data>
+  <data name="PlanPin" xml:space="preserve">
+    <value>オーバーレイにピン留め</value>
+  </data>
+  <data name="PlanUnpin" xml:space="preserve">
+    <value>オーバーレイのピン留めを解除</value>
+  </data>
+  <data name="PlanPinTooltip" xml:space="preserve">
+    <value>この拡張パッケージの受注可能な解放クエストをTodoオーバーレイに表示します（オーバーレイもオンになります）</value>
+  </data>
+  <data name="PlanUnpinTooltip" xml:space="preserve">
+    <value>この拡張パッケージのブロックをTodoオーバーレイに表示するのをやめます</value>
+  </data>
+  <data name="PlanCardToggleTooltip" xml:space="preserve">
+    <value>クリックでこの拡張パッケージを折りたたみ／展開します</value>
+  </data>
+  <data name="PlanUnknownZone" xml:space="preserve">
+    <value>依頼人の位置不明</value>
+  </data>
+  <data name="PlanFlag" xml:space="preserve">
+    <value>フラグ</value>
+  </data>
+  <data name="PlanFlagTooltip" xml:space="preserve">
+    <value>マップ上の依頼人にフラグを立てます</value>
+  </data>
+  <data name="PlanReveal" xml:space="preserve">
+    <value>表示</value>
+  </data>
+  <data name="PlanRevealTooltip" xml:space="preserve">
+    <value>ジャーナルでクエストを表示します</value>
+  </data>
+  <data name="PlanRowClickHint" xml:space="preserve">
+    <value>クリックで詳細ペインにクエストを表示します</value>
+  </data>
+  <data name="PlanHelpTitle" xml:space="preserve">
+    <value>青クエ: 解放クエストを片付ける</value>
+  </data>
+  <data name="PlanHelpBody" xml:space="preserve">
+    <value>青クエタブには、残っているすべての青い解放クエストが、拡張パッケージ、エリアの順に並びます。エリアはストーリーで到達する順、クエストはレベル順です。各行には月、解放されるもの（ダンジョン、討伐・討滅戦、レイド、アライアンスレイド、フィールドオペレーション、ジョブ、友好部族、飛行、システム、その他。そこへ向かう途中のクエストでは「つながる先」）、状況と妨げている条件が表示され、「フラグ」と「表示」があります。種類、「受注可能のみ」、または若葉モードで、ストーリーが到達していない拡張パッケージを隠して絞り込めます。「チェックリストとしてコピー」は、表示中のリストをMarkdownとしてクリップボードに入れ、Discordにそのまま貼れます（「- [ ] Hallo Halatali (Lv20, 西ザナラーン) — 解放: ダンジョン: ハラタリ修練所」）。あなたを特定する情報は含まれません。拡張パッケージの「オーバーレイにピン留め」で、その受注可能な解放クエストをTodoオーバーレイに表示します。設定 › Todoオーバーレイでこのセクションをオフにできます。シーズナルイベントのクエストは計画に含まれません。</value>
+  </data>
+  <data name="PlanTodoSection" xml:space="preserve">
+    <value>青クエ消化</value>
+  </data>
+  <data name="PlanTodoNoteFormat" xml:space="preserve">
+    <value>{0} · 残り{1:N0}件</value>
+  </data>
+  <data name="PlanTodoConfig" xml:space="preserve">
+    <value>青クエ消化でピン留めした拡張パッケージ</value>
+  </data>
+  <data name="PlanTodoConfigHint" xml:space="preserve">
+    <value>青クエタブでピン留めした拡張パッケージ（拡張パッケージの「オーバーレイにピン留め」）の、受注可能な解放クエスト。</value>
+  </data>
+  <data name="PlanTodoConfigPinnedFormat" xml:space="preserve">
+    <value>ピン留め中: {0}</value>
+  </data>
+  <data name="PlanTodoConfigNone" xml:space="preserve">
+    <value>まだピン留めしていません</value>
+  </data>
+  <data name="QuestionableAgrees" xml:space="preserve">
+    <value>Questionableも同じ判定</value>
+  </data>
+  <data name="QuestionableAgreesLevelAside" xml:space="preserve">
+    <value>Questionableも同じ判定（レベルとジョブは確認しません）</value>
+  </data>
+  <data name="QuestionableSaysFormat" xml:space="preserve">
+    <value>Questionableの判定: {0}</value>
+  </data>
+  <data name="QuestionableNotLocked" xml:space="preserve">
+    <value>ロックなし</value>
+  </data>
+  <data name="QuestionableLineTooltip" xml:space="preserve">
+    <value>Tsukimichiの判定と並べて表示する、Questionable自身によるこのクエストのロック判定です。両者が異なる場合は「レポート」に両方が記録され、どちらが誤っているかの特定に役立ちます。</value>
+  </data>
+  <data name="QuestionableMoreTooltip" xml:space="preserve">
+    <value>その他の操作</value>
+  </data>
+  <data name="QuestionableAddToPriority" xml:space="preserve">
+    <value>Questionableの優先リストに追加</value>
+  </data>
+  <data name="QuestionableAddToPriorityTooltip" xml:space="preserve">
+    <value>このクエストをQuestionableの優先リストに追加します。何も開始されません。次にあなたがQuestionableを実行したときに取り上げられます。</value>
+  </data>
+  <data name="QuestionableAddToPriorityNoPath" xml:space="preserve">
+    <value>Questionableにはこのクエストの経路がありません。</value>
+  </data>
+  <data name="QuestionableAdded" xml:space="preserve">
+    <value>Questionableの優先リストに追加しました</value>
+  </data>
+  <data name="QuestionableAddFailed" xml:space="preserve">
+    <value>Questionableがクエストを受け付けませんでした。/xllog を確認してください</value>
+  </data>
+  <data name="ConfigQuestionableHandoff" xml:space="preserve">
+    <value>Questionableへの受け渡しを表示</value>
+  </data>
+  <data name="ConfigQuestionableHandoffHint" xml:space="preserve">
+    <value>Questionableが読み込まれていると、詳細ペインの「…」ボタンに「Questionableの優先リストに追加」が表示されます。Questionable自身の優先リストを呼び出すだけで、TsukimichiがQuestionableを開始したり、キャラクターを動かしたりすることはありません。クエストの下の「Questionableも同じ判定」の行は、この設定に関係なく表示されます。</value>
+  </data>
+  <data name="RouteWindowTitle" xml:space="preserve">
+    <value>解放ルート###tsukimichiRoute</value>
+  </data>
+  <data name="RouteTitleFormat" xml:space="preserve">
+    <value>{0}へのルート</value>
+  </data>
+  <data name="RouteForLiveFormat" xml:space="preserve">
+    <value>{0}（ライブ）</value>
+  </data>
+  <data name="RouteForStoredFormat" xml:space="preserve">
+    <value>{0}（{1}に保存したスナップショット）</value>
+  </data>
+  <data name="RouteForNobody" xml:space="preserve">
+    <value>キャラクターが選択されていません。途中のすべてのクエストを表示し、完了の印は付けません。</value>
+  </data>
+  <data name="RouteLoading" xml:space="preserve">
+    <value>クエストカタログを読み込み中です。</value>
+  </data>
+  <data name="RouteAlsoUnlockedByFormat" xml:space="preserve">
+    <value>ほかの解放クエスト: {0}</value>
+  </data>
+  <data name="RouteAlreadyDoneHeading" xml:space="preserve">
+    <value>解放済み</value>
+  </data>
+  <data name="RouteAlreadyDoneBody" xml:space="preserve">
+    <value>これを解放するクエストは、このキャラクターで完了済みです。残っていることはありません。</value>
+  </data>
+  <data name="RouteNoQuestHeading" xml:space="preserve">
+    <value>これを解放するクエストが不明</value>
+  </data>
+  <data name="RouteNoQuestBody" xml:space="preserve">
+    <value>クエストデータにも精査済みの解放一覧にも、これに対応するクエストがありません。</value>
+  </data>
+  <data name="RouteLockedOut" xml:space="preserve">
+    <value>このルート上のクエストが受注不可、またはゲームから削除されているため、現状ではルートを完了できません。</value>
+  </data>
+  <data name="RouteMilestoneFormat" xml:space="preserve">
+    <value>メインクエスト · {0}</value>
+  </data>
+  <data name="RouteAfterMainScenario" xml:space="preserve">
+    <value>メインクエストの後</value>
+  </data>
+  <data name="RouteGateFormat" xml:space="preserve">
+    <value>レベルの壁 · Lv{0}に到達</value>
+  </data>
+  <data name="RouteGateWithLevelFormat" xml:space="preserve">
+    <value>レベルの壁 · Lv{0}に到達（対象ジョブでの最高はLv{1}）</value>
+  </data>
+  <data name="RouteGateTooltip" xml:space="preserve">
+    <value>次のクエストには、ルート上のそれまでのどのクエストよりも高いレベルが必要です。先に、そのクエストに対応するジョブのレベルを上げてください。</value>
+  </data>
+  <data name="RouteLevelFormat" xml:space="preserve">
+    <value>Lv{0}</value>
+  </data>
+  <data name="RouteMsqMark" xml:space="preserve">
+    <value>メイン</value>
+  </data>
+  <data name="RouteTargetMark" xml:space="preserve">
+    <value>対象</value>
+  </data>
+  <data name="RouteOrInsteadFormat" xml:space="preserve">
+    <value>代わりに: {0} · {1}件</value>
+  </data>
+  <data name="RouteOrInsteadOneFormat" xml:space="preserve">
+    <value>代わりに: {0} · 1件</value>
+  </data>
+  <data name="RouteStepTooltipHint" xml:space="preserve">
+    <value>クリックでジャーナルに表示します。</value>
+  </data>
+  <data name="RouteAlternativeTooltip" xml:space="preserve">
+    <value>次のクエストへの別の入口と、それに必要な残りのクエスト数です。クリックでジャーナルに表示します。</value>
+  </data>
+  <data name="RouteCopy" xml:space="preserve">
+    <value>ルートをコピー</value>
+  </data>
+  <data name="RouteCopyTooltip" xml:space="preserve">
+    <value>ルートをMarkdownのリストとしてコピーします。レベル、ネタバレ防止に従った名前、メインクエストの節目を含みます。キャラクター名は含まれません。</value>
+  </data>
+  <data name="RouteCopied" xml:space="preserve">
+    <value>ルートをクリップボードにコピーしました。</value>
+  </data>
+  <data name="RoutePinAllFormat" xml:space="preserve">
+    <value>すべてピン留め（{0}）</value>
+  </data>
+  <data name="RoutePinAllTooltip" xml:space="preserve">
+    <value>長押しでルート上のすべてのクエストを順にピン留めします（Shift+クリックで即時）。このキャラクターのピン留めとTodoオーバーレイに加わります。</value>
+  </data>
+  <data name="RoutePinAllUnavailable" xml:space="preserve">
+    <value>ピン留めはキャラクターごとです。ピン留めするキャラクターを選んでください。</value>
+  </data>
+  <data name="RoutePinnedFormat" xml:space="preserve">
+    <value>{0}件のクエストをピン留めしました</value>
+  </data>
+  <data name="RoutePinnedOne" xml:space="preserve">
+    <value>1件のクエストをピン留めしました</value>
+  </data>
+  <data name="RouteAllPinnedAlready" xml:space="preserve">
+    <value>ルート上のすべてのクエストは既にピン留めされています。</value>
+  </data>
+  <data name="RouteUndo" xml:space="preserve">
+    <value>取り消し</value>
+  </data>
+  <data name="RouteUndoTooltip" xml:space="preserve">
+    <value>「すべてピン留め」で追加したクエストのピン留めを解除します</value>
+  </data>
+  <data name="RouteToThisTooltip" xml:space="preserve">
+    <value>ここへのルート: その前にまだ必要なすべてのクエストを、レベルの壁とともに順番に表示</value>
+  </data>
+  <data name="RouteToThisReward" xml:space="preserve">
+    <value>この報酬へのルート</value>
+  </data>
+  <data name="RouteToUnlockJobFormat" xml:space="preserve">
+    <value>{0}の解放ルート</value>
+  </data>
+  <data name="RouteToUnlockMenu" xml:space="preserve">
+    <value>解放ルート…</value>
+  </data>
+  <data name="RouteToUnlockMenuTooltip" xml:space="preserve">
+    <value>このキャラクターがまだ解放していないジョブを選び、それに必要な残りのクエストを表示します</value>
+  </data>
+  <data name="RouteToUnlockNone" xml:space="preserve">
+    <value>すべてのジョブを解放済みです。</value>
+  </data>
+  <data name="SeasonalHeaderFormat" xml:space="preserve">
+    <value>シーズナルイベント（開催中 {0}）</value>
+  </data>
+  <data name="SeasonalHeader" xml:space="preserve">
+    <value>シーズナルイベント</value>
+  </data>
+  <data name="SeasonalNoneRunning" xml:space="preserve">
+    <value>開催中のシーズナルイベントはありません。</value>
+  </data>
+  <data name="SeasonalAtCaptureFormat" xml:space="preserve">
+    <value>このキャラクターの最後の記録時点（{0}）。</value>
+  </data>
+  <data name="SeasonalEvidenceTooltipFormat" xml:space="preserve">
+    <value>ロードストーンでの告知: {0}</value>
+  </data>
+  <data name="SeasonalRunningNowTooltip" xml:space="preserve">
+    <value>ゲーム上でこのイベントは開催中です。Tsukimichiは、ロードストーンで告知された場合にだけ終了日を表示し、推測はしません。</value>
+  </data>
+  <data name="SeasonalGiverFormat" xml:space="preserve">
+    <value>依頼人: {0}</value>
+  </data>
+  <data name="SeasonalNoQuests" xml:space="preserve">
+    <value>このイベントのクエストはジャーナルに登録されていません。</value>
+  </data>
+  <data name="SeasonalHistoryFormat" xml:space="preserve">
+    <value>年別の完了済みシーズナルクエスト（{0}）</value>
+  </data>
+  <data name="SeasonalHistoryNone" xml:space="preserve">
+    <value>完了したシーズナルクエストはまだありません。</value>
+  </data>
+  <data name="SeasonalHistoryTooltip" xml:space="preserve">
+    <value>各イベントの年は、ロードストーンがその回に付けた年です（「紅蓮祭（2014）」）。告知のない回は、同じイベントの最も近い告知済みの回から1年に1回として数えます。それが確かでない場合や、何度も復刻するコラボイベントの場合は「年不明」に表示されます。</value>
+  </data>
+  <data name="SeasonalYearUnknown" xml:space="preserve">
+    <value>年不明</value>
+  </data>
+  <data name="SeasonalConfigNotice" xml:space="preserve">
+    <value>シーズナルイベントに受注可能なクエストがあるとき、ログイン時にチャットで通知</value>
+  </data>
+  <data name="SeasonalConfigNoticeHint" xml:space="preserve">
+    <value>「紅蓮祭開催中: 受注可能なクエスト2件（8月28日終了）」を、ログインごと、イベントごとに1回、最初のクエストへのリンクとともに表示します。終了日はロードストーンで告知された場合にだけ表示されます。</value>
+  </data>
+  <data name="ArtworkHidden" xml:space="preserve">
+    <value>クエストがジャーナルに入るとアートワークが表示されます</value>
+  </data>
+  <data name="SpoilerRevealName" xml:space="preserve">
+    <value>この名前を表示</value>
+  </data>
+  <data name="SpoilerRevealNameTooltip" xml:space="preserve">
+    <value>プラグインが再読み込みされるまで、このメインクエストの本当の名前をすべての場所で表示します</value>
+  </data>
+  <data name="SpoilerMaskedNote" xml:space="preserve">
+    <value>名前を非表示: このメインクエストは現在の進行より先にあります</value>
+  </data>
+  <data name="SettingsSpoilers" xml:space="preserve">
+    <value>ネタバレ</value>
+  </data>
+  <data name="SpoilerHideNames" xml:space="preserve">
+    <value>この先のメインクエスト名を隠す</value>
+  </data>
+  <data name="SpoilerHideNamesHelp" xml:space="preserve">
+    <value>ストーリー上で現在より先にあるメインクエストは、一覧、詳細ペイン、ステータスバー、Todoオーバーレイ、チャット、Wotsit、検索のすべてで「メインクエスト（Lv83）」と表示されます。</value>
+  </data>
+  <data name="SpoilerAhead" xml:space="preserve">
+    <value>名前を表示する先のクエスト数</value>
+  </data>
+  <data name="SpoilerAheadHelp" xml:space="preserve">
+    <value>現在のメインクエストより先の何件まで名前を表示するか（0～10）。</value>
+  </data>
+  <data name="SpoilerHideArtwork" xml:space="preserve">
+    <value>ジャーナルに入るまでクエストのアートワークを隠す</value>
+  </data>
+  <data name="SpoilerHideArtworkHelp" xml:space="preserve">
+    <value>バナーアートはクエストの内容を表します。クエストを受注または完了すると表示されます。</value>
+  </data>
+  <data name="SpoilerCharacterLabel" xml:space="preserve">
+    <value>このキャラクター</value>
+  </data>
+  <data name="SpoilerCharacterFormat" xml:space="preserve">
+    <value>{0}の設定</value>
+  </data>
+  <data name="SpoilerCharacterNone" xml:space="preserve">
+    <value>キャラクターが表示されていません。上の設定が適用されます。</value>
+  </data>
+  <data name="SpoilerCharacterDefault" xml:space="preserve">
+    <value>上の設定に従う</value>
+  </data>
+  <data name="SpoilerCharacterOn" xml:space="preserve">
+    <value>常に保護</value>
+  </data>
+  <data name="SpoilerCharacterOff" xml:space="preserve">
+    <value>すべて表示</value>
+  </data>
+  <data name="SpoilerCharacterHelp" xml:space="preserve">
+    <value>ストーリーを終えたキャラクターではすべてを表示し、サブキャラクターは保護したままにできます。</value>
+  </data>
+  <data name="SpoilerMaskedCountFormat" xml:space="preserve">
+    <value>表示中のキャラクターでは、メインクエスト名 {0:N0}件を非表示にしています。</value>
+  </data>
+  <data name="PresetSproutTooltip" xml:space="preserve">
+    <value>メインクエストが到達した拡張パッケージのクエストのみ。ツリーの以降のセクションは件数だけに折りたたみます</value>
+  </data>
+  <data name="SproutReachFormat" xml:space="preserve">
+    <value>手の届くクエスト {0:N0}件</value>
+  </data>
+  <data name="SproutFoldedTooltip" xml:space="preserve">
+    <value>メインクエストの進行より先: 若葉モードで折りたたみ中</value>
+  </data>
+  <data name="TodoWindowTitle" xml:space="preserve">
+    <value>Tsukimichi Todo###TsukimichiTodo</value>
+  </data>
+  <data name="TodoHeader" xml:space="preserve">
+    <value>☾ Tsukimichi</value>
+  </data>
+  <data name="TodoEmpty" xml:space="preserve">
+    <value>ここですることはありません</value>
+  </data>
+  <data name="TodoNoSections" xml:space="preserve">
+    <value>有効なセクションがありません</value>
+  </data>
+  <data name="TodoSectionPinned" xml:space="preserve">
+    <value>ピン留め</value>
+  </data>
+  <data name="TodoSectionSeasonal" xml:space="preserve">
+    <value>開催中のイベントクエスト</value>
+  </data>
+  <data name="TodoSectionNearby" xml:space="preserve">
+    <value>ここで開始できる解放クエスト</value>
+  </data>
+  <data name="TodoSectionMsq" xml:space="preserve">
+    <value>メインクエスト</value>
+  </data>
+  <data name="TodoSectionJobQuests" xml:space="preserve">
+    <value>ジョブクエスト</value>
+  </data>
+  <data name="TodoRowClickHint" xml:space="preserve">
+    <value>クリック: Tsukimichiで表示 · ダブルクリック: マップ上の依頼人にフラグ · 右クリックまたは…: その他</value>
+  </data>
+  <data name="TodoRowMoreTooltip" xml:space="preserve">
+    <value>その他: 表示、フラグ、テレポ、チャットにリンク</value>
+  </data>
+  <data name="TodoHeaderMoreTooltip" xml:space="preserve">
+    <value>オーバーレイのオプション: ロック、コンパクト、位置をリセット、非表示</value>
+  </data>
+  <data name="TodoSectionToggleFormat" xml:space="preserve">
+    <value>クリックで{0}を折りたたみ／展開します</value>
+  </data>
+  <data name="TodoRevealInTsukimichi" xml:space="preserve">
+    <value>Tsukimichiで表示</value>
+  </data>
+  <data name="TodoMenuLock" xml:space="preserve">
+    <value>ロック（クリック透過）</value>
+  </data>
+  <data name="TodoMenuLockTooltip" xml:space="preserve">
+    <value>オーバーレイがクリックを受け付けなくなり、背後のゲームがクリックを受け取ります。設定 › Todoオーバーレイでロックを解除できます。</value>
+  </data>
+  <data name="TodoMenuCompact" xml:space="preserve">
+    <value>コンパクト</value>
+  </data>
+  <data name="TodoMenuResetPosition" xml:space="preserve">
+    <value>位置をリセット</value>
+  </data>
+  <data name="TodoMenuHide" xml:space="preserve">
+    <value>オーバーレイを隠す</value>
+  </data>
+  <data name="TodoConfigSection" xml:space="preserve">
+    <value>Todoオーバーレイ</value>
+  </data>
+  <data name="TodoConfigEnabled" xml:space="preserve">
+    <value>Todoオーバーレイを表示</value>
+  </data>
+  <data name="TodoConfigEnabledHint" xml:space="preserve">
+    <value>常に表示される小さなパネルです。ピン留め、開催中のイベントクエスト、ここで開始できる解放クエスト、次のメインクエスト、ジョブクエストを表示します。/tsuki todo で切り替えられます。</value>
+  </data>
+  <data name="TodoConfigLocked" xml:space="preserve">
+    <value>ロック（クリック透過）</value>
+  </data>
+  <data name="TodoConfigLockedHint" xml:space="preserve">
+    <value>オーバーレイは移動できず、マウスを無視します。クリックは背後のゲームに届きます。行やメニューを再び使うには、チェックを外してください。</value>
+  </data>
+  <data name="TodoLockUpgradeNotice" xml:space="preserve">
+    <value>0.8.0以降、ロックはクリック透過を意味します。ロック中のオーバーレイはすべてのクリックをゲームに通すため、行やメニューは反応しません。再び使うには、上の「ロック（クリック透過）」のチェックを外してください。</value>
+  </data>
+  <data name="TodoLockUpgradeChat" xml:space="preserve">
+    <value>Todoオーバーレイがロックされています。0.8.0以降、ロックはクリック透過を意味し、クリックは背後のゲームに届きます。行やメニューを再び使うには、設定 › Todoオーバーレイ › 「ロック（クリック透過）」のチェックを外してください。</value>
+  </data>
+  <data name="TodoConfigCompact" xml:space="preserve">
+    <value>コンパクト</value>
+  </data>
+  <data name="TodoConfigCompactHint" xml:space="preserve">
+    <value>月と名前のみを、1行ずつ固定幅で表示します。</value>
+  </data>
+  <data name="TodoConfigOpacity" xml:space="preserve">
+    <value>背景の不透明度</value>
+  </data>
+  <data name="TodoConfigSectionsLabel" xml:space="preserve">
+    <value>セクション</value>
+  </data>
+  <data name="TodoConfigShowPins" xml:space="preserve">
+    <value>ピン留めしたクエスト</value>
+  </data>
+  <data name="TodoConfigShowSeasonal" xml:space="preserve">
+    <value>開催中のイベントクエスト</value>
+  </data>
+  <data name="TodoConfigShowSeasonalHint" xml:space="preserve">
+    <value>開催中のシーズナルイベントのクエストのうち、開始できるものや受注中のものを依頼人とともに表示します。終了日はロードストーンで告知された場合にだけ表示されます（「8月28日終了（ロードストーン）」）。</value>
+  </data>
+  <data name="TodoConfigShowNearby" xml:space="preserve">
+    <value>このエリアで開始できる解放クエスト</value>
+  </data>
+  <data name="TodoConfigShowMsq" xml:space="preserve">
+    <value>次のメインクエスト</value>
+  </data>
+  <data name="TodoConfigShowJobQuests" xml:space="preserve">
+    <value>現在のジョブのジョブクエストとロールクエスト</value>
+  </data>
+  <data name="TodoConfigResetPosition" xml:space="preserve">
+    <value>位置をリセット</value>
+  </data>
+  <data name="TodoConfigResetPositionHint" xml:space="preserve">
+    <value>オーバーレイを画面の左上に戻します</value>
+  </data>
+  <data name="QuickViewAll" xml:space="preserve">
+    <value>すべて</value>
+  </data>
+  <data name="QuickViewAllTooltip" xml:space="preserve">
+    <value>クイックビューなし: 一覧はツリーとフィルターだけに従います</value>
+  </data>
+  <data name="QuickViewsPanelTooltip" xml:space="preserve">
+    <value>クイックビューはツールバーにあります。停滞中のビューは、ここで設定した日数を使います</value>
+  </data>
+  <data name="FiltersBadgeOne" xml:space="preserve">
+    <value>1個のフィルターが一覧を絞り込んでいます。ツールバーの下のチップで解除できます</value>
+  </data>
+  <data name="FiltersBadgeFormat" xml:space="preserve">
+    <value>{0}個のフィルターが一覧を絞り込んでいます。ツールバーの下のチップで1つずつ解除できます</value>
+  </data>
+  <data name="CharacterChipTooltip" xml:space="preserve">
+    <value>表示中の進行状況の持ち主です。塗りつぶしの丸印はログイン中のキャラクター、中抜きは保存済みのスナップショットです。クリックで切り替えます</value>
+  </data>
+  <data name="ScopeChipFormat" xml:space="preserve">
+    <value>範囲: {0}</value>
+  </data>
+  <data name="ScopeUnnamed" xml:space="preserve">
+    <value>このノード</value>
+  </data>
+  <data name="ScopeChipTooltip" xml:space="preserve">
+    <value>一覧を絞り込んでいるツリーの選択です。解除すると「すべてのクエスト」を表示します</value>
+  </data>
+  <data name="TabJournalTooltip" xml:space="preserve">
+    <value>ゲーム内のすべてのクエストを、ジャーナルと同じ分類で</value>
+  </data>
+  <data name="TabMoonlitTooltip" xml:space="preserve">
+    <value>他では手に入らないクエスト報酬と、既に所持しているもの</value>
+  </data>
+  <data name="TabCharactersTooltip" xml:space="preserve">
+    <value>保存済みのすべてのキャラクターと、その進行状況のダッシュボード</value>
+  </data>
+  <data name="TabFlightTooltip" xml:space="preserve">
+    <value>各飛行エリアの風脈クエスト</value>
+  </data>
+  <data name="TreeFractionFormat" xml:space="preserve">
+    <value>{0:P2} 完了</value>
+  </data>
+  <data name="TreeReadyBadgeFormat" xml:space="preserve">
+    <value>今すぐ受注可能 {0:N0}件</value>
+  </data>
+  <data name="Tutorial.TakeTour" xml:space="preserve">
+    <value>ツアーを始める</value>
+  </data>
+  <data name="Tutorial.Later" xml:space="preserve">
+    <value>あとで</value>
+  </data>
+  <data name="Tutorial.DontOffer" xml:space="preserve">
+    <value>今後案内しない</value>
+  </data>
+  <data name="Tutorial.LaterTooltip" xml:space="preserve">
+    <value>次のセッションで再びツアーを案内します</value>
+  </data>
+  <data name="Tutorial.DontOfferTooltip" xml:space="preserve">
+    <value>今後は案内しません。ツールバーの角帽ボタンや設定からはいつでも開始できます</value>
+  </data>
+  <data name="Tutorial.Back" xml:space="preserve">
+    <value>戻る</value>
+  </data>
+  <data name="Tutorial.Next" xml:space="preserve">
+    <value>次へ</value>
+  </data>
+  <data name="Tutorial.Close" xml:space="preserve">
+    <value>閉じる</value>
+  </data>
+  <data name="Tutorial.Done" xml:space="preserve">
+    <value>終了</value>
+  </data>
+  <data name="Tutorial.OpenHelp" xml:space="preserve">
+    <value>ヘルプを開く</value>
+  </data>
+  <data name="Tutorial.ChapterFind" xml:space="preserve">
+    <value>探す</value>
+  </data>
+  <data name="Tutorial.ChapterRead" xml:space="preserve">
+    <value>読む</value>
+  </data>
+  <data name="Tutorial.ChapterBeyond" xml:space="preserve">
+    <value>その先</value>
+  </data>
+  <data name="Tutorial.ChapterTooltip" xml:space="preserve">
+    <value>この章へ移動</value>
+  </data>
+  <data name="Tutorial.ProgressFormat" xml:space="preserve">
+    <value>{0} · {2}ステップ中{1}</value>
+  </data>
+  <data name="Tutorial.KeysHint" xml:space="preserve">
+    <value>Enterまたは→で次へ · ←で戻る · Escで閉じる</value>
+  </data>
+  <data name="Tutorial.OfferKeysHint" xml:space="preserve">
+    <value>Enterでツアーを開始 · Escであとで</value>
+  </data>
+  <data name="Tutorial.WelcomeTitle" xml:space="preserve">
+    <value>Tsukimichiへようこそ</value>
+  </data>
+  <data name="Tutorial.WelcomeBody" xml:space="preserve">
+    <value>Tsukimichiは、今すぐ受注できるクエスト、受注できない理由、他では手に入らない報酬を表示します。ツアーは3つの短い章で、ゲームには何も影響しません。</value>
+  </data>
+  <data name="Tutorial.SearchTitle" xml:space="preserve">
+    <value>名前でクエストを探す</value>
+  </data>
+  <data name="Tutorial.SearchBody" xml:space="preserve">
+    <value>クエスト、報酬、IDを入力すると、入力に合わせて一覧が絞り込まれます。Ctrl+Fでここへ移動し、×で消去します。</value>
+  </data>
+  <data name="Tutorial.QuickViewsTitle" xml:space="preserve">
+    <value>ワンクリックで要点へ</value>
+  </data>
+  <data name="Tutorial.QuickViewsBody" xml:space="preserve">
+    <value>クイックビューはよくある疑問に答えます: 解放、適正レベル、停滞中、物語サブクエ、若葉モード。「すべて」で解除します。</value>
+  </data>
+  <data name="Tutorial.FiltersTitle" xml:space="preserve">
+    <value>さらに絞り込む</value>
+  </data>
+  <data name="Tutorial.FiltersBody" xml:space="preserve">
+    <value>「フィルター」でツリーの横にこのパネルが開きます。バッジは絞り込みの数で、ツールバーの下のチップで1つずつ解除できます。先頭のチップはツリーの範囲です。</value>
+  </data>
+  <data name="Tutorial.TabsTitle" xml:space="preserve">
+    <value>各機能の場所</value>
+  </data>
+  <data name="Tutorial.TabsBody" xml:space="preserve">
+    <value>ジャーナルにはすべてのクエストがあり、バッジは今すぐ受注できる数です。月明かり、キャラクター、飛行、青クエは最後の章で紹介します。</value>
+  </data>
+  <data name="Tutorial.TreeTitle" xml:space="preserve">
+    <value>ジャーナルの一部を選ぶ</value>
+  </data>
+  <data name="Tutorial.TreeBody" xml:space="preserve">
+    <value>セクション、カテゴリー、ジャンルで一覧を絞り込みます。輪はクエストの完了に合わせて満ち、金色の数字は今すぐ受注できるクエストの数です。</value>
+  </data>
+  <data name="Tutorial.TableTitle" xml:space="preserve">
+    <value>1件のクエストに1行</value>
+  </data>
+  <data name="Tutorial.TableBody" xml:space="preserve">
+    <value>見出しのクリックで並べ替え、行のクリックで内容を表示します。行の右クリック、行末の…、メニューキーで、ピン留め、マップのフラグ、ゲーム内のジャーナルを利用できます。</value>
+  </data>
+  <data name="Tutorial.DetailTitle" xml:space="preserve">
+    <value>なぜ受注できないのか</value>
+  </data>
+  <data name="Tutorial.DetailBody" xml:space="preserve">
+    <value>行を選ぶと、詳細ペインに受注条件を先頭にカードが並び、妨げている条件に印が付きます。何も選んでいないときは「今夜」に今できることが表示されます。</value>
+  </data>
+  <data name="Tutorial.StatusTitle" xml:space="preserve">
+    <value>状況の列</value>
+  </data>
+  <data name="Tutorial.StatusBody" xml:space="preserve">
+    <value>状況の列は、クエストとの間にあるものを一言で示します。レベル、ランク、前のクエスト、または現在の進行段階です。</value>
+  </data>
+  <data name="Tutorial.LegendTitle" xml:space="preserve">
+    <value>8つの月、8つの状態</value>
+  </data>
+  <data name="Tutorial.LegendBody" xml:space="preserve">
+    <value>状態ごとに形が異なるので、色がなくても見分けられます。どこでも月にマウスを合わせると名前が表示されます。</value>
+  </data>
+  <data name="Tutorial.PathTitle" xml:space="preserve">
+    <value>ここに至る道</value>
+  </data>
+  <data name="Tutorial.PathBody" xml:space="preserve">
+    <value>道筋は星図です。前のクエストは月として並び、踏破した部分は金色の糸、完了区間はビーズにまとまり、その後に解放されるものが続きます。下のバーで依頼人にフラグを立てられます。</value>
+  </data>
+  <data name="Tutorial.MoonlitTitle" xml:space="preserve">
+    <value>他では手に入らない報酬</value>
+  </data>
+  <data name="Tutorial.MoonlitBody" xml:space="preserve">
+    <value>月明かりには、他では手に入らないクエスト報酬が種類別に並び、既に所持しているものには印が付きます。</value>
+  </data>
+  <data name="Tutorial.CharactersTitle" xml:space="preserve">
+    <value>ログアウト中もすべてのキャラクターを</value>
+  </data>
+  <data name="Tutorial.CharactersBody" xml:space="preserve">
+    <value>ログインした各キャラクターのスナップショットがここに保存されます。1人選ぶと、そのキャラクターとしてジャーナルを閲覧でき、進行状況のダッシュボードも表示されます。</value>
+  </data>
+  <data name="Tutorial.FlightTitle" xml:space="preserve">
+    <value>飛行を解放する</value>
+  </data>
+  <data name="Tutorial.FlightBody" xml:space="preserve">
+    <value>エリアを選ぶと、その風脈クエスト、それぞれを妨げているもの、次に飛べる場所がわかります。</value>
+  </data>
+  <data name="Tutorial.PlanTitle" xml:space="preserve">
+    <value>残りの解放クエスト</value>
+  </data>
+  <data name="Tutorial.PlanBody" xml:space="preserve">
+    <value>青クエには、残っている青い解放クエストが拡張パッケージとエリアごとに、解放するものとともに並びます。チェックリストとしてコピーしたり、Todoオーバーレイにピン留めしたりできます。</value>
+  </data>
+  <data name="Tutorial.PlayTitle" xml:space="preserve">
+    <value>プレイ中に</value>
+  </data>
+  <data name="Tutorial.PlayBody" xml:space="preserve">
+    <value>Todoオーバーレイはピン留めと近くの解放クエストを、周辺はこのエリアで開始できるものを画面に表示します。設定でオンにするか、/tsuki todo と /tsuki nearby を入力します。</value>
+  </data>
+  <data name="Tutorial.HelpTitle" xml:space="preserve">
+    <value>ヘルプ、ツアー、設定</value>
+  </data>
+  <data name="Tutorial.HelpBody" xml:space="preserve">
+    <value>？ボタンでガイドを、角帽ボタンでこのツアーを開きます。歯車では文字サイズ、配色、ネタバレを設定できます。</value>
+  </data>
+  <data name="Tutorial.FinishTitle" xml:space="preserve">
+    <value>これが道のりです</value>
+  </data>
+  <data name="Tutorial.FinishBody" xml:space="preserve">
+    <value>クエストの一つひとつが一歩で、歩むほどに月は満ちていきます。このツアーはツールバーや設定から再び開けます。ヘルプには各トピックの詳細があります。</value>
+  </data>
+  <data name="WelcomeBackTitle" xml:space="preserve">
+    <value>不在の間に</value>
+  </data>
+  <data name="WelcomeBackTitleFormat" xml:space="preserve">
+    <value>不在の間に · {0}</value>
+  </data>
+  <data name="WelcomeBackClose" xml:space="preserve">
+    <value>閉じる</value>
+  </data>
+  <data name="WelcomeBackDontShow" xml:space="preserve">
+    <value>今後表示しない</value>
+  </data>
+  <data name="WelcomeBackDontShowTooltip" xml:space="preserve">
+    <value>このキャラクターでは自動で開かないようにします。キャラクタータブの「不在の間に…」からは引き続き開けます。設定 › 通知で全キャラクターについてオフにできます。</value>
+  </data>
+  <data name="WelcomeBackReading" xml:space="preserve">
+    <value>最後の記録を読み込み中…</value>
+  </data>
+  <data name="WelcomeBackShowInJournal" xml:space="preserve">
+    <value>ジャーナルで表示</value>
+  </data>
+  <data name="WelcomeBackAwayFormat" xml:space="preserve">
+    <value>最後の記録は{0:N0}日前（{1:yyyy-MM-dd}）です。</value>
+  </data>
+  <data name="WelcomeBackAwayOneDayFormat" xml:space="preserve">
+    <value>最後の記録は1日前（{0:yyyy-MM-dd}）です。</value>
+  </data>
+  <data name="WelcomeBackAwayToday" xml:space="preserve">
+    <value>最後の記録は今日です。</value>
+  </data>
+  <data name="WelcomeBackSinceRecordedFormat" xml:space="preserve">
+    <value>パッチ{0}で記録されました。</value>
+  </data>
+  <data name="WelcomeBackSinceInferredFormat" xml:space="preserve">
+    <value>パッチ{0}以降で記録されました（完了していた最新のコンテンツから推定）。</value>
+  </data>
+  <data name="WelcomeBackSinceAnswerFormat" xml:space="preserve">
+    <value>最後にプレイしたのは{0}xです。</value>
+  </data>
+  <data name="WelcomeBackChange" xml:space="preserve">
+    <value>変更</value>
+  </data>
+  <data name="WelcomeBackChangeTooltip" xml:space="preserve">
+    <value>別のパッチを選びます。回答はこのキャラクターについて保存されます。</value>
+  </data>
+  <data name="WelcomeBackNewestFormat" xml:space="preserve">
+    <value>現在のゲームは{0}です。</value>
+  </data>
+  <data name="WelcomeBackAskTitle" xml:space="preserve">
+    <value>最後にプレイしたのはいつですか？</value>
+  </data>
+  <data name="WelcomeBackAskBody" xml:space="preserve">
+    <value>Tsukimichiには、このキャラクターと比較できる以前の記録がありません。最後にプレイしたパッチを選ぶと、それ以降にゲームで追加されたものを表示します。回答はこのキャラクターについて保存されます。</value>
+  </data>
+  <data name="WelcomeBackAskPick" xml:space="preserve">
+    <value>パッチを選ぶ</value>
+  </data>
+  <data name="WelcomeBackAskNew" xml:space="preserve">
+    <value>初めてです</value>
+  </data>
+  <data name="WelcomeBackAskNewTooltip" xml:space="preserve">
+    <value>追いかけるものはありません。カードを閉じ、このキャラクターでは再び尋ねません。</value>
+  </data>
+  <data name="WelcomeBackAskShow" xml:space="preserve">
+    <value>新しい内容を表示</value>
+  </data>
+  <data name="WelcomeBackAskSeriesFormat" xml:space="preserve">
+    <value>{0}x  （{1:N0}件）</value>
+  </data>
+  <data name="WelcomeBackJournalTitle" xml:space="preserve">
+    <value>当時のジャーナル</value>
+  </data>
+  <data name="WelcomeBackJournalNowTitle" xml:space="preserve">
+    <value>現在のジャーナル</value>
+  </data>
+  <data name="WelcomeBackJournalNone" xml:space="preserve">
+    <value>ジャーナルには何もありませんでした。</value>
+  </data>
+  <data name="WelcomeBackJournalNowNone" xml:space="preserve">
+    <value>ジャーナルには何もありません。</value>
+  </data>
+  <data name="WelcomeBackStillAtFormat" xml:space="preserve">
+    <value>まだ{0}</value>
+  </data>
+  <data name="WelcomeBackStill" xml:space="preserve">
+    <value>まだジャーナルにあります</value>
+  </data>
+  <data name="WelcomeBackMoved" xml:space="preserve">
+    <value>進行しました</value>
+  </data>
+  <data name="WelcomeBackCompleted" xml:space="preserve">
+    <value>その後完了</value>
+  </data>
+  <data name="WelcomeBackDropped" xml:space="preserve">
+    <value>ジャーナルから外れました</value>
+  </data>
+  <data name="WelcomeBackInJournal" xml:space="preserve">
+    <value>ジャーナルにあります</value>
+  </data>
+  <data name="WelcomeBackMoreFormat" xml:space="preserve">
+    <value>…ほか{0:N0}件</value>
+  </data>
+  <data name="WelcomeBackRowTooltip" xml:space="preserve">
+    <value>クリックでジャーナルに表示します。</value>
+  </data>
+  <data name="WelcomeBackMsqTitle" xml:space="preserve">
+    <value>メインクエスト</value>
+  </data>
+  <data name="WelcomeBackMsqAtFormat" xml:space="preserve">
+    <value>{0} · 次: {1}（{3:N0}件中{2:N0}件）</value>
+  </data>
+  <data name="WelcomeBackMsqComplete" xml:space="preserve">
+    <value>完了</value>
+  </data>
+  <data name="WelcomeBackMsqThenFormat" xml:space="preserve">
+    <value>当時: {0}</value>
+  </data>
+  <data name="WelcomeBackMsqNowFormat" xml:space="preserve">
+    <value>現在: {0}</value>
+  </data>
+  <data name="WelcomeBackMsqDoneSinceFormat" xml:space="preserve">
+    <value>その後、メインクエストを{0:N0}件完了しました。</value>
+  </data>
+  <data name="WelcomeBackMsqDoneSinceOne" xml:space="preserve">
+    <value>その後、メインクエストを1件完了しました。</value>
+  </data>
+  <data name="WelcomeBackMsqShowTooltip" xml:space="preserve">
+    <value>ジャーナルで次のメインクエストを選択します。</value>
+  </data>
+  <data name="WelcomeBackNewTitleFormat" xml:space="preserve">
+    <value>{0}以降の追加</value>
+  </data>
+  <data name="WelcomeBackNewTitleSeriesFormat" xml:space="preserve">
+    <value>{0}xより後の追加</value>
+  </data>
+  <data name="WelcomeBackNewTotalFormat" xml:space="preserve">
+    <value>{0:N0}件のクエスト: メインクエスト {1:N0}、解放 {2:N0}、サブ {3:N0}。</value>
+  </data>
+  <data name="WelcomeBackNewSeriesFormat" xml:space="preserve">
+    <value>{0}x · {1:N0}（メインクエスト {2:N0}、解放 {3:N0}、サブ {4:N0}）</value>
+  </data>
+  <data name="WelcomeBackNewShowTooltipFormat" xml:space="preserve">
+    <value>追加パッチを{0}xに設定してジャーナルを開きます。</value>
+  </data>
+  <data name="WelcomeBackNewNone" xml:space="preserve">
+    <value>それ以降に追加されたものはありません。</value>
+  </data>
+  <data name="WelcomeBackNewUnknown" xml:space="preserve">
+    <value>Tsukimichiはこの記録がどのパッチで取られたかわからないため、何が新しいかを示せません。</value>
+  </data>
+  <data name="WelcomeBackNewUnknownPick" xml:space="preserve">
+    <value>最後にプレイした時期を伝える</value>
+  </data>
+  <data name="WelcomeBackNewNote" xml:space="preserve">
+    <value>シーズナルイベントのクエストは毎年戻ってくるため、ここでは除外しています。開催中のものは下に表示されます。</value>
+  </data>
+  <data name="WelcomeBackEventsTitle" xml:space="preserve">
+    <value>開催中のイベント</value>
+  </data>
+  <data name="WelcomeBackEventReadyFormat" xml:space="preserve">
+    <value>{0} · 受注可能 {1:N0}件</value>
+  </data>
+  <data name="WelcomeBackLevelsTitle" xml:space="preserve">
+    <value>その後のレベル</value>
+  </data>
+  <data name="WelcomeBackOpen" xml:space="preserve">
+    <value>不在の間に…</value>
+  </data>
+  <data name="WelcomeBackOpenTooltip" xml:space="preserve">
+    <value>このキャラクターが何をしていたか、メインクエストの状況、それ以降にゲームで追加されたものを表示します。最後の長い休止の前の記録、または最後にプレイしたと答えたパッチが基準です。</value>
+  </data>
+  <data name="WelcomeBackConfigDays" xml:space="preserve">
+    <value>「不在の間に」を表示するまでの日数</value>
+  </data>
+  <data name="WelcomeBackConfigDaysFormat" xml:space="preserve">
+    <value>%d日</value>
+  </data>
+  <data name="WelcomeBackConfigOff" xml:space="preserve">
+    <value>オフ</value>
+  </data>
+  <data name="WelcomeBackConfigHint" xml:space="preserve">
+    <value>この日数以上離れていたあとにログインすると、詳細ペインの上にカードが表示され、何をしていたか、メインクエストの状況、それ以降にゲームで追加されたものを示します。すべてのキャラクターの最後の記録がこの日数より古いときだけ表示されるので、別のキャラクターで遊んでいる間に放置したサブキャラクターでは表示されません。1セッションにつき最大1回開きます。0でオフになります。キャラクタータブの「不在の間に…」からはいつでも開けます。</value>
+  </data>
+  <data name="MainWindowTitle" xml:space="preserve">
+    <value>Tsukimichi###TsukimichiMain</value>
+  </data>
+  <data name="LoadingCatalog" xml:space="preserve">
+    <value>カタログを読み込み中</value>
+  </data>
+  <data name="CatalogUnavailable" xml:space="preserve">
+    <value>カタログを利用できません</value>
+  </data>
+  <data name="Retry" xml:space="preserve">
+    <value>再試行</value>
+  </data>
+  <data name="Retrying" xml:space="preserve">
+    <value>再試行中</value>
+  </data>
+  <data name="SearchHint" xml:space="preserve">
+    <value>クエスト、報酬、IDを検索</value>
+  </data>
+  <data name="SearchTooltip" xml:space="preserve">
+    <value>クエスト名、報酬名、数値IDに一致します。Ctrl+Fでここへ移動します</value>
+  </data>
+  <data name="ClearSearch" xml:space="preserve">
+    <value>検索を消去</value>
+  </data>
+  <data name="Filters" xml:space="preserve">
+    <value>フィルター</value>
+  </data>
+  <data name="FiltersTooltip" xml:space="preserve">
+    <value>ツリーの横のフィルターパネルを表示／非表示</value>
+  </data>
+  <data name="NoCharacter" xml:space="preserve">
+    <value>キャラクターなし</value>
+  </data>
+  <data name="NoSnapshots" xml:space="preserve">
+    <value>スナップショットはまだありません</value>
+  </data>
+  <data name="SyncLive" xml:space="preserve">
+    <value>ライブ</value>
+  </data>
+  <data name="SyncPollerPaused" xml:space="preserve">
+    <value>エラーのためゲームの読み取りを停止中。再試行しています</value>
+  </data>
+  <data name="SyncSnapshotFormat" xml:space="preserve">
+    <value>{0}のスナップショット</value>
+  </data>
+  <data name="StaleBannerFormat" xml:space="preserve">
+    <value>スナップショット: {0}@{1}、{2}</value>
+  </data>
+  <data name="BrowseModeNotice" xml:space="preserve">
+    <value>キャラクターのスナップショットがありません。状態、妨げている条件、受注可否は評価されていません。</value>
+  </data>
+  <data name="HelpButtonTooltip" xml:space="preserve">
+    <value>ヘルプ</value>
+  </data>
+  <data name="TutorialButtonTooltip" xml:space="preserve">
+    <value>ツアー: ウィンドウの案内</value>
+  </data>
+  <data name="SettingsButtonTooltip" xml:space="preserve">
+    <value>設定</value>
+  </data>
+  <data name="ActionUnavailable" xml:space="preserve">
+    <value>まだ利用できません</value>
+  </data>
+  <data name="StatusFormat" xml:space="preserve">
+    <value>{0:N0}件のクエスト · {2:N0}件中{1:N0}件を表示</value>
+  </data>
+  <data name="StatusVersionFormat" xml:space="preserve">
+    <value>v{0}</value>
+  </data>
+  <data name="StatusLive" xml:space="preserve">
+    <value>ライブ</value>
+  </data>
+  <data name="StatusSnapshotFormat" xml:space="preserve">
+    <value>スナップショット {0}</value>
+  </data>
+  <data name="StatusNoSnapshot" xml:space="preserve">
+    <value>スナップショットなし</value>
+  </data>
+  <data name="StatusMsqFormat" xml:space="preserve">
+    <value>メイン · {0} ›</value>
+  </data>
+  <data name="StatusMsqComplete" xml:space="preserve">
+    <value>メイン · 完了</value>
+  </data>
+  <data name="StatusMsqRoutesFormat" xml:space="preserve">
+    <value>メイン · {0}</value>
+  </data>
+  <data name="CharactersMsqRoutesFormat" xml:space="preserve">
+    <value>メイン: {0} · {1}</value>
+  </data>
+  <data name="MsqProgressFormat" xml:space="preserve">
+    <value>{0} · メインクエスト {2:N0}件中{1:N0}件完了</value>
+  </data>
+  <data name="MsqCompleteFormat" xml:space="preserve">
+    <value>メインクエスト完了 · {1:N0}件中{0:N0}件</value>
+  </data>
+  <data name="MsqGiverFormat" xml:space="preserve">
+    <value>{0}、{1}</value>
+  </data>
+  <data name="MsqClickHint" xml:space="preserve">
+    <value>クリックで選択</value>
+  </data>
+  <data name="CharactersMsqFormat" xml:space="preserve">
+    <value>メイン: {0} · 次: {1}（{2}）</value>
+  </data>
+  <data name="CharactersMsqNoGiverFormat" xml:space="preserve">
+    <value>メイン: {0} · 次: {1}</value>
+  </data>
+  <data name="CharactersMsqComplete" xml:space="preserve">
+    <value>メイン: 完了</value>
+  </data>
+  <data name="TabJournal" xml:space="preserve">
+    <value>ジャーナル</value>
+  </data>
+  <data name="TabMoonlit" xml:space="preserve">
+    <value>月明かり</value>
+  </data>
+  <data name="TabCharacters" xml:space="preserve">
+    <value>キャラクター</value>
+  </data>
+  <data name="Placeholder" xml:space="preserve">
+    <value>次のマージで追加予定</value>
+  </data>
+  <data name="AllQuests" xml:space="preserve">
+    <value>すべてのクエスト</value>
+  </data>
+  <data name="FeatureUnlocks" xml:space="preserve">
+    <value>解放クエスト</value>
+  </data>
+  <data name="RemovedFromGame" xml:space="preserve">
+    <value>ゲームから削除</value>
+  </data>
+  <data name="FilingRuleFormat" xml:space="preserve">
+    <value>{0}に分類（ルール{1}: {2}）</value>
+  </data>
+  <data name="FilingCuratedFormat" xml:space="preserve">
+    <value>{0}に分類（精査済みの上書き）</value>
+  </data>
+  <data name="RemovedInPatchFormat" xml:space="preserve">
+    <value>パッチ{0}でゲームから削除</value>
+  </data>
+  <data name="RetiredRuleFormat" xml:space="preserve">
+    <value>ルール1: {0}</value>
+  </data>
+  <data name="RemovedByRuleFormat" xml:space="preserve">
+    <value>ゲームから削除（ルール1: {0}）</value>
+  </data>
+  <data name="RetiredReason.PlaceholderIssuer" xml:space="preserve">
+    <value>仮の依頼人</value>
+  </data>
+  <data name="RetiredReason.Both" xml:space="preserve">
+    <value>仮の依頼人、非表示フラグ</value>
+  </data>
+  <data name="RetiredReason.HiddenFlag" xml:space="preserve">
+    <value>非表示フラグ</value>
+  </data>
+  <data name="FilingReason.2" xml:space="preserve">
+    <value>クラス・ジョブの導入</value>
+  </data>
+  <data name="FilingReason.3" xml:space="preserve">
+    <value>グランドカンパニー</value>
+  </data>
+  <data name="FilingReason.4" xml:space="preserve">
+    <value>最も近い一覧上の前提クエスト</value>
+  </data>
+  <data name="FilingReason.5" xml:space="preserve">
+    <value>最も近い一覧上の後続クエスト</value>
+  </data>
+  <data name="FilingReason.6" xml:space="preserve">
+    <value>依頼人のエリア</value>
+  </data>
+  <data name="FilingReason.7" xml:space="preserve">
+    <value>手がかりなし</value>
+  </data>
+  <data name="FilingReason.Other" xml:space="preserve">
+    <value>ルール{0}</value>
+  </data>
+  <data name="Presets" xml:space="preserve">
+    <value>クイックビュー</value>
+  </data>
+  <data name="PresetFeatureQuestsTooltip" xml:space="preserve">
+    <value>解放クエスト: コンテンツ、ジョブ、アクション、風脈、システム。最新のパッチ系列のものを先頭に、続いて今すぐ行動できるクエストを表示します</value>
+  </data>
+  <data name="PresetLevelBandTooltip" xml:space="preserve">
+    <value>現在のジョブのレベルから5レベル以内のクエスト</value>
+  </data>
+  <data name="PresetStalledTooltip" xml:space="preserve">
+    <value>下で設定した日数以上、ジャーナルに入ったままのクエスト</value>
+  </data>
+  <data name="PresetStorySidequestsTooltip" xml:space="preserve">
+    <value>ジャーナルのアートワークがある、小さな物語を描くサブクエストをエリアごとに。各サイドストーリーはプレイする順に並びます</value>
+  </data>
+  <data name="StoryBadgeFormat" xml:space="preserve">
+    <value>サイドストーリーの一部: {0}（{2}件中{1}件目）</value>
+  </data>
+  <data name="StoryBadgeLone" xml:space="preserve">
+    <value>1件で完結するサイドストーリー: ジャーナルのアートワークがあります</value>
+  </data>
+  <data name="StalledDaysFormat" xml:space="preserve">
+    <value>%d日</value>
+  </data>
+  <data name="StalledDaysLabel" xml:space="preserve">
+    <value>停滞とみなす日数</value>
+  </data>
+  <data name="StalledDaysTooltip" xml:space="preserve">
+    <value>受注したクエストが何日間手つかずなら「停滞中」に表示するか</value>
+  </data>
+  <data name="Overrides" xml:space="preserve">
+    <value>個別設定</value>
+  </data>
+  <data name="OverrideInherit" xml:space="preserve">
+    <value>継承</value>
+  </data>
+  <data name="OverrideOn" xml:space="preserve">
+    <value>オン</value>
+  </data>
+  <data name="OverrideOff" xml:space="preserve">
+    <value>オフ</value>
+  </data>
+  <data name="NeedsSnapshot" xml:space="preserve">
+    <value>キャラクターのスナップショットが必要</value>
+  </data>
+  <data name="Advanced" xml:space="preserve">
+    <value>詳細</value>
+  </data>
+  <data name="States" xml:space="preserve">
+    <value>状態</value>
+  </data>
+  <data name="Expansions" xml:space="preserve">
+    <value>拡張パッケージ</value>
+  </data>
+  <data name="LevelFormat" xml:space="preserve">
+    <value>Lv%d</value>
+  </data>
+  <data name="LevelMaxFormat" xml:space="preserve">
+    <value>～%d</value>
+  </data>
+  <data name="LevelRangeChipFormat" xml:space="preserve">
+    <value>Lv{0}–{1}</value>
+  </data>
+  <data name="JobAll" xml:space="preserve">
+    <value>すべて</value>
+  </data>
+  <data name="JobDowDom" xml:space="preserve">
+    <value>ファイター/ソーサラー</value>
+  </data>
+  <data name="JobDoh" xml:space="preserve">
+    <value>クラフター</value>
+  </data>
+  <data name="JobDol" xml:space="preserve">
+    <value>ギャザラー</value>
+  </data>
+  <data name="JobCurrentOnly" xml:space="preserve">
+    <value>現在のジョブのみ</value>
+  </data>
+  <data name="JobCurrentOnlyTooltip" xml:space="preserve">
+    <value>現在のジョブに限定されたクエスト</value>
+  </data>
+  <data name="RewardHidden" xml:space="preserve">
+    <value>非表示</value>
+  </data>
+  <data name="RewardShow" xml:space="preserve">
+    <value>表示</value>
+  </data>
+  <data name="RewardOnly" xml:space="preserve">
+    <value>のみ</value>
+  </data>
+  <data name="RepeatableOnly" xml:space="preserve">
+    <value>リピート可能のみ</value>
+  </data>
+  <data name="SeasonalActiveOnly" xml:space="preserve">
+    <value>開催中イベントのみ</value>
+  </data>
+  <data name="PinnedOnly" xml:space="preserve">
+    <value>ピン留めのみ</value>
+  </data>
+  <data name="PinnedFirst" xml:space="preserve">
+    <value>ピン留めを先頭に</value>
+  </data>
+  <data name="Reset" xml:space="preserve">
+    <value>リセット</value>
+  </data>
+  <data name="Display" xml:space="preserve">
+    <value>表示</value>
+  </data>
+  <data name="UiScale" xml:space="preserve">
+    <value>UIの拡大率</value>
+  </data>
+  <data name="UiScaleTooltip" xml:space="preserve">
+    <value>Dalamud全体の拡大率に上乗せする、このウィンドウの文字とレイアウトの大きさ</value>
+  </data>
+  <data name="IconScale" xml:space="preserve">
+    <value>アイコンの拡大率</value>
+  </data>
+  <data name="IconScaleTooltip" xml:space="preserve">
+    <value>文字に対する月、報酬アイコン、バナーの大きさ</value>
+  </data>
+  <data name="ResetDisplay" xml:space="preserve">
+    <value>既定のサイズ</value>
+  </data>
+  <data name="ResetDisplayTooltip" xml:space="preserve">
+    <value>UIとアイコンの拡大率を既定に戻します</value>
+  </data>
+  <data name="HideCompletedTooltip" xml:space="preserve">
+    <value>完了済みと受注不可のクエストを一覧から除外します</value>
+  </data>
+  <data name="AvailableOnlyTooltip" xml:space="preserve">
+    <value>今すぐ行動できるクエストだけを残します: 受注可能、他ジョブで受注可能、受注中</value>
+  </data>
+  <data name="OverridesTooltip" xml:space="preserve">
+    <value>カテゴリーごとにこのフィルターをオン／オフします</value>
+  </data>
+  <data name="PinnedFirstTooltip" xml:space="preserve">
+    <value>並び順に関係なく、ピン留めしたクエストを一覧の先頭に置きます</value>
+  </data>
+  <data name="StatesTooltip" xml:space="preserve">
+    <value>チェックを外した状態のクエストを隠します</value>
+  </data>
+  <data name="ExpansionsTooltip" xml:space="preserve">
+    <value>チェックした拡張パッケージのクエストだけを残します。何もチェックしなければすべて残ります</value>
+  </data>
+  <data name="LevelRangeTooltip" xml:space="preserve">
+    <value>レベルが範囲内のクエストを残します。上限を100までドラッグすると上限なしになります</value>
+  </data>
+  <data name="JobCategoryTooltip" xml:space="preserve">
+    <value>特定の区分に限定されたクエスト、または現在のジョブだけのクエストを残します</value>
+  </data>
+  <data name="RewardKindsTooltip" xml:space="preserve">
+    <value>報酬の種類ごと: 「非表示」はそれを得られるクエストを除外し、「のみ」はそれらだけを残します</value>
+  </data>
+  <data name="RepeatableOnlyTooltip" xml:space="preserve">
+    <value>デイリーやウィークリーなどのリピートクエストだけを残します</value>
+  </data>
+  <data name="SeasonalActiveOnlyTooltip" xml:space="preserve">
+    <value>現在開催中のシーズナルイベントのクエストだけを残します</value>
+  </data>
+  <data name="IncludeUnlistedTooltip" xml:space="preserve">
+    <value>「すべてのクエスト」と「解放クエスト」の下に、ゲームから削除されたクエストも表示します</value>
+  </data>
+  <data name="PinnedOnlyTooltip" xml:space="preserve">
+    <value>ピン留めしたクエストだけを残します</value>
+  </data>
+  <data name="ResetTooltip" xml:space="preserve">
+    <value>すべてのフィルターと検索を解除します</value>
+  </data>
+  <data name="ResetFilters" xml:space="preserve">
+    <value>フィルターをリセット</value>
+  </data>
+  <data name="NothingMatchesCombination" xml:space="preserve">
+    <value>特定のフィルターが原因ではありません。いくつかを緩めるか、リセットしてください。</value>
+  </data>
+  <data name="ScopeEmpty" xml:space="preserve">
+    <value>このノードにはクエストがありません。</value>
+  </data>
+  <data name="ChipStateFormat" xml:space="preserve">
+    <value>状態: {0}</value>
+  </data>
+  <data name="ChipStateSeparator" xml:space="preserve">
+    <value>、</value>
+  </data>
+  <data name="ChipTooltip" xml:space="preserve">
+    <value>クリックで解除</value>
+  </data>
+  <data name="ChipStateTooltipFormat" xml:space="preserve">
+    <value>非表示: {0}</value>
+  </data>
+  <data name="FillingMoonTooltip" xml:space="preserve">
+    <value>完了数/総数</value>
+  </data>
+  <data name="ColumnGlyph" xml:space="preserve">
+    <value>状態</value>
+  </data>
+  <data name="ColumnName" xml:space="preserve">
+    <value>名前</value>
+  </data>
+  <data name="ColumnLevel" xml:space="preserve">
+    <value>Lv</value>
+  </data>
+  <data name="ColumnJob" xml:space="preserve">
+    <value>ジョブ</value>
+  </data>
+  <data name="ColumnStatus" xml:space="preserve">
+    <value>状況</value>
+  </data>
+  <data name="ColumnExpansion" xml:space="preserve">
+    <value>拡張</value>
+  </data>
+  <data name="ColumnRewards" xml:space="preserve">
+    <value>報酬</value>
+  </data>
+  <data name="ColumnGlyphTooltip" xml:space="preserve">
+    <value>月の満ち欠けと、行の端のストライプの模様で示すクエストの状態（マウスを合わせると名前を表示）。クリックで状態順に並べ替えます</value>
+  </data>
+  <data name="ColumnNameTooltip" xml:space="preserve">
+    <value>クエスト名。クリックで並べ替え、見出しを右クリックで列を非表示にできます</value>
+  </data>
+  <data name="ColumnLevelTooltip" xml:space="preserve">
+    <value>クエストのレベル。クリックで並べ替えます</value>
+  </data>
+  <data name="ColumnJobTooltip" xml:space="preserve">
+    <value>受注できる対象: 制限なし、単一のジョブ（アイコン付き）、または区分。マウスを合わせると名前を表示します</value>
+  </data>
+  <data name="ColumnStatusTooltip" xml:space="preserve">
+    <value>クエストがまだ受注可能でない理由: 最初の未達の受注条件、または次にすべきこと</value>
+  </data>
+  <data name="ColumnExpansionTooltip" xml:space="preserve">
+    <value>クエストが属する拡張パッケージ。クリックで並べ替えます</value>
+  </data>
+  <data name="ColumnRewardsTooltip" xml:space="preserve">
+    <value>報酬アイコンを最大4つ表示。マウスを合わせると詳細を表示します</value>
+  </data>
+  <data name="JobAny" xml:space="preserve">
+    <value>制限なし</value>
+  </data>
+  <data name="JobMulti" xml:space="preserve">
+    <value>複数</value>
+  </data>
+  <data name="JobDohDol" xml:space="preserve">
+    <value>クラフター/ギャザラー</value>
+  </data>
+  <data name="Pin" xml:space="preserve">
+    <value>ピン留め</value>
+  </data>
+  <data name="Unpin" xml:space="preserve">
+    <value>ピン留め解除</value>
+  </data>
+  <data name="FlagOnMap" xml:space="preserve">
+    <value>マップにフラグ</value>
+  </data>
+  <data name="OpenJournal" xml:space="preserve">
+    <value>ジャーナルを開く</value>
+  </data>
+  <data name="OpenJournalUnavailable" xml:space="preserve">
+    <value>ゲーム内のジャーナルで開けるのは、ジャーナルにあるクエスト（受注中または完了済み）だけです。</value>
+  </data>
+  <data name="CopyName" xml:space="preserve">
+    <value>名前をコピー</value>
+  </data>
+  <data name="CopyCoordinates" xml:space="preserve">
+    <value>座標をコピー</value>
+  </data>
+  <data name="CopyCoordinatesTooltip" xml:space="preserve">
+    <value>「場所 (x.x, y.y)」をクリップボードにコピーします。チャットにそのまま貼り付けられます</value>
+  </data>
+  <data name="ShowPath" xml:space="preserve">
+    <value>道筋を表示</value>
+  </data>
+  <data name="QuestMapGraph" xml:space="preserve">
+    <value>Quest Mapのグラフ</value>
+  </data>
+  <data name="LinkInChat" xml:space="preserve">
+    <value>チャットにリンク</value>
+  </data>
+  <data name="Report" xml:space="preserve">
+    <value>レポート</value>
+  </data>
+  <data name="ReportTooltip" xml:space="preserve">
+    <value>このクエストの診断ブロックをクリップボードにコピーします。GitHubのissueにそのまま貼り付けられます。バージョン、クエスト、その状態、すべての受注条件の判定と、判定に使った入力値を含みます。キャラクターを特定する情報は含みません。</value>
+  </data>
+  <data name="ReportCopied" xml:space="preserve">
+    <value>コピーしました · GitHubのissueに貼り付けてください</value>
+  </data>
+  <data name="ReportClipboardFailed" xml:space="preserve">
+    <value>クリップボードがテキストを受け付けませんでした。もう一度お試しください。</value>
+  </data>
+  <data name="ReportCopiedChatFormat" xml:space="preserve">
+    <value>{0}の診断ブロックをクリップボードにコピーしました。GitHubのissueに貼り付けてください。</value>
+  </data>
+  <data name="ReportNoSelection" xml:space="preserve">
+    <value>先にクエストを選択するか、名前を指定してください: /tsuki report &lt;quest name&gt;</value>
+  </data>
+  <data name="ReportNoMatchFormat" xml:space="preserve">
+    <value>「{0}」に一致するクエストはありません。</value>
+  </data>
+  <data name="ItemSummaryFormat" xml:space="preserve">
+    <value>IL{0} · {1}</value>
+  </data>
+  <data name="ItemLevelFormat" xml:space="preserve">
+    <value>IL{0}</value>
+  </data>
+  <data name="SelectQuest" xml:space="preserve">
+    <value>一覧でクエストを選ぶと、受注条件、報酬、道筋が表示されます。</value>
+  </data>
+  <data name="QuestNotInCatalog" xml:space="preserve">
+    <value>カタログにないクエスト</value>
+  </data>
+  <data name="Requirements" xml:space="preserve">
+    <value>受注条件</value>
+  </data>
+  <data name="NoRequirements" xml:space="preserve">
+    <value>このクエストに受注条件はありません。</value>
+  </data>
+  <data name="RequirementsNeedSnapshot" xml:space="preserve">
+    <value>キャラクターのスナップショットができると、受注条件を評価します。</value>
+  </data>
+  <data name="Rewards" xml:space="preserve">
+    <value>報酬</value>
+  </data>
+  <data name="NoRewards" xml:space="preserve">
+    <value>報酬の記載はありません。</value>
+  </data>
+  <data name="Path" xml:space="preserve">
+    <value>道筋</value>
+  </data>
+  <data name="FoldedRunExpandTooltip" xml:space="preserve">
+    <value>完了したステップを表示</value>
+  </data>
+  <data name="FoldedRunCollapseTooltip" xml:space="preserve">
+    <value>完了したステップを折りたたむ</value>
+  </data>
+  <data name="UniqueSection" xml:space="preserve">
+    <value>月明かり</value>
+  </data>
+  <data name="MarkedUniqueByYou" xml:space="preserve">
+    <value>自分でユニークとして登録</value>
+  </data>
+  <data name="MarkedNotUniqueByYou" xml:space="preserve">
+    <value>自分でユニークではないと登録</value>
+  </data>
+  <data name="RestoreOverride" xml:space="preserve">
+    <value>元に戻す</value>
+  </data>
+  <data name="RestoreOverrideTooltip" xml:space="preserve">
+    <value>あなたの判定を破棄し、同梱の報酬データを再び適用します</value>
+  </data>
+  <data name="ListedInMoonlit" xml:space="preserve">
+    <value>月明かりの宝物に掲載されています。</value>
+  </data>
+  <data name="NotListedInMoonlit" xml:space="preserve">
+    <value>月明かりの宝物には掲載されていません。</value>
+  </data>
+  <data name="MarkUnique" xml:space="preserve">
+    <value>ユニークとして登録…</value>
+  </data>
+  <data name="MarkUniqueTooltip" xml:space="preserve">
+    <value>このクエストを、あなたが保証するユニーク報酬として月明かりの宝物に追加します</value>
+  </data>
+  <data name="MarkUniqueNoteHint" xml:space="preserve">
+    <value>メモ: どの報酬がユニークか</value>
+  </data>
+  <data name="MarkUniqueConfirm" xml:space="preserve">
+    <value>ユニークとして登録</value>
+  </data>
+  <data name="MarkNotUniqueNoteHint" xml:space="preserve">
+    <value>メモ: ユニークではない理由（任意）</value>
+  </data>
+  <data name="MarkNotUniqueConfirm" xml:space="preserve">
+    <value>ユニークではないとして非表示</value>
+  </data>
+  <data name="VerdictQuestionUniqueFormat" xml:space="preserve">
+    <value>{0}を月明かりの宝物に追加しますか？</value>
+  </data>
+  <data name="VerdictQuestionHideFormat" xml:space="preserve">
+    <value>{0}を月明かりの宝物から非表示にしますか？</value>
+  </data>
+  <data name="VerdictConfirmTooltip" xml:space="preserve">
+    <value>Shiftを押しながらクリックするか、長押ししてください</value>
+  </data>
+  <data name="VerdictHoldCountdownFormat" xml:space="preserve">
+    <value>長押し…（{0:0.0}秒）</value>
+  </data>
+  <data name="VerdictUndoMarkedUnique" xml:space="preserve">
+    <value>ユニークとして登録しました</value>
+  </data>
+  <data name="VerdictUndoMarkedNotUnique" xml:space="preserve">
+    <value>ユニークではないとして非表示にしました</value>
+  </data>
+  <data name="VerdictUndo" xml:space="preserve">
+    <value>取り消し</value>
+  </data>
+  <data name="VerdictUndoTooltip" xml:space="preserve">
+    <value>その判定を再び破棄します</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>キャンセル</value>
+  </data>
+  <data name="Giver" xml:space="preserve">
+    <value>依頼人</value>
+  </data>
+  <data name="NoGiver" xml:space="preserve">
+    <value>依頼人の記録はありません。</value>
+  </data>
+  <data name="MetTooltip" xml:space="preserve">
+    <value>達成</value>
+  </data>
+  <data name="UnmetTooltip" xml:space="preserve">
+    <value>未達</value>
+  </data>
+  <data name="HeaderLineFormat" xml:space="preserve">
+    <value>{0} · Lv{1} · {2}</value>
+  </data>
+  <data name="ReadyOnJobFormat" xml:space="preserve">
+    <value>{0}で受注可能</value>
+  </data>
+  <data name="Pinned" xml:space="preserve">
+    <value>ピン留め中</value>
+  </data>
+  <data name="AndMoreFormat" xml:space="preserve">
+    <value>ほか{0}件</value>
+  </data>
+  <data name="NoMatches" xml:space="preserve">
+    <value>該当するクエストはありません。</value>
+  </data>
+  <data name="CatalogNotReady" xml:space="preserve">
+    <value>カタログを読み込み中です。</value>
+  </data>
+  <data name="ChatNewlyAvailableFormat" xml:space="preserve">
+    <value>受注可能になりました: {0}</value>
+  </data>
+  <data name="ConfigSectionItemHints" xml:space="preserve">
+    <value>アイテムヒント</value>
+  </data>
+  <data name="ConfigItemHints" xml:space="preserve">
+    <value>クエスト報酬のアイテムにマウスを合わせたときにヒントを表示</value>
+  </data>
+  <data name="ConfigItemHintsHint" xml:space="preserve">
+    <value>カーソルの近くに、クエスト名と完了済みかどうかを示す小さな行を表示します</value>
+  </data>
+  <data name="ConfigItemContextMenu" xml:space="preserve">
+    <value>アイテムのコンテキストメニューにTsukimichiの項目を追加</value>
+  </data>
+  <data name="ConfigItemContextMenuHint" xml:space="preserve">
+    <value>アイテムを右クリックすると、それを報酬とするクエストを表示できます</value>
+  </data>
+  <data name="CommandHelp" xml:space="preserve">
+    <value>Tsukimichiを開きます（/tsuki でも可）。search &lt;text&gt;（または &lt;text&gt; のみ）で該当するクエストのリンクを表示、zone でここで開始できるクエストを表示、which でターゲット中のNPCのクエストを表示、why [quest name] で選択中または指定したクエストを妨げているものを表示、nearby と todo で周辺のクエストウィンドウとTodoオーバーレイを切り替え、report [quest name] で選択中または指定したクエストの診断ブロックをコピー、export [quests|moonlit] [json|csv] で完了済みクエストまたは月明かりのコレクションをファイルに書き出し、settings（または config）、help、glyphs でそれぞれのウィンドウを開きます。</value>
+  </data>
+  <data name="CommandAliasHelp" xml:space="preserve">
+    <value>/tsukimichi の短縮形です。</value>
+  </data>
+  <data name="JustNow" xml:space="preserve">
+    <value>たった今</value>
+  </data>
+  <data name="MinutesAgoFormat" xml:space="preserve">
+    <value>{0}分前</value>
+  </data>
+  <data name="HoursAgoFormat" xml:space="preserve">
+    <value>{0}時間前</value>
+  </data>
+  <data name="DaysAgoFormat" xml:space="preserve">
+    <value>{0}日前</value>
+  </data>
+  <data name="RequirementName.Retired" xml:space="preserve">
+    <value>削除済み</value>
+  </data>
+  <data name="RequirementName.Foreclosure" xml:space="preserve">
+    <value>受注不可</value>
+  </data>
+  <data name="RequirementName.ExpansionCap" xml:space="preserve">
+    <value>拡張パッケージ</value>
+  </data>
+  <data name="RequirementName.LevelCap" xml:space="preserve">
+    <value>レベル上限</value>
+  </data>
+  <data name="RequirementName.ClassJob" xml:space="preserve">
+    <value>クラス/ジョブ</value>
+  </data>
+  <data name="RequirementName.Level" xml:space="preserve">
+    <value>レベル</value>
+  </data>
+  <data name="RequirementName.PreviousQuests" xml:space="preserve">
+    <value>前提クエスト</value>
+  </data>
+  <data name="RequirementName.GrandCompany" xml:space="preserve">
+    <value>グランドカンパニー</value>
+  </data>
+  <data name="RequirementName.GrandCompanyRank" xml:space="preserve">
+    <value>グランドカンパニーの階級</value>
+  </data>
+  <data name="RequirementName.TribeRank" xml:space="preserve">
+    <value>友好部族のランク</value>
+  </data>
+  <data name="RequirementName.TribeReputation" xml:space="preserve">
+    <value>友好部族の友好度</value>
+  </data>
+  <data name="RequirementName.TribeAllowance" xml:space="preserve">
+    <value>受注権</value>
+  </data>
+  <data name="RequirementName.TribeDailyOffer" xml:space="preserve">
+    <value>本日の依頼</value>
+  </data>
+  <data name="RequirementName.DutyCompletion" xml:space="preserve">
+    <value>コンテンツ</value>
+  </data>
+  <data name="RequirementName.Seasonal" xml:space="preserve">
+    <value>シーズナル</value>
+  </data>
+  <data name="RequirementName.AcceptCondition" xml:space="preserve">
+    <value>条件</value>
+  </data>
+  <data name="RequirementName.Mount" xml:space="preserve">
+    <value>マウント</value>
+  </data>
+  <data name="RequirementName.House" xml:space="preserve">
+    <value>ハウス</value>
+  </data>
+  <data name="RequirementName.Achievement" xml:space="preserve">
+    <value>アチーブメント</value>
+  </data>
+  <data name="RequirementName.CustomDeliveryRank" xml:space="preserve">
+    <value>カスタムデリバリー</value>
+  </data>
+  <data name="RequirementName.CarrierLevel" xml:space="preserve">
+    <value>配達士レベル</value>
+  </data>
+  <data name="RewardKindName.Item" xml:space="preserve">
+    <value>アイテム</value>
+  </data>
+  <data name="RewardKindName.OptionalItem" xml:space="preserve">
+    <value>選択報酬</value>
+  </data>
+  <data name="RewardKindName.Emote" xml:space="preserve">
+    <value>エモート</value>
+  </data>
+  <data name="RewardKindName.Action" xml:space="preserve">
+    <value>アクション</value>
+  </data>
+  <data name="RewardKindName.GeneralAction" xml:space="preserve">
+    <value>汎用アクション</value>
+  </data>
+  <data name="RewardKindName.Instance" xml:space="preserve">
+    <value>インスタンス</value>
+  </data>
+  <data name="RewardKindName.ClassJob" xml:space="preserve">
+    <value>クラス/ジョブ</value>
+  </data>
+  <data name="RewardKindName.Other" xml:space="preserve">
+    <value>その他</value>
+  </data>
+  <data name="RewardKindName.ArtifactGear" xml:space="preserve">
+    <value>AF装備</value>
+  </data>
+  <data name="RewardKindName.Mount" xml:space="preserve">
+    <value>マウント</value>
+  </data>
+  <data name="RewardKindName.Minion" xml:space="preserve">
+    <value>ミニオン</value>
+  </data>
+  <data name="RewardKindName.Orchestrion" xml:space="preserve">
+    <value>オーケストリオン譜</value>
+  </data>
+  <data name="RewardKindName.TripleTriadCard" xml:space="preserve">
+    <value>トリプルトライアドカード</value>
+  </data>
+  <data name="RewardKindName.Ornament" xml:space="preserve">
+    <value>ファッションアクセサリー</value>
+  </data>
+  <data name="RewardKindName.Barding" xml:space="preserve">
+    <value>バーディング</value>
+  </data>
+  <data name="RewardKindName.Hairstyle" xml:space="preserve">
+    <value>髪型</value>
+  </data>
+  <data name="RewardKindName.AetherCurrent" xml:space="preserve">
+    <value>風脈</value>
+  </data>
+  <data name="RewardKindName.BlueMageSpell" xml:space="preserve">
+    <value>青魔法</value>
+  </data>
+  <data name="RewardKindName.Trait" xml:space="preserve">
+    <value>特性</value>
+  </data>
+  <data name="RewardKindName.Achievement" xml:space="preserve">
+    <value>アチーブメント</value>
+  </data>
+  <data name="RewardKindName.Title" xml:space="preserve">
+    <value>称号</value>
+  </data>
+  <data name="RewardKindName.DutyUnlock" xml:space="preserve">
+    <value>コンテンツ解放</value>
+  </data>
+  <data name="RewardKindName.SystemUnlock" xml:space="preserve">
+    <value>システム解放</value>
+  </data>
+  <data name="ExpansionShort.0" xml:space="preserve">
+    <value>新生</value>
+  </data>
+  <data name="ExpansionShort.1" xml:space="preserve">
+    <value>蒼天</value>
+  </data>
+  <data name="ExpansionShort.2" xml:space="preserve">
+    <value>紅蓮</value>
+  </data>
+  <data name="ExpansionShort.3" xml:space="preserve">
+    <value>漆黒</value>
+  </data>
+  <data name="ExpansionShort.4" xml:space="preserve">
+    <value>暁月</value>
+  </data>
+  <data name="ExpansionShort.5" xml:space="preserve">
+    <value>黄金</value>
+  </data>
+  <data name="Core.Chain.Story" xml:space="preserve">
+    <value>ストーリー: {0}</value>
+  </data>
+  <data name="Core.Why.NoEvaluation" xml:space="preserve">
+    <value>未確認 · 評価済みのキャラクターがまだいません</value>
+  </data>
+  <data name="Core.Why.TalkToIn" xml:space="preserve">
+    <value>{0} — {2}の{1}に話しかける</value>
+  </data>
+  <data name="Core.Why.TalkTo" xml:space="preserve">
+    <value>{0} — {1}に話しかける</value>
+  </data>
+  <data name="Core.Why.Note" xml:space="preserve">
+    <value>注記: {0}</value>
+  </data>
+  <data name="Core.Diff.MainScenario" xml:space="preserve">
+    <value>メインクエスト</value>
+  </data>
+  <data name="Core.Diff.Feature" xml:space="preserve">
+    <value>解放クエスト</value>
+  </data>
+  <data name="Core.Diff.Side" xml:space="preserve">
+    <value>サブクエスト</value>
+  </data>
+  <data name="Core.Diff.UniqueRewardOne" xml:space="preserve">
+    <value>ユニーク報酬 {0}件</value>
+  </data>
+  <data name="Core.Diff.UniqueRewards" xml:space="preserve">
+    <value>ユニーク報酬 {0}件</value>
+  </data>
+  <data name="Core.Blocker.RemovedFromGame" xml:space="preserve">
+    <value>ゲームから削除</value>
+  </data>
+  <data name="Core.Blocker.AnotherChoice" xml:space="preserve">
+    <value>別の選択</value>
+  </data>
+  <data name="Core.Blocker.AnotherJob" xml:space="preserve">
+    <value>別のジョブ</value>
+  </data>
+  <data name="Core.Blocker.NotChecked.CustomDeliveryRank" xml:space="preserve">
+    <value>カスタムデリバリーのランク</value>
+  </data>
+  <data name="Core.Blocker.NotChecked.CarrierLevel" xml:space="preserve">
+    <value>配達士レベル</value>
+  </data>
+  <data name="Core.Blocker.NotChecked.Mount" xml:space="preserve">
+    <value>マウント</value>
+  </data>
+  <data name="Core.Blocker.NotChecked.House" xml:space="preserve">
+    <value>ハウス</value>
+  </data>
+  <data name="Core.Blocker.NotChecked.Achievements" xml:space="preserve">
+    <value>アチーブメント</value>
+  </data>
+  <data name="Core.Blocker.NotChecked.AcceptCondition" xml:space="preserve">
+    <value>受注条件</value>
+  </data>
+  <data name="Core.Blocker.Allowance" xml:space="preserve">
+    <value>受注権: 本日の残りなし</value>
+  </data>
+  <data name="Core.Blocker.NotOffered" xml:space="preserve">
+    <value>本日は依頼なし</value>
+  </data>
+  <data name="Core.Blocker.Mount" xml:space="preserve">
+    <value>マウント</value>
+  </data>
+  <data name="Core.Blocker.House" xml:space="preserve">
+    <value>ハウス</value>
+  </data>
+  <data name="Core.Blocker.SeasonalEnded" xml:space="preserve">
+    <value>シーズナル: 終了</value>
+  </data>
+  <data name="Core.Blocker.SeasonalChapterNotOpen" xml:space="preserve">
+    <value>シーズナル: 章が未開始</value>
+  </data>
+  <data name="Core.Blocker.SeasonalChapterOver" xml:space="preserve">
+    <value>シーズナル: 章が終了</value>
+  </data>
+  <data name="Core.Blocker.SeasonalNotRunning" xml:space="preserve">
+    <value>シーズナル: 開催期間外</value>
+  </data>
+  <data name="Core.State.Ready" xml:space="preserve">
+    <value>受注可能</value>
+  </data>
+  <data name="Core.Plan.Title" xml:space="preserve">
+    <value>青クエ消化</value>
+  </data>
+  <data name="Core.Plan.Footer" xml:space="preserve">
+    <value>Tsukimichi（Dalamudプラグイン）で作成</value>
+  </data>
+  <data name="Core.Plan.KindNames" xml:space="preserve">
+    <value>{0}: {1}</value>
+  </data>
+  <data name="Core.Plan.More" xml:space="preserve">
+    <value> ほか{0}件</value>
+  </data>
+  <data name="Core.Plan.Unlocks" xml:space="preserve">
+    <value>解放: {0}</value>
+  </data>
+  <data name="Core.Plan.LeadsTo" xml:space="preserve">
+    <value>つながる先: {0}</value>
+  </data>
+  <data name="Core.Plan.Level" xml:space="preserve">
+    <value>Lv{0}</value>
+  </data>
+  <data name="Core.Unlock.Dungeon" xml:space="preserve">
+    <value>ダンジョン</value>
+  </data>
+  <data name="Core.Unlock.Trial" xml:space="preserve">
+    <value>討伐・討滅戦</value>
+  </data>
+  <data name="Core.Unlock.NormalRaid" xml:space="preserve">
+    <value>レイド</value>
+  </data>
+  <data name="Core.Unlock.AllianceRaid" xml:space="preserve">
+    <value>アライアンスレイド</value>
+  </data>
+  <data name="Core.Unlock.FieldOperation" xml:space="preserve">
+    <value>フィールドオペレーション</value>
+  </data>
+  <data name="Core.Unlock.Job" xml:space="preserve">
+    <value>ジョブ</value>
+  </data>
+  <data name="Core.Unlock.Society" xml:space="preserve">
+    <value>友好部族</value>
+  </data>
+  <data name="Core.Unlock.Flying" xml:space="preserve">
+    <value>飛行</value>
+  </data>
+  <data name="Core.Unlock.System" xml:space="preserve">
+    <value>システム</value>
+  </data>
+  <data name="Core.Unlock.Other" xml:space="preserve">
+    <value>その他</value>
+  </data>
+  <data name="Core.Spoiler.Placeholder" xml:space="preserve">
+    <value>メインクエスト（Lv{0}）</value>
+  </data>
+  <data name="Core.Route.QuestFallback" xml:space="preserve">
+    <value>クエスト</value>
+  </data>
+  <data name="Core.Route.Title" xml:space="preserve">
+    <value>{0}へのルート</value>
+  </data>
+  <data name="Core.Route.AlreadyUnlocked" xml:space="preserve">
+    <value>解放済み</value>
+  </data>
+  <data name="Core.Route.NoQuest" xml:space="preserve">
+    <value>解放するクエストが不明</value>
+  </data>
+  <data name="Core.Route.IncludesLockedOut" xml:space="preserve">
+    <value>受注不可のクエストを含む</value>
+  </data>
+  <data name="Core.Route.AfterMainScenario" xml:space="preserve">
+    <value>メインクエストの後</value>
+  </data>
+  <data name="Core.Route.Milestone" xml:space="preserve">
+    <value>メインクエスト: {0}</value>
+  </data>
+  <data name="Core.Route.Level" xml:space="preserve">
+    <value>Lv{0}</value>
+  </data>
+  <data name="Core.Route.MsqMark" xml:space="preserve">
+    <value>（メイン）</value>
+  </data>
+  <data name="Core.Route.TargetMark" xml:space="preserve">
+    <value>対象</value>
+  </data>
+  <data name="Core.Route.OrInsteadOne" xml:space="preserve">
+    <value>代わりに: {0}（{1}件）</value>
+  </data>
+  <data name="Core.Route.OrInstead" xml:space="preserve">
+    <value>代わりに: {0}（{1}件）</value>
+  </data>
+  <data name="Core.Route.QuestId" xml:space="preserve">
+    <value>クエスト {0}</value>
+  </data>
+  <data name="Core.Route.NothingLeft" xml:space="preserve">
+    <value>残りなし</value>
+  </data>
+  <data name="Core.Route.CountOne" xml:space="preserve">
+    <value>{0}件</value>
+  </data>
+  <data name="Core.Route.Count" xml:space="preserve">
+    <value>{0}件</value>
+  </data>
+  <data name="Core.Route.LevelRange" xml:space="preserve">
+    <value>Lv{0}–{1}</value>
+  </data>
+  <data name="Core.Route.MsqLabel" xml:space="preserve">
+    <value>メイン:</value>
+  </data>
+  <data name="Core.Age.JustNow" xml:space="preserve">
+    <value>たった今</value>
+  </data>
+  <data name="Core.Age.Minutes" xml:space="preserve">
+    <value>{0}分前</value>
+  </data>
+  <data name="Core.Age.Hours" xml:space="preserve">
+    <value>{0}時間前</value>
+  </data>
+  <data name="Core.Age.OneDay" xml:space="preserve">
+    <value>1日前</value>
+  </data>
+  <data name="Core.Age.Days" xml:space="preserve">
+    <value>{0}日前</value>
+  </data>
+  <data name="Core.Seasonal.Ends" xml:space="preserve">
+    <value>{0}終了（ロードストーン）</value>
+  </data>
+  <data name="Core.Seasonal.NamedEnds" xml:space="preserve">
+    <value>{0}: {1}終了（ロードストーン）</value>
+  </data>
+  <data name="Core.Seasonal.Announced" xml:space="preserve">
+    <value>{0}終了予定と告知（ロードストーン）</value>
+  </data>
+  <data name="Core.Seasonal.RunningNow" xml:space="preserve">
+    <value>開催中</value>
+  </data>
+  <data name="Core.Seasonal.Notice" xml:space="preserve">
+    <value>{0}開催中: 受注可能なクエスト{1}件</value>
+  </data>
+  <data name="Core.Seasonal.NoticeOne" xml:space="preserve">
+    <value>{0}開催中: 受注可能なクエスト{1}件</value>
+  </data>
+  <data name="Core.Seasonal.NoticeEnd" xml:space="preserve">
+    <value>（{0}終了）</value>
+  </data>
+  <data name="Core.Culture" xml:space="preserve">
+    <value>ja-JP</value>
+  </data>
+  <data name="Core.Seasonal.DateFormat" xml:space="preserve">
+    <value>M月d日</value>
+  </data>
+  <data name="Core.Seasonal.DateYearFormat" xml:space="preserve">
+    <value>yyyy年M月d日</value>
+  </data>
+  <data name="Core.Seasonal.EventId" xml:space="preserve">
+    <value>シーズナルイベント {0}</value>
+  </data>
+  <data name="Core.Todo.ReadyOnJob" xml:space="preserve">
+    <value>{0}で受注可能</value>
+  </data>
+  <data name="Core.Todo.Level" xml:space="preserve">
+    <value>Lv{0}</value>
+  </data>
+  <data name="Core.Todo.PlanLeft" xml:space="preserve">
+    <value>残り{0}</value>
+  </data>
+  <data name="Core.Msq.DoneShort" xml:space="preserve">
+    <value>完了</value>
+  </data>
+  <data name="Core.Msq.NotStarted" xml:space="preserve">
+    <value>未着手</value>
+  </data>
+  <data name="Core.Msq.Done" xml:space="preserve">
+    <value>完了</value>
+  </data>
+  <data name="Core.Msq.Progress" xml:space="preserve">
+    <value>{0:N0}/{1:N0}</value>
+  </data>
+  <data name="Core.Msq.Route" xml:space="preserve">
+    <value>ルート{0}</value>
+  </data>
+  <data name="Core.Msq.RouteLine" xml:space="preserve">
+    <value>{0}: {1}</value>
+  </data>
+  <data name="Core.Msq.Next" xml:space="preserve">
+    <value>次: {0}（{1}）</value>
+  </data>
+  <data name="Core.Msq.OneRouteToGo" xml:space="preserve">
+    <value>残り1ルート</value>
+  </data>
+  <data name="Core.Msq.RoutesToGo" xml:space="preserve">
+    <value>残り{0:N0}ルート</value>
+  </data>
+  <data name="Core.Msq.JoinAny" xml:space="preserve">
+    <value>いずれかを完了すると、ルートは{0}で合流します（{1}）</value>
+  </data>
+  <data name="Core.Msq.JoinAll" xml:space="preserve">
+    <value>すべてを完了すると、ルートは{0}で合流します（{1}）</value>
+  </data>
+  <data name="Core.State.ReadyOnOtherJob" xml:space="preserve">
+    <value>他ジョブで受注可能</value>
+  </data>
+  <data name="Core.State.Accepted" xml:space="preserve">
+    <value>受注中</value>
+  </data>
+  <data name="Core.State.Blocked" xml:space="preserve">
+    <value>条件未達</value>
+  </data>
+  <data name="Core.State.DoneToday" xml:space="preserve">
+    <value>今日は完了</value>
+  </data>
+  <data name="Core.State.DoneThisWeek" xml:space="preserve">
+    <value>今週は完了</value>
+  </data>
+  <data name="Core.State.DoneThisCycle" xml:space="preserve">
+    <value>今期は完了</value>
+  </data>
+  <data name="Core.State.Completed" xml:space="preserve">
+    <value>完了済み</value>
+  </data>
+  <data name="Core.State.Foreclosed" xml:space="preserve">
+    <value>受注不可</value>
+  </data>
+  <data name="Core.State.Unknown" xml:space="preserve">
+    <value>未確認</value>
+  </data>
+  <data name="Core.HighContrast.Ready" xml:space="preserve">
+    <value>明るい半月、太いバー</value>
+  </data>
+  <data name="Core.HighContrast.ReadyOnOtherJob" xml:space="preserve">
+    <value>暗い半月、中抜きのバー</value>
+  </data>
+  <data name="Core.HighContrast.Accepted" xml:space="preserve">
+    <value>明るい凸月、大きな印章</value>
+  </data>
+  <data name="Core.HighContrast.Blocked" xml:space="preserve">
+    <value>空の円、太い縁</value>
+  </data>
+  <data name="Core.HighContrast.DoneThisCycle" xml:space="preserve">
+    <value>暗い凸月、チェック</value>
+  </data>
+  <data name="Core.HighContrast.Completed" xml:space="preserve">
+    <value>明るい塗りつぶしの円</value>
+  </data>
+  <data name="Core.HighContrast.Foreclosed" xml:space="preserve">
+    <value>太い斜線</value>
+  </data>
+  <data name="Core.HighContrast.Unknown" xml:space="preserve">
+    <value>破線の縁</value>
+  </data>
+  <data name="Core.Glyph.Ready" xml:space="preserve">
+    <value>上弦の月、輝き</value>
+  </data>
+  <data name="Core.Glyph.ReadyOnOtherJob" xml:space="preserve">
+    <value>上弦の月、銀、金の輪</value>
+  </data>
+  <data name="Core.Glyph.Accepted" xml:space="preserve">
+    <value>満ちゆく月、封印、銀の輪</value>
+  </data>
+  <data name="Core.Glyph.Blocked" xml:space="preserve">
+    <value>新月、銀の輪</value>
+  </data>
+  <data name="Core.Glyph.DoneThisCycle" xml:space="preserve">
+    <value>欠けゆく月、銀</value>
+  </data>
+  <data name="Core.Glyph.Completed" xml:space="preserve">
+    <value>満月</value>
+  </data>
+  <data name="Core.Glyph.Foreclosed" xml:space="preserve">
+    <value>月食</value>
+  </data>
+  <data name="Core.Glyph.Unknown" xml:space="preserve">
+    <value>朧月</value>
+  </data>
+  <data name="Core.Stripe.Completed" xml:space="preserve">
+    <value>全体のバー</value>
+  </data>
+  <data name="Core.Stripe.Accepted" xml:space="preserve">
+    <value>2本のバー</value>
+  </data>
+  <data name="Core.Stripe.Ready" xml:space="preserve">
+    <value>短いバー</value>
+  </data>
+  <data name="Core.Stripe.ReadyOnOtherJob" xml:space="preserve">
+    <value>中央の目盛り</value>
+  </data>
+  <data name="Core.Stripe.DoneThisCycle" xml:space="preserve">
+    <value>下半分</value>
+  </data>
+  <data name="Core.Stripe.Blocked" xml:space="preserve">
+    <value>バーなし</value>
+  </data>
+  <data name="Core.Stripe.Foreclosed" xml:space="preserve">
+    <value>破線</value>
+  </data>
+  <data name="Core.Stripe.Unknown" xml:space="preserve">
+    <value>点線</value>
+  </data>
+  <data name="Meta.TranslationStatus" xml:space="preserve">
+    <value>draft</value>
+  </data>
+  <data name="Core.Blocker.Step" xml:space="preserve">
+    <value>{0}段階目</value>
+  </data>
+  <data name="Core.Blocker.StepOf" xml:space="preserve">
+    <value>{1}段階中{0}段階目</value>
+  </data>
+  <data name="Core.Blocker.NotChecked" xml:space="preserve">
+    <value>未確認: {0}</value>
+  </data>
+  <data name="Core.Blocker.ClosedBy" xml:space="preserve">
+    <value>{0}により受注不可</value>
+  </data>
+  <data name="Core.Blocker.Expansion" xml:space="preserve">
+    <value>拡張パッケージ: {0}</value>
+  </data>
+  <data name="Core.Blocker.LevelCap" xml:space="preserve">
+    <value>Lv{0}（レベル上限超過）</value>
+  </data>
+  <data name="Core.Blocker.GrandCompany" xml:space="preserve">
+    <value>グランドカンパニー: {0}</value>
+  </data>
+  <data name="Core.Blocker.TribeRankWith" xml:space="preserve">
+    <value>{1}とのランク: {0}</value>
+  </data>
+  <data name="Core.Blocker.TribeRank" xml:space="preserve">
+    <value>ランク: {0}</value>
+  </data>
+  <data name="Core.Blocker.ReputationWith" xml:space="preserve">
+    <value>{1}との友好度: あと{0}</value>
+  </data>
+  <data name="Core.Blocker.Reputation" xml:space="preserve">
+    <value>友好度: あと{0}</value>
+  </data>
+  <data name="Core.Blocker.CarrierLevel" xml:space="preserve">
+    <value>モグレター配達: 配達士レベル{0}</value>
+  </data>
+  <data name="Core.Blocker.Level" xml:space="preserve">
+    <value>Lv{0}</value>
+  </data>
+  <data name="Core.Blocker.LevelOn" xml:space="preserve">
+    <value>{1}でLv{0}</value>
+  </data>
+  <data name="Core.Blocker.JobAnyYouAre" xml:space="preserve">
+    <value>ジョブ: {0}のいずれか（現在は{1}）</value>
+  </data>
+  <data name="Core.Blocker.JobAny" xml:space="preserve">
+    <value>ジョブ: {0}のいずれか</value>
+  </data>
+  <data name="Core.Blocker.JobYouAre" xml:space="preserve">
+    <value>ジョブ: {0}（現在は{1}）</value>
+  </data>
+  <data name="Core.Blocker.Job" xml:space="preserve">
+    <value>ジョブ: {0}</value>
+  </data>
+  <data name="Core.Blocker.After" xml:space="preserve">
+    <value>前提: {0}</value>
+  </data>
+  <data name="Core.Blocker.AfterMsq" xml:space="preserve">
+    <value>前提（メイン）: {0}</value>
+  </data>
+  <data name="Core.Blocker.CustomDeliveryWith" xml:space="preserve">
+    <value>カスタムデリバリー: {1}の満足度ランク{0}</value>
+  </data>
+  <data name="Core.Blocker.CustomDelivery" xml:space="preserve">
+    <value>カスタムデリバリー: 満足度ランク{0}</value>
+  </data>
+  <data name="Core.Blocker.Duty" xml:space="preserve">
+    <value>コンテンツ: {0}</value>
+  </data>
+  <data name="Core.Blocker.DutiesToClear" xml:space="preserve">
+    <value>コンテンツ: {0}をクリア</value>
+  </data>
+  <data name="Core.Blocker.QuestId" xml:space="preserve">
+    <value>クエスト {0}</value>
+  </data>
+  <data name="Core.Req.Retired" xml:space="preserve">
+    <value>ゲームから削除</value>
+  </data>
+  <data name="Core.Req.NoConflict" xml:space="preserve">
+    <value>競合するクエストは未完了</value>
+  </data>
+  <data name="Core.Req.LockedOutBy" xml:space="preserve">
+    <value>{0}により受注不可</value>
+  </data>
+  <data name="Core.Req.RequiresExpansion" xml:space="preserve">
+    <value>{0}が必要</value>
+  </data>
+  <data name="Core.Req.LevelCap" xml:space="preserve">
+    <value>レベル{0}はレベル上限{1}を超えています</value>
+  </data>
+  <data name="Core.Req.AvailableCurrentJob" xml:space="preserve">
+    <value>現在のジョブが対象</value>
+  </data>
+  <data name="Core.Req.AvailableThisJob" xml:space="preserve">
+    <value>このジョブが対象</value>
+  </data>
+  <data name="Core.Req.NotAvailableCurrentJob" xml:space="preserve">
+    <value>現在のジョブは対象外</value>
+  </data>
+  <data name="Core.Req.NotAvailableThisJob" xml:space="preserve">
+    <value>このジョブは対象外</value>
+  </data>
+  <data name="Core.Req.Level" xml:space="preserve">
+    <value>レベル{0}</value>
+  </data>
+  <data name="Core.Req.NeedsLevel" xml:space="preserve">
+    <value>レベル{0}が必要（現在{1}）</value>
+  </data>
+  <data name="Core.Req.RequiresGrandCompany" xml:space="preserve">
+    <value>{0}への所属が必要</value>
+  </data>
+  <data name="Core.Req.GrandCompanyRank" xml:space="preserve">
+    <value>{0} 階級{1}</value>
+  </data>
+  <data name="Core.Req.NeedsGrandCompanyRank" xml:space="preserve">
+    <value>{0}の階級{1}が必要（現在は階級{2}）</value>
+  </data>
+  <data name="Core.Req.NeedsTribeRank" xml:space="preserve">
+    <value>{0}が必要（現在は{1}）</value>
+  </data>
+  <data name="Core.Req.Reputation" xml:space="preserve">
+    <value>友好度{0}</value>
+  </data>
+  <data name="Core.Req.NeedsReputation" xml:space="preserve">
+    <value>友好度{0}が必要（現在{1}）</value>
+  </data>
+  <data name="Core.Req.AllowancesLeft" xml:space="preserve">
+    <value>受注権 残り{0}</value>
+  </data>
+  <data name="Core.Req.NoAllowances" xml:space="preserve">
+    <value>本日の受注権の残りなし</value>
+  </data>
+  <data name="Core.Req.OfferedToday" xml:space="preserve">
+    <value>本日は依頼あり</value>
+  </data>
+  <data name="Core.Req.NotOfferedToday" xml:space="preserve">
+    <value>本日は依頼なし</value>
+  </data>
+  <data name="Core.Req.NeedsCarrierNotChecked" xml:space="preserve">
+    <value>配達士レベル{0}が必要（未確認）</value>
+  </data>
+  <data name="Core.Req.CarrierLevel" xml:space="preserve">
+    <value>配達士レベル{0}</value>
+  </data>
+  <data name="Core.Req.NeedsCarrierLevel" xml:space="preserve">
+    <value>配達士レベル{0}が必要（現在レベル{1}）</value>
+  </data>
+  <data name="Core.Req.DutiesDoneOneNeeded" xml:space="preserve">
+    <value>コンテンツ{1}件中{0}件をクリア（1件必要）</value>
+  </data>
+  <data name="Core.Req.DutiesDone" xml:space="preserve">
+    <value>コンテンツ{1}件中{0}件をクリア</value>
+  </data>
+  <data name="Core.Req.AcceptConditionOne" xml:space="preserve">
+    <value>未確認の受注条件 1件</value>
+  </data>
+  <data name="Core.Req.AcceptConditions" xml:space="preserve">
+    <value>未確認の受注条件 {0}件</value>
+  </data>
+  <data name="Core.Req.MountAvailable" xml:space="preserve">
+    <value>マウントあり</value>
+  </data>
+  <data name="Core.Req.RequiresMount" xml:space="preserve">
+    <value>マウントが必要</value>
+  </data>
+  <data name="Core.Req.RequiresMountNotChecked" xml:space="preserve">
+    <value>マウントが必要（未確認）</value>
+  </data>
+  <data name="Core.Req.HouseAvailable" xml:space="preserve">
+    <value>ハウスあり</value>
+  </data>
+  <data name="Core.Req.RequiresHouse" xml:space="preserve">
+    <value>ハウスが必要</value>
+  </data>
+  <data name="Core.Req.RequiresHouseNotChecked" xml:space="preserve">
+    <value>ハウスが必要（未確認）</value>
+  </data>
+  <data name="Core.Req.Achievement" xml:space="preserve">
+    <value>アチーブメントの条件あり。ジャーナルを確認してください</value>
+  </data>
+  <data name="Core.Req.AchievementsNotLoaded" xml:space="preserve">
+    <value>アチーブメント未読み込み</value>
+  </data>
+  <data name="Core.Req.QuestDone" xml:space="preserve">
+    <value>{0} 完了</value>
+  </data>
+  <data name="Core.Req.NeedsQuest" xml:space="preserve">
+    <value>{0}が必要</value>
+  </data>
+  <data name="Core.Req.PrerequisitesDoneOneNeeded" xml:space="preserve">
+    <value>前提クエスト{1}件中{0}件完了（1件必要）</value>
+  </data>
+  <data name="Core.Req.PrerequisitesDone" xml:space="preserve">
+    <value>前提クエスト{1}件中{0}件完了</value>
+  </data>
+  <data name="Core.Req.NeedsSatisfactionWithNotChecked" xml:space="preserve">
+    <value>{1}の満足度ランク{0}が必要（未確認）</value>
+  </data>
+  <data name="Core.Req.NeedsSatisfactionNotChecked" xml:space="preserve">
+    <value>満足度ランク{0}が必要（未確認）</value>
+  </data>
+  <data name="Core.Req.SatisfactionWith" xml:space="preserve">
+    <value>{1}の満足度ランク{0}</value>
+  </data>
+  <data name="Core.Req.Satisfaction" xml:space="preserve">
+    <value>満足度ランク{0}</value>
+  </data>
+  <data name="Core.Req.NeedsSatisfactionWith" xml:space="preserve">
+    <value>{1}の満足度ランク{0}が必要（現在ランク{2}）</value>
+  </data>
+  <data name="Core.Req.NeedsSatisfaction" xml:space="preserve">
+    <value>満足度ランク{0}が必要（現在ランク{1}）</value>
+  </data>
+  <data name="Core.Req.SeasonalNotActive" xml:space="preserve">
+    <value>シーズナルイベント開催期間外</value>
+  </data>
+  <data name="Core.Req.ChapterNotOpen" xml:space="preserve">
+    <value>章の開始はフェーズ{0}、現在のイベントはフェーズ{1}</value>
+  </data>
+  <data name="Core.Req.ChapterOver" xml:space="preserve">
+    <value>章はフェーズ{0}で終了、現在のイベントはフェーズ{1}</value>
+  </data>
+  <data name="Core.Req.SeasonalActivePhase" xml:space="preserve">
+    <value>シーズナルイベント開催中（フェーズ{0}）</value>
+  </data>
+  <data name="Core.Req.SeasonalActive" xml:space="preserve">
+    <value>シーズナルイベント開催中</value>
+  </data>
+  <data name="Core.Req.QuestId" xml:space="preserve">
+    <value>クエスト {0}</value>
+  </data>
+  <data name="Core.Filter.HideCompleted" xml:space="preserve">
+    <value>完了済みを隠す</value>
+  </data>
+  <data name="Core.Filter.AvailableOnly" xml:space="preserve">
+    <value>今すぐ着手可能</value>
+  </data>
+  <data name="Core.Filter.State" xml:space="preserve">
+    <value>状態</value>
+  </data>
+  <data name="Core.Filter.Expansion" xml:space="preserve">
+    <value>拡張パッケージ</value>
+  </data>
+  <data name="Core.Filter.AddedIn" xml:space="preserve">
+    <value>追加パッチ</value>
+  </data>
+  <data name="Core.Filter.LevelRange" xml:space="preserve">
+    <value>レベル範囲</value>
+  </data>
+  <data name="Core.Filter.JobCategory" xml:space="preserve">
+    <value>ジョブ区分</value>
+  </data>
+  <data name="Core.Filter.RewardKinds" xml:space="preserve">
+    <value>報酬の種類</value>
+  </data>
+  <data name="Core.Filter.Repeatable" xml:space="preserve">
+    <value>リピート可能</value>
+  </data>
+  <data name="Core.Filter.SeasonalActive" xml:space="preserve">
+    <value>開催中イベント</value>
+  </data>
+  <data name="Core.Filter.IncludeUnlisted" xml:space="preserve">
+    <value>削除済みを含める</value>
+  </data>
+  <data name="Core.Filter.Pinned" xml:space="preserve">
+    <value>ピン留め</value>
+  </data>
+  <data name="Core.Filter.Abandoned" xml:space="preserve">
+    <value>破棄</value>
+  </data>
+  <data name="Core.Filter.Search" xml:space="preserve">
+    <value>検索</value>
+  </data>
+  <data name="Core.Filter.FeatureQuests" xml:space="preserve">
+    <value>解放</value>
+  </data>
+  <data name="Core.Filter.LevelBand" xml:space="preserve">
+    <value>適正レベル</value>
+  </data>
+  <data name="Core.Filter.Stalled" xml:space="preserve">
+    <value>停滞中</value>
+  </data>
+  <data name="Core.Filter.Sprout" xml:space="preserve">
+    <value>若葉モード</value>
+  </data>
+  <data name="Core.Filter.StorySidequests" xml:space="preserve">
+    <value>物語サブクエ</value>
+  </data>
+</root>
