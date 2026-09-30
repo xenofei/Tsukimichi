@@ -123,12 +123,13 @@ public sealed class SpoilerMask
 
     /// <summary>
     /// Whether the quest's journal artwork may show: always with <see cref="SpoilerOptions.HideArtwork"/> off,
-    /// otherwise only for a quest in the journal or completed (the art summarises the quest).
+    /// otherwise only for a quest in the journal or completed, a repeatable handed in this cycle included (the art
+    /// summarises the quest).
     /// </summary>
     public bool ShowArtwork(QuestRecord quest, QuestState state)
     {
         ArgumentNullException.ThrowIfNull(quest);
-        return !Options.HideArtwork || state is QuestState.Accepted or QuestState.Completed;
+        return !Options.HideArtwork || state is QuestState.Accepted or QuestState.Completed or QuestState.DoneThisCycle;
     }
 
     /// <summary>
