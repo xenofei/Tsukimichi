@@ -197,6 +197,25 @@ public sealed class MainWindow : Window, IDisposable
         whatsNew = card ?? throw new ArgumentNullException(nameof(card));
     }
 
+    /// <summary>
+    /// Night chrome for the whole window, title bar included (T13): pushed before Begin, popped after End, so popups,
+    /// combos and tooltips begun in Draw read as Night too (<see cref="Theme.PushNightWindow"/> says why that is
+    /// deliberate). <see cref="Window.BgAlpha"/> is left alone so the user's Dalamud opacity still applies. Nothing is
+    /// pushed while following Dalamud's colours.
+    /// </summary>
+    public override void PreDraw()
+    {
+        nightChrome = Theme.PushNightWindow();
+    }
+
+    public override void PostDraw()
+    {
+        nightChrome.Dispose();
+        nightChrome = default;
+    }
+
+    private Theme.StyleScope nightChrome;
+
     public override void Draw()
     {
         SyncTourState();

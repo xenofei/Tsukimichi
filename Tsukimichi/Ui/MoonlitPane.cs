@@ -342,7 +342,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 
         // The verdict popup is begun here, in the centre column's scope, because the context menu that requests it
         // lives inside the table's inner window and closes before the popup could be shown from there.
-        verdict.Draw(this, UiMetrics.Scale);
+        verdict.Draw(this);
 
         if (rows.Length == 0)
         {

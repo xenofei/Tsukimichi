@@ -94,6 +94,13 @@ public static class UiMetrics
     /// <summary>Square reserved for an inline state moon so its radius is <see cref="RowGlyphRadius"/>, never shorter than the line.</summary>
     public static float InlineGlyphSize(float lineHeight) => MathF.Max(lineHeight, RowGlyphRadius / MoonGlyph.InlineRadiusFraction);
 
+    /// <summary>
+    /// <see cref="InlineGlyphSize"/> on the surfaces read while playing (Todo overlay, Nearby): grown so the moon is
+    /// never under <see cref="ScaleMetrics.PlayingGlyphMinDiameter"/> (14 px) across, whatever the scales.
+    /// </summary>
+    public static float PlayingGlyphSize(float lineHeight) =>
+        ScaleMetrics.GlyphBoxWithFloor(InlineGlyphSize(lineHeight), MoonGlyph.InlineRadiusFraction);
+
     // Icons.
     public static float RowIconSize => Icon(14f);
     public static float DetailIconSize => Icon(17f);
@@ -133,6 +140,7 @@ public static class UiMetrics
     /// <summary>A plain text tooltip drawn with the window's font scale (SetTooltip cannot be scaled).</summary>
     public static void Tooltip(string text)
     {
+        using var tooltipStyle = Theme.PushTooltip();
         using var tooltip = ImRaii.Tooltip();
         ApplyFontScale();
         ImGui.TextUnformatted(text);
@@ -141,6 +149,7 @@ public static class UiMetrics
     /// <summary>A two-line tooltip: <paramref name="text"/>, then <paramref name="detail"/> in the disabled tone when it is not empty.</summary>
     public static void Tooltip(string text, string? detail)
     {
+        using var tooltipStyle = Theme.PushTooltip();
         using var tooltip = ImRaii.Tooltip();
         ApplyFontScale();
         ImGui.TextUnformatted(text);

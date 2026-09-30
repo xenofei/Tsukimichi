@@ -1,0 +1,81 @@
+using Dalamud.Bindings.ImGui;
+using Tsukimichi.Core.Ui;
+
+namespace Tsukimichi.Ui;
+
+/// <summary>
+/// Event-driven motion (ui-revamp §3, accessibility B5): eased values and one-shot pulses keyed by a <see cref="ulong"/>
+/// (an ImGui id, a row id) on <see cref="ImGui.GetTime"/>. Nothing here runs on its own: a value moves only because
+/// its target changed (hover, selection), a pulse plays only because something called <see cref="Trigger"/>, and
+/// there is no idle or breathing animation anywhere. Everything is skipped (values jump to their target, pulses do
+/// not play) while <see cref="UiMetrics.ReduceMotion"/> is on and while the user is scrolling, so a scrolled table
+/// leaves no wake of fading rows. Keys untouched for two seconds are pruned (<see cref="MotionStore"/>, easing in
+/// <see cref="MotionMath"/>). <see cref="BeginFrame"/> runs once per frame before the windows draw. Allocation-free.
+/// </summary>
+public static class Motion
+{
+    /// <summary>After the last wheel tick, motion stays off this long so a fling does not flicker back on between ticks.</summary>
+    private const double ScrollQuietSeconds = 0.15;
+
+    /// <summary>How often stale keys are pruned.</summary>
+    private const double PruneEverySeconds = 0.5;
+
+    private static readonly MotionStore Store = new();
+    private static double lastPrune;
+    private static double scrollQuietUntil;
+    private static bool scrolling;
+
+    /// <summary>Whether motion plays this frame: Reduce motion off and the user not scrolling.</summary>
+    public static bool Enabled => !UiMetrics.ReduceMotion && !scrolling;
+
+    /// <summary>
+    /// Once per frame, after <see cref="UiMetrics.Update"/> and before any window draws: notes whether the mouse wheel
+    /// moved (motion pauses while scrolling), drops every key when Reduce motion is on, and prunes stale keys.
+    /// </summary>
+    public static void BeginFrame()
+    {
+        var now = ImGui.GetTime();
+        var io = ImGui.GetIO();
+        if (io.MouseWheel != 0f || io.MouseWheelH != 0f)
+        {
+            scrollQuietUntil = now + ScrollQuietSeconds;
+        }
+
+        scrolling = now < scrollQuietUntil;
+        if (UiMetrics.ReduceMotion)
+        {
+            if (Store.Count > 0)
+            {
+                Store.Clear();
+            }
+
+            return;
+        }
+
+        if (now - lastPrune >= PruneEverySeconds || now < lastPrune)
+        {
+            lastPrune = now;
+            Store.Prune(now);
+        }
+    }
+
+    /// <summary>
+    /// The value under <paramref name="key"/> eased towards <paramref name="target"/> at <paramref name="rate"/> per
+    /// second (<see cref="MotionMath.HoverRate"/> ≈ 120 ms by default). A new key starts at its target; with motion
+    /// off the target comes back at once.
+    /// </summary>
+    public static float Lerp(ulong key, float target, float rate = MotionMath.HoverRate) =>
+        Store.Lerp(key, target, rate, ImGui.GetTime(), ImGui.GetIO().DeltaTime, Enabled);
+
+    /// <summary>Starts (or restarts) the pulse under <paramref name="key"/> now; nothing happens with motion off.</summary>
+    public static void Trigger(ulong key) => Store.Trigger(key, ImGui.GetTime(), Enabled);
+
+    /// <summary>
+    /// Progress 0..1 of the pulse under <paramref name="key"/> lasting <paramref name="seconds"/>, or -1 when none is
+    /// playing (never triggered, over, or motion off). Callers draw nothing on -1.
+    /// </summary>
+    public static float Pulse(ulong key, float seconds) => Store.Pulse(key, seconds, ImGui.GetTime(), Enabled);
+
+    /// <summary>Forgets every key (plugin unload).</summary>
+    public static void Reset() => Store.Clear();
+}

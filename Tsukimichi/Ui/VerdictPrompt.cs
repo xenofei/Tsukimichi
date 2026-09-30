@@ -11,15 +11,15 @@ namespace Tsukimichi.Ui;
 /// begun by <see cref="Draw"/> in the owning pane's ID scope, so <see cref="Open"/> may be called from inside a
 /// context menu: it only records the request, and the next <see cref="Draw"/> opens the popup (the pattern the
 /// settings window uses for its second delete confirm). The note field takes focus when the popup appears and Enter
-/// confirms; the confirm button is a <see cref="HoldButton"/> (Shift and click, or hold 600 ms); Escape cancels.
+/// confirms; the confirm button is a <see cref="Chrome.HoldButton"/> (Shift and click, or hold 600 ms); Escape cancels.
 /// </summary>
 internal sealed class VerdictPrompt(string popupId)
 {
     private const int NoteLength = 120;
     private const double UndoSeconds = 8.0;
 
-    private static readonly string ConfirmUniqueLabel = Strings.MarkUniqueConfirm + HoldButton.IdSuffix;
-    private static readonly string ConfirmHideLabel = Strings.MarkNotUniqueConfirm + HoldButton.IdSuffix;
+    private static readonly string ConfirmUniqueLabel = Strings.MarkUniqueConfirm + Chrome.HoldIdSuffix;
+    private static readonly string ConfirmHideLabel = Strings.MarkNotUniqueConfirm + Chrome.HoldIdSuffix;
 
     private readonly string popupId = popupId ?? throw new ArgumentNullException(nameof(popupId));
     private readonly ConfirmGate gate = new();
@@ -52,8 +52,7 @@ internal sealed class VerdictPrompt(string popupId)
     /// Opens a requested popup and draws it while it is open. Call every frame from the pane's own scope (not from a
     /// menu or a table's inner window). Returns true on the frame a verdict was stored.
     /// </summary>
-    /// <param name="scale">Pixels per logical unit for the hold arc.</param>
-    public bool Draw(IUniqueOverrides overrides, float scale)
+    public bool Draw(IUniqueOverrides overrides)
     {
         ArgumentNullException.ThrowIfNull(overrides);
         if (pendingOpen)
@@ -84,7 +83,7 @@ internal sealed class VerdictPrompt(string popupId)
             NoteLength,
             ImGuiInputTextFlags.EnterReturnsTrue);
 
-        var confirmed = HoldButton.Draw(unique ? ConfirmUniqueLabel : ConfirmHideLabel, gate, UiMetrics.ReduceMotion, scale);
+        var confirmed = Chrome.HoldButton(unique ? ConfirmUniqueLabel : ConfirmHideLabel, gate);
         if (ImGui.IsItemHovered())
         {
             UiMetrics.Tooltip(Strings.VerdictConfirmTooltip);

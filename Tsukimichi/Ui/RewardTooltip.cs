@@ -34,6 +34,7 @@ public static class RewardTooltip
         ArgumentNullException.ThrowIfNull(links);
         ArgumentNullException.ThrowIfNull(textures);
 
+        using var tooltipStyle = Theme.PushTooltip();
         using var tooltip = ImRaii.Tooltip();
         // A tooltip has no parent window, so it applies the font scale itself.
         UiMetrics.ApplyFontScale();

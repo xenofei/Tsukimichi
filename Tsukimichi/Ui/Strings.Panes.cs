@@ -340,7 +340,9 @@ static partial class Strings
     public const string ConfigIconScale = "Icon scale";
     public const string ConfigIconScaleHint = "Moon glyphs, reward icons and toolbar buttons.";
     public const string ConfigReduceMotion = "Reduce motion";
-    public const string ConfigReduceMotionHint = "Hold-to-confirm buttons count down in text instead of filling an arc. Until you change it here, it follows Windows' \"Show animations\" setting.";
+    public const string ConfigReduceMotionHint = "No hover fades or pulses anywhere, and hold-to-confirm buttons count down in text instead of filling an arc. Until you change it here, it follows Windows' \"Show animations\" setting.";
+    public const string ConfigFollowDalamudColours = "Follow Dalamud colours";
+    public const string ConfigFollowDalamudColoursHint = "Draw Tsukimichi's windows in your Dalamud theme's colours instead of the Night palette. The layout, the moons and the gold stay the same.";
     public const string ConfigDensity = "Table rows";
     public const string ConfigDensityComfortable = "Comfortable";
     public const string ConfigDensityDense = "Dense";

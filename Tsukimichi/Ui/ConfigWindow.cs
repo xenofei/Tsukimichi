@@ -29,7 +29,7 @@ namespace Tsukimichi.Ui;
 public sealed class ConfigWindow : Window
 {
     private static readonly TimeSpan ToastDuration = TimeSpan.FromSeconds(8);
-    private static readonly string RestoreAllLabel = Strings.ConfigVerdictRestoreAll + HoldButton.IdSuffix;
+    private static readonly string RestoreAllLabel = Strings.ConfigVerdictRestoreAll + Chrome.HoldIdSuffix;
 
     private readonly Configuration settings;
     private readonly SessionState session;
@@ -266,6 +266,19 @@ public sealed class ConfigWindow : Window
         if (ImGui.IsItemHovered())
         {
             ImGui.SetTooltip(Strings.ConfigReduceMotionHint);
+        }
+
+        // One layout, two palettes (T13): Night, or the surfaces mapped from the user's Dalamud style.
+        var followDalamud = settings.FollowDalamudColours;
+        if (ImGui.Checkbox(Strings.ConfigFollowDalamudColours, ref followDalamud))
+        {
+            settings.FollowDalamudColours = followDalamud;
+            Save();
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip(Strings.ConfigFollowDalamudColoursHint);
         }
 
         DrawJournalFiling();
@@ -813,7 +826,7 @@ public sealed class ConfigWindow : Window
             }
         }
 
-        if (HoldButton.Draw(RestoreAllLabel, restoreAllGate, settings.ReduceMotion, scale))
+        if (Chrome.HoldButton(RestoreAllLabel, restoreAllGate))
         {
             overrides.ClearAll();
             toast = Strings.ConfigVerdictsRestored;
