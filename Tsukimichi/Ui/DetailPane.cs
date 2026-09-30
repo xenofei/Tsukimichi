@@ -324,7 +324,7 @@ public sealed class DetailPane
         ImGui.SameLine();
         if (model.ChainNextName is not { } next)
         {
-            using var done = Theme.PushText(Theme.Moon);
+            using var done = Theme.PushText(Theme.MoonDim);
             ImGui.TextUnformatted(ChainCompleteLabel);
             return;
         }
@@ -644,7 +644,7 @@ public sealed class DetailPane
     {
         if (overrides.Get(rowId) is { } stored)
         {
-            using (Theme.PushText(stored.Unique ? Theme.Moon : Theme.Dusk))
+            using (Theme.PushText(stored.Unique ? Theme.Silver : Theme.Dusk))
             {
                 ImGui.TextUnformatted(stored.Unique ? Strings.MarkedUniqueByYou : Strings.MarkedNotUniqueByYou);
             }
@@ -960,7 +960,7 @@ public sealed class DetailPane
         if (ImGui.GetTime() < reportNoteUntil)
         {
             ImGui.SameLine();
-            using var moon = Theme.PushText(Theme.Moon);
+            using var moon = Theme.PushText(Theme.Silver);
             ImGui.TextUnformatted(Strings.ReportCopied);
         }
     }

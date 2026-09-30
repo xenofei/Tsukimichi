@@ -909,10 +909,10 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 
     private static Vector4 ConfidenceColor(Confidence confidence) => confidence switch
     {
-        Confidence.Static => Theme.Silver,
-        Confidence.Community => Theme.Dusk,
-        Confidence.Curated => Theme.Moon,
-        Confidence.UserOverride => Theme.Eclipse,
+        Confidence.Static => Theme.Mist,
+        Confidence.Community => Theme.VeilText,
+        Confidence.Curated => Theme.Silver,
+        Confidence.UserOverride => Theme.EclipseText,
         _ => Theme.Veil,
     };
 
@@ -962,7 +962,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             QuestName = quest is null ? Strings.MoonlitQuestPrefix + entry.QuestRowId.ToString(CultureInfo.InvariantCulture) : spoilers.DisplayName(quest);
             QuestLabel = QuestName + "##q";
             ConfidenceLabel = hidden ? Strings.MoonlitConfidenceUser : MoonlitPane.ConfidenceLabel(entry.Confidence);
-            ConfidenceColor = hidden ? Theme.Eclipse : MoonlitPane.ConfidenceColor(entry.Confidence);
+            ConfidenceColor = hidden ? Theme.EclipseText : MoonlitPane.ConfidenceColor(entry.Confidence);
             ConfidenceTooltip = hidden ? Strings.MoonlitBadgeHidden : MoonlitPane.ConfidenceTooltip(entry.Confidence);
             SourceText = string.IsNullOrWhiteSpace(entry.Source) ? Strings.MoonlitSourceUnknown : entry.Source;
             StoreResell = entry.SoldOnOnlineStore;

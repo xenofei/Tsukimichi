@@ -861,7 +861,7 @@ public sealed class ConfigWindow : Window
                 rowId,
                 name,
                 stored.Unique ? Strings.ConfigVerdictUnique : Strings.ConfigVerdictNotUnique,
-                stored.Unique ? Theme.Moon : Theme.Dusk,
+                stored.Unique ? Theme.Silver : Theme.Dusk,
                 stored.Note ?? string.Empty,
                 stored.MarkedUtc?.ToLocalTime().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) ?? string.Empty));
         }
@@ -939,7 +939,7 @@ public sealed class ConfigWindow : Window
             return;
         }
 
-        using (Theme.PushText(Theme.Moon))
+        using (Theme.PushText(Theme.Silver))
         {
             ImGui.TextUnformatted(toast);
         }

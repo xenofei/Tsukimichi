@@ -210,7 +210,7 @@ public sealed class FlightPane
         if (zone.Complete)
         {
             ImGui.SameLine();
-            using var moon = Theme.PushText(Theme.Moon);
+            using var moon = Theme.PushText(Theme.MoonDim);
             ImGui.TextUnformatted(Strings.FlightHeaderComplete);
         }
     }
