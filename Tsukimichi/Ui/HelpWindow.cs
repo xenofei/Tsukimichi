@@ -117,6 +117,7 @@ public sealed class HelpWindow : Window
         FontAwesomeIcon.Check,
         FontAwesomeIcon.Moon,
         FontAwesomeIcon.SlidersH,
+        FontAwesomeIcon.BookOpen,
         FontAwesomeIcon.Tags,
         FontAwesomeIcon.Search);
 

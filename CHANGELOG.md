@@ -4,6 +4,9 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+### Added
+- Story sidequests, a new quick view in the filter panel: the sidequests with journal artwork (the picture in the quest box that marks a quest as part of a small story), zone by zone, with each side story in the order you play it. Two lines that meet in a last quest read as one story, so a zone's tale reads top to bottom. A small book after the name marks these quests in any view; hover it for the story and how far in the quest sits ("Part of a side story: Broken Record (3 of 7)"). Select one and the detail pane shows "Story: Broken Record · 2 of 7 done · next: …". Blue unlock quests are left out, even the ones that open a zone's story, so a story can start at its second quest. Help › Filters and chips › Quick views explains it.
+
 ## [0.7.0] - 2026-09-29
 
 ### Added
