@@ -1,4 +1,5 @@
 using System;
+using Dalamud;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.GameFonts;
 using Dalamud.Interface.ManagedFontAtlas;
@@ -9,7 +10,9 @@ namespace Tsukimichi.Ui;
 
 /// <summary>
 /// The Caption and Display type roles (ui-revamp §4.2, T17): game font handles from the plugin's own font atlas
-/// (<c>UiBuilder.FontAtlas.NewGameFontHandle</c>), one pair per UI-scale bucket (0.9 / 1.0 / 1.15 / 1.3 / 1.6), each the
+/// (<c>UiBuilder.FontAtlas.NewDelegateFontHandle</c>: the game's Axis glyphs, the punctuation Axis may lack ("›", "·",
+/// "–") from Dalamud's default font, and the extra glyphs of Dalamud's language for Chinese and Korean clients), one
+/// pair per UI-scale bucket (0.9 / 1.0 / 1.15 / 1.3 / 1.6), each the
 /// Axis size nearest to what that bucket draws (<see cref="TypeScale"/>): the game's fonts are pre-baked bitmaps, and
 /// one handle scaled bilinearly across every scale would blur (dalamud-developer panel §5). When the UI scale moves to
 /// another bucket the old handles are disposed and the new ones built by the atlas in the background; until a handle
@@ -70,8 +73,8 @@ public static class Typography
         var basePx = ImGui.GetFont().FontSize / UiMetrics.GlobalScale;
         try
         {
-            caption = atlas.NewGameFontHandle(new GameFontStyle(GameFonts[TypeScale.CaptionGameFont(bucket, basePx)]));
-            display = atlas.NewGameFontHandle(new GameFontStyle(GameFonts[TypeScale.DisplayGameFont(bucket, basePx)]));
+            caption = NewRoleHandle(atlas, GameFonts[TypeScale.CaptionGameFont(bucket, basePx)]);
+            display = NewRoleHandle(atlas, GameFonts[TypeScale.DisplayGameFont(bucket, basePx)]);
         }
         catch (Exception ex)
         {
@@ -79,6 +82,28 @@ public static class Typography
             log?.Warning(ex, "Game font handles unavailable; captions and titles use the default font");
             DisposeHandles();
         }
+    }
+
+    /// <summary>
+    /// Punctuation the captions and titles use (the scope's "›", "·", "–", "…" and quotes), merged from Dalamud's
+    /// default font so a glyph the game's Axis lacks never shows as the fallback box: Latin-1 and General Punctuation.
+    /// </summary>
+    private static readonly ushort[] PunctuationRanges = [0x00A0, 0x00FF, 0x2010, 0x205E, 0];
+
+    /// <summary>
+    /// A role's handle: the game font's glyphs first, then the punctuation of Dalamud's default font and the extra
+    /// glyphs of Dalamud's language (Chinese and Korean quest names) merged in at the same size.
+    /// </summary>
+    private static IFontHandle NewRoleHandle(IFontAtlas fontAtlas, GameFontFamilyAndSize family)
+    {
+        var style = new GameFontStyle(family);
+        return fontAtlas.NewDelegateFontHandle(e => e.OnPreBuild(tk =>
+        {
+            var font = tk.AddGameGlyphs(style, null, default);
+            tk.AddDalamudAssetFont(DalamudAsset.NotoSansCjkMedium, new SafeFontConfig { SizePx = style.SizePx, MergeFont = font, GlyphRanges = PunctuationRanges });
+            tk.AttachExtraGlyphsForDalamudLanguage(new SafeFontConfig { SizePx = style.SizePx, MergeFont = font });
+            tk.Font = font;
+        }));
     }
 
     /// <summary>Disposes the handles (plugin unload).</summary>
