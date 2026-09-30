@@ -1279,15 +1279,18 @@ public sealed partial class ConfigWindow : Window
     }
 
     /// <summary>Rebuilds the verdict rows (sorted by quest name) when the overrides or the catalog changed.</summary>
+    private int verdictLanguage = -1;
+
     private void RefreshVerdictRows(IUniqueOverrides overrides)
     {
         var bundle = session.Bundle;
         var spoilers = session.Spoilers;
-        if (overrides.Version == verdictVersion && ReferenceEquals(bundle, verdictBundle) && spoilers.Fingerprint == verdictSpoilers)
+        if (overrides.Version == verdictVersion && ReferenceEquals(bundle, verdictBundle) && spoilers.Fingerprint == verdictSpoilers && verdictLanguage == Localization.Loc.Version)
         {
             return;
         }
 
+        verdictLanguage = Localization.Loc.Version;
         verdictVersion = overrides.Version;
         verdictBundle = bundle;
         verdictSpoilers = spoilers.Fingerprint;

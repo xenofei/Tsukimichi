@@ -33,6 +33,34 @@ public sealed class LocText
 }
 
 /// <summary>
+/// Any value built from localized strings (a help topic's cards, the tour's steps), built once and again only after a
+/// language switch (<see cref="Loc.Version"/>). Framework thread only.
+/// </summary>
+public sealed class LocCache<T>
+    where T : class
+{
+    private readonly Func<T> build;
+    private int version = -1;
+    private T? value;
+
+    public LocCache(Func<T> build) => this.build = build;
+
+    public T Value
+    {
+        get
+        {
+            if (value is null || version != Loc.Version)
+            {
+                value = build();
+                version = Loc.Version;
+            }
+
+            return value;
+        }
+    }
+}
+
+/// <summary>
 /// An array of localized strings (tab labels, column headers, combo items) composed once and again only after a
 /// language switch (<see cref="Loc.Version"/>). Framework thread only.
 /// </summary>

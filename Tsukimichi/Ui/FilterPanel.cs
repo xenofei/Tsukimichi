@@ -784,13 +784,16 @@ public sealed class FilterPanel
     /// category under its section, a genre under its category, the virtual nodes by their tree names, an NPC's quests
     /// as "Quests from Gerolt"). Memoized per (scope, catalog): naming a node scans the catalog once.
     /// </summary>
+    private int scopeChipLanguage = -1;
+
     private string ScopeChipText(QuestScope scope, QuestCatalog? catalog)
     {
-        if (scopeChip.Length > 0 && scope == scopeChipScope && ReferenceEquals(catalog, scopeChipCatalog))
+        if (scopeChip.Length > 0 && scope == scopeChipScope && ReferenceEquals(catalog, scopeChipCatalog) && scopeChipLanguage == Localization.Loc.Version)
         {
             return scopeChip;
         }
 
+        scopeChipLanguage = Localization.Loc.Version;
         scopeChipScope = scope;
         scopeChipCatalog = catalog;
         scopeChip = string.Format(CultureInfo.CurrentCulture, Strings.ScopeChipFormat, ScopeName(scope, catalog));
@@ -916,13 +919,16 @@ public sealed class FilterPanel
         return currentJobCategory;
     }
 
+    private int listsLanguage = -1;
+
     private void EnsureLists(CatalogBundle current)
     {
-        if (ReferenceEquals(bundle, current))
+        if (ReferenceEquals(bundle, current) && listsLanguage == Localization.Loc.Version)
         {
             return;
         }
 
+        listsLanguage = Localization.Loc.Version;
         bundle = current;
         categories.Clear();
         var seen = new HashSet<uint>();

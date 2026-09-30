@@ -255,12 +255,16 @@ public sealed class RouteWindow : Window
     }
 
     /// <summary>"Pin all (N)" with N the steps not pinned yet (every step when there is nobody to pin for); composed only when the route or the pins change.</summary>
+    private int pinLabelLanguage = -1;
+
     private string PinAllLabel(View v)
     {
-        if (ReferenceEquals(pinLabelView, v) && pinLabelPins == runner.PinsVersion)
+        if (ReferenceEquals(pinLabelView, v) && pinLabelPins == runner.PinsVersion && pinLabelLanguage == Localization.Loc.Version)
         {
             return pinLabel;
         }
+
+        pinLabelLanguage = Localization.Loc.Version;
 
         var count = pins.CanPin ? RoutePins.CountUnpinned(v.Route, pins) : v.Route.Steps.Count;
         pinLabelView = v;

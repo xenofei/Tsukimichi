@@ -221,8 +221,9 @@ public sealed class WelcomeBackCard
         }
 
         var series = source.PickerSeries;
-        if (!ReferenceEquals(labelsFor, series))
+        if (!ReferenceEquals(labelsFor, series) || labelsLanguage != Localization.Loc.Version)
         {
+            labelsLanguage = Localization.Loc.Version;
             labelsFor = series;
             seriesLabels = new string[series.Count];
             for (var i = 0; i < seriesLabels.Length; i++)
@@ -449,14 +450,18 @@ public sealed class WelcomeBackCard
 
     // ------------------------------------------------------------------ model
 
+    private int builtLanguage = -1;
+    private int labelsLanguage = -1;
+
     private void Refresh(WelcomeBackView view, CatalogBundle bundle)
     {
         var shield = Shield(view);
-        if (ReferenceEquals(builtView, view) && builtShield == shield.Fingerprint && ReferenceEquals(builtBundle, bundle))
+        if (ReferenceEquals(builtView, view) && builtShield == shield.Fingerprint && ReferenceEquals(builtBundle, bundle) && builtLanguage == Localization.Loc.Version)
         {
             return;
         }
 
+        builtLanguage = Localization.Loc.Version;
         builtView = view;
         builtShield = shield.Fingerprint;
         builtBundle = bundle;

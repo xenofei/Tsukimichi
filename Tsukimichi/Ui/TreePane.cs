@@ -37,7 +37,8 @@ public sealed class TreePane
     {
         public QuestScope Scope { get; } = scope;
         public string Id { get; } = id;
-        public string Name { get; } = name;
+        /// <summary>The label; the three virtual nodes take theirs again after a language switch.</summary>
+        public string Name { get; set; } = name;
         public bool Leaf { get; } = leaf;
         public List<Node> Children { get; } = [];
 
@@ -603,13 +604,20 @@ public sealed class TreePane
         }
     }
 
+    /// <summary>The UI language the nodes' labels and texts were built in.</summary>
+    private int nodesLanguage = -1;
+
     private void EnsureNodes(CatalogBundle current)
     {
-        if (ReferenceEquals(bundle, current))
+        if (ReferenceEquals(bundle, current) && nodesLanguage == Localization.Loc.Version)
         {
             return;
         }
 
+        nodesLanguage = Localization.Loc.Version;
+        allNode.Name = Strings.AllQuests;
+        featureNode.Name = Strings.FeatureUnlocks;
+        unlistedNode.Name = Strings.RemovedFromGame;
         bundle = current;
         counts = null;
         featureReady = -1;

@@ -702,7 +702,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     {
         EnsureCatalog();
         // The quest names are baked into the rows, so a spoiler mask that hides other names rebuilds them (T19).
-        if (rowsBuild != catalogBuild || !ReferenceEquals(rowsBundle, session.Bundle) || rowsSpoilers != session.Spoilers.Fingerprint)
+        if (rowsBuild != catalogBuild || !ReferenceEquals(rowsBundle, session.Bundle) || rowsSpoilers != session.Spoilers.Fingerprint || rowsLanguage != Localization.Loc.Version)
         {
             BuildRows();
         }
@@ -725,8 +725,12 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         catalogBuild++;
     }
 
+    /// <summary>The UI language the rows' labels were composed in.</summary>
+    private int rowsLanguage = -1;
+
     private void BuildRows()
     {
+        rowsLanguage = Localization.Loc.Version;
         var bundle = session.Bundle;
         var spoilers = session.Spoilers;
         var all = catalog.All;

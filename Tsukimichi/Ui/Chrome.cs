@@ -56,7 +56,9 @@ public static class Chrome
     private static readonly string[] CountStrings = BuildCounts();
 
     // Countdown labels under Reduce motion, index = tenths of a second left (1..6 for the default hold).
-    private static readonly string[] Countdown = BuildCountdown();
+    private static string[] Countdown => countdownText.Value;
+
+    private static readonly Tsukimichi.Localization.LocArray countdownText = new(BuildCountdown);
 
     // The open card: channel-split surfaces cannot nest on one draw list, so there is one at a time.
     private static bool cardOpen;

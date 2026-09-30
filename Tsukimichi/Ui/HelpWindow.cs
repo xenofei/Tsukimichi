@@ -98,8 +98,10 @@ public sealed class HelpWindow : Window
 
     private static readonly string LightbulbIcon = FontAwesomeIcon.Lightbulb.ToIconString();
 
-    private static readonly PhaseItem[] Phases =
-    [
+    private static PhaseItem[] Phases => phasesCache.Value;
+
+    private static readonly Localization.LocCache<PhaseItem[]> phasesCache = new(static () =>
+        [
         Phase(QuestState.Completed, Strings.Help.PhaseCompletedMeaning, Strings.Help.ChipHideCompletedOff),
         Phase(QuestState.Accepted, Strings.Help.PhaseAcceptedMeaning, Strings.Help.ChipAvailableNow),
         Phase(QuestState.Ready, Strings.Help.PhaseReadyMeaning, Strings.Help.ChipAvailableNow),
@@ -108,9 +110,12 @@ public sealed class HelpWindow : Window
         Phase(QuestState.Blocked, Strings.Help.PhaseBlockedMeaning, Strings.Help.ChipAvailableNowOff),
         Phase(QuestState.Foreclosed, Strings.Help.PhaseForeclosedMeaning, Strings.Help.ChipHideCompletedOff, Strings.Help.ChipNotInTotals),
         Phase(QuestState.Unknown, Strings.Help.PhaseUnknownMeaning),
-    ];
+    ]);
 
-    private static readonly CardItem[] FilterCards = Cards(
+    private static CardItem[] FilterCards => filterCardsCache.Value;
+
+    private static readonly Localization.LocCache<CardItem[]> filterCardsCache = new(static () =>
+        Cards(
         Strings.Help.FilterCardTitles,
         Strings.Help.FilterCardBodies,
         FontAwesomeIcon.Eye,
@@ -119,9 +124,12 @@ public sealed class HelpWindow : Window
         FontAwesomeIcon.SlidersH,
         FontAwesomeIcon.BookOpen,
         FontAwesomeIcon.Tags,
-        FontAwesomeIcon.Search);
+        FontAwesomeIcon.Search));
 
-    private static readonly CardItem[] QuestCards = Cards(
+    private static CardItem[] QuestCards => questCardsCache.Value;
+
+    private static readonly Localization.LocCache<CardItem[]> questCardsCache = new(static () =>
+        Cards(
         Strings.Help.QuestCardTitles,
         Strings.Help.QuestCardBodies,
         FontAwesomeIcon.Check,
@@ -129,27 +137,34 @@ public sealed class HelpWindow : Window
         FontAwesomeIcon.Link,
         FontAwesomeIcon.MapMarkerAlt,
         FontAwesomeIcon.History,
-        FontAwesomeIcon.BookOpen);
+        FontAwesomeIcon.BookOpen));
 
-    private static readonly CardItem[] MoonlitCards =
-    [
+    private static CardItem[] MoonlitCards => moonlitCardsCache.Value;
+
+    private static readonly Localization.LocCache<CardItem[]> moonlitCardsCache = new(static () =>
+        [
         new(FontAwesomeIcon.Gem.ToIconString(), Strings.Help.UniqueTitle, Strings.Help.UniqueBody),
         new(FontAwesomeIcon.Certificate.ToIconString(), Strings.Help.ConfidenceTitle, Strings.Help.ConfidenceBody),
         new(FontAwesomeIcon.Check.ToIconString(), Strings.Help.HaveTitle, Strings.Help.HaveBody),
         new(FontAwesomeIcon.Adjust.ToIconString(), Strings.Help.OverridesTitle, Strings.Help.OverridesBody),
         new(FontAwesomeIcon.Undo.ToIconString(), Strings.Help.RestoreTitle, Strings.Help.RestoreBody),
-    ];
+    ]);
 
-    private static readonly BadgeItem[] Badges =
-    [
+    private static BadgeItem[] Badges => badgesCache.Value;
+
+    private static readonly Localization.LocCache<BadgeItem[]> badgesCache = new(static () =>
+        [
         // The same tones as the Moonlit table's badge column (never gold: a badge is not a call to action).
         new(Strings.MoonlitConfidenceStatic, Theme.Mist, Strings.Help.ConfidenceStaticMeaning),
         new(Strings.MoonlitConfidenceCommunity, Theme.VeilText, Strings.Help.ConfidenceCommunityMeaning),
         new(Strings.MoonlitConfidenceCurated, Theme.Silver, Strings.Help.ConfidenceCuratedMeaning),
         new(Strings.MoonlitConfidenceUser, Theme.EclipseText, Strings.Help.ConfidenceUserMeaning),
-    ];
+    ]);
 
-    private static readonly CardItem[] CharacterCards = Cards(
+    private static CardItem[] CharacterCards => characterCardsCache.Value;
+
+    private static readonly Localization.LocCache<CardItem[]> characterCardsCache = new(static () =>
+        Cards(
         Strings.Help.CharacterCardTitles,
         Strings.Help.CharacterCardBodies,
         FontAwesomeIcon.Camera,
@@ -159,32 +174,43 @@ public sealed class HelpWindow : Window
         FontAwesomeIcon.Download,
         FontAwesomeIcon.Undo,
         FontAwesomeIcon.CalendarAlt,
-        FontAwesomeIcon.MapSigns);
+        FontAwesomeIcon.MapSigns));
 
-    private static readonly CardItem[] FlightCards = Cards(
+    private static CardItem[] FlightCards => flightCardsCache.Value;
+
+    private static readonly Localization.LocCache<CardItem[]> flightCardsCache = new(static () =>
+        Cards(
         Strings.Help.FlightCardTitles,
         Strings.Help.FlightCardBodies,
         FontAwesomeIcon.Plane,
         FontAwesomeIcon.Compass,
         FontAwesomeIcon.MapMarkerAlt,
         FontAwesomeIcon.Moon,
-        FontAwesomeIcon.Terminal);
+        FontAwesomeIcon.Terminal));
 
-    private static readonly CardItem[] PlanCards =
-    [
+    private static CardItem[] PlanCards => planCardsCache.Value;
+
+    private static readonly Localization.LocCache<CardItem[]> planCardsCache = new(static () =>
+        [
         new(FontAwesomeIcon.ClipboardList.ToIconString(), Strings.PlanHelpTitle, Strings.PlanHelpBody),
-    ];
+    ]);
 
-    private static readonly CardItem[] CountsCards = Cards(
+    private static CardItem[] CountsCards => countsCardsCache.Value;
+
+    private static readonly Localization.LocCache<CardItem[]> countsCardsCache = new(static () =>
+        Cards(
         Strings.Help.CountsCardTitles,
         Strings.Help.CountsCardBodies,
         FontAwesomeIcon.EyeSlash,
         FontAwesomeIcon.Snowflake,
         FontAwesomeIcon.Lock,
         FontAwesomeIcon.Plus,
-        FontAwesomeIcon.Redo);
+        FontAwesomeIcon.Redo));
 
-    private static readonly CardItem[] QuirkCards = Cards(
+    private static CardItem[] QuirkCards => quirkCardsCache.Value;
+
+    private static readonly Localization.LocCache<CardItem[]> quirkCardsCache = new(static () =>
+        Cards(
         Strings.Help.QuirkCardTitles,
         Strings.Help.QuirkCardBodies,
         FontAwesomeIcon.StepForward,
@@ -193,23 +219,29 @@ public sealed class HelpWindow : Window
         FontAwesomeIcon.Clock,
         FontAwesomeIcon.ShoppingCart,
         FontAwesomeIcon.PauseCircle,
-        FontAwesomeIcon.Lock);
+        FontAwesomeIcon.Lock));
 
-    private static readonly CardItem[] SpoilerCards = Cards(
+    private static CardItem[] SpoilerCards => spoilerCardsCache.Value;
+
+    private static readonly Localization.LocCache<CardItem[]> spoilerCardsCache = new(static () =>
+        Cards(
         Strings.Help.SpoilerCardTitles,
         Strings.Help.SpoilerCardBodies,
         FontAwesomeIcon.EyeSlash,
         FontAwesomeIcon.Image,
         FontAwesomeIcon.Seedling,
         FontAwesomeIcon.SlidersH,
-        FontAwesomeIcon.HourglassHalf);
+        FontAwesomeIcon.HourglassHalf));
 
     private static readonly float[] FillingFractions = [0f, 0.03f, 0.25f, 0.66f, 1f];
 
     private readonly HelpActions actions;
     private readonly IFontHandle iconFont;
     private readonly IFontHandle monoFont;
-    private readonly StepItem[] steps;
+    private StepItem[] steps = [];
+
+    /// <summary>The UI language <see cref="steps"/> and the search text were built in.</summary>
+    private int builtLanguage = -1;
 
     /// <summary>Lower-cased title, lede and every block's text per topic, for the rail's search box.</summary>
     private readonly string[] topicSearchText = new string[Topics.Length];
@@ -229,6 +261,18 @@ public sealed class HelpWindow : Window
         iconFont = pluginInterface.UiBuilder.IconFontFixedWidthHandle;
         monoFont = pluginInterface.UiBuilder.MonoFontHandle;
 
+        BuildForLanguage();
+        Array.Fill(topicVisible, true);
+
+        Size = new Vector2(780f, 600f);
+        SizeCondition = ImGuiCond.FirstUseEver;
+        SizeConstraints = new WindowSizeConstraints { MinimumSize = new Vector2(560f, 380f) };
+    }
+
+    /// <summary>The quick-start steps and the rail's search text in the current UI language (V2-19).</summary>
+    private void BuildForLanguage()
+    {
+        builtLanguage = Localization.Loc.Version;
         steps =
         [
             // Find, Read, Beyond: the order of the tour's chapters (T14).
@@ -244,11 +288,6 @@ public sealed class HelpWindow : Window
         ];
 
         BuildSearchText();
-        Array.Fill(topicVisible, true);
-
-        Size = new Vector2(780f, 600f);
-        SizeCondition = ImGuiCond.FirstUseEver;
-        SizeConstraints = new WindowSizeConstraints { MinimumSize = new Vector2(560f, 380f) };
     }
 
     /// <summary>Opens the window (on its current topic) and brings it to the front.</summary>
@@ -268,6 +307,11 @@ public sealed class HelpWindow : Window
     /// <summary>Night chrome around the whole window (rail included); nothing is pushed while following Dalamud's colours.</summary>
     public override void PreDraw()
     {
+        if (builtLanguage != Localization.Loc.Version)
+        {
+            BuildForLanguage();
+        }
+
         nightChrome = Theme.PushNightWindow();
     }
 
