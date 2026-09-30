@@ -298,7 +298,8 @@ public sealed class PathChart
         var scale = UiMetrics.Scale;
         var iconScale = UiMetrics.IconScale;
         var font = ImGui.GetFontSize();
-        if (!layoutDirty && scale == layoutScale && iconScale == layoutIconScale && font == layoutFont && MathF.Abs(width - layoutWidth) < 0.5f)
+        var dense = UiMetrics.Density == RowDensity.Dense;
+        if (!layoutDirty && scale == layoutScale && iconScale == layoutIconScale && font == layoutFont && dense == layoutDense && MathF.Abs(width - layoutWidth) < 0.5f)
         {
             return;
         }
@@ -307,15 +308,19 @@ public sealed class PathChart
         layoutScale = scale;
         layoutIconScale = iconScale;
         layoutFont = font;
+        layoutDense = dense;
         layoutWidth = width;
         BuildLayout(width);
         BuildStars(width);
     }
 
+    // Dense rows (§4.12): step 20 px, moons r 6 and a target of r 8, no sparkle crosses.
+    private bool layoutDense;
+
     private float RadiusFor(VKind kind) => kind switch
     {
-        VKind.Target => UiMetrics.Icon(9f),
-        VKind.Step => UiMetrics.Icon(7f),
+        VKind.Target => UiMetrics.Icon(layoutDense ? 8f : 9f),
+        VKind.Step => UiMetrics.Icon(layoutDense ? 6f : 7f),
         VKind.Bead => UiMetrics.Icon(7f),
         VKind.RunStep => UiMetrics.Icon(6f),
         VKind.Unlock => UiMetrics.Icon(6f),
@@ -330,7 +335,7 @@ public sealed class PathChart
         return kind switch
         {
             VKind.Band or VKind.UnlocksHeader => MathF.Max(Px(20f), captionLine + Px(6f)),
-            VKind.Step => MathF.Max(Px(PathRows.StepHeight), MathF.Max(line + Px(6f), 2.4f * r)),
+            VKind.Step => MathF.Max(Px(layoutDense ? 20f : PathRows.StepHeight), MathF.Max(line + Px(layoutDense ? 3f : 6f), 2.4f * r)),
             VKind.Target => MathF.Max(Px(PathRows.TargetHeight), MathF.Max(line + Px(10f), 2.6f * r)),
             VKind.Bead => MathF.Max(Px(PathRows.BeadHeight), MathF.Max(captionLine + Px(6f), UiMetrics.Icon(22f) + Px(2f))),
             VKind.RunStep => MathF.Max(Px(PathRows.ExpandedStepHeight), MathF.Max(line + Px(4f), 2.4f * r)),
@@ -744,8 +749,12 @@ public sealed class PathChart
                     break;
                 default:
                     dl.AddCircleFilled(p, MathF.Max(1.5f, Px(1.5f)), bright, 8);
-                    dl.AddLine(p - new Vector2(arm, 0f), p + new Vector2(arm, 0f), sparkle, 1f);
-                    dl.AddLine(p - new Vector2(0f, arm), p + new Vector2(0f, arm), sparkle, 1f);
+                    if (!layoutDense)
+                    {
+                        dl.AddLine(p - new Vector2(arm, 0f), p + new Vector2(arm, 0f), sparkle, 1f);
+                        dl.AddLine(p - new Vector2(0f, arm), p + new Vector2(0f, arm), sparkle, 1f);
+                    }
+
                     break;
             }
         }
@@ -917,7 +926,7 @@ public sealed class PathChart
             case VKind.RunStep:
             {
                 var step = path[row.Item];
-                var r = row.Kind == VKind.Step ? UiMetrics.Icon(7f) : UiMetrics.Icon(6f);
+                var r = RadiusFor(row.Kind);
                 if (hovered)
                 {
                     HoverHalo(dl, node, r);
@@ -1007,7 +1016,7 @@ public sealed class PathChart
     private void DrawTarget(ImDrawListPtr dl, Vector2 origin, float width, VRow row, Vector2 node, ImFontPtr font, float fontSize, float textY)
     {
         var s = Theme.Surface;
-        var r = UiMetrics.Icon(9f);
+        var r = RadiusFor(VKind.Target);
 
         // Spotlight row: gold fading left to right, under everything.
         dl.ChannelsSetCurrent(0);
