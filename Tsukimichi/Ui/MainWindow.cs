@@ -134,7 +134,7 @@ public sealed class MainWindow : Window, IDisposable
         // The first-use size is chosen on the first PreDraw, when the viewport and the UI scale are known.
         Size = ScaleMetrics.DefaultWindowLogical;
         SizeCondition = ImGuiCond.FirstUseEver;
-        SizeConstraints = new WindowSizeConstraints { MinimumSize = ScaleMetrics.MinWindowSize(ScaleMetrics.DefaultUiScale) };
+        SizeConstraints = new WindowSizeConstraints { MinimumSize = ScaleMetrics.MinWindowSize(ScaleMetrics.DefaultUiScale, ScaleMetrics.RailCompactLogical) };
 
         filterPanel = new FilterPanel(ui, OnFiltersChanged, OnDisplayChanged);
         ui.FiltersChanged += OnFiltersChanged;
@@ -282,11 +282,13 @@ public sealed class MainWindow : Window, IDisposable
 
         // The rail and the panes' floors grow with the UI scale, so the minimum size must too or a pane goes under its
         // floor (ScaleMetrics.MinWindowSize, PaneLayout); it never exceeds the viewport, so the window can always be
-        // placed whole. The rail is 64 logical px, or 44 while compact (TabStrip.UpdateMode: on a narrow window or by
-        // setting), and the minimum follows it.
+        // placed whole. It is the compact rail's minimum whatever the rail is: the labelled rail shows only on a window
+        // wider than the compact threshold (LayoutBudgets.CompactRail), which is above the labelled rail's own minimum at
+        // every scale, so a minimum that followed the rail would never bind and would only grow a window that was saved
+        // between the two minimums back on every load, before the rail had turned compact.
         SizeConstraints = new WindowSizeConstraints
         {
-            MinimumSize = ScaleMetrics.MinWindowSize(UiMetrics.FontScale, ImGuiHelpers.GlobalScale, ImGuiHelpers.MainViewport.WorkSize, tabStrip.RailLogicalWidth),
+            MinimumSize = ScaleMetrics.MinWindowSize(UiMetrics.FontScale, ImGuiHelpers.GlobalScale, ImGuiHelpers.MainViewport.WorkSize, ScaleMetrics.RailCompactLogical),
         };
 
         // Dalamud closes the window on Esc while it or one of its popups is focused. Esc closes the topmost thing first

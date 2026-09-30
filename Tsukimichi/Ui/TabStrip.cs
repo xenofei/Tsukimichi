@@ -24,7 +24,8 @@ namespace Tsukimichi.Ui;
 /// The union of the stations is recorded as <see cref="UiRects.Tabs"/>, and the foot's buttons as
 /// <see cref="UiRects.HelpButton"/> and <see cref="UiRects.SettingsButton"/>, for the tutorial. Nothing allocates per
 /// frame: labels are constants measured once per language and font size, and the tooltips and the percentage are
-/// rebuilt only when their counts change.
+/// rebuilt only when their counts or the language change. Everything is placed by <see cref="LayoutBudgets.PlaceRail"/>,
+/// so a rail that fits its pane never overflows it by a rounding pixel and turns wheel-scrollable.
 /// </para>
 /// </summary>
 public sealed class TabStrip
@@ -64,8 +65,9 @@ public sealed class TabStrip
     private int labelsLanguage = -1;
     private float labelsFontSize = -1f;
 
-    // The foot's texts, rebuilt when the overall count changes.
+    // The foot's texts, rebuilt when the overall count or the language changes.
     private NodeCount gaugeCount = new(-1, -1, 0);
+    private int gaugeLanguage = -1;
     private string percentText = string.Empty;
     private float percentWidth;
     private string progressText = string.Empty;
@@ -106,40 +108,34 @@ public sealed class TabStrip
         var origin = ImGui.GetCursorScreenPos();
         var avail = ImGui.GetContentRegionAvail();
         var width = MathF.Max(1f, avail.X);
-        var scale = MathF.Max(UiMetrics.Scale, 0.01f);
-        var fit = LayoutBudgets.FitRail(avail.Y / scale, Tabs.Length, Compact);
+        // Everything is placed by the fit, with the foot's buttons at the size they are drawn and whole-pixel stations,
+        // so a rail that fits its pane ends inside it and never becomes wheel-scrollable.
+        var place = LayoutBudgets.PlaceRail(avail.Y, UiMetrics.Scale, Tabs.Length, Compact, UiMetrics.MinTarget);
         var dl = ImGui.GetWindowDrawList();
         var centerX = MathF.Round(origin.X + width * 0.5f);
-        var gap = UiMetrics.Px(LayoutBudgets.RailGapLogical);
-        var y = origin.Y + UiMetrics.Px(LayoutBudgets.RailPadLogical);
 
         MeasureLabels();
         RefreshGauge(overall);
 
-        if (fit.Crest > 0f)
+        if (place.Crest > 0f)
         {
-            var crest = UiMetrics.Px(fit.Crest);
-            DrawCrest(dl, new Vector2(centerX - crest * 0.5f, y), crest);
-            y += crest + gap;
+            DrawCrest(dl, new Vector2(centerX - place.Crest * 0.5f, origin.Y + place.CrestTop), place.Crest);
         }
 
-        var stationHeight = MathF.Round(UiMetrics.Px(fit.Station));
+        var y = origin.Y + place.StationsTop;
         var first = y;
         for (var i = 0; i < Tabs.Length; i++)
         {
-            DrawStation(dl, i, new Vector2(origin.X, y), width, stationHeight, overall.Fraction, ready);
-            y += stationHeight;
+            DrawStation(dl, i, new Vector2(origin.X, y), width, place.Station, overall.Fraction, ready);
+            y += place.Station;
         }
 
         ui.RecordRect(UiRects.Tabs, new Vector2(origin.X, first), new Vector2(origin.X + width, y));
+        DrawFoot(dl, centerX, origin.Y + place.FootTop, place.Fit.Percent, place.Button, overall.Fraction, openHelp, openSettings);
 
-        var footHeight = UiMetrics.Px(LayoutBudgets.FootHeight(fit.Percent, Compact));
-        var bottom = origin.Y + avail.Y - UiMetrics.Px(LayoutBudgets.RailPadLogical);
-        var footTop = fit.FootAnchored ? MathF.Max(y + gap, bottom - footHeight) : y + gap;
-        var footBottom = DrawFoot(dl, centerX, footTop, fit.Percent, overall.Fraction, openHelp, openSettings);
-
-        // The rail's content ends under the foot, so a rail taller than its pane scrolls to it.
-        ImGui.SetCursorScreenPos(new Vector2(origin.X, footBottom + UiMetrics.Px(LayoutBudgets.RailPadLogical)));
+        // The rail's content ends under the foot (a 1 px item whose bottom is the content's), so a rail taller than
+        // its pane scrolls to it, and one that fits does not scroll at all.
+        ImGui.SetCursorScreenPos(new Vector2(origin.X, origin.Y + place.ContentBottom - 1f));
         ImGui.Dummy(new Vector2(1f, 1f));
     }
 
@@ -240,8 +236,13 @@ public sealed class TabStrip
             MoonGlyph.DrawFilling(dl, iconCenter, iconSize * 0.45f, overallFraction);
             if (ready > 0)
             {
-                // The Ready count on the icon's top right.
-                Chrome.Badge(dl, iconCenter + new Vector2(iconSize * 0.55f, -iconSize * 0.42f), ready, actionable: true);
+                // The Ready count on the icon's top right, held inside the station: on the 44 px compact rail a "99+"
+                // pill there would run past the rail's edge and be clipped.
+                var badge = Chrome.BadgeSize(ready);
+                var edge = UiMetrics.Px(1f);
+                var badgeX = MathF.Min(iconCenter.X + iconSize * 0.55f, max.X - edge - badge.X * 0.5f);
+                var badgeY = MathF.Max(iconCenter.Y - iconSize * 0.42f, min.Y + edge + badge.Y * 0.5f);
+                Chrome.Badge(dl, new Vector2(badgeX, badgeY), ready, actionable: true);
             }
         }
         else
@@ -280,9 +281,10 @@ public sealed class TabStrip
     /// <summary>
     /// The foot: the overall gauge (a halo filled to the overall completion, done / total on hover), its percentage
     /// under it where the height allows, then Help and Settings, side by side on the labelled rail and stacked on the
-    /// compact one. Returns the foot's bottom edge.
+    /// compact one. Each part takes the height <see cref="LayoutBudgets.FootHeight"/> gives it, so the foot is exactly as
+    /// tall as the fit reserved; <paramref name="button"/> is the buttons' side as drawn (<see cref="UiMetrics.MinTarget"/>).
     /// </summary>
-    private float DrawFoot(ImDrawListPtr dl, float centerX, float top, bool percent, float fraction, Action? openHelp, Action? openSettings)
+    private void DrawFoot(ImDrawListPtr dl, float centerX, float top, bool percent, float button, float fraction, Action? openHelp, Action? openSettings)
     {
         var gap = UiMetrics.Px(LayoutBudgets.RailGapLogical);
         var gauge = UiMetrics.Px(LayoutBudgets.RailGaugeLogical);
@@ -297,12 +299,11 @@ public sealed class TabStrip
         if (percent)
         {
             ImGui.SetWindowFontScale(LayoutBudgets.RailLabelFraction);
-            var line = ImGui.GetTextLineHeight();
             ImGui.SetCursorScreenPos(new Vector2(MathF.Round(centerX - percentWidth * ImGui.GetFontSize() * 0.5f), y));
             ImGui.TextUnformatted(percentText);
             gaugeHovered |= ImGui.IsItemHovered();
             ImGui.SetWindowFontScale(1f);
-            y += line + gap;
+            y += UiMetrics.Px(LayoutBudgets.PercentLine(percent: true));
         }
 
         if (gaugeHovered)
@@ -310,7 +311,6 @@ public sealed class TabStrip
             UiMetrics.Tooltip(Strings.FillingMoonTooltip, progressText);
         }
 
-        var button = UiMetrics.MinTarget;
         var between = UiMetrics.Px(4f);
         if (Compact)
         {
@@ -324,8 +324,6 @@ public sealed class TabStrip
             FootButton("##railHelp", HelpIcon, Strings.HelpButtonTooltip, openHelp, UiRects.HelpButton, new Vector2(left, y));
             FootButton("##railSettings", SettingsIcon, Strings.SettingsButtonTooltip, openSettings, UiRects.SettingsButton, new Vector2(left + button + between, y));
         }
-
-        return y + button;
     }
 
     private void FootButton(string id, string icon, string tooltip, Action? action, string rectKey, Vector2 pos)
@@ -368,15 +366,16 @@ public sealed class TabStrip
         ImGui.SetWindowFontScale(1f);
     }
 
-    /// <summary>The foot's percentage and progress texts, rebuilt when the overall count changes.</summary>
+    /// <summary>The foot's percentage and progress texts, rebuilt when the overall count or the language changes.</summary>
     private void RefreshGauge(NodeCount overall)
     {
-        if (overall == gaugeCount && percentText.Length > 0)
+        if (overall == gaugeCount && percentText.Length > 0 && gaugeLanguage == Localization.Loc.Version)
         {
             return;
         }
 
         gaugeCount = overall;
+        gaugeLanguage = Localization.Loc.Version;
         var percent = overall.Total <= 0 ? 0 : (int)MathF.Floor(100f * overall.Done / overall.Total);
         percentText = string.Format(CultureInfo.CurrentCulture, Strings.StatusPercentFormat, percent);
         // Stored per unit of font size, so it follows the UI scale without measuring again.

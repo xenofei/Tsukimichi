@@ -199,6 +199,14 @@ public sealed class TablePane : IDisposable
     // A sort to write back into the column state once the sorted column is shown again (ImGui drops a hidden column's sort).
     private bool restoreSort;
 
+    // The Name header's note while the plan hides the sorted column, and what it was built for.
+    private string hiddenSortNote = string.Empty;
+    private SortColumn hiddenSortColumn;
+    private int hiddenSortLanguage = -1;
+
+    // Last frame's row height: rows that change height keep the first visible row in view.
+    private float lastRowHeight;
+
     public TablePane(UiState ui, QueryRunner runner, GameLinks links, ITextureProvider textures, IDalamudPluginInterface pluginInterface, IPluginLog log, Action resetFilters, Action filtersChanged)
     {
         this.ui = ui ?? throw new ArgumentNullException(nameof(ui));
@@ -315,13 +323,7 @@ public sealed class TablePane : IDisposable
         var available = ImGui.GetWindowWidth() - (ImGui.GetScrollMaxY() > 0f ? style.ScrollbarSize : 0f);
         var widths = new QuestTableWidths(glyphColumn, levelColumn, jobIconColumn, jobColumn, StateWordWidth(), expansionColumn, rewardsColumn, overhead, UiMetrics.Px(1f));
         var sortedWasHidden = SortColumnAutoHidden();
-        plan = TableGeometry.PlanQuestTable(available, widths, playerHidden, plan, planned ? lastVisible : [], planSpecs, planVisible, planWidths);
-        planned = true;
-        Array.Copy(planVisible, lastVisible, ColumnCount);
-        for (var i = 0; i < ColumnCount; i++)
-        {
-            autoHidden[i] = !planVisible[i] && !playerHidden[i];
-        }
+        PlanColumns(available, in widths);
 
         // Name is the one ImGui stretch column: it takes what the fixed columns leave. Every other column is fixed and
         // NoResize, so ImGui lays it out at the width given here each frame (the plan's for Job and Status); a column the
@@ -351,16 +353,30 @@ public sealed class TablePane : IDisposable
             ApplyInitialSort(ui.Sort);
         }
 
-        DrawHeaders(SortedColumn(ui.Sort));
+        // While the plan hides the sorted column (its header and arrow are gone), the Name header's tooltip names the sort.
+        DrawHeaders(SortedColumn(ui.Sort), SortColumnAutoHidden() ? HiddenSortNote() : null);
 
         // The player's own hidden columns, read after the layout: a column the plan did not hide is shown unless the
         // player hid it from the header menu (the plan's hides never touch that flag).
+        var hiddenChanged = false;
         for (var i = (int)Column.Level; i < ColumnCount; i++)
         {
             if (!autoHidden[i])
             {
-                playerHidden[i] = !IsColumnEnabled((Column)i);
+                var hidden = !IsColumnEnabled((Column)i);
+                hiddenChanged |= hidden != playerHidden[i];
+                playerHidden[i] = hidden;
             }
+        }
+
+        // A column hidden or shown from the header menu reaches the layout only now (ImGui applies it in this frame's
+        // layout), so the plan made before it is stale: plan again, so this frame's rows and the next frame's columns
+        // follow the menu rather than lag a frame behind it.
+        if (hiddenChanged)
+        {
+            var sortWasHidden = SortColumnAutoHidden();
+            PlanColumns(available, in widths);
+            restoreSort |= sortWasHidden && !SortColumnAutoHidden();
         }
 
         // Two-line rows (design v4 §8.2): the name and the level on the first line, the status under it in the caption
@@ -374,6 +390,16 @@ public sealed class TablePane : IDisposable
         var lineGap = UiMetrics.Px(LayoutBudgets.TableTwoLineGapLogical);
         var content = plan.TwoLine ? MathF.Max(rowContent, lineHeight + lineGap + statusLine) : rowContent;
         var rowHeight = content + padY * 2f;
+
+        // Rows that change height (one line to two and back, the density, the UI scale) keep the first visible row in
+        // view rather than the pixel offset, which would land elsewhere in the list and could lose the selection.
+        // Rows start under the frozen header, so row i is in view from i × rowHeight.
+        if (lastRowHeight > 0f && rowHeight != lastRowHeight && ImGui.GetScrollY() is var scrollY and > 0f)
+        {
+            ImGui.SetScrollY(scrollY / lastRowHeight * rowHeight);
+        }
+
+        lastRowHeight = rowHeight;
 
         ApplySortSpecs();
         ScrollToExternalSelection(rows, rowHeight);
@@ -430,6 +456,36 @@ public sealed class TablePane : IDisposable
         public float SecondLineOffset => FirstLineOffset + LineHeight + LineGap;
     }
 
+    /// <summary>
+    /// Plans the columns for <paramref name="available"/> pixels (<see cref="TableGeometry.PlanQuestTable"/>) with the
+    /// player's hidden columns, keeping this plan's visibility for the next one's hysteresis, and marks the columns the
+    /// plan hides (Disabled at the next setup).
+    /// </summary>
+    private void PlanColumns(float available, in QuestTableWidths widths)
+    {
+        plan = TableGeometry.PlanQuestTable(available, widths, playerHidden, plan, planned ? lastVisible : [], planSpecs, planVisible, planWidths);
+        planned = true;
+        Array.Copy(planVisible, lastVisible, ColumnCount);
+        for (var i = 0; i < ColumnCount; i++)
+        {
+            autoHidden[i] = !planVisible[i] && !playerHidden[i];
+        }
+    }
+
+    /// <summary>"Sorted by Level (…)" for the Name header's tooltip while the plan hides the sorted column; rebuilt only when the sort's column or the language changes.</summary>
+    private string HiddenSortNote()
+    {
+        if (hiddenSortColumn != ui.Sort.Column || hiddenSortLanguage != Localization.Loc.Version || hiddenSortNote.Length == 0)
+        {
+            hiddenSortColumn = ui.Sort.Column;
+            hiddenSortLanguage = Localization.Loc.Version;
+            var column = ui.Sort.Column == SortColumn.Expansion ? Strings.ColumnExpansion : Strings.ColumnLevel;
+            hiddenSortNote = string.Format(CultureInfo.CurrentCulture, Strings.TableSortHiddenFormat, column);
+        }
+
+        return hiddenSortNote;
+    }
+
     /// <summary>The Disabled flag for a column the plan hides this frame.</summary>
     private ImGuiTableColumnFlags Planned(Column column) => autoHidden[(int)column] ? ImGuiTableColumnFlags.Disabled : ImGuiTableColumnFlags.None;
 
@@ -466,9 +522,9 @@ public sealed class TablePane : IDisposable
     /// <summary>
     /// What TableHeadersRow does, one header at a time, so each can carry a tooltip. Labels are in the secondary tone
     /// on the raised fill; the sorted column's label and its arrow are in the primary text colour (a sort is not a call
-    /// to action, so never gold).
+    /// to action, so never gold). <paramref name="nameNote"/>, when given, is a second line in the Name header's tooltip.
     /// </summary>
-    private static void DrawHeaders(int sortedColumn)
+    private static void DrawHeaders(int sortedColumn, string? nameNote)
     {
         var s = Theme.Surface;
 
@@ -489,7 +545,7 @@ public sealed class TablePane : IDisposable
             ImGui.PopID();
             if (ImGui.IsItemHovered())
             {
-                UiMetrics.Tooltip(HeaderTooltips[i]);
+                UiMetrics.Tooltip(HeaderTooltips[i], i == (int)Column.Name ? nameNote : null);
             }
         }
     }

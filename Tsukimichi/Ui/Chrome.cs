@@ -308,14 +308,27 @@ public static partial class Chrome
     public static void Badge(ImDrawListPtr dl, Vector2 center, int count, bool actionable) =>
         Badge(dl, center, CountStrings[Math.Clamp(count, 0, CountStrings.Length - 1)], actionable);
 
+    /// <summary>The size <see cref="Badge(ImDrawListPtr, Vector2, int, bool)"/> draws for <paramref name="count"/> at the current font, for callers that keep it inside a box.</summary>
+    public static Vector2 BadgeSize(int count)
+    {
+        var text = CountStrings[Math.Clamp(count, 0, CountStrings.Length - 1)];
+        var (width, height) = BadgeSize(ImGui.CalcTextSize(text).X * 0.72f, ImGui.GetFontSize() * 0.72f);
+        return new Vector2(width, height);
+    }
+
+    private static (float Width, float Height) BadgeSize(float textWidth, float fontSize)
+    {
+        var height = MathF.Max(UiMetrics.Px(BadgeMin), fontSize + UiMetrics.Px(3f));
+        return (MathF.Max(height, textWidth + UiMetrics.Px(6f)), height);
+    }
+
     /// <summary>A badge with preformatted text; see <see cref="Badge(ImDrawListPtr, Vector2, int, bool)"/>.</summary>
     public static void Badge(ImDrawListPtr dl, Vector2 center, string text, bool actionable)
     {
         var font = ImGui.GetFont();
         var fontSize = ImGui.GetFontSize() * 0.72f;
         var textSize = ImGui.CalcTextSize(text) * 0.72f;
-        var height = MathF.Max(UiMetrics.Px(BadgeMin), fontSize + UiMetrics.Px(3f));
-        var width = MathF.Max(height, textSize.X + UiMetrics.Px(6f));
+        var (width, height) = BadgeSize(textSize.X, fontSize);
         var min = center - new Vector2(width, height) * 0.5f;
         var fill = actionable ? Theme.MoonU32 : Theme.U32(Theme.Surface.StrongLine);
         var ink = actionable ? Theme.NightU32 : Theme.U32(Theme.Surface.Text);

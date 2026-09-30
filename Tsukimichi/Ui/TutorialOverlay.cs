@@ -145,7 +145,7 @@ public sealed class TutorialOverlay : ITutorial
         new(Chapter.Beyond, StepKind.Normal, Strings.Tutorial.FlightTitle, Strings.Tutorial.FlightBody, [UiRects.FlightTable], [UiRects.FlightZones], static ui => ui.Tab = NavTab.Flight),
         new(Chapter.Beyond, StepKind.Normal, Strings.Tutorial.PlanTitle, Strings.Tutorial.PlanBody, [UiRects.PlanCards], [UiRects.Tabs], static ui => ui.Tab = NavTab.Plan),
         new(Chapter.Beyond, StepKind.Normal, Strings.Tutorial.PlayTitle, Strings.Tutorial.PlayBody, [UiRects.SettingsButton], [UiRects.Toolbar], null),
-        new(Chapter.Beyond, StepKind.Normal, Strings.Tutorial.HelpTitle, Strings.Tutorial.HelpBody, [UiRects.HelpButton, UiRects.TutorialButton, UiRects.SettingsButton], [UiRects.Toolbar], null),
+        new(Chapter.Beyond, StepKind.Normal, Strings.Tutorial.HelpTitle, Strings.Tutorial.HelpBody, [UiRects.HelpButton, UiRects.SettingsButton], [UiRects.Toolbar], null),
         new(Chapter.Beyond, StepKind.Finish, Strings.Tutorial.FinishTitle, Strings.Tutorial.FinishBody, NoKeys, NoKeys, null),
     ]);
 

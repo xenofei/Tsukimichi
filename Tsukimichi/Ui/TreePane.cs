@@ -23,9 +23,10 @@ namespace Tsukimichi.Ui;
 /// <para>
 /// Rows read the short names of <see cref="JournalNames.Short"/> ("Eden", "Hildibrand", "Main Scenario" with an
 /// ARR–EW pill), and a row whose name is shortened or cut names the node in full, with its journal path, on hover.
-/// Each row is fitted by <see cref="RowFit"/> within the tree's <see cref="TreeTier"/> (feature plan v4 L3): the
+/// Each row is fitted by <see cref="TreeRowFit"/> within the tree's <see cref="TreeTier"/> (feature plan v4 L3): the
 /// expansion pill goes first, then the mini bar, then the count becomes a percentage, and in the narrowest tier the
-/// ring alone carries progress and the Ready pill becomes a gold dot on the glyph, so nothing ever overlaps. Texts
+/// ring alone carries progress and the Ready pill becomes a gold dot on the glyph, so nothing ever overlaps. A
+/// section's expansion suffix is never cut: without its pill the label carries it whole ("Main Sc… · DT"). Texts
 /// are measured once per font size, so a row does no measuring per frame.
 /// </para>
 ///
@@ -56,8 +57,11 @@ public sealed partial class TreePane
         /// <summary>The game's full name, for the tooltip; the virtual nodes' label.</summary>
         public string FullName { get; set; } = name;
 
-        /// <summary>The short name with its expansion suffix ("Main Scenario · DT"): the label where the pill does not show.</summary>
-        public string NameWithSuffix { get; set; } = name;
+        /// <summary>
+        /// The expansion suffix as the label carries it where the pill does not show (" · DT", after <see cref="Name"/>);
+        /// empty when it has none. It is never cut: the name before it is ellipsised instead (<see cref="TreeRowFit"/>).
+        /// </summary>
+        public string SuffixText { get; set; } = string.Empty;
 
         /// <summary>The short name's expansion suffix ("ARR–EW"), drawn as the row's pill; empty when it has none.</summary>
         public string Suffix { get; set; } = string.Empty;
@@ -89,7 +93,7 @@ public sealed partial class TreePane
         // Measured widths, kept for the font size they were measured at; any text change resets MeasuredAt.
         public float MeasuredAt { get; set; } = -1f;
         public float NameWidth { get; set; }
-        public float NameWithSuffixWidth { get; set; }
+        public float SuffixWidth { get; set; }
         public float CountWidth { get; set; }
         public float PercentWidth { get; set; }
         public float ReadyWidth { get; set; }
@@ -152,13 +156,6 @@ public sealed partial class TreePane
     private const float PillPadLogical = 5f;
     private const float PillFontFraction = 0.72f;
 
-    /// <summary>A row's parts in <see cref="RowFit"/> priority order: the count goes last, the expansion pill first.</summary>
-    private const int CountPart = 0;
-    private const int ReadyPart = 1;
-    private const int BarPart = 2;
-    private const int PillPart = 3;
-    private const int PartCount = 4;
-
     /// <summary>The tree's width tier, kept from frame to frame for its hysteresis.</summary>
     private TreeTier tier = TreeTier.Full;
 
@@ -216,7 +213,8 @@ public sealed partial class TreePane
 
         var start = ImGui.GetCursorScreenPos();
         var width = ImGui.GetContentRegionAvail().X;
-        tier = LayoutBudgets.TreeTierFor(width / MathF.Max(UiMetrics.Scale, 0.01f), tier);
+        // The tier follows the pane (the ##left window, which the tree fills), not the room beside its scrollbar.
+        tier = LayoutBudgets.TreeTierForPane(ImGui.GetWindowWidth(), UiMetrics.Scale, tier);
 
         // Rows touch: the washes of neighbouring rows meet, and each row is exactly its own height.
         using (ImRaii.PushStyle(ImGuiStyleVar.ItemSpacing, new Vector2(ImGui.GetStyle().ItemSpacing.X, 0f)))
@@ -427,8 +425,9 @@ public sealed partial class TreePane
 
     /// <summary>
     /// Halo, name, pills, mini bar and count painted on the node's row; drawn without items so layout is untouched.
-    /// The parts are fitted right to left by <see cref="RowFit"/> within the tree's <see cref="TreeTier"/> (feature
-    /// plan v4 L3): the name keeps at least <see cref="LayoutBudgets.RowNameMinLogical"/> and ends in an ellipsis,
+    /// The parts are fitted right to left by <see cref="TreeRowFit"/> within the tree's <see cref="TreeTier"/> (feature
+    /// plan v4 L3): the name keeps at least <see cref="LayoutBudgets.RowNameMinLogical"/> (and its expansion suffix
+    /// whole where the pill does not show) and ends in an ellipsis,
     /// and a part that does not fit is not drawn, so nothing overlaps the glyph or the chevron at any width. Where the
     /// Ready pill cannot show, a gold dot on the glyph carries it. Returns which part the mouse is over, for the
     /// caller's item-hover tooltip (the node is the item).
@@ -470,21 +469,19 @@ public sealed partial class TreePane
         var barWidth = UiMetrics.Px(BarWidthLogical);
         var barGap = UiMetrics.Px(BarGapLogical);
         var pillText = node.PillText;
-        Span<float> parts = stackalloc float[PartCount];
-        Span<bool> visible = stackalloc bool[PartCount];
-        parts[CountPart] = countWidth > 0f ? countWidth + pad : 0f;
-        parts[ReadyPart] = node.Ready > 0 && tier != TreeTier.Slim ? node.ReadyWidth + pad : 0f;
-        parts[BarPart] = tier <= TreeTier.Trim && !node.CountIsTally ? barWidth + barGap : 0f;
-        parts[PillPart] = tier == TreeTier.Full && pillText.Length > 0 ? node.PillWidth + pad : 0f;
-
-        var nameMin = UiMetrics.Px(LayoutBudgets.RowNameMinLogical);
-        // Where the tier offers no pill the label carries the expansion suffix, so the fit measures that label.
-        var fitName = parts[PillPart] > 0f ? node.NameWidth : node.NameWithSuffixWidth;
-        var fit = RowFit.Fit(right - namePos.X, fitName, nameMin, parts, visible);
-        var showCount = visible[CountPart] && parts[CountPart] > 0f;
-        var showReady = visible[ReadyPart] && parts[ReadyPart] > 0f;
-        var showBar = visible[BarPart] && parts[BarPart] > 0f;
-        var showPill = visible[PillPart] && parts[PillPart] > 0f;
+        // Where the pill does not show the label carries the expansion suffix whole, and the fit makes room for it.
+        var widths = new TreeRowWidths(
+            node.NameWidth,
+            node.SuffixWidth,
+            countWidth > 0f ? countWidth + pad : 0f,
+            node.Ready > 0 && tier != TreeTier.Slim ? node.ReadyWidth + pad : 0f,
+            tier <= TreeTier.Trim && !node.CountIsTally ? barWidth + barGap : 0f,
+            tier == TreeTier.Full && pillText.Length > 0 ? node.PillWidth + pad : 0f);
+        var fit = TreeRowFit.Fit(right - namePos.X, UiMetrics.Px(LayoutBudgets.RowNameMinLogical), in widths);
+        var showCount = fit.Count;
+        var showReady = fit.Ready;
+        var showBar = fit.Bar;
+        var showPill = fit.Pill;
 
         // Count, right-aligned: Dusk, Silver on the selected row, MoonDim once complete.
         var progressLeft = right;
@@ -503,27 +500,29 @@ public sealed partial class TreePane
             DrawMiniBar(dl, new Vector2(progressLeft, rowCenterY), barWidth, node.Count, complete);
         }
 
-        // The name in the room the parts leave, with an ellipsis when cut. A section whose expansion pill did not fit
-        // names its expansion in the label instead ("Main Scenario · DT"), so the two Main Scenario rows stay apart.
-        var suffixInName = node.Suffix.Length > 0 && !showPill;
-        var name = suffixInName ? node.NameWithSuffix : node.Name;
-        var nameWidth = suffixInName ? node.NameWithSuffixWidth : node.NameWidth;
+        // The name in the room the parts leave, with an ellipsis when cut. A section whose expansion pill does not show
+        // names its expansion in the label instead ("Main Scenario · DT"), drawn whole after the name, which is cut
+        // before it ("Main Sc… · DT"), so the two Main Scenario rows always stay apart.
         var nameColor = complete ? Theme.MoonDimU32 : ImGui.GetColorU32(ImGuiCol.Text);
-        var nameRoom = fit.NameRoom;
         var bold = section ? UiMetrics.Hairline : 0f;
-        var textRoom = MathF.Max(0f, nameRoom - bold);
-        var cut = name.Length > 0 && textRoom <= 0f;
+        var textRoom = MathF.Max(0f, fit.HeadRoom - bold);
+        var cut = node.Name.Length > 0 && textRoom <= 0f;
         if (textRoom > 0f)
         {
-            cut = Chrome.EllipsisTextAt(dl, namePos, textRoom, name, nameColor, nameWidth - bold);
-            if (section)
+            cut = DrawLabelText(dl, namePos, textRoom, node.Name, nameColor, node.NameWidth - bold, bold);
+        }
+
+        if (fit.SuffixInLabel)
+        {
+            var suffixPos = new Vector2(namePos.X + MathF.Min(node.NameWidth - bold, textRoom), namePos.Y);
+            var suffixRoom = namePos.X + fit.LabelRoom - bold - suffixPos.X;
+            if (suffixRoom > 0f)
             {
-                // No bold face in Dalamud: a second pass one scaled pixel to the right thickens the strokes.
-                Chrome.EllipsisTextAt(dl, namePos + new Vector2(bold, 0f), textRoom, name, nameColor, nameWidth - bold);
+                cut |= DrawLabelText(dl, suffixPos, suffixRoom, node.SuffixText, nameColor, node.SuffixWidth, bold);
             }
         }
 
-        var nameEnd = namePos.X + MathF.Min(nameWidth, nameRoom);
+        var nameEnd = namePos.X + MathF.Min(node.NameWidth, fit.HeadRoom);
 
         var hover = Hover.None;
         var pillX = nameEnd + pad;
@@ -598,12 +597,27 @@ public sealed partial class TreePane
         var bold = section ? UiMetrics.Hairline : 0f;
         var pillPad = 2f * UiMetrics.Px(PillPadLogical);
         node.NameWidth = ImGui.CalcTextSize(node.Name).X + bold;
-        node.NameWithSuffixWidth = ReferenceEquals(node.NameWithSuffix, node.Name) ? node.NameWidth : ImGui.CalcTextSize(node.NameWithSuffix).X + bold;
+        node.SuffixWidth = node.SuffixText.Length > 0 ? ImGui.CalcTextSize(node.SuffixText).X : 0f;
         node.CountWidth = node.CountText.Length > 0 ? ImGui.CalcTextSize(node.CountText).X : 0f;
         node.PercentWidth = node.PercentText.Length > 0 ? ImGui.CalcTextSize(node.PercentText).X : 0f;
         node.ReadyWidth = node.Ready > 0 ? ImGui.CalcTextSize(node.ReadyText).X + pillPad : 0f;
         node.PillWidth = node.PillText.Length > 0 ? (ImGui.CalcTextSize(node.PillText).X * PillFontFraction) + pillPad : 0f;
         node.MeasuredAt = fontSize;
+    }
+
+    /// <summary>
+    /// Label text in its room, ending in an ellipsis when cut; on a section row (<paramref name="bold"/> above 0) a second
+    /// pass that many pixels to the right thickens the strokes, as Dalamud has no bold face. Returns whether it was cut.
+    /// </summary>
+    private static bool DrawLabelText(ImDrawListPtr dl, Vector2 pos, float room, string text, uint color, float width, float bold)
+    {
+        var cut = Chrome.EllipsisTextAt(dl, pos, room, text, color, width);
+        if (bold > 0f)
+        {
+            Chrome.EllipsisTextAt(dl, pos + new Vector2(bold, 0f), room, text, color, width);
+        }
+
+        return cut;
     }
 
     /// <summary>The 44 × 3 mini bar: Veil track, Moon fill (MoonDim once complete), at least 2 px of fill above 0.</summary>
@@ -890,8 +904,11 @@ public sealed partial class TreePane
     {
         node.Name = name;
         node.FullName = name;
-        node.NameWithSuffix = name;
+        node.SuffixText = string.Empty;
         node.MeasuredAt = -1f;
+        // Their counts' texts are in the UI language too: cleared, so the next counts rebuild them.
+        node.CountText = string.Empty;
+        node.ReadyText = string.Empty;
     }
 
     /// <summary>
@@ -909,19 +926,20 @@ public sealed partial class TreePane
             // A section: "Main Scenario" with an "ARR–EW" pill that yields to the name when room runs short.
             node.Name = head;
             node.Suffix = suffix;
+            node.SuffixText = suffix.Length > 0 ? JournalNames.SuffixSeparator + suffix : string.Empty;
         }
         else
         {
             // A role genre ("Tank · ShB") keeps its expansion in the label, so its one-expansion pill would repeat it.
             node.Name = shortName;
             node.Suffix = string.Empty;
+            node.SuffixText = string.Empty;
             if (suffix.Length > 0)
             {
                 node.ExpansionText = string.Empty;
             }
         }
 
-        node.NameWithSuffix = shortName;
         node.Shortened = !string.Equals(shortName, full, StringComparison.Ordinal);
         node.Path = parentPath.Length == 0 ? full : parentPath + PathSeparator + full;
         node.MeasuredAt = -1f;
