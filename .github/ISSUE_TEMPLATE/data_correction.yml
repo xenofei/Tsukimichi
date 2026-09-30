@@ -1,12 +1,14 @@
 name: Data correction
-description: A Moonlit reward that is not unique (or one that is missing), a duty or system unlock quest that is wrong, a chain step out of place, an event date.
+description: A Moonlit reward that is not unique (or one that is missing), a duty or system unlock quest that is wrong, a chain step out of place, an event date, a quest filed or retired wrongly.
 title: "[Data] "
 labels: ["data"]
 body:
   - type: markdown
     attributes:
       value: |
-        Curated data lives in `Tsukimichi/Data/curated/` and is keyed by Quest row id; the reward database is generated from the game files. A correction needs something a maintainer can check, so the evidence link is required.
+        Curated data lives in `Tsukimichi/Data/curated/` and is keyed by Quest row id; the reward database is generated from the game files. A correction needs something a maintainer can check, so the evidence link is required. [CONTRIBUTING.md › Correcting curated data](https://github.com/xenofei/Tsukimichi/blob/main/CONTRIBUTING.md#correcting-curated-data) says which file holds what, if you would rather send a pull request.
+
+        A quest shown in the wrong state that no curated fact explains is a **Wrong quest state** report instead.
   - type: dropdown
     id: kind
     attributes:
@@ -16,35 +18,75 @@ body:
         - A unique reward is missing from Moonlit
         - A duty or system unlock points at the wrong quest, or is missing
         - A story chain is missing a step or has one out of order
-        - A seasonal event window or end date
+        - A seasonal event window, end date or name
+        - A quest is filed under the wrong journal heading, or should be (or is wrongly) listed as removed from the game
+        - The game does something its data does not say (a known quirk)
         - Something else in the data
     validations:
       required: true
-  - type: input
-    id: subject
+  - type: dropdown
+    id: file
     attributes:
-      label: Quest or reward
-      description: Name and id where you have it (quest row id, item id, or the entry as Moonlit shows it).
-      placeholder: "Wind-up Sun minion (item 12345) from quest 66236"
+      label: Curated file
+      description: The file that holds the fact, if you know it. "Not sure" is fine.
+      options:
+        - Not sure
+        - duty_unlocks.json (quest unlocks a duty)
+        - system_unlocks.json (quest unlocks a system or feature)
+        - chains.json (named quest chains)
+        - festivals.json (seasonal event windows and names)
+        - refile_overrides.json (journal heading of an unlisted quest)
+        - retired_quests.json (quests removed from the game)
+        - quirks.json (known quirks)
+        - online_store.json (rewards the Online Store also sells)
+        - other_sources.json (rewards that also drop in duties)
+        - unique_quests.json (generated reward data)
+    validations:
+      required: true
+  - type: input
+    id: ids
+    attributes:
+      label: Quest or item id
+      description: The Quest row id (65536 and up; the diagnostic block's `quest:` line and Garland Tools show it) and, for a reward, the item id. Add the name as Tsukimichi shows it.
+      placeholder: "quest 66236 My Little Chocobo; item 12345 Wind-up Sun"
     validations:
       required: true
   - type: textarea
     id: correction
     attributes:
       label: What it should say
+      description: The corrected fact, for example "Sastasha is unlocked by 65781 It's Probably Pirates, not …", or "ends 2026-10-31 per the announcement".
     validations:
       required: true
   - type: input
     id: evidence
     attributes:
       label: Evidence URL
-      description: A page that shows the fact — Lodestone Eorzea Database, the Console Games Wiki, FFXIV Collect, Garland Tools, the Online Store, or a screenshot you uploaded to the issue.
-      placeholder: "https://ffxiv.consolegameswiki.com/wiki/…"
+      description: An https link that shows the fact. The Lodestone first (Eorzea Database page, or the official announcement for an event or a patch change); the Console Games Wiki when the Lodestone does not show it; FFXIV Collect for an Online Store listing. A screenshot uploaded to this issue also works.
+      placeholder: "https://na.finalfantasyxiv.com/lodestone/playguide/db/quest/…"
     validations:
       required: true
+  - type: textarea
+    id: diagnostic
+    attributes:
+      label: Diagnostic block
+      description: When the fact is about a quest, select it in Tsukimichi and press **Report** at the end of the buttons under Giver in the detail pane (or type `/tsuki report <quest name>`), then paste what it copied here, fence and all. It carries the plugin, game and curated data versions and the quest id; no character identifiers. Leave empty for a reward-only correction.
+      render: text
+      placeholder: |
+        ```tsukimichi-diagnostic
+        plugin: 0.9.0.0
+        game: … (client) / … (data)
+        data: unique_quests generated …, curated …, schema …
+        quest: … "…" (…)
+        state: …
+        requirements:
+          - …
+        inputs: …
+        captured: …
+        ```
   - type: input
     id: version
     attributes:
       label: Data version
-      description: Settings › About shows the game version the reward data was generated for.
-      placeholder: "0.6.0 · data 2026.09.20"
+      description: Settings › About shows the game version the reward data was generated for and the curated revision. The diagnostic block carries both, so skip this if you pasted one.
+      placeholder: "0.9.0 · data 2026.09.15 · curated 573d225"

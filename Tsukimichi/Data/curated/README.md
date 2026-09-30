@@ -6,6 +6,12 @@ files into `unique_quests.json` and marks touched entries with
 `confidence: "curated"`. Runtime reads them read-only from the plugin
 directory (design spec section 6).
 
+This page is the per-file reference. The contributor workflow (which file
+to change, the evidence rules, checking a change offline with
+`tools/regen.ps1` and the curated tests, and reading an invariant failure) is
+[CONTRIBUTING.md › Correcting curated data](../../../CONTRIBUTING.md#correcting-curated-data);
+players without a pull request use the **Data correction** issue template.
+
 ## Files
 
 | File | Shape | Purpose |
@@ -70,6 +76,11 @@ version `541c0c12e07da325` (patch 7.56x1).
 - `online_store.json`, `other_sources.json`, `refile_overrides.json`, `retired_quests.json` and `quirks.json`
   entries need an `evidence` URL besides the `note`; the loader skips an entry without either
   (`other_sources.json` also needs `source` and `where`).
+- Evidence is an `https` URL: the Lodestone first (Eorzea Database page or
+  official announcement; required for a dated `festivals.json` entry), the
+  Console Games Wiki second, and the file-specific source where the table
+  above names one (FFXIV Collect for store re-sells, the report thread or
+  patch notes for a quirk). Notes are original wording, never wiki text.
 - After changing `refile_overrides.json` or `retired_quests.json`, run the tests once
   with `TSUKIMICHI_REGEN_GOLDEN=1` to rewrite `docs/data/refile-expected.csv` (the
   refiling outcome per quest that `RefilingFixtureTests` diffs row by row), review the
