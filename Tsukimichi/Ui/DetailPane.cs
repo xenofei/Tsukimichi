@@ -229,7 +229,7 @@ public sealed partial class DetailPane
 
         Gap();
         var start = ImGui.GetCursorScreenPos();
-        Chrome.BeginCard("##requirements", Strings.Requirements, RequirementsIcon);
+        Chrome.BeginCard("##requirements", Strings.Requirements, RequirementsIcon, eyebrow: true);
         CardCaption(model.RequirementsCaption, start.X + width, model.UnmetCount > 0 ? Theme.EclipseText : Theme.Surface.TextTertiary);
         DrawRequirements(start.X);
         Chrome.EndCard();
@@ -237,7 +237,7 @@ public sealed partial class DetailPane
 
         Gap();
         start = ImGui.GetCursorScreenPos();
-        Chrome.BeginCard("##rewards", Strings.Rewards, RewardsIcon);
+        Chrome.BeginCard("##rewards", Strings.Rewards, RewardsIcon, eyebrow: true);
         CardCaption(model.RewardsCaption, start.X + width, Theme.Surface.TextTertiary);
         DrawRewards(start.X + width - UiMetrics.Px(10f));
         Chrome.EndCard();
@@ -245,7 +245,7 @@ public sealed partial class DetailPane
         if (Overrides is { } overrides)
         {
             Gap();
-            Chrome.BeginCard("##moonlit", Strings.UniqueSection, MoonlitIcon);
+            Chrome.BeginCard("##moonlit", Strings.UniqueSection, MoonlitIcon, eyebrow: true);
             DrawUnique(overrides, rowId);
             Chrome.EndCard();
         }
@@ -259,7 +259,7 @@ public sealed partial class DetailPane
 
         start = ImGui.GetCursorScreenPos();
         var pad = UiMetrics.Px(10f);
-        Chrome.BeginCard("##path", Strings.Path, PathIcon);
+        Chrome.BeginCard("##path", Strings.Path, PathIcon, eyebrow: true);
         CardCaption(chart.HeaderCaption, start.X + width, Theme.Surface.TextTertiary);
         DrawChain();
         chart.Draw(width - (2f * pad), 0.4f * detailHeight, pad);
@@ -267,7 +267,7 @@ public sealed partial class DetailPane
         ui.RecordItem(UiRects.DetailPath);
 
         Gap();
-        Chrome.BeginCard("##giver", Strings.Giver, GiverIcon);
+        Chrome.BeginCard("##giver", Strings.Giver, GiverIcon, eyebrow: true);
         DrawGiver();
         Chrome.EndCard();
         ui.RecordItem(UiRects.DetailGiver);

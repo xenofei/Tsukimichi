@@ -335,8 +335,8 @@ public sealed class Plugin : IDalamudPlugin
         if (Settings is { } settings)
         {
             Ui.UiMetrics.Update(settings);
-            Ui.Typography.Update();
-            Ui.Theme.Refresh(settings.FollowDalamudColours, settings.GlyphPalette);
+            Ui.Typography.Update(Core.Ui.FlairRules.GameHeadingFonts(settings.Flair, settings.GameHeadingFonts));
+            Ui.Theme.Refresh(settings.FollowDalamudColours, settings.GlyphPalette, settings.Flair);
             Ui.Motion.BeginFrame();
         }
     }

@@ -94,6 +94,12 @@ public static class ColorMath
 /// <param name="TextTertiary">Tertiary text, rings, chevrons (Dusk).</param>
 /// <param name="TextDisabled">Disabled text (Veil).</param>
 /// <param name="Light">The window colour is light (luminance over 0.5), so outlines and shadows go light instead of dark.</param>
+/// <param name="Deep">The deepest surface: the rail, wells behind banners (Abyss).</param>
+/// <param name="Top">The top stop of a pane's sky-over-water gradient (NightTop); the window itself where there is none.</param>
+/// <param name="Ornament">Ornament hairlines: rules, dividers, corner marks, the rail thread (Gilt). At least 3 : 1 on the window when opaque.</param>
+/// <param name="OrnamentHigh">Ornament highlight points under 4 px (GiltHigh). At least 3 : 1 on the window.</param>
+/// <param name="Cool">The cool accent, usable as text: at least 4.5 : 1 on the window (Tide).</param>
+/// <param name="CoolDeep">The cool surface stop of drawn skies and water (TideDeep); part of a picture, so it stays fixed.</param>
 public readonly record struct SurfaceColors(
     Vector4 Window,
     Vector4 Sunken,
@@ -105,13 +111,65 @@ public readonly record struct SurfaceColors(
     Vector4 TextSecondary,
     Vector4 TextTertiary,
     Vector4 TextDisabled,
-    bool Light)
+    bool Light,
+    Vector4 Deep,
+    Vector4 Top,
+    Vector4 Ornament,
+    Vector4 OrnamentHigh,
+    Vector4 Cool,
+    Vector4 CoolDeep)
 {
     /// <summary>Minimum contrast of <see cref="TextSecondary"/> on <see cref="Window"/> (WCAG AA for text).</summary>
     public const float TextMinContrast = 4.5f;
 
     /// <summary>Minimum contrast of <see cref="StrongLine"/> on <see cref="Window"/> (WCAG 1.4.11 for UI components).</summary>
     public const float LineMinContrast = 3f;
+
+    /// <summary>Minimum contrast of <see cref="Cool"/> on <see cref="Window"/> in the high-contrast palette (WCAG AAA for text).</summary>
+    public const float HighContrastTextMinContrast = 7f;
+
+    /// <summary>How far towards black <see cref="Deep"/> is under a dark host window (proposal §3: WindowBg darkened 35 %).</summary>
+    public const float DeepDarkenDark = 0.35f;
+
+    /// <summary>The same under a light host window: a light rail stays light, a little under the sunken wells.</summary>
+    public const float DeepDarkenLight = 0.10f;
+
+    /// <summary>
+    /// The Night palette (ui-revamp §4.3, moon-road proposal §3): what the chrome draws with unless the user follows
+    /// Dalamud's colours.
+    /// </summary>
+    public static readonly SurfaceColors Night = new(
+        GlyphTokens.Night,
+        GlyphTokens.NightSunken,
+        GlyphTokens.NightRaised,
+        GlyphTokens.NightHover,
+        GlyphTokens.NightLine,
+        GlyphTokens.VeilLine,
+        GlyphTokens.Silver,
+        GlyphTokens.Mist,
+        GlyphTokens.Dusk,
+        GlyphTokens.Veil,
+        Light: false,
+        Deep: GlyphTokens.Abyss,
+        Top: GlyphTokens.NightTop,
+        Ornament: GlyphTokens.Gilt,
+        OrnamentHigh: GlyphTokens.GiltHigh,
+        Cool: GlyphTokens.Tide,
+        CoolDeep: GlyphTokens.TideDeep);
+
+    /// <summary>
+    /// The Moon Road roles as the high-contrast palette draws them (proposal §10.2): no pane gradient
+    /// (<see cref="Top"/> is the window), ornament lines in <see cref="StrongLine"/> (VeilLine on Night, 3.2 : 1, drawn
+    /// at full alpha) instead of brass at partial alpha, highlight points at least 3 : 1, and the cool accent pushed
+    /// towards the text colour until it reads at 7 : 1. The other roles are unchanged.
+    /// </summary>
+    public SurfaceColors ForHighContrast() => this with
+    {
+        Top = Window,
+        Ornament = StrongLine,
+        OrnamentHigh = ColorMath.EnsureContrast(OrnamentHigh, Text, Window, LineMinContrast),
+        Cool = ColorMath.EnsureContrast(Cool, Text, Window, HighContrastTextMinContrast),
+    };
 
     /// <summary>
     /// The palette mapped from a host style (the user's Dalamud colours), per the UX panel's mapping: Window ←
@@ -151,6 +209,18 @@ public readonly record struct SurfaceColors(
         var tertiary = ColorMath.Opaque(textDisabled);
         var secondary = ColorMath.EnsureContrast(ColorMath.Mix(textOpaque, tertiary, 0.5f), textOpaque, window, TextMinContrast);
         var disabled = ColorMath.Mix(tertiary, window, 0.3f);
-        return new SurfaceColors(window, sunken, raised, hover, line, strongLine, textOpaque, secondary, tertiary, disabled, light);
+
+        // The Moon Road roles (proposal §3): the deep surface is the window darkened; the gradient's top is a small
+        // step towards the text colour on a dark window (sky lighter than water) and towards white on a light one; the
+        // brass and tide inks keep their hue, pushed towards the text colour until they read on the window.
+        var white = new Vector4(1f, 1f, 1f, 1f);
+        var deep = ColorMath.Mix(window, black, light ? DeepDarkenLight : DeepDarkenDark);
+        var top = light ? ColorMath.Mix(window, white, 0.5f) : ColorMath.Mix(window, textOpaque, 0.04f);
+        var ornament = ColorMath.EnsureContrast(GlyphTokens.Gilt, textOpaque, window, LineMinContrast);
+        var ornamentHigh = ColorMath.EnsureContrast(GlyphTokens.GiltHigh, textOpaque, window, LineMinContrast);
+        var cool = ColorMath.EnsureContrast(GlyphTokens.Tide, textOpaque, window, TextMinContrast);
+        return new SurfaceColors(
+            window, sunken, raised, hover, line, strongLine, textOpaque, secondary, tertiary, disabled, light,
+            deep, top, ornament, ornamentHigh, cool, GlyphTokens.TideDeep);
     }
 }

@@ -1562,6 +1562,30 @@
   <data name="ConfigCompactRailHint" xml:space="preserve">
     <value>Show the tabs on the left as icons only, with their names on hover. On a window narrower than about 1,040 pixels they are always shown this way.</value>
   </data>
+  <data name="ConfigLook" xml:space="preserve">
+    <value>Look</value>
+  </data>
+  <data name="ConfigFlair" xml:space="preserve">
+    <value>Flair</value>
+  </data>
+  <data name="ConfigFlairFull" xml:space="preserve">
+    <value>Full</value>
+  </data>
+  <data name="ConfigFlairQuiet" xml:space="preserve">
+    <value>Quiet</value>
+  </data>
+  <data name="ConfigFlairPlain" xml:space="preserve">
+    <value>Plain</value>
+  </data>
+  <data name="ConfigFlairHint" xml:space="preserve">
+    <value>How much decoration the windows show. Full: a soft night-sky shading at the top of each pane, brass lines and dividers, framed corners and small animations. Quiet: the brass lines and dividers only. Plain: the look before 1.4. With the high-contrast glyph palette, Full looks like Quiet.</value>
+  </data>
+  <data name="ConfigGameHeadingFonts" xml:space="preserve">
+    <value>Game fonts for headings</value>
+  </data>
+  <data name="ConfigGameHeadingFontsHint" xml:space="preserve">
+    <value>Draw section headings, titles and numbers in the game's own display fonts. A heading the game fonts can't show, such as one in Japanese, uses the usual font. Off, or with Flair set to Plain, every heading uses the usual font.</value>
+  </data>
   <data name="ConfigFollowDalamudColours" xml:space="preserve">
     <value>Follow Dalamud colours</value>
   </data>

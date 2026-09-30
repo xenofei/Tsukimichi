@@ -70,25 +70,46 @@ public static class Theme
     public static readonly Vector4 MoonDim = Vector4.Lerp(Moon, Dusk, 0.35f);
 
     /// <summary>A panel one step above Night (a quarter of the way to Veil, #1E2437), for cards and header cards on the Night background.</summary>
-    public static readonly Vector4 NightRaised = Vector4.Lerp(Night, Veil, 0.25f);
+    public static readonly Vector4 NightRaised = GlyphTokens.NightRaised;
 
     /// <summary>#0B0F1C – wells below the window: search pill, gauge wells, level pills, the title bar (ui-revamp §4.3).</summary>
     public static readonly Vector4 NightSunken = Rgb(GlyphTokens.NightSunkenHex);
 
     /// <summary>#262D45 – hover fill for rows, tabs and buttons.</summary>
-    public static readonly Vector4 NightHover = Rgb(0x262D45);
+    public static readonly Vector4 NightHover = Rgb(GlyphTokens.NightHoverHex);
 
     /// <summary>#2A3149 – hairlines, card borders, row separators (subtle; <see cref="VeilLine"/> where 3 : 1 is needed).</summary>
-    public static readonly Vector4 NightLine = Rgb(0x2A3149);
+    public static readonly Vector4 NightLine = Rgb(GlyphTokens.NightLineHex);
 
     /// <summary>#A9B2CC – secondary text: hints, captions, chip labels (8.7 : 1 on Night, 7.3 on NightRaised). Dusk stays tertiary.</summary>
-    public static readonly Vector4 Mist = Rgb(0xA9B2CC);
+    public static readonly Vector4 Mist = Rgb(GlyphTokens.MistHex);
 
     /// <summary>#8A93B0 – the Unknown state's text and dashed ring (Veil itself fails AA for text).</summary>
-    public static readonly Vector4 VeilText = Rgb(0x8A93B0);
+    public static readonly Vector4 VeilText = Rgb(GlyphTokens.VeilTextHex);
 
     /// <summary>#D68AA8 – Foreclosed text and state-pill text (Eclipse fails 4.5 : 1 for text).</summary>
-    public static readonly Vector4 EclipseText = Rgb(0xD68AA8);
+    public static readonly Vector4 EclipseText = Rgb(GlyphTokens.EclipseTextHex);
+
+    // ---- Moon Road tokens (moon-road proposal §3). The fixed Night values; what to draw with this frame is in Surface
+    // (Deep, Top, Ornament, OrnamentHigh, Cool, CoolDeep), which follows a Dalamud style and the high-contrast palette.
+
+    /// <summary>#080B16 – the deepest surface: the rail, the letterbox behind the hero banner, the strip under the status bar.</summary>
+    public static readonly Vector4 Abyss = Rgb(GlyphTokens.AbyssHex);
+
+    /// <summary>#151C33 – the top stop of each pane's gradient (<see cref="Ornament.PaneGradient"/>).</summary>
+    public static readonly Vector4 NightTop = Rgb(GlyphTokens.NightTopHex);
+
+    /// <summary>#A88B52 – ornament hairlines (5.7 : 1 on Night), usually at alpha 0.55–0.8. Never text, never the only carrier of meaning.</summary>
+    public static readonly Vector4 Gilt = Rgb(GlyphTokens.GiltHex);
+
+    /// <summary>#D9BE82 – ornament highlight points under 4 px.</summary>
+    public static readonly Vector4 GiltHigh = Rgb(GlyphTokens.GiltHighHex);
+
+    /// <summary>#6F8FD0 – the cool accent: AA for text on Night (5.7 : 1) and NightRaised (4.8 : 1). Never "act now".</summary>
+    public static readonly Vector4 Tide = Rgb(GlyphTokens.TideHex);
+
+    /// <summary>#24345C – the bottom stop of the drawn night sky and Flight's water. Surface only (1.5 : 1 on Night).</summary>
+    public static readonly Vector4 TideDeep = Rgb(GlyphTokens.TideDeepHex);
 
     /// <summary>Alternate table row tint for zebra striping: Veil at low alpha, readable on Night and on the default style alike.</summary>
     public static readonly Vector4 ZebraRow = Veil with { W = 0.16f };
@@ -115,15 +136,69 @@ public static class Theme
     public static readonly uint MistU32 = Pack(Mist);
     public static readonly uint VeilTextU32 = Pack(VeilText);
     public static readonly uint EclipseTextU32 = Pack(EclipseText);
+    public static readonly uint AbyssU32 = Pack(Abyss);
+    public static readonly uint NightTopU32 = Pack(NightTop);
+    public static readonly uint GiltU32 = Pack(Gilt);
+    public static readonly uint GiltHighU32 = Pack(GiltHigh);
+    public static readonly uint TideU32 = Pack(Tide);
+    public static readonly uint TideDeepU32 = Pack(TideDeep);
 
     /// <summary>The Night palette as surface roles: what <see cref="Surface"/> is unless the user follows Dalamud's colours.</summary>
-    public static readonly SurfaceColors NightSurface = new(Night, NightSunken, NightRaised, NightHover, NightLine, VeilLine, Silver, Mist, Dusk, Veil, Light: false);
+    public static readonly SurfaceColors NightSurface = SurfaceColors.Night;
 
-    /// <summary>The surface and text roles in effect this frame (see <see cref="Refresh"/>).</summary>
+    /// <summary>
+    /// The surface and text roles in effect this frame (see <see cref="Refresh"/>), with the Moon Road roles: under the
+    /// high-contrast palette those are its own versions (<see cref="SurfaceColors.ForHighContrast"/>).
+    /// </summary>
     public static SurfaceColors Surface { get; private set; } = NightSurface;
 
     /// <summary>Whether <see cref="Surface"/> is mapped from the user's Dalamud style this frame.</summary>
     public static bool FollowingDalamud { get; private set; }
+
+    /// <summary><see cref="SurfaceColors.Deep"/> this frame, packed (Abyss on Night).</summary>
+    public static uint DeepU32 { get; private set; } = AbyssU32;
+
+    /// <summary><see cref="SurfaceColors.Top"/> this frame, packed (NightTop on Night; the window under high contrast).</summary>
+    public static uint TopU32 { get; private set; } = NightTopU32;
+
+    /// <summary><see cref="SurfaceColors.Ornament"/> this frame, opaque and packed (Gilt on Night; VeilLine under high contrast).</summary>
+    public static uint OrnamentU32 { get; private set; } = GiltU32;
+
+    /// <summary><see cref="SurfaceColors.OrnamentHigh"/> this frame, packed (GiltHigh on Night).</summary>
+    public static uint OrnamentHighU32 { get; private set; } = GiltHighU32;
+
+    /// <summary><see cref="SurfaceColors.Cool"/> this frame, packed (Tide on Night): usable as text.</summary>
+    public static uint CoolU32 { get; private set; } = TideU32;
+
+    /// <summary>
+    /// Settings › Display › Flair as drawn this frame (<see cref="FlairRules.Effective"/>): the setting, capped at Quiet
+    /// under the high-contrast palette. Ask <see cref="FlairRules"/> what a level draws, or use the shortcuts below.
+    /// </summary>
+    public static Flair Flair { get; private set; } = Flair.Full;
+
+    /// <summary>Whether the pane gradient draws this frame (Full only).</summary>
+    public static bool ShowPaneGradient => FlairRules.PaneGradient(Flair);
+
+    /// <summary>Whether section rules and moon-road dividers draw this frame (Full and Quiet).</summary>
+    public static bool ShowRules => FlairRules.Rules(Flair);
+
+    /// <summary>Whether corner marks draw this frame (Full only).</summary>
+    public static bool ShowCornerMarks => FlairRules.CornerMarks(Flair);
+
+    /// <summary>Whether glows and star fields draw this frame (Full only).</summary>
+    public static bool ShowGlow => FlairRules.Glow(Flair);
+
+    /// <summary>Whether the Moon Road's own motion plays this frame (Full, and Reduce motion off).</summary>
+    public static bool FlairMotion => FlairRules.Motion(Flair, UiMetrics.ReduceMotion);
+
+    /// <summary>
+    /// An ornament's alpha as drawn this frame: <paramref name="designed"/> (the proposal's 0.55–0.8), or 1 under the
+    /// high-contrast palette, whose ornament lines are opaque VeilLine so the structure stays and the shimmer goes (§10.2).
+    /// </summary>
+    public static float OrnamentAlpha(float designed) => Glyphs.HighContrast ? 1f : designed;
+
+    /// <summary>The host style's window background alpha as of the last <see cref="Refresh"/> (the user's Dalamud opacity).</summary>
+    public static float WindowAlpha => hostWindowAlpha;
 
     /// <summary>
     /// The glyph palette in effect this frame (Settings › Display › Glyph palette), resolved against the palette's window
@@ -155,9 +230,11 @@ public static class Theme
     /// read is the user's own): with <paramref name="followDalamud"/> the surface roles are mapped from the Dalamud
     /// style (<see cref="SurfaceColors.FromHost"/>), otherwise they are the Night tokens. The glyph palette
     /// <paramref name="glyphPalette"/> is resolved against the resulting window colour (<see cref="Glyphs"/>), so the
-    /// high-contrast glyphs switch to their light variant on a light Dalamud theme. Allocates nothing.
+    /// high-contrast glyphs switch to their light variant on a light Dalamud theme. Under high contrast the Moon Road
+    /// roles take that palette's versions and <paramref name="flair"/> is capped at Quiet (<see cref="Flair"/>).
+    /// Allocates nothing.
     /// </summary>
-    public static void Refresh(bool followDalamud, GlyphPaletteKind glyphPalette = GlyphPaletteKind.Standard)
+    public static void Refresh(bool followDalamud, GlyphPaletteKind glyphPalette = GlyphPaletteKind.Standard, Flair flair = Flair.Full)
     {
         var colors = ImGui.GetStyle().Colors;
         var windowBg = colors[(int)ImGuiCol.WindowBg];
@@ -177,7 +254,47 @@ public static class Theme
         AccentDim = followDalamud ? ColorMath.EnsureContrast(MoonDim, s.Text, s.Window, SurfaceColors.TextMinContrast) : MoonDim;
         AccentU32 = Pack(Accent);
         Glyphs = GlyphPalette.Resolve(glyphPalette, s.Window);
+        if (Glyphs.HighContrast)
+        {
+            Surface = s = s.ForHighContrast();
+        }
+
+        Flair = FlairRules.Effective(flair, Glyphs.HighContrast);
+        DeepU32 = Pack(s.Deep);
+        TopU32 = Pack(s.Top);
+        OrnamentU32 = Pack(s.Ornament);
+        OrnamentHighU32 = Pack(s.OrnamentHigh);
+        CoolU32 = Pack(s.Cool);
     }
+
+    /// <summary>
+    /// Marks the pane backdrop as painted by the caller (the main window paints Night and the pane gradient behind a
+    /// column) until the returned scope is disposed: meanwhile <see cref="PushNightPanel"/> leaves the child background
+    /// clear, so the gradient shows through the detail pane and its cards. A struct; <c>using</c> allocates nothing.
+    /// </summary>
+    public static BackdropScope PushPaneBackdrop(bool condition = true)
+    {
+        if (condition)
+        {
+            backdropDepth++;
+        }
+
+        return new BackdropScope(condition);
+    }
+
+    /// <summary>Ends a <see cref="PushPaneBackdrop"/>. Dispose exactly once.</summary>
+    public readonly struct BackdropScope(bool active) : IDisposable
+    {
+        public void Dispose()
+        {
+            if (active && backdropDepth > 0)
+            {
+                backdropDepth--;
+            }
+        }
+    }
+
+    private static int backdropDepth;
 
     /// <summary>
     /// Draws with <paramref name="palette"/> until the returned scope is disposed, then restores the frame's palette:
@@ -231,10 +348,11 @@ public static class Theme
 
     /// <summary>
     /// Night panel colours for the detail pane, path view and similar: child background, text, secondary text, borders
-    /// and separators from <see cref="Surface"/> (Night unless following Dalamud's colours). Dispose to pop.
+    /// and separators from <see cref="Surface"/> (Night unless following Dalamud's colours). Inside a
+    /// <see cref="PushPaneBackdrop"/> the child background is clear: the backdrop is already painted. Dispose to pop.
     /// </summary>
     public static ImRaii.ColorDisposable PushNightPanel(bool condition = true) =>
-        ImRaii.PushColor(ImGuiCol.ChildBg, Surface.Window, condition)
+        ImRaii.PushColor(ImGuiCol.ChildBg, backdropDepth > 0 ? Transparent : Surface.Window, condition)
               .Push(ImGuiCol.Text, Surface.Text, condition)
               .Push(ImGuiCol.TextDisabled, Surface.TextSecondary, condition)
               .Push(ImGuiCol.Border, Surface.Line, condition)

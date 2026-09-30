@@ -171,6 +171,43 @@ public static class GlyphTokens
     public const uint ShadowHex = 0x3A4363;
     public const uint VeilLineHex = 0x5C6584;
 
+    // The chrome tokens beside the glyph colours (ui-revamp §4.3), so the contrast tests read the values Theme draws.
+
+    /// <summary>#262D45 – hover fill for rows, tabs and buttons.</summary>
+    public const uint NightHoverHex = 0x262D45;
+
+    /// <summary>#2A3149 – hairlines, card borders, row separators.</summary>
+    public const uint NightLineHex = 0x2A3149;
+
+    /// <summary>#A9B2CC – secondary text.</summary>
+    public const uint MistHex = 0xA9B2CC;
+
+    /// <summary>#8A93B0 – the Unknown state's text and dashed ring.</summary>
+    public const uint VeilTextHex = 0x8A93B0;
+
+    /// <summary>#D68AA8 – Locked out text.</summary>
+    public const uint EclipseTextHex = 0xD68AA8;
+
+    // The Moon Road tokens (moon-road proposal §3).
+
+    /// <summary>#080B16 – the deepest surface: the rail, the letterbox behind the hero banner, the strip under the status bar.</summary>
+    public const uint AbyssHex = 0x080B16;
+
+    /// <summary>#151C33 – the top stop of each pane's sky-over-water gradient (NightTop at the top, Night from 60 % down).</summary>
+    public const uint NightTopHex = 0x151C33;
+
+    /// <summary>#A88B52 – brass for ornament hairlines. Decoration only: never text, never a fill over 4 px, never the only carrier of meaning.</summary>
+    public const uint GiltHex = 0xA88B52;
+
+    /// <summary>#D9BE82 – ornament highlight points under 4 px (corner diamonds, the sigil star).</summary>
+    public const uint GiltHighHex = 0xD9BE82;
+
+    /// <summary>#6F8FD0 – the cool accent (unlock quests, wind and sky in Flight, links): AA for text on Night, never "act now".</summary>
+    public const uint TideHex = 0x6F8FD0;
+
+    /// <summary>#24345C – the bottom stop of the drawn night sky and Flight's water gradient. Surface only.</summary>
+    public const uint TideDeepHex = 0x24345C;
+
     /// <summary>#747D9C – the high-contrast "dim" rung: 4.5 : 1 on Night and 4.1 : 1 on white, so both variants share it.</summary>
     public const uint HighContrastDimHex = 0x747D9C;
 
@@ -199,6 +236,22 @@ public static class GlyphTokens
 
     /// <summary>Moon dimmed toward Dusk (35 %), the quieter gold of finished things.</summary>
     public static readonly Vector4 MoonDim = Vector4.Lerp(Moon, Dusk, 0.35f);
+
+    /// <summary>A panel one step above Night: a quarter of the way to Veil (#1E2437).</summary>
+    public static readonly Vector4 NightRaised = Vector4.Lerp(Night, Veil, 0.25f);
+
+    public static readonly Vector4 NightHover = ColorMath.FromHex(NightHoverHex);
+    public static readonly Vector4 NightLine = ColorMath.FromHex(NightLineHex);
+    public static readonly Vector4 Mist = ColorMath.FromHex(MistHex);
+    public static readonly Vector4 VeilText = ColorMath.FromHex(VeilTextHex);
+    public static readonly Vector4 EclipseText = ColorMath.FromHex(EclipseTextHex);
+
+    public static readonly Vector4 Abyss = ColorMath.FromHex(AbyssHex);
+    public static readonly Vector4 NightTop = ColorMath.FromHex(NightTopHex);
+    public static readonly Vector4 Gilt = ColorMath.FromHex(GiltHex);
+    public static readonly Vector4 GiltHigh = ColorMath.FromHex(GiltHighHex);
+    public static readonly Vector4 Tide = ColorMath.FromHex(TideHex);
+    public static readonly Vector4 TideDeep = ColorMath.FromHex(TideDeepHex);
 
     public static readonly Vector4 HighContrastDim = ColorMath.FromHex(HighContrastDimHex);
     public static readonly Vector4 HighContrastInkGold = ColorMath.FromHex(HighContrastInkGoldHex);

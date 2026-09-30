@@ -43,7 +43,7 @@ public sealed partial class DetailPane
         }
 
         Gap();
-        Chrome.BeginCard("##journalText", Strings.JournalTextCard, JournalTextIcon);
+        Chrome.BeginCard("##journalText", Strings.JournalTextCard, JournalTextIcon, eyebrow: true);
         if (journalOpenRowId != quest.RowId)
         {
             using (Theme.PushText(Theme.Surface.TextSecondary))
