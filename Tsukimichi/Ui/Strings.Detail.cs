@@ -47,7 +47,8 @@ static partial class Strings
 
     /// <summary>{0} = completed steps folded into one bead.</summary>
     public static string PathMoonsWalkedFormat => Loc.Get("PathMoonsWalkedFormat");
-    public static string PathAlternativePrefix => Loc.Get("PathAlternativePrefix");
+    /// <summary>{0} = the other quest that leads here.</summary>
+    public static string PathAlternativeFormat => Loc.Get("PathAlternativeFormat");
 
     /// <summary>{0} = quests still to do on the alternative's own path.</summary>
     public static string PathAlternativeStepsFormat => Loc.Get("PathAlternativeStepsFormat");

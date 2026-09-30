@@ -18,9 +18,11 @@ static partial class Strings
     /// <summary>{0} = capture time. A stored character's events are the ones running when it was last captured.</summary>
     public static string SeasonalAtCaptureFormat => Loc.Get("SeasonalAtCaptureFormat");
 
-    public static string SeasonalEvidenceTooltipPrefix => Loc.Get("SeasonalEvidenceTooltipPrefix");
+    /// <summary>{0} = the announcement the end date comes from.</summary>
+    public static string SeasonalEvidenceTooltipFormat => Loc.Get("SeasonalEvidenceTooltipFormat");
     public static string SeasonalRunningNowTooltip => Loc.Get("SeasonalRunningNowTooltip");
-    public static string SeasonalGiverPrefix => Loc.Get("SeasonalGiverPrefix");
+    /// <summary>{0} = NPC name.</summary>
+    public static string SeasonalGiverFormat => Loc.Get("SeasonalGiverFormat");
     public static string SeasonalNoQuests => Loc.Get("SeasonalNoQuests");
 
     /// <summary>{0} = completed seasonal quests of the character.</summary>

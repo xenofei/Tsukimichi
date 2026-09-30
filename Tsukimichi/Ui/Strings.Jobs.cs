@@ -45,16 +45,17 @@ static partial class Strings
     /// <summary>{0} = done, {1} = total.</summary>
     public static string JobsChainCountFormat => Loc.Get("JobsChainCountFormat");
     public static string JobsChainComplete => Loc.Get("JobsChainComplete");
-    public static string JobsChainNextPrefix => Loc.Get("JobsChainNextPrefix");
+    /// <summary>{0} = the next quest of the chain.</summary>
+    public static string JobsChainNextFormat => Loc.Get("JobsChainNextFormat");
     /// <summary>{0} = number of chains with nothing done yet.</summary>
     public static string JobsChainsNotStartedFormat => Loc.Get("JobsChainsNotStartedFormat");
 
     // ---- Chat: level-up nudge ----
     /// <summary>{0} = level reached, {1} = job name; followed by the quest link and <see cref="JobsNudgeSuffix"/>.</summary>
-    public static string JobsNudgePrefixFormat => Loc.Get("JobsNudgePrefixFormat");
-    public static string JobsNudgeSuffix => Loc.Get("JobsNudgeSuffix");
+    public static string JobsNudgeFormat => Loc.Get("JobsNudgeFormat");
+    public static string JobsNudgeBlockerFormat => Loc.Get("JobsNudgeBlockerFormat");
     /// <summary>After the quest link when the level was reached but the quest is still blocked and no blocker could be named.</summary>
-    public static string JobsNudgeBlockedSuffix => Loc.Get("JobsNudgeBlockedSuffix");
+    public static string JobsNudgeBlockedFormat => Loc.Get("JobsNudgeBlockedFormat");
 
     // ---- Settings › Notices ----
     public static string JobsConfigNudge => Loc.Get("JobsConfigNudge");

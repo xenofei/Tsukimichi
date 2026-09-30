@@ -113,7 +113,7 @@ public sealed class PayoffGateLines
         tooltips = new string[gates.Count];
         for (var i = 0; i < gates.Count; i++)
         {
-            lines[i] = Strings.PayoffPrefix + gates[i].Gate.Instruction;
+            lines[i] = string.Format(CultureInfo.CurrentCulture, Strings.PayoffFormat, gates[i].Gate.Instruction);
             tooltips[i] = string.Format(CultureInfo.CurrentCulture, Strings.PayoffProgressFormat, gates[i].Done, gates[i].Total);
         }
     }

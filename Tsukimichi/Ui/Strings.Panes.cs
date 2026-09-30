@@ -51,7 +51,8 @@ static partial class Strings
 
     /// <summary>{0} = the kind row's obtained/total.</summary>
     public static string MoonlitKindCountTooltipFormat => Loc.Get("MoonlitKindCountTooltipFormat");
-    public static string MoonlitQuestPrefix => Loc.Get("MoonlitQuestPrefix");
+    /// <summary>{0} = the quest's row id, for a quest the catalog does not have.</summary>
+    public static string MoonlitQuestFormat => Loc.Get("MoonlitQuestFormat");
 
     // Rewards the FFXIV Online Store also sells (curated/online_store.json; entry OtherSources carries OnlineStore)
     public static string MoonlitStoreOnly => Loc.Get("MoonlitStoreOnly");
@@ -61,19 +62,21 @@ static partial class Strings
 
     // Rewards a duty also drops (curated/other_sources.json; entry OtherSources carries DungeonDrop, OtherSourceNotes the duties)
     public static string MoonlitAlsoDrops => Loc.Get("MoonlitAlsoDrops");
-    private static string AlsoDropsInPrefix => Loc.Get("AlsoDropsInPrefix");
+    /// <summary>{0} = the duties that also drop the reward.</summary>
+    private static string AlsoDropsInFormat => Loc.Get("AlsoDropsInFormat");
     private static string AlsoDropsInADuty => Loc.Get("AlsoDropsInADuty");
-    private static string NotExclusiveSuffix => Loc.Get("NotExclusiveSuffix");
+    /// <summary>{0} = the "Also drops in …" line.</summary>
+    private static string NotExclusiveFormat => Loc.Get("NotExclusiveFormat");
 
     /// <summary>
     /// "Also drops in Snowcloak, …": the line the reward tooltip and the item hover hint show for a reward a duty also
     /// drops; <paramref name="where"/> empty (the data names no duty) reads "Also drops in a duty".
     /// </summary>
     public static string AlsoDropsLine(string? where) =>
-        string.IsNullOrWhiteSpace(where) ? AlsoDropsInADuty : AlsoDropsInPrefix + where;
+        string.IsNullOrWhiteSpace(where) ? AlsoDropsInADuty : string.Format(System.Globalization.CultureInfo.CurrentCulture, AlsoDropsInFormat, where);
 
     /// <summary>The "Also drops" mark's tooltip: <see cref="AlsoDropsLine"/> plus "; not exclusive to the quest".</summary>
-    public static string MoonlitAlsoDropsTooltip(string? where) => AlsoDropsLine(where) + NotExclusiveSuffix;
+    public static string MoonlitAlsoDropsTooltip(string? where) => string.Format(System.Globalization.CultureInfo.CurrentCulture, NotExclusiveFormat, AlsoDropsLine(where));
 
     // One toggle hides both (the persisted setting keeps its 0.6.0 name, MoonlitHideStoreResells)
     public static string MoonlitHideStoreResellsLabel => Loc.Get("MoonlitHideStoreResellsLabel");
@@ -115,7 +118,8 @@ static partial class Strings
     public static string FlightAttunedNo => Loc.Get("FlightAttunedNo");
     public static string FlightAttunedUnknown => Loc.Get("FlightAttunedUnknown");
     public static string FlightQuestClickHint => Loc.Get("FlightQuestClickHint");
-    public static string FlightQuestPrefix => Loc.Get("FlightQuestPrefix");
+    /// <summary>{0} = the quest's row id, for a quest the catalog does not have.</summary>
+    public static string FlightQuestFormat => Loc.Get("FlightQuestFormat");
     public static string FlightFlag => Loc.Get("FlightFlag");
     public static string FlightFlagTooltip => Loc.Get("FlightFlagTooltip");
     public static string FlightTeleport => Loc.Get("FlightTeleport");
@@ -137,8 +141,10 @@ static partial class Strings
     public const string ChatSuffixSeparator = "  · ";
 
     // ---- Wotsit entries ----
-    public static string WotsitQuestPrefix => Loc.Get("WotsitQuestPrefix");
-    public static string WotsitRewardPrefix => Loc.Get("WotsitRewardPrefix");
+    /// <summary>{0} = quest name.</summary>
+    public static string WotsitQuestFormat => Loc.Get("WotsitQuestFormat");
+    /// <summary>{0} = reward name, {1} = reward kind.</summary>
+    public static string WotsitRewardFormat => Loc.Get("WotsitRewardFormat");
 
     // ---- Lifestream teleport (table and detail pane) ----
     public static string TeleportToGiver => Loc.Get("TeleportToGiver");
@@ -180,17 +186,28 @@ static partial class Strings
     public static string CharactersNoneStored => Loc.Get("CharactersNoneStored");
     public static string CharactersNoneViewed => Loc.Get("CharactersNoneViewed");
     public static string CharactersLive => Loc.Get("CharactersLive");
-    public static string CharactersSnapshotPrefix => Loc.Get("CharactersSnapshotPrefix");
-    public static string CharactersCompletedSuffix => Loc.Get("CharactersCompletedSuffix");
-    public static string CharactersAcceptedSuffix => Loc.Get("CharactersAcceptedSuffix");
+    /// <summary>{0} = date and time, {1} = how long ago.</summary>
+    public static string CharactersSnapshotFormat => Loc.Get("CharactersSnapshotFormat");
+    /// <summary>{0} = quests completed (plural form; the one form is CharactersCompletedOneFormat).</summary>
+    public static string CharactersCompletedFormat => Loc.Get("CharactersCompletedFormat");
+
+    /// <summary>{0} = quests completed, one form (<see cref="Loc.Plural"/>).</summary>
+    public static string CharactersCompletedOneFormat => Loc.Get("CharactersCompletedOneFormat");
+
+    /// <summary>"1 quest completed" or "N quests completed" by the language's plural rule.</summary>
+    public static string CharactersCompleted(int count) => Loc.Plural(count, CharactersCompletedOneFormat, CharactersCompletedFormat);
+    /// <summary>{0} = quests in the journal.</summary>
+    public static string CharactersAcceptedFormat => Loc.Get("CharactersAcceptedFormat");
     public static string CharactersExport => Loc.Get("CharactersExport");
-    public static string CharactersExportedPrefix => Loc.Get("CharactersExportedPrefix");
-    public static string CharactersExportFailedPrefix => Loc.Get("CharactersExportFailedPrefix");
+    /// <summary>{0} = file path.</summary>
+    public static string CharactersExportedFormat => Loc.Get("CharactersExportedFormat");
+    /// <summary>{0} = the error.</summary>
+    public static string CharactersExportFailedFormat => Loc.Get("CharactersExportFailedFormat");
     public static string CharactersForget => Loc.Get("CharactersForget");
     public static string CharactersForgetLiveHint => Loc.Get("CharactersForgetLiveHint");
     public static string CharactersForgetPopup => Loc.Get("CharactersForgetPopup");
-    public static string CharactersForgetQuestionPrefix => Loc.Get("CharactersForgetQuestionPrefix");
-    public static string CharactersForgetQuestionSuffix => Loc.Get("CharactersForgetQuestionSuffix");
+    /// <summary>{0} = character name.</summary>
+    public static string CharactersForgetQuestionFormat => Loc.Get("CharactersForgetQuestionFormat");
     public static string CharactersForgetConfirm => Loc.Get("CharactersForgetConfirm");
     public static string CharactersCancel => Loc.Get("CharactersCancel");
     public static string CharactersJobs => Loc.Get("CharactersJobs");
@@ -199,15 +216,15 @@ static partial class Strings
     public static string CharactersColumnLevel => Loc.Get("CharactersColumnLevel");
     public static string CharactersGrandCompany => Loc.Get("CharactersGrandCompany");
     public static string CharactersNoGrandCompany => Loc.Get("CharactersNoGrandCompany");
-    public static string CharactersRankPrefix => Loc.Get("CharactersRankPrefix");
+    /// <summary>{0} = Grand Company, {1} = rank number.</summary>
+    public static string CharactersGcRankFormat => Loc.Get("CharactersGcRankFormat");
     public static string CharactersTribes => Loc.Get("CharactersTribes");
     public static string CharactersNoTribes => Loc.Get("CharactersNoTribes");
     public static string CharactersColumnTribe => Loc.Get("CharactersColumnTribe");
     public static string CharactersColumnRank => Loc.Get("CharactersColumnRank");
     public static string CharactersColumnReputation => Loc.Get("CharactersColumnReputation");
-    public static string CharactersAllowancesPrefix => Loc.Get("CharactersAllowancesPrefix");
-    public static string CharactersTribeAllowanceSuffix => Loc.Get("CharactersTribeAllowanceSuffix");
-    public static string CharactersLeveAllowanceSuffix => Loc.Get("CharactersLeveAllowanceSuffix");
+    /// <summary>{0} = allied society allowances left today, {1} = levequest allowances left.</summary>
+    public static string CharactersAllowancesFormat => Loc.Get("CharactersAllowancesFormat");
     public static string CharactersAccountView => Loc.Get("CharactersAccountView");
     public static string CharactersAccountNoQuest => Loc.Get("CharactersAccountNoQuest");
     public static string CharactersAccountUnknownQuest => Loc.Get("CharactersAccountUnknownQuest");
@@ -216,19 +233,19 @@ static partial class Strings
     public static string CharactersColumnStatus => Loc.Get("CharactersColumnStatus");
     public static string CharactersSnapshotUnreadable => Loc.Get("CharactersSnapshotUnreadable");
     public const string CharactersLiveMarker = "● ";
-    public static string CharactersWorldPrefix => Loc.Get("CharactersWorldPrefix");
-    public static string CharactersJobPrefix => Loc.Get("CharactersJobPrefix");
-    public static string CharactersTribePrefix => Loc.Get("CharactersTribePrefix");
-    public static string CharactersAgeJustNow => Loc.Get("CharactersAgeJustNow");
-    public static string CharactersAgeMinutesSuffix => Loc.Get("CharactersAgeMinutesSuffix");
-    public static string CharactersAgeHoursSuffix => Loc.Get("CharactersAgeHoursSuffix");
-    public static string CharactersAgeDaysSuffix => Loc.Get("CharactersAgeDaysSuffix");
+    /// <summary>{0} = world id, for a world with no name.</summary>
+    public static string CharactersWorldFormat => Loc.Get("CharactersWorldFormat");
+    /// <summary>{0} = job id, for a job with no name.</summary>
+    public static string CharactersJobFormat => Loc.Get("CharactersJobFormat");
+    /// <summary>{0} = allied society id, for a society with no name.</summary>
+    public static string CharactersTribeFormat => Loc.Get("CharactersTribeFormat");
 
     // Characters dashboard
     public static string CharactersSectionCompletion => Loc.Get("CharactersSectionCompletion");
     public static string CharactersNoSections => Loc.Get("CharactersNoSections");
     public static string CharactersAllQuests => Loc.Get("CharactersAllQuests");
-    public static string CharactersSectionPrefix => Loc.Get("CharactersSectionPrefix");
+    /// <summary>{0} = journal section id, for a section with no name.</summary>
+    public static string CharactersSectionFormat => Loc.Get("CharactersSectionFormat");
     public static string CharactersColumnSection => Loc.Get("CharactersColumnSection");
     public static string CharactersColumnDone => Loc.Get("CharactersColumnDone");
     public const string CharactersColumnPercent = "%";
@@ -324,17 +341,16 @@ static partial class Strings
     public static string ConfigVerdictRestoreAllTooltip => Loc.Get("ConfigVerdictRestoreAllTooltip");
     public static string ConfigVerdictsRestored => Loc.Get("ConfigVerdictsRestored");
     public static string ConfigSectionAbout => Loc.Get("ConfigSectionAbout");
-    public static string ConfigPluginVersionPrefix => Loc.Get("ConfigPluginVersionPrefix");
-    public static string ConfigCuratedPrefix => Loc.Get("ConfigCuratedPrefix");
-    public static string ConfigCuratedSystemSuffix => Loc.Get("ConfigCuratedSystemSuffix");
-    public static string ConfigCuratedDutySuffix => Loc.Get("ConfigCuratedDutySuffix");
-    public static string ConfigCuratedFeatureSuffix => Loc.Get("ConfigCuratedFeatureSuffix");
-    public static string ConfigCuratedFestivalSuffix => Loc.Get("ConfigCuratedFestivalSuffix");
+    /// <summary>{0} = plugin version.</summary>
+    public static string ConfigPluginVersionFormat => Loc.Get("ConfigPluginVersionFormat");
+    /// <summary>{0} = system unlocks, {1} = duty unlocks, {2} = unlock quests, {3} = festivals in the curated data.</summary>
+    public static string ConfigCuratedFormat => Loc.Get("ConfigCuratedFormat");
     public static string ConfigDataStampTooltip => Loc.Get("ConfigDataStampTooltip");
-    public static string ConfigCatalogPrefix => Loc.Get("ConfigCatalogPrefix");
+    /// <summary>{0} = quests in the catalog, {1} = the game language its names are read in.</summary>
+    public static string ConfigCatalogFormat => Loc.Get("ConfigCatalogFormat");
     public static string ConfigCatalogLoading => Loc.Get("ConfigCatalogLoading");
-    public static string ConfigCatalogUnavailable => Loc.Get("ConfigCatalogUnavailable");
-    public static string ConfigCatalogQuestsSuffix => Loc.Get("ConfigCatalogQuestsSuffix");
+    /// <summary>{0} = the error.</summary>
+    public static string ConfigCatalogUnavailableFormat => Loc.Get("ConfigCatalogUnavailableFormat");
     public static string ConfigSectionDisplay => Loc.Get("ConfigSectionDisplay");
     public static string ConfigUiScale => Loc.Get("ConfigUiScale");
     public static string ConfigUiScaleHint => Loc.Get("ConfigUiScaleHint");
@@ -462,7 +478,8 @@ static partial class Strings
         public static string ChipAvailableNow => Loc.Get("Help.ChipAvailableNow");
         public static string ChipAvailableNowOff => Loc.Get("Help.ChipAvailableNowOff");
         public static string ChipNotInTotals => Loc.Get("Help.ChipNotInTotals");
-        public static string ChipStatePrefix => Loc.Get("Help.ChipStatePrefix");
+        /// <summary>{0} = state name.</summary>
+        public static string ChipStateFormat => Loc.Get("Help.ChipStateFormat");
 
         public static string HighContrastLegendNote => Loc.Get("Help.HighContrastLegendNote");
 

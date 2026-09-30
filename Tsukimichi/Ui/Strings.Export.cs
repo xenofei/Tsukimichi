@@ -23,9 +23,12 @@ static partial class Strings
     public static string ExportFolderDefault => Loc.Get("ExportFolderDefault");
     public static string ExportFolderDefaultTooltip => Loc.Get("ExportFolderDefaultTooltip");
     public static string ExportOpenFolder => Loc.Get("ExportOpenFolder");
-    public static string ExportOpenFolderFailed => Loc.Get("ExportOpenFolderFailed");
-    public static string ExportWrittenPrefix => Loc.Get("ExportWrittenPrefix");
-    public static string ExportFailedPrefix => Loc.Get("ExportFailedPrefix");
+    /// <summary>{0} = the error.</summary>
+    public static string ExportOpenFolderFailedFormat => Loc.Get("ExportOpenFolderFailedFormat");
+    /// <summary>{0} = file path.</summary>
+    public static string ExportWrittenFormat => Loc.Get("ExportWrittenFormat");
+    /// <summary>{0} = the error.</summary>
+    public static string ExportFailedFormat => Loc.Get("ExportFailedFormat");
     public static string ExportNoCharacter => Loc.Get("ExportNoCharacter");
     public static string ExportCatalogLoading => Loc.Get("ExportCatalogLoading");
 

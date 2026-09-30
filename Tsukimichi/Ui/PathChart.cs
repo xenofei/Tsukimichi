@@ -31,6 +31,10 @@ namespace Tsukimichi.Ui;
 /// </summary>
 public sealed class PathChart
 {
+    /// <summary>"or via {0}" split around the quest name, per language.</summary>
+    private static readonly Localization.LocText AlternativeBefore = new(static () => Strings.SplitAtLink(Strings.PathAlternativeFormat, Strings.LinkSlot).Before);
+    private static readonly Localization.LocText AlternativeAfter = new(static () => Strings.SplitAtLink(Strings.PathAlternativeFormat, Strings.LinkSlot).After);
+
     private const float PulseSeconds = 1.5f;
     private const ulong PulseKeyBase = 0x5041_5448_0000_0000UL; // "PATH"
 
@@ -1053,11 +1057,19 @@ public sealed class PathChart
 
                 var x = origin.X + ghostLabelX;
                 var dusk = Theme.U32(s.TextTertiary);
-                dl.AddText(font, captionSize, new Vector2(x, captionY), dusk, Strings.PathAlternativePrefix);
-                x += ImGui.CalcTextSize(Strings.PathAlternativePrefix).X * CaptionScale;
+                var before = AlternativeBefore.Value;
+                dl.AddText(font, captionSize, new Vector2(x, captionY), dusk, before);
+                x += ImGui.CalcTextSize(before).X * CaptionScale;
                 var name = rowLabels[row.Core];
                 dl.AddText(font, captionSize, new Vector2(x, captionY), Theme.U32(hovered ? s.TextSecondary : Theme.VeilText), name);
                 x += ImGui.CalcTextSize(name).X * CaptionScale;
+                var after = AlternativeAfter.Value;
+                if (after.Length > 0)
+                {
+                    dl.AddText(font, captionSize, new Vector2(x, captionY), dusk, after);
+                    x += ImGui.CalcTextSize(after).X * CaptionScale;
+                }
+
                 dl.AddText(font, captionSize, new Vector2(x, captionY), dusk, rowSuffixes[row.Core]);
                 break;
             }

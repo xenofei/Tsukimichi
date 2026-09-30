@@ -32,11 +32,13 @@
   <data name="AbandonedRevealTooltip" xml:space="preserve">
     <value>Show in the Journal</value>
   </data>
-  <data name="AbandonedGiverPrefix" xml:space="preserve">
-    <value>Giver: </value>
+  <data name="AbandonedGiverFormat" xml:space="preserve">
+    <value>Giver: {0}</value>
+    <comment>{0} = NPC name.</comment>
   </data>
-  <data name="AbandonedAtPrefix" xml:space="preserve">
-    <value>Abandoned </value>
+  <data name="AbandonedAtFormat" xml:space="preserve">
+    <value>Abandoned {0}</value>
+    <comment>{0} = date and time.</comment>
   </data>
   <data name="AbandonedOnly" xml:space="preserve">
     <value>Abandoned only</value>
@@ -44,8 +46,9 @@
   <data name="AbandonedOnlyTooltip" xml:space="preserve">
     <value>Keep only quests this character abandoned and has not taken up again</value>
   </data>
-  <data name="AbandonedChatPrefix" xml:space="preserve">
-    <value>Abandoned: </value>
+  <data name="AbandonedChatFormat" xml:space="preserve">
+    <value>Abandoned: {0}</value>
+    <comment>{0} = the quest link; " (step 3 of 5)" follows the line.</comment>
   </data>
   <data name="AbandonedConfigNotice" xml:space="preserve">
     <value>Chat line when you abandon a quest</value>
@@ -113,8 +116,9 @@
     <value>{0} moons walked</value>
     <comment>{0} = completed steps folded into one bead.</comment>
   </data>
-  <data name="PathAlternativePrefix" xml:space="preserve">
-    <value>or via </value>
+  <data name="PathAlternativeFormat" xml:space="preserve">
+    <value>or via {0}</value>
+    <comment>{0} = the other quest that leads here.</comment>
   </data>
   <data name="PathAlternativeStepsFormat" xml:space="preserve">
     <value> · {0} steps</value>
@@ -335,6 +339,14 @@
     <value>Copied {0} to the clipboard</value>
     <comment>{0} = quests copied.</comment>
   </data>
+  <data name="DiffQuestCountOneFormat" xml:space="preserve">
+    <value>{0} quest</value>
+    <comment>{0} = quests; the one form ("1 quest"), read into DiffAheadFormat.</comment>
+  </data>
+  <data name="DiffQuestCountFormat" xml:space="preserve">
+    <value>{0} quests</value>
+    <comment>{0} = quests; the plural form ("12 quests"), read into DiffAheadFormat.</comment>
+  </data>
   <data name="DiscoveryWindowTitle" xml:space="preserve">
     <value>Nearby quests###TsukimichiNearby</value>
   </data>
@@ -486,14 +498,17 @@
   <data name="ExportOpenFolder" xml:space="preserve">
     <value>Open folder</value>
   </data>
-  <data name="ExportOpenFolderFailed" xml:space="preserve">
-    <value>Could not open the folder: </value>
+  <data name="ExportOpenFolderFailedFormat" xml:space="preserve">
+    <value>Could not open the folder: {0}</value>
+    <comment>{0} = the error.</comment>
   </data>
-  <data name="ExportWrittenPrefix" xml:space="preserve">
-    <value>Written: </value>
+  <data name="ExportWrittenFormat" xml:space="preserve">
+    <value>Written: {0}</value>
+    <comment>{0} = file path.</comment>
   </data>
-  <data name="ExportFailedPrefix" xml:space="preserve">
-    <value>Export failed: </value>
+  <data name="ExportFailedFormat" xml:space="preserve">
+    <value>Export failed: {0}</value>
+    <comment>{0} = the error.</comment>
   </data>
   <data name="ExportNoCharacter" xml:space="preserve">
     <value>No character to export: log in, or pick a stored character on the Characters tab.</value>
@@ -643,23 +658,25 @@
   <data name="JobsChainComplete" xml:space="preserve">
     <value>complete</value>
   </data>
-  <data name="JobsChainNextPrefix" xml:space="preserve">
-    <value>next: </value>
+  <data name="JobsChainNextFormat" xml:space="preserve">
+    <value>next: {0}</value>
+    <comment>{0} = the next quest of the chain.</comment>
   </data>
   <data name="JobsChainsNotStartedFormat" xml:space="preserve">
     <value>Not started ({0})###notStartedChains</value>
     <comment>{0} = number of chains with nothing done yet.</comment>
   </data>
-  <data name="JobsNudgePrefixFormat" xml:space="preserve">
-    <value>Level {0} {1}: </value>
-    <comment>{0} = level reached, {1} = job name; followed by the quest link and JobsNudgeSuffix.</comment>
+  <data name="JobsNudgeFormat" xml:space="preserve">
+    <value>Level {0} {1}: {2} is available</value>
+    <comment>{0} = level reached, {1} = job name, {2} = the quest link.</comment>
   </data>
-  <data name="JobsNudgeSuffix" xml:space="preserve">
-    <value> is available</value>
+  <data name="JobsNudgeBlockerFormat" xml:space="preserve">
+    <value>Level {0} {1}: {2} · {3}</value>
+    <comment>{0} = level reached, {1} = job name, {2} = the quest link, {3} = what still blocks it (a blocker phrase).</comment>
   </data>
-  <data name="JobsNudgeBlockedSuffix" xml:space="preserve">
-    <value> is not open yet</value>
-    <comment>After the quest link when the level was reached but the quest is still blocked and no blocker could be named.</comment>
+  <data name="JobsNudgeBlockedFormat" xml:space="preserve">
+    <value>Level {0} {1}: {2} is not open yet</value>
+    <comment>{0} = level reached, {1} = job name, {2} = the quest link; the level was reached but no blocker could be named.</comment>
   </data>
   <data name="JobsConfigNudge" xml:space="preserve">
     <value>Chat notice when a job or role quest becomes available after a level-up</value>
@@ -869,8 +886,9 @@
     <value>{0} obtained</value>
     <comment>{0} = the kind row's obtained/total.</comment>
   </data>
-  <data name="MoonlitQuestPrefix" xml:space="preserve">
-    <value>Quest </value>
+  <data name="MoonlitQuestFormat" xml:space="preserve">
+    <value>Quest {0}</value>
+    <comment>{0} = the quest's row id, for a quest the catalog does not have.</comment>
   </data>
   <data name="MoonlitStoreOnly" xml:space="preserve">
     <value>Store only</value>
@@ -885,14 +903,16 @@
   <data name="MoonlitAlsoDrops" xml:space="preserve">
     <value>Also drops</value>
   </data>
-  <data name="AlsoDropsInPrefix" xml:space="preserve">
-    <value>Also drops in </value>
+  <data name="AlsoDropsInFormat" xml:space="preserve">
+    <value>Also drops in {0}</value>
+    <comment>{0} = the duties that also drop the reward.</comment>
   </data>
   <data name="AlsoDropsInADuty" xml:space="preserve">
     <value>Also drops in a duty</value>
   </data>
-  <data name="NotExclusiveSuffix" xml:space="preserve">
-    <value>; not exclusive to the quest</value>
+  <data name="NotExclusiveFormat" xml:space="preserve">
+    <value>{0}; not exclusive to the quest</value>
+    <comment>{0} = the "Also drops in …" line.</comment>
   </data>
   <data name="MoonlitHideStoreResellsLabel" xml:space="preserve">
     <value>Hide rewards found elsewhere</value>
@@ -979,8 +999,9 @@
   <data name="FlightQuestClickHint" xml:space="preserve">
     <value>Show the quest's requirements and path in the detail pane</value>
   </data>
-  <data name="FlightQuestPrefix" xml:space="preserve">
-    <value>Quest </value>
+  <data name="FlightQuestFormat" xml:space="preserve">
+    <value>Quest {0}</value>
+    <comment>{0} = the quest's row id, for a quest the catalog does not have.</comment>
   </data>
   <data name="FlightFlag" xml:space="preserve">
     <value>Flag</value>
@@ -1022,11 +1043,13 @@
     <value>{0} starts no quests in the catalog.</value>
     <comment>{0} = NPC name.</comment>
   </data>
-  <data name="WotsitQuestPrefix" xml:space="preserve">
-    <value>Quest: </value>
+  <data name="WotsitQuestFormat" xml:space="preserve">
+    <value>Quest: {0}</value>
+    <comment>{0} = quest name.</comment>
   </data>
-  <data name="WotsitRewardPrefix" xml:space="preserve">
-    <value>Reward: </value>
+  <data name="WotsitRewardFormat" xml:space="preserve">
+    <value>Reward: {0} ({1})</value>
+    <comment>{0} = reward name, {1} = reward kind.</comment>
   </data>
   <data name="TeleportToGiver" xml:space="preserve">
     <value>Teleport to giver (Lifestream)</value>
@@ -1119,23 +1142,32 @@
   <data name="CharactersLive" xml:space="preserve">
     <value>Live</value>
   </data>
-  <data name="CharactersSnapshotPrefix" xml:space="preserve">
-    <value>Snapshot taken </value>
+  <data name="CharactersSnapshotFormat" xml:space="preserve">
+    <value>Snapshot taken {0} ({1})</value>
+    <comment>{0} = date and time, {1} = how long ago.</comment>
   </data>
-  <data name="CharactersCompletedSuffix" xml:space="preserve">
-    <value> quests completed</value>
+  <data name="CharactersCompletedFormat" xml:space="preserve">
+    <value>{0} quests completed</value>
+    <comment>{0} = quests completed (plural form; the one form is CharactersCompletedOneFormat).</comment>
   </data>
-  <data name="CharactersAcceptedSuffix" xml:space="preserve">
-    <value> in journal</value>
+  <data name="CharactersCompletedOneFormat" xml:space="preserve">
+    <value>{0} quest completed</value>
+    <comment>{0} = quests completed (one form: 1 in English and German, 0 and 1 in French, never in Japanese).</comment>
+  </data>
+  <data name="CharactersAcceptedFormat" xml:space="preserve">
+    <value>{0} in journal</value>
+    <comment>{0} = quests in the journal.</comment>
   </data>
   <data name="CharactersExport" xml:space="preserve">
     <value>Export JSON…</value>
   </data>
-  <data name="CharactersExportedPrefix" xml:space="preserve">
-    <value>Exported to </value>
+  <data name="CharactersExportedFormat" xml:space="preserve">
+    <value>Exported to {0}</value>
+    <comment>{0} = file path.</comment>
   </data>
-  <data name="CharactersExportFailedPrefix" xml:space="preserve">
-    <value>Export failed: </value>
+  <data name="CharactersExportFailedFormat" xml:space="preserve">
+    <value>Export failed: {0}</value>
+    <comment>{0} = the error.</comment>
   </data>
   <data name="CharactersForget" xml:space="preserve">
     <value>Forget this character</value>
@@ -1146,11 +1178,9 @@
   <data name="CharactersForgetPopup" xml:space="preserve">
     <value>Forget character###TsukimichiForgetCharacter</value>
   </data>
-  <data name="CharactersForgetQuestionPrefix" xml:space="preserve">
-    <value>Forget </value>
-  </data>
-  <data name="CharactersForgetQuestionSuffix" xml:space="preserve">
-    <value>? The stored snapshot is deleted. Nothing in the game is changed.</value>
+  <data name="CharactersForgetQuestionFormat" xml:space="preserve">
+    <value>Forget {0}? The stored snapshot is deleted. Nothing in the game is changed.</value>
+    <comment>{0} = character name.</comment>
   </data>
   <data name="CharactersForgetConfirm" xml:space="preserve">
     <value>Forget</value>
@@ -1176,8 +1206,9 @@
   <data name="CharactersNoGrandCompany" xml:space="preserve">
     <value>No Grand Company</value>
   </data>
-  <data name="CharactersRankPrefix" xml:space="preserve">
-    <value>rank </value>
+  <data name="CharactersGcRankFormat" xml:space="preserve">
+    <value>{0} · rank {1}</value>
+    <comment>{0} = Grand Company, {1} = rank number.</comment>
   </data>
   <data name="CharactersTribes" xml:space="preserve">
     <value>Allied societies</value>
@@ -1194,14 +1225,9 @@
   <data name="CharactersColumnReputation" xml:space="preserve">
     <value>Reputation</value>
   </data>
-  <data name="CharactersAllowancesPrefix" xml:space="preserve">
-    <value>Allowances: </value>
-  </data>
-  <data name="CharactersTribeAllowanceSuffix" xml:space="preserve">
-    <value> society, </value>
-  </data>
-  <data name="CharactersLeveAllowanceSuffix" xml:space="preserve">
-    <value> leve</value>
+  <data name="CharactersAllowancesFormat" xml:space="preserve">
+    <value>Allowances: {0} society, {1} leve</value>
+    <comment>{0} = allied society allowances left today, {1} = levequest allowances left.</comment>
   </data>
   <data name="CharactersAccountView" xml:space="preserve">
     <value>Account view</value>
@@ -1224,26 +1250,17 @@
   <data name="CharactersSnapshotUnreadable" xml:space="preserve">
     <value>snapshot unreadable</value>
   </data>
-  <data name="CharactersWorldPrefix" xml:space="preserve">
-    <value>World </value>
+  <data name="CharactersWorldFormat" xml:space="preserve">
+    <value>World {0}</value>
+    <comment>{0} = world id, for a world with no name.</comment>
   </data>
-  <data name="CharactersJobPrefix" xml:space="preserve">
-    <value>Job </value>
+  <data name="CharactersJobFormat" xml:space="preserve">
+    <value>Job {0}</value>
+    <comment>{0} = job id, for a job with no name.</comment>
   </data>
-  <data name="CharactersTribePrefix" xml:space="preserve">
-    <value>Society </value>
-  </data>
-  <data name="CharactersAgeJustNow" xml:space="preserve">
-    <value>just now</value>
-  </data>
-  <data name="CharactersAgeMinutesSuffix" xml:space="preserve">
-    <value> min ago</value>
-  </data>
-  <data name="CharactersAgeHoursSuffix" xml:space="preserve">
-    <value> h ago</value>
-  </data>
-  <data name="CharactersAgeDaysSuffix" xml:space="preserve">
-    <value> d ago</value>
+  <data name="CharactersTribeFormat" xml:space="preserve">
+    <value>Society {0}</value>
+    <comment>{0} = allied society id, for a society with no name.</comment>
   </data>
   <data name="CharactersSectionCompletion" xml:space="preserve">
     <value>Completion by journal section</value>
@@ -1254,8 +1271,9 @@
   <data name="CharactersAllQuests" xml:space="preserve">
     <value>All quests</value>
   </data>
-  <data name="CharactersSectionPrefix" xml:space="preserve">
-    <value>Section </value>
+  <data name="CharactersSectionFormat" xml:space="preserve">
+    <value>Section {0}</value>
+    <comment>{0} = journal section id, for a section with no name.</comment>
   </data>
   <data name="CharactersColumnSection" xml:space="preserve">
     <value>Section</value>
@@ -1475,38 +1493,27 @@
   <data name="ConfigSectionAbout" xml:space="preserve">
     <value>About</value>
   </data>
-  <data name="ConfigPluginVersionPrefix" xml:space="preserve">
-    <value>Tsukimichi </value>
+  <data name="ConfigPluginVersionFormat" xml:space="preserve">
+    <value>Tsukimichi {0}</value>
+    <comment>{0} = plugin version.</comment>
   </data>
-  <data name="ConfigCuratedPrefix" xml:space="preserve">
-    <value>Curated: </value>
-  </data>
-  <data name="ConfigCuratedSystemSuffix" xml:space="preserve">
-    <value> system unlocks, </value>
-  </data>
-  <data name="ConfigCuratedDutySuffix" xml:space="preserve">
-    <value> duty unlocks, </value>
-  </data>
-  <data name="ConfigCuratedFeatureSuffix" xml:space="preserve">
-    <value> unlock quests, </value>
-  </data>
-  <data name="ConfigCuratedFestivalSuffix" xml:space="preserve">
-    <value> festivals</value>
+  <data name="ConfigCuratedFormat" xml:space="preserve">
+    <value>Curated: {0} system unlocks, {1} duty unlocks, {2} unlock quests, {3} festivals</value>
+    <comment>{0} = system unlocks, {1} = duty unlocks, {2} = unlock quests, {3} = festivals in the curated data.</comment>
   </data>
   <data name="ConfigDataStampTooltip" xml:space="preserve">
     <value>The game version the reward data was generated from, how many entries and when, and the curated overlay's revision. The same stamp is in every diagnostic block.</value>
   </data>
-  <data name="ConfigCatalogPrefix" xml:space="preserve">
-    <value>Catalog: </value>
+  <data name="ConfigCatalogFormat" xml:space="preserve">
+    <value>Catalog: {0} quests, {1}</value>
+    <comment>{0} = quests in the catalog, {1} = the game language its names are read in.</comment>
   </data>
   <data name="ConfigCatalogLoading" xml:space="preserve">
     <value>Catalog: loading</value>
   </data>
-  <data name="ConfigCatalogUnavailable" xml:space="preserve">
-    <value>Catalog unavailable: </value>
-  </data>
-  <data name="ConfigCatalogQuestsSuffix" xml:space="preserve">
-    <value> quests, </value>
+  <data name="ConfigCatalogUnavailableFormat" xml:space="preserve">
+    <value>Catalog unavailable: {0}</value>
+    <comment>{0} = the error.</comment>
   </data>
   <data name="ConfigSectionDisplay" xml:space="preserve">
     <value>Display</value>
@@ -1790,8 +1797,9 @@
   <data name="Help.ChipNotInTotals" xml:space="preserve">
     <value>Left out of totals</value>
   </data>
-  <data name="Help.ChipStatePrefix" xml:space="preserve">
-    <value>State: </value>
+  <data name="Help.ChipStateFormat" xml:space="preserve">
+    <value>State: {0}</value>
+    <comment>{0} = state name; a "Shown by" chip in Help › The moon phases.</comment>
   </data>
   <data name="Help.HighContrastLegendNote" xml:space="preserve">
     <value>Showing the high-contrast glyphs (Settings › Display › Glyph palette): each moon carries a mark as well as its shape, and states with the same shape differ clearly in brightness.</value>
@@ -2288,9 +2296,9 @@
   <data name="NewThisPatchCaptionOneFormat" xml:space="preserve">
     <value>New in {0}x: 1 unlock quest, listed first</value>
   </data>
-  <data name="PayoffPrefix" xml:space="preserve">
-    <value>Before you continue: </value>
-    <comment>Prefix of the line; the curated instruction follows ("Before you continue: Finish the Eden raid series first.").</comment>
+  <data name="PayoffFormat" xml:space="preserve">
+    <value>Before you continue: {0}</value>
+    <comment>{0} = the curated instruction ("Finish the Eden raid series first.").</comment>
   </data>
   <data name="PayoffWhyClosed" xml:space="preserve">
     <value>why? (spoiler)</value>
@@ -2306,9 +2314,9 @@
     <value>Optional content that changes a scene in the story ahead. {0} of {1} done. Click to select the first one left.</value>
     <comment>{0} = content quests done, {1} = content quests in all.</comment>
   </data>
-  <data name="PayoffChatNextPrefix" xml:space="preserve">
-    <value> Next: </value>
-    <comment>After the instruction, before the link to the first content quest left.</comment>
+  <data name="PayoffChatFormat" xml:space="preserve">
+    <value>Before you continue: {0} Next: {1}</value>
+    <comment>{0} = the curated instruction, {1} = the link to the first content quest left.</comment>
   </data>
   <data name="PayoffConfigShow" xml:space="preserve">
     <value>Show "Before you continue" notes</value>
@@ -2664,14 +2672,16 @@
     <value>As of this character's last capture ({0}).</value>
     <comment>{0} = capture time. A stored character's events are the ones running when it was last captured.</comment>
   </data>
-  <data name="SeasonalEvidenceTooltipPrefix" xml:space="preserve">
-    <value>Announced on the Lodestone: </value>
+  <data name="SeasonalEvidenceTooltipFormat" xml:space="preserve">
+    <value>Announced on the Lodestone: {0}</value>
+    <comment>{0} = the announcement the end date comes from.</comment>
   </data>
   <data name="SeasonalRunningNowTooltip" xml:space="preserve">
     <value>The game says this event is running. Tsukimichi shows an end date only when the Lodestone announced one; it never guesses.</value>
   </data>
-  <data name="SeasonalGiverPrefix" xml:space="preserve">
-    <value>Giver: </value>
+  <data name="SeasonalGiverFormat" xml:space="preserve">
+    <value>Giver: {0}</value>
+    <comment>{0} = NPC name.</comment>
   </data>
   <data name="SeasonalNoQuests" xml:space="preserve">
     <value>No quests of this event are listed in the journal.</value>
@@ -3394,6 +3404,10 @@
     <value>Main scenario complete · {0:N0} of {1:N0}</value>
     <comment>{0} = done, {1} = total.</comment>
   </data>
+  <data name="MsqGiverFormat" xml:space="preserve">
+    <value>{0}, {1}</value>
+    <comment>{0} = NPC, {1} = zone.</comment>
+  </data>
   <data name="MsqClickHint" xml:space="preserve">
     <value>Click to select</value>
   </data>
@@ -3448,8 +3462,16 @@
     <value>Removed from the game (rule 1: {0})</value>
     <comment>The same signal for a retired row the journal still lists, whose path is its genre: {0} = RetiredReason.</comment>
   </data>
-  <data name="RetiredReason.Default" xml:space="preserve">
+  <data name="RetiredReason.PlaceholderIssuer" xml:space="preserve">
     <value>placeholder issuer</value>
+  </data>
+  <data name="RetiredReason.Both" xml:space="preserve">
+    <value>placeholder issuer, hidden flag</value>
+    <comment>Rule 1 retired the row for both sheet signals.</comment>
+  </data>
+  <data name="RetiredReason.HiddenFlag" xml:space="preserve">
+    <value>hidden flag</value>
+    <comment>Rule 1 retired the row for the sheet's hidden flag.</comment>
   </data>
   <data name="FilingReason.2" xml:space="preserve">
     <value>class or job intro</value>
@@ -3468,6 +3490,10 @@
   </data>
   <data name="FilingReason.7" xml:space="preserve">
     <value>no signal</value>
+  </data>
+  <data name="FilingReason.Other" xml:space="preserve">
+    <value>rule {0}</value>
+    <comment>{0} = rule number, for a rule with no short reason.</comment>
   </data>
   <data name="Presets" xml:space="preserve">
     <value>Quick views</value>
@@ -3647,15 +3673,20 @@
   <data name="ScopeEmpty" xml:space="preserve">
     <value>This node has no quests.</value>
   </data>
-  <data name="ChipStatePrefix" xml:space="preserve">
-    <value>States: </value>
+  <data name="ChipStateFormat" xml:space="preserve">
+    <value>States: {0}</value>
+    <comment>{0} = the hidden states, each with a "−" before it, joined by ChipStateSeparator.</comment>
+  </data>
+  <data name="ChipStateSeparator" xml:space="preserve">
+    <value>, </value>
+    <comment>Between two state names in the States chip and its tooltip.</comment>
   </data>
   <data name="ChipTooltip" xml:space="preserve">
     <value>Click to clear</value>
   </data>
-  <data name="ChipStateTooltipPrefix" xml:space="preserve">
-    <value>Hiding: </value>
-    <comment>First line of the state chip's tooltip; the excluded states follow, all of them, however many the chip names.</comment>
+  <data name="ChipStateTooltipFormat" xml:space="preserve">
+    <value>Hiding: {0}</value>
+    <comment>{0} = every hidden state, joined by ChipStateSeparator.</comment>
   </data>
   <data name="FillingMoonTooltip" xml:space="preserve">
     <value>Done of total</value>
@@ -3845,17 +3876,13 @@
   <data name="MarkNotUniqueConfirm" xml:space="preserve">
     <value>Hide as not unique</value>
   </data>
-  <data name="VerdictQuestionUniquePrefix" xml:space="preserve">
-    <value>Add </value>
+  <data name="VerdictQuestionUniqueFormat" xml:space="preserve">
+    <value>Add {0} to Moonlit treasures?</value>
+    <comment>{0} = quest name.</comment>
   </data>
-  <data name="VerdictQuestionUniqueSuffix" xml:space="preserve">
-    <value> to Moonlit treasures?</value>
-  </data>
-  <data name="VerdictQuestionHidePrefix" xml:space="preserve">
-    <value>Hide </value>
-  </data>
-  <data name="VerdictQuestionHideSuffix" xml:space="preserve">
-    <value> from Moonlit treasures?</value>
+  <data name="VerdictQuestionHideFormat" xml:space="preserve">
+    <value>Hide {0} from Moonlit treasures?</value>
+    <comment>{0} = quest name.</comment>
   </data>
   <data name="VerdictConfirmTooltip" xml:space="preserve">
     <value>Hold Shift and click, or press and hold</value>
@@ -3913,8 +3940,9 @@
   <data name="CatalogNotReady" xml:space="preserve">
     <value>The catalog is still loading.</value>
   </data>
-  <data name="ChatNewlyAvailablePrefix" xml:space="preserve">
-    <value>Now available: </value>
+  <data name="ChatNewlyAvailableFormat" xml:space="preserve">
+    <value>Now available: {0}</value>
+    <comment>{0} = the quest link.</comment>
   </data>
   <data name="ConfigSectionItemHints" xml:space="preserve">
     <value>Item hints</value>

@@ -79,6 +79,7 @@ public sealed class FilterPanel
     private string stateChip = string.Empty;
     private string stateChipTooltip = string.Empty;
     private QuestStateMask stateChipMask = QuestStateMask.All;
+    private int stateChipLanguage = -1;
     // The scope chip's label, memoized per (scope, catalog): naming a node is a scan of the whole catalog.
     private string scopeChip = string.Empty;
     private QuestScope scopeChipScope = QuestScope.None;
@@ -733,14 +734,15 @@ public sealed class FilterPanel
     /// <summary>"States: −Completed, −Locked out", naming up to <see cref="MaxStateChipNames"/> excluded states then "+N"; rebuilt when the mask changes.</summary>
     private string StateChipText(FilterSet f)
     {
-        if (stateChipMask == f.StateMask && stateChip.Length > 0)
+        if (stateChipMask == f.StateMask && stateChipLanguage == Localization.Loc.Version && stateChip.Length > 0)
         {
             return stateChip;
         }
 
         stateChipMask = f.StateMask;
-        var text = Strings.ChipStatePrefix;
-        var tooltip = Strings.ChipStateTooltipPrefix;
+        stateChipLanguage = Localization.Loc.Version;
+        var text = string.Empty;
+        var tooltip = string.Empty;
         var named = 0;
         var excluded = 0;
         foreach (var state in StateOrder)
@@ -765,8 +767,8 @@ public sealed class FilterPanel
             text += string.Format(CultureInfo.CurrentCulture, Strings.ChipStateMoreFormat, excluded - named);
         }
 
-        stateChip = text;
-        stateChipTooltip = tooltip;
+        stateChip = string.Format(CultureInfo.CurrentCulture, Strings.ChipStateFormat, text);
+        stateChipTooltip = string.Format(CultureInfo.CurrentCulture, Strings.ChipStateTooltipFormat, tooltip);
         return stateChip;
     }
 

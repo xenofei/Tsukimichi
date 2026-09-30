@@ -42,7 +42,12 @@ static partial class Strings
     /// <summary>{0} = quest name, {1} = value; one line of the copied list.</summary>
     public const string DiffClipboardLineFormat = "{0} ({1})";
 
-    /// <summary>"1 quest" or "N quests".</summary>
-    public static string DiffQuestCount(int count) =>
-        count.ToString(CultureInfo.InvariantCulture) + (count == 1 ? " quest" : " quests");
+    /// <summary>{0} = quests, one form.</summary>
+    public static string DiffQuestCountOneFormat => Loc.Get("DiffQuestCountOneFormat");
+
+    /// <summary>{0} = quests, plural form.</summary>
+    public static string DiffQuestCountFormat => Loc.Get("DiffQuestCountFormat");
+
+    /// <summary>"1 quest" or "N quests", by the language's plural rule.</summary>
+    public static string DiffQuestCount(int count) => Loc.Plural(count, DiffQuestCountOneFormat, DiffQuestCountFormat);
 }

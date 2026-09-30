@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility.Raii;
 using Tsukimichi.Core.Ui;
@@ -41,8 +42,8 @@ internal sealed class VerdictPrompt(string popupId)
         this.rowId = rowId;
         this.unique = unique;
         question = unique
-            ? Strings.VerdictQuestionUniquePrefix + questName + Strings.VerdictQuestionUniqueSuffix
-            : Strings.VerdictQuestionHidePrefix + questName + Strings.VerdictQuestionHideSuffix;
+            ? string.Format(CultureInfo.CurrentCulture, Strings.VerdictQuestionUniqueFormat, questName)
+            : string.Format(CultureInfo.CurrentCulture, Strings.VerdictQuestionHideFormat, questName);
         noteBuffer = string.Empty;
         gate.Cancel();
         pendingOpen = true;

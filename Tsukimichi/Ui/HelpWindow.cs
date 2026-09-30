@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Numerics;
 using System.Text;
 using Dalamud.Bindings.ImGui;
@@ -898,7 +899,7 @@ public sealed class HelpWindow : Window
     private static PhaseItem Phase(QuestState state, string meaning, params string[] filterChips)
     {
         var chips = new string[filterChips.Length + 1];
-        chips[0] = Strings.Help.ChipStatePrefix + Strings.StateName(state);
+        chips[0] = string.Format(CultureInfo.CurrentCulture, Strings.Help.ChipStateFormat, Strings.StateName(state));
         Array.Copy(filterChips, 0, chips, 1, filterChips.Length);
         return new PhaseItem(state, Strings.StateGlyphSubtitle(state), meaning, chips);
     }

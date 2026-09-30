@@ -71,7 +71,7 @@ public static partial class Strings
     /// <summary>{0} = done, {1} = total.</summary>
     public static string MsqCompleteFormat => Loc.Get("MsqCompleteFormat");
     /// <summary>{0} = NPC, {1} = zone.</summary>
-    public const string MsqGiverFormat = "{0}, {1}";
+    public static string MsqGiverFormat => Loc.Get("MsqGiverFormat");
     public static string MsqClickHint => Loc.Get("MsqClickHint");
     /// <summary>{0} = expansion, {1} = quest, {2} = giver ("NPC, zone").</summary>
     public static string CharactersMsqFormat => Loc.Get("CharactersMsqFormat");
@@ -108,9 +108,9 @@ public static partial class Strings
     /// <summary>Which sheet signal retired a row under rule 1 (docs/data/unlisted-report.md section 4).</summary>
     public static string RetiredReason(bool placeholderIssuer, bool hiddenFlag) => (placeholderIssuer, hiddenFlag) switch
     {
-        (true, true) => "placeholder issuer, hidden flag",
-        (_, true) => "hidden flag",
-        _ => Loc.Get("RetiredReason.Default"),
+        (true, true) => Loc.Get("RetiredReason.Both"),
+        (_, true) => Loc.Get("RetiredReason.HiddenFlag"),
+        _ => Loc.Get("RetiredReason.PlaceholderIssuer"),
     };
 
     /// <summary>The short reason behind a refiling rule (docs/data/unlisted-report.md section 4).</summary>
@@ -122,7 +122,7 @@ public static partial class Strings
         5 => Loc.Get("FilingReason.5"),
         6 => Loc.Get("FilingReason.6"),
         7 => Loc.Get("FilingReason.7"),
-        _ => "rule " + rule.ToString(System.Globalization.CultureInfo.InvariantCulture),
+        _ => string.Format(System.Globalization.CultureInfo.CurrentCulture, Loc.Get("FilingReason.Other"), rule),
     };
     /// <summary>{0} = done, {1} = total.</summary>
     public const string CountFormat = "{0}/{1}";
@@ -156,7 +156,10 @@ public static partial class Strings
     public static string OverrideInherit => Loc.Get("OverrideInherit");
     public static string OverrideOn => Loc.Get("OverrideOn");
     public static string OverrideOff => Loc.Get("OverrideOff");
-    public const string OverrideOptions = "Inherit\0On\0Off\0";
+    /// <summary>The override combo's items, NUL-separated as ImGui.Combo takes them; composed once per language.</summary>
+    public static string OverrideOptions => overrideOptions.Value;
+
+    private static readonly LocText overrideOptions = new(static () => OverrideInherit + "\0" + OverrideOn + "\0" + OverrideOff + "\0");
     public static string NeedsSnapshot => Loc.Get("NeedsSnapshot");
     public static string Advanced => Loc.Get("Advanced");
     public static string States => Loc.Get("States");
@@ -220,9 +223,10 @@ public static partial class Strings
     public static string ResetFilters => Loc.Get("ResetFilters");
     public static string NothingMatchesCombination => Loc.Get("NothingMatchesCombination");
     public static string ScopeEmpty => Loc.Get("ScopeEmpty");
-    public static string ChipStatePrefix => Loc.Get("ChipStatePrefix");
+    /// <summary>{0} = the hidden states, each with a "−" before it, joined by ChipStateSeparator.</summary>
+    public static string ChipStateFormat => Loc.Get("ChipStateFormat");
     public const string ChipStateExcludedMarker = "−";
-    public const string ChipStateSeparator = ", ";
+    public static string ChipStateSeparator => Loc.Get("ChipStateSeparator");
     /// <summary>{0} = number of excluded states beyond the named ones.</summary>
     public const string ChipStateMoreFormat = " +{0}";
     public const string ChipExpansion = FilterNames.Expansion;
@@ -231,7 +235,8 @@ public static partial class Strings
     public const string ChipPinned = FilterNames.Pinned;
     public static string ChipTooltip => Loc.Get("ChipTooltip");
     /// <summary>First line of the state chip's tooltip; the excluded states follow, all of them, however many the chip names.</summary>
-    public static string ChipStateTooltipPrefix => Loc.Get("ChipStateTooltipPrefix");
+    /// <summary>{0} = every hidden state, joined by ChipStateSeparator.</summary>
+    public static string ChipStateTooltipFormat => Loc.Get("ChipStateTooltipFormat");
 
     /// <summary>First line of a filling moon's tooltip; the done/total (and percent where shown) follows.</summary>
     public static string FillingMoonTooltip => Loc.Get("FillingMoonTooltip");
@@ -308,10 +313,10 @@ public static partial class Strings
     public static string MarkUniqueConfirm => Loc.Get("MarkUniqueConfirm");
     public static string MarkNotUniqueNoteHint => Loc.Get("MarkNotUniqueNoteHint");
     public static string MarkNotUniqueConfirm => Loc.Get("MarkNotUniqueConfirm");
-    public static string VerdictQuestionUniquePrefix => Loc.Get("VerdictQuestionUniquePrefix");
-    public static string VerdictQuestionUniqueSuffix => Loc.Get("VerdictQuestionUniqueSuffix");
-    public static string VerdictQuestionHidePrefix => Loc.Get("VerdictQuestionHidePrefix");
-    public static string VerdictQuestionHideSuffix => Loc.Get("VerdictQuestionHideSuffix");
+    /// <summary>{0} = quest name.</summary>
+    public static string VerdictQuestionUniqueFormat => Loc.Get("VerdictQuestionUniqueFormat");
+    /// <summary>{0} = quest name.</summary>
+    public static string VerdictQuestionHideFormat => Loc.Get("VerdictQuestionHideFormat");
     public static string VerdictConfirmTooltip => Loc.Get("VerdictConfirmTooltip");
     /// <summary>{0} = seconds left, shown instead of the hold arc under Reduce motion.</summary>
     public static string VerdictHoldCountdownFormat => Loc.Get("VerdictHoldCountdownFormat");
@@ -344,7 +349,8 @@ public static partial class Strings
     public static string NoMatches => Loc.Get("NoMatches");
     public static string CatalogNotReady => Loc.Get("CatalogNotReady");
     public const string ChatTag = "Tsukimichi";
-    public static string ChatNewlyAvailablePrefix => Loc.Get("ChatNewlyAvailablePrefix");
+    /// <summary>{0} = the quest link.</summary>
+    public static string ChatNewlyAvailableFormat => Loc.Get("ChatNewlyAvailableFormat");
 
     // Settings › Item hints (the hooks themselves are wired by the item-hint feature)
     public static string ConfigSectionItemHints => Loc.Get("ConfigSectionItemHints");
@@ -403,6 +409,34 @@ public static partial class Strings
 
         var reason = BlockerText.For(evaluation, quest, names, states);
         return reason.Length > 0 ? reason : null;
+    }
+
+    /// <summary>
+    /// Stands in for a chat link while a line's format is filled (<see cref="SplitAtLink"/>): a private-use character
+    /// no translation contains.
+    /// </summary>
+    public const string LinkSlot = "\uE000";
+
+    /// <summary>
+    /// Fills <paramref name="format"/> with <paramref name="args"/>, one of which is <see cref="LinkSlot"/>, and returns
+    /// the text before and after the slot, so a chat line puts its quest link wherever the language puts it ("Now
+    /// available: [quest]", "[quest] が受注可能になりました"). A format that lost its placeholder yields the whole text
+    /// before the link.
+    /// </summary>
+    public static (string Before, string After) SplitAtLink(string format, params object?[] args)
+    {
+        string text;
+        try
+        {
+            text = string.Format(System.Globalization.CultureInfo.CurrentCulture, format, args);
+        }
+        catch (System.FormatException)
+        {
+            text = format;
+        }
+
+        var at = text.IndexOf(LinkSlot, System.StringComparison.Ordinal);
+        return at < 0 ? (text + " ", string.Empty) : (text[..at], text[(at + LinkSlot.Length)..]);
     }
 
     /// <summary>

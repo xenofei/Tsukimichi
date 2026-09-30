@@ -247,7 +247,7 @@ public sealed class WotsitIpc : IDisposable
             var expansion = bundle.Names.Expansion(quest.Expansion);
             var name = spoilers.DisplayName(quest);
             entries.Add(new WotsitEntry(
-                Strings.WotsitQuestPrefix + name,
+                string.Format(System.Globalization.CultureInfo.CurrentCulture, Strings.WotsitQuestFormat, name),
                 name + " " + quest.Journal.GenreName + " " + expansion,
                 spoilers.IsMasked(quest) ? 0 : quest.Icon,
                 () => reveal(target)));
@@ -264,7 +264,7 @@ public sealed class WotsitIpc : IDisposable
             var kind = Strings.MoonlitKindName(entry.Kind);
             var name = string.IsNullOrWhiteSpace(entry.RewardName) ? kind : entry.RewardName;
             entries.Add(new WotsitEntry(
-                Strings.WotsitRewardPrefix + name + " (" + kind + ")",
+                string.Format(System.Globalization.CultureInfo.CurrentCulture, Strings.WotsitRewardFormat, name, kind),
                 name + " " + kind + " " + spoilers.DisplayName(quest),
                 rewardIcon(quest, entry),
                 () => reveal(target)));

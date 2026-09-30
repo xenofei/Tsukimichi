@@ -21,8 +21,10 @@ static partial class Strings
     public static string AbandonedTeleport => Loc.Get("AbandonedTeleport");
     public static string AbandonedReveal => Loc.Get("AbandonedReveal");
     public static string AbandonedRevealTooltip => Loc.Get("AbandonedRevealTooltip");
-    public static string AbandonedGiverPrefix => Loc.Get("AbandonedGiverPrefix");
-    public static string AbandonedAtPrefix => Loc.Get("AbandonedAtPrefix");
+    /// <summary>{0} = NPC name.</summary>
+    public static string AbandonedGiverFormat => Loc.Get("AbandonedGiverFormat");
+    /// <summary>{0} = date and time.</summary>
+    public static string AbandonedAtFormat => Loc.Get("AbandonedAtFormat");
 
     // ---- Filter ----
     public static string AbandonedOnly => Loc.Get("AbandonedOnly");
@@ -30,7 +32,8 @@ static partial class Strings
     public const string AbandonedChip = FilterNames.Abandoned;
 
     // ---- Chat ----
-    public static string AbandonedChatPrefix => Loc.Get("AbandonedChatPrefix");
+    /// <summary>{0} = the quest link; " (step 3 of 5)" follows the line.</summary>
+    public static string AbandonedChatFormat => Loc.Get("AbandonedChatFormat");
 
     /// <summary>{0} = "step 3 of 5".</summary>
     public const string AbandonedChatStepFormat = " ({0})";

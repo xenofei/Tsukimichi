@@ -8,6 +8,7 @@ using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin;
 using Tsukimichi.Config;
+using Tsukimichi.Localization;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Runtime;
@@ -37,12 +38,13 @@ public sealed partial class ConfigWindow : Window
     private readonly IDalamudPluginInterface pluginInterface;
     private readonly Action<bool> onShowUnlistedChanged;
 
-    private readonly string pluginVersionLine;
+    private readonly LocText pluginVersionLine;
     private readonly string dataStampLine;
     private readonly string? dataVersionWarning;
-    private readonly string curatedLine;
+    private readonly LocText curatedLine;
 
     private CatalogBundle? aboutBundle;
+    private int aboutLanguage = -1;
     private string catalogLine = Strings.ConfigCatalogLoading;
     private string? catalogError;
 
@@ -96,16 +98,19 @@ public sealed partial class ConfigWindow : Window
         SizeCondition = ImGuiCond.FirstUseEver;
         SizeConstraints = new WindowSizeConstraints { MinimumSize = new Vector2(400f, 320f) };
 
-        pluginVersionLine = Strings.ConfigPluginVersionPrefix + (diagnostics.PluginVersion.Length > 0 ? diagnostics.PluginVersion : "unknown");
+        var pluginVersion = diagnostics.PluginVersion.Length > 0 ? diagnostics.PluginVersion : "unknown";
+        pluginVersionLine = new LocText(() => string.Format(CultureInfo.CurrentCulture, Strings.ConfigPluginVersionFormat, pluginVersion));
         dataStampLine = diagnostics.DataStampLine;
         dataVersionWarning = diagnostics.VersionMismatchWarning;
 
         var curated = session.Curated;
-        curatedLine = Strings.ConfigCuratedPrefix
-                      + curated.SystemUnlocks.Count.ToString(CultureInfo.InvariantCulture) + Strings.ConfigCuratedSystemSuffix
-                      + curated.DutyUnlocks.Count.ToString(CultureInfo.InvariantCulture) + Strings.ConfigCuratedDutySuffix
-                      + curated.FeatureQuests.Count.ToString(CultureInfo.InvariantCulture) + Strings.ConfigCuratedFeatureSuffix
-                      + curated.Festivals.Count.ToString(CultureInfo.InvariantCulture) + Strings.ConfigCuratedFestivalSuffix;
+        curatedLine = new LocText(() => string.Format(
+            CultureInfo.CurrentCulture,
+            Strings.ConfigCuratedFormat,
+            curated.SystemUnlocks.Count,
+            curated.DutyUnlocks.Count,
+            curated.FeatureQuests.Count,
+            curated.Festivals.Count));
 
         ReadSettings();
     }
@@ -1214,7 +1219,7 @@ public sealed partial class ConfigWindow : Window
         var list = new List<VerdictRow>(all.Count);
         foreach (var (rowId, stored) in all)
         {
-            var name = bundle?.Catalog.GetByRowId(rowId) is { } quest ? spoilers.DisplayName(quest) : Strings.MoonlitQuestPrefix + rowId.ToString(CultureInfo.InvariantCulture);
+            var name = bundle?.Catalog.GetByRowId(rowId) is { } quest ? spoilers.DisplayName(quest) : string.Format(CultureInfo.InvariantCulture, Strings.MoonlitQuestFormat, rowId);
             list.Add(new VerdictRow(
                 rowId,
                 name,
@@ -1307,7 +1312,7 @@ public sealed partial class ConfigWindow : Window
     {
         Header(Strings.ConfigSectionAbout);
         RefreshCatalogLine();
-        ImGui.TextUnformatted(pluginVersionLine);
+        ImGui.TextUnformatted(pluginVersionLine.Value);
         ImGui.TextUnformatted(dataStampLine);
         if (ImGui.IsItemHovered())
         {
@@ -1320,7 +1325,7 @@ public sealed partial class ConfigWindow : Window
             ImGui.TextWrapped(warning);
         }
 
-        ImGui.TextUnformatted(curatedLine);
+        ImGui.TextUnformatted(curatedLine.Value);
         ImGui.TextUnformatted(catalogLine);
         RefreshPollTiming();
         ImGui.TextUnformatted(pollTimingLine);
@@ -1332,10 +1337,11 @@ public sealed partial class ConfigWindow : Window
         var bundle = session.Bundle;
         if (bundle is not null)
         {
-            if (!ReferenceEquals(bundle, aboutBundle))
+            if (!ReferenceEquals(bundle, aboutBundle) || aboutLanguage != Loc.Version)
             {
                 aboutBundle = bundle;
-                catalogLine = Strings.ConfigCatalogPrefix + bundle.Catalog.Count.ToString(CultureInfo.InvariantCulture) + Strings.ConfigCatalogQuestsSuffix + bundle.Language;
+                aboutLanguage = Loc.Version;
+                catalogLine = string.Format(CultureInfo.CurrentCulture, Strings.ConfigCatalogFormat, bundle.Catalog.Count, bundle.Language);
             }
 
             return;
@@ -1346,7 +1352,7 @@ public sealed partial class ConfigWindow : Window
             if (error != catalogError)
             {
                 catalogError = error;
-                catalogLine = Strings.ConfigCatalogUnavailable + error;
+                catalogLine = string.Format(CultureInfo.CurrentCulture, Strings.ConfigCatalogUnavailableFormat, error);
             }
 
             return;

@@ -163,7 +163,8 @@ public sealed class ChatNotifier : IDisposable
             }
 
             tracker.MarkNotified(rowId);
-            Print(Strings.ChatNewlyAvailablePrefix, quest, string.Empty);
+            var (before, after) = Strings.SplitAtLink(Strings.ChatNewlyAvailableFormat, Strings.LinkSlot);
+            Print(before, quest, after);
         }
     }
 
@@ -189,7 +190,8 @@ public sealed class ChatNotifier : IDisposable
 
             var step = session.LiveAbandoned.TryGetValue(quest.QuestId, out var entry) ? entry.StepText : string.Empty;
             var suffix = step.Length == 0 ? string.Empty : string.Format(CultureInfo.CurrentCulture, Strings.AbandonedChatStepFormat, step);
-            Print(Strings.AbandonedChatPrefix, quest, suffix);
+            var (before, after) = Strings.SplitAtLink(Strings.AbandonedChatFormat, Strings.LinkSlot);
+            Print(before, quest, after + suffix);
         }
     }
 
@@ -303,14 +305,15 @@ public sealed class ChatNotifier : IDisposable
                 }
             }
 
-            var line = Strings.PayoffPrefix + gate.Gate.Instruction;
+            var line = string.Format(CultureInfo.CurrentCulture, Strings.PayoffFormat, gate.Gate.Instruction);
             if (next is null)
             {
                 chat.Print(new SeStringBuilder().AddText(line).Build(), Strings.ChatTag);
             }
             else
             {
-                Print(line + Strings.PayoffChatNextPrefix, next, string.Empty);
+                var (before, after) = Strings.SplitAtLink(Strings.PayoffChatFormat, gate.Gate.Instruction, Strings.LinkSlot);
+                Print(before, next, after);
             }
         }
     }
@@ -347,18 +350,20 @@ public sealed class ChatNotifier : IDisposable
                 }
 
                 tracker.MarkJobNudged(nudge.RowId);
-                var prefix = string.Format(CultureInfo.CurrentCulture, Strings.JobsNudgePrefixFormat, nudge.Level, DisplayName(nudge.Job.Name));
+                var job = DisplayName(nudge.Job.Name);
 
                 // "[quest] is available", or, when the level was the only thing this level-up settled, the one blocker
                 // left ("[quest] · after MSQ: The Vault"), so the player learns why no quest appeared.
-                var suffix = Strings.JobsNudgeSuffix;
+                var (before, after) = Strings.SplitAtLink(Strings.JobsNudgeFormat, nudge.Level, job, Strings.LinkSlot);
                 if (nudge.State == QuestState.Blocked && session.LiveStates.TryGetValue(nudge.RowId, out var evaluation))
                 {
                     var blocker = BlockerText.For(evaluation, quest, session.LiveNames, session.LiveStates);
-                    suffix = blocker.Length > 0 ? Strings.StateReasonSeparator + blocker : Strings.JobsNudgeBlockedSuffix;
+                    (before, after) = blocker.Length > 0
+                        ? Strings.SplitAtLink(Strings.JobsNudgeBlockerFormat, nudge.Level, job, Strings.LinkSlot, blocker)
+                        : Strings.SplitAtLink(Strings.JobsNudgeBlockedFormat, nudge.Level, job, Strings.LinkSlot);
                 }
 
-                Print(prefix, quest, suffix);
+                Print(before, quest, after);
             }
         }
 

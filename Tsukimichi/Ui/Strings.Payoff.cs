@@ -11,7 +11,8 @@ namespace Tsukimichi.Ui;
 static partial class Strings
 {
     /// <summary>Prefix of the line; the curated instruction follows ("Before you continue: Finish the Eden raid series first.").</summary>
-    public static string PayoffPrefix => Loc.Get("PayoffPrefix");
+    /// <summary>{0} = the curated instruction ("Finish the Eden raid series first.").</summary>
+    public static string PayoffFormat => Loc.Get("PayoffFormat");
 
     /// <summary>The closed disclosure; the reason shows only after a click, and stays open for that character until closed.</summary>
     public static string PayoffWhyClosed => Loc.Get("PayoffWhyClosed");
@@ -25,7 +26,8 @@ static partial class Strings
 
     // ---- Chat ----
     /// <summary>After the instruction, before the link to the first content quest left.</summary>
-    public static string PayoffChatNextPrefix => Loc.Get("PayoffChatNextPrefix");
+    /// <summary>{0} = the curated instruction, {1} = the link to the first content quest left.</summary>
+    public static string PayoffChatFormat => Loc.Get("PayoffChatFormat");
 
     // ---- Settings › Spoilers ----
     public static string PayoffConfigShow => Loc.Get("PayoffConfigShow");
