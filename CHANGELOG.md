@@ -4,6 +4,9 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+### Changed
+- The main scenario line is ready for branching stories: when a main scenario splits into routes you can play in any order and meet again later, as Evercold's is announced to, the status bar shows each route and how far along it you are ("MSQ · route A 3/9 · route B —", the tooltip naming each route's next quest and where they meet), the Characters dashboard, the Tonight card and the Todo overlay list one next quest per route, the spoiler shield counts "quests ahead" along each route, and an unlock route finishes one route before starting the next. Nothing changes on today's main scenario. Plugin authors get a new IPC gate, `Tsukimichi.GetMsqPositions`, with every route's next quest (docs/ipc.md).
+
 ## [0.9.0] - 2026-09-30
 
 ### Added
