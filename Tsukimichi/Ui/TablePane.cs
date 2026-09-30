@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface;
 using Dalamud.Interface.Textures;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin;
@@ -32,6 +33,11 @@ public sealed class TablePane : IDisposable
 
     /// <summary>Logical width under which the Status column sheds Rewards, then Expansion: room for "Ready on another job".</summary>
     private const float StatusMinWidth = 170f;
+
+    /// <summary>Logical gap between a story sidequest's name and its book badge.</summary>
+    private const float StoryBadgeGap = 6f;
+
+    private static readonly string StoryBadgeIcon = FontAwesomeIcon.BookOpen.ToIconString();
 
     private enum Column
     {
@@ -406,7 +412,8 @@ public sealed class TablePane : IDisposable
         var nameCellMin = ImGui.GetCursorScreenPos();
         var nameCellWidth = ImGui.GetContentRegionAvail().X;
         var selected = ui.SelectedRowId == quest.RowId;
-        if (ImGui.Selectable(runner.Spoilers.DisplayName(quest), selected, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowDoubleClick | ImGuiSelectableFlags.AllowItemOverlap, new Vector2(0f, layout.RowContent)))
+        var name = runner.Spoilers.DisplayName(quest);
+        if (ImGui.Selectable(name, selected, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowDoubleClick | ImGuiSelectableFlags.AllowItemOverlap, new Vector2(0f, layout.RowContent)))
         {
             SelectFromTable(quest.RowId);
             // The game journal only knows accepted and completed quests; for the rest a double-click just selects.
@@ -433,10 +440,17 @@ public sealed class TablePane : IDisposable
         // The selectable spans every column; the banner tooltip belongs to the name cell only, so the reward icons
         // keep their own tooltips.
         var rowHovered = ImGui.IsItemHovered();
+        var badge = runner.Stories.Contains(quest.RowId)
+            ? DrawStoryBadge(ImGui.GetWindowDrawList(), nameCellMin, nameCellWidth, layout.RowContent, name)
+            : default;
         if (rowHovered)
         {
             var mouseX = ImGui.GetMousePos().X;
-            if (mouseX >= nameCellMin.X && mouseX <= nameCellMin.X + nameCellWidth)
+            if (badge.Y > 0f && mouseX >= badge.X && mouseX <= badge.X + badge.Y)
+            {
+                UiMetrics.Tooltip(runner.StoryBadgeText(quest.RowId));
+            }
+            else if (mouseX >= nameCellMin.X && mouseX <= nameCellMin.X + nameCellWidth)
             {
                 DrawNameTooltip(quest, row.State);
             }
@@ -480,6 +494,20 @@ public sealed class TablePane : IDisposable
 
         ImGui.TableNextColumn();
         DrawRewardIcons(quest, in layout);
+    }
+
+    /// <summary>
+    /// The book badge of a story sidequest in Dusk, just after the name, or at the cell's right edge when the name
+    /// fills it. Draw list only, so the row's selectable stays the hovered item. Returns the badge's left x and width.
+    /// </summary>
+    private static Vector2 DrawStoryBadge(ImDrawListPtr dl, Vector2 cellMin, float cellWidth, float rowContent, string name)
+    {
+        var afterName = cellMin.X + ImGui.CalcTextSize(name).X + UiMetrics.Px(StoryBadgeGap);
+        using var font = ImRaii.PushFont(UiBuilder.IconFont);
+        var size = ImGui.CalcTextSize(StoryBadgeIcon);
+        var x = MathF.Max(cellMin.X, MathF.Min(afterName, cellMin.X + cellWidth - size.X));
+        dl.AddText(new Vector2(x, cellMin.Y + (rowContent - size.Y) * 0.5f), Theme.DuskU32, StoryBadgeIcon);
+        return new Vector2(x, size.X);
     }
 
     /// <summary>

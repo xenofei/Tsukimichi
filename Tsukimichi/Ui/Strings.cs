@@ -135,6 +135,12 @@ public static partial class Strings
     public const string PresetFeatureQuestsTooltip = "Unlock quests: duties, jobs, actions, aether currents, systems. Quests you can pick up now come first";
     public const string PresetLevelBandTooltip = "Quests within five levels of your current job's level";
     public const string PresetStalledTooltip = "Quests that have sat in your journal for the number of days below";
+    public const string PresetStorySidequests = FilterNames.StorySidequests;
+    public const string PresetStorySidequestsTooltip = "Sidequests with journal artwork, the ones that tell a small story, zone by zone; each side story in the order you play it";
+
+    // The book badge on a story sidequest's table row. {0} = the side story (its first quest's name), {1} = place, {2} = length.
+    public const string StoryBadgeFormat = "Part of a side story: {0} ({1} of {2})";
+    public const string StoryBadgeLone = "A side story in one quest: it carries journal artwork";
     public const string StalledDaysFormat = "%d days";
     public const string StalledDaysLabel = "Stalled after";
     public const string StalledDaysTooltip = "How long an accepted quest sits untouched before Stalled lists it";
