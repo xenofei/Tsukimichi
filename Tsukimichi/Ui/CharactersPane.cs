@@ -88,9 +88,8 @@ public sealed partial class CharactersPane
     private Dashboard? dashboard;
     private DashboardKey dashboardKey;
 
-    // Per-job ladders and named chains, built once per catalog bundle.
+    // Per-job ladders, built once per catalog bundle (the named chains are the session's).
     private JobLadder ladder = JobLadder.Empty;
-    private ChainCatalog chains = ChainCatalog.Empty;
     private CatalogBundle? derivedBundle;
 
     // Snapshot is null when the file could not be read at that capture time; the failure is cached too so an
@@ -1605,7 +1604,10 @@ public sealed partial class CharactersPane
             allowances);
     }
 
-    /// <summary>Ladders and chains follow the bundle; the chain warnings are logged once per rebuild.</summary>
+    /// <summary>
+    /// Ladders follow the bundle. Chains are the session's (<see cref="SessionState.Chains"/>, built and logged once per
+    /// bundle there), so the dashboard and the detail pane read the same catalog.
+    /// </summary>
     private void RefreshDerived(CatalogBundle? bundle)
     {
         if (ReferenceEquals(derivedBundle, bundle))
@@ -1615,7 +1617,6 @@ public sealed partial class CharactersPane
 
         derivedBundle = bundle;
         ladder = JobLadder.Empty;
-        chains = ChainCatalog.Empty;
         if (bundle is null)
         {
             return;
@@ -1624,15 +1625,10 @@ public sealed partial class CharactersPane
         try
         {
             ladder = bundle.BuildJobLadder();
-            chains = ChainCatalog.Build(bundle.Catalog, session.Curated);
-            foreach (var warning in chains.Warnings)
-            {
-                log.Warning("Chains: {Warning}", warning);
-            }
         }
         catch (Exception ex)
         {
-            log.Warning(ex, "Job ladders or chains could not be built for the dashboard");
+            log.Warning(ex, "Job ladders could not be built for the dashboard");
         }
     }
 
@@ -1710,6 +1706,7 @@ public sealed partial class CharactersPane
     private (ChainRow[] Started, ChainRow[] NotStarted) BuildChains(CatalogBundle? bundle)
     {
         var states = session.States;
+        var chains = session.Chains;
         if (bundle is null || states.Count == 0 || chains.Chains.Count == 0)
         {
             return ([], []);
