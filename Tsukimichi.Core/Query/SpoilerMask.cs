@@ -110,6 +110,23 @@ public sealed class SpoilerMask
     }
 
     /// <summary>
+    /// Compares two quests by the name they print, case-insensitively: the order of the table's Name column. Two
+    /// masked quests compare by their placeholders' display level as a number, so "Main scenario quest (Lv 90)"
+    /// comes before "(Lv 100)"; placeholders of one level keep their journal order (0 here, the caller's tiebreak).
+    /// </summary>
+    public int CompareDisplayNames(QuestRecord a, QuestRecord b)
+    {
+        ArgumentNullException.ThrowIfNull(a);
+        ArgumentNullException.ThrowIfNull(b);
+        if (masked.TryGetValue(a.RowId, out var levelA) && masked.TryGetValue(b.RowId, out var levelB))
+        {
+            return levelA.CompareTo(levelB);
+        }
+
+        return string.Compare(DisplayName(a), DisplayName(b), StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
     /// The lowercased placeholder a masked quest is searched by, or null when the quest is not masked and its own
     /// name is searched (<see cref="SearchIndex.Matches(uint, string, SpoilerMask?)"/>).
     /// </summary>

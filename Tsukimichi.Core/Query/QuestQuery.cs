@@ -308,7 +308,7 @@ public static class QuestQuery
         return result;
     }
 
-    /// <summary>Orders rows by the sort column; names compare as printed, so a masked quest sorts by its placeholder.</summary>
+    /// <summary>Orders rows by the sort column; names compare as printed, so a masked quest sorts by its placeholder (by level among placeholders).</summary>
     private sealed class RowComparer(QuestRow[] rows, SortSpec sort, SpoilerMask spoilers) : IComparer<int>
     {
         public int Compare(int x, int y)
@@ -322,7 +322,7 @@ public static class QuestQuery
             ref readonly var b = ref rows[y];
             var c = sort.Column switch
             {
-                SortColumn.Name => string.Compare(spoilers.DisplayName(a.Quest), spoilers.DisplayName(b.Quest), StringComparison.OrdinalIgnoreCase),
+                SortColumn.Name => spoilers.CompareDisplayNames(a.Quest, b.Quest),
                 SortColumn.Level => a.Quest.DisplayLevel.CompareTo(b.Quest.DisplayLevel),
                 SortColumn.State => ((int)a.State).CompareTo((int)b.State),
                 SortColumn.Expansion => a.Quest.Expansion.CompareTo(b.Quest.Expansion),
