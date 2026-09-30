@@ -8,9 +8,12 @@ using Tsukimichi.Localization;
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// Every literal the UI shows, in one place, so DRAFT-NEEDED F can swap them for resource lookups without touching
-/// the panes. Voice per spec §1: calm, precise, short; labels are nouns; no exclamation marks.
-/// Members ending in <c>Format</c> are composite format strings; the argument order is documented on each.
+/// Every string the UI shows, in one place (V2-19): each member reads its key from the resource files through
+/// <see cref="Loc"/> (<c>Tsukimichi/Localization/Strings.resx</c> in English, the translations beside it), so the panes
+/// ask for <c>Strings.TabJournal</c> and get the current language. Only separators, markers and ImGui ids stay
+/// constants. Voice per spec §1: calm, precise, short; labels are nouns; no exclamation marks. Members ending in
+/// <c>Format</c> are composite format strings with positional placeholders, so a language can reorder them; the
+/// argument order is documented on each (and in the resx comment translators read). docs/localization.md.
 /// </summary>
 public static partial class Strings
 {

@@ -781,6 +781,11 @@ public sealed class Plugin : IDalamudPlugin
     private void AbortLoad()
     {
         Unwind("tsukimichi ipc", () => ipcProvider?.Dispose());
+        Unwind("localization", () =>
+        {
+            Localization.Loc.Changed -= OnTextChanged;
+            loc?.Dispose();
+        });
         Unwind("draw hook", () =>
         {
             if (configWindow is not null)

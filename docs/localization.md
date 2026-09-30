@@ -39,6 +39,7 @@ A switch applies at once: the session bumps its version, so every label cached p
 - **`/tsuki why`'s requirement lines** use the diagnostic block's per-requirement format ("Level: met (24 ≤ 31)"), so they are English as well. Its headline (state, blocker, giver) follows the UI language.
 - **Export files** (Settings › Data › Export, `/tsuki export`): the JSON property names, the CSV column headers and the reward kinds (`Item`, `Mount`) are a file format ([export-format.md](export-format.md)), not UI text, and stay English. The quest, section and reward names inside are the client's (Moonlit reward names fall back to the shipped English names where the sheets have none).
 - **Curated data** (`Tsukimichi/Data/curated/*.json`): quirk notes, "Before you continue" instructions, festival names and system unlock labels are written in English by contributors and show in English.
+- **The "What's new" card** shows the running version's CHANGELOG.md section, which is written in English.
 - **Logs**: the Dalamud log is for the maintainer.
 
 ## Checks
