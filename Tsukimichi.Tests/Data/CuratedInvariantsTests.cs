@@ -23,6 +23,27 @@ public sealed class CuratedInvariantsTests(FixtureCatalog fixture) : IClassFixtu
 
     private static UniqueRewardsData Unique() => UniqueRewardsFile.Load(Path.Combine(FixtureCatalog.ShippedDataDir(), "unique_quests.json"));
 
+    [GitHistoryFact]
+    public void Version_json_names_the_last_commit_that_changed_the_curated_data()
+    {
+        // tools/regen.ps1 stamps VERSION.json with `git log -1 --format=%h` over the curated data files (VERSION.json
+        // and README.md excluded). Settings > About, the status bar and every "Report this quest" block name that
+        // revision, so a data commit without a fresh stamp would send bug reports against the wrong data.
+        var root = JsonNode.Parse(File.ReadAllText(Path.Combine(CuratedDir, CuratedData.VersionFileName)), documentOptions: CuratedData.StrictOptions)!.AsObject();
+        var stamp = (string?)root[CuratedData.CuratedRevisionKey];
+        Assert.False(string.IsNullOrWhiteSpace(stamp), "VERSION.json has no curatedRevision; run tools/regen.ps1");
+        Assert.DoesNotContain("-dirty", stamp, StringComparison.Ordinal);
+
+        // The full hash, compared by prefix: the abbreviation's length depends on the clone's object count.
+        var head = GitHistoryFactAttribute.Git(
+            "log", "-1", "--format=%H", "--",
+            "Tsukimichi/Data/curated", ":!Tsukimichi/Data/curated/VERSION.json", ":!Tsukimichi/Data/curated/README.md");
+        Assert.False(string.IsNullOrEmpty(head), "git log found no commit touching Tsukimichi/Data/curated");
+        Assert.True(
+            stamp!.Length >= 7 && head!.StartsWith(stamp, StringComparison.OrdinalIgnoreCase),
+            $"VERSION.json says curatedRevision {stamp}, but the curated data was last changed in {head![..7]}; run tools/regen.ps1 (-NoXivApi is enough) and commit VERSION.json and docs/data/DATA-VERSION.md");
+    }
+
     [Fact]
     public void Feature_quests_json_equals_the_set_DataGen_derives()
     {
