@@ -279,8 +279,8 @@ public sealed class DetailPane
         }
 
         var lineHeight = ImGui.GetTextLineHeight();
-        var size = UiMetrics.InlineGlyphSize(lineHeight);
-        MoonGlyph.DrawFillingInline(model.ChainFraction, size);
+        var size = UiMetrics.HaloBoxSize(lineHeight);
+        MoonGlyph.DrawHaloInline(model.ChainFraction, size);
         if (ImGui.IsItemHovered())
         {
             UiMetrics.Tooltip(string.Format(CultureInfo.CurrentCulture, ChainMoonTooltipFormat, model.ChainDone, model.ChainTotal));

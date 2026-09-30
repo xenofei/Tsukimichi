@@ -425,8 +425,8 @@ static partial class Strings
         public const string ChipNotInTotals = "Left out of totals";
         public const string ChipStatePrefix = "State: ";
 
-        public const string FillingTitle = "The filling moon";
-        public const string FillingBody = "Tree nodes, Moonlit kinds and the Characters dashboard show a moon whose lit fraction is the completion ratio: new at none, half at half, full only when everything is done. Locked out quests are left out of the total.";
+        public const string FillingTitle = "The halo";
+        public const string FillingBody = "Tree nodes, Moonlit kinds, flying zones and the Characters dashboard show a ring that fills clockwise from the top with the completion ratio, around a small moon that fills with it. Even one quest shows a gold pip, and the ring closes and glows only when everything is done. Where the ring is small the number sits beside it. Locked out quests are left out of the total.";
 
         // ---- Filters and chips ----
         public static readonly string[] FilterCardTitles =

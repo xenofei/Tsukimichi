@@ -808,12 +808,13 @@ public sealed class MainWindow : Window, IDisposable
         var barMin = ImGui.GetCursorScreenPos();
         ImGui.Separator();
 
-        // A tiny filling moon of overall completion leads the line.
+        // A small halo of overall completion leads the line.
         var lineHeight = ImGui.GetTextLineHeight();
-        var moonBox = MathF.Max(lineHeight, UiMetrics.StatusMoonRadius * 2.4f);
+        var haloRadius = UiMetrics.StatusHaloRadius;
+        var moonBox = MathF.Max(lineHeight, haloRadius * 2f);
         var moonPos = ImGui.GetCursorScreenPos();
         ImGui.Dummy(new Vector2(moonBox, lineHeight));
-        MoonGlyph.DrawFilling(ImGui.GetWindowDrawList(), moonPos + new Vector2(moonBox * 0.5f, lineHeight * 0.5f), UiMetrics.StatusMoonRadius, runner.Counts?.Overall.Fraction ?? 0f);
+        MoonGlyph.DrawHalo(ImGui.GetWindowDrawList(), moonPos + new Vector2(moonBox * 0.5f, lineHeight * 0.5f), haloRadius, runner.Counts?.Overall.Fraction ?? 0f);
         ImGui.SameLine();
         var avail = ImGui.GetContentRegionAvail().X;
         var statusWidth = ImGui.CalcTextSize(status).X;

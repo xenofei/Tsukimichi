@@ -279,7 +279,7 @@ public sealed class CharactersPane
         {
             ImGui.TableNextRow();
             ImGui.TableNextColumn();
-            MoonGlyph.DrawFillingInline(row.Fraction, UiMetrics.InlineGlyphSize(line));
+            MoonGlyph.DrawHaloInline(row.Fraction, UiMetrics.InlineGlyphSize(line));
             if (ImGui.IsItemHovered())
             {
                 FillingMoonTooltip(row.Count, row.Percent);
@@ -358,7 +358,7 @@ public sealed class CharactersPane
             ImGui.TableNextColumn();
             ImGui.TextUnformatted(row.Level);
             ImGui.TableNextColumn();
-            MoonGlyph.DrawFillingInline(row.Fraction, UiMetrics.InlineGlyphSize(line));
+            MoonGlyph.DrawHaloInline(row.Fraction, UiMetrics.InlineGlyphSize(line));
             if (ImGui.IsItemHovered())
             {
                 FillingMoonTooltip(row.Count);
@@ -422,7 +422,7 @@ public sealed class CharactersPane
             using var rowId = ImRaii.PushId(i);
             ImGui.TableNextRow();
             ImGui.TableNextColumn();
-            MoonGlyph.DrawFillingInline(row.Fraction, UiMetrics.InlineGlyphSize(line));
+            MoonGlyph.DrawHaloInline(row.Fraction, UiMetrics.InlineGlyphSize(line));
             if (ImGui.IsItemHovered())
             {
                 FillingMoonTooltip(row.Count);
@@ -503,7 +503,7 @@ public sealed class CharactersPane
             }
             else
             {
-                MoonGlyph.DrawFillingInline(row.Fraction, UiMetrics.InlineGlyphSize(line));
+                MoonGlyph.DrawHaloInline(row.Fraction, UiMetrics.InlineGlyphSize(line));
                 if (ImGui.IsItemHovered())
                 {
                     FillingMoonTooltip(row.Count);

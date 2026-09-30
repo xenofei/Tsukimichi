@@ -180,4 +180,27 @@ public class ScaleMetricsTests
         Assert.Equal(Vector2.Zero, uv0);
         Assert.Equal(Vector2.One, uv1);
     }
+
+    // imgui-notes §4 table: (UiScale, IconScale, L) → halo R and row height (layout scale = UiScale at global 1).
+    [Theory]
+    [InlineData(1.00f, 0.80f, 16.0f, 12.0f, 30f)]
+    [InlineData(1.00f, 1.00f, 16.0f, 12.0f, 30f)]
+    [InlineData(1.15f, 1.00f, 18.4f, 12.0f, 30.9f)]
+    [InlineData(1.15f, 1.25f, 18.4f, 12.0f, 30.9f)]
+    [InlineData(1.15f, 1.60f, 18.4f, 14.72f, 36.34f)]
+    [InlineData(1.40f, 1.25f, 22.4f, 14.0f, 36.4f)]
+    [InlineData(1.60f, 2.00f, 25.6f, 18.0f, 45.6f)]
+    public void Tree_glyph_is_never_under_a_24_px_box_and_rows_never_under_30_px(float uiScale, float iconScale, float line, float radius, float row)
+    {
+        var r = ScaleMetrics.TreeGlyphRadius(line, iconScale);
+        Assert.Equal(radius, r, 2);
+        Assert.Equal(row, ScaleMetrics.TreeRowHeight(line, r, uiScale), 1);
+    }
+
+    [Fact]
+    public void Tree_glyph_guards_bad_input()
+    {
+        Assert.Equal(ScaleMetrics.TreeGlyphMinRadius, ScaleMetrics.TreeGlyphRadius(float.NaN, 1.25f));
+        Assert.Equal(ScaleMetrics.TreeRowMinHeight, ScaleMetrics.TreeRowHeight(float.NaN, 12f, float.NaN) - 0f, 1);
+    }
 }

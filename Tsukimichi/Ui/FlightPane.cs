@@ -191,11 +191,11 @@ public sealed class FlightPane
         var center = pos + new Vector2(box * 0.5f, box * 0.5f);
         if (zone.AllUnknown)
         {
-            MoonGlyph.Draw(ImGui.GetWindowDrawList(), center, radius, QuestState.Unknown);
+            Marks.Draw(ImGui.GetWindowDrawList(), center, box, Mark.Unknown);
         }
         else
         {
-            MoonGlyph.DrawFilling(ImGui.GetWindowDrawList(), center, radius, zone.Fraction);
+            MoonGlyph.DrawHalo(ImGui.GetWindowDrawList(), center, radius, zone.Fraction);
         }
 
         if (ImGui.IsItemHovered())
@@ -370,14 +370,14 @@ public sealed class FlightPane
         using var id = ImRaii.PushId((int)zone.TerritoryId);
         ImGui.TableNextRow();
         ImGui.TableNextColumn();
-        var glyph = UiMetrics.InlineGlyphSize(line);
+        var glyph = UiMetrics.HaloBoxSize(line);
         if (zone.AllUnknown)
         {
-            MoonGlyph.DrawInline(QuestState.Unknown, glyph);
+            Marks.DrawInline(Mark.Unknown, glyph);
         }
         else
         {
-            MoonGlyph.DrawFillingInline(zone.Fraction, glyph);
+            MoonGlyph.DrawHaloInline(zone.Fraction, glyph);
         }
 
         if (ImGui.IsItemHovered())

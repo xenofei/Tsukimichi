@@ -87,6 +87,11 @@ public static class MoonGlyph
 
     private const float Degrees = MathF.PI / 180f;
 
+    /// <summary>Halo gauge: the track on raised cards (Dusk at 80 %, about 3.6 : 1) and the complete gauge's two glow rings.</summary>
+    private static readonly uint HaloTrackOnCard = Theme.WithAlpha(Theme.Dusk, 0.80f);
+    private static readonly uint HaloGlowOuter = Theme.WithAlpha(Theme.Moon, 0.10f);
+    private static readonly uint HaloGlowInner = Theme.WithAlpha(Theme.Moon, 0.16f);
+
     /// <summary>Gold and silver lit tones: gradient stops and the detail's light colours.</summary>
     private static readonly Tone GoldTone = new(Theme.MoonHigh, Theme.Moon, Theme.MoonDeep, silver: false);
     private static readonly Tone SilverTone = new(Theme.SilverHigh, Theme.Silver, Theme.SilverDeep, silver: true);
@@ -216,6 +221,77 @@ public static class MoonGlyph
     }
 
     /// <summary>
+    /// The halo gauge, the progress glyph (proposal v2.1 §3.2, imgui-notes §3; geometry in <see cref="GaugeGeometry"/>):
+    /// a track ring at 0.80 R (VeilLine, or Dusk at 80 % on raised cards), a Moon arc from 12 o'clock clockwise with
+    /// round caps whose length is the floored fraction, and from R 12 a core — a Shadow disc with a Dusk rim that
+    /// holds a filling moon with its own floor. At exactly 1 the ring is full Moon with two soft glow rings (unless
+    /// <paramref name="glow"/> is off) and the core a full gold moon. Below R 12 only track and arc are drawn and the
+    /// caller writes the number beside it; below R 8 nothing is drawn and the caller writes the number alone.
+    /// Allocation-free.
+    /// </summary>
+    /// <param name="radius">Half the box, R.</param>
+    /// <param name="onCard">Drawn on a raised card: the track is Dusk at 80 % to keep 3 : 1 there.</param>
+    /// <param name="glow">Whether a complete gauge glows; the Journal tree turns it off for complete nodes.</param>
+    public static void DrawHalo(ImDrawListPtr dl, Vector2 center, float radius, float fraction, bool onCard = false, bool glow = true)
+    {
+        var mode = GaugeGeometry.ModeFor(radius);
+        if (mode == HaloMode.NumberOnly) return;
+
+        center = Snap(center, radius);
+        var f = GaugeGeometry.Clamp01(fraction);
+        var track = GaugeGeometry.TrackRadius(radius);
+        var stroke = GaugeGeometry.Stroke(radius);
+        var segments = MoonGeometry.SegmentsFor(track);
+        var core = GaugeGeometry.CoreRadius(radius);
+
+        if (f >= 1f)
+        {
+            if (glow)
+            {
+                dl.AddCircle(center, track, HaloGlowOuter, segments, stroke * 2.2f);
+                dl.AddCircle(center, track, HaloGlowInner, segments, stroke * 1.5f);
+            }
+
+            dl.AddCircle(center, track, Theme.MoonU32, segments, stroke);
+            if (mode == HaloMode.Core)
+                FillingMoon(dl, center, core, MoonGeometry.SegmentsFor(core), 1f);
+            return;
+        }
+
+        dl.AddCircle(center, track, onCard ? HaloTrackOnCard : Theme.VeilLineU32, segments, stroke);
+        var sweep = GaugeGeometry.Sweep(f, radius);
+        if (sweep > 0f)
+        {
+            var start = GaugeGeometry.StartAngle;
+            dl.PathClear();
+            dl.PathArcTo(center, track, start, start + sweep, GaugeGeometry.ArcSegments(segments, sweep));
+            dl.PathStroke(Theme.MoonU32, ImDrawFlags.None, stroke);
+
+            // Round caps: PathStroke has none.
+            var (from, to) = GaugeGeometry.Caps(center, radius, f);
+            dl.AddCircleFilled(from, stroke * 0.5f, Theme.MoonU32);
+            dl.AddCircleFilled(to, stroke * 0.5f, Theme.MoonU32);
+        }
+
+        if (mode != HaloMode.Core) return;
+        FillingMoon(dl, center, core, MoonGeometry.SegmentsFor(core), GaugeGeometry.CoreLitWidth(f, core));
+    }
+
+    /// <summary>
+    /// Inline form of <see cref="DrawHalo"/>: reserves a <paramref name="size"/> square item at the cursor (so a tooltip
+    /// can hang off it) and draws the halo with R = size / 2. Returns the <see cref="HaloMode"/> it drew, so the caller
+    /// knows whether a number belongs beside it (<see cref="HaloMode.Ring"/>) or instead of it (<see cref="HaloMode.NumberOnly"/>).
+    /// </summary>
+    public static HaloMode DrawHaloInline(float fraction, float size, bool onCard = false, bool glow = true)
+    {
+        var pos = ImGui.GetCursorScreenPos();
+        ImGui.Dummy(new Vector2(size, size));
+        var radius = size * 0.5f;
+        DrawHalo(ImGui.GetWindowDrawList(), pos + new Vector2(radius), radius, fraction, onCard, glow);
+        return GaugeGeometry.ModeFor(radius);
+    }
+
+    /// <summary>
     /// The filling moon: lit <paramref name="fraction"/> from 0 (new) to 1 (full), filling right to left like a waxing
     /// moon, with the terminator floor of <see cref="MoonGeometry.FillingLayers"/>. The dark side is Shadow with a Dusk
     /// rim around it; the lit side is rimless, like Completed. Progress everywhere else is the halo gauge
@@ -228,14 +304,6 @@ public static class MoonGlyph
         center = Snap(center, radius);
         var segments = MoonGeometry.SegmentsFor(radius);
         FillingMoon(dl, center, radius, segments, MoonGeometry.FlooredFraction(fraction, radius));
-    }
-
-    /// <summary>Inline form of <see cref="DrawFilling"/>: reserves a square item and draws at the cursor.</summary>
-    public static void DrawFillingInline(float fraction, float size)
-    {
-        var pos = ImGui.GetCursorScreenPos();
-        ImGui.Dummy(new Vector2(size, size));
-        DrawFilling(ImGui.GetWindowDrawList(), pos + new Vector2(size * 0.5f), size * InlineRadiusFraction, fraction);
     }
 
     /// <summary>

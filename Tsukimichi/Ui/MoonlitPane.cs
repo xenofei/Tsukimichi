@@ -432,8 +432,8 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         if (item.AllUnknown)
         {
             // Nothing readable for this kind on the viewed character (logged out, a stored snapshot, or a kind the
-            // reader cannot answer): a veiled moon says so instead of a misleading empty one.
-            MoonGlyph.DrawInline(QuestState.Unknown, UiMetrics.InlineGlyphSize(ImGui.GetTextLineHeight()));
+            // reader cannot answer): a dash says so instead of a misleading empty gauge.
+            Marks.DrawInline(Mark.Unknown, UiMetrics.InlineGlyphSize(ImGui.GetTextLineHeight()));
             if (ImGui.IsItemHovered())
             {
                 UiMetrics.Tooltip(Strings.MoonlitObtainedUnknown);
@@ -441,7 +441,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         }
         else
         {
-            MoonGlyph.DrawFillingInline(item.Fraction, UiMetrics.InlineGlyphSize(ImGui.GetTextLineHeight()));
+            MoonGlyph.DrawHaloInline(item.Fraction, UiMetrics.InlineGlyphSize(ImGui.GetTextLineHeight()));
             if (ImGui.IsItemHovered())
             {
                 UiMetrics.Tooltip(item.TooltipText);

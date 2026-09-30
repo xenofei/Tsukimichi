@@ -173,7 +173,7 @@ public sealed class TreePane
         var min = ImGui.GetItemRectMin();
         var max = ImGui.GetItemRectMax();
         var style = ImGui.GetStyle();
-        var radius = UiMetrics.TreeMoonRadius(max.Y - min.Y);
+        var radius = UiMetrics.TreeGlyphRadius(ImGui.GetTextLineHeight());
         var pad = UiMetrics.Px(6f);
         var lineCenterY = (min.Y + max.Y) * 0.5f;
         var textY = lineCenterY - ImGui.GetTextLineHeight() * 0.5f;
@@ -185,7 +185,7 @@ public sealed class TreePane
 
         // Where TreeNodeEx puts its label: after the arrow slot (one font size plus twice the frame padding).
         var labelX = min.X + ImGui.GetFontSize() + style.FramePadding.X * 2f;
-        MoonGlyph.DrawFilling(dl, new Vector2(labelX + radius, lineCenterY), radius, node.Count.Fraction);
+        MoonGlyph.DrawHalo(dl, new Vector2(labelX + radius, lineCenterY), radius, node.Count.Fraction);
 
         var complete = node.Count.Total > 0 && node.Count.Done >= node.Count.Total;
         var color = section && complete ? Theme.MoonU32 : ImGui.GetColorU32(ImGuiCol.Text);

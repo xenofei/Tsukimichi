@@ -58,6 +58,36 @@ public static class ScaleMetrics
         return new Vector2((LeftColumnLogical + RightColumnLogical + CentreFloorLogical) * scale, MinWindowHeightLogical * scale);
     }
 
+    /// <summary>Smallest halo half-size in the Journal tree: a 24 px box (accessibility A4), whatever the icon scale.</summary>
+    public const float TreeGlyphMinRadius = 12f;
+
+    /// <summary>Largest halo half-size in the Journal tree.</summary>
+    public const float TreeGlyphMaxRadius = 18f;
+
+    /// <summary>Smallest Journal tree row in pixels, in every density.</summary>
+    public const float TreeRowMinHeight = 30f;
+
+    /// <summary>Logical padding around the tree halo inside its row.</summary>
+    public const float TreeRowPaddingLogical = 6f;
+
+    /// <summary>
+    /// The tree halo's half-size for a text line of <paramref name="lineHeight"/> px: clamp(0.5 · L · icon scale, 12, 18)
+    /// (glyph proposal §3.5). The line already carries the global and UI scales, so only the user's icon scale is applied.
+    /// </summary>
+    public static float TreeGlyphRadius(float lineHeight, float iconScale)
+    {
+        var line = float.IsFinite(lineHeight) && lineHeight > 0f ? lineHeight : 0f;
+        return Math.Clamp(0.5f * line * ClampIconScale(iconScale), TreeGlyphMinRadius, TreeGlyphMaxRadius);
+    }
+
+    /// <summary>A tree row's height: max(30 px, the line, the halo box plus 6 logical px).</summary>
+    public static float TreeRowHeight(float lineHeight, float glyphRadius, float layoutScale)
+    {
+        var line = float.IsFinite(lineHeight) ? lineHeight : 0f;
+        var scale = float.IsFinite(layoutScale) && layoutScale > 0f ? layoutScale : 1f;
+        return MathF.Max(TreeRowMinHeight, MathF.Max(line, 2f * glyphRadius + TreeRowPaddingLogical * scale));
+    }
+
     /// <summary>
     /// Texture coordinates that show a <paramref name="textureWidth"/> × <paramref name="textureHeight"/> image in a
     /// <paramref name="boxWidth"/> × <paramref name="boxHeight"/> box at the image's own aspect, cropping the excess

@@ -6,6 +6,7 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Ui;
 
 namespace Tsukimichi.Ui;
 
@@ -61,6 +62,18 @@ public sealed class GlyphDebugWindow : Window
     /// <summary>Progress fractions: the ends, the first sliver (17/612), both sides of the floor and both sides of the half.</summary>
     private static readonly float[] Fractions = [0f, 0.03f, 0.10f, 0.25f, 0.5f, 0.75f, 0.9f, 0.97f, 1f];
 
+    /// <summary>Halo boxes in device pixels (R = box / 2): number only, track + arc, the tree floor, the tooltip and the help size.</summary>
+    private static readonly (float Box, string Use)[] HaloBoxes =
+    [
+        (12f, "number only"),
+        (16f, "track + arc"),
+        (24f, "tree floor, core"),
+        (32f, "tooltip"),
+        (64f, "help"),
+    ];
+
+    private static readonly string[] HaloHeaders = Array.ConvertAll(HaloBoxes, static s => $"{s.Box:0} px · {s.Use}");
+
     // sRGB → linear lookup for the 256 channel values; the encode side is a pow per channel, cached per colour.
     private static readonly float[] ToLinear = BuildToLinear();
 
@@ -71,6 +84,7 @@ public sealed class GlyphDebugWindow : Window
 
     private float testRadius = 24f;
     private bool nightPanel = true;
+    private bool haloOnCard;
     private int simulation;
 
     /// <summary>Packed colour → simulated packed colour for the current mode; the panel draws a few dozen distinct colours.</summary>
@@ -113,6 +127,10 @@ public sealed class GlyphDebugWindow : Window
         if (!panel) return;
 
         DrawStates();
+        ImGui.Spacing();
+        ImGui.Separator();
+        ImGui.Spacing();
+        DrawHalos();
         ImGui.Spacing();
         ImGui.Separator();
         ImGui.Spacing();
@@ -160,9 +178,49 @@ public sealed class GlyphDebugWindow : Window
         }
     }
 
+    private void DrawHalos()
+    {
+        ImGui.TextUnformatted("Halo gauge (progress)");
+        ImGui.SameLine();
+        ImGui.Checkbox("On a card (Dusk 80 % track)", ref haloOnCard);
+        using var table = ImRaii.Table("##halos", 1 + HaloBoxes.Length + 1, ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.BordersInnerH);
+        if (!table) return;
+
+        ImGui.TableSetupColumn("Fraction");
+        foreach (var header in HaloHeaders) ImGui.TableSetupColumn(header);
+        ImGui.TableSetupColumn("Slider (box = 2 r)");
+        ImGui.TableHeadersRow();
+
+        foreach (var f in Fractions)
+        {
+            ImGui.TableNextRow();
+            ImGui.TableNextColumn();
+            ImGui.AlignTextToFramePadding();
+            ImGui.TextUnformatted($"{f:0.00}");
+
+            foreach (var (box, _) in HaloBoxes)
+            {
+                ImGui.TableNextColumn();
+                HaloCell(box, f, haloOnCard);
+            }
+
+            ImGui.TableNextColumn();
+            HaloCell(testRadius * 2f, f, haloOnCard);
+        }
+    }
+
+    /// <summary>A halo at exactly <paramref name="box"/> px with the number beside it where the rules ask for one.</summary>
+    private static void HaloCell(float box, float fraction, bool onCard)
+    {
+        var mode = MoonGlyph.DrawHaloInline(fraction, box, onCard);
+        if (mode == HaloMode.Core) return;
+        ImGui.SameLine(0f, 4f);
+        ImGui.TextDisabled($"{fraction:P0}");
+    }
+
     private void DrawFilling()
     {
-        ImGui.TextUnformatted("Filling moon (tree progress)");
+        ImGui.TextUnformatted("Filling moon (legacy progress glyph, for comparison)");
         using var table = ImRaii.Table("##filling", 1 + Radii.Length + 1, ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.BordersInnerH);
         if (!table) return;
 
@@ -206,7 +264,7 @@ public sealed class GlyphDebugWindow : Window
         ImGui.NewLine();
         foreach (var f in Fractions)
         {
-            MoonGlyph.DrawFillingInline(f, lineHeight);
+            MoonGlyph.DrawHaloInline(f, lineHeight);
             ImGui.SameLine();
             ImGui.TextUnformatted($"{f:0.00}");
             ImGui.SameLine(0f, 12f * ImGuiHelpers.GlobalScale);
