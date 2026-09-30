@@ -9,6 +9,7 @@ using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Jobs;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Runtime;
+using Tsukimichi.Core.Seasonal;
 using Tsukimichi.Core.Storage;
 using Tsukimichi.GameData;
 using Tsukimichi.Ui;
@@ -32,6 +33,10 @@ namespace Tsukimichi.Game;
 /// And the abandoned notice (P10): an <see cref="QuestEventKind.Abandoned"/> event prints "Abandoned: [quest] (step 3
 /// of 5)" with the step from the live ledger, once per quest per session, while
 /// <see cref="Configuration.ChatNoticeAbandoned"/> is on (the default), so a mis-click in the journal is noticed.
+/// </para>
+/// <para>
+/// And the seasonal line (P11): "Moonfire Faire is running: 2 quests ready (ends Aug 28) · [quest]" once per event
+/// per login when the event has a Ready quest, while <see cref="Configuration.ChatNoticeSeasonal"/> is on (the default).
 /// </para>
 /// </summary>
 public sealed class ChatNotifier : IDisposable
@@ -85,6 +90,7 @@ public sealed class ChatNotifier : IDisposable
         {
             Announce();
             Nudge();
+            AnnounceSeasonal();
         }
         catch (Exception ex)
         {
@@ -174,6 +180,49 @@ public sealed class ChatNotifier : IDisposable
             var step = session.LiveAbandoned.TryGetValue(quest.QuestId, out var entry) ? entry.StepText : string.Empty;
             var suffix = step.Length == 0 ? string.Empty : string.Format(CultureInfo.CurrentCulture, Strings.AbandonedChatStepFormat, step);
             Print(Strings.AbandonedChatPrefix, quest, suffix);
+        }
+    }
+
+    /// <summary>
+    /// "Moonfire Faire is running: 2 quests ready (ends Aug 28) · [quest]" once per event per login, the first time
+    /// the logged-in character's evaluations show a Ready quest of a running event (P11). The quest link is the first
+    /// Ready one, named through the live character's spoiler shield; the end only when curated data announces it.
+    /// Waits for the first pass (no live evaluations yet reads as nothing ready). The session reset is the tracker's:
+    /// <see cref="Announce"/> scans first, so a logout or another character clears what was announced.
+    /// </summary>
+    private void AnnounceSeasonal()
+    {
+        if (!config.ChatNoticeSeasonal
+            || session.Bundle is not { } bundle
+            || session.LiveSnapshot is not { ActiveFestivals.Count: > 0 } snapshot
+            || session.LiveStates.Count == 0)
+        {
+            return;
+        }
+
+        var all = true;
+        foreach (var id in snapshot.ActiveFestivals)
+        {
+            all &= tracker.WasSeasonalNoticed(id);
+        }
+
+        if (all)
+        {
+            return;
+        }
+
+        var now = DateTime.UtcNow;
+        var running = SeasonalNow.Running(bundle.Catalog, snapshot, session.LiveStates, session.Curated.Festivals, now);
+        foreach (var festival in tracker.TakeSeasonalNotices(running))
+        {
+            foreach (var entry in festival.Quests)
+            {
+                if (entry.State == QuestState.Ready)
+                {
+                    Print(SeasonalNow.NoticeText(festival, now) + Strings.SeasonalChatNextPrefix, entry.Quest, string.Empty);
+                    break;
+                }
+            }
         }
     }
 

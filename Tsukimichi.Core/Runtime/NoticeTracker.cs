@@ -1,5 +1,6 @@
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
+using Tsukimichi.Core.Seasonal;
 
 namespace Tsukimichi.Core.Runtime;
 
@@ -15,6 +16,7 @@ public sealed class NoticeTracker
     private readonly HashSet<uint> notified = [];
     private readonly HashSet<uint> jobNudged = [];
     private readonly HashSet<uint> abandonNoticed = [];
+    private readonly HashSet<ushort> seasonalNoticed = [];
     private QuestEvent? lastSeen;
     private ulong? sessionContentId;
     private bool started;
@@ -27,6 +29,12 @@ public sealed class NoticeTracker
 
     /// <summary>Row ids announced as abandoned this session; a quest abandoned, taken up and dropped again is announced once.</summary>
     public IReadOnlySet<uint> AbandonNoticed => abandonNoticed;
+
+    /// <summary>
+    /// Festival ids announced as running with quests ready this session (P11's login line): one line per event per
+    /// login, the first time the event has a Ready quest.
+    /// </summary>
+    public IReadOnlySet<ushort> SeasonalNoticed => seasonalNoticed;
 
     /// <summary>
     /// Row ids of <see cref="QuestEventKind.NewlyAvailable"/> events added since the previous call, earlier polls
@@ -64,6 +72,7 @@ public sealed class NoticeTracker
             notified.Clear();
             jobNudged.Clear();
             abandonNoticed.Clear();
+            seasonalNoticed.Clear();
             lastSeen = null;
         }
 
@@ -110,6 +119,31 @@ public sealed class NoticeTracker
 
     /// <summary>Records an "Abandoned:" line; false when the quest was already announced as abandoned this session.</summary>
     public bool MarkAbandonNoticed(uint rowId) => abandonNoticed.Add(rowId);
+
+    public bool WasSeasonalNoticed(ushort festivalId) => seasonalNoticed.Contains(festivalId);
+
+    /// <summary>Records a "Moonfire Faire is running" line; false when the event was already announced this session.</summary>
+    public bool MarkSeasonalNoticed(ushort festivalId) => seasonalNoticed.Add(festivalId);
+
+    /// <summary>
+    /// The running events that deserve the login line now: at least one quest Ready and not announced yet this
+    /// session. Each one returned is marked, so an event is announced once per login; an event without a Ready quest
+    /// is not marked and is announced later in the session if one becomes Ready (the event started while playing).
+    /// </summary>
+    public List<RunningFestival> TakeSeasonalNotices(IReadOnlyList<RunningFestival> running)
+    {
+        ArgumentNullException.ThrowIfNull(running);
+        var result = new List<RunningFestival>();
+        foreach (var festival in running)
+        {
+            if (festival.ReadyCount > 0 && seasonalNoticed.Add(festival.FestivalId))
+            {
+                result.Add(festival);
+            }
+        }
+
+        return result;
+    }
 
     /// <summary>
     /// Whether a newly available quest deserves a line: it must be pinned or a feature quest, and a main scenario

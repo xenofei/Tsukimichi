@@ -427,6 +427,18 @@ public sealed class ConfigWindow : Window
         {
             ImGui.SetTooltip(Strings.AbandonedConfigNoticeHint);
         }
+
+        var seasonal = settings.ChatNoticeSeasonal;
+        if (ImGui.Checkbox(Strings.SeasonalConfigNotice, ref seasonal))
+        {
+            settings.ChatNoticeSeasonal = seasonal;
+            Save();
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip(Strings.SeasonalConfigNoticeHint);
+        }
     }
 
     private void DrawJournal()
