@@ -102,10 +102,10 @@ public class ScaleMetricsTests
     }
 
     [Fact]
-    public void Min_window_size_at_scale_one_is_the_side_columns_plus_the_centre_floor()
+    public void Min_window_size_at_scale_one_is_the_rail_the_side_columns_and_the_centre_floor()
     {
         var size = ScaleMetrics.MinWindowSize(1f);
-        Assert.Equal(240f + 360f + 200f, size.X);
+        Assert.Equal(136f + 240f + 360f + 200f, size.X);
         Assert.Equal(500f, size.Y);
     }
 
@@ -116,7 +116,7 @@ public class ScaleMetricsTests
     public void Min_window_size_leaves_the_centre_column_its_floor_at_every_ui_scale(float uiScale)
     {
         var size = ScaleMetrics.MinWindowSize(uiScale);
-        var columns = (ScaleMetrics.LeftColumnLogical + ScaleMetrics.RightColumnLogical) * uiScale;
+        var columns = (ScaleMetrics.RailLogical + ScaleMetrics.LeftColumnLogical + ScaleMetrics.RightColumnLogical) * uiScale;
         Assert.Equal(ScaleMetrics.CentreFloorLogical * uiScale, size.X - columns, 3);
         Assert.Equal(ScaleMetrics.MinWindowHeightLogical * uiScale, size.Y, 3);
     }
@@ -126,6 +126,63 @@ public class ScaleMetricsTests
     {
         Assert.Equal(ScaleMetrics.MinWindowSize(ScaleMetrics.MaxUiScale), ScaleMetrics.MinWindowSize(9f));
         Assert.Equal(ScaleMetrics.MinWindowSize(ScaleMetrics.DefaultUiScale), ScaleMetrics.MinWindowSize(float.NaN));
+    }
+
+    private static readonly Vector2 Screen1080 = new(1920f, 1080f);
+
+    [Fact]
+    public void Default_window_at_the_default_ui_scale_is_1100_by_700()
+    {
+        var size = ScaleMetrics.DefaultWindowSize(ScaleMetrics.DefaultUiScale, 1f, Screen1080);
+        Assert.Equal(1100f, size.X, 3);
+        Assert.Equal(700f, size.Y, 3);
+    }
+
+    [Theory]
+    [InlineData(0.9f, 1f)]
+    [InlineData(1.15f, 1f)]
+    [InlineData(1.6f, 1f)]
+    [InlineData(1.6f, 1.25f)]
+    public void Default_window_fits_a_1080p_viewport_with_its_margin(float uiScale, float global)
+    {
+        var size = ScaleMetrics.DefaultWindowSize(uiScale, global, Screen1080) * global;
+        Assert.True(size.X <= 1920f - 2f * ScaleMetrics.ViewportMarginPx + 0.01f, $"width {size.X}");
+        Assert.True(size.Y <= 1080f - 2f * ScaleMetrics.ViewportMarginPx + 0.01f, $"height {size.Y}");
+    }
+
+    [Theory]
+    [InlineData(0.9f)]
+    [InlineData(1.15f)]
+    [InlineData(1.6f)]
+    public void Default_window_is_never_under_the_minimum_when_the_screen_has_room(float uiScale)
+    {
+        var size = ScaleMetrics.DefaultWindowSize(uiScale, 1f, new Vector2(3840f, 2160f));
+        var min = ScaleMetrics.MinWindowSize(uiScale);
+        Assert.True(size.X >= min.X && size.Y >= min.Y);
+    }
+
+    [Fact]
+    public void Default_window_grows_with_the_ui_scale()
+    {
+        var big = new Vector2(3840f, 2160f);
+        Assert.True(ScaleMetrics.DefaultWindowSize(1.6f, 1f, big).X > ScaleMetrics.DefaultWindowSize(1.15f, 1f, big).X);
+    }
+
+    [Fact]
+    public void Default_window_ignores_an_unknown_viewport()
+    {
+        var size = ScaleMetrics.DefaultWindowSize(ScaleMetrics.DefaultUiScale, 1f, new Vector2(float.NaN, 0f));
+        Assert.Equal(new Vector2(1100f, 700f), size);
+    }
+
+    [Fact]
+    public void Min_window_size_is_clamped_to_a_small_viewport()
+    {
+        var small = new Vector2(1280f, 720f);
+        var size = ScaleMetrics.MinWindowSize(ScaleMetrics.MaxUiScale, 1f, small);
+        Assert.Equal(1280f - 2f * ScaleMetrics.ViewportMarginPx, size.X, 3);
+        Assert.Equal(720f - 2f * ScaleMetrics.ViewportMarginPx, size.Y, 3);
+        Assert.Equal(ScaleMetrics.MinWindowSize(1f), ScaleMetrics.MinWindowSize(1f, 1f, new Vector2(3840f, 2160f)));
     }
 
     [Fact]

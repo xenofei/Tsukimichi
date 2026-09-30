@@ -54,18 +54,60 @@ public static class ScaleMetrics
     /// <summary>The least logical width the centre column (the quest table) may be squeezed to.</summary>
     public const float CentreFloorLogical = 200f;
 
+    /// <summary>
+    /// Logical width of the main window's tab rail (T14): its own fixed column left of the navigation column, so the
+    /// tree keeps <see cref="LeftColumnLogical"/>. Holds a 16 px icon, the longest tab label and the Journal badge.
+    /// </summary>
+    public const float RailLogical = 136f;
+
     /// <summary>Logical height floor of the main window.</summary>
     public const float MinWindowHeightLogical = 500f;
 
+    /// <summary>The main window's default size in logical units at <see cref="DefaultUiScale"/>.</summary>
+    public static readonly Vector2 DefaultWindowLogical = new(1100f, 700f);
+
+    /// <summary>Pixels the default window leaves free on every side of the viewport (accessibility B6).</summary>
+    public const float ViewportMarginPx = 48f;
+
     /// <summary>
-    /// The main window's minimum size in Dalamud-scaled units for a UI scale: the two fixed side columns plus the
-    /// centre floor, and the height floor, each multiplied by the clamped UI scale. Dalamud multiplies the result by
-    /// its global scale, so the window can never shrink below what the fixed columns need.
+    /// The main window's minimum size in Dalamud-scaled units for a UI scale: the tab rail, the two fixed side columns
+    /// and the centre floor, and the height floor, each multiplied by the clamped UI scale. Dalamud multiplies the
+    /// result by its global scale, so the window can never shrink below what the fixed columns need.
     /// </summary>
     public static Vector2 MinWindowSize(float uiScale)
     {
         var scale = ClampUiScale(uiScale);
-        return new Vector2((LeftColumnLogical + RightColumnLogical + CentreFloorLogical) * scale, MinWindowHeightLogical * scale);
+        return new Vector2((RailLogical + LeftColumnLogical + RightColumnLogical + CentreFloorLogical) * scale, MinWindowHeightLogical * scale);
+    }
+
+    /// <summary>
+    /// <see cref="MinWindowSize(float)"/> never larger than the viewport less <see cref="ViewportMarginPx"/> on each side
+    /// (in Dalamud-scaled units, so divided by <paramref name="globalScale"/>): at UiScale 1.6 on a small screen the
+    /// window can still be placed whole. A viewport that is not known (non-finite or non-positive) leaves it unclamped.
+    /// </summary>
+    public static Vector2 MinWindowSize(float uiScale, float globalScale, Vector2 viewport) =>
+        FitViewport(MinWindowSize(uiScale), globalScale, viewport);
+
+    /// <summary>
+    /// The main window's first-use size in Dalamud-scaled units (T14, accessibility B6): 1100 × 700 at the default UI
+    /// scale, growing and shrinking with the UI scale, never under <see cref="MinWindowSize(float)"/>, and never larger
+    /// than the viewport less <see cref="ViewportMarginPx"/> on each side. At UiScale 1.6 on a 1080p screen it fits.
+    /// </summary>
+    public static Vector2 DefaultWindowSize(float uiScale, float globalScale, Vector2 viewport)
+    {
+        var relative = ClampUiScale(uiScale) / DefaultUiScale;
+        var size = Vector2.Max(DefaultWindowLogical * relative, MinWindowSize(uiScale));
+        return FitViewport(size, globalScale, viewport);
+    }
+
+    private static Vector2 FitViewport(Vector2 size, float globalScale, Vector2 viewport)
+    {
+        var global = SafeGlobalScale(globalScale);
+        var roomX = float.IsFinite(viewport.X) ? (viewport.X - 2f * ViewportMarginPx) / global : float.NaN;
+        var roomY = float.IsFinite(viewport.Y) ? (viewport.Y - 2f * ViewportMarginPx) / global : float.NaN;
+        return new Vector2(
+            roomX > 0f ? MathF.Min(size.X, roomX) : size.X,
+            roomY > 0f ? MathF.Min(size.Y, roomY) : size.Y);
     }
 
     /// <summary>Smallest halo half-size in the Journal tree: a 24 px box (accessibility A4), whatever the icon scale.</summary>
