@@ -14,10 +14,4 @@ static partial class Strings
 
     /// <summary>Hover text of a node's Ready badge.</summary>
     public const string TreeReadyBadgeFormat = "{0:N0} ready to accept now";
-
-    /// <summary>The Journal tab with its Ready badge; the "###" suffix keeps the tab's id stable as the count changes.</summary>
-    public const string TreeTabJournalReadyFormat = "Journal · {0:N0}###TabJournal";
-
-    /// <summary>The Journal tab without Ready quests, same id as <see cref="TreeTabJournalReadyFormat"/>.</summary>
-    public const string TreeTabJournal = "Journal###TabJournal";
 }
