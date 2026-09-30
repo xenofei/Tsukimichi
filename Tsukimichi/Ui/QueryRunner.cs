@@ -69,9 +69,14 @@ public sealed class QueryRunner : IDisposable
     private bool pinsDirty;
     private DateTime pinsDirtyAtUtc;
 
-    // Multibox (D11): the characters whose pins changed here since the last save. A save merges only these into the
-    // file as it is on disk, so another game client's pins for other characters are never saved over.
-    private readonly HashSet<ulong> pinsTouched = [];
+    // Multibox (D11): the pin edits made here and not queued for a save yet, and those of the save on the background
+    // writer. A save applies them to the file as it is on disk, one quest at a time, so another game client's pins,
+    // for other characters or for the same one, are never saved over. One save is in flight at a time.
+    private readonly List<PinChange> pinChanges = [];
+    private List<PinChange>? pinChangesInFlight;
+
+    // Bumped by "Delete all data": a save or reload queued before it is ignored when it lands.
+    private int pinsGeneration;
 
     // The session whose data events are subscribed; it exists only after the plugin's game state initialized.
     private SessionState? subscribed;
@@ -233,15 +238,16 @@ public sealed class QueryRunner : IDisposable
         if (pinned.Remove(rowId))
         {
             list.Remove(rowId);
+            pinChanges.Add(new PinChange(key, rowId, PinChangeKind.Unpin));
         }
         else
         {
             pinned.Add(rowId);
             list.Add(rowId);
+            pinChanges.Add(new PinChange(key, rowId, PinChangeKind.Pin));
         }
 
         PinsVersion++;
-        pinsTouched.Add(key);
         MarkPinsDirty();
         ui.MarkQueryDirty();
         return true;
@@ -387,9 +393,10 @@ public sealed class QueryRunner : IDisposable
     public void Dispose()
     {
         Unsubscribe();
-        if (pinsDirty || pinsTouched.Count > 0)
+        if (pinChanges.Count > 0)
         {
-            SavePins();
+            // Queued even behind a save in flight: the writer runs both, in order, before the plugin unloads.
+            SavePins(final: true);
         }
     }
 
@@ -418,14 +425,31 @@ public sealed class QueryRunner : IDisposable
         subscribed = null;
     }
 
-    /// <summary>"Delete all data" removed user/pins.json: drop the in-memory copy so a later pin does not resurrect it.</summary>
+    /// <summary>
+    /// "Delete all data" rewrote user/pins.json with only the characters live in another game client (D11): the copy
+    /// held here keeps just those too, and saves or reloads queued before are ignored, so a later pin resurrects nothing.
+    /// </summary>
     private void OnDataDeleted()
     {
-        pinsFile = null;
+        pinsGeneration++;
+        pinChanges.Clear();
+        pinChangesInFlight = null;
+        var kept = new Dictionary<ulong, List<uint>>();
+        if (pinsFile is not null && plugin.Session is { } session)
+        {
+            foreach (var (id, list) in pinsFile)
+            {
+                if (session.IsLiveElsewhere(id))
+                {
+                    kept[id] = list;
+                }
+            }
+        }
+
+        pinsFile = kept;
         pinsKey = NoPinsKey;
         pinned.Clear();
         pinsDirty = false;
-        pinsTouched.Clear();
         PinsVersion++;
         ui.MarkQueryDirty();
     }
@@ -438,7 +462,7 @@ public sealed class QueryRunner : IDisposable
             return;
         }
 
-        pinsTouched.Add(contentId);
+        pinChanges.Add(new PinChange(contentId, 0, PinChangeKind.Forget));
 
         if (pinsKey == contentId)
         {
@@ -665,39 +689,68 @@ public sealed class QueryRunner : IDisposable
         ui.MarkQueryDirty();
     }
 
-    private void SavePins()
+    /// <summary>
+    /// Queues the pin edits made here on the background writer, so the framework thread never waits on the disk or the
+    /// cross-client lock. Multibox (D11): the edits are applied to the file as it is on disk, quest by quest; every
+    /// other pin keeps what another game client saved. One save is in flight at a time (edits made meanwhile follow
+    /// it), except at unload (<paramref name="final"/>), when the writer runs both in order.
+    /// </summary>
+    private void SavePins(bool final = false)
     {
         pinsDirty = false;
-        if (pinsFile is null)
+        if (pinsFile is null || pinChanges.Count == 0 || (pinChangesInFlight is not null && !final))
         {
             return;
         }
 
-        // Multibox (D11): only the characters pinned or unpinned here are written; the others keep what is on disk,
-        // which another game client may have changed since this one read it.
-        var touched = new List<ulong>(pinsTouched);
+        var changes = new List<PinChange>(pinChanges);
+        pinChanges.Clear();
+        pinChangesInFlight = changes;
+        // What stands in for a file that cannot be parsed: this client's own map, these edits included.
+        var fallback = PinsFile.Copy(pinsFile);
+        var generation = pinsGeneration;
+        var path = plugin.Paths.PinsFile;
         var warnings = new List<string>();
-        try
+        SerialWriter.Submit(plugin.Writer, () => PinsFile.SaveChanges(path, changes, fallback, warnings), (merged, error) =>
         {
-            var merged = PinsFile.SaveMerged(plugin.Paths.PinsFile, pinsFile, touched, warnings);
-            pinsTouched.Clear();
-            AdoptPins(merged);
-        }
-        catch (Exception ex)
-        {
-            // Still touched: the next save (the next pin, or unload) tries again.
-            log.Warning(ex, "Pins could not be saved");
-        }
+            if (generation != pinsGeneration)
+            {
+                return;
+            }
 
-        foreach (var warning in warnings)
-        {
-            log.Warning("Pins: {Warning}", warning);
-        }
+            if (ReferenceEquals(pinChangesInFlight, changes))
+            {
+                pinChangesInFlight = null;
+            }
+
+            foreach (var warning in warnings)
+            {
+                log.Warning("Pins: {Warning}", warning);
+            }
+
+            if (error is not null || merged is null)
+            {
+                // Kept: the next save (the next pin, or unload) tries again.
+                pinChanges.InsertRange(0, changes);
+                log.Warning(error, "Pins could not be saved");
+                return;
+            }
+
+            // The saved file, with the edits made here since it was queued.
+            PinsFile.Apply(merged, pinChanges);
+            AdoptPins(merged);
+            if (pinChanges.Count > 0)
+            {
+                MarkPinsDirty();
+            }
+        });
     }
 
     /// <summary>
     /// Multibox (D11): <c>user/pins.json</c> changed on disk (another game client pinned, or "Delete all data" ran
-    /// there). The file is merged into the pins held here; pins changed here and not saved yet stay as they are.
+    /// there). The file is read on the background writer, after any save queued before, and the edits made here and not
+    /// saved yet are applied on top. It is never quarantined: a file that cannot be read or parsed right now, or that
+    /// is missing, leaves the pins held here as they are.
     /// </summary>
     public void ReloadPinsFromDisk()
     {
@@ -707,20 +760,34 @@ public sealed class QueryRunner : IDisposable
             return;
         }
 
-        var warnings = new List<string>();
-        var disk = PinsFile.Load(plugin.Paths.PinsFile, warnings);
-        foreach (var warning in warnings)
+        var generation = pinsGeneration;
+        var path = plugin.Paths.PinsFile;
+        SerialWriter.Submit(plugin.Writer, () => PinsFile.LoadShared(path), (read, error) =>
         {
-            log.Warning("Pins: {Warning}", warning);
-        }
+            if (generation != pinsGeneration || pinsFile is null)
+            {
+                return;
+            }
 
-        if (warnings.Count > 0)
-        {
-            // Unreadable right now: keep what is held; the next change or the polling reads it again.
-            return;
-        }
+            if (error is not null || !read.IsLoaded)
+            {
+                if (error is not null || read.Status is SharedLoad.Unreadable or SharedLoad.Invalid)
+                {
+                    log.Debug(error, "Pins not merged from disk: {Problem}", read.Problem ?? error?.Message ?? string.Empty);
+                }
 
-        AdoptPins(KeyedMerge.Apply(disk, pinsFile, pinsTouched));
+                return;
+            }
+
+            var merged = read.Value!;
+            if (pinChangesInFlight is { } inFlight)
+            {
+                PinsFile.Apply(merged, inFlight);
+            }
+
+            PinsFile.Apply(merged, pinChanges);
+            AdoptPins(merged);
+        });
     }
 
     /// <summary>Takes a merged pins map as the one held here, refreshing the viewed character's pinned set when it changed.</summary>

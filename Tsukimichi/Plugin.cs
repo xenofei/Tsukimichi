@@ -179,6 +179,12 @@ public sealed class Plugin : IDalamudPlugin
     internal Game.SnapshotService Snapshots { get; private set; } = null!;
     internal Game.StatePoller Poller { get; private set; } = null!;
 
+    /// <summary>
+    /// The one background queue for snapshot, sidecar, pins and overrides saves: the framework thread never waits on the
+    /// disk or the cross-client lock. Its completions run on the framework thread (<see cref="DrainWriter"/>).
+    /// </summary>
+    internal Core.Storage.SerialWriter Writer { get; } = new();
+
     /// <summary>Multibox sharing with other game clients (D11); null until the game state is initialized.</summary>
     internal Game.MultiboxService? Multibox { get; private set; }
 
@@ -252,7 +258,9 @@ public sealed class Plugin : IDalamudPlugin
 
         Session.Changed += PersistViewedCharacter;
 
-        Poller = new Game.StatePoller(Framework, ClientState, Log, reader, Snapshots, Session, Settings);
+        Session.Writer = Writer;
+        Framework.Update += DrainWriter;
+        Poller = new Game.StatePoller(Framework, ClientState, Log, reader, Snapshots, Session, Settings, Writer);
         // Multibox (D11): heartbeats and other game clients' saves, through the shared config folder only.
         Multibox = new Game.MultiboxService(Framework, Log, Session, Snapshots, Paths);
 
@@ -388,6 +396,19 @@ public sealed class Plugin : IDalamudPlugin
         moonlitPane?.MergeOverridesFromDisk();
     }
 
+    /// <summary>Framework thread, every tick: the outcomes of saves the background writer finished.</summary>
+    private void DrainWriter(IFramework _)
+    {
+        try
+        {
+            Writer.DrainCompletions();
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "A save's completion failed");
+        }
+    }
+
     private void PersistViewedCharacter()
     {
         var explicitId = Session.IsFollowingLive ? null : Session.ViewedContentId;
@@ -414,6 +435,9 @@ public sealed class Plugin : IDalamudPlugin
         }
 
         Poller?.Dispose();
+        // The last saves (the poller's, the pins the query runner queued) land before the heartbeat goes.
+        Framework.Update -= DrainWriter;
+        Writer.Dispose();
         // After the poller's last save: the heartbeat goes once nothing more is written for the character.
         if (Multibox is not null)
         {
@@ -489,7 +513,7 @@ public sealed class Plugin : IDalamudPlugin
 
             // UI (session-dependent surfaces)
             var unlockReader = new Game.RewardUnlockReader(Session, DataManager, Framework, Log);
-            moonlitPane = new MoonlitPane(Session, TextureProvider, unlockReader, Paths, Log, DataManager, Settings, PluginInterface, gameLinks);
+            moonlitPane = new MoonlitPane(Session, TextureProvider, unlockReader, Paths, Log, DataManager, Settings, PluginInterface, gameLinks) { Writer = Writer };
             MoonlitPane moonlit = moonlitPane;
             // Reward tooltips (table icons, detail rows) say "Store only" for rewards the Online Store also sells and
             // "Also drops in …" for rewards a duty also drops.

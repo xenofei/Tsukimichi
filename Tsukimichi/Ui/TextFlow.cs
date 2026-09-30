@@ -10,15 +10,22 @@ namespace Tsukimichi.Ui;
 /// Wrapped text that breaks between words, never inside one (feature plan v4 L2, UI audit §4): ImGui's own
 /// <c>TextWrapped</c> breaks a long word, or a Japanese line, wherever the width runs out, which in a narrow pane left
 /// one or two letters per line. The break points come from <see cref="WordWrap"/> (Core, tested); a single word wider
-/// than the pane ends in an ellipsis with the whole text as the tooltip. The lines are cached per text, width and font
-/// size, so a text drawn every frame is measured once, and nothing is allocated on the frames in between.
+/// than the pane ends in an ellipsis with the whole text as the tooltip. The lines are cached per text, width (in steps
+/// of <see cref="WidthStep"/> pixels), font and font size, so a text drawn every frame is measured once, and nothing is
+/// allocated on the frames in between.
 /// </summary>
 public static class TextFlow
 {
     /// <summary>More cached texts than this and the cache starts over (a pane shows far fewer at once).</summary>
     private const int MaxEntries = 512;
 
-    private static readonly Dictionary<(string Text, int Width, int Font), WrapLine[]> Cache = [];
+    /// <summary>
+    /// Widths are cached in steps of this many pixels (rounded down, so a line never runs past the room it is given):
+    /// dragging a pane edge then breaks a text again every few pixels rather than on every frame of the drag.
+    /// </summary>
+    private const int WidthStep = 4;
+
+    private static readonly Dictionary<(string Text, int Width, int Size, ImFontPtr Font), WrapLine[]> Cache = [];
     private static readonly List<WrapLine> Scratch = [];
     private static readonly MeasureText Measure = static text => ImGui.CalcTextSize(text).X;
 
@@ -91,7 +98,9 @@ public static class TextFlow
     /// <summary>The cached lines of <paramref name="text"/> in <paramref name="width"/> pixels, broken on the first call.</summary>
     private static WrapLine[] Lines(string text, float width)
     {
-        var key = (text, (int)MathF.Floor(MathF.Max(0f, width)), (int)MathF.Round(ImGui.GetFontSize() * 100f));
+        // The font itself is part of the key, not only its size: two fonts of one size (body and heading) measure apart.
+        var step = (int)MathF.Floor(MathF.Max(0f, width) / WidthStep) * WidthStep;
+        var key = (text, step, (int)MathF.Round(ImGui.GetFontSize() * 100f), ImGui.GetFont());
         if (Cache.TryGetValue(key, out var lines))
         {
             return lines;

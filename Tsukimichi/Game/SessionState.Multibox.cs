@@ -6,6 +6,7 @@ using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Multibox;
 using Tsukimichi.Core.Runtime;
+using Tsukimichi.Core.Storage;
 using Tsukimichi.GameData;
 
 namespace Tsukimichi.Game;
@@ -90,6 +91,47 @@ public sealed partial class SessionState
         AcceptedSince = acceptedSince;
         Abandoned = abandoned;
         Bump();
+    }
+
+    /// <summary>
+    /// The background queue pins and overrides saves go through (set by the plugin). "Delete all data" queues its
+    /// rewrite of both files there, behind any save in flight, so that save cannot bring deleted pins back.
+    /// </summary>
+    internal SerialWriter? Writer { get; set; }
+
+    /// <summary>
+    /// "Delete all data" for <c>user/pins.json</c> and <c>user/overrides.json</c> (D11). Neither is deleted: under the
+    /// cross-client lock, the pins file is rewritten with only the characters live in another game client (whose pins
+    /// that client still shows) and the overrides file is emptied, so a merge in flight in another client cannot
+    /// resurrect what was deleted. Runs on the background writer; the listeners of <see cref="DataDeleted"/> drop
+    /// their in-memory copies the same way.
+    /// </summary>
+    private void ResetUserFiles()
+    {
+        var keep = new HashSet<ulong>(liveElsewhere.Keys);
+        var pinsPath = paths.PinsFile;
+        var overridesPath = paths.OverridesFile;
+        SerialWriter.Submit(
+            Writer,
+            () =>
+            {
+                var warnings = new List<string>();
+                PinsFile.KeepOnly(pinsPath, keep.Contains, warnings);
+                OverridesFile.Clear(overridesPath);
+                return warnings;
+            },
+            (warnings, error) =>
+            {
+                if (error is not null)
+                {
+                    log?.Warning(error, "Delete all data: pins or overrides could not be reset");
+                }
+
+                foreach (var warning in warnings ?? [])
+                {
+                    log?.Warning("Delete all data: {Warning}", warning);
+                }
+            });
     }
 
     /// <summary>Deletes one character's heartbeat when it is this client's own or stale; another client's fresh one stays.</summary>

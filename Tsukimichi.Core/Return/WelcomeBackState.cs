@@ -122,10 +122,11 @@ public static class WelcomeBackStateFile
         };
     }
 
-    public static void Save(string path, WelcomeBackState state)
+    /// <param name="attempts">Renames tried over the file (<see cref="AtomicFile.QuickAttempts"/> on the framework thread).</param>
+    public static void Save(string path, WelcomeBackState state, int attempts = AtomicFile.DefaultAttempts)
     {
         ArgumentNullException.ThrowIfNull(state);
-        AtomicFile.Write(path, JsonSerializer.Serialize(state, StorageJson.Options));
+        AtomicFile.Write(path, JsonSerializer.Serialize(state, StorageJson.Options), attempts);
     }
 
     private static DateTime AsUtc(DateTime time) => time.Kind switch

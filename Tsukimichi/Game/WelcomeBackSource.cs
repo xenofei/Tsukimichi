@@ -324,7 +324,8 @@ public sealed class WelcomeBackSource : IDisposable
     {
         try
         {
-            WelcomeBackStateFile.Save(WelcomeBackStateFile.PathFor(session.Paths.CharactersDir, contentId), state);
+            // Framework thread: a few milliseconds at most; a save that cannot land now is made again at the next login.
+            WelcomeBackStateFile.Save(WelcomeBackStateFile.PathFor(session.Paths.CharactersDir, contentId), state, AtomicFile.QuickAttempts);
         }
         catch (Exception ex)
         {

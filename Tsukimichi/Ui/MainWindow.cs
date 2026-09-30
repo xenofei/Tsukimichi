@@ -1280,7 +1280,8 @@ public sealed class MainWindow : Window, IDisposable
         var changed = paneSplit.Handle(PaneSide.Tree, settings, in widths, height, total, stripAllowed);
 
         ImGui.SameLine(0f, 0f);
-        using (var center = ImRaii.Child("##center", new Vector2(widths.Centre, height)))
+        // 0 would mean "fill the rest" to ImGui: a pane squeezed to nothing stays 1 px wide instead of covering the detail pane.
+        using (var center = ImRaii.Child("##center", new Vector2(MathF.Max(1f, widths.Centre), height)))
         {
             if (center)
             {
@@ -1342,7 +1343,7 @@ public sealed class MainWindow : Window, IDisposable
     /// </summary>
     private void DrawNavigation(SessionState session, CatalogBundle bundle, in PaneWidths widths, float height)
     {
-        using var left = ImRaii.Child("##left", new Vector2(widths.Tree, height));
+        using var left = ImRaii.Child("##left", new Vector2(MathF.Max(1f, widths.Tree), height));
         if (!left)
         {
             return;

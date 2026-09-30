@@ -6,6 +6,7 @@ using System.Numerics;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Textures;
 using Dalamud.Interface.Utility.Raii;
@@ -107,6 +108,10 @@ public sealed partial class CharactersPane
     private Compare? compare;
     private CompareKey compareKey;
     private readonly Dictionary<ulong, (DateTime Taken, CatalogBundle Bundle, ServerFestivals? Live, IReadOnlyDictionary<uint, QuestEvaluation>? States)> compareStates = [];
+
+    // Re-evaluations of a compared character on a worker (a newer copy another client saved, or other festivals),
+    // keyed like compareStates; the previous states are shown until one lands (TakeCompareResolves).
+    private readonly Dictionary<ulong, (DateTime Taken, CatalogBundle Bundle, ServerFestivals? Live, Task<IReadOnlyDictionary<uint, QuestEvaluation>> Task)> compareResolving = [];
     private UniqueRewardCatalog? fallbackRewards;
 
     private string? toast;
@@ -1107,6 +1112,12 @@ public sealed partial class CharactersPane
     /// </summary>
     private Compare? RefreshCompare(Dashboard d)
     {
+        if (TakeCompareResolves())
+        {
+            // A re-evaluation landed: the comparison is built again with it.
+            compare = null;
+        }
+
         var viewedId = d.Snapshot.ContentId;
         CharacterItem? other = null;
         CharacterItem? newest = null;
@@ -1273,27 +1284,99 @@ public sealed partial class CharactersPane
         // Festivals run server-wide: while someone is logged in the live flags decide for every stored character, so a
         // change of them (a login, a logout, an event starting) resolves the other character again.
         var live = session.LiveSnapshot is { } liveSnapshot ? ServerFestivals.Of(liveSnapshot) : null;
-        if (compareStates.TryGetValue(item.ContentId, out var cached) && cached.Taken == item.TakenUtc && ReferenceEquals(cached.Bundle, bundle)
+        var hasCached = compareStates.TryGetValue(item.ContentId, out var cached);
+        if (hasCached && cached.Taken == item.TakenUtc && ReferenceEquals(cached.Bundle, bundle)
             && (live is null ? cached.Live is null : live.SameAs(cached.Live)))
         {
             return cached.States;
         }
 
-        IReadOnlyDictionary<uint, QuestEvaluation>? states = null;
-        if (SnapshotFor(item) is { } snapshot)
+        if (SnapshotFor(item) is not { } snapshot)
         {
-            try
+            compareStates[item.ContentId] = (item.TakenUtc, bundle, live, null);
+            return null;
+        }
+
+        if (hasCached && cached.States is { } previous && ReferenceEquals(cached.Bundle, bundle))
+        {
+            // A newer copy (another game client saved it, D11) or other festivals: resolving the whole catalog takes
+            // tens of milliseconds, so it runs on a worker and the comparison keeps the previous result until it lands.
+            if (!compareResolving.TryGetValue(item.ContentId, out var running) || running.Taken != item.TakenUtc
+                || !(live is null ? running.Live is null : live.SameAs(running.Live)))
             {
-                states = StateResolver.ResolveAll(bundle.Catalog, snapshot, ContextFor(snapshot));
+                var context = ContextFor(snapshot);
+                compareResolving[item.ContentId] = (item.TakenUtc, bundle, live, Task.Run(() => (IReadOnlyDictionary<uint, QuestEvaluation>)StateResolver.ResolveAll(bundle.Catalog, snapshot, context)));
             }
-            catch (Exception ex)
+
+            return previous;
+        }
+
+        // The first comparison with this character (or a new catalog): nothing to show meanwhile, so it resolves now.
+        IReadOnlyDictionary<uint, QuestEvaluation>? states = null;
+        try
+        {
+            states = StateResolver.ResolveAll(bundle.Catalog, snapshot, ContextFor(snapshot));
+        }
+        catch (Exception ex)
+        {
+            log.Warning(ex, "Character {ContentId} could not be evaluated for the comparison", item.ContentId);
+        }
+
+        compareResolving.Remove(item.ContentId);
+        compareStates[item.ContentId] = (item.TakenUtc, bundle, live, states);
+        return states;
+    }
+
+    /// <summary>
+    /// Takes the comparison evaluations that finished on a worker (<see cref="StatesFor"/>); true when one replaced what
+    /// the comparison shows. One for a character forgotten meanwhile is dropped.
+    /// </summary>
+    private bool TakeCompareResolves()
+    {
+        if (compareResolving.Count == 0)
+        {
+            return false;
+        }
+
+        List<ulong>? done = null;
+        foreach (var (id, running) in compareResolving)
+        {
+            if (running.Task.IsCompleted)
             {
-                log.Warning(ex, "Character {ContentId} could not be evaluated for the comparison", item.ContentId);
+                (done ??= []).Add(id);
             }
         }
 
-        compareStates[item.ContentId] = (item.TakenUtc, bundle, live, states);
-        return states;
+        if (done is null)
+        {
+            return false;
+        }
+
+        var taken = false;
+        foreach (var id in done)
+        {
+            var running = compareResolving[id];
+            compareResolving.Remove(id);
+            if (!compareStates.ContainsKey(id))
+            {
+                continue;
+            }
+
+            IReadOnlyDictionary<uint, QuestEvaluation>? states = null;
+            if (running.Task.IsCompletedSuccessfully)
+            {
+                states = running.Task.Result;
+            }
+            else
+            {
+                log.Warning(running.Task.Exception?.GetBaseException(), "Character {ContentId} could not be evaluated for the comparison", id);
+            }
+
+            compareStates[id] = (running.Taken, running.Bundle, running.Live, states);
+            taken = true;
+        }
+
+        return taken;
     }
 
     /// <summary>

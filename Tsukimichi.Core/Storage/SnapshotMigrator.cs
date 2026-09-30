@@ -62,6 +62,22 @@ public sealed class SnapshotMigrator
         return current;
     }
 
+    /// <summary>
+    /// True when <paramref name="root"/> is an object stamped with a schema version newer than this build's: a newer
+    /// plugin (another game client, D11) wrote it. Such a file is valid and must be left alone, never quarantined.
+    /// </summary>
+    public static bool IsNewer(JsonNode root, out int version)
+    {
+        ArgumentNullException.ThrowIfNull(root);
+        version = 0;
+        if (root is not JsonObject obj || FindVersionKey(obj) is not { } key || obj[key] is not JsonValue value || !value.TryGetValue(out version))
+        {
+            return false;
+        }
+
+        return version > CharacterSnapshot.CurrentSchemaVersion;
+    }
+
     private static int ReadVersion(JsonObject obj)
     {
         var key = FindVersionKey(obj);

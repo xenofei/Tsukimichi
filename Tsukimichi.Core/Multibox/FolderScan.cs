@@ -23,7 +23,9 @@ public sealed record FolderScanResult(
 /// <summary>
 /// One pass over <c>characters/</c> for multibox sharing (D11): the heartbeats, plus every snapshot another client
 /// saved since the last pass, read through the snapshot store. Runs on a worker; it only reads files, and a
-/// snapshot being renamed into place meanwhile is simply read on the next pass.
+/// snapshot being renamed into place meanwhile is simply read on the next pass. It never quarantines: a file a newer
+/// plugin wrote, or one it cannot parse, is skipped with a warning (<see cref="JsonSnapshotStore.LoadShared"/>) and
+/// read again only once it changes.
 /// </summary>
 public static class FolderScan
 {
@@ -72,18 +74,26 @@ public static class FolderScan
                         continue;
                     }
 
-                    var snapshot = store.Load(contentId);
-                    foreach (var warning in store.Warnings)
+                    // Another client's file: read without quarantining anything, whatever it holds.
+                    var read = store.LoadShared(contentId);
+                    switch (read.Status)
                     {
-                        warnings.Add(warning);
-                    }
+                        case SharedLoad.Loaded:
+                            stamps[contentId] = stamp;
+                            changed.Add(read.Value!);
+                            break;
 
-                    store.ClearWarnings();
-                    if (snapshot is not null)
-                    {
-                        // Recorded only once read: a file caught mid-rename is read again on the next pass.
-                        stamps[contentId] = stamp;
-                        changed.Add(snapshot);
+                        case SharedLoad.Newer or SharedLoad.Invalid:
+                            // Skipped, and not read again until it changes: its owner (a newer plugin, or one that will
+                            // save over the damage) is the one to deal with it.
+                            stamps[contentId] = stamp;
+                            warnings.Add(read.Problem!);
+                            break;
+
+                        case SharedLoad.Unreadable:
+                            // Not recorded: a file locked for a moment is read again on the next pass.
+                            warnings.Add(read.Problem!);
+                            break;
                     }
                 }
             }

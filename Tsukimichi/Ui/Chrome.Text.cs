@@ -125,9 +125,9 @@ public static partial class Chrome
         ArgumentNullException.ThrowIfNull(value);
         var available = ImGui.GetContentRegionAvail().X;
         var gap = ImGui.GetStyle().ItemSpacing.X;
-        var labelWidth = MathF.Max(MathF.Max(0f, labelMin), ImGui.CalcTextSize(label).X);
+        var labelText = ImGui.CalcTextSize(label).X;
+        var labelWidth = MathF.Max(MathF.Max(0f, labelMin), labelText);
         var stacked = LayoutBudgets.StackLabelValue(available, labelWidth, gap, ImGui.GetFontSize());
-        var startX = ImGui.GetCursorPosX();
         using (ImRaii.PushColor(ImGuiCol.Text, Theme.Surface.TextSecondary))
         {
             ImGui.TextUnformatted(label);
@@ -139,7 +139,9 @@ public static partial class Chrome
             return;
         }
 
-        ImGui.SameLine(startX + labelWidth + gap);
+        // Spacing after the label rather than an offset from the line start: SameLine(offset) adds the group and column
+        // offsets that GetCursorPosX already holds, so inside a group or a column the value started too far right.
+        ImGui.SameLine(0f, labelWidth - labelText + gap);
         TextFlow.Wrapped(value, MathF.Max(0f, available - labelWidth - gap));
     }
 
