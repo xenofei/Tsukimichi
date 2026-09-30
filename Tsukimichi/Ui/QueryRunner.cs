@@ -95,7 +95,11 @@ public sealed class QueryRunner : IDisposable
         this.ui = ui ?? throw new ArgumentNullException(nameof(ui));
         this.log = log ?? throw new ArgumentNullException(nameof(log));
         ui.IsOtherPath = rowId => plugin.Session?.States is { } states && states.TryGetValue(rowId, out var evaluation) && evaluation.IsOtherPath;
+        ui.RevealContext = () => lastContext;
     }
+
+    // The last query's context, for a reveal to ask which filters and search would hide its quest (UiState.RevealContext).
+    private QueryContext? lastContext;
 
     public QuestRow[] Rows { get; private set; } = NoRows;
 
@@ -557,6 +561,7 @@ public sealed class QueryRunner : IDisposable
         // now; the other presets keep the table's sort.
         var unlocks = ui.Filters.Preset == Preset.FeatureQuests;
         var effectiveSort = ui.Sort with { AvailableFirst = unlocks, NewThisPatchFirst = unlocks };
+        lastContext = ctx;
         var result = QuestQuery.Apply(current.Catalog, session.States, ui.Filters, ui.Scope, effectiveSort, appliedSearch, ctx);
 
         Rows = result.Rows;

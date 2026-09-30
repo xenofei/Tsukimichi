@@ -58,7 +58,22 @@ public sealed record LevelCapRequirement(byte Level, byte LevelCap) : Requiremen
 public sealed record ClassJobRequirement(uint CategoryId, uint RequiredJob, byte Job) : Requirement(RequirementKind.ClassJob);
 
 /// <summary>Unsynced level of the job under consideration against the quest level.</summary>
-public sealed record LevelRequirement(byte Level, byte ActualLevel) : Requirement(RequirementKind.Level);
+public sealed record LevelRequirement(byte Level, byte ActualLevel) : Requirement(RequirementKind.Level)
+{
+    /// <summary>
+    /// The job <see cref="ActualLevel"/> was read from when it is not the job the quest was evaluated on: the job the
+    /// quest is ready on, its pinned job, or the character's best job its category admits
+    /// (<see cref="NotYetText.OnAdmittedJob"/>). Zero for the evaluated job, as the evaluator writes it.
+    /// </summary>
+    public byte MeasuredOn { get; init; }
+
+    /// <summary>
+    /// No job the character has can take the quest (the pinned job not unlocked, or no job of its category levelled):
+    /// there is no level to compare, so <see cref="ActualLevel"/> is zero and nothing reads it
+    /// (<see cref="NotYetText.OnAdmittedJob"/>).
+    /// </summary>
+    public bool NoJob { get; init; }
+}
 
 /// <summary>Previous quests with their join, how many are completed and which (<paramref name="DoneIds"/>, null when the caller did not say).</summary>
 public sealed record PreviousQuestsRequirement(uint[] QuestIds, JoinKind Join, int DoneCount, uint[]? DoneIds = null) : Requirement(RequirementKind.PreviousQuests);

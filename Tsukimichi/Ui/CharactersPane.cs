@@ -24,6 +24,7 @@ using Tsukimichi.Core.Ui;
 using Tsukimichi.Core.Unique;
 using Tsukimichi.Game;
 using Tsukimichi.GameData;
+using Tsukimichi.Localization;
 
 namespace Tsukimichi.Ui;
 
@@ -50,8 +51,29 @@ public sealed partial class CharactersPane
     private const int MaxDiffRows = 25;
     private static readonly TimeSpan ToastDuration = TimeSpan.FromSeconds(8);
 
-    /// <summary>The account view's "live in another client" badge (multibox, D11), built once.</summary>
-    private static readonly string MultiboxBadge = Strings.MultiboxMarker.TrimEnd();
+    /// <summary>The account view's "live in another client" badge (multibox, D11), built once per language.</summary>
+    private static readonly LocText MultiboxBadge = new(static () => Strings.MultiboxMarker.TrimEnd());
+
+    // The fixed columns' widths, measured from their headers and widest cells when the rows, the font or the language
+    // change (feature plan v4 L6); a width guessed in pixels clipped "3123/5402" and "Completed" mid-glyph.
+    private static readonly FixedWidth SectionsDoneWidth = new();
+    private static readonly FixedWidth SectionsPercentWidth = new();
+    private static readonly FixedWidth JobQuestsLevelWidth = new();
+    private static readonly FixedWidth JobQuestsDoneWidth = new();
+    private static readonly FixedWidth ChainsDoneWidth = new();
+    private static readonly FixedWidth NotStartedDoneWidth = new();
+    private static readonly FixedWidth MoonlitObtainedWidth = new();
+    private static readonly FixedWidth RecentTimeWidth = new();
+    private static readonly FixedWidth RecentEventWidth = new();
+    private static readonly FixedWidth JobsLevelWidth = new();
+    private static readonly FixedWidth TribesReputationWidth = new();
+    private static readonly FixedWidth DiffCountWidth = new();
+    private static readonly FixedWidth DiffViewedValueWidth = new();
+    private static readonly FixedWidth DiffOtherValueWidth = new();
+    private readonly FixedWidth accountStateWidth = new();
+
+    /// <summary>A moon column: the inline glyph with a little air, never narrower than the glyph.</summary>
+    private static float GlyphColumn(float line) => MathF.Max(line * 1.4f, UiMetrics.InlineGlyphSize(line));
 
     // Motion keys of the dashboard's halos (T17): one table per block in the high bits of the id, the row index in the
     // low; a halo's fill eases only when its fraction changes (another character viewed, a quest completed).
@@ -323,11 +345,25 @@ public sealed partial class CharactersPane
         }
 
         var line = ImGui.GetTextLineHeight();
-        // Names stretch and end in an ellipsis; the numbers keep their width (feature plan v4 L6).
-        ImGui.TableSetupColumn("##moon", ImGuiTableColumnFlags.WidthFixed, line * 1.4f);
+        if (SectionsDoneWidth.Stale(d.Sections))
+        {
+            var done = FixedWidth.Fit(0f, Strings.CharactersColumnDone);
+            var percent = FixedWidth.Fit(0f, Strings.CharactersColumnPercent);
+            foreach (var row in d.Sections)
+            {
+                done = FixedWidth.Fit(done, row.Count);
+                percent = FixedWidth.Fit(percent, row.Percent);
+            }
+
+            SectionsDoneWidth.Store(d.Sections, done);
+            SectionsPercentWidth.Store(d.Sections, percent);
+        }
+
+        // Names stretch and end in an ellipsis; the numbers keep the width of their widest (feature plan v4 L6).
+        ImGui.TableSetupColumn("##moon", ImGuiTableColumnFlags.WidthFixed, GlyphColumn(line));
         ImGui.TableSetupColumn(Strings.CharactersColumnSection, ImGuiTableColumnFlags.WidthStretch);
-        ImGui.TableSetupColumn(Strings.CharactersColumnDone, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(70f));
-        ImGui.TableSetupColumn(Strings.CharactersColumnPercent, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(40f));
+        ImGui.TableSetupColumn(Strings.CharactersColumnDone, ImGuiTableColumnFlags.WidthFixed, SectionsDoneWidth.Value);
+        ImGui.TableSetupColumn(Strings.CharactersColumnPercent, ImGuiTableColumnFlags.WidthFixed, SectionsPercentWidth.Value);
         ImGui.TableHeadersRow();
 
         for (var i = 0; i < d.Sections.Length; i++)
@@ -377,11 +413,25 @@ public sealed partial class CharactersPane
 
         var line = ImGui.GetTextLineHeight();
         var iconSize = UiMetrics.Square(UiMetrics.JobIconSize);
-        ImGui.TableSetupColumn("##icon", ImGuiTableColumnFlags.WidthFixed, line * 1.4f);
+        if (JobQuestsLevelWidth.Stale(d.JobQuests))
+        {
+            var level = FixedWidth.Fit(0f, Strings.JobsColumnLevel);
+            var done = FixedWidth.Fit(0f, Strings.JobsColumnDone);
+            foreach (var row in d.JobQuests)
+            {
+                level = FixedWidth.Fit(level, row.Level);
+                done = FixedWidth.Fit(done, row.Count);
+            }
+
+            JobQuestsLevelWidth.Store(d.JobQuests, level);
+            JobQuestsDoneWidth.Store(d.JobQuests, done);
+        }
+
+        ImGui.TableSetupColumn("##icon", ImGuiTableColumnFlags.WidthFixed, MathF.Max(line * 1.4f, iconSize.X));
         ImGui.TableSetupColumn(Strings.JobsColumnJob, ImGuiTableColumnFlags.WidthStretch, 2f);
-        ImGui.TableSetupColumn(Strings.JobsColumnLevel, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(30f));
-        ImGui.TableSetupColumn("##moon", ImGuiTableColumnFlags.WidthFixed, line * 1.4f);
-        ImGui.TableSetupColumn(Strings.JobsColumnDone, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(50f));
+        ImGui.TableSetupColumn(Strings.JobsColumnLevel, ImGuiTableColumnFlags.WidthFixed, JobQuestsLevelWidth.Value);
+        ImGui.TableSetupColumn("##moon", ImGuiTableColumnFlags.WidthFixed, GlyphColumn(line));
+        ImGui.TableSetupColumn(Strings.JobsColumnDone, ImGuiTableColumnFlags.WidthFixed, JobQuestsDoneWidth.Value);
         ImGui.TableSetupColumn(Strings.JobsColumnNext, ImGuiTableColumnFlags.WidthStretch, 3f);
         ImGui.TableHeadersRow();
 
@@ -424,7 +474,7 @@ public sealed partial class CharactersPane
             return;
         }
 
-        DrawChainTable(ui, "##chains", d.Chains, ChainGauges);
+        DrawChainTable(ui, "##chains", d.Chains, ChainGauges, ChainsDoneWidth);
         if (d.ChainsNotStarted.Length == 0)
         {
             return;
@@ -433,11 +483,11 @@ public sealed partial class CharactersPane
         using var node = ImRaii.TreeNode(d.ChainsNotStartedLabel);
         if (node)
         {
-            DrawChainTable(ui, "##chainsNotStarted", d.ChainsNotStarted, NotStartedGauges);
+            DrawChainTable(ui, "##chainsNotStarted", d.ChainsNotStarted, NotStartedGauges, NotStartedDoneWidth);
         }
     }
 
-    private static void DrawChainTable(UiState ui, string id, ChainRow[] rows, uint gaugeKeys)
+    private static void DrawChainTable(UiState ui, string id, ChainRow[] rows, uint gaugeKeys, FixedWidth doneWidth)
     {
         if (rows.Length == 0)
         {
@@ -450,10 +500,21 @@ public sealed partial class CharactersPane
             return;
         }
 
+        if (doneWidth.Stale(rows))
+        {
+            var done = FixedWidth.Fit(0f, Strings.JobsColumnDone);
+            foreach (var row in rows)
+            {
+                done = FixedWidth.Fit(done, row.Count);
+            }
+
+            doneWidth.Store(rows, done);
+        }
+
         var line = ImGui.GetTextLineHeight();
-        ImGui.TableSetupColumn("##moon", ImGuiTableColumnFlags.WidthFixed, line * 1.4f);
+        ImGui.TableSetupColumn("##moon", ImGuiTableColumnFlags.WidthFixed, GlyphColumn(line));
         ImGui.TableSetupColumn(Strings.JobsColumnChain, ImGuiTableColumnFlags.WidthStretch, 2f);
-        ImGui.TableSetupColumn(Strings.JobsColumnDone, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(50f));
+        ImGui.TableSetupColumn(Strings.JobsColumnDone, ImGuiTableColumnFlags.WidthFixed, doneWidth.Value);
         ImGui.TableSetupColumn(Strings.JobsColumnNext, ImGuiTableColumnFlags.WidthStretch, 3f);
 
         for (var i = 0; i < rows.Length; i++)
@@ -522,10 +583,21 @@ public sealed partial class CharactersPane
             return;
         }
 
+        if (MoonlitObtainedWidth.Stale(d.Moonlit))
+        {
+            var obtained = FixedWidth.Fit(0f, Strings.CharactersColumnObtained);
+            foreach (var row in d.Moonlit)
+            {
+                obtained = FixedWidth.Fit(obtained, row.Count);
+            }
+
+            MoonlitObtainedWidth.Store(d.Moonlit, obtained);
+        }
+
         var line = ImGui.GetTextLineHeight();
-        ImGui.TableSetupColumn("##moon", ImGuiTableColumnFlags.WidthFixed, line * 1.4f);
+        ImGui.TableSetupColumn("##moon", ImGuiTableColumnFlags.WidthFixed, GlyphColumn(line));
         ImGui.TableSetupColumn(Strings.CharactersColumnKind, ImGuiTableColumnFlags.WidthStretch);
-        ImGui.TableSetupColumn(Strings.CharactersColumnObtained, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(70f));
+        ImGui.TableSetupColumn(Strings.CharactersColumnObtained, ImGuiTableColumnFlags.WidthFixed, MoonlitObtainedWidth.Value);
 
         for (var i = 0; i < d.Moonlit.Length; i++)
         {
@@ -573,7 +645,7 @@ public sealed partial class CharactersPane
         }
 
         var line = ImGui.GetTextLineHeight();
-        ImGui.TableSetupColumn("##state", ImGuiTableColumnFlags.WidthFixed, line * 1.4f);
+        ImGui.TableSetupColumn("##state", ImGuiTableColumnFlags.WidthFixed, GlyphColumn(line));
         ImGui.TableSetupColumn(Strings.CharactersColumnQuest, ImGuiTableColumnFlags.WidthStretch, 3f);
         ImGui.TableSetupColumn(Strings.CharactersColumnStatus, ImGuiTableColumnFlags.WidthStretch, 2f);
 
@@ -661,8 +733,22 @@ public sealed partial class CharactersPane
             return;
         }
 
-        ImGui.TableSetupColumn(Strings.CharactersColumnTime, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(50f));
-        ImGui.TableSetupColumn(Strings.CharactersColumnEvent, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(110f));
+        if (RecentTimeWidth.Stale(d.Recent))
+        {
+            var time = FixedWidth.Fit(0f, Strings.CharactersColumnTime);
+            var kind = FixedWidth.Fit(0f, Strings.CharactersColumnEvent);
+            foreach (var row in d.Recent)
+            {
+                time = FixedWidth.Fit(time, row.Time);
+                kind = FixedWidth.Fit(kind, row.Kind);
+            }
+
+            RecentTimeWidth.Store(d.Recent, time);
+            RecentEventWidth.Store(d.Recent, kind);
+        }
+
+        ImGui.TableSetupColumn(Strings.CharactersColumnTime, ImGuiTableColumnFlags.WidthFixed, RecentTimeWidth.Value);
+        ImGui.TableSetupColumn(Strings.CharactersColumnEvent, ImGuiTableColumnFlags.WidthFixed, RecentEventWidth.Value);
         ImGui.TableSetupColumn(Strings.CharactersColumnQuest, ImGuiTableColumnFlags.WidthStretch);
 
         foreach (var row in d.Recent)
@@ -702,9 +788,20 @@ public sealed partial class CharactersPane
 
         var line = ImGui.GetTextLineHeight();
         var iconSize = UiMetrics.Square(UiMetrics.JobIconSize);
-        ImGui.TableSetupColumn("##icon", ImGuiTableColumnFlags.WidthFixed, line * 1.4f);
+        if (JobsLevelWidth.Stale(d.Jobs))
+        {
+            var level = FixedWidth.Fit(0f, Strings.CharactersColumnLevel);
+            foreach (var row in d.Jobs)
+            {
+                level = FixedWidth.Fit(level, row.Level);
+            }
+
+            JobsLevelWidth.Store(d.Jobs, level);
+        }
+
+        ImGui.TableSetupColumn("##icon", ImGuiTableColumnFlags.WidthFixed, MathF.Max(line * 1.4f, iconSize.X));
         ImGui.TableSetupColumn(Strings.CharactersColumnJob, ImGuiTableColumnFlags.WidthStretch);
-        ImGui.TableSetupColumn(Strings.CharactersColumnLevel, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(40f));
+        ImGui.TableSetupColumn(Strings.CharactersColumnLevel, ImGuiTableColumnFlags.WidthFixed, JobsLevelWidth.Value);
         ImGui.TableHeadersRow();
 
         var group = JobGroup.Other;
@@ -809,9 +906,20 @@ public sealed partial class CharactersPane
             return;
         }
 
+        if (TribesReputationWidth.Stale(d.Tribes))
+        {
+            var reputation = FixedWidth.Fit(0f, Strings.CharactersColumnReputation);
+            foreach (var (_, _, value) in d.Tribes)
+            {
+                reputation = FixedWidth.Fit(reputation, value);
+            }
+
+            TribesReputationWidth.Store(d.Tribes, reputation);
+        }
+
         ImGui.TableSetupColumn(Strings.CharactersColumnTribe, ImGuiTableColumnFlags.WidthStretch, 3f);
         ImGui.TableSetupColumn(Strings.CharactersColumnRank, ImGuiTableColumnFlags.WidthStretch, 2f);
-        ImGui.TableSetupColumn(Strings.CharactersColumnReputation, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(60f));
+        ImGui.TableSetupColumn(Strings.CharactersColumnReputation, ImGuiTableColumnFlags.WidthFixed, TribesReputationWidth.Value);
         ImGui.TableHeadersRow();
         foreach (var (tribe, rank, value) in d.Tribes)
         {
@@ -951,9 +1059,9 @@ public sealed partial class CharactersPane
         ImGui.TextDisabled(c.CountsLine);
         DrawCompareSections(c);
         ImGui.Spacing();
-        DrawDiffList(ui, "onlyViewed", c.OnlyViewed);
+        DrawDiffList(ui, "onlyViewed", c.OnlyViewed, DiffViewedValueWidth);
         ImGui.Spacing();
-        DrawDiffList(ui, "onlyOther", c.OnlyOther);
+        DrawDiffList(ui, "onlyOther", c.OnlyOther, DiffOtherValueWidth);
     }
 
     private void DrawCompareCombo(Compare c)
@@ -1002,10 +1110,22 @@ public sealed partial class CharactersPane
             return;
         }
 
+        if (DiffCountWidth.Stale(c.Sections))
+        {
+            // Room for a short name in the header, never less than the widest count.
+            var count = UiMetrics.Px(80f);
+            foreach (var row in c.Sections)
+            {
+                count = FixedWidth.Fit(FixedWidth.Fit(count, row.OnlyViewed), row.OnlyOther);
+            }
+
+            DiffCountWidth.Store(c.Sections, count);
+        }
+
         // The count columns' headers are character names: they end in an ellipsis instead of widening the columns.
         ImGui.TableSetupColumn(Strings.DiffColumnSection, ImGuiTableColumnFlags.WidthStretch);
-        ImGui.TableSetupColumn(c.ViewedHeader, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoHeaderWidth, UiMetrics.Px(80f));
-        ImGui.TableSetupColumn(c.OtherHeader, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoHeaderWidth, UiMetrics.Px(80f));
+        ImGui.TableSetupColumn(c.ViewedHeader, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoHeaderWidth, DiffCountWidth.Value);
+        ImGui.TableSetupColumn(c.OtherHeader, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoHeaderWidth, DiffCountWidth.Value);
         ImGui.TableHeadersRow();
 
         foreach (var row in c.Sections)
@@ -1021,7 +1141,7 @@ public sealed partial class CharactersPane
     }
 
     /// <summary>One side of the diff: header with count and Copy list, the capped table, then "and N more".</summary>
-    private void DrawDiffList(UiState ui, string id, DiffList list)
+    private void DrawDiffList(UiState ui, string id, DiffList list, FixedWidth valueWidth)
     {
         using var listId = ImRaii.PushId(id);
         Chrome.FitText(list.Header, ImGui.GetColorU32(ImGuiCol.Text));
@@ -1043,7 +1163,7 @@ public sealed partial class CharactersPane
             UiMetrics.Tooltip(Strings.DiffCopyListTooltip);
         }
 
-        DrawDiffTable(ui, list.Rows);
+        DrawDiffTable(ui, list.Rows, valueWidth);
         if (list.More.Length > 0)
         {
             ImGui.TextDisabled(list.More);
@@ -1051,7 +1171,7 @@ public sealed partial class CharactersPane
     }
 
     /// <summary>Rows: the lacking character's state moon, the quest (click reveals it), the value badge and the reason in Dusk.</summary>
-    private static void DrawDiffTable(UiState ui, DiffRow[] rows)
+    private static void DrawDiffTable(UiState ui, DiffRow[] rows, FixedWidth valueWidth)
     {
         using var table = ImRaii.Table("##diff", 4, ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.RowBg | ImGuiTableFlags.BordersInnerH);
         if (!table)
@@ -1059,10 +1179,22 @@ public sealed partial class CharactersPane
             return;
         }
 
+        if (valueWidth.Stale(rows))
+        {
+            // The value badge: its text and the pill's padding either side (DrawValueBadge).
+            var value = 0f;
+            foreach (var row in rows)
+            {
+                value = FixedWidth.Fit(value, row.Value);
+            }
+
+            valueWidth.Store(rows, MathF.Max(value + (UiMetrics.Px(5f) * 2f), ImGui.CalcTextSize(Strings.DiffColumnValue).X));
+        }
+
         var line = ImGui.GetTextLineHeight();
-        ImGui.TableSetupColumn("##state", ImGuiTableColumnFlags.WidthFixed, line * 1.4f);
+        ImGui.TableSetupColumn("##state", ImGuiTableColumnFlags.WidthFixed, GlyphColumn(line));
         ImGui.TableSetupColumn(Strings.DiffColumnQuest, ImGuiTableColumnFlags.WidthStretch, 3f);
-        ImGui.TableSetupColumn(Strings.DiffColumnValue, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(40f));
+        ImGui.TableSetupColumn(Strings.DiffColumnValue, ImGuiTableColumnFlags.WidthFixed, valueWidth.Value);
         ImGui.TableSetupColumn(Strings.DiffColumnWhy, ImGuiTableColumnFlags.WidthStretch, 2f);
         ImGui.TableHeadersRow();
 
@@ -1445,10 +1577,25 @@ public sealed partial class CharactersPane
         }
 
         var line = ImGui.GetTextLineHeight();
+        var stamp = HashCode.Combine(accountVersion, accountRowId);
+        if (accountStateWidth.Stale(items, stamp))
+        {
+            // The moon, the gap SameLine leaves and the widest state word ("Completed"); an unreadable file's words.
+            var word = 0f;
+            foreach (var item in items)
+            {
+                var (evaluation, _) = EvaluateFor(item, quest, bundle);
+                word = FixedWidth.Fit(word, evaluation is null ? Strings.CharactersSnapshotUnreadable : Strings.StateName(evaluation.State, quest));
+            }
+
+            var cell = UiMetrics.InlineGlyphSize(line) + ImGui.GetStyle().ItemSpacing.X + word;
+            accountStateWidth.Store(items, FixedWidth.Fit(cell, Strings.CharactersColumnState), stamp);
+        }
+
         // The character's name stretches and ends in an ellipsis before its multibox badge; the state keeps its
         // moon and word, and the reason takes what is left (feature plan v4 L6).
         ImGui.TableSetupColumn(Strings.CharactersColumnCharacter, ImGuiTableColumnFlags.WidthStretch, 2f);
-        ImGui.TableSetupColumn(Strings.CharactersColumnState, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(60f));
+        ImGui.TableSetupColumn(Strings.CharactersColumnState, ImGuiTableColumnFlags.WidthFixed, accountStateWidth.Value);
         ImGui.TableSetupColumn(Strings.CharactersColumnStatus, ImGuiTableColumnFlags.WidthStretch, 3f);
         ImGui.TableHeadersRow();
 
@@ -1463,7 +1610,7 @@ public sealed partial class CharactersPane
             {
                 // Multibox (D11): its state comes from the other client's latest save. The badge keeps its place at
                 // the name's end; the name gives way first.
-                var badgeWidth = ImGui.CalcTextSize(MultiboxBadge).X + ImGui.GetStyle().ItemSpacing.X;
+                var badgeWidth = ImGui.CalcTextSize(MultiboxBadge.Value).X + ImGui.GetStyle().ItemSpacing.X;
                 Chrome.EllipsisText(item.Name, MathF.Max(0f, Chrome.RoomX() - badgeWidth), ImGui.GetColorU32(ImGuiCol.Text));
                 if (ImGui.IsItemHovered())
                 {
@@ -1471,7 +1618,7 @@ public sealed partial class CharactersPane
                 }
 
                 ImGui.SameLine();
-                ImGui.TextDisabled(MultiboxBadge);
+                ImGui.TextDisabled(MultiboxBadge.Value);
                 if (ImGui.IsItemHovered())
                 {
                     UiMetrics.Tooltip(Strings.MultiboxLiveElsewhere, Strings.MultiboxLiveElsewhereTooltip);

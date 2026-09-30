@@ -408,7 +408,8 @@ public sealed partial class SessionState
             bundle.Jobs,
             static () => DateTime.UtcNow,
             jobParents: bundle.JobParents(),
-            satisfactionNpcName: id => bundle.Names.SatisfactionNpc(id));
+            satisfactionNpcName: id => bundle.Names.SatisfactionNpc(id),
+            jobRoles: bundle.JobRoles());
 
         // The live evaluations belong to the previous catalog (a filing flip retires or restores rows): shown
         // against this one they would read "Locked out · removed from the game" on rows no longer retired, or Ready

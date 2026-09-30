@@ -1,7 +1,6 @@
 using System;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
-using Dalamud.Interface.Utility.Raii;
 using Tsukimichi.Core.Ui;
 
 namespace Tsukimichi.Ui;
@@ -54,10 +53,33 @@ public static partial class Chrome
             return false;
         }
 
-        using var ink = ImRaii.PushColor(ImGuiCol.Text, color);
-        Vector2? size = new Vector2(full, max.Y - pos.Y);
-        ImGuiP.RenderTextEllipsis(dl, in pos, in max, max.X, max.X, text, in size);
+        // Raw push and pop, not ImRaii: this runs in every cell of the long tables, and ImRaii's scopes are allocated.
+        ImGui.PushStyleColor(ImGuiCol.Text, color);
+        try
+        {
+            Vector2? size = new Vector2(full, max.Y - pos.Y);
+            ImGuiP.RenderTextEllipsis(dl, in pos, in max, max.X, max.X, text, in size);
+        }
+        finally
+        {
+            ImGui.PopStyleColor();
+        }
+
         return true;
+    }
+
+    /// <summary><paramref name="text"/> in <paramref name="color"/> as one item, without allocating a colour scope.</summary>
+    private static void ColoredText(ReadOnlySpan<char> text, uint color)
+    {
+        ImGui.PushStyleColor(ImGuiCol.Text, color);
+        try
+        {
+            ImGui.TextUnformatted(text);
+        }
+        finally
+        {
+            ImGui.PopStyleColor();
+        }
     }
 
     /// <inheritdoc cref="EllipsisTextAt(ImDrawListPtr, Vector2, float, ReadOnlySpan{char}, uint, float)"/>
@@ -77,11 +99,7 @@ public static partial class Chrome
         var start = ImGui.GetCursorScreenPos();
         var split = TableGeometry.StateWordLength(text);
         var state = text.AsSpan(0, split);
-        using (ImRaii.PushColor(ImGuiCol.Text, stateInk))
-        {
-            ImGui.TextUnformatted(state);
-        }
-
+        ColoredText(state, ImGui.GetColorU32(stateInk));
         if (split >= text.Length)
         {
             return false;
@@ -93,11 +111,7 @@ public static partial class Chrome
         ImGui.SameLine(0f, 0f);
         if (!TableGeometry.ReasonNeedsEllipsis(reasonWidth, room))
         {
-            using (ImRaii.PushColor(ImGuiCol.Text, reasonInk))
-            {
-                ImGui.TextUnformatted(reason);
-            }
-
+            ColoredText(reason, ImGui.GetColorU32(reasonInk));
             return false;
         }
 
@@ -128,10 +142,7 @@ public static partial class Chrome
         var labelText = ImGui.CalcTextSize(label).X;
         var labelWidth = MathF.Max(MathF.Max(0f, labelMin), labelText);
         var stacked = LayoutBudgets.StackLabelValue(available, labelWidth, gap, ImGui.GetFontSize());
-        using (ImRaii.PushColor(ImGuiCol.Text, Theme.Surface.TextSecondary))
-        {
-            ImGui.TextUnformatted(label);
-        }
+        ColoredText(label, ImGui.GetColorU32(Theme.Surface.TextSecondary));
 
         if (stacked)
         {
@@ -147,12 +158,25 @@ public static partial class Chrome
 
     /// <summary>
     /// Continues the line when an item <paramref name="width"/> wide still fits before the content edge, else starts
-    /// a new one: a row of buttons or radio buttons that wraps whole instead of running off the edge.
+    /// a new one: a row of buttons or radio buttons that wraps whole instead of running off the edge. After a text
+    /// that wrapped onto several lines (<see cref="TextFlow.LastItemWrapped"/>) the item always goes under it, never
+    /// beside its first line.
     /// </summary>
-    public static void SameLineOrWrap(float width)
+    public static void SameLineOrWrap(float width) => SameLineOrWrap(width, float.NaN);
+
+    /// <summary>
+    /// <see cref="SameLineOrWrap(float)"/> measured against <paramref name="right"/> (a screen x, such as a card's
+    /// inner edge the pane keeps itself) instead of the content edge.
+    /// </summary>
+    public static void SameLineOrWrap(float width, float right)
     {
+        if (TextFlow.LastItemWrapped())
+        {
+            return;
+        }
+
         ImGui.SameLine();
-        if (ImGui.GetCursorScreenPos().X + width > ContentRight())
+        if (ImGui.GetCursorScreenPos().X + width > (float.IsNaN(right) ? ContentRight() : right))
         {
             ImGui.NewLine();
         }
@@ -229,11 +253,7 @@ public static partial class Chrome
         var width = ImGui.CalcTextSize(text).X;
         if (width <= room + 0.5f)
         {
-            using (ImRaii.PushColor(ImGuiCol.Text, color))
-            {
-                ImGui.TextUnformatted(text);
-            }
-
+            ColoredText(text, color);
             return false;
         }
 
@@ -262,9 +282,14 @@ public static partial class Chrome
         var room = width > 0f ? width : RoomX();
         var pos = ImGui.GetCursorScreenPos();
         bool clicked;
-        using (ImRaii.PushId(text))
+        ImGui.PushID(text);
+        try
         {
             clicked = ImGui.Selectable("##fit", selected, flags, new Vector2(MathF.Max(1f, room), 0f));
+        }
+        finally
+        {
+            ImGui.PopID();
         }
 
         cut = ImGui.IsItemVisible()

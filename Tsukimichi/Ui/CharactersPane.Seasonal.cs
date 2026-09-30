@@ -76,7 +76,7 @@ public sealed partial class CharactersPane
 
         var line = ImGui.GetTextLineHeight();
         // The name stretches and ends in an ellipsis; the status keeps its state word (feature plan v4 L6).
-        ImGui.TableSetupColumn("##state", ImGuiTableColumnFlags.WidthFixed, line * 1.4f);
+        ImGui.TableSetupColumn("##state", ImGuiTableColumnFlags.WidthFixed, GlyphColumn(line));
         ImGui.TableSetupColumn(Strings.CharactersColumnQuest, ImGuiTableColumnFlags.WidthStretch, 3f);
         ImGui.TableSetupColumn(Strings.CharactersColumnStatus, ImGuiTableColumnFlags.WidthStretch, 2f);
 

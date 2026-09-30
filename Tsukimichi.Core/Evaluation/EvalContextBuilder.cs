@@ -15,6 +15,7 @@ public static class EvalContextBuilder
     /// <param name="nowUtc">Clock, read on every festival check so a long-lived context stays current.</param>
     /// <param name="achievementGatedRowIds">Quest row ids gated by an achievement; null or empty gates nothing.</param>
     /// <param name="jobParents">ClassJob row id to its <c>ClassJobParent</c> row id, from the sheet; null leaves <see cref="EvalContext.ParentJob"/> unset.</param>
+    /// <param name="jobRoles">ClassJob row id to its sheet role byte; null leaves <see cref="EvalContext.JobRole"/> unset.</param>
     /// <param name="satisfactionNpcName">Custom delivery client name by SatisfactionNpc row id, from the sheet; null leaves the client out of the requirement detail.</param>
     public static EvalContext Build(
         IReadOnlyDictionary<ushort, FestivalInfo> festivals,
@@ -22,7 +23,8 @@ public static class EvalContextBuilder
         Func<DateTime> nowUtc,
         IReadOnlySet<uint>? achievementGatedRowIds = null,
         IReadOnlyDictionary<byte, byte>? jobParents = null,
-        Func<byte, string>? satisfactionNpcName = null)
+        Func<byte, string>? satisfactionNpcName = null,
+        IReadOnlyDictionary<byte, byte>? jobRoles = null)
     {
         ArgumentNullException.ThrowIfNull(festivals);
         ArgumentNullException.ThrowIfNull(nowUtc);
@@ -41,6 +43,11 @@ public static class EvalContextBuilder
         if (jobParents is { Count: > 0 } parents)
         {
             context = context with { ParentJob = job => parents.TryGetValue(job, out var parent) && parent != 0 ? parent : job };
+        }
+
+        if (jobRoles is { Count: > 0 } roles)
+        {
+            context = context with { JobRole = job => roles.TryGetValue(job, out var role) ? role : (byte)0 };
         }
 
         return festivals.Count == 0 ? context : context.WithCuratedFestivals(festivals, nowUtc);

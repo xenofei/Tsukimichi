@@ -648,6 +648,19 @@ public sealed class PathChart
     /// <summary>The room for a step's or the target's name, from its label column to the chart's right edge.</summary>
     private float StepNameRoom => MathF.Max(1f, drawWidth - labelX - Px(4f));
 
+    /// <summary>
+    /// The target wears the unmet mark after its name: a quest the character cannot take on the current job, as the
+    /// detail pane's "Not yet" callout has it (Blocked, Ready on another job, Locked out).
+    /// </summary>
+    private static bool TargetWearsUnmet(QuestState state) => state is QuestState.Blocked or QuestState.ReadyOnOtherJob or QuestState.Foreclosed;
+
+    /// <summary>The room the target's bold name is drawn in: the step room less its unmet mark and the bold pass.</summary>
+    private float TargetNameRoom(QuestState state) =>
+        MathF.Max(1f, StepNameRoom - (TargetWearsUnmet(state) ? UiMetrics.RequirementMarkSize + Px(4f) : 0f) - MathF.Max(1f, Px(0.6f)));
+
+    /// <summary>The room a step's or the target's name has as drawn.</summary>
+    private float NameRoom(VRow row) => row.Kind == VKind.Target ? TargetNameRoom(path[row.Item].State) : StepNameRoom;
+
     /// <summary>The room for an unlock's name, from its label column to the chart's right edge.</summary>
     private float UnlockNameRoom => MathF.Max(1f, drawWidth - ghostLabelX - Px(4f));
 
@@ -931,7 +944,7 @@ public sealed class PathChart
             case VKind.Bead:
                 x0 = MathF.Max(0f, threadX - row.NodeR - Px(2f));
                 break;
-            case VKind.Target when IsCut(stepNames[row.Item], StepNameRoom):
+            case VKind.Target when IsCut(stepNames[row.Item], TargetNameRoom(path[row.Item].State)):
                 // Only for its tooltip: the target's name, cut short, is named in full on hover.
                 x0 = MathF.Max(0f, threadX - row.NodeR - Px(2f));
                 break;
@@ -982,7 +995,7 @@ public sealed class PathChart
             case VKind.Step:
             case VKind.RunStep:
             case VKind.Target:
-                if (IsCut(stepNames[row.Item], StepNameRoom))
+                if (IsCut(stepNames[row.Item], NameRoom(row)))
                 {
                     NameTooltip(stepNames[row.Item], Strings.StateTooltip(path[row.Item].State), stepDetails[row.Item]);
                 }
@@ -1199,13 +1212,13 @@ public sealed class PathChart
         var name = stepNames[row.Item];
         var state = path[row.Item].State;
         var mark = UiMetrics.RequirementMarkSize;
-        var unmet = state is QuestState.Blocked or QuestState.Foreclosed;
-        var room = StepNameRoom - (unmet ? mark + Px(4f) : 0f);
+        var unmet = TargetWearsUnmet(state);
         var bold = MathF.Max(1f, Px(0.6f));
+        var room = TargetNameRoom(state);
         var nameWidth = ImGui.CalcTextSize(name).X;
-        Chrome.EllipsisTextAt(dl, pos, room - bold, name, ink, nameWidth);
-        Chrome.EllipsisTextAt(dl, pos + new Vector2(bold, 0f), room - bold, name, ink, nameWidth);
-        if (unmet && room > mark)
+        Chrome.EllipsisTextAt(dl, pos, room, name, ink, nameWidth);
+        Chrome.EllipsisTextAt(dl, pos + new Vector2(bold, 0f), room, name, ink, nameWidth);
+        if (unmet && room + bold > mark)
         {
             var x = pos.X + MathF.Min(nameWidth, room) + bold + Px(4f) + (mark * 0.5f);
             Marks.Draw(dl, new Vector2(x, textY + (fontSize * 0.5f)), mark, Mark.Unmet);

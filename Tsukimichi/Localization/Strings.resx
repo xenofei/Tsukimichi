@@ -4871,6 +4871,22 @@
     <value>needs level {0}, you are {1}</value>
     <comment>Core: RequirementDetail.cs.</comment>
   </data>
+  <data name="Core.Req.LevelOn" xml:space="preserve">
+    <value>level {0} on {1}</value>
+    <comment>Core: RequirementDetail.cs. Met on the job that can take the quest ({1}, its abbreviation).</comment>
+  </data>
+  <data name="Core.Req.NeedsLevelJobIs" xml:space="preserve">
+    <value>needs level {0}, {1} is {2}</value>
+    <comment>Core: RequirementDetail.cs. Measured on the job that can take the quest: {1} its abbreviation, {2} its level.</comment>
+  </data>
+  <data name="Core.Req.NeedsLevelOnLocked" xml:space="preserve">
+    <value>needs level {0} on {1}, not unlocked</value>
+    <comment>Core: RequirementDetail.cs. The quest's own job ({1}) is not unlocked yet.</comment>
+  </data>
+  <data name="Core.Req.NeedsLevelNoJob" xml:space="preserve">
+    <value>needs level {0}, no job of yours can take it</value>
+    <comment>Core: RequirementDetail.cs.</comment>
+  </data>
   <data name="Core.Req.RequiresGrandCompany" xml:space="preserve">
     <value>requires {0}</value>
     <comment>Core: RequirementDetail.cs.</comment>
@@ -5158,6 +5174,22 @@
   <data name="Core.NotYet.AnotherJob" xml:space="preserve">
     <value>another job</value>
     <comment>Core: NotYetText.cs.</comment>
+  </data>
+  <data name="Core.NotYet.LevelOnly" xml:space="preserve">
+    <value>level {0}</value>
+    <comment>Core: NotYetText.cs. No job the character has can take the quest, so no level is compared.</comment>
+  </data>
+  <data name="Core.NotYet.LevelJobIs" xml:space="preserve">
+    <value>level {0} ({1} is {2})</value>
+    <comment>Core: NotYetText.cs. The level measured on the job that can take the quest: {1} its abbreviation, {2} its level.</comment>
+  </data>
+  <data name="Core.NotYet.TribeRankWithNotStarted" xml:space="preserve">
+    <value>{0} with the {1} (not started)</value>
+    <comment>Core: NotYetText.cs. The character has no rank with the allied society yet.</comment>
+  </data>
+  <data name="Core.NotYet.TribeRankNotStarted" xml:space="preserve">
+    <value>{0} (not started)</value>
+    <comment>Core: NotYetText.cs. The character has no rank with the allied society yet.</comment>
   </data>
   <data name="Core.NotYet.PreviousOne" xml:space="preserve">
     <value>1 previous quest</value>

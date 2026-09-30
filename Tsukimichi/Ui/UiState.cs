@@ -114,7 +114,9 @@ public sealed class UiState
     /// narrowing filters and the active preset are cleared so the revealed row cannot be hidden by them; an unlisted
     /// quest also turns Include Unlisted on so its virtual scope is reachable.
     /// </summary>
-    public void Reveal(uint rowId, QuestScope scope, bool isUnlisted = false)
+    public void Reveal(uint rowId, QuestScope scope, bool isUnlisted = false) => Reveal(rowId, scope, isUnlisted, filtersChanged: false);
+
+    private void Reveal(uint rowId, QuestScope scope, bool isUnlisted, bool filtersChanged)
     {
         Tab = NavTab.Journal;
         Scope = scope;
@@ -123,13 +125,19 @@ public sealed class UiState
         RevealedRowId = rowId;
         RevealSerial++;
 
-        if (ClearNarrowingFilters(isUnlisted))
+        if (ClearNarrowingFilters(isUnlisted) | filtersChanged)
         {
             FiltersChanged?.Invoke();
         }
 
         MarkQueryDirty();
     }
+
+    /// <summary>
+    /// The query context of the table's last run (its running festivals, search index and spoiler shield); set by the
+    /// query runner. <see cref="Reveal(QuestRecord)"/> asks it which of the other filters and the search hide a quest.
+    /// </summary>
+    public Func<QueryContext?>? RevealContext { get; set; }
 
     /// <summary>
     /// Switch to the Journal tab scoped to the quests one NPC hands out (<see cref="QuestScope.Issuer"/>), from the
@@ -233,7 +241,9 @@ public sealed class UiState
 
     /// <summary>
     /// Reveals a catalog quest: its genre's scope, the "Removed from the game" scope for a removed quest, or the
-    /// "Other paths" scope for a quest on a path the character did not take while those are listed there only.
+    /// "Other paths" scope for a quest on a path the character did not take while those are listed there only. Beside
+    /// the narrowing filters every reveal clears, the other filters and the search are cleared only where they would
+    /// hide this quest (<see cref="QuestQuery.ClearFiltersHiding"/>), so the row it selects is always in the table.
     /// </summary>
     public void Reveal(QuestRecord quest)
     {
@@ -241,7 +251,14 @@ public sealed class UiState
         var scope = quest.IsRemoved ? QuestScope.VirtualUnlisted
             : !Filters.IncludeOtherPaths && IsOtherPath?.Invoke(quest.RowId) == true ? QuestScope.VirtualOtherPaths
             : QuestScope.Genre(quest.Journal.GenreId);
-        Reveal(quest.RowId, scope, quest.IsRemoved);
+        var context = RevealContext?.Invoke();
+        var changed = QuestQuery.ClearFiltersHiding(quest, Filters, context?.ActiveFestivals);
+        if (QuestQuery.SearchHides(quest, SearchText, context))
+        {
+            SearchText = string.Empty;
+        }
+
+        Reveal(quest.RowId, scope, quest.IsRemoved, changed);
     }
 
     /// <summary>Raised by <see cref="OpenRoute"/>; the plugin opens the route window on the target.</summary>

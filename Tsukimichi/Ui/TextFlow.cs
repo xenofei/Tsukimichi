@@ -58,6 +58,8 @@ public static class TextFlow
         }
 
         ImGui.Dummy(new Vector2(widest, MathF.Max(1, lines.Length) * lineHeight));
+        lastMin = ImGui.GetItemRectMin();
+        lastMultiLine = lines.Length > 1;
         if (!ImGui.IsItemVisible())
         {
             return false;
@@ -87,6 +89,16 @@ public static class TextFlow
 
         return cut;
     }
+
+    // The last wrapped text's item: where it starts and whether it took more than one line.
+    private static Vector2 lastMin = new(float.NaN);
+    private static bool lastMultiLine;
+
+    /// <summary>
+    /// The item just drawn is a <see cref="Wrapped(string, float, uint)"/> text that took more than one line: an item
+    /// put on its line would sit beside its first line, over the lines under it (<see cref="Chrome.SameLineOrWrap(float)"/>).
+    /// </summary>
+    public static bool LastItemWrapped() => lastMultiLine && ImGui.GetItemRectMin() == lastMin;
 
     /// <summary>The height <paramref name="text"/> takes wrapped in <paramref name="width"/> pixels, in the current font.</summary>
     public static float Height(string text, float width)

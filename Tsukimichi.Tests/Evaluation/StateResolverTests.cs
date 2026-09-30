@@ -520,6 +520,48 @@ public class StateResolverTests
     }
 
     [Fact]
+    public void ReadyOnOtherJob_names_a_job_over_the_base_class_it_shares_a_level_with()
+    {
+        // "ready on GLA" while Paladin is levelled the same: the tie went to the lowest job id.
+        var quest = Quest(Target) with { Level = 50, ClassJobCategory = 5 };
+        var ctx = new EvalContext
+        {
+            ClassJobs = new Jobs((5, [Gladiator, Paladin])),
+            ParentJob = static job => job == Paladin ? Gladiator : job,
+        };
+        var snapshot = Snapshot() with { CurrentJob = Conjurer, JobLevels = Levels((Gladiator, 90), (Paladin, 90), (Conjurer, 10)) };
+
+        Assert.Equal(Paladin, Resolve(quest, snapshot, ctx: ctx).ReadyOnJob);
+    }
+
+    [Fact]
+    public void ReadyOnOtherJob_leans_to_the_current_job_s_class_line_then_its_role()
+    {
+        const byte WhiteMage = 24;
+        const byte Scholar = 28;
+        const byte Arcanist = 26;
+        var quest = Quest(Target) with { Level = 50, ClassJobCategory = 5 };
+        var ctx = new EvalContext
+        {
+            ClassJobs = new Jobs((5, [Paladin, WhiteMage, Scholar])),
+            ParentJob = static job => job switch { Paladin => Gladiator, WhiteMage => Conjurer, Scholar => Arcanist, _ => job },
+            JobRole = static job => job switch { Paladin or Gladiator => 1, _ => 4 },
+        };
+
+        // On Conjurer: White Mage is its own line, though Paladin is higher.
+        var line = Snapshot() with { CurrentJob = Conjurer, JobLevels = Levels((Conjurer, 10), (Paladin, 90), (WhiteMage, 60), (Scholar, 80)) };
+        Assert.Equal(WhiteMage, Resolve(quest, line, ctx: ctx).ReadyOnJob);
+
+        // On Conjurer with White Mage not levelled: the other healer before the higher tank.
+        var role = Snapshot() with { CurrentJob = Conjurer, JobLevels = Levels((Conjurer, 10), (Paladin, 90), (Scholar, 60)) };
+        Assert.Equal(Scholar, Resolve(quest, role, ctx: ctx).ReadyOnJob);
+
+        // No role or line in common: the highest level.
+        var none = Snapshot() with { CurrentJob = Gladiator, JobLevels = Levels((Gladiator, 10), (WhiteMage, 60), (Scholar, 80)) };
+        Assert.Equal(Scholar, Resolve(quest, none, ctx: ctx with { JobRole = static _ => 0 }).ReadyOnJob);
+    }
+
+    [Fact]
     public void ReadyOnOtherJob_ignores_jobs_below_the_level()
     {
         var quest = Quest(Target) with { Level = 30, ClassJobCategory = 5 };
