@@ -24,7 +24,7 @@ public sealed partial class DetailPane
 
     private static readonly string MoreIcon = FontAwesomeIcon.EllipsisH.ToIconString();
 
-    // The cross-check as of the last refresh, keyed like the model plus Questionable's load generation.
+    // The cross-check as of the last refresh, keyed like the model plus Questionable's generation (plugin list changes).
     private uint questionableRowId = uint.MaxValue;
     private int questionableVersion = -1;
     private int questionableGeneration = -1;
@@ -51,7 +51,7 @@ public sealed partial class DetailPane
     /// </summary>
     private bool ShowsQuestionableMore => Questionable is not null && questionableSupportsPriority && QuestionableHandoff?.Invoke() == true;
 
-    /// <summary>Re-asks Questionable when the quest, the session version or its load state changed; otherwise free.</summary>
+    /// <summary>Re-asks Questionable when the quest, the session version or Dalamud's plugin list changed; otherwise free.</summary>
     private void RefreshQuestionable(SessionState session, QuestRecord quest)
     {
         if (Questionable is not { } questionable)

@@ -99,7 +99,10 @@ public sealed class QuestionableIpc : IDisposable
         }
     }
 
-    /// <summary>Moves whenever Questionable loads or unloads, so a cache of cross-checks knows to ask again.</summary>
+    /// <summary>
+    /// Moves whenever Dalamud's plugin list changes (Questionable loaded, unloaded, updated or swapped for a fork), so
+    /// a cache of cross-checks knows to ask again.
+    /// </summary>
     public int Generation { get; private set; }
 
     /// <summary>
@@ -140,7 +143,7 @@ public sealed class QuestionableIpc : IDisposable
     /// <summary>
     /// The cross-check for a quest against the viewed character's evaluation; null when Questionable is not loaded.
     /// A stored character is not compared (Questionable answers for the character logged in) and Questionable is not
-    /// asked about it. A disagreement is logged once per quest per load.
+    /// asked about it. A disagreement is logged once per quest until the plugin list changes.
     /// </summary>
     public CrossCheckResult? Check(QuestRecord quest, SessionState session)
     {
@@ -260,16 +263,16 @@ public sealed class QuestionableIpc : IDisposable
             return;
         }
 
+        // Every change of the plugin list starts over, whether or not the loaded flag flips: an unload and a load
+        // handled in one pass (an update, or a swap to the fork under the same internal name) is a new Questionable
+        // whose answers and reason gate may differ.
         pluginListDirty = false;
-        var now = isQuestLocked is not null && IsLoaded();
-        if (now != loaded)
-        {
-            loaded = now;
-            Generation++;
-            answers.Clear();
-            answersVersion = int.MinValue;
-            reasonGateBroken = false;
-        }
+        loaded = isQuestLocked is not null && IsLoaded();
+        Generation++;
+        answers.Clear();
+        answersVersion = int.MinValue;
+        reasonGateBroken = false;
+        loggedDisagreements.Clear();
     }
 
     private bool HasFunction(ICallGateSubscriber? gate)
