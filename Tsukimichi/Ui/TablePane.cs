@@ -637,6 +637,13 @@ public sealed class TablePane : IDisposable
         // itself) has keyboard focus: a left click, Enter or Space opens the same menu, so no action needs the right
         // button (accessibility A6).
         var mouseInRow = ImGui.IsWindowHovered() && ImGui.IsMouseHoveringRect(rowMin, rowMax);
+        if (mouseInRow)
+        {
+            // The "…" takes the hover from the selectable (AllowItemOverlap), so rowHovered alone would drop the
+            // row's fill while the pointer is on the button.
+            hoveredNext = quest.RowId;
+        }
+
         if (mouseInRow || rowFocused || moreFocusedRow == quest.RowId)
         {
             // Sized to the row's content, not its padded height: a button reaching into the cell padding would push
