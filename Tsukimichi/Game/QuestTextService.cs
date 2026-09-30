@@ -78,6 +78,7 @@ public sealed class QuestTextService : IDisposable
 
     private readonly IDataManager data;
     private readonly ISeStringEvaluator evaluator;
+    private readonly IClientState clientState;
     private readonly IPluginLog log;
     private readonly string configDir;
     private readonly QuestTextFiles files;
@@ -100,10 +101,11 @@ public sealed class QuestTextService : IDisposable
     private int version;
     private bool enabled;
 
-    public QuestTextService(IDataManager data, ISeStringEvaluator evaluator, IPluginLog log, string configDir, string gameVersion)
+    public QuestTextService(IDataManager data, ISeStringEvaluator evaluator, IClientState clientState, IPluginLog log, string configDir, string gameVersion)
     {
         this.data = data ?? throw new ArgumentNullException(nameof(data));
         this.evaluator = evaluator ?? throw new ArgumentNullException(nameof(evaluator));
+        this.clientState = clientState ?? throw new ArgumentNullException(nameof(clientState));
         this.log = log ?? throw new ArgumentNullException(nameof(log));
         ArgumentException.ThrowIfNullOrWhiteSpace(configDir);
         this.configDir = configDir;
@@ -111,6 +113,20 @@ public sealed class QuestTextService : IDisposable
         clientLanguage = data.Language;
         language = clientLanguage.ToLumina();
         files = new QuestTextFiles(data.GetFile<ExcelHeaderFile>, data.GetFile<ExcelDataFile>);
+
+        // No build runs yet, so any temporary index file is left over from a crash or an unload mid-write.
+        try
+        {
+            JournalIndexStore.DeleteTemp(configDir);
+        }
+        catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException)
+        {
+            log.Debug(ex, "Leftover journal index temporary files not removed");
+        }
+
+        // The live rendering carries the character's name and gender forms: another character must not see them.
+        clientState.Login += ClearViews;
+        clientState.Logout += OnLogout;
     }
 
     /// <summary>Where the search index stands.</summary>
@@ -147,9 +163,10 @@ public sealed class QuestTextService : IDisposable
     /// The journal the character has seen of <paramref name="quest"/>: every entry of a completed quest, the entries up
     /// to the current step of one in the journal (<see cref="JournalVisibility"/>), nothing otherwise. Evaluated with
     /// the game's evaluator for the logged-in character (<paramref name="live"/>), neutrally otherwise, with
-    /// <paramref name="storedName"/> for the player's name. Reads the sheet on first call; later calls are a cache hit.
+    /// <paramref name="storedName"/> for the player's name. <paramref name="contentId"/> is the character shown, so one
+    /// character's rendering is never served to another. Reads the sheet on first call; later calls are a cache hit.
     /// </summary>
-    public JournalView Journal(QuestRecord quest, QuestState state, byte? sequence, bool live, string? storedName)
+    public JournalView Journal(QuestRecord quest, QuestState state, byte? sequence, bool live, string? storedName, ulong contentId)
     {
         ArgumentNullException.ThrowIfNull(quest);
         var through = JournalVisibility.VisibleThrough(state, sequence, quest.StepCount);
@@ -158,7 +175,7 @@ public sealed class QuestTextService : IDisposable
             return JournalView.NotReadable;
         }
 
-        var key = new ViewKey(quest.RowId, through, JournalVisibility.IsCompleted(state), sequence, live, live ? null : storedName);
+        var key = new ViewKey(quest.RowId, through, JournalVisibility.IsCompleted(state), sequence, live, live ? null : storedName, contentId);
         for (var i = views.Count - 1; i >= 0; i--)
         {
             if (views[i].Key == key)
@@ -197,35 +214,44 @@ public sealed class QuestTextService : IDisposable
         }
 
         var entries = new List<string>();
+        var objectives = new List<string>();
         var withheld = 0;
-        foreach (var line in text.Journal)
+        try
         {
-            if (line.Index > through)
+            foreach (var line in text.Journal)
             {
-                withheld++;
-                continue;
+                if (line.Index > through)
+                {
+                    withheld++;
+                    continue;
+                }
+
+                var rendered = Render(line.Text, live, storedName);
+                if (rendered.Length > 0)
+                {
+                    entries.Add(rendered);
+                }
             }
 
-            var rendered = Render(line.Text, live, storedName);
-            if (rendered.Length > 0)
+            foreach (var line in text.Objectives)
             {
-                entries.Add(rendered);
+                if (!JournalVisibility.ObjectiveVisible(state, sequence, quest.StepCount, line.Sequence))
+                {
+                    continue;
+                }
+
+                var rendered = Render(line.Text, live, storedName);
+                if (rendered.Length > 0)
+                {
+                    objectives.Add(rendered);
+                }
             }
         }
-
-        var objectives = new List<string>();
-        foreach (var line in text.Objectives)
+        catch (Exception ex)
         {
-            if (!JournalVisibility.ObjectiveVisible(state, sequence, quest.StepCount, line.Sequence))
-            {
-                continue;
-            }
-
-            var rendered = Render(line.Text, live, storedName);
-            if (rendered.Length > 0)
-            {
-                objectives.Add(rendered);
-            }
+            // The neutral rendering reads other sheets through Lumina; an odd payload must not reach the draw.
+            log.Warning(ex, "Journal text of quest {RowId} could not be rendered", quest.RowId);
+            return JournalView.NoText;
         }
 
         return entries.Count == 0 && objectives.Count == 0
@@ -265,7 +291,11 @@ public sealed class QuestTextService : IDisposable
         return string.Join('\n', lines).Trim();
     }
 
-    private readonly record struct ViewKey(uint RowId, int Through, bool Completed, byte? Sequence, bool Live, string? Name);
+    private readonly record struct ViewKey(uint RowId, int Through, bool Completed, byte? Sequence, bool Live, string? Name, ulong ContentId);
+
+    private void ClearViews() => views.Clear();
+
+    private void OnLogout(int type, int code) => views.Clear();
 
     // ------------------------------------------------------------------ search index
 
@@ -308,12 +338,29 @@ public sealed class QuestTextService : IDisposable
         lock (indexLock)
         {
             indexCts?.Cancel();
+            indexCts?.Dispose();
             indexCts = new CancellationTokenSource();
             var token = indexCts.Token;
             status = JournalIndexStatus.Loading;
             Volatile.Write(ref done, 0);
             Volatile.Write(ref total, quests.Length);
-            indexTask = Task.Run(() => LoadOrBuild(quests, token), token);
+
+            // A build cancelled by a quick off and on may still be saving: the new one starts once it has finished,
+            // so two tasks never write or delete the same files. The chain ends in the newest task, which Dispose
+            // waits for. No token on Task.Run: a task cancelled before it starts would not wait for the one before.
+            var previous = indexTask;
+            indexTask = Task.Run(async () =>
+            {
+                if (previous is not null)
+                {
+                    await previous.ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
+                }
+
+                if (!token.IsCancellationRequested)
+                {
+                    LoadOrBuild(quests, token);
+                }
+            });
         }
     }
 
@@ -421,7 +468,8 @@ public sealed class QuestTextService : IDisposable
 
     /// <summary>
     /// Cancels a load or build in flight. The task checks its token between quests and publishes nothing once
-    /// cancelled; it is not awaited here (the framework thread must not block), only at unload, where Dispose waits briefly.
+    /// cancelled; it is not awaited here (the framework thread must not block). It stays as <c>indexTask</c>, so the
+    /// next build starts after it and Dispose waits for it briefly.
     /// </summary>
     private void StopIndex()
     {
@@ -430,12 +478,13 @@ public sealed class QuestTextService : IDisposable
             indexCts?.Cancel();
             indexCts?.Dispose();
             indexCts = null;
-            indexTask = null;
         }
     }
 
     public void Dispose()
     {
+        clientState.Login -= ClearViews;
+        clientState.Logout -= OnLogout;
         Task? task;
         lock (indexLock)
         {

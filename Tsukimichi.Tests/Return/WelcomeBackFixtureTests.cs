@@ -226,6 +226,33 @@ public sealed class WelcomeBackFixtureTests(FixtureCatalog fixture) : IClassFixt
     }
 
     [Fact]
+    public void Opened_by_hand_after_the_first_evaluation_it_counts_from_the_patch_recorded_before_this_login()
+    {
+        // At login the sidecar says the old capture was taken on 7.2; the first live evaluation then saves this
+        // session's newest patch over it (and the player may since have answered or muted the card).
+        var then = Stored.Value;
+        var now = then.TakenUtc.AddDays(60);
+        var newest = PatchIndex.For(Catalog).Newest;
+        var atLogin = new WelcomeBackState { SeenPatch = "7.2", LastPlayedPatch = "7.0" };
+        var saved = atLogin with { SeenPatch = newest, ShownForUtc = then.TakenUtc, Quiet = true };
+
+        var state = saved.MeasuredFrom(atLogin);
+        Assert.Equal("7.2", state.SeenPatch);
+        Assert.True(state.Quiet);
+        Assert.Equal(then.TakenUtc, state.ShownForUtc);
+        Assert.Same(saved, saved.MeasuredFrom(null));
+
+        var input = Input(then, now) with { Previous = then, LastPlayedPatch = state.LastPlayedPatch };
+        var reopened = WelcomeBack.Compute(input with { RecordedPatch = state.SeenPatch });
+        Assert.Equal(SincePatchSource.Recorded, reopened.SinceSource);
+        Assert.Equal(ExpectedNew("7.2", series: false).Count, reopened.NewQuestTotal);
+        Assert.True(reopened.NewQuestTotal > 0);
+
+        // What the card said before the fix: measured from the patch saved at this login, nothing is new.
+        Assert.Equal(0, WelcomeBack.Compute(input with { RecordedPatch = saved.SeenPatch }).NewQuestTotal);
+    }
+
+    [Fact]
     public void Newness_compares_patches_or_series()
     {
         Assert.True(WelcomeBack.IsNewSince("7.21", "7.2", sinceIsSeries: false));

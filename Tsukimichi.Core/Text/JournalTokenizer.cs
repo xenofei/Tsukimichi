@@ -5,11 +5,14 @@ namespace Tsukimichi.Core.Text;
 
 /// <summary>
 /// Splits journal text and search queries into the words the journal index (<see cref="JournalTextIndex"/>) stores:
-/// runs of letters and digits, lowercased, with accents folded ("Éorzéa" and "eorzea" are one word) and an apostrophe
-/// kept inside a word ("y'shtola", "ul'dah"). Words shorter than <see cref="MinWordLength"/> are dropped, so "a", "of"
-/// and "to" never reach the index. Scripts written without spaces (Japanese, Chinese, Korean) are cut into overlapping
-/// two-character pairs, which a query of the same script is cut into too, so a phrase matches wherever its pairs all
-/// appear. Pure and allocation-light; the same rules run at index time and at query time.
+/// runs of letters and digits, lowercased, with accents and ligatures folded ("Éorzéa" is "eorzea", "cœur" is "coeur",
+/// "straße" is "strasse") and an apostrophe kept inside a word ("y'shtola", "ul'dah"). A word with an apostrophe is
+/// also stored without it ("uldah"), and a French elision is stored with and without its article ("d'ishgard" and
+/// "ishgard"). Words shorter than <see cref="MinWordLength"/> are dropped, so "a", "of" and "to" never reach the index.
+/// Scripts written without spaces (Japanese, Chinese, Korean) are cut into overlapping two-character pairs, which a
+/// query of the same script is cut into too, so a phrase matches wherever its pairs all appear; the katakana middle
+/// dot inside a name ("ヤ・シュトラ") is skipped, so the name reads as one run. Pure and allocation-light; the same rules
+/// run at index time and at query time.
 /// </summary>
 public static class JournalTokenizer
 {
@@ -18,6 +21,9 @@ public static class JournalTokenizer
 
     /// <summary>Longest word kept; longer runs (a URL, a line of digits) are cut here.</summary>
     public const int MaxWordLength = 32;
+
+    /// <summary>The French elided words longer than two letters ("jusqu'à", "lorsqu'il"); any one or two letters also count.</summary>
+    private static readonly HashSet<string> LongElisions = new(StringComparer.Ordinal) { "jusqu", "lorsqu", "puisqu", "quoiqu", "presqu" };
 
     /// <summary>Adds every word of <paramref name="text"/> to <paramref name="into"/>.</summary>
     public static void AddWords(ReadOnlySpan<char> text, ISet<string> into)
@@ -35,6 +41,13 @@ public static class JournalTokenizer
                 continue;
             }
 
+            // The middle dot between the parts of a name (ヤ・シュトラ) joins them: the name is one run, so a query
+            // typed with or without the dot cuts into the same pairs.
+            if (IsCjkSeparator(c) && cjk.Length > 0 && i + 1 < text.Length && IsCjk(text[i + 1]))
+            {
+                continue;
+            }
+
             FlushCjk(cjk, into);
             if (char.IsLetterOrDigit(c))
             {
@@ -42,7 +55,7 @@ public static class JournalTokenizer
                 continue;
             }
 
-            // An apostrophe joins two letters of one word: Y'shtola, Ul'dah, G'raha. Anything else ends the word.
+            // An apostrophe joins two letters of one word: Y'shtola, Ul'dah, d'Ishgard. Anything else ends the word.
             if (IsApostrophe(c) && word.Length > 0 && i + 1 < text.Length && char.IsLetter(text[i + 1]))
             {
                 word.Append('\'');
@@ -96,16 +109,37 @@ public static class JournalTokenizer
         }
 
         // A trailing apostrophe cannot happen (it needs a letter after it), so the word is complete as built.
-        if (word.Length >= MinWordLength)
+        AddForms(Fold(word.ToString()), into);
+        word.Clear();
+    }
+
+    /// <summary>
+    /// Adds a folded word and, when it holds an apostrophe, the word without it ("ul'dah" also as "uldah") and, after
+    /// an elided article or pronoun ("d'", "l'", "qu'", "jusqu'"), the rest on its own ("d'ishgard" also as "ishgard").
+    /// </summary>
+    private static void AddForms(string folded, ISet<string> into)
+    {
+        AddWord(folded, into);
+        var apostrophe = folded.IndexOf('\'', StringComparison.Ordinal);
+        if (apostrophe < 0)
         {
-            var folded = Fold(word.ToString());
-            if (folded.Length >= MinWordLength)
-            {
-                into.Add(folded.Length > MaxWordLength ? folded[..MaxWordLength] : folded);
-            }
+            return;
         }
 
-        word.Clear();
+        AddWord(folded.Replace("'", string.Empty, StringComparison.Ordinal), into);
+        var head = folded[..apostrophe];
+        if (head.Length <= 2 || LongElisions.Contains(head))
+        {
+            AddForms(folded[(apostrophe + 1)..], into);
+        }
+    }
+
+    private static void AddWord(string folded, ISet<string> into)
+    {
+        if (folded.Length >= MinWordLength)
+        {
+            into.Add(folded.Length > MaxWordLength ? folded[..MaxWordLength] : folded);
+        }
     }
 
     private static void FlushCjk(StringBuilder run, ISet<string> into)
@@ -130,7 +164,10 @@ public static class JournalTokenizer
         run.Clear();
     }
 
-    /// <summary>Lowercase, accents removed ("É" to "e"), compatibility forms folded (full-width letters to ASCII).</summary>
+    /// <summary>
+    /// Lowercase, accents removed ("É" to "e"), compatibility forms folded (full-width letters to ASCII) and the
+    /// ligatures and sharp s spelled out ("œ" to "oe", "æ" to "ae", "ß" to "ss").
+    /// </summary>
     public static string Fold(string word)
     {
         ArgumentNullException.ThrowIfNull(word);
@@ -140,7 +177,7 @@ public static class JournalTokenizer
         }
 
         var decomposed = word.Normalize(NormalizationForm.FormKD);
-        var sb = new StringBuilder(decomposed.Length);
+        var sb = new StringBuilder(decomposed.Length + 2);
         foreach (var c in decomposed)
         {
             if (CharUnicodeInfo.GetUnicodeCategory(c) == UnicodeCategory.NonSpacingMark)
@@ -148,7 +185,21 @@ public static class JournalTokenizer
                 continue;
             }
 
-            sb.Append(char.ToLowerInvariant(c));
+            switch (char.ToLowerInvariant(c))
+            {
+                case 'œ':
+                    sb.Append("oe");
+                    break;
+                case 'æ':
+                    sb.Append("ae");
+                    break;
+                case 'ß' or 'ẞ':
+                    sb.Append("ss");
+                    break;
+                case var lower:
+                    sb.Append(lower);
+                    break;
+            }
         }
 
         return sb.ToString().Normalize(NormalizationForm.FormC);
@@ -156,9 +207,12 @@ public static class JournalTokenizer
 
     private static bool IsApostrophe(char c) => c is '\'' or '’' or 'ʼ';
 
+    /// <summary>The katakana middle dot (・, and its half-width form) and the double hyphen (゠) between the parts of a name.</summary>
+    private static bool IsCjkSeparator(char c) => c is '・' or '゠' or '･';
+
     /// <summary>Han, Hiragana, Katakana (with the prolonged sound mark) and Hangul: the scripts the game writes without spaces.</summary>
     private static bool IsCjk(char c) =>
-        c is (>= '぀' and <= 'ヿ')   // Hiragana, Katakana
+        c is ((>= '぀' and <= 'ヿ') and not ('・' or '゠')) // Hiragana, Katakana, but not the name separators
             or (>= '㐀' and <= '䶿') // CJK extension A
             or (>= '一' and <= '鿿') // CJK unified ideographs
             or (>= '가' and <= '힯') // Hangul syllables

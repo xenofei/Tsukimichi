@@ -15,6 +15,9 @@ public static class JournalIndexStore
     public const string FilePrefix = "journal-index.";
     public const string FileSuffix = ".bin";
 
+    /// <summary>The end of a temporary file's name: <c>journal-index.&lt;version&gt;.&lt;lang&gt;.bin.&lt;random&gt;.tmp</c>.</summary>
+    public const string TempSuffix = ".tmp";
+
     /// <summary>The folder the index files live in.</summary>
     public static string Folder(string configDir)
     {
@@ -46,25 +49,52 @@ public static class JournalIndexStore
         return JournalTextIndex.Read(stream, gameVersion, language);
     }
 
-    /// <summary>Writes the index for its own game version and language; returns the file's size in bytes.</summary>
+    /// <summary>
+    /// Writes the index for its own game version and language; returns the file's size in bytes. The temporary file
+    /// has a name of its own per call, so two builds never write the same one.
+    /// </summary>
     public static long Save(string configDir, JournalTextIndex index)
     {
         ArgumentNullException.ThrowIfNull(index);
         var path = PathFor(configDir, index.GameVersion, index.Language);
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        var temp = path + ".tmp";
-        using (var stream = new FileStream(temp, FileMode.Create, FileAccess.Write, FileShare.None, 1 << 16))
+        var temp = path + "." + Path.GetFileNameWithoutExtension(Path.GetRandomFileName()) + TempSuffix;
+        try
         {
-            index.Write(stream);
-            stream.Flush(flushToDisk: true);
+            using (var stream = new FileStream(temp, FileMode.CreateNew, FileAccess.Write, FileShare.None, 1 << 16))
+            {
+                index.Write(stream);
+                stream.Flush(flushToDisk: true);
+            }
+
+            File.Move(temp, path, overwrite: true);
+        }
+        catch
+        {
+            TryDelete(temp);
+            throw;
         }
 
-        File.Move(temp, path, overwrite: true);
         return new FileInfo(path).Length;
     }
 
-    /// <summary>Deletes every index file except <paramref name="keepPath"/> (null deletes them all); returns how many went.</summary>
-    public static int DeleteOthers(string configDir, string? keepPath)
+    /// <summary>
+    /// Deletes every index file except <paramref name="keepPath"/> (null deletes them all); returns how many went.
+    /// Temporary files are left alone: one may belong to a build still writing it (<see cref="DeleteTemp"/>).
+    /// </summary>
+    public static int DeleteOthers(string configDir, string? keepPath) =>
+        Delete(configDir, file =>
+            !file.EndsWith(TempSuffix, StringComparison.OrdinalIgnoreCase)
+            && (keepPath is null || !string.Equals(Path.GetFullPath(file), Path.GetFullPath(keepPath), StringComparison.OrdinalIgnoreCase)));
+
+    /// <summary>
+    /// Deletes the temporary files a save left behind (a crash or an unload mid-write); returns how many went. Called
+    /// when no build runs: at startup, and with <see cref="DeleteOthers"/> for "Delete all data".
+    /// </summary>
+    public static int DeleteTemp(string configDir) =>
+        Delete(configDir, file => file.EndsWith(TempSuffix, StringComparison.OrdinalIgnoreCase));
+
+    private static int Delete(string configDir, Func<string, bool> which)
     {
         var folder = Folder(configDir);
         if (!Directory.Exists(folder))
@@ -75,26 +105,36 @@ public static class JournalIndexStore
         var deleted = 0;
         foreach (var file in Directory.EnumerateFiles(folder, FilePrefix + "*"))
         {
-            if (keepPath is not null && string.Equals(Path.GetFullPath(file), Path.GetFullPath(keepPath), StringComparison.OrdinalIgnoreCase))
+            if (!which(file))
             {
                 continue;
             }
 
-            try
+            if (TryDelete(file))
             {
-                File.Delete(file);
                 deleted++;
-            }
-            catch (IOException)
-            {
-                // In use or already gone; the next rebuild tries again.
-            }
-            catch (UnauthorizedAccessException)
-            {
             }
         }
 
         return deleted;
+    }
+
+    private static bool TryDelete(string file)
+    {
+        try
+        {
+            File.Delete(file);
+            return true;
+        }
+        catch (IOException)
+        {
+            // In use or already gone; the next rebuild tries again.
+            return false;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return false;
+        }
     }
 
     private static string Slug(string value)

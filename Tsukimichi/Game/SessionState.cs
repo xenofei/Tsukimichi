@@ -341,6 +341,7 @@ public sealed class SessionState
 
         DeleteIfExists(paths.PinsFile);
         DeleteIfExists(paths.OverridesFile);
+        DeleteJournalIndex();
         recentEvents.Clear();
         // Listeners drop their in-memory copies (pins, overrides, spoiler overrides) first, so the bump in FollowLive
         // is the last one: whatever rebuilds on it, the spoiler masks included, sees the data already gone.
@@ -599,6 +600,23 @@ public sealed class SessionState
                 log?.Warning(ex, "Could not delete {Path}; it is left in place", path);
                 return;
             }
+        }
+    }
+
+    /// <summary>
+    /// The journal search index (<c>cache/journal-index.*.bin</c>) and any temporary file a save left. It holds words
+    /// and quest ids only, but "Delete all data" means every file Tsukimichi wrote; a later enable builds it again.
+    /// </summary>
+    private void DeleteJournalIndex()
+    {
+        try
+        {
+            Core.Text.JournalIndexStore.DeleteOthers(paths.ConfigDir, null);
+            Core.Text.JournalIndexStore.DeleteTemp(paths.ConfigDir);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            log?.Warning(ex, "Could not delete the journal search index; it is left in place");
         }
     }
 }

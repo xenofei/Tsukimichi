@@ -1,4 +1,6 @@
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using Tsukimichi.Config;
@@ -40,8 +42,10 @@ public sealed class LocService : IDisposable
         this.settings = settings;
         this.framework = framework;
         this.log = log;
-        pluginInterface.LanguageChanged += OnDalamudLanguageChanged;
+
+        // Subscribed only once the first switch went through, so a throw here leaves no handler behind.
         Apply();
+        pluginInterface.LanguageChanged += OnDalamudLanguageChanged;
     }
 
     /// <summary>The language code the settings resolve to now: "en", "ja", "de", "fr" or "qps".</summary>
@@ -71,7 +75,7 @@ public sealed class LocService : IDisposable
             if (translated == 0)
             {
                 // The satellite assembly (ja/Tsukimichi.resources.dll beside the plugin) did not load.
-                log.Warning("Plugin language {Language}: its resource file did not load; English is shown", language);
+                log.Warning(Loc.LastReadError, "Plugin language {Language}: its resource file did not load; English is shown", language);
             }
             else
             {
@@ -98,6 +102,10 @@ public sealed class LocService : IDisposable
         }
 
         // Dalamud raises this from its settings window; the switch belongs on the framework thread with the draws.
-        framework.RunOnFrameworkThread(Apply);
+        framework.RunOnFrameworkThread(Apply).ContinueWith(
+            t => log.Warning(t.Exception?.GetBaseException(), "Plugin language could not be switched"),
+            CancellationToken.None,
+            TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously,
+            TaskScheduler.Default);
     }
 }
