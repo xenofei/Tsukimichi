@@ -12,7 +12,7 @@ namespace Tsukimichi.Ui;
 /// The Journal tree as a strip of icons (feature plan v4 L1/L3, design v4 §8.2 "Icon strip"): what the tree becomes
 /// when its handle is dragged under <see cref="PaneLayout.StripSnapLogical"/>. One row per top-level node the full
 /// tree would show (All quests, each section, Unlock quests, and Removed from the game and Other paths when the tree
-/// lists them), each its node glyph (<see cref="DrawNodeGlyph"/>, where the orbit icon will plug in) with the gold
+/// lists them), each its node glyph (<see cref="DrawNodeGlyph"/>: the orbit, or the halo under Plain flair) with the gold
 /// Ready dot when something under it is Ready. Hovering a row names the node in full with its progress and Ready
 /// count; a click selects it, and the rows are real items, so keyboard navigation reaches them. The row holding the
 /// selected scope carries the selection's wash and gold rule. A reveal made while the strip shows is left pending for
@@ -25,6 +25,7 @@ public sealed partial class TreePane
     public void DrawStrip(CatalogBundle current, QueryRunner runner, bool showUnlisted)
     {
         EnsureNodes(current);
+        ApplyIcons();
         RefreshCounts(runner);
         // The strip has no rows to open or scroll to: a pending reveal is left for the full tree, which opens the
         // node's ancestors and scrolls to it once the pane is wide again (a scope change drops it meanwhile).
@@ -63,6 +64,7 @@ public sealed partial class TreePane
     private void DrawStripNode(Node node, float width, float rowHeight)
     {
         var clicked = ImGui.InvisibleButton(node.Id, new Vector2(MathF.Max(1f, width), rowHeight));
+        var itemId = ImGuiP.GetItemID();
         var hovered = ImGui.IsItemHovered();
         if (clicked)
         {
@@ -89,7 +91,7 @@ public sealed partial class TreePane
         }
 
         var center = new Vector2(MathF.Round((min.X + max.X) * 0.5f), MathF.Round((min.Y + max.Y) * 0.5f));
-        DrawNodeGlyph(dl, node, center, glyphRadius, node.Count.Fraction, readyDot: node.Ready > 0);
+        DrawNodeGlyph(dl, node, center, glyphRadius, Motion.Fill(Motion.Key(GaugeTag, itemId), node.Count.Fraction), readyDot: node.Ready > 0);
         Chrome.FocusRing();
 
         if (hovered)

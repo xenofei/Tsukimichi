@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility.Raii;
+using Dalamud.Plugin.Services;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Ui;
@@ -20,6 +21,13 @@ namespace Tsukimichi.Ui;
 /// A category with a single genre is folded into one leaf (the category's name, the genre's scope and counts), and a
 /// section whose only category folded likewise becomes a single leaf, so no node ever expands to just one child.
 /// The node list is built once per catalog; count labels are re-materialized only when the counts instance changes.
+/// <para>
+/// The Moon Road look (feature plan v4 V2) under Full and Quiet flair: each node's glyph is an orbit round its official
+/// icon or gap glyph (<see cref="DrawNodeGlyph"/>, icons from the catalog's <see cref="NodeIconMap"/>), the road under
+/// each row replaces the mini bar and the section rules, a header line names the Journal with the overall count, and
+/// moon-road dividers separate the story, side and virtual blocks (<c>TreePane.Art.cs</c>). Plain flair keeps the 1.3
+/// tree.
+/// </para>
 /// <para>
 /// Rows read the short names of <see cref="JournalNames.Short"/> ("Eden", "Hildibrand", "Main Scenario" with an
 /// ARR–EW pill), and a row whose name is shortened or cut names the node in full, with its journal path, on hover.
@@ -73,10 +81,14 @@ public sealed partial class TreePane
         public string Path { get; set; } = string.Empty;
 
         /// <summary>
-        /// The node's official icon for the orbit (design v4 §6.2-6.3), resolved once per catalog by the icon task; 0
-        /// draws the moon halo. Read only by <see cref="DrawNodeGlyph"/>.
+        /// The node's identity icon for the orbit (design v4 §6.2-6.3): an official game icon or a gap glyph from
+        /// <see cref="NodeIconMap"/>, applied once per catalog; empty draws the moon halo. Read only by
+        /// <see cref="DrawNodeGlyph"/>.
         /// </summary>
-        public uint IconId { get; set; }
+        public NodeIcon Icon { get; set; }
+
+        /// <summary>The tree block a top-level node belongs to, for the moon-road dividers between blocks.</summary>
+        public JournalBlock Block { get; set; } = JournalBlock.Virtual;
 
         public bool Leaf { get; } = leaf;
         public List<Node> Children { get; } = [];
@@ -165,6 +177,11 @@ public sealed partial class TreePane
     private const uint RevealTag = 0x5452_4552;  // "TRER"
 
     private readonly UiState ui;
+    private readonly ITextureProvider textures;
+    private readonly Func<NodeIconMap> nodeIcons;
+
+    /// <summary>The icon map last applied to the nodes; null after the nodes are rebuilt, so the next frame applies it again.</summary>
+    private NodeIconMap? appliedIcons;
 
     private CatalogBundle? bundle;
     private readonly List<Node> sections = [];
@@ -190,14 +207,20 @@ public sealed partial class TreePane
     private float rowPadY;
     private float glyphRadius;
 
-    public TreePane(UiState ui)
+    /// <param name="ui">The shared UI state.</param>
+    /// <param name="textures">The texture provider the orbits read the game icons through.</param>
+    /// <param name="nodeIcons">The current catalog's node icons (<see cref="Game.SessionState.NodeIcons"/>), resolved once per catalog.</param>
+    public TreePane(UiState ui, ITextureProvider textures, Func<NodeIconMap> nodeIcons)
     {
         this.ui = ui ?? throw new ArgumentNullException(nameof(ui));
+        this.textures = textures ?? throw new ArgumentNullException(nameof(textures));
+        this.nodeIcons = nodeIcons ?? throw new ArgumentNullException(nameof(nodeIcons));
     }
 
     public void Draw(CatalogBundle current, QueryRunner runner, bool showUnlisted)
     {
         EnsureNodes(current);
+        ApplyIcons();
         RefreshCounts(runner);
 
         // A reveal from another pane (Moonlit, Characters, Flight, the MSQ status, chat) selected a scope whose
@@ -219,12 +242,22 @@ public sealed partial class TreePane
         // Rows touch: the washes of neighbouring rows meet, and each row is exactly its own height.
         using (ImRaii.PushStyle(ImGuiStyleVar.ItemSpacing, new Vector2(ImGui.GetStyle().ItemSpacing.X, 0f)))
         {
+            // The Moon Road header and the dividers between the story, side and virtual blocks (Full and Quiet flair).
+            var ornaments = Theme.ShowRules;
+            if (ornaments)
+            {
+                DrawHeader(width);
+            }
+
+            var block = JournalBlock.All;
             DrawNode(allNode, section: true);
             foreach (var section in sections)
             {
+                BlockDivider(ref block, section.Block, width, ornaments);
                 DrawNode(section, section: true);
             }
 
+            BlockDivider(ref block, JournalBlock.Virtual, width, ornaments);
             DrawNode(featureNode, section: true);
             // A reveal can land in the removed scope while the config hides the node; show it so the selection is visible.
             if (showUnlisted || ui.Scope == QuestScope.VirtualUnlisted)
@@ -469,13 +502,15 @@ public sealed partial class TreePane
         var barWidth = UiMetrics.Px(BarWidthLogical);
         var barGap = UiMetrics.Px(BarGapLogical);
         var pillText = node.PillText;
+        // Under Full and Quiet flair the road under the row carries the length encoding, so the mini bar takes no room.
+        var road = Theme.ShowRules && !node.CountIsTally;
         // Where the pill does not show the label carries the expansion suffix whole, and the fit makes room for it.
         var widths = new TreeRowWidths(
             node.NameWidth,
             node.SuffixWidth,
             countWidth > 0f ? countWidth + pad : 0f,
             node.Ready > 0 && tier != TreeTier.Slim ? node.ReadyWidth + pad : 0f,
-            tier <= TreeTier.Trim && !node.CountIsTally ? barWidth + barGap : 0f,
+            !road && tier <= TreeTier.Trim && !node.CountIsTally ? barWidth + barGap : 0f,
             tier == TreeTier.Full && pillText.Length > 0 ? node.PillWidth + pad : 0f);
         var fit = TreeRowFit.Fit(right - namePos.X, UiMetrics.Px(LayoutBudgets.RowNameMinLogical), in widths);
         var showCount = fit.Count;
@@ -550,18 +585,25 @@ public sealed partial class TreePane
             }
         }
 
-        // The glyph, with the Ready dot when the pill could not show. The fill moves only when the count changes (a
-        // quest completed, another character viewed), never on its own.
+        // The glyph, with the Ready mark when the pill could not show. The fill moves only when the count changes (a
+        // quest completed, another character viewed) or, under Full flair, when the orbit first shows; never on its own.
         var readyDot = node.Ready > 0 && !showReady;
-        DrawNodeGlyph(dl, node, haloCenter, radius, Motion.Gauge(Motion.Key(GaugeTag, itemId), node.Count.Fraction), readyDot);
+        var shown = Motion.Fill(Motion.Key(GaugeTag, itemId), node.Count.Fraction);
+        DrawNodeGlyph(dl, node, haloCenter, radius, shown, readyDot);
+        if (road)
+        {
+            DrawRoad(dl, namePos.X, max.X - UiMetrics.Px(RoadEndLogical), max.Y - UiMetrics.Px(RoadLiftLogical), shown, selected);
+        }
+
         if (selected)
         {
             // The reveal pulse (a reveal from another pane landed here): around the row, inside the pane's edges.
             Motion.DrawRevealPulse(dl, Motion.Key(RevealTag, itemId), new Vector2(indentX, min.Y + 1f), new Vector2(max.X - pad, max.Y - 1f), UiMetrics.Px(4f));
         }
 
-        // Section rows read as chapters: a 1 px VeilLine rule under the row, indented past the arrow.
-        if (section)
+        // Section rows read as chapters: a 1 px VeilLine rule under the row, indented past the arrow (Plain flair; the
+        // road takes its place otherwise).
+        if (section && !Theme.ShowRules)
         {
             var y = max.Y - 0.5f;
             dl.AddLine(new Vector2(labelX, y), new Vector2(max.X - pad, y), Theme.VeilLineU32, 1f);
@@ -891,8 +933,50 @@ public sealed partial class TreePane
 
         for (var i = 0; i < sections.Count; i++)
         {
+            // The block is read from the section id before a fold hands the node its genre's scope.
+            var block = JournalBlocks.ForSection(sections[i].Scope.Id);
             sections[i] = Fold(sections[i]);
+            sections[i].Block = block;
             NameTree(sections[i], parent: null, sections[i].FullName, current.Language, string.Empty);
+        }
+
+        allNode.Block = JournalBlock.All;
+        appliedIcons = null;
+    }
+
+    /// <summary>
+    /// Hands every node its icon from the current catalog's <see cref="NodeIconMap"/> when the map or the nodes changed
+    /// (once per catalog; a map that lands after the nodes were built is applied the frame it arrives). The Other paths
+    /// node, which the map does not know, takes the Other glyph.
+    /// </summary>
+    private void ApplyIcons()
+    {
+        var map = nodeIcons();
+        if (ReferenceEquals(map, appliedIcons))
+        {
+            return;
+        }
+
+        appliedIcons = map;
+        var any = map.Nodes.Count > 0;
+        ApplyIcon(allNode, map, any);
+        foreach (var section in sections)
+        {
+            ApplyIcon(section, map, any);
+        }
+
+        ApplyIcon(featureNode, map, any);
+        ApplyIcon(unlistedNode, map, any);
+        ApplyIcon(otherPathsNode, map, any);
+    }
+
+    /// <summary>The node's icon and its children's; with an empty map (no sheets) every node keeps the moon halo.</summary>
+    private static void ApplyIcon(Node node, NodeIconMap map, bool any)
+    {
+        node.Icon = any ? map.For(node.Scope) : default;
+        foreach (var child in node.Children)
+        {
+            ApplyIcon(child, map, any);
         }
     }
 

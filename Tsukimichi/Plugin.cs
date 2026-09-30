@@ -126,7 +126,8 @@ public sealed class Plugin : IDalamudPlugin
         try
         {
             var bundle = await loader.BuildBundleAsync(DataManager.Language, filing, token).ConfigureAwait(false);
-            await Framework.RunOnFrameworkThread(() => PublishCatalog(generation, bundle, null)).ConfigureAwait(false);
+            var icons = ResolveNodeIcons(bundle);
+            await Framework.RunOnFrameworkThread(() => PublishCatalog(generation, bundle, null, icons)).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
@@ -141,11 +142,28 @@ public sealed class Plugin : IDalamudPlugin
     }
 
     /// <summary>
+    /// The Journal tree's node icons for a finished build (Moon Road proposal §6.2), read from the sheets off the
+    /// framework thread, once per catalog. A failure is logged and leaves the tree on its moon halos.
+    /// </summary>
+    private static Core.Ui.NodeIconMap ResolveNodeIcons(CatalogBundle bundle)
+    {
+        try
+        {
+            return NodeIconResolver.Build(DataManager.Excel).Resolve(bundle.Catalog);
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "Journal node icons could not be resolved; the tree keeps its moon halos");
+            return Core.Ui.NodeIconMap.Empty;
+        }
+    }
+
+    /// <summary>
     /// Framework thread. Hands a finished build to the session, unless the plugin is unloading or a newer build has
     /// started since (a filing flip or retry during this one): then this result is stale and is dropped, and the
     /// newer build's result is the one the session gets.
     /// </summary>
-    private void PublishCatalog(int generation, CatalogBundle? bundle, string? error)
+    private void PublishCatalog(int generation, CatalogBundle? bundle, string? error, Core.Ui.NodeIconMap? nodeIcons = null)
     {
         if (gameStateDisposed)
         {
@@ -160,7 +178,7 @@ public sealed class Plugin : IDalamudPlugin
 
         if (bundle is not null)
         {
-            Session.SetCatalog(bundle);
+            Session.SetCatalog(bundle, nodeIcons);
         }
         else
         {
@@ -277,7 +295,8 @@ public sealed class Plugin : IDalamudPlugin
 
                 var error = t.IsFaulted ? t.Exception?.GetBaseException().Message ?? "unknown error" : null;
                 var bundle = t.IsFaulted ? null : t.Result;
-                Framework.RunOnFrameworkThread(() => PublishCatalog(generation, bundle, error))
+                var icons = bundle is null ? null : ResolveNodeIcons(bundle);
+                Framework.RunOnFrameworkThread(() => PublishCatalog(generation, bundle, error, icons))
                     .ContinueWith(static r => _ = r.Exception, TaskContinuationOptions.OnlyOnFaulted);
             },
             CancellationToken.None,
