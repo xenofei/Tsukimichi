@@ -130,7 +130,7 @@ public sealed class RouteWindow : Window
         var v = view;
 
         ImGui.PushFont(UiBuilder.IconFont);
-        using (Theme.PushText(Theme.Accent))
+        using (Theme.PushText(Theme.Surface.TextSecondary))
         {
             ImGui.TextUnformatted(RouteIcon);
         }
@@ -222,7 +222,7 @@ public sealed class RouteWindow : Window
 
         ImGui.SameLine();
         ImGui.AlignTextToFramePadding();
-        using (Theme.PushText(Theme.Accent))
+        using (Theme.PushText(Theme.Surface.Text))
         {
             ImGui.TextUnformatted(note);
         }
@@ -336,7 +336,7 @@ public sealed class RouteWindow : Window
                     UiMetrics.Tooltip(Strings.RouteGateTooltip);
                 }
 
-                dl.AddText(new Vector2(min.X + UiMetrics.Px(IndentLogical), textY), Theme.AccentU32, l.Text);
+                dl.AddText(new Vector2(min.X + UiMetrics.Px(IndentLogical), textY), Theme.U32(Theme.Surface.TextSecondary), l.Text);
                 return;
             }
         }
@@ -377,11 +377,13 @@ public sealed class RouteWindow : Window
             dl.AddText(new Vector2(x, textY), Theme.U32(Theme.Surface.TextSecondary), l.Level);
             x += ImGui.CalcTextSize("Lv 000").X + UiMetrics.Px(6f);
 
-            dl.AddText(new Vector2(x, textY), Theme.U32(l.IsTarget ? Theme.Accent : Theme.Surface.Text), l.Text);
+            // Gold only for a target the character can act on now; a Blocked or locked-out target reads like any step.
+            var gold = l.IsTarget && l.State is QuestState.Ready or QuestState.ReadyOnOtherJob or QuestState.Accepted;
+            dl.AddText(new Vector2(x, textY), Theme.U32(gold ? Theme.Accent : Theme.Surface.Text), l.Text);
             x += ImGui.CalcTextSize(l.Text).X + UiMetrics.Px(8f);
             if (l.Mark.Length > 0)
             {
-                dl.AddText(new Vector2(x, textY), l.IsTarget ? Theme.AccentU32 : Theme.U32(Theme.Surface.TextTertiary), l.Mark);
+                dl.AddText(new Vector2(x, textY), gold ? Theme.AccentU32 : Theme.U32(l.IsTarget ? Theme.Surface.TextSecondary : Theme.Surface.TextTertiary), l.Mark);
                 x += ImGui.CalcTextSize(l.Mark).X + UiMetrics.Px(8f);
             }
 

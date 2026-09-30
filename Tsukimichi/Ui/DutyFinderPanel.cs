@@ -13,7 +13,7 @@ namespace Tsukimichi.Ui;
 /// The Duty Finder unlock hint (P13), drawn side: a small borderless window beside the game's Duty Finder while a
 /// padlocked duty is selected (<see cref="DutyFinderHint.Current"/>): "Locked duty", the duty's name, then per quest that
 /// unlocks it "Unlocked by:" with its state moon and name, <see cref="Core.Evaluation.BlockerText.StatusText"/> under it
-/// in Dusk (the quest done: in Moon), and the buttons Reveal in Tsukimichi and Flag giver.
+/// in Dusk (the quest done: in the quieter MoonDim), and the buttons Reveal in Tsukimichi and Flag giver.
 /// <para>
 /// Drawn from <c>UiBuilder.Draw</c>, outside the window system, so it has no chrome; unlike the item hover hint it takes
 /// clicks. Placed by <see cref="BesidePlacement"/>: right of the Duty Finder, else left, below or above, sliding along
@@ -157,7 +157,7 @@ public sealed class DutyFinderPanel
             ImGui.TextUnformatted(line.Name);
 
             using var indented = ImRaii.PushIndent(indent, scaled: false);
-            using (ImRaii.PushColor(ImGuiCol.Text, line.Done ? Theme.Moon : Theme.Dusk))
+            using (ImRaii.PushColor(ImGuiCol.Text, line.Done ? Theme.MoonDim : Theme.Dusk))
             {
                 ImGui.TextUnformatted(line.StatusText);
             }

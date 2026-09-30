@@ -187,7 +187,7 @@ public sealed class PlanPane
         ImGui.SameLine();
         if (ImGui.GetTime() - copiedAt < CopiedSeconds)
         {
-            using var gold = Theme.PushText(Theme.Accent);
+            using var confirmation = Theme.PushText(Theme.Surface.Text);
             ImGui.TextUnformatted(copied);
         }
         else
@@ -438,7 +438,7 @@ public sealed class PlanPane
     }
 
     /// <summary>
-    /// A toggle chip flowing onto the next line when the row is full: a pill painted gold-tinted when on, raised when
+    /// A toggle chip flowing onto the next line when the row is full: a pill painted silver-tinted when on, raised when
     /// off, with the focus ring; returns true on the click that flips it.
     /// </summary>
     private static bool FlowChip(string id, string label, bool on, string tooltip, ref bool first, bool enabled = true)
@@ -468,8 +468,9 @@ public sealed class PlanPane
         uint fill, border, ink;
         if (on)
         {
-            fill = Theme.WithAlpha(Theme.Accent, 0.16f + 0.08f * hover);
-            border = Theme.WithAlpha(Theme.Accent, 0.6f);
+            // A selection, not a call to action: silver, like the other active segments.
+            fill = Theme.WithAlpha(s.Text, 0.14f + 0.08f * hover);
+            border = Theme.WithAlpha(s.Text, 0.55f);
             ink = Theme.U32(s.Text);
         }
         else
