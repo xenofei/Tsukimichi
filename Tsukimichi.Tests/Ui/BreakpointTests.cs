@@ -80,6 +80,16 @@ public class BreakpointTests
     }
 
     [Fact]
+    public void Unreadable_measurements_give_the_default_budgets_never_nan()
+    {
+        Assert.Equal(LayoutBudgets.StatusMinLogical, LayoutBudgets.StatusMin(float.NaN));
+        Assert.Equal(LayoutBudgets.MaxStatusMinLogical, LayoutBudgets.StatusMin(float.PositiveInfinity));
+        Assert.Equal(ScaleMetrics.RailLogical, LayoutBudgets.RailWidth(float.NaN, float.NaN));
+        Assert.Equal(ScaleMetrics.RailLogical, LayoutBudgets.RailWidth(float.NaN, 20f));
+        Assert.Equal(LayoutBudgets.MaxRailLogical, LayoutBudgets.RailWidth(float.PositiveInfinity, float.NaN));
+    }
+
+    [Fact]
     public void Unreadable_label_value_widths_stack()
     {
         Assert.True(LayoutBudgets.StackLabelValue(float.NaN, 80f, 8f, 16f));

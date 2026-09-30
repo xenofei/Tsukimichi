@@ -158,6 +158,54 @@ public class WordWrapTests
         Assert.Empty(Wrap(string.Empty, 100f));
     }
 
+    [Theory]
+    [InlineData("Niveau 100 requis pour la quête suivante")]
+    [InlineData("Niveau 100 requis pour la quête suivante")]
+    [InlineData("Niveau 100 requis pour la quête suivante")]
+    public void A_no_break_space_never_breaks(string text)
+    {
+        for (var width = 10f; width <= 400f; width += 5f)
+        {
+            foreach (var line in Texts(text, width))
+            {
+                Assert.False(line.EndsWith("Niveau", StringComparison.Ordinal), $"broke after Niveau at {width}: \"{line}\"");
+                Assert.False(line.StartsWith("100", StringComparison.Ordinal), $"broke before 100 at {width}: \"{line}\"");
+            }
+        }
+    }
+
+    [Theory]
+    [InlineData("Êtes-vous prêt ? Parlez à Cid !", "?", "!")]
+    [InlineData("Terminé à 50 % seulement", "%", "%")]
+    [InlineData("Il dit « Bonjour » puis repart", "»", "»")]
+    public void A_closing_mark_after_a_space_never_starts_a_line(string text, string mark, string other)
+    {
+        for (var width = 10f; width <= 400f; width += 3f)
+        {
+            foreach (var line in Texts(text, width))
+            {
+                Assert.False(line.StartsWith(mark, StringComparison.Ordinal) || line.StartsWith(other, StringComparison.Ordinal), $"a line starts with a closing mark at {width}: \"{line}\"");
+                Assert.False(line.EndsWith('«'), $"a line ends with an opening guillemet at {width}: \"{line}\"");
+            }
+        }
+    }
+
+    [Theory]
+    [InlineData("がががががが")]
+    [InlineData("葛︀城︁葛︀城︁葛︀城︁")]
+    [InlineData("Café crème brûlée")]
+    public void A_combining_mark_stays_with_its_base(string text)
+    {
+        for (var width = 0f; width <= 200f; width += 4f)
+        {
+            foreach (var line in Wrap(text, width))
+            {
+                var first = text[line.Start];
+                Assert.False(char.GetUnicodeCategory(first) is System.Globalization.UnicodeCategory.NonSpacingMark || first is >= '︀' and <= '️', $"a line starts with a mark at {width}");
+            }
+        }
+    }
+
     [Fact]
     public void Each_word_is_measured_once()
     {

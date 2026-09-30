@@ -69,29 +69,34 @@ public static class ScaleMetrics
     /// <summary>
     /// The main window's minimum size in Dalamud-scaled units for a UI scale (feature plan v4 L1): the tab rail, the
     /// floors of the tree, the centre and the detail pane and the gutters between them
-    /// (<see cref="PaneLayout.MinContentLogical"/>), each multiplied by the clamped UI scale, plus the window's padding;
-    /// and the height floor. Dalamud multiplies the result by its global scale, so no pane is ever squeezed under its
-    /// floor by the window alone.
+    /// (<see cref="PaneLayout.MinContentLogical"/>), each multiplied by the clamped UI scale, plus the window's padding
+    /// and the pixels the whole-pixel floors and gutters can add (<see cref="PaneLayout.RoundingReservePx"/>, taken at a
+    /// global scale of 1); and the height floor. Dalamud multiplies the result by its global scale, so no pane is ever
+    /// squeezed under its floor by the window alone.
     /// </summary>
     /// <param name="uiScale">The UI scale.</param>
     /// <param name="railLogical">
     /// The rail's logical width when a translated tab label widened it (<see cref="LayoutBudgets.RailWidth"/>), so the
     /// wider rail does not come out of the centre floor; never less than <see cref="RailLogical"/>.
     /// </param>
-    public static Vector2 MinWindowSize(float uiScale, float railLogical = RailLogical)
-    {
-        var scale = ClampUiScale(uiScale);
-        var rail = float.IsFinite(railLogical) ? MathF.Max(railLogical, RailLogical) : RailLogical;
-        return new Vector2(((rail + PaneLayout.MinContentLogical) * scale) + WindowPaddingX, MinWindowHeightLogical * scale);
-    }
+    public static Vector2 MinWindowSize(float uiScale, float railLogical = RailLogical) =>
+        MinWindowSize(uiScale, railLogical, PaneLayout.RoundingReservePx);
 
     /// <summary>
     /// <see cref="MinWindowSize(float, float)"/> never larger than the viewport less <see cref="ViewportMarginPx"/> on each side
     /// (in Dalamud-scaled units, so divided by <paramref name="globalScale"/>): at UiScale 1.6 on a small screen the
     /// window can still be placed whole. A viewport that is not known (non-finite or non-positive) leaves it unclamped.
+    /// The rounding reserve is <see cref="PaneLayout.RoundingReservePx"/> pixels at this global scale.
     /// </summary>
     public static Vector2 MinWindowSize(float uiScale, float globalScale, Vector2 viewport, float railLogical = RailLogical) =>
-        FitViewport(MinWindowSize(uiScale, railLogical), globalScale, viewport);
+        FitViewport(MinWindowSize(uiScale, railLogical, PaneLayout.RoundingReservePx / SafeGlobalScale(globalScale)), globalScale, viewport);
+
+    private static Vector2 MinWindowSize(float uiScale, float railLogical, float reserve)
+    {
+        var scale = ClampUiScale(uiScale);
+        var rail = float.IsFinite(railLogical) ? MathF.Max(railLogical, RailLogical) : RailLogical;
+        return new Vector2(((rail + PaneLayout.MinContentLogical) * scale) + WindowPaddingX + reserve, MinWindowHeightLogical * scale);
+    }
 
     /// <summary>
     /// The main window's first-use size in Dalamud-scaled units (T14, accessibility B6): 1100 × 700 at the default UI

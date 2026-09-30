@@ -46,7 +46,10 @@ public static class LayoutBudgets
     /// <param name="journalLabel">The Journal tab's label, which shares its row with the Ready badge.</param>
     public static float RailWidth(float widestLabel, float journalLabel)
     {
-        var need = MathF.Max(widestLabel, journalLabel + TabBadgeReserveLogical) + TabChromeLogical;
+        // An unreadable measurement counts as no label: the default rail, never NaN.
+        var widest = float.IsNaN(widestLabel) ? 0f : widestLabel;
+        var journal = float.IsNaN(journalLabel) ? 0f : journalLabel;
+        var need = MathF.Max(widest, journal + TabBadgeReserveLogical) + TabChromeLogical;
         return Math.Clamp(MathF.Ceiling(need), ScaleMetrics.RailLogical, MaxRailLogical);
     }
 
@@ -73,7 +76,7 @@ public static class LayoutBudgets
     /// cuts, always shows whole; at most <see cref="MaxStatusMinLogical"/>.
     /// </summary>
     public static float StatusMin(float widestStateWord) =>
-        Math.Clamp(MathF.Ceiling(widestStateWord), StatusMinLogical, MaxStatusMinLogical);
+        float.IsNaN(widestStateWord) ? StatusMinLogical : Math.Clamp(MathF.Ceiling(widestStateWord), StatusMinLogical, MaxStatusMinLogical);
 
     /// <summary>ImGui's cell padding either side of a header label (Dalamud's style).</summary>
     public const float CellPaddingLogical = 4f;

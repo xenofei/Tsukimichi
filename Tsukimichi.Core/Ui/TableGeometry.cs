@@ -154,31 +154,41 @@ public static class TableGeometry
             }
         }
 
-        for (var priority = 0; left > 0f; priority++)
+        // The distinct priorities of the visible fixed columns, lowest first (never every integer between them: a
+        // priority of int.MaxValue is one step, not two billion).
+        var done = false;
+        var last = 0;
+        while (left > 0f)
         {
-            var any = false;
-            for (var i = 0; i < n && left > 0f; i++)
+            var found = false;
+            var next = 0;
+            for (var i = 0; i < n; i++)
             {
-                if (!visible[i] || columns[i].Stretch || columns[i].Priority < priority)
+                var p = columns[i].Priority;
+                if (visible[i] && !columns[i].Stretch && (!done || p > last) && (!found || p < next))
                 {
-                    continue;
+                    next = p;
+                    found = true;
                 }
-
-                any = true;
-                if (columns[i].Priority != priority)
-                {
-                    continue;
-                }
-
-                var grow = MathF.Min(left, MathF.Max(0f, IdealOf(columns[i]) - widths[i]));
-                widths[i] += grow;
-                left -= grow;
             }
 
-            if (!any)
+            if (!found)
             {
                 break;
             }
+
+            for (var i = 0; i < n && left > 0f; i++)
+            {
+                if (visible[i] && !columns[i].Stretch && columns[i].Priority == next)
+                {
+                    var grow = MathF.Min(left, MathF.Max(0f, IdealOf(columns[i]) - widths[i]));
+                    widths[i] += grow;
+                    left -= grow;
+                }
+            }
+
+            last = next;
+            done = true;
         }
 
         if (left > 0f && weights > 0f)

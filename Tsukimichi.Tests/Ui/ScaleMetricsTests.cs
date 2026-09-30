@@ -105,7 +105,7 @@ public class ScaleMetricsTests
     public void Min_window_size_at_scale_one_is_the_rail_the_pane_floors_the_gutters_and_the_padding()
     {
         var size = ScaleMetrics.MinWindowSize(1f);
-        Assert.Equal(136f + 180f + 320f + 260f + (3f * 6f) + 16f, size.X);
+        Assert.Equal(136f + 180f + 320f + 260f + (3f * 6f) + 16f + PaneLayout.RoundingReservePx, size.X);
         Assert.Equal(500f, size.Y);
     }
 
@@ -113,9 +113,10 @@ public class ScaleMetricsTests
     public void Min_window_size_at_the_default_ui_scale_is_narrower_than_before_the_splitter()
     {
         // 1,076 before L1 (rail 136 + columns 240 and 360 + a 200 centre floor, at 1.15); the floors and gutters of
-        // the splitter at the same rail need about 1,067, and the 64 px rail of L7 takes it to about 984.
+        // the splitter at the same rail need about 1,067 (1,071 with the whole-pixel reserve), and the 64 px rail of L7
+        // takes it to about 984.
         var size = ScaleMetrics.MinWindowSize(ScaleMetrics.DefaultUiScale);
-        Assert.InRange(size.X, 1060f, 1070f);
+        Assert.InRange(size.X, 1060f, 1075f);
         Assert.InRange(((64f + PaneLayout.MinContentLogical) * ScaleMetrics.DefaultUiScale) + ScaleMetrics.WindowPaddingX, 980f, 990f);
     }
 
@@ -125,7 +126,7 @@ public class ScaleMetricsTests
     public void A_rail_widened_for_a_translation_widens_the_min_window_instead_of_the_centre_losing_it(float uiScale, float rail)
     {
         var size = ScaleMetrics.MinWindowSize(uiScale, rail);
-        var fixedPart = ((rail + PaneLayout.FloorsLogical + (PaneLayout.GutterCount * PaneLayout.GutterLogical)) * uiScale) + ScaleMetrics.WindowPaddingX;
+        var fixedPart = ((rail + PaneLayout.FloorsLogical + (PaneLayout.GutterCount * PaneLayout.GutterLogical)) * uiScale) + ScaleMetrics.WindowPaddingX + PaneLayout.RoundingReservePx;
         Assert.Equal(fixedPart, size.X, 3);
         Assert.Equal(ScaleMetrics.MinWindowSize(uiScale).X + (rail - ScaleMetrics.RailLogical) * uiScale, size.X, 3);
     }
@@ -141,16 +142,34 @@ public class ScaleMetricsTests
     [Theory]
     [InlineData(0.9f)]
     [InlineData(1.15f)]
+    [InlineData(1.3f)]
     [InlineData(1.6f)]
     public void Min_window_size_leaves_every_pane_its_floor_at_every_ui_scale(float uiScale)
     {
         var size = ScaleMetrics.MinWindowSize(uiScale);
         var widths = PaneLayout.Solve(size.X - ScaleMetrics.WindowPaddingX, ScaleMetrics.RailLogical * uiScale, PaneLayout.TreeDefaultLogical, PaneLayout.DetailDefaultLogical, uiScale);
         Assert.False(widths.TreeStrip);
-        Assert.InRange(widths.Tree, (PaneLayout.TreeFloorLogical * uiScale) - 1f, (PaneLayout.TreeFloorLogical * uiScale) + 1f);
-        Assert.InRange(widths.Detail, (PaneLayout.DetailFloorLogical * uiScale) - 1f, (PaneLayout.DetailFloorLogical * uiScale) + 1f);
-        Assert.True(widths.Centre >= (PaneLayout.CentreFloorLogical * uiScale) - 2f, $"centre {widths.Centre}");
+        // The tree gives way last of the sides, so it keeps what the rounding reserve leaves over.
+        Assert.InRange(widths.Tree, (PaneLayout.TreeFloorLogical * uiScale) - 0.01f, (PaneLayout.TreeFloorLogical * uiScale) + PaneLayout.RoundingReservePx + 1f);
+        Assert.InRange(widths.Detail, (PaneLayout.DetailFloorLogical * uiScale) - 0.01f, (PaneLayout.DetailFloorLogical * uiScale) + 1f);
+        Assert.True(widths.Centre >= (PaneLayout.CentreFloorLogical * uiScale) - 0.01f, $"centre {widths.Centre}");
         Assert.Equal(ScaleMetrics.MinWindowHeightLogical * uiScale, size.Y, 3);
+    }
+
+    [Theory]
+    [InlineData(1.15f, 0.75f)]
+    [InlineData(1.3f, 1.25f)]
+    [InlineData(1.6f, 2f)]
+    public void Min_window_size_leaves_every_pane_its_floor_at_every_global_scale(float uiScale, float globalScale)
+    {
+        // Dalamud multiplies the minimum by its global scale; the rounding reserve is pixels at that scale.
+        var huge = new Vector2(float.NaN, float.NaN);
+        var size = ScaleMetrics.MinWindowSize(uiScale, globalScale, huge) * globalScale;
+        var s = uiScale * globalScale;
+        var widths = PaneLayout.Solve(size.X - (ScaleMetrics.WindowPaddingX * globalScale), ScaleMetrics.RailLogical * s, 180f, 260f, s);
+        Assert.True(widths.Tree >= (PaneLayout.TreeFloorLogical * s) - 0.01f, $"tree {widths.Tree}");
+        Assert.True(widths.Detail >= (PaneLayout.DetailFloorLogical * s) - 0.01f, $"detail {widths.Detail}");
+        Assert.True(widths.Centre >= (PaneLayout.CentreFloorLogical * s) - 0.01f, $"centre {widths.Centre}");
     }
 
     [Fact]
