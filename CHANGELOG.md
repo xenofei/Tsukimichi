@@ -4,6 +4,8 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+## [0.6.2] - 2026-09-29
+
 ### Added
 - "Why isn't this NPC giving me the quest?": target a quest-giving NPC and open the target bar's menu, and a new entry, "Tsukimichi: quests here (N)", opens the Journal on that NPC's quests with the Status column saying what blocks each one ("Blocked · after: Peace for Thanalan", "Blocked · Lv 50", "Ready"). The view shows as a chip, "Quests from Gerolt", that clears back to the whole journal. It reads only the NPC's kind and id (never a player's) and stores nothing; Settings › Integrations › "NPC context menu" turns it off.
 - `/tsuki why <quest name>` (or `/tsuki why` for the selected quest) answers in chat: the quest with its state and blocker, then one line per requirement with met or unmet and the values compared ("Level: met (24 ≤ 31)", "PreviousQuests: unmet (Peace for Thanalan: not done)"), the same lines Report this quest copies. A quest you can take says whom to talk to, with the giver's zone and coordinates as a map link. Help › Commands lists it.
