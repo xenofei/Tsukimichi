@@ -44,9 +44,9 @@ public sealed partial class ConfigWindow
         {
             JournalIndexStatus.Waiting => Strings.JournalTextStatusWaiting,
             JournalIndexStatus.Loading => Strings.JournalTextStatusLoading,
-            JournalIndexStatus.Building => string.Format(CultureInfo.CurrentCulture, Strings.JournalTextStatusBuildingFormat, (int)(service.Progress * 100f)),
+            JournalIndexStatus.Building => BuildingLine((int)(service.Progress * 100f)),
             JournalIndexStatus.Ready => ReadyLine(service),
-            JournalIndexStatus.Failed => string.Format(CultureInfo.CurrentCulture, Strings.JournalTextStatusFailedFormat, service.Error ?? Strings.UnknownError),
+            JournalIndexStatus.Failed => FailedLine(service.Error),
             _ => null,
         };
 
@@ -60,18 +60,52 @@ public sealed partial class ConfigWindow
         }
     }
 
-    // The ready line, rebuilt only when the index changes.
+    // The ready line, rebuilt only when the index or the language changes.
     private int journalTextLineVersion = -1;
+    private int journalTextLineLanguage = -1;
     private string journalTextLine = string.Empty;
+
+    // The building and failed lines, rebuilt only when the percentage, the error or the language changes.
+    private int journalBuildingPercent = -1;
+    private int journalBuildingLanguage = -1;
+    private string journalBuildingLine = string.Empty;
+    private string? journalFailedError;
+    private int journalFailedLanguage = -1;
+    private string journalFailedLine = string.Empty;
+
+    private string BuildingLine(int percent)
+    {
+        if (percent != journalBuildingPercent || journalBuildingLanguage != Localization.Loc.Version)
+        {
+            journalBuildingPercent = percent;
+            journalBuildingLanguage = Localization.Loc.Version;
+            journalBuildingLine = string.Format(CultureInfo.CurrentCulture, Strings.JournalTextStatusBuildingFormat, percent);
+        }
+
+        return journalBuildingLine;
+    }
+
+    private string FailedLine(string? error)
+    {
+        if (!string.Equals(error, journalFailedError, System.StringComparison.Ordinal) || journalFailedLanguage != Localization.Loc.Version)
+        {
+            journalFailedError = error;
+            journalFailedLanguage = Localization.Loc.Version;
+            journalFailedLine = string.Format(CultureInfo.CurrentCulture, Strings.JournalTextStatusFailedFormat, error ?? Strings.UnknownError);
+        }
+
+        return journalFailedLine;
+    }
 
     private string ReadyLine(QuestTextService service)
     {
-        if (journalTextLineVersion == service.Version)
+        if (journalTextLineVersion == service.Version && journalTextLineLanguage == Localization.Loc.Version)
         {
             return journalTextLine;
         }
 
         journalTextLineVersion = service.Version;
+        journalTextLineLanguage = Localization.Loc.Version;
         var index = service.Index;
         journalTextLine = string.Format(CultureInfo.CurrentCulture, Strings.JournalTextStatusReadyFormat, index?.QuestCount ?? 0, (service.FileBytes + 1023) / 1024);
         if (service.BuildTime is { } built)

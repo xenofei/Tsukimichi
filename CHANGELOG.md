@@ -12,6 +12,7 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ### Fixed
 - Journal text search now finds French words after an elision ("Ishgard" finds "d'Ishgard"), a single kanji inside a longer word ("竜" finds "竜騎士"), names written with ・ typed with or without it ("ヤシュトラ" finds "ヤ・シュトラ"), names without their apostrophe ("uldah" finds "Ul'dah"), and œ, æ and ß spelled out ("coeur", "strasse"); the word index is rebuilt once to pick this up. "Since you were away…" opened from the Characters tab counts the quests added since your last visit, where it said none when the card had not opened on its own at login. The Journal card no longer shows the previous character's name after you switch characters. Delete all data also removes the journal word index.
+- Languages: after a language switch, the job filter, the Job and Expansion columns, the Moonlit kinds, Nearby quests and its server info bar entry, reward tooltips and a few Settings lines now follow the new language at once.
 
 ## [1.0.0] - 2026-09-30
 

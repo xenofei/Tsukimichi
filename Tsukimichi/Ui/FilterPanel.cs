@@ -49,14 +49,15 @@ public sealed class FilterPanel
     private static readonly Action<FilterSet, bool> SetPinnedOnly = static (f, v) => f.PinnedOnly = v;
     private static readonly Action<FilterSet, bool> SetAbandonedOnly = static (f, v) => f.AbandonedOnly = v;
 
-    /// <summary>Fixed job-category choices: label and ClassJobCategory row id (null = all).</summary>
-    private static readonly (string Label, uint? Id)[] JobChoices =
-    [
-        (Strings.JobAll, null),
-        (Strings.JobDowDom, 142u),
-        (Strings.JobDoh, 33u),
-        (Strings.JobDol, 32u),
-    ];
+    /// <summary>Fixed job-category choices: ClassJobCategory row ids (null = all), labelled by <see cref="JobChoiceLabels"/>.</summary>
+    private static readonly uint?[] JobChoiceIds = [null, 142u, 33u, 32u];
+
+    /// <summary>The labels of <see cref="JobChoiceIds"/>, in the current language.</summary>
+    private static readonly Localization.LocArray JobChoiceLabels = new(static () =>
+        [Strings.JobAll, Strings.JobDowDom, Strings.JobDoh, Strings.JobDol]);
+
+    /// <summary>The Advanced header; its id does not change with the language, so its open state survives a switch.</summary>
+    private static readonly Localization.LocText AdvancedHeader = new(static () => Strings.Advanced + "###filterAdvanced");
 
     private readonly UiState ui;
     private readonly Action changed;
@@ -72,6 +73,7 @@ public sealed class FilterPanel
     // The "Added in 7.5x" chip label, rebuilt only when the filter's value changes.
     private string addedInChip = string.Empty;
     private string? addedInChipFor;
+    private int addedInChipLanguage = -1;
 
     private byte currentJobCached = byte.MaxValue;
     private uint? currentJobCategory;
@@ -87,9 +89,10 @@ public sealed class FilterPanel
     private string levelChip = string.Empty;
     private byte levelChipMin = byte.MaxValue;
     private byte levelChipMax;
-    private string jobPreview = Strings.JobAll;
+    private string jobPreview = string.Empty;
     private uint? jobPreviewId;
     private bool jobPreviewValid;
+    private int jobPreviewLanguage = -1;
 
     /// <param name="changed">A filter changed: the window re-runs the query and persists the filters.</param>
     /// <param name="displayChanged">A display slider changed: the window persists the settings (no query re-run).</param>
@@ -119,7 +122,7 @@ public sealed class FilterPanel
         DrawRuntimeToggle(Strings.AvailableOnly, Strings.AvailableOnlyTooltip, "##availableOnly", hasSnapshot, f.AvailableOnly, f, SetAvailableOnly, f.PerCategoryAvailableOnly);
         DrawPinnedFirst();
 
-        if (ImGui.CollapsingHeader(Strings.Advanced))
+        if (ImGui.CollapsingHeader(AdvancedHeader.Value))
         {
             using var indent = ImRaii.PushIndent(UiMetrics.Px(8f));
             DrawStates(f);
@@ -613,9 +616,10 @@ public sealed class FilterPanel
     /// <summary>"Added in 7.5x", memoized per filter value.</summary>
     private string AddedInChipText(FilterSet f)
     {
-        if (!string.Equals(addedInChipFor, f.AddedIn, StringComparison.Ordinal))
+        if (!string.Equals(addedInChipFor, f.AddedIn, StringComparison.Ordinal) || addedInChipLanguage != Localization.Loc.Version)
         {
             addedInChipFor = f.AddedIn;
+            addedInChipLanguage = Localization.Loc.Version;
             addedInChip = string.Format(CultureInfo.CurrentCulture, Strings.AddedInChipFormat, f.AddedIn);
         }
 
@@ -653,9 +657,11 @@ public sealed class FilterPanel
         // The combo popup opens from the left column (own font scale 1), so it scales itself.
         UiMetrics.ApplyFontScale();
 
-        foreach (var (label, id) in JobChoices)
+        var labels = JobChoiceLabels.Value;
+        for (var i = 0; i < JobChoiceIds.Length; i++)
         {
-            if (ImGui.Selectable(label, f.ClassJobCategoryId == id))
+            var id = JobChoiceIds[i];
+            if (ImGui.Selectable(labels[i], f.ClassJobCategoryId == id))
             {
                 f.ClassJobCategoryId = id;
                 changed();
@@ -854,22 +860,23 @@ public sealed class FilterPanel
 
     private string JobPreview(FilterSet f)
     {
-        if (jobPreviewValid && jobPreviewId == f.ClassJobCategoryId)
+        if (jobPreviewValid && jobPreviewId == f.ClassJobCategoryId && jobPreviewLanguage == Localization.Loc.Version)
         {
             return jobPreview;
         }
 
         jobPreviewValid = true;
         jobPreviewId = f.ClassJobCategoryId;
+        jobPreviewLanguage = Localization.Loc.Version;
         jobPreview = Strings.JobAll;
         if (f.ClassJobCategoryId is { } id)
         {
             jobPreview = string.Format(CultureInfo.CurrentCulture, "{0} {1}", Strings.JobCategory, id);
-            foreach (var (label, choiceId) in JobChoices)
+            for (var i = 0; i < JobChoiceIds.Length; i++)
             {
-                if (choiceId == id)
+                if (JobChoiceIds[i] == id)
                 {
-                    jobPreview = label;
+                    jobPreview = JobChoiceLabels.Value[i];
                     break;
                 }
             }

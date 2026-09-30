@@ -25,6 +25,10 @@ public sealed class TsukimichiCommand : IDisposable
     private readonly Action toggleGlyphWindow;
     private readonly Action<string> search;
 
+    // Kept so a language switch can update the help text Dalamud lists (/xlhelp, the installer).
+    private readonly CommandInfo mainInfo;
+    private readonly CommandInfo aliasInfo;
+
     /// <summary>Invoked for <c>/tsukimichi config</c>; set once the config window exists.</summary>
     public Action? ToggleConfigWindow { get; set; }
 
@@ -72,22 +76,33 @@ public sealed class TsukimichiCommand : IDisposable
         this.toggleGlyphWindow = toggleGlyphWindow;
         this.search = search;
 
-        commands.AddHandler(Name, new CommandInfo(OnCommand)
+        mainInfo = new CommandInfo(OnCommand)
         {
             HelpMessage = Strings.CommandHelp,
             ShowInHelp = true,
-        });
-        commands.AddHandler(Alias, new CommandInfo(OnCommand)
+        };
+        aliasInfo = new CommandInfo(OnCommand)
         {
             HelpMessage = Strings.CommandAliasHelp,
             ShowInHelp = false,
-        });
+        };
+        commands.AddHandler(Name, mainInfo);
+        commands.AddHandler(Alias, aliasInfo);
+        Localization.Loc.Changed += OnLanguageChanged;
     }
 
     public void Dispose()
     {
+        Localization.Loc.Changed -= OnLanguageChanged;
         commands.RemoveHandler(Alias);
         commands.RemoveHandler(Name);
+    }
+
+    /// <summary>Dalamud reads the help text from the registered <see cref="CommandInfo"/>, so /xlhelp follows a language switch.</summary>
+    private void OnLanguageChanged()
+    {
+        mainInfo.HelpMessage = Strings.CommandHelp;
+        aliasInfo.HelpMessage = Strings.CommandAliasHelp;
     }
 
     private void OnCommand(string command, string arguments)

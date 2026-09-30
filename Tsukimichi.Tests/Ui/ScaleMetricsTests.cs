@@ -110,6 +110,25 @@ public class ScaleMetricsTests
     }
 
     [Theory]
+    [InlineData(1f, 200f)]
+    [InlineData(1.6f, 170f)]
+    public void A_rail_widened_for_a_translation_widens_the_min_window_instead_of_the_centre_losing_it(float uiScale, float rail)
+    {
+        var size = ScaleMetrics.MinWindowSize(uiScale, rail);
+        var columns = (rail + ScaleMetrics.LeftColumnLogical + ScaleMetrics.RightColumnLogical) * uiScale;
+        Assert.Equal(ScaleMetrics.CentreFloorLogical * uiScale, size.X - columns, 3);
+        Assert.Equal(ScaleMetrics.MinWindowSize(uiScale).X + (rail - ScaleMetrics.RailLogical) * uiScale, size.X, 3);
+    }
+
+    [Theory]
+    [InlineData(100f)]
+    [InlineData(float.NaN)]
+    public void A_rail_under_the_default_or_unknown_keeps_the_default_min_window(float rail)
+    {
+        Assert.Equal(ScaleMetrics.MinWindowSize(1f), ScaleMetrics.MinWindowSize(1f, rail));
+    }
+
+    [Theory]
     [InlineData(0.9f)]
     [InlineData(1.15f)]
     [InlineData(1.6f)]

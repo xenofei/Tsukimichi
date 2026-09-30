@@ -97,7 +97,7 @@ public static class LayoutBudgets
     public const float SegmentPadLogical = 10f;
 
     /// <summary>
-    /// The toolbar's width at the smallest main window (<see cref="ScaleMetrics.MinWindowSize(float)"/> less the
+    /// The toolbar's width at the smallest main window (<see cref="ScaleMetrics.MinWindowSize(float, float)"/> less the
     /// window padding): the quick views, on a row of their own when they must be, fit in it.
     /// </summary>
     public const float MinToolbarLogical = ScaleMetrics.RailLogical + ScaleMetrics.LeftColumnLogical + ScaleMetrics.RightColumnLogical + ScaleMetrics.CentreFloorLogical - 16f;

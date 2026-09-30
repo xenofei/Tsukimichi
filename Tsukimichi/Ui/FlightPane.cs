@@ -711,6 +711,11 @@ public sealed class FlightPane
                 // Many aether currents come from main scenario quests; a masked one reads as its placeholder (T19).
                 QuestName = names.QuestName(named);
             }
+            else
+            {
+                // No quest record: the "Quest #id" fallback, composed again so it follows a language switch.
+                QuestName = string.Format(CultureInfo.InvariantCulture, Strings.FlightQuestFormat, Current.QuestRowId);
+            }
 
             if (evaluation is null)
             {

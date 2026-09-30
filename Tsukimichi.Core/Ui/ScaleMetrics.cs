@@ -74,23 +74,29 @@ public static class ScaleMetrics
     /// and the centre floor, and the height floor, each multiplied by the clamped UI scale. Dalamud multiplies the
     /// result by its global scale, so the window can never shrink below what the fixed columns need.
     /// </summary>
-    public static Vector2 MinWindowSize(float uiScale)
+    /// <param name="uiScale">The UI scale.</param>
+    /// <param name="railLogical">
+    /// The rail's logical width when a translated tab label widened it (<see cref="LayoutBudgets.RailWidth"/>), so the
+    /// wider rail does not come out of the centre floor; never less than <see cref="RailLogical"/>.
+    /// </param>
+    public static Vector2 MinWindowSize(float uiScale, float railLogical = RailLogical)
     {
         var scale = ClampUiScale(uiScale);
-        return new Vector2((RailLogical + LeftColumnLogical + RightColumnLogical + CentreFloorLogical) * scale, MinWindowHeightLogical * scale);
+        var rail = float.IsFinite(railLogical) ? MathF.Max(railLogical, RailLogical) : RailLogical;
+        return new Vector2((rail + LeftColumnLogical + RightColumnLogical + CentreFloorLogical) * scale, MinWindowHeightLogical * scale);
     }
 
     /// <summary>
-    /// <see cref="MinWindowSize(float)"/> never larger than the viewport less <see cref="ViewportMarginPx"/> on each side
+    /// <see cref="MinWindowSize(float, float)"/> never larger than the viewport less <see cref="ViewportMarginPx"/> on each side
     /// (in Dalamud-scaled units, so divided by <paramref name="globalScale"/>): at UiScale 1.6 on a small screen the
     /// window can still be placed whole. A viewport that is not known (non-finite or non-positive) leaves it unclamped.
     /// </summary>
-    public static Vector2 MinWindowSize(float uiScale, float globalScale, Vector2 viewport) =>
-        FitViewport(MinWindowSize(uiScale), globalScale, viewport);
+    public static Vector2 MinWindowSize(float uiScale, float globalScale, Vector2 viewport, float railLogical = RailLogical) =>
+        FitViewport(MinWindowSize(uiScale, railLogical), globalScale, viewport);
 
     /// <summary>
     /// The main window's first-use size in Dalamud-scaled units (T14, accessibility B6): 1100 × 700 at the default UI
-    /// scale, growing and shrinking with the UI scale, never under <see cref="MinWindowSize(float)"/>, and never larger
+    /// scale, growing and shrinking with the UI scale, never under <see cref="MinWindowSize(float, float)"/>, and never larger
     /// than the viewport less <see cref="ViewportMarginPx"/> on each side. At UiScale 1.6 on a 1080p screen it fits.
     /// </summary>
     public static Vector2 DefaultWindowSize(float uiScale, float globalScale, Vector2 viewport)

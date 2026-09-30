@@ -38,7 +38,7 @@ public sealed class WhatsNewCard
     private readonly string version;
 
     private ChangelogSection? section;
-    private string title = string.Empty;
+    private Localization.LocText? title;
     private bool checkedThisLoad;
 
     // The section's items per group with the bullet already in front, composed once when the card is prepared.
@@ -93,7 +93,7 @@ public sealed class WhatsNewCard
         {
             case WhatsNewDecision.Show:
                 section = found;
-                title = string.Format(CultureInfo.CurrentCulture, Strings.WhatsNew.TitleFormat, version);
+                title = new Localization.LocText(() => string.Format(CultureInfo.CurrentCulture, Strings.WhatsNew.TitleFormat, version));
                 groupLines = new string[found!.Groups.Count][];
                 for (var g = 0; g < groupLines.Length; g++)
                 {
@@ -152,7 +152,7 @@ public sealed class WhatsNewCard
     {
         using (Theme.PushText(Theme.Moon))
         {
-            ImGui.TextUnformatted(title);
+            ImGui.TextUnformatted(title?.Value ?? string.Empty);
         }
 
         ImGui.SameLine();

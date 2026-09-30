@@ -76,6 +76,9 @@ public sealed class QueryRunner : IDisposable
     private readonly string?[] expansionText = new string?[256];
     private readonly Dictionary<uint, JobLabel> jobShort = [];
 
+    // The language the expansion and job caches were filled in (Loc.Version); a switch empties them.
+    private int textLanguage = -1;
+
     public QueryRunner(Plugin plugin, UiState ui, IPluginLog log)
     {
         this.plugin = plugin ?? throw new ArgumentNullException(nameof(plugin));
@@ -326,8 +329,11 @@ public sealed class QueryRunner : IDisposable
         levelText[level] ??= level.ToString(CultureInfo.InvariantCulture);
 
     /// <summary>Short expansion label, cached per value.</summary>
-    public string ExpansionShort(byte expansion) =>
-        expansionText[expansion] ??= Strings.ExpansionShort(expansion);
+    public string ExpansionShort(byte expansion)
+    {
+        EnsureTextLanguage();
+        return expansionText[expansion] ??= Strings.ExpansionShort(expansion);
+    }
 
     /// <summary>
     /// Short label for a quest's ClassJobCategory: "Any" for everyone, a job abbreviation for a single job, else the
@@ -347,6 +353,7 @@ public sealed class QueryRunner : IDisposable
             return JobLabel.Any;
         }
 
+        EnsureTextLanguage();
         if (jobShort.TryGetValue(category, out var cached))
         {
             return cached;
@@ -355,6 +362,19 @@ public sealed class QueryRunner : IDisposable
         var label = ComputeJob(b, category);
         jobShort[category] = label;
         return label;
+    }
+
+    /// <summary>Empties the expansion and job label caches after a language switch.</summary>
+    private void EnsureTextLanguage()
+    {
+        if (textLanguage == Localization.Loc.Version)
+        {
+            return;
+        }
+
+        textLanguage = Localization.Loc.Version;
+        System.Array.Clear(expansionText);
+        jobShort.Clear();
     }
 
     public void Dispose()
@@ -682,5 +702,6 @@ public sealed class QueryRunner : IDisposable
 /// <summary>A quest's Job column: the short label, the game icon of its one job (0 for a group or everyone) and the name its hover shows (empty for everyone).</summary>
 public readonly record struct JobLabel(string Short, uint IconId, string Name)
 {
-    public static readonly JobLabel Any = new(Strings.JobAny, 0, string.Empty);
+    /// <summary>Everyone's label, in the current language.</summary>
+    public static JobLabel Any => new(Strings.JobAny, 0, string.Empty);
 }

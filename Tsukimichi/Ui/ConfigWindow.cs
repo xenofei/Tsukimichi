@@ -35,6 +35,8 @@ public sealed partial class ConfigWindow : Window
 
     private static readonly Localization.LocText restoreAllLabelText = new(static () => Strings.ConfigVerdictRestoreAll + Chrome.HoldIdSuffix);
 
+    private static readonly LocText UnpinPlanLabel = new(static () => Strings.Unpin + "##todoPlanUnpin");
+
     private readonly Configuration settings;
     private readonly SessionState session;
     private readonly IDalamudPluginInterface pluginInterface;
@@ -49,6 +51,7 @@ public sealed partial class ConfigWindow : Window
     private int aboutLanguage = -1;
     private string catalogLine = Strings.ConfigCatalogLoading;
     private string? catalogError;
+    private int catalogErrorLanguage = -1;
 
     private float pollSeconds;
     private bool pollDirty;
@@ -69,6 +72,7 @@ public sealed partial class ConfigWindow : Window
     // Todo overlay: the "Pinned: {expansion}" line, rebuilt when the pinned expansion or the names change.
     private int planPinnedExpansion = int.MinValue;
     private Core.Evaluation.BlockerNames? planPinnedNames;
+    private int planPinnedLanguage = -1;
     private string planPinnedLabel = string.Empty;
     private string? toast;
     private DateTime toastUntilUtc;
@@ -83,6 +87,7 @@ public sealed partial class ConfigWindow : Window
 
     // Poll timing lines, rebuilt only when another poll completed.
     private int pollTimingCount = -1;
+    private int pollTimingLanguage = -1;
     private string pollTimingLine = Strings.ConfigPollTimingNone;
     private string pollCostLine = Strings.ConfigPollCostUnknown;
 
@@ -376,17 +381,25 @@ public sealed partial class ConfigWindow : Window
     private void DrawLanguage()
     {
         var dalamud = Loc.Resolve(Language?.DalamudLanguage);
-        var followLabel = string.Format(CultureInfo.CurrentCulture, Strings.ConfigLanguageFollowFormat, Loc.NativeName(dalamud));
+        if (followLabelLanguage != Loc.Version || !string.Equals(followLabelDalamud, dalamud, StringComparison.Ordinal))
+        {
+            followLabelLanguage = Loc.Version;
+            followLabelDalamud = dalamud;
+            followLabel = string.Format(CultureInfo.CurrentCulture, Strings.ConfigLanguageFollowFormat, Loc.NativeName(dalamud));
+        }
+
+        // Each choice moves to the next line when it would run past the edge (French at the 400 px minimum width).
         ImGui.TextUnformatted(Strings.ConfigLanguage);
-        ImGui.SameLine();
+        SameLineOrWrap(RadioWidth(followLabel));
         if (ImGui.RadioButton(followLabel, settings.PluginLanguage == PluginLanguage.FollowDalamud))
         {
             SetLanguage(PluginLanguage.FollowDalamud);
         }
 
         HintOnHover(Strings.ConfigLanguageHint);
-        ImGui.SameLine();
-        if (ImGui.RadioButton(Strings.ConfigLanguageEnglish, settings.PluginLanguage == PluginLanguage.English))
+        var english = Strings.ConfigLanguageEnglish;
+        SameLineOrWrap(RadioWidth(english));
+        if (ImGui.RadioButton(english, settings.PluginLanguage == PluginLanguage.English))
         {
             SetLanguage(PluginLanguage.English);
         }
@@ -394,8 +407,9 @@ public sealed partial class ConfigWindow : Window
         HintOnHover(Strings.ConfigLanguageHint);
         if (settings.PluginLanguage == PluginLanguage.Pseudo || ImGui.GetIO().KeyShift)
         {
-            ImGui.SameLine();
-            if (ImGui.RadioButton(Strings.ConfigLanguagePseudo, settings.PluginLanguage == PluginLanguage.Pseudo))
+            var pseudo = Strings.ConfigLanguagePseudo;
+            SameLineOrWrap(RadioWidth(pseudo));
+            if (ImGui.RadioButton(pseudo, settings.PluginLanguage == PluginLanguage.Pseudo))
             {
                 SetLanguage(PluginLanguage.Pseudo);
             }
@@ -426,6 +440,25 @@ public sealed partial class ConfigWindow : Window
     private int languageNoteVersion = -1;
     private string languageNote = string.Empty;
 
+    // "Follow Dalamud (Deutsch)", rebuilt when the plugin's or Dalamud's language changes.
+    private int followLabelLanguage = -1;
+    private string? followLabelDalamud;
+    private string followLabel = string.Empty;
+
+    /// <summary>A radio button's width: the circle, the inner spacing and the label.</summary>
+    private static float RadioWidth(string label) =>
+        ImGui.GetFrameHeight() + ImGui.GetStyle().ItemInnerSpacing.X + ImGui.CalcTextSize(label).X;
+
+    /// <summary>Continues the line when an item <paramref name="width"/> wide still fits before the content edge, else starts a new one.</summary>
+    private static void SameLineOrWrap(float width)
+    {
+        ImGui.SameLine();
+        if (ImGui.GetCursorScreenPos().X + width > ImGui.GetWindowPos().X + ImGui.GetWindowContentRegionMax().X)
+        {
+            ImGui.NewLine();
+        }
+    }
+
     private void SetLanguage(PluginLanguage language)
     {
         if (settings.PluginLanguage == language)
@@ -435,8 +468,25 @@ public sealed partial class ConfigWindow : Window
 
         settings.PluginLanguage = language;
         Save();
-        Language?.Apply();
+        if (Language is not { } service)
+        {
+            return;
+        }
+
+        // The switch renames every window and raises the session's change events: done on the next framework tick,
+        // outside this ImGui frame, when the plugin provides one.
+        if (RunNextTick is { } defer)
+        {
+            defer(service.Apply);
+        }
+        else
+        {
+            service.Apply();
+        }
     }
+
+    /// <summary>Runs an action on the next framework tick, outside the ImGui frame; set by the plugin. Null runs it at once.</summary>
+    public Action<Action>? RunNextTick { get; set; }
 
     /// <summary>The last item's hint as a Night tooltip while it is hovered.</summary>
     private static void HintOnHover(string hint)
@@ -581,12 +631,13 @@ public sealed partial class ConfigWindow : Window
     private void RefreshPollTiming()
     {
         var count = session.PollCount;
-        if (count == pollTimingCount)
+        if (count == pollTimingCount && pollTimingLanguage == Loc.Version)
         {
             return;
         }
 
         pollTimingCount = count;
+        pollTimingLanguage = Loc.Version;
         if (count == 0)
         {
             pollTimingLine = Strings.ConfigPollTimingNone;
@@ -675,7 +726,7 @@ public sealed partial class ConfigWindow : Window
     {
         var days = Math.Clamp(settings.WelcomeBackDays, 0, Core.Return.WelcomeBackTrigger.MaxDays);
         ImGui.SetNextItemWidth(160f * ImGuiHelpers.GlobalScale);
-        if (ImGui.SliderInt(Strings.WelcomeBackConfigDays, ref days, 0, Core.Return.WelcomeBackTrigger.MaxDays, days == 0 ? Strings.WelcomeBackConfigOff : Strings.WelcomeBackConfigDaysFormat, ImGuiSliderFlags.AlwaysClamp))
+        if (ImGui.SliderInt("##welcomeBackDays", ref days, 0, Core.Return.WelcomeBackTrigger.MaxDays, days == 0 ? Strings.WelcomeBackConfigOff : Strings.WelcomeBackConfigDaysFormat, ImGuiSliderFlags.AlwaysClamp))
         {
             settings.WelcomeBackDays = days;
             welcomeBackDaysDirty = true;
@@ -687,10 +738,14 @@ public sealed partial class ConfigWindow : Window
             Save();
         }
 
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(Strings.WelcomeBackConfigHint);
-        }
+        HintOnHover(Strings.WelcomeBackConfigHint);
+
+        // The label beside the slider wraps at the content edge instead of running past it (French at 400 px).
+        ImGui.SameLine(0f, ImGui.GetStyle().ItemInnerSpacing.X);
+        ImGui.PushTextWrapPos(0f);
+        ImGui.TextUnformatted(Strings.WelcomeBackConfigDays);
+        ImGui.PopTextWrapPos();
+        HintOnHover(Strings.WelcomeBackConfigHint);
     }
 
     private void DrawJournal()
@@ -880,9 +935,10 @@ public sealed partial class ConfigWindow : Window
 
         var expansion = settings.TodoPlanExpansion;
         var pinned = expansion is >= 0 and <= byte.MaxValue;
-        if (expansion != planPinnedExpansion || !ReferenceEquals(session.Names, planPinnedNames))
+        if (expansion != planPinnedExpansion || !ReferenceEquals(session.Names, planPinnedNames) || planPinnedLanguage != Loc.Version)
         {
             planPinnedExpansion = expansion;
+            planPinnedLanguage = Loc.Version;
             planPinnedNames = session.Names;
             planPinnedLabel = pinned
                 ? string.Format(CultureInfo.CurrentCulture, Strings.PlanTodoConfigPinnedFormat, session.Names.Expansion((byte)expansion))
@@ -897,7 +953,7 @@ public sealed partial class ConfigWindow : Window
         }
 
         ImGui.SameLine();
-        if (ImGui.SmallButton(Strings.Unpin + "##todoPlanUnpin"))
+        if (ImGui.SmallButton(UnpinPlanLabel.Value))
         {
             settings.TodoPlanExpansion = -1;
             Save();
@@ -1428,9 +1484,10 @@ public sealed partial class ConfigWindow : Window
 
         if (session.CatalogError is { } error)
         {
-            if (error != catalogError)
+            if (error != catalogError || catalogErrorLanguage != Loc.Version)
             {
                 catalogError = error;
+                catalogErrorLanguage = Loc.Version;
                 catalogLine = string.Format(CultureInfo.CurrentCulture, Strings.ConfigCatalogUnavailableFormat, error);
             }
 

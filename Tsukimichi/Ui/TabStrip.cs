@@ -51,7 +51,8 @@ public sealed class TabStrip
     private readonly UiState ui;
 
     private int readyTooltipCount = -1;
-    private string readyTooltip = Strings.TabJournalTooltip;
+    private int readyTooltipLanguage = -1;
+    private string readyTooltip = string.Empty;
 
     public TabStrip(UiState ui)
     {
@@ -61,6 +62,7 @@ public sealed class TabStrip
     private static int railLanguage = -1;
     private static float railFontSize = -1f;
     private static float railWidth;
+    private static float railLogicalWidth = ScaleMetrics.RailLogical;
 
     /// <summary>
     /// The rail's width in pixels (V2-19): <see cref="ScaleMetrics.RailLogical"/>, or wider when a translated tab label
@@ -83,11 +85,18 @@ public sealed class TabStrip
             }
 
             var journal = ImGui.CalcTextSize(labels[Array.IndexOf(Tabs, NavTab.Journal)]).X;
-            railWidth = UiMetrics.Px(LayoutBudgets.RailWidth(widest / unit, journal / unit));
+            railLogicalWidth = LayoutBudgets.RailWidth(widest / unit, journal / unit);
+            railWidth = UiMetrics.Px(railLogicalWidth);
         }
 
         return railWidth;
     }
+
+    /// <summary>
+    /// The rail's logical width as <see cref="RailWidth"/> last measured it (<see cref="ScaleMetrics.RailLogical"/>
+    /// before the first draw); the main window's minimum size adds what it grew so the centre column keeps its floor.
+    /// </summary>
+    public static float RailLogicalWidth => railLogicalWidth;
 
     /// <summary>Height of one tab row: 30 logical px, never under the minimum click target.</summary>
     public static float RowHeight => MathF.Max(UiMetrics.Px(RowLogical), UiMetrics.MinTarget);
@@ -187,12 +196,13 @@ public sealed class TabStrip
         ImGui.PopFont();
     }
 
-    /// <summary>The Journal tab's hover text: what it holds, then the Ready count; rebuilt only when the count changes.</summary>
+    /// <summary>The Journal tab's hover text: what it holds, then the Ready count; rebuilt only when the count or the language changes.</summary>
     private string JournalTooltip(int ready)
     {
-        if (ready != readyTooltipCount)
+        if (ready != readyTooltipCount || readyTooltipLanguage != Localization.Loc.Version)
         {
             readyTooltipCount = ready;
+            readyTooltipLanguage = Localization.Loc.Version;
             readyTooltip = ready > 0
                 ? Strings.TabJournalTooltip + "\n" + string.Format(CultureInfo.CurrentCulture, Strings.TreeReadyBadgeFormat, ready)
                 : Strings.TabJournalTooltip;
