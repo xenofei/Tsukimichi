@@ -523,7 +523,7 @@ static partial class Strings
 
         public static readonly string[] FlightCardBodies =
         [
-            "Every zone you can fly in, under its expansion, with a moon that fills as you attune its currents; the zone you stand in is marked ● and selected first. Pick a zone and the table lists its quest currents: attuned or not, the quest's state and status, and Flag or Teleport to the giver.",
+            "Every zone you can fly in, under its expansion, with a halo that fills as you attune its currents; the zone you stand in is marked ● and selected first. Pick a zone and the table lists its quest currents: attuned or not, the quest's state and status, and Flag or Teleport to the giver.",
             "Quest currents come from quests, five per zone in most expansions, and completing the quest attunes them. Field currents are touched in the world; the tab counts them but never locates them. Use the Aether Compass, a General Action under Actions & Traits, to point at the nearest one.",
             "/tsuki nearby opens a small window with the quests you can start in the current zone: state moon, level, job, Flag and Teleport, and a click on the name shows it in the Journal. Also in your journal here folds out the quests in your journal whose giver stands in the zone. The cog holds its settings.",
             "☾ N in the server info bar is the count of quests you can start here. Hover it for the first five names; click it to open Nearby quests. It hides at zero unless Keep the entry visible is on, and the cog in Nearby quests can turn it off entirely.",
@@ -648,7 +648,7 @@ static partial class Strings
         public const string TabsTitle = "Four tabs";
         public const string TabsBody = "Journal is the catalog. Moonlit collects quests with unique rewards. Characters holds every snapshot on the account. Flight shows the aether current quests of each flying zone.";
         public const string TreeTitle = "Journal tree";
-        public const string TreeBody = "Section, category and genre scope the table. Each node shows done/total and a moon that fills with completion; Unlock quests and Removed from the game are virtual nodes.";
+        public const string TreeBody = "Section, category and genre scope the table. Each node shows a halo that fills with completion, done / total and, when some can be accepted now, a gold count; Unlock quests and Removed from the game are virtual nodes.";
         public const string TableTitle = "Quest table";
         public const string TableBody = "One row per quest. The moon is its state (hover it for the name; Help lists all eight) and Status says what blocks it. Click a header to sort; right-click a row for pin, map flag and journal.";
         public const string RequirementsTitle = "Requirements";
@@ -662,7 +662,7 @@ static partial class Strings
         public const string CharactersTitle = "Characters";
         public const string CharactersBody = "Every stored snapshot on the left. The dashboard shows completion by section, Moonlit progress, pins, recent activity, job levels and standings for the viewed character.";
         public const string FlightTitle = "Flight";
-        public const string FlightBody = "Every flying zone, under its expansion, with a moon of attuned currents. Pick one: the table lists its five quest currents, whether each is attuned, the quest that blocks it and its status, plus Flag and Teleport for where to fly next.";
+        public const string FlightBody = "Every flying zone, under its expansion, with a halo of attuned currents. Pick one: the table lists its five quest currents, whether each is attuned, the quest that blocks it and its status, plus Flag and Teleport for where to fly next.";
         public const string HelpTitle = "Help, tour and settings";
         public const string HelpBody = "The book reopens the guide, the graduation cap replays this tour, and the cog opens Settings: poll interval, display scale and data controls.";
         public const string FinishTitle = "That is the road";
