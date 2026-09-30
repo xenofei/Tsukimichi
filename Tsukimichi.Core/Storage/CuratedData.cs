@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 using Tsukimichi.Core.Model;
 
 namespace Tsukimichi.Core.Storage;
@@ -15,7 +16,18 @@ public sealed record DutyUnlock(IReadOnlyList<uint> ContentFinderConditionIds, s
 /// <paramref name="Evidence"/> is the announcement the dates were read from (the Lodestone page); the plugin shows an
 /// end date only when it has one, so a date is never shown that cannot be attributed.
 /// </summary>
-public sealed record FestivalInfo(string Name, DateTime? Start, DateTime? End, bool MogStation, string? Evidence = null, string? Note = null);
+public sealed record FestivalInfo(string Name, DateTime? Start, DateTime? End, bool MogStation, string? Evidence = null, string? Note = null)
+{
+    /// <summary>"Moonfire Faire (2014)": the edition year closing a curated name.</summary>
+    private static readonly Regex EditionYear = new(@"\(\d{4}\)\s*$", RegexOptions.CultureInvariant);
+
+    /// <summary>
+    /// An undated entry whose name carries no edition year: a collaboration event the game reruns under the same
+    /// Festival id (A Nocturne for Heroes, Blunderville), which never reads as past. An undated edition keeps its year
+    /// in the name ("The Rising (2024)") and is not a rerun.
+    /// </summary>
+    public bool IsRerun => End is null && Name.Length > 0 && !EditionYear.IsMatch(Name);
+}
 
 /// <summary>A named quest chain assembled from journal genres in the listed order, from <c>curated/chains.json</c>.</summary>
 public sealed record CuratedChain(string Name, IReadOnlyList<uint> GenreIds, string? Note);

@@ -98,10 +98,17 @@ public sealed class StorySidequests
     /// <param name="featureQuestIds">The derived unlock quests (<c>FeaturePresets.Derive</c>).</param>
     /// <param name="curated">The curated overlay, for its system and duty unlocks; null lets no unlock quest in.</param>
     /// <param name="uniqueRewards">The shipped unique-reward entries: which quests grant a current and which unlock something else. Null reads the quests' own rewards only.</param>
-    public static StorySidequests Build(QuestCatalog catalog, IReadOnlySet<uint> featureQuestIds, CuratedData? curated, IEnumerable<UniqueRewardEntry>? uniqueRewards)
+    /// <param name="minChainLength">Fewest quests a side story holds; a smaller connected set stays story sidequests outside any chain. <see cref="ChainCatalog.MinChainLength"/> unless a test says otherwise.</param>
+    public static StorySidequests Build(
+        QuestCatalog catalog,
+        IReadOnlySet<uint> featureQuestIds,
+        CuratedData? curated,
+        IEnumerable<UniqueRewardEntry>? uniqueRewards,
+        int minChainLength = ChainCatalog.MinChainLength)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(featureQuestIds);
+        ArgumentOutOfRangeException.ThrowIfLessThan(minChainLength, 1);
 
         var stories = new Dictionary<uint, QuestRecord>();
         List<QuestRecord>? blue = null;
@@ -185,9 +192,15 @@ public sealed class StorySidequests
         foreach (var root in roots)
         {
             var component = members[root];
-            if (component.Count < ChainCatalog.MinChainLength)
+            if (component.Count < minChainLength)
             {
-                order[component[0].RowId] = order.Count;
+                // Too few for a story: each quest keeps its own journal place (the component is in journal order), so
+                // every story sidequest has a distinct OrderOf key, which QuestQuery's story sort relies on.
+                foreach (var quest in component)
+                {
+                    order[quest.RowId] = order.Count;
+                }
+
                 continue;
             }
 

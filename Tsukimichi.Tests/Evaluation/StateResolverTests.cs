@@ -1,5 +1,6 @@
 using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Storage;
 using static Tsukimichi.Tests.Evaluation.Fixture;
 
 namespace Tsukimichi.Tests.Evaluation;
@@ -181,6 +182,59 @@ public class StateResolverTests
         // An earlier hook is not replaced.
         var chained = new EvalContext { FestivalIsPast = id => id == 10 }.WithFestivalEnds(ends, () => now);
         Assert.Equal(QuestState.Foreclosed, Resolve(quest, Snapshot(), catalog, chained).State);
+    }
+
+    [Fact]
+    public void Curated_rerun_entry_is_never_past_even_after_part_of_it_was_done()
+    {
+        var earlier = Quest(A) with { Festival = 84 };
+        var quest = Quest(Target) with { Festival = 84 };
+        var catalog = Catalog(earlier, quest);
+        var now = new DateTime(2026, 9, 29, 12, 0, 0, DateTimeKind.Utc);
+        var curated = new Dictionary<ushort, FestivalInfo>
+        {
+            [84] = new("A Nocturne for Heroes", null, null, false, "https://example.com/ffxv"),
+        };
+        var ctx = EvalContext.Default.WithCuratedFestivals(curated, () => now);
+
+        // A quest of it done, not running: the heuristic alone would read Locked out; the rerun entry keeps it Blocked.
+        Assert.Equal(QuestState.Foreclosed, Resolve(quest, Snapshot(A), catalog).State);
+        Assert.Equal(QuestState.Blocked, Resolve(quest, Snapshot(A), catalog, ctx).State);
+
+        // The curated verdict is final over an ad-hoc hook too.
+        Assert.Equal(QuestState.Blocked, Resolve(quest, Snapshot(A), catalog, ctx with { FestivalIsPast = _ => true }).State);
+    }
+
+    [Fact]
+    public void Curated_entries_leave_the_heuristic_only_undated_editions_and_unlisted_festivals()
+    {
+        var now = new DateTime(2026, 9, 29, 12, 0, 0, DateTimeKind.Utc);
+        var curated = new Dictionary<ushort, FestivalInfo>
+        {
+            [10] = new("Moonfire Faire (2014)", now.AddDays(-30), now.AddDays(-1), false),
+            [11] = new("Moonfire Faire (2027)", now.AddDays(1), now.AddDays(30), false),
+            [12] = new("The Rising (2024)", null, null, false),
+        };
+        var ctx = EvalContext.Default.WithCuratedFestivals(curated, () => now);
+
+        foreach (var (festival, doneOne, expected) in new (ushort, bool, QuestState)[]
+        {
+            (10, false, QuestState.Foreclosed), // curated end passed
+            (11, true, QuestState.Blocked),     // curated end still ahead: the heuristic may not foreclose
+            (12, true, QuestState.Foreclosed),  // undated edition (name with its year): heuristic
+            (12, false, QuestState.Blocked),
+            (13, true, QuestState.Foreclosed),  // no entry: heuristic
+            (13, false, QuestState.Blocked),
+        })
+        {
+            var earlier = Quest(A) with { Festival = festival };
+            var quest = Quest(Target) with { Festival = festival };
+            var snapshot = doneOne ? Snapshot(A) : Snapshot();
+            Assert.Equal(expected, Resolve(quest, snapshot, Catalog(earlier, quest), ctx).State);
+        }
+
+        Assert.False(curated[12].IsRerun);
+        Assert.True(new FestivalInfo("Blunderville", null, null, false).IsRerun);
     }
 
     [Fact]

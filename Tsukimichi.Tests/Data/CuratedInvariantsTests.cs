@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
+using Tsukimichi.Core.Seasonal;
 using Tsukimichi.Core.Storage;
 
 namespace Tsukimichi.Tests.Data;
@@ -22,6 +23,27 @@ public sealed class CuratedInvariantsTests(FixtureCatalog fixture) : IClassFixtu
     private static CuratedData Curated() => CuratedData.Load(CuratedDir);
 
     private static UniqueRewardsData Unique() => UniqueRewardsFile.Load(Path.Combine(FixtureCatalog.ShippedDataDir(), "unique_quests.json"));
+
+    [GitHistoryFact]
+    public void Version_json_names_the_last_commit_that_changed_the_curated_data()
+    {
+        // tools/regen.ps1 stamps VERSION.json with `git log -1 --format=%h` over the curated data files (VERSION.json
+        // and README.md excluded). Settings > About, the status bar and every "Report this quest" block name that
+        // revision, so a data commit without a fresh stamp would send bug reports against the wrong data.
+        var root = JsonNode.Parse(File.ReadAllText(Path.Combine(CuratedDir, CuratedData.VersionFileName)), documentOptions: CuratedData.StrictOptions)!.AsObject();
+        var stamp = (string?)root[CuratedData.CuratedRevisionKey];
+        Assert.False(string.IsNullOrWhiteSpace(stamp), "VERSION.json has no curatedRevision; run tools/regen.ps1");
+        Assert.DoesNotContain("-dirty", stamp, StringComparison.Ordinal);
+
+        // The full hash, compared by prefix: the abbreviation's length depends on the clone's object count.
+        var head = GitHistoryFactAttribute.Git(
+            "log", "-1", "--format=%H", "--",
+            "Tsukimichi/Data/curated", ":!Tsukimichi/Data/curated/VERSION.json", ":!Tsukimichi/Data/curated/README.md");
+        Assert.False(string.IsNullOrEmpty(head), "git log found no commit touching Tsukimichi/Data/curated");
+        Assert.True(
+            stamp!.Length >= 7 && head!.StartsWith(stamp, StringComparison.OrdinalIgnoreCase),
+            $"VERSION.json says curatedRevision {stamp}, but the curated data was last changed in {head![..7]}; run tools/regen.ps1 (-NoXivApi is enough) and commit VERSION.json and docs/data/DATA-VERSION.md");
+    }
 
     [Fact]
     public void Feature_quests_json_equals_the_set_DataGen_derives()
@@ -355,7 +377,7 @@ public sealed class CuratedInvariantsTests(FixtureCatalog fixture) : IClassFixtu
         var catalogFestivals = fixture.Bundle.Catalog.All.Where(q => q.Festival != 0).Select(q => q.Festival).ToHashSet();
         var loaded = Curated().Festivals;
         Assert.Equal(entries.Count, loaded.Count);
-        Assert.Equal(91, loaded.Count);
+        Assert.Equal(100, loaded.Count);
         Assert.Equal(83, loaded.Values.Count(f => f.End is not null));
 
         foreach (var (key, node) in entries)
@@ -370,8 +392,12 @@ public sealed class CuratedInvariantsTests(FixtureCatalog fixture) : IClassFixtu
 
             var info = loaded[id];
             Assert.True(Uri.TryCreate(info.Evidence, UriKind.Absolute, out var uri) && uri.Scheme == Uri.UriSchemeHttps, $"festivals.json {key} evidence is not an https URL");
-            Assert.EndsWith(".finalfantasyxiv.com", uri!.Host, StringComparison.Ordinal);
-            Assert.Contains("/lodestone/", uri.AbsolutePath, StringComparison.Ordinal);
+
+            // A date needs the Lodestone announcement; a name alone may also come from the wiki's event page (an
+            // edition not announced yet).
+            var lodestone = uri!.Host.EndsWith(".finalfantasyxiv.com", StringComparison.Ordinal) && uri.AbsolutePath.Contains("/lodestone/", StringComparison.Ordinal);
+            var wiki = uri.Host == "ffxiv.consolegameswiki.com" && uri.AbsolutePath.StartsWith("/wiki/", StringComparison.Ordinal);
+            Assert.True(lodestone || (wiki && info.End is null), $"festivals.json {key} evidence is neither a Lodestone page nor, for an undated entry, a wiki page: {info.Evidence}");
 
             // Dates come in pairs, parse as UTC and run forwards; a dated entry names its edition's year, which the
             // end falls in (or the year after, for an edition held late: All Saints' Wake 2021 ran in January 2022).
@@ -416,6 +442,55 @@ public sealed class CuratedInvariantsTests(FixtureCatalog fixture) : IClassFixtu
 
         // The seasonal events take a new Festival id every edition: no two ids carry the same edition.
         Assert.Equal(curated.Festivals.Count, curated.Festivals.Values.Select(f => f.Name).Distinct().Count());
+
+        // A rerun (never locked out) is exactly an undated entry without an edition year, and only collaborations are
+        // that: an undated seasonal edition keeps its year in the name, so the completed-quest rule still applies to it.
+        foreach (var (id, info) in curated.Festivals)
+        {
+            var collaboration = catalog.All.Where(q => q.Festival == id).All(q => q.Journal.GenreName == "Collaboration Quests");
+            Assert.True(collaboration == info.IsRerun, $"festival {id} ({info.Name}): a collaboration must be undated with no year in its name, and nothing else may be");
+        }
+    }
+
+    /// <summary>The event names a journal genre gives right ("Moonfire Faire Events" is Moonfire Faire).</summary>
+    private static readonly string[] GenreNamesThatAreEventNames =
+        ["Heavensturn", "Valentione's Day", "Little Ladies' Day", "Hatching-tide", "Moonfire Faire", "All Saints' Wake", "Starlight Celebration"];
+
+    [Fact]
+    public void Every_festival_reads_its_event_name_not_a_genre_that_only_files_it()
+    {
+        // A Festival id without a curated entry is named from its journal genre. That is right for most seasonal
+        // events and wrong for "Gold Saucer Festivities" (The Make It Rain Campaign), "Rising Events" (The Rising),
+        // "Collaboration Quests" and the combined "Little Ladies' & Hatching-tide Events": those need an undated entry
+        // with the event's name, or the running-now lines and the login notice read the genre. A new edition of one
+        // after a game update fails here until it is curated.
+        var catalog = fixture.Bundle.Catalog;
+        var curated = Curated().Festivals;
+        foreach (var id in catalog.All.Where(q => q.Festival != 0).Select(q => q.Festival).Distinct().Order())
+        {
+            if (curated.ContainsKey(id))
+            {
+                continue;
+            }
+
+            var name = SeasonalNow.Name(id, catalog, curated);
+            Assert.True(GenreNamesThatAreEventNames.Contains(name), $"festival {id} has no curated entry and reads \"{name}\"; add an undated entry with its event name to festivals.json");
+        }
+
+        Assert.Equal("The Make It Rain Campaign", SeasonalNow.Name(139, catalog, curated));
+        Assert.Equal("Little Ladies' Day & Hatching-tide", SeasonalNow.Name(145, catalog, curated));
+        Assert.Equal("The Make It Rain Campaign", SeasonalNow.Name(146, catalog, curated));
+        Assert.Equal("The Rising", SeasonalNow.Name(151, catalog, curated));
+        Assert.Equal("The Make It Rain Campaign", SeasonalNow.Name(161, catalog, curated));
+        Assert.Equal("The Rising", SeasonalNow.Name(162, catalog, curated));
+        Assert.Equal("Keybound Brawler", SeasonalNow.Name(257, catalog, curated));
+
+        // The named editions anchor their year for the seasonal history.
+        var years = SeasonalNow.EditionYears(catalog, curated);
+        Assert.Equal(2024, years[145]);
+        Assert.Equal(2025, years[162]);
+        Assert.Equal(2026, years[176]);
+        Assert.False(years.ContainsKey(257));
     }
 
     [Fact]
@@ -437,5 +512,22 @@ public sealed class CuratedInvariantsTests(FixtureCatalog fixture) : IClassFixtu
 
         // Even a dated festival the game switches on again reads by the live flag, not by its old end.
         Assert.NotEqual(QuestState.Foreclosed, StateResolver.Resolve(moonfire, fresh with { ActiveFestivals = [11] }, catalog, context).State);
+
+        // An undated edition (The Rising 2024, id 151) is not a rerun: once part of it was done, the rest is Locked out.
+        var rising = fresh with { CompletedBits = Evaluation.Fixture.Bits(70551) };
+        Assert.Equal(QuestState.Foreclosed, StateResolver.Resolve(catalog.ByRowId[70552], rising, catalog, context).State);
+        Assert.Equal(QuestState.Blocked, StateResolver.Resolve(catalog.ByRowId[70552], fresh, catalog, context).State);
+
+        // A character who did part of a rerun is not locked out of the rest between runs: the curated rerun entry is
+        // checked before the completed-quest heuristic. The Man in Black (68694) done, 84 not running.
+        var partial = fresh with { CompletedBits = Evaluation.Fixture.Bits(68694) };
+        Assert.True(partial.IsCompleted(QuestRecord.ToQuestId(68694)));
+        foreach (var rowId in new uint[] { 68695, 68696 })
+        {
+            var rest = catalog.ByRowId[rowId];
+            Assert.Equal(84, rest.Festival);
+            Assert.NotEqual(QuestState.Foreclosed, StateResolver.Resolve(rest, partial, catalog, context).State);
+            Assert.NotEqual(QuestState.Foreclosed, StateResolver.ResolveAll(catalog, partial, context)[rowId].State);
+        }
     }
 }

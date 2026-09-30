@@ -61,6 +61,35 @@ public sealed class StorySidequestsTests
     }
 
     [Fact]
+    public void Every_story_sidequest_has_its_own_order_even_in_a_line_too_short_to_be_a_story()
+    {
+        // With a minimum of three, the two-quest line 60 → 61 is no story: both quests keep their own journal place,
+        // so every key is distinct, which QuestQuery's story sort (an unstable Array.Sort) relies on.
+        var catalog = QuestCatalog.Build(
+        [
+            Quest(60, sortKey: 1), Quest(61, [60], sortKey: 2),
+            Quest(70, sortKey: 3), Quest(71, [70], sortKey: 4), Quest(72, [71], sortKey: 5),
+            Quest(80, sortKey: 6),
+        ]);
+
+        var stories = StorySidequests.Build(catalog, NoFeatures, null, null, minChainLength: 3);
+
+        var chain = Assert.Single(stories.Chains);
+        Assert.Equal(new uint[] { 70, 71, 72 }, chain.RowIds);
+        Assert.Null(stories.ChainOf(60));
+        Assert.Null(stories.ChainOf(61));
+        Assert.Equal(6, stories.Count);
+
+        var keys = new uint[] { 60, 61, 70, 71, 72, 80 }.Select(stories.OrderOf).ToList();
+        Assert.DoesNotContain(int.MaxValue, keys);
+        Assert.Equal(keys.Count, keys.Distinct().Count());
+        Assert.Equal(keys.Order(), keys);
+
+        // The shipped minimum makes 60 → 61 a story of its own.
+        Assert.Equal(2, StorySidequests.Build(catalog, NoFeatures).Chains.Count);
+    }
+
+    [Fact]
     public void A_quest_waits_for_every_quest_it_requires()
     {
         // Journal order puts 31 before 32, but 31 requires 32 (the Delivery Moogle genre does this).

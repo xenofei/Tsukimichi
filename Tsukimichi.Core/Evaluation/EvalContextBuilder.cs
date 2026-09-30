@@ -10,7 +10,7 @@ namespace Tsukimichi.Core.Evaluation;
 /// </summary>
 public static class EvalContextBuilder
 {
-    /// <param name="festivals">Curated festival windows (<see cref="CuratedData.Festivals"/>); an entry without an end date, or a missing entry, leaves that festival to the resolver's completed-quest heuristic.</param>
+    /// <param name="festivals">Curated festival windows (<see cref="CuratedData.Festivals"/>), final where they speak (<see cref="EvalContext.WithCuratedFestivals"/>): a dated entry is past once its end has passed and not before, an undated collaboration (<see cref="FestivalInfo.IsRerun"/>) is never past; an undated edition, or a missing entry, leaves that festival to the resolver's completed-quest heuristic.</param>
     /// <param name="classJobs">ClassJobCategory membership from the game data; null admits every job.</param>
     /// <param name="nowUtc">Clock, read on every festival check so a long-lived context stays current.</param>
     /// <param name="achievementGatedRowIds">Quest row ids gated by an achievement; null or empty gates nothing.</param>
@@ -43,13 +43,12 @@ public static class EvalContextBuilder
             context = context with { ParentJob = job => parents.TryGetValue(job, out var parent) && parent != 0 ? parent : job };
         }
 
-        var ends = FestivalEnds(festivals);
-        return ends.Count == 0 ? context : context.WithFestivalEnds(ends, nowUtc);
+        return festivals.Count == 0 ? context : context.WithCuratedFestivals(festivals, nowUtc);
     }
 
     /// <summary>
-    /// Festival id to curated end (UTC) for every entry that has one. Entries without an end are left out: "unknown"
-    /// must not read as "never ends", and <see cref="EvalContext.WithFestivalEnds"/> treats a missing id the same way.
+    /// Festival id to curated end (UTC) for every entry that has one, in the shape <see cref="EvalContext.WithFestivalEnds"/>
+    /// takes. Entries without an end are left out, and <see cref="EvalContext.WithFestivalEnds"/> treats a missing id the same way.
     /// </summary>
     public static Dictionary<ushort, DateTime?> FestivalEnds(IReadOnlyDictionary<ushort, FestivalInfo> festivals)
     {

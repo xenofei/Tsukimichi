@@ -288,11 +288,18 @@ public static class StateResolver
     }
 
     /// <summary>
-    /// A festival is past when the curated hook says so or when the character completed any quest of it (a run of it
-    /// already happened for them). The hook is checked first because the heuristic walks the catalog.
+    /// A festival is past when the curated verdict says so, and a curated "not past" (a rerun collaboration, an end
+    /// still ahead) is final too. Without a curated verdict it is past when the hook says so or when the character
+    /// completed any quest of it (a run of it already happened for them). The hooks are checked first because the
+    /// heuristic walks the catalog.
     /// </summary>
     private static bool FestivalIsPast(ushort festival, CharacterSnapshot s, QuestCatalog c, EvalContext ctx)
     {
+        if (ctx.CuratedFestivalPast?.Invoke(festival) is { } curated)
+        {
+            return curated;
+        }
+
         if (ctx.FestivalIsPast is { } hook && hook(festival))
         {
             return true;

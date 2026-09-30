@@ -690,7 +690,7 @@ public sealed class TodoOverlay : Window, IDisposable
         // Seasonal events from the snapshot's running festivals (the evaluator's Active flag), ends from curated data only.
         var now = DateTime.UtcNow;
         IReadOnlyList<RunningFestival> running = settings.TodoShowSeasonal
-            ? SeasonalNow.Running(bundle.Catalog, snapshot, session.States, session.Curated.Festivals, now)
+            ? SeasonalNow.Running(bundle.Catalog, session.ServerFestivals, session.States, session.Curated.Festivals, now)
             : [];
         var model = TodoList.Build(new TodoInputs(
             bundle.Catalog,
