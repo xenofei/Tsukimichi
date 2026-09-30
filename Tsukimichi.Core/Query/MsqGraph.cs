@@ -105,9 +105,10 @@ public sealed record MsqRouteProgress(MsqRoute Route, QuestRecord? Next, QuestSt
 /// in a routed region (on a route, or the reconvergence quest itself) and the region's join is not met yet, the
 /// position becomes one entry per route (<see cref="MsqPosition.Routes"/>), and the primary quest
 /// (<see cref="MsqPosition.Next"/>) is the first route's next quest. The reconvergence quest is never a position
-/// while its join is unmet: an All join needs every route that is not locked out done, an Any join one of them. Once
-/// an Any join is met, the unfinished quests of the other routes are optional: they leave the position and the
-/// totals, like a branch not taken.
+/// while its join is unmet. The join is met once the reconvergence quest itself is open, in the journal or completed
+/// (the evaluator has judged its previous quests as the game does), or else once the routes it needs are done: every
+/// route that is not locked out for an All join, one of them for an Any join. Once the join is met, the unfinished
+/// quests of the routes are optional: they leave the position and the totals, like a branch not taken.
 /// </para>
 /// </summary>
 public sealed class MsqGraph
@@ -295,7 +296,8 @@ public sealed class MsqGraph
                 && routedRegion[quest.RowId] is var region
                 && JoinMet(region))
             {
-                // An optional leftover of a met Any join: the story has moved on without it.
+                // An optional leftover of a met join (another route of an Any join, or a quest the reconvergence
+                // quest did not need): the story has moved on without it.
                 continue;
             }
 
@@ -390,13 +392,19 @@ public sealed class MsqGraph
     }
 
     /// <summary>
-    /// The region's join is met: the reconvergence quest is completed, or the routes it needs are done (every route
-    /// not locked out for an All join, one route for an Any join).
+    /// The region's join is met: the reconvergence quest is completed, in the journal or open (Ready, or ready on
+    /// another job), or the routes it needs are done (every route not locked out for an All join, one route for an
+    /// Any join).
+    /// <para>
+    /// The reconvergence quest's own state comes first: the evaluator has already judged its previous quests the way
+    /// the game does, while a route here is every quest that leads to it, so a route holding a quest the game does not
+    /// need (one side of an Any fork inside the route) never reads done.
+    /// </para>
     /// </summary>
     private static bool IsJoinMet<TSource>(MsqBranch branch, TSource source)
         where TSource : struct, IStateSource
     {
-        if (source.StateOf(branch.Join.RowId) == QuestState.Completed)
+        if (source.StateOf(branch.Join.RowId) is QuestState.Completed or QuestState.Accepted or QuestState.Ready or QuestState.ReadyOnOtherJob)
         {
             return true;
         }
