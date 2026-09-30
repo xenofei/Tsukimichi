@@ -41,6 +41,12 @@ jobs:
       - name: Build (warnings are errors)
         run: dotnet build Tsukimichi.sln -c Release -warnaserror
 
+      - name: Load check (every UI language)
+        # Loads the built plugin outside the game against the Dalamud above (DALAMUD_HOME) and, in en, de, fr, ja and
+        # the pseudo language, runs every UI type's static constructor and reads every static localized label; a throw
+        # there stops the plugin loading in the game, which the unit tests (Core and GameData only) cannot see.
+        run: dotnet run --project tools/Tsukimichi.LoadCheck -c Release --no-build
+
       - name: Test
         run: dotnet test Tsukimichi.Tests -c Release --no-build --filter "Category!=Perf"
 
