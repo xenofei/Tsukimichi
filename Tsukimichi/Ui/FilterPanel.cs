@@ -66,6 +66,13 @@ public sealed class FilterPanel
     private readonly List<(uint Id, string Name)> categories = [];
     private readonly List<(byte Id, string Name)> expansions = [];
 
+    /// <summary>The "Added in" combo's entries (P8): series ("7.5") and label ("7.5x  (61)"), newest first.</summary>
+    private readonly List<(string Series, string Label)> patchSeries = [];
+
+    // The "Added in 7.5x" chip label, rebuilt only when the filter's value changes.
+    private string addedInChip = string.Empty;
+    private string? addedInChipFor;
+
     private byte currentJobCached = byte.MaxValue;
     private uint? currentJobCategory;
 
@@ -116,6 +123,7 @@ public sealed class FilterPanel
             using var indent = ImRaii.PushIndent(UiMetrics.Px(8f));
             DrawStates(f);
             DrawExpansions(f);
+            DrawAddedIn(f);
             DrawLevelRange(f);
             DrawJobCategory(f, snapshot);
             DrawRewardKinds(f);
@@ -348,6 +356,12 @@ public sealed class FilterPanel
             filtersChanged = true;
         }
 
+        if (f.AddedInEngaged() && Chip("##chipAddedIn", AddedInChipText(f), ref any))
+        {
+            f.AddedIn = string.Empty;
+            filtersChanged = true;
+        }
+
         if (f.LevelRangeEngaged() && Chip("##chipLevel", LevelChipText(f), ref any))
         {
             f.LevelMin = FilterSet.NoLevelMin;
@@ -548,6 +562,56 @@ public sealed class FilterPanel
 
             Tip(Strings.ExpansionsTooltip);
         }
+    }
+
+    /// <summary>
+    /// The "Added in" filter (P8): a combo of the patch series the catalog's quests were added in, newest first, with
+    /// "Any patch" on top. Disabled, showing "Any patch", when no quest has a known patch (quest_patches.json missing).
+    /// </summary>
+    private void DrawAddedIn(FilterSet f)
+    {
+        ImGui.TextDisabled(Strings.AddedIn);
+        Tip(Strings.AddedInTooltip);
+        var preview = f.AddedInEngaged() ? AddedInChipText(f) : Strings.AddedInAny;
+        ImGui.SetNextItemWidth(UiMetrics.Px(180f));
+        using (ImRaii.Disabled(patchSeries.Count == 0 && !f.AddedInEngaged()))
+        {
+            using var combo = ImRaii.Combo("##addedIn", preview);
+            Tip(Strings.AddedInTooltip);
+            if (!combo)
+            {
+                return;
+            }
+
+            // The combo popup opens from the left column (own font scale 1), so it scales itself.
+            UiMetrics.ApplyFontScale();
+            if (ImGui.Selectable(Strings.AddedInAny, !f.AddedInEngaged()))
+            {
+                f.AddedIn = string.Empty;
+                changed();
+            }
+
+            foreach (var (series, label) in patchSeries)
+            {
+                if (ImGui.Selectable(label, string.Equals(f.AddedIn, series, StringComparison.Ordinal)))
+                {
+                    f.AddedIn = series;
+                    changed();
+                }
+            }
+        }
+    }
+
+    /// <summary>"Added in 7.5x", memoized per filter value.</summary>
+    private string AddedInChipText(FilterSet f)
+    {
+        if (!string.Equals(addedInChipFor, f.AddedIn, StringComparison.Ordinal))
+        {
+            addedInChipFor = f.AddedIn;
+            addedInChip = string.Format(CultureInfo.CurrentCulture, Strings.AddedInChipFormat, f.AddedIn);
+        }
+
+        return addedInChip;
     }
 
     private void DrawLevelRange(FilterSet f)
@@ -864,6 +928,15 @@ public sealed class FilterPanel
 
             categories.Add((quest.Journal.CategoryId, quest.Journal.CategoryName));
         }
+
+        // The "Added in" choices (P8): each series some quest in the game was added in, newest first, with its count.
+        patchSeries.Clear();
+        foreach (var series in PatchIndex.For(current.Catalog).Series)
+        {
+            patchSeries.Add((series.Series, string.Format(CultureInfo.CurrentCulture, Strings.AddedInOptionFormat, series.Series, series.Quests)));
+        }
+
+        addedInChipFor = null;
 
         expansions.Clear();
         var ids = new List<uint>(current.Names.Expansions.Keys);

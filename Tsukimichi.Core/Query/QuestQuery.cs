@@ -128,7 +128,9 @@ public static class QuestQuery
 
         var query = SearchIndex.Normalize(search);
         var index = query.Length == 0 ? null : ctx.SearchIndex ?? SearchIndex.For(catalog);
-        var plan = new Plan(filters, ctx, index, query, scope);
+        // The Unlocks quick view also holds what the newest patch added (P8), as its first group.
+        var newThisPatch = filters.Preset == Preset.FeatureQuests ? PatchIndex.For(catalog) : null;
+        var plan = new Plan(filters, ctx, index, query, scope, newThisPatch);
 
         var rows = new List<QuestRow>(candidates.Count);
         var totalInScope = 0;
@@ -170,19 +172,19 @@ public static class QuestQuery
             sorted = Partition(sorted, row => pinned.Contains(row.Quest.RowId));
         }
 
-        var newThisPatch = 0;
+        var newCount = 0;
         if (sort.NewThisPatchFirst)
         {
             // The Unlocks quick view's first group (P8): what the newest patch in the data added.
-            var patches = PatchIndex.For(catalog);
+            var patches = newThisPatch ?? PatchIndex.For(catalog);
             sorted = Partition(sorted, row => patches.IsNew(row.Quest));
-            while (newThisPatch < sorted.Length && patches.IsNew(sorted[newThisPatch].Quest))
+            while (newCount < sorted.Length && patches.IsNew(sorted[newCount].Quest))
             {
-                newThisPatch++;
+                newCount++;
             }
         }
 
-        return new QueryResult(sorted, null, totalInScope, newThisPatch);
+        return new QueryResult(sorted, null, totalInScope, newCount);
     }
 
     private static IReadOnlyList<QuestRecord> Candidates(QuestCatalog catalog, QuestScope scope, QueryContext ctx)
@@ -395,13 +397,15 @@ public static class QuestQuery
         private readonly int bandMax;
         private readonly DateTime stalledBeforeUtc;
         private readonly byte reachExpansion;
+        private readonly PatchIndex? newThisPatch;
 
-        public Plan(FilterSet filters, QueryContext ctx, SearchIndex? index, string query, QuestScope scope)
+        public Plan(FilterSet filters, QueryContext ctx, SearchIndex? index, string query, QuestScope scope, PatchIndex? newThisPatch)
         {
             this.filters = filters;
             this.ctx = ctx;
             this.index = index;
             this.query = query;
+            this.newThisPatch = newThisPatch;
             Preset = filters.Preset;
             bandMin = ctx.CurrentLevel - LevelBandRadius;
             bandMax = ctx.CurrentLevel + LevelBandRadius;
@@ -553,7 +557,7 @@ public static class QuestQuery
         }
 
         /// <summary>
-        /// Feature quests: membership in the derived set. Around my level: quest level within
+        /// Feature quests: membership in the derived set, plus what the newest patch added (P8, <see cref="PatchIndex.IsNew"/>). Around my level: quest level within
         /// <see cref="LevelBandRadius"/> of the current level (nothing when the level is unknown). Stalled: in the
         /// journal, with a known accepted time at least <see cref="QueryContext.StalledDays"/> days before now. Sprout
         /// mode: the quest's expansion at or below the one the character's main scenario has reached. Story sidequests:
@@ -562,7 +566,7 @@ public static class QuestQuery
         private bool PassesPreset(QuestRecord quest, QuestState state) => Preset switch
         {
             Preset.None => true,
-            Preset.FeatureQuests => ctx.FeatureQuestIds.Contains(quest.RowId),
+            Preset.FeatureQuests => ctx.FeatureQuestIds.Contains(quest.RowId) || (newThisPatch is not null && newThisPatch.IsNew(quest)),
             Preset.LevelBand => ctx.CurrentLevel > 0 && quest.DisplayLevel >= bandMin && quest.DisplayLevel <= bandMax,
             Preset.Stalled => state == QuestState.Accepted
                 && ctx.AcceptedSince is { } since

@@ -131,6 +131,9 @@ public sealed class TablePane : IDisposable
     private readonly Action filtersChanged;
 
     private ImGuiListClipperPtr clipper;
+
+    /// <summary>Row id of the last "New this patch" row under the Unlocks quick view (a rule is drawn under it); null when there is no group, or nothing after it.</summary>
+    private uint? newGroupEnd;
     private bool clipperCreated;
 
     private ICallGateSubscriber<uint, object>? questMap;
@@ -233,6 +236,14 @@ public sealed class TablePane : IDisposable
             // Sprout mode (T19): how much of the game is in reach, instead of the whole catalog.
             ImGui.TextDisabled(caption);
         }
+
+        if (runner.NewThisPatchCaption is { } newCaption)
+        {
+            // The Unlocks quick view's first group (P8): named here, closed by a rule under its last row.
+            ImGui.TextDisabled(newCaption);
+        }
+
+        newGroupEnd = runner.NewThisPatch > 0 && runner.NewThisPatch < rows.Length ? rows[runner.NewThisPatch - 1].Quest.RowId : null;
 
         // SortTristate lets the header cycle back to "no sort" (journal order) and stops ImGui from picking the first
         // sortable column (the glyph) as an implicit default on the first frame.
@@ -608,6 +619,10 @@ public sealed class TablePane : IDisposable
         }
 
         DrawRowChrome(rowMin, rowMax, state, selected, liftRow == quest.RowId && hover > 0.5f, in layout, Motion.Key(RevealTag, quest.RowId));
+        if (newGroupEnd == quest.RowId)
+        {
+            DrawGroupEnd(rowMin, rowMax);
+        }
 
         if (clicked)
         {
@@ -707,6 +722,19 @@ public sealed class TablePane : IDisposable
         ImGui.TableNextColumn();
         DrawRewardIcons(quest, in layout);
         ImGui.PopID();
+    }
+
+    /// <summary>
+    /// The line under the last row of the Unlocks quick view's "New this patch" group (P8): a moon-gold rule across
+    /// every column on the background channel, so the group reads as one block above the rest.
+    /// </summary>
+    private static void DrawGroupEnd(Vector2 rowMin, Vector2 rowMax)
+    {
+        ImGuiP.TablePushBackgroundChannel();
+        var thickness = MathF.Max(1f, UiMetrics.Hairline * 2f);
+        var y = rowMax.Y - thickness * 0.5f;
+        ImGui.GetWindowDrawList().AddLine(new Vector2(rowMin.X, y), new Vector2(rowMax.X, y), Theme.WithAlpha(Theme.Moon, 0.55f), thickness);
+        ImGuiP.TablePopBackgroundChannel();
     }
 
     /// <summary>Width of the state stripe in pixels: 3 logical, never under 2.</summary>

@@ -131,7 +131,7 @@ public static partial class Strings
     public const string PresetFeatureQuests = FilterNames.FeatureQuests;
     public const string PresetLevelBand = FilterNames.LevelBand;
     public const string PresetStalled = FilterNames.Stalled;
-    public const string PresetFeatureQuestsTooltip = "Unlock quests: duties, jobs, actions, aether currents, systems. Quests you can act on now come first";
+    public const string PresetFeatureQuestsTooltip = "Unlock quests: duties, jobs, actions, aether currents, systems. What the newest patch added comes first, then quests you can act on now";
     public const string PresetLevelBandTooltip = "Quests within five levels of your current job's level";
     public const string PresetStalledTooltip = "Quests that have sat in your journal for the number of days below";
     public const string PresetStorySidequests = FilterNames.StorySidequests;
