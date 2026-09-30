@@ -279,6 +279,14 @@ public sealed class Configuration : IPluginConfiguration
     /// </summary>
     public bool FollowDalamudColours { get; set; }
 
+    // ---- 1.1: high-contrast glyph palette (accessibility panel §2.2) ----
+    /// <summary>
+    /// Settings › Display › Glyph palette: Standard (the moons as designed) or High contrast (flat colours on a
+    /// luminance ladder, thicker rims and one in-disc mark per state; the table stripes, halos and marks follow it).
+    /// Standard by default.
+    /// </summary>
+    public GlyphPaletteKind GlyphPalette { get; set; } = GlyphPaletteKind.Standard;
+
     /// <summary>The todo overlay's Compact mode: moon and name only, one line per row, no hints. Off by default.</summary>
     public bool TodoOverlayCompact { get; set; }
 
@@ -397,6 +405,11 @@ public sealed class Configuration : IPluginConfiguration
         if (!Enum.IsDefined(config.Density))
         {
             config.Density = RowDensity.Comfortable;
+        }
+
+        if (!Enum.IsDefined(config.GlyphPalette))
+        {
+            config.GlyphPalette = GlyphPaletteKind.Standard;
         }
 
         // Before 0.7.0 ReduceMotion defaulted to false and had no Chosen flag, so a saved true was the user's choice;

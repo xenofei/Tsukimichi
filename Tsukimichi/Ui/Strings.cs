@@ -378,12 +378,14 @@ public static partial class Strings
 
     /// <summary>
     /// What a state moon says on hover: the display name and the glyph's shape hint ("Blocked · new moon, silver
-    /// ring"); <see cref="StateNames"/> composes the eight strings once, so hovering allocates nothing.
+    /// ring"); <see cref="StateNames"/> composes the eight strings once, so hovering allocates nothing. With the
+    /// high-contrast glyph palette the shape hint names that palette's silhouette and mark ("Blocked · empty disc,
+    /// thick rim").
     /// </summary>
-    public static string StateTooltip(QuestState state) => StateNames.Tooltip(state);
+    public static string StateTooltip(QuestState state) => StateNames.Tooltip(state, 0, Theme.Glyphs.HighContrast);
 
     /// <summary>The state moon tooltip for a quest: a done repeatable says "Done today" or "Done this week" by its reset.</summary>
-    public static string StateTooltip(QuestState state, QuestRecord? quest) => StateNames.Tooltip(state, quest);
+    public static string StateTooltip(QuestState state, QuestRecord? quest) => StateNames.Tooltip(state, quest, Theme.Glyphs.HighContrast);
 
     /// <summary>
     /// The reason clause on its own, for the second line of a moon's tooltip: the decisive blocker from
