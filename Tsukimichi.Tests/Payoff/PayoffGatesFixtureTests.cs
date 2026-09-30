@@ -27,10 +27,19 @@ public sealed class PayoffGatesFixtureTests(FixtureCatalog fixture) : IClassFixt
     };
 
     /// <summary>
-    /// Names the whys reveal, reviewed by hand: an instruction naming one of them would spoil the payoff whatever the
-    /// derived tokens say.
+    /// Names the whys reveal, reviewed by hand, on top of the tokens derived from each why (<see cref="WhyTokens"/>):
+    /// an instruction naming one of them would spoil the payoff whatever the derived tokens say.
     /// </summary>
     private static readonly string[] PayoffNames = ["Gaia", "Ryne", "Krile", "Galuf", "Alayla", "Robor", "Cyella", "Unukalhai", "Pilgrim's Answer", "Garlemald", "Ilsabard", "Thirteenth", "Crystarium"];
+
+    /// <summary>
+    /// Places where a gate's content is played that the catalog holds under no quest, chain or genre name (zones,
+    /// not quests), reviewed by hand: the instruction may name them, so their words are not tokens of that gate's why.
+    /// </summary>
+    private static readonly Dictionary<string, string[]> ContentPlaces = new(StringComparer.Ordinal)
+    {
+        ["bozja"] = ["Bozjan Southern Front", "Zadnor"],
+    };
 
     /// <summary>Capitalised words too common to mark a spoiler ("Quest" in Alisaie's Quest).</summary>
     private static readonly HashSet<string> CommonWords = new(StringComparer.OrdinalIgnoreCase) { "Quest", "Quests", "Main", "Scenario", "With", "From", "Into", "Their", "Your", "What", "When" };
@@ -228,7 +237,7 @@ public sealed class PayoffGatesFixtureTests(FixtureCatalog fixture) : IClassFixt
                 names.AddRange(story.Skip(anchor).Select(q => q.Journal.GenreName).Distinct(StringComparer.Ordinal));
             }
 
-            var tokens = names.Concat(names.SelectMany(Words)).Concat(PayoffNames).Distinct(StringComparer.Ordinal).ToList();
+            var tokens = names.Concat(names.SelectMany(Words)).Concat(WhyTokens(gate)).Concat(PayoffNames).Distinct(StringComparer.Ordinal).ToList();
             Assert.NotEmpty(tokens);
             foreach (var token in tokens)
             {
@@ -244,6 +253,36 @@ public sealed class PayoffGatesFixtureTests(FixtureCatalog fixture) : IClassFixt
             // The reason is not repeated in the instruction.
             Assert.DoesNotContain(gate.Gate.Why, instruction, StringComparison.Ordinal);
         }
+    }
+
+    [Fact]
+    public void Spoiler_tokens_are_derived_from_each_reason()
+    {
+        // The proper nouns only the reason names are tokens without anyone listing them by hand.
+        var eureka = WhyTokens(Gate("eureka")).ToList();
+        foreach (var token in new[] { "Baldesion", "Students", "Isle", "Krile", "Galuf", "Dawntrail" })
+        {
+            Assert.Contains(token, eureka);
+        }
+
+        var bozja = WhyTokens(Gate("bozja")).ToList();
+        foreach (var token in new[] { "Legion", "Garlemald", "Ilsabard", "Bozja" })
+        {
+            Assert.Contains(token, bozja);
+        }
+
+        // An instruction naming one of them now fails the lint.
+        Assert.Contains(eureka, token => ContainsWord("Finish the Baldesion story first.", token));
+
+        // "Resistance" is the content's own journal genre (Resistance Weapons), so the instruction may use it.
+        Assert.DoesNotContain("Resistance", bozja);
+        Assert.DoesNotContain("Zadnor", bozja);
+
+        // The content's own names are not: the instruction must be able to say what to do.
+        Assert.DoesNotContain("Eureka", WhyTokens(Gate("eureka")));
+        Assert.DoesNotContain("Eden", WhyTokens(Gate("eden")));
+        Assert.DoesNotContain("Safekeeping", WhyTokens(Gate("pilgrims-traverse")));
+        Assert.DoesNotContain("Shadow", WhyTokens(Gate("shb-role-quests")));
     }
 
     [Fact]
@@ -318,6 +357,32 @@ public sealed class PayoffGatesFixtureTests(FixtureCatalog fixture) : IClassFixt
         Assert.Contains("eden", noticed);
 
         Assert.Empty(PayoffGates.TakeNotices(active, noticed));
+    }
+
+    /// <summary>
+    /// The reason's own tokens: the capitalised words of <c>why</c> (what the payoff reveals: "Baldesion",
+    /// "Legion"), minus the words of the content's names, which the instruction must be free to use: its quests'
+    /// names, the chain's name, the journal genres its quests sit in and the places in <see cref="ContentPlaces"/>.
+    /// </summary>
+    private IEnumerable<string> WhyTokens(ResolvedPayoffGate gate)
+    {
+        var content = new List<string>(ContentPlaces.GetValueOrDefault(gate.Gate.Id) ?? []);
+        if (gate.Gate.BeforeChain is { } chain)
+        {
+            content.Add(chain);
+        }
+
+        foreach (var rowId in gate.Content)
+        {
+            if (Catalog.GetByRowId(rowId) is { } quest)
+            {
+                content.Add(quest.Name);
+                content.Add(quest.Journal.GenreName);
+            }
+        }
+
+        var allowed = new HashSet<string>(content.SelectMany(Words), StringComparer.OrdinalIgnoreCase);
+        return Words(gate.Gate.Why).Where(w => !allowed.Contains(w)).Distinct(StringComparer.Ordinal);
     }
 
     /// <summary>Capitalised words of four letters or more, a possessive "'s" dropped, common words left out.</summary>
