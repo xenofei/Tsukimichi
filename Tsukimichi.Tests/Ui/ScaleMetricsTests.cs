@@ -186,11 +186,25 @@ public class ScaleMetricsTests
     private static readonly Vector2 Screen1080 = new(1920f, 1080f);
 
     [Fact]
-    public void Default_window_at_the_default_ui_scale_is_1100_by_700()
+    public void Default_window_at_the_default_ui_scale_is_1320_by_760()
     {
         var size = ScaleMetrics.DefaultWindowSize(ScaleMetrics.DefaultUiScale, 1f, Screen1080);
-        Assert.Equal(1100f, size.X, 3);
-        Assert.Equal(700f, size.Y, 3);
+        Assert.Equal(1320f, size.X, 3);
+        Assert.Equal(760f, size.Y, 3);
+    }
+
+    [Theory]
+    [InlineData(0.9f)]
+    [InlineData(1.15f)]
+    [InlineData(1.3f)]
+    public void Default_window_holds_the_default_panes_with_room_for_the_quest_list(float uiScale)
+    {
+        // Rail, tree and detail at their defaults plus the gutters, and the quest list at least 60 logical over its floor.
+        var size = ScaleMetrics.DefaultWindowSize(uiScale, 1f, new Vector2(3840f, 2160f));
+        var needed = ((ScaleMetrics.RailLogical + PaneLayout.TreeDefaultLogical + PaneLayout.CentreFloorLogical + 60f
+            + PaneLayout.DetailDefaultLogical + (PaneLayout.GutterCount * PaneLayout.GutterLogical)) * uiScale)
+            + ScaleMetrics.WindowPaddingX + PaneLayout.RoundingReservePx;
+        Assert.True(size.X >= needed, $"default width {size.X} under {needed}");
     }
 
     [Theory]
@@ -227,7 +241,7 @@ public class ScaleMetricsTests
     public void Default_window_ignores_an_unknown_viewport()
     {
         var size = ScaleMetrics.DefaultWindowSize(ScaleMetrics.DefaultUiScale, 1f, new Vector2(float.NaN, 0f));
-        Assert.Equal(new Vector2(1100f, 700f), size);
+        Assert.Equal(new Vector2(1320f, 760f), size);
     }
 
     [Fact]

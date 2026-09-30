@@ -67,8 +67,12 @@ public static class ScaleMetrics
     /// <summary>Logical height floor of the main window.</summary>
     public const float MinWindowHeightLogical = 500f;
 
-    /// <summary>The main window's default size in logical units at <see cref="DefaultUiScale"/>.</summary>
-    public static readonly Vector2 DefaultWindowLogical = new(1100f, 700f);
+    /// <summary>
+    /// The main window's first-use size in Dalamud-scaled units at <see cref="DefaultUiScale"/>: wide enough for the
+    /// labelled rail, the tree and the detail pane at their default widths (so the tree opens in its full tier) with
+    /// the quest list well above its floor; still inside a 1080p screen, and clamped to smaller ones.
+    /// </summary>
+    public static readonly Vector2 DefaultWindowLogical = new(1320f, 760f);
 
     /// <summary>Pixels the default window leaves free on every side of the viewport (accessibility B6).</summary>
     public const float ViewportMarginPx = 48f;
