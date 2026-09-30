@@ -153,7 +153,7 @@ public sealed class PlanPane
 
         if (hiddenExpansions > 0)
         {
-            using var dusk = Theme.PushText(Theme.Dusk);
+            using var note = Theme.PushText(Theme.Surface.TextTertiary);
             ImGui.TextWrapped(hiddenText);
         }
     }
@@ -291,7 +291,7 @@ public sealed class PlanPane
             foreach (var zone in block.Zones)
             {
                 ImGui.Spacing();
-                using (Theme.PushText(Theme.Dusk))
+                using (Theme.PushText(Theme.Surface.TextTertiary))
                 {
                     ImGui.TextUnformatted(ZoneLabel(zone));
                 }
@@ -383,7 +383,11 @@ public sealed class PlanPane
             }
         }
 
-        if (ImGui.IsMouseHoveringRect(pillMin, new Vector2(pillEnd, start.Y + height)) && ImGui.IsWindowHovered())
+        // The painted pills and the status line get an invisible item each, so their tooltips honour popups, window
+        // hover and keyboard focus like every other tooltip.
+        ImGui.SetCursorScreenPos(pillMin);
+        ImGui.InvisibleButton("##pills", new Vector2(MathF.Max(1f, pillsWidth), height));
+        if (ImGui.IsItemHovered())
         {
             UiMetrics.Tooltip(UnlocksTooltip(entry));
         }
@@ -393,9 +397,11 @@ public sealed class PlanPane
         if (statusEnd > statusX && entry.StatusText.Length > 0)
         {
             dl.PushClipRect(new Vector2(statusX, start.Y), new Vector2(statusEnd, start.Y + height), true);
-            dl.AddText(new Vector2(statusX, textY), Theme.DuskU32, entry.StatusText);
+            dl.AddText(new Vector2(statusX, textY), Theme.U32(Theme.Surface.TextTertiary), entry.StatusText);
             dl.PopClipRect();
-            if (ImGui.IsMouseHoveringRect(new Vector2(statusX, start.Y), new Vector2(statusEnd, start.Y + height)) && ImGui.IsWindowHovered())
+            ImGui.SetCursorScreenPos(new Vector2(statusX, start.Y));
+            ImGui.InvisibleButton("##status", new Vector2(statusEnd - statusX, height));
+            if (ImGui.IsItemHovered())
             {
                 UiMetrics.Tooltip(entry.StatusText);
             }
