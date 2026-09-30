@@ -2,6 +2,7 @@ using System.Collections.Frozen;
 using System.Globalization;
 using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Runtime;
 
 namespace Tsukimichi.Core.Query;
 
@@ -29,7 +30,8 @@ public sealed record SpoilerOptions(bool HideNames = true, int Ahead = SpoilerOp
 /// artwork may show. Built once per session version from the catalog, the character's states and its main scenario
 /// position (walked as <see cref="MsqProgress"/> walks it: sections 0 then 1 in journal order, removed rows left out,
 /// the journal's hide state ignored). A main scenario quest is masked when it lies more than
-/// <see cref="SpoilerOptions.Ahead"/> quests past the position and is neither completed nor in the journal. A
+/// <see cref="SpoilerOptions.Ahead"/> quests past the position and is neither completed, in the journal nor once
+/// abandoned from it (the game has shown all three names). A
 /// character without states (browse mode, a stored view without data) has no position: every main scenario quest
 /// after the first is masked. Immutable; <see cref="DisplayName"/> allocates nothing.
 /// </summary>
@@ -157,21 +159,42 @@ public sealed class SpoilerMask
 
     /// <summary>The mask over evaluator output.</summary>
     /// <param name="revealed">Row ids the player revealed for the session ("Reveal this name"); never masked.</param>
-    public static SpoilerMask Build(QuestCatalog catalog, IReadOnlyDictionary<uint, QuestEvaluation> evaluations, SpoilerOptions options, IReadOnlySet<uint>? revealed = null)
+    /// <param name="abandoned">
+    /// The character's abandoned ledger (runtime quest id to entry): a quest that was once in the journal has had its
+    /// name shown by the game, so it is never masked.
+    /// </param>
+    public static SpoilerMask Build(
+        QuestCatalog catalog,
+        IReadOnlyDictionary<uint, QuestEvaluation> evaluations,
+        SpoilerOptions options,
+        IReadOnlySet<uint>? revealed = null,
+        IReadOnlyDictionary<ushort, AbandonedEntry>? abandoned = null)
     {
         ArgumentNullException.ThrowIfNull(evaluations);
-        return Build(catalog, new EvaluationSource(evaluations), evaluations.Count == 0, options, revealed);
+        return Build(catalog, new EvaluationSource(evaluations), evaluations.Count == 0, options, revealed, abandoned);
     }
 
     /// <summary>The mask over a plain state map; missing rows read as <see cref="QuestState.Unknown"/>.</summary>
     /// <param name="revealed">Row ids the player revealed for the session ("Reveal this name"); never masked.</param>
-    public static SpoilerMask Build(QuestCatalog catalog, IReadOnlyDictionary<uint, QuestState> states, SpoilerOptions options, IReadOnlySet<uint>? revealed = null)
+    /// <param name="abandoned">The character's abandoned ledger; an abandoned quest is never masked.</param>
+    public static SpoilerMask Build(
+        QuestCatalog catalog,
+        IReadOnlyDictionary<uint, QuestState> states,
+        SpoilerOptions options,
+        IReadOnlySet<uint>? revealed = null,
+        IReadOnlyDictionary<ushort, AbandonedEntry>? abandoned = null)
     {
         ArgumentNullException.ThrowIfNull(states);
-        return Build(catalog, new StateMapSource(states), states.Count == 0, options, revealed);
+        return Build(catalog, new StateMapSource(states), states.Count == 0, options, revealed, abandoned);
     }
 
-    private static SpoilerMask Build<TSource>(QuestCatalog catalog, TSource source, bool noStates, SpoilerOptions options, IReadOnlySet<uint>? revealed)
+    private static SpoilerMask Build<TSource>(
+        QuestCatalog catalog,
+        TSource source,
+        bool noStates,
+        SpoilerOptions options,
+        IReadOnlySet<uint>? revealed,
+        IReadOnlyDictionary<ushort, AbandonedEntry>? abandoned)
         where TSource : struct, IStateSource
     {
         ArgumentNullException.ThrowIfNull(catalog);
@@ -217,7 +240,8 @@ public sealed class SpoilerMask
                     || position is not { } at
                     || ordinal - at <= ahead
                     || state is QuestState.Completed or QuestState.Accepted
-                    || (revealed is not null && revealed.Contains(quest.RowId)))
+                    || (revealed is not null && revealed.Contains(quest.RowId))
+                    || (abandoned is not null && abandoned.ContainsKey(quest.QuestId)))
                 {
                     continue;
                 }

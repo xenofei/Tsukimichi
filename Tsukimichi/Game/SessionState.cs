@@ -182,7 +182,7 @@ public sealed class SessionState
             {
                 spoilersVersion = Version;
                 spoilers = Bundle is { } bundle
-                    ? SpoilerMask.Build(bundle.Catalog, States, SpoilerOptionsFor(ViewedContentId), revealedNames)
+                    ? SpoilerMask.Build(bundle.Catalog, States, SpoilerOptionsFor(ViewedContentId), revealedNames, Abandoned)
                     : SpoilerMask.None;
             }
 
@@ -206,7 +206,7 @@ public sealed class SessionState
             if (liveSpoilersVersion != Version)
             {
                 liveSpoilersVersion = Version;
-                liveSpoilers = SpoilerMask.Build(bundle.Catalog, liveStates, SpoilerOptionsFor(live), revealedNames);
+                liveSpoilers = SpoilerMask.Build(bundle.Catalog, liveStates, SpoilerOptionsFor(live), revealedNames, liveAbandoned);
             }
 
             return liveSpoilers;

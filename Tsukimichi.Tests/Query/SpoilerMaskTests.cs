@@ -1,6 +1,7 @@
 using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
+using Tsukimichi.Core.Runtime;
 using Tsukimichi.Tests.Data;
 using static Tsukimichi.Tests.Query.QueryTestData;
 
@@ -89,6 +90,28 @@ public class SpoilerMaskFixtureTests(FixtureCatalog fixture) : IClassFixture<Fix
         Assert.False(mask.IsMasked(completedAhead));
         Assert.All(story.Where(q => states[q.RowId] == QuestState.Completed), q => Assert.False(mask.IsMasked(q)));
         Assert.True(mask.IsMasked(story[^2]));
+    }
+
+    [Fact]
+    public void An_abandoned_quest_far_past_the_position_keeps_its_name()
+    {
+        var (states, story, position) = MidEndwalker();
+        var abandonedQuest = story.Last(q => q.Expansion == Dawntrail);
+        var other = story[^2] == abandonedQuest ? story[^3] : story[^2];
+        var ledger = new Dictionary<ushort, AbandonedEntry>
+        {
+            [abandonedQuest.QuestId] = new AbandonedEntry(abandonedQuest.QuestId, DateTime.UtcNow, 3, 5),
+        };
+
+        var mask = SpoilerMask.Build(Catalog, states, SpoilerOptions.Default, abandoned: ledger);
+        var evaluated = SpoilerMask.Build(Catalog, states.ToDictionary(p => p.Key, p => new QuestEvaluation(p.Value, [], null, null, null)), SpoilerOptions.Default, abandoned: ledger);
+
+        Assert.True(story.IndexOf(abandonedQuest) - position > SpoilerOptions.DefaultAhead);
+        Assert.False(mask.IsMasked(abandonedQuest));
+        Assert.Equal(abandonedQuest.Name, mask.DisplayName(abandonedQuest));
+        Assert.False(evaluated.IsMasked(abandonedQuest));
+        Assert.True(mask.IsMasked(other));
+        Assert.True(SpoilerMask.Build(Catalog, states, SpoilerOptions.Default).IsMasked(abandonedQuest));
     }
 
     [Fact]
