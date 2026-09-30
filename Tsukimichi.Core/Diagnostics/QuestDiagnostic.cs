@@ -450,7 +450,7 @@ public static class QuestDiagnostic
 
         if (Has(kinds, RequirementKind.CarrierLevel))
         {
-            sb.Append(", carrier level ").Append(s.CarrierLevelOrNull is { } level ? level.ToString(CultureInfo.InvariantCulture) : Unknown);
+            sb.Append(", carrier level ").Append(s.CarrierLevel is { } level ? level.ToString(CultureInfo.InvariantCulture) : Unknown);
         }
 
         if (Has(kinds, RequirementKind.Mount))

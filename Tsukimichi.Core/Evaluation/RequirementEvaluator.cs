@@ -160,7 +160,7 @@ public static class RequirementEvaluator
 
         if (q.CarrierLevel > 0)
         {
-            var actual = s.CarrierLevelOrNull;
+            var actual = s.CarrierLevel;
             var met = actual is null || actual >= q.CarrierLevel;
             results.Add(new(new CarrierLevelRequirement(q.CarrierLevel, actual), met, actual switch
             {

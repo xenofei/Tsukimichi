@@ -291,8 +291,9 @@ public sealed class GameStateReader
             ActiveFestivals = festivalIds,
             ActiveFestivalPhases = festivalPhases,
             SatisfactionRanks = ReadSatisfactionRanks(),
-            // PlayerState.DeliveryLevel ("Carrier Level of Delivery Moogle Quests"), surfaced by Dalamud; 0 before
-            // the postmoogle quests start, which the evaluator reads as "not checked".
+            // PlayerState.DeliveryLevel ("Carrier Level of Delivery Moogle Quests"), surfaced by Dalamud. Always
+            // stored, 0 included: 0 is the real level of a character who has not unlocked the Delivery Moogle, and
+            // it blocks every carrier-level gate (the lowest is 7). Only an older file (no field) reads "not checked".
             CarrierLevel = playerState.DeliveryLevel,
             // Account entitlement caps: PlayerState.MaxExpansion is the ExVersion row the account owns up to,
             // PlayerState.MaxLevel the level cap that comes with it. 0 means the client has not said (a snapshot

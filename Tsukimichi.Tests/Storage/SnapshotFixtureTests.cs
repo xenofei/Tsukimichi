@@ -57,8 +57,7 @@ public sealed class SnapshotFixtureTests
         Assert.Null(loaded.FestivalPhase(39));
         Assert.Empty(loaded.SatisfactionRanks);
         Assert.Null(loaded.SatisfactionRank(2));
-        Assert.Equal(0, loaded.CarrierLevel);
-        Assert.Null(loaded.CarrierLevelOrNull);
+        Assert.Null(loaded.CarrierLevel);
 
         var outRoot = tmp.File("out");
         new JsonSnapshotStore(outRoot).Save(loaded);

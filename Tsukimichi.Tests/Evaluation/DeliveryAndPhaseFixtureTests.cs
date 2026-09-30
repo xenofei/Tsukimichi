@@ -132,6 +132,17 @@ public class DeliveryAndPhaseFixtureTests(FixtureCatalog fixture) : IClassFixtur
         Assert.Equal("Blocked · Delivery Moogle: carrier level 7", BlockerText.StatusText(level6, quest, names));
 
         Assert.Equal(QuestState.Ready, StateResolver.Resolve(quest, Eligible(quest) with { CarrierLevel = 7 }, Catalog, Context).State);
+
+        // A level 50 character who never unlocked the Delivery Moogle: the live capture reads carrier level 0, a
+        // real level, so the quest is Blocked (with no previous quest nothing else would hold it back).
+        var never = StateResolver.Resolve(quest, Eligible(quest) with { CarrierLevel = 0 }, Catalog, Context);
+        Assert.Equal(QuestState.Blocked, never.State);
+        Assert.Equal("Blocked · Delivery Moogle: carrier level 7", BlockerText.StatusText(never, quest, names));
+
+        // A file written before 0.6.2 has no carrier level: listed, not judged.
+        var unread = StateResolver.Resolve(quest, Eligible(quest) with { CarrierLevel = null }, Catalog, Context);
+        Assert.Equal(QuestState.Ready, unread.State);
+        Assert.Contains(unread.Requirements, r => r.Req is CarrierLevelRequirement { ActualLevel: null } && r.Met);
     }
 
     [Fact]

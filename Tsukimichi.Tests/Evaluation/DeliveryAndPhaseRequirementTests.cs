@@ -96,6 +96,20 @@ public class DeliveryAndPhaseRequirementTests
     }
 
     [Fact]
+    public void A_captured_carrier_level_of_0_is_a_real_level_and_blocks()
+    {
+        var quest = Postmoogle();
+        var never = Snapshot() with { CarrierLevel = 0 };
+
+        var result = Only(RequirementEvaluator.Evaluate(quest, never, Catalog(quest), Context), RequirementKind.CarrierLevel);
+        Assert.False(result.Met);
+        Assert.Equal("needs carrier level 7, you are level 0", result.Detail);
+        Assert.Equal((byte?)0, Assert.IsType<CarrierLevelRequirement>(result.Req).ActualLevel);
+        Assert.Equal(QuestState.Blocked, Resolve(quest, never).State);
+        Assert.Equal("Delivery Moogle: carrier level 7", For(quest, never));
+    }
+
+    [Fact]
     public void Carrier_level_is_listed_not_judged_when_the_capture_has_none()
     {
         var quest = Postmoogle();

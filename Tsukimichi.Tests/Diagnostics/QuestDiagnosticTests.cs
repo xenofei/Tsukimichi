@@ -150,7 +150,7 @@ public class QuestDiagnosticTests
     {
         var quest = Everything() with { FestivalBegin = 2, FestivalEnd = 5 };
         var catalog = EverythingCatalog(quest);
-        var unread = Character() with { SatisfactionRanks = new Dictionary<byte, byte>(), CarrierLevel = 0, ActiveFestivals = [Starlight], ActiveFestivalPhases = [1] };
+        var unread = Character() with { SatisfactionRanks = new Dictionary<byte, byte>(), CarrierLevel = null, ActiveFestivals = [Starlight], ActiveFestivalPhases = [1] };
         var lines = Lines(QuestDiagnostic.Compose(Inputs(quest, catalog, unread, Context(quest.QuestId))));
         var requirementLines = lines.Where(l => l.StartsWith("  - ", StringComparison.Ordinal)).ToArray();
 
