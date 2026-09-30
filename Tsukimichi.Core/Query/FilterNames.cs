@@ -22,6 +22,7 @@ public static class FilterNames
     public const string LevelBand = "My level";
     public const string Stalled = "Stalled";
     public const string Sprout = "Sprout mode";
+    public const string StorySidequests = "Story sidequests";
 
     /// <summary>Chip and empty-guard label of a preset; empty for <see cref="Preset.None"/>.</summary>
     public static string PresetName(Preset preset) => preset switch
@@ -30,6 +31,7 @@ public static class FilterNames
         Preset.LevelBand => LevelBand,
         Preset.Stalled => Stalled,
         Preset.Sprout => Sprout,
+        Preset.StorySidequests => StorySidequests,
         _ => string.Empty,
     };
 }

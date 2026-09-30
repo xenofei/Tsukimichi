@@ -51,4 +51,10 @@ public enum Preset
     /// (<see cref="SpoilerMask.ReachExpansion"/> of <see cref="QueryContext.Spoilers"/>) and none beyond.
     /// </summary>
     Sprout,
+
+    /// <summary>
+    /// Story sidequests (<see cref="QueryContext.Stories"/>): sidequests with journal artwork, in reading order (zone,
+    /// then each side story in play order) while the table sorts by journal order.
+    /// </summary>
+    StorySidequests,
 }
