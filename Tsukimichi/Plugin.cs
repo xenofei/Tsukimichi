@@ -632,6 +632,9 @@ public sealed class Plugin : IDalamudPlugin
             // "Since you were away" (P7): the stored captures are kept from before this login's first save; the card
             // sits above the detail pane (after What's new) and the Characters dashboard opens it for any character.
             welcomeBack = new Game.WelcomeBackSource(Session, Snapshots, ClientState, Settings, Log);
+            mainWindow.AttachWelcomeBack(welcomeBack, Session);
+            Game.WelcomeBackSource welcomeBackSource = welcomeBack;
+            charactersPane.OpenWelcomeBack = welcomeBackSource.Open;
 
             // Toolbar buttons on the main window (help, tutorial, settings).
             mainWindow.AttachActions(configWindow.Toggle, helpWindow.Toggle, helpActions.StartTutorial);

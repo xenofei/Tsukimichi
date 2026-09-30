@@ -215,6 +215,7 @@ public sealed partial class CharactersPane
         ImGui.SameLine();
         ImGui.TextDisabled(d.World);
         ImGui.TextDisabled(d.TakenLine);
+        DrawWelcomeBackButton(snapshot);
         ImGui.TextUnformatted(d.CountsLine);
         DrawMsqLine(ui, d);
 
