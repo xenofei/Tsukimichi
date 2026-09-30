@@ -1,4 +1,22 @@
 {
+  "65626": {
+    "contentFinderConditionIds": [
+      80
+    ],
+    "note": "Drop Dead Shiva -> the Akh Afah Amphitheatre (Extreme); quest script INSTANCEDUNGEON0 is InstanceContent 20025 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 80."
+  },
+  "65630": {
+    "contentFinderConditionIds": [
+      28
+    ],
+    "note": "It's Definitely Pirates -> Sastasha (Hard); quest script INSTANCEDUNGEON0 is InstanceContent 28 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 28."
+  },
+  "65632": {
+    "contentFinderConditionIds": [
+      26
+    ],
+    "note": "The Wrath of Qarn -> the Sunken Temple of Qarn (Hard); quest script INSTANCEDUNGEON0 is InstanceContent 26 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 26."
+  },
   "65781": {
     "contentFinderConditionIds": [
       4
@@ -16,6 +34,12 @@
       84
     ],
     "note": "An Uninvited Ascian -> the Chrysalis (2.4 MSQ); objective territory matches CFC 84."
+  },
+  "66030": {
+    "contentFinderConditionIds": [
+      111
+    ],
+    "note": "The World of Darkness -> the World of Darkness (Crystal Tower alliance raid); quest script INSTANCEDUNGEON0 is InstanceContent 30020 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 111."
   },
   "66050": {
     "contentFinderConditionIds": [
@@ -161,6 +185,114 @@
       63
     ],
     "note": "Ifrit Ain't Broke -> the Bowl of Embers (Extreme); objective territory matches CFC 63."
+  },
+  "66738": {
+    "contentFinderConditionIds": [
+      92
+    ],
+    "note": "Labyrinth of the Ancients -> the Labyrinth of the Ancients (Crystal Tower alliance raid); quest script INSTANCEDUNGEON0 is InstanceContent 30001 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 92."
+  },
+  "66844": {
+    "contentFinderConditionIds": [
+      68
+    ],
+    "note": "The Ultimate Ballad -> the Minstrel's Ballad: Ultima's Bane; quest script INSTANCEDUNGEON0 is InstanceContent 20013 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 68."
+  },
+  "67010": {
+    "contentFinderConditionIds": [
+      102
+    ],
+    "note": "Syrcus Tower -> Syrcus Tower (Crystal Tower alliance raid); quest script INSTANCEDUNGEON0 is InstanceContent 30011 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 102."
+  },
+  "67060": {
+    "contentFinderConditionIds": [
+      24
+    ],
+    "note": "Corpse Groom -> the Tam-Tara Deepcroft (Hard); quest script INSTANCEDUNGEON0 is InstanceContent 24 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 24."
+  },
+  "67061": {
+    "contentFinderConditionIds": [
+      25
+    ],
+    "note": "Blood for Stone -> the Stone Vigil (Hard); quest script INSTANCEDUNGEON0 is InstanceContent 25 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 25."
+  },
+  "67062": {
+    "contentFinderConditionIds": [
+      23
+    ],
+    "note": "King of the Hull -> Hullbreaker Isle; quest script INSTANCEDUNGEON0 is InstanceContent 23 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 23."
+  },
+  "67066": {
+    "contentFinderConditionIds": [
+      78
+    ],
+    "note": "Judgment Bolts and Lightning -> the Striking Tree (Extreme); quest script INSTANCEDUNGEON0 is InstanceContent 20023 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 78."
+  },
+  "67647": {
+    "contentFinderConditionIds": [
+      36
+    ],
+    "note": "For All the Nights to Come -> the Dusk Vigil (Heavensward optional dungeon); quest script INSTANCEDUNGEON0 is InstanceContent 36 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 36."
+  },
+  "67648": {
+    "contentFinderConditionIds": [
+      33
+    ],
+    "note": "Reap What You Sow -> Neverreap (Heavensward optional dungeon); quest script INSTANCEDUNGEON0 is InstanceContent 33 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 33."
+  },
+  "67649": {
+    "contentFinderConditionIds": [
+      35
+    ],
+    "note": "Do It for Gilly -> the Fractal Continuum (Heavensward optional dungeon); quest script INSTANCEDUNGEON0 is InstanceContent 35 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 35."
+  },
+  "67737": {
+    "contentFinderConditionIds": [
+      40
+    ],
+    "note": "Things Are Getting Sirius -> Pharos Sirius (Hard); quest script INSTANCEDUNGEON0 is InstanceContent 40 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 40."
+  },
+  "67738": {
+    "contentFinderConditionIds": [
+      41
+    ],
+    "note": "An Overgrown Ambition -> Saint Mocianne's Arboretum (Heavensward optional dungeon); quest script INSTANCEDUNGEON0 is InstanceContent 41 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 41."
+  },
+  "67741": {
+    "contentFinderConditionIds": [
+      120
+    ],
+    "note": "To Rule the Skies -> the Void Ark (Shadow of Mhach alliance raid); quest script INSTANCEDUNGEON0 is InstanceContent 30029 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 120."
+  },
+  "67784": {
+    "contentFinderConditionIds": [
+      172
+    ],
+    "note": "Storming the Hull -> Hullbreaker Isle (Hard); quest script INSTANCEDUNGEON0 is InstanceContent 45 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 172."
+  },
+  "67818": {
+    "contentFinderConditionIds": [
+      140
+    ],
+    "note": "One More Night in Amdapor -> the Lost City of Amdapor (Hard); quest script INSTANCEDUNGEON0 is InstanceContent 42 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 140."
+  },
+  "67821": {
+    "contentFinderConditionIds": [
+      168
+    ],
+    "note": "The Weeping City -> the Weeping City of Mhach (Shadow of Mhach alliance raid); quest script INSTANCEDUNGEON0 is InstanceContent 30038 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 168."
+  },
+  "67922": {
+    "contentFinderConditionIds": [
+      196
+    ],
+    "note": "Let Me Gubal That for You -> the Great Gubal Library (Hard); quest script INSTANCEDUNGEON0 is InstanceContent 47 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 196."
+  },
+  "67938": {
+    "contentFinderConditionIds": [
+      221
+    ],
+    "note": "The Fires of Sohm Al -> Sohm Al (Hard); quest script INSTANCEDUNGEON0 is InstanceContent 49 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 221."
   },
   "70012": {
     "contentFinderConditionIds": [

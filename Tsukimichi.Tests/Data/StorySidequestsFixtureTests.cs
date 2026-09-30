@@ -47,8 +47,10 @@ public class StorySidequestsFixtureTests(FixtureCatalog fixture, ITestOutputHelp
         output.WriteLine($"{stories.Count} story sidequests ({blue} of them blue aether current line quests), {stories.Chains.Count} side stories holding {chained}, {stories.Count - chained} alone");
         output.WriteLine("sizes: " + string.Join(", ", sizes.Select(kv => $"{kv.Key}×{kv.Value}")));
 
-        Assert.Equal(379, stories.Count);
-        Assert.Equal(97, blue);
+        // 0.9.0 (P13) curated For All the Nights to Come as the Dusk Vigil's unlock: it grants a Coerthas Western
+        // Highlands aether current too, but a dungeon unlock is never a story, so it left the blue lines (was 379 / 97).
+        Assert.Equal(378, stories.Count);
+        Assert.Equal(96, blue);
         Assert.Equal(44, stories.Chains.Count);
         Assert.Equal(308, chained);
         Assert.Equal(
