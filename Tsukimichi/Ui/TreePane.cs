@@ -278,7 +278,7 @@ public sealed class TreePane
         // Where TreeNodeEx puts its label: after the arrow slot (one font size plus twice the frame padding).
         var labelX = indentX + ImGui.GetFontSize() + style.FramePadding.X * 2f;
         var haloCenter = new Vector2(labelX + radius, rowCenterY);
-        MoonGlyph.DrawHalo(dl, haloCenter, radius, node.Count.Fraction, onCard: false, glow: false);
+        MoonGlyph.DrawHalo(dl, haloCenter, radius, node.Count.Fraction, onCard: false, dimComplete: complete);
 
         // Mini bar 12 px before the count, dropped when the name would have less than a few characters of room.
         var namePos = new Vector2(labelX + radius * 2f + pad, textY);
@@ -404,7 +404,7 @@ public sealed class TreePane
         using var tooltip = ImRaii.Tooltip();
         UiMetrics.ApplyFontScale();
         var box = 2f * MathF.Max(16f, UiMetrics.Icon(11f));
-        MoonGlyph.DrawHaloInline(node.Count.Fraction, box);
+        MoonGlyph.DrawHaloInline(node.Count.Fraction, box, dimComplete: node.Complete);
         ImGui.SameLine();
         using (ImRaii.Group())
         {
