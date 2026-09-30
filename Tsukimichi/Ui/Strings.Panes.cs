@@ -455,6 +455,9 @@ static partial class Strings
         public const string ChipNotInTotals = "Left out of totals";
         public const string ChipStatePrefix = "State: ";
 
+        public const string StripeTitle = "The table's state stripe";
+        public const string StripeBody = "The thin bar on the left edge of each quest table row repeats the row's state as a pattern, so it reads without colour too: in a greyscale stream, through a colour filter or with colour blindness. Hover the stripe for the state and the pattern's name.";
+
         public const string FillingTitle = "The halo";
         public const string FillingBody = "Tree nodes, Moonlit kinds, flying zones and the Characters dashboard show a ring that fills clockwise from the top with the completion ratio, around a small moon that fills with it. Even one quest shows a gold pip, and the ring closes only when everything is done. Where the ring is small the number sits beside it. Locked out quests are left out of the total.";
 
@@ -578,6 +581,10 @@ static partial class Strings
             "/tsuki todo",
             "/tsuki report [quest name]",
             "/tsuki export [quests|moonlit] [json|csv]",
+            "Ctrl+F",
+            "Esc",
+            "Menu key, Shift+F10, …",
+            "Ctrl+1 to 4, F, Enter, P",
         ];
 
         public static readonly string[] CommandMeanings =
@@ -595,6 +602,10 @@ static partial class Strings
             "show or hide the todo overlay: pins, event quests running now, feature quests here, the next main scenario quest and job quests",
             "copy a diagnostic block for the selected quest (or the named one) to the clipboard, ready to paste into a GitHub issue; the Report button in the detail pane does the same",
             "write the viewed character's completed quests, its Moonlit collection, or both to the exports folder as JSON or CSV (the Settings format when none is named) and print where; see docs/export-format.md. No content id, account or world, and the name only when Settings › Data › Export › Include character name is ticked",
+            "put the caret in the search, while the window has focus",
+            "close the open menu or the filter panel; with neither open, close the window",
+            "open the focused row's menu in the quest table and the Moonlit list, the same menu a right-click opens; the … button at a row's right end (shown on hover or focus) opens it with a left click",
+            "off unless turned on in Settings › Keyboard: switch tabs, flag the selected quest's giver, show it in the Journal, pin it. The game sees these keys too: Ctrl+1 to 4 are hotbar 2 by default",
         ];
 
         // ---- Why my counts differ from the journal ----

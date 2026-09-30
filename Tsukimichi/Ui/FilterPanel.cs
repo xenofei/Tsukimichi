@@ -40,6 +40,15 @@ public sealed class FilterPanel
 
     private static readonly RewardKind[] Kinds = Enum.GetValues<RewardKind>();
 
+    // The toggles' setters, built once: a lambda capturing the filter set would allocate a closure every frame.
+    private static readonly Action<FilterSet, bool> SetHideCompleted = static (f, v) => f.HideCompleted = v;
+    private static readonly Action<FilterSet, bool> SetAvailableOnly = static (f, v) => f.AvailableOnly = v;
+    private static readonly Action<FilterSet, bool> SetRepeatableOnly = static (f, v) => f.RepeatableOnly = v;
+    private static readonly Action<FilterSet, bool> SetSeasonalActiveOnly = static (f, v) => f.SeasonalActiveOnly = v;
+    private static readonly Action<FilterSet, bool> SetIncludeUnlisted = static (f, v) => f.IncludeUnlisted = v;
+    private static readonly Action<FilterSet, bool> SetPinnedOnly = static (f, v) => f.PinnedOnly = v;
+    private static readonly Action<FilterSet, bool> SetAbandonedOnly = static (f, v) => f.AbandonedOnly = v;
+
     /// <summary>Fixed job-category choices: label and ClassJobCategory row id (null = all).</summary>
     private static readonly (string Label, uint? Id)[] JobChoices =
     [
@@ -98,8 +107,8 @@ public sealed class FilterPanel
 
         DrawPresets(settings);
         ImGui.Separator();
-        DrawRuntimeToggle(Strings.HideCompleted, Strings.HideCompletedTooltip, "##hideCompleted", hasSnapshot, f.HideCompleted, v => f.HideCompleted = v, f.PerCategoryHideCompleted);
-        DrawRuntimeToggle(Strings.AvailableOnly, Strings.AvailableOnlyTooltip, "##availableOnly", hasSnapshot, f.AvailableOnly, v => f.AvailableOnly = v, f.PerCategoryAvailableOnly);
+        DrawRuntimeToggle(Strings.HideCompleted, Strings.HideCompletedTooltip, "##hideCompleted", hasSnapshot, f.HideCompleted, f, SetHideCompleted, f.PerCategoryHideCompleted);
+        DrawRuntimeToggle(Strings.AvailableOnly, Strings.AvailableOnlyTooltip, "##availableOnly", hasSnapshot, f.AvailableOnly, f, SetAvailableOnly, f.PerCategoryAvailableOnly);
         DrawPinnedFirst();
 
         if (ImGui.CollapsingHeader(Strings.Advanced))
@@ -110,11 +119,11 @@ public sealed class FilterPanel
             DrawLevelRange(f);
             DrawJobCategory(f, snapshot);
             DrawRewardKinds(f);
-            Toggle(Strings.RepeatableOnly, Strings.RepeatableOnlyTooltip, f.RepeatableOnly, v => f.RepeatableOnly = v);
-            Toggle(Strings.SeasonalActiveOnly, Strings.SeasonalActiveOnlyTooltip, f.SeasonalActiveOnly, v => f.SeasonalActiveOnly = v, hasSnapshot);
-            Toggle(Strings.IncludeUnlisted, Strings.IncludeUnlistedTooltip, f.IncludeUnlisted, v => f.IncludeUnlisted = v);
-            Toggle(Strings.PinnedOnly, Strings.PinnedOnlyTooltip, f.PinnedOnly, v => f.PinnedOnly = v);
-            Toggle(Strings.AbandonedOnly, Strings.AbandonedOnlyTooltip, f.AbandonedOnly, v => f.AbandonedOnly = v, hasSnapshot);
+            Toggle(Strings.RepeatableOnly, Strings.RepeatableOnlyTooltip, f.RepeatableOnly, f, SetRepeatableOnly);
+            Toggle(Strings.SeasonalActiveOnly, Strings.SeasonalActiveOnlyTooltip, f.SeasonalActiveOnly, f, SetSeasonalActiveOnly, hasSnapshot);
+            Toggle(Strings.IncludeUnlisted, Strings.IncludeUnlistedTooltip, f.IncludeUnlisted, f, SetIncludeUnlisted);
+            Toggle(Strings.PinnedOnly, Strings.PinnedOnlyTooltip, f.PinnedOnly, f, SetPinnedOnly);
+            Toggle(Strings.AbandonedOnly, Strings.AbandonedOnlyTooltip, f.AbandonedOnly, f, SetAbandonedOnly, hasSnapshot);
         }
 
         if (ImGui.SmallButton(Strings.Reset))
@@ -440,13 +449,13 @@ public sealed class FilterPanel
         return clicked;
     }
 
-    private void DrawRuntimeToggle(string label, string tooltip, string popupId, bool hasSnapshot, bool value, Action<bool> set, Dictionary<uint, bool> overrides)
+    private void DrawRuntimeToggle(string label, string tooltip, string popupId, bool hasSnapshot, bool value, FilterSet filters, Action<FilterSet, bool> set, Dictionary<uint, bool> overrides)
     {
         using (ImRaii.Disabled(!hasSnapshot))
         {
             if (ImGui.Checkbox(label, ref value))
             {
-                set(value);
+                set(filters, value);
                 changed();
             }
         }
@@ -643,13 +652,13 @@ public sealed class FilterPanel
         }
     }
 
-    private void Toggle(string label, string tooltip, bool value, Action<bool> set, bool enabled = true)
+    private void Toggle(string label, string tooltip, bool value, FilterSet filters, Action<FilterSet, bool> set, bool enabled = true)
     {
         using (ImRaii.Disabled(!enabled))
         {
             if (ImGui.Checkbox(label, ref value))
             {
-                set(value);
+                set(filters, value);
                 changed();
             }
         }

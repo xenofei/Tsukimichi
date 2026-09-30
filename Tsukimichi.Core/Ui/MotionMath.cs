@@ -19,8 +19,35 @@ public static class MotionMath
     /// <summary>Rate for chevrons and similar rotations (about 140 ms).</summary>
     public const float ChevronRate = 10f;
 
+    /// <summary>Rate for a halo gauge's fill moving to a new fraction (about 500 ms, ease-out; accessibility B5).</summary>
+    public const float GaugeRate = 6f;
+
+    /// <summary>The reveal pulse: two rings of <see cref="RevealRingSeconds"/> each, back to back (ui-revamp §3, 2.2 flashes/s).</summary>
+    public const float RevealPulseSeconds = 0.9f;
+
+    /// <summary>One ring of the reveal pulse.</summary>
+    public const float RevealRingSeconds = 0.45f;
+
     /// <summary>Closer than this to the target counts as there, so an eased value settles instead of creeping forever.</summary>
     public const float SnapEpsilon = 0.001f;
+
+    /// <summary>
+    /// The reveal pulse at <paramref name="progress"/> (0..1 over <see cref="RevealPulseSeconds"/>): which of its two
+    /// rings is showing (0 or 1) and how far that ring has grown (0..1, eased out). -1 for the ring when the pulse is
+    /// not running (a negative or non-finite progress, or 1 and beyond).
+    /// </summary>
+    public static (int Ring, float Grow) RevealRing(float progress)
+    {
+        if (!float.IsFinite(progress) || progress < 0f || progress >= 1f)
+        {
+            return (-1, 0f);
+        }
+
+        var rings = RevealPulseSeconds / RevealRingSeconds;
+        var scaled = progress * rings;
+        var ring = Math.Min((int)scaled, (int)rings - 1);
+        return (ring, EaseOutCubic(scaled - ring));
+    }
 
     /// <summary>
     /// One frame of the exponential approach from <paramref name="current"/> towards <paramref name="target"/> at rate

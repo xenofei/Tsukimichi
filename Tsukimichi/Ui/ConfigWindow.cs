@@ -164,6 +164,8 @@ public sealed class ConfigWindow : Window
         ImGui.Spacing();
         DrawDisplay();
         ImGui.Spacing();
+        DrawKeyboard();
+        ImGui.Spacing();
         DrawNotices();
         ImGui.Spacing();
         DrawJournal();
@@ -272,7 +274,7 @@ public sealed class ConfigWindow : Window
 
         if (ImGui.IsItemHovered())
         {
-            ImGui.SetTooltip(Strings.ConfigReduceMotionHint);
+            UiMetrics.Tooltip(Strings.ConfigReduceMotionHint);
         }
 
         // One layout, two palettes (T13): Night, or the surfaces mapped from the user's Dalamud style.
@@ -285,10 +287,72 @@ public sealed class ConfigWindow : Window
 
         if (ImGui.IsItemHovered())
         {
-            ImGui.SetTooltip(Strings.ConfigFollowDalamudColoursHint);
+            UiMetrics.Tooltip(Strings.ConfigFollowDalamudColoursHint);
         }
 
         DrawJournalFiling();
+    }
+
+    /// <summary>
+    /// Settings › Keyboard (T17, accessibility A7): what is always bound, the warning that the game sees the keys too,
+    /// and the opt-in shortcuts, all off by default. Saved at once.
+    /// </summary>
+    private void DrawKeyboard()
+    {
+        Header(Strings.ConfigSectionKeyboard);
+        using (ImRaii.TextWrapPos(0f))
+        {
+            ImGui.TextDisabled(Strings.ConfigKeyboardAlwaysOn);
+            using (Theme.PushText(Theme.Surface.TextSecondary))
+            {
+                ImGui.TextWrapped(Strings.ConfigKeyboardGameSeesKeys);
+            }
+        }
+
+        var tabs = settings.ShortcutTabs;
+        if (ImGui.Checkbox(Strings.ConfigShortcutTabs, ref tabs))
+        {
+            settings.ShortcutTabs = tabs;
+            Save();
+        }
+
+        HintOnHover(Strings.ConfigShortcutTabsHint);
+
+        var flag = settings.ShortcutFlag;
+        if (ImGui.Checkbox(Strings.ConfigShortcutFlag, ref flag))
+        {
+            settings.ShortcutFlag = flag;
+            Save();
+        }
+
+        HintOnHover(Strings.ConfigShortcutFlagHint);
+
+        var reveal = settings.ShortcutReveal;
+        if (ImGui.Checkbox(Strings.ConfigShortcutReveal, ref reveal))
+        {
+            settings.ShortcutReveal = reveal;
+            Save();
+        }
+
+        HintOnHover(Strings.ConfigShortcutRevealHint);
+
+        var pin = settings.ShortcutPin;
+        if (ImGui.Checkbox(Strings.ConfigShortcutPin, ref pin))
+        {
+            settings.ShortcutPin = pin;
+            Save();
+        }
+
+        HintOnHover(Strings.ConfigShortcutPinHint);
+    }
+
+    /// <summary>The last item's hint as a Night tooltip while it is hovered.</summary>
+    private static void HintOnHover(string hint)
+    {
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(hint);
+        }
     }
 
     /// <summary>
@@ -364,7 +428,7 @@ public sealed class ConfigWindow : Window
 
         if (ImGui.IsItemHovered())
         {
-            ImGui.SetTooltip(Strings.ConfigOfferTutorialHint);
+            UiMetrics.Tooltip(Strings.ConfigOfferTutorialHint);
         }
     }
 
@@ -426,7 +490,7 @@ public sealed class ConfigWindow : Window
 
         if (ImGui.IsItemHovered())
         {
-            ImGui.SetTooltip(Strings.AbandonedConfigNoticeHint);
+            UiMetrics.Tooltip(Strings.AbandonedConfigNoticeHint);
         }
 
         var seasonal = settings.ChatNoticeSeasonal;
@@ -438,7 +502,7 @@ public sealed class ConfigWindow : Window
 
         if (ImGui.IsItemHovered())
         {
-            ImGui.SetTooltip(Strings.SeasonalConfigNoticeHint);
+            UiMetrics.Tooltip(Strings.SeasonalConfigNoticeHint);
         }
     }
 
@@ -616,7 +680,7 @@ public sealed class ConfigWindow : Window
 
         if (ImGui.IsItemHovered())
         {
-            ImGui.SetTooltip(Strings.TodoConfigEnabledHint);
+            UiMetrics.Tooltip(Strings.TodoConfigEnabledHint);
         }
 
         using var indent = ImRaii.PushIndent();
@@ -631,7 +695,7 @@ public sealed class ConfigWindow : Window
 
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
-            ImGui.SetTooltip(Strings.TodoConfigLockedHint);
+            UiMetrics.Tooltip(Strings.TodoConfigLockedHint);
         }
 
         var compact = settings.TodoOverlayCompact;
@@ -643,7 +707,7 @@ public sealed class ConfigWindow : Window
 
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
-            ImGui.SetTooltip(Strings.TodoConfigCompactHint);
+            UiMetrics.Tooltip(Strings.TodoConfigCompactHint);
         }
 
         var opacity = TodoOverlay.ClampOpacity(settings.TodoOverlayOpacity);
@@ -677,7 +741,7 @@ public sealed class ConfigWindow : Window
 
         if (ImGui.IsItemHovered())
         {
-            ImGui.SetTooltip(Strings.TodoConfigShowSeasonalHint);
+            UiMetrics.Tooltip(Strings.TodoConfigShowSeasonalHint);
         }
 
         var nearby = settings.TodoShowNearbyFeature;
@@ -713,7 +777,7 @@ public sealed class ConfigWindow : Window
 
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
-            ImGui.SetTooltip(Strings.TodoConfigResetPositionHint);
+            UiMetrics.Tooltip(Strings.TodoConfigResetPositionHint);
         }
     }
 
@@ -731,7 +795,7 @@ public sealed class ConfigWindow : Window
 
         if (ImGui.IsItemHovered())
         {
-            ImGui.SetTooltip(Strings.ConfigItemHintsHint);
+            UiMetrics.Tooltip(Strings.ConfigItemHintsHint);
         }
 
         var contextMenu = settings.ItemContextMenuEnabled;
@@ -744,7 +808,7 @@ public sealed class ConfigWindow : Window
 
         if (ImGui.IsItemHovered())
         {
-            ImGui.SetTooltip(Strings.ConfigItemContextMenuHint);
+            UiMetrics.Tooltip(Strings.ConfigItemContextMenuHint);
         }
     }
 
@@ -761,7 +825,7 @@ public sealed class ConfigWindow : Window
 
         if (ImGui.IsItemHovered())
         {
-            ImGui.SetTooltip(Strings.ConfigWotsitIntegrationHint);
+            UiMetrics.Tooltip(Strings.ConfigWotsitIntegrationHint);
         }
 
         var npcMenu = settings.NpcContextMenuEnabled;
@@ -774,7 +838,7 @@ public sealed class ConfigWindow : Window
 
         if (ImGui.IsItemHovered())
         {
-            ImGui.SetTooltip(Strings.ConfigNpcContextMenuHint);
+            UiMetrics.Tooltip(Strings.ConfigNpcContextMenuHint);
         }
 
         DrawHookGate();
@@ -815,7 +879,7 @@ public sealed class ConfigWindow : Window
 
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
-            ImGui.SetTooltip(Strings.HooksEnableUntestedHint);
+            UiMetrics.Tooltip(Strings.HooksEnableUntestedHint);
         }
 
         if (gate.Decision.Verdict == HookGateVerdict.Overridden)
@@ -910,7 +974,7 @@ public sealed class ConfigWindow : Window
 
                     if (ImGui.IsItemHovered())
                     {
-                        ImGui.SetTooltip(Strings.ConfigVerdictRestoreTooltip);
+                        UiMetrics.Tooltip(Strings.ConfigVerdictRestoreTooltip);
                     }
                 }
             }
@@ -925,7 +989,7 @@ public sealed class ConfigWindow : Window
 
         if (ImGui.IsItemHovered())
         {
-            ImGui.SetTooltip(Strings.ConfigVerdictRestoreAllTooltip);
+            UiMetrics.Tooltip(Strings.ConfigVerdictRestoreAllTooltip);
         }
     }
 

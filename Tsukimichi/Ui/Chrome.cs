@@ -147,6 +147,8 @@ public static class Chrome
             ImGui.SameLine(0f, UiMetrics.Px(8f));
         }
 
+        // The title in the display role (T17): the display game font at 1.2× the body.
+        using var display = Typography.Display();
         ImGui.PushStyleColor(ImGuiCol.Text, Theme.Surface.Text);
         ImGui.TextUnformatted(title);
         ImGui.PopStyleColor();
@@ -205,17 +207,24 @@ public static class Chrome
 
     // ------------------------------------------------------------------ pills, chips, badges
 
-    /// <summary>Size of a <see cref="Pill(string, Vector4, bool)"/> for <paramref name="text"/> at the current font.</summary>
-    public static Vector2 PillSize(string text) =>
+    /// <summary>Size of a <see cref="Pill(string, Vector4, bool)"/> for <paramref name="text"/> in the caption role.</summary>
+    public static Vector2 PillSize(string text)
+    {
+        using var caption = Typography.Caption();
+        return PillSizeNow(text);
+    }
+
+    private static Vector2 PillSizeNow(string text) =>
         ImGui.CalcTextSize(text) + new Vector2(UiMetrics.Px(PillPadX) * 2f, UiMetrics.Px(PillPadY) * 2f);
 
     /// <summary>
-    /// A tinted pill as an item: fill <paramref name="tone"/> at 16 %, border at 55 %, text in the tone. With
-    /// <paramref name="wrap"/> it moves to the next line instead of running past the content edge.
+    /// A tinted pill as an item: fill <paramref name="tone"/> at 16 %, border at 55 %, text in the tone, in the caption
+    /// role (ui-revamp §4.2). With <paramref name="wrap"/> it moves to the next line instead of running past the content edge.
     /// </summary>
     public static void Pill(string text, Vector4 tone, bool wrap = false)
     {
-        var size = PillSize(text);
+        using var caption = Typography.Caption();
+        var size = PillSizeNow(text);
         var pos = ImGui.GetCursorScreenPos();
         if (wrap && pos.X + size.X > ImGui.GetWindowPos().X + ImGui.GetWindowContentRegionMax().X)
         {

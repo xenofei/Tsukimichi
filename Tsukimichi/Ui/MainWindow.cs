@@ -99,6 +99,9 @@ public sealed class MainWindow : Window, IDisposable
     /// <summary>The least width the status text keeps when the MSQ segment crowds it, in logical pixels.</summary>
     private const float StatusMinLogical = 120f;
 
+    /// <summary>Motion key of the status bar's overall halo: its fill eases only when the overall count changes.</summary>
+    private static readonly ulong StatusGaugeKey = Motion.Key(0x5354_4147, 0); // "STAG"
+
     /// <summary>The MSQ pill's fill: Moon at 10 % (ui-revamp §2.6).</summary>
     private static readonly uint MsqPillFill = Theme.WithAlpha(Theme.Moon, 0.10f);
 
@@ -141,7 +144,7 @@ public sealed class MainWindow : Window, IDisposable
         ui.FiltersChanged += OnFiltersChanged;
         tabStrip = new TabStrip(ui);
         treePane = new TreePane(ui);
-        tablePane = new TablePane(ui, runner, links, textures, pluginInterface, log, filterPanel.ResetAll);
+        tablePane = new TablePane(ui, runner, links, textures, pluginInterface, log, filterPanel.ResetAll, OnFiltersChanged);
         detailPane = new DetailPane(ui, runner, links, textures, log);
         tonightCard = new TonightCard(ui, runner, OnFiltersChanged);
 
@@ -250,12 +253,19 @@ public sealed class MainWindow : Window, IDisposable
             MinimumSize = ScaleMetrics.MinWindowSize(UiMetrics.FontScale, ImGuiHelpers.GlobalScale, ImGuiHelpers.MainViewport.WorkSize),
         };
 
-        // Dalamud closes the window on Esc while it or one of its popups is focused; while a popup (verdict prompt,
-        // context menu) is open Esc belongs to the popup. The tour manages the flag itself while it runs.
+        // Dalamud closes the window on Esc while it or one of its popups is focused. Esc closes the topmost thing first
+        // (T17): while a popup (verdict prompt, context menu) or the filter panel is open, Esc belongs to it and the
+        // window stays; the next Esc closes the window. The tour manages the flag and its keys itself while it runs.
         if (!tourWasActive)
         {
-            RespectCloseHotkey = !ImGui.IsPopupOpen(string.Empty, ImGuiPopupFlags.AnyPopupId | ImGuiPopupFlags.AnyPopupLevel);
+            var panelOpen = ui.FilterPanelOpen && ui.Tab == NavTab.Journal;
+            var popupOpen = popupDepthAtEnd > 0 || ImGui.IsPopupOpen(string.Empty, ImGuiPopupFlags.AnyPopupId | ImGuiPopupFlags.AnyPopupLevel);
+            RespectCloseHotkey = !popupOpen && !panelOpen;
+            HandleEscape(panelOpen);
+            HandleShortcuts(session);
         }
+
+        selectionAtStart = ui.SelectedRowId;
 
         // Regions are re-recorded by whichever panes draw this frame; clearing first keeps hidden panes' rects
         // from lingering (the tutorial unions them for its dimmed area).
@@ -267,12 +277,121 @@ public sealed class MainWindow : Window, IDisposable
         try
         {
             DrawContent(session);
+            if (!tourWasActive)
+            {
+                HandleRevealShortcut(session);
+            }
         }
         finally
         {
             ImGui.SetWindowFontScale(1f);
+            popupDepthAtEnd = ImGui.GetCurrentContext().OpenPopupStack.Size;
         }
     }
+
+    // ------------------------------------------------------------------ keyboard (T17)
+
+    /// <summary>How many popups were open when the last frame's Draw ended (ImGui's own Esc may close one before the next Draw).</summary>
+    private int popupDepthAtEnd;
+
+    /// <summary>
+    /// Esc while this window has the keys and no text field is active: closes the topmost popup (a modal handles its
+    /// own Esc), else the filter panel; with neither open, Dalamud's close hotkey closes the window. When ImGui's
+    /// navigation already closed a popup on this press, nothing else happens, so one press closes one thing.
+    /// </summary>
+    private void HandleEscape(bool panelOpen)
+    {
+        if (!ImGui.IsKeyPressed(ImGuiKey.Escape, false) || !Keyboard.WindowHasKeys())
+        {
+            return;
+        }
+
+        var depth = ImGui.GetCurrentContext().OpenPopupStack.Size;
+        if (popupDepthAtEnd > 0)
+        {
+            if (depth > 0 && depth >= popupDepthAtEnd && ImGuiP.GetTopMostPopupModal().IsNull)
+            {
+                ImGuiP.ClosePopupToLevel(depth - 1, true);
+            }
+
+            return;
+        }
+
+        if (panelOpen)
+        {
+            ui.FilterPanelOpen = false;
+        }
+    }
+
+    /// <summary>
+    /// The opt-in shortcuts of Settings › Keyboard (all off by default; accessibility A7): Ctrl+1..4 switch tabs, F
+    /// flags the selected quest's giver, Enter shows the selected quest in the Journal, P pins or unpins it. Only while
+    /// this window has the keys and no text field is active; the game still sees the key.
+    /// </summary>
+    private void HandleShortcuts(SessionState session)
+    {
+        var settings = plugin.Settings;
+        if (!(settings.ShortcutTabs || settings.ShortcutFlag || settings.ShortcutPin) || !Keyboard.WindowHasKeys())
+        {
+            return;
+        }
+
+        if (settings.ShortcutTabs)
+        {
+            for (var i = 0; i < TabKeys.Length; i++)
+            {
+                if (Keyboard.CtrlPressed(TabKeys[i]))
+                {
+                    ui.Tab = (NavTab)i;
+                    return;
+                }
+            }
+        }
+
+        if (ui.SelectedRowId is not { } rowId || session.Bundle?.Catalog.GetByRowId(rowId) is not { } quest)
+        {
+            return;
+        }
+
+        if (settings.ShortcutFlag && Keyboard.LetterPressed(ImGuiKey.F) && links.CanFlagMap(quest))
+        {
+            links.FlagMap(quest);
+        }
+        else if (settings.ShortcutPin && Keyboard.LetterPressed(ImGuiKey.P) && runner.CanPin)
+        {
+            runner.TogglePin(rowId);
+        }
+    }
+
+    /// <summary>The selection when this frame's Draw began, so the Enter shortcut can tell a row activated by Enter.</summary>
+    private uint? selectionAtStart;
+
+    /// <summary>
+    /// The opt-in Enter shortcut, after the panes drew: on the Moonlit, Characters or Flight tab it shows the selected
+    /// quest in the Journal (on the Journal it is already there). While keyboard navigation is visible Enter belongs to
+    /// the focused item, so it reveals only when that item was a row whose activation selected a quest this frame.
+    /// </summary>
+    private void HandleRevealShortcut(SessionState session)
+    {
+        if (!plugin.Settings.ShortcutReveal || ui.Tab == NavTab.Journal || !Keyboard.WindowHasKeys()
+            || !(Keyboard.LetterPressed(ImGuiKey.Enter) || Keyboard.LetterPressed(ImGuiKey.KeypadEnter)))
+        {
+            return;
+        }
+
+        if (ImGui.GetIO().NavVisible && ui.SelectedRowId == selectionAtStart)
+        {
+            return;
+        }
+
+        if (ui.SelectedRowId is { } rowId && session.Bundle?.Catalog.GetByRowId(rowId) is { } quest)
+        {
+            ui.Reveal(quest);
+        }
+    }
+
+    /// <summary>Ctrl+1..4 in <see cref="NavTab"/> order.</summary>
+    private static readonly ImGuiKey[] TabKeys = [ImGuiKey.Key1, ImGuiKey.Key2, ImGuiKey.Key3, ImGuiKey.Key4];
 
     private void DrawContent(SessionState session)
     {
@@ -1182,6 +1301,8 @@ public sealed class MainWindow : Window, IDisposable
 
         RefreshMsq(session, bundle);
 
+        // The whole bar is in the caption role (ui-revamp §4.2): 0.85× the body, never under 12 px.
+        using var caption = Typography.Caption();
         var barMin = ImGui.GetCursorScreenPos();
         ImGui.Separator();
 
@@ -1202,7 +1323,7 @@ public sealed class MainWindow : Window, IDisposable
         {
             ImGui.SetCursorScreenPos(new Vector2(x, origin.Y));
             ImGui.Dummy(new Vector2(2f * haloRadius, rowHeight));
-            MoonGlyph.DrawHalo(dl, new Vector2(x + haloRadius, midY), haloRadius, overall.Fraction);
+            MoonGlyph.DrawHalo(dl, new Vector2(x + haloRadius, midY), haloRadius, Motion.Gauge(StatusGaugeKey, overall.Fraction));
             if (ImGui.IsItemHovered())
             {
                 UiMetrics.Tooltip(Strings.FillingMoonTooltip, statusProgress);

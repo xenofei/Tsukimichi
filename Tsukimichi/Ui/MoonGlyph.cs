@@ -287,7 +287,13 @@ public static class MoonGlyph
     /// Inline form of <see cref="DrawHalo"/>: reserves a <paramref name="size"/> square item at the cursor (so a tooltip
     /// can hang off it) and draws the halo with R = size / 2. Returns the <see cref="HaloMode"/> it drew, so the caller
     /// knows whether a number belongs beside it (<see cref="HaloMode.Ring"/>) or instead of it (<see cref="HaloMode.NumberOnly"/>).
+    /// This overload eases the fill through <see cref="Motion.Gauge"/> under <paramref name="motionKey"/>, so it moves
+    /// only when the fraction changes.
     /// </summary>
+    public static HaloMode DrawHaloInline(ulong motionKey, float fraction, float size, bool onCard = false, bool dimComplete = false) =>
+        DrawHaloInline(Motion.Gauge(motionKey, fraction), size, onCard, dimComplete);
+
+    /// <inheritdoc cref="DrawHaloInline(ulong, float, float, bool, bool)"/>
     public static HaloMode DrawHaloInline(float fraction, float size, bool onCard = false, bool dimComplete = false)
     {
         var pos = ImGui.GetCursorScreenPos();

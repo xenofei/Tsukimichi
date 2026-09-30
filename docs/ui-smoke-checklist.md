@@ -1,5 +1,7 @@
 # UI smoke checklist (T4.2–T4.4)
 
+> Historical: kept because older design and review documents link here. It is no longer maintained, and no new smoke-test pages are written.
+
 Manual, in game, with the repo folder added as a dev plugin location. One line per feature: what to do, what to expect.
 "Snapshot" below means a stored character file under `<config>/characters/`.
 

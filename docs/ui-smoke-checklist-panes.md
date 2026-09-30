@@ -1,5 +1,7 @@
 # UI smoke checklist — Moonlit pane, Characters pane, Config window
 
+> Historical: kept because older design and review documents link here. It is no longer maintained, and no new smoke-test pages are written.
+
 Manual, in game, after the panes are wired into MainWindow (T4.5). Companion to `ui-smoke-checklist.md`.
 Tick each line on a character that has done at least one quest with a unique reward (Her Last Vow → Most Gentlemanly is the reference).
 

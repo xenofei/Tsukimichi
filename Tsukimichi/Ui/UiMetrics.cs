@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Tsukimichi.Config;
@@ -121,12 +122,9 @@ public static class UiMetrics
         ScaleMetrics.TableRowContent(Density, GlobalScale, RowContentHeight(lineHeight), cellPaddingY);
 
     // Layout.
-    public static float ChipHeight => ImGui.GetFrameHeight();
     public static float LeftColumnWidth => Px(ScaleMetrics.LeftColumnLogical);
     public static float RightColumnWidth => Px(ScaleMetrics.RightColumnLogical);
-    public static float SearchWidth => Px(280f);
     public static float CharacterComboWidth => Px(240f);
-    public static float MinChipStripWidth => Px(40f);
     public static float MinBodyHeight => Px(120f);
     public static float Stripe => MathF.Max(1f, Px(2f));
     public static float Hairline => MathF.Max(1f, Px(1f));
@@ -137,13 +135,18 @@ public static class UiMetrics
     /// </summary>
     public static float MinTarget => MathF.Max(Px(26f), 24f);
 
-    /// <summary>A plain text tooltip drawn with the window's font scale (SetTooltip cannot be scaled).</summary>
+    /// <summary>
+    /// A plain text tooltip, Night styled and drawn with the UI scale (SetTooltip can be neither). It is always in the
+    /// default font, even when hung off an item drawn in a <see cref="Typography"/> role.
+    /// </summary>
     public static void Tooltip(string text)
     {
         using var tooltipStyle = Theme.PushTooltip();
         using var tooltip = ImRaii.Tooltip();
+        ImGui.PushFont(UiBuilder.DefaultFont);
         ApplyFontScale();
         ImGui.TextUnformatted(text);
+        ImGui.PopFont();
     }
 
     /// <summary>A two-line tooltip: <paramref name="text"/>, then <paramref name="detail"/> in the disabled tone when it is not empty.</summary>
@@ -151,12 +154,15 @@ public static class UiMetrics
     {
         using var tooltipStyle = Theme.PushTooltip();
         using var tooltip = ImRaii.Tooltip();
+        ImGui.PushFont(UiBuilder.DefaultFont);
         ApplyFontScale();
         ImGui.TextUnformatted(text);
         if (!string.IsNullOrEmpty(detail))
         {
             ImGui.TextDisabled(detail);
         }
+
+        ImGui.PopFont();
     }
 
     // The last reason line composed for a moon tooltip: one moon is hovered at a time, and an evaluation is an
