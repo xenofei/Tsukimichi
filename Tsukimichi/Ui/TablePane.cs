@@ -1084,7 +1084,7 @@ public sealed class TablePane : IDisposable
         {
             ArtworkPlaceholder.Draw(width);
         }
-        else if (quest.Icon != 0 && textures.GetFromGameIcon(new GameIconLookup(quest.Icon)).TryGetWrap(out var wrap, out _) && wrap.Width > 0 && wrap.Height > 0)
+        else if (quest.Icon != 0 && textures.TryGetFromGameIcon(new GameIconLookup(quest.Icon), out var bannerTex) && bannerTex.TryGetWrap(out var wrap, out _) && wrap.Width > 0 && wrap.Height > 0)
         {
             ImGui.Image(wrap.Handle, new Vector2(width, width * wrap.Height / wrap.Width));
         }

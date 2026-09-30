@@ -400,7 +400,7 @@ public sealed partial class CharactersPane
         {
             var inset = new Vector2(MathF.Round(UiMetrics.Px(3f)));
             var hiRes = frame > Orbit.LowResMaxPx;
-            if (textures.GetFromGameIcon(new GameIconLookup(d.JobIconId, false, hiRes)).TryGetWrap(out var wrap, out _))
+            if (textures.TryGetFromGameIcon(new GameIconLookup(d.JobIconId, false, hiRes), out var jobTex) && jobTex.TryGetWrap(out var wrap, out _))
             {
                 dl.AddImage(wrap.Handle, frameMin + inset, frameMax - inset);
             }

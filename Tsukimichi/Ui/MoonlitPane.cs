@@ -970,7 +970,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             if (row.Reward is not null)
             {
                 var hiRes = icon - (2f * art) > Orbit.LowResMaxPx;
-                if (textures.GetFromGameIcon(new GameIconLookup(row.Icon, false, hiRes)).TryGetWrap(out var wrap, out _))
+                if (textures.TryGetFromGameIcon(new GameIconLookup(row.Icon, false, hiRes), out var tileTex) && tileTex.TryGetWrap(out var wrap, out _))
                 {
                     dl.AddImageRounded(wrap.Handle, iconMin + new Vector2(art), iconMax - new Vector2(art), Vector2.Zero, Vector2.One, 0xFFFFFFFFu, rounding * 0.5f);
                 }
