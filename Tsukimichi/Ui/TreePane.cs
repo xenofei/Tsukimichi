@@ -25,7 +25,7 @@ namespace Tsukimichi.Ui;
 /// <see cref="UiMetrics.TreeRowHeight"/> tall (at least 30 px), and <see cref="ImGuiTreeNodeFlags.SpanFullWidth"/> so the
 /// hover and selection washes cross the whole row. Everything else is painted over the item without new items.
 /// </summary>
-public sealed class TreePane
+public sealed partial class TreePane
 {
     /// <summary>A label ImGui renders as nothing (text after "##" is hidden) but that is still a real, terminated string.</summary>
     private const string HiddenLabel = "##";

@@ -390,7 +390,7 @@ public sealed partial class ConfigWindow : Window
 
         // Each choice moves to the next line when it would run past the edge (French at the 400 px minimum width).
         ImGui.TextUnformatted(Strings.ConfigLanguage);
-        SameLineOrWrap(RadioWidth(followLabel));
+        Chrome.SameLineOrWrap(RadioWidth(followLabel));
         if (ImGui.RadioButton(followLabel, settings.PluginLanguage == PluginLanguage.FollowDalamud))
         {
             SetLanguage(PluginLanguage.FollowDalamud);
@@ -398,7 +398,7 @@ public sealed partial class ConfigWindow : Window
 
         HintOnHover(Strings.ConfigLanguageHint);
         var english = Strings.ConfigLanguageEnglish;
-        SameLineOrWrap(RadioWidth(english));
+        Chrome.SameLineOrWrap(RadioWidth(english));
         if (ImGui.RadioButton(english, settings.PluginLanguage == PluginLanguage.English))
         {
             SetLanguage(PluginLanguage.English);
@@ -408,7 +408,7 @@ public sealed partial class ConfigWindow : Window
         if (settings.PluginLanguage == PluginLanguage.Pseudo || ImGui.GetIO().KeyShift)
         {
             var pseudo = Strings.ConfigLanguagePseudo;
-            SameLineOrWrap(RadioWidth(pseudo));
+            Chrome.SameLineOrWrap(RadioWidth(pseudo));
             if (ImGui.RadioButton(pseudo, settings.PluginLanguage == PluginLanguage.Pseudo))
             {
                 SetLanguage(PluginLanguage.Pseudo);
@@ -448,16 +448,6 @@ public sealed partial class ConfigWindow : Window
     /// <summary>A radio button's width: the circle, the inner spacing and the label.</summary>
     private static float RadioWidth(string label) =>
         ImGui.GetFrameHeight() + ImGui.GetStyle().ItemInnerSpacing.X + ImGui.CalcTextSize(label).X;
-
-    /// <summary>Continues the line when an item <paramref name="width"/> wide still fits before the content edge, else starts a new one.</summary>
-    private static void SameLineOrWrap(float width)
-    {
-        ImGui.SameLine();
-        if (ImGui.GetCursorScreenPos().X + width > ImGui.GetWindowPos().X + ImGui.GetWindowContentRegionMax().X)
-        {
-            ImGui.NewLine();
-        }
-    }
 
     private void SetLanguage(PluginLanguage language)
     {

@@ -31,7 +31,7 @@ public enum CardKind
 /// (keyboard and gamepad navigation reach it, <c>IsItemHovered</c> works after it). Nothing allocates per frame:
 /// strings are the caller's, icon strings and badge counts are cached.
 /// </summary>
-public static class Chrome
+public static partial class Chrome
 {
     /// <summary>Every <see cref="HoldButton"/> label ends with this so its id survives the countdown text.</summary>
     public const string HoldIdSuffix = "###hold";

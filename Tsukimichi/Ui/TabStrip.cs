@@ -9,8 +9,8 @@ using Tsukimichi.Core.Ui;
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// The main window's vertical tab rail (T14, ui-revamp §2.2), drawn in its own fixed column of the layout table so the
-/// tree column keeps its width (Dalamud developer panel §4). One row per tab: an icon (Journal's is a small filling
+/// The main window's vertical tab rail (T14, ui-revamp §2.2), drawn in its own fixed pane left of the tree
+/// (<see cref="PaneSplit"/>) so the tree keeps its width (Dalamud developer panel §4). One row per tab: an icon (Journal's is a small filling
 /// moon of overall completion, the others FontAwesome glyphs from a family that does not mean a state), the label and,
 /// on Journal only, a badge with the Ready count (badges are a count of things to do, game UX panel §2). The active
 /// tab has a hover-tone fill, a 3 px Moon bar on the left edge and a primary label; inactive tabs read in the

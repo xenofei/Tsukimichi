@@ -271,6 +271,20 @@ public sealed class Configuration : IPluginConfiguration
     /// <summary>Quest table row height: Comfortable (32 px, default) or Dense (24 px). Only the table's rows change.</summary>
     public RowDensity Density { get; set; } = RowDensity.Comfortable;
 
+    // ---- 1.4: pane widths (feature plan v4 L1) ----
+    /// <summary>
+    /// The left pane's width (the Journal tree, or another tab's list) in logical pixels, so it follows the UI scale:
+    /// 300 by default, never under 180 (<see cref="PaneLayout"/>). Set by dragging its handle; a double-click resets
+    /// it. Before 1.4 the width lived in imgui.ini with the old body table and is not carried over.
+    /// </summary>
+    public float TreePaneWidth { get; set; } = PaneLayout.TreeDefaultLogical;
+
+    /// <summary>The detail pane's width in logical pixels: 360 by default, never under 260 (<see cref="PaneLayout"/>).</summary>
+    public float DetailPaneWidth { get; set; } = PaneLayout.DetailDefaultLogical;
+
+    /// <summary>The Journal tree was dragged shut to its strip of icons; a drag outwards or a double-click opens it.</summary>
+    public bool TreePaneStrip { get; set; }
+
     // ---- 0.8.0: chrome (T13) ----
     /// <summary>
     /// Draw the windows in the user's Dalamud colours instead of the Night palette: the same layout, with the surface
@@ -437,6 +451,9 @@ public sealed class Configuration : IPluginConfiguration
         {
             config.Density = RowDensity.Comfortable;
         }
+
+        config.TreePaneWidth = PaneLayout.SanitizeTree(config.TreePaneWidth);
+        config.DetailPaneWidth = PaneLayout.SanitizeDetail(config.DetailPaneWidth);
 
         if (!Enum.IsDefined(config.GlyphPalette))
         {

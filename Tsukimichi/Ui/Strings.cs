@@ -90,6 +90,9 @@ public static partial class Strings
 
     // Tree
     public static string AllQuests => Loc.Get("AllQuests");
+
+    /// <summary>The main window's pane dividers (feature plan v4 L1).</summary>
+    public static string PaneDividerTooltip => Loc.Get("PaneDividerTooltip");
     public static string FeatureUnlocks => Loc.Get("FeatureUnlocks");
     public static string RemovedFromGame => Loc.Get("RemovedFromGame");
 

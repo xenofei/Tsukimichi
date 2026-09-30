@@ -782,7 +782,7 @@ public sealed class TablePane : IDisposable
         CenterText(in layout);
         var statusCellMin = ImGui.GetCursorScreenPos();
         var statusCellWidth = ImGui.GetContentRegionAvail().X;
-        var cut = DrawStatus(row.Status, hasSnapshot, statusCellWidth, layout.LineHeight);
+        var cut = DrawStatus(row.Status, hasSnapshot, statusCellWidth);
 
         // The state word is never cut; when the reason after it was ellipsised, the whole line is the cell's tooltip.
         if (cut && rowHovered && mouseX >= statusCellMin.X && mouseX <= statusCellMin.X + statusCellWidth)
@@ -962,44 +962,10 @@ public sealed class TablePane : IDisposable
     /// short; a reason too long for the cell is ellipsised in the room the state word leaves. In browse mode (no
     /// snapshot) the whole line is in the tertiary tone. Returns whether the reason was cut.
     /// </summary>
-    private static bool DrawStatus(string text, bool hasSnapshot, float cellWidth, float lineHeight)
+    private static bool DrawStatus(string text, bool hasSnapshot, float cellWidth)
     {
         var s = Theme.Surface;
-        var stateInk = hasSnapshot ? s.Text : s.TextTertiary;
-        var reasonInk = hasSnapshot ? s.TextSecondary : s.TextTertiary;
-        var split = TableGeometry.StateWordLength(text);
-        var state = text.AsSpan(0, split);
-        ImGui.PushStyleColor(ImGuiCol.Text, stateInk);
-        ImGui.TextUnformatted(state);
-        ImGui.PopStyleColor();
-        if (split >= text.Length)
-        {
-            return false;
-        }
-
-        var reason = text.AsSpan(split);
-        var room = TableGeometry.ReasonWidth(cellWidth, ImGui.CalcTextSize(state).X);
-        var reasonSize = ImGui.CalcTextSize(reason);
-        ImGui.SameLine(0f, 0f);
-        ImGui.PushStyleColor(ImGuiCol.Text, reasonInk);
-        if (!TableGeometry.ReasonNeedsEllipsis(reasonSize.X, room))
-        {
-            ImGui.TextUnformatted(reason);
-            ImGui.PopStyleColor();
-            return false;
-        }
-
-        var min = ImGui.GetCursorScreenPos();
-        ImGui.Dummy(new Vector2(room, lineHeight));
-        if (room > 1f)
-        {
-            var max = new Vector2(min.X + room, min.Y + lineHeight);
-            Vector2? known = reasonSize;
-            ImGuiP.RenderTextEllipsis(ImGui.GetWindowDrawList(), in min, in max, max.X, max.X, reason, in known);
-        }
-
-        ImGui.PopStyleColor();
-        return true;
+        return Chrome.StatusText(text, cellWidth, hasSnapshot ? s.Text : s.TextTertiary, hasSnapshot ? s.TextSecondary : s.TextTertiary, tooltip: false);
     }
 
     /// <summary>

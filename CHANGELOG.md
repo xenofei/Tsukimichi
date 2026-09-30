@@ -4,6 +4,9 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+### Changed
+- Panes keep a minimum width: however you drag the dividers or size the window, the Journal tree stays at least 180 px wide, the quest list 320 and the details 260, so nothing is squeezed to a sliver; when the window gets narrow the details give way first, then the tree. The widths you drag to follow Settings › Display › UI scale, and double-click a divider to reset that pane to its default width (the tree now starts at 300 px, a little wider than before). Drag the tree's divider far to the left and the tree folds into a narrow strip of moons, one per section (hover for the name and count, click to show that section); drag it back out or double-click the divider to open it again. The main window can now be a little narrower. Pane widths set in earlier versions are not carried over.
+
 ### Fixed
 - Flight: The Churning Mists, The Dravanian Forelands and The Sea of Clouds counted the wrong quests, because the game's own data names the next quest instead of the one that gives the current (and an unrelated quest for one Thavnair current). The zone count now follows the currents you have attuned, and falls back to completed quests only for a character you are not logged in on. The Flag and Teleport buttons point at the right quests. A Realm Reborn shows as one entry for all its zones, marked "you are here" in any of them.
 

@@ -102,11 +102,21 @@ public class ScaleMetricsTests
     }
 
     [Fact]
-    public void Min_window_size_at_scale_one_is_the_rail_the_side_columns_and_the_centre_floor()
+    public void Min_window_size_at_scale_one_is_the_rail_the_pane_floors_the_gutters_and_the_padding()
     {
         var size = ScaleMetrics.MinWindowSize(1f);
-        Assert.Equal(136f + 240f + 360f + 200f, size.X);
+        Assert.Equal(136f + 180f + 320f + 260f + (3f * 6f) + 16f, size.X);
         Assert.Equal(500f, size.Y);
+    }
+
+    [Fact]
+    public void Min_window_size_at_the_default_ui_scale_is_narrower_than_before_the_splitter()
+    {
+        // 1,076 before L1 (rail 136 + columns 240 and 360 + a 200 centre floor, at 1.15); the floors and gutters of
+        // the splitter at the same rail need about 1,067, and the 64 px rail of L7 takes it to about 984.
+        var size = ScaleMetrics.MinWindowSize(ScaleMetrics.DefaultUiScale);
+        Assert.InRange(size.X, 1060f, 1070f);
+        Assert.InRange(((64f + PaneLayout.MinContentLogical) * ScaleMetrics.DefaultUiScale) + ScaleMetrics.WindowPaddingX, 980f, 990f);
     }
 
     [Theory]
@@ -115,8 +125,8 @@ public class ScaleMetricsTests
     public void A_rail_widened_for_a_translation_widens_the_min_window_instead_of_the_centre_losing_it(float uiScale, float rail)
     {
         var size = ScaleMetrics.MinWindowSize(uiScale, rail);
-        var columns = (rail + ScaleMetrics.LeftColumnLogical + ScaleMetrics.RightColumnLogical) * uiScale;
-        Assert.Equal(ScaleMetrics.CentreFloorLogical * uiScale, size.X - columns, 3);
+        var fixedPart = ((rail + PaneLayout.FloorsLogical + (PaneLayout.GutterCount * PaneLayout.GutterLogical)) * uiScale) + ScaleMetrics.WindowPaddingX;
+        Assert.Equal(fixedPart, size.X, 3);
         Assert.Equal(ScaleMetrics.MinWindowSize(uiScale).X + (rail - ScaleMetrics.RailLogical) * uiScale, size.X, 3);
     }
 
@@ -132,11 +142,14 @@ public class ScaleMetricsTests
     [InlineData(0.9f)]
     [InlineData(1.15f)]
     [InlineData(1.6f)]
-    public void Min_window_size_leaves_the_centre_column_its_floor_at_every_ui_scale(float uiScale)
+    public void Min_window_size_leaves_every_pane_its_floor_at_every_ui_scale(float uiScale)
     {
         var size = ScaleMetrics.MinWindowSize(uiScale);
-        var columns = (ScaleMetrics.RailLogical + ScaleMetrics.LeftColumnLogical + ScaleMetrics.RightColumnLogical) * uiScale;
-        Assert.Equal(ScaleMetrics.CentreFloorLogical * uiScale, size.X - columns, 3);
+        var widths = PaneLayout.Solve(size.X - ScaleMetrics.WindowPaddingX, ScaleMetrics.RailLogical * uiScale, PaneLayout.TreeDefaultLogical, PaneLayout.DetailDefaultLogical, uiScale);
+        Assert.False(widths.TreeStrip);
+        Assert.InRange(widths.Tree, (PaneLayout.TreeFloorLogical * uiScale) - 1f, (PaneLayout.TreeFloorLogical * uiScale) + 1f);
+        Assert.InRange(widths.Detail, (PaneLayout.DetailFloorLogical * uiScale) - 1f, (PaneLayout.DetailFloorLogical * uiScale) + 1f);
+        Assert.True(widths.Centre >= (PaneLayout.CentreFloorLogical * uiScale) - 2f, $"centre {widths.Centre}");
         Assert.Equal(ScaleMetrics.MinWindowHeightLogical * uiScale, size.Y, 3);
     }
 
