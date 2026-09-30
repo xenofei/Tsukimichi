@@ -38,6 +38,10 @@ public static class Typography
     private static IFontAtlas? atlas;
     private static IPluginLog? log;
     private static int bucket = -1;
+
+    // The game fonts the current handles were built with (indices into GameFonts); -1 before the first build.
+    private static int captionFont = -1;
+    private static int displayFont = -1;
     private static IFontHandle? caption;
     private static IFontHandle? display;
 
@@ -47,11 +51,14 @@ public static class Typography
         atlas = fontAtlas ?? throw new ArgumentNullException(nameof(fontAtlas));
         log = pluginLog;
         bucket = -1;
+        captionFont = -1;
+        displayFont = -1;
     }
 
     /// <summary>
     /// Once per frame after <see cref="UiMetrics.Update"/>, outside any window: when the UI scale entered another bucket,
-    /// disposes the handles of the old one and asks the atlas for the new pair. Nothing happens otherwise.
+    /// or Dalamud's font size changed enough that another Axis size is now nearest, disposes the old handles and asks
+    /// the atlas for the new pair. Nothing happens otherwise.
     /// </summary>
     public static void Update()
     {
@@ -61,20 +68,29 @@ public static class Typography
         }
 
         var next = TypeScale.Bucket(UiMetrics.FontScale);
-        if (next == bucket)
+
+        // The body size at UI scale 1 and global scale 1: the default font's size without Dalamud's global scale.
+        var basePx = ImGui.GetFont().FontSize / UiMetrics.GlobalScale;
+        if (!float.IsFinite(basePx) || basePx <= 0f)
+        {
+            return;
+        }
+
+        var nextCaption = TypeScale.CaptionGameFont(next, basePx);
+        var nextDisplay = TypeScale.DisplayGameFont(next, basePx);
+        if (next == bucket && nextCaption == captionFont && nextDisplay == displayFont)
         {
             return;
         }
 
         DisposeHandles();
         bucket = next;
-
-        // The body size at UI scale 1 and global scale 1: the default font's size without Dalamud's global scale.
-        var basePx = ImGui.GetFont().FontSize / UiMetrics.GlobalScale;
+        captionFont = nextCaption;
+        displayFont = nextDisplay;
         try
         {
-            caption = NewRoleHandle(atlas, GameFonts[TypeScale.CaptionGameFont(bucket, basePx)]);
-            display = NewRoleHandle(atlas, GameFonts[TypeScale.DisplayGameFont(bucket, basePx)]);
+            caption = NewRoleHandle(atlas, GameFonts[captionFont]);
+            display = NewRoleHandle(atlas, GameFonts[displayFont]);
         }
         catch (Exception ex)
         {
@@ -112,6 +128,8 @@ public static class Typography
         DisposeHandles();
         atlas = null;
         bucket = -1;
+        captionFont = -1;
+        displayFont = -1;
     }
 
     /// <summary>The caption size in the current window: 0.85× its body size, never under 12 px.</summary>
