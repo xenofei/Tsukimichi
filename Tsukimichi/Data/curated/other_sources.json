@@ -1,0 +1,314 @@
+{
+  "schema": 1,
+  "note": "Quest rewards that also drop in duties, so they are not exclusive to the quest. Keyed by the reward item's Item row id. source names the other place (DungeonDrop: the item drops in a dungeon); where names the duties as the Lodestone item page's Obtained From lists them, and the plugin shows it as \"Also drops in\" followed by that text. DataGen marks every unique_quests.json entry delivered as the item with otherSources DungeonDrop and copies where into otherSourceNotes; the plugin shows those rows as \"Also drops\" and can hide them. Source: docs/data/verification-full.md (T2a, Discrepancies to fix), where the Lodestone item page and the wiki both list the duties. Strict JSON; keep sorted by item id; every entry needs name, source, where, evidence and note.",
+  "entries": {
+    "4175": {
+      "name": "Darklight Bracelet of Striking",
+      "source": "DungeonDrop",
+      "where": "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/playguide/db/item/efe720cd638/",
+      "note": "Optional reward of quest 69413 It's Possibly a Primal; the Lodestone item page lists these A Realm Reborn dungeons under Obtained From and the wiki agrees (https://ffxiv.consolegameswiki.com/wiki/Darklight_Bracelet_of_Striking)"
+    },
+    "4176": {
+      "name": "Darklight Bracelet of Aiming",
+      "source": "DungeonDrop",
+      "where": "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/playguide/db/item/07e1a16afce/",
+      "note": "Optional reward of quest 66725 Hail to the King, Kupo; the Lodestone item page lists these A Realm Reborn dungeons under Obtained From and the wiki agrees (https://ffxiv.consolegameswiki.com/wiki/Darklight_Bracelet_of_Aiming)"
+    },
+    "4177": {
+      "name": "Darklight Bracelet of Healing",
+      "source": "DungeonDrop",
+      "where": "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/playguide/db/item/9ef301d28d3/",
+      "note": "Optional reward of quest 66725 Hail to the King, Kupo; the Lodestone item page lists these A Realm Reborn dungeons under Obtained From and the wiki agrees (https://ffxiv.consolegameswiki.com/wiki/Darklight_Bracelet_of_Healing)"
+    },
+    "4178": {
+      "name": "Darklight Bracelet of Fending",
+      "source": "DungeonDrop",
+      "where": "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/playguide/db/item/81d89a3ef85/",
+      "note": "Optional reward of quest 69413 It's Possibly a Primal; the Lodestone item page lists these A Realm Reborn dungeons under Obtained From and the wiki agrees (https://ffxiv.consolegameswiki.com/wiki/Darklight_Bracelet_of_Fending)"
+    },
+    "4179": {
+      "name": "Darklight Bracelet of Maiming",
+      "source": "DungeonDrop",
+      "where": "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/playguide/db/item/b1966ce9c4b/",
+      "note": "Optional reward of quest 69413 It's Possibly a Primal; the Lodestone item page lists these A Realm Reborn dungeons under Obtained From and the wiki agrees (https://ffxiv.consolegameswiki.com/wiki/Darklight_Bracelet_of_Maiming)"
+    },
+    "4180": {
+      "name": "Darklight Bracelet of Casting",
+      "source": "DungeonDrop",
+      "where": "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/playguide/db/item/3ab56bb3238/",
+      "note": "Optional reward of quest 66725 Hail to the King, Kupo; the Lodestone item page lists these A Realm Reborn dungeons under Obtained From and the wiki agrees (https://ffxiv.consolegameswiki.com/wiki/Darklight_Bracelet_of_Casting)"
+    },
+    "4278": {
+      "name": "Darklight Earrings of Striking",
+      "source": "DungeonDrop",
+      "where": "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/playguide/db/item/3ebbdce37a5/",
+      "note": "Optional reward of quest 69408 Hearts on Fire; the Lodestone item page lists these A Realm Reborn dungeons under Obtained From and the wiki agrees (https://ffxiv.consolegameswiki.com/wiki/Darklight_Earrings_of_Striking)"
+    },
+    "4279": {
+      "name": "Darklight Earrings of Aiming",
+      "source": "DungeonDrop",
+      "where": "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/playguide/db/item/7b87f5363eb/",
+      "note": "Optional reward of quest 69409 Rock the Castrum; the Lodestone item page lists these A Realm Reborn dungeons under Obtained From and the wiki agrees (https://ffxiv.consolegameswiki.com/wiki/Darklight_Earrings_of_Aiming)"
+    },
+    "4280": {
+      "name": "Darklight Earrings of Healing",
+      "source": "DungeonDrop",
+      "where": "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/playguide/db/item/5b7bf111366/",
+      "note": "Optional reward of quest 69409 Rock the Castrum; the Lodestone item page lists these A Realm Reborn dungeons under Obtained From and the wiki agrees (https://ffxiv.consolegameswiki.com/wiki/Darklight_Earrings_of_Healing)"
+    },
+    "4281": {
+      "name": "Darklight Earrings of Fending",
+      "source": "DungeonDrop",
+      "where": "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/playguide/db/item/2a722aeb7ec/",
+      "note": "Optional reward of quest 69408 Hearts on Fire; the Lodestone item page lists these A Realm Reborn dungeons under Obtained From and the wiki agrees (https://ffxiv.consolegameswiki.com/wiki/Darklight_Earrings_of_Fending)"
+    },
+    "4282": {
+      "name": "Darklight Earrings of Maiming",
+      "source": "DungeonDrop",
+      "where": "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/playguide/db/item/36f2b474e28/",
+      "note": "Optional reward of quest 69408 Hearts on Fire; the Lodestone item page lists these A Realm Reborn dungeons under Obtained From and the wiki agrees (https://ffxiv.consolegameswiki.com/wiki/Darklight_Earrings_of_Maiming)"
+    },
+    "4283": {
+      "name": "Darklight Earrings of Casting",
+      "source": "DungeonDrop",
+      "where": "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/playguide/db/item/66e6363f8fd/",
+      "note": "Optional reward of quest 69409 Rock the Castrum; the Lodestone item page lists these A Realm Reborn dungeons under Obtained From and the wiki agrees (https://ffxiv.consolegameswiki.com/wiki/Darklight_Earrings_of_Casting)"
+    },
+    "4382": {
+      "name": "Darklight Choker of Striking",
+      "source": "DungeonDrop",
+      "where": "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/playguide/db/item/59c40ac8b0b/",
+      "note": "Optional reward of quest 69411 All Things in Time; the Lodestone item page lists these A Realm Reborn dungeons under Obtained From and the wiki agrees (https://ffxiv.consolegameswiki.com/wiki/Darklight_Choker_of_Striking)"
+    },
+    "4383": {
+      "name": "Darklight Choker of Aiming",
+      "source": "DungeonDrop",
+      "where": "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/playguide/db/item/48ba3c7d8f0/",
+      "note": "Optional reward of quest 69412 Laying the Foundation; the Lodestone item page lists these A Realm Reborn dungeons under Obtained From and the wiki agrees (https://ffxiv.consolegameswiki.com/wiki/Darklight_Choker_of_Aiming)"
+    },
+    "4384": {
+      "name": "Darklight Choker of Healing",
+      "source": "DungeonDrop",
+      "where": "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/playguide/db/item/20c7bf7b044/",
+      "note": "Optional reward of quest 69412 Laying the Foundation; the Lodestone item page lists these A Realm Reborn dungeons under Obtained From and the wiki agrees (https://ffxiv.consolegameswiki.com/wiki/Darklight_Choker_of_Healing)"
+    },
+    "4385": {
+      "name": "Darklight Choker of Fending",
+      "source": "DungeonDrop",
+      "where": "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/playguide/db/item/75996a89a56/",
+      "note": "Optional reward of quest 69411 All Things in Time; the Lodestone item page lists these A Realm Reborn dungeons under Obtained From and the wiki agrees (https://ffxiv.consolegameswiki.com/wiki/Darklight_Choker_of_Fending)"
+    },
+    "4386": {
+      "name": "Darklight Choker of Maiming",
+      "source": "DungeonDrop",
+      "where": "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/playguide/db/item/7b8d0e45763/",
+      "note": "Optional reward of quest 69411 All Things in Time; the Lodestone item page lists these A Realm Reborn dungeons under Obtained From and the wiki agrees (https://ffxiv.consolegameswiki.com/wiki/Darklight_Choker_of_Maiming)"
+    },
+    "4387": {
+      "name": "Darklight Choker of Casting",
+      "source": "DungeonDrop",
+      "where": "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/playguide/db/item/44289c62cc3/",
+      "note": "Optional reward of quest 69412 Laying the Foundation; the Lodestone item page lists these A Realm Reborn dungeons under Obtained From and the wiki agrees (https://ffxiv.consolegameswiki.com/wiki/Darklight_Choker_of_Casting)"
+    },
+    "4520": {
+      "name": "Darklight Band of Striking",
+      "source": "DungeonDrop",
+      "where": "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/playguide/db/item/1a08ceb6404/",
+      "note": "Optional reward of quest 66711 The Price of Principles; the Lodestone item page lists these A Realm Reborn dungeons under Obtained From and the wiki agrees (https://ffxiv.consolegameswiki.com/wiki/Darklight_Band_of_Striking)"
+    },
+    "4521": {
+      "name": "Darklight Band of Aiming",
+      "source": "DungeonDrop",
+      "where": "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/playguide/db/item/14e7b1e1eea/",
+      "note": "Optional reward of quest 69410 Moving On; the Lodestone item page lists these A Realm Reborn dungeons under Obtained From and the wiki agrees (https://ffxiv.consolegameswiki.com/wiki/Darklight_Band_of_Aiming)"
+    },
+    "4522": {
+      "name": "Darklight Band of Healing",
+      "source": "DungeonDrop",
+      "where": "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/playguide/db/item/2da2edc9633/",
+      "note": "Optional reward of quest 69410 Moving On; the Lodestone item page lists these A Realm Reborn dungeons under Obtained From and the wiki agrees (https://ffxiv.consolegameswiki.com/wiki/Darklight_Band_of_Healing)"
+    },
+    "4523": {
+      "name": "Darklight Band of Fending",
+      "source": "DungeonDrop",
+      "where": "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/playguide/db/item/b8513c5059b/",
+      "note": "Optional reward of quest 66711 The Price of Principles; the Lodestone item page lists these A Realm Reborn dungeons under Obtained From and the wiki agrees (https://ffxiv.consolegameswiki.com/wiki/Darklight_Band_of_Fending)"
+    },
+    "4524": {
+      "name": "Darklight Band of Maiming",
+      "source": "DungeonDrop",
+      "where": "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/playguide/db/item/633c6136e90/",
+      "note": "Optional reward of quest 66711 The Price of Principles; the Lodestone item page lists these A Realm Reborn dungeons under Obtained From and the wiki agrees (https://ffxiv.consolegameswiki.com/wiki/Darklight_Band_of_Maiming)"
+    },
+    "4525": {
+      "name": "Darklight Band of Casting",
+      "source": "DungeonDrop",
+      "where": "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/playguide/db/item/912c46abc91/",
+      "note": "Optional reward of quest 69410 Moving On; the Lodestone item page lists these A Realm Reborn dungeons under Obtained From and the wiki agrees (https://ffxiv.consolegameswiki.com/wiki/Darklight_Band_of_Casting)"
+    },
+    "6237": {
+      "name": "Hero's Earrings of Fending",
+      "source": "DungeonDrop",
+      "where": "Snowcloak, Sastasha (Hard) and The Sunken Temple of Qarn (Hard)",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/playguide/db/item/b9fc1184a74/",
+      "note": "Optional reward of quest 69415 Still Waters; the Lodestone item page lists these A Realm Reborn dungeons under Obtained From and the wiki agrees (https://ffxiv.consolegameswiki.com/wiki/Hero's_Earrings_of_Fending)"
+    },
+    "6238": {
+      "name": "Hero's Earrings of Slaying",
+      "source": "DungeonDrop",
+      "where": "Snowcloak, Sastasha (Hard) and The Sunken Temple of Qarn (Hard)",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/playguide/db/item/11742a57308/",
+      "note": "Optional reward of quest 69415 Still Waters; the Lodestone item page lists these A Realm Reborn dungeons under Obtained From and the wiki agrees (https://ffxiv.consolegameswiki.com/wiki/Hero's_Earrings_of_Slaying)"
+    },
+    "6239": {
+      "name": "Hero's Earrings of Aiming",
+      "source": "DungeonDrop",
+      "where": "Snowcloak, Sastasha (Hard) and The Sunken Temple of Qarn (Hard)",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/playguide/db/item/ab67a23a152/",
+      "note": "Optional reward of quest 69415 Still Waters; the Lodestone item page lists these A Realm Reborn dungeons under Obtained From and the wiki agrees (https://ffxiv.consolegameswiki.com/wiki/Hero's_Earrings_of_Aiming)"
+    },
+    "6240": {
+      "name": "Hero's Earrings of Casting",
+      "source": "DungeonDrop",
+      "where": "Snowcloak, Sastasha (Hard) and The Sunken Temple of Qarn (Hard)",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/playguide/db/item/2b7774633cf/",
+      "note": "Optional reward of quest 66882 A Final Temptation; the Lodestone item page lists these A Realm Reborn dungeons under Obtained From and the wiki agrees (https://ffxiv.consolegameswiki.com/wiki/Hero's_Earrings_of_Casting)"
+    },
+    "6241": {
+      "name": "Hero's Earrings of Healing",
+      "source": "DungeonDrop",
+      "where": "Snowcloak, Sastasha (Hard) and The Sunken Temple of Qarn (Hard)",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/playguide/db/item/eafb648e3dd/",
+      "note": "Optional reward of quest 66882 A Final Temptation; the Lodestone item page lists these A Realm Reborn dungeons under Obtained From and the wiki agrees (https://ffxiv.consolegameswiki.com/wiki/Hero's_Earrings_of_Healing)"
+    },
+    "6242": {
+      "name": "Hero's Necklace of Fending",
+      "source": "DungeonDrop",
+      "where": "Snowcloak, Sastasha (Hard) and The Sunken Temple of Qarn (Hard)",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/playguide/db/item/cd21ea2a9ef/",
+      "note": "Optional reward of quest 66888 Why We Adventure; the Lodestone item page lists these A Realm Reborn dungeons under Obtained From and the wiki agrees (https://ffxiv.consolegameswiki.com/wiki/Hero's_Necklace_of_Fending)"
+    },
+    "6243": {
+      "name": "Hero's Necklace of Slaying",
+      "source": "DungeonDrop",
+      "where": "Snowcloak, Sastasha (Hard) and The Sunken Temple of Qarn (Hard)",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/playguide/db/item/3de0f736b04/",
+      "note": "Optional reward of quest 66888 Why We Adventure; the Lodestone item page lists these A Realm Reborn dungeons under Obtained From and the wiki agrees (https://ffxiv.consolegameswiki.com/wiki/Hero's_Necklace_of_Slaying)"
+    },
+    "6244": {
+      "name": "Hero's Necklace of Aiming",
+      "source": "DungeonDrop",
+      "where": "Snowcloak, Sastasha (Hard) and The Sunken Temple of Qarn (Hard)",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/playguide/db/item/7e59106086e/",
+      "note": "Optional reward of quest 66888 Why We Adventure; the Lodestone item page lists these A Realm Reborn dungeons under Obtained From and the wiki agrees (https://ffxiv.consolegameswiki.com/wiki/Hero's_Necklace_of_Aiming)"
+    },
+    "6245": {
+      "name": "Hero's Necklace of Casting",
+      "source": "DungeonDrop",
+      "where": "Snowcloak, Sastasha (Hard) and The Sunken Temple of Qarn (Hard)",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/playguide/db/item/e21c6995a8c/",
+      "note": "Optional reward of quest 66892 The Sea Rises; the Lodestone item page lists these A Realm Reborn dungeons under Obtained From and the wiki agrees (https://ffxiv.consolegameswiki.com/wiki/Hero's_Necklace_of_Casting)"
+    },
+    "6246": {
+      "name": "Hero's Necklace of Healing",
+      "source": "DungeonDrop",
+      "where": "Snowcloak, Sastasha (Hard) and The Sunken Temple of Qarn (Hard)",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/playguide/db/item/7dbf302238f/",
+      "note": "Optional reward of quest 66892 The Sea Rises; the Lodestone item page lists these A Realm Reborn dungeons under Obtained From and the wiki agrees (https://ffxiv.consolegameswiki.com/wiki/Hero's_Necklace_of_Healing)"
+    },
+    "6247": {
+      "name": "Hero's Bracelet of Fending",
+      "source": "DungeonDrop",
+      "where": "Snowcloak, Sastasha (Hard) and The Sunken Temple of Qarn (Hard)",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/playguide/db/item/04fa4d1bf45/",
+      "note": "Optional reward of quest 66894 Scouts in Distress; the Lodestone item page lists these A Realm Reborn dungeons under Obtained From and the wiki agrees (https://ffxiv.consolegameswiki.com/wiki/Hero's_Bracelet_of_Fending)"
+    },
+    "6248": {
+      "name": "Hero's Bracelet of Slaying",
+      "source": "DungeonDrop",
+      "where": "Snowcloak, Sastasha (Hard) and The Sunken Temple of Qarn (Hard)",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/playguide/db/item/fcfb07d5c57/",
+      "note": "Optional reward of quest 66894 Scouts in Distress; the Lodestone item page lists these A Realm Reborn dungeons under Obtained From and the wiki agrees (https://ffxiv.consolegameswiki.com/wiki/Hero's_Bracelet_of_Slaying)"
+    },
+    "6249": {
+      "name": "Hero's Bracelet of Aiming",
+      "source": "DungeonDrop",
+      "where": "Snowcloak, Sastasha (Hard) and The Sunken Temple of Qarn (Hard)",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/playguide/db/item/9d001d9f6eb/",
+      "note": "Optional reward of quest 66894 Scouts in Distress; the Lodestone item page lists these A Realm Reborn dungeons under Obtained From and the wiki agrees (https://ffxiv.consolegameswiki.com/wiki/Hero's_Bracelet_of_Aiming)"
+    },
+    "6250": {
+      "name": "Hero's Bracelet of Casting",
+      "source": "DungeonDrop",
+      "where": "Snowcloak, Sastasha (Hard) and The Sunken Temple of Qarn (Hard)",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/playguide/db/item/a833634f134/",
+      "note": "Optional reward of quest 66895 The Gift of Eternity; the Lodestone item page lists these A Realm Reborn dungeons under Obtained From and the wiki agrees (https://ffxiv.consolegameswiki.com/wiki/Hero's_Bracelet_of_Casting)"
+    },
+    "6251": {
+      "name": "Hero's Bracelet of Healing",
+      "source": "DungeonDrop",
+      "where": "Snowcloak, Sastasha (Hard) and The Sunken Temple of Qarn (Hard)",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/playguide/db/item/823265d556e/",
+      "note": "Optional reward of quest 66895 The Gift of Eternity; the Lodestone item page lists these A Realm Reborn dungeons under Obtained From and the wiki agrees (https://ffxiv.consolegameswiki.com/wiki/Hero's_Bracelet_of_Healing)"
+    },
+    "6252": {
+      "name": "Hero's Ring of Fending",
+      "source": "DungeonDrop",
+      "where": "Snowcloak, Sastasha (Hard) and The Sunken Temple of Qarn (Hard)",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/playguide/db/item/288109a2dfa/",
+      "note": "Optional reward of quest 69416 Promises to Keep; the Lodestone item page lists these A Realm Reborn dungeons under Obtained From and the wiki agrees (https://ffxiv.consolegameswiki.com/wiki/Hero's_Ring_of_Fending)"
+    },
+    "6253": {
+      "name": "Hero's Ring of Slaying",
+      "source": "DungeonDrop",
+      "where": "Snowcloak, Sastasha (Hard) and The Sunken Temple of Qarn (Hard)",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/playguide/db/item/49d9c19d8e4/",
+      "note": "Optional reward of quest 69416 Promises to Keep; the Lodestone item page lists these A Realm Reborn dungeons under Obtained From and the wiki agrees (https://ffxiv.consolegameswiki.com/wiki/Hero's_Ring_of_Slaying)"
+    },
+    "6254": {
+      "name": "Hero's Ring of Aiming",
+      "source": "DungeonDrop",
+      "where": "Snowcloak, Sastasha (Hard) and The Sunken Temple of Qarn (Hard)",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/playguide/db/item/0a8b7803434/",
+      "note": "Optional reward of quest 69416 Promises to Keep; the Lodestone item page lists these A Realm Reborn dungeons under Obtained From and the wiki agrees (https://ffxiv.consolegameswiki.com/wiki/Hero's_Ring_of_Aiming)"
+    },
+    "6255": {
+      "name": "Hero's Ring of Casting",
+      "source": "DungeonDrop",
+      "where": "Snowcloak, Sastasha (Hard) and The Sunken Temple of Qarn (Hard)",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/playguide/db/item/7ed29f4a461/",
+      "note": "Optional reward of quest 69417 Yugiri's Game; the Lodestone item page lists these A Realm Reborn dungeons under Obtained From and the wiki agrees (https://ffxiv.consolegameswiki.com/wiki/Hero's_Ring_of_Casting)"
+    },
+    "6256": {
+      "name": "Hero's Ring of Healing",
+      "source": "DungeonDrop",
+      "where": "Snowcloak, Sastasha (Hard) and The Sunken Temple of Qarn (Hard)",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/playguide/db/item/23a4a2cfdad/",
+      "note": "Optional reward of quest 69417 Yugiri's Game; the Lodestone item page lists these A Realm Reborn dungeons under Obtained From and the wiki agrees (https://ffxiv.consolegameswiki.com/wiki/Hero's_Ring_of_Healing)"
+    }
+  }
+}

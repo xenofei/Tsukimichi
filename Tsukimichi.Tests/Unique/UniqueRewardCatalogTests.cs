@@ -209,6 +209,38 @@ public class UniqueRewardCatalogTests
     }
 
     [Fact]
+    public void Curated_other_sources_mark_shipped_entries_by_item_with_the_duties()
+    {
+        // A shipped file older than other_sources.json: the catalog still marks the drop and carries where it drops.
+        var shipped = Data(
+            new UniqueRewardEntry(66711, RewardKind.OptionalItem, 4520, 4520, "Darklight Band of Striking", Confidence.Static, "s"),
+            new UniqueRewardEntry(66711, RewardKind.OptionalItem, 4523, 4523, "Darklight Band of Fending", Confidence.Static, "s")
+                .WithOtherSource(OtherSource.DungeonDrop, "The Lost City of Amdapor"),
+            new UniqueRewardEntry(66038, RewardKind.Emote, 114, 0, "Most Gentlemanly", Confidence.Static, "Quest.EmoteReward"));
+
+        using var tmp = new Storage.TempDir();
+        var dir = tmp.File("curated");
+        Directory.CreateDirectory(dir);
+        File.WriteAllText(Path.Combine(dir, CuratedData.OtherSourcesFileName),
+            """
+            { "schema": 1, "entries": {
+              "4520": { "name": "Darklight Band of Striking", "source": "DungeonDrop", "where": "The Lost City of Amdapor", "evidence": "https://x", "note": "n" },
+              "4523": { "name": "Darklight Band of Fending", "source": "DungeonDrop", "where": "The Lost City of Amdapor", "evidence": "https://x", "note": "n" }
+            } }
+            """);
+        var curated = CuratedData.Load(dir);
+        Assert.Empty(curated.Warnings);
+
+        var catalog = Build(shipped, curated: curated);
+
+        var entries = catalog.ForQuest(66711);
+        Assert.Equal(2, entries.Count);
+        Assert.All(entries, e => Assert.Equal([OtherSource.DungeonDrop], e.OtherSources));
+        Assert.All(entries, e => Assert.Equal("The Lost City of Amdapor", e.DropWhere));
+        Assert.False(catalog.ForQuest(66038).Single().DropsInDuty);
+    }
+
+    [Fact]
     public void Duplicate_shipped_entries_keep_the_higher_confidence()
     {
         var shipped = Data(

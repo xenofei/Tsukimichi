@@ -7,14 +7,16 @@ namespace Tsukimichi.DataGen;
 
 /// <summary>
 /// Reads the curated JSON overlay (spec section 6): system_unlocks.json (questId -> { label, ... }),
-/// duty_unlocks.json (questId -> contentFinderConditionId[]) and online_store.json (itemId -> { name, kind, rewardId,
-/// evidence }). Files must be strict JSON (the curated README's rule); within a file, unknown shapes are skipped with
+/// duty_unlocks.json (questId -> contentFinderConditionId[]), online_store.json (itemId -> { name, kind, rewardId,
+/// evidence }) and other_sources.json (itemId -> { name, source, where, evidence, note }). Files must be strict JSON (the curated README's rule); within a file, unknown shapes are skipped with
 /// a warning.
 /// </summary>
 internal static class CuratedOverlay
 {
     public const string OnlineStoreFileName = "online_store.json";
     private const int OnlineStoreSchema = 1;
+    public const string OtherSourcesFileName = CuratedData.OtherSourcesFileName;
+    private const int OtherSourcesSchema = 1;
 
     public static int Apply(string? curatedDir, GameSheets sheets, UniqueRewardGenerator generator, TextWriter log)
     {
@@ -33,6 +35,7 @@ internal static class CuratedOverlay
         applied += ApplySystemUnlocks(Path.Combine(curatedDir, "system_unlocks.json"), generator, log);
         applied += ApplyDutyUnlocks(Path.Combine(curatedDir, "duty_unlocks.json"), sheets, generator, log);
         applied += ApplyOnlineStore(Path.Combine(curatedDir, OnlineStoreFileName), sheets, generator, log);
+        applied += ApplyOtherSources(Path.Combine(curatedDir, OtherSourcesFileName), sheets, generator, log);
         return applied;
     }
 
@@ -116,6 +119,93 @@ internal static class CuratedOverlay
         log.WriteLine($"curated: {OnlineStoreFileName} applied {items} items, marked {marked} entries {OtherSource.OnlineStore}.");
         if (unmatched.Count > 0)
             log.WriteLine($"curated: {OnlineStoreFileName} {unmatched.Count} item(s) match no entry (orphaned by a regen?): {string.Join(", ", unmatched)}");
+        return marked;
+    }
+
+    /// <summary>
+    /// other_sources.json: <c>{ "schema": 1, "note", "entries": { "&lt;itemId&gt;": { name, source, where, evidence, note } } }</c>.
+    /// Read with the runtime loader's rules (<see cref="CuratedData"/>: a known source name, a where text, a note and an
+    /// evidence URL, else the entry is skipped); the item must be a named Item row whose name matches. Every entry
+    /// delivered as that item gains the source, with the where text in <see cref="UniqueRewardEntry.OtherSourceNotes"/>.
+    /// Returns the number of entries marked.
+    /// </summary>
+    private static int ApplyOtherSources(string path, GameSheets sheets, UniqueRewardGenerator generator, TextWriter log)
+    {
+        var root = LoadObject(path, log);
+        if (root is null)
+            return 0;
+
+        if (root["schema"] is not JsonValue schemaNode || !schemaNode.TryGetValue<int>(out var schema) || schema != OtherSourcesSchema)
+        {
+            log.WriteLine($"curated: {OtherSourcesFileName} schema is not {OtherSourcesSchema}; file skipped.");
+            return 0;
+        }
+
+        if (root["entries"] is not JsonObject entries)
+        {
+            log.WriteLine($"curated: {OtherSourcesFileName} has no entries object; file skipped.");
+            return 0;
+        }
+
+        var marked = 0;
+        var items = 0;
+        var bySource = new SortedDictionary<string, int>(StringComparer.Ordinal);
+        var unmatched = new List<string>();
+        foreach (var (key, value) in entries)
+        {
+            if (!uint.TryParse(key, out var itemId) || itemId == 0)
+            {
+                log.WriteLine($"curated: other_sources key '{key}' is not an item id; skipped.");
+                continue;
+            }
+
+            if (value is not JsonObject obj)
+            {
+                log.WriteLine($"curated: other_sources entry {itemId} is not an object; skipped.");
+                continue;
+            }
+
+            var name = ReadString(obj, "name")?.Trim();
+            var source = ReadString(obj, "source")?.Trim();
+            var where = ReadString(obj, "where")?.Trim();
+            var evidence = ReadString(obj, "evidence")?.Trim();
+            var note = ReadString(obj, "note")?.Trim();
+            if (source is null || !CuratedData.OtherSourcesFileSources.Contains(source, StringComparer.Ordinal))
+            {
+                log.WriteLine($"curated: other_sources entry {itemId} source '{source}' is not one of {string.Join(", ", CuratedData.OtherSourcesFileSources)}; skipped.");
+                continue;
+            }
+
+            if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(where) || string.IsNullOrEmpty(evidence) || string.IsNullOrEmpty(note))
+            {
+                log.WriteLine($"curated: other_sources entry {itemId} needs name, where, evidence and note; skipped.");
+                continue;
+            }
+
+            if (sheets.Items.GetRowOrDefault(itemId) is not { } item || UniqueRewardGenerator.Text(item.Name).Length == 0)
+            {
+                log.WriteLine($"curated: other_sources entry {itemId} is not a named Item row; skipped.");
+                continue;
+            }
+
+            var itemName = UniqueRewardGenerator.Text(item.Name);
+            if (!string.Equals(itemName, name, StringComparison.Ordinal))
+            {
+                log.WriteLine($"curated: other_sources entry {itemId} names '{name}' but the item is '{itemName}'; skipped.");
+                continue;
+            }
+
+            items++;
+            var count = generator.MarkOtherSource(itemId, default, 0, source, where);
+            if (count == 0)
+                unmatched.Add($"{itemId} ({name})");
+            marked += count;
+            bySource[source] = bySource.GetValueOrDefault(source) + count;
+        }
+
+        log.WriteLine($"curated: {OtherSourcesFileName} applied {items} items, marked {marked} entries ({string.Join(", ", bySource.Select(kv => $"{kv.Key} {kv.Value}"))}).");
+        if (unmatched.Count > 0)
+            log.WriteLine($"curated: {OtherSourcesFileName} {unmatched.Count} item(s) match no entry (orphaned by a regen?): {string.Join(", ", unmatched)}");
         return marked;
     }
 

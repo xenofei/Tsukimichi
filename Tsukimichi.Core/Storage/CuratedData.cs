@@ -24,6 +24,15 @@ public sealed record CuratedChain(string Name, IReadOnlyList<uint> GenreIds, str
 public sealed record OnlineStoreItem(string Name, RewardKind Kind, uint RewardId, string Evidence, string? Note);
 
 /// <summary>
+/// A quest reward that can also be had somewhere other than the quest and the Online Store, from
+/// <c>curated/other_sources.json</c>, keyed by the reward item's row id: today the Darklight and Hero's accessories that
+/// also drop in A Realm Reborn dungeons (<see cref="OtherSource.DungeonDrop"/>).
+/// </summary>
+/// <param name="Source">An <see cref="OtherSource"/> name the file may use (<see cref="CuratedData.OtherSourcesFileSources"/>).</param>
+/// <param name="Where">Where it drops, as players read it ("Snowcloak, Sastasha (Hard) and The Sunken Temple of Qarn (Hard)").</param>
+public sealed record OtherSourceItem(string Name, string Source, string Where, string Evidence, string Note);
+
+/// <summary>
 /// A quest pinned to a journal genre after the refiling rules ran, from <c>curated/refile_overrides.json</c>: a
 /// quest whose sheet signals point at the wrong genre (the Eureka entry quasi-quests land in Kugane Sidequests by
 /// their issuer's zone; they belong with The Forbidden Land, Eureka) or at none.
@@ -58,6 +67,7 @@ public sealed record QuestQuirk(string Note, string Evidence);
 ///                      or  { "entries": { "1": { ... } } }
 /// chains.json          { "chains": [ { "name": "Hildibrand", "genreIds": [ 93, 94 ], "note": "..." } ] }
 /// online_store.json    { "schema": 1, "note": "...", "entries": { "22437": { "name": "Starlight Bear", "kind": "Mount", "rewardId": 99, "evidence": "https://...", "note": "..." } } }
+/// other_sources.json   { "schema": 1, "note": "...", "entries": { "4520": { "name": "Darklight Band of Striking", "source": "DungeonDrop", "where": "...", "evidence": "https://...", "note": "..." } } }
 /// refile_overrides.json { "schema": 1, "entries": { "68478": { "genre": 90, "note": "...", "evidence": "https://..." } } }
 /// retired_quests.json  { "schema": 1, "entries": { "66033": { "note": "...", "evidence": "https://...", "patch": "6.3" } } }   (patch optional)
 /// quirks.json          { "schema": 1, "entries": { "66971": { "note": "...", "evidence": "https://..." } } }
@@ -73,9 +83,13 @@ public sealed class CuratedData
     public const string FestivalsFileName = "festivals.json";
     public const string ChainsFileName = "chains.json";
     public const string OnlineStoreFileName = "online_store.json";
+    public const string OtherSourcesFileName = "other_sources.json";
     public const string RefileOverridesFileName = "refile_overrides.json";
     public const string RetiredQuestsFileName = "retired_quests.json";
     public const string QuirksFileName = "quirks.json";
+
+    /// <summary>The <see cref="OtherSource"/> names <see cref="OtherSourcesFileName"/> may use; any other is a skipped entry.</summary>
+    public static readonly IReadOnlyList<string> OtherSourcesFileSources = [OtherSource.DungeonDrop];
 
     /// <summary>Written by <c>tools/regen.ps1</c>: the overlay's revision for the About stamp and the diagnostic block.</summary>
     public const string VersionFileName = "VERSION.json";
@@ -108,6 +122,7 @@ public sealed class CuratedData
         IReadOnlyDictionary<ushort, FestivalInfo> festivals,
         IReadOnlyList<CuratedChain> chains,
         IReadOnlyDictionary<uint, OnlineStoreItem> onlineStore,
+        IReadOnlyDictionary<uint, OtherSourceItem> otherSources,
         IReadOnlyDictionary<uint, RefileOverride> refileOverrides,
         IReadOnlyDictionary<uint, RetiredQuest> retiredQuests,
         IReadOnlyDictionary<uint, QuestQuirk> quirks,
@@ -120,6 +135,7 @@ public sealed class CuratedData
         Festivals = festivals;
         Chains = chains;
         OnlineStore = onlineStore;
+        OtherSources = otherSources;
         RefileOverrides = refileOverrides;
         RetiredQuests = retiredQuests;
         Quirks = quirks;
@@ -134,6 +150,7 @@ public sealed class CuratedData
         new Dictionary<ushort, FestivalInfo>(),
         [],
         new Dictionary<uint, OnlineStoreItem>(),
+        new Dictionary<uint, OtherSourceItem>(),
         new Dictionary<uint, RefileOverride>(),
         new Dictionary<uint, RetiredQuest>(),
         new Dictionary<uint, QuestQuirk>(),
@@ -150,6 +167,9 @@ public sealed class CuratedData
 
     /// <summary>Rewards the Online Store also sells, by store item row id.</summary>
     public IReadOnlyDictionary<uint, OnlineStoreItem> OnlineStore { get; }
+
+    /// <summary>Rewards that also come from somewhere other than the quest (a dungeon drop), by reward item row id.</summary>
+    public IReadOnlyDictionary<uint, OtherSourceItem> OtherSources { get; }
 
     /// <summary>Quests pinned to a genre after the refiling rules, by quest row id; read by <c>JournalRefiler</c>.</summary>
     public IReadOnlyDictionary<uint, RefileOverride> RefileOverrides { get; }
@@ -174,7 +194,7 @@ public sealed class CuratedData
     /// what the invariants test compares the shipped file against, so the file never feeds its own derivation.
     /// </summary>
     public CuratedData WithoutFeatureQuests() =>
-        FeatureQuests.Count == 0 ? this : new CuratedData(SystemUnlocks, DutyUnlocks, new HashSet<uint>(), Festivals, Chains, OnlineStore, RefileOverrides, RetiredQuests, Quirks, CuratedRevision, Warnings);
+        FeatureQuests.Count == 0 ? this : new CuratedData(SystemUnlocks, DutyUnlocks, new HashSet<uint>(), Festivals, Chains, OnlineStore, OtherSources, RefileOverrides, RetiredQuests, Quirks, CuratedRevision, Warnings);
 
     /// <summary>Loads every curated file under <paramref name="dir"/>. A missing directory or file yields empty collections.</summary>
     public static CuratedData Load(string dir)
@@ -192,6 +212,7 @@ public sealed class CuratedData
         var festivals = new Dictionary<ushort, FestivalInfo>();
         var chains = new List<CuratedChain>();
         var onlineStore = new Dictionary<uint, OnlineStoreItem>();
+        var otherSources = new Dictionary<uint, OtherSourceItem>();
         var refileOverrides = new Dictionary<uint, RefileOverride>();
         var retiredQuests = new Dictionary<uint, RetiredQuest>();
         var quirks = new Dictionary<uint, QuestQuirk>();
@@ -372,6 +393,49 @@ public sealed class CuratedData
             onlineStore[itemId] = new OnlineStoreItem(name.Trim(), kind, rewardId, evidence.Trim(), StorageJson.ReadString(obj, "note"));
         });
 
+        ForEachEntry(Path.Combine(dir, OtherSourcesFileName), warnings, (key, node, warn) =>
+        {
+            if (!StorageJson.TryParseKey(key, out uint itemId) || itemId == 0)
+            {
+                warn("key is not an item row id");
+                return;
+            }
+
+            if (node is not JsonObject obj)
+            {
+                warn("value is not an object");
+                return;
+            }
+
+            var name = StorageJson.ReadString(obj, "name");
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                warn("name is missing");
+                return;
+            }
+
+            var source = StorageJson.ReadString(obj, "source")?.Trim();
+            if (source is null || !OtherSourcesFileSources.Contains(source, StringComparer.Ordinal))
+            {
+                warn($"source '{source}' is not one of {string.Join(", ", OtherSourcesFileSources)}");
+                return;
+            }
+
+            var where = StorageJson.ReadString(obj, "where")?.Trim();
+            if (string.IsNullOrEmpty(where))
+            {
+                warn("where is missing");
+                return;
+            }
+
+            if (!TryReadNoteAndEvidence(obj, warn, out var note, out var evidence))
+            {
+                return;
+            }
+
+            otherSources[itemId] = new OtherSourceItem(name.Trim(), source, where, evidence, note);
+        });
+
         ForEachEntry(Path.Combine(dir, RefileOverridesFileName), warnings, (key, node, warn) =>
         {
             if (!StorageJson.TryParseKey(key, out uint rowId) || rowId == 0)
@@ -446,7 +510,7 @@ public sealed class CuratedData
 
         var curatedRevision = LoadRevision(Path.Combine(dir, VersionFileName), warnings);
 
-        return new CuratedData(systemUnlocks, dutyUnlocks, featureQuests, festivals, chains, onlineStore, refileOverrides, retiredQuests, quirks, curatedRevision, warnings);
+        return new CuratedData(systemUnlocks, dutyUnlocks, featureQuests, festivals, chains, onlineStore, otherSources, refileOverrides, retiredQuests, quirks, curatedRevision, warnings);
     }
 
     /// <summary>The note and evidence URL every refiling entry must carry (the curated README's rule for hand-filed quests).</summary>

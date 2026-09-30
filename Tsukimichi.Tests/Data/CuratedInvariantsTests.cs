@@ -62,7 +62,7 @@ public sealed class CuratedInvariantsTests(FixtureCatalog fixture) : IClassFixtu
         var known = new[]
         {
             CuratedData.SystemUnlocksFileName, CuratedData.DutyUnlocksFileName, CuratedData.FeatureQuestsFileName,
-            CuratedData.FestivalsFileName, CuratedData.ChainsFileName, CuratedData.OnlineStoreFileName,
+            CuratedData.FestivalsFileName, CuratedData.ChainsFileName, CuratedData.OnlineStoreFileName, CuratedData.OtherSourcesFileName,
             CuratedData.RefileOverridesFileName, CuratedData.RetiredQuestsFileName, CuratedData.QuirksFileName, CuratedData.VersionFileName,
         };
         Assert.Equal(known.OrderBy(n => n, StringComparer.Ordinal), files.Select(Path.GetFileName).OrderBy(n => n, StringComparer.Ordinal));
@@ -148,6 +148,56 @@ public sealed class CuratedInvariantsTests(FixtureCatalog fixture) : IClassFixtu
         Assert.Equal(
             new Dictionary<RewardKind, int> { [RewardKind.Minion] = 25, [RewardKind.Emote] = 21, [RewardKind.Mount] = 11, [RewardKind.Barding] = 5, [RewardKind.Orchestrion] = 4, [RewardKind.Ornament] = 2, [RewardKind.Hairstyle] = 1 },
             marked.GroupBy(e => e.Kind).ToDictionary(g => g.Key, g => g.Count()));
+    }
+
+    [Fact]
+    public void Other_sources_entries_carry_evidence_and_each_marks_its_unique_quests_entries_with_the_duties()
+    {
+        var curated = Curated();
+        var unique = Unique();
+
+        // The 44 Darklight and Hero's accessories verification-full.md (T2a) found also dropping in A Realm Reborn dungeons.
+        Assert.Equal(44, curated.OtherSources.Count);
+        Assert.All(curated.OtherSources.Values, o => Assert.Equal(OtherSource.DungeonDrop, o.Source));
+
+        // Raw file: schema 1, a note, keys ascending, every entry with name, source, where, an https evidence URL and a
+        // note, and the loader dropped nothing.
+        var root = JsonNode.Parse(File.ReadAllText(Path.Combine(CuratedDir, CuratedData.OtherSourcesFileName)), documentOptions: CuratedData.StrictOptions)!.AsObject();
+        Assert.Equal(1, (int)root["schema"]!);
+        Assert.False(string.IsNullOrWhiteSpace((string?)root["note"]));
+        var entries = root["entries"]!.AsObject();
+        var keys = entries.Select(kv => uint.Parse(kv.Key, System.Globalization.CultureInfo.InvariantCulture)).ToList();
+        Assert.Equal(keys.OrderBy(k => k).Distinct(), keys);
+        Assert.Equal(curated.OtherSources.Count, keys.Count);
+        foreach (var (key, node) in entries)
+        {
+            var obj = node!.AsObject();
+            foreach (var field in new[] { "name", "source", "where", "evidence", "note" })
+            {
+                Assert.True(obj.ContainsKey(field), $"other_sources {key} lacks {field}");
+            }
+
+            Assert.StartsWith("https://", (string?)obj["evidence"], StringComparison.Ordinal);
+        }
+
+        // Every item is a reward in unique_quests.json under the same name, and every entry delivered as it carries the
+        // source with the where text; nothing else carries DungeonDrop.
+        var byItem = unique.Entries.Where(e => e.ItemId != 0).ToLookup(e => e.ItemId);
+        foreach (var (itemId, other) in curated.OtherSources)
+        {
+            var matched = byItem[itemId].ToList();
+            Assert.True(matched.Count > 0, $"other_sources {itemId} {other.Name} matches no unique_quests.json entry");
+            Assert.All(matched, e =>
+            {
+                Assert.Equal(other.Name, e.RewardName);
+                Assert.True(e.HasOtherSource(other.Source), $"{e.QuestRowId} {e.RewardName} is not marked {other.Source} (stale regen?)");
+                Assert.Equal(other.Where, e.OtherSourceNote(other.Source));
+            });
+        }
+
+        var drops = unique.Entries.Where(e => e.DropsInDuty).ToList();
+        Assert.Equal(44, drops.Count);
+        Assert.All(drops, e => Assert.True(curated.OtherSources.ContainsKey(e.ItemId), $"{e.QuestRowId} {e.RewardName} is marked DungeonDrop but no curated entry explains it"));
     }
 
     [Fact]

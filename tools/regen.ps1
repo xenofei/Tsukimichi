@@ -114,6 +114,7 @@ Write-Host "wrote:   $curatedVersionFile (curated $curatedRevision)"
 $byKind = $data.entries | Group-Object kind | Sort-Object Name
 $bySource = $data.entries | ForEach-Object { $_.otherSources } | Group-Object | Sort-Object -Property @{ Expression = "Count"; Descending = $true }, Name
 $storeCount = @($data.entries | Where-Object { $_.otherSources -contains "OnlineStore" }).Count
+$dropCount = @($data.entries | Where-Object { $_.otherSources -contains "DungeonDrop" }).Count
 $questCount = @($data.entries | Select-Object -ExpandProperty questRowId -Unique).Count
 
 $lines = @(
@@ -130,6 +131,7 @@ $lines = @(
     "| unique_quests.json entries | $($data.entries.Count) across $questCount quests |",
     "| feature_quests.json (derived) | $($curated.questRowIds.Count) quests |",
     "| Online Store re-sells | $storeCount entries |",
+    "| Dungeon drops | $dropCount entries |",
     "",
     "## Entries per kind",
     "",

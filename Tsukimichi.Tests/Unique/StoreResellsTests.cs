@@ -32,7 +32,28 @@ public class StoreResellsTests
     {
         Assert.Same(StoreResells.Empty, StoreResells.Build([Entries[2], Entries[3]]));
         Assert.Equal(0, StoreResells.Empty.Count);
+        Assert.Equal(0, StoreResells.Empty.DropCount);
         Assert.False(StoreResells.Empty.Contains(RewardKind.Mount, 99, 22437));
+        Assert.Null(StoreResells.Empty.DropWhere(RewardKind.OptionalItem, 4520, 4520));
         Assert.Throws<ArgumentNullException>(() => StoreResells.Build(null!));
+    }
+
+    [Fact]
+    public void Dungeon_drops_answer_where_by_item_or_by_reward_and_are_not_store_resells()
+    {
+        var drop = new UniqueRewardEntry(66711, RewardKind.OptionalItem, 4520, 4520, "Darklight Band of Striking", Confidence.Static, "s")
+            .WithOtherSource(OtherSource.DungeonDrop, "The Lost City of Amdapor");
+        var unnamed = new UniqueRewardEntry(66711, RewardKind.OptionalItem, 4523, 4523, "Darklight Band of Fending", Confidence.Static, "s") { OtherSources = [OtherSource.DungeonDrop] };
+
+        var index = StoreResells.Build([.. Entries, drop, unnamed]);
+
+        Assert.Equal(2, index.Count);
+        Assert.Equal(2, index.DropCount);
+        Assert.Equal("The Lost City of Amdapor", index.DropWhere(new RewardRef(RewardKind.OptionalItem, 4520, 4520, 1, "Darklight Band of Striking", 0)));
+        Assert.Equal("The Lost City of Amdapor", index.DropWhere(new RewardRef(RewardKind.Item, 0, 4520, 1, "Darklight Band of Striking", 0)));
+        Assert.Equal(string.Empty, index.DropWhere(RewardKind.OptionalItem, 4523, 4523));
+        Assert.Null(index.DropWhere(new RewardRef(RewardKind.Mount, 99, 22437, 1, "Starlight Bear", 0)));
+        Assert.False(index.Contains(RewardKind.OptionalItem, 4520, 4520), "a drop is not a store re-sell");
+        Assert.NotSame(StoreResells.Empty, StoreResells.Build([drop]));
     }
 }
