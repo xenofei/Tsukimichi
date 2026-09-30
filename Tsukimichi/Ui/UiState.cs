@@ -73,6 +73,15 @@ public sealed class UiState
     public bool RevealPending { get; set; }
 
     /// <summary>
+    /// Bumped by every <see cref="Reveal(uint, QuestScope, bool)"/>: the table compares it with the last one it saw and
+    /// plays the reveal pulse on <see cref="RevealedRowId"/>'s row when that row is next drawn.
+    /// </summary>
+    public int RevealSerial { get; private set; }
+
+    /// <summary>The row the last <see cref="Reveal(uint, QuestScope, bool)"/> landed on.</summary>
+    public uint RevealedRowId { get; private set; }
+
+    /// <summary>
     /// Screen rectangles of named UI regions recorded during the last frame (toolbar, search, filters, chips,
     /// tabs, tree, table, detail, path, moonlit, characters, flight, settings, help). Consumers such as the interactive
     /// tutorial read them to draw highlights; panes call <see cref="RecordRect"/> right after drawing a region.
@@ -108,6 +117,8 @@ public sealed class UiState
         Scope = scope;
         SelectedRowId = rowId;
         RevealPending = true;
+        RevealedRowId = rowId;
+        RevealSerial++;
 
         if (ClearNarrowingFilters(isUnlisted))
         {

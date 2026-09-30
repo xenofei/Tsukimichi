@@ -76,6 +76,38 @@ public static class Motion
     /// </summary>
     public static float Pulse(ulong key, float seconds) => Store.Pulse(key, seconds, ImGui.GetTime(), Enabled);
 
+    /// <summary>
+    /// A key made of a <paramref name="tag"/> in the high half and an id (an ImGui id, a row id, an index) in the low
+    /// half, so the same item can carry several motions (hover, chevron, gauge, reveal) without their keys meeting.
+    /// </summary>
+    public static ulong Key(uint tag, uint id) => ((ulong)tag << 32) | id;
+
+    /// <summary>
+    /// A halo gauge's shown fraction: it moves to <paramref name="fraction"/> over about 500 ms when the fraction
+    /// changes (a quest completed, another character viewed) and sits still otherwise. A gauge seen for the first time,
+    /// or after two seconds out of view, starts at its fraction; with motion off it jumps.
+    /// </summary>
+    public static float Gauge(ulong key, float fraction) =>
+        Lerp(key, float.IsFinite(fraction) ? System.Math.Clamp(fraction, 0f, 1f) : 0f, MotionMath.GaugeRate);
+
+    /// <summary>
+    /// Draws the reveal pulse under <paramref name="key"/> around the rectangle, if one is playing: a Moon ring that
+    /// grows 0 → 6 px outward while fading 0.7 → 0, twice in 900 ms (ui-revamp §3, accessibility B5: 2.2 flashes/s on
+    /// a small area). Nothing is drawn with motion off or once the pulse has ended.
+    /// </summary>
+    public static void DrawRevealPulse(ImDrawListPtr dl, ulong key, System.Numerics.Vector2 min, System.Numerics.Vector2 max, float rounding)
+    {
+        var (ring, grow) = MotionMath.RevealRing(Pulse(key, MotionMath.RevealPulseSeconds));
+        if (ring < 0)
+        {
+            return;
+        }
+
+        var outset = UiMetrics.Px(6f) * grow;
+        var pad = new System.Numerics.Vector2(outset);
+        dl.AddRect(min - pad, max + pad, Theme.WithAlpha(Theme.Moon, 0.7f * (1f - grow)), rounding + outset, ImDrawFlags.None, System.MathF.Max(1.5f, UiMetrics.Px(2f)));
+    }
+
     /// <summary>Forgets every key (plugin unload).</summary>
     public static void Reset() => Store.Clear();
 }

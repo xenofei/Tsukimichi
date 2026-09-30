@@ -48,6 +48,41 @@ public class MotionMathTests
         Assert.InRange(frames, 5, 30);
     }
 
+    [Fact]
+    public void Gauge_fill_reaches_95_percent_in_about_half_a_second()
+    {
+        var v = 0.2f;
+        for (var i = 0; i < 30; i++)
+        {
+            v = MotionMath.Approach(v, 0.8f, MotionMath.GaugeRate, Frame);
+        }
+
+        // 30 frames = 0.5 s: e^(−3) ≈ 5 % of the step left.
+        Assert.InRange(v, 0.76f, 0.79f);
+    }
+
+    [Theory]
+    [InlineData(0f, 0, 0f)]
+    [InlineData(0.25f, 0, 0.875f)]
+    [InlineData(0.5f, 1, 0f)]
+    [InlineData(0.75f, 1, 0.875f)]
+    public void Reveal_pulse_plays_two_rings_back_to_back(float progress, int ring, float grow)
+    {
+        var (r, g) = MotionMath.RevealRing(progress);
+
+        Assert.Equal(ring, r);
+        Assert.Equal(grow, g, 3);
+    }
+
+    [Theory]
+    [InlineData(-0.1f)]
+    [InlineData(1f)]
+    [InlineData(float.NaN)]
+    public void Reveal_pulse_outside_its_run_shows_no_ring(float progress)
+    {
+        Assert.Equal(-1, MotionMath.RevealRing(progress).Ring);
+    }
+
     [Theory]
     [InlineData(0f, 0.016f)]
     [InlineData(-5f, 0.016f)]

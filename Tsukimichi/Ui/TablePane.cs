@@ -72,6 +72,12 @@ public sealed class TablePane : IDisposable
     /// <summary>High bits of the <see cref="Motion"/> key of a row's hover fade, so row ids never meet ImGui ids.</summary>
     private const ulong HoverKeyTag = 0x7461_6200_0000_0000UL;
 
+    /// <summary>High half of the <see cref="Motion"/> key of a row's reveal pulse.</summary>
+    private const uint RevealTag = 0x5441_5250; // "TARP"
+
+    /// <summary>How long a reveal waits for its row to be drawn (the query and the scroll land a frame or two later).</summary>
+    private const double RevealWaitSeconds = 2.0;
+
     private static readonly string StoryBadgeIcon = FontAwesomeIcon.BookOpen.ToIconString();
 
     /// <summary>The widest level a pill is sized for when the Level column is first laid out.</summary>
@@ -134,6 +140,11 @@ public sealed class TablePane : IDisposable
     private uint? hoveredRow;
     private uint? hoveredNext;
 
+    // Reveal pulse (T17): the last UiState.RevealSerial seen, and the row still waiting to be drawn to start its pulse.
+    private int revealSeen;
+    private uint? revealRow;
+    private double revealUntil;
+
     // FitStatusColumn state (see the method): the columns it hid, whether a re-show by hand suspended it, each
     // hideable column's enabled flag last frame (null before the first) and whether a re-show is the fit's own; the
     // Status width each hide gained, measured on the frame the hide took effect (widthBeforeHide is the width the
@@ -174,6 +185,13 @@ public sealed class TablePane : IDisposable
     /// <summary><paramref name="hasSnapshot"/> false greys the runtime columns (browse mode).</summary>
     public void Draw(bool hasSnapshot)
     {
+        if (ui.RevealSerial != revealSeen)
+        {
+            revealSeen = ui.RevealSerial;
+            revealRow = ui.RevealedRowId;
+            revealUntil = ImGui.GetTime() + RevealWaitSeconds;
+        }
+
         if (runner.Empty is { } empty)
         {
             hoveredRow = null;
@@ -513,7 +531,17 @@ public sealed class TablePane : IDisposable
             hoveredNext = quest.RowId;
         }
 
-        DrawRowChrome(rowMin, rowMax, state, selected, liftRow == quest.RowId && hover > 0.5f, in layout);
+        // A reveal from another pane landed on this row: its pulse starts the first frame the row is drawn.
+        if (revealRow == quest.RowId)
+        {
+            revealRow = null;
+            if (ImGui.GetTime() <= revealUntil)
+            {
+                Motion.Trigger(Motion.Key(RevealTag, quest.RowId));
+            }
+        }
+
+        DrawRowChrome(rowMin, rowMax, state, selected, liftRow == quest.RowId && hover > 0.5f, in layout, Motion.Key(RevealTag, quest.RowId));
 
         if (clicked)
         {
@@ -595,7 +623,7 @@ public sealed class TablePane : IDisposable
     /// (Comfortable), the selection ring (1 px, the text colour at 0.45, rounded, inset 1 px: a selection, not gold),
     /// the hover lift, and the state stripe on top of them at the left edge.
     /// </summary>
-    private static void DrawRowChrome(Vector2 rowMin, Vector2 rowMax, QuestState state, bool selected, bool lifted, in RowLayout layout)
+    private static void DrawRowChrome(Vector2 rowMin, Vector2 rowMax, QuestState state, bool selected, bool lifted, in RowLayout layout, ulong revealKey)
     {
         var s = Theme.Surface;
         ImGuiP.TablePushBackgroundChannel();
@@ -619,6 +647,11 @@ public sealed class TablePane : IDisposable
         }
 
         DrawStripe(dl, rowMin.X, rowMin.Y, rowMax.Y - rowMin.Y, state);
+        if (selected)
+        {
+            Motion.DrawRevealPulse(dl, revealKey, rowMin, rowMax, UiMetrics.Px(SelectionRounding));
+        }
+
         ImGuiP.TablePopBackgroundChannel();
     }
 

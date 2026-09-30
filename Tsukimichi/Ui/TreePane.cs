@@ -6,6 +6,7 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility.Raii;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
+using Tsukimichi.Core.Ui;
 using Tsukimichi.GameData;
 
 namespace Tsukimichi.Ui;
@@ -91,6 +92,11 @@ public sealed class TreePane
     private const float PillPadLogical = 5f;
     private const float PillMinPaneLogical = 200f;
     private const float PillFontFraction = 0.72f;
+
+    // Motion keys on a node's ImGui id (T17): the chevron's turn, the halo's fill, the reveal pulse.
+    private const uint ChevronTag = 0x5452_4543; // "TREC"
+    private const uint GaugeTag = 0x5452_4547;   // "TREG"
+    private const uint RevealTag = 0x5452_4552;  // "TRER"
 
     private readonly UiState ui;
 
@@ -268,19 +274,26 @@ public sealed class TreePane
         }
 
         // The indented start of the row: TreeNodeEx puts its arrow here even though the item spans the full width.
+        // The label is hidden, so the text colour only paints ImGui's arrow: it is made transparent and the overlay
+        // draws a chevron that turns through Motion instead (T17, 140 ms).
         var indentX = ImGui.GetCursorScreenPos().X;
+        var expandable = !node.Leaf && !sproutFolded;
+        var arrowColor = ImGui.GetColorU32(ImGuiCol.Text);
         bool open;
         using (ImRaii.PushStyle(ImGuiStyleVar.FramePadding, new Vector2(ImGui.GetStyle().FramePadding.X, rowPadY)))
         using (ImRaii.PushColor(ImGuiCol.Header, SelectedWash)
                      .Push(ImGuiCol.HeaderHovered, selected ? SelectedHoverWash : HoverWash)
-                     .Push(ImGuiCol.HeaderActive, selected ? SelectedHoverWash : ActiveWash))
+                     .Push(ImGuiCol.HeaderActive, selected ? SelectedHoverWash : ActiveWash)
+                     .Push(ImGuiCol.Text, Vector4.Zero, expandable))
         {
             open = ImGui.TreeNodeEx(node.Id, flags, HiddenLabel);
         }
 
+        var itemId = ImGuiP.GetItemID();
         if (revealing && selected)
         {
             ImGui.SetScrollHereY(0.5f);
+            Motion.Trigger(Motion.Key(RevealTag, itemId));
         }
         if (ImGui.IsItemClicked() && !ImGui.IsItemToggledOpen())
         {
@@ -289,7 +302,15 @@ public sealed class TreePane
 
         // The overlay paints on the node item; its tooltip depends on the part under the mouse. Rows scrolled out of
         // view skip the painting (a fully open tree is hundreds of halos); a hidden row cannot be hovered anyway.
-        var hover = ImGui.IsItemVisible() ? DrawNodeOverlay(node, section, selected, indentX) : Hover.None;
+        var hover = Hover.None;
+        if (ImGui.IsItemVisible())
+        {
+            hover = DrawNodeOverlay(node, section, selected, indentX, itemId);
+            if (expandable)
+            {
+                DrawChevron(indentX, Motion.Lerp(Motion.Key(ChevronTag, itemId), open ? 1f : 0f, MotionMath.ChevronRate), arrowColor);
+            }
+        }
         if (ImGui.IsItemHovered())
         {
             if (sproutFolded && hover is not (Hover.Halo or Hover.Progress or Hover.Ready))
@@ -317,7 +338,7 @@ public sealed class TreePane
     /// Halo, name, pills, mini bar and count painted on the node's row; drawn without items so layout is untouched.
     /// Returns which part the mouse is over, for the caller's item-hover tooltip (the node is the item).
     /// </summary>
-    private Hover DrawNodeOverlay(Node node, bool section, bool selected, float indentX)
+    private Hover DrawNodeOverlay(Node node, bool section, bool selected, float indentX, uint itemId)
     {
         var dl = ImGui.GetWindowDrawList();
         var min = ImGui.GetItemRectMin();
@@ -345,7 +366,13 @@ public sealed class TreePane
         // Where TreeNodeEx puts its label: after the arrow slot (one font size plus twice the frame padding).
         var labelX = indentX + ImGui.GetFontSize() + style.FramePadding.X * 2f;
         var haloCenter = new Vector2(labelX + radius, rowCenterY);
-        MoonGlyph.DrawHalo(dl, haloCenter, radius, node.Count.Fraction, onCard: false, dimComplete: complete);
+        // The fill moves only when the count changes (a quest completed, another character viewed), never on its own.
+        MoonGlyph.DrawHalo(dl, haloCenter, radius, Motion.Gauge(Motion.Key(GaugeTag, itemId), node.Count.Fraction), onCard: false, dimComplete: complete);
+        if (selected)
+        {
+            // The reveal pulse (a reveal from another pane landed here): around the row, inside the pane's edges.
+            Motion.DrawRevealPulse(dl, Motion.Key(RevealTag, itemId), new Vector2(indentX, min.Y + 1f), new Vector2(max.X - pad, max.Y - 1f), UiMetrics.Px(4f));
+        }
 
         // Mini bar 12 px before the count, dropped when the name would have less than a few characters of room.
         var namePos = new Vector2(labelX + radius * 2f + pad, textY);
@@ -444,6 +471,24 @@ public sealed class TreePane
 
         var fill = MathF.Max(2f, MathF.Round(width * count.Fraction));
         dl.AddRectFilled(trackMin, new Vector2(MathF.Min(trackMax.X, trackMin.X + fill), trackMax.Y), complete ? Theme.MoonDimU32 : Theme.MoonU32, height * 0.5f);
+    }
+
+    /// <summary>
+    /// The expand chevron where TreeNodeEx puts its arrow (the same size and place: RenderArrow at 0.7 of the font size,
+    /// after the frame padding), turned from pointing right (<paramref name="turn"/> 0, closed) to pointing down (1,
+    /// open). <paramref name="turn"/> comes from Motion, so it eases over 140 ms after a toggle and sits still otherwise.
+    /// </summary>
+    private static void DrawChevron(float indentX, float turn, uint color)
+    {
+        var min = ImGui.GetItemRectMin();
+        var max = ImGui.GetItemRectMax();
+        var fontSize = ImGui.GetFontSize();
+        var center = new Vector2(indentX + ImGui.GetStyle().FramePadding.X + (fontSize * 0.5f), (min.Y + max.Y) * 0.5f);
+        var r = fontSize * 0.40f * 0.70f;
+        var angle = turn * MathF.PI * 0.5f;
+        var (sin, cos) = MathF.SinCos(angle);
+        Vector2 Turn(float x, float y) => center + new Vector2((x * cos) - (y * sin), (x * sin) + (y * cos));
+        ImGui.GetWindowDrawList().AddTriangleFilled(Turn(0.750f * r, 0f), Turn(-0.750f * r, 0.866f * r), Turn(-0.750f * r, -0.866f * r), color);
     }
 
     /// <summary>

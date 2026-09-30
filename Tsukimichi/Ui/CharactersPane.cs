@@ -48,6 +48,15 @@ public sealed partial class CharactersPane
     private const int MaxDiffRows = 25;
     private static readonly TimeSpan ToastDuration = TimeSpan.FromSeconds(8);
 
+    // Motion keys of the dashboard's halos (T17): one table per block in the high bits of the id, the row index in the
+    // low; a halo's fill eases only when its fraction changes (another character viewed, a quest completed).
+    private const uint DashboardGaugeTag = 0x4441_5347; // "DASG"
+    private const uint SectionsGauges = 0x1_0000;
+    private const uint JobGauges = 0x2_0000;
+    private const uint ChainGauges = 0x3_0000;
+    private const uint NotStartedGauges = 0x4_0000;
+    private const uint MoonlitGauges = 0x5_0000;
+
     /// <summary>Reward kinds the dashboard summarizes, in display order.</summary>
     private static readonly RewardKind[] SummaryKinds =
     [
@@ -280,11 +289,12 @@ public sealed partial class CharactersPane
         ImGui.TableSetupColumn(Strings.CharactersColumnPercent, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(50f));
         ImGui.TableHeadersRow();
 
-        foreach (var row in d.Sections)
+        for (var i = 0; i < d.Sections.Length; i++)
         {
+            var row = d.Sections[i];
             ImGui.TableNextRow();
             ImGui.TableNextColumn();
-            MoonGlyph.DrawHaloInline(row.Fraction, UiMetrics.InlineGlyphSize(line));
+            MoonGlyph.DrawHaloInline(Motion.Key(DashboardGaugeTag, SectionsGauges | (uint)i), row.Fraction, UiMetrics.InlineGlyphSize(line));
             if (ImGui.IsItemHovered())
             {
                 FillingMoonTooltip(row.Count, row.Percent);
@@ -364,7 +374,7 @@ public sealed partial class CharactersPane
             ImGui.TableNextColumn();
             ImGui.TextUnformatted(row.Level);
             ImGui.TableNextColumn();
-            MoonGlyph.DrawHaloInline(row.Fraction, UiMetrics.InlineGlyphSize(line));
+            MoonGlyph.DrawHaloInline(Motion.Key(DashboardGaugeTag, JobGauges | (uint)i), row.Fraction, UiMetrics.InlineGlyphSize(line));
             if (ImGui.IsItemHovered())
             {
                 FillingMoonTooltip(row.Count);
@@ -390,7 +400,7 @@ public sealed partial class CharactersPane
             return;
         }
 
-        DrawChainTable(ui, "##chains", d.Chains);
+        DrawChainTable(ui, "##chains", d.Chains, ChainGauges);
         if (d.ChainsNotStarted.Length == 0)
         {
             return;
@@ -399,11 +409,11 @@ public sealed partial class CharactersPane
         using var node = ImRaii.TreeNode(d.ChainsNotStartedLabel);
         if (node)
         {
-            DrawChainTable(ui, "##chainsNotStarted", d.ChainsNotStarted);
+            DrawChainTable(ui, "##chainsNotStarted", d.ChainsNotStarted, NotStartedGauges);
         }
     }
 
-    private static void DrawChainTable(UiState ui, string id, ChainRow[] rows)
+    private static void DrawChainTable(UiState ui, string id, ChainRow[] rows, uint gaugeKeys)
     {
         if (rows.Length == 0)
         {
@@ -428,7 +438,7 @@ public sealed partial class CharactersPane
             using var rowId = ImRaii.PushId(i);
             ImGui.TableNextRow();
             ImGui.TableNextColumn();
-            MoonGlyph.DrawHaloInline(row.Fraction, UiMetrics.InlineGlyphSize(line));
+            MoonGlyph.DrawHaloInline(Motion.Key(DashboardGaugeTag, gaugeKeys | (uint)i), row.Fraction, UiMetrics.InlineGlyphSize(line));
             if (ImGui.IsItemHovered())
             {
                 FillingMoonTooltip(row.Count);
@@ -495,8 +505,9 @@ public sealed partial class CharactersPane
         ImGui.TableSetupColumn(Strings.CharactersColumnKind, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(300f));
         ImGui.TableSetupColumn(Strings.CharactersColumnObtained, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(90f));
 
-        foreach (var row in d.Moonlit)
+        for (var i = 0; i < d.Moonlit.Length; i++)
         {
+            var row = d.Moonlit[i];
             ImGui.TableNextRow();
             ImGui.TableNextColumn();
             if (row.AllUnknown)
@@ -509,7 +520,7 @@ public sealed partial class CharactersPane
             }
             else
             {
-                MoonGlyph.DrawHaloInline(row.Fraction, UiMetrics.InlineGlyphSize(line));
+                MoonGlyph.DrawHaloInline(Motion.Key(DashboardGaugeTag, MoonlitGauges | (uint)i), row.Fraction, UiMetrics.InlineGlyphSize(line));
                 if (ImGui.IsItemHovered())
                 {
                     FillingMoonTooltip(row.Count);

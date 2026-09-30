@@ -99,6 +99,9 @@ public sealed class MainWindow : Window, IDisposable
     /// <summary>The least width the status text keeps when the MSQ segment crowds it, in logical pixels.</summary>
     private const float StatusMinLogical = 120f;
 
+    /// <summary>Motion key of the status bar's overall halo: its fill eases only when the overall count changes.</summary>
+    private static readonly ulong StatusGaugeKey = Motion.Key(0x5354_4147, 0); // "STAG"
+
     /// <summary>The MSQ pill's fill: Moon at 10 % (ui-revamp §2.6).</summary>
     private static readonly uint MsqPillFill = Theme.WithAlpha(Theme.Moon, 0.10f);
 
@@ -1202,7 +1205,7 @@ public sealed class MainWindow : Window, IDisposable
         {
             ImGui.SetCursorScreenPos(new Vector2(x, origin.Y));
             ImGui.Dummy(new Vector2(2f * haloRadius, rowHeight));
-            MoonGlyph.DrawHalo(dl, new Vector2(x + haloRadius, midY), haloRadius, overall.Fraction);
+            MoonGlyph.DrawHalo(dl, new Vector2(x + haloRadius, midY), haloRadius, Motion.Gauge(StatusGaugeKey, overall.Fraction));
             if (ImGui.IsItemHovered())
             {
                 UiMetrics.Tooltip(Strings.FillingMoonTooltip, statusProgress);
