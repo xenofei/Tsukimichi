@@ -174,7 +174,8 @@ public sealed class HelpWindow : Window
         FontAwesomeIcon.Download,
         FontAwesomeIcon.Undo,
         FontAwesomeIcon.CalendarAlt,
-        FontAwesomeIcon.MapSigns));
+        FontAwesomeIcon.MapSigns,
+        FontAwesomeIcon.History));
 
     private static CardItem[] FlightCards => flightCardsCache.Value;
 
@@ -950,15 +951,20 @@ public sealed class HelpWindow : Window
 
     private static CardItem[] Cards(string[] titles, string[] bodies, params FontAwesomeIcon[] icons)
     {
+        // A card list that grows without its icon must not stop the Help window (and so the plugin) from
+        // loading: log it, show a plain icon for the missing ones and drop a title that has no body.
         if (titles.Length != bodies.Length || titles.Length != icons.Length)
         {
-            throw new InvalidOperationException("Help card titles, bodies and icons must have the same length.");
+            Plugin.Log.Warning(
+                "Help cards: {Titles} titles, {Bodies} bodies, {Icons} icons; a card list and its icons differ",
+                titles.Length, bodies.Length, icons.Length);
         }
 
-        var cards = new CardItem[titles.Length];
+        var cards = new CardItem[Math.Min(titles.Length, bodies.Length)];
         for (var i = 0; i < cards.Length; i++)
         {
-            cards[i] = new CardItem(icons[i].ToIconString(), titles[i], bodies[i]);
+            var icon = i < icons.Length ? icons[i] : FontAwesomeIcon.InfoCircle;
+            cards[i] = new CardItem(icon.ToIconString(), titles[i], bodies[i]);
         }
 
         return cards;
