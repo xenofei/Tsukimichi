@@ -74,6 +74,7 @@ public sealed class Plugin : IDalamudPlugin
     private HoverHint? hoverHint;
     private Game.ItemHooks? itemHooks;
     private Game.NpcHooks? npcHooks;
+    private Game.HookGateNotice? hookGateNotice;
     private TodoOverlay? todoOverlay;
 
     /// <summary>
@@ -390,14 +391,22 @@ public sealed class Plugin : IDalamudPlugin
             // Item hover hints and context-menu links (V2-14). The lookup follows the Moonlit catalog reference (rebuilt
             // after an override change) and the quest catalog (set once the build finishes); both are read per use.
             var rewardLookup = new Core.Unique.RewardLookupSource(() => moonlit.Catalog, () => Session.Bundle?.Catalog);
-            hoverHint = new HoverHint(GameGui, Session, unlockReader, rewardLookup, Log) { Enabled = Settings.ItemHintsEnabled };
+            // Addon kill switch (T20): the four game hooks below (hover hint, item and NPC menu entries, server info
+            // bar entry) run only while this gate allows them, that is on the game version they were play-tested on
+            // (the csproj's TsukimichiTestedGameVersion) or with "Enable game hooks on this untested version" ticked for the running version. It is
+            // one shared service: anything else drawn beside a game addon, the Duty Finder unlock hint of 0.9.0 (P13)
+            // first, takes this instance and follows its Changed event. The client version is read once here.
+            var clientGameVersion = Game.DiagnosticBuilder.ReadClientGameVersion(DataManager, Log);
+            var gate = new Core.Runtime.HookGate(Game.DiagnosticBuilder.TestedGameVersionText(), clientGameVersion, Settings.EnableHooksOnUntestedVersion);
+            hookGateNotice = new Game.HookGateNotice(gate, ClientState, ChatGui, Log, () => Game.DiagnosticBuilder.ReadClientGameVersion(DataManager, Log));
+            hoverHint = new HoverHint(GameGui, Session, unlockReader, rewardLookup, gate, Log) { Enabled = Settings.ItemHintsEnabled };
             PluginInterface.UiBuilder.Draw += hoverHint.Draw;
             itemHooks = new Game.ItemHooks(ContextMenu, rewardLookup, quest =>
             {
                 mainWindow.IsOpen = true;
                 mainWindow.BringToFront();
                 MoonlitPane.Reveal(ui, quest);
-            }, Log) { Enabled = Settings.ItemContextMenuEnabled, QuestName = quest => Session.LiveSpoilers.DisplayName(quest) };
+            }, gate, Log) { Enabled = Settings.ItemContextMenuEnabled, QuestName = quest => Session.LiveSpoilers.DisplayName(quest) };
             var discovery = new DiscoveryCommands(Session, ClientState, TargetManager, gameLinks);
             command.ListZoneQuests = discovery.Zone;
             command.ListTargetQuests = discovery.Which;
@@ -408,13 +417,14 @@ public sealed class Plugin : IDalamudPlugin
                 mainWindow.IsOpen = true;
                 mainWindow.BringToFront();
                 ui.ShowIssuer(npcId);
-            }, Log) { Enabled = Settings.NpcContextMenuEnabled };
+            }, gate, Log) { Enabled = Settings.NpcContextMenuEnabled };
             var why = new WhyCommand(Session, ui, gameLinks);
             command.Why = why.Run;
 
             // "Report this quest": the diagnostic block (detail pane button and /tsuki report), the data stamp in
-            // Settings > About and on the status bar, and the game-version warning. The client version is read once.
-            var diagnostics = new Game.DiagnosticBuilder(Session, Game.DiagnosticBuilder.PluginVersionText(), Game.DiagnosticBuilder.ReadClientGameVersion(DataManager, Log), () => Settings.JournalFiling);
+            // Settings > About and on the status bar, and the game-version warning. The client version is the one read
+            // for the hook gate above.
+            var diagnostics = new Game.DiagnosticBuilder(Session, Game.DiagnosticBuilder.PluginVersionText(), clientGameVersion, () => Settings.JournalFiling);
             if (diagnostics.VersionMismatchWarning is { } versionWarning)
             {
                 Log.Warning("{Warning}", versionWarning);
@@ -440,7 +450,7 @@ public sealed class Plugin : IDalamudPlugin
                 MoonlitPane.Reveal(ui, quest);
             });
             windowSystem.AddWindow(discoveryWindow);
-            dtrEntry = new Game.DtrEntry(DtrBar, discoveryWindow, discoverySettings, Log);
+            dtrEntry = new Game.DtrEntry(DtrBar, discoveryWindow, discoverySettings, gate, Log);
             command.ToggleNearbyWindow = discoveryWindow.Toggle;
             charactersPane = new CharactersPane(Session, Paths, Log, Snapshots.Load, DataManager, TextureProvider);
             charactersPane.MoonlitCounts = moonlitPane.CountsFor;
@@ -467,6 +477,7 @@ public sealed class Plugin : IDalamudPlugin
             if (hoverHint is { } hint) { configWindow.ItemHintsToggled = enabled => hint.Enabled = enabled; }
             if (itemHooks is { } hooks) { configWindow.ItemContextMenuToggled = enabled => hooks.Enabled = enabled; }
             if (npcHooks is { } npcMenu) { configWindow.NpcContextMenuToggled = enabled => npcMenu.Enabled = enabled; }
+            configWindow.HookGate = gate;
             windowSystem.AddWindow(configWindow);
             PluginInterface.UiBuilder.OpenConfigUi += configWindow.Toggle;
             command.ToggleConfigWindow = configWindow.Toggle;
@@ -558,6 +569,7 @@ public sealed class Plugin : IDalamudPlugin
 
         itemHooks?.Dispose();
         npcHooks?.Dispose();
+        hookGateNotice?.Dispose();
         PluginInterface.UiBuilder.OpenMainUi -= mainWindow.Toggle;
         PluginInterface.UiBuilder.Draw -= windowSystem.Draw;
         PluginInterface.UiBuilder.Draw -= UpdateUiMetrics;
@@ -611,6 +623,7 @@ public sealed class Plugin : IDalamudPlugin
         });
         Unwind("item hooks", () => itemHooks?.Dispose());
         Unwind("npc hooks", () => npcHooks?.Dispose());
+        Unwind("hook gate notice", () => hookGateNotice?.Dispose());
         Unwind("command", () => command?.Dispose());
         Unwind("todo overlay", () => todoOverlay?.Dispose());
         Unwind("server bar entry", () => dtrEntry?.Dispose());

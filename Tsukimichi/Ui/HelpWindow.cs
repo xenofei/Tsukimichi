@@ -181,7 +181,8 @@ public sealed class HelpWindow : Window
         FontAwesomeIcon.Tag,
         FontAwesomeIcon.ExchangeAlt,
         FontAwesomeIcon.Clock,
-        FontAwesomeIcon.ShoppingCart);
+        FontAwesomeIcon.ShoppingCart,
+        FontAwesomeIcon.PauseCircle);
 
     private static readonly CardItem[] SpoilerCards = Cards(
         Strings.Help.SpoilerCardTitles,

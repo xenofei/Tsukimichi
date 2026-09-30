@@ -92,6 +92,27 @@ public sealed class Configuration : IPluginConfiguration
     /// <summary>Add a "Tsukimichi: quests here (N)" entry to the target bar's menu on a quest-giving NPC.</summary>
     public bool NpcContextMenuEnabled { get; set; } = true;
 
+    // ---- 0.8.0: addon kill switch (T20) ----
+    /// <summary>
+    /// The game version (ffxivgame.ver text) on which the player let the game hooks (item tooltip panel, item and NPC
+    /// menu entries, server info bar entry) run although it is newer than the one they were tested on
+    /// (<c>Core.Runtime.HookGate</c>); empty when off, the default. It applies to that version only, so the next patch
+    /// pauses the hooks again.
+    /// </summary>
+    public string EnableHooksOnUntestedVersion { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Migration of a pre-release boolean form of the override (development builds of 0.8.0 wrote
+    /// <c>EnableHooksOnUntestedVersions: true</c>). No release shipped it, so its value is read and dropped: the
+    /// version-scoped <see cref="EnableHooksOnUntestedVersion"/> stays empty. Write-only, so it is never saved again.
+    /// </summary>
+    [Newtonsoft.Json.JsonProperty]
+    [Obsolete("Replaced by EnableHooksOnUntestedVersion; read only to drop the old value.")]
+    public bool EnableHooksOnUntestedVersions
+    {
+        set { }
+    }
+
     /// <summary>Days an accepted quest sits untouched before the Stalled preset lists it; 1–90, default 7. Clamped by <see cref="StalledDaysClamped"/> when read.</summary>
     public int StalledDays { get; set; } = DefaultStalledDays;
 
@@ -258,6 +279,7 @@ public sealed class Configuration : IPluginConfiguration
 
         config.Filters ??= new FilterSet();
         config.LastSeenVersion ??= string.Empty;
+        config.EnableHooksOnUntestedVersion = config.EnableHooksOnUntestedVersion?.Trim() ?? string.Empty;
         config.SpoilerShieldByCharacter ??= [];
         config.ExportFolder ??= string.Empty;
         if (!Enum.IsDefined(config.ExportFormat))

@@ -3,7 +3,8 @@ name: Release
 # Push a tag like v0.2.0 to build the plugin against the current Dalamud, attach latest.zip to a
 # GitHub Release, and refresh pluginmaster.json on main so custom-repo users get the update.
 #
-# Guards: the tag must equal the csproj <Version> (an -rcN suffix is allowed on the tag), and a
+# Guards: the tag must equal the csproj <Version> (an -rcN suffix is allowed on the tag), the csproj
+# must carry a TsukimichiTestedGameVersion (the addon kill switch's tested game version), and a
 # non-prerelease tag must have its CHANGELOG.md section. A tag containing "-" is published as a
 # prerelease and never touches pluginmaster.json.
 #
@@ -73,6 +74,24 @@ jobs:
             exit 1
           }
           Write-Host "csproj Version $version matches tag $env:RELEASE_TAG"
+
+      - name: Guard - csproj TsukimichiTestedGameVersion is set
+        # The game hooks pause on any game newer than this version (Core/Runtime/HookGate.cs); an empty value would
+        # ship a build whose kill switch never acts. Bump it with tools/set-tested-version.ps1 (CONTRIBUTING.md).
+        shell: pwsh
+        run: |
+          $csproj = [xml](Get-Content Tsukimichi/Tsukimichi.csproj -Raw)
+          $tested = ($csproj.Project.PropertyGroup | ForEach-Object { $_.TsukimichiTestedGameVersion } | Where-Object { $_ -and $_.Trim() } | Select-Object -First 1)
+          if (-not $tested) {
+            Write-Host "::error::Tsukimichi/Tsukimichi.csproj has no <TsukimichiTestedGameVersion> or it is empty. Play-test the game hooks and run tools/set-tested-version.ps1 before tagging."
+            exit 1
+          }
+          $tested = $tested.Trim()
+          if ($tested -notmatch '^\d{4}\.\d{2}\.\d{2}\.\d{4}\.\d{4}$') {
+            Write-Host "::error::TsukimichiTestedGameVersion '$tested' is not a game version of the form 2026.09.15.0000.0000."
+            exit 1
+          }
+          Write-Host "Game hooks tested on game $tested"
 
       - name: Guard - CHANGELOG.md has the version's section
         if: env.RELEASE_PRERELEASE == 'false'

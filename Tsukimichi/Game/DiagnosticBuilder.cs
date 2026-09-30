@@ -22,6 +22,9 @@ public sealed class DiagnosticBuilder
     /// <summary>The version file beside the sqpack directory, the fallback when the repository carries no version.</summary>
     private const string GameVersionFile = "ffxivgame.ver";
 
+    /// <summary>The assembly metadata key the csproj writes the tested game version under.</summary>
+    private const string TestedGameVersionKey = "TestedGameVersion";
+
     private readonly SessionState session;
     private readonly Func<JournalFiling> filing;
 
@@ -97,6 +100,23 @@ public sealed class DiagnosticBuilder
 
     /// <summary>The plugin's assembly version ("0.6.0.0"); empty when the assembly carries none.</summary>
     public static string PluginVersionText() => typeof(DiagnosticBuilder).Assembly.GetName().Version?.ToString() ?? string.Empty;
+
+    /// <summary>
+    /// The game version the hooks were play-tested on: the csproj's <c>TsukimichiTestedGameVersion</c>, stamped into
+    /// the assembly as <c>AssemblyMetadata("TestedGameVersion")</c>; empty when the build carries none.
+    /// </summary>
+    public static string TestedGameVersionText()
+    {
+        foreach (var attribute in typeof(DiagnosticBuilder).Assembly.GetCustomAttributes(typeof(System.Reflection.AssemblyMetadataAttribute), false))
+        {
+            if (attribute is System.Reflection.AssemblyMetadataAttribute { Key: TestedGameVersionKey } metadata)
+            {
+                return metadata.Value?.Trim() ?? string.Empty;
+            }
+        }
+
+        return string.Empty;
+    }
 
     /// <summary>
     /// The client's game version: the base repository's version from Lumina, else the <c>ffxivgame.ver</c> file

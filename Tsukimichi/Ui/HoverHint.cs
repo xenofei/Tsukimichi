@@ -8,6 +8,7 @@ using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
 using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Runtime;
 using Tsukimichi.Core.Ui;
 using Tsukimichi.Core.Unique;
 using Tsukimichi.Game;
@@ -24,6 +25,10 @@ namespace Tsukimichi.Ui;
 /// Placement: beside the <c>ItemDetail</c> addon when it is visible (right of it, else left, below or above, whichever
 /// fits the viewport), otherwise beside a small box at the cursor. The hint model is memoized per item id, session
 /// version and lookup, so hovering costs no allocation after the first frame of a new item.
+/// </para>
+/// <para>
+/// Behind the addon kill switch (T20): on a game version newer than the tested one <see cref="Draw"/> returns before
+/// reading <see cref="IGameGui.HoveredItem"/> or the addon, unless the player enabled hooks on this untested version.
 /// </para>
 /// </summary>
 public sealed class HoverHint
@@ -53,6 +58,7 @@ public sealed class HoverHint
     private readonly SessionState session;
     private readonly RewardUnlockReader unlocks;
     private readonly RewardLookupSource lookup;
+    private readonly HookGate gate;
     private readonly IPluginLog log;
     private readonly List<Line> lines = [];
     private readonly HashSet<uint> seen = [];
@@ -65,17 +71,25 @@ public sealed class HoverHint
     private int settled;
     private bool warned;
 
-    public HoverHint(IGameGui gameGui, SessionState session, RewardUnlockReader unlocks, RewardLookupSource lookup, IPluginLog log)
+    /// <param name="gate">The shared addon kill switch (T20): while it pauses game hooks the hint reads nothing from the game.</param>
+    public HoverHint(IGameGui gameGui, SessionState session, RewardUnlockReader unlocks, RewardLookupSource lookup, HookGate gate, IPluginLog log)
     {
         this.gameGui = gameGui ?? throw new ArgumentNullException(nameof(gameGui));
         this.session = session ?? throw new ArgumentNullException(nameof(session));
         this.unlocks = unlocks ?? throw new ArgumentNullException(nameof(unlocks));
         this.lookup = lookup ?? throw new ArgumentNullException(nameof(lookup));
+        this.gate = gate ?? throw new ArgumentNullException(nameof(gate));
         this.log = log ?? throw new ArgumentNullException(nameof(log));
     }
 
     /// <summary>Follows <c>Configuration.ItemHintsEnabled</c>; off draws nothing and forgets the current model.</summary>
     public bool Enabled { get; set; } = true;
+
+    /// <summary>
+    /// Whether the hint reads the hovered item and the <c>ItemDetail</c> addon this frame: the setting is on and the
+    /// <see cref="HookGate"/> allows game hooks on the running game version.
+    /// </summary>
+    public bool IsActive => Enabled && gate.HooksAllowed;
 
     /// <summary>Whether the reward kind is one <see cref="RewardUnlockReader"/> reads from the live client, so an owned line makes sense.</summary>
     public static bool IsUnlockable(RewardKind kind) => kind is
@@ -85,7 +99,8 @@ public sealed class HoverHint
     /// <summary><c>UiBuilder.Draw</c> handler.</summary>
     public void Draw()
     {
-        if (!Enabled)
+        // Paused by the kill switch or turned off: return before the first read of game state.
+        if (!IsActive)
         {
             Forget();
             return;
