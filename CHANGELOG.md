@@ -4,6 +4,11 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+### Added
+- Abandoned quests are no longer lost: the game keeps no list of what you dropped from the journal, so Tsukimichi now does. The Characters dashboard has an "Abandoned (N)" section with each quest's moon, name, the step it had reached and when ("step 3 of 5 · 2 days ago"), and Flag, Teleport (with Lifestream) and Reveal to go back for it; "Show in Journal" opens the Journal under a new Abandoned filter (also under Filters › Advanced › Abandoned only, with its chip). Taking the quest up again or completing it clears the row. The list is kept per character beside its snapshot (`characters\<id>.abandoned.json`) and is deleted with the character or by Delete all data. It starts with this version: quests abandoned before it are not known.
+- A chat line the moment you abandon a quest, "Abandoned: [quest] (step 3 of 5)" with a quest link and the giver's map link, so a mis-click in the journal is noticed before the duty has to be run again. Once per quest per session; Settings › Notices › "Chat line when you abandon a quest" (on by default).
+- Export for spreadsheets and collection trackers: Settings › Data › Export writes your completed quests (quest id, name, journal section, category and genre, expansion) or your Moonlit collection (each quest-exclusive reward with obtained yes, no or unknown) as JSON or CSV, into `exports` in the plugin's config folder or a folder you choose, then shows the path with an Open folder button. `/tsuki export [quests|moonlit] [json|csv]` does the same from chat. The files never carry your content id, account or world, and your character's name only if you tick "Include character name". Nothing is uploaded anywhere. The format is described in docs/export-format.md.
+
 ## [0.6.2] - 2026-09-29
 
 ### Added

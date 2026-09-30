@@ -26,13 +26,15 @@ Updates arrive through the plugin installer like any other plugin.
 - **Eight quest states as moon glyphs**, one name each everywhere: Ready (first quarter, glowing), Ready on another job, In journal (waxing gibbous), Blocked (new moon, always with what blocks it), Done today / Done this week (repeatables), Completed (full), Locked out (for good, such as a Grand Company choice not taken) and Not checked. The glyphs differ in shape, not only colour; Help › Moon phases is the legend and `docs/glossary.md` the reference.
 - **Filters and presets**: hide completed, available now (both with per-category overrides), state, expansion, level, job, reward kind, repeatable, seasonal, pinned, unlisted; presets for feature quests, quests around your level and stalled quests. Active filters show as chips; an empty table says which filters emptied it.
 - **Moonlit tab**: unique quest rewards, the ones that exist nowhere else (emotes, mounts, minions, orchestrion rolls, Triple Triad cards, gear, duties, systems and more), with whether you already own each one, the quest's state and a confidence badge saying whether the claim comes from the game data or a curated list. Your own verdicts (mark unique, hide as not unique) are kept and can be restored.
-- **Characters tab**: a snapshot of every character on the account with a dashboard (completion by section, Moonlit progress, pins, recent activity, job quest ladders, story chains, Grand Company and allied society standings), the main scenario position, an account-wide view of any quest's state per character, **Compare with** (what one character has done that another has not, ranked by unlock value), JSON export and forget.
+- **Characters tab**: a snapshot of every character on the account with a dashboard (completion by section, Moonlit progress, pins, abandoned quests, recent activity, job quest ladders, story chains, Grand Company and allied society standings), the main scenario position, an account-wide view of any quest's state per character, **Compare with** (what one character has done that another has not, ranked by unlock value), JSON export and forget.
+- **Abandoned quests**: the game keeps no list of what you dropped from the journal; Tsukimichi does. Each abandoned quest is kept with the step it had reached and when ("step 3 of 5 · 2 days ago"), with Flag, Teleport and Reveal to go back for it, an Abandoned filter, and a chat line the moment it happens so a mis-click is noticed.
+- **Export**: your completed quests and your Moonlit collection as JSON or CSV for a spreadsheet or a collection tracker (Settings › Data › Export or `/tsuki export`; format in [docs/export-format.md](docs/export-format.md)). No content id, account or world, and your character's name only if you tick it. Local files only; nothing is uploaded.
 - **Flight tab**: every flying zone with its aether current quests, attunement, the quest that blocks each, and Flag or Teleport to the giver.
 - **Nearby quests** (`/tsuki nearby`): the quests you can start in the current zone, with a "☾ N" count in the server info bar.
 - **Todo overlay** (`/tsuki todo`): a small always-visible panel with your pins, the feature quests you can start here, the next main scenario quest and the current job's next job and role quest.
 - **Item hints**: hovering an item that is a quest-exclusive reward shows which quest gives it and whether it is done; right-clicking such an item in the inventory adds "Tsukimichi: quest reward" to its context menu.
 - **Chains and ladders**: Hildibrand, the relic lines, the raid stories and every job and role quest ladder with "N of M" and the next quest.
-- **Notices**: an optional chat line when a pinned or feature quest becomes available, and when a level-up opens the next job or role quest.
+- **Notices**: an optional chat line when a pinned or feature quest becomes available, when a level-up opens the next job or role quest, and when you abandon a quest.
 - **Integrations**: every quest and Moonlit reward is registered with the Wotsit search plugin; Teleport to the giver goes through the Lifestream plugin when it is installed. Both are optional.
 - **Help, tour and settings** from the toolbar: a searchable help window, an interactive tour that points at each part of the window, UI and icon scale, reduce motion.
 
@@ -48,6 +50,7 @@ Updates arrive through the plugin installer like any other plugin.
 | `/tsuki why [quest name]` | why the selected or named quest is not offered: its state and blocker, one line per requirement, and the curated note where the game is known to skip a step; a Ready quest says whom to talk to, with a map link |
 | `/tsuki nearby` | open or close the Nearby quests window |
 | `/tsuki todo` | show or hide the todo overlay |
+| `/tsuki export [quests\|moonlit] [json\|csv]` | write your completed quests, your Moonlit collection, or both to the exports folder (see [docs/export-format.md](docs/export-format.md)) |
 | `/tsuki config` or `/tsuki settings` | open Settings |
 | `/tsuki help` | open the help window |
 | `/tsuki glyphs` | the glyph sheet: every moon at every size |
@@ -65,7 +68,7 @@ Everything else is a Dalamud window. It also talks to two other plugins over Dal
 
 It never automates anything: it does not move your character, accept or turn in quests, skip dialogue or press anything for you. Teleport to the giver is a button you click, handed to Lifestream. Map flags, journal pages and chat links use the game's own functions.
 
-It has no network code. Nothing leaves your machine. Snapshots and settings live in `%AppData%\XIVLauncher\pluginConfigs\Tsukimichi\` (`characters\<id>.json`, `user\pins.json`, `user\overrides.json`, `user\discovery.json`). Export is a file you write on purpose, and Settings › Data can delete everything.
+It has no network code. Nothing leaves your machine. Snapshots and settings live in `%AppData%\XIVLauncher\pluginConfigs\Tsukimichi\` (`characters\<id>.json` with its `<id>.accepted.json` and `<id>.abandoned.json`, `user\pins.json`, `user\overrides.json`, `user\discovery.json`). Exports are files you write on purpose, to `exports\` unless you choose another folder, and Settings › Data can delete everything else.
 
 ## Verification and releases
 

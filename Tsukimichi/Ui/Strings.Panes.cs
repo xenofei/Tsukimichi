@@ -444,7 +444,7 @@ static partial class Strings
             "Drops Completed and Locked out quests. Per-category overrides let you hide completed everywhere except, say, the main scenario.",
             "Keeps only Ready, Ready on another job and In journal: the quests you can act on now. Takes the same per-category overrides.",
             "All eight phases as checkboxes for fine control. Untick a phase to hide its quests.",
-            "Expansion, level range, job category, reward kind (three-state per kind), Repeatable and Seasonal active narrow the table further; Include removed widens it to quests the game deleted.",
+            "Expansion, level range, job category, reward kind (three-state per kind), Repeatable, Seasonal active, Pinned only and Abandoned only narrow the table further; Include removed widens it to quests the game deleted.",
             "Every active filter shows as a chip under the search box. Click a chip to clear it; Reset clears them all and the search.",
             "When the table empties, the panel names the filters responsible and offers Reset.",
         ];
@@ -496,6 +496,7 @@ static partial class Strings
             "Dashboard",
             "Account view",
             "Export and forget",
+            "Abandoned quests",
         ];
 
         public static readonly string[] CharacterCardBodies =
@@ -504,7 +505,8 @@ static partial class Strings
             "Pick a stored character to browse the catalog as that character. The toolbar's sync moon goes veiled and a banner names the snapshot.",
             "Completion per journal section, Moonlit progress, pins, recent activity, job levels by role, Grand Company and society standings.",
             "At the bottom: every character's state for the quest selected in the Journal, without switching characters.",
-            "Export JSON writes the snapshot to the exports folder in the config directory. Forget deletes a stored character. Settings can delete everything.",
+            "Export JSON writes the snapshot to the exports folder in the config directory. For a spreadsheet or a collection tracker, Settings › Data › Export (or /tsuki export) writes the completed quests or the Moonlit collection as JSON or CSV, without your name unless you tick Include character name; nothing is ever uploaded. Forget deletes a stored character. Settings can delete everything.",
+            "A quest that leaves your journal without being completed is listed under Abandoned (N) with the step it had reached and when (\"step 3 of 5 · 2 days ago\"), with Flag, Teleport and Reveal to go and take it up again; Show in Journal turns on the Abandoned filter. Chat says \"Abandoned: [quest] (step 3 of 5)\" the moment it happens (Settings › Notices). Taking the quest up again or completing it clears the row.",
         ];
 
         // ---- Flight and nearby ----
@@ -541,6 +543,7 @@ static partial class Strings
             "/tsuki nearby",
             "/tsuki todo",
             "/tsuki report [quest name]",
+            "/tsuki export [quests|moonlit] [json|csv]",
         ];
 
         public static readonly string[] CommandMeanings =
@@ -557,6 +560,7 @@ static partial class Strings
             "open or close the Nearby quests window: what you can start in the current zone",
             "show or hide the todo overlay: pins, feature quests here, the next main scenario quest and job quests",
             "copy a diagnostic block for the selected quest (or the named one) to the clipboard, ready to paste into a GitHub issue; the Report button in the detail pane does the same",
+            "write the viewed character's completed quests, its Moonlit collection, or both to the exports folder as JSON or CSV (the Settings format when none is named) and print where; see docs/export-format.md. No content id, account or world, and the name only when Settings › Data › Export › Include character name is ticked",
         ];
 
         // ---- Why my counts differ from the journal ----
