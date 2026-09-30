@@ -4,6 +4,8 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-09-29
+
 ### Added
 - Patch-day safety: the item tooltip panel, the item and NPC menu entries and the server info bar entry now pause themselves on a game version newer than the one this release was tested on, instead of misbehaving after a patch. A chat line at login and a notice in Settings › Integrations say when they are paused; the quest journal and everything else work as usual, and the next tested update turns them back on. Settings › Integrations › "Enable game hooks on this untested version" (off by default) runs them anyway, at once, on the game version you are on; the next patch pauses them again. Help › Known quirks explains it. This release is tested on game 2026.09.15.
 - Story sidequests, a new quick view in the filter panel: the sidequests with journal artwork (the picture in the quest box that marks a quest as part of a small story), zone by zone, with each side story in the order you play it. Two lines that meet in a last quest read as one story, so a zone's tale reads top to bottom: in each Dawntrail field zone that is two lines of four and the quest that joins them. The blue aether current quests that open those lines, and the blue quests that carry them on, are part of the story; other blue quests (dungeon, system and job unlocks) are left out. A small book after the name marks these quests in any view; hover it for the story and how far in the quest sits ("Part of a side story: When the Bill Comes Due (3 of 9)"). Select one and the detail pane shows "Story: When the Bill Comes Due · 2 of 9 done · next: …". Help › Filters and chips › Quick views explains it.
