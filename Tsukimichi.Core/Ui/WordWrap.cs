@@ -143,7 +143,7 @@ public static class WordWrap
     private const string NoEnd = "（「『［｛〔〈《【〘〖([{«";
 
     /// <summary>A space a line may break at: whitespace other than the no-break spaces (U+00A0, U+2007, U+202F).</summary>
-    public static bool IsBreakSpace(char c) => c is not (' ' or ' ' or ' ') && char.IsWhiteSpace(c);
+    public static bool IsBreakSpace(char c) => c is not ('\u00A0' or '\u2007' or '\u202F') && char.IsWhiteSpace(c);
 
     /// <summary>
     /// Whether <paramref name="c"/> belongs to the character before it: a combining mark, a variation selector or the
@@ -151,7 +151,7 @@ public static class WordWrap
     /// </summary>
     private static bool IsAttached(char c) =>
         char.IsLowSurrogate(c)
-        || c is >= '︀' and <= '️'
+        || c is >= '\uFE00' and <= '\uFE0F'
         || CharUnicodeInfo.GetUnicodeCategory(c) is UnicodeCategory.NonSpacingMark or UnicodeCategory.SpacingCombiningMark or UnicodeCategory.EnclosingMark;
 
     /// <summary>The index after <paramref name="i"/> and any marks attached to the character before it.</summary>

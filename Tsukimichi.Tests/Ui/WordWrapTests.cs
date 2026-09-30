@@ -159,9 +159,9 @@ public class WordWrapTests
     }
 
     [Theory]
-    [InlineData("Niveau 100 requis pour la quête suivante")]
-    [InlineData("Niveau 100 requis pour la quête suivante")]
-    [InlineData("Niveau 100 requis pour la quête suivante")]
+    [InlineData("Niveau\u00A0100 requis pour la quête suivante")]
+    [InlineData("Niveau\u202F100 requis pour la quête suivante")]
+    [InlineData("Niveau\u2007100 requis pour la quête suivante")]
     public void A_no_break_space_never_breaks(string text)
     {
         for (var width = 10f; width <= 400f; width += 5f)
@@ -191,9 +191,9 @@ public class WordWrapTests
     }
 
     [Theory]
-    [InlineData("がががががが")]
-    [InlineData("葛︀城︁葛︀城︁葛︀城︁")]
-    [InlineData("Café crème brûlée")]
+    [InlineData("か\u3099か\u3099か\u3099か\u3099か\u3099か\u3099")]
+    [InlineData("葛\uFE00城\uFE01葛\uFE00城\uFE01葛\uFE00城\uFE01")]
+    [InlineData("Cafe\u0301 cre\u0300me bru\u0302le\u0301e")]
     public void A_combining_mark_stays_with_its_base(string text)
     {
         for (var width = 0f; width <= 200f; width += 4f)
@@ -201,7 +201,7 @@ public class WordWrapTests
             foreach (var line in Wrap(text, width))
             {
                 var first = text[line.Start];
-                Assert.False(char.GetUnicodeCategory(first) is System.Globalization.UnicodeCategory.NonSpacingMark || first is >= '︀' and <= '️', $"a line starts with a mark at {width}");
+                Assert.False(char.GetUnicodeCategory(first) is System.Globalization.UnicodeCategory.NonSpacingMark || first is >= '\uFE00' and <= '\uFE0F', $"a line starts with a mark at {width}");
             }
         }
     }
