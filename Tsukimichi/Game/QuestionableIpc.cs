@@ -102,8 +102,13 @@ public sealed class QuestionableIpc : IDisposable
     /// <summary>Moves whenever Questionable loads or unloads, so a cache of cross-checks knows to ask again.</summary>
     public int Generation { get; private set; }
 
-    /// <summary>Questionable is loaded and registers <c>Questionable.AddQuestPriority</c>.</summary>
-    public bool SupportsPriority => Available && HasFunction(addQuestPriority);
+    /// <summary>
+    /// Questionable is loaded and registers <c>Questionable.AddQuestPriority</c> and a working
+    /// <c>Questionable.IsQuestLockedReason</c>. Without the reason gate (the WigglyMuffin fork, or a reason gate of
+    /// another shape) there is no telling a quest Questionable has a path for from one it does not, and
+    /// <c>AddQuestPriority</c> answers true for both, so the hand-off is not offered at all.
+    /// </summary>
+    public bool SupportsPriority => Available && HasFunction(addQuestPriority) && !reasonGateBroken && HasFunction(isQuestLockedReason);
 
     /// <summary>
     /// Questionable's answer for a Quest row, asked once per <paramref name="sessionVersion"/>. Null when Questionable

@@ -257,7 +257,7 @@ Source: `Game/QuestionableIpc.cs`; the comparison is `Tsukimichi.Core/Ipc/Questi
 - Both lock gates answer locked for a quest Questionable has no path for; the reason gate then gives an empty reason. Tsukimichi reads a locked answer without a reason as "no answer", not a disagreement.
 - Questionable's lock does not check the level of an ordinary quest, the job, the account caps, or whether the quest is done or in the journal, so only Ready, Available on another job and Blocked are compared, and a quest Blocked only by level or job is compared as open. Its reasons are the English ones ("Prev quest (2)", "Aetheryte locked: …", "Low level (GLA)").
 - Tsukimichi never asks about Gold Saucer quest 4081 or Palace of the Dead quest 2387, whose lock check makes Questionable open the Achievements window.
-- `AddQuestPriority` answers true even for a quest Questionable does not know, so the menu item is enabled only when the reason gate named a path for the quest. It adds the quest to Questionable's list and nothing else: Questionable does not start, and Tsukimichi never calls `StartQuest`, `Stop` or any other gate.
+- `AddQuestPriority` answers true even for a quest Questionable does not know, so the menu item is enabled only when the reason gate named a path for the quest, and the "…" button is not shown at all when the reason gate is absent (the WigglyMuffin fork) or fails. It adds the quest to Questionable's list and nothing else: Questionable does not start, and Tsukimichi never calls `StartQuest`, `Stop` or any other gate.
 
 ## Versioning
 

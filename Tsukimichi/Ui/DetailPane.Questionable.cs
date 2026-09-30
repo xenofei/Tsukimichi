@@ -12,9 +12,10 @@ namespace Tsukimichi.Ui;
 /// <summary>
 /// The detail pane's Questionable pieces (V2-17): a line under the status saying whether Questionable's own lock check
 /// agrees with Tsukimichi ("Questionable agrees", "Questionable says: Prev quest (1)"), and, when Settings ›
-/// Integrations › "Show Questionable hand-off" is ticked and Questionable offers the gate, a round "…" button at the
-/// end of the action bar whose menu holds "Add to Questionable priority". Questionable is asked when the selection,
-/// the session version or Questionable's load state changes, never per frame; nothing shows while it is not loaded.
+/// Integrations › "Show Questionable hand-off" is ticked and Questionable offers the gate and a working reason gate, a
+/// round "…" button at the end of the action bar whose menu holds "Add to Questionable priority". Questionable is asked
+/// when the selection, the session version or Dalamud's plugin list changes, never per frame; nothing shows while it
+/// is not loaded.
 /// </summary>
 public sealed partial class DetailPane
 {
@@ -44,7 +45,10 @@ public sealed partial class DetailPane
     /// <summary>Reads Settings › Integrations › "Show Questionable hand-off" (off by default); null reads as off.</summary>
     public Func<bool>? QuestionableHandoff { get; set; }
 
-    /// <summary>The "…" button is drawn: Questionable is loaded, registers the priority gate, and the setting is ticked.</summary>
+    /// <summary>
+    /// The "…" button is drawn: Questionable is loaded, registers the priority gate and a working reason gate, and the
+    /// setting is ticked. A fork without the reason gate gets no button rather than one whose item is always disabled.
+    /// </summary>
     private bool ShowsQuestionableMore => Questionable is not null && questionableSupportsPriority && QuestionableHandoff?.Invoke() == true;
 
     /// <summary>Re-asks Questionable when the quest, the session version or its load state changed; otherwise free.</summary>
@@ -71,7 +75,7 @@ public sealed partial class DetailPane
         questionableHandoff = handoff;
         questionableLine = null;
         questionableDisagrees = false;
-        questionableSupportsPriority = available && questionable.SupportsPriority;
+        questionableSupportsPriority = false;
         questionableCanAdd = false;
         if (!available)
         {
@@ -87,6 +91,10 @@ public sealed partial class DetailPane
             _ => null,
         };
         questionableDisagrees = result?.Disagrees == true;
+
+        // Read after the check: a reason gate found broken by it withdraws the hand-off (no "…" without a way to
+        // tell a quest Questionable has a path for).
+        questionableSupportsPriority = questionable.SupportsPriority;
 
         // Only with the hand-off on; the answer is the one Check just cached, so Questionable is not asked again.
         if (questionableSupportsPriority && handoff)
