@@ -277,7 +277,7 @@ public sealed class TonightCard
             }
         }
 
-        events = EventsLine(session, bundle, snapshot);
+        events = EventsLine(session, bundle);
     }
 
     /// <summary>
@@ -298,10 +298,15 @@ public sealed class TonightCard
         return count;
     }
 
-    /// <summary>"Events now: Starlight Celebration (3 ready)" from the festivals the client reports running; null when none is.</summary>
-    private static string? EventsLine(SessionState session, CatalogBundle bundle, CharacterSnapshot snapshot)
+    /// <summary>
+    /// "Events now: Starlight Celebration (3 ready)" from the festivals running on the server
+    /// (<see cref="SessionState.ServerFestivals"/>: the live character's flags, or a stored one's less the stale ones);
+    /// null when none is.
+    /// </summary>
+    private static string? EventsLine(SessionState session, CatalogBundle bundle)
     {
-        if (snapshot.ActiveFestivals.Count == 0)
+        var running = session.ServerFestivals.Ids;
+        if (running.Count == 0)
         {
             return null;
         }
@@ -317,7 +322,7 @@ public sealed class TonightCard
 
         var text = new StringBuilder();
         var seen = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var id in snapshot.ActiveFestivals)
+        foreach (var id in running)
         {
             var name = session.Curated.Festivals.TryGetValue(id, out var info) && info.Name.Length > 0 ? info.Name : Strings.TonightEventFallback;
             var count = readyByFestival.GetValueOrDefault(id);

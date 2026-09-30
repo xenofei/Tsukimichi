@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using Dalamud.Plugin.Services;
 using Tsukimichi.Core.Chains;
+using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Storage;
@@ -47,8 +48,8 @@ public sealed class QueryRunner : IDisposable
     private int countsVersion = -1;
     private bool countsIncludeUnlisted;
 
-    // Festivals of the viewed snapshot, rebuilt when the snapshot instance changes.
-    private CharacterSnapshot? festivalsSnapshot;
+    // The festivals running on the server for the viewed character (SessionState.ServerFestivals), rebuilt when they change.
+    private ServerFestivals? festivalsServer;
     private HashSet<ushort> festivals = NoFestivals;
 
     // The Sprout caption's reach count, rebuilt once per session version and catalog.
@@ -451,10 +452,14 @@ public sealed class QueryRunner : IDisposable
     private void Run(SessionState session, CatalogBundle current, DateTime nowUtc)
     {
         var snapshot = session.ViewedSnapshot;
-        if (!ReferenceEquals(snapshot, festivalsSnapshot))
+
+        // Festivals are server-wide: a stored character on view gets the live character's flags (or its own, less the
+        // stale ones), the same set its states were resolved with, so "Seasonal active" and the states agree.
+        var server = session.ServerFestivals;
+        if (!server.SameAs(festivalsServer))
         {
-            festivalsSnapshot = snapshot;
-            festivals = snapshot is null || snapshot.ActiveFestivals.Count == 0 ? NoFestivals : new HashSet<ushort>(snapshot.ActiveFestivals);
+            festivalsServer = server;
+            festivals = server.Ids.Count == 0 ? NoFestivals : new HashSet<ushort>(server.Ids);
         }
 
         var ctx = new QueryContext(
