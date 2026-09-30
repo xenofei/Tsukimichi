@@ -64,7 +64,7 @@ Answered by the owner on 2026-09-28:
 - **7 License: MIT** (T21 ships the LICENSE file in 0.6.0).
 - **8 Official repository: not pursued.** The goal is the best possible questing experience and working alongside other plugins, with or without the official repository. V2-20 is dropped; the interop items move up: the IPC provider (V2-16) joins 0.9.0 and the Questionable cross-check (V2-17) joins 1.0.0.
 - **9 Interior moon detail is size-gated.** Maria and craters draw from a 12 px radius (24 px box) upward, so they appear on the detail-pane header moon, the Help legend, the folded-path tooltip, the Tonight card and the glyph window, not on 11 px row moons, which stay a clean gradient so they remain crisp. If the owner wants detail on row moons too, the tree row height must rise to about 34 px.
-- **10 Pins per character or per account** must be answered before P6's "Pin all" (today pins are account-wide).
+- **10 Pins: settled.** Pins are already stored per character (user/pins.json is keyed by content id), so P6's "Pin all" pins for the viewed character; no decision is needed.
 
 Found after 0.5.1: the installer shows no icon because the manifest inside the zip carries `IconUrl: null` (the csproj sets no IconUrl and ships icon.png at the package root rather than images/icon.png); fixed in T21. A 50 ms hitch on the poller's first capture after load is added to T5b.
 
