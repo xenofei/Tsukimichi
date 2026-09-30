@@ -28,13 +28,22 @@ public class DeliveryAndPhaseRequirementTests
 
     private static QuestRecord Chapter2() => Quest(Target) with { Festival = HatchingTide, FestivalBegin = 2, FestivalEnd = 5 };
 
+    /// <summary>
+    /// Chapter 1 of the synthetic Hatching-tide. Its window differs from every other quest's here, so a catalog that
+    /// holds it makes the festival phased (<see cref="QuestCatalog.PhasedFestivals"/>) and the window is judged.
+    /// </summary>
+    private static QuestRecord Chapter1() => Quest(E) with { Festival = HatchingTide, FestivalBegin = 1, FestivalEnd = 1 };
+
+    /// <summary>The quest's catalog; a Hatching-tide quest gets <see cref="Chapter1"/> beside it.</summary>
+    private static QuestCatalog Phased(QuestRecord q) => q.Festival == HatchingTide && q.RowId != E ? Catalog(q, Chapter1()) : Catalog(q);
+
     private static CharacterSnapshot Ranked(byte rank) => Snapshot() with { SatisfactionRanks = new Dictionary<byte, byte> { [Mnaago] = rank } };
 
     private static CharacterSnapshot Running(params ushort[] phases) => Snapshot() with { ActiveFestivals = [HatchingTide], ActiveFestivalPhases = phases };
 
-    private static QuestEvaluation Resolve(QuestRecord q, CharacterSnapshot s) => StateResolver.Resolve(q, s, Catalog(q), Context);
+    private static QuestEvaluation Resolve(QuestRecord q, CharacterSnapshot s) => StateResolver.Resolve(q, s, Phased(q), Context);
 
-    private static string For(QuestRecord q, CharacterSnapshot s) => BlockerText.For(Resolve(q, s), q, Names with { Catalog = Catalog(q) });
+    private static string For(QuestRecord q, CharacterSnapshot s) => BlockerText.For(Resolve(q, s), q, Names with { Catalog = Phased(q) });
 
     [Fact]
     public void Custom_delivery_rank_blocks_below_the_rank_and_passes_at_it()
@@ -243,8 +252,38 @@ public class DeliveryAndPhaseRequirementTests
 
         Assert.Equal(QuestState.Blocked, Resolve(quest, Snapshot()).State);
         Assert.Equal("Seasonal: not running", For(quest, Snapshot()));
-        var past = StateResolver.Resolve(quest, Snapshot(), Catalog(quest), Context with { FestivalIsPast = _ => true });
+        var past = StateResolver.Resolve(quest, Snapshot(), Phased(quest), Context with { FestivalIsPast = _ => true });
         Assert.Equal(QuestState.Foreclosed, past.State);
         Assert.Equal("Seasonal: ended", BlockerText.For(past, quest, Names));
+    }
+
+    [Fact]
+    public void A_single_window_festival_quest_is_ready_at_any_phase_while_the_festival_runs()
+    {
+        // Every quest of this festival carries the same window (0, 1), as 250 seasonal rows do: the window cannot
+        // separate chapters, so it is not judged and the reported phase never blocks.
+        const ushort Moonfire = 39;
+        var quest = Quest(Target) with { Festival = Moonfire, FestivalEnd = 1 };
+        var sibling = Quest(A) with { Festival = Moonfire, FestivalEnd = 1 };
+        var catalog = Catalog(quest, sibling);
+        Assert.DoesNotContain(Moonfire, catalog.PhasedFestivals);
+
+        foreach (ushort phase in new ushort[] { 0, 1, 2, 9 })
+        {
+            var running = Snapshot() with { ActiveFestivals = [Moonfire], ActiveFestivalPhases = [phase] };
+            var result = StateResolver.Resolve(quest, running, catalog, Context);
+            Assert.True(result.State == QuestState.Ready, $"phase {phase}: {result.State} {result.NextStep?.Detail}");
+            var req = Assert.IsType<SeasonalRequirement>(Only(result.Requirements, RequirementKind.Seasonal).Req);
+            Assert.False(req.HasWindow);
+            Assert.Equal((ushort?)phase, req.Phase);
+        }
+
+        Assert.Equal(QuestState.Blocked, StateResolver.Resolve(quest, Snapshot(), catalog, Context).State);
+
+        // The same window in a festival whose quests carry two windows is judged.
+        var phased = Catalog(quest, sibling with { FestivalBegin = 2, FestivalEnd = 3 });
+        Assert.Contains(Moonfire, phased.PhasedFestivals);
+        var late = Snapshot() with { ActiveFestivals = [Moonfire], ActiveFestivalPhases = [2] };
+        Assert.Equal(QuestState.Blocked, StateResolver.Resolve(quest, late, phased, Context).State);
     }
 }

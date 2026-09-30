@@ -149,7 +149,9 @@ public class QuestDiagnosticTests
     public void Delivery_gates_the_capture_did_not_read_are_not_checked_and_a_phased_event_prints_its_window()
     {
         var quest = Everything() with { FestivalBegin = 2, FestivalEnd = 5 };
-        var catalog = EverythingCatalog(quest);
+
+        // A second window among the festival's quests makes it a phased event, whose windows are judged.
+        var catalog = QuestCatalog.Build([.. EverythingCatalog(quest).All, Quest(E, "Chapter 1") with { Festival = Starlight, FestivalBegin = 1, FestivalEnd = 1 }]);
         var unread = Character() with { SatisfactionRanks = new Dictionary<byte, byte>(), CarrierLevel = null, ActiveFestivals = [Starlight], ActiveFestivalPhases = [1] };
         var lines = Lines(QuestDiagnostic.Compose(Inputs(quest, catalog, unread, Context(quest.QuestId))));
         var requirementLines = lines.Where(l => l.StartsWith("  - ", StringComparison.Ordinal)).ToArray();
