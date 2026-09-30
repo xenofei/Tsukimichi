@@ -1,6 +1,6 @@
 {
   "gameVersion": "2026.09.15.0000.0000",
-  "generatedUtc": "2026-09-30T18:06:31Z",
+  "generatedUtc": "2026-09-30T18:24:29Z",
   "entries": [
     {
       "questRowId": 65549,
@@ -52,6 +52,36 @@
       "rewardName": "the Final Coil of Bahamut - Turn 1",
       "confidence": "Static",
       "source": "Quest.InstanceContentUnlock;InstanceContent=30016",
+      "otherSources": []
+    },
+    {
+      "questRowId": 65579,
+      "kind": "DutyUnlock",
+      "rewardId": 108,
+      "itemId": 0,
+      "rewardName": "the Final Coil of Bahamut - Turn 2",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 65579,
+      "kind": "DutyUnlock",
+      "rewardId": 109,
+      "itemId": 0,
+      "rewardName": "the Final Coil of Bahamut - Turn 3",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 65579,
+      "kind": "DutyUnlock",
+      "rewardId": 110,
+      "itemId": 0,
+      "rewardName": "the Final Coil of Bahamut - Turn 4",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -121,6 +151,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 65594,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Guildhests",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 65595,
       "kind": "DutyUnlock",
       "rewardId": 42,
@@ -131,6 +171,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 65595,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Guildhests",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 65596,
       "kind": "DutyUnlock",
       "rewardId": 42,
@@ -138,6 +188,16 @@
       "rewardName": "Basic Training: Enemy Parties",
       "confidence": "Static",
       "source": "Quest.InstanceContentUnlock;InstanceContent=10001",
+      "otherSources": []
+    },
+    {
+      "questRowId": 65596,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Guildhests",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
       "otherSources": []
     },
     {
@@ -1053,6 +1113,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 65902,
+      "kind": "DutyUnlock",
+      "rewardId": 32,
+      "itemId": 0,
+      "rewardName": "the Keeper of the Lake",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 65905,
       "kind": "DutyUnlock",
       "rewardId": 84,
@@ -1083,6 +1153,26 @@
       "otherSources": []
     },
     {
+      "questRowId": 65966,
+      "kind": "DutyUnlock",
+      "rewardId": 29,
+      "itemId": 0,
+      "rewardName": "Amdapor Keep (Hard)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 65967,
+      "kind": "DutyUnlock",
+      "rewardId": 30,
+      "itemId": 0,
+      "rewardName": "the Wanderer's Palace (Hard)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 65968,
       "kind": "Mount",
       "rewardId": 47,
@@ -1100,6 +1190,16 @@
       "rewardName": "Tamer of Steeds",
       "confidence": "Static",
       "source": "Achievement.Key;achievement=1063;type=6",
+      "otherSources": []
+    },
+    {
+      "questRowId": 65969,
+      "kind": "DutyUnlock",
+      "rewardId": 82,
+      "itemId": 0,
+      "rewardName": "Urth's Fount",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -1336,6 +1436,26 @@
       "rewardName": "This One Time, at Level Thirty...",
       "confidence": "Static",
       "source": "Achievement.Data;type=9",
+      "otherSources": []
+    },
+    {
+      "questRowId": 66024,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Mini Cactpot",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 66025,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Jumbo Cactpot",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
       "otherSources": []
     },
     {
@@ -2143,6 +2263,16 @@
       "rewardName": "Haukke Manor",
       "confidence": "Curated",
       "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 66338,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "White Wolf Gate (New Gridania)",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
       "otherSources": []
     },
     {
@@ -3162,6 +3292,26 @@
       "otherSources": []
     },
     {
+      "questRowId": 66655,
+      "kind": "DutyUnlock",
+      "rewardId": 74,
+      "itemId": 0,
+      "rewardName": "A Relic Reborn: the Chimera",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 66655,
+      "kind": "DutyUnlock",
+      "rewardId": 75,
+      "itemId": 0,
+      "rewardName": "A Relic Reborn: the Hydra",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 66656,
       "kind": "Item",
       "rewardId": 1675,
@@ -3196,6 +3346,26 @@
       "otherSources": []
     },
     {
+      "questRowId": 66656,
+      "kind": "DutyUnlock",
+      "rewardId": 74,
+      "itemId": 0,
+      "rewardName": "A Relic Reborn: the Chimera",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 66656,
+      "kind": "DutyUnlock",
+      "rewardId": 75,
+      "itemId": 0,
+      "rewardName": "A Relic Reborn: the Hydra",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 66657,
       "kind": "Item",
       "rewardId": 1746,
@@ -3215,6 +3385,26 @@
       "rewardName": "Coeurlfist",
       "confidence": "Static",
       "source": "Achievement.Key;achievement=130;type=6",
+      "otherSources": []
+    },
+    {
+      "questRowId": 66657,
+      "kind": "DutyUnlock",
+      "rewardId": 74,
+      "itemId": 0,
+      "rewardName": "A Relic Reborn: the Chimera",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 66657,
+      "kind": "DutyUnlock",
+      "rewardId": 75,
+      "itemId": 0,
+      "rewardName": "A Relic Reborn: the Hydra",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -3240,6 +3430,26 @@
       "otherSources": []
     },
     {
+      "questRowId": 66658,
+      "kind": "DutyUnlock",
+      "rewardId": 74,
+      "itemId": 0,
+      "rewardName": "A Relic Reborn: the Chimera",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 66658,
+      "kind": "DutyUnlock",
+      "rewardId": 75,
+      "itemId": 0,
+      "rewardName": "A Relic Reborn: the Hydra",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 66659,
       "kind": "Item",
       "rewardId": 2140,
@@ -3259,6 +3469,26 @@
       "rewardName": "Starcaller",
       "confidence": "Static",
       "source": "Achievement.Key;achievement=135;type=6",
+      "otherSources": []
+    },
+    {
+      "questRowId": 66659,
+      "kind": "DutyUnlock",
+      "rewardId": 74,
+      "itemId": 0,
+      "rewardName": "A Relic Reborn: the Chimera",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 66659,
+      "kind": "DutyUnlock",
+      "rewardId": 75,
+      "itemId": 0,
+      "rewardName": "A Relic Reborn: the Hydra",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -3284,6 +3514,26 @@
       "otherSources": []
     },
     {
+      "questRowId": 66660,
+      "kind": "DutyUnlock",
+      "rewardId": 74,
+      "itemId": 0,
+      "rewardName": "A Relic Reborn: the Chimera",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 66660,
+      "kind": "DutyUnlock",
+      "rewardId": 75,
+      "itemId": 0,
+      "rewardName": "A Relic Reborn: the Hydra",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 66661,
       "kind": "Item",
       "rewardId": 1955,
@@ -3303,6 +3553,26 @@
       "rewardName": "The Godsbow",
       "confidence": "Static",
       "source": "Achievement.Key;achievement=133;type=6",
+      "otherSources": []
+    },
+    {
+      "questRowId": 66661,
+      "kind": "DutyUnlock",
+      "rewardId": 74,
+      "itemId": 0,
+      "rewardName": "A Relic Reborn: the Chimera",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 66661,
+      "kind": "DutyUnlock",
+      "rewardId": 75,
+      "itemId": 0,
+      "rewardName": "A Relic Reborn: the Hydra",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -3328,6 +3598,26 @@
       "otherSources": []
     },
     {
+      "questRowId": 66662,
+      "kind": "DutyUnlock",
+      "rewardId": 74,
+      "itemId": 0,
+      "rewardName": "A Relic Reborn: the Chimera",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 66662,
+      "kind": "DutyUnlock",
+      "rewardId": 75,
+      "itemId": 0,
+      "rewardName": "A Relic Reborn: the Hydra",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 66663,
       "kind": "Item",
       "rewardId": 2214,
@@ -3347,6 +3637,26 @@
       "rewardName": "The Strategist",
       "confidence": "Static",
       "source": "Achievement.Key;achievement=598;type=6",
+      "otherSources": []
+    },
+    {
+      "questRowId": 66663,
+      "kind": "DutyUnlock",
+      "rewardId": 74,
+      "itemId": 0,
+      "rewardName": "A Relic Reborn: the Chimera",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 66663,
+      "kind": "DutyUnlock",
+      "rewardId": 75,
+      "itemId": 0,
+      "rewardName": "A Relic Reborn: the Hydra",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -3450,6 +3760,46 @@
       "otherSources": []
     },
     {
+      "questRowId": 66695,
+      "kind": "DutyUnlock",
+      "rewardId": 94,
+      "itemId": 0,
+      "rewardName": "the Binding Coil of Bahamut - Turn 2",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 66695,
+      "kind": "DutyUnlock",
+      "rewardId": 95,
+      "itemId": 0,
+      "rewardName": "the Binding Coil of Bahamut - Turn 3",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 66695,
+      "kind": "DutyUnlock",
+      "rewardId": 96,
+      "itemId": 0,
+      "rewardName": "the Binding Coil of Bahamut - Turn 4",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 66695,
+      "kind": "DutyUnlock",
+      "rewardId": 97,
+      "itemId": 0,
+      "rewardName": "the Binding Coil of Bahamut - Turn 5",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 66696,
       "kind": "Achievement",
       "rewardId": 900,
@@ -3457,6 +3807,16 @@
       "rewardName": "The Truth Is Down There",
       "confidence": "Static",
       "source": "Achievement.Key;type=9",
+      "otherSources": []
+    },
+    {
+      "questRowId": 66698,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Chocobo saddlebag",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
       "otherSources": []
     },
     {
@@ -3690,6 +4050,36 @@
       "otherSources": []
     },
     {
+      "questRowId": 66748,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Housing (the Lavender Beds)",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 66749,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Housing (the Goblet)",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 66750,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Housing (Mist)",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 66751,
       "kind": "DutyUnlock",
       "rewardId": 19,
@@ -3831,6 +4221,36 @@
       "rewardName": "the Second Coil of Bahamut - Turn 1",
       "confidence": "Static",
       "source": "Quest.InstanceContentUnlock;InstanceContent=30007",
+      "otherSources": []
+    },
+    {
+      "questRowId": 66849,
+      "kind": "DutyUnlock",
+      "rewardId": 99,
+      "itemId": 0,
+      "rewardName": "the Second Coil of Bahamut - Turn 2",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 66849,
+      "kind": "DutyUnlock",
+      "rewardId": 100,
+      "itemId": 0,
+      "rewardName": "the Second Coil of Bahamut - Turn 3",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 66849,
+      "kind": "DutyUnlock",
+      "rewardId": 101,
+      "itemId": 0,
+      "rewardName": "the Second Coil of Bahamut - Turn 4",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -4178,6 +4598,26 @@
       "otherSources": []
     },
     {
+      "questRowId": 66958,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Master recipes: glamours",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 66959,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Master recipes: crafting",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 66961,
       "kind": "Emote",
       "rewardId": 102,
@@ -4215,6 +4655,16 @@
       "rewardName": "The Ambitious Angler",
       "confidence": "Static",
       "source": "Achievement.Key;achievement=902;type=6",
+      "otherSources": []
+    },
+    {
+      "questRowId": 66967,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Challenge Log",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
       "otherSources": []
     },
     {
@@ -4265,6 +4715,16 @@
       "rewardName": "Defender of Eorzea",
       "confidence": "Static",
       "source": "Achievement.Key;achievement=1001;type=6",
+      "otherSources": []
+    },
+    {
+      "questRowId": 66999,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Materia transmutation",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
       "otherSources": []
     },
     {
@@ -4524,6 +4984,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 67090,
+      "kind": "DutyUnlock",
+      "rewardId": 474,
+      "itemId": 0,
+      "rewardName": "the Great Hunt",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 67091,
       "kind": "DutyUnlock",
       "rewardId": 475,
@@ -4604,6 +5074,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 67094,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Augmented artifact armor",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 67095,
       "kind": "DutyUnlock",
       "rewardId": 103,
@@ -4611,6 +5091,36 @@
       "rewardName": "the Second Coil of Bahamut (Savage) - Turn 1",
       "confidence": "Static",
       "source": "Quest.InstanceContentUnlock;InstanceContent=30012",
+      "otherSources": []
+    },
+    {
+      "questRowId": 67095,
+      "kind": "DutyUnlock",
+      "rewardId": 104,
+      "itemId": 0,
+      "rewardName": "the Second Coil of Bahamut (Savage) - Turn 2",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 67095,
+      "kind": "DutyUnlock",
+      "rewardId": 105,
+      "itemId": 0,
+      "rewardName": "the Second Coil of Bahamut (Savage) - Turn 3",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 67095,
+      "kind": "DutyUnlock",
+      "rewardId": 106,
+      "itemId": 0,
+      "rewardName": "the Second Coil of Bahamut (Savage) - Turn 4",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -4698,6 +5208,26 @@
       "otherSources": []
     },
     {
+      "questRowId": 67115,
+      "kind": "DutyUnlock",
+      "rewardId": 74,
+      "itemId": 0,
+      "rewardName": "A Relic Reborn: the Chimera",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 67115,
+      "kind": "DutyUnlock",
+      "rewardId": 75,
+      "itemId": 0,
+      "rewardName": "A Relic Reborn: the Hydra",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 67133,
       "kind": "Action",
       "rewardId": 26988,
@@ -4778,6 +5308,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 67152,
+      "kind": "DutyUnlock",
+      "rewardId": 86,
+      "itemId": 0,
+      "rewardName": "Thok ast Thok (Hard)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 67153,
       "kind": "AetherCurrent",
       "rewardId": 2818063,
@@ -4785,6 +5325,16 @@
       "rewardName": "Aether Current (The Dravanian Forelands)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
+      "otherSources": []
+    },
+    {
+      "questRowId": 67153,
+      "kind": "DutyUnlock",
+      "rewardId": 37,
+      "itemId": 0,
+      "rewardName": "Sohm Al",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -4808,6 +5358,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 67170,
+      "kind": "DutyUnlock",
+      "rewardId": 39,
+      "itemId": 0,
+      "rewardName": "the Aery",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 67172,
       "kind": "Title",
       "rewardId": 216,
@@ -4815,6 +5375,16 @@
       "rewardName": "Nidhogg Slayer",
       "confidence": "Static",
       "source": "Achievement.Key;achievement=1135;type=6",
+      "otherSources": []
+    },
+    {
+      "questRowId": 67176,
+      "kind": "DutyUnlock",
+      "rewardId": 34,
+      "itemId": 0,
+      "rewardName": "the Vault",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -4875,6 +5445,16 @@
       "rewardName": "Aether Current (The Dravanian Hinterlands)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
+      "otherSources": []
+    },
+    {
+      "questRowId": 67196,
+      "kind": "DutyUnlock",
+      "rewardId": 31,
+      "itemId": 0,
+      "rewardName": "the Great Gubal Library",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -4950,71 +5530,21 @@
     {
       "questRowId": 67205,
       "kind": "DutyUnlock",
-      "rewardId": 131,
+      "rewardId": 38,
       "itemId": 0,
-      "rewardName": "the Diadem (Easy)",
-      "confidence": "Static",
-      "source": "ContentFinderCondition.UnlockCriteria",
+      "rewardName": "the Aetherochemical Research Facility",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
       "questRowId": 67205,
       "kind": "DutyUnlock",
-      "rewardId": 132,
+      "rewardId": 90,
       "itemId": 0,
-      "rewardName": "the Diadem",
-      "confidence": "Static",
-      "source": "ContentFinderCondition.UnlockCriteria",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67205,
-      "kind": "DutyUnlock",
-      "rewardId": 133,
-      "itemId": 0,
-      "rewardName": "the Diadem (Hard)",
-      "confidence": "Static",
-      "source": "ContentFinderCondition.UnlockCriteria",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67205,
-      "kind": "DutyUnlock",
-      "rewardId": 202,
-      "itemId": 0,
-      "rewardName": "the Diadem Hunting Grounds (Easy)",
-      "confidence": "Static",
-      "source": "ContentFinderCondition.UnlockCriteria",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67205,
-      "kind": "DutyUnlock",
-      "rewardId": 203,
-      "itemId": 0,
-      "rewardName": "the Diadem Hunting Grounds",
-      "confidence": "Static",
-      "source": "ContentFinderCondition.UnlockCriteria",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67205,
-      "kind": "DutyUnlock",
-      "rewardId": 225,
-      "itemId": 0,
-      "rewardName": "the Diadem - Trials of the Fury",
-      "confidence": "Static",
-      "source": "ContentFinderCondition.UnlockCriteria",
-      "otherSources": []
-    },
-    {
-      "questRowId": 67205,
-      "kind": "DutyUnlock",
-      "rewardId": 234,
-      "itemId": 0,
-      "rewardName": "the Diadem - Trials of the Matron",
-      "confidence": "Static",
-      "source": "ContentFinderCondition.UnlockCriteria",
+      "rewardName": "the Singularity Reactor",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -6248,6 +6778,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 67626,
+      "kind": "DutyUnlock",
+      "rewardId": 112,
+      "itemId": 0,
+      "rewardName": "Alexander - The Fist of the Father",
+      "confidence": "Static",
+      "source": "QuestScript;primary duty;UNLOCK_IMAGE",
+      "otherSources": []
+    },
+    {
       "questRowId": 67627,
       "kind": "DutyUnlock",
       "rewardId": 113,
@@ -6498,6 +7038,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 67634,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Scrip exchange (Idyllshire)",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 67637,
       "kind": "Action",
       "rewardId": 16510,
@@ -6628,6 +7178,26 @@
       "otherSources": []
     },
     {
+      "questRowId": 67642,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Levequests (Ishgard)",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 67643,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Sightseeing Log (Heavensward)",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 67644,
       "kind": "DutyUnlock",
       "rewardId": 116,
@@ -6635,6 +7205,36 @@
       "rewardName": "Alexander - The Fist of the Father (Savage)",
       "confidence": "Static",
       "source": "Quest.InstanceContentUnlock;InstanceContent=30025",
+      "otherSources": []
+    },
+    {
+      "questRowId": 67644,
+      "kind": "DutyUnlock",
+      "rewardId": 117,
+      "itemId": 0,
+      "rewardName": "Alexander - The Cuff of the Father (Savage)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 67644,
+      "kind": "DutyUnlock",
+      "rewardId": 118,
+      "itemId": 0,
+      "rewardName": "Alexander - The Arm of the Father (Savage)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 67644,
+      "kind": "DutyUnlock",
+      "rewardId": 119,
+      "itemId": 0,
+      "rewardName": "Alexander - The Burden of the Father (Savage)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -6688,6 +7288,26 @@
       "otherSources": []
     },
     {
+      "questRowId": 67651,
+      "kind": "DutyUnlock",
+      "rewardId": 89,
+      "itemId": 0,
+      "rewardName": "the Limitless Blue (Extreme)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 67652,
+      "kind": "DutyUnlock",
+      "rewardId": 87,
+      "itemId": 0,
+      "rewardName": "Thok ast Thok (Extreme)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 67653,
       "kind": "Title",
       "rewardId": 237,
@@ -6698,7 +7318,37 @@
       "otherSources": []
     },
     {
+      "questRowId": 67654,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Stone, Sky, Sea",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 67655,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Hunts (Heavensward)",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 67656,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Hunts (Heavensward)",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 67657,
       "kind": "SystemUnlock",
       "rewardId": 0,
       "itemId": 0,
@@ -7472,6 +8122,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 67766,
+      "kind": "DutyUnlock",
+      "rewardId": 134,
+      "itemId": 0,
+      "rewardName": "Containment Bay S1T7",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 67768,
       "kind": "Minion",
       "rewardId": 181,
@@ -7479,6 +8139,16 @@
       "rewardName": "Poro Roggo",
       "confidence": "Static",
       "source": "Quest.Reward;ItemAction=853",
+      "otherSources": []
+    },
+    {
+      "questRowId": 67768,
+      "kind": "DutyUnlock",
+      "rewardId": 141,
+      "itemId": 0,
+      "rewardName": "the Antitower",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -7509,6 +8179,26 @@
       "rewardName": "The Gear of Change",
       "confidence": "Static",
       "source": "Achievement.Key;achievement=1493;type=6",
+      "otherSources": []
+    },
+    {
+      "questRowId": 67780,
+      "kind": "DutyUnlock",
+      "rewardId": 171,
+      "itemId": 0,
+      "rewardName": "Sohr Khai",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 67781,
+      "kind": "DutyUnlock",
+      "rewardId": 169,
+      "itemId": 0,
+      "rewardName": "the Final Steps of Faith",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -7564,6 +8254,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 67785,
+      "kind": "DutyUnlock",
+      "rewardId": 136,
+      "itemId": 0,
+      "rewardName": "Alexander - The Fist of the Son",
+      "confidence": "Static",
+      "source": "QuestScript;primary duty;UNLOCK_IMAGE",
+      "otherSources": []
+    },
+    {
       "questRowId": 67786,
       "kind": "DutyUnlock",
       "rewardId": 137,
@@ -7611,6 +8311,36 @@
       "rewardName": "Alexander - The Fist of the Son (Savage)",
       "confidence": "Static",
       "source": "Quest.InstanceContentUnlock;InstanceContent=30034",
+      "otherSources": []
+    },
+    {
+      "questRowId": 67790,
+      "kind": "DutyUnlock",
+      "rewardId": 148,
+      "itemId": 0,
+      "rewardName": "Alexander - The Cuff of the Son (Savage)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 67790,
+      "kind": "DutyUnlock",
+      "rewardId": 149,
+      "itemId": 0,
+      "rewardName": "Alexander - The Arm of the Son (Savage)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 67790,
+      "kind": "DutyUnlock",
+      "rewardId": 150,
+      "itemId": 0,
+      "rewardName": "Alexander - The Burden of the Son (Savage)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -8000,6 +8730,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 67868,
+      "kind": "DutyUnlock",
+      "rewardId": 183,
+      "itemId": 0,
+      "rewardName": "Containment Bay P1T6",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 67869,
       "kind": "DutyUnlock",
       "rewardId": 184,
@@ -8007,6 +8747,26 @@
       "rewardName": "Containment Bay P1T6 (Extreme)",
       "confidence": "Static",
       "source": "Quest.InstanceContentUnlock;InstanceContent=20042",
+      "otherSources": []
+    },
+    {
+      "questRowId": 67871,
+      "kind": "DutyUnlock",
+      "rewardId": 186,
+      "itemId": 0,
+      "rewardName": "Alexander - The Eyes of the Creator",
+      "confidence": "Static",
+      "source": "QuestScript;primary duty;UNLOCK_IMAGE",
+      "otherSources": []
+    },
+    {
+      "questRowId": 67872,
+      "kind": "DutyUnlock",
+      "rewardId": 187,
+      "itemId": 0,
+      "rewardName": "Alexander - The Breath of the Creator",
+      "confidence": "Static",
+      "source": "QuestScript;primary duty;UNLOCK_IMAGE",
       "otherSources": []
     },
     {
@@ -8020,6 +8780,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 67873,
+      "kind": "DutyUnlock",
+      "rewardId": 188,
+      "itemId": 0,
+      "rewardName": "Alexander - The Heart of the Creator",
+      "confidence": "Static",
+      "source": "QuestScript;primary duty;UNLOCK_IMAGE",
+      "otherSources": []
+    },
+    {
       "questRowId": 67874,
       "kind": "Orchestrion",
       "rewardId": 113,
@@ -8027,6 +8797,16 @@
       "rewardName": "Rise",
       "confidence": "Static",
       "source": "Quest.Reward;ItemAction=25183;AdditionalData=113",
+      "otherSources": []
+    },
+    {
+      "questRowId": 67874,
+      "kind": "DutyUnlock",
+      "rewardId": 189,
+      "itemId": 0,
+      "rewardName": "Alexander - The Soul of the Creator",
+      "confidence": "Static",
+      "source": "QuestScript;primary duty;UNLOCK_IMAGE",
       "otherSources": []
     },
     {
@@ -8090,6 +8870,36 @@
       "otherSources": []
     },
     {
+      "questRowId": 67876,
+      "kind": "DutyUnlock",
+      "rewardId": 191,
+      "itemId": 0,
+      "rewardName": "Alexander - The Breath of the Creator (Savage)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 67876,
+      "kind": "DutyUnlock",
+      "rewardId": 192,
+      "itemId": 0,
+      "rewardName": "Alexander - The Heart of the Creator (Savage)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 67876,
+      "kind": "DutyUnlock",
+      "rewardId": 193,
+      "itemId": 0,
+      "rewardName": "Alexander - The Soul of the Creator (Savage)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 67878,
       "kind": "Orchestrion",
       "rewardId": 103,
@@ -8097,6 +8907,16 @@
       "rewardName": "Grounded",
       "confidence": "Static",
       "source": "Quest.Reward;ItemAction=25183;AdditionalData=103",
+      "otherSources": []
+    },
+    {
+      "questRowId": 67878,
+      "kind": "DutyUnlock",
+      "rewardId": 182,
+      "itemId": 0,
+      "rewardName": "Xelphatol",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -8127,6 +8947,16 @@
       "rewardName": "Another Brick",
       "confidence": "Static",
       "source": "Quest.Reward;ItemAction=25183;AdditionalData=132",
+      "otherSources": []
+    },
+    {
+      "questRowId": 67890,
+      "kind": "DutyUnlock",
+      "rewardId": 219,
+      "itemId": 0,
+      "rewardName": "Baelsar's Wall",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -8238,6 +9068,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 67896,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Egi glamours",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 67899,
       "kind": "Item",
       "rewardId": 17717,
@@ -8319,6 +9159,16 @@
       "rewardName": "Shadow of the Body",
       "confidence": "Static",
       "source": "Quest.Reward;ItemAction=25183;AdditionalData=147",
+      "otherSources": []
+    },
+    {
+      "questRowId": 67909,
+      "kind": "DutyUnlock",
+      "rewardId": 220,
+      "itemId": 0,
+      "rewardName": "Dun Scaith",
+      "confidence": "Static",
+      "source": "QuestScript;primary duty;UNLOCK_IMAGE",
       "otherSources": []
     },
     {
@@ -8733,6 +9583,16 @@
       "rewardName": "Wondrous Tails",
       "confidence": "Curated",
       "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 67930,
+      "kind": "DutyUnlock",
+      "rewardId": 223,
+      "itemId": 0,
+      "rewardName": "Containment Bay Z1T9",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -9262,6 +10122,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 68005,
+      "kind": "DutyUnlock",
+      "rewardId": 238,
+      "itemId": 0,
+      "rewardName": "the Sirensong Sea",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 68012,
       "kind": "Title",
       "rewardId": 352,
@@ -9279,6 +10149,16 @@
       "rewardName": "Eastern Bow",
       "confidence": "Static",
       "source": "Quest.EmoteReward",
+      "otherSources": []
+    },
+    {
+      "questRowId": 68025,
+      "kind": "DutyUnlock",
+      "rewardId": 243,
+      "itemId": 0,
+      "rewardName": "the Pool of Tribute",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -9362,6 +10242,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 68060,
+      "kind": "DutyUnlock",
+      "rewardId": 241,
+      "itemId": 0,
+      "rewardName": "Doma Castle",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 68062,
       "kind": "Title",
       "rewardId": 356,
@@ -9372,6 +10262,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 68068,
+      "kind": "DutyUnlock",
+      "rewardId": 263,
+      "itemId": 0,
+      "rewardName": "Emanation",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 68069,
       "kind": "AetherCurrent",
       "rewardId": 2818128,
@@ -9379,6 +10279,16 @@
       "rewardName": "Aether Current (The Fringes)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
+      "otherSources": []
+    },
+    {
+      "questRowId": 68080,
+      "kind": "DutyUnlock",
+      "rewardId": 242,
+      "itemId": 0,
+      "rewardName": "Castrum Abania",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -9431,6 +10341,26 @@
       "rewardName": "The Liberator",
       "confidence": "Static",
       "source": "Achievement.Key;achievement=1794;type=6",
+      "otherSources": []
+    },
+    {
+      "questRowId": 68089,
+      "kind": "DutyUnlock",
+      "rewardId": 239,
+      "itemId": 0,
+      "rewardName": "the Royal Menagerie",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 68089,
+      "kind": "DutyUnlock",
+      "rewardId": 247,
+      "itemId": 0,
+      "rewardName": "Ala Mhigo",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -9844,6 +10774,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 68167,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Housing (Shirogane)",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 68168,
       "kind": "AetherCurrent",
       "rewardId": 2818177,
@@ -9859,6 +10799,26 @@
       "rewardId": 235,
       "itemId": 0,
       "rewardName": "Shisui of the Violet Tides",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 68169,
+      "kind": "DutyUnlock",
+      "rewardId": 236,
+      "itemId": 0,
+      "rewardName": "the Temple of the Fist",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 68170,
+      "kind": "DutyUnlock",
+      "rewardId": 262,
+      "itemId": 0,
+      "rewardName": "Kugane Castle",
       "confidence": "Curated",
       "source": "curated/duty_unlocks.json",
       "otherSources": []
@@ -10266,6 +11226,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 68456,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Sightseeing Log (Stormblood)",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 68458,
       "kind": "Action",
       "rewardId": 7632,
@@ -10496,6 +11466,56 @@
       "otherSources": []
     },
     {
+      "questRowId": 68472,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Hunts (Stormblood)",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 68473,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Hunts (Stormblood)",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 68474,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Hunts (Stormblood)",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 68475,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Hunts (Stormblood elite)",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 68476,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "The Circles of Answering",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 68478,
       "kind": "DutyUnlock",
       "rewardId": 581,
@@ -10503,6 +11523,106 @@
       "rewardName": "the Forbidden Land, Eureka Pagos",
       "confidence": "Static",
       "source": "ContentFinderCondition.UnlockCriteria",
+      "otherSources": []
+    },
+    {
+      "questRowId": 68479,
+      "kind": "DutyUnlock",
+      "rewardId": 244,
+      "itemId": 0,
+      "rewardName": "the Pool of Tribute (Extreme)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 68479,
+      "kind": "DutyUnlock",
+      "rewardId": 264,
+      "itemId": 0,
+      "rewardName": "Emanation (Extreme)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 68479,
+      "kind": "DutyUnlock",
+      "rewardId": 278,
+      "itemId": 0,
+      "rewardName": "the Minstrel's Ballad: Shinryu's Domain",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 68479,
+      "kind": "DutyUnlock",
+      "rewardId": 280,
+      "itemId": 0,
+      "rewardName": "the Unending Coil of Bahamut (Ultimate)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 68479,
+      "kind": "DutyUnlock",
+      "rewardId": 291,
+      "itemId": 0,
+      "rewardName": "the Jade Stoa (Extreme)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 68479,
+      "kind": "DutyUnlock",
+      "rewardId": 538,
+      "itemId": 0,
+      "rewardName": "the Minstrel's Ballad: Tsukuyomi's Pain",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 68479,
+      "kind": "DutyUnlock",
+      "rewardId": 539,
+      "itemId": 0,
+      "rewardName": "the Weapon's Refrain (Ultimate)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 68479,
+      "kind": "DutyUnlock",
+      "rewardId": 597,
+      "itemId": 0,
+      "rewardName": "Hells' Kier (Extreme)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 68479,
+      "kind": "DutyUnlock",
+      "rewardId": 638,
+      "itemId": 0,
+      "rewardName": "the Wreath of Snakes (Extreme)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 68479,
+      "kind": "DutyUnlock",
+      "rewardId": 694,
+      "itemId": 0,
+      "rewardName": "the Epic of Alexander (Ultimate)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -10592,6 +11712,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 68500,
+      "kind": "DutyUnlock",
+      "rewardId": 279,
+      "itemId": 0,
+      "rewardName": "the Drowned City of Skalla",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 68501,
       "kind": "Orchestrion",
       "rewardId": 173,
@@ -10649,6 +11779,16 @@
       "rewardName": "Background Story",
       "confidence": "Static",
       "source": "Quest.Reward;ItemAction=25183;AdditionalData=190",
+      "otherSources": []
+    },
+    {
+      "questRowId": 68540,
+      "kind": "DutyUnlock",
+      "rewardId": 281,
+      "itemId": 0,
+      "rewardName": "the Royal City of Rabanastre",
+      "confidence": "Static",
+      "source": "QuestScript;primary duty;UNLOCK_IMAGE",
       "otherSources": []
     },
     {
@@ -10724,6 +11864,36 @@
       "otherSources": []
     },
     {
+      "questRowId": 68551,
+      "kind": "DutyUnlock",
+      "rewardId": 284,
+      "itemId": 0,
+      "rewardName": "Hells' Lid",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 68551,
+      "kind": "DutyUnlock",
+      "rewardId": 290,
+      "itemId": 0,
+      "rewardName": "the Jade Stoa",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 68552,
+      "kind": "DutyUnlock",
+      "rewardId": 536,
+      "itemId": 0,
+      "rewardName": "the Swallow's Compass",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 68553,
       "kind": "GeneralAction",
       "rewardId": 22,
@@ -10749,6 +11919,26 @@
       "rewardId": 0,
       "itemId": 0,
       "rewardName": "Glamour (cast/dispel)",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 68554,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Master recipes: glamours",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 68555,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Performance",
       "confidence": "Curated",
       "source": "curated/system_unlocks.json",
       "otherSources": []
@@ -10784,6 +11974,56 @@
       "otherSources": []
     },
     {
+      "questRowId": 68568,
+      "kind": "DutyUnlock",
+      "rewardId": 286,
+      "itemId": 0,
+      "rewardName": "Sigmascape V1.0",
+      "confidence": "Static",
+      "source": "QuestScript;primary duty;UNLOCK_IMAGE",
+      "otherSources": []
+    },
+    {
+      "questRowId": 68569,
+      "kind": "DutyUnlock",
+      "rewardId": 287,
+      "itemId": 0,
+      "rewardName": "Sigmascape V2.0",
+      "confidence": "Static",
+      "source": "QuestScript;primary duty;UNLOCK_IMAGE",
+      "otherSources": []
+    },
+    {
+      "questRowId": 68570,
+      "kind": "DutyUnlock",
+      "rewardId": 288,
+      "itemId": 0,
+      "rewardName": "Sigmascape V3.0",
+      "confidence": "Static",
+      "source": "QuestScript;primary duty;UNLOCK_IMAGE",
+      "otherSources": []
+    },
+    {
+      "questRowId": 68571,
+      "kind": "DutyUnlock",
+      "rewardId": 289,
+      "itemId": 0,
+      "rewardName": "Sigmascape V4.0",
+      "confidence": "Static",
+      "source": "QuestScript;primary duty;UNLOCK_IMAGE",
+      "otherSources": []
+    },
+    {
+      "questRowId": 68610,
+      "kind": "DutyUnlock",
+      "rewardId": 537,
+      "itemId": 0,
+      "rewardName": "Castrum Fluminis",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 68611,
       "kind": "Title",
       "rewardId": 392,
@@ -10801,6 +12041,16 @@
       "rewardName": "Ponder",
       "confidence": "Static",
       "source": "Quest.EmoteReward",
+      "otherSources": []
+    },
+    {
+      "questRowId": 68613,
+      "kind": "DutyUnlock",
+      "rewardId": 285,
+      "itemId": 0,
+      "rewardName": "the Fractal Continuum (Hard)",
+      "confidence": "Static",
+      "source": "QuestScript;primary duty;UNLOCK_IMAGE",
       "otherSources": []
     },
     {
@@ -10843,6 +12093,16 @@
       "rewardName": "Eggsit Stage Left",
       "confidence": "Static",
       "source": "Achievement.Key;type=6",
+      "otherSources": []
+    },
+    {
+      "questRowId": 68617,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Fashion Report",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
       "otherSources": []
     },
     {
@@ -10938,6 +12198,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 68624,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Duty Recorder",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 68627,
       "kind": "Orchestrion",
       "rewardId": 232,
@@ -10955,6 +12225,16 @@
       "rewardName": "A Chapel",
       "confidence": "Static",
       "source": "Quest.Reward;ItemAction=25183;AdditionalData=233",
+      "otherSources": []
+    },
+    {
+      "questRowId": 68628,
+      "kind": "DutyUnlock",
+      "rewardId": 550,
+      "itemId": 0,
+      "rewardName": "the Ridorana Lighthouse",
+      "confidence": "Static",
+      "source": "QuestScript;primary duty;UNLOCK_IMAGE",
       "otherSources": []
     },
     {
@@ -13718,6 +14998,26 @@
       "otherSources": []
     },
     {
+      "questRowId": 68678,
+      "kind": "DutyUnlock",
+      "rewardId": 584,
+      "itemId": 0,
+      "rewardName": "Saint Mocianne's Arboretum (Hard)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 68680,
+      "kind": "DutyUnlock",
+      "rewardId": 585,
+      "itemId": 0,
+      "rewardName": "the Burn",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 68684,
       "kind": "Emote",
       "rewardId": 190,
@@ -13748,6 +15048,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 68688,
+      "kind": "DutyUnlock",
+      "rewardId": 596,
+      "itemId": 0,
+      "rewardName": "Hells' Kier",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 68689,
       "kind": "Title",
       "rewardId": 403,
@@ -13758,6 +15068,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 68690,
+      "kind": "DutyUnlock",
+      "rewardId": 587,
+      "itemId": 0,
+      "rewardName": "Alphascape V1.0",
+      "confidence": "Static",
+      "source": "QuestScript;primary duty;UNLOCK_IMAGE",
+      "otherSources": []
+    },
+    {
       "questRowId": 68691,
       "kind": "Orchestrion",
       "rewardId": 265,
@@ -13765,6 +15085,36 @@
       "rewardName": "Deltascape",
       "confidence": "Static",
       "source": "Quest.Reward;ItemAction=25183;AdditionalData=265",
+      "otherSources": []
+    },
+    {
+      "questRowId": 68691,
+      "kind": "DutyUnlock",
+      "rewardId": 588,
+      "itemId": 0,
+      "rewardName": "Alphascape V2.0",
+      "confidence": "Static",
+      "source": "QuestScript;primary duty;UNLOCK_IMAGE",
+      "otherSources": []
+    },
+    {
+      "questRowId": 68692,
+      "kind": "DutyUnlock",
+      "rewardId": 589,
+      "itemId": 0,
+      "rewardName": "Alphascape V3.0",
+      "confidence": "Static",
+      "source": "QuestScript;primary duty;UNLOCK_IMAGE",
+      "otherSources": []
+    },
+    {
+      "questRowId": 68692,
+      "kind": "DutyUnlock",
+      "rewardId": 590,
+      "itemId": 0,
+      "rewardName": "Alphascape V4.0",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -13825,6 +15175,26 @@
       "rewardName": "Kageyama Killer",
       "confidence": "Static",
       "source": "Achievement.Key;achievement=2235;type=6",
+      "otherSources": []
+    },
+    {
+      "questRowId": 68701,
+      "kind": "DutyUnlock",
+      "rewardId": 637,
+      "itemId": 0,
+      "rewardName": "the Wreath of Snakes",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 68703,
+      "kind": "DutyUnlock",
+      "rewardId": 595,
+      "itemId": 0,
+      "rewardName": "Kugane Ohashi",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -13924,6 +15294,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 68719,
+      "kind": "DutyUnlock",
+      "rewardId": 611,
+      "itemId": 0,
+      "rewardName": "the Ghimlyt Dark",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 68721,
       "kind": "Title",
       "rewardId": 417,
@@ -13951,6 +15331,16 @@
       "rewardName": "Alma's Theme",
       "confidence": "Static",
       "source": "Quest.Reward;ItemAction=25183;AdditionalData=293",
+      "otherSources": []
+    },
+    {
+      "questRowId": 68725,
+      "kind": "DutyUnlock",
+      "rewardId": 636,
+      "itemId": 0,
+      "rewardName": "the Orbonne Monastery",
+      "confidence": "Static",
+      "source": "QuestScript;primary duty;UNLOCK_IMAGE",
       "otherSources": []
     },
     {
@@ -14542,6 +15932,46 @@
       "otherSources": []
     },
     {
+      "questRowId": 68792,
+      "kind": "DutyUnlock",
+      "rewardId": 653,
+      "itemId": 0,
+      "rewardName": "Eden's Gate: Resurrection",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 68793,
+      "kind": "DutyUnlock",
+      "rewardId": 684,
+      "itemId": 0,
+      "rewardName": "Eden's Gate: Descent",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 68794,
+      "kind": "DutyUnlock",
+      "rewardId": 682,
+      "itemId": 0,
+      "rewardName": "Eden's Gate: Inundation",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 68795,
+      "kind": "DutyUnlock",
+      "rewardId": 689,
+      "itemId": 0,
+      "rewardName": "Eden's Gate: Sepulture",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 68797,
       "kind": "Item",
       "rewardId": 25216,
@@ -14642,6 +16072,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 68836,
+      "kind": "DutyUnlock",
+      "rewardId": 676,
+      "itemId": 0,
+      "rewardName": "Holminster Switch",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 68837,
       "kind": "Title",
       "rewardId": 426,
@@ -14710,6 +16150,16 @@
       ]
     },
     {
+      "questRowId": 68848,
+      "kind": "DutyUnlock",
+      "rewardId": 649,
+      "itemId": 0,
+      "rewardName": "Dohn Mheg",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 68856,
       "kind": "AetherCurrent",
       "rewardId": 2818263,
@@ -14717,6 +16167,16 @@
       "rewardName": "Aether Current (Il Mheg)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
+      "otherSources": []
+    },
+    {
+      "questRowId": 68856,
+      "kind": "DutyUnlock",
+      "rewardId": 657,
+      "itemId": 0,
+      "rewardName": "the Dancing Plague",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -14737,6 +16197,16 @@
       "rewardName": "Aether Current (The Rak'tika Greatwood)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
+      "otherSources": []
+    },
+    {
+      "questRowId": 68876,
+      "kind": "DutyUnlock",
+      "rewardId": 651,
+      "itemId": 0,
+      "rewardName": "the Qitana Ravel",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -15000,11 +16470,91 @@
       "otherSources": []
     },
     {
+      "questRowId": 69131,
+      "kind": "DutyUnlock",
+      "rewardId": 655,
+      "itemId": 0,
+      "rewardName": "the Twinning",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69132,
+      "kind": "DutyUnlock",
+      "rewardId": 661,
+      "itemId": 0,
+      "rewardName": "Akadaemia Anyder",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 69133,
       "kind": "SystemUnlock",
       "rewardId": 0,
       "itemId": 0,
       "rewardName": "Hunts (Shadowbringers)",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69134,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Hunts (Shadowbringers)",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69135,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Hunts (Shadowbringers)",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69136,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Hunts (Shadowbringers elite)",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69137,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "The Lawns",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69139,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Scrip exchange (Eulmore)",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69140,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Sightseeing Log (Shadowbringers)",
       "confidence": "Curated",
       "source": "curated/system_unlocks.json",
       "otherSources": []
@@ -15017,6 +16567,16 @@
       "rewardName": "Aether Current (Amh Araeng)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69157,
+      "kind": "DutyUnlock",
+      "rewardId": 656,
+      "itemId": 0,
+      "rewardName": "Malikah's Well",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -15070,6 +16630,26 @@
       "otherSources": []
     },
     {
+      "questRowId": 69179,
+      "kind": "DutyUnlock",
+      "rewardId": 659,
+      "itemId": 0,
+      "rewardName": "Mt. Gulg",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69179,
+      "kind": "DutyUnlock",
+      "rewardId": 666,
+      "itemId": 0,
+      "rewardName": "the Crown of the Immaculate",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 69189,
       "kind": "AetherCurrent",
       "rewardId": 2818293,
@@ -15110,6 +16690,36 @@
       "otherSources": []
     },
     {
+      "questRowId": 69190,
+      "kind": "DutyUnlock",
+      "rewardId": 652,
+      "itemId": 0,
+      "rewardName": "Amaurot",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69190,
+      "kind": "DutyUnlock",
+      "rewardId": 687,
+      "itemId": 0,
+      "rewardName": "the Dying Gasp",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69191,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Custom deliveries: the Crystarium",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 69192,
       "kind": "AetherCurrent",
       "rewardId": 2818280,
@@ -15139,6 +16749,46 @@
       "rewardName": "At Sixes and Sevens",
       "confidence": "Static",
       "source": "Achievement.Key;type=6",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69198,
+      "kind": "DutyUnlock",
+      "rewardId": 658,
+      "itemId": 0,
+      "rewardName": "the Dancing Plague (Extreme)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69198,
+      "kind": "DutyUnlock",
+      "rewardId": 667,
+      "itemId": 0,
+      "rewardName": "the Crown of the Immaculate (Extreme)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69198,
+      "kind": "DutyUnlock",
+      "rewardId": 693,
+      "itemId": 0,
+      "rewardName": "the Minstrel's Ballad: Hades's Elegy",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69198,
+      "kind": "DutyUnlock",
+      "rewardId": 739,
+      "itemId": 0,
+      "rewardName": "the Seat of Sacrifice (Extreme)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -15204,6 +16854,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 69210,
+      "kind": "DutyUnlock",
+      "rewardId": 692,
+      "itemId": 0,
+      "rewardName": "the Grand Cosmos",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 69217,
       "kind": "Orchestrion",
       "rewardId": 342,
@@ -15231,6 +16891,16 @@
       "rewardName": "Significance (Nothing)",
       "confidence": "Static",
       "source": "Quest.Reward;ItemAction=25183;AdditionalData=350",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69254,
+      "kind": "DutyUnlock",
+      "rewardId": 700,
+      "itemId": 0,
+      "rewardName": "the Copied Factory",
+      "confidence": "Static",
+      "source": "QuestScript;primary duty;UNLOCK_IMAGE",
       "otherSources": []
     },
     {
@@ -15279,6 +16949,16 @@
       "rewardId": 0,
       "itemId": 0,
       "rewardName": "Custom deliveries: Kai-Shirr",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69267,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Airship (Eulmore)",
       "confidence": "Curated",
       "source": "curated/system_unlocks.json",
       "otherSources": []
@@ -15426,6 +17106,26 @@
       "otherSources": []
     },
     {
+      "questRowId": 69295,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "New Game+",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69305,
+      "kind": "DutyUnlock",
+      "rewardId": 714,
+      "itemId": 0,
+      "rewardName": "Anamnesis Anyder",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 69306,
       "kind": "Title",
       "rewardId": 520,
@@ -15433,6 +17133,26 @@
       "rewardName": "Echo of a Fallen Star",
       "confidence": "Static",
       "source": "Achievement.Key;achievement=2587;type=6",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69313,
+      "kind": "DutyUnlock",
+      "rewardId": 737,
+      "itemId": 0,
+      "rewardName": "the Heroes' Gauntlet",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69314,
+      "kind": "DutyUnlock",
+      "rewardId": 738,
+      "itemId": 0,
+      "rewardName": "the Seat of Sacrifice",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -15456,6 +17176,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 69319,
+      "kind": "DutyUnlock",
+      "rewardId": 717,
+      "itemId": 0,
+      "rewardName": "Cinder Drift",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 69321,
       "kind": "Orchestrion",
       "rewardId": 372,
@@ -15463,6 +17193,46 @@
       "rewardName": "Crumbling Lies (Front)",
       "confidence": "Static",
       "source": "Quest.Reward;ItemAction=25183;AdditionalData=372",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69324,
+      "kind": "DutyUnlock",
+      "rewardId": 715,
+      "itemId": 0,
+      "rewardName": "Eden's Verse: Fulmination",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69325,
+      "kind": "DutyUnlock",
+      "rewardId": 719,
+      "itemId": 0,
+      "rewardName": "Eden's Verse: Furor",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69326,
+      "kind": "DutyUnlock",
+      "rewardId": 726,
+      "itemId": 0,
+      "rewardName": "Eden's Verse: Iconoclasm",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69327,
+      "kind": "DutyUnlock",
+      "rewardId": 728,
+      "itemId": 0,
+      "rewardName": "Eden's Verse: Refulgence",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -15493,6 +17263,36 @@
       "rewardName": "Cidception",
       "confidence": "Static",
       "source": "Achievement.Key;type=6",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69378,
+      "kind": "DutyUnlock",
+      "rewardId": 718,
+      "itemId": 0,
+      "rewardName": "Cinder Drift (Extreme)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69378,
+      "kind": "DutyUnlock",
+      "rewardId": 763,
+      "itemId": 0,
+      "rewardName": "Castrum Marinum (Extreme)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69378,
+      "kind": "DutyUnlock",
+      "rewardId": 782,
+      "itemId": 0,
+      "rewardName": "the Cloud Deck (Extreme)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -18820,6 +20620,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 69489,
+      "kind": "DutyUnlock",
+      "rewardId": 736,
+      "itemId": 0,
+      "rewardName": "the Puppets' Bunker",
+      "confidence": "Static",
+      "source": "QuestScript;primary duty;UNLOCK_IMAGE",
+      "otherSources": []
+    },
+    {
       "questRowId": 69490,
       "kind": "Orchestrion",
       "rewardId": 399,
@@ -18859,6 +20669,16 @@
       "rewardName": "Service with a Smile",
       "confidence": "Static",
       "source": "Achievement.Key;type=6",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69501,
+      "kind": "DutyUnlock",
+      "rewardId": 1118,
+      "itemId": 0,
+      "rewardName": "Shinryu's Domain (Unreal)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -19276,6 +21096,56 @@
       "otherSources": []
     },
     {
+      "questRowId": 69512,
+      "kind": "DutyUnlock",
+      "rewardId": 749,
+      "itemId": 0,
+      "rewardName": "Eden's Promise: Umbra",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69513,
+      "kind": "DutyUnlock",
+      "rewardId": 747,
+      "itemId": 0,
+      "rewardName": "Eden's Promise: Litany",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69514,
+      "kind": "DutyUnlock",
+      "rewardId": 751,
+      "itemId": 0,
+      "rewardName": "Eden's Promise: Anamorphosis",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69514,
+      "kind": "DutyUnlock",
+      "rewardId": 758,
+      "itemId": 0,
+      "rewardName": "Eden's Promise: Eternity",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69516,
+      "kind": "DutyUnlock",
+      "rewardId": 762,
+      "itemId": 0,
+      "rewardName": "Castrum Marinum",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 69519,
       "kind": "ArtifactGear",
       "rewardId": 31714,
@@ -19508,6 +21378,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 69547,
+      "kind": "DutyUnlock",
+      "rewardId": 746,
+      "itemId": 0,
+      "rewardName": "Matoya's Relict",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 69552,
       "kind": "Title",
       "rewardId": 549,
@@ -19620,6 +21500,26 @@
       "otherSources": []
     },
     {
+      "questRowId": 69562,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Delubrum Reginae",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69563,
+      "kind": "DutyUnlock",
+      "rewardId": 761,
+      "itemId": 0,
+      "rewardName": "Delubrum Reginae (Savage)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 69566,
       "kind": "DutyUnlock",
       "rewardId": 756,
@@ -19637,6 +21537,16 @@
       "rewardName": "And Love You Shall Find",
       "confidence": "Static",
       "source": "Quest.Reward;ItemAction=25183;AdditionalData=440",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69567,
+      "kind": "DutyUnlock",
+      "rewardId": 781,
+      "itemId": 0,
+      "rewardName": "the Cloud Deck",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -19719,6 +21629,16 @@
       "rewardName": "Faltering Prayer (Dawn Breeze)",
       "confidence": "Static",
       "source": "Quest.Reward;ItemAction=25183;AdditionalData=474",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69571,
+      "kind": "DutyUnlock",
+      "rewardId": 779,
+      "itemId": 0,
+      "rewardName": "the Tower at Paradigm's Breach",
+      "confidence": "Static",
+      "source": "QuestScript;primary duty;UNLOCK_IMAGE",
       "otherSources": []
     },
     {
@@ -20144,6 +22064,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 69598,
+      "kind": "DutyUnlock",
+      "rewardId": 777,
+      "itemId": 0,
+      "rewardName": "Paglth'an",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 69599,
       "kind": "Achievement",
       "rewardId": 2850,
@@ -20333,6 +22263,16 @@
       "rewardName": "You Say Good-bye, I Say Hielo...",
       "confidence": "Static",
       "source": "Achievement.Key;type=6",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69620,
+      "kind": "DutyUnlock",
+      "rewardId": 778,
+      "itemId": 0,
+      "rewardName": "Zadnor",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -20698,11 +22638,191 @@
       "otherSources": []
     },
     {
+      "questRowId": 69703,
+      "kind": "DutyUnlock",
+      "rewardId": 794,
+      "itemId": 0,
+      "rewardName": "Smileton",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69704,
+      "kind": "DutyUnlock",
+      "rewardId": 784,
+      "itemId": 0,
+      "rewardName": "the Stigma Dreamscape",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69707,
+      "kind": "DutyUnlock",
+      "rewardId": 788,
+      "itemId": 0,
+      "rewardName": "Dragonsong's Reprise (Ultimate)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69707,
+      "kind": "DutyUnlock",
+      "rewardId": 791,
+      "itemId": 0,
+      "rewardName": "the Minstrel's Ballad: Hydaelyn's Call",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69707,
+      "kind": "DutyUnlock",
+      "rewardId": 803,
+      "itemId": 0,
+      "rewardName": "the Minstrel's Ballad: Zodiark's Fall",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69707,
+      "kind": "DutyUnlock",
+      "rewardId": 846,
+      "itemId": 0,
+      "rewardName": "the Minstrel's Ballad: Endsinger's Aria",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69707,
+      "kind": "DutyUnlock",
+      "rewardId": 871,
+      "itemId": 0,
+      "rewardName": "Storm's Crown (Extreme)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69707,
+      "kind": "DutyUnlock",
+      "rewardId": 908,
+      "itemId": 0,
+      "rewardName": "the Omega Protocol (Ultimate)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69707,
+      "kind": "DutyUnlock",
+      "rewardId": 924,
+      "itemId": 0,
+      "rewardName": "Mount Ordeals (Extreme)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69707,
+      "kind": "DutyUnlock",
+      "rewardId": 950,
+      "itemId": 0,
+      "rewardName": "the Voidcast Dais (Extreme)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69707,
+      "kind": "DutyUnlock",
+      "rewardId": 965,
+      "itemId": 0,
+      "rewardName": "the Abyssal Fracture (Extreme)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69708,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Housing (Empyreum)",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69709,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "The Burning Field",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69710,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Sightseeing Log (Endwalker)",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69711,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Scrip exchange (Radz-at-Han)",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 69712,
       "kind": "SystemUnlock",
       "rewardId": 0,
       "itemId": 0,
       "rewardName": "Hunts (Endwalker)",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69713,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Hunts (Endwalker)",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69714,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Hunts (Endwalker)",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69715,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Hunts (Endwalker elite)",
       "confidence": "Curated",
       "source": "curated/system_unlocks.json",
       "otherSources": []
@@ -20868,6 +22988,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 69913,
+      "kind": "DutyUnlock",
+      "rewardId": 783,
+      "itemId": 0,
+      "rewardName": "the Tower of Zot",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 69915,
       "kind": "Title",
       "rewardId": 597,
@@ -20900,6 +23030,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 69931,
+      "kind": "DutyUnlock",
+      "rewardId": 785,
+      "itemId": 0,
+      "rewardName": "the Tower of Babil",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 69934,
       "kind": "Title",
       "rewardId": 598,
@@ -20907,6 +23047,16 @@
       "rewardName": "Moonwalker",
       "confidence": "Static",
       "source": "Achievement.Key;achievement=2953;type=6",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69934,
+      "kind": "DutyUnlock",
+      "rewardId": 802,
+      "itemId": 0,
+      "rewardName": "the Dark Inside",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -20927,6 +23077,16 @@
       "rewardName": "Lightingway",
       "confidence": "Static",
       "source": "Achievement.Key;achievement=2954;type=6",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69945,
+      "kind": "DutyUnlock",
+      "rewardId": 789,
+      "itemId": 0,
+      "rewardName": "Vanaspati",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -20996,6 +23156,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 69973,
+      "kind": "DutyUnlock",
+      "rewardId": 787,
+      "itemId": 0,
+      "rewardName": "Ktisis Hyperboreia",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 69974,
       "kind": "Title",
       "rewardId": 601,
@@ -21023,6 +23193,26 @@
       "rewardName": "Hope's Legacy",
       "confidence": "Static",
       "source": "Achievement.Key;achievement=2957;type=6",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69985,
+      "kind": "DutyUnlock",
+      "rewardId": 786,
+      "itemId": 0,
+      "rewardName": "the Aitiascope",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 69985,
+      "kind": "DutyUnlock",
+      "rewardId": 790,
+      "itemId": 0,
+      "rewardName": "the Mothercrystal",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -21083,6 +23273,26 @@
       "rewardName": "Endwalker",
       "confidence": "Static",
       "source": "Achievement.Key;achievement=2958;type=6",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70000,
+      "kind": "DutyUnlock",
+      "rewardId": 792,
+      "itemId": 0,
+      "rewardName": "the Dead Ends",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70000,
+      "kind": "DutyUnlock",
+      "rewardId": 796,
+      "itemId": 0,
+      "rewardName": "the Final Day",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -21152,6 +23362,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 70009,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Custom deliveries: the Studium",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 70010,
       "kind": "Minion",
       "rewardId": 437,
@@ -21177,6 +23397,36 @@
       "rewardId": 808,
       "itemId": 0,
       "rewardName": "Asphodelos: The First Circle",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70013,
+      "kind": "DutyUnlock",
+      "rewardId": 810,
+      "itemId": 0,
+      "rewardName": "Asphodelos: The Second Circle",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70014,
+      "kind": "DutyUnlock",
+      "rewardId": 806,
+      "itemId": 0,
+      "rewardName": "Asphodelos: The Third Circle",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70015,
+      "kind": "DutyUnlock",
+      "rewardId": 800,
+      "itemId": 0,
+      "rewardName": "Asphodelos: The Fourth Circle",
       "confidence": "Curated",
       "source": "curated/duty_unlocks.json",
       "otherSources": []
@@ -21414,6 +23664,16 @@
       ]
     },
     {
+      "questRowId": 70065,
+      "kind": "DutyUnlock",
+      "rewardId": 844,
+      "itemId": 0,
+      "rewardName": "Alzadaal's Legacy",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 70071,
       "kind": "Title",
       "rewardId": 637,
@@ -21421,6 +23681,16 @@
       "rewardName": "Newfound Adventurer",
       "confidence": "Static",
       "source": "Achievement.Key;achievement=3075;type=6",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70073,
+      "kind": "DutyUnlock",
+      "rewardId": 866,
+      "itemId": 0,
+      "rewardName": "Aglaia",
+      "confidence": "Static",
+      "source": "QuestScript;primary duty;UNLOCK_IMAGE",
       "otherSources": []
     },
     {
@@ -21488,6 +23758,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 70121,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Crystalline Conflict",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 70123,
       "kind": "Orchestrion",
       "rewardId": 509,
@@ -21540,6 +23820,26 @@
       "otherSources": []
     },
     {
+      "questRowId": 70128,
+      "kind": "DutyUnlock",
+      "rewardId": 869,
+      "itemId": 0,
+      "rewardName": "the Fell Court of Troia",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70133,
+      "kind": "DutyUnlock",
+      "rewardId": 870,
+      "itemId": 0,
+      "rewardName": "Storm's Crown",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 70136,
       "kind": "Title",
       "rewardId": 648,
@@ -21550,11 +23850,61 @@
       "otherSources": []
     },
     {
+      "questRowId": 70172,
+      "kind": "DutyUnlock",
+      "rewardId": 872,
+      "itemId": 0,
+      "rewardName": "Abyssos: The Fifth Circle",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70173,
+      "kind": "DutyUnlock",
+      "rewardId": 880,
+      "itemId": 0,
+      "rewardName": "Abyssos: The Sixth Circle",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70174,
+      "kind": "DutyUnlock",
+      "rewardId": 876,
+      "itemId": 0,
+      "rewardName": "Abyssos: The Seventh Circle",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70175,
+      "kind": "DutyUnlock",
+      "rewardId": 883,
+      "itemId": 0,
+      "rewardName": "Abyssos: The Eighth Circle",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 70179,
       "kind": "SystemUnlock",
       "rewardId": 0,
       "itemId": 0,
       "rewardName": "Island Sanctuary",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70180,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Island Sanctuary visits",
       "confidence": "Curated",
       "source": "curated/system_unlocks.json",
       "otherSources": []
@@ -21647,6 +23997,16 @@
       "rewardName": "Sultana's Shadow",
       "confidence": "Static",
       "source": "Achievement.Key;achievement=3152;type=6",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70187,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Variant and Criterion dungeons",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
       "otherSources": []
     },
     {
@@ -22299,6 +24659,36 @@
       "rewardName": "Eureka Orthos (Floors 91-100)",
       "confidence": "Static",
       "source": "ContentFinderCondition.UnlockCriteria",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70202,
+      "kind": "DutyUnlock",
+      "rewardId": 911,
+      "itemId": 0,
+      "rewardName": "Euphrosyne",
+      "confidence": "Static",
+      "source": "QuestScript;primary duty;UNLOCK_IMAGE",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70210,
+      "kind": "DutyUnlock",
+      "rewardId": 896,
+      "itemId": 0,
+      "rewardName": "Lapis Manalis",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70213,
+      "kind": "DutyUnlock",
+      "rewardId": 886,
+      "itemId": 0,
+      "rewardName": "Mount Ordeals",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -25100,6 +27490,26 @@
       "otherSources": []
     },
     {
+      "questRowId": 70272,
+      "kind": "DutyUnlock",
+      "rewardId": 822,
+      "itemId": 0,
+      "rewardName": "the Aetherfont",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70278,
+      "kind": "DutyUnlock",
+      "rewardId": 949,
+      "itemId": 0,
+      "rewardName": "the Voidcast Dais",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 70279,
       "kind": "Orchestrion",
       "rewardId": 591,
@@ -25117,6 +27527,26 @@
       "rewardName": "Throneshaker",
       "confidence": "Static",
       "source": "Achievement.Key;achievement=3244;type=6",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70284,
+      "kind": "DutyUnlock",
+      "rewardId": 823,
+      "itemId": 0,
+      "rewardName": "the Lunar Subterrane",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70284,
+      "kind": "DutyUnlock",
+      "rewardId": 964,
+      "itemId": 0,
+      "rewardName": "the Abyssal Fracture",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -25157,6 +27587,46 @@
       "rewardName": "wind-up PuPu",
       "confidence": "Static",
       "source": "Quest.Reward;ItemAction=853",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70292,
+      "kind": "DutyUnlock",
+      "rewardId": 936,
+      "itemId": 0,
+      "rewardName": "Anabaseios: The Ninth Circle",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70293,
+      "kind": "DutyUnlock",
+      "rewardId": 938,
+      "itemId": 0,
+      "rewardName": "Anabaseios: The Tenth Circle",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70294,
+      "kind": "DutyUnlock",
+      "rewardId": 940,
+      "itemId": 0,
+      "rewardName": "Anabaseios: The Eleventh Circle",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70295,
+      "kind": "DutyUnlock",
+      "rewardId": 942,
+      "itemId": 0,
+      "rewardName": "Anabaseios: The Twelfth Circle",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -25240,6 +27710,16 @@
       "otherSources": [
         "GilShopItem"
       ]
+    },
+    {
+      "questRowId": 70300,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Egi glamours",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
     },
     {
       "questRowId": 70302,
@@ -26050,6 +28530,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 70327,
+      "kind": "DutyUnlock",
+      "rewardId": 962,
+      "itemId": 0,
+      "rewardName": "Thaleia",
+      "confidence": "Static",
+      "source": "QuestScript;primary duty;UNLOCK_IMAGE",
+      "otherSources": []
+    },
+    {
       "questRowId": 70328,
       "kind": "Item",
       "rewardId": 41369,
@@ -26205,6 +28695,26 @@
       "rewardName": "Identified Flying Gentlemen",
       "confidence": "Static",
       "source": "Achievement.Key;type=6",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70336,
+      "kind": "DutyUnlock",
+      "rewardId": 69,
+      "itemId": 0,
+      "rewardName": "The Gilded Araya",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70336,
+      "kind": "DutyUnlock",
+      "rewardId": 944,
+      "itemId": 0,
+      "rewardName": "the Gilded Araya",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -27000,6 +29510,16 @@
       ]
     },
     {
+      "questRowId": 70352,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Custom deliveries: Margrat",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 70359,
       "kind": "Achievement",
       "rewardId": 3499,
@@ -27174,6 +29694,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 70430,
+      "kind": "DutyUnlock",
+      "rewardId": 832,
+      "itemId": 0,
+      "rewardName": "Worqor Lar Dor",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 70431,
       "kind": "AetherCurrent",
       "rewardId": 2818399,
@@ -27294,6 +29824,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 70481,
+      "kind": "DutyUnlock",
+      "rewardId": 995,
+      "itemId": 0,
+      "rewardName": "Everkeep",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 70494,
       "kind": "AetherCurrent",
       "rewardId": 2818474,
@@ -27344,6 +29884,46 @@
       "otherSources": []
     },
     {
+      "questRowId": 70495,
+      "kind": "DutyUnlock",
+      "rewardId": 984,
+      "itemId": 0,
+      "rewardName": "the Interphos",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70497,
+      "kind": "DutyUnlock",
+      "rewardId": 985,
+      "itemId": 0,
+      "rewardName": "AAC Light-heavyweight M1",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70498,
+      "kind": "DutyUnlock",
+      "rewardId": 987,
+      "itemId": 0,
+      "rewardName": "AAC Light-heavyweight M2",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70500,
+      "kind": "DutyUnlock",
+      "rewardId": 989,
+      "itemId": 0,
+      "rewardName": "AAC Light-heavyweight M3",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 70501,
       "kind": "Achievement",
       "rewardId": 3572,
@@ -27351,6 +29931,26 @@
       "rewardName": "Pick on Someone Your Own Size I",
       "confidence": "Static",
       "source": "Achievement.Key;type=6",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70501,
+      "kind": "DutyUnlock",
+      "rewardId": 991,
+      "itemId": 0,
+      "rewardName": "AAC Light-heavyweight M4",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70502,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Custom deliveries: Wachumeqimeqi",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
       "otherSources": []
     },
     {
@@ -27423,6 +30023,216 @@
       "rewardName": "Of Countless Catches",
       "confidence": "Static",
       "source": "Achievement.Key;achievement=3508;type=6",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70540,
+      "kind": "DutyUnlock",
+      "rewardId": 833,
+      "itemId": 0,
+      "rewardName": "Worqor Lar Dor (Extreme)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70540,
+      "kind": "DutyUnlock",
+      "rewardId": 996,
+      "itemId": 0,
+      "rewardName": "Everkeep (Extreme)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70540,
+      "kind": "DutyUnlock",
+      "rewardId": 1006,
+      "itemId": 0,
+      "rewardName": "Futures Rewritten (Ultimate)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70540,
+      "kind": "DutyUnlock",
+      "rewardId": 1010,
+      "itemId": 0,
+      "rewardName": "the Cloud of Darkness (Chaotic)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70540,
+      "kind": "DutyUnlock",
+      "rewardId": 1017,
+      "itemId": 0,
+      "rewardName": "the Minstrel's Ballad: Sphene's Burden",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70540,
+      "kind": "DutyUnlock",
+      "rewardId": 1031,
+      "itemId": 0,
+      "rewardName": "Recollection (Extreme)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70540,
+      "kind": "DutyUnlock",
+      "rewardId": 1044,
+      "itemId": 0,
+      "rewardName": "the Windward Wilds (Extreme)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70540,
+      "kind": "DutyUnlock",
+      "rewardId": 1062,
+      "itemId": 0,
+      "rewardName": "the Minstrel's Ballad: Necron's Embrace",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70540,
+      "kind": "DutyUnlock",
+      "rewardId": 1077,
+      "itemId": 0,
+      "rewardName": "Hell on Rails (Extreme)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70540,
+      "kind": "DutyUnlock",
+      "rewardId": 1094,
+      "itemId": 0,
+      "rewardName": "Dancing Mad (Ultimate)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70540,
+      "kind": "DutyUnlock",
+      "rewardId": 1116,
+      "itemId": 0,
+      "rewardName": "the Unmaking (Extreme)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70541,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "The Spire of Trial",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70542,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Sightseeing Log (Dawntrail)",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70543,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Sightseeing Log (Dawntrail)",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70544,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Scrip exchange (Solution Nine)",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70545,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Hunts (Dawntrail)",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70546,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Hunts (Dawntrail)",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70547,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Hunts (Dawntrail)",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70548,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Hunts (Dawntrail elite)",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70549,
+      "kind": "DutyUnlock",
+      "rewardId": 834,
+      "itemId": 0,
+      "rewardName": "Tender Valley",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70550,
+      "kind": "DutyUnlock",
+      "rewardId": 981,
+      "itemId": 0,
+      "rewardName": "The Strayborough Deadwalk",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -27884,6 +30694,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 70769,
+      "kind": "DutyUnlock",
+      "rewardId": 1015,
+      "itemId": 0,
+      "rewardName": "Jeuno: The First Walk",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 70772,
       "kind": "Orchestrion",
       "rewardId": 709,
@@ -27933,6 +30753,16 @@
       "rewardName": "Problem Parasolved",
       "confidence": "Static",
       "source": "Achievement.Key;type=6",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70782,
+      "kind": "DutyUnlock",
+      "rewardId": 1008,
+      "itemId": 0,
+      "rewardName": "Yuweyawata Field Station",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -27988,6 +30818,56 @@
       "otherSources": []
     },
     {
+      "questRowId": 70789,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Cosmic Exploration",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70826,
+      "kind": "DutyUnlock",
+      "rewardId": 1019,
+      "itemId": 0,
+      "rewardName": "AAC Cruiserweight M1",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70827,
+      "kind": "DutyUnlock",
+      "rewardId": 1021,
+      "itemId": 0,
+      "rewardName": "AAC Cruiserweight M2",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70828,
+      "kind": "DutyUnlock",
+      "rewardId": 1023,
+      "itemId": 0,
+      "rewardName": "AAC Cruiserweight M3",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70830,
+      "kind": "DutyUnlock",
+      "rewardId": 1025,
+      "itemId": 0,
+      "rewardName": "AAC Cruiserweight M4",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 70834,
       "kind": "Minion",
       "rewardId": 546,
@@ -28007,6 +30887,26 @@
       "rewardName": "Delightful Dozen",
       "confidence": "Static",
       "source": "Achievement.Key;type=6",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70840,
+      "kind": "DutyUnlock",
+      "rewardId": 1027,
+      "itemId": 0,
+      "rewardName": "the Underkeep",
+      "confidence": "Static",
+      "source": "QuestScript;primary duty;UNLOCK_IMAGE",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70840,
+      "kind": "DutyUnlock",
+      "rewardId": 1030,
+      "itemId": 0,
+      "rewardName": "Recollection",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -28365,6 +31265,26 @@
       "rewardName": "An Extra-large Serving of Love",
       "confidence": "Static",
       "source": "Achievement.Key;type=6",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70861,
+      "kind": "DutyUnlock",
+      "rewardId": 1045,
+      "itemId": 0,
+      "rewardName": "the Pâtisserie",
+      "confidence": "Static",
+      "source": "QuestScript;primary duty;UNLOCK_IMAGE",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70862,
+      "kind": "DutyUnlock",
+      "rewardId": 1058,
+      "itemId": 0,
+      "rewardName": "San d'Oria: The Second Walk",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -30178,6 +33098,26 @@
       "otherSources": []
     },
     {
+      "questRowId": 70907,
+      "kind": "DutyUnlock",
+      "rewardId": 1028,
+      "itemId": 0,
+      "rewardName": "the Meso Terminal",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70907,
+      "kind": "DutyUnlock",
+      "rewardId": 1061,
+      "itemId": 0,
+      "rewardName": "the Ageless Necropolis",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 70909,
       "kind": "Orchestrion",
       "rewardId": 769,
@@ -30215,6 +33155,16 @@
       "rewardName": "The White Wraith",
       "confidence": "Static",
       "source": "Achievement.Key;achievement=3822;type=6",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70910,
+      "kind": "DutyUnlock",
+      "rewardId": 1043,
+      "itemId": 0,
+      "rewardName": "the Windward Wilds",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -30622,6 +33572,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 70945,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Cosmic Exploration: Phaenna",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 70961,
       "kind": "Item",
       "rewardId": 50309,
@@ -30639,6 +33599,26 @@
       "rewardName": "Springtime Delights",
       "confidence": "Static",
       "source": "Achievement.Key;type=6",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70964,
+      "kind": "DutyUnlock",
+      "rewardId": 1064,
+      "itemId": 0,
+      "rewardName": "Mistwake",
+      "confidence": "Static",
+      "source": "QuestScript;primary duty;UNLOCK_IMAGE",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70969,
+      "kind": "DutyUnlock",
+      "rewardId": 1076,
+      "itemId": 0,
+      "rewardName": "Hell on Rails",
+      "confidence": "Static",
+      "source": "QuestScript;primary duty;UNLOCK_IMAGE",
       "otherSources": []
     },
     {
@@ -30662,6 +33642,36 @@
       "otherSources": []
     },
     {
+      "questRowId": 70972,
+      "kind": "DutyUnlock",
+      "rewardId": 1068,
+      "itemId": 0,
+      "rewardName": "AAC Heavyweight M1",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70973,
+      "kind": "DutyUnlock",
+      "rewardId": 1070,
+      "itemId": 0,
+      "rewardName": "AAC Heavyweight M2",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70975,
+      "kind": "DutyUnlock",
+      "rewardId": 1072,
+      "itemId": 0,
+      "rewardName": "AAC Heavyweight M3",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 70976,
       "kind": "Orchestrion",
       "rewardId": 817,
@@ -30679,6 +33689,16 @@
       "rewardName": "Ascension",
       "confidence": "Static",
       "source": "Achievement.Key;type=6",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70976,
+      "kind": "DutyUnlock",
+      "rewardId": 1074,
+      "itemId": 0,
+      "rewardName": "AAC Heavyweight M4",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -30779,6 +33799,16 @@
       "rewardName": "Real Devotion",
       "confidence": "Static",
       "source": "Achievement.Key;type=6",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70984,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Cosmic Exploration: Oizys",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
       "otherSources": []
     },
     {
@@ -31244,6 +34274,26 @@
       "otherSources": []
     },
     {
+      "questRowId": 71007,
+      "kind": "DutyUnlock",
+      "rewardId": 1011,
+      "itemId": 0,
+      "rewardName": "the Clyteum",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 71008,
+      "kind": "DutyUnlock",
+      "rewardId": 1115,
+      "itemId": 0,
+      "rewardName": "the Unmaking",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 71010,
       "kind": "Title",
       "rewardId": 856,
@@ -31321,6 +34371,16 @@
       "rewardName": "Far-wanderer",
       "confidence": "Static",
       "source": "Achievement.Key;achievement=3943;type=6",
+      "otherSources": []
+    },
+    {
+      "questRowId": 71015,
+      "kind": "DutyUnlock",
+      "rewardId": 1117,
+      "itemId": 0,
+      "rewardName": "Windurst: The Third Walk",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -31421,6 +34481,16 @@
       "rewardName": "Gently Does It",
       "confidence": "Static",
       "source": "Achievement.Key;type=6",
+      "otherSources": []
+    },
+    {
+      "questRowId": 71019,
+      "kind": "SystemUnlock",
+      "rewardId": 0,
+      "itemId": 0,
+      "rewardName": "Cosmic Exploration: Auxesia",
+      "confidence": "Curated",
+      "source": "curated/system_unlocks.json",
       "otherSources": []
     },
     {
