@@ -18,7 +18,7 @@ namespace Tsukimichi.Ui;
 /// <summary>
 /// The detail column when no quest is selected (game UX panel finding 1): a "Tonight" card that answers "what can I do
 /// now" before the catalog does. How many quests are Ready, with a button that opens the Journal showing exactly those
-/// (All quests, Ready only, no search, no other filter); the next main scenario quest with its blocker; the seasonal events running now on one line; and up to
+/// (All quests, Ready only, no search, no other filter); the next main scenario quest with its blocker (one per route inside a branch region); the seasonal events running now on one line; and up to
 /// three pinned quests that are Ready. Rows come from the Todo overlay's model (<see cref="TodoList"/>), rebuilt when
 /// the session version, the pins or the catalog change, so drawing allocates nothing. Every line is a focusable item
 /// that selects its quest.
@@ -26,6 +26,9 @@ namespace Tsukimichi.Ui;
 public sealed class TonightCard
 {
     public const int MaxPinned = 3;
+
+    /// <summary>ImGui ids of the second and later main scenario rows (one per route), above the pinned rows' 1–3.</summary>
+    private const int MsqRowIdBase = 100;
 
     private static readonly string TonightIcon = FontAwesomeIcon.Moon.ToIconString();
 
@@ -45,7 +48,8 @@ public sealed class TonightCard
     private bool hasSnapshot;
     private string readyText = Strings.TonightReadyNone;
     private int ready;
-    private TodoRow? msq;
+    // The next main scenario quest; inside a branch region one row per open route, in route order. Empty once complete.
+    private readonly List<TodoRow> msq = [];
     private string? events;
     private readonly List<TodoRow> pinned = [];
 
@@ -139,14 +143,18 @@ public sealed class TonightCard
             ImGui.TextUnformatted(Strings.TonightMsqLabel);
         }
 
-        if (msq is null)
+        if (msq.Count == 0)
         {
             using var dim = Theme.PushText(Theme.AccentDim);
             ImGui.TextUnformatted(Strings.TonightMsqDone);
             return;
         }
 
-        Row(bundle, msq, 0);
+        // One row on a linear stretch; one per open route inside a branch region (ids clear of the pinned rows').
+        for (var i = 0; i < msq.Count; i++)
+        {
+            Row(bundle, msq[i], i == 0 ? 0 : MsqRowIdBase + i);
+        }
     }
 
     private void DrawPinned(CatalogBundle bundle)
@@ -227,7 +235,7 @@ public sealed class TonightCard
             _ => string.Format(CultureInfo.CurrentCulture, Strings.TonightReadyFormat, readyNow),
         };
 
-        msq = null;
+        msq.Clear();
         events = null;
         pinned.Clear();
         hasSnapshot = session.ViewedSnapshot is not null;
@@ -261,8 +269,8 @@ public sealed class TonightCard
         {
             switch (section.Section)
             {
-                case TodoSection.Msq when section.Rows.Count > 0:
-                    msq = section.Rows[0];
+                case TodoSection.Msq:
+                    msq.AddRange(section.Rows);
                     break;
                 case TodoSection.Pinned:
                     foreach (var row in section.Rows)

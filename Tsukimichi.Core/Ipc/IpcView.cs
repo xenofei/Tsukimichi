@@ -28,7 +28,9 @@ public sealed class IpcView
     /// <summary>No catalog, no character: every answer is the not-ready one.</summary>
     public static readonly IpcView Empty = new(null, null, BlockerNames.Default);
 
-    private readonly Lazy<uint> msqNext;
+    private static readonly uint[] NoPositions = [];
+
+    private readonly Lazy<MsqPosition?> msq;
 
     /// <param name="catalog">The built catalog; null while it loads or after a failure.</param>
     /// <param name="states">The logged-in character's evaluations by row id; null or empty while nobody is logged in or the first evaluation runs.</param>
@@ -39,7 +41,7 @@ public sealed class IpcView
         Catalog = catalog;
         States = catalog is null ? NoStates : states ?? NoStates;
         Names = catalog is not null && !ReferenceEquals(names.Catalog, catalog) ? names with { Catalog = catalog } : names;
-        msqNext = new Lazy<uint>(ComputeMsqNext, LazyThreadSafetyMode.ExecutionAndPublication);
+        msq = new Lazy<MsqPosition?>(ComputeMsq, LazyThreadSafetyMode.ExecutionAndPublication);
     }
 
     public QuestCatalog? Catalog { get; }
@@ -121,10 +123,38 @@ public sealed class IpcView
     }
 
     /// <summary>
-    /// The row id of the logged-in character's next main scenario quest (<see cref="MsqProgress"/>); 0 once the
-    /// story is complete and when there is no answer (<see cref="IsReady"/> tells the two apart). Computed once per view.
+    /// The row id of the logged-in character's next main scenario quest (<see cref="MsqProgress"/>; inside a branch
+    /// region the first route's next quest); 0 once the story is complete and when there is no answer
+    /// (<see cref="IsReady"/> tells the two apart). Computed once per view.
     /// </summary>
-    public uint MsqNext() => msqNext.Value;
+    public uint MsqNext() => msq.Value?.Next?.RowId ?? 0;
+
+    /// <summary>
+    /// The row ids of every main scenario position (<see cref="MsqPosition.Positions"/>): the next quest alone on a
+    /// linear stretch, each open route's next quest in route order inside a branch region. Empty once the story is
+    /// complete and when there is no answer. A fresh array per call, so a caller may keep or change it.
+    /// </summary>
+    public uint[] MsqPositions()
+    {
+        if (msq.Value is not { } position)
+        {
+            return NoPositions;
+        }
+
+        var positions = position.Positions;
+        if (positions.Count == 0)
+        {
+            return NoPositions;
+        }
+
+        var ids = new uint[positions.Count];
+        for (var i = 0; i < ids.Length; i++)
+        {
+            ids[i] = positions[i].RowId;
+        }
+
+        return ids;
+    }
 
     /// <summary>
     /// Whether two evaluation sets differ in what a consumer sees: a quest added or gone, or a quest's state, its
@@ -180,13 +210,13 @@ public sealed class IpcView
         return status;
     }
 
-    private uint ComputeMsqNext()
+    private MsqPosition? ComputeMsq()
     {
         if (!IsReady || Catalog is not { } catalog)
         {
-            return 0;
+            return null;
         }
 
-        return MsqProgress.Compute(catalog, States)?.Next?.RowId ?? 0;
+        return MsqProgress.Compute(catalog, States);
     }
 }

@@ -120,6 +120,13 @@ public enum RouteOutcome : byte
 /// goes first, then the earlier in journal order (<see cref="JournalRef.SortKey"/>), then the lower row id. The
 /// target is therefore always last. A cycle in the data is broken by placing what is left in the same order.
 /// </para>
+/// <para>
+/// <b>Main scenario routes.</b> Inside a routed branch region of the main scenario (<see cref="MsqGraph"/>, Evercold
+/// on) each route is done in one go: a route quest is ordered by its route's first quest's level and then by route,
+/// so the route begun is finished before the next one starts, routes in their journal order. The MSQ milestone of a
+/// category that ends at or after the reconvergence quest therefore falls after every route. Before Evercold no
+/// region is routed and the order is exactly the rule above.
+/// </para>
 /// </summary>
 public sealed class UnlockRoute
 {
@@ -309,6 +316,7 @@ public sealed class UnlockRoute
 
         private readonly Dictionary<uint, Choice> choices = [];
         private readonly HashSet<uint> choosing = [];
+        private readonly MsqGraph msq = MsqGraph.For(catalog);
 
         public QuestState StateOf(uint rowId) =>
             states.TryGetValue(rowId, out var evaluation) ? evaluation.State : QuestState.Unknown;
@@ -393,7 +401,7 @@ public sealed class UnlockRoute
                 pending[id] = count;
             }
 
-            var ready = new PriorityQueue<uint, (byte Level, int SortKey, uint RowId)>();
+            var ready = new PriorityQueue<uint, (byte Level, int Route, int SortKey, uint RowId)>();
             foreach (var (id, count) in pending)
             {
                 if (count == 0)
@@ -433,10 +441,16 @@ public sealed class UnlockRoute
             return order;
         }
 
-        private (byte Level, int SortKey, uint RowId) Key(uint rowId)
+        /// <summary>
+        /// The ordering key: level, then journal order, then row id; a main scenario route quest takes its route's
+        /// entry level and its route's place, so a route is walked to its end before the next begins.
+        /// </summary>
+        private (byte Level, int Route, int SortKey, uint RowId) Key(uint rowId)
         {
             var quest = catalog.ByRowId[rowId];
-            return (quest.Level, quest.Journal.SortKey, rowId);
+            return msq.RouteOf(rowId) is { } route
+                ? (route.First.Level, route.Index + 1, quest.Journal.SortKey, rowId)
+                : (quest.Level, 0, quest.Journal.SortKey, rowId);
         }
 
         /// <summary>The previous quests of <paramref name="quest"/> the route must still do: every one for All, the chosen branch for Any.</summary>

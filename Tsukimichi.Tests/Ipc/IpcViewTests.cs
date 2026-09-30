@@ -45,6 +45,7 @@ public class IpcViewTests
         Assert.Equal("Tsukimichi.GetStateName", IpcChannels.GetStateNameGate);
         Assert.Equal("Tsukimichi.GetBlockers", IpcChannels.GetBlockersGate);
         Assert.Equal("Tsukimichi.GetMsqPosition", IpcChannels.GetMsqPositionGate);
+        Assert.Equal("Tsukimichi.GetMsqPositions", IpcChannels.GetMsqPositionsGate);
         Assert.Equal("Tsukimichi.OpenQuest", IpcChannels.OpenQuestGate);
         Assert.Equal("Tsukimichi.StatesChanged", IpcChannels.StatesChangedGate);
     }
