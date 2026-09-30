@@ -9,7 +9,7 @@ namespace Tsukimichi.Ui;
 /// </summary>
 static partial class Strings
 {
-    public const string AddedIn = FilterNames.AddedIn;
+    public static string AddedIn => FilterNames.Display(FilterNames.AddedIn);
     public static string AddedInTooltip => Loc.Get("AddedInTooltip");
     public static string AddedInAny => Loc.Get("AddedInAny");
 

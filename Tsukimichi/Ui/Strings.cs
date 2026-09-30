@@ -133,13 +133,13 @@ public static partial class Strings
 
     // Quick views (one-click presets at the top of the filter panel)
     public static string Presets => Loc.Get("Presets");
-    public const string PresetFeatureQuests = FilterNames.FeatureQuests;
-    public const string PresetLevelBand = FilterNames.LevelBand;
-    public const string PresetStalled = FilterNames.Stalled;
+    public static string PresetFeatureQuests => FilterNames.Display(FilterNames.FeatureQuests);
+    public static string PresetLevelBand => FilterNames.Display(FilterNames.LevelBand);
+    public static string PresetStalled => FilterNames.Display(FilterNames.Stalled);
     public static string PresetFeatureQuestsTooltip => Loc.Get("PresetFeatureQuestsTooltip");
     public static string PresetLevelBandTooltip => Loc.Get("PresetLevelBandTooltip");
     public static string PresetStalledTooltip => Loc.Get("PresetStalledTooltip");
-    public const string PresetStorySidequests = FilterNames.StorySidequests;
+    public static string PresetStorySidequests => FilterNames.Display(FilterNames.StorySidequests);
     public static string PresetStorySidequestsTooltip => Loc.Get("PresetStorySidequestsTooltip");
 
     // The book badge on a story sidequest's table row. {0} = the side story (its first quest's name), {1} = place, {2} = length.
@@ -150,8 +150,8 @@ public static partial class Strings
     public static string StalledDaysTooltip => Loc.Get("StalledDaysTooltip");
 
     // Filter panel
-    public const string HideCompleted = FilterNames.HideCompleted;
-    public const string AvailableOnly = FilterNames.AvailableOnly;
+    public static string HideCompleted => FilterNames.Display(FilterNames.HideCompleted);
+    public static string AvailableOnly => FilterNames.Display(FilterNames.AvailableOnly);
     public static string Overrides => Loc.Get("Overrides");
     public static string OverrideInherit => Loc.Get("OverrideInherit");
     public static string OverrideOn => Loc.Get("OverrideOn");
@@ -164,20 +164,20 @@ public static partial class Strings
     public static string Advanced => Loc.Get("Advanced");
     public static string States => Loc.Get("States");
     public static string Expansions => Loc.Get("Expansions");
-    public const string LevelRange = FilterNames.LevelRange;
+    public static string LevelRange => FilterNames.Display(FilterNames.LevelRange);
     public static string LevelFormat => Loc.Get("LevelFormat");
     public static string LevelMaxFormat => Loc.Get("LevelMaxFormat");
 
     /// <summary>The level range filter's chip: {0} = lowest level, {1} = highest.</summary>
     public static string LevelRangeChipFormat => Loc.Get("LevelRangeChipFormat");
-    public const string JobCategory = FilterNames.JobCategory;
+    public static string JobCategory => FilterNames.Display(FilterNames.JobCategory);
     public static string JobAll => Loc.Get("JobAll");
     public static string JobDowDom => Loc.Get("JobDowDom");
     public static string JobDoh => Loc.Get("JobDoh");
     public static string JobDol => Loc.Get("JobDol");
     public static string JobCurrentOnly => Loc.Get("JobCurrentOnly");
     public static string JobCurrentOnlyTooltip => Loc.Get("JobCurrentOnlyTooltip");
-    public const string RewardKinds = FilterNames.RewardKinds;
+    public static string RewardKinds => FilterNames.Display(FilterNames.RewardKinds);
     public static string RewardHidden => Loc.Get("RewardHidden");
     public static string RewardShow => Loc.Get("RewardShow");
     public static string RewardOnly => Loc.Get("RewardOnly");
@@ -190,7 +190,7 @@ public static partial class Strings
     };
     public static string RepeatableOnly => Loc.Get("RepeatableOnly");
     public static string SeasonalActiveOnly => Loc.Get("SeasonalActiveOnly");
-    public const string IncludeUnlisted = FilterNames.IncludeUnlisted;
+    public static string IncludeUnlisted => FilterNames.Display(FilterNames.IncludeUnlisted);
     public static string PinnedOnly => Loc.Get("PinnedOnly");
     public static string PinnedFirst => Loc.Get("PinnedFirst");
     public static string Reset => Loc.Get("Reset");
@@ -229,10 +229,10 @@ public static partial class Strings
     public static string ChipStateSeparator => Loc.Get("ChipStateSeparator");
     /// <summary>{0} = number of excluded states beyond the named ones.</summary>
     public const string ChipStateMoreFormat = " +{0}";
-    public const string ChipExpansion = FilterNames.Expansion;
-    public const string ChipRepeatable = FilterNames.Repeatable;
-    public const string ChipSeasonal = FilterNames.SeasonalActive;
-    public const string ChipPinned = FilterNames.Pinned;
+    public static string ChipExpansion => FilterNames.Display(FilterNames.Expansion);
+    public static string ChipRepeatable => FilterNames.Display(FilterNames.Repeatable);
+    public static string ChipSeasonal => FilterNames.Display(FilterNames.SeasonalActive);
+    public static string ChipPinned => FilterNames.Display(FilterNames.Pinned);
     public static string ChipTooltip => Loc.Get("ChipTooltip");
     /// <summary>First line of the state chip's tooltip; the excluded states follow, all of them, however many the chip names.</summary>
     /// <summary>{0} = every hidden state, joined by ChipStateSeparator.</summary>

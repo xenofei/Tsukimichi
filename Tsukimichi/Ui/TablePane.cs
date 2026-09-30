@@ -1076,6 +1076,32 @@ public sealed class TablePane : IDisposable
         }
     }
 
+    /// <summary>
+    /// The chips' labels in the UI language: the guard names filters by their English identities
+    /// (<see cref="FilterNames"/>), which clearing one still switches on. Rebuilt when the list or the language changes.
+    /// </summary>
+    private System.Collections.Generic.IReadOnlyList<string> EmptyChipLabels(System.Collections.Generic.IReadOnlyList<string> filters)
+    {
+        if (!ReferenceEquals(filters, emptyChipSource) || emptyChipLanguage != Localization.Loc.Version)
+        {
+            emptyChipSource = filters;
+            emptyChipLanguage = Localization.Loc.Version;
+            var labels = new string[filters.Count];
+            for (var i = 0; i < labels.Length; i++)
+            {
+                labels[i] = FilterNames.Display(filters[i]);
+            }
+
+            emptyChipLabels = labels;
+        }
+
+        return emptyChipLabels;
+    }
+
+    private System.Collections.Generic.IReadOnlyList<string>? emptyChipSource;
+    private int emptyChipLanguage = -1;
+    private System.Collections.Generic.IReadOnlyList<string> emptyChipLabels = [];
+
     private void DrawEmpty(EmptyReason empty)
     {
         ui.RecordWindow(UiRects.Table);
@@ -1087,7 +1113,7 @@ public sealed class TablePane : IDisposable
 
         // Heading, one line, the offending filters as chips (each clears only itself) and Reset (T16, ui-revamp §2.8).
         var body = empty.Filters.Count > 0 ? Strings.EmptyFiltersHiding : Strings.NothingMatchesCombination;
-        var clicked = EmptyState.DrawWithAction(Strings.EmptyNothingMatchesHeading, body, Strings.ResetFilters, empty.Filters, QuestState.Blocked);
+        var clicked = EmptyState.DrawWithAction(Strings.EmptyNothingMatchesHeading, body, Strings.ResetFilters, EmptyChipLabels(empty.Filters), QuestState.Blocked);
         if (clicked == EmptyState.ActionClicked)
         {
             resetFilters();

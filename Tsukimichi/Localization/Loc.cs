@@ -241,7 +241,7 @@ public static class Loc
 
     // Spans pseudo-localization must keep as they are: composite format items, printf specifiers, ImGui ids, the
     // combo separator and line breaks.
-    private static readonly Regex Protected = new(@"\{[^{}]*\}|%[-+ #0]*\d*(?:\.\d+)?[a-zA-Z%]|##.*$|\0|\n", RegexOptions.Compiled | RegexOptions.Singleline);
+    private static readonly Regex Protected = new(@"\{[^{}]*\}|%[-+#0]*\d*(?:\.\d+)?[dfsuxXi%]|##.*$|\0|\n", RegexOptions.Compiled | RegexOptions.Singleline);
 
     /// <summary>
     /// English stretched by 40 % and bracketed: letters swap to accented look-alikes, a run of "·" pads the end, and

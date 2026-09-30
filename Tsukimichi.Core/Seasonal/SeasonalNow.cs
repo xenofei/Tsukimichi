@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Storage;
+using Tsukimichi.Core.Localization;
 
 namespace Tsukimichi.Core.Seasonal;
 
@@ -65,13 +66,17 @@ public static class SeasonalNow
 
     private const string EventsSuffix = " Events";
 
-    // Display vocabulary (English in Core, as the todo hints are).
-    private const string EndsFormat = "Ends {0} (Lodestone)";
-    private const string NamedEndsFormat = "{0}: ends {1} (Lodestone)";
-    private const string AnnouncedFormat = "announced to end {0} (Lodestone)";
-    public const string RunningNow = "running now";
-    private const string NoticeFormat = "{0} is running: {1} {2} ready";
-    private const string NoticeEndFormat = " (ends {0})";
+    // Display vocabulary: English here, the UI language through CoreText (keys Core.Seasonal.*).
+    private static string EndsFormat => CoreText.T("Core.Seasonal.Ends", "Ends {0} (Lodestone)");
+    private static string NamedEndsFormat => CoreText.T("Core.Seasonal.NamedEnds", "{0}: ends {1} (Lodestone)");
+    private static string AnnouncedFormat => CoreText.T("Core.Seasonal.Announced", "announced to end {0} (Lodestone)");
+    public static string RunningNow => CoreText.T("Core.Seasonal.RunningNow", "running now");
+    private static string NoticeFormat => CoreText.T("Core.Seasonal.Notice", "{0} is running: {1} quests ready");
+    private static string NoticeOneFormat => CoreText.T("Core.Seasonal.NoticeOne", "{0} is running: {1} quest ready");
+    private static string NoticeEndFormat => CoreText.T("Core.Seasonal.NoticeEnd", " (ends {0})");
+
+    /// <summary>The culture dates print in: the UI language's ("en-US" in English, where "Aug 28" reads as before).</summary>
+    private static CultureInfo DateCulture => CultureInfo.GetCultureInfo(CoreText.T("Core.Culture", "en-US"));
 
     /// <summary>
     /// The events <paramref name="snapshot"/> was captured with as running: right for the live character only. For a
@@ -185,7 +190,9 @@ public static class SeasonalNow
 
     /// <summary>"Aug 28", or "Jan 14, 2027" when the end falls in another year than <paramref name="nowUtc"/>; the UTC date.</summary>
     public static string DateText(DateTime endUtc, DateTime nowUtc) =>
-        endUtc.ToString(endUtc.Year == nowUtc.Year ? "MMM d" : "MMM d, yyyy", CultureInfo.InvariantCulture);
+        endUtc.ToString(
+            endUtc.Year == nowUtc.Year ? CoreText.T("Core.Seasonal.DateFormat", "MMM d") : CoreText.T("Core.Seasonal.DateYearFormat", "MMM d, yyyy"),
+            DateCulture);
 
     /// <summary>
     /// The Todo overlay's line under its "Event quests running now" header: "Ends Aug 28 (Lodestone)", or with the
@@ -218,7 +225,7 @@ public static class SeasonalNow
     public static string NoticeText(RunningFestival festival, DateTime nowUtc)
     {
         ArgumentNullException.ThrowIfNull(festival);
-        var text = string.Format(CultureInfo.InvariantCulture, NoticeFormat, festival.Name, festival.ReadyCount, festival.ReadyCount == 1 ? "quest" : "quests");
+        var text = string.Format(CultureInfo.CurrentCulture, festival.ReadyCount == 1 ? NoticeOneFormat : NoticeFormat, festival.Name, festival.ReadyCount);
         return festival.AnnouncedEndUtc is { } end
             ? text + string.Format(CultureInfo.InvariantCulture, NoticeEndFormat, DateText(end, nowUtc))
             : text;
@@ -460,7 +467,7 @@ public static class SeasonalNow
             .FirstOrDefault();
         if (genre is null)
         {
-            return "Seasonal event " + id.ToString(CultureInfo.InvariantCulture);
+            return string.Format(CultureInfo.InvariantCulture, CoreText.T("Core.Seasonal.EventId", "Seasonal event {0}"), id);
         }
 
         return genre.EndsWith(EventsSuffix, StringComparison.Ordinal) && genre.Length > EventsSuffix.Length

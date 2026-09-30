@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Storage;
+using Tsukimichi.Core.Localization;
 
 namespace Tsukimichi.Core.Runtime;
 
@@ -202,21 +203,23 @@ public static class AbandonedLedger
     {
         if (age < TimeSpan.FromMinutes(1))
         {
-            return "just now";
+            return CoreText.T("Core.Age.JustNow", "just now");
         }
 
         if (age < TimeSpan.FromHours(1))
         {
-            return ((int)age.TotalMinutes).ToString(CultureInfo.InvariantCulture) + " min ago";
+            return string.Format(CultureInfo.CurrentCulture, CoreText.T("Core.Age.Minutes", "{0} min ago"), (int)age.TotalMinutes);
         }
 
         if (age < TimeSpan.FromDays(1))
         {
-            return ((int)age.TotalHours).ToString(CultureInfo.InvariantCulture) + " h ago";
+            return string.Format(CultureInfo.CurrentCulture, CoreText.T("Core.Age.Hours", "{0} h ago"), (int)age.TotalHours);
         }
 
         var days = (int)age.TotalDays;
-        return days == 1 ? "1 day ago" : days.ToString(CultureInfo.InvariantCulture) + " days ago";
+        return days == 1
+            ? CoreText.T("Core.Age.OneDay", "1 day ago")
+            : string.Format(CultureInfo.CurrentCulture, CoreText.T("Core.Age.Days", "{0} days ago"), days);
     }
 
     private static DateTime AsUtc(DateTime time) => time.Kind switch

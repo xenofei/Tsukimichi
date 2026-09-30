@@ -36,7 +36,7 @@ static partial class Strings
     public static string SpoilerMaskedCountFormat => Loc.Get("SpoilerMaskedCountFormat");
 
     // ---- Sprout mode quick view ----
-    public const string PresetSprout = FilterNames.Sprout;
+    public static string PresetSprout => FilterNames.Display(FilterNames.Sprout);
     public static string PresetSproutTooltip => Loc.Get("PresetSproutTooltip");
     public static string SproutReachFormat => Loc.Get("SproutReachFormat");
     public static string SproutFoldedTooltip => Loc.Get("SproutFoldedTooltip");

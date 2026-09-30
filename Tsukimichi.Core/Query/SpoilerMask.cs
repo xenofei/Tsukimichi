@@ -4,6 +4,7 @@ using System.Text;
 using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Runtime;
+using Tsukimichi.Core.Localization;
 
 namespace Tsukimichi.Core.Query;
 
@@ -41,16 +42,16 @@ public sealed record SpoilerOptions(bool HideNames = true, int Ahead = SpoilerOp
 /// </summary>
 public sealed class SpoilerMask
 {
-    /// <summary>"Main scenario quest (Lv 83)": what a masked quest is called everywhere its name would print.</summary>
-    public const string PlaceholderFormat = "Main scenario quest (Lv {0})";
+    /// <summary>"Main scenario quest (Lv 83)": what a masked quest is called everywhere its name would print, in the UI language.</summary>
+    public static string PlaceholderFormat => CoreText.T("Core.Spoiler.Placeholder", "Main scenario quest (Lv {0})");
 
     /// <summary>Masks nothing and shows every banner: no catalog yet, or the shield turned off.</summary>
     public static readonly SpoilerMask None = new(SpoilerOptions.Off, FrozenDictionary<uint, byte>.Empty, byte.MaxValue, 0);
 
-    // One placeholder (and its lowercased search form) per display level, shared by every mask: a rebuild per session
-    // version allocates no strings. Written racily at worst with equal values.
-    private static readonly string?[] PlaceholderByLevel = new string?[byte.MaxValue + 1];
-    private static readonly string?[] SearchNameByLevel = new string?[byte.MaxValue + 1];
+    // One placeholder (and its lowercased search form) per display level and language, shared by every mask: a
+    // rebuild per session version allocates no strings. Written racily at worst with equal values.
+    private static readonly TextCache<string?[]> PlaceholderByLevel = new(static () => new string?[byte.MaxValue + 1]);
+    private static readonly TextCache<string?[]> SearchNameByLevel = new(static () => new string?[byte.MaxValue + 1]);
 
     /// <summary>Masked row id to the display level its placeholder prints.</summary>
     private readonly IReadOnlyDictionary<uint, byte> masked;
@@ -90,10 +91,10 @@ public sealed class SpoilerMask
     }
 
     private static string PlaceholderFor(byte level) =>
-        PlaceholderByLevel[level] ??= string.Format(CultureInfo.InvariantCulture, PlaceholderFormat, level);
+        PlaceholderByLevel.Value[level] ??= string.Format(CultureInfo.InvariantCulture, PlaceholderFormat, level);
 
     private static string SearchNameFor(byte level) =>
-        SearchNameByLevel[level] ??= PlaceholderFor(level).ToLowerInvariant();
+        SearchNameByLevel.Value[level] ??= PlaceholderFor(level).ToLowerInvariant();
 
     /// <summary>Whether the quest's name is hidden.</summary>
     public bool IsMasked(QuestRecord quest)

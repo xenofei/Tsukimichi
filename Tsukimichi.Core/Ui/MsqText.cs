@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
+using Tsukimichi.Core.Localization;
 
 namespace Tsukimichi.Core.Ui;
 
@@ -14,11 +15,10 @@ namespace Tsukimichi.Core.Ui;
 /// </summary>
 public static class MsqText
 {
-    public const string RoutePrefix = "route ";
     public const string NotStartedShort = "—";
-    public const string DoneShort = "done";
-    public const string NotStarted = "not started";
-    public const string Done = "done";
+    public static string DoneShort => CoreText.T("Core.Msq.DoneShort", "done");
+    public static string NotStarted => CoreText.T("Core.Msq.NotStarted", "not started");
+    public static string Done => CoreText.T("Core.Msq.Done", "done");
     public const string Separator = " · ";
 
     /// <summary>"3/9", "—" before the route is started, "done" once it is.</summary>
@@ -41,7 +41,7 @@ public static class MsqText
         {
             MsqRouteStatus.NotStarted => NotStarted,
             MsqRouteStatus.Done => Done,
-            _ => string.Format(CultureInfo.CurrentCulture, "{0:N0} of {1:N0}", route.Done, route.Total),
+            _ => string.Format(CultureInfo.CurrentCulture, CoreText.T("Core.Msq.Progress", "{0:N0} of {1:N0}"), route.Done, route.Total),
         };
     }
 
@@ -50,7 +50,7 @@ public static class MsqText
     {
         ArgumentNullException.ThrowIfNull(route);
         ArgumentNullException.ThrowIfNull(name);
-        return RoutePrefix + name(route.First);
+        return string.Format(CultureInfo.CurrentCulture, CoreText.T("Core.Msq.Route", "route {0}"), name(route.First));
     }
 
     /// <summary>The pill's routes: "route A 3/9 · route B — · route C done". Empty on a linear stretch.</summary>
@@ -75,10 +75,10 @@ public static class MsqText
                 continue;
             }
 
-            var line = RouteName(route.Route, name) + ": " + Long(route);
+            var line = string.Format(CultureInfo.CurrentCulture, CoreText.T("Core.Msq.RouteLine", "{0}: {1}"), RouteName(route.Route, name), Long(route));
             if (route.Next is { } next)
             {
-                line += Separator + "next: " + name(next) + " (" + StateNames.Name(route.State, next) + ")";
+                line += Separator + string.Format(CultureInfo.CurrentCulture, CoreText.T("Core.Msq.Next", "next: {0} ({1})"), name(next), StateNames.Name(route.State, next));
             }
 
             lines.Add(line);
@@ -100,9 +100,13 @@ public static class MsqText
             return string.Empty;
         }
 
-        var need = branch.JoinKind == JoinKind.Any ? "once one is done" : "once all are done";
-        var left = position.RoutesToJoin == 1 ? "1 route to go" : string.Format(CultureInfo.CurrentCulture, "{0:N0} routes to go", position.RoutesToJoin);
-        return "The routes meet again at " + name(branch.Join) + " " + need + " (" + left + ")";
+        var left = position.RoutesToJoin == 1
+            ? CoreText.T("Core.Msq.OneRouteToGo", "1 route to go")
+            : string.Format(CultureInfo.CurrentCulture, CoreText.T("Core.Msq.RoutesToGo", "{0:N0} routes to go"), position.RoutesToJoin);
+        var format = branch.JoinKind == JoinKind.Any
+            ? CoreText.T("Core.Msq.JoinAny", "The routes meet again at {0} once one is done ({1})")
+            : CoreText.T("Core.Msq.JoinAll", "The routes meet again at {0} once all are done ({1})");
+        return string.Format(CultureInfo.CurrentCulture, format, name(branch.Join), left);
     }
 
     /// <summary>

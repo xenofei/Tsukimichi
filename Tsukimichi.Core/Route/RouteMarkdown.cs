@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Localization;
 
 namespace Tsukimichi.Core.Route;
 
@@ -27,19 +28,20 @@ public static class RouteMarkdown
         ArgumentNullException.ThrowIfNull(questName);
 
         var sb = new StringBuilder();
-        sb.Append("**Route to ").Append(Escape(route.Target.Label.Length > 0 ? route.Target.Label : "quest")).Append("**");
+        var target = Escape(route.Target.Label.Length > 0 ? route.Target.Label : CoreText.T("Core.Route.QuestFallback", "quest"));
+        sb.Append("**").Append(string.Format(CultureInfo.CurrentCulture, CoreText.T("Core.Route.Title", "Route to {0}"), target)).Append("**");
         switch (route.Outcome)
         {
             case RouteOutcome.AlreadyDone:
-                return sb.Append(" · already unlocked").ToString();
+                return sb.Append(" · ").Append(CoreText.T("Core.Route.AlreadyUnlocked", "already unlocked")).ToString();
             case RouteOutcome.NoQuest:
-                return sb.Append(" · no quest known to unlock it").ToString();
+                return sb.Append(" · ").Append(CoreText.T("Core.Route.NoQuest", "no quest known to unlock it")).ToString();
         }
 
         sb.Append(" · ").Append(route.Summary.Text);
         if (route.Outcome == RouteOutcome.LockedOut)
         {
-            sb.Append(" · includes a quest that is locked out");
+            sb.Append(" · ").Append(CoreText.T("Core.Route.IncludesLockedOut", "includes a quest that is locked out"));
         }
 
         sb.Append('\n');
@@ -51,35 +53,42 @@ public static class RouteMarkdown
             if (first || !ReferenceEquals(step.Milestone, milestone))
             {
                 milestone = step.Milestone;
-                sb.Append('\n').Append('*').Append(milestone is null ? "After the main scenario" : "Main scenario: " + Escape(milestone.Name)).Append("*\n");
+                sb.Append('\n').Append('*').Append(milestone is null
+                    ? CoreText.T("Core.Route.AfterMainScenario", "After the main scenario")
+                    : string.Format(CultureInfo.CurrentCulture, CoreText.T("Core.Route.Milestone", "Main scenario: {0}"), Escape(milestone.Name))).Append("*\n");
                 first = false;
             }
 
-            var name = catalog.GetByRowId(step.RowId) is { } quest ? questName(quest) : "quest " + step.RowId.ToString(CultureInfo.InvariantCulture);
-            sb.Append((i + 1).ToString(CultureInfo.InvariantCulture)).Append(". Lv ").Append(step.DisplayLevel.ToString(CultureInfo.InvariantCulture))
+            var name = catalog.GetByRowId(step.RowId) is { } quest ? questName(quest) : QuestId(step.RowId);
+            sb.Append((i + 1).ToString(CultureInfo.InvariantCulture)).Append(". ")
+                .Append(string.Format(CultureInfo.CurrentCulture, CoreText.T("Core.Route.Level", "Lv {0}"), step.DisplayLevel))
                 .Append(" · ").Append(Escape(name));
             if (step.IsMainScenario)
             {
-                sb.Append(" (MSQ)");
+                sb.Append(' ').Append(CoreText.T("Core.Route.MsqMark", "(MSQ)"));
             }
 
             if (step.IsTarget)
             {
-                sb.Append(" — target");
+                sb.Append(" — ").Append(CoreText.T("Core.Route.TargetMark", "target"));
             }
 
             sb.Append('\n');
             foreach (var alternative in step.Alternatives)
             {
-                var other = catalog.GetByRowId(alternative.RowId) is { } q ? questName(q) : "quest " + alternative.RowId.ToString(CultureInfo.InvariantCulture);
-                sb.Append("   - or instead: ").Append(Escape(other)).Append(" (")
-                    .Append(alternative.RemainingCount.ToString(CultureInfo.InvariantCulture))
-                    .Append(alternative.RemainingCount == 1 ? " quest)" : " quests)").Append('\n');
+                var other = catalog.GetByRowId(alternative.RowId) is { } q ? questName(q) : QuestId(alternative.RowId);
+                var format = alternative.RemainingCount == 1
+                    ? CoreText.T("Core.Route.OrInsteadOne", "or instead: {0} ({1} quest)")
+                    : CoreText.T("Core.Route.OrInstead", "or instead: {0} ({1} quests)");
+                sb.Append("   - ").Append(string.Format(CultureInfo.CurrentCulture, format, Escape(other), alternative.RemainingCount)).Append('\n');
             }
         }
 
         return sb.ToString().TrimEnd('\n');
     }
+
+    private static string QuestId(uint rowId) =>
+        string.Format(CultureInfo.InvariantCulture, CoreText.T("Core.Route.QuestId", "quest {0}"), rowId);
 
     /// <summary>Backslashes the characters Markdown would read as emphasis, links or code in a quest name.</summary>
     private static string Escape(string text)

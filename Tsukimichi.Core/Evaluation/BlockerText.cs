@@ -1,4 +1,5 @@
 using System.Globalization;
+using Tsukimichi.Core.Localization;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Ui;
@@ -34,6 +35,11 @@ namespace Tsukimichi.Core.Evaluation;
 /// A quest whose state is Not checked or Locked out keeps the evaluator's own reason (the veil or the lock), since
 /// nothing else about it is decided.
 /// </para>
+/// <para>
+/// The phrases are English here and follow the UI language through <see cref="CoreText"/> (keys
+/// <c>Core.Blocker.*</c>); each is one format string, so a language can move the name it carries. The separator stays
+/// " · " in every language: the table's status column splits on it.
+/// </para>
 /// </summary>
 public static class BlockerText
 {
@@ -43,15 +49,14 @@ public static class BlockerText
     /// <summary>The journal sequence of a quest on its last step (<see cref="QuestRecord.StepCount"/>).</summary>
     public const byte FinalSequence = 255;
 
-    private const string AfterMsqPrefix = "after MSQ: ";
-    private const string AfterPrefix = "after: ";
-    private const string ClosedByPrefix = "closed by: ";
-
     /// <summary>The reason a retired quest is locked out; the "Removed from the game" node and the detail pane use the same words.</summary>
-    public const string RemovedFromGame = "removed from the game";
-    private const string AnotherChoice = "another choice";
-    private const string AnotherJob = "another job";
-    private const string NotCheckedPrefix = "Not checked: ";
+    public static string RemovedFromGame => CoreText.T("Core.Blocker.RemovedFromGame", "removed from the game");
+
+    private static string AnotherChoice => CoreText.T("Core.Blocker.AnotherChoice", "another choice");
+    private static string AnotherJob => CoreText.T("Core.Blocker.AnotherJob", "another job");
+
+    private static string F(string key, string english, params object?[] args) =>
+        string.Format(CultureInfo.CurrentCulture, CoreText.T(key, english), args);
 
     private static readonly RequirementKind[] Priority =
     [
@@ -90,28 +95,32 @@ public static class BlockerText
         ArgumentNullException.ThrowIfNull(quest);
         ArgumentNullException.ThrowIfNull(names);
 
-        RequirementResult? decisive;
-        switch (evaluation.State)
-        {
-            case QuestState.Ready:
-            case QuestState.ReadyOnOtherJob:
-            case QuestState.Accepted:
-            case QuestState.DoneThisCycle:
-            case QuestState.Completed:
-                return string.Empty;
-
-            case QuestState.Foreclosed:
-            case QuestState.Unknown:
-                decisive = evaluation.NextStep ?? Decisive(evaluation.Requirements);
-                break;
-
-            default:
-                decisive = Decisive(evaluation.Requirements) ?? evaluation.NextStep;
-                break;
-        }
-
+        var decisive = Decide(evaluation);
         return decisive is null ? string.Empty : Phrase(decisive, evaluation.State, quest, names, states);
     }
+
+    /// <summary>The requirement <see cref="For"/> names; null for a state that needs no reason.</summary>
+    private static RequirementResult? Decide(QuestEvaluation evaluation) => evaluation.State switch
+    {
+        QuestState.Ready or QuestState.ReadyOnOtherJob or QuestState.Accepted or QuestState.DoneThisCycle or QuestState.Completed => null,
+        QuestState.Foreclosed or QuestState.Unknown => evaluation.NextStep ?? Decisive(evaluation.Requirements),
+        _ => Decisive(evaluation.Requirements) ?? evaluation.NextStep,
+    };
+
+    /// <summary>
+    /// What the plugin could not check for a requirement ("achievements", "mount"), or null when it did check it; the
+    /// phrase is "Not checked: achievements", and the status line writes the item alone after the state name.
+    /// </summary>
+    private static string? NotCheckedItem(Requirement requirement) => requirement switch
+    {
+        CustomDeliveryRankRequirement { ActualRank: null } => CoreText.T("Core.Blocker.NotChecked.CustomDeliveryRank", "custom delivery rank"),
+        CarrierLevelRequirement { ActualLevel: null } => CoreText.T("Core.Blocker.NotChecked.CarrierLevel", "carrier level"),
+        MountRequirement { HasMount: null } => CoreText.T("Core.Blocker.NotChecked.Mount", "mount"),
+        HouseRequirement { HasHouse: null } => CoreText.T("Core.Blocker.NotChecked.House", "house"),
+        AchievementRequirement => CoreText.T("Core.Blocker.NotChecked.Achievements", "achievements"),
+        AcceptConditionRequirement => CoreText.T("Core.Blocker.NotChecked.AcceptCondition", "accept condition"),
+        _ => null,
+    };
 
     /// <summary>
     /// What follows the state name: the blocker from <see cref="For"/>, or "step 3 of 7" for a quest in the journal.
@@ -141,10 +150,10 @@ public static class BlockerText
         }
 
         var reason = Reason(evaluation, quest, names, states);
-        if (evaluation.State == QuestState.Unknown && reason.StartsWith(NotCheckedPrefix, StringComparison.Ordinal))
+        if (evaluation.State == QuestState.Unknown && Decide(evaluation) is { } decisive && NotCheckedItem(decisive.Req) is { } item)
         {
             // "Not checked · achievements", not "Not checked · Not checked: achievements".
-            reason = reason[NotCheckedPrefix.Length..];
+            reason = item;
         }
 
         return reason.Length == 0 ? name : name + Separator + reason;
@@ -163,11 +172,11 @@ public static class BlockerText
 
         if (stepCount == 0)
         {
-            return "step " + seq.ToString(CultureInfo.InvariantCulture);
+            return F("Core.Blocker.Step", "step {0}", seq);
         }
 
         var step = seq == FinalSequence ? stepCount : Math.Clamp(seq, (byte)1, stepCount);
-        return string.Create(CultureInfo.InvariantCulture, $"step {step} of {stepCount}");
+        return F("Core.Blocker.StepOf", "step {0} of {1}", step, stepCount);
     }
 
     /// <summary>The first unmet requirement in <see cref="Priority"/> order.</summary>
@@ -187,44 +196,52 @@ public static class BlockerText
         return null;
     }
 
-    private static string Phrase(RequirementResult result, QuestState state, QuestRecord quest, BlockerNames names, IReadOnlyDictionary<uint, QuestEvaluation>? states) =>
-        result.Req switch
+    private static string Phrase(RequirementResult result, QuestState state, QuestRecord quest, BlockerNames names, IReadOnlyDictionary<uint, QuestEvaluation>? states)
+    {
+        if (NotCheckedItem(result.Req) is { } item)
+        {
+            return F("Core.Blocker.NotChecked", "Not checked: {0}", item);
+        }
+
+        return result.Req switch
         {
             RetiredRequirement => RemovedFromGame,
-            ForeclosureRequirement f => ClosedByPrefix + (f.CompletedLockIds.Length > 0 ? QuestName(names, f.CompletedLockIds[0]) : AnotherChoice),
-            ExpansionCapRequirement e => "Expansion: " + names.Expansion(e.Expansion),
-            LevelCapRequirement l => string.Create(CultureInfo.InvariantCulture, $"Lv {l.Level}, above your cap"),
+            ForeclosureRequirement f => F("Core.Blocker.ClosedBy", "closed by: {0}", f.CompletedLockIds.Length > 0 ? QuestName(names, f.CompletedLockIds[0]) : AnotherChoice),
+            ExpansionCapRequirement e => F("Core.Blocker.Expansion", "Expansion: {0}", names.Expansion(e.Expansion)),
+            LevelCapRequirement l => F("Core.Blocker.LevelCap", "Lv {0}, above your cap", l.Level),
             PreviousQuestsRequirement p => Prerequisite(p, names, states),
             ClassJobRequirement c => Job(c, quest, names),
             LevelRequirement l => Level(l.Level, quest, names),
-            GrandCompanyRequirement g => "Grand Company: " + names.GrandCompany(g.GrandCompany),
-            GrandCompanyRankRequirement g => "Grand Company: " + names.GrandCompanyRank(g.RequiredRank),
-            TribeRankRequirement t => "Rank: " + names.TribeRank(t.RequiredRank) + WithTribe(t.Tribe, names),
-            TribeReputationRequirement t => string.Create(CultureInfo.InvariantCulture, $"Reputation: {Math.Max(0, t.RequiredValue - t.ActualValue)} more") + WithTribe(t.Tribe, names),
-            TribeAllowanceRequirement => "Allowance: none left today",
-            TribeDailyOfferRequirement => "Not offered today",
-            CustomDeliveryRankRequirement c => c.ActualRank is null ? NotCheckedPrefix + "custom delivery rank" : CustomDelivery(c, names),
-            CarrierLevelRequirement c => c.ActualLevel is null ? NotCheckedPrefix + "carrier level" : string.Create(CultureInfo.InvariantCulture, $"Delivery Moogle: carrier level {c.RequiredLevel}"),
+            GrandCompanyRequirement g => F("Core.Blocker.GrandCompany", "Grand Company: {0}", names.GrandCompany(g.GrandCompany)),
+            GrandCompanyRankRequirement g => F("Core.Blocker.GrandCompany", "Grand Company: {0}", names.GrandCompanyRank(g.RequiredRank)),
+            TribeRankRequirement t => names.Tribe(t.Tribe) is { Length: > 0 } tribe
+                ? F("Core.Blocker.TribeRankWith", "Rank: {0} with the {1}", names.TribeRank(t.RequiredRank), tribe)
+                : F("Core.Blocker.TribeRank", "Rank: {0}", names.TribeRank(t.RequiredRank)),
+            TribeReputationRequirement t => names.Tribe(t.Tribe) is { Length: > 0 } tribe
+                ? F("Core.Blocker.ReputationWith", "Reputation: {0} more with the {1}", Math.Max(0, t.RequiredValue - t.ActualValue), tribe)
+                : F("Core.Blocker.Reputation", "Reputation: {0} more", Math.Max(0, t.RequiredValue - t.ActualValue)),
+            TribeAllowanceRequirement => CoreText.T("Core.Blocker.Allowance", "Allowance: none left today"),
+            TribeDailyOfferRequirement => CoreText.T("Core.Blocker.NotOffered", "Not offered today"),
+            CustomDeliveryRankRequirement c => CustomDelivery(c, names),
+            CarrierLevelRequirement c => F("Core.Blocker.CarrierLevel", "Delivery Moogle: carrier level {0}", c.RequiredLevel),
             DutyCompletionRequirement d => Duty(d, names),
             SeasonalRequirement s => Seasonal(s, state),
-            MountRequirement m => m.HasMount is null ? NotCheckedPrefix + "mount" : "Mount",
-            HouseRequirement h => h.HasHouse is null ? NotCheckedPrefix + "house" : "House",
-            AchievementRequirement => NotCheckedPrefix + "achievements",
-            AcceptConditionRequirement => NotCheckedPrefix + "accept condition",
+            MountRequirement => CoreText.T("Core.Blocker.Mount", "Mount"),
+            HouseRequirement => CoreText.T("Core.Blocker.House", "House"),
             _ => result.Detail,
         };
+    }
 
     /// <summary>"Lv 80", or "Lv 80 on PLD" when the quest pins a job.</summary>
     private static string Level(byte level, QuestRecord quest, BlockerNames names)
     {
-        var text = "Lv " + level.ToString(CultureInfo.InvariantCulture);
         if (quest.ClassJobRequired == 0)
         {
-            return text;
+            return F("Core.Blocker.Level", "Lv {0}", level);
         }
 
         var job = names.JobAbbreviation(quest.ClassJobRequired);
-        return text + " on " + (job.Length > 0 ? job : AnotherJob);
+        return F("Core.Blocker.LevelOn", "Lv {0} on {1}", level, job.Length > 0 ? job : AnotherJob);
     }
 
     /// <summary>
@@ -241,30 +258,34 @@ public static class BlockerText
             }
 
             var required = names.JobAbbreviation(quest.ClassJobRequired);
-            return "Job: " + (required.Length > 0 ? required : AnotherJob) + YouAre(c.Job, names);
+            return JobPhrase(required.Length > 0 ? required : AnotherJob, c.Job, names);
         }
 
         // "Job: any Disciple of the Hand, you are WHM"; the sheet already opens some category names with "Any".
         var category = names.ClassJobCategory(c.CategoryId);
         if (category.Length == 0)
         {
-            return "Job: " + AnotherJob + YouAre(c.Job, names);
+            return JobPhrase(AnotherJob, c.Job, names);
         }
 
-        var any = category.StartsWith("any ", StringComparison.OrdinalIgnoreCase) ? string.Empty : "any ";
-        return "Job: " + any + category + YouAre(c.Job, names);
+        if (category.StartsWith("any ", StringComparison.OrdinalIgnoreCase))
+        {
+            return JobPhrase(category, c.Job, names);
+        }
+
+        var you = names.JobAbbreviation(c.Job);
+        return you.Length > 0
+            ? F("Core.Blocker.JobAnyYouAre", "Job: any {0}, you are {1}", category, you)
+            : F("Core.Blocker.JobAny", "Job: any {0}", category);
     }
 
-    private static string YouAre(byte job, BlockerNames names)
+    /// <summary>"Job: PLD, you are WHM", or "Job: PLD" when the current job has no abbreviation.</summary>
+    private static string JobPhrase(string required, byte job, BlockerNames names)
     {
-        var abbreviation = names.JobAbbreviation(job);
-        return abbreviation.Length > 0 ? ", you are " + abbreviation : string.Empty;
-    }
-
-    private static string WithTribe(byte tribe, BlockerNames names)
-    {
-        var name = names.Tribe(tribe);
-        return name.Length > 0 ? " with the " + name : string.Empty;
+        var you = names.JobAbbreviation(job);
+        return you.Length > 0
+            ? F("Core.Blocker.JobYouAre", "Job: {0}, you are {1}", required, you)
+            : F("Core.Blocker.Job", "Job: {0}", required);
     }
 
     /// <summary>
@@ -277,7 +298,7 @@ public static class BlockerText
         var ids = p.QuestIds;
         if (ids.Length == 0)
         {
-            return AfterPrefix + AnotherChoice;
+            return F("Core.Blocker.After", "after: {0}", AnotherChoice);
         }
 
         var chosen = ids[0];
@@ -306,8 +327,9 @@ public static class BlockerText
         }
 
         var quest = names.Catalog.GetByRowId(chosen);
-        var prefix = quest is not null && FeaturePresets.IsMainScenario(quest) ? AfterMsqPrefix : AfterPrefix;
-        return prefix + QuestName(names, chosen);
+        return quest is not null && FeaturePresets.IsMainScenario(quest)
+            ? F("Core.Blocker.AfterMsq", "after MSQ: {0}", QuestName(names, chosen))
+            : F("Core.Blocker.After", "after: {0}", QuestName(names, chosen));
     }
 
     private static bool IsDone(uint rowId, PreviousQuestsRequirement p, IReadOnlyDictionary<uint, QuestEvaluation>? states)
@@ -323,9 +345,10 @@ public static class BlockerText
     /// <summary>"Custom delivery: rank 4 with M'naago"; without a client name, "Custom delivery: rank 4".</summary>
     private static string CustomDelivery(CustomDeliveryRankRequirement c, BlockerNames names)
     {
-        var text = string.Create(CultureInfo.InvariantCulture, $"Custom delivery: rank {c.RequiredRank}");
         var npc = names.SatisfactionNpc(c.Npc);
-        return npc.Length > 0 ? text + " with " + npc : text;
+        return npc.Length > 0
+            ? F("Core.Blocker.CustomDeliveryWith", "Custom delivery: rank {0} with {1}", c.RequiredRank, npc)
+            : F("Core.Blocker.CustomDelivery", "Custom delivery: rank {0}", c.RequiredRank);
     }
 
     /// <summary>
@@ -336,15 +359,17 @@ public static class BlockerText
     {
         if (state == QuestState.Foreclosed)
         {
-            return "Seasonal: ended";
+            return CoreText.T("Core.Blocker.SeasonalEnded", "Seasonal: ended");
         }
 
         if (s.ChapterNotOpen)
         {
-            return "Seasonal: chapter not open yet";
+            return CoreText.T("Core.Blocker.SeasonalChapterNotOpen", "Seasonal: chapter not open yet");
         }
 
-        return s.ChapterOver ? "Seasonal: chapter over" : "Seasonal: not running";
+        return s.ChapterOver
+            ? CoreText.T("Core.Blocker.SeasonalChapterOver", "Seasonal: chapter over")
+            : CoreText.T("Core.Blocker.SeasonalNotRunning", "Seasonal: not running");
     }
 
     /// <summary>"Duty: The Vault" for the first duty with a name; otherwise how many are left to clear.</summary>
@@ -355,14 +380,14 @@ public static class BlockerText
             var name = names.Duty(id);
             if (name.Length > 0)
             {
-                return "Duty: " + name;
+                return F("Core.Blocker.Duty", "Duty: {0}", name);
             }
         }
 
         var remaining = d.Join == JoinKind.Any ? 1 : Math.Max(1, d.InstanceIds.Length - d.DoneCount);
-        return string.Create(CultureInfo.InvariantCulture, $"Duty: {remaining} to clear");
+        return F("Core.Blocker.DutiesToClear", "Duty: {0} to clear", remaining);
     }
 
     private static string QuestName(BlockerNames names, uint rowId) =>
-        names.Catalog.GetByRowId(rowId) is { Name.Length: > 0 } quest ? names.QuestName(quest) : "quest " + rowId.ToString(CultureInfo.InvariantCulture);
+        names.Catalog.GetByRowId(rowId) is { Name.Length: > 0 } quest ? names.QuestName(quest) : F("Core.Blocker.QuestId", "quest {0}", rowId);
 }

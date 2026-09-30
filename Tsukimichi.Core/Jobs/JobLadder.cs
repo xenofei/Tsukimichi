@@ -235,11 +235,21 @@ public sealed class JobLadder
         };
     }
 
-    /// <summary>A role quest by its journal genre or category name (English sheets; other languages get no role ladders).</summary>
+    /// <summary>
+    /// The JournalCategory row "Role Quests" ("ロールクエスト", "Rollenaufträge", …): every role quest genre sits under it,
+    /// in every client language.
+    /// </summary>
+    public const uint RoleQuestsCategory = 95;
+
+    /// <summary>
+    /// A role quest: its journal category is <see cref="RoleQuestsCategory"/>, which holds in every client language; an
+    /// English genre or category name that says "Role Quests" also counts (a catalog built without category ids).
+    /// </summary>
     public static bool IsRoleQuest(QuestRecord quest)
     {
         ArgumentNullException.ThrowIfNull(quest);
-        return quest.Journal.GenreName.Contains(RoleQuestsMarker, StringComparison.OrdinalIgnoreCase)
+        return quest.Journal.CategoryId == RoleQuestsCategory
+               || quest.Journal.GenreName.Contains(RoleQuestsMarker, StringComparison.OrdinalIgnoreCase)
                || quest.Journal.CategoryName.Contains(RoleQuestsMarker, StringComparison.OrdinalIgnoreCase);
     }
 

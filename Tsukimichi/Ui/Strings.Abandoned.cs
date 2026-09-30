@@ -29,7 +29,7 @@ static partial class Strings
     // ---- Filter ----
     public static string AbandonedOnly => Loc.Get("AbandonedOnly");
     public static string AbandonedOnlyTooltip => Loc.Get("AbandonedOnlyTooltip");
-    public const string AbandonedChip = FilterNames.Abandoned;
+    public static string AbandonedChip => FilterNames.Display(FilterNames.Abandoned);
 
     // ---- Chat ----
     /// <summary>{0} = the quest link; " (step 3 of 5)" follows the line.</summary>

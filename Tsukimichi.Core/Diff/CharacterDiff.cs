@@ -2,6 +2,7 @@ using System.Globalization;
 using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
+using Tsukimichi.Core.Localization;
 
 namespace Tsukimichi.Core.Diff;
 
@@ -67,9 +68,9 @@ public static class CharacterDiff
     public const int FeatureValue = 5;
     public const int UniqueRewardValue = 2;
 
-    public const string ReasonMainScenario = "Main scenario";
-    public const string ReasonFeature = "Unlock quest";
-    public const string ReasonSide = "Side quest";
+    public static string ReasonMainScenario => CoreText.T("Core.Diff.MainScenario", "Main scenario");
+    public static string ReasonFeature => CoreText.T("Core.Diff.Feature", "Unlock quest");
+    public static string ReasonSide => CoreText.T("Core.Diff.Side", "Side quest");
     public const string ReasonSeparator = " · ";
 
     /// <summary>
@@ -119,7 +120,10 @@ public static class CharacterDiff
 
         if (rewards > 0)
         {
-            parts.Add(rewards.ToString(CultureInfo.InvariantCulture) + (rewards == 1 ? " unique reward" : " unique rewards"));
+            parts.Add(string.Format(
+                CultureInfo.CurrentCulture,
+                rewards == 1 ? CoreText.T("Core.Diff.UniqueRewardOne", "{0} unique reward") : CoreText.T("Core.Diff.UniqueRewards", "{0} unique rewards"),
+                rewards));
         }
 
         return string.Join(ReasonSeparator, parts);

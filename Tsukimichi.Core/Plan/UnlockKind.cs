@@ -1,3 +1,5 @@
+using Tsukimichi.Core.Localization;
+
 namespace Tsukimichi.Core.Plan;
 
 /// <summary>
@@ -54,15 +56,15 @@ public static class UnlockKinds
     /// <summary>The display name: "Dungeon", "Alliance raid", "Field operation", ….</summary>
     public static string Name(UnlockKind kind) => kind switch
     {
-        UnlockKind.Dungeon => "Dungeon",
-        UnlockKind.Trial => "Trial",
-        UnlockKind.NormalRaid => "Raid",
-        UnlockKind.AllianceRaid => "Alliance raid",
-        UnlockKind.FieldOperation => "Field operation",
-        UnlockKind.Job => "Job",
-        UnlockKind.Society => "Allied society",
-        UnlockKind.Flying => "Flying",
-        UnlockKind.System => "System",
-        _ => "Other",
+        UnlockKind.Dungeon => CoreText.T("Core.Unlock.Dungeon", "Dungeon"),
+        UnlockKind.Trial => CoreText.T("Core.Unlock.Trial", "Trial"),
+        UnlockKind.NormalRaid => CoreText.T("Core.Unlock.NormalRaid", "Raid"),
+        UnlockKind.AllianceRaid => CoreText.T("Core.Unlock.AllianceRaid", "Alliance raid"),
+        UnlockKind.FieldOperation => CoreText.T("Core.Unlock.FieldOperation", "Field operation"),
+        UnlockKind.Job => CoreText.T("Core.Unlock.Job", "Job"),
+        UnlockKind.Society => CoreText.T("Core.Unlock.Society", "Allied society"),
+        UnlockKind.Flying => CoreText.T("Core.Unlock.Flying", "Flying"),
+        UnlockKind.System => CoreText.T("Core.Unlock.System", "System"),
+        _ => CoreText.T("Core.Unlock.Other", "Other"),
     };
 }

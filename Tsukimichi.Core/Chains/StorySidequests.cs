@@ -2,6 +2,7 @@ using System.Collections.Frozen;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Storage;
+using Tsukimichi.Core.Localization;
 
 namespace Tsukimichi.Core.Chains;
 
@@ -37,7 +38,9 @@ public sealed class StorySidequests
     public const uint SidequestSectionId = 3;
 
     /// <summary>Prefix of a side story's name, followed by its first quest's name.</summary>
-    public const string ChainNamePrefix = "Story: ";
+    /// <summary>A side story's name from its first quest's: "Story: A Mother's Love", in the UI language.</summary>
+    public static string StoryName(string title) =>
+        string.Format(System.Globalization.CultureInfo.CurrentCulture, CoreText.T("Core.Chain.Story", "Story: {0}"), title);
 
     public static readonly StorySidequests Empty = new(FrozenSet<uint>.Empty, [], FrozenDictionary<uint, (Chain, int)>.Empty, FrozenDictionary<uint, int>.Empty);
 
@@ -205,7 +208,7 @@ public sealed class StorySidequests
             }
 
             var rowIds = PlayOrder(component, requires);
-            var chain = new Chain(ChainNamePrefix + catalog.ByRowId[rowIds[0]].Name, rowIds) { IsStory = true };
+            var chain = new Chain(StoryName(catalog.ByRowId[rowIds[0]].Name), rowIds) { IsStory = true };
             chains.Add(chain);
             for (var i = 0; i < rowIds.Length; i++)
             {

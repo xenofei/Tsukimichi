@@ -4130,4 +4130,512 @@
   <data name="ExpansionShort.5" xml:space="preserve">
     <value>DT</value>
   </data>
+  <data name="Core.Chain.Story" xml:space="preserve">
+    <value>Story: {0}</value>
+    <comment>Core: StorySidequests.cs.</comment>
+  </data>
+  <data name="Core.Why.NoEvaluation" xml:space="preserve">
+    <value>Not checked · no character evaluated yet</value>
+    <comment>Core: WhyText.cs.</comment>
+  </data>
+  <data name="Core.Why.TalkToIn" xml:space="preserve">
+    <value>{0} — talk to {1} in {2}</value>
+    <comment>Core: WhyText.cs.</comment>
+  </data>
+  <data name="Core.Why.TalkTo" xml:space="preserve">
+    <value>{0} — talk to {1}</value>
+    <comment>Core: WhyText.cs.</comment>
+  </data>
+  <data name="Core.Why.Note" xml:space="preserve">
+    <value>Note: {0}</value>
+    <comment>Core: WhyText.cs.</comment>
+  </data>
+  <data name="Core.Diff.MainScenario" xml:space="preserve">
+    <value>Main scenario</value>
+    <comment>Core: CharacterDiff.cs.</comment>
+  </data>
+  <data name="Core.Diff.Feature" xml:space="preserve">
+    <value>Unlock quest</value>
+    <comment>Core: CharacterDiff.cs.</comment>
+  </data>
+  <data name="Core.Diff.Side" xml:space="preserve">
+    <value>Side quest</value>
+    <comment>Core: CharacterDiff.cs.</comment>
+  </data>
+  <data name="Core.Diff.UniqueRewardOne" xml:space="preserve">
+    <value>{0} unique reward</value>
+    <comment>Core: CharacterDiff.cs.</comment>
+  </data>
+  <data name="Core.Diff.UniqueRewards" xml:space="preserve">
+    <value>{0} unique rewards</value>
+    <comment>Core: CharacterDiff.cs.</comment>
+  </data>
+  <data name="Core.Blocker.RemovedFromGame" xml:space="preserve">
+    <value>removed from the game</value>
+    <comment>Core: BlockerText.cs.</comment>
+  </data>
+  <data name="Core.Blocker.AnotherChoice" xml:space="preserve">
+    <value>another choice</value>
+    <comment>Core: BlockerText.cs.</comment>
+  </data>
+  <data name="Core.Blocker.AnotherJob" xml:space="preserve">
+    <value>another job</value>
+    <comment>Core: BlockerText.cs.</comment>
+  </data>
+  <data name="Core.Blocker.NotChecked.CustomDeliveryRank" xml:space="preserve">
+    <value>custom delivery rank</value>
+    <comment>Core: BlockerText.cs.</comment>
+  </data>
+  <data name="Core.Blocker.NotChecked.CarrierLevel" xml:space="preserve">
+    <value>carrier level</value>
+    <comment>Core: BlockerText.cs.</comment>
+  </data>
+  <data name="Core.Blocker.NotChecked.Mount" xml:space="preserve">
+    <value>mount</value>
+    <comment>Core: BlockerText.cs.</comment>
+  </data>
+  <data name="Core.Blocker.NotChecked.House" xml:space="preserve">
+    <value>house</value>
+    <comment>Core: BlockerText.cs.</comment>
+  </data>
+  <data name="Core.Blocker.NotChecked.Achievements" xml:space="preserve">
+    <value>achievements</value>
+    <comment>Core: BlockerText.cs.</comment>
+  </data>
+  <data name="Core.Blocker.NotChecked.AcceptCondition" xml:space="preserve">
+    <value>accept condition</value>
+    <comment>Core: BlockerText.cs.</comment>
+  </data>
+  <data name="Core.Blocker.Allowance" xml:space="preserve">
+    <value>Allowance: none left today</value>
+    <comment>Core: BlockerText.cs.</comment>
+  </data>
+  <data name="Core.Blocker.NotOffered" xml:space="preserve">
+    <value>Not offered today</value>
+    <comment>Core: BlockerText.cs.</comment>
+  </data>
+  <data name="Core.Blocker.Mount" xml:space="preserve">
+    <value>Mount</value>
+    <comment>Core: BlockerText.cs.</comment>
+  </data>
+  <data name="Core.Blocker.House" xml:space="preserve">
+    <value>House</value>
+    <comment>Core: BlockerText.cs.</comment>
+  </data>
+  <data name="Core.Blocker.SeasonalEnded" xml:space="preserve">
+    <value>Seasonal: ended</value>
+    <comment>Core: BlockerText.cs.</comment>
+  </data>
+  <data name="Core.Blocker.SeasonalChapterNotOpen" xml:space="preserve">
+    <value>Seasonal: chapter not open yet</value>
+    <comment>Core: BlockerText.cs.</comment>
+  </data>
+  <data name="Core.Blocker.SeasonalChapterOver" xml:space="preserve">
+    <value>Seasonal: chapter over</value>
+    <comment>Core: BlockerText.cs.</comment>
+  </data>
+  <data name="Core.Blocker.SeasonalNotRunning" xml:space="preserve">
+    <value>Seasonal: not running</value>
+    <comment>Core: BlockerText.cs.</comment>
+  </data>
+  <data name="Core.State.Ready" xml:space="preserve">
+    <value>Ready</value>
+    <comment>Core: CoreText.cs.</comment>
+  </data>
+  <data name="Core.Plan.Title" xml:space="preserve">
+    <value>Clear my blues</value>
+    <comment>Core: PlanChecklist.cs.</comment>
+  </data>
+  <data name="Core.Plan.Footer" xml:space="preserve">
+    <value>Made with Tsukimichi (Dalamud plugin)</value>
+    <comment>Core: PlanChecklist.cs.</comment>
+  </data>
+  <data name="Core.Plan.KindNames" xml:space="preserve">
+    <value>{0}: {1}</value>
+    <comment>Core: PlanChecklist.cs.</comment>
+  </data>
+  <data name="Core.Plan.More" xml:space="preserve">
+    <value> +{0} more</value>
+    <comment>Core: PlanChecklist.cs.</comment>
+  </data>
+  <data name="Core.Plan.Unlocks" xml:space="preserve">
+    <value>unlocks: {0}</value>
+    <comment>Core: PlanChecklist.cs.</comment>
+  </data>
+  <data name="Core.Plan.LeadsTo" xml:space="preserve">
+    <value>leads to: {0}</value>
+    <comment>Core: PlanChecklist.cs.</comment>
+  </data>
+  <data name="Core.Plan.Level" xml:space="preserve">
+    <value>Lv {0}</value>
+    <comment>Core: PlanChecklist.cs.</comment>
+  </data>
+  <data name="Core.Unlock.Dungeon" xml:space="preserve">
+    <value>Dungeon</value>
+    <comment>Core: UnlockKind.cs.</comment>
+  </data>
+  <data name="Core.Unlock.Trial" xml:space="preserve">
+    <value>Trial</value>
+    <comment>Core: UnlockKind.cs.</comment>
+  </data>
+  <data name="Core.Unlock.NormalRaid" xml:space="preserve">
+    <value>Raid</value>
+    <comment>Core: UnlockKind.cs.</comment>
+  </data>
+  <data name="Core.Unlock.AllianceRaid" xml:space="preserve">
+    <value>Alliance raid</value>
+    <comment>Core: UnlockKind.cs.</comment>
+  </data>
+  <data name="Core.Unlock.FieldOperation" xml:space="preserve">
+    <value>Field operation</value>
+    <comment>Core: UnlockKind.cs.</comment>
+  </data>
+  <data name="Core.Unlock.Job" xml:space="preserve">
+    <value>Job</value>
+    <comment>Core: UnlockKind.cs.</comment>
+  </data>
+  <data name="Core.Unlock.Society" xml:space="preserve">
+    <value>Allied society</value>
+    <comment>Core: UnlockKind.cs.</comment>
+  </data>
+  <data name="Core.Unlock.Flying" xml:space="preserve">
+    <value>Flying</value>
+    <comment>Core: UnlockKind.cs.</comment>
+  </data>
+  <data name="Core.Unlock.System" xml:space="preserve">
+    <value>System</value>
+    <comment>Core: UnlockKind.cs.</comment>
+  </data>
+  <data name="Core.Unlock.Other" xml:space="preserve">
+    <value>Other</value>
+    <comment>Core: UnlockKind.cs.</comment>
+  </data>
+  <data name="Core.Spoiler.Placeholder" xml:space="preserve">
+    <value>Main scenario quest (Lv {0})</value>
+    <comment>Core: SpoilerMask.cs.</comment>
+  </data>
+  <data name="Core.Route.QuestFallback" xml:space="preserve">
+    <value>quest</value>
+    <comment>Core: RouteMarkdown.cs.</comment>
+  </data>
+  <data name="Core.Route.Title" xml:space="preserve">
+    <value>Route to {0}</value>
+    <comment>Core: RouteMarkdown.cs.</comment>
+  </data>
+  <data name="Core.Route.AlreadyUnlocked" xml:space="preserve">
+    <value>already unlocked</value>
+    <comment>Core: RouteMarkdown.cs.</comment>
+  </data>
+  <data name="Core.Route.NoQuest" xml:space="preserve">
+    <value>no quest known to unlock it</value>
+    <comment>Core: RouteMarkdown.cs.</comment>
+  </data>
+  <data name="Core.Route.IncludesLockedOut" xml:space="preserve">
+    <value>includes a quest that is locked out</value>
+    <comment>Core: RouteMarkdown.cs.</comment>
+  </data>
+  <data name="Core.Route.AfterMainScenario" xml:space="preserve">
+    <value>After the main scenario</value>
+    <comment>Core: RouteMarkdown.cs.</comment>
+  </data>
+  <data name="Core.Route.Milestone" xml:space="preserve">
+    <value>Main scenario: {0}</value>
+    <comment>Core: RouteMarkdown.cs.</comment>
+  </data>
+  <data name="Core.Route.Level" xml:space="preserve">
+    <value>Lv {0}</value>
+    <comment>Core: RouteMarkdown.cs.</comment>
+  </data>
+  <data name="Core.Route.MsqMark" xml:space="preserve">
+    <value>(MSQ)</value>
+    <comment>Core: RouteMarkdown.cs.</comment>
+  </data>
+  <data name="Core.Route.TargetMark" xml:space="preserve">
+    <value>target</value>
+    <comment>Core: RouteMarkdown.cs.</comment>
+  </data>
+  <data name="Core.Route.OrInsteadOne" xml:space="preserve">
+    <value>or instead: {0} ({1} quest)</value>
+    <comment>Core: RouteMarkdown.cs.</comment>
+  </data>
+  <data name="Core.Route.OrInstead" xml:space="preserve">
+    <value>or instead: {0} ({1} quests)</value>
+    <comment>Core: RouteMarkdown.cs.</comment>
+  </data>
+  <data name="Core.Route.QuestId" xml:space="preserve">
+    <value>quest {0}</value>
+    <comment>Core: RouteMarkdown.cs.</comment>
+  </data>
+  <data name="Core.Route.NothingLeft" xml:space="preserve">
+    <value>Nothing left to do</value>
+    <comment>Core: UnlockRoute.cs.</comment>
+  </data>
+  <data name="Core.Route.CountOne" xml:space="preserve">
+    <value>{0} quest</value>
+    <comment>Core: UnlockRoute.cs.</comment>
+  </data>
+  <data name="Core.Route.Count" xml:space="preserve">
+    <value>{0} quests</value>
+    <comment>Core: UnlockRoute.cs.</comment>
+  </data>
+  <data name="Core.Route.LevelRange" xml:space="preserve">
+    <value>Lv {0}–{1}</value>
+    <comment>Core: UnlockRoute.cs.</comment>
+  </data>
+  <data name="Core.Route.MsqLabel" xml:space="preserve">
+    <value>MSQ:</value>
+    <comment>Core: UnlockRoute.cs.</comment>
+  </data>
+  <data name="Core.Age.JustNow" xml:space="preserve">
+    <value>just now</value>
+    <comment>Core: AbandonedLedger.cs.</comment>
+  </data>
+  <data name="Core.Age.Minutes" xml:space="preserve">
+    <value>{0} min ago</value>
+    <comment>Core: AbandonedLedger.cs.</comment>
+  </data>
+  <data name="Core.Age.Hours" xml:space="preserve">
+    <value>{0} h ago</value>
+    <comment>Core: AbandonedLedger.cs.</comment>
+  </data>
+  <data name="Core.Age.OneDay" xml:space="preserve">
+    <value>1 day ago</value>
+    <comment>Core: AbandonedLedger.cs.</comment>
+  </data>
+  <data name="Core.Age.Days" xml:space="preserve">
+    <value>{0} days ago</value>
+    <comment>Core: AbandonedLedger.cs.</comment>
+  </data>
+  <data name="Core.Seasonal.Ends" xml:space="preserve">
+    <value>Ends {0} (Lodestone)</value>
+    <comment>Core: SeasonalNow.cs.</comment>
+  </data>
+  <data name="Core.Seasonal.NamedEnds" xml:space="preserve">
+    <value>{0}: ends {1} (Lodestone)</value>
+    <comment>Core: SeasonalNow.cs.</comment>
+  </data>
+  <data name="Core.Seasonal.Announced" xml:space="preserve">
+    <value>announced to end {0} (Lodestone)</value>
+    <comment>Core: SeasonalNow.cs.</comment>
+  </data>
+  <data name="Core.Seasonal.RunningNow" xml:space="preserve">
+    <value>running now</value>
+    <comment>Core: SeasonalNow.cs.</comment>
+  </data>
+  <data name="Core.Seasonal.Notice" xml:space="preserve">
+    <value>{0} is running: {1} quests ready</value>
+    <comment>Core: SeasonalNow.cs.</comment>
+  </data>
+  <data name="Core.Seasonal.NoticeOne" xml:space="preserve">
+    <value>{0} is running: {1} quest ready</value>
+    <comment>Core: SeasonalNow.cs.</comment>
+  </data>
+  <data name="Core.Seasonal.NoticeEnd" xml:space="preserve">
+    <value> (ends {0})</value>
+    <comment>Core: SeasonalNow.cs.</comment>
+  </data>
+  <data name="Core.Culture" xml:space="preserve">
+    <value>en-US</value>
+    <comment>Core: SeasonalNow.cs.</comment>
+  </data>
+  <data name="Core.Seasonal.DateFormat" xml:space="preserve">
+    <value>MMM d</value>
+    <comment>Core: SeasonalNow.cs.</comment>
+  </data>
+  <data name="Core.Seasonal.DateYearFormat" xml:space="preserve">
+    <value>MMM d, yyyy</value>
+    <comment>Core: SeasonalNow.cs.</comment>
+  </data>
+  <data name="Core.Seasonal.EventId" xml:space="preserve">
+    <value>Seasonal event {0}</value>
+    <comment>Core: SeasonalNow.cs.</comment>
+  </data>
+  <data name="Core.Todo.ReadyOnJob" xml:space="preserve">
+    <value>Ready on {0}</value>
+    <comment>Core: TodoList.cs.</comment>
+  </data>
+  <data name="Core.Todo.Level" xml:space="preserve">
+    <value>Lv {0}</value>
+    <comment>Core: TodoList.cs.</comment>
+  </data>
+  <data name="Core.Todo.PlanLeft" xml:space="preserve">
+    <value>{0} left</value>
+    <comment>Core: TodoList.cs.</comment>
+  </data>
+  <data name="Core.Msq.DoneShort" xml:space="preserve">
+    <value>done</value>
+    <comment>Core: MsqText.cs.</comment>
+  </data>
+  <data name="Core.Msq.NotStarted" xml:space="preserve">
+    <value>not started</value>
+    <comment>Core: MsqText.cs.</comment>
+  </data>
+  <data name="Core.Msq.Done" xml:space="preserve">
+    <value>done</value>
+    <comment>Core: MsqText.cs.</comment>
+  </data>
+  <data name="Core.Msq.Progress" xml:space="preserve">
+    <value>{0:N0} of {1:N0}</value>
+    <comment>Core: MsqText.cs.</comment>
+  </data>
+  <data name="Core.Msq.Route" xml:space="preserve">
+    <value>route {0}</value>
+    <comment>Core: MsqText.cs.</comment>
+  </data>
+  <data name="Core.Msq.RouteLine" xml:space="preserve">
+    <value>{0}: {1}</value>
+    <comment>Core: MsqText.cs.</comment>
+  </data>
+  <data name="Core.Msq.Next" xml:space="preserve">
+    <value>next: {0} ({1})</value>
+    <comment>Core: MsqText.cs.</comment>
+  </data>
+  <data name="Core.Msq.OneRouteToGo" xml:space="preserve">
+    <value>1 route to go</value>
+    <comment>Core: MsqText.cs.</comment>
+  </data>
+  <data name="Core.Msq.RoutesToGo" xml:space="preserve">
+    <value>{0:N0} routes to go</value>
+    <comment>Core: MsqText.cs.</comment>
+  </data>
+  <data name="Core.Msq.JoinAny" xml:space="preserve">
+    <value>The routes meet again at {0} once one is done ({1})</value>
+    <comment>Core: MsqText.cs.</comment>
+  </data>
+  <data name="Core.Msq.JoinAll" xml:space="preserve">
+    <value>The routes meet again at {0} once all are done ({1})</value>
+    <comment>Core: MsqText.cs.</comment>
+  </data>
+  <data name="Core.State.ReadyOnOtherJob" xml:space="preserve">
+    <value>Ready on another job</value>
+    <comment>Core: StateNames.cs.</comment>
+  </data>
+  <data name="Core.State.Accepted" xml:space="preserve">
+    <value>In journal</value>
+    <comment>Core: StateNames.cs.</comment>
+  </data>
+  <data name="Core.State.Blocked" xml:space="preserve">
+    <value>Blocked</value>
+    <comment>Core: StateNames.cs.</comment>
+  </data>
+  <data name="Core.State.DoneToday" xml:space="preserve">
+    <value>Done today</value>
+    <comment>Core: StateNames.cs.</comment>
+  </data>
+  <data name="Core.State.DoneThisWeek" xml:space="preserve">
+    <value>Done this week</value>
+    <comment>Core: StateNames.cs.</comment>
+  </data>
+  <data name="Core.State.DoneThisCycle" xml:space="preserve">
+    <value>Done this cycle</value>
+    <comment>Core: StateNames.cs.</comment>
+  </data>
+  <data name="Core.State.Completed" xml:space="preserve">
+    <value>Completed</value>
+    <comment>Core: StateNames.cs.</comment>
+  </data>
+  <data name="Core.State.Foreclosed" xml:space="preserve">
+    <value>Locked out</value>
+    <comment>Core: StateNames.cs.</comment>
+  </data>
+  <data name="Core.State.Unknown" xml:space="preserve">
+    <value>Not checked</value>
+    <comment>Core: StateNames.cs.</comment>
+  </data>
+  <data name="Core.HighContrast.Ready" xml:space="preserve">
+    <value>bright half, bold bar</value>
+    <comment>Core: StateNames.cs.</comment>
+  </data>
+  <data name="Core.HighContrast.ReadyOnOtherJob" xml:space="preserve">
+    <value>dim half, hollow bar</value>
+    <comment>Core: StateNames.cs.</comment>
+  </data>
+  <data name="Core.HighContrast.Accepted" xml:space="preserve">
+    <value>bright gibbous, large seal</value>
+    <comment>Core: StateNames.cs.</comment>
+  </data>
+  <data name="Core.HighContrast.Blocked" xml:space="preserve">
+    <value>empty disc, thick rim</value>
+    <comment>Core: StateNames.cs.</comment>
+  </data>
+  <data name="Core.HighContrast.DoneThisCycle" xml:space="preserve">
+    <value>dim gibbous, check</value>
+    <comment>Core: StateNames.cs.</comment>
+  </data>
+  <data name="Core.HighContrast.Completed" xml:space="preserve">
+    <value>solid bright disc</value>
+    <comment>Core: StateNames.cs.</comment>
+  </data>
+  <data name="Core.HighContrast.Foreclosed" xml:space="preserve">
+    <value>thick diagonal bar</value>
+    <comment>Core: StateNames.cs.</comment>
+  </data>
+  <data name="Core.HighContrast.Unknown" xml:space="preserve">
+    <value>dashed rim</value>
+    <comment>Core: StateNames.cs.</comment>
+  </data>
+  <data name="Core.Glyph.Ready" xml:space="preserve">
+    <value>first quarter, glow</value>
+    <comment>Core: StateNames.cs.</comment>
+  </data>
+  <data name="Core.Glyph.ReadyOnOtherJob" xml:space="preserve">
+    <value>first quarter, silver, gold ring</value>
+    <comment>Core: StateNames.cs.</comment>
+  </data>
+  <data name="Core.Glyph.Accepted" xml:space="preserve">
+    <value>waxing gibbous, sealed, silver ring</value>
+    <comment>Core: StateNames.cs.</comment>
+  </data>
+  <data name="Core.Glyph.Blocked" xml:space="preserve">
+    <value>new moon, silver ring</value>
+    <comment>Core: StateNames.cs.</comment>
+  </data>
+  <data name="Core.Glyph.DoneThisCycle" xml:space="preserve">
+    <value>waning gibbous, silver</value>
+    <comment>Core: StateNames.cs.</comment>
+  </data>
+  <data name="Core.Glyph.Completed" xml:space="preserve">
+    <value>full moon</value>
+    <comment>Core: StateNames.cs.</comment>
+  </data>
+  <data name="Core.Glyph.Foreclosed" xml:space="preserve">
+    <value>eclipsed</value>
+    <comment>Core: StateNames.cs.</comment>
+  </data>
+  <data name="Core.Glyph.Unknown" xml:space="preserve">
+    <value>veiled</value>
+    <comment>Core: StateNames.cs.</comment>
+  </data>
+  <data name="Core.Stripe.Completed" xml:space="preserve">
+    <value>full bar</value>
+    <comment>Core: StripePattern.cs.</comment>
+  </data>
+  <data name="Core.Stripe.Accepted" xml:space="preserve">
+    <value>two bars</value>
+    <comment>Core: StripePattern.cs.</comment>
+  </data>
+  <data name="Core.Stripe.Ready" xml:space="preserve">
+    <value>short bar</value>
+    <comment>Core: StripePattern.cs.</comment>
+  </data>
+  <data name="Core.Stripe.ReadyOnOtherJob" xml:space="preserve">
+    <value>centre tick</value>
+    <comment>Core: StripePattern.cs.</comment>
+  </data>
+  <data name="Core.Stripe.DoneThisCycle" xml:space="preserve">
+    <value>lower half</value>
+    <comment>Core: StripePattern.cs.</comment>
+  </data>
+  <data name="Core.Stripe.Blocked" xml:space="preserve">
+    <value>no bar</value>
+    <comment>Core: StripePattern.cs.</comment>
+  </data>
+  <data name="Core.Stripe.Foreclosed" xml:space="preserve">
+    <value>dashed</value>
+    <comment>Core: StripePattern.cs.</comment>
+  </data>
+  <data name="Core.Stripe.Unknown" xml:space="preserve">
+    <value>dotted</value>
+    <comment>Core: StripePattern.cs.</comment>
+  </data>
 </root>

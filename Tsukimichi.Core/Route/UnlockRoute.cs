@@ -3,6 +3,7 @@ using System.Text;
 using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
+using Tsukimichi.Core.Localization;
 
 namespace Tsukimichi.Core.Route;
 
@@ -61,20 +62,23 @@ public sealed record RouteSummary(int Count, byte MinLevel, byte MaxLevel, IRead
         {
             if (Count == 0)
             {
-                return "Nothing left to do";
+                return CoreText.T("Core.Route.NothingLeft", "Nothing left to do");
             }
 
             var sb = new StringBuilder();
-            sb.Append(Count.ToString(CultureInfo.InvariantCulture)).Append(Count == 1 ? " quest" : " quests");
-            sb.Append(" · Lv ").Append(MinLevel.ToString(CultureInfo.InvariantCulture));
-            if (MaxLevel != MinLevel)
-            {
-                sb.Append('–').Append(MaxLevel.ToString(CultureInfo.InvariantCulture));
-            }
+            sb.Append(string.Format(
+                CultureInfo.CurrentCulture,
+                Count == 1 ? CoreText.T("Core.Route.CountOne", "{0} quest") : CoreText.T("Core.Route.Count", "{0} quests"),
+                Count));
+            sb.Append(" · ").Append(string.Format(
+                CultureInfo.CurrentCulture,
+                MaxLevel != MinLevel ? CoreText.T("Core.Route.LevelRange", "Lv {0}–{1}") : CoreText.T("Core.Route.Level", "Lv {0}"),
+                MinLevel,
+                MaxLevel));
 
             if (Milestones.Count > 0)
             {
-                sb.Append(" · MSQ: ");
+                sb.Append(" · ").Append(CoreText.T("Core.Route.MsqLabel", "MSQ:")).Append(' ');
                 for (var i = 0; i < Milestones.Count; i++)
                 {
                     sb.Append(i == 0 ? string.Empty : ", ").Append(Milestones[i].Name);
@@ -131,6 +135,7 @@ public enum RouteOutcome : byte
 public sealed class UnlockRoute
 {
     private const string MainScenarioSuffix = " Main Scenario Quests";
+    private const string MainScenarioPrefixJa = "メインクエスト：";
 
     private UnlockRoute(RouteTarget target, uint targetRowId, RouteOutcome outcome, IReadOnlyList<RouteStep> steps, RouteSummary summary, IReadOnlyList<PathAlternative> targetAlternatives)
     {
@@ -305,7 +310,15 @@ public sealed class UnlockRoute
         ArgumentNullException.ThrowIfNull(journal);
         var name = journal.CategoryName;
         var at = name.IndexOf(MainScenarioSuffix, StringComparison.Ordinal);
-        return at > 0 ? name.Remove(at, MainScenarioSuffix.Length) : name;
+        if (at > 0)
+        {
+            return name.Remove(at, MainScenarioSuffix.Length);
+        }
+
+        // The Japanese journal opens the category with its label instead ("メインクエスト：黄金のレガシー").
+        return name.StartsWith(MainScenarioPrefixJa, StringComparison.Ordinal) && name.Length > MainScenarioPrefixJa.Length
+            ? name[MainScenarioPrefixJa.Length..]
+            : name;
     }
 
     /// <summary>The closure walk, the Any-join choices (memoized so every walk agrees) and the ordering.</summary>
