@@ -22,6 +22,8 @@ public static class RewardTooltip
 
     private static readonly Dictionary<(RewardKind Kind, uint Count), string> KindLines = [];
 
+    private static readonly Dictionary<string, string> DropLines = new(StringComparer.Ordinal);
+
     /// <summary>
     /// Draws the tooltip; call only while the reward's item is hovered. <paramref name="source"/>, when given, closes
     /// the tooltip as a disabled line (Moonlit passes where its unique verdict came from).
@@ -59,6 +61,15 @@ public static class RewardTooltip
             }
         }
 
+        if (links.DropWhere?.Invoke(reward) is { } where)
+        {
+            // A duty drops it too (curated/other_sources.json): the same "Also drops in …" line as the item hover hint.
+            using (Theme.PushText(Theme.Dusk))
+            {
+                ImGui.TextUnformatted(DropLine(where));
+            }
+        }
+
         if (reward.ItemId != 0)
         {
             if (links.Item(reward.ItemId) is { } item)
@@ -90,6 +101,18 @@ public static class RewardTooltip
             ImGui.Spacing();
             ImGui.TextDisabled(source);
         }
+    }
+
+    /// <summary>"Also drops in …", cached per duty text (a handful of distinct values) so hovering allocates nothing after the first time.</summary>
+    private static string DropLine(string where)
+    {
+        if (!DropLines.TryGetValue(where, out var line))
+        {
+            line = Strings.AlsoDropsLine(where);
+            DropLines[where] = line;
+        }
+
+        return line;
     }
 
     /// <summary>"Kind" or "Kind ×N", cached per (kind, count).</summary>

@@ -155,7 +155,8 @@ public sealed class HoverHint
             var state = evaluation?.State ?? QuestState.Unknown;
             var done = state == QuestState.Completed;
             var status = done ? Strings.ItemsDone : BlockerText.StatusText(evaluation, quest, session.Names, session.States);
-            var line = new Line(quest.RowId, state, string.Format(CultureInfo.CurrentCulture, Strings.ItemsQuestRewardFormat, quest.Name), status, done, entry.SoldOnOnlineStore);
+            var line = new Line(quest.RowId, state, string.Format(CultureInfo.CurrentCulture, Strings.ItemsQuestRewardFormat, quest.Name), status, done, entry.SoldOnOnlineStore,
+                entry.DropsInDuty ? Strings.AlsoDropsLine(entry.DropWhere) : string.Empty);
             if (IsUnlockable(entry.Kind))
             {
                 line.SetObtained(unlocks.IsObtained(entry));
@@ -249,6 +250,14 @@ public sealed class HoverHint
                 ImGui.TextDisabled(Strings.ItemsStoreOnly);
                 ImGui.Unindent(indent);
             }
+
+            if (line.DropLine.Length > 0)
+            {
+                // A duty drops it too (curated/other_sources.json): the same "Also drops in …" line as the reward tooltip.
+                ImGui.Indent(indent);
+                ImGui.TextDisabled(line.DropLine);
+                ImGui.Unindent(indent);
+            }
         }
 
         if (moreText.Length > 0)
@@ -289,7 +298,7 @@ public sealed class HoverHint
     }
 
     /// <summary>One quest of the hint, with its strings built once.</summary>
-    private sealed class Line(uint questRowId, QuestState state, string questText, string statusText, bool done, bool storeResell)
+    private sealed class Line(uint questRowId, QuestState state, string questText, string statusText, bool done, bool storeResell, string dropLine)
     {
         public uint QuestRowId { get; } = questRowId;
         public QuestState State { get; } = state;
@@ -299,6 +308,9 @@ public sealed class HoverHint
 
         /// <summary>The FFXIV Online Store also sells this reward (entry OtherSources carries OnlineStore).</summary>
         public bool StoreResell { get; } = storeResell;
+
+        /// <summary>"Also drops in …" when a duty also drops this reward (entry OtherSources carries DungeonDrop); empty otherwise.</summary>
+        public string DropLine { get; } = dropLine;
 
         public bool HasObtained { get; private set; }
         public QuestState ObtainedGlyph { get; private set; } = QuestState.Unknown;

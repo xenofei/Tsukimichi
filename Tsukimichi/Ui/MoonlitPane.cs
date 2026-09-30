@@ -29,8 +29,10 @@ namespace Tsukimichi.Ui;
 /// quests hidden that way stay in the row array as struck-through rows the Yours confidence filter lists, so their
 /// context menu can restore them.
 /// <para>
-/// A row whose reward the FFXIV Online Store also sells (entry OtherSources carries OnlineStore) wears a small Dusk
-/// "Store only" mark; the persisted "Hide store re-sells" toggle drops those rows and leaves them out of every count.
+/// A row whose reward can be had outside the quest wears one small Dusk mark per such source: "Store only" when the
+/// FFXIV Online Store also sells it (entry OtherSources carries OnlineStore), "Also drops" when a duty also drops it
+/// (DungeonDrop; the tooltip names the duties). The persisted "Hide rewards found elsewhere" toggle
+/// (Configuration.MoonlitHideStoreResells) drops both kinds of row and leaves them out of every count.
 /// Row arrays and every label are built once per catalog build; obtained states and the filtered index refresh only
 /// when <see cref="SessionState.Version"/>, the kind, the toggles or the filter text change. Nothing allocates per frame
 /// in the table body except tooltips on hover. The list clipper lives as long as the pane; <see cref="Dispose"/>
@@ -41,7 +43,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 {
     private const int FilterMaxLength = 128;
 
-    /// <summary>Font size of the "Store only" mark relative to the row's text.</summary>
+    /// <summary>Font size of the "Store only" and "Also drops" marks relative to the row's text.</summary>
     private const float SmallTextScale = 0.85f;
 
     /// <summary>The combo next to "Hide obtained": which rows to keep by confidence, or only the unreadable ones.</summary>
@@ -88,7 +90,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 
     private Row[] rows = [];
     private int uniqueCount;
-    private int storeCount;
+    private int elsewhereCount;
     private int rowsBuild = -1;
     private CatalogBundle? rowsBundle;
 
@@ -274,10 +276,13 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         ui.RecordSpan(UiRects.MoonlitKinds, start, width);
     }
 
-    /// <summary>Whether rows the Online Store also sells are dropped from the table and the counts (Configuration.MoonlitHideStoreResells).</summary>
+    /// <summary>
+    /// Whether rows found elsewhere (sold on the Online Store, or dropping in a duty) are dropped from the table and the
+    /// counts (Configuration.MoonlitHideStoreResells, named before dungeon drops joined it).
+    /// </summary>
     public bool HideStoreResells => settings.MoonlitHideStoreResells;
 
-    /// <summary>Center column: toolbar (hide obtained, hide store re-sells, filter) and the reward table with a list clipper.</summary>
+    /// <summary>Center column: toolbar (hide obtained, hide rewards found elsewhere, filter) and the reward table with a list clipper.</summary>
     public void DrawMain(UiState ui)
     {
         ArgumentNullException.ThrowIfNull(ui);
@@ -514,6 +519,16 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             }
         }
 
+        if (row.DropsInDuty)
+        {
+            ImGui.SameLine();
+            SmallDuskText(Strings.MoonlitAlsoDrops);
+            if (ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(row.DropTooltip);
+            }
+        }
+
         // Kind.
         ImGui.TableNextColumn();
         ImGui.TextUnformatted(row.KindName);
@@ -693,12 +708,12 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         }
 
         uniqueCount = all.Count;
-        storeCount = 0;
+        elsewhereCount = 0;
         for (var i = 0; i < all.Count; i++)
         {
-            if (built[i].StoreResell)
+            if (built[i].FoundElsewhere)
             {
-                storeCount++;
+                elsewhereCount++;
             }
         }
 
@@ -708,7 +723,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         obtainedVersion = -1;
     }
 
-    /// <summary>Obtained state per row and the per-kind counts, once per session version (and per store toggle: hidden re-sells leave the counts).</summary>
+    /// <summary>Obtained state per row and the per-kind counts, once per session version (and per "found elsewhere" toggle: hidden rows leave the counts).</summary>
     private void RefreshObtained()
     {
         var obtained = kindObtained;
@@ -722,7 +737,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         foreach (var row in rows)
         {
             row.SetObtained(unlocks.IsObtained(row.Entry));
-            if (row.Hidden || (hideStore && row.StoreResell))
+            if (row.Hidden || (hideStore && row.FoundElsewhere))
             {
                 continue;
             }
@@ -807,7 +822,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
                 continue;
             }
 
-            if (hideStore && row.StoreResell)
+            if (hideStore && row.FoundElsewhere)
             {
                 continue;
             }
@@ -838,7 +853,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         }
 
         visibleCount = count;
-        var denominator = hideStore ? uniqueCount - storeCount : uniqueCount;
+        var denominator = hideStore ? uniqueCount - elsewhereCount : uniqueCount;
         visibleSummary = listed.ToString(CultureInfo.InvariantCulture) + " / " + denominator.ToString(CultureInfo.InvariantCulture);
     }
 
@@ -946,6 +961,8 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             ConfidenceTooltip = hidden ? Strings.MoonlitBadgeHidden : MoonlitPane.ConfidenceTooltip(entry.Confidence);
             SourceText = string.IsNullOrWhiteSpace(entry.Source) ? Strings.MoonlitSourceUnknown : entry.Source;
             StoreResell = entry.SoldOnOnlineStore;
+            DropsInDuty = entry.DropsInDuty;
+            DropTooltip = DropsInDuty ? Strings.MoonlitAlsoDropsTooltip(entry.DropWhere) : string.Empty;
             Reward = icon == 0 ? null : RewardFor(quest, entry, icon, Name);
         }
 
@@ -994,6 +1011,15 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 
         /// <summary>The FFXIV Online Store also sells this reward (entry OtherSources carries OnlineStore).</summary>
         public bool StoreResell { get; }
+
+        /// <summary>A duty also drops this reward (entry OtherSources carries DungeonDrop).</summary>
+        public bool DropsInDuty { get; }
+
+        /// <summary>"Also drops in …; not exclusive to the quest" for the "Also drops" mark; empty when the reward does not drop.</summary>
+        public string DropTooltip { get; }
+
+        /// <summary>Found outside the quest (store or drop): what "Hide rewards found elsewhere" leaves out.</summary>
+        public bool FoundElsewhere => StoreResell || DropsInDuty;
 
         /// <summary>What the icon's tooltip describes; null when the row has no icon (the veiled stand-in is drawn instead).</summary>
         public RewardRef? Reward { get; }

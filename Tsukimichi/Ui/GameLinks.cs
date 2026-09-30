@@ -33,6 +33,13 @@ public sealed class GameLinks(IGameGui gameGui, IChatGui chat, IDataManager data
     /// </summary>
     public Func<RewardRef, bool>? IsStoreResell { get; set; }
 
+    /// <summary>
+    /// Where a duty also drops a reward (<see cref="Core.Unique.StoreResells.DropWhere(RewardRef)"/>: the duties, empty
+    /// when unnamed, null when it does not drop), attached by the plugin so <see cref="RewardTooltip"/> can say
+    /// "Also drops in …"; null (never) until then.
+    /// </summary>
+    public Func<RewardRef, string?>? DropWhere { get; set; }
+
     /// <summary>Teleportable aetherytes by territory, read from the sheets on first use; empty when the read fails.</summary>
     public AetheryteIndex Aetherytes
     {
