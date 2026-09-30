@@ -931,31 +931,16 @@ public sealed class TablePane : IDisposable
             return;
         }
 
-        ImGui.Spacing();
-        using (Theme.PushText(Theme.Dusk))
-        {
-            ImGui.TextUnformatted(Strings.NothingMatches);
-        }
-
-        if (empty.Filters.Count > 0)
-        {
-            ImGui.TextUnformatted(Strings.NothingMatchesHint);
-            using var indent = ImRaii.PushIndent(UiMetrics.Px(12f));
-            foreach (var name in empty.Filters)
-            {
-                ImGui.Bullet();
-                ImGui.TextUnformatted(name);
-            }
-        }
-        else
-        {
-            ImGui.TextWrapped(Strings.NothingMatchesCombination);
-        }
-
-        ImGui.Spacing();
-        if (ImGui.Button(Strings.ResetFilters))
+        // Heading, one line, the offending filters as chips (each clears only itself) and Reset (T16, ui-revamp §2.8).
+        var body = empty.Filters.Count > 0 ? Strings.EmptyFiltersHiding : Strings.NothingMatchesCombination;
+        var clicked = EmptyState.DrawWithAction(Strings.EmptyNothingMatchesHeading, body, Strings.ResetFilters, empty.Filters, QuestState.Blocked);
+        if (clicked == EmptyState.ActionClicked)
         {
             resetFilters();
+        }
+        else if (clicked >= 0 && EmptyState.ClearFilter(ui, empty.Filters[clicked]))
+        {
+            ui.MarkQueryDirty();
         }
     }
 

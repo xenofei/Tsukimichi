@@ -19,16 +19,24 @@ using Tsukimichi.GameData;
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// The detail pane for <see cref="UiState.SelectedRowId"/> on a Night panel: header, requirements, rewards, Moonlit
-/// verdict, path (grouped by expansion, completed runs folded), what the quest unlocks next, giver, provenance.
-/// Everything shown is materialized into a <see cref="Model"/> when the selection or the session version changes, so
-/// drawing allocates nothing.
+/// The detail pane for <see cref="UiState.SelectedRowId"/> as a card stack on a Night panel (ui-revamp §2.5, game UX
+/// panel finding 8): a hero at most 96 px tall (the journal banner cover-cropped under a scrim, the state pill and the
+/// special badge, the name and a caption line; the Night card when the artwork is hidden or missing), then the
+/// Requirements card first with one next-step marker, Rewards as tiles, the Moonlit verdict, the Path card (the chain
+/// line once, then the star chart, <see cref="PathChart"/>), the Giver card; under the scrolling stack a sticky action
+/// bar with one labelled primary action (Flag on map, or Teleport when Lifestream is loaded) and round buttons for Pin,
+/// Show path, Link in chat, Copy coordinates, Open journal and Report, and a plain provenance line. Every action is a
+/// focusable item, so the pane works without a mouse (accessibility A6). Everything shown is materialized when the
+/// selection or the session version changes, so drawing allocates nothing.
 /// </summary>
 public sealed class DetailPane
 {
     public const int MaxUnlocks = 8;
 
     private const int PathScrollFrames = 2;
+    private const float HeroMaxHeight = 96f;
+    private const float CaptionScale = 0.85f;
+    private const float MarkScale = 0.72f;
 
     // Section icons, converted once (ToIconString allocates).
     private static readonly string RequirementsIcon = FontAwesomeIcon.Tasks.ToIconString();
@@ -36,14 +44,12 @@ public sealed class DetailPane
     private static readonly string MoonlitIcon = FontAwesomeIcon.Moon.ToIconString();
     private static readonly string PathIcon = FontAwesomeIcon.Route.ToIconString();
     private static readonly string GiverIcon = FontAwesomeIcon.MapMarkerAlt.ToIconString();
-    private const double PathHighlightSeconds = 1.5;
-    private const int MinFoldedRun = 2;
 
     // Header badge for QuestRecord.IconSpecial (seasonal events, promotions).
     private const string SeasonalBadgeTooltip = "Seasonal event quest";
     private const string SpecialBadgeTooltip = "Special";
 
-    // Chain progress line under the header.
+    // Chain progress line at the top of the Path card.
     private const string ChainFormat = "Chain: {0} · {1} of {2} done";
     private const string StoryFormat = "{0} · {1} of {2} done";
     private const string ChainNextLabel = "· next:";
@@ -51,29 +57,16 @@ public sealed class DetailPane
     private const string ChainNextTooltip = "Select the next quest in this chain";
     private const string ChainMoonTooltipFormat = "{0} of {1} quests done";
 
+    // Refresh the "Checked just now" line this often while nothing else changes.
+    private const double ProvenanceRefreshSeconds = 30.0;
+
+    // "Copied · paste it into a GitHub issue" in place of the provenance line for a few seconds after Report.
+    private const double ReportNoteSeconds = 5.0;
+
     private sealed record RequirementLine(bool Met, bool IsNext, string Label, string Detail);
 
-    private sealed record RewardLine(RewardRef Reward, string Text, string Kind);
-
-    private sealed record PathLine(uint RowId, string Name, QuestState State, bool IsTarget, byte Expansion);
-
-    private enum PathRowKind
-    {
-        ExpansionHeader,
-        Step,
-        FoldedRun,
-    }
-
-    /// <summary>One drawn line of the Path section: an expansion header, a single step, or a folded run of completed steps.</summary>
-    private sealed class PathRow(PathRowKind kind, string text, string? expandedText, PathLine? step, List<PathLine>? run, int runIndex)
-    {
-        public PathRowKind Kind { get; } = kind;
-        public string Text { get; } = text;
-        public string ExpandedText { get; } = expandedText ?? text;
-        public PathLine? Step { get; } = step;
-        public List<PathLine>? Run { get; } = run;
-        public int RunIndex { get; } = runIndex;
-    }
+    /// <summary>A reward tile: unique rewards wear the gold ring and crescent; a mark says when the store sells it or a duty drops it.</summary>
+    private sealed record RewardTile(RewardRef Reward, bool Unique, string? Mark);
 
     private sealed class Model
     {
@@ -81,22 +74,28 @@ public sealed class DetailPane
         public int Version;
         public CatalogBundle? Bundle;
         public QuestRecord? Quest;
+        public QuestEvaluation? Evaluation;
         public QuestState State;
 
         /// <summary>The quest's name as the spoiler shield prints it (<see cref="Core.Query.SpoilerMask.DisplayName(QuestRecord)"/>).</summary>
         public string DisplayName = string.Empty;
 
-        /// <summary>The shield masks the name; the header offers "Reveal this name".</summary>
+        /// <summary>The shield masks the name; the pane offers "Reveal this name".</summary>
         public bool NameMasked;
 
-        /// <summary>The quest has a banner the shield hides; the header card says the art comes later.</summary>
+        /// <summary>The quest has a banner the shield hides; the Night card says the art comes later.</summary>
         public bool ArtworkHidden;
         public string JournalPath = string.Empty;
 
         /// <summary>Provenance of a refiled or removed quest ("Filed under … (rule 4: …)", "Removed from the game in patch 6.3"); null for an ordinary quest.</summary>
         public string? FilingLine;
+
+        /// <summary>"Expansion · Lv N · job", the hero's caption.</summary>
         public string HeaderLine = string.Empty;
-        public string StateText = string.Empty;
+        public string StateName = string.Empty;
+
+        /// <summary>What the state pill cannot say: the blocker, the step, the date; empty when the state says it all.</summary>
+        public string StatusReason = string.Empty;
         public string? StateNote;
 
         /// <summary>"Note: …" from <c>curated/quirks.json</c>, drawn under the requirements; null for a quest without one.</summary>
@@ -111,15 +110,16 @@ public sealed class DetailPane
         public bool Pinned;
         public bool HasUniqueEntries;
         public readonly List<RequirementLine> Requirements = [];
-        public readonly List<RewardLine> Rewards = [];
-        public readonly List<PathLine> Path = [];
-        public readonly List<PathRow> PathRows = [];
-        public readonly List<PathLine> Unlocks = [];
-        public string? UnlocksMore;
+        public string RequirementsCaption = string.Empty;
+        public readonly List<RewardTile> Rewards = [];
+        public string RewardsCaption = string.Empty;
         public string? GiverName;
-        public string? PlaceText;
         public string? CoordinateText;
+
+        /// <summary>"Region › Place (x, y)" for the Giver card; null when the giver's map is unknown.</summary>
+        public string? PlaceLine;
         public string Provenance = string.Empty;
+        public double ProvenanceBuiltAt;
     }
 
     private readonly UiState ui;
@@ -127,16 +127,14 @@ public sealed class DetailPane
     private readonly GameLinks links;
     private readonly ITextureProvider textures;
     private readonly IPluginLog? log;
+    private readonly PathChart chart;
 
     private readonly Model model = new() { RowId = uint.MaxValue, Version = -1 };
     private bool pinnedShown;
 
-    // Folded completed runs the user opened, by run index; forgotten when another quest is selected.
-    private readonly HashSet<int> expandedRuns = [];
-
-    // Quests with shipped unique-reward entries, rebuilt when the shipped data instance changes.
+    // Quests with shipped unique-reward entries (and the entries per quest), rebuilt when the shipped data instance changes.
     private UniqueRewardsData? uniqueData;
-    private readonly HashSet<uint> uniqueQuests = [];
+    private readonly Dictionary<uint, List<UniqueRewardEntry>> uniqueByQuest = [];
 
     // The "Mark as unique…" confirm popup and its eight-second Undo line.
     private readonly VerdictPrompt verdict = new(Strings.MarkUniquePopup);
@@ -144,10 +142,6 @@ public sealed class DetailPane
     // "Show path": the scroll is requested on two consecutive frames because ImGui clamps a scroll target against the
     // content size measured in the previous frame, which does not yet include a freshly selected quest's sections.
     private int pathScrollFrames;
-    private double pathHighlightUntil;
-
-    // "Copied · paste it into a GitHub issue" beside the Report button for a few seconds after a click.
-    private const double ReportNoteSeconds = 5.0;
     private double reportNoteUntil;
 
     /// <param name="log">Receives a failed diagnostic copy; null uses the plugin log.</param>
@@ -158,9 +152,10 @@ public sealed class DetailPane
         this.links = links ?? throw new ArgumentNullException(nameof(links));
         this.textures = textures ?? throw new ArgumentNullException(nameof(textures));
         this.log = log;
+        chart = new PathChart(RevealRow);
     }
 
-    /// <summary>The user's unique-reward verdicts; null until the plugin attaches them, which hides the Moonlit section.</summary>
+    /// <summary>The user's unique-reward verdicts; null until the plugin attaches them, which hides the Moonlit card.</summary>
     public IUniqueOverrides? Overrides { get; set; }
 
     /// <summary>Composes the "Report" diagnostic block; null until the plugin attaches it, which hides the button.</summary>
@@ -169,7 +164,7 @@ public sealed class DetailPane
     public void Draw(SessionState session, CatalogBundle bundle, Vector2 size)
     {
         using var colors = Theme.PushNightPanel();
-        using var child = ImRaii.Child("##detail", size, true);
+        using var child = ImRaii.Child("##detail", size, true, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
         if (!child)
         {
             return;
@@ -187,168 +182,341 @@ public sealed class DetailPane
         {
             ui.ScrollToPath = false;
             pathScrollFrames = PathScrollFrames;
-            pathHighlightUntil = ImGui.GetTime() + PathHighlightSeconds;
+            chart.RequestScrollToTarget(pulse: true);
         }
 
         if (model.Quest is not { } quest)
         {
-            EmptyState.Draw(Strings.QuestNotInCatalog);
+            if (EmptyState.DrawWithAction(Strings.EmptyNotInCatalogHeading, Strings.EmptyNotInCatalogBody, Strings.EmptyClearSelection) == EmptyState.ActionClicked)
+            {
+                ui.SelectedRowId = null;
+            }
+
             return;
         }
 
-        var width = ImGui.GetContentRegionAvail().X;
-        DrawHeader(quest);
-        if (model.NameMasked)
+        var detailHeight = ImGui.GetContentRegionAvail().Y;
+        var bar = ActionBarHeight();
+        using (ImRaii.PushColor(ImGuiCol.ChildBg, Vector4.Zero))
+        using (var body = ImRaii.Child("##detailBody", new Vector2(0f, MathF.Max(UiMetrics.Px(40f), detailHeight - bar)), false))
         {
-            DrawRevealName(session, rowId);
+            if (body)
+            {
+                DrawBody(session, quest, rowId, detailHeight);
+            }
         }
 
-        var start = ImGui.GetCursorScreenPos();
-        Section(Strings.Requirements, RequirementsIcon);
-        DrawRequirements();
-        ui.RecordSpan(UiRects.DetailRequirements, start, width);
+        DrawActionBar(quest, rowId);
+        DrawProvenance(session);
+    }
 
-        Section(Strings.Rewards, RewardsIcon);
-        DrawRewards();
+    private void DrawBody(SessionState session, QuestRecord quest, uint rowId, float detailHeight)
+    {
+        DrawHero(quest);
+        DrawUnderHero(session, rowId);
+
+        Gap();
+        var width = ImGui.GetContentRegionAvail().X;
+        var start = ImGui.GetCursorScreenPos();
+        Chrome.BeginCard("##requirements", Strings.Requirements, RequirementsIcon);
+        CardCaption(model.RequirementsCaption, start.X + width);
+        DrawRequirements(start.X);
+        Chrome.EndCard();
+        ui.RecordItem(UiRects.DetailRequirements);
+
+        Gap();
+        start = ImGui.GetCursorScreenPos();
+        Chrome.BeginCard("##rewards", Strings.Rewards, RewardsIcon);
+        CardCaption(model.RewardsCaption, start.X + width);
+        DrawRewards(start.X + width - UiMetrics.Px(10f));
+        Chrome.EndCard();
+
         if (Overrides is { } overrides)
         {
-            Section(Strings.UniqueSection, MoonlitIcon);
+            Gap();
+            Chrome.BeginCard("##moonlit", Strings.UniqueSection, MoonlitIcon);
             DrawUnique(overrides, rowId);
+            Chrome.EndCard();
         }
 
-        start = ImGui.GetCursorScreenPos();
-        Section(Strings.Path, PathIcon, highlight: ImGui.GetTime() < pathHighlightUntil);
+        Gap();
         if (pathScrollFrames > 0)
         {
             pathScrollFrames--;
             ImGui.SetScrollHereY(0f);
         }
 
-        DrawPath();
-        DrawUnlocks();
-        ui.RecordSpan(UiRects.DetailPath, start, width);
-
         start = ImGui.GetCursorScreenPos();
-        Section(Strings.Giver, GiverIcon);
-        DrawGiver(quest);
-        ui.RecordSpan(UiRects.DetailGiver, start, width);
-        ImGui.Spacing();
-        ImGui.Separator();
-        ImGui.TextDisabled(model.Provenance);
+        var pad = UiMetrics.Px(10f);
+        Chrome.BeginCard("##path", Strings.Path, PathIcon);
+        CardCaption(chart.HeaderCaption, start.X + width);
+        DrawChain();
+        chart.Draw(width - (2f * pad), 0.4f * detailHeight, pad);
+        Chrome.EndCard();
+        ui.RecordItem(UiRects.DetailPath);
+
+        Gap();
+        Chrome.BeginCard("##giver", Strings.Giver, GiverIcon);
+        DrawGiver();
+        Chrome.EndCard();
+        ui.RecordItem(UiRects.DetailGiver);
+        Gap();
     }
 
-    /// <summary>
-    /// The journal banner (<see cref="QuestRecord.Icon"/>) at the pane's width with the name on a Night strip and the
-    /// state moon at its right; quests without a banner (or whose banner is still loading) get a raised Night card
-    /// with the moon beside the name instead. The journal path, header line and state follow either way.
-    /// </summary>
-    private void DrawHeader(QuestRecord quest)
+    private static void Gap() => ImGui.Dummy(new Vector2(0f, UiMetrics.Px(2f)));
+
+    /// <summary>A card header's right-aligned caption (Dusk, 0.85×) on the title line; draw-list only, so the layout is untouched.</summary>
+    private static void CardCaption(string caption, float cardRight)
+    {
+        if (caption.Length == 0)
+        {
+            return;
+        }
+
+        var titleMin = ImGui.GetItemRectMin();
+        var titleHeight = ImGui.GetItemRectSize().Y;
+        var size = ImGui.GetFontSize() * CaptionScale;
+        var width = ImGui.CalcTextSize(caption).X * CaptionScale;
+        var pos = new Vector2(cardRight - UiMetrics.Px(10f) - width, titleMin.Y + ((titleHeight - size) * 0.5f));
+        ImGui.GetWindowDrawList().AddText(ImGui.GetFont(), size, pos, Theme.U32(Theme.Surface.TextTertiary), caption);
+    }
+
+    // ------------------------------------------------------------------ hero
+
+    /// <summary>The banner hero, or the Night card when the artwork is hidden, missing or still loading.</summary>
+    private void DrawHero(QuestRecord quest)
     {
         if (model.ArtworkHidden || !DrawBanner(quest))
         {
             DrawHeaderCard(quest);
         }
+    }
+
+    /// <summary>
+    /// The journal banner at the column's width and at most 96 px tall, cover-cropped, a scrim from 30 % of its height
+    /// to the bottom, the state pill top left, the special badge top right, and the name over its caption line bottom
+    /// left. False when the quest has no banner or it is not loaded yet.
+    /// </summary>
+    private bool DrawBanner(QuestRecord quest)
+    {
+        if (quest.Icon == 0 || !textures.GetFromGameIcon(new GameIconLookup(quest.Icon)).TryGetWrap(out var wrap, out _) || wrap.Width <= 0 || wrap.Height <= 0)
+        {
+            return false;
+        }
+
+        var dl = ImGui.GetWindowDrawList();
+        var width = ImGui.GetContentRegionAvail().X;
+        var height = MathF.Min(UiMetrics.Px(HeroMaxHeight), width * wrap.Height / wrap.Width);
+        var min = ImGui.GetCursorScreenPos();
+        var max = min + new Vector2(width, height);
+        var rounding = UiMetrics.Px(6f);
+        Chrome.ImageCover(wrap.Handle, new Vector2(width, height), new Vector2(wrap.Width, wrap.Height), rounding);
+        var after = ImGui.GetCursorScreenPos();
+        Chrome.Scrim(dl, new Vector2(min.X, min.Y + (height * 0.3f)), max, 0f, 0.92f);
+
+        var pad = UiMetrics.Px(8f);
+        var font = ImGui.GetFont();
+        var fontSize = ImGui.GetFontSize();
+        var captionSize = fontSize * CaptionScale;
+
+        // Name over the caption line, bottom left.
+        var wrapWidth = MathF.Max(UiMetrics.Px(40f), width - (pad * 2f));
+        var captionY = max.Y - pad - captionSize;
+        var nameHeight = ImGui.CalcTextSize(model.DisplayName, false, wrapWidth).Y;
+        var nameY = captionY - UiMetrics.Px(2f) - nameHeight;
+        dl.AddText(font, fontSize, new Vector2(min.X + pad, nameY), Theme.U32(Theme.Surface.Text), model.DisplayName, wrapWidth);
+        dl.AddText(font, captionSize, new Vector2(min.X + pad, captionY), Theme.U32(Theme.Surface.TextSecondary), model.HeaderLine);
+
+        // State pill top left; its item carries the state tooltip.
+        var pillMin = min + new Vector2(pad, pad);
+        var pillSize = StatePill(dl, pillMin);
+        ImGui.SetCursorScreenPos(pillMin);
+        ImGui.InvisibleButton("##heroState", pillSize);
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.StateTooltip(model.State, model.Evaluation, quest, BlockerNamesOf(), lastStates);
+        }
+
+        if (quest.IconSpecial != 0)
+        {
+            var size = MathF.Min(UiMetrics.BannerBadgeSize, UiMetrics.Px(22f));
+            var badgeMin = new Vector2(max.X - pad - size, min.Y + pad);
+            if (DrawSpecialBadge(dl, quest, badgeMin, size))
+            {
+                ImGui.SetCursorScreenPos(badgeMin);
+                ImGui.InvisibleButton("##heroBadge", new Vector2(size, size));
+                if (ImGui.IsItemHovered())
+                {
+                    UiMetrics.Tooltip(BadgeTooltip(quest));
+                }
+            }
+        }
+
+        ImGui.SetCursorScreenPos(after);
+        return true;
+    }
+
+    private BlockerNames BlockerNamesOf() => lastNames ?? BlockerNames.Default;
+
+    // The session's names and states as of the last refresh, for the state tooltip's blocker line.
+    private BlockerNames? lastNames;
+    private IReadOnlyDictionary<uint, QuestEvaluation>? lastStates;
+
+    /// <summary>
+    /// The state pill (ui-revamp §2.5): the state colour at 18 % over a dark base, a 1 px border at 70 %, a 12 px moon and
+    /// the state's name in its text tone. Returns its size.
+    /// </summary>
+    private Vector2 StatePill(ImDrawListPtr dl, Vector2 min)
+    {
+        var captionSize = ImGui.GetFontSize() * CaptionScale;
+        var moon = UiMetrics.Icon(6f);
+        var height = MathF.Max(UiMetrics.Px(20f), MathF.Max(captionSize + UiMetrics.Px(6f), (moon * 2f) + UiMetrics.Px(6f)));
+        var textWidth = ImGui.CalcTextSize(model.StateName).X * CaptionScale;
+        var size = new Vector2(UiMetrics.Px(5f) + (moon * 2f) + UiMetrics.Px(6f) + textWidth + UiMetrics.Px(8f), height);
+        var max = min + size;
+        var tone = Theme.StateColor(model.State);
+        var rounding = height * 0.5f;
+        dl.AddRectFilled(min, max, Theme.WithAlpha(Theme.Night, 0.6f), rounding);
+        dl.AddRectFilled(min, max, Theme.WithAlpha(tone, 0.18f), rounding);
+        dl.AddRect(min, max, Theme.WithAlpha(tone, 0.7f), rounding, ImDrawFlags.None, UiMetrics.Hairline);
+        var center = new Vector2(min.X + UiMetrics.Px(5f) + moon, min.Y + (height * 0.5f));
+        MoonGlyph.Draw(dl, center, moon, model.State);
+        dl.AddText(ImGui.GetFont(), captionSize, new Vector2(center.X + moon + UiMetrics.Px(6f), min.Y + ((height - captionSize) * 0.5f)), Theme.U32(StateTextColor(model.State)), model.StateName);
+        return size;
+    }
+
+    /// <summary>A state's text tone for pills and captions: the state colour, with Locked out, Not checked and Blocked in their readable text tones.</summary>
+    private static Vector4 StateTextColor(QuestState state) => state switch
+    {
+        QuestState.Foreclosed => Theme.EclipseText,
+        QuestState.Unknown => Theme.VeilText,
+        QuestState.Blocked => Theme.Surface.TextSecondary,
+        _ => Theme.StateColor(state),
+    };
+
+    /// <summary>
+    /// The quest's special icon (<see cref="QuestRecord.IconSpecial"/>) drawn on the draw list at <paramref name="min"/>;
+    /// false (nothing drawn) while the texture is still loading.
+    /// </summary>
+    private bool DrawSpecialBadge(ImDrawListPtr dl, QuestRecord quest, Vector2 min, float size)
+    {
+        if (!textures.GetFromGameIcon(new GameIconLookup(quest.IconSpecial)).TryGetWrap(out var wrap, out _))
+        {
+            return false;
+        }
+
+        dl.AddImage(wrap.Handle, min, min + new Vector2(size, size));
+        return true;
+    }
+
+    /// <summary>What the special badge means.</summary>
+    private static string BadgeTooltip(QuestRecord quest) => quest.Festival != 0 ? SeasonalBadgeTooltip : SpecialBadgeTooltip;
+
+    /// <summary>
+    /// The Night card with the state moon, the name and the caption line, for quests without a banner, and for quests
+    /// whose banner the spoiler shield hides (the card then says the artwork appears once the quest is in the journal).
+    /// </summary>
+    private void DrawHeaderCard(QuestRecord quest)
+    {
+        var dl = ImGui.GetWindowDrawList();
+        Chrome.BeginCard("##headerCard");
+        var radius = UiMetrics.Icon(20f);
+        var box = radius * 2.3f;
+        var pos = ImGui.GetCursorScreenPos();
+        ImGui.Dummy(new Vector2(box, box));
+        MoonGlyph.Draw(dl, pos + new Vector2(box * 0.5f), radius, model.State);
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.StateTooltip(model.State, model.Evaluation, quest, BlockerNamesOf(), lastStates);
+        }
+
+        ImGui.SameLine();
+        if (quest.IconSpecial != 0)
+        {
+            var size = MathF.Min(UiMetrics.BannerBadgeSize, UiMetrics.Px(22f));
+            var badgeMin = ImGui.GetCursorScreenPos() + new Vector2(0f, (box - size) * 0.5f);
+            ImGui.Dummy(new Vector2(size, box));
+            if (DrawSpecialBadge(dl, quest, badgeMin, size) && ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(BadgeTooltip(quest));
+            }
+
+            ImGui.SameLine();
+        }
+
+        // The name wraps at the card's inner edge (Chrome pushes the wrap position).
+        using (ImRaii.Group())
+        {
+            using (Theme.PushText(Theme.Surface.Text))
+            {
+                ImGui.TextWrapped(model.DisplayName);
+            }
+
+            using (Theme.PushText(Theme.Surface.TextSecondary))
+            {
+                ImGui.TextWrapped(model.HeaderLine);
+                if (model.ArtworkHidden)
+                {
+                    ImGui.TextWrapped(Strings.ArtworkHidden);
+                }
+            }
+
+            var pillPos = ImGui.GetCursorScreenPos();
+            var pillSize = StatePill(dl, pillPos);
+            ImGui.Dummy(pillSize);
+        }
+
+        Chrome.EndCard();
+    }
+
+    /// <summary>
+    /// Under the hero: the name-reveal line when the shield masks it, what the pill cannot say (the blocker, the step,
+    /// the job that can take it), the journal path and the filing line.
+    /// </summary>
+    private void DrawUnderHero(SessionState session, uint rowId)
+    {
+        if (model.NameMasked)
+        {
+            ImGui.TextDisabled(Strings.SpoilerMaskedNote);
+            ImGui.SameLine();
+            if (ImGui.SmallButton(Strings.SpoilerRevealName))
+            {
+                session.RevealName(rowId);
+            }
+
+            if (ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(Strings.SpoilerRevealNameTooltip);
+            }
+        }
+
+        if (model.StatusReason.Length > 0 || model.StateNote is not null)
+        {
+            using (Theme.PushText(StateTextColor(model.State)))
+            {
+                ImGui.TextWrapped(model.StatusReason.Length > 0 ? model.StatusReason : model.StateNote!);
+            }
+
+            if (model.StatusReason.Length > 0 && model.StateNote is { } note)
+            {
+                ImGui.TextDisabled(note);
+            }
+        }
 
         ImGui.TextDisabled(model.JournalPath);
         if (model.FilingLine is { } filing)
         {
-            ImGui.TextDisabled(filing);
-        }
-
-        ImGui.TextDisabled(model.HeaderLine);
-        using (Theme.PushText(Theme.StateColor(model.State)))
-        {
-            ImGui.TextUnformatted(model.StateText);
-        }
-
-        if (model.StateNote is { } note)
-        {
-            ImGui.SameLine();
-            ImGui.TextDisabled(note);
-        }
-
-        if (model.Pinned)
-        {
-            ImGui.SameLine();
-            using var moon = Theme.PushText(Theme.Moon);
-            ImGui.TextUnformatted(Strings.Pinned);
-        }
-
-        DrawChain();
-    }
-
-    /// <summary>
-    /// The spoiler shield masks this quest's name: a line saying so and "Reveal this name", which shows the real name
-    /// everywhere for the rest of the session.
-    /// </summary>
-    private static void DrawRevealName(SessionState session, uint rowId)
-    {
-        ImGui.TextDisabled(Strings.SpoilerMaskedNote);
-        if (ImGui.SmallButton(Strings.SpoilerRevealName))
-        {
-            session.RevealName(rowId);
-        }
-
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(Strings.SpoilerRevealNameTooltip);
+            using var mist = Theme.PushText(Theme.Surface.TextSecondary);
+            ImGui.TextWrapped(filing);
         }
     }
 
     /// <summary>
-    /// "Chain: name · N of M done · next: quest" with a filling moon at its left; the next quest's name selects it.
-    /// Nothing is drawn for a quest outside every chain.
-    /// </summary>
-    private void DrawChain()
-    {
-        if (model.ChainText is not { } text)
-        {
-            return;
-        }
-
-        var lineHeight = ImGui.GetTextLineHeight();
-        var size = UiMetrics.HaloBoxSize(lineHeight);
-        MoonGlyph.DrawHaloInline(model.ChainFraction, size);
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(string.Format(CultureInfo.CurrentCulture, ChainMoonTooltipFormat, model.ChainDone, model.ChainTotal));
-        }
-
-        // The glyph box is taller than a text line; centre the text on it.
-        ImGui.SameLine();
-        ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (size - lineHeight) * 0.5f);
-        ImGui.TextUnformatted(text);
-        ImGui.SameLine();
-        if (model.ChainNextName is not { } next)
-        {
-            using var done = Theme.PushText(Theme.MoonDim);
-            ImGui.TextUnformatted(ChainCompleteLabel);
-            return;
-        }
-
-        ImGui.TextDisabled(ChainNextLabel);
-        ImGui.SameLine();
-        using (Theme.PushText(Theme.Moon))
-        {
-            ImGui.TextUnformatted(next);
-        }
-
-        if (ImGui.IsItemHovered())
-        {
-            ImGui.SetMouseCursor(ImGuiMouseCursor.Hand);
-            UiMetrics.Tooltip(ChainNextTooltip);
-            if (ImGui.IsItemClicked())
-            {
-                RevealRow(model.ChainNextRowId);
-            }
-        }
-    }
-
-    /// <summary>
-    /// Selects a path step, an unlock or the chain's next quest. A row the table already lists is selected in place
-    /// (the table scrolls to it; the tab, scope and filters stay as they are). Otherwise it is revealed the way the
-    /// other panes do: the Journal tab scoped to its genre with the narrowing filters cleared, so the table shows the
-    /// row wherever the step lives. A row id the catalog does not know is selected plainly so the detail pane can say so.
+    /// Selects a path step, an alternative, an unlock or the chain's next quest. A row the table already lists is
+    /// selected in place (the table scrolls to it; the tab, scope and filters stay as they are). Otherwise it is
+    /// revealed the way the other panes do: the Journal tab scoped to its genre with the narrowing filters cleared, so
+    /// the table shows the row wherever the step lives. A row id the catalog does not know is selected plainly so the
+    /// detail pane can say so.
     /// </summary>
     private void RevealRow(uint rowId)
     {
@@ -376,171 +544,40 @@ public sealed class DetailPane
         return false;
     }
 
-    /// <summary>Banner image with the name overlaid; false when the quest has none or it is not loaded yet.</summary>
-    private bool DrawBanner(QuestRecord quest)
-    {
-        if (quest.Icon == 0 || !textures.GetFromGameIcon(new GameIconLookup(quest.Icon)).TryGetWrap(out var wrap, out _) || wrap.Width <= 0 || wrap.Height <= 0)
-        {
-            return false;
-        }
-
-        var dl = ImGui.GetWindowDrawList();
-        var width = ImGui.GetContentRegionAvail().X;
-        var height = MathF.Min(UiMetrics.BannerMaxHeight, width * wrap.Height / wrap.Width);
-        var min = ImGui.GetCursorScreenPos();
-        var max = min + new Vector2(width, height);
-        // When the height clamp bites, the image is cropped to the box (top and bottom trimmed evenly), not squashed.
-        Chrome.ImageCover(wrap.Handle, new Vector2(width, height), new Vector2(wrap.Width, wrap.Height));
-
-        // Name strip: a Night gradient over the lower part of the image, the name in Silver at its left and the
-        // large state moon at its right.
-        var pad = UiMetrics.Px(8f);
-        var radius = UiMetrics.HeaderMoonRadius;
-        var moonBox = radius * 2.4f;
-        var badge = quest.IconSpecial != 0 ? UiMetrics.BannerBadgeSize + pad : 0f;
-        var textWrap = MathF.Max(UiMetrics.Px(40f), width - pad * 3f - moonBox - badge);
-        var textHeight = ImGui.CalcTextSize(model.DisplayName, false, textWrap).Y;
-        var stripHeight = MathF.Min(height, MathF.Max(textHeight + pad * 2f, moonBox + pad));
-        var stripTop = max.Y - stripHeight;
-        var fade = MathF.Min(UiMetrics.Px(28f), stripTop - min.Y);
-        if (fade > 0f)
-        {
-            Chrome.Scrim(dl, new Vector2(min.X, stripTop - fade), new Vector2(max.X, stripTop), 0f, 0.84f);
-        }
-
-        dl.AddRectFilled(new Vector2(min.X, stripTop), max, Theme.WithAlpha(Theme.Surface.Window, 0.84f));
-        dl.AddText(ImGui.GetFont(), ImGui.GetFontSize(), new Vector2(min.X + pad, max.Y - pad - textHeight), Theme.U32(Theme.Surface.Text), model.DisplayName, textWrap);
-        var moonCenter = new Vector2(max.X - pad - moonBox * 0.5f, max.Y - stripHeight * 0.5f);
-        MoonGlyph.Draw(dl, moonCenter, radius, model.State);
-
-        // The moon and the badge sit on the image item, so each gets an invisible item of its own for its tooltip;
-        // the cursor goes back under the image afterwards.
-        var cursor = ImGui.GetCursorScreenPos();
-        ImGui.SetCursorScreenPos(moonCenter - new Vector2(moonBox * 0.5f));
-        ImGui.InvisibleButton("##bannerMoon", new Vector2(moonBox, moonBox));
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(Strings.StateTooltip(model.State, quest));
-        }
-
-        if (badge > 0f)
-        {
-            var size = UiMetrics.BannerBadgeSize;
-            var badgeMin = new Vector2(max.X - pad - moonBox - pad - size, max.Y - stripHeight * 0.5f - size * 0.5f);
-            if (DrawSpecialBadge(dl, quest, badgeMin, size))
-            {
-                ImGui.SetCursorScreenPos(badgeMin);
-                ImGui.InvisibleButton("##bannerBadge", new Vector2(size, size));
-                if (ImGui.IsItemHovered())
-                {
-                    UiMetrics.Tooltip(BadgeTooltip(quest));
-                }
-            }
-        }
-
-        ImGui.SetCursorScreenPos(cursor);
-        ImGui.Spacing();
-        return true;
-    }
+    // ------------------------------------------------------------------ cards
 
     /// <summary>
-    /// The quest's special icon (<see cref="QuestRecord.IconSpecial"/>) drawn on the draw list at <paramref name="min"/>;
-    /// false (nothing drawn) while the texture is still loading. The caller owns the item under it and hangs
-    /// <see cref="BadgeTooltip"/> on that item, so the tooltip honours popups and window hover.
+    /// Every requirement with its check or cross; the one blocking the quest is the only marked row: a 2 px gold bar
+    /// at the card's left edge and its label in gold (one marker, game UX panel finding 8). The curated quirk's
+    /// "Note: …" follows.
     /// </summary>
-    private bool DrawSpecialBadge(ImDrawListPtr dl, QuestRecord quest, Vector2 min, float size)
+    private void DrawRequirements(float cardLeft)
     {
-        if (!textures.GetFromGameIcon(new GameIconLookup(quest.IconSpecial)).TryGetWrap(out var wrap, out _))
+        if (!model.HasSnapshot)
         {
-            return false;
+            using var mist = Theme.PushText(Theme.Surface.TextSecondary);
+            ImGui.TextWrapped(Strings.RequirementsNeedSnapshot);
+        }
+        else if (model.Requirements.Count == 0)
+        {
+            ImGui.TextDisabled(Strings.NoRequirements);
+        }
+        else
+        {
+            DrawRequirementLines(cardLeft);
         }
 
-        dl.AddImage(wrap.Handle, min, min + new Vector2(size, size));
-        return true;
-    }
-
-    /// <summary>What the special badge means.</summary>
-    private static string BadgeTooltip(QuestRecord quest) => quest.Festival != 0 ? SeasonalBadgeTooltip : SpecialBadgeTooltip;
-
-    /// <summary>
-    /// Raised Night card with the state moon and the name, for quests without a banner, and for quests whose banner
-    /// the spoiler shield hides (the card then says the artwork appears once the quest is in the journal).
-    /// </summary>
-    private void DrawHeaderCard(QuestRecord quest)
-    {
-        var dl = ImGui.GetWindowDrawList();
-
-        // A Chrome card (raised surface under the content, painted once its height is known).
-        Chrome.BeginCard("##headerCard");
-        var radius = UiMetrics.HeaderMoonRadius;
-        var box = radius * 2.6f;
-        var pos = ImGui.GetCursorScreenPos();
-        ImGui.Dummy(new Vector2(box, box));
-        MoonGlyph.Draw(dl, pos + new Vector2(box * 0.5f), radius, model.State);
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(Strings.StateTooltip(model.State, quest));
-        }
-
-        ImGui.SameLine();
-        if (quest.IconSpecial != 0)
-        {
-            var size = UiMetrics.BannerBadgeSize;
-            var badgeMin = ImGui.GetCursorScreenPos() + new Vector2(0f, (box - size) * 0.5f);
-            ImGui.Dummy(new Vector2(size, box));
-            if (DrawSpecialBadge(dl, quest, badgeMin, size) && ImGui.IsItemHovered())
-            {
-                UiMetrics.Tooltip(BadgeTooltip(quest));
-            }
-
-            ImGui.SameLine();
-        }
-
-        // The name wraps at the card's inner edge (Chrome pushes the wrap position).
-        using (ImRaii.Group())
-        {
-            using (Theme.PushText(Theme.Surface.Text))
-            {
-                ImGui.TextWrapped(model.DisplayName);
-            }
-
-            if (model.ArtworkHidden)
-            {
-                using var secondary = Theme.PushText(Theme.Surface.TextSecondary);
-                ImGui.TextWrapped(Strings.ArtworkHidden);
-            }
-        }
-
-        Chrome.EndCard();
-        ImGui.Spacing();
-    }
-
-    private void DrawRequirements()
-    {
-        DrawRequirementLines();
         if (model.QuirkNote is { } note)
         {
             // The curated quirk: what the game does that its data does not say. Shown whatever the state, since it is
             // the answer to "the NPC offers this while the plugin shows it Blocked".
-            using var dusk = Theme.PushText(Theme.Dusk);
+            using var dusk = Theme.PushText(Theme.Surface.TextSecondary);
             ImGui.TextWrapped(note);
         }
     }
 
-    private void DrawRequirementLines()
+    private void DrawRequirementLines(float cardLeft)
     {
-        if (!model.HasSnapshot)
-        {
-            ImGui.TextWrapped(Strings.RequirementsNeedSnapshot);
-            return;
-        }
-
-        if (model.Requirements.Count == 0)
-        {
-            ImGui.TextDisabled(Strings.NoRequirements);
-            return;
-        }
-
         var dl = ImGui.GetWindowDrawList();
         var lineHeight = ImGui.GetTextLineHeight();
         var mark = UiMetrics.RequirementMarkSize;
@@ -557,17 +594,7 @@ public sealed class DetailPane
             }
 
             ImGui.SameLine();
-            if (line.IsNext)
-            {
-                using (Theme.PushText(Theme.Moon))
-                {
-                    ImGui.TextUnformatted(Strings.NextStepMarker);
-                }
-
-                ImGui.SameLine();
-            }
-
-            using (Theme.PushText(line.IsNext ? Theme.Moon : Theme.Silver))
+            using (Theme.PushText(line.IsNext ? Theme.Moon : Theme.Surface.Text))
             {
                 ImGui.TextUnformatted(line.Label);
             }
@@ -575,13 +602,25 @@ public sealed class DetailPane
             if (line.Detail.Length > 0)
             {
                 ImGui.SameLine();
-                ImGui.TextDisabled(line.Detail);
+                using var mist = Theme.PushText(Theme.Surface.TextSecondary);
+                ImGui.TextWrapped(line.Detail);
+            }
+
+            if (line.IsNext)
+            {
+                var bottom = ImGui.GetItemRectMax().Y;
+                var x = cardLeft + UiMetrics.Px(1f);
+                dl.AddRectFilled(new Vector2(x, pos.Y - UiMetrics.Px(1f)), new Vector2(x + MathF.Max(2f, UiMetrics.Px(2f)), bottom + UiMetrics.Px(1f)), Theme.MoonU32);
             }
         }
     }
 
-    /// <summary>Icon, name and kind per reward; hovering anywhere on the row shows the blown-up reward tooltip.</summary>
-    private void DrawRewards()
+    /// <summary>
+    /// Rewards as tiles on sunken wells, wrapping at the card's inner edge: unique rewards wear a 1.5 px gold ring and a
+    /// crescent badge, a small caption says "Store only" or "Also drops" under a tile the store sells or a duty drops.
+    /// Hovering a tile, or focusing it with the keyboard, shows <see cref="RewardTooltip"/>.
+    /// </summary>
+    private void DrawRewards(float innerRight)
     {
         if (model.Rewards.Count == 0)
         {
@@ -589,33 +628,80 @@ public sealed class DetailPane
             return;
         }
 
-        var iconSize = UiMetrics.DetailIconSize;
-        foreach (var line in model.Rewards)
+        var dl = ImGui.GetWindowDrawList();
+        var tile = MathF.Max(UiMetrics.Px(40f), UiMetrics.Icon(34f) + UiMetrics.Px(8f));
+        var iconSize = tile - UiMetrics.Px(8f);
+        var gap = UiMetrics.Px(6f);
+        var markSize = ImGui.GetFontSize() * MarkScale;
+        var rowStart = ImGui.GetCursorScreenPos();
+        var x = rowStart.X;
+        var y = rowStart.Y;
+        var rowHeight = 0f;
+        for (var i = 0; i < model.Rewards.Count; i++)
         {
-            using (ImRaii.Group())
+            var reward = model.Rewards[i];
+            var markWidth = reward.Mark is null ? 0f : ImGui.CalcTextSize(reward.Mark).X * MarkScale;
+            var slot = MathF.Max(tile, markWidth);
+            var height = tile + (reward.Mark is null ? 0f : markSize + UiMetrics.Px(2f));
+            if (x > rowStart.X && x + slot > innerRight)
             {
-                if (line.Reward.Icon != 0)
-                {
-                    var wrap = textures.GetFromGameIcon(new GameIconLookup(line.Reward.Icon)).GetWrapOrEmpty();
-                    ImGui.Image(wrap.Handle, new Vector2(iconSize, iconSize));
-                }
-                else
-                {
-                    ImGui.Dummy(new Vector2(iconSize, iconSize));
-                }
-
-                ImGui.SameLine();
-                ImGui.AlignTextToFramePadding();
-                ImGui.TextUnformatted(line.Text);
-                ImGui.SameLine();
-                ImGui.TextDisabled(line.Kind);
+                x = rowStart.X;
+                y += rowHeight + gap;
+                rowHeight = 0f;
             }
 
-            if (ImGui.IsItemHovered())
+            var min = new Vector2(x + ((slot - tile) * 0.5f), y);
+            var max = min + new Vector2(tile, tile);
+            ImGui.SetCursorScreenPos(min);
+            ImGui.PushID(i);
+            ImGui.InvisibleButton("##reward", new Vector2(tile, tile));
+            var hovered = ImGui.IsItemHovered();
+            ImGui.PopID();
+            var rounding = UiMetrics.Px(6f);
+            dl.AddRectFilled(min, max, Theme.U32(hovered ? Theme.Surface.Hover : Theme.Surface.Sunken), rounding);
+            if (reward.Reward.Icon != 0)
             {
-                RewardTooltip.Draw(line.Reward, links, textures);
+                var wrap = textures.GetFromGameIcon(new GameIconLookup(reward.Reward.Icon)).GetWrapOrEmpty();
+                var iconMin = min + new Vector2((tile - iconSize) * 0.5f);
+                dl.AddImageRounded(wrap.Handle, iconMin, iconMin + new Vector2(iconSize), Vector2.Zero, Vector2.One, 0xFFFFFFFFu, UiMetrics.Px(4f));
             }
+
+            if (reward.Unique)
+            {
+                dl.AddRect(min, max, Theme.MoonU32, rounding, ImDrawFlags.None, MathF.Max(1.5f, UiMetrics.Px(1.5f)));
+                Crescent(dl, new Vector2(max.X - UiMetrics.Px(1f), min.Y + UiMetrics.Px(1f)), MathF.Max(3f, UiMetrics.Px(4f)));
+            }
+            else
+            {
+                dl.AddRect(min, max, Theme.U32(Theme.Surface.Line), rounding, ImDrawFlags.None, UiMetrics.Hairline);
+            }
+
+            Chrome.FocusRing(rounding);
+            if (hovered || (ImGui.GetIO().NavVisible && ImGui.IsItemFocused()))
+            {
+                RewardTooltip.Draw(reward.Reward, links, textures, reward.Unique ? Strings.DetailUniqueRewardTooltip : null);
+            }
+
+            if (reward.Mark is { } mark)
+            {
+                var markPos = new Vector2(x + ((slot - markWidth) * 0.5f), max.Y + UiMetrics.Px(2f));
+                dl.AddText(ImGui.GetFont(), markSize, markPos, Theme.U32(Theme.Surface.TextTertiary), mark);
+            }
+
+            x += slot + gap;
+            rowHeight = MathF.Max(rowHeight, height);
         }
+
+        ImGui.SetCursorScreenPos(new Vector2(rowStart.X, y));
+        ImGui.Dummy(new Vector2(1f, rowHeight));
+    }
+
+    /// <summary>The unique-reward badge: a small gold crescent (a disc with an offset bite) on the tile's corner.</summary>
+    private static void Crescent(ImDrawListPtr dl, Vector2 center, float r)
+    {
+        dl.AddCircleFilled(center, r + 1f, Theme.U32(Theme.Surface.Raised), 12);
+        dl.AddCircleFilled(center, r, Theme.MoonU32, 12);
+        dl.AddCircleFilled(center + new Vector2(r * 0.45f, -r * 0.35f), r * 0.8f, Theme.U32(Theme.Surface.Raised), 12);
     }
 
     /// <summary>
@@ -627,7 +713,7 @@ public sealed class DetailPane
     {
         if (overrides.Get(rowId) is { } stored)
         {
-            using (Theme.PushText(stored.Unique ? Theme.Silver : Theme.Dusk))
+            using (Theme.PushText(stored.Unique ? Theme.Surface.Text : Theme.Surface.TextSecondary))
             {
                 ImGui.TextUnformatted(stored.Unique ? Strings.MarkedUniqueByYou : Strings.MarkedNotUniqueByYou);
             }
@@ -674,301 +760,309 @@ public sealed class DetailPane
     }
 
     /// <summary>
-    /// The chain grouped by expansion, completed runs folded behind a toggle, every visible glyph joined by a thin
-    /// Dusk line; each name is clickable and selects that quest.
+    /// "Chain: name · N of M done · next: quest" with a filling halo at its left, at the top of the Path card (the only
+    /// place the chain is shown); the next quest's name selects it. Nothing is drawn for a quest outside every chain.
     /// </summary>
-    private void DrawPath()
+    private void DrawChain()
     {
-        if (model.Path.Count <= 1)
+        if (model.ChainText is not { } text)
         {
-            ImGui.TextDisabled(Strings.PathSingle);
             return;
         }
 
-        var dl = ImGui.GetWindowDrawList();
-        var radius = UiMetrics.PathGlyphRadius;
         var lineHeight = ImGui.GetTextLineHeight();
-        var glyphBox = MathF.Max(lineHeight, radius * 2.4f);
-        var chain = default(Chain);
-
-        foreach (var row in model.PathRows)
-        {
-            switch (row.Kind)
-            {
-                case PathRowKind.ExpansionHeader:
-                    ImGui.TextDisabled(row.Text);
-                    break;
-
-                case PathRowKind.Step:
-                    DrawStep(dl, row.Step!, radius, lineHeight, glyphBox, ref chain);
-                    break;
-
-                case PathRowKind.FoldedRun:
-                {
-                    var expanded = expandedRuns.Contains(row.RunIndex);
-                    using var id = ImRaii.PushId(row.RunIndex);
-                    BeginGlyphLine(dl, QuestState.Completed, radius, lineHeight, glyphBox, ref chain);
-                    using (Theme.PushText(Theme.Dusk))
-                    {
-                        if (ImGui.Selectable(expanded ? row.ExpandedText : row.Text))
-                        {
-                            if (!expandedRuns.Remove(row.RunIndex))
-                            {
-                                expandedRuns.Add(row.RunIndex);
-                            }
-                        }
-                    }
-
-                    if (ImGui.IsItemHovered())
-                    {
-                        UiMetrics.Tooltip(expanded ? Strings.FoldedRunCollapseTooltip : Strings.FoldedRunExpandTooltip);
-                    }
-
-                    if (expanded)
-                    {
-                        foreach (var step in row.Run!)
-                        {
-                            DrawStep(dl, step, radius, lineHeight, glyphBox, ref chain);
-                        }
-                    }
-
-                    break;
-                }
-            }
-        }
-    }
-
-    /// <summary>The previous glyph of the chain: where it is and whether that step is done (its outgoing line is then lit).</summary>
-    private struct Chain
-    {
-        public Vector2 Center;
-        public bool Has;
-        public bool Done;
-    }
-
-    private void DrawStep(ImDrawListPtr dl, PathLine step, float radius, float lineHeight, float glyphBox, ref Chain chain)
-    {
-        using var id = ImRaii.PushId((int)step.RowId);
-        BeginGlyphLine(dl, step.State, radius, lineHeight, glyphBox, ref chain);
-        if (ImGui.Selectable(step.Name, step.IsTarget))
-        {
-            RevealRow(step.RowId);
-        }
-    }
-
-    /// <summary>
-    /// Glyph at the line's left joined to the previous glyph by a line that is Moon where the path is already walked
-    /// (the previous step done) and Dusk where it is not; the cursor is left on the same line for the label.
-    /// </summary>
-    private static void BeginGlyphLine(ImDrawListPtr dl, QuestState state, float radius, float lineHeight, float glyphBox, ref Chain chain)
-    {
-        var pos = ImGui.GetCursorScreenPos();
-        var center = pos + new Vector2(glyphBox * 0.5f, lineHeight * 0.5f);
-        if (chain.Has)
-        {
-            dl.AddLine(
-                chain.Center + new Vector2(0f, radius),
-                center - new Vector2(0f, radius),
-                chain.Done ? Theme.MoonU32 : Theme.DuskU32,
-                chain.Done ? UiMetrics.Px(1.5f) : UiMetrics.Hairline);
-        }
-
-        ImGui.Dummy(new Vector2(glyphBox, lineHeight));
-        MoonGlyph.Draw(dl, center, radius, state);
+        var size = UiMetrics.HaloBoxSize(lineHeight);
+        MoonGlyph.DrawHaloInline(model.ChainFraction, size, onCard: true);
         if (ImGui.IsItemHovered())
         {
-            UiMetrics.Tooltip(Strings.StateTooltip(state));
+            UiMetrics.Tooltip(string.Format(CultureInfo.CurrentCulture, ChainMoonTooltipFormat, model.ChainDone, model.ChainTotal));
+        }
+
+        // The glyph box is taller than a text line; centre the text on it.
+        ImGui.SameLine();
+        ImGui.SetCursorPosY(ImGui.GetCursorPosY() + ((size - lineHeight) * 0.5f));
+        using (Theme.PushText(Theme.Surface.TextSecondary))
+        {
+            ImGui.TextUnformatted(text);
         }
 
         ImGui.SameLine();
-        chain.Center = center;
-        chain.Has = true;
-        chain.Done = state == QuestState.Completed;
-    }
-
-    /// <summary>Direct dependents of the selected quest: the quests it is a previous quest of, with their glyphs.</summary>
-    private void DrawUnlocks()
-    {
-        ImGui.Spacing();
-        ImGui.TextDisabled(Strings.UnlocksNext);
-        if (model.Unlocks.Count == 0)
+        if (model.ChainNextName is not { } next)
         {
-            ImGui.TextDisabled(Strings.UnlocksNone);
+            using var done = Theme.PushText(Theme.MoonDim);
+            ImGui.TextUnformatted(ChainCompleteLabel);
             return;
         }
 
-        var dl = ImGui.GetWindowDrawList();
-        var radius = UiMetrics.PathGlyphRadius;
-        var lineHeight = ImGui.GetTextLineHeight();
-        var glyphBox = MathF.Max(lineHeight, radius * 2.4f);
-        foreach (var line in model.Unlocks)
+        ImGui.TextDisabled(ChainNextLabel);
+        ImGui.SameLine();
+        using (Theme.PushText(Theme.Moon))
         {
-            using var id = ImRaii.PushId((int)line.RowId);
-            var pos = ImGui.GetCursorScreenPos();
-            ImGui.Dummy(new Vector2(glyphBox, lineHeight));
-            MoonGlyph.Draw(dl, pos + new Vector2(glyphBox * 0.5f, lineHeight * 0.5f), radius, line.State);
-            if (ImGui.IsItemHovered())
+            if (ImGui.Selectable(next, false, ImGuiSelectableFlags.None, ImGui.CalcTextSize(next)))
             {
-                UiMetrics.Tooltip(Strings.StateTooltip(line.State));
-            }
-
-            ImGui.SameLine();
-            if (ImGui.Selectable(line.Name))
-            {
-                RevealRow(line.RowId);
+                RevealRow(model.ChainNextRowId);
             }
         }
 
-        if (model.UnlocksMore is { } more)
+        if (ImGui.IsItemHovered())
         {
-            ImGui.TextDisabled(more);
+            ImGui.SetMouseCursor(ImGuiMouseCursor.Hand);
+            UiMetrics.Tooltip(ChainNextTooltip);
         }
     }
 
-    private void DrawGiver(QuestRecord quest)
+    private void DrawGiver()
     {
         if (model.GiverName is null)
         {
             ImGui.TextDisabled(Strings.NoGiver);
-            DrawReport(quest, sameLine: false);
             return;
         }
 
         ImGui.TextUnformatted(model.GiverName);
-        if (model.PlaceText is { } place)
+        using var mist = Theme.PushText(Theme.Surface.TextSecondary);
+        if (model.PlaceLine is { } place)
         {
-            ImGui.TextDisabled(place);
-            if (model.CoordinateText is { } coords)
+            ImGui.TextWrapped(place);
+        }
+        else
+        {
+            ImGui.TextUnformatted(Strings.DetailNoGiverPlace);
+        }
+    }
+
+    // ------------------------------------------------------------------ action bar
+
+    private static readonly string FlagIcon = FontAwesomeIcon.Flag.ToIconString();
+    private static readonly string TeleportIcon = FontAwesomeIcon.PaperPlane.ToIconString();
+    private static readonly string PinIcon = FontAwesomeIcon.Thumbtack.ToIconString();
+    private static readonly string ShowPathIcon = FontAwesomeIcon.Route.ToIconString();
+    private static readonly string LinkIcon = FontAwesomeIcon.Link.ToIconString();
+    private static readonly string CopyIcon = FontAwesomeIcon.Copy.ToIconString();
+    private static readonly string JournalIcon = FontAwesomeIcon.BookOpen.ToIconString();
+    private static readonly string ReportIcon = FontAwesomeIcon.Bug.ToIconString();
+
+    private uint teleportTipRowId = uint.MaxValue;
+    private string teleportTip = string.Empty;
+
+    /// <summary>Round buttons after the primary action: Pin, Show path, Link, Copy, Journal, Report (when attached), Flag (when Teleport leads).</summary>
+    private int IconButtonCount => 5 + (Diagnostics is null ? 0 : 1) + (links.TeleportAvailable ? 1 : 0);
+
+    private float PrimaryWidth()
+    {
+        var label = links.TeleportAvailable ? Strings.ActionTeleport : Strings.FlagOnMap;
+        ImGui.PushFont(UiBuilder.IconFont);
+        var icon = ImGui.CalcTextSize(TeleportIcon).X;
+        ImGui.PopFont();
+        return UiMetrics.Px(12f) + icon + UiMetrics.Px(6f) + ImGui.CalcTextSize(label).X + UiMetrics.Px(14f);
+    }
+
+    /// <summary>The bar's rows: one when everything fits the pane's width, else the round buttons wrap to a second.</summary>
+    private int ActionRows(float width)
+    {
+        var spacing = ImGui.GetStyle().ItemSpacing.X;
+        var total = PrimaryWidth() + (IconButtonCount * (UiMetrics.MinTarget + spacing));
+        return total <= width ? 1 : 2;
+    }
+
+    /// <summary>Height under the scrolling stack: hairline, the action rows, the provenance line and paddings.</summary>
+    private float ActionBarHeight()
+    {
+        var spacing = ImGui.GetStyle().ItemSpacing.Y;
+        var rows = ActionRows(ImGui.GetContentRegionAvail().X);
+        return UiMetrics.Hairline + spacing + (rows * UiMetrics.MinTarget) + ((rows - 1) * spacing) + spacing + ImGui.GetTextLineHeight() + UiMetrics.Px(2f);
+    }
+
+    /// <summary>
+    /// The sticky action bar: one labelled primary action, gold (Flag on map, or Teleport when Lifestream is loaded),
+    /// then round buttons for Pin, Show path, Link in chat, Copy coordinates, Open journal, Report and, with Teleport
+    /// leading, Flag on map. Disabled buttons say why on hover. All are focusable items (accessibility A6).
+    /// </summary>
+    private void DrawActionBar(QuestRecord quest, uint rowId)
+    {
+        Chrome.Hairline();
+        var width = ImGui.GetContentRegionAvail().X;
+        var wrap = ActionRows(width) > 1;
+        var teleportLeads = links.TeleportAvailable;
+        if (teleportLeads)
+        {
+            var canTeleport = links.CanTeleport(quest);
+            if (teleportTipRowId != rowId)
             {
-                ImGui.SameLine();
-                ImGui.TextDisabled(coords);
+                // The aetheryte is fixed per quest: named once per selection, not per frame.
+                teleportTipRowId = rowId;
+                teleportTip = links.NearestAetheryte(quest) is { } aetheryte
+                    ? string.Format(CultureInfo.CurrentCulture, Strings.ActionTeleportTooltipFormat, aetheryte.Name)
+                    : Strings.TeleportNoAetheryte;
+            }
+
+            var tip = links.TeleportBusy ? Strings.TeleportBusy : teleportTip;
+            if (PrimaryButton("##teleport", TeleportIcon, Strings.ActionTeleport, canTeleport, tip))
+            {
+                links.TeleportToGiver(quest);
             }
         }
-
-        using (ImRaii.Disabled(!links.CanFlagMap(quest)))
+        else
         {
-            if (ImGui.SmallButton(Strings.FlagOnMap))
+            var canFlag = links.CanFlagMap(quest);
+            if (PrimaryButton("##flag", FlagIcon, Strings.FlagOnMap, canFlag, canFlag ? Strings.FlagOnMap : Strings.ActionFlagUnavailable))
             {
                 links.FlagMap(quest);
             }
         }
 
-        ImGui.SameLine();
-        var canOpen = GameLinks.CanOpenJournal(quest, model.State);
-        using (ImRaii.Disabled(!canOpen))
+        if (!wrap)
         {
-            if (ImGui.SmallButton(Strings.OpenJournal))
-            {
-                links.OpenJournal(quest);
-            }
+            ImGui.SameLine();
         }
 
-        if (!canOpen && ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+        var pinned = model.Pinned;
+        var canPin = runner.CanPin;
+        if (Chrome.IconButtonRound("##pin", PinIcon, !canPin ? Strings.ActionPinUnavailable : pinned ? Strings.ActionUnpinTooltip : Strings.ActionPinTooltip, pinned, canPin))
         {
-            UiMetrics.Tooltip(Strings.OpenJournalUnavailable);
+            runner.TogglePin(rowId);
         }
 
         ImGui.SameLine();
-        if (ImGui.SmallButton(Strings.LinkInChat))
+        if (Chrome.IconButtonRound("##showPath", ShowPathIcon, Strings.ActionShowPathTooltip))
+        {
+            ui.ShowPath(rowId);
+        }
+
+        ImGui.SameLine();
+        if (Chrome.IconButtonRound("##link", LinkIcon, Strings.LinkInChat))
         {
             links.PrintQuestLink(quest);
         }
 
-        using (ImRaii.Disabled(model.CoordinateText is null))
+        ImGui.SameLine();
+        var hasCoordinates = model.CoordinateText is not null;
+        if (Chrome.IconButtonRound("##copy", CopyIcon, hasCoordinates ? Strings.CopyCoordinatesTooltip : Strings.ActionCopyCoordinatesUnavailable, enabled: hasCoordinates)
+            && links.CoordinateText(quest) is { } coordinates)
         {
-            if (ImGui.SmallButton(Strings.CopyCoordinates) && links.CoordinateText(quest) is { } coordinates)
-            {
-                ImGui.SetClipboardText(coordinates);
-            }
-        }
-
-        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
-        {
-            UiMetrics.Tooltip(Strings.CopyCoordinatesTooltip);
-        }
-
-        // Teleport through Lifestream: shown only when that plugin is loaded.
-        if (links.TeleportAvailable)
-        {
-            ImGui.SameLine();
-            var canTeleport = links.CanTeleport(quest);
-            using (ImRaii.Disabled(!canTeleport))
-            {
-                if (ImGui.SmallButton(Strings.TeleportToGiver))
-                {
-                    links.TeleportToGiver(quest);
-                }
-            }
-
-            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
-            {
-                var tip = links.TeleportBusy ? Strings.TeleportBusy
-                    : links.NearestAetheryte(quest) is { } aetheryte ? aetheryte.Name
-                    : Strings.TeleportNoAetheryte;
-                UiMetrics.Tooltip(tip);
-            }
-        }
-
-        DrawReport(quest, sameLine: true);
-    }
-
-    /// <summary>
-    /// "Report" at the end of the action row (feature plan v3 T18): composes the diagnostic block for this quest on
-    /// the click only, puts it on the clipboard and shows "Copied · paste it into a GitHub issue" beside the button for
-    /// <see cref="ReportNoteSeconds"/>. Absent until the plugin attaches <see cref="Diagnostics"/>.
-    /// </summary>
-    private void DrawReport(QuestRecord quest, bool sameLine)
-    {
-        if (Diagnostics is not { } diagnostics)
-        {
-            return;
-        }
-
-        if (sameLine)
-        {
-            ImGui.SameLine();
-        }
-
-        if (ImGui.SmallButton(Strings.Report))
-        {
-            var copied = DiagnosticBuilder.TryCopy(diagnostics.Compose(quest), log ?? Plugin.Log);
-            reportNoteUntil = copied ? ImGui.GetTime() + ReportNoteSeconds : 0.0;
-        }
-
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(Strings.ReportTooltip);
-        }
-
-        if (ImGui.GetTime() < reportNoteUntil)
-        {
-            ImGui.SameLine();
-            using var moon = Theme.PushText(Theme.Silver);
-            ImGui.TextUnformatted(Strings.ReportCopied);
-        }
-    }
-
-    /// <summary>Section header: a small FontAwesome icon in Dusk, the title, then a Dusk rule; all Moon while highlighted.</summary>
-    private static void Section(string title, string icon, bool highlight = false)
-    {
-        ImGui.Spacing();
-        using (ImRaii.PushFont(UiBuilder.IconFont))
-        using (Theme.PushText(highlight ? Theme.Moon : Theme.Dusk))
-        {
-            ImGui.TextUnformatted(icon);
+            ImGui.SetClipboardText(coordinates);
         }
 
         ImGui.SameLine();
-        using (Theme.PushText(Theme.Moon, highlight))
+        var canOpen = GameLinks.CanOpenJournal(quest, model.State);
+        if (Chrome.IconButtonRound("##journal", JournalIcon, canOpen ? Strings.OpenJournal : Strings.OpenJournalUnavailable, enabled: canOpen))
         {
-            ImGui.TextUnformatted(title);
+            links.OpenJournal(quest);
         }
 
-        using (ImRaii.PushColor(ImGuiCol.Separator, highlight ? Theme.Moon : Theme.Dusk))
+        if (Diagnostics is { } diagnostics)
         {
-            ImGui.Separator();
+            ImGui.SameLine();
+            if (Chrome.IconButtonRound("##report", ReportIcon, Strings.ReportTooltip))
+            {
+                var copied = DiagnosticBuilder.TryCopy(diagnostics.Compose(quest), log ?? Plugin.Log);
+                reportNoteUntil = copied ? ImGui.GetTime() + ReportNoteSeconds : 0.0;
+            }
+        }
+
+        if (teleportLeads)
+        {
+            ImGui.SameLine();
+            var canFlag = links.CanFlagMap(quest);
+            if (Chrome.IconButtonRound("##flagIcon", FlagIcon, canFlag ? Strings.FlagOnMap : Strings.ActionFlagUnavailable, enabled: canFlag))
+            {
+                links.FlagMap(quest);
+            }
         }
     }
+
+    /// <summary>
+    /// The labelled primary action: a pill of <see cref="UiMetrics.MinTarget"/> height, Moon at 16 % with Moon text
+    /// (22 % hovered, 28 % held); disabled, a neutral pill with the reason in the tooltip. Focusable, with the ring.
+    /// </summary>
+    private static bool PrimaryButton(string id, string icon, string label, bool enabled, string tooltip)
+    {
+        var height = UiMetrics.MinTarget;
+        ImGui.PushFont(UiBuilder.IconFont);
+        var iconSize = ImGui.CalcTextSize(icon);
+        ImGui.PopFont();
+        var labelSize = ImGui.CalcTextSize(label);
+        var padX = UiMetrics.Px(12f);
+        var size = new Vector2(padX + iconSize.X + UiMetrics.Px(6f) + labelSize.X + UiMetrics.Px(14f), height);
+        var min = ImGui.GetCursorScreenPos();
+        ImGui.BeginDisabled(!enabled);
+        var clicked = ImGui.InvisibleButton(id, size);
+        ImGui.EndDisabled();
+        var hovered = enabled && ImGui.IsItemHovered();
+        var held = enabled && ImGui.IsItemActive();
+
+        var dl = ImGui.GetWindowDrawList();
+        var max = min + size;
+        var rounding = height * 0.5f;
+        var s = Theme.Surface;
+        if (enabled)
+        {
+            dl.AddRectFilled(min, max, Theme.WithAlpha(Theme.Moon, held ? 0.28f : hovered ? 0.22f : 0.16f), rounding);
+            dl.AddRect(min, max, Theme.WithAlpha(Theme.Moon, 0.45f), rounding, ImDrawFlags.None, UiMetrics.Hairline);
+        }
+        else
+        {
+            dl.AddRectFilled(min, max, Theme.U32(s.Raised), rounding);
+        }
+
+        var ink = enabled ? Theme.MoonU32 : Theme.U32(s.TextDisabled);
+        ImGui.PushFont(UiBuilder.IconFont);
+        dl.AddText(new Vector2(min.X + padX, min.Y + ((height - iconSize.Y) * 0.5f)), ink, icon);
+        ImGui.PopFont();
+        dl.AddText(new Vector2(min.X + padX + iconSize.X + UiMetrics.Px(6f), min.Y + ((height - labelSize.Y) * 0.5f)), ink, label);
+        Chrome.FocusRing(rounding);
+        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+        {
+            UiMetrics.Tooltip(tooltip);
+        }
+
+        return clicked && enabled;
+    }
+
+    /// <summary>The plain provenance line under the bar ("Checked just now · live"), or the Report confirmation for a few seconds.</summary>
+    private void DrawProvenance(SessionState session)
+    {
+        var now = ImGui.GetTime();
+        if (now < reportNoteUntil)
+        {
+            using var silver = Theme.PushText(Theme.Surface.Text);
+            ImGui.TextUnformatted(Strings.ReportCopied);
+            return;
+        }
+
+        if (now - model.ProvenanceBuiltAt > ProvenanceRefreshSeconds || now < model.ProvenanceBuiltAt)
+        {
+            BuildProvenance(session, now);
+        }
+
+        using var dusk = Theme.PushText(Theme.Surface.TextTertiary);
+        ImGui.TextUnformatted(model.Provenance);
+    }
+
+    /// <summary>"Checked just now · live" for the logged-in character, "From Michiru's snapshot, 2 d ago" for a stored one.</summary>
+    private void BuildProvenance(SessionState session, double now)
+    {
+        model.ProvenanceBuiltAt = now;
+        if (session.ViewedSnapshot is not { } snapshot)
+        {
+            model.Provenance = Strings.ProvenanceLogIn;
+            return;
+        }
+
+        var age = UiFormat.Age(snapshot.TakenUtc);
+        if (session.IsLive)
+        {
+            model.Provenance = string.Format(CultureInfo.CurrentCulture, Strings.ProvenanceLiveFormat, age);
+            return;
+        }
+
+        var name = snapshot.Name;
+        var space = name.IndexOf(' ', StringComparison.Ordinal);
+        var first = space > 0 ? name[..space] : name;
+        model.Provenance = string.Format(CultureInfo.CurrentCulture, Strings.ProvenanceSnapshotFormat, first, age);
+    }
+
+    // ------------------------------------------------------------------ model
 
     private void Refresh(SessionState session, CatalogBundle bundle, uint rowId)
     {
@@ -978,11 +1072,6 @@ public sealed class DetailPane
             return;
         }
 
-        if (model.RowId != rowId)
-        {
-            expandedRuns.Clear();
-        }
-
         pinnedShown = pinned;
         model.RowId = rowId;
         model.Version = session.Version;
@@ -990,17 +1079,19 @@ public sealed class DetailPane
         model.Pinned = pinned;
         model.Requirements.Clear();
         model.Rewards.Clear();
-        model.Path.Clear();
-        model.PathRows.Clear();
-        model.Unlocks.Clear();
-        model.UnlocksMore = null;
         model.StateNote = null;
         model.QuirkNote = null;
         model.ChainText = null;
         model.ChainNextName = null;
         model.GiverName = null;
-        model.PlaceText = null;
+        model.PlaceLine = null;
         model.CoordinateText = null;
+        model.StatusReason = string.Empty;
+        model.RequirementsCaption = string.Empty;
+        model.RewardsCaption = string.Empty;
+        model.Evaluation = null;
+        lastNames = session.Names;
+        lastStates = session.States;
 
         var quest = bundle.Catalog.GetByRowId(rowId);
         model.Quest = quest;
@@ -1012,12 +1103,16 @@ public sealed class DetailPane
         var snapshot = session.ViewedSnapshot;
         model.HasSnapshot = snapshot is not null;
         session.States.TryGetValue(rowId, out var evaluation);
+        model.Evaluation = evaluation;
         model.State = evaluation?.State ?? QuestState.Unknown;
         var spoilers = session.Spoilers;
         model.DisplayName = spoilers.DisplayName(quest);
         model.NameMasked = spoilers.IsMasked(quest);
         model.ArtworkHidden = quest.Icon != 0 && !spoilers.ShowArtwork(quest, model.State);
-        model.StateText = BlockerText.StatusText(evaluation, quest, session.Names, session.States);
+        model.StateName = Strings.StateName(model.State, quest);
+        var status = BlockerText.StatusText(evaluation, quest, session.Names, session.States);
+        var prefix = model.StateName + BlockerText.Separator;
+        model.StatusReason = status.StartsWith(prefix, StringComparison.Ordinal) ? status[prefix.Length..] : status == model.StateName ? string.Empty : status;
         model.HasUniqueEntries = HasShippedUniqueEntry(session.UniqueRewards, rowId);
 
         model.JournalPath = quest.IsUnlisted
@@ -1042,6 +1137,7 @@ public sealed class DetailPane
                 model.StateNote = string.Format(CultureInfo.CurrentCulture, Strings.ReadyOnJobFormat, bundle.Names.ClassJobAbbreviation(job));
             }
 
+            var unmet = 0;
             foreach (var result in evaluation.Requirements)
             {
                 // The evaluator wrote the prerequisite's or lock's real name into the detail; the shield masks it here.
@@ -1052,115 +1148,70 @@ public sealed class DetailPane
                     _ => result.Detail,
                 };
                 model.Requirements.Add(new RequirementLine(result.Met, ReferenceEquals(result, evaluation.NextStep), Strings.RequirementName(result.Req.Kind), detail));
+                unmet += result.Met ? 0 : 1;
+            }
+
+            if (model.Requirements.Count > 0)
+            {
+                model.RequirementsCaption = unmet == 0
+                    ? Strings.DetailRequirementsAllMet
+                    : string.Format(CultureInfo.CurrentCulture, Strings.DetailRequirementsUnmetFormat, unmet, model.Requirements.Count);
             }
         }
 
-        foreach (var reward in quest.Rewards)
-        {
-            var text = reward.Count > 1
-                ? string.Format(CultureInfo.CurrentCulture, Strings.RewardCountFormat, reward.Name, reward.Count)
-                : reward.Name;
-            model.Rewards.Add(new RewardLine(reward, text, Strings.RewardKindName(reward.Kind)));
-        }
-
-        foreach (var step in PathFinder.PathTo(rowId, bundle.Catalog, session.States))
-        {
-            var stepQuest = bundle.Catalog.GetByRowId(step.RowId);
-            var name = stepQuest is null ? step.RowId.ToString(CultureInfo.InvariantCulture) : spoilers.DisplayName(stepQuest);
-            model.Path.Add(new PathLine(step.RowId, name, step.State, step.RowId == rowId, stepQuest?.Expansion ?? quest.Expansion));
-        }
-
-        BuildPathRows(bundle);
-        BuildUnlocks(session, bundle, quest);
+        BuildRewards(session, quest);
+        chart.Load(session, bundle, quest, MaxUnlocks);
         BuildChain(session, bundle, rowId);
 
         if (quest.Issuer is { } issuer)
         {
             model.GiverName = issuer.Name.Length > 0 ? issuer.Name : Strings.NoGiver;
-            if (links.Map(issuer.MapId) is { } map)
-            {
-                model.PlaceText = map.Region.Length > 0 && map.Region != map.PlaceName
-                    ? string.Format(CultureInfo.CurrentCulture, Strings.JournalPathFormat, map.Region, map.PlaceName)
-                    : map.PlaceName;
-            }
-
             if (links.MapCoordinates(quest) is { } coords)
             {
                 model.CoordinateText = string.Format(CultureInfo.CurrentCulture, Strings.CoordinatesFormat, coords.X, coords.Y);
             }
+
+            if (links.Map(issuer.MapId) is { } map)
+            {
+                var place = map.Region.Length > 0 && map.Region != map.PlaceName
+                    ? string.Format(CultureInfo.CurrentCulture, Strings.JournalPathFormat, map.Region, map.PlaceName)
+                    : map.PlaceName;
+                model.PlaceLine = model.CoordinateText is { } text ? place + " " + text : place;
+            }
         }
 
-        model.Provenance = snapshot is null
-            ? Strings.ProvenanceNoSnapshot
-            : string.Format(
-                CultureInfo.CurrentCulture,
-                model.State == QuestState.Completed ? Strings.ProvenanceCompletedFormat : Strings.ProvenanceEvaluatedFormat,
-                UiFormat.Time(snapshot.TakenUtc));
+        BuildProvenance(session, ImGui.GetTime());
     }
 
-    /// <summary>
-    /// Groups <see cref="Model.Path"/> by expansion under a header each, and folds every run of at least
-    /// <see cref="MinFoldedRun"/> consecutive completed steps into one toggle row. The target and every step that is
-    /// not completed stay listed.
-    /// </summary>
-    private void BuildPathRows(CatalogBundle bundle)
+    /// <summary>The reward tiles: which rewards are unique for this quest (shipped entries), and which the store sells or a duty drops.</summary>
+    private void BuildRewards(SessionState session, QuestRecord quest)
     {
-        if (model.Path.Count <= 1)
+        uniqueByQuest.TryGetValue(quest.RowId, out var entries);
+        var unique = 0;
+        foreach (var reward in quest.Rewards)
         {
-            return;
-        }
-
-        var rows = model.PathRows;
-        List<PathLine>? run = null;
-        var runIndex = 0;
-        byte? expansion = null;
-
-        void Flush()
-        {
-            if (run is null)
+            var isUnique = false;
+            if (entries is not null)
             {
-                return;
-            }
-
-            if (run.Count >= MinFoldedRun)
-            {
-                var collapsed = string.Format(CultureInfo.CurrentCulture, Strings.FoldedRunCollapsedFormat, run.Count);
-                var expanded = string.Format(CultureInfo.CurrentCulture, Strings.FoldedRunExpandedFormat, run.Count);
-                rows.Add(new PathRow(PathRowKind.FoldedRun, collapsed, expanded, null, run, runIndex++));
-            }
-            else
-            {
-                foreach (var step in run)
+                foreach (var entry in entries)
                 {
-                    rows.Add(new PathRow(PathRowKind.Step, step.Name, null, step, null, -1));
+                    if (entry.Kind == reward.Kind && (entry.RewardId == reward.Id || (entry.ItemId != 0 && entry.ItemId == reward.ItemId)))
+                    {
+                        isUnique = true;
+                        break;
+                    }
                 }
             }
 
-            run = null;
+            // The reward tooltip says where else it comes from; the tile's caption only names the kind of source.
+            var mark = session.StoreResells.Contains(reward) ? Strings.MoonlitStoreOnly
+                : session.StoreResells.DropWhere(reward) is not null ? Strings.MoonlitAlsoDrops
+                : null;
+            unique += isUnique ? 1 : 0;
+            model.Rewards.Add(new RewardTile(reward, isUnique, mark));
         }
 
-        foreach (var line in model.Path)
-        {
-            if (expansion != line.Expansion)
-            {
-                Flush();
-                expansion = line.Expansion;
-                var name = bundle.Names.Expansion(line.Expansion);
-                rows.Add(new PathRow(PathRowKind.ExpansionHeader, name.Length > 0 ? name : Strings.ExpansionShort(line.Expansion), null, null, null, -1));
-            }
-
-            if (line.State == QuestState.Completed && !line.IsTarget)
-            {
-                (run ??= []).Add(line);
-            }
-            else
-            {
-                Flush();
-                rows.Add(new PathRow(PathRowKind.Step, line.Name, null, line, null, -1));
-            }
-        }
-
-        Flush();
+        model.RewardsCaption = unique == 0 ? string.Empty : string.Format(CultureInfo.CurrentCulture, Strings.DetailRewardsUniqueFormat, unique);
     }
 
     /// <summary>
@@ -1184,39 +1235,6 @@ public sealed class DetailPane
         {
             model.ChainNextRowId = next;
             model.ChainNextName = session.Spoilers.DisplayName(bundle.Catalog, next, next.ToString(CultureInfo.InvariantCulture));
-        }
-    }
-
-    /// <summary>Quests that list the selected one among their previous quests, in catalog order, capped at <see cref="MaxUnlocks"/>.</summary>
-    private void BuildUnlocks(SessionState session, CatalogBundle bundle, QuestRecord quest)
-    {
-        if (session.Index is not { } index)
-        {
-            return;
-        }
-
-        var more = 0;
-        foreach (var dependentId in index.Dependents(quest.RowId))
-        {
-            // The index also lists quests that merely lock on this one; only a true prerequisite is an unlock.
-            if (bundle.Catalog.GetByRowId(dependentId) is not { } dependent || Array.IndexOf(dependent.PreviousQuests.QuestIds, quest.RowId) < 0)
-            {
-                continue;
-            }
-
-            if (model.Unlocks.Count >= MaxUnlocks)
-            {
-                more++;
-                continue;
-            }
-
-            var state = session.States.TryGetValue(dependentId, out var evaluation) ? evaluation.State : QuestState.Unknown;
-            model.Unlocks.Add(new PathLine(dependentId, session.Spoilers.DisplayName(dependent), state, false, dependent.Expansion));
-        }
-
-        if (more > 0)
-        {
-            model.UnlocksMore = string.Format(CultureInfo.CurrentCulture, Strings.AndMoreFormat, more);
         }
     }
 
@@ -1261,13 +1279,19 @@ public sealed class DetailPane
         if (!ReferenceEquals(uniqueData, data))
         {
             uniqueData = data;
-            uniqueQuests.Clear();
+            uniqueByQuest.Clear();
             foreach (var entry in data.Entries)
             {
-                uniqueQuests.Add(entry.QuestRowId);
+                if (!uniqueByQuest.TryGetValue(entry.QuestRowId, out var list))
+                {
+                    list = [];
+                    uniqueByQuest[entry.QuestRowId] = list;
+                }
+
+                list.Add(entry);
             }
         }
 
-        return uniqueQuests.Contains(rowId);
+        return uniqueByQuest.ContainsKey(rowId);
     }
 }
