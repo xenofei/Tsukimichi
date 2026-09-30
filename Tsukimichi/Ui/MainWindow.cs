@@ -958,13 +958,15 @@ public sealed class MainWindow : Window, IDisposable
             dl.AddRectFilled(pillMin, pillMax, MsqPillFill, (pillMax.Y - pillMin.Y) * 0.5f);
             ImGui.SetCursorScreenPos(new Vector2(x + pillPad, textY));
             EllipsisText(msqStatus, msqRoom - 2f * pillPad, msqTextWidth, Theme.MoonU32);
-            if (ImGui.IsMouseHoveringRect(pillMin, pillMax))
+            // Only while this window is the one under the mouse: another window (Settings, the Todo overlay, a popup)
+            // covering the bar gets neither the tooltip nor the hand.
+            if (ImGui.IsWindowHovered() && ImGui.IsMouseHoveringRect(pillMin, pillMax))
             {
                 UiMetrics.Tooltip(msqTooltip);
                 if (msq?.Next is { } next)
                 {
                     ImGui.SetMouseCursor(ImGuiMouseCursor.Hand);
-                    if (ImGui.IsMouseClicked(ImGuiMouseButton.Left) && ImGui.IsWindowHovered())
+                    if (ImGui.IsMouseClicked(ImGuiMouseButton.Left))
                     {
                         SelectMsq(next);
                     }
