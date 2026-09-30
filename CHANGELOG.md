@@ -4,6 +4,9 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+### Added
+- Before you continue: when your story reaches a point where optional content changes a scene and you have not done it, a line under the MSQ line on the Characters tab and in the Tonight card says what to do first ("Before you continue: Finish the Eden raid series first."). It names only the optional content, never what it changes or a main scenario quest ahead of you, and shows only while that quest is ready or in your journal. "why? (spoiler)" under it gives the reason, only when clicked, and stays open for that character. Chat says it once per character (Settings › Notices, on by default). The first five: the Eden raids, the Shadowbringers role quests and their epilogue, the role quest epilogue before the Pilgrim's Traverse's last floor, the story of Eureka, and the Bozja and Zadnor story. Help › Spoilers explains it.
+
 ## [0.9.0] - 2026-09-30
 
 ### Added
