@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Full-catalog verification tool (feature plan v3 T2a). A standalone console app: it is not referenced by the plugin,
+    never ships in the plugin package, and is never run in CI. It reads the local game files through Lumina, fetches the
+    Lodestone Eorzea Database, consolegameswiki, FFXIV Collect and Garland Tools politely (one request every "rate"
+    seconds per host, identifying User-Agent, robots.txt honoured, exponential backoff), caches every fetch outside the
+    repository and writes the verdict CSVs under docs/data.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Tsukimichi.Verify</RootNamespace>
+    <Version>0.1.0</Version>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Lumina" Version="7.7.1" />
+    <PackageReference Include="Lumina.Excel" Version="7.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Tsukimichi.Core\Tsukimichi.Core.csproj" />
+    <ProjectReference Include="..\..\Tsukimichi.GameData\Tsukimichi.GameData.csproj" />
+  </ItemGroup>
+
+</Project>

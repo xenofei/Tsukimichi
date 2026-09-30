@@ -13,6 +13,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tsukimichi.Tests", "Tsukimi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tsukimichi.GameData", "Tsukimichi.GameData\Tsukimichi.GameData.csproj", "{26E3F193-20DA-4DD2-B02A-353C8E10C75F}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{07C2787E-EAC7-C090-1BA3-A61EC2A24D84}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tsukimichi.Verify", "tools\Tsukimichi.Verify\Tsukimichi.Verify.csproj", "{E4CDC39C-4A4C-45FB-B6EA-9C0459690B07}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -83,8 +87,23 @@ Global
 		{26E3F193-20DA-4DD2-B02A-353C8E10C75F}.Release|x64.Build.0 = Release|Any CPU
 		{26E3F193-20DA-4DD2-B02A-353C8E10C75F}.Release|x86.ActiveCfg = Release|Any CPU
 		{26E3F193-20DA-4DD2-B02A-353C8E10C75F}.Release|x86.Build.0 = Release|Any CPU
+		{E4CDC39C-4A4C-45FB-B6EA-9C0459690B07}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E4CDC39C-4A4C-45FB-B6EA-9C0459690B07}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E4CDC39C-4A4C-45FB-B6EA-9C0459690B07}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{E4CDC39C-4A4C-45FB-B6EA-9C0459690B07}.Debug|x64.Build.0 = Debug|Any CPU
+		{E4CDC39C-4A4C-45FB-B6EA-9C0459690B07}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{E4CDC39C-4A4C-45FB-B6EA-9C0459690B07}.Debug|x86.Build.0 = Debug|Any CPU
+		{E4CDC39C-4A4C-45FB-B6EA-9C0459690B07}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E4CDC39C-4A4C-45FB-B6EA-9C0459690B07}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E4CDC39C-4A4C-45FB-B6EA-9C0459690B07}.Release|x64.ActiveCfg = Release|Any CPU
+		{E4CDC39C-4A4C-45FB-B6EA-9C0459690B07}.Release|x64.Build.0 = Release|Any CPU
+		{E4CDC39C-4A4C-45FB-B6EA-9C0459690B07}.Release|x86.ActiveCfg = Release|Any CPU
+		{E4CDC39C-4A4C-45FB-B6EA-9C0459690B07}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{E4CDC39C-4A4C-45FB-B6EA-9C0459690B07} = {07C2787E-EAC7-C090-1BA3-A61EC2A24D84}
 	EndGlobalSection
 EndGlobal
