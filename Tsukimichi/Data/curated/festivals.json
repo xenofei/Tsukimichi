@@ -1,4 +1,626 @@
 {
-  "$schema_note": "festivalId -> { name, start (ISO date), end, mogStation: bool }. Empty in V1 (DRAFT-NEEDED B).",
-  "entries": {}
+  "$schema_note": "festivalId -> { name, start, end (UTC), evidence (the Lodestone announcement or special-site page), note }. Seeded from docs/data/festival-end-dates.json (Tsukimichi.Verify, game 2026.09.15) after checking each id's quests against the catalog. A past end turns that festival's undone quests Locked out while it is not running; the plugin shows 'ends <date> (Lodestone)' only for an end still ahead with an https evidence URL. Collaboration events rerun under the same Festival id, so their entries carry a name and evidence but no dates. Festival ids with no Lodestone link (the 2023-2026 editions without one, Heavensturn and Hatching-tide 2014 whose wiki dates did not validate) are left out; the plugin then shows 'running now' only.",
+  "entries": {
+    "2": {
+      "name": "All Saints' Wake (2013)",
+      "start": "2013-10-18T00:00:00Z",
+      "end": "2013-11-01T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2013/All_Saints_Wake/",
+      "note": "Lodestone window October 18, 2013 to November 1, 2013; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 12 quest(s) in All Saints' Wake Events (I Burn for You, Monstrous Mummery, Not-so-evil Dead, Show Me the Candy)."
+    },
+    "3": {
+      "name": "Lightning Strikes",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2013/Lightning_Strikes/",
+      "note": "Collaboration event (Lodestone window November 14, 2013 to December 9, 2013); collaboration events rerun under their own Festival id (A Nocturne for Heroes, Yo-kai Watch and Blunderville did), so no dates are shipped: a past end would read Locked out between runs. Quests: For the Winsome, Seeking the Scoop, The Knight's Passage, Wonder and Lightning."
+    },
+    "6": {
+      "name": "Burgeoning Dread",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2014/That_Old_Black_Magic/",
+      "note": "Collaboration event (Lodestone window January 21, 2014 to February 3, 2014); collaboration events rerun under their own Festival id (A Nocturne for Heroes, Yo-kai Watch and Blunderville did), so no dates are shipped: a past end would read Locked out between runs. Quests: Burgeoning Dread."
+    },
+    "7": {
+      "name": "Breaking Brick Mountains",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2014/Theres_Golems_in_Those_Hills/",
+      "note": "Collaboration event (Lodestone window January 21, 2014 to February 3, 2014); collaboration events rerun under their own Festival id (A Nocturne for Heroes, Yo-kai Watch and Blunderville did), so no dates are shipped: a past end would read Locked out between runs. Quests: Breaking Brick Mountains."
+    },
+    "8": {
+      "name": "Valentione's Day (2014)",
+      "start": "2014-02-04T00:00:00Z",
+      "end": "2014-02-17T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2014/Ardor_and_Affection/",
+      "note": "Lodestone window February 4th, 2014 to February 17th, 2014; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 5 quest(s) in Valentione's Day Events (Love Is a Battleground, Never Say Farewell, Right Here Waiting, Sweet, Sweet Love, The Puissance of Love)."
+    },
+    "9": {
+      "name": "Little Ladies' Day (2014)",
+      "start": "2014-02-28T00:00:00Z",
+      "end": "2014-03-13T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2014/Little_Ladies_Day/",
+      "note": "Lodestone window February 28th, 2014 to March 13th, 2014; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 6 quest(s) in Little Ladies' Day Events (A Peach by Any Other Name, A Real Peach, All the Little Ladies (Gridania), All the Little Ladies (Limsa Lominsa), All the Little Ladies (Ul'dah), Say It with Peaches)."
+    },
+    "11": {
+      "name": "Moonfire Faire (2014)",
+      "start": "2014-08-14T00:00:00Z",
+      "end": "2014-09-08T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2014/Moonfire_Faire/",
+      "note": "Lodestone window August 14th, 2014 to September 8th, 2014; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 11 quest(s) in Moonfire Faire Events and Rising Events (A Rousing Douse, A Very Cherry Bomb, Blast It! Moonfire Faire, Drench It! Moonfire Faire, Explode It! Moonfire Faire, Remember Me This Moonfire Faire, Streets of Moonfire (Gridania), Streets of Moonfire (Limsa Lominsa), Streets of Moonfire (Ul'dah), The Cannon-do Spirit, What Blooms in the Night)."
+    },
+    "14": {
+      "name": "All Saints' Wake (2014)",
+      "start": "2014-10-20T00:00:00Z",
+      "end": "2014-11-03T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2014/All_Saints_Wake/",
+      "note": "Lodestone window October 20th, 2014 to November 3rd, 2014; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 3 quest(s) in All Saints' Wake Events (A Plague of Pumpkins, Affright and Delight, Yes We Cant)."
+    },
+    "15": {
+      "name": "Starlight Celebration (2014)",
+      "start": "2014-12-18T00:00:00Z",
+      "end": "2014-12-31T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2014/The_Starlight_Celebration/",
+      "note": "Lodestone window December 18th, 2014 to December 31st, 2014; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 9 quest(s) in Starlight Celebration Events (A Little Help (Mist), A Little Help (The Goblet), A Little Help (The Lavender Beds), A Starlight Miracle, Going the Extra Smile, Starlight Savings, The Gift of Joy (Mist), The Gift of Joy (The Goblet), The Gift of Joy (The Lavender Beds))."
+    },
+    "16": {
+      "name": "Heavensturn (2015)",
+      "start": "2014-12-31T00:00:00Z",
+      "end": "2015-01-14T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2015/Heavensturn/",
+      "note": "Lodestone window December 31, 2014 to January 14, 2015; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 5 quest(s) in Heavensturn Events (All's Wool That Ends Wool, Lions for Lambs, Sleepless in the Saloon, Sleepless in the Stable, Sleepless in the Swaddle)."
+    },
+    "19": {
+      "name": "Valentione's Day (2015)",
+      "start": "2015-02-03T00:00:00Z",
+      "end": "2015-02-16T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2015/Valentiones_Day/",
+      "note": "Lodestone window February 3rd, 2015 to February 16th, 2015; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 5 quest(s) in Valentione's Day Events (Ardor in the Harbor, Hearts in the Sand, Love in the Woods, Now That We've Found Love, Where Did Our Loves Go)."
+    },
+    "20": {
+      "name": "Little Ladies' Day (2015)",
+      "start": "2015-03-03T00:00:00Z",
+      "end": "2015-03-16T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2015/Little_Ladies_Day/",
+      "note": "Lodestone window March 3rd, 2015 to March 16th, 2015; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 3 quest(s) in Little Ladies' Day Events (A Father's Folly, A Thorne-y Relationship, Digging for Dolls)."
+    },
+    "21": {
+      "name": "Hatching-tide (2015)",
+      "start": "2015-04-02T00:00:00Z",
+      "end": "2015-04-15T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2015/Hatching_tide/",
+      "note": "Lodestone window April 2, 2015 to Wednesday, April 15, 2015; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 3 quest(s) in Hatching-tide Events (Eggs Pluribus Unum, Great Eggspectations, Poaching the Poachers)."
+    },
+    "22": {
+      "name": "Moonfire Faire (2015)",
+      "start": "2015-08-11T00:00:00Z",
+      "end": "2015-09-07T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2015/Moonfire_Faire/",
+      "note": "Lodestone window August 11th, 2015 to September 7th, 2015; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 5 quest(s) in Moonfire Faire Events and Rising Events (A Matter of Taste, A World Away, An Adventurer's Life for Me, Reigniting the Festivities, What's in the Dish)."
+    },
+    "28": {
+      "name": "All Saints' Wake (2015)",
+      "start": "2015-10-22T00:00:00Z",
+      "end": "2015-11-04T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2015/All_Saints_Wake/",
+      "note": "Lodestone window October 22nd, 2015 to November 4th, 2015; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 3 quest(s) in All Saints' Wake Events (Investigating the Inimical, Joining the Circus, Sweeping the Meadows)."
+    },
+    "30": {
+      "name": "The Maiden's Rhapsody",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2015/The_Maidens_Rhapsody/",
+      "note": "Collaboration event (Lodestone window November 11, 2015 to December 31, 2015); collaboration events rerun under their own Festival id (A Nocturne for Heroes, Yo-kai Watch and Blunderville did), so no dates are shipped: a past end would read Locked out between runs. Quests: A Journey to Remember."
+    },
+    "31": {
+      "name": "Starlight Celebration (2015)",
+      "start": "2015-12-18T00:00:00Z",
+      "end": "2015-12-31T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2015/The_Starlight_Celebration/",
+      "note": "Lodestone window December 18th, 2015 to December 31st, 2015; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 1 quest(s) in Starlight Celebration Events (For Whom the Starlight Bell Tolls)."
+    },
+    "32": {
+      "name": "Heavensturn (2016)",
+      "start": "2015-12-31T00:00:00Z",
+      "end": "2016-01-14T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2016/Heavensturn/",
+      "note": "Lodestone window December 31st 2015 to January 14, 2016; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 1 quest(s) in Heavensturn Events (Monkey about Town)."
+    },
+    "33": {
+      "name": "Valentione's Day (2016)",
+      "start": "2016-02-02T00:00:00Z",
+      "end": "2016-02-15T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2016/Valentiones_Day/",
+      "note": "Lodestone window February 2nd, 2016 to February 15th, 2016; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 3 quest(s) in Valentione's Day Events (A Pair of Hearts, The Fault in Our Cards, What Is Love)."
+    },
+    "34": {
+      "name": "Little Ladies' Day (2016)",
+      "start": "2016-02-26T00:00:00Z",
+      "end": "2016-03-10T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2016/Little_Ladies_Day/",
+      "note": "Lodestone window February 26th 2016 to March 10th, 2016; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 3 quest(s) in Little Ladies' Day Events (Aligning the Stars, Sugar, Spice, and Everything Rice, The Lead Starling)."
+    },
+    "35": {
+      "name": "Hatching-tide (2016)",
+      "start": "2016-03-15T00:00:00Z",
+      "end": "2016-03-28T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2016/Hatching_tide/",
+      "note": "Lodestone window March 15th, 2016 to March 28th, 2016; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 5 quest(s) in Hatching-tide Events (Eggsaltation of a Lark, Hard-boiled Hocus, Jihli Dreams of Egg Hunts, Pass the Poacher, Spriggan Scramble)."
+    },
+    "36": {
+      "name": "The Make It Rain Campaign (2016)",
+      "start": "2016-05-27T00:00:00Z",
+      "end": "2016-06-10T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2016/the_make_it_rain_campaign/",
+      "note": "Lodestone window May 27th, 2016 to June 10th, 2016; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 2 quest(s) in Gold Saucer Festivities (An Inspector's Gadget, And Then There Were Some)."
+    },
+    "37": {
+      "name": "Moonfire Faire (2016)",
+      "start": "2016-08-05T00:00:00Z",
+      "end": "2016-08-26T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2016/Moonfire_Faire/",
+      "note": "Lodestone window August 5th, 2016 to August 26th, 2016; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 5 quest(s) in Moonfire Faire Events (A Battle Royal, Dashing and Burning, Heroes of Tomorrow, Hot 'n Cold, Who Let the Bombs Out)."
+    },
+    "38": {
+      "name": "The Rising (2016)",
+      "start": "2016-08-27T00:00:00Z",
+      "end": "2016-09-12T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2016/The_Rising/",
+      "note": "Lodestone window August 27th 2016 to September 12th 2016; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 3 quest(s) in Rising Events (A Play in Three Acts, After the Curtain Falls, The Show Must Go On)."
+    },
+    "39": {
+      "name": "Yo-kai Watch: Gather One, Gather All!",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2016/youkai-watch/",
+      "note": "Collaboration event; the game reuses Festival id 39 for its reruns (it ran July 26 to October 3, 2016 (the window the Lodestone link gives), then September 3 to November 1, 2017, August 19 to December 8, 2020, April 24 to June 26, 2024 and August 4 to October 5, 2026, per the wiki). No dates: a past end would read Locked out between runs, and a running rerun must not show an old end date. Quests: A Complete Game Changer."
+    },
+    "42": {
+      "name": "All Saints' Wake (2016)",
+      "start": "2016-10-19T00:00:00Z",
+      "end": "2016-11-01T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2016/All_Saints_Wake/",
+      "note": "Lodestone window October 19th, 2016 to November 1st, 2016; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 1 quest(s) in All Saints' Wake Events (In a Manor of Spooking)."
+    },
+    "43": {
+      "name": "Starlight Celebration (2016)",
+      "start": "2016-12-15T00:00:00Z",
+      "end": "2016-12-31T23:59:59Z",
+      "evidence": "https://eu.finalfantasyxiv.com/lodestone/special/2016/The_Starlight_Celebration/",
+      "note": "Lodestone window December 15th, 2016 to December 31st, 2016; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 4 quest(s) in Starlight Celebration Events (A Starlight Story, I'll Be Home for Starlight, Naughty or Nice, Think of the Children)."
+    },
+    "44": {
+      "name": "Heavensturn (2017)",
+      "start": "2016-12-31T00:00:00Z",
+      "end": "2017-01-16T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2017/Heavensturn/",
+      "note": "Lodestone window December 31, 2016 to January 16, 2017; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 1 quest(s) in Heavensturn Events (A Thousand Blows)."
+    },
+    "45": {
+      "name": "Valentione's Day (2017)",
+      "start": "2017-02-02T00:00:00Z",
+      "end": "2017-02-15T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2017/Valentiones_Day/",
+      "note": "Lodestone window February 2nd, 2017 to February 15th, 2017; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 2 quest(s) in Valentione's Day Events (Once More with Feeling, The Magic Number)."
+    },
+    "46": {
+      "name": "Little Ladies' Day (2017)",
+      "start": "2017-03-01T00:00:00Z",
+      "end": "2017-03-14T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2017/Little_Ladies_Day/",
+      "note": "Lodestone window March 1st, 2017 to March 14th, 2017; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 6 quest(s) in Little Ladies' Day Events (Birdwatching Gone Wrong, Idols Give Back, Masha's Grand Performance, Narumi's Grand Performance, The Disappearing Act, Ulala's Grand Performance)."
+    },
+    "47": {
+      "name": "Hatching-tide (2017)",
+      "start": "2017-04-04T00:00:00Z",
+      "end": "2017-04-17T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2017/Hatching_tide/",
+      "note": "Lodestone window April 4th, 2017 to April 17th, 2017; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 3 quest(s) in Hatching-tide Events (Eggsistential Crisis, Shock-full of Eggcitement, When Eggs Fly)."
+    },
+    "48": {
+      "name": "The Make It Rain Campaign (2017)",
+      "start": "2017-05-29T00:00:00Z",
+      "end": "2017-06-12T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2017/the_make_it_rain_campaign/",
+      "note": "Lodestone window May 29, 2017 to June 12, 2017; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 1 quest(s) in Gold Saucer Festivities (Golden Rain)."
+    },
+    "49": {
+      "name": "Heavensturn (2018)",
+      "start": "2017-12-31T00:00:00Z",
+      "end": "2018-01-16T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2018/Heavensturn/",
+      "note": "Lodestone window December 31st, 2017 to January 16th, 2018; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 1 quest(s) in Heavensturn Events (More Bark and Mochi Bite)."
+    },
+    "53": {
+      "name": "Moonfire Faire (2017)",
+      "start": "2017-08-08T00:00:00Z",
+      "end": "2017-08-26T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2017/Moonfire_Faire/",
+      "note": "Lodestone window August 8th, 2017 to August 26th, 2017; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 5 quest(s) in Moonfire Faire Events (Fried Fish Is the Best Fish, The Isle and the Faire, The True Meaning of Summer, These Fireworks Won't Light Themselves, You Had Me at Haddock)."
+    },
+    "54": {
+      "name": "The Rising (2017)",
+      "start": "2017-08-26T00:00:00Z",
+      "end": "2017-09-14T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2017/The_Rising/",
+      "note": "Lodestone window August 26, 2017 to September 14, 2017; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 1 quest(s) in Rising Events (A Reoccurring Bug)."
+    },
+    "58": {
+      "name": "All Saints' Wake (2017)",
+      "start": "2017-10-19T00:00:00Z",
+      "end": "2017-11-01T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2017/All_Saints_Wake/",
+      "note": "Lodestone window October 19th, 2017 to November 1st, 2017; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 3 quest(s) in All Saints' Wake Events (An Othardian Wolfman in Gridania, Mind Their Manor, The Adventurer Who Cried Wolfman)."
+    },
+    "59": {
+      "name": "Starlight Celebration (2017)",
+      "start": "2017-12-15T00:00:00Z",
+      "end": "2017-12-31T23:59:59Z",
+      "evidence": "https://eu.finalfantasyxiv.com/lodestone/special/2017/The_Starlight_Celebration",
+      "note": "Lodestone window December 15th, 2017 to December 31st, 2017; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 2 quest(s) in Starlight Celebration Events (Starlight Stakeout, Stars and Explosions and Bears, Oh My)."
+    },
+    "60": {
+      "name": "Heavensturn (2019)",
+      "start": "2018-12-31T00:00:00Z",
+      "end": "2019-01-15T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2019/Heavensturn/",
+      "note": "Lodestone window December 31, 2018 to January 15, 2019; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 1 quest(s) in Heavensturn Events (Hogging the Spotlight)."
+    },
+    "64": {
+      "name": "Valentione's Day (2018)",
+      "start": "2018-02-02T00:00:00Z",
+      "end": "2018-02-15T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2018/Valentiones_Day/",
+      "note": "Lodestone window February 2nd, 2018 to February 15th, 2018; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 2 quest(s) in Valentione's Day Events (In Fortune with the Times, Lessons in Love)."
+    },
+    "65": {
+      "name": "Little Ladies' Day (2018)",
+      "start": "2018-03-01T00:00:00Z",
+      "end": "2018-03-14T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2018/Little_Ladies_Day/",
+      "note": "Lodestone window March 1st, 2018 to March 14th, 2018; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 2 quest(s) in Little Ladies' Day Events (A Colorful Affair, Untended Dreams)."
+    },
+    "66": {
+      "name": "Hatching-tide (2018)",
+      "start": "2018-03-20T00:00:00Z",
+      "end": "2018-04-02T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2018/Hatching_tide/",
+      "note": "Lodestone window March 20th, 2018 to April 2nd, 2018; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 2 quest(s) in Hatching-tide Events (Uneggseptable Losses, Uneggspected Encounters)."
+    },
+    "70": {
+      "name": "The Make It Rain Campaign (2018)",
+      "start": "2018-06-06T00:00:00Z",
+      "end": "2018-06-24T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2018/the_make_it_rain_campaign/",
+      "note": "Lodestone window June 6, 2018 to June 24, 2018; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 2 quest(s) in Gold Saucer Festivities (Love and Kupo Nuts, Trouble in Paradise)."
+    },
+    "71": {
+      "name": "Moonfire Faire (2018)",
+      "start": "2018-08-13T00:00:00Z",
+      "end": "2018-08-26T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2018/Moonfire_Faire/",
+      "note": "Lodestone window August 13th, 2018 to August 26th, 2018; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 3 quest(s) in Moonfire Faire Events (Eorzean Nimble Warrior, If at First You Don't Succeed, Give Up, Jump to the Beach)."
+    },
+    "72": {
+      "name": "The Rising (2018)",
+      "start": "2018-08-26T00:00:00Z",
+      "end": "2018-09-17T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2018/The_Rising/",
+      "note": "Lodestone window August 26, 2018 to September 17, 2018; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 1 quest(s) in Rising Events (In Adventurers We Trust)."
+    },
+    "76": {
+      "name": "All Saints' Wake (2018)",
+      "start": "2018-10-18T00:00:00Z",
+      "end": "2018-11-01T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2018/All_Saints_Wake/",
+      "note": "Lodestone window October 18th, 2018 to November 1st, 2018; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 4 quest(s) in All Saints' Wake Events (The Macabre Manor, The Parlous Ploy, The Sinister Soirée, The Sordid Cipher)."
+    },
+    "77": {
+      "name": "Starlight Celebration (2018)",
+      "start": "2018-12-17T00:00:00Z",
+      "end": "2018-12-31T23:59:59Z",
+      "evidence": "https://eu.finalfantasyxiv.com/lodestone/special/2018/The_Starlight_Celebration",
+      "note": "Lodestone window December 17th, 2018 to December 31st, 2018; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 3 quest(s) in Starlight Celebration Events (A Concerted Effort, Not-so-silent Night, Theatgrhythdaniam)."
+    },
+    "78": {
+      "name": "Heavensturn (2020)",
+      "start": "2019-12-31T00:00:00Z",
+      "end": "2020-01-14T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2020/Heavensturn/",
+      "note": "Lodestone window December 31, 2019 to January 14, 2020; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 1 quest(s) in Heavensturn Events (Mochi to Be Desired)."
+    },
+    "82": {
+      "name": "Valentione's Day (2019)",
+      "start": "2019-01-31T00:00:00Z",
+      "end": "2019-02-19T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2019/Valentiones_Day/",
+      "note": "Lodestone window January 31, 2019 to February 19th, 2019; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 2 quest(s) in Valentione's Day Events (A Many-splendored Thing, From Now until Affinity)."
+    },
+    "83": {
+      "name": "Little Ladies' Day (2019)",
+      "start": "2019-02-28T00:00:00Z",
+      "end": "2019-03-13T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2019/Little_Ladies_Day/",
+      "note": "Lodestone window February 28, 2019 to March 13th, 2019; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 2 quest(s) in Little Ladies' Day Events (One Short Day on Emerald Avenue, Princess of Flowers)."
+    },
+    "84": {
+      "name": "A Nocturne for Heroes",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/ffxv/",
+      "note": "Collaboration event; the game reuses Festival id 84 for its reruns (it ran April 16 to May 27, 2019, September 13 to October 18, 2021, February 28 to March 13, 2024 (the window the Lodestone link gives) and again from September 24, 2026, per the wiki). No dates: a past end would read Locked out between runs, and a running rerun must not show an old end date. Quests: In the Dark of Night, Messenger of the Winds, The Man in Black."
+    },
+    "85": {
+      "name": "Hatching-tide (2019)",
+      "start": "2019-04-09T00:00:00Z",
+      "end": "2019-04-22T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2019/Hatching_tide/",
+      "note": "Lodestone window April 9th, 2019 to April 22nd, 2019; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 3 quest(s) in Hatching-tide Events (A Shelltered Eggsistence, Deus Eggs Machina, Eggstreme Eggstrapolation)."
+    },
+    "86": {
+      "name": "The Make It Rain Campaign (2019)",
+      "start": "2019-06-06T00:00:00Z",
+      "end": "2019-06-24T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2019/the_make_it_rain_campaign/",
+      "note": "Lodestone window June 6, 2019 to June 24, 2019; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 1 quest(s) in Gold Saucer Festivities (The Sabotender Shimmy)."
+    },
+    "89": {
+      "name": "Moonfire Faire (2019)",
+      "start": "2019-08-07T00:00:00Z",
+      "end": "2019-08-26T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2019/Moonfire_Faire/",
+      "note": "Lodestone window August 7th, 2019 to August 26th, 2019; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 5 quest(s) in Moonfire Faire Events (Anything You Can Do, Feels Like Moonfire, Frying for Fame and Fortune, High-flying Hijinks, Hook, Line, and Sinker)."
+    },
+    "90": {
+      "name": "The Rising (2019)",
+      "start": "2019-08-26T00:00:00Z",
+      "end": "2019-09-17T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2019/The_Rising/",
+      "note": "Lodestone window August 26th 2019 to September 17th 2019; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 2 quest(s) in Rising Events (Message in a Bottle, Messages from Distant Shores)."
+    },
+    "91": {
+      "name": "All Saints' Wake (2019)",
+      "start": "2019-10-17T00:00:00Z",
+      "end": "2019-11-01T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2019/All_Saints_Wake/",
+      "note": "Lodestone window October 17th, 2019 to November 1st, 2019; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 3 quest(s) in All Saints' Wake Events (A Glamourous Guise, Fear and Delight, Haunting Grounds)."
+    },
+    "95": {
+      "name": "Starlight Celebration (2019)",
+      "start": "2019-12-18T00:00:00Z",
+      "end": "2019-12-31T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2019/The_Starlight_Celebration/",
+      "note": "Lodestone window December 18th, 2019 to December 31st, 2019; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 3 quest(s) in Starlight Celebration Events (A Chocobo Carol, A Star Shines On, All I Want for Starlight)."
+    },
+    "96": {
+      "name": "Heavensturn (2021)",
+      "start": "2020-12-31T00:00:00Z",
+      "end": "2021-01-18T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2021/Heavensturn/ua6dxnj3ya",
+      "note": "Lodestone window December 31, 2020 to January 18, 2021; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 2 quest(s) in Heavensturn Events (Bully for Mochi, Steering Clear of Trouble)."
+    },
+    "100": {
+      "name": "Valentione's Day (2020)",
+      "start": "2020-01-29T00:00:00Z",
+      "end": "2020-02-17T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2020/Valentiones_Day/",
+      "note": "Lodestone window January 29, 2020 to February 17, 2020; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 7 quest(s) in Valentione's Day Events (A Vote for Astrid, A Vote for Bert, A Vote for Rodrigault, Astrid's Acumen, Bert's Big Idea, Of Ardor and Argument, Rodrigault's Revelation)."
+    },
+    "103": {
+      "name": "Little Ladies' Day (2020)",
+      "start": "2020-03-02T00:00:00Z",
+      "end": "2020-03-16T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2020/Little_Ladies_Day/",
+      "note": "Lodestone window March 2nd, 2020 to March 16th, 2020; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 2 quest(s) in Little Ladies' Day Events (A Guest to Impress, Pretty in Peaches)."
+    },
+    "104": {
+      "name": "Hatching-tide (2020)",
+      "start": "2020-03-30T00:00:00Z",
+      "end": "2020-04-13T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2020/Hatching_tide/",
+      "note": "Lodestone window March 30th, 2020 to April 13th, 2020; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 2 quest(s) in Hatching-tide Events (A Procession Eggstraordinaire, The Eggth Umbral Calamity)."
+    },
+    "105": {
+      "name": "The Make It Rain Campaign (2020)",
+      "start": "2020-10-21T00:00:00Z",
+      "end": "2020-11-20T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2020/the_make_it_rain_campaign/cx5vklj29q",
+      "note": "Lodestone window October 21st, 2020 to November 20th, 2020; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 2 quest(s) in Gold Saucer Festivities (A Guide to Fun, Caught Shorthanded)."
+    },
+    "106": {
+      "name": "Moonfire Faire (2020)",
+      "start": "2020-08-12T00:00:00Z",
+      "end": "2020-08-26T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2020/Moonfire_Faire/d5130d4b53",
+      "note": "Lodestone window August 12th, 2020 to August 26th, 2020; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 2 quest(s) in Moonfire Faire Events (A Fish Too Far, Flame On)."
+    },
+    "107": {
+      "name": "The Rising (2020)",
+      "start": "2020-08-27T00:00:00Z",
+      "end": "2020-09-14T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2020/The_Rising/89gmadhdzc",
+      "note": "Lodestone window August 27th 2020 to September 14th 2020; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 2 quest(s) in Rising Events (Art of Glass, Glass from the Past)."
+    },
+    "108": {
+      "name": "Starlight Celebration (2020)",
+      "start": "2020-12-14T00:00:00Z",
+      "end": "2020-12-31T23:59:59Z",
+      "evidence": "https://eu.finalfantasyxiv.com/lodestone/special/2020/The_Starlight_Celebration/uho06l3k9d",
+      "note": "Lodestone window December 14th, 2020 to December 31st, 2020; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 6 quest(s) in Starlight Celebration Events (A Festive Fiasco, One Happy Family, Starlight Slapdashery, Starlit Smiles, The True Spirit of Starlight, Wish Upon a Starlight)."
+    },
+    "109": {
+      "name": "Heavensturn (2022)",
+      "start": "2022-01-05T00:00:00Z",
+      "end": "2022-01-19T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2022/Heavensturn/22lsrul3tu",
+      "note": "Lodestone window January 5, 2022 to January 19, 2022; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 2 quest(s) in Heavensturn Events (Let Them Eat Cake, Tangle with a Tora)."
+    },
+    "113": {
+      "name": "Valentione's and Little Ladies' Day (2021)",
+      "start": "2021-02-10T00:00:00Z",
+      "end": "2021-03-08T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2021/Valentiones_Little_Ladies_Day/pe6np8kt8d",
+      "note": "Lodestone window February 10, 2021 to March 8, 2021; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 2 quest(s) in Valentione's & Little Ladies' Day Events (A Delivery of Love, Little Lady Adventurer)."
+    },
+    "114": {
+      "name": "Hatching-tide (2021)",
+      "start": "2021-04-14T00:00:00Z",
+      "end": "2021-04-28T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2021/Hatching_tide/82rmia4in6",
+      "note": "Lodestone window April 14, 2021 to April 28, 2021; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 2 quest(s) in Hatching-tide Events (A Poultry Sum, Fowl Demands)."
+    },
+    "115": {
+      "name": "The Make It Rain Campaign (2021)",
+      "start": "2021-07-19T00:00:00Z",
+      "end": "2021-08-11T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2021/the_make_it_rain_campaign/b1nyoh167i",
+      "note": "Lodestone window July 19, 2021 to August 11, 2021; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 3 quest(s) in Gold Saucer Festivities (A Token of Thanks, The Great Horn Heist, The Great Horn Heist Redux)."
+    },
+    "116": {
+      "name": "Moonfire Faire (2021)",
+      "start": "2021-08-13T00:00:00Z",
+      "end": "2021-08-26T23:59:59Z",
+      "evidence": "https://eu.finalfantasyxiv.com/lodestone/special/2021/Moonfire_Faire/y2mjm7r1v6",
+      "note": "Lodestone window August 13, 2021 to August 26, 2021; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 2 quest(s) in Moonfire Faire Events (A Treat to Beat the Heat, Unseasonable Chills)."
+    },
+    "117": {
+      "name": "The Rising (2021)",
+      "start": "2021-08-27T00:00:00Z",
+      "end": "2021-09-09T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2021/The_Rising/ct5qm6qrje",
+      "note": "Lodestone window August 27, 2021 to September 9, 2021; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 1 quest(s) in Rising Events (Rising Calm)."
+    },
+    "118": {
+      "name": "All Saints' Wake (2021)",
+      "start": "2022-01-20T00:00:00Z",
+      "end": "2022-02-02T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2022/All_Saints_Wake/rjk7wevhuy",
+      "note": "Lodestone window January 20, 2022 to February 2, 2022; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 2 quest(s) in All Saints' Wake Events (A Feast to Remember, All Clowns' Wake)."
+    },
+    "121": {
+      "name": "Starlight Celebration (2021)",
+      "start": "2021-12-16T00:00:00Z",
+      "end": "2021-12-31T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2021/The_Starlight_Celebration/mc0uc43gq6",
+      "note": "Lodestone window December 16, 2021 to December 31, 2021; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 3 quest(s) in Starlight Celebration Events (A Very Yeti Starlight, Saintly Inspiration, Time to Shine)."
+    },
+    "122": {
+      "name": "Valentione's Day (2022)",
+      "start": "2022-02-08T00:00:00Z",
+      "end": "2022-02-21T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2022/Valentiones_Day/wcm6ffa3hm",
+      "note": "Lodestone window February 8, 2022 to February 21, 2022; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 3 quest(s) in Valentione's Day Events (Better Letters, Love's Labors, No Love Lost)."
+    },
+    "123": {
+      "name": "Little Ladies' Day (2022)",
+      "start": "2022-03-14T00:00:00Z",
+      "end": "2022-03-31T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2022/Little_Ladies_Day/jsuk7gn8z4",
+      "note": "Lodestone window March 14, 2022 to March 31, 2022; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 2 quest(s) in Little Ladies' Day Events (A Stylish Transformation, Fashion Face-off)."
+    },
+    "124": {
+      "name": "Hatching-tide (2022)",
+      "start": "2022-04-13T00:00:00Z",
+      "end": "2022-04-27T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2022/Hatching_tide/qeng0r6k46",
+      "note": "Lodestone window April 13, 2022 to April 27, 2022; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 1 quest(s) in Hatching-tide Events (Hippity, Hoppity, Happily)."
+    },
+    "125": {
+      "name": "The Make It Rain Campaign (2022)",
+      "start": "2022-06-03T00:00:00Z",
+      "end": "2022-06-20T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2022/the_make_it_rain_campaign/gvewqi34l6",
+      "note": "Lodestone window June 3, 2022 to June 20, 2022; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 1 quest(s) in Gold Saucer Festivities (A Prickly Plaint)."
+    },
+    "126": {
+      "name": "Moonfire Faire (2022)",
+      "start": "2022-08-10T00:00:00Z",
+      "end": "2022-08-26T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2022/Moonfire_Faire/0vfxyiytu0",
+      "note": "Lodestone window August 10, 2022 to August 26, 2022; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 2 quest(s) in Moonfire Faire Events (A Matter of Course, Fhul Me Once)."
+    },
+    "127": {
+      "name": "The Rising (2022)",
+      "start": "2022-08-27T00:00:00Z",
+      "end": "2022-09-12T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2022/The_Rising/hirh6wbu52",
+      "note": "Lodestone window August 27, 2022 to September 12, 2022; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 1 quest(s) in Rising Events (Newfound Journey)."
+    },
+    "128": {
+      "name": "Heavensturn (2023)",
+      "start": "2022-12-31T00:00:00Z",
+      "end": "2023-01-16T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2023/Heavensturn/bpodp61wy2",
+      "note": "Lodestone window December 31, 2022 to January 16, 2023; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 2 quest(s) in Heavensturn Events (The Box of Fortune, With Great Fortune Comes Great Responsibility)."
+    },
+    "132": {
+      "name": "All Saints' Wake (2022)",
+      "start": "2022-10-19T00:00:00Z",
+      "end": "2022-11-01T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2022/All_Saints_Wake/34nzplu2qj",
+      "note": "Lodestone window October 19, 2022 to November 1, 2022; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 3 quest(s) in All Saints' Wake Events (A Mad Masquerade, A Spooky Celebration, Be Our Guest)."
+    },
+    "133": {
+      "name": "Starlight Celebration (2022)",
+      "start": "2022-12-16T00:00:00Z",
+      "end": "2022-12-31T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2022/The_Starlight_Celebration/aaxhogpd7o",
+      "note": "Lodestone window December 16, 2022 to December 31, 2022; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 2 quest(s) in Starlight Celebration Events (Reindeer Fame, The Ghost of Starlight Present)."
+    },
+    "136": {
+      "name": "Hatching-tide (2023)",
+      "start": "2023-03-27T00:00:00Z",
+      "end": "2023-04-10T23:59:59Z",
+      "evidence": "https://eu.finalfantasyxiv.com/lodestone/special/2023/Hatching_tide/gkonsy0g3l",
+      "note": "Lodestone window March 27, 2023 to April 10, 2023; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 2 quest(s) in Hatching-tide Events (Chaos, Carnage, Eggs, Get Along and Play Knife)."
+    },
+    "140": {
+      "name": "Moonfire Faire (2023)",
+      "start": "2023-08-10T00:00:00Z",
+      "end": "2023-08-26T23:59:59Z",
+      "evidence": "https://eu.finalfantasyxiv.com/lodestone/special/2023/Moonfire_Faire/oct9miki0d",
+      "note": "Lodestone window August 10, 2023 to August 26, 2023; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 2 quest(s) in Moonfire Faire Events (Allergic to Sunshine, I Am the Sunshine)."
+    },
+    "141": {
+      "name": "The Rising (2023)",
+      "start": "2023-08-27T00:00:00Z",
+      "end": "2023-10-03T23:59:59Z",
+      "evidence": "https://eu.finalfantasyxiv.com/lodestone/special/2023/The_Rising/eykg76bc2d",
+      "note": "Lodestone window August 27, 2023 to October 3, 2023; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 2 quest(s) in Rising Events (Siblings Rising, What Drives Us)."
+    },
+    "147": {
+      "name": "Final Fantasy XVI Collaboration: The Path Infernal",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/ffxvi/",
+      "note": "Collaboration event (Lodestone window April 2, 2024 to May 8, 2024); collaboration events rerun under their own Festival id (A Nocturne for Heroes, Yo-kai Watch and Blunderville did), so no dates are shipped: a past end would read Locked out between runs. Quests: A Land on Fire, Pain to Recall, The Path Infernal."
+    },
+    "148": {
+      "name": "Blunderville",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/fallguys/",
+      "note": "Collaboration event; the game reuses Festival id 148 for its reruns (it ran October 31 to December 31, 2023 (the window the Lodestone link gives), then May 23 to June 10, 2024, October 23 to November 11, 2024 and November 6 to November 27, 2025, per the wiki). No dates: a past end would read Locked out between runs, and a running rerun must not show an old end date. Quests: Just Crowning Around."
+    },
+    "169": {
+      "name": "Little Ladies' Day (2026)",
+      "start": "2026-02-26T00:00:00Z",
+      "end": "2026-03-12T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2026/Little_Ladies_Day/ivf88rc2gm",
+      "note": "Lodestone window February 26, 2026 to March 12, 2026; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 2 quest(s) in Little Ladies' Day Events (Backstage Chats, What Can Eye Do for You)."
+    },
+    "172": {
+      "name": "Hatching-tide (2026)",
+      "start": "2026-03-23T00:00:00Z",
+      "end": "2026-04-06T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2026/Hatching_tide/wgtbl3kgc5",
+      "note": "Lodestone window March 23, 2026 to April 6, 2026; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 1 quest(s) in Hatching-tide Events (Of Weeds and Whimsy)."
+    },
+    "173": {
+      "name": "The Make It Rain Campaign (2026)",
+      "start": "2026-05-29T00:00:00Z",
+      "end": "2026-06-24T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2026/the_make_it_rain_campaign/NX0yR0viwE",
+      "note": "Lodestone window May 29, 2026 to June 24, 2026; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 1 quest(s) in Gold Saucer Festivities (You Otter Be There)."
+    },
+    "174": {
+      "name": "Moonfire Faire (2026)",
+      "start": "2026-08-12T00:00:00Z",
+      "end": "2026-08-28T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2026/Moonfire_Faire/1fxgakswoj",
+      "note": "Lodestone window '''August 12, 2026''' to '''August 28, 2026'''; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 2 quest(s) in Moonfire Faire Events (Earning Your Water Wings, Whoever Floats Your Raft)."
+    },
+    "175": {
+      "name": "The Rising (2026)",
+      "start": "2026-08-27T00:00:00Z",
+      "end": "2026-09-10T23:59:59Z",
+      "evidence": "https://na.finalfantasyxiv.com/lodestone/special/2026/The_Rising/cula62e5jx",
+      "note": "Lodestone window '''August 27, 2026''' to '''September 10, 2026'''; the announcement gives dates only, so the end is the close of that day (UTC). One Festival id per edition: 2 quest(s) in Rising Events (Prelude's Call, The Symphony of Life)."
+    }
+  }
 }

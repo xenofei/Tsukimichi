@@ -1,5 +1,8 @@
+using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
+using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Storage;
@@ -335,5 +338,104 @@ public sealed class CuratedInvariantsTests(FixtureCatalog fixture) : IClassFixtu
         var successor = fixture.Bundle.Catalog.ByRowId[70012];
         Assert.Equal("Where Familiars Dare", successor.Name);
         Assert.Equal(FeaturePresets.FeatureEventIconType, successor.EventIconType);
+    }
+
+    /// <summary>Collaboration events the game runs again under the same Festival id (the wiki's list of runs).</summary>
+    private static readonly ushort[] RerunFestivals = [39, 84, 148];
+
+    [Fact]
+    public void Festival_entries_are_catalog_festivals_with_https_evidence_a_note_and_parseable_dates()
+    {
+        var root = JsonNode.Parse(File.ReadAllText(Path.Combine(CuratedDir, CuratedData.FestivalsFileName)), documentOptions: CuratedData.StrictOptions)!.AsObject();
+        Assert.False(string.IsNullOrWhiteSpace((string?)root["$schema_note"]));
+        var entries = root["entries"]!.AsObject();
+        var keys = entries.Select(kv => ushort.Parse(kv.Key, CultureInfo.InvariantCulture)).ToList();
+        Assert.Equal(keys.OrderBy(k => k), keys);
+
+        var catalogFestivals = fixture.Bundle.Catalog.All.Where(q => q.Festival != 0).Select(q => q.Festival).ToHashSet();
+        var loaded = Curated().Festivals;
+        Assert.Equal(entries.Count, loaded.Count);
+        Assert.Equal(91, loaded.Count);
+        Assert.Equal(83, loaded.Values.Count(f => f.End is not null));
+
+        foreach (var (key, node) in entries)
+        {
+            var obj = node!.AsObject();
+            var id = ushort.Parse(key, CultureInfo.InvariantCulture);
+            Assert.True(catalogFestivals.Contains(id), $"festivals.json {key} is not the Festival of any quest in the catalog");
+            foreach (var field in new[] { "name", "evidence", "note" })
+            {
+                Assert.False(string.IsNullOrWhiteSpace((string?)obj[field]), $"festivals.json {key} lacks {field}");
+            }
+
+            var info = loaded[id];
+            Assert.True(Uri.TryCreate(info.Evidence, UriKind.Absolute, out var uri) && uri.Scheme == Uri.UriSchemeHttps, $"festivals.json {key} evidence is not an https URL");
+            Assert.EndsWith(".finalfantasyxiv.com", uri!.Host, StringComparison.Ordinal);
+            Assert.Contains("/lodestone/", uri.AbsolutePath, StringComparison.Ordinal);
+
+            // Dates come in pairs, parse as UTC and run forwards; a dated entry names its edition's year, which the
+            // end falls in (or the year after, for an edition held late: All Saints' Wake 2021 ran in January 2022).
+            Assert.Equal(obj.ContainsKey("start"), obj.ContainsKey("end"));
+            if (info.End is not { } end)
+            {
+                continue;
+            }
+
+            Assert.Equal(DateTimeKind.Utc, end.Kind);
+            Assert.True(info.Start is { } start && start <= end, $"festivals.json {key} runs backwards");
+            var year = Regex.Match(info.Name, @"\((\d{4})\)$");
+            Assert.True(year.Success, $"festivals.json {key} ({info.Name}) has an end date but no edition year");
+            var edition = int.Parse(year.Groups[1].Value, CultureInfo.InvariantCulture);
+            Assert.InRange(end.Year - edition, 0, 1);
+        }
+    }
+
+    [Fact]
+    public void No_end_date_is_shipped_for_a_festival_id_the_game_reruns()
+    {
+        // A past end turns a festival's undone quests Locked out whenever it is not running. Collaboration events come
+        // back under the same Festival id (A Nocturne for Heroes, id 84: 2019, 2021, 2024 and September 2026), so a
+        // date for one run would lock the quests out between runs and show a stale end while the next one runs.
+        var curated = Curated();
+        var catalog = fixture.Bundle.Catalog;
+        foreach (var id in RerunFestivals)
+        {
+            Assert.True(curated.Festivals.TryGetValue(id, out var info), $"festival {id} should keep its name");
+            Assert.Null(info!.End);
+            Assert.Null(info.Start);
+        }
+
+        foreach (var (id, info) in curated.Festivals)
+        {
+            var genres = catalog.All.Where(q => q.Festival == id).Select(q => q.Journal.GenreName).Distinct().ToList();
+            if (genres.SequenceEqual(["Collaboration Quests"]))
+            {
+                Assert.True(info.End is null, $"festival {id} ({info.Name}) is a collaboration event and must not carry an end date");
+            }
+        }
+
+        // The seasonal events take a new Festival id every edition: no two ids carry the same edition.
+        Assert.Equal(curated.Festivals.Count, curated.Festivals.Values.Select(f => f.Name).Distinct().Count());
+    }
+
+    [Fact]
+    public void Curated_ends_lock_out_past_editions_but_never_a_rerun_or_a_running_event()
+    {
+        var catalog = fixture.Bundle.Catalog;
+        var now = new DateTime(2026, 9, 29, 12, 0, 0, DateTimeKind.Utc);
+        var context = EvalContextBuilder.Build(Curated().Festivals, fixture.Bundle.Jobs, () => now);
+        var fresh = Evaluation.Fixture.Snapshot() with { JobLevels = Evaluation.Fixture.Levels((Evaluation.Fixture.Gladiator, 100)) };
+
+        // Moonfire Faire 2014 (id 11) ended in 2014: its quests are Locked out for a character who never saw it.
+        var moonfire = catalog.All.First(q => q.Festival == 11);
+        Assert.Equal(QuestState.Foreclosed, StateResolver.Resolve(moonfire, fresh, catalog, context).State);
+
+        // A Nocturne for Heroes (id 84) reruns: between runs it is only Blocked, and while it runs it is not locked out.
+        var nocturne = catalog.All.First(q => q.Festival == 84);
+        Assert.Equal(QuestState.Blocked, StateResolver.Resolve(nocturne, fresh, catalog, context).State);
+        Assert.NotEqual(QuestState.Foreclosed, StateResolver.Resolve(nocturne, fresh with { ActiveFestivals = [84] }, catalog, context).State);
+
+        // Even a dated festival the game switches on again reads by the live flag, not by its old end.
+        Assert.NotEqual(QuestState.Foreclosed, StateResolver.Resolve(moonfire, fresh with { ActiveFestivals = [11] }, catalog, context).State);
     }
 }
