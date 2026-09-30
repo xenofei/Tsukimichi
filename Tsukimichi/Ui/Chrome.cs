@@ -60,6 +60,7 @@ public static class Chrome
 
     // The open card: channel-split surfaces cannot nest on one draw list, so there is one at a time.
     private static bool cardOpen;
+    private static int cardFrame = -1;
     private static Vector2 cardStart;
     private static float cardWidth;
     private static CardKind cardKind;
@@ -105,11 +106,15 @@ public static class Chrome
 
     private static void OpenCard(CardKind kind, Vector4? accent)
     {
-        if (cardOpen)
+        // A card left open by an earlier frame (its Draw threw between Begin and End) is stale: the draw list and its
+        // channel split were reset with the frame, so only the flag needs clearing. Within one frame it is a nesting bug.
+        var frame = ImGui.GetFrameCount();
+        if (cardOpen && cardFrame == frame)
         {
             throw new InvalidOperationException("Chrome cards do not nest; call EndCard first.");
         }
 
+        cardFrame = frame;
         cardOpen = true;
         cardKind = kind;
         cardAccent = accent ?? Theme.Surface.StrongLine;
