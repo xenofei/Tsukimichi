@@ -30,6 +30,9 @@ public sealed class SnapshotService : IDisposable
     private readonly CancellationTokenSource lifetime = new();
     private readonly List<SnapshotSummary> characters = [];
 
+    /// <summary>Snapshots other game clients saved, as the multibox worker read them (D11); framework thread only.</summary>
+    private readonly Dictionary<ulong, CharacterSnapshot> external = [];
+
     private int loginGeneration;
     private bool awaitingCharacter;
     private bool disposed;
@@ -84,8 +87,27 @@ public sealed class SnapshotService : IDisposable
     /// <summary>Raised from the Logout event, before <see cref="CharacterReady"/> turns false, for a last capture.</summary>
     public event Action? LoggingOut;
 
+    /// <summary>
+    /// Multibox (D11): whether this client may write a character's snapshot and sidecars. Set by the multibox service;
+    /// false only for a logged-in character another client holds with a newer claim. Null allows every write.
+    /// </summary>
+    public Func<ulong, bool>? MayWrite { get; set; }
+
+    /// <summary><see cref="MayWrite"/> for one character; true when no gate is set.</summary>
+    public bool CanWrite(ulong contentId) => MayWrite?.Invoke(contentId) ?? true;
+
+    /// <summary>
+    /// Loads a stored character. A snapshot another game client saved and the multibox service already read on its
+    /// worker (D11) is served from memory, so the Characters pane's comparison and account view do not read the file
+    /// on the draw thread.
+    /// </summary>
     public CharacterSnapshot? Load(ulong contentId)
     {
+        if (external.TryGetValue(contentId, out var cached))
+        {
+            return cached;
+        }
+
         var snapshot = store.Load(contentId);
         LogStoreWarnings();
         return snapshot;
@@ -95,8 +117,9 @@ public sealed class SnapshotService : IDisposable
     {
         ArgumentNullException.ThrowIfNull(snapshot);
         store.Save(snapshot);
+        external.Remove(snapshot.ContentId);
         characters.RemoveAll(c => c.ContentId == snapshot.ContentId);
-        characters.Add(new SnapshotSummary(snapshot.ContentId, snapshot.Name, snapshot.World, snapshot.TakenUtc, CountBits(snapshot.CompletedBits)));
+        characters.Add(Summarize(snapshot));
         SortCharacters();
         CharactersChanged?.Invoke();
     }
@@ -104,22 +127,93 @@ public sealed class SnapshotService : IDisposable
     public void Delete(ulong contentId)
     {
         store.Delete(contentId);
+        external.Remove(contentId);
         if (characters.RemoveAll(c => c.ContentId == contentId) > 0)
         {
             CharactersChanged?.Invoke();
         }
     }
 
-    public void DeleteAll()
+    /// <summary>
+    /// Deletes every stored snapshot except those <paramref name="keep"/> selects (multibox, D11: characters live in
+    /// another client, whose snapshot that client owns and would write again within seconds).
+    /// </summary>
+    public void DeleteAll(Func<ulong, bool>? keep = null)
     {
         foreach (var summary in characters.ToArray())
         {
+            if (keep?.Invoke(summary.ContentId) == true)
+            {
+                continue;
+            }
+
             store.Delete(summary.ContentId);
+            external.Remove(summary.ContentId);
+            characters.Remove(summary);
         }
 
-        characters.Clear();
         CharactersChanged?.Invoke();
     }
+
+    /// <summary>
+    /// Multibox (D11), framework thread: snapshots another game client saved, read on the multibox worker, and the
+    /// characters whose file another client deleted. The list and the in-memory copies follow; this client's own
+    /// logged-in character (<paramref name="ownLive"/>) is left alone, its copy in memory being newer. Raises
+    /// <see cref="CharactersChanged"/> when the list changed; returns the snapshots taken in.
+    /// </summary>
+    public IReadOnlyList<CharacterSnapshot> ApplyExternal(IReadOnlyList<CharacterSnapshot> changed, IReadOnlyList<ulong> removed, ulong? ownLive)
+    {
+        ArgumentNullException.ThrowIfNull(changed);
+        ArgumentNullException.ThrowIfNull(removed);
+        var listChanged = false;
+        var taken = new List<CharacterSnapshot>(changed.Count);
+        foreach (var snapshot in changed)
+        {
+            if (snapshot.ContentId == ownLive)
+            {
+                continue;
+            }
+
+            external[snapshot.ContentId] = snapshot;
+            taken.Add(snapshot);
+            var summary = Summarize(snapshot);
+            var index = characters.FindIndex(c => c.ContentId == snapshot.ContentId);
+            if (index >= 0 && characters[index] == summary)
+            {
+                continue;
+            }
+
+            if (index >= 0)
+            {
+                characters.RemoveAt(index);
+            }
+
+            characters.Add(summary);
+            listChanged = true;
+        }
+
+        foreach (var id in removed)
+        {
+            if (id == ownLive)
+            {
+                continue;
+            }
+
+            external.Remove(id);
+            listChanged |= characters.RemoveAll(c => c.ContentId == id) > 0;
+        }
+
+        if (listChanged)
+        {
+            SortCharacters();
+            CharactersChanged?.Invoke();
+        }
+
+        return taken;
+    }
+
+    private static SnapshotSummary Summarize(CharacterSnapshot snapshot) =>
+        new(snapshot.ContentId, snapshot.Name, snapshot.World, snapshot.TakenUtc, CountBits(snapshot.CompletedBits));
 
     public void Dispose()
     {

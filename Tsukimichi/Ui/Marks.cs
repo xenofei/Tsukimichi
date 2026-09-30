@@ -21,6 +21,9 @@ public enum Mark
 
     /// <summary>A stored snapshot: a hollow Dusk pip.</summary>
     SnapshotPip,
+
+    /// <summary>A character live in another game client (multibox, D11): a Moon ring around a small Moon dot, static.</summary>
+    ElsewherePip,
 }
 
 /// <summary>
@@ -81,6 +84,15 @@ public static class Marks
                 var ring = 1.5f * colors.StrokeScale;
                 if (keyline > 0f) dl.AddCircleFilled(center, r + keyline, ground);
                 dl.AddCircle(center, r - ring * 0.5f, palette.HighContrast ? Theme.U32(colors.SnapshotPip) : Theme.DuskU32, 0, ring);
+                break;
+
+            case Mark.ElsewherePip:
+                var outer = MathF.Max(3.5f, PipRadius * 1.6f * size);
+                var elsewhereRing = 1.5f * colors.StrokeScale;
+                var ink = palette.HighContrast ? Theme.U32(colors.LivePip) : Theme.MoonU32;
+                if (keyline > 0f) dl.AddCircleFilled(center, outer + keyline, ground);
+                dl.AddCircle(center, outer - elsewhereRing * 0.5f, ink, 0, elsewhereRing);
+                dl.AddCircleFilled(center, MathF.Max(1.5f, outer * 0.4f), ink);
                 break;
         }
     }

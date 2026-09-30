@@ -21,7 +21,7 @@ namespace Tsukimichi.Game;
 /// Written by the poller and the plugin on the framework thread, read by the UI on that same thread, so a version
 /// counter plus <see cref="Changed"/> is all the synchronization needed. Every mutation bumps <see cref="Version"/>.
 /// </summary>
-public sealed class SessionState
+public sealed partial class SessionState
 {
     public const int MaxRecentEvents = 100;
 
@@ -316,11 +316,21 @@ public sealed class SessionState
     /// </summary>
     public void ForgetCharacter(ulong contentId)
     {
+        // Multibox (D11): a character live in another game client belongs to that client, which would write it again
+        // within seconds; the Characters pane disables Forget for it, and this guards any other caller.
+        if (IsLiveElsewhere(contentId))
+        {
+            log?.Warning("Character {ContentId} is live in another game client; it was not forgotten", contentId);
+            return;
+        }
+
         snapshots.Delete(contentId);
         foreach (var sidecar in CharacterSidecars.PathsFor(paths.CharactersDir, contentId))
         {
             DeleteIfExists(sidecar);
         }
+
+        DeleteHeartbeat(contentId);
 
         if (ViewedContentId == contentId && contentId != LiveContentId)
         {
@@ -330,14 +340,25 @@ public sealed class SessionState
         CharacterForgotten?.Invoke(contentId);
     }
 
-    /// <summary>Removes every stored snapshot plus pins and overrides. See <see cref="ForgetCharacter"/> for the live character.</summary>
+    /// <summary>
+    /// Removes every stored snapshot plus pins and overrides. See <see cref="ForgetCharacter"/> for the live character.
+    /// Multibox (D11): the snapshot, sidecars and heartbeat of a character live in another game client stay (that
+    /// client owns them); every other heartbeat this client may delete goes (<see cref="DeleteHeartbeats"/>).
+    /// </summary>
     public void DeleteAllData()
     {
-        snapshots.DeleteAll();
+        snapshots.DeleteAll(IsLiveElsewhere);
         foreach (var sidecar in CharacterSidecars.FindAll(paths.CharactersDir))
         {
+            if (SidecarOwner(sidecar) is { } owner && IsLiveElsewhere(owner))
+            {
+                continue;
+            }
+
             DeleteIfExists(sidecar);
         }
+
+        DeleteHeartbeats();
 
         DeleteIfExists(paths.PinsFile);
         DeleteIfExists(paths.OverridesFile);
@@ -612,7 +633,8 @@ public sealed class SessionState
         try
         {
             Core.Text.JournalIndexStore.DeleteOthers(paths.ConfigDir, null);
-            Core.Text.JournalIndexStore.DeleteTemp(paths.ConfigDir);
+            // A temporary file younger than a minute may be another game client's build in flight (D11).
+            Core.Text.JournalIndexStore.DeleteTemp(paths.ConfigDir, TimeSpan.FromMinutes(1));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {

@@ -184,6 +184,11 @@ public sealed partial class CharactersPane
                 }
             }
 
+            if (item.Elsewhere && ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(Strings.MultiboxLiveElsewhereTooltip);
+            }
+
             using (ImRaii.PushIndent())
             {
                 ImGui.TextDisabled(item.Detail);
@@ -215,6 +220,11 @@ public sealed partial class CharactersPane
         ImGui.SameLine();
         ImGui.TextDisabled(d.World);
         ImGui.TextDisabled(d.TakenLine);
+        if (!session.IsLive && session.IsLiveElsewhere(snapshot.ContentId) && ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.MultiboxLiveElsewhereTooltip);
+        }
+
         DrawWelcomeBackButton(snapshot);
         ImGui.TextUnformatted(d.CountsLine);
         DrawMsqLine(ui, d);
@@ -807,7 +817,9 @@ public sealed partial class CharactersPane
 
         ImGui.SameLine();
         var live = session.IsLive;
-        using (ImRaii.Disabled(live))
+        // Multibox (D11): a character live in another game client belongs to that client, which would save it again.
+        var elsewhere = !live && session.IsLiveElsewhere(snapshot.ContentId);
+        using (ImRaii.Disabled(live || elsewhere))
         using (Theme.PushDestructiveButton())
         {
             if (ImGui.Button(Strings.CharactersForget))
@@ -818,9 +830,9 @@ public sealed partial class CharactersPane
             }
         }
 
-        if (live && ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+        if ((live || elsewhere) && ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
-            UiMetrics.Tooltip(Strings.CharactersForgetLiveHint);
+            UiMetrics.Tooltip(live ? Strings.CharactersForgetLiveHint : Strings.MultiboxForgetHint);
         }
     }
 
@@ -1356,6 +1368,16 @@ public sealed partial class CharactersPane
             ImGui.TableNextRow();
             ImGui.TableNextColumn();
             ImGui.TextUnformatted(item.Name);
+            if (item.Elsewhere)
+            {
+                // Multibox (D11): its state comes from the other client's latest save.
+                ImGui.SameLine();
+                ImGui.TextDisabled(Strings.MultiboxMarker.TrimEnd());
+                if (ImGui.IsItemHovered())
+                {
+                    UiMetrics.Tooltip(Strings.MultiboxLiveElsewhere + "\n" + Strings.MultiboxLiveElsewhereTooltip);
+                }
+            }
 
             ImGui.TableNextColumn();
             if (evaluation is null)
@@ -1466,8 +1488,9 @@ public sealed partial class CharactersPane
             var file = Path.Combine(dir, SafeFileName(snapshot.Name) + "-" + stamp + ".json");
 
             var source = paths.SnapshotFile(snapshot.ContentId);
-            var text = File.Exists(source) ? File.ReadAllText(source) : JsonSerializer.Serialize(snapshot, ExportJson);
-            File.WriteAllText(file, text);
+            // Read and written the multibox-safe way (D11): another game client may save the snapshot meanwhile.
+            var text = AtomicFile.Read(source) ?? JsonSerializer.Serialize(snapshot, ExportJson);
+            AtomicFile.Write(file, text);
 
             log.Information("Exported {Name} to {Path}", snapshot.Name, file);
             ShowToast(string.Format(CultureInfo.CurrentCulture, Strings.CharactersExportedFormat, file));
@@ -1519,10 +1542,11 @@ public sealed partial class CharactersPane
         {
             var c = characters[i];
             var live = c.ContentId == session.LiveContentId;
-            var label = (live ? Strings.CharactersLiveMarker : string.Empty) + c.Name;
-            var detailText = WorldName(c.World) + " · " + (live ? Strings.CharactersLive : Age(c.TakenUtc)) + " · "
-                             + Strings.CharactersCompleted(c.CompletedCount);
-            built[i] = new CharacterItem(c.ContentId, c.Name, c.TakenUtc, label, detailText);
+            var elsewhere = !live && session.IsLiveElsewhere(c.ContentId);
+            var label = (live ? Strings.CharactersLiveMarker : elsewhere ? Strings.MultiboxMarker : string.Empty) + c.Name;
+            var state = live ? Strings.CharactersLive : elsewhere ? Strings.MultiboxLiveElsewhere : Age(c.TakenUtc);
+            var detailText = WorldName(c.World) + " · " + state + " · " + Strings.CharactersCompleted(c.CompletedCount);
+            built[i] = new CharacterItem(c.ContentId, c.Name, c.TakenUtc, label, detailText, elsewhere);
         }
 
         items = built;
@@ -1553,7 +1577,9 @@ public sealed partial class CharactersPane
         var taken = snapshot.TakenUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture);
         var takenLine = session.IsLive
             ? Strings.CharactersLive + " · " + taken
-            : string.Format(CultureInfo.CurrentCulture, Strings.CharactersSnapshotFormat, taken, Age(snapshot.TakenUtc));
+            : session.IsLiveElsewhere(snapshot.ContentId)
+                ? Strings.MultiboxMarker + Strings.MultiboxLiveElsewhere + " · " + taken
+                : string.Format(CultureInfo.CurrentCulture, Strings.CharactersSnapshotFormat, taken, Age(snapshot.TakenUtc));
 
         var completed = 0;
         foreach (var b in snapshot.CompletedBits)
@@ -2163,7 +2189,8 @@ public sealed partial class CharactersPane
         Other,
     }
 
-    private sealed record CharacterItem(ulong ContentId, string Name, DateTime TakenUtc, string Label, string Detail);
+    /// <param name="Elsewhere">Logged in on another game client (multibox, D11): badged, and never forgotten from here.</param>
+    private sealed record CharacterItem(ulong ContentId, string Name, DateTime TakenUtc, string Label, string Detail, bool Elsewhere = false);
 
     private readonly record struct DashboardKey(int Version, ulong ContentId, bool Live, long Minute, bool HasMoonlit, int PinsVersion);
 

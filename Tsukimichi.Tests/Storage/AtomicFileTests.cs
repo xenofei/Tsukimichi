@@ -33,15 +33,57 @@ public sealed class AtomicFileTests : IDisposable
     }
 
     [Fact]
-    public void Write_replaces_a_stale_tmp_file()
+    public void Write_uses_a_temporary_file_of_its_own_and_ignores_a_leftover_one()
     {
         var path = tmp.File("file.json");
+        // A leftover of an older version, or another client's save in flight: never moved into place, never deleted here.
         File.WriteAllText(path + ".tmp", "stale");
 
         AtomicFile.Write(path, "fresh");
 
         Assert.Equal("fresh", File.ReadAllText(path));
-        Assert.False(File.Exists(path + ".tmp"));
+        Assert.Equal([path + ".tmp"], Directory.GetFiles(tmp.Path, "*" + AtomicFile.TempSuffix));
+    }
+
+    [Fact]
+    public void Temporary_names_are_unique_and_carry_the_process()
+    {
+        var path = tmp.File("file.json");
+
+        var a = AtomicFile.TempPathFor(path);
+        var b = AtomicFile.TempPathFor(path);
+
+        Assert.NotEqual(a, b);
+        Assert.StartsWith(path + "." + Environment.ProcessId + "-", a);
+        Assert.EndsWith(AtomicFile.TempSuffix, a);
+    }
+
+    [Fact]
+    public async Task Write_waits_out_a_read_in_another_client_instead_of_failing()
+    {
+        var path = tmp.File("file.json");
+        AtomicFile.Write(path, "first");
+
+        // Windows refuses to replace an open file; the reader lets go after 50 ms and the write's retry gets through.
+        var reader = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+        var release = Task.Delay(50).ContinueWith(_ => reader.Dispose(), TaskScheduler.Default);
+        AtomicFile.Write(path, "second");
+        await release;
+
+        Assert.Equal("second", AtomicFile.Read(path));
+    }
+
+    [Fact]
+    public void Read_does_not_block_a_rename_over_the_file()
+    {
+        var path = tmp.File("file.json");
+        AtomicFile.Write(path, "first");
+
+        Assert.Equal("first", AtomicFile.Read(path));
+        File.WriteAllText(path + ".next", "second");
+        File.Move(path + ".next", path, overwrite: true);
+
+        Assert.Equal("second", AtomicFile.Read(path));
     }
 
     [Fact]

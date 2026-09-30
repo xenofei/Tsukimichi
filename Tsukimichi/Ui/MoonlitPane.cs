@@ -77,6 +77,9 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     private readonly Configuration settings;
     private readonly IDalamudPluginInterface pluginInterface;
     private readonly Dictionary<uint, UniqueOverride> overrides;
+
+    /// <summary>Multibox (D11): quests whose verdict changed here since the last save; a save merges only these into the file on disk.</summary>
+    private readonly HashSet<uint> overridesTouched = [];
     private readonly VerdictPrompt verdict = new(Strings.MoonlitVerdictPopup);
     private int overridesVersion;
 
@@ -185,6 +188,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     public void SetOverride(uint rowId, bool unique, string? note)
     {
         overrides[rowId] = new UniqueOverride(unique, string.IsNullOrWhiteSpace(note) ? null : note.Trim(), DateTime.UtcNow);
+        overridesTouched.Add(rowId);
         SaveOverrides();
     }
 
@@ -196,6 +200,8 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             return;
         }
 
+        // Every verdict this client knows of goes; one another game client adds meanwhile survives the merge.
+        overridesTouched.UnionWith(overrides.Keys);
         overrides.Clear();
         SaveOverrides();
     }
@@ -205,8 +211,62 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     {
         if (overrides.Remove(rowId))
         {
+            overridesTouched.Add(rowId);
             SaveOverrides();
         }
+    }
+
+    /// <summary>
+    /// Multibox (D11): <c>user/overrides.json</c> changed on disk (another game client's verdict, or "Delete all data"
+    /// there). The file is merged into the verdicts held here, keeping any change here not saved yet; the catalog
+    /// rebuilds only when something changed.
+    /// </summary>
+    public void MergeOverridesFromDisk()
+    {
+        var warnings = new List<string>();
+        var disk = OverridesFile.Load(paths.OverridesFile, warnings);
+        foreach (var warning in warnings)
+        {
+            log.Warning("Overrides: {Warning}", warning);
+        }
+
+        if (warnings.Count > 0)
+        {
+            return;
+        }
+
+        AdoptOverrides(KeyedMerge.Apply(disk, overrides, overridesTouched));
+    }
+
+    /// <summary>Takes a merged verdict map as the one held here; marks the catalog for a rebuild when it differs.</summary>
+    private void AdoptOverrides(Dictionary<uint, UniqueOverride> merged)
+    {
+        var same = merged.Count == overrides.Count;
+        if (same)
+        {
+            foreach (var (rowId, stored) in merged)
+            {
+                if (!overrides.TryGetValue(rowId, out var held) || held != stored)
+                {
+                    same = false;
+                    break;
+                }
+            }
+        }
+
+        if (same)
+        {
+            return;
+        }
+
+        overrides.Clear();
+        foreach (var (rowId, stored) in merged)
+        {
+            overrides[rowId] = stored;
+        }
+
+        catalogDirty = true;
+        overridesVersion++;
     }
 
     /// <summary>
@@ -233,6 +293,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         }
 
         overrides.Clear();
+        overridesTouched.Clear();
         foreach (var (rowId, stored) in loaded)
         {
             overrides[rowId] = stored;
@@ -919,13 +980,24 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 
     private void SaveOverrides()
     {
+        // Multibox (D11): only the verdicts changed here are written; the others keep what is on disk, which another
+        // game client may have changed since this one read it.
+        var warnings = new List<string>();
         try
         {
-            OverridesFile.Save(paths.OverridesFile, overrides);
+            var merged = OverridesFile.SaveMerged(paths.OverridesFile, overrides, overridesTouched, warnings);
+            overridesTouched.Clear();
+            AdoptOverrides(merged);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
+            // Still touched: the next verdict saves it too.
             log.Error(ex, "Could not save {Path}", paths.OverridesFile);
+        }
+
+        foreach (var warning in warnings)
+        {
+            log.Warning("Overrides: {Warning}", warning);
         }
 
         catalogDirty = true;

@@ -21,6 +21,35 @@ public static class PinsFile
         ArgumentNullException.ThrowIfNull(pins);
         AtomicFile.Write(path, JsonSerializer.Serialize(pins, StorageJson.Options));
     }
+
+    /// <summary>
+    /// Saves the pins of the characters in <paramref name="touched"/> without losing what another game client saved for
+    /// the others (D11): under <see cref="SharedFile.Lock"/> the file is read again, <see cref="KeyedMerge.Apply"/> takes
+    /// the touched characters' lists from <paramref name="local"/>, empty lists are dropped, and the result is written
+    /// and returned for the caller to adopt. A file that exists but cannot be read throws rather than being replaced.
+    /// </summary>
+    public static Dictionary<ulong, List<uint>> SaveMerged(
+        string path,
+        IReadOnlyDictionary<ulong, List<uint>> local,
+        IEnumerable<ulong> touched,
+        IList<string>? warnings = null,
+        TimeSpan? lockTimeout = null)
+    {
+        ArgumentNullException.ThrowIfNull(local);
+        ArgumentNullException.ThrowIfNull(touched);
+        using (SharedFile.Lock(path, lockTimeout))
+        {
+            var disk = UserFile.LoadForMerge<Dictionary<ulong, List<uint>>>(path, warnings) ?? [];
+            var merged = KeyedMerge.Apply(disk, local, touched);
+            foreach (var key in merged.Where(static p => p.Value is null || p.Value.Count == 0).Select(static p => p.Key).ToList())
+            {
+                merged.Remove(key);
+            }
+
+            Save(path, merged);
+            return merged;
+        }
+    }
 }
 
 /// <summary>
@@ -38,6 +67,29 @@ public static class OverridesFile
     {
         ArgumentNullException.ThrowIfNull(overrides);
         AtomicFile.Write(path, JsonSerializer.Serialize(overrides, StorageJson.Options));
+    }
+
+    /// <summary>
+    /// Saves the verdicts of the quests in <paramref name="touched"/> without losing verdicts another game client saved
+    /// for other quests (D11): read again under <see cref="SharedFile.Lock"/>, merged with <see cref="KeyedMerge.Apply"/>,
+    /// written, and returned for the caller to adopt. A file that exists but cannot be read throws rather than being replaced.
+    /// </summary>
+    public static Dictionary<uint, UniqueOverride> SaveMerged(
+        string path,
+        IReadOnlyDictionary<uint, UniqueOverride> local,
+        IEnumerable<uint> touched,
+        IList<string>? warnings = null,
+        TimeSpan? lockTimeout = null)
+    {
+        ArgumentNullException.ThrowIfNull(local);
+        ArgumentNullException.ThrowIfNull(touched);
+        using (SharedFile.Lock(path, lockTimeout))
+        {
+            var disk = UserFile.LoadForMerge<Dictionary<uint, UniqueOverride>>(path, warnings) ?? [];
+            var merged = KeyedMerge.Apply(disk, local, touched);
+            Save(path, merged);
+            return merged;
+        }
     }
 }
 
@@ -62,6 +114,28 @@ internal static class UserFile
             return null;
         }
 
+        return Parse<T>(path, text, warnings);
+    }
+
+    /// <summary>
+    /// <see cref="Load{T}"/> for a read-merge-write: a file that exists but cannot be read throws
+    /// <see cref="IOException"/>, since saving over it would lose what it holds. Missing → null; corrupt → quarantined, null.
+    /// </summary>
+    public static T? LoadForMerge<T>(string path, IList<string>? warnings) where T : class
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        var text = AtomicFile.Read(path, out var ioError);
+        if (ioError is not null)
+        {
+            throw new IOException($"{Path.GetFileName(path)} could not be read, so it was not saved over: {ioError}");
+        }
+
+        return text is null ? null : Parse<T>(path, text, warnings);
+    }
+
+    private static T? Parse<T>(string path, string text, IList<string>? warnings) where T : class
+    {
+        var fileName = Path.GetFileName(path);
         try
         {
             return JsonSerializer.Deserialize<T>(text, StorageJson.Options);

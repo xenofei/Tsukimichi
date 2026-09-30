@@ -95,6 +95,13 @@ public sealed class StatePoller : IDisposable
             return;
         }
 
+        // Multibox (D11): another game client holds this character with a newer login and writes its files; the
+        // multibox service logged the warning. The changes stay pending and are written if this client owns it again.
+        if (!snapshots.CanWrite(last.ContentId))
+        {
+            return;
+        }
+
         var now = DateTime.UtcNow;
         var saves = memory.Saves;
         if (saves.Pending)

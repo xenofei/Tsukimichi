@@ -4,6 +4,9 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+### Added
+- Several game clients at once: when you play two or more characters in separate game clients, each client's Tsukimichi now shows the others' characters as "live in another client" (a ◎ dot and badge) in the character switcher, on the Characters tab, in Compare with and in the account view, with their latest progress, updated within seconds each time the other client saves. It works through the shared config folder only, so both clients must use the same Dalamud config folder; it never reads another game process or sends it anything. Forget character is not offered for a character logged in on another client, and Delete all data leaves that character's files to its own client. docs/multibox.md explains how it works and what it can't do.
+
 ### Changed
 - Panes keep a minimum width: however you drag the dividers or size the window, the Journal tree stays at least 180 px wide, the quest list 320 and the details 260, so nothing is squeezed to a sliver; when the window gets narrow the details give way first, then the tree. The widths you drag to follow Settings › Display › UI scale, and double-click a divider to reset that pane to its default width (the tree now starts at 300 px, a little wider than before). Drag the tree's divider far to the left and the tree folds into a narrow strip of moons, one per section (hover for the name and count, click to show that section); drag it back out or double-click the divider to open it again. The main window can now be a little narrower. Pane widths set in earlier versions are not carried over.
 
@@ -15,6 +18,7 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 - The Job column reads "Any" for quests every class and job can take, where 216 main scenario quests read "Multi".
 - What Lies Beneath (Palace of the Dead, floors 51–200) is filed under Palace of the Dead, not Gridanian Sidequests.
 - Chain steps now follow the order you play them in, where a few quests the game files without a place came before the quest that unlocks them.
+- Two game clients saving at the same time can no longer leave a half-written file or lose each other's changes: every file is written whole and then swapped into place, and pins and Moonlit verdicts made in one client are merged with those made in the other instead of being saved over. Two clients in different languages no longer delete each other's journal word index, and one starting up no longer removes the index the other is building.
 
 ## [1.1.0] - 2026-09-30
 

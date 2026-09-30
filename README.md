@@ -75,7 +75,13 @@ Everything else is a Dalamud window. It also talks to three other plugins over D
 
 It never automates anything: it does not move your character, accept or turn in quests, skip dialogue or press anything for you. Teleport to the giver is a button you click, handed to Lifestream. Map flags, journal pages and chat links use the game's own functions.
 
-It has no network code. Nothing leaves your machine. Snapshots and settings live in `%AppData%\XIVLauncher\pluginConfigs\Tsukimichi\` (`characters\<id>.json` with its `<id>.accepted.json` and `<id>.abandoned.json`, `user\pins.json`, `user\overrides.json`, `user\discovery.json`). Exports are files you write on purpose, to `exports\` unless you choose another folder, and Settings › Data can delete everything else.
+It has no network code. Nothing leaves your machine. Snapshots and settings live in `%AppData%\XIVLauncher\pluginConfigs\Tsukimichi\` (`characters\<id>.json` with its `<id>.accepted.json` and `<id>.abandoned.json`, `<id>.live.json` while that character is logged in (see [multibox](#several-game-clients-at-once-multibox)), `user\pins.json`, `user\overrides.json`, `user\discovery.json`). Exports are files you write on purpose, to `exports\` unless you choose another folder, and Settings › Data can delete everything else.
+
+## Several game clients at once (multibox)
+
+If you run two or more game clients at the same time, each with its own character, every client's Tsukimichi sees the others' characters. A character logged in on another client shows as **live in another client** (a ◎ dot and badge) in the character switcher, on the Characters tab, in Compare with and in the account view, with the data that client saved last; it updates every time that client saves (every 10 seconds or so while something changes). Both clients can pin quests and mark Moonlit verdicts at the same time without losing each other's changes.
+
+It works only through the files in the shared config folder, so both clients must use the same Dalamud config folder (the usual setup). It never reads another game process or sends it anything. [docs/multibox.md](docs/multibox.md) explains how it works and what it can't do.
 
 ## Works with other plugins
 

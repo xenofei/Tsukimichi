@@ -179,6 +179,9 @@ public sealed class Plugin : IDalamudPlugin
     internal Game.SnapshotService Snapshots { get; private set; } = null!;
     internal Game.StatePoller Poller { get; private set; } = null!;
 
+    /// <summary>Multibox sharing with other game clients (D11); null until the game state is initialized.</summary>
+    internal Game.MultiboxService? Multibox { get; private set; }
+
     /// <summary>The journal text reader and its opt-in search index (P9); null until the constructor creates it.</summary>
     internal Game.QuestTextService? QuestText { get; private set; }
 
@@ -250,6 +253,8 @@ public sealed class Plugin : IDalamudPlugin
         Session.Changed += PersistViewedCharacter;
 
         Poller = new Game.StatePoller(Framework, ClientState, Log, reader, Snapshots, Session, Settings);
+        // Multibox (D11): heartbeats and other game clients' saves, through the shared config folder only.
+        Multibox = new Game.MultiboxService(Framework, Log, Session, Snapshots, Paths);
 
         // The initial build's ticket: a filing flip from Settings during the startup build supersedes it, and
         // PublishCatalog drops its result on the framework thread.
@@ -373,6 +378,16 @@ public sealed class Plugin : IDalamudPlugin
         }
     }
 
+    /// <summary>
+    /// Multibox (D11), framework thread: <c>user/pins.json</c> or <c>user/overrides.json</c> changed on disk. Each owner
+    /// merges the file into its copy, keeping its own changes not saved yet.
+    /// </summary>
+    private void OnUserFilesChanged()
+    {
+        queryRunner?.ReloadPinsFromDisk();
+        moonlitPane?.MergeOverridesFromDisk();
+    }
+
     private void PersistViewedCharacter()
     {
         var explicitId = Session.IsFollowingLive ? null : Session.ViewedContentId;
@@ -399,6 +414,13 @@ public sealed class Plugin : IDalamudPlugin
         }
 
         Poller?.Dispose();
+        // After the poller's last save: the heartbeat goes once nothing more is written for the character.
+        if (Multibox is not null)
+        {
+            Multibox.UserFilesChanged -= OnUserFilesChanged;
+            Multibox.Dispose();
+        }
+
         Snapshots?.Dispose();
     }
     // ---- end game state ----
@@ -578,6 +600,11 @@ public sealed class Plugin : IDalamudPlugin
             charactersPane.Links = gameLinks;
             mainWindow.AttachPanes(moonlitPane, charactersPane);
             mainWindow.AttachOverrides(moonlitPane);
+            // Multibox (D11): pins and overrides another game client saved are merged in as they land.
+            if (Multibox is not null)
+            {
+                Multibox.UserFilesChanged += OnUserFilesChanged;
+            }
             // Unlock route (P6): the detail pane, a Moonlit row's menu and the Characters job rows ask UiState for it.
             routeWindow = new RouteWindow(Session, queryRunner, quest =>
             {
