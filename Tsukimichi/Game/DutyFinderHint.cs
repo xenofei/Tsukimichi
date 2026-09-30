@@ -237,18 +237,34 @@ public sealed unsafe class DutyFinderHint : IDisposable
 
     private void OnSetup(AddonEvent type, AddonArgs args)
     {
+        // A listener whose unregister threw keeps firing after Apply() recorded the hint as off: read nothing then.
+        if (!registered)
+        {
+            return;
+        }
+
         open = true;
         ReadSelection();
     }
 
     private void OnChange(AddonEvent type, AddonArgs args)
     {
+        if (!registered)
+        {
+            return;
+        }
+
         open = true;
         ReadSelection();
     }
 
     private void OnUpdate(AddonEvent type, AddonArgs args)
     {
+        if (!registered)
+        {
+            return;
+        }
+
         // Registered while the window was already up: PostUpdate is the first event this side sees.
         open = true;
         var now = Environment.TickCount64;

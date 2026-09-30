@@ -63,6 +63,33 @@ public class QuestPatchesFixtureTests(FixtureCatalog fixture) : IClassFixture<Fi
     }
 
     [Fact]
+    [Trait("Category", "Curated")]
+    public void Shipped_file_carries_every_hand_correction()
+    {
+        // docs/data/quest-patch-corrections.json is what Tsukimichi.Verify patches lays over Garland's values; the
+        // shipped file must agree with it, so a correction made by hand is also made where a re-seed keeps it.
+        var path = Path.Combine(FixtureCatalog.ShippedDataDir(), "..", "..", "docs", "data", QuestPatchCorrections.FileName);
+        Assert.True(File.Exists(path), $"{path} is missing");
+        var corrections = QuestPatchCorrections.Load(path);
+        Assert.Empty(corrections.Warnings);
+        Assert.NotEmpty(corrections.ByRowId);
+
+        var catalog = fixture.LegacyBundle.Catalog;
+        foreach (var (id, fix) in corrections.ByRowId)
+        {
+            Assert.Equal(fix.Patch, Shipped.Value.For(id));
+            Assert.Equal(fix.Name, catalog.GetByRowId(id)?.Name);
+            Assert.StartsWith("https://", fix.Evidence, StringComparison.Ordinal);
+        }
+
+        // The eight ARR class quests Garland dates 3.1 are 2.0 launch quests.
+        foreach (var id in new uint[] { 65557, 65558, 65559, 65789, 65846, 65880, 66068, 66091 })
+        {
+            Assert.Equal("2.0", Shipped.Value.For(id));
+        }
+    }
+
+    [Fact]
     public void Mapping_sets_added_in_from_the_file()
     {
         var catalog = Dated().Catalog;

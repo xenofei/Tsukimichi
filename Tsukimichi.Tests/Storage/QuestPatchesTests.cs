@@ -129,4 +129,43 @@ public class QuestPatchesTests
         Assert.Same(records[1], dated[1]);
         Assert.Same(records, QuestPatches.Empty.Apply(records));
     }
+
+    [Fact]
+    public void The_schema_note_reads_as_sentences()
+    {
+        // 0.9.0 shipped "detail pane.Every quest ..." in the file's note.
+        var note = (string?)System.Text.Json.Nodes.JsonNode.Parse(Sample().ToJson())!["$schema_note"];
+
+        Assert.NotNull(note);
+        Assert.Contains("the detail pane. Every quest id", note, StringComparison.Ordinal);
+        Assert.Contains("quest-patch-corrections.json", note, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Corrections_keep_complete_entries_and_skip_the_rest_with_a_warning()
+    {
+        const string json = """
+            {
+              "schema": 1,
+              "entries": {
+                "65557": { "name": "Way of the Archer", "patch": "2.0", "reason": "wiki says 2.0", "evidence": "https://ffxiv.consolegameswiki.com/wiki/Way_of_the_Archer" },
+                "65558": { "name": "Way of the Conjurer", "patch": "2.00", "reason": "r", "evidence": "https://example.org/a" },
+                "abc": { "patch": "2.0", "reason": "r", "evidence": "https://example.org/b" },
+                "65559": { "patch": "soon", "reason": "r", "evidence": "https://example.org/c" },
+                "65789": { "patch": "2.0", "evidence": "https://example.org/d" },
+                "65846": { "patch": "2.0", "reason": "r", "evidence": "http://example.org/e" }
+              }
+            }
+            """;
+
+        var corrections = QuestPatchCorrections.Parse(json);
+
+        Assert.Equal([65557u, 65558u], corrections.ByRowId.Keys.Order());
+        Assert.Equal(new QuestPatchCorrection("Way of the Archer", "2.0", "wiki says 2.0", "https://ffxiv.consolegameswiki.com/wiki/Way_of_the_Archer"), corrections.ByRowId[65557]);
+        Assert.Equal("2.0", corrections.ByRowId[65558].Patch);
+        Assert.Equal(4, corrections.Warnings.Count);
+        Assert.Single(QuestPatchCorrections.Parse("{ \"entries\": 1 }").Warnings);
+        Assert.Single(QuestPatchCorrections.Parse("{ \"entries\": {}, }").Warnings);
+        Assert.Empty(QuestPatchCorrections.Load(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".json")).ByRowId);
+    }
 }

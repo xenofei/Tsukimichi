@@ -1,6 +1,6 @@
 {
   "gameVersion": "2026.09.15.0000.0000",
-  "generatedUtc": "2026-09-30T05:05:16Z",
+  "generatedUtc": "2026-09-30T05:51:38Z",
   "entries": [
     {
       "questRowId": 65545,
@@ -183,6 +183,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 65611,
+      "kind": "DutyUnlock",
+      "rewardId": 27,
+      "itemId": 0,
+      "rewardName": "Snowcloak",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 65612,
       "kind": "Action",
       "rewardId": 113,
@@ -210,6 +220,16 @@
       "rewardName": "Seeker of Blood",
       "confidence": "Static",
       "source": "Achievement.Data;achievement=314;type=6",
+      "otherSources": []
+    },
+    {
+      "questRowId": 65620,
+      "kind": "DutyUnlock",
+      "rewardId": 79,
+      "itemId": 0,
+      "rewardName": "the Akh Afah Amphitheatre (Hard)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -472,6 +492,16 @@
       "rewardName": "unicorn",
       "confidence": "Static",
       "source": "Quest.Reward;ItemAction=1322",
+      "otherSources": []
+    },
+    {
+      "questRowId": 65740,
+      "kind": "DutyUnlock",
+      "rewardId": 81,
+      "itemId": 0,
+      "rewardName": "the Dragon's Neck",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -1523,6 +1553,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 66038,
+      "kind": "DutyUnlock",
+      "rewardId": 85,
+      "itemId": 0,
+      "rewardName": "Battle in the Big Keep",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 66043,
       "kind": "Minion",
       "rewardId": 52,
@@ -2348,16 +2388,6 @@
       "otherSources": []
     },
     {
-      "questRowId": 66476,
-      "kind": "DutyUnlock",
-      "rewardId": 11,
-      "itemId": 0,
-      "rewardName": "the Stone Vigil",
-      "confidence": "Curated",
-      "source": "curated/duty_unlocks.json",
-      "otherSources": []
-    },
-    {
       "questRowId": 66488,
       "kind": "Achievement",
       "rewardId": 786,
@@ -2365,6 +2395,16 @@
       "rewardName": "History Repeating",
       "confidence": "Static",
       "source": "Achievement.Key;type=6",
+      "otherSources": []
+    },
+    {
+      "questRowId": 66488,
+      "kind": "DutyUnlock",
+      "rewardId": 11,
+      "itemId": 0,
+      "rewardName": "the Stone Vigil",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -2405,16 +2445,6 @@
       "rewardName": "cactuar cutting",
       "confidence": "Static",
       "source": "Quest.Reward;ItemAction=853",
-      "otherSources": []
-    },
-    {
-      "questRowId": 66572,
-      "kind": "DutyUnlock",
-      "rewardId": 15,
-      "itemId": 0,
-      "rewardName": "Castrum Meridianum",
-      "confidence": "Curated",
-      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -3510,6 +3540,66 @@
       "otherSources": []
     },
     {
+      "questRowId": 66664,
+      "kind": "DutyUnlock",
+      "rewardId": 13,
+      "itemId": 0,
+      "rewardName": "Dzemael Darkhold",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 66665,
+      "kind": "DutyUnlock",
+      "rewardId": 13,
+      "itemId": 0,
+      "rewardName": "Dzemael Darkhold",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 66666,
+      "kind": "DutyUnlock",
+      "rewardId": 13,
+      "itemId": 0,
+      "rewardName": "Dzemael Darkhold",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 66667,
+      "kind": "DutyUnlock",
+      "rewardId": 5,
+      "itemId": 0,
+      "rewardName": "the Aurum Vale",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 66668,
+      "kind": "DutyUnlock",
+      "rewardId": 5,
+      "itemId": 0,
+      "rewardName": "the Aurum Vale",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 66669,
+      "kind": "DutyUnlock",
+      "rewardId": 5,
+      "itemId": 0,
+      "rewardName": "the Aurum Vale",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 66671,
       "kind": "DutyUnlock",
       "rewardId": 14,
@@ -3678,6 +3768,16 @@
       "otherSourceNotes": {
         "DungeonDrop": "The Lost City of Amdapor, Halatali (Hard) and Brayflox's Longstop (Hard)"
       }
+    },
+    {
+      "questRowId": 66726,
+      "kind": "DutyUnlock",
+      "rewardId": 66,
+      "itemId": 0,
+      "rewardName": "Thornmarch (Hard)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
     },
     {
       "questRowId": 66729,
@@ -3944,6 +4044,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 66854,
+      "kind": "DutyUnlock",
+      "rewardId": 76,
+      "itemId": 0,
+      "rewardName": "Battle on the Big Bridge",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 66881,
       "kind": "Achievement",
       "rewardId": 898,
@@ -4132,6 +4242,16 @@
       "otherSourceNotes": {
         "DungeonDrop": "Snowcloak, Sastasha (Hard) and The Sunken Temple of Qarn (Hard)"
       }
+    },
+    {
+      "questRowId": 66897,
+      "kind": "DutyUnlock",
+      "rewardId": 72,
+      "itemId": 0,
+      "rewardName": "the Whorleater (Hard)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
     },
     {
       "questRowId": 66899,
@@ -4945,6 +5065,16 @@
       "rewardName": "Aether Current (The Sea of Clouds)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
+      "otherSources": []
+    },
+    {
+      "questRowId": 67183,
+      "kind": "DutyUnlock",
+      "rewardId": 88,
+      "itemId": 0,
+      "rewardName": "the Limitless Blue (Hard)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -6598,6 +6728,36 @@
       "otherSources": []
     },
     {
+      "questRowId": 67627,
+      "kind": "DutyUnlock",
+      "rewardId": 113,
+      "itemId": 0,
+      "rewardName": "Alexander - The Cuff of the Father",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 67628,
+      "kind": "DutyUnlock",
+      "rewardId": 114,
+      "itemId": 0,
+      "rewardName": "Alexander - The Arm of the Father",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 67629,
+      "kind": "DutyUnlock",
+      "rewardId": 115,
+      "itemId": 0,
+      "rewardName": "Alexander - The Burden of the Father",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 67630,
       "kind": "Title",
       "rewardId": 235,
@@ -8039,6 +8199,36 @@
       "rewardId": 172,
       "itemId": 0,
       "rewardName": "Hullbreaker Isle (Hard)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 67786,
+      "kind": "DutyUnlock",
+      "rewardId": 137,
+      "itemId": 0,
+      "rewardName": "Alexander - The Cuff of the Son",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 67787,
+      "kind": "DutyUnlock",
+      "rewardId": 138,
+      "itemId": 0,
+      "rewardName": "Alexander - The Arm of the Son",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 67788,
+      "kind": "DutyUnlock",
+      "rewardId": 139,
+      "itemId": 0,
+      "rewardName": "Alexander - The Burden of the Son",
       "confidence": "Curated",
       "source": "curated/duty_unlocks.json",
       "otherSources": []
@@ -10452,6 +10642,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 68043,
+      "kind": "DutyUnlock",
+      "rewardId": 240,
+      "itemId": 0,
+      "rewardName": "Bardam's Mettle",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 68052,
       "kind": "Other",
       "rewardId": 2,
@@ -11011,6 +11211,16 @@
       "rewardName": "Aether Current (The Ruby Sea)",
       "confidence": "Static",
       "source": "AetherCurrent.Quest",
+      "otherSources": []
+    },
+    {
+      "questRowId": 68168,
+      "kind": "DutyUnlock",
+      "rewardId": 235,
+      "itemId": 0,
+      "rewardName": "Shisui of the Violet Tides",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -11823,6 +12033,46 @@
       "rewardName": "Keeper of the Lilacs",
       "confidence": "Static",
       "source": "Achievement.Key;achievement=1805;type=6",
+      "otherSources": []
+    },
+    {
+      "questRowId": 68465,
+      "kind": "DutyUnlock",
+      "rewardId": 252,
+      "itemId": 0,
+      "rewardName": "Deltascape V1.0",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 68466,
+      "kind": "DutyUnlock",
+      "rewardId": 253,
+      "itemId": 0,
+      "rewardName": "Deltascape V2.0",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 68467,
+      "kind": "DutyUnlock",
+      "rewardId": 254,
+      "itemId": 0,
+      "rewardName": "Deltascape V3.0",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
+      "questRowId": 68468,
+      "kind": "DutyUnlock",
+      "rewardId": 255,
+      "itemId": 0,
+      "rewardName": "Deltascape V4.0",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -18200,6 +18450,16 @@
       }
     },
     {
+      "questRowId": 69409,
+      "kind": "DutyUnlock",
+      "rewardId": 15,
+      "itemId": 0,
+      "rewardName": "Castrum Meridianum",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 69410,
       "kind": "OptionalItem",
       "rewardId": 4521,
@@ -18528,6 +18788,16 @@
       "otherSourceNotes": {
         "DungeonDrop": "Snowcloak, Sastasha (Hard) and The Sunken Temple of Qarn (Hard)"
       }
+    },
+    {
+      "questRowId": 69421,
+      "kind": "DutyUnlock",
+      "rewardId": 77,
+      "itemId": 0,
+      "rewardName": "the Striking Tree (Hard)",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
     },
     {
       "questRowId": 69425,
@@ -24276,16 +24546,6 @@
     {
       "questRowId": 70057,
       "kind": "DutyUnlock",
-      "rewardId": 15,
-      "itemId": 0,
-      "rewardName": "Castrum Meridianum",
-      "confidence": "Curated",
-      "source": "curated/duty_unlocks.json",
-      "otherSources": []
-    },
-    {
-      "questRowId": 70057,
-      "kind": "DutyUnlock",
       "rewardId": 865,
       "itemId": 0,
       "rewardName": "Cape Westwind",
@@ -24618,6 +24878,16 @@
       "otherSources": [
         "GilShopItem"
       ]
+    },
+    {
+      "questRowId": 70182,
+      "kind": "DutyUnlock",
+      "rewardId": 868,
+      "itemId": 0,
+      "rewardName": "the Sil'dihn Subterrane",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
     },
     {
       "questRowId": 70182,
@@ -28940,6 +29210,16 @@
       "otherSources": []
     },
     {
+      "questRowId": 70269,
+      "kind": "DutyUnlock",
+      "rewardId": 945,
+      "itemId": 0,
+      "rewardName": "Mount Rokkon",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
+      "otherSources": []
+    },
+    {
       "questRowId": 70270,
       "kind": "Title",
       "rewardId": 695,
@@ -30367,6 +30647,16 @@
       "rewardName": "Space Race",
       "confidence": "Static",
       "source": "Achievement.Key;type=6",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70325,
+      "kind": "DutyUnlock",
+      "rewardId": 961,
+      "itemId": 0,
+      "rewardName": "Aloalo Island",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {
@@ -36219,6 +36509,16 @@
       "rewardName": "Ascension",
       "confidence": "Static",
       "source": "Achievement.Key;type=6",
+      "otherSources": []
+    },
+    {
+      "questRowId": 70977,
+      "kind": "DutyUnlock",
+      "rewardId": 1066,
+      "itemId": 0,
+      "rewardName": "The Merchant's Tale",
+      "confidence": "Curated",
+      "source": "curated/duty_unlocks.json",
       "otherSources": []
     },
     {

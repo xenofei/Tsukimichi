@@ -5,14 +5,15 @@ Written by `Tsukimichi.Verify patches`; do not edit by hand. The patch each ques
 | Field | Value |
 |---|---|
 | Game version | `2026.09.15.0000.0000` |
-| Run | 2026-09-30, UA `Tsukimichi.Verify/0.1.0 (+https://github.com/xenofei/Tsukimichi)`, 2.0 s per request |
+| Run | 2026-09-30, UA `Tsukimichi.Verify/0.1.0 (+https://github.com/xenofei/Tsukimichi)`, 2.0 s per request, offline |
 | Garland's current patch | 7.5 |
 | Newest patch in the data | 7.56 |
 | Coverage, every named quest | 5373 / 5373 (100.0%) |
 | Coverage, quests still in the game | 5266 / 5266 (100.0%) |
-| From Garland's patch documents | 5373 |
+| From Garland's patch documents | 5365 |
 | From Garland's quest documents | 0 (37 quest documents were already cached, 0 fetched this run, 0 still to fetch) |
 | Kept from the previous file | 0 |
+| Hand corrections (`docs/data/quest-patch-corrections.json`) | 8 |
 | Unknown | 0 |
 | Cached quest documents that agree with the patch documents | 37 |
 
@@ -25,6 +26,7 @@ The Quest sheet carries no patch or version column (Lumina.Excel 7.5.0's schema 
 - **documentsDisagree**: Garland's per-quest document and its patch document give different patches for one quest.
 - **listedTwice**: a quest under two patches in Garland's patch documents; the older is kept (first seen).
 - **changedFromPrevious**: the committed file had another patch for the quest.
+- **corrected**: a hand correction (`docs/data/quest-patch-corrections.json`, with its reason and evidence) replaced Garland's patch. **correctionNameDiffers**: the correction names another quest than the row id's.
 
 | Check | Findings |
 |---|---:|
@@ -32,9 +34,11 @@ The Quest sheet carries no patch or version column (Lumina.Excel 7.5.0's schema 
 | nameDiffers | 0 |
 | documentsDisagree | 0 |
 | listedTwice | 0 |
-| changedFromPrevious | 0 |
+| changedFromPrevious | 8 |
+| corrected | 8 |
+| correctionNameDiffers | 0 |
 
-4958 quests carry a patch of their own expansion; 415 carry a later expansion's patch while filed under an earlier `Quest.Expansion` (expected for events and features).
+4966 quests carry a patch of their own expansion; 407 carry a later expansion's patch while filed under an earlier `Quest.Expansion` (expected for events and features).
 
 ## Quests per series
 
@@ -70,14 +74,40 @@ Row ids rise with the patches for most genres, so each series' id range is a rou
 | 3.4x | 41 | 3.4 (31), 3.45 (10) | 67084 | 67929 | [3.4](https://www.garlandtools.org/db/#patch/3.4) |
 | 3.3x | 69 | 3.3 (58), 3.35 (11) | 67011 | 67870 | [3.3](https://www.garlandtools.org/db/#patch/3.3) |
 | 3.2x | 64 | 3.2 (60), 3.25 (4) | 65781 | 67823 | [3.2](https://www.garlandtools.org/db/#patch/3.2) |
-| 3.1x | 105 | 3.1 (94), 3.15 (11) | 65557 | 67761 | [3.1](https://www.garlandtools.org/db/#patch/3.1) |
+| 3.1x | 97 | 3.1 (86), 3.15 (11) | 65571 | 67761 | [3.1](https://www.garlandtools.org/db/#patch/3.1) |
 | 3.0x | 557 | 3.0 (542), 3.01 (5), 3.05 (2), 3.07 (8) | 65581 | 67687 | [3.0](https://www.garlandtools.org/db/#patch/3.0) |
 | 2.5x | 65 | 2.5 (28), 2.51 (15), 2.55 (22) | 65776 | 67111 | [2.5](https://www.garlandtools.org/db/#patch/2.5) |
 | 2.4x | 78 | 2.4 (54), 2.45 (24) | 65579 | 67115 | [2.4](https://www.garlandtools.org/db/#patch/2.4) |
 | 2.3x | 118 | 2.3 (58), 2.35 (52), 2.38 (8) | 65569 | 67109 | [2.3](https://www.garlandtools.org/db/#patch/2.3) |
 | 2.2x | 128 | 2.2 (122), 2.25 (1), 2.28 (5) | 65698 | 67000 | [2.2](https://www.garlandtools.org/db/#patch/2.2) |
 | 2.1x | 148 | 2.1 (147), 2.15 (1) | 66640 | 66847 | [2.1](https://www.garlandtools.org/db/#patch/2.1) |
-| 2.0x | 915 | 2.0 (915) | 65537 | 66698 | [2.0](https://www.garlandtools.org/db/#patch/2.0) |
+| 2.0x | 923 | 2.0 (923) | 65537 | 66698 | [2.0](https://www.garlandtools.org/db/#patch/2.0) |
+
+## changedFromPrevious (8)
+
+| Row id | Quest | Detail |
+|---:|---|---|
+| 65557 | Way of the Archer | previous file 3.1, now 2.0 (hand correction) |
+| 65558 | Way of the Conjurer | previous file 3.1, now 2.0 (hand correction) |
+| 65559 | Way of the Lancer | previous file 3.1, now 2.0 (hand correction) |
+| 65789 | Way of the Gladiator | previous file 3.1, now 2.0 (hand correction) |
+| 65846 | Way of the Marauder | previous file 3.1, now 2.0 (hand correction) |
+| 65880 | Way of the Thaumaturge | previous file 3.1, now 2.0 (hand correction) |
+| 66068 | Way of the Pugilist | previous file 3.1, now 2.0 (hand correction) |
+| 66091 | Burning Up the Quarter Malm | previous file 3.1, now 2.0 (hand correction) |
+
+## corrected (8)
+
+| Row id | Quest | Detail |
+|---:|---|---|
+| 65557 | Way of the Archer | 3.1 (Garland patch document) corrected to 2.0: A 2.0 launch quest: its row id sits among the 2.0 rows and the wiki infobox says patch 2.0. Garland's patch documents list it under 3.1, so the "Added in" filter showed it under 3.1 and not under 2.0. |
+| 65558 | Way of the Conjurer | 3.1 (Garland patch document) corrected to 2.0: A 2.0 launch quest: its row id sits among the 2.0 rows and the wiki infobox says patch 2.0. Garland's patch documents list it under 3.1, so the "Added in" filter showed it under 3.1 and not under 2.0. |
+| 65559 | Way of the Lancer | 3.1 (Garland patch document) corrected to 2.0: A 2.0 launch quest: its row id sits among the 2.0 rows and the wiki infobox says patch 2.0. Garland's patch documents list it under 3.1, so the "Added in" filter showed it under 3.1 and not under 2.0. |
+| 65789 | Way of the Gladiator | 3.1 (Garland patch document) corrected to 2.0: A 2.0 launch quest: its row id sits among the 2.0 rows and the wiki infobox says patch 2.0. Garland's patch documents list it under 3.1, so the "Added in" filter showed it under 3.1 and not under 2.0. |
+| 65846 | Way of the Marauder | 3.1 (Garland patch document) corrected to 2.0: A 2.0 launch quest: its row id sits among the 2.0 rows and the wiki infobox says patch 2.0. Garland's patch documents list it under 3.1, so the "Added in" filter showed it under 3.1 and not under 2.0. |
+| 65880 | Way of the Thaumaturge | 3.1 (Garland patch document) corrected to 2.0: A 2.0 launch quest: its row id sits among the 2.0 rows and the wiki infobox says patch 2.0. Garland's patch documents list it under 3.1, so the "Added in" filter showed it under 3.1 and not under 2.0. |
+| 66068 | Way of the Pugilist | 3.1 (Garland patch document) corrected to 2.0: A 2.0 launch quest: its row id sits among the 2.0 rows and the wiki infobox says patch 2.0. Garland's patch documents list it under 3.1, so the "Added in" filter showed it under 3.1 and not under 2.0. |
+| 66091 | Burning Up the Quarter Malm | 3.1 (Garland patch document) corrected to 2.0: A 2.0 launch quest: its row id sits among the 2.0 rows and the wiki infobox says patch 2.0. Garland's patch documents list it under 3.1, so the "Added in" filter showed it under 3.1 and not under 2.0. |
 
 ## Unknown (0)
 

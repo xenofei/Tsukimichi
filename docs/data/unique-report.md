@@ -2,7 +2,7 @@
 
 Generated from game version `2026.09.15.0000.0000` by Tsukimichi.DataGen (see docs/data/DATA-VERSION.md for when).
 
-- Entries: **3486** across **1191** quests.
+- Entries: **3516** across **1216** quests.
 - Entries whose reward is also obtainable elsewhere (`otherSources` non-empty): **913**. They keep confidence Static in V1; the UI shows the source and marks Online Store re-sells and dungeon drops.
   - `SpecialShop`: 605
   - `Tradable`: 555
@@ -38,9 +38,9 @@ Generated from game version `2026.09.15.0000.0000` by Tsukimichi.DataGen (see do
 | Trait | 54 | 0 | 0 | 0 | 54 |
 | Achievement | 664 | 0 | 0 | 0 | 664 |
 | Title | 220 | 0 | 0 | 0 | 220 |
-| DutyUnlock | 135 | 0 | 61 | 0 | 196 |
+| DutyUnlock | 135 | 0 | 91 | 0 | 226 |
 | SystemUnlock | 0 | 0 | 65 | 0 | 65 |
-| **Total** | 3360 | 0 | 126 | 0 | 3486 |
+| **Total** | 3360 | 0 | 156 | 0 | 3516 |
 
 ## Examples per kind
 
@@ -321,7 +321,7 @@ Generated from game version `2026.09.15.0000.0000` by Tsukimichi.DataGen (see do
 | 65802 The Chefsbane Cometh | Seeker of Skill | 47 | 0 | Static | `Achievement.Data;achievement=316;type=6` |
 | 65816 May the Best Armorer Win | Seeker of Skill | 47 | 0 | Static | `Achievement.Data;achievement=316;type=6` |
 
-### DutyUnlock (196)
+### DutyUnlock (226)
 
 | Quest | Reward | Reward id | Item id | Confidence | Source |
 |---|---|---:|---:|---|---|
@@ -329,12 +329,12 @@ Generated from game version `2026.09.15.0000.0000` by Tsukimichi.DataGen (see do
 | 65594 Simply the Hest | Basic Training: Enemy Parties | 42 | 0 | Static | `Quest.InstanceContentUnlock;InstanceContent=10001` |
 | 65595 Simply the Hest | Basic Training: Enemy Parties | 42 | 0 | Static | `Quest.InstanceContentUnlock;InstanceContent=10001` |
 | 65596 Simply the Hest | Basic Training: Enemy Parties | 42 | 0 | Static | `Quest.InstanceContentUnlock;InstanceContent=10001` |
+| 65611 The Path of the Righteous | Snowcloak | 27 | 0 | Curated | `curated/duty_unlocks.json` |
+| 65620 The Instruments of Our Deliverance | the Akh Afah Amphitheatre (Hard) | 79 | 0 | Curated | `curated/duty_unlocks.json` |
 | 65626 Drop Dead Shiva | the Akh Afah Amphitheatre (Extreme) | 80 | 0 | Curated | `curated/duty_unlocks.json` |
 | 65630 It's Definitely Pirates | Sastasha (Hard) | 28 | 0 | Curated | `curated/duty_unlocks.json` |
 | 65632 The Wrath of Qarn | the Sunken Temple of Qarn (Hard) | 26 | 0 | Curated | `curated/duty_unlocks.json` |
-| 65781 It's Probably Pirates | Sastasha | 4 | 0 | Curated | `curated/duty_unlocks.json` |
-| 65879 Lord of the Inferno | the Bowl of Embers | 56 | 0 | Curated | `curated/duty_unlocks.json` |
-| 65905 An Uninvited Ascian | the Chrysalis | 84 | 0 | Curated | `curated/duty_unlocks.json` |
+| 65740 The Coliseum Conundrum | the Dragon's Neck | 81 | 0 | Curated | `curated/duty_unlocks.json` |
 
 ### SystemUnlock (65)
 
@@ -353,10 +353,10 @@ Generated from game version `2026.09.15.0000.0000` by Tsukimichi.DataGen (see do
 
 ## Quests with rewards but no unique classification
 
-Named quests that hand out at least one reward signal (item, emote, action, unlock or other) but produced no entry: **1982** of 3015.
+Named quests that hand out at least one reward signal (item, emote, action, unlock or other) but produced no entry: **1981** of 3015.
 Most of them only give tradable gear or consumables. The list below is restricted to the ones worth a second look: at least one reward item is untradable, or carries an ItemAction and is not sold on the market board, yet no rule claimed it.
 
-Quests to review: **365**.
+Quests to review: **364**.
 
 | Quest | Reward signals |
 |---|---|
@@ -412,7 +412,6 @@ Quests to review: **365**.
 | 66831 Heavenly Power | Reward item 6965 Crimson Uma Kabuto [untradable] |
 | 66833 The Puissance of Love | Reward item 6975 Valentione Trousers [untradable]; Reward item 6976 Valentione Skirt [untradable] |
 | 66845 Primal Focus | Reward item 7004 Rowena's Token [untradable] |
-| 66897 Lord of the Whorl | Reward item 7060 Durability Draught [ItemAction=846, untradable] |
 | 66898 When Yugiri Met the Fraternity | Reward item 31696 Level 50 Weapon Coffer (IL 90) [ItemAction=4647, untradable] |
 | 66953 Eggsigent Circumstances | Reward item 7063 Bronze Decorative Egg [ItemAction=2120, untradable] |
 | 66954 Nothing to Yolk About | Reward item 7063 Bronze Decorative Egg [ItemAction=2120, untradable] |
@@ -737,7 +736,7 @@ Unhandled ItemAction types among those rewards (candidates for a new rule):
 | 944 | 7 |
 | 3800 | 5 |
 | 2120 | 5 |
-| 846 | 3 |
+| 846 | 2 |
 | 9994 | 2 |
 | 852 | 1 |
 | 1326 | 1 |

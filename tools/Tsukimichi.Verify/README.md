@@ -38,7 +38,7 @@ dotnet tools/Tsukimichi.Verify/bin/Release/net10.0/Tsukimichi.Verify.dll summary
 
 ### patches
 
-`dotnet tools/Tsukimichi.Verify/bin/Release/net10.0/Tsukimichi.Verify.dll patches [--offline] [--limit N] [--no-quest-documents] [--patches <file>]`
+`dotnet tools/Tsukimichi.Verify/bin/Release/net10.0/Tsukimichi.Verify.dll patches [--offline] [--limit N] [--no-quest-documents] [--patches <file>] [--patch-corrections <file>]`
 
 Garland's core document (`db/doc/core/en/3/data.json`) names the patch series it tracks; one document per series
 (`db/doc/patch/en/2/<series>.json`) lists every quest first seen in each patch of the series (7.5, 7.51, 7.55, ...).
@@ -48,6 +48,10 @@ earlier `quests` run fetched it, otherwise fetched, at most `--limit N` of them 
 the cache only). A quest Garland cannot place keeps the value the previous file gave it, else stays `""` (unknown).
 Rerunning is safe: the cache answers everything already fetched, and the file's `history` keeps one `garland` line per
 game version.
+
+Hand corrections in `docs/data/quest-patch-corrections.json` (`--patch-corrections`; each with the patch, the reason
+and an https evidence page) win over every Garland value, so a re-seed keeps them; the report lists each one Garland
+disagrees with as `corrected`. The first eight are the ARR class-starting quests Garland dates 3.1 (wiki: 2.0).
 
 The Quest sheet has no patch column, so the game data can only refute, not state, a patch. The report lists: a patch
 older than the quest's `Quest.Expansion` allows, a Garland name that is not the catalog's (a reused row id), the

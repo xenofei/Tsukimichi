@@ -34,11 +34,12 @@ public sealed class QuestPatches
     public const string SourceDiff = "diff";
 
     private const string SchemaNote =
-        "Quest sheet row id -> the patch the quest was added in (\"2.0\", \"6.55\", \"7.5\"), for the plugin's \"Added in\" filter, the Unlocks quick view's \"New in 7.5x\" group and the detail pane." +
+        "Quest sheet row id -> the patch the quest was added in (\"2.0\", \"6.55\", \"7.5\"), for the plugin's \"Added in\" filter, the Unlocks quick view's \"New in 7.5x\" group and the detail pane. " +
         "Every quest id the catalog held at the last write is listed; \"\" means the patch is unknown, and an id not listed is new since then. " +
-        "Seeded from Garland Tools' per-patch documents by `Tsukimichi.Verify patches` (facts only; see docs/data/quest-patches-report.md); " +
+        "Seeded from Garland Tools' per-patch documents by `Tsukimichi.Verify patches` (facts only; see docs/data/quest-patches-report.md), " +
+        "which lays the hand corrections of docs/data/quest-patch-corrections.json over Garland's values; " +
         "maintained offline by `Tsukimichi.DataGen --patches ... --patch <x.y>` (tools/regen.ps1 -Patch), which stamps every quest id not seen before with that patch. " +
-        "history lists each run. Do not edit by hand except to correct a patch, and say why in the commit.";
+        "history lists each run. Do not edit by hand: correct a patch in docs/data/quest-patch-corrections.json (with the reason and evidence) and in this file.";
 
     private readonly Dictionary<uint, string> byRowId;
 
