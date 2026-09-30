@@ -1,0 +1,67 @@
+{
+  "schema": 1,
+  "review": "pending: two players who finished the story should confirm each pair",
+  "note": "\"Before you continue\" payoff gates (P5). Each entry pairs a milestone quest (the Quest sheet row id at which to speak: the plugin shows the gate only while that quest is Ready or in the journal) with optional content whose completion changes what the milestone's story shows. before is a list of Quest row ids that must all be completed, or the name of a chain in chains.json (every quest of the chain). instruction is shown as is and must stay spoiler-free: it may name the optional content, never a story beat, character or place the milestone reveals, and never a main scenario quest past the milestone. why is the spoiler, shown only when the player opens it. Left out on purpose: the Crystal Tower (The Light of Hope is an accept condition of A Time to Every Purpose, 65961, so the main scenario already requires it) and Hildibrand before the Manderville relic line (every Manderville step names its Hildibrand step as a previous quest, and The Sleeping Gentleman needs Don't Do the Dewprism, so the game already enforces the order and a gate could never show).",
+  "entries": {
+    "eden": {
+      "milestone": 70286,
+      "before": "Eden",
+      "instruction": "Finish the Eden raid series first.",
+      "why": "Gaia appears in a Growing Light scene in the Crystarium, when the memoria crystal is delivered, only if the Eden story (through Where I Belong) is complete. Without it the scene plays without her.",
+      "evidence": [
+        "https://ffxiv.consolegameswiki.com/wiki/Growing_Light",
+        "https://ffxiv.consolegameswiki.com/wiki/Where_I_Belong",
+        "https://www.reddit.com/r/ffxiv/comments/1un3iow/"
+      ],
+      "note": "Milestone Growing Light (70286, patch 6.5): the scene is inside the quest itself, so the gate speaks while Growing Light is Ready or in the journal, before it is turned in. before is the Eden chain (genre 26, 18 quests ending with Where I Belong, 69515); Empty Promise needs Reflections in Crystal (5.3), so the whole series can be done before 6.5. Research: player-gripes-2026.md P5 (Eden epilogue before the 6.5 Gaia cameo)."
+    },
+    "shb-role-quests": {
+      "milestone": 69543,
+      "before": [68784, 68808, 68814, 69164, 69165],
+      "instruction": "Finish all four Shadowbringers role quest lines and Shadow Walk with Me first.",
+      "why": "Shadow Walk with Me, the epilogue that opens once all four role quest lines are done, introduces Cyella and Unukalhai. The story that follows 5.3 turns to the void and the Thirteenth, and the epilogue is the context for both of them.",
+      "evidence": [
+        "https://forum.square-enix.com/ffxiv/threads/530697",
+        "https://na.finalfantasyxiv.com/lodestone/playguide/db/quest/92799414083/",
+        "https://ffxiv.consolegameswiki.com/wiki/Shadow_Walk_with_Me"
+      ],
+      "note": "Milestone Alisaie's Quest (69543), the first quest of 5.4, where the cited forum thread asks for the role quests and Shadow Walk with Me to be done. The research summary said 'before the 5.0 climax'; no source reached places the payoff there, so the gate follows the thread; reviewers should confirm or move it to Shadowbringers (69190). before: the four level 80 finales (To Have Loved and Lost 68784 tank, The Soul of Temperance 68808 healer, Courage Born of Fear 68814 physical DPS, A Tearful Reunion 69164 magical ranged DPS; each needs the earlier steps of its line) and Shadow Walk with Me (69165). The four lines unlock after Warrior of Darkness (68837) and need no later main scenario quest."
+    },
+    "pilgrims-traverse": {
+      "milestone": 70943,
+      "before": [69165, 69521],
+      "instruction": "Finish Shadow Walk with Me and Safekeeping (the Shadowbringers role quest epilogue) first.",
+      "why": "Clearing floor 100 opens a hidden quest, The Pilgrim's Answer: Cyella in the Crystarium (X 10.7, Y 15.3) gives and completes it in one talk. It has no journal entry and no map marker, and it needs Safekeeping and Buried Memory done, so without the role quest epilogue it never appears.",
+      "evidence": [
+        "https://ffxiv.consolegameswiki.com/wiki/The_Pilgrim%27s_Answer",
+        "https://ffxiv.consolegameswiki.com/wiki/A_Branch_and_Their_Sapling",
+        "https://www.reddit.com/r/ffxiv/comments/1o2kqgx/"
+      ],
+      "note": "Not a main scenario milestone: A Branch and Their Sapling (70943, patch 7.35), the Pilgrim's Traverse quest for reaching floor 100. The payoff, The Pilgrim's Answer (70944), is a stepless quasi-quest the catalog files as removed (no journal genre), so it cannot be the gate itself; its previous quests are 70943, Buried Memory (70136, main scenario 6.3, done before Pilgrim's Traverse opens) and Safekeeping (69521, which needs Shadow Walk with Me 69165 and Reflections in Crystal 69318)."
+    },
+    "eureka": {
+      "milestone": 70490,
+      "before": [68149],
+      "instruction": "Finish the story of Eureka, through Eureka Hydatos, first.",
+      "why": "Late in Dawntrail Krile meets her parents. Eureka's story is where her family's past is told: her grandfather Galuf, the Students of Baldesion and what the Isle of Val cost them. The Dawntrail chapter reads as the end of that story if you know it.",
+      "evidence": [
+        "https://www.reddit.com/r/ffxiv/comments/1m9ghyu/",
+        "https://ffxiv.consolegameswiki.com/wiki/And_We_Shall_Call_It_Hydatos",
+        "https://finalfantasy.fandom.com/wiki/Krile_Maya_Baldesion"
+      ],
+      "note": "Milestone The Taste of Family (70490, Dawntrail 7.0), the quest in which Krile meets her parents; her family thread runs through several earlier Dawntrail quests too, so reviewers may move the milestone earlier. Eureka's story ends inside Eureka Hydatos with no quest of its own, so before is And We Shall Call It Hydatos (68149, the Hydatos entry quasi-quest, refiled to The Forbidden Land, Eureka by refile_overrides.json): the last Eureka step the game records as a quest. The gate therefore hides once Hydatos is entered, not when its story ends."
+    },
+    "bozja": {
+      "milestone": 69919,
+      "before": [69631],
+      "instruction": "Finish the Bozjan Southern Front and Zadnor story first.",
+      "why": "The Bozjan Resistance fights in Garlemald as part of the Ilsabard contingent, and its people and their war with the IVth Legion are introduced in the Bozja and Zadnor story.",
+      "evidence": [
+        "https://ffxiv.consolegameswiki.com/wiki/Resistance_Weapons",
+        "https://ffxiv.consolegameswiki.com/wiki/A_Frosty_Reception",
+        "https://www.reddit.com/r/ffxiv/comments/1ir9hja/"
+      ],
+      "note": "Milestone A Frosty Reception (69919, Endwalker 6.0), the quest that opens Garlemald and Camp Broken Glass: the last main scenario quest before the Garlemald arc. before is A Ruined Opportunity (69631, patch 5.55), the last story quest of the Zadnor line; it follows March of the Bloody Queen and the Southern Front story (The Lady of Blades, 69487). The relic weapon steps of the Resistance Weapons chain are left out: they are gear, not story."
+    }
+  }
+}

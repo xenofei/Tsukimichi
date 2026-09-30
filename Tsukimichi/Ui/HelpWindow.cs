@@ -199,7 +199,8 @@ public sealed class HelpWindow : Window
         FontAwesomeIcon.EyeSlash,
         FontAwesomeIcon.Image,
         FontAwesomeIcon.Seedling,
-        FontAwesomeIcon.SlidersH);
+        FontAwesomeIcon.SlidersH,
+        FontAwesomeIcon.HourglassHalf);
 
     private static readonly float[] FillingFractions = [0f, 0.03f, 0.25f, 0.66f, 1f];
 

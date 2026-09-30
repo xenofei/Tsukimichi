@@ -23,7 +23,7 @@ namespace Tsukimichi.Ui;
 /// the session version, the pins or the catalog change, so drawing allocates nothing. Every line is a focusable item
 /// that selects its quest.
 /// </summary>
-public sealed class TonightCard
+public sealed partial class TonightCard
 {
     public const int MaxPinned = 3;
 
@@ -81,6 +81,7 @@ public sealed class TonightCard
         {
             DrawReady();
             DrawMsq(bundle);
+            DrawPayoffGates();
             if (events is not null)
             {
                 Chrome.Hairline();

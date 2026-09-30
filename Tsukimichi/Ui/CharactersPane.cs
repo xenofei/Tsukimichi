@@ -229,6 +229,7 @@ public sealed partial class CharactersPane
             }
         }
 
+        DrawPayoffGates(ui);
         Gap();
         DrawSections(d);
         Gap();

@@ -72,6 +72,30 @@ public sealed record RetiredQuest(string Note, string Evidence, string Patch);
 public sealed record QuestQuirk(string Note, string Evidence);
 
 /// <summary>
+/// A "Before you continue" payoff gate (P5), from <c>curated/payoff_gates.json</c>: optional content whose completion
+/// changes a scene of the milestone quest's story. The plugin shows <see cref="Instruction"/> only while the milestone
+/// is Ready or in the journal and the content is not done (<c>Core.Payoff.PayoffGates</c>); <see cref="Why"/> is the
+/// spoiler behind a closed "why?".
+/// </summary>
+/// <param name="Id">The entry's key ("eden"): stable, spoiler-free, what per-character notice and disclosure state is stored by.</param>
+/// <param name="MilestoneRowId">Quest row id at which the gate speaks.</param>
+/// <param name="BeforeRowIds">Quest row ids that must all be completed; empty when <paramref name="BeforeChain"/> names the content.</param>
+/// <param name="BeforeChain">A <c>chains.json</c> chain name whose every quest must be completed; null when the ids are listed.</param>
+/// <param name="Instruction">Spoiler-free: names the optional content, never the payoff ("Finish the Eden raid series first.").</param>
+/// <param name="Why">The reason, a spoiler, shown only when opened.</param>
+/// <param name="Evidence">https URLs the pairing was read from.</param>
+/// <param name="Note">Why the milestone and the content were chosen.</param>
+public sealed record PayoffGate(
+    string Id,
+    uint MilestoneRowId,
+    IReadOnlyList<uint> BeforeRowIds,
+    string? BeforeChain,
+    string Instruction,
+    string Why,
+    IReadOnlyList<string> Evidence,
+    string Note);
+
+/// <summary>
 /// Hand-maintained overlays shipped in the plugin's <c>curated/</c> directory. Every file is optional and every entry
 /// is validated on its own, so one bad line never hides the rest. Shapes (object keys are row ids as strings; keys
 /// starting with <c>$</c>, such as <c>$schema_note</c>, are comments and ignored everywhere):
@@ -87,6 +111,7 @@ public sealed record QuestQuirk(string Note, string Evidence);
 /// refile_overrides.json { "schema": 1, "entries": { "68478": { "genre": 90, "note": "...", "evidence": "https://..." } } }
 /// retired_quests.json  { "schema": 1, "entries": { "66033": { "note": "...", "evidence": "https://...", "patch": "6.3" } } }   (patch optional)
 /// quirks.json          { "schema": 1, "entries": { "66971": { "note": "...", "evidence": "https://..." } } }
+/// payoff_gates.json    { "schema": 1, "review": "...", "entries": { "eden": { "milestone": 70286, "before": "Eden" or [ 69515 ], "instruction": "...", "why": "...", "evidence": [ "https://..." ], "note": "..." } } }
 /// VERSION.json         { "curatedRevision": "573d225" }   (written by tools/regen.ps1; absent in a checkout that never ran it)
 /// </code>
 /// Every file must be strict JSON (no comments, no trailing commas), as the curated README requires.
@@ -103,6 +128,7 @@ public sealed class CuratedData
     public const string RefileOverridesFileName = "refile_overrides.json";
     public const string RetiredQuestsFileName = "retired_quests.json";
     public const string QuirksFileName = "quirks.json";
+    public const string PayoffGatesFileName = "payoff_gates.json";
 
     /// <summary>The <see cref="OtherSource"/> names <see cref="OtherSourcesFileName"/> may use; any other is a skipped entry.</summary>
     public static readonly IReadOnlyList<string> OtherSourcesFileSources = [OtherSource.DungeonDrop];
@@ -196,6 +222,9 @@ public sealed class CuratedData
     /// <summary>Known quirks by quest row id: a note the detail pane, <c>/tsuki why</c> and the diagnostic block show.</summary>
     public IReadOnlyDictionary<uint, QuestQuirk> Quirks { get; }
 
+    /// <summary>"Before you continue" payoff gates in file order (P5); milestones and content are not checked against the catalog here.</summary>
+    public IReadOnlyList<PayoffGate> PayoffGates { get; private init; } = [];
+
     /// <summary>
     /// Short git hash of the last commit touching the overlay, from <see cref="VersionFileName"/> ("573d225", or
     /// "573d225-dirty" when regenerated with uncommitted changes); empty when the file is absent or has no value.
@@ -210,7 +239,7 @@ public sealed class CuratedData
     /// what the invariants test compares the shipped file against, so the file never feeds its own derivation.
     /// </summary>
     public CuratedData WithoutFeatureQuests() =>
-        FeatureQuests.Count == 0 ? this : new CuratedData(SystemUnlocks, DutyUnlocks, new HashSet<uint>(), Festivals, Chains, OnlineStore, OtherSources, RefileOverrides, RetiredQuests, Quirks, CuratedRevision, Warnings);
+        FeatureQuests.Count == 0 ? this : new CuratedData(SystemUnlocks, DutyUnlocks, new HashSet<uint>(), Festivals, Chains, OnlineStore, OtherSources, RefileOverrides, RetiredQuests, Quirks, CuratedRevision, Warnings) { PayoffGates = PayoffGates };
 
     /// <summary>Loads every curated file under <paramref name="dir"/>. A missing directory or file yields empty collections.</summary>
     public static CuratedData Load(string dir)
@@ -532,9 +561,114 @@ public sealed class CuratedData
             quirks[rowId] = new QuestQuirk(note, evidence);
         });
 
+        var payoffGates = LoadPayoffGates(Path.Combine(dir, PayoffGatesFileName), warnings);
+
         var curatedRevision = LoadRevision(Path.Combine(dir, VersionFileName), warnings);
 
-        return new CuratedData(systemUnlocks, dutyUnlocks, featureQuests, festivals, chains, onlineStore, otherSources, refileOverrides, retiredQuests, quirks, curatedRevision, warnings);
+        return new CuratedData(systemUnlocks, dutyUnlocks, featureQuests, festivals, chains, onlineStore, otherSources, refileOverrides, retiredQuests, quirks, curatedRevision, warnings)
+        {
+            PayoffGates = payoffGates,
+        };
+    }
+
+    /// <summary>
+    /// payoff_gates.json: entries keyed by a gate id, each with a milestone quest row id, <c>before</c> (an array of
+    /// quest row ids or a chain name), a spoiler-free instruction, the spoiler reason, at least one https evidence URL
+    /// and a note. An entry missing any of them is skipped with a warning.
+    /// </summary>
+    private static List<PayoffGate> LoadPayoffGates(string path, List<string> warnings)
+    {
+        var gates = new List<PayoffGate>();
+        ForEachEntry(path, warnings, (key, node, warn) =>
+        {
+            var id = key.Trim();
+            if (id.Length == 0)
+            {
+                warn("key is empty");
+                return;
+            }
+
+            if (node is not JsonObject obj)
+            {
+                warn("value is not an object");
+                return;
+            }
+
+            if (!obj.TryGetPropertyValue("milestone", out var milestoneNode) || !StorageJson.TryReadId(milestoneNode, out var milestone) || milestone == 0)
+            {
+                warn("milestone is not a quest row id");
+                return;
+            }
+
+            var beforeIds = new List<uint>();
+            string? beforeChain = null;
+            obj.TryGetPropertyValue("before", out var beforeNode);
+            switch (beforeNode)
+            {
+                case JsonArray ids:
+                    foreach (var element in ids)
+                    {
+                        if (!StorageJson.TryReadId(element, out var rowId) || rowId == 0)
+                        {
+                            warn($"before id '{element}' is not a quest row id");
+                            return;
+                        }
+
+                        if (!beforeIds.Contains(rowId))
+                        {
+                            beforeIds.Add(rowId);
+                        }
+                    }
+
+                    break;
+                case JsonValue value when value.TryGetValue<string>(out var chain) && !string.IsNullOrWhiteSpace(chain):
+                    beforeChain = chain.Trim();
+                    break;
+            }
+
+            if (beforeIds.Count == 0 && beforeChain is null)
+            {
+                warn("before must be a non-empty array of quest row ids or a chain name");
+                return;
+            }
+
+            var instruction = StorageJson.ReadString(obj, "instruction")?.Trim() ?? string.Empty;
+            var why = StorageJson.ReadString(obj, "why")?.Trim() ?? string.Empty;
+            var note = StorageJson.ReadString(obj, "note")?.Trim() ?? string.Empty;
+            if (instruction.Length == 0 || why.Length == 0 || note.Length == 0)
+            {
+                warn("instruction, why and note are all required");
+                return;
+            }
+
+            var evidence = new List<string>();
+            if (obj.TryGetPropertyValue("evidence", out var evidenceNode) && evidenceNode is JsonArray urls)
+            {
+                foreach (var element in urls)
+                {
+                    if (element is not JsonValue urlValue
+                        || !urlValue.TryGetValue<string>(out var url)
+                        || !Uri.TryCreate(url.Trim(), UriKind.Absolute, out var uri)
+                        || uri.Scheme != Uri.UriSchemeHttps)
+                    {
+                        warn($"evidence '{element}' is not an https URL");
+                        return;
+                    }
+
+                    evidence.Add(url.Trim());
+                }
+            }
+
+            if (evidence.Count == 0)
+            {
+                warn("evidence is missing");
+                return;
+            }
+
+            gates.Add(new PayoffGate(id, milestone, beforeIds, beforeChain, instruction, why, evidence, note));
+        });
+
+        return gates;
     }
 
     /// <summary>The note and evidence URL every refiling entry must carry (the curated README's rule for hand-filed quests).</summary>
