@@ -5,6 +5,7 @@ using Dalamud.Game.Gui.Dtr;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Plugin.Services;
 using Tsukimichi.Core.Discovery;
+using Tsukimichi.Core.Runtime;
 using Tsukimichi.Ui;
 
 namespace Tsukimichi.Game;
@@ -14,8 +15,9 @@ namespace Tsukimichi.Game;
 /// zone, with the first few names in the tooltip; a click toggles the Nearby quests window. Follows
 /// <see cref="DiscoveryWindow.Changed"/>, which fires on the session and territory triggers, so nothing runs per
 /// frame. Hidden at zero unless <see cref="DiscoverySettings.DtrShowWhenEmpty"/>, and entirely while
-/// <see cref="DiscoverySettings.ShowDtrEntry"/> is off. The entry is acquired lazily on first show and removed on
-/// dispose. Dalamud 15: <c>IDtrBar.Get(string, SeString)</c>, <c>IDtrBarEntry.Text</c>/<c>Tooltip</c> are
+/// <see cref="DiscoverySettings.ShowDtrEntry"/> is off, and while the shared <see cref="HookGate"/> (the addon kill
+/// switch, T20) pauses game hooks on an untested game version. The entry is acquired lazily on first show (so a load
+/// on an untested version never registers it) and removed on dispose. Dalamud 15: <c>IDtrBar.Get(string, SeString)</c>, <c>IDtrBarEntry.Text</c>/<c>Tooltip</c> are
 /// <see cref="SeString"/>, <c>OnClick</c> is <c>Action&lt;DtrInteractionEvent&gt;</c>.
 /// </summary>
 public sealed class DtrEntry : IDisposable
@@ -28,23 +30,27 @@ public sealed class DtrEntry : IDisposable
     private readonly IDtrBar bar;
     private readonly DiscoveryWindow window;
     private readonly DiscoverySettings settings;
+    private readonly HookGate gate;
     private readonly IPluginLog log;
     private readonly StringBuilder tooltip = new();
     private IDtrBarEntry? entry;
     private bool disposed;
     private bool warned;
 
-    public DtrEntry(IDtrBar bar, DiscoveryWindow window, DiscoverySettings settings, IPluginLog log)
+    /// <param name="gate">The shared addon kill switch (T20): while it pauses game hooks the entry is not acquired, or is hidden.</param>
+    public DtrEntry(IDtrBar bar, DiscoveryWindow window, DiscoverySettings settings, HookGate gate, IPluginLog log)
     {
         this.bar = bar ?? throw new ArgumentNullException(nameof(bar));
         this.window = window ?? throw new ArgumentNullException(nameof(window));
         this.settings = settings ?? throw new ArgumentNullException(nameof(settings));
+        this.gate = gate ?? throw new ArgumentNullException(nameof(gate));
         this.log = log ?? throw new ArgumentNullException(nameof(log));
         window.Changed += Refresh;
+        gate.Changed += Refresh;
         Refresh();
     }
 
-    /// <summary>Recomputes text, tooltip and visibility from the window's current lists and the settings.</summary>
+    /// <summary>Recomputes text, tooltip and visibility from the window's current lists, the settings and the gate.</summary>
     public void Refresh()
     {
         if (disposed)
@@ -53,7 +59,7 @@ public sealed class DtrEntry : IDisposable
         }
 
         var count = window.StartableCount;
-        if (!settings.ShowDtrEntry || (count == 0 && !settings.DtrShowWhenEmpty))
+        if (!gate.HooksAllowed || !settings.ShowDtrEntry || (count == 0 && !settings.DtrShowWhenEmpty))
         {
             if (entry is not null)
             {
@@ -94,6 +100,7 @@ public sealed class DtrEntry : IDisposable
 
         disposed = true;
         window.Changed -= Refresh;
+        gate.Changed -= Refresh;
         if (entry is null)
         {
             return;

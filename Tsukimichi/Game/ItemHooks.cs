@@ -4,6 +4,7 @@ using System.Globalization;
 using Dalamud.Game.Gui.ContextMenu;
 using Dalamud.Plugin.Services;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Runtime;
 using Tsukimichi.Core.Unique;
 using Tsukimichi.Ui;
 
@@ -16,8 +17,9 @@ namespace Tsukimichi.Game;
 /// armoury, saddlebag, retainers and the like) carry an item; a default menu such as a chat item link exposes
 /// none, so nothing is added there.
 /// <para>
-/// <see cref="Enabled"/> follows <c>Configuration.ItemContextMenuEnabled</c> and subscribes or unsubscribes the
-/// <see cref="IContextMenu.OnMenuOpened"/> handler; <see cref="Dispose"/> unsubscribes for good.
+/// <see cref="Enabled"/> follows <c>Configuration.ItemContextMenuEnabled</c>; the <see cref="IContextMenu.OnMenuOpened"/>
+/// handler is subscribed while it is on and the shared <see cref="HookGate"/> (the addon kill switch, T20) allows game
+/// hooks, and follows the gate's changes. <see cref="Dispose"/> unsubscribes for good.
 /// </para>
 /// </summary>
 public sealed class ItemHooks : IDisposable
@@ -30,17 +32,22 @@ public sealed class ItemHooks : IDisposable
     private readonly Action<QuestRecord> reveal;
     private readonly IPluginLog log;
 
+    private readonly HookGate gate;
     private bool enabled;
+    private bool subscribed;
     private bool disposed;
     private bool warned;
 
     /// <param name="reveal">Opens the main window on the quest; called on the framework thread from the menu click.</param>
-    public ItemHooks(IContextMenu contextMenu, RewardLookupSource lookup, Action<QuestRecord> reveal, IPluginLog log)
+    /// <param name="gate">The shared addon kill switch; the handler stays off while it pauses game hooks.</param>
+    public ItemHooks(IContextMenu contextMenu, RewardLookupSource lookup, Action<QuestRecord> reveal, HookGate gate, IPluginLog log)
     {
         this.contextMenu = contextMenu ?? throw new ArgumentNullException(nameof(contextMenu));
         this.lookup = lookup ?? throw new ArgumentNullException(nameof(lookup));
         this.reveal = reveal ?? throw new ArgumentNullException(nameof(reveal));
+        this.gate = gate ?? throw new ArgumentNullException(nameof(gate));
         this.log = log ?? throw new ArgumentNullException(nameof(log));
+        gate.Changed += Apply;
     }
 
     /// <summary>
@@ -49,7 +56,10 @@ public sealed class ItemHooks : IDisposable
     /// </summary>
     public Func<QuestRecord, string>? QuestName { get; set; }
 
-    /// <summary>Whether the handler is subscribed (default off until the plugin applies the setting).</summary>
+    /// <summary>
+    /// The player's setting (default off until the plugin applies it). The handler is subscribed only while this is on
+    /// and the <see cref="HookGate"/> allows game hooks on the running game version.
+    /// </summary>
     public bool Enabled
     {
         get => enabled;
@@ -61,16 +71,12 @@ public sealed class ItemHooks : IDisposable
             }
 
             enabled = value;
-            if (value)
-            {
-                contextMenu.OnMenuOpened += OnMenuOpened;
-            }
-            else
-            {
-                contextMenu.OnMenuOpened -= OnMenuOpened;
-            }
+            Apply();
         }
     }
+
+    /// <summary>Whether the handler is subscribed now (the setting is on and the gate allows it).</summary>
+    public bool IsActive => subscribed;
 
     public void Dispose()
     {
@@ -79,8 +85,29 @@ public sealed class ItemHooks : IDisposable
             return;
         }
 
-        Enabled = false;
         disposed = true;
+        gate.Changed -= Apply;
+        Apply();
+    }
+
+    /// <summary>Subscribes or unsubscribes the handler to match the setting and the gate. Framework thread.</summary>
+    private void Apply()
+    {
+        var want = enabled && !disposed && gate.HooksAllowed;
+        if (want == subscribed)
+        {
+            return;
+        }
+
+        subscribed = want;
+        if (want)
+        {
+            contextMenu.OnMenuOpened += OnMenuOpened;
+        }
+        else
+        {
+            contextMenu.OnMenuOpened -= OnMenuOpened;
+        }
     }
 
     private void OnMenuOpened(IMenuOpenedArgs args)

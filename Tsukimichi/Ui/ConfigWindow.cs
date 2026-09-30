@@ -10,6 +10,7 @@ using Dalamud.Plugin;
 using Tsukimichi.Config;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
+using Tsukimichi.Core.Runtime;
 using Tsukimichi.Core.Ui;
 using Tsukimichi.Game;
 using Tsukimichi.GameData;
@@ -127,6 +128,12 @@ public sealed class ConfigWindow : Window
 
     /// <summary>Called with the new value after <see cref="Configuration.NpcContextMenuEnabled"/> is toggled and saved; the NPC menu hook wires it.</summary>
     public Action<bool>? NpcContextMenuToggled { get; set; }
+
+    /// <summary>
+    /// The shared addon kill switch (T20) behind Integrations' paused notice and "Enable game hooks on untested
+    /// versions"; set by the plugin. Null hides both.
+    /// </summary>
+    public HookGate? HookGate { get; set; }
 
     /// <summary>Settings › Data › Export (P12); set by the plugin once the export service exists. Null hides it.</summary>
     public ExportSection? Export { get; set; }
@@ -718,6 +725,44 @@ public sealed class ConfigWindow : Window
         if (ImGui.IsItemHovered())
         {
             ImGui.SetTooltip(Strings.ConfigNpcContextMenuHint);
+        }
+
+        DrawHookGate();
+    }
+
+    /// <summary>
+    /// The addon kill switch (T20): the paused notice while the game hooks wait for a tested update, and "Enable game
+    /// hooks on untested versions", which re-registers them at once through <see cref="HookGate.Changed"/>.
+    /// </summary>
+    private void DrawHookGate()
+    {
+        if (HookGate is not { } gate)
+        {
+            return;
+        }
+
+        if (gate.IsPaused)
+        {
+            using var eclipse = Theme.PushText(Theme.Eclipse);
+            ImGui.TextWrapped(Strings.HooksPausedNotice);
+        }
+
+        var anyway = settings.EnableHooksOnUntestedVersions;
+        if (ImGui.Checkbox(Strings.HooksEnableUntested, ref anyway))
+        {
+            settings.EnableHooksOnUntestedVersions = anyway;
+            Save();
+            gate.SetEnableAnyway(anyway);
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip(Strings.HooksEnableUntestedHint);
+        }
+
+        if (gate.Decision.Verdict == HookGateVerdict.Overridden)
+        {
+            ImGui.TextDisabled(Strings.HooksRunningUntested);
         }
     }
 

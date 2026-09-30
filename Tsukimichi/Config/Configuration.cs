@@ -92,6 +92,13 @@ public sealed class Configuration : IPluginConfiguration
     /// <summary>Add a "Tsukimichi: quests here (N)" entry to the target bar's menu on a quest-giving NPC.</summary>
     public bool NpcContextMenuEnabled { get; set; } = true;
 
+    // ---- 0.8.0: addon kill switch (T20) ----
+    /// <summary>
+    /// Let the game hooks (item tooltip panel, item and NPC menu entries, server info bar entry) run on a game version
+    /// newer than the one they were tested on (<c>Core.Runtime.HookGate</c>). Off by default: on patch day they pause.
+    /// </summary>
+    public bool EnableHooksOnUntestedVersions { get; set; }
+
     /// <summary>Days an accepted quest sits untouched before the Stalled preset lists it; 1–90, default 7. Clamped by <see cref="StalledDaysClamped"/> when read.</summary>
     public int StalledDays { get; set; } = DefaultStalledDays;
 

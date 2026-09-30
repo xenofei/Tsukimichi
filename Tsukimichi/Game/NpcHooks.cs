@@ -5,6 +5,7 @@ using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Game.Gui.ContextMenu;
 using Dalamud.Plugin.Services;
 using Tsukimichi.Core.Discovery;
+using Tsukimichi.Core.Runtime;
 using Tsukimichi.Ui;
 
 namespace Tsukimichi.Game;
@@ -25,8 +26,9 @@ namespace Tsukimichi.Game;
 /// is never read and nothing about the target is stored.
 /// </para>
 /// <para>
-/// <see cref="Enabled"/> follows <c>Configuration.NpcContextMenuEnabled</c> and subscribes or unsubscribes the handler;
-/// <see cref="Dispose"/> unsubscribes for good. Same shape as <see cref="ItemHooks"/>.
+/// <see cref="Enabled"/> follows <c>Configuration.NpcContextMenuEnabled</c>; the handler is subscribed while it is on and
+/// the shared <see cref="HookGate"/> (T20) allows game hooks. <see cref="Dispose"/> unsubscribes for good. Same shape as
+/// <see cref="ItemHooks"/>.
 /// </para>
 /// </summary>
 public sealed class NpcHooks : IDisposable
@@ -40,21 +42,29 @@ public sealed class NpcHooks : IDisposable
     private readonly Action<uint> showIssuer;
     private readonly IPluginLog log;
 
+    private readonly HookGate gate;
     private bool enabled;
+    private bool subscribed;
     private bool disposed;
     private bool warned;
 
     /// <param name="showIssuer">Opens the main window on the NPC's quests; called on the framework thread from the menu click with the ENpcResident row id.</param>
-    public NpcHooks(IContextMenu contextMenu, SessionState session, ITargetManager targets, Action<uint> showIssuer, IPluginLog log)
+    /// <param name="gate">The shared addon kill switch; the handler stays off while it pauses game hooks.</param>
+    public NpcHooks(IContextMenu contextMenu, SessionState session, ITargetManager targets, Action<uint> showIssuer, HookGate gate, IPluginLog log)
     {
         this.contextMenu = contextMenu ?? throw new ArgumentNullException(nameof(contextMenu));
         this.session = session ?? throw new ArgumentNullException(nameof(session));
         this.targets = targets ?? throw new ArgumentNullException(nameof(targets));
         this.showIssuer = showIssuer ?? throw new ArgumentNullException(nameof(showIssuer));
+        this.gate = gate ?? throw new ArgumentNullException(nameof(gate));
         this.log = log ?? throw new ArgumentNullException(nameof(log));
+        gate.Changed += Apply;
     }
 
-    /// <summary>Whether the handler is subscribed (default off until the plugin applies the setting).</summary>
+    /// <summary>
+    /// The player's setting (default off until the plugin applies it). The handler is subscribed only while this is on
+    /// and the <see cref="HookGate"/> allows game hooks on the running game version.
+    /// </summary>
     public bool Enabled
     {
         get => enabled;
@@ -66,16 +76,12 @@ public sealed class NpcHooks : IDisposable
             }
 
             enabled = value;
-            if (value)
-            {
-                contextMenu.OnMenuOpened += OnMenuOpened;
-            }
-            else
-            {
-                contextMenu.OnMenuOpened -= OnMenuOpened;
-            }
+            Apply();
         }
     }
+
+    /// <summary>Whether the handler is subscribed now (the setting is on and the gate allows it).</summary>
+    public bool IsActive => subscribed;
 
     public void Dispose()
     {
@@ -84,8 +90,29 @@ public sealed class NpcHooks : IDisposable
             return;
         }
 
-        Enabled = false;
         disposed = true;
+        gate.Changed -= Apply;
+        Apply();
+    }
+
+    /// <summary>Subscribes or unsubscribes the handler to match the setting and the gate. Framework thread.</summary>
+    private void Apply()
+    {
+        var want = enabled && !disposed && gate.HooksAllowed;
+        if (want == subscribed)
+        {
+            return;
+        }
+
+        subscribed = want;
+        if (want)
+        {
+            contextMenu.OnMenuOpened += OnMenuOpened;
+        }
+        else
+        {
+            contextMenu.OnMenuOpened -= OnMenuOpened;
+        }
     }
 
     private void OnMenuOpened(IMenuOpenedArgs args)
