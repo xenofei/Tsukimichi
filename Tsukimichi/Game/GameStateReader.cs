@@ -32,7 +32,7 @@ public sealed class GameStateReader
     /// </summary>
     public const int SatisfactionNpcSlots = 12;
 
-    /// <summary>Prefix of the once-per-login log line comparing the three festival arrays the client keeps.</summary>
+    /// <summary>Prefix of the log line comparing the three festival arrays the client keeps (see <see cref="LogFestivalProbe"/>).</summary>
     public const string FestivalProbePrefix = "[festival probe]";
 
     /// <summary>Grand Companies (Maelstrom, Twin Adder, Immortal Flames); ids are 1-based.</summary>
@@ -53,6 +53,8 @@ public sealed class GameStateReader
     private bool satisfactionWarned;
     private bool outOfRangeLogged;
     private ulong festivalProbeContentId;
+    private IReadOnlyList<ushort> festivalProbeIds = [];
+    private IReadOnlyList<ushort> festivalProbePhases = [];
 
     public GameStateReader(IFramework framework, IPlayerState playerState, IDataManager data, IPluginLog log)
     {
@@ -131,12 +133,6 @@ public sealed class GameStateReader
 
         var ids = IdsFor(catalog);
         var stopwatch = measured ? null : Stopwatch.StartNew();
-
-        if (festivalProbeContentId != contentId)
-        {
-            festivalProbeContentId = contentId;
-            LogFestivalProbe(ps);
-        }
 
         // Completion bits. The client mask is finite; ids past its end are not completable and must not be looked up,
         // since IsQuestComplete does no bounds check of its own.
@@ -272,6 +268,18 @@ public sealed class GameStateReader
 
         var (festivalIds, festivalPhases) = ReadActiveFestivals();
 
+        // The probe: once per character, and again whenever the captured (id, phase) pairs change within the session
+        // (a chapter opening mid-event is the case it exists for).
+        if (festivalProbeContentId != contentId
+            || !Same(festivalIds, festivalProbeIds)
+            || !Same(festivalPhases, festivalProbePhases))
+        {
+            festivalProbeContentId = contentId;
+            festivalProbeIds = festivalIds;
+            festivalProbePhases = festivalPhases;
+            LogFestivalProbe(ps);
+        }
+
         var snapshot = new CharacterSnapshot
         {
             ContentId = contentId,
@@ -291,8 +299,9 @@ public sealed class GameStateReader
             ActiveFestivals = festivalIds,
             ActiveFestivalPhases = festivalPhases,
             SatisfactionRanks = ReadSatisfactionRanks(),
-            // PlayerState.DeliveryLevel ("Carrier Level of Delivery Moogle Quests"), surfaced by Dalamud; 0 before
-            // the postmoogle quests start, which the evaluator reads as "not checked".
+            // PlayerState.DeliveryLevel ("Carrier Level of Delivery Moogle Quests"), surfaced by Dalamud. Always
+            // stored, 0 included: 0 is the real level of a character who has not unlocked the Delivery Moogle, and
+            // it blocks every carrier-level gate (the lowest is 7). Only an older file (no field) reads "not checked".
             CarrierLevel = playerState.DeliveryLevel,
             // Account entitlement caps: PlayerState.MaxExpansion is the ExVersion row the account owns up to,
             // PlayerState.MaxLevel the level cap that comes with it. 0 means the client has not said (a snapshot
@@ -360,11 +369,11 @@ public sealed class GameStateReader
     /// <summary>
     /// Custom delivery satisfaction rank per client from <c>SatisfactionSupplyManager.SatisfactionRanks</c>, keyed by
     /// SatisfactionNpc row id (slot + 1), every slot included so a client not yet unlocked reads rank 0. Empty when the
-    /// manager is not available, which the evaluator reads as "not checked".
+    /// manager is not available or every slot reads 0 (the server may not have sent the ranks yet; see
+    /// <see cref="SatisfactionRankSlots.ToRanks"/>), which the evaluator reads as "not checked".
     /// </summary>
     private unsafe Dictionary<byte, byte> ReadSatisfactionRanks()
     {
-        var result = new Dictionary<byte, byte>(SatisfactionNpcSlots);
         var manager = SatisfactionSupplyManager.Instance();
         if (manager == null)
         {
@@ -374,22 +383,16 @@ public sealed class GameStateReader
                 log.Warning("SatisfactionSupplyManager is not available; custom delivery ranks will read as not checked");
             }
 
-            return result;
+            return new Dictionary<byte, byte>(SatisfactionNpcSlots);
         }
 
-        var ranks = manager->SatisfactionRanks;
-        for (var slot = 0; slot < ranks.Length && slot < byte.MaxValue; slot++)
-        {
-            result[(byte)(slot + 1)] = ranks[slot];
-        }
-
-        return result;
+        return SatisfactionRankSlots.ToRanks(manager->SatisfactionRanks);
     }
 
     /// <summary>
-    /// Once per login, the three festival arrays the client keeps, with phases, so the owner can compare them during a
-    /// phased event and pick the one the quest givers follow: <c>GameMain.ActiveFestivals</c> (what the snapshot
-    /// reads), <c>PlayerState.ActiveFestivalIds</c> / <c>ActiveFestivalPhases</c> (the server-sent per-character
+    /// Once per character and again whenever the captured (id, phase) pairs change, the three festival arrays the
+    /// client keeps, with phases, so the owner can compare them during a phased event and pick the one the quest
+    /// givers follow: <c>GameMain.ActiveFestivals</c> (what the snapshot reads), <c>PlayerState.ActiveFestivalIds</c> / <c>ActiveFestivalPhases</c> (the server-sent per-character
     /// state) and <c>EventFramework.Festivals</c>. Logged at Information under <see cref="FestivalProbePrefix"/>.
     /// </summary>
     private unsafe void LogFestivalProbe(PlayerState* ps)
@@ -405,6 +408,24 @@ public sealed class GameStateReader
             gameMain,
             playerStateText,
             eventFramework);
+    }
+
+    private static bool Same(IReadOnlyList<ushort> a, IReadOnlyList<ushort> b)
+    {
+        if (a.Count != b.Count)
+        {
+            return false;
+        }
+
+        for (var i = 0; i < a.Count; i++)
+        {
+            if (a[i] != b[i])
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static string FormatFestivals(Span<GameMain.Festival> festivals)

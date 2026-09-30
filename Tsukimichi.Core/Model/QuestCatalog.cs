@@ -43,6 +43,7 @@ public sealed class QuestCatalog
         }
 
         Removed = removed.ToArray();
+        PhasedFestivals = FindPhasedFestivals(all);
     }
 
     /// <summary>Builds a catalog. Records are ordered by <see cref="JournalRef.SortKey"/> then row id; duplicate row ids throw.</summary>
@@ -83,6 +84,14 @@ public sealed class QuestCatalog
     /// <summary>Every quest of the "Removed from the game" bucket (<see cref="QuestRecord.IsRemoved"/>), in journal order.</summary>
     public IReadOnlyList<QuestRecord> Removed { get; }
 
+    /// <summary>
+    /// Festivals whose quests carry at least two distinct (FestivalBegin, FestivalEnd) windows: the events that open
+    /// later chapters on later phases (Hatching-tide 2014 and a handful of others). Only these have their phase window
+    /// judged; every other festival's quests share one window, which cannot separate chapters, so they keep the
+    /// id-only seasonal check until the meaning of the reported phase is verified in game.
+    /// </summary>
+    public IReadOnlySet<ushort> PhasedFestivals { get; }
+
     /// <summary>Lookup by Quest sheet row id (65536 + n): the id prerequisites, locks, pins and unique-reward entries carry.</summary>
     public QuestRecord? GetByRowId(uint rowId) => ByRowId.GetValueOrDefault(rowId);
 
@@ -115,6 +124,27 @@ public sealed class QuestCatalog
 
         quest = null!;
         return false;
+    }
+
+    private static FrozenSet<ushort> FindPhasedFestivals(IReadOnlyList<QuestRecord> all)
+    {
+        var windows = new Dictionary<ushort, HashSet<(byte Begin, byte End)>>();
+        foreach (var quest in all)
+        {
+            if (quest.Festival == 0)
+            {
+                continue;
+            }
+
+            if (!windows.TryGetValue(quest.Festival, out var set))
+            {
+                windows[quest.Festival] = set = [];
+            }
+
+            set.Add((quest.FestivalBegin, quest.FestivalEnd));
+        }
+
+        return windows.Where(pair => pair.Value.Count >= 2).Select(pair => pair.Key).ToFrozenSet();
     }
 
     private static FrozenDictionary<uint, IReadOnlyList<QuestRecord>> Group(

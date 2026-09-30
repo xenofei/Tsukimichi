@@ -37,8 +37,7 @@ public sealed class SnapshotAdditiveFieldsTests
         Assert.Equal((byte)3, loaded.SatisfactionRank(2));
         Assert.Equal((byte)0, loaded.SatisfactionRank(12));
         Assert.Null(loaded.SatisfactionRank(13));
-        Assert.Equal(7, loaded.CarrierLevel);
-        Assert.Equal((byte)7, loaded.CarrierLevelOrNull);
+        Assert.Equal((byte?)7, loaded.CarrierLevel);
         Assert.Equal(1, loaded.SchemaVersion);
 
         var json = JsonNode.Parse(File.ReadAllText(Path.Combine(root, "characters", "1.json")))!.AsObject();
@@ -64,6 +63,21 @@ public sealed class SnapshotAdditiveFieldsTests
         Assert.NotNull(loaded);
         Assert.Null(loaded.FestivalPhase(10));
         Assert.Empty(loaded.SatisfactionRanks);
-        Assert.Null(loaded.CarrierLevelOrNull);
+        Assert.Null(loaded.CarrierLevel);
+    }
+
+    [Fact]
+    public void A_captured_carrier_level_of_0_is_written_and_read_back_as_a_value()
+    {
+        using var tmp = new TempDir();
+        var root = tmp.File("store");
+        new JsonSnapshotStore(root).Save(Fixture.Snapshot(Fixture.A) with { CarrierLevel = 0 });
+
+        var json = JsonNode.Parse(File.ReadAllText(Path.Combine(root, "characters", "1.json")))!.AsObject();
+        Assert.Equal(0, (int)json["carrierLevel"]!);
+
+        var loaded = new JsonSnapshotStore(root).Load(1);
+        Assert.NotNull(loaded);
+        Assert.Equal((byte?)0, loaded.CarrierLevel);
     }
 }

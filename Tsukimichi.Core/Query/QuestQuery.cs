@@ -12,7 +12,9 @@ namespace Tsukimichi.Core.Query;
 /// <see cref="FilterSet.IncludeUnlisted"/> is on, and always under <see cref="QuestScope.VirtualUnlisted"/>. A
 /// section, category or genre node never shows them, whatever ids the sheet gave them, because section 0 is a real
 /// journal section and a retired listed row still carries its old genre. <see cref="QuestScope.Issuer"/> (the NPC
-/// context menu's scope) lists what the NPC hands out today, so it leaves them out too.
+/// context menu's scope) lists what the NPC hands out today: its candidates carry no retired quest, and it always
+/// shows the unlisted live ones among them (every genre-0 quest under <see cref="JournalFiling.Legacy"/>), so the
+/// scope matches the menu's count and <c>/tsuki which</c> under either filing.
 /// </para>
 /// </summary>
 public static class QuestQuery
@@ -198,7 +200,7 @@ public static class QuestQuery
                 return picked;
             }
             case ScopeKind.VirtualIssuer:
-                // Journal order, removed quests left out: an NPC that lost a quest in a patch never lists it.
+                // Journal order, retired quests left out: an NPC that lost a quest in a patch never lists it.
                 return Discovery.QuestDiscovery.IssuedBy(catalog, scope.Id);
             default:
                 throw new ArgumentOutOfRangeException(nameof(scope), scope.Kind, "Unknown scope kind.");
@@ -363,8 +365,10 @@ public static class QuestQuery
             UnlistedToggleable = scope.Kind is ScopeKind.None or ScopeKind.VirtualFeature;
             IncludeUnlisted = scope.Kind switch
             {
-                ScopeKind.VirtualUnlisted => true,
-                ScopeKind.Section or ScopeKind.Category or ScopeKind.Genre or ScopeKind.VirtualIssuer => false,
+                // The issuer's candidates are never retired, so "removed" there can only mean an unlisted live quest
+                // the NPC still hands out.
+                ScopeKind.VirtualUnlisted or ScopeKind.VirtualIssuer => true,
+                ScopeKind.Section or ScopeKind.Category or ScopeKind.Genre => false,
                 _ => filters.IncludeUnlisted,
             };
             hideCompletedEngaged = filters.HideCompletedEngaged();

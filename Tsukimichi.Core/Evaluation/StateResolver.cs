@@ -132,6 +132,19 @@ public static class StateResolver
         return ResolveDependents(previousResults, rowIds, index, c, s, ctx, changedLevels, changedFestivals);
     }
 
+    private static bool IsAccepted(CharacterSnapshot s, ushort questId)
+    {
+        foreach (var accepted in s.Accepted)
+        {
+            if (accepted.QuestId == questId)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private static QuestEvaluation ResolveCore(QuestRecord q, CharacterSnapshot s, QuestCatalog c, EvalContext ctx, Func<ushort, bool> festivalIsPast)
     {
         var completed = s.IsCompleted(q.QuestId);
@@ -161,8 +174,10 @@ public static class StateResolver
 
         // 3. Inactive festival: foreclosed if the character already saw a run of it, otherwise blocked as seasonal.
         //    A running event whose reported phase lies outside the quest's window (a chapter not open yet, or over)
-        //    is blocked as seasonal too; the requirement carries which.
-        if (q.Festival != 0 && FirstOfKind(requirements, RequirementKind.Seasonal) is { Met: false } seasonal)
+        //    is blocked as seasonal too; the requirement carries which. A chapter quest the character already holds
+        //    stays In journal (rule 4) while its event runs: the game keeps it there after the chapter moves on.
+        if (q.Festival != 0 && FirstOfKind(requirements, RequirementKind.Seasonal) is { Met: false } seasonal
+            && !(seasonal.Req is SeasonalRequirement { Active: true } && IsAccepted(s, q.QuestId)))
         {
             var running = seasonal.Req is SeasonalRequirement { Active: true };
             var state = !running && festivalIsPast(q.Festival) ? QuestState.Foreclosed : QuestState.Blocked;

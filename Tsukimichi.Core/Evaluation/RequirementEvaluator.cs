@@ -160,7 +160,7 @@ public static class RequirementEvaluator
 
         if (q.CarrierLevel > 0)
         {
-            var actual = s.CarrierLevelOrNull;
+            var actual = s.CarrierLevel;
             var met = actual is null || actual >= q.CarrierLevel;
             results.Add(new(new CarrierLevelRequirement(q.CarrierLevel, actual), met, actual switch
             {
@@ -186,11 +186,13 @@ public static class RequirementEvaluator
 
         if (q.Festival != 0)
         {
-            // The event must be running; a quest with a phase window (a later chapter of a phased event) also needs
-            // the running event's phase inside it. A phase the client did not report never blocks.
+            // The event must be running; a quest with a phase window in a phased event (one whose quests carry two or
+            // more distinct windows, see QuestCatalog.PhasedFestivals) also needs the running event's phase inside
+            // it. Every other festival's single window is ignored, and a phase the client did not report never blocks.
             var active = s.ActiveFestivals.Contains(q.Festival);
             var phase = active ? s.FestivalPhase(q.Festival) : null;
-            var seasonal = new SeasonalRequirement(q.Festival, active, q.FestivalBegin, q.FestivalEnd, phase);
+            var phased = catalog.PhasedFestivals.Contains(q.Festival);
+            var seasonal = new SeasonalRequirement(q.Festival, active, phased ? q.FestivalBegin : (byte)0, phased ? q.FestivalEnd : (byte)0, phase);
             var met = active && !seasonal.ChapterNotOpen && !seasonal.ChapterOver;
             string detail;
             if (!active)

@@ -132,6 +132,17 @@ public class DeliveryAndPhaseFixtureTests(FixtureCatalog fixture) : IClassFixtur
         Assert.Equal("Blocked · Delivery Moogle: carrier level 7", BlockerText.StatusText(level6, quest, names));
 
         Assert.Equal(QuestState.Ready, StateResolver.Resolve(quest, Eligible(quest) with { CarrierLevel = 7 }, Catalog, Context).State);
+
+        // A level 50 character who never unlocked the Delivery Moogle: the live capture reads carrier level 0, a
+        // real level, so the quest is Blocked (with no previous quest nothing else would hold it back).
+        var never = StateResolver.Resolve(quest, Eligible(quest) with { CarrierLevel = 0 }, Catalog, Context);
+        Assert.Equal(QuestState.Blocked, never.State);
+        Assert.Equal("Blocked · Delivery Moogle: carrier level 7", BlockerText.StatusText(never, quest, names));
+
+        // A file written before 0.6.2 has no carrier level: listed, not judged.
+        var unread = StateResolver.Resolve(quest, Eligible(quest) with { CarrierLevel = null }, Catalog, Context);
+        Assert.Equal(QuestState.Ready, unread.State);
+        Assert.Contains(unread.Requirements, r => r.Req is CarrierLevelRequirement { ActualLevel: null } && r.Met);
     }
 
     [Fact]
@@ -181,5 +192,16 @@ public class DeliveryAndPhaseFixtureTests(FixtureCatalog fixture) : IClassFixtur
         Assert.All(windowed, q => Assert.True(q.FestivalEnd == 0 || q.FestivalEnd >= q.FestivalBegin, $"{q.RowId} {q.Name}: end {q.FestivalEnd} before begin {q.FestivalBegin}"));
         Assert.All(Catalog.All.Where(q => q.Festival != 0), q => Assert.NotEqual(0, q.FestivalEnd));
         Assert.All(Catalog.All.Where(q => q.Festival == 0), q => Assert.Equal(0, q.FestivalBegin));
+    }
+
+    [Fact]
+    public void Only_festivals_with_two_or_more_windows_are_phased()
+    {
+        // 120 festivals; only these carry more than one distinct (Begin, End) window among their quests, so only
+        // their windows are judged. The rest share one window ((0,1) for most) and keep the id-only check.
+        Assert.Equal(new ushort[] { 3, 10, 11, 20, 22, 100, 104 }, Catalog.PhasedFestivals.Order());
+        Assert.Equal(39, Catalog.All.Count(q => Catalog.PhasedFestivals.Contains(q.Festival)));
+        Assert.Equal(310, Catalog.All.Count(q => q.Festival != 0));
+        Assert.Contains(HatchingTide2014, Catalog.PhasedFestivals);
     }
 }

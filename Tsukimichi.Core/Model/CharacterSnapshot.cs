@@ -64,17 +64,19 @@ public sealed record CharacterSnapshot
     /// <summary>
     /// Custom delivery satisfaction rank per client, keyed by SatisfactionNpc row id (1-based; every slot the client
     /// holds, rank 0 included, so a client not yet unlocked reads rank 0). Additive at schema v1: empty when the
-    /// plugin did not read the ranks, and a missing client is "not checked". Not written while empty.
+    /// plugin did not read the ranks or every slot read 0 (see <see cref="Runtime.SatisfactionRankSlots"/>), and a
+    /// missing client is "not checked". Not written while empty.
     /// </summary>
     [OmitWhenEmpty]
     public IReadOnlyDictionary<byte, byte> SatisfactionRanks { get; init; } = new Dictionary<byte, byte>();
 
     /// <summary>
-    /// Delivery Moogle carrier level (<c>PlayerState.DeliveryLevel</c>). Additive at schema v1: 0 means the plugin did
-    /// not read it (or the character has not started the postmoogle quests), which reads as "not checked"; 0 is not written.
+    /// Delivery Moogle carrier level (<c>PlayerState.DeliveryLevel</c>). Additive at schema v1: null when the plugin did
+    /// not read it (files written before 0.6.2), which reads as "not checked"; null is not written. A captured 0 is a
+    /// real level (the character has not unlocked the Delivery Moogle) and blocks every carrier-level gate.
     /// </summary>
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-    public byte CarrierLevel { get; init; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public byte? CarrierLevel { get; init; }
 
     public byte MaxExpansion { get; init; }
     public byte LevelCap { get; init; }
@@ -108,10 +110,6 @@ public sealed record CharacterSnapshot
 
     /// <summary>The satisfaction rank held with a custom delivery client, or null when the plugin did not read it.</summary>
     public byte? SatisfactionRank(byte npc) => SatisfactionRanks.TryGetValue(npc, out var rank) ? rank : null;
-
-    /// <summary>The Delivery Moogle carrier level, or null when the plugin did not read it (<see cref="CarrierLevel"/> is 0).</summary>
-    [JsonIgnore]
-    public byte? CarrierLevelOrNull => CarrierLevel == 0 ? null : CarrierLevel;
 }
 
 /// <summary>
