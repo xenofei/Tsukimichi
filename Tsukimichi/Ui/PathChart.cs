@@ -679,6 +679,7 @@ public sealed class PathChart
 
         dl.ChannelsSetCurrent(0);
         DrawSky(dl, origin, width, top, bottom);
+        DrawCulledOwners(dl, origin, first);
         var hovered = -1;
         for (var i = first; i < threadEnd; i++)
         {
@@ -707,6 +708,68 @@ public sealed class PathChart
         ImGui.SetCursorScreenPos(origin);
         ImGui.Dummy(new Vector2(1f, contentHeight));
         return scrollY;
+    }
+
+    /// <summary>
+    /// Decorations whose owner row is culled above the view but that reach into it: the bracket of an opened bead
+    /// whose steps are in view, and the ghost curves of alternatives whose join is in view (they sit just above it).
+    /// </summary>
+    private void DrawCulledOwners(ImDrawListPtr dl, Vector2 origin, int first)
+    {
+        if (first <= 0 || first >= layout.Count)
+        {
+            return;
+        }
+
+        var row = layout[first];
+        if (row.Kind == VKind.RunStep && row.Core >= 0 && coreToRow[row.Core] < first)
+        {
+            var bead = layout[coreToRow[row.Core]];
+            dl.ChannelsSetCurrent(2);
+            DrawRunBracket(dl, origin, bead, origin + new Vector2(threadX, bead.NodeY));
+        }
+
+        for (var i = first - 1; i >= 0 && layout[i].Kind is VKind.Alternative or VKind.MoreAlternatives; i--)
+        {
+            var alternative = layout[i];
+            if (alternative.Kind == VKind.Alternative && alternative.Join >= first)
+            {
+                DrawJoinCurve(dl, origin, alternative);
+            }
+        }
+
+        dl.ChannelsSetCurrent(0);
+    }
+
+    /// <summary>An alternative's curve from its ghost node into its join's upper rim, on the threads' channel (1).</summary>
+    private void DrawJoinCurve(ImDrawListPtr dl, Vector2 origin, VRow row)
+    {
+        if (row.Join < 0)
+        {
+            return;
+        }
+
+        var ghost = origin + new Vector2(ghostX, row.NodeY);
+        var r = UiMetrics.Icon(5f);
+        var join = layout[row.Join];
+        var end = origin + new Vector2(threadX, join.NodeY - join.NodeR);
+        var start = ghost + new Vector2(0f, r);
+        var bend = Px(12f);
+        dl.ChannelsSetCurrent(1);
+        dl.AddBezierCubic(start, start + new Vector2(0f, bend), end - new Vector2(0f, bend), end, Theme.WithAlpha(Theme.Surface.TextTertiary, 0.6f), UiMetrics.Hairline, 12);
+    }
+
+    /// <summary>The faint bracket beside an opened bead's steps, from the bead down to its last step.</summary>
+    private void DrawRunBracket(ImDrawListPtr dl, Vector2 origin, VRow bead, Vector2 node)
+    {
+        var lastChild = FindLastChild(bead.Core, rows[bead.Core].Count);
+        if (lastChild < 0)
+        {
+            return;
+        }
+
+        var x = origin.X + Px(4f);
+        dl.AddLine(new Vector2(x, node.Y - Px(8f)), new Vector2(x, origin.Y + layout[lastChild].NodeY + Px(8f)), Theme.WithAlpha(Theme.Moon, 0.25f), UiMetrics.Hairline);
     }
 
     private int FirstRowAt(float y)
@@ -985,16 +1048,8 @@ public sealed class PathChart
                 var ghost = origin + new Vector2(ghostX, row.NodeY);
                 var r = UiMetrics.Icon(5f);
                 GhostRing(dl, ghost, r, Theme.U32(hovered ? s.Text : s.TextTertiary));
-                if (row.Join >= 0)
-                {
-                    var join = layout[row.Join];
-                    var end = origin + new Vector2(threadX, join.NodeY - join.NodeR);
-                    var start = ghost + new Vector2(0f, r);
-                    var bend = Px(12f);
-                    dl.ChannelsSetCurrent(1);
-                    dl.AddBezierCubic(start, start + new Vector2(0f, bend), end - new Vector2(0f, bend), end, Theme.WithAlpha(s.TextTertiary, 0.6f), UiMetrics.Hairline, 12);
-                    dl.ChannelsSetCurrent(2);
-                }
+                DrawJoinCurve(dl, origin, row);
+                dl.ChannelsSetCurrent(2);
 
                 var x = origin.X + ghostLabelX;
                 var dusk = Theme.U32(s.TextTertiary);
@@ -1107,13 +1162,7 @@ public sealed class PathChart
             var c = UiMetrics.Icon(2.5f);
             dl.AddLine(node + new Vector2(-c, -c * 0.4f), node + new Vector2(0f, c * 0.6f), Theme.MoonU32, UiMetrics.Hairline);
             dl.AddLine(node + new Vector2(0f, c * 0.6f), node + new Vector2(c, -c * 0.4f), Theme.MoonU32, UiMetrics.Hairline);
-            var runCount = rows[row.Core].Count;
-            var lastChild = FindLastChild(row.Core, runCount);
-            if (lastChild >= 0)
-            {
-                var x = origin.X + Px(4f);
-                dl.AddLine(new Vector2(x, node.Y - Px(8f)), new Vector2(x, origin.Y + layout[lastChild].NodeY + Px(8f)), Theme.WithAlpha(Theme.Moon, 0.25f), UiMetrics.Hairline);
-            }
+            DrawRunBracket(dl, origin, row, node);
         }
 
         var ink = expanded || hovered ? s.TextSecondary : s.TextTertiary;
