@@ -61,7 +61,7 @@ public static class LayoutBudgets
     /// <summary>The expansion column: a four-letter pill.</summary>
     public const float ExpansionColumnLogical = 40f;
 
-    /// <summary>The status column's least width before Rewards, then Expansion, are hidden to make room.</summary>
+    /// <summary>The room a status line needs for the longest English state name with " · …" after it (the translation budget).</summary>
     public const float StatusMinLogical = 170f;
 
     /// <summary>The widest the status column's minimum may grow for a long state name.</summary>
@@ -70,7 +70,9 @@ public static class LayoutBudgets
     /// <summary>
     /// The status column's least content width for a language: <see cref="StatusMinLogical"/>, or the widest state name
     /// (a state with a reason already followed by " · …") when that is wider, so the state word, which the column never
-    /// cuts, always shows whole; at most <see cref="MaxStatusMinLogical"/>.
+    /// cuts, always shows whole; at most <see cref="MaxStatusMinLogical"/>. This is the translation budget the layout
+    /// tests check; the quest table sizes its status column from the measured state word
+    /// (<see cref="TableGeometry.QuestColumnSpecs"/>).
     /// </summary>
     public static float StatusMin(float widestStateWord) =>
         Math.Clamp(MathF.Ceiling(widestStateWord), StatusMinLogical, MaxStatusMinLogical);
@@ -146,23 +148,51 @@ public static class LayoutBudgets
     /// <summary>Tree: the ring alone carries progress and the Ready pill becomes a dot; the tree's floor.</summary>
     public const float TreeSlimLogical = PaneLayout.TreeFloorLogical;
 
-    /// <summary>Quest table: every column shows; Name and Status stretch 3 : 2.</summary>
-    public const float TableFullLogical = 640f;
+    // Quest table tiers (design v4 §8.2), each the least width of its tier: where the English table at UI scale 1 takes
+    // that step under the column plan (TableGeometry.PlanQuestTable, measured with Dalamud's font; a test keeps them
+    // within half the hysteresis of it). The table itself plans from the widths it measures, so another language or
+    // scale moves the steps instead of cutting a column.
 
-    /// <summary>Quest table: under this Rewards hides.</summary>
-    public const float TableNoRewardsLogical = 560f;
+    /// <summary>Quest table: every column shows, the job with its label; Name and Status stretch 3 : 2. Under this Rewards hides.</summary>
+    public const float TableFullLogical = 664f;
 
-    /// <summary>Quest table: under this the expansion column hides too.</summary>
-    public const float TableNoExpansionLogical = 480f;
+    /// <summary>Quest table: Rewards hidden. Under this Expansion hides too.</summary>
+    public const float TableNoRewardsLogical = 586f;
 
-    /// <summary>Quest table: under this the job column shows its icon only, then hides.</summary>
-    public const float TableNoJobLogical = 400f;
+    /// <summary>Quest table: Rewards and Expansion hidden. Under this the job shows its icon alone, then hides.</summary>
+    public const float TableNoExpansionLogical = 534f;
 
-    /// <summary>Quest table: under this the level column hides and the status keeps its state word.</summary>
-    public const float TableNoLevelLogical = 360f;
+    /// <summary>Quest table: the job as an icon, then hidden. Under this Level hides too (its level stays in the name's hover card).</summary>
+    public const float TableNoJobLogical = 434f;
 
-    /// <summary>Quest table: under <see cref="TableNoLevelLogical"/> rows become two lines, down to the centre's floor.</summary>
+    /// <summary>Quest table: glyph, name and status only. Under this the rows go two-line, since the status would no longer fit beside the name.</summary>
+    public const float TableNoLevelLogical = 386f;
+
+    /// <summary>Quest table: two-line rows (the name and the level, the status under them), down to the centre's floor.</summary>
     public const float TableTwoLineLogical = PaneLayout.CentreFloorLogical;
+
+    /// <summary>
+    /// Quest table: rows are two-line under this width however short the state words are (design v4 §8.2); they are
+    /// two-line wider than this too wherever the glyph, the name and the status stop fitting one line.
+    /// </summary>
+    public const float TableTwoLineUnderLogical = 360f;
+
+    // The quest table's column plan (feature plan v4 L4, UI audit §4.3).
+
+    /// <summary>Quest table: the name column's least width; it never hides and takes three shares of the spare room.</summary>
+    public const float TableNameMinLogical = 140f;
+
+    /// <summary>Quest table: the room past the widest state word in the status column's least width.</summary>
+    public const float TableStatusPadLogical = 24f;
+
+    /// <summary>Quest table: the name column's share of the room the columns' minimums leave.</summary>
+    public const float TableNameWeight = 3f;
+
+    /// <summary>Quest table: the status column's share of the room the columns' minimums leave.</summary>
+    public const float TableStatusWeight = 2f;
+
+    /// <summary>Quest table: the gap between the two lines of a two-line row.</summary>
+    public const float TableTwoLineGapLogical = 2f;
 
     /// <summary>Detail pane D1: the full hero, requirements as a grid.</summary>
     public const float DetailFullLogical = 340f;

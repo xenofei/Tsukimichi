@@ -11,6 +11,7 @@ using Dalamud.Plugin.Services;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Ui;
+using Column = Tsukimichi.Core.Ui.QuestColumn;
 
 namespace Tsukimichi.Ui;
 
@@ -26,6 +27,13 @@ namespace Tsukimichi.Ui;
 /// a neutral selection wash with a 1 px ring (never gold); level and expansion pills; the job's game icon. Fills go
 /// through <c>TableSetBgColor</c> with the selectable's own Header colours pushed transparent so it does not paint
 /// over them; lines go on the table's background channel so they span every column under the text.
+///
+/// Narrow widths (feature plan v4 L4, UI audit §4.3): <see cref="TableGeometry.PlanQuestTable"/> decides the columns
+/// from the table's width. Name is the one ImGui stretch column and takes what the fixed columns leave; Status is sized
+/// by the plan (its state word never cut) and hides only after Rewards, Expansion, Job (its icon alone first) and
+/// Level. The plan hides a column with <see cref="ImGuiTableColumnFlags.Disabled"/>, which ImGui neither saves nor
+/// lists in the header menu, so the player's own hidden columns (the menu's) stay theirs and stay hidden. Under
+/// 360 px the rows go two-line: the name and the level pill, then the status under the name.
 /// </summary>
 public sealed class TablePane : IDisposable
 {
@@ -36,42 +44,38 @@ public sealed class TablePane : IDisposable
     /// <summary>Logical space left of the state moon for the pinned dot; also the state stripe's hover zone.</summary>
     private const float GlyphColumnLead = 8f;
 
-    /// <summary>Initial logical width of the Name column; the player can drag it, and long names clip.</summary>
-    private const float NameColumnWidth = 240f;
-
-    /// <summary>Logical width under which the Status column sheds Rewards, then Expansion: room for "Ready on another job".</summary>
-    private const float StatusMinWidth = LayoutBudgets.StatusMinLogical;
-
-    // The status column's minimum for the current language (V2-19): the widest state name must show whole.
-    private int statusMinLanguage = -1;
-    private float statusMinFont = -1f;
-    private float statusMin;
-
     /// <summary>
-    /// <see cref="StatusMinWidth"/>, or wider for a language whose longest state name (with " · …" after the states that
-    /// carry a reason) would not fit it (<see cref="LayoutBudgets.StatusMin"/>); measured again on a language or font change.
+    /// The table's ImGui id. It changed with the column plan (feature plan v4 L4): the widths, weights and hidden flags
+    /// imgui.ini kept under the old id include columns the old status fit hid on its own, which would otherwise read
+    /// as hidden by the player forever.
     /// </summary>
-    private float StatusMin()
+    private const string TableId = "##questtable";
+
+    private const int ColumnCount = TableGeometry.QuestColumnCount;
+
+    // The widest state word in the current language and font (V2-19): the status column never cuts it.
+    private int stateWordLanguage = -1;
+    private float stateWordFont = -1f;
+    private float stateWord;
+
+    /// <summary>The widest state word (every state's name, and "Done this cycle"), measured again on a language or font change.</summary>
+    private float StateWordWidth()
     {
         var font = ImGui.GetFontSize();
-        if (statusMinLanguage != Localization.Loc.Version || statusMinFont != font)
+        if (stateWordLanguage != Localization.Loc.Version || stateWordFont != font)
         {
-            statusMinLanguage = Localization.Loc.Version;
-            statusMinFont = font;
-            var unit = MathF.Max(UiMetrics.Px(1f), 0.01f);
-            var ellipsis = ImGui.CalcTextSize(Strings.StateReasonSeparator + "…").X;
+            stateWordLanguage = Localization.Loc.Version;
+            stateWordFont = font;
             var widest = 0f;
             foreach (var state in Enum.GetValues<QuestState>())
             {
-                var reason = state is QuestState.Blocked or QuestState.Foreclosed or QuestState.Unknown or QuestState.Accepted ? ellipsis : 0f;
-                widest = MathF.Max(widest, ImGui.CalcTextSize(Strings.StateName(state)).X + reason);
+                widest = MathF.Max(widest, ImGui.CalcTextSize(Strings.StateName(state)).X);
             }
 
-            widest = MathF.Max(widest, ImGui.CalcTextSize(Strings.StateName(QuestState.DoneThisCycle, null)).X);
-            statusMin = UiMetrics.Px(LayoutBudgets.StatusMin(widest / unit));
+            stateWord = MathF.Max(widest, ImGui.CalcTextSize(Strings.StateName(QuestState.DoneThisCycle, null)).X);
         }
 
-        return statusMin;
+        return stateWord;
     }
 
     /// <summary>Logical gap between a story sidequest's name and its book badge.</summary>
@@ -87,8 +91,6 @@ public sealed class TablePane : IDisposable
     private const float JobIconSide = 16f;
     private const float JobIconGap = 5f;
 
-    /// <summary>Initial logical width of the Job column: icon, gap and "DoH/DoL".</summary>
-    private const float JobColumnWidth = 76f;
 
     /// <summary>Selection: the wash's alpha of the text colour, the ring's alpha and its logical rounding.</summary>
     private const float SelectionWashAlpha = 0.10f;
@@ -114,17 +116,6 @@ public sealed class TablePane : IDisposable
 
     /// <summary>The widest level a pill is sized for when the Level column is first laid out.</summary>
     private const string WidestLevel = "100";
-
-    private enum Column
-    {
-        Glyph,
-        Name,
-        Level,
-        Job,
-        Status,
-        Expansion,
-        Rewards,
-    }
 
     /// <summary>Header label per <see cref="Column"/>; the glyph column keeps its name for the hide/show menu but shows none.</summary>
     private static string[] HeaderLabels => headerLabelsText.Value;
@@ -175,16 +166,6 @@ public sealed class TablePane : IDisposable
     private uint? lastSelection;
     private bool tableInitialized;
 
-    // The Job column's minimum, re-asserted once per table init: measured on the first frame, applied on the next.
-    private bool measureJobWidth;
-    private float jobWidthFix;
-
-    // The Level column's width raised to a longer translated header on the frame after it was measured (V2-19).
-    private float levelWidthFix;
-
-    // The UI language the header widths were last checked in.
-    private int headerLanguage = -1;
-
     // Hover lift (dalamud-developer panel §4: no TableGetHoveredRow in the binding): the quest hovered on the previous
     // frame gets the fill and the lift this frame; hoveredNext collects this frame's for the next.
     private uint? hoveredRow;
@@ -203,20 +184,19 @@ public sealed class TablePane : IDisposable
     private uint? revealRow;
     private double revealUntil;
 
-    // FitStatusColumn state (see the method): the columns it hid, whether a re-show by hand suspended it, each
-    // hideable column's enabled flag last frame (null before the first) and whether a re-show is the fit's own; the
-    // Status width each hide gained, measured on the frame the hide took effect (widthBeforeHide is the width the
-    // frame before); and a sort to write back into the column state once the sorted column is enabled again.
-    private bool rewardsAutoHidden;
-    private bool expansionAutoHidden;
-    private bool fitSuspended;
-    private bool? lastRewardsEnabled;
-    private bool? lastExpansionEnabled;
-    private bool fitReshowing;
-    private Column? measureGainFor;
-    private float widthBeforeHide;
-    private float rewardsGain;
-    private float expansionGain;
+    // The column plan (PlanColumns): this frame's specs, visibility and widths; last frame's visibility (planned is
+    // false before the first plan) and row mode; the columns the plan hides this frame (Disabled) and the ones the
+    // player hid from the header menu, read from the table after each layout. Arrays, so nothing allocates per frame.
+    private readonly ColumnSpec[] planSpecs = new ColumnSpec[ColumnCount];
+    private readonly bool[] planVisible = new bool[ColumnCount];
+    private readonly float[] planWidths = new float[ColumnCount];
+    private readonly bool[] lastVisible = new bool[ColumnCount];
+    private readonly bool[] autoHidden = new bool[ColumnCount];
+    private readonly bool[] playerHidden = new bool[ColumnCount];
+    private bool planned;
+    private QuestTablePlan plan;
+
+    // A sort to write back into the column state once the sorted column is shown again (ImGui drops a hidden column's sort).
     private bool restoreSort;
 
     public TablePane(UiState ui, QueryRunner runner, GameLinks links, ITextureProvider textures, IDalamudPluginInterface pluginInterface, IPluginLog log, Action resetFilters, Action filtersChanged)
@@ -292,7 +272,7 @@ public sealed class TablePane : IDisposable
         // The header's fill is painted when its row ends, which is when the clipper begins, so the push spans the table.
         ImGui.PushStyleColor(ImGuiCol.TableHeaderBg, Theme.Surface.Raised);
         using var headerBg = new Theme.StyleScope(1, 0);
-        using var table = ImRaii.Table("##quests", 7, flags, ImGui.GetContentRegionAvail());
+        using var table = ImRaii.Table(TableId, ColumnCount, flags, ImGui.GetContentRegionAvail());
         if (!table)
         {
             hoveredRow = null;
@@ -307,8 +287,7 @@ public sealed class TablePane : IDisposable
         var lineHeight = ImGui.GetTextLineHeight();
         var padY = style.CellPadding.Y;
         var rowContent = UiMetrics.TableRowContentHeight(lineHeight, padY);
-        var rowHeight = rowContent + padY * 2f;
-        // The moon, and with it the Glyph column, follows the row height (r 9 Comfortable, r 6.4 Dense at scale 1).
+        // The moon, and with it the Glyph column, follows the one-line row height (r 9 Comfortable, r 6.4 Dense at scale 1).
         var glyphRadius = TableGeometry.GlyphRadius(rowContent, UiMetrics.RowGlyphRadius);
         var glyphBox = glyphRadius * TableGeometry.GlyphBoxPerRadius;
         var glyphColumn = UiMetrics.Px(GlyphColumnLead) + glyphBox + UiMetrics.Px(2f);
@@ -323,76 +302,78 @@ public sealed class TablePane : IDisposable
         var levelColumn = MathF.Max(
             MathF.Max(UiMetrics.Px(LayoutBudgets.LevelColumnLogical), PillWidth(WidestLevel, UiMetrics.Px(LevelPillMinWidth), UiMetrics.Px(PillPadX))),
             HeaderFloor(Strings.ColumnLevel, sortable: true));
-
-        ImGui.TableSetupColumn(Strings.ColumnGlyph, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize | ImGuiTableColumnFlags.NoHide | ImGuiTableColumnFlags.NoHeaderLabel, glyphColumn);
-        // Status is the one stretch column (feature plan v3 P1): it holds the answer to "why not", so it takes the
-        // width the others leave, and FitStatusColumn hides Rewards, then Expansion, before it drops under its minimum.
         var expansionColumn = MathF.Max(UiMetrics.Px(LayoutBudgets.ExpansionColumnLogical), HeaderFloor(Strings.ColumnExpansion, sortable: true));
-        ImGui.TableSetupColumn(Strings.ColumnName, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoHide, UiMetrics.Px(NameColumnWidth));
-        ImGui.TableSetupColumn(Strings.ColumnLevel, ImGuiTableColumnFlags.WidthFixed, levelColumn);
-        ImGui.TableSetupColumn(Strings.ColumnJob, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoSort, UiMetrics.Px(JobColumnWidth));
-        ImGui.TableSetupColumn(Strings.ColumnStatus, ImGuiTableColumnFlags.WidthStretch | ImGuiTableColumnFlags.NoSort, 1f);
-        // Expansion is a four-letter tag: NoResize keeps its width the setup width, so hiding it frees exactly that.
-        ImGui.TableSetupColumn(Strings.ColumnExpansion, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, expansionColumn);
-        ImGui.TableSetupColumn(Strings.ColumnRewards, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoSort, rewardsColumn);
+        // The job column: icon, gap and "DoH/DoL" (never under its 76 px budget); narrowed, its icon alone (and its header).
+        var jobIcon = MathF.Min(UiMetrics.Icon(JobIconSide), rowContent);
+        var jobHeader = HeaderFloor(Strings.ColumnJob, sortable: false);
+        var jobColumn = MathF.Max(MathF.Max(UiMetrics.Px(LayoutBudgets.JobColumnLogical), jobIcon + UiMetrics.Px(JobIconGap) + ImGui.CalcTextSize(Strings.JobDohDol).X), jobHeader);
+        var jobIconColumn = MathF.Max(jobIcon, jobHeader);
+
+        // The column plan, from the table's width (its window less the scrollbar when the rows overflow). ImGui adds the
+        // cell padding either side of a column's content width, and the border between columns.
+        var overhead = style.CellPadding.X * 2f + 1f;
+        var available = ImGui.GetWindowWidth() - (ImGui.GetScrollMaxY() > 0f ? style.ScrollbarSize : 0f);
+        var widths = new QuestTableWidths(glyphColumn, levelColumn, jobIconColumn, jobColumn, StateWordWidth(), expansionColumn, rewardsColumn, overhead, UiMetrics.Px(1f));
+        var sortedWasHidden = SortColumnAutoHidden();
+        plan = TableGeometry.PlanQuestTable(available, widths, playerHidden, plan, planned ? lastVisible : [], planSpecs, planVisible, planWidths);
+        planned = true;
+        Array.Copy(planVisible, lastVisible, ColumnCount);
+        for (var i = 0; i < ColumnCount; i++)
+        {
+            autoHidden[i] = !planVisible[i] && !playerHidden[i];
+        }
+
+        // Name is the one ImGui stretch column: it takes what the fixed columns leave. Every other column is fixed and
+        // NoResize, so ImGui lays it out at the width given here each frame (the plan's for Job and Status); a column the
+        // plan hides is Disabled, which ImGui neither saves nor lists in the header menu.
+        const ImGuiTableColumnFlags fixedFlags = ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize;
+        ImGui.TableSetupColumn(Strings.ColumnGlyph, fixedFlags | ImGuiTableColumnFlags.NoHide | ImGuiTableColumnFlags.NoHeaderLabel, glyphColumn);
+        ImGui.TableSetupColumn(Strings.ColumnName, ImGuiTableColumnFlags.WidthStretch | ImGuiTableColumnFlags.NoHide, LayoutBudgets.TableNameWeight);
+        ImGui.TableSetupColumn(Strings.ColumnLevel, fixedFlags | Planned(Column.Level), levelColumn);
+        ImGui.TableSetupColumn(Strings.ColumnJob, fixedFlags | ImGuiTableColumnFlags.NoSort | Planned(Column.Job), plan.JobIconOnly ? jobIconColumn : jobColumn);
+        ImGui.TableSetupColumn(Strings.ColumnStatus, fixedFlags | ImGuiTableColumnFlags.NoSort | Planned(Column.Status), PlannedContent(Column.Status, TableGeometry.StatusColumnMin(widths) - overhead, overhead));
+        ImGui.TableSetupColumn(Strings.ColumnExpansion, fixedFlags | Planned(Column.Expansion), expansionColumn);
+        ImGui.TableSetupColumn(Strings.ColumnRewards, fixedFlags | ImGuiTableColumnFlags.NoSort | Planned(Column.Rewards), rewardsColumn);
         ImGui.TableSetupScrollFreeze(0, 1);
 
         // The persisted sort is written straight into the column state on the table's first frame: ImGui's own saved
         // settings (imgui.ini) would otherwise win over DefaultSort and hand their sort back through SpecsDirty. It is
-        // written again on the frame the sorted column comes back from a FitStatusColumn hide (ImGui dropped it).
-        if (headerLanguage != Localization.Loc.Version)
+        // written again on the frame the sorted column comes back from a plan hide (ImGui dropped its sort).
+        if (sortedWasHidden && !SortColumnAutoHidden())
         {
-            // A new language: the saved Level and Job widths are checked against the new headers (below).
-            headerLanguage = Localization.Loc.Version;
-            measureJobWidth = true;
+            restoreSort = true;
         }
 
         if (!tableInitialized || restoreSort)
         {
-            // Once per table init the Job column's saved width is checked against its widest label (below).
-            measureJobWidth |= !tableInitialized;
             tableInitialized = true;
             restoreSort = false;
             ApplyInitialSort(ui.Sort);
         }
 
-        // Players with saved widths from before T15 keep a 64 px Job column, which clips "DoH/DoL" beside the icon:
-        // the width measured on the table's first frame is raised to the minimum on the next (before the layout locks).
-        if (jobWidthFix > 0f)
-        {
-            ImGuiP.TableSetColumnWidth((int)Column.Job, jobWidthFix);
-            jobWidthFix = 0f;
-        }
+        DrawHeaders(SortedColumn(ui.Sort));
 
-        if (levelWidthFix > 0f)
+        // The player's own hidden columns, read after the layout: a column the plan did not hide is shown unless the
+        // player hid it from the header menu (the plan's hides never touch that flag).
+        for (var i = (int)Column.Level; i < ColumnCount; i++)
         {
-            ImGuiP.TableSetColumnWidth((int)Column.Level, levelWidthFix);
-            levelWidthFix = 0f;
-        }
-
-        // The two icon-derived widths are re-asserted every frame (imgui.ini restores font-tracked widths, not IconScale).
-        ImGuiP.TableSetColumnWidth((int)Column.Glyph, glyphColumn);
-        ImGuiP.TableSetColumnWidth((int)Column.Rewards, rewardsColumn);
-        var statusWidth = DrawHeaders(SortedColumn(ui.Sort), out var jobWidth, out var levelWidth);
-        if (measureJobWidth)
-        {
-            measureJobWidth = false;
-            var jobMin = MathF.Max(
-                MathF.Min(UiMetrics.Icon(JobIconSide), rowContent) + UiMetrics.Px(JobIconGap) + ImGui.CalcTextSize(Strings.JobDohDol).X,
-                HeaderFloor(Strings.ColumnJob, sortable: false));
-            if (jobWidth > 0f && jobWidth + 0.5f < jobMin)
+            if (!autoHidden[i])
             {
-                jobWidthFix = MathF.Max(jobMin, UiMetrics.Px(JobColumnWidth));
-            }
-
-            var levelMin = levelColumn;
-            if (levelWidth > 0f && levelWidth + 0.5f < levelMin)
-            {
-                levelWidthFix = levelColumn;
+                playerHidden[i] = !IsColumnEnabled((Column)i);
             }
         }
 
-        FitStatusColumn(statusWidth, expansionColumn, rewardsColumn);
+        // Two-line rows (design v4 §8.2): the name and the level on the first line, the status under it in the caption
+        // role, the moon centred on both.
+        float statusLine;
+        using (Typography.Caption())
+        {
+            statusLine = ImGui.GetTextLineHeight();
+        }
+
+        var lineGap = UiMetrics.Px(LayoutBudgets.TableTwoLineGapLogical);
+        var content = plan.TwoLine ? MathF.Max(rowContent, lineHeight + lineGap + statusLine) : rowContent;
+        var rowHeight = content + padY * 2f;
 
         ApplySortSpecs();
         ScrollToExternalSelection(rows, rowHeight);
@@ -403,7 +384,8 @@ public sealed class TablePane : IDisposable
             clipperCreated = true;
         }
 
-        // Rows can be taller than the text when icons are scaled up; the selectable fills the row and centres its label.
+        // Rows can be taller than the text when icons are scaled up; the selectable fills the row, and the name and the
+        // other cells centre themselves in it.
         // Dense keeps the zebra so long lists stay easy to track across columns; Comfortable trades it for a faint
         // separator under each row (ui-revamp §2.4), which with the hover fill keeps the eye on the row. Raw pushes in a
         // struct scope: nothing allocates per frame.
@@ -411,7 +393,7 @@ public sealed class TablePane : IDisposable
         ImGui.PushStyleVar(ImGuiStyleVar.SelectableTextAlign, new Vector2(0f, 0.5f));
         ImGui.PushStyleColor(ImGuiCol.TableRowBgAlt, dense ? Theme.ZebraRow : Vector4.Zero);
         using var rowStyle = new Theme.StyleScope(1, 1);
-        var layout = new RowLayout(lineHeight, rowContent, rowHeight, padY, glyphBox, glyphRadius, dense);
+        var layout = new RowLayout(lineHeight, content, rowHeight, padY, glyphBox, glyphRadius, dense, plan.TwoLine, statusLine, lineGap);
         var liftRow = hoveredRow;
         hoveredNext = null;
         moreFocusedNext = null;
@@ -429,12 +411,39 @@ public sealed class TablePane : IDisposable
         moreFocusedRow = moreFocusedNext;
     }
 
-    /// <summary>Per-frame row measurements, computed once per draw.</summary>
-    private readonly record struct RowLayout(float LineHeight, float RowContent, float RowHeight, float PadY, float GlyphBox, float GlyphRadius, bool Dense)
+    /// <summary>
+    /// Per-frame row measurements, computed once per draw. In two-line rows <paramref name="StatusLine"/> is the second
+    /// line's height (the caption role) and <paramref name="LineGap"/> the space between the lines.
+    /// </summary>
+    private readonly record struct RowLayout(float LineHeight, float RowContent, float RowHeight, float PadY, float GlyphBox, float GlyphRadius, bool Dense, bool TwoLine, float StatusLine, float LineGap)
     {
         /// <summary>Offset that centres a text line in the row.</summary>
         public float TextOffset => MathF.Max(0f, (RowContent - LineHeight) * 0.5f);
+
+        /// <summary>Offset of a two-line row's first line: the two lines centred in the row together.</summary>
+        public float FirstLineOffset => MathF.Max(0f, (RowContent - LineHeight - LineGap - StatusLine) * 0.5f);
+
+        /// <summary>Offset of the name's line: the first of a two-line row, else the row's middle.</summary>
+        public float NameOffset => TwoLine ? FirstLineOffset : TextOffset;
+
+        /// <summary>Offset of a two-line row's second line.</summary>
+        public float SecondLineOffset => FirstLineOffset + LineHeight + LineGap;
     }
+
+    /// <summary>The Disabled flag for a column the plan hides this frame.</summary>
+    private ImGuiTableColumnFlags Planned(Column column) => autoHidden[(int)column] ? ImGuiTableColumnFlags.Disabled : ImGuiTableColumnFlags.None;
+
+    /// <summary>A column's content width from the plan (its width less the cell overhead), or <paramref name="fallback"/> while it is hidden.</summary>
+    private float PlannedContent(Column column, float fallback, float overhead) =>
+        planVisible[(int)column] && planWidths[(int)column] > overhead ? planWidths[(int)column] - overhead : fallback;
+
+    /// <summary>Whether the persisted sort is on a column the plan hides this frame (ImGui drops a hidden column's sort).</summary>
+    private bool SortColumnAutoHidden() => ui.Sort.Column switch
+    {
+        SortColumn.Level => autoHidden[(int)Column.Level],
+        SortColumn.Expansion => autoHidden[(int)Column.Expansion],
+        _ => false,
+    };
 
     /// <summary>Moves the cursor down so a text line sits in the vertical middle of a row taller than the text.</summary>
     private static void CenterText(in RowLayout layout)
@@ -457,13 +466,10 @@ public sealed class TablePane : IDisposable
     /// <summary>
     /// What TableHeadersRow does, one header at a time, so each can carry a tooltip. Labels are in the secondary tone
     /// on the raised fill; the sorted column's label and its arrow are in the primary text colour (a sort is not a call
-    /// to action, so never gold). Returns the Status column's laid-out width (0 when hidden).
+    /// to action, so never gold).
     /// </summary>
-    private static float DrawHeaders(int sortedColumn, out float jobWidth, out float levelWidth)
+    private static void DrawHeaders(int sortedColumn)
     {
-        var statusWidth = 0f;
-        jobWidth = 0f;
-        levelWidth = 0f;
         var s = Theme.Surface;
 
         // Header labels are captions (ui-revamp §4.2): 0.85× the body, never under 12 px, in the caption game font.
@@ -476,19 +482,6 @@ public sealed class TablePane : IDisposable
                 continue;
             }
 
-            if (i == (int)Column.Status)
-            {
-                statusWidth = ImGui.GetContentRegionAvail().X;
-            }
-            else if (i == (int)Column.Job)
-            {
-                jobWidth = ImGui.GetContentRegionAvail().X;
-            }
-            else if (i == (int)Column.Level)
-            {
-                levelWidth = ImGui.GetContentRegionAvail().X;
-            }
-
             ImGui.PushID(i);
             ImGui.PushStyleColor(ImGuiCol.Text, i == sortedColumn ? s.Text : s.TextSecondary);
             ImGui.TableHeader(HeaderLabels[i]);
@@ -499,8 +492,6 @@ public sealed class TablePane : IDisposable
                 UiMetrics.Tooltip(HeaderTooltips[i]);
             }
         }
-
-        return statusWidth;
     }
 
     /// <summary>The column index the persisted sort puts its arrow on, or -1 for journal order.</summary>
@@ -512,105 +503,6 @@ public sealed class TablePane : IDisposable
         SortColumn.Expansion => (int)Column.Expansion,
         _ => -1,
     };
-
-    /// <summary>
-    /// Keeps the Status column at least <see cref="StatusMinWidth"/> wide: when the laid-out width falls short, Rewards
-    /// is hidden first, then Expansion; each comes back, Expansion first, once Status would still hold the minimum
-    /// after giving back what the hide gained (measured on the frame the hide took effect, never less than the
-    /// column's setup width, so the two cannot alternate). The column the table is sorted by is never hidden here,
-    /// since ImGui drops the sort of a hidden column. A column the player hid or re-showed from the header menu is
-    /// theirs: only the columns this hid are re-shown, and any column the player brings back (a disabled-to-enabled
-    /// step this did not request) suspends the fit until Status is wide enough on its own.
-    /// </summary>
-    private void FitStatusColumn(float statusWidth, float expansionWidth, float rewardsWidth)
-    {
-        if (statusWidth <= 0f)
-        {
-            return;
-        }
-
-        var min = StatusMin();
-        var padding = ImGui.GetStyle().CellPadding.X * 2f;
-        var rewardsEnabled = IsColumnEnabled(Column.Rewards);
-        var expansionEnabled = IsColumnEnabled(Column.Expansion);
-
-        if (measureGainFor is { } hidden)
-        {
-            var measured = statusWidth - widthBeforeHide;
-            if (hidden == Column.Rewards)
-            {
-                rewardsGain = MathF.Max(measured, rewardsWidth + padding);
-            }
-            else
-            {
-                expansionGain = MathF.Max(measured, expansionWidth + padding);
-            }
-
-            measureGainFor = null;
-        }
-
-        var rewardsBack = lastRewardsEnabled == false && rewardsEnabled;
-        var expansionBack = lastExpansionEnabled == false && expansionEnabled;
-        lastRewardsEnabled = rewardsEnabled;
-        lastExpansionEnabled = expansionEnabled;
-        if ((rewardsBack || expansionBack) && !fitReshowing)
-        {
-            if (expansionBack && expansionAutoHidden && ui.Sort.Column == SortColumn.Expansion)
-            {
-                restoreSort = true;
-            }
-
-            rewardsAutoHidden &= !rewardsBack;
-            expansionAutoHidden &= !expansionBack;
-            fitSuspended = true;
-        }
-
-        fitReshowing = false;
-
-        if (statusWidth < min)
-        {
-            if (fitSuspended)
-            {
-                return;
-            }
-
-            if (rewardsEnabled)
-            {
-                Hide(Column.Rewards, statusWidth);
-                rewardsAutoHidden = true;
-            }
-            else if (expansionEnabled && ui.Sort.Column != SortColumn.Expansion)
-            {
-                Hide(Column.Expansion, statusWidth);
-                expansionAutoHidden = true;
-            }
-
-            return;
-        }
-
-        fitSuspended = false;
-        if (expansionAutoHidden && statusWidth - expansionGain >= min)
-        {
-            ImGui.TableSetColumnEnabled((int)Column.Expansion, true);
-            expansionAutoHidden = false;
-            fitReshowing = true;
-            restoreSort = ui.Sort.Column == SortColumn.Expansion;
-        }
-        else if (rewardsAutoHidden && !expansionAutoHidden && statusWidth - rewardsGain >= min)
-        {
-            ImGui.TableSetColumnEnabled((int)Column.Rewards, true);
-            rewardsAutoHidden = false;
-            fitReshowing = true;
-        }
-    }
-
-    /// <summary>Hides a column for the next frame and arms the measurement of what Status gains from it.</summary>
-    private void Hide(Column column, float statusWidth)
-    {
-        ImGui.TableSetColumnEnabled((int)column, false);
-        measureGainFor = column;
-        widthBeforeHide = statusWidth;
-    }
 
     private static bool IsColumnEnabled(Column column) =>
         (ImGui.TableGetColumnFlags((int)column) & ImGuiTableColumnFlags.IsEnabled) != 0;
@@ -654,15 +546,17 @@ public sealed class TablePane : IDisposable
         MoonGlyph.Draw(dl, new Vector2(cell.X + lead + layout.GlyphBox * 0.5f, centerY), layout.GlyphRadius, state);
 
         // Name column carries the row-wide selectable and the context menu. Its Header colours are transparent so it
-        // paints neither hover nor selection over the fills above (keyboard focus still gets ImGui's nav frame).
+        // paints neither hover nor selection over the fills above (keyboard focus still gets ImGui's nav frame). The
+        // name itself is drawn below, ellipsised in the room the "…" button and the badges leave.
         ImGui.TableNextColumn();
         var nameCellMin = ImGui.GetCursorScreenPos();
         var nameCellWidth = ImGui.GetContentRegionAvail().X;
         var name = runner.Spoilers.DisplayName(quest);
+        var nameInk = ImGui.GetColorU32(ImGuiCol.Text);
         ImGui.PushStyleColor(ImGuiCol.Header, Vector4.Zero);
         ImGui.PushStyleColor(ImGuiCol.HeaderHovered, Vector4.Zero);
         ImGui.PushStyleColor(ImGuiCol.HeaderActive, Vector4.Zero);
-        var clicked = ImGui.Selectable(name, selected, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowDoubleClick | ImGuiSelectableFlags.AllowItemOverlap, new Vector2(0f, layout.RowContent));
+        var clicked = ImGui.Selectable("##row", selected, ImGuiSelectableFlags.SpanAllColumns | ImGuiSelectableFlags.AllowDoubleClick | ImGuiSelectableFlags.AllowItemOverlap, new Vector2(0f, layout.RowContent));
         ImGui.PopStyleColor(3);
 
         // The selectable spans the table's width: its rectangle gives the row's left and right edges.
@@ -733,13 +627,14 @@ public sealed class TablePane : IDisposable
             hoveredNext = quest.RowId;
         }
 
-        if (mouseInRow || rowFocused || moreFocusedRow == quest.RowId)
+        // Sized to the row's content, not its padded height: a button reaching into the cell padding would push the
+        // cell's CursorMaxPos down and make the hovered or focused row taller.
+        var moreShown = mouseInRow || rowFocused || moreFocusedRow == quest.RowId;
+        var moreSize = MathF.Min(layout.RowContent, UiMetrics.MinTarget);
+        if (moreShown)
         {
-            // Sized to the row's content, not its padded height: a button reaching into the cell padding would push
-            // the cell's CursorMaxPos down and make the hovered or focused row taller.
-            var size = MathF.Min(layout.RowContent, UiMetrics.MinTarget);
-            var moreMin = new Vector2(nameCellMin.X + nameCellWidth - size, nameCellMin.Y + ((layout.RowContent - size) * 0.5f));
-            if (Keyboard.MoreButton("##more", RowMenuId, moreMin, size))
+            var moreMin = new Vector2(nameCellMin.X + nameCellWidth - moreSize, nameCellMin.Y + ((layout.RowContent - moreSize) * 0.5f));
+            if (Keyboard.MoreButton("##more", RowMenuId, moreMin, moreSize))
             {
                 SelectFromTable(quest.RowId);
             }
@@ -750,21 +645,38 @@ public sealed class TablePane : IDisposable
             }
         }
 
+        var nameLine = DrawNameLine(quest, name, nameInk, nameCellMin, nameCellWidth, moreShown, moreSize, in layout);
+
+        // Two-line rows: the status on the second line, from the name's left edge to the cell's end (short of the "…"
+        // while it shows, since the button sits on both lines).
+        var statusCut = false;
+        var secondLineY = nameCellMin.Y + layout.SecondLineOffset;
+        if (layout.TwoLine)
+        {
+            var gap = UiMetrics.Px(StoryBadgeGap);
+            ImGui.SetCursorScreenPos(new Vector2(nameCellMin.X, secondLineY));
+            using var caption = Typography.Caption();
+            statusCut = DrawStatus(row.Status, hasSnapshot, nameCellWidth - (moreShown ? moreSize + gap : 0f));
+        }
+
         // The selectable spans every column; the banner tooltip belongs to the name cell only, the stripe's to the
         // row's left edge, so the reward and job icons keep their own tooltips.
-        var badge = runner.Stories.Contains(quest.RowId)
-            ? DrawStoryBadge(ImGui.GetWindowDrawList(), nameCellMin, nameCellWidth, layout.RowContent, name)
-            : default;
-        var mouseX = ImGui.GetMousePos().X;
+        var mouse = ImGui.GetMousePos();
+        var mouseX = mouse.X;
         if (rowHovered)
         {
             if (mouseX >= rowMin.X && mouseX <= rowMin.X + MathF.Max(lead, StripeThickness()))
             {
                 UiMetrics.Tooltip(StripePattern.Tooltip(state, quest.RepeatInterval));
             }
-            else if (badge.Y > 0f && mouseX >= badge.X && mouseX <= badge.X + badge.Y)
+            else if (nameLine.Y > 0f && mouseX >= nameLine.X && mouseX <= nameLine.X + nameLine.Y && (!layout.TwoLine || mouse.Y < secondLineY))
             {
                 UiMetrics.Tooltip(runner.StoryBadgeText(quest.RowId));
+            }
+            else if (statusCut && mouse.Y >= secondLineY && mouseX >= nameCellMin.X && mouseX <= nameCellMin.X + nameCellWidth)
+            {
+                // The state word is never cut; when the reason after it was ellipsised, the whole line is its tooltip.
+                UiMetrics.Tooltip(row.Status);
             }
             else if (mouseX >= nameCellMin.X && mouseX <= nameCellMin.X + nameCellWidth)
             {
@@ -772,30 +684,96 @@ public sealed class TablePane : IDisposable
             }
         }
 
-        ImGui.TableNextColumn();
-        DrawPill(runner.LevelText(quest.DisplayLevel), UiMetrics.Px(LevelPillMinWidth), UiMetrics.Px(PillPadX), s.TextSecondary, in layout);
-
-        ImGui.TableNextColumn();
-        DrawJob(runner.Job(quest), rowHovered, mouseX, in layout);
-
-        ImGui.TableNextColumn();
-        CenterText(in layout);
-        var statusCellMin = ImGui.GetCursorScreenPos();
-        var statusCellWidth = ImGui.GetContentRegionAvail().X;
-        var cut = DrawStatus(row.Status, hasSnapshot, statusCellWidth);
-
-        // The state word is never cut; when the reason after it was ellipsised, the whole line is the cell's tooltip.
-        if (cut && rowHovered && mouseX >= statusCellMin.X && mouseX <= statusCellMin.X + statusCellWidth)
+        // The other cells, each only when its column shows (the plan hides columns by disabling them).
+        if (ImGui.TableNextColumn())
         {
-            UiMetrics.Tooltip(row.Status);
+            DrawPill(runner.LevelText(quest.DisplayLevel), UiMetrics.Px(LevelPillMinWidth), UiMetrics.Px(PillPadX), s.TextSecondary, in layout);
         }
 
-        ImGui.TableNextColumn();
-        DrawPill(runner.ExpansionShort(quest.Expansion), 0f, UiMetrics.Px(ExpansionPillPadX), s.TextTertiary, in layout);
+        if (ImGui.TableNextColumn())
+        {
+            DrawJob(runner.Job(quest), plan.JobIconOnly, rowHovered, mouseX, in layout);
+        }
 
-        ImGui.TableNextColumn();
-        DrawRewardIcons(quest, in layout);
+        if (ImGui.TableNextColumn())
+        {
+            CenterText(in layout);
+            var statusCellMin = ImGui.GetCursorScreenPos();
+            var statusCellWidth = ImGui.GetContentRegionAvail().X;
+            var cut = DrawStatus(row.Status, hasSnapshot, statusCellWidth);
+
+            // The state word is never cut; when the reason after it was ellipsised, the whole line is the cell's tooltip.
+            if (cut && rowHovered && mouseX >= statusCellMin.X && mouseX <= statusCellMin.X + statusCellWidth)
+            {
+                UiMetrics.Tooltip(row.Status);
+            }
+        }
+
+        if (ImGui.TableNextColumn())
+        {
+            DrawPill(runner.ExpansionShort(quest.Expansion), 0f, UiMetrics.Px(ExpansionPillPadX), s.TextTertiary, in layout);
+        }
+
+        if (ImGui.TableNextColumn())
+        {
+            DrawRewardIcons(quest, in layout);
+        }
+
         ImGui.PopID();
+    }
+
+    /// <summary>
+    /// The name's line in the name cell, draw list only so the row's selectable stays the hovered item: the name,
+    /// ellipsised in the room the rest of the line leaves (its full name is in the hover card), then a story
+    /// sidequest's book badge. The rest of the line is the "…" button while it shows (one-line rows: the name gives
+    /// way to it rather than run under it) or, in two-line rows, the level pill at the right end, whose place the
+    /// "…" takes while it shows so the name never moves. Returns the badge's left x and width (0 without a badge).
+    /// </summary>
+    private Vector2 DrawNameLine(QuestRecord quest, string name, uint ink, Vector2 cellMin, float cellWidth, bool moreShown, float moreSize, in RowLayout layout)
+    {
+        var dl = ImGui.GetWindowDrawList();
+        var gap = UiMetrics.Px(StoryBadgeGap);
+        var lineY = cellMin.Y + layout.NameOffset;
+        var reserve = moreShown ? moreSize + gap : 0f;
+        if (layout.TwoLine && !playerHidden[(int)Column.Level])
+        {
+            var level = runner.LevelText(quest.DisplayLevel);
+            if (level.Length > 0)
+            {
+                var pill = PillSize(level, UiMetrics.Px(LevelPillMinWidth), UiMetrics.Px(PillPadX), layout.LineHeight);
+                reserve = MathF.Max(reserve, pill.X + gap);
+                if (!moreShown)
+                {
+                    var pillMin = new Vector2(cellMin.X + cellWidth - pill.X, lineY + MathF.Round((layout.LineHeight - pill.Y) * 0.5f));
+                    PillAt(dl, pillMin, pill, level, Theme.Surface.TextSecondary);
+                }
+            }
+        }
+
+        var story = runner.Stories.Contains(quest.RowId);
+        var badgeSize = Vector2.Zero;
+        if (story)
+        {
+            ImGui.PushFont(UiBuilder.IconFont);
+            badgeSize = ImGui.CalcTextSize(StoryBadgeIcon);
+            ImGui.PopFont();
+            reserve += badgeSize.X + gap;
+        }
+
+        var room = MathF.Max(0f, cellWidth - reserve);
+        var nameWidth = ImGui.CalcTextSize(name).X;
+        EllipsisAt(dl, new Vector2(cellMin.X, lineY), room, name, ink, nameWidth);
+        if (!story)
+        {
+            return default;
+        }
+
+        // The book badge in Dusk just after the name, or after the ellipsis when the name was cut.
+        var x = cellMin.X + MathF.Min(nameWidth, room) + gap;
+        ImGui.PushFont(UiBuilder.IconFont);
+        dl.AddText(new Vector2(x, lineY + (layout.LineHeight - badgeSize.Y) * 0.5f), Theme.U32(Theme.Surface.TextTertiary), StoryBadgeIcon);
+        ImGui.PopFont();
+        return new Vector2(x, badgeSize.X);
     }
 
     /// <summary>
@@ -902,38 +880,65 @@ public sealed class TablePane : IDisposable
 
         var pos = ImGui.GetCursorScreenPos();
         var avail = ImGui.GetContentRegionAvail().X;
+        var size = PillSize(text, minWidth, padX, layout.RowContent);
+        size.X = MathF.Max(1f, MathF.Min(avail, size.X));
+        ImGui.Dummy(new Vector2(size.X, layout.RowContent));
+        var min = new Vector2(pos.X, pos.Y + MathF.Round((layout.RowContent - size.Y) * 0.5f));
+        PillAt(ImGui.GetWindowDrawList(), min, size, text, ink);
+    }
+
+    /// <summary>A pill's size for <paramref name="text"/> in the caption role: 16 px tall (never over <paramref name="maxHeight"/>), padded, at least <paramref name="minWidth"/> wide.</summary>
+    private static Vector2 PillSize(string text, float minWidth, float padX, float maxHeight)
+    {
         using var caption = Typography.Caption();
         var textSize = ImGui.CalcTextSize(text);
-        var height = MathF.Min(layout.RowContent, MathF.Max(UiMetrics.Px(PillHeight), textSize.Y + UiMetrics.Px(2f)));
-        var width = MathF.Max(1f, MathF.Min(avail, MathF.Max(minWidth, textSize.X + padX * 2f)));
-        ImGui.Dummy(new Vector2(width, layout.RowContent));
-        var s = Theme.Surface;
-        var min = new Vector2(pos.X, pos.Y + MathF.Round((layout.RowContent - height) * 0.5f));
-        Chrome.PillAt(ImGui.GetWindowDrawList(), min, new Vector2(width, height), text, Theme.U32(s.Sunken), 0u, Theme.U32(ink));
+        var height = MathF.Min(maxHeight, MathF.Max(UiMetrics.Px(PillHeight), textSize.Y + UiMetrics.Px(2f)));
+        return new Vector2(MathF.Max(minWidth, textSize.X + padX * 2f), height);
+    }
+
+    /// <summary>A pill at <paramref name="min"/>: the palette's sunken fill, the text in the caption role in <paramref name="ink"/>.</summary>
+    private static void PillAt(ImDrawListPtr dl, Vector2 min, Vector2 size, string text, Vector4 ink)
+    {
+        using var caption = Typography.Caption();
+        Chrome.PillAt(dl, min, size, text, Theme.U32(Theme.Surface.Sunken), 0u, Theme.U32(ink));
     }
 
     /// <summary>
     /// The Job cell: a quest limited to one job shows the job's game icon (16 px at scale 1) before its abbreviation;
-    /// groups and "Any" keep the icon's slot so the labels line up. Hovering it names the job, or the group.
+    /// groups and "Any" keep the icon's slot so the labels line up. Hovering it names the job, or the group. When the
+    /// column plan narrows the column to its icon (<paramref name="iconOnly"/>, <see cref="QuestTablePlan.JobIconOnly"/>)
+    /// a job shows its icon alone and a group its label, ellipsised in the cell.
     /// </summary>
-    private void DrawJob(JobLabel job, bool rowHovered, float mouseX, in RowLayout layout)
+    private void DrawJob(JobLabel job, bool iconOnly, bool rowHovered, float mouseX, in RowLayout layout)
     {
         var pos = ImGui.GetCursorScreenPos();
+        var cellWidth = ImGui.GetContentRegionAvail().X;
         var icon = MathF.Min(UiMetrics.Icon(JobIconSide), layout.RowContent);
         var gap = UiMetrics.Px(JobIconGap);
         var textSize = ImGui.CalcTextSize(job.Short);
-        var width = icon + gap + textSize.X;
+        var width = iconOnly ? MathF.Max(1f, cellWidth) : icon + gap + textSize.X;
         ImGui.Dummy(new Vector2(width, layout.RowContent));
 
         var dl = ImGui.GetWindowDrawList();
+        var ink = Theme.U32(Theme.Surface.TextSecondary);
         if (job.IconId != 0)
         {
             var iconMin = new Vector2(pos.X, pos.Y + MathF.Round((layout.RowContent - icon) * 0.5f));
             var wrap = textures.GetFromGameIcon(new GameIconLookup(job.IconId)).GetWrapOrEmpty();
             dl.AddImage(wrap.Handle, iconMin, iconMin + new Vector2(icon, icon));
+            if (!iconOnly)
+            {
+                dl.AddText(new Vector2(pos.X + icon + gap, pos.Y + layout.TextOffset), ink, job.Short);
+            }
         }
-
-        dl.AddText(new Vector2(pos.X + icon + gap, pos.Y + layout.TextOffset), Theme.U32(Theme.Surface.TextSecondary), job.Short);
+        else if (iconOnly)
+        {
+            EllipsisAt(dl, new Vector2(pos.X, pos.Y + layout.TextOffset), cellWidth, job.Short, ink, textSize.X);
+        }
+        else
+        {
+            dl.AddText(new Vector2(pos.X + icon + gap, pos.Y + layout.TextOffset), ink, job.Short);
+        }
 
         if (rowHovered && job.Name.Length > 0 && mouseX >= pos.X && mouseX <= pos.X + width)
         {
@@ -942,30 +947,68 @@ public sealed class TablePane : IDisposable
     }
 
     /// <summary>
-    /// The book badge of a story sidequest in Dusk, just after the name, or at the cell's right edge when the name
-    /// fills it. Draw list only, so the row's selectable stays the hovered item. Returns the badge's left x and width.
-    /// </summary>
-    private static Vector2 DrawStoryBadge(ImDrawListPtr dl, Vector2 cellMin, float cellWidth, float rowContent, string name)
-    {
-        var afterName = cellMin.X + ImGui.CalcTextSize(name).X + UiMetrics.Px(StoryBadgeGap);
-        ImGui.PushFont(UiBuilder.IconFont);
-        var size = ImGui.CalcTextSize(StoryBadgeIcon);
-        var x = MathF.Max(cellMin.X, MathF.Min(afterName, cellMin.X + cellWidth - size.X));
-        dl.AddText(new Vector2(x, cellMin.Y + (rowContent - size.Y) * 0.5f), Theme.U32(Theme.Surface.TextTertiary), StoryBadgeIcon);
-        ImGui.PopFont();
-        return new Vector2(x, size.X);
-    }
-
-    /// <summary>
     /// Status text (P1): the state word first in the primary text colour, then the reason after the separator in the
     /// secondary tone (Mist: Dusk fails AA on a hovered row), spans only, no new strings. The state word is never cut
     /// short; a reason too long for the cell is ellipsised in the room the state word leaves. In browse mode (no
-    /// snapshot) the whole line is in the tertiary tone. Returns whether the reason was cut.
+    /// snapshot) the whole line is in the tertiary tone. Returns whether the reason was cut. The rule is
+    /// <see cref="Chrome.StatusText"/>'s, drawn with raw colour pushes so a row allocates nothing.
     /// </summary>
     private static bool DrawStatus(string text, bool hasSnapshot, float cellWidth)
     {
         var s = Theme.Surface;
-        return Chrome.StatusText(text, cellWidth, hasSnapshot ? s.Text : s.TextTertiary, hasSnapshot ? s.TextSecondary : s.TextTertiary, tooltip: false);
+        var split = TableGeometry.StateWordLength(text);
+        var stateWord = text.AsSpan(0, split);
+        ImGui.PushStyleColor(ImGuiCol.Text, hasSnapshot ? s.Text : s.TextTertiary);
+        ImGui.TextUnformatted(stateWord);
+        ImGui.PopStyleColor();
+        if (split >= text.Length)
+        {
+            return false;
+        }
+
+        var reason = text.AsSpan(split);
+        var reasonInk = hasSnapshot ? s.TextSecondary : s.TextTertiary;
+        var room = TableGeometry.ReasonWidth(cellWidth, ImGui.CalcTextSize(stateWord).X);
+        var reasonWidth = ImGui.CalcTextSize(reason).X;
+        ImGui.SameLine(0f, 0f);
+        if (!TableGeometry.ReasonNeedsEllipsis(reasonWidth, room))
+        {
+            ImGui.PushStyleColor(ImGuiCol.Text, reasonInk);
+            ImGui.TextUnformatted(reason);
+            ImGui.PopStyleColor();
+            return false;
+        }
+
+        var pos = ImGui.GetCursorScreenPos();
+        ImGui.Dummy(new Vector2(room, ImGui.GetTextLineHeight()));
+        EllipsisAt(ImGui.GetWindowDrawList(), pos, room, reason, ImGui.GetColorU32(reasonInk), reasonWidth);
+        return true;
+    }
+
+    /// <summary>
+    /// <paramref name="text"/> on <paramref name="dl"/> at <paramref name="pos"/> within <paramref name="width"/>, ending
+    /// in an ellipsis when it is longer (<see cref="Chrome.EllipsisTextAt(ImDrawListPtr, Vector2, float, ReadOnlySpan{char}, uint, float)"/>
+    /// with a raw colour push, so a row allocates nothing). Returns whether the text was cut.
+    /// </summary>
+    private static bool EllipsisAt(ImDrawListPtr dl, Vector2 pos, float width, ReadOnlySpan<char> text, uint color, float textWidth)
+    {
+        if (text.IsEmpty || !(width > 0f))
+        {
+            return !text.IsEmpty;
+        }
+
+        if (textWidth <= width + 0.5f)
+        {
+            dl.AddText(pos, color, text);
+            return false;
+        }
+
+        var max = new Vector2(pos.X + width, pos.Y + ImGui.GetTextLineHeight());
+        Vector2? size = new Vector2(textWidth, max.Y - pos.Y);
+        ImGui.PushStyleColor(ImGuiCol.Text, color);
+        ImGuiP.RenderTextEllipsis(dl, in pos, in max, max.X, max.X, text, in size);
+        ImGui.PopStyleColor();
+        return true;
     }
 
     /// <summary>
@@ -1199,9 +1242,9 @@ public sealed class TablePane : IDisposable
             return;
         }
 
-        // ImGui clears the sort of a column that is disabled and reports it as no specs: while FitStatusColumn holds
+        // ImGui clears the sort of a column that is disabled and reports it as no specs: while the column plan holds
         // the sorted column hidden that is its doing, not a header click, and the persisted sort stands.
-        if (specs.SpecsCount == 0 && expansionAutoHidden && ui.Sort.Column == SortColumn.Expansion)
+        if (specs.SpecsCount == 0 && SortColumnAutoHidden())
         {
             specs.SpecsDirty = false;
             return;
