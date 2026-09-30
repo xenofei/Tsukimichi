@@ -588,7 +588,7 @@ static partial class Strings
             "Ctrl+F",
             "Esc",
             "Menu key, Shift+F10, …",
-            "Ctrl+1 to 4, F, Enter, P",
+            "Ctrl+1 to 5, F, Enter, P",
         ];
 
         public static readonly string[] CommandMeanings =
@@ -609,7 +609,7 @@ static partial class Strings
             "put the caret in the search, while the window has focus",
             "close the open menu or the filter panel; with neither open, close the window",
             "open the focused row's menu in the quest table and the Moonlit list, the same menu a right-click opens; the … button at a row's right end (shown on hover or focus) opens it with a left click",
-            "off unless turned on in Settings › Keyboard: switch tabs, flag the selected quest's giver, show it in the Journal, pin it. The game sees these keys too: Ctrl+1 to 4 are hotbar 2 by default",
+            "off unless turned on in Settings › Keyboard: switch tabs, flag the selected quest's giver, show it in the Journal, pin it. The game sees these keys too: Ctrl+1 to 5 are hotbar 2 by default",
         ];
 
         // ---- Why my counts differ from the journal ----
