@@ -782,7 +782,7 @@ public sealed class TablePane : IDisposable
         CenterText(in layout);
         var statusCellMin = ImGui.GetCursorScreenPos();
         var statusCellWidth = ImGui.GetContentRegionAvail().X;
-        var cut = DrawStatus(row.Status, hasSnapshot, statusCellWidth);
+        var cut = DrawStatus(row.Status, row.State, hasSnapshot, statusCellWidth);
 
         // The state word is never cut; when the reason after it was ellipsised, the whole line is the cell's tooltip.
         if (cut && rowHovered && mouseX >= statusCellMin.X && mouseX <= statusCellMin.X + statusCellWidth)
@@ -960,12 +960,14 @@ public sealed class TablePane : IDisposable
     /// Status text (P1): the state word first in the primary text colour, then the reason after the separator in the
     /// secondary tone (Mist: Dusk fails AA on a hovered row), spans only, no new strings. The state word is never cut
     /// short; a reason too long for the cell is ellipsised in the room the state word leaves. In browse mode (no
-    /// snapshot) the whole line is in the tertiary tone. Returns whether the reason was cut.
+    /// snapshot) the whole line is in the tertiary tone. The reason of a Blocked or Locked out quest, a requirement the
+    /// character does not meet, is in the unmet tone the detail pane uses (L8). Returns whether the reason was cut.
     /// </summary>
-    private static bool DrawStatus(string text, bool hasSnapshot, float cellWidth)
+    private static bool DrawStatus(string text, QuestState state, bool hasSnapshot, float cellWidth)
     {
         var s = Theme.Surface;
-        return Chrome.StatusText(text, cellWidth, hasSnapshot ? s.Text : s.TextTertiary, hasSnapshot ? s.TextSecondary : s.TextTertiary, tooltip: false);
+        var reason = !hasSnapshot ? s.TextTertiary : state is QuestState.Blocked or QuestState.Foreclosed ? Theme.EclipseText : s.TextSecondary;
+        return Chrome.StatusText(text, cellWidth, hasSnapshot ? s.Text : s.TextTertiary, reason, tooltip: false);
     }
 
     /// <summary>

@@ -642,6 +642,35 @@ public sealed class PathChart
 
     private float ScrollbarSize => MathF.Max(4f, Px(6f));
 
+    // The rows' width this frame, for the room a name has (L5: names end in an ellipsis instead of being clipped).
+    private float drawWidth;
+
+    /// <summary>The room for a step's or the target's name, from its label column to the chart's right edge.</summary>
+    private float StepNameRoom => MathF.Max(1f, drawWidth - labelX - Px(4f));
+
+    /// <summary>The room for an unlock's name, from its label column to the chart's right edge.</summary>
+    private float UnlockNameRoom => MathF.Max(1f, drawWidth - ghostLabelX - Px(4f));
+
+    /// <summary>Whether <paramref name="name"/> is cut short in <paramref name="room"/>, so its tooltip names it in full.</summary>
+    private static bool IsCut(string name, float room) => ImGui.CalcTextSize(name).X > room + 0.5f;
+
+    /// <summary>A row's tooltip with the full name first, for a name the row cut short: the name, the state, the detail.</summary>
+    private static void NameTooltip(string name, string state, string detail)
+    {
+        using var style = Theme.PushTooltip();
+        using var tooltip = ImRaii.Tooltip();
+        ImGui.PushFont(Dalamud.Interface.UiBuilder.DefaultFont);
+        UiMetrics.ApplyFontScale();
+        ImGui.TextUnformatted(name);
+        ImGui.TextDisabled(state);
+        if (detail.Length > 0)
+        {
+            ImGui.TextDisabled(detail);
+        }
+
+        ImGui.PopFont();
+    }
+
     private float DrawChild(float view)
     {
         if (scrollFrames > 0 && targetRow >= 0)
@@ -659,6 +688,7 @@ public sealed class PathChart
         var origin = ImGui.GetCursorScreenPos();
         var scrollY = ImGui.GetScrollY();
         var width = ImGui.GetContentRegionAvail().X;
+        drawWidth = width;
         var top = scrollY - Px(40f);
         var bottom = scrollY + view + Px(40f);
 
@@ -901,6 +931,10 @@ public sealed class PathChart
             case VKind.Bead:
                 x0 = MathF.Max(0f, threadX - row.NodeR - Px(2f));
                 break;
+            case VKind.Target when IsCut(stepNames[row.Item], StepNameRoom):
+                // Only for its tooltip: the target's name, cut short, is named in full on hover.
+                x0 = MathF.Max(0f, threadX - row.NodeR - Px(2f));
+                break;
             case VKind.Alternative:
             case VKind.Unlock:
             case VKind.UnlocksMore:
@@ -924,7 +958,7 @@ public sealed class PathChart
         ImGui.PopID();
         if (hovered)
         {
-            ImGui.SetMouseCursor(row.Kind is VKind.UnlocksMore or VKind.MoreAlternatives ? ImGuiMouseCursor.Arrow : ImGuiMouseCursor.Hand);
+            ImGui.SetMouseCursor(row.Kind is VKind.UnlocksMore or VKind.MoreAlternatives or VKind.Target ? ImGuiMouseCursor.Arrow : ImGuiMouseCursor.Hand);
         }
 
         var focused = ImGui.GetIO().NavVisible && ImGui.IsItemFocused();
@@ -947,7 +981,16 @@ public sealed class PathChart
         {
             case VKind.Step:
             case VKind.RunStep:
-                UiMetrics.Tooltip(Strings.StateTooltip(path[row.Item].State), stepDetails[row.Item]);
+            case VKind.Target:
+                if (IsCut(stepNames[row.Item], StepNameRoom))
+                {
+                    NameTooltip(stepNames[row.Item], Strings.StateTooltip(path[row.Item].State), stepDetails[row.Item]);
+                }
+                else
+                {
+                    UiMetrics.Tooltip(Strings.StateTooltip(path[row.Item].State), stepDetails[row.Item]);
+                }
+
                 break;
             case VKind.Bead:
                 var expanded = expandedRuns.Contains(RunKey(rows[row.Core]));
@@ -958,7 +1001,15 @@ public sealed class PathChart
                 break;
             case VKind.Unlock:
                 var unlock = unlocks[row.Item];
-                UiMetrics.Tooltip(Strings.StateTooltip(unlock.State), unlock.Detail);
+                if (IsCut(unlock.Name, UnlockNameRoom))
+                {
+                    NameTooltip(unlock.Name, Strings.StateTooltip(unlock.State), unlock.Detail);
+                }
+                else
+                {
+                    UiMetrics.Tooltip(Strings.StateTooltip(unlock.State), unlock.Detail);
+                }
+
                 break;
             case VKind.UnlocksMore when unlocksMoreTooltip is { Length: > 0 } names:
                 UiMetrics.Tooltip(names);
@@ -1035,7 +1086,7 @@ public sealed class PathChart
 
                 MoonGlyph.Draw(dl, node, r, step.State);
                 var color = hovered ? s.Text : row.Kind == VKind.RunStep ? s.TextSecondary : NameColor(step.State);
-                dl.AddText(font, fontSize, new Vector2(origin.X + labelX, textY), Theme.U32(color), stepNames[row.Item]);
+                Chrome.EllipsisTextAt(dl, new Vector2(origin.X + labelX, textY), StepNameRoom, stepNames[row.Item], Theme.U32(color));
                 break;
             }
 
@@ -1141,11 +1192,24 @@ public sealed class PathChart
 
         MoonGlyph.Draw(dl, node, r, path[row.Item].State);
 
-        // The name in Silver, two-pass bold.
+        // The name in Silver, two-pass bold, ending in an ellipsis when the chart is too narrow for it (L5); a target
+        // the character cannot take yet wears the unmet mark after its name, as in the detail pane and table (L8).
         var pos = new Vector2(origin.X + labelX, textY);
         var ink = Theme.U32(s.Text);
-        dl.AddText(font, fontSize, pos, ink, stepNames[row.Item]);
-        dl.AddText(font, fontSize, pos + new Vector2(MathF.Max(1f, Px(0.6f)), 0f), ink, stepNames[row.Item]);
+        var name = stepNames[row.Item];
+        var state = path[row.Item].State;
+        var mark = UiMetrics.RequirementMarkSize;
+        var unmet = state is QuestState.Blocked or QuestState.Foreclosed;
+        var room = StepNameRoom - (unmet ? mark + Px(4f) : 0f);
+        var bold = MathF.Max(1f, Px(0.6f));
+        var nameWidth = ImGui.CalcTextSize(name).X;
+        Chrome.EllipsisTextAt(dl, pos, room - bold, name, ink, nameWidth);
+        Chrome.EllipsisTextAt(dl, pos + new Vector2(bold, 0f), room - bold, name, ink, nameWidth);
+        if (unmet && room > mark)
+        {
+            var x = pos.X + MathF.Min(nameWidth, room) + bold + Px(4f) + (mark * 0.5f);
+            Marks.Draw(dl, new Vector2(x, textY + (fontSize * 0.5f)), mark, Mark.Unmet);
+        }
     }
 
     private void DrawBead(ImDrawListPtr dl, Vector2 origin, VRow row, Vector2 node, bool hovered, ImFontPtr font, float captionSize, float captionY)
@@ -1231,7 +1295,7 @@ public sealed class PathChart
         }
 
         MoonGlyph.Draw(dl, node, r, unlock.State);
-        dl.AddText(font, fontSize, new Vector2(origin.X + ghostLabelX, textY), Theme.U32(hovered ? s.Text : NameColor(unlock.State)), unlock.Name);
+        Chrome.EllipsisTextAt(dl, new Vector2(origin.X + ghostLabelX, textY), UnlockNameRoom, unlock.Name, Theme.U32(hovered ? s.Text : NameColor(unlock.State)));
     }
 
     private void DrawJumpPill(ImDrawListPtr dl, Vector2 origin, float width, float view, float scrollY)

@@ -24,6 +24,12 @@ public enum Mark
 
     /// <summary>A character live in another game client (multibox, D11): a Moon ring around a small Moon dot, static.</summary>
     ElsewherePip,
+
+    /// <summary>
+    /// A requirement the character does not meet (feature plan v4 L8): an Eclipse cross, bolder than <see cref="Cross"/>,
+    /// so an unmet line reads apart from the quiet met ones.
+    /// </summary>
+    Unmet,
 }
 
 /// <summary>
@@ -65,6 +71,12 @@ public static class Marks
             case Mark.Cross:
                 if (keyline > 0f) Cross(dl, center, size, ground, stroke + 2f * keyline);
                 Cross(dl, center, size, palette.HighContrast ? Theme.U32(colors.Cross) : Theme.DuskU32, stroke);
+                break;
+
+            case Mark.Unmet:
+                var bold = stroke * 1.25f;
+                if (keyline > 0f) Cross(dl, center, size, ground, bold + 2f * keyline);
+                Cross(dl, center, size, palette.HighContrast ? Theme.U32(colors.Cross) : Theme.EclipseTextU32, bold);
                 break;
 
             case Mark.Unknown:
