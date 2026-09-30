@@ -204,6 +204,8 @@ public class ScaleMetricsTests
     [InlineData(RowDensity.Comfortable, 2f, 20.7f, 4f, 56f)]    // 4K: the host's global scale doubles the target
     [InlineData(RowDensity.Comfortable, 1f, 40f, 2f, 40f)]       // UiScale 1.6 + IconScale 2: content wins
     [InlineData((RowDensity)7, 1f, 16f, 2f, 28f)]                // an unknown value reads as Comfortable
+    [InlineData(RowDensity.Dense, 0.8f, 12f, 2f, 20f)]           // a global scale under 1 keeps the 24 px row (B4)
+    [InlineData(RowDensity.Comfortable, 0.5f, 12f, 2f, 20f)]
     public void Table_rows_follow_the_density_but_never_clip_their_content(RowDensity density, float global, float content, float padding, float expected)
     {
         Assert.Equal(expected, ScaleMetrics.TableRowContent(density, global, content, padding), 3);

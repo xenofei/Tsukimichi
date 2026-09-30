@@ -101,14 +101,18 @@ public static class ScaleMetrics
     /// <summary>Quest table row height in Dalamud-scaled pixels for each density (T12): Dense 24, Comfortable 32.</summary>
     public static float TableRowTarget(RowDensity density) => density == RowDensity.Dense ? 24f : 32f;
 
+    /// <summary>Smallest quest table row in pixels whatever the scales: rows are contiguous click targets (WCAG 2.5.8, accessibility B4).</summary>
+    public const float TableRowMinPx = 24f;
+
     /// <summary>
     /// A quest table row's content height (the row minus its cell padding): the density's target at the host's global
     /// scale, never less than what the moon, icon and text need (<paramref name="minContent"/>), so large UI scales
-    /// still fit. Unknown density values read as Comfortable.
+    /// still fit, and never a row under <see cref="TableRowMinPx"/> (a global scale under 1). Unknown density values
+    /// read as Comfortable.
     /// </summary>
     public static float TableRowContent(RowDensity density, float globalScale, float minContent, float cellPaddingY)
     {
-        var target = TableRowTarget(Enum.IsDefined(density) ? density : RowDensity.Comfortable) * SafeGlobalScale(globalScale);
+        var target = MathF.Max(TableRowMinPx, TableRowTarget(Enum.IsDefined(density) ? density : RowDensity.Comfortable) * SafeGlobalScale(globalScale));
         var padding = float.IsFinite(cellPaddingY) ? MathF.Max(0f, cellPaddingY) : 0f;
         var floor = float.IsFinite(minContent) ? MathF.Max(0f, minContent) : 0f;
         return MathF.Max(floor, target - 2f * padding);
