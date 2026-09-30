@@ -49,12 +49,16 @@ public class StorySidequestsFixtureTests(FixtureCatalog fixture, ITestOutputHelp
 
         // 0.9.0 (P13) curated For All the Nights to Come as the Dusk Vigil's unlock: it grants a Coerthas Western
         // Highlands aether current too, but a dungeon unlock is never a story, so it left the blue lines (was 379 / 97).
-        Assert.Equal(378, stories.Count);
-        Assert.Equal(96, blue);
-        Assert.Equal(44, stories.Chains.Count);
-        Assert.Equal(308, chained);
+        // 0.9.0's script-checked duty unlocks curated The Palace of Lost Souls (68168) as Shisui of the Violet Tides'
+        // unlock. It opened a five-quest blue Ruby Sea line; with its head a dungeon unlock, the four quests after it
+        // (68240-68243, Fathoms Below to The Two Princesses of Sui-no-Sato) are no longer linked to a current-granting
+        // quest through aether-current-only quests, so the whole side story left (was 378 / 96, 44 stories, 308 chained).
+        Assert.Equal(373, stories.Count);
+        Assert.Equal(91, blue);
+        Assert.Equal(43, stories.Chains.Count);
+        Assert.Equal(303, chained);
         Assert.Equal(
-            new Dictionary<int, int> { [2] = 4, [3] = 1, [4] = 7, [5] = 5, [6] = 1, [7] = 1, [8] = 3, [9] = 18, [10] = 1, [11] = 1, [12] = 2 },
+            new Dictionary<int, int> { [2] = 4, [3] = 1, [4] = 7, [5] = 4, [6] = 1, [7] = 1, [8] = 3, [9] = 18, [10] = 1, [11] = 1, [12] = 2 },
             sizes);
 
         // The base rule alone (every unlock quest left out): 282 quests in 36 stories.
