@@ -92,7 +92,9 @@ public sealed class PathChart
     private int targetCore = -1;
     private uint targetRowId = uint.MaxValue;
     private float walkedFraction;
-    private readonly HashSet<int> expandedRuns = [];
+    // Opened beads, keyed by the run's first quest: a refresh that re-numbers the runs (a step completed above) keeps
+    // the same stretch open.
+    private readonly HashSet<uint> expandedRuns = [];
 
     // ---- layout (pixels) ----
     private readonly List<VRow> layout = new(64);
@@ -410,7 +412,7 @@ public sealed class PathChart
                     pendingAlternatives = layout.Count;
                     break;
                 case PathRowKind.FoldedRun:
-                    var open = expandedRuns.Contains(row.RunIndex);
+                    var open = expandedRuns.Contains(RunKey(row));
                     AddNode(VKind.Bead, core, -1, ref y, ref prevNode, line, captionLine, outDone: true);
                     if (!open)
                     {
@@ -876,7 +878,7 @@ public sealed class PathChart
                 UiMetrics.Tooltip(Strings.StateTooltip(path[row.Item].State), stepDetails[row.Item]);
                 break;
             case VKind.Bead:
-                var expanded = expandedRuns.Contains(rows[row.Core].RunIndex);
+                var expanded = expandedRuns.Contains(RunKey(rows[row.Core]));
                 UiMetrics.Tooltip(expanded ? Strings.FoldedRunCollapseTooltip : Strings.FoldedRunExpandTooltip);
                 break;
             case VKind.Alternative:
@@ -904,7 +906,7 @@ public sealed class PathChart
                 select(path[row.Item].RowId);
                 break;
             case VKind.Bead:
-                var run = rows[row.Core].RunIndex;
+                var run = RunKey(rows[row.Core]);
                 if (!expandedRuns.Remove(run))
                 {
                     expandedRuns.Add(run);
@@ -1077,7 +1079,7 @@ public sealed class PathChart
     private void DrawBead(ImDrawListPtr dl, Vector2 origin, VRow row, Vector2 node, bool hovered, ImFontPtr font, float captionSize, float captionY)
     {
         var s = Theme.Surface;
-        var expanded = expandedRuns.Contains(rows[row.Core].RunIndex);
+        var expanded = expandedRuns.Contains(RunKey(rows[row.Core]));
         var label = rowLabels[row.Core];
         if (!expanded)
         {
@@ -1121,6 +1123,9 @@ public sealed class PathChart
             dl.AddLine(new Vector2(x + c, y), new Vector2(x, y + c), Theme.U32(ink), UiMetrics.Hairline);
         }
     }
+
+    /// <summary>A folded run's key in <see cref="expandedRuns"/>: its first quest's row id.</summary>
+    private uint RunKey(PathRow row) => row.PathIndex >= 0 && row.PathIndex < path.Count ? path[row.PathIndex].RowId : uint.MaxValue;
 
     private int FindLastChild(int core, int runCount)
     {

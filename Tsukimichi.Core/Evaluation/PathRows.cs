@@ -43,7 +43,7 @@ public sealed record PathRow(PathRowKind Kind)
     /// <summary>Steps a folded run holds, or alternatives a <see cref="PathRowKind.MoreAlternatives"/> line stands for.</summary>
     public int Count { get; init; }
 
-    /// <summary>A folded run's ordinal on the path (0, 1, …), the key its expanded state is remembered by; -1 otherwise.</summary>
+    /// <summary>A folded run's ordinal on the path (0, 1, …); -1 otherwise. The chart remembers an opened run by its first quest instead, which survives a re-numbering.</summary>
     public int RunIndex { get; init; } = -1;
 
     /// <summary>An alternative's quests still to do (<see cref="PathAlternative.RemainingCount"/>).</summary>
