@@ -127,7 +127,8 @@ public sealed record TodoInputs(
 /// name), the Ready unlock quests of the expansion pinned from the "Clear my blues" plan (P3, at most
 /// <see cref="MaxPlan"/>, in plan order), the next main scenario quest with its blocker, and for the current job the next quest of its ladder and of
 /// its role's ladder when either is open now (Ready, Ready on another job or Accepted). Completed, done-this-cycle and
-/// foreclosed pins are not todos and are left out. Hints are the evaluator's next-step clause when something blocks,
+/// foreclosed pins are not todos and are left out, as are spare alternatives (an open choice's options other than the
+/// presumed one) among the pins and the event quests. Hints are the evaluator's next-step clause when something blocks,
 /// otherwise the level and giver. The caller memoizes per session version, territory and settings.
 /// </summary>
 public static class TodoList
@@ -208,6 +209,13 @@ public static class TodoList
     public static bool IsTodo(QuestState state) =>
         state is QuestState.Ready or QuestState.ReadyOnOtherJob or QuestState.Accepted or QuestState.Blocked or QuestState.Unknown;
 
+    /// <summary>
+    /// <see cref="IsTodo(QuestState)"/> for an evaluation, and not a spare alternative (an option of a choice not made
+    /// yet other than the one presumed, which leaves the counts); a quest without an evaluation reads Unknown.
+    /// </summary>
+    public static bool IsTodo(QuestEvaluation? evaluation) =>
+        evaluation is null ? IsTodo(QuestState.Unknown) : !evaluation.IsSpareAlternative && IsTodo(evaluation.State);
+
     /// <summary>Display rank of a state in the Pinned section: what can be done now comes first.</summary>
     private static int Rank(QuestState state) => state switch
     {
@@ -234,10 +242,10 @@ public static class TodoList
                 continue;
             }
 
-            var state = StateOf(inputs.States, rowId);
-            if (IsTodo(state))
+            inputs.States.TryGetValue(rowId, out var evaluation);
+            if (IsTodo(evaluation))
             {
-                picked.Add((quest, state));
+                picked.Add((quest, StateOf(inputs.States, rowId)));
             }
         }
 
@@ -275,7 +283,7 @@ public static class TodoList
             var before = rows.Count;
             foreach (var entry in festival.Quests)
             {
-                if (SeasonalNow.IsActionable(entry.State))
+                if (entry.IsActionable)
                 {
                     rows.Add(new TodoRow(entry.Quest.RowId, QuestName(inputs, entry.Quest), entry.State, SeasonalHint(inputs, entry.Quest, entry.State), TodoRowKind.Seasonal));
                 }

@@ -56,9 +56,11 @@ public sealed record DiffResult(
 /// Alt diff (V2-12): the quests one character has completed and another has not, ranked by unlock value so the
 /// player sees which unlocks the alt is missing first. Pure; the caller memoizes per pair of snapshots.
 /// <para>
-/// A quest is "done" only in <see cref="QuestState.Completed"/>. A quest done on one side and
-/// <see cref="QuestState.Foreclosed"/> on the other is not missing (a Grand Company choice not taken, a seasonal run
-/// the other character already saw) and is left out of both lists. Unlisted quests never enter the diff.
+/// A quest is "done" when it counts as done (<see cref="QuestEvaluation.CountsAsDone"/>: completed, or an allied
+/// society daily turned in before). A quest done on one side and <see cref="QuestState.Foreclosed"/> on the other is
+/// not missing (a Grand Company choice not taken, a seasonal run the other character already saw) and is left out of
+/// both lists. Only quests that enter the counts (<see cref="QuestRecord.EntersCounts"/>) enter the diff: unlisted
+/// quests, progress trackers and repeatables other than allied society dailies never do.
 /// </para>
 /// </summary>
 public static class CharacterDiff
@@ -156,7 +158,7 @@ public static class CharacterDiff
         for (var i = 0; i < all.Count; i++)
         {
             var quest = all[i];
-            if (quest.IsRemoved)
+            if (quest.IsRemoved || !quest.EntersCounts)
             {
                 continue;
             }
@@ -165,8 +167,8 @@ public static class CharacterDiff
             statesB.TryGetValue(quest.RowId, out var evaluationB);
             var stateA = evaluationA?.State ?? QuestState.Unknown;
             var stateB = evaluationB?.State ?? QuestState.Unknown;
-            var doneA = stateA == QuestState.Completed;
-            var doneB = stateB == QuestState.Completed;
+            var doneA = evaluationA is { CountsAsDone: true };
+            var doneB = evaluationB is { CountsAsDone: true };
 
             if (doneA && doneB)
             {

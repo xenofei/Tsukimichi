@@ -68,6 +68,27 @@ public static class PaneLayout
     /// <summary>The floors and the gutters: what the window needs beside the rail so that every floor holds.</summary>
     public const float MinContentLogical = FloorsLogical + (GutterCount * GutterLogical);
 
+    /// <summary>
+    /// The most <see cref="MinContentPx"/> exceeds <see cref="MinContentLogical"/> times the scale: the side floors are
+    /// whole pixels rounded up (under 1 px each) and each gutter is rounded to a whole pixel (at most 0.5 px each).
+    /// <c>ScaleMetrics.MinWindowSize</c> reserves it, so the floors hold at the smallest window.
+    /// </summary>
+    public const float RoundingReservePx = 4f;
+
+    /// <summary>A pane floor in whole pixels at <paramref name="scale"/>: rounded up, so the floor always holds (180 at 1.3 is 234, never 233).</summary>
+    public static float FloorPx(float floorLogical, float scale) => MathF.Ceiling((floorLogical * SafeScale(scale)) - 1e-3f);
+
+    /// <summary>A gutter in whole pixels at <paramref name="scale"/>.</summary>
+    public static float GutterPx(float scale) => MathF.Round(GutterLogical * SafeScale(scale));
+
+    /// <summary>
+    /// The pixels the panes need beside the rail at <paramref name="scale"/> so that every floor holds as
+    /// <see cref="Solve"/> rounds it: the tree's and the detail pane's floors in whole pixels, the centre's floor and the
+    /// three gutters. At most <see cref="MinContentLogical"/> × scale + <see cref="RoundingReservePx"/>.
+    /// </summary>
+    public static float MinContentPx(float scale) =>
+        FloorPx(TreeFloorLogical, scale) + FloorPx(DetailFloorLogical, scale) + (CentreFloorLogical * SafeScale(scale)) + (GutterCount * GutterPx(scale));
+
     /// <summary>A stored tree width as the layout reads it: the default when unreadable, else within the floor and the cap.</summary>
     public static float SanitizeTree(float logical) => Sanitize(logical, TreeFloorLogical, TreeDefaultLogical);
 
@@ -107,15 +128,16 @@ public static class PaneLayout
     /// <param name="treeStrip">Whether the tree is the icon strip.</param>
     public static PaneWidths Solve(float total, float rail, float leftWanted, float rightWanted, float scale, bool treeStrip = false)
     {
-        var s = float.IsFinite(scale) && scale > 0f ? scale : 1f;
+        var s = SafeScale(scale);
         var railPx = float.IsFinite(rail) ? MathF.Max(0f, rail) : 0f;
-        var gutter = MathF.Round(GutterLogical * s);
+        var gutter = GutterPx(s);
         var content = MathF.Max(0f, (float.IsFinite(total) ? total : 0f) - railPx - (GutterCount * gutter));
 
-        var treeMin = MathF.Floor((treeStrip ? TreeStripLogical : TreeFloorLogical) * s);
-        var detailMin = MathF.Floor(DetailFloorLogical * s);
-        var tree = treeStrip ? treeMin : MathF.Floor(SanitizeTree(leftWanted) * s);
-        var detail = MathF.Floor(SanitizeDetail(rightWanted) * s);
+        // Floors round up so they hold; an asked width rounds down but never under its floor.
+        var treeMin = FloorPx(treeStrip ? TreeStripLogical : TreeFloorLogical, s);
+        var detailMin = FloorPx(DetailFloorLogical, s);
+        var tree = treeStrip ? treeMin : MathF.Max(treeMin, MathF.Floor(SanitizeTree(leftWanted) * s));
+        var detail = MathF.Max(detailMin, MathF.Floor(SanitizeDetail(rightWanted) * s));
         var centreFloor = CentreFloorLogical * s;
 
         // Out of room: the detail pane first, then the tree, each down to its floor.
@@ -159,6 +181,8 @@ public static class PaneLayout
         var delta = float.IsFinite(deltaPx) ? deltaPx : 0f;
         return (float.IsFinite(startLogical) ? startLogical : 0f) + (delta / s);
     }
+
+    private static float SafeScale(float scale) => float.IsFinite(scale) && scale > 0f ? scale : 1f;
 
     private static float Sanitize(float logical, float floor, float fallback) =>
         float.IsFinite(logical) && logical > 0f ? Math.Clamp(logical, floor, MaxSideLogical) : fallback;

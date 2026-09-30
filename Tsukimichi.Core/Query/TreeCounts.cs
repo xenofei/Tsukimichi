@@ -28,8 +28,8 @@ public readonly record struct NodeCount(int Done, int Total, int Excluded)
 
 /// <summary>
 /// Done/total per section, category and genre for the tree labels. Done counts <see cref="QuestState.Completed"/>, and an
-/// allied society daily the character has completed at least once (<see cref="QuestEvaluation.CountsAsDone"/>).
-/// Removed quests (<see cref="QuestRecord.IsRemoved"/>: retired rows and the genre-0 leftovers) never enter a
+/// allied society daily the character has completed at least once (<see cref="QuestEvaluation.CountsAsDone"/>), unless
+/// the quest leaves the totals, so a node never reads more done than total. Removed quests (<see cref="QuestRecord.IsRemoved"/>: retired rows and the genre-0 leftovers) never enter a
 /// section, category or genre node, whatever ids the sheet gave them; they always land in <see cref="Unlisted"/> and
 /// join <see cref="Overall"/> only when included. That bucket counts every row, exclusions aside: a removed quest
 /// evaluates Locked out, and "118 of 179 done before they went" is the number the bucket is for. A listed quest with
@@ -170,6 +170,12 @@ public sealed class TreeCounts
 
             var excluded = source.LeavesTotals(quest.RowId) ? 1 : 0;
             var other = otherPath is null ? 0 : 1;
+
+            // A quest out of the totals is out of the done count too, so no node reads more done than total.
+            if (excluded == 1)
+            {
+                done = 0;
+            }
 
             Bump(sections, quest.Journal.SectionId, done, excluded, other);
             Bump(categories, quest.Journal.CategoryId, done, excluded, other);

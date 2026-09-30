@@ -29,6 +29,25 @@ public sealed class QuestEventsTests
     }
 
     [Fact]
+    public void A_spare_alternative_becoming_ready_is_not_announced()
+    {
+        // Another city's version of a quest while the choice is open: Ready, but out of the counts and not news.
+        var catalog = Fixture.Catalog(Fixture.Quest(Fixture.A), Fixture.Quest(Fixture.B));
+        var old = Fixture.Snapshot();
+        var @new = Fixture.Snapshot();
+        var before = States((Fixture.A, QuestState.Blocked), (Fixture.B, QuestState.Blocked));
+        var after = new Dictionary<uint, QuestEvaluation>
+        {
+            [Fixture.A] = Eval(QuestState.Ready) with { IsSpareAlternative = true, ChoiceOf = 2 },
+            [Fixture.B] = Eval(QuestState.Ready),
+        };
+
+        var events = QuestEvents.Derive(SnapshotDiff.Compute(old, @new), old, @new, catalog, before, after, Now);
+
+        Assert.Equal([new QuestEvent(QuestEventKind.NewlyAvailable, Fixture.B, Now)], events);
+    }
+
+    [Fact]
     public void Journal_entry_and_exit_yield_Accepted_and_Abandoned()
     {
         var catalog = Fixture.Catalog(Fixture.Quest(Fixture.A), Fixture.Quest(Fixture.B));

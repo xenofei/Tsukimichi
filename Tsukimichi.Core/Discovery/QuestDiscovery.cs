@@ -61,7 +61,8 @@ public static class QuestDiscovery
                 continue;
             }
 
-            if (!states.TryGetValue(quest.RowId, out var evaluation) || !Matches(filter, evaluation.State))
+            // A spare alternative (the choice's other options) is not startable news; the journal never holds one.
+            if (!states.TryGetValue(quest.RowId, out var evaluation) || !Matches(filter, evaluation.State) || evaluation.IsSpareAlternative)
             {
                 continue;
             }

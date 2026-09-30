@@ -7,14 +7,15 @@ public class ColumnPlanTests
 {
     private const float H = LayoutBudgets.HysteresisLogical;
 
-    // The audit's table (UI audit §4), display order: Glyph, Name, Level, Job, Status, Expansion, Rewards.
+    // The audit's table (UI audit §4), display order: Glyph, Name, Level, Job, Status, Expansion, Rewards. The status
+    // never hides (priority 0) and needs only its state word (80 here); the reason gives way to an ellipsis.
     private static readonly ColumnSpec[] Table =
     [
         new(Priority: 0, Min: 28f, Ideal: 28f),
         new(Priority: 0, Min: 140f, Ideal: 140f, Weight: 3f),
         new(Priority: 2, Min: 40f, Ideal: 48f),
         new(Priority: 3, Min: 76f, Ideal: 76f),
-        new(Priority: 1, Min: 120f, Ideal: 120f, Weight: 2f),
+        new(Priority: 0, Min: 80f, Ideal: 80f, Weight: 2f),
         new(Priority: 4, Min: 40f, Ideal: 40f),
         new(Priority: 5, Min: 80f, Ideal: 80f),
     ];
@@ -25,7 +26,7 @@ public class ColumnPlanTests
     private const int Expansion = 5;
     private const int Rewards = 6;
 
-    /// <summary>Every minimum together: 524.</summary>
+    /// <summary>Every minimum together: 484.</summary>
     private static readonly float AllMins = Table.Sum(static c => c.Min);
 
     private static (bool[] Visible, float[] Widths, int Shown) Plan(float width, bool[]? was = null)
@@ -45,7 +46,7 @@ public class ColumnPlanTests
         Assert.Equal(1000f, widths.Sum(), 2);
         Assert.Equal(48f, widths[Level]);
         var extraName = widths[1] - 140f;
-        var extraStatus = widths[Status] - 120f;
+        var extraStatus = widths[Status] - 80f;
         Assert.Equal(1.5f, extraName / extraStatus, 3);
     }
 
@@ -70,21 +71,38 @@ public class ColumnPlanTests
     }
 
     [Fact]
-    public void Priority_zero_never_hides_and_status_hides_last()
+    public void Priority_zero_never_hides_so_the_status_never_hides()
     {
         var (visible, widths, shown) = Plan(100f);
-        Assert.Equal(2, shown);
+        Assert.Equal(3, shown);
         Assert.True(visible[0]);
         Assert.True(visible[1]);
-        Assert.False(visible[Status]);
+        Assert.True(visible[Status]);
+        Assert.False(visible[Level] || visible[Job] || visible[Expansion] || visible[Rewards]);
         Assert.Equal(28f, widths[0]);
         Assert.Equal(140f, widths[1]);
+        Assert.Equal(80f, widths[Status]);
+    }
+
+    [Fact]
+    public void Extreme_priorities_plan_in_one_step_each()
+    {
+        // Growth walks the distinct priorities, so int.MaxValue does not walk two billion empty ones.
+        ColumnSpec[] columns = [new(int.MinValue, 10f, 30f), new(0, 10f, 10f, Weight: 1f), new(int.MaxValue, 10f, 30f)];
+        var visible = new bool[3];
+        var widths = new float[3];
+        Assert.Equal(3, TableGeometry.PlanColumns(100f, columns, [], visible, widths, H));
+        Assert.Equal([30f, 40f, 30f], widths);
+
+        // Tight: the lower priority grows toward its ideal first.
+        Assert.Equal(3, TableGeometry.PlanColumns(45f, columns, [], visible, widths, H));
+        Assert.Equal([25f, 10f, 10f], widths);
     }
 
     [Fact]
     public void Visible_columns_always_fit_down_to_the_never_hidden_ones()
     {
-        for (var width = 168f; width <= 1200f; width += 3f)
+        for (var width = 248f; width <= 1200f; width += 3f)
         {
             var (visible, widths, _) = Plan(width);
             var mins = 0f;
@@ -158,7 +176,7 @@ public class ColumnPlanTests
         var (_, widths, _) = Plan(AllMins + 4f);
         Assert.Equal(44f, widths[Level]);
         Assert.Equal(140f, widths[1]);
-        Assert.Equal(120f, widths[Status]);
+        Assert.Equal(80f, widths[Status]);
     }
 
     [Fact]
@@ -176,7 +194,7 @@ public class ColumnPlanTests
     {
         var visible = new bool[Table.Length];
         var widths = new float[Table.Length];
-        Assert.Equal(2, TableGeometry.PlanColumns(float.NaN, Table, [], visible, widths, float.NaN));
+        Assert.Equal(3, TableGeometry.PlanColumns(float.NaN, Table, [], visible, widths, float.NaN));
         Assert.Throws<ArgumentException>(() => TableGeometry.PlanColumns(100f, Table, [], new bool[1], new float[Table.Length], H));
     }
 }

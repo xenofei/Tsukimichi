@@ -1859,6 +1859,12 @@ public sealed partial class CharactersPane
             }
 
             var progress = ChainCatalog.Progress(chain, states);
+            if (progress.IsEmpty)
+            {
+                // Nothing in it counts for this character: not a chain to finish, and never "complete".
+                continue;
+            }
+
             var next = progress.NextRowId is { } nextRowId ? bundle.Catalog.GetByRowId(nextRowId) : null;
             var row = new ChainRow(
                 chain.Name,

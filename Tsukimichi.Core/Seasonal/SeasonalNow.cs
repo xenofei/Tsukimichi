@@ -8,7 +8,17 @@ using Tsukimichi.Core.Localization;
 namespace Tsukimichi.Core.Seasonal;
 
 /// <summary>One quest of a running seasonal event with its state for the character.</summary>
-public sealed record SeasonalQuest(QuestRecord Quest, QuestState State);
+public sealed record SeasonalQuest(QuestRecord Quest, QuestState State)
+{
+    /// <summary>
+    /// The quest is one of a set only one of which counts (a city's version of the event quest) and not the one presumed
+    /// (<see cref="QuestEvaluation.IsSpareAlternative"/>): it is never counted as Ready nor listed as a to-do.
+    /// </summary>
+    public bool IsSpareAlternative { get; init; }
+
+    /// <summary>Startable now (here or on another job) or in the journal, and not a spare alternative.</summary>
+    public bool IsActionable => !IsSpareAlternative && SeasonalNow.IsActionable(State);
+}
 
 /// <summary>
 /// A seasonal event the game reports as running, with its quests (removed ones left out) in display order: what can be
@@ -18,7 +28,7 @@ public sealed record SeasonalQuest(QuestRecord Quest, QuestState State);
 /// </summary>
 /// <param name="FestivalId">The <c>Festival</c> row id (<see cref="QuestRecord.Festival"/>).</param>
 /// <param name="Name">Display name without the edition year ("Moonfire Faire").</param>
-/// <param name="ReadyCount">Quests whose state is <see cref="QuestState.Ready"/>.</param>
+/// <param name="ReadyCount">Quests whose state is <see cref="QuestState.Ready"/>, spare alternatives left out.</param>
 /// <param name="EndEvidence">The announcement the end was read from, when <paramref name="AnnouncedEndUtc"/> is set.</param>
 public sealed record RunningFestival(
     ushort FestivalId,
@@ -144,7 +154,8 @@ public static class SeasonalNow
                 quests[quest.Festival] = list = [];
             }
 
-            list.Add(new SeasonalQuest(quest, states.TryGetValue(quest.RowId, out var evaluation) ? evaluation.State : QuestState.Unknown));
+            states.TryGetValue(quest.RowId, out var evaluation);
+            list.Add(new SeasonalQuest(quest, evaluation?.State ?? QuestState.Unknown) { IsSpareAlternative = evaluation is { IsSpareAlternative: true } });
         }
 
         var result = new List<RunningFestival>(quests.Count);
@@ -163,7 +174,7 @@ public static class SeasonalNow
                 return bySort != 0 ? bySort : a.Quest.RowId.CompareTo(b.Quest.RowId);
             });
 
-            var ready = list.Count(q => q.State == QuestState.Ready);
+            var ready = list.Count(q => q.State == QuestState.Ready && !q.IsSpareAlternative);
             curated.TryGetValue(id, out var info);
             var end = AnnouncedEnd(info, nowUtc);
             result.Add(new RunningFestival(id, DisplayName(id, info, list.Select(q => q.Quest)), list, ready, end, end is null ? null : info!.Evidence));

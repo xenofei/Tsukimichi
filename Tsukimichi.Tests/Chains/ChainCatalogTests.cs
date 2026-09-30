@@ -266,6 +266,19 @@ public sealed class ChainCatalogTests
     }
 
     [Fact]
+    public void A_chain_with_nothing_counted_is_empty_and_never_complete()
+    {
+        // Every step locked out or out of season for this character: nothing to do and nothing done.
+        var progress = ChainCatalog.Progress(new Chain("Another city's festival", [A, B]), States((A, QuestState.Foreclosed), (B, QuestState.Foreclosed)));
+
+        Assert.Equal(new ChainProgress(0, 0, null), progress);
+        Assert.True(progress.IsEmpty);
+        Assert.False(progress.IsComplete);
+        Assert.Equal(0f, progress.Fraction);
+        Assert.False(new ChainProgress(1, 2, B).IsEmpty);
+    }
+
+    [Fact]
     public void Progress_without_evaluations_is_zero_with_the_first_quest_next()
     {
         var progress = ChainCatalog.Progress(new Chain("Story", [A, B]), States());

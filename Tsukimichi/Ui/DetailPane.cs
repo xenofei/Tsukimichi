@@ -1308,6 +1308,12 @@ public sealed partial class DetailPane
         }
 
         var progress = ChainCatalog.Progress(chain, session.States);
+        if (progress.IsEmpty)
+        {
+            // Nothing in the chain counts for this character: no "0 of 0 done" line.
+            return;
+        }
+
         model.ChainFraction = progress.Fraction;
         var name = ChainCatalog.DisplayName(chain, id => session.Spoilers.DisplayName(bundle.Catalog, id, id.ToString(CultureInfo.InvariantCulture)));
         model.ChainText = string.Format(CultureInfo.CurrentCulture, chain.IsStory ? Strings.DetailStoryFormat : Strings.DetailChainFormat, name, progress.Done, progress.Total);

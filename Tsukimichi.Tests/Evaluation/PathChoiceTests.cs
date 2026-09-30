@@ -266,4 +266,65 @@ public class PathChoiceTests
         Assert.Equal("1 on other paths: another city's start 1", PathText.Tally(counts.OtherPathsIn(QuestScope.Section(0))));
         Assert.Equal(1, counts.Section(0).OtherPaths);
     }
+
+    [Fact]
+    public void A_search_whose_only_hits_are_on_another_path_names_include_other_paths()
+    {
+        var catalog = World();
+        var states = Resolve(catalog, Snapshot(AlphaRoot));
+
+        var hidden = QuestQuery.Apply(catalog, states, new FilterSet(), QuestScope.None, SortSpec.Default, "Beta Story", QueryContext.Empty);
+        Assert.Empty(hidden.Rows);
+        Assert.Contains(FilterNames.IncludeOtherPaths, hidden.Empty!.Filters);
+        Assert.False(hidden.Empty.ScopeIsEmpty);
+
+        // Turned on, the hit shows; a search with no hit anywhere names nothing about other paths.
+        var shown = QuestQuery.Apply(catalog, states, new FilterSet { IncludeOtherPaths = true }, QuestScope.None, SortSpec.Default, "Beta Story", QueryContext.Empty);
+        Assert.Equal([BetaMsq], shown.Rows.Select(r => r.Quest.RowId));
+        var nothing = QuestQuery.Apply(catalog, states, new FilterSet(), QuestScope.None, SortSpec.Default, "Nowhere at all", QueryContext.Empty);
+        Assert.DoesNotContain(FilterNames.IncludeOtherPaths, nothing.Empty!.Filters);
+    }
+
+    [Fact]
+    public void A_node_holding_only_other_path_quests_offers_include_other_paths_rather_than_empty()
+    {
+        // Beta's own genre: its only quest is on another path for an Alpha starter.
+        var catalog = Catalog(
+            Side(AlphaRoot, "Coming to Alpha"),
+            Side(BetaRoot, "Coming to Beta"),
+            Msq(AlphaMsq, "Alpha Story", JoinKind.All, AlphaRoot),
+            Msq(BetaMsq, "Beta Story", JoinKind.All, BetaRoot) with { Journal = new JournalRef(0, "Main Scenario", 1, "Seventh Umbral Era", 2, "Beta Only", (int)BetaMsq) });
+        PathIndex.Attach(catalog, Choices);
+        var states = Resolve(catalog, Snapshot(AlphaRoot));
+
+        var result = QuestQuery.Apply(catalog, states, new FilterSet(), QuestScope.Genre(2), SortSpec.Default, null, QueryContext.Empty);
+        Assert.Empty(result.Rows);
+        Assert.Equal([FilterNames.IncludeOtherPaths], result.Empty!.Filters);
+    }
+
+    [Fact]
+    public void A_repeatable_out_of_the_totals_never_counts_as_done()
+    {
+        // An allied society daily done before, then locked out by another quest: out of the total, so out of done too.
+        const uint Daily = 65650;
+        const uint Rival = 65651;
+        var catalog = Catalog(
+            Side(Daily, "Daily") with { IsRepeatable = true, RepeatInterval = 1, BeastTribe = 1, QuestLocks = [Rival] },
+            Side(Rival, "Rival"));
+        var states = Resolve(catalog, Snapshot(Daily, Rival));
+
+        Assert.Equal(QuestState.Foreclosed, states[Daily].State);
+        Assert.True(states[Daily].LeavesTotals);
+        Assert.False(states[Daily].RepeatableDoneBefore);
+        Assert.False(states[Daily].CountsAsDone);
+
+        // Counts built from an evaluation that says both still keep done within the total.
+        var both = new Dictionary<uint, QuestEvaluation>(states) { [Daily] = states[Daily] with { RepeatableDoneBefore = true } };
+        var counts = TreeCounts.Compute(catalog, both, includeUnlisted: false);
+        Assert.Equal(new NodeCount(1, 1, 1), counts.Section(3));
+        foreach (var node in counts.Sections.Values.Concat(counts.Categories.Values).Concat(counts.Genres.Values).Append(counts.Overall))
+        {
+            Assert.True(node.Done <= node.Total, $"{node.Done} done of {node.Total}");
+        }
+    }
 }

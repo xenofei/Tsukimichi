@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace Tsukimichi.Core.Ui;
 
 /// <summary>Measures a run of text in pixels (the plugin passes the font's advance widths).</summary>
@@ -19,8 +21,10 @@ public readonly record struct WrapLine(int Start, int Length, float Width, bool 
 /// gets a line of its own and is marked cut (drawn with an ellipsis), never broken between letters. Chinese and
 /// Japanese have no spaces, so each of their characters is a break opportunity of its own, with the usual courtesies:
 /// closing punctuation and small kana never start a line, and an opening bracket never ends one. Hangul is written
-/// with spaces and wraps by word. Widths are summed per word, so a text is measured once per word, not once per
-/// candidate line. The plugin's <c>TextFlow</c> caches the lines per text and width, so nothing is measured or
+/// with spaces and wraps by word. A no-break space (U+00A0, U+202F, U+2007) never breaks; a closing mark after a
+/// space (French "Prêt ?", "50 %", "»") stays with the word before it, and an opening "«" with the word after it; a
+/// combining mark or variation selector stays with its base. Widths are summed per word, so a text is measured once
+/// per word, not once per candidate line. The plugin's <c>TextFlow</c> caches the lines per text and width, so nothing is measured or
 /// allocated on the frames in between.
 /// </summary>
 public static class WordWrap
@@ -68,7 +72,7 @@ public static class WordWrap
                 continue;
             }
 
-            if (char.IsWhiteSpace(text[i]) && lineStart < 0)
+            if (IsBreakSpace(text[i]) && lineStart < 0)
             {
                 // Spaces at the start of a wrapped line are dropped; at the start of the text or after a newline too.
                 i++;
@@ -77,7 +81,7 @@ public static class WordWrap
 
             var contentEnd = TokenEnd(text, i);
             var end = contentEnd;
-            while (end < text.Length && text[end] != '\n' && char.IsWhiteSpace(text[end]))
+            while (end < text.Length && text[end] != '\n' && IsBreakSpace(text[end]))
             {
                 end++;
             }
@@ -133,31 +137,73 @@ public static class WordWrap
     /// <summary>Characters that never end a line: opening brackets.</summary>
     public static bool NoLineEnd(char c) => NoEnd.Contains(c, StringComparison.Ordinal);
 
-    private const string NoStart = "、。，．・：；？！ー）」』］｝〕〉》】〙〗ゝゞヽヾ々ぁぃぅぇぉっゃゅょゎァィゥェォッャュョヮヵヶ…‥,.:;?!)]}%";
-    private const string NoEnd = "（「『［｛〔〈《【〘〖([{";
+    private const string NoStart = "、。，．・：；？！ー）」』］｝〕〉》】〙〗ゝゞヽヾ々ぁぃぅぇぉっゃゅょゎァィゥェォッャュョヮヵヶ…‥,.:;?!)]}%»";
+
+    // The single guillemets are left out: the UI uses "›" as a path separator ("Settings › Display"), which may wrap.
+    private const string NoEnd = "（「『［｛〔〈《【〘〖([{«";
+
+    /// <summary>A space a line may break at: whitespace other than the no-break spaces (U+00A0, U+2007, U+202F).</summary>
+    public static bool IsBreakSpace(char c) => c is not ('\u00A0' or '\u2007' or '\u202F') && char.IsWhiteSpace(c);
 
     /// <summary>
-    /// The end of the unbreakable run that starts at <paramref name="start"/> (not whitespace): a CJK character with
-    /// any closing punctuation after it (and any opening bracket before it), or a word up to the next space, newline
-    /// or CJK character, or just after a hyphen, dash or slash inside it.
+    /// Whether <paramref name="c"/> belongs to the character before it: a combining mark, a variation selector or the
+    /// second half of a surrogate pair. A line never starts at one.
+    /// </summary>
+    private static bool IsAttached(char c) =>
+        char.IsLowSurrogate(c)
+        || c is >= '\uFE00' and <= '\uFE0F'
+        || CharUnicodeInfo.GetUnicodeCategory(c) is UnicodeCategory.NonSpacingMark or UnicodeCategory.SpacingCombiningMark or UnicodeCategory.EnclosingMark;
+
+    /// <summary>The index after <paramref name="i"/> and any marks attached to the character before it.</summary>
+    private static int AfterMarks(ReadOnlySpan<char> text, int i)
+    {
+        while (i < text.Length && IsAttached(text[i]))
+        {
+            i++;
+        }
+
+        return i;
+    }
+
+    /// <summary>The index after the breakable spaces from <paramref name="i"/> on (a newline ends them).</summary>
+    private static int AfterSpaces(ReadOnlySpan<char> text, int i)
+    {
+        while (i < text.Length && text[i] != '\n' && IsBreakSpace(text[i]))
+        {
+            i++;
+        }
+
+        return i;
+    }
+
+    /// <summary>
+    /// The end of the unbreakable run that starts at <paramref name="start"/> (not a breakable space): a CJK character
+    /// with any closing punctuation after it (and any opening bracket before it), or a word up to the next breakable
+    /// space, newline or CJK character, or just after a hyphen, dash or slash inside it. Combining marks stay with their
+    /// base, a closing mark after a space stays with the run (French spacing), and so does the word after "« ".
     /// </summary>
     private static int TokenEnd(ReadOnlySpan<char> text, int start)
     {
         var i = start;
 
-        // Opening brackets hold on to what follows them.
+        // Opening brackets hold on to what follows them; the French guillemet across its space too.
         while (i < text.Length && NoLineEnd(text[i]))
         {
-            i++;
+            var opening = text[i];
+            i = AfterMarks(text, i + 1);
+            if (opening == '«')
+            {
+                i = AfterSpaces(text, i);
+            }
         }
 
         if (i < text.Length && IsCjk(text[i]))
         {
-            i++;
+            i = AfterMarks(text, i + 1);
         }
         else
         {
-            while (i < text.Length && !char.IsWhiteSpace(text[i]) && !IsCjk(text[i]))
+            while (i < text.Length && !IsBreakSpace(text[i]) && !IsCjk(text[i]))
             {
                 var c = text[i];
                 i++;
@@ -168,13 +214,26 @@ public static class WordWrap
             }
         }
 
-        // Closing punctuation stays with what it closes.
-        while (i < text.Length && NoLineStart(text[i]))
+        while (true)
         {
-            i++;
+            // Closing punctuation stays with what it closes.
+            while (i < text.Length && NoLineStart(text[i]))
+            {
+                i = AfterMarks(text, i + 1);
+            }
+
+            // French spacing ("Prêt ?", "50 %", "Bonjour »"): the mark after the space never starts a line.
+            var next = AfterSpaces(text, i);
+            if (next > i && next < text.Length && NoLineStart(text[next]) && !IsCjk(text[next]))
+            {
+                i = next;
+                continue;
+            }
+
+            break;
         }
 
-        return i > start ? i : start + 1;
+        return i > start ? i : AfterMarks(text, start + 1);
     }
 
     private static bool IsBreakAfter(char c) => c is '-' or '/' or '‐' or '–' or '—';

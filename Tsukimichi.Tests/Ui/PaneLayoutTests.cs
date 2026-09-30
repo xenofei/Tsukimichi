@@ -94,19 +94,35 @@ public class PaneLayoutTests
     [InlineData(0.9f)]
     [InlineData(1f)]
     [InlineData(1.15f)]
+    [InlineData(1.3f)]
     [InlineData(1.6f)]
     [InlineData(2.5f)]
     public void Floors_hold_down_to_the_sum_of_the_floors(float scale)
     {
-        var minimum = (Rail * scale) + (PaneLayout.MinContentLogical * scale) + 3f;
+        // No slack: the whole-pixel floors and gutters are what MinContentPx adds up, within the reserve.
+        var minimum = (Rail * scale) + PaneLayout.MinContentPx(scale);
+        Assert.InRange(PaneLayout.MinContentPx(scale) - (PaneLayout.MinContentLogical * scale), -1.5f, PaneLayout.RoundingReservePx);
         for (var total = minimum; total < minimum + (900f * scale); total += 7f)
         {
             var w = PaneLayout.Solve(total, Rail * scale, 700f, 700f, scale);
-            Assert.True(w.Tree >= MathF.Floor(PaneLayout.TreeFloorLogical * scale), $"tree {w.Tree} at {total}");
-            Assert.True(w.Detail >= MathF.Floor(PaneLayout.DetailFloorLogical * scale), $"detail {w.Detail} at {total}");
+            Assert.True(w.Tree >= (PaneLayout.TreeFloorLogical * scale) - 0.01f, $"tree {w.Tree} at {total}");
+            Assert.True(w.Detail >= (PaneLayout.DetailFloorLogical * scale) - 0.01f, $"detail {w.Detail} at {total}");
             Assert.True(w.Centre >= (PaneLayout.CentreFloorLogical * scale) - 0.01f, $"centre {w.Centre} at {total}");
             Assert.Equal(total, w.Total, 2);
         }
+    }
+
+    [Theory]
+    [InlineData(1.3f, 234f, 338f)]
+    [InlineData(1.15f, 207f, 299f)]
+    [InlineData(1f, 180f, 260f)]
+    public void Floors_round_up_to_whole_pixels(float scale, float tree, float detail)
+    {
+        Assert.Equal(tree, PaneLayout.FloorPx(PaneLayout.TreeFloorLogical, scale));
+        Assert.Equal(detail, PaneLayout.FloorPx(PaneLayout.DetailFloorLogical, scale));
+        var w = PaneLayout.Solve((Rail * scale) + PaneLayout.MinContentPx(scale), Rail * scale, 180f, 260f, scale);
+        Assert.Equal(tree, w.Tree);
+        Assert.Equal(detail, w.Detail);
     }
 
     [Fact]
@@ -163,7 +179,7 @@ public class PaneLayoutTests
     {
         var w = PaneLayout.Solve(Roomy, Rail, 300f, 360f, 1.15f, treeStrip: true);
         Assert.True(w.TreeStrip);
-        Assert.Equal(MathF.Floor(56f * 1.15f), w.Tree);
+        Assert.Equal(MathF.Ceiling(56f * 1.15f), w.Tree);
 
         var tight = PaneLayout.Solve(Rail + (3f * PaneLayout.GutterLogical) + 56f + 320f + 260f, Rail, 300f, 360f, 1f, treeStrip: true);
         Assert.Equal(56f, tight.Tree);

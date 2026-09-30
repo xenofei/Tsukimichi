@@ -46,6 +46,7 @@ public static class QuestQuery
         Repeatable,
         SeasonalActive,
         IncludeUnlisted,
+        IncludeOtherPaths,
         Pinned,
         Abandoned,
         Search,
@@ -66,6 +67,7 @@ public static class QuestQuery
         (Filter.Repeatable, FilterNames.Repeatable),
         (Filter.SeasonalActive, FilterNames.SeasonalActive),
         (Filter.IncludeUnlisted, FilterNames.IncludeUnlisted),
+        (Filter.IncludeOtherPaths, FilterNames.IncludeOtherPaths),
         (Filter.Pinned, FilterNames.Pinned),
         (Filter.Abandoned, FilterNames.Abandoned),
         (Filter.Search, FilterNames.Search),
@@ -137,6 +139,7 @@ public static class QuestQuery
 
         var rows = new List<QuestRow>(candidates.Count);
         var totalInScope = 0;
+        var otherPathsHidden = false;
         foreach (var quest in candidates)
         {
             if (quest.IsRemoved && !plan.IncludeUnlisted)
@@ -146,6 +149,7 @@ public static class QuestQuery
 
             if (!plan.IncludeOtherPaths && source.OtherPathKind(quest.RowId) is not null)
             {
+                otherPathsHidden = true;
                 continue;
             }
 
@@ -159,8 +163,9 @@ public static class QuestQuery
 
         if (rows.Count == 0)
         {
-            // A journal node holding only removed quests has nothing a filter could bring back.
-            var reason = totalInScope == 0 && !plan.UnlistedToggleable
+            // A journal node holding only removed quests has nothing a filter could bring back; one holding quests on
+            // another path has "Include other paths".
+            var reason = totalInScope == 0 && !otherPathsHidden && !plan.UnlistedToggleable
                 ? EmptyReason.Scope
                 : Diagnose(candidates, source, plan);
             return new QueryResult(NoRows, reason, totalInScope);
@@ -257,7 +262,11 @@ public static class QuestQuery
         return picked.ConvertAll(static p => p.Quest);
     }
 
-    /// <summary>Names each engaged filter whose removal alone would restore at least one row. Runs only on empty results.</summary>
+    /// <summary>
+    /// Names each engaged filter whose removal alone would restore at least one row. Runs only on empty results. Quests
+    /// on another path count only for <see cref="FilterNames.IncludeOtherPaths"/>: when they are the only hits for the
+    /// search or the node, the reason says so and the UI offers to include them.
+    /// </summary>
     private static EmptyReason Diagnose<TSource>(IReadOnlyList<QuestRecord> candidates, TSource source, Plan plan)
         where TSource : struct, IStateSource
     {
@@ -272,7 +281,7 @@ public static class QuestQuery
             foreach (var quest in candidates)
             {
                 if ((quest.IsRemoved && !plan.IncludeUnlisted && filter != Filter.IncludeUnlisted)
-                    || (!plan.IncludeOtherPaths && source.OtherPathKind(quest.RowId) is not null))
+                    || (!plan.IncludeOtherPaths && filter != Filter.IncludeOtherPaths && source.OtherPathKind(quest.RowId) is not null))
                 {
                     continue;
                 }
@@ -495,6 +504,7 @@ public static class QuestQuery
             Filter.Repeatable => filters.RepeatableOnly,
             Filter.SeasonalActive => filters.SeasonalActiveOnly,
             Filter.IncludeUnlisted => UnlistedToggleable && !IncludeUnlisted,
+            Filter.IncludeOtherPaths => !IncludeOtherPaths,
             Filter.Pinned => filters.PinnedOnly,
             Filter.Abandoned => filters.AbandonedOnly,
             Filter.Search => query.Length > 0,
