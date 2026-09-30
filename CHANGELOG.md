@@ -4,6 +4,19 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+### Added
+- Settings › Display › "Follow Dalamud colours": draws Tsukimichi's windows in your Dalamud theme's colours instead of the Night palette. The layout is the same either way; the moons and the gold keep their colours, and hint text is kept readable against your theme's background.
+- Todo overlay: Compact mode (the moon and the name only, one line per quest, at a fixed width), from the overlay title's right-click menu or Settings › Todo overlay.
+- Todo overlay and Nearby quests: a "…" button at the end of every row opens the same menu as a right-click (show the quest, flag the giver, teleport with Lifestream, link in chat), so everything works with a keyboard, a controller or one hand. The overlay's title has one too.
+
+### Changed
+- The Night look for the whole main window, title bar included, and for Help, Nearby quests and the Todo overlay: dark surfaces, cards and pills, tooltips and menus to match. Your Dalamud window opacity still applies.
+- Gold now means "you can act on this": quests you can accept, quests in progress, the next step, pins and the main scenario pill. Things that are only information (selections, badges, headings, confirmations) are silver, and things already done (met requirements, owned rewards, a finished chain or zone) are a quieter gold.
+- Todo overlay: its text is outlined so it reads over snow, sand and sky even at low opacity, hints are brighter, moons are never smaller than 14 px, and section headings are a quiet caption over a thin line (click to fold).
+- Todo overlay: Locked now means click-through. A locked overlay cannot be moved and lets every click through to the game; set it from the title's menu, and unlock it in Settings › Todo overlay.
+- Nearby quests: a click shows the quest in the Journal and a double-click flags the giver on the map; Flag and Teleport moved from buttons on each row into the "…" and right-click menu, so a stray click never plants a flag or starts a teleport.
+- Reduce motion also turns off hover fades. Nothing in Tsukimichi moves on its own; hover fades pause while you scroll.
+
 ## [0.7.0] - 2026-09-29
 
 ### Added
