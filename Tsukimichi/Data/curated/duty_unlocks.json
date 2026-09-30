@@ -1,4 +1,18 @@
 {
+  "65611": {
+    "contentFinderConditionIds": [
+      27
+    ],
+    "note": "The Path of the Righteous -> Snowcloak (2.4 MSQ dungeon); quest script INSTANCEDUNGEON0 is InstanceContent 27 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 27. The wiki quest page (id-gt 65611) lists the duty under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Path_of_the_Righteous"
+  },
+  "65620": {
+    "contentFinderConditionIds": [
+      79
+    ],
+    "note": "The Instruments of Our Deliverance -> the Akh Afah Amphitheatre (Hard) (2.4 MSQ trial); quest script INSTANCEDUNGEON0 is InstanceContent 20024 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 79. The wiki quest page (id-gt 65620) lists the duty under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Instruments_of_Our_Deliverance"
+  },
   "65626": {
     "contentFinderConditionIds": [
       80
@@ -16,6 +30,13 @@
       26
     ],
     "note": "The Wrath of Qarn -> the Sunken Temple of Qarn (Hard); quest script INSTANCEDUNGEON0 is InstanceContent 26 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 26."
+  },
+  "65740": {
+    "contentFinderConditionIds": [
+      81
+    ],
+    "note": "The Coliseum Conundrum -> the Dragon's Neck (Hildibrand trial); quest script INSTANCEDUNGEON0 is InstanceContent 20026 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 81. The wiki quest page (id-gt 65740) lists the duty under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Coliseum_Conundrum"
   },
   "65781": {
     "contentFinderConditionIds": [
@@ -40,6 +61,13 @@
       111
     ],
     "note": "The World of Darkness -> the World of Darkness (Crystal Tower alliance raid); quest script INSTANCEDUNGEON0 is InstanceContent 30020 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 111."
+  },
+  "66038": {
+    "contentFinderConditionIds": [
+      85
+    ],
+    "note": "Her Last Vow -> Battle in the Big Keep (Hildibrand trial); quest script INSTANCEDUNGEON0 is InstanceContent 20030 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 85. The wiki quest page (id-gt 66038) lists the duty under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Her_Last_Vow"
   },
   "66050": {
     "contentFinderConditionIds": [
@@ -151,6 +179,48 @@
     ],
     "note": "Ifrit Bleeds, We Can Kill It -> the Bowl of Embers (Hard); Quest.InstanceContentUnlock 20004 confirms."
   },
+  "66664": {
+    "contentFinderConditionIds": [
+      13
+    ],
+    "note": "Shadows Uncast (Maelstrom) -> Dzemael Darkhold (Maelstrom variant; Fort of Fear 66515 unlocks it too); quest script INSTANCEDUNGEON0 is InstanceContent 13 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 13. The wiki quest page (id-gt 66664) lists the duty under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Shadows_Uncast_(Maelstrom)"
+  },
+  "66665": {
+    "contentFinderConditionIds": [
+      13
+    ],
+    "note": "Shadows Uncast (Twin Adder) -> Dzemael Darkhold (Twin Adder variant; Fort of Fear 66515 unlocks it too); quest script INSTANCEDUNGEON0 is InstanceContent 13 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 13. The wiki quest page (id-gt 66665) lists the duty under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Shadows_Uncast_(Twin_Adder)"
+  },
+  "66666": {
+    "contentFinderConditionIds": [
+      13
+    ],
+    "note": "Shadows Uncast (Immortal Flames) -> Dzemael Darkhold (Immortal Flames variant; Fort of Fear 66515 unlocks it too); quest script INSTANCEDUNGEON0 is InstanceContent 13 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 13. The wiki quest page (id-gt 66666) lists the duty under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Shadows_Uncast_(Immortal_Flames)"
+  },
+  "66667": {
+    "contentFinderConditionIds": [
+      5
+    ],
+    "note": "Gilding the Bilious (Maelstrom) -> the Aurum Vale (Maelstrom variant; Going for Gold 66550 unlocks it too); quest script INSTANCEDUNGEON0 is InstanceContent 5 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 5. The wiki quest page (id-gt 66667) lists the duty under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Gilding_the_Bilious_(Maelstrom)"
+  },
+  "66668": {
+    "contentFinderConditionIds": [
+      5
+    ],
+    "note": "Gilding the Bilious (Twin Adder) -> the Aurum Vale (Twin Adder variant; Going for Gold 66550 unlocks it too); quest script INSTANCEDUNGEON0 is InstanceContent 5 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 5. The wiki quest page (id-gt 66668) lists the duty under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Gilding_the_Bilious_(Twin_Adder)"
+  },
+  "66669": {
+    "contentFinderConditionIds": [
+      5
+    ],
+    "note": "Gilding the Bilious (Immortal Flames) -> the Aurum Vale (Immortal Flames variant; Going for Gold 66550 unlocks it too); quest script INSTANCEDUNGEON0 is InstanceContent 5 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 5. The wiki quest page (id-gt 66669) lists the duty under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Gilding_the_Bilious_(Immortal_Flames)"
+  },
   "66671": {
     "contentFinderConditionIds": [
       14
@@ -168,6 +238,13 @@
       60
     ],
     "note": "In a Titan Spot -> the Navel (Hard); GaiUsd004 in the hard-mode primal chain."
+  },
+  "66726": {
+    "contentFinderConditionIds": [
+      66
+    ],
+    "note": "You Have Selected Regicide -> Thornmarch (Hard) (2.1 MSQ trial); quest script INSTANCEDUNGEON0 is InstanceContent 20011 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 66. The wiki quest page (id-gt 66726) lists the duty under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/You_Have_Selected_Regicide"
   },
   "66731": {
     "contentFinderConditionIds": [
@@ -199,6 +276,20 @@
     ],
     "note": "The Ultimate Ballad -> the Minstrel's Ballad: Ultima's Bane; quest script INSTANCEDUNGEON0 is InstanceContent 20013 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 68."
   },
+  "66854": {
+    "contentFinderConditionIds": [
+      76
+    ],
+    "note": "The Three Collectors -> Battle on the Big Bridge (Hildibrand trial); quest script INSTANCEDUNGEON0 is InstanceContent 20021 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 76. The wiki quest page (id-gt 66854) lists the duty under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Three_Collectors"
+  },
+  "66897": {
+    "contentFinderConditionIds": [
+      72
+    ],
+    "note": "Lord of the Whorl -> the Whorleater (Hard) (2.2 MSQ trial); quest script INSTANCEDUNGEON0 is InstanceContent 20017 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 72. The wiki quest page (id-gt 66897) lists the duty under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Lord_of_the_Whorl"
+  },
   "67010": {
     "contentFinderConditionIds": [
       102
@@ -228,6 +319,34 @@
       78
     ],
     "note": "Judgment Bolts and Lightning -> the Striking Tree (Extreme); quest script INSTANCEDUNGEON0 is InstanceContent 20023 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 78."
+  },
+  "67183": {
+    "contentFinderConditionIds": [
+      88
+    ],
+    "note": "Bolt, Chain, and Island -> the Limitless Blue (Hard) (Heavensward MSQ trial); quest script INSTANCEDUNGEON0 is InstanceContent 20033 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 88. The wiki quest page (id-gt 67183) lists the duty under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Bolt,_Chain,_and_Island"
+  },
+  "67627": {
+    "contentFinderConditionIds": [
+      113
+    ],
+    "note": "Steel and Steam -> Alexander - The Cuff of the Father; quest script INSTANCEDUNGEON0 is InstanceContent 30022 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 113. The wiki quest page (id-gt 67627) lists the duty under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Steel_and_Steam"
+  },
+  "67628": {
+    "contentFinderConditionIds": [
+      114
+    ],
+    "note": "Tinker, Seeker, Soldier, Spy -> Alexander - The Arm of the Father; quest script INSTANCEDUNGEON0 is InstanceContent 30023 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 114. The wiki quest page (id-gt 67628) lists the duty under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Tinker,_Seeker,_Soldier,_Spy"
+  },
+  "67629": {
+    "contentFinderConditionIds": [
+      115
+    ],
+    "note": "The Pulsing Heart -> Alexander - The Burden of the Father; quest script INSTANCEDUNGEON0 is InstanceContent 30024 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 115. The wiki quest page (id-gt 67629) lists the duty under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Pulsing_Heart"
   },
   "67647": {
     "contentFinderConditionIds": [
@@ -271,6 +390,27 @@
     ],
     "note": "Storming the Hull -> Hullbreaker Isle (Hard); quest script INSTANCEDUNGEON0 is InstanceContent 45 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 172."
   },
+  "67786": {
+    "contentFinderConditionIds": [
+      137
+    ],
+    "note": "The Folly of Youth -> Alexander - The Cuff of the Son; quest script INSTANCEDUNGEON0 is InstanceContent 30031 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 137. The wiki quest page (id-gt 67786) lists the duty under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Folly_of_Youth"
+  },
+  "67787": {
+    "contentFinderConditionIds": [
+      138
+    ],
+    "note": "Toppling the Tyrant -> Alexander - The Arm of the Son; quest script INSTANCEDUNGEON0 is InstanceContent 30032 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 138. The wiki quest page (id-gt 67787) lists the duty under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Toppling_the_Tyrant"
+  },
+  "67788": {
+    "contentFinderConditionIds": [
+      139
+    ],
+    "note": "One Step Behind -> Alexander - The Burden of the Son; quest script INSTANCEDUNGEON0 is InstanceContent 30033 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 139. The wiki quest page (id-gt 67788) lists the duty under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/One_Step_Behind"
+  },
   "67818": {
     "contentFinderConditionIds": [
       140
@@ -295,12 +435,61 @@
     ],
     "note": "The Fires of Sohm Al -> Sohm Al (Hard); quest script INSTANCEDUNGEON0 is InstanceContent 49 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 221."
   },
+  "68043": {
+    "contentFinderConditionIds": [
+      240
+    ],
+    "note": "In the Footsteps of Bardam the Brave -> Bardam's Mettle (Stormblood MSQ dungeon); quest script INSTANCEDUNGEON0 is InstanceContent 53 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 240. The wiki quest page (id-gt 68043) lists the duty under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/In_the_Footsteps_of_Bardam_the_Brave"
+  },
+  "68168": {
+    "contentFinderConditionIds": [
+      235
+    ],
+    "note": "The Palace of Lost Souls -> Shisui of the Violet Tides (Stormblood optional dungeon); quest script INSTANCEDUNGEON0 is InstanceContent 50 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 235. The wiki quest page (id-gt 68168) lists the duty under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Palace_of_Lost_Souls"
+  },
+  "68465": {
+    "contentFinderConditionIds": [
+      252
+    ],
+    "note": "Into the Deltascape -> Deltascape V1.0; quest script INSTANCEDUNGEON0 is InstanceContent 30049 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 252 (INSTANCEDUNGEON1 names the Labyrinth of the Ancients, which is not what it unlocks). The wiki quest page (id-gt 68465) lists the duty under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Into_the_Deltascape"
+  },
+  "68466": {
+    "contentFinderConditionIds": [
+      253
+    ],
+    "note": "A Catastrophe Waiting -> Deltascape V2.0; quest script INSTANCEDUNGEON0 is InstanceContent 30050 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 253. The wiki quest page (id-gt 68466) lists the duty under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Catastrophe_Waiting"
+  },
+  "68467": {
+    "contentFinderConditionIds": [
+      254
+    ],
+    "note": "The Croak Queen -> Deltascape V3.0; quest script INSTANCEDUNGEON0 is InstanceContent 30051 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 254. The wiki quest page (id-gt 68467) lists the duty under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Croak_Queen"
+  },
+  "68468": {
+    "contentFinderConditionIds": [
+      255
+    ],
+    "note": "A Void at All Costs -> Deltascape V4.0; quest script INSTANCEDUNGEON0 is InstanceContent 30052 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 255. The wiki quest page (id-gt 68468) lists the duty under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Void_at_All_Costs"
+  },
   "69409": {
     "contentFinderConditionIds": [
       15
     ],
     "note": "Rock the Castrum (current row XxaFst502) -> Castrum Meridianum; quest script INSTANCEDUNGEON0 is InstanceContent 15, CFC 15 and it runs UNLOCK_IMAGE_DUNGEON and CONTENT_START 15 (the removed legacy row 66672 of the same quest also runs UNLOCK_ADD_NEW_CONTENT_TO_CF). The wiki quest page (id-gt 69409) lists Castrum Meridianum under unlocks. Previously credited to Operation Archon; an in-game check that Castrum Meridianum is not in the Duty Finder between Operation Archon and Rock the Castrum is still pending.",
     "evidence": "https://ffxiv.consolegameswiki.com/wiki/Rock_the_Castrum"
+  },
+  "69421": {
+    "contentFinderConditionIds": [
+      77
+    ],
+    "note": "Levin an Impression -> the Striking Tree (Hard) (2.3 MSQ trial; current row, the removed legacy row 66988 runs UNLOCK_ADD_NEW_CONTENT_TO_CF); quest script INSTANCEDUNGEON0 is InstanceContent 20022, CFC 77. The wiki quest page (id-gt 69421) lists the duty under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Levin_an_Impression"
   },
   "70012": {
     "contentFinderConditionIds": [
@@ -322,6 +511,27 @@
       830
     ],
     "note": "The Ultimate Weapon (6.1 rework row XxcFst503) -> the Praetorium and the Porta Decumana; both objective territories match."
+  },
+  "70182": {
+    "contentFinderConditionIds": [
+      868
+    ],
+    "note": "A Key to the Past -> the Sil'dihn Subterrane (variant dungeon); quest script INSTANCEDUNGEON0 is InstanceContent 36001 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 868. The wiki quest page (id-gt 70182) lists the duty under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Key_to_the_Past"
+  },
+  "70269": {
+    "contentFinderConditionIds": [
+      945
+    ],
+    "note": "Mononoke Aware -> Mount Rokkon (variant dungeon); quest script INSTANCEDUNGEON0 is InstanceContent 36002 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 945. The wiki quest page (id-gt 70269) lists the duty under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Mononoke_Aware"
+  },
+  "70325": {
+    "contentFinderConditionIds": [
+      961
+    ],
+    "note": "Stranger from Paradise -> Aloalo Island (variant dungeon); quest script INSTANCEDUNGEON0 is InstanceContent 36003 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 961. The wiki quest page (id-gt 70325) lists the duty under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/Stranger_from_Paradise"
   },
   "70415": {
     "contentFinderConditionIds": [
@@ -358,5 +568,12 @@
       827
     ],
     "note": "Dawntrail -> Alexandria; objective territory 1199 matches CFC 827."
+  },
+  "70977": {
+    "contentFinderConditionIds": [
+      1066
+    ],
+    "note": "A Spellbinding Read -> the Merchant's Tale (variant dungeon); quest script INSTANCEDUNGEON0 is InstanceContent 36004 and it runs UNLOCK_ADD_NEW_CONTENT_TO_CF (the \"added to the Duty Finder\" message), CFC 1066. The wiki quest page (id-gt 70977) lists the duty under unlocks.",
+    "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Spellbinding_Read"
   }
 }
