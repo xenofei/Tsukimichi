@@ -19,6 +19,7 @@ public static class FilterBadge
         Add(ref count, filters.AvailableOnlyEngaged());
         Add(ref count, filters.StateMask != QuestStateMask.All);
         Add(ref count, filters.Expansions.Count > 0);
+        Add(ref count, filters.AddedInEngaged());
         Add(ref count, filters.LevelRangeEngaged());
         Add(ref count, filters.ClassJobCategoryId is not null);
         Add(ref count, filters.RewardKindsEngaged());

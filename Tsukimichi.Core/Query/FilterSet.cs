@@ -31,6 +31,13 @@ public sealed class FilterSet : IEquatable<FilterSet>
     /// <summary>Expansion ids to keep; empty keeps all.</summary>
     public HashSet<byte> Expansions { get; set; } = [];
 
+    /// <summary>
+    /// Keeps quests added in this patch series (P8): "7.5" keeps 7.5, 7.51 and 7.55 (<see cref="PatchVersion.InSeries"/>
+    /// on <see cref="QuestRecord.AddedIn"/>); empty keeps all. A quest whose patch is unknown never passes an engaged
+    /// filter.
+    /// </summary>
+    public string AddedIn { get; set; } = string.Empty;
+
     /// <summary>Inclusive quest level bounds. <see cref="NoLevelMin"/> and <see cref="NoLevelMax"/> mean unbounded.</summary>
     public byte LevelMin { get; set; } = NoLevelMin;
 
@@ -66,6 +73,7 @@ public sealed class FilterSet : IEquatable<FilterSet>
         || AvailableOnlyEngaged()
         || StateMask != QuestStateMask.All
         || Expansions.Count > 0
+        || AddedInEngaged()
         || LevelRangeEngaged()
         || ClassJobCategoryId is not null
         || RewardKindsEngaged()
@@ -79,6 +87,9 @@ public sealed class FilterSet : IEquatable<FilterSet>
     public bool AvailableOnlyEngaged() => AvailableOnly || PerCategoryAvailableOnly.ContainsValue(true);
 
     public bool LevelRangeEngaged() => LevelMin > NoLevelMin || LevelMax < NoLevelMax;
+
+    /// <summary>A null (a config written before 0.9.0 by a serializer that kept nulls) reads as not engaged.</summary>
+    public bool AddedInEngaged() => !string.IsNullOrEmpty(AddedIn);
 
     public bool RewardKindsEngaged()
     {
@@ -109,6 +120,7 @@ public sealed class FilterSet : IEquatable<FilterSet>
         PerCategoryAvailableOnly = new Dictionary<uint, bool>(PerCategoryAvailableOnly),
         StateMask = StateMask,
         Expansions = [.. Expansions],
+        AddedIn = AddedIn ?? string.Empty,
         LevelMin = LevelMin,
         LevelMax = LevelMax,
         ClassJobCategoryId = ClassJobCategoryId,
@@ -130,6 +142,7 @@ public sealed class FilterSet : IEquatable<FilterSet>
         PerCategoryAvailableOnly.Clear();
         StateMask = QuestStateMask.All;
         Expansions.Clear();
+        AddedIn = string.Empty;
         LevelMin = NoLevelMin;
         LevelMax = NoLevelMax;
         ClassJobCategoryId = null;
@@ -166,6 +179,7 @@ public sealed class FilterSet : IEquatable<FilterSet>
             && PinnedOnly == other.PinnedOnly
             && AbandonedOnly == other.AbandonedOnly
             && Preset == other.Preset
+            && string.Equals(AddedIn ?? string.Empty, other.AddedIn ?? string.Empty, StringComparison.Ordinal)
             && Expansions.SetEquals(other.Expansions)
             && SameEntries(PerCategoryHideCompleted, other.PerCategoryHideCompleted)
             && SameEntries(PerCategoryAvailableOnly, other.PerCategoryAvailableOnly)
@@ -189,6 +203,7 @@ public sealed class FilterSet : IEquatable<FilterSet>
         hash.Add(PinnedOnly);
         hash.Add(AbandonedOnly);
         hash.Add(Preset);
+        hash.Add(AddedIn ?? string.Empty, StringComparer.Ordinal);
         hash.Add(OrderInsensitiveHash(Expansions));
         hash.Add(OrderInsensitiveHash(PerCategoryHideCompleted));
         hash.Add(OrderInsensitiveHash(PerCategoryAvailableOnly));

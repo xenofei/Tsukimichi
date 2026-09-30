@@ -63,6 +63,14 @@ public static class PatchVersion
     }
 
     /// <summary>
+    /// Whether <paramref name="patch"/> belongs to <paramref name="series"/> ("7.55" is in "7.5"; "7.5" is in "7.5";
+    /// "17.5" is not). A full patch as the series matches itself and its longer spellings ("7.55" holds only 7.55x).
+    /// Both are expected in <see cref="Normalize"/>d form; allocation-free, for the per-row filter.
+    /// </summary>
+    public static bool InSeries(string? patch, string? series) =>
+        !string.IsNullOrEmpty(patch) && !string.IsNullOrEmpty(series) && patch.StartsWith(series, StringComparison.Ordinal);
+
+    /// <summary>
     /// The canonical spelling: a lone major gains ".0" ("2" → "2.0", as a JSON number 2.0 reads back), trailing zeros
     /// past the first fraction digit go ("7.50" → "7.5"), surrounding space is trimmed. Unknown stays empty; text that
     /// is not a patch number is returned trimmed.

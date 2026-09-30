@@ -17,7 +17,8 @@ namespace Tsukimichi.Data;
 /// service is used from the worker, and <see cref="IPluginLog"/> is thread-safe.
 /// </summary>
 /// <param name="curated">The curated overlay the refiler reads; <see cref="CuratedData.Empty"/> runs the rules alone.</param>
-public sealed class LuminaCatalogLoader(IDataManager data, IPluginLog log, CuratedData curated)
+/// <param name="patches"><c>quest_patches.json</c>, for <see cref="Core.Model.QuestRecord.AddedIn"/>; null leaves every patch unknown.</param>
+public sealed class LuminaCatalogLoader(IDataManager data, IPluginLog log, CuratedData curated, QuestPatches? patches = null)
 {
     /// <summary>Builds the catalog and its lookups under <paramref name="filing"/>. Faults with <see cref="OperationCanceledException"/> when cancelled.</summary>
     public Task<CatalogBundle> BuildBundleAsync(ClientLanguage language, JournalFiling filing, CancellationToken ct)
@@ -34,7 +35,7 @@ public sealed class LuminaCatalogLoader(IDataManager data, IPluginLog log, Curat
         var stopwatch = Stopwatch.StartNew();
         try
         {
-            var bundle = CatalogMapper.Map(data.Excel, luminaLanguage, ct, line => log.Debug("Catalog: {Line}", line), filing, curated);
+            var bundle = CatalogMapper.Map(data.Excel, luminaLanguage, ct, line => log.Debug("Catalog: {Line}", line), filing, curated, patches);
             log.Information(
                 "Catalog built: {Count} quests in {Elapsed} ms ({Language}, {Filing} filing)",
                 bundle.Catalog.Count,

@@ -110,7 +110,7 @@ public sealed class Plugin : IDalamudPlugin
 
     private async Task BuildCatalogAsync(int generation, CancellationToken token)
     {
-        var loader = new LuminaCatalogLoader(DataManager, Log, curated);
+        var loader = new LuminaCatalogLoader(DataManager, Log, curated, questPatches);
         // Read on the caller's (framework) thread, before the first await.
         var filing = Settings.JournalFiling;
         try
@@ -190,7 +190,16 @@ public sealed class Plugin : IDalamudPlugin
         {
             Log.Warning("Curated data: {Warning}", warning);
         }
+
+        questPatches = Core.Storage.QuestPatches.Load(Paths.QuestPatchesFile);
+        foreach (var warning in questPatches.Warnings)
+        {
+            Log.Warning("Quest patches: {Warning}", warning);
+        }
     }
+
+    /// <summary>quest_patches.json (P8), read with the curated overlay and kept for rebuilds.</summary>
+    private Core.Storage.QuestPatches questPatches = Core.Storage.QuestPatches.Empty;
 
     /// <summary>Shipped reward data, snapshot store, session state and poller; hands the catalog to the session when built.</summary>
     private void InitializeGameState()
@@ -325,7 +334,7 @@ public sealed class Plugin : IDalamudPlugin
 
         // The catalog build reads the filing setting and the curated overlay, so those come before it starts.
         LoadSettingsAndCurated();
-        var loader = new LuminaCatalogLoader(DataManager, Log, curated);
+        var loader = new LuminaCatalogLoader(DataManager, Log, curated, questPatches);
         var (initialGeneration, initialToken) = StartCatalogBuild();
         initialCatalogGeneration = initialGeneration;
         CatalogTask = loader.BuildBundleAsync(DataManager.Language, Settings.JournalFiling, initialToken);

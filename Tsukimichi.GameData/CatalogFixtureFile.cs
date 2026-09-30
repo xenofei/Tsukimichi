@@ -71,15 +71,20 @@ public static class CatalogFixtureFile
     /// <summary>Loads the file as written: the sheet's own filing, no refiler.</summary>
     public static (CatalogBundle Bundle, string GameVersion) Read(string path) => Read(path, JournalFiling.Legacy, Core.Storage.CuratedData.Empty);
 
-    /// <summary>Loads the file and rebuilds the bundle the mapper would have produced under <paramref name="filing"/> with <paramref name="curated"/>.</summary>
-    public static (CatalogBundle Bundle, string GameVersion) Read(string path, JournalFiling filing, Core.Storage.CuratedData curated)
+    /// <summary>
+    /// Loads the file and rebuilds the bundle the mapper would have produced under <paramref name="filing"/> with
+    /// <paramref name="curated"/> and, when given, <paramref name="patches"/> (the file holds the sheet's own data, so
+    /// <see cref="QuestRecord.AddedIn"/> is empty in it and laid over here, as the plugin's catalog build does).
+    /// </summary>
+    public static (CatalogBundle Bundle, string GameVersion) Read(string path, JournalFiling filing, Core.Storage.CuratedData curated, Core.Storage.QuestPatches? patches = null)
     {
         ArgumentNullException.ThrowIfNull(curated);
         var data = ReadData(path);
         var jobs = ClassJobCategoryLookup.FromMembership(
             data.JobCategories.Select(kv => new KeyValuePair<uint, IEnumerable<byte>>(kv.Key, kv.Value)),
             data.JobColumns);
-        var quests = filing == JournalFiling.Refiled ? JournalRefiler.Apply(data.Quests, curated) : data.Quests;
+        var dated = patches is null ? data.Quests : patches.Apply(data.Quests);
+        var quests = filing == JournalFiling.Refiled ? JournalRefiler.Apply(dated, curated) : dated;
         var bundle = new CatalogBundle(QuestCatalog.Build(quests), data.Names, jobs, data.Language);
         return (bundle, data.GameVersion);
     }

@@ -18,4 +18,8 @@ public sealed record EmptyReason(IReadOnlyList<string> Filters, bool ScopeIsEmpt
 /// <param name="Rows">Filtered and sorted rows.</param>
 /// <param name="Empty">Null when <paramref name="Rows"/> is non-empty.</param>
 /// <param name="TotalInScope">Quests under the selected node before filters and search (Unlisted excluded unless included).</param>
-public sealed record QueryResult(QuestRow[] Rows, EmptyReason? Empty, int TotalInScope);
+/// <param name="NewThisPatch">
+/// Under <see cref="SortSpec.NewThisPatchFirst"/>, how many of the leading <paramref name="Rows"/> form the "New this
+/// patch" group (<see cref="PatchIndex.IsNew"/>); 0 otherwise or when none passed the filters.
+/// </param>
+public sealed record QueryResult(QuestRow[] Rows, EmptyReason? Empty, int TotalInScope, int NewThisPatch = 0);

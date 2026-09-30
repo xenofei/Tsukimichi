@@ -85,6 +85,30 @@ public sealed class QuestPatches
     /// <summary>Whether the quest id was in the catalog when the file was last written (known patch or not).</summary>
     public bool Lists(uint rowId) => byRowId.ContainsKey(rowId);
 
+    /// <summary>
+    /// The records with <see cref="QuestRecord.AddedIn"/> set from this file (empty for a quest it has no patch for).
+    /// The catalog build and the fixture reader both lay the file over the mapped records this way; with no data the
+    /// input is returned as is.
+    /// </summary>
+    public IReadOnlyList<QuestRecord> Apply(IReadOnlyList<QuestRecord> records)
+    {
+        ArgumentNullException.ThrowIfNull(records);
+        if (byRowId.Count == 0)
+        {
+            return records;
+        }
+
+        var result = new QuestRecord[records.Count];
+        for (var i = 0; i < result.Length; i++)
+        {
+            var record = records[i];
+            var patch = For(record.RowId);
+            result[i] = string.Equals(record.AddedIn, patch, StringComparison.Ordinal) ? record : record with { AddedIn = patch };
+        }
+
+        return result;
+    }
+
     /// <summary>Reads the file; a missing or unreadable file is <see cref="Empty"/> with a warning.</summary>
     public static QuestPatches Load(string path)
     {
