@@ -56,8 +56,11 @@ public static class GaugeGeometry
     public static float Gap(float radius) => MathF.Max(1f, 0.10f * radius);
 
     /// <summary>Core radius: 0.80 R − stroke/2 − gap (0.61 R from R 12 up), and 0 below R 12 where no core is drawn.</summary>
-    public static float CoreRadius(float radius) =>
-        radius >= CoreMinRadius ? TrackRadius(radius) - Stroke(radius) * 0.5f - Gap(radius) : 0f;
+    public static float CoreRadius(float radius) => CoreRadius(radius, Stroke(radius));
+
+    /// <summary>Core radius for a gauge drawn with its own <paramref name="stroke"/> (the high-contrast palette's is thicker).</summary>
+    public static float CoreRadius(float radius, float stroke) =>
+        radius >= CoreMinRadius ? TrackRadius(radius) - stroke * 0.5f - Gap(radius) : 0f;
 
     /// <summary>Visual floor for a box of half-size R with its own stroke.</summary>
     public static float FloorEpsilon(float radius) => FloorEpsilon(radius, Stroke(radius));
@@ -86,9 +89,12 @@ public static class GaugeGeometry
     }
 
     /// <summary>The arc's sweep in radians for a progress fraction on a box of half-size R: 0 at 0, exactly 2π at 1.</summary>
-    public static float Sweep(float fraction, float radius)
+    public static float Sweep(float fraction, float radius) => Sweep(fraction, radius, Stroke(radius));
+
+    /// <summary>The arc's sweep for a gauge drawn with its own <paramref name="stroke"/>: the floor grows with the cap.</summary>
+    public static float Sweep(float fraction, float radius, float stroke)
     {
-        var v = VisualFraction(fraction, FloorEpsilon(radius));
+        var v = VisualFraction(fraction, FloorEpsilon(radius, stroke));
         return v >= 1f ? TwoPi : TwoPi * v;
     }
 
@@ -107,7 +113,11 @@ public static class GaugeGeometry
 
     /// <summary>Centres of the two round caps (discs of radius stroke/2): the start at 12 o'clock and the arc's end.</summary>
     public static (Vector2 Start, Vector2 End) Caps(Vector2 center, float radius, float fraction) =>
-        (TrackPoint(center, radius, StartAngle), TrackPoint(center, radius, EndAngle(fraction, radius)));
+        Caps(center, radius, fraction, Stroke(radius));
+
+    /// <summary>Cap centres for a gauge drawn with its own <paramref name="stroke"/>.</summary>
+    public static (Vector2 Start, Vector2 End) Caps(Vector2 center, float radius, float fraction, float stroke) =>
+        (TrackPoint(center, radius, StartAngle), TrackPoint(center, radius, StartAngle + Sweep(fraction, radius, stroke)));
 
     /// <summary>Arc length in pixels along the track centre line.</summary>
     public static float ArcLength(float fraction, float radius) => Sweep(fraction, radius) * TrackRadius(radius);
