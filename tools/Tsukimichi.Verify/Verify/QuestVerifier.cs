@@ -315,6 +315,7 @@ internal sealed partial class QuestVerifier(
     private async Task LodestoneListingsAsync(IReadOnlyList<QuestRecord> selection, CancellationToken ct)
     {
         var categories = selection
+            .Select(game.SheetRecord)
             .Where(q => !q.IsUnlisted && q.Journal.SectionId != 255)
             .Select(q => (q.Journal.SectionId, q.Journal.CategoryId))
             .Distinct()
@@ -371,6 +372,7 @@ internal sealed partial class QuestVerifier(
         // scored on level, class line, starting class, rewards, area and Grand Company; a row takes a page only when
         // it is that page's best row and the page is that row's best page.
         var groups = selection
+            .Select(game.SheetRecord)
             .Where(q => !listingByRow.ContainsKey(q.RowId) && !q.IsUnlisted)
             .GroupBy(q => (q.Journal.CategoryId, Name: Names.Canon(q.Name)));
         var scored = 0;
@@ -651,6 +653,7 @@ internal sealed partial class QuestVerifier(
     private List<(QuestRecord Quest, Draft Draft)> Compare(QuestRecord quest)
     {
         var drafts = new List<Draft>();
+        var sheet = game.SheetRecord(quest);
         var extras = game.ExtrasOf(quest.RowId);
         var displayLevel = GameCatalog.DisplayLevel(quest);
         var prereqNames = quest.PreviousQuests.QuestIds.Select(id => game.Catalog.GetByRowId(id)?.Name ?? $"row {id}").ToList();
@@ -665,9 +668,10 @@ internal sealed partial class QuestVerifier(
         // ---- Lodestone
         var lodestoneRef = string.Empty;
         LodestonePage? page = null;
-        if (quest.IsUnlisted || quest.Journal.SectionId == 255)
+        if (sheet.IsUnlisted || sheet.Journal.SectionId == 255)
         {
-            drafts.Add(new Draft(Facts.Listed, "unlisted", SourceNames.Lodestone, string.Empty, LodestoneSource.Base, Verdict.NotModeled, "journal genre 0; the Lodestone lists journal categories only"));
+            drafts.Add(new Draft(Facts.Listed, "unlisted", SourceNames.Lodestone, string.Empty, LodestoneSource.Base, Verdict.NotModeled,
+                "journal genre 0; the Lodestone lists journal categories only" + (quest.RefiledFrom != 0 && !quest.IsRemoved ? $" (the plugin files it under {quest.Journal.CategoryName}, refiling rule {quest.RefiledFrom})" : string.Empty)));
         }
         else if (listingByRow.TryGetValue(quest.RowId, out var listing))
         {
@@ -682,6 +686,11 @@ internal sealed partial class QuestVerifier(
                 drafts.Add(new Draft(Facts.Listed, "listed", SourceNames.Lodestone, listing.LodestoneId, lodestoneRef, Verdict.Unresolved, "quest page did not parse (layout drift or error page)"));
                 page = null;
             }
+            else if (quest.IsRetired)
+            {
+                drafts.Add(new Draft(Facts.Listed, "retired", SourceNames.Lodestone, listing.LodestoneId, lodestoneRef, Verdict.SourceLagging,
+                    $"the catalog retires this row (rule {quest.RefiledFrom}: {(quest.RefiledFrom == 1 ? "placeholder issuer or hidden flag in the sheet" : "curated/retired_quests.json")}); the Lodestone database still lists its page"));
+            }
             else
             {
                 drafts.Add(new Draft(Facts.Listed, "listed", SourceNames.Lodestone, listing.LodestoneId, lodestoneRef, Verdict.Match, twinNotes.GetValueOrDefault(quest.RowId, string.Empty)));
@@ -689,29 +698,34 @@ internal sealed partial class QuestVerifier(
         }
         else
         {
-            var (_, total, url) = listings.GetValueOrDefault((quest.Journal.SectionId, quest.Journal.CategoryId));
-            var catalogCount = game.Catalog.ByCategory.TryGetValue(quest.Journal.CategoryId, out var cat) ? cat.Count : 0;
+            var (_, total, url) = listings.GetValueOrDefault((sheet.Journal.SectionId, sheet.Journal.CategoryId));
+            var catalogCount = game.SheetRecords.Values.Count(r => r.Journal.CategoryId == sheet.Journal.CategoryId);
             if (lodestoneAmbiguity.TryGetValue(quest.RowId, out var why))
             {
                 drafts.Add(new Draft(Facts.Listed, "listed", SourceNames.Lodestone, string.Empty, url ?? LodestoneSource.Base, Verdict.Ambiguous, why));
             }
-            else if (listings.TryGetValue((quest.Journal.SectionId, quest.Journal.CategoryId), out var l) && l.Rows is null)
+            else if (listings.TryGetValue((sheet.Journal.SectionId, sheet.Journal.CategoryId), out var l) && l.Rows is null)
             {
                 drafts.Add(new Draft(Facts.Listed, "listed", SourceNames.Lodestone, string.Empty, l.Url, Verdict.Unresolved, "category listing could not be fetched"));
             }
+            else if (quest.IsRetired)
+            {
+                drafts.Add(new Draft(Facts.Listed, "retired", SourceNames.Lodestone, "not listed", url ?? LodestoneSource.Base, Verdict.Match,
+                    $"the catalog retires this row (rule {quest.RefiledFrom}) and the Lodestone listing for section {sheet.Journal.SectionId} category {sheet.Journal.CategoryId} omits it"));
+            }
             else if (wikiByRow.TryGetValue(quest.RowId, out var retiredPage) && retiredPage.RetiredPatch is { } retiredIn)
             {
-                drafts.Add(new Draft(Facts.Listed, "listed", SourceNames.Lodestone, string.Empty, url ?? LodestoneSource.Base, Verdict.NotListed,
-                    $"not in the Lodestone listing for section {quest.Journal.SectionId} category {quest.Journal.CategoryId}; the wiki marks the quest retired in patch {retiredIn} (see the retired row)"));
+                drafts.Add(new Draft(Facts.Listed, "listed", SourceNames.Lodestone, "not listed", url ?? LodestoneSource.Base, Verdict.NotListed,
+                    $"not in the Lodestone listing for section {sheet.Journal.SectionId} category {sheet.Journal.CategoryId}; the wiki marks the quest retired in patch {retiredIn} (see the retired row)"));
             }
             else
             {
-                var maxMapped = MaxMappedRowInCategory(quest.Journal.CategoryId);
+                var maxMapped = MaxMappedRowInCategory(sheet.Journal.CategoryId);
                 var lag = quest.RowId > maxMapped && maxMapped > 0;
                 drafts.Add(new Draft(Facts.Listed, "listed", SourceNames.Lodestone, string.Empty, url ?? LodestoneSource.Base, lag ? Verdict.SourceLagging : Verdict.NotListed,
                     lag
                         ? $"newer than the Lodestone's newest listed row in this category ({maxMapped}); Lodestone lists {total} of the catalog's {catalogCount}"
-                        : $"not in the Lodestone listing for section {quest.Journal.SectionId} category {quest.Journal.CategoryId} ({total} listed, catalog {catalogCount})"));
+                        : $"not in the Lodestone listing for section {sheet.Journal.SectionId} category {sheet.Journal.CategoryId} ({total} listed, catalog {catalogCount})"));
             }
         }
 
@@ -762,12 +776,12 @@ internal sealed partial class QuestVerifier(
                 : Names.Canon(page.GrandCompany).StartsWith(Names.Canon(extras.GrandCompanyName), StringComparison.Ordinal);
             drafts.Add(Compare(Facts.GrandCompany, extras.GrandCompanyName, SourceNames.Lodestone, page.GrandCompany, lodestoneRef, gcOk));
 
-            var genreOk = Names.Canon(page.ContentType) == Names.Canon(quest.Journal.GenreName) || Names.Canon(page.ContentType) == Names.Canon(quest.Journal.CategoryName);
-            drafts.Add(Compare(Facts.Genre, quest.Journal.GenreName, SourceNames.Lodestone, page.ContentType, lodestoneRef, genreOk));
+            var genreOk = Names.Canon(page.ContentType) == Names.Canon(sheet.Journal.GenreName) || Names.Canon(page.ContentType) == Names.Canon(sheet.Journal.CategoryName);
+            drafts.Add(Compare(Facts.Genre, sheet.Journal.GenreName, SourceNames.Lodestone, page.ContentType, lodestoneRef, genreOk));
 
             var listing = listingByRow[quest.RowId];
-            var sectionOk = listing.SectionId == quest.Journal.SectionId && listing.CategoryId == quest.Journal.CategoryId;
-            drafts.Add(Compare(Facts.Section, $"{quest.Journal.SectionId}/{quest.Journal.CategoryId} {quest.Journal.SectionName} > {quest.Journal.CategoryName}", SourceNames.Lodestone,
+            var sectionOk = listing.SectionId == sheet.Journal.SectionId && listing.CategoryId == sheet.Journal.CategoryId;
+            drafts.Add(Compare(Facts.Section, $"{sheet.Journal.SectionId}/{sheet.Journal.CategoryId} {sheet.Journal.SectionName} > {sheet.Journal.CategoryName}", SourceNames.Lodestone,
                 $"{listing.SectionId}/{listing.CategoryId} {game.SectionNames.GetValueOrDefault(listing.SectionId, string.Empty)} > {game.CategoryNames.GetValueOrDefault(listing.CategoryId, string.Empty)}", lodestoneRef, sectionOk));
 
             // Quest/Duty: entries that are duty names compare with InstanceContent; anything else is a quest name.
@@ -796,7 +810,7 @@ internal sealed partial class QuestVerifier(
         {
             var box = wikiPage.QuestInfobox;
             var wref = wikiPage.Url;
-            drafts.Add(new Draft(Facts.Listed, quest.IsUnlisted ? "unlisted" : "listed", SourceNames.Wiki, wikiPage.Title, wref, Verdict.Match, box.ContainsKey("id-gt") ? "matched by id-gt" : "matched by title"));
+            drafts.Add(new Draft(Facts.Listed, ListedValue(quest), SourceNames.Wiki, wikiPage.Title, wref, Verdict.Match, box.ContainsKey("id-gt") ? "matched by id-gt" : "matched by title"));
 
             var title = WikiSource.StripMarkup(box.GetValueOrDefault("title", wikiPage.Title));
             var baseTitle = BaseName(title);
@@ -807,7 +821,16 @@ internal sealed partial class QuestVerifier(
             var levelText = Names.Clean(box.GetValueOrDefault("level", string.Empty));
             if (int.TryParse(levelText, out var wikiLevel))
             {
-                drafts.Add(Compare(Facts.DisplayLevel, displayLevel.ToString(), SourceNames.Wiki, wikiLevel.ToString(), wref, wikiLevel == displayLevel));
+                var gateLevel = quest.PreviousQuests.QuestIds.Select(game.Catalog.GetByRowId).OfType<QuestRecord>().Select(GameCatalog.DisplayLevel).DefaultIfEmpty(0).Max();
+                if (wikiLevel > displayLevel && wikiLevel == gateLevel)
+                {
+                    drafts.Add(new Draft(Facts.DisplayLevel, displayLevel.ToString(), SourceNames.Wiki, wikiLevel.ToString(), wref, Verdict.NotModeled,
+                        $"the wiki quotes the level of the prerequisite that gates the quest (Lv {gateLevel}); the sheet's own level is {displayLevel}, and the plugin gates on the prerequisite"));
+                }
+                else
+                {
+                    drafts.Add(Compare(Facts.DisplayLevel, displayLevel.ToString(), SourceNames.Wiki, wikiLevel.ToString(), wref, wikiLevel == displayLevel));
+                }
             }
             else
             {
@@ -818,17 +841,18 @@ internal sealed partial class QuestVerifier(
             var wikiCategory = WikiSource.StripMarkup(box.GetValueOrDefault("journal-category", string.Empty));
             if (wikiCategory.Length == 0 && wikiSection.Length == 0)
             {
-                drafts.Add(new Draft(Facts.Section, $"{quest.Journal.SectionName} > {quest.Journal.CategoryName}", SourceNames.Wiki, string.Empty, wref, Verdict.NotModeled, "no journal fields in the infobox"));
+                drafts.Add(new Draft(Facts.Section, $"{sheet.Journal.SectionName} > {sheet.Journal.CategoryName}", SourceNames.Wiki, string.Empty, wref, Verdict.NotModeled, "no journal fields in the infobox"));
             }
-            else if (quest.IsUnlisted)
+            else if (sheet.IsUnlisted)
             {
-                drafts.Add(new Draft(Facts.Section, "unlisted", SourceNames.Wiki, $"{wikiSection} > {wikiCategory}", wref, Verdict.NotModeled, "catalog has no journal genre for this row"));
+                drafts.Add(new Draft(Facts.Section, "unlisted", SourceNames.Wiki, $"{wikiSection} > {wikiCategory}", wref, Verdict.NotModeled,
+                    "the sheet gives this row no journal genre" + (quest.RefiledFrom != 0 && !quest.IsRemoved ? $"; the plugin files it under {quest.Journal.SectionName} > {quest.Journal.CategoryName} (refiling rule {quest.RefiledFrom})" : string.Empty)));
             }
             else
             {
-                var catOk = wikiCategory.Length == 0 || SameJournalName(wikiCategory, quest.Journal.CategoryName);
-                var secOk = wikiSection.Length == 0 || SameJournalName(wikiSection, quest.Journal.SectionName);
-                drafts.Add(Compare(Facts.Section, $"{quest.Journal.SectionName} > {quest.Journal.CategoryName}", SourceNames.Wiki, $"{wikiSection} > {wikiCategory}", wref, catOk && secOk));
+                var catOk = wikiCategory.Length == 0 || SameJournalName(wikiCategory, sheet.Journal.CategoryName);
+                var secOk = wikiSection.Length == 0 || SameJournalName(wikiSection, sheet.Journal.SectionName);
+                drafts.Add(Compare(Facts.Section, $"{sheet.Journal.SectionName} > {sheet.Journal.CategoryName}", SourceNames.Wiki, $"{wikiSection} > {wikiCategory}", wref, catOk && secOk));
             }
 
             var expansion = WikiSource.ExpansionOf(box.GetValueOrDefault("release"), box.GetValueOrDefault("patch"));
@@ -897,9 +921,18 @@ internal sealed partial class QuestVerifier(
             }
 
             var retired = wikiPage.RetiredPatch;
-            if (retired is null)
+            if (retired is null && quest.IsRetired)
             {
-                drafts.Add(new Draft(Facts.Retired, quest.IsUnlisted ? "unlisted" : "live", SourceNames.Wiki, "live", wref, Verdict.Match, string.Empty));
+                drafts.Add(new Draft(Facts.Retired, "retired", SourceNames.Wiki, "live", wref, Verdict.Unresolved,
+                    $"the catalog retires this row (rule {quest.RefiledFrom}); the wiki does not mark it removed", Disagree: true));
+            }
+            else if (retired is null)
+            {
+                drafts.Add(new Draft(Facts.Retired, ListedValue(quest), SourceNames.Wiki, "live", wref, Verdict.Match, string.Empty));
+            }
+            else if (quest.IsRetired)
+            {
+                drafts.Add(new Draft(Facts.Retired, "retired", SourceNames.Wiki, "retired " + retired, wref, Verdict.Match, $"retired in the catalog (rule {quest.RefiledFrom}) and on the wiki"));
             }
             else if (quest.IsUnlisted)
             {
@@ -907,16 +940,20 @@ internal sealed partial class QuestVerifier(
             }
             else
             {
-                drafts.Add(new Draft(Facts.Retired, "live", SourceNames.Wiki, "retired " + retired, wref, Verdict.CatalogWrong, $"wiki marks the quest retired in patch {retired}; the catalog still lists it under {quest.Journal.CategoryName}", "0.6.1 (T1 retired_quests.json)"));
+                drafts.Add(listingByRow.ContainsKey(quest.RowId)
+                    ? new Draft(Facts.Retired, "live", SourceNames.Wiki, "retired " + retired, wref, Verdict.Unresolved,
+                        $"wiki marks the quest retired in patch {retired}, but the Lodestone still lists it; the catalog lists it under {quest.Journal.CategoryName}", Disagree: true)
+                    : new Draft(Facts.Retired, "live", SourceNames.Wiki, "retired " + retired, wref, Verdict.CatalogWrong,
+                        $"wiki marks the quest retired in patch {retired} and the Lodestone listing omits it; the catalog still lists it under {quest.Journal.CategoryName}", "curated/retired_quests.json"));
             }
         }
         else if (wikiAmbiguity.TryGetValue(quest.RowId, out var ambiguous))
         {
-            drafts.Add(new Draft(Facts.Listed, quest.IsUnlisted ? "unlisted" : "listed", SourceNames.Wiki, string.Empty, WikiSource.PageUrl(quest.Name), Verdict.Ambiguous, ambiguous));
+            drafts.Add(new Draft(Facts.Listed, ListedValue(quest), SourceNames.Wiki, string.Empty, WikiSource.PageUrl(quest.Name), Verdict.Ambiguous, ambiguous));
         }
         else
         {
-            drafts.Add(new Draft(Facts.Listed, quest.IsUnlisted ? "unlisted" : "listed", SourceNames.Wiki, string.Empty, WikiSource.PageUrl(quest.Name), Verdict.NotListed, wikiMissing.GetValueOrDefault(quest.RowId, "no wiki page")));
+            drafts.Add(new Draft(Facts.Listed, ListedValue(quest), SourceNames.Wiki, string.Empty, WikiSource.PageUrl(quest.Name), Verdict.NotListed, wikiMissing.GetValueOrDefault(quest.RowId, "no wiki page")));
         }
 
         // ---- garland (curated duty unlocks only)
@@ -952,12 +989,12 @@ internal sealed partial class QuestVerifier(
             }
         }
 
-        if (quest.IsUnlisted)
+        if (quest.IsRemoved)
         {
-            // Unlisted (hidden, removed, legacy) rows: only identity facts are compared, as qa-data-engineer §1.4 asks; the rest would only pollute the counts.
+            // Unlisted and retired (hidden, removed, legacy) rows: only identity facts are compared, as qa-data-engineer §1.4 asks; the rest would only pollute the counts.
             drafts = drafts.Select(d => d.Fact is Facts.Listed or Facts.Name or Facts.DisplayLevel or Facts.Retired || !d.Disagree
                 ? d
-                : d with { Verdict = Verdict.NotModeled, Disagree = false, Reason = "unlisted row; only identity facts are compared (" + d.Reason + ")" }).ToList();
+                : d with { Verdict = Verdict.NotModeled, Disagree = false, Reason = (quest.IsRetired ? "retired row" : "unlisted row") + "; only identity facts are compared (" + d.Reason + ")" }).ToList();
         }
         else if (wikiByRow.TryGetValue(quest.RowId, out var stubPage) && stubPage.RetiredPatch is { } stubRetiredIn)
         {
@@ -1106,8 +1143,11 @@ internal sealed partial class QuestVerifier(
     private bool IsMainScenario(QuestRecord q)
     {
         msqSections ??= game.SectionNames.Where(kv => Names.Canon(kv.Value).StartsWith("main scenario", StringComparison.Ordinal)).Select(kv => kv.Key).ToHashSet();
-        return msqSections.Contains(q.Journal.SectionId) && !q.IsUnlisted;
+        return msqSections.Contains(q.Journal.SectionId) && !q.IsRemoved;
     }
+
+    /// <summary>The catalog's filing state as the listed/retired rows print it.</summary>
+    private static string ListedValue(QuestRecord q) => q.IsRetired ? "retired" : q.IsUnlisted ? "unlisted" : "listed";
 
     /// <summary>Quest rows named by QuestAcceptAdditionCondition: further quests that must be complete before the quest is offered, in addition to PreviousQuest.</summary>
     private List<uint> AcceptQuests(QuestRecord q) => q.AcceptConditions.Where(id => game.Catalog.GetByRowId(id) is not null).ToList();

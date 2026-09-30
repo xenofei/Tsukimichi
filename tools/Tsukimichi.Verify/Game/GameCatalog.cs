@@ -41,11 +41,17 @@ internal sealed class GameCatalog
     /// <summary>JournalCategory id → JournalSection id.</summary>
     public IReadOnlyDictionary<uint, uint> CategorySection { get; }
 
-    public GameCatalog(string sqpackPath, TextWriter log)
+    /// <param name="curated">The curated overlay the plugin loads (refile overrides, retired quests), so the refiled catalog is the one players see.</param>
+    public GameCatalog(string sqpackPath, Tsukimichi.Core.Storage.CuratedData curated, TextWriter log)
     {
         var data = new Lumina.GameData(sqpackPath, new LuminaOptions { PanicOnSheetChecksumMismatch = false });
         GameVersion = ReadGameVersion(sqpackPath);
-        Bundle = CatalogMapper.Map(data.Excel, Language.English, default, line => log.WriteLine("catalog: " + line));
+        Bundle = CatalogMapper.Map(data.Excel, Language.English, default, line => log.WriteLine("catalog: " + line), JournalFiling.Refiled, curated);
+
+        // The sheet's own filing: the Lodestone and the wiki file a quest by the journal genre the game gives it, not by
+        // the plugin's refiling, so those comparisons read this record.
+        var legacy = CatalogMapper.Map(data.Excel, Language.English, default, null, JournalFiling.Legacy);
+        SheetRecords = legacy.Catalog.All.ToDictionary(q => q.RowId);
 
         var quests = data.GetExcelSheet<Quest>(Language.English) ?? throw new InvalidOperationException("Quest sheet missing");
         var categories = data.GetExcelSheet<ClassJobCategory>(Language.English) ?? throw new InvalidOperationException("ClassJobCategory sheet missing");
@@ -125,6 +131,12 @@ internal sealed class GameCatalog
 
         Extras = extras;
     }
+
+    /// <summary>Records as the sheet files them (<see cref="JournalFiling.Legacy"/>), by row id.</summary>
+    public IReadOnlyDictionary<uint, QuestRecord> SheetRecords { get; }
+
+    /// <summary>The quest as the sheet files it: its own journal genre, before the refiler.</summary>
+    public QuestRecord SheetRecord(QuestRecord q) => SheetRecords.TryGetValue(q.RowId, out var s) ? s : q;
 
     public QuestExtras ExtrasOf(uint rowId) => Extras.TryGetValue(rowId, out var e) ? e : new QuestExtras(string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, [], string.Empty, 0, 0, 0);
 

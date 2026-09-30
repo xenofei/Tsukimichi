@@ -108,8 +108,14 @@ internal sealed class RewardVerifier(
         return other.Length > 0 ? $"quest only; otherSource={other}" : "quest only";
     }
 
+    /// <summary>The entry's other sources: the structured <c>otherSources</c> array (0.6.0 on), else the legacy <c>otherSource=</c> tag in <c>source</c>.</summary>
     private static string OtherSource(UniqueRewardEntry e)
     {
+        if (e.OtherSources.Count > 0)
+        {
+            return string.Join(",", e.OtherSources);
+        }
+
         foreach (var part in e.Source.Split(';'))
         {
             if (part.StartsWith("otherSource=", StringComparison.Ordinal))

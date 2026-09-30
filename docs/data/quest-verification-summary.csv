@@ -472,7 +472,7 @@ rowId,name,sourcesChecked,overallVerdict,worstFact,facts,gateFailures
 66020,What Goes Around,lodestone;wiki,notModeled,prereqs,20,0
 66021,Fire and Brimstone,lodestone;wiki,notModeled,prereqs,20,0
 66022,Kobolds Ahoy,lodestone;wiki,notModeled,prereqs,20,0
-66023,"Meet, Greet, and Deceit",lodestone;wiki,catalogWrong,retired,9,1
+66023,"Meet, Greet, and Deceit",lodestone;wiki,notModeled,prereqs,9,0
 66024,Scratch It Rich,lodestone;wiki,notModeled,listed,9,0
 66025,Hitting the Cactpot,lodestone;wiki,notModeled,listed,9,0
 66026,Shades of Sil'dih,lodestone;wiki,notModeled,prereqs,20,0
@@ -482,8 +482,8 @@ rowId,name,sourcesChecked,overallVerdict,worstFact,facts,gateFailures
 66030,The World of Darkness,lodestone;wiki,notModeled,dutyUnlock,21,0
 66031,The Light of Hope,lodestone;wiki,notModeled,prereqs,20,0
 66032,Better Left Unfound,lodestone;wiki,notModeled,prereqs,20,0
-66033,But I Hardly Noah,lodestone;wiki,catalogWrong,retired,9,1
-66034,The Gift of the Archmagus,lodestone;wiki,catalogWrong,retired,9,1
+66033,But I Hardly Noah,lodestone;wiki,notModeled,section,9,0
+66034,The Gift of the Archmagus,lodestone;wiki,notModeled,rewards,9,0
 66035,A Thorne-y Relationship,lodestone;wiki,notModeled,prereqs,20,0
 66036,Digging for Dolls,lodestone;wiki,notModeled,prereqs,20,0
 66037,A Father's Folly,lodestone;wiki,notModeled,prereqs,20,0
@@ -1367,8 +1367,8 @@ rowId,name,sourcesChecked,overallVerdict,worstFact,facts,gateFailures
 66961,Saw That One Coming,lodestone;wiki,notModeled,prereqs,20,0
 66962,Good for What Ales You,lodestone;wiki,notModeled,prereqs,20,0
 66963,"Help Me, Lord of the Dance",lodestone;wiki,notModeled,prereqs,20,0
-66964,He's Got a Ticket to Ride,lodestone;wiki,catalogWrong,retired,9,1
-66965,Lend Me Your Ears Already,lodestone;wiki,catalogWrong,retired,9,1
+66964,He's Got a Ticket to Ride,lodestone;wiki,notModeled,prereqs,9,0
+66965,Lend Me Your Ears Already,lodestone;wiki,match,,9,0
 66966,The Beast of Brewer's Beacon,lodestone;wiki,notModeled,prereqs,20,0
 66967,Rising to the Challenge,lodestone;wiki,notModeled,prereqs,20,0
 66968,An Ill-conceived Venture,lodestone;wiki,notModeled,prereqs,20,0
@@ -2209,7 +2209,7 @@ rowId,name,sourcesChecked,overallVerdict,worstFact,facts,gateFailures
 67816, Not for the Faint of Heart,lodestone;wiki,sourceWrong,rewards,20,0
 67817,A Fiendish Likeness,lodestone;wiki,notModeled,prereqs,21,0
 67818,One More Night in Amdapor,lodestone;wiki,notModeled,dutyUnlock,21,0
-67819,A Seat at the Feast,lodestone;wiki,catalogWrong,retired,10,1
+67819,A Seat at the Feast,lodestone;wiki,notModeled,section,10,0
 67820, Finding Your Voice,lodestone;wiki,notModeled,prereqs,20,0
 67821,The Weeping City,lodestone;wiki,notModeled,dutyUnlock,21,0
 67822,Freedom for Our Skies,lodestone;wiki,notModeled,prereqs,20,0
@@ -2309,7 +2309,7 @@ rowId,name,sourcesChecked,overallVerdict,worstFact,facts,gateFailures
 67920,Lift Me to the Moon,lodestone;wiki,notModeled,prereqs,20,0
 67921,"Eternity, Loyalty, Honesty",lodestone;wiki,notModeled,prereqs,20,0
 67922,Let Me Gubal That for You,lodestone;wiki,notModeled,dutyUnlock,21,0
-67923,What Lies Beneath,lodestone;wiki,notModeled,listed,10,0
+67923,What Lies Beneath,lodestone;wiki,unresolved,prereqs,10,1
 67924,Dead but Not Gone,lodestone;wiki,unresolved,prereqs,20,1
 67925,Squadron and Commander (Twin Adder),lodestone;wiki,notModeled,expansion,9,0
 67926,Squadron and Commander (Maelstrom),lodestone;wiki,notModeled,expansion,9,0
@@ -2533,8 +2533,8 @@ rowId,name,sourcesChecked,overallVerdict,worstFact,facts,gateFailures
 68145,A Taxing Request,lodestone;wiki,notModeled,prereqs,20,0
 68146,Mounting Expectations,lodestone;wiki,notModeled,prereqs,20,0
 68147,The Value of Life,lodestone;wiki,notModeled,prereqs,20,0
-68148,And We Shall Call It Pyros,lodestone;wiki,notModeled,listed,10,0
-68149,And We Shall Call It Hydatos,lodestone;wiki,notModeled,listed,10,0
+68148,And We Shall Call It Pyros,lodestone;wiki,unresolved,prereqs,10,1
+68149,And We Shall Call It Hydatos,lodestone;wiki,unresolved,prereqs,10,1
 68150,The Trouble with Taxidermy,lodestone;wiki,notModeled,prereqs,20,0
 68151,True to Life,lodestone;wiki,notModeled,prereqs,20,0
 68152,The Client Is King,lodestone;wiki,notModeled,prereqs,20,0
@@ -2864,7 +2864,7 @@ rowId,name,sourcesChecked,overallVerdict,worstFact,facts,gateFailures
 68476,Another Striking Opportunity,lodestone;wiki,notModeled,prereqs,20,0
 68477,Reach Long and Prosper,lodestone;wiki,notModeled,listed,9,0
 68478,And We Shall Call It Pagos,lodestone;wiki,notModeled,listed,10,0
-68479,Songs in the Key of Kugane,lodestone;wiki,unresolved,displayLevel,9,1
+68479,Songs in the Key of Kugane,lodestone;wiki,notModeled,displayLevel,9,0
 68482,How Tataru Got Her Groove Back,lodestone;wiki,notModeled,prereqs,20,0
 68483,"Broken Steel, Broken Men",lodestone;wiki,sourceWrong,rewards,20,0
 68484,Search for the Stolen Scroll,lodestone;wiki,notModeled,prereqs,20,0
@@ -3012,7 +3012,7 @@ rowId,name,sourcesChecked,overallVerdict,worstFact,facts,gateFailures
 68626,"My Power, My Pleasure, My Pain",lodestone;wiki,notModeled,prereqs,20,0
 68627,Desire,lodestone;wiki,notModeled,prereqs,20,0
 68628,Annihilation,lodestone;wiki,notModeled,dutyUnlock,21,0
-68629,Makin' Bacon (Bread),lodestone;wiki,catalogWrong,retired,9,1
+68629,Makin' Bacon (Bread),lodestone;wiki,notModeled,section,9,0
 68630,In the Eye of the Hingan,lodestone;wiki,notModeled,prereqs,20,0
 68631,The Blade Mislaid,lodestone;wiki,notModeled,prereqs,20,0
 68632,Something Fishy This Way Comes,lodestone;wiki,notModeled,prereqs,20,0
@@ -3110,7 +3110,7 @@ rowId,name,sourcesChecked,overallVerdict,worstFact,facts,gateFailures
 68724,Welcome to Their Jungle,lodestone;wiki,notModeled,prereqs,20,0
 68725,The City of Lost Angels,lodestone;wiki,notModeled,dutyUnlock,21,0
 68726,In Bad Taste,lodestone;wiki,notModeled,prereqs,20,0
-68727,Wok on By,lodestone;wiki,catalogWrong,retired,9,1
+68727,Wok on By,lodestone;wiki,notModeled,section,9,0
 68728,Out of the Blue,lodestone;wiki,notModeled,expansion,20,0
 68729,Blue Leading the Blue,lodestone;wiki,notModeled,expansion,20,0
 68730,Blue Collar Work,lodestone;wiki,notModeled,expansion,20,0
@@ -3579,7 +3579,7 @@ rowId,name,sourcesChecked,overallVerdict,worstFact,facts,gateFailures
 69195, Snakes in the Grass,lodestone;wiki,notModeled,prereqs,20,0
 69196,Message in a Bottle,lodestone;wiki,notModeled,expansion,20,0
 69197,Messages from Distant Shores,lodestone;wiki,notModeled,expansion,20,0
-69198,Minstrel from Another Mother,lodestone;wiki,unresolved,displayLevel,9,1
+69198,Minstrel from Another Mother,lodestone;wiki,notModeled,displayLevel,9,0
 69199,Feels Like Moonfire,lodestone;wiki,notModeled,expansion,20,0
 69200,Anything You Can Do,lodestone;wiki,notModeled,expansion,20,0
 69201,High-flying Hijinks,lodestone;wiki,sourceWrong,rewards,20,0
@@ -4063,7 +4063,7 @@ rowId,name,sourcesChecked,overallVerdict,worstFact,facts,gateFailures
 69703,Cutting the Cheese,lodestone;wiki,notModeled,dutyUnlock,21,0
 69704,Where No Loporrit Has Gone Before,lodestone;wiki,notModeled,dutyUnlock,21,0
 69706,Leves of Old Sharlayan,lodestone;wiki,notModeled,listed,9,0
-69707,I Wandered Sharlayan as a Minstrel,lodestone;wiki,unresolved,displayLevel,9,1
+69707,I Wandered Sharlayan as a Minstrel,lodestone;wiki,notModeled,displayLevel,9,0
 69708,Ascending to Empyreum,lodestone;wiki,notModeled,expansion,20,0
 69709,A Place to Train,lodestone;wiki,notModeled,prereqs,20,0
 69710,Sights of the End,lodestone;wiki,notModeled,listed,9,0
@@ -4367,8 +4367,8 @@ rowId,name,sourcesChecked,overallVerdict,worstFact,facts,gateFailures
 70008,A Stylish Transformation,lodestone;wiki,notModeled,expansion,20,0
 70009,The Faculty,lodestone;wiki,notModeled,prereqs,20,0
 70010,The Meeting of Minds,lodestone;wiki,notModeled,prereqs,20,0
-70011,The Crystal from Beyond,garland;lodestone;wiki,notModeled,dutyUnlock,22,0
-70012,Where Familiars Dare,lodestone;wiki,notModeled,dutyUnlock,21,0
+70011,The Crystal from Beyond,lodestone;wiki,notModeled,prereqs,20,0
+70012,Where Familiars Dare,garland;lodestone;wiki,notModeled,prereqs,22,0
 70013,Under the Surface,lodestone;wiki,notModeled,dutyUnlock,21,0
 70014,The Fires of Creation,lodestone;wiki,notModeled,dutyUnlock,21,0
 70015,Who Wards the Warders?,lodestone;wiki,notModeled,dutyUnlock,21,0
@@ -4892,8 +4892,8 @@ rowId,name,sourcesChecked,overallVerdict,worstFact,facts,gateFailures
 70536,Donuhanu's Devotion,lodestone;wiki,notModeled,prereqs,20,0
 70537,Catching Breath,lodestone;wiki,notModeled,prereqs,20,0
 70538,An Odd Fish Odyssey,lodestone;wiki,notModeled,prereqs,20,0
-70539,Leves of Tuliyollal,lodestone;wiki,notModeled,listed,9,0
-70540,How the West Was Sung,lodestone;wiki,unresolved,displayLevel,9,1
+70539,Leves of Tuliyollal,lodestone;wiki,unresolved,prereqs,9,1
+70540,How the West Was Sung,lodestone;wiki,notModeled,displayLevel,9,0
 70541,Trial by Spire,lodestone;wiki,notModeled,prereqs,20,0
 70542,Sights of the West,lodestone;wiki,notModeled,listed,9,0
 70543,Sights of the West and Beyond,lodestone;wiki,notModeled,listed,9,0
@@ -5313,7 +5313,7 @@ rowId,name,sourcesChecked,overallVerdict,worstFact,facts,gateFailures
 70992, A Phantom Reborn,lodestone;wiki,notModeled,prereqs,20,0
 70993,Earning Your Water Wings,lodestone;wiki,sourceLagging,listed,9,0
 70994,Whoever Floats Your Raft,lodestone;wiki,sourceLagging,listed,9,0
-70995,Abridged Too Far,lodestone;wiki,notModeled,duties,11,0
+70995,Abridged Too Far,lodestone;wiki,unresolved,duties,11,1
 70996,Taco Time,lodestone;wiki,notModeled,prereqs,20,0
 70997,A Dream Realized,lodestone;wiki,notModeled,prereqs,20,0
 70998,Touring Tural,lodestone;wiki,notModeled,prereqs,20,0

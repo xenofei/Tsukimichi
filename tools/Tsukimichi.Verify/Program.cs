@@ -116,7 +116,13 @@ public static class Program
         }
 
         var log = Console.Out;
-        var catalog = new GameCatalog(game, log);
+        var curatedData = Tsukimichi.Core.Storage.CuratedData.Load(opts.CuratedDir);
+        foreach (var warning in curatedData.Warnings)
+        {
+            log.WriteLine("curated: " + warning);
+        }
+
+        var catalog = new GameCatalog(game, curatedData, log);
         var cacheRoot = opts.Cache ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Tsukimichi.Verify", catalog.GameVersion);
         var repo = opts.RepoRoot;
         if (Path.GetFullPath(cacheRoot).StartsWith(Path.GetFullPath(repo), StringComparison.OrdinalIgnoreCase))
@@ -454,7 +460,10 @@ public static class Program
                 e["itemId"]?.GetValue<uint>() ?? 0,
                 e["rewardName"]?.GetValue<string>() ?? string.Empty,
                 Enum.TryParse<Confidence>(e["confidence"]?.GetValue<string>(), true, out var conf) ? conf : Confidence.Static,
-                e["source"]?.GetValue<string>() ?? string.Empty));
+                e["source"]?.GetValue<string>() ?? string.Empty)
+            {
+                OtherSources = (e["otherSources"] as JsonArray ?? []).Select(n => n?.GetValue<string>() ?? string.Empty).Where(n => n.Length > 0).ToList(),
+            });
         }
 
         return list;
