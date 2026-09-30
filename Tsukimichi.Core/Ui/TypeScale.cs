@@ -2,7 +2,8 @@ namespace Tsukimichi.Core.Ui;
 
 /// <summary>
 /// The type roles of ui-revamp §4.2 as numbers, so they are tested without ImGui: Caption (table headers, pills, the
-/// status bar) at 0.85× the body size with a 12 px absolute floor, Display (the hero title, card titles) at 1.2×, and
+/// status bar, card titles, the provenance line) at 0.85× the body size with a 12 px absolute floor, Display (the hero
+/// title, the empty-state and tour headings) at 1.2×, and
 /// the game font picked for each. The game's fonts are pre-baked bitmaps at fixed sizes (Axis 9.6 / 12 / 14 / 18 / 36
 /// pt), and scaling one bilinearly blurs it (dalamud-developer panel §5), so <c>Ui.Typography</c> keeps one handle per
 /// UI-scale bucket, each the game size nearest to what that bucket draws, and scales the small remainder.

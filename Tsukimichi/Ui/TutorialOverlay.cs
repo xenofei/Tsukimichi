@@ -54,7 +54,6 @@ public sealed class TutorialOverlay : ITutorial
     /// previous step.
     /// </summary>
     private const int CardSettleFrames = 2;
-    private const float TitleScale = 1.2f;
     private const float DimAlpha = 0.7f;
 
     /// <summary>Two holes (target and card) split the area into at most 4² pieces.</summary>
@@ -641,13 +640,12 @@ public sealed class TutorialOverlay : ITutorial
             ImGui.TextDisabled(progress[index]);
         }
 
-        ImGui.SetWindowFontScale(UiMetrics.FontScale * TitleScale);
+        using (Typography.Display())
         using (Theme.PushText(Theme.Moon))
         {
             ImGui.TextUnformatted(step.Title);
         }
 
-        ImGui.SetWindowFontScale(UiMetrics.FontScale);
         ImGui.TextWrapped(step.Body);
         if (step.Kind == StepKind.Legend)
         {

@@ -876,7 +876,7 @@ public sealed class DetailPane
     {
         var spacing = ImGui.GetStyle().ItemSpacing.Y;
         var rows = ActionRows(ImGui.GetContentRegionAvail().X);
-        return UiMetrics.Hairline + spacing + (rows * UiMetrics.MinTarget) + ((rows - 1) * spacing) + spacing + ImGui.GetTextLineHeight() + UiMetrics.Px(2f);
+        return UiMetrics.Hairline + spacing + (rows * UiMetrics.MinTarget) + ((rows - 1) * spacing) + spacing + Typography.CaptionSize + UiMetrics.Px(2f);
     }
 
     /// <summary>
@@ -1034,6 +1034,8 @@ public sealed class DetailPane
     /// </summary>
     private void DrawProvenance(SessionState session)
     {
+        // Provenance is a caption (ui-revamp §4.2).
+        using var caption = Typography.Caption();
         var now = ImGui.GetTime();
         if (now < reportNoteUntil && reportNoteRowId == model.RowId)
         {

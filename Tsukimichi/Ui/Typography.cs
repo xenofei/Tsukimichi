@@ -1,6 +1,7 @@
 using System;
 using Dalamud;
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface;
 using Dalamud.Interface.GameFonts;
 using Dalamud.Interface.ManagedFontAtlas;
 using Dalamud.Plugin.Services;
@@ -138,11 +139,32 @@ public static class Typography
     /// <summary>The display size in the current window: 1.2× its body size.</summary>
     public static float DisplaySize => TypeScale.DisplayPx(ImGui.GetFontSize());
 
-    /// <summary>Draws in the caption role until disposed (table headers, pills, the status bar).</summary>
+    /// <summary>Draws in the caption role until disposed (table headers, pills, the status bar, card titles, the provenance line).</summary>
     public static Scope Caption() => new(caption, CaptionSize);
 
-    /// <summary>Draws in the display role until disposed (the hero title, card titles).</summary>
+    /// <summary>Draws in the display role until disposed (the hero title, the empty-state and tour headings).</summary>
     public static Scope Display() => new(display, DisplaySize);
+
+    /// <summary>
+    /// An icon-font glyph as a text item at the current font size (inside a <see cref="Caption"/> scope, the caption
+    /// size), so an icon beside a role's text matches it; the window's font scale comes back afterwards.
+    /// </summary>
+    public static void Icon(string icon)
+    {
+        var target = ImGui.GetFontSize();
+        var window = ImGuiP.GetCurrentWindow();
+        var own = window.FontWindowScale;
+        ImGui.PushFont(UiBuilder.IconFont);
+        var now = ImGui.GetFontSize();
+        if (now > 0f && target > 0f && float.IsFinite(target))
+        {
+            ImGui.SetWindowFontScale(own * target / now);
+        }
+
+        ImGui.TextUnformatted(icon);
+        ImGui.SetWindowFontScale(own);
+        ImGui.PopFont();
+    }
 
     private static void DisposeHandles()
     {
