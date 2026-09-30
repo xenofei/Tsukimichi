@@ -47,23 +47,11 @@ public sealed partial class DetailPane
     private static float SmallButtonWidth(string label) => ImGui.CalcTextSize(label).X + (ImGui.GetStyle().FramePadding.X * 2f);
 
     /// <summary>
-    /// Continues the line when an item <paramref name="width"/> wide still fits before <paramref name="right"/>, else
-    /// starts a new one (Chrome's <c>SameLineOrWrap</c> measured against a card's inner edge, not the window's). After
-    /// a text that wrapped onto several lines the item always goes under it, never beside its first line.
+    /// Continues the line when an item <paramref name="width"/> wide still fits before <paramref name="right"/> (a
+    /// card's inner edge, not the window's), else starts a new one; after a text that wrapped onto several lines the
+    /// item goes under it (<see cref="Chrome.SameLineOrWrap(float, float)"/>).
     /// </summary>
-    private static void SameLineOrWrap(float width, float right)
-    {
-        if (ImGui.GetItemRectSize().Y > ImGui.GetTextLineHeight() + 0.5f)
-        {
-            return;
-        }
-
-        ImGui.SameLine();
-        if (ImGui.GetCursorScreenPos().X + width > right)
-        {
-            ImGui.NewLine();
-        }
-    }
+    private static void SameLineOrWrap(float width, float right) => Chrome.SameLineOrWrap(width, right);
 
     /// <summary>
     /// <paramref name="segments"/> as a flow in <paramref name="room"/> pixels: whole segments with
