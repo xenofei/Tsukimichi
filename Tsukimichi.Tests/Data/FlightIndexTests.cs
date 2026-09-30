@@ -270,7 +270,8 @@ public class FlightIndexGameDataTests(GameDataFixture fixture, ITestOutputHelper
         {
             Assert.NotNull(zone.LoadingImagePath);
             Assert.StartsWith("ui/loadingimage/", zone.LoadingImagePath, StringComparison.Ordinal);
-            Assert.EndsWith("_hr1.tex", zone.LoadingImagePath, StringComparison.Ordinal);
+            Assert.EndsWith(".tex", zone.LoadingImagePath, StringComparison.Ordinal);
+            Assert.DoesNotContain("_hr1", zone.LoadingImagePath, StringComparison.Ordinal);   // the 1920 × 1080 file, not the 4K one
             Assert.True(fixture.Game.FileExists(zone.LoadingImagePath), $"{zone.Name}: {zone.LoadingImagePath} is not in the game data");
             Assert.NotEqual(0u, zone.ExpansionIcon);
         });

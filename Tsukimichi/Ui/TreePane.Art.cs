@@ -1,5 +1,4 @@
 using System;
-using System.Globalization;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Tsukimichi.Core.Ui;
@@ -12,18 +11,12 @@ namespace Tsukimichi.Ui;
 /// Numeral role), the moon-road dividers between the story, side and virtual blocks, and the road under each row, a
 /// 2 px track whose gold walked part is the node's completion. Plain flair keeps the 1.3 tree (the mini bar and the
 /// section rules). Everything is draw-list work over plain <c>Dummy</c> items, so keyboard navigation, the tiers and the
-/// tour rects are untouched; texts are measured once per font size and language.
+/// tour rects are untouched.
 /// </summary>
 public sealed partial class TreePane
 {
-    /// <summary>The header line's height (the mockup's 28), the sigil's size, and the gap after the sigil and around the rule.</summary>
-    private const float HeaderLogical = 28f;
-    private const float HeaderSigilLogical = 10f;
-    private const float HeaderGapLogical = 7f;
+    /// <summary>The header's inset from the pane's edges.</summary>
     private const float HeaderPadLogical = 6f;
-
-    /// <summary>A rule shorter than this is left out rather than drawn as a stub.</summary>
-    private const float HeaderRuleMinLogical = 16f;
 
     /// <summary>A divider's line box and the height of its three phases (the mockup's 14 px svg with 4 px margins).</summary>
     private const float DividerLogical = 20f;
@@ -35,94 +28,59 @@ public sealed partial class TreePane
     private const float RoadLiftLogical = 2f;
     private const float RoadEndLogical = 8f;
 
-    // The header's texts and widths, rebuilt when the language, the overall count or the font size changes.
-    private string headerTitle = string.Empty;
-    private int headerLanguage = -1;
-    private float headerTitleWidth;
-    private float headerCountWidth;
-    private string headerCountMeasured = string.Empty;
-    private float headerMeasuredAt = -1f;
+    /// <summary>The fraction each orbit last showed, so a row whose tween state was pruned out of view does not refill.</summary>
+    private readonly FillMemory filled = new();
+
+    /// <summary>The character the remembered fills belong to (the viewed content id, 0 for none).</summary>
+    private ulong filledOwner;
 
     /// <summary>
-    /// The header: the sigil star, "JOURNAL" in the Eyebrow role (uppercase; the caption role stands in where the game
-    /// font lacks a glyph), a GiltRule fading toward the count, and the overall "done / total" right-aligned in the
-    /// Numeral role. A narrow pane drops the count, then the rule; the title is never cut below the sigil.
+    /// The header: the shared heading line (<see cref="SectionHeading.DrawLine"/>: the sigil star, "JOURNAL" cased for
+    /// the language, the rule) with the overall "done / total" right-aligned in the Numeral role, inset from the pane's
+    /// edges and as tall as the other headings plus their top pad again below. A narrow pane drops the count (named on
+    /// hover), then the rule; the title is cut last. Measured every frame, so a heading font that finishes building
+    /// mid-session is measured in the face it draws in.
     /// </summary>
     private void DrawHeader(float width)
     {
         var origin = ImGui.GetCursorScreenPos();
-        var height = MathF.Round(MathF.Max(UiMetrics.Px(HeaderLogical), ImGui.GetTextLineHeight() + UiMetrics.Px(8f)));
-        ImGui.Dummy(new Vector2(MathF.Max(1f, width), height));
-        if (!ImGui.IsItemVisible())
-        {
-            return;
-        }
-
-        var hovered = ImGui.IsItemHovered();
-        if (headerLanguage != Localization.Loc.Version)
-        {
-            headerLanguage = Localization.Loc.Version;
-            headerTitle = Strings.TabJournal.ToUpper(CultureInfo.CurrentCulture);
-            headerMeasuredAt = -1f;
-        }
-
-        var count = allNode.CountText;
-        var fontSize = ImGui.GetFontSize();
-        if (headerMeasuredAt != fontSize || !ReferenceEquals(headerCountMeasured, count))
-        {
-            using (Typography.Eyebrow(headerTitle))
-            {
-                headerTitleWidth = ImGui.CalcTextSize(headerTitle).X;
-            }
-
-            using (Typography.Numeral(count))
-            {
-                headerCountWidth = count.Length > 0 ? ImGui.CalcTextSize(count).X : 0f;
-            }
-
-            headerCountMeasured = count;
-            headerMeasuredAt = fontSize;
-        }
-
-        var dl = ImGui.GetWindowDrawList();
-        var centerY = MathF.Round(origin.Y + (height * 0.5f));
         var pad = UiMetrics.Px(HeaderPadLogical);
-        var gap = UiMetrics.Px(HeaderGapLogical);
-        var sigil = UiMetrics.Px(HeaderSigilLogical);
-        var left = origin.X + pad;
-        var right = origin.X + width - pad;
-        Ornament.Sigil(dl, new Vector2(MathF.Round(left + (sigil * 0.5f)), centerY), sigil);
-
-        var titleX = left + sigil + gap;
-        var titleRoom = MathF.Max(0f, right - titleX);
-        using (Typography.Eyebrow(headerTitle))
+        var count = allNode.CountText;
+        ImGui.SetCursorScreenPos(new Vector2(origin.X + pad, origin.Y));
+        var drawn = SectionHeading.DrawLine(Strings.TabJournal, count, Theme.U32(Theme.Surface.TextSecondary), pad, sigil: true, Theme.Flair, CaptionOverflow.Tooltip, numeral: true);
+        if (drawn.CaptionShown && ImGui.IsItemHovered())
         {
-            var y = MathF.Round(centerY - (ImGui.GetTextLineHeight() * 0.5f));
-            Chrome.EllipsisTextAt(dl, new Vector2(titleX, y), titleRoom, headerTitle, Theme.U32(Theme.Surface.TextSecondary), headerTitleWidth);
-        }
-
-        var ruleX = titleX + headerTitleWidth + gap;
-        var ruleMin = UiMetrics.Px(HeaderRuleMinLogical);
-        var countX = right - headerCountWidth;
-        var showCount = headerCountWidth > 0f && countX - gap - ruleMin >= ruleX;
-        var ruleEnd = showCount ? countX - gap : right;
-        if (ruleEnd - ruleX >= ruleMin)
-        {
-            Ornament.Rule(dl, new Vector2(ruleX, centerY), ruleEnd - ruleX);
-        }
-
-        if (showCount)
-        {
-            using (Typography.Numeral(count))
-            {
-                var y = MathF.Round(centerY - (ImGui.GetTextLineHeight() * 0.5f));
-                dl.AddText(new Vector2(MathF.Round(countX), y), Theme.U32(Theme.Surface.TextSecondary), count);
-            }
-
-            if (hovered && ImGui.IsMouseHoveringRect(new Vector2(countX, origin.Y), new Vector2(right, origin.Y + height), false))
+            var min = ImGui.GetItemRectMin();
+            var max = ImGui.GetItemRectMax();
+            if (ImGui.IsMouseHoveringRect(new Vector2(drawn.CaptionMin.X, min.Y), new Vector2(drawn.CaptionMax.X, max.Y), false))
             {
                 UiMetrics.Tooltip(Strings.FillingMoonTooltip, allNode.HoverText.Length > 0 ? allNode.HoverText : allNode.ProgressText);
             }
+        }
+
+        ImGui.SetCursorScreenPos(new Vector2(origin.X, ImGui.GetCursorScreenPos().Y));
+        ImGui.Dummy(new Vector2(MathF.Max(1f, width), UiMetrics.Px(HeadingLayout.TopPadLogical)));
+    }
+
+    /// <summary>
+    /// An orbit's shown fraction (<see cref="Motion.Fill"/>): a node never shown fills from empty, one shown before
+    /// starts from the fraction it last showed, so a row coming back into view does not replay its fill.
+    /// </summary>
+    private float NodeFill(ulong key, float fraction)
+    {
+        var shown = Motion.Fill(key, fraction, filled.StartFor(key));
+        filled.Remember(key, fraction);
+        return shown;
+    }
+
+    /// <summary>Forgets the remembered fills when another character is viewed (their fractions mean another journal).</summary>
+    private void ForgetFillsOnNewCharacter(QueryRunner runner)
+    {
+        var owner = runner.PinOwner ?? 0;
+        if (owner != filledOwner)
+        {
+            filledOwner = owner;
+            filled.Clear();
         }
     }
 

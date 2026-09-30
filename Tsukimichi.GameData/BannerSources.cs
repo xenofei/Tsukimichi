@@ -11,13 +11,16 @@ namespace Tsukimichi.GameData;
 /// The sheet side of the hero banner chain (<see cref="BannerIndex"/>): each duty's Duty Finder banner
 /// (<c>ContentFinderCondition.Image</c>, an icon id in the same 376 × 120 format as a journal banner), which duties a
 /// quest unlocks, and each territory's loading-screen image (<c>TerritoryType.LoadingImage</c> →
-/// <c>LoadingImage.FileName</c> → <c>ui/loadingimage/&lt;FileName&gt;_hr1.tex</c>, checked against the game data).
+/// <c>LoadingImage.FileName</c> → <c>ui/loadingimage/&lt;FileName&gt;.tex</c>, checked against the game data).
 /// Standalone (takes an <see cref="ExcelModule"/>) so tests run it without Dalamud.
 /// </summary>
 public sealed class BannerSources : IBannerLookups
 {
-    /// <summary>The loading image's texture path; the <c>_hr1</c> file is the high-resolution one (both exist for every row).</summary>
-    public const string LoadingImagePathFormat = "ui/loadingimage/{0}_hr1.tex";
+    /// <summary>
+    /// The loading image's texture path: the 1920 × 1080 file. The <c>_hr1</c> twin (3840 × 2160, four times the memory)
+    /// exists for every row too, but a banner at most a pane wide never needs it.
+    /// </summary>
+    public const string LoadingImagePathFormat = "ui/loadingimage/{0}.tex";
 
     private readonly FrozenDictionary<uint, (uint Icon, uint Condition)> dutyBannerByQuest;
     private readonly FrozenDictionary<uint, string> zonePathByTerritory;

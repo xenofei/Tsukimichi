@@ -12,7 +12,10 @@ public enum Flair
     /// <summary>Ornament rules and dividers only: no pane gradient, corner marks, glow or Moon Road motion.</summary>
     Quiet = 1,
 
-    /// <summary>The 1.3 look: no Moon Road ornament, and headings in the Caption and Display roles rather than game fonts.</summary>
+    /// <summary>
+    /// The 1.3 look, plus a banner for every quest (the hero's fallback chain): no Moon Road ornament or motion, and
+    /// headings in the Caption and Display roles rather than game fonts.
+    /// </summary>
     Plain = 2,
 }
 

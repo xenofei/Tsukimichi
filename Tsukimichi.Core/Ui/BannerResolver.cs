@@ -1,5 +1,7 @@
 using System.Collections.Frozen;
+using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Query;
 
 namespace Tsukimichi.Core.Ui;
 
@@ -81,7 +83,7 @@ public interface IBannerLookups
     /// </summary>
     bool TryGetDutyBanner(QuestRecord quest, out uint iconId, out uint contentFinderConditionId);
 
-    /// <summary>The territory's loading-screen texture path (<c>ui/loadingimage/&lt;file&gt;_hr1.tex</c>), or null when it has none.</summary>
+    /// <summary>The territory's loading-screen texture path (<c>ui/loadingimage/&lt;file&gt;.tex</c>, 1920 × 1080), or null when it has none.</summary>
     string? ZoneBannerPath(uint territoryId);
 }
 
@@ -89,7 +91,7 @@ public interface IBannerLookups
 /// Every quest's hero banner, resolved once per catalog (feature plan V4). The chain, first hit wins:
 /// <list type="number">
 /// <item>the quest's own journal banner (<see cref="QuestRecord.Icon"/>);</item>
-/// <item>the banner of the nearest quest in the same chain (its previous quests, walked back within the genre) or, failing that, the nearest in journal order within the same genre;</item>
+/// <item>the banner of the nearest quest in the same chain (its previous quests, walked back within the genre) or, failing that, the nearest earlier quest in journal order within the same genre (a later one only when no earlier quest has a banner);</item>
 /// <item>the Duty Finder banner of a duty the quest unlocks;</item>
 /// <item>the loading-screen image of the territory where its issuer stands;</item>
 /// <item>the bundled category art (<see cref="BannerArts.For"/>).</item>
@@ -179,10 +181,11 @@ public sealed class BannerIndex
     }
 
     /// <summary>
-    /// For every quest without a banner of its own, the quest that lends it one: first its chain (previous quests, walked
-    /// breadth-first up to <see cref="ChainDepth"/> steps, staying in the genre), then the genre's nearest quest with a
-    /// banner in journal order (the earlier one on a tie). Genre 0 (unlisted quests) lends nothing: it is no chain.
-    /// Precomputed once per catalog, linear in the genre sizes.
+    /// For every quest without a banner of its own, the quest that lends it one, earlier quests first so a banner rarely
+    /// shows a story the player has not reached: its chain (previous quests, walked breadth-first up to
+    /// <see cref="ChainDepth"/> steps, staying in the genre), then the genre's nearest earlier quest with a banner in
+    /// journal order, and only when no earlier quest has one the nearest later one. Genre 0 (unlisted quests) lends
+    /// nothing: it is no chain. Precomputed once per catalog, linear in the genre sizes.
     /// </summary>
     public static IReadOnlyDictionary<uint, QuestRecord> SiblingDonors(QuestCatalog catalog)
     {
@@ -232,9 +235,7 @@ public sealed class BannerIndex
                     continue;
                 }
 
-                var b = before[i];
-                var a = after[i];
-                var pick = b < 0 ? a : a < 0 ? b : (i - b) <= (a - i) ? b : a;
+                var pick = before[i] >= 0 ? before[i] : after[i];
                 if (pick >= 0)
                 {
                     donors[quest.RowId] = quests[pick];
@@ -272,6 +273,53 @@ public sealed class BannerIndex
 
         return null;
     }
+}
+
+/// <summary>
+/// The spoiler shield over a resolved hero banner (feature plan V4). With <see cref="SpoilerOptions.HideArtwork"/> on,
+/// game art shows only where the player has already seen what it depicts, judged by the art's own source rather than
+/// by the quest borrowing it:
+/// <list type="bullet">
+/// <item>the quest's own banner and the zone image: the quest is in the journal or completed (<see cref="SpoilerMask.ShowArtwork"/>);</item>
+/// <item>a sibling's banner: the donor quest, by its own state, is in the journal or completed;</item>
+/// <item>a duty's banner: the quest that unlocks the duty (this quest) is completed.</item>
+/// </list>
+/// Anything else falls back to the quest's bundled category art, which spoils nothing. Allocation-free: two
+/// dictionary reads at most.
+/// </summary>
+public static class BannerShield
+{
+    /// <summary>Whether <paramref name="choice"/> may show for <paramref name="quest"/> in <paramref name="state"/>.</summary>
+    /// <param name="states">The viewed character's states, for a sibling donor's own state; null reads every donor as not started.</param>
+    public static bool Allows(in BannerChoice choice, QuestRecord quest, QuestState state, SpoilerMask spoilers, QuestCatalog? catalog, IReadOnlyDictionary<uint, QuestEvaluation>? states)
+    {
+        ArgumentNullException.ThrowIfNull(quest);
+        ArgumentNullException.ThrowIfNull(spoilers);
+        if (choice.Source is BannerSource.None or BannerSource.Category || !spoilers.Options.HideArtwork)
+        {
+            return true;
+        }
+
+        switch (choice.Source)
+        {
+            case BannerSource.Sibling:
+                if (catalog?.GetByRowId(choice.SourceId) is not { } donor)
+                {
+                    return false;
+                }
+
+                var donorState = states is not null && states.TryGetValue(donor.RowId, out var evaluation) && evaluation is not null ? evaluation.State : QuestState.Unknown;
+                return spoilers.ShowArtwork(donor, donorState);
+            case BannerSource.Duty:
+                return state is QuestState.Completed or QuestState.DoneThisCycle;
+            default:
+                return spoilers.ShowArtwork(quest, state);
+        }
+    }
+
+    /// <summary><paramref name="choice"/> when <see cref="Allows"/> holds, else the quest's category art alone.</summary>
+    public static BannerChoice Apply(in BannerChoice choice, QuestRecord quest, QuestState state, SpoilerMask spoilers, QuestCatalog? catalog, IReadOnlyDictionary<uint, QuestEvaluation>? states) =>
+        Allows(in choice, quest, state, spoilers, catalog, states) ? choice : BannerChoice.ForArt(choice.Art);
 }
 
 /// <summary>

@@ -12,7 +12,8 @@ namespace Tsukimichi.Ui;
 /// icon for the journal, sibling and duty banners (<c>GetFromGameIcon</c>, hi-res), the zone's loading image
 /// (<c>GetFromGame</c>), or the bundled category art (<c>GetFromManifestResource</c>, embedded 752 × 240 PNGs, drawn at
 /// 376 × 120 logical so the GPU halves them at UI scale 1). When a game texture fails to load the bundled art stands
-/// in, and <c>shown</c> says so; while one is still loading the call returns false and the caller draws its placeholder.
+/// in (an icon the game does not have counts as failed), and <c>shown</c> says so; while one is still loading the call
+/// returns false and the caller draws its placeholder.
 /// Per frame it allocates nothing: the resource names are built once per art.
 /// </summary>
 public static class BannerArtwork
@@ -31,7 +32,13 @@ public static class BannerArtwork
         switch (choice.Source)
         {
             case BannerSource.Own or BannerSource.Sibling or BannerSource.Duty when choice.IconId != 0:
-                if (textures.GetFromGameIcon(new GameIconLookup(choice.IconId)).TryGetWrap(out wrap, out var iconError))
+                // TryGetFromGameIcon: GetFromGameIcon throws for an icon the game does not have; that is a load error too.
+                if (!textures.TryGetFromGameIcon(new GameIconLookup(choice.IconId), out var icon))
+                {
+                    break;
+                }
+
+                if (icon.TryGetWrap(out wrap, out var iconError))
                 {
                     return true;
                 }

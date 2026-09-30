@@ -80,6 +80,9 @@ public sealed class Plugin : IDalamudPlugin
     private Game.ItemHooks? itemHooks;
     private Game.NpcHooks? npcHooks;
     private Game.DutyFinderHint? dutyFinderHint;
+
+    /// <summary>The hero banners' index source; polled once when a catalog lands so the index starts building before the first selection.</summary>
+    private Core.Ui.BannerIndexSource<Core.Unique.DutyUnlockIndex>? banners;
     private DutyFinderPanel? dutyFinderPanel;
     private Game.HookGateNotice? hookGateNotice;
     private Game.TodoLockNotice? todoLockNotice;
@@ -179,6 +182,10 @@ public sealed class Plugin : IDalamudPlugin
         if (bundle is not null)
         {
             Session.SetCatalog(bundle, nodeIcons);
+
+            // Start the hero banner index now rather than on the first selection, which would otherwise show its
+            // category art for a frame or two while the index builds.
+            banners?.Poll();
         }
         else
         {
@@ -585,11 +592,12 @@ public sealed class Plugin : IDalamudPlugin
             dutyFinderHint = new Game.DutyFinderHint(AddonLifecycle, GameGui, DataManager, Session, dutyUnlocks, gate, Log) { Enabled = Settings.DutyFinderHintEnabled };
             // Hero banners (V4): every quest's banner through the fallback chain, resolved off the frame once per catalog
             // and duty unlock index; the duty step reads the same index as the Duty Finder hint.
-            mainWindow.AttachBanners(new Core.Ui.BannerIndexSource<Core.Unique.DutyUnlockIndex>(
+            banners = new Core.Ui.BannerIndexSource<Core.Unique.DutyUnlockIndex>(
                 () => Session.Bundle?.Catalog,
                 () => dutyUnlocks.Current,
                 (catalog, duties) => BannerSources.Build(DataManager.Excel, catalog, duties).Resolve(catalog),
-                onError: ex => Log.Warning(ex, "Hero banners unavailable; quests show their own banner or category art")));
+                onError: ex => Log.Warning(ex, "Hero banners unavailable; quests show their own banner or category art"));
+            mainWindow.AttachBanners(banners);
             dutyFinderPanel = new DutyFinderPanel(dutyFinderHint, gameLinks, quest =>
             {
                 mainWindow.IsOpen = true;

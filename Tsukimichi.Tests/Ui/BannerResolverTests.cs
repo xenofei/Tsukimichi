@@ -1,5 +1,7 @@
 using System.Globalization;
+using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Storage;
 using Tsukimichi.Core.Ui;
 using Tsukimichi.Core.Unique;
@@ -55,7 +57,7 @@ public sealed class BannerResolverTests(FixtureCatalog fixture, ITestOutputHelpe
         var zoneOnly = Quest(5, 0, territory: 134, sort: 5);
         var nothing = Quest(6, 0, territory: 999, sort: 6);
         var catalog = QuestCatalog.Build([own, donor, sibling, dutyOnly, zoneOnly, nothing]);
-        var lookups = new FakeLookups(new() { [3] = (112005, 4), [4] = (112005, 4) }, new() { [134] = "ui/loadingimage/-nowloading_base01_hr1.tex" });
+        var lookups = new FakeLookups(new() { [3] = (112005, 4), [4] = (112005, 4) }, new() { [134] = "ui/loadingimage/-nowloading_base01.tex" });
 
         var index = BannerIndex.Build(catalog, lookups);
 
@@ -63,7 +65,7 @@ public sealed class BannerResolverTests(FixtureCatalog fixture, ITestOutputHelpe
         Assert.Equal(new BannerChoice(BannerSource.Sibling, 100002, null, BannerArt.SideLaNoscea, 2), index.For(sibling));
         Assert.Equal(new BannerChoice(BannerSource.Duty, 112005, null, BannerArt.Other, 4), index.For(dutyOnly));
         Assert.Equal(BannerSource.Zone, index.For(zoneOnly).Source);
-        Assert.Equal("ui/loadingimage/-nowloading_base01_hr1.tex", index.For(zoneOnly).GamePath);
+        Assert.Equal("ui/loadingimage/-nowloading_base01.tex", index.For(zoneOnly).GamePath);
         Assert.Equal(134u, index.For(zoneOnly).SourceId);
         Assert.Equal(BannerChoice.ForArt(BannerArt.Other), index.For(nothing));
         Assert.Equal([0, 2, 1, 1, 1, 1], index.Counts);
@@ -90,19 +92,123 @@ public sealed class BannerResolverTests(FixtureCatalog fixture, ITestOutputHelpe
     }
 
     [Fact]
-    public void The_nearest_in_the_genre_wins_and_a_tie_goes_to_the_earlier_quest()
+    public void The_nearest_earlier_quest_in_the_genre_wins_and_a_later_one_only_when_none_is_earlier()
     {
+        var first = Quest(19, 151, sort: 0);                 // nothing earlier: the nearest later banner
         var a = Quest(20, 151, icon: 100020, sort: 1);
         var b = Quest(21, 151, sort: 2);
-        var c = Quest(22, 151, icon: 100022, sort: 3);
+        var c = Quest(22, 151, sort: 3);
         var d = Quest(23, 151, sort: 4);
-        var e = Quest(24, 151, sort: 5);
-        var other = Quest(25, 152, icon: 100025, sort: 6);
-        var donors = BannerIndex.SiblingDonors(QuestCatalog.Build([a, b, c, d, e, other]));
+        var near = Quest(24, 151, icon: 100024, sort: 5);    // right after 23, but later
+        var e = Quest(25, 151, sort: 6);
+        var other = Quest(26, 152, icon: 100026, sort: 7);
+        var donors = BannerIndex.SiblingDonors(QuestCatalog.Build([first, a, b, c, d, near, e, other]));
 
-        Assert.Equal(20u, donors[21].RowId);   // tie between 20 and 22: the earlier
-        Assert.Equal(22u, donors[23].RowId);
-        Assert.Equal(22u, donors[24].RowId);   // never across genres
+        Assert.Equal(20u, donors[19].RowId);
+        Assert.Equal(20u, donors[21].RowId);
+        Assert.Equal(20u, donors[22].RowId);
+        Assert.Equal(20u, donors[23].RowId);   // the earlier banner, three back, over the later one next door
+        Assert.Equal(24u, donors[25].RowId);   // never across genres
+    }
+
+    [Fact]
+    public void Chain_predecessors_come_before_the_genre_neighbours()
+    {
+        // 40 (art, sort 9) is the chain predecessor of 41 (sort 3), which sits after 42 (art, sort 2) in journal order.
+        var predecessor = Quest(40, 153, icon: 100040, sort: 9);
+        var borrower = Quest(41, 153, previous: [40], sort: 3);
+        var neighbour = Quest(42, 153, icon: 100042, sort: 2);
+        var donors = BannerIndex.SiblingDonors(QuestCatalog.Build([predecessor, borrower, neighbour]));
+
+        Assert.Equal(40u, donors[41].RowId);
+    }
+
+    [Fact]
+    public void Under_hide_artwork_a_borrowed_banner_follows_its_own_source()
+    {
+        var early = Quest(50, 154, icon: 100050, sort: 1);
+        var borrower = Quest(51, 154, sort: 2);
+        var late = Quest(52, 154, icon: 100052, sort: 3);
+        var lonely = Quest(53, 155, sort: 1);                 // only a later banner in its genre
+        var lonelyDonor = Quest(54, 155, icon: 100054, sort: 2);
+        var catalog = QuestCatalog.Build([early, borrower, late, lonely, lonelyDonor]);
+        var index = BannerIndex.Build(catalog, null);
+        var shield = SpoilerMask.Build(catalog, new Dictionary<uint, QuestState>(), SpoilerOptions.Default);
+        var open = SpoilerMask.Build(catalog, new Dictionary<uint, QuestState>(), SpoilerOptions.Default with { HideArtwork = false });
+        Dictionary<uint, QuestEvaluation> States(params (uint Id, QuestState State)[] states) =>
+            states.ToDictionary(s => s.Id, s => new QuestEvaluation(s.State, [], null, null, null));
+
+        // 51 borrows 50's banner: shown once 50 is in the journal or done, whatever 51's own state.
+        Assert.Equal(50u, index.For(borrower).SourceId);
+        var choice = index.For(borrower);
+        Assert.Equal(choice, BannerShield.Apply(in choice, borrower, QuestState.Ready, shield, catalog, States((50, QuestState.Completed))));
+        Assert.Equal(BannerChoice.ForArt(choice.Art), BannerShield.Apply(in choice, borrower, QuestState.Accepted, shield, catalog, States((50, QuestState.Ready))));
+
+        // 53 can only borrow the later 54: with 53 accepted and 54 not reached, the category art stands in.
+        var later = index.For(lonely);
+        Assert.Equal(54u, later.SourceId);
+        Assert.Equal(BannerSource.Category, BannerShield.Apply(in later, lonely, QuestState.Accepted, shield, catalog, States((53, QuestState.Accepted))).Source);
+        Assert.Equal(BannerSource.Category, BannerShield.Apply(in later, lonely, QuestState.Accepted, shield, catalog, null).Source);
+        Assert.Equal(later, BannerShield.Apply(in later, lonely, QuestState.Ready, open, catalog, null));
+
+        // A duty's banner waits for the quest that unlocks it to be completed; the own banner and the zone for the journal.
+        var duty = new BannerChoice(BannerSource.Duty, 112005, null, BannerArt.Other, 4);
+        Assert.False(BannerShield.Allows(in duty, borrower, QuestState.Accepted, shield, catalog, null));
+        Assert.True(BannerShield.Allows(in duty, borrower, QuestState.Completed, shield, catalog, null));
+        var own = index.For(early);
+        Assert.False(BannerShield.Allows(in own, early, QuestState.Ready, shield, catalog, null));
+        Assert.True(BannerShield.Allows(in own, early, QuestState.Accepted, shield, catalog, null));
+        var zone = new BannerChoice(BannerSource.Zone, 0, "ui/loadingimage/x.tex", BannerArt.Other, 134);
+        Assert.False(BannerShield.Allows(in zone, borrower, QuestState.Blocked, shield, catalog, null));
+        Assert.True(BannerShield.Allows(in zone, borrower, QuestState.Accepted, shield, catalog, null));
+    }
+
+    [Fact]
+    public void Under_hide_artwork_no_accepted_quest_shows_a_later_donors_banner()
+    {
+        // Over the frozen catalog: in each genre the quests before a point are completed, the one there accepted, the
+        // rest not reached. No accepted quest may show art lent by a quest later in journal order.
+        var catalog = fixture.Bundle.Catalog;
+        var index = BannerIndex.Build(catalog, null);
+        var shield = SpoilerMask.Build(catalog, new Dictionary<uint, QuestState>(), SpoilerOptions.Default);
+        var borrowedLater = 0;
+        var checkedAccepted = 0;
+        foreach (var (genreId, quests) in catalog.ByGenre)
+        {
+            if (genreId == 0)
+            {
+                continue;
+            }
+
+            var position = new Dictionary<uint, int>();
+            for (var i = 0; i < quests.Count; i++)
+            {
+                position[quests[i].RowId] = i;
+            }
+
+            for (var i = 0; i < quests.Count; i++)
+            {
+                var quest = quests[i];
+                var choice = index.For(quest);
+                if (choice.Source != BannerSource.Sibling || !position.TryGetValue(choice.SourceId, out var donorAt) || donorAt <= i)
+                {
+                    continue;
+                }
+
+                borrowedLater++;
+                var states = new Dictionary<uint, QuestEvaluation>();
+                for (var j = 0; j < quests.Count; j++)
+                {
+                    var state = j < i ? QuestState.Completed : j == i ? QuestState.Accepted : QuestState.Ready;
+                    states[quests[j].RowId] = new QuestEvaluation(state, [], null, null, null);
+                }
+
+                checkedAccepted++;
+                Assert.Equal(BannerSource.Category, BannerShield.Apply(in choice, quest, QuestState.Accepted, shield, catalog, states).Source);
+            }
+        }
+
+        output.WriteLine($"sibling banners lent by a later quest: {borrowedLater}; accepted with the later donor not reached, all withheld: {checkedAccepted}");
     }
 
     [Fact]
@@ -243,6 +349,13 @@ public sealed class BannerResolverTests(FixtureCatalog fixture, ITestOutputHelpe
         }
 
         Report(output, "live catalog, full chain", index, catalog);
+        Assert.DoesNotContain(catalog.All.Select(q => index.For(q)), c => c.GamePath is { } p && p.Contains("_hr1", StringComparison.Ordinal));
+
+        // Sibling banners lent by a quest later in journal order: only where no earlier quest of the genre has one.
+        var position = catalog.ByGenre.Where(g => g.Key != 0).SelectMany(g => g.Value.Select((q, i) => (q.RowId, i))).ToDictionary(p => p.RowId, p => p.i);
+        var siblings = catalog.All.Where(q => index.For(q).Source == BannerSource.Sibling).ToArray();
+        var later = siblings.Count(q => position.TryGetValue(index.For(q).SourceId, out var d) && position.TryGetValue(q.RowId, out var b) && d > b);
+        output.WriteLine($"  sibling banners: {siblings.Length}, lent by a later quest: {later}");
 
         // What each later step could supply on its own, among the quests without a banner of their own.
         var bare = catalog.All.Where(q => q.Icon == 0).ToArray();

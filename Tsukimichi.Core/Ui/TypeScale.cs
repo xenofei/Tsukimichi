@@ -6,7 +6,8 @@ namespace Tsukimichi.Core.Ui;
 /// title, the empty-state and tour headings) at 1.2×, and
 /// the game font picked for each. The game's fonts are pre-baked bitmaps at fixed sizes (Axis 9.6 / 12 / 14 / 18 / 36
 /// pt), and scaling one bilinearly blurs it (dalamud-developer panel §5), so <c>Ui.Typography</c> keeps one handle per
-/// UI-scale bucket, each the game size nearest to what that bucket draws, and scales the small remainder.
+/// UI-scale bucket, each the game size nearest to what that bucket draws, and scales the small remainder. The Moon
+/// Road heading faces go one size up rather than stretch a smaller one by more than <see cref="MaxUpscale"/>.
 /// </summary>
 public static class TypeScale
 {
@@ -117,7 +118,22 @@ public static class TypeScale
 
     private static float Times(float bodyPx, float factor) => float.IsFinite(bodyPx) && bodyPx > 0f ? bodyPx * factor : 0f;
 
-    private static int NearestOf(float[] sizes, float px) => Nearest(sizes, float.IsFinite(px) && px > 0f ? px : sizes[1]);
+    /// <summary>
+    /// A bitmap face scaled up blurs far more than one scaled down, so a heading font is never stretched by more than
+    /// this: when the nearest size would be, the next larger one is taken and drawn a little smaller instead.
+    /// </summary>
+    public const float MaxUpscale = 1.1f;
+
+    /// <summary>
+    /// The heading size for <paramref name="px"/>: the nearest of <paramref name="sizes"/>, or the next larger one when
+    /// the nearest would be scaled up by more than <see cref="MaxUpscale"/> (the largest size is scaled up as far as it must).
+    /// </summary>
+    private static int NearestOf(float[] sizes, float px)
+    {
+        var target = float.IsFinite(px) && px > 0f ? px : sizes[1];
+        var best = Nearest(sizes, target);
+        return target / sizes[best] > MaxUpscale && best + 1 < sizes.Length ? best + 1 : best;
+    }
 
     private static float[] Pixels(float[] points)
     {

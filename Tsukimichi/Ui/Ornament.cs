@@ -28,7 +28,8 @@ public static class Ornament
     /// <summary>
     /// The section rule: a hairline from <paramref name="start"/> running <paramref name="width"/> px right, the
     /// palette's ornament colour (or <paramref name="color"/>) at <paramref name="alpha"/> fading to nothing; under high
-    /// contrast the line is opaque (proposal §10.2). <paramref name="thickness"/> defaults to one pixel.
+    /// contrast the line is solid and opaque from end to end (proposal §10.2). <paramref name="thickness"/> defaults to
+    /// one pixel.
     /// </summary>
     public static void Rule(ImDrawListPtr dl, Vector2 start, float width, float alpha = RuleAlpha, float thickness = 1f, Vector4? color = null)
     {
@@ -38,11 +39,18 @@ public static class Ornament
         }
 
         var c = color ?? Theme.Surface.Ornament;
-        alpha = Theme.OrnamentAlpha(alpha);
-        var from = Theme.WithAlpha(c, alpha);
-        var to = Theme.WithAlpha(c, 0f);
         var top = MathF.Floor(start.Y);
-        dl.AddRectFilledMultiColor(new Vector2(start.X, top), new Vector2(start.X + width, top + MathF.Max(1f, thickness)), from, to, to, from);
+        var min = new Vector2(start.X, top);
+        var max = new Vector2(start.X + width, top + MathF.Max(1f, thickness));
+        if (Theme.Glyphs.HighContrast)
+        {
+            dl.AddRectFilled(min, max, Theme.WithAlpha(c, 1f));
+            return;
+        }
+
+        var from = Theme.WithAlpha(c, Theme.OrnamentAlpha(alpha));
+        var to = Theme.WithAlpha(c, 0f);
+        dl.AddRectFilledMultiColor(min, max, from, to, to, from);
     }
 
     /// <summary>

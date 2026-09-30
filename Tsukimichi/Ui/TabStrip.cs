@@ -467,7 +467,7 @@ public sealed class TabStrip
                 return OrnamentAtlas.IsReady && OrnamentAtlas.Draw(dl, OrnamentGlyph.Flight, min, max, tint);
             case NavTab.Plan when Plugin.TextureProvider is { } textures:
                 var lookup = new GameIconLookup(NodeIcons.FeatureMarker, false, max.X - min.X > Orbit.LowResMaxPx);
-                if (!textures.GetFromGameIcon(lookup).TryGetWrap(out var wrap, out _))
+                if (!textures.TryGetFromGameIcon(lookup, out var texture) || !texture.TryGetWrap(out var wrap, out _))
                 {
                     return false;
                 }
