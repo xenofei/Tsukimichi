@@ -155,11 +155,12 @@ public sealed class FilterPanel
     /// <summary>UI and icon scale sliders; the values take effect on the next frame and are saved with the settings.</summary>
     private void DrawDisplay(Configuration settings)
     {
+        // The controls shrink to a narrow panel and their labels move under them, wrapped (feature plan v4 L6).
         ImGui.TextDisabled(Strings.Display);
         var sliderWidth = UiMetrics.Px(150f);
 
         var uiScale = ScaleMetrics.ClampUiScale(settings.UiScale);
-        ImGui.SetNextItemWidth(sliderWidth);
+        ImGui.SetNextItemWidth(Chrome.FitWidth(sliderWidth));
         if (ImGui.SliderFloat("##uiScale", ref uiScale, ScaleMetrics.MinUiScale, ScaleMetrics.MaxUiScale, Strings.ScaleFormat, ImGuiSliderFlags.AlwaysClamp))
         {
             settings.UiScale = uiScale;
@@ -167,11 +168,10 @@ public sealed class FilterPanel
         }
 
         Tip(Strings.UiScaleTooltip);
-        ImGui.SameLine();
-        ImGui.TextUnformatted(Strings.UiScale);
+        Chrome.TrailingLabel(Strings.UiScale);
 
         var iconScale = ScaleMetrics.ClampIconScale(settings.IconScale);
-        ImGui.SetNextItemWidth(sliderWidth);
+        ImGui.SetNextItemWidth(Chrome.FitWidth(sliderWidth));
         if (ImGui.SliderFloat("##iconScale", ref iconScale, ScaleMetrics.MinIconScale, ScaleMetrics.MaxIconScale, Strings.ScaleFormat, ImGuiSliderFlags.AlwaysClamp))
         {
             settings.IconScale = iconScale;
@@ -179,8 +179,7 @@ public sealed class FilterPanel
         }
 
         Tip(Strings.IconScaleTooltip);
-        ImGui.SameLine();
-        ImGui.TextUnformatted(Strings.IconScale);
+        Chrome.TrailingLabel(Strings.IconScale);
 
         var isDefault = settings.UiScale == ScaleMetrics.DefaultUiScale && settings.IconScale == ScaleMetrics.DefaultIconScale;
         using (ImRaii.Disabled(isDefault))
@@ -280,7 +279,7 @@ public sealed class FilterPanel
 
         // The Stalled threshold; a change re-runs the query and is saved with the settings.
         var days = settings.StalledDaysClamped;
-        ImGui.SetNextItemWidth(UiMetrics.Px(110f));
+        ImGui.SetNextItemWidth(Chrome.FitWidth(UiMetrics.Px(110f)));
         if (ImGui.SliderInt("##stalledDays", ref days, Configuration.MinStalledDays, Configuration.MaxStalledDays, Strings.StalledDaysFormat, ImGuiSliderFlags.AlwaysClamp))
         {
             settings.StalledDays = days;
@@ -288,8 +287,7 @@ public sealed class FilterPanel
         }
 
         Tip(Strings.StalledDaysTooltip);
-        ImGui.SameLine();
-        ImGui.TextUnformatted(Strings.StalledDaysLabel);
+        Chrome.TrailingLabel(Strings.StalledDaysLabel);
     }
 
     /// <summary>The sort's pinned-first flag lives beside the filters; MainWindow persists it with the sort.</summary>
@@ -489,7 +487,7 @@ public sealed class FilterPanel
 
         Tip(hasSnapshot ? tooltip : Strings.NeedsSnapshot);
 
-        ImGui.SameLine();
+        Chrome.SameLineOrWrap(ImGui.CalcTextSize(Strings.Overrides).X + (ImGui.GetStyle().FramePadding.X * 2f));
         using var id = ImRaii.PushId(popupId);
         using (ImRaii.Disabled(!hasSnapshot))
         {
@@ -586,7 +584,7 @@ public sealed class FilterPanel
         ImGui.TextDisabled(Strings.AddedIn);
         Tip(Strings.AddedInTooltip);
         var preview = f.AddedInEngaged() ? AddedInChipText(f) : Strings.AddedInAny;
-        ImGui.SetNextItemWidth(UiMetrics.Px(180f));
+        ImGui.SetNextItemWidth(Chrome.FitWidth(UiMetrics.Px(180f)));
         using (ImRaii.Disabled(patchSeries.Count == 0 && !f.AddedInEngaged()))
         {
             using var combo = ImRaii.Combo("##addedIn", preview);
@@ -633,7 +631,7 @@ public sealed class FilterPanel
         ImGui.TextDisabled(Strings.LevelRange);
         int min = f.LevelMin;
         int max = f.LevelMax == FilterSet.NoLevelMax ? LevelCap : f.LevelMax;
-        ImGui.SetNextItemWidth(UiMetrics.Px(180f));
+        ImGui.SetNextItemWidth(Chrome.FitWidth(UiMetrics.Px(180f)));
         if (ImGui.DragIntRange2("##level", ref min, ref max, 0.5f, 0, LevelCap, Strings.LevelFormat, Strings.LevelMaxFormat, ImGuiSliderFlags.AlwaysClamp))
         {
             f.LevelMin = (byte)Math.Clamp(min, 0, LevelCap);
@@ -648,7 +646,7 @@ public sealed class FilterPanel
     {
         ImGui.TextDisabled(Strings.JobCategory);
         var currentOnly = CurrentJobCategory(snapshot);
-        ImGui.SetNextItemWidth(UiMetrics.Px(180f));
+        ImGui.SetNextItemWidth(Chrome.FitWidth(UiMetrics.Px(180f)));
         using var combo = ImRaii.Combo("##job", JobPreview(f));
         Tip(Strings.JobCategoryTooltip);
         if (!combo)
@@ -694,11 +692,10 @@ public sealed class FilterPanel
         {
             using var id = ImRaii.PushId((int)kind);
             var current = f.RewardKinds.TryGetValue(kind, out var v) ? v : TriState.Show;
-            ImGui.SetNextItemWidth(width);
+            ImGui.SetNextItemWidth(Chrome.FitWidth(width));
             DrawRewardKindCombo(f, kind, current);
             Tip(Strings.RewardKindsTooltip);
-            ImGui.SameLine();
-            ImGui.TextUnformatted(Strings.RewardKindName(kind));
+            Chrome.TrailingLabel(Strings.RewardKindName(kind));
         }
     }
 

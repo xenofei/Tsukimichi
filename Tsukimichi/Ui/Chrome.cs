@@ -296,7 +296,8 @@ public static partial class Chrome
         return padX + ImGui.CalcTextSize(label).X + padX * 0.7f + UiMetrics.Px(ChipGlyph) + padX * 0.7f;
     }
 
-    private static float ChipHeightPx() =>
+    /// <summary>The height a <see cref="Chip"/> takes at the current font, for callers that flow chips onto lines.</summary>
+    public static float ChipHeightPx() =>
         MathF.Max(MathF.Max(UiMetrics.Px(ChipHeight), ImGui.GetTextLineHeight() + UiMetrics.Px(4f)), UiMetrics.MinTarget);
 
     /// <summary>

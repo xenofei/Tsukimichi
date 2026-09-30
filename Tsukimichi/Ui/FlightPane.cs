@@ -8,6 +8,7 @@ using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
 using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Ui;
 using Tsukimichi.Game;
 using Tsukimichi.GameData;
 
@@ -207,14 +208,26 @@ public sealed class FlightPane
         ImGui.SameLine();
         var textHeight = ImGui.GetTextLineHeight();
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + MathF.Max(0f, (box - textHeight) * 0.5f));
-        ImGui.TextUnformatted(header);
+        // The zone and its counts wrap between words beside the moon; "Complete" follows on the line when it fits and
+        // starts its own otherwise (UI audit §3).
+        TextFlow.Wrapped(header, Chrome.RoomX());
         if (zone.Complete)
         {
-            ImGui.SameLine();
+            Chrome.SameLineOrWrap(ImGui.CalcTextSize(Strings.FlightHeaderComplete).X);
             using var moon = Theme.PushText(Theme.AccentDim);
             ImGui.TextUnformatted(Strings.FlightHeaderComplete);
         }
     }
+
+    // The quest table's columns, in display order (feature plan v4 L6): the state moon hides first, the actions and
+    // the status never; the status keeps its state word.
+    private const int ColumnAttuned = 0;
+    private const int ColumnQuest = 1;
+    private const int ColumnState = 2;
+    private const int ColumnStatus = 3;
+    private const int ColumnActions = 4;
+    private const string RowMenuId = "##flightRowMenu";
+    private readonly ColumnFit columns = new(5);
 
     private void DrawQuestTable(UiState ui, ZoneItem zone)
     {
@@ -222,130 +235,212 @@ public sealed class FlightPane
         var start = ImGui.GetCursorScreenPos();
         var width = ImGui.GetContentRegionAvail().X;
 
-        const ImGuiTableFlags Flags = ImGuiTableFlags.RowBg | ImGuiTableFlags.BordersInnerH | ImGuiTableFlags.SizingStretchProp;
+        const ImGuiTableFlags Flags = ImGuiTableFlags.RowBg | ImGuiTableFlags.BordersInnerH | ImGuiTableFlags.SizingFixedFit;
         var line = ImGui.GetTextLineHeight();
         var glyphColumn = MathF.Max(UiMetrics.InlineGlyphSize(line) * 2f, UiMetrics.Px(44f));
         var teleport = links.TeleportAvailable;
-        var spacing = ImGui.GetStyle().ItemSpacing.X;
-        var padding = ImGui.GetStyle().FramePadding.X * 2f;
-        var actionsWidth = ImGui.CalcTextSize(Strings.FlightFlag).X + padding;
-        if (teleport)
+        var style = ImGui.GetStyle();
+        var padding = style.FramePadding.X * 2f;
+
+        // Flag and Teleport fold into one "…" under the fold width; with Flag alone there is nothing to fold.
+        var fold = teleport && PaneFit.FoldActions(width / UiMetrics.Scale);
+        var actionsWidth = fold ? MoreSize(line) : ImGui.CalcTextSize(Strings.FlightFlag).X + padding;
+        if (teleport && !fold)
         {
-            actionsWidth += spacing + ImGui.CalcTextSize(Strings.FlightTeleport).X + padding;
+            actionsWidth += style.ItemSpacing.X + ImGui.CalcTextSize(Strings.FlightTeleport).X + padding;
         }
 
-        using (var table = ImRaii.Table("##flightQuests", 5, Flags))
+        // A fixed column is at least as wide as its header, which ImGui would widen it to anyway.
+        Span<ColumnSpec> specs = stackalloc ColumnSpec[5];
+        PaneFit.FlightColumns(glyphColumn, UiMetrics.Px(LayoutBudgets.RowNameMinLogical), StatusMin(zone.Rows), actionsWidth, specs);
+        ColumnFit.FitHeader(specs, ColumnAttuned, Strings.FlightColumnAttuned);
+        ColumnFit.FitHeader(specs, ColumnState, Strings.FlightColumnState);
+        ColumnFit.FitHeader(specs, ColumnActions, Strings.FlightColumnActions);
+        columns.Plan(width, specs);
+        using (var table = columns.Begin("##flightQuests", Flags))
         {
-            if (!table)
+            if (!table.Success)
             {
                 return;
             }
 
-            ImGui.TableSetupColumn(Strings.FlightColumnAttuned, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, glyphColumn);
-            ImGui.TableSetupColumn(Strings.FlightColumnQuest, ImGuiTableColumnFlags.WidthStretch, 3f);
-            ImGui.TableSetupColumn(Strings.FlightColumnState, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, glyphColumn);
-            ImGui.TableSetupColumn(Strings.FlightColumnStatus, ImGuiTableColumnFlags.WidthStretch, 3f);
-            ImGui.TableSetupColumn(Strings.FlightColumnActions, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, actionsWidth + spacing);
+            columns.Setup(ColumnAttuned, Strings.FlightColumnAttuned);
+            columns.Setup(ColumnQuest, Strings.FlightColumnQuest);
+            columns.Setup(ColumnState, Strings.FlightColumnState);
+            columns.Setup(ColumnStatus, Strings.FlightColumnStatus);
+            columns.Setup(ColumnActions, Strings.FlightColumnActions);
             ImGui.TableHeadersRow();
 
             var rows = zone.Rows;
             for (var i = 0; i < rows.Length; i++)
             {
-                DrawQuestRow(ui, rows[i], i, line, teleport);
+                DrawQuestRow(ui, rows[i], i, line, teleport, fold);
             }
         }
 
         ui.RecordSpan(UiRects.FlightTable, start, width);
     }
 
-    private void DrawQuestRow(UiState ui, QuestRow row, int index, float line, bool teleport)
+    /// <summary>The status column's least width: the rows' widest state word and a little reason, so no state word is cut.</summary>
+    private static float StatusMin(QuestRow[] rows)
+    {
+        var stateWord = 0f;
+        foreach (var row in rows)
+        {
+            stateWord = MathF.Max(stateWord, ImGui.CalcTextSize(row.StatusText.AsSpan(0, TableGeometry.StateWordLength(row.StatusText))).X);
+        }
+
+        return stateWord + UiMetrics.Px(24f);
+    }
+
+    /// <summary>Moves to the column's cell when the column shows; false when it is hidden.</summary>
+    private bool NextColumn(int column) => columns.Next(column);
+
+    /// <summary>The "…" button's side in a table row.</summary>
+    private static float MoreSize(float line) => MathF.Min(UiMetrics.MinTarget, MathF.Max(line, UiMetrics.RowIconSize));
+
+    private void DrawQuestRow(UiState ui, QuestRow row, int index, float line, bool teleport, bool fold)
     {
         using var id = ImRaii.PushId(index);
         ImGui.TableNextRow();
 
         // Attuned.
-        ImGui.TableNextColumn();
-        Marks.DrawInline(row.AttunedGlyph, UiMetrics.InlineGlyphSize(line));
-        if (ImGui.IsItemHovered())
+        if (NextColumn(ColumnAttuned))
         {
-            UiMetrics.Tooltip(row.AttunedText);
-        }
-
-        // Quest: click shows it in the detail pane without leaving the tab.
-        ImGui.TableNextColumn();
-        if (row.Quest is { } quest)
-        {
-            if (ImGui.Selectable(row.QuestName, ui.SelectedRowId == quest.RowId))
-            {
-                ui.SelectedRowId = quest.RowId;
-            }
-
+            Marks.DrawInline(row.AttunedGlyph, UiMetrics.InlineGlyphSize(line));
             if (ImGui.IsItemHovered())
             {
-                UiMetrics.Tooltip(Strings.FlightQuestClickHint);
+                UiMetrics.Tooltip(row.AttunedText);
             }
         }
-        else
+
+        // Quest: click shows it in the detail pane without leaving the tab. A long name ends in an ellipsis.
+        if (NextColumn(ColumnQuest))
         {
-            ImGui.TextDisabled(row.QuestName);
+            if (row.Quest is { } quest)
+            {
+                if (Chrome.EllipsisSelectable(row.QuestName, ui.SelectedRowId == quest.RowId, 0f, out var cut))
+                {
+                    ui.SelectedRowId = quest.RowId;
+                }
+
+                if (ImGui.IsItemHovered())
+                {
+                    if (cut)
+                    {
+                        UiMetrics.Tooltip(row.QuestName, Strings.FlightQuestClickHint);
+                    }
+                    else
+                    {
+                        UiMetrics.Tooltip(Strings.FlightQuestClickHint);
+                    }
+                }
+            }
+            else
+            {
+                Chrome.FitText(row.QuestName, ImGui.GetColorU32(ImGuiCol.TextDisabled));
+            }
         }
 
         // Quest state for the viewed character, and its status line (state word first, then the decisive blocker),
         // both stored on the row by RefreshCounts once per session version.
-        ImGui.TableNextColumn();
         var state = row.State;
-        var nextStep = row.StatusText;
-        MoonGlyph.DrawInline(state, UiMetrics.InlineGlyphSize(line));
-        if (ImGui.IsItemHovered())
+        if (NextColumn(ColumnState))
         {
-            UiMetrics.StateTooltip(state, row.Evaluation, row.Quest, session.Names, session.States);
-        }
-
-        ImGui.TableNextColumn();
-        if (nextStep.Length > 0)
-        {
-            using var dusk = Theme.PushText(Theme.Dusk);
-            ImGui.TextUnformatted(nextStep);
-        }
-
-        // Flag the giver; teleport through Lifestream when it is loaded.
-        ImGui.TableNextColumn();
-        if (row.Quest is { } target)
-        {
-            using (ImRaii.Disabled(!links.CanFlagMap(target)))
+            MoonGlyph.DrawInline(state, UiMetrics.InlineGlyphSize(line));
+            if (ImGui.IsItemHovered())
             {
-                if (ImGui.SmallButton(Strings.FlightFlag))
+                UiMetrics.StateTooltip(state, row.Evaluation, row.Quest, session.Names, session.States);
+            }
+        }
+
+        // The state word is never cut; the reason ends in an ellipsis with the whole line on hover.
+        if (NextColumn(ColumnStatus) && row.StatusText.Length > 0)
+        {
+            var s = Theme.Surface;
+            Chrome.StatusText(row.StatusText, ImGui.GetContentRegionAvail().X, s.Text, s.TextSecondary);
+        }
+
+        // Flag the giver; teleport through Lifestream when it is loaded. Folded into "…" in a narrow pane.
+        if (!NextColumn(ColumnActions) || row.Quest is not { } target)
+        {
+            return;
+        }
+
+        if (fold)
+        {
+            DrawRowMenu(target, line);
+            return;
+        }
+
+        using (ImRaii.Disabled(!links.CanFlagMap(target)))
+        {
+            if (ImGui.SmallButton(Strings.FlightFlag))
+            {
+                links.FlagMap(target);
+            }
+        }
+
+        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+        {
+            UiMetrics.Tooltip(Strings.FlightFlagTooltip);
+        }
+
+        if (teleport)
+        {
+            ImGui.SameLine();
+            using (ImRaii.Disabled(!links.CanTeleport(target)))
+            {
+                if (ImGui.SmallButton(Strings.FlightTeleport))
                 {
-                    links.FlagMap(target);
+                    links.TeleportToGiver(target);
                 }
             }
 
             if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
             {
-                UiMetrics.Tooltip(Strings.FlightFlagTooltip);
-            }
-
-            if (teleport)
-            {
-                ImGui.SameLine();
-                using (ImRaii.Disabled(!links.CanTeleport(target)))
-                {
-                    if (ImGui.SmallButton(Strings.FlightTeleport))
-                    {
-                        links.TeleportToGiver(target);
-                    }
-                }
-
-                if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
-                {
-                    var tip = links.TeleportBusy ? Strings.TeleportBusy
-                        : links.NearestAetheryte(target) is { } aetheryte ? aetheryte.Name
-                        : Strings.TeleportNoAetheryte;
-                    UiMetrics.Tooltip(tip);
-                }
+                UiMetrics.Tooltip(TeleportTip(target));
             }
         }
     }
+
+    /// <summary>Flag and Teleport folded into one "…" button and its menu (a narrow pane).</summary>
+    private void DrawRowMenu(QuestRecord target, float line)
+    {
+        Keyboard.MoreButton("##more", RowMenuId, ImGui.GetCursorScreenPos(), MoreSize(line));
+        using var popup = ImRaii.Popup(RowMenuId);
+        if (!popup)
+        {
+            return;
+        }
+
+        // Opened from the centre column (own font scale 1), so the menu scales itself.
+        UiMetrics.ApplyFontScale();
+        if (ImGui.MenuItem(Strings.FlightFlag, enabled: links.CanFlagMap(target)))
+        {
+            links.FlagMap(target);
+        }
+
+        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+        {
+            UiMetrics.Tooltip(Strings.FlightFlagTooltip);
+        }
+
+        if (ImGui.MenuItem(Strings.FlightTeleport, enabled: links.CanTeleport(target)))
+        {
+            links.TeleportToGiver(target);
+        }
+
+        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+        {
+            UiMetrics.Tooltip(TeleportTip(target));
+        }
+    }
+
+    private string TeleportTip(QuestRecord target) =>
+        links.TeleportBusy ? Strings.TeleportBusy
+        : links.NearestAetheryte(target) is { } aetheryte ? aetheryte.Name
+        : Strings.TeleportNoAetheryte;
 
     private void DrawFieldLine(ZoneItem zone)
     {

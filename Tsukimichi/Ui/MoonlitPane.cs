@@ -14,6 +14,7 @@ using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Storage;
+using Tsukimichi.Core.Ui;
 using Tsukimichi.Core.Unique;
 using Tsukimichi.Game;
 using Tsukimichi.GameData;
@@ -338,24 +339,38 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         }
 
         var line = ImGui.GetTextLineHeight();
-        var countWidth = ImGui.CalcTextSize("9999/9999").X;
         var start = ImGui.GetCursorScreenPos();
         var width = ImGui.GetContentRegionAvail().X;
-        using (var table = ImRaii.Table("##moonlitKinds", 3, ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.NoPadOuterX))
+
+        // The count column is as wide as the widest count; in a pane too narrow for it beside a few letters of the
+        // name it gives way to the name's tooltip rather than be crushed (feature plan v4 L6).
+        var countWidth = ImGui.CalcTextSize(allItem.CountText).X;
+        for (var i = 0; i < kindItems.Length; i++)
+        {
+            countWidth = MathF.Max(countWidth, ImGui.CalcTextSize(kindItems[i].CountText).X);
+        }
+
+        var moonWidth = MathF.Max(line * 1.4f, UiMetrics.InlineGlyphSize(line));
+        var padding = ImGui.GetStyle().CellPadding.X * 2f;
+        var showCount = width - moonWidth - countWidth - (padding * 2f) >= UiMetrics.Px(LayoutBudgets.RowNameMinLogical);
+        using (var table = ImRaii.Table(showCount ? "##moonlitKinds" : "##moonlitKindsNarrow", showCount ? 3 : 2, ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.NoPadOuterX))
         {
             if (!table)
             {
                 return;
             }
 
-            ImGui.TableSetupColumn("##moon", ImGuiTableColumnFlags.WidthFixed, line * 1.4f);
+            ImGui.TableSetupColumn("##moon", ImGuiTableColumnFlags.WidthFixed, moonWidth);
             ImGui.TableSetupColumn("##name", ImGuiTableColumnFlags.WidthStretch);
-            ImGui.TableSetupColumn("##count", ImGuiTableColumnFlags.WidthFixed, countWidth);
+            if (showCount)
+            {
+                ImGui.TableSetupColumn("##count", ImGuiTableColumnFlags.WidthFixed, countWidth);
+            }
 
-            DrawKindRow(ui, allItem, -1);
+            DrawKindRow(ui, allItem, -1, showCount);
             for (var i = 0; i < kindItems.Length; i++)
             {
-                DrawKindRow(ui, kindItems[i], i);
+                DrawKindRow(ui, kindItems[i], i, showCount);
             }
         }
 
@@ -380,13 +395,16 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             ImGui.TextUnformatted(Strings.MoonlitSubtitle);
         }
 
+        // The toolbar flows: under MoonlitTwoRowToolbarLogical the two checkboxes take the first row and the rest the
+        // second, and any item that would run past the edge starts a new row (feature plan v4 L6).
+        var twoRows = ImGui.GetContentRegionAvail().X / UiMetrics.Scale < LayoutBudgets.MoonlitTwoRowToolbarLogical;
         var hide = ui.MoonlitHideObtained;
         if (ImGui.Checkbox(Strings.MoonlitHideObtainedLabel, ref hide))
         {
             ui.MoonlitHideObtained = hide;
         }
 
-        ImGui.SameLine();
+        Chrome.SameLineOrWrap(CheckboxWidth(Strings.MoonlitHideStoreResellsLabel));
         var hideStore = settings.MoonlitHideStoreResells;
         if (ImGui.Checkbox(Strings.MoonlitHideStoreResellsLabel, ref hideStore))
         {
@@ -399,29 +417,36 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             UiMetrics.Tooltip(Strings.MoonlitHideStoreResellsTooltip);
         }
 
-        ImGui.SameLine();
-        ImGui.SetNextItemWidth(UiMetrics.Px(150f));
+        var comboWidth = UiMetrics.Px(150f);
+        if (!twoRows)
+        {
+            Chrome.SameLineOrWrap(comboWidth);
+        }
+
+        ImGui.SetNextItemWidth(Chrome.FitWidth(comboWidth));
         DrawConfidenceCombo();
 
-        ImGui.SameLine();
-        ImGui.SetNextItemWidth(UiMetrics.Px(220f));
+        // The filter keeps at least a third of its width on the line, and shrinks to the room left.
+        var filterWidth = UiMetrics.Px(220f);
+        Chrome.SameLineOrWrap(filterWidth / 3f);
+        ImGui.SetNextItemWidth(Chrome.FitWidth(filterWidth));
         ImGui.InputTextWithHint("##moonlitFilter", Strings.MoonlitFilterHint, ref filterText, FilterMaxLength);
 
         RefreshVisible(ui);
-        ImGui.SameLine();
+        Chrome.SameLineOrWrap(ImGui.CalcTextSize(visibleSummary).X);
         ImGui.TextDisabled(visibleSummary);
         if (!session.IsLive)
         {
-            ImGui.SameLine();
+            Chrome.SameLineOrWrap(ImGui.CalcTextSize(Strings.MoonlitOfflineHint).X);
             using (Theme.PushText(Theme.Dusk))
             {
-                ImGui.TextUnformatted(Strings.MoonlitOfflineHint);
+                TextFlow.Wrapped(Strings.MoonlitOfflineHint, Chrome.RoomX());
             }
         }
 
         if (verdict.UndoShowing)
         {
-            ImGui.SameLine();
+            Chrome.SameLineOrWrap(verdict.UndoWidth());
             verdict.DrawUndo(this);
         }
 
@@ -457,6 +482,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         const ImGuiTableFlags Flags = ImGuiTableFlags.ScrollY | ImGuiTableFlags.RowBg | ImGuiTableFlags.BordersInnerH
                                       | ImGuiTableFlags.Resizable | ImGuiTableFlags.Reorderable | ImGuiTableFlags.Hideable
                                       | ImGuiTableFlags.SizingStretchProp;
+        var tableWidth = ImGui.GetContentRegionAvail().X;
         using var table = ImRaii.Table("##moonlitTable", 6, Flags, new Vector2(-1f, -1f));
         if (!table)
         {
@@ -480,6 +506,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         // (a no-op once they agree) so a changed IconScale never clips the moons.
         ImGuiP.TableSetColumnWidth(0, glyphColumn);
         ImGuiP.TableSetColumnWidth(4, glyphColumn);
+        FitColumns(tableWidth, glyphColumn, line);
         ImGui.TableHeadersRow();
 
         if (!clipperCreated)
@@ -501,6 +528,80 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         clipper.End();
         moreFocusedRow = moreFocusedNext;
     }
+
+    // The table's narrow-width plan (feature plan v4 L6): Confidence hides first, then Kind; State never. Only the
+    // columns the plan hid are shown again; a column the player shows again by hand while it would not fit suspends the
+    // plan for that column until the table is wide enough for it.
+    private const int KindColumn = 2;
+    private const int ConfidenceColumn = 5;
+    private readonly bool[] columnsShown = new bool[6];
+    private readonly bool[] columnsWere = new bool[6];
+    private readonly float[] columnWidths = new float[6];
+    private bool columnsPlanned;
+    private bool kindAutoHidden;
+    private bool kindSuspended;
+    private bool confidenceAutoHidden;
+    private bool confidenceSuspended;
+
+    /// <summary>Plans the table's columns for its width and hides or re-shows Kind and Confidence to match (next frame).</summary>
+    private void FitColumns(float tableWidth, float glyphColumn, float line)
+    {
+        var padding = ImGui.GetStyle().CellPadding.X * 2f;
+        var nameMin = UiMetrics.Px(LayoutBudgets.RowNameMinLogical);
+        var rewardMin = UiMetrics.RowIconSize + ImGui.GetStyle().ItemSpacing.X + nameMin + MoreSize(line);
+        Span<ColumnSpec> specs = stackalloc ColumnSpec[6];
+        PaneFit.MoonlitColumns(
+            glyphColumn + padding,
+            rewardMin + padding,
+            UiMetrics.Px(110f) + padding,
+            nameMin + padding,
+            UiMetrics.Px(80f) + padding,
+            specs);
+        TableGeometry.PlanColumns(tableWidth, specs, columnsPlanned ? columnsWere : [], columnsShown, columnWidths, UiMetrics.Px(LayoutBudgets.HysteresisLogical));
+        columnsPlanned = true;
+        Array.Copy(columnsShown, columnsWere, columnsShown.Length);
+        FitColumn(ConfidenceColumn, columnsShown[ConfidenceColumn], ref confidenceAutoHidden, ref confidenceSuspended);
+        FitColumn(KindColumn, columnsShown[KindColumn], ref kindAutoHidden, ref kindSuspended);
+    }
+
+    private static void FitColumn(int column, bool fits, ref bool autoHidden, ref bool suspended)
+    {
+        var enabled = (ImGui.TableGetColumnFlags(column) & ImGuiTableColumnFlags.IsEnabled) != 0;
+        if (fits)
+        {
+            suspended = false;
+            if (autoHidden)
+            {
+                autoHidden = false;
+                if (!enabled)
+                {
+                    ImGui.TableSetColumnEnabled(column, true);
+                }
+            }
+
+            return;
+        }
+
+        if (autoHidden && enabled)
+        {
+            // Shown again by hand from the header menu: the player's choice stands while the width stays short.
+            autoHidden = false;
+            suspended = true;
+        }
+
+        if (!suspended && enabled)
+        {
+            ImGui.TableSetColumnEnabled(column, false);
+            autoHidden = true;
+        }
+    }
+
+    /// <summary>The "…" button's side in a row.</summary>
+    private static float MoreSize(float line) => MathF.Min(UiMetrics.MinTarget, MathF.Max(line, UiMetrics.RowIconSize));
+
+    /// <summary>A checkbox's width: the box, the inner spacing and the label.</summary>
+    private static float CheckboxWidth(string label) =>
+        ImGui.GetFrameHeight() + ImGui.GetStyle().ItemInnerSpacing.X + ImGui.CalcTextSize(label).X;
 
     /// <summary>The row's context menu, opened by a right-click, the Menu key or Shift+F10, or the "…" button.</summary>
     private const string RowMenuId = "ctx";
@@ -533,7 +634,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         }
     }
 
-    private void DrawKindRow(UiState ui, KindItem item, int index)
+    private void DrawKindRow(UiState ui, KindItem item, int index, bool showCount)
     {
         using var id = ImRaii.PushId(index);
         ImGui.TableNextRow();
@@ -559,13 +660,21 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 
         ImGui.TableNextColumn();
         var selected = ui.MoonlitKind == item.Kind;
-        if (ImGui.Selectable(item.Name, selected, ImGuiSelectableFlags.SpanAllColumns))
+        if (Chrome.EllipsisSelectable(item.Name, selected, 0f, out var cut, ImGuiSelectableFlags.SpanAllColumns))
         {
             ui.MoonlitKind = item.Kind;
         }
 
-        ImGui.TableNextColumn();
-        ImGui.TextDisabled(item.CountText);
+        if ((cut || !showCount) && ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(item.Name, item.TooltipText);
+        }
+
+        if (showCount)
+        {
+            ImGui.TableNextColumn();
+            ImGui.TextDisabled(item.CountText);
+        }
     }
 
     private void DrawRow(UiState ui, Row row, float line)
@@ -642,13 +751,15 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 
         // The "…" button at the reward cell's right end while the mouse is over the cell or the name (or the button)
         // has keyboard focus: a left click, Enter or Space opens the same menu (accessibility A6).
-        var size = MathF.Min(UiMetrics.MinTarget, MathF.Max(line, UiMetrics.RowIconSize));
+        var size = MoreSize(line);
         var cellMax = new Vector2(cellMin.X + cellWidth, cellMin.Y + size);
         if (nameFocused || moreFocusedRow == row.Index || (ImGui.IsWindowHovered() && ImGui.IsMouseHoveringRect(cellMin, cellMax)))
         {
             // No cursor restore afterwards: TableNextColumn follows at once, and a set position folded into the
-            // cell's CursorMaxPos would make the row taller while the button shows.
-            Keyboard.MoreButton("##more", RowMenuId, new Vector2(cellMax.X - size, cellMin.Y), size);
+            // cell's CursorMaxPos would make the row taller while the button shows. In a narrow cell the button
+            // stays right of the reward's icon rather than cover it (feature plan v4 L6).
+            var moreX = MathF.Max(cellMin.X + UiMetrics.RowIconSize + ImGui.GetStyle().ItemSpacing.X, cellMax.X - size);
+            Keyboard.MoreButton("##more", RowMenuId, new Vector2(moreX, cellMin.Y), size);
             if (ImGui.IsItemFocused())
             {
                 moreFocusedNext = row.Index;

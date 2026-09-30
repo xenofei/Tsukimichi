@@ -149,6 +149,28 @@ public class ChangelogSectionTests
         Assert.Null(ChangelogSection.Find(text, "Unreleased"));
     }
 
+    [Fact]
+    public void Repository_changelog_keeps_the_section_of_the_version_the_plugin_is_built_as()
+    {
+        // The What's new card reads the running version's section; a merge that folds a released section into
+        // [Unreleased] must fail here, not show an empty card after the next update.
+        var csproj = File.ReadAllText(Path.Combine(RepoRoot(), "Tsukimichi", "Tsukimichi.csproj"));
+        var match = System.Text.RegularExpressions.Regex.Match(csproj, @"<Version>(\d+\.\d+\.\d+)(?:\.\d+)?</Version>");
+        Assert.True(match.Success, "Tsukimichi.csproj has no <Version>");
+
+        var text = File.ReadAllText(Path.Combine(RepoRoot(), "CHANGELOG.md"));
+        Assert.True(ChangelogSection.Find(text, match.Groups[1].Value) is not null, $"CHANGELOG.md has no section for {match.Groups[1].Value}, the version in Tsukimichi.csproj");
+
+        // [Unreleased] first, then every released version newest first: a section moved out of place is a bad merge.
+        var headings = text.Split('\n').Where(l => l.StartsWith("## [", StringComparison.Ordinal)).Select(l => l[4..l.IndexOf(']')]).ToList();
+        Assert.Equal("Unreleased", headings[0]);
+        var released = headings.Skip(1).Select(Version.Parse).ToList();
+        for (var i = 1; i < released.Count; i++)
+        {
+            Assert.True(released[i - 1] > released[i], $"CHANGELOG.md lists [{released[i]}] after [{released[i - 1]}]; versions must run newest first");
+        }
+    }
+
     private static string RepoRoot()
     {
         var dir = AppContext.BaseDirectory;

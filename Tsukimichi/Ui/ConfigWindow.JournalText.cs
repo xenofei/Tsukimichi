@@ -31,7 +31,7 @@ public sealed partial class ConfigWindow
             service.SetEnabled(search);
         }
 
-        ImGui.TextDisabled(Strings.JournalTextSearchHint);
+        Chrome.Hint(Strings.JournalTextSearchHint);
         if (!settings.JournalTextSearch)
         {
             return;

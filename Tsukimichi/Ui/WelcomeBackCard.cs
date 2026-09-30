@@ -128,16 +128,13 @@ public sealed class WelcomeBackCard
 
     private void DrawBody(WelcomeBackView view)
     {
-        using (Theme.PushText(Theme.Moon))
-        {
-            ImGui.TextUnformatted(title);
-        }
-
-        ImGui.SameLine();
+        // The title, then its two buttons at the right end of the line, or right-aligned on the next line when they
+        // would run into it (feature plan v4 L6).
+        Chrome.FitText(title, Theme.U32(Theme.Moon));
         var closeWidth = ImGuiHelpers.GetButtonSize(Strings.WelcomeBackClose).X;
         var quietWidth = ImGuiHelpers.GetButtonSize(Strings.WelcomeBackDontShow).X;
         var spacing = ImGui.GetStyle().ItemSpacing.X;
-        ImGui.SetCursorPosX(MathF.Max(ImGui.GetCursorPosX(), ImGui.GetWindowContentRegionMax().X - closeWidth - quietWidth - spacing));
+        Chrome.SameLineRightOrWrap(closeWidth + quietWidth + spacing);
         if (ImGui.SmallButton(Strings.WelcomeBackDontShow))
         {
             source.DontShowAgain();
@@ -237,8 +234,9 @@ public sealed class WelcomeBackCard
             picked = -1;
         }
 
+        // The combo shrinks to the card, and each button moves to the next line when it would run past the edge.
         var preview = picked < 0 ? Strings.WelcomeBackAskPick : seriesLabels[picked];
-        ImGui.SetNextItemWidth(UiMetrics.Px(200f));
+        ImGui.SetNextItemWidth(Chrome.FitWidth(UiMetrics.Px(200f)));
         using (var combo = ImRaii.Combo("##lastPlayed", preview))
         {
             if (combo)
@@ -253,7 +251,7 @@ public sealed class WelcomeBackCard
             }
         }
 
-        ImGui.SameLine();
+        Chrome.SameLineOrWrap(ImGuiHelpers.GetButtonSize(Strings.WelcomeBackAskShow).X);
         using (ImRaii.Disabled(picked < 0))
         {
             if (ImGui.Button(Strings.WelcomeBackAskShow) && picked >= 0)
@@ -262,7 +260,7 @@ public sealed class WelcomeBackCard
             }
         }
 
-        ImGui.SameLine();
+        Chrome.SameLineOrWrap(ImGuiHelpers.GetButtonSize(Strings.WelcomeBackAskNew).X);
         if (ImGui.Button(Strings.WelcomeBackAskNew))
         {
             source.Answer(WelcomeBackState.NewPlayer);
@@ -288,20 +286,20 @@ public sealed class WelcomeBackCard
         {
             var (quest, name, status) = journalRows[i];
             using var id = ImRaii.PushId(i);
-            if (ImGui.Selectable(name))
+            if (Chrome.EllipsisSelectable(name, false, 0f, out var cut))
             {
                 ui.Reveal(quest);
             }
 
             if (ImGui.IsItemHovered())
             {
-                UiMetrics.Tooltip(Strings.WelcomeBackRowTooltip);
+                UiMetrics.Tooltip(cut ? name : Strings.WelcomeBackRowTooltip, cut ? Strings.WelcomeBackRowTooltip : null);
             }
 
             ImGui.Indent();
             using (Theme.PushText(Theme.Surface.TextSecondary))
             {
-                ImGui.TextWrapped(status);
+                TextFlow.Wrapped(status, Chrome.RoomX());
             }
 
             ImGui.Unindent();
@@ -376,11 +374,11 @@ public sealed class WelcomeBackCard
         ImGui.TextWrapped(newTotal);
         for (var i = 0; i < newRows.Count; i++)
         {
+            // The line wraps between words and its button follows it, or starts the next line when it would not fit.
             var (series, text, tooltip) = newRows[i];
             using var id = ImRaii.PushId(i);
-            ImGui.AlignTextToFramePadding();
-            ImGui.TextUnformatted(text);
-            ImGui.SameLine();
+            TextFlow.Wrapped(text, Chrome.RoomX());
+            Chrome.SameLineOrWrap(ImGui.CalcTextSize(Strings.WelcomeBackShowInJournal).X + (ImGui.GetStyle().FramePadding.X * 2f));
             if (ImGui.SmallButton(Strings.WelcomeBackShowInJournal))
             {
                 ShowAddedIn(series);

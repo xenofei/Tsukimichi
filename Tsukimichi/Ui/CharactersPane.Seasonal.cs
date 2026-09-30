@@ -54,13 +54,9 @@ public sealed partial class CharactersPane
 
     private void DrawRunningFestival(UiState ui, SeasonalFestivalView festival)
     {
-        using (Theme.PushText(Theme.Surface.Text))
-        {
-            ImGui.TextUnformatted(festival.Name);
-        }
-
-        ImGui.SameLine();
-        ImGui.TextDisabled(festival.Status);
+        Chrome.FitText(festival.Name, Theme.U32(Theme.Surface.Text));
+        Chrome.SameLineOrWrap(ImGui.CalcTextSize(festival.Status).X);
+        Chrome.FitText(festival.Status, ImGui.GetColorU32(ImGuiCol.TextDisabled));
         if (ImGui.IsItemHovered())
         {
             UiMetrics.Tooltip(festival.StatusTooltip);
@@ -79,9 +75,10 @@ public sealed partial class CharactersPane
         }
 
         var line = ImGui.GetTextLineHeight();
+        // The name stretches and ends in an ellipsis; the status keeps its state word (feature plan v4 L6).
         ImGui.TableSetupColumn("##state", ImGuiTableColumnFlags.WidthFixed, line * 1.4f);
-        ImGui.TableSetupColumn(Strings.CharactersColumnQuest, ImGuiTableColumnFlags.WidthFixed, UiMetrics.Px(260f));
-        ImGui.TableSetupColumn(Strings.CharactersColumnStatus, ImGuiTableColumnFlags.WidthStretch);
+        ImGui.TableSetupColumn(Strings.CharactersColumnQuest, ImGuiTableColumnFlags.WidthStretch, 3f);
+        ImGui.TableSetupColumn(Strings.CharactersColumnStatus, ImGuiTableColumnFlags.WidthStretch, 2f);
 
         for (var i = 0; i < festival.Rows.Length; i++)
         {
@@ -96,18 +93,18 @@ public sealed partial class CharactersPane
             }
 
             ImGui.TableNextColumn();
-            if (ImGui.Selectable(row.Name))
+            if (Chrome.EllipsisSelectable(row.Name, false, 0f, out var cut))
             {
                 Reveal(ui, row.Quest);
             }
 
             if (ImGui.IsItemHovered())
             {
-                UiMetrics.Tooltip(row.Tooltip);
+                UiMetrics.Tooltip(cut ? row.Name : row.Tooltip, cut ? row.Tooltip : null);
             }
 
             ImGui.TableNextColumn();
-            ImGui.TextUnformatted(row.Detail);
+            StatusCell(row.Detail);
         }
     }
 
@@ -149,9 +146,14 @@ public sealed partial class CharactersPane
                 {
                     var (quest, name) = festival.Quests[q];
                     using var questId = ImRaii.PushId(q);
-                    if (ImGui.Selectable(name))
+                    if (Chrome.EllipsisSelectable(name, false, 0f, out var cut))
                     {
                         Reveal(ui, quest);
+                    }
+
+                    if (cut && ImGui.IsItemHovered())
+                    {
+                        UiMetrics.Tooltip(name);
                     }
                 }
             }

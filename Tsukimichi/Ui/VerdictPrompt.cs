@@ -116,6 +116,12 @@ internal sealed class VerdictPrompt(string popupId)
         return false;
     }
 
+    /// <summary>The width <see cref="DrawUndo"/>'s line takes now, so a toolbar can wrap it whole.</summary>
+    public float UndoWidth() =>
+        ImGui.CalcTextSize(undoUnique ? Strings.VerdictUndoMarkedUnique : Strings.VerdictUndoMarkedNotUnique).X
+        + ImGui.CalcTextSize(Strings.VerdictUndoSeparator).X
+        + ImGui.CalcTextSize(Strings.VerdictUndo).X + (ImGui.GetStyle().FramePadding.X * 2f);
+
     /// <summary>"Marked unique · Undo" (or "Hidden as not unique · Undo") for eight seconds after a verdict; nothing otherwise. With <paramref name="forRowId"/> the line shows only while that quest is the one the verdict was given for.</summary>
     public void DrawUndo(IUniqueOverrides overrides, uint? forRowId = null)
     {
