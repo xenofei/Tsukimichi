@@ -181,6 +181,16 @@ public sealed class MainWindow : Window, IDisposable
         detailPane.Overrides = overrides ?? throw new ArgumentNullException(nameof(overrides));
     }
 
+    /// <summary>
+    /// The detail pane's Questionable cross-check line and its opt-in "Add to Questionable priority" (V2-17);
+    /// <paramref name="handoff"/> reads Settings › Integrations › "Show Questionable hand-off".
+    /// </summary>
+    public void AttachQuestionable(QuestionableIpc questionable, Func<bool> handoff)
+    {
+        detailPane.Questionable = questionable ?? throw new ArgumentNullException(nameof(questionable));
+        detailPane.QuestionableHandoff = handoff ?? throw new ArgumentNullException(nameof(handoff));
+    }
+
     /// <summary>The detail pane's Report button and the status bar's data stamp tooltip.</summary>
     public void AttachDiagnostics(DiagnosticBuilder diagnostics)
     {

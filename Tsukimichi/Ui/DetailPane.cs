@@ -29,7 +29,7 @@ namespace Tsukimichi.Ui;
 /// focusable item, so the pane works without a mouse (accessibility A6). Everything shown is materialized when the
 /// selection or the session version changes, so drawing allocates nothing.
 /// </summary>
-public sealed class DetailPane
+public sealed partial class DetailPane
 {
     public const int MaxUnlocks = 8;
 
@@ -504,6 +504,11 @@ public sealed class DetailPane
             using var mist = Theme.PushText(Theme.Surface.TextSecondary);
             ImGui.TextWrapped(filing);
         }
+
+        if (model.Quest is { } quest)
+        {
+            DrawQuestionableLine(session, quest);
+        }
     }
 
     /// <summary>
@@ -841,8 +846,8 @@ public sealed class DetailPane
     private uint teleportTipRowId = uint.MaxValue;
     private string teleportTip = string.Empty;
 
-    /// <summary>Round buttons after the primary action: Pin, Show path, Route to this, Link, Copy, Journal, Report (when attached), Flag (when Teleport leads).</summary>
-    private int IconButtonCount => 6 + (Diagnostics is null ? 0 : 1) + (links.TeleportAvailable ? 1 : 0);
+    /// <summary>Round buttons after the primary action: Pin, Show path, Route to this, Link, Copy, Journal, Report (when attached), Flag (when Teleport leads), "…" (the Questionable hand-off, when shown).</summary>
+    private int IconButtonCount => 6 + (Diagnostics is null ? 0 : 1) + (links.TeleportAvailable ? 1 : 0) + (ShowsQuestionableMore ? 1 : 0);
 
     private float PrimaryWidth()
     {
@@ -1014,6 +1019,8 @@ public sealed class DetailPane
                 links.FlagMap(quest);
             }
         }
+
+        DrawQuestionableMore(ref used, width, rowId);
     }
 
     /// <summary>

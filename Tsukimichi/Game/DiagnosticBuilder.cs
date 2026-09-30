@@ -51,6 +51,13 @@ public sealed class DiagnosticBuilder
     /// <summary>"Reward data was generated for game X; you are on Y", or null when the versions match or are unknown.</summary>
     public string? VersionMismatchWarning { get; }
 
+    /// <summary>
+    /// Questionable's answer for a quest compared with the viewed character's evaluation (V2-17), printed as the
+    /// block's "questionable:" line; null (or a null answer) leaves the line out. The plugin points it at
+    /// <see cref="QuestionableIpc.Check"/>.
+    /// </summary>
+    public Func<QuestRecord, Core.Ipc.CrossCheckResult?>? CrossCheck { get; set; }
+
     /// <summary>The block for a quest by row id; null without a catalog or for a row id it does not know.</summary>
     public string? Compose(uint rowId) => session.Bundle?.Catalog.GetByRowId(rowId) is { } quest ? Compose(quest) : null;
 
@@ -79,7 +86,21 @@ public sealed class DiagnosticBuilder
             Snapshot = snapshot,
             Context = session.Context,
             IsLive = session.IsLive,
+            Questionable = QuestionableCheck(quest),
         });
+    }
+
+    /// <summary>The cross-check for the block; a failure leaves the line out rather than the whole block.</summary>
+    private Core.Ipc.CrossCheckResult? QuestionableCheck(QuestRecord quest)
+    {
+        try
+        {
+            return CrossCheck?.Invoke(quest);
+        }
+        catch (Exception)
+        {
+            return null;
+        }
     }
 
     /// <summary>Puts text on the system clipboard through ImGui; false (and a log line) when the platform refused.</summary>
