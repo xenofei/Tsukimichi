@@ -48,6 +48,7 @@ public sealed class MainWindow : Window, IDisposable
     private readonly TreePane treePane;
     private readonly TablePane tablePane;
     private readonly DetailPane detailPane;
+    private readonly TonightCard tonightCard;
 
     // Attached after the game state exists (they need the session); null until then.
     private MoonlitPane? moonlitPane;
@@ -137,6 +138,7 @@ public sealed class MainWindow : Window, IDisposable
         treePane = new TreePane(ui);
         tablePane = new TablePane(ui, runner, links, textures, pluginInterface, log, filterPanel.ResetAll);
         detailPane = new DetailPane(ui, runner, links, textures, log);
+        tonightCard = new TonightCard(ui, runner, OnFiltersChanged);
 
         version = typeof(Plugin).Assembly.GetName().Version?.ToString(3) ?? "0";
     }
@@ -726,7 +728,15 @@ public sealed class MainWindow : Window, IDisposable
             detailHeight -= card.Draw(cellHeight);
         }
 
-        detailPane.Draw(session, bundle, new Vector2(0f, detailHeight));
+        // Nothing selected: the Tonight card answers "what now" in the detail column (game UX panel finding 1).
+        if (ui.SelectedRowId is null)
+        {
+            tonightCard.Draw(session, bundle, new Vector2(0f, detailHeight));
+        }
+        else
+        {
+            detailPane.Draw(session, bundle, new Vector2(0f, detailHeight));
+        }
     }
 
     private void DrawNavigation(SessionState session, CatalogBundle bundle, float height)
