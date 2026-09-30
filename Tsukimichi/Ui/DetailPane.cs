@@ -1015,7 +1015,7 @@ public sealed class DetailPane
             dl.AddRectFilled(min, max, Theme.U32(s.Raised), rounding);
         }
 
-        var ink = enabled ? Theme.MoonU32 : Theme.U32(s.TextDisabled);
+        var ink = enabled ? Theme.AccentU32 : Theme.U32(s.TextDisabled);
         ImGui.PushFont(UiBuilder.IconFont);
         dl.AddText(new Vector2(min.X + padX, min.Y + ((height - iconSize.Y) * 0.5f)), ink, icon);
         ImGui.PopFont();
