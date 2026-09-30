@@ -1,5 +1,7 @@
 using System.Collections.Frozen;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Query;
+using Tsukimichi.Core.Storage;
 
 namespace Tsukimichi.Core.Chains;
 
@@ -10,6 +12,14 @@ namespace Tsukimichi.Core.Chains;
 /// seasonal events), has a banner (<see cref="QuestRecord.Icon"/>), and is not an unlock quest (the feature set),
 /// not repeatable and not removed.
 /// <para>
+/// One kind of unlock quest is let in: the aether current story lines. Since Shadowbringers most zones tell their
+/// side stories in lines drawn blue, where the opening quest grants an aether current and the quests after it unlock
+/// nothing of their own. A blue quest with artwork whose only unlocks are aether currents
+/// (<see cref="FeaturePresets.UnlocksOnlyAetherCurrents"/>) is a story sidequest when it grants a current or is
+/// linked, in the same genre or territory, through such quests to one that does. Every other unlock quest (duties,
+/// systems, jobs, actions) stays out.
+/// </para>
+/// <para>
 /// A side story is a maximal connected set of at least <see cref="ChainCatalog.MinChainLength"/> story sidequests
 /// linked by previous-quest requirements, where each link joins two quests of the same journal genre or given in the
 /// same territory. The typical Shadowbringers-to-Dawntrail zone has two short lines joined by a last quest that
@@ -18,8 +28,7 @@ namespace Tsukimichi.Core.Chains;
 /// </para>
 /// <para>
 /// A heuristic, and it says so: a one-quest vignette with art is a story sidequest outside any chain; a line whose
-/// later quests have no art, or whose opening quest is an unlock (the aether current quests that open most zone
-/// stories since Shadowbringers), keeps only its art-bearing, non-unlock part.
+/// later quests have no art, or that passes through another kind of unlock quest, keeps only its art-bearing part.
 /// </para>
 /// </summary>
 public sealed class StorySidequests
@@ -66,33 +75,56 @@ public sealed class StorySidequests
     /// </summary>
     public int OrderOf(uint rowId) => order.TryGetValue(rowId, out var index) ? index : int.MaxValue;
 
-    /// <summary>Whether a quest is a story sidequest: the section, artwork, unlock, repeatable and removed rules of the class summary.</summary>
+    /// <summary>
+    /// Whether a quest is a story sidequest by the base rule: the section, artwork, unlock, repeatable and removed
+    /// rules of the class summary. The four-argument <c>Build</c> also lets in the aether current story lines, which
+    /// this test alone does not know.
+    /// </summary>
     /// <param name="featureQuestIds">The derived unlock quests (<c>FeaturePresets.Derive</c>).</param>
     public static bool IsStorySidequest(QuestRecord quest, IReadOnlySet<uint> featureQuestIds)
     {
-        ArgumentNullException.ThrowIfNull(quest);
         ArgumentNullException.ThrowIfNull(featureQuestIds);
-        return !quest.IsRemoved
-            && !quest.IsRepeatable
-            && quest.Icon != 0
-            && quest.Journal.SectionId == SidequestSectionId
-            && !featureQuestIds.Contains(quest.RowId);
+        return IsStoryShaped(quest) && !featureQuestIds.Contains(quest.RowId);
     }
 
-    /// <summary>Finds every story sidequest and derives the side stories. Computed once per catalog; the result is immutable.</summary>
+    /// <summary>Finds the story sidequests by the base rule alone (every unlock quest left out) and derives the side stories.</summary>
     /// <param name="featureQuestIds">The derived unlock quests (<c>FeaturePresets.Derive</c>); they are never story sidequests.</param>
-    public static StorySidequests Build(QuestCatalog catalog, IReadOnlySet<uint> featureQuestIds)
+    public static StorySidequests Build(QuestCatalog catalog, IReadOnlySet<uint> featureQuestIds) => Build(catalog, featureQuestIds, null, null);
+
+    /// <summary>
+    /// Finds every story sidequest, the aether current story lines included, and derives the side stories. Computed
+    /// once per catalog; the result is immutable.
+    /// </summary>
+    /// <param name="featureQuestIds">The derived unlock quests (<c>FeaturePresets.Derive</c>).</param>
+    /// <param name="curated">The curated overlay, for its system and duty unlocks; null lets no unlock quest in.</param>
+    /// <param name="uniqueRewards">The shipped unique-reward entries: which quests grant a current and which unlock something else. Null reads the quests' own rewards only.</param>
+    public static StorySidequests Build(QuestCatalog catalog, IReadOnlySet<uint> featureQuestIds, CuratedData? curated, IEnumerable<UniqueRewardEntry>? uniqueRewards)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(featureQuestIds);
 
         var stories = new Dictionary<uint, QuestRecord>();
+        List<QuestRecord>? blue = null;
         foreach (var quest in catalog.All)
         {
-            if (IsStorySidequest(quest, featureQuestIds))
+            if (!IsStoryShaped(quest))
+            {
+                continue;
+            }
+
+            if (!featureQuestIds.Contains(quest.RowId))
             {
                 stories.Add(quest.RowId, quest);
             }
+            else if (curated is not null)
+            {
+                (blue ??= []).Add(quest);
+            }
+        }
+
+        if (blue is not null)
+        {
+            AddAetherCurrentLines(catalog, blue, curated!, uniqueRewards ?? [], stories);
         }
 
         if (stories.Count == 0)
@@ -170,6 +202,99 @@ public sealed class StorySidequests
         }
 
         return new StorySidequests(stories.Keys.ToFrozenSet(), chains, chainOf.ToFrozenDictionary(), order.ToFrozenDictionary());
+    }
+
+    /// <summary>Removed, repeatable, art-less and non-Sidequests quests are never story sidequests, unlock or not.</summary>
+    private static bool IsStoryShaped(QuestRecord quest)
+    {
+        ArgumentNullException.ThrowIfNull(quest);
+        return !quest.IsRemoved
+            && !quest.IsRepeatable
+            && quest.Icon != 0
+            && quest.Journal.SectionId == SidequestSectionId;
+    }
+
+    /// <summary>
+    /// Lets in the blue quests of the aether current story lines: those whose only unlocks are currents, when they
+    /// grant one or are linked (a previous-quest link in the same genre or territory, either way) through such quests
+    /// to one that does.
+    /// </summary>
+    private static void AddAetherCurrentLines(
+        QuestCatalog catalog,
+        List<QuestRecord> blue,
+        CuratedData curated,
+        IEnumerable<UniqueRewardEntry> uniqueRewards,
+        Dictionary<uint, QuestRecord> stories)
+    {
+        var entries = uniqueRewards as IReadOnlyCollection<UniqueRewardEntry> ?? uniqueRewards.ToArray();
+        var currents = FeaturePresets.AetherCurrentQuests(catalog, entries);
+        var otherUnlocks = FeaturePresets.NonCurrentUnlockQuests(entries);
+        blue.RemoveAll(quest => !FeaturePresets.UnlocksOnlyAetherCurrents(quest, curated, currents, otherUnlocks));
+
+        // Links among the remaining blue quests, both ways: a line may open with a quest before the one that grants
+        // the current (Thavnair's "What's in a Parent" precedes "Curing What Ails").
+        var byId = new Dictionary<uint, QuestRecord>(blue.Count);
+        foreach (var quest in blue)
+        {
+            byId[quest.RowId] = quest;
+        }
+
+        var links = new Dictionary<uint, List<uint>>();
+        foreach (var quest in blue)
+        {
+            foreach (var previousId in quest.PreviousQuests.QuestIds)
+            {
+                if (previousId != quest.RowId && byId.TryGetValue(previousId, out var previous) && SameStoryPlace(quest, previous))
+                {
+                    Link(links, quest.RowId, previousId);
+                    Link(links, previousId, quest.RowId);
+                }
+            }
+        }
+
+        var admitted = new HashSet<uint>();
+        var pending = new Queue<uint>();
+        foreach (var quest in blue)
+        {
+            if (currents.Contains(quest.RowId) && admitted.Add(quest.RowId))
+            {
+                pending.Enqueue(quest.RowId);
+            }
+        }
+
+        while (pending.TryDequeue(out var rowId))
+        {
+            if (!links.TryGetValue(rowId, out var neighbours))
+            {
+                continue;
+            }
+
+            foreach (var neighbour in neighbours)
+            {
+                if (admitted.Add(neighbour))
+                {
+                    pending.Enqueue(neighbour);
+                }
+            }
+        }
+
+        foreach (var quest in blue)
+        {
+            if (admitted.Contains(quest.RowId))
+            {
+                stories.Add(quest.RowId, quest);
+            }
+        }
+    }
+
+    private static void Link(Dictionary<uint, List<uint>> links, uint from, uint to)
+    {
+        if (!links.TryGetValue(from, out var list))
+        {
+            links[from] = list = [];
+        }
+
+        list.Add(to);
     }
 
     /// <summary>A link counts when both quests share a journal genre or their givers stand in the same territory.</summary>

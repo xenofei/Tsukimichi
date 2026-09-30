@@ -7,44 +7,58 @@ using Xunit.Abstractions;
 namespace Tsukimichi.Tests.Data;
 
 /// <summary>
-/// Story sidequests over the frozen catalog with the shipped curated and unique-reward data, the unlock set derived
-/// the way the plugin derives it: the counts, the size of every side story, one known story and the Dawntrail zone
-/// shape players describe ("every region has two mini storylines … once you do both you unlock an extra one").
+/// Story sidequests over the frozen catalog with the shipped curated and unique-reward data, built the way the plugin
+/// builds them (unlock set from <see cref="FeaturePresets.Derive"/>, aether current lines let in): the counts, the
+/// size of every side story, one known story and the Dawntrail zone shape players describe ("every region has two
+/// mini storylines … once you do both you unlock an extra one").
 /// </summary>
 public class StorySidequestsFixtureTests(FixtureCatalog fixture, ITestOutputHelper output) : IClassFixture<FixtureCatalog>
 {
-    // Kozama'uka: two four-quest lines, each opened by an unlock (aether current) quest, joined by a ninth.
-    private const uint RiteOfTheWindsChosen = 70617;
-    private const uint AllGoodPotpacts = 70621;
-    private const uint LandsguardsNewClothes = 70625;
-
-    // Urqopacha: the same shape, every quest of it an unlock quest.
-    private const uint ACrisisOfCorruption = 70587;
-    private const uint BrainsAndBrawn = 70595;
+    /// <summary>
+    /// The four Dawntrail field zones with two story lines: the first quest of each four-quest line (it grants an
+    /// aether current) and the ninth quest, which requires the last quest of both lines.
+    /// </summary>
+    public static readonly TheoryData<string, uint, uint, uint> DawntrailZones = new()
+    {
+        { "Urqopacha", 70587, 70591, 70595 },
+        { "Kozama'uka", 70617, 70621, 70625 },
+        { "Yak T'el", 70646, 70650, 70654 },
+        { "Shaaloani", 70676, 70680, 70684 },
+    };
 
     private QuestCatalog Catalog => fixture.Bundle.Catalog;
 
-    private IReadOnlySet<uint> Features()
+    private UniqueRewardsData Unique() => UniqueRewardsFile.Load(Path.Combine(FixtureCatalog.ShippedDataDir(), "unique_quests.json"));
+
+    private (StorySidequests Stories, IReadOnlySet<uint> Features) Build()
     {
-        var unique = UniqueRewardsFile.Load(Path.Combine(FixtureCatalog.ShippedDataDir(), "unique_quests.json"));
-        return FeaturePresets.Derive(Catalog, fixture.Curated, unique.Entries);
+        var unique = Unique();
+        var features = FeaturePresets.Derive(Catalog, fixture.Curated, unique.Entries);
+        return (StorySidequests.Build(Catalog, features, fixture.Curated, unique.Entries), features);
     }
 
     [Fact]
     public void Fixture_counts_story_sidequests_and_side_stories()
     {
-        var stories = StorySidequests.Build(Catalog, Features());
+        var (stories, features) = Build();
         var chained = stories.Chains.Sum(c => c.RowIds.Count);
+        var blue = stories.RowIds.Count(features.Contains);
         var sizes = stories.Chains.GroupBy(c => c.RowIds.Count).OrderBy(g => g.Key).ToDictionary(g => g.Key, g => g.Count());
-        output.WriteLine($"{stories.Count} story sidequests, {stories.Chains.Count} side stories holding {chained}, {stories.Count - chained} alone");
+        output.WriteLine($"{stories.Count} story sidequests ({blue} of them blue aether current line quests), {stories.Chains.Count} side stories holding {chained}, {stories.Count - chained} alone");
         output.WriteLine("sizes: " + string.Join(", ", sizes.Select(kv => $"{kv.Key}×{kv.Value}")));
 
-        Assert.Equal(282, stories.Count);
-        Assert.Equal(36, stories.Chains.Count);
-        Assert.Equal(221, chained);
+        Assert.Equal(379, stories.Count);
+        Assert.Equal(97, blue);
+        Assert.Equal(44, stories.Chains.Count);
+        Assert.Equal(308, chained);
         Assert.Equal(
-            new Dictionary<int, int> { [2] = 4, [3] = 5, [4] = 3, [5] = 4, [7] = 9, [8] = 5, [9] = 2, [10] = 1, [11] = 1, [12] = 2 },
+            new Dictionary<int, int> { [2] = 4, [3] = 1, [4] = 7, [5] = 5, [6] = 1, [7] = 1, [8] = 3, [9] = 18, [10] = 1, [11] = 1, [12] = 2 },
             sizes);
+
+        // The base rule alone (every unlock quest left out): 282 quests in 36 stories.
+        var baseRule = StorySidequests.Build(Catalog, features);
+        Assert.Equal(282, baseRule.Count);
+        Assert.Equal(36, baseRule.Chains.Count);
 
         Assert.All(stories.RowIds, id =>
         {
@@ -58,57 +72,72 @@ public class StorySidequestsFixtureTests(FixtureCatalog fixture, ITestOutputHelp
     }
 
     [Fact]
-    public void Kozamauka_story_is_two_lines_and_the_quest_that_joins_them()
+    public void Unlock_quests_other_than_aether_current_lines_stay_out()
     {
-        var features = Features();
-        var stories = StorySidequests.Build(Catalog, features);
+        var unique = Unique();
+        var (stories, features) = Build();
+        var currents = FeaturePresets.AetherCurrentQuests(Catalog, unique.Entries);
+        var otherUnlocks = FeaturePresets.NonCurrentUnlockQuests(unique.Entries);
 
-        var chain = stories.ChainOf(LandsguardsNewClothes);
+        foreach (var id in stories.RowIds.Where(features.Contains))
+        {
+            var quest = Catalog.ByRowId[id];
+            Assert.True(FeaturePresets.UnlocksOnlyAetherCurrents(quest, fixture.Curated, currents, otherUnlocks), $"{id} {quest.Name}");
+            Assert.False(fixture.Curated.DutyUnlocks.ContainsKey(id));
+            Assert.False(fixture.Curated.SystemUnlocks.ContainsKey(id));
+        }
+
+        // Dungeon unlocks among the sidequests with artwork (Halatali, the Aurum Vale, …) are not stories.
+        var dutyUnlocks = Catalog.All.Where(q => q.Journal.SectionId == StorySidequests.SidequestSectionId && q.Icon != 0 && fixture.Curated.DutyUnlocks.ContainsKey(q.RowId)).ToArray();
+        Assert.NotEmpty(dutyUnlocks);
+        Assert.All(dutyUnlocks, q => Assert.False(stories.Contains(q.RowId), q.Name));
+    }
+
+    [Theory]
+    [MemberData(nameof(DawntrailZones))]
+    public void Dawntrail_zone_is_two_lines_and_the_quest_that_joins_them(string zone, uint firstLine, uint secondLine, uint last)
+    {
+        var (stories, features) = Build();
+
+        var chain = stories.ChainOf(last);
         Assert.NotNull(chain);
-        Assert.Equal(StorySidequests.ChainNamePrefix + Catalog.ByRowId[70618].Name, chain.Name);
-        Assert.Equal(new uint[] { 70618, 70619, 70620, 70622, 70623, 70624, 70625 }, chain.RowIds);
+        output.WriteLine($"{zone}: {chain.Name}: {string.Join(", ", chain.RowIds)}");
 
-        // The last quest requires the end of both lines.
-        Assert.Equal(new uint[] { 70620, 70624 }, Catalog.ByRowId[LandsguardsNewClothes].PreviousQuests.QuestIds.Order());
+        // Named after the true first quest, the one that grants the first line's aether current.
+        Assert.Equal(StorySidequests.ChainNamePrefix + Catalog.ByRowId[firstLine].Name, chain.Name);
+        Assert.Contains(firstLine, features);
 
-        // Each line opens with an unlock quest the story leaves out.
-        Assert.Contains(RiteOfTheWindsChosen, features);
-        Assert.Contains(AllGoodPotpacts, features);
-        Assert.False(stories.Contains(RiteOfTheWindsChosen));
-        Assert.Equal([RiteOfTheWindsChosen], Catalog.ByRowId[70618].PreviousQuests.QuestIds);
-        Assert.Equal([AllGoodPotpacts], Catalog.ByRowId[70622].PreviousQuests.QuestIds);
+        // Four quests of the first line, four of the second, then the one that requires the end of both.
+        uint[] expected = [firstLine, firstLine + 1, firstLine + 2, firstLine + 3, secondLine, secondLine + 1, secondLine + 2, secondLine + 3, last];
+        Assert.Equal(expected, chain.RowIds);
+        Assert.Equal(new[] { firstLine + 3, secondLine + 3 }, Catalog.ByRowId[last].PreviousQuests.QuestIds.Order());
+        Assert.All(chain.RowIds, id => Assert.Equal(Catalog.ByRowId[last].Journal.GenreId, Catalog.ByRowId[id].Journal.GenreId));
 
         // The detail pane's chain line reaches it through the chain catalog.
         var chains = ChainCatalog.Build(Catalog, fixture.Curated, stories);
-        Assert.Same(chain, chains.ForQuest(70622));
+        Assert.Same(chain, chains.ForQuest(secondLine));
     }
 
     [Fact]
-    public void Dawntrail_zones_have_two_lines_then_a_third_quest_but_unlocks_keep_some_out()
+    public void Shadowbringers_and_Endwalker_zones_stay_whole()
     {
-        var features = Features();
-        var stories = StorySidequests.Build(Catalog, features);
+        var (stories, _) = Build();
 
-        // Shaaloani: the same 3 + 3 + 1 once the two unlock openers are left out.
-        var shaaloani = stories.ChainOf(70684);
-        Assert.NotNull(shaaloani);
-        Assert.Equal(new uint[] { 70677, 70678, 70679, 70681, 70682, 70683, 70684 }, shaaloani.RowIds);
-        Assert.Equal(new uint[] { 70679, 70683 }, Catalog.ByRowId[70684].PreviousQuests.QuestIds.Order());
-
-        // Urqopacha has the shape too (70587–70590, 70591–70594, then 70595 requiring both), but every quest in it is an
-        // unlock quest drawn blue, so none of it is a story sidequest.
-        Assert.Equal(new uint[] { 70590, 70594 }, Catalog.ByRowId[BrainsAndBrawn].PreviousQuests.QuestIds.Order());
-        for (var id = ACrisisOfCorruption; id <= BrainsAndBrawn; id++)
+        // Nine quests each, opened by the aether current quest: Kholusia, Amh Araeng, Il Mheg, Rak'tika, Labyrinthos,
+        // Thavnair (whose second line opens one quest before its current), Garlemald, Elpis.
+        foreach (var (first, last) in new (uint, uint)[] { (68907, 69096), (68911, 69065), (68940, 68967), (69192, 69018), (70016, 70024), (70025, 70033), (70034, 70042), (70043, 70051) })
         {
-            Assert.Contains(id, features);
-            Assert.False(stories.Contains(id));
+            var chain = stories.ChainOf(last);
+            Assert.NotNull(chain);
+            Assert.Equal(first, chain.RowIds[0]);
+            Assert.Equal(9, chain.RowIds.Count);
         }
     }
 
     [Fact]
     public void Play_order_puts_a_quest_after_what_it_requires()
     {
-        var stories = StorySidequests.Build(Catalog, Features());
+        var (stories, _) = Build();
 
         // Delivery Moogle: Carline Memories (67018) requires A Debt Unpaid (67019), which the journal lists after it.
         var moogle = stories.ChainOf(67018);

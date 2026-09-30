@@ -1,6 +1,7 @@
 using Tsukimichi.Core.Chains;
 using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Storage;
 
 namespace Tsukimichi.Tests.Chains;
@@ -131,6 +132,56 @@ public sealed class StorySidequestsTests
         Assert.True(stories.Contains(70));
         Assert.True(stories.Contains(73));
         Assert.False(stories.Contains(71));
+    }
+
+    [Fact]
+    public void Aether_current_lines_come_in_whole_and_other_unlocks_stay_out()
+    {
+        // Every quest here is blue (in the feature set). Zone A: 199 opens nothing of its own and leads to 200, which
+        // grants the current; 201 and 202 follow; 203 joins 202 and a yellow 210. 204 follows 203 but unlocks a duty.
+        // Zone B: 300 unlocks a duty and grants a current; 301 follows it; 310 is a blue quest linked to no current.
+        var catalog = QuestCatalog.Build(
+        [
+            Quest(199), Quest(200, [199]), Quest(201, [200]), Quest(202, [201]), Quest(210, icon: 100001),
+            Quest(203, [202, 210]), Quest(204, [203]),
+            Quest(300, genre: 71, territory: ZoneB), Quest(301, [300], genre: 71, territory: ZoneB),
+            Quest(310, genre: 72, territory: ZoneB),
+        ]);
+        var features = new HashSet<uint> { 199, 200, 201, 202, 203, 204, 300, 301, 310 };
+        UniqueRewardEntry[] unique =
+        [
+            new(200, RewardKind.AetherCurrent, 1, 0, "Aether Current", Confidence.Static, "test"),
+            new(204, RewardKind.DutyUnlock, 2, 0, "A Duty", Confidence.Static, "test"),
+            new(300, RewardKind.AetherCurrent, 3, 0, "Aether Current", Confidence.Static, "test"),
+            new(300, RewardKind.DutyUnlock, 4, 0, "Another Duty", Confidence.Static, "test"),
+        ];
+
+        var stories = StorySidequests.Build(catalog, features, CuratedData.Empty, unique);
+
+        var chain = Assert.Single(stories.Chains);
+        Assert.Equal("Story: Quest 199", chain.Name);
+        Assert.Equal(new uint[] { 199, 200, 201, 202, 210, 203 }, chain.RowIds);
+        Assert.Equal(new uint[] { 199, 200, 201, 202, 203, 210 }, stories.RowIds.Order());
+
+        // The base rule alone leaves every blue quest out; without curated data the lines are not let in either.
+        Assert.Equal(new uint[] { 210 }, StorySidequests.Build(catalog, features).RowIds.Order());
+        Assert.Equal(new uint[] { 210 }, StorySidequests.Build(catalog, features, null, unique).RowIds.Order());
+    }
+
+    [Fact]
+    public void Only_aether_current_unlocks_pass_the_current_only_test()
+    {
+        var currents = new HashSet<uint> { 1 };
+        var others = new HashSet<uint> { 3 };
+        var named = Quest(1) with { Rewards = [new RewardRef(RewardKind.Other, 0, 0, 1, "Aether Current", 0)] };
+        var unnamedCurrentless = Quest(2) with { Rewards = [new RewardRef(RewardKind.Other, 0, 0, 1, "Something", 0)] };
+        var action = Quest(4) with { Rewards = [new RewardRef(RewardKind.Action, 7, 0, 1, "An Action", 0)] };
+
+        Assert.True(FeaturePresets.UnlocksOnlyAetherCurrents(named, CuratedData.Empty, currents, others));
+        Assert.True(FeaturePresets.UnlocksOnlyAetherCurrents(Quest(5), CuratedData.Empty, currents, others));
+        Assert.False(FeaturePresets.UnlocksOnlyAetherCurrents(unnamedCurrentless, CuratedData.Empty, currents, others));
+        Assert.False(FeaturePresets.UnlocksOnlyAetherCurrents(Quest(3), CuratedData.Empty, currents, others));
+        Assert.False(FeaturePresets.UnlocksOnlyAetherCurrents(action, CuratedData.Empty, currents, others));
     }
 
     [Fact]

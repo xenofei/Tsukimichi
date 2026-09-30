@@ -99,6 +99,90 @@ public static class FeaturePresets
         return ids;
     }
 
+    /// <summary>Quests that grant an aether current: the unique-reward data credits them with one, or a quest reward is one.</summary>
+    public static HashSet<uint> AetherCurrentQuests(QuestCatalog catalog, IEnumerable<UniqueRewardEntry> uniqueRewards)
+    {
+        ArgumentNullException.ThrowIfNull(catalog);
+        ArgumentNullException.ThrowIfNull(uniqueRewards);
+        var ids = new HashSet<uint>();
+        foreach (var entry in uniqueRewards)
+        {
+            if (entry.Kind == RewardKind.AetherCurrent)
+            {
+                ids.Add(entry.QuestRowId);
+            }
+        }
+
+        foreach (var quest in catalog.All)
+        {
+            for (var i = 0; i < quest.Rewards.Count; i++)
+            {
+                if (quest.Rewards[i].Kind == RewardKind.AetherCurrent)
+                {
+                    ids.Add(quest.RowId);
+                    break;
+                }
+            }
+        }
+
+        return ids;
+    }
+
+    /// <summary>Quests the unique-reward data credits with an unlock other than an aether current (a duty, system, job, action, trait, spell).</summary>
+    public static HashSet<uint> NonCurrentUnlockQuests(IEnumerable<UniqueRewardEntry> uniqueRewards)
+    {
+        ArgumentNullException.ThrowIfNull(uniqueRewards);
+        var ids = new HashSet<uint>();
+        foreach (var entry in uniqueRewards)
+        {
+            if (IsUnlockKind(entry.Kind) && entry.Kind != RewardKind.AetherCurrent)
+            {
+                ids.Add(entry.QuestRowId);
+            }
+        }
+
+        return ids;
+    }
+
+    /// <summary>
+    /// Whether every unlock a quest carries is an aether current (or it carries none beyond the blue icon): no curated
+    /// system or duty unlock, no unique-reward unlock of another kind (<paramref name="nonCurrentUnlockQuests"/>), no
+    /// reward of another unlock kind, and a named <c>Quest.OtherReward</c> only when it is the quest's aether current
+    /// (<paramref name="aetherCurrentQuests"/> lists the quest). The zone story lines since Shadowbringers open with
+    /// such a quest and continue with blue quests that unlock nothing of their own.
+    /// </summary>
+    public static bool UnlocksOnlyAetherCurrents(QuestRecord quest, CuratedData curated, IReadOnlySet<uint> aetherCurrentQuests, IReadOnlySet<uint> nonCurrentUnlockQuests)
+    {
+        ArgumentNullException.ThrowIfNull(quest);
+        ArgumentNullException.ThrowIfNull(curated);
+        ArgumentNullException.ThrowIfNull(aetherCurrentQuests);
+        ArgumentNullException.ThrowIfNull(nonCurrentUnlockQuests);
+
+        if (curated.SystemUnlocks.ContainsKey(quest.RowId)
+            || curated.DutyUnlocks.ContainsKey(quest.RowId)
+            || nonCurrentUnlockQuests.Contains(quest.RowId))
+        {
+            return false;
+        }
+
+        var rewards = quest.Rewards;
+        for (var i = 0; i < rewards.Count; i++)
+        {
+            var reward = rewards[i];
+            if (IsUnlockKind(reward.Kind) && reward.Kind != RewardKind.AetherCurrent)
+            {
+                return false;
+            }
+
+            if (IsFeatureReward(reward) && reward.Kind == RewardKind.Other && !aetherCurrentQuests.Contains(quest.RowId))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     /// <summary>Row ids of every feature quest in the catalog. Computed once per catalog; the result is immutable.</summary>
     /// <param name="uniqueRewards">The shipped unique-reward entries; null derives from curated data and quest rewards alone.</param>
     public static FrozenSet<uint> Derive(QuestCatalog catalog, CuratedData curated, IEnumerable<UniqueRewardEntry>? uniqueRewards = null)

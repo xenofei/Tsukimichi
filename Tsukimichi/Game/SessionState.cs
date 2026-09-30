@@ -163,8 +163,8 @@ public sealed class SessionState
     public IReadOnlySet<uint> FeatureQuestIds { get; private set; } = FrozenSet<uint>.Empty;
 
     /// <summary>
-    /// Story sidequests (artwork sidequests that are not unlock quests) and their side stories, derived once per
-    /// catalog after <see cref="FeatureQuestIds"/>. Backs the Story sidequests quick view and the table's book badge.
+    /// Story sidequests (artwork sidequests that are not unlock quests, plus the aether current story lines) and their
+    /// side stories, derived once per catalog after <see cref="FeatureQuestIds"/>. Backs the Story sidequests quick view and the table's book badge.
     /// </summary>
     public StorySidequests Stories { get; private set; } = StorySidequests.Empty;
 
@@ -347,7 +347,7 @@ public sealed class SessionState
     {
         try
         {
-            Stories = StorySidequests.Build(bundle.Catalog, FeatureQuestIds);
+            Stories = StorySidequests.Build(bundle.Catalog, FeatureQuestIds, Curated, UniqueRewards.Entries);
             Chains = ChainCatalog.Build(bundle.Catalog, Curated, Stories);
             foreach (var warning in Chains.Warnings)
             {
