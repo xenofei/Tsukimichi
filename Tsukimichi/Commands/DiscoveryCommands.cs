@@ -43,7 +43,7 @@ public sealed class DiscoveryCommands(SessionState session, IClientState clientS
         {
             var quest = matches[i];
             session.States.TryGetValue(quest.RowId, out var evaluation);
-            links.PrintQuestLink(quest, BlockerText.StatusText(evaluation, quest, session.Names, session.States));
+            links.PrintQuestLink(quest, BlockerText.StatusText(evaluation, quest, session.LiveNames, session.States));
         }
 
         if (matches.Count > MaxChatMatches)
@@ -80,7 +80,7 @@ public sealed class DiscoveryCommands(SessionState session, IClientState clientS
         {
             var quest = matches[i];
             session.States.TryGetValue(quest.RowId, out var evaluation);
-            links.PrintQuestLink(quest, BlockerText.StatusText(evaluation, quest, session.Names, session.States));
+            links.PrintQuestLink(quest, BlockerText.StatusText(evaluation, quest, session.LiveNames, session.States));
         }
 
         if (matches.Count > MaxChatMatches)

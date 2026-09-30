@@ -36,7 +36,7 @@ public sealed class WhyCommand(SessionState session, UiState ui, GameLinks links
         }
         else
         {
-            quest = ReportCommand.FindByName(bundle.Catalog, text, session.Spoilers);
+            quest = ReportCommand.FindByName(bundle.Catalog, text, session.LiveSpoilers);
             if (quest is null)
             {
                 links.PrintText(string.Format(CultureInfo.CurrentCulture, Strings.ReportNoMatchFormat, text));
@@ -59,7 +59,7 @@ public sealed class WhyCommand(SessionState session, UiState ui, GameLinks links
             coordinates = links.MapCoordinates(quest) is { } c ? (c.X, c.Y) : null;
         }
 
-        var lines = WhyText.Lines(evaluation, quest, session.Names, states, place, coordinates, quirk?.Note);
+        var lines = WhyText.Lines(evaluation, quest, session.LiveNames, states, place, coordinates, quirk?.Note);
         links.PrintHeadline(quest, lines[0], linkGiver);
         for (var i = 1; i < lines.Count; i++)
         {

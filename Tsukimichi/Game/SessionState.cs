@@ -70,6 +70,14 @@ public sealed class SessionState
     /// <summary>Name lookups for <see cref="BlockerText"/> over the current bundle; <see cref="BlockerNames.Default"/> until the catalog is built.</summary>
     public BlockerNames Names { get; private set; } = BlockerNames.Default;
 
+    /// <summary>
+    /// <see cref="Names"/> with quest names routed through <see cref="LiveSpoilers"/> instead of the viewed
+    /// character's mask, for the surfaces in the game world that speak for the logged-in character (chat lines, the
+    /// item context menu, hover hints, Wotsit). The same names as <see cref="Names"/> while that character is viewed
+    /// or nobody is logged in.
+    /// </summary>
+    public BlockerNames LiveNames { get; private set; } = BlockerNames.Default;
+
     /// <summary>Why the catalog is unavailable, for the "Catalog unavailable" panel.</summary>
     public string? CatalogError { get; private set; }
 
@@ -191,8 +199,9 @@ public sealed class SessionState
     }
 
     /// <summary>
-    /// The logged-in character's shield, for chat notices about that character while another one is viewed; the
-    /// same instance as <see cref="Spoilers"/> when the live character is the one shown.
+    /// The logged-in character's shield, for the surfaces in the game world (chat lines, item menus and hints, Wotsit)
+    /// while another character is viewed; the same instance as <see cref="Spoilers"/> when the live character is the
+    /// one shown or nobody is logged in.
     /// </summary>
     public SpoilerMask LiveSpoilers
     {
@@ -331,6 +340,8 @@ public sealed class SessionState
         FeatureQuestIds = FeaturePresets.Derive(bundle.Catalog, Curated, UniqueRewards.Entries);
         // Every blocker, status line, todo row and diagnostic names quests through the viewed character's shield.
         Names = bundle.BlockerNames() with { QuestName = quest => Spoilers.DisplayName(quest) };
+        // Chat, item menus and hints speak for the logged-in character, whichever one the window shows.
+        LiveNames = Names with { QuestName = quest => LiveSpoilers.DisplayName(quest) };
         baseContext = EvalContextBuilder.Build(
             Curated.Festivals,
             bundle.Jobs,

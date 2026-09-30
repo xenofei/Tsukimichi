@@ -367,8 +367,9 @@ public sealed class Plugin : IDalamudPlugin
             // Reward tooltips (table icons, detail rows) say "Store only" for rewards the Online Store also sells and
             // "Also drops in …" for rewards a duty also drops.
             gameLinks.IsStoreResell = reward => Session.StoreResells.Contains(reward);
-            // Chat links print a masked main scenario quest under its placeholder (T19).
-            gameLinks.QuestName = quest => Session.Spoilers.DisplayName(quest);
+            // Chat links print a masked main scenario quest under its placeholder (T19). Chat, the item menu, hover
+            // hints and Wotsit speak for the logged-in character, so they use its mask, not the viewed character's.
+            gameLinks.QuestName = quest => Session.LiveSpoilers.DisplayName(quest);
             gameLinks.DropWhere = reward => Session.StoreResells.DropWhere(reward);
             wotsit = new Game.WotsitIpc(PluginInterface, Framework, Log);
             wotsit.Enabled = Settings.WotsitIntegration;
@@ -377,7 +378,7 @@ public sealed class Plugin : IDalamudPlugin
                 mainWindow.IsOpen = true;
                 mainWindow.BringToFront();
                 MoonlitPane.Reveal(ui, quest);
-            }, () => Session.Spoilers);
+            }, () => Session.LiveSpoilers);
             // Item hover hints and context-menu links (V2-14). The lookup follows the Moonlit catalog reference (rebuilt
             // after an override change) and the quest catalog (set once the build finishes); both are read per use.
             var rewardLookup = new Core.Unique.RewardLookupSource(() => moonlit.Catalog, () => Session.Bundle?.Catalog);
@@ -388,7 +389,7 @@ public sealed class Plugin : IDalamudPlugin
                 mainWindow.IsOpen = true;
                 mainWindow.BringToFront();
                 MoonlitPane.Reveal(ui, quest);
-            }, Log) { Enabled = Settings.ItemContextMenuEnabled, QuestName = quest => Session.Spoilers.DisplayName(quest) };
+            }, Log) { Enabled = Settings.ItemContextMenuEnabled, QuestName = quest => Session.LiveSpoilers.DisplayName(quest) };
             var discovery = new DiscoveryCommands(Session, ClientState, TargetManager, gameLinks);
             command.ListZoneQuests = discovery.Zone;
             command.ListTargetQuests = discovery.Which;

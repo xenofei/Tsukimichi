@@ -28,8 +28,9 @@ public sealed record WotsitEntry(string DisplayName, string SearchText, uint Ico
 /// throws is retried from the same entry on the next tick (<see cref="BatchCursor"/>); after
 /// <see cref="MaxRegisterAttempts"/> failures on one entry the rest of the batch is abandoned with a warning. The
 /// entries are rebuilt (after an <c>UnregisterAll</c>) whenever the catalog or the Moonlit catalog is a new instance,
-/// and again whenever Wotsit announces itself, since a reloaded Wotsit has forgotten them, or whenever the spoiler
-/// shield's masked set changes (<see cref="SpoilerMask.Fingerprint"/>): a masked main scenario quest is registered
+/// and again whenever Wotsit announces itself, since a reloaded Wotsit has forgotten them, or whenever the masked set
+/// of the logged-in character's spoiler shield changes (<see cref="SpoilerMask.Fingerprint"/>; viewing another
+/// character changes nothing here): a masked main scenario quest is registered
 /// under its placeholder, without its banner, so Wotsit never finds it by name. Dalamud's plugin-list
 /// event and Wotsit's messages may arrive off the framework thread, so they only raise flags that the next tick acts on.
 /// </para>

@@ -216,7 +216,7 @@ public sealed class ChatNotifier : IDisposable
                 var suffix = Strings.JobsNudgeSuffix;
                 if (nudge.State == QuestState.Blocked && session.LiveStates.TryGetValue(nudge.RowId, out var evaluation))
                 {
-                    var blocker = BlockerText.For(evaluation, quest, session.Names, session.LiveStates);
+                    var blocker = BlockerText.For(evaluation, quest, session.LiveNames, session.LiveStates);
                     suffix = blocker.Length > 0 ? Strings.StateReasonSeparator + blocker : Strings.JobsNudgeBlockedSuffix;
                 }
 

@@ -155,7 +155,7 @@ public sealed class HoverHint
             var state = evaluation?.State ?? QuestState.Unknown;
             var done = state == QuestState.Completed;
             var status = done ? Strings.ItemsDone : BlockerText.StatusText(evaluation, quest, session.Names, session.States);
-            var line = new Line(quest.RowId, state, string.Format(CultureInfo.CurrentCulture, Strings.ItemsQuestRewardFormat, session.Spoilers.DisplayName(quest)), status, done, entry.SoldOnOnlineStore,
+            var line = new Line(quest.RowId, state, string.Format(CultureInfo.CurrentCulture, Strings.ItemsQuestRewardFormat, session.LiveSpoilers.DisplayName(quest)), status, done, entry.SoldOnOnlineStore,
                 entry.DropsInDuty ? Strings.AlsoDropsLine(entry.DropWhere) : string.Empty);
             if (IsUnlockable(entry.Kind))
             {
