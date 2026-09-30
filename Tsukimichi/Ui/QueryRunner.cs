@@ -50,6 +50,11 @@ public sealed class QueryRunner : IDisposable
     private CharacterSnapshot? festivalsSnapshot;
     private HashSet<ushort> festivals = NoFestivals;
 
+    // The Sprout caption's reach count, rebuilt once per session version and catalog.
+    private int sproutVersion = -1;
+    private CatalogBundle? sproutBundle;
+    private string? sproutCaption;
+
     // Pins. pinsKey is the content id the pinned set was loaded for; NoPinsKey until the first Update, 0 in browse mode.
     private const ulong NoPinsKey = ulong.MaxValue;
     private Dictionary<ulong, List<uint>>? pinsFile;
@@ -80,7 +85,10 @@ public sealed class QueryRunner : IDisposable
 
     public int TotalInScope { get; private set; }
 
-    /// <summary>"412 quests in your reach" while the Sprout mode quick view is on; null otherwise.</summary>
+    /// <summary>
+    /// "412 quests in your reach" while the Sprout mode quick view is on, counting the whole catalog within reach rather
+    /// than the table's rows; null otherwise.
+    /// </summary>
     public string? SproutCaption { get; private set; }
 
     /// <summary>Null until a catalog exists.</summary>
@@ -408,9 +416,7 @@ public sealed class QueryRunner : IDisposable
         Rows = result.Rows;
         Empty = result.Empty;
         TotalInScope = result.TotalInScope;
-        SproutCaption = ui.Filters.Preset == Preset.Sprout
-            ? string.Format(CultureInfo.CurrentCulture, Strings.SproutReachFormat, Rows.Length)
-            : null;
+        SproutCaption = ui.Filters.Preset == Preset.Sprout ? SproutReach(session, current) : null;
 
         sessionVersion = session.Version;
         queryVersion = ui.QueryVersion;
@@ -418,6 +424,34 @@ public sealed class QueryRunner : IDisposable
         sort = ui.Sort;
         searchDirty = false;
         filtersSnapshot = ui.Filters.Clone();
+    }
+
+    /// <summary>
+    /// "412 quests in your reach": every quest in the catalog at or below the expansion the main scenario has reached
+    /// (removed quests left out), whatever the scope, search or other filters narrow the table to. Counted once per
+    /// session version and catalog.
+    /// </summary>
+    private string SproutReach(SessionState session, CatalogBundle current)
+    {
+        if (sproutCaption is not null && sproutVersion == session.Version && ReferenceEquals(sproutBundle, current))
+        {
+            return sproutCaption;
+        }
+
+        var reach = session.Spoilers.ReachExpansion;
+        var count = 0;
+        foreach (var quest in current.Catalog.All)
+        {
+            if (!quest.IsRemoved && quest.Expansion <= reach)
+            {
+                count++;
+            }
+        }
+
+        sproutVersion = session.Version;
+        sproutBundle = current;
+        sproutCaption = string.Format(CultureInfo.CurrentCulture, Strings.SproutReachFormat, count);
+        return sproutCaption;
     }
 
     /// <summary>Unsynced level of the snapshot's current job for the Around-my-level preset; 0 without a snapshot or a recorded level.</summary>
