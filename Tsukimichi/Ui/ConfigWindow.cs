@@ -443,8 +443,14 @@ public sealed class ConfigWindow : Window
             UiMetrics.Tooltip(Strings.SpoilerHideNamesHelp);
         }
 
+        // The slider applies whenever the viewed character's effective options hide names: the global setting, or
+        // that character's override (Always shield hides them even with the global setting off). Mirrors
+        // Configuration.SpoilerOptionsFor without building the options record each frame.
+        var effectiveHide = session.ViewedContentId is { } viewedId && settings.SpoilerShieldByCharacter.TryGetValue(viewedId, out var shielded)
+            ? shielded
+            : hideNames;
         using (ImRaii.PushIndent())
-        using (ImRaii.Disabled(!hideNames))
+        using (ImRaii.Disabled(!effectiveHide))
         {
             var ahead = Math.Clamp(settings.SpoilerRevealAhead, 0, SpoilerOptions.MaxAhead);
             ImGui.SetNextItemWidth(160f * ImGuiHelpers.GlobalScale);
