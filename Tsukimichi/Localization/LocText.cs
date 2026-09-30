@@ -31,3 +31,30 @@ public sealed class LocText
 
     public override string ToString() => Value;
 }
+
+/// <summary>
+/// An array of localized strings (tab labels, column headers, combo items) composed once and again only after a
+/// language switch (<see cref="Loc.Version"/>). Framework thread only.
+/// </summary>
+public sealed class LocArray
+{
+    private readonly Func<string[]> build;
+    private int version = -1;
+    private string[] items = [];
+
+    public LocArray(Func<string[]> build) => this.build = build;
+
+    public string[] Value
+    {
+        get
+        {
+            if (version != Loc.Version)
+            {
+                items = build();
+                version = Loc.Version;
+            }
+
+            return items;
+        }
+    }
+}

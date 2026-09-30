@@ -46,7 +46,7 @@ public sealed partial class ConfigWindow
             JournalIndexStatus.Loading => Strings.JournalTextStatusLoading,
             JournalIndexStatus.Building => string.Format(CultureInfo.CurrentCulture, Strings.JournalTextStatusBuildingFormat, (int)(service.Progress * 100f)),
             JournalIndexStatus.Ready => ReadyLine(service),
-            JournalIndexStatus.Failed => string.Format(CultureInfo.CurrentCulture, Strings.JournalTextStatusFailedFormat, service.Error ?? "unknown error"),
+            JournalIndexStatus.Failed => string.Format(CultureInfo.CurrentCulture, Strings.JournalTextStatusFailedFormat, service.Error ?? Strings.UnknownError),
             _ => null,
         };
 

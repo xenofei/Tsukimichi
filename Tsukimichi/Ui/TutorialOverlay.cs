@@ -88,7 +88,10 @@ public sealed class TutorialOverlay : ITutorial
 
     private static readonly string[] NoKeys = [];
 
-    private static readonly string[] ChapterNames = [Strings.Tutorial.ChapterFind, Strings.Tutorial.ChapterRead, Strings.Tutorial.ChapterBeyond];
+    private static string[] ChapterNames => chapterNamesText.Value;
+
+    private static readonly Localization.LocArray chapterNamesText = new(static () =>
+        [Strings.Tutorial.ChapterFind, Strings.Tutorial.ChapterRead, Strings.Tutorial.ChapterBeyond]);
 
     private static readonly string[] ChapterIds = ["##chapterFind", "##chapterRead", "##chapterBeyond"];
 

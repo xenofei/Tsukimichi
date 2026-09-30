@@ -29,11 +29,17 @@ public sealed class TabStrip
 
     private static readonly NavTab[] Tabs = [NavTab.Journal, NavTab.Moonlit, NavTab.Characters, NavTab.Flight, NavTab.Plan];
 
-    private static readonly string[] Labels = [Strings.TabJournal, Strings.TabMoonlit, Strings.TabCharacters, Strings.TabFlight, Strings.PlanTab];
+    private static string[] Labels => labelsText.Value;
+
+    private static readonly Localization.LocArray labelsText = new(static () =>
+        [Strings.TabJournal, Strings.TabMoonlit, Strings.TabCharacters, Strings.TabFlight, Strings.PlanTab]);
 
     private static readonly string[] Ids = ["##tabJournal", "##tabMoonlit", "##tabCharacters", "##tabFlight", "##tabPlan"];
 
-    private static readonly string[] Tooltips = [Strings.TabJournalTooltip, Strings.TabMoonlitTooltip, Strings.TabCharactersTooltip, Strings.TabFlightTooltip, Strings.PlanTabTooltip];
+    private static string[] Tooltips => tooltipsText.Value;
+
+    private static readonly Localization.LocArray tooltipsText = new(static () =>
+        [Strings.TabJournalTooltip, Strings.TabMoonlitTooltip, Strings.TabCharactersTooltip, Strings.TabFlightTooltip, Strings.PlanTabTooltip]);
 
     private static readonly string GemIcon = FontAwesomeIcon.Gem.ToIconString();
     private static readonly string UsersIcon = FontAwesomeIcon.Users.ToIconString();

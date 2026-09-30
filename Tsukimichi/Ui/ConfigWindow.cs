@@ -31,7 +31,9 @@ namespace Tsukimichi.Ui;
 public sealed partial class ConfigWindow : Window
 {
     private static readonly TimeSpan ToastDuration = TimeSpan.FromSeconds(8);
-    private static readonly string RestoreAllLabel = Strings.ConfigVerdictRestoreAll + Chrome.HoldIdSuffix;
+    private static string RestoreAllLabel => restoreAllLabelText.Value;
+
+    private static readonly Localization.LocText restoreAllLabelText = new(static () => Strings.ConfigVerdictRestoreAll + Chrome.HoldIdSuffix);
 
     private readonly Configuration settings;
     private readonly SessionState session;
@@ -85,8 +87,11 @@ public sealed partial class ConfigWindow : Window
     private string pollCostLine = Strings.ConfigPollCostUnknown;
 
     /// <param name="diagnostics">Owns the data stamp and the game-version warning the About section shows.</param>
+    /// <summary>The UI language service (V2-19); Settings › Display › Plugin language applies through it. Null in no build.</summary>
+    public LocService? Language { get; set; }
+
     public ConfigWindow(Configuration settings, SessionState session, IDalamudPluginInterface pluginInterface, DiagnosticBuilder diagnostics, Action<bool> onShowUnlistedChanged)
-        : base("Tsukimichi Settings###TsukimichiConfig")
+        : base(Strings.ConfigWindowTitle)
     {
         this.settings = settings ?? throw new ArgumentNullException(nameof(settings));
         this.session = session ?? throw new ArgumentNullException(nameof(session));
@@ -238,6 +243,7 @@ public sealed partial class ConfigWindow : Window
     {
         Header(Strings.ConfigSectionDisplay);
         var width = 220f * ImGuiHelpers.GlobalScale;
+        DrawLanguage();
 
         var uiScale = ScaleMetrics.ClampUiScale(settings.UiScale);
         ImGui.SetNextItemWidth(width);
@@ -360,6 +366,76 @@ public sealed partial class ConfigWindow : Window
         }
 
         HintOnHover(Strings.ConfigShortcutPinHint);
+    }
+
+    /// <summary>
+    /// Settings › Display › Plugin language (V2-19): follow Dalamud (the default) or English; the pseudo-localization
+    /// layout check shows only while Shift is held (or while it is on). Applied at once. A draft translation says so,
+    /// with its coverage; a translation whose resource file did not load says that instead.
+    /// </summary>
+    private void DrawLanguage()
+    {
+        var dalamud = Loc.Resolve(Language?.DalamudLanguage);
+        var followLabel = string.Format(CultureInfo.CurrentCulture, Strings.ConfigLanguageFollowFormat, Loc.NativeName(dalamud));
+        ImGui.TextUnformatted(Strings.ConfigLanguage);
+        ImGui.SameLine();
+        if (ImGui.RadioButton(followLabel, settings.PluginLanguage == PluginLanguage.FollowDalamud))
+        {
+            SetLanguage(PluginLanguage.FollowDalamud);
+        }
+
+        HintOnHover(Strings.ConfigLanguageHint);
+        ImGui.SameLine();
+        if (ImGui.RadioButton(Strings.ConfigLanguageEnglish, settings.PluginLanguage == PluginLanguage.English))
+        {
+            SetLanguage(PluginLanguage.English);
+        }
+
+        HintOnHover(Strings.ConfigLanguageHint);
+        if (settings.PluginLanguage == PluginLanguage.Pseudo || ImGui.GetIO().KeyShift)
+        {
+            ImGui.SameLine();
+            if (ImGui.RadioButton(Strings.ConfigLanguagePseudo, settings.PluginLanguage == PluginLanguage.Pseudo))
+            {
+                SetLanguage(PluginLanguage.Pseudo);
+            }
+        }
+
+        if (Loc.Language is Loc.Japanese or Loc.German or Loc.French)
+        {
+            if (Loc.TranslatedCount == 0)
+            {
+                ImGui.TextDisabled(Strings.ConfigLanguageNotLoaded);
+            }
+            else if (Loc.IsDraft)
+            {
+                if (languageNoteVersion != Loc.Version)
+                {
+                    languageNoteVersion = Loc.Version;
+                    var percent = Loc.KeyCount == 0 ? 0 : (int)Math.Floor(100.0 * Loc.TranslatedCount / Loc.KeyCount);
+                    languageNote = string.Format(CultureInfo.CurrentCulture, Strings.ConfigLanguageDraftFormat, Loc.NativeName(Loc.Language), percent);
+                }
+
+                ImGui.PushTextWrapPos(0f);
+                ImGui.TextDisabled(languageNote);
+                ImGui.PopTextWrapPos();
+            }
+        }
+    }
+
+    private int languageNoteVersion = -1;
+    private string languageNote = string.Empty;
+
+    private void SetLanguage(PluginLanguage language)
+    {
+        if (settings.PluginLanguage == language)
+        {
+            return;
+        }
+
+        settings.PluginLanguage = language;
+        Save();
+        Language?.Apply();
     }
 
     /// <summary>The last item's hint as a Night tooltip while it is hovered.</summary>

@@ -95,8 +95,10 @@ public sealed class TablePane : IDisposable
     }
 
     /// <summary>Header label per <see cref="Column"/>; the glyph column keeps its name for the hide/show menu but shows none.</summary>
-    private static readonly string[] HeaderLabels =
-    [
+    private static string[] HeaderLabels => headerLabelsText.Value;
+
+    private static readonly Localization.LocArray headerLabelsText = new(static () =>
+        [
         string.Empty,
         Strings.ColumnName,
         Strings.ColumnLevel,
@@ -104,11 +106,13 @@ public sealed class TablePane : IDisposable
         Strings.ColumnStatus,
         Strings.ColumnExpansion,
         Strings.ColumnRewards,
-    ];
+    ]);
 
     /// <summary>Header tooltip per <see cref="Column"/>, in column order.</summary>
-    private static readonly string[] HeaderTooltips =
-    [
+    private static string[] HeaderTooltips => headerTooltipsText.Value;
+
+    private static readonly Localization.LocArray headerTooltipsText = new(static () =>
+        [
         Strings.ColumnGlyphTooltip,
         Strings.ColumnNameTooltip,
         Strings.ColumnLevelTooltip,
@@ -116,7 +120,7 @@ public sealed class TablePane : IDisposable
         Strings.ColumnStatusTooltip,
         Strings.ColumnExpansionTooltip,
         Strings.ColumnRewardsTooltip,
-    ];
+    ]);
 
     private readonly UiState ui;
     private readonly QueryRunner runner;

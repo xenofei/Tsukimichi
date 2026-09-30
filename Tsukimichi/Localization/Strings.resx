@@ -1356,6 +1356,14 @@
   <data name="ConfigSectionPolling" xml:space="preserve">
     <value>Polling</value>
   </data>
+  <data name="ConfigWindowTitle" xml:space="preserve">
+    <value>Tsukimichi Settings###TsukimichiConfig</value>
+    <comment>The settings window title; keep "###TsukimichiConfig" as it is (ImGui remembers the window by it).</comment>
+  </data>
+  <data name="UnknownError" xml:space="preserve">
+    <value>unknown error</value>
+    <comment>Stands in for an error with no message.</comment>
+  </data>
   <data name="ConfigPollInterval" xml:space="preserve">
     <value>Poll interval</value>
   </data>
@@ -1565,6 +1573,34 @@
   </data>
   <data name="ConfigDensityHint" xml:space="preserve">
     <value>Height of the quest table's rows; the Journal tree keeps its size.</value>
+  </data>
+  <data name="ConfigLanguage" xml:space="preserve">
+    <value>Plugin language</value>
+    <comment>Settings › Display: the label before the language choice.</comment>
+  </data>
+  <data name="ConfigLanguageFollowFormat" xml:space="preserve">
+    <value>Follow Dalamud ({0})</value>
+    <comment>{0} = the language Dalamud is set to, in its own name ("日本語", "Deutsch").</comment>
+  </data>
+  <data name="ConfigLanguageEnglish" xml:space="preserve">
+    <value>English</value>
+    <comment>The choice that keeps Tsukimichi in English whatever Dalamud is set to. Translate as "English" in your language.</comment>
+  </data>
+  <data name="ConfigLanguagePseudo" xml:space="preserve">
+    <value>Pseudo (layout check)</value>
+    <comment>A test mode that stretches every string by 40 %; offered only while Shift is held.</comment>
+  </data>
+  <data name="ConfigLanguageHint" xml:space="preserve">
+    <value>Tsukimichi's own text follows Dalamud's language (Dalamud settings › General › Language) where a translation exists, and English otherwise. Quest, item, NPC and place names always come from the game in your client's language.</value>
+    <comment>Tooltip of the language choice.</comment>
+  </data>
+  <data name="ConfigLanguageDraftFormat" xml:space="preserve">
+    <value>The {0} translation is a draft: {1}% of the text is translated, and corrections are welcome (CONTRIBUTING.md › Translations on GitHub).</value>
+    <comment>{0} = the language in its own name, {1} = whole percent of strings translated. Shown only while Meta.TranslationStatus is "draft".</comment>
+  </data>
+  <data name="ConfigLanguageNotLoaded" xml:space="preserve">
+    <value>The resource file for this language did not load, so the text is in English. Reinstalling the plugin usually fixes it.</value>
+    <comment>Shown when a translation's satellite assembly is missing.</comment>
   </data>
   <data name="ConfigSectionHelp" xml:space="preserve">
     <value>Help</value>
@@ -4637,5 +4673,9 @@
   <data name="Core.Stripe.Unknown" xml:space="preserve">
     <value>dotted</value>
     <comment>Core: StripePattern.cs.</comment>
+  </data>
+  <data name="Meta.TranslationStatus" xml:space="preserve">
+    <value>source</value>
+    <comment>Not shown. English is the source ("source"); a translation says "draft" until players have reviewed it, then "reviewed". Settings shows the draft notice while it says "draft".</comment>
   </data>
 </root>

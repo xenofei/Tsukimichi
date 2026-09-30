@@ -117,6 +117,20 @@ public static class Loc
         _ => count == 1,
     };
 
+    /// <summary>A language's name in that language, as the Settings choice shows it; never translated.</summary>
+    public static string NativeName(string language) => language switch
+    {
+        English => "English",
+        Japanese => "日本語",
+        German => "Deutsch",
+        French => "Français",
+        PseudoLanguage => "Pseudo",
+        _ => language,
+    };
+
+    /// <summary>"draft" while a translation awaits players' review (the file's <c>Meta.TranslationStatus</c>).</summary>
+    public static bool IsDraft => Language is Japanese or German or French && Get("Meta.TranslationStatus") == "draft";
+
     /// <summary>
     /// Maps a Dalamud UI language code ("en", "ja", "de", "fr", "it", …) to a shipped language; anything without a
     /// resource file reads English.

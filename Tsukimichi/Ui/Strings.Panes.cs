@@ -286,6 +286,19 @@ static partial class Strings
     };
 
     // ---- Config window ----
+    public static string ConfigWindowTitle => Loc.Get("ConfigWindowTitle");
+    public static string UnknownError => Loc.Get("UnknownError");
+
+    // Settings › Display › Plugin language (V2-19)
+    public static string ConfigLanguage => Loc.Get("ConfigLanguage");
+    /// <summary>{0} = the language Dalamud is set to, in its own name.</summary>
+    public static string ConfigLanguageFollowFormat => Loc.Get("ConfigLanguageFollowFormat");
+    public static string ConfigLanguageEnglish => Loc.Get("ConfigLanguageEnglish");
+    public static string ConfigLanguagePseudo => Loc.Get("ConfigLanguagePseudo");
+    public static string ConfigLanguageHint => Loc.Get("ConfigLanguageHint");
+    /// <summary>{0} = the language in its own name, {1} = whole percent translated.</summary>
+    public static string ConfigLanguageDraftFormat => Loc.Get("ConfigLanguageDraftFormat");
+    public static string ConfigLanguageNotLoaded => Loc.Get("ConfigLanguageNotLoaded");
     public static string ConfigSectionPolling => Loc.Get("ConfigSectionPolling");
     public static string ConfigPollInterval => Loc.Get("ConfigPollInterval");
     public static string ConfigPollIntervalHint => Loc.Get("ConfigPollIntervalHint");

@@ -201,6 +201,7 @@ public sealed class FilterPanel
     {
         var f = ui.Filters;
         var selected = Array.IndexOf(QuickViewPresets, f.Preset);
+        quickViewTooltips[0] = Strings.QuickViewAllTooltip;
         for (var i = 0; i < QuickViewPresets.Length; i++)
         {
             quickViewEnabled[i] = hasSnapshot || !QuickViewNeedsSnapshot[i];
@@ -222,16 +223,22 @@ public sealed class FilterPanel
     /// <summary>Quick views in toolbar order (the segment after "All" is index 0).</summary>
     private static readonly Preset[] QuickViewPresets = [Preset.FeatureQuests, Preset.LevelBand, Preset.Stalled, Preset.StorySidequests, Preset.Sprout];
 
-    private static readonly string[] QuickViewLabels =
-        [Strings.PresetFeatureQuests, Strings.PresetLevelBand, Strings.PresetStalled, Strings.PresetStorySidequests, Strings.PresetSprout];
+    private static string[] QuickViewLabels => quickViewLabelsText.Value;
 
-    private static readonly string[] QuickViewTooltips =
-        [Strings.PresetFeatureQuestsTooltip, Strings.PresetLevelBandTooltip, Strings.PresetStalledTooltip, Strings.PresetStorySidequestsTooltip, Strings.PresetSproutTooltip];
+    private static readonly Localization.LocArray quickViewLabelsText = new(static () =>
+        [Strings.PresetFeatureQuests, Strings.PresetLevelBand, Strings.PresetStalled, Strings.PresetStorySidequests, Strings.PresetSprout]);
+
+    private static string[] QuickViewTooltips => quickViewTooltipsText.Value;
+
+    private static readonly Localization.LocArray quickViewTooltipsText = new(static () =>
+        [Strings.PresetFeatureQuestsTooltip, Strings.PresetLevelBandTooltip, Strings.PresetStalledTooltip, Strings.PresetStorySidequestsTooltip, Strings.PresetSproutTooltip]);
 
     // Sprout mode (T19): without a character only A Realm Reborn is in reach, which is still a useful view.
     private static readonly bool[] QuickViewNeedsSnapshot = [false, true, true, false, false];
 
-    private static readonly string[] QuickViewDisabledTooltips = BuildDisabledTooltips();
+    private static string[] QuickViewDisabledTooltips => quickViewDisabledTooltipsText.Value;
+
+    private static readonly Localization.LocArray quickViewDisabledTooltipsText = new(BuildDisabledTooltips);
 
     private readonly bool[] quickViewEnabled = new bool[QuickViewPresets.Length];
 

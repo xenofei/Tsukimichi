@@ -57,14 +57,16 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     }
 
     /// <summary>Combo labels in <see cref="ConfidenceFilter"/> order.</summary>
-    private static readonly string[] ConfidenceFilterItems =
-    [
+    private static string[] ConfidenceFilterItems => confidenceFilterItemsText.Value;
+
+    private static readonly Localization.LocArray confidenceFilterItemsText = new(static () =>
+        [
         Strings.MoonlitConfidenceAny,
         Strings.MoonlitConfidenceStaticOnly,
         Strings.MoonlitConfidenceCuratedOnly,
         Strings.MoonlitConfidenceYoursOnly,
         Strings.MoonlitConfidenceUnknownObtained,
-    ];
+    ]);
 
     private readonly SessionState session;
     private readonly ITextureProvider textures;

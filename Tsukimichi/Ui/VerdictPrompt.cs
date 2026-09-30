@@ -19,8 +19,12 @@ internal sealed class VerdictPrompt(string popupId)
     private const int NoteLength = 120;
     private const double UndoSeconds = 8.0;
 
-    private static readonly string ConfirmUniqueLabel = Strings.MarkUniqueConfirm + Chrome.HoldIdSuffix;
-    private static readonly string ConfirmHideLabel = Strings.MarkNotUniqueConfirm + Chrome.HoldIdSuffix;
+    private static string ConfirmUniqueLabel => confirmUniqueLabelText.Value;
+
+    private static readonly Localization.LocText confirmUniqueLabelText = new(static () => Strings.MarkUniqueConfirm + Chrome.HoldIdSuffix);
+    private static string ConfirmHideLabel => confirmHideLabelText.Value;
+
+    private static readonly Localization.LocText confirmHideLabelText = new(static () => Strings.MarkNotUniqueConfirm + Chrome.HoldIdSuffix);
 
     private readonly string popupId = popupId ?? throw new ArgumentNullException(nameof(popupId));
     private readonly ConfirmGate gate = new();
