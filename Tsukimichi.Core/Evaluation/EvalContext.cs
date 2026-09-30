@@ -64,6 +64,12 @@ public sealed record EvalContext
     /// </summary>
     public Func<byte, byte>? ParentJob { get; init; }
 
+    /// <summary>
+    /// A job's role from the ClassJob sheet (1 tank, 2 melee, 3 ranged or caster, 4 healer, 0 none): which of the jobs
+    /// a quest is ready on is named first leans toward the current job's role. Null when the plugin has no sheet.
+    /// </summary>
+    public Func<byte, byte>? JobRole { get; init; }
+
     /// <summary>Whether the character owns a mount; null means not checked.</summary>
     public bool? HasMount { get; init; }
 

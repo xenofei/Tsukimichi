@@ -325,7 +325,9 @@ public static class BlockerText
     /// quests left (ties to the lowest row id), another path's line last. Null when every prerequisite is done or
     /// there is none.
     /// </summary>
-    public static uint? NearestPrerequisite(PreviousQuestsRequirement p, QuestCatalog catalog, IReadOnlyDictionary<uint, QuestEvaluation>? states)
+    /// <param name="usable">Leaves out a prerequisite it answers false for (the jump button's: one the character can
+    /// never take); the next nearest is chosen instead, and null when none is left.</param>
+    public static uint? NearestPrerequisite(PreviousQuestsRequirement p, QuestCatalog catalog, IReadOnlyDictionary<uint, QuestEvaluation>? states, Func<uint, bool>? usable = null)
     {
         ArgumentNullException.ThrowIfNull(p);
         ArgumentNullException.ThrowIfNull(catalog);
@@ -333,7 +335,7 @@ public static class BlockerText
         var bestRemaining = int.MaxValue;
         foreach (var id in p.QuestIds)
         {
-            if (IsDone(id, p, states))
+            if (IsDone(id, p, states) || (usable is not null && !usable(id)))
             {
                 continue;
             }

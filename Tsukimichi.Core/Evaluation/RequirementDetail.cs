@@ -20,7 +20,8 @@ public static class RequirementDetail
     {
         ArgumentNullException.ThrowIfNull(result);
         ArgumentNullException.ThrowIfNull(names);
-        if (CoreText.IsEnglish)
+        // A level measured on another job (NotYetText.OnAdmittedJob) names that job, which the English detail cannot.
+        if (CoreText.IsEnglish && result.Req is not LevelRequirement { MeasuredOn: not 0 } and not LevelRequirement { NoJob: true })
         {
             return result.Detail;
         }
@@ -50,6 +51,7 @@ public static class RequirementDetail
                 (false, true) => T("Core.Req.NotAvailableCurrentJob", "not available on the current job"),
                 _ => T("Core.Req.NotAvailableThisJob", "not available on this job"),
             },
+            LevelRequirement l when l.NoJob || (l.MeasuredOn != 0 && names.JobAbbreviation(l.MeasuredOn).Length > 0) => MeasuredLevel(l, met, names),
             LevelRequirement l => met
                 ? F("Core.Req.Level", "level {0}", l.Level)
                 : F("Core.Req.NeedsLevel", "needs level {0}, you are {1}", l.Level, l.ActualLevel),
@@ -103,6 +105,26 @@ public static class RequirementDetail
                 : T("Core.Req.AchievementsNotLoaded", "achievements not loaded"),
             _ => null,
         };
+    }
+
+    /// <summary>
+    /// A level measured on the job that can take the quest (<see cref="NotYetText.OnAdmittedJob"/>): "level 80 on PLD",
+    /// "needs level 70, CUL is 35"; with no such job, "needs level 70 on CUL, not unlocked" for a pinned job and "needs
+    /// level 50, no job of yours can take it" for a category.
+    /// </summary>
+    private static string MeasuredLevel(LevelRequirement l, bool met, BlockerNames names)
+    {
+        var job = l.MeasuredOn == 0 ? string.Empty : names.JobAbbreviation(l.MeasuredOn);
+        if (l.NoJob)
+        {
+            return job.Length > 0
+                ? F("Core.Req.NeedsLevelOnLocked", "needs level {0} on {1}, not unlocked", l.Level, job)
+                : F("Core.Req.NeedsLevelNoJob", "needs level {0}, no job of yours can take it", l.Level);
+        }
+
+        return met
+            ? F("Core.Req.LevelOn", "level {0} on {1}", l.Level, job)
+            : F("Core.Req.NeedsLevelJobIs", "needs level {0}, {1} is {2}", l.Level, job, l.ActualLevel);
     }
 
     private static string Previous(PreviousQuestsRequirement p, bool met, BlockerNames names)

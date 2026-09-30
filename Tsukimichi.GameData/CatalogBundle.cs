@@ -127,6 +127,21 @@ public sealed record CatalogBundle(QuestCatalog Catalog, GameNames Names, ClassJ
 
         return parents;
     }
+
+    /// <summary>ClassJob row id to the sheet's role byte for every row that fits a byte, for <see cref="Core.Evaluation.EvalContext.JobRole"/>.</summary>
+    public Dictionary<byte, byte> JobRoles()
+    {
+        var roles = new Dictionary<byte, byte>(Names.ClassJobInfos.Count);
+        foreach (var info in Names.ClassJobInfos)
+        {
+            if (info.RowId is > 0 and <= byte.MaxValue)
+            {
+                roles[(byte)info.RowId] = info.Role;
+            }
+        }
+
+        return roles;
+    }
 }
 
 /// <summary>How the Job column groups the jobs a ClassJobCategory admits (<see cref="CatalogBundle.ClassifyJobs"/>).</summary>

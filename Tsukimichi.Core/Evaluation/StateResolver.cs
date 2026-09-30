@@ -290,27 +290,110 @@ public static class StateResolver
     }
 
     /// <summary>
-    /// Highest-level job other than the current one that the quest admits at the required level; ties go to the lowest
-    /// job id. Only reached when every other requirement is already met on the current job, and those do not depend on
-    /// the job, so admission plus level is the whole check.
+    /// The job other than the current one that the quest admits at the required level, and the one the pane says it is
+    /// ready on: of those, one of the current job's class line (Lancer and Dragoon), then of its role, then the
+    /// highest level, then a job over its own base class (Paladin before Gladiator, which share a level), then the
+    /// lowest job id. Only reached when every other requirement is already met on the current job, and those do not
+    /// depend on the job, so admission plus level is the whole check.
     /// </summary>
     private static byte? FindReadyJob(QuestRecord q, CharacterSnapshot s, EvalContext ctx)
     {
-        var candidates = CandidateJobs(q, s, ctx)
-            .Where(job => job != s.CurrentJob)
-            .Distinct()
-            .OrderByDescending(job => RequirementEvaluator.LevelOf(s, job))
-            .ThenBy(job => job);
-
-        foreach (var job in candidates)
+        byte? best = null;
+        foreach (var job in CandidateJobs(q, s, ctx))
         {
-            if (RequirementEvaluator.AdmitsJob(q, s, ctx, job) && RequirementEvaluator.LevelOf(s, job) >= q.Level)
+            if (job != s.CurrentJob
+                && RequirementEvaluator.AdmitsJob(q, s, ctx, job)
+                && RequirementEvaluator.LevelOf(s, job) >= q.Level
+                && (best is not { } current || CompareJobs(job, current, s, ctx, levelFirst: false) < 0))
             {
-                return job;
+                best = job;
             }
         }
 
-        return null;
+        return best;
+    }
+
+    /// <summary>
+    /// The job the quest's level is best measured on when the current job cannot take it: of the jobs the quest admits
+    /// that the character has levelled, the highest level, then the current job's class line and role, then a job over
+    /// its base class, then the lowest id. Null when the character has no such job.
+    /// </summary>
+    internal static byte? BestAdmittedJob(QuestRecord q, CharacterSnapshot s, EvalContext ctx)
+    {
+        byte? best = null;
+        foreach (var job in CandidateJobs(q, s, ctx))
+        {
+            if (job != s.CurrentJob
+                && RequirementEvaluator.LevelOf(s, job) > 0
+                && RequirementEvaluator.AdmitsJob(q, s, ctx, job)
+                && (best is not { } current || CompareJobs(job, current, s, ctx, levelFirst: true) < 0))
+            {
+                best = job;
+            }
+        }
+
+        return best;
+    }
+
+    /// <summary>Negative when <paramref name="a"/> is the job to name before <paramref name="b"/> (<see cref="FindReadyJob"/>'s order).</summary>
+    private static int CompareJobs(byte a, byte b, CharacterSnapshot s, EvalContext ctx, bool levelFirst)
+    {
+        if (a == b)
+        {
+            return 0;
+        }
+
+        var byLevel = RequirementEvaluator.LevelOf(s, b).CompareTo(RequirementEvaluator.LevelOf(s, a));
+        if (levelFirst && byLevel != 0)
+        {
+            return byLevel;
+        }
+
+        if (ctx.ParentJob is { } parentOf)
+        {
+            var line = parentOf(s.CurrentJob);
+            var byLine = (parentOf(b) == line).CompareTo(parentOf(a) == line);
+            if (byLine != 0)
+            {
+                return byLine;
+            }
+        }
+
+        if (ctx.JobRole is { } roleOf && roleOf(s.CurrentJob) is var role and not 0)
+        {
+            var byRole = (roleOf(b) == role).CompareTo(roleOf(a) == role);
+            if (byRole != 0)
+            {
+                return byRole;
+            }
+        }
+
+        if (byLevel != 0)
+        {
+            return byLevel;
+        }
+
+        // A job over the base class it grew out of: Paladin and Gladiator share a level, and Paladin is what is played.
+        if (ctx.ParentJob is { } parent)
+        {
+            if (parent(a) == b)
+            {
+                return -1;
+            }
+
+            if (parent(b) == a)
+            {
+                return 1;
+            }
+
+            var byJob = (parent(b) != b).CompareTo(parent(a) != a);
+            if (byJob != 0)
+            {
+                return byJob;
+            }
+        }
+
+        return a.CompareTo(b);
     }
 
     private static IEnumerable<byte> CandidateJobs(QuestRecord q, CharacterSnapshot s, EvalContext ctx)

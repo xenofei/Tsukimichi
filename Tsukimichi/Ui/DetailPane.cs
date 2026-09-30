@@ -1271,12 +1271,15 @@ public sealed partial class DetailPane
                 model.StateNote = PathText.Detail(path, session.Names.GrandCompany);
             }
 
+            // A job that cannot take the quest has no level to compare: the level is read on the job that can (L8).
+            var shown = snapshot is null ? evaluation : NotYetText.OnAdmittedJob(evaluation, quest, snapshot, session.Context);
+
             // What stands in the way, in one line at the top (L8); a path not taken keeps its D1 line under it.
-            model.Callout = NotYetText.Callout(evaluation, quest, session.Names, session.States);
+            model.Callout = NotYetText.Callout(shown, quest, session.Names, session.States);
             model.CalloutDetail = model.Callout is not null && evaluation.OtherPath is not null ? model.StateNote : null;
 
             var unmet = 0;
-            foreach (var result in evaluation.Requirements)
+            foreach (var result in shown.Requirements)
             {
                 // The evaluator wrote the prerequisite's or lock's real name into the detail; the shield masks it here.
                 // In the UI language: the evaluator's own detail is English, and stays so for the diagnostic block.
@@ -1287,7 +1290,7 @@ public sealed partial class DetailPane
                     ForeclosureRequirement f => spoilers.MaskNamesIn(clause, bundle.Catalog, f.CompletedLockIds),
                     _ => clause,
                 };
-                model.Requirements.Add(UnmetLine(session, bundle, quest, result, ReferenceEquals(result, evaluation.NextStep), detail));
+                model.Requirements.Add(UnmetLine(session, bundle, quest, result, ReferenceEquals(result, shown.NextStep), detail));
                 unmet += result.Met ? 0 : 1;
             }
 
