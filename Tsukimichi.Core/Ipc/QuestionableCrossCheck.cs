@@ -94,9 +94,14 @@ public static class QuestionableCrossCheck
     public const uint EndRowId = 0x20000;
 
     /// <summary>
-    /// Quests whose lock check makes Questionable open the game's Achievements window (it requests the achievement
-    /// list when it is not loaded): Gold Saucer 4081 and Palace of the Dead 2387, as row ids. Tsukimichi never asks
-    /// about these, so a glance at the detail pane opens nothing.
+    /// Quests whose lock check makes Questionable open the game's Achievements window (its <c>IsAchievementComplete</c>
+    /// shows the window to load the achievement list when it is not loaded), as row ids. From the prerequisite switch
+    /// in <c>Questionable/Functions/QuestFunctions.cs</c> (github.com/PunishXIV/Questionable, commit
+    /// 0bd61efe8a6806a7a8010741c0c46b7dea153709): 4081 (row 69617) "The Adventurer with All the Cards", the Gold Saucer
+    /// quest Questionable gates on achievement 2819, and 2387 (row 67923) "What Lies Beneath", the Palace of the Dead
+    /// quasi-quest that opens floors 51 to 100 (Questionable's "potd", gated on achievement 1580; the journal files it
+    /// with the Gridanian sidequests, given at Quarrymill in the South Shroud). Tsukimichi never asks about these, so a
+    /// glance at the detail pane opens nothing.
     /// </summary>
     public static readonly IReadOnlySet<uint> SideEffectRowIds = new HashSet<uint> { FirstRowId + 4081, FirstRowId + 2387 };
 
