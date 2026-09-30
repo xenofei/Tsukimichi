@@ -4,6 +4,16 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+### Changed
+- New moons. Accepted is now an early gibbous (a little more than half lit) with a silver rim and a small dark seal on its lit side, so it no longer reads as a full moon at row size. Larger moons (the detail pane header, the Help legend, tooltips) show a lunar surface: soft seas, a few craters, a glow along the terminator and a darker limb; small moons stay clean. A moon now only ever means a quest state or a completion: met and unmet requirements are a check and a cross, rewards you own or not are a check and a cross (a dash when unreadable), and the live indicator is a small dot, filled when live and hollow on a snapshot.
+- Progress is now a halo: a ring that fills clockwise from the top around a small moon that fills with it. Even 17 of 612 shows a gold pip and 611 of 612 a visible gap; the ring closes and glows only when everything is done. It replaces the filling moon in the Journal tree, the status bar, the Characters dashboard, Moonlit reward kinds and Flight zones; where the ring is small the number sits beside it.
+- Larger Journal tree rows (at least 30 px) with a 24 px halo, "done / total" with a small bar before it (the percentage is in the tooltip), a thin rule under each section, an expansion tag on nodes that belong to one expansion, and a gold count of quests you can accept now on any node that has some. The Journal tab shows that count too. Finished chapters are drawn in a quieter gold; the selected row has a gold edge.
+- Status bar: the overall halo with its percentage, the quest counts, a still dot with "live" or the snapshot time, the main scenario quest as a gold pill (click it to select the quest), and the version at the right.
+
+### Added
+- Settings › Display › Table rows: Comfortable (the default, taller rows) or Dense. Only the quest table changes.
+- Reduce motion now follows Windows' "Show animations" setting until you set it yourself in Settings.
+
 ## [0.6.2] - 2026-09-29
 
 ### Added
