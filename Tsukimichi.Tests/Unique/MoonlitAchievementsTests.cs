@@ -151,4 +151,30 @@ public class MoonlitAchievementsShippedTests(GameDataFixture fixture) : IClassFi
             Assert.DoesNotContain(row.Title.RowId, shippedTitles);
         }
     }
+
+    /// <summary>
+    /// Artifact gear comes from the per-job reward table, which also pays allied society crafter and gatherer quests in
+    /// crystals, cordials and society currencies. None of those may reach Moonlit as gear.
+    /// </summary>
+    [Fact]
+    public void No_artifact_gear_entry_is_a_crystal_cordial_or_society_currency()
+    {
+        string[] notGear = ["Crystal", "Cordial", "Namazu Koban", "Hammered Frogment", "Loporrit Carat", "Yok Huy Ward"];
+        var offenders = Entries()
+            .Where(e => e.Kind == RewardKind.ArtifactGear && notGear.Any(n => e.RewardName.EndsWith(n, StringComparison.Ordinal)))
+            .Select(e => $"{e.QuestRowId} {e.RewardName}")
+            .ToList();
+        Assert.Empty(offenders);
+    }
+
+    [GameDataFact]
+    public void Every_artifact_gear_entry_is_equipment()
+    {
+        var items = fixture.Game.Excel.GetSheet<Item>(Language.English);
+        var offenders = Entries()
+            .Where(e => e.Kind == RewardKind.ArtifactGear && items.GetRowOrDefault(e.ItemId) is not { EquipSlotCategory.RowId: not 0 })
+            .Select(e => $"{e.QuestRowId} {e.RewardName}")
+            .ToList();
+        Assert.Empty(offenders);
+    }
 }

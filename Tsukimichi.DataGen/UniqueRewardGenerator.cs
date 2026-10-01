@@ -350,6 +350,14 @@ internal sealed class UniqueRewardGenerator
                     Dropped.Add(new DroppedItem(quest.RowId, item.Value.RowId, string.Empty, "unnamed item row"));
                     continue;
                 }
+                // The per-job table also pays allied society crafter and gatherer quests in crystals, cordials and
+                // society currencies: only gear (anything with an equip slot) is artifact gear.
+                if (item.Value.EquipSlotCategory.RowId == 0)
+                {
+                    Dropped.Add(new DroppedItem(quest.RowId, item.Value.RowId, Text(item.Value.Name),
+                        $"QuestClassJobReward item is not equipment (ItemUICategory {Text(item.Value.ItemUICategory.ValueNullable?.Name)})"));
+                    continue;
+                }
                 var others = OtherSourcesOf(item.Value);
                 Add(quest.RowId, kind, item.Value.RowId, item.Value.RowId, Text(item.Value.Name), source + Suffix(others), others);
             }

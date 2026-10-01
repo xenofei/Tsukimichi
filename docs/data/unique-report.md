@@ -2,17 +2,15 @@
 
 Generated from game version `2026.09.15.0000.0000` by Tsukimichi.DataGen (see docs/data/DATA-VERSION.md for when).
 
-- Entries: **3198** across **1379** quests.
-- Entries whose reward is also obtainable elsewhere (`otherSources` non-empty): **913**. They keep confidence Static in V1; the UI shows the source and marks Online Store re-sells and dungeon drops.
-  - `SpecialShop`: 605
-  - `Tradable`: 555
-  - `Marketable`: 495
-  - `GatheringItem`: 468
+- Entries: **2630** across **1301** quests.
+- Entries whose reward is also obtainable elsewhere (`otherSources` non-empty): **363**. They keep confidence Static in V1; the UI shows the source and marks Online Store re-sells and dungeon drops.
   - `GilShopItem`: 136
+  - `SpecialShop`: 115
   - `OnlineStore`: 69
   - `DungeonDrop`: 44
-  - `Recipe`: 22
-- Plain item rewards refused by the exclusivity rule (strict): **713** (listed at the end).
+  - `Marketable`: 5
+  - `Tradable`: 5
+- Plain item rewards refused by the exclusivity rule (strict): **2093** (listed at the end).
 
 ## Counts per kind and confidence
 
@@ -25,7 +23,7 @@ Generated from game version `2026.09.15.0000.0000` by Tsukimichi.DataGen (see do
 | GeneralAction | 12 | 0 | 0 | 0 | 12 |
 | ClassJob | 48 | 0 | 0 | 0 | 48 |
 | Other | 13 | 0 | 0 | 0 | 13 |
-| ArtifactGear | 1175 | 0 | 0 | 0 | 1175 |
+| ArtifactGear | 607 | 0 | 0 | 0 | 607 |
 | Mount | 38 | 0 | 0 | 0 | 38 |
 | Minion | 64 | 0 | 0 | 0 | 64 |
 | Orchestrion | 79 | 0 | 0 | 0 | 79 |
@@ -40,7 +38,7 @@ Generated from game version `2026.09.15.0000.0000` by Tsukimichi.DataGen (see do
 | Title | 199 | 0 | 0 | 0 | 199 |
 | DutyUnlock | 156 | 0 | 308 | 0 | 464 |
 | SystemUnlock | 0 | 0 | 134 | 0 | 134 |
-| **Total** | 2756 | 0 | 442 | 0 | 3198 |
+| **Total** | 2188 | 0 | 442 | 0 | 2630 |
 
 ## Examples per kind
 
@@ -149,7 +147,7 @@ Generated from game version `2026.09.15.0000.0000` by Tsukimichi.DataGen (see do
 | 67631 Inscrutable Tastes | Collectable Action | 3 | 0 | Static | `Quest.OtherReward` |
 | 67632 Beloved of the Builder | Specialist Action | 4 | 0 | Static | `Quest.OtherReward` |
 
-### ArtifactGear (1175)
+### ArtifactGear (607)
 
 | Quest | Reward | Reward id | Item id | Confidence | Source |
 |---|---|---:|---:|---|---|
@@ -353,10 +351,10 @@ Generated from game version `2026.09.15.0000.0000` by Tsukimichi.DataGen (see do
 
 ## Quests with rewards but no unique classification
 
-Named quests that hand out at least one reward signal (item, emote, action, unlock or other) but produced no entry: **1928** of 3015.
+Named quests that hand out at least one reward signal (item, emote, action, unlock or other) but produced no entry: **2006** of 3015.
 Most of them only give tradable gear or consumables. The list below is restricted to the ones worth a second look: at least one reward item is untradable, or carries an ItemAction and is not sold on the market board, yet no rule claimed it.
 
-Quests to review: **360**.
+Quests to review: **378**.
 
 | Quest | Reward signals |
 |---|---|
@@ -709,15 +707,33 @@ Quests to review: **360**.
 | 70708 Warrior of Light, Wrangler of Cats | Reward item 43525 Ra'Kaznar Ring Coffer (IL 675) [ItemAction=4647, untradable] |
 | 70723 Bottled Fantasy | Reward item 6221 Fantasia [ItemAction=1326, untradable] |
 | 70777 His Heart Blazes On | Reward item 44660 Dawnblazer Attire Coffer [ItemAction=4647, untradable] |
+| 70872 Snow on the Mountain | ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable] |
+| 70873 A Work of Cart | ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable] |
+| 70874 Will Work for Supplies | ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable] |
 | 70875 Getting a Glow On | Reward item 46178 Yok Huy Ward [untradable] |
+| 70876 Hold My Hand Warmers | ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable] |
+| 70877 For a Goods Cause | ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable] |
+| 70878 Happiness Is a Warm Poncho | ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable] |
 | 70879 Worth Their Salt | Reward item 46178 Yok Huy Ward [untradable] |
+| 70880 Tradition for Trade | ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable] |
+| 70881 A Few Tools Short of a Toolbox | ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable] |
 | 70882 Romanced by the Stone | Reward item 46178 Yok Huy Ward [untradable] |
+| 70883 Every Last Pebble | ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable] |
+| 70884 Trail Fix | ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable] |
 | 70885 Working Stew Hard | Reward item 46178 Yok Huy Ward [untradable] |
+| 70886 Snack in Hand | ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable] |
 | 70887 Seasoned Stories | Reward item 46178 Yok Huy Ward [untradable] |
+| 70888 Larder for the Long Term | ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable] |
+| 70889 Table for Too Few | ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable] |
 | 70890 I Want to Trade My Icicle | Reward item 46178 Yok Huy Ward [untradable] |
+| 70891 Larder Logistics | ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable] |
 | 70892 The Weight of Generosity | Reward item 46178 Yok Huy Ward [untradable] |
+| 70893 A Growing Field | ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable] |
 | 70894 The Crystals' Favor | Reward item 46178 Yok Huy Ward [untradable] |
+| 70895 Big Mountain, Little Climbers | ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable] |
 | 70896 Scouring for Flowers | Reward item 46178 Yok Huy Ward [untradable] |
+| 70897 A Rock-solid Repair Job | ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable] |
+| 70898 Mad about Brew | ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable]; ClassJob reward item 46178 Yok Huy Ward [untradable] |
 | 70899 A Feast of Indecision | Reward item 46178 Yok Huy Ward [untradable] |
 | 71024 Despite Our Rest Efforts | Reward item 48095 Big Bang Ticket (Auxesia) [untradable] |
 
@@ -743,9 +759,12 @@ Untradable, non-marketable item rewards that are nevertheless not quest-only col
 
 | Reason | Items dropped |
 |---|---:|
+| QuestClassJobReward item is not equipment (ItemUICategory Currency) | 690 |
+| QuestClassJobReward item is not equipment (ItemUICategory Crystal) | 624 |
 | ItemUICategory Miscellany | 337 |
 | sold by a gil shop that is not a quest-reward reacquisition menu | 130 |
 | sold by a special shop | 109 |
+| QuestClassJobReward item is not equipment (ItemUICategory Medicine) | 66 |
 | ItemUICategory Seasonal Miscellany | 58 |
 | ItemUICategory Other | 37 |
 | ItemUICategory Medicine | 24 |
@@ -1094,6 +1113,490 @@ Untradable, non-marketable item rewards that are nevertheless not quest-only col
 | 68629 Makin' Bacon (Bread) | 18030 Cracked Cluster | ItemUICategory Miscellany |
 | 68629 Makin' Bacon (Bread) | 18031 Cracked Crystal | ItemUICategory Miscellany |
 | 68638 Disciples of Creation | 23360 Namazu Bell | sold by a gil shop that is not a quest-reward reacquisition menu |
+| 68639 The Importance of Being Yes, Yes | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68639 The Importance of Being Yes, Yes | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68639 The Importance of Being Yes, Yes | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68639 The Importance of Being Yes, Yes | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68639 The Importance of Being Yes, Yes | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68639 The Importance of Being Yes, Yes | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68639 The Importance of Being Yes, Yes | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68639 The Importance of Being Yes, Yes | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68639 The Importance of Being Yes, Yes | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68639 The Importance of Being Yes, Yes | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68639 The Importance of Being Yes, Yes | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68639 The Importance of Being Yes, Yes | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68639 The Importance of Being Yes, Yes | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68639 The Importance of Being Yes, Yes | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68639 The Importance of Being Yes, Yes | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68639 The Importance of Being Yes, Yes | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68639 The Importance of Being Yes, Yes | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68639 The Importance of Being Yes, Yes | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68639 The Importance of Being Yes, Yes | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68639 The Importance of Being Yes, Yes | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68639 The Importance of Being Yes, Yes | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68639 The Importance of Being Yes, Yes | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68641 Unidentified Festive Objects | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68641 Unidentified Festive Objects | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68641 Unidentified Festive Objects | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68641 Unidentified Festive Objects | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68641 Unidentified Festive Objects | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68641 Unidentified Festive Objects | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68641 Unidentified Festive Objects | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68641 Unidentified Festive Objects | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68641 Unidentified Festive Objects | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68641 Unidentified Festive Objects | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68641 Unidentified Festive Objects | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68641 Unidentified Festive Objects | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68641 Unidentified Festive Objects | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68641 Unidentified Festive Objects | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68641 Unidentified Festive Objects | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68641 Unidentified Festive Objects | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68641 Unidentified Festive Objects | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68641 Unidentified Festive Objects | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68641 Unidentified Festive Objects | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68641 Unidentified Festive Objects | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68641 Unidentified Festive Objects | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68641 Unidentified Festive Objects | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68642 Carry That Crate | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68642 Carry That Crate | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68642 Carry That Crate | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68642 Carry That Crate | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68642 Carry That Crate | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68642 Carry That Crate | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68642 Carry That Crate | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68642 Carry That Crate | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68642 Carry That Crate | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68642 Carry That Crate | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68642 Carry That Crate | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68642 Carry That Crate | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68642 Carry That Crate | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68642 Carry That Crate | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68642 Carry That Crate | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68642 Carry That Crate | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68642 Carry That Crate | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68642 Carry That Crate | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68642 Carry That Crate | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68642 Carry That Crate | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68642 Carry That Crate | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68642 Carry That Crate | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68643 Free for Most | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68643 Free for Most | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68643 Free for Most | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68643 Free for Most | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68643 Free for Most | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68643 Free for Most | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68643 Free for Most | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68643 Free for Most | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68643 Free for Most | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68643 Free for Most | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68643 Free for Most | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68643 Free for Most | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68643 Free for Most | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68643 Free for Most | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68643 Free for Most | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68643 Free for Most | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68643 Free for Most | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68643 Free for Most | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68643 Free for Most | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68643 Free for Most | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68643 Free for Most | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68643 Free for Most | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68644 Simpler Gifts | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68644 Simpler Gifts | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68644 Simpler Gifts | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68644 Simpler Gifts | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68644 Simpler Gifts | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68644 Simpler Gifts | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68644 Simpler Gifts | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68644 Simpler Gifts | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68644 Simpler Gifts | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68644 Simpler Gifts | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68644 Simpler Gifts | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68644 Simpler Gifts | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68644 Simpler Gifts | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68644 Simpler Gifts | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68644 Simpler Gifts | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68644 Simpler Gifts | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68644 Simpler Gifts | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68644 Simpler Gifts | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68644 Simpler Gifts | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68644 Simpler Gifts | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68644 Simpler Gifts | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68644 Simpler Gifts | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68645 Catching Catfish | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68645 Catching Catfish | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68645 Catching Catfish | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68645 Catching Catfish | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68645 Catching Catfish | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68645 Catching Catfish | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68645 Catching Catfish | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68645 Catching Catfish | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68645 Catching Catfish | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68645 Catching Catfish | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68645 Catching Catfish | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68645 Catching Catfish | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68645 Catching Catfish | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68645 Catching Catfish | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68645 Catching Catfish | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68645 Catching Catfish | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68645 Catching Catfish | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68645 Catching Catfish | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68645 Catching Catfish | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68645 Catching Catfish | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68645 Catching Catfish | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68645 Catching Catfish | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68646 Wood You Believe It | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68646 Wood You Believe It | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68646 Wood You Believe It | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68646 Wood You Believe It | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68646 Wood You Believe It | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68646 Wood You Believe It | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68646 Wood You Believe It | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68646 Wood You Believe It | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68646 Wood You Believe It | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68646 Wood You Believe It | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68646 Wood You Believe It | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68646 Wood You Believe It | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68646 Wood You Believe It | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68646 Wood You Believe It | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68646 Wood You Believe It | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68646 Wood You Believe It | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68646 Wood You Believe It | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68646 Wood You Believe It | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68646 Wood You Believe It | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68646 Wood You Believe It | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68646 Wood You Believe It | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68646 Wood You Believe It | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68647 Ghosts of Honor | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68647 Ghosts of Honor | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68647 Ghosts of Honor | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68647 Ghosts of Honor | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68647 Ghosts of Honor | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68647 Ghosts of Honor | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68647 Ghosts of Honor | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68647 Ghosts of Honor | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68647 Ghosts of Honor | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68647 Ghosts of Honor | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68647 Ghosts of Honor | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68647 Ghosts of Honor | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68647 Ghosts of Honor | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68647 Ghosts of Honor | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68647 Ghosts of Honor | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68647 Ghosts of Honor | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68647 Ghosts of Honor | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68647 Ghosts of Honor | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68647 Ghosts of Honor | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68647 Ghosts of Honor | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68647 Ghosts of Honor | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68647 Ghosts of Honor | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68648 Carving a Niche | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68648 Carving a Niche | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68648 Carving a Niche | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68648 Carving a Niche | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68648 Carving a Niche | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68648 Carving a Niche | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68648 Carving a Niche | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68648 Carving a Niche | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68648 Carving a Niche | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68648 Carving a Niche | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68648 Carving a Niche | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68648 Carving a Niche | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68648 Carving a Niche | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68648 Carving a Niche | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68648 Carving a Niche | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68648 Carving a Niche | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68648 Carving a Niche | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68648 Carving a Niche | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68648 Carving a Niche | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68648 Carving a Niche | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68648 Carving a Niche | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68648 Carving a Niche | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68649 Great Buuz Up | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68649 Great Buuz Up | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68649 Great Buuz Up | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68649 Great Buuz Up | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68649 Great Buuz Up | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68649 Great Buuz Up | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68649 Great Buuz Up | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68649 Great Buuz Up | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68649 Great Buuz Up | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68649 Great Buuz Up | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68649 Great Buuz Up | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68649 Great Buuz Up | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68649 Great Buuz Up | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68649 Great Buuz Up | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68649 Great Buuz Up | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68649 Great Buuz Up | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68649 Great Buuz Up | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68649 Great Buuz Up | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68649 Great Buuz Up | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68649 Great Buuz Up | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68649 Great Buuz Up | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68649 Great Buuz Up | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68650 Local Special Tea | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68650 Local Special Tea | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68650 Local Special Tea | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68650 Local Special Tea | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68650 Local Special Tea | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68650 Local Special Tea | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68650 Local Special Tea | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68650 Local Special Tea | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68650 Local Special Tea | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68650 Local Special Tea | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68650 Local Special Tea | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68650 Local Special Tea | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68650 Local Special Tea | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68650 Local Special Tea | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68650 Local Special Tea | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68650 Local Special Tea | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68650 Local Special Tea | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68650 Local Special Tea | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68650 Local Special Tea | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68650 Local Special Tea | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68650 Local Special Tea | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68650 Local Special Tea | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68652 A Stable's Condition | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68652 A Stable's Condition | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68652 A Stable's Condition | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68652 A Stable's Condition | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68652 A Stable's Condition | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68652 A Stable's Condition | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68652 A Stable's Condition | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68652 A Stable's Condition | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68652 A Stable's Condition | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68652 A Stable's Condition | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68652 A Stable's Condition | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68652 A Stable's Condition | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68652 A Stable's Condition | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68652 A Stable's Condition | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68652 A Stable's Condition | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68652 A Stable's Condition | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68652 A Stable's Condition | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68652 A Stable's Condition | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68652 A Stable's Condition | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68652 A Stable's Condition | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68652 A Stable's Condition | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68652 A Stable's Condition | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68653 Beat of the Drum | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68653 Beat of the Drum | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68653 Beat of the Drum | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68653 Beat of the Drum | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68653 Beat of the Drum | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68653 Beat of the Drum | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68653 Beat of the Drum | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68653 Beat of the Drum | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68653 Beat of the Drum | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68653 Beat of the Drum | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68653 Beat of the Drum | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68653 Beat of the Drum | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68653 Beat of the Drum | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68653 Beat of the Drum | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68653 Beat of the Drum | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68653 Beat of the Drum | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68653 Beat of the Drum | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68653 Beat of the Drum | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68653 Beat of the Drum | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68653 Beat of the Drum | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68653 Beat of the Drum | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68653 Beat of the Drum | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68655 Ready the Confetti | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68655 Ready the Confetti | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68655 Ready the Confetti | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68655 Ready the Confetti | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68655 Ready the Confetti | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68655 Ready the Confetti | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68655 Ready the Confetti | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68655 Ready the Confetti | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68655 Ready the Confetti | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68655 Ready the Confetti | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68655 Ready the Confetti | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68655 Ready the Confetti | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68655 Ready the Confetti | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68655 Ready the Confetti | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68655 Ready the Confetti | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68655 Ready the Confetti | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68655 Ready the Confetti | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68655 Ready the Confetti | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68655 Ready the Confetti | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68655 Ready the Confetti | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68655 Ready the Confetti | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68655 Ready the Confetti | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68656 Surprise Offerings | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68656 Surprise Offerings | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68656 Surprise Offerings | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68656 Surprise Offerings | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68656 Surprise Offerings | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68656 Surprise Offerings | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68656 Surprise Offerings | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68656 Surprise Offerings | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68656 Surprise Offerings | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68656 Surprise Offerings | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68656 Surprise Offerings | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68656 Surprise Offerings | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68656 Surprise Offerings | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68656 Surprise Offerings | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68656 Surprise Offerings | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68656 Surprise Offerings | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68656 Surprise Offerings | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68656 Surprise Offerings | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68656 Surprise Offerings | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68656 Surprise Offerings | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68656 Surprise Offerings | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68656 Surprise Offerings | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68658 Roasting a New Dish | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68658 Roasting a New Dish | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68658 Roasting a New Dish | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68658 Roasting a New Dish | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68658 Roasting a New Dish | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68658 Roasting a New Dish | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68658 Roasting a New Dish | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68658 Roasting a New Dish | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68658 Roasting a New Dish | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68658 Roasting a New Dish | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68658 Roasting a New Dish | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68658 Roasting a New Dish | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68658 Roasting a New Dish | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68658 Roasting a New Dish | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68658 Roasting a New Dish | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68658 Roasting a New Dish | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68658 Roasting a New Dish | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68658 Roasting a New Dish | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68658 Roasting a New Dish | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68658 Roasting a New Dish | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68658 Roasting a New Dish | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68658 Roasting a New Dish | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68659 Give till It Hurts | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68659 Give till It Hurts | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68659 Give till It Hurts | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68659 Give till It Hurts | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68659 Give till It Hurts | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68659 Give till It Hurts | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68659 Give till It Hurts | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68659 Give till It Hurts | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68659 Give till It Hurts | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68659 Give till It Hurts | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68659 Give till It Hurts | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68659 Give till It Hurts | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68659 Give till It Hurts | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68659 Give till It Hurts | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68659 Give till It Hurts | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68659 Give till It Hurts | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68659 Give till It Hurts | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68659 Give till It Hurts | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68659 Give till It Hurts | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68659 Give till It Hurts | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68659 Give till It Hurts | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68659 Give till It Hurts | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68661 Taking the Plunge | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68661 Taking the Plunge | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68661 Taking the Plunge | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68661 Taking the Plunge | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68661 Taking the Plunge | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68661 Taking the Plunge | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68661 Taking the Plunge | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68661 Taking the Plunge | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68661 Taking the Plunge | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68661 Taking the Plunge | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68661 Taking the Plunge | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68661 Taking the Plunge | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68661 Taking the Plunge | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68661 Taking the Plunge | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68661 Taking the Plunge | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68661 Taking the Plunge | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68661 Taking the Plunge | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68661 Taking the Plunge | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68661 Taking the Plunge | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68661 Taking the Plunge | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68661 Taking the Plunge | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68661 Taking the Plunge | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68662 A Favor Repaid | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68662 A Favor Repaid | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68662 A Favor Repaid | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68662 A Favor Repaid | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68662 A Favor Repaid | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68662 A Favor Repaid | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68662 A Favor Repaid | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68662 A Favor Repaid | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68662 A Favor Repaid | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68662 A Favor Repaid | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68662 A Favor Repaid | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68662 A Favor Repaid | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68662 A Favor Repaid | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68662 A Favor Repaid | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68662 A Favor Repaid | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68662 A Favor Repaid | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68662 A Favor Repaid | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68662 A Favor Repaid | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68662 A Favor Repaid | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68662 A Favor Repaid | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68662 A Favor Repaid | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68662 A Favor Repaid | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68664 A Welcome Surprise | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68664 A Welcome Surprise | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68664 A Welcome Surprise | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68664 A Welcome Surprise | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68664 A Welcome Surprise | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68664 A Welcome Surprise | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68664 A Welcome Surprise | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68664 A Welcome Surprise | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68664 A Welcome Surprise | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68664 A Welcome Surprise | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68664 A Welcome Surprise | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68664 A Welcome Surprise | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68664 A Welcome Surprise | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68664 A Welcome Surprise | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68664 A Welcome Surprise | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68664 A Welcome Surprise | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68664 A Welcome Surprise | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68664 A Welcome Surprise | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68664 A Welcome Surprise | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68664 A Welcome Surprise | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68664 A Welcome Surprise | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68664 A Welcome Surprise | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68665 The Deadliest Sport | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68665 The Deadliest Sport | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68665 The Deadliest Sport | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68665 The Deadliest Sport | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68665 The Deadliest Sport | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68665 The Deadliest Sport | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68665 The Deadliest Sport | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68665 The Deadliest Sport | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68665 The Deadliest Sport | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68665 The Deadliest Sport | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68665 The Deadliest Sport | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68665 The Deadliest Sport | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68665 The Deadliest Sport | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68665 The Deadliest Sport | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68665 The Deadliest Sport | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68665 The Deadliest Sport | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68665 The Deadliest Sport | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68665 The Deadliest Sport | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68665 The Deadliest Sport | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68665 The Deadliest Sport | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68665 The Deadliest Sport | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68665 The Deadliest Sport | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68666 Overcommitment | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68666 Overcommitment | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68666 Overcommitment | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68666 Overcommitment | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68666 Overcommitment | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68666 Overcommitment | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68666 Overcommitment | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68666 Overcommitment | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 68666 Overcommitment | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68666 Overcommitment | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68666 Overcommitment | 6141 Cordial | QuestClassJobReward item is not equipment (ItemUICategory Medicine) |
+| 68666 Overcommitment | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68666 Overcommitment | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68666 Overcommitment | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68666 Overcommitment | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68666 Overcommitment | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68666 Overcommitment | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68666 Overcommitment | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68666 Overcommitment | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68666 Overcommitment | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68666 Overcommitment | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 68666 Overcommitment | 22525 Namazu Koban | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
 | 68669 Trouble in Paradise | 14971 MGP Gold Card | ItemUICategory Miscellany |
 | 68670 Love and Kupo Nuts | 10085 Gold Saucer Ticket | ItemUICategory Miscellany |
 | 68670 Love and Kupo Nuts | 10131 MGP Voucher | ItemUICategory Miscellany |
@@ -1239,6 +1742,310 @@ Untradable, non-marketable item rewards that are nevertheless not quest-only col
 | 69422 Chasing Ivy | 7321 Auroral Tabard | sold by a special shop |
 | 69422 Chasing Ivy | 7331 Daystar Robe | sold by a special shop |
 | 69422 Chasing Ivy | 7341 Evenstar Coat | sold by a special shop |
+| 69438 Lakeland Neighbors | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69438 Lakeland Neighbors | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69438 Lakeland Neighbors | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69438 Lakeland Neighbors | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69438 Lakeland Neighbors | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69438 Lakeland Neighbors | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69438 Lakeland Neighbors | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69438 Lakeland Neighbors | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69438 Lakeland Neighbors | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69438 Lakeland Neighbors | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69438 Lakeland Neighbors | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69438 Lakeland Neighbors | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69438 Lakeland Neighbors | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69438 Lakeland Neighbors | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69438 Lakeland Neighbors | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69438 Lakeland Neighbors | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69439 Clean Beard, Clear Mind | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69439 Clean Beard, Clear Mind | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69439 Clean Beard, Clear Mind | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69439 Clean Beard, Clear Mind | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69439 Clean Beard, Clear Mind | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69439 Clean Beard, Clear Mind | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69439 Clean Beard, Clear Mind | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69439 Clean Beard, Clear Mind | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69439 Clean Beard, Clear Mind | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69439 Clean Beard, Clear Mind | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69439 Clean Beard, Clear Mind | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69439 Clean Beard, Clear Mind | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69439 Clean Beard, Clear Mind | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69439 Clean Beard, Clear Mind | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69439 Clean Beard, Clear Mind | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69439 Clean Beard, Clear Mind | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69440 Quality Parts, Guaranteed | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69440 Quality Parts, Guaranteed | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69440 Quality Parts, Guaranteed | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69440 Quality Parts, Guaranteed | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69440 Quality Parts, Guaranteed | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69440 Quality Parts, Guaranteed | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69440 Quality Parts, Guaranteed | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69440 Quality Parts, Guaranteed | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69440 Quality Parts, Guaranteed | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69440 Quality Parts, Guaranteed | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69440 Quality Parts, Guaranteed | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69440 Quality Parts, Guaranteed | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69440 Quality Parts, Guaranteed | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69440 Quality Parts, Guaranteed | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69440 Quality Parts, Guaranteed | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69440 Quality Parts, Guaranteed | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69442 The Telltale Axles | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69442 The Telltale Axles | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69442 The Telltale Axles | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69442 The Telltale Axles | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69442 The Telltale Axles | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69442 The Telltale Axles | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69442 The Telltale Axles | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69442 The Telltale Axles | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69442 The Telltale Axles | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69442 The Telltale Axles | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69442 The Telltale Axles | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69442 The Telltale Axles | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69442 The Telltale Axles | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69442 The Telltale Axles | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69442 The Telltale Axles | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69442 The Telltale Axles | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69443 A Blueprint a Day | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69443 A Blueprint a Day | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69443 A Blueprint a Day | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69443 A Blueprint a Day | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69443 A Blueprint a Day | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69443 A Blueprint a Day | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69443 A Blueprint a Day | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69443 A Blueprint a Day | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69443 A Blueprint a Day | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69443 A Blueprint a Day | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69443 A Blueprint a Day | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69443 A Blueprint a Day | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69443 A Blueprint a Day | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69443 A Blueprint a Day | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69443 A Blueprint a Day | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69443 A Blueprint a Day | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69444 Foundations of Steel | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69444 Foundations of Steel | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69444 Foundations of Steel | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69444 Foundations of Steel | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69444 Foundations of Steel | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69444 Foundations of Steel | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69444 Foundations of Steel | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69444 Foundations of Steel | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69444 Foundations of Steel | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69444 Foundations of Steel | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69444 Foundations of Steel | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69444 Foundations of Steel | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69444 Foundations of Steel | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69444 Foundations of Steel | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69444 Foundations of Steel | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69444 Foundations of Steel | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69446 Wood for What Ales You | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69446 Wood for What Ales You | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69446 Wood for What Ales You | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69446 Wood for What Ales You | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69446 Wood for What Ales You | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69446 Wood for What Ales You | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69446 Wood for What Ales You | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69446 Wood for What Ales You | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69446 Wood for What Ales You | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69446 Wood for What Ales You | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69446 Wood for What Ales You | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69446 Wood for What Ales You | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69446 Wood for What Ales You | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69446 Wood for What Ales You | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69446 Wood for What Ales You | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69446 Wood for What Ales You | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69447 The Heart of Tankiness | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69447 The Heart of Tankiness | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69447 The Heart of Tankiness | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69447 The Heart of Tankiness | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69447 The Heart of Tankiness | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69447 The Heart of Tankiness | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69447 The Heart of Tankiness | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69447 The Heart of Tankiness | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69447 The Heart of Tankiness | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69447 The Heart of Tankiness | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69447 The Heart of Tankiness | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69447 The Heart of Tankiness | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69447 The Heart of Tankiness | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69447 The Heart of Tankiness | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69447 The Heart of Tankiness | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69447 The Heart of Tankiness | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69449 One Hundred Tankards of Solitude | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69449 One Hundred Tankards of Solitude | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69449 One Hundred Tankards of Solitude | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69449 One Hundred Tankards of Solitude | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69449 One Hundred Tankards of Solitude | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69449 One Hundred Tankards of Solitude | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69449 One Hundred Tankards of Solitude | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69449 One Hundred Tankards of Solitude | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69449 One Hundred Tankards of Solitude | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69449 One Hundred Tankards of Solitude | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69449 One Hundred Tankards of Solitude | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69449 One Hundred Tankards of Solitude | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69449 One Hundred Tankards of Solitude | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69449 One Hundred Tankards of Solitude | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69449 One Hundred Tankards of Solitude | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69449 One Hundred Tankards of Solitude | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69450 Cooler Tanks Prevail | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69450 Cooler Tanks Prevail | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69450 Cooler Tanks Prevail | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69450 Cooler Tanks Prevail | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69450 Cooler Tanks Prevail | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69450 Cooler Tanks Prevail | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69450 Cooler Tanks Prevail | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69450 Cooler Tanks Prevail | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69450 Cooler Tanks Prevail | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69450 Cooler Tanks Prevail | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69450 Cooler Tanks Prevail | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69450 Cooler Tanks Prevail | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69450 Cooler Tanks Prevail | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69450 Cooler Tanks Prevail | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69450 Cooler Tanks Prevail | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69450 Cooler Tanks Prevail | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69451 What's in a Locket | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69451 What's in a Locket | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69451 What's in a Locket | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69451 What's in a Locket | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69451 What's in a Locket | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69451 What's in a Locket | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69451 What's in a Locket | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69451 What's in a Locket | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69451 What's in a Locket | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69451 What's in a Locket | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69451 What's in a Locket | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69451 What's in a Locket | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69451 What's in a Locket | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69451 What's in a Locket | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69451 What's in a Locket | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69451 What's in a Locket | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69453 Taking the Heat | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69453 Taking the Heat | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69453 Taking the Heat | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69453 Taking the Heat | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69453 Taking the Heat | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69453 Taking the Heat | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69453 Taking the Heat | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69453 Taking the Heat | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69453 Taking the Heat | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69453 Taking the Heat | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69453 Taking the Heat | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69453 Taking the Heat | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69453 Taking the Heat | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69453 Taking the Heat | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69453 Taking the Heat | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69453 Taking the Heat | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69454 Sealing the Deal | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69454 Sealing the Deal | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69454 Sealing the Deal | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69454 Sealing the Deal | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69454 Sealing the Deal | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69454 Sealing the Deal | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69454 Sealing the Deal | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69454 Sealing the Deal | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69454 Sealing the Deal | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69454 Sealing the Deal | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69454 Sealing the Deal | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69454 Sealing the Deal | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69454 Sealing the Deal | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69454 Sealing the Deal | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69454 Sealing the Deal | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69454 Sealing the Deal | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69456 Targets Required | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69456 Targets Required | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69456 Targets Required | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69456 Targets Required | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69456 Targets Required | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69456 Targets Required | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69456 Targets Required | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69456 Targets Required | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69456 Targets Required | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69456 Targets Required | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69456 Targets Required | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69456 Targets Required | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69456 Targets Required | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69456 Targets Required | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69456 Targets Required | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69456 Targets Required | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69457 Unbreakable Plate | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69457 Unbreakable Plate | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69457 Unbreakable Plate | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69457 Unbreakable Plate | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69457 Unbreakable Plate | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69457 Unbreakable Plate | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69457 Unbreakable Plate | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69457 Unbreakable Plate | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69457 Unbreakable Plate | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69457 Unbreakable Plate | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69457 Unbreakable Plate | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69457 Unbreakable Plate | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69457 Unbreakable Plate | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69457 Unbreakable Plate | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69457 Unbreakable Plate | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69457 Unbreakable Plate | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69460 A Crude Awakening | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69460 A Crude Awakening | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69460 A Crude Awakening | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69460 A Crude Awakening | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69460 A Crude Awakening | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69460 A Crude Awakening | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69460 A Crude Awakening | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69460 A Crude Awakening | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69460 A Crude Awakening | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69460 A Crude Awakening | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69460 A Crude Awakening | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69460 A Crude Awakening | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69460 A Crude Awakening | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69460 A Crude Awakening | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69460 A Crude Awakening | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69460 A Crude Awakening | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69461 Fast and Loud | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69461 Fast and Loud | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69461 Fast and Loud | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69461 Fast and Loud | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69461 Fast and Loud | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69461 Fast and Loud | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69461 Fast and Loud | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69461 Fast and Loud | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69461 Fast and Loud | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69461 Fast and Loud | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69461 Fast and Loud | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69461 Fast and Loud | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69461 Fast and Loud | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69461 Fast and Loud | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69461 Fast and Loud | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69461 Fast and Loud | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69463 Remote Repairs | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69463 Remote Repairs | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69463 Remote Repairs | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69463 Remote Repairs | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69463 Remote Repairs | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69463 Remote Repairs | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69463 Remote Repairs | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69463 Remote Repairs | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69463 Remote Repairs | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69463 Remote Repairs | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69463 Remote Repairs | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69463 Remote Repairs | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69463 Remote Repairs | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69463 Remote Repairs | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69463 Remote Repairs | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69463 Remote Repairs | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69464 Tip-top Gear | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69464 Tip-top Gear | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69464 Tip-top Gear | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69464 Tip-top Gear | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69464 Tip-top Gear | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69464 Tip-top Gear | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69464 Tip-top Gear | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69464 Tip-top Gear | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 69464 Tip-top Gear | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69464 Tip-top Gear | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69464 Tip-top Gear | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69464 Tip-top Gear | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69464 Tip-top Gear | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69464 Tip-top Gear | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69464 Tip-top Gear | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 69464 Tip-top Gear | 28188 Hammered Frogment | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
 | 69499 Caught Shorthanded | 22522 MGP Bronze Card | ItemUICategory Miscellany |
 | 69500 A Guide to Fun | 10131 MGP Voucher | ItemUICategory Miscellany |
 | 69510 Glass from the Past | 30883 The Sultana's Seven | sold by a gil shop that is not a quest-reward reacquisition menu |
@@ -1351,6 +2158,310 @@ Untradable, non-marketable item rewards that are nevertheless not quest-only col
 | 70211 A Dragon's Resolve | 44279 Lunar Envoy's Gear of Scouting Coffer (IL 630) | ItemUICategory Miscellany |
 | 70211 A Dragon's Resolve | 44280 Lunar Envoy's Gear of Healing Coffer (IL 630) | ItemUICategory Miscellany |
 | 70211 A Dragon's Resolve | 44281 Lunar Envoy's Gear of Casting Coffer (IL 630) | ItemUICategory Miscellany |
+| 70223 Don't Stop the Music | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70223 Don't Stop the Music | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70223 Don't Stop the Music | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70223 Don't Stop the Music | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70223 Don't Stop the Music | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70223 Don't Stop the Music | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70223 Don't Stop the Music | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70223 Don't Stop the Music | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70223 Don't Stop the Music | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70223 Don't Stop the Music | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70223 Don't Stop the Music | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70223 Don't Stop the Music | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70223 Don't Stop the Music | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70223 Don't Stop the Music | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70223 Don't Stop the Music | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70223 Don't Stop the Music | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70224 A Pipe Dream | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70224 A Pipe Dream | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70224 A Pipe Dream | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70224 A Pipe Dream | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70224 A Pipe Dream | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70224 A Pipe Dream | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70224 A Pipe Dream | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70224 A Pipe Dream | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70224 A Pipe Dream | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70224 A Pipe Dream | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70224 A Pipe Dream | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70224 A Pipe Dream | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70224 A Pipe Dream | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70224 A Pipe Dream | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70224 A Pipe Dream | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70224 A Pipe Dream | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70225 Money Makes the Moon Go Round | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70225 Money Makes the Moon Go Round | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70225 Money Makes the Moon Go Round | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70225 Money Makes the Moon Go Round | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70225 Money Makes the Moon Go Round | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70225 Money Makes the Moon Go Round | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70225 Money Makes the Moon Go Round | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70225 Money Makes the Moon Go Round | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70225 Money Makes the Moon Go Round | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70225 Money Makes the Moon Go Round | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70225 Money Makes the Moon Go Round | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70225 Money Makes the Moon Go Round | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70225 Money Makes the Moon Go Round | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70225 Money Makes the Moon Go Round | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70225 Money Makes the Moon Go Round | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70225 Money Makes the Moon Go Round | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70227 Pieces of You | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70227 Pieces of You | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70227 Pieces of You | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70227 Pieces of You | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70227 Pieces of You | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70227 Pieces of You | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70227 Pieces of You | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70227 Pieces of You | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70227 Pieces of You | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70227 Pieces of You | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70227 Pieces of You | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70227 Pieces of You | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70227 Pieces of You | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70227 Pieces of You | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70227 Pieces of You | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70227 Pieces of You | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70228 Underneath the Starry Lights | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70228 Underneath the Starry Lights | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70228 Underneath the Starry Lights | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70228 Underneath the Starry Lights | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70228 Underneath the Starry Lights | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70228 Underneath the Starry Lights | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70228 Underneath the Starry Lights | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70228 Underneath the Starry Lights | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70228 Underneath the Starry Lights | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70228 Underneath the Starry Lights | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70228 Underneath the Starry Lights | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70228 Underneath the Starry Lights | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70228 Underneath the Starry Lights | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70228 Underneath the Starry Lights | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70228 Underneath the Starry Lights | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70228 Underneath the Starry Lights | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70229 Carrotlight, Carrot Bright | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70229 Carrotlight, Carrot Bright | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70229 Carrotlight, Carrot Bright | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70229 Carrotlight, Carrot Bright | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70229 Carrotlight, Carrot Bright | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70229 Carrotlight, Carrot Bright | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70229 Carrotlight, Carrot Bright | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70229 Carrotlight, Carrot Bright | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70229 Carrotlight, Carrot Bright | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70229 Carrotlight, Carrot Bright | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70229 Carrotlight, Carrot Bright | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70229 Carrotlight, Carrot Bright | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70229 Carrotlight, Carrot Bright | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70229 Carrotlight, Carrot Bright | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70229 Carrotlight, Carrot Bright | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70229 Carrotlight, Carrot Bright | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70231 Clean Times | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70231 Clean Times | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70231 Clean Times | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70231 Clean Times | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70231 Clean Times | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70231 Clean Times | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70231 Clean Times | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70231 Clean Times | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70231 Clean Times | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70231 Clean Times | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70231 Clean Times | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70231 Clean Times | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70231 Clean Times | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70231 Clean Times | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70231 Clean Times | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70231 Clean Times | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70232 A Sound Endeavor | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70232 A Sound Endeavor | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70232 A Sound Endeavor | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70232 A Sound Endeavor | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70232 A Sound Endeavor | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70232 A Sound Endeavor | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70232 A Sound Endeavor | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70232 A Sound Endeavor | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70232 A Sound Endeavor | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70232 A Sound Endeavor | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70232 A Sound Endeavor | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70232 A Sound Endeavor | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70232 A Sound Endeavor | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70232 A Sound Endeavor | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70232 A Sound Endeavor | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70232 A Sound Endeavor | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70234 Always Wear Protection | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70234 Always Wear Protection | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70234 Always Wear Protection | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70234 Always Wear Protection | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70234 Always Wear Protection | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70234 Always Wear Protection | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70234 Always Wear Protection | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70234 Always Wear Protection | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70234 Always Wear Protection | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70234 Always Wear Protection | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70234 Always Wear Protection | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70234 Always Wear Protection | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70234 Always Wear Protection | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70234 Always Wear Protection | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70234 Always Wear Protection | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70234 Always Wear Protection | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70235 Hare-raising Thrills | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70235 Hare-raising Thrills | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70235 Hare-raising Thrills | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70235 Hare-raising Thrills | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70235 Hare-raising Thrills | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70235 Hare-raising Thrills | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70235 Hare-raising Thrills | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70235 Hare-raising Thrills | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70235 Hare-raising Thrills | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70235 Hare-raising Thrills | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70235 Hare-raising Thrills | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70235 Hare-raising Thrills | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70235 Hare-raising Thrills | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70235 Hare-raising Thrills | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70235 Hare-raising Thrills | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70235 Hare-raising Thrills | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70237 Hungry for Knowledge | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70237 Hungry for Knowledge | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70237 Hungry for Knowledge | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70237 Hungry for Knowledge | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70237 Hungry for Knowledge | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70237 Hungry for Knowledge | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70237 Hungry for Knowledge | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70237 Hungry for Knowledge | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70237 Hungry for Knowledge | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70237 Hungry for Knowledge | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70237 Hungry for Knowledge | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70237 Hungry for Knowledge | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70237 Hungry for Knowledge | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70237 Hungry for Knowledge | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70237 Hungry for Knowledge | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70237 Hungry for Knowledge | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70238 No Chill | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70238 No Chill | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70238 No Chill | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70238 No Chill | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70238 No Chill | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70238 No Chill | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70238 No Chill | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70238 No Chill | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70238 No Chill | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70238 No Chill | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70238 No Chill | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70238 No Chill | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70238 No Chill | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70238 No Chill | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70238 No Chill | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70238 No Chill | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70239 Fungi Frustrations | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70239 Fungi Frustrations | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70239 Fungi Frustrations | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70239 Fungi Frustrations | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70239 Fungi Frustrations | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70239 Fungi Frustrations | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70239 Fungi Frustrations | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70239 Fungi Frustrations | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70239 Fungi Frustrations | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70239 Fungi Frustrations | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70239 Fungi Frustrations | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70239 Fungi Frustrations | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70239 Fungi Frustrations | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70239 Fungi Frustrations | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70239 Fungi Frustrations | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70239 Fungi Frustrations | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70241 Whisks for Whiskers | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70241 Whisks for Whiskers | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70241 Whisks for Whiskers | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70241 Whisks for Whiskers | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70241 Whisks for Whiskers | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70241 Whisks for Whiskers | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70241 Whisks for Whiskers | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70241 Whisks for Whiskers | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70241 Whisks for Whiskers | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70241 Whisks for Whiskers | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70241 Whisks for Whiskers | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70241 Whisks for Whiskers | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70241 Whisks for Whiskers | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70241 Whisks for Whiskers | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70241 Whisks for Whiskers | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70241 Whisks for Whiskers | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70242 Sets, Reps, and Loporrits | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70242 Sets, Reps, and Loporrits | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70242 Sets, Reps, and Loporrits | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70242 Sets, Reps, and Loporrits | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70242 Sets, Reps, and Loporrits | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70242 Sets, Reps, and Loporrits | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70242 Sets, Reps, and Loporrits | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70242 Sets, Reps, and Loporrits | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70242 Sets, Reps, and Loporrits | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70242 Sets, Reps, and Loporrits | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70242 Sets, Reps, and Loporrits | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70242 Sets, Reps, and Loporrits | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70242 Sets, Reps, and Loporrits | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70242 Sets, Reps, and Loporrits | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70242 Sets, Reps, and Loporrits | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70242 Sets, Reps, and Loporrits | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70244 Most Like It Sparkly | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70244 Most Like It Sparkly | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70244 Most Like It Sparkly | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70244 Most Like It Sparkly | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70244 Most Like It Sparkly | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70244 Most Like It Sparkly | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70244 Most Like It Sparkly | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70244 Most Like It Sparkly | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70244 Most Like It Sparkly | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70244 Most Like It Sparkly | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70244 Most Like It Sparkly | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70244 Most Like It Sparkly | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70244 Most Like It Sparkly | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70244 Most Like It Sparkly | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70244 Most Like It Sparkly | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70244 Most Like It Sparkly | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70246 Clean Paws Make Good Artists | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70246 Clean Paws Make Good Artists | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70246 Clean Paws Make Good Artists | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70246 Clean Paws Make Good Artists | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70246 Clean Paws Make Good Artists | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70246 Clean Paws Make Good Artists | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70246 Clean Paws Make Good Artists | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70246 Clean Paws Make Good Artists | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70246 Clean Paws Make Good Artists | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70246 Clean Paws Make Good Artists | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70246 Clean Paws Make Good Artists | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70246 Clean Paws Make Good Artists | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70246 Clean Paws Make Good Artists | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70246 Clean Paws Make Good Artists | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70246 Clean Paws Make Good Artists | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70246 Clean Paws Make Good Artists | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70248 Art Is an Explosion! | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70248 Art Is an Explosion! | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70248 Art Is an Explosion! | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70248 Art Is an Explosion! | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70248 Art Is an Explosion! | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70248 Art Is an Explosion! | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70248 Art Is an Explosion! | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70248 Art Is an Explosion! | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70248 Art Is an Explosion! | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70248 Art Is an Explosion! | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70248 Art Is an Explosion! | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70248 Art Is an Explosion! | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70248 Art Is an Explosion! | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70248 Art Is an Explosion! | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70248 Art Is an Explosion! | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70248 Art Is an Explosion! | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70249 Craft, Craft, Fashion, Baby | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70249 Craft, Craft, Fashion, Baby | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70249 Craft, Craft, Fashion, Baby | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70249 Craft, Craft, Fashion, Baby | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70249 Craft, Craft, Fashion, Baby | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70249 Craft, Craft, Fashion, Baby | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70249 Craft, Craft, Fashion, Baby | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70249 Craft, Craft, Fashion, Baby | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70249 Craft, Craft, Fashion, Baby | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70249 Craft, Craft, Fashion, Baby | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70249 Craft, Craft, Fashion, Baby | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70249 Craft, Craft, Fashion, Baby | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70249 Craft, Craft, Fashion, Baby | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70249 Craft, Craft, Fashion, Baby | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70249 Craft, Craft, Fashion, Baby | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70249 Craft, Craft, Fashion, Baby | 38952 Loporrit Carat | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
 | 70260 I Am the Sunshine | 39245 Phoenix Riser Helmet | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 70260 I Am the Sunshine | 39246 Phoenix Riser Suit | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 70266 An Original Improvement | 38809 Splendorous Coffer | ItemUICategory Miscellany |
@@ -1452,15 +2563,303 @@ Untradable, non-marketable item rewards that are nevertheless not quest-only col
 | 70857 Dressed to Protect | 47926 Maritime Shorts | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 70857 Dressed to Protect | 47927 Maritime Sandals | sold by a gil shop that is not a quest-reward reacquisition menu |
 | 70861 The Icing on the Cake | 47349 Rolanberry Valentione Cake | sold by a special shop |
+| 70872 Snow on the Mountain | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70872 Snow on the Mountain | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70872 Snow on the Mountain | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70872 Snow on the Mountain | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70872 Snow on the Mountain | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70872 Snow on the Mountain | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70872 Snow on the Mountain | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70872 Snow on the Mountain | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70872 Snow on the Mountain | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70872 Snow on the Mountain | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70872 Snow on the Mountain | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70872 Snow on the Mountain | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70872 Snow on the Mountain | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70872 Snow on the Mountain | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70872 Snow on the Mountain | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70872 Snow on the Mountain | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70873 A Work of Cart | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70873 A Work of Cart | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70873 A Work of Cart | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70873 A Work of Cart | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70873 A Work of Cart | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70873 A Work of Cart | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70873 A Work of Cart | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70873 A Work of Cart | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70873 A Work of Cart | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70873 A Work of Cart | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70873 A Work of Cart | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70873 A Work of Cart | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70873 A Work of Cart | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70873 A Work of Cart | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70873 A Work of Cart | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70873 A Work of Cart | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70874 Will Work for Supplies | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70874 Will Work for Supplies | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70874 Will Work for Supplies | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70874 Will Work for Supplies | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70874 Will Work for Supplies | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70874 Will Work for Supplies | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70874 Will Work for Supplies | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70874 Will Work for Supplies | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70874 Will Work for Supplies | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70874 Will Work for Supplies | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70874 Will Work for Supplies | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70874 Will Work for Supplies | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70874 Will Work for Supplies | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70874 Will Work for Supplies | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70874 Will Work for Supplies | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70874 Will Work for Supplies | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
 | 70875 Getting a Glow On | 46178 Yok Huy Ward | ItemUICategory Currency |
+| 70876 Hold My Hand Warmers | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70876 Hold My Hand Warmers | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70876 Hold My Hand Warmers | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70876 Hold My Hand Warmers | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70876 Hold My Hand Warmers | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70876 Hold My Hand Warmers | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70876 Hold My Hand Warmers | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70876 Hold My Hand Warmers | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70876 Hold My Hand Warmers | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70876 Hold My Hand Warmers | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70876 Hold My Hand Warmers | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70876 Hold My Hand Warmers | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70876 Hold My Hand Warmers | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70876 Hold My Hand Warmers | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70876 Hold My Hand Warmers | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70876 Hold My Hand Warmers | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70877 For a Goods Cause | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70877 For a Goods Cause | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70877 For a Goods Cause | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70877 For a Goods Cause | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70877 For a Goods Cause | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70877 For a Goods Cause | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70877 For a Goods Cause | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70877 For a Goods Cause | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70877 For a Goods Cause | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70877 For a Goods Cause | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70877 For a Goods Cause | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70877 For a Goods Cause | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70877 For a Goods Cause | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70877 For a Goods Cause | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70877 For a Goods Cause | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70877 For a Goods Cause | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70878 Happiness Is a Warm Poncho | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70878 Happiness Is a Warm Poncho | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70878 Happiness Is a Warm Poncho | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70878 Happiness Is a Warm Poncho | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70878 Happiness Is a Warm Poncho | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70878 Happiness Is a Warm Poncho | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70878 Happiness Is a Warm Poncho | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70878 Happiness Is a Warm Poncho | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70878 Happiness Is a Warm Poncho | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70878 Happiness Is a Warm Poncho | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70878 Happiness Is a Warm Poncho | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70878 Happiness Is a Warm Poncho | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70878 Happiness Is a Warm Poncho | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70878 Happiness Is a Warm Poncho | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70878 Happiness Is a Warm Poncho | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70878 Happiness Is a Warm Poncho | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
 | 70879 Worth Their Salt | 46178 Yok Huy Ward | ItemUICategory Currency |
+| 70880 Tradition for Trade | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70880 Tradition for Trade | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70880 Tradition for Trade | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70880 Tradition for Trade | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70880 Tradition for Trade | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70880 Tradition for Trade | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70880 Tradition for Trade | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70880 Tradition for Trade | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70880 Tradition for Trade | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70880 Tradition for Trade | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70880 Tradition for Trade | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70880 Tradition for Trade | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70880 Tradition for Trade | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70880 Tradition for Trade | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70880 Tradition for Trade | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70880 Tradition for Trade | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70881 A Few Tools Short of a Toolbox | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70881 A Few Tools Short of a Toolbox | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70881 A Few Tools Short of a Toolbox | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70881 A Few Tools Short of a Toolbox | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70881 A Few Tools Short of a Toolbox | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70881 A Few Tools Short of a Toolbox | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70881 A Few Tools Short of a Toolbox | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70881 A Few Tools Short of a Toolbox | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70881 A Few Tools Short of a Toolbox | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70881 A Few Tools Short of a Toolbox | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70881 A Few Tools Short of a Toolbox | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70881 A Few Tools Short of a Toolbox | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70881 A Few Tools Short of a Toolbox | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70881 A Few Tools Short of a Toolbox | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70881 A Few Tools Short of a Toolbox | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70881 A Few Tools Short of a Toolbox | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
 | 70882 Romanced by the Stone | 46178 Yok Huy Ward | ItemUICategory Currency |
+| 70883 Every Last Pebble | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70883 Every Last Pebble | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70883 Every Last Pebble | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70883 Every Last Pebble | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70883 Every Last Pebble | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70883 Every Last Pebble | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70883 Every Last Pebble | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70883 Every Last Pebble | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70883 Every Last Pebble | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70883 Every Last Pebble | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70883 Every Last Pebble | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70883 Every Last Pebble | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70883 Every Last Pebble | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70883 Every Last Pebble | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70883 Every Last Pebble | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70883 Every Last Pebble | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70884 Trail Fix | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70884 Trail Fix | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70884 Trail Fix | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70884 Trail Fix | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70884 Trail Fix | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70884 Trail Fix | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70884 Trail Fix | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70884 Trail Fix | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70884 Trail Fix | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70884 Trail Fix | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70884 Trail Fix | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70884 Trail Fix | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70884 Trail Fix | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70884 Trail Fix | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70884 Trail Fix | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70884 Trail Fix | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
 | 70885 Working Stew Hard | 46178 Yok Huy Ward | ItemUICategory Currency |
+| 70886 Snack in Hand | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70886 Snack in Hand | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70886 Snack in Hand | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70886 Snack in Hand | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70886 Snack in Hand | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70886 Snack in Hand | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70886 Snack in Hand | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70886 Snack in Hand | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70886 Snack in Hand | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70886 Snack in Hand | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70886 Snack in Hand | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70886 Snack in Hand | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70886 Snack in Hand | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70886 Snack in Hand | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70886 Snack in Hand | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70886 Snack in Hand | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
 | 70887 Seasoned Stories | 46178 Yok Huy Ward | ItemUICategory Currency |
+| 70888 Larder for the Long Term | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70888 Larder for the Long Term | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70888 Larder for the Long Term | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70888 Larder for the Long Term | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70888 Larder for the Long Term | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70888 Larder for the Long Term | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70888 Larder for the Long Term | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70888 Larder for the Long Term | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70888 Larder for the Long Term | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70888 Larder for the Long Term | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70888 Larder for the Long Term | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70888 Larder for the Long Term | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70888 Larder for the Long Term | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70888 Larder for the Long Term | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70888 Larder for the Long Term | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70888 Larder for the Long Term | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70889 Table for Too Few | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70889 Table for Too Few | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70889 Table for Too Few | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70889 Table for Too Few | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70889 Table for Too Few | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70889 Table for Too Few | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70889 Table for Too Few | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70889 Table for Too Few | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70889 Table for Too Few | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70889 Table for Too Few | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70889 Table for Too Few | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70889 Table for Too Few | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70889 Table for Too Few | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70889 Table for Too Few | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70889 Table for Too Few | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70889 Table for Too Few | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
 | 70890 I Want to Trade My Icicle | 46178 Yok Huy Ward | ItemUICategory Currency |
+| 70891 Larder Logistics | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70891 Larder Logistics | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70891 Larder Logistics | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70891 Larder Logistics | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70891 Larder Logistics | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70891 Larder Logistics | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70891 Larder Logistics | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70891 Larder Logistics | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70891 Larder Logistics | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70891 Larder Logistics | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70891 Larder Logistics | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70891 Larder Logistics | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70891 Larder Logistics | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70891 Larder Logistics | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70891 Larder Logistics | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70891 Larder Logistics | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
 | 70892 The Weight of Generosity | 46178 Yok Huy Ward | ItemUICategory Currency |
+| 70893 A Growing Field | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70893 A Growing Field | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70893 A Growing Field | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70893 A Growing Field | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70893 A Growing Field | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70893 A Growing Field | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70893 A Growing Field | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70893 A Growing Field | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70893 A Growing Field | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70893 A Growing Field | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70893 A Growing Field | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70893 A Growing Field | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70893 A Growing Field | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70893 A Growing Field | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70893 A Growing Field | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70893 A Growing Field | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
 | 70894 The Crystals' Favor | 46178 Yok Huy Ward | ItemUICategory Currency |
+| 70895 Big Mountain, Little Climbers | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70895 Big Mountain, Little Climbers | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70895 Big Mountain, Little Climbers | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70895 Big Mountain, Little Climbers | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70895 Big Mountain, Little Climbers | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70895 Big Mountain, Little Climbers | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70895 Big Mountain, Little Climbers | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70895 Big Mountain, Little Climbers | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70895 Big Mountain, Little Climbers | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70895 Big Mountain, Little Climbers | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70895 Big Mountain, Little Climbers | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70895 Big Mountain, Little Climbers | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70895 Big Mountain, Little Climbers | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70895 Big Mountain, Little Climbers | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70895 Big Mountain, Little Climbers | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70895 Big Mountain, Little Climbers | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
 | 70896 Scouring for Flowers | 46178 Yok Huy Ward | ItemUICategory Currency |
+| 70897 A Rock-solid Repair Job | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70897 A Rock-solid Repair Job | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70897 A Rock-solid Repair Job | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70897 A Rock-solid Repair Job | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70897 A Rock-solid Repair Job | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70897 A Rock-solid Repair Job | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70897 A Rock-solid Repair Job | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70897 A Rock-solid Repair Job | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70897 A Rock-solid Repair Job | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70897 A Rock-solid Repair Job | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70897 A Rock-solid Repair Job | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70897 A Rock-solid Repair Job | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70897 A Rock-solid Repair Job | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70897 A Rock-solid Repair Job | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70897 A Rock-solid Repair Job | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70897 A Rock-solid Repair Job | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70898 Mad about Brew | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70898 Mad about Brew | 8 Fire Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70898 Mad about Brew | 9 Ice Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70898 Mad about Brew | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70898 Mad about Brew | 10 Wind Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70898 Mad about Brew | 11 Earth Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70898 Mad about Brew | 12 Lightning Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70898 Mad about Brew | 13 Water Crystal | QuestClassJobReward item is not equipment (ItemUICategory Crystal) |
+| 70898 Mad about Brew | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70898 Mad about Brew | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70898 Mad about Brew | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70898 Mad about Brew | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70898 Mad about Brew | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70898 Mad about Brew | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70898 Mad about Brew | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
+| 70898 Mad about Brew | 46178 Yok Huy Ward | QuestClassJobReward item is not equipment (ItemUICategory Currency) |
 | 70899 A Feast of Indecision | 46178 Yok Huy Ward | ItemUICategory Currency |
 | 70941 Pilgrimage of Light | 47342 Luminous Oil | ItemUICategory Other |
 | 70961 Of Weeds and Whimsy | 50286 Party Eggy Eyeglasses | sold by a gil shop that is not a quest-reward reacquisition menu |

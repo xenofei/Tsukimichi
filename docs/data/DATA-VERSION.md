@@ -5,10 +5,10 @@ Written by `tools/regen.ps1`; do not edit by hand. The reports under `docs/data`
 | Field | Value |
 |---|---|
 | Game version | `2026.09.15.0000.0000` |
-| Generated (UTC) | `2026-09-30T18:24:29Z` |
+| Generated (UTC) | `2026-10-01T17:23:55Z` |
 | Curated revision | `42ba527` (last commit touching a data file under `Tsukimichi/Data/curated`) |
 | Catalog fixture | `catalog-2026.09.15.0000.0000.json.gz` |
-| unique_quests.json entries | 3198 across 1379 quests |
+| unique_quests.json entries | 2630 across 1301 quests |
 | feature_quests.json (derived) | 1722 quests |
 | quest_patches.json | 5373 of 5373 quests with a patch, newest 7.56 |
 | Online Store re-sells | 69 entries |
@@ -21,7 +21,7 @@ Written by `tools/regen.ps1`; do not edit by hand. The reports under `docs/data`
 | Achievement | 210 |
 | Action | 250 |
 | AetherCurrent | 151 |
-| ArtifactGear | 1175 |
+| ArtifactGear | 607 |
 | Barding | 6 |
 | BlueMageSpell | 16 |
 | ClassJob | 48 |
@@ -45,12 +45,10 @@ Written by `tools/regen.ps1`; do not edit by hand. The reports under `docs/data`
 
 | Source | Entries |
 |---|---:|
-| SpecialShop | 605 |
-| Tradable | 555 |
-| Marketable | 495 |
-| GatheringItem | 468 |
 | GilShopItem | 136 |
+| SpecialShop | 115 |
 | OnlineStore | 69 |
 | DungeonDrop | 44 |
-| Recipe | 22 |
+| Marketable | 5 |
+| Tradable | 5 |
 
