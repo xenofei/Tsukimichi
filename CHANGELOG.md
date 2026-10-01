@@ -4,6 +4,8 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+## [1.4.1] - 2026-10-01
+
 ### Fixed
 - Moonlit no longer lists crystals, Cordials and allied society currencies (Namazu Koban, Hammered Frogment, Loporrit Carat, Yok Huy Ward) as artifact gear: crafter and gatherer society quests pay them through the same per-job reward table the relic and tool lines use, and 568 such rows had slipped in. Only equipment is artifact gear now; the relic weapons and tools are unchanged.
 
