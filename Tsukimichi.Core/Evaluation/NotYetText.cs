@@ -261,6 +261,7 @@ public static class NotYetText
             GrandCompanyRequirement g => F("Core.NotYet.GrandCompany", "joining the {0}", names.GrandCompany(g.GrandCompany)),
             GrandCompanyRankRequirement g => F("Core.NotYet.GrandCompanyRank", "{0} (you're {1})", names.GrandCompanyRank(g.RequiredRank), names.GrandCompanyRank(g.ActualRank)),
             TribeRankRequirement t => TribeRank(t, names),
+            TribeReputationRequirement { MaxedRank: not 0 } t => F("Core.NotYet.MaxedReputation", "{0} reputation maxed ({1:N0}/{2:N0})", names.TribeRank(t.MaxedRank), t.ActualValue, t.RequiredValue),
             TribeReputationRequirement t => F("Core.NotYet.Reputation", "{0} more reputation", Math.Max(0, t.RequiredValue - t.ActualValue)),
             TribeAllowanceRequirement => T("Core.NotYet.Allowance", "an allowance (none left today)"),
             TribeDailyOfferRequirement => T("Core.NotYet.NotOffered", "today's offer"),
@@ -376,6 +377,7 @@ public static class NotYetText
         LevelRequirement l => new RequirementGap(l.ActualLevel, l.Level),
         GrandCompanyRankRequirement g => new RequirementGap(g.ActualRank, g.RequiredRank),
         TribeRankRequirement t => new RequirementGap(t.ActualRank, t.RequiredRank),
+        TribeReputationRequirement { NotChecked: true } => null,
         TribeReputationRequirement t => new RequirementGap(t.ActualValue, t.RequiredValue),
         CustomDeliveryRankRequirement { ActualRank: { } actual } c => new RequirementGap(actual, c.RequiredRank),
         CarrierLevelRequirement { ActualLevel: { } actual } c => new RequirementGap(actual, c.RequiredLevel),
@@ -394,6 +396,8 @@ public static class NotYetText
         {
             TribeRankRequirement t => Arrow(names.TribeRank(t.ActualRank), names.TribeRank(t.RequiredRank)),
             GrandCompanyRankRequirement g => Arrow(names.GrandCompanyRank(g.ActualRank), names.GrandCompanyRank(g.RequiredRank)),
+            TribeReputationRequirement { MaxedRank: not 0, NotChecked: false } t =>
+                F("Core.Gap.RankReputation", "{0} {1:N0}/{2:N0} reputation", names.TribeRank(t.MaxedRank), t.ActualValue, t.RequiredValue),
             _ => Gap(requirement) is { } gap
                 ? Arrow(gap.Current.ToString(CultureInfo.CurrentCulture), gap.Required.ToString(CultureInfo.CurrentCulture))
                 : null,

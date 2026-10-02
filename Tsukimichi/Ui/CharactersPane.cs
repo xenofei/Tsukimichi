@@ -161,6 +161,9 @@ public sealed partial class CharactersPane
     private readonly Dictionary<ulong, (DateTime Taken, CatalogBundle Bundle, ServerFestivals? Live, Task<IReadOnlyDictionary<uint, QuestEvaluation>> Task)> compareResolving = [];
     private UniqueRewardCatalog? fallbackRewards;
 
+    // The reset cycle compareStates was resolved in (GameResets.Cycle); a reset passing clears it.
+    private (DateTime Daily, DateTime Weekly) compareCycle;
+
     private string? toast;
     private DateTime toastUntilUtc;
     private string forgetQuestion = string.Empty;
@@ -1700,6 +1703,15 @@ public sealed partial class CharactersPane
             return session.LiveStates;
         }
 
+        // A daily or weekly reset since the comparisons were resolved opens what the stored characters did before it.
+        var cycle = GameResets.Cycle(DateTime.UtcNow);
+        if (cycle != compareCycle)
+        {
+            compareCycle = cycle;
+            compareStates.Clear();
+            compareResolving.Clear();
+        }
+
         // Festivals run server-wide: while someone is logged in the live flags decide for every stored character, so a
         // change of them (a login, a logout, an event starting) resolves the other character again.
         var live = session.LiveSnapshot is { } liveSnapshot ? ServerFestivals.Of(liveSnapshot) : null;
@@ -1801,10 +1813,15 @@ public sealed partial class CharactersPane
     /// <summary>
     /// The context another stored character is resolved with: the session's, with the festivals running on the server
     /// for that character (<see cref="ServerFestivals.For"/>: the live flags while someone is logged in, else its own
-    /// less the stale ones) instead of the viewed character's.
+    /// less the stale ones) instead of the viewed character's. The daily offer (the live character's) is left out, and
+    /// the stored character's dailies and weeklies from before the last reset read as cleared (<see cref="EvalContext.CycleClock"/>).
     /// </summary>
     private EvalContext ContextFor(CharacterSnapshot snapshot) =>
-        session.Context with { ServerFestivals = ServerFestivals.For(snapshot, session.LiveSnapshot, session.Curated.Festivals, DateTime.UtcNow) };
+        session.Context.WithDailyOffer(null) with
+        {
+            ServerFestivals = ServerFestivals.For(snapshot, session.LiveSnapshot, session.Curated.Festivals, DateTime.UtcNow),
+            CycleClock = SessionState.StoredCycleClock,
+        };
 
     /// <summary>The Moonlit pane's merged catalog when attached; otherwise the shipped data and curated files, built once.</summary>
     private UniqueRewardCatalog RewardsCatalog()

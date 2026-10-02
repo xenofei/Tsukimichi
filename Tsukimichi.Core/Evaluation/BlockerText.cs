@@ -228,6 +228,9 @@ public static class BlockerText
             TribeRankRequirement t => names.Tribe(t.Tribe) is { Length: > 0 } tribe
                 ? F("Core.Blocker.TribeRankWith", "Rank: {0} with the {1}", names.TribeRank(t.RequiredRank), tribe)
                 : F("Core.Blocker.TribeRank", "Rank: {0}", names.TribeRank(t.RequiredRank)),
+            TribeReputationRequirement { MaxedRank: not 0 } t => names.Tribe(t.Tribe) is { Length: > 0 } tribe
+                ? F("Core.Blocker.MaxedReputationWith", "Reputation: {0} {1:N0}/{2:N0} with the {3}", names.TribeRank(t.MaxedRank), t.ActualValue, t.RequiredValue, tribe)
+                : F("Core.Blocker.MaxedReputation", "Reputation: {0} {1:N0}/{2:N0}", names.TribeRank(t.MaxedRank), t.ActualValue, t.RequiredValue),
             TribeReputationRequirement t => names.Tribe(t.Tribe) is { Length: > 0 } tribe
                 ? F("Core.Blocker.ReputationWith", "Reputation: {0} more with the {1}", Math.Max(0, t.RequiredValue - t.ActualValue), tribe)
                 : F("Core.Blocker.Reputation", "Reputation: {0} more", Math.Max(0, t.RequiredValue - t.ActualValue)),

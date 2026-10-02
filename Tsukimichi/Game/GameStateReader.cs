@@ -35,6 +35,12 @@ public sealed class GameStateReader
     /// <summary>Prefix of the log line comparing the three festival arrays the client keeps (see <see cref="LogFestivalProbe"/>).</summary>
     public const string FestivalProbePrefix = "[festival probe]";
 
+    /// <summary>
+    /// QuestRepeatFlag rows (0 to 15): <c>QuestManager.QuestRepeatFlags</c> is two bytes, one bit per row. Row 0 is
+    /// "no flag".
+    /// </summary>
+    public const int RepeatFlagRows = 16;
+
     /// <summary>Grand Companies (Maelstrom, Twin Adder, Immortal Flames); ids are 1-based.</summary>
     private const int GrandCompanyCount = 3;
 
@@ -51,6 +57,7 @@ public sealed class GameStateReader
     private bool measured;
     private bool festivalsWarned;
     private bool satisfactionWarned;
+    private bool repeatFlagsWarned;
     private bool outOfRangeLogged;
     private ulong festivalProbeContentId;
     private IReadOnlyList<ushort> festivalProbeIds = [];
@@ -200,6 +207,8 @@ public sealed class GameStateReader
             }
         }
 
+        var repeatFlags = ReadRepeatFlags(qm);
+
         // Unsynced levels per ClassJob row id.
         var levels = ps->ClassJobLevels;
         var jobLevels = new Dictionary<byte, short>();
@@ -290,6 +299,7 @@ public sealed class GameStateReader
             CompletedBits = completedBits,
             Accepted = accepted,
             DailyDone = dailyDone,
+            RepeatFlags = repeatFlags,
             JobLevels = jobLevels,
             GrandCompany = grandCompany,
             GcRanks = gcRanks,
@@ -330,6 +340,37 @@ public sealed class GameStateReader
 
     /// <summary>What changed between two captures; see <see cref="SnapshotDiff.Compute"/>.</summary>
     public static SnapshotDiff Diff(CharacterSnapshot old, CharacterSnapshot @new) => SnapshotDiff.Compute(old, @new);
+
+    /// <summary>
+    /// The QuestRepeatFlag rows the client has set, ascending, through the game's own
+    /// <c>QuestManager.IsQuestRepeatFlagSet</c> (rows 1 to <see cref="RepeatFlagRows"/> - 1; 0 is "no flag"). A
+    /// repeatable carrying a set flag (<see cref="QuestRecord.RepeatFlag"/>) was turned in this cycle; the game clears
+    /// it at that quest's daily or weekly reset. Empty, logged once, when the function did not resolve.
+    /// </summary>
+    private unsafe List<byte> ReadRepeatFlags(QuestManager* qm)
+    {
+        var flags = new List<byte>();
+        if (QuestManager.Addresses.IsQuestRepeatFlagSet.Value == 0)
+        {
+            if (!repeatFlagsWarned)
+            {
+                repeatFlagsWarned = true;
+                log.Warning("QuestManager.IsQuestRepeatFlagSet did not resolve; repeat-flag quests will not read done this cycle");
+            }
+
+            return flags;
+        }
+
+        for (byte flag = 1; flag < RepeatFlagRows; flag++)
+        {
+            if (qm->IsQuestRepeatFlagSet(flag))
+            {
+                flags.Add(flag);
+            }
+        }
+
+        return flags;
+    }
 
     /// <summary>
     /// Running festivals as (id, phase) pairs from <c>GameMain.ActiveFestivals</c> (8 slots of

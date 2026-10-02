@@ -60,6 +60,15 @@ public sealed record CharacterSnapshot
     /// <summary>Repeatable quests done this cycle: quest id to the flag byte from the client.</summary>
     public IReadOnlyDictionary<ushort, byte> DailyDone { get; init; } = new Dictionary<ushort, byte>();
 
+    /// <summary>
+    /// The QuestRepeatFlag rows the client has set (<c>QuestManager.IsQuestRepeatFlagSet</c>), ascending: a repeatable
+    /// that carries one (<see cref="QuestRecord.RepeatFlag"/>) was turned in this cycle, and the game clears the flag
+    /// at the quest's daily or weekly reset. Additive at schema v1: empty in files written before it was read, which
+    /// reads as no flag set (the behaviour of those builds). Not written while empty.
+    /// </summary>
+    [OmitWhenEmpty]
+    public IReadOnlyList<byte> RepeatFlags { get; init; } = [];
+
     /// <summary>Unsynced level per ClassJob row id.</summary>
     public IReadOnlyDictionary<byte, short> JobLevels { get; init; } = new Dictionary<byte, short>();
 
@@ -114,6 +123,35 @@ public sealed record CharacterSnapshot
     {
         var index = questId >> 3;
         return index < CompletedBits.Length && (CompletedBits[index] & (1 << (questId & 7))) != 0;
+    }
+
+    /// <summary>Whether the client had QuestRepeatFlag row <paramref name="flag"/> set; false for 0 and for a flag not captured.</summary>
+    public bool IsRepeatFlagSet(byte flag)
+    {
+        if (flag == 0)
+        {
+            return false;
+        }
+
+        foreach (var set in RepeatFlags)
+        {
+            if (set == flag)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// A repeatable turned in this cycle by the client's cycle data: its allied society daily slot reads completed
+    /// (<see cref="DailyDone"/>), or the repeat flag it carries is set (<see cref="RepeatFlags"/>).
+    /// </summary>
+    public bool IsDoneThisCycle(QuestRecord quest)
+    {
+        ArgumentNullException.ThrowIfNull(quest);
+        return DailyDone.ContainsKey(quest.QuestId) || IsRepeatFlagSet(quest.RepeatFlag);
     }
 
     /// <summary>The phase of a running festival, or null when it is not running or its phase was not captured.</summary>

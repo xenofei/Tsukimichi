@@ -66,6 +66,24 @@ public sealed record QuestRecord
     public byte BeastRank { get; init; }
     public ushort BeastValue { get; init; }
 
+    /// <summary>
+    /// The quest needs the reputation of its rank (<see cref="BeastRank"/>) maxed: the sheet's
+    /// <c>Quest.BeastReputationValue</c> holds 65535 rather than a number. Set on every allied society story quest,
+    /// the rank-up quests among them (69434 "I Heard You Like Tanks" needs Trusted maxed and makes the dwarves
+    /// Respected); never on a daily, nor on the Qitari stela choices (which hold 0). The amount is
+    /// <c>BeastReputationRank.RequiredReputation</c> of that rank (<see cref="Evaluation.TribeRanks.MaxReputation"/>);
+    /// a rank-0 story opener needs none.
+    /// </summary>
+    public bool BeastReputationMaxed { get; init; }
+
+    /// <summary>
+    /// <c>Quest.QuestRepeatFlag</c>: the QuestRepeatFlag row (1 to 15) the client sets when this repeatable is turned
+    /// in and clears at its reset (<c>QuestManager.IsQuestRepeatFlagSet</c>); 0 for every other quest. Twelve quests
+    /// carry one: the Gift of Joy dailies and a few other dailies, and six weeklies (One Man's Relic, Seeking
+    /// Inspiration, A Ruined Opportunity, and the three Komra weeklies, which share flag 12: one turn-in a week among them).
+    /// </summary>
+    public byte RepeatFlag { get; init; }
+
     public bool IsRepeatable { get; init; }
     public byte RepeatInterval { get; init; }
     public byte DailyPool { get; init; }

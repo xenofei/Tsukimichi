@@ -96,6 +96,7 @@ public sealed class Plugin : IDalamudPlugin
     private Core.Ui.BannerIndexSource<Core.Unique.DutyUnlockIndex>? banners;
     private DutyFinderPanel? dutyFinderPanel;
     private Game.HookGateNotice? hookGateNotice;
+    private Game.DailyOfferReader? dailyOffers;
     private Game.TodoLockNotice? todoLockNotice;
     private Game.WelcomeBackSource? welcomeBack;
     private Game.IpcProvider? ipcProvider;
@@ -365,7 +366,12 @@ public sealed class Plugin : IDalamudPlugin
 
         Session.Writer = Writer;
         Framework.Update += DrainWriter;
+        // A stored character on view reads its dailies and weeklies cleared once the reset passes (one compare a frame).
+        Framework.Update += WatchResets;
         Poller = new Game.StatePoller(Framework, ClientState, Log, reader, Snapshots, Session, Settings, Writer);
+        // Today's allied society offer from the game's own calculation; it waits for the hook gate (set with the UI).
+        dailyOffers = new Game.DailyOfferReader(Log);
+        Poller.DailyOffers = dailyOffers;
         // Multibox (D11): heartbeats and other game clients' saves, through the shared config folder only.
         Multibox = new Game.MultiboxService(Framework, Log, Session, Snapshots, Paths);
 
@@ -514,6 +520,18 @@ public sealed class Plugin : IDalamudPlugin
         }
     }
 
+    private void WatchResets(IFramework _)
+    {
+        try
+        {
+            Session?.WatchResets(DateTime.UtcNow);
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "Re-reading the stored character after the reset failed");
+        }
+    }
+
     private void PersistViewedCharacter()
     {
         var explicitId = Session.IsFollowingLive ? null : Session.ViewedContentId;
@@ -546,6 +564,7 @@ public sealed class Plugin : IDalamudPlugin
                 Session.DataDeleted -= ClearPayoffGates;
             }
         });
+        Unwind("reset watch", () => Framework.Update -= WatchResets);
         Unwind("state poller", () => Poller?.Dispose());
         // The last saves (the poller's, the pins the query runner queued) land before the heartbeat goes.
         Unwind("save writer", () =>
@@ -665,6 +684,12 @@ public sealed class Plugin : IDalamudPlugin
             var clientGameVersion = Game.DiagnosticBuilder.ReadClientGameVersion(DataManager, Log);
             var gate = new Core.Runtime.HookGate(Game.DiagnosticBuilder.TestedGameVersionText(), clientGameVersion, Settings.EnableHooksOnUntestedVersion);
             hookGateNotice = new Game.HookGateNotice(gate, ClientState, ChatGui, Log, () => Game.DiagnosticBuilder.ReadClientGameVersion(DataManager, Log));
+            // The daily offer calls a game function, so it follows the same kill switch as the hooks.
+            if (dailyOffers is not null)
+            {
+                dailyOffers.Gate = gate;
+            }
+
             hoverHint = new HoverHint(GameGui, Session, unlockReader, rewardLookup, gate, Log) { Enabled = Settings.ItemHintsEnabled };
             PluginInterface.UiBuilder.Draw += hoverHint.Draw;
             itemHooks = new Game.ItemHooks(ContextMenu, rewardLookup, quest =>
