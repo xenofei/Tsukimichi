@@ -122,6 +122,14 @@ public sealed partial class SessionState
 
         Bump();
 
+        // A daily or weekly reset passed while it resolved (WatchResets leaves a character still being opened alone):
+        // what landed reads the cycle before it, so it is resolved again at once.
+        if (GameResets.PassedBetween(done.StartedUtc, DateTime.UtcNow))
+        {
+            StartView(done.ContentId, bundle, view.Snapshot, refresh: true);
+            return;
+        }
+
         // The live character's festivals may have moved while it resolved.
         RefreshStoredFestivals();
     }
@@ -200,8 +208,9 @@ public sealed partial class SessionState
         var live = liveSnapshot;
         var festivals = Curated.Festivals;
         var dir = paths.CharactersDir;
+        var started = DateTime.UtcNow;
         var task = Task.Run(() => ResolveView(store, contentId, known, bundle, context, live, festivals, dir, sidecars: !refresh));
-        pendingView = new PendingView(contentId, bundle, known, refresh, task);
+        pendingView = new PendingView(contentId, bundle, known, refresh, task, started);
     }
 
     /// <summary>Forgets the view request in flight; its worker finishes on its own and its result is ignored.</summary>
@@ -273,8 +282,11 @@ public sealed partial class SessionState
         }
     }
 
-    /// <summary>A view request on a worker. <paramref name="Refresh"/> re-resolves the capture on view (<paramref name="Known"/>).</summary>
-    private sealed record PendingView(ulong ContentId, CatalogBundle Bundle, CharacterSnapshot? Known, bool Refresh, Task<StoredView?> Task);
+    /// <summary>
+    /// A view request on a worker. <paramref name="Refresh"/> re-resolves the capture on view (<paramref name="Known"/>);
+    /// <paramref name="StartedUtc"/> is when it was asked for, so a reset passing before it lands is noticed.
+    /// </summary>
+    private sealed record PendingView(ulong ContentId, CatalogBundle Bundle, CharacterSnapshot? Known, bool Refresh, Task<StoredView?> Task, DateTime StartedUtc);
 
     private sealed record ViewHint(CharacterSnapshot Viewed, CharacterSnapshot? Live);
 }

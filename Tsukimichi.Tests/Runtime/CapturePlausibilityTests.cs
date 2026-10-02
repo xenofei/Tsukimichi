@@ -200,6 +200,38 @@ public sealed class CapturePlausibilityTests
     }
 
     [Fact]
+    public void An_accepted_loss_stays_accepted_until_it_is_committed()
+    {
+        var t0 = new DateTime(2026, 10, 1, 12, 0, 0, DateTimeKind.Utc);
+        var last = With(OneOff);
+        var lossy = With(OneOff.Skip(100));
+        var result = CapturePlausibility.Check(last, lossy, Catalog);
+        var held = new HeldBackCaptures();
+        held.Observe(last, lossy, result, t0);
+        held.Observe(last, lossy, result, t0.AddMinutes(1));
+        Assert.True(held.Observe(last, lossy, result, t0 + HeldBackCaptures.AcceptAfter));
+        Assert.True(held.Accepted);
+        Assert.Equal(t0, held.SinceUtc);
+
+        // The deferred pass that was to commit it was dropped at logout: the logout's own capture of the same loss is
+        // taken in at once, not held back for another few minutes.
+        Assert.True(held.Observe(last, lossy, result, t0 + HeldBackCaptures.AcceptAfter + TimeSpan.FromSeconds(1)));
+
+        // Committed: the watch ends, and a later loss starts from scratch.
+        held.Reset();
+        Assert.False(held.Accepted);
+        Assert.False(held.Observe(last, lossy, result, t0.AddMinutes(10)));
+
+        // A different loss after an acceptance is a new watch.
+        var other = With(OneOff.Skip(200));
+        held.Observe(last, lossy, result, t0.AddMinutes(11));
+        held.Observe(last, lossy, result, t0.AddMinutes(13));
+        Assert.True(held.Accepted);
+        Assert.False(held.Observe(last, other, CapturePlausibility.Check(last, other, Catalog), t0.AddMinutes(14)));
+        Assert.False(held.Accepted);
+    }
+
+    [Fact]
     public void A_loss_that_changes_or_heals_starts_the_watch_over()
     {
         var t0 = new DateTime(2026, 10, 1, 12, 0, 0, DateTimeKind.Utc);

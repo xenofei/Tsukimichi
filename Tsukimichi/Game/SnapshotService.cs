@@ -31,7 +31,7 @@ public sealed class SnapshotService : IDisposable
     private readonly CancellationTokenSource lifetime = new();
     private readonly List<SnapshotSummary> characters = [];
 
-    /// <summary>Raises <see cref="CharactersChanged"/> and <see cref="LoggingOut"/> one listener at a time.</summary>
+    /// <summary>Raises <see cref="CharactersChanged"/>, <see cref="LoggingOut"/> and <see cref="Recorded"/> one listener at a time.</summary>
     private readonly ListenerIsolation listeners;
 
     /// <summary>Snapshots other game clients saved, as the multibox worker read them (D11); framework thread only.</summary>
@@ -92,6 +92,12 @@ public sealed class SnapshotService : IDisposable
 
     /// <summary>Raised from the Logout event, before <see cref="CharacterReady"/> turns false, for a last capture.</summary>
     public event Action? LoggingOut;
+
+    /// <summary>
+    /// Raised by <see cref="Record"/> with the content id: a snapshot this client wrote is on disk, so the file reads
+    /// again (multibox: a "not updating" mark on it goes, 1.8.0, R7 G).
+    /// </summary>
+    public event Action<ulong>? Recorded;
 
     /// <summary>
     /// Multibox (D11): whether this client may write a character's snapshot and sidecars. Set by the multibox service;
@@ -181,6 +187,7 @@ public sealed class SnapshotService : IDisposable
         characters.Add(Summarize(snapshot));
         SortCharacters();
         listeners.Raise(CharactersChanged);
+        listeners.Raise(Recorded, snapshot.ContentId);
     }
 
     public void Delete(ulong contentId)

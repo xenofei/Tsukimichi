@@ -58,30 +58,51 @@ public sealed partial class SessionState
 
     private static readonly IReadOnlyDictionary<ulong, SharedLoad> NoProblems = new Dictionary<ulong, SharedLoad>();
 
+    // Every unreadable file the worker reported, and the part the lists show (never the character logged in here).
     private IReadOnlyDictionary<ulong, SharedLoad> notUpdating = NoProblems;
+    private IReadOnlyDictionary<ulong, SharedLoad> notUpdatingShown = NoProblems;
 
     /// <summary>
     /// Characters whose file another game client saved and this client cannot read (1.8.0, R7 G): <see cref="SharedLoad.Newer"/>
     /// when a newer Tsukimichi wrote it, <see cref="SharedLoad.Invalid"/> when it does not parse. What is shown for them
-    /// is their last readable save, and it does not update until the file reads again; the lists say so.
+    /// is their last readable save, and it does not update until the file reads again; the lists say so. Never the
+    /// character logged in here, which shows live (<see cref="NotUpdatingSet.Shown"/>).
     /// </summary>
-    public IReadOnlyDictionary<ulong, SharedLoad> NotUpdating => notUpdating;
+    public IReadOnlyDictionary<ulong, SharedLoad> NotUpdating => notUpdatingShown;
 
     /// <summary>
-    /// The multibox worker's latest set of unreadable files; when it changed, the lists' badges rebuild
-    /// (<see cref="CharactersVersion"/>), and the dashboard only when the viewed character's own status moved.
+    /// The multibox worker's latest set of unreadable files; when what the lists show changed, their badges rebuild
+    /// (<see cref="CharactersVersion"/>), and the dashboard only when the viewed character's own status moved (in or
+    /// out of the set, or from one reason to the other).
     /// </summary>
     internal void SetNotUpdating(IReadOnlyDictionary<ulong, SharedLoad> problems)
     {
         ArgumentNullException.ThrowIfNull(problems);
-        if (problems.Count == notUpdating.Count && problems.All(p => notUpdating.TryGetValue(p.Key, out var was) && was == p.Value))
+        if (NotUpdatingSet.Same(problems, notUpdating))
         {
             return;
         }
 
-        var viewedBefore = ViewedContentId is { } before && notUpdating.ContainsKey(before);
         notUpdating = problems;
-        if (ViewedContentId is { } viewed && viewedBefore != problems.ContainsKey(viewed))
+        ShowNotUpdating(bumpViewed: true);
+    }
+
+    /// <summary>
+    /// Recomputes what <see cref="NotUpdating"/> shows (after the worker's set or the character logged in here changed);
+    /// bumps the lists when it moved, and the session when the viewed character's own status did, unless the caller
+    /// bumps it anyway (<paramref name="bumpViewed"/> false).
+    /// </summary>
+    private void ShowNotUpdating(bool bumpViewed)
+    {
+        var shown = NotUpdatingSet.Shown(notUpdating, LiveContentId);
+        var before = notUpdatingShown;
+        notUpdatingShown = shown;
+        if (NotUpdatingSet.Same(before, shown))
+        {
+            return;
+        }
+
+        if (bumpViewed && ViewedContentId is { } viewed && !NotUpdatingSet.SameFor(before, shown, viewed))
         {
             Bump();
         }

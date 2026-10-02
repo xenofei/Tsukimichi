@@ -206,7 +206,10 @@ public sealed class IpcProvider : IDisposable
     /// <summary>Pins or unpins a quest for one character (<c>QueryRunner.SetPin</c>); framework thread.</summary>
     public Func<ulong, uint, bool, bool>? SetPin { get; set; }
 
-    /// <summary>Moves whenever any pin changes (<c>QueryRunner.PinsVersion</c>); framework thread.</summary>
+    /// <summary>
+    /// Moves whenever any character's pins change (<c>QueryRunner.AllPinsVersion</c>), not only the viewed one's: the
+    /// logged-in character's pins change while an alt is on view too. Framework thread.
+    /// </summary>
     public Func<int>? PinsVersion { get; set; }
 
     public void Dispose()

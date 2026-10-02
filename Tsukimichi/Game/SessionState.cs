@@ -548,6 +548,7 @@ public sealed partial class SessionState
         liveContext = context with { ServerFestivals = ServerFestivals.Of(snapshot) };
         liveAcceptedSince = acceptedSince ?? liveAcceptedSince;
         liveAbandoned = abandoned ?? liveAbandoned;
+        var wasLive = LiveContentId;
         LiveContentId = snapshot.ContentId;
         // Another character without a logout gap in between: its Recent activity must not start with the previous one's.
         recentEvents.Follow(snapshot.ContentId);
@@ -565,6 +566,12 @@ public sealed partial class SessionState
         else
         {
             RefreshStoredFestivals();
+        }
+
+        if (wasLive != snapshot.ContentId)
+        {
+            // Logged in here: its file's "not updating" mark no longer shows (the bump below covers the dashboard).
+            ShowNotUpdating(bumpViewed: false);
         }
 
         Bump();
@@ -586,6 +593,7 @@ public sealed partial class SessionState
         liveAbandoned = NoAbandoned;
         recentEvents.Clear();
         RefreshStoredFestivals(force: true);
+        ShowNotUpdating(bumpViewed: false);
         Bump();
     }
 
@@ -633,7 +641,8 @@ public sealed partial class SessionState
         }
 
         // A stored character on view is resolved again on a worker; until it lands it keeps its states, and the bump
-        // below already moves the "resets in" texts.
+        // below already moves the "resets in" texts. A character still being opened is left alone: it notices the reset
+        // itself when it lands (TakePendingView) and is resolved again then.
         if (!IsLive && ViewedSnapshot is { } viewed && Bundle is { } bundle && pendingView is not { Refresh: false })
         {
             StartView(viewed.ContentId, bundle, viewed, refresh: true);
