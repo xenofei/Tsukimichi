@@ -87,6 +87,26 @@ public static class StoryRecap
     }
 
     /// <summary>
+    /// Whether the character has started <paramref name="chain"/>: some quest of it is completed, so its recap has
+    /// something to read (<c>/tsuki recap</c> says "You haven't started this story yet." otherwise, and the
+    /// Characters tab offers the recap only then).
+    /// </summary>
+    public static bool HasStarted(Chain chain, Func<uint, bool> isCompleted)
+    {
+        ArgumentNullException.ThrowIfNull(chain);
+        ArgumentNullException.ThrowIfNull(isCompleted);
+        foreach (var rowId in chain.RowIds)
+        {
+            if (isCompleted(rowId))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
     /// The recap as plain text for the clipboard: <paramref name="heading"/>, then each chapter's title and its entries
     /// as paragraphs, chapters apart by a blank line. A chapter without text keeps its title, so the story's order
     /// stays readable.

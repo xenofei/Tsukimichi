@@ -8080,6 +8080,9 @@
     <value>{0} is not part of a story chain; /tsuki recap with no name reads the main scenario.</value>
     <comment>{0} = the quest's name</comment>
   </data>
+  <data name="RecapNotStarted" xml:space="preserve">
+    <value>You haven't started this story yet.</value>
+  </data>
   <data name="CollectorCard" xml:space="preserve">
     <value>Story</value>
   </data>

@@ -865,7 +865,7 @@ public sealed partial class CharactersPane
             DrawJobIcon(row.IconId, iconSize, row.Name, row.Level);
             ImGui.TableNextColumn();
             Chrome.FitText(row.Name, row.IsRole ? Theme.U32(Theme.Dusk) : ImGui.GetColorU32(ImGuiCol.Text));
-            DrawQuestionableRowMenu(row.RowIds);
+            DrawRowMenu(ui, row.RowIds);
 
             ImGui.TableNextColumn();
             ImGui.TextUnformatted(row.Level);
@@ -953,7 +953,7 @@ public sealed partial class CharactersPane
 
             ImGui.TableNextColumn();
             Chrome.FitText(row.Name, ImGui.GetColorU32(ImGuiCol.Text));
-            DrawQuestionableRowMenu(row.RowIds);
+            DrawRowMenu(ui, row.RowIds, row.RecapQuest);
             ImGui.TableNextColumn();
             ImGui.TextUnformatted(row.Count);
             ImGui.TableNextColumn();
@@ -963,11 +963,14 @@ public sealed partial class CharactersPane
 
     /// <summary>
     /// The right-click menu on a ladder's or a chain's name (feature plan v5, 1.6.0): "Send to Questionable" with the
-    /// row's quests in their order (done ones left out when sent).
+    /// row's quests in their order (done ones left out when sent), and for a story chain the character has started,
+    /// "Read the story so far" (the story recap, 1.9.0).
     /// </summary>
-    private void DrawQuestionableRowMenu(IReadOnlyList<uint> rowIds)
+    /// <param name="recapQuest">A quest naming the chain for the recap (<see cref="RecapRequest.ChainQuestRowId"/>); 0 offers none.</param>
+    private void DrawRowMenu(UiState ui, IReadOnlyList<uint> rowIds, uint recapQuest = 0)
     {
-        if (Questionable is not { } questionable || rowIds.Count == 0)
+        var questionable = rowIds.Count > 0 ? Questionable : null;
+        if (questionable is null && recapQuest == 0)
         {
             return;
         }
@@ -979,7 +982,19 @@ public sealed partial class CharactersPane
         }
 
         UiMetrics.ApplyFontScale();
-        questionable.DrawSubmenu(MainWindow.QuestionableHost, Strings.QuestionableSendButton, rowIds, static rows => rows);
+        questionable?.DrawSubmenu(MainWindow.QuestionableHost, Strings.QuestionableSendButton, rowIds, static rows => rows);
+        if (recapQuest != 0)
+        {
+            if (ImGui.MenuItem(Strings.RecapReadChain))
+            {
+                ui.OpenRecap(new RecapRequest(recapQuest));
+            }
+
+            if (ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(Strings.RecapReadChainTooltip);
+            }
+        }
     }
 
     /// <summary>A clickable "next" cell: the text in Moon when the quest is open now, Dusk otherwise; null quest means finished.</summary>
@@ -2372,7 +2387,7 @@ public sealed partial class CharactersPane
     {
         var bundle = session.Bundle;
         var minute = DateTime.UtcNow.Ticks / TimeSpan.TicksPerMinute;
-        var key = new DashboardKey(session.Version, snapshot.ContentId, session.IsLive, minute, MoonlitCounts is not null, Pins?.PinsVersion ?? -1);
+        var key = new DashboardKey(session.Version, snapshot.ContentId, session.IsLive, minute, MoonlitCounts is not null, Pins?.PinsVersion ?? -1, settings.FreeTrialView);
         var icons = session.NodeIcons;
         if (dashboard is { } current && key == dashboardKey && ReferenceEquals(current.Snapshot, snapshot) && ReferenceEquals(current.Bundle, bundle)
             && ReferenceEquals(dashboardIcons, icons))
@@ -2619,11 +2634,36 @@ public sealed partial class CharactersPane
                 string.Format(CultureInfo.CurrentCulture, Strings.JobsChainCountFormat, progress.Done, progress.Total),
                 next,
                 next is null ? Strings.JobsChainComplete : string.Format(CultureInfo.CurrentCulture, Strings.JobsChainNextFormat, session.Spoilers.DisplayName(next)),
-                chain.RowIds);
+                chain.RowIds)
+            {
+                RecapQuest = RecapQuestOf(chains, chain, states),
+            };
             (progress.Done > 0 ? started : notStarted).Add(row);
         }
 
         return (started.ToArray(), notStarted.ToArray());
+    }
+
+    /// <summary>
+    /// A quest that names <paramref name="chain"/> for the story recap (one <see cref="ChainCatalog.ForQuest"/> maps
+    /// back to it), once the character has completed some quest of it; 0 otherwise, and the row offers no recap.
+    /// </summary>
+    private static uint RecapQuestOf(ChainCatalog chains, Chain chain, IReadOnlyDictionary<uint, QuestEvaluation> states)
+    {
+        if (!StoryRecap.HasStarted(chain, rowId => states.TryGetValue(rowId, out var evaluation) && evaluation.State == QuestState.Completed))
+        {
+            return 0;
+        }
+
+        foreach (var rowId in chain.RowIds)
+        {
+            if (ReferenceEquals(chains.ForQuest(rowId), chain))
+            {
+                return rowId;
+            }
+        }
+
+        return 0;
     }
 
     /// <summary>"MSQ: &lt;expansion&gt; · next: &lt;quest&gt; (&lt;NPC&gt;, &lt;zone&gt;)" for the viewed character; empty without evaluations.</summary>
@@ -2714,7 +2754,8 @@ public sealed partial class CharactersPane
         TreeCounts counts;
         try
         {
-            counts = TreeCounts.Compute(bundle.Catalog, session.States, includeUnlisted: false);
+            // The free-trial view (1.9.0) counts as the Journal tree does: what the trial does not include is not left to do.
+            counts = TreeCounts.Compute(bundle.Catalog, session.States, includeUnlisted: false, settings.FreeTrialView ? FreeTrial.IsBeyond : null);
         }
         catch (Exception ex)
         {
@@ -3033,7 +3074,7 @@ public sealed partial class CharactersPane
 
     private readonly record struct ListKey(int Version, int Roster, long Minute, bool ShowHidden, bool ByDataCenter, string Search);
 
-    private readonly record struct DashboardKey(int Version, ulong ContentId, bool Live, long Minute, bool HasMoonlit, int PinsVersion);
+    private readonly record struct DashboardKey(int Version, ulong ContentId, bool Live, long Minute, bool HasMoonlit, int PinsVersion, bool FreeTrial);
 
     /// <param name="Icon">The section's official icon (or glyph) inside its ring; the crest glyph for All quests.</param>
     private sealed record SectionRow(string Name, string Count, string Percent, float Fraction, bool Overall, NodeIcon Icon)
@@ -3062,7 +3103,11 @@ public sealed partial class CharactersPane
     /// <summary>A job's (or a role's) ladder: icon and level are empty for role rows; <paramref name="Next"/> is null once finished.</summary>
     private sealed record LadderRow(uint IconId, string Name, string Level, bool IsRole, float Fraction, string Count, QuestRecord? Next, string NextText, bool Ready, IReadOnlyList<uint> RowIds);
 
-    private sealed record ChainRow(string Name, float Fraction, string Count, QuestRecord? Next, string NextText, IReadOnlyList<uint> RowIds);
+    private sealed record ChainRow(string Name, float Fraction, string Count, QuestRecord? Next, string NextText, IReadOnlyList<uint> RowIds)
+    {
+        /// <summary>A quest naming the chain for "Read the story so far" in the row's menu; 0 while nothing of it is done.</summary>
+        public uint RecapQuest { get; init; }
+    }
 
     // ---- Compare with (V2-12) ----
 

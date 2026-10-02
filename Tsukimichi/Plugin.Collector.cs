@@ -18,7 +18,7 @@ public sealed partial class Plugin
     private void InitializeCollector(Game.RewardUnlockReader unlockReader)
     {
         // The story recap ("Previously…"): the Since you were away card, a chain quest's detail pane, the Characters
-        // tab's achievement rows and /tsuki recap ask UiState for it.
+        // tab's story chain rows and /tsuki recap ask UiState for it.
         var recap = new RecapWindow(Session, Settings, () => QuestText);
         recapWindow = recap;
         windowSystem.AddWindow(recap);

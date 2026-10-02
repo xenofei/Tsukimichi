@@ -80,6 +80,18 @@ public sealed class StoryRecapTests
         Assert.Equal([67001u, 67002u, 67003u], picked.Select(q => q.RowId));
     }
 
+    [Fact]
+    public void A_chain_is_started_once_any_of_its_quests_is_done()
+    {
+        var chain = ChainCatalog.Build(Catalog, CuratedData.Empty).ForQuest(67001);
+        Assert.NotNull(chain);
+
+        // The main scenario's quests are not this story's.
+        Assert.False(StoryRecap.HasStarted(chain, new HashSet<uint> { 66001, 66002 }.Contains));
+        Assert.True(StoryRecap.HasStarted(chain, new HashSet<uint> { 67003 }.Contains));
+        Assert.False(StoryRecap.HasStarted(chain, static _ => false));
+    }
+
     [Theory]
     [InlineData(1, 3)]
     [InlineData(10, 10)]

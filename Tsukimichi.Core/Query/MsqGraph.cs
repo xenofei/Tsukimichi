@@ -266,19 +266,7 @@ public sealed class MsqGraph
             return null;
         }
 
-        // Routed regions' join state, worked out once per call (none exist before 8.0 data).
-        Dictionary<MsqBranch, bool>? joinMet = null;
-        bool JoinMet(MsqBranch branch)
-        {
-            joinMet ??= [];
-            if (!joinMet.TryGetValue(branch, out var met))
-            {
-                joinMet[branch] = met = IsJoinMet(branch, source);
-            }
-
-            return met;
-        }
-
+        var joins = Joins(source);
         QuestRecord? first = null;
         var firstState = QuestState.Completed;
         var done = 0;
@@ -292,10 +280,7 @@ public sealed class MsqGraph
             }
 
             var state = source.StateOf(quest.RowId);
-            if (state != QuestState.Completed
-                && routedRoute.ContainsKey(quest.RowId)
-                && routedRegion[quest.RowId] is var region
-                && JoinMet(region))
+            if (state != QuestState.Completed && joins.IsLeftover(quest.RowId))
             {
                 // An optional leftover of a met join (another route of an Any join, or a quest the reconvergence
                 // quest did not need): the story has moved on without it.
@@ -314,7 +299,7 @@ public sealed class MsqGraph
             }
         }
 
-        if (first is null || routedRegion.GetValueOrDefault(first.RowId) is not { } branch || JoinMet(branch))
+        if (first is null || routedRegion.GetValueOrDefault(first.RowId) is not { } branch || joins.Met(branch))
         {
             return new MsqPosition(first, firstState, done, total);
         }
@@ -340,6 +325,44 @@ public sealed class MsqGraph
             Routes = routes,
             RoutesToJoin = RoutesToJoin(branch, routes),
         };
+    }
+
+    /// <summary>
+    /// The routed regions' join state over <paramref name="source"/>, worked out once per region: what
+    /// <see cref="Position{TSource}"/> leaves out of the story's count, for any other count of the story that must
+    /// agree with it (<see cref="MsqCatchUp"/>).
+    /// </summary>
+    internal JoinState<TSource> Joins<TSource>(TSource source)
+        where TSource : struct, IStateSource => new(this, source);
+
+    /// <summary>
+    /// The routed regions' join state over one state source (none exist before 8.0 data), each region's worked out on
+    /// first use (<see cref="IsJoinMet{TSource}"/>).
+    /// </summary>
+    internal sealed class JoinState<TSource>(MsqGraph graph, TSource source)
+        where TSource : struct, IStateSource
+    {
+        private Dictionary<MsqBranch, bool>? met;
+
+        /// <summary>Whether the region's join is met; see <see cref="IsJoinMet{TSource}"/>.</summary>
+        public bool Met(MsqBranch branch)
+        {
+            met ??= [];
+            if (!met.TryGetValue(branch, out var value))
+            {
+                met[branch] = value = IsJoinMet(branch, source);
+            }
+
+            return value;
+        }
+
+        /// <summary>
+        /// Whether a story quest lies on a route of a routed region whose join is met, so the story has moved on
+        /// without it when it is not completed: an optional leftover (another route of an Any join, or a quest the
+        /// reconvergence quest did not need).
+        /// </summary>
+        public bool IsLeftover(uint rowId) =>
+            graph.routedRoute.ContainsKey(rowId) && graph.routedRegion.TryGetValue(rowId, out var region) && Met(region);
     }
 
     /// <summary>One route's progress; see <see cref="MsqRouteProgress"/>.</summary>

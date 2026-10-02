@@ -92,6 +92,52 @@ public sealed class CollectorFilterTests
     }
 
     [Fact]
+    public void The_beyond_trial_group_holds_only_what_the_tree_counts_as_beyond()
+    {
+        // 70001 is done (it keeps its place and status), 70002 is locked out (it keeps "Locked out"): neither is left
+        // to do beyond the trial, so the group and the tree's tally hold neither.
+        var states = States(Catalog, QuestState.Blocked);
+        states[70001] = QuestState.Completed;
+        states[70002] = QuestState.Foreclosed;
+        var evaluations = Evaluations(states, new Dictionary<uint, string> { [70002] = "Locked out" });
+        var ctx = QueryContext.Empty with { FreeTrial = true };
+        var result = Run(Catalog, evaluations, ctx: ctx);
+        var counts = TreeCounts.Compute(Catalog, evaluations, includeUnlisted: false, FreeTrial.IsBeyond);
+
+        Assert.Equal(0, result.BeyondTrial);
+        Assert.Equal(0, counts.Overall.BeyondTrial);
+        Assert.Equal([65001u, 65002u, 65003u, 70001u, 70002u, 65004u, 65005u], RowIds(result));
+        Assert.DoesNotContain(result.Rows, row => row.Status == "Beyond your trial");
+        Assert.StartsWith("Locked out", result.Rows.Single(row => row.Quest.RowId == 70002).Status);
+
+        // One left to do: the group and the tally agree.
+        states[70001] = QuestState.Ready;
+        evaluations = Evaluations(states, new Dictionary<uint, string> { [70002] = "Locked out" });
+        result = Run(Catalog, evaluations, ctx: ctx);
+        counts = TreeCounts.Compute(Catalog, evaluations, includeUnlisted: false, FreeTrial.IsBeyond);
+        Assert.Equal(1, result.BeyondTrial);
+        Assert.Equal(1, counts.Overall.BeyondTrial);
+        Assert.Equal(70001u, result.Rows[^1].Quest.RowId);
+        Assert.Equal("Beyond your trial", result.Rows[^1].Status);
+    }
+
+    [Fact]
+    public void Once_only_story_leaves_out_quests_out_of_the_totals()
+    {
+        var chains = ChainCatalog.Build(Catalog, CuratedData.Empty);
+        var evaluations = Evaluations(States(Catalog, QuestState.Ready));
+
+        // 65001 is a spare alternative of a choice not made yet: the choice's other option stands for it.
+        evaluations[65001] = evaluations[65001] with { IsSpareAlternative = true };
+        var ctx = QueryContext.Empty with { NewGamePlus = Replayable, Chains = chains };
+        var result = Run(Catalog, evaluations, new FilterSet { OnceOnlyStory = true }, ctx: ctx);
+
+        Assert.Equal([65003u], RowIds(result));
+        Assert.False(NewGamePlus.IsOnceOnlyStoryLeft(Catalog.GetByRowId(65003)!, QuestState.Blocked, leavesTotals: true, Replayable, chains, null));
+        Assert.True(NewGamePlus.IsOnceOnlyStoryLeft(Catalog.GetByRowId(65003)!, QuestState.Blocked, leavesTotals: false, Replayable, chains, null));
+    }
+
+    [Fact]
     public void Once_only_story_keeps_the_open_story_quests_New_Game_plus_cannot_replay()
     {
         var chains = ChainCatalog.Build(Catalog, CuratedData.Empty);

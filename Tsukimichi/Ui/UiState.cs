@@ -326,7 +326,10 @@ public sealed class UiState
     /// <summary>Raised by <see cref="OpenRecap"/>; the plugin opens the story recap window on the request.</summary>
     public event Action<RecapRequest>? RecapRequested;
 
-    /// <summary>Opens the story recap ("Previously…", feature plan v5 collector extras) for the viewed character. Safe from inside a menu.</summary>
+    /// <summary>
+    /// Opens the story recap ("Previously…", feature plan v5 collector extras) for the viewed character, or the one the
+    /// request names. Safe from inside a menu.
+    /// </summary>
     public void OpenRecap(RecapRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -335,11 +338,15 @@ public sealed class UiState
 }
 
 /// <summary>
-/// What the story recap reads: the last few main scenario quests the viewed character completed
+/// What the story recap reads: the last few main scenario quests the character completed
 /// (<see cref="MainScenario"/>), or every completed quest of one chain, named by one of its quests.
 /// </summary>
 /// <param name="ChainQuestRowId">A quest of the chain to recap; 0 for the main scenario.</param>
-public sealed record RecapRequest(uint ChainQuestRowId)
+/// <param name="ContentId">
+/// The character whose story it is: the viewed or the logged-in one (the Since you were away card can speak for the
+/// logged-in character while a stored one is viewed); null reads the viewed character.
+/// </param>
+public sealed record RecapRequest(uint ChainQuestRowId, ulong? ContentId = null)
 {
     /// <summary>The main scenario's recap, as long as Settings › Display › Free trial and story recap says.</summary>
     public static readonly RecapRequest MainScenario = new(0u);

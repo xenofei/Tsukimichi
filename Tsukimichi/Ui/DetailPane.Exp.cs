@@ -41,7 +41,7 @@ public sealed partial class DetailPane
             return false;
         }
 
-        TextFlow.Wrapped(expLine);
+        TextFlow.Wrapped(expLine, RoomTo(cardRight));
         if (expTooltip.Length > 0 && ImGui.IsItemHovered())
         {
             UiMetrics.Tooltip(expTooltip);

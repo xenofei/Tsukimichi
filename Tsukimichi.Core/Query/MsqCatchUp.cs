@@ -108,11 +108,12 @@ public sealed record MsqCatchUpSummary(IReadOnlyList<CatchUpExpansion> Expansion
 /// The main scenario catch-up summary. Walks the story as <see cref="MsqGraph"/> does (sections 0 and 1 in journal
 /// order, removed quests left out) and counts every quest that is not completed, leaving out those that leave the
 /// totals (another city's or Grand Company's quests, a spare alternative) and, inside a routed branch region whose
-/// reconvergence quest is already open or done, the optional leftovers of the other routes, so the count equals the
+/// join is met (<see cref="MsqGraph.JoinState{TSource}.IsLeftover"/>, the position's own test), the optional leftovers
+/// of the other routes, so the count equals the
 /// position's <see cref="MsqPosition.Total"/> less its <see cref="MsqPosition.Done"/>. A quest's duties are the
 /// <see cref="QuestRecord.InstanceContentRequired"/> rows the character has not cleared
-/// (<see cref="CharacterSnapshot.UnlockedInstances"/>, as the evaluator reads them), the instance it opens
-/// (<see cref="RewardKind.Instance"/>) and, with a <see cref="CatchUpDutySource"/>, the duties it unlocks: the story's
+/// (<see cref="CharacterSnapshot.UnlockedInstances"/>, as the evaluator reads them; for an Any join, none once one is
+/// cleared and else one), the instance it opens (<see cref="RewardKind.Instance"/>) unless already cleared and, with a <see cref="CatchUpDutySource"/>, the duties it unlocks: the story's
 /// dungeons and trials, not done while the quest that opens them is not. Pure.
 /// </summary>
 public static class MsqCatchUp
@@ -133,6 +134,7 @@ public static class MsqCatchUp
         }
 
         var cleared = snapshot is null ? new HashSet<uint>() : new HashSet<uint>(snapshot.UnlockedInstances);
+        var joins = graph.Joins(new EvaluationSource(states));
         var parts = new SortedDictionary<byte, (int Quests, byte Min, byte Max, List<CatchUpDuty> Duties)>();
         foreach (var quest in graph.Story)
         {
@@ -142,11 +144,10 @@ public static class MsqCatchUp
                 continue;
             }
 
-            if (graph.RouteOf(quest.RowId) is not null
-                && graph.RoutedBranchOf(quest.RowId) is { } branch
-                && states.GetValueOrDefault(branch.Join.RowId)?.State is QuestState.Completed or QuestState.Accepted or QuestState.Ready or QuestState.ReadyOnOtherJob)
+            if (joins.IsLeftover(quest.RowId))
             {
-                // The story moved on past this region without this route's quest.
+                // The story moved on past this region without this route's quest; the same test as the position's,
+                // so the count here is its quests left.
                 continue;
             }
 
@@ -159,17 +160,11 @@ public static class MsqCatchUp
             part.Quests++;
             part.Min = Math.Min(part.Min, level);
             part.Max = Math.Max(part.Max, level);
-            foreach (var instance in quest.InstanceContentRequired)
-            {
-                if (instance != 0 && !cleared.Contains(instance))
-                {
-                    Add(part.Duties, new CatchUpDuty(duties?.ConditionOf?.Invoke(instance) ?? 0, instance));
-                }
-            }
-
+            AddRequired(part.Duties, quest, cleared, duties);
             foreach (var reward in quest.Rewards)
             {
-                if (reward.Kind == RewardKind.Instance && reward.Id != 0)
+                // An instance the character has cleared already (one opened elsewhere first) is not a duty left.
+                if (reward.Kind == RewardKind.Instance && reward.Id != 0 && !cleared.Contains(reward.Id))
                 {
                     Add(part.Duties, new CatchUpDuty(duties?.ConditionOf?.Invoke(reward.Id) ?? 0, reward.Id));
                 }
@@ -193,6 +188,31 @@ public static class MsqCatchUp
         }
 
         return new MsqCatchUpSummary(list);
+    }
+
+    /// <summary>
+    /// The duties <paramref name="quest"/> asks to have cleared that the character has not: each one not cleared for an
+    /// All join; for an Any join none once one is cleared, else the first, since clearing any one of them will do.
+    /// </summary>
+    private static void AddRequired(List<CatchUpDuty> list, QuestRecord quest, HashSet<uint> cleared, CatchUpDutySource? duties)
+    {
+        var any = quest.InstanceJoin == JoinKind.Any;
+        if (any && quest.InstanceContentRequired.Any(cleared.Contains))
+        {
+            return;
+        }
+
+        foreach (var instance in quest.InstanceContentRequired)
+        {
+            if (instance != 0 && !cleared.Contains(instance))
+            {
+                Add(list, new CatchUpDuty(duties?.ConditionOf?.Invoke(instance) ?? 0, instance));
+                if (any)
+                {
+                    return;
+                }
+            }
+        }
     }
 
     private static void Add(List<CatchUpDuty> duties, CatchUpDuty duty)

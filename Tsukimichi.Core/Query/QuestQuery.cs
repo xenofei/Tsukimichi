@@ -145,6 +145,9 @@ public static class QuestQuery
         var rows = new List<QuestRow>(candidates.Count);
         var totalInScope = 0;
         var otherPathsHidden = false;
+
+        // The free-trial view's "Beyond your trial" rows, by the rule TreeCounts counts them with (FreeTrial.IsLeftBeyond).
+        var beyondRows = ctx.FreeTrial ? new HashSet<uint>() : null;
         foreach (var quest in candidates)
         {
             if (quest.IsRemoved && !plan.IncludeUnlisted)
@@ -160,11 +163,17 @@ public static class QuestQuery
 
             totalInScope++;
             var state = source.StateOf(quest.RowId);
-            if (plan.Passes(quest, state, Filter.None))
+            if (plan.Passes(quest, state, Filter.None, source))
             {
-                // The free-trial view: a quest the trial does not include says so rather than naming its blocker.
-                var status = ctx.FreeTrial && state != QuestState.Completed && FreeTrial.IsBeyond(quest) ? BeyondTrialStatus : source.StatusOf(quest);
-                rows.Add(new QuestRow(quest, state, status));
+                // The free-trial view: a quest the trial does not include says so rather than naming its blocker; one
+                // done, Locked out (another path among them) or otherwise out of the totals keeps its own status.
+                var beyond = beyondRows is not null && FreeTrial.IsLeftBeyond(quest, source);
+                if (beyond)
+                {
+                    beyondRows!.Add(quest.RowId);
+                }
+
+                rows.Add(new QuestRow(quest, state, beyond ? BeyondTrialStatus : source.StatusOf(quest)));
             }
         }
 
@@ -207,13 +216,10 @@ public static class QuestQuery
         // The free-trial view folds what lies beyond the trial into one group after the rest, every other order kept;
         // the newest patch's quests all lie beyond it, so that group is not formed then.
         var beyondTrial = 0;
-        if (ctx.FreeTrial)
+        if (beyondRows is { Count: > 0 })
         {
-            sorted = Partition(sorted, static row => !FreeTrial.IsBeyond(row.Quest));
-            for (var i = sorted.Length - 1; i >= 0 && FreeTrial.IsBeyond(sorted[i].Quest); i--)
-            {
-                beyondTrial++;
-            }
+            sorted = Partition(sorted, row => !beyondRows.Contains(row.Quest.RowId));
+            beyondTrial = beyondRows.Count;
         }
 
         return new QueryResult(sorted, null, totalInScope, newCount) { BeyondTrial = beyondTrial };
@@ -411,7 +417,7 @@ public static class QuestQuery
                     continue;
                 }
 
-                if (plan.Passes(quest, source.StateOf(quest.RowId), filter))
+                if (plan.Passes(quest, source.StateOf(quest.RowId), filter, source))
                 {
                     (blamed ??= []).Add(filter == Filter.Preset ? FilterNames.PresetName(plan.Preset) : name);
                     break;
@@ -640,7 +646,8 @@ public static class QuestQuery
         };
 
         /// <summary>Every filter except <paramref name="skip"/>; the Unlisted rule is applied by the caller.</summary>
-        public bool Passes(QuestRecord quest, QuestState state, Filter skip)
+        public bool Passes<TSource>(QuestRecord quest, QuestState state, Filter skip, TSource source)
+            where TSource : struct, IStateSource
         {
             var categoryId = quest.Journal.CategoryId;
 
@@ -718,7 +725,8 @@ public static class QuestQuery
             }
 
             if (skip != Filter.OnceOnlyStory && filters.OnceOnlyStory
-                && (ctx.NewGamePlus is not { } replayable || !NewGamePlus.IsOnceOnlyStoryLeft(quest, state, replayable, ctx.Chains, ctx.Stories)))
+                && (ctx.NewGamePlus is not { } replayable
+                    || !NewGamePlus.IsOnceOnlyStoryLeft(quest, state, source.LeavesTotals(quest.RowId), replayable, ctx.Chains, ctx.Stories)))
             {
                 return false;
             }
