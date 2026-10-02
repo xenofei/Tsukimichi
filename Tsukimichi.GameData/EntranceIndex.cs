@@ -21,8 +21,12 @@ namespace Tsukimichi.GameData;
 /// leads into another interior (the Copied Factory into the Excavation Tunnels) takes that one's door. An interior
 /// with no exit in the data (a story area entered through the quest itself) takes the territory of the aetheryte its
 /// TerritoryType row names, unplaced unless a warp in there leads in.</para>
-/// Resolved lazily per territory and cached; a layout file that cannot be read counts as empty. Standalone (takes an
-/// <see cref="ExcelModule"/> and a layout reader) so tests can build it against game data without Dalamud.
+/// Resolved lazily per territory and cached; a layout file that cannot be read counts as empty, and a territory whose
+/// resolution throws counts as having no way in (logged once through <see cref="OnError"/>). <see cref="Warm"/> resolves
+/// a set of territories ahead, on a worker thread, so the draw thread never resolves many at once; meanwhile
+/// <see cref="Peek"/> answers only what is known without resolving, and <see cref="Revision"/> moves when a warm-up
+/// ends. Thread-safe. Standalone (takes an <see cref="ExcelModule"/> and a layout reader) so tests can build it against
+/// game data without Dalamud.
 /// </summary>
 public sealed class EntranceIndex
 {
@@ -51,9 +55,12 @@ public sealed class EntranceIndex
     private readonly Func<string, LgbFile?>? readLayout;
     private readonly Language language;
     private readonly AetheryteIndex aetherytes;
-    private readonly Dictionary<uint, InteriorEntrance?> cache = [];
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<uint, InteriorEntrance?> cache = new();
     private readonly Dictionary<uint, IReadOnlyList<Way>> warpsByTerritory = [];
     private readonly Lock gate = new();
+    private int revision;
+    private int warming;
+    private int errorLogged;
 
     private EntranceIndex(ExcelModule? excel, Func<string, LgbFile?>? readLayout, Language language, AetheryteIndex aetherytes)
     {
@@ -83,7 +90,22 @@ public sealed class EntranceIndex
     public bool IsInterior(uint territoryId) =>
         territoryId != 0 && !aetherytes.Reachable(territoryId) && TravelSpecials.Classify(territoryId) == TravelSpecial.None;
 
-    /// <summary>The way into <paramref name="territoryId"/>; null when it is no interior or the data names no outside for it.</summary>
+    /// <summary>
+    /// Called once, with the territory, for the first territory whose resolution threw (the plugin logs it); every
+    /// such territory reads as having no way in. Null logs nothing.
+    /// </summary>
+    public Action<Exception, uint>? OnError { get; set; }
+
+    /// <summary>Moves each time a <see cref="Warm"/> ends: answers <see cref="Peek"/> could not give before may be known now.</summary>
+    public int Revision => Volatile.Read(ref revision);
+
+    /// <summary>True while a <see cref="Warm"/> runs.</summary>
+    public bool Warming => Volatile.Read(ref warming) > 0;
+
+    /// <summary>
+    /// The way into <paramref name="territoryId"/>; null when it is no interior, the data names no outside for it, or
+    /// its resolution threw. Resolves it now when no answer is cached (may wait for a warm-up's current territory).
+    /// </summary>
     public InteriorEntrance? For(uint territoryId)
     {
         if (excel is null || !IsInterior(territoryId))
@@ -91,15 +113,78 @@ public sealed class EntranceIndex
             return null;
         }
 
+        if (cache.TryGetValue(territoryId, out var known))
+        {
+            return known;
+        }
+
         lock (gate)
         {
-            if (!cache.TryGetValue(territoryId, out var entrance))
+            if (cache.TryGetValue(territoryId, out var entrance))
             {
-                entrance = Resolve(territoryId, [territoryId]);
-                cache[territoryId] = entrance;
+                return entrance;
             }
 
+            try
+            {
+                entrance = Resolve(territoryId, [territoryId]);
+            }
+            catch (Exception ex)
+            {
+                // A sheet or layout this code does not expect: no way in for this one, the zone's aetheryte instead.
+                entrance = null;
+                if (Interlocked.Exchange(ref errorLogged, 1) == 0)
+                {
+                    OnError?.Invoke(ex, territoryId);
+                }
+            }
+
+            cache[territoryId] = entrance;
             return entrance;
+        }
+    }
+
+    /// <summary>
+    /// The answer <see cref="For"/> would give, when it is known without resolving anything (no interior, or resolved
+    /// already): true with <paramref name="entrance"/> set; false while the territory still waits to be resolved.
+    /// Never blocks.
+    /// </summary>
+    public bool Peek(uint territoryId, out InteriorEntrance? entrance)
+    {
+        if (excel is null || !IsInterior(territoryId))
+        {
+            entrance = null;
+            return true;
+        }
+
+        return cache.TryGetValue(territoryId, out entrance);
+    }
+
+    /// <summary>
+    /// Resolves each of <paramref name="territories"/> (the givers' territories) that is an interior, one at a time, so
+    /// a later <see cref="For"/> or <see cref="Peek"/> finds it cached; meant for a worker thread. Stops early when
+    /// <paramref name="token"/> is cancelled. <see cref="Revision"/> moves when it ends either way.
+    /// </summary>
+    public void Warm(IEnumerable<uint> territories, CancellationToken token = default)
+    {
+        ArgumentNullException.ThrowIfNull(territories);
+        Interlocked.Increment(ref warming);
+        try
+        {
+            foreach (var territory in territories)
+            {
+                if (token.IsCancellationRequested)
+                {
+                    return;
+                }
+
+                For(territory);
+            }
+        }
+        finally
+        {
+            Interlocked.Decrement(ref warming);
+            Interlocked.Increment(ref revision);
         }
     }
 

@@ -124,6 +124,12 @@ public sealed partial class Configuration : IPluginConfiguration
     /// <summary>Ask before starting Questionable; cleared when the player ticks "Don't ask again" in the confirmation.</summary>
     public bool QuestionableConfirmStart { get; set; } = true;
 
+    /// <summary>
+    /// Ask before Stop while Questionable's "Run command after stop" is on (it then runs that command, /li auto by
+    /// default, on any stop another plugin asks for); cleared when the player ticks "Don't ask again".
+    /// </summary>
+    public bool QuestionableConfirmStopCommand { get; set; } = true;
+
     // ---- 0.5.0: todo overlay ----
     /// <summary>Show the small always-on todo overlay (pins, nearby feature quests, MSQ, job quests).</summary>
     public bool TodoOverlayEnabled { get; set; } = false;

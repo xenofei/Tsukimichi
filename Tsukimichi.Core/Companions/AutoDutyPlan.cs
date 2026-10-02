@@ -55,6 +55,9 @@ public enum AutoDutyBlocker
 
     /// <summary>Neither Duty Support nor Trust offers it and it is no dungeon, trial or raid AutoDuty can queue.</summary>
     NoQueue,
+
+    /// <summary>Tsukimichi's Go to giver or Walk to giver drives vnavmesh; AutoDuty would fight it for the character.</summary>
+    Traveling,
 }
 
 /// <summary>What the detail pane knows when it draws "Run with AutoDuty" for one duty.</summary>
@@ -74,7 +77,11 @@ public readonly record struct AutoDutyInputs(
     bool Busy,
     bool? HasPath,
     bool? Unlocked,
-    bool AllowDutyFinder);
+    bool AllowDutyFinder)
+{
+    /// <summary>Tsukimichi's Go to giver or Walk to giver is under way (it moves the character through vnavmesh).</summary>
+    public bool Traveling { get; init; }
+}
 
 /// <summary>The mode AutoDuty would run in and, when the button is disabled, why.</summary>
 public readonly record struct AutoDutyChoice(AutoDutyMode Mode, AutoDutyBlocker Blocker)
@@ -86,7 +93,7 @@ public readonly record struct AutoDutyChoice(AutoDutyMode Mode, AutoDutyBlocker 
 /// Decision 1's AutoDuty rules, pure so they are tested without the game: Duty Support when the duty offers it, else
 /// Trust, else the regular Duty Finder (dungeon, trial or raid by its category) only when Settings allows it.
 /// <see cref="Choose"/> then checks, in order, AutoDuty and its own requirements (vnavmesh; Boss Mod or Boss Mod
-/// Reborn), the live character, a run already going, a path, the unlock and the queue.
+/// Reborn), the live character, a run already going, a trip of Tsukimichi's under way, a path, the unlock and the queue.
 /// </summary>
 public static class AutoDutyPlan
 {
@@ -131,6 +138,7 @@ public static class AutoDutyPlan
             { BossMod: not CompanionState.Loaded } => AutoDutyBlocker.NeedsBossMod,
             { Live: false } => AutoDutyBlocker.NotLive,
             { Busy: true } => AutoDutyBlocker.Busy,
+            { Traveling: true } => AutoDutyBlocker.Traveling,
             { HasPath: not true } => AutoDutyBlocker.NoPath,
             { Unlocked: not true } => AutoDutyBlocker.Locked,
             _ when mode != AutoDutyMode.None => AutoDutyBlocker.None,

@@ -26,7 +26,13 @@ public sealed class GoToGiverTests
 
         public bool NavReady { get; set; } = true;
 
+        public float? Height { get; set; } = 0f;
+
         public bool Walking { get; set; }
+
+        public bool Pathfinding { get; set; }
+
+        public int? Waypoints { get; set; }
 
         public bool AcceptTeleport { get; set; } = true;
 
@@ -559,6 +565,7 @@ public sealed class GoToGiverTests
         // vnavmesh flies there and stops in the air beside the giver: land, never dismount.
         ports.Walking = true;
         ports.InFlight = true;
+        ports.Height = 40f;
         ports.Position = (100f, 0f);
         Assert.Null(machine.Tick(5_000));
         ports.Position = (198f, 0f);
@@ -567,12 +574,64 @@ public sealed class GoToGiverTests
         Assert.Equal(GoToGiverStep.Landing, machine.Step);
         Assert.Equal("land", ports.Calls[^1]);
 
-        // Still up a second later: asked again; down: arrived.
-        Assert.Null(machine.Tick(10_100));
+        // Still up and no lower after the retry time: asked again; down: arrived.
+        Assert.Null(Run(machine, 9_100, 9_000 + GoToGiver.LandRetryMs - 100));
+        Assert.Single(ports.Calls, c => c == "land");
+        Assert.Null(machine.Tick(9_000 + GoToGiver.LandRetryMs));
         Assert.Equal(2, ports.Calls.Count(c => c == "land"));
         ports.InFlight = false;
-        Assert.Equal(new GoToGiverOutcome(GoToGiverStep.Done, GoToGiverFailure.None), machine.Tick(10_500));
+        Assert.Equal(new GoToGiverOutcome(GoToGiverStep.Done, GoToGiverFailure.None), machine.Tick(12_000));
         Assert.DoesNotContain("stop walk", ports.Calls);
+    }
+
+    [Fact]
+    public void A_mount_coming_down_is_not_pressed_again()
+    {
+        // Dismount pressed on the ground would dismount the character: while the mount sinks, it is left be.
+        var ports = new FakePorts { Territory = SubZone, Mounted = true, MoveContext = Field with { Mounted = true }, Height = 60f };
+        var machine = new GoToGiver(ports);
+        machine.Start(LongWalk(), 0);
+        ports.Walking = true;
+        machine.Tick(100);
+        ports.Walking = false;
+        ports.InFlight = true;
+        ports.Position = (199f, 0f);
+        machine.Tick(200);
+        Assert.Equal(GoToGiverStep.Landing, machine.Step);
+        Assert.Single(ports.Calls, c => c == "land");
+
+        // Sinking a yalm a second for eight seconds: one press is enough, however long the descent takes.
+        for (var now = 300L; now <= 8_300; now += 100)
+        {
+            ports.Height = 60f - ((now - 200) / 1_000f);
+            Assert.Null(machine.Tick(now));
+        }
+
+        Assert.Single(ports.Calls, c => c == "land");
+
+        // Then hovering at one height: pressed again at the next check, not every frame.
+        Assert.Null(Run(machine, 8_400, 10_400));
+        Assert.Equal(2, ports.Calls.Count(c => c == "land"));
+        ports.InFlight = false;
+        Assert.Equal(GoToGiverStep.Done, machine.Tick(10_500)?.Step);
+    }
+
+    [Fact]
+    public void A_mount_hovering_in_place_is_pressed_again_every_retry()
+    {
+        var ports = new FakePorts { Territory = SubZone, Mounted = true, MoveContext = Field with { Mounted = true }, Height = 60f };
+        var machine = new GoToGiver(ports);
+        machine.Start(LongWalk(), 0);
+        ports.Walking = true;
+        machine.Tick(100);
+        ports.Walking = false;
+        ports.InFlight = true;
+        ports.Position = (199f, 0f);
+        machine.Tick(200);
+
+        // Four retries in eight seconds, no more: the press waits for the height check.
+        Assert.Null(Run(machine, 300, 200 + (4 * GoToGiver.LandRetryMs)));
+        Assert.Equal(5, ports.Calls.Count(c => c == "land"));
     }
 
     [Fact]
@@ -672,6 +731,114 @@ public sealed class GoToGiverTests
             new GoToGiverOutcome(GoToGiverStep.Failed, GoToGiverFailure.Stuck),
             Run(machine, 2_100 + GoToGiver.StuckMs, 4_000 + (2 * GoToGiver.StuckMs)));
         Assert.Equal("stop walk", ports.Calls[^1]);
+    }
+
+    [Fact]
+    public void A_detour_away_from_the_goal_is_progress()
+    {
+        // The path runs around a wall: for longer than the stuck time it leads away from the giver.
+        var ports = new FakePorts { Territory = SubZone, Walking = true, Position = (100f, 0f) };
+        var machine = new GoToGiver(ports);
+        machine.Start(GoToGiverPlan.WalkOnly(SubZone, 200f, 5f, 0f), 0);
+
+        GoToGiverOutcome? outcome = null;
+        for (var now = 100L; now <= 3 * GoToGiver.StuckMs && outcome is null; now += 100)
+        {
+            ports.Position = (100f - (now / 1_000f), now / 500f);
+            outcome = machine.Tick(now);
+        }
+
+        Assert.Null(outcome);
+        Assert.False(machine.Repathed);
+        Assert.Equal(["walk 200,5,0"], ports.Calls);
+    }
+
+    [Fact]
+    public void Fewer_waypoints_are_progress_and_shuffling_in_place_is_not()
+    {
+        // Shuffling within a yalm (pushed against a corner) while the path shortens: progress.
+        var ports = new FakePorts { Territory = SubZone, Walking = true, Waypoints = 40 };
+        var machine = new GoToGiver(ports);
+        machine.Start(GoToGiverPlan.WalkOnly(SubZone, 200f, 5f, 0f), 0);
+        for (var now = 100L; now <= 2 * GoToGiver.StuckMs; now += 100)
+        {
+            ports.Position = ((now / 100) % 2 == 0 ? 0.5f : 0f, 0f);
+            ports.Waypoints = 40 - (int)(now / 1_000);
+            Assert.Null(machine.Tick(now));
+        }
+
+        Assert.False(machine.Repathed);
+
+        // The same shuffling with the path as long as before: stuck, a new path.
+        var start = (2 * GoToGiver.StuckMs) + 100;
+        for (var now = start; now <= start + GoToGiver.StuckMs; now += 100)
+        {
+            ports.Position = ((now / 100) % 2 == 0 ? 0.5f : 0f, 0f);
+            Assert.Null(machine.Tick(now));
+        }
+
+        Assert.True(machine.Repathed);
+        Assert.Equal(["walk 200,5,0", "stop walk", "walk 200,5,0"], ports.Calls);
+    }
+
+    [Fact]
+    public void A_longer_path_from_vnavmesh_is_not_progress_but_the_new_count_is_the_baseline()
+    {
+        var ports = new FakePorts { Territory = SubZone, Walking = true, Waypoints = 10 };
+        var machine = new GoToGiver(ports);
+        machine.Start(GoToGiverPlan.WalkOnly(SubZone, 200f, 5f, 0f), 0);
+
+        // vnavmesh replans with more waypoints, standing still: no progress for that.
+        ports.Waypoints = 30;
+        Assert.Null(Run(machine, 100, GoToGiver.StuckMs - 100));
+        Assert.False(machine.Repathed);
+
+        // Then one fewer than the new count: progress.
+        ports.Waypoints = 29;
+        Assert.Null(machine.Tick(GoToGiver.StuckMs - 50));
+        Assert.Null(Run(machine, GoToGiver.StuckMs, (2 * GoToGiver.StuckMs) - 100));
+        Assert.False(machine.Repathed);
+    }
+
+    [Fact]
+    public void A_pathfind_still_running_is_progress_and_never_gets_a_new_path()
+    {
+        // A long pathfind (a big zone, a slow machine): Walking, nothing moves yet.
+        var ports = new FakePorts { Territory = SubZone, Walking = true, Pathfinding = true };
+        var machine = new GoToGiver(ports);
+        machine.Start(GoToGiverPlan.WalkOnly(SubZone, 200f, 5f, 0f), 0);
+
+        Assert.Null(Run(machine, 100, 3 * GoToGiver.StuckMs));
+        Assert.False(machine.Repathed);
+        Assert.Equal(["walk 200,5,0"], ports.Calls);
+
+        // The path is found and followed: the stuck time counts from there.
+        ports.Pathfinding = false;
+        var found = (3 * GoToGiver.StuckMs) + 100;
+        Assert.Null(Run(machine, found, found + GoToGiver.StuckMs - 200));
+        Assert.False(machine.Repathed);
+        Assert.Null(Run(machine, found + GoToGiver.StuckMs - 100, found + GoToGiver.StuckMs + 100));
+        Assert.True(machine.Repathed);
+    }
+
+    [Fact]
+    public void Abandon_ends_the_run_without_touching_vnavmesh_or_lifestream()
+    {
+        // Questionable started from its own window: the walk is its now.
+        var ports = new FakePorts { Territory = SubZone, Walking = true };
+        var machine = new GoToGiver(ports);
+        machine.Start(GoToGiverPlan.WalkOnly(SubZone, 1f, 2f, 3f), 0);
+
+        Assert.Equal(new GoToGiverOutcome(GoToGiverStep.Cancelled, GoToGiverFailure.None), machine.Abandon());
+        Assert.False(machine.IsActive);
+        Assert.Equal(["walk 1,2,3"], ports.Calls);
+        Assert.Null(machine.Abandon());
+
+        var teleporting = new FakePorts { LifestreamBusy = true };
+        var chain = new GoToGiver(teleporting);
+        chain.Start(Full, 0);
+        chain.Abandon();
+        Assert.Equal(["teleport 2"], teleporting.Calls);
     }
 
     [Fact]

@@ -24,6 +24,12 @@ public sealed class CompanionSetupService : IDisposable
     /// <summary>How long a read is reused.</summary>
     public const long RefreshMs = 5_000;
 
+    /// <summary>Questionable's "Run command after stop" in <see cref="CompanionSetupCatalog"/>.</summary>
+    private const string CommandAfterStopId = "questionable.command-after-stop";
+
+    /// <summary>The command it runs, beside that setting in Questionable's file.</summary>
+    private const string CommandAfterStopPath = "Stop.CommandAfterStop";
+
     private readonly CompanionPlugins companions;
     private readonly IPluginLog log;
     private readonly string? configDirectory;
@@ -36,6 +42,8 @@ public sealed class CompanionSetupService : IDisposable
     private long readAt;
     private int readGeneration = -1;
     private bool stale = true;
+    private int commandVersion = -1;
+    private string? commandAfterStop;
 
     public CompanionSetupService(IDalamudPluginInterface pluginInterface, CompanionPlugins companions, IPluginLog log)
     {
@@ -100,6 +108,42 @@ public sealed class CompanionSetupService : IDisposable
         throw new ArgumentOutOfRangeException(nameof(plugin), plugin, "Unknown companion plugin");
     }
 
+    /// <summary>
+    /// The command Questionable runs after it stops (its "Run command after stop", default <c>/li auto</c>), read from
+    /// its file: null while that setting is off, unknown or Questionable is not loaded; empty when it is on but the
+    /// command cannot be read. Questionable runs it on any stop asked over IPC (it exempts only its own window's stop
+    /// and Esc), so Tsukimichi's Stop says so. Read again with the settings (<see cref="RefreshMs"/>).
+    /// </summary>
+    public string? QuestionableCommandAfterStop()
+    {
+        var version = FreshVersion;
+        if (commandVersion == version)
+        {
+            return commandAfterStop;
+        }
+
+        commandVersion = version;
+        commandAfterStop = null;
+        var setup = For(CompanionPlugin.Questionable);
+        foreach (var result in setup.Results)
+        {
+            if (!string.Equals(result.Requirement.Id, CommandAfterStopId, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            if (result.Value is { } value && bool.TryParse(value.Trim(), out var on) && on)
+            {
+                var command = ReadFile(result.Requirement.File ?? setup.Status.Variant.InternalName + ".json", CommandAfterStopPath);
+                commandAfterStop = command is { Read: true, Value: { } text } && !string.IsNullOrWhiteSpace(text) ? text.Trim() : string.Empty;
+            }
+
+            break;
+        }
+
+        return commandAfterStop;
+    }
+
     /// <summary>The first blocking setting not as recommended that affects <paramref name="handOff"/>; null when none.</summary>
     public SetupResult? BlockingFor(CompanionPlugin handOff) => CompanionSetupEvaluator.BlockingFor(handOff, Setups);
 
@@ -117,23 +161,29 @@ public sealed class CompanionSetupService : IDisposable
     public void Invalidate() => stale = true;
 
     /// <summary>
-    /// Sets each of <paramref name="plugin"/>'s settings that is not as recommended and settable
-    /// (<see cref="PluginSetup.Applicable"/>), through the plugin's own IPC, and nothing else. Returns how many were set
-    /// and how many the plugin refused or could not be asked about.
+    /// Sets the settings of <paramref name="plugin"/> the player confirmed (<paramref name="confirmed"/>, the ids the
+    /// confirmation listed) that are still not as recommended when read again now
+    /// (<see cref="PluginSetup.ApplicableOf"/>), through the plugin's own IPC, and nothing else. Each set is read back.
+    /// Returns how many were set and how many the plugin refused, did not take or could not be asked about.
     /// </summary>
-    public (int Applied, int Failed) Apply(CompanionPlugin plugin)
+    public (int Applied, int Failed) Apply(CompanionPlugin plugin, IReadOnlyCollection<string> confirmed)
     {
+        ArgumentNullException.ThrowIfNull(confirmed);
         var applied = 0;
         var failed = 0;
+
+        // Read again: something may have changed while the confirmation was open.
+        stale = true;
+        var settable = For(plugin).ApplicableOf(confirmed);
         if (!gates.TryGetValue(plugin, out var pluginGates))
         {
-            return (0, For(plugin).Applicable.Count);
+            return (0, settable.Count);
         }
 
-        foreach (var result in For(plugin).Applicable)
+        foreach (var result in settable)
         {
             var requirement = result.Requirement;
-            if (requirement.SetterKey is { } key && requirement.ApplyValue is { } value && pluginGates.Set(key, value))
+            if (requirement.SetterKey is { } key && requirement.ApplyValue is { } value && requirement.Path is { } readKey && pluginGates.Set(key, value, readKey))
             {
                 applied++;
                 log.Information("Set {Plugin} setting {Key} to {Value} (Settings › Integrations › Apply recommended settings)", plugin, key, value);
@@ -254,8 +304,12 @@ public interface ICompanionSettingGates
     /// <summary>The setting's value as text; <see cref="SetupReading.Unread"/> when the plugin cannot be asked.</summary>
     SetupReading Get(string key);
 
-    /// <summary>Sets the setting through the plugin's own setter; false when it refused or cannot be asked.</summary>
-    bool Set(string key, string value);
+    /// <summary>
+    /// Sets the setting through the plugin's own setter (<paramref name="key"/>), then reads it back through
+    /// <paramref name="readKey"/> (the getter's key; the same for a plugin whose gates share one): true only when the
+    /// value read back is <paramref name="value"/>. False when it refused, did not take or cannot be asked.
+    /// </summary>
+    bool Set(string key, string value, string readKey);
 
     /// <summary>A setting may be set now (AutoDuty: only while it is stopped).</summary>
     bool CanSetNow { get; }

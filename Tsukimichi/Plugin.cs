@@ -311,6 +311,17 @@ public sealed partial class Plugin : IDalamudPlugin
 
         OnCollectorCatalog(bundle);
 
+        // The ways into the interiors givers stand in, resolved ahead on a worker: Next stops and the route window
+        // would otherwise resolve dozens on the draw thread the first time they group givers by aetheryte.
+        try
+        {
+            gameLinks?.WarmEntrances(bundle.Catalog);
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "Interior entrances could not be resolved ahead; they are resolved on first use");
+        }
+
         // The landing frame's own cost (the session's listeners included), against what the worker did before it.
         var landedMs = Stopwatch.GetElapsedTime(started).TotalMilliseconds;
         if (prepared is not null)
@@ -1020,6 +1031,13 @@ public sealed partial class Plugin : IDalamudPlugin
             // through vnavmesh too). Both reads are cached inside their IPC wrappers.
             gameLinks.QuestionableRunning = () => questionableIpc.PollStatus().Running;
             gameLinks.AutoDutyRunning = () => !autoDuty.IsStopped;
+            // Either one started from its own window during a trip takes the character over: the trip ends and leaves
+            // vnavmesh to it. The other way round, Start Questionable and Run with AutoDuty wait while a trip runs.
+            travel.QuestionableRunning = gameLinks.QuestionableRunning;
+            travel.AutoDutyRunning = gameLinks.AutoDutyRunning;
+            questionableActions.Traveling = () => travel.JourneyActive;
+            // Questionable runs its "command after stop" (default /li auto) on any stop asked over IPC: Stop says so.
+            questionableActions.CommandAfterStop = companionSetup.QuestionableCommandAfterStop;
             mainWindow.AttachDiagnostics(diagnostics);
 
             // Journal text (P9): the detail pane's Journal card, and with Settings › Journal text the search box's journal
@@ -1473,6 +1491,7 @@ public sealed partial class Plugin : IDalamudPlugin
         Unwind("journal text", () => QuestText?.Dispose());
         // A walk or Go to giver this plugin started stops before the IPC wrappers go.
         Unwind("travel", () => travel?.Dispose());
+        Unwind("interior entrances", () => gameLinks?.StopWarmingEntrances());
         Unwind("vnavmesh ipc", () => vnavmesh?.Dispose());
         Unwind("lifestream ipc", () => lifestream?.Dispose());
         Unwind("allagan tools ipc", () => allaganTools?.Dispose());

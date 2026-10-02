@@ -56,6 +56,9 @@ static partial class Strings
 
     public static string TravelFailLanding => Loc.Get("TravelFailLanding");
 
+    /// <summary>{0} = the plugin that took the character over (Questionable, AutoDuty).</summary>
+    public static string TravelFailTakenOverFormat => Loc.Get("TravelFailTakenOverFormat");
+
     /// <summary>{0} = aetheryte.</summary>
     public static string ActionTravelStepTeleportingToFormat => Loc.Get("ActionTravelStepTeleportingToFormat");
 

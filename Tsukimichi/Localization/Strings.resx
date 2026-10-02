@@ -8095,6 +8095,25 @@
   <data name="QuestionableStopNoGate" xml:space="preserve">
     <value>This version of Questionable cannot be stopped by another plugin: stop it from its own window.</value>
   </data>
+  <data name="QuestionableStopCommandFormat" xml:space="preserve">
+    <value>Questionable will then run {0} (its "command after stop" setting).</value>
+    <comment>Second line of the Stop tooltip. {0}: the command, such as /li auto.</comment>
+  </data>
+  <data name="QuestionableStopCommandUnread" xml:space="preserve">
+    <value>a command</value>
+    <comment>Stands for the command in QuestionableStopCommandFormat and QuestionableStopQuestionFormat when it cannot be read.</comment>
+  </data>
+  <data name="QuestionableStopPopup" xml:space="preserve">
+    <value>Stop Questionable###TsukimichiQuestionableStop</value>
+    <comment>Modal title; keep the part from ### unchanged.</comment>
+  </data>
+  <data name="QuestionableStopQuestionFormat" xml:space="preserve">
+    <value>Stop Questionable? It will then run {0}, as its "Run command after stop" setting says. It does so whenever another plugin stops it; turn that setting off in /qst config to stop without it.</value>
+    <comment>{0}: the command, such as /li auto.</comment>
+  </data>
+  <data name="QuestionableStopConfirm" xml:space="preserve">
+    <value>Stop</value>
+  </data>
   <data name="QuestionableSentFormat" xml:space="preserve">
     <value>Questionable: sent {0} of {1} ({2} have no Questionable path).</value>
     <comment>Chat line. {0}: quests now on its list; {1}: quests sent; {2}: quests it has no path for.</comment>
@@ -8220,6 +8239,12 @@
   </data>
   <data name="ConfigQuestionableConfirmStartHint" xml:space="preserve">
     <value>Shows what starting Questionable does and asks you to confirm, each time until you tick "Don't ask again".</value>
+  </data>
+  <data name="ConfigQuestionableConfirmStopCommand" xml:space="preserve">
+    <value>Ask before stopping Questionable when it runs a command after a stop</value>
+  </data>
+  <data name="ConfigQuestionableConfirmStopCommandHint" xml:space="preserve">
+    <value>Questionable runs its "Run command after stop" (/li auto by default) whenever another plugin stops it. While that setting is on, Stop asks first, until you tick "Don't ask again".</value>
   </data>
   <data name="ConfigQuestionableStatusFormat" xml:space="preserve">
     <value>Questionable is loaded. It needs {0} to run; missing: {1}.</value>
@@ -8853,6 +8878,10 @@
   </data>
   <data name="TravelFailLanding" xml:space="preserve">
     <value>the mount did not land</value>
+  </data>
+  <data name="TravelFailTakenOverFormat" xml:space="preserve">
+    <value>{0} started and now moves your character</value>
+    <comment>Reason in TravelGoToStoppedFormat. {0}: the plugin (Questionable, AutoDuty).</comment>
   </data>
   <data name="ActionTravelStepTeleportingToFormat" xml:space="preserve">
     <value>Teleporting to {0}…</value>

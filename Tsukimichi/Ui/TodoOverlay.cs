@@ -581,7 +581,7 @@ public sealed class TodoOverlay : Window, IDisposable
         ImGui.SameLine();
         using (ImRaii.PushStyle(ImGuiStyleVar.FramePadding, new Vector2(ImGui.GetStyle().FramePadding.X, 0f)))
         {
-            Questionable.DrawStopSmallButton("##questionableStop");
+            Questionable.DrawStopSmallButton(QuestionableHost, "##questionableStop");
         }
     }
 

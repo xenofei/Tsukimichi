@@ -193,7 +193,10 @@ public sealed partial class DetailPane
         EndSection();
     }
 
-    /// <summary>AutoDuty's inputs for a run as of now, before the duty's own path and unlock answers.</summary>
+    /// <summary>
+    /// AutoDuty's inputs for a run as of now, before the duty's own path and unlock answers. A trip of Tsukimichi's
+    /// under way blocks the run: both would drive vnavmesh.
+    /// </summary>
     private AutoDutyInputs AutoDutyInputsFor(CompanionPlugins companions, SessionState session, bool running) => new(
         companions.Status(CompanionPlugin.AutoDuty).State,
         companions.Status(CompanionPlugin.Vnavmesh).State,
@@ -202,7 +205,10 @@ public sealed partial class DetailPane
         running,
         null,
         null,
-        AutoDutyAllowDutyFinder?.Invoke() == true);
+        AutoDutyAllowDutyFinder?.Invoke() == true)
+    {
+        Traveling = links.IsTraveling,
+    };
 
     /// <summary>Hands the duty to AutoDuty in the chosen mode and says how it went under the Duties section.</summary>
     private void StartAutoDuty(AutoDutyIpc autoDuty, QuestRecord quest, DutyRow row, AutoDutyChoice choice)
@@ -228,6 +234,7 @@ public sealed partial class DetailPane
         AutoDutyBlocker.NoPath => Strings.AutoDutyNoPath,
         AutoDutyBlocker.Locked => Strings.AutoDutyLocked,
         AutoDutyBlocker.NeedsDutyFinder => Strings.AutoDutyNeedsDutyFinder,
+        AutoDutyBlocker.Traveling => Strings.TravelBusyJourney,
         _ => Strings.AutoDutyNoQueue,
     };
 

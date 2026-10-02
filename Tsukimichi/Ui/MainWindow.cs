@@ -2091,7 +2091,7 @@ public sealed class MainWindow : Window, IDisposable
         ImGui.SetCursorScreenPos(new Vector2(x, textY));
         using (ImRaii.PushStyle(ImGuiStyleVar.FramePadding, new Vector2(ImGui.GetStyle().FramePadding.X, 0f)))
         {
-            questionableActions.DrawStopSmallButton("##questionableStop");
+            questionableActions.DrawStopSmallButton(QuestionableHost, "##questionableStop");
         }
 
         x = ImGui.GetItemRectMax().X;

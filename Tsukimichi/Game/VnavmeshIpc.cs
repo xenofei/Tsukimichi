@@ -17,7 +17,9 @@ namespace Tsukimichi.Game;
 /// negative when no build runs, else 0..1.</item>
 /// <item><c>SimpleMove.PathfindAndMoveCloseTo(Vector3 destination, bool fly, float range) -> bool</c>: queues a path
 /// and follows it; false while another pathfind is pending. <c>SimpleMove.PathfindInProgress() -> bool</c>.</item>
-/// <item><c>Path.IsRunning() -> bool</c> (waypoints left) and <c>Path.Stop()</c>.</item>
+/// <item><c>Path.IsRunning() -> bool</c> (waypoints left), <c>Path.NumWaypoints() -> int</c> and <c>Path.Stop()</c>,
+/// which clears the waypoints only: a pathfind still pending hands its path over later (vnavmesh 1.2.3.14's
+/// <c>AsyncMoveRequest</c>), which <see cref="Core.Travel.PendingWalkStop"/> watches for.</item>
 /// </list>
 /// <see cref="Available"/> comes from Dalamud's plugin list (cached, refreshed when it changes); the state reads are
 /// cached for <see cref="StateCacheMs"/> so the per-frame Walk / Stop button costs a few IPC calls a second. Every call
@@ -34,6 +36,7 @@ public sealed class VnavmeshIpc : IDisposable
     private const string MoveCloseToGate = "vnavmesh.SimpleMove.PathfindAndMoveCloseTo";
     private const string PathfindInProgressGate = "vnavmesh.SimpleMove.PathfindInProgress";
     private const string IsRunningGate = "vnavmesh.Path.IsRunning";
+    private const string NumWaypointsGate = "vnavmesh.Path.NumWaypoints";
     private const string StopGate = "vnavmesh.Path.Stop";
 
     /// <summary>How long a state answer (ready, progress, walking) is reused before vnavmesh is asked again.</summary>
@@ -47,13 +50,16 @@ public sealed class VnavmeshIpc : IDisposable
     private readonly ICallGateSubscriber<Vector3, bool, float, bool>? moveCloseTo;
     private readonly ICallGateSubscriber<bool>? pathfindInProgress;
     private readonly ICallGateSubscriber<bool>? isRunning;
+    private readonly ICallGateSubscriber<int>? numWaypoints;
     private readonly ICallGateSubscriber<object>? stop;
 
     private bool? available;
     private long? checkedAt;
     private bool readyCached;
     private float progressCached = -1f;
-    private bool walkingCached;
+    private bool runningCached;
+    private bool pathfindingCached;
+    private int? waypointsCached;
     private bool warned;
 
     public VnavmeshIpc(IDalamudPluginInterface pluginInterface, IPluginLog log)
@@ -68,6 +74,7 @@ public sealed class VnavmeshIpc : IDisposable
             moveCloseTo = pluginInterface.GetIpcSubscriber<Vector3, bool, float, bool>(MoveCloseToGate);
             pathfindInProgress = pluginInterface.GetIpcSubscriber<bool>(PathfindInProgressGate);
             isRunning = pluginInterface.GetIpcSubscriber<bool>(IsRunningGate);
+            numWaypoints = pluginInterface.GetIpcSubscriber<int>(NumWaypointsGate);
             stop = pluginInterface.GetIpcSubscriber<object>(StopGate);
         }
         catch (Exception ex)
@@ -78,6 +85,7 @@ public sealed class VnavmeshIpc : IDisposable
             moveCloseTo = null;
             pathfindInProgress = null;
             isRunning = null;
+            numWaypoints = null;
             stop = null;
         }
 
@@ -133,8 +141,44 @@ public sealed class VnavmeshIpc : IDisposable
         get
         {
             Refresh();
-            return walkingCached;
+            return runningCached || pathfindingCached;
         }
+    }
+
+    /// <summary>True while vnavmesh is still finding a path: its pathfind task is pending and nothing moves yet (cached).</summary>
+    public bool IsPathfinding
+    {
+        get
+        {
+            Refresh();
+            return pathfindingCached;
+        }
+    }
+
+    /// <summary>How many waypoints the path being followed has left; null when vnavmesh cannot say (cached).</summary>
+    public int? Waypoints
+    {
+        get
+        {
+            Refresh();
+            return waypointsCached;
+        }
+    }
+
+    /// <summary>
+    /// Whether vnavmesh is finding a path and whether it follows one, asked now rather than from the cache: a stop that
+    /// waits for a pending pathfind must catch its path the frame it starts to run.
+    /// </summary>
+    public (bool Pathfinding, bool Running) ReadMotion()
+    {
+        if (!Available)
+        {
+            return (false, false);
+        }
+
+        pathfindingCached = ReadPathfinding();
+        runningCached = ReadRunning();
+        return (pathfindingCached, runningCached);
     }
 
     /// <summary>
@@ -183,7 +227,9 @@ public sealed class VnavmeshIpc : IDisposable
             checkedAt = null;
             readyCached = false;
             progressCached = -1f;
-            walkingCached = false;
+            runningCached = false;
+            pathfindingCached = false;
+            waypointsCached = null;
             return;
         }
 
@@ -198,9 +244,18 @@ public sealed class VnavmeshIpc : IDisposable
         progressCached = readyCached || buildProgress is null || gates.IsMissing(BuildProgressGate)
             ? -1f
             : Invoke(buildProgress, BuildProgressGate, static gate => gate.InvokeFunc(), -1f);
-        walkingCached = (isRunning is not null && !gates.IsMissing(IsRunningGate) && Invoke(isRunning, IsRunningGate, static gate => gate.InvokeFunc(), false))
-            || (pathfindInProgress is not null && !gates.IsMissing(PathfindInProgressGate) && Invoke(pathfindInProgress, PathfindInProgressGate, static gate => gate.InvokeFunc(), false));
+        runningCached = ReadRunning();
+        pathfindingCached = ReadPathfinding();
+        waypointsCached = runningCached && numWaypoints is not null && !gates.IsMissing(NumWaypointsGate)
+            ? Invoke<ICallGateSubscriber<int>, int?>(numWaypoints, NumWaypointsGate, static gate => gate.InvokeFunc(), null)
+            : null;
     }
+
+    private bool ReadRunning() =>
+        isRunning is not null && !gates.IsMissing(IsRunningGate) && Invoke(isRunning, IsRunningGate, static gate => gate.InvokeFunc(), false);
+
+    private bool ReadPathfinding() =>
+        pathfindInProgress is not null && !gates.IsMissing(PathfindInProgressGate) && Invoke(pathfindInProgress, PathfindInProgressGate, static gate => gate.InvokeFunc(), false);
 
     /// <summary>
     /// Calls a gate; a gate that is not registered is remembered as missing (only the core gates take vnavmesh down

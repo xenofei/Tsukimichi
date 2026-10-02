@@ -13,8 +13,9 @@ namespace Tsukimichi.Ui;
 /// quests batched by the aetheryte nearest their givers (<see cref="StopPlanner"/>), from the followed route's next
 /// stop, the pins, the Ready blues of the expansion pinned from My blues and the other Ready quests within
 /// <see cref="StopPlanner.DefaultLevelRange"/> levels. Rebuilt when the session, the pins, the followed route, the
-/// plan, the pinned expansion or the zone changes; each giver's aetheryte (the nearest one, attuned or not) is looked
-/// up once per catalog. Framework thread only.
+/// plan, the pinned expansion, the zone or the known ways into interiors (<see cref="GameLinks.EntranceRevision"/>)
+/// change; each giver's aetheryte (the nearest one, attuned or not) is looked up once per catalog and entrance revision.
+/// Framework thread only.
 /// </summary>
 public sealed class NextStopsSource
 {
@@ -29,7 +30,8 @@ public sealed class NextStopsSource
     private readonly Dictionary<uint, StopPlace?> places = [];
     private CatalogBundle? placesBundle;
 
-    private (int Version, int Pins, int Route, int Plan, uint Territory, int Expansion) builtKey = (-1, -1, -1, -1, 0, -2);
+    private (int Version, int Pins, int Route, int Plan, uint Territory, int Expansion, int Entrances) builtKey = (-1, -1, -1, -1, 0, -2, -1);
+    private int placesEntrances = -1;
     private IReadOnlyList<Stop> stops = [];
 
     /// <param name="territory">The zone the logged-in character stands in.</param>
@@ -66,7 +68,8 @@ public sealed class NextStopsSource
         var expansion = settings.TodoPlanExpansion;
         var blues = expansion is >= 0 and <= byte.MaxValue ? plan.Plan : null;
         var zone = session.IsLive ? territory() : 0u;
-        var key = (session.Version, runner.PinsVersion, routes.Revision, blues is null ? -1 : plan.Revision, zone, expansion);
+        var entrances = links.EntranceRevision;
+        var key = (session.Version, runner.PinsVersion, routes.Revision, blues is null ? -1 : plan.Revision, zone, expansion, entrances);
         if (key == builtKey)
         {
             return;
@@ -80,9 +83,12 @@ public sealed class NextStopsSource
             return;
         }
 
-        if (!ReferenceEquals(placesBundle, bundle))
+        if (!ReferenceEquals(placesBundle, bundle) || placesEntrances != entrances)
         {
+            // A new catalog, or the ways into interiors became known: givers inside them grouped under their zone's
+            // aetheryte meanwhile.
             placesBundle = bundle;
+            placesEntrances = entrances;
             places.Clear();
         }
 

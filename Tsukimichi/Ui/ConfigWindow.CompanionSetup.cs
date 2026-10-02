@@ -28,6 +28,7 @@ public sealed partial class ConfigWindow
     private bool applyPopupPending;
     private string applyQuestion = string.Empty;
     private List<string> applyLines = [];
+    private List<string> applyIds = [];
     private string? applyResult;
     private double applyResultUntil;
 
@@ -242,6 +243,9 @@ public sealed partial class ConfigWindow
                 Strings.CompanionSetupValue(r.Requirement.Id, r.Value),
                 Strings.CompanionSetupValue(r.Requirement.Id, r.Requirement.ApplyValue)))
             .ToList();
+
+        // Apply sets exactly these (those still not as recommended when confirmed), never a list worked out again then.
+        applyIds = applicable.Select(static r => r.Requirement.Id).ToList();
         applyPopupPending = true;
     }
 
@@ -272,7 +276,7 @@ public sealed partial class ConfigWindow
         ImGui.Spacing();
         if (ImGui.Button(Strings.CompanionSetupApplyConfirm) && applyPlugin is { } plugin && CompanionSetup is { } setup)
         {
-            var (applied, failed) = setup.Apply(plugin);
+            var (applied, failed) = setup.Apply(plugin, applyIds);
             applyResult = string.Format(CultureInfo.CurrentCulture, Strings.CompanionSetupAppliedFormat, companions.Status(plugin).DisplayName, applied, applied + failed);
             applyResultUntil = ImGui.GetTime() + CompanionAppliedSeconds;
             applyPlugin = null;

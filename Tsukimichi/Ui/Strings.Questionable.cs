@@ -105,6 +105,18 @@ static partial class Strings
 
     public static string QuestionableStopNoGate => Loc.Get("QuestionableStopNoGate");
 
+    /// <summary>{0} = the command Questionable runs after a stop.</summary>
+    public static string QuestionableStopCommandFormat => Loc.Get("QuestionableStopCommandFormat");
+
+    public static string QuestionableStopCommandUnread => Loc.Get("QuestionableStopCommandUnread");
+
+    public static string QuestionableStopPopup => Loc.Get("QuestionableStopPopup");
+
+    /// <summary>{0} = the command Questionable runs after a stop.</summary>
+    public static string QuestionableStopQuestionFormat => Loc.Get("QuestionableStopQuestionFormat");
+
+    public static string QuestionableStopConfirm => Loc.Get("QuestionableStopConfirm");
+
     public static string QuestionableSentFormat => Loc.Get("QuestionableSentFormat");
 
     public static string QuestionableSentAllFormat => Loc.Get("QuestionableSentAllFormat");
@@ -174,6 +186,10 @@ static partial class Strings
     public static string ConfigQuestionableConfirmStart => Loc.Get("ConfigQuestionableConfirmStart");
 
     public static string ConfigQuestionableConfirmStartHint => Loc.Get("ConfigQuestionableConfirmStartHint");
+
+    public static string ConfigQuestionableConfirmStopCommand => Loc.Get("ConfigQuestionableConfirmStopCommand");
+
+    public static string ConfigQuestionableConfirmStopCommandHint => Loc.Get("ConfigQuestionableConfirmStopCommandHint");
 
     public static string ConfigQuestionableStatusFormat => Loc.Get("ConfigQuestionableStatusFormat");
 
