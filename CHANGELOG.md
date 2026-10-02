@@ -4,6 +4,59 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+## [1.8.0] - 2026-10-02
+
+### Added
+- **Characters › Collection by character.** A "who has it" grid of every Moonlit collectible (or every unlock quest) against your characters, with kind, "missing on any" and name filters.
+- **Hide or stop tracking a character.**
+  - Hide removes it from the lists.
+  - "Don't track this character" saves nothing of it while it is logged in, and stays on when you forget the character.
+  - Right-click it in the Characters list, or use the boxes next to Forget.
+- **Settings › Data › Characters:**
+  - group the list by data center;
+  - show hidden characters;
+  - see the hidden or untracked ones, with Show and Track buttons;
+  - "Forget characters not seen in N days".
+- **A search box in the Characters list,** and data center groups when your characters are on more than one.
+- **A "not updating" status** for a character another game client saved with a newer Tsukimichi, or in a file this client cannot read, with the reason in its tooltip. It clears once this client saves that character itself.
+- **Open on….** Open any quest on the Lodestone, Garland Tools, the Console Games Wiki or Teamcraft from the detail pane's "…" menu, or by right-clicking in the Journal table and My blues.
+  - Moonlit rewards open on FFXIV Collect and Garland Tools.
+  - Pages open in your browser; Tsukimichi itself stays offline.
+  - A quest the spoiler shield hides asks before opening.
+- **Copy for Discord** on routes, My blues and Compare. Plain bullets that read well in a message, split into parts of up to 2,000 characters ("Copy part 2/3"). Right-click the button to add links to quest names.
+- **Copy table as TSV.** Right-click the Journal table or a Moonlit row to copy what's listed straight into a spreadsheet, with a link column.
+- **Richer exports.**
+  - Quest exports include the state, level, patch, main scenario and repeatable flags, and the Lodestone id.
+  - Moonlit exports add the item id and the FFXIV Collect id.
+  - A JSON Schema is published in docs.
+- **For plugin authors:**
+  - new IPC queries: bulk states; quests by state, zone or item; structured blockers; routes; Moonlit status; duty unlock quests; pins; abandoned quests; the next job quest;
+  - per-quest change and unloading messages;
+  - a drop-in client file, and a /tsuki ipc window for testing.
+
+### Changed
+- **The quest list takes the Moon Road look:**
+  - the chapter's name in the game's title font, with its count ("160 of 213" while filters are on);
+  - a clean header in the game's heading font, with a brass rule under it;
+  - at Flair Full, a faint road line under quests you can take now.
+- Cards are framed in brass, and the first card in each window gets corner marks at Flair Full. High contrast keeps a solid line.
+- **Moon Road headings in more places:** a small star and a fading brass rule on Route milestones, the Todo overlay's and Nearby's section captions, and My blues' filter headings. The Route title uses the game's title font and wraps.
+- Long quest names in Route, Nearby and the Todo overlay end in "…", with the full name on hover, instead of being cut mid-letter. Route's buttons wrap on narrow windows.
+- The toolbar and status bar are separated by brass rules.
+- The Duty Finder hint and the item hover hint follow your palette, including "Follow Dalamud colours" and high contrast, with a brass caption rule.
+- While the catalog loads, a moon cycles through its phases; it stays still with Reduce motion.
+- **Smoother play:**
+  - Changing gearsets, levelling up and clearing a duty no longer stutters; Tsukimichi re-checks your quests in the background.
+  - Opening another character, and comparing two characters, no longer freezes the game for a moment.
+  - The moment after Tsukimichi finishes loading, or after you change the journal filing, is smoother.
+- With several game clients open, another client saving no longer makes this one recompute everything every few seconds.
+- The Todo overlay shows a new pin at once.
+- **Characters keep one order everywhere:** logged in here, then in another client, then by name and world. Another client's save no longer moves them around.
+- Compare with remembers your choice for each character. Without one, it shows a fixed choice rather than the most recent save.
+- **Per-character settings now live in a file every game client merges,** so two clients no longer undo each other's changes or repeat a notice. These are the spoiler override, "Before you continue" notices and "why?" lines. They move over by themselves on the first load.
+- Viewing a character that another game client forgets returns to your logged-in character. Forget says so when the character has just logged in elsewhere.
+- Ages read the same everywhere ("23 h ago", then "1 d ago").
+
 ## [1.7.0] - 2026-10-01
 
 ### Added
