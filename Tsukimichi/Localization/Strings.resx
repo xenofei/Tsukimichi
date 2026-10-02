@@ -8789,4 +8789,130 @@
   <data name="HandInFishShort" xml:space="preserve">
     <value>Fish</value>
   </data>
+  <data name="TravelSubstitutedFormat" xml:space="preserve">
+    <value>Nearest aetheryte {0} isn't attuned — teleporting to {1}.</value>
+    <comment>{0} = the nearest aetheryte, {1} = the attuned one used instead.</comment>
+  </data>
+  <data name="TravelTooFarFormat" xml:space="preserve">
+    <value>Nearest aetheryte {0} isn't attuned, and the nearest attuned one, {1}, is in another region. Attune to {0} first.</value>
+    <comment>{0} = the nearest aetheryte, {1} = the attuned one in another region.</comment>
+  </data>
+  <data name="TravelInsideFormat" xml:space="preserve">
+    <value>{0} is inside {1}, which no teleport reaches. {2} is the aetheryte nearest the way in.</value>
+    <comment>{0} = the giver, {1} = the zone the giver stands in, {2} = aetheryte.</comment>
+  </data>
+  <data name="TravelInsideUnplacedFormat" xml:space="preserve">
+    <value>{0} is inside {1}, which no teleport reaches. {2} is the aetheryte the game links to it; Tsukimichi doesn't know where the way in stands.</value>
+    <comment>{0} = the giver, {1} = the zone the giver stands in, {2} = aetheryte.</comment>
+  </data>
+  <data name="TravelGoToStepEntranceFormat" xml:space="preserve">
+    <value>Walk to the way into {0}, then go in</value>
+    <comment>Go to giver tooltip step. {0} = the zone the giver stands in.</comment>
+  </data>
+  <data name="TravelGoToNoEntranceFormat" xml:space="preserve">
+    <value>The trip ends at the aetheryte: Tsukimichi doesn't know where the way into {0} stands.</value>
+    <comment>Go to giver tooltip. {0} = the zone the giver stands in.</comment>
+  </data>
+  <data name="TravelArrivedEntranceFormat" xml:space="preserve">
+    <value>You are at the way into {0}: go in to find {1}.</value>
+    <comment>Chat line when Go to giver or Walk ends at an interior's door. {0} = zone, {1} = giver.</comment>
+  </data>
+  <data name="TravelWalkEntranceTooltipFormat" xml:space="preserve">
+    <value>Walk to the way into {0} with vnavmesh; {1} is inside. Your character moves until you press Stop or arrive.</value>
+    <comment>{0} = the zone the giver stands in, {1} = the giver.</comment>
+  </data>
+  <data name="TravelWalkNoEntranceFormat" xml:space="preserve">
+    <value>{0} is inside {1}, and Tsukimichi doesn't know where its way in stands.</value>
+    <comment>{0} = the giver, {1} = the zone the giver stands in.</comment>
+  </data>
+  <data name="TravelTargetEntranceFormat" xml:space="preserve">
+    <value>the way into {0}</value>
+    <comment>Status line target. {0} = the zone the giver stands in.</comment>
+  </data>
+  <data name="TravelMoveMountFormat" xml:space="preserve">
+    <value>Rides a mount for walks over {0} yalms.</value>
+    <comment>Walk and Go to giver tooltip. {0} = yalms.</comment>
+  </data>
+  <data name="TravelMoveFly" xml:space="preserve">
+    <value>Flies where you have unlocked flying.</value>
+  </data>
+  <data name="TravelMoveSprint" xml:space="preserve">
+    <value>Sprints in towns.</value>
+  </data>
+  <data name="TravelStepMounting" xml:space="preserve">
+    <value>mounting</value>
+  </data>
+  <data name="TravelStepFlying" xml:space="preserve">
+    <value>flying</value>
+  </data>
+  <data name="TravelStepLanding" xml:space="preserve">
+    <value>landing</value>
+  </data>
+  <data name="TravelFailStuck" xml:space="preserve">
+    <value>the walk stopped making progress, even on a new path</value>
+  </data>
+  <data name="TravelFailLanding" xml:space="preserve">
+    <value>the mount did not land</value>
+  </data>
+  <data name="ActionTravelStepTeleportingToFormat" xml:space="preserve">
+    <value>Teleporting to {0}…</value>
+    <comment>{0} = aetheryte.</comment>
+  </data>
+  <data name="ActionTravelStepHoppingToFormat" xml:space="preserve">
+    <value>Taking the aethernet to {0}…</value>
+    <comment>{0} = shard.</comment>
+  </data>
+  <data name="ActionTravelStepMounting" xml:space="preserve">
+    <value>Mounting…</value>
+  </data>
+  <data name="ActionTravelStepWalkingToFormat" xml:space="preserve">
+    <value>Walking to {0}…</value>
+    <comment>{0} = the giver, or the way into a zone.</comment>
+  </data>
+  <data name="ActionTravelStepRidingToFormat" xml:space="preserve">
+    <value>Riding to {0}…</value>
+    <comment>{0} = the giver, or the way into a zone.</comment>
+  </data>
+  <data name="ActionTravelStepFlyingToFormat" xml:space="preserve">
+    <value>Flying to {0}…</value>
+    <comment>{0} = the giver, or the way into a zone.</comment>
+  </data>
+  <data name="ActionTravelStepLanding" xml:space="preserve">
+    <value>Landing…</value>
+  </data>
+  <data name="ConfigTravelMountDistance" xml:space="preserve">
+    <value>Mount for walks longer than</value>
+  </data>
+  <data name="ConfigTravelMountDistanceHint" xml:space="preserve">
+    <value>Walk to giver and Go to giver summon a mount before a walk longer than this, where the zone allows mounts and you are not in combat. 0 never mounts. You stay mounted at the end.</value>
+  </data>
+  <data name="ConfigTravelMountDistanceFormat" xml:space="preserve">
+    <value>%d yalms</value>
+    <comment>Slider format; %d = yalms.</comment>
+  </data>
+  <data name="ConfigTravelMount" xml:space="preserve">
+    <value>Mount</value>
+  </data>
+  <data name="ConfigTravelMountHint" xml:space="preserve">
+    <value>Which mount Walk and Go to giver summon: Mount Roulette, or one of your mounts.</value>
+  </data>
+  <data name="ConfigTravelMountRoulette" xml:space="preserve">
+    <value>Mount Roulette</value>
+  </data>
+  <data name="ConfigTravelFly" xml:space="preserve">
+    <value>Fly where flying is unlocked</value>
+  </data>
+  <data name="ConfigTravelFlyHint" xml:space="preserve">
+    <value>On a mount, fly to the giver in zones where you have attuned every aether current, then land beside them.</value>
+  </data>
+  <data name="ConfigTravelSprint" xml:space="preserve">
+    <value>Sprint in towns</value>
+  </data>
+  <data name="ConfigTravelSprintHint" xml:space="preserve">
+    <value>Use Sprint at the start of a walk in a town or another place where mounts are not allowed.</value>
+  </data>
+  <data name="TravelTheGiver" xml:space="preserve">
+    <value>the giver</value>
+    <comment>Stands for a quest giver whose name is unknown, inside a sentence.</comment>
+  </data>
 </root>

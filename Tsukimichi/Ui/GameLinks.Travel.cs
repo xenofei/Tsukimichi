@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using Dalamud.Utility;
+using Lumina.Data.Files;
+using Lumina.Excel.Sheets;
 using Tsukimichi.Core.Companions;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Travel;
@@ -19,16 +21,29 @@ public enum TeleportBlock
     NoLifestream,
     NotAttuned,
     Busy,
+
+    /// <summary>Lifestream is loaded but a setting of its blocks the hand-off (<see cref="CompanionPlugins.DisabledReason"/>).</summary>
+    LifestreamSetup,
+
+    /// <summary>The nearest aetheryte is not attuned and the nearest attuned one stands in another region.</summary>
+    TooFar,
 }
 
 /// <summary>
-/// What Teleport would do for a quest: the attuned aetheryte nearest the giver (<paramref name="Target"/>), the
-/// special zone it serves (<paramref name="Special"/>), and whether the player already stands closer to the giver than
-/// that aetheryte (<paramref name="AlreadyHere"/>, the button then de-emphasises).
+/// What Teleport would do for a quest: the attuned aetheryte nearest the goal (<paramref name="Target"/>: the giver,
+/// or the way into the interior the giver stands in), the special zone it serves (<paramref name="Special"/>), and
+/// whether the player already stands closer to the goal than that aetheryte (<paramref name="AlreadyHere"/>, the button
+/// then de-emphasises). <see cref="Skipped"/> is the nearer aetheryte that is not attuned, when Teleport goes elsewhere.
 /// </summary>
 public readonly record struct TeleportCheck(TeleportBlock Block, AetheryteInfo? Target, TravelSpecial Special, bool AlreadyHere)
 {
     public bool Ready => Block == TeleportBlock.None;
+
+    /// <summary>The aetheryte nearest the goal when it is not attuned and <see cref="Target"/> is another one; else null.</summary>
+    public AetheryteInfo? Skipped { get; init; }
+
+    /// <summary>Where travel aims: the giver, or the way into the interior the giver stands in.</summary>
+    public TravelGoal? Goal { get; init; }
 }
 
 /// <summary>Why Walk to giver cannot start now; <see cref="None"/> when it can.</summary>
@@ -57,6 +72,12 @@ public enum WalkBlock
 
     /// <summary>AutoDuty is running and drives the character.</summary>
     AutoDutyRunning,
+
+    /// <summary>vnavmesh is loaded but a setting of its blocks the walk (<see cref="CompanionPlugins.DisabledReason"/>).</summary>
+    VnavmeshSetup,
+
+    /// <summary>The giver stands inside an interior whose way in the data does not place.</summary>
+    NoEntrance,
 }
 
 /// <summary>
@@ -96,6 +117,15 @@ public enum GoToBlock
 
     /// <summary>AutoDuty is running and drives the character.</summary>
     AutoDutyRunning,
+
+    /// <summary>vnavmesh is loaded but a setting of its blocks the walk.</summary>
+    VnavmeshSetup,
+
+    /// <summary>Lifestream is loaded but a setting of its blocks the teleport the trip needs.</summary>
+    LifestreamSetup,
+
+    /// <summary>The nearest aetheryte is not attuned and the nearest attuned one stands in another region.</summary>
+    TooFar,
 }
 
 /// <summary>What Go to giver would do (<paramref name="Plan"/>), or why not; <paramref name="Stoppable"/> while a chain or walk runs.</summary>
@@ -126,19 +156,29 @@ public readonly record struct HopCheck(HopBlock Block, AetheryteInfo? Shard, boo
 
 /// <summary>
 /// Travel to quest givers (feature plan v5, 1.6.0), the API every pane and the route window call. Teleport goes
-/// through Lifestream only (decision 2): it knows attunement and the gil cost, says "already here", and without
-/// Lifestream stays visible and names it. Walk to giver and Go to giver move the character through vnavmesh and only
-/// on an explicit click (decision 1), each with Stop. The checks are cheap enough to run per frame for the visible
-/// rows (a handful of aetherytes per zone, cached attunement); the tooltips are composed only on hover.
+/// through Lifestream only (decision 2): it knows attunement and the gil cost, says "already here", says when the
+/// nearest aetheryte is not attuned, and without Lifestream stays visible and names it. Walk to giver and Go to giver
+/// move the character through vnavmesh and only on an explicit click (decision 1), each with Stop; they mount for a long
+/// walk and fly where flying is unlocked (Settings › Integrations › Travel). A giver inside an interior no teleport
+/// reaches (the Waking Sands, Fortemps Manor, a story area like Zero's Domain) is travelled to by its way in
+/// (<see cref="EntranceIndex"/>): the aetheryte nearest that door, a walk to it, and a note to go in. The checks are
+/// cheap enough to run per frame for the visible rows (a handful of aetherytes per zone, cached attunement and doors);
+/// the tooltips are composed only on hover.
 /// </summary>
 public sealed partial class GameLinks
 {
     private const string Separator = " · ";
 
     private readonly TravelClickGuard clickGuard = new();
+    private readonly Dictionary<uint, uint> regions = [];
     private AetheryteIndex? aetherytes;
+    private EntranceIndex? entrances;
     private Func<uint, bool>? isAttuned;
     private Func<uint, bool>? isShardAttuned;
+
+    // The status line under the pills, composed once per step, target and language.
+    private string? statusText;
+    private (GoToGiverStep Step, bool Flying, bool Mounted, GoToGiverPlan? Plan, string Target, int Language) statusKey;
 
     /// <summary>Whether Questionable is running (its live status); Walk and Go to giver wait meanwhile. Unset reads as not running.</summary>
     public Func<bool>? QuestionableRunning { get; set; }
@@ -183,6 +223,31 @@ public sealed partial class GameLinks
             }
 
             return aetherytes;
+        }
+    }
+
+    /// <summary>
+    /// The ways into interiors (doors, NPCs and zone lines from the game's layout files), resolved per territory on
+    /// first use; empty when the index cannot be made, which leaves interiors to the aetheryte their zone names.
+    /// </summary>
+    public EntranceIndex Entrances
+    {
+        get
+        {
+            if (entrances is null)
+            {
+                try
+                {
+                    entrances = EntranceIndex.Create(data.Excel, path => data.GetFile<LgbFile>(path), Aetherytes, data.Language.ToLumina());
+                }
+                catch (Exception ex)
+                {
+                    log.Warning(ex, "Interior entrances unavailable; givers inside buildings use their zone's aetheryte");
+                    entrances = EntranceIndex.Empty;
+                }
+            }
+
+            return entrances;
         }
     }
 
@@ -242,9 +307,58 @@ public sealed partial class GameLinks
             GoToGiverStep.Teleporting => Strings.TravelStepTeleporting,
             GoToGiverStep.Hopping => Strings.TravelStepHopping,
             GoToGiverStep.PreparingPath => Strings.TravelStepPreparing,
+            GoToGiverStep.Mounting => Strings.TravelStepMounting,
+            GoToGiverStep.Landing => Strings.TravelStepLanding,
+            _ when travel.JourneyFlying => Strings.TravelStepFlying,
             _ => Strings.TravelStepWalking,
         };
         return string.Format(CultureInfo.CurrentCulture, Strings.TravelGoToStopTooltipFormat, step);
+    }
+
+    /// <summary>
+    /// The live status of a Walk or Go to giver under way, for the line under the detail pane's pills ("Going to giver
+    /// · Flying to Varshahn…", "· Mounting…", "· Teleporting to Yedlihmad…"); null while nothing of Tsukimichi's moves.
+    /// Composed once per step, target and language, so a per-frame caller costs a few field reads.
+    /// </summary>
+    public string? TravelStatusText()
+    {
+        if (Travel is not { JourneyActive: true } travel)
+        {
+            return null;
+        }
+
+        var step = travel.JourneyStep;
+        var flying = travel.JourneyFlying;
+        var mounted = step == GoToGiverStep.Walking && travel.Mounted;
+        var plan = travel.JourneyPlan;
+        var key = (step, flying, mounted, plan, travel.JourneyTarget, Localization.Loc.Version);
+        if (statusText is not null && key == statusKey)
+        {
+            return statusText;
+        }
+
+        var target = travel.JourneyTarget;
+        var text = step switch
+        {
+            GoToGiverStep.Teleporting when plan?.Teleport is { } leg && Aetherytes.Find(leg.Id) is { } aetheryte =>
+                string.Format(CultureInfo.CurrentCulture, Strings.ActionTravelStepTeleportingToFormat, aetheryte.Name),
+            GoToGiverStep.Teleporting => Strings.ActionTravelStepTeleporting,
+            GoToGiverStep.Hopping when plan?.Hop is { } hop =>
+                string.Format(CultureInfo.CurrentCulture, Strings.ActionTravelStepHoppingToFormat, hop.Id == GoToGiverPlan.FirmamentHop ? Strings.TravelFirmament : Aetherytes.Find(hop.Id)?.Name ?? string.Empty),
+            GoToGiverStep.Hopping => Strings.ActionTravelStepHopping,
+            GoToGiverStep.PreparingPath => Strings.ActionTravelStepPreparing,
+            GoToGiverStep.Mounting => Strings.ActionTravelStepMounting,
+            GoToGiverStep.Landing => Strings.ActionTravelStepLanding,
+            _ when target.Length == 0 => Strings.ActionTravelStepWalking,
+            _ => string.Format(
+                CultureInfo.CurrentCulture,
+                flying ? Strings.ActionTravelStepFlyingToFormat : mounted ? Strings.ActionTravelStepRidingToFormat : Strings.ActionTravelStepWalkingToFormat,
+                target),
+        };
+
+        statusKey = key;
+        statusText = string.Format(CultureInfo.CurrentCulture, Strings.ActionTravelStatusFormat, text);
+        return statusText;
     }
 
     /// <summary>True while a click is still part of the double click that just started travel; it is ignored.</summary>
@@ -256,11 +370,60 @@ public sealed partial class GameLinks
 
     private Func<uint, bool> IsShardAttuned => isShardAttuned ??= id => Travel?.IsShardAttuned(id) ?? false;
 
+    // ------------------------------------------------------------------ goal
+
+    /// <summary>
+    /// Where travel aims for the quest's giver from where the player stands: the giver, or, while the player is outside
+    /// an interior the giver stands in, its way in. Null without a giver place.
+    /// </summary>
+    public TravelGoal? GoalFor(QuestRecord quest) =>
+        quest.Issuer is { TerritoryId: > 0 } issuer ? GiverTravel.Goal(issuer, Entrances, Travel?.Territory ?? 0) : null;
+
+    /// <summary>The giver's display name, or "the giver" when the sheet has none.</summary>
+    private static string GiverName(QuestRecord quest) =>
+        quest.Issuer is { Name.Length: > 0 } issuer ? issuer.Name : Strings.TravelTheGiver;
+
+    /// <summary>The name of the zone a territory is (its TerritoryType place name); empty when unknown.</summary>
+    private string TerritoryName(uint territoryId)
+    {
+        try
+        {
+            return data.GetExcelSheet<TerritoryType>().GetRowOrDefault(territoryId)?.PlaceName.ValueNullable?.Name.ExtractText() ?? string.Empty;
+        }
+        catch (Exception ex)
+        {
+            log.Debug(ex, "Territory name unavailable");
+            return string.Empty;
+        }
+    }
+
+    /// <summary>The region (PlaceNameRegion row) a territory belongs to, read once per territory; 0 when unknown.</summary>
+    private uint RegionOf(uint territoryId)
+    {
+        if (regions.TryGetValue(territoryId, out var region))
+        {
+            return region;
+        }
+
+        try
+        {
+            region = data.GetExcelSheet<TerritoryType>().GetRowOrDefault(territoryId)?.PlaceNameRegion.RowId ?? 0;
+        }
+        catch (Exception ex)
+        {
+            log.Debug(ex, "Territory region unavailable");
+            region = 0;
+        }
+
+        regions[territoryId] = region;
+        return region;
+    }
+
     // ------------------------------------------------------------------ teleport
 
     /// <summary>
-    /// The aetheryte Teleport goes to for the quest's giver (id and place name): the attuned one nearest the giver,
-    /// or null without an issuer or an attuned aetheryte for the giver's zone.
+    /// The aetheryte Teleport goes to for the quest's giver (id and place name): the attuned one nearest the goal,
+    /// or null without an issuer or an attuned aetheryte for the goal's zone.
     /// </summary>
     public (uint Id, string Name)? NearestAetheryte(QuestRecord quest) =>
         CheckTeleport(quest).Target is { } target ? (target.RowId, target.Name) : null;
@@ -278,25 +441,43 @@ public sealed partial class GameLinks
 
         var special = TravelSpecials.Classify(issuer.TerritoryId);
         var index = Aetherytes;
-        var fallback = index.TerritoryDefault(issuer.TerritoryId);
-        var nodes = index.NodesInTerritory(issuer.TerritoryId);
-        var chosen = TravelPlanner.NearestAttuned(nodes, fallback?.Node, issuer.X, issuer.Z, IsAttuned);
-        var target = chosen is { } node ? index.Find(node.RowId) : null;
+        var goal = GiverTravel.Goal(issuer, Entrances, Travel?.Territory ?? 0);
+        var arrival = GiverTravel.Arrival(index, issuer.TerritoryId, goal, IsAttuned);
+        var target = arrival.Target is { } node ? index.Find(node.RowId) : null;
+        var skipped = arrival.Substituted && arrival.Nearest is { } nearest ? index.Find(nearest.RowId) : null;
+
+        // "Already here": in the goal's zone and closer than the arrival would be. A door the data does not place has no
+        // spot to measure from, so only standing inside the giver's own zone counts there.
         var here = Travel is { Position: { } at } travel
-            && TravelPlanner.IsAlreadyHere(travel.Territory, at.X, at.Z, issuer.TerritoryId, issuer.X, issuer.Z, target?.Node);
+            && (goal.Placed
+                ? TravelPlanner.IsAlreadyHere(travel.Territory, at.X, at.Z, goal.Place.TerritoryId, goal.Place.X, goal.Place.Z, target?.Node)
+                : travel.Territory == issuer.TerritoryId);
+
+        // A substitute in another territory (a city sub-zone's city) must stay in the goal's region, or the trip is absurd.
+        var tooFar = skipped is not null && target is { } t && t.TerritoryId != goal.Place.TerritoryId
+            && RegionOf(t.TerritoryId) is var targetRegion && RegionOf(goal.Place.TerritoryId) is var goalRegion
+            && targetRegion != 0 && goalRegion != 0 && targetRegion != goalRegion;
 
         var block = TravelSpecials.NeedsConversation(special)
-            ? !TeleportAvailable ? TeleportBlock.NoLifestream : TeleportBusy ? TeleportBlock.Busy : TeleportBlock.None
-            : nodes.Count == 0 && fallback is null ? TeleportBlock.NoAetheryte
+            ? !TeleportAvailable ? TeleportBlock.NoLifestream : LifestreamReason() is not null ? TeleportBlock.LifestreamSetup : TeleportBusy ? TeleportBlock.Busy : TeleportBlock.None
+            : arrival.Nearest is null ? TeleportBlock.NoAetheryte
             : !TeleportAvailable ? TeleportBlock.NoLifestream
+            : LifestreamReason() is not null ? TeleportBlock.LifestreamSetup
             : target is null ? TeleportBlock.NotAttuned
+            : tooFar ? TeleportBlock.TooFar
             : TeleportBusy ? TeleportBlock.Busy
             : TeleportBlock.None;
-        return new TeleportCheck(block, target, special, here);
+        return new TeleportCheck(block, target, special, here) { Skipped = skipped, Goal = goal };
     }
 
+    /// <summary>Lifestream's own reason a loaded Lifestream cannot take the hand-off (a blocking setting); null when it can.</summary>
+    private static string? LifestreamReason() => CompanionPlugins.DisabledReason(CompanionPlugin.Lifestream);
+
+    /// <summary>vnavmesh's own reason a loaded vnavmesh cannot walk (a blocking setting, such as its navmesh auto-load off); null when it can.</summary>
+    private static string? VnavmeshReason() => CompanionPlugins.DisabledReason(CompanionPlugin.Vnavmesh);
+
     /// <summary>
-    /// Teleports toward the quest's giver through Lifestream: to the attuned aetheryte nearest the giver, or, for
+    /// Teleports toward the quest's giver through Lifestream: to the attuned aetheryte nearest the goal, or, for
     /// Island Sanctuary and the Occult Crescent, Lifestream's <c>/li island</c> / <c>/li occult</c> (an explicit click
     /// only; the tooltip says Lifestream talks to the NPC). When Lifestream refuses, one chat line says why. False when
     /// nothing was started.
@@ -352,13 +533,17 @@ public sealed partial class GameLinks
                 return Strings.TeleportNoAetheryte;
             case TeleportBlock.NoLifestream:
                 return NeedsLifestream();
+            case TeleportBlock.LifestreamSetup:
+                return LifestreamReason() ?? NeedsLifestream();
             case TeleportBlock.NotAttuned:
-                return string.Format(CultureInfo.CurrentCulture, Strings.TravelNotAttunedFormat, ZoneName(quest));
+                return string.Format(CultureInfo.CurrentCulture, Strings.TravelNotAttunedFormat, GoalZoneName(quest, check.Goal));
+            case TeleportBlock.TooFar:
+                return string.Format(CultureInfo.CurrentCulture, Strings.TravelTooFarFormat, check.Skipped?.Name ?? string.Empty, check.Target?.Name ?? string.Empty);
             case TeleportBlock.Busy:
                 return BusyReason();
         }
 
-        var lines = new List<string>(4);
+        var lines = new List<string>(6);
         if (check.Special == TravelSpecial.IslandSanctuary)
         {
             lines.Add(Strings.TravelIslandTooltip);
@@ -376,6 +561,17 @@ public sealed partial class GameLinks
                 lines.Add(favourite ? cost + Separator + Strings.TravelFavourite : cost);
             }
 
+            if (check.Skipped is { } skipped)
+            {
+                lines.Add(string.Format(CultureInfo.CurrentCulture, Strings.TravelSubstitutedFormat, skipped.Name, target.Name));
+            }
+
+            if (check.Goal is { Entrance: { } door } goal)
+            {
+                var format = goal.Placed ? Strings.TravelInsideFormat : Strings.TravelInsideUnplacedFormat;
+                lines.Add(string.Format(CultureInfo.CurrentCulture, format, GiverName(quest), TerritoryName(door.Interior), (check.Skipped ?? target).Name));
+            }
+
             if (check.Special == TravelSpecial.Firmament)
             {
                 lines.Add(Strings.TravelFirmamentHint);
@@ -388,7 +584,7 @@ public sealed partial class GameLinks
 
         if (check.AlreadyHere)
         {
-            lines.Add(check.Target is { } t && quest.Issuer is { } issuer && t.TerritoryId == issuer.TerritoryId
+            lines.Add(check.Target is { } t && check.Goal is { } g && t.TerritoryId == g.Place.TerritoryId
                 ? string.Format(CultureInfo.CurrentCulture, Strings.TravelAlreadyHereFormat, t.Name)
                 : Strings.TravelAlreadyInZone);
         }
@@ -416,11 +612,15 @@ public sealed partial class GameLinks
     /// <summary>The giver's zone name (the Map sheet's place name); empty when unknown.</summary>
     private string ZoneName(QuestRecord quest) => quest.Issuer is { } issuer ? Map(issuer.MapId)?.PlaceName ?? string.Empty : string.Empty;
 
+    /// <summary>The goal's zone name: the outside zone of an interior's way in, else the giver's zone.</summary>
+    private string GoalZoneName(QuestRecord quest, TravelGoal? goal) =>
+        goal is { AtEntrance: true } g && TerritoryName(g.Place.TerritoryId) is { Length: > 0 } outside ? outside : ZoneName(quest);
+
     // ------------------------------------------------------------------ aethernet hop
 
     /// <summary>
-    /// The aethernet hop toward a giver in a city, offered while the player is in that city's network: to the
-    /// attuned shard nearest the giver when it beats walking from where the player stands by
+    /// The aethernet hop toward a giver in a city (or an interior's door there), offered while the player is in that
+    /// city's network: to the attuned shard nearest the goal when it beats walking from where the player stands by
     /// <see cref="TravelPlanner.HopMargin"/>, or to the Firmament from the Foundation. Lifestream needs the player at
     /// the city's aetheryte or a shard (its <c>GetActiveAetheryte</c>); elsewhere in the city the hop shows, disabled.
     /// </summary>
@@ -433,7 +633,15 @@ public sealed partial class GameLinks
 
         var index = Aetherytes;
         var firmament = TravelSpecials.Classify(issuer.TerritoryId) == TravelSpecial.Firmament;
-        var city = firmament ? index.Find(TravelSpecials.FoundationAetheryte) : index.Nearest(issuer.TerritoryId, issuer.X, issuer.Z);
+        var goal = GiverTravel.Goal(issuer, Entrances, travel.Territory);
+        if (!firmament && !goal.Placed)
+        {
+            return default;
+        }
+
+        var city = firmament
+            ? index.Find(TravelSpecials.FoundationAetheryte)
+            : GiverTravel.Arrival(index, issuer.TerritoryId, goal, static _ => true).Nearest is { } nearest ? index.Find(nearest.RowId) : null;
         if (city is not { Group: > 0 } || !InNetwork(travel.Territory, city.Group))
         {
             return default;
@@ -443,7 +651,7 @@ public sealed partial class GameLinks
         if (!firmament)
         {
             var here = new TravelNode(0, travel.Territory, at.X, at.Z, city.Group);
-            if (TravelPlanner.ChooseShard(here, index.ShardNodesInGroup(city.Group), issuer.TerritoryId, issuer.X, issuer.Z, IsShardAttuned) is not { } best
+            if (TravelPlanner.ChooseShard(here, index.ShardNodesInGroup(city.Group), goal.Place.TerritoryId, goal.Place.X, goal.Place.Z, IsShardAttuned) is not { } best
                 || index.Find(best.RowId) is not { } found)
             {
                 return default;
@@ -541,8 +749,9 @@ public sealed partial class GameLinks
 
     /// <summary>
     /// What Walk to giver would do now: start, Stop (a walk or Go to giver Tsukimichi started is under way), or why it
-    /// cannot. It waits while Questionable or AutoDuty drives the character, while the character casts, and while
-    /// vnavmesh walks for another plugin (whose walk it never stops).
+    /// cannot. It walks to the giver, or, outside an interior the giver stands in, to its way in. It waits while
+    /// Questionable or AutoDuty drives the character, while the character casts, and while vnavmesh walks for another
+    /// plugin (whose walk it never stops).
     /// </summary>
     public WalkCheck CheckWalk(QuestRecord quest)
     {
@@ -556,9 +765,12 @@ public sealed partial class GameLinks
             return new WalkCheck(WalkBlock.None, true, -1f);
         }
 
-        var block = quest.Issuer is not { TerritoryId: > 0 } issuer ? WalkBlock.NoGiverPlace
+        var goal = GoalFor(quest);
+        var block = goal is not { } g ? WalkBlock.NoGiverPlace
+            : VnavmeshReason() is not null ? WalkBlock.VnavmeshSetup
             : travel.BetweenAreas ? WalkBlock.Loading
-            : travel.Territory != issuer.TerritoryId ? WalkBlock.NotInZone
+            : travel.Territory != g.Place.TerritoryId ? WalkBlock.NotInZone
+            : !g.Placed ? WalkBlock.NoEntrance
             : AutomationBlock() is { } automation ? automation
             : travel.InCombat ? WalkBlock.Combat
             : travel.InCutscene ? WalkBlock.Cutscene
@@ -576,27 +788,54 @@ public sealed partial class GameLinks
         : AutoDutyRunning?.Invoke() == true ? WalkBlock.AutoDutyRunning
         : null;
 
-    /// <summary>True when Walk to giver can start now: vnavmesh loaded and ready, the player idle in the giver's zone.</summary>
+    /// <summary>True when Walk to giver can start now: vnavmesh loaded and ready, the player idle in the goal's zone.</summary>
     public bool CanWalk(QuestRecord quest) => CheckWalk(quest).Ready;
 
     /// <summary>
-    /// Walks the character to the quest's giver through vnavmesh (it stops about 3 yalms away). Stop with
-    /// <see cref="StopTravel"/>; leaving the zone, logging out or unloading stops it too. False when nothing was started.
+    /// Walks the character to the quest's giver (or the way into the interior it stands in) through vnavmesh, which
+    /// stops about 3 yalms away, mounting and flying as the settings say. Stop with <see cref="StopTravel"/>; leaving the
+    /// zone, logging out or unloading stops it too. False when nothing was started.
     /// </summary>
     public bool WalkToGiver(QuestRecord quest)
     {
-        if (ClickHeld || !CheckWalk(quest).Ready || Travel is not { } travel || quest.Issuer is not { } issuer)
+        if (ClickHeld || !CheckWalk(quest).Ready || Travel is not { } travel || GoalFor(quest) is not { } goal)
         {
             return false;
         }
 
-        travel.Start(GoToGiverPlan.WalkOnly(issuer.TerritoryId, issuer.X, issuer.Y, issuer.Z));
+        var plan = GoToGiverPlan.WalkOnly(goal.Place.TerritoryId, goal.Place.X, goal.Place.Y, goal.Place.Z) with
+        {
+            Options = travel.CurrentOptions,
+            ToEntrance = goal.AtEntrance,
+        };
+        StartJourney(travel, plan, quest, goal);
+        return travel.JourneyActive;
+    }
+
+    /// <summary>Starts a run with its status target and, for an interior's door, the note to go in.</summary>
+    private void StartJourney(TravelService travel, GoToGiverPlan plan, QuestRecord quest, TravelGoal goal)
+    {
+        string target;
+        string? note = null;
+        if (goal.Entrance is { } door)
+        {
+            // At the door: go in. A door the data does not place: the trip ends at the aetheryte, and says so.
+            var zone = TerritoryName(door.Interior);
+            target = string.Format(CultureInfo.CurrentCulture, Strings.TravelTargetEntranceFormat, zone);
+            note = plan.Walk ? string.Format(CultureInfo.CurrentCulture, Strings.TravelArrivedEntranceFormat, zone, GiverName(quest))
+                : !goal.Placed ? string.Format(CultureInfo.CurrentCulture, Strings.TravelWalkNoEntranceFormat, GiverName(quest), zone)
+                : null;
+        }
+        else
+        {
+            target = GiverName(quest);
+        }
+
+        travel.Start(plan, target, note);
         if (travel.JourneyActive)
         {
             MarkStarted();
         }
-
-        return travel.JourneyActive;
     }
 
     /// <summary>The Walk button's label: Stop while moving, "Preparing path… 40%" while vnavmesh builds, else <paramref name="walk"/>.</summary>
@@ -606,7 +845,7 @@ public sealed partial class GameLinks
         : check.Progress >= 0f ? string.Format(CultureInfo.CurrentCulture, Strings.TravelPreparingFormat, (int)MathF.Round(check.Progress * 100f))
         : Strings.TravelPreparing;
 
-    /// <summary>The Walk button's tooltip: what it does, Stop, or why it cannot.</summary>
+    /// <summary>The Walk button's tooltip: what it does (and how it moves), Stop, or why it cannot.</summary>
     public string WalkTooltip(QuestRecord quest, WalkCheck check)
     {
         if (check.Stoppable)
@@ -614,11 +853,26 @@ public sealed partial class GameLinks
             return StopTooltip();
         }
 
+        switch (check.Block)
+        {
+            case WalkBlock.None:
+                var lines = new List<string>(4);
+                lines.Add(GoalFor(quest) is { Entrance: { } door }
+                    ? string.Format(CultureInfo.CurrentCulture, Strings.TravelWalkEntranceTooltipFormat, TerritoryName(door.Interior), GiverName(quest))
+                    : Strings.TravelWalkTooltip);
+                AddMoveLines(lines);
+                return string.Join('\n', lines);
+            case WalkBlock.NotInZone:
+                return string.Format(CultureInfo.CurrentCulture, Strings.TravelWalkNotInZoneFormat, GoalZoneName(quest, GoalFor(quest)));
+            case WalkBlock.NoEntrance:
+                return string.Format(CultureInfo.CurrentCulture, Strings.TravelWalkNoEntranceFormat, GiverName(quest), quest.Issuer is { } issuer ? TerritoryName(issuer.TerritoryId) : string.Empty);
+        }
+
         return check.Block switch
         {
             WalkBlock.NoVnavmesh => NeedsVnavmesh(),
+            WalkBlock.VnavmeshSetup => VnavmeshReason() ?? NeedsVnavmesh(),
             WalkBlock.NoGiverPlace => Strings.TravelNoGiverPlace,
-            WalkBlock.NotInZone => string.Format(CultureInfo.CurrentCulture, Strings.TravelWalkNotInZoneFormat, ZoneName(quest)),
             WalkBlock.Loading => Strings.TravelWalkLoading,
             WalkBlock.Combat => Strings.TravelWalkCombat,
             WalkBlock.Cutscene => Strings.TravelWalkCutscene,
@@ -632,13 +886,36 @@ public sealed partial class GameLinks
         };
     }
 
+    /// <summary>The lines saying how a walk moves (mount, fly, sprint) from the settings, none when it stays on foot.</summary>
+    private void AddMoveLines(List<string> lines)
+    {
+        if (Travel?.CurrentOptions is not { } options)
+        {
+            return;
+        }
+
+        if (options.MountDistance > 0f)
+        {
+            lines.Add(string.Format(CultureInfo.CurrentCulture, Strings.TravelMoveMountFormat, (int)options.MountDistance));
+            if (options.Fly)
+            {
+                lines.Add(Strings.TravelMoveFly);
+            }
+        }
+
+        if (options.SprintInTowns)
+        {
+            lines.Add(Strings.TravelMoveSprint);
+        }
+    }
+
     // ------------------------------------------------------------------ go to giver
 
     /// <summary>
     /// What Go to giver would do now: walk when the player is already closer than any teleport would bring them
-    /// (after a hop when standing at the city's aetheryte); else teleport to the attuned aetheryte nearest the giver,
-    /// take the aethernet to the shard nearest the giver (or to the Firmament), and walk when the trip ends in the
-    /// giver's zone.
+    /// (after a hop when standing at the city's aetheryte); else teleport to the attuned aetheryte nearest the goal,
+    /// take the aethernet to the shard nearest the goal (or to the Firmament), and walk when the trip ends in the goal's
+    /// zone and the goal has a place. The goal is the giver, or the way into the interior the giver stands in.
     /// </summary>
     public GoToCheck CheckGoTo(QuestRecord quest)
     {
@@ -658,11 +935,14 @@ public sealed partial class GameLinks
         }
 
         var teleport = CheckTeleport(quest);
+        var goal = teleport.Goal ?? GiverTravel.Goal(issuer, Entrances, travel.Territory);
+
         // A conversation zone is never entered by the chain; once inside it, the walk is fine.
         var conversation = (TravelSpecials.NeedsConversation(teleport.Special) || teleport.Special == TravelSpecial.CosmicExploration)
             && travel.Territory != issuer.TerritoryId;
         var automation = AutomationBlock();
         var block = conversation ? GoToBlock.Conversation
+            : VnavmeshReason() is not null ? GoToBlock.VnavmeshSetup
             : travel.BetweenAreas ? GoToBlock.Loading
             : automation == WalkBlock.QuestionableRunning ? GoToBlock.QuestionableRunning
             : automation == WalkBlock.AutoDutyRunning ? GoToBlock.AutoDutyRunning
@@ -677,21 +957,22 @@ public sealed partial class GameLinks
             return new GoToCheck(block, null, false);
         }
 
-        // Standing at the city's aetheryte (or already in the giver's zone and closer than any aetheryte there).
+        // Standing at the city's aetheryte (or already in the goal's zone and closer than any aetheryte there).
         var hop = CheckHop(quest);
-        TravelLeg? hopLeg = hop.Ready ? HopLeg(hop) : null;
+        TravelLeg? hopLeg = hop.Ready && LifestreamReason() is null ? HopLeg(hop) : null;
         if (teleport.AlreadyHere || hopLeg is not null)
         {
             var end = hopLeg?.TerritoryId ?? travel.Territory;
-            return new GoToCheck(GoToBlock.None, Plan(issuer, null, hopLeg, end), false);
+            return new GoToCheck(GoToBlock.None, Plan(goal, null, hopLeg, end, travel.CurrentOptions), false);
         }
 
         if (!teleport.Ready || teleport.Target is not { } target)
         {
-            // In the giver's zone already, no teleport is needed to get going: walk from here.
-            if (travel.Territory == issuer.TerritoryId && teleport.Block is TeleportBlock.NoLifestream or TeleportBlock.NotAttuned or TeleportBlock.NoAetheryte)
+            // In the goal's zone already, no teleport is needed to get going: walk from here.
+            if (travel.Territory == goal.Place.TerritoryId && goal.Placed
+                && teleport.Block is TeleportBlock.NoLifestream or TeleportBlock.NotAttuned or TeleportBlock.NoAetheryte or TeleportBlock.LifestreamSetup or TeleportBlock.TooFar)
             {
-                return new GoToCheck(GoToBlock.None, Plan(issuer, null, null, travel.Territory), false);
+                return new GoToCheck(GoToBlock.None, Plan(goal, null, null, travel.Territory, travel.CurrentOptions), false);
             }
 
             var reason = teleport.Block switch
@@ -699,7 +980,9 @@ public sealed partial class GameLinks
                 TeleportBlock.NoGiverPlace => GoToBlock.NoGiverPlace,
                 TeleportBlock.NoAetheryte => GoToBlock.NoAetheryte,
                 TeleportBlock.NoLifestream => GoToBlock.NoLifestream,
+                TeleportBlock.LifestreamSetup => GoToBlock.LifestreamSetup,
                 TeleportBlock.NotAttuned => GoToBlock.NotAttuned,
+                TeleportBlock.TooFar => GoToBlock.TooFar,
                 _ => GoToBlock.Busy,
             };
             return new GoToCheck(reason, null, false);
@@ -710,13 +993,14 @@ public sealed partial class GameLinks
         {
             arrivalHop = new TravelLeg(GoToGiverPlan.FirmamentHop, TravelSpecials.FirmamentTerritory);
         }
-        else if (TravelPlanner.ChooseShard(target.Node, Aetherytes.ShardNodesInGroup(target.Group), issuer.TerritoryId, issuer.X, issuer.Z, IsShardAttuned) is { } shard)
+        else if (goal.Placed
+            && TravelPlanner.ChooseShard(target.Node, Aetherytes.ShardNodesInGroup(target.Group), goal.Place.TerritoryId, goal.Place.X, goal.Place.Z, IsShardAttuned) is { } shard)
         {
             arrivalHop = new TravelLeg(shard.RowId, shard.TerritoryId);
         }
 
         var leg = new TravelLeg(target.RowId, target.TerritoryId);
-        return new GoToCheck(GoToBlock.None, Plan(issuer, leg, arrivalHop, arrivalHop?.TerritoryId ?? target.TerritoryId), false);
+        return new GoToCheck(GoToBlock.None, Plan(goal, leg, arrivalHop, arrivalHop?.TerritoryId ?? target.TerritoryId, travel.CurrentOptions), false);
     }
 
     private static TravelLeg? HopLeg(HopCheck hop) =>
@@ -724,31 +1008,33 @@ public sealed partial class GameLinks
         : hop.Shard is { } shard ? new TravelLeg(shard.RowId, shard.TerritoryId)
         : null;
 
-    /// <summary>The plan for the legs; it walks only when the trip ends in the giver's zone (vnavmesh does not cross zone lines).</summary>
-    private static GoToGiverPlan Plan(Issuer issuer, TravelLeg? teleport, TravelLeg? hop, uint endTerritory) =>
-        new(issuer.TerritoryId, issuer.X, issuer.Y, issuer.Z, teleport, hop, endTerritory == issuer.TerritoryId);
+    /// <summary>
+    /// The plan for the legs; it walks only when the trip ends in the goal's zone (vnavmesh does not cross zone lines)
+    /// and the goal has a place (an interior's door the data does not place has none).
+    /// </summary>
+    private static GoToGiverPlan Plan(TravelGoal goal, TravelLeg? teleport, TravelLeg? hop, uint endTerritory, TravelOptions options) =>
+        new(goal.Place.TerritoryId, goal.Place.X, goal.Place.Y, goal.Place.Z, teleport, hop, endTerritory == goal.Place.TerritoryId && goal.Placed)
+        {
+            Options = options,
+            ToEntrance = goal.AtEntrance,
+        };
 
     /// <summary>True when Go to giver can start now.</summary>
     public bool CanGoToGiver(QuestRecord quest) => CheckGoTo(quest).Ready;
 
     /// <summary>
     /// Starts the Go to giver chain: teleport (Lifestream), wait for the arrival, an aethernet hop, then the walk
-    /// (vnavmesh). Every step can be stopped with <see cref="StopTravel"/> and times out with a chat line. False when
-    /// nothing was started.
+    /// (vnavmesh), mounting and flying as the settings say, to the giver or the way into its interior. Every step can be
+    /// stopped with <see cref="StopTravel"/> and times out with a chat line. False when nothing was started.
     /// </summary>
     public bool GoToGiver(QuestRecord quest)
     {
-        if (ClickHeld || CheckGoTo(quest) is not { Ready: true, Plan: { } plan } || Travel is not { } travel)
+        if (ClickHeld || CheckGoTo(quest) is not { Ready: true, Plan: { } plan } || Travel is not { } travel || GoalFor(quest) is not { } goal)
         {
             return false;
         }
 
-        travel.Start(plan);
-        if (travel.JourneyActive)
-        {
-            MarkStarted();
-        }
-
+        StartJourney(travel, plan, quest, goal);
         return travel.JourneyActive;
     }
 
@@ -764,6 +1050,10 @@ public sealed partial class GameLinks
         {
             case GoToBlock.NoVnavmesh:
                 return NeedsVnavmesh();
+            case GoToBlock.VnavmeshSetup:
+                return VnavmeshReason() ?? NeedsVnavmesh();
+            case GoToBlock.LifestreamSetup:
+                return LifestreamReason() ?? NeedsLifestream();
             case GoToBlock.NoGiverPlace:
                 return Strings.TravelNoGiverPlace;
             case GoToBlock.NoLifestream:
@@ -771,7 +1061,10 @@ public sealed partial class GameLinks
             case GoToBlock.NoAetheryte:
                 return Strings.TeleportNoAetheryte;
             case GoToBlock.NotAttuned:
-                return string.Format(CultureInfo.CurrentCulture, Strings.TravelNotAttunedFormat, ZoneName(quest));
+                return string.Format(CultureInfo.CurrentCulture, Strings.TravelNotAttunedFormat, GoalZoneName(quest, GoalFor(quest)));
+            case GoToBlock.TooFar:
+                var far = CheckTeleport(quest);
+                return string.Format(CultureInfo.CurrentCulture, Strings.TravelTooFarFormat, far.Skipped?.Name ?? string.Empty, far.Target?.Name ?? string.Empty);
             case GoToBlock.Conversation:
                 return string.Format(CultureInfo.CurrentCulture, Strings.TravelGoToConversationFormat, ZoneName(quest));
             case GoToBlock.Busy:
@@ -792,7 +1085,7 @@ public sealed partial class GameLinks
                 return Strings.TravelWalkCutscene;
         }
 
-        var lines = new List<string>(5) { Strings.TravelGoToTooltip };
+        var lines = new List<string>(8) { Strings.TravelGoToTooltip };
         if (check.Plan is not { } plan)
         {
             return lines[0];
@@ -801,6 +1094,10 @@ public sealed partial class GameLinks
         if (plan.Teleport is { } teleport)
         {
             lines.Add(string.Format(CultureInfo.CurrentCulture, Strings.TravelGoToStepTeleportFormat, Aetherytes.Find(teleport.Id)?.Name ?? string.Empty));
+            if (CheckTeleport(quest) is { Skipped: { } skipped, Target: { } target })
+            {
+                lines.Add(string.Format(CultureInfo.CurrentCulture, Strings.TravelSubstitutedFormat, skipped.Name, target.Name));
+            }
         }
 
         if (plan.Hop is { } hop)
@@ -809,7 +1106,22 @@ public sealed partial class GameLinks
             lines.Add(string.Format(CultureInfo.CurrentCulture, Strings.TravelGoToStepHopFormat, name));
         }
 
-        lines.Add(plan.Walk ? Strings.TravelGoToStepWalk : string.Format(CultureInfo.CurrentCulture, Strings.TravelGoToNoWalkFormat, ZoneName(quest)));
+        var goal = GoalFor(quest);
+        var interior = goal is { Entrance: { } door } ? TerritoryName(door.Interior) : null;
+        if (plan.Walk)
+        {
+            lines.Add(interior is not null ? string.Format(CultureInfo.CurrentCulture, Strings.TravelGoToStepEntranceFormat, interior) : Strings.TravelGoToStepWalk);
+            AddMoveLines(lines);
+        }
+        else if (interior is not null && goal is { Placed: false })
+        {
+            lines.Add(string.Format(CultureInfo.CurrentCulture, Strings.TravelGoToNoEntranceFormat, interior));
+        }
+        else
+        {
+            lines.Add(string.Format(CultureInfo.CurrentCulture, Strings.TravelGoToNoWalkFormat, interior ?? ZoneName(quest)));
+        }
+
         return string.Join('\n', lines);
     }
 }

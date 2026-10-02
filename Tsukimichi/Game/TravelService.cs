@@ -4,7 +4,9 @@ using System.Globalization;
 using System.Numerics;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Plugin.Services;
+using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
+using Lumina.Excel.Sheets;
 using Tsukimichi.Core.Runtime;
 using Tsukimichi.Core.Travel;
 using Tsukimichi.GameData;
@@ -23,6 +25,11 @@ namespace Tsukimichi.Game;
 /// stays unknown and is read again next frame. <see cref="AttunementRevision"/> moves whenever the answers change. A
 /// walk or chain this service started is stopped when the player leaves the zone (the chain's own check), on logout and
 /// when the plugin unloads; a walk another plugin started is never stopped from here.
+/// <para>Mounting, Sprint and landing a flying mount (travel review, 1.10) are the game's general actions through
+/// FFXIVClientStructs' <c>ActionManager</c> (Mount Roulette or the chosen mount, Sprint, and Dismount, which brings a
+/// flying mount down), only while the shared <see cref="HookGate"/> allows game calls and only during a Walk or Go to
+/// giver the player clicked; whether the zone's flying is unlocked is Dalamud's <see cref="IUnlockState"/>
+/// (<c>PlayerState.IsAetherCurrentZoneComplete</c>). The character is never dismounted.</para>
 /// </summary>
 public sealed class TravelService : ITravelPorts, IDisposable
 {
@@ -32,11 +39,17 @@ public sealed class TravelService : ITravelPorts, IDisposable
     /// <summary>How close (raw units) vnavmesh is asked to bring the player to the giver.</summary>
     public const float WalkRange = 3f;
 
+    private const uint SprintAction = TravelActions.Sprint;
+    private const uint MountRouletteAction = TravelActions.MountRoulette;
+    private const uint DismountAction = TravelActions.Dismount;
+
     private readonly IFramework framework;
     private readonly IClientState clientState;
     private readonly ICondition condition;
     private readonly IObjectTable objects;
     private readonly IAetheryteList aetheryteList;
+    private readonly IDataManager data;
+    private readonly IUnlockState unlocks;
     private readonly IPluginLog log;
     private readonly GoToGiver journey;
 
@@ -49,9 +62,16 @@ public sealed class TravelService : ITravelPorts, IDisposable
     private Vector3? position;
     private bool journeyIsWalkOnly;
     private bool warned;
+    private bool actionWarned;
+    private uint zoneRead;
+    private bool zoneMount;
+    private uint zoneCurrents;
+    private string? journeyArrivalNote;
 
-    public TravelService(IFramework framework, IClientState clientState, ICondition condition, IObjectTable objects, IAetheryteList aetheryteList, LifestreamIpc lifestream, VnavmeshIpc vnavmesh, IPluginLog log)
+    public TravelService(IFramework framework, IClientState clientState, ICondition condition, IObjectTable objects, IAetheryteList aetheryteList, IDataManager data, IUnlockState unlocks, LifestreamIpc lifestream, VnavmeshIpc vnavmesh, IPluginLog log)
     {
+        this.data = data ?? throw new ArgumentNullException(nameof(data));
+        this.unlocks = unlocks ?? throw new ArgumentNullException(nameof(unlocks));
         this.framework = framework ?? throw new ArgumentNullException(nameof(framework));
         this.clientState = clientState ?? throw new ArgumentNullException(nameof(clientState));
         this.condition = condition ?? throw new ArgumentNullException(nameof(condition));
@@ -80,6 +100,15 @@ public sealed class TravelService : ITravelPorts, IDisposable
 
     /// <summary>Prints one chat line under the plugin's tag; set by the plugin.</summary>
     public Action<string>? Print { get; set; }
+
+    /// <summary>Settings › Integrations › Travel: how walks move; on foot when unset.</summary>
+    public Func<TravelOptions>? Options { get; set; }
+
+    /// <summary>Settings › Integrations › Travel › Mount: the chosen mount's row, 0 for Mount Roulette; Roulette when unset.</summary>
+    public Func<uint>? MountChoice { get; set; }
+
+    /// <summary>The settings' movement options now (<see cref="TravelOptions.OnFoot"/> when unset); every new plan carries them.</summary>
+    public TravelOptions CurrentOptions => Options?.Invoke() ?? TravelOptions.OnFoot;
 
     public void Dispose()
     {
@@ -334,14 +363,29 @@ public sealed class TravelService : ITravelPorts, IDisposable
 
     public GoToGiverStep JourneyStep => journey.Step;
 
+    /// <summary>True while the walk under way flies.</summary>
+    public bool JourneyFlying => journey.IsActive && journey.Flying;
+
+    /// <summary>The plan of the run under way or the last one; null before the first.</summary>
+    public GoToGiverPlan? JourneyPlan => journey.Plan;
+
+    /// <summary>Who or what the run under way heads for (the giver's name, or the way into a zone), for the status line.</summary>
+    public string JourneyTarget { get; private set; } = string.Empty;
+
     /// <summary>True while vnavmesh moves the character, whoever asked it to.</summary>
     public bool Walking => Vnavmesh.IsWalking;
 
-    /// <summary>Starts a Go to giver chain (or, with <see cref="GoToGiverPlan.WalkOnly"/>, a lone walk), replacing any under way.</summary>
-    public void Start(GoToGiverPlan plan)
+    /// <summary>
+    /// Starts a Go to giver chain (or, with <see cref="GoToGiverPlan.WalkOnly"/>, a lone walk), replacing any under way.
+    /// <paramref name="target"/> names where it heads for the status line; <paramref name="arrivalNote"/> is the chat
+    /// line printed when the run ends well (at an interior's door: "go in to find …").
+    /// </summary>
+    public void Start(GoToGiverPlan plan, string target = "", string? arrivalNote = null)
     {
         ArgumentNullException.ThrowIfNull(plan);
         journeyIsWalkOnly = plan.Teleport is null && plan.Hop is null;
+        JourneyTarget = target ?? string.Empty;
+        journeyArrivalNote = arrivalNote;
         Report(journey.Start(plan, Environment.TickCount64));
     }
 
@@ -353,6 +397,21 @@ public sealed class TravelService : ITravelPorts, IDisposable
 
     private void Report(GoToGiverOutcome? outcome)
     {
+        if (outcome is { Step: GoToGiverStep.Done })
+        {
+            if (journey.MountGaveUp)
+            {
+                log.Information("Go to giver: the mount did not come; walked on foot");
+            }
+
+            if (journeyArrivalNote is { } note)
+            {
+                PrintLine(note);
+            }
+
+            return;
+        }
+
         if (outcome is not { Step: GoToGiverStep.Failed } failed)
         {
             return;
@@ -374,6 +433,8 @@ public sealed class TravelService : ITravelPorts, IDisposable
             GoToGiverFailure.WalkTimedOut => Strings.TravelFailWalkTimedOut,
             GoToGiverFailure.WalkStoppedShort => Strings.TravelFailWalkStoppedShort,
             GoToGiverFailure.LeftZone => Strings.TravelFailLeftZone,
+            GoToGiverFailure.Stuck => Strings.TravelFailStuck,
+            GoToGiverFailure.LandingFailed => Strings.TravelFailLanding,
             _ => Strings.TravelReasonDeclined,
         };
         var format = journeyIsWalkOnly ? Strings.TravelWalkStoppedFormat : Strings.TravelGoToStoppedFormat;
@@ -396,7 +457,145 @@ public sealed class TravelService : ITravelPorts, IDisposable
         shardId == GoToGiverPlan.FirmamentHop ? Lifestream.AethernetTeleportToFirmament() : Lifestream.AethernetTeleport(shardId);
 
     /// <inheritdoc />
-    public bool StartWalk(GoToGiverPlan plan) => Vnavmesh.MoveCloseTo(new Vector3(plan.GoalX, plan.GoalY, plan.GoalZ), WalkRange);
+    public bool StartWalk(GoToGiverPlan plan, bool fly) => Vnavmesh.MoveCloseTo(new Vector3(plan.GoalX, plan.GoalY, plan.GoalZ), WalkRange, fly);
+
+    /// <inheritdoc />
+    public bool Mounted => condition[ConditionFlag.Mounted];
+
+    /// <inheritdoc />
+    public bool InFlight => condition[ConditionFlag.InFlight];
+
+    /// <inheritdoc />
+    public TravelMoveContext MoveContext
+    {
+        get
+        {
+            ReadZone();
+            var calls = Gate is { HooksAllowed: true };
+            var (type, id) = MountAction();
+            var mountAllowed = calls && zoneMount && !InCombat && CanUse(type, id);
+            var flight = calls && zoneCurrents != 0 && FlightUnlocked(zoneCurrents);
+            var sprint = calls && CanUse(ActionType.GeneralAction, SprintAction);
+            return new TravelMoveContext(Mounted, mountAllowed, flight, !zoneMount, sprint);
+        }
+    }
+
+    /// <inheritdoc />
+    public bool StartMount()
+    {
+        var (type, id) = MountAction();
+        return Gate is { HooksAllowed: true } && UseAction(type, id);
+    }
+
+    /// <inheritdoc />
+    public bool StartLanding() =>
+        Gate is { HooksAllowed: true } && CanUse(ActionType.GeneralAction, DismountAction) && UseAction(ActionType.GeneralAction, DismountAction);
+
+    /// <inheritdoc />
+    public bool StartSprint() => Gate is { HooksAllowed: true } && UseAction(ActionType.GeneralAction, SprintAction);
+
+    /// <summary>The chosen mount when the character owns it, else Mount Roulette.</summary>
+    private (ActionType Type, uint Id) MountAction()
+    {
+        var chosen = MountChoice?.Invoke() ?? 0;
+        if (chosen != 0)
+        {
+            try
+            {
+                if (data.GetExcelSheet<Mount>().GetRowOrDefault(chosen) is { } mount && unlocks.IsMountUnlocked(mount))
+                {
+                    return (ActionType.Mount, chosen);
+                }
+            }
+            catch (Exception ex)
+            {
+                WarnActionOnce(ex, "Mount unlock unavailable");
+            }
+        }
+
+        return (ActionType.GeneralAction, MountRouletteAction);
+    }
+
+    /// <summary>The current zone's TerritoryType flags (mounts allowed, its aether current set), read once per zone.</summary>
+    private void ReadZone()
+    {
+        var territory = Territory;
+        if (territory == zoneRead)
+        {
+            return;
+        }
+
+        zoneRead = territory;
+        zoneMount = false;
+        zoneCurrents = 0;
+        try
+        {
+            if (data.GetExcelSheet<TerritoryType>().GetRowOrDefault(territory) is { } row)
+            {
+                zoneMount = row.Mount;
+                zoneCurrents = row.AetherCurrentCompFlgSet.RowId;
+            }
+        }
+        catch (Exception ex)
+        {
+            WarnActionOnce(ex, "Zone flags unavailable");
+        }
+    }
+
+    /// <summary>True when every aether current of the zone's set is attuned: the game's own flying flag.</summary>
+    private bool FlightUnlocked(uint set)
+    {
+        try
+        {
+            return data.GetExcelSheet<AetherCurrentCompFlgSet>().GetRowOrDefault(set) is { } row && unlocks.IsAetherCurrentCompFlgSetUnlocked(row);
+        }
+        catch (Exception ex)
+        {
+            WarnActionOnce(ex, "Flying state unavailable");
+            return false;
+        }
+    }
+
+    /// <summary>True when the game would take the action now (<c>ActionManager.GetActionStatus</c> answers 0).</summary>
+    private unsafe bool CanUse(ActionType type, uint id)
+    {
+        try
+        {
+            var actions = ActionManager.Instance();
+            return actions != null && actions->GetActionStatus(type, id) == 0;
+        }
+        catch (Exception ex)
+        {
+            WarnActionOnce(ex, "Action status unavailable");
+            return false;
+        }
+    }
+
+    private unsafe bool UseAction(ActionType type, uint id)
+    {
+        try
+        {
+            var actions = ActionManager.Instance();
+            return actions != null && actions->UseAction(type, id);
+        }
+        catch (Exception ex)
+        {
+            WarnActionOnce(ex, "Action use failed");
+            return false;
+        }
+    }
+
+    private void WarnActionOnce(Exception ex, string message)
+    {
+        if (actionWarned)
+        {
+            log.Debug(ex, message);
+            return;
+        }
+
+        actionWarned = true;
+        log.Warning(ex, message);
+    }
 
     /// <inheritdoc />
     public void StopWalk() => Vnavmesh.Stop();

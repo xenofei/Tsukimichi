@@ -7,6 +7,40 @@ namespace Tsukimichi.Core.Travel;
 /// </summary>
 public readonly record struct TravelNode(uint RowId, uint TerritoryId, float X, float Z, uint Group = 0);
 
+/// <summary>A place in raw world units: a territory and a position in it (<paramref name="Y"/> the height).</summary>
+public readonly record struct TravelPlace(uint TerritoryId, float X, float Y, float Z);
+
+/// <summary>
+/// The way into an interior: a building, a private room or a story area that holds no aetheryte and no aethernet shard
+/// (the Waking Sands, Fortemps Manor, Zero's Domain). <paramref name="Interior"/> is the territory the giver stands
+/// in; <paramref name="TerritoryId"/> the outside territory its door (or the NPC who takes you in) stands in. When
+/// <paramref name="Placed"/> the game data places the door at (<paramref name="X"/>, <paramref name="Y"/>,
+/// <paramref name="Z"/>); otherwise only the outside territory is known and the position means nothing.
+/// </summary>
+public readonly record struct InteriorEntrance(uint Interior, uint TerritoryId, float X, float Y, float Z, bool Placed);
+
+/// <summary>
+/// Where travel aims for one giver: the giver itself, or, while the player is outside an interior the giver stands
+/// in, that interior's door (<see cref="Entrance"/> set). <see cref="Placed"/> is false when only the outside territory
+/// of the door is known: a teleport still gets close, a walk cannot.
+/// </summary>
+public readonly record struct TravelGoal(TravelPlace Place, bool Placed, InteriorEntrance? Entrance)
+{
+    /// <summary>True when the goal is an interior's door rather than the giver.</summary>
+    public bool AtEntrance => Entrance is not null;
+}
+
+/// <summary>
+/// Which aetheryte a teleport toward a goal lands at: <paramref name="Nearest"/> is the one nearest the goal, attuned
+/// or not; <paramref name="Target"/> the attuned one Teleport uses (null when none is). They differ when the nearest is
+/// not attuned (<see cref="Substituted"/>), which the tooltip says.
+/// </summary>
+public readonly record struct ArrivalChoice(TravelNode? Nearest, TravelNode? Target)
+{
+    /// <summary>True when the nearest aetheryte is not attuned and Teleport lands at another one.</summary>
+    public bool Substituted => Nearest is { } nearest && Target is { } target && nearest.RowId != target.RowId;
+}
+
 /// <summary>
 /// The choices behind Teleport, "Already here" and the aethernet hop (feature plan v5, 1.6.0): which attuned aetheryte
 /// lands closest to a quest giver, whether the player already stands closer than that, and which aethernet shard of
@@ -33,34 +67,116 @@ public static class TravelPlanner
     /// giver's territory; without one, <paramref name="fallback"/> (the aetheryte the zone's TerritoryType row names,
     /// for a city sub-zone without its own) when it is attuned; null when none of them is.
     /// </summary>
-    public static TravelNode? NearestAttuned(IReadOnlyList<TravelNode> inTerritory, TravelNode? fallback, float x, float z, Func<uint, bool> isAttuned)
+    public static TravelNode? NearestAttuned(IReadOnlyList<TravelNode> inTerritory, TravelNode? fallback, float x, float z, Func<uint, bool> isAttuned) =>
+        ChooseArrival(inTerritory, fallback, x, z, isAttuned).Target;
+
+    /// <summary>
+    /// Distances (raw units) closer than this count as a tie, which the aetheryte the game itself links to the zone
+    /// (its TerritoryType row) wins.
+    /// </summary>
+    public const float TieMargin = 5f;
+
+    /// <summary>
+    /// Where a teleport toward a goal lands. <paramref name="inTerritory"/> are the aetherytes standing in the goal's
+    /// territory; <paramref name="preferred"/> is the aetheryte the game links to the zone (its TerritoryType row): it
+    /// wins a tie (<see cref="TieMargin"/>), it is the reference point when the goal's position is unknown
+    /// (<paramref name="x"/> or <paramref name="z"/> null: an interior whose door the data does not place), and it is
+    /// the fallback when the territory holds no aetheryte of its own (a city sub-zone) or none there is attuned.
+    /// <see cref="ArrivalChoice.Nearest"/> ignores attunement; <see cref="ArrivalChoice.Target"/> is attuned or null.
+    /// </summary>
+    public static ArrivalChoice ChooseArrival(IReadOnlyList<TravelNode> inTerritory, TravelNode? preferred, float? x, float? z, Func<uint, bool> isAttuned)
     {
         ArgumentNullException.ThrowIfNull(inTerritory);
         ArgumentNullException.ThrowIfNull(isAttuned);
 
+        // Without a position, measure from the preferred aetheryte when it stands among the candidates.
+        var refX = x;
+        var refZ = z;
+        if ((refX is null || refZ is null) && preferred is { } p && Contains(inTerritory, p.RowId))
+        {
+            refX = p.X;
+            refZ = p.Z;
+        }
+
+        var nearest = Pick(inTerritory, preferred, refX, refZ, static _ => true) ?? preferred;
+        var target = Pick(inTerritory, preferred, refX, refZ, isAttuned);
+        if (target is null && preferred is { } fallback && isAttuned(fallback.RowId))
+        {
+            target = fallback;
+        }
+
+        return new ArrivalChoice(nearest, target);
+    }
+
+    private static bool Contains(IReadOnlyList<TravelNode> nodes, uint rowId)
+    {
+        foreach (var node in nodes)
+        {
+            if (node.RowId == rowId)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// The candidate nearest the reference point that passes <paramref name="allowed"/>, the preferred one winning a
+    /// tie; without a reference point, the preferred one when allowed and among them, else the first allowed.
+    /// </summary>
+    private static TravelNode? Pick(IReadOnlyList<TravelNode> candidates, TravelNode? preferred, float? x, float? z, Func<uint, bool> allowed)
+    {
         TravelNode? best = null;
         var bestDistance = float.MaxValue;
-        foreach (var candidate in inTerritory)
+        var bestIsPreferred = false;
+        foreach (var candidate in candidates)
         {
-            if (!isAttuned(candidate.RowId))
+            if (!allowed(candidate.RowId))
             {
                 continue;
             }
 
-            var distance = Distance(candidate.X, candidate.Z, x, z);
-            if (distance < bestDistance)
+            var isPreferred = preferred is { } pref && candidate.RowId == pref.RowId;
+            if (x is not { } px || z is not { } pz)
+            {
+                if (isPreferred)
+                {
+                    return candidate;
+                }
+
+                best ??= candidate;
+                continue;
+            }
+
+            var distance = Distance(candidate.X, candidate.Z, px, pz);
+            var better = isPreferred
+                ? distance < bestDistance + TieMargin
+                : bestIsPreferred ? distance + TieMargin <= bestDistance : distance < bestDistance;
+            if (better)
             {
                 bestDistance = distance;
                 best = candidate;
+                bestIsPreferred = isPreferred;
             }
         }
 
-        if (best is not null)
+        return best;
+    }
+
+    /// <summary>
+    /// Where travel aims for a giver at <paramref name="giver"/>: the giver itself, or, when the giver stands inside an
+    /// interior (<paramref name="entrance"/> for the giver's territory) and the player is not inside it already, the
+    /// interior's door outside.
+    /// </summary>
+    public static TravelGoal Goal(TravelPlace giver, InteriorEntrance? entrance, uint playerTerritory)
+    {
+        if (entrance is { } door && door.Interior == giver.TerritoryId && door.TerritoryId != 0 && playerTerritory != giver.TerritoryId)
         {
-            return best;
+            return new TravelGoal(new TravelPlace(door.TerritoryId, door.X, door.Y, door.Z), door.Placed, door);
         }
 
-        return fallback is { } f && isAttuned(f.RowId) ? f : null;
+        return new TravelGoal(giver, true, null);
     }
 
     /// <summary>

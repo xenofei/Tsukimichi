@@ -168,4 +168,98 @@ public sealed class TravelPlannerTests
         Assert.False(TravelSpecials.NeedsConversation(TravelSpecial.Firmament));
         Assert.False(TravelSpecials.NeedsConversation(TravelSpecial.CosmicExploration));
     }
+
+    // ------------------------------------------------------------------ arrival choice and goals (travel review, 1.10)
+
+    private const uint Thavnair = 957;
+    private const uint ZerosDomain = 1077;
+    private static readonly TravelNode Yedlihmad = new(169, Thavnair, 196f, 628f);
+    private static readonly TravelNode GreatWork = new(170, Thavnair, -526f, 36f);
+    private static readonly TravelNode PalakasStand = new(171, Thavnair, 404f, -247f);
+    private static readonly TravelNode[] ThavnairAetherytes = [Yedlihmad, GreatWork, PalakasStand];
+
+    [Fact]
+    public void Arrival_reports_the_nearest_and_says_when_it_is_not_attuned()
+    {
+        // The way into the Void stands at (-270, 606): Yedlihmad (about 467 away) beats the Great Work (about 625).
+        var all = TravelPlanner.ChooseArrival(ThavnairAetherytes, Yedlihmad, -270f, 606f, All);
+        Assert.Equal(Yedlihmad, all.Nearest);
+        Assert.Equal(Yedlihmad, all.Target);
+        Assert.False(all.Substituted);
+
+        var withoutYedlihmad = TravelPlanner.ChooseArrival(ThavnairAetherytes, Yedlihmad, -270f, 606f, id => id != Yedlihmad.RowId);
+        Assert.Equal(Yedlihmad, withoutYedlihmad.Nearest);
+        Assert.Equal(GreatWork, withoutYedlihmad.Target);
+        Assert.True(withoutYedlihmad.Substituted);
+
+        var none = TravelPlanner.ChooseArrival(ThavnairAetherytes, Yedlihmad, -270f, 606f, _ => false);
+        Assert.Equal(Yedlihmad, none.Nearest);
+        Assert.Null(none.Target);
+        Assert.False(none.Substituted);
+    }
+
+    [Fact]
+    public void The_zones_own_aetheryte_wins_a_tie()
+    {
+        TravelNode a = new(1, Field, 0f, 0f);
+        TravelNode b = new(2, Field, 8f, 0f);
+
+        // (4.5, 0): a is 4.5 away, b 3.5; within the tie margin the preferred one wins, either way round.
+        Assert.Equal(a, TravelPlanner.ChooseArrival([a, b], a, 4.5f, 0f, All).Target);
+        Assert.Equal(a, TravelPlanner.ChooseArrival([b, a], a, 4.5f, 0f, All).Target);
+        Assert.Equal(b, TravelPlanner.ChooseArrival([a, b], b, 3.5f, 0f, All).Target);
+
+        // Beyond the margin the nearer one wins whatever the zone names.
+        Assert.Equal(b, TravelPlanner.ChooseArrival([a, b], a, 8f + TravelPlanner.TieMargin, 0f, All).Target);
+        Assert.Equal(b, TravelPlanner.ChooseArrival([a, b], null, 4.5f, 0f, All).Target);
+    }
+
+    [Fact]
+    public void Without_a_position_the_zones_own_aetheryte_is_the_reference()
+    {
+        // A door the data does not place: the aetheryte the zone names, and its neighbour when it is not attuned.
+        var choice = TravelPlanner.ChooseArrival(ThavnairAetherytes, Yedlihmad, null, null, All);
+        Assert.Equal(Yedlihmad, choice.Target);
+
+        var substitute = TravelPlanner.ChooseArrival(ThavnairAetherytes, Yedlihmad, null, null, id => id != Yedlihmad.RowId);
+        Assert.Equal(PalakasStand, substitute.Target);
+        Assert.True(substitute.Substituted);
+
+        // The zone's own aetheryte stands elsewhere and the territory has none: it is the fallback (a city sub-zone).
+        Assert.Equal(GridaniaPlaza, TravelPlanner.ChooseArrival([], GridaniaPlaza, null, null, All).Target);
+        Assert.Null(TravelPlanner.ChooseArrival([], null, null, null, All).Nearest);
+    }
+
+    [Fact]
+    public void The_goal_is_the_way_in_while_outside_and_the_giver_inside()
+    {
+        var giver = new TravelPlace(ZerosDomain, -27f, 0f, 50f);
+        var door = new InteriorEntrance(ZerosDomain, Thavnair, -270f, 0f, 606f, true);
+
+        var outside = TravelPlanner.Goal(giver, door, playerTerritory: 132);
+        Assert.True(outside.AtEntrance);
+        Assert.True(outside.Placed);
+        Assert.Equal(new TravelPlace(Thavnair, -270f, 0f, 606f), outside.Place);
+
+        // In Thavnair itself the goal is still the door; inside the Void it is the giver.
+        Assert.True(TravelPlanner.Goal(giver, door, Thavnair).AtEntrance);
+        var inside = TravelPlanner.Goal(giver, door, ZerosDomain);
+        Assert.False(inside.AtEntrance);
+        Assert.Equal(giver, inside.Place);
+
+        // An unplaced door keeps its outside territory but no spot; another interior's door does not apply.
+        var unplaced = TravelPlanner.Goal(giver, door with { Placed = false }, 0);
+        Assert.False(unplaced.Placed);
+        Assert.Equal(Thavnair, unplaced.Place.TerritoryId);
+        Assert.False(TravelPlanner.Goal(giver, door with { Interior = 212 }, 0).AtEntrance);
+        Assert.False(TravelPlanner.Goal(giver, null, 0).AtEntrance);
+    }
+
+    [Fact]
+    public void Already_here_measures_against_the_goal_not_the_giver_inside()
+    {
+        // Standing in Thavnair 50 from the door, Yedlihmad 467 from it: walking is quicker than teleporting.
+        Assert.True(TravelPlanner.IsAlreadyHere(Thavnair, -250f, 580f, Thavnair, -270f, 606f, Yedlihmad));
+        Assert.False(TravelPlanner.IsAlreadyHere(Thavnair, 400f, -200f, Thavnair, -270f, 606f, Yedlihmad));
+    }
 }

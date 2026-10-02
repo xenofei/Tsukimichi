@@ -351,6 +351,12 @@ public sealed class MainWindow : Window, IDisposable
         detailPane.QuestText = questText ?? throw new ArgumentNullException(nameof(questText));
     }
 
+    /// <summary>The live travel status ("Mounting…", "Flying to …") for the line under the detail pane's pills while a trip runs.</summary>
+    public void AttachTravelStatus(Func<string?> status)
+    {
+        detailPane.TravelStatusText = status ?? throw new ArgumentNullException(nameof(status));
+    }
+
     /// <summary>The game's achievement flags for the detail pane's achievement lines (1.9.0 collector extras); without them the quests decide.</summary>
     public void AttachAchievementFlags(Func<uint, bool?> earned)
     {

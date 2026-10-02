@@ -150,11 +150,23 @@ public sealed partial class GameLinks(IGameGui gameGui, IChatGui chat, IDataMana
     /// <summary>
     /// The aetheryte nearest the quest's giver, attuned or not (id and place name), for grouping quests into stops:
     /// it reads the sheets only, never the character, so a stop list cached per catalog stays right as aetherytes are
-    /// attuned. Teleport's own target, the nearest attuned one, is <see cref="CheckTeleport"/>'s. Null without a giver
-    /// place or an aetheryte for its zone.
+    /// attuned. A giver inside an interior groups under the aetheryte nearest its way in, as Teleport goes there.
+    /// Teleport's own target, the nearest attuned one, is <see cref="CheckTeleport"/>'s. Null without a giver place or
+    /// an aetheryte for its zone.
     /// </summary>
-    public (uint Id, string Name)? GiverAetheryte(QuestRecord quest) =>
-        Aetherytes.NearestToGiver(quest) is { } aetheryte ? (aetheryte.RowId, aetheryte.Name) : null;
+    public (uint Id, string Name)? GiverAetheryte(QuestRecord quest)
+    {
+        if (quest.Issuer is not { TerritoryId: > 0 } issuer)
+        {
+            return null;
+        }
+
+        var index = Aetherytes;
+        var goal = GiverTravel.Goal(issuer, Entrances, 0);
+        return GiverTravel.Arrival(index, issuer.TerritoryId, goal, static _ => true).Nearest is { } node && index.Find(node.RowId) is { } aetheryte
+            ? (aetheryte.RowId, aetheryte.Name)
+            : null;
+    }
 
     /// <summary>
     /// True when the game journal can show the quest: it only holds accepted and completed quests (a repeatable done
