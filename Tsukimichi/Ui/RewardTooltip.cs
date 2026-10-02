@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
-using Dalamud.Interface.Textures;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
 using Tsukimichi.Core.Model;
@@ -43,8 +42,8 @@ public static class RewardTooltip
         var iconSize = UiMetrics.TooltipIconSize;
         if (reward.Icon != 0)
         {
-            var wrap = textures.GetFromGameIcon(new GameIconLookup(reward.Icon)).GetWrapOrEmpty();
-            ImGui.Image(wrap.Handle, new Vector2(iconSize, iconSize));
+            // Hi-res at this size, and never throwing: a missing icon here would break the window's draw while hovered.
+            GameIcon.Draw(textures, reward.Icon, iconSize);
             ImGui.SameLine();
         }
 

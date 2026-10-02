@@ -8,7 +8,6 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Dalamud.Bindings.ImGui;
-using Dalamud.Interface.Textures;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
 using Lumina.Excel.Sheets;
@@ -399,8 +398,7 @@ public sealed partial class CharactersPane
         if (textures is not null && d.JobIconId != 0)
         {
             var inset = new Vector2(MathF.Round(UiMetrics.Px(3f)));
-            var hiRes = frame > Orbit.LowResMaxPx;
-            if (textures.TryGetFromGameIcon(new GameIconLookup(d.JobIconId, false, hiRes), out var jobTex) && jobTex.TryGetWrap(out var wrap, out _))
+            if (GameIcon.TryGetWrap(textures, d.JobIconId, frame, out var wrap))
             {
                 dl.AddImage(wrap.Handle, frameMin + inset, frameMax - inset);
             }
@@ -633,6 +631,7 @@ public sealed partial class CharactersPane
         using var tooltipStyle = Theme.PushTooltip();
         using var tooltip = ImRaii.Tooltip();
         UiMetrics.ApplyFontScale();
+        using var wrap = UiMetrics.TooltipWrap();
         ImGui.TextUnformatted(row.Name);
         ImGui.TextDisabled(row.Count);
         ImGui.SameLine();
@@ -1115,8 +1114,7 @@ public sealed partial class CharactersPane
         }
         else
         {
-            var wrap = textures.GetFromGameIcon(new GameIconLookup(iconId)).GetWrapOrEmpty();
-            ImGui.Image(wrap.Handle, size);
+            GameIcon.Draw(textures, iconId, size.X);
         }
 
         if (ImGui.IsItemHovered())
@@ -1131,6 +1129,7 @@ public sealed partial class CharactersPane
         using var tooltipStyle = Theme.PushTooltip();
         using var tooltip = ImRaii.Tooltip();
         UiMetrics.ApplyFontScale();
+        using var wrap = UiMetrics.TooltipWrap();
         ImGui.TextUnformatted(name);
         if (level.Length > 0)
         {
@@ -1146,6 +1145,7 @@ public sealed partial class CharactersPane
         using var tooltipStyle = Theme.PushTooltip();
         using var tooltip = ImRaii.Tooltip();
         UiMetrics.ApplyFontScale();
+        using var wrap = UiMetrics.TooltipWrap();
         ImGui.TextUnformatted(Strings.FillingMoonTooltip);
         ImGui.TextDisabled(count);
         if (percent is { Length: > 0 })

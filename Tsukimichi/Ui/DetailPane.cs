@@ -713,9 +713,8 @@ public sealed partial class DetailPane
             dl.AddRectFilled(min, max, Theme.U32(hovered ? Theme.Surface.Hover : Theme.Surface.Sunken), rounding);
             if (reward.Reward.Icon != 0)
             {
-                var wrap = textures.GetFromGameIcon(new GameIconLookup(reward.Reward.Icon)).GetWrapOrEmpty();
                 var iconMin = min + new Vector2((tile - iconSize) * 0.5f);
-                dl.AddImageRounded(wrap.Handle, iconMin, iconMin + new Vector2(iconSize), Vector2.Zero, Vector2.One, 0xFFFFFFFFu, UiMetrics.Px(4f));
+                GameIcon.DrawAt(dl, textures, reward.Reward.Icon, iconMin, iconMin + new Vector2(iconSize), UiMetrics.Px(4f));
             }
 
             if (reward.Unique)

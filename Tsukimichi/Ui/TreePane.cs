@@ -721,6 +721,7 @@ public sealed partial class TreePane
                     using var readyStyle = Theme.PushTooltip();
                     using var readyTip = ImRaii.Tooltip();
                     UiMetrics.ApplyFontScale();
+                    using var readyWrap = UiMetrics.TooltipWrap();
                     ImGui.TextUnformatted(Strings.FillingMoonTooltip);
                     ImGui.TextDisabled(progress);
                     using (ImRaii.PushColor(ImGuiCol.Text, Theme.Moon))
@@ -748,6 +749,7 @@ public sealed partial class TreePane
         using var tooltipStyle = Theme.PushTooltip();
         using var tooltip = ImRaii.Tooltip();
         UiMetrics.ApplyFontScale();
+        using var wrap = UiMetrics.TooltipWrap();
         var box = 2f * MathF.Max(16f, UiMetrics.Icon(11f));
         MoonGlyph.DrawHaloInline(node.Count.Fraction, box, dimComplete: node.Complete);
         ImGui.SameLine();

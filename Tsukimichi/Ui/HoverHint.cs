@@ -233,6 +233,8 @@ public sealed class HoverHint
     private void DrawLines()
     {
         UiMetrics.ApplyFontScale();
+        // A long quest name or blocker wraps like any tooltip instead of stretching the hint across the screen.
+        using var wrap = UiMetrics.TooltipWrap();
         var lineHeight = ImGui.GetTextLineHeight();
         var glyph = UiMetrics.InlineGlyphSize(lineHeight);
         var indent = glyph + ImGui.GetStyle().ItemSpacing.X;
