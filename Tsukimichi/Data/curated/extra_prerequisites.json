@@ -1,0 +1,293 @@
+{
+  "schema": 1,
+  "note": "Quests the game wants completed before it offers a quest that neither the sheet's previous quests nor its accept conditions (QuestAcceptAdditionCondition) record, mostly a main scenario milestone the quest's own text asks for. The catalog adds them to the quest's prerequisites as an \"all\" list. Every entry names at least two sources that each name every required id: \"gameText\" (the quest text row in gameTextKey; the text is never committed), \"questionable\" (a hand-added link in docs/data/questionable-prerequisites.json) and \"wiki\" (the Console Games Wiki infobox, as docs/data/quest-verification.csv records it). Keys are Quest sheet row ids, sorted ascending.",
+  "entries": {
+    "67001": {
+      "requires": [66757, 66792, 66860, 66914, 67029],
+      "sources": ["questionable", "wiki"],
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Call_of_the_Wild_(Twin_Adder)",
+      "note": "Call of the Wild (Twin Adder), level 50, A Realm Reborn Allied Society Quests: the game also wants the quests Martial Perfection (66757), Feathers and Folly (66792), Revenge of the Furred (66860), Like Clutchfather, Like Son (66914) and Spread Your Wings and Soar (67029) done first; the sheet gives it no previous quest at all, so it read Ready at its level."
+    },
+    "67002": {
+      "requires": [66757, 66792, 66860, 66914, 67029],
+      "sources": ["questionable", "wiki"],
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Call_of_the_Wild_(Maelstrom)",
+      "note": "Call of the Wild (Maelstrom), level 50, A Realm Reborn Allied Society Quests: the game also wants the quests Martial Perfection (66757), Feathers and Folly (66792), Revenge of the Furred (66860), Like Clutchfather, Like Son (66914) and Spread Your Wings and Soar (67029) done first; the sheet gives it no previous quest at all, so it read Ready at its level."
+    },
+    "67003": {
+      "requires": [66757, 66792, 66860, 66914, 67029],
+      "sources": ["questionable", "wiki"],
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Call_of_the_Wild_(Immortal_Flames)",
+      "note": "Call of the Wild (Immortal Flames), level 50, A Realm Reborn Allied Society Quests: the game also wants the quests Martial Perfection (66757), Feathers and Folly (66792), Revenge of the Furred (66860), Like Clutchfather, Like Son (66914) and Spread Your Wings and Soar (67029) done first; the sheet gives it no previous quest at all, so it read Ready at its level."
+    },
+    "67253": {
+      "requires": [67155],
+      "sources": ["gameText", "questionable", "wiki"],
+      "gameTextKey": "TEXT_JOBBRD580_01717_SYSTEM_000_900",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Saint_of_Song",
+      "note": "A Saint of Song, level 58, Bard Quests: the game also wants the main scenario quest Mountaintop Diplomacy (67155) done first; the sheet links only When Gnaths Cry (67252)."
+    },
+    "67598": {
+      "requires": [67153],
+      "sources": ["gameText", "questionable", "wiki"],
+      "gameTextKey": "TEXT_JOBDRK560_02062_SYSTEM_000_900",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Original_Sins",
+      "note": "Original Sins, level 56, Dark Knight Quests: the game also wants the main scenario quest Mourn in Passing (67153) done first; the sheet links only Kindred Spirits (67597)."
+    },
+    "67599": {
+      "requires": [67155],
+      "sources": ["gameText", "questionable", "wiki"],
+      "gameTextKey": "TEXT_JOBDRK580_02063_SYSTEM_000_900",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Flame_in_the_Abyss",
+      "note": "The Flame in the Abyss, level 58, Dark Knight Quests: the game also wants the main scenario quest Mountaintop Diplomacy (67155) done first; the sheet links only Original Sins (67598)."
+    },
+    "67624": {
+      "requires": [67155],
+      "sources": ["gameText", "questionable", "wiki"],
+      "gameTextKey": "TEXT_CLSFSH580_02088_SYSTEM_000_900",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/One_Man's_Fish_Is_Another_Man's_Poison",
+      "note": "One Man's Fish Is Another Man's Poison, level 58, Fisher Quests: the game also wants the main scenario quest Mountaintop Diplomacy (67155) done first; the sheet links only Invasion of the Supper Snatchers (67623)."
+    },
+    "67793": {
+      "requires": [67191],
+      "sources": ["gameText", "questionable", "wiki"],
+      "gameTextKey": "TEXT_BANGNA003_02257_SYSTEM_100_000",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/An_Acquired_Taste",
+      "note": "An Acquired Taste, level 50, Vath Quests: the game also wants the main scenario quest A Great New Nation (67191) done first; the sheet links only Adventurers Don't Get Cold Feet (67792)."
+    },
+    "68136": {
+      "requires": [68002],
+      "sources": ["gameText", "questionable"],
+      "gameTextKey": "TEXT_CLSGLD630_02600_SYSTEM_000_000",
+      "evidence": "https://github.com/PunishXIV/Questionable/blob/0bd61efe8a6806a7a8010741c0c46b7dea153709/Questionable/Data/QuestData.cs",
+      "note": "Gemworks in Progress, level 63, Goldsmith Quests: the game also wants the main scenario quest Divide and Conquer (68002) done first; the sheet links only A Royal Request (68135)."
+    },
+    "68144": {
+      "requires": [68070],
+      "sources": ["gameText", "questionable", "wiki"],
+      "gameTextKey": "TEXT_CLSCUL700_02608_SYSTEM_100_000",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Way_to_a_Father's_Heart",
+      "note": "The Way to a Father's Heart, level 70, Culinarian Quests: the game also wants the main scenario quest The First of Many (68070) done first; the sheet links only Teach a Man to Make Fish (68143)."
+    },
+    "68158": {
+      "requires": [68026],
+      "sources": ["gameText", "questionable", "wiki"],
+      "gameTextKey": "TEXT_CLSHRV650_02622_SYSTEM_100_000",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Walking_for_Walker's",
+      "note": "Walking for Walker's, level 65, Botanist Quests: the game also wants the main scenario quest Tide Goes in, Imperials Go Out (68026) done first; the sheet links only You Say Popoto, I Say... (68157)."
+    },
+    "68160": {
+      "requires": [68070],
+      "sources": ["gameText", "questionable", "wiki"],
+      "gameTextKey": "TEXT_CLSHRV700_02624_SYSTEM_100_000",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Edgyth's_Winning_Streak",
+      "note": "Edgyth's Winning Streak, level 70, Botanist Quests: the game also wants the main scenario quest The First of Many (68070) done first; the sheet links only The White Death (68159)."
+    },
+    "68434": {
+      "requires": [68026],
+      "sources": ["gameText", "questionable", "wiki"],
+      "gameTextKey": "TEXT_CLSFSH680_02898_SYSTEM_000_900",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Always_a_Bigger_Fish",
+      "note": "Always a Bigger Fish, level 68, Fisher Quests: the game also wants the main scenario quest Tide Goes in, Imperials Go Out (68026) done first; the sheet links only Search for the Spawning Grounds (68433)."
+    },
+    "68440": {
+      "requires": [68039],
+      "sources": ["gameText", "questionable", "wiki"],
+      "gameTextKey": "TEXT_JOBWAR700_02904_SYSTEM_100_000",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Heart_of_the_Problem",
+      "note": "The Heart of the Problem, level 70, Warrior Quests: the game also wants the main scenario quest Stars in the Dark (68039) done first; the sheet links only Going the Distance (68439)."
+    },
+    "68448": {
+      "requires": [68026],
+      "sources": ["gameText", "questionable", "wiki"],
+      "gameTextKey": "TEXT_JOBDRG650_02912_SYSTEM_100_000",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Serpent_and_the_Sea_of_Rubies",
+      "note": "Serpent and the Sea of Rubies, level 65, Dragoon Quests: the game also wants the main scenario quest Tide Goes in, Imperials Go Out (68026) done first; the sheet links only Drowsy Dragons (68447)."
+    },
+    "68450": {
+      "requires": [68073],
+      "sources": ["gameText", "questionable", "wiki"],
+      "gameTextKey": "TEXT_JOBDRG700_02914_SYSTEM_100_000",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Dragon_Sound",
+      "note": "Dragon Sound, level 70, Dragoon Quests: the game also wants the main scenario quest Heavens Weep (68073) done first; the sheet links only Dark as the Night Sky (68449)."
+    },
+    "68455": {
+      "requires": [67991],
+      "sources": ["gameText", "questionable", "wiki"],
+      "gameTextKey": "TEXT_JOBDRK700_02919_SYSTEM_000_005",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Our_Compromise",
+      "note": "Our Compromise, level 70, Dark Knight Quests: the game also wants the main scenario quest A Familiar Face Forgotten (67991) done first; the sheet links only We Can Never Go Home (68454)."
+    },
+    "68488": {
+      "requires": [68054],
+      "sources": ["gameText", "questionable", "wiki"],
+      "gameTextKey": "TEXT_JOBNIN700_02952_SYSTEM_100_000",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/When_Clans_Collide",
+      "note": "When Clans Collide, level 70, Ninja Quests: the game also wants the main scenario quest The Hour of Reckoning (68054) done first; the sheet links only True Enlightenment (68487)."
+    },
+    "68510": {
+      "requires": [68027],
+      "sources": ["gameText", "questionable", "wiki"],
+      "gameTextKey": "TEXT_BANKJN002_02974_SYSTEM_000_000",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Under_Wraps",
+      "note": "Under Wraps, level 60, Kojin Quests: the game also wants the main scenario quest A Silence in Three Parts (68027) done first; the sheet links only Heaven-sent (68509)."
+    },
+    "68511": {
+      "requires": [68166],
+      "sources": ["gameText", "questionable", "wiki"],
+      "gameTextKey": "TEXT_BANKJN003_02975_SYSTEM_000_000",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Value_of_Silence",
+      "note": "The Value of Silence, level 60, Kojin Quests: the game also wants the main scenario quest Here There Be Xaela (68166) done first; the sheet links only Under Wraps (68510)."
+    },
+    "68574": {
+      "requires": [68070],
+      "sources": ["gameText", "questionable"],
+      "gameTextKey": "TEXT_BANANA003_03038_SYSTEM_100_001",
+      "evidence": "https://github.com/PunishXIV/Questionable/blob/0bd61efe8a6806a7a8010741c0c46b7dea153709/Questionable/Data/QuestData.cs",
+      "note": "Chance of Gales, level 60, Ananta Quests: the game also wants the main scenario quest The First of Many (68070) done first; the sheet links only Griffins Rampant (68573)."
+    },
+    "68623": {
+      "requires": [65636],
+      "sources": ["gameText", "questionable", "wiki"],
+      "gameTextKey": "TEXT_STMBDY502_03087_SYSTEM_000_002",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Thousand_and_One_Farewells",
+      "note": "A Thousand and One Farewells, level 70, Doman Reconstruction Quests: the game also wants the quest Short Arms of the Law (65636) done first; the sheet links only Precious Reclamation (68622)."
+    },
+    "68764": {
+      "requires": [68856],
+      "sources": ["gameText", "questionable", "wiki"],
+      "gameTextKey": "TEXT_LUCKLA102_03228_SYSTEM_100_001",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/To_Struggle_Nu_Mou",
+      "note": "To Struggle Nu Mou, level 75, Facet of Forging Quests: the game also wants the main scenario quest Acht-la Ormh Inn (68856) done first; the sheet links only Iola, Forgemaster (68763)."
+    },
+    "68770": {
+      "requires": [68856],
+      "sources": ["gameText", "questionable"],
+      "gameTextKey": "TEXT_LUCKLA302_03234_SYSTEM_100_000",
+      "evidence": "https://github.com/PunishXIV/Questionable/blob/0bd61efe8a6806a7a8010741c0c46b7dea153709/Questionable/Data/QuestData.cs",
+      "note": "Where We Belong, level 75, Facet of Nourishing Quests: the game also wants the main scenario quest Acht-la Ormh Inn (68856) done first; the sheet links only Friends of a Feather (68769)."
+    },
+    "68773": {
+      "requires": [68856],
+      "sources": ["gameText", "questionable"],
+      "gameTextKey": "TEXT_LUCKLA402_03237_SYSTEM_000_900",
+      "evidence": "https://github.com/PunishXIV/Questionable/blob/0bd61efe8a6806a7a8010741c0c46b7dea153709/Questionable/Data/QuestData.cs",
+      "note": "Shedding Light on the Myth, level 75, Facet of Gathering Quests: the game also wants the main scenario quest Acht-la Ormh Inn (68856) done first; the sheet links only On the Trail of a Myth (68772)."
+    },
+    "68774": {
+      "requires": [69170],
+      "sources": ["gameText", "questionable", "wiki"],
+      "gameTextKey": "TEXT_LUCKLA403_03238_SYSTEM_000_900",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Myth_Takes_Form",
+      "note": "The Myth Takes Form, level 80, Facet of Gathering Quests: the game also wants the main scenario quest The View from Above (69170) done first; the sheet links only Shedding Light on the Myth (68773)."
+    },
+    "68776": {
+      "requires": [68856],
+      "sources": ["gameText", "questionable"],
+      "gameTextKey": "TEXT_LUCKLA502_03240_SYSTEM_000_900",
+      "evidence": "https://github.com/PunishXIV/Questionable/blob/0bd61efe8a6806a7a8010741c0c46b7dea153709/Questionable/Data/QuestData.cs",
+      "note": "Fishing for Confidence, level 75, Facet of Fishing Quests: the game also wants the main scenario quest Acht-la Ormh Inn (68856) done first; the sheet links only Well Eel Be Damned (68775)."
+    },
+    "68777": {
+      "requires": [69184],
+      "sources": ["gameText", "questionable", "wiki"],
+      "gameTextKey": "TEXT_LUCKLA503_03241_SYSTEM_000_900",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Morsel_of_the_Deep",
+      "note": "Morsel of the Deep, level 80, Facet of Fishing Quests: the game also wants the main scenario quest Waiting in the Depths (69184) done first; the sheet links only Fishing for Confidence (68776)."
+    },
+    "68778": {
+      "requires": [69190],
+      "sources": ["questionable", "wiki"],
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/For_Every_Child_a_Star",
+      "note": "For Every Child a Star, level 80, Crystalline Mean Quests: the game also wants the main scenario quest Shadowbringers (69190) done first; the sheet gives it no previous quest at all, so it read Ready at its level."
+    },
+    "68782": {
+      "requires": [68850],
+      "sources": ["gameText", "questionable", "wiki"],
+      "gameTextKey": "TEXT_LUCKBA131_03246_SYSTEM_100_001",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Princess_and_Her_Knight",
+      "note": "The Princess and Her Knight, level 76, Tank Role Quests (Shadowbringers): the game also wants the main scenario quest A Fitting Payment (68850) done first; the sheet links only Defined by Loss (68781)."
+    },
+    "68783": {
+      "requires": [68856],
+      "sources": ["gameText", "questionable", "wiki"],
+      "gameTextKey": "TEXT_LUCKBA141_03247_SYSTEM_100_001",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Hardened_Heart",
+      "note": "The Hardened Heart, level 78, Tank Role Quests (Shadowbringers): the game also wants the main scenario quest Acht-la Ormh Inn (68856) done first; the sheet links only The Princess and Her Knight (68782)."
+    },
+    "68789": {
+      "requires": [67783],
+      "sources": ["gameText", "questionable", "wiki"],
+      "gameTextKey": "TEXT_LUCKBB231_03253_SYSTEM_000_900",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/High-steppin'_in_the_Holy_See",
+      "note": "High-steppin' in the Holy See, level 68, Dancer Quests: the game also wants the main scenario quest Litany of Peace (67783) done first; the sheet links only Dances with Duskwights (68788)."
+    },
+    "68790": {
+      "requires": [68073],
+      "sources": ["gameText", "questionable", "wiki"],
+      "gameTextKey": "TEXT_LUCKBB241_03254_SYSTEM_000_900",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Save_the_Last_Dance_for_Me",
+      "note": "Save the Last Dance for Me, level 70, Dancer Quests: the game also wants the main scenario quest Heavens Weep (68073) done first; the sheet links only High-steppin' in the Holy See (68789)."
+    },
+    "68800": {
+      "requires": [67783],
+      "sources": ["gameText", "questionable"],
+      "gameTextKey": "TEXT_LUCKBB121_03264_SYSTEM_100_001",
+      "evidence": "https://github.com/PunishXIV/Questionable/blob/0bd61efe8a6806a7a8010741c0c46b7dea153709/Questionable/Data/QuestData.cs",
+      "note": "Confessions of a Flaming Mongrel, level 65, Gunbreaker Quests: the game also wants the main scenario quest Litany of Peace (67783) done first; the sheet links only For Better or Worse (68799)."
+    },
+    "68806": {
+      "requires": [68869],
+      "sources": ["gameText", "questionable", "wiki"],
+      "gameTextKey": "TEXT_LUCKBA231_03270_SYSTEM_100_001",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Lost_and_the_Found",
+      "note": "The Lost and the Found, level 76, Healer Role Quests (Shadowbringers): the game also wants the main scenario quest Into the Wood (68869) done first; the sheet links only The Scientific Method (68805)."
+    },
+    "68807": {
+      "requires": [69170],
+      "sources": ["gameText", "questionable", "wiki"],
+      "gameTextKey": "TEXT_LUCKBA241_03271_SYSTEM_100_001",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Never_to_Return",
+      "note": "Never to Return, level 78, Healer Role Quests (Shadowbringers): the game also wants the main scenario quest The View from Above (69170) done first; the sheet links only The Lost and the Found (68806)."
+    },
+    "69165": {
+      "requires": [68784, 68808, 68814, 69164],
+      "sources": ["questionable", "wiki"],
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Shadow_Walk_with_Me",
+      "note": "Shadow Walk with Me, level 80, Role Quests (Shadowbringers): the game also wants the quests To Have Loved and Lost (68784), The Soul of Temperance (68808), Courage Born of Fear (68814) and A Tearful Reunion (69164) done first; the sheet gives it no previous quest at all, so it read Ready at its level."
+    },
+    "69191": {
+      "requires": [67631],
+      "sources": ["gameText", "questionable", "wiki"],
+      "gameTextKey": "TEXT_LUCKLZ000_03655_SYSTEM_100_001",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Crystalline_Mean",
+      "note": "The Crystalline Mean, level 70, Crystalline Mean Quests: the game also wants the quest Inscrutable Tastes (67631) done first; the sheet links only The Crystarium's Resolve (68839)."
+    },
+    "69222": {
+      "requires": [68878],
+      "sources": ["gameText", "wiki"],
+      "gameTextKey": "TEXT_BANPIX003_03685_SYSTEM_000_150",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Cry_from_the_Ashes",
+      "note": "A Cry from the Ashes, level 70, Pixie Quests: the game also wants the main scenario quest Out of the Wood (68878) done first; the sheet links only The Heart's Oasis (69221)."
+    },
+    "69522": {
+      "requires": [67651, 67652, 67817, 67869, 67931, 69521],
+      "sources": ["questionable", "wiki"],
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Hero's_Journey",
+      "note": "The Hero's Journey, level 80, Void Quests: the game also wants the quests The Diabolical Bismarck (67651), Thok Around the Clock (67652), A Fiendish Likeness (67817), A Deific Simulacrum (67869), A Demonic Duplicate (67931) and Safekeeping (69521) done first; the sheet gives it no previous quest at all, so it read Ready at its level."
+    },
+    "70535": {
+      "requires": [70444],
+      "sources": ["gameText", "questionable"],
+      "gameTextKey": "TEXT_KINGLA504_04999_SYSTEM_000_060",
+      "evidence": "https://github.com/PunishXIV/Questionable/blob/0bd61efe8a6806a7a8010741c0c46b7dea153709/Questionable/Data/QuestData.cs",
+      "note": "Big Body, Big Beauty, level 95, Fish Fancies Donuhanu Quests: the game also wants the main scenario quest The Feat of the Brotherhood (70444) done first; the sheet links only Scaling Up Demand (70534) (accept condition The Skyruin (70430))."
+    },
+    "70544": {
+      "requires": [70469],
+      "sources": ["questionable", "wiki"],
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Dawn_of_a_New_Deal",
+      "note": "Dawn of a New Deal, level 90: the game also wants the main scenario quest Solution Nine (70469) done first; the sheet links only Inscrutable Tastes (67631)."
+    }
+  }
+}

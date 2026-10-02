@@ -14,9 +14,9 @@ namespace Tsukimichi.Core.Model;
 /// </summary>
 public sealed class QuestCatalog
 {
-    public static readonly QuestCatalog Empty = new([]);
+    public static readonly QuestCatalog Empty = new([], null);
 
-    private QuestCatalog(IReadOnlyList<QuestRecord> all)
+    private QuestCatalog(IReadOnlyList<QuestRecord> all, IReadOnlyDictionary<uint, uint[]>? extras)
     {
         All = all;
         ByRowId = all.ToFrozenDictionary(q => q.RowId);
@@ -45,10 +45,23 @@ public sealed class QuestCatalog
         Removed = removed.ToArray();
         PhasedFestivals = FindPhasedFestivals(all);
 
+        // Curated ids that name no quest of this catalog (a test catalog, a row the game dropped) are left out here.
+        var known = new Dictionary<uint, uint[]>();
+        foreach (var (rowId, ids) in extras ?? FrozenDictionary<uint, uint[]>.Empty)
+        {
+            var kept = ids.Where(id => id != rowId && ByRowId.ContainsKey(id)).Distinct().ToArray();
+            if (kept.Length > 0 && ByRowId.ContainsKey(rowId))
+            {
+                known[rowId] = kept;
+            }
+        }
+
+        extraPrerequisites = known.ToFrozenDictionary();
+
         var extended = new Dictionary<uint, Prereq>();
         foreach (var quest in all)
         {
-            if (quest.AcceptConditions.Length > 0 && Extend(quest) is { } prereq)
+            if ((quest.AcceptConditions.Length > 0 || extraPrerequisites.ContainsKey(quest.RowId)) && Extend(quest) is { } prereq)
             {
                 extended[quest.RowId] = prereq;
             }
@@ -57,18 +70,28 @@ public sealed class QuestCatalog
         extendedPrerequisites = extended.ToFrozenDictionary();
     }
 
-    /// <summary><see cref="PrerequisitesOf"/> for the held records whose accept conditions add a quest.</summary>
+    /// <summary><see cref="PrerequisitesOf"/> for the held records whose accept conditions or curated extras add a quest.</summary>
     private readonly FrozenDictionary<uint, Prereq> extendedPrerequisites;
 
+    /// <summary>The curated extra prerequisites by quest row id, every id a quest of this catalog (<see cref="ExtraPrerequisitesOf"/>).</summary>
+    private readonly FrozenDictionary<uint, uint[]> extraPrerequisites;
+
     /// <summary>Builds a catalog. Records are ordered by <see cref="JournalRef.SortKey"/> then row id; duplicate row ids throw.</summary>
-    public static QuestCatalog Build(IEnumerable<QuestRecord> quests)
+    public static QuestCatalog Build(IEnumerable<QuestRecord> quests) => Build(quests, null);
+
+    /// <summary>
+    /// Builds a catalog with curated extra prerequisites (<c>curated/extra_prerequisites.json</c>): quest row id to the
+    /// quest row ids the game wants completed first that neither the sheet's previous quests nor its accept conditions
+    /// record. <see cref="PrerequisitesOf"/> adds them; an id that is no quest of this catalog is ignored.
+    /// </summary>
+    public static QuestCatalog Build(IEnumerable<QuestRecord> quests, IReadOnlyDictionary<uint, uint[]>? extraPrerequisites)
     {
         ArgumentNullException.ThrowIfNull(quests);
         var ordered = quests
             .OrderBy(q => q.Journal.SortKey)
             .ThenBy(q => q.RowId)
             .ToArray();
-        return new QuestCatalog(ordered);
+        return new QuestCatalog(ordered, extraPrerequisites);
     }
 
     public int Count => All.Count;
@@ -121,22 +144,24 @@ public sealed class QuestCatalog
     /// <summary>
     /// The quests the game wants completed before it offers <paramref name="quest"/>: its
     /// <see cref="QuestRecord.PreviousQuests"/>, then every <see cref="QuestRecord.AcceptConditions"/> value that is a
-    /// quest of this catalog and not already listed, under the previous quests' join. The sheet has three
-    /// previous-quest slots and QuestAcceptAdditionCondition carries the rest: with 7.3 data 47 of its 57 rows hold
-    /// quest ids only (The Killing Art also needs Over the Wall; the role, Studium and allied society finales list
-    /// their fourth and fifth lines and the expansion's last main scenario quest there, and the wiki names all of them
-    /// as required), so the values are an "all" list like the slots they extend. The one Any-join quest, Royal
+    /// quest of this catalog and not already listed, then the curated extras (<see cref="ExtraPrerequisitesOf"/>) not
+    /// already listed, under the previous quests' join. The sheet has three previous-quest slots and
+    /// QuestAcceptAdditionCondition carries the rest: with 7.3 data 47 of its 57 rows hold quest ids only (The Killing
+    /// Art also needs Over the Wall; the role, Studium and allied society finales list their fourth and fifth lines and
+    /// the expansion's last main scenario quest there, and the wiki names all of them as required), so the values are
+    /// an "all" list like the slots they extend. The curated extras are the gates neither records, most of them a main
+    /// scenario milestone the quest's own text names; they are always an "all" list. The one Any-join quest, Royal
     /// Rumblings, repeats its three envoy quests, one per city and only one ever done: read under the quest's own
-    /// join it stays "any of the three", where an "all" reading would block it for good. A condition outside an Any
-    /// join's previous quests is no further alternative: it is listed in <see cref="Prereq.Required"/>, needed beside
-    /// one of them (no such quest with 7.3 data). A value that is no quest (rows such as 17, 226 or 509 of other
+    /// join it stays "any of the three", where an "all" reading would block it for good. A condition or extra outside
+    /// an Any join's previous quests is no further alternative: it is listed in <see cref="Prereq.Required"/>, needed
+    /// beside one of them (no such quest with 7.3 data). A value that is no quest (rows such as 17, 226 or 509 of other
     /// sheets) is no prerequisite; see <see cref="UncheckedAcceptConditions"/>.
-    /// The record's own <see cref="QuestRecord.PreviousQuests"/> when no accept condition adds a quest.
+    /// The record's own <see cref="QuestRecord.PreviousQuests"/> when neither adds a quest.
     /// </summary>
     public Prereq PrerequisitesOf(QuestRecord quest)
     {
         ArgumentNullException.ThrowIfNull(quest);
-        if (quest.AcceptConditions.Length == 0)
+        if (quest.AcceptConditions.Length == 0 && !extraPrerequisites.ContainsKey(quest.RowId))
         {
             return quest.PreviousQuests;
         }
@@ -149,6 +174,12 @@ public sealed class QuestCatalog
 
         return Extend(quest) ?? quest.PreviousQuests;
     }
+
+    /// <summary>
+    /// The curated extra prerequisites of <paramref name="rowId"/> (<c>curated/extra_prerequisites.json</c>) that are
+    /// quests of this catalog; empty for most quests. <see cref="PrerequisitesOf"/> already includes them.
+    /// </summary>
+    public uint[] ExtraPrerequisitesOf(uint rowId) => extraPrerequisites.TryGetValue(rowId, out var ids) ? ids : [];
 
     /// <summary>
     /// The accept conditions <see cref="PrerequisitesOf"/> cannot use, values that are no quest of this catalog: the
@@ -182,12 +213,15 @@ public sealed class QuestCatalog
         return false;
     }
 
-    /// <summary>The previous quests extended by the accept conditions that name a catalog quest; null when none adds one.</summary>
+    /// <summary>
+    /// The previous quests extended by the accept conditions that name a catalog quest and by the curated extras; null
+    /// when none adds one.
+    /// </summary>
     private Prereq? Extend(QuestRecord quest)
     {
         var previous = quest.PreviousQuests.QuestIds;
         List<uint>? extra = null;
-        foreach (var id in quest.AcceptConditions)
+        foreach (var id in quest.AcceptConditions.Concat(ExtraPrerequisitesOf(quest.RowId)))
         {
             if (ByRowId.ContainsKey(id) && Array.IndexOf(previous, id) < 0 && (extra is null || !extra.Contains(id)))
             {
@@ -200,7 +234,8 @@ public sealed class QuestCatalog
             return null;
         }
 
-        // Accept conditions are an "all" list: under an Any join they are needed beside one of the previous quests.
+        // Accept conditions and curated extras are "all" lists: under an Any join they are needed beside one of the
+        // previous quests.
         var join = quest.PreviousQuests.Join;
         return new Prereq([.. previous, .. extra], join) { Required = join == JoinKind.Any ? [.. extra] : [] };
     }

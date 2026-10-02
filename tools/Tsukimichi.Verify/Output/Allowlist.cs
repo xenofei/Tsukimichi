@@ -7,13 +7,18 @@ namespace Tsukimichi.Verify.Output;
 /// <summary>
 /// docs/data/verification-allowlist.json: entries <c>{ rowId, fact, source?, verdict, reason, until }</c> that excuse a
 /// gate-failing row until the named release. <c>rowId</c> may be a quest row id or <c>"*"</c>; <c>fact</c> may name a
-/// reward kind (<c>reward:Mount</c>) for reward rows, narrowed by the optional <c>rewardId</c>; <c>fix</c> (optional) names where a confirmed catalogWrong is
+/// reward kind (<c>reward:Mount</c>) for reward rows, narrowed by the optional <c>rewardId</c>; a <c>prereqs</c> entry with
+/// source <c>questionable</c> excuses a Questionable link the catalog does not imply (<c>Tsukimichi.Verify questionable</c>),
+/// narrowed to one required quest by the optional <c>prereqId</c>; <c>fix</c> (optional) names where a confirmed catalogWrong is
 /// corrected (a mapper rule, a curated file, or data) and feeds the "Discrepancies to fix" section of the report. An
 /// entry has expired when <c>until</c> is a version at or below the current plugin version.
 /// </summary>
 internal sealed class Allowlist
 {
-    public sealed record Entry(string RowId, string Fact, string? Source, string Verdict, string Reason, string Until, string? Evidence, string? Fix, string? RewardId = null);
+    public sealed record Entry(string RowId, string Fact, string? Source, string Verdict, string Reason, string Until, string? Evidence, string? Fix, string? RewardId = null, string? PrereqId = null);
+
+    /// <summary>The <c>source</c> of an entry that excuses a Questionable prerequisite link.</summary>
+    public const string QuestionableSource = "questionable";
 
     public IReadOnlyList<Entry> Entries { get; }
 
@@ -41,7 +46,8 @@ internal sealed class Allowlist
                     node["until"]?.GetValue<string>() ?? string.Empty,
                     node["evidence"]?.GetValue<string>(),
                     node["fix"]?.GetValue<string>(),
-                    node["rewardId"]?.ToString()));
+                    node["rewardId"]?.ToString(),
+                    node["prereqId"]?.ToString()));
             }
         }
 
@@ -53,6 +59,14 @@ internal sealed class Allowlist
 
     public Entry? Covering(RewardRow row, Version? current)
         => Entries.FirstOrDefault(e => Applies(e, row.QuestRowId, "reward:" + row.Kind, row.Source, row.Verdict, current) && (e.RewardId is null || e.RewardId == row.RewardId.ToString()));
+
+    /// <summary>The entry excusing Questionable's link from <paramref name="questRowId"/> to <paramref name="requiredRowId"/>, if any is still live.</summary>
+    public Entry? CoveringLink(uint questRowId, uint requiredRowId, Version? current)
+        => Entries.FirstOrDefault(e => !Expired(e, current)
+                                       && e.RowId == questRowId.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                                       && e.Fact == Facts.Prereqs
+                                       && e.Source == QuestionableSource
+                                       && (e.PrereqId is null || e.PrereqId == requiredRowId.ToString(System.Globalization.CultureInfo.InvariantCulture)));
 
     public static bool Expired(Entry e, Version? current)
     {
@@ -95,7 +109,7 @@ internal sealed class Allowlist
     {
         var root = new JsonObject
         {
-            ["$schema_note"] = "entries: { rowId (quest row id or \"*\"), fact (fact name, or reward:<Kind> for reward rows), source (optional), verdict, reason, evidence (URL), fix (optional: mapper rule, curated file or data change that corrects a catalogWrong), until (release in which the fix lands; the entry expires once the plugin version reaches it) }",
+            ["$schema_note"] = "entries: { rowId (quest row id or \"*\"), fact (fact name, or reward:<Kind> for reward rows), source (optional), verdict, reason, evidence (URL), fix (optional: mapper rule, curated file or data change that corrects a catalogWrong), until (release in which the fix lands; the entry expires once the plugin version reaches it), rewardId (reward rows only), prereqId (source questionable only: the required quest) }",
             ["entries"] = new JsonArray(),
         };
         File.WriteAllText(path, root.ToJsonString(new JsonSerializerOptions { WriteIndented = true }) + "\n");

@@ -46,6 +46,7 @@ Facts the game sheets do not hold (duty and system unlock quests, story chains, 
 | `online_store.json` | store `Item` row id | quest rewards the Online Store also sells | a Moonlit reward is sold on the Mog Station |
 | `other_sources.json` | reward `Item` row id | quest rewards that also drop in duties | a Moonlit reward drops in a duty |
 | `path_choices.json` | Quest row id (cities, companies), `ClassJob` row id (classes) | the start cities' names (a pin the rule that finds them must match), each starting class's "Close to Home" and starter "Way of", the Grand Company of quests whose sheet row leaves it 0 | another city's, class's or company's quests are counted or read Ready, or a label is wrong |
+| `extra_prerequisites.json` | Quest row id | the quests the game wants done first that neither the sheet's previous quests nor its accept conditions record, each with two sources | a quest reads Ready while the game asks for another quest first (usually "you must first complete the main scenario quest …") |
 | `feature_quests.json` | none | **generated**; never edit it | (regenerate instead) |
 | `VERSION.json` | none | **written by `tools/regen.ps1`**; never edit it | (regenerate instead) |
 
@@ -90,7 +91,12 @@ path_choices.json (classes keyed by ClassJob row id; "grandCompany" is 1 Maelstr
   "cities": { "<questRowId>": { "label": "Gridania", "note": "…" } },
   "classes": { "<classJobId>": { "label": "Lancer", "closeToHome": 65621, "starter": 65559, "note": "…" } },
   "grandCompanies": { "<questRowId>": { "grandCompany": 2, "note": "…" } } }
+
+extra_prerequisites.json ("sources" names at least two of gameText, questionable, wiki; "gameTextKey" only with gameText)
+{ "schema": 1, "note": "…", "entries": { "<questRowId>": { "requires": [68850], "sources": ["gameText", "questionable", "wiki"], "gameTextKey": "TEXT_…", "evidence": "https://…", "note": "…" } } }
 ```
+
+**Two sources for every extra prerequisite.** Each source an entry cites must name every id it requires: the game's own quest text (the row key in `gameTextKey`; the text is never committed), Questionable's hand-added link (`docs/data/questionable-prerequisites.json`) or the wiki infobox (as `docs/data/quest-verification.csv` records it). The tests check all three. When two sources disagree (Questionable names one quest, the sheet's accept condition another), leave the entry out and allowlist the Questionable link with the reason instead.
 
 Quest keys are Quest **row ids** (65536 and up), never the runtime quest id, a name or the script id (`SubCts811_01432`). Where a quest has start-city or Grand Company variants, list every variant. `contentFinderConditionIds` are `ContentFinderCondition` rows, not `InstanceContent` or `TerritoryType` rows. Check every id with xivapi before writing it (the curated README has the queries); never write one from memory.
 
@@ -128,6 +134,10 @@ dotnet tools/Tsukimichi.Verify/bin/Release/net10.0/Tsukimichi.Verify.dll summary
 
 `--offline` never fetches: a URL missing from the cache (`%LOCALAPPDATA%\Tsukimichi.Verify\<gameVersion>`) becomes a status-0 row that says so. `summary` exits 1 when a row is `unresolved` or `catalogWrong` outside the allowlist. [tools/Tsukimichi.Verify/README.md](tools/Tsukimichi.Verify/README.md) explains the verdicts.
 
+`Tsukimichi.Verify.dll questionable` checks every prerequisite link Questionable adds by hand (`docs/data/questionable-prerequisites.json`, ids only, pinned to a commit) against the catalog built from your game: a link the previous quests, the accept conditions and `extra_prerequisites.json` do not imply fails unless `docs/data/verification-allowlist.json` excuses it (`fact` `prereqs`, `source` `questionable`, `prereqId`). `QuestionableLinksTests` runs the same check in CI from the frozen catalog. To refresh the links, fetch Questionable's `Questionable/Data/QuestData.cs` yourself (for example with `gh api`) and pass it with `--extract <file> --commit <full hash>`.
+
+Every allowlist entry carries an `until` release, and `VerificationAllowlistTests` fails once the csproj `<Version>` reaches it: resolve the row, or extend `until` with a reason.
+
 ### When the invariants fail
 
 `CuratedInvariantsTests` and the loader tests beside it (`dotnet test … --filter "Category=Curated"`) fail with a message that names the file and the key, for example:
@@ -140,6 +150,9 @@ dotnet tools/Tsukimichi.Verify/bin/Release/net10.0/Tsukimichi.Verify.dll summary
 - `feature_quests.json differs from the derived set … regenerate with tools/regen.ps1`: an unlock file changed and the derived list did not; run the script, do not edit the list.
 - `Version_json_names_the_last_commit_that_changed_the_curated_data`: commit the data change, then run `tools/regen.ps1` (`-NoXivApi` is enough) so `VERSION.json` names that commit, and commit `VERSION.json` and `docs/data/DATA-VERSION.md`.
 - An `Assert.Equal() Failure` on a key list: sort the entries by id.
+- `extra_prerequisites.json:68782 cites wiki, but the wiki infobox does not name …` (or `… has no link …`, `… gameTextKey … does not name …`): a cited source does not back the id; fix the id or drop the source (two must remain).
+- `Questionable links the catalog does not imply …`: Questionable added a link (after a refresh of its links); add it to `extra_prerequisites.json` with a second source, or allowlist it with the reason.
+- `verification-allowlist.json … expired: until 1.5.0 <= plugin version 1.5.0`: the release that was to fix the row is here; resolve it, or extend `until` with a reason.
 
 ## Releases
 

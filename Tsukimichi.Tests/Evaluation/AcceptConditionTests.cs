@@ -223,9 +223,9 @@ public class AcceptConditionFixtureTests(FixtureCatalog fixture) : IClassFixture
     {
         // 57 quests carry accept conditions. 47 hold quest ids only: all but Royal Rumblings (which repeats its own
         // previous quests) gain them, and so does In the Name of the Light (a quest and a value of another sheet). The
-        // twelve values that are no quest sit on ten quests.
+        // twelve values that are no quest sit on ten quests. (The curated extras extend others; ExtraPrerequisiteTests.)
         Assert.Equal(57, Catalog.All.Count(q => q.AcceptConditions.Length > 0));
-        var extended = Catalog.All.Where(q => !ReferenceEquals(Catalog.PrerequisitesOf(q), q.PreviousQuests)).ToArray();
+        var extended = Catalog.All.Where(q => q.AcceptConditions.Length > 0 && !ReferenceEquals(Catalog.PrerequisitesOf(q), q.PreviousQuests)).ToArray();
         Assert.Equal(47, extended.Length);
         Assert.All(extended, q => Assert.Equal(q.PreviousQuests.Join, Catalog.PrerequisitesOf(q).Join));
         Assert.Equal(12, Catalog.All.Sum(q => Catalog.UncheckedAcceptConditions(q).Length));
