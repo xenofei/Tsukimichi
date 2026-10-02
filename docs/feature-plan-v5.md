@@ -74,7 +74,7 @@ No integration possible: DailyDuty, Simple Tweaks, HaselTweaks, Mappy and Collec
 
 Each release ships on its own with the usual gates. Effort: S = hours, M = a day or two, L = more.
 
-### 1.4.2 · Correctness patch (all S, low risk)
+### 1.4.2 · Correctness patch (all S, low risk) — **released 2026-10-01**
 
 - **B1** Check accept conditions that name a quest. Non-quest values stay "not checked". Fix the verifier so a condition the evaluator doesn't actually check stops counting as a "match".
 - **B2** Mask the rank-up bit; keep it as a "ranked up today" flag; repair saved snapshots on load.
