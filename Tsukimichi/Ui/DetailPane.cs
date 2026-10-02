@@ -26,8 +26,9 @@ namespace Tsukimichi.Ui;
 /// callout for a quest the character cannot take (DetailPane.Unmet.cs), then the
 /// Requirements card first with one marker on the blocking line, Rewards as tiles, the Moonlit verdict, the Path card (the chain
 /// line once, then the star chart, <see cref="PathChart"/>), the Giver card; under the scrolling stack a sticky action
-/// bar with one labelled primary action (Flag on map, or Teleport when Lifestream is loaded) and round buttons for Pin,
-/// Show path, Route to this (the unlock route window), Link in chat, Copy coordinates, Open journal and Report, and a plain provenance line. Every action is a
+/// bar: a row of labelled travel and automation pills (Go to giver, Teleport, Walk, Start Questionable, Run with
+/// AutoDuty; DetailPane.Actions.cs) with their live lines, then round buttons for Pin, Show path, Route to this (the
+/// unlock route window), Flag on map, Link in chat, Copy coordinates, Open journal and Report, and a plain provenance line. Every action is a
 /// focusable item, so the pane works without a mouse (accessibility A6). Everything shown is materialized when the
 /// selection or the session version changes, so drawing allocates nothing.
 /// <para>
@@ -210,7 +211,7 @@ public sealed partial class DetailPane
         }
 
         var detailHeight = ImGui.GetContentRegionAvail().Y;
-        PrepareTravel(quest);
+        PrepareTravel(session, quest);
         var bar = ActionBarHeight();
         using (ImRaii.PushColor(ImGuiCol.ChildBg, Vector4.Zero))
         using (var body = ImRaii.Child("##detailBody", new Vector2(0f, MathF.Max(UiMetrics.Px(40f), detailHeight - bar)), false))
@@ -942,55 +943,38 @@ public sealed partial class DetailPane
     private string hopLabel = string.Empty;
 
     /// <summary>
-    /// Round buttons after the primary action: Pin, Show path, Route to this, Link, Copy, Journal, Report (when
-    /// attached), Flag (when Teleport leads) or Teleport (disabled, naming Lifestream, when Flag leads), Walk and Go to
-    /// giver (when shown in Settings), the aethernet hop (in the giver's city), "…" ("Open on…" since 1.8.0, and the
-    /// Questionable hand-off when shown).
+    /// The round buttons of the second row (1.10; the travel and automation actions are pills on the first): Pin, Show
+    /// path, Route to this, Flag on map (while Lifestream is loaded; without it Flag leads the pills), Link, Copy,
+    /// Journal, Report (when attached), the aethernet hop (in the giver's city) and "…" ("Open on…", the pills the
+    /// first row had no room for, and the Questionable hand-off when shown).
     /// </summary>
-    private int IconButtonCount => 8 + (Diagnostics is null ? 0 : 1) + (links.WalkShown ? 1 : 0) + (links.GoToShown ? 1 : 0)
-        + (hopCheck.Visible ? 1 : 0);
+    private int IconButtonCount => 7 + (Diagnostics is null ? 0 : 1) + (links.TeleportAvailable ? 1 : 0) + (hopCheck.Visible ? 1 : 0);
 
-    /// <summary>Reads the travel checks once per frame, before the bar's height is planned.</summary>
-    private void PrepareTravel(QuestRecord quest)
+    /// <summary>Reads the travel checks and the pills' state once per frame, before the bar's height is planned.</summary>
+    private void PrepareTravel(SessionState session, QuestRecord quest)
     {
         teleportCheck = links.CheckTeleport(quest);
         walkCheck = links.WalkShown ? links.CheckWalk(quest) : default;
         goToCheck = links.GoToShown ? links.CheckGoTo(quest) : default;
         hopCheck = links.CheckHop(quest);
-    }
-
-    /// <summary>Under the pane's floor (<see cref="DetailTier.Compact"/>) the primary action is an icon button, its label in the tooltip (L5).</summary>
-    private bool PrimaryIconOnly => tier == DetailTier.Compact;
-
-    private float PrimaryWidth()
-    {
-        if (PrimaryIconOnly)
-        {
-            return UiMetrics.MinTarget;
-        }
-
-        var label = links.TeleportAvailable ? Strings.ActionTeleport : Strings.FlagOnMap;
-        ImGui.PushFont(UiBuilder.IconFont);
-        var icon = ImGui.CalcTextSize(TeleportIcon).X;
-        ImGui.PopFont();
-        return UiMetrics.Px(12f) + icon + UiMetrics.Px(6f) + ImGui.CalcTextSize(label).X + UiMetrics.Px(14f);
+        PrepareActions(session, quest);
     }
 
     /// <summary>
-    /// The gap between round buttons: half the usual item spacing, so the primary action and every round button fit
-    /// one row at the default right-column width (each button keeps its full <see cref="UiMetrics.MinTarget"/>).
+    /// The gap between round buttons: half the usual item spacing, so every round button fits one row at the default
+    /// right-column width (each button keeps its full <see cref="UiMetrics.MinTarget"/>).
     /// </summary>
     private static float RoundGap => UiMetrics.Px(4f);
 
     /// <summary>
-    /// The bar's rows as <see cref="DrawActionBar"/> flows them: the round buttons follow the primary action and wrap
-    /// onto as many rows as the pane's width needs, so on a narrow column every button stays reachable.
+    /// The second row's lines as <see cref="DrawActionBar"/> flows them: the round buttons wrap onto as many lines as
+    /// the pane's width needs, so on a narrow column every button stays reachable.
     /// </summary>
     private int ActionRows(float width)
     {
         var rows = 1;
-        var used = PrimaryWidth();
-        for (var i = 0; i < IconButtonCount; i++)
+        var used = UiMetrics.MinTarget;
+        for (var i = 1; i < IconButtonCount; i++)
         {
             if (!FitsOnRow(ref used, width))
             {
@@ -1029,52 +1013,31 @@ public sealed partial class DetailPane
 
     /// <summary>
     /// Height under the scrolling stack, as laid out: the spacing after the body child, the hairline and its spacing,
-    /// each action row and its spacing, then the provenance line (a caption).
+    /// the pill row and its live lines, each round-button row and its spacing, then the provenance line (a caption).
+    /// Fits the pill row to the width as it goes, so the bar draws what was planned.
     /// </summary>
     private float ActionBarHeight()
     {
         var spacing = ImGui.GetStyle().ItemSpacing.Y;
-        var rows = ActionRows(ImGui.GetContentRegionAvail().X);
-        return UiMetrics.Hairline + ((rows + 2) * spacing) + (rows * UiMetrics.MinTarget) + Typography.CaptionSize;
+        var width = ImGui.GetContentRegionAvail().X;
+        LayoutActions(width);
+        var rows = ActionRows(width);
+        return UiMetrics.Hairline + (2 * spacing) + ActionRowHeight(spacing) + (rows * (UiMetrics.MinTarget + spacing)) + Typography.CaptionSize;
     }
 
     /// <summary>
-    /// The sticky action bar: one labelled primary action, gold (Flag on map, or Teleport when Lifestream is loaded;
-    /// Teleport goes quiet when the player already stands closer to the giver), then round buttons for Pin, Show path,
-    /// Route to this, Link in chat, Copy coordinates, Open journal, Report, Flag on map with Teleport leading (or
-    /// Teleport, greyed and naming Lifestream, without it), Walk to giver, Go to giver and, in the giver's city, the
-    /// aethernet hop. Disabled buttons say why on hover. All are focusable items (accessibility A6).
+    /// The sticky action bar (1.10): first the travel and automation pills with their live lines
+    /// (DetailPane.Actions.cs), then round buttons for Pin, Show path, Route to this, Flag on map (while Lifestream is
+    /// loaded), Link in chat, Copy coordinates, Open journal, Report, the aethernet hop in the giver's city, and "…".
+    /// Disabled buttons say why on hover. All are focusable items (accessibility A6).
     /// </summary>
     private void DrawActionBar(QuestRecord quest, uint rowId)
     {
         Chrome.Hairline();
+        DrawActionRow(quest, rowId);
+
         var width = ImGui.GetContentRegionAvail().X;
-        var used = PrimaryWidth();
-        var teleportLeads = links.TeleportAvailable;
-        if (teleportLeads)
-        {
-            var check = teleportCheck;
-            if (PrimaryButton("##teleport", TeleportIcon, PrimaryIconOnly ? null : Strings.ActionTeleport, check.Ready, null, quiet: check.AlreadyHere))
-            {
-                links.TeleportToGiver(quest);
-            }
-
-            // Composed only on hover: the cost and the "already here" line follow the attuned list and the player.
-            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
-            {
-                UiMetrics.Tooltip(links.TeleportTooltip(quest, check));
-            }
-        }
-        else
-        {
-            var canFlag = links.CanFlagMap(quest);
-            if (PrimaryButton("##flag", FlagIcon, PrimaryIconOnly ? null : Strings.FlagOnMap, canFlag, canFlag ? Strings.FlagOnMap : Strings.ActionFlagUnavailable))
-            {
-                links.FlagMap(quest);
-            }
-        }
-
-        NextRound(ref used, width);
+        var used = UiMetrics.MinTarget;
         var pinned = model.Pinned;
         var canPin = runner.CanPin;
         if (Chrome.IconButtonRound("##pin", PinIcon, !canPin ? Strings.ActionPinUnavailable : pinned ? Strings.ActionUnpinTooltip : Strings.ActionPinTooltip, pinned, canPin))
@@ -1092,6 +1055,17 @@ public sealed partial class DetailPane
         if (Chrome.IconButtonRound("##route", RouteIcon, Strings.RouteToThisTooltip))
         {
             ui.OpenRoute(Core.Route.RouteTarget.ForQuest(rowId, model.DisplayName));
+        }
+
+        if (links.TeleportAvailable)
+        {
+            // Without Lifestream Flag on map leads the pills instead.
+            NextRound(ref used, width);
+            var canFlag = links.CanFlagMap(quest);
+            if (Chrome.IconButtonRound("##flagIcon", FlagIcon, canFlag ? Strings.FlagOnMap : Strings.ActionFlagUnavailable, enabled: canFlag))
+            {
+                links.FlagMap(quest);
+            }
         }
 
         NextRound(ref used, width);
@@ -1126,158 +1100,37 @@ public sealed partial class DetailPane
             }
         }
 
-        if (teleportLeads)
-        {
-            NextRound(ref used, width);
-            var canFlag = links.CanFlagMap(quest);
-            if (Chrome.IconButtonRound("##flagIcon", FlagIcon, canFlag ? Strings.FlagOnMap : Strings.ActionFlagUnavailable, enabled: canFlag))
-            {
-                links.FlagMap(quest);
-            }
-        }
-        else
-        {
-            // Without Lifestream Teleport stays in view, greyed, and its tooltip names Lifestream (decision 2).
-            NextRound(ref used, width);
-            Chrome.IconButtonRound("##teleportIcon", TeleportIcon, null, enabled: false);
-            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
-            {
-                UiMetrics.Tooltip(links.TeleportTooltip(quest, teleportCheck));
-            }
-        }
-
-        DrawTravelButtons(quest, ref used, width);
+        DrawHopButton(quest, ref used, width);
         DrawMoreMenu(ref used, width, quest, rowId);
     }
 
-    /// <summary>
-    /// Walk to giver and Go to giver (each Stop while moving; greyed, naming vnavmesh, without it) and, in the giver's
-    /// city, the aethernet hop. Their tooltips are composed on hover only.
-    /// </summary>
-    private void DrawTravelButtons(QuestRecord quest, ref float used, float width)
+    /// <summary>In the giver's city, the aethernet hop toward the giver; its tooltip is composed on hover only.</summary>
+    private void DrawHopButton(QuestRecord quest, ref float used, float width)
     {
-        if (links.WalkShown)
+        if (!hopCheck.Visible)
         {
-            NextRound(ref used, width);
-            var walk = walkCheck;
-            if (Chrome.IconButtonRound("##walk", walk.Stoppable ? StopIcon : WalkIcon, null, active: walk.Stoppable, enabled: walk.Ready || walk.Stoppable))
+            return;
+        }
+
+        NextRound(ref used, width);
+        var hop = hopCheck;
+        if (Chrome.IconButtonRound("##hop", HopIcon, null, enabled: hop.Ready))
+        {
+            links.AethernetToGiver(quest);
+        }
+
+        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+        {
+            // "Aethernet to Lancers' Guild" over the reason, named once per shard.
+            var shard = hop.Firmament ? GoToGiverPlan.FirmamentHop : hop.Shard?.RowId ?? 0;
+            if (hopLabelShard != shard)
             {
-                if (walk.Stoppable)
-                {
-                    links.StopTravel();
-                }
-                else
-                {
-                    links.WalkToGiver(quest);
-                }
+                hopLabelShard = shard;
+                hopLabel = GameLinks.HopLabel(hop);
             }
 
-            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
-            {
-                UiMetrics.Tooltip(links.WalkTooltip(quest, walk));
-            }
+            UiMetrics.Tooltip(hopLabel, GameLinks.HopTooltip(hop));
         }
-
-        if (links.GoToShown)
-        {
-            NextRound(ref used, width);
-            var go = goToCheck;
-            if (Chrome.IconButtonRound("##goTo", go.Stoppable ? StopIcon : GoToIcon, null, active: go.Stoppable, enabled: go.Ready || go.Stoppable))
-            {
-                if (go.Stoppable)
-                {
-                    links.StopTravel();
-                }
-                else
-                {
-                    links.GoToGiver(quest);
-                }
-            }
-
-            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
-            {
-                UiMetrics.Tooltip(links.GoToTooltip(quest, go));
-            }
-        }
-
-        if (hopCheck.Visible)
-        {
-            NextRound(ref used, width);
-            var hop = hopCheck;
-            if (Chrome.IconButtonRound("##hop", HopIcon, null, enabled: hop.Ready))
-            {
-                links.AethernetToGiver(quest);
-            }
-
-            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
-            {
-                // "Aethernet to Lancers' Guild" over the reason, named once per shard.
-                var shard = hop.Firmament ? GoToGiverPlan.FirmamentHop : hop.Shard?.RowId ?? 0;
-                if (hopLabelShard != shard)
-                {
-                    hopLabelShard = shard;
-                    hopLabel = GameLinks.HopLabel(hop);
-                }
-
-                UiMetrics.Tooltip(hopLabel, GameLinks.HopTooltip(hop));
-            }
-        }
-    }
-
-    /// <summary>
-    /// The labelled primary action: a pill of <see cref="UiMetrics.MinTarget"/> height, Moon at 16 % with Moon text
-    /// (22 % hovered, 28 % held); disabled, a neutral pill with the reason in the tooltip. Focusable, with the ring.
-    /// Without a <paramref name="label"/> it is a round icon button of the same height (the compact tier). A
-    /// <paramref name="quiet"/> one (Teleport when the player already stands closer to the giver) stays clickable but
-    /// drops the gold: the neutral pill with the primary text tone. A null <paramref name="tooltip"/> leaves the hover
-    /// text to the caller.
-    /// </summary>
-    private static bool PrimaryButton(string id, string icon, string? label, bool enabled, string? tooltip, bool quiet = false)
-    {
-        var height = UiMetrics.MinTarget;
-        ImGui.PushFont(UiBuilder.IconFont);
-        var iconSize = ImGui.CalcTextSize(icon);
-        ImGui.PopFont();
-        var labelSize = label is null ? Vector2.Zero : ImGui.CalcTextSize(label);
-        var padX = label is null ? (height - iconSize.X) * 0.5f : UiMetrics.Px(12f);
-        var size = label is null ? new Vector2(height, height) : new Vector2(padX + iconSize.X + UiMetrics.Px(6f) + labelSize.X + UiMetrics.Px(14f), height);
-        var min = ImGui.GetCursorScreenPos();
-        ImGui.BeginDisabled(!enabled);
-        var clicked = ImGui.InvisibleButton(id, size);
-        ImGui.EndDisabled();
-        var hovered = enabled && ImGui.IsItemHovered();
-        var held = enabled && ImGui.IsItemActive();
-
-        var dl = ImGui.GetWindowDrawList();
-        var max = min + size;
-        var rounding = height * 0.5f;
-        var s = Theme.Surface;
-        if (enabled && !quiet)
-        {
-            dl.AddRectFilled(min, max, Theme.WithAlpha(Theme.Moon, held ? 0.28f : hovered ? 0.22f : 0.16f), rounding);
-            dl.AddRect(min, max, Theme.WithAlpha(Theme.Moon, 0.45f), rounding, ImDrawFlags.None, UiMetrics.Hairline);
-        }
-        else
-        {
-            dl.AddRectFilled(min, max, enabled && (held || hovered) ? Theme.WithAlpha(s.Hover, 1f) : Theme.U32(s.Raised), rounding);
-        }
-
-        var ink = !enabled ? Theme.U32(s.TextDisabled) : quiet ? Theme.U32(hovered ? s.Text : s.TextSecondary) : Theme.AccentU32;
-        ImGui.PushFont(UiBuilder.IconFont);
-        dl.AddText(new Vector2(min.X + padX, min.Y + ((height - iconSize.Y) * 0.5f)), ink, icon);
-        ImGui.PopFont();
-        if (label is not null)
-        {
-            dl.AddText(new Vector2(min.X + padX + iconSize.X + UiMetrics.Px(6f), min.Y + ((height - labelSize.Y) * 0.5f)), ink, label);
-        }
-
-        Chrome.FocusRing(rounding);
-        if (tooltip is not null && ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
-        {
-            UiMetrics.Tooltip(tooltip);
-        }
-
-        return clicked && enabled;
     }
 
     /// <summary>

@@ -152,4 +152,20 @@ static partial class Strings
     public static string TonightPickHint => Loc.Get("TonightPickHint");
     public static string TonightLogIn => Loc.Get("TonightLogIn");
     public static string TonightRowTooltip => Loc.Get("TonightRowTooltip");
+
+    // ---- Action bar: travel and automation pills (1.10) ----
+    public static string ActionGoToShort => Loc.Get("ActionGoToShort");
+    public static string ActionQuestionableStart => Loc.Get("ActionQuestionableStart");
+    public static string ActionQuestionableShort => Loc.Get("ActionQuestionableShort");
+    public static string ActionQuestionableStop => Loc.Get("ActionQuestionableStop");
+    public static string ActionQuestionableStartTooltip => Loc.Get("ActionQuestionableStartTooltip");
+    public static string ActionAutoDutyShort => Loc.Get("ActionAutoDutyShort");
+    public static string ActionStopShort => Loc.Get("ActionStopShort");
+
+    /// <summary>{0} = the step under way ("Teleporting…").</summary>
+    public static string ActionTravelStatusFormat => Loc.Get("ActionTravelStatusFormat");
+    public static string ActionTravelStepTeleporting => Loc.Get("ActionTravelStepTeleporting");
+    public static string ActionTravelStepHopping => Loc.Get("ActionTravelStepHopping");
+    public static string ActionTravelStepPreparing => Loc.Get("ActionTravelStepPreparing");
+    public static string ActionTravelStepWalking => Loc.Get("ActionTravelStepWalking");
 }

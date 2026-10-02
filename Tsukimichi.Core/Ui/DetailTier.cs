@@ -15,7 +15,7 @@ public enum DetailTier : byte
     /// <summary>D3, from the pane's floor (<see cref="LayoutBudgets.DetailNarrowLogical"/>): the moon above the title, requirements label over value.</summary>
     Narrow,
 
-    /// <summary>Under the floor (a window too narrow for every floor): as Narrow, and the primary action is an icon button.</summary>
+    /// <summary>Under the floor (a window too narrow for every floor): as Narrow; the action pills fit as <see cref="ActionPillFit"/> says at every tier.</summary>
     Compact,
 }
 

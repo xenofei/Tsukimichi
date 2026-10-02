@@ -8193,4 +8193,56 @@
     <value>Beyond your trial</value>
     <comment>Core: QuestQuery.cs.</comment>
   </data>
+  <data name="ActionGoToShort" xml:space="preserve">
+    <value>Go to</value>
+  </data>
+  <data name="ActionQuestionableStart" xml:space="preserve">
+    <value>Start Questionable</value>
+  </data>
+  <data name="ActionQuestionableShort" xml:space="preserve">
+    <value>Questionable</value>
+  </data>
+  <data name="ActionQuestionableStop" xml:space="preserve">
+    <value>Stop Questionable</value>
+  </data>
+  <data name="ActionQuestionableStartTooltip" xml:space="preserve">
+    <value>Starts Questionable on this quest. A quest not yet in your journal goes on Questionable's priority list first. Questionable then carries on with its own choices until you stop it.</value>
+  </data>
+  <data name="ActionAutoDutyShort" xml:space="preserve">
+    <value>AutoDuty</value>
+  </data>
+  <data name="ActionStopShort" xml:space="preserve">
+    <value>Stop</value>
+  </data>
+  <data name="ActionTravelStatusFormat" xml:space="preserve">
+    <value>Going to giver · {0}</value>
+    <comment>{0} = the step under way ("Teleporting…").</comment>
+  </data>
+  <data name="ActionTravelStepTeleporting" xml:space="preserve">
+    <value>Teleporting…</value>
+  </data>
+  <data name="ActionTravelStepHopping" xml:space="preserve">
+    <value>Taking the aethernet…</value>
+  </data>
+  <data name="ActionTravelStepPreparing" xml:space="preserve">
+    <value>Preparing the path…</value>
+  </data>
+  <data name="ActionTravelStepWalking" xml:space="preserve">
+    <value>Walking…</value>
+  </data>
+  <data name="QuestionableStartNothing" xml:space="preserve">
+    <value>Nothing to start: this quest is done or locked out for the character logged in.</value>
+  </data>
+  <data name="QuestionableStartNoPath" xml:space="preserve">
+    <value>Questionable has no path for this quest.</value>
+  </data>
+  <data name="HandInCraftShort" xml:space="preserve">
+    <value>Craft</value>
+  </data>
+  <data name="HandInGatherShort" xml:space="preserve">
+    <value>Gather</value>
+  </data>
+  <data name="HandInFishShort" xml:space="preserve">
+    <value>Fish</value>
+  </data>
 </root>
