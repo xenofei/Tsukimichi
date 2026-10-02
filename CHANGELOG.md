@@ -4,6 +4,31 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+## [1.9.0] - 2026-10-02
+
+### Added
+- **EXP and gil per quest** in the detail pane ("12,345 EXP · 1,200 gil"), from the game's own reward formula.
+  - Quest Sync quests show their range.
+  - Allied society and seasonal event quests show gil only.
+  - An optional EXP column in the Journal table (Settings › Display › Planning, off by default).
+- **"Levelling opens"** on the Characters dashboard: what each job's next level opens ("52→56 opens 7 quests (2 unlock quests, MSQ)"), with the quests on hover. The Tonight card says when the next main scenario quest is waiting for a level.
+- **Main scenario catch-up.** "To reach the latest story: 143 quests, Lv 90–100, 18 duties", with each expansion on hover. Shown in the Tonight card, on the Characters dashboard and in Since you were away.
+- **Allied society board** on the Characters dashboard. For each unlocked society:
+  - rank and reputation;
+  - today's dailies and allowances left;
+  - Teleport to its giver;
+  - the time to the daily reset.
+
+  It can be turned off in Settings › Display › Planning.
+- **Achievements that need several quests.** Tales of War, Tales of Magic, Tales of the Hand, Tales of the Land and The War Still Wageth On show under Story chains on Characters, with "3 of 5", the next quest and whether you've earned it. Each of their quests' detail panes says how far the set is and what's left. Works for stored characters too.
+- **Read the story so far ("Previously…").** One page with the journal of your last main scenario quests, or of every quest of a story chain you've done, in story order, with Copy all.
+  - Settings › Display sets how many main scenario quests (10 by default).
+  - Only quests you've completed are shown, so nothing is spoiled.
+  - Open it from Since you were away, a chain quest's detail pane, a chain's right-click menu on Characters, or /tsuki recap [quest name].
+- **New Game+ badge.** The detail pane says whether New Game+ can replay a quest or it's once only. A new filter lists the once-only story quests you haven't done.
+- **Moonlit "Added in" filter:** rewards by the patch their quest came in.
+- **Free-trial view.** Turn on Settings › Display › "I'm on the free trial". Quest counts, the Characters dashboard, My blues and the Journal table then put Endwalker, Dawntrail and anything above level 80 in a "Beyond your trial" group instead of showing it as Blocked. Off by default.
+
 ## [1.8.0] - 2026-10-02
 
 ### Added
