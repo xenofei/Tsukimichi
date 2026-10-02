@@ -1421,6 +1421,7 @@ public sealed partial class ConfigWindow : Window
             UiMetrics.Tooltip(Strings.ConfigQuestionableHandoffHint);
         }
 
+        DrawQuestionableSettings();
         DrawHookGate();
     }
 

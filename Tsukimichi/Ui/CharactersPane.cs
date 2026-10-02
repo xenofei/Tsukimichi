@@ -207,6 +207,9 @@ public sealed partial class CharactersPane
     /// </summary>
     public QueryRunner? Pins { get; set; }
 
+    /// <summary>The shared Questionable hand-offs (1.6.0): "Send to Questionable" on the ladder and chain rows; null hides it.</summary>
+    public QuestionableActions? Questionable { get; set; }
+
     /// <summary>Left column: stored characters, newest capture first; selecting one views it.</summary>
     public void DrawLeft(UiState ui)
     {
@@ -720,6 +723,7 @@ public sealed partial class CharactersPane
             DrawJobIcon(row.IconId, iconSize, row.Name, row.Level);
             ImGui.TableNextColumn();
             Chrome.FitText(row.Name, row.IsRole ? Theme.U32(Theme.Dusk) : ImGui.GetColorU32(ImGuiCol.Text));
+            DrawQuestionableRowMenu(row.RowIds);
 
             ImGui.TableNextColumn();
             ImGui.TextUnformatted(row.Level);
@@ -763,7 +767,7 @@ public sealed partial class CharactersPane
         }
     }
 
-    private static void DrawChainTable(UiState ui, string id, ChainRow[] rows, uint gaugeKeys, FixedWidth doneWidth)
+    private void DrawChainTable(UiState ui, string id, ChainRow[] rows, uint gaugeKeys, FixedWidth doneWidth)
     {
         if (rows.Length == 0)
         {
@@ -807,11 +811,33 @@ public sealed partial class CharactersPane
 
             ImGui.TableNextColumn();
             Chrome.FitText(row.Name, ImGui.GetColorU32(ImGuiCol.Text));
+            DrawQuestionableRowMenu(row.RowIds);
             ImGui.TableNextColumn();
             ImGui.TextUnformatted(row.Count);
             ImGui.TableNextColumn();
             DrawNextQuest(ui, row.Next, row.NextText, ready: true);
         }
+    }
+
+    /// <summary>
+    /// The right-click menu on a ladder's or a chain's name (feature plan v5, 1.6.0): "Send to Questionable" with the
+    /// row's quests in their order (done ones left out when sent).
+    /// </summary>
+    private void DrawQuestionableRowMenu(IReadOnlyList<uint> rowIds)
+    {
+        if (Questionable is not { } questionable || rowIds.Count == 0)
+        {
+            return;
+        }
+
+        using var menu = ImRaii.ContextPopupItem("##questionableRow");
+        if (!menu)
+        {
+            return;
+        }
+
+        UiMetrics.ApplyFontScale();
+        questionable.DrawSubmenu(MainWindow.QuestionableHost, Strings.QuestionableSendButton, rowIds, static rows => rows);
     }
 
     /// <summary>A clickable "next" cell: the text in Moon when the quest is open now, Dusk otherwise; null quest means finished.</summary>
@@ -2272,7 +2298,7 @@ public sealed partial class CharactersPane
                 continue;
             }
 
-            rows.Add(LadderRowFor(job.IconId, job.Name, job.Level, isRole: false, ladder.Progress(entry, states, job.LevelValue)));
+            rows.Add(LadderRowFor(job.IconId, job.Name, job.Level, isRole: false, ladder.Progress(entry, states, job.LevelValue), entry.QuestRowIds));
         }
 
         foreach (var (role, level) in roleLevels)
@@ -2284,13 +2310,13 @@ public sealed partial class CharactersPane
             }
 
             var name = string.Format(CultureInfo.CurrentCulture, Strings.JobsRoleRowFormat, Strings.JobsRoleName(role));
-            rows.Add(LadderRowFor(0, name, string.Empty, isRole: true, ladder.Progress(quests, states, level)));
+            rows.Add(LadderRowFor(0, name, string.Empty, isRole: true, ladder.Progress(quests, states, level), quests));
         }
 
         return rows.ToArray();
     }
 
-    private LadderRow LadderRowFor(uint iconId, string name, string level, bool isRole, LadderProgress progress)
+    private LadderRow LadderRowFor(uint iconId, string name, string level, bool isRole, LadderProgress progress, IReadOnlyList<uint> rowIds)
     {
         var count = string.Format(CultureInfo.InvariantCulture, Strings.JobsCountFormat, progress.Done, progress.Total);
         var next = progress.NextRowId is { } nextRowId ? derivedBundle?.Catalog.GetByRowId(nextRowId) : null;
@@ -2313,7 +2339,7 @@ public sealed partial class CharactersPane
                 : string.Format(CultureInfo.CurrentCulture, Strings.JobsNextLaterFormat, session.Spoilers.DisplayName(next), next.DisplayLevel);
         }
 
-        return new LadderRow(iconId, name, level, isRole, progress.Fraction, count, next, text, progress.IsReadyNow);
+        return new LadderRow(iconId, name, level, isRole, progress.Fraction, count, next, text, progress.IsReadyNow, rowIds);
     }
 
     /// <summary>Curated chains in file order, split into those with at least one quest done and those not started.</summary>
@@ -2354,7 +2380,8 @@ public sealed partial class CharactersPane
                 progress.Fraction,
                 string.Format(CultureInfo.CurrentCulture, Strings.JobsChainCountFormat, progress.Done, progress.Total),
                 next,
-                next is null ? Strings.JobsChainComplete : string.Format(CultureInfo.CurrentCulture, Strings.JobsChainNextFormat, session.Spoilers.DisplayName(next)));
+                next is null ? Strings.JobsChainComplete : string.Format(CultureInfo.CurrentCulture, Strings.JobsChainNextFormat, session.Spoilers.DisplayName(next)),
+                chain.RowIds);
             (progress.Done > 0 ? started : notStarted).Add(row);
         }
 
@@ -2795,9 +2822,9 @@ public sealed partial class CharactersPane
     private sealed record JobRow(JobGroup Group, uint JobId, uint IconId, string Name, string Abbreviation, string Level, short LevelValue);
 
     /// <summary>A job's (or a role's) ladder: icon and level are empty for role rows; <paramref name="Next"/> is null once finished.</summary>
-    private sealed record LadderRow(uint IconId, string Name, string Level, bool IsRole, float Fraction, string Count, QuestRecord? Next, string NextText, bool Ready);
+    private sealed record LadderRow(uint IconId, string Name, string Level, bool IsRole, float Fraction, string Count, QuestRecord? Next, string NextText, bool Ready, IReadOnlyList<uint> RowIds);
 
-    private sealed record ChainRow(string Name, float Fraction, string Count, QuestRecord? Next, string NextText);
+    private sealed record ChainRow(string Name, float Fraction, string Count, QuestRecord? Next, string NextText, IReadOnlyList<uint> RowIds);
 
     // ---- Compare with (V2-12) ----
 

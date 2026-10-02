@@ -44,6 +44,10 @@ namespace Tsukimichi.Ui;
 /// <see cref="IClientState.TerritoryChanged"/>, when a section toggle flips and when <c>user/pins.json</c> changes (its
 /// write time is checked every <see cref="PinsCheckInterval"/>); drawing allocates nothing. <see cref="ResetPosition"/>
 /// moves the panel back to the top left on the next frame.
+///
+/// Questionable (feature plan v5, 1.6.0): while it runs, a gold "Questionable: running · &lt;quest&gt; · step 3 of 7"
+/// line under the title with a Stop button (polled at most once a second, only while the panel draws), its quest's
+/// name in gold in the rows, and "Send pins to Questionable" in the title's menu (<see cref="QuestionableActions"/>).
 /// </summary>
 public sealed class TodoOverlay : Window, IDisposable
 {
@@ -129,6 +133,12 @@ public sealed class TodoOverlay : Window, IDisposable
     // A clicked row whose reveal waits out the double-click window (ImGui time of the click); see DrawRow.
     private QuestRecord? pendingReveal;
     private double pendingRevealTime;
+
+    /// <summary>The host name of this window's Questionable confirmations.</summary>
+    private const string QuestionableHost = "todo";
+
+    /// <summary>The shared Questionable hand-offs (1.6.0); null hides the status line and the menu item.</summary>
+    public QuestionableActions? Questionable { get; set; }
 
     /// <param name="settings">Overlay settings; read every frame so the config window's changes show at once.</param>
     /// <param name="session">Catalog, viewed character and its evaluations.</param>
@@ -254,6 +264,7 @@ public sealed class TodoOverlay : Window, IDisposable
         try
         {
             DrawContent();
+            Questionable?.DrawModals(QuestionableHost);
         }
         finally
         {
@@ -267,6 +278,7 @@ public sealed class TodoOverlay : Window, IDisposable
         var compact = settings.TodoOverlayCompact;
         var layout = Measure(compact);
         DrawHeader(layout);
+        DrawQuestionableLine(layout);
         if (!catalogReady)
         {
             Chrome.OutlinedText(session.CatalogLoading ? Strings.CatalogNotReady : Strings.CatalogUnavailable, Theme.Surface.TextSecondary);
@@ -481,6 +493,51 @@ public sealed class TodoOverlay : Window, IDisposable
             settings.TodoOverlayEnabled = false;
             Save();
         }
+
+        if (Questionable is { } questionable)
+        {
+            // The viewed character's pins, in the order they were pinned.
+            ImGui.Separator();
+            questionable.DrawSubmenu(QuestionableHost, Strings.QuestionableSendPins, pinned, static pins => pins);
+        }
+    }
+
+    /// <summary>
+    /// Questionable's live status under the title while it runs, outlined in gold and cut to the panel's width, and a
+    /// small Stop (not while locked: the panel takes no clicks then).
+    /// </summary>
+    private void DrawQuestionableLine(in RowLayout layout)
+    {
+        if (Questionable?.PollStatusText() is not { } text)
+        {
+            return;
+        }
+
+        var locked = settings.TodoOverlayLocked;
+        var stopWidth = locked ? 0f : ImGui.CalcTextSize(Strings.QuestionableStopShort).X + (ImGui.GetStyle().FramePadding.X * 2f) + ImGui.GetStyle().ItemSpacing.X;
+        var start = ImGui.GetCursorScreenPos();
+        var line = ImGui.GetTextLineHeight();
+        var room = MathF.Max(UiMetrics.Px(40f), layout.RowWidth - stopWidth);
+        ImGui.Dummy(new Vector2(room, line));
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(text, Strings.QuestionableStatusTooltip);
+        }
+
+        var dl = ImGui.GetWindowDrawList();
+        dl.PushClipRect(start, new Vector2(start.X + room, start.Y + line), true);
+        Chrome.OutlinedTextAt(dl, start, text, Theme.AccentU32);
+        dl.PopClipRect();
+        if (locked)
+        {
+            return;
+        }
+
+        ImGui.SameLine();
+        using (ImRaii.PushStyle(ImGuiStyleVar.FramePadding, new Vector2(ImGui.GetStyle().FramePadding.X, 0f)))
+        {
+            Questionable.DrawStopSmallButton("##questionableStop");
+        }
     }
 
     /// <summary>A section caption (caret, name and count) outlined in the secondary tone over a hairline; a click folds it.</summary>
@@ -495,6 +552,16 @@ public sealed class TodoOverlay : Window, IDisposable
 
         var hovered = ImGui.IsItemHovered();
         Chrome.FocusRing();
+        if (section.Section == TodoSection.Pinned && Questionable is { } questionable)
+        {
+            // Right-click on the pins' caption: the same "Send pins to Questionable" as the title's menu.
+            using var menu = ImRaii.ContextPopupItem("##pinsQuestionable");
+            if (menu)
+            {
+                questionable.DrawSubmenu(QuestionableHost, Strings.QuestionableSendPins, pinned, static pins => pins);
+            }
+        }
+
         var dl = ImGui.GetWindowDrawList();
         var ink = Theme.U32(hovered ? Theme.Surface.Text : Theme.Surface.TextSecondary);
         ImGui.PushFont(UiBuilder.IconFont);
@@ -550,7 +617,9 @@ public sealed class TodoOverlay : Window, IDisposable
         var textMax = new Vector2(textX + layout.TextWidth, start.Y + layout.RowHeight);
         dl.PushClipRect(new Vector2(textX, start.Y), textMax, true);
         var name = new Vector2(textX, textY);
-        Chrome.OutlinedTextAt(dl, name, row.Name, Theme.U32(Theme.Surface.Text));
+        // Gold while Questionable works on this quest (1.6.0).
+        var nameInk = Questionable?.RunningRowId == row.Quest.RowId ? Theme.AccentU32 : Theme.U32(Theme.Surface.Text);
+        Chrome.OutlinedTextAt(dl, name, row.Name, nameInk);
         if (!compact && row.Hint.Length > 0)
         {
             var hintX = textX + ImGui.CalcTextSize(row.Name).X + style.ItemSpacing.X;

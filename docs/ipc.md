@@ -228,7 +228,7 @@ public sealed class TsukimichiIpc : IDisposable
 
 ## Consumed IPC
 
-Tsukimichi also calls three other plugins' gates when they are loaded. Each is optional: a plugin that is absent, not loaded, or whose gate is missing or throws reads as unavailable, the first failure is logged once, and the feature that needed it simply does not show. Detection goes through Dalamud's installed plugin list (`IDalamudPluginInterface.InstalledPlugins`, loaded state, re-read when the list changes), never through a per-frame IPC call.
+Tsukimichi also calls three other plugins' gates when they are loaded. Each is optional: a plugin that is absent, not loaded, or whose gate is missing or throws reads as unavailable, and the first failure is logged once. A passive feature that needed it (a line, a badge) does not show; a button that needs it stays visible, disabled, and names the plugin (feature plan v5, decision 1). Detection goes through Dalamud's installed plugin list (`IDalamudPluginInterface.InstalledPlugins`, loaded state, re-read when the list changes), never through a per-frame IPC call.
 
 ### Lifestream (internal name `Lifestream`)
 
@@ -270,23 +270,61 @@ When an entry changes group, Tsukimichi re-registers the entries that must move.
 
 ### Questionable (internal name `Questionable`, since 1.0.0)
 
-Read from Questionable's provider class, `Questionable/External/QuestionableIpc.cs`, at [github.com/PunishXIV/Questionable](https://github.com/PunishXIV/Questionable) commit `0bd61efe8a6806a7a8010741c0c46b7dea153709` (branch `new-main`, 2026-09-30). The WigglyMuffin fork ([github.com/WigglyMuffin/Questionable](https://github.com/WigglyMuffin/Questionable), commit `4f2909b7bc9e6ec65e63c4b71f4fb7f523688b46`) registers `IsQuestLocked` and `AddQuestPriority` but not `IsQuestLockedReason`.
+Read from Questionable's provider class, `Questionable/External/QuestionableIpc.cs`, at [github.com/PunishXIV/Questionable](https://github.com/PunishXIV/Questionable) commit `0bd61efe8a6806a7a8010741c0c46b7dea153709` (branch `new-main`, 2026-09-30). The WigglyMuffin fork ([github.com/WigglyMuffin/Questionable](https://github.com/WigglyMuffin/Questionable), commit `4f2909b7bc9e6ec65e63c4b71f4fb7f523688b46`, 2026-09-24) registers fewer gates; the last column says which.
 
-| Gate | Signature | Used for |
-|---|---|---|
-| `Questionable.IsQuestLockedReason` | `(string questId) -> (bool locked, string reasons)` | the cross-check: the detail pane's "Questionable agrees" / "Questionable says: …" line and the "questionable:" line of Report this quest |
-| `Questionable.IsQuestLocked` | `(string questId) -> bool` | the same, without a reason, when the reason gate is absent or fails |
-| `Questionable.AddQuestPriority` | `(string questId) -> bool` | "Add to Questionable priority" in the detail pane's "…" menu, only with Settings › Integrations › "Show Questionable hand-off" ticked (off by default) |
-| `Questionable.ReloadData` | message, no arguments | Questionable reloaded its paths (at load, after downloading its path bundle, or its "Reload Data" button): forget the cached answers and ask again (since 1.4.2) |
+| Gate | Signature | Used for | Fork |
+|---|---|---|---|
+| `Questionable.IsQuestLockedReason` | `(string questId) -> (bool locked, string reasons)` | the cross-check: the detail pane's "Questionable agrees" / "Questionable says: …" line and the "questionable:" line of Report this quest; the "has a path / no path" badges (1.6.0) | no |
+| `Questionable.IsQuestLocked` | `(string questId) -> bool` | the same, without a reason, when the reason gate is absent or fails | yes |
+| `Questionable.AddQuestPriority` | `(string questId) -> bool` | "Add to Questionable priority" in the detail pane's "…" menu, only with Settings › Integrations › "Show Questionable hand-off" ticked (off by default) | yes |
+| `Questionable.ImportQuestPriority` | `(string encoded) -> bool` | Send to Questionable (1.6.0): one call per send | yes |
+| `Questionable.ClearQuestPriority` | `() -> bool` | "Replace Questionable's list…", after a confirmation (1.6.0) | yes |
+| `Questionable.ExportQuestPriority` | `() -> string` | reading the list back after a send ("Sent 14 of 17 (3 have no Questionable path)"), and the "On Questionable's list (#n)" badges (1.6.0) | yes |
+| `Questionable.StartQuest` | `(string questId) -> bool` | "Add and start Questionable" (1.6.0) | yes |
+| `Questionable.Stop` | `(string label) -> bool` | Stop, called with the label `"Tsukimichi"` (1.6.0) | no |
+| `Questionable.IsRunning` | `() -> bool` | the live status (1.6.0) | yes |
+| `Questionable.GetCurrentQuestId` | `() -> string?` | the live status: the quest it works on (1.6.0) | yes |
+| `Questionable.GetCurrentStepData` | `() -> StepData?` | the live status: the step (1.6.0) | yes (`TerritoryId` is `ushort` there, `uint` upstream) |
+| `Questionable.IsQuestUnobtainable` | `(string questId) -> bool` | the wider cross-check against Locked out (1.6.0) | no |
+| `Questionable.GetCurrentlyActiveEventQuests` | `() -> List<string>` | the wider cross-check against the seasonal events the game reports running (1.6.0) | yes |
+| `Questionable.ReloadData` | message, no arguments | Questionable reloaded its paths (at load, after downloading its path bundle, or its "Reload Data" button): forget the cached answers, path badges and list, and ask again (since 1.4.2) | yes |
 
-Source: `Game/QuestionableIpc.cs`; the comparison is `Tsukimichi.Core/Ipc/QuestionableCrossCheck.cs`.
+Source: `Game/QuestionableIpc.cs` and `Game/QuestionableIpc.Automation.cs`; the pure parts are in `Tsukimichi.Core/Ipc/` (`QuestionableCrossCheck.cs`, `QuestionableList.cs`, `QuestionableBadges.cs`, `QuestionableStatus.cs`, `QuestionableWiderCheck.cs`). Every gate is looked up when it is used (`HasFunction`), so whichever version is installed gets what it offers; a button whose gate is missing stays visible, disabled, and says why.
 
-- The quest id is the Quest row id's low 16 bits in decimal (row 65964 is `"428"`), the form Questionable's `ElementId.FromString` reads as a quest.
+**Ids and the cross-check**
+
+- The quest id is the Quest row id's low 16 bits in decimal (row 65964 is `"428"`), the form Questionable's `ElementId.FromString` reads as a quest. Questionable's other element kinds carry a letter (`A` allied society daily, `S` satisfaction supply, `U` unlock link, `N` aethernet, `C` collection); Tsukimichi never sends them and ignores them when it reads Questionable's list or status.
 - Questionable is asked when a quest is selected or the character's state changes, one call per quest per session version, never per frame, and only about the character logged in: a stored character is not compared. The answers are asked again after `Questionable.ReloadData`, since an answer given before Questionable's paths arrived reads "no path" for every quest.
 - Both lock gates answer locked for a quest Questionable has no path for; the reason gate then gives an empty reason. Tsukimichi reads a locked answer without a reason as "no answer", not a disagreement.
 - Questionable's lock does not check the level of an ordinary quest, the job, the account caps, or whether the quest is done or in the journal, so only Ready, Available on another job and Blocked are compared, and a quest Blocked only by level or job is compared as open. Its reasons ("Prev quest (2)", "Aetheryte locked: …", "Low level (GLA)") follow Questionable's own language: it translates them into Japanese, Simplified and Traditional Chinese (`Questionable/Resources/I18N.xml`), so "Questionable says: …" can show "レベル不足 (GLA)". Tsukimichi recognises the level reason in each of those languages (since 1.4.2; before, only the English one, so a quest blocked only by level showed a false disagreement under Questionable in Japanese or Chinese).
-- Tsukimichi never asks about two quests whose lock check makes Questionable open the Achievements window (it checks an achievement, and shows the window to load the list; `Questionable/Functions/QuestFunctions.cs`): 4081, row 69617 "The Adventurer with All the Cards" (Gold Saucer), and 2387, row 67923 "What Lies Beneath", the Palace of the Dead quest that opens floors 51 to 100 (the journal files it with the Gridanian sidequests).
-- `AddQuestPriority` answers true even for a quest Questionable does not know, so the menu item is enabled only when the reason gate named a path for the quest, and the "…" button is not shown at all when the reason gate is absent (the WigglyMuffin fork) or fails. It adds the quest to Questionable's list and nothing else: Questionable does not start, and Tsukimichi never calls `StartQuest`, `Stop` or any other gate.
+- Tsukimichi never asks about two quests whose lock check makes Questionable open the Achievements window (it checks an achievement, and shows the window to load the list; `Questionable/Functions/QuestFunctions.cs`): 4081, row 69617 "The Adventurer with All the Cards" (Gold Saucer), and 2387, row 67923 "What Lies Beneath", the Palace of the Dead quest that opens floors 51 to 100 (the journal files it with the Gridanian sidequests). It never sends them either.
+- `AddQuestPriority` answers true even for a quest Questionable does not know, so the "…" menu item is enabled only when the reason gate named a path for the quest, and the "…" button is not shown at all when the reason gate is absent (the WigglyMuffin fork) or fails.
+
+**Send to Questionable (1.6.0)**
+
+- Offered on the route window (the route's steps, in route order), each My blues expansion card (its quests as the card lists them), the right-click menu of a Characters job, role or chain row (its quests in order), and the Todo overlay's title menu (the pins, in the order they were pinned). Done, in-journal and locked-out quests are left out, and each quest is sent once.
+- The list goes over in one `ImportQuestPriority` call, in Questionable's own clipboard format: `"qst:priority:"` followed by the Base64 of the UTF-8 text of the ids joined by `;` (`PriorityWindow.EncodeQuestPriority` / `DecodeQuestPriority`). Questionable appends the quests it has a path for that are not already on its list, drops the others without saying so, and always answers true (`QuestPriorityManager.Import`). So Tsukimichi reads the list before and after with `ExportQuestPriority` and reports the difference in chat: "Questionable: sent 14 of 17 (3 have no Questionable path)."
+- Adding to the end is the default. "Replace Questionable's list…" calls `ClearQuestPriority` first, after a confirmation that says how many quests the list holds now.
+- Questionable keeps its list in memory only and sends no message when it changes, so the "On Questionable's list (#n)" badge reads it again after a send, when a quest is opened in the detail pane or a route window opens, after `ReloadData`, and otherwise at most every 30 seconds while a badge is drawn.
+- There is no "has a path" gate. The badge reads it from the reason gate: `(true, "")` means no path, any other answer means a path. It does not depend on the character, so an answer holds until Questionable's paths reload or Dalamud's plugin list changes. A route asks for the steps it draws, at most six new questions a frame. On the fork, whose `IsQuestLocked` cannot tell "no path" from "locked", the badge is hidden.
+
+**Start and Stop (1.6.0)**
+
+- "Add and start Questionable" sends the quests, then calls `StartQuest` on the first quest Questionable took, preferring one that is Ready. `StartQuest` sets the quest as the next one and turns on Questionable's automatic mode (`QuestController.Start`), which then works through its priority list in order and, when the list is done, carries on with its own choices (the main scenario) until it is stopped. `StartSingleQuest` (one quest, then stop) is not used.
+- It is offered when Settings › Integrations › "Allow Tsukimichi to start Questionable" is ticked (on by default) and asks first until the player ticks "Don't ask again" ("Ask before starting Questionable" turns the question back on). It is disabled, naming what is missing, when Questionable is already running, or when a plugin Questionable needs to run is not loaded: vnavmesh, TextAdvance and Lifestream, from its manifest ("Required Plugins: vnavmesh, TextAdvance, Lifestream") and the `RequiredPlugins` list of `Questionable/Windows/ConfigComponents/PluginConfigComponent.cs` (the same in both versions).
+- Stop calls `Stop("Tsukimichi")`. It shows beside the live status and in every Send to Questionable menu while Questionable runs. The fork has no `Stop` gate, so there the button is disabled and says to stop it from Questionable's own window.
+
+**Live status (1.6.0)**
+
+- `IsRunning`, then `GetCurrentQuestId` and `GetCurrentStepData`, at most once a second, and only while the main window or the Todo overlay draws it: nothing is asked while no Tsukimichi window is visible. Questionable sends no event for this, so it is polled.
+- The main window's status bar shows "Questionable: running · <quest> · step 3 of 7" with a Stop button, the Todo overlay a line under its title, and that quest's row is washed gold in the Journal and its name gold in the overlay.
+- `GetCurrentStepData` returns Questionable's own `StepData` class, which Dalamud converts into Tsukimichi's `QuestionableStepData` through JSON by property name (`QuestId`, `Sequence`, `Step`, `InteractionType`, `TerritoryId` as `uint`, which also reads the fork's `ushort`). If a gate answers with another shape, the status (or just the step) is turned off with one log line until Dalamud's plugin list changes.
+
+**Wider cross-check (1.6.0)**
+
+- `IsQuestUnobtainable` (upstream only) against Tsukimichi's Locked out: compared for Ready, Available on another job, Blocked and Locked out quests, never for a stored character. Unobtainable on a quest Tsukimichi holds back only for an expansion the account does not own agrees. The gate throws for a quest Questionable has no data for, which reads as no answer.
+- `GetCurrentlyActiveEventQuests` (read at most once a minute) against the festivals the game's flags report running: a quest Questionable lists while its festival is not running is a disagreement. Questionable leaves a whole event out once one of its quests is done, so a running event quest it does not list is only noted.
+- A disagreement adds a line under the detail pane's Questionable line ("Questionable says it can no longer be done"), and Report this quest adds `questionable more: path yes; list #3; unobtainable no, agrees; event listed, agrees`.
 
 ## Versioning
 
