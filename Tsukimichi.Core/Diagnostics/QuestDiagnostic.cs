@@ -191,6 +191,7 @@ public static class QuestDiagnostic
             AchievementRequirement { Loaded: false } => NotChecked,
             CustomDeliveryRankRequirement { ActualRank: null } => NotChecked,
             CarrierLevelRequirement { ActualLevel: null } => NotChecked,
+            TribeReputationRequirement { NotChecked: true } => NotChecked,
             _ => result.Met ? Met : Unmet,
         };
     }
