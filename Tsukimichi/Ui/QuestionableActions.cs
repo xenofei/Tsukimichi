@@ -24,7 +24,8 @@ namespace Tsukimichi.Ui;
 /// Without Questionable every button and item stays visible, disabled, saying the plugin is needed. Start also needs
 /// Questionable's own required plugins (vnavmesh, TextAdvance, Lifestream) and names the missing ones. The quests sent
 /// are worked out when a menu opens (<see cref="QuestionableList.Plan"/>: done, in-journal and locked-out quests left
-/// out, order kept), not per frame.
+/// out, order kept), not per frame, from the logged-in character's states, since Questionable plays that character
+/// whoever is viewed; "Add and start" also waits until the viewed character is the one logged in.
 /// </para>
 /// </summary>
 public sealed class QuestionableActions
@@ -89,6 +90,12 @@ public sealed class QuestionableActions
 
     /// <summary>Questionable's IPC.</summary>
     public QuestionableIpc Ipc => ipc;
+
+    /// <summary>
+    /// The states the quests sent are judged by: the logged-in character's, whoever is viewed, since Questionable plays
+    /// that character; the viewed character's only while nobody is logged in.
+    /// </summary>
+    private IReadOnlyDictionary<uint, QuestEvaluation> ActingStates => session.LiveContentId is not null ? session.LiveStates : session.States;
 
     /// <summary>
     /// Whether the game's festival flags have the quest's seasonal event running for the character logged in (false
@@ -471,6 +478,13 @@ public sealed class QuestionableActions
             return string.Format(CultureInfo.CurrentCulture, Strings.QuestionableStartMissingFormat, string.Join(", ", missing));
         }
 
+        // Questionable plays the character logged in; starting it while a stored character is viewed would set off
+        // quests chosen for someone else.
+        if (!session.IsLive)
+        {
+            return Strings.QuestionableStartNotLive;
+        }
+
         return status.Running ? Strings.QuestionableAlreadyRunning : null;
     }
 
@@ -500,7 +514,7 @@ public sealed class QuestionableActions
             rows = [];
         }
 
-        plan = QuestionableList.Plan(rows, session.States);
+        plan = QuestionableList.Plan(rows, ActingStates);
         appendLabel = string.Format(CultureInfo.CurrentCulture, Strings.QuestionableSendAppendFormat, plan.Count);
         startLabel = string.Format(CultureInfo.CurrentCulture, Strings.QuestionableSendStartFormat, plan.Count);
         skippedText = plan.Skipped > 0 ? string.Format(CultureInfo.CurrentCulture, Strings.QuestionableSkippedFormat, plan.Skipped) : string.Empty;
@@ -541,10 +555,16 @@ public sealed class QuestionableActions
     /// <summary>Sends, says how it went in chat, and starts Questionable when asked.</summary>
     private void DoSend(QuestionableSendPlan sendPlan, bool replace, bool start)
     {
-        var result = ipc.Send(sendPlan, replace);
+        var result = ipc.Send(sendPlan, replace, out var replaced);
         if (result is null)
         {
-            print(Strings.QuestionableSendFailed);
+            print(replaced switch
+            {
+                QuestionableReplaceOutcome.NotRead => Strings.QuestionableReplaceNotRead,
+                QuestionableReplaceOutcome.FailedRestored => Strings.QuestionableReplaceRestored,
+                QuestionableReplaceOutcome.FailedNotRestored => Strings.QuestionableReplaceNotRestored,
+                _ => Strings.QuestionableSendFailed,
+            });
             return;
         }
 
@@ -606,7 +626,7 @@ public sealed class QuestionableActions
                 continue;
             }
 
-            if (session.States.TryGetValue(rowId, out var evaluation) && evaluation.State == QuestState.Ready)
+            if (ActingStates.TryGetValue(rowId, out var evaluation) && evaluation.State == QuestState.Ready)
             {
                 return rowId;
             }

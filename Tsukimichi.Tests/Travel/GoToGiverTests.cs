@@ -290,7 +290,52 @@ public sealed class GoToGiverTests
         machine.Start(GoToGiverPlan.WalkOnly(SubZone, 1f, 2f, 3f), 0);
 
         Assert.Equal(new GoToGiverOutcome(GoToGiverStep.Failed, GoToGiverFailure.PathNotReady), Run(machine, 0, GoToGiver.PathReadyTimeoutMs + 1_000));
-        Assert.Contains("stop walk", ports.Calls);
+
+        // No walk of this run was asked for: whatever vnavmesh does is another plugin's.
+        Assert.DoesNotContain("stop walk", ports.Calls);
+    }
+
+    [Fact]
+    public void Cancel_while_the_path_is_prepared_leaves_another_plugins_walk_alone()
+    {
+        var ports = new FakePorts { Territory = SubZone, NavReady = false, Walking = true };
+        var machine = new GoToGiver(ports);
+        machine.Start(GoToGiverPlan.WalkOnly(SubZone, 1f, 2f, 3f), 0);
+
+        Assert.Equal(GoToGiverStep.Cancelled, machine.Cancel()?.Step);
+        Assert.Empty(ports.Calls);
+    }
+
+    [Fact]
+    public void Stop_during_the_teleport_cast_lets_it_land_and_does_nothing_after()
+    {
+        var ports = new FakePorts();
+        var machine = new GoToGiver(ports);
+        machine.Start(Full, 0);
+        Assert.True(machine.TeleportCastPending);
+
+        Assert.Equal(GoToGiverStep.Cancelled, machine.Cancel()?.Step);
+        Assert.False(machine.TeleportCastPending);
+
+        // The cast finishes and the player lands where the teleport went; no hop and no walk follow.
+        ports.Load(City);
+        Assert.Null(machine.Tick(5_000));
+        ports.Arrive();
+        Assert.Null(Run(machine, 5_100, 20_000));
+        Assert.Equal(["teleport 2"], ports.Calls);
+    }
+
+    [Fact]
+    public void The_cast_is_pending_only_until_the_loading_screen()
+    {
+        var ports = new FakePorts();
+        var machine = new GoToGiver(ports);
+        machine.Start(Full, 0);
+
+        ports.Load(City);
+        machine.Tick(1_000);
+        Assert.Equal(GoToGiverStep.Teleporting, machine.Step);
+        Assert.False(machine.TeleportCastPending);
     }
 
     [Fact]

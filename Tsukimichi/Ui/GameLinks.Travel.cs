@@ -45,6 +45,18 @@ public enum WalkBlock
 
     /// <summary>vnavmesh has no navmesh for the zone yet; <see cref="WalkCheck.Progress"/> says how far its build is.</summary>
     Preparing,
+
+    /// <summary>The character is casting (a teleport among others).</summary>
+    Casting,
+
+    /// <summary>vnavmesh is already walking for another plugin.</summary>
+    Moving,
+
+    /// <summary>Questionable is running and drives the character.</summary>
+    QuestionableRunning,
+
+    /// <summary>AutoDuty is running and drives the character.</summary>
+    AutoDutyRunning,
 }
 
 /// <summary>
@@ -72,6 +84,18 @@ public enum GoToBlock
     Loading,
     Combat,
     Cutscene,
+
+    /// <summary>The character is casting (a teleport among others).</summary>
+    Casting,
+
+    /// <summary>vnavmesh is already walking for another plugin.</summary>
+    Moving,
+
+    /// <summary>Questionable is running and drives the character.</summary>
+    QuestionableRunning,
+
+    /// <summary>AutoDuty is running and drives the character.</summary>
+    AutoDutyRunning,
 }
 
 /// <summary>What Go to giver would do (<paramref name="Plan"/>), or why not; <paramref name="Stoppable"/> while a chain or walk runs.</summary>
@@ -111,9 +135,22 @@ public sealed partial class GameLinks
 {
     private const string Separator = " · ";
 
+    private readonly TravelClickGuard clickGuard = new();
     private AetheryteIndex? aetherytes;
     private Func<uint, bool>? isAttuned;
     private Func<uint, bool>? isShardAttuned;
+
+    /// <summary>Whether Questionable is running (its live status); Walk and Go to giver wait meanwhile. Unset reads as not running.</summary>
+    public Func<bool>? QuestionableRunning { get; set; }
+
+    /// <summary>Whether AutoDuty is not stopped; Walk and Go to giver wait meanwhile. Unset reads as stopped.</summary>
+    public Func<bool>? AutoDutyRunning { get; set; }
+
+    /// <summary>
+    /// Moves whenever attunement (aetherytes, their cost, aethernet shards) may have changed
+    /// (<see cref="TravelService.AttunementRevision"/>); 0 without travel. A cache of teleport targets keys on it.
+    /// </summary>
+    public int AttunementRevision => Travel?.AttunementRevision ?? 0;
 
     /// <summary>Lifestream's IPC, attached by the plugin; null (no teleport) until then.</summary>
     public LifestreamIpc? Lifestream { get; set; }
@@ -152,8 +189,11 @@ public sealed partial class GameLinks
     /// <summary>True while Lifestream is loaded. Teleport buttons show either way; without it they are disabled and name it.</summary>
     public bool TeleportAvailable => Lifestream?.Available == true;
 
-    /// <summary>True while Lifestream is busy with another task; teleport controls are disabled meanwhile.</summary>
-    public bool TeleportBusy => Lifestream?.IsBusy == true;
+    /// <summary>
+    /// True while Lifestream is busy with another task, a cast or loading screen is under way (a teleport just asked
+    /// for among them), or Go to giver runs; teleport controls are disabled meanwhile.
+    /// </summary>
+    public bool TeleportBusy => Lifestream?.IsBusy == true || Travel is { } travel && (travel.TeleportInProgress || travel.JourneyActive);
 
     /// <summary>True while vnavmesh is loaded.</summary>
     public bool WalkAvailable => Travel?.Vnavmesh.Available == true;
@@ -164,11 +204,53 @@ public sealed partial class GameLinks
     /// <summary>Whether Go to giver buttons are drawn at all (the setting; on by default).</summary>
     public bool GoToShown => ShowGoTo?.Invoke() ?? true;
 
-    /// <summary>True while a walk or Go to giver runs (Walk and Go to giver buttons read Stop).</summary>
-    public bool IsTraveling => Travel is { } travel && (travel.JourneyActive || travel.Walking);
+    /// <summary>True while a walk or Go to giver Tsukimichi started runs (Walk and Go to giver buttons read Stop).</summary>
+    public bool IsTraveling => Travel?.JourneyActive == true;
 
-    /// <summary>The one Stop: cancels Go to giver or a walk, wherever it was started.</summary>
-    public void StopTravel() => Travel?.Stop();
+    /// <summary>
+    /// The one Stop: cancels the Go to giver or walk Tsukimichi started (never another plugin's walk). Ignored within
+    /// <see cref="TravelClickGuard.WindowMs"/> of a start, so a double click on Walk does not start and stop at once.
+    /// </summary>
+    public void StopTravel()
+    {
+        if (clickGuard.Holding(Environment.TickCount64))
+        {
+            return;
+        }
+
+        Travel?.Stop();
+    }
+
+    /// <summary>
+    /// The Stop tooltip: while Go to giver waits for its teleport cast, that the cast lands and nothing follows it;
+    /// else Stop with the step under way.
+    /// </summary>
+    public string StopTooltip()
+    {
+        if (Travel is not { JourneyActive: true } travel)
+        {
+            return Strings.TravelStopTooltip;
+        }
+
+        if (travel.JourneyCastPending)
+        {
+            return Strings.TravelStopAfterCastTooltip;
+        }
+
+        var step = travel.JourneyStep switch
+        {
+            GoToGiverStep.Teleporting => Strings.TravelStepTeleporting,
+            GoToGiverStep.Hopping => Strings.TravelStepHopping,
+            GoToGiverStep.PreparingPath => Strings.TravelStepPreparing,
+            _ => Strings.TravelStepWalking,
+        };
+        return string.Format(CultureInfo.CurrentCulture, Strings.TravelGoToStopTooltipFormat, step);
+    }
+
+    /// <summary>True while a click is still part of the double click that just started travel; it is ignored.</summary>
+    private bool ClickHeld => clickGuard.Holding(Environment.TickCount64);
+
+    private void MarkStarted() => clickGuard.Started(Environment.TickCount64);
 
     private Func<uint, bool> IsAttuned => isAttuned ??= id => Travel?.IsAttuned(id) ?? true;
 
@@ -222,14 +304,20 @@ public sealed partial class GameLinks
     public bool TeleportToGiver(QuestRecord quest)
     {
         var check = CheckTeleport(quest);
-        if (!check.Ready || Lifestream is not { } lifestream)
+        if (!check.Ready || Lifestream is not { } lifestream || ClickHeld)
         {
             return false;
         }
 
         if (TravelSpecials.LifestreamCommand(check.Special) is { } command)
         {
-            return lifestream.ExecuteCommand(command);
+            var sent = lifestream.ExecuteCommand(command);
+            if (sent)
+            {
+                MarkStarted();
+            }
+
+            return sent;
         }
 
         if (check.Target is not { } target)
@@ -238,7 +326,11 @@ public sealed partial class GameLinks
         }
 
         var started = Travel?.Teleport(target.RowId, target.Name) ?? lifestream.Teleport(target.RowId);
-        if (!started)
+        if (started)
+        {
+            MarkStarted();
+        }
+        else
         {
             log.Warning("Teleport to {Aetheryte} ({AetheryteId}) for quest {RowId} did not start", target.Name, target.RowId, quest.RowId);
         }
@@ -263,7 +355,7 @@ public sealed partial class GameLinks
             case TeleportBlock.NotAttuned:
                 return string.Format(CultureInfo.CurrentCulture, Strings.TravelNotAttunedFormat, ZoneName(quest));
             case TeleportBlock.Busy:
-                return Strings.TeleportBusy;
+                return BusyReason();
         }
 
         var lines = new List<string>(4);
@@ -312,6 +404,12 @@ public sealed partial class GameLinks
         CompanionPlugins.DisabledReason(plugin) is { } reason ? reason + "\n" + why : why;
 
     private static string NeedsLifestream() => NeedsPlugin(CompanionPlugin.Lifestream, Strings.TravelNeedsLifestream);
+
+    /// <summary>Why a busy teleport or hop waits: Go to giver under way, a cast or loading screen, or Lifestream's own task.</summary>
+    private string BusyReason() =>
+        Travel is { JourneyActive: true } ? Strings.TravelBusyJourney
+        : Travel is { TeleportInProgress: true } ? Strings.TravelBusyCasting
+        : Strings.TeleportBusy;
 
     private static string NeedsVnavmesh() => NeedsPlugin(CompanionPlugin.Vnavmesh, Strings.TravelNeedsVnavmesh);
 
@@ -363,9 +461,14 @@ public sealed partial class GameLinks
         {
             block = HopBlock.Busy;
         }
+        else if (!Lifestream!.CanReadActiveAetheryte)
+        {
+            // A Lifestream without GetActiveAetheryte: offer the hop and let Lifestream say if the player is not at one.
+            block = HopBlock.None;
+        }
         else
         {
-            var active = Lifestream!.ActiveAetheryte;
+            var active = Lifestream.ActiveAetheryte;
             var atNetwork = firmament
                 ? active == TravelSpecials.FoundationAetheryte
                 : active != 0 && index.Find(active)?.Group == city.Group;
@@ -403,13 +506,17 @@ public sealed partial class GameLinks
     public bool AethernetToGiver(QuestRecord quest)
     {
         var check = CheckHop(quest);
-        if (!check.Ready || Lifestream is not { } lifestream)
+        if (!check.Ready || Lifestream is not { } lifestream || ClickHeld)
         {
             return false;
         }
 
         var started = check.Firmament ? lifestream.AethernetTeleportToFirmament() : check.Shard is { } shard && lifestream.AethernetTeleport(shard.RowId);
-        if (!started)
+        if (started)
+        {
+            MarkStarted();
+        }
+        else
         {
             log.Warning("Aethernet hop for quest {RowId} did not start", quest.RowId);
         }
@@ -432,7 +539,11 @@ public sealed partial class GameLinks
 
     // ------------------------------------------------------------------ walk
 
-    /// <summary>What Walk to giver would do now: start, Stop (something is moving), or why it cannot.</summary>
+    /// <summary>
+    /// What Walk to giver would do now: start, Stop (a walk or Go to giver Tsukimichi started is under way), or why it
+    /// cannot. It waits while Questionable or AutoDuty drives the character, while the character casts, and while
+    /// vnavmesh walks for another plugin (whose walk it never stops).
+    /// </summary>
     public WalkCheck CheckWalk(QuestRecord quest)
     {
         if (Travel is not { } travel || !travel.Vnavmesh.Available)
@@ -440,7 +551,7 @@ public sealed partial class GameLinks
             return new WalkCheck(WalkBlock.NoVnavmesh, false, -1f);
         }
 
-        if (travel.JourneyActive || travel.Walking)
+        if (travel.JourneyActive)
         {
             return new WalkCheck(WalkBlock.None, true, -1f);
         }
@@ -448,13 +559,22 @@ public sealed partial class GameLinks
         var block = quest.Issuer is not { TerritoryId: > 0 } issuer ? WalkBlock.NoGiverPlace
             : travel.BetweenAreas ? WalkBlock.Loading
             : travel.Territory != issuer.TerritoryId ? WalkBlock.NotInZone
+            : AutomationBlock() is { } automation ? automation
             : travel.InCombat ? WalkBlock.Combat
             : travel.InCutscene ? WalkBlock.Cutscene
+            : travel.Casting ? WalkBlock.Casting
+            : travel.Walking ? WalkBlock.Moving
             : travel.LifestreamBusy ? WalkBlock.Busy
             : !travel.NavReady ? WalkBlock.Preparing
             : WalkBlock.None;
         return new WalkCheck(block, false, block == WalkBlock.Preparing ? travel.Vnavmesh.BuildProgress : -1f);
     }
+
+    /// <summary>The plugin driving the character now, Questionable first; null when neither runs.</summary>
+    private WalkBlock? AutomationBlock() =>
+        QuestionableRunning?.Invoke() == true ? WalkBlock.QuestionableRunning
+        : AutoDutyRunning?.Invoke() == true ? WalkBlock.AutoDutyRunning
+        : null;
 
     /// <summary>True when Walk to giver can start now: vnavmesh loaded and ready, the player idle in the giver's zone.</summary>
     public bool CanWalk(QuestRecord quest) => CheckWalk(quest).Ready;
@@ -465,12 +585,17 @@ public sealed partial class GameLinks
     /// </summary>
     public bool WalkToGiver(QuestRecord quest)
     {
-        if (!CheckWalk(quest).Ready || Travel is not { } travel || quest.Issuer is not { } issuer)
+        if (ClickHeld || !CheckWalk(quest).Ready || Travel is not { } travel || quest.Issuer is not { } issuer)
         {
             return false;
         }
 
         travel.Start(GoToGiverPlan.WalkOnly(issuer.TerritoryId, issuer.X, issuer.Y, issuer.Z));
+        if (travel.JourneyActive)
+        {
+            MarkStarted();
+        }
+
         return travel.JourneyActive;
     }
 
@@ -486,7 +611,7 @@ public sealed partial class GameLinks
     {
         if (check.Stoppable)
         {
-            return Strings.TravelStopTooltip;
+            return StopTooltip();
         }
 
         return check.Block switch
@@ -499,6 +624,10 @@ public sealed partial class GameLinks
             WalkBlock.Cutscene => Strings.TravelWalkCutscene,
             WalkBlock.Busy => Strings.TeleportBusy,
             WalkBlock.Preparing => WalkLabel(check, Strings.TravelPreparing),
+            WalkBlock.Casting => Strings.TravelBusyCasting,
+            WalkBlock.Moving => Strings.TravelBusyMoving,
+            WalkBlock.QuestionableRunning => Strings.TravelBusyQuestionable,
+            WalkBlock.AutoDutyRunning => Strings.TravelBusyAutoDuty,
             _ => Strings.TravelWalkTooltip,
         };
     }
@@ -532,11 +661,16 @@ public sealed partial class GameLinks
         // A conversation zone is never entered by the chain; once inside it, the walk is fine.
         var conversation = (TravelSpecials.NeedsConversation(teleport.Special) || teleport.Special == TravelSpecial.CosmicExploration)
             && travel.Territory != issuer.TerritoryId;
+        var automation = AutomationBlock();
         var block = conversation ? GoToBlock.Conversation
             : travel.BetweenAreas ? GoToBlock.Loading
+            : automation == WalkBlock.QuestionableRunning ? GoToBlock.QuestionableRunning
+            : automation == WalkBlock.AutoDutyRunning ? GoToBlock.AutoDutyRunning
             : travel.InCutscene ? GoToBlock.Cutscene
             : travel.InCombat ? GoToBlock.Combat
-            : travel.LifestreamBusy || travel.Walking ? GoToBlock.Busy
+            : travel.Casting ? GoToBlock.Casting
+            : travel.Walking ? GoToBlock.Moving
+            : travel.LifestreamBusy ? GoToBlock.Busy
             : GoToBlock.None;
         if (block != GoToBlock.None)
         {
@@ -604,12 +738,17 @@ public sealed partial class GameLinks
     /// </summary>
     public bool GoToGiver(QuestRecord quest)
     {
-        if (CheckGoTo(quest) is not { Ready: true, Plan: { } plan } || Travel is not { } travel)
+        if (ClickHeld || CheckGoTo(quest) is not { Ready: true, Plan: { } plan } || Travel is not { } travel)
         {
             return false;
         }
 
         travel.Start(plan);
+        if (travel.JourneyActive)
+        {
+            MarkStarted();
+        }
+
         return travel.JourneyActive;
     }
 
@@ -618,14 +757,7 @@ public sealed partial class GameLinks
     {
         if (check.Stoppable)
         {
-            var step = Travel?.JourneyStep switch
-            {
-                GoToGiverStep.Teleporting => Strings.TravelStepTeleporting,
-                GoToGiverStep.Hopping => Strings.TravelStepHopping,
-                GoToGiverStep.PreparingPath => Strings.TravelStepPreparing,
-                _ => Strings.TravelStepWalking,
-            };
-            return string.Format(CultureInfo.CurrentCulture, Strings.TravelGoToStopTooltipFormat, step);
+            return StopTooltip();
         }
 
         switch (check.Block)
@@ -644,6 +776,14 @@ public sealed partial class GameLinks
                 return string.Format(CultureInfo.CurrentCulture, Strings.TravelGoToConversationFormat, ZoneName(quest));
             case GoToBlock.Busy:
                 return Strings.TeleportBusy;
+            case GoToBlock.Casting:
+                return Strings.TravelBusyCasting;
+            case GoToBlock.Moving:
+                return Strings.TravelBusyMoving;
+            case GoToBlock.QuestionableRunning:
+                return Strings.TravelBusyQuestionable;
+            case GoToBlock.AutoDutyRunning:
+                return Strings.TravelBusyAutoDuty;
             case GoToBlock.Loading:
                 return Strings.TravelWalkLoading;
             case GoToBlock.Combat:

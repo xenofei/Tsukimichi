@@ -18,8 +18,11 @@ namespace Tsukimichi.Game;
 /// (<c>UIState.IsAetheryteUnlocked</c>, a game call, so only while the shared <see cref="HookGate"/> allows), where the
 /// player stands, and the <see cref="GoToGiver"/> chain driven from the framework update. Attunement is read on the
 /// framework thread after login and every territory change, and again every <see cref="AttunementRefreshMs"/> (a new
-/// aetheryte is attuned without a zone change); the UI reads the cached answers. A walk or chain this service started
-/// is stopped when the player leaves the zone (the chain's own check), on logout and when the plugin unloads.
+/// aetheryte is attuned without a zone change); the UI reads the cached answers. Right after login Dalamud's list is
+/// empty until the player object exists, so an empty read (or no player) is not taken as "nothing attuned": the list
+/// stays unknown and is read again next frame. <see cref="AttunementRevision"/> moves whenever the answers change. A
+/// walk or chain this service started is stopped when the player leaves the zone (the chain's own check), on logout and
+/// when the plugin unloads; a walk another plugin started is never stopped from here.
 /// </summary>
 public sealed class TravelService : ITravelPorts, IDisposable
 {
@@ -115,12 +118,26 @@ public sealed class TravelService : ITravelPorts, IDisposable
     /// <summary>True when the aethernet shard is attuned; false when it is not or cannot be read (no hop is offered then).</summary>
     public bool IsShardAttuned(uint shardId) => shardsKnown && attunedShards.Contains(shardId);
 
+    /// <summary>
+    /// Moves whenever an answer of <see cref="IsAttuned"/>, <see cref="TryGetCost"/> or <see cref="IsShardAttuned"/> may
+    /// have changed (a read that differs from the last, the list becoming known, logout); a cache of anything built from
+    /// attunement keys on it.
+    /// </summary>
+    public int AttunementRevision { get; private set; }
+
     private void RefreshAttunement(long now)
     {
         attunementDirty = false;
         attunementReadAt = now;
         try
         {
+            if (objects.LocalPlayer is null)
+            {
+                // Dalamud's list reads empty until the player object exists: try again next frame.
+                attunementDirty = true;
+                return;
+            }
+
             var read = new Dictionary<uint, (uint Gil, bool Favourite)>();
             foreach (var entry in aetheryteList)
             {
@@ -131,6 +148,19 @@ public sealed class TravelService : ITravelPorts, IDisposable
                 }
 
                 read.TryAdd(entry.AetheryteId, (entry.GilCost, entry.IsFavourite));
+            }
+
+            if (read.Count == 0)
+            {
+                // Every character has attuned at least its starting city's aetheryte: an empty list is one not filled
+                // yet, not an answer. Keep what was known and read again next frame.
+                attunementDirty = true;
+                return;
+            }
+
+            if (!attunementKnown || !SameAttunement(attuned, read))
+            {
+                AttunementRevision++;
             }
 
             attuned = read;
@@ -144,11 +174,29 @@ public sealed class TravelService : ITravelPorts, IDisposable
         RefreshShards();
     }
 
+    private static bool SameAttunement(Dictionary<uint, (uint Gil, bool Favourite)> before, Dictionary<uint, (uint Gil, bool Favourite)> after)
+    {
+        if (before.Count != after.Count)
+        {
+            return false;
+        }
+
+        foreach (var (id, entry) in after)
+        {
+            if (!before.TryGetValue(id, out var old) || old != entry)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     private unsafe void RefreshShards()
     {
         if (Gate is not { HooksAllowed: true } || Index?.Invoke() is not { } index)
         {
-            shardsKnown = false;
+            ForgetShards();
             return;
         }
 
@@ -157,7 +205,7 @@ public sealed class TravelService : ITravelPorts, IDisposable
             var state = UIState.Instance();
             if (state == null)
             {
-                shardsKnown = false;
+                ForgetShards();
                 return;
             }
 
@@ -170,14 +218,29 @@ public sealed class TravelService : ITravelPorts, IDisposable
                 }
             }
 
+            if (!shardsKnown || !attunedShards.SetEquals(read))
+            {
+                AttunementRevision++;
+            }
+
             attunedShards = read;
             shardsKnown = true;
         }
         catch (Exception ex)
         {
-            shardsKnown = false;
+            ForgetShards();
             WarnOnce(ex, "Aethernet shard attunement unavailable");
         }
+    }
+
+    private void ForgetShards()
+    {
+        if (shardsKnown)
+        {
+            AttunementRevision++;
+        }
+
+        shardsKnown = false;
     }
 
     // ------------------------------------------------------------------ the player
@@ -195,6 +258,18 @@ public sealed class TravelService : ITravelPorts, IDisposable
     public bool BetweenAreas => condition[ConditionFlag.BetweenAreas] || condition[ConditionFlag.BetweenAreas51];
 
     public bool InCombat => condition[ConditionFlag.InCombat];
+
+    /// <summary>True while the character casts (a teleport among others); a teleport or a walk would cut it or be refused.</summary>
+    public bool Casting => condition[ConditionFlag.Casting] || condition[ConditionFlag.Casting87];
+
+    /// <summary>
+    /// True while a teleport may be under way: a cast, a loading screen, or the Go to giver chain asked for a teleport
+    /// and no loading screen has followed yet. Teleport buttons treat it as busy.
+    /// </summary>
+    public bool TeleportInProgress => Casting || BetweenAreas || journey.TeleportCastPending;
+
+    /// <summary>True while the Go to giver chain waits for its teleport cast, which a Stop cannot cut short.</summary>
+    public bool JourneyCastPending => journey.TeleportCastPending;
 
     public bool InCutscene => condition[ConditionFlag.OccupiedInCutSceneEvent] || condition[ConditionFlag.WatchingCutscene] || condition[ConditionFlag.WatchingCutscene78];
 
@@ -270,20 +345,11 @@ public sealed class TravelService : ITravelPorts, IDisposable
         Report(journey.Start(plan, Environment.TickCount64));
     }
 
-    /// <summary>The one Stop: cancels the chain this service runs, or stops vnavmesh when something else made it walk.</summary>
-    public void Stop()
-    {
-        if (journey.IsActive)
-        {
-            journey.Cancel();
-            return;
-        }
-
-        if (Vnavmesh.IsWalking)
-        {
-            Vnavmesh.Stop();
-        }
-    }
+    /// <summary>
+    /// The one Stop: cancels the walk or chain this service runs. A walk another plugin (Questionable, AutoDuty, vnavmesh's
+    /// own window) started is left alone; it is that plugin's to stop.
+    /// </summary>
+    public void Stop() => journey.Cancel();
 
     private void Report(GoToGiverOutcome? outcome)
     {
@@ -366,6 +432,11 @@ public sealed class TravelService : ITravelPorts, IDisposable
     private void OnLogout(int type, int code)
     {
         journey.Cancel();
+        if (attunementKnown || shardsKnown)
+        {
+            AttunementRevision++;
+        }
+
         attuned = [];
         attunedShards = [];
         attunementKnown = false;

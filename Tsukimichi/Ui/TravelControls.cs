@@ -35,7 +35,7 @@ internal static class TravelControls
 
             if (ImGui.IsItemHovered())
             {
-                UiMetrics.Tooltip(Strings.TravelStopTooltip);
+                UiMetrics.Tooltip(links.StopTooltip());
             }
 
             return;

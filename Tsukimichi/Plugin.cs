@@ -872,9 +872,14 @@ public sealed class Plugin : IDalamudPlugin
                 questMap,
                 () => dutyRuns.Value,
                 rowId => moonlit.Catalog.ForQuest(rowId),
-                Game.AutoDutyIpc.IsInstanceUnlocked,
+                // Dalamud's IUnlockState, as the Moonlit reads use it: no game call of Tsukimichi's own from the draw.
+                instanceContentId => CollectibleFlags?.IsUnlocked(Core.Model.RewardKind.Instance, instanceContentId),
                 () => Settings.AutoDutyAllowDutyFinder);
             why.QuestMap = questMap;
+            // Walk to giver and Go to giver wait while Questionable or AutoDuty drives the character (both move it
+            // through vnavmesh too). Both reads are cached inside their IPC wrappers.
+            gameLinks.QuestionableRunning = () => questionableIpc.PollStatus().Running;
+            gameLinks.AutoDutyRunning = () => !autoDuty.IsStopped;
             mainWindow.AttachDiagnostics(diagnostics);
 
             // Journal text (P9): the detail pane's Journal card, and with Settings › Journal text the search box's journal

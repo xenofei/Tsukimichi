@@ -4,26 +4,9 @@ using Dalamud.Plugin;
 using Dalamud.Plugin.Ipc;
 using Dalamud.Plugin.Ipc.Exceptions;
 using Dalamud.Plugin.Services;
-using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using Tsukimichi.Core.Companions;
 
 namespace Tsukimichi.Game;
-
-/// <summary>What became of a "Run with AutoDuty" press.</summary>
-public enum AutoDutyStart
-{
-    /// <summary>AutoDuty took the run and is no longer stopped.</summary>
-    Started,
-
-    /// <summary>AutoDuty is not loaded or a gate is missing.</summary>
-    Unavailable,
-
-    /// <summary>AutoDuty refused the duty mode, so nothing was run (it would have queued in whatever mode it had).</summary>
-    ModeRefused,
-
-    /// <summary>AutoDuty took the call but stayed stopped (it does not know the duty, or another plugin holds it).</summary>
-    NotStarted,
-}
 
 /// <summary>
 /// AutoDuty's IPC (decision 1: "Run with AutoDuty" for the duties a quest needs). The gates are AutoDuty's own
@@ -39,7 +22,14 @@ public enum AutoDutyStart
 /// <c>ConfigOverrideHelper.Pop</c>), so the player's own run mode, queue and loop count come back after the run. If
 /// AutoDuty refuses them nothing runs. Run is then called with 0 loops (which leaves the loop count to the override) in
 /// bare mode, so AutoDuty's pre-loop, between-loop and termination actions (inn trips, repairs, logging out) stay off for
-/// a quest's single clear. A call that leaves AutoDuty stopped pops the overrides again.
+/// a quest's single clear. Whenever the overrides were pushed and AutoDuty is still stopped afterwards (Run refused or
+/// threw, or AutoDuty cannot be asked) they are popped again (<see cref="AutoDutyRunSteps"/>).
+/// </para>
+/// <para>
+/// AutoDuty's leveling mode (a runtime choice, not a setting) makes its <c>Plugin.Run</c> ignore the territory it is
+/// given. It needs no handling here: the <c>Meta.AutoDutyModeEnum</c> and <c>Meta.DutyModeEnum</c> setters reset
+/// <c>Plugin.LevelingModeEnum</c> to None (<c>ConfigurationProfileV2.MetaConfig</c>), and both the override push and the
+/// IPC Run itself (which sets <c>AutoDutyModeEnum</c> to Looping before it calls <c>Plugin.Run</c>) go through them.
 /// </para>
 /// <para>
 /// Read answers are cached: <see cref="IsStopped"/> for <see cref="StateCacheMs"/>, <see cref="HasPath"/> per
@@ -187,44 +177,50 @@ public sealed class AutoDutyIpc
         }
 
         var value = AutoDutyPlan.SettingValue(mode) ?? string.Empty;
-        try
+
+        // Insertion order is the order AutoDuty applies them in.
+        var overrides = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var (key, setting) in settings)
         {
-            // Insertion order is the order AutoDuty applies them in.
-            var overrides = new Dictionary<string, string>(StringComparer.Ordinal);
-            foreach (var (key, setting) in settings)
-            {
-                overrides[key] = setting;
-            }
+            overrides[key] = setting;
+        }
 
-            if (!pushOverrides.InvokeFunc(overrides))
-            {
-                log.Information("AutoDuty refused the duty mode {Mode}; nothing was run", value);
-                return AutoDutyStart.ModeRefused;
-            }
-
+        var outcome = AutoDutyRunSteps.Run(
+            () => pushOverrides.InvokeFunc(overrides),
             // Loops 0 leaves AutoDuty's loop count alone (the override holds it at 1); bare mode skips its pre-loop,
             // between-loop and termination actions.
-            run.InvokeAction(territoryType, 0, true);
-            stoppedCheckedAt = null;
-            if (QueryStopped())
+            () => run.InvokeAction(territoryType, 0, true),
+            () =>
             {
-                Pop();
-                log.Information("AutoDuty stayed stopped after Run for territory {Territory}", territoryType);
-                return AutoDutyStart.NotStarted;
-            }
+                stoppedCheckedAt = null;
+                return QueryStopped();
+            },
+            Pop,
+            ex =>
+            {
+                if (ex is not IpcNotReadyError)
+                {
+                    WarnOnce(ex, "AutoDuty.Run failed");
+                }
+            });
 
-            log.Information("AutoDuty started territory {Territory} in {Mode}", territoryType, value);
-            return AutoDutyStart.Started;
-        }
-        catch (IpcNotReadyError)
+        switch (outcome)
         {
-            return AutoDutyStart.Unavailable;
+            case AutoDutyStart.ModeRefused:
+                log.Information("AutoDuty refused the duty mode {Mode}; nothing was run", value);
+                break;
+            case AutoDutyStart.NotStarted:
+                log.Information("AutoDuty stayed stopped after Run for territory {Territory}", territoryType);
+                break;
+            case AutoDutyStart.Unavailable:
+                log.Information("AutoDuty could not be asked to run territory {Territory}; its settings were restored", territoryType);
+                break;
+            default:
+                log.Information("AutoDuty started territory {Territory} in {Mode}", territoryType, value);
+                break;
         }
-        catch (Exception ex)
-        {
-            WarnOnce(ex, "AutoDuty.Run failed");
-            return AutoDutyStart.Unavailable;
-        }
+
+        return outcome;
     }
 
     /// <summary>Asks AutoDuty to stop (it restores its settings as it does). False when it could not be asked.</summary>
@@ -249,28 +245,6 @@ public sealed class AutoDutyIpc
         {
             WarnOnce(ex, "AutoDuty.Stop failed");
             return false;
-        }
-    }
-
-    /// <summary>
-    /// Whether the logged-in character has the InstanceContent row unlocked (the game's own
-    /// <c>UIState.IsInstanceContentUnlocked</c>, as the Duty Finder hint reads it); null when it cannot be read.
-    /// Framework thread only.
-    /// </summary>
-    public static bool? IsInstanceUnlocked(uint instanceContentId)
-    {
-        if (instanceContentId == 0)
-        {
-            return null;
-        }
-
-        try
-        {
-            return UIState.IsInstanceContentUnlocked(instanceContentId);
-        }
-        catch (Exception)
-        {
-            return null;
         }
     }
 

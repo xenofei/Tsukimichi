@@ -123,8 +123,11 @@ public sealed partial class QuestionableIpc
     /// <summary>Questionable takes a list of quests (<c>ImportQuestPriority</c>): both versions.</summary>
     public bool CanSend => Available && HasFunction(importQuestPriority);
 
-    /// <summary>Questionable can empty its list first (<c>ClearQuestPriority</c>): both versions.</summary>
-    public bool CanReplace => CanSend && HasFunction(clearQuestPriority);
+    /// <summary>
+    /// Questionable can empty its list first (<c>ClearQuestPriority</c>), and its list can be read beforehand
+    /// (<c>ExportQuestPriority</c>) so a failed replace puts it back: both versions.
+    /// </summary>
+    public bool CanReplace => CanSend && HasFunction(clearQuestPriority) && HasFunction(exportQuestPriority);
 
     /// <summary>Questionable's list can be read back (<c>ExportQuestPriority</c>): both versions.</summary>
     public bool CanReadList => Available && HasFunction(exportQuestPriority);
@@ -139,36 +142,62 @@ public sealed partial class QuestionableIpc
     public bool CanTellPaths => Available && !reasonGateBroken && HasFunction(isQuestLockedReason);
 
     /// <summary>
-    /// Sends <paramref name="plan"/>'s quests to Questionable's priority list in one <c>ImportQuestPriority</c> call
-    /// (after <c>ClearQuestPriority</c> when <paramref name="replace"/>), then reads the list back to say how many
-    /// landed. Null when Questionable is absent, the gate is missing or the call failed; nothing is sent for an empty plan.
+    /// Sends <paramref name="plan"/>'s quests to Questionable's priority list in one <c>ImportQuestPriority</c> call,
+    /// then reads the list back to say how many landed. With <paramref name="replace"/> the list is read first and
+    /// emptied (<see cref="QuestionableListReplace"/>): <paramref name="replaced"/> says how that went, and a failed import
+    /// puts the old list back. Null when Questionable is absent, the gate is missing or the call failed; nothing is sent
+    /// for an empty plan.
     /// </summary>
-    public QuestionableSendResult? Send(QuestionableSendPlan plan, bool replace)
+    public QuestionableSendResult? Send(QuestionableSendPlan plan, bool replace, out QuestionableReplaceOutcome? replaced)
     {
         ArgumentNullException.ThrowIfNull(plan);
+        replaced = null;
         if (plan.Count == 0 || !(replace ? CanReplace : CanSend) || importQuestPriority is null)
         {
             return null;
         }
 
-        var before = replace ? null : ReadList();
-        try
+        var encoded = QuestionableList.Encode(plan.Ids);
+        IReadOnlyList<string>? before = null;
+        if (replace)
         {
-            if (replace)
+            var import = importQuestPriority;
+            var outcome = QuestionableListReplace.Run(
+                encoded,
+                () => exportQuestPriority!.InvokeFunc(),
+                () => clearQuestPriority!.InvokeFunc(),
+                text => import.InvokeFunc(text),
+                ex =>
+                {
+                    if (ex is not IpcNotReadyError)
+                    {
+                        WarnOnce(ex, "Questionable list replace failed");
+                    }
+                });
+            replaced = outcome;
+            if (outcome != QuestionableReplaceOutcome.Replaced)
             {
-                clearQuestPriority!.InvokeFunc();
+                badges.MarkListStale();
+                log.Information("Questionable list replace did not go through: {Outcome}", outcome);
+                return null;
             }
-
-            importQuestPriority.InvokeFunc(QuestionableList.Encode(plan.Ids));
         }
-        catch (IpcNotReadyError)
+        else
         {
-            return null;
-        }
-        catch (Exception ex)
-        {
-            WarnOnce(ex, "Questionable.ImportQuestPriority failed");
-            return null;
+            before = ReadList();
+            try
+            {
+                importQuestPriority.InvokeFunc(encoded);
+            }
+            catch (IpcNotReadyError)
+            {
+                return null;
+            }
+            catch (Exception ex)
+            {
+                WarnOnce(ex, "Questionable.ImportQuestPriority failed");
+                return null;
+            }
         }
 
         var after = ReadList();
