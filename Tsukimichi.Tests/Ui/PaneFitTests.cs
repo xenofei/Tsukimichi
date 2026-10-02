@@ -117,11 +117,11 @@ public class PaneFitTests
     }
 
     [Fact]
-    public void Moonlit_hides_confidence_then_kind_and_never_state()
+    public void Moonlit_hides_confidence_then_kind_then_availability_and_never_state()
     {
-        Span<ColumnSpec> columns = stackalloc ColumnSpec[6];
-        PaneFit.MoonlitColumns(glyph: 44f, rewardMin: 110f, kind: 110f, questMin: 80f, confidence: 80f, columns);
-        var all = 44f + 110f + 110f + 80f + 44f + 80f;
+        Span<ColumnSpec> columns = stackalloc ColumnSpec[7];
+        PaneFit.MoonlitColumns(glyph: 44f, rewardMin: 110f, kind: 110f, questMin: 80f, confidence: 80f, availability: 100f, columns);
+        var all = 44f + 110f + 110f + 80f + 44f + 80f + 100f;
 
         var (visible, _) = Plan(columns, all);
         Assert.All(visible, static v => Assert.True(v));
@@ -130,10 +130,16 @@ public class PaneFitTests
         Assert.False(visible[5]);
         Assert.True(visible[2]);
         Assert.True(visible[4]);
+        Assert.True(visible[6]);
 
         (visible, _) = Plan(columns, all - 80f - 1f);
         Assert.False(visible[5]);
         Assert.False(visible[2]);
+        Assert.True(visible[4]);
+        Assert.True(visible[6]);
+
+        (visible, _) = Plan(columns, all - 80f - 110f - 1f);
+        Assert.False(visible[6]);
         Assert.True(visible[4]);
 
         (visible, _) = Plan(columns, 10f);

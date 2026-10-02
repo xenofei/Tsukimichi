@@ -35,8 +35,12 @@ public sealed record ExportHeader(string PluginVersion, string GameVersion, Date
 /// <summary>One quest of a quest export.</summary>
 public sealed record QuestExportRow(uint RowId, ushort QuestId, string Name, string Section, string Category, string Genre, string Expansion, bool Completed);
 
-/// <summary>One reward of a Moonlit export; <see cref="Obtained"/> null means the plugin cannot tell.</summary>
-public sealed record MoonlitExportRow(RewardKind Kind, uint RewardId, string RewardName, uint QuestRowId, bool? Obtained);
+/// <summary>
+/// One reward of a Moonlit export; <see cref="Obtained"/> null means the plugin cannot tell. <see cref="Availability"/>
+/// (added in 1.5, an additive field) is whether the reward can still be had through its quest; null when the caller
+/// did not classify it.
+/// </summary>
+public sealed record MoonlitExportRow(RewardKind Kind, uint RewardId, string RewardName, uint QuestRowId, bool? Obtained, RewardAvailability? Availability = null);
 
 /// <summary>
 /// Builds the P12 exports (docs/export-format.md): the completed quests of a character and its Moonlit obtained state,
@@ -56,7 +60,7 @@ public static class ExportWriter
     public const string Unknown = "unknown";
 
     private static readonly string[] QuestColumns = ["rowId", "questId", "name", "section", "category", "genre", "expansion", "completed"];
-    private static readonly string[] MoonlitColumns = ["kind", "rewardId", "rewardName", "questRowId", "obtained"];
+    private static readonly string[] MoonlitColumns = ["kind", "rewardId", "rewardName", "questRowId", "obtained", "availability"];
 
     /// <summary>
     /// The header for an export of <paramref name="snapshot"/>'s character: its name only when
@@ -113,14 +117,21 @@ public static class ExportWriter
     }
 
     /// <summary>One row per reward of the Moonlit unique view with the caller's obtained verdict, in the view's order.</summary>
-    public static List<MoonlitExportRow> MoonlitRows(IReadOnlyList<UniqueRewardRow> view)
+    public static List<MoonlitExportRow> MoonlitRows(IReadOnlyList<UniqueRewardRow> view) => MoonlitRows(view, null);
+
+    /// <summary>
+    /// One row per reward of the Moonlit unique view with the caller's obtained verdict and, when
+    /// <paramref name="availability"/> is given, each entry's availability through its quest (the <c>availability</c>
+    /// field), in the view's order.
+    /// </summary>
+    public static List<MoonlitExportRow> MoonlitRows(IReadOnlyList<UniqueRewardRow> view, Func<UniqueRewardEntry, RewardAvailability>? availability)
     {
         ArgumentNullException.ThrowIfNull(view);
         var rows = new List<MoonlitExportRow>(view.Count);
         foreach (var row in view)
         {
             var e = row.Entry;
-            rows.Add(new MoonlitExportRow(e.Kind, e.RewardId, e.RewardName, e.QuestRowId, row.Obtained));
+            rows.Add(new MoonlitExportRow(e.Kind, e.RewardId, e.RewardName, e.QuestRowId, row.Obtained, availability?.Invoke(e)));
         }
 
         return rows;
@@ -203,6 +214,11 @@ public static class ExportWriter
                     w.WriteNull("obtained");
                 }
 
+                if (row.Availability is { } availability)
+                {
+                    w.WriteString("availability", RewardAvailabilities.ExportName(availability));
+                }
+
                 w.WriteEndObject();
             }
 
@@ -243,7 +259,8 @@ public static class ExportWriter
                 Number(row.RewardId),
                 row.RewardName,
                 Number(row.QuestRowId),
-                row.Obtained switch { true => "true", false => "false", null => Unknown });
+                row.Obtained switch { true => "true", false => "false", null => Unknown },
+                row.Availability is { } availability ? RewardAvailabilities.ExportName(availability) : string.Empty);
         }
 
         return sb.ToString();

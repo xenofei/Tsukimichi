@@ -246,6 +246,16 @@ public sealed class Configuration : IPluginConfiguration
     /// </summary>
     public bool MoonlitHideStoreResells { get; set; }
 
+    // ---- 1.5.0: Moonlit totals (feature plan v5, decision 4) ----
+    /// <summary>
+    /// Moonlit toolbar "Count rewards that are gone for good": keep rewards whose event is over (or whose quest the game
+    /// removed) and that the character does not have in the obtained/total counts. Off by default: they leave the totals.
+    /// </summary>
+    public bool MoonlitCountGone { get; set; }
+
+    /// <summary>Moonlit toolbar "Group by expansion": the rows sorted by their quest's expansion under one heading each. Off by default.</summary>
+    public bool MoonlitGroupByExpansion { get; set; }
+
     // ---- 0.5.1: motion ----
     /// <summary>
     /// Replace the hold-to-confirm arc with a text countdown (and, later, other animation with a cut). Until the user

@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.Json;
+using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Export;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Storage;
@@ -141,9 +142,36 @@ public sealed class ExportWriterTests(FixtureCatalog fixture) : IClassFixture<Fi
         Assert.False(string.IsNullOrEmpty(unknown.GetProperty("kind").GetString()));
 
         var csv = ExportWriter.MoonlitCsv(rows);
-        Assert.StartsWith("﻿kind,rewardId,rewardName,questRowId,obtained\r\n", csv, StringComparison.Ordinal);
-        Assert.Contains("," + ExportWriter.Unknown + "\r\n", csv, StringComparison.Ordinal);
-        Assert.Contains(",true\r\n", csv, StringComparison.Ordinal);
+        Assert.StartsWith("﻿kind,rewardId,rewardName,questRowId,obtained,availability\r\n", csv, StringComparison.Ordinal);
+        Assert.Contains("," + ExportWriter.Unknown + ",\r\n", csv, StringComparison.Ordinal);
+        Assert.Contains(",true,\r\n", csv, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Moonlit_export_carries_each_rewards_availability_when_classified()
+    {
+        var snapshot = LoadSnapshot();
+        var view = MoonlitView(snapshot);
+        var context = AvailabilityContext.For(Catalog, fixture.Curated.Festivals, ServerFestivals.Of(snapshot), Exported);
+        var rows = ExportWriter.MoonlitRows(view, e => RewardAvailabilities.Classify(e, Catalog.GetByRowId(e.QuestRowId), null, context).Kind);
+        Assert.All(rows, r => Assert.NotNull(r.Availability));
+        Assert.Contains(rows, r => r.Availability == RewardAvailability.GetNow);
+        Assert.Contains(rows, r => r.Availability == RewardAvailability.GoneForGood);
+        Assert.Contains(rows, r => r.Availability == RewardAvailability.CollabMayReturn);
+
+        var header = ExportWriter.Header("1.5.0.0", "g", Exported, snapshot, includeCharacterName: false);
+        using var json = JsonDocument.Parse(ExportWriter.MoonlitJson(header, rows));
+        var names = json.RootElement.GetProperty("rewards").EnumerateArray().Select(r => r.GetProperty("availability").GetString()).ToHashSet();
+        Assert.Contains("getNow", names);
+        Assert.Contains("goneForGood", names);
+
+        var csv = ExportWriter.MoonlitCsv(rows);
+        Assert.Contains(",getNow\r\n", csv, StringComparison.Ordinal);
+        Assert.Contains(",goneForGood\r\n", csv, StringComparison.Ordinal);
+
+        // Unclassified rows leave the JSON field out (an additive field) and the CSV cell empty.
+        using var plain = JsonDocument.Parse(ExportWriter.MoonlitJson(header, ExportWriter.MoonlitRows(view)));
+        Assert.All(plain.RootElement.GetProperty("rewards").EnumerateArray(), r => Assert.False(r.TryGetProperty("availability", out _)));
     }
 
     [Fact]

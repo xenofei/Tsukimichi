@@ -969,6 +969,121 @@
   <data name="MoonlitConfidenceUnknownObtained" xml:space="preserve">
     <value>Obtained not checked</value>
   </data>
+  <data name="MoonlitColumnAvailability" xml:space="preserve">
+    <value>Availability</value>
+  </data>
+  <data name="MoonlitAvailability.GetNow" xml:space="preserve">
+    <value>Get now</value>
+  </data>
+  <data name="MoonlitAvailability.EventRunning" xml:space="preserve">
+    <value>Event running</value>
+  </data>
+  <data name="MoonlitAvailability.EventEndsFormat" xml:space="preserve">
+    <value>Event running (ends {0})</value>
+    <comment>{0} = the announced end date ("Oct 5").</comment>
+  </data>
+  <data name="MoonlitAvailability.UpcomingEvent" xml:space="preserve">
+    <value>Upcoming event</value>
+  </data>
+  <data name="MoonlitAvailability.CollabMayReturn" xml:space="preserve">
+    <value>Collab — may return</value>
+  </data>
+  <data name="MoonlitAvailability.PastEventOnStore" xml:space="preserve">
+    <value>Past event — on the Online Store</value>
+  </data>
+  <data name="MoonlitAvailability.GoneForGood" xml:space="preserve">
+    <value>Gone for good</value>
+  </data>
+  <data name="MoonlitAvailabilityTooltip.GetNow" xml:space="preserve">
+    <value>The quest stays in the game: you can get this reward whenever you reach it</value>
+  </data>
+  <data name="MoonlitAvailabilityTooltip.EventRunning" xml:space="preserve">
+    <value>A seasonal event running right now gives this reward; get it before the event ends</value>
+  </data>
+  <data name="MoonlitAvailabilityTooltip.UpcomingEvent" xml:space="preserve">
+    <value>A seasonal event that has not run yet gives this reward</value>
+  </data>
+  <data name="MoonlitAvailabilityTooltip.CollabMayReturn" xml:space="preserve">
+    <value>A collaboration event gives this reward; such events have come back before, so it may return</value>
+  </data>
+  <data name="MoonlitAvailabilityTooltip.PastEventOnStore" xml:space="preserve">
+    <value>The quest can no longer be done, but the FFXIV Online Store sells this reward</value>
+  </data>
+  <data name="MoonlitAvailabilityTooltip.GoneForGood" xml:space="preserve">
+    <value>The event is over (or the game removed the quest) and nothing else gives this reward. It leaves the totals unless "Count rewards that are gone for good" is on</value>
+  </data>
+  <data name="MoonlitCountGoneLabel" xml:space="preserve">
+    <value>Count rewards that are gone for good</value>
+  </data>
+  <data name="MoonlitCountGoneTooltip" xml:space="preserve">
+    <value>Keep rewards you can no longer get (a past event, a removed quest) in the obtained/total counts. Off, they count only when you have them</value>
+  </data>
+  <data name="MoonlitMissedFormat" xml:space="preserve">
+    <value>{0} time-limited rewards missed</value>
+  </data>
+  <data name="MoonlitMissedOne" xml:space="preserve">
+    <value>1 time-limited reward missed</value>
+  </data>
+  <data name="MoonlitMissedTooltip" xml:space="preserve">
+    <value>Rewards of past events or removed quests you do not have (or whose owned state cannot be read). They are listed as "Gone for good" and leave the totals unless "Count rewards that are gone for good" is on</value>
+  </data>
+  <data name="MoonlitAlsoFromFormat" xml:space="preserve">
+    <value>Also from {0}</value>
+    <comment>{0} = the other quests that give the same reward, joined with commas.</comment>
+  </data>
+  <data name="MoonlitAlsoFromMenu" xml:space="preserve">
+    <value>Also from</value>
+  </data>
+  <data name="MoonlitChoiceFormat" xml:space="preserve">
+    <value>{0} (1 of {1})</value>
+    <comment>{0} = the first item's name, {1} = how many items the quest offers, one per job.</comment>
+  </data>
+  <data name="MoonlitChoiceTooltipFormat" xml:space="preserve">
+    <value>You receive one of these {0}, for the job you pick; the quest counts once:</value>
+  </data>
+  <data name="MoonlitExpansionAll" xml:space="preserve">
+    <value>All expansions</value>
+  </data>
+  <data name="MoonlitExpansionFilterTooltip" xml:space="preserve">
+    <value>Only rewards whose quest belongs to this expansion</value>
+  </data>
+  <data name="MoonlitStateFilterTooltip" xml:space="preserve">
+    <value>Only rewards whose quest is in this state for the viewed character</value>
+  </data>
+  <data name="MoonlitStateAny" xml:space="preserve">
+    <value>Any state</value>
+  </data>
+  <data name="MoonlitStateReadyNow" xml:space="preserve">
+    <value>Ready now</value>
+  </data>
+  <data name="MoonlitStateInJournal" xml:space="preserve">
+    <value>In journal</value>
+  </data>
+  <data name="MoonlitStateBlocked" xml:space="preserve">
+    <value>Blocked</value>
+  </data>
+  <data name="MoonlitStateDone" xml:space="preserve">
+    <value>Done</value>
+  </data>
+  <data name="MoonlitGroupByExpansionLabel" xml:space="preserve">
+    <value>Group by expansion</value>
+  </data>
+  <data name="MoonlitCopyMissing" xml:space="preserve">
+    <value>Copy missing</value>
+  </data>
+  <data name="MoonlitCopyPartFormat" xml:space="preserve">
+    <value>Copy part {0}/{1}</value>
+    <comment>{0} = the part the next click copies, {1} = how many parts.</comment>
+  </data>
+  <data name="MoonlitCopyMissingTooltip" xml:space="preserve">
+    <value>Copy the rewards listed here that you do not have, as a Markdown list for Discord or a document. Quest names follow the spoiler shield. A list longer than one Discord message (2,000 characters) is copied in parts, one per click</value>
+  </data>
+  <data name="MoonlitCopyNothing" xml:space="preserve">
+    <value>Nothing listed is missing</value>
+  </data>
+  <data name="MoonlitCopied" xml:space="preserve">
+    <value>Copied</value>
+  </data>
   <data name="TabFlight" xml:space="preserve">
     <value>Flight</value>
   </data>
@@ -1128,7 +1243,7 @@
     <value>Other</value>
   </data>
   <data name="MoonlitKindName.ArtifactGear" xml:space="preserve">
-    <value>Artifact gear</value>
+    <value>Relic &amp; special weapons</value>
   </data>
   <data name="MoonlitKindName.Mount" xml:space="preserve">
     <value>Mounts</value>
@@ -4222,7 +4337,7 @@
     <value>Other</value>
   </data>
   <data name="RewardKindName.ArtifactGear" xml:space="preserve">
-    <value>Artifact gear</value>
+    <value>Relic or special weapon</value>
   </data>
   <data name="RewardKindName.Mount" xml:space="preserve">
     <value>Mount</value>
@@ -4415,6 +4530,10 @@
   <data name="Core.Plan.KindNames" xml:space="preserve">
     <value>{0}: {1}</value>
     <comment>Core: PlanChecklist.cs.</comment>
+  </data>
+  <data name="Core.Moonlit.MissingTitle" xml:space="preserve">
+    <value>Moonlit: missing rewards</value>
+    <comment>Core: MoonlitMarkdown.cs.</comment>
   </data>
   <data name="Core.Plan.More" xml:space="preserve">
     <value> +{0} more</value>
