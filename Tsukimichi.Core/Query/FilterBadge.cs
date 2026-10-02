@@ -27,6 +27,7 @@ public static class FilterBadge
         Add(ref count, filters.SeasonalActiveOnly);
         Add(ref count, filters.PinnedOnly);
         Add(ref count, filters.AbandonedOnly);
+        Add(ref count, filters.OnceOnlyStory);
         return count;
     }
 

@@ -110,7 +110,31 @@ public static class CatalogMapper
             log?.Invoke($"Journal refiling: {refiled} quests filed into a genre, {retired} retired, {unlisted.Count} left unlisted{unlistedIds}");
         }
 
-        return new CatalogBundle(catalog, names, jobs, language.ToString());
+        // Collector extras (feature plan v5): the New Game+ chapters and the achievements that need several quests. A
+        // sheet that cannot be read hides its feature; the catalog stands without it.
+        var newGamePlus = ReadOptional(() => NewGamePlusQuests.Read(excel), System.Collections.Frozen.FrozenSet<uint>.Empty, "New Game+ chapters", log);
+        var ladders = ReadOptional(() => AchievementQuests.Ladders(excel, language, catalog), Core.Chains.AchievementLadders.Empty, "achievements", log);
+        log?.Invoke($"Collector extras: {newGamePlus.Count} quests in New Game+ chapters, {ladders.Count} achievements that need several quests");
+
+        return new CatalogBundle(catalog, names, jobs, language.ToString())
+        {
+            NewGamePlus = newGamePlus,
+            AchievementLadders = ladders,
+        };
+    }
+
+    /// <summary>Runs one optional sheet read; a failure is logged and gives <paramref name="fallback"/>.</summary>
+    private static T ReadOptional<T>(Func<T> read, T fallback, string what, Action<string>? log)
+    {
+        try
+        {
+            return read();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            log?.Invoke($"The {what} could not be read ({ex.GetType().Name}: {ex.Message}); that feature is hidden");
+            return fallback;
+        }
     }
 
     /// <summary>Sheet join byte to <see cref="JoinKind"/>: 2 means any, everything else (1, or 0 when unused) means all.</summary>

@@ -13,7 +13,7 @@ namespace Tsukimichi.Commands;
 /// search finds nothing and the first word was a near miss of one (<see cref="CommandLine.DidYouMean"/>);
 /// <c>journal</c>, <c>moonlit</c>, <c>characters</c>, <c>flight</c> and <c>blues</c> open those tabs; <c>tour</c>
 /// starts the tour; <c>zone</c> and <c>which</c> print discovery lists; <c>why [quest name]</c> prints what blocks a
-/// quest; <c>route [quest name]</c> opens its unlock route; <c>nearby</c> toggles the Nearby quests window; <c>todo</c>
+/// quest; <c>route [quest name]</c> opens its unlock route; <c>recap [quest name]</c> opens the story recap; <c>nearby</c> toggles the Nearby quests window; <c>todo</c>
 /// toggles the todo overlay; <c>report [quest name]</c> copies a quest's diagnostic block; <c>export [quests|moonlit]
 /// [json|csv]</c> writes the export files; <c>settings</c> (or <c>config</c>) and <c>help</c> open those windows;
 /// <c>glyphs</c> opens the glyph sheet and <c>ipc</c> the IPC developer window (neither listed to players); a bare
@@ -91,6 +91,12 @@ public sealed class TsukimichiCommand : IDisposable
     /// files and prints where. Falls back to a search for the text.
     /// </summary>
     public Action<string>? Export { get; set; }
+
+    /// <summary>
+    /// Invoked for <c>/tsukimichi recap [quest name]</c> with the rest of the line (empty for the main scenario): opens
+    /// the story recap. Falls back to a search for the text.
+    /// </summary>
+    public Action<string>? Recap { get; set; }
 
     /// <param name="commands">Dalamud command manager.</param>
     /// <param name="toggleMainWindow">Invoked for <c>/tsukimichi</c> with no arguments.</param>
@@ -217,6 +223,10 @@ public sealed class TsukimichiCommand : IDisposable
 
             case Subcommand.Export:
                 RunOrSearch(Export, rest, args);
+                break;
+
+            case Subcommand.Recap:
+                RunOrSearch(Recap, rest, args);
                 break;
 
             case Subcommand.Todo:

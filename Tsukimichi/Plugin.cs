@@ -308,6 +308,8 @@ public sealed partial class Plugin : IDalamudPlugin
             return;
         }
 
+        OnCollectorCatalog(bundle);
+
         // The landing frame's own cost (the session's listeners included), against what the worker did before it.
         var landedMs = Stopwatch.GetElapsedTime(started).TotalMilliseconds;
         if (prepared is not null)
@@ -1151,6 +1153,7 @@ public sealed partial class Plugin : IDalamudPlugin
             var settingsWindow = configWindow;
             discoveryWindow.OpenSettings = () => settingsWindow.OpenAt(Core.Ui.SettingsSection.Integrations, Core.Ui.SettingsAnchor.Nearby);
             InitializeInGame(gate, rewardLookup, handIns, moonlit);
+            InitializeCollector(unlockReader);
             windowSystem.AddWindow(configWindow);
             PluginInterface.UiBuilder.OpenConfigUi += configWindow.Toggle;
             command.ToggleConfigWindow = configWindow.Toggle;

@@ -24,6 +24,12 @@ public readonly record struct NodeCount(int Done, int Total, int Excluded)
     /// the tree's tooltip names them ("53 on other paths: another city's start 49, …", <see cref="TreeCounts.OtherPathsIn"/>).
     /// </summary>
     public int OtherPaths { get; init; }
+
+    /// <summary>
+    /// How many of <see cref="Excluded"/> lie beyond the free trial (<see cref="FreeTrial.IsBeyond"/>) under the
+    /// free-trial view: the tree's tooltip says "N beyond your trial" instead of counting them as left to do.
+    /// </summary>
+    public int BeyondTrial { get; init; }
 }
 
 /// <summary>
@@ -113,20 +119,24 @@ public sealed class TreeCounts
     };
 
     /// <summary>Counts from evaluator output; each quest's state is read from its <see cref="QuestEvaluation"/>.</summary>
-    public static TreeCounts Compute(QuestCatalog catalog, IReadOnlyDictionary<uint, QuestEvaluation> evaluations, bool includeUnlisted)
+    /// <param name="beyondTrial">
+    /// The free-trial view (<see cref="FreeTrial.IsBeyond"/>): a quest it names that is not done leaves the totals like
+    /// a Locked-out one and is tallied in <see cref="NodeCount.BeyondTrial"/>; null counts every quest as usual.
+    /// </param>
+    public static TreeCounts Compute(QuestCatalog catalog, IReadOnlyDictionary<uint, QuestEvaluation> evaluations, bool includeUnlisted, Func<QuestRecord, bool>? beyondTrial = null)
     {
         ArgumentNullException.ThrowIfNull(evaluations);
-        return Compute(catalog, new EvaluationSource(evaluations), includeUnlisted);
+        return Compute(catalog, new EvaluationSource(evaluations), includeUnlisted, beyondTrial);
     }
 
     /// <summary>Counts from a plain state map; missing rows read as <see cref="QuestState.Unknown"/>. Without requirements only Foreclosed leaves the totals.</summary>
-    public static TreeCounts Compute(QuestCatalog catalog, IReadOnlyDictionary<uint, QuestState> states, bool includeUnlisted)
+    public static TreeCounts Compute(QuestCatalog catalog, IReadOnlyDictionary<uint, QuestState> states, bool includeUnlisted, Func<QuestRecord, bool>? beyondTrial = null)
     {
         ArgumentNullException.ThrowIfNull(states);
-        return Compute(catalog, new StateMapSource(states), includeUnlisted);
+        return Compute(catalog, new StateMapSource(states), includeUnlisted, beyondTrial);
     }
 
-    private static TreeCounts Compute<TSource>(QuestCatalog catalog, TSource source, bool includeUnlisted)
+    private static TreeCounts Compute<TSource>(QuestCatalog catalog, TSource source, bool includeUnlisted, Func<QuestRecord, bool>? beyondTrial)
         where TSource : struct, IStateSource
     {
         ArgumentNullException.ThrowIfNull(catalog);
@@ -171,16 +181,20 @@ public sealed class TreeCounts
             var excluded = source.LeavesTotals(quest.RowId) ? 1 : 0;
             var other = otherPath is null ? 0 : 1;
 
+            // The free-trial view: what the trial does not include is not left to do; one done anyway still counts.
+            var beyond = excluded == 0 && done == 0 && beyondTrial?.Invoke(quest) == true ? 1 : 0;
+            excluded |= beyond;
+
             // A quest out of the totals is out of the done count too, so no node reads more done than total.
             if (excluded == 1)
             {
                 done = 0;
             }
 
-            Bump(sections, quest.Journal.SectionId, done, excluded, other);
-            Bump(categories, quest.Journal.CategoryId, done, excluded, other);
-            Bump(genres, quest.Journal.GenreId, done, excluded, other);
-            overall = Add(overall, done, excluded, other);
+            Bump(sections, quest.Journal.SectionId, done, excluded, other, beyond);
+            Bump(categories, quest.Journal.CategoryId, done, excluded, other, beyond);
+            Bump(genres, quest.Journal.GenreId, done, excluded, other, beyond);
+            overall = Add(overall, done, excluded, other, beyond);
             if (otherPath is { } kind)
             {
                 paths.Add(quest.Journal, kind);
@@ -235,12 +249,16 @@ public sealed class TreeCounts
         }
     }
 
-    private static NodeCount Add(NodeCount count, int done, int excluded, int otherPaths = 0) =>
-        new(count.Done + done, count.Total + 1 - excluded, count.Excluded + excluded) { OtherPaths = count.OtherPaths + otherPaths };
+    private static NodeCount Add(NodeCount count, int done, int excluded, int otherPaths = 0, int beyondTrial = 0) =>
+        new(count.Done + done, count.Total + 1 - excluded, count.Excluded + excluded)
+        {
+            OtherPaths = count.OtherPaths + otherPaths,
+            BeyondTrial = count.BeyondTrial + beyondTrial,
+        };
 
-    private static void Bump(Dictionary<uint, NodeCount> counts, uint key, int done, int excluded, int otherPaths)
+    private static void Bump(Dictionary<uint, NodeCount> counts, uint key, int done, int excluded, int otherPaths, int beyondTrial)
     {
         ref var slot = ref CollectionsMarshal.GetValueRefOrAddDefault(counts, key, out _);
-        slot = Add(slot, done, excluded, otherPaths);
+        slot = Add(slot, done, excluded, otherPaths, beyondTrial);
     }
 }

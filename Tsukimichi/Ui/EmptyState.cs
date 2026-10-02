@@ -206,6 +206,9 @@ public static class EmptyState
             case FilterNames.Abandoned:
                 f.AbandonedOnly = false;
                 return true;
+            case FilterNames.OnceOnlyStory:
+                f.OnceOnlyStory = false;
+                return true;
             case FilterNames.Search:
                 ui.SearchText = string.Empty;
                 return true;

@@ -5776,7 +5776,7 @@
     <value>Right-click an item to reveal the quest that rewards it</value>
   </data>
   <data name="CommandHelp" xml:space="preserve">
-    <value>Open Tsukimichi (also /tsuki). search &lt;text&gt; (or just &lt;text&gt;) prints matching quest links; journal, moonlit, characters, flight and blues open those tabs; tour starts the guided tour; zone lists quests you can start here; which lists the targeted NPC's quests; why [quest name] says what blocks the selected or named quest; route [quest name] opens its unlock route; nearby and todo toggle the Nearby quests window and the Todo overlay; report [quest name] copies a diagnostic block for the selected or named quest; export [quests|moonlit] [json|csv] writes your completed quests or Moonlit collection to a file; settings (or config) and help open those windows.</value>
+    <value>Open Tsukimichi (also /tsuki). search &lt;text&gt; (or just &lt;text&gt;) prints matching quest links; journal, moonlit, characters, flight and blues open those tabs; tour starts the guided tour; zone lists quests you can start here; which lists the targeted NPC's quests; why [quest name] says what blocks the selected or named quest; route [quest name] opens its unlock route; recap [quest name] reads the story so far, of the main scenario or the named quest's chain; nearby and todo toggle the Nearby quests window and the Todo overlay; report [quest name] copies a diagnostic block for the selected or named quest; export [quests|moonlit] [json|csv] writes your completed quests or Moonlit collection to a file; settings (or config) and help open those windows.</value>
   </data>
   <data name="CommandAliasHelp" xml:space="preserve">
     <value>Short form of /tsukimichi.</value>
@@ -7837,5 +7837,180 @@
   </data>
   <data name="LinksCopyLink" xml:space="preserve">
     <value>Copy link</value>
+  </data>
+  <data name="RecapWindowTitle" xml:space="preserve">
+    <value>Previously…###tsukimichiRecap</value>
+  </data>
+  <data name="RecapMsqHeading" xml:space="preserve">
+    <value>Previously in the main scenario</value>
+  </data>
+  <data name="RecapMsqIntroFormat" xml:space="preserve">
+    <value>The journal of the last {0} main scenario quests you completed, in story order.</value>
+    <comment>{0} = how many quests the page reads</comment>
+  </data>
+  <data name="RecapMsqIntroOne" xml:space="preserve">
+    <value>The journal of the last main scenario quest you completed.</value>
+  </data>
+  <data name="RecapChainHeadingFormat" xml:space="preserve">
+    <value>Previously in {0}</value>
+    <comment>{0} = the chain's name</comment>
+  </data>
+  <data name="RecapChainIntroFormat" xml:space="preserve">
+    <value>The journal of the {0} quests you completed of {1} in this story, in story order.</value>
+    <comment>{0} = quests done in the chain, {1} = quests in the chain</comment>
+  </data>
+  <data name="RecapNoCharacter" xml:space="preserve">
+    <value>Log in or view a character to read the story so far.</value>
+  </data>
+  <data name="RecapNoReader" xml:space="preserve">
+    <value>The journal text reader is not ready yet.</value>
+  </data>
+  <data name="RecapEmptyHeading" xml:space="preserve">
+    <value>Nothing to recap yet</value>
+  </data>
+  <data name="RecapEmptyMsq" xml:space="preserve">
+    <value>Complete a main scenario quest and its journal shows here.</value>
+  </data>
+  <data name="RecapEmptyChain" xml:space="preserve">
+    <value>Complete a quest of this story and its journal shows here.</value>
+  </data>
+  <data name="RecapCopy" xml:space="preserve">
+    <value>Copy all</value>
+  </data>
+  <data name="RecapCopyTooltip" xml:space="preserve">
+    <value>Copies the whole page as plain text: each quest's name, then its journal entries.</value>
+  </data>
+  <data name="RecapReadingFormat" xml:space="preserve">
+    <value>Reading the journal… {0} of {1}</value>
+    <comment>{0} = quests read so far, {1} = quests to read</comment>
+  </data>
+  <data name="RecapNeutral" xml:space="preserve">
+    <value>Shown for a stored character</value>
+  </data>
+  <data name="RecapReadMsq" xml:space="preserve">
+    <value>Read the story so far</value>
+  </data>
+  <data name="RecapReadMsqTooltip" xml:space="preserve">
+    <value>Opens the journal of the last main scenario quests you completed as one page. Only quests you have done are shown, so nothing is spoiled. Settings › Display sets how many.</value>
+  </data>
+  <data name="RecapReadChain" xml:space="preserve">
+    <value>Read the story so far</value>
+  </data>
+  <data name="RecapReadChainTooltip" xml:space="preserve">
+    <value>Opens the journal of every quest of this story you completed as one page, in story order. Only quests you have done are shown, so nothing is spoiled.</value>
+  </data>
+  <data name="RecapNoChainFormat" xml:space="preserve">
+    <value>{0} is not part of a story chain; /tsuki recap with no name reads the main scenario.</value>
+    <comment>{0} = the quest's name</comment>
+  </data>
+  <data name="CollectorCard" xml:space="preserve">
+    <value>Story</value>
+  </data>
+  <data name="ReplayableInNewGamePlus" xml:space="preserve">
+    <value>Replayable in New Game+</value>
+  </data>
+  <data name="ReplayableInNewGamePlusTooltip" xml:space="preserve">
+    <value>A New Game+ chapter lists this quest: once you have done it, you can play it again from the New Game+ menu.</value>
+  </data>
+  <data name="OnceOnly" xml:space="preserve">
+    <value>Once only: New Game+ does not replay this quest</value>
+  </data>
+  <data name="OnceOnlyTooltip" xml:space="preserve">
+    <value>No New Game+ chapter lists this quest, so its story plays once. Take your time with it.</value>
+  </data>
+  <data name="LaddersHeading" xml:space="preserve">
+    <value>Achievements that need several quests</value>
+  </data>
+  <data name="LaddersHeadingTooltip" xml:space="preserve">
+    <value>Achievements earned by completing every one of a set of quests. Progress reads your completed quests; Earned is the game's own word once you have opened the Achievements window this session.</value>
+  </data>
+  <data name="LaddersColumnAchievement" xml:space="preserve">
+    <value>Achievement</value>
+  </data>
+  <data name="LadderLineFormat" xml:space="preserve">
+    <value>Achievement: {0} · {1} of {2} quests · {3}</value>
+    <comment>{0} = the achievement, {1} = quests done, {2} = quests it needs, {3} = earned or not</comment>
+  </data>
+  <data name="LadderNeedsFormat" xml:space="preserve">
+    <value>Achievement: {0} · needs {1} quests</value>
+    <comment>{0} = the achievement, {1} = quests it needs</comment>
+  </data>
+  <data name="LadderEarned" xml:space="preserve">
+    <value>Earned</value>
+  </data>
+  <data name="LadderNotEarned" xml:space="preserve">
+    <value>Not earned yet</value>
+  </data>
+  <data name="LadderStillToDo" xml:space="preserve">
+    <value>Still to do:</value>
+  </data>
+  <data name="LadderTooltip" xml:space="preserve">
+    <value>This achievement needs every one of its quests done; progress reads your completed quests.</value>
+  </data>
+  <data name="LadderTooltipFromGame" xml:space="preserve">
+    <value>This achievement needs every one of its quests done; whether it is earned comes from the game's achievement list.</value>
+  </data>
+  <data name="OnceOnlyStoryFilter" xml:space="preserve">
+    <value>Once-only story quests I haven't done</value>
+  </data>
+  <data name="OnceOnlyStoryFilterTooltip" xml:space="preserve">
+    <value>Story quests New Game+ cannot replay (allied society stories, side stories, the stories of a zone or a city) that you have not completed. Their story plays once.</value>
+  </data>
+  <data name="OnceOnlyStoryChip" xml:space="preserve">
+    <value>Once-only story</value>
+  </data>
+  <data name="TrialBeyondHeading" xml:space="preserve">
+    <value>Beyond your trial</value>
+  </data>
+  <data name="TrialBeyondCaptionFormat" xml:space="preserve">
+    <value>Beyond your trial: {0} quests, listed last</value>
+    <comment>{0} = quests beyond the free trial in the table</comment>
+  </data>
+  <data name="TrialBeyondCaptionOne" xml:space="preserve">
+    <value>Beyond your trial: 1 quest, listed last</value>
+  </data>
+  <data name="TrialBeyondCountFormat" xml:space="preserve">
+    <value>{0:N0} beyond your trial</value>
+    <comment>{0} = quests of the node beyond the free trial</comment>
+  </data>
+  <data name="PlanBeyondTrialFormat" xml:space="preserve">
+    <value>{0} unlock quests in Endwalker and later are not part of the free trial, so they are left out here.</value>
+    <comment>{0} = unlock quests in the expansions after the trial's</comment>
+  </data>
+  <data name="CollectorSettingsHeading" xml:space="preserve">
+    <value>Free trial and story recap</value>
+  </data>
+  <data name="TrialSetting" xml:space="preserve">
+    <value>I'm on the free trial</value>
+  </data>
+  <data name="TrialSettingHint" xml:space="preserve">
+    <value>The free trial includes A Realm Reborn through Shadowbringers (every patch up to 5.5) and level 80. With this on, the quest counts, My blues and the Journal table put what lies beyond it in a "Beyond your trial" group instead of reading it as Blocked. Off by default.</value>
+  </data>
+  <data name="TrialDetected" xml:space="preserve">
+    <value>The game reports this account as a free trial. Tick the box above if that is right.</value>
+  </data>
+  <data name="RecapLengthSetting" xml:space="preserve">
+    <value>Story recap length</value>
+  </data>
+  <data name="RecapLengthHint" xml:space="preserve">
+    <value>How many of your last completed main scenario quests "Read the story so far" shows.</value>
+  </data>
+  <data name="RecapLengthFormat" xml:space="preserve">
+    <value>%d quests</value>
+  </data>
+  <data name="MoonlitAddedInTooltip" xml:space="preserve">
+    <value>Only rewards whose quest was added in this patch series.</value>
+  </data>
+  <data name="MoonlitAddedInOptionFormat" xml:space="preserve">
+    <value>{0}x  ({1})</value>
+    <comment>A series in the combo: {0} = series ("7.5"), {1} = rewards whose quest it added.</comment>
+  </data>
+  <data name="Core.Filter.OnceOnlyStory" xml:space="preserve">
+    <value>Once-only story</value>
+    <comment>Core: FilterNames.cs.</comment>
+  </data>
+  <data name="Core.Trial.BeyondStatus" xml:space="preserve">
+    <value>Beyond your trial</value>
+    <comment>Core: QuestQuery.cs.</comment>
   </data>
 </root>

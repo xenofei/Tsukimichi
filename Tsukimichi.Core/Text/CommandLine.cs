@@ -46,6 +46,9 @@ public enum Subcommand
 
     /// <summary><c>blues</c>: the My blues tab.</summary>
     Blues,
+
+    /// <summary><c>recap [quest name]</c>: the story recap ("Previously…") of the main scenario, or of the named quest's chain.</summary>
+    Recap,
 }
 
 /// <summary>A parsed <c>/tsukimichi</c> line.</summary>
@@ -84,6 +87,7 @@ public static class CommandLine
         ("report", Subcommand.Report, true),
         ("export", Subcommand.Export, true),
         ("route", Subcommand.Route, true),
+        ("recap", Subcommand.Recap, true),
         ("journal", Subcommand.Journal, true),
         ("moonlit", Subcommand.Moonlit, true),
         ("characters", Subcommand.Characters, true),

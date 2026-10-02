@@ -453,6 +453,7 @@ public sealed partial class CharactersPane
         DrawJobQuests(ui, d);
         Gap();
         DrawChains(ui, d);
+        DrawAchievementLadders(ui);
         Gap();
         DrawCompare(ui, d);
         Gap();

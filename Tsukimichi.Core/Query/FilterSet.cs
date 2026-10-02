@@ -77,6 +77,14 @@ public sealed class FilterSet : IEquatable<FilterSet>
     /// <summary>Keeps only quests the viewed character abandoned (<see cref="QueryContext.Abandoned"/>) and has not taken up again.</summary>
     public bool AbandonedOnly { get; set; }
 
+    /// <summary>
+    /// Keeps only the story quests that play once and the viewed character has not done
+    /// (<see cref="NewGamePlus.IsOnceOnlyStoryLeft"/>, feature plan v5 collector extras): quests no New Game+ chapter
+    /// lists, on a story chain or a side story, neither completed nor locked out. Keeps nothing while the New Game+
+    /// data is not loaded (<see cref="QueryContext.NewGamePlus"/>).
+    /// </summary>
+    public bool OnceOnlyStory { get; set; }
+
     /// <summary>The active one-click preset (feature quests, level band, stalled); <see cref="Preset.None"/> when none.</summary>
     public Preset Preset { get; set; }
 
@@ -94,7 +102,8 @@ public sealed class FilterSet : IEquatable<FilterSet>
         || RepeatableOnly
         || SeasonalActiveOnly
         || PinnedOnly
-        || AbandonedOnly;
+        || AbandonedOnly
+        || OnceOnlyStory;
 
     public bool HideCompletedEngaged() => HideCompleted || PerCategoryHideCompleted.ContainsValue(true);
 
@@ -148,6 +157,7 @@ public sealed class FilterSet : IEquatable<FilterSet>
         IncludeOtherPaths = IncludeOtherPaths,
         PinnedOnly = PinnedOnly,
         AbandonedOnly = AbandonedOnly,
+        OnceOnlyStory = OnceOnlyStory,
         Preset = Preset,
     };
 
@@ -171,6 +181,7 @@ public sealed class FilterSet : IEquatable<FilterSet>
         IncludeOtherPaths = false;
         PinnedOnly = false;
         AbandonedOnly = false;
+        OnceOnlyStory = false;
         Preset = Preset.None;
     }
 
@@ -198,6 +209,7 @@ public sealed class FilterSet : IEquatable<FilterSet>
             && IncludeOtherPaths == other.IncludeOtherPaths
             && PinnedOnly == other.PinnedOnly
             && AbandonedOnly == other.AbandonedOnly
+            && OnceOnlyStory == other.OnceOnlyStory
             && Preset == other.Preset
             && string.Equals(AddedIn ?? string.Empty, other.AddedIn ?? string.Empty, StringComparison.Ordinal)
             && Expansions.SetEquals(other.Expansions)
@@ -223,6 +235,7 @@ public sealed class FilterSet : IEquatable<FilterSet>
         hash.Add(IncludeOtherPaths);
         hash.Add(PinnedOnly);
         hash.Add(AbandonedOnly);
+        hash.Add(OnceOnlyStory);
         hash.Add(Preset);
         hash.Add(AddedIn ?? string.Empty, StringComparer.Ordinal);
         hash.Add(OrderInsensitiveHash(Expansions));

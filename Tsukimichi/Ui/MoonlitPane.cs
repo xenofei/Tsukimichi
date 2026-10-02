@@ -169,6 +169,14 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     private byte? expansionFilter;
     private MoonlitStateFilter stateFilter = MoonlitStateFilter.Any;
 
+    /// <summary>
+    /// The Added in filter (1.9.0, R9 F8): a patch series ("7.5" keeps 7.5, 7.51 and 7.55) the row's quest was added in,
+    /// as the quest table's filter reads it; empty keeps every row. <see cref="patchSeries"/> holds the series the rows'
+    /// quests carry, newest first, with their labels.
+    /// </summary>
+    private string addedInFilter = string.Empty;
+    private (string Series, string Label)[] patchSeries = [];
+
     private static string[] StateFilterItems => stateFilterItemsText.Value;
 
     private static readonly Localization.LocArray stateFilterItemsText = new(static () =>
@@ -538,6 +546,10 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         ImGui.SetNextItemWidth(Chrome.FitWidth(stateWidth));
         DrawStateCombo();
 
+        Chrome.SameLineOrWrap(stateWidth);
+        ImGui.SetNextItemWidth(Chrome.FitWidth(stateWidth));
+        DrawAddedInCombo();
+
         Chrome.SameLineOrWrap(CheckboxWidth(Strings.MoonlitGroupByExpansionLabel));
         var groupBy = settings.MoonlitGroupByExpansion;
         if (ImGui.Checkbox(Strings.MoonlitGroupByExpansionLabel, ref groupBy))
@@ -861,6 +873,39 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         }
     }
 
+    /// <summary>The Added in filter (1.9.0): any patch, or one patch series the rows' quests were added in.</summary>
+    private void DrawAddedInCombo()
+    {
+        var label = addedInFilter.Length == 0 ? Strings.AddedInAny : string.Format(CultureInfo.CurrentCulture, Strings.AddedInChipFormat, addedInFilter);
+        using (ImRaii.Disabled(patchSeries.Length == 0 && addedInFilter.Length == 0))
+        using (var combo = ImRaii.Combo("##moonlitAddedIn", label))
+        {
+            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+            {
+                UiMetrics.Tooltip(Strings.MoonlitAddedInTooltip);
+            }
+
+            if (!combo)
+            {
+                return;
+            }
+
+            UiMetrics.ApplyFontScale();
+            if (ImGui.Selectable(Strings.AddedInAny, addedInFilter.Length == 0))
+            {
+                addedInFilter = string.Empty;
+            }
+
+            foreach (var (series, seriesLabel) in patchSeries)
+            {
+                if (ImGui.Selectable(seriesLabel, string.Equals(addedInFilter, series, StringComparison.Ordinal)))
+                {
+                    addedInFilter = series;
+                }
+            }
+        }
+    }
+
     /// <summary>The State filter: Any, Ready now, In journal, Blocked or Done, by the row's quest.</summary>
     private void DrawStateCombo()
     {
@@ -1054,6 +1099,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         confidenceFilter = ConfidenceFilter.Any;
         expansionFilter = null;
         stateFilter = MoonlitStateFilter.Any;
+        addedInFilter = string.Empty;
         filterText = string.Empty;
     }
 
@@ -1756,6 +1802,26 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             expansionFilter = null;
         }
 
+        // The patch series the rows' quests were added in, newest first, for the Added in filter (1.9.0).
+        var seriesCounts = new Dictionary<string, int>(StringComparer.Ordinal);
+        foreach (var row in built)
+        {
+            if (!row.Hidden && row.Quest is { } quest && Core.Model.PatchVersion.IsPatch(quest.AddedIn))
+            {
+                var series = Core.Model.PatchVersion.Series(quest.AddedIn);
+                seriesCounts[series] = seriesCounts.GetValueOrDefault(series) + 1;
+            }
+        }
+
+        patchSeries = seriesCounts
+            .OrderBy(static kv => kv.Key, Core.Model.PatchVersion.NewestFirst)
+            .Select(static kv => (kv.Key, string.Format(CultureInfo.CurrentCulture, Strings.MoonlitAddedInOptionFormat, kv.Key, kv.Value)))
+            .ToArray();
+        if (addedInFilter.Length > 0 && !seriesCounts.ContainsKey(addedInFilter))
+        {
+            addedInFilter = string.Empty;
+        }
+
         editionYears = bundle is null
             ? new Dictionary<ushort, int>()
             : Core.Seasonal.SeasonalNow.EditionYears(bundle.Catalog, session.Curated.Festivals);
@@ -1859,7 +1925,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         var headings = groupBy && !settings.MoonlitGallery;
         var key = new VisibleKey(
             rowsBuild, obtainedVersion, ui.MoonlitKind, ui.MoonlitHideObtained, hideStore, confidenceFilter, filterText,
-            expansionFilter, stateFilter, groupBy, headings, settings.MoonlitCountGone, Localization.Loc.Version);
+            expansionFilter, stateFilter, groupBy, headings, settings.MoonlitCountGone, Localization.Loc.Version, addedInFilter);
         if (key == visibleKey)
         {
             return;
@@ -1910,6 +1976,11 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             }
 
             if (!MoonlitStateFilters.Passes(stateFilter, StateOf(row)))
+            {
+                continue;
+            }
+
+            if (addedInFilter.Length > 0 && (row.Quest is not { } rowQuest || !Core.Model.PatchVersion.InSeries(rowQuest.AddedIn, addedInFilter)))
             {
                 continue;
             }
@@ -2403,7 +2474,8 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         bool GroupByExpansion,
         bool Headings,
         bool CountGone,
-        int Language);
+        int Language,
+        string AddedIn);
 }
 
 /// <summary>

@@ -14,6 +14,18 @@ namespace Tsukimichi.GameData;
 /// <param name="Language">Lumina language name the strings were read in, e.g. "English".</param>
 public sealed record CatalogBundle(QuestCatalog Catalog, GameNames Names, ClassJobCategoryLookup Jobs, string Language)
 {
+    /// <summary>
+    /// The quests a New Game+ chapter lists (<see cref="NewGamePlusQuests"/>, read with the catalog); empty when the
+    /// sheet could not be read or the bundle came from a frozen fixture, which hides the replay badge.
+    /// </summary>
+    public IReadOnlySet<uint> NewGamePlus { get; init; } = System.Collections.Frozen.FrozenSet<uint>.Empty;
+
+    /// <summary>
+    /// The achievements that need several quests (<see cref="AchievementQuests.Ladders"/>, read with the catalog);
+    /// empty when the sheet could not be read or the bundle came from a frozen fixture.
+    /// </summary>
+    public Core.Chains.AchievementLadders AchievementLadders { get; init; } = Core.Chains.AchievementLadders.Empty;
+
     /// <summary>The name lookups <see cref="BlockerText"/> prints with, over this bundle's catalog and sheet names; the callers memoize one per bundle.</summary>
     public BlockerNames BlockerNames() => new()
     {
