@@ -34,6 +34,10 @@ namespace Tsukimichi.Core.Query;
 /// Row ids newer than Tsukimichi's shipped data (<see cref="Diagnostics.DataFreshnessReport.NewQuestIds"/>), for the
 /// Added in filter's "New since data" value (<see cref="FilterSet.NewSinceData"/>); null keeps nothing under it.
 /// </param>
+/// <param name="JustOpened">
+/// Row ids the "Just opened" scope lists (<see cref="QuestScope.JustOpened"/>, 1.7.0): what the last completions opened,
+/// from the "Opened:" chat line's Show link; null or empty lists nothing there.
+/// </param>
 public sealed record QueryContext(
     IReadOnlySet<ushort> ActiveFestivals,
     IReadOnlySet<uint> Pinned,
@@ -50,7 +54,8 @@ public sealed record QueryContext(
     SpoilerMask? Spoilers = null,
     StorySidequests? Stories = null,
     IReadOnlySet<uint>? JournalHits = null,
-    IReadOnlySet<uint>? NewSinceData = null)
+    IReadOnlySet<uint>? NewSinceData = null,
+    IReadOnlySet<uint>? JustOpened = null)
 {
     public const int DefaultStalledDays = 7;
 

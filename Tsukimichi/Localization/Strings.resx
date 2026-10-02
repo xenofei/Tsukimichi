@@ -490,6 +490,182 @@
   <data name="DutyHintSettingHint" xml:space="preserve">
     <value>When you select a padlocked duty in the Duty Finder or Raid Finder, a small panel beside the window names the quest that unlocks it, its state and what it is waiting for, with buttons to reveal it in Tsukimichi or flag its giver. Nothing shows for a duty you have unlocked, or one no known quest unlocks. It reads the selected duty only; it never queues or opens one.</value>
   </data>
+  <data name="GamePanelOfferCaption" xml:space="preserve">
+    <value>Worth it?</value>
+    <comment>Caption of the panel beside the game's quest-offer window (1.7.0).</comment>
+  </data>
+  <data name="GamePanelResultCaption" xml:space="preserve">
+    <value>What this opened</value>
+    <comment>Caption of the panel beside the game's quest-complete window (1.7.0).</comment>
+  </data>
+  <data name="GamePanelJournalCaption" xml:space="preserve">
+    <value>Tsukimichi</value>
+    <comment>Caption of the companion panel beside the game's Journal (1.7.0).</comment>
+  </data>
+  <data name="GamePanelMasked" xml:space="preserve">
+    <value>Hidden by your spoiler settings: a main scenario quest ahead of your story.</value>
+  </data>
+  <data name="GamePanelOwned" xml:space="preserve">
+    <value>you have it</value>
+    <comment>After a Moonlit reward's name: the logged-in character has it.</comment>
+  </data>
+  <data name="GamePanelNotOwned" xml:space="preserve">
+    <value>not yet</value>
+    <comment>After a Moonlit reward's name: the logged-in character does not have it.</comment>
+  </data>
+  <data name="GamePanelOwnedUnknown" xml:space="preserve">
+    <value>can't tell</value>
+    <comment>After a Moonlit reward's name: ownership cannot be read (another character is on view in Tsukimichi).</comment>
+  </data>
+  <data name="GamePanelMoonlitHeading" xml:space="preserve">
+    <value>Moonlit rewards:</value>
+  </data>
+  <data name="GamePanelUnlocksHeading" xml:space="preserve">
+    <value>Unlocks:</value>
+  </data>
+  <data name="GamePanelChainFormat" xml:space="preserve">
+    <value>Step {0} of {1} · {2}</value>
+    <comment>{0} the quest's step, {1} the chain's steps, {2} the chain's name.</comment>
+  </data>
+  <data name="GamePanelChainNext" xml:space="preserve">
+    <value>Next:</value>
+    <comment>Opens the line naming the next quest of the chain.</comment>
+  </data>
+  <data name="GamePanelAddedInFormat" xml:space="preserve">
+    <value>Added in {0}</value>
+    <comment>{0} the patch the quest was added in, as the game writes it.</comment>
+  </data>
+  <data name="GamePanelRepeatable" xml:space="preserve">
+    <value>Repeatable</value>
+  </data>
+  <data name="GamePanelSocietyDaily" xml:space="preserve">
+    <value>Allied society daily</value>
+  </data>
+  <data name="GamePanelSeasonal" xml:space="preserve">
+    <value>Seasonal event</value>
+  </data>
+  <data name="GamePanelOpen" xml:space="preserve">
+    <value>Open in Tsukimichi</value>
+  </data>
+  <data name="GamePanelOpenHint" xml:space="preserve">
+    <value>Open Tsukimichi's Journal on this quest: its requirements, rewards, path and where to pick it up.</value>
+  </data>
+  <data name="GamePanelPin" xml:space="preserve">
+    <value>Pin</value>
+  </data>
+  <data name="GamePanelUnpin" xml:space="preserve">
+    <value>Unpin</value>
+  </data>
+  <data name="GamePanelPinHint" xml:space="preserve">
+    <value>Pin or unpin this quest for the logged-in character; pins show at the top of the Journal and in the todo overlay.</value>
+  </data>
+  <data name="GamePanelPinUnavailable" xml:space="preserve">
+    <value>Pins are per character: view the logged-in character in Tsukimichi to pin from here.</value>
+  </data>
+  <data name="GamePanelRoute" xml:space="preserve">
+    <value>Route to this</value>
+  </data>
+  <data name="GamePanelRouteHint" xml:space="preserve">
+    <value>Open the route window on this quest: every step still needed to reach it, in order.</value>
+  </data>
+  <data name="GamePanelOtherJobFormat" xml:space="preserve">
+    <value>{0} (on another job)</value>
+    <comment>{0} an opened quest's name, when only another class or job can take it.</comment>
+  </data>
+  <data name="GamePanelOpenedNone" xml:space="preserve">
+    <value>Opens no new quests</value>
+  </data>
+  <data name="GamePanelOpenedFormat" xml:space="preserve">
+    <value>Opens {0}</value>
+    <comment>{0} the counts joined by GamePanelOpenedJoin: "1 main scenario quest, 2 unlock quests".</comment>
+  </data>
+  <data name="GamePanelOpenedJoin" xml:space="preserve">
+    <value>, </value>
+    <comment>Between the counts of GamePanelOpenedFormat.</comment>
+  </data>
+  <data name="GamePanelOpenedMsqOne" xml:space="preserve">
+    <value>1 main scenario quest</value>
+  </data>
+  <data name="GamePanelOpenedMsqFormat" xml:space="preserve">
+    <value>{0} main scenario quests</value>
+    <comment>{0} a count of 2 or more.</comment>
+  </data>
+  <data name="GamePanelOpenedFeatureOne" xml:space="preserve">
+    <value>1 unlock quest</value>
+  </data>
+  <data name="GamePanelOpenedFeatureFormat" xml:space="preserve">
+    <value>{0} unlock quests</value>
+    <comment>{0} a count of 2 or more.</comment>
+  </data>
+  <data name="GamePanelOpenedSideOne" xml:space="preserve">
+    <value>1 other quest</value>
+  </data>
+  <data name="GamePanelOpenedSideFormat" xml:space="preserve">
+    <value>{0} other quests</value>
+    <comment>{0} a count of 2 or more.</comment>
+  </data>
+  <data name="GamePanelMoreFormat" xml:space="preserve">
+    <value>and {0} more</value>
+    <comment>{0} how many more quests the completion opens.</comment>
+  </data>
+  <data name="GamePanelSettingsHeading" xml:space="preserve">
+    <value>Quest panels beside game windows</value>
+    <comment>Settings › Integrations block heading: the quest offer, quest complete and Journal panels (1.7.0).</comment>
+  </data>
+  <data name="GamePanelSettingOffer" xml:space="preserve">
+    <value>"Worth it?" panel beside quest offers</value>
+  </data>
+  <data name="GamePanelSettingOfferHint" xml:space="preserve">
+    <value>When an NPC offers you a quest, a small panel beside the offer window says what it is worth to you: what it unlocks, its Moonlit rewards and whether you have them, its step in a chain, the patch it came in and whether it is repeatable or seasonal. It follows your spoiler settings and never accepts or declines the quest for you.</value>
+  </data>
+  <data name="GamePanelSettingResult" xml:space="preserve">
+    <value>"What this opened" panel beside quest completions</value>
+  </data>
+  <data name="GamePanelSettingResultHint" xml:space="preserve">
+    <value>When you turn in a quest, a small panel beside the reward window lists the quests its completion makes ready, what it unlocks and the next quest of its chain, with buttons to flag a giver or pin a quest. It never completes the quest for you.</value>
+  </data>
+  <data name="GamePanelSettingJournal" xml:space="preserve">
+    <value>Companion panel beside the Journal</value>
+  </data>
+  <data name="GamePanelSettingJournalHint" xml:space="preserve">
+    <value>While the game's Journal is open, a small panel beside it shows Tsukimichi's verdict on the selected quest: its chain step, what it unlocks next and its Moonlit rewards, with Open in Tsukimichi and Route to this.</value>
+  </data>
+  <data name="Core.Verdict.Unlocks" xml:space="preserve">
+    <value>Unlocks {0}</value>
+    <comment>Core: QuestVerdict.cs. {0} the duty, job or system the quest opens.</comment>
+  </data>
+  <data name="Core.Verdict.Moonlit" xml:space="preserve">
+    <value>Moonlit: {0}</value>
+    <comment>Core: QuestVerdict.cs. {0} a Moonlit reward the character lacks.</comment>
+  </data>
+  <data name="Core.Verdict.MoonlitMore" xml:space="preserve">
+    <value>Moonlit: {0} and {1} more</value>
+    <comment>Core: QuestVerdict.cs. {0} a Moonlit reward the character lacks, {1} how many more it lacks.</comment>
+  </data>
+  <data name="Core.Verdict.MoonlitOwned" xml:space="preserve">
+    <value>Moonlit: {0} (you have it)</value>
+    <comment>Core: QuestVerdict.cs. {0} a Moonlit reward the character already has.</comment>
+  </data>
+  <data name="Core.Verdict.ChainStep" xml:space="preserve">
+    <value>Step {0} of {1} in {2}</value>
+    <comment>Core: QuestVerdict.cs. {0} the step, {1} the chain's steps, {2} the chain's name.</comment>
+  </data>
+  <data name="Core.Verdict.ChainStepUnnamed" xml:space="preserve">
+    <value>Step {0} of {1} of a chain</value>
+    <comment>Core: QuestVerdict.cs.</comment>
+  </data>
+  <data name="Core.Verdict.Seasonal" xml:space="preserve">
+    <value>Seasonal event quest</value>
+    <comment>Core: QuestVerdict.cs.</comment>
+  </data>
+  <data name="Core.Verdict.Repeatable" xml:space="preserve">
+    <value>Repeatable quest</value>
+    <comment>Core: QuestVerdict.cs.</comment>
+  </data>
+  <data name="Core.Verdict.Nothing" xml:space="preserve">
+    <value>No unlock or unique reward</value>
+    <comment>Core: QuestVerdict.cs.</comment>
+  </data>
   <data name="ExportHeader" xml:space="preserve">
     <value>Export</value>
   </data>
@@ -556,14 +732,14 @@
     <comment>{0} = the word not understood.</comment>
   </data>
   <data name="HooksPausedNotice" xml:space="preserve">
-    <value>Tsukimichi's game hooks (item tooltip, item and NPC menus, server info bar, Duty Finder hint) are paused on this new game patch until an update is tested; hotfixes do not pause them. The quest journal works as usual.</value>
+    <value>Tsukimichi's game hooks (item tooltip, item and NPC menus, server info bar, Duty Finder hint, quest offer, completion and Journal panels) are paused on this new game patch until an update is tested; hotfixes do not pause them. The quest journal works as usual.</value>
     <comment>The one chat line (once per load) and the Settings notice while the hooks are paused.</comment>
   </data>
   <data name="HooksEnableUntested" xml:space="preserve">
     <value>Enable game hooks on this untested version</value>
   </data>
   <data name="HooksEnableUntestedHint" xml:space="preserve">
-    <value>After a game patch (a new patch date; hotfixes do not count) the item tooltip panel, the item and NPC menu entries, the server info bar entry and the Duty Finder unlock hint pause until a Tsukimichi update has been tested on the new patch. Tick this to run them anyway on the patch you are on now, its hotfixes included; the next patch pauses them again. If one draws in the wrong place or misbehaves, untick it. The quest journal is not affected either way.</value>
+    <value>After a game patch (a new patch date; hotfixes do not count) the item tooltip panel, the item and NPC menu entries, the server info bar entry, the Duty Finder unlock hint and the panels beside the quest offer, quest complete and Journal windows pause until a Tsukimichi update has been tested on the new patch. Tick this to run them anyway on the patch you are on now, its hotfixes included; the next patch pauses them again. If one draws in the wrong place or misbehaves, untick it. The quest journal is not affected either way.</value>
   </data>
   <data name="HooksRunningUntested" xml:space="preserve">
     <value>Game hooks are running on an untested game version.</value>
@@ -780,6 +956,163 @@
   <data name="ChipIssuerTooltip" xml:space="preserve">
     <value>The quests this NPC hands out, each with what blocks it; clearing shows the whole journal again</value>
     <comment>Above the "click to clear" line on the issuer chip.</comment>
+  </data>
+  <data name="ChatActionOpen" xml:space="preserve">
+    <value>[Open]</value>
+    <comment>Chat line action after a quest link: opens the quest in Tsukimichi. Keep the brackets.</comment>
+  </data>
+  <data name="ChatActionPin" xml:space="preserve">
+    <value>[Pin]</value>
+    <comment>Chat line action after a quest link: pins the quest. Keep the brackets.</comment>
+  </data>
+  <data name="ChatActionRoute" xml:space="preserve">
+    <value>[Route]</value>
+    <comment>Chat line action after a quest link: opens the unlock route. Keep the brackets.</comment>
+  </data>
+  <data name="ChatActionShow" xml:space="preserve">
+    <value>[Show]</value>
+    <comment>After an "Opened:" chat line: lists those quests in the main window. Keep the brackets.</comment>
+  </data>
+  <data name="ChatActionShowGone" xml:space="preserve">
+    <value>That list came from an older line and can no longer be shown.</value>
+  </data>
+  <data name="ChatActionPinnedFormat" xml:space="preserve">
+    <value>Pinned {0}.</value>
+    <comment>{0} = quest name.</comment>
+  </data>
+  <data name="ChatActionAlreadyPinnedFormat" xml:space="preserve">
+    <value>{0} is already pinned.</value>
+    <comment>{0} = quest name.</comment>
+  </data>
+  <data name="ChatActionPinNeedsLogin" xml:space="preserve">
+    <value>Log in to pin a quest from chat.</value>
+  </data>
+  <data name="OpenedChatFormat" xml:space="preserve">
+    <value>Opened: {0}</value>
+    <comment>{0} = the counts, e.g. "2 feature quests, 8 side quests (3 with a story)".</comment>
+  </data>
+  <data name="OpenedScopeName" xml:space="preserve">
+    <value>Just opened</value>
+    <comment>Scope chip name for the quests an "Opened:" chat line counted.</comment>
+  </data>
+  <data name="ToastMoonlitFormat" xml:space="preserve">
+    <value>Moonlit reward: {0}</value>
+    <comment>Quest toast; {0} = the reward's name.</comment>
+  </data>
+  <data name="ToastDutyFormat" xml:space="preserve">
+    <value>Duty unlocked: {0}</value>
+    <comment>Quest toast; {0} = the duty's name.</comment>
+  </data>
+  <data name="ToastMoreFormat" xml:space="preserve">
+    <value> (+{0} more)</value>
+    <comment>Appended to a quest toast; {0} = how many more rewards the quest gave.</comment>
+  </data>
+  <data name="ChatTwoOpenQuestFormat" xml:space="preserve">
+    <value>Open in Tsukimichi · {0}</value>
+    <comment>Chat 2 Integrations menu on a quest link; {0} = the quest's state (Ready, Done...).</comment>
+  </data>
+  <data name="ChatTwoOpenItemQuestFormat" xml:space="preserve">
+    <value>Open in Tsukimichi: {0} · {1}</value>
+    <comment>Chat 2 Integrations menu on an item link; {0} = quest name, {1} = its state.</comment>
+  </data>
+  <data name="NamePlatePinned" xml:space="preserve">
+    <value>☾ Pinned</value>
+    <comment>Nameplate title under a quest giver. Short.</comment>
+  </data>
+  <data name="NamePlateMoonlit" xml:space="preserve">
+    <value>☾ Moonlit reward</value>
+    <comment>Nameplate title under a quest giver. Short.</comment>
+  </data>
+  <data name="NamePlateReadyOnFormat" xml:space="preserve">
+    <value>☾ Ready on {0}</value>
+    <comment>Nameplate title under a quest giver; {0} = job abbreviation (WHM). Short.</comment>
+  </data>
+  <data name="NamePlateReadyOnOtherJob" xml:space="preserve">
+    <value>☾ Ready on another job</value>
+    <comment>Nameplate title under a quest giver. Short.</comment>
+  </data>
+  <data name="ConfigSectionChatActions" xml:space="preserve">
+    <value>Chat actions</value>
+    <comment>Settings › Notices: heading of the chat actions block.</comment>
+  </data>
+  <data name="ConfigSectionChatTwoNamePlates" xml:space="preserve">
+    <value>Chat 2 and nameplates</value>
+    <comment>Settings › Integrations: heading of the Chat 2 and nameplate marks block.</comment>
+  </data>
+  <data name="ConfigChatLinkActions" xml:space="preserve">
+    <value>Clickable [Open] [Pin] [Route] on Tsukimichi's chat lines</value>
+    <comment>Settings checkbox.</comment>
+  </data>
+  <data name="ConfigChatLinkActionsHint" xml:space="preserve">
+    <value>Notices and /tsuki search, zone, which and why end each quest line with three links: open the quest here, pin it for the character you are playing, or open its unlock route. They work in the game's chat and in Chat 2.</value>
+  </data>
+  <data name="ConfigChatNoticeOpened" xml:space="preserve">
+    <value>Say what a completed quest opened</value>
+    <comment>Settings checkbox.</comment>
+  </data>
+  <data name="ConfigChatNoticeOpenedHint" xml:space="preserve">
+    <value>After a turn-in, one chat line counts the quests it made available ("Opened: 2 unlock quests, 8 side quests"), with Show to list them. Turn-ins a few seconds apart share one line; nothing is printed when nothing opened. Quest names are never printed, so it is spoiler-safe.</value>
+  </data>
+  <data name="ConfigChatTwo" xml:space="preserve">
+    <value>"Open in Tsukimichi" in Chat 2's menu</value>
+    <comment>Settings checkbox.</comment>
+  </data>
+  <data name="ConfigChatTwoHint" xml:space="preserve">
+    <value>Right-click a quest link, or an item link that is a Moonlit reward or that an open quest needs, and Chat 2's Integrations submenu offers to open the quest here. Does nothing without Chat 2.</value>
+  </data>
+  <data name="ConfigNamePlateMarks" xml:space="preserve">
+    <value>Mark quest givers on their nameplates</value>
+    <comment>Settings checkbox.</comment>
+  </data>
+  <data name="ConfigNamePlateMarksHint" xml:space="preserve">
+    <value>A short line under a quest giver's name: "☾ Pinned", "☾ Moonlit reward" or "☾ Ready on WHM", for quests you can take. Replaces the NPC's own title while shown. Player nameplates are never touched.</value>
+  </data>
+  <data name="ConfigQuestToasts" xml:space="preserve">
+    <value>Quest toast for a Moonlit reward or an unlocked duty</value>
+    <comment>Settings checkbox.</comment>
+  </data>
+  <data name="ConfigQuestToastsHint" xml:space="preserve">
+    <value>The game's quest banner, "Moonlit reward: …" or "Duty unlocked: …", when a quest you complete gives one.</value>
+  </data>
+  <data name="Core.Opened.MsqOne" xml:space="preserve">
+    <value>{0} main scenario quest</value>
+    <comment>"Opened:" chat line part; {0} = 1.</comment>
+  </data>
+  <data name="Core.Opened.MsqMany" xml:space="preserve">
+    <value>{0} main scenario quests</value>
+    <comment>"Opened:" chat line part; {0} = count.</comment>
+  </data>
+  <data name="Core.Opened.FeatureOne" xml:space="preserve">
+    <value>{0} unlock quest</value>
+    <comment>"Opened:" chat line part; {0} = 1.</comment>
+  </data>
+  <data name="Core.Opened.FeatureMany" xml:space="preserve">
+    <value>{0} unlock quests</value>
+    <comment>"Opened:" chat line part; {0} = count.</comment>
+  </data>
+  <data name="Core.Opened.SideOne" xml:space="preserve">
+    <value>{0} side quest</value>
+    <comment>"Opened:" chat line part; {0} = 1.</comment>
+  </data>
+  <data name="Core.Opened.SideMany" xml:space="preserve">
+    <value>{0} side quests</value>
+    <comment>"Opened:" chat line part; {0} = count.</comment>
+  </data>
+  <data name="Core.Opened.WithStory" xml:space="preserve">
+    <value>{0} ({1} with a story)</value>
+    <comment>{0} = "8 side quests", {1} = how many of them are story sidequests.</comment>
+  </data>
+  <data name="Core.Opened.OtherOne" xml:space="preserve">
+    <value>{0} other quest</value>
+    <comment>"Opened:" chat line part; {0} = 1.</comment>
+  </data>
+  <data name="Core.Opened.OtherMany" xml:space="preserve">
+    <value>{0} other quests</value>
+    <comment>"Opened:" chat line part; {0} = count.</comment>
+  </data>
+  <data name="Core.Opened.Separator" xml:space="preserve">
+    <value>, </value>
+    <comment>Between the parts of the "Opened:" chat line.</comment>
   </data>
   <data name="JobsSection" xml:space="preserve">
     <value>Job quests</value>

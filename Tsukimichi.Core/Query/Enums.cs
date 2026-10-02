@@ -36,6 +36,12 @@ public enum ScopeKind
     /// the kind of path, shown here whatever <see cref="FilterSet.IncludeOtherPaths"/> says.
     /// </summary>
     VirtualOtherPaths,
+
+    /// <summary>
+    /// What the last quest completions opened (1.7.0, "Opened by that"): <see cref="QueryContext.JustOpened"/>, reached
+    /// from the "Opened:" chat line's Show link, not the tree. <see cref="QuestScope.Id"/> is the batch's serial.
+    /// </summary>
+    VirtualJustOpened,
 }
 
 /// <summary>One-click table presets from the filter panel; at most one is active at a time.</summary>

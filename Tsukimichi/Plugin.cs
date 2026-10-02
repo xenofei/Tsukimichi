@@ -16,7 +16,7 @@ namespace Tsukimichi;
 /// <summary>
 /// Plugin entry point. Starts the catalog build on load; windows and commands are added in later tasks.
 /// </summary>
-public sealed class Plugin : IDalamudPlugin
+public sealed partial class Plugin : IDalamudPlugin
 {
     [PluginService] internal static IDalamudPluginInterface PluginInterface { get; private set; } = null!;
     [PluginService] internal static IPluginLog Log { get; private set; } = null!;
@@ -101,6 +101,7 @@ public sealed class Plugin : IDalamudPlugin
     /// <summary>The hero banners' index source; polled once when a catalog lands so the index starts building before the first selection.</summary>
     private Core.Ui.BannerIndexSource<Core.Unique.DutyUnlockIndex>? banners;
     private DutyFinderPanel? dutyFinderPanel;
+    private GamePanels? gamePanels;
     private Game.HookGateNotice? hookGateNotice;
     private Game.DailyOfferReader? dailyOffers;
     private Game.GameStateReader? stateReader;
@@ -975,6 +976,17 @@ public sealed class Plugin : IDalamudPlugin
                 RewardEntries = () => moonlit.Catalog.All,
                 Questionable = questionableActions,
             });
+            // Panels beside game windows (1.7.0): "Worth it?" on quest offers, "What this opened" on completions and the
+            // Journal companion. Their reads take the same kill switch as the Duty Finder hint.
+            PlanSource plans = planSource;
+            gamePanels = new GamePanels(PluginInterface.UiBuilder, AddonLifecycle, GameGui, TargetManager, Settings,
+                new Game.QuestBriefBuilder(Session, () => moonlit.Catalog, unlockReader, () => plans.Tags),
+                queryRunner, gameLinks, gate, Log, quest =>
+                {
+                    mainWindow.IsOpen = true;
+                    mainWindow.BringToFront();
+                    MoonlitPane.Reveal(ui, quest);
+                }, ui.OpenRoute);
             // Next stops (1.6.0): Ready quests batched by aetheryte, for the Tonight card and the todo overlay.
             var nextStops = new NextStopsSource(Session, gameLinks, queryRunner, planSource, followed, Settings, () => ClientState.TerritoryType);
             mainWindow.AttachNextStops(nextStops);
@@ -1006,11 +1018,13 @@ public sealed class Plugin : IDalamudPlugin
             if (npcHooks is { } npcMenu) { configWindow.NpcContextMenuToggled = enabled => npcMenu.Enabled = enabled; }
             if (dutyFinderHint is { } dutyHint) { configWindow.DutyFinderHintToggled = enabled => dutyHint.Enabled = enabled; }
             configWindow.HookGate = gate;
+            gamePanels.Attach(configWindow);
             configWindow.Companions = companions;
             configWindow.Questionable = questionableIpc;
             configWindow.Nearby = discoveryWindow;
             var settingsWindow = configWindow;
             discoveryWindow.OpenSettings = () => settingsWindow.OpenAt(Core.Ui.SettingsSection.Integrations);
+            InitializeInGame(gate, rewardLookup, handIns, moonlit);
             windowSystem.AddWindow(configWindow);
             PluginInterface.UiBuilder.OpenConfigUi += configWindow.Toggle;
             command.ToggleConfigWindow = configWindow.Toggle;
@@ -1260,9 +1274,11 @@ public sealed class Plugin : IDalamudPlugin
         });
         Unwind("windows", windowSystem.RemoveAllWindows);
         Unwind("fonts", Ui.Typography.Dispose);
+        Unwind("in the game", DisposeInGame);
         Unwind("item hooks", () => itemHooks?.Dispose());
         Unwind("npc hooks", () => npcHooks?.Dispose());
         Unwind("duty finder hint", () => dutyFinderHint?.Dispose());
+        Unwind("game panels", () => gamePanels?.Dispose());
         Unwind("hook gate notice", () => hookGateNotice?.Dispose());
         Unwind("todo lock notice", () => todoLockNotice?.Dispose());
         Unwind("since you were away", () => welcomeBack?.Dispose());

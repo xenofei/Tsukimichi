@@ -16,7 +16,7 @@ namespace Tsukimichi.Config;
 /// Load with <see cref="Load"/>, persist with <see cref="Save"/>.
 /// </summary>
 [Serializable]
-public sealed class Configuration : IPluginConfiguration
+public sealed partial class Configuration : IPluginConfiguration
 {
     public const int CurrentVersion = 1;
     public const double MinPollIntervalSeconds = 0.5;
@@ -183,6 +183,16 @@ public sealed class Configuration : IPluginConfiguration
     // ---- 0.9.0: Duty Finder unlock hint (P13) ----
     /// <summary>Show the quest that unlocks a padlocked duty beside the Duty Finder when that duty is selected.</summary>
     public bool DutyFinderHintEnabled { get; set; } = true;
+
+    // ---- 1.7.0: panels beside game windows (R8 A, B, C) ----
+    /// <summary>Show the "Worth it?" panel beside the game's quest-offer window.</summary>
+    public bool QuestOfferPanelEnabled { get; set; } = true;
+
+    /// <summary>Show the "What this opened" panel beside the game's quest-complete window.</summary>
+    public bool QuestResultPanelEnabled { get; set; } = true;
+
+    /// <summary>Show the companion panel beside the game's Journal.</summary>
+    public bool JournalCompanionEnabled { get; set; } = true;
 
     // ---- 0.8.0: addon kill switch (T20) ----
     /// <summary>

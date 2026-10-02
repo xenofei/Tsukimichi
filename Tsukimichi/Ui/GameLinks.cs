@@ -38,6 +38,12 @@ public sealed partial class GameLinks(IGameGui gameGui, IChatGui chat, IDataMana
     public string NameOf(QuestRecord quest) => QuestName?.Invoke(quest) ?? quest.Name;
 
     /// <summary>
+    /// The clickable "[Open] [Pin] [Route]" actions (1.7.0), attached by the plugin: every quest line and headline this
+    /// class prints ends with them while Settings › Notices › Chat actions has them on. Null prints none.
+    /// </summary>
+    public ChatActions? Actions { get; set; }
+
+    /// <summary>
     /// Where a duty also drops a reward (<see cref="Core.Unique.StoreResells.DropWhere(RewardRef)"/>: the duties, empty
     /// when unnamed, null when it does not drop), attached by the plugin so <see cref="RewardTooltip"/> can say
     /// "Also drops in …"; null (never) until then.
@@ -273,6 +279,7 @@ public sealed partial class GameLinks(IGameGui gameGui, IChatGui chat, IDataMana
                        .Add(RawPayload.LinkTerminator);
             }
 
+            Actions?.AppendQuestActions(builder, quest);
             chat.Print(builder.Build(), Strings.ChatTag);
         }
         catch (Exception ex)
@@ -406,6 +413,7 @@ public sealed partial class GameLinks(IGameGui gameGui, IChatGui chat, IDataMana
             builder.AddText(Strings.ChatSuffixSeparator + suffix);
         }
 
+        Actions?.AppendQuestActions(builder, quest);
         return builder.Build();
     }
 }
