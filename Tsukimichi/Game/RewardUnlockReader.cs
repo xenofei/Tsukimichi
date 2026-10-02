@@ -321,6 +321,24 @@ public sealed class RewardUnlockReader
         return known ? false : QuestBit(entry.QuestRowId);
     }
 
+    /// <summary>
+    /// The game's own word on an achievement for the viewed character (feature plan v5 collector extras, the
+    /// achievements that need several quests): the live completed-achievement bit once the achievement list is loaded,
+    /// else what the snapshot saved while it was loaded (<see cref="CharacterSnapshot.CompletedAchievements"/>, recorded
+    /// for the ids <c>GameStateReader.AchievementIds</c> names); null when neither knows.
+    /// </summary>
+    public bool? AchievementEarned(uint achievementId)
+    {
+        if (LiveAchievement(achievementId) is { } live)
+        {
+            return live;
+        }
+
+        return session.ViewedSnapshot is { AchievementsLoaded: true } snapshot && snapshot.CompletedAchievements.Count > 0
+            ? System.Linq.Enumerable.Contains(snapshot.CompletedAchievements, achievementId)
+            : null;
+    }
+
     /// <summary>The live completed-achievement bit; null when not live, not loaded yet, or unreadable.</summary>
     private unsafe bool? LiveAchievement(uint achievementId)
     {

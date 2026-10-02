@@ -195,6 +195,18 @@ public sealed class QuestTextService : IDisposable
         return view;
     }
 
+    /// <summary>
+    /// Every journal entry of a completed quest, for the story recap ("Previously…", feature plan v5 collector extras):
+    /// read and evaluated like <see cref="Journal"/> for a completed quest, but kept out of its small cache so a recap
+    /// of many quests does not push out the Journal card's. The caller asks only for quests the character completed.
+    /// </summary>
+    public JournalView ReadCompleted(QuestRecord quest, bool live, string? storedName)
+    {
+        ArgumentNullException.ThrowIfNull(quest);
+        var through = JournalVisibility.VisibleThrough(QuestState.Completed, null, quest.StepCount);
+        return through == JournalVisibility.None ? JournalView.NotReadable : Build(quest, QuestState.Completed, null, through, live, storedName);
+    }
+
     private JournalView Build(QuestRecord quest, QuestState state, byte? sequence, int through, bool live, string? storedName)
     {
         QuestText? text;

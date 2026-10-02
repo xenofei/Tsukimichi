@@ -796,7 +796,7 @@ public sealed partial class TreePane
 
         counts = current;
         Apply(allNode, current.Overall, current.OverallReady);
-        ApplyOtherPaths(allNode, current.OtherPathsIn(QuestScope.None));
+        ApplyOtherPaths(allNode, current.OtherPathsIn(QuestScope.None), current.Overall.BeyondTrial);
         Apply(unlistedNode, current.Unlisted, 0);
         foreach (var section in sections)
         {
@@ -813,10 +813,19 @@ public sealed partial class TreePane
         otherPathsNode.MeasuredAt = -1f;
     }
 
-    /// <summary>The node's other-path tally and the halo tooltip that carries it.</summary>
-    private static void ApplyOtherPaths(Node node, Core.Evaluation.PathTally tally)
+    /// <summary>
+    /// The node's other-path tally and the halo tooltip that carries it, with "N beyond your trial" under the
+    /// free-trial view (1.9.0).
+    /// </summary>
+    private static void ApplyOtherPaths(Node node, Core.Evaluation.PathTally tally, int beyondTrial = 0)
     {
         var text = Core.Evaluation.PathText.Tally(tally);
+        if (beyondTrial > 0)
+        {
+            var trial = string.Format(CultureInfo.CurrentCulture, Strings.TrialBeyondCountFormat, beyondTrial);
+            text = text.Length == 0 ? trial : text + "\n" + trial;
+        }
+
         if (text != node.OtherPathsText || node.HoverText.Length == 0)
         {
             node.OtherPathsText = text;
@@ -834,7 +843,7 @@ public sealed partial class TreePane
             _ => (current.Genre(node.Scope.Id), current.GenreReady(node.Scope.Id)),
         };
         Apply(node, count, ready);
-        ApplyOtherPaths(node, current.OtherPathsIn(node.Scope));
+        ApplyOtherPaths(node, current.OtherPathsIn(node.Scope), count.BeyondTrial);
         foreach (var child in node.Children)
         {
             ApplyTree(child, current);

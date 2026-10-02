@@ -51,6 +51,8 @@ public sealed class QueryRunner : IDisposable
     // Counts cache keys.
     private int countsVersion = -1;
     private bool countsIncludeUnlisted;
+    private bool countsFreeTrial;
+    private bool ranFreeTrial;
 
     // The festivals running on the server for the viewed character (SessionState.ServerFestivals), rebuilt when they change.
     private ServerFestivals? festivalsServer;
@@ -123,6 +125,15 @@ public sealed class QueryRunner : IDisposable
 
     /// <summary>"New in 7.5x: 12 unlock quests, listed first", or null when <see cref="NewThisPatch"/> is 0.</summary>
     public string? NewThisPatchCaption { get; private set; }
+
+    /// <summary>
+    /// Under the free-trial view (1.9.0), how many trailing <see cref="Rows"/> lie beyond the trial, the "Beyond your
+    /// trial" group; 0 otherwise. <see cref="BeyondTrialCaption"/> names it above the table.
+    /// </summary>
+    public int BeyondTrial { get; private set; }
+
+    /// <summary>"Beyond your trial: 12 quests, listed last", or null when <see cref="BeyondTrial"/> is 0.</summary>
+    public string? BeyondTrialCaption { get; private set; }
 
     /// <summary>Null until a catalog exists.</summary>
     public TreeCounts? Counts { get; private set; }
@@ -404,12 +415,15 @@ public sealed class QueryRunner : IDisposable
         plugin.QuestText?.Update(current.Catalog);
 
         var includeUnlisted = ui.Filters.IncludeUnlisted;
-        if (catalogChanged || countsVersion != session.Version || countsIncludeUnlisted != includeUnlisted || Counts is null)
+        var freeTrial = plugin.Settings.FreeTrialView;
+        if (catalogChanged || countsVersion != session.Version || countsIncludeUnlisted != includeUnlisted || countsFreeTrial != freeTrial || Counts is null)
         {
-            Counts = TreeCounts.Compute(current.Catalog, session.States, includeUnlisted);
+            // The free-trial view (1.9.0): what the trial does not include leaves the counts, tallied apart.
+            Counts = TreeCounts.Compute(current.Catalog, session.States, includeUnlisted, freeTrial ? FreeTrial.IsBeyond : null);
             (FeatureCount, FeatureReady) = ComputeFeatureCount(session, current.Catalog);
             countsVersion = session.Version;
             countsIncludeUnlisted = includeUnlisted;
+            countsFreeTrial = freeTrial;
         }
 
         // The Stalled preset compares accepted times with the clock, so it is re-run once an hour even when nothing else moved.
@@ -422,6 +436,7 @@ public sealed class QueryRunner : IDisposable
             || searchDirty
             || stalledHour != ranStalledHour
             || journalVersion != (plugin.QuestText?.Version ?? 0)
+            || ranFreeTrial != freeTrial
             || !filtersSnapshot.Equals(ui.Filters);
 
         if (dirty)
@@ -654,7 +669,11 @@ public sealed class QueryRunner : IDisposable
             Stories: session.Stories,
             JournalHits: plugin.Settings.JournalTextSearch ? plugin.QuestText?.MatchCompleted(appliedSearch, session.States) : null,
             NewSinceData: plugin.Freshness?.Current.NewQuestIds,
-            JustOpened: ui.JustOpened);
+            JustOpened: ui.JustOpened,
+            NewGamePlus: current.NewGamePlus,
+            Chains: session.Chains,
+            FreeTrial: plugin.Settings.FreeTrialView);
+        ranFreeTrial = ctx.FreeTrial;
 
         // The Unlocks quick view reads best with its unlocks from the newest patch series on top (P8), then what can be picked up
         // now; the other presets keep the table's sort.
@@ -675,6 +694,10 @@ public sealed class QueryRunner : IDisposable
                 result.NewThisPatch == 1 ? Strings.NewThisPatchCaptionOneFormat : Strings.NewThisPatchCaptionFormat,
                 PatchIndex.For(current.Catalog).NewestSeries,
                 result.NewThisPatch);
+        BeyondTrial = result.BeyondTrial;
+        BeyondTrialCaption = result.BeyondTrial == 0
+            ? null
+            : string.Format(CultureInfo.CurrentCulture, result.BeyondTrial == 1 ? Strings.TrialBeyondCaptionOne : Strings.TrialBeyondCaptionFormat, result.BeyondTrial);
 
         sessionVersion = session.Version;
         journalVersion = plugin.QuestText?.Version ?? 0;

@@ -22,6 +22,7 @@ public static class FilterNames
     public const string IncludeOtherPaths = "Include other paths";
     public const string Pinned = "Pinned";
     public const string Abandoned = "Abandoned";
+    public const string OnceOnlyStory = "Once-only story";
     public const string Search = "Search";
 
     // Quick views (presets)
@@ -48,6 +49,7 @@ public static class FilterNames
         IncludeOtherPaths => CoreText.T("Core.Filter.IncludeOtherPaths", "Include other paths"),
         Pinned => CoreText.T("Core.Filter.Pinned", "Pinned"),
         Abandoned => CoreText.T("Core.Filter.Abandoned", "Abandoned"),
+        OnceOnlyStory => CoreText.T("Core.Filter.OnceOnlyStory", "Once-only story"),
         Search => CoreText.T("Core.Filter.Search", "Search"),
         FeatureQuests => CoreText.T("Core.Filter.FeatureQuests", "Unlocks"),
         LevelBand => CoreText.T("Core.Filter.LevelBand", "My level"),

@@ -344,6 +344,12 @@ public sealed class MainWindow : Window, IDisposable
         detailPane.QuestText = questText ?? throw new ArgumentNullException(nameof(questText));
     }
 
+    /// <summary>The game's achievement flags for the detail pane's achievement lines (1.9.0 collector extras); without them the quests decide.</summary>
+    public void AttachAchievementFlags(Func<uint, bool?> earned)
+    {
+        detailPane.AchievementEarned = earned ?? throw new ArgumentNullException(nameof(earned));
+    }
+
     /// <summary>The detail pane's Report button and the status bar's data stamp tooltip.</summary>
     public void AttachDiagnostics(DiagnosticBuilder diagnostics)
     {

@@ -1,3 +1,4 @@
+using Lumina.Data;
 using Lumina.Excel;
 using Lumina.Excel.Sheets;
 
@@ -85,6 +86,40 @@ public static class AchievementQuests
             TypeAnyQuest => listed.Any(isComplete),
             _ => null,
         };
+    }
+
+    /// <summary>
+    /// The achievements that need several quests (feature plan v5, collector extras; R5 F6): every "complete every
+    /// listed quest" achievement (<see cref="TypeAllQuests"/>) that names at least two quests, each of them a live quest
+    /// of <paramref name="catalog"/> (an achievement naming a removed quest can no longer be followed). With the 7.x
+    /// sheets five: Tales of War, Tales of Magic, Tales of the Hand, Tales of the Land and The War Still Wageth On.
+    /// </summary>
+    public static Core.Chains.AchievementLadders Ladders(ExcelModule excel, Language language, Core.Model.QuestCatalog catalog)
+    {
+        ArgumentNullException.ThrowIfNull(excel);
+        ArgumentNullException.ThrowIfNull(catalog);
+        var ladders = new List<Core.Chains.AchievementLadder>();
+        foreach (var row in excel.GetSheet<Achievement>(language))
+        {
+            if (row.Type != TypeAllQuests)
+            {
+                continue;
+            }
+
+            var quests = QuestsOf(row);
+            if (quests.Count < 2 || quests.Any(q => catalog.GetByRowId(q) is not { IsRemoved: false }))
+            {
+                continue;
+            }
+
+            var name = row.Name.ExtractText();
+            if (!string.IsNullOrWhiteSpace(name))
+            {
+                ladders.Add(new Core.Chains.AchievementLadder(row.RowId, name, quests));
+            }
+        }
+
+        return Core.Chains.AchievementLadders.Build(ladders);
     }
 
     /// <summary>The quest row ids an Achievement row names in <c>Key</c> and <c>Data</c>, in sheet order, each once.</summary>

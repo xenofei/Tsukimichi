@@ -38,6 +38,16 @@ namespace Tsukimichi.Core.Query;
 /// Row ids the "Just opened" scope lists (<see cref="QuestScope.JustOpened"/>, 1.7.0): what the last completions opened,
 /// from the "Opened:" chat line's Show link; null or empty lists nothing there.
 /// </param>
+/// <param name="NewGamePlus">
+/// Row ids some New Game+ chapter lists (feature plan v5 collector extras, <see cref="Query.NewGamePlus"/>), for the
+/// "Once-only story quests I haven't done" filter (<see cref="FilterSet.OnceOnlyStory"/>); null or empty keeps nothing
+/// under it.
+/// </param>
+/// <param name="Chains">The story chains that filter counts as story; null leaves only <paramref name="Stories"/>.</param>
+/// <param name="FreeTrial">
+/// The free-trial view (<see cref="Query.FreeTrial"/>): quests beyond the trial read "Beyond your trial" instead of their
+/// blocker and are listed after the rest (<see cref="QueryResult.BeyondTrial"/>).
+/// </param>
 public sealed record QueryContext(
     IReadOnlySet<ushort> ActiveFestivals,
     IReadOnlySet<uint> Pinned,
@@ -55,7 +65,10 @@ public sealed record QueryContext(
     StorySidequests? Stories = null,
     IReadOnlySet<uint>? JournalHits = null,
     IReadOnlySet<uint>? NewSinceData = null,
-    IReadOnlySet<uint>? JustOpened = null)
+    IReadOnlySet<uint>? JustOpened = null,
+    IReadOnlySet<uint>? NewGamePlus = null,
+    ChainCatalog? Chains = null,
+    bool FreeTrial = false)
 {
     public const int DefaultStalledDays = 7;
 

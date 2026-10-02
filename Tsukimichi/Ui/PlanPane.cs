@@ -62,6 +62,10 @@ public sealed class PlanPane
     private readonly string[] kindLabels = new string[UnlockKinds.All.Length];
     private int hiddenExpansions;
     private string hiddenText = string.Empty;
+
+    // The free-trial view (1.9.0): whether the view was built under it, and "N unlock quests in later expansions".
+    private bool viewTrial;
+    private string beyondTrialText = string.Empty;
     private string summary = string.Empty;
     private string showing = string.Empty;
     // Per expansion: the card title, its Ready count, the left list's count and the left list row's id.
@@ -196,6 +200,14 @@ public sealed class PlanPane
         {
             using var note = Theme.PushText(Theme.Surface.TextTertiary);
             ImGui.TextWrapped(hiddenText);
+        }
+
+        if (beyondTrialText.Length > 0)
+        {
+            ImGui.Spacing();
+            SectionHeading.Draw(Strings.TrialBeyondHeading);
+            using var note = Theme.PushText(Theme.Surface.TextTertiary);
+            ImGui.TextWrapped(beyondTrialText);
         }
     }
 
@@ -927,14 +939,23 @@ public sealed class PlanPane
 
         var plan = source.Plan;
         var maxExpansion = sprout ? source.Reach : byte.MaxValue;
+
+        // The free-trial view (1.9.0): the expansions after the trial's fold into "Beyond your trial" below the list.
+        var trial = settings.FreeTrialView;
+        if (trial)
+        {
+            maxExpansion = Math.Min(maxExpansion, FreeTrial.LastExpansion);
+        }
+
         var key = (source.Revision, kinds, readyOnly, (int)maxExpansion);
-        if (key == viewKey)
+        if (key == viewKey && trial == viewTrial)
         {
             return;
         }
 
         viewKey = key;
-        var reachFilter = new PlanFilter(UnlockKinds.AllMask, readyOnly, sprout ? maxExpansion : null);
+        viewTrial = trial;
+        var reachFilter = new PlanFilter(UnlockKinds.AllMask, readyOnly, sprout || trial ? maxExpansion : null);
         var reached = plan.Filter(reachFilter);
         view = reached.Filter(reachFilter with { Kinds = kinds });
 
@@ -957,11 +978,16 @@ public sealed class PlanPane
         }
 
         hiddenExpansions = 0;
-        if (sprout)
+        var beyondTrialQuests = 0;
+        if (sprout || trial)
         {
             foreach (var block in plan.Expansions)
             {
-                if (block.Expansion > maxExpansion)
+                if (trial && block.Expansion > FreeTrial.LastExpansion)
+                {
+                    beyondTrialQuests += block.Count;
+                }
+                else if (block.Expansion > maxExpansion)
                 {
                     hiddenExpansions++;
                 }
@@ -969,6 +995,7 @@ public sealed class PlanPane
         }
 
         hiddenText = hiddenExpansions > 0 ? string.Format(CultureInfo.CurrentCulture, Strings.PlanSproutHiddenFormat, hiddenExpansions) : string.Empty;
+        beyondTrialText = beyondTrialQuests > 0 ? string.Format(CultureInfo.CurrentCulture, Strings.PlanBeyondTrialFormat, beyondTrialQuests) : string.Empty;
         summary = session.ViewedSnapshot is null
             ? Strings.PlanSummaryBrowse
             : string.Format(CultureInfo.CurrentCulture, Strings.PlanSummaryFormat, plan.Count, plan.ReadyCount);

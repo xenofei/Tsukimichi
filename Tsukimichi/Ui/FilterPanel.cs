@@ -49,6 +49,7 @@ public sealed class FilterPanel
     private static readonly Action<FilterSet, bool> SetIncludeOtherPaths = static (f, v) => f.IncludeOtherPaths = v;
     private static readonly Action<FilterSet, bool> SetPinnedOnly = static (f, v) => f.PinnedOnly = v;
     private static readonly Action<FilterSet, bool> SetAbandonedOnly = static (f, v) => f.AbandonedOnly = v;
+    private static readonly Action<FilterSet, bool> SetOnceOnlyStory = static (f, v) => f.OnceOnlyStory = v;
 
     /// <summary>Fixed job-category choices: ClassJobCategory row ids (null = all), labelled by <see cref="JobChoiceLabels"/>.</summary>
     private static readonly uint?[] JobChoiceIds = [null, 142u, 33u, 32u];
@@ -148,6 +149,7 @@ public sealed class FilterPanel
             Toggle(Strings.IncludeOtherPaths, Strings.IncludeOtherPathsTooltip, f.IncludeOtherPaths, f, SetIncludeOtherPaths, hasSnapshot);
             Toggle(Strings.PinnedOnly, Strings.PinnedOnlyTooltip, f.PinnedOnly, f, SetPinnedOnly);
             Toggle(Strings.AbandonedOnly, Strings.AbandonedOnlyTooltip, f.AbandonedOnly, f, SetAbandonedOnly, hasSnapshot);
+            Toggle(Strings.OnceOnlyStoryFilter, Strings.OnceOnlyStoryFilterTooltip, f.OnceOnlyStory, f, SetOnceOnlyStory, hasSnapshot);
         }
 
         if (ImGui.SmallButton(Strings.Reset))
@@ -423,6 +425,12 @@ public sealed class FilterPanel
         if (f.AbandonedOnly && Chip("##chipAbandoned", Strings.AbandonedChip, ref any))
         {
             f.AbandonedOnly = false;
+            filtersChanged = true;
+        }
+
+        if (f.OnceOnlyStory && Chip("##chipOnceOnly", Strings.OnceOnlyStoryChip, ref any))
+        {
+            f.OnceOnlyStory = false;
             filtersChanged = true;
         }
 

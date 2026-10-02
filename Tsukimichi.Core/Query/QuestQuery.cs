@@ -30,6 +30,9 @@ public static class QuestQuery
 
     private static readonly QuestRow[] NoRows = [];
 
+    /// <summary>The Status text of a quest beyond the free trial under <see cref="QueryContext.FreeTrial"/>.</summary>
+    private static string BeyondTrialStatus => Localization.CoreText.T("Core.Trial.BeyondStatus", "Beyond your trial");
+
     /// <summary>Filters, ordered as the panel shows them; the order also fixes <see cref="EmptyReason.Filters"/>.</summary>
     private enum Filter
     {
@@ -49,6 +52,7 @@ public static class QuestQuery
         IncludeOtherPaths,
         Pinned,
         Abandoned,
+        OnceOnlyStory,
         Search,
     }
 
@@ -70,6 +74,7 @@ public static class QuestQuery
         (Filter.IncludeOtherPaths, FilterNames.IncludeOtherPaths),
         (Filter.Pinned, FilterNames.Pinned),
         (Filter.Abandoned, FilterNames.Abandoned),
+        (Filter.OnceOnlyStory, FilterNames.OnceOnlyStory),
         (Filter.Search, FilterNames.Search),
     ];
 
@@ -157,7 +162,9 @@ public static class QuestQuery
             var state = source.StateOf(quest.RowId);
             if (plan.Passes(quest, state, Filter.None))
             {
-                rows.Add(new QuestRow(quest, state, source.StatusOf(quest)));
+                // The free-trial view: a quest the trial does not include says so rather than naming its blocker.
+                var status = ctx.FreeTrial && state != QuestState.Completed && FreeTrial.IsBeyond(quest) ? BeyondTrialStatus : source.StatusOf(quest);
+                rows.Add(new QuestRow(quest, state, status));
             }
         }
 
@@ -186,7 +193,7 @@ public static class QuestQuery
         }
 
         var newCount = 0;
-        if (sort.NewThisPatchFirst)
+        if (sort.NewThisPatchFirst && !ctx.FreeTrial)
         {
             // The Unlocks quick view's first group (P8): its quests from the newest patch series in the data.
             var patches = PatchIndex.For(catalog);
@@ -197,7 +204,19 @@ public static class QuestQuery
             }
         }
 
-        return new QueryResult(sorted, null, totalInScope, newCount);
+        // The free-trial view folds what lies beyond the trial into one group after the rest, every other order kept;
+        // the newest patch's quests all lie beyond it, so that group is not formed then.
+        var beyondTrial = 0;
+        if (ctx.FreeTrial)
+        {
+            sorted = Partition(sorted, static row => !FreeTrial.IsBeyond(row.Quest));
+            for (var i = sorted.Length - 1; i >= 0 && FreeTrial.IsBeyond(sorted[i].Quest); i--)
+            {
+                beyondTrial++;
+            }
+        }
+
+        return new QueryResult(sorted, null, totalInScope, newCount) { BeyondTrial = beyondTrial };
     }
 
     /// <summary>
@@ -615,6 +634,7 @@ public static class QuestQuery
             Filter.IncludeOtherPaths => !IncludeOtherPaths,
             Filter.Pinned => filters.PinnedOnly,
             Filter.Abandoned => filters.AbandonedOnly,
+            Filter.OnceOnlyStory => filters.OnceOnlyStory,
             Filter.Search => query.Length > 0,
             _ => false,
         };
@@ -693,6 +713,12 @@ public static class QuestQuery
 
             if (skip != Filter.Abandoned && filters.AbandonedOnly
                 && (ctx.Abandoned is not { } abandoned || !abandoned.Contains(quest.QuestId)))
+            {
+                return false;
+            }
+
+            if (skip != Filter.OnceOnlyStory && filters.OnceOnlyStory
+                && (ctx.NewGamePlus is not { } replayable || !NewGamePlus.IsOnceOnlyStoryLeft(quest, state, replayable, ctx.Chains, ctx.Stories)))
             {
                 return false;
             }

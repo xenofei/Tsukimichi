@@ -350,6 +350,25 @@ public sealed class WelcomeBackCard
             }
         }
 
+        // The story recap (1.9.0 collector extras): the journal text of the last main scenario quests done.
+        if (session.ViewedSnapshot is not null)
+        {
+            if (msqNext is not null)
+            {
+                Chrome.SameLineOrWrap(ImGui.CalcTextSize(Strings.RecapReadMsq).X + (ImGui.GetStyle().FramePadding.X * 2f));
+            }
+
+            if (ImGui.SmallButton(Strings.RecapReadMsq))
+            {
+                ui.OpenRecap(RecapRequest.MainScenario);
+            }
+
+            if (ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(Strings.RecapReadMsqTooltip);
+            }
+        }
+
         Chrome.EndCard();
         ImGui.Spacing();
     }

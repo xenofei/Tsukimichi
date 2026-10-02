@@ -287,6 +287,7 @@ public sealed partial class DetailPane
         EndSection();
         ui.RecordItem(UiRects.DetailGiver);
         DrawJournalCard(session, quest);
+        DrawCollector(session, quest);
         Gap();
     }
 

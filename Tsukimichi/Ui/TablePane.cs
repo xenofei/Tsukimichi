@@ -193,6 +193,9 @@ public sealed class TablePane : IDisposable
 
     /// <summary>Row id of the last "New in 7.5x" row under the Unlocks quick view (a rule is drawn under it); null when there is no group, or nothing after it.</summary>
     private uint? newGroupEnd;
+
+    // The last row before the free-trial view's "Beyond your trial" group (1.9.0); null when there is none.
+    private uint? trialGroupEnd;
     private bool clipperCreated;
 
     private ICallGateSubscriber<uint, object>? questMap;
@@ -314,6 +317,14 @@ public sealed class TablePane : IDisposable
         }
 
         newGroupEnd = runner.NewThisPatch > 0 && runner.NewThisPatch < rows.Length ? rows[runner.NewThisPatch - 1].Quest.RowId : null;
+
+        // The free-trial view (1.9.0): what lies beyond the trial is listed last, under a rule, and named here.
+        if (runner.BeyondTrialCaption is { } trialCaption)
+        {
+            ImGui.TextDisabled(trialCaption);
+        }
+
+        trialGroupEnd = runner.BeyondTrial > 0 && runner.BeyondTrial < rows.Length ? rows[rows.Length - runner.BeyondTrial - 1].Quest.RowId : null;
 
         // SortTristate lets the header cycle back to "no sort" (journal order) and stops ImGui from picking the first
         // sortable column (the glyph) as an implicit default on the first frame.
@@ -837,7 +848,7 @@ public sealed class TablePane : IDisposable
         }
 
         DrawRowChrome(rowMin, rowMax, nameCellMin.X, state, selected, liftRow == quest.RowId && hover > 0.5f, in layout, Motion.Key(RevealTag, quest.RowId));
-        if (newGroupEnd == quest.RowId)
+        if (newGroupEnd == quest.RowId || trialGroupEnd == quest.RowId)
         {
             DrawGroupEnd(rowMin, rowMax);
         }

@@ -22,4 +22,11 @@ public sealed record EmptyReason(IReadOnlyList<string> Filters, bool ScopeIsEmpt
 /// Under <see cref="SortSpec.NewThisPatchFirst"/>, how many of the leading <paramref name="Rows"/> form the "New in
 /// 7.5x" group (the newest patch series, <see cref="PatchIndex.IsNew"/>); 0 otherwise or when none passed the filters.
 /// </param>
-public sealed record QueryResult(QuestRow[] Rows, EmptyReason? Empty, int TotalInScope, int NewThisPatch = 0);
+public sealed record QueryResult(QuestRow[] Rows, EmptyReason? Empty, int TotalInScope, int NewThisPatch = 0)
+{
+    /// <summary>
+    /// Under the free-trial view (<see cref="QueryContext.FreeTrial"/>), how many of the trailing <see cref="Rows"/>
+    /// lie beyond the trial (<see cref="FreeTrial.IsBeyond"/>), the "Beyond your trial" group; 0 otherwise.
+    /// </summary>
+    public int BeyondTrial { get; init; }
+}
