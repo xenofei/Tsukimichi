@@ -4922,6 +4922,13 @@
   <data name="Alts.NoMatch" xml:space="preserve">
     <value>No character matches the search.</value>
   </data>
+  <data name="Alts.AllHidden" xml:space="preserve">
+    <value>All characters are hidden.</value>
+  </data>
+  <data name="Alts.UnknownDataCenter" xml:space="preserve">
+    <value>Unknown data center</value>
+    <comment>Heading of the Characters list's run of characters whose data center is not known.</comment>
+  </data>
   <data name="Alts.HiddenBadge" xml:space="preserve">
     <value>hidden</value>
     <comment>Badge after a hidden character's name in the lists (shown only with Show hidden characters). Lower case: it follows the name.</comment>
@@ -5032,6 +5039,10 @@
   </data>
   <data name="Alts.GridCellPendingFormat" xml:space="preserve">
     <value>{0}: being read</value>
+    <comment>{0} = character name.</comment>
+  </data>
+  <data name="Alts.GridCellUnreadableFormat" xml:space="preserve">
+    <value>{0}: unknown (its save could not be read)</value>
     <comment>{0} = character name.</comment>
   </data>
   <data name="Alts.GridColumnTooltipFormat" xml:space="preserve">

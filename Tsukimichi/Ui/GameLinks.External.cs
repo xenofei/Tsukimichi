@@ -1,7 +1,10 @@
 using System;
+using System.Collections.Generic;
 using Dalamud.Bindings.ImGui;
+using Dalamud.Game;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
+using Lumina.Excel.Sheets;
 using Tsukimichi.Core.Links;
 using Tsukimichi.Core.Model;
 
@@ -33,11 +36,48 @@ public sealed partial class GameLinks
     /// <summary>Asks before opening a page that may show spoilers (url, then the name the question shows); null opens at once.</summary>
     public Action<string, string>? ConfirmLink { get; set; }
 
+    // English quest names for the wiki's search on another client, read from the English Quest sheet once per row.
+    private readonly Dictionary<uint, string?> englishQuestNames = [];
+
     private string Language => SiteLanguage?.Invoke() ?? "en";
 
-    /// <summary>The quest's page on <paramref name="site"/>, from the link table or the site's search.</summary>
-    public string? QuestLink(ExternalSite site, QuestRecord quest) =>
-        ExternalLinks.Quest(site, quest.RowId, quest.Name, ExternalIds, Language);
+    /// <summary>
+    /// The quest's page on <paramref name="site"/>, from the link table or the site's search. The wiki is English, so
+    /// on another client its search uses the quest's English name (the English Quest sheet), else the quest's
+    /// Lodestone or Garland Tools page opens instead.
+    /// </summary>
+    public string? QuestLink(ExternalSite site, QuestRecord quest)
+    {
+        var language = Language;
+        return ExternalLinks.Quest(site, quest.RowId, quest.Name, ExternalIds, language, WikiEnglishName(site, quest.RowId, language));
+    }
+
+    /// <summary>The English name the wiki's search needs: only for the wiki, on another client, when the table has no page.</summary>
+    private string? WikiEnglishName(ExternalSite site, uint rowId, string language) =>
+        site == ExternalSite.ConsoleGamesWiki && language != "en" && ExternalIds.WikiTitle(rowId) is null ? EnglishQuestName(rowId) : null;
+
+    /// <summary>The quest's name on the English Quest sheet (cleaned of sheet glyphs), read once; null when it cannot be read.</summary>
+    private string? EnglishQuestName(uint rowId)
+    {
+        if (englishQuestNames.TryGetValue(rowId, out var cached))
+        {
+            return cached;
+        }
+
+        string? name = null;
+        try
+        {
+            var text = data.GetExcelSheet<Quest>(ClientLanguage.English)?.GetRowOrDefault(rowId)?.Name.ExtractText();
+            name = string.IsNullOrWhiteSpace(text) ? null : UiFormat.CleanSheetText(text);
+        }
+        catch (Exception ex)
+        {
+            log.Warning(ex, "Could not read the English name of quest {RowId}", rowId);
+        }
+
+        englishQuestNames[rowId] = name;
+        return name;
+    }
 
     /// <summary>The one link a copied line or row carries: the Lodestone page when known, else Garland Tools.</summary>
     public string PreferredLink(QuestRecord quest) => PreferredLink(quest.RowId);
@@ -88,6 +128,8 @@ public sealed partial class GameLinks
             return;
         }
 
+        // A submenu is its own popup window: it scales itself.
+        UiMetrics.ApplyFontScale();
         foreach (var (site, label) in QuestSites)
         {
             if (ImGui.MenuItem(label()) && QuestLink(site, quest) is { } url)
@@ -98,7 +140,8 @@ public sealed partial class GameLinks
             var searches = site switch
             {
                 ExternalSite.Lodestone => ExternalIds.LodestoneId(quest.RowId) is null,
-                ExternalSite.ConsoleGamesWiki => ExternalIds.WikiTitle(quest.RowId) is null,
+                ExternalSite.ConsoleGamesWiki => ExternalIds.WikiTitle(quest.RowId) is null
+                                                 && ExternalLinks.WikiSearches(Language, WikiEnglishName(site, quest.RowId, Language)),
                 _ => false,
             };
             if (searches && ImGui.IsItemHovered())

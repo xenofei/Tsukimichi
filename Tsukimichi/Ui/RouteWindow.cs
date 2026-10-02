@@ -277,12 +277,7 @@ public sealed class RouteWindow : Window
 
         // Copy for Discord (1.8.0): bullets, optional links (never on a masked name), parts of 2,000 characters.
         Chrome.SameLineOrWrap(ImGui.CalcTextSize(Strings.LinksCopyDiscord).X + (ImGui.GetStyle().FramePadding.X * 2f));
-        var spoilers = session.Spoilers;
-        discordCopy.Draw("route", v.Route, addLinks => RouteMarkdown.WriteDiscord(
-            v.Route,
-            bundle.Catalog,
-            spoilers.DisplayName,
-            addLinks ? q => spoilers.IsMasked(q) ? null : links.PreferredLink(q) : null));
+        discordCopy.Draw("route", v.Route, (Window: this, Route: v.Route, Catalog: bundle.Catalog), static (s, addLinks) => s.Window.RouteDiscordText(s.Route, s.Catalog, addLinks));
 
         var canPin = pins.CanPin && v.Route.Steps.Count > 0;
         var pinAll = PinAllLabel(v);
@@ -351,6 +346,13 @@ public sealed class RouteWindow : Window
     /// The second row (1.6.0): "Follow this route" (or "Stop following" when it is the followed one) and "Flag next
     /// stop". Following needs a character, since the route belongs to the one it was built for.
     /// </summary>
+    /// <summary>The route as Copy for Discord copies it; built only on a click.</summary>
+    private string RouteDiscordText(UnlockRoute route, QuestCatalog catalog, bool addLinks)
+    {
+        var spoilers = session.Spoilers;
+        return RouteMarkdown.WriteDiscord(route, catalog, spoilers.DisplayName, addLinks ? q => spoilers.IsMasked(q) ? null : links.PreferredLink(q) : null);
+    }
+
     private void DrawFollowActions(View v)
     {
         var owner = session.ViewedContentId;

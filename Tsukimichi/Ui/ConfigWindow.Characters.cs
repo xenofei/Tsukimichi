@@ -195,7 +195,7 @@ public sealed partial class ConfigWindow
             }
             else
             {
-                using (Theme.PushText(Theme.Silver))
+                using (Theme.PushText(Theme.Surface.Text))
                 {
                     ImGui.TextWrapped(charactersToast);
                 }
