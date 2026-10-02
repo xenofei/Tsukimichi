@@ -120,6 +120,64 @@ public class QuestionableCrossCheckTests
         Assert.Equal(CrossCheckOutcome.Agrees, result.Outcome);
     }
 
+    // Questionable's I18N.xml (commit 0bd61efe), key "Low level": en, ja-jp, zh-cn, zh-tw, and the commented-out ko.
+    [Theory]
+    [InlineData("Low level (GLA)")]
+    [InlineData("レベル不足 (GLA)")]
+    [InlineData("等级不足 (PLD)")]
+    [InlineData("等級不足 (ACN)")]
+    [InlineData("레벨 부족 (ROG)")]
+    public void Questionables_low_level_reason_agrees_in_every_language_it_ships(string reason)
+    {
+        Assert.True(QuestionableCrossCheck.IsLowLevelReason(reason));
+
+        var result = QuestionableCrossCheck.Compare(BlockedByLevel, new QuestionableAnswer(true, reason));
+
+        Assert.Equal(CrossCheckOutcome.Agrees, result.Outcome);
+        Assert.False(result.Disagrees);
+    }
+
+    [Fact]
+    public void Two_localized_low_level_reasons_still_agree()
+    {
+        var result = QuestionableCrossCheck.Compare(BlockedByLevel, new QuestionableAnswer(true, "レベル不足 (GLA),レベル不足 (PLD)"));
+
+        Assert.Equal(CrossCheckOutcome.Agrees, result.Outcome);
+    }
+
+    [Theory]
+    [InlineData("Low level")]
+    [InlineData("Low level ()")]
+    [InlineData("{Low level} (GLA)")]
+    [InlineData("{等级不足} (WHM)")]
+    [InlineData(" low level (gla) ")]
+    public void The_level_reasons_other_shapes_are_read(string reason) =>
+        Assert.True(QuestionableCrossCheck.IsLowLevelReason(reason));
+
+    [Theory]
+    [InlineData("Carrier level")]
+    [InlineData("Prev quest (2)")]
+    [InlineData("前提クエスト (2)")]
+    [InlineData("配達士レベル")]
+    [InlineData("邮递员等级")]
+    [InlineData("Aethernet locked (A): Ul'dah")]
+    [InlineData("Low level (GLA): more")]
+    [InlineData("Low levels")]
+    [InlineData("Low level (G-A)")]
+    [InlineData("レベル不足です")]
+    [InlineData("{Low level (GLA)")]
+    [InlineData("")]
+    public void Other_reasons_are_not_the_level_reason(string reason) =>
+        Assert.False(QuestionableCrossCheck.IsLowLevelReason(reason));
+
+    [Fact]
+    public void A_localized_level_reason_beside_another_reason_still_disagrees()
+    {
+        var result = QuestionableCrossCheck.Compare(BlockedByLevel, new QuestionableAnswer(true, "等级不足 (GLA),Prev quest (1)"));
+
+        Assert.Equal(CrossCheckOutcome.QuestionableLocked, result.Outcome);
+    }
+
     [Theory]
     [InlineData(QuestState.Accepted)]
     [InlineData(QuestState.Completed)]
