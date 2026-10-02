@@ -90,8 +90,15 @@ public class BlockerTextFixtureTests(FixtureCatalog fixture) : IClassFixture<Fix
         Assert.Equal("Rank: Recognized with the Amalj'aa", BlockerText.For(evaluation, quest, names));
         Assert.Equal("Blocked · Rank: Recognized with the Amalj'aa", BlockerText.StatusText(evaluation, quest, names));
 
+        // A rank-up quest: Recognized is not enough until its reputation is maxed (360, BeastReputationRank).
+        Assert.True(quest.BeastReputationMaxed);
         var recognized = neutral with { Tribes = new Dictionary<byte, TribeStanding> { [Amaljaa] = new(2, 0) } };
-        Assert.Equal(QuestState.Ready, StateResolver.Resolve(quest, recognized, Catalog, Context).State);
+        var unmaxed = StateResolver.Resolve(quest, recognized, Catalog, Context);
+        Assert.Equal(QuestState.Blocked, unmaxed.State);
+        Assert.Equal("Reputation: Recognized 0/360 with the Amalj'aa", BlockerText.For(unmaxed, quest, names));
+
+        var maxed = neutral with { Tribes = new Dictionary<byte, TribeStanding> { [Amaljaa] = new(2, 360) } };
+        Assert.Equal(QuestState.Ready, StateResolver.Resolve(quest, maxed, Catalog, Context).State);
     }
 
     [Fact]
@@ -100,8 +107,11 @@ public class BlockerTextFixtureTests(FixtureCatalog fixture) : IClassFixture<Fix
         var quest = Catalog.GetByRowId(BrotherhoodOfAsh)!;
         Assert.Equal("Brotherhood of Ash", quest.Name);
         Assert.Equal(Amaljaa, quest.BeastTribe);
-        // The sheet writes 65535 for the society story quests; the mapper reads that as no reputation gate.
+        // The sheet writes 65535 for the society story quests: "this rank's reputation maxed", and the opener's rank is
+        // None, which has nothing to max, so no reputation gate is listed.
         Assert.Equal(0, quest.BeastValue);
+        Assert.True(quest.BeastReputationMaxed);
+        Assert.Equal(0, quest.BeastRank);
 
         var names = fixture.Bundle.BlockerNames();
         var fresh = Fixture.Snapshot() with { JobLevels = Fixture.Levels((Fixture.Gladiator, 60)) };
