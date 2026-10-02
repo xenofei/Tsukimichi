@@ -111,12 +111,12 @@ public enum RouteOutcome : byte
 /// quests still to do.
 /// <para>
 /// <b>Which quests.</b> The target's prerequisite closure minus what is completed: walking back from the target
-/// through <see cref="QuestRecord.PreviousQuests"/>, a completed quest ends the walk (its own prerequisites no longer
-/// matter), an All join needs every previous quest, and an Any join is met by one completed previous quest or else
-/// takes the branch with the fewest quests left to do (the other branches are listed on the step as
-/// <see cref="RouteStep.Alternatives"/> with their counts); a branch through a locked-out or removed quest is taken
-/// only when every branch has one. A target several quests unlock (<see cref="RouteTarget.QuestRowIds"/>) is chosen
-/// the same way.
+/// through <see cref="QuestCatalog.PrerequisitesOf"/> (the previous quests and the accept conditions that name a
+/// quest), a completed quest ends the walk (its own prerequisites no longer matter), an All join needs every previous
+/// quest, and an Any join is met by one completed previous quest or else takes the branch with the fewest quests left
+/// to do (the other branches are listed on the step as <see cref="RouteStep.Alternatives"/> with their counts); a
+/// branch through a locked-out or removed quest is taken only when every branch has one. A target several quests
+/// unlock (<see cref="RouteTarget.QuestRowIds"/>) is chosen the same way.
 /// </para>
 /// <para>
 /// <b>Ordering rule.</b> Every quest comes after every quest it needs (a topological order of the closure); among the
@@ -490,10 +490,12 @@ public sealed class UnlockRoute
             }
         }
 
+        /// <summary>The catalogued prerequisites, accept conditions that name a quest included (<see cref="QuestCatalog.PrerequisitesOf"/>).</summary>
         private List<uint> Prereqs(QuestRecord quest)
         {
-            var list = new List<uint>(quest.PreviousQuests.QuestIds.Length);
-            foreach (var id in quest.PreviousQuests.QuestIds)
+            var prerequisites = catalog.PrerequisitesOf(quest).QuestIds;
+            var list = new List<uint>(prerequisites.Length);
+            foreach (var id in prerequisites)
             {
                 if (id != quest.RowId && catalog.ByRowId.ContainsKey(id) && !list.Contains(id))
                 {

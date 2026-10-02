@@ -35,7 +35,7 @@ public sealed class ReversePrereqIndex
 
         foreach (var quest in catalog.All)
         {
-            foreach (var prereq in quest.PreviousQuests.QuestIds)
+            foreach (var prereq in catalog.PrerequisitesOf(quest).QuestIds)
             {
                 Add(dependents, prereq, quest.RowId);
             }
@@ -56,7 +56,7 @@ public sealed class ReversePrereqIndex
         return new(Freeze(dependents), Freeze(byLevel), Freeze(byFestival));
     }
 
-    /// <summary>Row ids of quests that list <paramref name="rowId"/> in their previous quests or quest locks.</summary>
+    /// <summary>Row ids of quests that list <paramref name="rowId"/> in their previous quests (accept conditions that name a quest included) or quest locks.</summary>
     public IReadOnlyList<uint> Dependents(uint rowId) => dependents.GetValueOrDefault(rowId) ?? Empty;
 
     /// <summary>Row ids of quests whose level is exactly <paramref name="level"/>.</summary>

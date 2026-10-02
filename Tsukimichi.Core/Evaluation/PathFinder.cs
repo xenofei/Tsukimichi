@@ -84,7 +84,7 @@ public static class PathFinder
                 continue;
             }
 
-            var prereqs = quest.PreviousQuests.QuestIds;
+            var prereqs = c.PrerequisitesOf(quest).QuestIds;
             var catalogued = 0;
             foreach (var id in prereqs.Distinct())
             {
@@ -159,7 +159,7 @@ public static class PathFinder
             var quest = catalog.ByRowId[rowId];
             var steps = new List<(uint RowId, int Depth)>();
             var seen = new HashSet<uint>();
-            var prereqs = quest.PreviousQuests.QuestIds.Where(catalog.ByRowId.ContainsKey);
+            var prereqs = catalog.PrerequisitesOf(quest).QuestIds.Where(catalog.ByRowId.ContainsKey);
 
             if (quest.PreviousQuests.Join == JoinKind.Any)
             {

@@ -1155,8 +1155,13 @@ internal sealed partial class QuestVerifier(
     /// <summary>The catalog's filing state as the listed/retired rows print it.</summary>
     private static string ListedValue(QuestRecord q) => q.IsRetired ? "retired" : q.IsUnlisted ? "unlisted" : "listed";
 
-    /// <summary>Quest rows named by QuestAcceptAdditionCondition: further quests that must be complete before the quest is offered, in addition to PreviousQuest.</summary>
-    private List<uint> AcceptQuests(QuestRecord q) => q.AcceptConditions.Where(id => game.Catalog.GetByRowId(id) is not null).ToList();
+    /// <summary>
+    /// Quest rows named by QuestAcceptAdditionCondition that the evaluator judges on top of PreviousQuest: exactly what
+    /// <see cref="QuestCatalog.PrerequisitesOf"/> adds, so a source naming one is a match only for a condition the
+    /// plugin checks. A value that is no catalog quest stays out (listed, not checked), as does one PreviousQuest
+    /// already names.
+    /// </summary>
+    private List<uint> AcceptQuests(QuestRecord q) => game.Catalog.PrerequisitesOf(q).QuestIds.Except(q.PreviousQuests.QuestIds).ToList();
 
     /// <summary>Every duty the catalog says a quest unlocks: the sheet's InstanceContentUnlock, the ContentFinderCondition unlock criteria and curated/duty_unlocks.json (all three reach unique_quests.json).</summary>
     private List<string> DutyUnlocksOf(QuestRecord q)

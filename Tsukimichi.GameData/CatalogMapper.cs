@@ -204,7 +204,9 @@ public static class CatalogMapper
     /// <summary>
     /// QuestAcceptAdditionCondition is keyed by quest row id and carries two quest references plus one unknown uint.
     /// The non-zero values are kept in slot order (Requirement0, Requirement1, Unknown0); empty when no row exists or
-    /// every slot is zero, so a quest never shows an accept condition it does not have.
+    /// every slot is zero, so a quest never shows an accept condition it does not have. Most values are Quest row ids
+    /// (Unknown0 included: Endwalker, Dawntrail, Crossroads); a few are small ids of some other sheet. The catalog
+    /// judges the quest ones as previous quests (<see cref="QuestCatalog.PrerequisitesOf"/>).
     /// </summary>
     private static uint[] MapAcceptConditions(uint questRowId, ExcelSheet<QuestAcceptAdditionCondition> sheet)
     {

@@ -284,7 +284,7 @@ public sealed class PathChart
             foreach (var dependentId in index.Dependents(quest.RowId))
             {
                 // The index also lists quests that merely lock on this one; only a true prerequisite is an unlock.
-                if (bundle.Catalog.GetByRowId(dependentId) is not { } dependent || Array.IndexOf(dependent.PreviousQuests.QuestIds, quest.RowId) < 0)
+                if (bundle.Catalog.GetByRowId(dependentId) is not { } dependent || Array.IndexOf(bundle.Catalog.PrerequisitesOf(dependent).QuestIds, quest.RowId) < 0)
                 {
                     continue;
                 }

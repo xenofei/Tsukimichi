@@ -129,7 +129,10 @@ public sealed record CustomDeliveryRankRequirement(byte Npc, byte RequiredRank, 
 /// </summary>
 public sealed record CarrierLevelRequirement(byte RequiredLevel, byte? ActualLevel) : Requirement(RequirementKind.CarrierLevel);
 
-/// <summary>Extra accept conditions from the sheet. Core cannot evaluate these; they are listed, not checked.</summary>
+/// <summary>
+/// Accept conditions from the sheet that name no quest (QuestCatalog.UncheckedAcceptConditions). Core cannot evaluate
+/// these; they are listed, not checked. The ones that name a quest are judged with the previous quests.
+/// </summary>
 public sealed record AcceptConditionRequirement(uint[] ConditionIds) : Requirement(RequirementKind.AcceptCondition);
 
 /// <summary>A mount is required. Null means the plugin did not say.</summary>
