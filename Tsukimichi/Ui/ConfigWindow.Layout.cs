@@ -78,6 +78,7 @@ public sealed partial class ConfigWindow
         new(SettingsSection.Integrations, DrawWotsit),
         new(SettingsSection.Integrations, DrawNearbySettings),
         new(SettingsSection.Integrations, DrawIntegrations),
+        new(SettingsSection.Integrations, DrawGamePanels),
         new(SettingsSection.Integrations, DrawItemHints),
         new(SettingsSection.Data, DrawData),
         new(SettingsSection.Advanced, DrawPolling),
