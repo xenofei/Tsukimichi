@@ -106,7 +106,7 @@ public sealed class ExportWriterTests(FixtureCatalog fixture) : IClassFixture<Fi
 
         // CSV: byte order mark, one header row, one row per quest.
         var csv = ExportWriter.QuestsCsv(rows);
-        Assert.StartsWith("﻿rowId,questId,name,section,category,genre,expansion,completed\r\n", csv, StringComparison.Ordinal);
+        Assert.StartsWith("﻿rowId,questId,name,section,category,genre,expansion,completed,completedAt,completedAfter\r\n", csv, StringComparison.Ordinal);
         Assert.Equal(expected + 1, csv.Split("\r\n", StringSplitOptions.RemoveEmptyEntries).Length);
     }
 
@@ -231,6 +231,49 @@ public sealed class ExportWriterTests(FixtureCatalog fixture) : IClassFixture<Fi
 
         Assert.Equal(Path.Combine(Path.GetFullPath(dir), fileName), path);
         Assert.Equal("a,b\r\n", File.ReadAllText(path));
+    }
+
+    [Fact]
+    public void Quest_rows_carry_known_completion_dates_and_never_a_guessed_one()
+    {
+        var snapshot = LoadSnapshot();
+        var since = new DateTime(2026, 9, 12, 19, 2, 11, DateTimeKind.Utc);
+        var seen = new DateTime(2026, 9, 20, 21, 14, 5, DateTimeKind.Utc);
+        var rows = ExportWriter.QuestRows(Catalog, snapshot, Expansion);
+        var seenQuest = rows[0].QuestId;
+        var byQuest = rows[1].QuestId;
+        var dated = snapshot with
+        {
+            CompletionDatesSinceUtc = since,
+            CompletedUtc = new Dictionary<ushort, DateTime> { [seenQuest] = seen, [byQuest] = seen.AddDays(1) },
+            CompletedAfterUtc = new Dictionary<ushort, DateTime> { [byQuest] = seen },
+        };
+
+        rows = ExportWriter.QuestRows(Catalog, dated, Expansion);
+        Assert.Equal(seen, rows[0].CompletedAt);
+        Assert.Null(rows[0].CompletedAfter);
+        Assert.Equal(seen.AddDays(1), rows[1].CompletedAt);
+        Assert.Equal(seen, rows[1].CompletedAfter);
+        // Already complete when recording started: no date at all, not the start date.
+        Assert.Null(rows[2].CompletedAt);
+
+        var header = ExportWriter.Header("v", "g", Exported, dated, includeCharacterName: false);
+        using var json = JsonDocument.Parse(ExportWriter.QuestsJson(header, rows));
+        Assert.Equal("2026-09-12T19:02:11Z", json.RootElement.GetProperty("completionDatesSinceUtc").GetString());
+        var quests = json.RootElement.GetProperty("quests");
+        Assert.Equal("2026-09-20T21:14:05Z", quests[0].GetProperty("completedAt").GetString());
+        Assert.False(quests[0].TryGetProperty("completedAfter", out _));
+        Assert.Equal("2026-09-20T21:14:05Z", quests[1].GetProperty("completedAfter").GetString());
+        Assert.False(quests[2].TryGetProperty("completedAt", out _));
+
+        var lines = ExportWriter.QuestsCsv(rows).Split("\r\n");
+        Assert.EndsWith(",true,2026-09-20T21:14:05Z,", lines[1], StringComparison.Ordinal);
+        Assert.EndsWith(",true,2026-09-21T21:14:05Z,2026-09-20T21:14:05Z", lines[2], StringComparison.Ordinal);
+        Assert.EndsWith(",true,,", lines[3], StringComparison.Ordinal);
+
+        // A file from before 1.5 has no start date: the header field is left out.
+        using var old = JsonDocument.Parse(ExportWriter.QuestsJson(ExportWriter.Header("v", "g", Exported, snapshot, false), rows));
+        Assert.False(old.RootElement.TryGetProperty("completionDatesSinceUtc", out _));
     }
 
     [Fact]

@@ -412,6 +412,8 @@ public sealed class StatePoller : IDisposable
         }
 
         var states = memory.States;
+        // Completion dates (decision 9) ride along with the capture: carried over, and stamped for quests just completed.
+        snapshot = CompletionDates.Carry(last, snapshot);
         var diff = SnapshotDiff.Compute(last, snapshot);
         if (diff.IsEmpty)
         {
@@ -459,7 +461,11 @@ public sealed class StatePoller : IDisposable
             var warnings = new List<string>();
             var acceptedSince = AcceptedSince.Load(sidecarPath, warnings);
             var abandoned = AbandonedLedger.Load(abandonedPath, warnings);
-            return new FirstPassResult(states, acceptedSince, abandoned, warnings, resolveMs);
+
+            // Completion dates continue from the stored file; quests completed while the plugin was not watching are
+            // dated "between the stored capture and now" (decision 9).
+            var dated = CompletionDates.Begin(snapshots.ReadStored(snapshot.ContentId), snapshot);
+            return new FirstPassResult(dated, states, acceptedSince, abandoned, warnings, resolveMs);
         });
 
         pendingFirst = new FirstPass(snapshot, bundle, context, task, Stopwatch.GetTimestamp(), captureMs);
@@ -503,7 +509,7 @@ public sealed class StatePoller : IDisposable
             log.Warning("Character sidecar: {Warning}", warning);
         }
 
-        var snapshot = pending.Snapshot;
+        var snapshot = result.Snapshot;
         var dirty = AcceptedSince.Reconcile(result.AcceptedSince, snapshot, now);
         memory.Commit(snapshot, result.States, pending.Bundle);
         memory.SetAcceptedSince(result.AcceptedSince, dirty);
@@ -728,7 +734,9 @@ public sealed class StatePoller : IDisposable
     /// <summary>What each part of a flush threw on the writer; null for a part that was written or not queued.</summary>
     private sealed record FlushOutcome(Exception? Snapshot, Exception? Accepted, Exception? Abandoned);
 
+    /// <param name="Snapshot">The capture with its completion dates (<see cref="CompletionDates.Begin"/>); what is committed.</param>
     private sealed record FirstPassResult(
+        CharacterSnapshot Snapshot,
         Dictionary<uint, QuestEvaluation> States,
         Dictionary<ushort, DateTime> AcceptedSince,
         Dictionary<ushort, AbandonedEntry> Abandoned,

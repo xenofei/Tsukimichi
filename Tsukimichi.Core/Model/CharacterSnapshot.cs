@@ -109,6 +109,39 @@ public sealed record CharacterSnapshot
 
     public byte CurrentJob { get; init; }
 
+    /// <summary>
+    /// The collectible rewards of the unique-reward data the character owns, per kind (keyed by <see cref="RewardKind"/>
+    /// name: Mount, Emote, …; see <see cref="Unique.Collectibles"/>), read from the client's unlock flags at capture, so
+    /// a stored character, or one live in another game client, still answers "owned?" (decision 9). Keys are names
+    /// rather than enum values so an older build skips a kind it does not know instead of failing the whole file.
+    /// Additive at schema v1: empty in files written before 1.5, which reads as "not captured"; not written while empty.
+    /// </summary>
+    [OmitWhenEmpty]
+    public IReadOnlyDictionary<string, CollectibleSet> Collectibles { get; init; } = new Dictionary<string, CollectibleSet>();
+
+    /// <summary>
+    /// When this character's quest completion dates started being recorded (the first capture by a build that records
+    /// them). Quests already complete then have no date (<see cref="Runtime.CompletionDates"/>). Additive at schema v1:
+    /// null in older files and not written while null.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public DateTime? CompletionDatesSinceUtc { get; init; }
+
+    /// <summary>
+    /// Runtime quest id to the UTC time the plugin first saw the quest completed. Kept once set (a seasonal quest
+    /// whose bit the game clears keeps its first date). Additive at schema v1: not written while empty.
+    /// </summary>
+    [OmitWhenEmpty]
+    public IReadOnlyDictionary<ushort, DateTime> CompletedUtc { get; init; } = new Dictionary<ushort, DateTime>();
+
+    /// <summary>
+    /// For quests found completed at a login rather than seen being completed: the time of the capture before it, the
+    /// earliest the quest can have been done. The quest was completed between this and its <see cref="CompletedUtc"/>.
+    /// Additive at schema v1: not written while empty.
+    /// </summary>
+    [OmitWhenEmpty]
+    public IReadOnlyDictionary<ushort, DateTime> CompletedAfterUtc { get; init; } = new Dictionary<ushort, DateTime>();
+
     /// <summary>Reads the completion bit for a quest id; false when the bitmask is shorter than the id.</summary>
     public bool IsCompleted(ushort questId)
     {

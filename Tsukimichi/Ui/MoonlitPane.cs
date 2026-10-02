@@ -476,10 +476,12 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         ImGui.TextDisabled(visibleSummary);
         if (!session.IsLive)
         {
-            Chrome.SameLineOrWrap(ImGui.CalcTextSize(Strings.MoonlitOfflineHint).X);
+            // A stored character's owned states are its last capture's ("Owned as of …"); older files have none.
+            var ownedNote = Strings.MoonlitOwnedNote(unlocks.StoredAsOfUtc);
+            Chrome.SameLineOrWrap(ImGui.CalcTextSize(ownedNote).X);
             using (Theme.PushText(Theme.Dusk))
             {
-                TextFlow.Wrapped(Strings.MoonlitOfflineHint, Chrome.RoomX());
+                TextFlow.Wrapped(ownedNote, Chrome.RoomX());
             }
         }
 
@@ -1336,7 +1338,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 
         // Titles and achievements switch to the game's own state once the client has loaded it (opening the Titles or
         // Achievements window); that bumps no session version, so the reader's own counter is watched too.
-        var achievementState = unlocks.AchievementStateVersion;
+        var achievementState = unlocks.LiveStateVersion;
         if (obtainedVersion != session.Version || obtainedBuild != rowsBuild || countsHideStore != settings.MoonlitHideStoreResells
             || obtainedAchievementState != achievementState)
         {

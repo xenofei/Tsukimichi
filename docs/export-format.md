@@ -48,6 +48,10 @@ One row per quest the character has completed, in journal order. With **List eve
 | `genre` | Journal genre (the node the quest sits under in the Journal tab) |
 | `expansion` | Expansion name ("A Realm Reborn", …, "Dawntrail") |
 | `completed` | `true` when the quest's completion flag is set |
+| `completedAt` | When Tsukimichi first saw the quest completed, UTC, ISO 8601. Absent in JSON (empty in CSV) when no date is known |
+| `completedAfter` | Only for a quest found completed when the character logged in (it was done while Tsukimichi was not running): the character's previous capture, UTC. The quest was completed between `completedAfter` and `completedAt` |
+
+Completion dates start when Tsukimichi 1.5 first captures the character (`completionDatesSinceUtc` in the JSON header). Quests already completed then get no date: nothing is guessed. The dates are kept on your computer with the character's other saved data.
 
 Quests the game removed (the "Removed from the game" node) are included when the character completed them. Quests the journal never names (internal steps) are not.
 
@@ -63,7 +67,7 @@ One row per reward of the Moonlit tab's unique view (rewards you marked not uniq
 | `questRowId` | Quest sheet row id of the quest that gives it |
 | `obtained` | `true`, `false`, or unknown (`null` in JSON, `unknown` in CSV) |
 
-Emotes, minions, mounts, orchestrion rolls, ornaments (fashion accessories), Triple Triad cards and duties are read from the game's unlock flags, which only exist for the logged-in character: exported for a stored character, they read unknown. Rewards that simply follow the quest (actions, traits, jobs, blue magic, titles, achievements, system unlocks) are answered from the quest's completion flag for any character. Bardings, hairstyles, items and gear read unknown for now. This is the same obtained state the Moonlit tab shows.
+Emotes, minions, mounts, orchestrion rolls, ornaments (fashion accessories), Triple Triad cards, bardings, hairstyles, aether currents and duties are read from the game's unlock flags. Each capture saves them with the character, so a stored character (or one logged in on another game client) exports what it owned at its last capture. A character not captured since Tsukimichi 1.5 reads unknown for these until it logs in once. Rewards that simply follow the quest (actions, traits, jobs, blue magic, titles, achievements, system unlocks) are answered from the quest's completion flag for any character. Items and gear read unknown for now. This is the same obtained state the Moonlit tab shows.
 
 ## JSON
 
@@ -81,6 +85,7 @@ A small header, the counts, then the rows. `formatVersion` is bumped only when a
 | `count` | Number of rows |
 | `completedCount` | Quests: rows with `completed` true |
 | `obtainedCount`, `unknownCount` | Moonlit: rows obtained, rows unknown |
+| `completionDatesSinceUtc` | Quests: when completion dates started being recorded for the character; absent when it has none yet |
 
 Sample (quests, trimmed):
 
@@ -92,6 +97,7 @@ Sample (quests, trimmed):
   "pluginVersion": "0.7.0.0",
   "gameVersion": "2026.09.15.0000.0000",
   "exportedUtc": "2026-09-29T18:30:00Z",
+  "completionDatesSinceUtc": "2026-09-12T19:02:11Z",
   "count": 2,
   "completedCount": 2,
   "quests": [
@@ -113,7 +119,8 @@ Sample (quests, trimmed):
       "category": "Gridanian Sidequests",
       "genre": "Gridanian Sidequests",
       "expansion": "A Realm Reborn",
-      "completed": true
+      "completed": true,
+      "completedAt": "2026-09-20T21:14:05Z"
     }
   ]
 }
@@ -156,9 +163,9 @@ Sample (Moonlit, trimmed):
 UTF-8 with a byte order mark (so Excel reads accented names correctly), comma separated, CRLF line ends, one header row, fields quoted per RFC 4180 when they contain a comma, a quote or a line break. CSV files carry the rows only; the header fields above are JSON-only.
 
 ```csv
-rowId,questId,name,section,category,genre,expansion,completed
-65621,85,Close to Home,Main Scenario (A Realm Reborn through Endwalker),Seventh Umbral Era Main Scenario Quests,Seventh Umbral Era,A Realm Reborn,true
-65575,39,Coming to Gridania,Sidequests,Gridanian Sidequests,Gridanian Sidequests,A Realm Reborn,true
+rowId,questId,name,section,category,genre,expansion,completed,completedAt,completedAfter
+65621,85,Close to Home,Main Scenario (A Realm Reborn through Endwalker),Seventh Umbral Era Main Scenario Quests,Seventh Umbral Era,A Realm Reborn,true,,
+65575,39,Coming to Gridania,Sidequests,Gridanian Sidequests,Gridanian Sidequests,A Realm Reborn,true,2026-09-20T21:14:05Z,
 ```
 
 ```csv

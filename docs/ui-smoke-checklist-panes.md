@@ -8,12 +8,14 @@ Tick each line on a character that has done at least one quest with a unique rew
 ## Moonlit pane
 
 - [ ] Left column lists **All** first, then one line per reward kind present in `unique_quests.json`, each with a small filling moon and `obtained/total`; the moon's lit fraction matches the ratio (0/1175 is a new moon, 5/6 nearly full, 136/177 gibbous; only `n/n` is a full moon).
-- [ ] Kinds with no readable entry on the viewed character (logged out, a stored snapshot, or emote/mount/minion rows without the live client) show the veiled moon with a tooltip instead of an empty moon.
+- [ ] Kinds with no readable entry on the viewed character (items and gear, or emote/mount/minion rows of a stored snapshot saved before 1.5) show the veiled moon with a tooltip instead of an empty moon.
 - [ ] Selecting a kind filters the table; selecting **All** shows every entry. The selected line is highlighted.
 - [ ] Table columns: Have (moon), Reward (icon + name), Kind, Quest, State (moon), Confidence. Columns resize, reorder and hide from the header context menu; the header stays frozen while scrolling.
 - [ ] Dragging the **State** header left of Quest (grab the middle of the header, not its edge) moves the column; Quest keeps its width. The same works for **Have**.
 - [ ] Her Last Vow → Most Gentlemanly shows a full moon in Have on a character that has the emote and a new moon on one that does not.
-- [ ] While logged out, or viewing a stored snapshot, Have shows the veiled moon for emote/mount/minion/orchestrion/ornament/card/aether current/duty rows and the toolbar says obtained states need the live character; action/trait/job/title/achievement/system rows still answer from the snapshot's completion bit.
+- [ ] Viewing a stored snapshot captured by 1.5 or later (or a character live in another game client), emote/mount/minion/orchestrion/ornament/card/barding/hairstyle/aether current/duty rows show what it owned at its last capture and the toolbar says "Owned as of <capture time>."; a snapshot from before 1.5 shows the veiled moon for those rows and says to log in with the character once. Action/trait/job/title/achievement/system rows answer from the snapshot's completion bit either way.
+- [ ] On the live character, learning a mount or minion (or buying a barding) turns its Have moon full within a second, without waiting for the next save.
+- [ ] Detail pane of a completed quest: the hero's caption ends "· Done 12 Sep 2026" for a quest completed while Tsukimichi ran, "· Done by …" for one completed while it was not running, "· Done before …" for one already complete when the character was first captured by 1.5.
 - [ ] Reward icons: an item-based reward (mount, minion, orchestrion) shows the item icon; an emote from `Quest.EmoteReward` shows the emote icon; an entry with no icon shows a small moon instead (filled when obtained).
 - [ ] **Hide obtained** removes full-moon rows; the `n / total` counter next to the filter updates.
 - [ ] Starlight Stakeout → Starlight Bear (and the other 68 rewards the Online Store re-sells, Clowning Around face paint among them) shows a small Dusk **Store only** mark after the name; hovering it reads "Also sold on the FFXIV Online Store; not exclusive to the quest". The same line appears in the reward tooltip (table icon, detail pane) and under the quest in the item hover hint.

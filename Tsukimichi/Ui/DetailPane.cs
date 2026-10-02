@@ -1301,6 +1301,12 @@ public sealed partial class DetailPane
             model.HeaderLine += string.Format(CultureInfo.CurrentCulture, Strings.DetailAddedInFormat, quest.AddedIn);
         }
 
+        // Decision 9: when the character completed it, as far as its snapshot knows ("Done 12 Sep 2026").
+        if (Core.Runtime.CompletionDates.For(snapshot, quest.QuestId) is { } done)
+        {
+            model.HeaderLine += Strings.DetailDoneSuffix(done);
+        }
+
         // The caption line as whole segments ("Heavensward", "Lv 56", the job, "Added in 3.0") that wrap apart (L5).
         model.HeaderSegments = model.HeaderLine.Split(BlockerText.Separator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 

@@ -14,8 +14,9 @@ public sealed record ExportResult(bool Ok, string? Path, string Message);
 
 /// <summary>
 /// Writes the P12 exports of the viewed character (Settings › Data › Export and <c>/tsuki export</c>): the completed
-/// quests from its snapshot, and the Moonlit collection with each reward's obtained state as the Moonlit pane reads it
-/// (<see cref="RewardUnlockReader"/>: flag-backed kinds are known only for the logged-in character). Format, folder,
+/// quests from its snapshot (with their completion dates), and the Moonlit collection with each reward's obtained state
+/// as the Moonlit pane reads it (<see cref="RewardUnlockReader"/>: flag-backed kinds live for the logged-in character,
+/// from the last capture for any other). Format, folder,
 /// the character-name opt-in and the full-journal option come from <see cref="Configuration"/>. Local files only;
 /// never an upload. Runs on the framework thread (the unlock flags are read there).
 /// </summary>
