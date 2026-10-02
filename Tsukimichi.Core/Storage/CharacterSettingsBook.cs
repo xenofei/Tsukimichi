@@ -216,7 +216,10 @@ public sealed class CharacterSettingsBook
 
     /// <summary>
     /// "Delete all data": every character's settings go except those <paramref name="keep"/> selects (characters live
-    /// in another game client). Edits not saved yet are dropped; the file is rewritten under the lock on the writer.
+    /// in another game client), and every character keeps its hidden and not-tracked choices
+    /// (<see cref="CharacterSettingsFile.KeepOnly(IReadOnlyDictionary{ulong, CharacterSettings}, Func{ulong, bool})"/>):
+    /// an untracked character logged in here is not written at once. Edits not saved yet are dropped; the file is
+    /// rewritten under the lock on the writer.
     /// </summary>
     public void Reset(Func<ulong, bool> keep)
     {
@@ -224,16 +227,7 @@ public sealed class CharacterSettingsBook
         generation++;
         pending.Clear();
         inFlight = null;
-        var kept = new Dictionary<ulong, CharacterSettings>();
-        foreach (var (id, entry) in map)
-        {
-            if (keep(id))
-            {
-                kept[id] = entry;
-            }
-        }
-
-        Adopt(kept);
+        Adopt(CharacterSettingsFile.KeepOnly(map, keep));
         var ticket = generation;
         var warnings = new List<string>();
         SerialWriter.Submit(writer, () => CharacterSettingsFile.KeepOnly(path, keep, warnings), (merged, error) =>

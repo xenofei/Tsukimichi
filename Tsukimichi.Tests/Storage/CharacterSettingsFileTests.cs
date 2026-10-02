@@ -121,13 +121,73 @@ public sealed class CharacterSettingsFileTests : IDisposable
     [Fact]
     public void Forget_drops_the_character_and_keep_only_keeps_the_chosen()
     {
-        CharacterSettingsFile.SaveChanges(Path, [CharacterSettingChange.Hide(Main, true), CharacterSettingChange.Hide(Alt, true)], new Dictionary<ulong, CharacterSettings>());
+        CharacterSettingsFile.SaveChanges(Path, [CharacterSettingChange.Spoiler(Main, true), CharacterSettingChange.Compare(Alt, Main)], new Dictionary<ulong, CharacterSettings>());
         var forgotten = CharacterSettingsFile.SaveChanges(Path, [CharacterSettingChange.Forget(Main)], new Dictionary<ulong, CharacterSettings>());
         Assert.Equal([Alt], forgotten.Keys);
 
         var kept = CharacterSettingsFile.KeepOnly(Path, static id => id == Main);
         Assert.Empty(kept);
         Assert.Empty(CharacterSettingsFile.Load(Path));
+    }
+
+    [Fact]
+    public void Forget_keeps_hidden_and_not_tracked_and_clears_the_rest()
+    {
+        CharacterSettingsFile.SaveChanges(
+            Path,
+            [
+                CharacterSettingChange.Track(Main, false),
+                CharacterSettingChange.Spoiler(Main, true),
+                CharacterSettingChange.Noticed(Main, "eden"),
+                CharacterSettingChange.Compare(Main, Alt),
+                CharacterSettingChange.Hide(Alt, true),
+                CharacterSettingChange.Why(Alt, "eden", open: true),
+            ],
+            new Dictionary<ulong, CharacterSettings>());
+
+        var forgotten = CharacterSettingsFile.SaveChanges(Path, [CharacterSettingChange.Forget(Main), CharacterSettingChange.Forget(Alt)], new Dictionary<ulong, CharacterSettings>());
+
+        // Forgetting an untracked character deletes its old file; it must not be tracked again at its next login.
+        Assert.True(forgotten[Main].DontTrack);
+        Assert.False(forgotten[Main].Hidden);
+        Assert.Null(forgotten[Main].SpoilerShield);
+        Assert.Null(forgotten[Main].CompareWith);
+        Assert.Empty(forgotten[Main].PayoffGatesNoticed);
+        Assert.True(forgotten[Alt].Hidden);
+        Assert.Empty(forgotten[Alt].PayoffWhyOpen);
+        Assert.True(CharacterSettingsFile.Load(Path)[Main].DontTrack);
+
+        // Applying it again changes nothing more.
+        var again = CharacterSettingsFile.Copy(forgotten);
+        CharacterSettingsFile.Apply(again, [CharacterSettingChange.Forget(Main)]);
+        Assert.True(again[Main].DontTrack);
+    }
+
+    [Fact]
+    public void Delete_all_keeps_every_characters_hidden_and_not_tracked_choices()
+    {
+        CharacterSettingsFile.SaveChanges(
+            Path,
+            [
+                CharacterSettingChange.Track(Main, false),
+                CharacterSettingChange.Spoiler(Main, false),
+                CharacterSettingChange.Hide(Alt, true),
+                CharacterSettingChange.Compare(Alt, Main),
+                CharacterSettingChange.Spoiler(3, true),
+                CharacterSettingChange.Spoiler(4, true),
+            ],
+            new Dictionary<ulong, CharacterSettings>());
+
+        // Character 4 is live in another client: everything of it stays.
+        var kept = CharacterSettingsFile.KeepOnly(Path, static id => id == 4);
+
+        Assert.Equal([Alt, 4UL, Main], kept.Keys.Order());
+        Assert.True(kept[Main].DontTrack);
+        Assert.Null(kept[Main].SpoilerShield);
+        Assert.True(kept[Alt].Hidden);
+        Assert.Null(kept[Alt].CompareWith);
+        Assert.True(kept[4].SpoilerShield);
+        Assert.True(CharacterSettingsFile.Load(Path)[Main].DontTrack);
     }
 
     [Fact]

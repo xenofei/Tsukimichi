@@ -518,8 +518,11 @@ public sealed class StatePoller : IDisposable
 
         // The plausibility guard (1.5.0): a capture that lost many completed quests at once, or emptied the journal,
         // is held back before anything (the accepted times, the abandoned ledger, the commit) takes it in.
-        // A loss that keeps reading the same for a few minutes is real and is taken in after all.
+        // A loss that keeps reading the same for a few minutes is real and is taken in after all, when it is committed:
+        // until then the watch stays accepted (HeldBackCaptures.Accepted), so a deferred pass dropped at logout, or one
+        // that faulted, leaves the next capture of the same loss (the logout's own included) accepted at once.
         var plausibility = CapturePlausibility.Check(last, snapshot, catalog);
+        PlausibilityResult? accepted = null;
         if (!plausibility.Plausible)
         {
             if (!heldBack.Observe(last, snapshot, plausibility, now))
@@ -527,7 +530,7 @@ public sealed class StatePoller : IDisposable
                 throw new ImplausibleCaptureException(plausibility);
             }
 
-            AcceptHeldBack(plausibility, snapshot.ContentId, now);
+            accepted = plausibility;
         }
         else if (heldBack.Count > 0)
         {
@@ -540,7 +543,7 @@ public sealed class StatePoller : IDisposable
         var full = FullPass.Needed(diff, offerChanged);
         if (full && deferFull)
         {
-            StartFullPass(last, snapshot, diff, states, bundle, context, offer, now);
+            StartFullPass(last, snapshot, diff, states, bundle, context, offer, now, accepted);
             return null;
         }
 
@@ -549,6 +552,11 @@ public sealed class StatePoller : IDisposable
             : StateResolver.ResolveDependents(states, ChangedRows(diff, catalog, session.Index!), session.Index!, catalog, snapshot, context, changedFestivals: diff.ChangedFestivals);
 
         var events = QuestEvents.Derive(diff, last, snapshot, catalog, states, resolved, now);
+        if (accepted is { } loss)
+        {
+            AcceptHeldBack(loss, snapshot.ContentId, now);
+        }
+
         return Take(last, snapshot, diff, resolved, events, bundle, context, offer, now);
     }
 
@@ -584,6 +592,7 @@ public sealed class StatePoller : IDisposable
     /// commit, never changed in place), the catalog and the context. The capture already passed the plausibility
     /// guard; the accepted times, the ledger and the memory take it in only when <see cref="CommitFullPass"/> does.
     /// </summary>
+    /// <param name="accepted">A held-back loss the guard now takes in: announced and backed up when the pass commits.</param>
     private void StartFullPass(
         CharacterSnapshot last,
         CharacterSnapshot snapshot,
@@ -592,11 +601,12 @@ public sealed class StatePoller : IDisposable
         CatalogBundle bundle,
         EvalContext context,
         DailyOffer offer,
-        DateTime now)
+        DateTime now,
+        PlausibilityResult? accepted)
     {
         var catalog = bundle.Catalog;
         var task = Task.Run(() => FullPass.Run(catalog, last, snapshot, diff, context, states, now));
-        pendingFull = new PendingFullPass(last, snapshot, diff, bundle, context, offer, now, task, Stopwatch.GetTimestamp());
+        pendingFull = new PendingFullPass(last, snapshot, diff, bundle, context, offer, now, task, Stopwatch.GetTimestamp(), accepted);
     }
 
     /// <summary>
@@ -626,6 +636,12 @@ public sealed class StatePoller : IDisposable
         }
 
         var result = pending.Task.Result;
+        if (pending.Accepted is { } loss)
+        {
+            // Only now, with the commit: a pass dropped or faulted leaves the watch accepted for the next capture.
+            AcceptHeldBack(loss, pending.Snapshot.ContentId, now);
+        }
+
         var poll = Take(pending.Base, pending.Snapshot, pending.Diff, result.States, result.Events, pending.Bundle, pending.Context, pending.Offer, pending.CapturedUtc);
         log.Debug(
             "Re-evaluation for {ContentId}: {Count} quests in {ResolveMs:F1} ms on a worker, committed {TotalMs:F0} ms after the capture",
@@ -824,9 +840,9 @@ public sealed class StatePoller : IDisposable
     }
 
     /// <summary>
-    /// A held-back loss read the same long enough (<see cref="HeldBackCaptures"/>) and is about to be committed: what
-    /// is pending is written first, the saved file is copied to the backup on the writer before the capture's own save,
-    /// and the acceptance is logged and printed in chat.
+    /// A held-back loss read the same long enough (<see cref="HeldBackCaptures"/>) and is about to be committed, on this
+    /// frame (never before a deferred pass lands): what is pending is written first, the saved file is copied to the
+    /// backup on the writer before the capture's own save, the acceptance is logged and printed in chat, and the watch ends.
     /// </summary>
     private void AcceptHeldBack(PlausibilityResult result, ulong contentId, DateTime now)
     {
@@ -1092,7 +1108,8 @@ public sealed class StatePoller : IDisposable
 
     /// <summary>
     /// A full pass on the worker: the committed capture it was diffed against (<paramref name="Base"/>), the capture,
-    /// the diff, what it resolves against, the offer it was read with, the poll's time and the task doing it.
+    /// the diff, what it resolves against, the offer it was read with, the poll's time, the task doing it, and the
+    /// held-back loss it takes in (<paramref name="Accepted"/>, null for an ordinary capture).
     /// </summary>
     private sealed record PendingFullPass(
         CharacterSnapshot Base,
@@ -1103,7 +1120,8 @@ public sealed class StatePoller : IDisposable
         DailyOffer Offer,
         DateTime CapturedUtc,
         Task<FullPassResult> Task,
-        long StartedTimestamp);
+        long StartedTimestamp,
+        PlausibilityResult? Accepted);
 
     /// <summary>What each part of a flush threw on the writer; null for a part that was written or not queued.</summary>
     private sealed record FlushOutcome(Exception? Snapshot, Exception? Accepted, Exception? Abandoned);

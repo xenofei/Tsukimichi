@@ -105,13 +105,49 @@ public sealed class CharacterSettingsBookTests : IDisposable
     public void Reset_keeps_only_the_chosen_characters()
     {
         var book = new CharacterSettingsBook(Path);
-        book.Edit([CharacterSettingChange.Hide(Main, true), CharacterSettingChange.Hide(Alt, true)]);
+        book.Edit([CharacterSettingChange.Spoiler(Main, true), CharacterSettingChange.Spoiler(Alt, true)]);
 
         book.Reset(static id => id == Alt);
 
-        Assert.False(book.IsHidden(Main));
-        Assert.True(book.IsHidden(Alt));
+        Assert.Null(book.SpoilerShield(Main));
+        Assert.True(book.SpoilerShield(Alt));
         Assert.Equal([Alt], CharacterSettingsFile.Load(Path).Keys);
+    }
+
+    [Fact]
+    public void Forget_leaves_an_untracked_character_untracked()
+    {
+        var book = new CharacterSettingsBook(Path);
+        book.Edit([CharacterSettingChange.Track(Main, false), CharacterSettingChange.Spoiler(Main, true), CharacterSettingChange.Hide(Alt, true)]);
+
+        // What Forget character and "Forget characters not seen in N days" send, one per character.
+        book.Edit([CharacterSettingChange.Forget(Main), CharacterSettingChange.Forget(Alt)]);
+
+        Assert.False(book.IsTracked(Main));
+        Assert.Null(book.SpoilerShield(Main));
+        Assert.True(book.IsHidden(Alt));
+        var reloaded = new CharacterSettingsBook(Path);
+        reloaded.Load();
+        Assert.False(reloaded.IsTracked(Main));
+        Assert.True(reloaded.IsHidden(Alt));
+    }
+
+    [Fact]
+    public void Delete_all_keeps_untracked_and_hidden_characters_so()
+    {
+        var book = new CharacterSettingsBook(Path);
+        book.Edit([CharacterSettingChange.Track(Main, false), CharacterSettingChange.Spoiler(Main, true), CharacterSettingChange.Hide(Alt, true), CharacterSettingChange.Compare(Alt, Main)]);
+
+        // Nobody live elsewhere: the untracked character logged in here must not be written at once.
+        book.Reset(static _ => false);
+
+        Assert.False(book.IsTracked(Main));
+        Assert.Null(book.SpoilerShield(Main));
+        Assert.True(book.IsHidden(Alt));
+        Assert.Null(book.CompareWith(Alt));
+        var onDisk = CharacterSettingsFile.Load(Path);
+        Assert.True(onDisk[Main].DontTrack);
+        Assert.True(onDisk[Alt].Hidden);
     }
 
     [Fact]

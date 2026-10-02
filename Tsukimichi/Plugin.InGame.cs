@@ -72,7 +72,8 @@ public sealed partial class Plugin
         namePlateHooks = new Game.NamePlateHooks(NamePlateGui, Framework, Session, gate, Log)
         {
             LivePins = LivePins,
-            PinsVersion = () => queryRunner.PinsVersion,
+            // The logged-in character's pins change while an alt is on view too.
+            PinsVersion = () => queryRunner.AllPinsVersion,
             Moonlit = () => moonlit.Catalog,
         };
         namePlateHooks.Enabled = Settings.NamePlateMarks;
@@ -117,7 +118,10 @@ public sealed partial class Plugin
         }
     }
 
-    /// <summary>The logged-in character's pins for the nameplate marks: the live set while it is on view, else its saved file.</summary>
+    /// <summary>
+    /// The logged-in character's pins for the nameplate marks: the live set while it is on view, else the query runner's
+    /// copy of its list (pins made through IPC and not saved yet included; no file read on the framework thread).
+    /// </summary>
     private IReadOnlySet<uint> LivePins()
     {
         if (Session.LiveContentId is not { } live)
@@ -130,9 +134,7 @@ public sealed partial class Plugin
             return queryRunner.Pinned;
         }
 
-        var warnings = new List<string>();
-        var pins = Core.Storage.PinsFile.Load(Paths.PinsFile, warnings);
-        return pins.TryGetValue(live, out var list) ? new HashSet<uint>(list) : new HashSet<uint>();
+        return new HashSet<uint>(queryRunner.PinsOf(live));
     }
 
     /// <summary>Unwinds <see cref="InitializeInGame"/>: the tick, the nameplate hook, the Chat 2 registration and every chat link handler.</summary>

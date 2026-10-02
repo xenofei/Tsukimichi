@@ -14,7 +14,7 @@ namespace Tsukimichi.Ui;
 /// Settings › Data › Characters (1.8.0, R7 B, E, H): group the Characters list by data center, show hidden characters
 /// in the lists, the characters hidden or not tracked with Show and Track buttons, and "Forget characters not seen in
 /// N days" behind a confirmation that names them. A character live here or in another game client is never forgotten,
-/// and one that logs in elsewhere while the question is open is kept and counted in the result.
+/// and one that logs in, or is saved, while the question is open is kept and counted in the result.
 /// </summary>
 public sealed partial class ConfigWindow
 {
@@ -239,20 +239,33 @@ public sealed partial class ConfigWindow
         }
     }
 
-    /// <summary>Forgets the picked characters, except one that logged in here or elsewhere since; says how many went.</summary>
+    /// <summary>
+    /// Forgets the picked characters that still qualify now (<see cref="BulkForget.Recheck"/>): one that logged in here
+    /// or elsewhere, or was saved, since the question opened is kept and counted. Says how many went, and, as Forget
+    /// character does for one, when a listener failed to drop a character's data from memory.
+    /// </summary>
     private void ForgetPicked()
     {
+        var plan = Roster is { } roster
+            ? BulkForget.Recheck(forgetPicked, roster.All, settings.ForgetNotSeenDays, DateTime.UtcNow)
+            : new BulkForgetPlan([], forgetPicked.Count);
         var forgotten = 0;
-        var kept = 0;
-        foreach (var entry in forgetPicked)
+        var kept = plan.Kept;
+        var partial = 0;
+        foreach (var contentId in plan.Forget)
         {
-            if (session.IsLiveElsewhere(entry.ContentId) || entry.ContentId == session.LiveContentId)
+            if (session.IsLiveElsewhere(contentId) || contentId == session.LiveContentId)
             {
                 kept++;
                 continue;
             }
 
-            session.ForgetCharacter(entry.ContentId);
+            // A listener that failed may still hold this character's pins or overrides and save them again.
+            if (session.ForgetCharacter(contentId) > 0)
+            {
+                partial++;
+            }
+
             forgotten++;
         }
 
@@ -261,6 +274,11 @@ public sealed partial class ConfigWindow
         charactersToast = kept == 0
             ? string.Format(CultureInfo.CurrentCulture, Strings.AltsForgetBulkDoneFormat, forgotten)
             : string.Format(CultureInfo.CurrentCulture, Strings.AltsForgetBulkSkippedFormat, forgotten, kept);
+        if (partial > 0)
+        {
+            charactersToast += " " + string.Format(CultureInfo.CurrentCulture, Strings.AltsForgetBulkPartialFormat, partial);
+        }
+
         charactersToastUntilUtc = DateTime.UtcNow + ToastDuration;
     }
 }

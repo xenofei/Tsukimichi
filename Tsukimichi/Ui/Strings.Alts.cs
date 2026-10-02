@@ -144,4 +144,7 @@ static partial class Strings
 
     /// <summary>{0} = forgotten, {1} = kept.</summary>
     public static string AltsForgetBulkSkippedFormat => Loc.Get("Alts.ForgetBulkSkippedFormat");
+
+    /// <summary>Appended to the bulk result when a forget listener failed; {0} = how many characters.</summary>
+    public static string AltsForgetBulkPartialFormat => Loc.Get("Alts.ForgetBulkPartialFormat");
 }

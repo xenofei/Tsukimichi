@@ -149,6 +149,14 @@ public sealed class QueryRunner : IDisposable
     public int PinsVersion { get; private set; }
 
     /// <summary>
+    /// Bumped whenever any character's pins may have changed (<see cref="PinsOf"/> may answer differently), whoever is
+    /// on view: a pin here or through IPC, another client's save merged in, a forget or a delete. What reads the logged-in
+    /// character's pins while an alt is on view (IPC <c>GetPins</c>, the nameplate marks) keys on it; a view switch alone
+    /// does not move it.
+    /// </summary>
+    public int AllPinsVersion { get; private set; }
+
+    /// <summary>
     /// The viewed character's spoiler shield (<see cref="SessionState.Spoilers"/>); <see cref="SpoilerMask.None"/> before
     /// the session exists. The table prints <see cref="SpoilerMask.DisplayName(QuestRecord)"/> for every name.
     /// </summary>
@@ -250,6 +258,7 @@ public sealed class QueryRunner : IDisposable
             list.Add(rowId);
             pinChanges.Add(new PinChange(key, rowId, PinChangeKind.Pin));
             PinsVersion++;
+            AllPinsVersion++;
             MarkPinsDirty();
             ui.MarkQueryDirty();
             QuestPinned?.Invoke(rowId);
@@ -257,6 +266,7 @@ public sealed class QueryRunner : IDisposable
         }
 
         PinsVersion++;
+        AllPinsVersion++;
         MarkPinsDirty();
         ui.MarkQueryDirty();
         return true;
@@ -337,6 +347,7 @@ public sealed class QueryRunner : IDisposable
         }
 
         PinsVersion++;
+        AllPinsVersion++;
         MarkPinsDirty();
         return true;
     }
@@ -539,6 +550,7 @@ public sealed class QueryRunner : IDisposable
         pinned.Clear();
         pinsDirty = false;
         PinsVersion++;
+        AllPinsVersion++;
         ui.MarkQueryDirty();
     }
 
@@ -551,6 +563,7 @@ public sealed class QueryRunner : IDisposable
         }
 
         pinChanges.Add(new PinChange(contentId, 0, PinChangeKind.Forget));
+        AllPinsVersion++;
 
         if (pinsKey == contentId)
         {
@@ -753,6 +766,7 @@ public sealed class QueryRunner : IDisposable
         {
             var warnings = new List<string>();
             pinsFile = PinsFile.Load(plugin.Paths.PinsFile, warnings);
+            AllPinsVersion++;
             foreach (var warning in warnings)
             {
                 log.Warning("Pins: {Warning}", warning);
@@ -881,10 +895,18 @@ public sealed class QueryRunner : IDisposable
         });
     }
 
-    /// <summary>Takes a merged pins map as the one held here, refreshing the viewed character's pinned set when it changed.</summary>
+    /// <summary>
+    /// Takes a merged pins map as the one held here, refreshing the viewed character's pinned set when it changed;
+    /// <see cref="AllPinsVersion"/> moves when any character's pins did (the logged-in one's while an alt is on view).
+    /// </summary>
     private void AdoptPins(Dictionary<ulong, List<uint>> merged)
     {
         var before = pinsKey is not (0 or NoPinsKey) && pinsFile is not null && pinsFile.TryGetValue(pinsKey, out var old) ? old : null;
+        if (!SamePins(pinsFile, merged))
+        {
+            AllPinsVersion++;
+        }
+
         pinsFile = merged;
         if (pinsKey is 0 or NoPinsKey)
         {
@@ -908,6 +930,34 @@ public sealed class QueryRunner : IDisposable
 
         PinsVersion++;
         ui.MarkQueryDirty();
+    }
+
+    /// <summary>The same characters with the same pins in the same order; a character with an empty list reads as none.</summary>
+    private static bool SamePins(Dictionary<ulong, List<uint>>? a, Dictionary<ulong, List<uint>> b)
+    {
+        if (a is null)
+        {
+            return false;
+        }
+
+        foreach (var (id, list) in a)
+        {
+            var other = b.TryGetValue(id, out var found) ? found : null;
+            if ((list?.Count ?? 0) != (other?.Count ?? 0) || (list is { Count: > 0 } && !list.SequenceEqual(other!)))
+            {
+                return false;
+            }
+        }
+
+        foreach (var (id, list) in b)
+        {
+            if (list is { Count: > 0 } && !a.ContainsKey(id))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
 

@@ -4963,7 +4963,7 @@
     <value>Hidden characters leave the character switcher, the Characters list, Compare with, the account view and the collection grid. Nothing is deleted, and a hidden character you log in with still shows.</value>
   </data>
   <data name="Alts.DontTrackTooltip" xml:space="preserve">
-    <value>While this character is logged in, nothing of it is saved: no snapshot, no completion dates. A file saved before stays as it is until you forget the character.</value>
+    <value>While this character is logged in, nothing of it is saved: no snapshot, no completion dates. A file saved before stays as it is until you forget the character; forgetting it (or Delete all data) keeps it untracked.</value>
   </data>
   <data name="Alts.UntrackedNotice" xml:space="preserve">
     <value>Not tracked: nothing of this character is saved while it is logged in.</value>
@@ -5110,7 +5110,7 @@
     <comment>Window title; keep the part from ### on as it is.</comment>
   </data>
   <data name="Alts.ForgetBulkQuestionFormat" xml:space="preserve">
-    <value>Forget these characters ({0})? Their snapshots, pins and settings are deleted. Nothing in the game is changed.</value>
+    <value>Forget these characters ({0})? Their snapshots, pins and settings are deleted (hidden and not tracked stay as they are). Nothing in the game is changed.</value>
     <comment>{0} = how many characters.</comment>
   </data>
   <data name="Alts.ForgetBulkConfirm" xml:space="preserve">
@@ -5121,8 +5121,12 @@
     <comment>{0} = how many.</comment>
   </data>
   <data name="Alts.ForgetBulkSkippedFormat" xml:space="preserve">
-    <value>Characters forgotten: {0}. Kept because they logged in on another game client meanwhile: {1}.</value>
+    <value>Characters forgotten: {0}. Kept because they logged in or were saved meanwhile: {1}.</value>
     <comment>{0} = forgotten, {1} = kept.</comment>
+  </data>
+  <data name="Alts.ForgetBulkPartialFormat" xml:space="preserve">
+    <value>Some data of {0} of them could not be cleared from memory and may be saved again; see /xllog.</value>
+    <comment>Follows the result line. {0} = how many characters.</comment>
   </data>
   <data name="NoSnapshots" xml:space="preserve">
     <value>No snapshots yet</value>

@@ -21,7 +21,10 @@ public sealed class CharacterSettings
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public bool Hidden { get; set; }
 
-    /// <summary>"Don't track this character": while logged in, nothing of it is written (its existing file stays until Forget).</summary>
+    /// <summary>
+    /// "Don't track this character": while logged in, nothing of it is written (its existing file stays until Forget).
+    /// Forget and "Delete all data" keep it, as they keep <see cref="Hidden"/> (<see cref="Lasting"/>).
+    /// </summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public bool DontTrack { get; set; }
 
@@ -46,6 +49,15 @@ public sealed class CharacterSettings
     public bool IsEmpty =>
         SpoilerShield is null && !Hidden && !DontTrack && CompareWith is null
         && PayoffGatesNoticed.Count == 0 && PayoffWhyOpen.Count == 0 && (Extra is null || Extra.Count == 0);
+
+    /// <summary>
+    /// What outlives Forget character and "Delete all data": the player's choices about the character itself, hidden
+    /// and not tracked, and nothing else (no spoiler override, notices, Compare target or a newer build's fields).
+    /// Forgetting an untracked character is how its old file is deleted, and must not start saving it again at its
+    /// next login; a hidden one stays out of the lists if it comes back. Null when neither is set.
+    /// </summary>
+    public CharacterSettings? Lasting() =>
+        Hidden || DontTrack ? new CharacterSettings { Hidden = Hidden, DontTrack = DontTrack } : null;
 
     /// <summary>A deep copy, safe to hand to the background writer while this one keeps changing.</summary>
     public CharacterSettings Copy() => new()
@@ -81,7 +93,10 @@ public enum CharacterSettingField
     /// <summary>Opens (<see cref="CharacterSettingChange.Flag"/> true) or closes a gate's "why?".</summary>
     WhyOpen,
 
-    /// <summary>Drops the character's whole entry (Forget character).</summary>
+    /// <summary>
+    /// Forget character: drops the character's entry except <see cref="CharacterSettings.Hidden"/> and
+    /// <see cref="CharacterSettings.DontTrack"/> (<see cref="CharacterSettings.Lasting"/>).
+    /// </summary>
     Forget,
 }
 
@@ -171,7 +186,16 @@ public static class CharacterSettingsFile
         {
             if (change.Field == CharacterSettingField.Forget)
             {
-                settings.Remove(change.ContentId);
+                // Hidden and not tracked stay: forgetting an untracked character must not track it again.
+                if (settings.TryGetValue(change.ContentId, out var forgotten) && forgotten.Lasting() is { } lasting)
+                {
+                    settings[change.ContentId] = lasting;
+                }
+                else
+                {
+                    settings.Remove(change.ContentId);
+                }
+
                 continue;
             }
 
@@ -300,27 +324,46 @@ public static class CharacterSettingsFile
     }
 
     /// <summary>
-    /// "Delete all data" (D11): under the lock, rewrites the file with only the characters <paramref name="keep"/>
-    /// selects (those live in another game client, whose settings that client still uses). Returns what was kept.
+    /// "Delete all data" (D11): under the lock, rewrites the file with what
+    /// <see cref="KeepOnly(IReadOnlyDictionary{ulong, CharacterSettings}, Func{ulong, bool})"/> leaves of it. Returns
+    /// what was kept.
     /// </summary>
     public static Dictionary<ulong, CharacterSettings> KeepOnly(string path, Func<ulong, bool> keep, IList<string>? warnings = null, TimeSpan? lockTimeout = null)
     {
         ArgumentNullException.ThrowIfNull(keep);
         using (SharedFile.Lock(path, lockTimeout))
         {
-            var disk = Clean(UserFile.LoadForMerge<Dictionary<ulong, CharacterSettings>>(path, warnings, out _));
-            var kept = new Dictionary<ulong, CharacterSettings>();
-            foreach (var (id, entry) in disk)
-            {
-                if (keep(id))
-                {
-                    kept[id] = entry;
-                }
-            }
-
+            var kept = KeepOnly(Clean(UserFile.LoadForMerge<Dictionary<ulong, CharacterSettings>>(path, warnings, out _)), keep);
             Save(path, kept);
             return kept;
         }
+    }
+
+    /// <summary>
+    /// What "Delete all data" leaves of <paramref name="settings"/>: every setting of the characters <paramref name="keep"/>
+    /// selects (those live in another game client, whose settings that client still uses), and of every other one only
+    /// its hidden and not-tracked choices (<see cref="CharacterSettings.Lasting"/>): deleting everything must not start
+    /// saving a character the player chose not to track, the one logged in here included. A new map; the entries kept
+    /// in full are shared with <paramref name="settings"/>.
+    /// </summary>
+    public static Dictionary<ulong, CharacterSettings> KeepOnly(IReadOnlyDictionary<ulong, CharacterSettings> settings, Func<ulong, bool> keep)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+        ArgumentNullException.ThrowIfNull(keep);
+        var kept = new Dictionary<ulong, CharacterSettings>();
+        foreach (var (id, entry) in settings)
+        {
+            if (keep(id))
+            {
+                kept[id] = entry;
+            }
+            else if (entry.Lasting() is { } lasting)
+            {
+                kept[id] = lasting;
+            }
+        }
+
+        return kept;
     }
 
     private static IEnumerable<string> Sorted(HashSet<string>? ids) =>

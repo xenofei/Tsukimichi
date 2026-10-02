@@ -597,11 +597,15 @@ public sealed partial class Plugin : IDalamudPlugin
         }
     }
 
-    /// <summary>A forgotten character takes its own settings with it (spoiler override, notices, hidden, not tracked, Compare).</summary>
+    /// <summary>
+    /// A forgotten character takes its own settings with it (spoiler override, notices, Compare), except hidden and not
+    /// tracked: forgetting an untracked character deletes its old file and must not start saving it again.
+    /// </summary>
     private void ForgetCharacterSettings(ulong contentId) => CharacterBook.Edit(Core.Storage.CharacterSettingChange.Forget(contentId));
 
     /// <summary>
-    /// "Delete all data" drops every character's settings except those of characters live in another game client.
+    /// "Delete all data" drops every character's settings except those of characters live in another game client, and
+    /// keeps every character's hidden and not-tracked choices (an untracked character logged in here is not written).
     /// <see cref="Game.SessionState.DeleteAllData"/> raises this before it follows the live character, and that bump is
     /// the refresh: every listener rebuilds with the overrides already gone.
     /// </summary>
@@ -1270,7 +1274,8 @@ public sealed partial class Plugin : IDalamudPlugin
                 LiveOwned = entry => unlockReader.CanReadLive ? unlockReader.IsObtained(entry) : null,
                 PinsOf = queryRunner.PinsOf,
                 SetPin = queryRunner.SetPin,
-                PinsVersion = () => queryRunner.PinsVersion,
+                // Any character's pins, not the viewed one's: GetPins answers for the logged-in character while an alt is on view.
+                PinsVersion = () => queryRunner.AllPinsVersion,
             };
 
             // /tsuki ipc (1.8.0, not in /tsuki help): every gate with its subscriber count and a test-call box.

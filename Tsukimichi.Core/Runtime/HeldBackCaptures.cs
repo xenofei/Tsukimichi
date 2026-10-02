@@ -9,7 +9,10 @@ namespace Tsukimichi.Core.Runtime;
 /// A bad read comes back right within seconds; a real loss reads the same every time. So a held-back capture is taken
 /// in once the same loss (the same completed quests read as not completed, the same journal quests gone, against the
 /// same last capture) has been read for <see cref="AcceptAfter"/> over at least <see cref="MinCaptures"/> captures. A
-/// capture that reads as an empty character is never taken in. Not thread-safe: the framework thread owns it.
+/// capture that reads as an empty character is never taken in. An accepted loss stays accepted until the caller commits
+/// it (<see cref="Reset"/>): a commit that never happens (a deferred pass dropped at logout, or one that faulted) leaves
+/// the next capture of the same loss taken in at once, rather than held back for another few minutes. Not thread-safe:
+/// the framework thread owns it.
 /// </summary>
 public sealed class HeldBackCaptures
 {
@@ -31,10 +34,13 @@ public sealed class HeldBackCaptures
     /// <summary>When the current loss was first read; null when none is being watched.</summary>
     public DateTime? SinceUtc => Count > 0 ? firstUtc : null;
 
+    /// <summary>The current loss read the same long enough and is taken in; it stays so until <see cref="Reset"/> (the commit).</summary>
+    public bool Accepted { get; private set; }
+
     /// <summary>
     /// Records a capture the guard judged (<paramref name="result"/>) against <paramref name="last"/>. Returns true when
-    /// it is to be taken in after all: its loss has read the same long enough. A plausible capture, an empty one or a
-    /// different loss starts the watch over.
+    /// it is to be taken in after all: its loss has read the same long enough, or was already accepted and not committed
+    /// yet (<see cref="Accepted"/>). A plausible capture, an empty one or a different loss starts the watch over.
     /// </summary>
     public bool Observe(CharacterSnapshot last, CharacterSnapshot capture, PlausibilityResult result, DateTime nowUtc)
     {
@@ -60,23 +66,25 @@ public sealed class HeldBackCaptures
             left = leftNow;
             firstUtc = nowUtc;
             Count = 1;
+            Accepted = false;
             return false;
         }
 
         Count++;
-        if (Count >= MinCaptures && nowUtc - firstUtc >= AcceptAfter)
+        if (Accepted || (Count >= MinCaptures && nowUtc - firstUtc >= AcceptAfter))
         {
-            Reset();
+            Accepted = true;
             return true;
         }
 
         return false;
     }
 
-    /// <summary>Stops watching: a capture was committed, or the character or session changed.</summary>
+    /// <summary>Stops watching: a capture was committed (an accepted one included), or the character or session changed.</summary>
     public void Reset()
     {
         Count = 0;
+        Accepted = false;
         lost = [];
         left = [];
     }

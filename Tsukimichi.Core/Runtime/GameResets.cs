@@ -73,6 +73,14 @@ public static class GameResets
     public static (DateTime Daily, DateTime Weekly) Cycle(DateTime nowUtc) => (LastDaily(nowUtc), LastWeekly(nowUtc));
 
     /// <summary>
+    /// Whether a daily or weekly reset passed after <paramref name="sinceUtc"/>, up to <paramref name="nowUtc"/>: a stored
+    /// character resolved from <paramref name="sinceUtc"/> on reads its dailies and weeklies as they were before it, and
+    /// is resolved again. False when <paramref name="nowUtc"/> is not later (a clock set back).
+    /// </summary>
+    public static bool PassedBetween(DateTime sinceUtc, DateTime nowUtc) =>
+        AsUtc(nowUtc) > AsUtc(sinceUtc) && Cycle(sinceUtc) != Cycle(nowUtc);
+
+    /// <summary>
     /// "resets in 3 h" for a done repeatable of <paramref name="repeatInterval"/>; null for an interval that is neither
     /// daily nor weekly.
     /// </summary>

@@ -176,4 +176,16 @@ public class GameResetsTests
         Assert.NotEqual(GameResets.Cycle(Utc(10, 1, 14, 59)), GameResets.Cycle(Utc(10, 1, 15)));
         Assert.NotEqual(GameResets.Cycle(Utc(10, 6, 7, 59)), GameResets.Cycle(Utc(10, 6, 8)));
     }
+
+    [Fact]
+    public void A_view_resolved_across_a_reset_is_resolved_again()
+    {
+        // Opened at 14:59:59, landed at 15:00:01: the daily reset passed while it resolved.
+        Assert.True(GameResets.PassedBetween(Utc(10, 1, 14, 59).AddSeconds(59), Utc(10, 1, 15).AddSeconds(1)));
+        // The weekly reset (Tuesday 08:00) too.
+        Assert.True(GameResets.PassedBetween(Utc(10, 6, 7, 59), Utc(10, 6, 8)));
+        // Within one cycle, or a clock set back: nothing to do.
+        Assert.False(GameResets.PassedBetween(Utc(10, 1, 15), Utc(10, 2, 14, 59)));
+        Assert.False(GameResets.PassedBetween(Utc(10, 1, 15, 1), Utc(10, 1, 14, 59)));
+    }
 }

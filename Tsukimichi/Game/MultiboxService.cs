@@ -54,6 +54,10 @@ public sealed class MultiboxService : IDisposable
     private readonly ClientIdentity me;
     private readonly CancellationTokenSource lifetime = new();
     private readonly ConcurrentQueue<ScanOutcome> outcomes = new();
+
+    // Characters this client saved itself (SnapshotService.Recorded), queued on the framework thread for the loop: their
+    // file reads again, so their "not updating" mark goes (NotUpdatingSet.Track).
+    private readonly ConcurrentQueue<ulong> savedHere = new();
     private readonly Task loop;
 
     // Set on the framework thread, read by the loop.
@@ -120,6 +124,7 @@ public sealed class MultiboxService : IDisposable
 
         snapshots.MayWrite = MayWrite;
         snapshots.LiveElsewhere = session.IsLiveElsewhere;
+        snapshots.Recorded += OnRecorded;
         session.DataDeleted += OnDataDeleted;
         StartWatchers();
         loop = Task.Run(() => RunAsync(lifetime.Token));
@@ -163,6 +168,7 @@ public sealed class MultiboxService : IDisposable
         disposed = true;
         framework.Update -= OnUpdate;
         session.DataDeleted -= OnDataDeleted;
+        snapshots.Recorded -= OnRecorded;
         snapshots.MayWrite = null;
         snapshots.LiveElsewhere = null;
 
@@ -198,6 +204,13 @@ public sealed class MultiboxService : IDisposable
 
     /// <summary>Whether this client may write a character's files: false only while another client holds its own character with a newer claim.</summary>
     private bool MayWrite(ulong contentId) => Volatile.Read(ref blockedContentId) != contentId;
+
+    /// <summary>Framework thread: a snapshot this client wrote is on disk; the loop clears its "not updating" mark on the next scan.</summary>
+    private void OnRecorded(ulong contentId)
+    {
+        savedHere.Enqueue(contentId);
+        Interlocked.Exchange(ref charactersDirty, 1);
+    }
 
     private void OnDataDeleted()
     {
@@ -509,32 +522,18 @@ public sealed class MultiboxService : IDisposable
 
     /// <summary>
     /// Keeps the characters whose file cannot be read here (a newer plugin's, or one that does not parse) across scans:
-    /// a scan reports such a file only when it changed, and it stays "not updating" until it reads, or goes. True when
-    /// the set changed.
+    /// a scan reports such a file only when it changed, and it stays "not updating" until it reads, goes, or this client
+    /// saves over it (<see cref="NotUpdatingSet.Track"/>). True when the set changed.
     /// </summary>
     private bool TrackProblems(FolderScanResult result)
     {
-        var changed = false;
-        foreach (var snapshot in result.Changed)
+        List<ulong>? saved = null;
+        while (savedHere.TryDequeue(out var id))
         {
-            changed |= notUpdating.Remove(snapshot.ContentId);
+            (saved ??= []).Add(id);
         }
 
-        foreach (var id in notUpdating.Keys.Where(id => !result.Stamps.ContainsKey(id)).ToList())
-        {
-            changed |= notUpdating.Remove(id);
-        }
-
-        foreach (var (id, status) in result.Problems ?? new Dictionary<ulong, SharedLoad>())
-        {
-            if (!notUpdating.TryGetValue(id, out var was) || was != status)
-            {
-                notUpdating[id] = status;
-                changed = true;
-            }
-        }
-
-        return changed;
+        return NotUpdatingSet.Track(notUpdating, result, saved ?? []);
     }
 
     /// <summary>
