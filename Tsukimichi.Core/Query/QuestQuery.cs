@@ -323,6 +323,25 @@ public static class QuestQuery
             case ScopeKind.VirtualIssuer:
                 // Journal order, retired quests left out: an NPC that lost a quest in a patch never lists it.
                 return Discovery.QuestDiscovery.IssuedBy(catalog, scope.Id);
+            case ScopeKind.VirtualJustOpened:
+            {
+                if (ctx.JustOpened is not { Count: > 0 } opened)
+                {
+                    return [];
+                }
+
+                // Journal order, like the Feature Unlocks node.
+                var picked = new List<QuestRecord>(opened.Count);
+                foreach (var quest in catalog.All)
+                {
+                    if (opened.Contains(quest.RowId))
+                    {
+                        picked.Add(quest);
+                    }
+                }
+
+                return picked;
+            }
             default:
                 throw new ArgumentOutOfRangeException(nameof(scope), scope.Kind, "Unknown scope kind.");
         }
@@ -541,7 +560,7 @@ public static class QuestQuery
             {
                 // The issuer's candidates are never retired, so "removed" there can only mean an unlisted live quest
                 // the NPC still hands out.
-                ScopeKind.VirtualUnlisted or ScopeKind.VirtualIssuer => true,
+                ScopeKind.VirtualUnlisted or ScopeKind.VirtualIssuer or ScopeKind.VirtualJustOpened => true,
                 ScopeKind.Section or ScopeKind.Category or ScopeKind.Genre => false,
                 _ => filters.IncludeUnlisted,
             };

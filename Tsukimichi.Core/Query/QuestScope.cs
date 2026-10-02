@@ -25,4 +25,11 @@ public readonly record struct QuestScope(ScopeKind Kind, uint Id)
     /// removed quests left out: what the NPC context menu opens the Journal on. Not a tree node; the scope chip names it.
     /// </summary>
     public static QuestScope Issuer(uint npcId) => new(ScopeKind.VirtualIssuer, npcId);
+
+    /// <summary>
+    /// The quests the last completions opened (<see cref="QueryContext.JustOpened"/>), in journal order: what the
+    /// "Opened:" chat line's Show link opens the Journal on. <paramref name="serial"/> is the line's batch, so a newer
+    /// line's scope differs from an older one's. Not a tree node; the scope chip names it.
+    /// </summary>
+    public static QuestScope JustOpened(uint serial) => new(ScopeKind.VirtualJustOpened, serial);
 }

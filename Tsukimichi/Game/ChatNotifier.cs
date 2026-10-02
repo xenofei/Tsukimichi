@@ -44,7 +44,7 @@ namespace Tsukimichi.Game;
 /// is on (the default).
 /// </para>
 /// </summary>
-public sealed class ChatNotifier : IDisposable
+public sealed partial class ChatNotifier : IDisposable
 {
     private readonly SessionState session;
     private readonly Configuration config;
@@ -120,6 +120,7 @@ public sealed class ChatNotifier : IDisposable
     private void Announce()
     {
         var fresh = tracker.ScanEvents(session.RecentEvents, session.LiveContentId);
+        TrackOpened(fresh);
         if (fresh.Count == 0 || session.Bundle is not { } bundle)
         {
             return;
@@ -435,6 +436,7 @@ public sealed class ChatNotifier : IDisposable
                    .Add(RawPayload.LinkTerminator);
         }
 
+        links.Actions?.AppendQuestActions(builder, quest);
         chat.Print(builder.Build(), Strings.ChatTag);
     }
 }

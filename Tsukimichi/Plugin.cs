@@ -16,7 +16,7 @@ namespace Tsukimichi;
 /// <summary>
 /// Plugin entry point. Starts the catalog build on load; windows and commands are added in later tasks.
 /// </summary>
-public sealed class Plugin : IDalamudPlugin
+public sealed partial class Plugin : IDalamudPlugin
 {
     [PluginService] internal static IDalamudPluginInterface PluginInterface { get; private set; } = null!;
     [PluginService] internal static IPluginLog Log { get; private set; } = null!;
@@ -1007,6 +1007,7 @@ public sealed class Plugin : IDalamudPlugin
             configWindow.Nearby = discoveryWindow;
             var settingsWindow = configWindow;
             discoveryWindow.OpenSettings = () => settingsWindow.OpenAt(Core.Ui.SettingsSection.Integrations);
+            InitializeInGame(gate, rewardLookup, handIns, moonlit);
             windowSystem.AddWindow(configWindow);
             PluginInterface.UiBuilder.OpenConfigUi += configWindow.Toggle;
             command.ToggleConfigWindow = configWindow.Toggle;
@@ -1172,6 +1173,7 @@ public sealed class Plugin : IDalamudPlugin
         });
         Unwind("windows", windowSystem.RemoveAllWindows);
         Unwind("fonts", Ui.Typography.Dispose);
+        Unwind("in the game", DisposeInGame);
         Unwind("item hooks", () => itemHooks?.Dispose());
         Unwind("npc hooks", () => npcHooks?.Dispose());
         Unwind("duty finder hint", () => dutyFinderHint?.Dispose());
