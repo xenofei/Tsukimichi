@@ -1,4 +1,5 @@
 using System.Collections.Frozen;
+using System.Runtime.CompilerServices;
 using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Unique;
@@ -18,7 +19,19 @@ public sealed class HandInIndex
     /// <summary>The index of no catalog: every item needs no quest.</summary>
     public static readonly HandInIndex Empty = new(null);
 
+    private static readonly ConditionalWeakTable<QuestCatalog, HandInIndex> Cache = [];
+
     private readonly FrozenDictionary<uint, QuestRecord[]> byItem;
+
+    /// <summary>
+    /// The index for a catalog, built on first use and kept while the catalog lives; safe from any thread, so the
+    /// catalog worker builds it before the catalog lands (<see cref="Runtime.CatalogIndexes"/>).
+    /// </summary>
+    public static HandInIndex For(QuestCatalog catalog)
+    {
+        ArgumentNullException.ThrowIfNull(catalog);
+        return Cache.GetValue(catalog, static c => new HandInIndex(c));
+    }
 
     public HandInIndex(QuestCatalog? catalog)
     {
@@ -120,7 +133,7 @@ public sealed class HandInIndexSource
             var now = catalog();
             if (!ReferenceEquals(current.Catalog, now))
             {
-                current = new HandInIndex(now);
+                current = now is null ? HandInIndex.Empty : HandInIndex.For(now);
             }
 
             return current;

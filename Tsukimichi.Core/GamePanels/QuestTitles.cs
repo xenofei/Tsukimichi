@@ -1,5 +1,6 @@
 using System.Collections.Frozen;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using System.Text;
 using Tsukimichi.Core.Model;
 
@@ -130,6 +131,18 @@ public sealed class QuestTitleIndex
         }
 
         return new(catalog, map.ToFrozenDictionary(kv => kv.Key, kv => kv.Value.ToArray(), StringComparer.Ordinal));
+    }
+
+    private static readonly ConditionalWeakTable<QuestCatalog, QuestTitleIndex> Cache = [];
+
+    /// <summary>
+    /// The index for a catalog, built on first use and kept while the catalog lives; safe from any thread, so the
+    /// catalog worker builds it before the catalog lands (<see cref="Runtime.CatalogIndexes"/>).
+    /// </summary>
+    public static QuestTitleIndex For(QuestCatalog catalog)
+    {
+        ArgumentNullException.ThrowIfNull(catalog);
+        return Cache.GetValue(catalog, Build);
     }
 
     /// <summary>The quests whose normalised title is <paramref name="normalizedTitle"/>; empty when none.</summary>
