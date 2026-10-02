@@ -83,6 +83,33 @@ public class QuestIdentifierTests
     }
 
     [Fact]
+    public void An_exact_title_in_the_catalog_wins_over_a_candidate_whose_title_is_only_part_of_it()
+    {
+        // The window offers "The Ties That Bind Us"; the targeted NPC's candidate is "The Ties That Bind". The shorter
+        // title sits inside the window's title, but the exact one names the quest shown.
+        var shorter = Quest(A, "The Ties That Bind");
+        var offered = Quest(B, "The Ties That Bind Us");
+        var index = QuestTitleIndex.Build(Catalog(shorter, offered));
+
+        var match = QuestIdentifier.Identify(["The Ties That Bind Us"], [shorter], index);
+
+        Assert.Same(offered, match.Quest);
+        Assert.Equal(TitleMatchSource.Catalog, match.Source);
+    }
+
+    [Fact]
+    public void Among_candidates_the_exact_title_wins_over_a_contained_one_listed_first()
+    {
+        var shorter = Quest(A, "The Ties That Bind");
+        var offered = Quest(B, "The Ties That Bind Us");
+
+        var match = QuestIdentifier.Identify(["The Ties That Bind Us"], [shorter, offered], null);
+
+        Assert.Same(offered, match.Quest);
+        Assert.Equal(TitleMatchSource.Candidate, match.Source);
+    }
+
+    [Fact]
     public void A_title_inside_the_journal_text_is_not_a_match()
     {
         var quest = Quest(A, "Close to Home");

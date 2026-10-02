@@ -161,18 +161,19 @@ public readonly record struct TitleMatch(QuestRecord? Quest, TitleMatchSource So
 
 /// <summary>
 /// Which quest a game window shows (1.7.0): the quest-offer window (<c>JournalAccept</c>), the quest-complete window
-/// (<c>JournalResult</c>). Neither tells its quest's id, so the window's texts are matched by title, first against the
-/// expected candidates (the targeted NPC's quests for an offer; the journal's quests and the ones just completed for a
-/// completion), then across the catalog (<see cref="QuestTitleIndex"/>). A title several quests share is settled by
+/// (<c>JournalResult</c>). Neither tells its quest's id, so the window's texts are matched by title: an exact title
+/// among the expected candidates (the targeted NPC's quests for an offer; the journal's quests and the ones just
+/// completed for a completion), then an exact title across the catalog (<see cref="QuestTitleIndex"/>), and only then a
+/// candidate's title inside a slightly longer label (never ahead of an exact title). A title several quests share is settled by
 /// <c>prefer</c> (the caller's "Ready" or "in the journal"), then by order. Pure.
 /// </summary>
 public static class QuestIdentifier
 {
-    /// <summary>A candidate's title must be at least this long to be found inside a longer text (pass 2).</summary>
+    /// <summary>A candidate's title must be at least this long to be found inside a longer text (pass 3).</summary>
     public const int MinContainedLength = 4;
 
     /// <summary>
-    /// How much longer than the title a text may be for pass 2 to look inside it: a label around a title ("Lv. 50"),
+    /// How much longer than the title a text may be for pass 3 to look inside it: a label around a title ("Lv. 50"),
     /// not a paragraph of journal text that happens to use the title's words.
     /// </summary>
     public const int MaxLabelExtra = 24;
@@ -217,7 +218,29 @@ public static class QuestIdentifier
             return new TitleMatch(Pick(exact, prefer), TitleMatchSource.Candidate, exact.Count);
         }
 
-        // Pass 2: a candidate whose title stands inside a slightly longer label ("Lv 50 <title>", a title with its tag).
+        // Pass 2: the whole catalog, by exact title. Before any contained-in match: a candidate whose title is only a
+        // part of the window's title ("The Ties That Bind" inside "Where the Ties That Bind") is not the quest shown.
+        if (index is not null)
+        {
+            var found = new List<QuestRecord>();
+            foreach (var text in normalized)
+            {
+                foreach (var quest in index.Find(text))
+                {
+                    if (!found.Contains(quest))
+                    {
+                        found.Add(quest);
+                    }
+                }
+            }
+
+            if (found.Count > 0)
+            {
+                return new TitleMatch(Pick(found, prefer), TitleMatchSource.Catalog, found.Count);
+            }
+        }
+
+        // Pass 3: a candidate whose title stands inside a slightly longer label ("Lv 50 <title>", a title with its tag).
         QuestRecord? contained = null;
         var containedLength = 0;
         var containedCount = 0;
@@ -251,30 +274,7 @@ public static class QuestIdentifier
             }
         }
 
-        if (contained is not null)
-        {
-            return new TitleMatch(contained, TitleMatchSource.Candidate, containedCount);
-        }
-
-        // Pass 3: the whole catalog, by exact title.
-        if (index is null)
-        {
-            return TitleMatch.NotFound;
-        }
-
-        var found = new List<QuestRecord>();
-        foreach (var text in normalized)
-        {
-            foreach (var quest in index.Find(text))
-            {
-                if (!found.Contains(quest))
-                {
-                    found.Add(quest);
-                }
-            }
-        }
-
-        return found.Count == 0 ? TitleMatch.NotFound : new TitleMatch(Pick(found, prefer), TitleMatchSource.Catalog, found.Count);
+        return contained is null ? TitleMatch.NotFound : new TitleMatch(contained, TitleMatchSource.Candidate, containedCount);
     }
 
     private static QuestRecord Pick(List<QuestRecord> quests, Func<QuestRecord, bool>? prefer)

@@ -78,13 +78,54 @@ public sealed class OpenedByThatTests
     }
 
     [Fact]
-    public void Only_availability_after_the_completion_in_the_same_scan_joins()
+    public void Only_availability_of_the_completions_poll_or_later_joins()
     {
+        // An earlier poll's availability (before any turn-in) stays out; the turn-in's own poll joins in any order.
         var batcher = new OpenedBatcher();
-        batcher.Add([Opened(5), Completed(1), Opened(6)], T0);
+        var earlier = T0.AddSeconds(-2);
+        batcher.Add([new(QuestEventKind.NewlyAvailable, 5, earlier), Opened(6), Completed(1), Opened(7)], T0);
 
         var batch = batcher.Take(T0.AddSeconds(5), Quiet);
-        Assert.Equal(new uint[] { 6 }, batch!.Opened);
+        Assert.Equal(new uint[] { 6, 7 }, batch!.Opened);
+    }
+
+    [Fact]
+    public void Within_one_poll_the_completion_counts_first_whatever_the_order()
+    {
+        var batcher = new OpenedBatcher();
+        batcher.Add([Opened(2), Opened(3), Completed(1)], T0);
+
+        var batch = batcher.Take(T0.AddSeconds(5), Quiet);
+        Assert.NotNull(batch);
+        Assert.Equal(new uint[] { 1 }, batch.Completed);
+        Assert.Equal(new uint[] { 2, 3 }, batch.Opened);
+    }
+
+    [Fact]
+    public void A_turn_in_and_what_its_poll_opened_reach_the_line_through_the_recent_list_and_the_scan()
+    {
+        // The real pipeline: QuestEvents.Derive lists a poll's events completions first, the recent list keeps that
+        // order newest first, and NoticeTracker.ScanEvents walks it backwards, so the batcher sees them reversed.
+        const ulong contentId = 42;
+        var recent = new RecentEventsTracker();
+        var tracker = new NoticeTracker();
+        var batcher = new OpenedBatcher();
+        tracker.ScanEvents(recent.Events, contentId);
+
+        var before = T0.AddSeconds(-10);
+        recent.Add(contentId, [new QuestEvent(QuestEventKind.NewlyAvailable, 9, before)]);
+        batcher.Add(tracker.ScanEvents(recent.Events, contentId), before);
+        Assert.False(batcher.Pending);
+
+        recent.Add(contentId, [Completed(1), Accepted(4), Opened(2), Opened(3)]);
+        var fresh = tracker.ScanEvents(recent.Events, contentId);
+        Assert.Equal(QuestEventKind.Completed, fresh[^1].Kind);
+        batcher.Add(fresh, T0);
+
+        var batch = batcher.Take(T0.AddSeconds(5), Quiet);
+        Assert.NotNull(batch);
+        Assert.Equal(new uint[] { 1 }, batch.Completed);
+        Assert.Equal(new uint[] { 2, 3 }, batch.Opened.Order());
     }
 
     [Fact]
