@@ -132,11 +132,19 @@ public sealed class Configuration : IPluginConfiguration
     // ---- 0.8.0: addon kill switch (T20) ----
     /// <summary>
     /// The game version (ffxivgame.ver text) on which the player let the game hooks (item tooltip panel, item and NPC
-    /// menu entries, server info bar entry) run although it is newer than the one they were tested on
-    /// (<c>Core.Runtime.HookGate</c>); empty when off, the default. It applies to that version only, so the next patch
-    /// pauses the hooks again.
+    /// menu entries, server info bar entry) run although its patch date is newer than the one they were tested on
+    /// (<c>Core.Runtime.HookGate</c>); empty when off, the default. It applies to that patch date only (its hotfixes
+    /// included), so the next patch pauses the hooks again.
     /// </summary>
     public string EnableHooksOnUntestedVersion { get; set; } = string.Empty;
+
+    // ---- 1.5.0: data freshness strip ----
+    /// <summary>
+    /// The client game version (ffxivgame.ver text) on which the player dismissed the main window's "Game updated"
+    /// strip (<c>Core.Diagnostics.DataFreshness</c>); empty when never dismissed. One dismissal covers that client
+    /// version only: the next game update shows the strip again.
+    /// </summary>
+    public string DataFreshnessDismissedFor { get; set; } = string.Empty;
 
     /// <summary>
     /// Migration of a pre-release boolean form of the override (development builds of 0.8.0 wrote
@@ -456,6 +464,7 @@ public sealed class Configuration : IPluginConfiguration
         config.Filters ??= new FilterSet();
         config.LastSeenVersion ??= string.Empty;
         config.EnableHooksOnUntestedVersion = config.EnableHooksOnUntestedVersion?.Trim() ?? string.Empty;
+        config.DataFreshnessDismissedFor = config.DataFreshnessDismissedFor?.Trim() ?? string.Empty;
         config.SpoilerShieldByCharacter ??= [];
         config.PayoffGatesNoticedByCharacter ??= [];
         config.PayoffWhyOpenByCharacter ??= [];

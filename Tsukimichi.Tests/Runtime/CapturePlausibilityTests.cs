@@ -1,0 +1,167 @@
+using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Runtime;
+using Tsukimichi.Tests.Evaluation;
+
+namespace Tsukimichi.Tests.Runtime;
+
+/// <summary>The plausibility guard (1.5.0 "Trust"): which mid-session captures are held back instead of saved.</summary>
+public sealed class CapturePlausibilityTests
+{
+    private const uint First = 65600;
+
+    /// <summary>Row ids of 600 one-off quests (65600…66199).</summary>
+    private static readonly uint[] OneOff = Enumerable.Range(0, 600).Select(i => First + (uint)i).ToArray();
+
+    /// <summary>100 seasonal quests (festival 7) and 100 repeatable ones after them.</summary>
+    private static readonly uint[] Seasonal = Enumerable.Range(600, 100).Select(i => First + (uint)i).ToArray();
+    private static readonly uint[] Repeatable = Enumerable.Range(700, 100).Select(i => First + (uint)i).ToArray();
+
+    private static readonly QuestCatalog Catalog = Fixture.Catalog(
+    [
+        .. OneOff.Select(id => Fixture.Quest(id)),
+        .. Seasonal.Select(id => Fixture.Quest(id) with { Festival = 7 }),
+        .. Repeatable.Select(id => Fixture.Quest(id) with { IsRepeatable = true }),
+    ]);
+
+    private static CharacterSnapshot With(IEnumerable<uint> completed, params AcceptedQuest[] journal) =>
+        Fixture.Snapshot([.. completed]) with { Accepted = journal };
+
+    [Fact]
+    public void Ordinary_progress_is_plausible()
+    {
+        var last = With(OneOff.Take(300));
+        var now = With(OneOff.Take(301));
+
+        var result = CapturePlausibility.Check(last, now, Catalog);
+
+        Assert.True(result.Plausible);
+        Assert.Null(result.LogNote);
+    }
+
+    [Fact]
+    public void A_handful_of_lost_bits_is_plausible()
+    {
+        var last = With(OneOff.Take(300));
+        var now = With(OneOff.Take(300).Skip(5));
+
+        Assert.True(CapturePlausibility.Check(last, now, Catalog).Plausible);
+    }
+
+    [Fact]
+    public void Losing_more_than_fifty_completed_quests_is_implausible()
+    {
+        var last = With(OneOff); // 600 completed: 51 is under 10 % but over the absolute cap
+        var now = With(OneOff.Skip(51));
+
+        var result = CapturePlausibility.Check(last, now, Catalog);
+
+        Assert.Equal(PlausibilityVerdict.LostCompletions, result.Verdict);
+        Assert.Equal(51, result.Lost);
+        Assert.Equal(600, result.Completed);
+        Assert.Contains("51 of 600", result.LogNote);
+    }
+
+    [Fact]
+    public void Fifty_lost_of_six_hundred_is_still_plausible()
+    {
+        Assert.True(CapturePlausibility.Check(With(OneOff), With(OneOff.Skip(50)), Catalog).Plausible);
+    }
+
+    [Fact]
+    public void A_small_character_is_judged_by_the_share()
+    {
+        // 40 completed: losing 10 is 25 %.
+        var last = With(OneOff.Take(40));
+        Assert.Equal(PlausibilityVerdict.LostCompletions, CapturePlausibility.Check(last, With(OneOff.Take(30)), Catalog).Verdict);
+
+        // Losing 9 stays under the share rule's floor.
+        Assert.True(CapturePlausibility.Check(last, With(OneOff.Take(31)), Catalog).Plausible);
+    }
+
+    [Fact]
+    public void Seasonal_and_repeatable_quests_clearing_together_are_plausible()
+    {
+        // The yearly festival reset and the repeatable reset clear 200 bits at once; the one-off progress is intact.
+        var last = With([.. OneOff.Take(100), .. Seasonal, .. Repeatable]);
+        var now = With(OneOff.Take(100));
+
+        var result = CapturePlausibility.Check(last, now, Catalog);
+
+        Assert.True(result.Plausible);
+        Assert.Equal(0, result.Lost);
+        Assert.Equal(100, result.Completed);
+    }
+
+    [Fact]
+    public void Ids_the_catalog_does_not_name_are_not_counted()
+    {
+        Assert.True(CapturePlausibility.MayClear(QuestRecord.ToQuestId(70000), Catalog));
+        Assert.True(CapturePlausibility.MayClear(QuestRecord.ToQuestId(Seasonal[0]), Catalog));
+        Assert.True(CapturePlausibility.MayClear(QuestRecord.ToQuestId(Repeatable[0]), Catalog));
+        Assert.False(CapturePlausibility.MayClear(QuestRecord.ToQuestId(OneOff[0]), Catalog));
+
+        var unknown = Enumerable.Range(0, 200).Select(i => 70000u + (uint)i).ToArray();
+        Assert.True(CapturePlausibility.Check(With([.. OneOff.Take(10), .. unknown]), With(OneOff.Take(10)), Catalog).Plausible);
+    }
+
+    [Fact]
+    public void A_capture_that_reads_as_an_empty_character_is_implausible()
+    {
+        var last = With(OneOff.Take(3), Fixture.Accepted(OneOff[10]));
+        var empty = Fixture.Snapshot() with { CompletedBits = new byte[8192] };
+
+        var result = CapturePlausibility.Check(last, empty, Catalog);
+
+        Assert.Equal(PlausibilityVerdict.EmptyCapture, result.Verdict);
+        Assert.NotNull(result.LogNote);
+    }
+
+    [Fact]
+    public void A_journal_of_several_quests_emptying_at_once_is_implausible()
+    {
+        var last = With(OneOff.Take(5), Fixture.Accepted(OneOff[10]), Fixture.Accepted(OneOff[11]), Fixture.Accepted(OneOff[12]));
+        var now = With(OneOff.Take(5));
+
+        var result = CapturePlausibility.Check(last, now, Catalog);
+
+        Assert.Equal(PlausibilityVerdict.EmptiedJournal, result.Verdict);
+        Assert.Equal(3, result.JournalBefore);
+        Assert.Equal(3, result.JournalLeft);
+    }
+
+    [Fact]
+    public void Turning_in_the_last_quests_of_the_journal_is_plausible()
+    {
+        // Three quests leave the journal and all three are completed now.
+        var last = With(OneOff.Take(5), Fixture.Accepted(OneOff[10]), Fixture.Accepted(OneOff[11]), Fixture.Accepted(OneOff[12]));
+        var now = With([.. OneOff.Take(5), OneOff[10], OneOff[11], OneOff[12]]);
+
+        Assert.True(CapturePlausibility.Check(last, now, Catalog).Plausible);
+    }
+
+    [Fact]
+    public void Abandoning_the_one_or_two_quests_left_is_plausible()
+    {
+        var last = With(OneOff.Take(5), Fixture.Accepted(OneOff[10]), Fixture.Accepted(OneOff[11]));
+
+        Assert.True(CapturePlausibility.Check(last, With(OneOff.Take(5)), Catalog).Plausible);
+    }
+
+    [Fact]
+    public void Another_character_or_no_previous_capture_is_always_plausible()
+    {
+        var empty = Fixture.Snapshot() with { CompletedBits = new byte[8192] };
+
+        Assert.True(CapturePlausibility.Check(null, empty, Catalog).Plausible);
+        Assert.True(CapturePlausibility.Check(With(OneOff) with { ContentId = 2 }, empty, Catalog).Plausible);
+    }
+
+    [Fact]
+    public void A_shorter_mask_counts_the_missing_bytes_as_cleared()
+    {
+        var last = With(OneOff);
+        var now = last with { CompletedBits = last.CompletedBits[..^20] };
+
+        Assert.Equal(PlausibilityVerdict.LostCompletions, CapturePlausibility.Check(last, now, Catalog).Verdict);
+    }
+}

@@ -30,6 +30,10 @@ namespace Tsukimichi.Core.Query;
 /// the quests the viewed character completed; such a quest passes the search even when its name does not match. Null
 /// when journal search is off, not ready, or the query has nothing to look for in the journal.
 /// </param>
+/// <param name="NewSinceData">
+/// Row ids newer than Tsukimichi's shipped data (<see cref="Diagnostics.DataFreshnessReport.NewQuestIds"/>), for the
+/// Added in filter's "New since data" value (<see cref="FilterSet.NewSinceData"/>); null keeps nothing under it.
+/// </param>
 public sealed record QueryContext(
     IReadOnlySet<ushort> ActiveFestivals,
     IReadOnlySet<uint> Pinned,
@@ -45,7 +49,8 @@ public sealed record QueryContext(
     IReadOnlySet<ushort>? Abandoned = null,
     SpoilerMask? Spoilers = null,
     StorySidequests? Stories = null,
-    IReadOnlySet<uint>? JournalHits = null)
+    IReadOnlySet<uint>? JournalHits = null,
+    IReadOnlySet<uint>? NewSinceData = null)
 {
     public const int DefaultStalledDays = 7;
 

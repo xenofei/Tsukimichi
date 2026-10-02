@@ -270,7 +270,7 @@ public sealed class UiState
             : !Filters.IncludeOtherPaths && IsOtherPath?.Invoke(quest.RowId) == true ? QuestScope.VirtualOtherPaths
             : QuestScope.Genre(quest.Journal.GenreId);
         var context = RevealContext?.Invoke();
-        var changed = QuestQuery.ClearFiltersHiding(quest, Filters, context?.ActiveFestivals);
+        var changed = QuestQuery.ClearFiltersHiding(quest, Filters, context?.ActiveFestivals, context?.NewSinceData);
         if (QuestQuery.SearchHides(quest, SearchText, context))
         {
             SearchText = string.Empty;

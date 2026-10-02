@@ -13,7 +13,9 @@ namespace Tsukimichi.Core.Storage;
 /// process, permissions, disk) is skipped with a warning and left in place, and so is one a newer plugin wrote (a higher
 /// schema version, D11): it is valid, only not readable here. <see cref="LoadShared"/> never quarantines anything, for
 /// files another game client owns. Unknown JSON properties are ignored on read,
-/// and quest ids the catalog does not know are carried through untouched.
+/// and quest ids the catalog does not know are carried through untouched. Before a save overwrites a character's file,
+/// the file is copied to its once-a-day backup (<see cref="SnapshotBackup"/>); a backup that fails is reported through
+/// <see cref="BackupFailed"/> and never holds up the save.
 /// </summary>
 public sealed class JsonSnapshotStore : ISnapshotStore
 {
@@ -29,6 +31,15 @@ public sealed class JsonSnapshotStore : ISnapshotStore
         charactersDir = Path.Combine(rootDir, CharactersFolder);
         this.migrator = migrator ?? new SnapshotMigrator();
     }
+
+    /// <summary>
+    /// Called (on the saving thread) when the backup before a save could not be written: the snapshot path and the
+    /// error. The save goes ahead. Null ignores the failure.
+    /// </summary>
+    public Action<string, Exception>? BackupFailed { get; init; }
+
+    /// <summary>The clock the backup's once-a-day rule reads; UTC now by default.</summary>
+    public Func<DateTime> Clock { get; init; } = static () => DateTime.UtcNow;
 
     /// <summary>Problems met while reading, oldest first. The caller logs them and calls <see cref="ClearWarnings"/>.</summary>
     public IReadOnlyList<string> Warnings => warnings;
@@ -80,7 +91,17 @@ public sealed class JsonSnapshotStore : ISnapshotStore
         ArgumentNullException.ThrowIfNull(snapshot);
         var stamped = snapshot with { SchemaVersion = CharacterSnapshot.CurrentSchemaVersion };
         var json = JsonSerializer.Serialize(stamped, StorageJson.Options);
-        AtomicFile.Write(PathFor(snapshot.ContentId), json);
+        var path = PathFor(snapshot.ContentId);
+        try
+        {
+            SnapshotBackup.RotateIfDue(path, SnapshotBackup.PathFor(charactersDir, snapshot.ContentId), Clock());
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            BackupFailed?.Invoke(path, ex);
+        }
+
+        AtomicFile.Write(path, json);
     }
 
     public void Delete(ulong contentId)

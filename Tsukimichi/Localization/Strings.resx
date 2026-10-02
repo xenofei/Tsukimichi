@@ -544,14 +544,14 @@
     <comment>{0} = the word not understood.</comment>
   </data>
   <data name="HooksPausedNotice" xml:space="preserve">
-    <value>Tsukimichi's game hooks (item tooltip, item and NPC menus, server info bar, Duty Finder hint) are paused on this game version until an update is tested. The quest journal works as usual.</value>
+    <value>Tsukimichi's game hooks (item tooltip, item and NPC menus, server info bar, Duty Finder hint) are paused on this new game patch until an update is tested; hotfixes do not pause them. The quest journal works as usual.</value>
     <comment>The one chat line (once per load) and the Settings notice while the hooks are paused.</comment>
   </data>
   <data name="HooksEnableUntested" xml:space="preserve">
     <value>Enable game hooks on this untested version</value>
   </data>
   <data name="HooksEnableUntestedHint" xml:space="preserve">
-    <value>After a game patch the item tooltip panel, the item and NPC menu entries, the server info bar entry and the Duty Finder unlock hint pause until a Tsukimichi update has been tested on the new version. Tick this to run them anyway on the game version you are on now; the next patch pauses them again. If one draws in the wrong place or misbehaves, untick it. The quest journal is not affected either way.</value>
+    <value>After a game patch (a new patch date; hotfixes do not count) the item tooltip panel, the item and NPC menu entries, the server info bar entry and the Duty Finder unlock hint pause until a Tsukimichi update has been tested on the new patch. Tick this to run them anyway on the patch you are on now, its hotfixes included; the next patch pauses them again. If one draws in the wrong place or misbehaves, untick it. The quest journal is not affected either way.</value>
   </data>
   <data name="HooksRunningUntested" xml:space="preserve">
     <value>Game hooks are running on an untested game version.</value>
@@ -2319,7 +2319,7 @@
     <value>Some past seasonal rewards (minions, emotes, mounts, bardings, orchestrion rolls, ornaments) are sold again on the Online Store, which the game files cannot know. Moonlit says so on the rows the curated list covers; if you find one it does not, open a data correction issue with the store page as evidence.</value>
   </data>
   <data name="Help.QuirkCardBodies.5" xml:space="preserve">
-    <value>The item tooltip panel, the item and NPC menu entries, the server info bar entry and the Duty Finder unlock hint sit beside the game's own interface, which a patch can move. Each Tsukimichi release records the game version they were tested on; on a newer game they pause until an update is tested there, and a chat line at login and a notice in Settings › Integrations say so. The Journal, Moonlit, Characters, Nearby, the Todo overlay and every /tsuki command work as usual. To use the hooks anyway, tick Settings › Integrations › "Enable game hooks on this untested version"; it covers the game version you are on now only, so the next patch pauses them again. If one then draws in the wrong place, untick it and it stops at once.</value>
+    <value>The item tooltip panel, the item and NPC menu entries, the server info bar entry and the Duty Finder unlock hint sit beside the game's own interface, which a patch can move. Each Tsukimichi release records the game version they were tested on; on a newer game patch (a new patch date) they pause until an update is tested there, and a chat line at login and a notice in Settings › Integrations say so. Hotfixes keep the patch date and do not pause them. The Journal, Moonlit, Characters, Nearby, the Todo overlay and every /tsuki command work as usual. To use the hooks anyway, tick Settings › Integrations › "Enable game hooks on this untested version"; it covers the patch you are on now and its hotfixes, so the next patch pauses them again. If one then draws in the wrong place, untick it and it stops at once.</value>
   </data>
   <data name="Help.QuirkCardBodies.6" xml:space="preserve">
     <value>Select a padlocked duty in the Duty Finder or Raid Finder and a small panel beside the window names the quest that unlocks it, with its moon, what it is waiting for, and buttons to reveal it here or flag its giver. It follows the duty you select, not the one under the mouse, and speaks for the character you are logged in on. It knows the unlocks the game data links, a curated list (the A Realm Reborn and Dawntrail launch dungeons, the Crystal Tower and Shadow of Mhach alliance raids, the Heavensward optional dungeons and more) and Moonlit's duty unlocks; for any other padlocked duty it stays silent rather than guess. If the panel names the wrong quest, or a padlocked duty you know the quest for shows nothing, open a data correction issue with the duty's name. Turn it off in Settings › Integrations › "Duty Finder unlock hint".</value>
@@ -2397,7 +2397,7 @@
     <value>Delete all data in Settings removes snapshots, pins and overrides but keeps your settings.</value>
   </data>
   <data name="AddedInTooltip" xml:space="preserve">
-    <value>Keep only the quests one patch series added: 7.5x is 7.5, 7.51, 7.55 and the rest of 7.5. Quests whose patch is not known are hidden while it is set</value>
+    <value>Keep only the quests one patch series added: 7.5x is 7.5, 7.51, 7.55 and the rest of 7.5. Quests whose patch is not known are hidden while it is set. After a game update, New since data keeps the quests newer than Tsukimichi's data</value>
   </data>
   <data name="AddedInAny" xml:space="preserve">
     <value>Any patch</value>
@@ -5457,5 +5457,39 @@
   </data>
   <data name="IncludeOtherPathsTooltip" xml:space="preserve">
     <value>Also show quests on paths you did not take (another city's start, another starting class, another Grand Company, another choice) in their journal sections; they are always listed under Other paths</value>
+  </data>
+  <data name="FreshnessStripFormat" xml:space="preserve">
+    <value>Game updated: {0:N0} quests are newer than Tsukimichi's data; rewards and patch info for them may be missing until an update.</value>
+    <comment>The main window's strip after a game update: {0} = quests the shipped data has never seen (more than one).</comment>
+  </data>
+  <data name="FreshnessStripOneFormat" xml:space="preserve">
+    <value>Game updated: {0:N0} quest is newer than Tsukimichi's data; rewards and patch info for it may be missing until an update.</value>
+    <comment>The main window's strip after a game update, one form: {0} = 1.</comment>
+  </data>
+  <data name="FreshnessShowNew" xml:space="preserve">
+    <value>Show them</value>
+    <comment>Strip button: sets the Added in filter to New since data.</comment>
+  </data>
+  <data name="FreshnessShowNewTooltip" xml:space="preserve">
+    <value>List only the quests that are newer than Tsukimichi's data (Filters › Added in › New since data)</value>
+  </data>
+  <data name="FreshnessDismiss" xml:space="preserve">
+    <value>Dismiss</value>
+    <comment>Strip button: hides the strip until the next game update.</comment>
+  </data>
+  <data name="FreshnessDismissTooltip" xml:space="preserve">
+    <value>Hide this until the game updates again</value>
+  </data>
+  <data name="AddedInNewSinceData" xml:space="preserve">
+    <value>New since data</value>
+    <comment>Added in filter value and chip: quests quest_patches.json does not list.</comment>
+  </data>
+  <data name="AddedInNewSinceDataOptionFormat" xml:space="preserve">
+    <value>New since data  ({0})</value>
+    <comment>Added in combo entry: {0} = quests newer than the data.</comment>
+  </data>
+  <data name="PlausibilitySkippedNotice" xml:space="preserve">
+    <value>Tsukimichi skipped saving: the game reported far fewer completed quests than before; your saved progress is unchanged.</value>
+    <comment>Chat line, once per session, when a capture that lost many completed quests at once is not saved.</comment>
   </data>
 </root>

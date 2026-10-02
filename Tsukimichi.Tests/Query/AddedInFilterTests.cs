@@ -185,5 +185,47 @@ public class AddedInFilterTests
         Assert.Equal(new uint[] { 6, 1 }, RowIds(result));
         Assert.Equal(1, result.NewThisPatch);
     }
-}
 
+    [Fact]
+    public void New_since_data_keeps_the_quests_newer_than_the_data()
+    {
+        // Quests 7 (patch unknown) and 6 (7.55): the data never listed them.
+        var ctx = QueryContext.Empty with { NewSinceData = new HashSet<uint> { 6, 7 } };
+        var filters = new FilterSet { AddedIn = FilterSet.NewSinceData };
+
+        Assert.True(filters.AddedInEngaged());
+        Assert.True(filters.AddedInNewSinceData());
+        Assert.Equal(1, FilterBadge.Count(filters));
+        Assert.Equal(new uint[] { 6, 7 }, RowIds(Run(Catalog, AllReady, filters, ctx: ctx)));
+    }
+
+    [Fact]
+    public void New_since_data_without_a_set_keeps_nothing_and_names_itself()
+    {
+        var result = Run(Catalog, AllReady, new FilterSet { AddedIn = FilterSet.NewSinceData });
+
+        Assert.Empty(result.Rows);
+        Assert.Equal([FilterNames.AddedIn], result.Empty!.Filters);
+    }
+
+    [Fact]
+    public void New_since_data_is_not_a_patch_series()
+    {
+        Assert.False(PatchVersion.IsPatch(FilterSet.NewSinceData));
+        Assert.False(new FilterSet { AddedIn = "7.5" }.AddedInNewSinceData());
+        Assert.True(new FilterSet { AddedIn = " new " }.AddedInNewSinceData());
+    }
+
+    [Fact]
+    public void A_reveal_keeps_new_since_data_for_a_new_quest_and_clears_it_for_an_old_one()
+    {
+        var fresh = new HashSet<uint> { 6 };
+        var filters = new FilterSet { AddedIn = FilterSet.NewSinceData };
+
+        Assert.False(QuestQuery.ClearFiltersHiding(Catalog.GetByRowId(6)!, filters, activeFestivals: null, fresh));
+        Assert.Equal(FilterSet.NewSinceData, filters.AddedIn);
+
+        Assert.True(QuestQuery.ClearFiltersHiding(Catalog.GetByRowId(2)!, filters, activeFestivals: null, fresh));
+        Assert.Equal(string.Empty, filters.AddedIn);
+    }
+}

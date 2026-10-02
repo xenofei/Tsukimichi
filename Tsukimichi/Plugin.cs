@@ -325,6 +325,9 @@ public sealed class Plugin : IDalamudPlugin
         }
     }
 
+    /// <summary>The "Game updated" report for the current catalog (1.5.0); null until the UI is wired.</summary>
+    internal Game.DataFreshnessSource? Freshness { get; private set; }
+
     /// <summary>quest_patches.json (P8), read with the curated overlay and kept for rebuilds.</summary>
     private Core.Storage.QuestPatches questPatches = Core.Storage.QuestPatches.Empty;
 
@@ -347,7 +350,12 @@ public sealed class Plugin : IDalamudPlugin
             curated.Festivals.Count);
 
         var reader = new Game.GameStateReader(Framework, PlayerState, DataManager, Log);
-        Snapshots = new Game.SnapshotService(new Core.Storage.JsonSnapshotStore(Paths.ConfigDir), ClientState, Framework, Log, reader);
+        // The store keeps one once-a-day backup per character (<id>.prev.json, 1.5.0); a failed backup is logged and the save goes on.
+        var store = new Core.Storage.JsonSnapshotStore(Paths.ConfigDir)
+        {
+            BackupFailed = (path, ex) => Log.Warning(ex, "Snapshot backup before saving {File} failed; the save goes ahead", System.IO.Path.GetFileName(path)),
+        };
+        Snapshots = new Game.SnapshotService(store, ClientState, Framework, Log, reader);
         Session = new Game.SessionState(Snapshots, Paths, uniqueRewards, curated, Log);
         // Spoiler shield (T19): Settings > Spoilers with the viewed character's override.
         Session.SpoilerOptionsFor = Settings.SpoilerOptionsFor;
@@ -365,7 +373,10 @@ public sealed class Plugin : IDalamudPlugin
 
         Session.Writer = Writer;
         Framework.Update += DrainWriter;
-        Poller = new Game.StatePoller(Framework, ClientState, Log, reader, Snapshots, Session, Settings, Writer);
+        Poller = new Game.StatePoller(Framework, ClientState, Log, reader, Snapshots, Session, Settings, Writer)
+        {
+            PrintNotice = line => ChatGui.Print(line, Ui.Strings.ChatTag),
+        };
         // Multibox (D11): heartbeats and other game clients' saves, through the shared config folder only.
         Multibox = new Game.MultiboxService(Framework, Log, Session, Snapshots, Paths);
 
@@ -658,8 +669,8 @@ public sealed class Plugin : IDalamudPlugin
             // after an override change) and the quest catalog (set once the build finishes); both are read per use.
             var rewardLookup = new Core.Unique.RewardLookupSource(() => moonlit.Catalog, () => Session.Bundle?.Catalog);
             // Addon kill switch (T20): the five game hooks below (hover hint, item and NPC menu entries, Duty Finder
-            // unlock hint, server info bar entry) run only while this gate allows them, that is on the game version they were play-tested on
-            // (the csproj's TsukimichiTestedGameVersion) or with "Enable game hooks on this untested version" ticked for the running version. It is
+            // unlock hint, server info bar entry) run only while this gate allows them, that is on the patch date they were play-tested on
+            // (the csproj's TsukimichiTestedGameVersion; hotfixes count as the same patch) or with "Enable game hooks on this untested version" ticked for the running patch. It is
             // one shared service: anything else drawn beside a game addon, the Duty Finder unlock hint of 0.9.0 (P13)
             // first, takes this instance and follows its Changed event. The client version is read once here.
             var clientGameVersion = Game.DiagnosticBuilder.ReadClientGameVersion(DataManager, Log);
@@ -714,6 +725,19 @@ public sealed class Plugin : IDalamudPlugin
             {
                 Log.Warning("{Warning}", versionWarning);
             }
+
+            // Patch-day honesty (1.5.0): quests the shipped quest_patches.json does not list are new since the data was
+            // built. The main window's "Game updated" strip, the Added in filter's New since data and the About line read
+            // one report per catalog; the data's game version is the one quest_patches.json was written against.
+            var freshness = new Game.DataFreshnessSource(
+                () => Session.Bundle?.Catalog,
+                questPatches,
+                questPatches.GameVersion.Length > 0 ? questPatches.GameVersion : Session.UniqueRewards.GameVersion,
+                clientGameVersion,
+                Log);
+            Freshness = freshness;
+            diagnostics.Freshness = () => freshness.Current;
+            mainWindow.AttachFreshness(freshness);
 
             // Questionable cross-check (V2-17): the detail pane's "Questionable agrees" line, the diagnostic block's
             // "questionable:" line, and the opt-in "Add to Questionable priority" behind Settings › Integrations.

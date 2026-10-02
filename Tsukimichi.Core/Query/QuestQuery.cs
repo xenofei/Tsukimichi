@@ -207,7 +207,8 @@ public static class QuestQuery
     /// active only); a filter the quest passes stays as it is. Returns whether any changed.
     /// </summary>
     /// <param name="activeFestivals">The festivals running (<see cref="QueryContext.ActiveFestivals"/>); null reads as none.</param>
-    public static bool ClearFiltersHiding(QuestRecord quest, FilterSet filters, IReadOnlySet<ushort>? activeFestivals)
+    /// <param name="newSinceData">The quests newer than the data (<see cref="QueryContext.NewSinceData"/>), for "New since data"; null reads as none.</param>
+    public static bool ClearFiltersHiding(QuestRecord quest, FilterSet filters, IReadOnlySet<ushort>? activeFestivals, IReadOnlySet<uint>? newSinceData = null)
     {
         ArgumentNullException.ThrowIfNull(quest);
         ArgumentNullException.ThrowIfNull(filters);
@@ -218,7 +219,7 @@ public static class QuestQuery
             changed = true;
         }
 
-        if (filters.AddedInEngaged() && !PatchVersion.InSeries(quest.AddedIn, PatchVersion.Normalize(filters.AddedIn)))
+        if (filters.AddedInEngaged() && !PassesAddedIn(quest, filters.AddedInNewSinceData() ? FilterSet.NewSinceData : PatchVersion.Normalize(filters.AddedIn), newSinceData))
         {
             filters.AddedIn = string.Empty;
             changed = true;
@@ -276,6 +277,15 @@ public static class QuestQuery
         return ctx?.SearchIndex is not { } index
             || (!index.Matches(quest.RowId, query, ctx.Spoilers) && ctx.JournalHits?.Contains(quest.RowId) != true);
     }
+
+    /// <summary>
+    /// The Added in filter for an engaged value: <see cref="FilterSet.NewSinceData"/> keeps the quests in
+    /// <paramref name="newSinceData"/>; a series keeps the quests added in it.
+    /// </summary>
+    private static bool PassesAddedIn(QuestRecord quest, string addedIn, IReadOnlySet<uint>? newSinceData) =>
+        string.Equals(addedIn, FilterSet.NewSinceData, StringComparison.Ordinal)
+            ? newSinceData?.Contains(quest.RowId) == true
+            : PatchVersion.InSeries(quest.AddedIn, addedIn);
 
     private static IReadOnlyList<QuestRecord> Candidates(QuestCatalog catalog, QuestScope scope, QueryContext ctx)
     {
@@ -539,7 +549,9 @@ public static class QuestQuery
             availableOnlyEngaged = filters.AvailableOnlyEngaged();
             levelRangeEngaged = filters.LevelRangeEngaged();
             // Normalized once, so a hand-edited "7.50" still reads as the 7.5 series.
-            addedIn = filters.AddedInEngaged() ? PatchVersion.Normalize(filters.AddedIn) : string.Empty;
+            addedIn = !filters.AddedInEngaged() ? string.Empty
+                : filters.AddedInNewSinceData() ? FilterSet.NewSinceData
+                : PatchVersion.Normalize(filters.AddedIn);
 
             foreach (var (kind, state) in filters.RewardKinds)
             {
@@ -622,7 +634,7 @@ public static class QuestQuery
                 return false;
             }
 
-            if (skip != Filter.AddedIn && addedIn.Length > 0 && !PatchVersion.InSeries(quest.AddedIn, addedIn))
+            if (skip != Filter.AddedIn && addedIn.Length > 0 && !PassesAddedIn(quest, addedIn, ctx.NewSinceData))
             {
                 return false;
             }

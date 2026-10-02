@@ -432,6 +432,9 @@ public sealed partial class SessionState
             satisfactionNpcName: id => bundle.Names.SatisfactionNpc(id),
             jobRoles: bundle.JobRoles());
 
+        // 8.0 readiness: requirement details name an expansion from the ExVersion sheet, as every other text does.
+        context = context with { ExpansionName = names.Expansion };
+
         // The live evaluations belong to the previous catalog (a filing flip retires or restores rows): shown
         // against this one they would read "Locked out · removed from the game" on rows no longer retired, or Ready
         // on retired ones, until the poller's next pass. The poller sees the new bundle on its next poll and starts

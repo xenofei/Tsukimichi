@@ -30,17 +30,34 @@ public static class DataStamp
 
     /// <summary>
     /// "Reward data was generated for game X; you are on Y" when the two versions differ; null when they match or
-    /// either is unknown (nothing to warn about yet).
+    /// either is unknown (nothing to warn about yet). The versions compare as the main window's "Game updated" strip
+    /// compares them (<see cref="DataFreshness.Compare"/>: "2026.09.15" and "2026.09.15.0000.0000" match), falling
+    /// back to text for a version that does not parse. With <paramref name="newQuests"/> above zero on a newer client,
+    /// the line adds the count the strip shows; an older client gets this line alone, no strip.
     /// </summary>
-    public static string? MismatchWarning(string dataGameVersion, string clientGameVersion)
+    public static string? MismatchWarning(string dataGameVersion, string clientGameVersion, int newQuests = 0)
     {
-        if (string.IsNullOrWhiteSpace(dataGameVersion) || string.IsNullOrWhiteSpace(clientGameVersion)
-            || string.Equals(dataGameVersion.Trim(), clientGameVersion.Trim(), StringComparison.Ordinal))
+        if (string.IsNullOrWhiteSpace(dataGameVersion) || string.IsNullOrWhiteSpace(clientGameVersion))
         {
             return null;
         }
 
-        return "Reward data was generated for game " + ShortGameVersion(dataGameVersion) + "; you are on " + ShortGameVersion(clientGameVersion);
+        var verdict = DataFreshness.Compare(dataGameVersion, clientGameVersion);
+        if (verdict == FreshnessVerdict.Current
+            || (verdict is null && string.Equals(dataGameVersion.Trim(), clientGameVersion.Trim(), StringComparison.Ordinal)))
+        {
+            return null;
+        }
+
+        var line = "Reward data was generated for game " + ShortGameVersion(dataGameVersion) + "; you are on " + ShortGameVersion(clientGameVersion);
+        if (verdict == FreshnessVerdict.NewerClient && newQuests > 0)
+        {
+            line += newQuests == 1
+                ? ", which has 1 quest newer than the data"
+                : ", which has " + newQuests.ToString("N0", CultureInfo.InvariantCulture) + " quests newer than the data";
+        }
+
+        return line;
     }
 
     /// <summary>The date part of a game version: "2026.09.15.0000.0000" reads "2026.09.15"; shorter strings are left as they are.</summary>

@@ -4,10 +4,18 @@ name: CI
 # suite. The [GameDataFact] tests skip here (no game files on the runner); the curated-data and fixture-backed
 # tests run everywhere. The timing tests ([Trait("Category", "Perf")]) are left out: their budgets are for a
 # developer machine, and a busy shared runner would fail them for no reason.
+#
+# A weekly run (Monday 06:00 UTC) catches a Dalamud update that breaks the build or the load check between commits.
+# The api16 job (feature plan v5, decision 11) builds and load-checks against Dalamud API 16 ahead of its release;
+# it is not blocking: API 16 removes and renames members Tsukimichi still uses, so a red api16 job is expected
+# until the migration lands, and it never fails the workflow.
 on:
   push:
     branches: [main]
   pull_request:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -54,3 +62,29 @@ jobs:
 
       - name: Release helper compiles
         run: python -m py_compile tools/make_pluginmaster.py
+
+  api16:
+    runs-on: windows-latest
+    continue-on-error: true
+    steps:
+      - name: Check out
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Download Dalamud (API 16)
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri https://goatcorp.github.io/dalamud-distrib/api16/latest.zip -OutFile dalamud.zip
+          Expand-Archive dalamud.zip -DestinationPath "$env:RUNNER_TEMP\dalamud"
+          "DALAMUD_HOME=$env:RUNNER_TEMP\dalamud" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Build against API 16 (expected to fail until the migration)
+        # Warnings are not errors here: the point is which members API 16 broke, and the build log lists them.
+        run: dotnet build Tsukimichi.sln -c Release
+
+      - name: Load check against API 16
+        run: dotnet run --project tools/Tsukimichi.LoadCheck -c Release --no-build

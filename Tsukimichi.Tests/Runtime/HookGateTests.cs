@@ -34,12 +34,24 @@ public sealed class HookGateTests
         Assert.Contains("paused", decision.LogNote);
     }
 
-    [Fact]
-    public void Newer_build_on_the_same_date_is_paused()
+    [Theory]
+    [InlineData("2026.09.15.0001.0000")]
+    [InlineData("2026.09.15.0000.0001")]
+    [InlineData("2026.09.15.0003.0002")]
+    public void A_hotfix_on_the_same_patch_date_is_allowed_with_a_note(string running)
     {
-        // A hotfix keeps the date and bumps the build.
-        Assert.Equal(HookGateVerdict.Paused, HookGate.Decide(Tested, "2026.09.15.0001.0000", enableAnywayVersion: null).Verdict);
-        Assert.Equal(HookGateVerdict.Paused, HookGate.Decide(Tested, "2026.09.15.0000.0001", enableAnywayVersion: null).Verdict);
+        // Decision 6 (feature plan v5): a hotfix keeps the date and bumps the build; it does not pause the hooks.
+        var decision = HookGate.Decide(Tested, running, enableAnywayVersion: null);
+
+        Assert.Equal(HookGateVerdict.Hotfix, decision.Verdict);
+        Assert.True(decision.Allowed);
+        Assert.Contains("hotfix", decision.LogNote);
+    }
+
+    [Fact]
+    public void An_older_build_on_the_same_patch_date_is_a_hotfix_too()
+    {
+        Assert.Equal(HookGateVerdict.Hotfix, HookGate.Decide("2026.09.15.0002.0000", "2026.09.15.0001.0009", enableAnywayVersion: null).Verdict);
     }
 
     [Fact]
@@ -63,9 +75,11 @@ public sealed class HookGateTests
     }
 
     [Fact]
-    public void An_override_from_an_older_build_on_the_same_date_does_not_apply_to_a_hotfix()
+    public void An_override_carries_over_to_a_hotfix_of_the_same_patch()
     {
-        Assert.Equal(HookGateVerdict.Paused, HookGate.Decide(Tested, "2026.10.28.0001.0000", enableAnywayVersion: "2026.10.28.0000.0000").Verdict);
+        // Ticked on the patch day; the hotfix a week later keeps the date, so the hooks stay on.
+        Assert.Equal(HookGateVerdict.Overridden, HookGate.Decide(Tested, "2026.10.28.0001.0000", enableAnywayVersion: "2026.10.28.0000.0000").Verdict);
+        Assert.True(HookGate.OverrideApplies("2026.10.28.0002.0000", "2026.10.28.0001.0000"));
     }
 
     [Fact]
@@ -99,12 +113,6 @@ public sealed class HookGateTests
         Assert.Equal(HookGateVerdict.Older, decision.Verdict);
         Assert.True(decision.Allowed);
         Assert.Contains("older", decision.LogNote);
-    }
-
-    [Fact]
-    public void Older_build_on_the_same_date_is_older()
-    {
-        Assert.Equal(HookGateVerdict.Older, HookGate.Decide("2026.09.15.0002.0000", "2026.09.15.0001.0009", enableAnywayVersion: null).Verdict);
     }
 
     [Fact]
@@ -151,6 +159,19 @@ public sealed class HookGateTests
         Assert.True(GameVersion.TryParse("2026.09.15.0000.0000", out var version));
         Assert.Equal(new GameVersion(2026, 9, 15, 0, 0), version);
         Assert.Equal("2026.09.15.0000.0000", version.ToString());
+    }
+
+    [Fact]
+    public void Game_version_compares_patch_dates_apart_from_builds()
+    {
+        Assert.True(GameVersion.TryParse("2026.09.15.0001.0000", out var hotfix));
+        Assert.True(GameVersion.TryParse("2026.09.15.0000.0000", out var patch));
+        Assert.True(GameVersion.TryParse("2026.10.28.0000.0000", out var next));
+
+        Assert.Equal(0, hotfix.ComparePatchDate(patch));
+        Assert.True(hotfix.CompareTo(patch) > 0);
+        Assert.True(next.ComparePatchDate(hotfix) > 0);
+        Assert.Equal(20260915, patch.PatchDate);
     }
 
     [Fact]
@@ -210,6 +231,9 @@ public sealed class HookGateTests
         Assert.Equal(HookGateVerdict.Overridden, gate.Decision.Verdict);
         Assert.True(gate.EnableAnywayApplies);
 
+        gate.SetRunningVersion("2026.10.28.0001.0000");
+        Assert.Equal(HookGateVerdict.Overridden, gate.Decision.Verdict);
+
         gate.SetRunningVersion("2026.12.02.0000.0000");
 
         Assert.True(gate.IsPaused);
@@ -226,6 +250,17 @@ public sealed class HookGateTests
         gate.SetRunningVersion("2026.10.28.0000.0000");
 
         Assert.Equal(HookGateVerdict.Overridden, gate.Decision.Verdict);
+    }
+
+    [Fact]
+    public void A_hotfix_arriving_after_load_keeps_the_hooks_on()
+    {
+        var gate = new HookGate(Tested);
+        gate.SetRunningVersion("2026.09.15.0001.0000");
+
+        Assert.Equal(HookGateVerdict.Hotfix, gate.Decision.Verdict);
+        Assert.True(gate.HooksAllowed);
+        Assert.False(gate.IsPaused);
     }
 
     [Fact]
