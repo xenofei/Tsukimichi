@@ -171,9 +171,14 @@ Each release ships on its own with the usual gates. Effort: S = hours, M = a day
   - fewer recomputes when other clients save;
   - an honest "not updating" status [R7, R5].
 
-### 1.9.0 · Side track wrap-up (in progress)
+### 1.9.0 · Side track wrap-up — **released 2026-10-02**
 
-1.8.0 shipped the IPC additions, "Open on…", Copy for Discord, TSV and the export fields. 1.9.0 takes the rest of the side track below: planning extras, collector extras and the CharactersPane clean-up. The API 16 migration waits for Patch 8.0's date (decision 11).
+1.8.0 shipped the IPC additions, "Open on…", Copy for Discord, TSV and the export fields. 1.9.0 shipped the planning extras and the collector extras.
+
+**Still open from this plan:**
+- **The CharactersPane clean-up:** moving its view-models into Core with tests. It is an internal change with no player value, so it was left as an optional follow-up.
+- **The API 16 migration:** waits for Patch 8.0's date (decision 11). The weekly CI job already builds against API 16 and is expected to fail until then.
+- **19 wiki-only prerequisites:** they still lack a second source. Their allowlist entries now run until 1.10.0.
 
 ### Side track (fitted into the releases above where convenient)
 
@@ -225,6 +230,17 @@ Each release ships on its own with the usual gates. Effort: S = hours, M = a day
 12. **Release order:** 1.4.2, then 1.5, 1.6, 1.7, 1.8, with the side track folded in.
 
 ## In-game checks I'll need from you along the way
+
+Added with 1.9.0:
+- **EXP:** Close to Home reads "400 EXP · 107 gil", and a Shadowbringers side quest shows an EXP range.
+- **Characters dashboard:**
+  - "Levelling opens", main scenario catch-up and the allied society board read right;
+  - the board's Teleport works;
+  - its reset countdown ticks.
+- **Achievement sets:** Tales of War and the others show "N of M". "Earned" follows the game's Achievements window.
+- **Story recap:** "Read the story so far" opens from Since you were away, a chain quest and a chain's right-click menu. /tsuki recap works.
+- **New Game+ badge:** a main scenario quest reads Replayable, and Close to Home reads Once only.
+- **Free-trial switch:** turning it on moves Endwalker and Dawntrail into "Beyond your trial" everywhere, with the same counts on every screen.
 
 Added with 1.8.0:
 - **Two clients:**
