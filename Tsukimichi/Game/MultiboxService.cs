@@ -74,6 +74,8 @@ public sealed class MultiboxService : IDisposable
     // Loop-only state.
     private readonly JsonSnapshotStore workerStore;
     private Dictionary<ulong, FileStamp> known = [];
+    private IReadOnlyDictionary<ulong, SidecarStamp>? knownSidecars;
+    private Dictionary<ulong, SharedLoad> notUpdating = [];
     private IReadOnlyDictionary<ulong, Heartbeat> lastPublished = new Dictionary<ulong, Heartbeat>();
     private readonly Dictionary<string, FileStamp?> userStamps = new(StringComparer.OrdinalIgnoreCase);
     private ulong? beatContentId;
@@ -98,6 +100,7 @@ public sealed class MultiboxService : IDisposable
 
     // Framework-thread state.
     private Task<StoredRefresh>? refresh;
+    private Task<SidecarRefresh>? sidecarRefresh;
     private bool disposed;
     private bool updating;
 
@@ -137,7 +140,10 @@ public sealed class MultiboxService : IDisposable
         framework.Update += OnUpdate;
     }
 
-    /// <summary>Raised on the framework thread when <c>user/pins.json</c> or <c>user/overrides.json</c> changed on disk (another client's save, or this one's).</summary>
+    /// <summary>
+    /// Raised on the framework thread when <c>user/pins.json</c>, <c>user/overrides.json</c> or <c>user/characters.json</c>
+    /// changed on disk (another client's save, or this one's).
+    /// </summary>
     public event Action? UserFilesChanged;
 
     public void Dispose() => Dispose(DisposeWait);
@@ -256,7 +262,10 @@ public sealed class MultiboxService : IDisposable
         while (outcomes.TryDequeue(out var outcome))
         {
             session.SetLiveElsewhere(outcome.LiveElsewhere);
+            session.SetNotUpdating(outcome.NotUpdating);
             var taken = snapshots.ApplyExternal(outcome.Changed, outcome.Removed, session.LiveContentId);
+            // Forgotten in another client while on view here: follow the live character rather than show a ghost.
+            session.FollowLiveIfRemoved(outcome.Removed);
             foreach (var fresh in taken)
             {
                 if (session.PrepareStoredRefresh(fresh) is { } prepared)
@@ -264,7 +273,22 @@ public sealed class MultiboxService : IDisposable
                     StartRefresh(fresh, prepared.Bundle, prepared.Context);
                 }
             }
+
+            if (!session.IsLive && session.ViewedContentId is { } viewed && outcome.SidecarsChanged.Contains(viewed))
+            {
+                StartSidecarRefresh(viewed);
+            }
         }
+    }
+
+    /// <summary>Reads the accepted-time and abandoned sidecars of the stored character on view again, on a worker.</summary>
+    private void StartSidecarRefresh(ulong contentId)
+    {
+        var dir = paths.CharactersDir;
+        sidecarRefresh = Task.Run(() => new SidecarRefresh(
+            contentId,
+            AcceptedSince.Load(AcceptedSince.PathFor(dir, contentId)),
+            AbandonedLedger.Load(AbandonedLedger.PathFor(dir, contentId))));
     }
 
     /// <summary>Resolves a newer copy of the stored character on view on a worker; the newest request wins.</summary>
@@ -283,6 +307,20 @@ public sealed class MultiboxService : IDisposable
 
     private void TakeRefresh()
     {
+        if (sidecarRefresh is { IsCompleted: true } sidecars)
+        {
+            sidecarRefresh = null;
+            if (sidecars.IsCompletedSuccessfully)
+            {
+                var s = sidecars.Result;
+                session.ApplyStoredSidecars(s.ContentId, s.AcceptedSince, s.Abandoned);
+            }
+            else
+            {
+                log.Debug(sidecars.Exception?.GetBaseException(), "The sidecars of a character saved by another game client could not be read");
+            }
+        }
+
         if (refresh is not { IsCompleted: true } done)
         {
             return;
@@ -443,13 +481,16 @@ public sealed class MultiboxService : IDisposable
     private void Scan(DateTime now, long nowMs)
     {
         var skip = beatContentId is { } own ? new HashSet<ulong> { own } : [];
-        var result = FolderScan.Run(paths.CharactersDir, known, workerStore, skip);
+        var result = FolderScan.Run(paths.CharactersDir, known, workerStore, skip, knownSidecars);
         known = new Dictionary<ulong, FileStamp>(result.Stamps);
+        knownSidecars = result.SidecarStamps;
         WarnSkipped(result.Warnings, nowMs);
+        var problemsChanged = TrackProblems(result);
+        var sidecarsChanged = result.SidecarsChanged ?? [];
 
         var liveElsewhere = LiveClients.LiveElsewhere(result.Heartbeats, me, now, beatContentId);
         var sameLive = LiveClients.SameCharacters(liveElsewhere, lastPublished);
-        if (sameLive && result.Changed.Count == 0 && result.Removed.Count == 0)
+        if (sameLive && result.Changed.Count == 0 && result.Removed.Count == 0 && !problemsChanged && sidecarsChanged.Count == 0)
         {
             return;
         }
@@ -463,7 +504,37 @@ public sealed class MultiboxService : IDisposable
         }
 
         lastPublished = liveElsewhere;
-        outcomes.Enqueue(new ScanOutcome(liveElsewhere, result.Changed, result.Removed));
+        outcomes.Enqueue(new ScanOutcome(liveElsewhere, result.Changed, result.Removed, new Dictionary<ulong, SharedLoad>(notUpdating), sidecarsChanged));
+    }
+
+    /// <summary>
+    /// Keeps the characters whose file cannot be read here (a newer plugin's, or one that does not parse) across scans:
+    /// a scan reports such a file only when it changed, and it stays "not updating" until it reads, or goes. True when
+    /// the set changed.
+    /// </summary>
+    private bool TrackProblems(FolderScanResult result)
+    {
+        var changed = false;
+        foreach (var snapshot in result.Changed)
+        {
+            changed |= notUpdating.Remove(snapshot.ContentId);
+        }
+
+        foreach (var id in notUpdating.Keys.Where(id => !result.Stamps.ContainsKey(id)).ToList())
+        {
+            changed |= notUpdating.Remove(id);
+        }
+
+        foreach (var (id, status) in result.Problems ?? new Dictionary<ulong, SharedLoad>())
+        {
+            if (!notUpdating.TryGetValue(id, out var was) || was != status)
+            {
+                notUpdating[id] = status;
+                changed = true;
+            }
+        }
+
+        return changed;
     }
 
     /// <summary>
@@ -493,10 +564,10 @@ public sealed class MultiboxService : IDisposable
         }
     }
 
-    /// <summary>The polling fallback for <c>user/</c>: a pins or overrides file whose stamp moved counts as changed.</summary>
+    /// <summary>The polling fallback for <c>user/</c>: a pins, overrides or character settings file whose stamp moved counts as changed.</summary>
     private void PollUserFiles()
     {
-        foreach (var path in new[] { paths.PinsFile, paths.OverridesFile })
+        foreach (var path in new[] { paths.PinsFile, paths.OverridesFile, paths.CharacterSettingsFile })
         {
             FileStamp? stamp = null;
             try
@@ -543,7 +614,8 @@ public sealed class MultiboxService : IDisposable
             userWatcher = Watch(paths.UserDir, name =>
             {
                 if (string.Equals(name, Path.GetFileName(paths.PinsFile), StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(name, Path.GetFileName(paths.OverridesFile), StringComparison.OrdinalIgnoreCase))
+                    || string.Equals(name, Path.GetFileName(paths.OverridesFile), StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(name, Path.GetFileName(paths.CharacterSettingsFile), StringComparison.OrdinalIgnoreCase))
                 {
                     Interlocked.Exchange(ref userDirty, 1);
                 }
@@ -599,7 +671,14 @@ public sealed class MultiboxService : IDisposable
 
     private sealed record LiveInfo(ulong ContentId, string Name, uint World);
 
-    private sealed record ScanOutcome(IReadOnlyDictionary<ulong, Heartbeat> LiveElsewhere, IReadOnlyList<CharacterSnapshot> Changed, IReadOnlyList<ulong> Removed);
+    private sealed record ScanOutcome(
+        IReadOnlyDictionary<ulong, Heartbeat> LiveElsewhere,
+        IReadOnlyList<CharacterSnapshot> Changed,
+        IReadOnlyList<ulong> Removed,
+        IReadOnlyDictionary<ulong, SharedLoad> NotUpdating,
+        IReadOnlyList<ulong> SidecarsChanged);
+
+    private sealed record SidecarRefresh(ulong ContentId, IReadOnlyDictionary<ushort, DateTime> AcceptedSince, IReadOnlyDictionary<ushort, AbandonedEntry> Abandoned);
 
     private sealed record StoredRefresh(
         CharacterSnapshot Snapshot,

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Text.Json;
@@ -12,6 +13,7 @@ using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
 using Lumina.Excel.Sheets;
 using Tsukimichi.Core.Chains;
+using Tsukimichi.Core.Characters;
 using Tsukimichi.Core.Diff;
 using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Jobs;
@@ -21,6 +23,7 @@ using Tsukimichi.Core.Runtime;
 using Tsukimichi.Core.Storage;
 using Tsukimichi.Core.Ui;
 using Tsukimichi.Core.Unique;
+using Tsukimichi.Config;
 using Tsukimichi.Game;
 using Tsukimichi.GameData;
 using Tsukimichi.Localization;
@@ -126,12 +129,19 @@ public sealed partial class CharactersPane
     private readonly Func<ulong, CharacterSnapshot?> loadSnapshot;
     private readonly IDataManager? data;
     private readonly ITextureProvider? textures;
+    private readonly CharacterRoster roster;
+    private readonly Configuration settings;
+    private readonly System.Action saveSettings;
 
     private Dictionary<uint, string>? worldNames;
     private readonly Dictionary<uint, string> zoneNames = [];
 
+    // The characters every dashboard list reads (Compare with, the account view, the grid): hidden ones left out
+    // (1.8.0, R7 E), in the roster's stable order (R7 B), with their CharacterEntry beside them for the Core rules.
     private CharacterItem[] items = [];
+    private List<CharacterEntry> itemEntries = [];
     private int itemsVersion = -1;
+    private int itemsRoster = -1;
     private long itemsMinute = -1;
 
     private Dashboard? dashboard;
@@ -148,10 +158,10 @@ public sealed partial class CharactersPane
     private uint accountRowId;
     private int accountVersion = -1;
 
-    // Compare with (V2-12): the chosen other character (null follows the most recent capture), the other characters'
+    // Compare with (V2-12): the other character is the one remembered for the viewed one in user/characters.json, else
+    // the first other one in the list (1.8.0, R7 B: a fixed choice, never "the newest save"); the other characters'
     // offline evaluations memoized per capture time, bundle and the server festivals they were resolved with (Live
     // says those were the live character's flags, which change under a stored character), and the view model with its key.
-    private ulong? compareTarget;
     private Compare? compare;
     private CompareKey compareKey;
     private readonly Dictionary<ulong, (DateTime Taken, CatalogBundle Bundle, ServerFestivals? Live, IReadOnlyDictionary<uint, QuestEvaluation>? States)> compareStates = [];
@@ -171,6 +181,9 @@ public sealed partial class CharactersPane
     private ulong forgetTarget;
 
     /// <param name="loadSnapshot">Loads a stored character by content id (e.g. <c>SnapshotService.Load</c>); null when unreadable.</param>
+    /// <param name="roster">Every character in the alt lists' stable order, with hidden, not tracked and the Compare target (1.8.0).</param>
+    /// <param name="settings">The list's data center grouping and "show hidden" (Settings › Data › Characters).</param>
+    /// <param name="saveSettings">Saves <paramref name="settings"/> after the list's "Show hidden" toggle.</param>
     /// <param name="data">Optional; resolves world names from the World sheet. Without it the world id is shown.</param>
     /// <param name="textures">Optional; draws the game's job icons next to job levels. Without it the rows are text only.</param>
     public CharactersPane(
@@ -178,6 +191,9 @@ public sealed partial class CharactersPane
         PluginPaths paths,
         IPluginLog log,
         Func<ulong, CharacterSnapshot?> loadSnapshot,
+        CharacterRoster roster,
+        Configuration settings,
+        System.Action saveSettings,
         IDataManager? data = null,
         ITextureProvider? textures = null)
     {
@@ -185,6 +201,9 @@ public sealed partial class CharactersPane
         this.paths = paths ?? throw new ArgumentNullException(nameof(paths));
         this.log = log ?? throw new ArgumentNullException(nameof(log));
         this.loadSnapshot = loadSnapshot ?? throw new ArgumentNullException(nameof(loadSnapshot));
+        this.roster = roster ?? throw new ArgumentNullException(nameof(roster));
+        this.settings = settings ?? throw new ArgumentNullException(nameof(settings));
+        this.saveSettings = saveSettings ?? throw new ArgumentNullException(nameof(saveSettings));
         this.data = data;
         this.textures = textures;
     }
@@ -210,59 +229,170 @@ public sealed partial class CharactersPane
     /// <summary>The shared Questionable hand-offs (1.6.0): "Send to Questionable" on the ladder and chain rows; null hides it.</summary>
     public QuestionableActions? Questionable { get; set; }
 
-    /// <summary>Left column: stored characters, newest capture first; selecting one views it.</summary>
+    /// <summary>
+    /// Left column (1.8.0, R7 B, E, H): every character in one stable order (live here, live in another client, then by
+    /// name and world), grouped by data center when they span more than one, with a search box once the list is long;
+    /// selecting one views it, right-click hides it or stops tracking it. Hidden characters show only with "Show hidden".
+    /// </summary>
     public void DrawLeft(UiState ui)
     {
         ArgumentNullException.ThrowIfNull(ui);
         using var id = ImRaii.PushId("charactersLeft");
-        RefreshItems();
+        RefreshList();
 
         var start = ImGui.GetCursorScreenPos();
         var width = ImGui.GetContentRegionAvail().X;
-        if (items.Length == 0)
+        if (listTotal == 0)
         {
             ImGui.TextWrapped(Strings.CharactersNoneStored);
             ui.RecordSpan(UiRects.CharactersList, start, width);
             return;
         }
 
-        for (var i = 0; i < items.Length; i++)
+        if (listTotal > ListSearchFrom || listSearch.Length > 0)
         {
-            var item = items[i];
-            using var itemId = ImRaii.PushId(i);
-            var selected = session.ViewedContentId == item.ContentId;
-            if (Chrome.EllipsisSelectable(item.Label, selected, 0f, out var cut))
+            ImGui.SetNextItemWidth(-1f);
+            if (ImGui.InputTextWithHint("##characterSearch", Strings.AltsSearchHint, ref listSearch, 64))
             {
-                if (session.ViewCharacter(item.ContentId))
-                {
-                    ui.MarkQueryDirty();
-                }
-                else
-                {
-                    log.Warning("Character {ContentId} could not be viewed; its snapshot is unreadable", item.ContentId);
-                }
+                listKey = default;
+                RefreshList();
+            }
+
+            ImGui.Spacing();
+        }
+
+        if (listGroups.Count == 0)
+        {
+            ImGui.TextDisabled(Strings.AltsNoMatch);
+        }
+
+        var row = 0;
+        foreach (var group in listGroups)
+        {
+            if (group.Heading.Length > 0)
+            {
+                ImGui.Spacing();
+                Chrome.FitText(group.Heading, ImGui.GetColorU32(ImGuiCol.TextDisabled));
+            }
+
+            foreach (var item in group.Items)
+            {
+                DrawListItem(ui, item, row++);
+            }
+        }
+
+        if (listHiddenCount > 0)
+        {
+            ImGui.Spacing();
+            var show = settings.ShowHiddenCharacters;
+            if (ImGui.Checkbox(listShowHiddenLabel, ref show))
+            {
+                settings.ShowHiddenCharacters = show;
+                saveSettings();
+                listKey = default;
             }
 
             if (ImGui.IsItemHovered())
             {
-                if (item.Elsewhere)
-                {
-                    UiMetrics.Tooltip(cut ? item.Label : Strings.MultiboxLiveElsewhere, Strings.MultiboxLiveElsewhereTooltip);
-                }
-                else if (cut)
-                {
-                    UiMetrics.Tooltip(item.Label);
-                }
-            }
-
-            using (ImRaii.PushIndent())
-            {
-                Chrome.FitText(item.Detail, ImGui.GetColorU32(ImGuiCol.TextDisabled));
+                UiMetrics.Tooltip(Strings.AltsHideTooltip);
             }
         }
 
         ui.RecordSpan(UiRects.CharactersList, start, width);
     }
+
+    /// <summary>One row of the list: the name (dimmed when hidden), its detail line, its tooltip and its menu.</summary>
+    private void DrawListItem(UiState ui, CharacterItem item, int index)
+    {
+        using var itemId = ImRaii.PushId(index);
+        var selected = session.ViewedContentId == item.ContentId;
+        bool clicked;
+        bool cut;
+        using (Theme.PushText(Theme.Surface.TextDisabled, item.Hidden))
+        {
+            clicked = Chrome.EllipsisSelectable(item.Label, selected, 0f, out cut);
+        }
+
+        if (clicked)
+        {
+            View(ui, item.ContentId);
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            if (item.NotUpdating is { } problem)
+            {
+                UiMetrics.Tooltip(cut ? item.Label : Strings.AltsNotUpdatingBadge, NotUpdatingTooltip(problem));
+            }
+            else if (item.Elsewhere)
+            {
+                UiMetrics.Tooltip(cut ? item.Label : Strings.MultiboxLiveElsewhere, Strings.MultiboxLiveElsewhereTooltip);
+            }
+            else if (cut)
+            {
+                UiMetrics.Tooltip(item.Label);
+            }
+        }
+
+        if (ImGui.BeginPopupContextItem("##characterMenu"))
+        {
+            // The menu opens from the left column (own font scale 1), so it scales itself.
+            UiMetrics.ApplyFontScale();
+            DrawCharacterMenu(ui, item);
+            ImGui.EndPopup();
+        }
+
+        using (ImRaii.PushIndent())
+        {
+            Chrome.FitText(item.Detail, ImGui.GetColorU32(ImGuiCol.TextDisabled));
+        }
+    }
+
+    /// <summary>View, hide or show, track or don't track one character (1.8.0, R7 E).</summary>
+    private void DrawCharacterMenu(UiState ui, CharacterItem item)
+    {
+        if (ImGui.MenuItem(Strings.AltsMenuView, string.Empty, false, session.ViewedContentId != item.ContentId))
+        {
+            View(ui, item.ContentId);
+        }
+
+        var book = roster.Settings;
+        if (ImGui.MenuItem(item.Hidden ? Strings.AltsMenuShow : Strings.AltsMenuHide))
+        {
+            book.Edit(CharacterSettingChange.Hide(item.ContentId, !item.Hidden));
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.AltsHideTooltip);
+        }
+
+        if (ImGui.MenuItem(item.Tracked ? Strings.AltsMenuDontTrack : Strings.AltsMenuTrack))
+        {
+            book.Edit(CharacterSettingChange.Track(item.ContentId, !item.Tracked));
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.AltsDontTrackTooltip);
+        }
+    }
+
+    private void View(UiState ui, ulong contentId)
+    {
+        if (session.ViewCharacter(contentId))
+        {
+            ui.MarkQueryDirty();
+        }
+        else
+        {
+            log.Warning("Character {ContentId} could not be viewed; its snapshot is unreadable", contentId);
+        }
+    }
+
+    /// <summary>The tooltip of a character whose file another client saved and this one cannot read (1.8.0, R7 G).</summary>
+    private static string NotUpdatingTooltip(SharedLoad problem) =>
+        problem == SharedLoad.Newer ? Strings.AltsNotUpdatingNewerTooltip : Strings.AltsNotUpdatingInvalidTooltip;
 
     /// <summary>Center column: the viewed character's dashboard, its actions and the account view for the selected quest.</summary>
     public void DrawMain(UiState ui)
@@ -272,6 +402,13 @@ public sealed partial class CharactersPane
 
         // The dashboard fills the centre column; the column is its own child window.
         ui.RecordWindow(UiRects.CharactersDashboard);
+        if (DrawViewSwitch())
+        {
+            DrawCollection(ui);
+            DrawToast();
+            return;
+        }
+
         var snapshot = session.ViewedSnapshot;
         if (snapshot is null)
         {
@@ -301,6 +438,8 @@ public sealed partial class CharactersPane
         {
             UiMetrics.Tooltip(Strings.MultiboxLiveElsewhereTooltip);
         }
+
+        DrawStatusNotices(snapshot.ContentId);
 
         DrawWelcomeBackButton(snapshot);
         TextFlow.Wrapped(d.CountsLine);
@@ -1265,6 +1404,31 @@ public sealed partial class CharactersPane
         {
             UiMetrics.Tooltip(live ? Strings.CharactersForgetLiveHint : Strings.MultiboxForgetHint);
         }
+
+        // Hide and don't track (1.8.0, R7 E): saved in user/characters.json, shared by every game client.
+        var book = roster.Settings;
+        var hidden = book.IsHidden(snapshot.ContentId);
+        if (ImGui.Checkbox(Strings.AltsMenuHide, ref hidden))
+        {
+            book.Edit(CharacterSettingChange.Hide(snapshot.ContentId, hidden));
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.AltsHideTooltip);
+        }
+
+        Chrome.SameLineOrWrap(ImGui.CalcTextSize(Strings.AltsMenuDontTrack).X + ImGui.GetFrameHeight() + (ImGui.GetStyle().ItemInnerSpacing.X * 2f));
+        var untracked = !book.IsTracked(snapshot.ContentId);
+        if (ImGui.Checkbox(Strings.AltsMenuDontTrack, ref untracked))
+        {
+            book.Edit(CharacterSettingChange.Track(snapshot.ContentId, !untracked));
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.AltsDontTrackTooltip);
+        }
     }
 
     private void DrawForgetPopup(UiState ui)
@@ -1284,6 +1448,14 @@ public sealed partial class CharactersPane
         {
             if (ImGui.Button(Strings.CharactersForgetConfirm))
             {
+                if (session.IsLiveElsewhere(forgetTarget))
+                {
+                    // Logged in on another client while the question was open (1.8.0, R7 G): that client owns it now.
+                    ShowToast(string.Format(CultureInfo.CurrentCulture, Strings.AltsForgetRefusedFormat, forgetName));
+                    ImGui.CloseCurrentPopup();
+                    return;
+                }
+
                 // A listener that failed may still hold this character's pins or overrides and save them again: say so.
                 if (session.ForgetCharacter(forgetTarget) > 0)
                 {
@@ -1293,11 +1465,6 @@ public sealed partial class CharactersPane
                 snapshotCache.Remove(forgetTarget);
                 compareStates.Remove(forgetTarget);
                 compareResolving.Remove(forgetTarget);
-                if (compareTarget == forgetTarget)
-                {
-                    compareTarget = null;
-                }
-
                 accountVersion = -1;
                 ui.MarkQueryDirty();
                 log.Information("Forgot character {ContentId}", forgetTarget);
@@ -1332,7 +1499,8 @@ public sealed partial class CharactersPane
     }
 
     /// <summary>
-    /// Compare with (V2-12): a combo of the other stored characters (the most recently captured one at first), the lead
+    /// Compare with (V2-12): a combo of the other characters (the one remembered for the viewed character, else the first
+    /// other one in the list; hidden ones left out, 1.8.0), the lead
     /// line and per-section counts, then the quests done on the viewed character and not on the other and the reverse,
     /// each ranked by unlock value, capped at <see cref="MaxDiffRows"/> rows and copyable as text. Hidden behind a hint
     /// until a second character is stored.
@@ -1401,9 +1569,10 @@ public sealed partial class CharactersPane
         {
             var candidate = c.Candidates[i];
             using var itemId = ImRaii.PushId(i);
-            if (ImGui.Selectable(candidate.Label, candidate.ContentId == c.OtherContentId))
+            if (ImGui.Selectable(candidate.Label, candidate.ContentId == c.OtherContentId) && session.ViewedContentId is { } viewed)
             {
-                compareTarget = candidate.ContentId;
+                // Remembered per viewed character in user/characters.json (1.8.0, R7 B).
+                roster.Settings.Edit(CharacterSettingChange.Compare(viewed, candidate.ContentId));
             }
 
             if (ImGui.IsItemHovered())
@@ -1563,8 +1732,8 @@ public sealed partial class CharactersPane
 
     /// <summary>
     /// The comparison view model, rebuilt when the session version, the viewed character, the other character or its
-    /// capture time, or the bundle changes. The other character defaults to the most recently captured one that is not
-    /// the viewed one; a chosen character that was forgotten falls back to that default.
+    /// capture time, or the bundle changes. The other character is the one remembered for the viewed one, else the first
+    /// other one in the list (<see cref="CharacterList.CompareTarget"/>); one forgotten or hidden falls back to that.
     /// </summary>
     private Compare? RefreshCompare(Dashboard d)
     {
@@ -1575,24 +1744,17 @@ public sealed partial class CharactersPane
         }
 
         var viewedId = d.Snapshot.ContentId;
+        var target = CharacterList.CompareTarget(itemEntries, viewedId, roster.Settings.CompareWith(viewedId));
         CharacterItem? other = null;
-        CharacterItem? newest = null;
         foreach (var item in items)
         {
-            if (item.ContentId == viewedId)
-            {
-                continue;
-            }
-
-            newest ??= item;
-            if (item.ContentId == compareTarget)
+            if (item.ContentId == target)
             {
                 other = item;
                 break;
             }
         }
 
-        other ??= newest;
         if (other is null)
         {
             return null;
@@ -2106,32 +2268,84 @@ public sealed partial class CharactersPane
         return result.Length == 0 ? "character" : result;
     }
 
-    /// <summary>Left-column labels, once per session version and once a minute (the ages tick).</summary>
+    /// <summary>
+    /// The characters the dashboard's lists read (hidden ones left out but the one on view), once per session version,
+    /// roster version and minute (the ages tick).
+    /// </summary>
     private void RefreshItems()
     {
         var minute = DateTime.UtcNow.Ticks / TimeSpan.TicksPerMinute;
-        if (itemsVersion == session.RosterVersion && itemsMinute == minute)
+        var rosterVersion = roster.Version;
+        if (itemsVersion == session.RosterVersion && itemsRoster == rosterVersion && itemsMinute == minute)
         {
             return;
         }
 
         itemsVersion = session.RosterVersion;
+        itemsRoster = rosterVersion;
         itemsMinute = minute;
-
-        var characters = session.Characters;
-        var built = new CharacterItem[characters.Count];
+        // Hidden characters are left out, except the one on view (its own row in the account view).
+        var viewed = session.ViewedContentId;
+        itemEntries = roster.All.Where(e => !e.Hidden || e.LiveHere || e.ContentId == viewed).ToList();
+        var built = new CharacterItem[itemEntries.Count];
         for (var i = 0; i < built.Length; i++)
         {
-            var c = characters[i];
-            var live = c.ContentId == session.LiveContentId;
-            var elsewhere = !live && session.IsLiveElsewhere(c.ContentId);
-            var label = (live ? Strings.CharactersLiveMarker : elsewhere ? Strings.MultiboxMarker : string.Empty) + c.Name;
-            var state = live ? Strings.CharactersLive : elsewhere ? Strings.MultiboxLiveElsewhere : Age(c.TakenUtc);
-            var detailText = WorldName(c.World) + " · " + state + " · " + Strings.CharactersCompleted(c.CompletedCount);
-            built[i] = new CharacterItem(c.ContentId, c.Name, c.TakenUtc, label, detailText, elsewhere);
+            built[i] = ItemFor(itemEntries[i]);
         }
 
         items = built;
+    }
+
+    /// <summary>One character's labels: the marker and name, then world, state (live, elsewhere or age), count and badges.</summary>
+    private CharacterItem ItemFor(CharacterEntry c)
+    {
+        var notUpdating = session.NotUpdating.TryGetValue(c.ContentId, out var problem) ? problem : (SharedLoad?)null;
+        var label = (c.LiveHere ? Strings.CharactersLiveMarker : c.LiveElsewhere ? Strings.MultiboxMarker : string.Empty) + c.Name;
+        var state = c.LiveHere ? Strings.CharactersLive : c.LiveElsewhere ? Strings.MultiboxLiveElsewhere : Age(c.TakenUtc);
+        var detail = new StringBuilder(c.WorldName).Append(" · ").Append(state).Append(" · ").Append(Strings.CharactersCompleted(c.CompletedCount));
+        if (notUpdating is not null)
+        {
+            detail.Append(" · ").Append(Strings.AltsNotUpdatingBadge);
+        }
+
+        if (!c.Tracked)
+        {
+            detail.Append(" · ").Append(Strings.AltsUntrackedBadge);
+        }
+
+        if (c.Hidden)
+        {
+            detail.Append(" · ").Append(Strings.AltsHiddenBadge);
+        }
+
+        return new CharacterItem(c.ContentId, c.Name, c.TakenUtc, label, detail.ToString(), c.LiveElsewhere, c.Hidden, c.Tracked, notUpdating, c.WorldName);
+    }
+
+    /// <summary>
+    /// The left column's runs (1.8.0, R7 H): the roster with hidden characters only when shown, matched against the
+    /// search box, grouped by data center when the setting is on. Rebuilt when any of those or the ages change.
+    /// </summary>
+    private void RefreshList()
+    {
+        var key = new ListKey(session.RosterVersion, roster.Version, DateTime.UtcNow.Ticks / TimeSpan.TicksPerMinute, settings.ShowHiddenCharacters, settings.CharacterListByDataCenter, listSearch);
+        if (key == listKey)
+        {
+            return;
+        }
+
+        listKey = key;
+        var all = roster.All;
+        listTotal = all.Count;
+        listHiddenCount = 0;
+        foreach (var entry in all)
+        {
+            listHiddenCount += entry.Hidden && !entry.LiveHere ? 1 : 0;
+        }
+
+        listShowHiddenLabel = string.Format(CultureInfo.CurrentCulture, Strings.AltsShowHiddenFormat, listHiddenCount);
+        var shown = CharacterList.Visible(all, settings.ShowHiddenCharacters).Where(e => CharacterList.Matches(e, listSearch)).ToList();
+        var groups = CharacterList.Group(shown, settings.CharacterListByDataCenter);
+        listGroups = groups.Select(g => new ListGroup(g.DataCenter, g.Entries.Select(ItemFor).ToArray())).ToList();
     }
 
     /// <summary>
@@ -2766,26 +2980,8 @@ public sealed partial class CharactersPane
         return worldNames.TryGetValue(world, out var known) ? known : string.Format(CultureInfo.InvariantCulture, Strings.CharactersWorldFormat, world);
     }
 
-    private static string Age(DateTime takenUtc)
-    {
-        var age = DateTime.UtcNow - takenUtc;
-        if (age < TimeSpan.FromMinutes(1))
-        {
-            return Strings.JustNow;
-        }
-
-        if (age < TimeSpan.FromHours(1))
-        {
-            return string.Format(CultureInfo.CurrentCulture, Strings.MinutesAgoFormat, (int)age.TotalMinutes);
-        }
-
-        if (age < TimeSpan.FromDays(2))
-        {
-            return string.Format(CultureInfo.CurrentCulture, Strings.HoursAgoFormat, (int)age.TotalHours);
-        }
-
-        return string.Format(CultureInfo.CurrentCulture, Strings.DaysAgoFormat, (int)age.TotalDays);
-    }
+    /// <summary>How old a capture is, by the one rule every surface follows (<see cref="UiFormat.Age"/>).</summary>
+    private static string Age(DateTime takenUtc) => UiFormat.Age(takenUtc);
 
     /// <summary>Role groups in display order.</summary>
     public enum JobGroup
@@ -2801,7 +2997,25 @@ public sealed partial class CharactersPane
     }
 
     /// <param name="Elsewhere">Logged in on another game client (multibox, D11): badged, and never forgotten from here.</param>
-    private sealed record CharacterItem(ulong ContentId, string Name, DateTime TakenUtc, string Label, string Detail, bool Elsewhere = false);
+    /// <param name="Hidden">Hidden from the lists (1.8.0); listed only with "Show hidden", dimmed.</param>
+    /// <param name="Tracked">False after "Don't track this character".</param>
+    /// <param name="NotUpdating">Its file was saved by another client and cannot be read here (a newer plugin's, or broken).</param>
+    private sealed record CharacterItem(
+        ulong ContentId,
+        string Name,
+        DateTime TakenUtc,
+        string Label,
+        string Detail,
+        bool Elsewhere = false,
+        bool Hidden = false,
+        bool Tracked = true,
+        SharedLoad? NotUpdating = null,
+        string WorldName = "");
+
+    /// <summary>One run of the left column under its data center heading (empty: no heading).</summary>
+    private sealed record ListGroup(string Heading, CharacterItem[] Items);
+
+    private readonly record struct ListKey(int Version, int Roster, long Minute, bool ShowHidden, bool ByDataCenter, string Search);
 
     private readonly record struct DashboardKey(int Version, ulong ContentId, bool Live, long Minute, bool HasMoonlit, int PinsVersion);
 

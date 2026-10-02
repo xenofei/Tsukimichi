@@ -4916,6 +4916,214 @@
   <data name="Multibox.ForgetHint" xml:space="preserve">
     <value>This character is logged in on another game client. Log out there first.</value>
   </data>
+  <data name="Alts.SearchHint" xml:space="preserve">
+    <value>Search characters</value>
+  </data>
+  <data name="Alts.NoMatch" xml:space="preserve">
+    <value>No character matches the search.</value>
+  </data>
+  <data name="Alts.HiddenBadge" xml:space="preserve">
+    <value>hidden</value>
+    <comment>Badge after a hidden character's name in the lists (shown only with Show hidden characters). Lower case: it follows the name.</comment>
+  </data>
+  <data name="Alts.UntrackedBadge" xml:space="preserve">
+    <value>not tracked</value>
+    <comment>Badge after a character the player chose not to track. Lower case: it follows the name.</comment>
+  </data>
+  <data name="Alts.NotUpdatingBadge" xml:space="preserve">
+    <value>not updating</value>
+    <comment>Badge after a character whose file another game client saved and this client cannot read. Lower case: it follows the name.</comment>
+  </data>
+  <data name="Alts.NotUpdatingNewerTooltip" xml:space="preserve">
+    <value>Not updating: this character was saved by a newer Tsukimichi in another game client. Update this client to see its new saves; until then it shows the last save this client could read.</value>
+  </data>
+  <data name="Alts.NotUpdatingInvalidTooltip" xml:space="preserve">
+    <value>Not updating: the file another game client saved for this character cannot be read here. It shows the last save this client could read until that client saves it again.</value>
+  </data>
+  <data name="Alts.ShowHiddenFormat" xml:space="preserve">
+    <value>Show hidden ({0})</value>
+    <comment>{0} = how many characters are hidden. Checkbox under the Characters list.</comment>
+  </data>
+  <data name="Alts.MenuView" xml:space="preserve">
+    <value>View this character</value>
+  </data>
+  <data name="Alts.MenuHide" xml:space="preserve">
+    <value>Hide from lists</value>
+  </data>
+  <data name="Alts.MenuShow" xml:space="preserve">
+    <value>Show in lists</value>
+  </data>
+  <data name="Alts.MenuDontTrack" xml:space="preserve">
+    <value>Don't track this character</value>
+  </data>
+  <data name="Alts.MenuTrack" xml:space="preserve">
+    <value>Track this character</value>
+  </data>
+  <data name="Alts.HideTooltip" xml:space="preserve">
+    <value>Hidden characters leave the character switcher, the Characters list, Compare with, the account view and the collection grid. Nothing is deleted, and a hidden character you log in with still shows.</value>
+  </data>
+  <data name="Alts.DontTrackTooltip" xml:space="preserve">
+    <value>While this character is logged in, nothing of it is saved: no snapshot, no completion dates. A file saved before stays as it is until you forget the character.</value>
+  </data>
+  <data name="Alts.UntrackedNotice" xml:space="preserve">
+    <value>Not tracked: nothing of this character is saved while it is logged in.</value>
+  </data>
+  <data name="Alts.ForgetRefusedFormat" xml:space="preserve">
+    <value>{0} is now logged in on another game client, so it was not forgotten. Log out there first.</value>
+    <comment>{0} = character name.</comment>
+  </data>
+  <data name="Alts.ViewDashboard" xml:space="preserve">
+    <value>Dashboard</value>
+    <comment>The Characters tab's first view: the viewed character's dashboard.</comment>
+  </data>
+  <data name="Alts.ViewCollection" xml:space="preserve">
+    <value>Collection by character</value>
+    <comment>The Characters tab's second view: who has which reward, one column per character.</comment>
+  </data>
+  <data name="Alts.GridModeRewards" xml:space="preserve">
+    <value>Collectibles</value>
+  </data>
+  <data name="Alts.GridModeQuests" xml:space="preserve">
+    <value>Unlock quests</value>
+  </data>
+  <data name="Alts.GridKindAll" xml:space="preserve">
+    <value>All kinds</value>
+  </data>
+  <data name="Alts.GridMissingOnAny" xml:space="preserve">
+    <value>Missing on any</value>
+  </data>
+  <data name="Alts.GridMissingOnAnyTooltip" xml:space="preserve">
+    <value>Only the rewards at least one character is known to lack.</value>
+  </data>
+  <data name="Alts.GridNotDoneOnAny" xml:space="preserve">
+    <value>Not done on any</value>
+  </data>
+  <data name="Alts.GridNotDoneOnAnyTooltip" xml:space="preserve">
+    <value>Only the unlock quests at least one character has not completed.</value>
+  </data>
+  <data name="Alts.GridSearchHint" xml:space="preserve">
+    <value>Filter by name</value>
+  </data>
+  <data name="Alts.GridColumnReward" xml:space="preserve">
+    <value>Reward</value>
+  </data>
+  <data name="Alts.GridColumnQuest" xml:space="preserve">
+    <value>Quest</value>
+  </data>
+  <data name="Alts.GridColumnCount" xml:space="preserve">
+    <value>Have</value>
+    <comment>Column header: how many characters own the reward or completed the quest.</comment>
+  </data>
+  <data name="Alts.GridCellOwnedFormat" xml:space="preserve">
+    <value>{0}: owned</value>
+    <comment>{0} = character name.</comment>
+  </data>
+  <data name="Alts.GridCellMissingFormat" xml:space="preserve">
+    <value>{0}: missing</value>
+    <comment>{0} = character name.</comment>
+  </data>
+  <data name="Alts.GridCellUnknownFormat" xml:space="preserve">
+    <value>{0}: not known (its save holds no answer for this reward)</value>
+    <comment>{0} = character name.</comment>
+  </data>
+  <data name="Alts.GridCellStateFormat" xml:space="preserve">
+    <value>{0}: {1}</value>
+    <comment>{0} = character name, {1} = the quest's state for that character.</comment>
+  </data>
+  <data name="Alts.GridCellPendingFormat" xml:space="preserve">
+    <value>{0}: being read</value>
+    <comment>{0} = character name.</comment>
+  </data>
+  <data name="Alts.GridColumnTooltipFormat" xml:space="preserve">
+    <value>{0} ({1}) · saved {2}</value>
+    <comment>{0} = character name, {1} = world, {2} = how long ago it was saved.</comment>
+  </data>
+  <data name="Alts.GridSummaryFormat" xml:space="preserve">
+    <value>Rows: {0} · characters: {1}</value>
+    <comment>{0} = rows shown, {1} = character columns.</comment>
+  </data>
+  <data name="Alts.GridEmpty" xml:space="preserve">
+    <value>No row matches the filters.</value>
+  </data>
+  <data name="Alts.GridNeedsCatalog" xml:space="preserve">
+    <value>The grid appears once the catalog is built.</value>
+  </data>
+  <data name="Alts.GridNoCharacters" xml:space="preserve">
+    <value>No character to show. Hidden characters are left out.</value>
+  </data>
+  <data name="Alts.GridRewardsHint" xml:space="preserve">
+    <value>From what each character's last save holds. A character saved before 1.5 reads as not known.</value>
+  </data>
+  <data name="Alts.SettingsHeading" xml:space="preserve">
+    <value>Characters</value>
+    <comment>Settings › Data: the block for the alt lists.</comment>
+  </data>
+  <data name="Alts.SettingsByDataCenter" xml:space="preserve">
+    <value>Group the Characters list by data center</value>
+  </data>
+  <data name="Alts.SettingsByDataCenterHint" xml:space="preserve">
+    <value>Characters not logged in are listed under their data center when they are on more than one. Logged-in characters stay at the top.</value>
+  </data>
+  <data name="Alts.SettingsShowHidden" xml:space="preserve">
+    <value>Show hidden characters in the lists</value>
+  </data>
+  <data name="Alts.SettingsShowHiddenHint" xml:space="preserve">
+    <value>Hidden characters show dimmed in the character switcher and the Characters list, so you can show them again. Compare with, the account view and the collection grid still leave them out.</value>
+  </data>
+  <data name="Alts.SettingsHiddenFormat" xml:space="preserve">
+    <value>Hidden or not tracked ({0})</value>
+    <comment>{0} = how many characters are hidden or not tracked.</comment>
+  </data>
+  <data name="Alts.SettingsHiddenHint" xml:space="preserve">
+    <value>Characters you hid from the lists or chose not to track. Right-click a character in the Characters list to change it there too.</value>
+  </data>
+  <data name="Alts.SettingsHiddenNone" xml:space="preserve">
+    <value>No character is hidden or untracked.</value>
+  </data>
+  <data name="Alts.SettingsShowButton" xml:space="preserve">
+    <value>Show</value>
+    <comment>Button: show a hidden character in the lists again.</comment>
+  </data>
+  <data name="Alts.SettingsTrackButton" xml:space="preserve">
+    <value>Track</value>
+    <comment>Button: track a character again.</comment>
+  </data>
+  <data name="Alts.SettingsForget" xml:space="preserve">
+    <value>Forget characters not seen in</value>
+    <comment>Followed by a number of days.</comment>
+  </data>
+  <data name="Alts.SettingsForgetDays" xml:space="preserve">
+    <value>days</value>
+  </data>
+  <data name="Alts.SettingsForgetHint" xml:space="preserve">
+    <value>Forgets every character whose last save is at least this old, as Forget character does for one. A character logged in here or on another game client is never forgotten.</value>
+  </data>
+  <data name="Alts.SettingsForgetButtonFormat" xml:space="preserve">
+    <value>Forget ({0})…</value>
+    <comment>{0} = how many characters would be forgotten.</comment>
+  </data>
+  <data name="Alts.SettingsForgetNone" xml:space="preserve">
+    <value>No character was last saved that long ago.</value>
+  </data>
+  <data name="Alts.ForgetBulkPopup" xml:space="preserve">
+    <value>Forget characters###TsukimichiForgetCharacters</value>
+    <comment>Window title; keep the part from ### on as it is.</comment>
+  </data>
+  <data name="Alts.ForgetBulkQuestionFormat" xml:space="preserve">
+    <value>Forget these characters ({0})? Their snapshots, pins and settings are deleted. Nothing in the game is changed.</value>
+    <comment>{0} = how many characters.</comment>
+  </data>
+  <data name="Alts.ForgetBulkConfirm" xml:space="preserve">
+    <value>Forget them</value>
+  </data>
+  <data name="Alts.ForgetBulkDoneFormat" xml:space="preserve">
+    <value>Characters forgotten: {0}.</value>
+    <comment>{0} = how many.</comment>
+  </data>
+  <data name="Alts.ForgetBulkSkippedFormat" xml:space="preserve">
+    <value>Characters forgotten: {0}. Kept because they logged in on another game client meanwhile: {1}.</value>
+    <comment>{0} = forgotten, {1} = kept.</comment>
+  </data>
   <data name="NoSnapshots" xml:space="preserve">
     <value>No snapshots yet</value>
   </data>

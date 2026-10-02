@@ -14,26 +14,17 @@ public static class UiFormat
         return local.ToString(local.Date == today ? Strings.TimeFormat : Strings.DateTimeFormat, CultureInfo.CurrentCulture);
     }
 
-    /// <summary>"just now", "5 min ago", "3 h ago", "2 d ago".</summary>
+    /// <summary>"just now", "5 min ago", "3 h ago", "2 d ago": the one age rule every surface follows (<see cref="Core.Ui.AgeText"/>).</summary>
     public static string Age(DateTime utc, DateTime? nowUtc = null)
     {
-        var age = (nowUtc ?? DateTime.UtcNow) - utc;
-        if (age < TimeSpan.FromMinutes(1))
+        var (unit, value) = Core.Ui.AgeText.Of(utc, nowUtc ?? DateTime.UtcNow);
+        return unit switch
         {
-            return Strings.JustNow;
-        }
-
-        if (age < TimeSpan.FromHours(1))
-        {
-            return string.Format(CultureInfo.CurrentCulture, Strings.MinutesAgoFormat, (int)age.TotalMinutes);
-        }
-
-        if (age < TimeSpan.FromDays(1))
-        {
-            return string.Format(CultureInfo.CurrentCulture, Strings.HoursAgoFormat, (int)age.TotalHours);
-        }
-
-        return string.Format(CultureInfo.CurrentCulture, Strings.DaysAgoFormat, (int)age.TotalDays);
+            Core.Ui.AgeUnit.JustNow => Strings.JustNow,
+            Core.Ui.AgeUnit.Minutes => string.Format(CultureInfo.CurrentCulture, Strings.MinutesAgoFormat, value),
+            Core.Ui.AgeUnit.Hours => string.Format(CultureInfo.CurrentCulture, Strings.HoursAgoFormat, value),
+            _ => string.Format(CultureInfo.CurrentCulture, Strings.DaysAgoFormat, value),
+        };
     }
 
     public static string Count(int done, int total) =>

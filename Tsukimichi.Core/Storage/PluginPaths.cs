@@ -28,6 +28,9 @@ public sealed class PluginPaths
     public string PinsFile => Path.Combine(UserDir, "pins.json");
     public string OverridesFile => Path.Combine(UserDir, "overrides.json");
 
+    /// <summary>Per-character settings every game client shares (1.8.0): spoiler overrides, notices, hidden, not tracked, Compare.</summary>
+    public string CharacterSettingsFile => Path.Combine(UserDir, "characters.json");
+
     /// <summary>Default folder of Settings › Data › Export and <c>/tsuki export</c>.</summary>
     public string ExportsDir => Path.Combine(ConfigDir, "exports");
 
