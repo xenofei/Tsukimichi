@@ -19,14 +19,17 @@ namespace Tsukimichi.Game;
 /// fork at 4f2909b7bc9e6ec65e63c4b71f4fb7f523688b46 has the first and the last, not the reason gate):
 /// <c>Questionable.IsQuestLocked(string questId) -> bool</c>,
 /// <c>Questionable.IsQuestLockedReason(string questId) -> (bool, string)</c> (reasons joined by ','), and
-/// <c>Questionable.AddQuestPriority(string questId) -> bool</c>. The quest id is the Quest row id's low 16 bits in
+/// <c>Questionable.AddQuestPriority(string questId) -> bool</c>, and the message <c>Questionable.ReloadData</c> (no
+/// arguments), which <c>Questionable/Controller/QuestRegistry.cs</c> sends at the end of every <c>Reload</c>: at load,
+/// after its path bundle is downloaded at run time, and on its "Reload Data" button. The quest id is the Quest row id's low 16 bits in
 /// decimal (<see cref="QuestionableCrossCheck.QuestionableId"/>). Both lock gates answer locked for a quest Questionable
 /// has no path for, the reason gate with an empty reason; <c>AddQuestPriority</c> answers true even for a quest it
 /// does not know, so the button is offered only when the reason gate names the quest as one it has a path for.
 /// </para>
 /// <para>
 /// Questionable is asked on demand, never per frame: an answer is cached per quest until the session's
-/// <see cref="SessionState.Version"/> moves or Dalamud's plugin list changes (<see cref="Generation"/>). Every call is
+/// <see cref="SessionState.Version"/> moves, Dalamud's plugin list changes or Questionable reloads its paths
+/// (<see cref="Generation"/>): an answer given before its paths arrived says "no path" for every quest. Every call is
 /// wrapped: a gate that is not registered or throws reads as no answer, and the first failure is logged once.
 /// </para>
 /// </summary>
@@ -36,12 +39,14 @@ public sealed class QuestionableIpc : IDisposable
     public const string IsQuestLockedGate = "Questionable.IsQuestLocked";
     public const string IsQuestLockedReasonGate = "Questionable.IsQuestLockedReason";
     public const string AddQuestPriorityGate = "Questionable.AddQuestPriority";
+    public const string ReloadDataMessage = "Questionable.ReloadData";
 
     private readonly IDalamudPluginInterface pluginInterface;
     private readonly IPluginLog log;
     private readonly ICallGateSubscriber<string, bool>? isQuestLocked;
     private readonly ICallGateSubscriber<string, (bool, string)>? isQuestLockedReason;
     private readonly ICallGateSubscriber<string, bool>? addQuestPriority;
+    private readonly ICallGateSubscriber<object>? reloadData;
 
     // Answers by row id for one session version; a null value is "asked, no answer".
     private readonly Dictionary<uint, QuestionableAnswer?> answers = [];
@@ -55,6 +60,10 @@ public sealed class QuestionableIpc : IDisposable
 
     // Raised by ActivePluginsChanged, which may arrive off the framework thread; consumed on the next read.
     private volatile bool pluginListDirty = true;
+
+    // Raised by Questionable.ReloadData, which Questionable sends from whatever thread reloaded its paths (the bundle
+    // download finishes on a worker); consumed on the next read.
+    private volatile bool pathsReloaded;
 
     public QuestionableIpc(IDalamudPluginInterface pluginInterface, IPluginLog log)
     {
@@ -75,6 +84,18 @@ public sealed class QuestionableIpc : IDisposable
             addQuestPriority = null;
         }
 
+        // Apart from the gates: a message that cannot be subscribed costs fresh answers after a reload, not the cross-check.
+        try
+        {
+            reloadData = pluginInterface.GetIpcSubscriber<object>(ReloadDataMessage);
+            reloadData.Subscribe(OnReloadData);
+        }
+        catch (Exception ex)
+        {
+            log.Warning(ex, "Questionable.ReloadData subscription unavailable");
+            reloadData = null;
+        }
+
         pluginInterface.ActivePluginsChanged += OnActivePluginsChanged;
     }
 
@@ -87,6 +108,14 @@ public sealed class QuestionableIpc : IDisposable
 
         disposed = true;
         pluginInterface.ActivePluginsChanged -= OnActivePluginsChanged;
+        try
+        {
+            reloadData?.Unsubscribe(OnReloadData);
+        }
+        catch (Exception ex)
+        {
+            log.Debug(ex, "Questionable.ReloadData unsubscribe failed");
+        }
     }
 
     /// <summary>True while Questionable is installed and loaded. Cached; re-read after Dalamud's plugin list changes.</summary>
@@ -100,8 +129,8 @@ public sealed class QuestionableIpc : IDisposable
     }
 
     /// <summary>
-    /// Moves whenever Dalamud's plugin list changes (Questionable loaded, unloaded, updated or swapped for a fork), so
-    /// a cache of cross-checks knows to ask again.
+    /// Moves whenever Dalamud's plugin list changes (Questionable loaded, unloaded, updated or swapped for a fork) or
+    /// Questionable sends <c>Questionable.ReloadData</c>, so a cache of cross-checks knows to ask again.
     /// </summary>
     public int Generation { get; private set; }
 
@@ -260,6 +289,17 @@ public sealed class QuestionableIpc : IDisposable
     {
         if (!pluginListDirty)
         {
+            if (pathsReloaded)
+            {
+                // The same Questionable with new paths: its answers may change (a quest that had no path has one now),
+                // its gates and what is loaded do not.
+                pathsReloaded = false;
+                Generation++;
+                answers.Clear();
+                answersVersion = int.MinValue;
+                loggedDisagreements.Clear();
+            }
+
             return;
         }
 
@@ -267,6 +307,7 @@ public sealed class QuestionableIpc : IDisposable
         // handled in one pass (an update, or a swap to the fork under the same internal name) is a new Questionable
         // whose answers and reason gate may differ.
         pluginListDirty = false;
+        pathsReloaded = false;
         loaded = isQuestLocked is not null && IsLoaded();
         Generation++;
         answers.Clear();
@@ -294,6 +335,8 @@ public sealed class QuestionableIpc : IDisposable
     }
 
     private void OnActivePluginsChanged(IActivePluginsChangedEventArgs args) => pluginListDirty = true;
+
+    private void OnReloadData() => pathsReloaded = true;
 
     private bool IsLoaded()
     {

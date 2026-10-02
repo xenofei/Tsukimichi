@@ -119,8 +119,16 @@ public static class QuestionableCrossCheck
         RequirementKind.CarrierLevel,
     };
 
-    /// <summary>The prefix of Questionable's (English) level reason, "Low level (GLA)"; it checks level for class and job quests only.</summary>
-    public const string LowLevelReason = "Low level";
+    /// <summary>
+    /// Questionable's level reason in each language it ships, the text before the job: "Low level (GLA)" in English,
+    /// "レベル不足 (GLA)" in Japanese. It checks the level of class and job quests only. Questionable translates its
+    /// reasons through <c>Questionable/Resources/I18N.xml</c> (github.com/PunishXIV/Questionable, commit
+    /// 0bd61efe8a6806a7a8010741c0c46b7dea153709): key "Low level", values en, ja-jp, zh-cn and zh-tw, and a Korean one it
+    /// keeps commented out, listed here so the match holds the day it ships. <c>QuestFunctions.IsQuestLocked</c> writes
+    /// the reason as <c>$"{_L("Low level")} ({job})"</c> in every language: the job is an ECommons <c>Job</c> name
+    /// ("GLA", "PLD"), or nothing ("()") when its unlock-quest branch finds no job stone.
+    /// </summary>
+    public static readonly IReadOnlyList<string> LowLevelReasons = ["Low level", "レベル不足", "等级不足", "等級不足", "레벨 부족"];
 
     /// <summary>
     /// The id Questionable's gates take for a Quest sheet row: the row id's low 16 bits in invariant digits
@@ -258,6 +266,59 @@ public static class QuestionableCrossCheck
         return false;
     }
 
+    /// <summary>
+    /// One of Questionable's reasons is its level reason, in any language it ships: a <see cref="LowLevelReasons"/>
+    /// text, alone or followed by " (JOB)" with the job's ASCII letters or digits, and nothing else. The bracketed form
+    /// of Questionable's localisation debug option ("{Low level} (GLA)") is read too. No other reason can match: each
+    /// starts with another text, and a level text followed by anything but a job is not taken.
+    /// </summary>
+    public static bool IsLowLevelReason(string reason)
+    {
+        ArgumentNullException.ThrowIfNull(reason);
+        var text = reason.AsSpan().Trim();
+        foreach (var prefix in LowLevelReasons)
+        {
+            if (text.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            {
+                return IsJobSuffix(text[prefix.Length..]);
+            }
+
+            if (text.Length >= prefix.Length + 2
+                && text[0] == '{'
+                && text[1..].StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
+                && text[prefix.Length + 1] == '}')
+            {
+                return IsJobSuffix(text[(prefix.Length + 2)..]);
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>Nothing, or " (" + the job's ASCII letters or digits + ")": "", " (GLA)", " ()".</summary>
+    private static bool IsJobSuffix(ReadOnlySpan<char> rest)
+    {
+        if (rest.IsEmpty)
+        {
+            return true;
+        }
+
+        if (rest.Length < 3 || rest[0] != ' ' || rest[1] != '(' || rest[^1] != ')')
+        {
+            return false;
+        }
+
+        foreach (var c in rest[2..^1])
+        {
+            if (!char.IsAsciiLetterOrDigit(c))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     private static bool OnlyLowLevel(QuestionableAnswer answer)
     {
         var reasons = answer.Reasons;
@@ -268,7 +329,7 @@ public static class QuestionableCrossCheck
 
         foreach (var reason in reasons)
         {
-            if (!reason.StartsWith(LowLevelReason, StringComparison.OrdinalIgnoreCase))
+            if (!IsLowLevelReason(reason))
             {
                 return false;
             }
