@@ -110,6 +110,7 @@ public sealed partial class TreePane
         using var tooltipStyle = Theme.PushTooltip();
         using var tooltip = ImRaii.Tooltip();
         UiMetrics.ApplyFontScale();
+        using var wrap = UiMetrics.TooltipWrap();
         ImGui.TextUnformatted(node.FullName);
         var progress = node.HoverText.Length > 0 ? node.HoverText : node.ProgressText;
         if (progress.Length > 0)

@@ -133,9 +133,19 @@ public static class UiMetrics
     /// </summary>
     public static float MinTarget => MathF.Max(Px(26f), 24f);
 
+    /// <summary>Widest a tooltip's text runs before it wraps, in ems (font sizes): long hints wrap, short ones keep their width.</summary>
+    public const float TooltipWrapEm = 32f;
+
+    /// <summary>
+    /// Wraps every text line of the current tooltip at <see cref="TooltipWrapEm"/> from where its content starts. Call
+    /// inside the tooltip after its font and font scale are set; <c>TextUnformatted</c> and <c>TextDisabled</c> honour it
+    /// as <c>TextWrapped</c> does, and a line shorter than the wrap width draws exactly as before.
+    /// </summary>
+    public static ImRaii.TextWrapDisposable TooltipWrap() => ImRaii.TextWrapPos(ImGui.GetCursorPosX() + (ImGui.GetFontSize() * TooltipWrapEm));
+
     /// <summary>
     /// A plain text tooltip, Night styled and drawn with the UI scale (SetTooltip can be neither). It is always in the
-    /// default font, even when hung off an item drawn in a <see cref="Typography"/> role.
+    /// default font, even when hung off an item drawn in a <see cref="Typography"/> role, and wraps at <see cref="TooltipWrapEm"/>.
     /// </summary>
     public static void Tooltip(string text)
     {
@@ -143,21 +153,28 @@ public static class UiMetrics
         using var tooltip = ImRaii.Tooltip();
         ImGui.PushFont(UiBuilder.DefaultFont);
         ApplyFontScale();
-        ImGui.TextUnformatted(text);
+        using (TooltipWrap())
+        {
+            ImGui.TextUnformatted(text);
+        }
+
         ImGui.PopFont();
     }
 
-    /// <summary>A two-line tooltip: <paramref name="text"/>, then <paramref name="detail"/> in the disabled tone when it is not empty.</summary>
+    /// <summary>A two-line tooltip: <paramref name="text"/>, then <paramref name="detail"/> in the disabled tone when it is not empty; both wrap.</summary>
     public static void Tooltip(string text, string? detail)
     {
         using var tooltipStyle = Theme.PushTooltip();
         using var tooltip = ImRaii.Tooltip();
         ImGui.PushFont(UiBuilder.DefaultFont);
         ApplyFontScale();
-        ImGui.TextUnformatted(text);
-        if (!string.IsNullOrEmpty(detail))
+        using (TooltipWrap())
         {
-            ImGui.TextDisabled(detail);
+            ImGui.TextUnformatted(text);
+            if (!string.IsNullOrEmpty(detail))
+            {
+                ImGui.TextDisabled(detail);
+            }
         }
 
         ImGui.PopFont();

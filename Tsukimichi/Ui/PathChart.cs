@@ -198,7 +198,8 @@ public sealed class PathChart
             {
                 case PathRowKind.Band:
                     var name = bundle.Names.Expansion(row.Expansion);
-                    rowLabels[i] = (name.Length > 0 ? name : Strings.ExpansionShort(row.Expansion)).ToUpper(CultureInfo.CurrentCulture);
+                    // The heading case rule (capitals in English, invariant culture; each language's own case otherwise).
+                    rowLabels[i] = SectionHeading.Label(name.Length > 0 ? name : Strings.ExpansionShort(row.Expansion));
                     break;
                 case PathRowKind.FoldedRun:
                     rowLabels[i] = string.Format(CultureInfo.CurrentCulture, Strings.PathMoonsWalkedFormat, row.Count);
@@ -674,11 +675,14 @@ public sealed class PathChart
         using var tooltip = ImRaii.Tooltip();
         ImGui.PushFont(Dalamud.Interface.UiBuilder.DefaultFont);
         UiMetrics.ApplyFontScale();
-        ImGui.TextUnformatted(name);
-        ImGui.TextDisabled(state);
-        if (detail.Length > 0)
+        using (UiMetrics.TooltipWrap())
         {
-            ImGui.TextDisabled(detail);
+            ImGui.TextUnformatted(name);
+            ImGui.TextDisabled(state);
+            if (detail.Length > 0)
+            {
+                ImGui.TextDisabled(detail);
+            }
         }
 
         ImGui.PopFont();

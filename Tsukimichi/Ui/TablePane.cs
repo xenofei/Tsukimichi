@@ -980,8 +980,7 @@ public sealed class TablePane : IDisposable
         if (job.IconId != 0)
         {
             var iconMin = new Vector2(pos.X, pos.Y + MathF.Round((layout.RowContent - icon) * 0.5f));
-            var wrap = textures.GetFromGameIcon(new GameIconLookup(job.IconId)).GetWrapOrEmpty();
-            dl.AddImage(wrap.Handle, iconMin, iconMin + new Vector2(icon, icon));
+            GameIcon.DrawAt(dl, textures, job.IconId, iconMin, iconMin + new Vector2(icon, icon));
             if (!iconOnly)
             {
                 dl.AddText(new Vector2(pos.X + icon + gap, pos.Y + layout.TextOffset), ink, job.Short);
@@ -1122,8 +1121,7 @@ public sealed class TablePane : IDisposable
                 ImGui.SetCursorPosY(ImGui.GetCursorPosY() + iconOffset);
             }
 
-            var wrap = textures.GetFromGameIcon(new GameIconLookup(reward.Icon)).GetWrapOrEmpty();
-            ImGui.Image(wrap.Handle, new Vector2(iconSize, iconSize));
+            GameIcon.Draw(textures, reward.Icon, iconSize);
             if (ImGui.IsItemHovered())
             {
                 RewardTooltip.Draw(reward, links, textures);

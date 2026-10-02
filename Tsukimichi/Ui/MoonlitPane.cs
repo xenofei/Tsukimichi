@@ -5,7 +5,6 @@ using System.IO;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
-using Dalamud.Interface.Textures;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
@@ -969,8 +968,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             var art = MathF.Round(icon * 6f / 64f);
             if (row.Reward is not null)
             {
-                var hiRes = icon - (2f * art) > Orbit.LowResMaxPx;
-                if (textures.TryGetFromGameIcon(new GameIconLookup(row.Icon, false, hiRes), out var tileTex) && tileTex.TryGetWrap(out var wrap, out _))
+                if (GameIcon.TryGetWrap(textures, row.Icon, icon - (2f * art), out var wrap))
                 {
                     dl.AddImageRounded(wrap.Handle, iconMin + new Vector2(art), iconMax - new Vector2(art), Vector2.Zero, Vector2.One, 0xFFFFFFFFu, rounding * 0.5f);
                 }
@@ -1254,8 +1252,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     {
         if (row.Reward is { } reward)
         {
-            var wrap = textures.GetFromGameIcon(new GameIconLookup(row.Icon)).GetWrapOrEmpty();
-            ImGui.Image(wrap.Handle, new Vector2(size, size));
+            GameIcon.Draw(textures, row.Icon, size);
             if (ImGui.IsItemHovered())
             {
                 RewardTooltip.Draw(reward, links, textures, row.SourceText);

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
-using Dalamud.Interface.Textures;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
 using Tsukimichi.Core.Evaluation;
@@ -489,8 +488,7 @@ public sealed class FlightPane
         if (icon != 0 && zone.Zone.FieldCurrentCount > 0)
         {
             var size = UiMetrics.DetailIconSize;
-            var wrap = textures.GetFromGameIcon(new GameIconLookup(icon)).GetWrapOrEmpty();
-            ImGui.Image(wrap.Handle, new Vector2(size, size));
+            GameIcon.Draw(textures, icon, size);
             ImGui.SameLine();
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + MathF.Max(0f, (size - ImGui.GetTextLineHeight()) * 0.5f));
         }

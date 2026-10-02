@@ -113,6 +113,26 @@ public class HeadingLayoutTests
     }
 
     [Fact]
+    public void Path_band_labels_follow_the_heading_case_rule()
+    {
+        // The Path chart's expansion bands go through the heading case (they once upper-cased with the system culture,
+        // so a Turkish system printed "SHADOWBRİNGERS"); other languages keep the sheet's own case.
+        var headings = new HeadingCase();
+        var previous = System.Globalization.CultureInfo.CurrentCulture;
+        try
+        {
+            System.Globalization.CultureInfo.CurrentCulture = new System.Globalization.CultureInfo("tr-TR");
+            Assert.Equal("SHADOWBRINGERS", headings.For("Shadowbringers", capitals: true));
+            Assert.Equal("Shadowbringers", headings.For("Shadowbringers", capitals: false));
+            Assert.Equal("漆黒のヴィランズ", headings.For("漆黒のヴィランズ", capitals: false));
+        }
+        finally
+        {
+            System.Globalization.CultureInfo.CurrentCulture = previous;
+        }
+    }
+
+    [Fact]
     public void Upper_cased_headings_are_cached_and_the_cache_is_bounded()
     {
         var headings = new HeadingCase();

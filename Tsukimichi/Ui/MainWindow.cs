@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Game.ClientState.Keys;
 using Dalamud.Interface;
-using Dalamud.Interface.Textures;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
@@ -1085,7 +1084,7 @@ public sealed class MainWindow : Window, IDisposable
         var iconSize = UiMetrics.Px(18f);
         var iconMin = new Vector2(min.X + UiMetrics.Px(4f), min.Y + (height - iconSize) * 0.5f);
         var iconMax = iconMin + new Vector2(iconSize);
-        if (characterJobIcon != 0 && textures.TryGetFromGameIcon(new GameIconLookup(characterJobIcon), out var jobTex) && jobTex.TryGetWrap(out var wrap, out _))
+        if (GameIcon.TryGetWrap(textures, characterJobIcon, iconSize, out var wrap))
         {
             dl.AddImageRounded(wrap.Handle, iconMin, iconMax, Vector2.Zero, Vector2.One, 0xFFFFFFFFu, iconSize * 0.5f);
         }
