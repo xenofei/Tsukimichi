@@ -635,32 +635,8 @@ public sealed class TodoOverlay : Window, IDisposable
             links.FlagMap(quest);
         }
 
-        // Hidden without Lifestream; disabled, with the reason on hover, while it is busy or the giver's zone has no aetheryte.
-        if (links.TeleportAvailable)
-        {
-            var aetheryte = links.NearestAetheryte(quest);
-            var busy = links.TeleportBusy;
-            if (ImGui.MenuItem(Strings.TeleportToGiver, enabled: aetheryte is not null && !busy))
-            {
-                links.TeleportToGiver(quest);
-            }
-
-            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
-            {
-                if (aetheryte is not { } target)
-                {
-                    UiMetrics.Tooltip(Strings.TeleportNoAetheryte);
-                }
-                else if (busy)
-                {
-                    UiMetrics.Tooltip(Strings.TeleportBusy);
-                }
-                else
-                {
-                    UiMetrics.Tooltip(string.Format(CultureInfo.CurrentCulture, Strings.TeleportTooltipFormat, target.Name));
-                }
-            }
-        }
+        // Teleport, Walk and Go to giver; disabled, with the reason on hover (naming Lifestream or vnavmesh when missing).
+        TravelControls.MenuItems(links, quest, Strings.TeleportToGiver);
 
         if (ImGui.MenuItem(Strings.LinkInChat))
         {

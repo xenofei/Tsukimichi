@@ -14,7 +14,7 @@ namespace Tsukimichi.Ui;
 /// The "Abandoned (N)" section of the Characters dashboard (P10): the quests the viewed character dropped from the
 /// journal and has not taken up again, newest first, from <see cref="Game.SessionState.Abandoned"/>. Each row: the
 /// quest's state moon, its name (click reveals it in the Journal; the tooltip names the giver), "step 3 of 5 · 2 days
-/// ago", and Flag, Teleport (with Lifestream) and Reveal. "Show in Journal" opens the Journal under the Abandoned filter.
+/// ago", and Flag, Teleport (through Lifestream; greyed and naming it without), Walk (vnavmesh) and Reveal. "Show in Journal" opens the Journal under the Abandoned filter.
 /// Rows are rebuilt once per session version and once a minute (the ages tick).
 /// </summary>
 public sealed partial class CharactersPane
@@ -25,7 +25,7 @@ public sealed partial class CharactersPane
     private int abandonedVersion = -1;
     private long abandonedMinute = -1;
 
-    /// <summary>Map flags and Lifestream teleports for the Abandoned rows; set by the plugin. Null hides Flag and Teleport.</summary>
+    /// <summary>Map flags and travel for the Abandoned rows; set by the plugin. Null hides Flag, Teleport and Walk.</summary>
     public GameLinks? Links { get; set; }
 
     private void DrawAbandoned(UiState ui)
@@ -160,7 +160,7 @@ public sealed partial class CharactersPane
         return widest + UiMetrics.Px(24f);
     }
 
-    /// <summary>Flag, Teleport (with Lifestream) and Reveal side by side.</summary>
+    /// <summary>Flag, Teleport, Walk (when shown) and Reveal side by side.</summary>
     private float AbandonedActionsWidth()
     {
         var style = ImGui.GetStyle();
@@ -169,10 +169,7 @@ public sealed partial class CharactersPane
         if (Links is { } links)
         {
             width += ImGui.CalcTextSize(Strings.AbandonedFlag).X + padding + style.ItemSpacing.X;
-            if (links.TeleportAvailable)
-            {
-                width += ImGui.CalcTextSize(Strings.AbandonedTeleport).X + padding + style.ItemSpacing.X;
-            }
+            width += TravelControls.ButtonsWidth(links, Strings.AbandonedTeleport);
         }
 
         return width;
@@ -202,20 +199,7 @@ public sealed partial class CharactersPane
                 UiMetrics.Tooltip(Strings.AbandonedFlagTooltip);
             }
 
-            if (links.TeleportAvailable)
-            {
-                var aetheryte = links.NearestAetheryte(quest);
-                var busy = links.TeleportBusy;
-                if (ImGui.MenuItem(Strings.AbandonedTeleport, enabled: aetheryte is not null && !busy))
-                {
-                    links.TeleportToGiver(quest);
-                }
-
-                if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
-                {
-                    UiMetrics.Tooltip(TeleportTooltip(aetheryte, busy));
-                }
-            }
+            TravelControls.MenuItems(links, quest, Strings.AbandonedTeleport);
         }
 
         if (ImGui.MenuItem(Strings.AbandonedReveal))
@@ -229,7 +213,7 @@ public sealed partial class CharactersPane
         }
     }
 
-    /// <summary>Flag (when the giver has a map spot), Teleport (only with Lifestream) and Reveal, the actions of the Nearby window's row menu.</summary>
+    /// <summary>Flag (when the giver has a map spot), Teleport, Walk (when shown) and Reveal.</summary>
     private void DrawAbandonedActions(UiState ui, QuestRecord quest)
     {
         if (Links is { } links)
@@ -247,25 +231,7 @@ public sealed partial class CharactersPane
                 UiMetrics.Tooltip(Strings.AbandonedFlagTooltip);
             }
 
-            if (links.TeleportAvailable)
-            {
-                ImGui.SameLine();
-                var aetheryte = links.NearestAetheryte(quest);
-                var busy = links.TeleportBusy;
-                using (ImRaii.Disabled(aetheryte is null || busy))
-                {
-                    if (ImGui.SmallButton(Strings.AbandonedTeleport))
-                    {
-                        links.TeleportToGiver(quest);
-                    }
-                }
-
-                if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
-                {
-                    UiMetrics.Tooltip(TeleportTooltip(aetheryte, busy));
-                }
-            }
-
+            TravelControls.Buttons(links, quest, Strings.AbandonedTeleport);
             ImGui.SameLine();
         }
 
@@ -279,12 +245,6 @@ public sealed partial class CharactersPane
             UiMetrics.Tooltip(Strings.AbandonedRevealTooltip);
         }
     }
-
-    /// <summary>A Teleport action's tooltip: the aetheryte it goes to, or why it cannot.</summary>
-    private static string TeleportTooltip((uint Id, string Name)? aetheryte, bool busy) =>
-        aetheryte is not { } target ? Strings.TeleportNoAetheryte
-        : busy ? Strings.TeleportBusy
-        : string.Format(CultureInfo.CurrentCulture, Strings.TeleportTooltipFormat, target.Name);
 
     /// <summary>Rebuilds the rows from the viewed character's ledger when the session changed or a minute passed.</summary>
     private void RefreshAbandoned()

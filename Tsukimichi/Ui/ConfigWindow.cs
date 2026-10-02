@@ -1421,6 +1421,31 @@ public sealed partial class ConfigWindow : Window
             UiMetrics.Tooltip(Strings.ConfigQuestionableHandoffHint);
         }
 
+        // Travel (1.6.0): read per draw by the panes through GameLinks, so no callback is needed.
+        var showWalk = settings.ShowWalkToGiver;
+        if (ImGui.Checkbox(Strings.ConfigShowWalk, ref showWalk))
+        {
+            settings.ShowWalkToGiver = showWalk;
+            Save();
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.ConfigShowWalkHint);
+        }
+
+        var showGoTo = settings.ShowGoToGiver;
+        if (ImGui.Checkbox(Strings.ConfigShowGoTo, ref showGoTo))
+        {
+            settings.ShowGoToGiver = showGoTo;
+            Save();
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.ConfigShowGoToHint);
+        }
+
         DrawHookGate();
     }
 

@@ -76,6 +76,16 @@ public sealed class Configuration : IPluginConfiguration
     /// </summary>
     public bool QuestionableHandoff { get; set; }
 
+    // ---- 1.6.0: travel ----
+    /// <summary>
+    /// Show Walk to giver (vnavmesh) beside Teleport. On by default; without vnavmesh the button stays, greyed, and
+    /// names it. The character only moves on a click.
+    /// </summary>
+    public bool ShowWalkToGiver { get; set; } = true;
+
+    /// <summary>Show Go to giver (teleport, aethernet and walk in one click, with Stop). On by default.</summary>
+    public bool ShowGoToGiver { get; set; } = true;
+
     // ---- 0.5.0: todo overlay ----
     /// <summary>Show the small always-on todo overlay (pins, nearby feature quests, MSQ, job quests).</summary>
     public bool TodoOverlayEnabled { get; set; } = false;

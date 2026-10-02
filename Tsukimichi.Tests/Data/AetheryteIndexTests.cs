@@ -1,5 +1,6 @@
 using Lumina.Data;
 using Lumina.Excel.Sheets;
+using Tsukimichi.Core.Travel;
 using Tsukimichi.GameData;
 using Xunit.Abstractions;
 
@@ -69,6 +70,45 @@ public class AetheryteIndexTests
     {
         Assert.Same(AetheryteIndex.Empty, AetheryteIndex.From([]));
         Assert.Empty(AetheryteIndex.Empty.All);
+        Assert.Empty(AetheryteIndex.Empty.Shards);
+        Assert.Empty(AetheryteIndex.Empty.ShardNodesInGroup(2));
+        Assert.Null(AetheryteIndex.Empty.GroupAetheryte(2));
+    }
+
+    [Fact]
+    public void Shards_are_kept_by_network_beside_the_aetherytes()
+    {
+        var index = AetheryteIndex.From(
+            [
+                new AetheryteInfo(2, Gridania, "New Gridania", 35f, 28f, Group: 2),
+                new AetheryteInfo(3, Bentbranch, "Bentbranch Meadows", 0f, 0f),
+            ],
+            [new KeyValuePair<uint, uint>(OldGridania, 2)],
+            [
+                new AetheryteInfo(25, Gridania, "Archers' Guild", 166f, 88f, Group: 2),
+                new AetheryteInfo(28, OldGridania, "Conjurers' Guild", -145f, -12f, Group: 2),
+                // A row without a network and a row reusing an aetheryte's id are not shards.
+                new AetheryteInfo(99, OldGridania, "Nowhere", 0f, 0f),
+                new AetheryteInfo(3, OldGridania, "Duplicate", 0f, 0f, Group: 2),
+            ]);
+
+        Assert.Equal([25u, 28u], index.Shards.Select(s => s.RowId));
+        Assert.Equal([25u, 28u], index.ShardsInGroup(2).Select(s => s.RowId));
+        Assert.Equal([25u, 28u], index.ShardNodesInGroup(2).Select(s => s.RowId));
+        Assert.Empty(index.ShardsInGroup(0));
+        Assert.Empty(index.ShardsInGroup(7));
+
+        Assert.Equal("Conjurers' Guild", index.Find(28)?.Name);
+        Assert.Equal("Bentbranch Meadows", index.Find(3)?.Name);
+        Assert.Null(index.Find(99));
+        Assert.Equal(2u, index.GroupAetheryte(2)?.RowId);
+        Assert.Null(index.GroupAetheryte(0));
+        Assert.Equal(2u, index.TerritoryDefault(OldGridania)?.RowId);
+        Assert.Null(index.TerritoryDefault(Bentbranch));
+
+        // Shards never become teleport destinations.
+        Assert.Empty(index.InTerritory(OldGridania));
+        Assert.Equal(new TravelNode(2, Gridania, 35f, 28f, 2), Assert.Single(index.NodesInTerritory(Gridania)));
     }
 }
 
@@ -94,6 +134,45 @@ public class AetheryteIndexGameDataTests(GameDataFixture fixture, ITestOutputHel
         // Old Gridania (133) holds no aetheryte of its own; the TerritoryType row points at Gridania's.
         Assert.Empty(index.InTerritory(133));
         Assert.Equal(2u, index.Nearest(133, 0f, 0f)!.RowId);
+    }
+
+    [GameDataFact]
+    public void City_shards_are_placed_in_their_own_city()
+    {
+        var index = AetheryteIndex.Build(fixture.Game.Excel, Language.English);
+        output.WriteLine($"{index.Shards.Count} aethernet shards");
+        Assert.InRange(index.Shards.Count, 60, 250);
+        Assert.All(index.Shards, s =>
+        {
+            Assert.NotEqual(0u, s.Group);
+            Assert.False(string.IsNullOrWhiteSpace(s.Name), $"shard {s.RowId} has no name");
+            Assert.NotNull(index.GroupAetheryte(s.Group));
+        });
+
+        // Every shard in its city aetheryte's own territory stands within the city, not across the map.
+        foreach (var shard in index.Shards)
+        {
+            var city = index.GroupAetheryte(shard.Group)!;
+            if (city.TerritoryId == shard.TerritoryId)
+            {
+                Assert.InRange(TravelPlanner.Distance(shard.X, shard.Z, city.X, city.Z), 0f, 700f);
+            }
+        }
+
+        // Gridania: the Conjurers' Guild shard (28) stands in Old Gridania (133) in network 2, whose aetheryte is
+        // New Gridania's (2). A giver beside it is reached by teleport to New Gridania and a hop there.
+        var conjurers = index.Find(28);
+        Assert.NotNull(conjurers);
+        Assert.Equal(133u, conjurers.TerritoryId);
+        Assert.Equal(2u, conjurers.Group);
+        var gridania = index.GroupAetheryte(2);
+        Assert.Equal(2u, gridania?.RowId);
+        Assert.Equal(2u, index.Nearest(133, conjurers.X, conjurers.Z)?.RowId);
+        var hop = TravelPlanner.ChooseShard(gridania!.Node, index.ShardNodesInGroup(2), 133, conjurers.X + 5f, conjurers.Z + 5f, _ => true);
+        Assert.Equal(28u, hop?.RowId);
+
+        // Kugane's shards (network 7) are in Kugane (628).
+        Assert.Contains(index.ShardsInGroup(7), s => s.TerritoryId == 628);
     }
 
     [GameDataFact]

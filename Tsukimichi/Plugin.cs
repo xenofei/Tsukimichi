@@ -33,6 +33,9 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] internal static IKeyState KeyState { get; private set; } = null!;
     [PluginService] internal static IAddonLifecycle AddonLifecycle { get; private set; } = null!;
     [PluginService] internal static ISeStringEvaluator SeStringEvaluator { get; private set; } = null!;
+    // Travel (1.6.0): where the player stands and which aetherytes are attuned.
+    [PluginService] internal static IObjectTable ObjectTable { get; private set; } = null!;
+    [PluginService] internal static IAetheryteList AetheryteList { get; private set; } = null!;
     // /UI
 
     /// <summary>
@@ -73,6 +76,8 @@ public sealed class Plugin : IDalamudPlugin
     private readonly UiState ui;
     private readonly GameLinks gameLinks;
     private readonly Game.LifestreamIpc lifestream;
+    private readonly Game.VnavmeshIpc vnavmesh;
+    private readonly Game.TravelService travel;
     private readonly QueryRunner queryRunner;
     private readonly MainWindow mainWindow;
     private MoonlitPane? moonlitPane;
@@ -662,6 +667,17 @@ public sealed class Plugin : IDalamudPlugin
             gameLinks = new GameLinks(GameGui, ChatGui, DataManager, Log);
             lifestream = new Game.LifestreamIpc(PluginInterface, Log);
             gameLinks.Lifestream = lifestream;
+            // Travel (1.6.0): attunement-aware Teleport, the aethernet hop, Walk to giver and Go to giver. Lifestream and
+            // vnavmesh stay optional; the character only moves on an explicit click (decision 1).
+            vnavmesh = new Game.VnavmeshIpc(PluginInterface, Log);
+            travel = new Game.TravelService(Framework, ClientState, Condition, ObjectTable, AetheryteList, lifestream, vnavmesh, Log)
+            {
+                Print = line => ChatGui.Print(line, Strings.ChatTag),
+                Index = () => gameLinks.Aetherytes,
+            };
+            gameLinks.Travel = travel;
+            gameLinks.ShowWalk = () => Settings.ShowWalkToGiver;
+            gameLinks.ShowGoTo = () => Settings.ShowGoToGiver;
             queryRunner = new QueryRunner(this, ui, Log);
             mainWindow = new MainWindow(this, ui, queryRunner, gameLinks, TextureProvider, PluginInterface, Log, RetryCatalogAsync);
             windowSystem.AddWindow(mainWindow);
@@ -722,6 +738,9 @@ public sealed class Plugin : IDalamudPlugin
             {
                 stateReader.Gate = gate;
             }
+
+            // And the aethernet shard attunement read (UIState.IsAetheryteUnlocked).
+            travel.Gate = gate;
 
             hoverHint = new HoverHint(GameGui, Session, unlockReader, rewardLookup, gate, Log) { Enabled = Settings.ItemHintsEnabled };
             PluginInterface.UiBuilder.Draw += hoverHint.Draw;
@@ -1051,6 +1070,9 @@ public sealed class Plugin : IDalamudPlugin
         Unwind("chat notifier", () => chatNotifier?.Dispose());
         Unwind("query runner", () => queryRunner?.Dispose());
         Unwind("journal text", () => QuestText?.Dispose());
+        // A walk or Go to giver this plugin started stops before the IPC wrappers go.
+        Unwind("travel", () => travel?.Dispose());
+        Unwind("vnavmesh ipc", () => vnavmesh?.Dispose());
         Unwind("lifestream ipc", () => lifestream?.Dispose());
         // Each of its steps is isolated on its own. Its save writer drain starts the budget's clock.
         DisposeGameState(budget);
