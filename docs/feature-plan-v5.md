@@ -231,6 +231,15 @@ Each release ships on its own with the usual gates. Effort: S = hours, M = a day
 
 ## In-game checks I'll need from you along the way
 
+Added with 1.10.0 (owner feedback of 2026-10-02):
+- **Allagan Tools:** the 1.15.0.13 row reads Loaded.
+- **Companion setup:** the Setup lists show the right ✓/✕. "Apply recommended settings" works for AutoDuty and vnavmesh.
+- **Return from the Void:** Go to giver goes to Yedlihmad, flies to the Weaver's Warding NPC, lands, and prints "go in". Confirm this is the expected way in.
+- **Mount, fly and land:** longer walks mount and fly where unlocked, then land and stay mounted. With the setting at 0, the walk stays on foot.
+- **Stop:** Stop right after Walk (still "Preparing path") leaves the character standing still.
+- **His Dark Materia:** Ready with a nexus equipped. Blocked with a novus equipped. "Ready on another job (PLD)" with the nexus in the Armoury Chest.
+- **Pill buttons:** look right at every width and at Flair Full, Quiet and Plain.
+
 Added with 1.9.0:
 - **EXP:** Close to Home reads "400 EXP · 107 gil", and a Shadowbringers side quest shows an EXP range.
 - **Characters dashboard:**
