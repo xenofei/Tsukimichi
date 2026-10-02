@@ -238,7 +238,8 @@ public sealed class GameStateReader
             var rep = qm->GetBeastReputationById(tribe);
             if (rep != null && (rep->Rank != 0 || rep->Value != 0))
             {
-                tribes[tribe] = new TribeStanding(rep->Rank, rep->Value);
+                // The rank byte's high bit means "ranked up today" (BeastReputationWork.Rank); FromClient masks it off.
+                tribes[tribe] = TribeStanding.FromClient(rep->Rank, rep->Value);
             }
         }
 

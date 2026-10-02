@@ -12,8 +12,30 @@ public readonly record struct AcceptedQuest(
     byte Sequence,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] byte AcceptClassJob = 0);
 
-/// <summary>Standing with one allied society (beast tribe).</summary>
-public readonly record struct TribeStanding(byte Rank, ushort Value);
+/// <summary>
+/// Standing with one allied society (beast tribe). <paramref name="Rank"/> is the real rank (a BeastReputationRank row
+/// id), never the client's raw byte: build one from the client with <see cref="FromClient"/>.
+/// <paramref name="RankedUpToday"/> is additive at schema v1: false in files written before it was read, and false is
+/// not written to disk.
+/// </summary>
+public readonly record struct TribeStanding(
+    byte Rank,
+    ushort Value,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool RankedUpToday = false)
+{
+    /// <summary>The high bit of the client's rank byte (<c>BeastReputationWork.Rank</c>): set on the day the rank went up.</summary>
+    public const byte RankedUpTodayBit = 0x80;
+
+    /// <summary>
+    /// The standing for the client's raw rank byte: the rank-up bit is masked off <see cref="Rank"/> and kept as
+    /// <see cref="RankedUpToday"/>, so a rank-up day never reads as rank 128 and up.
+    /// </summary>
+    public static TribeStanding FromClient(byte rawRank, ushort value, bool rankedUpToday = false) =>
+        new((byte)(rawRank & ~RankedUpTodayBit), value, rankedUpToday || (rawRank & RankedUpTodayBit) != 0);
+
+    /// <summary>This standing with a stray rank-up bit moved out of <see cref="Rank"/>; unchanged when the rank is already real.</summary>
+    public TribeStanding Masked() => Rank < RankedUpTodayBit ? this : FromClient(Rank, Value, RankedUpToday);
+}
 
 /// <summary>
 /// Everything the evaluator needs about one character, captured on the framework thread and persisted per ContentId.
@@ -106,6 +128,37 @@ public sealed record CharacterSnapshot
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// This snapshot with every allied society rank masked (<see cref="TribeStanding.Masked"/>). Builds before 1.4.2
+    /// saved the client's raw rank byte, so a file written on a rank-up day holds 128 + rank; the store repairs it on
+    /// load. Returns this instance when no rank needs it.
+    /// </summary>
+    public CharacterSnapshot WithMaskedTribeRanks()
+    {
+        var dirty = false;
+        foreach (var standing in Tribes.Values)
+        {
+            if (standing.Rank >= TribeStanding.RankedUpTodayBit)
+            {
+                dirty = true;
+                break;
+            }
+        }
+
+        if (!dirty)
+        {
+            return this;
+        }
+
+        var tribes = new Dictionary<byte, TribeStanding>(Tribes.Count);
+        foreach (var (tribe, standing) in Tribes)
+        {
+            tribes[tribe] = standing.Masked();
+        }
+
+        return this with { Tribes = tribes };
     }
 
     /// <summary>The satisfaction rank held with a custom delivery client, or null when the plugin did not read it.</summary>
