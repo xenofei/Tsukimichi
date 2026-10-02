@@ -86,7 +86,7 @@ Each release ships on its own with the usual gates. Effort: S = hours, M = a day
 - **B11** Correct the export doc and README claims.
 - **Patch-day safety:** LoadCheck checks every Lumina member GameData uses against Dalamud's Lumina.Excel. Tag the two wall-clock save tests as Perf and release test readers on a dedicated thread (the likely flaky test).
 
-### 1.5.0 · Honest gates, honest collections (data)
+### 1.5.0 · Honest gates, honest collections (data) — **released 2026-10-01**
 
 - **Gates**
   - `curated/extra_prerequisites.json` (two sources per entry: wiki plus Questionable ids or the game's text) covers the ~36 hidden main scenario gates and resolves the 25 allowlisted prerequisites before they expire.
@@ -221,6 +221,15 @@ Each release ships on its own with the usual gates. Effort: S = hours, M = a day
 12. **Release order:** 1.4.2, then 1.5, 1.6, 1.7, 1.8, with the side track folded in.
 
 ## In-game checks I'll need from you along the way
+
+Added with 1.5.0:
+- **Daily offers:** compare the `[daily offer]` lines in /xllog with what each allied society quest giver offers, including on a rank-up day.
+- **Weekly quests:** the Komra weeklies, One Man's Relic and the Gift of Joy dailies read Done after turn-in and clear at the reset.
+- **Owned collectibles:** learn a mount or minion and see it marked owned right away. Log out and see Moonlit say "Owned as of …".
+- **Completion dates:** turn in a quest and see "Done <today>" in its details.
+- **Capture timing:** the /xllog line "Collectibles: N reward flags read in X ms" shows the time is small.
+- **New Game+:** entering it does not freeze tracking. If the game reports lost progress for a few minutes, Tsukimichi accepts it with a chat line.
+
 
 - **Rank-up day:** the bit is set.
 - **Repeat-flag quests:** the flag sets, and clears at reset.
