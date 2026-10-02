@@ -795,7 +795,11 @@ public sealed class Plugin : IDalamudPlugin
             questionable = new Game.QuestionableIpc(PluginInterface, Log);
             Game.QuestionableIpc questionableIpc = questionable;
             diagnostics.CrossCheck = quest => questionableIpc.Check(quest, Session);
-            mainWindow.AttachQuestionable(questionableIpc, () => Settings.QuestionableHandoff);
+            // Send to Questionable, Start and Stop, the list and path badges and the live status (1.6.0, decision 1):
+            // every pane that offers them shares one QuestionableActions; the result of a send is a chat line.
+            var questionableActions = new QuestionableActions(questionableIpc, Session, Settings, () => Settings.Save(PluginInterface), line => ChatGui.Print(line, Ui.Strings.ChatTag));
+            diagnostics.CrossCheckMore = quest => questionableIpc.Wider(quest, (Session.States.TryGetValue(quest.RowId, out var evaluation) ? evaluation : null), Session.IsLive, Session.Version, questionableActions.FestivalRunning(quest));
+            mainWindow.AttachQuestionable(questionableIpc, () => Settings.QuestionableHandoff, questionableActions);
 
             // AutoDuty and Quest Map (decision 1): the detail pane's Duties section ("Run with AutoDuty", Duty Support or
             // Trust unless Settings allows the Duty Finder) and "Open in Quest Map"; /tsuki why points at the latter. The
@@ -856,6 +860,7 @@ public sealed class Plugin : IDalamudPlugin
             charactersPane.UniqueRewards = () => moonlit.Catalog;
             charactersPane.Pins = queryRunner;
             charactersPane.Links = gameLinks;
+            charactersPane.Questionable = questionableActions;
             mainWindow.AttachPanes(moonlitPane, charactersPane);
             mainWindow.AttachOverrides(moonlitPane);
             // Multibox (D11): pins and overrides another game client saved are merged in as they land.
@@ -870,6 +875,7 @@ public sealed class Plugin : IDalamudPlugin
                 mainWindow.BringToFront();
                 MoonlitPane.Reveal(ui, quest);
             });
+            routeWindow.Questionable = questionableActions;
             windowSystem.AddWindow(routeWindow);
             ui.RouteRequested += routeWindow.Show;
             // The flight index (a few small sheets) is built on the pane's first draw, on the framework thread.
@@ -877,7 +883,7 @@ public sealed class Plugin : IDalamudPlugin
             mainWindow.AttachFlight(flightPane);
             // Clear my blues (P3): the duty kinds (ContentFinderCondition) are read on the plan's first use.
             planSource = new PlanSource(Session, () => DutyIndex.Build(DataManager.Excel, Dalamud.Utility.ClientLanguageExtensions.ToLumina(DataManager.Language)), Log);
-            mainWindow.AttachPlan(new PlanPane(Session, planSource, gameLinks, Settings, () => Settings.Save(PluginInterface)));
+            mainWindow.AttachPlan(new PlanPane(Session, planSource, gameLinks, Settings, () => Settings.Save(PluginInterface)) { Questionable = questionableActions });
             chatNotifier = new Game.ChatNotifier(Session, Settings, Paths, gameLinks, ChatGui, Log);
             // "Before you continue" (P5): the dashboard and the Tonight card lines, and the once-per-character chat line.
             var payoffGates = new Game.PayoffGateSource(Session, Log);
@@ -907,6 +913,7 @@ public sealed class Plugin : IDalamudPlugin
             if (dutyFinderHint is { } dutyHint) { configWindow.DutyFinderHintToggled = enabled => dutyHint.Enabled = enabled; }
             configWindow.HookGate = gate;
             configWindow.Companions = companions;
+            configWindow.Questionable = questionableIpc;
             windowSystem.AddWindow(configWindow);
             PluginInterface.UiBuilder.OpenConfigUi += configWindow.Toggle;
             command.ToggleConfigWindow = configWindow.Toggle;
@@ -919,6 +926,7 @@ public sealed class Plugin : IDalamudPlugin
                 MoonlitPane.Reveal(ui, quest);
             }, ClientState, Condition, Paths, PluginInterface, Log);
             todoOverlay.Plan = planSource;
+            todoOverlay.Questionable = questionableActions;
             todoOverlay.ShowPins = mainWindow.ShowPinned;
             windowSystem.AddWindow(todoOverlay);
             // 0.8.0: Locked became click-through; a player who upgraded with it on is told once in chat.

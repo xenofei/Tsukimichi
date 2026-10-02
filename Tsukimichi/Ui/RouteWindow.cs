@@ -25,6 +25,11 @@ namespace Tsukimichi.Ui;
 /// <see cref="RoutePins.PinAll"/>, followed by an Undo line. Opened by <see cref="UiState.OpenRoute"/> from the detail
 /// pane's action bar, a Moonlit row's menu and the Characters job rows. Every string is composed when the route is
 /// rebuilt, and the list draws only its visible lines, so a thousand-quest route costs nothing per frame.
+/// <para>
+/// Questionable (feature plan v5, 1.6.0): "Send to Questionable" beside Pin all hands the route's steps, in route
+/// order, to Questionable's priority list (<see cref="QuestionableActions"/>), and each step shows "Q #3" when it is on
+/// that list or "Q no path" when Questionable cannot do it.
+/// </para>
 /// </summary>
 public sealed class RouteWindow : Window
 {
@@ -75,6 +80,12 @@ public sealed class RouteWindow : Window
         SizeConstraints = new WindowSizeConstraints { MinimumSize = new Vector2(380f, 260f) };
     }
 
+    /// <summary>The host name of this window's Questionable confirmations.</summary>
+    private const string QuestionableHost = "route";
+
+    /// <summary>The shared Questionable hand-offs (1.6.0); null hides Send to Questionable and the step marks.</summary>
+    public QuestionableActions? Questionable { get; set; }
+
     /// <summary>Opens the window on the route to <paramref name="routeTarget"/> and brings it to the front.</summary>
     public void Show(RouteTarget routeTarget)
     {
@@ -83,6 +94,7 @@ public sealed class RouteWindow : Window
         pinGate.Cancel();
         undo = RoutePinBatch.Empty;
         noteUntil = -1.0;
+        Questionable?.Ipc.MarkListStale();
         IsOpen = true;
         BringToFront();
     }
@@ -109,6 +121,7 @@ public sealed class RouteWindow : Window
         try
         {
             DrawContent();
+            Questionable?.DrawModals(QuestionableHost);
         }
         finally
         {
@@ -206,6 +219,12 @@ public sealed class RouteWindow : Window
             UiMetrics.Tooltip(pins.CanPin ? Strings.RoutePinAllTooltip : Strings.RoutePinAllUnavailable);
         }
 
+        if (Questionable is { } questionable)
+        {
+            Chrome.SameLineOrWrap(QuestionableActions.ButtonWidth);
+            questionable.DrawButton(QuestionableHost, "##questionable", v.Route, static route => StepRowIds(route));
+        }
+
         if (confirmed && canPin)
         {
             var added = RoutePins.PinAll(v.Route, pins);
@@ -247,6 +266,14 @@ public sealed class RouteWindow : Window
         else if (ImGui.IsItemHovered())
         {
             UiMetrics.Tooltip(Strings.RouteUndoTooltip);
+        }
+    }
+
+    private static IEnumerable<uint> StepRowIds(UnlockRoute route)
+    {
+        foreach (var step in route.Steps)
+        {
+            yield return step.RowId;
         }
     }
 
@@ -351,9 +378,12 @@ public sealed class RouteWindow : Window
         // A step or an alternative: one selectable across the line, content drawn over it.
         var clicked = ImGui.Selectable("##line", false, ImGuiSelectableFlags.None, new Vector2(0f, rowHeight));
         var hovered = ImGui.IsItemHovered();
+
+        // Questionable's mark (1.6.0): on its list, or no path; asked lazily, a few steps per frame.
+        var (questionableMark, questionableTooltip) = l.Kind == LineKind.Step && Questionable is { } questionable ? questionable.StepMark(l.RowId) : (string.Empty, string.Empty);
         if (hovered)
         {
-            UiMetrics.Tooltip(l.Tooltip, l.Kind == LineKind.Step ? Strings.RouteStepTooltipHint : null);
+            UiMetrics.Tooltip(l.Tooltip, l.Kind != LineKind.Step ? null : questionableTooltip.Length > 0 ? questionableTooltip + "\n" + Strings.RouteStepTooltipHint : Strings.RouteStepTooltipHint);
         }
 
         if (clicked && bundle.Catalog.GetByRowId(l.RowId) is { } quest)
@@ -392,6 +422,12 @@ public sealed class RouteWindow : Window
             {
                 dl.AddText(new Vector2(x, textY), gold ? Theme.AccentU32 : Theme.U32(l.IsTarget ? Theme.Surface.TextSecondary : Theme.Surface.TextTertiary), l.Mark);
                 x += ImGui.CalcTextSize(l.Mark).X + UiMetrics.Px(8f);
+            }
+
+            if (questionableMark.Length > 0)
+            {
+                dl.AddText(new Vector2(x, textY), Theme.U32(Theme.Surface.TextSecondary), questionableMark);
+                x += ImGui.CalcTextSize(questionableMark).X + UiMetrics.Px(8f);
             }
 
             dl.AddText(new Vector2(x, textY), Theme.U32(Theme.Surface.TextTertiary), l.Detail);

@@ -85,4 +85,11 @@ public sealed record DiagnosticInputs
     /// when Questionable is not loaded, which leaves the line out.
     /// </summary>
     public Ipc.CrossCheckResult? Questionable { get; init; }
+
+    /// <summary>
+    /// The wider Questionable cross-check (feature plan v5, 1.6.0): its path, the quest's place on its list, its
+    /// unobtainable and active-events answers, printed as a "questionable more:" line; null, or nothing known, leaves
+    /// the line out.
+    /// </summary>
+    public Ipc.QuestionableWider? QuestionableMore { get; init; }
 }

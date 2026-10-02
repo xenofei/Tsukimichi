@@ -28,6 +28,7 @@ namespace Tsukimichi.Core.Diagnostics;
 ///   - TribeRank: met (Amalj'aa Recognized ≥ Recognized)
 /// quirk: Up in Arms is optional once the Zenith is in hand …   (only when curated/quirks.json names the quest)
 /// questionable: agrees; not locked   (only when Questionable is loaded)
+/// questionable more: path yes; list #3; unobtainable no, agrees   (what Questionable's other gates answered)
 /// inputs: job WHM 31, msq 66043, tribe 1 rank 2 rep 0
 /// captured: 2026-09-28T21:14:02Z live
 /// ```
@@ -155,6 +156,11 @@ public static class QuestDiagnostic
         if (inputs.Questionable is { } check)
         {
             sb.Append("questionable: ").Append(Ipc.QuestionableCrossCheck.DiagnosticText(check)).Append('\n');
+        }
+
+        if (inputs.QuestionableMore is { } more && Ipc.QuestionableWiderCheck.DiagnosticText(more, inputs.Evaluation?.State) is { Length: > 0 } text)
+        {
+            sb.Append("questionable more: ").Append(text).Append('\n');
         }
     }
 

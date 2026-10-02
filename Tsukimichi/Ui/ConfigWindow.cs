@@ -1422,6 +1422,7 @@ public sealed partial class ConfigWindow : Window
         }
 
         DrawCompanionPlugins();
+        DrawQuestionableSettings();
         DrawHookGate();
     }
 
