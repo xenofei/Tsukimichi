@@ -424,8 +424,12 @@ internal sealed class Verifier
         static string Fmt((ushort Width, ushort Height)? d) => d is { } x ? $"{x.Width}x{x.Height}" : "missing";
     }
 
-    /// <summary>Copy of MoonlitPane.FindIcon: same item, else same kind and id, from the catalog's reward list.</summary>
-    private static uint FindIcon(QuestRecord? quest, UniqueRewardEntry entry)
+    /// <summary>
+    /// Copy of MoonlitIconResolver.FromQuestRewards (same item, else same kind and id, from the catalog's reward list),
+    /// with its item fallback: an item kind whose item the reward list does not carry (the A Realm Reborn soul crystals,
+    /// handed out through QuestRewardOther) shows the item's own icon.
+    /// </summary>
+    private uint FindIcon(QuestRecord? quest, UniqueRewardEntry entry)
     {
         if (quest is null)
             return 0;
@@ -441,6 +445,8 @@ internal sealed class Verifier
                 if (reward.Kind == entry.Kind && reward.Id == entry.RewardId && reward.Icon != 0)
                     return reward.Icon;
         }
+        if (entry.Kind is RewardKind.Item or RewardKind.OptionalItem or RewardKind.ArtifactGear && entry.ItemId != 0)
+            return g.Items.GetRowOrDefault(entry.ItemId)?.Icon ?? 0u;
         return 0;
     }
 

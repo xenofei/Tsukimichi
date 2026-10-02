@@ -1,6 +1,6 @@
 {
   "gameVersion": "2026.09.15.0000.0000",
-  "generatedUtc": "2026-10-01T17:23:55Z",
+  "generatedUtc": "2026-10-02T01:30:33Z",
   "entries": [
     {
       "questRowId": 65549,
@@ -2419,22 +2419,22 @@
     },
     {
       "questRowId": 66585,
+      "kind": "Item",
+      "rewardId": 4544,
+      "itemId": 4544,
+      "rewardName": "Soul of the Warrior",
+      "confidence": "Static",
+      "source": "Quest.OtherReward;QuestRewardOther=12;untradable",
+      "otherSources": []
+    },
+    {
+      "questRowId": 66585,
       "kind": "ClassJob",
       "rewardId": 21,
       "itemId": 0,
       "rewardName": "warrior",
       "confidence": "Static",
       "source": "ClassJob.UnlockQuest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 66585,
-      "kind": "Other",
-      "rewardId": 12,
-      "itemId": 0,
-      "rewardName": "Soul of the Warrior",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -2499,6 +2499,16 @@
     },
     {
       "questRowId": 66591,
+      "kind": "Item",
+      "rewardId": 4542,
+      "itemId": 4542,
+      "rewardName": "Soul of the Paladin",
+      "confidence": "Static",
+      "source": "Quest.OtherReward;QuestRewardOther=10;untradable",
+      "otherSources": []
+    },
+    {
+      "questRowId": 66591,
       "kind": "Action",
       "rewardId": 29,
       "itemId": 0,
@@ -2515,16 +2525,6 @@
       "rewardName": "paladin",
       "confidence": "Static",
       "source": "ClassJob.UnlockQuest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 66591,
-      "kind": "Other",
-      "rewardId": 10,
-      "itemId": 0,
-      "rewardName": "Soul of the Paladin",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -2589,6 +2589,16 @@
     },
     {
       "questRowId": 66597,
+      "kind": "Item",
+      "rewardId": 4543,
+      "itemId": 4543,
+      "rewardName": "Soul of the Monk",
+      "confidence": "Static",
+      "source": "Quest.OtherReward;QuestRewardOther=11;untradable",
+      "otherSources": []
+    },
+    {
+      "questRowId": 66597,
       "kind": "Action",
       "rewardId": 70,
       "itemId": 0,
@@ -2605,16 +2615,6 @@
       "rewardName": "monk",
       "confidence": "Static",
       "source": "ClassJob.UnlockQuest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 66597,
-      "kind": "Other",
-      "rewardId": 11,
-      "itemId": 0,
-      "rewardName": "Soul of the Monk",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -2679,6 +2679,16 @@
     },
     {
       "questRowId": 66603,
+      "kind": "Item",
+      "rewardId": 4545,
+      "itemId": 4545,
+      "rewardName": "Soul of the Dragoon",
+      "confidence": "Static",
+      "source": "Quest.OtherReward;QuestRewardOther=13;untradable",
+      "otherSources": []
+    },
+    {
+      "questRowId": 66603,
       "kind": "Action",
       "rewardId": 92,
       "itemId": 0,
@@ -2695,16 +2705,6 @@
       "rewardName": "dragoon",
       "confidence": "Static",
       "source": "ClassJob.UnlockQuest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 66603,
-      "kind": "Other",
-      "rewardId": 13,
-      "itemId": 0,
-      "rewardName": "Soul of the Dragoon",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -2769,6 +2769,16 @@
     },
     {
       "questRowId": 66609,
+      "kind": "Item",
+      "rewardId": 4548,
+      "itemId": 4548,
+      "rewardName": "Soul of the Black Mage",
+      "confidence": "Static",
+      "source": "Quest.OtherReward;QuestRewardOther=16;untradable",
+      "otherSources": []
+    },
+    {
+      "questRowId": 66609,
       "kind": "Action",
       "rewardId": 158,
       "itemId": 0,
@@ -2785,16 +2795,6 @@
       "rewardName": "black mage",
       "confidence": "Static",
       "source": "ClassJob.UnlockQuest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 66609,
-      "kind": "Other",
-      "rewardId": 16,
-      "itemId": 0,
-      "rewardName": "Soul of the Black Mage",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -2859,6 +2859,16 @@
     },
     {
       "questRowId": 66615,
+      "kind": "Item",
+      "rewardId": 4547,
+      "itemId": 4547,
+      "rewardName": "Soul of the White Mage",
+      "confidence": "Static",
+      "source": "Quest.OtherReward;QuestRewardOther=15;untradable",
+      "otherSources": []
+    },
+    {
+      "questRowId": 66615,
       "kind": "Action",
       "rewardId": 136,
       "itemId": 0,
@@ -2875,16 +2885,6 @@
       "rewardName": "white mage",
       "confidence": "Static",
       "source": "ClassJob.UnlockQuest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 66615,
-      "kind": "Other",
-      "rewardId": 15,
-      "itemId": 0,
-      "rewardName": "Soul of the White Mage",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {
@@ -2939,6 +2939,16 @@
     },
     {
       "questRowId": 66621,
+      "kind": "Item",
+      "rewardId": 4546,
+      "itemId": 4546,
+      "rewardName": "Soul of the Bard",
+      "confidence": "Static",
+      "source": "Quest.OtherReward;QuestRewardOther=14;untradable",
+      "otherSources": []
+    },
+    {
+      "questRowId": 66621,
       "kind": "Action",
       "rewardId": 114,
       "itemId": 0,
@@ -2955,16 +2965,6 @@
       "rewardName": "bard",
       "confidence": "Static",
       "source": "ClassJob.UnlockQuest",
-      "otherSources": []
-    },
-    {
-      "questRowId": 66621,
-      "kind": "Other",
-      "rewardId": 14,
-      "itemId": 0,
-      "rewardName": "Soul of the Bard",
-      "confidence": "Static",
-      "source": "Quest.OtherReward",
       "otherSources": []
     },
     {

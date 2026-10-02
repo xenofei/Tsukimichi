@@ -41,6 +41,12 @@ internal sealed class UniqueRewardGenerator
     private readonly HashSet<uint> gatheringItems = new();
     private readonly HashSet<uint> achievementItems = new();
 
+    /// <summary>Soul crystal items by name (English): what a QuestRewardOther soul crystal resolves to.</summary>
+    private readonly Dictionary<string, Item> soulCrystalByName = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>The ItemUICategory (English name) of every job's soul crystal.</summary>
+    private const string SoulCrystalCategory = "Soul Crystal";
+
     /// <summary>Quests that hand out at least one reward signal, for the "unclassified" section of the report.</summary>
     public Dictionary<uint, List<string>> RewardSignals { get; } = new();
 
@@ -235,6 +241,16 @@ internal sealed class UniqueRewardGenerator
             if (ach.Item.RowId != 0)
                 achievementItems.Add(ach.Item.RowId);
         }
+
+        foreach (var item in g.Items)
+        {
+            if (string.Equals(Text(item.ItemUICategory.ValueNullable?.Name), SoulCrystalCategory, StringComparison.Ordinal))
+            {
+                var name = Text(item.Name);
+                if (name.Length > 0)
+                    soulCrystalByName.TryAdd(name, item);
+            }
+        }
     }
 
     // ----------------------------------------------------------------------------------------------------------
@@ -322,8 +338,20 @@ internal sealed class UniqueRewardGenerator
             if (quest.OtherReward.RowId != 0)
             {
                 NoteSignal(quest.RowId, $"OtherReward {quest.OtherReward.RowId}");
-                Add(quest.RowId, RewardKind.Other, quest.OtherReward.RowId, 0,
-                    Text(quest.OtherReward.ValueNullable?.Name), "Quest.OtherReward");
+                var otherName = Text(quest.OtherReward.ValueNullable?.Name);
+                if (soulCrystalByName.TryGetValue(otherName, out var crystal))
+                {
+                    // The A Realm Reborn jobs hand their soul crystal out through QuestRewardOther; every later job's
+                    // comes from Quest.Reward as an untradable Item. Shipped as that same Item entry, so every soul
+                    // crystal sits under one kind (the job itself is the job quest's ClassJob entry).
+                    var others = OtherSourcesOf(crystal);
+                    Add(quest.RowId, RewardKind.Item, crystal.RowId, crystal.RowId, Text(crystal.Name),
+                        $"Quest.OtherReward;QuestRewardOther={quest.OtherReward.RowId};untradable{Suffix(others)}", others);
+                }
+                else
+                {
+                    Add(quest.RowId, RewardKind.Other, quest.OtherReward.RowId, 0, otherName, "Quest.OtherReward");
+                }
             }
         }
     }

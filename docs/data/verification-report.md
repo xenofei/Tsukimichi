@@ -70,13 +70,13 @@ Entries: **2630** across **1301** quests. Problems found: **0**.
 
 | Kind | Static | Community | Curated | UserOverride | Total | With `otherSources` |
 |---|---:|---:|---:|---:|---:|---:|
-| Item | 165 | 0 | 0 | 0 | 165 | 127 |
+| Item | 172 | 0 | 0 | 0 | 172 | 127 |
 | OptionalItem | 53 | 0 | 0 | 0 | 53 | 53 |
 | Emote | 56 | 0 | 0 | 0 | 56 | 21 |
 | Action | 250 | 0 | 0 | 0 | 250 | 0 |
 | GeneralAction | 12 | 0 | 0 | 0 | 12 | 0 |
 | ClassJob | 48 | 0 | 0 | 0 | 48 | 0 |
-| Other | 13 | 0 | 0 | 0 | 13 | 0 |
+| Other | 6 | 0 | 0 | 0 | 6 | 0 |
 | ArtifactGear | 607 | 0 | 0 | 0 | 607 | 110 |
 | Mount | 38 | 0 | 0 | 0 | 38 | 11 |
 | Minion | 64 | 0 | 0 | 0 | 64 | 28 |
@@ -124,13 +124,13 @@ Entries with no drawable icon (no catalog reward matches by item id or by kind a
 
 | Kind | Entries | Without icon |
 |---|---:|---:|
-| Item | 165 | 0 |
+| Item | 172 | 0 |
 | OptionalItem | 53 | 0 |
 | Emote | 56 | 0 |
 | Action | 250 | 90 |
 | GeneralAction | 12 | 0 |
 | ClassJob | 48 | 48 |
-| Other | 13 | 0 |
+| Other | 6 | 0 |
 | ArtifactGear | 607 | 0 |
 | Mount | 38 | 0 |
 | Minion | 64 | 0 |
@@ -236,16 +236,16 @@ Skipped (`--no-xivapi`).
 
 ## 5. Exclusivity of Item entries
 
-Static Item/OptionalItem entries: **218**.
+Static Item/OptionalItem entries: **225**.
 
 ### ItemUICategory distribution
 
 | ItemUICategory | Entries | Consumable-like | Of which unlock items | Examples |
 |---|---:|---|---:|---|
 | Body | 27 |  | 0 | Custom-made Tunic, Custom-made Scale Mail, Custom-made Robe of Healing, Custom-made Cuirass |
+| Soul Crystal | 23 |  | 0 | Soul of the Ninja, Soul of the Warrior, Soul of the Paladin, Soul of the Monk |
 | Miscellany | 18 | yes | 18 | Field Notes on Misija, Field Notes on Menenius, Field Notes on Gunnhildr, Field Notes on Lilja |
 | Head | 16 |  | 0 | Postmoogle Cap, Monoa Mask, Sable Death Mask, Scion Adventurer's Monocle |
-| Soul Crystal | 16 |  | 0 | Soul of the Ninja, Soul of the Summoner, Soul of the Scholar, Soul of the Machinist |
 | Ring | 15 |  | 0 | Gridanian Ring, Lominsan Ring, Ul'dahn Ring, Meteor Survivor Ring |
 | Legs | 14 |  | 0 | Manderville Bottoms, Star-spangled Subligar, Scion Adventurer's Bottoms, Sophist's Podea |
 | Earrings | 13 |  | 0 | Voice of the Just, Hero's Earrings of Casting, Hero's Earrings of Healing, Darklight Earrings of Striking |
