@@ -37,11 +37,14 @@ public static class PaneFit
     /// <summary>Flight: the quest's state moon column, the first to hide (the status line names the state too).</summary>
     public const int FlightStatePriority = 1;
 
+    /// <summary>Moonlit: the Availability column hides third.</summary>
+    public const int MoonlitAvailabilityPriority = 1;
+
     /// <summary>Moonlit: the Kind column hides second.</summary>
-    public const int MoonlitKindPriority = 1;
+    public const int MoonlitKindPriority = 2;
 
     /// <summary>Moonlit: the Confidence column hides first.</summary>
-    public const int MoonlitConfidencePriority = 2;
+    public const int MoonlitConfidencePriority = 3;
 
     /// <summary>Settings › Moonlit verdicts: the date hides second.</summary>
     public const int VerdictDatePriority = 1;
@@ -122,16 +125,17 @@ public static class PaneFit
     }
 
     /// <summary>
-    /// The Moonlit table (display order Obtained, Reward, Kind, Quest, State, Confidence): Confidence hides first,
-    /// then Kind; State, the two names and Obtained never hide.
+    /// The Moonlit table (display order Obtained, Reward, Kind, Quest, State, Confidence, Availability): Confidence
+    /// hides first, then Kind, then Availability; State, the two names and Obtained never hide.
     /// </summary>
     /// <param name="glyph">The width of a moon column.</param>
     /// <param name="rewardMin">The reward cell's least width: its icon, a short name and the "…" button.</param>
     /// <param name="kind">The Kind column's width.</param>
     /// <param name="questMin">The quest name's least width.</param>
     /// <param name="confidence">The Confidence column's width.</param>
-    /// <param name="columns">Filled with the six columns; at least six long.</param>
-    public static void MoonlitColumns(float glyph, float rewardMin, float kind, float questMin, float confidence, Span<ColumnSpec> columns)
+    /// <param name="availability">The Availability column's width (its widest label).</param>
+    /// <param name="columns">Filled with the seven columns; at least seven long.</param>
+    public static void MoonlitColumns(float glyph, float rewardMin, float kind, float questMin, float confidence, float availability, Span<ColumnSpec> columns)
     {
         columns[0] = new ColumnSpec(0, glyph, glyph);
         columns[1] = new ColumnSpec(0, rewardMin, rewardMin, 3f);
@@ -139,6 +143,7 @@ public static class PaneFit
         columns[3] = new ColumnSpec(0, questMin, questMin, 3f);
         columns[4] = new ColumnSpec(0, glyph, glyph);
         columns[5] = new ColumnSpec(MoonlitConfidencePriority, confidence, confidence);
+        columns[6] = new ColumnSpec(MoonlitAvailabilityPriority, availability, availability);
     }
 
     /// <summary>

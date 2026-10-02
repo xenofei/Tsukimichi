@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Dalamud.Plugin.Services;
 using Tsukimichi.Config;
@@ -63,7 +64,12 @@ public sealed class ExportService(
         }
         else
         {
-            var rows = ExportWriter.MoonlitRows(rewards().View(null, unlocks.IsObtained));
+            // Each reward's availability through its quest for the viewed character, as the Moonlit pane labels it.
+            var availability = AvailabilityContext.For(bundle.Catalog, session.Curated.Festivals, session.ServerFestivals, DateTime.UtcNow);
+            var states = session.States;
+            var rows = ExportWriter.MoonlitRows(
+                rewards().View(null, unlocks.IsObtained),
+                e => RewardAvailabilities.Classify(e, bundle.Catalog.GetByRowId(e.QuestRowId), states.GetValueOrDefault(e.QuestRowId), availability).Kind);
             content = format == ExportFormat.Json ? ExportWriter.MoonlitJson(header, rows) : ExportWriter.MoonlitCsv(rows);
         }
 

@@ -49,6 +49,18 @@ namespace Tsukimichi.Ui;
 /// are real, focusable items with the same click, context menu and "…" menu as the table rows, so verdicts and their
 /// undo work in either view. At Full each tile fades in once (never under Reduce motion).
 /// </para>
+/// <para>
+/// Honest totals (feature plan v5, decision 4; <see cref="MoonlitGroups"/> and <see cref="MoonlitTally"/> in Core): a
+/// row is a counted reward, so a reward several quests give (Guildhests from each city, a class from three quests, an
+/// achievement nine quests award) is one row showing the quest that matters most to the viewed character, with the
+/// others under "Also from" in the quest's tooltip and the row's menu; a relic or special weapon quest is one row
+/// ("Honorbound (1 of 18)") with its repeatable "another job" twin. Rows whose every quest lies on another path are not
+/// listed. Each row has an availability label (Get now, Event running, Upcoming event, Collab — may return, Past event —
+/// on the Online Store, Gone for good); gone-for-good rewards the character lacks leave the totals unless "Count rewards
+/// that are gone for good" (Configuration.MoonlitCountGone) is on, and a line under the toolbar says how many there
+/// are. Expansion and State filters, "Group by expansion" (Configuration.MoonlitGroupByExpansion; headings in the
+/// table) and "Copy missing" (Markdown for Discord, in 2,000-character parts) sit in the toolbar.
+/// </para>
 /// </summary>
 public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 {
@@ -111,8 +123,6 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     private int catalogBuild;
 
     private Row[] rows = [];
-    private int uniqueCount;
-    private int elsewhereCount;
     private int rowsBuild = -1;
     private CatalogBundle? rowsBundle;
     private int rowsSpoilers;
@@ -135,16 +145,51 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     private int kindsBuild = -1;
     private int kindsLanguage = -1;
 
-    // Per-kind counts from the last RefreshObtained, indexed by RewardKind; CountsFor reads them.
-    private readonly int[] kindObtained = new int[KindCount];
-    private readonly int[] kindTotal = new int[KindCount];
-    private readonly int[] kindUnknown = new int[KindCount];
+    // Counted rewards (feature plan v5, decision 4): the catalog folded per reward, built with the rows; each group's
+    // state for the viewed character and the totals from the last RefreshObtained, which CountsFor reads.
+    private MoonlitGroups groups = MoonlitGroups.Empty;
+    private MoonlitGroupState[] groupStates = [];
+    private MoonlitTotals totals = new();
+    private bool countsGone;
+
+    /// <summary>Rows the summary counts: in the unique view, on the character's path, and not left out as found elsewhere.</summary>
+    private int listableCount;
+
+    /// <summary>Edition year per festival of the rows' catalog (<see cref="Core.Seasonal.SeasonalNow.EditionYears"/>), for the availability labels.</summary>
+    private IReadOnlyDictionary<ushort, int> editionYears = new Dictionary<ushort, int>();
+
+    /// <summary>The expansions the rows' quests belong to, in order, for the Expansion filter.</summary>
+    private byte[] expansions = [];
+
+    // Session-only filters beside the confidence combo (feature plan v5 R5 F5).
+    private byte? expansionFilter;
+    private MoonlitStateFilter stateFilter = MoonlitStateFilter.Any;
+
+    private static string[] StateFilterItems => stateFilterItemsText.Value;
+
+    private static readonly Localization.LocArray stateFilterItemsText = new(static () =>
+        [
+        Strings.MoonlitStateAny,
+        Strings.MoonlitStateReadyNow,
+        Strings.MoonlitStateInJournal,
+        Strings.MoonlitStateBlocked,
+        Strings.MoonlitStateDone,
+    ]);
+
+    // "Copy missing": the Markdown of the listed rows not obtained, split into Discord-sized parts when the visible
+    // rows change; the button copies the next part. copiedAt is ImGui time of the last copy (the "Copied" note).
+    private IReadOnlyList<string> copyParts = [];
+    private int copyNext;
+    private double copiedAt = double.NegativeInfinity;
 
     private int[] visible = [];
     private int visibleCount;
     private VisibleKey visibleKey;
     private string visibleSummary = string.Empty;
     private string filterText = string.Empty;
+
+    /// <summary>Per expansion (by id), the "Endwalker (12)" heading of its group of rows when the table groups by expansion.</summary>
+    private readonly Dictionary<byte, string> groupHeadings = [];
 
     public MoonlitPane(SessionState session, ITextureProvider textures, RewardUnlockReader unlocks, PluginPaths paths, IPluginLog log, IDataManager data, Configuration settings, IDalamudPluginInterface pluginInterface, GameLinks links)
     {
@@ -332,16 +377,15 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     }
 
     /// <summary>
-    /// Obtained/total/unknown for one reward kind on the viewed character, with the same obtained logic the table
-    /// uses. Memoized per <see cref="SessionState.Version"/>; the Characters dashboard reads it every frame.
+    /// Obtained/total/unknown for one reward kind on the viewed character, with the same obtained logic and the same
+    /// totals the kinds list shows (<see cref="MoonlitTally"/>: each reward once, other paths hidden, gone-for-good
+    /// rewards left out unless counted). Memoized per <see cref="SessionState.Version"/>; the Characters dashboard reads
+    /// it every frame.
     /// </summary>
     public UniqueRewardCounts CountsFor(RewardKind kind)
     {
         Refresh();
-        var k = (int)kind;
-        return (uint)k < KindCount
-            ? new UniqueRewardCounts(kindObtained[k], kindTotal[k], kindUnknown[k])
-            : default;
+        return totals.For(kind);
     }
 
     /// <summary>Left column: reward kinds with obtained/total and a filling moon; "All" on top.</summary>
@@ -456,6 +500,19 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             UiMetrics.Tooltip(Strings.MoonlitHideStoreResellsTooltip);
         }
 
+        Chrome.SameLineOrWrap(CheckboxWidth(Strings.MoonlitCountGoneLabel));
+        var countGone = settings.MoonlitCountGone;
+        if (ImGui.Checkbox(Strings.MoonlitCountGoneLabel, ref countGone))
+        {
+            settings.MoonlitCountGone = countGone;
+            settings.Save(pluginInterface);
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.MoonlitCountGoneTooltip);
+        }
+
         var comboWidth = UiMetrics.Px(150f);
         if (!twoRows)
         {
@@ -464,6 +521,23 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 
         ImGui.SetNextItemWidth(Chrome.FitWidth(comboWidth));
         DrawConfidenceCombo();
+
+        Chrome.SameLineOrWrap(comboWidth);
+        ImGui.SetNextItemWidth(Chrome.FitWidth(comboWidth));
+        DrawExpansionCombo();
+
+        var stateWidth = UiMetrics.Px(120f);
+        Chrome.SameLineOrWrap(stateWidth);
+        ImGui.SetNextItemWidth(Chrome.FitWidth(stateWidth));
+        DrawStateCombo();
+
+        Chrome.SameLineOrWrap(CheckboxWidth(Strings.MoonlitGroupByExpansionLabel));
+        var groupBy = settings.MoonlitGroupByExpansion;
+        if (ImGui.Checkbox(Strings.MoonlitGroupByExpansionLabel, ref groupBy))
+        {
+            settings.MoonlitGroupByExpansion = groupBy;
+            settings.Save(pluginInterface);
+        }
 
         // The filter keeps at least a third of its width on the line, and shrinks to the room left.
         var filterWidth = UiMetrics.Px(220f);
@@ -474,6 +548,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         RefreshVisible(ui);
         Chrome.SameLineOrWrap(ImGui.CalcTextSize(visibleSummary).X);
         ImGui.TextDisabled(visibleSummary);
+        DrawCopyMissing();
         if (!session.IsLive)
         {
             // A stored character's owned states are its last capture's ("Owned as of …"); older files have none.
@@ -494,6 +569,20 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         // The verdict popup is begun here, in the centre column's scope, because the context menu that requests it
         // lives inside the table's inner window and closes before the popup could be shown from there.
         verdict.Draw(this);
+
+        // Rewards on the character's path that can no longer be had and are not theirs: said once, under the toolbar.
+        if (totals.Missed > 0)
+        {
+            using (Theme.PushText(Theme.Dusk))
+            {
+                ImGui.TextUnformatted(missedText);
+            }
+
+            if (ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(Strings.MoonlitMissedTooltip);
+            }
+        }
 
         // Until the client has loaded the title or achievement list, those obtained marks are worked out from quests.
         if (session.IsLive && ui.MoonlitKind is { } shownKind && (shownKind is RewardKind.Title or RewardKind.Achievement) && !unlocks.ReadsExactly(shownKind))
@@ -530,7 +619,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
                                       | ImGuiTableFlags.Resizable | ImGuiTableFlags.Reorderable | ImGuiTableFlags.Hideable
                                       | ImGuiTableFlags.SizingStretchProp;
         var tableWidth = ImGui.GetContentRegionAvail().X;
-        using var table = ImRaii.Table(TableId, 6, Flags, new Vector2(-1f, -1f));
+        using var table = ImRaii.Table(TableId, ColumnCount, Flags, new Vector2(-1f, -1f));
         if (!table)
         {
             return;
@@ -550,6 +639,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         ImGui.TableSetupColumn(Strings.MoonlitColumnQuest, ImGuiTableColumnFlags.WidthStretch, 3f);
         ImGui.TableSetupColumn(Strings.MoonlitColumnState, ImGuiTableColumnFlags.WidthFixed | ImGuiTableColumnFlags.NoResize, glyphColumn);
         ImGui.TableSetupColumn(Strings.MoonlitColumnConfidence, ImGuiTableColumnFlags.WidthFixed | Planned(ConfidenceColumn), UiMetrics.Px(80f));
+        ImGui.TableSetupColumn(Strings.MoonlitColumnAvailability, ImGuiTableColumnFlags.WidthFixed | Planned(AvailabilityColumn), AvailabilityWidth());
         // The glyph columns follow IconScale, which imgui.ini's saved widths do not track; re-asserted every frame
         // (a no-op once they agree) so a changed IconScale never clips the moons.
         ImGuiP.TableSetColumnWidth(0, glyphColumn);
@@ -563,13 +653,23 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             clipperCreated = true;
         }
 
+        // Group headings are rows of the same height as a reward's, so the clipper's even spacing holds.
+        var rowHeight = MathF.Max(line, UiMetrics.RowIconSize) + (ImGui.GetStyle().CellPadding.Y * 2f);
         moreFocusedNext = -1;
         clipper.Begin(visibleCount);
         while (clipper.Step())
         {
             for (var i = clipper.DisplayStart; i < clipper.DisplayEnd; i++)
             {
-                DrawRow(ui, rows[visible[i]], line);
+                var index = visible[i];
+                if (index < 0)
+                {
+                    DrawGroupHeading((byte)~index, rowHeight);
+                }
+                else
+                {
+                    DrawRow(ui, rows[index], line);
+                }
             }
         }
 
@@ -584,17 +684,52 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     /// </summary>
     private const string TableId = "##moonlitRewards";
 
-    // The table's narrow-width plan (feature plan v4 L6): Confidence hides first, then Kind; State never. The plan hides
-    // a column with ImGuiTableColumnFlags.Disabled, which ImGui neither saves nor lists in the header menu, so a column
-    // the player hides from that menu stays theirs and stays hidden, and one the plan hid comes back when there is room.
+    // The table's narrow-width plan (feature plan v4 L6): Confidence hides first, then Kind, then Availability; State
+    // never. The plan hides a column with ImGuiTableColumnFlags.Disabled, which ImGui neither saves nor lists in the
+    // header menu, so a column the player hides from that menu stays theirs and stays hidden, and one the plan hid comes
+    // back when there is room. Availability (1.5) is the last column, so the saved order of the others holds.
+    private const int ColumnCount = 7;
     private const int KindColumn = 2;
     private const int ConfidenceColumn = 5;
-    private readonly bool[] columnsShown = new bool[6];
-    private readonly bool[] columnsWere = new bool[6];
-    private readonly float[] columnWidths = new float[6];
-    private readonly bool[] playerHidden = new bool[6];
-    private readonly bool[] autoHidden = new bool[6];
+    private const int AvailabilityColumn = 6;
+    private readonly bool[] columnsShown = new bool[ColumnCount];
+    private readonly bool[] columnsWere = new bool[ColumnCount];
+    private readonly float[] columnWidths = new float[ColumnCount];
+    private readonly bool[] playerHidden = new bool[ColumnCount];
+    private readonly bool[] autoHidden = new bool[ColumnCount];
     private bool columnsPlanned;
+
+    private float availabilityWidth;
+    private float availabilityWidthFont = -1f;
+    private int availabilityWidthLanguage = -1;
+
+    /// <summary>The Availability column's width: its widest label in the current font. Measured again only when the font size or the language changes.</summary>
+    private float AvailabilityWidth()
+    {
+        var font = ImGui.GetFontSize();
+        if (font != availabilityWidthFont || availabilityWidthLanguage != Localization.Loc.Version)
+        {
+            availabilityWidthFont = font;
+            availabilityWidthLanguage = Localization.Loc.Version;
+            availabilityWidth = MeasureAvailability();
+        }
+
+        return availabilityWidth;
+    }
+
+    private static float MeasureAvailability()
+    {
+        var widest = ImGui.CalcTextSize(Strings.MoonlitColumnAvailability).X;
+        foreach (var kind in Enum.GetValues<RewardAvailability>())
+        {
+            widest = MathF.Max(widest, ImGui.CalcTextSize(Strings.MoonlitAvailability(new RewardAvailabilityInfo(kind), DateTime.UnixEpoch)).X);
+        }
+
+        // A running event with an announced end, at a wide date in the same year.
+        var ends = new RewardAvailabilityInfo(RewardAvailability.EventRunning, new DateTime(1970, 12, 30, 0, 0, 0, DateTimeKind.Utc));
+        widest = MathF.Max(widest, ImGui.CalcTextSize(Strings.MoonlitAvailability(ends, DateTime.UnixEpoch)).X);
+        return MathF.Ceiling(widest);
+    }
 
     /// <summary>Plans the table's columns for its width, before they are set up; a column the player hid takes no room.</summary>
     private void FitColumns(float tableWidth, float glyphColumn, float line)
@@ -602,13 +737,14 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         var padding = ImGui.GetStyle().CellPadding.X * 2f;
         var nameMin = UiMetrics.Px(LayoutBudgets.RowNameMinLogical);
         var rewardMin = UiMetrics.RowIconSize + ImGui.GetStyle().ItemSpacing.X + nameMin + MoreSize(line);
-        Span<ColumnSpec> specs = stackalloc ColumnSpec[6];
+        Span<ColumnSpec> specs = stackalloc ColumnSpec[ColumnCount];
         PaneFit.MoonlitColumns(
             glyphColumn + padding,
             rewardMin + padding,
             UiMetrics.Px(110f) + padding,
             nameMin + padding,
             UiMetrics.Px(80f) + padding,
+            AvailabilityWidth() + padding,
             specs);
         for (var i = 0; i < specs.Length; i++)
         {
@@ -642,7 +778,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         }
     }
 
-    private static readonly int[] PlannedColumns = [KindColumn, ConfidenceColumn];
+    private static readonly int[] PlannedColumns = [KindColumn, ConfidenceColumn, AvailabilityColumn];
 
     /// <summary>The "…" button's side in a row.</summary>
     private static float MoreSize(float line) => MathF.Min(UiMetrics.MinTarget, MathF.Max(line, UiMetrics.RowIconSize));
@@ -679,6 +815,125 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             {
                 confidenceFilter = (ConfidenceFilter)i;
             }
+        }
+    }
+
+    /// <summary>The Expansion filter: All, or one of the expansions the rows' quests belong to.</summary>
+    private void DrawExpansionCombo()
+    {
+        var names = session.Names;
+        var label = expansionFilter is { } shown ? names.Expansion(shown) : Strings.MoonlitExpansionAll;
+        using var combo = ImRaii.Combo("##moonlitExpansion", label);
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.MoonlitExpansionFilterTooltip);
+        }
+
+        if (!combo)
+        {
+            return;
+        }
+
+        UiMetrics.ApplyFontScale();
+        if (ImGui.Selectable(Strings.MoonlitExpansionAll, expansionFilter is null))
+        {
+            expansionFilter = null;
+        }
+
+        foreach (var expansion in expansions)
+        {
+            if (ImGui.Selectable(names.Expansion(expansion) + "##x" + expansion.ToString(CultureInfo.InvariantCulture), expansionFilter == expansion))
+            {
+                expansionFilter = expansion;
+            }
+        }
+    }
+
+    /// <summary>The State filter: Any, Ready now, In journal, Blocked or Done, by the row's quest.</summary>
+    private void DrawStateCombo()
+    {
+        using var combo = ImRaii.Combo("##moonlitState", StateFilterItems[(int)stateFilter]);
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.MoonlitStateFilterTooltip);
+        }
+
+        if (!combo)
+        {
+            return;
+        }
+
+        UiMetrics.ApplyFontScale();
+        for (var i = 0; i < StateFilterItems.Length; i++)
+        {
+            if (ImGui.Selectable(StateFilterItems[i], i == (int)stateFilter))
+            {
+                stateFilter = (MoonlitStateFilter)i;
+            }
+        }
+    }
+
+    /// <summary>How long the "Copied" note shows after a copy, in seconds.</summary>
+    private const double CopiedNoteSeconds = 2.5;
+
+    /// <summary>
+    /// "Copy missing": copies the listed rows the character does not have as Markdown (<see cref="MoonlitMarkdown"/>);
+    /// longer than a Discord message, one part per click, the button naming the part it copies next ("Copy part 2/3").
+    /// </summary>
+    private void DrawCopyMissing()
+    {
+        if (copyLabel.Length == 0 || copyLabelLanguage != Localization.Loc.Version)
+        {
+            UpdateCopyLabel();
+        }
+
+        Chrome.SameLineOrWrap(ImGui.CalcTextSize(copyLabel, true, -1f).X + (ImGui.GetStyle().FramePadding.X * 2f));
+        using (ImRaii.Disabled(copyParts.Count == 0))
+        {
+            if (ImGui.SmallButton(copyLabel) && copyParts.Count > 0)
+            {
+                ImGui.SetClipboardText(copyParts[copyNext]);
+                copyNext = (copyNext + 1) % copyParts.Count;
+                copiedAt = ImGui.GetTime();
+                UpdateCopyLabel();
+            }
+        }
+
+        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+        {
+            UiMetrics.Tooltip(copyParts.Count == 0 ? Strings.MoonlitCopyNothing : Strings.MoonlitCopyMissingTooltip);
+        }
+
+        if (ImGui.GetTime() - copiedAt < CopiedNoteSeconds)
+        {
+            Chrome.SameLineOrWrap(ImGui.CalcTextSize(Strings.MoonlitCopied).X);
+            ImGui.TextDisabled(Strings.MoonlitCopied);
+        }
+    }
+
+    private string copyLabel = string.Empty;
+    private int copyLabelLanguage = -1;
+
+    /// <summary>"Copy missing", or "Copy part 2/3" while a long list is being copied in parts; with its ImGui id.</summary>
+    private void UpdateCopyLabel()
+    {
+        copyLabelLanguage = Localization.Loc.Version;
+        var text = copyParts.Count > 1
+            ? string.Format(CultureInfo.CurrentCulture, Strings.MoonlitCopyPartFormat, copyNext + 1, copyParts.Count)
+            : Strings.MoonlitCopyMissing;
+        copyLabel = text + "##copyMissing";
+    }
+
+    /// <summary>A group heading row of the table grouped by expansion: the expansion's name and its row count, as tall as a reward's row.</summary>
+    private void DrawGroupHeading(byte expansion, float rowHeight)
+    {
+        ImGui.TableNextRow();
+        ImGui.TableSetColumnIndex(1);
+        ImGui.Dummy(new Vector2(1f, MathF.Max(1f, rowHeight - (ImGui.GetStyle().CellPadding.Y * 2f))));
+        ImGui.SameLine();
+        using (Theme.PushText(Theme.Silver))
+        {
+            ImGui.TextUnformatted(groupHeadings.GetValueOrDefault(expansion) ?? string.Empty);
         }
     }
 
@@ -1147,6 +1402,11 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
                 UiMetrics.Tooltip(Strings.MoonlitHiddenTooltip);
             }
         }
+        else if (row.ChoiceTooltip.Length > 0 && ImGui.IsItemHovered())
+        {
+            // A relic or special weapon quest: the items it offers, one per job, of which the character gets one.
+            UiMetrics.Tooltip(row.Name, row.ChoiceTooltip);
+        }
 
         using (var menu = ImRaii.ContextPopupItem(RowMenuId))
         {
@@ -1216,7 +1476,8 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 
             if (ImGui.IsItemHovered())
             {
-                UiMetrics.Tooltip(Strings.MoonlitShowInJournal);
+                // Other quests that give the same reward ("Also from …"), under the action.
+                UiMetrics.Tooltip(Strings.MoonlitShowInJournal, row.AlsoFromText.Length > 0 ? row.AlsoFromText : null);
             }
         }
         else
@@ -1243,6 +1504,18 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         if (ImGui.IsItemHovered())
         {
             UiMetrics.Tooltip(row.ConfidenceTooltip, row.SourceText);
+        }
+
+        // Availability: can the reward still be had, and how (feature plan v5, decision 4). Past and gone in Dusk.
+        ImGui.TableNextColumn();
+        using (Theme.PushText(Theme.Dusk, row.Availability.Kind is RewardAvailability.GoneForGood or RewardAvailability.PastEventOnStore))
+        {
+            ImGui.TextUnformatted(row.AvailabilityText);
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(row.AvailabilityText, row.AvailabilityTooltip);
         }
     }
 
@@ -1284,6 +1557,20 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         if (ImGui.MenuItem(Strings.RouteToThisReward))
         {
             ui.OpenRoute(Core.Route.RouteTarget.ForReward(row.Entry, catalog.All, row.Name));
+        }
+
+        // The other quests on the character's path that give the same reward: each opens in the Journal.
+        if (row.AlsoFrom.Count > 0)
+        {
+            ImGui.Separator();
+            ImGui.TextDisabled(Strings.MoonlitAlsoFromMenu);
+            foreach (var i in row.AlsoFrom)
+            {
+                if (row.QuestAt(i) is { } other && ImGui.MenuItem(row.QuestLabelAt(i)))
+                {
+                    Reveal(ui, other);
+                }
+            }
         }
 
         ImGui.Separator();
@@ -1340,7 +1627,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         // Achievements window); that bumps no session version, so the reader's own counter is watched too.
         var achievementState = unlocks.LiveStateVersion;
         if (obtainedVersion != session.Version || obtainedBuild != rowsBuild || countsHideStore != settings.MoonlitHideStoreResells
-            || obtainedAchievementState != achievementState)
+            || countsGone != settings.MoonlitCountGone || obtainedAchievementState != achievementState)
         {
             obtainedAchievementState = achievementState;
             RefreshObtained();
@@ -1362,41 +1649,61 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     /// <summary>The UI language the rows' labels were composed in.</summary>
     private int rowsLanguage = -1;
 
+    /// <summary>
+    /// One row per counted reward (<see cref="MoonlitGroups"/>: a reward several quests give, or a relic quest's items,
+    /// is one row), then one per entry a "not unique" verdict hides. Labels are composed here once per catalog build.
+    /// </summary>
     private void BuildRows()
     {
         rowsLanguage = Localization.Loc.Version;
         var bundle = session.Bundle;
         var spoilers = session.Spoilers;
-        var all = catalog.All;
         var hidden = catalog.Hidden;
-        var built = new Row[all.Count + hidden.Count];
-        for (var i = 0; i < all.Count; i++)
+        groups = MoonlitGroups.Build(catalog.All, id => bundle?.Catalog.GetByRowId(id) is { IsRepeatable: true });
+        var grouped = groups.All;
+        var built = new Row[grouped.Count + hidden.Count];
+        QuestRecord? QuestOf(uint rowId) => bundle?.Catalog.GetByRowId(rowId);
+        for (var i = 0; i < grouped.Count; i++)
         {
-            var entry = all[i];
-            var quest = bundle?.Catalog.GetByRowId(entry.QuestRowId);
-            built[i] = new Row(i, entry, quest, Icons.Resolve(quest, entry), hidden: false, spoilers, bundle?.Language);
+            var group = grouped[i];
+            var entry = group.Primary;
+            var quest = QuestOf(entry.QuestRowId);
+            built[i] = new Row(i, group, entry, QuestOf, Icons.Resolve(quest, entry), hidden: false, spoilers, bundle?.Language);
         }
 
         // Rows hidden by a "not unique" verdict follow the view so the Yours filter can list them for Restore.
         for (var j = 0; j < hidden.Count; j++)
         {
-            var i = all.Count + j;
+            var i = grouped.Count + j;
             var entry = hidden[j];
-            var quest = bundle?.Catalog.GetByRowId(entry.QuestRowId);
-            built[i] = new Row(i, entry, quest, Icons.Resolve(quest, entry), hidden: true, spoilers, bundle?.Language);
+            var quest = QuestOf(entry.QuestRowId);
+            built[i] = new Row(i, null, entry, QuestOf, Icons.Resolve(quest, entry), hidden: true, spoilers, bundle?.Language);
         }
 
-        uniqueCount = all.Count;
-        elsewhereCount = 0;
-        tileSeen = new bool[built.Length];
-        for (var i = 0; i < all.Count; i++)
+        // The expansions the rows' quests belong to, for the Expansion filter.
+        var present = new SortedSet<byte>();
+        foreach (var row in built)
         {
-            if (built[i].FoundElsewhere)
+            for (var q = 0; q < row.QuestCount; q++)
             {
-                elsewhereCount++;
+                if (row.QuestAt(q) is { } quest)
+                {
+                    present.Add(quest.Expansion);
+                }
             }
         }
 
+        expansions = [.. present];
+        if (expansionFilter is { } shown && !present.Contains(shown))
+        {
+            expansionFilter = null;
+        }
+
+        editionYears = bundle is null
+            ? new Dictionary<ushort, int>()
+            : Core.Seasonal.SeasonalNow.EditionYears(bundle.Catalog, session.Curated.Festivals);
+        groupStates = new MoonlitGroupState[grouped.Count];
+        tileSeen = new bool[built.Length];
         rows = built;
         rowsBuild = catalogBuild;
         rowsBundle = bundle;
@@ -1404,44 +1711,50 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         obtainedVersion = -1;
     }
 
-    /// <summary>Obtained state per row and the per-kind counts, once per session version (and per "found elsewhere" toggle: hidden rows leave the counts).</summary>
+    /// <summary>
+    /// Per row: the obtained state, the quest it shows, whether it is on the character's path and its availability
+    /// (<see cref="MoonlitTally"/>); then the totals the kinds list and <see cref="CountsFor"/> read. Once per session
+    /// version, and when the "found elsewhere" or "gone for good" toggle changes.
+    /// </summary>
     private void RefreshObtained()
     {
-        var obtained = kindObtained;
-        var total = kindTotal;
-        var unknown = kindUnknown;
-        Array.Clear(obtained);
-        Array.Clear(total);
-        Array.Clear(unknown);
         var hideStore = settings.MoonlitHideStoreResells;
+        var countGone = settings.MoonlitCountGone;
+        var bundle = session.Bundle;
+        var now = DateTime.UtcNow;
+        var context = bundle is null
+            ? AvailabilityContext.None
+            : new AvailabilityContext(session.Curated.Festivals, editionYears, session.ServerFestivals.Contains, now);
+        var states = session.States;
+        QuestEvaluation? EvaluationOf(uint rowId) => states.TryGetValue(rowId, out var evaluation) ? evaluation : null;
+        RewardAvailabilityInfo AvailabilityOf(UniqueRewardEntry entry, QuestEvaluation? evaluation) =>
+            RewardAvailabilities.Classify(entry, bundle?.Catalog.GetByRowId(entry.QuestRowId), evaluation, context);
 
+        listableCount = 0;
         foreach (var row in rows)
         {
-            row.SetObtained(unlocks.IsObtained(row.Entry));
-            if (row.Hidden || (hideStore && row.FoundElsewhere))
+            MoonlitGroupState state;
+            if (row.Group is { } group)
             {
-                continue;
+                state = MoonlitTally.Evaluate(group, unlocks.IsObtained, EvaluationOf, AvailabilityOf);
+                groupStates[group.Index] = state;
+            }
+            else
+            {
+                // Hidden by the user's verdict: its own entry, never counted.
+                state = new MoonlitGroupState(true, 0, unlocks.IsObtained(row.Entry), AvailabilityOf(row.Entry, EvaluationOf(row.Entry.QuestRowId)));
             }
 
-            var k = (int)row.Entry.Kind;
-            if ((uint)k < KindCount)
+            row.SetState(state, EvaluationOf, now);
+            if (!row.Hidden && row.OnPath && !(hideStore && row.FoundElsewhere))
             {
-                total[k]++;
-                switch (row.Obtained)
-                {
-                    case true:
-                        obtained[k]++;
-                        break;
-                    case null:
-                        unknown[k]++;
-                        break;
-                }
+                listableCount++;
             }
         }
 
-        var allObtained = 0;
-        var allTotal = 0;
-        var allUnknown = 0;
+        totals = MoonlitTally.Totals(groups.All, groupStates, new MoonlitCountOptions(countGone, hideStore));
+        missedText = totals.Missed > 0 ? Strings.MoonlitMissed(totals.Missed) : string.Empty;
+
         var kinds = catalog.Kinds;
         if (kindsBuild != rowsBuild || kindsLanguage != Localization.Loc.Version)
         {
@@ -1457,41 +1770,43 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 
         for (var i = 0; i < kindItems.Length; i++)
         {
-            var k = (int)kinds[i].Kind;
-            var o = (uint)k < KindCount ? obtained[k] : 0;
-            var t = (uint)k < KindCount ? total[k] : kinds[i].Count;
-            var u = (uint)k < KindCount ? unknown[k] : 0;
+            var (o, t, u) = totals.For(kinds[i].Kind);
             kindItems[i].SetCounts(o, t, u);
-            allObtained += o;
-            allTotal += t;
-            allUnknown += u;
         }
 
-        allItem.SetCounts(allObtained, allTotal, allUnknown);
+        var all = totals.All;
+        allItem.SetCounts(all.Obtained, all.Total, all.Unknown);
         obtainedVersion = session.Version;
         obtainedBuild = rowsBuild;
         countsHideStore = hideStore;
+        countsGone = countGone;
         visibleKey = default;
     }
 
-    /// <summary>The filtered index array, rebuilt when the kind, the toggle, the filter text or the obtained states change.</summary>
+    /// <summary>"3 time-limited rewards missed", composed when the totals change.</summary>
+    private string missedText = string.Empty;
+
+    /// <summary>
+    /// The filtered index array, rebuilt when the kind, a toggle, a filter, the grouping or the obtained states change.
+    /// Grouped by expansion, the rows are in expansion order (stable) and, in the table, each expansion opens with a
+    /// heading entry (an expansion id <c>e</c> stored as <c>~e</c>). The "Copy missing" text follows the listed rows.
+    /// </summary>
     private void RefreshVisible(UiState ui)
     {
         var hideStore = settings.MoonlitHideStoreResells;
-        var key = new VisibleKey(rowsBuild, obtainedVersion, ui.MoonlitKind, ui.MoonlitHideObtained, hideStore, confidenceFilter, filterText);
+        var groupBy = settings.MoonlitGroupByExpansion;
+        var headings = groupBy && !settings.MoonlitGallery;
+        var key = new VisibleKey(
+            rowsBuild, obtainedVersion, ui.MoonlitKind, ui.MoonlitHideObtained, hideStore, confidenceFilter, filterText,
+            expansionFilter, stateFilter, groupBy, headings, settings.MoonlitCountGone, Localization.Loc.Version);
         if (key == visibleKey)
         {
             return;
         }
 
         visibleKey = key;
-        if (visible.Length < rows.Length)
-        {
-            visible = new int[rows.Length];
-        }
-
         var filter = filterText.Trim();
-        var count = 0;
+        var picked = new List<int>(rows.Length);
         var listed = 0;
         foreach (var row in rows)
         {
@@ -1518,7 +1833,22 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
                     continue;
                 }
             }
+            else if (!row.OnPath)
+            {
+                // Every quest that gives it lies on a path the character did not take (feature plan v5, decision 4).
+                continue;
+            }
             else if (!PassesConfidence(confidenceFilter, row.Entry.Confidence, row.Obtained))
+            {
+                continue;
+            }
+
+            if (expansionFilter is { } expansion && row.Expansion != expansion)
+            {
+                continue;
+            }
+
+            if (!MoonlitStateFilters.Passes(stateFilter, StateOf(row)))
             {
                 continue;
             }
@@ -1528,16 +1858,90 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
                 continue;
             }
 
-            visible[count++] = row.Index;
+            picked.Add(row.Index);
             if (!row.Hidden)
             {
                 listed++;
             }
         }
 
+        if (groupBy)
+        {
+            // Stable: within an expansion the rows keep the catalog's order.
+            var order = new Dictionary<int, int>(picked.Count);
+            for (var i = 0; i < picked.Count; i++)
+            {
+                order[picked[i]] = i;
+            }
+
+            picked.Sort((a, b) =>
+            {
+                var byExpansion = rows[a].Expansion.CompareTo(rows[b].Expansion);
+                return byExpansion != 0 ? byExpansion : order[a].CompareTo(order[b]);
+            });
+        }
+
+        groupHeadings.Clear();
+        var capacity = picked.Count + (headings ? expansions.Length + 1 : 0);
+        if (visible.Length < capacity)
+        {
+            visible = new int[capacity];
+        }
+
+        var count = 0;
+        var names = session.Names;
+        for (var i = 0; i < picked.Count; i++)
+        {
+            var row = rows[picked[i]];
+            if (headings && (i == 0 || rows[picked[i - 1]].Expansion != row.Expansion))
+            {
+                var size = 1;
+                while (i + size < picked.Count && rows[picked[i + size]].Expansion == row.Expansion)
+                {
+                    size++;
+                }
+
+                groupHeadings[row.Expansion] = names.Expansion(row.Expansion) + " (" + size.ToString(CultureInfo.InvariantCulture) + ")";
+                visible[count++] = ~(int)row.Expansion;
+            }
+
+            visible[count++] = picked[i];
+        }
+
         visibleCount = count;
-        var denominator = hideStore ? uniqueCount - elsewhereCount : uniqueCount;
-        visibleSummary = listed.ToString(CultureInfo.InvariantCulture) + " / " + denominator.ToString(CultureInfo.InvariantCulture);
+        visibleSummary = listed.ToString(CultureInfo.InvariantCulture) + " / " + listableCount.ToString(CultureInfo.InvariantCulture);
+        BuildCopyMissing(picked, groupBy);
+    }
+
+    /// <summary>The state of the quest a row shows for the viewed character; null when it has no evaluation.</summary>
+    private QuestState? StateOf(Row row) => session.States.TryGetValue(row.Entry.QuestRowId, out var evaluation) ? evaluation.State : null;
+
+    /// <summary>
+    /// "Copy missing" over the listed rows: those the character does not have (unknown included), not hidden by a
+    /// verdict, and not gone for good unless such rewards count; under their kind, or their expansion when grouped.
+    /// Split into Discord-sized parts (<see cref="Core.Text.MessageSplitter"/>); the button starts at part 1 again.
+    /// </summary>
+    private void BuildCopyMissing(List<int> picked, bool byExpansion)
+    {
+        var countGone = settings.MoonlitCountGone;
+        var names = session.Names;
+        var lines = new List<MoonlitMissingLine>();
+        foreach (var index in picked)
+        {
+            var row = rows[index];
+            if (row.Hidden || row.Obtained == true || (!countGone && row.Missed))
+            {
+                continue;
+            }
+
+            var section = byExpansion ? names.Expansion(row.Expansion) : row.KindName;
+            var note = row.Availability.Kind == RewardAvailability.GetNow ? string.Empty : row.AvailabilityText;
+            lines.Add(new MoonlitMissingLine(section, row.Name, row.QuestName, note));
+        }
+
+        copyParts = lines.Count == 0 ? [] : Core.Text.MessageSplitter.Split(MoonlitMarkdown.Write(lines));
+        copyNext = 0;
+        UpdateCopyLabel();
     }
 
     /// <summary>Whether a row passes the confidence combo: a confidence match, or (Obtained not checked) an unreadable obtained state.</summary>
@@ -1602,8 +2006,6 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         });
     }
 
-    private static readonly int KindCount = Enum.GetValues<RewardKind>().Length;
-
     private static string ConfidenceLabel(Confidence confidence) => confidence switch
     {
         Confidence.Static => Strings.MoonlitConfidenceStatic,
@@ -1660,35 +2062,102 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     }
 
     /// <summary>
-    /// One table row with every label pre-materialized; only the obtained state changes after construction. A hidden
-    /// row (kept out of the unique view by the user's verdict) wears the "yours" badge whatever its entry's confidence.
+    /// One table row, a counted reward (<see cref="MoonlitGroup"/>), with every label pre-materialized: the reward's
+    /// name, kind and badges once, and the name of each quest that gives it. What changes with the viewed character is
+    /// set by <see cref="SetState"/>: the obtained state, which quest the row shows (the representative), whether it is
+    /// on the character's path, its availability and the other quests ("Also from …"). A hidden row (kept out of the
+    /// unique view by the user's verdict) is one entry of its own and wears the "yours" badge whatever its confidence.
     /// </summary>
     private sealed class Row
     {
+        private static readonly int[] NoQuests = [];
+
+        private readonly QuestRecord?[] quests;
+        private readonly string[] questNames;
+        private readonly string[] questLabels;
+        private readonly UniqueRewardEntry[] questEntries;
+        private readonly string searchText;
+        private int representative;
+
+        /// <param name="group">The counted reward; null for a row a verdict hides (<paramref name="entry"/> alone).</param>
+        /// <param name="entry">The group's primary entry, or the hidden entry.</param>
+        /// <param name="questOf">A quest of the catalog by row id; null when the catalog lacks it.</param>
         /// <param name="spoilers">The viewed character's shield: a masked quest's name is its placeholder here too.</param>
         /// <param name="catalogLanguage">The catalog's language: a non-English client prints the sheet's reward name (<see cref="RewardNames"/>).</param>
-        public Row(int index, UniqueRewardEntry entry, QuestRecord? quest, uint icon, bool hidden, SpoilerMask spoilers, string? catalogLanguage)
+        public Row(int index, MoonlitGroup? group, UniqueRewardEntry entry, Func<uint, QuestRecord?> questOf, uint icon, bool hidden, SpoilerMask spoilers, string? catalogLanguage)
         {
             Index = index;
-            Entry = entry;
-            Quest = quest;
+            Group = group;
             Icon = icon;
             Hidden = hidden;
+            IReadOnlyList<uint> ids = group is null ? [entry.QuestRowId] : group.Quests;
+            quests = new QuestRecord?[ids.Count];
+            questNames = new string[ids.Count];
+            questLabels = new string[ids.Count];
+            questEntries = new UniqueRewardEntry[ids.Count];
+            for (var i = 0; i < ids.Count; i++)
+            {
+                var quest = questOf(ids[i]);
+                quests[i] = quest;
+                questNames[i] = quest is null ? string.Format(CultureInfo.InvariantCulture, Strings.MoonlitQuestFormat, ids[i]) : spoilers.DisplayName(quest);
+                questLabels[i] = questNames[i] + "##q" + i.ToString(CultureInfo.InvariantCulture);
+                questEntries[i] = group?.FirstOf(ids[i]) ?? entry;
+            }
+
+            var primaryQuest = questOf(entry.QuestRowId);
             KindName = Strings.MoonlitKindName(entry.Kind);
-            var rewardName = RewardNames.Display(entry, quest, catalogLanguage);
-            Name = string.IsNullOrWhiteSpace(rewardName)
+            var rewardName = RewardNames.Display(entry, primaryQuest, catalogLanguage);
+            var baseName = string.IsNullOrWhiteSpace(rewardName)
                 ? KindName + " #" + entry.RewardId.ToString(CultureInfo.InvariantCulture)
                 : rewardName;
-            QuestName = quest is null ? string.Format(CultureInfo.InvariantCulture, Strings.MoonlitQuestFormat, entry.QuestRowId) : spoilers.DisplayName(quest);
-            QuestLabel = QuestName + "##q";
+            var search = new List<string> { baseName };
+            if (group is { IsChoice: true })
+            {
+                // A relic or special weapon quest: "Honorbound (1 of 18)", the items listed in the name's tooltip.
+                Name = string.Format(CultureInfo.CurrentCulture, Strings.MoonlitChoiceFormat, baseName, group.Choices);
+                var items = new List<string>();
+                var seen = new HashSet<RewardKey>();
+                foreach (var item in group.Entries)
+                {
+                    if (seen.Add(RewardKey.Of(item)))
+                    {
+                        var itemName = RewardNames.Display(item, questOf(item.QuestRowId), catalogLanguage);
+                        items.Add(itemName);
+                        search.Add(itemName);
+                    }
+                }
+
+                ChoiceTooltip = string.Format(CultureInfo.CurrentCulture, Strings.MoonlitChoiceTooltipFormat, group.Choices) + "\n" + string.Join("\n", items);
+            }
+            else
+            {
+                Name = baseName;
+                ChoiceTooltip = string.Empty;
+            }
+
+            search.AddRange(questNames);
+            search.Add(KindName);
+            searchText = string.Join("\n", search);
             ConfidenceLabel = hidden ? Strings.MoonlitConfidenceUser : MoonlitPane.ConfidenceLabel(entry.Confidence);
             ConfidenceColor = hidden ? Theme.EclipseText : MoonlitPane.ConfidenceColor(entry.Confidence);
             ConfidenceTooltip = hidden ? Strings.MoonlitBadgeHidden : MoonlitPane.ConfidenceTooltip(entry.Confidence);
             SourceText = string.IsNullOrWhiteSpace(entry.Source) ? Strings.MoonlitSourceUnknown : entry.Source;
-            StoreResell = entry.SoldOnOnlineStore;
-            DropsInDuty = entry.DropsInDuty;
-            DropTooltip = DropsInDuty ? Strings.MoonlitAlsoDropsTooltip(entry.DropWhere) : string.Empty;
-            Reward = icon == 0 ? null : RewardFor(quest, entry, icon, Name);
+
+            // The marks follow every entry of the reward: one sold on the store or dropping in a duty marks the row.
+            var all = group?.Entries ?? [entry];
+            var drop = (UniqueRewardEntry?)null;
+            foreach (var e in all)
+            {
+                StoreResell |= e.SoldOnOnlineStore;
+                if (drop is null && e.DropsInDuty)
+                {
+                    drop = e;
+                }
+            }
+
+            DropsInDuty = drop is not null;
+            DropTooltip = drop is null ? string.Empty : Strings.MoonlitAlsoDropsTooltip(drop.DropWhere);
+            Reward = icon == 0 ? null : RewardFor(primaryQuest, entry, icon, baseName);
         }
 
         /// <summary>
@@ -1721,14 +2190,38 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         }
 
         public int Index { get; }
-        public UniqueRewardEntry Entry { get; }
-        public QuestRecord? Quest { get; }
+
+        /// <summary>The counted reward; null for a row a verdict hides.</summary>
+        public MoonlitGroup? Group { get; }
+
+        /// <summary>The entry of the quest the row shows (the representative's).</summary>
+        public UniqueRewardEntry Entry => questEntries[representative];
+
+        /// <summary>The quest the row shows; null when the catalog lacks it.</summary>
+        public QuestRecord? Quest => quests[representative];
+
+        public string QuestName => questNames[representative];
+
+        public string QuestLabel => questLabels[representative];
+
+        /// <summary>How many quests give the reward.</summary>
+        public int QuestCount => quests.Length;
+
+        public QuestRecord? QuestAt(int index) => quests[index];
+
+        /// <summary>The quest's name with an ImGui id unique within the row, for a menu item.</summary>
+        public string QuestLabelAt(int index) => questLabels[index];
+
+        /// <summary>The expansion of the quest the row shows (0 when unknown): what the Expansion filter and the grouping read.</summary>
+        public byte Expansion => Quest?.Expansion ?? 0;
+
         public uint Icon { get; }
         public bool Hidden { get; }
         public string Name { get; }
         public string KindName { get; }
-        public string QuestName { get; }
-        public string QuestLabel { get; }
+
+        /// <summary>For a relic or special weapon quest, the items it offers under a line that says one is received; empty otherwise.</summary>
+        public string ChoiceTooltip { get; }
         public string ConfidenceLabel { get; }
         public Vector4 ConfidenceColor { get; }
         public string ConfidenceTooltip { get; }
@@ -1753,24 +2246,89 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         public Mark ObtainedGlyph { get; private set; } = Mark.Unknown;
         public string ObtainedText { get; private set; } = Strings.MoonlitObtainedUnknown;
 
-        public void SetObtained(bool? obtained)
+        /// <summary>False when every quest that gives the reward lies on a path the character did not take (and the reward is not theirs): the row is not listed.</summary>
+        public bool OnPath { get; private set; } = true;
+
+        public RewardAvailabilityInfo Availability { get; private set; }
+        public string AvailabilityText { get; private set; } = string.Empty;
+        public string AvailabilityTooltip { get; private set; } = string.Empty;
+
+        /// <summary>Gone for good and not obtained: left out of the totals unless they count gone rewards.</summary>
+        public bool Missed => Availability.IsGone && Obtained != true;
+
+        /// <summary>Indexes (into the row's quests) of the other quests on the character's path that give the reward.</summary>
+        public IReadOnlyList<int> AlsoFrom { get; private set; } = NoQuests;
+
+        /// <summary>"Also from Quest B, Quest C" for the quest's tooltip; empty when no other quest gives it.</summary>
+        public string AlsoFromText { get; private set; } = string.Empty;
+
+        /// <summary>Applies the viewed character's state of the reward; <paramref name="evaluationOf"/> tells which other quests are on its path.</summary>
+        public void SetState(MoonlitGroupState state, Func<uint, QuestEvaluation?> evaluationOf, DateTime nowUtc)
         {
-            Obtained = obtained;
-            (ObtainedGlyph, ObtainedText) = obtained switch
+            Obtained = state.Obtained;
+            (ObtainedGlyph, ObtainedText) = state.Obtained switch
             {
                 true => (Mark.Check, Strings.MoonlitObtainedYes),
                 false => (Mark.Cross, Strings.MoonlitObtainedNo),
                 null => (Mark.Unknown, Strings.MoonlitObtainedUnknown),
             };
+
+            representative = Math.Clamp(state.Representative, 0, quests.Length - 1);
+            OnPath = state.OnPath;
+            if (Availability != state.Availability || AvailabilityText.Length == 0)
+            {
+                Availability = state.Availability;
+                AvailabilityText = Strings.MoonlitAvailability(state.Availability, nowUtc);
+                AvailabilityTooltip = Strings.MoonlitAvailabilityTooltip(state.Availability.Kind);
+            }
+
+            if (quests.Length < 2)
+            {
+                return;
+            }
+
+            var others = new List<int>(quests.Length - 1);
+            for (var i = 0; i < quests.Length; i++)
+            {
+                if (i != representative && (quests[i] is null || !MoonlitTally.IsOffPath(evaluationOf(quests[i]!.RowId))))
+                {
+                    others.Add(i);
+                }
+            }
+
+            AlsoFrom = others;
+            if (others.Count == 0)
+            {
+                AlsoFromText = string.Empty;
+                return;
+            }
+
+            var names = new string[others.Count];
+            for (var i = 0; i < names.Length; i++)
+            {
+                names[i] = questNames[others[i]];
+            }
+
+            AlsoFromText = string.Format(CultureInfo.CurrentCulture, Strings.MoonlitAlsoFromFormat, string.Join(", ", names));
         }
 
-        public bool Matches(string filter) =>
-            Name.Contains(filter, StringComparison.OrdinalIgnoreCase)
-            || QuestName.Contains(filter, StringComparison.OrdinalIgnoreCase)
-            || KindName.Contains(filter, StringComparison.OrdinalIgnoreCase);
+        public bool Matches(string filter) => searchText.Contains(filter, StringComparison.OrdinalIgnoreCase);
     }
 
-    private readonly record struct VisibleKey(int Build, int Version, RewardKind? Kind, bool HideObtained, bool HideStore, ConfidenceFilter Confidence, string Filter);
+    private readonly record struct VisibleKey(
+        int Build,
+        int Version,
+        RewardKind? Kind,
+        bool HideObtained,
+        bool HideStore,
+        ConfidenceFilter Confidence,
+        string Filter,
+        byte? Expansion,
+        MoonlitStateFilter State,
+        bool GroupByExpansion,
+        bool Headings,
+        bool CountGone,
+        int Language);
 }
 
 /// <summary>
@@ -1830,6 +2388,10 @@ public sealed class MoonlitIconResolver(IDataManager data, IPluginLog log)
                 RewardKind.Trait => Positive(data.GetExcelSheet<Trait>()?.GetRowOrDefault(entry.RewardId)?.Icon),
                 RewardKind.Achievement => data.GetExcelSheet<Achievement>()?.GetRowOrDefault(entry.RewardId)?.Icon ?? 0u,
                 RewardKind.BlueMageSpell => data.GetExcelSheet<AozAction>()?.GetRowOrDefault(entry.RewardId)?.Action.ValueNullable?.Icon ?? 0u,
+                // An item the quest's reward list does not carry as an item (the A Realm Reborn soul crystals come
+                // through QuestRewardOther): the item's own icon.
+                RewardKind.Item or RewardKind.OptionalItem or RewardKind.ArtifactGear when entry.ItemId != 0 =>
+                    data.GetExcelSheet<Item>()?.GetRowOrDefault(entry.ItemId)?.Icon ?? 0u,
                 _ => 0u,
             };
         }

@@ -66,6 +66,9 @@ One row per reward of the Moonlit tab's unique view (rewards you marked not uniq
 | `rewardName` | The reward's name in English, from the shipped reward data, whatever the client's language |
 | `questRowId` | Quest sheet row id of the quest that gives it |
 | `obtained` | `true`, `false`, or unknown (`null` in JSON, `unknown` in CSV) |
+| `availability` | Whether the reward can still be had through this quest (added in 1.5.0): `getNow`, `eventRunning`, `upcomingEvent`, `collabMayReturn` (a collaboration event, which may return), `pastEventOnStore` (the event is over but the FFXIV Online Store sells it) or `goneForGood` |
+
+The file keeps one row per quest that gives a reward, so a reward several quests give (Guildhests from each city's quest, a relic weapon from its quest and its repeatable "another job" twin) appears once per quest. The Moonlit tab counts each such reward once and hides the quests on paths the character did not take; group by `kind` and `rewardId` to count as it does.
 
 Emotes, minions, mounts, orchestrion rolls, ornaments (fashion accessories), Triple Triad cards, bardings, hairstyles, aether currents and duties are read from the game's unlock flags. Each capture saves them with the character, so a stored character (or one logged in on another game client) exports what it owned at its last capture. A character not captured since Tsukimichi 1.5 reads unknown for these until it logs in once. Rewards that simply follow the quest (actions, traits, jobs, blue magic, titles, achievements, system unlocks) are answered from the quest's completion flag for any character. Items and gear read unknown for now. This is the same obtained state the Moonlit tab shows.
 
@@ -145,14 +148,16 @@ Sample (Moonlit, trimmed):
       "rewardId": 114,
       "rewardName": "Most Gentlemanly",
       "questRowId": 66038,
-      "obtained": true
+      "obtained": true,
+      "availability": "getNow"
     },
     {
       "kind": "Mount",
       "rewardId": 15,
       "rewardName": "unicorn",
       "questRowId": 65730,
-      "obtained": false
+      "obtained": false,
+      "availability": "getNow"
     }
   ]
 }
@@ -169,10 +174,10 @@ rowId,questId,name,section,category,genre,expansion,completed,completedAt,comple
 ```
 
 ```csv
-kind,rewardId,rewardName,questRowId,obtained
-Emote,114,Most Gentlemanly,66038,true
-Mount,15,unicorn,65730,false
-Minion,21,wind-up gentleman,66038,unknown
+kind,rewardId,rewardName,questRowId,obtained,availability
+Emote,114,Most Gentlemanly,66038,true,getNow
+Mount,15,unicorn,65730,false,getNow
+Minion,21,wind-up gentleman,66038,unknown,getNow
 ```
 
 The rows in these samples come from the game data of 2026.09.15. Quest, section, category and genre names are in the client's language; Moonlit reward names are always the shipped English ones.

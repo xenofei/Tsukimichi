@@ -5,7 +5,7 @@ Written by `tools/regen.ps1`; do not edit by hand. The reports under `docs/data`
 | Field | Value |
 |---|---|
 | Game version | `2026.09.15.0000.0000` |
-| Generated (UTC) | `2026-10-01T17:23:55Z` |
+| Generated (UTC) | `2026-10-02T01:30:33Z` |
 | Curated revision | `42ba527` (last commit touching a data file under `Tsukimichi/Data/curated`) |
 | Catalog fixture | `catalog-2026.09.15.0000.0000.json.gz` |
 | unique_quests.json entries | 2630 across 1301 quests |
@@ -29,13 +29,13 @@ Written by `tools/regen.ps1`; do not edit by hand. The reports under `docs/data`
 | Emote | 56 |
 | GeneralAction | 12 |
 | Hairstyle | 1 |
-| Item | 165 |
+| Item | 172 |
 | Minion | 64 |
 | Mount | 38 |
 | OptionalItem | 53 |
 | Orchestrion | 79 |
 | Ornament | 4 |
-| Other | 13 |
+| Other | 6 |
 | SystemUnlock | 134 |
 | Title | 199 |
 | Trait | 54 |

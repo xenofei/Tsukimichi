@@ -16,13 +16,13 @@ Generated from game version `2026.09.15.0000.0000` by Tsukimichi.DataGen (see do
 
 | Kind | Static | Community | Curated | UserOverride | Total |
 |---|---:|---:|---:|---:|---:|
-| Item | 165 | 0 | 0 | 0 | 165 |
+| Item | 172 | 0 | 0 | 0 | 172 |
 | OptionalItem | 53 | 0 | 0 | 0 | 53 |
 | Emote | 56 | 0 | 0 | 0 | 56 |
 | Action | 250 | 0 | 0 | 0 | 250 |
 | GeneralAction | 12 | 0 | 0 | 0 | 12 |
 | ClassJob | 48 | 0 | 0 | 0 | 48 |
-| Other | 13 | 0 | 0 | 0 | 13 |
+| Other | 6 | 0 | 0 | 0 | 6 |
 | ArtifactGear | 607 | 0 | 0 | 0 | 607 |
 | Mount | 38 | 0 | 0 | 0 | 38 |
 | Minion | 64 | 0 | 0 | 0 | 64 |
@@ -42,7 +42,7 @@ Generated from game version `2026.09.15.0000.0000` by Tsukimichi.DataGen (see do
 
 ## Examples per kind
 
-### Item (165)
+### Item (172)
 
 | Quest | Reward | Reward id | Item id | Confidence | Source |
 |---|---|---:|---:|---|---|
@@ -132,20 +132,16 @@ Generated from game version `2026.09.15.0000.0000` by Tsukimichi.DataGen (see do
 | 65660 Close to Home | conjurer | 6 | 0 | Static | `Quest.ClassJobUnlock` |
 | 65713 So You Want to Be a Gladiator | gladiator | 1 | 0 | Static | `Quest.ClassJobUnlock` |
 
-### Other (13)
+### Other (6)
 
 | Quest | Reward | Reward id | Item id | Confidence | Source |
 |---|---|---:|---:|---|---|
-| 66585 Pride and Duty (Will Take You from the Mountain) | Soul of the Warrior | 12 | 0 | Static | `Quest.OtherReward` |
-| 66591 Paladin's Pledge | Soul of the Paladin | 10 | 0 | Static | `Quest.OtherReward` |
-| 66597 Brother from Another Mother | Soul of the Monk | 11 | 0 | Static | `Quest.OtherReward` |
-| 66603 Eye of the Dragon | Soul of the Dragoon | 13 | 0 | Static | `Quest.OtherReward` |
-| 66609 Taking the Black | Soul of the Black Mage | 16 | 0 | Static | `Quest.OtherReward` |
-| 66615 Seer Folly | Soul of the White Mage | 15 | 0 | Static | `Quest.OtherReward` |
-| 66621 A Song of Bards and Bowmen | Soul of the Bard | 14 | 0 | Static | `Quest.OtherReward` |
 | 67133 Divine Intervention | Aether Compass | 5 | 0 | Static | `Quest.OtherReward` |
 | 67631 Inscrutable Tastes | Collectable Action | 3 | 0 | Static | `Quest.OtherReward` |
 | 67632 Beloved of the Builder | Specialist Action | 4 | 0 | Static | `Quest.OtherReward` |
+| 67677 A Complete Game Changer | Yo-kai Medallium | 6 | 0 | Static | `Quest.OtherReward` |
+| 67928 Keeping Up with the Aliapohs | Wondrous Tails | 7 | 0 | Static | `Quest.OtherReward` |
+| 68458 A New Fishing Ex-spear-ience | Spearfishing | 8 | 0 | Static | `Quest.OtherReward` |
 
 ### ArtifactGear (607)
 

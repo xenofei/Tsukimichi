@@ -1,6 +1,7 @@
 using System;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Runtime;
+using Tsukimichi.Core.Unique;
 using Tsukimichi.Localization;
 
 namespace Tsukimichi.Ui;
@@ -116,6 +117,72 @@ static partial class Strings
     public static string MoonlitConfidenceCuratedOnly => Loc.Get("MoonlitConfidenceCuratedOnly");
     public static string MoonlitConfidenceYoursOnly => Loc.Get("MoonlitConfidenceYoursOnly");
     public static string MoonlitConfidenceUnknownObtained => Loc.Get("MoonlitConfidenceUnknownObtained");
+
+    // 1.5.0 (feature plan v5, decision 4): availability, counted once, filters, Copy missing
+    public static string MoonlitColumnAvailability => Loc.Get("MoonlitColumnAvailability");
+
+    /// <summary>The availability label a row wears ("Get now", "Event running (ends Oct 5)", "Gone for good", …).</summary>
+    public static string MoonlitAvailability(RewardAvailabilityInfo availability, System.DateTime nowUtc) => availability.Kind switch
+    {
+        RewardAvailability.GetNow => Loc.Get("MoonlitAvailability.GetNow"),
+        RewardAvailability.EventRunning when availability.EndsUtc is { } end =>
+            string.Format(System.Globalization.CultureInfo.CurrentCulture, Loc.Get("MoonlitAvailability.EventEndsFormat"), Core.Seasonal.SeasonalNow.DateText(end, nowUtc)),
+        RewardAvailability.EventRunning => Loc.Get("MoonlitAvailability.EventRunning"),
+        RewardAvailability.UpcomingEvent => Loc.Get("MoonlitAvailability.UpcomingEvent"),
+        RewardAvailability.CollabMayReturn => Loc.Get("MoonlitAvailability.CollabMayReturn"),
+        RewardAvailability.PastEventOnStore => Loc.Get("MoonlitAvailability.PastEventOnStore"),
+        RewardAvailability.GoneForGood => Loc.Get("MoonlitAvailability.GoneForGood"),
+        _ => availability.Kind.ToString(),
+    };
+
+    /// <summary>What an availability label means, for its tooltip.</summary>
+    public static string MoonlitAvailabilityTooltip(RewardAvailability availability) => availability switch
+    {
+        RewardAvailability.GetNow => Loc.Get("MoonlitAvailabilityTooltip.GetNow"),
+        RewardAvailability.EventRunning => Loc.Get("MoonlitAvailabilityTooltip.EventRunning"),
+        RewardAvailability.UpcomingEvent => Loc.Get("MoonlitAvailabilityTooltip.UpcomingEvent"),
+        RewardAvailability.CollabMayReturn => Loc.Get("MoonlitAvailabilityTooltip.CollabMayReturn"),
+        RewardAvailability.PastEventOnStore => Loc.Get("MoonlitAvailabilityTooltip.PastEventOnStore"),
+        RewardAvailability.GoneForGood => Loc.Get("MoonlitAvailabilityTooltip.GoneForGood"),
+        _ => string.Empty,
+    };
+
+    public static string MoonlitCountGoneLabel => Loc.Get("MoonlitCountGoneLabel");
+    public static string MoonlitCountGoneTooltip => Loc.Get("MoonlitCountGoneTooltip");
+
+    /// <summary>"3 time-limited rewards missed"; one reward reads in the singular.</summary>
+    public static string MoonlitMissed(int count) => count == 1
+        ? Loc.Get("MoonlitMissedOne")
+        : string.Format(System.Globalization.CultureInfo.CurrentCulture, Loc.Get("MoonlitMissedFormat"), count);
+
+    public static string MoonlitMissedTooltip => Loc.Get("MoonlitMissedTooltip");
+
+    /// <summary>{0} = the other quests that give the same reward, joined.</summary>
+    public static string MoonlitAlsoFromFormat => Loc.Get("MoonlitAlsoFromFormat");
+    public static string MoonlitAlsoFromMenu => Loc.Get("MoonlitAlsoFromMenu");
+
+    /// <summary>{0} = the first item's name, {1} = how many items the quest offers ("Honorbound (1 of 18)").</summary>
+    public static string MoonlitChoiceFormat => Loc.Get("MoonlitChoiceFormat");
+
+    /// <summary>{0} = how many items: the first line of a relic quest's item list.</summary>
+    public static string MoonlitChoiceTooltipFormat => Loc.Get("MoonlitChoiceTooltipFormat");
+
+    public static string MoonlitExpansionAll => Loc.Get("MoonlitExpansionAll");
+    public static string MoonlitExpansionFilterTooltip => Loc.Get("MoonlitExpansionFilterTooltip");
+    public static string MoonlitStateFilterTooltip => Loc.Get("MoonlitStateFilterTooltip");
+    public static string MoonlitStateAny => Loc.Get("MoonlitStateAny");
+    public static string MoonlitStateReadyNow => Loc.Get("MoonlitStateReadyNow");
+    public static string MoonlitStateInJournal => Loc.Get("MoonlitStateInJournal");
+    public static string MoonlitStateBlocked => Loc.Get("MoonlitStateBlocked");
+    public static string MoonlitStateDone => Loc.Get("MoonlitStateDone");
+    public static string MoonlitGroupByExpansionLabel => Loc.Get("MoonlitGroupByExpansionLabel");
+    public static string MoonlitCopyMissing => Loc.Get("MoonlitCopyMissing");
+
+    /// <summary>{0} = the part about to be copied, {1} = how many parts.</summary>
+    public static string MoonlitCopyPartFormat => Loc.Get("MoonlitCopyPartFormat");
+    public static string MoonlitCopyMissingTooltip => Loc.Get("MoonlitCopyMissingTooltip");
+    public static string MoonlitCopyNothing => Loc.Get("MoonlitCopyNothing");
+    public static string MoonlitCopied => Loc.Get("MoonlitCopied");
 
     // ---- Flight pane ----
     public static string TabFlight => Loc.Get("TabFlight");
