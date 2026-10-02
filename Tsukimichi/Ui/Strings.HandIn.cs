@@ -120,4 +120,8 @@ static partial class Strings
     public static string ConfigHandInAllaganHint => Loc.Get("ConfigHandInAllaganHint");
     public static string ConfigItemNeededFor => Loc.Get("ConfigItemNeededFor");
     public static string ConfigItemNeededForHint => Loc.Get("ConfigItemNeededForHint");
+
+    public static string HandInCraftShort => Loc.Get("HandInCraftShort");
+    public static string HandInGatherShort => Loc.Get("HandInGatherShort");
+    public static string HandInFishShort => Loc.Get("HandInFishShort");
 }

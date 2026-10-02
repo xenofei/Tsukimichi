@@ -5,6 +5,7 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
 using Tsukimichi.Config;
+using Tsukimichi.Core.Companions;
 using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Ipc;
 using Tsukimichi.Core.Model;
@@ -55,6 +56,7 @@ public sealed class QuestionableActions
     private string pendingHost = string.Empty;
     private bool pendingOpen;
     private QuestionableSendPlan pendingPlan = QuestionableSendPlan.Empty;
+    private uint pendingStartOnly;
     private string pendingQuestion = string.Empty;
     private bool dontAskAgain = true;
 
@@ -122,6 +124,65 @@ public sealed class QuestionableActions
 
     /// <summary>The quest Questionable works on as last polled, when it runs; null otherwise. Does not ask Questionable.</summary>
     public uint? RunningRowId => status.Running ? status.RowId : null;
+
+    /// <summary>Whether Questionable runs, as last polled (<see cref="PollStatusText"/>). Does not ask Questionable.</summary>
+    public bool Running => status.Running;
+
+    /// <summary>Whether this Questionable has a Stop gate (the WigglyMuffin fork has none).</summary>
+    public bool CanStop => ipc.CanStop;
+
+    /// <summary>Asks Questionable to stop and says how it went in chat.</summary>
+    public void Stop() => DoStop();
+
+    /// <summary>
+    /// Why "Start Questionable" (the detail pane's pill, 1.10) cannot start Questionable on <paramref name="rowId"/>
+    /// now, or null when it can: Questionable missing or turned off (the registry's reason), starting turned off in
+    /// Settings, no Start gate, Questionable's own required plugins missing, a stored character on view, already
+    /// running, a quest done or locked out for the character logged in, or one Questionable has no path for. Cheap
+    /// enough per frame: the path answer is Questionable's cached one.
+    /// </summary>
+    public string? StartQuestBlocker(uint rowId)
+    {
+        if (!ipc.Available)
+        {
+            return CompanionPlugins.DisabledReason(CompanionPlugin.Questionable) ?? Strings.QuestionableNeedsPlugin;
+        }
+
+        if (StartBlocker() is { } blocker)
+        {
+            return blocker;
+        }
+
+        if (QuestionableCrossCheck.QuestionableId(rowId) is null)
+        {
+            return Strings.QuestionableStartNoPath;
+        }
+
+        var state = ActingStates.TryGetValue(rowId, out var evaluation) ? evaluation.State : QuestState.Unknown;
+        if (state is QuestState.Completed or QuestState.DoneThisCycle or QuestState.Foreclosed)
+        {
+            return Strings.QuestionableStartNothing;
+        }
+
+        return ipc.HasPath(rowId, ImGui.GetFrameCount()) == false ? Strings.QuestionableStartNoPath : null;
+    }
+
+    /// <summary>
+    /// "Start Questionable" for one quest (the detail pane's pill, 1.10): adds it to Questionable's priority list when
+    /// it is not in the journal yet, then starts Questionable on it; a quest already in the journal is started on
+    /// directly. Asks first, in <paramref name="host"/>'s confirmation (<see cref="DrawModals"/>), unless the player
+    /// said not to. Does nothing while <see cref="StartQuestBlocker"/> has a reason.
+    /// </summary>
+    public void StartQuest(string host, uint rowId)
+    {
+        if (StartQuestBlocker(rowId) is not null)
+        {
+            return;
+        }
+
+        var sendPlan = ipc.CanSend ? QuestionableList.Plan([rowId], ActingStates) : QuestionableSendPlan.Empty;
+        RequestStart(host, sendPlan, sendPlan.Count == 0 ? rowId : 0u);
+    }
 
     /// <summary>
     /// Polls Questionable's live status (at most once a second, inside <see cref="QuestionableIpc.PollStatus"/>) and
@@ -304,7 +365,14 @@ public sealed class QuestionableActions
                     save();
                 }
 
-                DoSend(sendPlan, replace: false, start: true);
+                if (pendingStartOnly != 0)
+                {
+                    DoStartOnly(pendingStartOnly);
+                }
+                else
+                {
+                    DoSend(sendPlan, replace: false, start: true);
+                }
             }
         }
         else if (cancelled)
@@ -532,27 +600,41 @@ public sealed class QuestionableActions
         Request(PendingKind.Replace, host, sendPlan);
     }
 
-    private void RequestStart(string host, QuestionableSendPlan sendPlan)
+    /// <summary>Starts, or asks first; <paramref name="startOnly"/> (a quest already in the journal) starts without a send.</summary>
+    private void RequestStart(string host, QuestionableSendPlan sendPlan, uint startOnly = 0)
     {
         if (!settings.QuestionableConfirmStart)
         {
-            DoSend(sendPlan, replace: false, start: true);
+            if (startOnly != 0)
+            {
+                DoStartOnly(startOnly);
+            }
+            else
+            {
+                DoSend(sendPlan, replace: false, start: true);
+            }
+
             return;
         }
 
-        var first = PreferredStart(sendPlan, null);
+        var first = startOnly != 0 ? startOnly : PreferredStart(sendPlan, null);
         pendingQuestion = string.Format(CultureInfo.CurrentCulture, Strings.QuestionableStartQuestionFormat, first is { } rowId ? NameOf(rowId) : string.Empty);
         dontAskAgain = true;
-        Request(PendingKind.Start, host, sendPlan);
+        Request(PendingKind.Start, host, sendPlan, startOnly);
     }
 
-    private void Request(PendingKind kind, string host, QuestionableSendPlan sendPlan)
+    private void Request(PendingKind kind, string host, QuestionableSendPlan sendPlan, uint startOnly = 0)
     {
         pending = kind;
         pendingHost = host;
         pendingPlan = sendPlan;
+        pendingStartOnly = startOnly;
         pendingOpen = true;
     }
+
+    /// <summary>Starts Questionable on a quest without sending it (one already in the journal), and says how it went in chat.</summary>
+    private void DoStartOnly(uint rowId) =>
+        print(ipc.Start(rowId) ? string.Format(CultureInfo.CurrentCulture, Strings.QuestionableStartedFormat, NameOf(rowId)) : Strings.QuestionableStartFailed);
 
     /// <summary>Sends, says how it went in chat, and starts Questionable when asked.</summary>
     private void DoSend(QuestionableSendPlan sendPlan, bool replace, bool start)

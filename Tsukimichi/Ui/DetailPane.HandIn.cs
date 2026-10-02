@@ -33,6 +33,9 @@ public sealed partial class DetailPane
     private const string HandInCopyMenuId = "##handInCopy";
     private const double HandInNoteSeconds = 5.0;
 
+    /// <summary>The least room a hand-in row keeps for the item's name before its pills drop their labels, logical pixels.</summary>
+    private const float HandInNameRoomLogical = 120f;
+
     private static readonly string HandInIcon = FontAwesomeIcon.HandHolding.ToIconString();
     private static readonly string CraftIcon = FontAwesomeIcon.Hammer.ToIconString();
     private static readonly string GatherIcon = FontAwesomeIcon.Leaf.ToIconString();
@@ -186,6 +189,15 @@ public sealed partial class DetailPane
         var artisanBusy = artisanLoaded && Artisan!.IsBusy;
         var gatherPlugin = GatherBuddy?.Plugin ?? GatherPlugin.None;
         handInHqMixed = false;
+
+        // The two hand-offs are pills like the action bar's (1.10): labelled while the row keeps room for the item's
+        // name, else the icons alone (still pills), their labels in the tooltips.
+        var labelled = HandInPillsLabelled(iconSize);
+        var craftWidth = Chrome.ActionPillWidth(CraftIcon, labelled ? Strings.HandInCraftShort : null);
+        var gatherWidth = labelled
+            ? MathF.Max(Chrome.ActionPillWidth(GatherIcon, Strings.HandInGatherShort), Chrome.ActionPillWidth(FishIcon, Strings.HandInFishShort))
+            : Chrome.ActionPillWidth(GatherIcon, null);
+        var buttons = craftWidth + ImGui.GetStyle().ItemSpacing.X + gatherWidth;
         for (var i = 0; i < handInRows.Count; i++)
         {
             var row = handInRows[i];
@@ -206,7 +218,7 @@ public sealed partial class DetailPane
             ImGui.SameLine();
             using (ImRaii.Group())
             {
-                TextFlow.Wrapped(row.Line, MathF.Max(1f, RoomTo(cardRight) - (2f * UiMetrics.MinTarget) - UiMetrics.Px(8f)));
+                TextFlow.Wrapped(row.Line, MathF.Max(1f, RoomTo(cardRight) - buttons - UiMetrics.Px(8f)));
                 if (live && row.CountText.Length > 0)
                 {
                     using (Theme.PushText(row.Enough ? Theme.Moon : Theme.Surface.TextSecondary))
@@ -217,12 +229,11 @@ public sealed partial class DetailPane
             }
 
             // The two hand-offs at the row's right edge, beside the name while they fit.
-            var buttons = (2f * UiMetrics.MinTarget) + ImGui.GetStyle().ItemSpacing.X;
             SameLineOrWrap(buttons, cardRight);
             ImGui.SetCursorScreenPos(new Vector2(MathF.Max(ImGui.GetCursorScreenPos().X, cardRight - buttons), MathF.Max(ImGui.GetCursorScreenPos().Y, start.Y)));
-            DrawCraftButton(session, row, artisanLoaded, artisanBusy);
+            DrawCraftButton(session, row, artisanLoaded, artisanBusy, labelled);
             ImGui.SameLine();
-            DrawGatherButton(row, gatherPlugin);
+            DrawGatherButton(row, gatherPlugin, labelled, gatherWidth);
         }
 
         if (!live)
@@ -275,7 +286,19 @@ public sealed partial class DetailPane
         _ => Strings.HandInCountUnknown,
     };
 
-    private void DrawCraftButton(SessionState session, HandInRow row, bool artisanLoaded, bool artisanBusy)
+    /// <summary>
+    /// Whether the hand-off pills carry their labels: while the item's icon, the labelled pills and
+    /// <see cref="HandInNameRoomLogical"/> of name fit the card.
+    /// </summary>
+    private bool HandInPillsLabelled(float iconSize)
+    {
+        var labelled = Chrome.ActionPillWidth(CraftIcon, Strings.HandInCraftShort)
+            + ImGui.GetStyle().ItemSpacing.X
+            + MathF.Max(Chrome.ActionPillWidth(GatherIcon, Strings.HandInGatherShort), Chrome.ActionPillWidth(FishIcon, Strings.HandInFishShort));
+        return iconSize + ImGui.GetStyle().ItemSpacing.X + UiMetrics.Px(HandInNameRoomLogical) + labelled <= RoomTo(cardRight);
+    }
+
+    private void DrawCraftButton(SessionState session, HandInRow row, bool artisanLoaded, bool artisanBusy, bool labelled)
     {
         // Enough only from the live character's count: another character on view has no count to go by.
         var state = HandInActions.Craft(row.Item, artisanLoaded, artisanBusy, enough: session.IsLive && row.Enough);
@@ -291,7 +314,13 @@ public sealed partial class DetailPane
             HandOffState.Busy => Strings.HandInArtisanBusy,
             _ => Strings.HandInNoRecipe,
         };
-        if (!Chrome.IconButtonRound("##craft", CraftIcon, tooltip, enabled: state == HandOffState.Ready))
+        var pressed = Chrome.ActionPill("##craft", CraftIcon, labelled ? Strings.HandInCraftShort : null, PillTone.Normal, state == HandOffState.Ready);
+        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+        {
+            UiMetrics.Tooltip(tooltip);
+        }
+
+        if (!pressed)
         {
             return;
         }
@@ -317,13 +346,13 @@ public sealed partial class DetailPane
     private static int CraftAmountFor(SessionState session, HandInRow row, HandInRecipe? recipe) =>
         HandInActions.CraftAmount(row.Item, recipe, session.IsLive && row.Count is { } count ? count.UsableFor(row.Item) : null);
 
-    private void DrawGatherButton(HandInRow row, GatherPlugin plugin)
+    private void DrawGatherButton(HandInRow row, GatherPlugin plugin, bool labelled, float slotWidth)
     {
         var state = HandInActions.Gather(row.Item, plugin);
         if (state == HandOffState.NotApplicable)
         {
             // Not gatherable: the slot stays empty so the craft button keeps its place.
-            ImGui.Dummy(new Vector2(UiMetrics.MinTarget));
+            ImGui.Dummy(new Vector2(slotWidth, Chrome.ActionPillHeight));
             return;
         }
 
@@ -331,8 +360,10 @@ public sealed partial class DetailPane
         var tooltip = state == HandOffState.Ready
             ? string.Format(CultureInfo.CurrentCulture, Strings.HandInGatherTooltipFormat, command)
             : CompanionPlugins.DisabledReason(CompanionPlugin.GatherBuddy) ?? Strings.HandInNeedsGatherBuddy;
-        var icon = row.Item.Gather == GatherKind.Fish ? FishIcon : GatherIcon;
-        if (Chrome.IconButtonRound("##gather", icon, tooltip, enabled: state == HandOffState.Ready) && command is not null && GatherBuddy is { } gather)
+        var fish = row.Item.Gather == GatherKind.Fish;
+        var icon = fish ? FishIcon : GatherIcon;
+        var label = !labelled ? null : fish ? Strings.HandInFishShort : Strings.HandInGatherShort;
+        if (Chrome.ActionPill("##gather", icon, label, PillTone.Normal, state == HandOffState.Ready, tooltip) && command is not null && GatherBuddy is { } gather)
         {
             ShowHandInNote(gather.Run(command)
                 ? string.Format(CultureInfo.CurrentCulture, Strings.HandInSentToGatherBuddyFormat, row.Name)

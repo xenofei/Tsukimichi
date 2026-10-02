@@ -180,4 +180,7 @@ static partial class Strings
     public static string ConfigQuestionableStatusReadyFormat => Loc.Get("ConfigQuestionableStatusReadyFormat");
 
     public static string ConfigQuestionableStatusAbsent => Loc.Get("ConfigQuestionableStatusAbsent");
+
+    public static string QuestionableStartNothing => Loc.Get("QuestionableStartNothing");
+    public static string QuestionableStartNoPath => Loc.Get("QuestionableStartNoPath");
 }

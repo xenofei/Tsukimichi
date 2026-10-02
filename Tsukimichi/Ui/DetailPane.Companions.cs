@@ -34,10 +34,9 @@ public sealed partial class DetailPane
     private static readonly string DutiesIcon = FontAwesomeIcon.Dungeon.ToIconString();
 
     private static readonly Localization.LocText QuestMapLabel = new(static () => Strings.QuestMapOpen + "##questMap");
-    private static readonly Localization.LocText AutoDutyStopLabel = new(static () => Strings.AutoDutyStop + "##autoDutyStop");
 
     /// <summary>One duty row as of the last refresh.</summary>
-    private sealed record DutyRow(QuestDuty Duty, string Caption, bool? HasPath, bool? Unlocked, string RunLabel);
+    private sealed record DutyRow(QuestDuty Duty, string Caption, bool? HasPath, bool? Unlocked, string RunId);
 
     private readonly List<DutyRow> dutyRows = [];
     private uint dutyRowId = uint.MaxValue;
@@ -105,7 +104,7 @@ public sealed partial class DetailPane
                 false => relation + Strings.AutoDutyCaptionSeparator + Strings.AutoDutyNoPath,
                 _ => relation,
             };
-            dutyRows.Add(new DutyRow(duty, caption, hasPath, unlocked, Strings.AutoDutyRun + "##autoDuty" + info.ContentFinderConditionId.ToString(CultureInfo.InvariantCulture)));
+            dutyRows.Add(new DutyRow(duty, caption, hasPath, unlocked, "##autoDuty" + info.ContentFinderConditionId.ToString(CultureInfo.InvariantCulture)));
         }
     }
 
@@ -133,27 +132,13 @@ public sealed partial class DetailPane
                 TextFlow.Wrapped(Strings.AutoDutyRunning, RoomTo(cardRight));
             }
 
-            SameLineOrWrap(SmallButtonWidth(AutoDutyStopLabel.Value), cardRight);
-            if (ImGui.SmallButton(AutoDutyStopLabel.Value) && !autoDuty.Stop())
+            if (Chrome.ActionPill("##autoDutyStop", StopIcon, Strings.AutoDutyStop, PillTone.Danger, true, Strings.AutoDutyStopTooltip) && !autoDuty.Stop())
             {
                 ShowCompanionNote(quest.RowId, Strings.AutoDutyUnreachable);
             }
-
-            if (ImGui.IsItemHovered())
-            {
-                UiMetrics.Tooltip(Strings.AutoDutyStopTooltip);
-            }
         }
 
-        var inputsBase = new AutoDutyInputs(
-            companions.Status(CompanionPlugin.AutoDuty).State,
-            companions.Status(CompanionPlugin.Vnavmesh).State,
-            companions.Status(CompanionPlugin.BossMod).State,
-            session.IsLive,
-            running,
-            null,
-            null,
-            AutoDutyAllowDutyFinder?.Invoke() == true);
+        var inputsBase = AutoDutyInputsFor(companions, session, running);
         var anyPath = false;
         for (var i = 0; i < dutyRows.Count; i++)
         {
@@ -171,26 +156,28 @@ public sealed partial class DetailPane
             }
 
             var choice = AutoDutyPlan.Choose(row.Duty.Duty, inputsBase with { HasPath = row.HasPath, Unlocked = row.Unlocked });
-            ImGui.BeginDisabled(!choice.CanRun);
-            var pressed = ImGui.SmallButton(row.RunLabel);
-            ImGui.EndDisabled();
+
+            // The same pill as the action bar's Run with AutoDuty (1.10); the icon alone when the card is narrower than its label.
+            var label = Chrome.ActionPillWidth(AutoDutyIcon, Strings.AutoDutyRun) <= RoomTo(cardRight) ? Strings.AutoDutyRun : null;
+            var pressed = Chrome.ActionPill(row.RunId, AutoDutyIcon, label, PillTone.Normal, choice.CanRun);
             if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
             {
-                UiMetrics.Tooltip(choice.CanRun
+                var text = choice.CanRun
                     ? string.Format(CultureInfo.CurrentCulture, Strings.AutoDutyRunTooltipFormat, Strings.AutoDutyModeName(choice.Mode))
-                    : AutoDutyBlockerText(choice.Blocker, companions));
+                    : AutoDutyBlockerText(choice.Blocker, companions);
+                if (label is null)
+                {
+                    UiMetrics.Tooltip(Strings.AutoDutyRun, text);
+                }
+                else
+                {
+                    UiMetrics.Tooltip(text);
+                }
             }
 
             if (pressed && choice.CanRun)
             {
-                var result = autoDuty.Run(row.Duty.Duty.TerritoryTypeId, choice.Mode);
-                ShowCompanionNote(quest.RowId, result switch
-                {
-                    AutoDutyStart.Started => string.Format(CultureInfo.CurrentCulture, Strings.AutoDutyStartedFormat, row.Duty.Duty.Name),
-                    AutoDutyStart.ModeRefused => Strings.AutoDutyModeRefused,
-                    AutoDutyStart.NotStarted => Strings.AutoDutyNotStarted,
-                    _ => Strings.AutoDutyUnreachable,
-                });
+                StartAutoDuty(autoDuty, quest, row, choice);
             }
         }
 
@@ -202,6 +189,30 @@ public sealed partial class DetailPane
 
         DrawCompanionNote(quest.RowId);
         EndSection();
+    }
+
+    /// <summary>AutoDuty's inputs for a run as of now, before the duty's own path and unlock answers.</summary>
+    private AutoDutyInputs AutoDutyInputsFor(CompanionPlugins companions, SessionState session, bool running) => new(
+        companions.Status(CompanionPlugin.AutoDuty).State,
+        companions.Status(CompanionPlugin.Vnavmesh).State,
+        companions.Status(CompanionPlugin.BossMod).State,
+        session.IsLive,
+        running,
+        null,
+        null,
+        AutoDutyAllowDutyFinder?.Invoke() == true);
+
+    /// <summary>Hands the duty to AutoDuty in the chosen mode and says how it went under the Duties section.</summary>
+    private void StartAutoDuty(AutoDutyIpc autoDuty, QuestRecord quest, DutyRow row, AutoDutyChoice choice)
+    {
+        var result = autoDuty.Run(row.Duty.Duty.TerritoryTypeId, choice.Mode);
+        ShowCompanionNote(quest.RowId, result switch
+        {
+            AutoDutyStart.Started => string.Format(CultureInfo.CurrentCulture, Strings.AutoDutyStartedFormat, row.Duty.Duty.Name),
+            AutoDutyStart.ModeRefused => Strings.AutoDutyModeRefused,
+            AutoDutyStart.NotStarted => Strings.AutoDutyNotStarted,
+            _ => Strings.AutoDutyUnreachable,
+        });
     }
 
     /// <summary>The disabled Run button's reason, naming the plugin that is missing.</summary>

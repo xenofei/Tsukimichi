@@ -182,7 +182,8 @@ public sealed partial class DetailPane
     }
 
     /// <summary>
-    /// The round "…" button and its menu, last on the action bar (always shown since 1.8.0): "Open on…" (the quest's
+    /// The round "…" button and its menu, last on the action bar (always shown since 1.8.0): first the travel and
+    /// automation pills the row had no room for (1.10), then "Open on…" (the quest's
     /// page on the Lodestone, Garland Tools, the wiki or Teamcraft; a masked quest asks first), then, when
     /// <see cref="ShowsQuestionableMore"/>, "Add to Questionable priority", which calls Questionable's own
     /// <c>AddQuestPriority</c> gate and is disabled, saying why, for a quest Questionable has no path for.
@@ -199,6 +200,12 @@ public sealed partial class DetailPane
         if (!popup)
         {
             return;
+        }
+
+        // The travel and automation pills the first row had no room for (1.10), then "Open on…".
+        if (DrawOverflowActions(quest, rowId))
+        {
+            ImGui.Separator();
         }
 
         var spoilers = runner.Spoilers;
