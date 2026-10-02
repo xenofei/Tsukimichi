@@ -55,6 +55,8 @@ static partial class Strings
     /// <summary>{0} = the quest's name.</summary>
     public static string RecapNoChainFormat => Loc.Get("RecapNoChainFormat");
 
+    public static string RecapNotStarted => Loc.Get("RecapNotStarted");
+
     // ---- Detail pane: Story card ----
     public static string CollectorCard => Loc.Get("CollectorCard");
 

@@ -27,4 +27,14 @@ public static class FreeTrial
         ArgumentNullException.ThrowIfNull(quest);
         return quest.Expansion > LastExpansion || quest.Level > LevelCap;
     }
+
+    /// <summary>
+    /// Whether the free-trial view sets the quest apart as beyond the trial: it <see cref="IsBeyond"/>, is not done
+    /// (<see cref="Evaluation.QuestEvaluation.CountsAsDone"/>) and is not already out of the totals for another reason
+    /// (<see cref="Evaluation.QuestEvaluation.LeavesTotals"/>: Locked out, a path not taken among them, out of season, a
+    /// spare alternative). One rule for the table's "Beyond your trial" group and the tree's beyond-trial tally.
+    /// </summary>
+    internal static bool IsLeftBeyond<TSource>(QuestRecord quest, TSource source)
+        where TSource : struct, IStateSource =>
+        !source.CountsAsDone(quest.RowId) && !source.LeavesTotals(quest.RowId) && IsBeyond(quest);
 }

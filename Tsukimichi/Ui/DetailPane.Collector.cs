@@ -113,9 +113,11 @@ public sealed partial class DetailPane
         {
             var (rowId, name) = line.Remaining[i];
             using var id = ImRaii.PushId((int)rowId);
+            bool cut;
             using (Theme.PushText(Theme.Moon))
             {
-                if (ImGui.Selectable(name))
+                // A long name ends in an ellipsis inside the card; the tooltip then carries it whole.
+                if (Chrome.EllipsisSelectable(name, false, RoomTo(cardRight), out cut))
                 {
                     RevealRow(rowId);
                 }
@@ -123,7 +125,7 @@ public sealed partial class DetailPane
 
             if (ImGui.IsItemHovered())
             {
-                UiMetrics.Tooltip(Strings.DetailChainNextTooltip);
+                UiMetrics.Tooltip(cut ? name : Strings.DetailChainNextTooltip, cut ? Strings.DetailChainNextTooltip : null);
             }
         }
     }
@@ -153,18 +155,7 @@ public sealed partial class DetailPane
             ladderLines.Add(BuildLadderLine(session, bundle, ladder, snapshot is not null, Done));
         }
 
-        recapOffered = false;
-        if (snapshot is not null && session.Chains.ForQuest(quest.RowId) is { } chain)
-        {
-            foreach (var rowId in chain.RowIds)
-            {
-                if (Done(rowId))
-                {
-                    recapOffered = true;
-                    break;
-                }
-            }
-        }
+        recapOffered = snapshot is not null && session.Chains.ForQuest(quest.RowId) is { } chain && StoryRecap.HasStarted(chain, Done);
     }
 
     private LadderLine BuildLadderLine(SessionState session, CatalogBundle bundle, AchievementLadder ladder, bool hasSnapshot, Func<uint, bool> done)

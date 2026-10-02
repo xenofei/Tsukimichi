@@ -1,4 +1,6 @@
 using System.Globalization;
+using Tsukimichi.Core.Chains;
+using Tsukimichi.Core.Model;
 using Tsukimichi.Game;
 using Tsukimichi.Ui;
 
@@ -7,8 +9,8 @@ namespace Tsukimichi.Commands;
 /// <summary>
 /// <c>/tsuki recap [quest name]</c> (feature plan v5, collector extras): opens the story recap ("Previously…") on the
 /// last main scenario quests the viewed character completed, or, with a quest name, on the story chain that quest
-/// belongs to. Name resolution is <see cref="ReportCommand.FindByName"/> through the viewed character's spoiler
-/// shield; a miss, or a quest on no chain, says so in chat.
+/// belongs to, once the character has completed some quest of it. Name resolution is <see cref="ReportCommand.FindByName"/> through the viewed character's spoiler
+/// shield; a miss, a quest on no chain or a story not started yet says so in chat.
 /// </summary>
 public sealed class RecapCommand(SessionState session, UiState ui, GameLinks links)
 {
@@ -33,9 +35,16 @@ public sealed class RecapCommand(SessionState session, UiState ui, GameLinks lin
             return;
         }
 
-        if (session.Chains.ForQuest(quest.RowId) is null)
+        if (session.Chains.ForQuest(quest.RowId) is not { } chain)
         {
             links.PrintText(string.Format(CultureInfo.CurrentCulture, Strings.RecapNoChainFormat, session.Spoilers.DisplayName(quest)));
+            return;
+        }
+
+        // Only a story the character has begun has something to recap (the window would open on an empty page).
+        if (session.ViewedSnapshot is { } snapshot && !StoryRecap.HasStarted(chain, rowId => snapshot.IsCompleted(QuestRecord.ToQuestId(rowId))))
+        {
+            links.PrintText(Strings.RecapNotStarted);
             return;
         }
 

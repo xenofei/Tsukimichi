@@ -8,6 +8,7 @@ using Dalamud.Interface.Windowing;
 using Tsukimichi.Config;
 using Tsukimichi.Core.Chains;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Query;
 using Tsukimichi.Game;
 using Tsukimichi.GameData;
 
@@ -16,12 +17,15 @@ namespace Tsukimichi.Ui;
 /// <summary>
 /// The story recap, "Previously…" (feature plan v5, collector extras; R9 F5): the journal text of the last few main
 /// scenario quests the viewed character completed (Settings › Display › Free trial and story recap sets how many), or
-/// of every completed quest of one chain, as one page to read in story order, with Copy all. Spoiler-safe by
+/// of every completed quest of one chain, as one page to read in story order, with Copy all. A request may name its
+/// character (<see cref="RecapRequest.ContentId"/>: the Since you were away card's, which can be the logged-in one
+/// while a stored character is viewed); the page then reads that character's capture and shield. Spoiler-safe by
 /// construction: only completed quests are picked (<see cref="StoryRecap"/>), from the completion bits, so a stored
 /// character's recap works too. The text comes from the journal text reader (<see cref="QuestTextService.ReadCompleted"/>),
 /// a few quests per frame so a long chain never stalls a frame; the logged-in character's text is evaluated by the
 /// game (its name, its gender), a stored one's neutrally. Opened by <see cref="UiState.OpenRecap"/> from the Since you
-/// were away card, a chain quest's detail pane, the Characters tab's achievement rows and <c>/tsuki recap</c>.
+/// were away card, a chain quest's detail pane, the Characters tab's story chain rows (their right-click menu; an
+/// achievement's quests are no one story, so its rows offer none) and <c>/tsuki recap</c>.
 /// </summary>
 public sealed class RecapWindow : Window
 {
@@ -39,11 +43,14 @@ public sealed class RecapWindow : Window
 
     private RecapRequest? request;
 
-    // What the page was built for; a new request, another character or a new catalog starts it again.
+    // What the page was built for; a new request, another character, a new catalog, another language or the
+    // character turning live or stored starts it again.
     private RecapRequest? builtRequest;
     private ulong? builtFor;
     private CatalogBundle? builtBundle;
     private int builtLength;
+    private int builtLanguage = -1;
+    private bool builtLive;
 
     private string heading = string.Empty;
     private string intro = string.Empty;
@@ -126,7 +133,7 @@ public sealed class RecapWindow : Window
             return;
         }
 
-        if (session.ViewedSnapshot is not { } snapshot)
+        if (Subject(request) is not { } subject)
         {
             EmptyState.Draw(Strings.RecapNoCharacter);
             return;
@@ -138,24 +145,25 @@ public sealed class RecapWindow : Window
             return;
         }
 
-        Build(bundle, snapshot, request);
-        ReadSome(reader, snapshot);
+        Build(bundle, subject, request);
+        ReadSome(reader, subject);
 
         using (Typography.Title(heading))
         {
             ImGui.TextUnformatted(heading);
         }
 
-        using (Theme.PushText(Theme.Surface.TextSecondary))
-        {
-            ImGui.TextWrapped(intro);
-        }
-
         if (pending.Count == 0)
         {
+            // No quest to read: the empty state says why, with no "the last 0 quests" line above it.
             ImGui.Spacing();
             EmptyState.DrawWithAction(Strings.RecapEmptyHeading, request.IsMainScenario ? Strings.RecapEmptyMsq : Strings.RecapEmptyChain, null);
             return;
+        }
+
+        using (Theme.PushText(Theme.Surface.TextSecondary))
+        {
+            ImGui.TextWrapped(intro);
         }
 
         DrawToolbar();
@@ -238,11 +246,32 @@ public sealed class RecapWindow : Window
         }
     }
 
-    /// <summary>Picks the quests when the request, the character, the catalog or the length changed.</summary>
-    private void Build(CatalogBundle bundle, CharacterSnapshot snapshot, RecapRequest recap)
+    /// <summary>
+    /// The character the request reads (<see cref="RecapRequest.ContentId"/>, else the viewed one), whether it is the
+    /// logged-in one, and its spoiler shield; null when that character is neither viewed nor logged in any more.
+    /// </summary>
+    private (CharacterSnapshot Snapshot, bool Live, SpoilerMask Shield)? Subject(RecapRequest recap)
     {
+        if (recap.ContentId is not { } id || id == session.ViewedContentId)
+        {
+            return session.ViewedSnapshot is { } viewed ? (viewed, session.IsLive, session.Spoilers) : null;
+        }
+
+        return id == session.LiveContentId && session.LiveSnapshot is { } live ? (live, true, session.LiveSpoilers) : null;
+    }
+
+    /// <summary>
+    /// Picks the quests when the request, the character, the catalog, the length, the language or whether the
+    /// character is the logged-in one changed; the last two re-read the chapters (their names and the journal text
+    /// follow the language, and the text is evaluated by the game only for the logged-in character).
+    /// </summary>
+    private void Build(CatalogBundle bundle, (CharacterSnapshot Snapshot, bool Live, SpoilerMask Shield) subject, RecapRequest recap)
+    {
+        var (snapshot, isLive, shield) = subject;
         var length = settings.RecapLengthClamped;
-        if (ReferenceEquals(builtRequest, recap) && builtFor == snapshot.ContentId && ReferenceEquals(builtBundle, bundle) && (!recap.IsMainScenario || builtLength == length))
+        var language = Localization.Loc.Version;
+        if (ReferenceEquals(builtRequest, recap) && builtFor == snapshot.ContentId && ReferenceEquals(builtBundle, bundle)
+            && (!recap.IsMainScenario || builtLength == length) && builtLanguage == language && builtLive == isLive)
         {
             return;
         }
@@ -251,6 +280,8 @@ public sealed class RecapWindow : Window
         builtFor = snapshot.ContentId;
         builtBundle = bundle;
         builtLength = length;
+        builtLanguage = language;
+        builtLive = isLive;
         pending.Clear();
         chapters.Clear();
         nextToRead = 0;
@@ -273,20 +304,20 @@ public sealed class RecapWindow : Window
         }
 
         pending.AddRange(StoryRecap.Chain(chain, bundle.Catalog, Done));
-        var name = ChainCatalog.DisplayName(chain, id => session.Spoilers.DisplayName(bundle.Catalog, id, id.ToString(CultureInfo.InvariantCulture)));
+        var name = ChainCatalog.DisplayName(chain, id => shield.DisplayName(bundle.Catalog, id, id.ToString(CultureInfo.InvariantCulture)));
         heading = string.Format(CultureInfo.CurrentCulture, Strings.RecapChainHeadingFormat, name);
         intro = string.Format(CultureInfo.CurrentCulture, Strings.RecapChainIntroFormat, pending.Count, chain.RowIds.Count);
     }
 
     /// <summary>Reads the next few quests' journals into chapters.</summary>
-    private void ReadSome(QuestTextService reader, CharacterSnapshot snapshot)
+    private void ReadSome(QuestTextService reader, (CharacterSnapshot Snapshot, bool Live, SpoilerMask Shield) subject)
     {
-        live = session.IsLive;
+        live = subject.Live;
         for (var n = 0; n < ReadsPerFrame && nextToRead < pending.Count; n++, nextToRead++)
         {
             var quest = pending[nextToRead];
-            var view = reader.ReadCompleted(quest, live, live ? null : snapshot.Name);
-            chapters.Add(new RecapChapter(quest.RowId, session.Spoilers.DisplayName(quest), view.Entries));
+            var view = reader.ReadCompleted(quest, live, live ? null : subject.Snapshot.Name);
+            chapters.Add(new RecapChapter(quest.RowId, subject.Shield.DisplayName(quest), view.Entries));
         }
     }
 }

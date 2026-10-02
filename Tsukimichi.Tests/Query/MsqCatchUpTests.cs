@@ -150,6 +150,50 @@ public sealed class MsqCatchUpTests(FixtureCatalog fixture, ITestOutputHelper ou
     }
 
     [Fact]
+    public void Inside_a_routed_region_the_count_is_the_positions_quests_left()
+    {
+        // The Evercold fixture with an Any join: route C done opens the join, and the rest of routes A and B are
+        // leftovers. The reconvergence quest stays Blocked (a level, say), so only the routes tell the join is met.
+        var catalog = MsqBranchFixture.Build(JoinKind.Any);
+        var states = MsqBranchFixture.Evaluate(catalog, MsqBranchFixture.L1, MsqBranchFixture.L2, MsqBranchFixture.A1, MsqBranchFixture.C1, MsqBranchFixture.C2);
+        states[MsqBranchFixture.J] = states[MsqBranchFixture.J] with { State = QuestState.Blocked };
+
+        var position = MsqProgress.Compute(catalog, states);
+        var summary = MsqCatchUp.Compute(catalog, states, null);
+        Assert.NotNull(position);
+        Assert.NotNull(summary);
+
+        // J, P1 and P2 are left; A2, A3 and route B are not.
+        Assert.Equal(3, position.Total - position.Done);
+        Assert.Equal(position.Total - position.Done, summary.Quests);
+
+        // While the join is not met every route's quests are still ahead.
+        var inside = MsqBranchFixture.Evaluate(catalog, MsqBranchFixture.L1, MsqBranchFixture.L2, MsqBranchFixture.A1);
+        var insidePosition = MsqProgress.Compute(catalog, inside);
+        Assert.NotNull(insidePosition);
+        Assert.Equal(insidePosition.Total - insidePosition.Done, MsqCatchUp.Compute(catalog, inside, null)?.Quests);
+    }
+
+    [Fact]
+    public void Duties_already_cleared_are_not_left()
+    {
+        // a opens instance 20 (cleared already); b needs 21 or 22 (Any) with 22 cleared; c needs 23 or 24, neither cleared.
+        var msq = new JournalRef(0, "Main Scenario", 1, "Story", 1, "Story", 0);
+        var a = Fixture.Quest(65810) with { Journal = msq with { SortKey = 1 }, Level = 50, Rewards = [new RewardRef(RewardKind.Instance, 20, 0, 1, "Opened", 0)] };
+        var b = Fixture.Quest(65811) with { Journal = msq with { SortKey = 2 }, Level = 50, PreviousQuests = new Prereq([65810u], JoinKind.All), InstanceContentRequired = [21u, 22u], InstanceJoin = JoinKind.Any };
+        var c = Fixture.Quest(65812) with { Journal = msq with { SortKey = 3 }, Level = 50, PreviousQuests = new Prereq([65811u], JoinKind.All), InstanceContentRequired = [23u, 24u], InstanceJoin = JoinKind.Any };
+        var catalog = Fixture.Catalog(a, b, c);
+
+        var snapshot = Fixture.Snapshot() with { UnlockedInstances = [20u, 22u] };
+        var summary = MsqCatchUp.Compute(catalog, StateResolver.ResolveAll(catalog, snapshot, EvalContext.Default), snapshot);
+        Assert.NotNull(summary);
+        Assert.Equal(3, summary.Quests);
+
+        // Any one of 23 and 24 will do: one duty, not two.
+        Assert.Equal([new CatchUpDuty(0, 23)], Assert.Single(summary.Expansions).Duties);
+    }
+
+    [Fact]
     public void A_catalog_without_a_main_scenario_has_no_summary()
     {
         var side = Fixture.Quest(65900) with { Journal = new JournalRef(3, "Side", 30, "Side", 300, "Side", 1) };

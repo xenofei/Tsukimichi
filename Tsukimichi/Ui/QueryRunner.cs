@@ -424,7 +424,7 @@ public sealed class QueryRunner : IDisposable
         {
             // The free-trial view (1.9.0): what the trial does not include leaves the counts, tallied apart.
             Counts = TreeCounts.Compute(current.Catalog, session.States, includeUnlisted, freeTrial ? FreeTrial.IsBeyond : null);
-            (FeatureCount, FeatureReady) = ComputeFeatureCount(session, current.Catalog);
+            (FeatureCount, FeatureReady) = ComputeFeatureCount(session, current.Catalog, freeTrial);
             countsVersion = session.Version;
             countsIncludeUnlisted = includeUnlisted;
             countsFreeTrial = freeTrial;
@@ -776,24 +776,31 @@ public sealed class QueryRunner : IDisposable
         return (byte)Math.Min(level, byte.MaxValue);
     }
 
-    private static (NodeCount Count, int Ready) ComputeFeatureCount(SessionState session, QuestCatalog catalog)
+    private static (NodeCount Count, int Ready) ComputeFeatureCount(SessionState session, QuestCatalog catalog, bool freeTrial)
     {
         var ready = 0;
         var done = 0;
         var total = 0;
         var excluded = 0;
+        var beyondTrial = 0;
         foreach (var rowId in session.FeatureQuestIds)
         {
-            if (!catalog.ByRowId.ContainsKey(rowId))
+            if (!catalog.ByRowId.TryGetValue(rowId, out var quest))
             {
                 continue;
             }
 
-            // Foreclosed and out-of-season quests leave the total, as in TreeCounts.
+            // Foreclosed and out-of-season quests leave the total, as in TreeCounts, and so under the free-trial view
+            // (1.9.0) does an unlock quest the trial does not include and the character has not done.
             session.States.TryGetValue(rowId, out var evaluation);
             if (evaluation is { LeavesTotals: true })
             {
                 excluded++;
+            }
+            else if (freeTrial && evaluation is not { CountsAsDone: true } && FreeTrial.IsBeyond(quest))
+            {
+                excluded++;
+                beyondTrial++;
             }
             else
             {
@@ -809,7 +816,7 @@ public sealed class QueryRunner : IDisposable
             }
         }
 
-        return (new NodeCount(done, total, excluded), ready);
+        return (new NodeCount(done, total, excluded) { BeyondTrial = beyondTrial }, ready);
     }
 
     private void EnsurePins(SessionState session)

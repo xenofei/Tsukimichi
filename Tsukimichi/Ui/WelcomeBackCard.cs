@@ -173,7 +173,7 @@ public sealed class WelcomeBackCard
 
         DrawHeader();
         DrawJournal();
-        DrawMsq();
+        DrawMsq(view.ContentId);
         DrawNew();
         DrawEvents();
         DrawLevels();
@@ -317,7 +317,7 @@ public sealed class WelcomeBackCard
         ImGui.Spacing();
     }
 
-    private void DrawMsq()
+    private void DrawMsq(ulong contentId)
     {
         Chrome.BeginCard("##msq", Strings.WelcomeBackMsqTitle, MsqIcon);
         if (msqThen.Length > 0)
@@ -350,8 +350,12 @@ public sealed class WelcomeBackCard
             }
         }
 
-        // The story recap (1.9.0 collector extras): the journal text of the last main scenario quests done.
-        if (session.ViewedSnapshot is not null)
+        // The story recap (1.9.0 collector extras): the journal text of the last main scenario quests the card's
+        // character did, which can be the logged-in one while a stored character is viewed; a stored character no
+        // longer viewed has no capture in hand, so the card offers no recap for it.
+        var recapReadable = contentId == session.ViewedContentId ? session.ViewedSnapshot is not null
+            : contentId == session.LiveContentId && session.LiveSnapshot is not null;
+        if (recapReadable)
         {
             if (msqNext is not null)
             {
@@ -360,7 +364,7 @@ public sealed class WelcomeBackCard
 
             if (ImGui.SmallButton(Strings.RecapReadMsq))
             {
-                ui.OpenRecap(RecapRequest.MainScenario);
+                ui.OpenRecap(RecapRequest.MainScenario with { ContentId = contentId });
             }
 
             if (ImGui.IsItemHovered())

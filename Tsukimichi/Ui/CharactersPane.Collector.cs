@@ -31,7 +31,7 @@ public sealed partial class CharactersPane
     /// <summary>The game's achievement flag for the viewed character (<c>RewardUnlockReader.AchievementEarned</c>); null lets the quests decide.</summary>
     public Func<uint, bool?>? AchievementEarned { get; set; }
 
-    private sealed record AchievementRow(string Name, float Fraction, string Count, QuestRecord? Next, string NextText, string Tooltip, IReadOnlyList<uint> RowIds);
+    private sealed record AchievementRow(string Name, float Fraction, string Count, QuestRecord? Next, string NextText, bool Ready, string Tooltip, IReadOnlyList<uint> RowIds);
 
     private (int Version, ulong? Viewed, CatalogBundle? Bundle, long Tick, int Language) laddersKey = (-1, null, null, -1, -1);
     private AchievementRow[] ladderRows = [];
@@ -97,11 +97,11 @@ public sealed partial class CharactersPane
                 UiMetrics.Tooltip(row.Name, row.Tooltip);
             }
 
-            DrawQuestionableRowMenu(row.RowIds);
+            DrawRowMenu(ui, row.RowIds);
             ImGui.TableNextColumn();
             ImGui.TextUnformatted(row.Count);
             ImGui.TableNextColumn();
-            DrawNextQuest(ui, row.Next, row.NextText, ready: true);
+            DrawNextQuest(ui, row.Next, row.NextText, row.Ready);
         }
     }
 
@@ -148,6 +148,8 @@ public sealed partial class CharactersPane
                 next is null
                     ? progress.Earned ? Strings.LadderEarned : Strings.JobsChainComplete
                     : string.Format(CultureInfo.CurrentCulture, Strings.JobsChainNextFormat, session.Spoilers.DisplayName(next)),
+                next is not null && session.States.TryGetValue(next.RowId, out var evaluation)
+                    && evaluation.State is QuestState.Ready or QuestState.ReadyOnOtherJob or QuestState.Accepted,
                 tooltip.ToString(),
                 ladder.RowIds));
         }

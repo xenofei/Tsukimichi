@@ -49,18 +49,22 @@ public static class NewGamePlus
 
     /// <summary>
     /// Whether the quest is a story quest that plays once and the character has not done: <see cref="ReplayKind.OnceOnly"/>,
-    /// a step of a story (a chain of <paramref name="chains"/>, or a side story of <paramref name="stories"/>), and
-    /// neither completed nor locked out. The "Once-only story quests I haven't done" filter keeps exactly these.
+    /// a step of a story (a chain of <paramref name="chains"/>, or a side story of <paramref name="stories"/>), not
+    /// completed, and not out of the totals (<paramref name="leavesTotals"/>: locked out, out of season, or a spare
+    /// alternative of a choice not made yet, which the choice's other option stands for). The "Once-only story quests
+    /// I haven't done" filter keeps exactly these.
     /// </summary>
+    /// <param name="leavesTotals">The quest's <see cref="Evaluation.QuestEvaluation.LeavesTotals"/>.</param>
     public static bool IsOnceOnlyStoryLeft(
         QuestRecord quest,
         QuestState state,
+        bool leavesTotals,
         IReadOnlySet<uint> replayable,
         ChainCatalog? chains,
         StorySidequests? stories)
     {
         ArgumentNullException.ThrowIfNull(quest);
-        if (state is QuestState.Completed or QuestState.Foreclosed || Of(quest, replayable) != ReplayKind.OnceOnly)
+        if (leavesTotals || state is QuestState.Completed or QuestState.Foreclosed || Of(quest, replayable) != ReplayKind.OnceOnly)
         {
             return false;
         }

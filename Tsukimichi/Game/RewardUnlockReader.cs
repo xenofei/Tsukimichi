@@ -325,7 +325,12 @@ public sealed class RewardUnlockReader
     /// The game's own word on an achievement for the viewed character (feature plan v5 collector extras, the
     /// achievements that need several quests): the live completed-achievement bit once the achievement list is loaded,
     /// else what the snapshot saved while it was loaded (<see cref="CharacterSnapshot.CompletedAchievements"/>, recorded
-    /// for the ids <c>GameStateReader.AchievementIds</c> names); null when neither knows.
+    /// for the ids <c>GameStateReader.AchievementIds</c> named at that capture); null when neither knows.
+    /// <para>
+    /// A stored capture answers "earned" only: it does not say which ids were tracked when it was taken (an older
+    /// build, or a capture from before the catalog listed the achievement), so an id it does not hold is unknown, not
+    /// "not earned", and the quests decide.
+    /// </para>
     /// </summary>
     public bool? AchievementEarned(uint achievementId)
     {
@@ -334,9 +339,10 @@ public sealed class RewardUnlockReader
             return live;
         }
 
-        return session.ViewedSnapshot is { AchievementsLoaded: true } snapshot && snapshot.CompletedAchievements.Count > 0
-            ? System.Linq.Enumerable.Contains(snapshot.CompletedAchievements, achievementId)
-            : null;
+        return session.ViewedSnapshot is { AchievementsLoaded: true } snapshot
+            && System.Linq.Enumerable.Contains(snapshot.CompletedAchievements, achievementId)
+                ? true
+                : null;
     }
 
     /// <summary>The live completed-achievement bit; null when not live, not loaded yet, or unreadable.</summary>
