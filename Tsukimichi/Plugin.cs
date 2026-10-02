@@ -73,6 +73,7 @@ public sealed class Plugin : IDalamudPlugin
     private readonly UiState ui;
     private readonly GameLinks gameLinks;
     private readonly Game.LifestreamIpc lifestream;
+    private readonly Game.CompanionPlugins companions;
     private readonly QueryRunner queryRunner;
     private readonly MainWindow mainWindow;
     private MoonlitPane? moonlitPane;
@@ -665,6 +666,9 @@ public sealed class Plugin : IDalamudPlugin
             // The main window reads Session/Settings/Paths lazily; they are initialized by the game-state block below.
             ui = new UiState();
             gameLinks = new GameLinks(GameGui, ChatGui, DataManager, Log);
+            // Companion plugins (feature plan v5, decision 1): which plugins Tsukimichi hands work to are loaded,
+            // turned off, outdated or missing; every hand-off button asks it why it is disabled.
+            companions = new Game.CompanionPlugins(PluginInterface, Log);
             lifestream = new Game.LifestreamIpc(PluginInterface, Log);
             gameLinks.Lifestream = lifestream;
             queryRunner = new QueryRunner(this, ui, Log);
@@ -820,6 +824,33 @@ public sealed class Plugin : IDalamudPlugin
             Game.QuestionableIpc questionableIpc = questionable;
             diagnostics.CrossCheck = quest => questionableIpc.Check(quest, Session);
             mainWindow.AttachQuestionable(questionableIpc, () => Settings.QuestionableHandoff);
+
+            // AutoDuty and Quest Map (decision 1): the detail pane's Duties section ("Run with AutoDuty", Duty Support or
+            // Trust unless Settings allows the Duty Finder) and "Open in Quest Map"; /tsuki why points at the latter. The
+            // duty index is read from the sheets once, on first use.
+            var autoDuty = new Game.AutoDutyIpc(PluginInterface, companions, Log);
+            var questMap = new Game.QuestMapIpc(PluginInterface, companions, Log);
+            var dutyRuns = new Lazy<Core.Companions.DutyRunIndex?>(() =>
+            {
+                try
+                {
+                    return DutyRunSheets.Build(DataManager.Excel);
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning(ex, "Duty index unavailable; the Duties section is hidden");
+                    return null;
+                }
+            });
+            mainWindow.AttachCompanions(
+                companions,
+                autoDuty,
+                questMap,
+                () => dutyRuns.Value,
+                rowId => moonlit.Catalog.ForQuest(rowId),
+                Game.AutoDutyIpc.IsInstanceUnlocked,
+                () => Settings.AutoDutyAllowDutyFinder);
+            why.QuestMap = questMap;
             mainWindow.AttachDiagnostics(diagnostics);
 
             // Journal text (P9): the detail pane's Journal card, and with Settings › Journal text the search box's journal
@@ -903,10 +934,7 @@ public sealed class Plugin : IDalamudPlugin
             if (npcHooks is { } npcMenu) { configWindow.NpcContextMenuToggled = enabled => npcMenu.Enabled = enabled; }
             if (dutyFinderHint is { } dutyHint) { configWindow.DutyFinderHintToggled = enabled => dutyHint.Enabled = enabled; }
             configWindow.HookGate = gate;
-            Game.AllaganToolsIpc allaganIpc = allaganTools;
-            Game.ArtisanIpc artisanIpc = artisan;
-            Game.GatherBuddyCommands gatherCommands = gatherBuddy;
-            configWindow.HandInPlugins = () => (allaganIpc.Available, artisanIpc.Available, gatherCommands.Plugin != Core.HandIn.GatherPlugin.None);
+            configWindow.Companions = companions;
             windowSystem.AddWindow(configWindow);
             PluginInterface.UiBuilder.OpenConfigUi += configWindow.Toggle;
             command.ToggleConfigWindow = configWindow.Toggle;
@@ -1087,6 +1115,7 @@ public sealed class Plugin : IDalamudPlugin
         Unwind("allagan tools ipc", () => allaganTools?.Dispose());
         Unwind("artisan ipc", () => artisan?.Dispose());
         Unwind("gatherbuddy commands", () => gatherBuddy?.Dispose());
+        Unwind("companion plugins", () => companions?.Dispose());
         // Each of its steps is isolated on its own. Its save writer drain starts the budget's clock.
         DisposeGameState(budget);
         Unwind("catalog build", () => StopCatalogBuild(budget.Remaining()));

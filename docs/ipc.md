@@ -228,7 +228,27 @@ public sealed class TsukimichiIpc : IDisposable
 
 ## Consumed IPC
 
-Tsukimichi also calls three other plugins' gates when they are loaded. Each is optional: a plugin that is absent, not loaded, or whose gate is missing or throws reads as unavailable, the first failure is logged once, and the feature that needed it simply does not show. Detection goes through Dalamud's installed plugin list (`IDalamudPluginInterface.InstalledPlugins`, loaded state, re-read when the list changes), never through a per-frame IPC call.
+Tsukimichi also calls other plugins' gates when they are loaded. Each is optional: a plugin that is absent, not loaded, or whose gate is missing or throws reads as unavailable, and the first failure is logged once. Detection goes through Dalamud's installed plugin list (`IDalamudPluginInterface.InstalledPlugins`, loaded state, re-read when the list changes), never through a per-frame IPC call.
+
+### Companion plugin registry (since 1.6.0)
+
+`Game/CompanionPlugins.cs` reads the installed list once per `ActivePluginsChanged` and gives each companion plugin a state: **Loaded**, **Installed but turned off**, **Outdated** (below the minimum version Tsukimichi needs, or flagged by Dalamud as built for an older API) or **Not installed**. The plugins, their internal names, minimum versions and repositories are in `Tsukimichi.Core/Companions/CompanionCatalog.cs`; Settings › Integrations › Companion plugins lists them.
+
+| Plugin | Internal name(s) | Minimum version | Repository |
+|---|---|---|---|
+| Lifestream | `Lifestream` | — | `https://github.com/NightmareXIV/MyDalamudPlugins/raw/main/pluginmaster.json` |
+| vnavmesh | `vnavmesh` | — | `https://puni.sh/api/repository/veyn` |
+| Questionable | `Questionable` | — | `https://love.puni.sh/ment.json` |
+| AutoDuty | `AutoDuty` | 0.0.0.336 | `https://puni.sh/api/repository/erdelf` |
+| Artisan | `Artisan` | — | `https://love.puni.sh/ment.json` |
+| GatherBuddy / GatherBuddy Reborn | `GatherBuddy`, `GatherBuddyReborn` | — | official / `https://raw.githubusercontent.com/FFXIV-CombatReborn/CombatRebornRepo/main/pluginmaster.json` |
+| Allagan Tools | `InventoryTools` | — | official |
+| Quest Map | `QuestMap` | 1.7.2.2 | official |
+| Chat 2 | `ChatTwo` | — | official |
+| Boss Mod / Boss Mod Reborn (AutoDuty's) | `BossMod`, `BossModReborn` | — | `https://puni.sh/api/repository/veyn` / Combat Reborn |
+| Wrath Combo / Rotation Solver Reborn (AutoDuty's) | `WrathCombo`, `RotationSolver` | — | `https://love.puni.sh/ment.json` / Combat Reborn |
+
+Every button that hands work to one of them stays visible when the plugin is not loaded: it is disabled and its tooltip is `CompanionPlugins.DisabledReason(plugin)` ("Needs Lifestream — see Settings › Integrations", "… is installed but turned off — turn it on in /xlplugins", "Needs AutoDuty 0.0.0.336 or newer — update it in /xlplugins"). Each IPC wrapper keeps its own gates; the registry only answers "is it there" and "why not".
 
 ### Lifestream (internal name `Lifestream`)
 
@@ -287,6 +307,36 @@ Source: `Game/QuestionableIpc.cs`; the comparison is `Tsukimichi.Core/Ipc/Questi
 - Questionable's lock does not check the level of an ordinary quest, the job, the account caps, or whether the quest is done or in the journal, so only Ready, Available on another job and Blocked are compared, and a quest Blocked only by level or job is compared as open. Its reasons ("Prev quest (2)", "Aetheryte locked: …", "Low level (GLA)") follow Questionable's own language: it translates them into Japanese, Simplified and Traditional Chinese (`Questionable/Resources/I18N.xml`), so "Questionable says: …" can show "レベル不足 (GLA)". Tsukimichi recognises the level reason in each of those languages (since 1.4.2; before, only the English one, so a quest blocked only by level showed a false disagreement under Questionable in Japanese or Chinese).
 - Tsukimichi never asks about two quests whose lock check makes Questionable open the Achievements window (it checks an achievement, and shows the window to load the list; `Questionable/Functions/QuestFunctions.cs`): 4081, row 69617 "The Adventurer with All the Cards" (Gold Saucer), and 2387, row 67923 "What Lies Beneath", the Palace of the Dead quest that opens floors 51 to 100 (the journal files it with the Gridanian sidequests).
 - `AddQuestPriority` answers true even for a quest Questionable does not know, so the menu item is enabled only when the reason gate named a path for the quest, and the "…" button is not shown at all when the reason gate is absent (the WigglyMuffin fork) or fails. It adds the quest to Questionable's list and nothing else: Questionable does not start, and Tsukimichi never calls `StartQuest`, `Stop` or any other gate.
+
+### AutoDuty (internal name `AutoDuty`, since 1.6.0)
+
+Read from AutoDuty's provider class, `AutoDuty/IPC/IPCProvider.cs`, at [github.com/erdelf/AutoDuty](https://github.com/erdelf/AutoDuty) commit `39b9a877a466871e8a25b3af6e12dae33abd2d6c` (release 0.0.0.375, 2026-10-01). AutoDuty registers its gates through ECommons' EzIPC, so each is named `AutoDuty.<method>`.
+
+| Gate | Signature | Used for |
+|---|---|---|
+| `AutoDuty.ContentHasPath` | `(uint territoryType) -> bool` | "AutoDuty has a path" in the detail pane's Duties section (read only; cached per territory for a minute or until the plugin list changes) |
+| `AutoDuty.PushConfigOverrides` | `(object Dictionary<string, string>) -> bool` | before a run: `{"Meta.AutoDutyModeEnum": "Looping", "Meta.DutyModeEnum": "Support" \| "Trust" \| "Regular" \| "Trial" \| "Raid", "Meta.LoopTimes": "1"}`, temporary overrides AutoDuty restores itself when it stops (`StopAndResetAll` → `ConfigOverrideHelper.Pop`), so the player's own run mode, queue and loop count come back |
+| `AutoDuty.Run` | `(uint territoryType, int loops, bool bareMode)` | "Run with AutoDuty": `loops` 0 (Run would otherwise write the loop count for good; the override holds it at 1), `bareMode` true (no pre-loop, between-loop or termination actions) |
+| `AutoDuty.IsStopped` | `() -> bool` | Stop and the "AutoDuty is running" line (cached for 250 ms); right after Run, a still-stopped AutoDuty means the run did not start |
+| `AutoDuty.PopConfigOverrides` | `() -> bool` | only when Run left AutoDuty stopped, to undo the override |
+| `AutoDuty.Stop` | `()` | the Stop button |
+
+Source: `Game/AutoDutyIpc.cs`; the mode choice and the disabled reasons are `Tsukimichi.Core/Companions/AutoDutyPlan.cs`, the duty data `Tsukimichi.GameData/DutyRunSheets.cs`.
+
+- The territory is the duty's `ContentFinderCondition.TerritoryType`. A quest's duties are the ones it requires (`Quest.InstanceContent`, mapped to the Duty Finder entry that links the instance) and the ones it unlocks (curated `duty_unlocks.json` and the reward data's duty unlocks).
+- The mode is Duty Support when a DawnContent row names the duty with more than one party choice (AutoDuty's own rule), else Trust (a DawnContent row and Shadowbringers on), else the regular Duty Finder only with Settings › Integrations › "Allow AutoDuty to queue in the regular Duty Finder" (off by default). `Meta.DutyModeEnum` and `PushConfigOverrides` are both in AutoDuty from 0.0.0.336 on, the minimum the registry asks for.
+- Run is offered only to the logged-in character, for a duty it has unlocked (`UIState.IsInstanceContentUnlocked`), with a path, and with AutoDuty's own requirements loaded: vnavmesh and Boss Mod or Boss Mod Reborn. A missing rotation plugin (Wrath Combo or Rotation Solver Reborn) is a note, since Boss Mod's autorotation also serves.
+- Tsukimichi never calls `Start`, `SetConfig`, `SetLevelingMode` or any other gate.
+
+### Quest Map (internal name `QuestMap`, since 1.6.0)
+
+Read from `QuestMap/Ipc.cs` at [github.com/GemPlugins/QuestMap](https://github.com/GemPlugins/QuestMap) commit `5926c83ee9aec9036a8bbffc686b8e3ba133720f` (the gates were added in `b2ce55e3e9d972f126961a66342f58113dd75b86`, Quest Map 1.7.2.2).
+
+| Gate | Signature | Used for |
+|---|---|---|
+| `QuestMap.ShowGraphByQuestId` | `(uint questId) -> bool` | "Open in Quest Map" in the detail pane's Path section; false ("Quest Map does not chart this quest") when Quest Map has no node for it |
+
+The id is the Quest sheet row id (65536 and up): Quest Map keys its nodes by `Quest.RowId`. `QuestMap.ShowInfoByQuestId` (same signature, Quest Map's info window) is wrapped in `Game/QuestMapIpc.cs` but no button calls it yet. `/tsuki why` ends with a line pointing at Open in Quest Map, or naming Quest Map as missing.
 
 ## Versioning
 

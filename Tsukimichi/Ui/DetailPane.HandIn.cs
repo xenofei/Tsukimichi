@@ -6,6 +6,7 @@ using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
+using Tsukimichi.Core.Companions;
 using Tsukimichi.Core.HandIn;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Game;
@@ -257,7 +258,8 @@ public sealed partial class DetailPane
         var tooltip = state switch
         {
             HandOffState.Ready => string.Format(CultureInfo.CurrentCulture, Strings.HandInCraftTooltipFormat, CraftAmountFor(session, row), row.Name),
-            HandOffState.PluginMissing => Strings.HandInNeedsArtisan,
+            // The registry's reason when it has one ("Artisan is installed but turned off…"), as every hand-off button says it.
+            HandOffState.PluginMissing => CompanionPlugins.DisabledReason(CompanionPlugin.Artisan) ?? Strings.HandInNeedsArtisan,
             HandOffState.Busy => Strings.HandInArtisanBusy,
             _ => Strings.HandInNoRecipe,
         };
@@ -288,7 +290,7 @@ public sealed partial class DetailPane
         var command = HandInActions.GatherCommandFor(row.Item);
         var tooltip = state == HandOffState.Ready
             ? string.Format(CultureInfo.CurrentCulture, Strings.HandInGatherTooltipFormat, command)
-            : Strings.HandInNeedsGatherBuddy;
+            : CompanionPlugins.DisabledReason(CompanionPlugin.GatherBuddy) ?? Strings.HandInNeedsGatherBuddy;
         var icon = row.Item.Gather == GatherKind.Fish ? FishIcon : GatherIcon;
         if (Chrome.IconButtonRound("##gather", icon, tooltip, enabled: state == HandOffState.Ready) && command is not null && GatherBuddy is { } gather)
         {

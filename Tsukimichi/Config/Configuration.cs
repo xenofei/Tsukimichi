@@ -76,6 +76,12 @@ public sealed class Configuration : IPluginConfiguration
     /// </summary>
     public bool QuestionableHandoff { get; set; }
 
+    /// <summary>
+    /// 1.6.0 (decision 1): "Run with AutoDuty" may queue a duty that has neither Duty Support nor Trust in the regular
+    /// Duty Finder, with other players. Off by default: such a duty's button stays disabled and says why.
+    /// </summary>
+    public bool AutoDutyAllowDutyFinder { get; set; }
+
     // ---- 0.5.0: todo overlay ----
     /// <summary>Show the small always-on todo overlay (pins, nearby feature quests, MSQ, job quests).</summary>
     public bool TodoOverlayEnabled { get; set; } = false;

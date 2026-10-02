@@ -96,10 +96,4 @@ static partial class Strings
     public static string ConfigHandInAllaganHint => Loc.Get("ConfigHandInAllaganHint");
     public static string ConfigItemNeededFor => Loc.Get("ConfigItemNeededFor");
     public static string ConfigItemNeededForHint => Loc.Get("ConfigItemNeededForHint");
-
-    /// <summary>{0} = Allagan Tools' state, {1} = Artisan's, {2} = GatherBuddy's (each "loaded" or "not loaded").</summary>
-    public static string ConfigHandInPluginsFormat => Loc.Get("ConfigHandInPluginsFormat");
-
-    public static string ConfigHandInLoaded => Loc.Get("ConfigHandInLoaded");
-    public static string ConfigHandInNotLoaded => Loc.Get("ConfigHandInNotLoaded");
 }
