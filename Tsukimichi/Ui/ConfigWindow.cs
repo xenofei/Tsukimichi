@@ -1220,13 +1220,18 @@ public sealed partial class ConfigWindow : Window
         session.RefreshSpoilers();
     }
 
-    /// <summary>The Todo overlay's "Clear my blues" section (P3): its toggle, which expansion is pinned and Unpin.</summary>
-    private void DrawTodoPlanToggle()
+    /// <summary>
+    /// The Todo overlay's "Clear my blues" section (P3): its toggle, which expansion is pinned and Unpin; greyed while
+    /// the overlay is off (<paramref name="overlayOn"/>).
+    /// </summary>
+    private void DrawTodoPlanToggle(bool overlayOn)
     {
         if (!Row(Strings.PlanTodoConfig, Strings.PlanTodoConfigHint, "overlay my blues plan expansion pinned"))
         {
             return;
         }
+
+        using var sub = SubSetting(overlayOn);
 
         var plan = settings.TodoShowPlan;
         if (ImGui.Checkbox(Strings.PlanTodoConfig, ref plan))
@@ -1291,11 +1296,11 @@ public sealed partial class ConfigWindow : Window
             HintOnHover(Strings.TodoConfigEnabledHint);
         }
 
-        using var indent = ImRaii.PushIndent();
-        using var disabled = ImRaii.Disabled(!enabled);
-
+        // The rest are the overlay's sub-settings, indented and greyed while it is off: each row opens that scope
+        // itself, so the heading a search result waits to draw before it stays flush left and in full colour.
         if (Row(Strings.TodoConfigLocked, Strings.TodoConfigLockedHint, "overlay lock click-through clicks"))
         {
+            using var sub = SubSetting(enabled);
             var locked = settings.TodoOverlayLocked;
             if (ImGui.Checkbox(Strings.TodoConfigLocked, ref locked))
             {
@@ -1323,6 +1328,7 @@ public sealed partial class ConfigWindow : Window
 
         if (Row(Strings.TodoConfigCompact, Strings.TodoConfigCompactHint, "overlay compact small"))
         {
+            using var sub = SubSetting(enabled);
             var compact = settings.TodoOverlayCompact;
             if (ImGui.Checkbox(Strings.TodoConfigCompact, ref compact))
             {
@@ -1338,6 +1344,7 @@ public sealed partial class ConfigWindow : Window
 
         if (Row(Strings.TodoConfigOpacity, null, "overlay opacity transparency alpha background"))
         {
+            using var sub = SubSetting(enabled);
             var opacity = TodoOverlay.ClampOpacity(settings.TodoOverlayOpacity);
             bool moved;
             ImGui.SetNextItemWidth(SliderWidth());
@@ -1363,13 +1370,15 @@ public sealed partial class ConfigWindow : Window
 
         if (!filter.Active)
         {
+            using var sub = SubSetting(enabled);
             ImGui.Spacing();
             ImGui.TextDisabled(Strings.TodoConfigSectionsLabel);
         }
 
-        DrawTodoRouteToggles();
+        DrawTodoRouteToggles(enabled);
         if (Row(Strings.TodoConfigShowPins, null, "overlay section pinned pins"))
         {
+            using var sub = SubSetting(enabled);
             var pins = settings.TodoShowPins;
             if (ImGui.Checkbox(Strings.TodoConfigShowPins, ref pins))
             {
@@ -1380,6 +1389,7 @@ public sealed partial class ConfigWindow : Window
 
         if (Row(Strings.TodoConfigShowSeasonal, Strings.TodoConfigShowSeasonalHint, "overlay section seasonal event"))
         {
+            using var sub = SubSetting(enabled);
             var seasonal = settings.TodoShowSeasonal;
             if (ImGui.Checkbox(Strings.TodoConfigShowSeasonal, ref seasonal))
             {
@@ -1393,10 +1403,11 @@ public sealed partial class ConfigWindow : Window
             }
         }
 
-        DrawTodoPlanToggle();
+        DrawTodoPlanToggle(enabled);
 
         if (Row(Strings.TodoConfigShowNearby, null, "overlay section nearby feature"))
         {
+            using var sub = SubSetting(enabled);
             var nearby = settings.TodoShowNearbyFeature;
             if (ImGui.Checkbox(Strings.TodoConfigShowNearby, ref nearby))
             {
@@ -1407,6 +1418,7 @@ public sealed partial class ConfigWindow : Window
 
         if (Row(Strings.TodoConfigShowMsq, null, "overlay section main scenario msq"))
         {
+            using var sub = SubSetting(enabled);
             var msq = settings.TodoShowMsq;
             if (ImGui.Checkbox(Strings.TodoConfigShowMsq, ref msq))
             {
@@ -1417,6 +1429,7 @@ public sealed partial class ConfigWindow : Window
 
         if (Row(Strings.TodoConfigShowJobQuests, null, "overlay section job class quests"))
         {
+            using var sub = SubSetting(enabled);
             var jobs = settings.TodoShowJobQuests;
             if (ImGui.Checkbox(Strings.TodoConfigShowJobQuests, ref jobs))
             {
@@ -1430,6 +1443,7 @@ public sealed partial class ConfigWindow : Window
             return;
         }
 
+        using var resetSub = SubSetting(enabled);
         ImGui.Spacing();
         if (ImGui.Button(Strings.TodoConfigResetPosition))
         {

@@ -195,6 +195,64 @@ public class SettingsSearchTests
     }
 
     [Fact]
+    public void A_blocks_first_appearance_while_a_query_is_active_is_searched()
+    {
+        // Regression: a block was skipped while searching until its page had been drawn once, so the search missed
+        // every section not opened this session.
+        var filter = new SettingsFilter();
+        filter.SetText("click-through");
+        filter.BeginFrame();
+        filter.BeginSection(SettingsSection.TodoOverlay, "Todo overlay");
+        filter.BeginBlock();
+        bool? rowAware = null;
+        Assert.True(filter.DrawsBlock(rowAware), "a block not drawn yet draws, so its settings are searched");
+        Assert.False(filter.Heading("Todo overlay"));
+        Assert.False(filter.Row("Show the Todo overlay"));
+        Assert.True(filter.Row("Locked (click-through)", "Clicks go to the game."));
+        rowAware = filter.LearnRowAware(rowAware);
+        Assert.True(rowAware);
+        filter.EndFrame();
+        Assert.Equal(1, filter.Shown(SettingsSection.TodoOverlay));
+    }
+
+    [Fact]
+    public void A_block_that_registers_no_setting_shows_while_searching_only_when_whole()
+    {
+        var filter = new SettingsFilter();
+        filter.BeginFrame();
+        filter.BeginSection(SettingsSection.About, "About");
+        filter.BeginBlock();
+        Assert.True(filter.DrawsBlock(false), "without a query every block draws");
+
+        filter.SetText("catalog");
+        filter.BeginFrame();
+        filter.BeginSection(SettingsSection.About, "About");
+        filter.BeginBlock();
+        bool? rowAware = null;
+        Assert.True(filter.DrawsBlock(rowAware));
+        rowAware = filter.LearnRowAware(rowAware);
+        Assert.False(rowAware, "it drew without registering a setting");
+
+        filter.BeginBlock();
+        Assert.False(filter.DrawsBlock(rowAware), "its contents would show unfiltered");
+        filter.BeginBlock("catalog stamp");
+        Assert.True(filter.DrawsBlock(rowAware), "the entry's keywords matched: it shows whole");
+    }
+
+    [Fact]
+    public void A_block_known_to_register_settings_stays_known()
+    {
+        var filter = new SettingsFilter();
+        filter.SetText("nothing here");
+        filter.BeginFrame();
+        filter.BeginSection(SettingsSection.Integrations, "Integrations");
+        filter.BeginBlock();
+        Assert.True(filter.DrawsBlock(true));
+        Assert.True(filter.LearnRowAware(true), "a draw that registered nothing (a plugin went away) does not forget");
+        Assert.False(filter.LearnRowAware(null));
+    }
+
+    [Fact]
     public void Counts_start_again_each_frame()
     {
         var filter = new SettingsFilter();

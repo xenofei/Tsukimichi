@@ -20,6 +20,23 @@ public enum SettingsSection
     About,
 }
 
+/// <summary>
+/// A block of settings another window can open the Settings window on, scrolled so the block's heading is at the top
+/// of its section's page (the Nearby window's cog, the setup card's Companion plugins link). The values are not
+/// persisted.
+/// </summary>
+public enum SettingsAnchor
+{
+    /// <summary>The top of the section's page.</summary>
+    None,
+
+    /// <summary>Settings › Integrations › Companion plugins.</summary>
+    CompanionPlugins,
+
+    /// <summary>Settings › Integrations › Nearby quests.</summary>
+    Nearby,
+}
+
 /// <summary>The order of the Settings window's section index and of the search results.</summary>
 public static class SettingsSections
 {
@@ -127,7 +144,8 @@ public sealed class SettingsQuery
 /// <summary>
 /// The Settings window's search, one frame at a time, without ImGui so it can be tested. The window calls
 /// <see cref="BeginFrame"/>, then for each section it draws <see cref="BeginSection"/>, for each block of settings
-/// <see cref="BeginBlock"/> and, when the block names itself, <see cref="Heading"/>, and for each setting
+/// <see cref="BeginBlock"/> (drawing it when <see cref="DrawsBlock"/> says so, and keeping what
+/// <see cref="LearnRowAware"/> learns) and, when the block names itself, <see cref="Heading"/>, and for each setting
 /// <see cref="Row"/>, which says whether the setting shows; <see cref="EndFrame"/> keeps the counts for the section
 /// index. While a query is active the headings wait: <see cref="TakeSectionHeading"/> and
 /// <see cref="TakeBlockHeading"/> hand them out once, just before the first setting of their section or block that
@@ -227,6 +245,22 @@ public sealed class SettingsFilter
         VisibleInBlock = 0;
         BlockWhole = sectionWhole || (Active && keywords is { Length: > 0 } && query.Matches(keywords));
     }
+
+    /// <summary>
+    /// Whether the block just started (<see cref="BeginBlock"/>) draws this frame, given what is known of it:
+    /// <paramref name="rowAware"/> is true for a block that registers its settings through <see cref="Row"/>, false for
+    /// one that drew without registering any, and null for one not drawn yet. Without a query every block draws. With
+    /// one, a block draws when it shows whole, and otherwise unless it is known not to register its settings (its
+    /// contents would show unfiltered), so a block's first appearance while a query is active is searched like the rest.
+    /// </summary>
+    public bool DrawsBlock(bool? rowAware) => !Active || BlockWhole || rowAware != false;
+
+    /// <summary>
+    /// What the block that just drew taught about itself, from <paramref name="rowAware"/> (what was known before):
+    /// true once it registered a setting through <see cref="Row"/> (and true stays true), false when it drew without
+    /// registering one.
+    /// </summary>
+    public bool LearnRowAware(bool? rowAware) => rowAware == true || RowsInBlock > 0;
 
     /// <summary>
     /// Names the current block. A heading equal to the section's title is not repeated (the section already says it).

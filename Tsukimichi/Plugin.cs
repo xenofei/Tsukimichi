@@ -1023,7 +1023,7 @@ public sealed partial class Plugin : IDalamudPlugin
             configWindow.Questionable = questionableIpc;
             configWindow.Nearby = discoveryWindow;
             var settingsWindow = configWindow;
-            discoveryWindow.OpenSettings = () => settingsWindow.OpenAt(Core.Ui.SettingsSection.Integrations);
+            discoveryWindow.OpenSettings = () => settingsWindow.OpenAt(Core.Ui.SettingsSection.Integrations, Core.Ui.SettingsAnchor.Nearby);
             InitializeInGame(gate, rewardLookup, handIns, moonlit);
             windowSystem.AddWindow(configWindow);
             PluginInterface.UiBuilder.OpenConfigUi += configWindow.Toggle;
@@ -1120,7 +1120,7 @@ public sealed partial class Plugin : IDalamudPlugin
 
             // "Set up your road" (1.7.0, decision 7): once on a fresh install, after the tour offer; Help reopens it.
             // Each switch applies at once and tells the service that follows it, as Settings does.
-            mainWindow.AttachSetup(new SetupCard(Settings, PluginInterface, Log, BuildSetupToggles(overlay, nearbyWindow), () => settingsWindow.OpenAt(Core.Ui.SettingsSection.Integrations)));
+            mainWindow.AttachSetup(new SetupCard(Settings, PluginInterface, Log, BuildSetupToggles(overlay, nearbyWindow), () => settingsWindow.OpenAt(Core.Ui.SettingsSection.Integrations, Core.Ui.SettingsAnchor.CompanionPlugins)));
 
             // "Since you were away" (P7): the stored captures are kept from before this login's first save; the card
             // sits above the detail pane (after What's new) and the Characters dashboard opens it for any character.

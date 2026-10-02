@@ -3569,7 +3569,7 @@
     <value>A small panel that stays on screen: your pins, Event quests running now, unlocks you can start here, the next main scenario quest and job quests, an expansion pinned from My blues and a route you follow. Turn it on with the list button at the foot of the tabs, /tsuki todo or Settings › Todo overlay. Locked makes it click-through.</value>
   </data>
   <data name="Help.PlayCardBodies.1" xml:space="preserve">
-    <value>Nearby quests lists what you can start in the zone you stand in, by level, with Flag and Teleport. ☾ N in the server info bar is the same count: hover it for the first names, click it for the list. The marker button at the foot of the tabs and /tsuki nearby open it too; its cog hides the count.</value>
+    <value>Nearby quests lists what you can start in the zone you stand in, by level, with Flag and Teleport. ☾ N in the server info bar is the same count: hover it for the first names, click it for the list. The marker button at the foot of the tabs and /tsuki nearby open it too; its cog opens its settings, where the count can be hidden.</value>
   </data>
   <data name="Help.PlayCardBodies.2" xml:space="preserve">
     <value>Hover an item that a quest rewards and a short line near the cursor names the quest and whether it is done. Right-click the item for "Tsukimichi: quest reward", which opens the quest here. Items a quest asks you to hand in say so too. Settings › Integrations turns each off.</value>
