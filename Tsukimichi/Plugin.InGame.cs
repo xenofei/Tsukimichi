@@ -69,7 +69,7 @@ public sealed partial class Plugin
         chatTwo.Enabled = Settings.ChatTwoIntegration;
 
         // Nameplate marks on quest givers: off by default, behind the hook gate.
-        namePlateHooks = new Game.NamePlateHooks(NamePlateGui, Session, gate, Log)
+        namePlateHooks = new Game.NamePlateHooks(NamePlateGui, Framework, Session, gate, Log)
         {
             LivePins = LivePins,
             PinsVersion = () => queryRunner.PinsVersion,

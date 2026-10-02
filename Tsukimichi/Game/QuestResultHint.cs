@@ -23,7 +23,8 @@ namespace Tsukimichi.Game;
 /// title (<see cref="QuestIdentifier"/>) against the quests in the logged-in character's journal and those the state
 /// poller saw completed in the last <see cref="RecentCompletionMinutes"/> minutes (Accepted to Completed), then across
 /// the catalog. The model is rebuilt on every session change, so the list stays right when the poller applies the
-/// completion while the window is still up. Behind the addon kill switch; it never presses Complete.
+/// completion while the window is still up. A refresh may show another quest (turn-ins in a row), so it drops the one
+/// found and restarts the retry window before reading again. Behind the addon kill switch; it never presses Complete.
 /// </para>
 /// </summary>
 public sealed unsafe class QuestResultHint : AddonPanelSource
@@ -125,6 +126,13 @@ public sealed unsafe class QuestResultHint : AddonPanelSource
         {
             completed = found.RowId;
         }
+    }
+
+    /// <summary>The window got new data, perhaps another turn-in: identify the quest afresh, with a fresh retry window.</summary>
+    protected override void Refreshing()
+    {
+        completed = 0;
+        openedAt = Environment.TickCount64;
     }
 
     protected override void Forget()

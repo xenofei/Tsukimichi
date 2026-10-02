@@ -14,8 +14,8 @@ public sealed record OpenedBatch(uint Serial, IReadOnlyList<uint> Completed, IRe
 /// <summary>
 /// "Opened by that" (feature plan v5, 1.7.0; R9 F1): gathers the quests that became available after a completion, so
 /// one chat line can say what the turn-in opened. A <see cref="QuestEventKind.Completed"/> event opens a batch (or
-/// extends the open one); every <see cref="QuestEventKind.NewlyAvailable"/> event that follows while the batch is open
-/// joins it. The poller re-evaluates a poll or two after the completion, so the batch closes only once nothing new
+/// extends the open one); every <see cref="QuestEventKind.NewlyAvailable"/> event of the same poll or a later one joins
+/// it while the batch is open. The poller re-evaluates a poll or two after the completion, so the batch closes only once nothing new
 /// arrived for a quiet spell (<see cref="Take"/>'s <c>quiet</c>, a few seconds), or after <see cref="MaxWait"/> at the
 /// latest; several turn-ins in a row become one line.
 /// <para>
@@ -40,47 +40,75 @@ public sealed class OpenedBatcher
     public bool Pending { get; private set; }
 
     /// <summary>
-    /// Folds in events in the order they happened (earlier polls first, as <see cref="NoticeTracker.ScanEvents"/> lists
-    /// them; a completion comes before the availability changes of its own poll). <paramref name="nowUtc"/> is when they
-    /// were read, which starts or extends the quiet spell.
+    /// Folds in events, earlier polls before later ones (as <see cref="NoticeTracker.ScanEvents"/> lists them).
+    /// <paramref name="nowUtc"/> is when they were read, which starts or extends the quiet spell.
+    /// <para>
+    /// The events of one poll share a <see cref="QuestEvent.TimeUtc"/>, and their order among themselves is not
+    /// significant: the scan walks the newest-first recent list backwards, which reverses the order a poll recorded
+    /// them in (its completions first). So each run of events with the same time is folded in completions first, and a
+    /// quest that became available in the very poll of a turn-in joins the batch that turn-in opens.
+    /// </para>
     /// </summary>
     public void Add(IReadOnlyList<QuestEvent> events, DateTime nowUtc)
     {
         ArgumentNullException.ThrowIfNull(events);
-        foreach (var e in events)
+        var start = 0;
+        while (start < events.Count)
         {
-            switch (e.Kind)
+            var time = events[start].TimeUtc;
+            var end = start + 1;
+            while (end < events.Count && events[end].TimeUtc == time)
             {
-                case QuestEventKind.Completed:
-                    if (!Pending)
-                    {
-                        Pending = true;
-                        startedUtc = nowUtc;
-                    }
-
-                    lastActivityUtc = nowUtc;
-                    if (!completed.Contains(e.RowId))
-                    {
-                        completed.Add(e.RowId);
-                    }
-
-                    // A quest completed in this batch never counts as opened by it (a repeatable that came back).
-                    if (opened.Remove(e.RowId))
-                    {
-                        seen.Remove(e.RowId);
-                    }
-
-                    break;
-
-                case QuestEventKind.NewlyAvailable when Pending:
-                    if (!completed.Contains(e.RowId) && seen.Add(e.RowId))
-                    {
-                        opened.Add(e.RowId);
-                        lastActivityUtc = nowUtc;
-                    }
-
-                    break;
+                end++;
             }
+
+            for (var i = start; i < end; i++)
+            {
+                if (events[i].Kind == QuestEventKind.Completed)
+                {
+                    AddCompleted(events[i].RowId, nowUtc);
+                }
+            }
+
+            for (var i = start; i < end; i++)
+            {
+                if (events[i].Kind == QuestEventKind.NewlyAvailable && Pending)
+                {
+                    AddOpened(events[i].RowId, nowUtc);
+                }
+            }
+
+            start = end;
+        }
+    }
+
+    private void AddCompleted(uint rowId, DateTime nowUtc)
+    {
+        if (!Pending)
+        {
+            Pending = true;
+            startedUtc = nowUtc;
+        }
+
+        lastActivityUtc = nowUtc;
+        if (!completed.Contains(rowId))
+        {
+            completed.Add(rowId);
+        }
+
+        // A quest completed in this batch never counts as opened by it (a repeatable that came back).
+        if (opened.Remove(rowId))
+        {
+            seen.Remove(rowId);
+        }
+    }
+
+    private void AddOpened(uint rowId, DateTime nowUtc)
+    {
+        if (!completed.Contains(rowId) && seen.Add(rowId))
+        {
+            opened.Add(rowId);
+            lastActivityUtc = nowUtc;
         }
     }
 

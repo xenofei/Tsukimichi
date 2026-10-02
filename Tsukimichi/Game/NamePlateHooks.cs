@@ -19,7 +19,9 @@ namespace Tsukimichi.Game;
 /// (<see cref="Config.Configuration.NamePlateMarks"/>).
 /// <para>
 /// Cost: the NPC-to-mark table is rebuilt only when its inputs change (the live states, the pins, the Moonlit catalog,
-/// the language), on <see cref="SessionState.Changed"/>; Dalamud's <see cref="INamePlateGui.OnNamePlateUpdate"/> hands
+/// the language), on <see cref="SessionState.Changed"/>. A pin or unpin does not bump the session, so while the marks
+/// are on each framework update also compares <see cref="PinsVersion"/> with the one the table was built from (one
+/// delegate call and an int compare) and rebuilds when it moved. Dalamud's <see cref="INamePlateGui.OnNamePlateUpdate"/> hands
 /// over only the plates with important updates, and each costs a kind check and, for an event NPC, one dictionary
 /// lookup. When the table changes the plates are redrawn once (<see cref="INamePlateGui.RequestRedraw"/>), so marks
 /// appear and clear without waiting for the game.
@@ -35,6 +37,7 @@ namespace Tsukimichi.Game;
 public sealed class NamePlateHooks : IDisposable
 {
     private readonly INamePlateGui namePlates;
+    private readonly IFramework framework;
     private readonly SessionState session;
     private readonly HookGate gate;
     private readonly IPluginLog log;
@@ -55,9 +58,10 @@ public sealed class NamePlateHooks : IDisposable
     private UniqueRewardCatalog? moonlitFor;
     private HashSet<uint> moonlitQuests = [];
 
-    public NamePlateHooks(INamePlateGui namePlates, SessionState session, HookGate gate, IPluginLog log)
+    public NamePlateHooks(INamePlateGui namePlates, IFramework framework, SessionState session, HookGate gate, IPluginLog log)
     {
         this.namePlates = namePlates ?? throw new ArgumentNullException(nameof(namePlates));
+        this.framework = framework ?? throw new ArgumentNullException(nameof(framework));
         this.session = session ?? throw new ArgumentNullException(nameof(session));
         this.gate = gate ?? throw new ArgumentNullException(nameof(gate));
         this.log = log ?? throw new ArgumentNullException(nameof(log));
@@ -67,7 +71,10 @@ public sealed class NamePlateHooks : IDisposable
     /// <summary>The logged-in character's pinned row ids; set by the plugin. Null marks no pins.</summary>
     public Func<IReadOnlySet<uint>>? LivePins { get; set; }
 
-    /// <summary>Moves when the pins change (the query runner's pins version); a rebuild follows. Null reads as unchanged.</summary>
+    /// <summary>
+    /// Moves when the pins change (the query runner's pins version, bumped on pin and unpin alike); checked every
+    /// framework update while the marks are on, and a rebuild follows a move. Null reads as unchanged.
+    /// </summary>
     public Func<int>? PinsVersion { get; set; }
 
     /// <summary>The Moonlit catalog; set by the plugin. Null marks no Moonlit rewards.</summary>
@@ -121,6 +128,7 @@ public sealed class NamePlateHooks : IDisposable
             if (want)
             {
                 session.Changed += Rebuild;
+                framework.Update += OnFrameworkUpdate;
                 namePlates.OnNamePlateUpdate += OnNamePlateUpdate;
                 Rebuild();
                 namePlates.RequestRedraw();
@@ -128,6 +136,7 @@ public sealed class NamePlateHooks : IDisposable
             else
             {
                 session.Changed -= Rebuild;
+                framework.Update -= OnFrameworkUpdate;
                 namePlates.OnNamePlateUpdate -= OnNamePlateUpdate;
                 marks = [];
                 titles = [];
@@ -139,6 +148,15 @@ public sealed class NamePlateHooks : IDisposable
         catch (Exception ex)
         {
             Warn(ex, "Nameplate marks could not be switched");
+        }
+    }
+
+    /// <summary>A pin or unpin since the last build: rebuild. One delegate call and an int compare otherwise.</summary>
+    private void OnFrameworkUpdate(IFramework _)
+    {
+        if (subscribed && PinsVersion is { } version && version() != builtPins)
+        {
+            Rebuild();
         }
     }
 

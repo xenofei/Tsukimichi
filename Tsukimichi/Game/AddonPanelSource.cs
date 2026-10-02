@@ -19,7 +19,7 @@ namespace Tsukimichi.Game;
 /// hidden (with the UI, in a cutscene) so the panel is never drawn over nothing.
 /// <para>
 /// The subclass reads what it needs in <see cref="Read"/>, called on PostSetup, PostRefresh and PostRequestedUpdate
-/// (the window got new data), on PostReceiveEvent when <see cref="ReadOnEvents"/> (a click in the window), and on
+/// (the window got new data; <see cref="Refreshing"/> first for the latter two), on PostReceiveEvent when <see cref="ReadOnEvents"/> (a click in the window), and on
 /// PostUpdate at most every <see cref="PollInterval"/> milliseconds while <see cref="WantsPoll"/> (a change no event
 /// announces, such as a keyboard selection). Every call is on the framework thread; a read failure is the subclass's
 /// to log (<see cref="WarnOnce"/>).
@@ -113,6 +113,15 @@ public abstract unsafe class AddonPanelSource : IDisposable
 
     /// <summary>Forgets what was read: the window closed or the listeners went away.</summary>
     protected abstract void Forget();
+
+    /// <summary>
+    /// The open window got new data (PostRefresh, PostRequestedUpdate), possibly about something else than before:
+    /// called just before that <see cref="Read"/>, so a subclass can drop what it identified and read afresh. Nothing
+    /// by default.
+    /// </summary>
+    protected virtual void Refreshing()
+    {
+    }
 
     /// <summary>A visible addon's rectangle by name; false when it is closed, hidden or unreadable.</summary>
     protected bool TryGetAddonRect(string name, out ScreenRect rect)
@@ -292,6 +301,7 @@ public abstract unsafe class AddonPanelSource : IDisposable
         }
 
         IsOpen = true;
+        Refreshing();
         ReadFrom(args);
     }
 

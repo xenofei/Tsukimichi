@@ -20,7 +20,8 @@ namespace Tsukimichi.Game;
 /// any value that is a Quest sheet row id, then across the whole catalog in the client's language.
 /// <para>
 /// Read on PostSetup, PostRefresh and PostRequestedUpdate; while no quest is found yet, PostUpdate retries every
-/// <see cref="RetryInterval"/> for <see cref="RetryWindow"/> (the title can land a frame after setup). Behind the addon
+/// <see cref="RetryInterval"/> for <see cref="RetryWindow"/> (the title can land a frame after setup). A refresh may
+/// show another quest, so it drops the one found and restarts the retry window before reading again. Behind the addon
 /// kill switch like every panel beside a game window. Informational only: it never presses Accept or Decline.
 /// </para>
 /// </summary>
@@ -125,6 +126,14 @@ public sealed unsafe class QuestOfferHint : AddonPanelSource
             offered = found.RowId;
             source = match.Source;
         }
+    }
+
+    /// <summary>The window got new data, perhaps another quest's offer: identify it afresh, with a fresh retry window.</summary>
+    protected override void Refreshing()
+    {
+        offered = 0;
+        source = TitleMatchSource.None;
+        openedAt = Environment.TickCount64;
     }
 
     protected override void Forget()

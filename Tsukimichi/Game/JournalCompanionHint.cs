@@ -12,9 +12,10 @@ namespace Tsukimichi.Game;
 /// <c>JournalDetail</c> addon beside it) is open, follows the quest selected in it and hands
 /// <see cref="Ui.JournalCompanionPanel"/> Tsukimichi's verdict on it for the logged-in character.
 /// <para>
-/// The selection is read from <c>AgentQuestJournal</c>: <c>SelectedQuestId</c> on the quests tab (type 1),
-/// <c>SelectedCompletedQuestId</c> on the completed tab (<c>IsDisplayingCompletedQuests</c>, type 0); a levequest
-/// (type 2) is none. Either holds the quest id as <c>OpenForQuest</c> takes it (the low 16 bits of the row id); a
+/// The selection is read from <c>AgentQuestJournal</c>: <c>SelectedCompletedQuestId</c> only while the completed tab
+/// is shown (<c>IsDisplayingCompletedQuests</c>), <c>SelectedQuestId</c> otherwise; <c>SelectedQuestType</c> is not
+/// trusted to tell the tabs apart (what it reads for a completed quest is unverified), only to skip a levequest (type
+/// 2). An id of 0 (nothing selected on that tab) shows nothing. Either holds the quest id as <c>OpenForQuest</c> takes it (the low 16 bits of the row id); a
 /// full row id is taken as one. Read on the Journal's setup, refresh, requested update and clicks, and every
 /// <see cref="PollInterval"/> on PostUpdate for a keyboard or pad selection: three struct fields, no allocation.
 /// Behind the addon kill switch like every panel beside a game window.
@@ -30,9 +31,6 @@ public sealed unsafe class JournalCompanionHint : AddonPanelSource
 
     /// <summary><c>AgentQuestJournal.SelectedQuestType</c> of a levequest.</summary>
     private const uint LeveType = 2;
-
-    /// <summary><c>AgentQuestJournal.SelectedQuestType</c> of a completed quest.</summary>
-    private const uint CompletedType = 0;
 
     /// <summary>The first Quest sheet row id: row ids are 65536 + the quest id.</summary>
     private const uint QuestRowBase = 0x10000;
@@ -106,7 +104,9 @@ public sealed unsafe class JournalCompanionHint : AddonPanelSource
             return;
         }
 
-        var id = agent->IsDisplayingCompletedQuests || type == CompletedType ? agent->SelectedCompletedQuestId : agent->SelectedQuestId;
+        // The tab decides which field to trust, not the type: the type's value for a completed quest is unverified, and
+        // reading SelectedCompletedQuestId on the quests tab would show a stale completed quest. 0 shows nothing.
+        var id = agent->IsDisplayingCompletedQuests ? agent->SelectedCompletedQuestId : agent->SelectedQuestId;
         selected = ToRowId(id);
     }
 
