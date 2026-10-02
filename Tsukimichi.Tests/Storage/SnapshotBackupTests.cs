@@ -1,6 +1,7 @@
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Runtime;
 using Tsukimichi.Core.Storage;
+using Tsukimichi.Tests.Evaluation;
 
 namespace Tsukimichi.Tests.Storage;
 
@@ -100,6 +101,87 @@ public sealed class SnapshotBackupTests : IDisposable
         DateTime? written = hoursAgo is { } h ? T0.AddHours(h) : null;
 
         Assert.Equal(due, SnapshotBackup.IsDue(written, T0));
+    }
+
+    private string OlderPath => SnapshotBackup.OlderPathFor(Characters, Id);
+
+    /// <summary>600 one-off quests the catalog names, so the lost-progress check counts them.</summary>
+    private static readonly uint[] OneOff = Enumerable.Range(0, 600).Select(i => 65600u + (uint)i).ToArray();
+
+    private static readonly QuestCatalog Catalog = Fixture.Catalog([.. OneOff.Select(id => Fixture.Quest(id))]);
+
+    private static CharacterSnapshot Progress(string name, int completed) =>
+        Fixture.Snapshot([.. OneOff.Take(completed)]) with { ContentId = Id, Name = name };
+
+    [Fact]
+    public void The_refresh_keeps_the_backup_it_replaces_as_the_older_generation()
+    {
+        var now = T0;
+        var store = new JsonSnapshotStore(tmp.Path) { Clock = () => now };
+        store.Save(Snapshot("first"));
+        store.Save(Snapshot("second"));
+        File.SetLastWriteTimeUtc(BackupPath, T0);
+        Assert.False(File.Exists(OlderPath));
+
+        now = T0.AddDays(1);
+        store.Save(Snapshot("third"));
+
+        Assert.Contains("\"second\"", File.ReadAllText(BackupPath));
+        Assert.Contains("\"first\"", File.ReadAllText(OlderPath));
+        Assert.Contains(OlderPath, CharacterSidecars.PathsFor(Characters, Id));
+        Assert.Contains(OlderPath, CharacterSidecars.FindAll(Characters));
+        Assert.Single(store.List());
+    }
+
+    [Fact]
+    public void A_saved_file_that_lost_many_completed_quests_never_becomes_the_backup()
+    {
+        var now = T0;
+        var store = new JsonSnapshotStore(tmp.Path) { Clock = () => now, Catalog = () => Catalog };
+        store.Save(Progress("good", 500));
+        store.Save(Progress("good", 501));
+        Assert.Contains("\"good\"", File.ReadAllText(BackupPath));
+        File.SetLastWriteTimeUtc(BackupPath, T0);
+
+        // A bad capture saved at 23:59 …
+        now = T0.AddHours(23).AddMinutes(59);
+        store.Save(Progress("bad", 100));
+
+        // … is still on disk when the backup comes due a minute later: the backup keeps the good file.
+        now = T0.AddDays(1);
+        store.Save(Progress("bad", 101));
+        Assert.Contains("\"good\"", File.ReadAllText(BackupPath));
+        Assert.False(File.Exists(OlderPath));
+
+        // A handful lost against the backup is ordinary play (a few quests the game resets): the refresh goes ahead.
+        store.Save(Progress("fine", 495));
+        now = T0.AddDays(3);
+        File.SetLastWriteTimeUtc(BackupPath, T0);
+        store.Save(Progress("fine", 496));
+        Assert.Contains("\"fine\"", File.ReadAllText(BackupPath));
+        Assert.Contains("\"good\"", File.ReadAllText(OlderPath));
+    }
+
+    [Fact]
+    public void A_backup_now_copies_the_save_within_the_day_unless_it_lost_progress()
+    {
+        var now = T0;
+        var store = new JsonSnapshotStore(tmp.Path) { Clock = () => now, Catalog = () => Catalog };
+        store.Save(Progress("old", 400));
+        store.Save(Progress("before the loss", 500));
+        Assert.Contains("\"old\"", File.ReadAllText(BackupPath));
+
+        // A held-back capture is accepted: the save it overwrites becomes the backup at once.
+        now = T0.AddHours(1);
+        Assert.True(store.BackupNow(Id));
+        Assert.Contains("\"before the loss\"", File.ReadAllText(BackupPath));
+        Assert.Contains("\"old\"", File.ReadAllText(OlderPath));
+        File.SetLastWriteTimeUtc(BackupPath, now);
+
+        // Once the loss is saved, another backup now keeps the better copy.
+        store.Save(Progress("after the loss", 100));
+        Assert.False(store.BackupNow(Id));
+        Assert.Contains("\"before the loss\"", File.ReadAllText(BackupPath));
     }
 
     [Fact]

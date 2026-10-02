@@ -24,7 +24,7 @@ public enum PlausibilityVerdict
 /// </summary>
 /// <param name="Lost">Completed quests (seasonal and repeatable ones aside) the capture no longer reads as completed.</param>
 /// <param name="Completed">Completed quests (seasonal and repeatable ones aside) in the last committed capture; counted only when some bit cleared, else 0.</param>
-/// <param name="JournalBefore">Quests in the last capture's journal.</param>
+/// <param name="JournalBefore">Quests in the last capture's journal (seasonal, repeatable and unnamed ones aside).</param>
 /// <param name="JournalLeft">Of those, how many left the journal without being completed.</param>
 public readonly record struct PlausibilityResult(PlausibilityVerdict Verdict, int Lost, int Completed, int JournalBefore, int JournalLeft)
 {
@@ -46,14 +46,17 @@ public readonly record struct PlausibilityResult(PlausibilityVerdict Verdict, in
 /// or a client hiccup. Committing it would overwrite the saved snapshot and its sidecars with far less progress than
 /// the character has. A capture of the same character that suddenly loses many completion bits, or empties a
 /// journal of several quests none of which was completed, is not committed or saved; the poller backs off and
-/// captures again.
+/// captures again. The first capture of a session is judged the same way against the stored snapshot, and the backup
+/// refresh (<see cref="Storage.SnapshotBackup"/>) judges the saved file against the backup it would replace. A loss
+/// that keeps reading the same for a few minutes is real and is then taken in (<see cref="HeldBackCaptures"/>).
 /// <para>
 /// Completion bits can clear legitimately: seasonal (festival) quests are reset every year and repeatable quests on
 /// their schedule. Those, and ids the catalog does not know (unnamed quests whose kind is unknown), are left out of
-/// both counts. What is left only ever grows in play, so even a modest loss is suspicious; the thresholds still allow
-/// a handful, and a small character is judged by the share rather than the absolute count.
+/// the counts, the journal's too (the game takes a festival's quests out of the journal when it ends). What is left
+/// only ever grows in play, so even a modest loss is suspicious; the thresholds still allow a handful, and a small
+/// character is judged by the share rather than the absolute count.
 /// </para>
-/// Pure; the framework thread calls it once per changed capture.
+/// Pure; the framework thread calls it once per changed capture, a worker once per first pass.
 /// </summary>
 public static class CapturePlausibility
 {
@@ -70,9 +73,9 @@ public static class CapturePlausibility
     public const int MinJournalEmptied = 3;
 
     /// <summary>
-    /// Judges <paramref name="capture"/> against the last committed capture of the same character. A different
-    /// character, or no previous capture, is always plausible (the login guard, <see cref="LoginReadiness"/>, judges
-    /// first captures).
+    /// Judges <paramref name="capture"/> against the last committed (or stored) capture of the same character. A
+    /// different character, or no previous capture, is always plausible (a first capture with nothing to compare is
+    /// left to the login guard, <see cref="LoginReadiness"/>).
     /// </summary>
     public static PlausibilityResult Check(CharacterSnapshot? last, CharacterSnapshot capture, QuestCatalog catalog)
     {
@@ -84,8 +87,8 @@ public static class CapturePlausibility
         }
 
         var (lost, completed) = CountLost(last.CompletedBits, capture.CompletedBits, catalog);
-        var journalBefore = last.Accepted.Count;
-        var journalLeft = capture.Accepted.Count == 0 ? CountLeftUncompleted(last, capture) : 0;
+        var journalBefore = CountJournal(last, catalog);
+        var journalLeft = capture.Accepted.Count == 0 ? CountLeftUncompleted(last, capture, catalog) : 0;
 
         PlausibilityVerdict verdict;
         if (LoginReadiness.LooksEmpty(capture) && !LoginReadiness.LooksEmpty(last))
@@ -170,13 +173,32 @@ public static class CapturePlausibility
         return (lost, completed);
     }
 
-    /// <summary>Quests in the last journal that are neither in the new journal nor completed now: abandoned, or lost by the read.</summary>
-    private static int CountLeftUncompleted(CharacterSnapshot last, CharacterSnapshot capture)
+    /// <summary>Quests in the journal that only the player removes (seasonal, repeatable and unnamed ones aside).</summary>
+    private static int CountJournal(CharacterSnapshot snapshot, QuestCatalog catalog)
+    {
+        var count = 0;
+        foreach (var accepted in snapshot.Accepted)
+        {
+            if (!MayClear(accepted.QuestId, catalog))
+            {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+    /// <summary>
+    /// Quests in the last journal that are neither in the new journal nor completed now: abandoned, or lost by the read.
+    /// Seasonal quests (the game takes them out of the journal when their festival ends), repeatable and unnamed ones
+    /// are not counted.
+    /// </summary>
+    private static int CountLeftUncompleted(CharacterSnapshot last, CharacterSnapshot capture, QuestCatalog catalog)
     {
         var left = 0;
         foreach (var accepted in last.Accepted)
         {
-            if (!capture.IsCompleted(accepted.QuestId))
+            if (!capture.IsCompleted(accepted.QuestId) && !MayClear(accepted.QuestId, catalog))
             {
                 left++;
             }

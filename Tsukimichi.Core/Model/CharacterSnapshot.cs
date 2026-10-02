@@ -130,15 +130,18 @@ public sealed record CharacterSnapshot
 
     /// <summary>
     /// When this character's quest completion dates started being recorded (the first capture by a build that records
-    /// them). Quests already complete then have no date (<see cref="Runtime.CompletionDates"/>). Additive at schema v1:
-    /// null in older files and not written while null.
+    /// them). Quests already complete then have no date (<see cref="Runtime.CompletionDates"/>). The dates live in their
+    /// own file beside the snapshot (<see cref="Storage.CompletionDateFile"/>, <c>&lt;ContentId&gt;.dates.json</c>), so an
+    /// older build or a downgrade that rewrites the snapshot cannot drop them; the store reads them back into these
+    /// properties. A snapshot file written by a 1.5 preview may still carry them inline: they are read, and moved to the
+    /// dates file by the next save. Null when nothing is recorded; never written to the snapshot file.
     /// </summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public DateTime? CompletionDatesSinceUtc { get; init; }
 
     /// <summary>
     /// Runtime quest id to the UTC time the plugin first saw the quest completed. Kept once set (a seasonal quest
-    /// whose bit the game clears keeps its first date). Additive at schema v1: not written while empty.
+    /// whose bit the game clears keeps its first date). Kept in the dates file (see <see cref="CompletionDatesSinceUtc"/>).
     /// </summary>
     [OmitWhenEmpty]
     public IReadOnlyDictionary<ushort, DateTime> CompletedUtc { get; init; } = new Dictionary<ushort, DateTime>();
@@ -146,10 +149,19 @@ public sealed record CharacterSnapshot
     /// <summary>
     /// For quests found completed at a login rather than seen being completed: the time of the capture before it, the
     /// earliest the quest can have been done. The quest was completed between this and its <see cref="CompletedUtc"/>.
-    /// Additive at schema v1: not written while empty.
+    /// Kept in the dates file (see <see cref="CompletionDatesSinceUtc"/>).
     /// </summary>
     [OmitWhenEmpty]
     public IReadOnlyDictionary<ushort, DateTime> CompletedAfterUtc { get; init; } = new Dictionary<ushort, DateTime>();
+
+    /// <summary>
+    /// The completion bits of the capture that started recording dates (<see cref="CompletionDatesSinceUtc"/>): the
+    /// quests already complete then, which never get a date, even when their bit clears for a while and comes back.
+    /// Kept in the dates file only. Null when not known (a 1.5 preview's inline dates): every completed quest without
+    /// a date then counts as complete before recording started.
+    /// </summary>
+    [JsonIgnore]
+    public byte[]? CompletedBeforeBits { get; init; }
 
     /// <summary>Reads the completion bit for a quest id; false when the bitmask is shorter than the id.</summary>
     public bool IsCompleted(ushort questId)

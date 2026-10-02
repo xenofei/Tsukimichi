@@ -97,6 +97,7 @@ public sealed class Plugin : IDalamudPlugin
     private DutyFinderPanel? dutyFinderPanel;
     private Game.HookGateNotice? hookGateNotice;
     private Game.DailyOfferReader? dailyOffers;
+    private Game.GameStateReader? stateReader;
     private Game.TodoLockNotice? todoLockNotice;
     private Game.WelcomeBackSource? welcomeBack;
     private Game.IpcProvider? ipcProvider;
@@ -361,10 +362,14 @@ public sealed class Plugin : IDalamudPlugin
             CollectibleTargets = Core.Unique.Collectibles.Targets(uniqueRewards, curated),
             CollectibleFlags = CollectibleFlags,
         };
-        // The store keeps one once-a-day backup per character (<id>.prev.json, 1.5.0); a failed backup is logged and the save goes on.
+        stateReader = reader;
+        // The store keeps two backup generations per character (<id>.prev.json refreshed once a day, <id>.prev2.json
+        // the one before, 1.5.0) and never refreshes them from a file that lost many completed quests (judged with the
+        // live catalog); a failed backup is logged and the save goes on.
         var store = new Core.Storage.JsonSnapshotStore(Paths.ConfigDir)
         {
             BackupFailed = (path, ex) => Log.Warning(ex, "Snapshot backup before saving {File} failed; the save goes ahead", System.IO.Path.GetFileName(path)),
+            Catalog = () => Session?.Bundle?.Catalog,
         };
         Snapshots = new Game.SnapshotService(store, ClientState, Framework, Log, reader);
         Session = new Game.SessionState(Snapshots, Paths, uniqueRewards, curated, Log);
@@ -710,6 +715,12 @@ public sealed class Plugin : IDalamudPlugin
             if (dailyOffers is not null)
             {
                 dailyOffers.Gate = gate;
+            }
+
+            // So do the repeat flags each capture reads (QuestManager.IsQuestRepeatFlagSet).
+            if (stateReader is not null)
+            {
+                stateReader.Gate = gate;
             }
 
             hoverHint = new HoverHint(GameGui, Session, unlockReader, rewardLookup, gate, Log) { Enabled = Settings.ItemHintsEnabled };

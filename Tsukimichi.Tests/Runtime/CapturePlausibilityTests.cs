@@ -157,6 +157,87 @@ public sealed class CapturePlausibilityTests
     }
 
     [Fact]
+    public void Festival_quests_leaving_the_journal_when_the_festival_ends_are_plausible()
+    {
+        // The game takes a festival's uncompleted quests out of the journal when it ends; so do repeatables move on.
+        var last = With(OneOff.Take(5), Fixture.Accepted(Seasonal[0]), Fixture.Accepted(Seasonal[1]), Fixture.Accepted(Seasonal[2]), Fixture.Accepted(Repeatable[0]));
+
+        var result = CapturePlausibility.Check(last, With(OneOff.Take(5)), Catalog);
+
+        Assert.True(result.Plausible);
+        Assert.Equal(0, result.JournalBefore);
+
+        // Three one-off quests vanishing beside them still count.
+        var mixed = last with { Accepted = [.. last.Accepted, Fixture.Accepted(OneOff[10]), Fixture.Accepted(OneOff[11]), Fixture.Accepted(OneOff[12])] };
+        Assert.Equal(PlausibilityVerdict.EmptiedJournal, CapturePlausibility.Check(mixed, With(OneOff.Take(5)), Catalog).Verdict);
+    }
+
+    [Fact]
+    public void A_held_back_loss_that_reads_the_same_for_a_few_minutes_is_taken_in()
+    {
+        var t0 = new DateTime(2026, 10, 1, 12, 0, 0, DateTimeKind.Utc);
+        var last = With(OneOff);
+        var lossy = With(OneOff.Skip(100));
+        var result = CapturePlausibility.Check(last, lossy, Catalog);
+        Assert.False(result.Plausible);
+        var held = new HeldBackCaptures();
+
+        Assert.False(held.Observe(last, lossy, result, t0));
+        Assert.False(held.Observe(last, lossy, result, t0.AddSeconds(30)));
+        Assert.Equal(2, held.Count);
+        Assert.Equal(t0, held.SinceUtc);
+
+        // Long enough, but only from the third capture on.
+        Assert.False(held.Observe(last, lossy, result, t0.AddMinutes(1)));
+        Assert.True(held.Observe(last, lossy, result, t0 + HeldBackCaptures.AcceptAfter));
+
+        // Progress made meanwhile does not change the loss itself.
+        var playing = new HeldBackCaptures();
+        var moreProgress = With([.. OneOff.Skip(100), .. Seasonal.Take(1)]);
+        Assert.False(playing.Observe(last, lossy, result, t0));
+        Assert.False(playing.Observe(last, moreProgress, CapturePlausibility.Check(last, moreProgress, Catalog), t0.AddMinutes(1)));
+        Assert.True(playing.Observe(last, lossy, result, t0.AddMinutes(2)));
+    }
+
+    [Fact]
+    public void A_loss_that_changes_or_heals_starts_the_watch_over()
+    {
+        var t0 = new DateTime(2026, 10, 1, 12, 0, 0, DateTimeKind.Utc);
+        var last = With(OneOff);
+        var lossy = With(OneOff.Skip(100));
+        var other = With(OneOff.Skip(200));
+        var held = new HeldBackCaptures();
+
+        held.Observe(last, lossy, CapturePlausibility.Check(last, lossy, Catalog), t0);
+        held.Observe(last, lossy, CapturePlausibility.Check(last, lossy, Catalog), t0.AddMinutes(1));
+
+        // Another loss: a bad read, still moving.
+        Assert.False(held.Observe(last, other, CapturePlausibility.Check(last, other, Catalog), t0.AddMinutes(3)));
+        Assert.Equal(1, held.Count);
+        Assert.Equal(t0.AddMinutes(3), held.SinceUtc);
+
+        // A plausible capture ends the watch.
+        Assert.False(held.Observe(last, last, CapturePlausibility.Check(last, last, Catalog), t0.AddMinutes(4)));
+        Assert.Equal(0, held.Count);
+        Assert.Null(held.SinceUtc);
+    }
+
+    [Fact]
+    public void An_empty_capture_is_never_taken_in()
+    {
+        var t0 = new DateTime(2026, 10, 1, 12, 0, 0, DateTimeKind.Utc);
+        var last = With(OneOff.Take(3), Fixture.Accepted(OneOff[10]));
+        var empty = Fixture.Snapshot() with { CompletedBits = new byte[8192] };
+        var result = CapturePlausibility.Check(last, empty, Catalog);
+        var held = new HeldBackCaptures();
+
+        for (var minute = 0; minute < 30; minute++)
+        {
+            Assert.False(held.Observe(last, empty, result, t0.AddMinutes(minute)));
+        }
+    }
+
+    [Fact]
     public void A_shorter_mask_counts_the_missing_bytes_as_cleared()
     {
         var last = With(OneOff);

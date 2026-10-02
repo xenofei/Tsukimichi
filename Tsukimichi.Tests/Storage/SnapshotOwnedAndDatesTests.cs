@@ -53,11 +53,14 @@ public sealed class SnapshotOwnedAndDatesTests
         Assert.Null(lookup.Owns(RewardKind.Mount, 999));
         Assert.Null(lookup.Owns(RewardKind.Minion, 15));
 
-        // The kinds are written by name, the ids as plain arrays, the dates by runtime quest id.
+        // The kinds are written by name, the ids as plain arrays; the dates go to their own file, by runtime quest id.
         var json = JsonNode.Parse(File.ReadAllText(Path.Combine(root, "characters", "1.json")))!.AsObject();
         Assert.Equal("[15,71]", json["collectibles"]!["Mount"]!["owned"]!.ToJsonString());
-        Assert.NotNull(json["completedUtc"]![QuestRecord.ToQuestId(Fixture.B).ToString(System.Globalization.CultureInfo.InvariantCulture)]);
-        Assert.NotNull(json["completionDatesSinceUtc"]);
+        Assert.Null(json["completedUtc"]);
+        Assert.Null(json["completionDatesSinceUtc"]);
+        var dates = JsonNode.Parse(File.ReadAllText(Path.Combine(root, "characters", "1.dates.json")))!.AsObject();
+        Assert.NotNull(dates["completedUtc"]![QuestRecord.ToQuestId(Fixture.B).ToString(System.Globalization.CultureInfo.InvariantCulture)]);
+        Assert.NotNull(dates["sinceUtc"]);
     }
 
     [Fact]

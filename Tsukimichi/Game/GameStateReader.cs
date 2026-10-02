@@ -100,6 +100,14 @@ public sealed class GameStateReader
     public CollectibleReader? CollectibleFlags { get; set; }
 
     /// <summary>
+    /// The addon kill switch (T20). The repeat flags are read by calling a game function
+    /// (<c>QuestManager.IsQuestRepeatFlagSet</c>), so, like the daily offer, that call waits for the gate: while it
+    /// holds the hooks, or before it is set, no flag is captured and repeat-flag quests read as before 1.5 (not done
+    /// this cycle by their flag) rather than from a call into an untested game version.
+    /// </summary>
+    public HookGate? Gate { get; set; }
+
+    /// <summary>
     /// A capture reads the collectible flags again at least this often (in captures) even when nothing says they
     /// changed; between reads it reuses the last answer, so the usual poll does no unlock reads at all.
     /// </summary>
@@ -423,11 +431,17 @@ public sealed class GameStateReader
     /// The QuestRepeatFlag rows the client has set, ascending, through the game's own
     /// <c>QuestManager.IsQuestRepeatFlagSet</c> (rows 1 to <see cref="RepeatFlagRows"/> - 1; 0 is "no flag"). A
     /// repeatable carrying a set flag (<see cref="QuestRecord.RepeatFlag"/>) was turned in this cycle; the game clears
-    /// it at that quest's daily or weekly reset. Empty, logged once, when the function did not resolve.
+    /// it at that quest's daily or weekly reset. Empty, logged once, when the function did not resolve; empty while
+    /// the <see cref="Gate"/> holds the game hooks.
     /// </summary>
     private unsafe List<byte> ReadRepeatFlags(QuestManager* qm)
     {
         var flags = new List<byte>();
+        if (Gate is not { HooksAllowed: true })
+        {
+            return flags;
+        }
+
         if (QuestManager.Addresses.IsQuestRepeatFlagSet.Value == 0)
         {
             if (!repeatFlagsWarned)
