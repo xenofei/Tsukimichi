@@ -1,0 +1,108 @@
+{
+  "headline": "Menphina's Medallion (D) led on both glyphs (6.91) and icon (7.54), and all six jurors picked its icon. Nothing reached the 8.0 ship bar, so nothing ships yet; D is the base for a short round 3 that fixes known row-size problems.",
+  "recommendation": "Take D's icon forward with dimmer, flatter glints moved clear of the Installed checkmark, and one quiet detail on the crescent. For the glyphs, use D's medallion material with A's row-size legibility: thin hairline rims on resting states, a Ready whose road glints break out of an opened bezel, the Done and Completed meanings swapped, a crescent for Ready on another job, and a single-wisp Not checked. Then rerun the same blind test and metrics.",
+  "concepts": {
+    "aether-crystal": {
+      "liked": [
+        "best row legibility and distinctness (weakest pair 17.6)",
+        "Ready's road breaks the circle, so it can be found by shape alone, even colour-blind",
+        "calm cool moonstone, no cheese",
+        "favourite glyph set of the veteran raider and colour-blind jurors"
+      ],
+      "failed": [
+        "Locked out reads as a no-entry sign (all six jurors)",
+        "Completed reads as a coin or gem",
+        "Done reads as a check-circle",
+        "Not checked reads as a hamburger menu at 16 px",
+        "Ready at 16 px reads as a lollipop or magnifier; teal glow looks like a mobile-game claim button",
+        "icon road reads as stepping stones; aetheryte is a speck"
+      ]
+    },
+    "astrologian-orrery": {
+      "liked": [
+        "Blocked's engraved constellation",
+        "Dalamud as a small rose moon in the icon",
+        "round icon matches the Ready glyph exactly"
+      ],
+      "failed": [
+        "24 rim ticks read as sun rays, decoration with no meaning",
+        "Ready reads as a lightbulb or user icon at 16 px, with two pills below",
+        "Not checked reads as Saturn",
+        "Completed reads as a gold coin",
+        "Locked out reads as a stray slash",
+        "icon road is a brick stack as bright as the moon; ring reads as a clock"
+      ]
+    },
+    "ishgard-glass": {
+      "liked": [
+        "most specific FFXIV idea (Ishgard stained glass)",
+        "Ishgard skyline in the icon is the best FFXIV detail of the round",
+        "Blocked is the prettiest single moon"
+      ],
+      "failed": [
+        "lead lines vanish below 48 px, leaving plain discs in game",
+        "Locked out reads as a no-entry sign",
+        "Ready reads as a lollipop or hand mirror",
+        "Not checked nearly disappears on daylight scenes",
+        "Ready on another job reads as an AI sparkle",
+        "icon moon is a gilt-framed plate (lemon slice, clock) its reflection cannot match; road is a hex pyramid"
+      ]
+    },
+    "menphina-medallion": {
+      "liked": [
+        "most FFXIV-feeling family, built like job-icon medals",
+        "finest detail at large sizes",
+        "cracked red Dalamud is the only Locked out that is not a no-entry sign",
+        "Ready, a moon over the sea in a gilt medal, is the best Ready in the panel",
+        "icon reflection sits under the lit crescent in the same colour, dimmer and broken, answering the round-1 complaint",
+        "lantern and aetheryte island give the icon a sense of place"
+      ],
+      "failed": [
+        "same rim on all eight makes the row look like radio buttons at 16 px",
+        "Blocked and Completed read as a hollow and filled radio button pair",
+        "Ready on another job reads as a contrast toggle",
+        "Done reads as a check-circle; Not checked as a hamburger in a ring",
+        "Ready's only greyscale cue is its gold rim",
+        "icon glints nearly as bright as the moon and look like leaves; road touches the Installed checkmark; moon is the plainest element",
+        "over the new-colour budget"
+      ]
+    }
+  },
+  "shared": [
+    {
+      "problem": "Done and Completed read backwards: a check means finished, a blank full moon means nothing (new player swapped them in every set)",
+      "fix": "Put the check on Completed; give Done this cycle a comes-back mark such as a short gilt arc along the waning half's dark edge, tested against a refresh-icon read"
+    },
+    {
+      "problem": "Completed reads as a coin or radio button",
+      "fix": "Brighter face with a pale edge band and a gilt check crossing the lower-right edge; no ring at row size"
+    },
+    {
+      "problem": "Not checked reads as a hamburger menu (two parallel bars)",
+      "fix": "One curved, tapered mist wisp at a slight angle, no ring, bright enough to survive daylight scenes"
+    },
+    {
+      "problem": "Locked out reads as a no-entry sign (diagonal band in A and C, slash in B)",
+      "fix": "Use D's cracked Dalamud, with a thicker, darker crack that works without colour"
+    },
+    {
+      "problem": "A half moon in a ring reads as a contrast toggle",
+      "fix": "Make Ready on another job a crescent with a larger crystal"
+    }
+  ],
+  "next": [
+    "Icon: lower the brightest glints to about 85% of the crescent's brightness",
+    "Icon: flatten and vary the glints into horizontal ripple streaks",
+    "Icon: shift moon and road slightly left, clear of the Installed checkmark",
+    "Icon: add one quiet detail to the crescent (faint earthshine or one facet line)",
+    "Glyphs: thin, darker pewter hairline rims on the seven resting states; full gilt bezel on Ready only",
+    "Ready: open the bezel at the bottom and let two road glints cross it; no glow",
+    "Swap meanings: check moves to Completed; Done this cycle gets a comes-back arc",
+    "Completed: brighter face with an edge band; drop the moon-daisy if it costs clarity",
+    "Ready on another job: crescent with a larger crystal to separate it from Blocked",
+    "Not checked: single curved wisp, no ghost ring",
+    "Locked out: keep the crack and thicken it",
+    "Fold iron and oxidised pewter into pewter to meet the colour budget",
+    "Rerun the blind test and metrics on the revised set"
+  ]
+}

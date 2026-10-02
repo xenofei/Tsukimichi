@@ -1,0 +1,92 @@
+{
+ "A": {
+  "glyph": 6.7,
+  "icon": 6.88,
+  "owner_glyph": 6.4,
+  "owner_icon": 6.25,
+  "crit": {
+   "identity": 6.3,
+   "ffxiv": 6.3,
+   "craft": 6.7,
+   "legibility": 7.3,
+   "distinct": 7.2,
+   "meaning": 6.5,
+   "coherence": 7,
+   "taste": 6.3
+  }
+ },
+ "B": {
+  "glyph": 5.76,
+  "icon": 6.12,
+  "owner_glyph": 5.4,
+  "owner_icon": 5.75,
+  "crit": {
+   "identity": 5.5,
+   "ffxiv": 6.5,
+   "craft": 5.5,
+   "legibility": 6,
+   "distinct": 6.2,
+   "meaning": 5.7,
+   "coherence": 5.7,
+   "taste": 4.8
+  }
+ },
+ "C": {
+  "glyph": 5.87,
+  "icon": 6.29,
+  "owner_glyph": 5.75,
+  "owner_icon": 6.25,
+  "crit": {
+   "identity": 5.3,
+   "ffxiv": 6.5,
+   "craft": 6,
+   "legibility": 5.5,
+   "distinct": 5.7,
+   "meaning": 5.8,
+   "coherence": 6.5,
+   "taste": 5.7
+  }
+ },
+ "D": {
+  "glyph": 6.91,
+  "icon": 7.54,
+  "owner_glyph": 6.9,
+  "owner_icon": 7.75,
+  "crit": {
+   "identity": 6.8,
+   "ffxiv": 7.3,
+   "craft": 7.5,
+   "legibility": 6.5,
+   "distinct": 5.8,
+   "meaning": 6.5,
+   "coherence": 7.5,
+   "taste": 7
+  }
+ },
+ "jurors": {
+  "colour-blind": {
+   "fg": "A",
+   "fi": "D"
+  },
+  "ffxiv-art": {
+   "fg": "D",
+   "fi": "D"
+  },
+  "glamour": {
+   "fg": "D",
+   "fi": "D"
+  },
+  "new-player": {
+   "fg": "D",
+   "fi": "D"
+  },
+  "owner-proxy": {
+   "fg": "D",
+   "fi": "D"
+  },
+  "veteran-raider": {
+   "fg": "A",
+   "fi": "D"
+  }
+ }
+}

@@ -1,0 +1,4 @@
+Concept A: 1=Completed, 2=Not checked, 3=Locked out, 4=Done this cycle, 5=Ready, 6=In journal, 7=Blocked, 8=Ready on another job
+Concept B: 1=Done this cycle, 2=Ready on another job, 3=Not checked, 4=Blocked, 5=Locked out, 6=Ready, 7=In journal, 8=Completed
+Concept C: 1=Locked out, 2=Ready, 3=Blocked, 4=In journal, 5=Completed, 6=Done this cycle, 7=Not checked, 8=Ready on another job
+Concept D: 1=Completed, 2=Done this cycle, 3=Ready on another job, 4=Blocked, 5=Not checked, 6=Ready, 7=In journal, 8=Locked out
