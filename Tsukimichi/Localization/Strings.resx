@@ -2917,6 +2917,146 @@
   <data name="RouteToUnlockNone" xml:space="preserve">
     <value>Every job is unlocked.</value>
   </data>
+  <data name="RouteFollow" xml:space="preserve">
+    <value>Follow this route</value>
+  </data>
+  <data name="RouteFollowTooltip" xml:space="preserve">
+    <value>Show the coming steps of this route in the todo overlay. Steps drop off as you turn them in; your pins are not touched.</value>
+  </data>
+  <data name="RouteFollowUnavailable" xml:space="preserve">
+    <value>Log in or pick a character to follow a route.</value>
+  </data>
+  <data name="RouteStopFollowing" xml:space="preserve">
+    <value>Stop following</value>
+  </data>
+  <data name="RouteStopFollowingTooltip" xml:space="preserve">
+    <value>Take this route out of the todo overlay. Nothing else changes.</value>
+  </data>
+  <data name="RouteFlagNextStop" xml:space="preserve">
+    <value>Flag next stop</value>
+  </data>
+  <data name="RouteFlagNextStopTooltip" xml:space="preserve">
+    <value>Open the map with the flag on the giver of the next quest to pick up</value>
+  </data>
+  <data name="RouteFlagNextStopUnavailable" xml:space="preserve">
+    <value>The next quest's giver has no place on the map.</value>
+  </data>
+  <data name="RouteStepFlag" xml:space="preserve">
+    <value>Flag</value>
+  </data>
+  <data name="RouteStepFlagTooltip" xml:space="preserve">
+    <value>Open the map with the flag on this quest's giver</value>
+  </data>
+  <data name="RouteStepFlagUnavailable" xml:space="preserve">
+    <value>This quest's giver has no place on the map.</value>
+  </data>
+  <data name="RouteStepTeleport" xml:space="preserve">
+    <value>Teleport</value>
+  </data>
+  <data name="RouteTeleportNeedsLifestream" xml:space="preserve">
+    <value>Teleport needs the Lifestream plugin.</value>
+  </data>
+  <data name="RouteStopFormat" xml:space="preserve">
+    <value>{0} quests near {1}</value>
+    <comment>{0} = steps in a row whose givers share the nearest aetheryte, {1} = the aetheryte's place name.</comment>
+  </data>
+  <data name="RouteStopTooltip" xml:space="preserve">
+    <value>These steps' givers share the nearest aetheryte: one teleport covers them all. The order is still the route's.</value>
+  </data>
+  <data name="RouteNearFormat" xml:space="preserve">
+    <value>near {0}</value>
+    <comment>{0} = the aetheryte nearest the quest's giver.</comment>
+  </data>
+  <data name="RouteReachesFormat" xml:space="preserve">
+    <value>→ {0}</value>
+    <comment>Mark on the step that completes a milestone of a route to several targets. {0} = the milestones ("Dragoon quests").</comment>
+  </data>
+  <data name="RouteEverythingJobFormat" xml:space="preserve">
+    <value>Route: everything for {0}</value>
+    <comment>{0} = job name.</comment>
+  </data>
+  <data name="RouteEverythingTooltip" xml:space="preserve">
+    <value>One route through the job's unlock quest, its job quests and its role quests, up to your level cap</value>
+  </data>
+  <data name="PlanRouteBlues" xml:space="preserve">
+    <value>Route</value>
+  </data>
+  <data name="PlanRouteBluesTooltip" xml:space="preserve">
+    <value>One route through every quest this card lists and what they need first</value>
+  </data>
+  <data name="PlanRouteToThis" xml:space="preserve">
+    <value>Route to this</value>
+  </data>
+  <data name="PlanRouteToThisTooltip" xml:space="preserve">
+    <value>The quests still to do before this unlock; for a duty or system, through whichever quest opens it soonest</value>
+  </data>
+  <data name="PlanFlagNextStopTooltip" xml:space="preserve">
+    <value>Open the map with the flag on the giver of the first quest listed that you can start now</value>
+  </data>
+  <data name="PlanFlagNextStopUnavailable" xml:space="preserve">
+    <value>Nothing listed can be started now.</value>
+  </data>
+  <data name="DutyHintRoute" xml:space="preserve">
+    <value>Route to unlock</value>
+  </data>
+  <data name="DutyHintRouteTooltip" xml:space="preserve">
+    <value>Open the route: the quests still to do before this duty opens</value>
+  </data>
+  <data name="TodoSectionNextStops" xml:space="preserve">
+    <value>Next stops</value>
+  </data>
+  <data name="TodoRouteStop" xml:space="preserve">
+    <value>Stop</value>
+  </data>
+  <data name="TodoRouteMoreTooltip" xml:space="preserve">
+    <value>Open the whole route</value>
+  </data>
+  <data name="TodoPinsMenuHint" xml:space="preserve">
+    <value>Right-click: route through your pins</value>
+  </data>
+  <data name="TodoRoutePins" xml:space="preserve">
+    <value>Route through my pins</value>
+  </data>
+  <data name="TodoRoutePinsTooltip" xml:space="preserve">
+    <value>One route through every pin and what it needs first, in the order to do them</value>
+  </data>
+  <data name="TodoStopClickHint" xml:space="preserve">
+    <value>Click shows its first quest · … teleports there</value>
+  </data>
+  <data name="TodoConfigShowRoute" xml:space="preserve">
+    <value>Followed route</value>
+  </data>
+  <data name="TodoConfigShowRouteHint" xml:space="preserve">
+    <value>The next three steps of the route you follow ("Follow this route" in the route window)</value>
+  </data>
+  <data name="TodoConfigRouteFlagAdvance" xml:space="preserve">
+    <value>Move the map flag to the next stop as you go</value>
+  </data>
+  <data name="TodoConfigRouteFlagAdvanceHint" xml:space="preserve">
+    <value>When you turn in a step of the followed route, the map flag moves to the next quest's giver. The map does not open.</value>
+  </data>
+  <data name="TodoConfigShowNextStops" xml:space="preserve">
+    <value>Next stops</value>
+  </data>
+  <data name="TodoConfigShowNextStopsHint" xml:space="preserve">
+    <value>Quests you can pick up now, grouped by the aetheryte nearest their givers: your zone first, then the busiest stops</value>
+  </data>
+  <data name="TonightStopsTitle" xml:space="preserve">
+    <value>Next stops</value>
+  </data>
+  <data name="TonightStopFormat" xml:space="preserve">
+    <value>{0} · {1}</value>
+    <comment>{0} = aetheryte place name, {1} = "3 quests · 1 unlock".</comment>
+  </data>
+  <data name="TonightStopHereSuffix" xml:space="preserve">
+    <value> (here)</value>
+  </data>
+  <data name="TonightStopTeleport" xml:space="preserve">
+    <value>Teleport</value>
+  </data>
+  <data name="TonightStopTooltip" xml:space="preserve">
+    <value>Click shows the first quest there</value>
+  </data>
   <data name="SeasonalHeaderFormat" xml:space="preserve">
     <value>Seasonal events ({0} running)</value>
     <comment>{0} = number of running events.</comment>
@@ -4689,6 +4829,62 @@
   <data name="Core.Route.MsqLabel" xml:space="preserve">
     <value>MSQ:</value>
     <comment>Core: UnlockRoute.cs.</comment>
+  </data>
+  <data name="Core.Route.JobUnlocked" xml:space="preserve">
+    <value>{0} unlocked</value>
+    <comment>Core: RouteTarget.cs. Milestone of an "everything for a job" route. {0} = job name.</comment>
+  </data>
+  <data name="Core.Route.JobQuestsPart" xml:space="preserve">
+    <value>{0} quests</value>
+    <comment>Core: RouteTarget.cs. Milestone of an "everything for a job" route. {0} = job name.</comment>
+  </data>
+  <data name="Core.Route.RoleQuestsPart" xml:space="preserve">
+    <value>Role quests</value>
+    <comment>Core: RouteTarget.cs. Milestone of an "everything for a job" route.</comment>
+  </data>
+  <data name="Core.Route.JobQuestsLabel" xml:space="preserve">
+    <value>everything for {0}</value>
+    <comment>Core: RouteTarget.cs. A route's target, read after "Route to" and "Route:". {0} = job name.</comment>
+  </data>
+  <data name="Core.Route.PinsLabel" xml:space="preserve">
+    <value>all your pins</value>
+    <comment>Core: RouteTarget.cs. A route's target, read after "Route to" and "Route:".</comment>
+  </data>
+  <data name="Core.Route.BluesLabel" xml:space="preserve">
+    <value>{0} blues</value>
+    <comment>Core: RouteTarget.cs. A route's target, read after "Route to" and "Route:". {0} = expansion name.</comment>
+  </data>
+  <data name="Core.Route.GateLine" xml:space="preserve">
+    <value>Level {0} needed from step {1} (you are {2})</value>
+    <comment>Core: ActiveRoute.cs. Todo overlay route section. {0} = level, {1} = step number, {2} = the character's level.</comment>
+  </data>
+  <data name="Core.Route.GateLineNoLevel" xml:space="preserve">
+    <value>Level {0} needed from step {1}</value>
+    <comment>Core: ActiveRoute.cs. {0} = level, {1} = step number.</comment>
+  </data>
+  <data name="Core.Route.Completed" xml:space="preserve">
+    <value>Route complete: {0}.</value>
+    <comment>Core: ActiveRoute.cs. Chat line when a followed route runs out. {0} = the route's target.</comment>
+  </data>
+  <data name="Core.Stops.CountOne" xml:space="preserve">
+    <value>1 quest</value>
+    <comment>Core: StopPlanner.cs.</comment>
+  </data>
+  <data name="Core.Stops.Count" xml:space="preserve">
+    <value>{0} quests</value>
+    <comment>Core: StopPlanner.cs. {0} = quests at the stop.</comment>
+  </data>
+  <data name="Core.Stops.UnlockOne" xml:space="preserve">
+    <value>1 unlock</value>
+    <comment>Core: StopPlanner.cs.</comment>
+  </data>
+  <data name="Core.Stops.Unlocks" xml:space="preserve">
+    <value>{0} unlocks</value>
+    <comment>Core: StopPlanner.cs. {0} = unlock quests at the stop.</comment>
+  </data>
+  <data name="Core.Todo.RouteTitle" xml:space="preserve">
+    <value>Route: {0}</value>
+    <comment>Core: TodoList.cs. The overlay's route section caption. {0} = the route's target.</comment>
   </data>
   <data name="Core.Age.JustNow" xml:space="preserve">
     <value>just now</value>

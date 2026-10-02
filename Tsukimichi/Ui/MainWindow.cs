@@ -187,6 +187,13 @@ public sealed class MainWindow : Window, IDisposable
         tonightCard.PayoffLines = lines ?? throw new ArgumentNullException(nameof(lines));
     }
 
+    /// <summary>"Next stops" (1.6.0): the Tonight card lists the first stops with Teleport.</summary>
+    public void AttachNextStops(NextStopsSource stops)
+    {
+        tonightCard.Stops = stops ?? throw new ArgumentNullException(nameof(stops));
+        tonightCard.Links = links;
+    }
+
     /// <summary>Gives the detail pane the user's unique-reward verdicts so it can show and change them.</summary>
     public void AttachOverrides(IUniqueOverrides overrides)
     {

@@ -352,7 +352,18 @@ public sealed unsafe class DutyFinderHint : IDisposable
         // panel already has rather than hand it an equal new one.
         model = previous is not null && SameContent(previous, selected, duty.Name, quests, more)
             ? previous
-            : new DutyHintModel(selected, duty.Name, quests.Count == 0 ? NoQuests : quests.ToArray(), more);
+            : new DutyHintModel(selected, duty.Name, quests.Count == 0 ? NoQuests : quests.ToArray(), more) { AllQuestRowIds = RowIds(resolved) };
+    }
+
+    private static uint[] RowIds(IReadOnlyList<QuestRecord> quests)
+    {
+        var ids = new uint[quests.Count];
+        for (var i = 0; i < ids.Length; i++)
+        {
+            ids[i] = quests[i].RowId;
+        }
+
+        return ids;
     }
 
     private static bool SameContent(DutyHintModel previous, uint condition, string dutyName, List<DutyHintQuest> lines, string more)
@@ -427,7 +438,11 @@ public sealed unsafe class DutyFinderHint : IDisposable
 /// <param name="DutyName">Its Duty Finder name, first letter raised.</param>
 /// <param name="Quests">The quests that unlock it, at most <see cref="DutyFinderHint.MaxQuests"/>.</param>
 /// <param name="MoreText">"and N more" when more quests unlock it; empty otherwise.</param>
-public sealed record DutyHintModel(uint ContentFinderConditionId, string DutyName, IReadOnlyList<DutyHintQuest> Quests, string MoreText);
+public sealed record DutyHintModel(uint ContentFinderConditionId, string DutyName, IReadOnlyList<DutyHintQuest> Quests, string MoreText)
+{
+    /// <summary>Every quest that unlocks the duty (not only the first <see cref="DutyFinderHint.MaxQuests"/>), for "Route to unlock".</summary>
+    public IReadOnlyList<uint> AllQuestRowIds { get; init; } = [];
+}
 
 /// <summary>One unlocking quest of <see cref="DutyHintModel"/>, its strings built once.</summary>
 /// <param name="Quest">The quest record (for Reveal and Flag giver).</param>

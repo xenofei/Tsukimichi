@@ -62,13 +62,16 @@ public sealed partial class CharactersPane
     }
 
     /// <summary>
-    /// The right-click menu on a Jobs table row: "Route to unlock &lt;job&gt;" for each locked job the class grows into.
-    /// A row with no such job (a job, or a class whose jobs are all unlocked) gets no menu at all.
+    /// The right-click menu on a Jobs table row: "Route to unlock &lt;job&gt;" for each locked job the class grows into,
+    /// then (1.6.0) "Route: everything for &lt;job&gt;" for the jobs the row stands for (a class's jobs, else the row's
+    /// own job): its unlock quest, its job quests and its role quests up to the character's level cap, in one route.
+    /// A row with neither gets no menu at all.
     /// </summary>
     private void DrawJobRowRouteMenu(UiState ui, Dashboard d, uint jobId)
     {
         var locked = LockedJobs(d);
-        if (!HasLockedJobFrom(locked, jobId))
+        var everything = EverythingJobs(d, jobId);
+        if (!HasLockedJobFrom(locked, jobId) && everything.Count == 0)
         {
             return;
         }
@@ -92,6 +95,73 @@ public sealed partial class CharactersPane
                 ui.OpenRoute(RouteTarget.ForJob(job.Name, job.UnlockQuestRowId));
             }
         }
+
+        foreach (var job in everything)
+        {
+            if (ImGui.MenuItem(job.MenuLabel) && d.Bundle is { } bundle)
+            {
+                ui.OpenRoute(RouteTarget.ForJobQuests(ladder, bundle.Catalog, job.JobId, job.Name, job.UnlockQuestRowId, d.Snapshot.LevelCap));
+            }
+
+            if (ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(Strings.RouteEverythingTooltip);
+            }
+        }
+    }
+
+    private object? everythingFor;
+    private LockedJob[] everythingJobs = [];
+    private readonly List<LockedJob> everythingRow = [];
+
+    /// <summary>
+    /// The jobs a row's "everything" entries route to: the jobs a class grows into, else the row's own job, each only
+    /// when it has quests (a ladder or an unlock quest). Built once per dashboard, filtered per row without allocating.
+    /// </summary>
+    private List<LockedJob> EverythingJobs(Dashboard d, uint jobId)
+    {
+        if (!ReferenceEquals(everythingFor, d))
+        {
+            everythingFor = d;
+            var list = new List<LockedJob>();
+            if (d.Bundle is { } bundle)
+            {
+                foreach (var info in bundle.Names.ClassJobInfos)
+                {
+                    if (info.Name.Length == 0 || (info.UnlockQuestRowId == 0 && ladder.ForJob(info.RowId) is null))
+                    {
+                        continue;
+                    }
+
+                    var name = DisplayName(info.Name);
+                    list.Add(new LockedJob(info.RowId, info.ParentRowId, name, info.UnlockQuestRowId, string.Format(CultureInfo.CurrentCulture, Strings.RouteEverythingJobFormat, name)));
+                }
+            }
+
+            everythingJobs = list.ToArray();
+        }
+
+        everythingRow.Clear();
+        foreach (var job in everythingJobs)
+        {
+            if (job.ParentId == jobId && job.JobId != jobId)
+            {
+                everythingRow.Add(job);
+            }
+        }
+
+        if (everythingRow.Count == 0)
+        {
+            foreach (var job in everythingJobs)
+            {
+                if (job.JobId == jobId)
+                {
+                    everythingRow.Add(job);
+                }
+            }
+        }
+
+        return everythingRow;
     }
 
     private static bool HasLockedJobFrom(LockedJob[] locked, uint jobId)

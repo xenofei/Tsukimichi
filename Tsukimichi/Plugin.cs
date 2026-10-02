@@ -104,6 +104,7 @@ public sealed class Plugin : IDalamudPlugin
     private TodoOverlay? todoOverlay;
     private Localization.LocService? loc;
     private RouteWindow? routeWindow;
+    private Game.ActiveRouteService? activeRoutes;
 
     /// <summary>
     /// Rebuilds the catalog under the current <see cref="Config.Configuration.JournalFiling"/> and hands it to the
@@ -832,8 +833,13 @@ public sealed class Plugin : IDalamudPlugin
             {
                 Multibox.UserFilesChanged += OnUserFilesChanged;
             }
-            // Unlock route (P6): the detail pane, a Moonlit row's menu and the Characters job rows ask UiState for it.
-            routeWindow = new RouteWindow(Session, queryRunner, quest =>
+            // The followed route (1.6.0): stored in Settings, rebuilt from the owner's states; its map flag follows the
+            // next stop as steps are turned in, through a game call that obeys the hooks' kill switch.
+            activeRoutes = new Game.ActiveRouteService(Settings, Session, gameLinks, new Game.MapFlag(Log) { Gate = gate }, () => Settings.Save(PluginInterface), Log);
+            Game.ActiveRouteService followed = activeRoutes;
+            // Unlock route (P6): the detail pane, a Moonlit row's menu, the Characters job rows, My blues, the Duty
+            // Finder panel and the todo overlay's pins ask UiState for it.
+            routeWindow = new RouteWindow(Session, queryRunner, gameLinks, followed, quest =>
             {
                 mainWindow.IsOpen = true;
                 mainWindow.BringToFront();
@@ -841,12 +847,43 @@ public sealed class Plugin : IDalamudPlugin
             });
             windowSystem.AddWindow(routeWindow);
             ui.RouteRequested += routeWindow.Show;
+            RouteWindow routes = routeWindow;
+            // "Route to unlock" beside the Duty Finder: every quest that opens the selected duty.
+            dutyFinderPanel.OpenRoute = model =>
+            {
+                if (Session.Bundle is not { } bundle)
+                {
+                    return;
+                }
+
+                var duty = Core.Route.RouteTarget.ForDuty(bundle.Catalog, Core.Model.RewardKind.DutyUnlock, model.ContentFinderConditionId, model.DutyName, moonlit.Catalog.All);
+                var quests = new System.Collections.Generic.List<uint>(duty.QuestRowIds);
+                foreach (var rowId in model.AllQuestRowIds)
+                {
+                    if (!quests.Contains(rowId))
+                    {
+                        quests.Add(rowId);
+                    }
+                }
+
+                ui.OpenRoute(duty with { QuestRowIds = quests });
+            };
             // The flight index (a few small sheets) is built on the pane's first draw, on the framework thread.
             flightPane = new FlightPane(Session, unlockReader, gameLinks, TextureProvider, Log, () => ClientState.TerritoryType, () => FlightIndex.Build(DataManager.Excel, Dalamud.Utility.ClientLanguageExtensions.ToLumina(DataManager.Language), Strings.FlightAllZonesFormat));
             mainWindow.AttachFlight(flightPane);
             // Clear my blues (P3): the duty kinds (ContentFinderCondition) are read on the plan's first use.
-            planSource = new PlanSource(Session, () => DutyIndex.Build(DataManager.Excel, Dalamud.Utility.ClientLanguageExtensions.ToLumina(DataManager.Language)), Log);
-            mainWindow.AttachPlan(new PlanPane(Session, planSource, gameLinks, Settings, () => Settings.Save(PluginInterface)));
+            planSource = new PlanSource(Session, () => DutyIndex.Build(DataManager.Excel, Dalamud.Utility.ClientLanguageExtensions.ToLumina(DataManager.Language)), Log)
+            {
+                // Zones of a level band are walked region by region (1.6.0), the region read from the giver's map.
+                RegionOfMap = mapId => gameLinks.Map(mapId)?.Region ?? string.Empty,
+            };
+            mainWindow.AttachPlan(new PlanPane(Session, planSource, gameLinks, Settings, () => Settings.Save(PluginInterface))
+            {
+                RewardEntries = () => moonlit.Catalog.All,
+            });
+            // Next stops (1.6.0): Ready quests batched by aetheryte, for the Tonight card and the todo overlay.
+            var nextStops = new NextStopsSource(Session, gameLinks, queryRunner, planSource, followed, Settings, () => ClientState.TerritoryType);
+            mainWindow.AttachNextStops(nextStops);
             chatNotifier = new Game.ChatNotifier(Session, Settings, Paths, gameLinks, ChatGui, Log);
             // "Before you continue" (P5): the dashboard and the Tonight card lines, and the once-per-character chat line.
             var payoffGates = new Game.PayoffGateSource(Session, Log);
@@ -888,6 +925,10 @@ public sealed class Plugin : IDalamudPlugin
             }, ClientState, Condition, Paths, PluginInterface, Log);
             todoOverlay.Plan = planSource;
             todoOverlay.ShowPins = mainWindow.ShowPinned;
+            todoOverlay.ActiveRoutes = followed;
+            todoOverlay.NextStops = nextStops;
+            todoOverlay.OpenRoute = ui.OpenRoute;
+            todoOverlay.ShowFollowedRoute = () => routes.ShowFollowed();
             windowSystem.AddWindow(todoOverlay);
             // 0.8.0: Locked became click-through; a player who upgraded with it on is told once in chat.
             todoLockNotice = new Game.TodoLockNotice(Settings, ClientState, ChatGui, PluginInterface, Log);
@@ -1042,6 +1083,7 @@ public sealed class Plugin : IDalamudPlugin
         Unwind("todo lock notice", () => todoLockNotice?.Dispose());
         Unwind("since you were away", () => welcomeBack?.Dispose());
         Unwind("todo overlay", () => todoOverlay?.Dispose());
+        Unwind("followed route", () => activeRoutes?.Dispose());
         Unwind("server bar entry", () => dtrEntry?.Dispose());
         Unwind("nearby window", () => discoveryWindow?.Dispose());
         Unwind("main window", () => mainWindow?.Dispose());

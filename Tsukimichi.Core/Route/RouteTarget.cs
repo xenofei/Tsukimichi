@@ -1,5 +1,8 @@
+using System.Globalization;
 using Tsukimichi.Core.Jobs;
+using Tsukimichi.Core.Localization;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Plan;
 
 namespace Tsukimichi.Core.Route;
 
@@ -20,6 +23,15 @@ public enum RouteTargetKind : byte
 
     /// <summary>A Moonlit reward: the quest that grants it.</summary>
     Reward,
+
+    /// <summary>"Everything for a job" (1.6.0): its unlock quest, its job quests and its role's quests, up to the level cap.</summary>
+    JobQuests,
+
+    /// <summary>"All my pins" (1.6.0): every pinned quest still to do.</summary>
+    Pins,
+
+    /// <summary>"This expansion's blues" (1.6.0): the unlock quests of one expansion left in My blues.</summary>
+    Blues,
 }
 
 /// <summary>
@@ -33,6 +45,170 @@ public enum RouteTargetKind : byte
 /// <param name="QuestRowIds">Quest sheet row ids any one of which unlocks the target, distinct, in the order given.</param>
 public sealed record RouteTarget(RouteTargetKind Kind, string Label, IReadOnlyList<uint> QuestRowIds)
 {
+    /// <summary>
+    /// A route to several things at once (1.6.0, "Everything for a job", "All my pins", "This expansion's blues"): each
+    /// part is a target of its own, the route runs through the union of their closures in one order
+    /// (<see cref="UnlockRoute.Build"/>), and every part is a milestone. Empty for a single target, whose variants
+    /// <see cref="QuestRowIds"/> lists. Parts sharing a <see cref="Label"/> make one milestone, reached with the last
+    /// of them; a part without a label is a milestone of its own, its quest marked as a target.
+    /// </summary>
+    public IReadOnlyList<RouteTarget> Parts { get; init; } = [];
+
+    /// <summary>True for a route to several targets (<see cref="Parts"/>).</summary>
+    public bool IsUnion => Parts.Count > 0;
+
+    /// <summary>
+    /// A target made of <paramref name="parts"/> (see <see cref="Parts"/>); parts with no quest are dropped, and
+    /// <see cref="QuestRowIds"/> lists every part's quests once, in order.
+    /// </summary>
+    public static RouteTarget Union(RouteTargetKind kind, string label, IEnumerable<RouteTarget> parts)
+    {
+        ArgumentNullException.ThrowIfNull(parts);
+        var kept = new List<RouteTarget>();
+        var quests = new List<uint>();
+        var seen = new HashSet<uint>();
+        foreach (var part in parts)
+        {
+            if (part is null || part.QuestRowIds.Count == 0)
+            {
+                continue;
+            }
+
+            kept.Add(part);
+            foreach (var id in part.QuestRowIds)
+            {
+                if (seen.Add(id))
+                {
+                    quests.Add(id);
+                }
+            }
+        }
+
+        return new RouteTarget(kind, label ?? string.Empty, quests) { Parts = kept };
+    }
+
+    /// <summary>
+    /// "Everything for a job": the job's unlock quest (milestone "Dragoon unlocked"), every quest of its ladder
+    /// (<see cref="JobLadder.ForJob"/>, its base class's included; milestone "Dragoon quests") and every quest of its
+    /// role's ladder (<see cref="JobLadder.RoleLadder"/>; milestone "Role quests"), each up to
+    /// <paramref name="levelCap"/> (0 for no cap). A job with no ladder and no unlock quest gives an empty target.
+    /// </summary>
+    /// <param name="jobName">The job's name as the route is titled ("Dragoon").</param>
+    /// <param name="unlockQuestRowId">The job's unlock quest (<see cref="LadderJob.UnlockQuestRowId"/>); 0 when it has none.</param>
+    public static RouteTarget ForJobQuests(JobLadder ladder, QuestCatalog catalog, uint jobId, string jobName, uint unlockQuestRowId, byte levelCap = 0)
+    {
+        ArgumentNullException.ThrowIfNull(ladder);
+        ArgumentNullException.ThrowIfNull(catalog);
+        var name = jobName ?? string.Empty;
+        var parts = new List<RouteTarget>();
+        if (unlockQuestRowId != 0)
+        {
+            parts.Add(new RouteTarget(RouteTargetKind.Job, F("Core.Route.JobUnlocked", "{0} unlocked", name), [unlockQuestRowId]));
+        }
+
+        bool Within(uint rowId) =>
+            rowId != unlockQuestRowId && catalog.TryGetByRowId(rowId, out var quest) && (levelCap == 0 || quest.Level <= levelCap);
+
+        if (ladder.ForJob(jobId) is { } entry)
+        {
+            var label = F("Core.Route.JobQuestsPart", "{0} quests", name);
+            foreach (var rowId in entry.QuestRowIds)
+            {
+                if (Within(rowId))
+                {
+                    parts.Add(new RouteTarget(RouteTargetKind.Quest, label, [rowId]));
+                }
+            }
+        }
+
+        if (ladder.RoleOf(jobId) is { } role)
+        {
+            var label = CoreText.T("Core.Route.RoleQuestsPart", "Role quests");
+            foreach (var rowId in ladder.RoleLadder(role))
+            {
+                if (Within(rowId))
+                {
+                    parts.Add(new RouteTarget(RouteTargetKind.Quest, label, [rowId]));
+                }
+            }
+        }
+
+        return Union(RouteTargetKind.JobQuests, F("Core.Route.JobQuestsLabel", "everything for {0}", name), parts);
+    }
+
+    /// <summary>"All my pins": every pinned quest, in the order pinned, each its own milestone.</summary>
+    public static RouteTarget ForPins(IEnumerable<uint> pinned)
+    {
+        ArgumentNullException.ThrowIfNull(pinned);
+        var parts = new List<RouteTarget>();
+        foreach (var rowId in pinned)
+        {
+            parts.Add(new RouteTarget(RouteTargetKind.Quest, string.Empty, [rowId]));
+        }
+
+        return Union(RouteTargetKind.Pins, CoreText.T("Core.Route.PinsLabel", "all your pins"), parts);
+    }
+
+    /// <summary>"This expansion's blues": every unlock quest of the My blues block, each its own milestone.</summary>
+    public static RouteTarget ForBlues(PlanExpansion block)
+    {
+        ArgumentNullException.ThrowIfNull(block);
+        var parts = new List<RouteTarget>();
+        foreach (var entry in block.Entries)
+        {
+            parts.Add(new RouteTarget(RouteTargetKind.Quest, string.Empty, [entry.Quest.RowId]));
+        }
+
+        return Union(RouteTargetKind.Blues, F("Core.Route.BluesLabel", "{0} blues", block.Name), parts);
+    }
+
+    /// <summary>
+    /// "Route to this" for an unlock quest (My blues): the duty it opens when its rewards or <paramref name="entries"/>
+    /// name one (<see cref="ForDuty"/>, so every quest opening that duty is a variant), else the curated system it
+    /// opens (<see cref="ForSystem"/>), else the quest itself. A duty or system target that leaves the quest out
+    /// falls back to the quest.
+    /// </summary>
+    /// <param name="label">The route's title: the duty or system's name when known, else the quest's.</param>
+    public static RouteTarget ForUnlockQuest(QuestRecord quest, QuestCatalog catalog, IEnumerable<UniqueRewardEntry>? entries, string label)
+    {
+        ArgumentNullException.ThrowIfNull(quest);
+        ArgumentNullException.ThrowIfNull(catalog);
+        IReadOnlyList<UniqueRewardEntry> list = entries as IReadOnlyList<UniqueRewardEntry> ?? entries?.ToList() ?? [];
+        foreach (var reward in quest.Rewards)
+        {
+            if (reward.Kind is RewardKind.DutyUnlock or RewardKind.Instance && reward.Id != 0
+                && ForDuty(catalog, reward.Kind, reward.Id, label, list) is { } duty && duty.QuestRowIds.Contains(quest.RowId))
+            {
+                return duty;
+            }
+        }
+
+        foreach (var entry in list)
+        {
+            if (entry.QuestRowId != quest.RowId)
+            {
+                continue;
+            }
+
+            if (entry.Kind is RewardKind.DutyUnlock or RewardKind.Instance && entry.RewardId != 0
+                && ForDuty(catalog, entry.Kind, entry.RewardId, label, list) is { } duty && duty.QuestRowIds.Contains(quest.RowId))
+            {
+                return duty;
+            }
+
+            if (entry.Kind == RewardKind.SystemUnlock && entry.RewardName.Length > 0
+                && ForSystem(list, entry.RewardName) is { } system && system.QuestRowIds.Contains(quest.RowId))
+            {
+                return system with { Label = label ?? string.Empty };
+            }
+        }
+
+        return ForQuest(quest.RowId, label ?? string.Empty);
+    }
+
+    private static string F(string key, string english, string value) =>
+        string.Format(CultureInfo.CurrentCulture, CoreText.T(key, english), value);
+
     /// <summary>A quest picked directly.</summary>
     public static RouteTarget ForQuest(uint rowId, string label) => new(RouteTargetKind.Quest, label ?? string.Empty, [rowId]);
 
