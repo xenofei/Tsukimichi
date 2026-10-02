@@ -195,6 +195,7 @@ public static class QuestDiagnostic
             MountRequirement { HasMount: null } => NotChecked,
             HouseRequirement { HasHouse: null } => NotChecked,
             AchievementRequirement { Loaded: false } => NotChecked,
+            GameGateRequirement => NotChecked,
             CustomDeliveryRankRequirement { ActualRank: null } => NotChecked,
             CarrierLevelRequirement { ActualLevel: null } => NotChecked,
             TribeReputationRequirement { NotChecked: true } => NotChecked,
@@ -419,6 +420,10 @@ public static class QuestDiagnostic
 
             case AchievementRequirement a:
                 sb.Append("achievements ").Append(a.Loaded ? "loaded" : "not loaded").Append(", quest ").Append(a.RowId.ToString(CultureInfo.InvariantCulture));
+                break;
+
+            case GameGateRequirement g:
+                sb.Append("game gate \"").Append(g.Gate).Append("\"; listed, not judged");
                 break;
 
             default:

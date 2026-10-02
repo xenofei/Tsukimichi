@@ -158,6 +158,13 @@ public sealed record HouseRequirement(bool? HasHouse) : Requirement(RequirementK
 /// <summary>The quest is gated by an achievement per curated data; it can only be judged once achievements are loaded.</summary>
 public sealed record AchievementRequirement(uint RowId, bool Loaded) : Requirement(RequirementKind.Achievement);
 
+/// <summary>
+/// A gate the game checks that Tsukimichi cannot read (<see cref="QuestCatalog.GameGateOf"/>): <paramref name="Gate"/>
+/// says what in English ("a relic weapon nexus equipped"). Always listed as not checked; it keeps the quest from
+/// reading Ready.
+/// </summary>
+public sealed record GameGateRequirement(string Gate) : Requirement(RequirementKind.GameGate);
+
 /// <summary>Allied society rank names; index is the rank as held by the client.</summary>
 public static class TribeRanks
 {

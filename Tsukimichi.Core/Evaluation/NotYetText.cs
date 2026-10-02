@@ -276,6 +276,7 @@ public static class NotYetText
             MountRequirement => T("Core.NotYet.Mount", "a mount"),
             HouseRequirement => T("Core.NotYet.House", "a house"),
             AchievementRequirement => T("Core.NotYet.Achievement", "an achievement"),
+            GameGateRequirement g => g.Gate,
             AcceptConditionRequirement => T("Core.NotYet.AcceptCondition", "an accept condition"),
             _ => null,
         };

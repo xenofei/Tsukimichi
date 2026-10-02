@@ -230,7 +230,7 @@ GetQuestsInState("Accepted") -> [66045, 67112, 70210]   // the journal, in journ
 | `house` | needs a house | 0 | 1 / 0 or 1 (-1: not read) |
 | `customDeliveryRank` | needs a custom delivery satisfaction rank | SatisfactionNpc row id | ranks (have -1: not read) |
 | `carrierLevel` | needs a Delivery Moogle carrier level | 0 | levels (have -1: not read) |
-| `unchecked` | a condition the game does not expose (the quest reads Not checked) | the first condition id | 0 / 0 |
+| `unchecked` | a condition the game does not expose (the quest reads Not checked): an accept condition, or a game gate such as a relic weapon equipped | the first condition id; 0 for a game gate | 0 / 0 |
 | `other` | something this vocabulary has no word for yet | 0 | 0 / 0 |
 
 The words are frozen: none is renamed or removed within API version 1. A later release may add one; treat a word you do not know as `other`.

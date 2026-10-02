@@ -16,9 +16,9 @@
       "fact": "prereqs",
       "source": "wiki",
       "verdict": "unresolved",
-      "reason": "His Dark Materia: Zodiac step with no PreviousQuest in the sheet; the wiki names the previous step Method in His Malice. Wiki prerequisites: Method in His Malice; only the wiki names it; the sheet's PreviousQuest and QuestAcceptAdditionCondition do not, and no second source covers quest prerequisites (the Lodestone's Quest/Duty line names duties only). Check in game whether the quest is offered without it: if it is, the wiki is wrong (sourceWrong); if not, the gate is script-side and needs a curated requirement. 1.5.0 review: no second source, so curated/extra_prerequisites.json cannot take it under its two-source rule: Questionable adds no link for this quest and neither its own quest text nor its predecessor's names a requirement. Still needs the in-game check",
+      "reason": "His Dark Materia: the wiki infobox names Method in His Malice as the previous quest; the game gates the quest on a relic weapon nexus equipped (its own text and script), which curated/game_gates.json now carries with Mmmmmm, Soulglazed Relics (65742) as the step a nexus cannot exist before. The quest no longer reads Ready without it (it reads Not checked once 65742 is done, Blocked before). Method in His Malice itself stays unmodeled: only the wiki names it, and the game's script for this quest checks the weapon, not the four material quests",
       "evidence": "https://ffxiv.consolegameswiki.com/wiki/His_Dark_Materia",
-      "fix": "in-game check, then a curated requirement (T3-style requirement kind) or a wiki correction",
+      "fix": "curated/game_gates.json (relic weapon nexus equipped, after 65742); in-game check whether Gerolt also wants the four material quests",
       "until": "1.10.0"
     },
     {
@@ -76,9 +76,9 @@
       "fact": "prereqs",
       "source": "wiki",
       "verdict": "unresolved",
-      "reason": "And We Shall Call It Pyros: Eureka quasi-quest with no PreviousQuest; the wiki names the previous zone's quasi-quest And We Shall Call It Pagos. Wiki prerequisites: And We Shall Call It Pagos; only the wiki names it; the sheet's PreviousQuest and QuestAcceptAdditionCondition do not, and no second source covers quest prerequisites (the Lodestone's Quest/Duty line names duties only). Check in game whether the quest is offered without it: if it is, the wiki is wrong (sourceWrong); if not, the gate is script-side and needs a curated requirement. 1.5.0 review: no second source, so curated/extra_prerequisites.json cannot take it under its two-source rule: Questionable adds no link for this quest and neither its own quest text nor its predecessor's names a requirement. Still needs the in-game check",
+      "reason": "And We Shall Call It Pyros: Eureka quasi-quest with no PreviousQuest; the wiki names And We Shall Call It Pagos, which curated/game_gates.json now adds as the quest Pyros's gate (Pagos story at elemental level 35) cannot be passed before. The row stays until the verifier's quest report is re-derived",
       "evidence": "https://ffxiv.consolegameswiki.com/wiki/And_We_Shall_Call_It_Pyros",
-      "fix": "in-game check, then a curated requirement (T3-style requirement kind) or a wiki correction",
+      "fix": "curated/game_gates.json; re-derive quest-verification.csv",
       "until": "1.10.0"
     },
     {
@@ -86,9 +86,9 @@
       "fact": "prereqs",
       "source": "wiki",
       "verdict": "unresolved",
-      "reason": "And We Shall Call It Hydatos: Eureka quasi-quest with no PreviousQuest; the wiki names the previous zone's quasi-quest And We Shall Call It Pyros. Wiki prerequisites: And We Shall Call It Pyros; only the wiki names it; the sheet's PreviousQuest and QuestAcceptAdditionCondition do not, and no second source covers quest prerequisites (the Lodestone's Quest/Duty line names duties only). Check in game whether the quest is offered without it: if it is, the wiki is wrong (sourceWrong); if not, the gate is script-side and needs a curated requirement. 1.5.0 review: no second source, so curated/extra_prerequisites.json cannot take it under its two-source rule: Questionable adds no link for this quest and neither its own quest text nor its predecessor's names a requirement. Still needs the in-game check",
+      "reason": "And We Shall Call It Hydatos: Eureka quasi-quest with no PreviousQuest; the wiki names And We Shall Call It Pyros, which curated/game_gates.json now adds as the quest Hydatos's gate (Pyros story at elemental level 50) cannot be passed before. The row stays until the verifier's quest report is re-derived",
       "evidence": "https://ffxiv.consolegameswiki.com/wiki/And_We_Shall_Call_It_Hydatos",
-      "fix": "in-game check, then a curated requirement (T3-style requirement kind) or a wiki correction",
+      "fix": "curated/game_gates.json; re-derive quest-verification.csv",
       "until": "1.10.0"
     },
     {
@@ -96,9 +96,9 @@
       "fact": "prereqs",
       "source": "wiki",
       "verdict": "unresolved",
-      "reason": "Lighting the Way: no PreviousQuest in the sheet; the wiki names Doman Reconstruction: Tauyaku. Wiki prerequisites: Doman Reconstruction: Tauyaku; only the wiki names it; the sheet's PreviousQuest and QuestAcceptAdditionCondition do not, and no second source covers quest prerequisites (the Lodestone's Quest/Duty line names duties only). Check in game whether the quest is offered without it: if it is, the wiki is wrong (sourceWrong); if not, the gate is script-side and needs a curated requirement. 1.5.0 review: the sources disagree. Questionable links It Takes an Enclave (68677) instead, the wiki names a Doman reconstruction stage that is no quest, and the quest text names neither, so nothing is added; see also the questionable entry for this quest",
+      "reason": "Lighting the Way: no PreviousQuest in the sheet; the wiki names the Doman reconstruction stage Tauyaku, a donation level and not a quest. curated/game_gates.json now carries that gate (not checked) with It Takes an Enclave (68677), the quest that opens donations and the link Questionable adds, as its after quest; the wiki's stage stays unmodeled because Tsukimichi cannot read reconstruction progress",
       "evidence": "https://ffxiv.consolegameswiki.com/wiki/Lighting_the_Way",
-      "fix": "in-game check, then a curated requirement (T3-style requirement kind) or a wiki correction",
+      "fix": "curated/game_gates.json (reconstruction stage, not checked)",
       "until": "1.10.0"
     },
     {
@@ -182,17 +182,6 @@
       "reason": "Always a Bigger Fish: Questionable also makes it wait for A New Fishing Ex-spear-ience (68458), the spearfishing unlock. The quest text names only the main scenario quest Tide Goes in, Imperials Go Out (68026, now a curated extra) and the wiki agrees; where the game asks for spearfishing, its text says it is needed to proceed with a quest, not to take it. Single source, not added",
       "evidence": "https://github.com/PunishXIV/Questionable/blob/0bd61efe8a6806a7a8010741c0c46b7dea153709/Questionable/Data/QuestData.cs",
       "fix": "in-game check: offered without spearfishing unlocked? If not, add 68458 to curated/extra_prerequisites.json",
-      "until": "1.10.0"
-    },
-    {
-      "rowId": "68689",
-      "fact": "prereqs",
-      "source": "questionable",
-      "prereqId": "68677",
-      "verdict": "unresolved",
-      "reason": "Lighting the Way: Questionable makes it wait for It Takes an Enclave (68677); the wiki names a Doman reconstruction stage instead, and the quest text names neither. The sources disagree, so nothing is added (see the wiki entry for this quest)",
-      "evidence": "https://github.com/PunishXIV/Questionable/blob/0bd61efe8a6806a7a8010741c0c46b7dea153709/Questionable/Data/QuestData.cs",
-      "fix": "in-game check, then a curated extra prerequisite or a reconstruction-level requirement",
       "until": "1.10.0"
     }
   ]

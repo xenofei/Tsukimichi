@@ -264,13 +264,22 @@ public static class StateResolver
             return new(QuestState.Unknown, requirements, FirstOfKind(requirements, RequirementKind.Achievement), null, null);
         }
 
-        // 7. Requirements on the current job, then on other jobs.
+        // 7. Requirements on the current job, then on other jobs. A game gate Tsukimichi cannot read (game_gates.json)
+        //    is never judged: it turns what would read Ready (on this job or another) into Not checked, and leaves a
+        //    quest Blocked by something else Blocked by that.
         RequirementResult? firstUnmet = null;
+        RequirementResult? gameGate = null;
         var onlyJobGates = true;
         foreach (var r in requirements)
         {
             if (r.Met)
             {
+                continue;
+            }
+
+            if (r.Req.Kind == RequirementKind.GameGate)
+            {
+                gameGate ??= r;
                 continue;
             }
 
@@ -283,12 +292,16 @@ public static class StateResolver
 
         if (firstUnmet is null)
         {
-            return new(QuestState.Ready, requirements, null, null, null);
+            return gameGate is null
+                ? new(QuestState.Ready, requirements, null, null, null)
+                : new(QuestState.Unknown, requirements, gameGate, null, null);
         }
 
         if (onlyJobGates && FindReadyJob(q, s, ctx) is { } job)
         {
-            return new(QuestState.ReadyOnOtherJob, requirements, null, job, null);
+            return gameGate is null
+                ? new(QuestState.ReadyOnOtherJob, requirements, null, job, null)
+                : new(QuestState.Unknown, requirements, gameGate, null, null);
         }
 
         return new(QuestState.Blocked, requirements, firstUnmet, null, null);

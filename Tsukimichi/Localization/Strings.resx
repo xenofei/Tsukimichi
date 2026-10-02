@@ -6955,6 +6955,10 @@
     <value>{0} accept conditions not checked</value>
     <comment>Core: RequirementDetail.cs.</comment>
   </data>
+  <data name="Core.Req.GameGateNotChecked" xml:space="preserve">
+    <value>needs {0}, not checked</value>
+    <comment>Core: RequirementDetail.cs. {0} is a curated English phrase from game_gates.json ("a relic weapon nexus equipped").</comment>
+  </data>
   <data name="Core.Req.MountAvailable" xml:space="preserve">
     <value>mount available</value>
     <comment>Core: RequirementDetail.cs.</comment>
@@ -7401,6 +7405,10 @@
   </data>
   <data name="RequirementName.OtherPath" xml:space="preserve">
     <value>Other path</value>
+  </data>
+  <data name="RequirementName.GameGate" xml:space="preserve">
+    <value>Game check</value>
+    <comment>Requirement name for a gate the game checks that Tsukimichi cannot read (a relic weapon equipped, Eureka progress).</comment>
   </data>
   <data name="IncludeOtherPathsTooltip" xml:space="preserve">
     <value>Also show quests on paths you did not take (another city's start, another starting class, another Grand Company, another choice) in their journal sections; they are always listed under Other paths</value>

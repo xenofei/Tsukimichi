@@ -76,7 +76,7 @@ public static class CatalogMapper
         IReadOnlyList<QuestRecord> dated = patches is null ? records : patches.Apply(records);
         IReadOnlyList<QuestRecord> filed = filing == JournalFiling.Refiled ? JournalRefiler.Apply(dated, curated ?? CuratedData.Empty) : dated;
         // The curated extra prerequisites join the sheet's at build, so every reader of PrerequisitesOf sees them.
-        var catalog = QuestCatalog.Build(filed, curated?.ExtraPrerequisiteIds);
+        var catalog = QuestCatalog.Build(filed, curated?.ExtraPrerequisiteIds, curated?.GameGateIds);
         // The choice groups' labels and guards (feature plan v4 D1); without curated data only the rule-found sets.
         Core.Evaluation.PathIndex.Attach(catalog, curated?.PathChoices);
         var jobs = ClassJobCategoryLookup.Build(excel, language);

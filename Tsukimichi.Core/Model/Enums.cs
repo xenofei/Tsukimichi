@@ -56,6 +56,13 @@ public enum RequirementKind
     /// right after <see cref="Retired"/>; unmet, it makes the quest Locked out.
     /// </summary>
     OtherPath,
+
+    /// <summary>
+    /// A gate the game checks that Tsukimichi cannot read, from <c>curated/game_gates.json</c> (a relic weapon at some
+    /// stage equipped, Eureka or Doman Enclave progress). Never judged: once every other requirement is met it makes
+    /// the quest Not checked rather than Ready (<c>QuestCatalog.GameGateOf</c>).
+    /// </summary>
+    GameGate,
 }
 
 /// <summary>What a quest hands out. The first block mirrors the Quest sheet reward slots; the rest are resolved links.</summary>
