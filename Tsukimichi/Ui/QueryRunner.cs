@@ -141,7 +141,7 @@ public sealed class QueryRunner : IDisposable
     /// is the runner's own, so read it on the draw thread only and key any memo on <see cref="PinsVersion"/>.
     /// </summary>
     public IReadOnlyList<uint> PinnedInOrder =>
-        pinsFile is not null && pinsKey != 0 && pinsKey != NoPinsKey && pinsFile.TryGetValue(pinsKey, out var list) ? list : NoPins;
+        pinsFile is not null && pinsKey != 0 && pinsKey != NoPinsKey && pinsFile.TryGetValue(pinsKey, out var list) && list is not null ? list : NoPins;
 
     private static readonly uint[] NoPins = [];
 

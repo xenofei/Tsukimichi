@@ -24,6 +24,10 @@ static partial class Strings
     /// <summary>{0} = section name, {1} = row count.</summary>
     public const string TodoSectionFormat = "{0} ({1})";
 
+    /// <summary>{0} = rows a capped section leaves out ("+52 more").</summary>
+    public static string TodoMoreFormat => Loc.Get("TodoMoreFormat");
+    public static string TodoMoreTooltip => Loc.Get("TodoMoreTooltip");
+
     public static string TodoRowClickHint => Loc.Get("TodoRowClickHint");
     public static string TodoRowMoreTooltip => Loc.Get("TodoRowMoreTooltip");
     public static string TodoHeaderMoreTooltip => Loc.Get("TodoHeaderMoreTooltip");

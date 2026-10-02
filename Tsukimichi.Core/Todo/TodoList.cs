@@ -46,6 +46,12 @@ public sealed record TodoSectionModel(TodoSection Section, IReadOnlyList<TodoRow
 {
     /// <summary>Lines shown under the section's header before its rows ("Ends Aug 28 (Lodestone)"); usually none.</summary>
     public IReadOnlyList<string> Notes { get; init; } = [];
+
+    /// <summary>
+    /// Rows the section holds beyond <see cref="Rows"/>, left out by its cap (the Pinned section's
+    /// <see cref="TodoInputs.PinLimit"/>); the overlay shows them as one "+N more" line. 0 when nothing was left out.
+    /// </summary>
+    public int More { get; init; }
 }
 
 /// <summary>What the overlay shows: the non-empty sections in display order, plus how many sections were enabled at all.</summary>
@@ -79,7 +85,7 @@ public sealed record TodoModel(IReadOnlyList<TodoSectionModel> Sections, int Ena
 /// </summary>
 /// <param name="Catalog">The quest catalog.</param>
 /// <param name="States">Evaluations for the character keyed by quest row id.</param>
-/// <param name="Pinned">The character's pinned quest row ids.</param>
+/// <param name="Pinned">The character's pinned quest row ids in the order they were pinned (<c>user/pins.json</c>'s order); the Pinned section keeps that order.</param>
 /// <param name="FeatureQuestIds">Row ids of the feature ("blue") quests.</param>
 /// <param name="TerritoryId">The territory the character stands in; 0 when unknown.</param>
 /// <param name="CurrentJob">ClassJob row id of the current class or job; 0 when unknown.</param>
@@ -97,10 +103,11 @@ public sealed record TodoModel(IReadOnlyList<TodoSectionModel> Sections, int Ena
 /// <param name="Plan">The character's "Clear my blues" plan (<see cref="UnlockPlan"/>); null leaves the section out.</param>
 /// <param name="PlanExpansion">The expansion pinned from the plan (ExVersion row id); negative leaves the section out.</param>
 /// <param name="ShowPlan">Include the "Clear my blues" section.</param>
+/// <param name="PinLimit">Most rows the Pinned section lists (<see cref="TodoList.MaxPinned"/>, the overlay's cap); the rest are counted in <see cref="TodoSectionModel.More"/>.</param>
 public sealed record TodoInputs(
     QuestCatalog Catalog,
     IReadOnlyDictionary<uint, QuestEvaluation> States,
-    IReadOnlySet<uint> Pinned,
+    IReadOnlyList<uint> Pinned,
     IReadOnlySet<uint> FeatureQuestIds,
     uint TerritoryId,
     byte CurrentJob,
@@ -117,12 +124,13 @@ public sealed record TodoInputs(
     DateTime? NowUtc = null,
     UnlockPlan? Plan = null,
     int PlanExpansion = -1,
-    bool ShowPlan = true);
+    bool ShowPlan = true,
+    int PinLimit = TodoList.MaxPinned);
 
 /// <summary>
 /// Pure builder for the todo overlay (V2-13). Six sections, each only when enabled and non-empty: the character's
-/// pins that are still to do (Ready first, then Ready on another job, Accepted, Blocked, Unknown; by level then name
-/// within a state), the quests of the seasonal events running now that can be started or are in the journal (P11,
+/// pins that are still to do in the order they were pinned (so a route pinned with "Pin all" reads in the order to do
+/// it; at most <see cref="TodoInputs.PinLimit"/>, the rest counted in <see cref="TodoSectionModel.More"/>), the quests of the seasonal events running now that can be started or are in the journal (P11,
 /// with an "Ends Aug 28 (Lodestone)" line only when curated data announces the end), the feature quests startable in the current zone (at most <see cref="MaxNearby"/>, by level then
 /// name), the Ready unlock quests of the expansion pinned from the "Clear my blues" plan (P3, at most
 /// <see cref="MaxPlan"/>, in plan order), the next main scenario quest with its blocker, and for the current job the next quest of its ladder and of
@@ -138,6 +146,9 @@ public static class TodoList
 
     /// <summary>Most quests the "Clear my blues" section lists.</summary>
     public const int MaxPlan = 8;
+
+    /// <summary>Most pins the overlay's Pinned section lists; the rest are one "+N more" line, so a 60-step route is not 60 rows.</summary>
+    public const int MaxPinned = 8;
 
     // Hint fragments in the display vocabulary (English in Core; the overlay shows them as is). The row's moon already
     // carries the state, so a hint never repeats the state name: a blocked row shows its blocker, an accepted one its step.
@@ -161,7 +172,7 @@ public static class TodoList
         if (inputs.ShowPins)
         {
             enabled++;
-            Add(sections, TodoSection.Pinned, BuildPinned(inputs));
+            AddPinned(sections, inputs);
         }
 
         if (inputs.ShowSeasonal && inputs.Running is { } running)
@@ -216,57 +227,50 @@ public static class TodoList
     public static bool IsTodo(QuestEvaluation? evaluation) =>
         evaluation is null ? IsTodo(QuestState.Unknown) : !evaluation.IsSpareAlternative && IsTodo(evaluation.State);
 
-    /// <summary>Display rank of a state in the Pinned section: what can be done now comes first.</summary>
-    private static int Rank(QuestState state) => state switch
+    /// <summary>
+    /// The pins still to do, in the order they were pinned (oldest first, so a route pinned with "Pin all" reads in
+    /// route order), at most <see cref="TodoInputs.PinLimit"/>, the others counted in <see cref="TodoSectionModel.More"/>.
+    /// Completed, done-this-cycle and foreclosed pins, spare alternatives, quests the catalog lacks and repeats of a row
+    /// id are left out and not counted, so finishing a step brings the next pin into view.
+    /// </summary>
+    private static void AddPinned(List<TodoSectionModel> sections, TodoInputs inputs)
     {
-        QuestState.Ready => 0,
-        QuestState.ReadyOnOtherJob => 1,
-        QuestState.Accepted => 2,
-        QuestState.Blocked => 3,
-        _ => 4,
-    };
-
-    private static List<TodoRow> BuildPinned(TodoInputs inputs)
-    {
-        var rows = new List<TodoRow>();
         if (inputs.Pinned.Count == 0)
         {
-            return rows;
+            return;
         }
 
-        var picked = new List<(QuestRecord Quest, QuestState State)>();
+        var limit = Math.Max(0, inputs.PinLimit);
+        var rows = new List<TodoRow>(Math.Min(inputs.Pinned.Count, limit));
+        var more = 0;
+        var seen = new HashSet<uint>();
         foreach (var rowId in inputs.Pinned)
         {
-            if (!inputs.Catalog.TryGetByRowId(rowId, out var quest))
+            if (!seen.Add(rowId) || !inputs.Catalog.TryGetByRowId(rowId, out var quest))
             {
                 continue;
             }
 
             inputs.States.TryGetValue(rowId, out var evaluation);
-            if (IsTodo(evaluation))
+            if (!IsTodo(evaluation))
             {
-                picked.Add((quest, StateOf(inputs.States, rowId)));
+                continue;
+            }
+
+            if (rows.Count < limit)
+            {
+                rows.Add(Row(inputs, quest, StateOf(inputs.States, rowId), TodoRowKind.Pin));
+            }
+            else
+            {
+                more++;
             }
         }
 
-        picked.Sort(static (a, b) =>
+        if (rows.Count > 0)
         {
-            var byRank = Rank(a.State).CompareTo(Rank(b.State));
-            if (byRank != 0)
-            {
-                return byRank;
-            }
-
-            var byLevel = a.Quest.DisplayLevel.CompareTo(b.Quest.DisplayLevel);
-            return byLevel != 0 ? byLevel : string.Compare(a.Quest.Name, b.Quest.Name, StringComparison.CurrentCultureIgnoreCase);
-        });
-
-        foreach (var (quest, state) in picked)
-        {
-            rows.Add(Row(inputs, quest, state, TodoRowKind.Pin));
+            sections.Add(new TodoSectionModel(TodoSection.Pinned, rows) { More = more });
         }
-
-        return rows;
     }
 
     /// <summary>

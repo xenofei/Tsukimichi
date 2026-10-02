@@ -2912,6 +2912,12 @@
   <data name="TodoSectionJobQuests" xml:space="preserve">
     <value>Job quests</value>
   </data>
+  <data name="TodoMoreFormat" xml:space="preserve">
+    <value>+{0} more</value>
+  </data>
+  <data name="TodoMoreTooltip" xml:space="preserve">
+    <value>Click: show all your pinned quests in Tsukimichi</value>
+  </data>
   <data name="TodoRowClickHint" xml:space="preserve">
     <value>Click: show in Tsukimichi · double-click: flag the giver on the map · right-click or …: more</value>
   </data>

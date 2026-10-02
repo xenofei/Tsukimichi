@@ -41,6 +41,59 @@ public sealed class UserDataTests : IDisposable
     }
 
     [Fact]
+    public void Pins_keep_the_order_they_were_pinned_across_save_and_load()
+    {
+        // Not sorted: the order is the order pinned (a route's steps), which the Todo overlay lists them in.
+        var path = tmp.File("pins.json");
+        PinsFile.Save(path, new Dictionary<ulong, List<uint>> { [1] = [66038, 65576, 69000, 65577] });
+
+        var json = JsonNode.Parse(File.ReadAllText(path))!.AsObject();
+
+        Assert.Equal([66038, 65576, 69000, 65577], json["1"]!.AsArray().Select(static n => (int)n!));
+        Assert.Equal([66038u, 65576, 69000, 65577], PinsFile.Load(path)[1]);
+    }
+
+    [Fact]
+    public void Pins_written_by_an_earlier_version_load_in_their_order()
+    {
+        // The shape every release wrote (content id string to an array of row ids); nothing to migrate.
+        var path = tmp.File("pins.json");
+        File.WriteAllText(path, """{ "18014398509481985": [ 67000, 65600, 66100 ], "2": [ 5 ] }""");
+
+        var loaded = PinsFile.Load(path);
+
+        Assert.Equal([67000u, 65600, 66100], loaded[18014398509481985UL]);
+        Assert.Equal([5u], loaded[2]);
+    }
+
+    [Fact]
+    public void Pin_edits_append_new_pins_after_the_ones_held_and_keep_their_order()
+    {
+        // Multibox (D11): another client pinned 30 after this one loaded [10, 20]; this client then pins 40 and 10
+        // (already held) and unpins nothing. The file keeps the existing order and appends only what is new.
+        var path = tmp.File("pins.json");
+        PinsFile.Save(path, new Dictionary<ulong, List<uint>> { [1] = [10, 20, 30], [2] = [7] });
+        var local = new Dictionary<ulong, List<uint>> { [1] = [10, 20, 40], [2] = [7] };
+
+        var merged = PinsFile.SaveChanges(path, [new PinChange(1, 40, PinChangeKind.Pin), new PinChange(1, 10, PinChangeKind.Pin)], local);
+
+        Assert.Equal([10u, 20, 30, 40], merged[1]);
+        Assert.Equal([10u, 20, 30, 40], PinsFile.Load(path)[1]);
+        Assert.Equal([7u], PinsFile.Load(path)[2]);
+    }
+
+    [Fact]
+    public void Pin_edits_replayed_on_a_reload_keep_the_disk_order_first()
+    {
+        // ReloadPinsFromDisk: the file as another client wrote it, then this client's unsaved edits in order.
+        var disk = new Dictionary<ulong, List<uint>> { [1] = [3, 1, 2] };
+
+        PinsFile.Apply(disk, [new PinChange(1, 9, PinChangeKind.Pin), new PinChange(1, 1, PinChangeKind.Unpin), new PinChange(1, 4, PinChangeKind.Pin), new PinChange(1, 3, PinChangeKind.Pin)]);
+
+        Assert.Equal([3u, 2, 9, 4], disk[1]);
+    }
+
+    [Fact]
     public void Pins_missing_file_returns_empty()
     {
         var warnings = new List<string>();

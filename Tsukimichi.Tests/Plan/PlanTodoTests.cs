@@ -14,7 +14,7 @@ public class PlanTodoTests(PlanFixture fixture) : IClassFixture<PlanFixture>
         return new TodoInputs(
             fixture.Bundle.Catalog,
             fixture.States(snapshot),
-            new HashSet<uint>(),
+            [],
             fixture.Features,
             0,
             snapshot.CurrentJob,

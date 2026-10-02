@@ -179,6 +179,24 @@ public sealed class UiState
     }
 
     /// <summary>
+    /// Switch to the Journal tab on the whole journal filtered to the viewed character's pins (the Todo overlay's
+    /// "+N more" line): the other narrowing filters and the search are cleared, so no pin is hidden, then the Pinned
+    /// filter is turned on; its chip clears it.
+    /// </summary>
+    public void ShowPinned()
+    {
+        Tab = NavTab.Journal;
+        Scope = QuestScope.None;
+        SelectedRowId = null;
+        RevealPending = false;
+        SearchText = string.Empty;
+        ClearNarrowingFilters(includeUnlisted: false);
+        Filters.PinnedOnly = true;
+        FiltersChanged?.Invoke();
+        MarkQueryDirty();
+    }
+
+    /// <summary>
     /// Turns off the state-based narrowing filters and the active preset (and turns Include removed on when asked);
     /// true when anything changed and the window should persist the filters.
     /// </summary>
