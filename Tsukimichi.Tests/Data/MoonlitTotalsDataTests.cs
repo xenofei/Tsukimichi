@@ -53,10 +53,10 @@ public sealed class MoonlitTotalsDataTests(FixtureCatalog fixture, ITestOutputHe
 
         Assert.True(twice.Count == 0, "counted in two groups: " + string.Join(", ", twice));
 
-        // 2,630 entries less the 206 that repeat another row's (kind, reward), the relic items folded per quest.
+        // 2,629 entries less the 192 that repeat another row's (kind, reward), the relic items folded per quest.
         var duplicates = rewards.All.Count - rewards.All.Select(RewardKey.Of).Distinct().Count();
         output.WriteLine($"entries {rewards.Count}, repeated (kind, reward) rows {duplicates}, counted rewards {groups.All.Count}");
-        Assert.Equal(206, duplicates);
+        Assert.Equal(192, duplicates);
     }
 
     [Fact]
@@ -89,6 +89,60 @@ public sealed class MoonlitTotalsDataTests(FixtureCatalog fixture, ITestOutputHe
         Assert.Equal(3, Named(RewardKind.SystemUnlock, "Hunts (ARR)").Quests.Count);
         Assert.Equal(3, Named(RewardKind.ClassJob, "archer").Quests.Count);
         Assert.Equal(9, Assert.Single(groups.All, g => g.Kind == RewardKind.Achievement && g.Primary.RewardId == 313).Quests.Count);
+    }
+
+    /// <summary>
+    /// A system unlock has no reward id, so its curated label is its key: two quests that share a label count once.
+    /// That is right only for quests that are each other's alternatives (one per city, starting class or Grand
+    /// Company, or a QuestLock set: <see cref="PathIndex"/> puts them on disjoint options of one group); tiers of one
+    /// system (the 2★ and 3★ hunt bills, the later sightseeing entries) must carry labels of their own.
+    /// </summary>
+    [Fact]
+    public void Quests_share_a_system_unlock_only_when_they_are_alternatives()
+    {
+        var index = PathIndex.For(Catalog);
+        bool Alternatives(uint a, uint b)
+        {
+            foreach (var tag in index.TagsOf(a))
+            {
+                foreach (var other in index.TagsOf(b))
+                {
+                    if (tag.Group == other.Group && (tag.Options & other.Options) == 0)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            // A Grand Company's own version of a quest the sheet tags with that company.
+            return Catalog.GetByRowId(a) is { GrandCompany: not 0 } qa && Catalog.GetByRowId(b) is { GrandCompany: not 0 } qb
+                && qa.GrandCompany != qb.GrandCompany;
+        }
+
+        var groups = Groups(Rewards());
+        var offenders = new List<string>();
+        var shared = 0;
+        foreach (var group in groups.All.Where(g => g.Kind == RewardKind.SystemUnlock && g.Quests.Count > 1))
+        {
+            shared++;
+            for (var i = 0; i < group.Quests.Count; i++)
+            {
+                for (var j = i + 1; j < group.Quests.Count; j++)
+                {
+                    if (!Alternatives(group.Quests[i], group.Quests[j]))
+                    {
+                        offenders.Add($"\"{group.Primary.RewardName}\": {group.Quests[i]} and {group.Quests[j]}");
+                    }
+                }
+            }
+        }
+
+        output.WriteLine($"{shared} system unlocks given by more than one quest");
+        Assert.True(offenders.Count == 0, "quests that are not alternatives share a system unlock label (give each tier its own label in curated/system_unlocks.json):"
+            + Environment.NewLine + string.Join(Environment.NewLine, offenders));
+
+        // The real alternatives keep sharing one reward.
+        Assert.True(shared >= 8, $"{shared} shared system unlocks");
     }
 
     [Fact]

@@ -20,8 +20,10 @@ on:
 permissions:
   contents: read
 
+# One group per trigger and ref: a newer push supersedes an older one, but a push to main never cancels the weekly
+# or a manual run on main (nor the other way round).
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:

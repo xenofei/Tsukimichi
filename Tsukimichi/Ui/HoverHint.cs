@@ -177,8 +177,10 @@ public sealed class HoverHint
             if (IsUnlockable(entry.Kind))
             {
                 // The reader answers for the viewed character; while another one is viewed, the logged-in character's
-                // flag is not what it reads, so the line says unknown rather than speak for the wrong character.
-                var forLive = session.IsLive || session.LiveStates.Count == 0;
+                // flag is not what it reads, so the line says unknown rather than speak for the wrong character. The
+                // hint only shows over an item in game, so someone is logged in: until the poller's first pass commits
+                // (no live content id yet) the session cannot tell whether the viewed character is that one either.
+                var forLive = session.IsLive;
                 line.SetObtained(forLive ? unlocks.IsObtained(entry) : null);
             }
 

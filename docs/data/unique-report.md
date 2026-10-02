@@ -2,7 +2,7 @@
 
 Generated from game version `2026.09.15.0000.0000` by Tsukimichi.DataGen (see docs/data/DATA-VERSION.md for when).
 
-- Entries: **2630** across **1301** quests.
+- Entries: **2629** across **1301** quests.
 - Entries whose reward is also obtainable elsewhere (`otherSources` non-empty): **363**. They keep confidence Static in V1; the UI shows the source and marks Online Store re-sells and dungeon drops.
   - `GilShopItem`: 136
   - `SpecialShop`: 115
@@ -37,8 +37,8 @@ Generated from game version `2026.09.15.0000.0000` by Tsukimichi.DataGen (see do
 | Achievement | 210 | 0 | 0 | 0 | 210 |
 | Title | 199 | 0 | 0 | 0 | 199 |
 | DutyUnlock | 156 | 0 | 308 | 0 | 464 |
-| SystemUnlock | 0 | 0 | 134 | 0 | 134 |
-| **Total** | 2188 | 0 | 442 | 0 | 2630 |
+| SystemUnlock | 0 | 0 | 133 | 0 | 133 |
+| **Total** | 2188 | 0 | 441 | 0 | 2629 |
 
 ## Examples per kind
 
@@ -330,7 +330,7 @@ Generated from game version `2026.09.15.0000.0000` by Tsukimichi.DataGen (see do
 | 65620 The Instruments of Our Deliverance | the Akh Afah Amphitheatre (Hard) | 79 | 0 | Curated | `curated/duty_unlocks.json` |
 | 65626 Drop Dead Shiva | the Akh Afah Amphitheatre (Extreme) | 80 | 0 | Curated | `curated/duty_unlocks.json` |
 
-### SystemUnlock (134)
+### SystemUnlock (133)
 
 | Quest | Reward | Reward id | Item id | Confidence | Source |
 |---|---|---:|---:|---|---|

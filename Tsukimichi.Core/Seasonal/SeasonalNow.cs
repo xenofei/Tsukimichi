@@ -41,6 +41,12 @@ public sealed record RunningFestival(
 /// <summary>One event edition in a character's seasonal history: the quests of it the character completed.</summary>
 public sealed record SeasonalHistoryFestival(ushort FestivalId, string Name, IReadOnlyList<QuestRecord> Quests);
 
+/// <summary>
+/// An undated edition's likely window (UTC): the latest dated earlier edition of the same event moved to the
+/// edition's year (<see cref="SeasonalNow.EditionWindows"/>). An estimate; events shift by days from year to year.
+/// </summary>
+public readonly record struct EditionWindow(DateTime Start, DateTime End);
+
 /// <summary>A year of seasonal history; <paramref name="Year"/> is null for editions whose year is not known.</summary>
 public sealed record SeasonalHistoryYear(int? Year, IReadOnlyList<SeasonalHistoryFestival> Festivals)
 {
@@ -346,6 +352,93 @@ public static class SeasonalNow
         }
 
         return years;
+    }
+
+    /// <summary>
+    /// The likely window of each edition with a known year (<paramref name="years"/>, from <see cref="EditionYears"/>)
+    /// and no curated end: the latest earlier edition of the same event with a curated start and end, moved forward by
+    /// the years between them. The same event means the same journal genre, the edition's only one, holding one
+    /// edition per year; a combined genre ("Little Ladies' &amp; Hatching-tide Events") or a year with two editions
+    /// gives no window. Editions with a curated end, or none dated before them, are left out.
+    /// </summary>
+    public static IReadOnlyDictionary<ushort, EditionWindow> EditionWindows(
+        QuestCatalog catalog,
+        IReadOnlyDictionary<ushort, FestivalInfo> curated,
+        IReadOnlyDictionary<ushort, int> years)
+    {
+        ArgumentNullException.ThrowIfNull(catalog);
+        ArgumentNullException.ThrowIfNull(curated);
+        ArgumentNullException.ThrowIfNull(years);
+
+        var genresOf = new Dictionary<ushort, HashSet<uint>>();
+        var festivalsOf = new Dictionary<uint, HashSet<ushort>>();
+        foreach (var quest in catalog.All)
+        {
+            if (quest.Festival == 0 || quest.Journal.GenreId == 0)
+            {
+                continue;
+            }
+
+            if (!genresOf.TryGetValue(quest.Festival, out var genres))
+            {
+                genresOf[quest.Festival] = genres = [];
+            }
+
+            genres.Add(quest.Journal.GenreId);
+            if (!festivalsOf.TryGetValue(quest.Journal.GenreId, out var festivals))
+            {
+                festivalsOf[quest.Journal.GenreId] = festivals = [];
+            }
+
+            festivals.Add(quest.Festival);
+        }
+
+        var windows = new Dictionary<ushort, EditionWindow>();
+        foreach (var (id, genres) in genresOf)
+        {
+            if (genres.Count != 1 || !years.TryGetValue(id, out var year)
+                || (curated.TryGetValue(id, out var own) && own.End is not null))
+            {
+                continue;
+            }
+
+            // One edition per year along the genre, or the genre mixes events and no edition stands for another.
+            var editions = festivalsOf[genres.First()];
+            var perYear = new HashSet<int>();
+            var oneEach = true;
+            foreach (var edition in editions)
+            {
+                if (years.TryGetValue(edition, out var y) && !perYear.Add(y))
+                {
+                    oneEach = false;
+                    break;
+                }
+            }
+
+            if (!oneEach)
+            {
+                continue;
+            }
+
+            int? best = null;
+            EditionWindow window = default;
+            foreach (var edition in editions)
+            {
+                if (edition != id && years.TryGetValue(edition, out var y) && y < year && (best is null || y > best)
+                    && curated.TryGetValue(edition, out var info) && info is { Start: { } start, End: { } end })
+                {
+                    best = y;
+                    window = new EditionWindow(start.AddYears(year - y), end.AddYears(year - y));
+                }
+            }
+
+            if (best is not null)
+            {
+                windows[id] = window;
+            }
+        }
+
+        return windows;
     }
 
     /// <summary>

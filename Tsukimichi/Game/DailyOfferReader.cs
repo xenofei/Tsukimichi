@@ -111,6 +111,8 @@ public sealed unsafe class DailyOfferReader
         var map = &ef->DailyQuests;
         var player = (FFXIVClientStructs.FFXIV.Client.Game.Character.Character*)control->LocalPlayer;
         var seed = qm->DailyQuestSeed;
+        // Answers computed with another seed (read before the server's pick for the day arrived) go now.
+        book.Observe(snapshot.ContentId, nowUtc, seed);
         var head = map->Entries.WithOps.Tree.Head;
         if (head == null)
         {
@@ -124,7 +126,7 @@ public sealed unsafe class DailyOfferReader
             var entry = &node->_Myval.Item2;
             var tribe = entry->TribeId;
             var standing = snapshot.Tribes.GetValueOrDefault(tribe);
-            if (tribe == 0 || standing.Rank == 0 || book.Knows(snapshot.ContentId, nowUtc, giver, standing))
+            if (tribe == 0 || standing.Rank == 0 || book.Knows(snapshot.ContentId, nowUtc, seed, giver, standing))
             {
                 continue;
             }
@@ -174,7 +176,7 @@ public sealed unsafe class DailyOfferReader
                 continue;
             }
 
-            book.Record(snapshot.ContentId, nowUtc, giver, tribe, standing, quests);
+            book.Record(snapshot.ContentId, nowUtc, seed, giver, tribe, standing, quests);
             log.Information(
                 "{Prefix} society {Tribe} giver {Giver} at rank {Rank}{RankedUp}, seed {Seed}: {Quests}",
                 LogPrefix,

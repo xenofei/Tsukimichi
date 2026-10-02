@@ -1,6 +1,6 @@
 {
   "gameVersion": "2026.09.15.0000.0000",
-  "generatedUtc": "2026-10-02T01:36:30Z",
+  "generatedUtc": "2026-10-02T02:06:59Z",
   "entries": [
     {
       "questRowId": 65549,
@@ -7342,7 +7342,7 @@
       "kind": "SystemUnlock",
       "rewardId": 0,
       "itemId": 0,
-      "rewardName": "Hunts (Heavensward)",
+      "rewardName": "Hunts (Heavensward) · 2-star bills",
       "confidence": "Curated",
       "source": "curated/system_unlocks.json",
       "otherSources": []
@@ -7352,7 +7352,7 @@
       "kind": "SystemUnlock",
       "rewardId": 0,
       "itemId": 0,
-      "rewardName": "Hunts (Heavensward)",
+      "rewardName": "Hunts (Heavensward) · 3-star bills",
       "confidence": "Curated",
       "source": "curated/system_unlocks.json",
       "otherSources": []
@@ -9072,7 +9072,7 @@
       "kind": "SystemUnlock",
       "rewardId": 0,
       "itemId": 0,
-      "rewardName": "Egi glamours",
+      "rewardName": "Egi glamours (Summoner)",
       "confidence": "Curated",
       "source": "curated/system_unlocks.json",
       "otherSources": []
@@ -11480,7 +11480,7 @@
       "kind": "SystemUnlock",
       "rewardId": 0,
       "itemId": 0,
-      "rewardName": "Hunts (Stormblood)",
+      "rewardName": "Hunts (Stormblood) · 2-star bills",
       "confidence": "Curated",
       "source": "curated/system_unlocks.json",
       "otherSources": []
@@ -11490,7 +11490,7 @@
       "kind": "SystemUnlock",
       "rewardId": 0,
       "itemId": 0,
-      "rewardName": "Hunts (Stormblood)",
+      "rewardName": "Hunts (Stormblood) · 3-star bills",
       "confidence": "Curated",
       "source": "curated/system_unlocks.json",
       "otherSources": []
@@ -13930,7 +13930,7 @@
       "kind": "SystemUnlock",
       "rewardId": 0,
       "itemId": 0,
-      "rewardName": "Hunts (Shadowbringers)",
+      "rewardName": "Hunts (Shadowbringers) · two-nut bills",
       "confidence": "Curated",
       "source": "curated/system_unlocks.json",
       "otherSources": []
@@ -13940,7 +13940,7 @@
       "kind": "SystemUnlock",
       "rewardId": 0,
       "itemId": 0,
-      "rewardName": "Hunts (Shadowbringers)",
+      "rewardName": "Hunts (Shadowbringers) · three-nut bills",
       "confidence": "Curated",
       "source": "curated/system_unlocks.json",
       "otherSources": []
@@ -18290,7 +18290,7 @@
       "kind": "SystemUnlock",
       "rewardId": 0,
       "itemId": 0,
-      "rewardName": "Hunts (Endwalker)",
+      "rewardName": "Hunts (Endwalker) · associate bills",
       "confidence": "Curated",
       "source": "curated/system_unlocks.json",
       "otherSources": []
@@ -18300,7 +18300,7 @@
       "kind": "SystemUnlock",
       "rewardId": 0,
       "itemId": 0,
-      "rewardName": "Hunts (Endwalker)",
+      "rewardName": "Hunts (Endwalker) · senior bills",
       "confidence": "Curated",
       "source": "curated/system_unlocks.json",
       "otherSources": []
@@ -19472,7 +19472,7 @@
       "kind": "SystemUnlock",
       "rewardId": 0,
       "itemId": 0,
-      "rewardName": "Variant and Criterion dungeons",
+      "rewardName": "Variant dungeons · Sil'dih survey record",
       "confidence": "Curated",
       "source": "curated/system_unlocks.json",
       "otherSources": []
@@ -19492,7 +19492,7 @@
       "kind": "SystemUnlock",
       "rewardId": 0,
       "itemId": 0,
-      "rewardName": "Variant and Criterion dungeons",
+      "rewardName": "Variant dungeons",
       "confidence": "Curated",
       "source": "curated/system_unlocks.json",
       "otherSources": []
@@ -21266,7 +21266,7 @@
       "kind": "SystemUnlock",
       "rewardId": 0,
       "itemId": 0,
-      "rewardName": "Egi glamours",
+      "rewardName": "Egi glamours (Scholar)",
       "confidence": "Curated",
       "source": "curated/system_unlocks.json",
       "otherSources": []
@@ -23060,16 +23060,6 @@
       ]
     },
     {
-      "questRowId": 70352,
-      "kind": "SystemUnlock",
-      "rewardId": 0,
-      "itemId": 0,
-      "rewardName": "Custom deliveries: Margrat",
-      "confidence": "Curated",
-      "source": "curated/system_unlocks.json",
-      "otherSources": []
-    },
-    {
       "questRowId": 70359,
       "kind": "Achievement",
       "rewardId": 3499,
@@ -23710,7 +23700,7 @@
       "kind": "SystemUnlock",
       "rewardId": 0,
       "itemId": 0,
-      "rewardName": "Sightseeing Log (Dawntrail)",
+      "rewardName": "Sightseeing Log (Dawntrail) · entries 29-45",
       "confidence": "Curated",
       "source": "curated/system_unlocks.json",
       "otherSources": []
@@ -23740,7 +23730,7 @@
       "kind": "SystemUnlock",
       "rewardId": 0,
       "itemId": 0,
-      "rewardName": "Hunts (Dawntrail)",
+      "rewardName": "Hunts (Dawntrail) · intermediate bills",
       "confidence": "Curated",
       "source": "curated/system_unlocks.json",
       "otherSources": []
@@ -23750,7 +23740,7 @@
       "kind": "SystemUnlock",
       "rewardId": 0,
       "itemId": 0,
-      "rewardName": "Hunts (Dawntrail)",
+      "rewardName": "Hunts (Dawntrail) · advanced bills",
       "confidence": "Curated",
       "source": "curated/system_unlocks.json",
       "otherSources": []
