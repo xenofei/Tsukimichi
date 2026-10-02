@@ -4,6 +4,53 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+## [1.10.0] - 2026-10-02
+
+### Added
+- **Mounting and flying for Walk to giver and Go to giver.**
+  - Longer walks mount up (Mount Roulette or a mount you choose).
+  - Where you've unlocked flying, the trip flies and lands beside the giver, staying mounted.
+  - In towns it can Sprint.
+  - A walk that really gets stuck tries a new path once. A detour around a building or up a slope doesn't count as stuck.
+  - Settings › Integrations › Travel: "Mount for walks longer than N yalms", the mount, "Fly where flying is unlocked" and "Sprint in towns".
+  - The detail pane shows each step ("Mounting…", "Flying to Varshahn…", "Landing…").
+- **Givers inside buildings and story areas.** Teleport and Go to giver now aim at the way in for givers in the Waking Sands, the Rising Stones, Fortemps Manor, Zero's Domain and other interiors:
+  - the aetheryte nearest the door;
+  - an aethernet hop where one helps;
+  - a walk to the door, then "go in to find X".
+
+  The tooltip says where the giver really is.
+- **Companion plugin setup.**
+  - Settings › Integrations says whether you're ready for full automation ("Ready for full automation" / "2 plugins need setup"), and so do Help and the setup card.
+  - Each companion plugin has a Setup list of the settings that matter for Tsukimichi's hand-offs, with ✓ / ✕ / ? and what to change.
+  - "Apply recommended settings" changes AutoDuty and vnavmesh settings through their own IPC, after showing exactly what will change, and reads each change back.
+  - TextAdvance, Boss Mod and the rotation plugins are now listed as companions ("Needed by Questionable / AutoDuty").
+
+### Changed
+- **The detail pane's travel and automation actions are labelled buttons** with the same weight as Teleport: Go to giver, Teleport, Walk to giver, and, when they apply to the quest, Start Questionable and Run with AutoDuty.
+  - The one you can use now is highlighted.
+  - A running hand-off turns into a labelled Stop, with a status line under the buttons.
+  - Buttons you can't use yet stay visible and labelled, and say why.
+  - On a narrow pane the labels shorten, then become icons, then move into "…", without cutting text.
+- When the nearest aetheryte isn't attuned, the Teleport tooltip says so and names the one it uses instead. A substitute in another region is refused, with the reason.
+- **Kienkan, Stygian Insenescence Cells and a few other interiors** now teleport to the zone their door is actually in.
+- **Buttons explain setup problems.**
+  - Walk and Go to giver say when a vnavmesh or Lifestream setting blocks them.
+  - "Start Questionable" says when a setting would stop the run, for example "Questionable needs TextAdvance's quest accept on".
+- **Start Questionable and Run with AutoDuty wait while Go to giver is under way.** If Questionable or AutoDuty is started from its own window mid-trip, Go to giver steps aside without stopping it.
+- If Questionable's "command after stop" setting is on, Tsukimichi's Stop button says that Questionable will run that command (for example /li auto), and asks before the first time.
+
+### Fixed
+- **His Dark Materia and the other relic weapon steps** (Zodiac, Anima, Resistance, Manderville and Phantom weapons) no longer read Ready right after the previous step. Tsukimichi now checks the weapon you have equipped or carry, as the game does:
+  - With the right stage, the quest reads Ready.
+  - With the right weapon in your bags or Armoury Chest, it reads Ready on the job that can wear it.
+  - Otherwise it reads Blocked with what's missing ("needs a relic weapon nexus equipped, you have Curtana Novus equipped").
+  - Characters not logged in since this update show these steps as Not checked until their next login.
+- **The Eureka zone quests** (And We Shall Call It Pagos, Pyros and Hydatos) and Lighting the Way no longer read Ready. They depend on Eureka progress or Doman Enclave rebuilding, which Tsukimichi cannot read. Each now waits for the quest that opens it, then reads Not checked with the reason.
+- **Return from the Void and other givers with no aetheryte of their own** no longer show a Teleport that implies the giver stands at the aetheryte.
+- **Stop now stops a walk** even while vnavmesh is still working out the path; the character no longer starts moving afterwards.
+- Settings › Integrations no longer marks the newest Allagan Tools (1.15.0.13) as outdated: its version is now compared the way Dalamud numbers it.
+
 ## [1.9.0] - 2026-10-02
 
 ### Added
