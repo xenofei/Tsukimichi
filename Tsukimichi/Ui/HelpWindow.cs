@@ -215,6 +215,10 @@ public sealed class HelpWindow : Window
 
     private static CardItem[] CompanionCards => companionCardsCache.Value;
 
+    /// <summary>The companion setup summary ("Ready for full automation", "2 plugins need setup"); null before the plugin set it up.</summary>
+    private static string? CompanionSetupLine() =>
+        Game.CompanionPlugins.Current?.Setup is { } setup ? Strings.CompanionSetupSummaryLine(setup.Summary) : null;
+
     /// <summary>One card per listed companion plugin (its name and what it unlocks), then how to add a custom repository.</summary>
     private static readonly Localization.LocCache<CardItem[]> companionCardsCache = new(static () =>
     {
@@ -602,6 +606,11 @@ public sealed class HelpWindow : Window
                     AppendCards(sb, PrivacyCards);
                     break;
                 case HelpTopic.Companions:
+                    if (CompanionSetupLine() is { } setupLine)
+                    {
+                        sb.Append(setupLine).Append('\n');
+                    }
+
                     AppendCards(sb, CompanionCards);
                     sb.Append(Strings.HelpCompanionsTip);
                     break;
@@ -699,6 +708,16 @@ public sealed class HelpWindow : Window
                 DrawCards(PrivacyCards);
                 break;
             case HelpTopic.Companions:
+                if (CompanionSetupLine() is { } setupLine)
+                {
+                    using (Theme.PushText(Theme.Surface.Text))
+                    {
+                        ImGui.TextWrapped(setupLine);
+                    }
+
+                    ImGui.Spacing();
+                }
+
                 DrawCards(CompanionCards);
                 Tip(100, Strings.HelpCompanionsTip, actions.OpenSettings, Strings.Help.OpenSettings);
                 break;

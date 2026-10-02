@@ -82,8 +82,149 @@ static partial class Strings
         CompanionPlugin.ChatTwo => Loc.Get("CompanionUnlocks.ChatTwo"),
         CompanionPlugin.BossMod => Loc.Get("CompanionUnlocks.BossMod"),
         CompanionPlugin.RotationPlugin => Loc.Get("CompanionUnlocks.RotationPlugin"),
+        CompanionPlugin.TextAdvance => Loc.Get("CompanionUnlocks.TextAdvance"),
         _ => string.Empty,
     };
+
+    // ---- Companion setup: recommended settings ----
+
+    /// <summary>{0} = who needs the plugin ("Questionable", "AutoDuty and Questionable").</summary>
+    public static string CompanionNeededByFormat => Loc.Get("CompanionNeededByFormat");
+
+    /// <summary>{0} and {1} = two plugin names.</summary>
+    public static string CompanionAndFormat => Loc.Get("CompanionAndFormat");
+
+    /// <summary>{0} = the plugin handed the work, {1} = what it needs (<see cref="CompanionSetupNeed"/>).</summary>
+    public static string CompanionSetupBlockedFormat => Loc.Get("CompanionSetupBlockedFormat");
+
+    /// <summary>{0} = the plugin.</summary>
+    public static string CompanionSetupNoteOneFormat => Loc.Get("CompanionSetupNoteOneFormat");
+
+    /// <summary>{0} = the plugin, {1} = how many settings.</summary>
+    public static string CompanionSetupNoteFormat => Loc.Get("CompanionSetupNoteFormat");
+
+    public static string CompanionSetupReady => Loc.Get("CompanionSetupReady");
+    public static string CompanionSetupNeedsOne => Loc.Get("CompanionSetupNeedsOne");
+
+    /// <summary>{0} = how many plugins.</summary>
+    public static string CompanionSetupNeedsFormat => Loc.Get("CompanionSetupNeedsFormat");
+
+    public static string CompanionSetupMissingOne => Loc.Get("CompanionSetupMissingOne");
+
+    /// <summary>{0} = how many plugins.</summary>
+    public static string CompanionSetupMissingFormat => Loc.Get("CompanionSetupMissingFormat");
+
+    /// <summary>{0} = how many settings.</summary>
+    public static string CompanionSetupUnknownFormat => Loc.Get("CompanionSetupUnknownFormat");
+
+    public static string CompanionSetupNode => Loc.Get("CompanionSetupNode");
+    public static string CompanionSetupNodeOk => Loc.Get("CompanionSetupNodeOk");
+
+    /// <summary>{0} = how many settings to change.</summary>
+    public static string CompanionSetupNodeChangeFormat => Loc.Get("CompanionSetupNodeChangeFormat");
+
+    public static string CompanionSetupNodeUnknown => Loc.Get("CompanionSetupNodeUnknown");
+    public static string CompanionSetupWhere => Loc.Get("CompanionSetupWhere");
+    public static string CompanionSetupOk => Loc.Get("CompanionSetupOk");
+    public static string CompanionSetupNeedsChange => Loc.Get("CompanionSetupNeedsChange");
+    public static string CompanionSetupUnknown => Loc.Get("CompanionSetupUnknown");
+    public static string CompanionSetupCovered => Loc.Get("CompanionSetupCovered");
+    public static string CompanionSetupBlocking => Loc.Get("CompanionSetupBlocking");
+
+    /// <summary>{0} = the value now.</summary>
+    public static string CompanionSetupNowFormat => Loc.Get("CompanionSetupNowFormat");
+
+    /// <summary>{0} = the recommended value.</summary>
+    public static string CompanionSetupRecommendedFormat => Loc.Get("CompanionSetupRecommendedFormat");
+
+    public static string CompanionSetupOn => Loc.Get("CompanionSetupOn");
+    public static string CompanionSetupOff => Loc.Get("CompanionSetupOff");
+    public static string CompanionSetupApply => Loc.Get("CompanionSetupApply");
+
+    /// <summary>{0} = the plugin.</summary>
+    public static string CompanionSetupApplyTooltipFormat => Loc.Get("CompanionSetupApplyTooltipFormat");
+
+    public static string CompanionSetupApplyNothing => Loc.Get("CompanionSetupApplyNothing");
+    public static string CompanionSetupApplyBusy => Loc.Get("CompanionSetupApplyBusy");
+    public static string CompanionSetupApplyPopup => Loc.Get("CompanionSetupApplyPopup");
+
+    /// <summary>{0} = the plugin.</summary>
+    public static string CompanionSetupApplyQuestionFormat => Loc.Get("CompanionSetupApplyQuestionFormat");
+
+    /// <summary>{0} = the setting, {1} = its value now, {2} = the recommended value.</summary>
+    public static string CompanionSetupApplyLineFormat => Loc.Get("CompanionSetupApplyLineFormat");
+
+    public static string CompanionSetupApplyConfirm => Loc.Get("CompanionSetupApplyConfirm");
+
+    /// <summary>{0} = the plugin, {1} = changed, {2} = asked.</summary>
+    public static string CompanionSetupAppliedFormat => Loc.Get("CompanionSetupAppliedFormat");
+
+    public static string CompanionSetupCheckAgain => Loc.Get("CompanionSetupCheckAgain");
+    public static string CompanionSetupCheckAgainTooltip => Loc.Get("CompanionSetupCheckAgainTooltip");
+
+    /// <summary>A recommended setting's name as its plugin shows it ("Automatic quest accept (QA)").</summary>
+    public static string CompanionSetupLabel(string id) => Loc.Get("CompanionSetup." + id + ".Label");
+
+    /// <summary>The recommended value or step ("on", "save one gear set per crafting class…").</summary>
+    public static string CompanionSetupRecommended(string id) => Loc.Get("CompanionSetup." + id + ".Recommended");
+
+    /// <summary>Why the setting matters to a hand-off.</summary>
+    public static string CompanionSetupWhy(string id) => Loc.Get("CompanionSetup." + id + ".Why");
+
+    /// <summary>What a blocked hand-off needs ("TextAdvance's quest accept on"), for <see cref="CompanionSetupBlockedFormat"/>.</summary>
+    public static string CompanionSetupNeed(string id) => Loc.Get("CompanionSetup." + id + ".Need");
+
+    /// <summary>The overall line: "Ready for full automation", "2 plugins need setup", "1 plugin for full automation is not loaded", or both counts.</summary>
+    public static string CompanionSetupSummaryLine(CompanionSetupSummary summary)
+    {
+        System.ArgumentNullException.ThrowIfNull(summary);
+        if (summary.Ready)
+        {
+            return CompanionSetupReady;
+        }
+
+        var needs = summary.NeedSetup.Count switch
+        {
+            0 => null,
+            1 => CompanionSetupNeedsOne,
+            var n => string.Format(System.Globalization.CultureInfo.CurrentCulture, CompanionSetupNeedsFormat, n),
+        };
+        var missing = summary.NotLoaded.Count switch
+        {
+            0 => null,
+            1 => CompanionSetupMissingOne,
+            var n => string.Format(System.Globalization.CultureInfo.CurrentCulture, CompanionSetupMissingFormat, n),
+        };
+        return needs is not null && missing is not null ? needs + " · " + missing : needs ?? missing ?? CompanionSetupReady;
+    }
+
+    /// <summary>A setting's value for display: "on"/"off" for a bool, Questionable's combat module by name, else as read.</summary>
+    public static string CompanionSetupValue(string id, string? value)
+    {
+        if (value is null)
+        {
+            return "?";
+        }
+
+        if (bool.TryParse(value, out var on))
+        {
+            return on ? CompanionSetupOn : CompanionSetupOff;
+        }
+
+        return id switch
+        {
+            "questionable.combat-module" => value switch
+            {
+                "0" => "None",
+                "1" => "Boss Mod",
+                "2" => "Wrath Combo",
+                "3" => "Rotation Solver Reborn",
+                _ => value,
+            },
+            "questionable.setup" => value == "0" ? CompanionSetupOff : CompanionSetupOn,
+            _ => value,
+        };
+    }
 
     // ---- Help and the tour ----
     public static string HelpCompanionsTip => Loc.Get("Help.CompanionsTip");

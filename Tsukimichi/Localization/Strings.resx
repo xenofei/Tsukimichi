@@ -2235,6 +2235,542 @@
     <value>AutoDuty's rotation</value>
     <comment>What a rotation plugin does for AutoDuty, one line.</comment>
   </data>
+  <data name="CompanionUnlocks.TextAdvance" xml:space="preserve">
+    <value>Talks, accepts and turns in quests while Questionable runs</value>
+    <comment>What TextAdvance does for Questionable, one line.</comment>
+  </data>
+  <data name="CompanionNeededByFormat" xml:space="preserve">
+    <value>Needed by {0}</value>
+    <comment>Under a companion row that another plugin needs. {0} = "Questionable" or "AutoDuty and Questionable".</comment>
+  </data>
+  <data name="CompanionAndFormat" xml:space="preserve">
+    <value>{0} and {1}</value>
+    <comment>Two plugin names joined ("AutoDuty and Questionable").</comment>
+  </data>
+  <data name="CompanionSetupBlockedFormat" xml:space="preserve">
+    <value>{0} needs {1} — see Settings › Integrations</value>
+    <comment>Disabled hand-off button whose plugin is loaded but a setting blocks it. {0} = the plugin handed the work ("Questionable"), {1} = what it needs ("TextAdvance's quest accept on").</comment>
+  </data>
+  <data name="CompanionSetupNoteOneFormat" xml:space="preserve">
+    <value>{0}: one recommended setting is set otherwise — see Settings › Integrations</value>
+    <comment>Note under an enabled hand-off button's tooltip. {0} = the plugin.</comment>
+  </data>
+  <data name="CompanionSetupNoteFormat" xml:space="preserve">
+    <value>{0}: {1} recommended settings are set otherwise — see Settings › Integrations</value>
+    <comment>Note under an enabled hand-off button's tooltip. {0} = the plugin, {1} = how many (2 or more).</comment>
+  </data>
+  <data name="CompanionSetupReady" xml:space="preserve">
+    <value>Ready for full automation</value>
+    <comment>Companion plugins summary line: every plugin full automation needs is loaded and set as recommended.</comment>
+  </data>
+  <data name="CompanionSetupNeedsOne" xml:space="preserve">
+    <value>1 plugin needs setup</value>
+    <comment>Companion plugins summary line.</comment>
+  </data>
+  <data name="CompanionSetupNeedsFormat" xml:space="preserve">
+    <value>{0} plugins need setup</value>
+    <comment>Companion plugins summary line. {0} = 2 or more.</comment>
+  </data>
+  <data name="CompanionSetupMissingOne" xml:space="preserve">
+    <value>1 plugin for full automation is not loaded</value>
+    <comment>Companion plugins summary line.</comment>
+  </data>
+  <data name="CompanionSetupMissingFormat" xml:space="preserve">
+    <value>{0} plugins for full automation are not loaded</value>
+    <comment>Companion plugins summary line. {0} = 2 or more.</comment>
+  </data>
+  <data name="CompanionSetupUnknownFormat" xml:space="preserve">
+    <value>{0} settings Tsukimichi cannot read are listed as "?" under Setup.</value>
+    <comment>Tooltip line under the summary. {0} = how many.</comment>
+  </data>
+  <data name="CompanionSetupNode" xml:space="preserve">
+    <value>Setup</value>
+    <comment>Expander under a companion row listing its recommended settings.</comment>
+  </data>
+  <data name="CompanionSetupNodeOk" xml:space="preserve">
+    <value>Setup · as recommended</value>
+    <comment>Expander title when every readable setting is as recommended.</comment>
+  </data>
+  <data name="CompanionSetupNodeChangeFormat" xml:space="preserve">
+    <value>Setup · {0} to change</value>
+    <comment>Expander title. {0} = how many settings are set otherwise.</comment>
+  </data>
+  <data name="CompanionSetupNodeUnknown" xml:space="preserve">
+    <value>Setup · check by hand</value>
+    <comment>Expander title when nothing can be read.</comment>
+  </data>
+  <data name="CompanionSetupWhere" xml:space="preserve">
+    <value>Change these in the plugin's own settings: /xlplugins › Installed › its cog button.</value>
+    <comment>Under the Setup list.</comment>
+  </data>
+  <data name="CompanionSetupOk" xml:space="preserve">
+    <value>Set as recommended</value>
+    <comment>Tooltip of the check mark.</comment>
+  </data>
+  <data name="CompanionSetupNeedsChange" xml:space="preserve">
+    <value>Set otherwise</value>
+    <comment>Tooltip of the cross.</comment>
+  </data>
+  <data name="CompanionSetupUnknown" xml:space="preserve">
+    <value>Tsukimichi cannot read this setting: check it yourself</value>
+    <comment>Tooltip of the question mark.</comment>
+  </data>
+  <data name="CompanionSetupCovered" xml:space="preserve">
+    <value>Not needed: Questionable sets this itself while it runs</value>
+    <comment>Tooltip of a check mark whose setting another setting covers.</comment>
+  </data>
+  <data name="CompanionSetupBlocking" xml:space="preserve">
+    <value>Hand-offs stop here until this is changed</value>
+    <comment>Tooltip line on a blocking setting that is set otherwise.</comment>
+  </data>
+  <data name="CompanionSetupNowFormat" xml:space="preserve">
+    <value>Now: {0}</value>
+    <comment>Tooltip line: the setting's current value.</comment>
+  </data>
+  <data name="CompanionSetupRecommendedFormat" xml:space="preserve">
+    <value>Recommended: {0}</value>
+    <comment>The recommended value or step.</comment>
+  </data>
+  <data name="CompanionSetupOn" xml:space="preserve">
+    <value>on</value>
+    <comment>A setting's value: on.</comment>
+  </data>
+  <data name="CompanionSetupOff" xml:space="preserve">
+    <value>off</value>
+    <comment>A setting's value: off.</comment>
+  </data>
+  <data name="CompanionSetupApply" xml:space="preserve">
+    <value>Apply recommended settings</value>
+    <comment>Button under a Setup list: sets the listed settings through the plugin's own IPC, after a confirmation.</comment>
+  </data>
+  <data name="CompanionSetupApplyTooltipFormat" xml:space="preserve">
+    <value>Changes only the settings marked with a cross that {0} lets other plugins set. You see the list first.</value>
+    <comment>Tooltip of Apply recommended settings. {0} = the plugin.</comment>
+  </data>
+  <data name="CompanionSetupApplyNothing" xml:space="preserve">
+    <value>Nothing to change that Tsukimichi may set.</value>
+    <comment>Tooltip of a disabled Apply recommended settings.</comment>
+  </data>
+  <data name="CompanionSetupApplyBusy" xml:space="preserve">
+    <value>AutoDuty is running: apply once it has stopped.</value>
+    <comment>Tooltip of a disabled Apply recommended settings while AutoDuty runs.</comment>
+  </data>
+  <data name="CompanionSetupApplyPopup" xml:space="preserve">
+    <value>Apply recommended settings?###TsukimichiCompanionApply</value>
+    <comment>Confirmation popup title. Keep ###TsukimichiCompanionApply.</comment>
+  </data>
+  <data name="CompanionSetupApplyQuestionFormat" xml:space="preserve">
+    <value>Tsukimichi will change these settings in {0}, through {0}'s own IPC, and nothing else:</value>
+    <comment>Confirmation text. {0} = the plugin.</comment>
+  </data>
+  <data name="CompanionSetupApplyLineFormat" xml:space="preserve">
+    <value>{0}: {1}, becomes {2}</value>
+    <comment>One change in the confirmation. {0} = the setting, {1} = its value now, {2} = the recommended value.</comment>
+  </data>
+  <data name="CompanionSetupApplyConfirm" xml:space="preserve">
+    <value>Apply</value>
+    <comment>Confirmation button.</comment>
+  </data>
+  <data name="CompanionSetupAppliedFormat" xml:space="preserve">
+    <value>{0}: changed {1} of {2} settings.</value>
+    <comment>Shown after Apply. {0} = the plugin, {1} = changed, {2} = asked.</comment>
+  </data>
+  <data name="CompanionSetupCheckAgain" xml:space="preserve">
+    <value>Check again</value>
+    <comment>Button: read the companion plugins' settings again now.</comment>
+  </data>
+  <data name="CompanionSetupCheckAgainTooltip" xml:space="preserve">
+    <value>Reads every plugin's settings again (Tsukimichi also does so every few seconds while this page is open).</value>
+    <comment>Tooltip of Check again.</comment>
+  </data>
+  <data name="CompanionSetup.questionable.setup.Label" xml:space="preserve">
+    <value>One-time setup (Finish Setup)</value>
+    <comment>Questionable setting name.</comment>
+  </data>
+  <data name="CompanionSetup.questionable.setup.Recommended" xml:space="preserve">
+    <value>finished</value>
+    <comment>Recommended value.</comment>
+  </data>
+  <data name="CompanionSetup.questionable.setup.Why" xml:space="preserve">
+    <value>Until it is finished, /qst and Questionable's window refuse to work. Open Questionable and press Finish Setup.</value>
+    <comment>Why the setting matters.</comment>
+  </data>
+  <data name="CompanionSetup.questionable.combat-module.Label" xml:space="preserve">
+    <value>Preferred Combat Module</value>
+    <comment>Questionable setting name (its own label).</comment>
+  </data>
+  <data name="CompanionSetup.questionable.combat-module.Recommended" xml:space="preserve">
+    <value>Boss Mod, Wrath Combo or Rotation Solver Reborn (installed)</value>
+    <comment>Recommended value.</comment>
+  </data>
+  <data name="CompanionSetup.questionable.combat-module.Why" xml:space="preserve">
+    <value>With None, every fight in a quest is left to you.</value>
+    <comment>Why the setting matters.</comment>
+  </data>
+  <data name="CompanionSetup.questionable.configure-textadvance.Label" xml:space="preserve">
+    <value>Automatically configure TextAdvance with the recommended settings</value>
+    <comment>Questionable setting name (its own label).</comment>
+  </data>
+  <data name="CompanionSetup.questionable.configure-textadvance.Recommended" xml:space="preserve">
+    <value>on</value>
+    <comment>Recommended value.</comment>
+  </data>
+  <data name="CompanionSetup.questionable.configure-textadvance.Why" xml:space="preserve">
+    <value>Questionable then turns TextAdvance's quest accept, turn-in and dialogue on while it runs. Off, your own TextAdvance settings must do it.</value>
+    <comment>Why the setting matters.</comment>
+  </data>
+  <data name="CompanionSetup.questionable.dont-skip-cutscenes.Label" xml:space="preserve">
+    <value>…but don't skip cutscenes or dialogue</value>
+    <comment>Questionable setting name (its own label, under the TextAdvance one).</comment>
+  </data>
+  <data name="CompanionSetup.questionable.dont-skip-cutscenes.Recommended" xml:space="preserve">
+    <value>off</value>
+    <comment>Recommended value.</comment>
+  </data>
+  <data name="CompanionSetup.questionable.dont-skip-cutscenes.Why" xml:space="preserve">
+    <value>On, Questionable stops answering dialogue choices, so a run waits for you at every prompt.</value>
+    <comment>Why the setting matters.</comment>
+  </data>
+  <data name="CompanionSetup.questionable.prevent-completion.Label" xml:space="preserve">
+    <value>Prevent quest completion (Advanced)</value>
+    <comment>Questionable setting name.</comment>
+  </data>
+  <data name="CompanionSetup.questionable.prevent-completion.Recommended" xml:space="preserve">
+    <value>off</value>
+    <comment>Recommended value.</comment>
+  </data>
+  <data name="CompanionSetup.questionable.prevent-completion.Why" xml:space="preserve">
+    <value>On, Questionable never turns a quest in, so nothing Tsukimichi sends gets done.</value>
+    <comment>Why the setting matters.</comment>
+  </data>
+  <data name="CompanionSetup.questionable.prevent-completion.Need" xml:space="preserve">
+    <value>its "Prevent quest completion" off</value>
+    <comment>Completes CompanionSetupBlockedFormat: "Questionable needs its "Prevent quest completion" off".</comment>
+  </data>
+  <data name="CompanionSetup.questionable.stop-conditions.Label" xml:space="preserve">
+    <value>Stop Questionable when any of the conditions below are met</value>
+    <comment>Questionable setting name (its own label).</comment>
+  </data>
+  <data name="CompanionSetup.questionable.stop-conditions.Recommended" xml:space="preserve">
+    <value>off, or check its quest and level list</value>
+    <comment>Recommended value.</comment>
+  </data>
+  <data name="CompanionSetup.questionable.stop-conditions.Why" xml:space="preserve">
+    <value>A run started from Tsukimichi can stop halfway at one of those quests or levels.</value>
+    <comment>Why the setting matters.</comment>
+  </data>
+  <data name="CompanionSetup.questionable.command-after-stop.Label" xml:space="preserve">
+    <value>Run command when Questionable finishes automatic questing</value>
+    <comment>Questionable setting name (its own label).</comment>
+  </data>
+  <data name="CompanionSetup.questionable.command-after-stop.Recommended" xml:space="preserve">
+    <value>off</value>
+    <comment>Recommended value.</comment>
+  </data>
+  <data name="CompanionSetup.questionable.command-after-stop.Why" xml:space="preserve">
+    <value>Tsukimichi's Stop button runs that command too (by default /li auto, a Lifestream trip).</value>
+    <comment>Why the setting matters.</comment>
+  </data>
+  <data name="CompanionSetup.questionable.autoduty.Label" xml:space="preserve">
+    <value>Run instanced content with AutoDuty and BossMod</value>
+    <comment>Questionable setting name (its own label).</comment>
+  </data>
+  <data name="CompanionSetup.questionable.autoduty.Recommended" xml:space="preserve">
+    <value>on (needs AutoDuty)</value>
+    <comment>Recommended value.</comment>
+  </data>
+  <data name="CompanionSetup.questionable.autoduty.Why" xml:space="preserve">
+    <value>Off, a quest's dungeon only opens the Duty Finder and waits for you.</value>
+    <comment>Why the setting matters.</comment>
+  </data>
+  <data name="CompanionSetup.questionable.solo-duties.Label" xml:space="preserve">
+    <value>Run quest battles with BossMod</value>
+    <comment>Questionable setting name (its own label).</comment>
+  </data>
+  <data name="CompanionSetup.questionable.solo-duties.Recommended" xml:space="preserve">
+    <value>on (needs Boss Mod; Boss Mod Reborn does not serve here)</value>
+    <comment>Recommended value.</comment>
+  </data>
+  <data name="CompanionSetup.questionable.solo-duties.Why" xml:space="preserve">
+    <value>Off, a solo quest battle waits for you to play it.</value>
+    <comment>Why the setting matters.</comment>
+  </data>
+  <data name="CompanionSetup.textadvance.quest-accept.Label" xml:space="preserve">
+    <value>Automatic quest accept (QA)</value>
+    <comment>TextAdvance setting name (its own label).</comment>
+  </data>
+  <data name="CompanionSetup.textadvance.quest-accept.Recommended" xml:space="preserve">
+    <value>on</value>
+    <comment>Recommended value.</comment>
+  </data>
+  <data name="CompanionSetup.textadvance.quest-accept.Why" xml:space="preserve">
+    <value>Questionable accepts quests through TextAdvance; off, it stops at every quest offer.</value>
+    <comment>Why the setting matters.</comment>
+  </data>
+  <data name="CompanionSetup.textadvance.quest-accept.Need" xml:space="preserve">
+    <value>TextAdvance's quest accept on</value>
+    <comment>Completes CompanionSetupBlockedFormat: "Questionable needs TextAdvance's quest accept on".</comment>
+  </data>
+  <data name="CompanionSetup.textadvance.quest-complete.Label" xml:space="preserve">
+    <value>Automatic quest complete (QC)</value>
+    <comment>TextAdvance setting name (its own label).</comment>
+  </data>
+  <data name="CompanionSetup.textadvance.quest-complete.Recommended" xml:space="preserve">
+    <value>on</value>
+    <comment>Recommended value.</comment>
+  </data>
+  <data name="CompanionSetup.textadvance.quest-complete.Why" xml:space="preserve">
+    <value>Questionable turns quests in through TextAdvance; off, it stops at every turn-in.</value>
+    <comment>Why the setting matters.</comment>
+  </data>
+  <data name="CompanionSetup.textadvance.quest-complete.Need" xml:space="preserve">
+    <value>TextAdvance's quest complete on</value>
+    <comment>Completes CompanionSetupBlockedFormat.</comment>
+  </data>
+  <data name="CompanionSetup.textadvance.talk-skip.Label" xml:space="preserve">
+    <value>Automatic talk skip (TS)</value>
+    <comment>TextAdvance setting name (its own label).</comment>
+  </data>
+  <data name="CompanionSetup.textadvance.talk-skip.Recommended" xml:space="preserve">
+    <value>on</value>
+    <comment>Recommended value.</comment>
+  </data>
+  <data name="CompanionSetup.textadvance.talk-skip.Why" xml:space="preserve">
+    <value>Off, every conversation in a Questionable run waits for a click.</value>
+    <comment>Why the setting matters.</comment>
+  </data>
+  <data name="CompanionSetup.textadvance.enabled.Label" xml:space="preserve">
+    <value>Enable plugin (non-persistent)</value>
+    <comment>TextAdvance setting name (its own label).</comment>
+  </data>
+  <data name="CompanionSetup.textadvance.enabled.Recommended" xml:space="preserve">
+    <value>on (add the character to its auto-enable list so it stays on after logging in)</value>
+    <comment>Recommended value.</comment>
+  </data>
+  <data name="CompanionSetup.textadvance.enabled.Why" xml:space="preserve">
+    <value>TextAdvance turns itself off at logout; while it is off, nothing is accepted or turned in.</value>
+    <comment>Why the setting matters.</comment>
+  </data>
+  <data name="CompanionSetup.textadvance.not-paused.Label" xml:space="preserve">
+    <value>Not stopped by another plugin</value>
+    <comment>TextAdvance state (its red "stopped by these plugins" banner).</comment>
+  </data>
+  <data name="CompanionSetup.textadvance.not-paused.Recommended" xml:space="preserve">
+    <value>not stopped</value>
+    <comment>Recommended value.</comment>
+  </data>
+  <data name="CompanionSetup.textadvance.not-paused.Why" xml:space="preserve">
+    <value>While another plugin holds TextAdvance stopped (its window names it), even Questionable's runs wait at dialogue.</value>
+    <comment>Why the setting matters.</comment>
+  </data>
+  <data name="CompanionSetup.autoduty.manage-rotation.Label" xml:space="preserve">
+    <value>Auto Manage Rotation Plugin State</value>
+    <comment>AutoDuty setting name (its own label).</comment>
+  </data>
+  <data name="CompanionSetup.autoduty.manage-rotation.Recommended" xml:space="preserve">
+    <value>on</value>
+    <comment>Recommended value.</comment>
+  </data>
+  <data name="CompanionSetup.autoduty.manage-rotation.Why" xml:space="preserve">
+    <value>Off, AutoDuty never turns your rotation on and the character does not attack. AutoDuty turns this off itself when Wrath Combo refuses it.</value>
+    <comment>Why the setting matters.</comment>
+  </data>
+  <data name="CompanionSetup.autoduty.alternative-rotation.Label" xml:space="preserve">
+    <value>Using Alternative Rotation Plugin</value>
+    <comment>AutoDuty setting name (its own label).</comment>
+  </data>
+  <data name="CompanionSetup.autoduty.alternative-rotation.Recommended" xml:space="preserve">
+    <value>off</value>
+    <comment>Recommended value.</comment>
+  </data>
+  <data name="CompanionSetup.autoduty.alternative-rotation.Why" xml:space="preserve">
+    <value>On, AutoDuty leaves the rotation entirely to you.</value>
+    <comment>Why the setting matters.</comment>
+  </data>
+  <data name="CompanionSetup.autoduty.wrath-setup-jobs.Label" xml:space="preserve">
+    <value>Auto setup jobs for autorotation</value>
+    <comment>AutoDuty setting name (its own label).</comment>
+  </data>
+  <data name="CompanionSetup.autoduty.wrath-setup-jobs.Recommended" xml:space="preserve">
+    <value>on</value>
+    <comment>Recommended value.</comment>
+  </data>
+  <data name="CompanionSetup.autoduty.wrath-setup-jobs.Why" xml:space="preserve">
+    <value>Off, a job you have not set up in Wrath Combo gets no rotation from it.</value>
+    <comment>Why the setting matters.</comment>
+  </data>
+  <data name="CompanionSetup.autoduty.manage-bossmod.Label" xml:space="preserve">
+    <value>Auto Manage BossMod AI Settings</value>
+    <comment>AutoDuty setting name (its own label).</comment>
+  </data>
+  <data name="CompanionSetup.autoduty.manage-bossmod.Recommended" xml:space="preserve">
+    <value>on</value>
+    <comment>Recommended value.</comment>
+  </data>
+  <data name="CompanionSetup.autoduty.manage-bossmod.Why" xml:space="preserve">
+    <value>Off, AutoDuty sets no Boss Mod preset: the character neither dodges nor follows the party.</value>
+    <comment>Why the setting matters.</comment>
+  </data>
+  <data name="CompanionSetup.autoduty.leave-duty.Label" xml:space="preserve">
+    <value>Auto Leave Duty in last loop</value>
+    <comment>AutoDuty setting name (its own label).</comment>
+  </data>
+  <data name="CompanionSetup.autoduty.leave-duty.Recommended" xml:space="preserve">
+    <value>on</value>
+    <comment>Recommended value.</comment>
+  </data>
+  <data name="CompanionSetup.autoduty.leave-duty.Why" xml:space="preserve">
+    <value>Off, the run ends with you still inside the duty.</value>
+    <comment>Why the setting matters.</comment>
+  </data>
+  <data name="CompanionSetup.autoduty.block-leaving.Label" xml:space="preserve">
+    <value>Block leaving duty until it's complete</value>
+    <comment>AutoDuty setting name (its own label).</comment>
+  </data>
+  <data name="CompanionSetup.autoduty.block-leaving.Recommended" xml:space="preserve">
+    <value>off</value>
+    <comment>Recommended value.</comment>
+  </data>
+  <data name="CompanionSetup.autoduty.block-leaving.Why" xml:space="preserve">
+    <value>On, a path that ends before the duty is done never leaves.</value>
+    <comment>Why the setting matters.</comment>
+  </data>
+  <data name="CompanionSetup.autoduty.unsynced.Label" xml:space="preserve">
+    <value>Unsynced</value>
+    <comment>AutoDuty setting name (its own label).</comment>
+  </data>
+  <data name="CompanionSetup.autoduty.unsynced.Recommended" xml:space="preserve">
+    <value>off</value>
+    <comment>Recommended value.</comment>
+  </data>
+  <data name="CompanionSetup.autoduty.unsynced.Why" xml:space="preserve">
+    <value>On, a Duty Finder run queues unsynced and takes the path's unsynced steps.</value>
+    <comment>Why the setting matters.</comment>
+  </data>
+  <data name="CompanionSetup.lifestream.firmament.Label" xml:space="preserve">
+    <value>Add firmament location into Foundation aetheryte</value>
+    <comment>Lifestream setting name (its own label).</comment>
+  </data>
+  <data name="CompanionSetup.lifestream.firmament.Recommended" xml:space="preserve">
+    <value>on</value>
+    <comment>Recommended value.</comment>
+  </data>
+  <data name="CompanionSetup.lifestream.firmament.Why" xml:space="preserve">
+    <value>Off, Go to giver's hop from the Foundation to the Firmament goes nowhere.</value>
+    <comment>Why the setting matters.</comment>
+  </data>
+  <data name="CompanionSetup.lifestream.custom-overrides.Label" xml:space="preserve">
+    <value>Allow custom alias and house alias to override built-in commands</value>
+    <comment>Lifestream setting name (its own label).</comment>
+  </data>
+  <data name="CompanionSetup.lifestream.custom-overrides.Recommended" xml:space="preserve">
+    <value>off</value>
+    <comment>Recommended value.</comment>
+  </data>
+  <data name="CompanionSetup.lifestream.custom-overrides.Why" xml:space="preserve">
+    <value>On, an alias named "island" or "occult" replaces the trips Teleport takes to those quest givers.</value>
+    <comment>Why the setting matters.</comment>
+  </data>
+  <data name="CompanionSetup.vnavmesh.auto-load.Label" xml:space="preserve">
+    <value>Automatically load/build navigation data when changing zones</value>
+    <comment>vnavmesh setting name (its own label).</comment>
+  </data>
+  <data name="CompanionSetup.vnavmesh.auto-load.Recommended" xml:space="preserve">
+    <value>on</value>
+    <comment>Recommended value.</comment>
+  </data>
+  <data name="CompanionSetup.vnavmesh.auto-load.Why" xml:space="preserve">
+    <value>Off, the map is never loaded after a zone change and Walk to giver waits at "Preparing path…".</value>
+    <comment>Why the setting matters.</comment>
+  </data>
+  <data name="CompanionSetup.vnavmesh.auto-load.Need" xml:space="preserve">
+    <value>its automatic navigation loading on</value>
+    <comment>Completes CompanionSetupBlockedFormat: "vnavmesh needs its automatic navigation loading on".</comment>
+  </data>
+  <data name="CompanionSetup.artisan.gearsets.Label" xml:space="preserve">
+    <value>A saved gear set for each crafter</value>
+    <comment>Artisan requirement (not a setting).</comment>
+  </data>
+  <data name="CompanionSetup.artisan.gearsets.Recommended" xml:space="preserve">
+    <value>save one gear set per crafting class in the game's Gear Set list</value>
+    <comment>The step to take.</comment>
+  </data>
+  <data name="CompanionSetup.artisan.gearsets.Why" xml:space="preserve">
+    <value>Craft switches to the recipe's crafter through its gear set, and stops when there is none.</value>
+    <comment>Why it matters.</comment>
+  </data>
+  <data name="CompanionSetup.artisan.exit-stance.Label" xml:space="preserve">
+    <value>Exit Crafting Stance After Completion</value>
+    <comment>Artisan setting name (its own label).</comment>
+  </data>
+  <data name="CompanionSetup.artisan.exit-stance.Recommended" xml:space="preserve">
+    <value>on</value>
+    <comment>Recommended value.</comment>
+  </data>
+  <data name="CompanionSetup.artisan.exit-stance.Why" xml:space="preserve">
+    <value>Off, the character stays at the crafting log after the craft and cannot walk to the turn-in.</value>
+    <comment>Why the setting matters.</comment>
+  </data>
+  <data name="CompanionSetup.artisan.stop-nq.Label" xml:space="preserve">
+    <value>Disable Endurance Mode Upon Crafting an NQ item</value>
+    <comment>Artisan setting name (its own label).</comment>
+  </data>
+  <data name="CompanionSetup.artisan.stop-nq.Recommended" xml:space="preserve">
+    <value>off</value>
+    <comment>Recommended value.</comment>
+  </data>
+  <data name="CompanionSetup.artisan.stop-nq.Why" xml:space="preserve">
+    <value>On, Craft can stop short of the amount the quest asks for.</value>
+    <comment>Why the setting matters.</comment>
+  </data>
+  <data name="CompanionSetup.artisan.stop-fail.Label" xml:space="preserve">
+    <value>Disable Endurance Mode Upon Failed Craft</value>
+    <comment>Artisan setting name (its own label).</comment>
+  </data>
+  <data name="CompanionSetup.artisan.stop-fail.Recommended" xml:space="preserve">
+    <value>off</value>
+    <comment>Recommended value.</comment>
+  </data>
+  <data name="CompanionSetup.artisan.stop-fail.Why" xml:space="preserve">
+    <value>On, one failed craft stops the rest of the amount.</value>
+    <comment>Why the setting matters.</comment>
+  </data>
+  <data name="CompanionSetup.gatherbuddy.teleport.Label" xml:space="preserve">
+    <value>Enable Teleport</value>
+    <comment>GatherBuddy setting name (its own label).</comment>
+  </data>
+  <data name="CompanionSetup.gatherbuddy.teleport.Recommended" xml:space="preserve">
+    <value>on</value>
+    <comment>Recommended value.</comment>
+  </data>
+  <data name="CompanionSetup.gatherbuddy.teleport.Why" xml:space="preserve">
+    <value>Off, Gather only marks the node and you travel there yourself.</value>
+    <comment>Why the setting matters.</comment>
+  </data>
+  <data name="CompanionSetup.gatherbuddy.set-names.Label" xml:space="preserve">
+    <value>Set Names (Miner, Botanist, Fisher)</value>
+    <comment>GatherBuddy setting name (its own label).</comment>
+  </data>
+  <data name="CompanionSetup.gatherbuddy.set-names.Recommended" xml:space="preserve">
+    <value>the names of your own gathering gear sets</value>
+    <comment>The step to take.</comment>
+  </data>
+  <data name="CompanionSetup.gatherbuddy.set-names.Why" xml:space="preserve">
+    <value>GatherBuddy changes gear by gear set name; a name that does not match fails with a chat error. GatherBuddy Reborn picks the set by job instead.</value>
+    <comment>Why the setting matters.</comment>
+  </data>
+  <data name="CompanionSetup.allagantools.open-once.Label" xml:space="preserve">
+    <value>Retainers, saddlebags, armoire and glamour dresser opened once</value>
+    <comment>Allagan Tools requirement (not a setting).</comment>
+  </data>
+  <data name="CompanionSetup.allagantools.open-once.Recommended" xml:space="preserve">
+    <value>open each once on every character</value>
+    <comment>The step to take.</comment>
+  </data>
+  <data name="CompanionSetup.allagantools.open-once.Why" xml:space="preserve">
+    <value>Allagan Tools counts what they hold only after it has seen them open; until then the Hand in counts leave them out.</value>
+    <comment>Why it matters.</comment>
+  </data>
   <data name="DutiesSection" xml:space="preserve">
     <value>Duties</value>
     <comment>Detail pane section listing the duties a quest needs or unlocks.</comment>

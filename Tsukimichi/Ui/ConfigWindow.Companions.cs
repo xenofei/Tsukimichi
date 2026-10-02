@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Globalization;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
@@ -10,7 +11,8 @@ namespace Tsukimichi.Ui;
 /// <summary>
 /// Settings › Integrations › Companion plugins (feature plan v5, decision 1): one row per plugin Tsukimichi works with,
 /// its state as a glyph (loaded, turned off, outdated, not installed; the word, the installed version and the minimum
-/// in the tooltip), its name, what it unlocks in Tsukimichi and a "Copy repo URL" button for a custom repository
+/// in the tooltip), its name, what it unlocks in Tsukimichi (with "Needed by …" for TextAdvance, Boss Mod and the
+/// rotation plugins, and the companion setup expander, <see cref="DrawCompanionSetup"/>) and a "Copy repo URL" button for a custom repository
 /// ("Official repository" for one in Dalamud's own list), then plain-text steps for adding a custom repository and the
 /// AutoDuty "regular Duty Finder" setting (its own block, <see cref="DrawAutoDutySettings"/>). The table reads <see cref="CompanionPlugins.All"/>, which re-reads Dalamud's
 /// list only after it changed.
@@ -48,6 +50,8 @@ public sealed partial class ConfigWindow
             ImGui.TextWrapped(Strings.CompanionsIntro);
         }
 
+        DrawCompanionSetupSummary(companions);
+
         var flags = ImGuiTableFlags.RowBg | ImGuiTableFlags.BordersInnerH | ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.PadOuterX;
         using (var table = ImRaii.Table("##companions", 4, flags))
         {
@@ -64,7 +68,7 @@ public sealed partial class ConfigWindow
                 {
                     if (all[i].Definition.Listed)
                     {
-                        DrawCompanionRow(i, all[i]);
+                        DrawCompanionRow(i, all[i], all);
                     }
                 }
             }
@@ -80,10 +84,12 @@ public sealed partial class ConfigWindow
         {
             ImGui.TextWrapped(Strings.CompanionAddRepoHowTo);
         }
+
+        DrawCompanionApplyConfirm(companions);
     }
 
     /// <summary>Every plugin the table lists, for the search box (the names are the plugins' own, never translated).</summary>
-    private const string CompanionKeywords = "plugins installed missing outdated repository url Questionable AutoDuty Artisan GatherBuddy vnavmesh Lifestream Allagan Tools Quest Map Chat 2";
+    private const string CompanionKeywords = "plugins installed missing outdated repository url setup settings recommended automation Questionable AutoDuty Artisan GatherBuddy vnavmesh Lifestream TextAdvance Boss Mod Wrath Combo Rotation Solver Allagan Tools Quest Map Chat 2";
 
     /// <summary>
     /// Settings › Integrations › AutoDuty: whether "Run with AutoDuty" may use the regular Duty Finder when a duty has no
@@ -107,7 +113,7 @@ public sealed partial class ConfigWindow
         HintOnHover(Strings.CompanionAutoDutyAllowDutyFinderHint);
     }
 
-    private void DrawCompanionRow(int index, CompanionStatus status)
+    private void DrawCompanionRow(int index, CompanionStatus status, IReadOnlyList<CompanionStatus> all)
     {
         using var id = ImRaii.PushId(index);
         ImGui.TableNextRow();
@@ -147,6 +153,9 @@ public sealed partial class ConfigWindow
         {
             ImGui.TextWrapped(Strings.CompanionUnlocks(status.Plugin));
         }
+
+        DrawNeededBy(status, all);
+        DrawCompanionSetup(status);
 
         ImGui.TableNextColumn();
         var variant = status.Definition.Primary;

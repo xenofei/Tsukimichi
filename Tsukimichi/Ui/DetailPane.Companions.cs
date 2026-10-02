@@ -165,13 +165,15 @@ public sealed partial class DetailPane
                 var text = choice.CanRun
                     ? string.Format(CultureInfo.CurrentCulture, Strings.AutoDutyRunTooltipFormat, Strings.AutoDutyModeName(choice.Mode))
                     : AutoDutyBlockerText(choice.Blocker, companions);
+                // A recommended AutoDuty setting set otherwise (companion setup) is a note, not a blocker.
+                var note = choice.CanRun ? CompanionPlugins.SetupNote(CompanionPlugin.AutoDuty) : null;
                 if (label is null)
                 {
-                    UiMetrics.Tooltip(Strings.AutoDutyRun, text);
+                    UiMetrics.Tooltip(Strings.AutoDutyRun, note is null ? text : text + "\n" + note);
                 }
                 else
                 {
-                    UiMetrics.Tooltip(text);
+                    UiMetrics.Tooltip(text, note);
                 }
             }
 

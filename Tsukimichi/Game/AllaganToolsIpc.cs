@@ -56,7 +56,7 @@ public sealed class AllaganToolsIpc : IDisposable
     private int consumedChanges;
     private bool? available;
 
-    // The plugin-list generation in which a count gate answered "not ready" (an Allagan Tools before 15.0.12): until
+    // The plugin-list generation in which a count gate answered "not ready" (an Allagan Tools before 1.15.0.12): until
     // the list changes again it is treated as unavailable, rather than asked again every frame.
     private int gateMissingIn = -1;
     private int consumedPresence = -1;
@@ -194,7 +194,7 @@ public sealed class AllaganToolsIpc : IDisposable
         }
         catch (IpcNotReadyError)
         {
-            // An Allagan Tools without the gate (before 15.0.12) or mid-reload: unknown until the plugin list changes.
+            // An Allagan Tools without the gate (before 1.15.0.12) or mid-reload: unknown until the plugin list changes.
             gateMissingIn = presence.Generation;
             available = false;
             return null;

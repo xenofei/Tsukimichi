@@ -433,21 +433,43 @@ Tsukimichi also calls other plugins' gates when they are loaded. Each is optiona
 
 `Game/CompanionPlugins.cs` reads the installed list once per `ActivePluginsChanged` and gives each companion plugin a state: **Loaded**, **Installed but turned off**, **Outdated** (below the minimum version Tsukimichi needs, or flagged by Dalamud as built for an older API) or **Not installed**. The plugins, their internal names, minimum versions and repositories are in `Tsukimichi.Core/Companions/CompanionCatalog.cs`; Settings › Integrations › Companion plugins lists them.
 
-| Plugin | Internal name(s) | Minimum version | Repository |
-|---|---|---|---|
-| Lifestream | `Lifestream` | — | `https://github.com/NightmareXIV/MyDalamudPlugins/raw/main/pluginmaster.json` |
-| vnavmesh | `vnavmesh` | — | `https://puni.sh/api/repository/veyn` |
-| Questionable | `Questionable` | — | `https://love.puni.sh/ment.json` |
-| AutoDuty | `AutoDuty` | 0.0.0.336 | `https://puni.sh/api/repository/erdelf` |
-| Artisan | `Artisan` | — | `https://love.puni.sh/ment.json` |
-| GatherBuddy / GatherBuddy Reborn | `GatherBuddy`, `GatherBuddyReborn` | — | official / `https://raw.githubusercontent.com/FFXIV-CombatReborn/CombatRebornRepo/main/pluginmaster.json` |
-| Allagan Tools | `InventoryTools` | — | official |
-| Quest Map | `QuestMap` | 1.7.2.2 | official |
-| Chat 2 | `ChatTwo` | — | official |
-| Boss Mod / Boss Mod Reborn (AutoDuty's) | `BossMod`, `BossModReborn` | — | `https://puni.sh/api/repository/veyn` / Combat Reborn |
-| Wrath Combo / Rotation Solver Reborn (AutoDuty's) | `WrathCombo`, `RotationSolver` | — | `https://love.puni.sh/ment.json` / Combat Reborn |
+Minimum versions are written the way Dalamud reports the plugin's version (its assembly version), which is not always the version a plugin's changelog uses. The last column is a released build as Dalamud reports it (checked 2026-10-02); `CompanionResolverTests.Every_minimum_is_in_the_numbering_of_a_released_build` holds each minimum to that numbering.
 
-Every button that hands work to one of them stays visible when the plugin is not loaded: it is disabled and its tooltip is `CompanionPlugins.DisabledReason(plugin)` ("Needs Lifestream — see Settings › Integrations", "… is installed but turned off — turn it on in /xlplugins", "Needs AutoDuty 0.0.0.336 or newer — update it in /xlplugins"). Each IPC wrapper keeps its own gates; the registry only answers "is it there" and "why not".
+| Plugin | Internal name(s) | Minimum version | Repository | Numbering (a released build) |
+|---|---|---|---|---|
+| Lifestream | `Lifestream` | — | `https://github.com/NightmareXIV/MyDalamudPlugins/raw/main/pluginmaster.json` | 2.5.4.23 (release tag) |
+| vnavmesh | `vnavmesh` | — | `https://puni.sh/api/repository/veyn` | 1.2.3.14 (csproj) |
+| Questionable | `Questionable` | — | `https://love.puni.sh/ment.json` | 15.756.3.26 (release tag) |
+| TextAdvance (needed by Questionable) | `TextAdvance` | — | `https://github.com/NightmareXIV/MyDalamudPlugins/raw/main/pluginmaster.json` | 3.3.0.1 (csproj) |
+| AutoDuty | `AutoDuty` | 0.0.0.336 | `https://puni.sh/api/repository/erdelf` | 0.0.0.375 (release tag; the csproj says 0.0.0.0) |
+| Boss Mod / Boss Mod Reborn (needed by AutoDuty and Questionable) | `BossMod`, `BossModReborn` | — | `https://puni.sh/api/repository/veyn` / Combat Reborn | 7.5.6.9 / 7.5.6.27 (tags) |
+| Wrath Combo / Rotation Solver Reborn (needed by AutoDuty and Questionable) | `WrathCombo`, `RotationSolver` | — | `https://love.puni.sh/ment.json` / Combat Reborn | 1.0.4.26 / 7.5.6.13 |
+| Artisan | `Artisan` | — | `https://love.puni.sh/ment.json` | 4.0.5.21 (csproj) |
+| GatherBuddy / GatherBuddy Reborn | `GatherBuddy`, `GatherBuddyReborn` | — | official / `https://raw.githubusercontent.com/FFXIV-CombatReborn/CombatRebornRepo/main/pluginmaster.json` | 3.8.11.1 / 7.5.6.1 |
+| Allagan Tools | `InventoryTools` | 1.15.0.12 | official | 1.15.0.13 (manifest; its changelog says 15.0.13) |
+| Quest Map | `QuestMap` | — | official | 15.755.2.0 (`<API>.<patch>.N.0` since API 14) |
+| Chat 2 | `ChatTwo` | — | official | 1.40.9.0 |
+
+- **Allagan Tools 1.15.0.12** (2026-08-31) added `ItemCountOwnedByCategory` and `GetItemCountsByCharacter`. Its changelog calls that build 15.0.12, and the official repository publishes it as 1.15.0.12 (goatcorp/DalamudPluginsD17 `b0e378b`, InventoryTools `84af185`). Up to 1.9.0 the minimum was written 15.0.12, so every Allagan Tools build read as outdated.
+- **Quest Map** added its gates in 1.7.2.2 (`b2ce55e`, 2025-06-05). Since API 14 it numbers builds 14.x and 15.x, so every build for the current API has them and no minimum is needed.
+
+Every button that hands work to one of them stays visible when the plugin is not loaded: it is disabled and its tooltip is `CompanionPlugins.DisabledReason(plugin)` ("Needs Lifestream — see Settings › Integrations", "… is installed but turned off — turn it on in /xlplugins", "Needs AutoDuty 0.0.0.336 or newer — update it in /xlplugins"). A loaded plugin whose hand-off a setting blocks gets a reason too ("Questionable needs TextAdvance's quest accept on — see Settings › Integrations"; see Companion setup below). Each IPC wrapper keeps its own gates; the registry only answers "is it there", "is it set up" and "why not".
+
+### Companion setup
+
+Settings › Integrations › Companion plugins shows one line at the top ("Ready for full automation", "2 plugins need setup") and, under each loaded plugin, a **Setup** list of the settings that matter to Tsukimichi's hand-offs. Each setting reads ✓ (as recommended), ✕ (set otherwise) or ? (Tsukimichi cannot read it). Help › Companion plugins and the "Set up your road" card show the same line. The list is `Tsukimichi.Core/Companions/CompanionSetupCatalog.cs`; the checks are `CompanionSetupEvaluator` (pure, tested); `Game/CompanionSetupService.cs` reads them at most every 5 seconds while something asks.
+
+How a setting is read:
+- From the plugin's own configuration file in Dalamud's `pluginConfigs` folder, **read only**: `Questionable.json`, `Lifestream/DefaultConfig.json`, `Artisan.json`, `GatherBuddy.json` / `GatherBuddyReborn.json`. The file is opened with sharing for reading and writing, and parsed again only when its write time changes. A setting the file lacks takes the plugin's own default.
+- Or through the plugin's own getter gate: `AutoDuty.GetConfig(string key) -> string` (the active profile), `TextAdvance.GetEnableQuestAccept`, `GetEnableQuestComplete`, `GetEnableTalkSkip`, `IsEnabled`, `IsPaused` (each `() -> bool`), `vnavmesh.Nav.IsAutoLoad() -> bool`.
+
+How a setting is set: never by writing another plugin's file. **Apply recommended settings** uses the plugin's own setter, only for the settings marked ✕ that it lists, after a confirmation that names each change:
+- `AutoDuty.SetConfig(string key, object value)`, which saves the active profile. Bools are sent as "True"/"False". It is refused while AutoDuty runs: the run holds Tsukimichi's temporary overrides, and AutoDuty saves nothing while it does. Each change is read back with `GetConfig`.
+- `vnavmesh.Nav.SetAutoLoad(bool)`.
+
+Questionable, TextAdvance, Lifestream, Artisan and GatherBuddy have no setter for these settings, so their Setup lists say what to change and where.
+
+Blocking settings (the hand-off button is disabled and names them): Questionable's "Prevent quest completion" on; TextAdvance's quest accept or quest complete off, unless Questionable's "Automatically configure TextAdvance" is on, because Questionable then turns them on itself while it runs; vnavmesh's automatic navmesh loading off. Any other setting set otherwise adds a note under the enabled button's tooltip ("AutoDuty: 2 recommended settings are set otherwise — see Settings › Integrations").
 
 ### Lifestream (internal name `Lifestream`)
 
@@ -583,7 +605,8 @@ Source: `Game/AutoDutyIpc.cs`; the mode choice and the disabled reasons are `Tsu
 - The territory is the duty's `ContentFinderCondition.TerritoryType`. A quest's duties are the ones it requires (`Quest.InstanceContent`, mapped to the Duty Finder entry that links the instance) and the ones it unlocks (curated `duty_unlocks.json` and the reward data's duty unlocks).
 - The mode is Duty Support when a DawnContent row names the duty with more than one party choice (AutoDuty's own rule), else Trust (a DawnContent row and Shadowbringers on), else the regular Duty Finder only with Settings › Integrations › "Allow AutoDuty to queue in the regular Duty Finder" (off by default). `Meta.DutyModeEnum` and `PushConfigOverrides` are both in AutoDuty from 0.0.0.336 on, the minimum the registry asks for.
 - Run is offered only to the logged-in character, for a duty it has unlocked (`UIState.IsInstanceContentUnlocked`), with a path, and with AutoDuty's own requirements loaded: vnavmesh and Boss Mod or Boss Mod Reborn. A missing rotation plugin (Wrath Combo or Rotation Solver Reborn) is a note, since Boss Mod's autorotation also serves.
-- Tsukimichi never calls `Start`, `SetConfig`, `SetLevelingMode` or any other gate.
+- Companion setup reads `AutoDuty.GetConfig(string) -> string` and, only on Settings › Integrations › Apply recommended settings after the player confirms, calls `AutoDuty.SetConfig(string, object)` for the listed settings (see Companion setup above).
+- Tsukimichi never calls `Start`, `SetLevelingMode` or any other gate.
 
 ### Quest Map (internal name `QuestMap`, since 1.6.0)
 

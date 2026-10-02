@@ -79,6 +79,7 @@ public sealed partial class Plugin : IDalamudPlugin
     private readonly Game.VnavmeshIpc vnavmesh;
     private readonly Game.TravelService travel;
     private readonly Game.CompanionPlugins companions;
+    private readonly Game.CompanionSetupService companionSetup;
     private readonly QueryRunner queryRunner;
     private readonly MainWindow mainWindow;
     private MoonlitPane? moonlitPane;
@@ -785,6 +786,14 @@ public sealed partial class Plugin : IDalamudPlugin
             // Companion plugins (feature plan v5, decision 1): which plugins Tsukimichi hands work to are loaded,
             // turned off, outdated or missing; every hand-off button asks it why it is disabled.
             companions = new Game.CompanionPlugins(PluginInterface, Log);
+
+            // Companion setup: the settings of those plugins that matter to a hand-off, read from their own files and
+            // getter gates, set only through their own IPC on "Apply recommended settings". A blocking one makes the
+            // registry's disabled reason name it.
+            companionSetup = new Game.CompanionSetupService(PluginInterface, companions, Log);
+            companionSetup.UseGates(Core.Companions.CompanionPlugin.TextAdvance, new Game.BoolSettingGates(PluginInterface, companions, Core.Companions.CompanionPlugin.TextAdvance, "TextAdvance.", Log));
+            companionSetup.UseGates(Core.Companions.CompanionPlugin.Vnavmesh, new Game.BoolSettingGates(PluginInterface, companions, Core.Companions.CompanionPlugin.Vnavmesh, "vnavmesh.", Log));
+            companions.Setup = companionSetup;
             lifestream = new Game.LifestreamIpc(PluginInterface, Log);
             gameLinks.Lifestream = lifestream;
             // Travel (1.6.0): attunement-aware Teleport, the aethernet hop, Walk to giver and Go to giver. Lifestream and
@@ -978,6 +987,7 @@ public sealed partial class Plugin : IDalamudPlugin
             // Trust unless Settings allows the Duty Finder) and "Open in Quest Map"; /tsuki why points at the latter. The
             // duty index is read from the sheets once, on first use.
             var autoDuty = new Game.AutoDutyIpc(PluginInterface, companions, Log);
+            companionSetup.UseGates(Core.Companions.CompanionPlugin.AutoDuty, new Game.AutoDutySettingGates(PluginInterface, autoDuty, Log));
             var questMap = new Game.QuestMapIpc(PluginInterface, companions, Log);
             var dutyRuns = new Lazy<Core.Companions.DutyRunIndex?>(() =>
             {
@@ -1153,6 +1163,7 @@ public sealed partial class Plugin : IDalamudPlugin
             configWindow.HookGate = gate;
             gamePanels.Attach(configWindow);
             configWindow.Companions = companions;
+            configWindow.CompanionSetup = companionSetup;
             configWindow.Questionable = questionableIpc;
             configWindow.Nearby = discoveryWindow;
             var settingsWindow = configWindow;
@@ -1461,6 +1472,7 @@ public sealed partial class Plugin : IDalamudPlugin
         Unwind("allagan tools ipc", () => allaganTools?.Dispose());
         Unwind("artisan ipc", () => artisan?.Dispose());
         Unwind("gatherbuddy commands", () => gatherBuddy?.Dispose());
+        Unwind("companion setup", () => companionSetup?.Dispose());
         Unwind("companion plugins", () => companions?.Dispose());
         // Each of its steps is isolated on its own. Its save writer drain starts the budget's clock.
         DisposeGameState(budget);

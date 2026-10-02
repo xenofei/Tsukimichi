@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using Tsukimichi.Core.Companions;
@@ -32,6 +33,8 @@ public sealed class CompanionPlugins : IDisposable
     private string?[] reasons;
     private int reasonsGeneration = -1;
     private int reasonsLanguage = -1;
+    private int reasonsSetup = -1;
+    private string?[]? notes;
     private bool disposed;
     private bool warned;
 
@@ -83,26 +86,45 @@ public sealed class CompanionPlugins : IDisposable
     public bool IsLoaded(CompanionPlugin plugin) => Status(plugin).IsLoaded;
 
     /// <summary>
-    /// Why a button that needs <paramref name="plugin"/> is disabled, or null when the plugin is loaded: "Needs
-    /// Lifestream — see Settings › Integrations", "Lifestream is installed but turned off…", "Needs a newer AutoDuty…".
-    /// Safe to call every frame from any button; before the plugin finished loading it names the plugin as missing.
+    /// The companions' recommended settings (companion setup); set by the plugin. Null leaves the reasons to the
+    /// installed list alone.
+    /// </summary>
+    public CompanionSetupService? Setup { get; set; }
+
+    /// <summary>
+    /// Why a button that needs <paramref name="plugin"/> is disabled, or null when the plugin is loaded and set up:
+    /// "Needs Lifestream — see Settings › Integrations", "Lifestream is installed but turned off…", "Needs a newer
+    /// AutoDuty…", and for a loaded plugin whose hand-off a setting blocks (<see cref="SetupImpact.Blocking"/>), "Questionable
+    /// needs TextAdvance's quest accept on — see Settings › Integrations". Safe to call every frame from any button;
+    /// before the plugin finished loading it names the plugin as missing.
     /// </summary>
     public static string? DisabledReason(CompanionPlugin plugin) =>
         Current is { } registry ? registry.ReasonFor(plugin) : ReasonText(CompanionResolver.Resolve(CompanionCatalog.Get(plugin), []));
 
-    /// <summary>The instance form of <see cref="DisabledReason(CompanionPlugin)"/>; the text is composed once per list change and language.</summary>
+    /// <summary>
+    /// A note for an enabled hand-off button whose plugin's recommended settings are not all as recommended ("AutoDuty:
+    /// 2 recommended settings are set otherwise — see Settings › Integrations"); null when none is, or nothing can tell.
+    /// </summary>
+    public static string? SetupNote(CompanionPlugin plugin) => Current?.NoteFor(plugin);
+
+    /// <summary>The instance form of <see cref="DisabledReason(CompanionPlugin)"/>; the text is composed once per list change, settings read and language.</summary>
     public string? ReasonFor(CompanionPlugin plugin)
     {
         var all = All;
-        if (reasonsGeneration != Generation || reasonsLanguage != Loc.Version)
+
+        var setupVersion = Setup?.FreshVersion ?? 0;
+        if (reasonsGeneration != Generation || reasonsLanguage != Loc.Version || reasonsSetup != setupVersion)
         {
+            notes ??= new string?[all.Count];
             for (var i = 0; i < all.Count; i++)
             {
-                reasons[i] = ReasonText(all[i]);
+                reasons[i] = ReasonText(all[i]) ?? (Setup?.BlockingFor(all[i].Plugin) is { } blocking ? BlockingText(all[i], blocking) : null);
+                notes[i] = Setup is { } setup && all[i].IsLoaded ? NoteText(all[i], setup.Setups) : null;
             }
 
             reasonsGeneration = Generation;
             reasonsLanguage = Loc.Version;
+            reasonsSetup = setupVersion;
         }
 
         for (var i = 0; i < all.Count; i++)
@@ -114,6 +136,59 @@ public sealed class CompanionPlugins : IDisposable
         }
 
         return null;
+    }
+
+    /// <summary>The instance form of <see cref="SetupNote(CompanionPlugin)"/>.</summary>
+    public string? NoteFor(CompanionPlugin plugin)
+    {
+        // Composes the notes with the reasons.
+        ReasonFor(plugin);
+        if (notes is null)
+        {
+            return null;
+        }
+
+        var all = All;
+        for (var i = 0; i < all.Count && i < notes.Length; i++)
+        {
+            if (all[i].Plugin == plugin)
+            {
+                return notes[i];
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>"Questionable needs TextAdvance's quest accept on — see Settings › Integrations".</summary>
+    public static string BlockingText(CompanionStatus status, SetupResult blocking)
+    {
+        ArgumentNullException.ThrowIfNull(status);
+        ArgumentNullException.ThrowIfNull(blocking);
+        return string.Format(CultureInfo.CurrentCulture, Strings.CompanionSetupBlockedFormat, status.DisplayName, Strings.CompanionSetupNeed(blocking.Requirement.Id));
+    }
+
+    /// <summary>How many settings that affect <paramref name="status"/>'s hand-off are set otherwise, as a note; null when none.</summary>
+    private static string? NoteText(CompanionStatus status, IReadOnlyList<PluginSetup> setups)
+    {
+        var count = 0;
+        foreach (var setup in setups)
+        {
+            foreach (var result in setup.Results)
+            {
+                if (result.Check == SetupCheck.NeedsChange && result.Requirement.HandOffs.Contains(status.Plugin))
+                {
+                    count++;
+                }
+            }
+        }
+
+        return count switch
+        {
+            0 => null,
+            1 => string.Format(CultureInfo.CurrentCulture, Strings.CompanionSetupNoteOneFormat, status.DisplayName),
+            _ => string.Format(CultureInfo.CurrentCulture, Strings.CompanionSetupNoteFormat, status.DisplayName, count),
+        };
     }
 
     /// <summary>The disabled-button reason for a status; null when it is loaded.</summary>
