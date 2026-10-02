@@ -204,7 +204,9 @@ public static class CatalogMapper
     /// <summary>
     /// QuestAcceptAdditionCondition is keyed by quest row id and carries two quest references plus one unknown uint.
     /// The non-zero values are kept in slot order (Requirement0, Requirement1, Unknown0); empty when no row exists or
-    /// every slot is zero, so a quest never shows an accept condition it does not have.
+    /// every slot is zero, so a quest never shows an accept condition it does not have. Most values are Quest row ids
+    /// (Unknown0 included: Endwalker, Dawntrail, Crossroads); a few are small ids of some other sheet. The catalog
+    /// judges the quest ones as previous quests (<see cref="QuestCatalog.PrerequisitesOf"/>).
     /// </summary>
     private static uint[] MapAcceptConditions(uint questRowId, ExcelSheet<QuestAcceptAdditionCondition> sheet)
     {
@@ -377,8 +379,10 @@ public static class CatalogMapper
     }
 
     /// <summary>
-    /// A QuestClassJobReward row lists, per class/job category, up to four items. The catalog flattens every distinct item
-    /// as <see cref="RewardKind.ArtifactGear"/> with the QuestClassJobReward row as <see cref="RewardRef.Id"/>.
+    /// A QuestClassJobReward row lists, per class/job category, up to four items. The catalog flattens every distinct item:
+    /// gear as <see cref="RewardKind.ArtifactGear"/> with the QuestClassJobReward row as <see cref="RewardRef.Id"/>, and
+    /// anything else (crystals, Cordials, society currencies) as an ordinary <see cref="RewardKind.Item"/> reward
+    /// (<see cref="ClassJobRewardItems"/>).
     /// </summary>
     private static void AddClassJobRewards(List<RewardRef> rewards, uint rowId, Sheets sheets)
     {
@@ -399,7 +403,9 @@ public static class CatalogMapper
                 }
 
                 var amount = k < subrow.RewardAmount.Count ? subrow.RewardAmount[k] : (byte)0;
-                rewards.Add(new RewardRef(RewardKind.ArtifactGear, rowId, item.RowId, Math.Max(amount, (byte)1), item.Name.ExtractText(), item.Icon));
+                rewards.Add(ClassJobRewardItems.IsArtifactGear(in item)
+                    ? new RewardRef(RewardKind.ArtifactGear, rowId, item.RowId, Math.Max(amount, (byte)1), item.Name.ExtractText(), item.Icon)
+                    : ItemReward(RewardKind.Item, in item, amount));
             }
         }
     }

@@ -44,7 +44,21 @@ public sealed class QuestCatalog
 
         Removed = removed.ToArray();
         PhasedFestivals = FindPhasedFestivals(all);
+
+        var extended = new Dictionary<uint, Prereq>();
+        foreach (var quest in all)
+        {
+            if (quest.AcceptConditions.Length > 0 && Extend(quest) is { } prereq)
+            {
+                extended[quest.RowId] = prereq;
+            }
+        }
+
+        extendedPrerequisites = extended.ToFrozenDictionary();
     }
+
+    /// <summary><see cref="PrerequisitesOf"/> for the held records whose accept conditions add a quest.</summary>
+    private readonly FrozenDictionary<uint, Prereq> extendedPrerequisites;
 
     /// <summary>Builds a catalog. Records are ordered by <see cref="JournalRef.SortKey"/> then row id; duplicate row ids throw.</summary>
     public static QuestCatalog Build(IEnumerable<QuestRecord> quests)
@@ -104,6 +118,46 @@ public sealed class QuestCatalog
     /// <summary>Lookup by runtime quest id; see <see cref="GetByQuestId"/>.</summary>
     public bool TryGetByQuestId(ushort questId, [NotNullWhen(true)] out QuestRecord? quest) => ByQuestId.TryGetValue(questId, out quest);
 
+    /// <summary>
+    /// The quests the game wants completed before it offers <paramref name="quest"/>: its
+    /// <see cref="QuestRecord.PreviousQuests"/>, then every <see cref="QuestRecord.AcceptConditions"/> value that is a
+    /// quest of this catalog and not already listed, all under the previous quests' join. The sheet has three
+    /// previous-quest slots and QuestAcceptAdditionCondition carries the rest: with 7.3 data 47 of its 57 rows hold
+    /// quest ids only (The Killing Art also needs Over the Wall; the role, Studium and allied society finales list
+    /// their fourth and fifth lines and the expansion's last main scenario quest there, and the wiki names all of them
+    /// as required), so the values are an "all" list like the slots they extend. The one Any-join quest, Royal
+    /// Rumblings, repeats its three envoy quests, one per city and only one ever done: read under the quest's own
+    /// join it stays "any of the three", where an "all" reading would block it for good. A value that is no quest
+    /// (rows such as 17, 226 or 509 of other sheets) is no prerequisite; see <see cref="UncheckedAcceptConditions"/>.
+    /// The record's own <see cref="QuestRecord.PreviousQuests"/> when no accept condition adds a quest.
+    /// </summary>
+    public Prereq PrerequisitesOf(QuestRecord quest)
+    {
+        ArgumentNullException.ThrowIfNull(quest);
+        if (quest.AcceptConditions.Length == 0)
+        {
+            return quest.PreviousQuests;
+        }
+
+        // The cached answer belongs to the record the catalog holds; an edited copy is worked out afresh.
+        if (ByRowId.TryGetValue(quest.RowId, out var held) && ReferenceEquals(held, quest))
+        {
+            return extendedPrerequisites.GetValueOrDefault(quest.RowId) ?? quest.PreviousQuests;
+        }
+
+        return Extend(quest) ?? quest.PreviousQuests;
+    }
+
+    /// <summary>
+    /// The accept conditions <see cref="PrerequisitesOf"/> cannot use, values that are no quest of this catalog: the
+    /// evaluator lists them as not checked. Empty for most quests.
+    /// </summary>
+    public uint[] UncheckedAcceptConditions(QuestRecord quest)
+    {
+        ArgumentNullException.ThrowIfNull(quest);
+        return quest.AcceptConditions.Length == 0 ? quest.AcceptConditions : quest.AcceptConditions.Where(id => !ByRowId.ContainsKey(id)).ToArray();
+    }
+
     /// <summary>Lookup by Quest sheet row id. Kept for older callers; the name does not say which id it takes.</summary>
     [Obsolete("Use GetByRowId: this overload takes a Quest sheet row id (65536 + n), not a runtime quest id.")]
     public QuestRecord? Get(uint rowId) => GetByRowId(rowId);
@@ -124,6 +178,22 @@ public sealed class QuestCatalog
 
         quest = null!;
         return false;
+    }
+
+    /// <summary>The previous quests extended by the accept conditions that name a catalog quest; null when none adds one.</summary>
+    private Prereq? Extend(QuestRecord quest)
+    {
+        var previous = quest.PreviousQuests.QuestIds;
+        List<uint>? extra = null;
+        foreach (var id in quest.AcceptConditions)
+        {
+            if (ByRowId.ContainsKey(id) && Array.IndexOf(previous, id) < 0 && (extra is null || !extra.Contains(id)))
+            {
+                (extra ??= []).Add(id);
+            }
+        }
+
+        return extra is null ? null : new Prereq([.. previous, .. extra], quest.PreviousQuests.Join);
     }
 
     private static FrozenSet<ushort> FindPhasedFestivals(IReadOnlyList<QuestRecord> all)

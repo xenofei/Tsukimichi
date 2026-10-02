@@ -270,12 +270,14 @@ public class CatalogLoaderTests(GameDataFixture fixture, ITestOutputHelper outpu
     public void Currency_rewards_map_to_Other_not_Item()
     {
         // A currency reward is the only Other-kind reward that carries an item row, so its presence proves the
-        // mapping; Item-kind rewards must never carry the low row ids the Item sheet reserves for currencies.
+        // mapping; Item-kind rewards must never carry gil (Item row 1). The rows after it, 2 to 19, are the shards,
+        // crystals and clusters, which the per-job table pays allied society crafters and gatherers as ordinary items.
         var currencies = Catalog.All.SelectMany(q => q.Rewards).Where(r => r.Kind == RewardKind.Other && r.ItemId != 0).ToArray();
         Assert.NotEmpty(currencies);
         Assert.All(currencies, r => Assert.Equal(r.Id, r.ItemId));
         Assert.All(currencies, r => Assert.False(string.IsNullOrEmpty(r.Name)));
-        Assert.DoesNotContain(Catalog.All.SelectMany(q => q.Rewards), r => r.Kind == RewardKind.Item && r.ItemId is > 0 and < 20);
+        var low = Catalog.All.SelectMany(q => q.Rewards).Where(r => r.Kind == RewardKind.Item && r.ItemId is > 0 and < 20).ToArray();
+        Assert.All(low, r => Assert.True(r.ItemId >= 2 && r.Name.EndsWith(" Crystal", StringComparison.Ordinal), $"{r.Name} ({r.ItemId}) is an Item reward"));
     }
 
     [GameDataFact]

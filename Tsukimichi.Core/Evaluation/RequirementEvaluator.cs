@@ -81,10 +81,12 @@ public static class RequirementEvaluator
             results.Add(new(new LevelRequirement(q.Level, actual), met, met ? $"level {q.Level}" : $"needs level {q.Level}, you are {actual}"));
         }
 
-        if (!q.PreviousQuests.IsEmpty)
+        // The accept conditions that name a quest count as previous quests (QuestCatalog.PrerequisitesOf).
+        var prerequisites = catalog.PrerequisitesOf(q);
+        if (!prerequisites.IsEmpty)
         {
-            var ids = q.PreviousQuests.QuestIds;
-            var join = q.PreviousQuests.Join;
+            var ids = prerequisites.QuestIds;
+            var join = prerequisites.Join;
             var doneIds = ids.Where(id => s.IsCompleted(QuestRecord.ToQuestId(id))).ToArray();
             var done = doneIds.Length;
             var met = join == JoinKind.Any ? done >= 1 : done == ids.Length;
@@ -241,10 +243,11 @@ public static class RequirementEvaluator
             results.Add(new(seasonal, met, detail));
         }
 
-        if (q.AcceptConditions.Length > 0)
+        // Only the values that are no quest are left here, listed and not judged.
+        if (q.AcceptConditions.Length > 0 && catalog.UncheckedAcceptConditions(q) is { Length: > 0 } notChecked)
         {
-            var n = q.AcceptConditions.Length;
-            results.Add(new(new AcceptConditionRequirement(q.AcceptConditions), true, n == 1 ? "1 accept condition not checked" : $"{n} accept conditions not checked"));
+            var n = notChecked.Length;
+            results.Add(new(new AcceptConditionRequirement(notChecked), true, n == 1 ? "1 accept condition not checked" : $"{n} accept conditions not checked"));
         }
 
         if (q.MountRequired)

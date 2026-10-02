@@ -2,6 +2,7 @@ using Lumina.Excel;
 using Lumina.Excel.Sheets;
 using Lumina.Text.ReadOnly;
 using Tsukimichi.Core.Model;
+using Tsukimichi.GameData;
 using Action = Lumina.Excel.Sheets.Action;
 
 namespace Tsukimichi.DataGen;
@@ -351,8 +352,8 @@ internal sealed class UniqueRewardGenerator
                     continue;
                 }
                 // The per-job table also pays allied society crafter and gatherer quests in crystals, cordials and
-                // society currencies: only gear (anything with an equip slot) is artifact gear.
-                if (item.Value.EquipSlotCategory.RowId == 0)
+                // society currencies: only gear (anything with an equip slot) is artifact gear. The catalog shares the rule.
+                if (!ClassJobRewardItems.IsArtifactGear(item.Value))
                 {
                     Dropped.Add(new DroppedItem(quest.RowId, item.Value.RowId, Text(item.Value.Name),
                         $"QuestClassJobReward item is not equipment (ItemUICategory {Text(item.Value.ItemUICategory.ValueNullable?.Name)})"));
