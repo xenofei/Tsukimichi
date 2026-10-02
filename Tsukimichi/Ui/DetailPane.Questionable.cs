@@ -16,6 +16,11 @@ namespace Tsukimichi.Ui;
 /// round "…" button at the end of the action bar whose menu holds "Add to Questionable priority". Questionable is asked
 /// when the selection, the session version or Dalamud's plugin list changes, never per frame; nothing shows while it
 /// is not loaded.
+/// <para>
+/// 1.6.0 (feature plan v5): under that line, "On Questionable's list (#3) · Questionable has a path" when Questionable
+/// knows (<see cref="QuestionableActions.BadgeLine"/>; the list is read again when another quest is opened), and a line
+/// when its unobtainable or active-event answer differs from Tsukimichi ("Questionable says it can no longer be done").
+/// </para>
 /// </summary>
 public sealed partial class DetailPane
 {
@@ -33,6 +38,7 @@ public sealed partial class DetailPane
     private bool questionableDisagrees;
     private bool questionableSupportsPriority;
     private bool questionableCanAdd;
+    private string? questionableWiderLine;
 
     // "Added to Questionable's priority list" in place of the line for a few seconds after the hand-off.
     private string? questionableNote;
@@ -41,6 +47,9 @@ public sealed partial class DetailPane
 
     /// <summary>Questionable's IPC; null until the plugin attaches it, which hides the line and the hand-off.</summary>
     public QuestionableIpc? Questionable { get; set; }
+
+    /// <summary>The shared Questionable hand-offs (1.6.0): the badge line; null hides it.</summary>
+    public QuestionableActions? QuestionableActions { get; set; }
 
     /// <summary>Reads Settings › Integrations › "Show Questionable hand-off" (off by default); null reads as off.</summary>
     public Func<bool>? QuestionableHandoff { get; set; }
@@ -69,6 +78,12 @@ public sealed partial class DetailPane
             return;
         }
 
+        if (questionableRowId != quest.RowId)
+        {
+            // A quest opened: read Questionable's list again for its badge (once, not per frame).
+            questionable.MarkListStale();
+        }
+
         questionableRowId = quest.RowId;
         questionableVersion = session.Version;
         questionableGeneration = generation;
@@ -77,6 +92,7 @@ public sealed partial class DetailPane
         questionableDisagrees = false;
         questionableSupportsPriority = false;
         questionableCanAdd = false;
+        questionableWiderLine = null;
         if (!available)
         {
             return;
@@ -91,6 +107,16 @@ public sealed partial class DetailPane
             _ => null,
         };
         questionableDisagrees = result?.Disagrees == true;
+
+        // The wider cross-check (1.6.0): Questionable's unobtainable and active-event answers, for the character logged in.
+        session.States.TryGetValue(quest.RowId, out var evaluation);
+        var wider = questionable.Wider(quest, evaluation, session.IsLive, session.Version, QuestionableActions?.FestivalRunning(quest) ?? false);
+        questionableWiderLine = wider?.UnobtainableOutcome switch
+        {
+            UnobtainableOutcome.QuestionableUnobtainable => Strings.QuestionableSaysUnobtainable,
+            UnobtainableOutcome.QuestionableObtainable => Strings.QuestionableSaysObtainable,
+            _ => wider?.EventOutcome == EventOutcome.QuestionableListsInactive ? Strings.QuestionableSaysEventRunning : null,
+        };
 
         // Read after the check: a reason gate found broken by it withdraws the hand-off (no "…" without a way to
         // tell a quest Questionable has a path for).
@@ -114,19 +140,43 @@ public sealed partial class DetailPane
             return;
         }
 
-        if (questionableLine is not { } line)
+        if (questionableLine is { } line)
         {
-            return;
+            using (Theme.PushText(questionableDisagrees ? Theme.Surface.Text : Theme.Surface.TextSecondary))
+            {
+                TextFlow.Wrapped(line, RoomTo(bodyRight));
+            }
+
+            if (ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(Strings.QuestionableLineTooltip);
+            }
         }
 
-        using (Theme.PushText(questionableDisagrees ? Theme.Surface.Text : Theme.Surface.TextSecondary))
+        if (questionableWiderLine is { } wider)
         {
-            TextFlow.Wrapped(line, RoomTo(bodyRight));
+            using (Theme.PushText(Theme.Surface.Text))
+            {
+                TextFlow.Wrapped(wider, RoomTo(bodyRight));
+            }
+
+            if (ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(Strings.QuestionableLineTooltip);
+            }
         }
 
-        if (ImGui.IsItemHovered())
+        if (QuestionableActions?.BadgeLine(quest.RowId) is { Length: > 0 } badges)
         {
-            UiMetrics.Tooltip(Strings.QuestionableLineTooltip);
+            using (Theme.PushText(Theme.Surface.TextSecondary))
+            {
+                TextFlow.Wrapped(badges, RoomTo(bodyRight));
+            }
+
+            if (ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(Strings.QuestionableBadgesTooltip);
+            }
         }
     }
 

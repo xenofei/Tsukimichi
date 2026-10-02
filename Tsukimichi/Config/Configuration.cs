@@ -82,6 +82,17 @@ public sealed class Configuration : IPluginConfiguration
     /// </summary>
     public bool AutoDutyAllowDutyFinder { get; set; }
 
+    // ---- 1.6.0: Questionable hand-offs (feature plan v5, decision 1) ----
+    /// <summary>
+    /// Offer "Add and start Questionable" beside Send to Questionable, and Stop while it runs. On by default (the owner
+    /// allows full automation through other plugins); nothing starts unless the player presses the button, and
+    /// <see cref="QuestionableConfirmStart"/> asks first.
+    /// </summary>
+    public bool QuestionableAllowStart { get; set; } = true;
+
+    /// <summary>Ask before starting Questionable; cleared when the player ticks "Don't ask again" in the confirmation.</summary>
+    public bool QuestionableConfirmStart { get; set; } = true;
+
     // ---- 0.5.0: todo overlay ----
     /// <summary>Show the small always-on todo overlay (pins, nearby feature quests, MSQ, job quests).</summary>
     public bool TodoOverlayEnabled { get; set; } = false;

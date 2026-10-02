@@ -195,12 +195,17 @@ public sealed class MainWindow : Window, IDisposable
 
     /// <summary>
     /// The detail pane's Questionable cross-check line and its opt-in "Add to Questionable priority" (V2-17);
-    /// <paramref name="handoff"/> reads Settings › Integrations › "Show Questionable hand-off".
+    /// <paramref name="handoff"/> reads Settings › Integrations › "Show Questionable hand-off". <paramref name="actions"/>
+    /// (1.6.0) adds the badges, the status bar's live status with Stop, the Journal row Questionable works on, and the
+    /// confirmations of the Send to Questionable menus drawn in this window.
     /// </summary>
-    public void AttachQuestionable(QuestionableIpc questionable, Func<bool> handoff)
+    public void AttachQuestionable(QuestionableIpc questionable, Func<bool> handoff, QuestionableActions actions)
     {
         detailPane.Questionable = questionable ?? throw new ArgumentNullException(nameof(questionable));
         detailPane.QuestionableHandoff = handoff ?? throw new ArgumentNullException(nameof(handoff));
+        questionableActions = actions ?? throw new ArgumentNullException(nameof(actions));
+        detailPane.QuestionableActions = actions;
+        tablePane.QuestionableRow = () => actions.RunningRowId;
     }
 
     /// <summary>
@@ -237,6 +242,9 @@ public sealed class MainWindow : Window, IDisposable
         detailPane.IsDutyUnlocked = isDutyUnlocked ?? throw new ArgumentNullException(nameof(isDutyUnlocked));
         detailPane.AutoDutyAllowDutyFinder = allowDutyFinder ?? throw new ArgumentNullException(nameof(allowDutyFinder));
     }
+
+    // Questionable's hand-offs (1.6.0); null until attached.
+    private QuestionableActions? questionableActions;
 
     /// <summary>The detail pane's hero banners (V4); without it a quest shows its own banner or its category art.</summary>
     public void AttachBanners(BannerIndexSource<Core.Unique.DutyUnlockIndex> banners)
@@ -555,6 +563,7 @@ public sealed class MainWindow : Window, IDisposable
         DrawBanners(session);
         DrawBody(session, bundle);
         DrawStatusBar(session, bundle);
+        questionableActions?.DrawModals(QuestionableHost);
 
         // The table writes ui.Sort from ImGui's header state; persist it through the same debounce as the filters.
         if (ui.Sort != persistedSort)
@@ -1703,12 +1712,56 @@ public sealed class MainWindow : Window, IDisposable
             }
         }
 
+        DrawQuestionableStatus(dl, ref x, textY, gap, separatorWidth, versionX, origin.X);
+
         // One item spanning the bar so the layout advances past it.
         ImGui.SetCursorScreenPos(origin);
         ImGui.Dummy(new Vector2(MathF.Max(0f, right - origin.X), rowHeight));
 
         var windowX = ImGui.GetWindowPos().X;
         ui.RecordRect(UiRects.StatusBar, new Vector2(windowX + ImGui.GetWindowContentRegionMin().X, barMin.Y), new Vector2(windowX + ImGui.GetWindowContentRegionMax().X, origin.Y + rowHeight));
+    }
+
+    /// <summary>The host name of this window's Questionable confirmations.</summary>
+    internal const string QuestionableHost = "main";
+
+    /// <summary>
+    /// Questionable's live status (feature plan v5, 1.6.0) after the MSQ pill, in the room the bar has left:
+    /// "Questionable: running · &lt;quest&gt; · step 3 of 7" in gold, ending in an ellipsis, and a small Stop. Polled at
+    /// most once a second, and only while this window draws; nothing shows while Questionable does not run.
+    /// </summary>
+    private void DrawQuestionableStatus(ImDrawListPtr dl, ref float x, float textY, float gap, float separatorWidth, float versionX, float left)
+    {
+        if (questionableActions?.PollStatusText() is not { } text)
+        {
+            return;
+        }
+
+        var stopWidth = ImGui.CalcTextSize(Strings.QuestionableStopShort).X + (ImGui.GetStyle().FramePadding.X * 2f);
+        var textWidth = ImGui.CalcTextSize(text).X;
+        var start = x > left ? x + separatorWidth : x;
+        var room = MathF.Min(textWidth, versionX - gap - start - gap - stopWidth);
+        if (room < UiMetrics.Px(48f))
+        {
+            return;
+        }
+
+        x = x > left ? StatusSeparatorAt(dl, x, textY, gap) : x;
+        ImGui.SetCursorScreenPos(new Vector2(x, textY));
+        Chrome.EllipsisText(text, room, Theme.AccentU32, textWidth);
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(textWidth > room ? text : Strings.QuestionableStatusTooltip, textWidth > room ? Strings.QuestionableStatusTooltip : null);
+        }
+
+        x += room + gap;
+        ImGui.SetCursorScreenPos(new Vector2(x, textY));
+        using (ImRaii.PushStyle(ImGuiStyleVar.FramePadding, new Vector2(ImGui.GetStyle().FramePadding.X, 0f)))
+        {
+            questionableActions.DrawStopSmallButton("##questionableStop");
+        }
+
+        x = ImGui.GetItemRectMax().X;
     }
 
     /// <summary>The status bar's segment separator, a Veil "·" with a gap either side.</summary>

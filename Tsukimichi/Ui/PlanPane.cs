@@ -20,7 +20,8 @@ namespace Tsukimichi.Ui;
 /// per kind with its count, Ready only, Sprout mode) and the expansion list; <see cref="DrawMain"/> the "Copy as
 /// checklist" button and one card per expansion, folded but for the one opened, with the zone groups and a row per
 /// quest: state moon, name (click shows it in the detail pane), kind pills, the status line, Flag and Reveal. Each
-/// card can pin its expansion's block to the todo overlay.
+/// card can pin its expansion's block to the todo overlay, and send its quests to Questionable's priority list (the
+/// paper-plane button, feature plan v5 1.6.0, <see cref="QuestionableActions"/>).
 /// <para>
 /// Sprout mode is the plan's own switch, turned on whenever the tab opens while the Journal's Sprout mode quick view
 /// is on, so revealing a quest in the Journal (which clears quick views) does not widen the plan. The filtered plan,
@@ -67,6 +68,9 @@ public sealed class PlanPane
 
     private string copied = string.Empty;
     private double copiedAt = double.NegativeInfinity;
+
+    /// <summary>The shared Questionable hand-offs (1.6.0); null hides the cards' Send to Questionable button.</summary>
+    public QuestionableActions? Questionable { get; init; }
 
     public PlanPane(SessionState session, PlanSource source, GameLinks links, Configuration settings, Action save)
     {
@@ -266,7 +270,8 @@ public sealed class PlanPane
         var right = ImGui.GetWindowContentRegionMax().X - UiMetrics.Px(10f);
         var pinWidth = ImGui.CalcTextSize(pinLabel).X + ImGui.GetStyle().FramePadding.X * 2f;
         var headerStart = ImGui.GetCursorPos();
-        var titleWidth = MathF.Max(1f, right - pinWidth - UiMetrics.Px(8f) - headerStart.X);
+        var questionableWidth = Questionable is null ? 0f : UiMetrics.MinTarget + UiMetrics.Px(4f);
+        var titleWidth = MathF.Max(1f, right - pinWidth - questionableWidth - UiMetrics.Px(8f) - headerStart.X);
         if (ImGui.InvisibleButton("##fold", new Vector2(titleWidth, ImGui.GetFrameHeight())))
         {
             open[block.Expansion] = !isOpen;
@@ -312,6 +317,13 @@ public sealed class PlanPane
             }
         }
 
+        if (Questionable is { } questionable)
+        {
+            // Send to Questionable: the expansion's quests as the card lists them (filters applied), in story order.
+            ImGui.SetCursorPos(new Vector2(right - pinWidth - questionableWidth, headerStart.Y + ((ImGui.GetFrameHeight() - UiMetrics.MinTarget) * 0.5f)));
+            questionable.DrawIconButton(MainWindow.QuestionableHost, "##questionable", block, static b => RowIdsOf(b), Strings.QuestionableSendExpansionTooltip);
+        }
+
         ImGui.SetCursorPos(new Vector2(right - pinWidth, headerStart.Y));
         if (ImGui.Button(pinLabel))
         {
@@ -350,6 +362,14 @@ public sealed class PlanPane
         }
 
         Chrome.EndCard();
+    }
+
+    private static IEnumerable<uint> RowIdsOf(PlanExpansion block)
+    {
+        foreach (var entry in block.Entries)
+        {
+            yield return entry.Quest.RowId;
+        }
     }
 
     /// <summary>The "…" menu of a row whose Flag and Reveal folded (under <see cref="LayoutBudgets.PlanMenuLogical"/>).</summary>
