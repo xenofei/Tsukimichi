@@ -856,6 +856,8 @@ public sealed class FilterPanel
                 return Strings.RemovedFromGame;
             case ScopeKind.VirtualOtherPaths:
                 return Strings.OtherPaths;
+            case ScopeKind.VirtualJustOpened:
+                return Strings.OpenedScopeName;
             case ScopeKind.VirtualIssuer:
                 var npc = catalog is null ? null : QuestDiscovery.IssuerName(catalog, scope.Id);
                 return npc is null ? Strings.ChipIssuerUnknown : string.Format(CultureInfo.CurrentCulture, Strings.ChipIssuerFormat, npc);

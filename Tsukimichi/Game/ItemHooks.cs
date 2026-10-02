@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Globalization;
 using Dalamud.Game.Gui.ContextMenu;
 using Dalamud.Plugin.Services;
+using Dalamud.Utility;
+using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.HandIn;
 using Tsukimichi.Core.Model;
@@ -15,9 +17,16 @@ namespace Tsukimichi.Game;
 /// <summary>
 /// Adds "Tsukimichi: quest reward (quest)" to the context menu of an inventory item that is a quest-exclusive reward
 /// (V2-14). Clicking it opens the main window on that quest; an item several quests hand out gets
-/// "quest rewards (N)" with a submenu listing them. Only <see cref="MenuTargetInventory"/> menus (inventory,
-/// armoury, saddlebag, retainers and the like) carry an item; a default menu such as a chat item link exposes
-/// none, so nothing is added there.
+/// "quest rewards (N)" with a submenu listing them. <see cref="MenuTargetInventory"/> menus (inventory, armoury,
+/// saddlebag, retainers and the like) carry their item.
+/// <para>
+/// 1.7.0: so does an item link in the game's own chat log (R8 E, C6 #4). Its menu is a default one (AddonName
+/// "ChatLog") whose item Dalamud does not expose; the item is <c>AgentChatLog.ContextItemId</c> (FFXIVClientStructs,
+/// offset 0x9C0), read only when the uint 8 bytes after it says the menu is an item's (3), the check GatherBuddy makes
+/// (Ottermandias/GatherBuddy 1e39592, <c>Plugin/ContextMenu.cs</c> HandleChatLog), since the field keeps the last
+/// item after a player-name or tab menu. The raw id is reduced to the base item (HQ and collectable offsets). Behind
+/// the same <see cref="HookGate"/> as the rest, so a patch that moves the field pauses it.
+/// </para>
 /// <para>
 /// 1.6.0: an item an open quest asks for (in the journal, or ready to take; <see cref="HandInIndex"/>) also gets
 /// "Tsukimichi: needed for (quest)", or "needed for quests (N)" with a submenu, while <see cref="NeededForEnabled"/>
@@ -130,13 +139,14 @@ public sealed class ItemHooks : IDisposable
     {
         try
         {
-            if (args.Target is not MenuTargetInventory { TargetItem: { } item })
+            var itemId = args.Target is MenuTargetInventory { TargetItem: { } item } ? item.BaseItemId : ChatLogItemId(args);
+            if (itemId == 0)
             {
                 return;
             }
 
             var current = lookup.Current;
-            var entries = current.ByItem(item.BaseItemId);
+            var entries = current.ByItem(itemId);
             var quests = entries.Count == 0 ? [] : DistinctQuests(current, entries);
             if (quests.Count > 0)
             {
@@ -145,7 +155,7 @@ public sealed class ItemHooks : IDisposable
 
             if (NeededForEnabled?.Invoke() != false && HandIns is { } handIns && NeededStates?.Invoke() is { } states)
             {
-                var needed = handIns.Current.NeededFor(item.BaseItemId, states);
+                var needed = handIns.Current.NeededFor(itemId, states);
                 if (needed.Count > 0)
                 {
                     args.AddMenuItem(BuildNeededItem(needed));
@@ -160,6 +170,35 @@ public sealed class ItemHooks : IDisposable
                 log.Warning(ex, "Item context menu entry failed");
             }
         }
+    }
+
+    /// <summary>The offset from <c>ContextItemId</c> to the uint that says what the chat menu was opened on; 3 is an item link.</summary>
+    private const int ChatLogContextKindOffset = 8;
+
+    private const uint ChatLogContextKindItem = 3;
+
+    /// <summary>The base item id of a chat log item link's menu, or 0 for any other menu.</summary>
+    private static unsafe uint ChatLogItemId(IMenuOpenedArgs args)
+    {
+        if (args.AddonName != "ChatLog" || args.Target is not MenuTargetDefault)
+        {
+            return 0;
+        }
+
+        var agent = AgentChatLog.Instance();
+        if (agent == null)
+        {
+            return 0;
+        }
+
+        var raw = agent->ContextItemId;
+        if (raw == 0 || *(uint*)((nint)(&agent->ContextItemId) + ChatLogContextKindOffset) != ChatLogContextKindItem)
+        {
+            return 0;
+        }
+
+        var (itemId, _) = ItemUtil.GetBaseId(raw);
+        return itemId;
     }
 
     /// <summary>The quests behind the entries, each once, in entry order; entries without a quest record (catalog not loaded) are skipped.</summary>

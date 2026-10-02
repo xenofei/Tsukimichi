@@ -16,7 +16,7 @@ namespace Tsukimichi.Config;
 /// Load with <see cref="Load"/>, persist with <see cref="Save"/>.
 /// </summary>
 [Serializable]
-public sealed class Configuration : IPluginConfiguration
+public sealed partial class Configuration : IPluginConfiguration
 {
     public const int CurrentVersion = 1;
     public const double MinPollIntervalSeconds = 0.5;

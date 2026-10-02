@@ -197,6 +197,34 @@ public sealed class UiState
     }
 
     /// <summary>
+    /// What the last "Opened:" chat line counted (1.7.0, "Opened by that"): the quest row ids the Just opened scope
+    /// lists. Session-only; replaced by the next <see cref="ShowJustOpened"/>.
+    /// </summary>
+    public IReadOnlySet<uint> JustOpened { get; private set; } = new HashSet<uint>();
+
+    /// <summary>
+    /// Switch to the Journal tab scoped to the quests one "Opened:" line counted (<see cref="QuestScope.JustOpened"/>),
+    /// from its Show link. The narrowing filters and the search are cleared as <see cref="ShowPinned"/> clears them, so
+    /// every quest the line counted is listed; the scope chip clears the scope.
+    /// </summary>
+    public void ShowJustOpened(uint serial, IReadOnlyCollection<uint> rowIds)
+    {
+        ArgumentNullException.ThrowIfNull(rowIds);
+        JustOpened = new HashSet<uint>(rowIds);
+        Tab = NavTab.Journal;
+        Scope = QuestScope.JustOpened(serial);
+        SelectedRowId = null;
+        RevealPending = false;
+        SearchText = string.Empty;
+        if (ClearNarrowingFilters(includeUnlisted: false))
+        {
+            FiltersChanged?.Invoke();
+        }
+
+        MarkQueryDirty();
+    }
+
+    /// <summary>
     /// Turns off the state-based narrowing filters and the active preset (and turns Include removed on when asked);
     /// true when anything changed and the window should persist the filters.
     /// </summary>
