@@ -150,7 +150,7 @@ Each release ships on its own with the usual gates. Effort: S = hours, M = a day
   - A privacy card: what Tsukimichi reads and keeps [R1, R9].
 - **Settings:** a section index with search, Night chrome, and Polling moved to Advanced [R1, R3].
 
-### 1.8.0 · Moon Road part 2, speed, alts
+### 1.8.0 · Moon Road part 2, speed, alts — **released 2026-10-02**
 
 - **Look:**
   - the quest list in the Moon Road style (title with count, Eyebrow header, a road line under Ready rows);
@@ -170,6 +170,10 @@ Each release ships on its own with the usual gates. Effort: S = hours, M = a day
   - a **who-has-it grid** (rewards × characters);
   - fewer recomputes when other clients save;
   - an honest "not updating" status [R7, R5].
+
+### 1.9.0 · Side track wrap-up (in progress)
+
+1.8.0 shipped the IPC additions, "Open on…", Copy for Discord, TSV and the export fields. 1.9.0 takes the rest of the side track below: planning extras, collector extras and the CharactersPane clean-up. The API 16 migration waits for Patch 8.0's date (decision 11).
 
 ### Side track (fitted into the releases above where convenient)
 
@@ -221,6 +225,22 @@ Each release ships on its own with the usual gates. Effort: S = hours, M = a day
 12. **Release order:** 1.4.2, then 1.5, 1.6, 1.7, 1.8, with the side track folded in.
 
 ## In-game checks I'll need from you along the way
+
+Added with 1.8.0:
+- **Two clients:**
+  - A spoiler override set in one client and a character hidden in the other both survive.
+  - Characters don't reorder while another client saves.
+  - Compare remembers its choice.
+- **Don't track:** with it on, the character's file isn't modified. It stays on after Forget.
+- **Who has it:** the Collection by character grid scrolls smoothly with many rows.
+- **Speed:** changing gearsets and opening another character no longer hitch. The /xllog line "Catalog handed to the session in X ms" shows a small number.
+- **Look:**
+  - the quest list title and count;
+  - brass cards and rules at Flair Full, Quiet and Plain, and under high contrast;
+  - the loading moon.
+- **Open on…:** each site opens the right page; achievements open on FFXIV Collect; a masked quest asks first.
+- **Copy for Discord:** a long list copies in parts that each fit one message.
+- **/tsuki ipc:** the window lists the IPC gates, and a test call answers.
 
 Added with 1.7.0:
 - **Game panels:** "Worth it?" appears beside a quest offer, "What this opened" beside a turn-in, and a companion panel beside the Journal. One thing to confirm: which of the turn-in window's two text nodes holds the quest title.
