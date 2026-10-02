@@ -86,6 +86,7 @@ public sealed partial class TonightCard
             DrawReady();
             DrawMsq(bundle);
             DrawPayoffGates();
+            DrawStops();
             if (events is not null)
             {
                 Chrome.Hairline();

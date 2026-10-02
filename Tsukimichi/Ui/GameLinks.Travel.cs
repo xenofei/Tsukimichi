@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using Dalamud.Utility;
+using Tsukimichi.Core.Companions;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Travel;
 using Tsukimichi.Game;
@@ -258,7 +259,7 @@ public sealed partial class GameLinks
             case TeleportBlock.NoAetheryte:
                 return Strings.TeleportNoAetheryte;
             case TeleportBlock.NoLifestream:
-                return Strings.TravelNeedsLifestream;
+                return NeedsLifestream();
             case TeleportBlock.NotAttuned:
                 return string.Format(CultureInfo.CurrentCulture, Strings.TravelNotAttunedFormat, ZoneName(quest));
             case TeleportBlock.Busy:
@@ -302,6 +303,17 @@ public sealed partial class GameLinks
 
         return string.Join('\n', lines);
     }
+
+    /// <summary>
+    /// A greyed travel button's tooltip when its plugin is not loaded: the companion registry's reason ("Needs
+    /// Lifestream — see Settings › Integrations", "… installed but turned off", "Needs a newer …") over why it is needed.
+    /// </summary>
+    private static string NeedsPlugin(CompanionPlugin plugin, string why) =>
+        CompanionPlugins.DisabledReason(plugin) is { } reason ? reason + "\n" + why : why;
+
+    private static string NeedsLifestream() => NeedsPlugin(CompanionPlugin.Lifestream, Strings.TravelNeedsLifestream);
+
+    private static string NeedsVnavmesh() => NeedsPlugin(CompanionPlugin.Vnavmesh, Strings.TravelNeedsVnavmesh);
 
     /// <summary>The giver's zone name (the Map sheet's place name); empty when unknown.</summary>
     private string ZoneName(QuestRecord quest) => quest.Issuer is { } issuer ? Map(issuer.MapId)?.PlaceName ?? string.Empty : string.Empty;
@@ -412,7 +424,7 @@ public sealed partial class GameLinks
     /// <summary>The hop's tooltip: where it goes, or why it waits.</summary>
     public static string HopTooltip(HopCheck check) => check.Block switch
     {
-        HopBlock.NoLifestream => Strings.TravelNeedsLifestream,
+        HopBlock.NoLifestream => NeedsLifestream(),
         HopBlock.Busy => Strings.TeleportBusy,
         HopBlock.NotAtAetheryte => string.Format(CultureInfo.CurrentCulture, Strings.TravelHopStandAtFormat, check.City?.Name ?? string.Empty),
         _ => string.Format(CultureInfo.CurrentCulture, Strings.TravelHopTooltipFormat, check.Firmament ? Strings.TravelFirmament : check.Shard?.Name ?? string.Empty),
@@ -479,7 +491,7 @@ public sealed partial class GameLinks
 
         return check.Block switch
         {
-            WalkBlock.NoVnavmesh => Strings.TravelNeedsVnavmesh,
+            WalkBlock.NoVnavmesh => NeedsVnavmesh(),
             WalkBlock.NoGiverPlace => Strings.TravelNoGiverPlace,
             WalkBlock.NotInZone => string.Format(CultureInfo.CurrentCulture, Strings.TravelWalkNotInZoneFormat, ZoneName(quest)),
             WalkBlock.Loading => Strings.TravelWalkLoading,
@@ -619,11 +631,11 @@ public sealed partial class GameLinks
         switch (check.Block)
         {
             case GoToBlock.NoVnavmesh:
-                return Strings.TravelNeedsVnavmesh;
+                return NeedsVnavmesh();
             case GoToBlock.NoGiverPlace:
                 return Strings.TravelNoGiverPlace;
             case GoToBlock.NoLifestream:
-                return Strings.TravelNeedsLifestream;
+                return NeedsLifestream();
             case GoToBlock.NoAetheryte:
                 return Strings.TeleportNoAetheryte;
             case GoToBlock.NotAttuned:

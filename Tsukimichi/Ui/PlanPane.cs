@@ -20,7 +20,8 @@ namespace Tsukimichi.Ui;
 /// per kind with its count, Ready only, Sprout mode) and the expansion list; <see cref="DrawMain"/> the "Copy as
 /// checklist" button and one card per expansion, folded but for the one opened, with the zone groups and a row per
 /// quest: state moon, name (click shows it in the detail pane), kind pills, the status line, Flag and Reveal. Each
-/// card can pin its expansion's block to the todo overlay.
+/// card can pin its expansion's block to the todo overlay, and send its quests to Questionable's priority list (the
+/// paper-plane button, feature plan v5 1.6.0, <see cref="QuestionableActions"/>).
 /// <para>
 /// Sprout mode is the plan's own switch, turned on whenever the tab opens while the Journal's Sprout mode quick view
 /// is on, so revealing a quest in the Journal (which clears quick views) does not widen the plan. The filtered plan,
@@ -67,6 +68,9 @@ public sealed class PlanPane
 
     private string copied = string.Empty;
     private double copiedAt = double.NegativeInfinity;
+
+    /// <summary>The shared Questionable hand-offs (1.6.0); null hides the cards' Send to Questionable button.</summary>
+    public QuestionableActions? Questionable { get; init; }
 
     public PlanPane(SessionState session, PlanSource source, GameLinks links, Configuration settings, Action save)
     {
@@ -213,6 +217,22 @@ public sealed class PlanPane
             UiMetrics.Tooltip(Strings.PlanCopyTooltip);
         }
 
+        // "Flag next stop" (1.6.0, C3 C): the first quest the list shows that can be started now.
+        var next = NextStop();
+        Chrome.SameLineOrWrap(ImGui.CalcTextSize(Strings.RouteFlagNextStop).X + (ImGui.GetStyle().FramePadding.X * 2f));
+        using (ImRaii.Disabled(next is null))
+        {
+            if (ImGui.Button(Strings.RouteFlagNextStop) && next is not null)
+            {
+                links.FlagMap(next);
+            }
+        }
+
+        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+        {
+            UiMetrics.Tooltip(next is not null ? Strings.PlanFlagNextStopTooltip : Strings.PlanFlagNextStopUnavailable);
+        }
+
         var justCopied = ImGui.GetTime() - copiedAt < CopiedSeconds;
         Chrome.SameLineOrWrap(ImGui.CalcTextSize(justCopied ? copied : showing).X);
         if (justCopied)
@@ -254,19 +274,66 @@ public sealed class PlanPane
         }
     }
 
+    /// <summary>The first quest of the view, in plan order, that can be started now and whose giver can be flagged; null when none.</summary>
+    private QuestRecord? NextStop()
+    {
+        if (nextStopKey == viewKey)
+        {
+            return nextStop;
+        }
+
+        nextStopKey = viewKey;
+        nextStop = null;
+        foreach (var entry in view.Entries)
+        {
+            if (entry.IsReady && links.CanFlagMap(entry.Quest))
+            {
+                nextStop = entry.Quest;
+                break;
+            }
+        }
+
+        return nextStop;
+    }
+
+    private (int Revision, ushort Kinds, bool Ready, int MaxExpansion) nextStopKey = (-2, 0, false, -1);
+    private QuestRecord? nextStop;
+
+    /// <summary>
+    /// "Route to this" for a row (1.6.0): the route to the duty or system it opens (every quest opening it is a way
+    /// in), else to the quest itself.
+    /// </summary>
+    private void OpenRouteTo(UiState ui, PlanEntry entry)
+    {
+        if (session.Bundle is not { } bundle)
+        {
+            return;
+        }
+
+        var label = entry.Unlocks.Count > 0 && entry.Unlocks[0] is { Inherited: false, Name.Length: > 0 } unlock ? unlock.Name : entry.Name;
+        ui.OpenRoute(Core.Route.RouteTarget.ForUnlockQuest(entry.Quest, bundle.Catalog, RewardEntries?.Invoke(), label));
+    }
+
+    /// <summary>The Moonlit catalog's entries (curated duty and system unlocks included), for "Route to this"; null routes to the quest alone.</summary>
+    public Func<IEnumerable<Core.Model.UniqueRewardEntry>>? RewardEntries { get; set; }
+
+    private const string RowContextId = "##planRowContext";
+
     private void DrawCard(UiState ui, PlanExpansion block)
     {
         var text = cardText[block.Expansion];
         var isOpen = IsOpen(block);
         Chrome.BeginCard(block.Expansion);
 
-        // Header: fold caret and title (one click target), the Ready count in gold, the pin button right-aligned.
+        // Header: fold caret and title (one click target), the Ready count in gold, Route and Pin right-aligned.
         var pinned = settings.TodoPlanExpansion == block.Expansion;
         var pinLabel = pinned ? Strings.PlanUnpin : Strings.PlanPin;
         var right = ImGui.GetWindowContentRegionMax().X - UiMetrics.Px(10f);
         var pinWidth = ImGui.CalcTextSize(pinLabel).X + ImGui.GetStyle().FramePadding.X * 2f;
+        var routeWidth = ImGui.CalcTextSize(Strings.PlanRouteBlues).X + ImGui.GetStyle().FramePadding.X * 2f;
         var headerStart = ImGui.GetCursorPos();
-        var titleWidth = MathF.Max(1f, right - pinWidth - UiMetrics.Px(8f) - headerStart.X);
+        var questionableWidth = Questionable is null ? 0f : UiMetrics.MinTarget + UiMetrics.Px(4f);
+        var titleWidth = MathF.Max(1f, right - pinWidth - routeWidth - questionableWidth - UiMetrics.Px(14f) - headerStart.X);
         if (ImGui.InvisibleButton("##fold", new Vector2(titleWidth, ImGui.GetFrameHeight())))
         {
             open[block.Expansion] = !isOpen;
@@ -312,6 +379,25 @@ public sealed class PlanPane
             }
         }
 
+        if (Questionable is { } questionable)
+        {
+            // Send to Questionable: the expansion's quests as the card lists them (filters applied), in story order.
+            ImGui.SetCursorPos(new Vector2(right - pinWidth - routeWidth - UiMetrics.Px(6f) - questionableWidth, headerStart.Y + ((ImGui.GetFrameHeight() - UiMetrics.MinTarget) * 0.5f)));
+            questionable.DrawIconButton(MainWindow.QuestionableHost, "##questionable", block, static b => RowIdsOf(b), Strings.QuestionableSendExpansionTooltip);
+        }
+
+        // "Route": every quest the card lists (the filters apply) in one route through their prerequisites (1.6.0).
+        ImGui.SetCursorPos(new Vector2(right - pinWidth - routeWidth - UiMetrics.Px(6f), headerStart.Y));
+        if (ImGui.Button(Strings.PlanRouteBlues))
+        {
+            ui.OpenRoute(Core.Route.RouteTarget.ForBlues(block));
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.PlanRouteBluesTooltip);
+        }
+
         ImGui.SetCursorPos(new Vector2(right - pinWidth, headerStart.Y));
         if (ImGui.Button(pinLabel))
         {
@@ -350,6 +436,14 @@ public sealed class PlanPane
         }
 
         Chrome.EndCard();
+    }
+
+    private static IEnumerable<uint> RowIdsOf(PlanExpansion block)
+    {
+        foreach (var entry in block.Entries)
+        {
+            yield return entry.Quest.RowId;
+        }
     }
 
     /// <summary>The "…" menu of a row whose Flag and Reveal folded (under <see cref="LayoutBudgets.PlanMenuLogical"/>).</summary>
@@ -457,6 +551,24 @@ public sealed class PlanPane
             UiMetrics.Tooltip(entry.Name, Strings.PlanRowClickHint);
         }
 
+        using (var context = ImRaii.ContextPopupItem(RowContextId))
+        {
+            if (context)
+            {
+                // Opened from the cards' child window (own font scale 1), so the menu scales itself.
+                UiMetrics.ApplyFontScale();
+                if (ImGui.MenuItem(Strings.PlanRouteToThis))
+                {
+                    OpenRouteTo(ui, entry);
+                }
+
+                if (ImGui.IsItemHovered())
+                {
+                    UiMetrics.Tooltip(Strings.PlanRouteToThisTooltip);
+                }
+            }
+        }
+
         // The painted pills get an invisible item, so their tooltip honours popups, window hover and keyboard focus.
         var pillX = nameX + nameRoom;
         var pillsEnd = DrawPills(dl, kinds[..kindCount], parts, pillX, pillEnd, start.Y, firstLine);
@@ -481,7 +593,7 @@ public sealed class PlanPane
 
         if (menu)
         {
-            DrawRowMenu(ui, quest, new Vector2(actionsX, start.Y + ((height - moreSize) * 0.5f)), moreSize);
+            DrawRowMenu(ui, entry, new Vector2(actionsX, start.Y + ((height - moreSize) * 0.5f)), moreSize);
         }
         else
         {
@@ -564,9 +676,10 @@ public sealed class PlanPane
         }
     }
 
-    /// <summary>Flag and Reveal folded into one "…" button at <paramref name="min"/> and its menu (a narrow pane).</summary>
-    private void DrawRowMenu(UiState ui, QuestRecord quest, Vector2 min, float size)
+    /// <summary>Flag, Reveal and Route to this folded into one "…" button at <paramref name="min"/> and its menu (a narrow pane).</summary>
+    private void DrawRowMenu(UiState ui, PlanEntry entry, Vector2 min, float size)
     {
+        var quest = entry.Quest;
         Keyboard.MoreButton("##more", RowMenuId, min, size);
         using var popup = ImRaii.Popup(RowMenuId);
         if (!popup)
@@ -594,6 +707,16 @@ public sealed class PlanPane
         if (ImGui.IsItemHovered())
         {
             UiMetrics.Tooltip(Strings.PlanRevealTooltip);
+        }
+
+        if (ImGui.MenuItem(Strings.PlanRouteToThis))
+        {
+            OpenRouteTo(ui, entry);
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.PlanRouteToThisTooltip);
         }
     }
 

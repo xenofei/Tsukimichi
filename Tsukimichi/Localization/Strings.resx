@@ -602,6 +602,138 @@
     <value>Tsukimichi: quest rewards ({0})</value>
     <comment>{0} = number of quests; the entry opens a submenu with one line per quest.</comment>
   </data>
+  <data name="HandInSection" xml:space="preserve">
+    <value>Hand in</value>
+  </data>
+  <data name="HandInMasked" xml:space="preserve">
+    <value>The items this quest asks for stay hidden while its name is hidden.</value>
+  </data>
+  <data name="HandInCaptionFormat" xml:space="preserve">
+    <value>{0} of {1} in hand</value>
+    <comment>{0} = items the character holds enough of, {1} = items the quest asks for.</comment>
+  </data>
+  <data name="HandInAmountFormat" xml:space="preserve">
+    <value>×{0}</value>
+    <comment>{0} = how many the quest asks for.</comment>
+  </data>
+  <data name="HandInHq" xml:space="preserve">
+    <value>HQ</value>
+  </data>
+  <data name="HandInHaveFormat" xml:space="preserve">
+    <value>You have {0}</value>
+    <comment>{0} = how many the logged-in character holds (bags, armoury, saddlebag).</comment>
+  </data>
+  <data name="HandInHaveWithRetainersFormat" xml:space="preserve">
+    <value>You have {0} · {1} on retainers</value>
+    <comment>{0} = held by the character, {1} = held by its retainers (Allagan Tools).</comment>
+  </data>
+  <data name="HandInRetainersOnlyFormat" xml:space="preserve">
+    <value>{0} on retainers</value>
+    <comment>{0} = held by the retainers (Allagan Tools) while the game read is paused.</comment>
+  </data>
+  <data name="HandInCountUnknown" xml:space="preserve">
+    <value>Count not readable right now</value>
+  </data>
+  <data name="HandInCountsLiveOnly" xml:space="preserve">
+    <value>Counts are for the character you are logged in as.</value>
+  </data>
+  <data name="HandInCountsUnavailable" xml:space="preserve">
+    <value>Item counts are not available.</value>
+  </data>
+  <data name="HandInAmountUnknownNote" xml:space="preserve">
+    <value>The game data does not say how many of some items, or whether they must be high quality; one is assumed.</value>
+  </data>
+  <data name="HandInCraftTooltipFormat" xml:space="preserve">
+    <value>Craft {0} × {1} with Artisan</value>
+    <comment>{0} = amount, {1} = item name.</comment>
+  </data>
+  <data name="HandInNeedsArtisan" xml:space="preserve">
+    <value>Needs Artisan: install and enable it to craft this from here.</value>
+  </data>
+  <data name="HandInArtisanBusy" xml:space="preserve">
+    <value>Artisan is busy with another craft or list.</value>
+  </data>
+  <data name="HandInNoRecipe" xml:space="preserve">
+    <value>No recipe makes this item.</value>
+  </data>
+  <data name="HandInSentToArtisanFormat" xml:space="preserve">
+    <value>Sent {0} to Artisan.</value>
+    <comment>{0} = item name.</comment>
+  </data>
+  <data name="HandInArtisanFailed" xml:space="preserve">
+    <value>Artisan did not take the craft.</value>
+  </data>
+  <data name="HandInGatherTooltipFormat" xml:space="preserve">
+    <value>Gather with GatherBuddy: runs {0}</value>
+    <comment>{0} = the chat command that will run ("/gather Maple Log").</comment>
+  </data>
+  <data name="HandInNeedsGatherBuddy" xml:space="preserve">
+    <value>Needs GatherBuddy or GatherBuddy Reborn: install and enable one to gather this from here.</value>
+  </data>
+  <data name="HandInSentToGatherBuddyFormat" xml:space="preserve">
+    <value>Asked GatherBuddy for {0}.</value>
+    <comment>{0} = item name.</comment>
+  </data>
+  <data name="HandInGatherBuddyFailed" xml:space="preserve">
+    <value>GatherBuddy did not take the command.</value>
+  </data>
+  <data name="HandInCopyTooltip" xml:space="preserve">
+    <value>Copy missing items</value>
+  </data>
+  <data name="HandInCopyLinkThis" xml:space="preserve">
+    <value>Teamcraft link for this quest</value>
+  </data>
+  <data name="HandInCopyListThis" xml:space="preserve">
+    <value>Item list for this quest (Artisan, Teamcraft)</value>
+  </data>
+  <data name="HandInCopyLinkPinned" xml:space="preserve">
+    <value>Teamcraft link for all pinned quests</value>
+  </data>
+  <data name="HandInCopyListPinned" xml:space="preserve">
+    <value>Item list for all pinned quests (Artisan, Teamcraft)</value>
+  </data>
+  <data name="HandInCopyLinkTooltip" xml:space="preserve">
+    <value>Copies a ffxivteamcraft.com import link for what you still need. Nothing is sent; open it in your browser.</value>
+  </data>
+  <data name="HandInCopyListTooltip" xml:space="preserve">
+    <value>Copies one "3x Item" line per item you still need, for Artisan's or Teamcraft's import.</value>
+  </data>
+  <data name="HandInNothingMissing" xml:space="preserve">
+    <value>Nothing missing: you hold enough of every item.</value>
+  </data>
+  <data name="HandInCopied" xml:space="preserve">
+    <value>Copied to the clipboard.</value>
+  </data>
+  <data name="HandInOwnedPerAllagan" xml:space="preserve">
+    <value>Owned (per Allagan Tools)</value>
+  </data>
+  <data name="ItemsNeededForFormat" xml:space="preserve">
+    <value>Needed for: {0}</value>
+    <comment>{0} = quest name.</comment>
+  </data>
+  <data name="ItemsMenuNeededFormat" xml:space="preserve">
+    <value>Tsukimichi: needed for {0}</value>
+    <comment>{0} = quest name.</comment>
+  </data>
+  <data name="ItemsMenuNeededManyFormat" xml:space="preserve">
+    <value>Tsukimichi: needed for quests ({0})</value>
+    <comment>{0} = number of quests; the entry opens a submenu with one line per quest.</comment>
+  </data>
+  <data name="ConfigSectionHandIn" xml:space="preserve">
+    <value>Integrations: hand-in items</value>
+  </data>
+  <data name="ConfigHandInAllagan" xml:space="preserve">
+    <value>Count with Allagan Tools</value>
+  </data>
+  <data name="ConfigHandInAllaganHint" xml:space="preserve">
+    <value>When Allagan Tools is loaded, the Hand in section also counts what your retainers hold, and Moonlit marks relic and special weapons you hold anywhere as owned.</value>
+  </data>
+  <data name="ConfigItemNeededFor" xml:space="preserve">
+    <value>Say which open quests need an item</value>
+  </data>
+  <data name="ConfigItemNeededForHint" xml:space="preserve">
+    <value>The item hint and the item menu name the quests in your journal, or ready to take, that ask for the item.</value>
+  </data>
   <data name="NpcMenuFormat" xml:space="preserve">
     <value>Tsukimichi: quests here ({0})</value>
     <comment>{0} = number of quests the targeted NPC hands out (removed quests excluded); clicking opens the Journal on them.</comment>
@@ -1596,6 +1728,274 @@
   <data name="ConfigWotsitIntegrationHint" xml:space="preserve">
     <value>Every quest and Moonlit reward becomes a Wotsit search entry that reveals it in the Journal. Needs Wotsit installed.</value>
   </data>
+  <data name="CompanionMissingReasonFormat" xml:space="preserve">
+    <value>Needs {0} — see Settings › Integrations</value>
+    <comment>Disabled-button tooltip when a companion plugin is not installed. {0} = the plugin's name, or two names joined by CompanionEitherFormat.</comment>
+  </data>
+  <data name="CompanionDisabledReasonFormat" xml:space="preserve">
+    <value>{0} is installed but turned off — turn it on in /xlplugins</value>
+    <comment>Disabled-button tooltip when a companion plugin is installed but not loaded. {0} = the plugin's name.</comment>
+  </data>
+  <data name="CompanionOutdatedReasonFormat" xml:space="preserve">
+    <value>Needs a newer {0} — update it in /xlplugins</value>
+    <comment>Disabled-button tooltip when a companion plugin is too old. {0} = the plugin's name.</comment>
+  </data>
+  <data name="CompanionOutdatedMinimumReasonFormat" xml:space="preserve">
+    <value>Needs {0} {1} or newer — update it in /xlplugins</value>
+    <comment>Disabled-button tooltip when a companion plugin is older than Tsukimichi needs. {0} = the plugin's name, {1} = the oldest version accepted.</comment>
+  </data>
+  <data name="CompanionEitherFormat" xml:space="preserve">
+    <value>{0} or {1}</value>
+    <comment>Two builds of one plugin that both work. {0}, {1} = plugin names (GatherBuddy or GatherBuddy Reborn).</comment>
+  </data>
+  <data name="CompanionsHeading" xml:space="preserve">
+    <value>Companion plugins</value>
+    <comment>Settings › Integrations: heading of the companion plugin table.</comment>
+  </data>
+  <data name="CompanionsIntro" xml:space="preserve">
+    <value>Tsukimichi automates only when you press a button that hands the work to one of these plugins. Each is optional: without it, its buttons stay visible and say what they need.</value>
+    <comment>Settings › Integrations: the line under Companion plugins (decision 1's promise).</comment>
+  </data>
+  <data name="CompanionsColumnPlugin" xml:space="preserve">
+    <value>Plugin</value>
+    <comment>Companion plugin table column.</comment>
+  </data>
+  <data name="CompanionsColumnUnlocks" xml:space="preserve">
+    <value>What it unlocks</value>
+    <comment>Companion plugin table column: what the plugin adds to Tsukimichi.</comment>
+  </data>
+  <data name="CompanionsColumnRepository" xml:space="preserve">
+    <value>Repository</value>
+    <comment>Companion plugin table column: where to get the plugin.</comment>
+  </data>
+  <data name="CompanionStateLoaded" xml:space="preserve">
+    <value>Loaded</value>
+    <comment>Companion plugin state: installed, turned on and recent enough.</comment>
+  </data>
+  <data name="CompanionStateDisabled" xml:space="preserve">
+    <value>Installed but turned off</value>
+    <comment>Companion plugin state: installed in Dalamud but not loaded.</comment>
+  </data>
+  <data name="CompanionStateOutdated" xml:space="preserve">
+    <value>Outdated</value>
+    <comment>Companion plugin state: too old for what Tsukimichi calls.</comment>
+  </data>
+  <data name="CompanionStateMissing" xml:space="preserve">
+    <value>Not installed</value>
+    <comment>Companion plugin state.</comment>
+  </data>
+  <data name="CompanionInstalledVersionFormat" xml:space="preserve">
+    <value>Installed: {0}</value>
+    <comment>Companion table tooltip line. {0} = the installed version.</comment>
+  </data>
+  <data name="CompanionMinimumVersionFormat" xml:space="preserve">
+    <value>Tsukimichi needs {0} or newer</value>
+    <comment>Companion table tooltip line. {0} = the oldest version accepted.</comment>
+  </data>
+  <data name="CompanionCopyRepo" xml:space="preserve">
+    <value>Copy repo URL</value>
+    <comment>Companion table button: copies the plugin's custom repository URL.</comment>
+  </data>
+  <data name="CompanionCopyRepoTooltipFormat" xml:space="preserve">
+    <value>Copies {0}. Add it in /xlsettings › Experimental, then install the plugin from /xlplugins.</value>
+    <comment>Tooltip of Copy repo URL. {0} = the repository URL.</comment>
+  </data>
+  <data name="CompanionCopiedFormat" xml:space="preserve">
+    <value>Copied the repository URL for {0}.</value>
+    <comment>Shown under the table after Copy repo URL. {0} = the plugin's name.</comment>
+  </data>
+  <data name="CompanionOfficial" xml:space="preserve">
+    <value>Official repository</value>
+    <comment>Companion table: the plugin is in Dalamud's own plugin list.</comment>
+  </data>
+  <data name="CompanionOfficialTooltip" xml:space="preserve">
+    <value>In Dalamud's own plugin list: search for it in /xlplugins.</value>
+    <comment>Tooltip of Official repository.</comment>
+  </data>
+  <data name="CompanionAddRepoHowTo" xml:space="preserve">
+    <value>To add a custom repository: type /xlsettings, open Experimental, paste the URL into the empty row under Custom Plugin Repositories, press +, tick Enabled and Save. Then install the plugin from /xlplugins.</value>
+    <comment>Plain-text instructions under the companion plugin table.</comment>
+  </data>
+  <data name="CompanionAutoDutyAllowDutyFinder" xml:space="preserve">
+    <value>Allow AutoDuty to queue in the regular Duty Finder</value>
+    <comment>Settings › Integrations checkbox, off by default.</comment>
+  </data>
+  <data name="CompanionAutoDutyAllowDutyFinderHint" xml:space="preserve">
+    <value>Off: Run with AutoDuty uses Duty Support or Trust only, so no other player joins an automated run, and a duty without them stays disabled. On: such duties queue in the regular Duty Finder.</value>
+    <comment>Tooltip of the AutoDuty Duty Finder checkbox.</comment>
+  </data>
+  <data name="CompanionUnlocks.Lifestream" xml:space="preserve">
+    <value>Teleport and aethernet travel to quest givers</value>
+    <comment>What Lifestream unlocks in Tsukimichi, one line.</comment>
+  </data>
+  <data name="CompanionUnlocks.Vnavmesh" xml:space="preserve">
+    <value>Walk to giver and Go to giver</value>
+    <comment>What vnavmesh unlocks in Tsukimichi, one line.</comment>
+  </data>
+  <data name="CompanionUnlocks.Questionable" xml:space="preserve">
+    <value>Send and start quest lists; path and lock checks</value>
+    <comment>What Questionable unlocks in Tsukimichi, one line.</comment>
+  </data>
+  <data name="CompanionUnlocks.AutoDuty" xml:space="preserve">
+    <value>Run duties a quest needs (Duty Support or Trust)</value>
+    <comment>What AutoDuty unlocks in Tsukimichi, one line.</comment>
+  </data>
+  <data name="CompanionUnlocks.Artisan" xml:space="preserve">
+    <value>Craft hand-in items</value>
+    <comment>What Artisan unlocks in Tsukimichi, one line.</comment>
+  </data>
+  <data name="CompanionUnlocks.GatherBuddy" xml:space="preserve">
+    <value>Gather hand-in items</value>
+    <comment>What GatherBuddy unlocks in Tsukimichi, one line.</comment>
+  </data>
+  <data name="CompanionUnlocks.AllaganTools" xml:space="preserve">
+    <value>Item counts across retainers; gear you own</value>
+    <comment>What Allagan Tools unlocks in Tsukimichi, one line.</comment>
+  </data>
+  <data name="CompanionUnlocks.QuestMap" xml:space="preserve">
+    <value>A quest's full requirement graph</value>
+    <comment>What Quest Map unlocks in Tsukimichi, one line.</comment>
+  </data>
+  <data name="CompanionUnlocks.ChatTwo" xml:space="preserve">
+    <value>Open in Tsukimichi from chat links</value>
+    <comment>What Chat 2 unlocks in Tsukimichi, one line.</comment>
+  </data>
+  <data name="CompanionUnlocks.BossMod" xml:space="preserve">
+    <value>AutoDuty's boss fights</value>
+    <comment>What Boss Mod does for AutoDuty, one line.</comment>
+  </data>
+  <data name="CompanionUnlocks.RotationPlugin" xml:space="preserve">
+    <value>AutoDuty's rotation</value>
+    <comment>What a rotation plugin does for AutoDuty, one line.</comment>
+  </data>
+  <data name="DutiesSection" xml:space="preserve">
+    <value>Duties</value>
+    <comment>Detail pane section listing the duties a quest needs or unlocks.</comment>
+  </data>
+  <data name="AutoDutyRelationRequired" xml:space="preserve">
+    <value>Clear before this quest</value>
+    <comment>Duties section: the quest needs this duty cleared first.</comment>
+  </data>
+  <data name="AutoDutyRelationUnlocks" xml:space="preserve">
+    <value>Unlocked by this quest</value>
+    <comment>Duties section: the quest adds this duty to the Duty Finder.</comment>
+  </data>
+  <data name="AutoDutyHasPath" xml:space="preserve">
+    <value>AutoDuty has a path</value>
+    <comment>Duties section: AutoDuty can run this duty.</comment>
+  </data>
+  <data name="AutoDutyHasPathTooltip" xml:space="preserve">
+    <value>AutoDuty has a path for this duty. Tsukimichi only asks; nothing runs until you press Run with AutoDuty.</value>
+    <comment>Tooltip of AutoDuty has a path.</comment>
+  </data>
+  <data name="AutoDutyRun" xml:space="preserve">
+    <value>Run with AutoDuty</value>
+    <comment>Duties section button: hands the duty to AutoDuty.</comment>
+  </data>
+  <data name="AutoDutyRunTooltipFormat" xml:space="preserve">
+    <value>Hands this duty to AutoDuty for one clear in {0}. AutoDuty plays it; Stop ends it, and AutoDuty puts its own duty mode back.</value>
+    <comment>Tooltip of Run with AutoDuty. {0} = the queue (Duty Support, Trust, the Duty Finder).</comment>
+  </data>
+  <data name="AutoDutyStop" xml:space="preserve">
+    <value>Stop AutoDuty</value>
+    <comment>Duties section button while AutoDuty runs.</comment>
+  </data>
+  <data name="AutoDutyStopTooltip" xml:space="preserve">
+    <value>Asks AutoDuty to stop.</value>
+    <comment>Tooltip of Stop AutoDuty.</comment>
+  </data>
+  <data name="AutoDutyRunning" xml:space="preserve">
+    <value>AutoDuty is running.</value>
+    <comment>Duties section line while AutoDuty runs.</comment>
+  </data>
+  <data name="AutoDutyModeSupport" xml:space="preserve">
+    <value>Duty Support</value>
+    <comment>A queue AutoDuty runs in.</comment>
+  </data>
+  <data name="AutoDutyModeTrust" xml:space="preserve">
+    <value>Trust</value>
+    <comment>A queue AutoDuty runs in.</comment>
+  </data>
+  <data name="AutoDutyModeDutyFinder" xml:space="preserve">
+    <value>the Duty Finder</value>
+    <comment>A queue AutoDuty runs in, inside a sentence.</comment>
+  </data>
+  <data name="AutoDutyNeedsFormat" xml:space="preserve">
+    <value>AutoDuty needs {0} — see Settings › Integrations</value>
+    <comment>Disabled Run tooltip. {0} = a plugin AutoDuty needs (vnavmesh, Boss Mod or Boss Mod Reborn).</comment>
+  </data>
+  <data name="AutoDutyNotLive" xml:space="preserve">
+    <value>Log in as this character to run its duties.</value>
+    <comment>Disabled Run tooltip while viewing a stored character.</comment>
+  </data>
+  <data name="AutoDutyBusy" xml:space="preserve">
+    <value>AutoDuty is already running.</value>
+    <comment>Disabled Run tooltip.</comment>
+  </data>
+  <data name="AutoDutyNoPath" xml:space="preserve">
+    <value>AutoDuty has no path for this duty.</value>
+    <comment>Disabled Run tooltip and Duties line.</comment>
+  </data>
+  <data name="AutoDutyLocked" xml:space="preserve">
+    <value>This duty is not unlocked yet.</value>
+    <comment>Disabled Run tooltip.</comment>
+  </data>
+  <data name="AutoDutyNeedsDutyFinder" xml:space="preserve">
+    <value>No Duty Support or Trust for this duty. Allow the regular Duty Finder in Settings › Integrations to run it.</value>
+    <comment>Disabled Run tooltip.</comment>
+  </data>
+  <data name="AutoDutyNoQueue" xml:space="preserve">
+    <value>AutoDuty cannot queue this duty.</value>
+    <comment>Disabled Run tooltip.</comment>
+  </data>
+  <data name="AutoDutyRotationNote" xml:space="preserve">
+    <value>AutoDuty also wants a rotation: Wrath Combo or Rotation Solver Reborn, or Boss Mod's own autorotation.</value>
+    <comment>Duties section note when no rotation plugin is loaded.</comment>
+  </data>
+  <data name="AutoDutyStartedFormat" xml:space="preserve">
+    <value>AutoDuty is running {0}.</value>
+    <comment>Duties section note after Run. {0} = the duty's name.</comment>
+  </data>
+  <data name="AutoDutyModeRefused" xml:space="preserve">
+    <value>AutoDuty did not accept the duty mode, so nothing was run.</value>
+    <comment>Duties section note after Run.</comment>
+  </data>
+  <data name="AutoDutyNotStarted" xml:space="preserve">
+    <value>AutoDuty did not start; see its window.</value>
+    <comment>Duties section note after Run.</comment>
+  </data>
+  <data name="AutoDutyUnreachable" xml:space="preserve">
+    <value>AutoDuty could not be reached.</value>
+    <comment>Duties section note after Run or Stop.</comment>
+  </data>
+  <data name="QuestMapOpen" xml:space="preserve">
+    <value>Open in Quest Map</value>
+    <comment>Detail pane Path section button.</comment>
+  </data>
+  <data name="QuestMapOpenTooltip" xml:space="preserve">
+    <value>Shows this quest in Quest Map's requirement graph.</value>
+    <comment>Tooltip of Open in Quest Map.</comment>
+  </data>
+  <data name="QuestMapNotCharted" xml:space="preserve">
+    <value>Quest Map does not chart this quest.</value>
+    <comment>Shown after Open in Quest Map when Quest Map declined.</comment>
+  </data>
+  <data name="QuestMapWhyLine" xml:space="preserve">
+    <value>Full requirement graph: Open in Quest Map, in the detail pane's Path section.</value>
+    <comment>/tsuki why: last line while Quest Map is loaded.</comment>
+  </data>
+  <data name="QuestMapWhyUnavailableFormat" xml:space="preserve">
+    <value>Full requirement graph: {0}</value>
+    <comment>/tsuki why: last line while Quest Map cannot be used. {0} = the reason (Needs Quest Map — see Settings › Integrations).</comment>
+  </data>
+  <data name="Help.CompanionsTip" xml:space="preserve">
+    <value>Settings › Integrations › Companion plugins shows which you have, what each unlocks, and copies each repository URL.</value>
+    <comment>Help › Companion plugins: tip with an Open settings button.</comment>
+  </data>
+  <data name="Help.CompanionsRepoTitle" xml:space="preserve">
+    <value>Adding a custom repository</value>
+    <comment>Help › Companion plugins: card title over CompanionAddRepoHowTo.</comment>
+  </data>
   <data name="ConfigNpcContextMenu" xml:space="preserve">
     <value>NPC context menu</value>
   </data>
@@ -1906,6 +2306,9 @@
   <data name="Help.TopicName.Plan" xml:space="preserve">
     <value>My blues</value>
   </data>
+  <data name="Help.TopicName.Companions" xml:space="preserve">
+    <value>Companion plugins</value>
+  </data>
   <data name="Help.TopicName.Commands" xml:space="preserve">
     <value>Commands</value>
   </data>
@@ -1944,6 +2347,10 @@
   </data>
   <data name="Help.TopicLede.Plan" xml:space="preserve">
     <value>Every blue unlock quest you have left, in the order the story reaches them.</value>
+  </data>
+  <data name="Help.TopicLede.Companions" xml:space="preserve">
+    <value>Optional plugins add buttons for travel, duties, crafting and gathering; Tsukimichi automates only when you press one.</value>
+    <comment>One-line summary of the companion plugins.</comment>
   </data>
   <data name="Help.TopicLede.Commands" xml:space="preserve">
     <value>Everything the chat command can do.</value>
@@ -2779,7 +3186,7 @@
     <value>Show Questionable hand-off</value>
   </data>
   <data name="ConfigQuestionableHandoffHint" xml:space="preserve">
-    <value>When Questionable is loaded, the detail pane's "…" button offers "Add to Questionable priority". It only calls Questionable's own priority list; Tsukimichi never starts Questionable or moves your character. The "Questionable agrees" line under a quest shows whether this is on or not.</value>
+    <value>When Questionable is loaded, the detail pane's "…" button offers "Add to Questionable priority", which puts the quest on Questionable's own priority list and starts nothing. The "Questionable agrees" line under a quest shows whether this is on or not.</value>
   </data>
   <data name="RouteWindowTitle" xml:space="preserve">
     <value>Unlock route###tsukimichiRoute</value>
@@ -2916,6 +3323,146 @@
   </data>
   <data name="RouteToUnlockNone" xml:space="preserve">
     <value>Every job is unlocked.</value>
+  </data>
+  <data name="RouteFollow" xml:space="preserve">
+    <value>Follow this route</value>
+  </data>
+  <data name="RouteFollowTooltip" xml:space="preserve">
+    <value>Show the coming steps of this route in the todo overlay. Steps drop off as you turn them in; your pins are not touched.</value>
+  </data>
+  <data name="RouteFollowUnavailable" xml:space="preserve">
+    <value>Log in or pick a character to follow a route.</value>
+  </data>
+  <data name="RouteStopFollowing" xml:space="preserve">
+    <value>Stop following</value>
+  </data>
+  <data name="RouteStopFollowingTooltip" xml:space="preserve">
+    <value>Take this route out of the todo overlay. Nothing else changes.</value>
+  </data>
+  <data name="RouteFlagNextStop" xml:space="preserve">
+    <value>Flag next stop</value>
+  </data>
+  <data name="RouteFlagNextStopTooltip" xml:space="preserve">
+    <value>Open the map with the flag on the giver of the next quest to pick up</value>
+  </data>
+  <data name="RouteFlagNextStopUnavailable" xml:space="preserve">
+    <value>The next quest's giver has no place on the map.</value>
+  </data>
+  <data name="RouteStepFlag" xml:space="preserve">
+    <value>Flag</value>
+  </data>
+  <data name="RouteStepFlagTooltip" xml:space="preserve">
+    <value>Open the map with the flag on this quest's giver</value>
+  </data>
+  <data name="RouteStepFlagUnavailable" xml:space="preserve">
+    <value>This quest's giver has no place on the map.</value>
+  </data>
+  <data name="RouteStepTeleport" xml:space="preserve">
+    <value>Teleport</value>
+  </data>
+  <data name="RouteTeleportNeedsLifestream" xml:space="preserve">
+    <value>Teleport needs the Lifestream plugin.</value>
+  </data>
+  <data name="RouteStopFormat" xml:space="preserve">
+    <value>{0} quests near {1}</value>
+    <comment>{0} = steps in a row whose givers share the nearest aetheryte, {1} = the aetheryte's place name.</comment>
+  </data>
+  <data name="RouteStopTooltip" xml:space="preserve">
+    <value>These steps' givers share the nearest aetheryte: one teleport covers them all. The order is still the route's.</value>
+  </data>
+  <data name="RouteNearFormat" xml:space="preserve">
+    <value>near {0}</value>
+    <comment>{0} = the aetheryte nearest the quest's giver.</comment>
+  </data>
+  <data name="RouteReachesFormat" xml:space="preserve">
+    <value>→ {0}</value>
+    <comment>Mark on the step that completes a milestone of a route to several targets. {0} = the milestones ("Dragoon quests").</comment>
+  </data>
+  <data name="RouteEverythingJobFormat" xml:space="preserve">
+    <value>Route: everything for {0}</value>
+    <comment>{0} = job name.</comment>
+  </data>
+  <data name="RouteEverythingTooltip" xml:space="preserve">
+    <value>One route through the job's unlock quest, its job quests and its role quests, up to your level cap</value>
+  </data>
+  <data name="PlanRouteBlues" xml:space="preserve">
+    <value>Route</value>
+  </data>
+  <data name="PlanRouteBluesTooltip" xml:space="preserve">
+    <value>One route through every quest this card lists and what they need first</value>
+  </data>
+  <data name="PlanRouteToThis" xml:space="preserve">
+    <value>Route to this</value>
+  </data>
+  <data name="PlanRouteToThisTooltip" xml:space="preserve">
+    <value>The quests still to do before this unlock; for a duty or system, through whichever quest opens it soonest</value>
+  </data>
+  <data name="PlanFlagNextStopTooltip" xml:space="preserve">
+    <value>Open the map with the flag on the giver of the first quest listed that you can start now</value>
+  </data>
+  <data name="PlanFlagNextStopUnavailable" xml:space="preserve">
+    <value>Nothing listed can be started now.</value>
+  </data>
+  <data name="DutyHintRoute" xml:space="preserve">
+    <value>Route to unlock</value>
+  </data>
+  <data name="DutyHintRouteTooltip" xml:space="preserve">
+    <value>Open the route: the quests still to do before this duty opens</value>
+  </data>
+  <data name="TodoSectionNextStops" xml:space="preserve">
+    <value>Next stops</value>
+  </data>
+  <data name="TodoRouteStop" xml:space="preserve">
+    <value>Stop</value>
+  </data>
+  <data name="TodoRouteMoreTooltip" xml:space="preserve">
+    <value>Open the whole route</value>
+  </data>
+  <data name="TodoPinsMenuHint" xml:space="preserve">
+    <value>Right-click: route through your pins</value>
+  </data>
+  <data name="TodoRoutePins" xml:space="preserve">
+    <value>Route through my pins</value>
+  </data>
+  <data name="TodoRoutePinsTooltip" xml:space="preserve">
+    <value>One route through every pin and what it needs first, in the order to do them</value>
+  </data>
+  <data name="TodoStopClickHint" xml:space="preserve">
+    <value>Click shows its first quest · … teleports there</value>
+  </data>
+  <data name="TodoConfigShowRoute" xml:space="preserve">
+    <value>Followed route</value>
+  </data>
+  <data name="TodoConfigShowRouteHint" xml:space="preserve">
+    <value>The next three steps of the route you follow ("Follow this route" in the route window)</value>
+  </data>
+  <data name="TodoConfigRouteFlagAdvance" xml:space="preserve">
+    <value>Move the map flag to the next stop as you go</value>
+  </data>
+  <data name="TodoConfigRouteFlagAdvanceHint" xml:space="preserve">
+    <value>When you turn in a step of the followed route, the map flag moves to the next quest's giver. The map does not open.</value>
+  </data>
+  <data name="TodoConfigShowNextStops" xml:space="preserve">
+    <value>Next stops</value>
+  </data>
+  <data name="TodoConfigShowNextStopsHint" xml:space="preserve">
+    <value>Quests you can pick up now, grouped by the aetheryte nearest their givers: your zone first, then the busiest stops</value>
+  </data>
+  <data name="TonightStopsTitle" xml:space="preserve">
+    <value>Next stops</value>
+  </data>
+  <data name="TonightStopFormat" xml:space="preserve">
+    <value>{0} · {1}</value>
+    <comment>{0} = aetheryte place name, {1} = "3 quests · 1 unlock".</comment>
+  </data>
+  <data name="TonightStopHereSuffix" xml:space="preserve">
+    <value> (here)</value>
+  </data>
+  <data name="TonightStopTeleport" xml:space="preserve">
+    <value>Teleport</value>
+  </data>
+  <data name="TonightStopTooltip" xml:space="preserve">
+    <value>Click shows the first quest there</value>
   </data>
   <data name="SeasonalHeaderFormat" xml:space="preserve">
     <value>Seasonal events ({0} running)</value>
@@ -3349,6 +3896,12 @@
   </data>
   <data name="Tutorial.PlayBody" xml:space="preserve">
     <value>The Todo overlay keeps pins and nearby unlocks on screen; Nearby lists what you can start in this zone. Turn them on in Settings, or type /tsuki todo and /tsuki nearby.</value>
+  </data>
+  <data name="Tutorial.CompanionsTitle" xml:space="preserve">
+    <value>Companion plugins</value>
+  </data>
+  <data name="Tutorial.CompanionsBody" xml:space="preserve">
+    <value>Optional plugins such as Lifestream, vnavmesh, Questionable and AutoDuty add buttons for travel and duties. Settings › Integrations shows which you have and where to get the rest.</value>
   </data>
   <data name="Tutorial.HelpTitle" xml:space="preserve">
     <value>Help, tour and settings</value>
@@ -4690,6 +5243,62 @@
     <value>MSQ:</value>
     <comment>Core: UnlockRoute.cs.</comment>
   </data>
+  <data name="Core.Route.JobUnlocked" xml:space="preserve">
+    <value>{0} unlocked</value>
+    <comment>Core: RouteTarget.cs. Milestone of an "everything for a job" route. {0} = job name.</comment>
+  </data>
+  <data name="Core.Route.JobQuestsPart" xml:space="preserve">
+    <value>{0} quests</value>
+    <comment>Core: RouteTarget.cs. Milestone of an "everything for a job" route. {0} = job name.</comment>
+  </data>
+  <data name="Core.Route.RoleQuestsPart" xml:space="preserve">
+    <value>Role quests</value>
+    <comment>Core: RouteTarget.cs. Milestone of an "everything for a job" route.</comment>
+  </data>
+  <data name="Core.Route.JobQuestsLabel" xml:space="preserve">
+    <value>everything for {0}</value>
+    <comment>Core: RouteTarget.cs. A route's target, read after "Route to" and "Route:". {0} = job name.</comment>
+  </data>
+  <data name="Core.Route.PinsLabel" xml:space="preserve">
+    <value>all your pins</value>
+    <comment>Core: RouteTarget.cs. A route's target, read after "Route to" and "Route:".</comment>
+  </data>
+  <data name="Core.Route.BluesLabel" xml:space="preserve">
+    <value>{0} blues</value>
+    <comment>Core: RouteTarget.cs. A route's target, read after "Route to" and "Route:". {0} = expansion name.</comment>
+  </data>
+  <data name="Core.Route.GateLine" xml:space="preserve">
+    <value>Level {0} needed from step {1} (you are {2})</value>
+    <comment>Core: ActiveRoute.cs. Todo overlay route section. {0} = level, {1} = step number, {2} = the character's level.</comment>
+  </data>
+  <data name="Core.Route.GateLineNoLevel" xml:space="preserve">
+    <value>Level {0} needed from step {1}</value>
+    <comment>Core: ActiveRoute.cs. {0} = level, {1} = step number.</comment>
+  </data>
+  <data name="Core.Route.Completed" xml:space="preserve">
+    <value>Route complete: {0}.</value>
+    <comment>Core: ActiveRoute.cs. Chat line when a followed route runs out. {0} = the route's target.</comment>
+  </data>
+  <data name="Core.Stops.CountOne" xml:space="preserve">
+    <value>1 quest</value>
+    <comment>Core: StopPlanner.cs.</comment>
+  </data>
+  <data name="Core.Stops.Count" xml:space="preserve">
+    <value>{0} quests</value>
+    <comment>Core: StopPlanner.cs. {0} = quests at the stop.</comment>
+  </data>
+  <data name="Core.Stops.UnlockOne" xml:space="preserve">
+    <value>1 unlock</value>
+    <comment>Core: StopPlanner.cs.</comment>
+  </data>
+  <data name="Core.Stops.Unlocks" xml:space="preserve">
+    <value>{0} unlocks</value>
+    <comment>Core: StopPlanner.cs. {0} = unlock quests at the stop.</comment>
+  </data>
+  <data name="Core.Todo.RouteTitle" xml:space="preserve">
+    <value>Route: {0}</value>
+    <comment>Core: TodoList.cs. The overlay's route section caption. {0} = the route's target.</comment>
+  </data>
   <data name="Core.Age.JustNow" xml:space="preserve">
     <value>just now</value>
     <comment>Core: AbandonedLedger.cs.</comment>
@@ -5682,9 +6291,238 @@
     <value>Tsukimichi accepted the game's reading after it stayed the same for a few minutes; a backup of the earlier save is kept.</value>
     <comment>Chat line when a capture held back as implausible kept reading the same for a few minutes and is now saved; the save before it was copied to the backup.</comment>
   </data>
+  <data name="QuestionableSendButton" xml:space="preserve">
+    <value>Send to Questionable</value>
+    <comment>Button and menu label: hands quests to the Questionable plugin's priority list.</comment>
+  </data>
+  <data name="QuestionableSendTooltip" xml:space="preserve">
+    <value>Hand these quests to the Questionable plugin's priority list. Questionable does the questing; Tsukimichi gives it the list, and starts it only when you ask.</value>
+  </data>
+  <data name="QuestionableSendExpansionTooltip" xml:space="preserve">
+    <value>Send this expansion's quests to the Questionable plugin's priority list.</value>
+    <comment>Tooltip of the paper-plane button on a My blues expansion card.</comment>
+  </data>
+  <data name="QuestionableNeedsPlugin" xml:space="preserve">
+    <value>Needs the Questionable plugin: install and enable it to hand quests to it.</value>
+    <comment>Tooltip of a disabled Send to Questionable button or menu item.</comment>
+  </data>
+  <data name="QuestionableSendAppendFormat" xml:space="preserve">
+    <value>Add to Questionable's list ({0})</value>
+    <comment>{0}: quests that will be sent.</comment>
+  </data>
+  <data name="QuestionableSendAppendTooltip" xml:space="preserve">
+    <value>Adds the quests to the end of Questionable's priority list, in this order, after what is already on it. Questionable leaves out quests it has no path for.</value>
+  </data>
+  <data name="QuestionableSkippedFormat" xml:space="preserve">
+    <value>{0} left out: done, in your journal or locked out.</value>
+    <comment>{0}: quests not sent.</comment>
+  </data>
+  <data name="QuestionableNothingToSend" xml:space="preserve">
+    <value>Nothing to send: every quest here is done, in your journal or locked out.</value>
+  </data>
+  <data name="QuestionableSendStartFormat" xml:space="preserve">
+    <value>Add and start Questionable ({0})</value>
+    <comment>{0}: quests that will be sent.</comment>
+  </data>
+  <data name="QuestionableSendStartTooltip" xml:space="preserve">
+    <value>Adds the quests, then starts Questionable on the first one it can do. It works through its priority list in order, then carries on with its own choices (the main scenario) until you stop it.</value>
+  </data>
+  <data name="QuestionableStartOffSetting" xml:space="preserve">
+    <value>Starting Questionable is turned off in Settings › Integrations.</value>
+  </data>
+  <data name="QuestionableStartNoGate" xml:space="preserve">
+    <value>This version of Questionable cannot be started by another plugin.</value>
+  </data>
+  <data name="QuestionableStartMissingFormat" xml:space="preserve">
+    <value>Questionable needs {0} to run: install and enable it first.</value>
+    <comment>{0}: plugin names joined by commas (vnavmesh, TextAdvance, Lifestream).</comment>
+  </data>
+  <data name="QuestionableAlreadyRunning" xml:space="preserve">
+    <value>Questionable is already running. Stop it first, or add the quests without starting.</value>
+  </data>
+  <data name="QuestionableReplace" xml:space="preserve">
+    <value>Replace Questionable's list…</value>
+    <comment>Menu item; opens a confirmation.</comment>
+  </data>
+  <data name="QuestionableReplaceTooltip" xml:space="preserve">
+    <value>Empties Questionable's priority list, then adds these quests. Asks first.</value>
+  </data>
+  <data name="QuestionableReplaceNoGate" xml:space="preserve">
+    <value>This version of Questionable cannot empty its list for another plugin.</value>
+  </data>
+  <data name="QuestionableReplacePopup" xml:space="preserve">
+    <value>Replace Questionable's list###TsukimichiQuestionableReplace</value>
+    <comment>Modal title; keep the part from ### unchanged.</comment>
+  </data>
+  <data name="QuestionableReplaceQuestionFormat" xml:space="preserve">
+    <value>Questionable's priority list holds {0} quests. Replace them with these {1}?</value>
+    <comment>{0}: quests on Questionable's list now; {1}: quests to send.</comment>
+  </data>
+  <data name="QuestionableReplaceQuestionUnknownFormat" xml:space="preserve">
+    <value>Replace everything on Questionable's priority list with these {0} quests?</value>
+    <comment>{0}: quests to send.</comment>
+  </data>
+  <data name="QuestionableReplaceConfirm" xml:space="preserve">
+    <value>Replace</value>
+  </data>
+  <data name="QuestionableCancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="QuestionableStartPopup" xml:space="preserve">
+    <value>Start Questionable###TsukimichiQuestionableStart</value>
+    <comment>Modal title; keep the part from ### unchanged.</comment>
+  </data>
+  <data name="QuestionableStartQuestionFormat" xml:space="preserve">
+    <value>Questionable will play for you: it walks, talks to NPCs, and accepts and turns in quests, starting with {0}. It works through its priority list, then carries on with its own choices until you stop it. You can stop it from the Questionable line in Tsukimichi or from Questionable itself.</value>
+    <comment>{0}: the quest name.</comment>
+  </data>
+  <data name="QuestionableStartConfirm" xml:space="preserve">
+    <value>Start Questionable</value>
+  </data>
+  <data name="QuestionableStartDontAsk" xml:space="preserve">
+    <value>Don't ask again</value>
+  </data>
+  <data name="QuestionableStop" xml:space="preserve">
+    <value>Stop Questionable</value>
+  </data>
+  <data name="QuestionableStopShort" xml:space="preserve">
+    <value>Stop</value>
+    <comment>Small button beside the Questionable status line.</comment>
+  </data>
+  <data name="QuestionableStopTooltip" xml:space="preserve">
+    <value>Asks Questionable to stop what it is doing.</value>
+  </data>
+  <data name="QuestionableStopNoGate" xml:space="preserve">
+    <value>This version of Questionable cannot be stopped by another plugin: stop it from its own window.</value>
+  </data>
+  <data name="QuestionableSentFormat" xml:space="preserve">
+    <value>Questionable: sent {0} of {1} ({2} have no Questionable path).</value>
+    <comment>Chat line. {0}: quests now on its list; {1}: quests sent; {2}: quests it has no path for.</comment>
+  </data>
+  <data name="QuestionableSentAllFormat" xml:space="preserve">
+    <value>Questionable: sent {0} of {0}.</value>
+    <comment>Chat line. {0}: quests sent, all on its list.</comment>
+  </data>
+  <data name="QuestionableSentNoneFormat" xml:space="preserve">
+    <value>Questionable has no path for any of these {0} quests; nothing was added.</value>
+    <comment>Chat line. {0}: quests sent.</comment>
+  </data>
+  <data name="QuestionableSentUnverifiedFormat" xml:space="preserve">
+    <value>Questionable: sent {0} quests (its list could not be read back).</value>
+    <comment>Chat line. {0}: quests sent.</comment>
+  </data>
+  <data name="QuestionableAlreadyOnFormat" xml:space="preserve">
+    <value>{0} were already on it.</value>
+    <comment>Appended to the sent line. {0}: quests that were on the list before.</comment>
+  </data>
+  <data name="QuestionableSendFailed" xml:space="preserve">
+    <value>Questionable did not take the list; see /xllog.</value>
+  </data>
+  <data name="QuestionableStartedFormat" xml:space="preserve">
+    <value>Questionable started on {0}.</value>
+    <comment>Chat line. {0}: the quest name.</comment>
+  </data>
+  <data name="QuestionableStartFailed" xml:space="preserve">
+    <value>Questionable did not start; see /xllog.</value>
+  </data>
+  <data name="QuestionableStopped" xml:space="preserve">
+    <value>Asked Questionable to stop.</value>
+  </data>
+  <data name="QuestionableStopFailed" xml:space="preserve">
+    <value>Questionable did not stop; see /xllog.</value>
+  </data>
+  <data name="QuestionableStatusRunning" xml:space="preserve">
+    <value>Questionable: running</value>
+    <comment>Status line while the Questionable plugin runs.</comment>
+  </data>
+  <data name="QuestionableStatusQuestFormat" xml:space="preserve">
+    <value>Questionable: running · {0}</value>
+    <comment>{0}: the quest it works on.</comment>
+  </data>
+  <data name="QuestionableStatusStepFormat" xml:space="preserve">
+    <value>Questionable: running · {0} · {1}</value>
+    <comment>{0}: the quest; {1}: its step ("step 3 of 7").</comment>
+  </data>
+  <data name="QuestionableStatusPickUp" xml:space="preserve">
+    <value>to pick up</value>
+    <comment>Step part of the status line while Questionable goes to accept the quest.</comment>
+  </data>
+  <data name="QuestionableStatusTooltip" xml:space="preserve">
+    <value>What the Questionable plugin is doing, read once a second while a Tsukimichi window is open. Its quest is highlighted in the Journal.</value>
+  </data>
+  <data name="QuestionableOnListFormat" xml:space="preserve">
+    <value>On Questionable's list (#{0})</value>
+    <comment>{0}: the quest's place on Questionable's priority list.</comment>
+  </data>
+  <data name="QuestionableHasPath" xml:space="preserve">
+    <value>Questionable has a path</value>
+  </data>
+  <data name="QuestionableNoPath" xml:space="preserve">
+    <value>Questionable has no path</value>
+  </data>
+  <data name="QuestionableBadgesTooltip" xml:space="preserve">
+    <value>From the Questionable plugin: where this quest is on its priority list, and whether it can do the quest (it has a path for it). The list is read when a quest is opened and after a send.</value>
+  </data>
+  <data name="QuestionableMarkListFormat" xml:space="preserve">
+    <value>Q #{0}</value>
+    <comment>Short mark on a route step: the quest's place on Questionable's priority list.</comment>
+  </data>
+  <data name="QuestionableMarkNoPath" xml:space="preserve">
+    <value>Q no path</value>
+    <comment>Short mark on a route step: Questionable has no path for the quest.</comment>
+  </data>
+  <data name="QuestionableMarkListTooltipFormat" xml:space="preserve">
+    <value>On Questionable's priority list, #{0}.</value>
+  </data>
+  <data name="QuestionableMarkNoPathTooltip" xml:space="preserve">
+    <value>Questionable has no path for this quest, so it would leave it out of its list.</value>
+  </data>
+  <data name="QuestionableSaysUnobtainable" xml:space="preserve">
+    <value>Questionable says it can no longer be done</value>
+    <comment>Detail pane cross-check line.</comment>
+  </data>
+  <data name="QuestionableSaysObtainable" xml:space="preserve">
+    <value>Questionable says it can still be done</value>
+    <comment>Detail pane cross-check line.</comment>
+  </data>
+  <data name="QuestionableSaysEventRunning" xml:space="preserve">
+    <value>Questionable lists it as a running event quest</value>
+    <comment>Detail pane cross-check line.</comment>
+  </data>
+  <data name="QuestionableSendPins" xml:space="preserve">
+    <value>Send pins to Questionable</value>
+    <comment>Todo overlay menu.</comment>
+  </data>
+  <data name="ConfigQuestionableSection" xml:space="preserve">
+    <value>Questionable</value>
+    <comment>Settings › Integrations sub-heading.</comment>
+  </data>
+  <data name="ConfigQuestionableAllowStart" xml:space="preserve">
+    <value>Allow Tsukimichi to start Questionable</value>
+  </data>
+  <data name="ConfigQuestionableAllowStartHint" xml:space="preserve">
+    <value>Offers "Add and start Questionable" beside Send to Questionable, and Stop while it runs. Questionable then plays for you until you stop it. Nothing starts unless you press the button.</value>
+  </data>
+  <data name="ConfigQuestionableConfirmStart" xml:space="preserve">
+    <value>Ask before starting Questionable</value>
+  </data>
+  <data name="ConfigQuestionableConfirmStartHint" xml:space="preserve">
+    <value>Shows what starting Questionable does and asks you to confirm, each time until you tick "Don't ask again".</value>
+  </data>
+  <data name="ConfigQuestionableStatusFormat" xml:space="preserve">
+    <value>Questionable is loaded. It needs {0} to run; missing: {1}.</value>
+    <comment>{0}: required plugins; {1}: the missing ones.</comment>
+  </data>
+  <data name="ConfigQuestionableStatusReadyFormat" xml:space="preserve">
+    <value>Questionable is loaded, with {0}.</value>
+    <comment>{0}: required plugins.</comment>
+  </data>
+  <data name="ConfigQuestionableStatusAbsent" xml:space="preserve">
+    <value>Questionable is not loaded: Send to Questionable and its badges stay disabled until it is.</value>
+  </data>
   <data name="TravelNeedsLifestream" xml:space="preserve">
-    <value>Needs Lifestream: Tsukimichi teleports only through the Lifestream plugin. Install it from Dalamud's plugin installer to teleport to quest givers.</value>
-    <comment>Tooltip of a disabled Teleport button when Lifestream is not loaded.</comment>
+    <value>Tsukimichi teleports only through the Lifestream plugin.</value>
+    <comment>Second line of a disabled Teleport button's tooltip when Lifestream is not loaded, under the companion registry's reason ("Needs Lifestream — see Settings › Integrations").</comment>
   </data>
   <data name="TravelNotAttunedFormat" xml:space="preserve">
     <value>No attuned aetheryte in {0}. Attune to one there first.</value>
@@ -5789,8 +6627,8 @@
     <value>Stop walking (vnavmesh)</value>
   </data>
   <data name="TravelNeedsVnavmesh" xml:space="preserve">
-    <value>Needs vnavmesh: walking to the giver is done by the vnavmesh plugin. Install it from Dalamud's plugin installer.</value>
-    <comment>Tooltip of a disabled Walk button when vnavmesh is not loaded.</comment>
+    <value>Walking to the giver is done by the vnavmesh plugin; your character moves only when you press the button.</value>
+    <comment>Second line of a disabled Walk or Go to giver button's tooltip when vnavmesh is not loaded, under the companion registry's reason.</comment>
   </data>
   <data name="TravelWalkNotInZoneFormat" xml:space="preserve">
     <value>Walk works inside the giver's zone ({0}); teleport there first.</value>

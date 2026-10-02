@@ -78,6 +78,7 @@ public sealed class Plugin : IDalamudPlugin
     private readonly Game.LifestreamIpc lifestream;
     private readonly Game.VnavmeshIpc vnavmesh;
     private readonly Game.TravelService travel;
+    private readonly Game.CompanionPlugins companions;
     private readonly QueryRunner queryRunner;
     private readonly MainWindow mainWindow;
     private MoonlitPane? moonlitPane;
@@ -109,6 +110,12 @@ public sealed class Plugin : IDalamudPlugin
     private TodoOverlay? todoOverlay;
     private Localization.LocService? loc;
     private RouteWindow? routeWindow;
+    private Game.ActiveRouteService? activeRoutes;
+
+    // Hand-in items (1.6.0): read-only counts through Allagan Tools, and the Artisan and GatherBuddy hand-offs.
+    private Game.AllaganToolsIpc? allaganTools;
+    private Game.ArtisanIpc? artisan;
+    private Game.GatherBuddyCommands? gatherBuddy;
 
     /// <summary>
     /// Rebuilds the catalog under the current <see cref="Config.Configuration.JournalFiling"/> and hands it to the
@@ -665,6 +672,9 @@ public sealed class Plugin : IDalamudPlugin
             // The main window reads Session/Settings/Paths lazily; they are initialized by the game-state block below.
             ui = new UiState();
             gameLinks = new GameLinks(GameGui, ChatGui, DataManager, Log);
+            // Companion plugins (feature plan v5, decision 1): which plugins Tsukimichi hands work to are loaded,
+            // turned off, outdated or missing; every hand-off button asks it why it is disabled.
+            companions = new Game.CompanionPlugins(PluginInterface, Log);
             lifestream = new Game.LifestreamIpc(PluginInterface, Log);
             gameLinks.Lifestream = lifestream;
             // Travel (1.6.0): attunement-aware Teleport, the aethernet hop, Walk to giver and Go to giver. Lifestream and
@@ -742,14 +752,37 @@ public sealed class Plugin : IDalamudPlugin
             // And the aethernet shard attunement read (UIState.IsAetheryteUnlocked).
             travel.Gate = gate;
 
-            hoverHint = new HoverHint(GameGui, Session, unlockReader, rewardLookup, gate, Log) { Enabled = Settings.ItemHintsEnabled };
+            // Hand-in items (1.6.0): the detail pane's Hand in section, the "Needed for" hint and menu entry, Moonlit's
+            // relic ownership through Allagan Tools, and the Artisan and GatherBuddy hand-offs (decision 1).
+            allaganTools = new Game.AllaganToolsIpc(PluginInterface, Log);
+            artisan = new Game.ArtisanIpc(PluginInterface, Log);
+            gatherBuddy = new Game.GatherBuddyCommands(PluginInterface, CommandManager, Log);
+            unlockReader.Allagan = allaganTools;
+            unlockReader.AllaganEnabled = () => Settings.HandInAllaganTools;
+            var handInStock = new Game.HandInStock(ClientState, Framework, gate, Log) { Allagan = allaganTools, AllaganEnabled = () => Settings.HandInAllaganTools };
+            mainWindow.AttachHandIns(handInStock, artisan, gatherBuddy);
+            var handIns = new Core.HandIn.HandInIndexSource(() => Session.Bundle?.Catalog);
+            hoverHint = new HoverHint(GameGui, Session, unlockReader, rewardLookup, gate, Log)
+            {
+                Enabled = Settings.ItemHintsEnabled,
+                HandIns = handIns,
+                NeededForEnabled = () => Settings.ItemNeededForEnabled,
+            };
             PluginInterface.UiBuilder.Draw += hoverHint.Draw;
             itemHooks = new Game.ItemHooks(ContextMenu, rewardLookup, quest =>
             {
                 mainWindow.IsOpen = true;
                 mainWindow.BringToFront();
                 MoonlitPane.Reveal(ui, quest);
-            }, gate, Log) { Enabled = Settings.ItemContextMenuEnabled, QuestName = quest => Session.LiveSpoilers.DisplayName(quest) };
+            }, gate, Log)
+            {
+                Enabled = Settings.ItemContextMenuEnabled,
+                QuestName = quest => Session.LiveSpoilers.DisplayName(quest),
+                HandIns = handIns,
+                // The item is in the logged-in character's inventory: its states decide what is open.
+                NeededStates = () => Session.LiveStates,
+                NeededForEnabled = () => Settings.ItemNeededForEnabled,
+            };
             var discovery = new DiscoveryCommands(Session, ClientState, TargetManager, gameLinks);
             command.ListZoneQuests = discovery.Zone;
             command.ListTargetQuests = discovery.Which;
@@ -810,7 +843,38 @@ public sealed class Plugin : IDalamudPlugin
             questionable = new Game.QuestionableIpc(PluginInterface, Log);
             Game.QuestionableIpc questionableIpc = questionable;
             diagnostics.CrossCheck = quest => questionableIpc.Check(quest, Session);
-            mainWindow.AttachQuestionable(questionableIpc, () => Settings.QuestionableHandoff);
+            // Send to Questionable, Start and Stop, the list and path badges and the live status (1.6.0, decision 1):
+            // every pane that offers them shares one QuestionableActions; the result of a send is a chat line.
+            var questionableActions = new QuestionableActions(questionableIpc, Session, Settings, () => Settings.Save(PluginInterface), line => ChatGui.Print(line, Ui.Strings.ChatTag));
+            diagnostics.CrossCheckMore = quest => questionableIpc.Wider(quest, (Session.States.TryGetValue(quest.RowId, out var evaluation) ? evaluation : null), Session.IsLive, Session.Version, questionableActions.FestivalRunning(quest));
+            mainWindow.AttachQuestionable(questionableIpc, () => Settings.QuestionableHandoff, questionableActions);
+
+            // AutoDuty and Quest Map (decision 1): the detail pane's Duties section ("Run with AutoDuty", Duty Support or
+            // Trust unless Settings allows the Duty Finder) and "Open in Quest Map"; /tsuki why points at the latter. The
+            // duty index is read from the sheets once, on first use.
+            var autoDuty = new Game.AutoDutyIpc(PluginInterface, companions, Log);
+            var questMap = new Game.QuestMapIpc(PluginInterface, companions, Log);
+            var dutyRuns = new Lazy<Core.Companions.DutyRunIndex?>(() =>
+            {
+                try
+                {
+                    return DutyRunSheets.Build(DataManager.Excel);
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning(ex, "Duty index unavailable; the Duties section is hidden");
+                    return null;
+                }
+            });
+            mainWindow.AttachCompanions(
+                companions,
+                autoDuty,
+                questMap,
+                () => dutyRuns.Value,
+                rowId => moonlit.Catalog.ForQuest(rowId),
+                Game.AutoDutyIpc.IsInstanceUnlocked,
+                () => Settings.AutoDutyAllowDutyFinder);
+            why.QuestMap = questMap;
             mainWindow.AttachDiagnostics(diagnostics);
 
             // Journal text (P9): the detail pane's Journal card, and with Settings › Journal text the search box's journal
@@ -844,6 +908,7 @@ public sealed class Plugin : IDalamudPlugin
             charactersPane.UniqueRewards = () => moonlit.Catalog;
             charactersPane.Pins = queryRunner;
             charactersPane.Links = gameLinks;
+            charactersPane.Questionable = questionableActions;
             mainWindow.AttachPanes(moonlitPane, charactersPane);
             mainWindow.AttachOverrides(moonlitPane);
             // Multibox (D11): pins and overrides another game client saved are merged in as they land.
@@ -851,21 +916,59 @@ public sealed class Plugin : IDalamudPlugin
             {
                 Multibox.UserFilesChanged += OnUserFilesChanged;
             }
-            // Unlock route (P6): the detail pane, a Moonlit row's menu and the Characters job rows ask UiState for it.
-            routeWindow = new RouteWindow(Session, queryRunner, quest =>
+            // The followed route (1.6.0): stored in Settings, rebuilt from the owner's states; its map flag follows the
+            // next stop as steps are turned in, through a game call that obeys the hooks' kill switch.
+            activeRoutes = new Game.ActiveRouteService(Settings, Session, gameLinks, new Game.MapFlag(Log) { Gate = gate }, () => Settings.Save(PluginInterface), Log);
+            Game.ActiveRouteService followed = activeRoutes;
+            // Unlock route (P6): the detail pane, a Moonlit row's menu, the Characters job rows, My blues, the Duty
+            // Finder panel and the todo overlay's pins ask UiState for it.
+            routeWindow = new RouteWindow(Session, queryRunner, gameLinks, followed, quest =>
             {
                 mainWindow.IsOpen = true;
                 mainWindow.BringToFront();
                 MoonlitPane.Reveal(ui, quest);
             });
+            routeWindow.Questionable = questionableActions;
             windowSystem.AddWindow(routeWindow);
             ui.RouteRequested += routeWindow.Show;
+            RouteWindow routes = routeWindow;
+            // "Route to unlock" beside the Duty Finder: every quest that opens the selected duty.
+            dutyFinderPanel.OpenRoute = model =>
+            {
+                if (Session.Bundle is not { } bundle)
+                {
+                    return;
+                }
+
+                var duty = Core.Route.RouteTarget.ForDuty(bundle.Catalog, Core.Model.RewardKind.DutyUnlock, model.ContentFinderConditionId, model.DutyName, moonlit.Catalog.All);
+                var quests = new System.Collections.Generic.List<uint>(duty.QuestRowIds);
+                foreach (var rowId in model.AllQuestRowIds)
+                {
+                    if (!quests.Contains(rowId))
+                    {
+                        quests.Add(rowId);
+                    }
+                }
+
+                ui.OpenRoute(duty with { QuestRowIds = quests });
+            };
             // The flight index (a few small sheets) is built on the pane's first draw, on the framework thread.
             flightPane = new FlightPane(Session, unlockReader, gameLinks, TextureProvider, Log, () => ClientState.TerritoryType, () => FlightIndex.Build(DataManager.Excel, Dalamud.Utility.ClientLanguageExtensions.ToLumina(DataManager.Language), Strings.FlightAllZonesFormat));
             mainWindow.AttachFlight(flightPane);
             // Clear my blues (P3): the duty kinds (ContentFinderCondition) are read on the plan's first use.
-            planSource = new PlanSource(Session, () => DutyIndex.Build(DataManager.Excel, Dalamud.Utility.ClientLanguageExtensions.ToLumina(DataManager.Language)), Log);
-            mainWindow.AttachPlan(new PlanPane(Session, planSource, gameLinks, Settings, () => Settings.Save(PluginInterface)));
+            planSource = new PlanSource(Session, () => DutyIndex.Build(DataManager.Excel, Dalamud.Utility.ClientLanguageExtensions.ToLumina(DataManager.Language)), Log)
+            {
+                // Zones of a level band are walked region by region (1.6.0), the region read from the giver's map.
+                RegionOfMap = mapId => gameLinks.Map(mapId)?.Region ?? string.Empty,
+            };
+            mainWindow.AttachPlan(new PlanPane(Session, planSource, gameLinks, Settings, () => Settings.Save(PluginInterface))
+            {
+                RewardEntries = () => moonlit.Catalog.All,
+                Questionable = questionableActions,
+            });
+            // Next stops (1.6.0): Ready quests batched by aetheryte, for the Tonight card and the todo overlay.
+            var nextStops = new NextStopsSource(Session, gameLinks, queryRunner, planSource, followed, Settings, () => ClientState.TerritoryType);
+            mainWindow.AttachNextStops(nextStops);
             chatNotifier = new Game.ChatNotifier(Session, Settings, Paths, gameLinks, ChatGui, Log);
             // "Before you continue" (P5): the dashboard and the Tonight card lines, and the once-per-character chat line.
             var payoffGates = new Game.PayoffGateSource(Session, Log);
@@ -894,6 +997,8 @@ public sealed class Plugin : IDalamudPlugin
             if (npcHooks is { } npcMenu) { configWindow.NpcContextMenuToggled = enabled => npcMenu.Enabled = enabled; }
             if (dutyFinderHint is { } dutyHint) { configWindow.DutyFinderHintToggled = enabled => dutyHint.Enabled = enabled; }
             configWindow.HookGate = gate;
+            configWindow.Companions = companions;
+            configWindow.Questionable = questionableIpc;
             windowSystem.AddWindow(configWindow);
             PluginInterface.UiBuilder.OpenConfigUi += configWindow.Toggle;
             command.ToggleConfigWindow = configWindow.Toggle;
@@ -906,7 +1011,12 @@ public sealed class Plugin : IDalamudPlugin
                 MoonlitPane.Reveal(ui, quest);
             }, ClientState, Condition, Paths, PluginInterface, Log);
             todoOverlay.Plan = planSource;
+            todoOverlay.Questionable = questionableActions;
             todoOverlay.ShowPins = mainWindow.ShowPinned;
+            todoOverlay.ActiveRoutes = followed;
+            todoOverlay.NextStops = nextStops;
+            todoOverlay.OpenRoute = ui.OpenRoute;
+            todoOverlay.ShowFollowedRoute = () => routes.ShowFollowed();
             windowSystem.AddWindow(todoOverlay);
             // 0.8.0: Locked became click-through; a player who upgraded with it on is told once in chat.
             todoLockNotice = new Game.TodoLockNotice(Settings, ClientState, ChatGui, PluginInterface, Log);
@@ -1061,6 +1171,7 @@ public sealed class Plugin : IDalamudPlugin
         Unwind("todo lock notice", () => todoLockNotice?.Dispose());
         Unwind("since you were away", () => welcomeBack?.Dispose());
         Unwind("todo overlay", () => todoOverlay?.Dispose());
+        Unwind("followed route", () => activeRoutes?.Dispose());
         Unwind("server bar entry", () => dtrEntry?.Dispose());
         Unwind("nearby window", () => discoveryWindow?.Dispose());
         Unwind("main window", () => mainWindow?.Dispose());
@@ -1074,6 +1185,10 @@ public sealed class Plugin : IDalamudPlugin
         Unwind("travel", () => travel?.Dispose());
         Unwind("vnavmesh ipc", () => vnavmesh?.Dispose());
         Unwind("lifestream ipc", () => lifestream?.Dispose());
+        Unwind("allagan tools ipc", () => allaganTools?.Dispose());
+        Unwind("artisan ipc", () => artisan?.Dispose());
+        Unwind("gatherbuddy commands", () => gatherBuddy?.Dispose());
+        Unwind("companion plugins", () => companions?.Dispose());
         // Each of its steps is isolated on its own. Its save writer drain starts the budget's clock.
         DisposeGameState(budget);
         Unwind("catalog build", () => StopCatalogBuild(budget.Remaining()));

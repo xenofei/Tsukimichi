@@ -68,7 +68,12 @@ public static class RouteMarkdown
                 sb.Append(' ').Append(CoreText.T("Core.Route.MsqMark", "(MSQ)"));
             }
 
-            if (step.IsTarget)
+            if (step.TargetLabel.Length > 0)
+            {
+                // A route to several targets names the milestones the step reaches ("Dragoon quests").
+                sb.Append(" — ").Append(Escape(step.TargetLabel));
+            }
+            else if (step.IsTarget)
             {
                 sb.Append(" — ").Append(CoreText.T("Core.Route.TargetMark", "target"));
             }

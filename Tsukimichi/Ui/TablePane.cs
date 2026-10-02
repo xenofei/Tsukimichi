@@ -94,6 +94,15 @@ public sealed class TablePane : IDisposable
 
     /// <summary>Selection: the wash's alpha of the text colour, the ring's alpha and its logical rounding.</summary>
     private const float SelectionWashAlpha = 0.10f;
+
+    /// <summary>The faint gold wash on the row of the quest Questionable works on (feature plan v5, 1.6.0).</summary>
+    private const float QuestionableWashAlpha = 0.12f;
+
+    // The quest Questionable works on this frame, read once before the rows.
+    private uint? questionableRow;
+
+    /// <summary>The quest Questionable works on while it runs (its live status), or null; its row gets a faint gold wash.</summary>
+    public Func<uint?>? QuestionableRow { get; set; }
     private const float SelectionRingAlpha = 0.45f;
     private const float SelectionRounding = 4f;
 
@@ -421,6 +430,7 @@ public sealed class TablePane : IDisposable
         using var rowStyle = new Theme.StyleScope(1, 1);
         var layout = new RowLayout(lineHeight, content, rowHeight, padY, glyphBox, glyphRadius, dense, plan.TwoLine, statusLine, lineGap);
         var liftRow = hoveredRow;
+        questionableRow = QuestionableRow?.Invoke();
         hoveredNext = null;
         moreFocusedNext = null;
         clipper.Begin(rows.Length, rowHeight);
@@ -579,6 +589,10 @@ public sealed class TablePane : IDisposable
         if (selected)
         {
             ImGui.TableSetBgColor(ImGuiTableBgTarget.RowBg0, Theme.WithAlpha(s.Text, SelectionWashAlpha));
+        }
+        else if (questionableRow == quest.RowId)
+        {
+            ImGui.TableSetBgColor(ImGuiTableBgTarget.RowBg0, Theme.WithAlpha(Theme.Accent, QuestionableWashAlpha));
         }
 
         if (hover > 0.004f)

@@ -11,8 +11,10 @@ namespace Tsukimichi.Game;
 
 /// <summary>
 /// Reads Questionable's lock answer for a quest, to cross-check Tsukimichi's evaluator (feature plan v3 §3 V2-17), and
-/// hands a quest to Questionable's priority list when the player clicks the opt-in button. Tsukimichi never starts,
-/// stops or steers Questionable: the one call that changes anything is <see cref="AddToPriority"/>, behind a button.
+/// hands a quest to Questionable's priority list when the player clicks the opt-in button. The calls that change
+/// anything in Questionable, <see cref="AddToPriority"/> here and the send, start and stop of
+/// <c>QuestionableIpc.Automation.cs</c> (feature plan v5, 1.6.0, decision 1), each run only from a button the player
+/// presses.
 /// <para>
 /// The gates, as Questionable's own provider registers them (<c>Questionable/External/QuestionableIpc.cs</c> at
 /// github.com/PunishXIV/Questionable, commit 0bd61efe8a6806a7a8010741c0c46b7dea153709, 2026-09-30; the WigglyMuffin
@@ -33,7 +35,7 @@ namespace Tsukimichi.Game;
 /// wrapped: a gate that is not registered or throws reads as no answer, and the first failure is logged once.
 /// </para>
 /// </summary>
-public sealed class QuestionableIpc : IDisposable
+public sealed partial class QuestionableIpc : IDisposable
 {
     public const string PluginInternalName = "Questionable";
     public const string IsQuestLockedGate = "Questionable.IsQuestLocked";
@@ -96,6 +98,7 @@ public sealed class QuestionableIpc : IDisposable
             reloadData = null;
         }
 
+        SubscribeAutomation();
         pluginInterface.ActivePluginsChanged += OnActivePluginsChanged;
     }
 
@@ -298,6 +301,7 @@ public sealed class QuestionableIpc : IDisposable
                 answers.Clear();
                 answersVersion = int.MinValue;
                 loggedDisagreements.Clear();
+                ResetAutomation(pluginsChanged: false);
             }
 
             return;
@@ -308,12 +312,13 @@ public sealed class QuestionableIpc : IDisposable
         // whose answers and reason gate may differ.
         pluginListDirty = false;
         pathsReloaded = false;
-        loaded = isQuestLocked is not null && IsLoaded();
+        loaded = isQuestLocked is not null && ScanPlugins();
         Generation++;
         answers.Clear();
         answersVersion = int.MinValue;
         reasonGateBroken = false;
         loggedDisagreements.Clear();
+        ResetAutomation(pluginsChanged: true);
     }
 
     private bool HasFunction(ICallGateSubscriber? gate)
@@ -338,24 +343,48 @@ public sealed class QuestionableIpc : IDisposable
 
     private void OnReloadData() => pathsReloaded = true;
 
-    private bool IsLoaded()
+    /// <summary>
+    /// Whether Questionable is loaded, read from Dalamud's installed plugin list in the same pass as the plugins
+    /// Questionable itself needs to run (<see cref="MissingRequiredPlugins"/>).
+    /// </summary>
+    private bool ScanPlugins()
     {
+        var found = false;
+        var present = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         try
         {
             foreach (var plugin in pluginInterface.InstalledPlugins)
             {
-                if (plugin.IsLoaded && string.Equals(plugin.InternalName, PluginInternalName, StringComparison.OrdinalIgnoreCase))
+                if (!plugin.IsLoaded)
                 {
-                    return true;
+                    continue;
+                }
+
+                present.Add(plugin.InternalName);
+                if (string.Equals(plugin.InternalName, PluginInternalName, StringComparison.OrdinalIgnoreCase))
+                {
+                    found = true;
                 }
             }
         }
         catch (Exception ex)
         {
             log.Warning(ex, "Installed plugin list unavailable");
+            missingRequired = [];
+            return false;
         }
 
-        return false;
+        var missing = new List<string>(RequiredPlugins.Count);
+        foreach (var required in RequiredPlugins)
+        {
+            if (!present.Contains(required))
+            {
+                missing.Add(required);
+            }
+        }
+
+        missingRequired = missing;
+        return found;
     }
 
     private void WarnOnce(Exception ex, string message)

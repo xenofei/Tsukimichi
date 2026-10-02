@@ -4,6 +4,7 @@ using Tsukimichi.Core.Jobs;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Plan;
 using Tsukimichi.Core.Query;
+using Tsukimichi.Core.Route;
 using Tsukimichi.Core.Seasonal;
 using Tsukimichi.Core.Ui;
 using Tsukimichi.Core.Localization;
@@ -11,8 +12,9 @@ using Tsukimichi.Core.Localization;
 namespace Tsukimichi.Core.Todo;
 
 /// <summary>
-/// The parts of the todo overlay. Display order is Pinned, Seasonal, NearbyFeature, Plan, Msq, JobQuests; Seasonal
-/// (0.8.0) and Plan (0.9.0) were added last, so the stored values of the others did not move.
+/// The parts of the todo overlay. Display order is Route, NextStops, Pinned, Seasonal, NearbyFeature, Plan, Msq,
+/// JobQuests; Seasonal (0.8.0), Plan (0.9.0), Route and NextStops (1.6.0) were added last, so the stored values of
+/// the others did not move.
 /// </summary>
 public enum TodoSection : byte
 {
@@ -24,6 +26,12 @@ public enum TodoSection : byte
 
     /// <summary>"Clear my blues" (P3): the Ready unlock quests of the expansion pinned from the plan.</summary>
     Plan,
+
+    /// <summary>The followed route's next steps (1.6.0, R6 A).</summary>
+    Route,
+
+    /// <summary>"Next stops" (1.6.0, R6 B): Ready quests batched by aetheryte, one row per stop.</summary>
+    NextStops,
 }
 
 /// <summary>Why a quest is on the list; one kind per section except job quests, which tell a job's own line from its role's.</summary>
@@ -36,6 +44,12 @@ public enum TodoRowKind : byte
     RoleQuest,
     Seasonal,
     Plan,
+
+    /// <summary>A step of the followed route.</summary>
+    Route,
+
+    /// <summary>A stop of Next stops: the row names the place and stands on its first quest.</summary>
+    Stop,
 }
 
 /// <summary>One line of the overlay: the quest, its state for the character and a short hint (the next step, or where to start it).</summary>
@@ -52,6 +66,9 @@ public sealed record TodoSectionModel(TodoSection Section, IReadOnlyList<TodoRow
     /// <see cref="TodoInputs.PinLimit"/>); the overlay shows them as one "+N more" line. 0 when nothing was left out.
     /// </summary>
     public int More { get; init; }
+
+    /// <summary>The section's caption when it names something of its own ("Route: everything for Dragoon"); empty uses the section's name.</summary>
+    public string Title { get; init; } = string.Empty;
 }
 
 /// <summary>What the overlay shows: the non-empty sections in display order, plus how many sections were enabled at all.</summary>
@@ -104,6 +121,10 @@ public sealed record TodoModel(IReadOnlyList<TodoSectionModel> Sections, int Ena
 /// <param name="PlanExpansion">The expansion pinned from the plan (ExVersion row id); negative leaves the section out.</param>
 /// <param name="ShowPlan">Include the "Clear my blues" section.</param>
 /// <param name="PinLimit">Most rows the Pinned section lists (<see cref="TodoList.MaxPinned"/>, the overlay's cap); the rest are counted in <see cref="TodoSectionModel.More"/>.</param>
+/// <param name="Route">The followed route, built for this character (<see cref="ActiveRoute"/>); null leaves the section out.</param>
+/// <param name="ShowRoute">Include the route section.</param>
+/// <param name="Stops">Next stops (<see cref="StopPlanner.Plan"/>); null leaves the section out.</param>
+/// <param name="ShowNextStops">Include the Next stops section.</param>
 public sealed record TodoInputs(
     QuestCatalog Catalog,
     IReadOnlyDictionary<uint, QuestEvaluation> States,
@@ -125,7 +146,11 @@ public sealed record TodoInputs(
     UnlockPlan? Plan = null,
     int PlanExpansion = -1,
     bool ShowPlan = true,
-    int PinLimit = TodoList.MaxPinned);
+    int PinLimit = TodoList.MaxPinned,
+    UnlockRoute? Route = null,
+    bool ShowRoute = true,
+    IReadOnlyList<Stop>? Stops = null,
+    bool ShowNextStops = false);
 
 /// <summary>
 /// Pure builder for the todo overlay (V2-13). Six sections, each only when enabled and non-empty: the character's
@@ -167,8 +192,20 @@ public static class TodoList
         ArgumentNullException.ThrowIfNull(inputs.Ladder);
         ArgumentNullException.ThrowIfNull(inputs.JobNames);
 
-        var sections = new List<TodoSectionModel>(6);
+        var sections = new List<TodoSectionModel>(8);
         var enabled = 0;
+        if (inputs.ShowRoute && inputs.Route is { } route)
+        {
+            enabled++;
+            AddRoute(sections, inputs, route);
+        }
+
+        if (inputs.ShowNextStops && inputs.Stops is { } stops)
+        {
+            enabled++;
+            AddStops(sections, stops);
+        }
+
         if (inputs.ShowPins)
         {
             enabled++;
@@ -206,6 +243,68 @@ public static class TodoList
         }
 
         return sections.Count == 0 && enabled == 0 ? TodoModel.Empty : new TodoModel(sections, enabled);
+    }
+
+    /// <summary>Most stops the Next stops section lists.</summary>
+    public const int MaxStops = 3;
+
+    /// <summary>
+    /// "Route: everything for Dragoon": the followed route's next <see cref="ActiveRoute.Shown"/> steps in route order,
+    /// the rest counted in <see cref="TodoSectionModel.More"/>, with the level gate line as a note when one of them
+    /// waits on a level. A route with nothing left has no section (the plugin says so in chat and stops following).
+    /// </summary>
+    private static void AddRoute(List<TodoSectionModel> sections, TodoInputs inputs, UnlockRoute route)
+    {
+        var glance = ActiveRoute.Glance(route);
+        if (glance.Next.Count == 0)
+        {
+            return;
+        }
+
+        var rows = new List<TodoRow>(glance.Next.Count);
+        foreach (var step in glance.Next)
+        {
+            if (inputs.Catalog.TryGetByRowId(step.RowId, out var quest))
+            {
+                rows.Add(Row(inputs, quest, StateOf(inputs.States, step.RowId), TodoRowKind.Route));
+            }
+        }
+
+        if (rows.Count == 0)
+        {
+            return;
+        }
+
+        var gate = glance.GateText;
+        sections.Add(new TodoSectionModel(TodoSection.Route, rows)
+        {
+            More = glance.More,
+            Notes = gate.Length > 0 ? [gate] : [],
+            Title = string.Format(System.Globalization.CultureInfo.CurrentCulture, RouteTitleFormat, route.Target.Label),
+        });
+    }
+
+    private static string RouteTitleFormat => CoreText.T("Core.Todo.RouteTitle", "Route: {0}");
+
+    /// <summary>"Next stops": the first <see cref="MaxStops"/> stops, one row each, standing on the stop's first quest.</summary>
+    private static void AddStops(List<TodoSectionModel> sections, IReadOnlyList<Stop> stops)
+    {
+        var rows = new List<TodoRow>(MaxStops);
+        foreach (var stop in stops)
+        {
+            if (stop.Quests.Count == 0)
+            {
+                continue;
+            }
+
+            rows.Add(new TodoRow(stop.Quests[0].Quest.RowId, stop.Place.Name, QuestState.Ready, stop.CountText, TodoRowKind.Stop));
+            if (rows.Count >= MaxStops)
+            {
+                break;
+            }
+        }
+
+        Add(sections, TodoSection.NextStops, rows);
     }
 
     private static void Add(List<TodoSectionModel> sections, TodoSection section, List<TodoRow> rows)

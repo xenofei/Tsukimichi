@@ -85,6 +85,22 @@ public sealed class Configuration : IPluginConfiguration
 
     /// <summary>Show Go to giver (teleport, aethernet and walk in one click, with Stop). On by default.</summary>
     public bool ShowGoToGiver { get; set; } = true;
+    /// <summary>
+    /// 1.6.0 (decision 1): "Run with AutoDuty" may queue a duty that has neither Duty Support nor Trust in the regular
+    /// Duty Finder, with other players. Off by default: such a duty's button stays disabled and says why.
+    /// </summary>
+    public bool AutoDutyAllowDutyFinder { get; set; }
+
+    // ---- 1.6.0: Questionable hand-offs (feature plan v5, decision 1) ----
+    /// <summary>
+    /// Offer "Add and start Questionable" beside Send to Questionable, and Stop while it runs. On by default (the owner
+    /// allows full automation through other plugins); nothing starts unless the player presses the button, and
+    /// <see cref="QuestionableConfirmStart"/> asks first.
+    /// </summary>
+    public bool QuestionableAllowStart { get; set; } = true;
+
+    /// <summary>Ask before starting Questionable; cleared when the player ticks "Don't ask again" in the confirmation.</summary>
+    public bool QuestionableConfirmStart { get; set; } = true;
 
     // ---- 0.5.0: todo overlay ----
     /// <summary>Show the small always-on todo overlay (pins, nearby feature quests, MSQ, job quests).</summary>
@@ -125,11 +141,40 @@ public sealed class Configuration : IPluginConfiguration
     /// <summary>ExVersion row id of the expansion pinned from the My blues tab ("Pin to overlay"); -1 when none.</summary>
     public int TodoPlanExpansion { get; set; } = -1;
 
+    // ---- 1.6.0: routes and Next stops (R6, C3) ----
+    /// <summary>
+    /// The route being followed ("Follow this route" in the route window): its target and the character it is for,
+    /// never its steps, which are worked out from that character's states each time. Null when none is followed.
+    /// </summary>
+    public Core.Route.SavedRoute? ActiveRoute { get; set; }
+
+    /// <summary>The todo overlay's route section (the followed route's next steps). On by default; empty until a route is followed.</summary>
+    public bool TodoShowRoute { get; set; } = true;
+
+    /// <summary>
+    /// While a route is followed, move the map flag to the next stop's giver each time a step is turned in (the flag
+    /// only, the map does not open). On by default.
+    /// </summary>
+    public bool RouteFlagAdvance { get; set; } = true;
+
+    /// <summary>The todo overlay's "Next stops" section: Ready quests batched by aetheryte. Off by default.</summary>
+    public bool TodoShowNextStops { get; set; }
+
     // ---- 0.5.0: item hints ----
     /// <summary>Show a small hint near the cursor when hovering an item that is a quest-exclusive reward.</summary>
     public bool ItemHintsEnabled { get; set; } = true;
     /// <summary>Add a "Tsukimichi: quest reward" entry to item context menus.</summary>
     public bool ItemContextMenuEnabled { get; set; } = true;
+
+    // ---- 1.6.0: hand-in items ----
+    /// <summary>
+    /// With Allagan Tools loaded, count what the retainers hold in the detail pane's Hand in section, and read relic and
+    /// special weapons as owned when it counts them anywhere (Moonlit). On by default; read-only either way.
+    /// </summary>
+    public bool HandInAllaganTools { get; set; } = true;
+
+    /// <summary>The item hint and the item menu also name the open quests (in the journal or ready) that ask for the item. On by default.</summary>
+    public bool ItemNeededForEnabled { get; set; } = true;
 
     // ---- 0.6.2: NPC context menu (P2) ----
     /// <summary>Add a "Tsukimichi: quests here (N)" entry to the target bar's menu on a quest-giving NPC.</summary>

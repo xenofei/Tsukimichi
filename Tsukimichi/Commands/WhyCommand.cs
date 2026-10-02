@@ -65,5 +65,16 @@ public sealed class WhyCommand(SessionState session, UiState ui, GameLinks links
         {
             links.PrintText(lines[i]);
         }
+
+        // The full requirement graph lives in Quest Map: pointed at while it is loaded, named as missing otherwise.
+        if (QuestMap is { } questMap)
+        {
+            links.PrintText(questMap.DisabledReason is { } reason
+                ? string.Format(CultureInfo.CurrentCulture, Strings.QuestMapWhyUnavailableFormat, reason)
+                : Strings.QuestMapWhyLine);
+        }
     }
+
+    /// <summary>Quest Map's IPC; with it the reply ends with where to open the full requirement graph. Null leaves the line out.</summary>
+    public QuestMapIpc? QuestMap { get; set; }
 }

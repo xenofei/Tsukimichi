@@ -7,6 +7,7 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
 using Tsukimichi.Core.Evaluation;
+using Tsukimichi.Core.HandIn;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Runtime;
 using Tsukimichi.Core.Ui;
@@ -21,6 +22,11 @@ namespace Tsukimichi.Ui;
 /// in Dusk; for rewards the client can report (mounts, minions, rolls, cards, ornaments) a second line says owned,
 /// not owned or veiled. It is drawn from <c>UiBuilder.Draw</c>, outside the window system, so it has no chrome and
 /// takes no input; the game tooltip keeps the mouse, so nothing here is clickable.
+/// <para>
+/// 1.6.0: an item an open quest asks for (in the journal or ready to take; <see cref="HandInIndex"/>) gets a line per
+/// quest too, "Needed for: name" with its state and status, while <see cref="NeededForEnabled"/> says so. The two kinds
+/// of line share <see cref="MaxQuestLines"/>.
+/// </para>
 /// <para>
 /// Placement: beside the <c>ItemDetail</c> addon when it is visible (right of it, else left, below or above, whichever
 /// fits the viewport), otherwise beside a small box at the cursor. The hint model is memoized per item id, session
@@ -66,6 +72,8 @@ public sealed class HoverHint
     private uint modelItem;
     private int modelVersion = -1;
     private RewardLookup? modelLookup;
+    private HandInIndex? modelHandIns;
+    private bool modelNeededFor;
     private string moreText = string.Empty;
     private Vector2 size;
     private int settled;
@@ -84,6 +92,12 @@ public sealed class HoverHint
 
     /// <summary>Follows <c>Configuration.ItemHintsEnabled</c>; off draws nothing and forgets the current model.</summary>
     public bool Enabled { get; set; } = true;
+
+    /// <summary>Item to the quests that ask for it; null leaves the "Needed for" lines out.</summary>
+    public HandInIndexSource? HandIns { get; set; }
+
+    /// <summary>Reads Settings › "Say which open quests need an item"; null reads as on.</summary>
+    public Func<bool>? NeededForEnabled { get; set; }
 
     /// <summary>
     /// Whether the hint reads the hovered item and the <c>ItemDetail</c> addon this frame: the setting is on and the
@@ -112,8 +126,13 @@ public sealed class HoverHint
 
         var itemId = RewardLookup.NormalizeItemId(hovered);
         var current = lookup.Current;
-        if (itemId != modelItem || modelVersion != session.Version || !ReferenceEquals(modelLookup, current))
+        var handIns = HandIns?.Current;
+        var neededFor = NeededForEnabled?.Invoke() != false;
+        if (itemId != modelItem || modelVersion != session.Version || !ReferenceEquals(modelLookup, current)
+            || !ReferenceEquals(modelHandIns, handIns) || modelNeededFor != neededFor)
         {
+            modelHandIns = handIns;
+            modelNeededFor = neededFor;
             Rebuild(itemId, current);
         }
 
@@ -136,6 +155,7 @@ public sealed class HoverHint
         modelItem = 0;
         modelVersion = -1;
         modelLookup = null;
+        modelHandIns = null;
     }
 
     private void Rebuild(uint itemId, RewardLookup current)
@@ -187,10 +207,48 @@ public sealed class HoverHint
             lines.Add(line);
         }
 
+        quests += AddNeededLines(itemId, quests);
         if (quests > MaxQuestLines)
         {
             moreText = string.Format(CultureInfo.CurrentCulture, Strings.ItemsMoreFormat, quests - MaxQuestLines);
         }
+    }
+
+    /// <summary>
+    /// "Needed for: quest" for each open quest that asks for the item and has no reward line already; returns how many
+    /// quests that was (lines past <see cref="MaxQuestLines"/> are counted, not added).
+    /// </summary>
+    private int AddNeededLines(uint itemId, int shown)
+    {
+        if (!modelNeededFor || modelHandIns is not { } handIns)
+        {
+            return 0;
+        }
+
+        // The logged-in character holds the item; while nobody is (cannot happen over a game item) the viewed one.
+        var states = session.LiveStates.Count > 0 ? session.LiveStates : session.States;
+        var names = session.LiveStates.Count > 0 ? session.LiveNames : session.Names;
+        var added = 0;
+        foreach (var quest in handIns.NeededFor(itemId, states))
+        {
+            if (!seen.Add(quest.RowId))
+            {
+                continue;
+            }
+
+            added++;
+            if (shown + added > MaxQuestLines)
+            {
+                continue;
+            }
+
+            var evaluation = states.GetValueOrDefault(quest.RowId);
+            var state = evaluation?.State ?? QuestState.Unknown;
+            var status = BlockerText.StatusText(evaluation, quest, names, states);
+            lines.Add(new Line(quest.RowId, state, string.Format(CultureInfo.CurrentCulture, Strings.ItemsNeededForFormat, session.LiveSpoilers.DisplayName(quest)), status, false, false, string.Empty));
+        }
+
+        return added;
     }
 
     private void DrawWindow()

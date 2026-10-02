@@ -84,6 +84,13 @@ public sealed class DiagnosticBuilder
     /// </summary>
     public Func<QuestRecord, Core.Ipc.CrossCheckResult?>? CrossCheck { get; set; }
 
+    /// <summary>
+    /// The wider Questionable cross-check for a quest (feature plan v5, 1.6.0): its path, list place, unobtainable and
+    /// active-events answers, printed as the block's "questionable more:" line. The plugin points it at
+    /// <see cref="QuestionableIpc.Wider"/>.
+    /// </summary>
+    public Func<QuestRecord, Core.Ipc.QuestionableWider?>? CrossCheckMore { get; set; }
+
     /// <summary>The block for a quest by row id; null without a catalog or for a row id it does not know.</summary>
     public string? Compose(uint rowId) => session.Bundle?.Catalog.GetByRowId(rowId) is { } quest ? Compose(quest) : null;
 
@@ -113,6 +120,7 @@ public sealed class DiagnosticBuilder
             Context = session.Context,
             IsLive = session.IsLive,
             Questionable = QuestionableCheck(quest),
+            QuestionableMore = QuestionableMore(quest),
         });
     }
 
@@ -122,6 +130,19 @@ public sealed class DiagnosticBuilder
         try
         {
             return CrossCheck?.Invoke(quest);
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>The wider cross-check for the block; a failure leaves the line out.</summary>
+    private Core.Ipc.QuestionableWider? QuestionableMore(QuestRecord quest)
+    {
+        try
+        {
+            return CrossCheckMore?.Invoke(quest);
         }
         catch (Exception)
         {

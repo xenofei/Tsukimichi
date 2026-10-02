@@ -44,6 +44,14 @@ namespace Tsukimichi.Ui;
 /// <see cref="IClientState.TerritoryChanged"/>, when a section toggle flips and when <c>user/pins.json</c> changes (its
 /// write time is checked every <see cref="PinsCheckInterval"/>); drawing allocates nothing. <see cref="ResetPosition"/>
 /// moves the panel back to the top left on the next frame.
+///
+/// 1.6.0: the followed route's section ("Route: everything for Dragoon", <see cref="ActiveRoutes"/>) comes first, with
+/// its next three steps, the level gate line, Flag next stop and Stop, and a "+N more" line that opens the route;
+/// Next stops (<see cref="NextStops"/>, off by default) lists one row per stop standing on its first quest; and a
+/// right-click on the Pinned caption offers a route through every pin (<see cref="OpenRoute"/>).
+/// Questionable (feature plan v5, 1.6.0): while it runs, a gold "Questionable: running · &lt;quest&gt; · step 3 of 7"
+/// line under the title with a Stop button (polled at most once a second, only while the panel draws), its quest's
+/// name in gold in the rows, and "Send pins to Questionable" in the title's menu (<see cref="QuestionableActions"/>).
 /// </summary>
 public sealed class TodoOverlay : Window, IDisposable
 {
@@ -129,6 +137,12 @@ public sealed class TodoOverlay : Window, IDisposable
     // A clicked row whose reveal waits out the double-click window (ImGui time of the click); see DrawRow.
     private QuestRecord? pendingReveal;
     private double pendingRevealTime;
+
+    /// <summary>The host name of this window's Questionable confirmations.</summary>
+    private const string QuestionableHost = "todo";
+
+    /// <summary>The shared Questionable hand-offs (1.6.0); null hides the status line and the menu item.</summary>
+    public QuestionableActions? Questionable { get; set; }
 
     /// <param name="settings">Overlay settings; read every frame so the config window's changes show at once.</param>
     /// <param name="session">Catalog, viewed character and its evaluations.</param>
@@ -254,6 +268,7 @@ public sealed class TodoOverlay : Window, IDisposable
         try
         {
             DrawContent();
+            Questionable?.DrawModals(QuestionableHost);
         }
         finally
         {
@@ -267,6 +282,7 @@ public sealed class TodoOverlay : Window, IDisposable
         var compact = settings.TodoOverlayCompact;
         var layout = Measure(compact);
         DrawHeader(layout);
+        DrawQuestionableLine(layout);
         if (!catalogReady)
         {
             Chrome.OutlinedText(session.CatalogLoading ? Strings.CatalogNotReady : Strings.CatalogUnavailable, Theme.Surface.TextSecondary);
@@ -308,6 +324,11 @@ public sealed class TodoOverlay : Window, IDisposable
                 {
                     Chrome.OutlinedText(note, Theme.Surface.TextSecondary);
                 }
+
+                if (section.Section == TodoSection.Route && !settings.TodoOverlayLocked)
+                {
+                    DrawRouteActions();
+                }
             }
 
             for (var i = 0; i < section.Rows.Length; i++)
@@ -317,16 +338,57 @@ public sealed class TodoOverlay : Window, IDisposable
 
             if (section.MoreText is { } moreText)
             {
-                DrawMoreLine(moreText, layout);
+                DrawMoreLine(moreText, layout, section.Section == TodoSection.Route ? ShowFollowedRoute : ShowPins);
             }
         }
     }
 
     /// <summary>
-    /// "+52 more" under a capped section's rows, in the name column and the secondary tone. A click opens the main
-    /// window on the Journal filtered to the pins (<see cref="ShowPins"/>); while locked it is plain text.
+    /// The route section's buttons (1.6.0): "Flag next stop" opens the map on the next step's giver, "Stop" stops
+    /// following the route (the pins and the route itself are untouched).
     /// </summary>
-    private void DrawMoreLine(string text, in RowLayout layout)
+    private void DrawRouteActions()
+    {
+        if (ActiveRoutes is not { } routes)
+        {
+            return;
+        }
+
+        var route = routes.ViewedRoute;
+        var stop = routes.NextStopQuest(route);
+        var canFlag = stop is not null && links.CanFlagMap(stop);
+        using (ImRaii.Disabled(!canFlag))
+        {
+            if (ImGui.SmallButton(Strings.RouteFlagNextStop))
+            {
+                routes.FlagNextStop(route);
+            }
+        }
+
+        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+        {
+            UiMetrics.Tooltip(canFlag ? Strings.RouteFlagNextStopTooltip : Strings.RouteFlagNextStopUnavailable);
+        }
+
+        ImGui.SameLine();
+        if (ImGui.SmallButton(Strings.TodoRouteStop))
+        {
+            routes.Stop();
+            dirty = true;
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.RouteStopFollowingTooltip);
+        }
+    }
+
+    /// <summary>
+    /// "+52 more" under a capped section's rows, in the name column and the secondary tone. A click runs
+    /// <paramref name="open"/>: the main window on the Journal filtered to the pins (<see cref="ShowPins"/>), or the
+    /// followed route's window (<see cref="ShowFollowedRoute"/>); while locked it is plain text.
+    /// </summary>
+    private void DrawMoreLine(string text, in RowLayout layout, Action? open)
     {
         var start = ImGui.GetCursorScreenPos();
         var textX = start.X + layout.Glyph + ImGui.GetStyle().ItemSpacing.X;
@@ -337,7 +399,7 @@ public sealed class TodoOverlay : Window, IDisposable
         Chrome.FocusRing();
         if (clicked)
         {
-            ShowPins?.Invoke();
+            open?.Invoke();
         }
 
         var dl = ImGui.GetWindowDrawList();
@@ -346,7 +408,7 @@ public sealed class TodoOverlay : Window, IDisposable
         dl.PopClipRect();
         if (hovered)
         {
-            UiMetrics.Tooltip(Strings.TodoMoreTooltip);
+            UiMetrics.Tooltip(ReferenceEquals(open, ShowPins) ? Strings.TodoMoreTooltip : Strings.TodoRouteMoreTooltip);
         }
     }
 
@@ -481,6 +543,51 @@ public sealed class TodoOverlay : Window, IDisposable
             settings.TodoOverlayEnabled = false;
             Save();
         }
+
+        if (Questionable is { } questionable)
+        {
+            // The viewed character's pins, in the order they were pinned.
+            ImGui.Separator();
+            questionable.DrawSubmenu(QuestionableHost, Strings.QuestionableSendPins, pinned, static pins => pins);
+        }
+    }
+
+    /// <summary>
+    /// Questionable's live status under the title while it runs, outlined in gold and cut to the panel's width, and a
+    /// small Stop (not while locked: the panel takes no clicks then).
+    /// </summary>
+    private void DrawQuestionableLine(in RowLayout layout)
+    {
+        if (Questionable?.PollStatusText() is not { } text)
+        {
+            return;
+        }
+
+        var locked = settings.TodoOverlayLocked;
+        var stopWidth = locked ? 0f : ImGui.CalcTextSize(Strings.QuestionableStopShort).X + (ImGui.GetStyle().FramePadding.X * 2f) + ImGui.GetStyle().ItemSpacing.X;
+        var start = ImGui.GetCursorScreenPos();
+        var line = ImGui.GetTextLineHeight();
+        var room = MathF.Max(UiMetrics.Px(40f), layout.RowWidth - stopWidth);
+        ImGui.Dummy(new Vector2(room, line));
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(text, Strings.QuestionableStatusTooltip);
+        }
+
+        var dl = ImGui.GetWindowDrawList();
+        dl.PushClipRect(start, new Vector2(start.X + room, start.Y + line), true);
+        Chrome.OutlinedTextAt(dl, start, text, Theme.AccentU32);
+        dl.PopClipRect();
+        if (locked)
+        {
+            return;
+        }
+
+        ImGui.SameLine();
+        using (ImRaii.PushStyle(ImGuiStyleVar.FramePadding, new Vector2(ImGui.GetStyle().FramePadding.X, 0f)))
+        {
+            Questionable.DrawStopSmallButton("##questionableStop");
+        }
     }
 
     /// <summary>A section caption (caret, name and count) outlined in the secondary tone over a hairline; a click folds it.</summary>
@@ -494,7 +601,15 @@ public sealed class TodoOverlay : Window, IDisposable
         }
 
         var hovered = ImGui.IsItemHovered();
+        // The pins' caption has one menu (1.6.0): a route through every pin, and Send pins to Questionable.
+        var pinsMenu = section.Section == TodoSection.Pinned && (OpenRoute is not null || Questionable is not null);
+        if (pinsMenu && hovered && ImGui.IsMouseReleased(ImGuiMouseButton.Right))
+        {
+            ImGui.OpenPopup(PinsMenuId);
+        }
+
         Chrome.FocusRing();
+
         var dl = ImGui.GetWindowDrawList();
         var ink = Theme.U32(hovered ? Theme.Surface.Text : Theme.Surface.TextSecondary);
         ImGui.PushFont(UiBuilder.IconFont);
@@ -503,10 +618,49 @@ public sealed class TodoOverlay : Window, IDisposable
         Chrome.OutlinedTextAt(dl, new Vector2(start.X + ImGui.GetFontSize(), start.Y), section.HeaderText, ink);
         if (hovered)
         {
-            UiMetrics.Tooltip(section.ToggleTooltip);
+            UiMetrics.Tooltip(section.ToggleTooltip, pinsMenu ? Strings.TodoPinsMenuHint : null);
+        }
+
+        if (pinsMenu)
+        {
+            DrawPinsMenu();
         }
 
         Chrome.Hairline(width: layout.RowWidth);
+    }
+
+    private const string PinsMenuId = "##todoPinsMenu";
+
+    /// <summary>The Pinned caption's menu: "Route through my pins" opens the route to every pin still to do.</summary>
+    private void DrawPinsMenu()
+    {
+        if (!ImGui.IsPopupOpen(PinsMenuId))
+        {
+            return;
+        }
+
+        using var style = Theme.PushPopup();
+        using var popup = ImRaii.Popup(PinsMenuId);
+        if (!popup)
+        {
+            return;
+        }
+
+        if (OpenRoute is not null)
+        {
+            if (ImGui.MenuItem(Strings.TodoRoutePins) && pinned.Count > 0)
+            {
+                OpenRoute.Invoke(Core.Route.RouteTarget.ForPins(pinned));
+            }
+
+            if (ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(Strings.TodoRoutePinsTooltip);
+            }
+        }
+
+        // The same "Send pins to Questionable" as the title's menu.
+        Questionable?.DrawSubmenu(QuestionableHost, Strings.QuestionableSendPins, pinned, static pins => pins);
     }
 
     private void DrawRow(Row row, int index, in RowLayout layout, bool compact)
@@ -550,7 +704,9 @@ public sealed class TodoOverlay : Window, IDisposable
         var textMax = new Vector2(textX + layout.TextWidth, start.Y + layout.RowHeight);
         dl.PushClipRect(new Vector2(textX, start.Y), textMax, true);
         var name = new Vector2(textX, textY);
-        Chrome.OutlinedTextAt(dl, name, row.Name, Theme.U32(Theme.Surface.Text));
+        // Gold while Questionable works on this quest (1.6.0).
+        var nameInk = Questionable?.RunningRowId == row.Quest.RowId ? Theme.AccentU32 : Theme.U32(Theme.Surface.Text);
+        Chrome.OutlinedTextAt(dl, name, row.Name, nameInk);
         if (!compact && row.Hint.Length > 0)
         {
             var hintX = textX + ImGui.CalcTextSize(row.Name).X + style.ItemSpacing.X;
@@ -650,6 +806,18 @@ public sealed class TodoOverlay : Window, IDisposable
     /// <summary>Opens the main window on every pin (the Journal filtered to Pinned); the Pinned section's "+N more" line calls it.</summary>
     public Action? ShowPins { get; set; }
 
+    /// <summary>The followed route (1.6.0); null leaves the route section out.</summary>
+    public ActiveRouteService? ActiveRoutes { get; set; }
+
+    /// <summary>Next stops (1.6.0); null leaves the section out.</summary>
+    public NextStopsSource? NextStops { get; set; }
+
+    /// <summary>Opens the route window on a target (the Pinned caption's "Route through my pins"); null hides that menu.</summary>
+    public Action<Core.Route.RouteTarget>? OpenRoute { get; set; }
+
+    /// <summary>Opens the route window on the followed route; the route section's "+N more" line calls it.</summary>
+    public Action? ShowFollowedRoute { get; set; }
+
     private void OnSessionChanged() => dirty = true;
 
     private void OnTerritoryChanged(uint territory) => dirty = true;
@@ -657,7 +825,30 @@ public sealed class TodoOverlay : Window, IDisposable
     /// <summary>Section toggles as one integer, compared per frame so a change in the settings window rebuilds at once.</summary>
     private int SettingsSignature() =>
         (settings.TodoShowPins ? 1 : 0) | (settings.TodoShowNearbyFeature ? 2 : 0) | (settings.TodoShowMsq ? 4 : 0) | (settings.TodoShowJobQuests ? 8 : 0)
-        | (settings.TodoShowSeasonal ? 16 : 0) | (settings.TodoShowPlan ? 32 : 0) | ((settings.TodoPlanExpansion + 1) << 6);
+        | (settings.TodoShowSeasonal ? 16 : 0) | (settings.TodoShowPlan ? 32 : 0) | ((settings.TodoPlanExpansion + 1) << 6)
+        | (settings.TodoShowRoute ? 1 << 20 : 0) | (settings.TodoShowNextStops ? 1 << 21 : 0);
+
+    /// <summary>The followed route's and Next stops' revisions (each read through its source, which rebuilds first when due).</summary>
+    private (int Route, int Stops) SourceRevisions()
+    {
+        var route = 0;
+        if (settings.TodoShowRoute && ActiveRoutes is { } routes)
+        {
+            _ = routes.ViewedRoute;
+            route = routes.Revision;
+        }
+
+        var stops = 0;
+        if (settings.TodoShowNextStops && NextStops is { } source)
+        {
+            _ = source.Stops;
+            stops = source.Revision;
+        }
+
+        return (route, stops);
+    }
+
+    private (int Route, int Stops) builtSources = (-1, -1);
 
     /// <summary>Once per frame: notices a changed pins file on a timer, then rebuilds when any input moved.</summary>
     private void Refresh()
@@ -677,7 +868,8 @@ public sealed class TodoOverlay : Window, IDisposable
         var version = session.Version;
         var territory = clientState.TerritoryType;
         var signature = SettingsSignature();
-        if (!dirty && version == builtVersion && territory == builtTerritory && signature == builtSettings)
+        var sources = SourceRevisions();
+        if (!dirty && version == builtVersion && territory == builtTerritory && signature == builtSettings && sources == builtSources)
         {
             return;
         }
@@ -686,6 +878,7 @@ public sealed class TodoOverlay : Window, IDisposable
         builtVersion = version;
         builtTerritory = territory;
         builtSettings = signature;
+        builtSources = sources;
         Rebuild(territory);
     }
 
@@ -694,7 +887,8 @@ public sealed class TodoOverlay : Window, IDisposable
         var bundle = session.Bundle;
         catalogReady = bundle is not null;
         enabledSections = (settings.TodoShowPins ? 1 : 0) + (settings.TodoShowNearbyFeature ? 1 : 0) + (settings.TodoShowMsq ? 1 : 0) + (settings.TodoShowJobQuests ? 1 : 0)
-                          + (settings.TodoShowSeasonal ? 1 : 0) + (settings.TodoShowPlan && settings.TodoPlanExpansion >= 0 && Plan is not null ? 1 : 0);
+                          + (settings.TodoShowSeasonal ? 1 : 0) + (settings.TodoShowPlan && settings.TodoPlanExpansion >= 0 && Plan is not null ? 1 : 0)
+                          + (settings.TodoShowNextStops && NextStops is not null ? 1 : 0);
 
         if (bundle is null || session.ViewedSnapshot is not { } snapshot)
         {
@@ -738,7 +932,11 @@ public sealed class TodoOverlay : Window, IDisposable
             // unlock quest, and nothing is pinned by default.
             settings.TodoShowPlan && settings.TodoPlanExpansion >= 0 ? Plan?.Plan : null,
             settings.TodoPlanExpansion,
-            settings.TodoShowPlan));
+            settings.TodoShowPlan,
+            Route: settings.TodoShowRoute ? ActiveRoutes?.ViewedRoute : null,
+            ShowRoute: settings.TodoShowRoute,
+            Stops: settings.TodoShowNextStops ? NextStops?.Stops : null,
+            ShowNextStops: settings.TodoShowNextStops));
 
         enabledSections = model.EnabledSections;
         if (model.Sections.Count == 0)
@@ -759,14 +957,16 @@ public sealed class TodoOverlay : Window, IDisposable
                     continue;
                 }
 
-                var tooltip = row.Hint.Length > 0
-                    ? Strings.StateName(row.State, quest) + Strings.StateReasonSeparator + row.Hint + "\n" + Strings.TodoRowClickHint
-                    : Strings.StateName(row.State, quest) + "\n" + Strings.TodoRowClickHint;
+                var tooltip = row.Kind == TodoRowKind.Stop
+                    ? row.Name + Strings.StateReasonSeparator + row.Hint + "\n" + Strings.TodoStopClickHint
+                    : row.Hint.Length > 0
+                        ? Strings.StateName(row.State, quest) + Strings.StateReasonSeparator + row.Hint + "\n" + Strings.TodoRowClickHint
+                        : Strings.StateName(row.State, quest) + "\n" + Strings.TodoRowClickHint;
                 rows.Add(new Row(quest, row.Name, row.State, row.Hint, tooltip));
             }
 
             // A capped section counts every row it holds in its caption ("Pinned (60)") and names the rest on one line.
-            var name = Strings.TodoSectionName(section.Section);
+            var name = section.Title.Length > 0 ? section.Title : Strings.TodoSectionName(section.Section);
             var headerText = string.Format(CultureInfo.CurrentCulture, Strings.TodoSectionFormat, name, rows.Count + section.More);
             var toggle = string.Format(CultureInfo.CurrentCulture, Strings.TodoSectionToggleFormat, name);
             var more = section.More > 0 ? string.Format(CultureInfo.CurrentCulture, Strings.TodoMoreFormat, section.More) : null;

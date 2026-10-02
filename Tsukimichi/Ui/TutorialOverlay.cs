@@ -18,7 +18,7 @@ namespace Tsukimichi.Ui;
 /// The interactive tour (<see cref="ITutorial"/>, T14, accessibility C1, game UX panel finding 6), in three chapters:
 /// <b>Find</b> (search, quick views, filters and chips, the tab rail, the tree, the table), <b>Read</b> (the detail
 /// pane, the Status column, a legend of all eight states with their glyphs drawn in the card, the path and giver) and
-/// <b>Beyond</b> (Moonlit, Characters, Flight, the Todo overlay and Nearby, help and settings). Each step points at a
+/// <b>Beyond</b> (Moonlit, Characters, Flight, the Todo overlay and Nearby, the companion plugins, help and settings). Each step points at a
 /// region the main window recorded in <see cref="UiState.Rects"/> from the real items; its body is at most 35 words.
 /// Drawn on the foreground draw list at the end of the main window's Draw: the window area is dimmed with Night at
 /// 70 % except for a rounded cutout around the target and around the card; the target gets a Moon border with a soft
@@ -145,6 +145,7 @@ public sealed class TutorialOverlay : ITutorial
         new(Chapter.Beyond, StepKind.Normal, Strings.Tutorial.FlightTitle, Strings.Tutorial.FlightBody, [UiRects.FlightTable], [UiRects.FlightZones], static ui => ui.Tab = NavTab.Flight),
         new(Chapter.Beyond, StepKind.Normal, Strings.Tutorial.PlanTitle, Strings.Tutorial.PlanBody, [UiRects.PlanCards], [UiRects.Tabs], static ui => ui.Tab = NavTab.Plan),
         new(Chapter.Beyond, StepKind.Normal, Strings.Tutorial.PlayTitle, Strings.Tutorial.PlayBody, [UiRects.SettingsButton], [UiRects.Toolbar], null),
+        new(Chapter.Beyond, StepKind.Normal, Strings.Tutorial.CompanionsTitle, Strings.Tutorial.CompanionsBody, [UiRects.SettingsButton], [UiRects.Toolbar], null),
         new(Chapter.Beyond, StepKind.Normal, Strings.Tutorial.HelpTitle, Strings.Tutorial.HelpBody, [UiRects.HelpButton, UiRects.SettingsButton], [UiRects.Toolbar], null),
         new(Chapter.Beyond, StepKind.Finish, Strings.Tutorial.FinishTitle, Strings.Tutorial.FinishBody, NoKeys, NoKeys, null),
     ]);

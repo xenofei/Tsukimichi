@@ -23,8 +23,21 @@ namespace Tsukimichi.Ui;
 /// quests drop off as they are completed. "Copy route" puts a Markdown list on the clipboard (names through the
 /// spoiler shield, no character); "Pin all" is a hold-to-confirm button that pins every step through
 /// <see cref="RoutePins.PinAll"/>, followed by an Undo line. Opened by <see cref="UiState.OpenRoute"/> from the detail
-/// pane's action bar, a Moonlit row's menu and the Characters job rows. Every string is composed when the route is
-/// rebuilt, and the list draws only its visible lines, so a thousand-quest route costs nothing per frame.
+/// pane's action bar, a Moonlit row's menu, the Characters job rows, My blues, the Duty Finder panel and the todo
+/// overlay's pins. Every string is composed when the route is rebuilt, and the list draws only its visible lines, so
+/// a thousand-quest route costs nothing per frame.
+/// <para>
+/// 1.6.0 (R6 A, C3 C): "Follow this route" makes it the route the todo overlay shows (<see cref="ActiveRouteService"/>),
+/// "Flag next stop" opens the map on the next step's giver, and every step says where its giver is: the aetheryte
+/// nearest it, with Flag and Teleport. Consecutive steps whose givers share that aetheryte are one stop ("3 quests
+/// near Camp Dragonhead") with one Teleport; the order is never changed for it. A route to several targets marks
+/// each target's milestone on the step that reaches it.
+/// </para>
+/// <para>
+/// Questionable (feature plan v5, 1.6.0): "Send to Questionable" beside Pin all hands the route's steps, in route
+/// order, to Questionable's priority list (<see cref="QuestionableActions"/>), and each step shows "Q #3" when it is on
+/// that list or "Q no path" when Questionable cannot do it.
+/// </para>
 /// </summary>
 public sealed class RouteWindow : Window
 {
@@ -41,6 +54,8 @@ public sealed class RouteWindow : Window
     private readonly Action<QuestRecord> showQuest;
     private readonly PinStore pins;
     private readonly ConfirmGate pinGate = new();
+    private readonly GameLinks links;
+    private readonly ActiveRouteService routes;
 
     private RouteTarget? target;
     private int builtVersion = -1;
@@ -62,18 +77,28 @@ public sealed class RouteWindow : Window
     private string pinLabel = string.Empty;
 
     /// <param name="runner">The pin list "Pin all" adds to (the viewed character's).</param>
+    /// <param name="links">Map flags and Lifestream teleports for the steps.</param>
+    /// <param name="routes">The followed route ("Follow this route").</param>
     /// <param name="showQuest">Brings the main window forward and shows a quest in the Journal.</param>
-    public RouteWindow(SessionState session, QueryRunner runner, Action<QuestRecord> showQuest)
+    public RouteWindow(SessionState session, QueryRunner runner, GameLinks links, ActiveRouteService routes, Action<QuestRecord> showQuest)
         : base(Strings.RouteWindowTitle)
     {
         this.session = session ?? throw new ArgumentNullException(nameof(session));
         this.runner = runner ?? throw new ArgumentNullException(nameof(runner));
+        this.links = links ?? throw new ArgumentNullException(nameof(links));
+        this.routes = routes ?? throw new ArgumentNullException(nameof(routes));
         pins = new PinStore(runner);
         this.showQuest = showQuest ?? throw new ArgumentNullException(nameof(showQuest));
-        Size = new Vector2(560f, 620f);
+        Size = new Vector2(600f, 620f);
         SizeCondition = ImGuiCond.FirstUseEver;
         SizeConstraints = new WindowSizeConstraints { MinimumSize = new Vector2(380f, 260f) };
     }
+
+    /// <summary>The host name of this window's Questionable confirmations.</summary>
+    private const string QuestionableHost = "route";
+
+    /// <summary>The shared Questionable hand-offs (1.6.0); null hides Send to Questionable and the step marks.</summary>
+    public QuestionableActions? Questionable { get; set; }
 
     /// <summary>Opens the window on the route to <paramref name="routeTarget"/> and brings it to the front.</summary>
     public void Show(RouteTarget routeTarget)
@@ -83,8 +108,21 @@ public sealed class RouteWindow : Window
         pinGate.Cancel();
         undo = RoutePinBatch.Empty;
         noteUntil = -1.0;
+        Questionable?.Ipc.MarkListStale();
         IsOpen = true;
         BringToFront();
+    }
+
+    /// <summary>Opens the window on the followed route; false (nothing opened) when none is followed.</summary>
+    public bool ShowFollowed()
+    {
+        if (routes.Saved is not { } saved)
+        {
+            return false;
+        }
+
+        Show(saved.ToTarget());
+        return true;
     }
 
     public override void PreDraw()
@@ -109,6 +147,7 @@ public sealed class RouteWindow : Window
         try
         {
             DrawContent();
+            Questionable?.DrawModals(QuestionableHost);
         }
         finally
         {
@@ -171,6 +210,7 @@ public sealed class RouteWindow : Window
         }
 
         DrawActions(bundle, v);
+        DrawFollowActions(v);
         Chrome.Hairline();
         DrawLines(bundle, v);
     }
@@ -204,6 +244,12 @@ public sealed class RouteWindow : Window
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
             UiMetrics.Tooltip(pins.CanPin ? Strings.RoutePinAllTooltip : Strings.RoutePinAllUnavailable);
+        }
+
+        if (Questionable is { } questionable)
+        {
+            Chrome.SameLineOrWrap(QuestionableActions.ButtonWidth);
+            questionable.DrawButton(QuestionableHost, "##questionable", v.Route, static route => StepRowIds(route));
         }
 
         if (confirmed && canPin)
@@ -247,6 +293,60 @@ public sealed class RouteWindow : Window
         else if (ImGui.IsItemHovered())
         {
             UiMetrics.Tooltip(Strings.RouteUndoTooltip);
+        }
+    }
+
+    /// <summary>
+    /// The second row (1.6.0): "Follow this route" (or "Stop following" when it is the followed one) and "Flag next
+    /// stop". Following needs a character, since the route belongs to the one it was built for.
+    /// </summary>
+    private void DrawFollowActions(View v)
+    {
+        var owner = session.ViewedContentId;
+        var following = target is not null && routes.Follows(target, owner);
+        var canFollow = owner is not null && v.Route.Steps.Count > 0;
+        using (ImRaii.Disabled(!following && !canFollow))
+        {
+            if (ImGui.Button(following ? Strings.RouteStopFollowing : Strings.RouteFollow) && target is not null)
+            {
+                if (following)
+                {
+                    routes.Stop();
+                }
+                else if (owner is { } id)
+                {
+                    routes.Follow(target, id);
+                }
+            }
+        }
+
+        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+        {
+            UiMetrics.Tooltip(following ? Strings.RouteStopFollowingTooltip : owner is null ? Strings.RouteFollowUnavailable : Strings.RouteFollowTooltip);
+        }
+
+        var stop = routes.NextStopQuest(v.Route);
+        var canFlag = stop is not null && links.CanFlagMap(stop);
+        Chrome.SameLineOrWrap(ImGui.CalcTextSize(Strings.RouteFlagNextStop).X + (ImGui.GetStyle().FramePadding.X * 2f));
+        using (ImRaii.Disabled(!canFlag))
+        {
+            if (ImGui.Button(Strings.RouteFlagNextStop))
+            {
+                routes.FlagNextStop(v.Route);
+            }
+        }
+
+        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+        {
+            UiMetrics.Tooltip(canFlag ? Strings.RouteFlagNextStopTooltip : Strings.RouteFlagNextStopUnavailable);
+        }
+    }
+
+    private static IEnumerable<uint> StepRowIds(UnlockRoute route)
+    {
+        foreach (var step in route.Steps)
+        {
+            yield return step.RowId;
         }
     }
 
@@ -312,6 +412,81 @@ public sealed class RouteWindow : Window
         }
     }
 
+    /// <summary>A small button's width for <paramref name="label"/>.</summary>
+    private static float SmallButtonWidth(string label) => ImGui.CalcTextSize(label).X + (ImGui.GetStyle().FramePadding.X * 2f);
+
+    /// <summary>
+    /// The line's Flag and Teleport, right-aligned at <paramref name="right"/> on the row starting at <paramref name="top"/>;
+    /// returns the x where they begin (the text ends before it). A Teleport that cannot start says why on hover.
+    /// </summary>
+    private float DrawStepButtons(QuestRecord quest, bool flag, bool teleport, float right, float top, float rowHeight)
+    {
+        var gap = UiMetrics.Px(4f);
+        var width = 0f;
+        if (flag)
+        {
+            width += SmallButtonWidth(Strings.RouteStepFlag);
+        }
+
+        if (teleport)
+        {
+            width += SmallButtonWidth(Strings.RouteStepTeleport) + (flag ? gap : 0f);
+        }
+
+        if (width <= 0f)
+        {
+            return right;
+        }
+
+        var x = right - width;
+        var y = top + ((rowHeight - ImGui.GetTextLineHeight()) * 0.5f);
+        if (flag)
+        {
+            ImGui.SetCursorScreenPos(new Vector2(x, y));
+            var canFlag = links.CanFlagMap(quest);
+            using (ImRaii.Disabled(!canFlag))
+            {
+                if (ImGui.SmallButton(Strings.RouteStepFlag))
+                {
+                    links.FlagMap(quest);
+                }
+            }
+
+            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+            {
+                UiMetrics.Tooltip(canFlag ? Strings.RouteStepFlagTooltip : Strings.RouteStepFlagUnavailable);
+            }
+
+            x += SmallButtonWidth(Strings.RouteStepFlag) + gap;
+        }
+
+        if (teleport)
+        {
+            ImGui.SetCursorScreenPos(new Vector2(x, y));
+            var canTeleport = links.CanTeleport(quest);
+            using (ImRaii.Disabled(!canTeleport))
+            {
+                if (ImGui.SmallButton(Strings.RouteStepTeleport))
+                {
+                    links.TeleportToGiver(quest);
+                }
+            }
+
+            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+            {
+                UiMetrics.Tooltip(TeleportTip(quest));
+            }
+        }
+
+        return right - width - UiMetrics.Px(8f);
+    }
+
+    /// <summary>
+    /// A step's Teleport tooltip: where it goes with the gil cost and "already here", or why it cannot (no Lifestream,
+    /// Lifestream busy, no attuned aetheryte), the same text as every other Teleport (<see cref="GameLinks.TeleportTooltip(QuestRecord)"/>).
+    /// </summary>
+    private string TeleportTip(QuestRecord quest) => links.TeleportTooltip(quest);
+
     private void DrawLine(CatalogBundle bundle, Line l, float rowHeight, float line)
     {
         var dl = ImGui.GetWindowDrawList();
@@ -346,14 +521,43 @@ public sealed class RouteWindow : Window
                 dl.AddText(new Vector2(min.X + UiMetrics.Px(IndentLogical), textY), Theme.U32(Theme.Surface.TextSecondary), l.Text);
                 return;
             }
+
+            case LineKind.Stop:
+            {
+                // "3 quests near Camp Dragonhead": one Teleport for the stop; its steps keep their own Flag.
+                var first = bundle.Catalog.GetByRowId(l.RowId);
+                var end = first is null ? min.X + width : DrawStepButtons(first, flag: false, teleport: true, min.X + width, min.Y, rowHeight);
+                ImGui.SetCursorScreenPos(min);
+                ImGui.Dummy(new Vector2(MathF.Max(1f, end - min.X), rowHeight));
+                if (ImGui.IsItemHovered())
+                {
+                    UiMetrics.Tooltip(Strings.RouteStopTooltip);
+                }
+
+                dl.PushClipRect(min, new Vector2(end, min.Y + rowHeight), true);
+                dl.AddText(new Vector2(min.X + UiMetrics.Px(IndentLogical), textY), Theme.U32(Theme.Surface.TextSecondary), l.Text);
+                dl.PopClipRect();
+                return;
+            }
         }
 
-        // A step or an alternative: one selectable across the line, content drawn over it.
-        var clicked = ImGui.Selectable("##line", false, ImGuiSelectableFlags.None, new Vector2(0f, rowHeight));
+        // A step or an alternative: one selectable up to the step's buttons, content drawn over it.
+        var stepQuest = l.Kind == LineKind.Step ? bundle.Catalog.GetByRowId(l.RowId) : null;
+        var textEnd = min.X + width;
+        if (stepQuest is not null)
+        {
+            textEnd = DrawStepButtons(stepQuest, flag: true, teleport: l.Teleport, min.X + width, min.Y, rowHeight);
+            ImGui.SetCursorScreenPos(min);
+        }
+
+        var clicked = ImGui.Selectable("##line", false, ImGuiSelectableFlags.None, new Vector2(MathF.Max(1f, textEnd - min.X), rowHeight));
         var hovered = ImGui.IsItemHovered();
+
+        // Questionable's mark (1.6.0): on its list, or no path; asked lazily, a few steps per frame.
+        var (questionableMark, questionableTooltip) = l.Kind == LineKind.Step && Questionable is { } questionable ? questionable.StepMark(l.RowId) : (string.Empty, string.Empty);
         if (hovered)
         {
-            UiMetrics.Tooltip(l.Tooltip, l.Kind == LineKind.Step ? Strings.RouteStepTooltipHint : null);
+            UiMetrics.Tooltip(l.Tooltip, l.Kind != LineKind.Step ? null : questionableTooltip.Length > 0 ? questionableTooltip + "\n" + Strings.RouteStepTooltipHint : Strings.RouteStepTooltipHint);
         }
 
         if (clicked && bundle.Catalog.GetByRowId(l.RowId) is { } quest)
@@ -361,7 +565,7 @@ public sealed class RouteWindow : Window
             showQuest(quest);
         }
 
-        var max = new Vector2(min.X + width, min.Y + rowHeight);
+        var max = new Vector2(textEnd, min.Y + rowHeight);
         dl.PushClipRect(min, max, true);
         try
         {
@@ -371,7 +575,7 @@ public sealed class RouteWindow : Window
                 return;
             }
 
-            var x = min.X;
+            var x = min.X + (l.InStop ? UiMetrics.Px(IndentLogical * 0.5f) : 0f);
             var numberWidth = ImGui.CalcTextSize("0000").X;
             var number = ImGui.CalcTextSize(l.Number);
             dl.AddText(new Vector2(x + numberWidth - number.X, textY), Theme.U32(Theme.Surface.TextTertiary), l.Number);
@@ -392,6 +596,12 @@ public sealed class RouteWindow : Window
             {
                 dl.AddText(new Vector2(x, textY), gold ? Theme.AccentU32 : Theme.U32(l.IsTarget ? Theme.Surface.TextSecondary : Theme.Surface.TextTertiary), l.Mark);
                 x += ImGui.CalcTextSize(l.Mark).X + UiMetrics.Px(8f);
+            }
+
+            if (questionableMark.Length > 0)
+            {
+                dl.AddText(new Vector2(x, textY), Theme.U32(Theme.Surface.TextSecondary), questionableMark);
+                x += ImGui.CalcTextSize(questionableMark).X + UiMetrics.Px(8f);
             }
 
             dl.AddText(new Vector2(x, textY), Theme.U32(Theme.Surface.TextTertiary), l.Detail);
@@ -441,9 +651,27 @@ public sealed class RouteWindow : Window
                 .Append(string.Format(CultureInfo.CurrentCulture, Strings.RouteAlternativeFormat, NameOf(catalog, alternative.RowId), alternative.RemainingCount));
         }
 
-        var lines = new List<Line>(route.Steps.Count + 8);
+        // Where each giver is: the aetheryte nearest it, its id for merging and its name for the line.
+        var place = new Dictionary<uint, (uint Id, string Name)>(route.Steps.Count);
+        foreach (var step in route.Steps)
+        {
+            if (catalog.GetByRowId(step.RowId) is { } quest && links.NearestAetheryte(quest) is { } aetheryte)
+            {
+                place[step.RowId] = aetheryte;
+            }
+        }
+
+        var stops = RouteStops.Group(route.Steps, rowId => place.TryGetValue(rowId, out var p) ? p.Id : 0u);
+        var stopAt = new Dictionary<int, RouteStop>(stops.Count);
+        foreach (var stop in stops)
+        {
+            stopAt[stop.Start] = stop;
+        }
+
+        var lines = new List<Line>(route.Steps.Count + stops.Count + 8);
         RouteMilestone? milestone = null;
         var anyMilestone = route.Summary.Milestones.Count > 0;
+        var stopEnd = -1;
         for (var i = 0; i < route.Steps.Count; i++)
         {
             var step = route.Steps[i];
@@ -464,16 +692,33 @@ public sealed class RouteWindow : Window
                 lines.Add(new Line(LineKind.Gate, 0, QuestState.Unknown, text));
             }
 
+            // A stop of several steps opens with its own line; a milestone or gate inside it never splits it, since
+            // the stop is about the place and those lines about the story and the level.
+            var inStop = i <= stopEnd;
+            if (stopAt.TryGetValue(i, out var group) && group.Count > 1 && place.TryGetValue(step.RowId, out var shared))
+            {
+                stopEnd = i + group.Count - 1;
+                inStop = true;
+                lines.Add(new Line(LineKind.Stop, step.RowId, QuestState.Unknown, string.Format(CultureInfo.CurrentCulture, Strings.RouteStopFormat, group.Count, shared.Name)));
+            }
+
             var name = NameOf(catalog, step.RowId);
-            var mark = step.IsTarget ? Strings.RouteTargetMark : step.IsMainScenario ? Strings.RouteMsqMark : string.Empty;
+            var mark = step.TargetLabel.Length > 0 ? string.Format(CultureInfo.CurrentCulture, Strings.RouteReachesFormat, step.TargetLabel)
+                : step.IsTarget ? Strings.RouteTargetMark
+                : step.IsMainScenario ? Strings.RouteMsqMark
+                : string.Empty;
+            var near = !inStop && place.TryGetValue(step.RowId, out var own) ? own.Name : string.Empty;
+            var detail = near.Length > 0 ? string.Format(CultureInfo.CurrentCulture, Strings.RouteNearFormat, near) + Strings.RouteDetailSeparator + step.StatusText : step.StatusText;
             lines.Add(new Line(LineKind.Step, step.RowId, step.State, name)
             {
                 Number = (i + 1).ToString(CultureInfo.CurrentCulture) + ".",
                 Level = string.Format(CultureInfo.CurrentCulture, Strings.RouteLevelFormat, step.DisplayLevel),
-                Detail = step.StatusText,
+                Detail = detail,
                 Mark = mark,
                 IsTarget = step.IsTarget,
-                Tooltip = name + "\n" + step.StatusText,
+                InStop = inStop,
+                Teleport = !inStop,
+                Tooltip = near.Length > 0 ? name + "\n" + step.StatusText + "\n" + string.Format(CultureInfo.CurrentCulture, Strings.RouteNearFormat, near) : name + "\n" + step.StatusText,
             });
 
             foreach (var alternative in step.Alternatives)
@@ -499,6 +744,9 @@ public sealed class RouteWindow : Window
         Gate,
         Step,
         Alternative,
+
+        /// <summary>"3 quests near Camp Dragonhead", heading consecutive steps at one aetheryte; <see cref="Line.RowId"/> is its first step.</summary>
+        Stop,
     }
 
     /// <summary>One line of the list; every string composed when the route is built.</summary>
@@ -515,6 +763,12 @@ public sealed class RouteWindow : Window
         public string Tooltip { get; init; } = string.Empty;
 
         public bool IsTarget { get; init; }
+
+        /// <summary>A step inside a stop of several steps: indented, its Teleport on the stop's line.</summary>
+        public bool InStop { get; init; }
+
+        /// <summary>The step shows its own Teleport (a stop of one step).</summary>
+        public bool Teleport { get; init; }
     }
 
     private sealed record View(UnlockRoute Route, string Title, string Caption, string Summary, string AlsoUnlockedBy, Line[] Lines)

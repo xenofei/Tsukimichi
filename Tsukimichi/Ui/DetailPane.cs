@@ -252,6 +252,7 @@ public sealed partial class DetailPane
         BeginSection("##rewards", Strings.Rewards, RewardsIcon, model.RewardsCaption, Theme.Surface.TextTertiary);
         DrawRewards(cardRight);
         EndSection();
+        DrawHandInSection(session, quest);
 
         if (Overrides is { } overrides)
         {
@@ -275,8 +276,10 @@ public sealed partial class DetailPane
         // The chart ends at the card's inner edge, or a gutter short of the body's (the minimap draws in the gutter).
         var chartRight = open ? bodyRight - pad : cardRight;
         chart.Draw(MathF.Max(1f, chartRight - ImGui.GetCursorScreenPos().X), 0.4f * detailHeight, pad);
+        DrawQuestMapButton(rowId);
         EndSection();
         ui.RecordItem(UiRects.DetailPath);
+        DrawDuties(session, quest);
 
         Gap();
         BeginSection("##giver", Strings.Giver, GiverIcon);

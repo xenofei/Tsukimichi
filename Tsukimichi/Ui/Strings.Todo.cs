@@ -51,6 +51,8 @@ static partial class Strings
         TodoSection.Msq => TodoSectionMsq,
         TodoSection.JobQuests => TodoSectionJobQuests,
         TodoSection.Plan => PlanTodoSection,
+        TodoSection.Route => RouteWindowTitle,
+        TodoSection.NextStops => TodoSectionNextStops,
         _ => section.ToString(),
     };
 

@@ -2409,9 +2409,6 @@
   <data name="ConfigQuestionableHandoff" xml:space="preserve">
     <value>Übergabe an Questionable zeigen</value>
   </data>
-  <data name="ConfigQuestionableHandoffHint" xml:space="preserve">
-    <value>Ist Questionable geladen, bietet die Schaltfläche „…“ im Detailbereich „Zur Questionable-Priorität hinzufügen“ an. Sie ruft nur die eigene Prioritätsliste von Questionable auf; Tsukimichi startet Questionable nie und bewegt deinen Charakter nie. Die Zeile „Questionable stimmt zu“ unter einem Auftrag erscheint unabhängig von dieser Einstellung.</value>
-  </data>
   <data name="RouteWindowTitle" xml:space="preserve">
     <value>Freischaltroute###tsukimichiRoute</value>
   </data>
