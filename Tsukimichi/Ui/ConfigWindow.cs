@@ -1277,6 +1277,7 @@ public sealed partial class ConfigWindow : Window
         Chrome.TrailingLabel(Strings.TodoConfigOpacity);
 
         ImGui.TextDisabled(Strings.TodoConfigSectionsLabel);
+        DrawTodoRouteToggles();
         var pins = settings.TodoShowPins;
         if (ImGui.Checkbox(Strings.TodoConfigShowPins, ref pins))
         {

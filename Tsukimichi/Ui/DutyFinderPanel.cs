@@ -58,6 +58,9 @@ public sealed class DutyFinderPanel
         this.reveal = reveal ?? throw new ArgumentNullException(nameof(reveal));
     }
 
+    /// <summary>Opens the route to the duty (set by the plugin, which builds the target); null hides "Route to unlock".</summary>
+    public Action<DutyHintModel>? OpenRoute { get; set; }
+
     /// <summary><c>UiBuilder.Draw</c> handler.</summary>
     public void Draw()
     {
@@ -143,6 +146,21 @@ public sealed class DutyFinderPanel
 
         ImGui.TextDisabled(Strings.DutyHintCaption);
         ImGui.TextUnformatted(model.DutyName);
+
+        // "Route to unlock" (1.6.0): the route window on every quest that opens the duty, the cheapest way first.
+        if (OpenRoute is { } openRoute && model.AllQuestRowIds.Count > 0)
+        {
+            ImGui.SameLine();
+            if (ImGui.SmallButton(Strings.DutyHintRoute) && interactive)
+            {
+                openRoute(model);
+            }
+
+            if (ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(Strings.DutyHintRouteTooltip);
+            }
+        }
 
         var quests = model.Quests;
         for (var i = 0; i < quests.Count; i++)

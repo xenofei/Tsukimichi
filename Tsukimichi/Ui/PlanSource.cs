@@ -37,6 +37,12 @@ public sealed class PlanSource
         this.log = log ?? throw new ArgumentNullException(nameof(log));
     }
 
+    /// <summary>
+    /// A zone's region by Map row id (the map's PlaceNameRegion: "La Noscea", "Thanalan"), so the plan walks a level
+    /// band region by region (1.6.0); set by the plugin before the plan is first read. Null orders zones by level alone.
+    /// </summary>
+    public Func<uint, string>? RegionOfMap { get; set; }
+
     /// <summary>Bumped whenever <see cref="Plan"/> is rebuilt, so callers can memoize what they derive from it.</summary>
     public int Revision { get; private set; }
 
@@ -90,7 +96,7 @@ public sealed class PlanSource
         {
             planVersion = session.Version;
             planTags = tags;
-            plan = UnlockPlan.Build(tags, session.States, session.Names);
+            plan = UnlockPlan.Build(tags, session.States, session.Names, RegionOfMap);
             Revision++;
         }
     }

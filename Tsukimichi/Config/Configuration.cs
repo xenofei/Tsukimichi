@@ -132,6 +132,25 @@ public sealed class Configuration : IPluginConfiguration
     /// <summary>ExVersion row id of the expansion pinned from the My blues tab ("Pin to overlay"); -1 when none.</summary>
     public int TodoPlanExpansion { get; set; } = -1;
 
+    // ---- 1.6.0: routes and Next stops (R6, C3) ----
+    /// <summary>
+    /// The route being followed ("Follow this route" in the route window): its target and the character it is for,
+    /// never its steps, which are worked out from that character's states each time. Null when none is followed.
+    /// </summary>
+    public Core.Route.SavedRoute? ActiveRoute { get; set; }
+
+    /// <summary>The todo overlay's route section (the followed route's next steps). On by default; empty until a route is followed.</summary>
+    public bool TodoShowRoute { get; set; } = true;
+
+    /// <summary>
+    /// While a route is followed, move the map flag to the next stop's giver each time a step is turned in (the flag
+    /// only, the map does not open). On by default.
+    /// </summary>
+    public bool RouteFlagAdvance { get; set; } = true;
+
+    /// <summary>The todo overlay's "Next stops" section: Ready quests batched by aetheryte. Off by default.</summary>
+    public bool TodoShowNextStops { get; set; }
+
     // ---- 0.5.0: item hints ----
     /// <summary>Show a small hint near the cursor when hovering an item that is a quest-exclusive reward.</summary>
     public bool ItemHintsEnabled { get; set; } = true;

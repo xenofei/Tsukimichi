@@ -44,9 +44,23 @@ public sealed record RouteStep(uint RowId, QuestState State, byte Level, byte Di
     /// <summary>For a quest that takes any one of several previous quests: the ones the route does not take, fewest quests left first.</summary>
     public IReadOnlyList<PathAlternative> Alternatives { get; init; } = [];
 
-    /// <summary>The route's last step, the quest that unlocks the target.</summary>
+    /// <summary>The route's last step, the quest that unlocks the target; on a route to several targets, every part's quest.</summary>
     public bool IsTarget { get; init; }
+
+    /// <summary>
+    /// On a route to several targets: the milestones this step completes ("Dragoon unlocked", "Dragoon quests"),
+    /// joined with ", "; empty on any other step and on a single-target route.
+    /// </summary>
+    public string TargetLabel { get; init; } = string.Empty;
+
+    /// <summary>The character's best level for the quest (what the level gate was checked against); 0 when levels were not given.</summary>
+    public byte CharacterLevel { get; init; }
 }
+
+/// <summary>A milestone of a route to several targets: a part's label (or, for a part without one, its quest) and the step that completes it.</summary>
+/// <param name="Label">The part's label; empty for a part named by its quest alone.</param>
+/// <param name="RowId">The quest whose completion reaches the milestone.</param>
+public sealed record RouteTargetMilestone(string Label, uint RowId);
 
 /// <summary>How many quests a route holds, the levels it spans and the MSQ milestones it crosses.</summary>
 /// <param name="MinLevel">Lowest <see cref="RouteStep.DisplayLevel"/> on the route (0 for an empty route).</param>
@@ -131,13 +145,27 @@ public enum RouteOutcome : byte
 /// category that ends at or after the reconvergence quest therefore falls after every route. Before Evercold no
 /// region is routed and the order is exactly the rule above.
 /// </para>
+/// <para>
+/// <b>Several targets</b> (<see cref="RouteTarget.Parts"/>, 1.6.0). Each part's quest is chosen as a single target's
+/// is; parts already done, and parts whose chosen quest is locked out, are left out. The route is the union of the
+/// chosen quests' closures in the same order (one topological order by level), and each part is a milestone
+/// (<see cref="TargetMilestones"/>, <see cref="RouteStep.TargetLabel"/>): parts sharing a label are reached with the
+/// last of their quests on the route.
+/// </para>
 /// </summary>
 public sealed class UnlockRoute
 {
     private const string MainScenarioSuffix = " Main Scenario Quests";
     private const string MainScenarioPrefixJa = "メインクエスト：";
 
-    private UnlockRoute(RouteTarget target, uint targetRowId, RouteOutcome outcome, IReadOnlyList<RouteStep> steps, RouteSummary summary, IReadOnlyList<PathAlternative> targetAlternatives)
+    private UnlockRoute(
+        RouteTarget target,
+        uint targetRowId,
+        RouteOutcome outcome,
+        IReadOnlyList<RouteStep> steps,
+        RouteSummary summary,
+        IReadOnlyList<PathAlternative> targetAlternatives,
+        IReadOnlyList<RouteTargetMilestone>? targetMilestones = null)
     {
         Target = target;
         TargetRowId = targetRowId;
@@ -145,7 +173,11 @@ public sealed class UnlockRoute
         Steps = steps;
         Summary = summary;
         TargetAlternatives = targetAlternatives;
+        TargetMilestones = targetMilestones ?? [];
     }
+
+    /// <summary>On a route to several targets, its milestones in the order the route reaches them; empty otherwise.</summary>
+    public IReadOnlyList<RouteTargetMilestone> TargetMilestones { get; }
 
     public RouteTarget Target { get; }
 
@@ -180,15 +212,12 @@ public sealed class UnlockRoute
         ArgumentNullException.ThrowIfNull(states);
 
         var planner = new Planner(catalog, states);
-        var candidates = new List<uint>();
-        foreach (var id in target.QuestRowIds)
+        if (target.IsUnion)
         {
-            if (catalog.ByRowId.ContainsKey(id) && !candidates.Contains(id))
-            {
-                candidates.Add(id);
-            }
+            return BuildUnion(target, catalog, states, planner, names, levelOf);
         }
 
+        var candidates = Candidates(target, catalog);
         if (candidates.Count == 0)
         {
             return new UnlockRoute(target, 0, RouteOutcome.NoQuest, [], RouteSummary.Empty, []);
@@ -202,7 +231,37 @@ public sealed class UnlockRoute
             }
         }
 
-        // The target quest: the candidate with the fewest quests left, a locked-out one only when all are.
+        var ranked = Rank(candidates, planner);
+        var targetRowId = ranked[0].RowId;
+        var others = new PathAlternative[ranked.Count - 1];
+        for (var i = 1; i < ranked.Count; i++)
+        {
+            others[i - 1] = new PathAlternative(ranked[i].RowId, planner.StateOf(ranked[i].RowId), ranked[i].Count);
+        }
+
+        var order = planner.Order([targetRowId]);
+        var steps = BuildSteps(order, new HashSet<uint> { targetRowId }, new Dictionary<int, string>(), catalog, states, planner, names ?? new BlockerNames { Catalog = catalog }, levelOf);
+        return new UnlockRoute(target, targetRowId, LockedOut(order, planner) ? RouteOutcome.LockedOut : RouteOutcome.Route, steps.Steps, steps.Summary, others);
+    }
+
+    /// <summary>The target's quests the catalog knows, distinct, in the order given.</summary>
+    private static List<uint> Candidates(RouteTarget target, QuestCatalog catalog)
+    {
+        var candidates = new List<uint>();
+        foreach (var id in target.QuestRowIds)
+        {
+            if (catalog.ByRowId.ContainsKey(id) && !candidates.Contains(id))
+            {
+                candidates.Add(id);
+            }
+        }
+
+        return candidates;
+    }
+
+    /// <summary>The candidates by quests left, fewest first (a locked-out one only after every live one), ties to the lower row id.</summary>
+    private static List<(uint RowId, int Cost, int Count)> Rank(List<uint> candidates, Planner planner)
+    {
         var ranked = new List<(uint RowId, int Cost, int Count)>(candidates.Count);
         foreach (var id in candidates)
         {
@@ -211,27 +270,144 @@ public sealed class UnlockRoute
         }
 
         ranked.Sort(static (a, b) => a.Cost != b.Cost ? a.Cost.CompareTo(b.Cost) : a.RowId.CompareTo(b.RowId));
-        var targetRowId = ranked[0].RowId;
-        var others = new PathAlternative[ranked.Count - 1];
-        for (var i = 1; i < ranked.Count; i++)
-        {
-            others[i - 1] = new PathAlternative(ranked[i].RowId, planner.StateOf(ranked[i].RowId), ranked[i].Count);
-        }
+        return ranked;
+    }
 
-        var order = planner.Order(targetRowId);
-        var steps = BuildSteps(order, targetRowId, catalog, states, planner, names ?? new BlockerNames { Catalog = catalog }, levelOf);
-        var lockedOut = false;
+    private static bool LockedOut(List<uint> order, Planner planner)
+    {
         foreach (var id in order)
         {
-            lockedOut |= planner.Dead(id);
+            if (planner.Dead(id))
+            {
+                return true;
+            }
         }
 
-        return new UnlockRoute(target, targetRowId, lockedOut ? RouteOutcome.LockedOut : RouteOutcome.Route, steps.Steps, steps.Summary, others);
+        return false;
+    }
+
+    /// <summary>
+    /// A route to several targets (see the class summary): every part not done chooses its quest as a single target
+    /// would; the union of their closures is ordered once, and each label's milestone falls on its last quest.
+    /// </summary>
+    private static UnlockRoute BuildUnion(
+        RouteTarget target,
+        QuestCatalog catalog,
+        IReadOnlyDictionary<uint, QuestEvaluation> states,
+        Planner planner,
+        BlockerNames? names,
+        Func<QuestRecord, byte>? levelOf)
+    {
+        var anyQuest = false;
+        var roots = new List<uint>();
+        var labelOf = new Dictionary<uint, List<string>>();
+        foreach (var part in target.Parts)
+        {
+            var candidates = Candidates(part, catalog);
+            if (candidates.Count == 0)
+            {
+                continue;
+            }
+
+            anyQuest = true;
+            if (candidates.Exists(planner.Done))
+            {
+                continue;
+            }
+
+            var chosen = Rank(candidates, planner)[0].RowId;
+            if (planner.StateOf(chosen) == QuestState.Foreclosed)
+            {
+                // Locked out for good: nothing on the route would change that, so the part is left out.
+                continue;
+            }
+
+            if (!labelOf.TryGetValue(chosen, out var labels))
+            {
+                roots.Add(chosen);
+                labelOf[chosen] = labels = [];
+            }
+
+            if (!labels.Contains(part.Label))
+            {
+                labels.Add(part.Label);
+            }
+        }
+
+        if (!anyQuest)
+        {
+            return new UnlockRoute(target, 0, RouteOutcome.NoQuest, [], RouteSummary.Empty, []);
+        }
+
+        if (roots.Count == 0)
+        {
+            return new UnlockRoute(target, 0, RouteOutcome.AlreadyDone, [], RouteSummary.Empty, []);
+        }
+
+        var order = planner.Order(roots);
+        var index = new Dictionary<uint, int>(order.Count);
+        for (var i = 0; i < order.Count; i++)
+        {
+            index[order[i]] = i;
+        }
+
+        // Each label's milestone is its last quest on the route; a part without a label is its own quest's milestone.
+        var lastOf = new Dictionary<string, int>(StringComparer.Ordinal);
+        var unnamed = new List<int>();
+        foreach (var root in roots)
+        {
+            foreach (var label in labelOf[root])
+            {
+                if (label.Length == 0)
+                {
+                    unnamed.Add(index[root]);
+                }
+                else if (!lastOf.TryGetValue(label, out var at) || index[root] > at)
+                {
+                    lastOf[label] = index[root];
+                }
+            }
+        }
+
+        var labelAt = new Dictionary<int, string>();
+        var marks = new List<(int Index, string Label)>();
+        foreach (var (label, at) in lastOf)
+        {
+            marks.Add((at, label));
+        }
+
+        foreach (var at in unnamed)
+        {
+            marks.Add((at, string.Empty));
+        }
+
+        // In route order; labels on one step in the order their parts were given.
+        var partOrder = new Dictionary<string, int>(StringComparer.Ordinal);
+        foreach (var part in target.Parts)
+        {
+            partOrder.TryAdd(part.Label, partOrder.Count);
+        }
+
+        marks.Sort((a, b) => a.Index != b.Index ? a.Index.CompareTo(b.Index) : partOrder.GetValueOrDefault(a.Label).CompareTo(partOrder.GetValueOrDefault(b.Label)));
+        var milestones = new List<RouteTargetMilestone>(marks.Count);
+        foreach (var (at, label) in marks)
+        {
+            milestones.Add(new RouteTargetMilestone(label, order[at]));
+            if (label.Length > 0)
+            {
+                labelAt[at] = labelAt.TryGetValue(at, out var earlier) ? earlier + ", " + label : label;
+            }
+        }
+
+        var steps = BuildSteps(order, new HashSet<uint>(roots), labelAt, catalog, states, planner, names ?? new BlockerNames { Catalog = catalog }, levelOf);
+        var last = milestones[^1].RowId;
+        return new UnlockRoute(target, last, LockedOut(order, planner) ? RouteOutcome.LockedOut : RouteOutcome.Route, steps.Steps, steps.Summary, [], milestones);
     }
 
     private static (RouteStep[] Steps, RouteSummary Summary) BuildSteps(
         List<uint> order,
-        uint targetRowId,
+        IReadOnlySet<uint> targetRowIds,
+        IReadOnlyDictionary<int, string> labelAt,
         QuestCatalog catalog,
         IReadOnlyDictionary<uint, QuestEvaluation> states,
         Planner planner,
@@ -285,15 +461,18 @@ public sealed class UnlockRoute
                 milestones.Add(milestone);
             }
 
+            var level = levelOf?.Invoke(quest) ?? 0;
             steps[i] = new RouteStep(quest.RowId, planner.StateOf(quest.RowId), quest.Level, quest.DisplayLevel)
             {
                 LevelGate = gate,
-                LevelMet = levelOf is null || levelOf(quest) >= quest.Level,
+                LevelMet = levelOf is null || level >= quest.Level,
+                CharacterLevel = level,
                 IsMainScenario = FeaturePresets.IsMainScenario(quest),
                 Milestone = nextMilestone[i],
                 StatusText = BlockerText.StatusText(states.GetValueOrDefault(quest.RowId), quest, names, states),
                 Alternatives = planner.AlternativesOf(quest),
-                IsTarget = quest.RowId == targetRowId,
+                IsTarget = targetRowIds.Contains(quest.RowId),
+                TargetLabel = labelAt.GetValueOrDefault(i, string.Empty),
             };
         }
 
@@ -388,10 +567,15 @@ public sealed class UnlockRoute
             return set;
         }
 
-        /// <summary>The closure of <paramref name="root"/> in route order (see <see cref="UnlockRoute"/>'s ordering rule).</summary>
-        public List<uint> Order(uint root)
+        /// <summary>The union of the closures of <paramref name="roots"/> in route order (see <see cref="UnlockRoute"/>'s ordering rule).</summary>
+        public List<uint> Order(IReadOnlyList<uint> roots)
         {
-            var needed = Collect(root);
+            var needed = new HashSet<uint>();
+            foreach (var root in roots)
+            {
+                needed.UnionWith(Collect(root));
+            }
+
             var pending = new Dictionary<uint, int>(needed.Count);
             var dependents = new Dictionary<uint, List<uint>>();
             foreach (var id in needed)

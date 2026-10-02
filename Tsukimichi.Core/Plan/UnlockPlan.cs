@@ -82,17 +82,29 @@ public sealed record PlanFilter(ushort Kinds = UnlockKinds.AllMask, bool ReadyOn
 /// order alone would open the plan with endgame content. <see cref="Filter"/> regroups what it keeps under the same
 /// rules, so a filtered plan's first zone is the one whose remaining quests start lowest.
 /// </para>
+/// <para>
+/// Region order (1.6.0): given each zone's region (<c>regionOf</c>, the map's PlaceNameRegion: La Noscea, Thanalan,
+/// Coerthas…), zones whose lowest level falls in one <see cref="LevelBand"/>-level band are walked region by region,
+/// so the plan does not criss-cross the map: within a band a region comes where its first zone would, and its other
+/// zones follow it at once, in the order above. Zones without a known region stand alone, so without regions the
+/// order is exactly the level order above.
+/// </para>
 /// Immutable; build once per session version.
 /// </summary>
 public sealed class UnlockPlan
 {
-    public static readonly UnlockPlan Empty = new([], []);
+    public static readonly UnlockPlan Empty = new([], [], null);
+
+    /// <summary>Levels per band within which zones are ordered by region (see the class summary).</summary>
+    public const int LevelBand = 10;
 
     private readonly PlanEntry[] entries;
+    private readonly Func<uint, string>? regionOf;
 
-    private UnlockPlan(PlanEntry[] entries, PlanExpansion[] expansions)
+    private UnlockPlan(PlanEntry[] entries, PlanExpansion[] expansions, Func<uint, string>? regionOf)
     {
         this.entries = entries;
+        this.regionOf = regionOf;
         Expansions = expansions;
         ReadyCount = entries.Count(static e => e.IsReady);
     }
@@ -130,7 +142,8 @@ public sealed class UnlockPlan
     /// <param name="tags">The plan quests and their unlocks for the catalog.</param>
     /// <param name="states">The character's evaluations by quest row id; empty reads every quest as Not checked.</param>
     /// <param name="names">Names for the quest (spoiler-aware), its status line and the expansion headers.</param>
-    public static UnlockPlan Build(UnlockTags tags, IReadOnlyDictionary<uint, QuestEvaluation> states, BlockerNames names)
+    /// <param name="regionOf">A zone's region by its giver's Map row id (empty when unknown); null orders zones by level alone.</param>
+    public static UnlockPlan Build(UnlockTags tags, IReadOnlyDictionary<uint, QuestEvaluation> states, BlockerNames names, Func<uint, string>? regionOf = null)
     {
         ArgumentNullException.ThrowIfNull(tags);
         ArgumentNullException.ThrowIfNull(states);
@@ -149,7 +162,7 @@ public sealed class UnlockPlan
             list.Add(new PlanEntry(quest, names.QuestName(quest), state, BlockerText.StatusText(evaluation, quest, names, states), tags.For(quest.RowId)));
         }
 
-        return Group(list, names.Expansion);
+        return Group(list, names.Expansion, regionOf);
     }
 
     /// <summary>The entries <paramref name="filter"/> keeps, regrouped in story order.</summary>
@@ -181,10 +194,10 @@ public sealed class UnlockPlan
             names[block.Expansion] = block.Name;
         }
 
-        return Group(kept, expansion => names.GetValueOrDefault(expansion, Evaluation.Expansions.Name(expansion)));
+        return Group(kept, expansion => names.GetValueOrDefault(expansion, Evaluation.Expansions.Name(expansion)), regionOf);
     }
 
-    private static UnlockPlan Group(List<PlanEntry> list, Func<byte, string> expansionName)
+    private static UnlockPlan Group(List<PlanEntry> list, Func<byte, string> expansionName, Func<uint, string>? regionOf)
     {
         if (list.Count == 0)
         {
@@ -195,13 +208,15 @@ public sealed class UnlockPlan
         var ordered = new List<PlanEntry>(list.Count);
         foreach (var byExpansion in list.GroupBy(static e => e.Quest.Expansion).OrderBy(static g => g.Key))
         {
+            var byLevel = byExpansion
+                .GroupBy(static e => e.Quest.Issuer?.TerritoryId ?? 0u)
+                .Select(static g => g.OrderBy(static e => e.Quest.DisplayLevel).ThenBy(static e => e.Quest.Journal.SortKey).ThenBy(static e => e.Quest.RowId).ToArray())
+                .OrderBy(static z => z[0].Quest.DisplayLevel)
+                .ThenBy(static z => z[0].Quest.Journal.SortKey)
+                .ThenBy(static z => z[0].Quest.Issuer?.TerritoryId ?? 0u)
+                .ToList();
             var zones = new List<PlanZone>();
-            foreach (var byZone in byExpansion
-                         .GroupBy(static e => e.Quest.Issuer?.TerritoryId ?? 0u)
-                         .Select(static g => g.OrderBy(static e => e.Quest.DisplayLevel).ThenBy(static e => e.Quest.Journal.SortKey).ThenBy(static e => e.Quest.RowId).ToArray())
-                         .OrderBy(static z => z[0].Quest.DisplayLevel)
-                         .ThenBy(static z => z[0].Quest.Journal.SortKey)
-                         .ThenBy(static z => z[0].Quest.Issuer?.TerritoryId ?? 0u))
+            foreach (var byZone in OrderByRegion(byLevel, regionOf))
             {
                 var first = byZone[0].Quest.Issuer;
                 zones.Add(new PlanZone(first?.TerritoryId ?? 0, first?.MapId ?? 0, byZone));
@@ -211,6 +226,63 @@ public sealed class UnlockPlan
             expansions.Add(new PlanExpansion(byExpansion.Key, expansionName(byExpansion.Key), zones));
         }
 
-        return new UnlockPlan(ordered.ToArray(), expansions.ToArray());
+        return new UnlockPlan(ordered.ToArray(), expansions.ToArray(), regionOf);
     }
+
+    /// <summary>
+    /// The zones (already in level order) walked band by band and, within a band, region by region: a region comes
+    /// where its first zone is, its other zones of the band right after it. A zone without a region stands alone.
+    /// </summary>
+    private static List<PlanEntry[]> OrderByRegion(List<PlanEntry[]> zones, Func<uint, string>? regionOf)
+    {
+        if (regionOf is null || zones.Count < 3)
+        {
+            return zones;
+        }
+
+        var result = new List<PlanEntry[]>(zones.Count);
+        var i = 0;
+        while (i < zones.Count)
+        {
+            var band = zones[i][0].Quest.DisplayLevel / LevelBand;
+            var end = i;
+            while (end < zones.Count && zones[end][0].Quest.DisplayLevel / LevelBand == band)
+            {
+                end++;
+            }
+
+            var taken = new bool[end - i];
+            for (var a = i; a < end; a++)
+            {
+                if (taken[a - i])
+                {
+                    continue;
+                }
+
+                taken[a - i] = true;
+                result.Add(zones[a]);
+                var region = RegionOf(zones[a], regionOf);
+                if (region.Length == 0)
+                {
+                    continue;
+                }
+
+                for (var b = a + 1; b < end; b++)
+                {
+                    if (!taken[b - i] && string.Equals(RegionOf(zones[b], regionOf), region, StringComparison.Ordinal))
+                    {
+                        taken[b - i] = true;
+                        result.Add(zones[b]);
+                    }
+                }
+            }
+
+            i = end;
+        }
+
+        return result;
+    }
+
+    private static string RegionOf(PlanEntry[] zone, Func<uint, string> regionOf) =>
+        zone[0].Quest.Issuer is { MapId: > 0 } issuer ? regionOf(issuer.MapId) ?? string.Empty : string.Empty;
 }
