@@ -188,6 +188,27 @@ public sealed class SeasonalNowTests(FixtureCatalog fixture) : IClassFixture<Fix
     }
 
     [Fact]
+    public void Undated_editions_take_the_last_dated_edition_s_window_moved_to_their_year()
+    {
+        var years = SeasonalNow.EditionYears(Catalog, Curated);
+        var windows = SeasonalNow.EditionWindows(Catalog, Curated, years);
+        static DateTime Day(int year, int month, int day) => new(year, month, day, 0, 0, 0, DateTimeKind.Utc);
+
+        // Heavensturn (2026), All Saints' Wake (2026) and the Starlight Celebration (2026) carry no curated dates.
+        Assert.Equal(Day(2025, 12, 31), windows[157].Start.Date);
+        Assert.Equal(Day(2026, 1, 16), windows[157].End.Date);
+        Assert.Equal(Day(2026, 10, 19), windows[176].Start.Date);
+        Assert.Equal(Day(2026, 11, 1), windows[176].End.Date);
+        Assert.Equal(Day(2026, 12, 16), windows[258].Start.Date);
+
+        // A dated edition needs none; a combined genre's editions and collaborations get none.
+        Assert.False(windows.ContainsKey(174));
+        Assert.False(windows.ContainsKey(145));
+        Assert.False(windows.ContainsKey(84));
+        Assert.All(windows.Keys, id => Assert.True(years.ContainsKey(id)));
+    }
+
+    [Fact]
     public void History_groups_completed_seasonal_quests_by_year_newest_first_with_unknown_years_last()
     {
         var moonfire2014 = Catalog.All.First(q => q.Festival == 11).RowId;

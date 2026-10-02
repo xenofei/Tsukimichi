@@ -19,9 +19,17 @@ public enum RewardAvailability : byte
 
     /// <summary>
     /// A seasonal edition that has not run yet as far as the plugin can tell (no curated end, no completed run, its year
-    /// not over): never read as gone before it has even started.
+    /// not over, and neither its curated start nor last year's dates put its start behind us): never read as gone before
+    /// it has even started.
     /// </summary>
     UpcomingEvent,
+
+    /// <summary>
+    /// This year's edition of a seasonal event that is not running now, when the plugin cannot tell whether it is over
+    /// or still to come: its curated start has passed, or today falls in or just after last year's dates, and no end is
+    /// curated. Neither upcoming nor gone.
+    /// </summary>
+    EventNotRunning,
 
     /// <summary>A collaboration event (Yo-kai Watch, Final Fantasy XVI, Fall Guys…): the game reruns these under the same id, so it may return.</summary>
     CollabMayReturn,
@@ -50,13 +58,17 @@ public sealed class AvailabilityContext
         IReadOnlyDictionary<ushort, FestivalInfo> festivals,
         IReadOnlyDictionary<ushort, int> editionYears,
         Func<ushort, bool> isRunning,
-        DateTime nowUtc)
+        DateTime nowUtc,
+        IReadOnlyDictionary<ushort, EditionWindow>? editionWindows = null)
     {
         Festivals = festivals ?? throw new ArgumentNullException(nameof(festivals));
         EditionYears = editionYears ?? throw new ArgumentNullException(nameof(editionYears));
         IsRunning = isRunning ?? throw new ArgumentNullException(nameof(isRunning));
         NowUtc = nowUtc;
+        EditionWindows = editionWindows ?? NoWindows;
     }
+
+    private static readonly IReadOnlyDictionary<ushort, EditionWindow> NoWindows = new Dictionary<ushort, EditionWindow>();
 
     /// <summary>No festival known, none running: every reward of a live quest reads <see cref="RewardAvailability.GetNow"/>.</summary>
     public static AvailabilityContext None { get; } = new(
@@ -69,6 +81,9 @@ public sealed class AvailabilityContext
 
     public IReadOnlyDictionary<ushort, int> EditionYears { get; }
 
+    /// <summary>The likely window of the undated editions (<see cref="SeasonalNow.EditionWindows"/>); empty when not known.</summary>
+    public IReadOnlyDictionary<ushort, EditionWindow> EditionWindows { get; }
+
     public Func<ushort, bool> IsRunning { get; }
 
     public DateTime NowUtc { get; }
@@ -79,7 +94,8 @@ public sealed class AvailabilityContext
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(festivals);
         ArgumentNullException.ThrowIfNull(running);
-        return new AvailabilityContext(festivals, SeasonalNow.EditionYears(catalog, festivals), running.Contains, nowUtc);
+        var years = SeasonalNow.EditionYears(catalog, festivals);
+        return new AvailabilityContext(festivals, years, running.Contains, nowUtc, SeasonalNow.EditionWindows(catalog, festivals, years));
     }
 }
 
@@ -90,7 +106,8 @@ public sealed class AvailabilityContext
 /// <item>A seasonal quest (<see cref="QuestRecord.Festival"/>): <see cref="RewardAvailability.EventRunning"/> while the
 /// server runs its festival (with the curated end when one may be shown, <see cref="SeasonalNow.AnnouncedEnd"/>);
 /// otherwise a collaboration (<see cref="FestivalInfo.IsRerun"/>) <see cref="RewardAvailability.CollabMayReturn"/>, never
-/// gone; an edition that has not run yet <see cref="RewardAvailability.UpcomingEvent"/>; a past one
+/// gone; an edition that has not run yet <see cref="RewardAvailability.UpcomingEvent"/>; this year's edition when it
+/// cannot be told whether it ran <see cref="RewardAvailability.EventNotRunning"/>; a past one
 /// <see cref="RewardAvailability.PastEventOnStore"/> when the Online Store sells the reward, else
 /// <see cref="RewardAvailability.GoneForGood"/>.</item>
 /// <item>A quest the game removed (<see cref="QuestRecord.IsRetired"/>): on the store, or gone for good.</item>
@@ -99,7 +116,10 @@ public sealed class AvailabilityContext
 /// An edition is past when its curated end has passed, when the evaluation already locks the quest out (the resolver's
 /// own verdict: a curated end or a completed run of it), or when its edition year is over; a curated start still ahead
 /// keeps it upcoming, and an edition with no curated entry and no year is taken as past, since the game opens a new
-/// festival id for every edition.
+/// festival id for every edition. This year's edition with no curated end reads by last year's dates
+/// (<see cref="AvailabilityContext.EditionWindows"/>): upcoming before their start, past a month after their end (events
+/// shift by days from year to year), not running in between; without them, not running once a curated start has passed,
+/// else upcoming.
 /// </summary>
 public static class RewardAvailabilities
 {
@@ -130,9 +150,12 @@ public static class RewardAvailabilities
                 return new RewardAvailabilityInfo(RewardAvailability.CollabMayReturn);
             }
 
-            if (!IsPast(festival, info, evaluation, context))
+            switch (EditionOf(festival, info, evaluation, context))
             {
-                return new RewardAvailabilityInfo(RewardAvailability.UpcomingEvent);
+                case Edition.Upcoming:
+                    return new RewardAvailabilityInfo(RewardAvailability.UpcomingEvent);
+                case Edition.Unclear:
+                    return new RewardAvailabilityInfo(RewardAvailability.EventNotRunning);
             }
 
             return new RewardAvailabilityInfo(store ? RewardAvailability.PastEventOnStore : RewardAvailability.GoneForGood);
@@ -149,40 +172,69 @@ public static class RewardAvailabilities
     /// <summary>Lower is better: the order <see cref="RewardAvailability"/> lists them in.</summary>
     public static int Rank(RewardAvailability availability) => (int)availability;
 
-    /// <summary>The export's value: <c>getNow</c>, <c>eventRunning</c>, <c>upcomingEvent</c>, <c>collabMayReturn</c>, <c>pastEventOnStore</c> or <c>goneForGood</c>.</summary>
+    /// <summary>The export's value: <c>getNow</c>, <c>eventRunning</c>, <c>upcomingEvent</c>, <c>eventNotRunning</c>, <c>collabMayReturn</c>, <c>pastEventOnStore</c> or <c>goneForGood</c>.</summary>
     public static string ExportName(RewardAvailability availability) => availability switch
     {
         RewardAvailability.GetNow => "getNow",
         RewardAvailability.EventRunning => "eventRunning",
         RewardAvailability.UpcomingEvent => "upcomingEvent",
+        RewardAvailability.EventNotRunning => "eventNotRunning",
         RewardAvailability.CollabMayReturn => "collabMayReturn",
         RewardAvailability.PastEventOnStore => "pastEventOnStore",
         RewardAvailability.GoneForGood => "goneForGood",
         _ => availability.ToString(),
     };
 
-    private static bool IsPast(ushort festival, FestivalInfo? info, QuestEvaluation? evaluation, AvailabilityContext context)
+    /// <summary>How long after last year's end this year's edition still reads as not running rather than past.</summary>
+    private static readonly TimeSpan WindowSlack = TimeSpan.FromDays(30);
+
+    private enum Edition
     {
+        Past,
+        Upcoming,
+        Unclear,
+    }
+
+    /// <summary>Where an edition that is not running stands (see the class remarks).</summary>
+    private static Edition EditionOf(ushort festival, FestivalInfo? info, QuestEvaluation? evaluation, AvailabilityContext context)
+    {
+        var now = context.NowUtc;
         if (info?.End is { } end)
         {
-            return end < context.NowUtc;
+            return end < now ? Edition.Past : Edition.Upcoming;
         }
 
-        if (info?.Start is { } start && start > context.NowUtc)
+        if (info?.Start is { } start && start > now)
         {
-            return false;
+            return Edition.Upcoming;
         }
 
         if (evaluation is { State: QuestState.Foreclosed })
         {
-            return true;
+            return Edition.Past;
         }
 
-        if (context.EditionYears.TryGetValue(festival, out var year))
+        if (!context.EditionYears.TryGetValue(festival, out var year))
         {
-            return year < context.NowUtc.Year;
+            return Edition.Past;
         }
 
-        return true;
+        if (year != now.Year)
+        {
+            return year < now.Year ? Edition.Past : Edition.Upcoming;
+        }
+
+        // This year's edition, not running, no curated end: last year's dates, else the curated start.
+        if (context.EditionWindows.TryGetValue(festival, out var window))
+        {
+            if (now < window.Start)
+            {
+                return Edition.Upcoming;
+            }
+
+            return now > window.End + WindowSlack ? Edition.Past : Edition.Unclear;
+        }
+
+        return info?.Start is not null ? Edition.Unclear : Edition.Upcoming;
     }
 }

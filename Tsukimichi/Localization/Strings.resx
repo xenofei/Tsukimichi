@@ -1002,6 +1002,9 @@
   <data name="MoonlitAvailability.UpcomingEvent" xml:space="preserve">
     <value>Upcoming event</value>
   </data>
+  <data name="MoonlitAvailability.EventNotRunning" xml:space="preserve">
+    <value>Event not running</value>
+  </data>
   <data name="MoonlitAvailability.CollabMayReturn" xml:space="preserve">
     <value>Collab — may return</value>
   </data>
@@ -1020,6 +1023,9 @@
   <data name="MoonlitAvailabilityTooltip.UpcomingEvent" xml:space="preserve">
     <value>A seasonal event that has not run yet gives this reward</value>
   </data>
+  <data name="MoonlitAvailabilityTooltip.EventNotRunning" xml:space="preserve">
+    <value>A seasonal event gives this reward. This year's edition is not running now, and with no announced end date the plugin cannot tell whether it is over or still to come</value>
+  </data>
   <data name="MoonlitAvailabilityTooltip.CollabMayReturn" xml:space="preserve">
     <value>A collaboration event gives this reward; such events have come back before, so it may return</value>
   </data>
@@ -1027,13 +1033,13 @@
     <value>The quest can no longer be done, but the FFXIV Online Store sells this reward</value>
   </data>
   <data name="MoonlitAvailabilityTooltip.GoneForGood" xml:space="preserve">
-    <value>The event is over (or the game removed the quest) and nothing else gives this reward. It leaves the totals unless "Count rewards that are gone for good" is on</value>
+    <value>The event is over (or the game removed the quest) and nothing else gives this reward. If you are known not to have it, it leaves the totals unless "Count rewards that are gone for good" is on</value>
   </data>
   <data name="MoonlitCountGoneLabel" xml:space="preserve">
     <value>Count rewards that are gone for good</value>
   </data>
   <data name="MoonlitCountGoneTooltip" xml:space="preserve">
-    <value>Keep rewards you can no longer get (a past event, a removed quest) in the obtained/total counts. Off, they count only when you have them</value>
+    <value>Keep rewards you can no longer get (a past event, a removed quest) in the obtained/total counts. Off, one you are known not to have leaves the counts; one whose owned state cannot be read stays in them as unknown</value>
   </data>
   <data name="MoonlitMissedFormat" xml:space="preserve">
     <value>{0} time-limited rewards missed</value>
@@ -1042,7 +1048,7 @@
     <value>1 time-limited reward missed</value>
   </data>
   <data name="MoonlitMissedTooltip" xml:space="preserve">
-    <value>Rewards of past events or removed quests you do not have (or whose owned state cannot be read). They are listed as "Gone for good" and leave the totals unless "Count rewards that are gone for good" is on</value>
+    <value>Rewards of past events or removed quests you are known not to have, from quests you did not complete. They are listed as "Gone for good" and leave the totals unless "Count rewards that are gone for good" is on. A gone reward whose owned state cannot be read is not counted as missed: it stays in the totals as unknown</value>
   </data>
   <data name="MoonlitAlsoFromFormat" xml:space="preserve">
     <value>Also from {0}</value>

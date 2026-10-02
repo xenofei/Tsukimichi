@@ -167,8 +167,9 @@ public static class TribeRanks
     /// <summary>
     /// <c>BeastReputationRank.RequiredReputation</c> by rank: the reputation that maxes each rank, the same for every
     /// allied society, A Realm Reborn's included (Neutral 150, Recognized 360, Friendly 510, Trusted 720, Respected 990,
-    /// Honored 1320, Sworn 1730). A [GameDataFact] test pins it to the sheet; the plugin passes the sheet's own values
-    /// (<see cref="EvalContext.TribeRankReputation"/>).
+    /// Honored 1320, Sworn 1730). Nothing reads the sheet at run time: every context, the plugin's included, answers
+    /// from this table through the default <see cref="EvalContext.TribeRankReputation"/>, and a [GameDataFact] test
+    /// pins it to the sheet so a patch that changes the values fails the build's data tests.
     /// </summary>
     private static readonly ushort[] MaxReputations = [0, 150, 360, 510, 720, 990, 1320, 1730, 0];
 

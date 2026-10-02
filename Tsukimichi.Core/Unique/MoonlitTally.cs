@@ -14,14 +14,19 @@ namespace Tsukimichi.Core.Unique;
 /// <param name="Representative">Index into <see cref="MoonlitGroup.Quests"/> of the quest the row shows.</param>
 /// <param name="Obtained">True when any entry of the group is obtained; false when every entry reads false; null otherwise.</param>
 /// <param name="Availability">The representative quest's availability: the best of the group's quests on the character's path.</param>
-public readonly record struct MoonlitGroupState(bool OnPath, int Representative, bool? Obtained, RewardAvailabilityInfo Availability)
+/// <param name="QuestCompleted">Whether the character completed the representative quest.</param>
+public readonly record struct MoonlitGroupState(bool OnPath, int Representative, bool? Obtained, RewardAvailabilityInfo Availability, bool QuestCompleted = false)
 {
-    /// <summary>Gone for good and not obtained: a missed time-limited reward.</summary>
-    public bool Missed => Availability.IsGone && Obtained != true;
+    /// <summary>
+    /// Gone for good and known not to be obtained: a missed time-limited reward. A reward whose owned state cannot be
+    /// read is not called missed (it stays in the totals as unknown), nor is one whose quest the character completed:
+    /// the quest gave it, whatever became of it since.
+    /// </summary>
+    public bool Missed => Availability.IsGone && Obtained == false && !QuestCompleted;
 }
 
 /// <summary>Which counted rewards enter the totals.</summary>
-/// <param name="CountGone">Count rewards that are gone for good and not obtained (off by default).</param>
+/// <param name="CountGone">Count rewards that are gone for good and missed (off by default).</param>
 /// <param name="ExcludeFoundElsewhere">Leave out rewards the Online Store also sells or a duty also drops ("Hide rewards found elsewhere").</param>
 public readonly record struct MoonlitCountOptions(bool CountGone = false, bool ExcludeFoundElsewhere = false);
 
@@ -37,7 +42,7 @@ public sealed class MoonlitTotals
     /// <summary>Counted rewards over every kind.</summary>
     public UniqueRewardCounts All { get; private set; }
 
-    /// <summary>Rewards on the character's path that are gone for good and not obtained, whether or not they count.</summary>
+    /// <summary>Rewards on the character's path that are gone for good and missed (<see cref="MoonlitGroupState.Missed"/>), whether or not they count.</summary>
     public int Missed { get; private set; }
 
     /// <summary>The counts of one kind; zeros for a kind with no counted reward.</summary>
@@ -79,8 +84,10 @@ public sealed class MoonlitTotals
 /// <summary>
 /// The Moonlit totals of feature plan v5, decision 4, over <see cref="MoonlitGroups"/>: a reward counts once however
 /// many quests give it, obtained when any of its entries is; rows on a path the character did not take are hidden;
-/// a relic or special weapon quest counts once; rewards that are gone for good and not obtained leave the totals
-/// unless <see cref="MoonlitCountOptions.CountGone"/> brings them back. Pure; the Moonlit pane, the Characters
+/// a relic or special weapon quest counts once; rewards that are gone for good and missed
+/// (<see cref="MoonlitGroupState.Missed"/>: known not obtained, quest not completed) leave the totals unless
+/// <see cref="MoonlitCountOptions.CountGone"/> brings them back, while a gone reward whose owned state cannot be read
+/// stays in them as unknown. Pure; the Moonlit pane, the Characters
 /// dashboard (through the pane) and the tests share it.
 /// </summary>
 public static class MoonlitTally
@@ -144,6 +151,7 @@ public static class MoonlitTally
         var best = -1;
         (int Obtained, int Availability, int State) bestKey = default;
         var bestAvailability = new RewardAvailabilityInfo(RewardAvailability.GetNow);
+        var bestCompleted = false;
         for (var i = 0; i < quests.Count; i++)
         {
             var evaluation = evaluationOf(quests[i]);
@@ -160,10 +168,11 @@ public static class MoonlitTally
                 best = i;
                 bestKey = key;
                 bestAvailability = availability;
+                bestCompleted = evaluation?.State == QuestState.Completed;
             }
         }
 
-        return new MoonlitGroupState(anyOnPath || anyTrue, Math.Max(0, best), obtained, bestAvailability);
+        return new MoonlitGroupState(anyOnPath || anyTrue, Math.Max(0, best), obtained, bestAvailability, bestCompleted);
     }
 
     /// <summary>Whether the group enters the totals under <paramref name="options"/>.</summary>

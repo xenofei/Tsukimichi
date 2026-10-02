@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
@@ -158,6 +159,9 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     /// <summary>Edition year per festival of the rows' catalog (<see cref="Core.Seasonal.SeasonalNow.EditionYears"/>), for the availability labels.</summary>
     private IReadOnlyDictionary<ushort, int> editionYears = new Dictionary<ushort, int>();
 
+    /// <summary>Last year's dates for the undated editions (<see cref="Core.Seasonal.SeasonalNow.EditionWindows"/>), for the availability labels.</summary>
+    private IReadOnlyDictionary<ushort, Core.Seasonal.EditionWindow> editionWindows = new Dictionary<ushort, Core.Seasonal.EditionWindow>();
+
     /// <summary>The expansions the rows' quests belong to, in order, for the Expansion filter.</summary>
     private byte[] expansions = [];
 
@@ -177,8 +181,11 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     ]);
 
     // "Copy missing": the Markdown of the listed rows not obtained, split into Discord-sized parts when the visible
-    // rows change; the button copies the next part. copiedAt is ImGui time of the last copy (the "Copied" note).
+    // rows change; the button copies the next part. copyLines are the lines the parts were written from, so a refresh
+    // that lists the same lines (a poll, another session version) keeps the parts and the next part to copy.
+    // copiedAt is ImGui time of the last copy (the "Copied" note).
     private IReadOnlyList<string> copyParts = [];
+    private List<MoonlitMissingLine> copyLines = [];
     private int copyNext;
     private double copiedAt = double.NegativeInfinity;
 
@@ -1702,6 +1709,9 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         editionYears = bundle is null
             ? new Dictionary<ushort, int>()
             : Core.Seasonal.SeasonalNow.EditionYears(bundle.Catalog, session.Curated.Festivals);
+        editionWindows = bundle is null
+            ? new Dictionary<ushort, Core.Seasonal.EditionWindow>()
+            : Core.Seasonal.SeasonalNow.EditionWindows(bundle.Catalog, session.Curated.Festivals, editionYears);
         groupStates = new MoonlitGroupState[grouped.Count];
         tileSeen = new bool[built.Length];
         rows = built;
@@ -1724,7 +1734,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         var now = DateTime.UtcNow;
         var context = bundle is null
             ? AvailabilityContext.None
-            : new AvailabilityContext(session.Curated.Festivals, editionYears, session.ServerFestivals.Contains, now);
+            : new AvailabilityContext(session.Curated.Festivals, editionYears, session.ServerFestivals.Contains, now, editionWindows);
         var states = session.States;
         QuestEvaluation? EvaluationOf(uint rowId) => states.TryGetValue(rowId, out var evaluation) ? evaluation : null;
         RewardAvailabilityInfo AvailabilityOf(UniqueRewardEntry entry, QuestEvaluation? evaluation) =>
@@ -1742,7 +1752,8 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             else
             {
                 // Hidden by the user's verdict: its own entry, never counted.
-                state = new MoonlitGroupState(true, 0, unlocks.IsObtained(row.Entry), AvailabilityOf(row.Entry, EvaluationOf(row.Entry.QuestRowId)));
+                var evaluation = EvaluationOf(row.Entry.QuestRowId);
+                state = new MoonlitGroupState(true, 0, unlocks.IsObtained(row.Entry), AvailabilityOf(row.Entry, evaluation), evaluation?.State == QuestState.Completed);
             }
 
             row.SetState(state, EvaluationOf, now);
@@ -1919,7 +1930,8 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     /// <summary>
     /// "Copy missing" over the listed rows: those the character does not have (unknown included), not hidden by a
     /// verdict, and not gone for good unless such rewards count; under their kind, or their expansion when grouped.
-    /// Split into Discord-sized parts (<see cref="Core.Text.MessageSplitter"/>); the button starts at part 1 again.
+    /// Split into Discord-sized parts (<see cref="Core.Text.MessageSplitter"/>); the button starts at part 1 again only
+    /// when the parts changed, so a session update in the middle of copying a long list keeps its place.
     /// </summary>
     private void BuildCopyMissing(List<int> picked, bool byExpansion)
     {
@@ -1929,7 +1941,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         foreach (var index in picked)
         {
             var row = rows[index];
-            if (row.Hidden || row.Obtained == true || (!countGone && row.Missed))
+            if (row.Hidden || row.Obtained == true || (!countGone && row.Availability.IsGone))
             {
                 continue;
             }
@@ -1939,8 +1951,19 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
             lines.Add(new MoonlitMissingLine(section, row.Name, row.QuestName, note));
         }
 
-        copyParts = lines.Count == 0 ? [] : Core.Text.MessageSplitter.Split(MoonlitMarkdown.Write(lines));
-        copyNext = 0;
+        if (lines.SequenceEqual(copyLines))
+        {
+            return;
+        }
+
+        copyLines = lines;
+        IReadOnlyList<string> parts = lines.Count == 0 ? [] : Core.Text.MessageSplitter.Split(MoonlitMarkdown.Write(lines));
+        if (!parts.SequenceEqual(copyParts, StringComparer.Ordinal))
+        {
+            copyParts = parts;
+            copyNext = 0;
+        }
+
         UpdateCopyLabel();
     }
 
@@ -2253,8 +2276,8 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
         public string AvailabilityText { get; private set; } = string.Empty;
         public string AvailabilityTooltip { get; private set; } = string.Empty;
 
-        /// <summary>Gone for good and not obtained: left out of the totals unless they count gone rewards.</summary>
-        public bool Missed => Availability.IsGone && Obtained != true;
+        /// <summary>Gone for good and missed (<see cref="MoonlitGroupState.Missed"/>): left out of the totals unless they count gone rewards.</summary>
+        public bool Missed { get; private set; }
 
         /// <summary>Indexes (into the row's quests) of the other quests on the character's path that give the reward.</summary>
         public IReadOnlyList<int> AlsoFrom { get; private set; } = NoQuests;
@@ -2275,6 +2298,7 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 
             representative = Math.Clamp(state.Representative, 0, quests.Length - 1);
             OnPath = state.OnPath;
+            Missed = state.Missed;
             if (Availability != state.Availability || AvailabilityText.Length == 0)
             {
                 Availability = state.Availability;

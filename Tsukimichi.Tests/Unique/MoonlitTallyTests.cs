@@ -233,6 +233,33 @@ public class MoonlitTallyTests
     }
 
     [Fact]
+    public void A_gone_reward_is_missed_only_when_known_not_obtained_and_its_quest_was_not_completed()
+    {
+        var minion = GroupOf(EventQuest, RewardKind.Minion);
+        static RewardAvailabilityInfo Gone(UniqueRewardEntry entry, QuestEvaluation? evaluation) => new(RewardAvailability.GoneForGood);
+
+        // Known not obtained, quest never done: missed, and out of the totals unless gone rewards count.
+        var missed = MoonlitTally.Evaluate(minion, _ => false, _ => State(QuestState.Foreclosed), Gone);
+        Assert.True(missed.Missed);
+        Assert.False(MoonlitTally.Counts(minion, missed, default));
+        Assert.True(MoonlitTally.Counts(minion, missed, new MoonlitCountOptions(CountGone: true)));
+
+        // Owned state unreadable: not called missed; it stays in the totals as unknown.
+        var unknown = MoonlitTally.Evaluate(minion, _ => null, _ => State(QuestState.Foreclosed), Gone);
+        Assert.False(unknown.Missed);
+        Assert.True(MoonlitTally.Counts(minion, unknown, default));
+        var totals = MoonlitTally.Totals([minion], [unknown], default);
+        Assert.Equal(new UniqueRewardCounts(0, 1, 1), totals.All);
+        Assert.Equal(0, totals.Missed);
+
+        // The quest was completed: it gave the reward, whatever the flag reads now.
+        var completed = MoonlitTally.Evaluate(minion, _ => false, _ => State(QuestState.Completed), Gone);
+        Assert.True(completed.QuestCompleted);
+        Assert.False(completed.Missed);
+        Assert.Equal(0, MoonlitTally.Totals([minion], [completed], default).Missed);
+    }
+
+    [Fact]
     public void Found_elsewhere_rewards_leave_the_totals_when_asked()
     {
         var sold = Entry(MountQuest, RewardKind.Mount, 10, "Company Chocobo").WithOtherSource(OtherSource.OnlineStore);

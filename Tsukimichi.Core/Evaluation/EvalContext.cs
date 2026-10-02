@@ -121,6 +121,18 @@ public sealed record EvalContext
             : this with { TodaysDailyOffer = offer.Quests, DailyOfferTribes = offer.Tribes };
 
     /// <summary>
+    /// This context for a stored character (or the last live capture left on view after a logout): the festivals
+    /// running on the server per <paramref name="server"/>, its cycle data read against <paramref name="cycleClock"/>,
+    /// and no daily offer, which was the live character's for one daily cycle and is unknown for anyone else.
+    /// </summary>
+    public EvalContext ForStoredCharacter(ServerFestivals server, Func<DateTime> cycleClock)
+    {
+        ArgumentNullException.ThrowIfNull(server);
+        ArgumentNullException.ThrowIfNull(cycleClock);
+        return this with { ServerFestivals = server, CycleClock = cycleClock, TodaysDailyOffer = null, DailyOfferTribes = null };
+    }
+
+    /// <summary>
     /// A context whose <see cref="FestivalIsPast"/> answers true for a festival whose curated end lies before
     /// <paramref name="nowUtc"/>. Festivals without an entry, or with a null end, are left to the other sources:
     /// any hook already on this context, then the default completed-quest heuristic in the resolver.

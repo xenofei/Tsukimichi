@@ -15,6 +15,9 @@ public class DailyOfferBookTests
 
     private static readonly DateTime Morning = new(2026, 10, 1, 16, 0, 0, DateTimeKind.Utc);
 
+    /// <summary>The game's daily seed the answers are computed with.</summary>
+    private const byte Seed = 42;
+
     private static QuestRecord Daily(uint rowId, byte tribe, byte rank, uint giver) => Quest(rowId) with
     {
         BeastTribe = tribe,
@@ -58,19 +61,19 @@ public class DailyOfferBookTests
     {
         var book = new DailyOfferBook();
         var character = Character(2, 4);
-        book.Record(7, Morning, Fibubb, Amaljaa, character.Tribes[Amaljaa], [Id(66001)]);
-        book.Record(7, Morning, Dwarf, Dwarves, character.Tribes[Dwarves], [Id(69501), Id(69503)]);
+        book.Record(7, Morning, Seed, Fibubb, Amaljaa, character.Tribes[Amaljaa], [Id(66001)]);
+        book.Record(7, Morning, Seed, Dwarf, Dwarves, character.Tribes[Dwarves], [Id(69501), Id(69503)]);
 
         // Yadovv (rank 2) is not read yet: the Amalj'aa stay unknown. The rank-3 giver offers nothing at rank 2.
         var partial = book.Offer(Catalog, character, Morning);
         Assert.Equal([Dwarves], partial.Tribes);
         Assert.Equal([Id(69501), Id(69503)], partial.Quests.Order());
 
-        book.Record(7, Morning, Yadovv, Amaljaa, character.Tribes[Amaljaa], [Id(66003)]);
+        book.Record(7, Morning, Seed, Yadovv, Amaljaa, character.Tribes[Amaljaa], [Id(66003)]);
         var full = book.Offer(Catalog, character, Morning);
         Assert.Equal([Amaljaa, Dwarves], full.Tribes.Order());
         Assert.Equal([Id(66001), Id(66003), Id(69501), Id(69503)], full.Quests.Order());
-        Assert.True(book.Knows(7, Morning, Yadovv, character.Tribes[Amaljaa]));
+        Assert.True(book.Knows(7, Morning, Seed, Yadovv, character.Tribes[Amaljaa]));
     }
 
     [Fact]
@@ -78,7 +81,7 @@ public class DailyOfferBookTests
     {
         var book = new DailyOfferBook();
         var character = Character(0, 4);
-        book.Record(7, Morning, Dwarf, Dwarves, character.Tribes[Dwarves], [Id(69501)]);
+        book.Record(7, Morning, Seed, Dwarf, Dwarves, character.Tribes[Dwarves], [Id(69501)]);
 
         Assert.DoesNotContain(Amaljaa, book.Offer(Catalog, character, Morning).Tribes);
     }
@@ -88,20 +91,51 @@ public class DailyOfferBookTests
     {
         var book = new DailyOfferBook();
         var character = Character(2, 4);
-        book.Record(7, Morning, Dwarf, Dwarves, character.Tribes[Dwarves], [Id(69501)]);
+        book.Record(7, Morning, Seed, Dwarf, Dwarves, character.Tribes[Dwarves], [Id(69501)]);
         Assert.Contains(Dwarves, book.Offer(Catalog, character, Morning).Tribes);
 
         // Ranked up (Respected, ranked up today): the answer at Trusted no longer holds.
         Assert.True(book.Offer(Catalog, Character(2, 5, rankedUp: true), Morning).IsEmpty);
-        Assert.False(book.Knows(7, Morning, Dwarf, new TribeStanding(5, 0, true)));
+        Assert.False(book.Knows(7, Morning, Seed, Dwarf, new TribeStanding(5, 0, true)));
 
         // The next daily reset.
         Assert.True(book.Offer(Catalog, character, Morning.AddDays(1)).IsEmpty);
         Assert.Equal(0, book.Count);
 
         // Another character.
-        book.Record(7, Morning, Dwarf, Dwarves, character.Tribes[Dwarves], [Id(69501)]);
+        book.Record(7, Morning, Seed, Dwarf, Dwarves, character.Tribes[Dwarves], [Id(69501)]);
         Assert.True(book.Offer(Catalog, character with { ContentId = 8 }, Morning).IsEmpty);
+    }
+
+    [Fact]
+    public void Answers_hold_only_for_the_daily_seed_they_were_computed_with()
+    {
+        var book = new DailyOfferBook();
+        var character = Character(2, 4);
+        var standing = character.Tribes[Dwarves];
+
+        // Read just after the reset while the client still held yesterday's seed (or the clock ran ahead).
+        book.Record(7, Morning, Seed, Dwarf, Dwarves, standing, [Id(69501)]);
+        Assert.True(book.Knows(7, Morning, Seed, Dwarf, standing));
+        Assert.Contains(Dwarves, book.Offer(Catalog, character, Morning).Tribes);
+
+        // The server's seed for the day arrives: the old answer is not today's and must be read again.
+        Assert.False(book.Knows(7, Morning, Seed + 1, Dwarf, standing));
+        Assert.Equal(0, book.Count);
+        Assert.True(book.Offer(Catalog, character, Morning).IsEmpty);
+
+        book.Record(7, Morning, Seed + 1, Dwarf, Dwarves, standing, [Id(69502), Id(69503)]);
+        Assert.Equal([Id(69502), Id(69503)], book.Offer(Catalog, character, Morning).Quests.Order());
+
+        // A seed change seen while no giver is loaded drops the answers too.
+        book.Observe(7, Morning, Seed);
+        Assert.Equal(0, book.Count);
+        Assert.True(book.Offer(Catalog, character, Morning).IsEmpty);
+
+        // The same seed again keeps what is known.
+        book.Record(7, Morning, Seed, Dwarf, Dwarves, standing, [Id(69501)]);
+        book.Observe(7, Morning, Seed);
+        Assert.Equal(1, book.Count);
     }
 
     [Fact]
@@ -109,7 +143,7 @@ public class DailyOfferBookTests
     {
         var book = new DailyOfferBook();
         var character = Character(2, 4) with { DailyDone = new Dictionary<ushort, byte> { [Id(69502)] = 1 } };
-        book.Record(7, Morning, Dwarf, Dwarves, character.Tribes[Dwarves], [Id(69501), Id(69503)]);
+        book.Record(7, Morning, Seed, Dwarf, Dwarves, character.Tribes[Dwarves], [Id(69501), Id(69503)]);
 
         Assert.True(book.Offer(Catalog, character, Morning).IsEmpty);
         Assert.Equal([Dwarves], book.Mismatched);

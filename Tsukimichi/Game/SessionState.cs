@@ -530,7 +530,12 @@ public sealed partial class SessionState
         Bump();
     }
 
-    /// <summary>Logout: the last live snapshot stays viewable as a stale snapshot.</summary>
+    /// <summary>
+    /// Logout: the last live snapshot stays viewable as a stale snapshot, resolved from now on as a stored character
+    /// is (<see cref="StoredContext(CharacterSnapshot, EvalContext?)"/>): the live context it was shown with carries
+    /// today's allied society offer and reads its dailies as the game cleared them, neither of which holds once the
+    /// character is gone (the offer would outlive its day, and the next reset would find no clock to read it against).
+    /// </summary>
     internal void ClearLive()
     {
         LiveContentId = null;
@@ -540,7 +545,7 @@ public sealed partial class SessionState
         liveAcceptedSince = NoAcceptedSince;
         liveAbandoned = NoAbandoned;
         recentEvents.Clear();
-        RefreshStoredFestivals();
+        RefreshStoredFestivals(force: true);
         Bump();
     }
 
@@ -560,7 +565,7 @@ public sealed partial class SessionState
         StoredContext(ServerFestivals.For(snapshot, liveSnapshot, Curated.Festivals, DateTime.UtcNow), context);
 
     private EvalContext StoredContext(ServerFestivals server, EvalContext? context = null) =>
-        (context ?? baseContext) with { ServerFestivals = server, CycleClock = StoredCycleClock };
+        (context ?? baseContext).ForStoredCharacter(server, StoredCycleClock);
 
     /// <summary>The clock a stored character's cycle data is read against (<see cref="EvalContext.CycleClock"/>).</summary>
     internal static readonly Func<DateTime> StoredCycleClock = static () => DateTime.UtcNow;
@@ -597,9 +602,10 @@ public sealed partial class SessionState
 
     /// <summary>
     /// A stored character on view is resolved again when the server's running festivals changed under it (a login, a
-    /// logout, an event starting or ending on the live character); nothing else about it can change here.
+    /// logout, an event starting or ending on the live character); nothing else about it can change here, except at a
+    /// logout, when the character that was live stays on view and leaves its live context (<paramref name="force"/>).
     /// </summary>
-    private void RefreshStoredFestivals()
+    private void RefreshStoredFestivals(bool force = false)
     {
         if (IsLive || ViewedSnapshot is not { } viewed || Bundle is not { } bundle)
         {
@@ -607,7 +613,7 @@ public sealed partial class SessionState
         }
 
         var server = ServerFestivals.For(viewed, liveSnapshot, Curated.Festivals, DateTime.UtcNow);
-        if (server.SameAs(Context.ServerFestivals))
+        if (!force && server.SameAs(Context.ServerFestivals))
         {
             return;
         }

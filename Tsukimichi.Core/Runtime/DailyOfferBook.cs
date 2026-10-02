@@ -27,8 +27,11 @@ public sealed record DailyOffer(IReadOnlySet<ushort> Quests, IReadOnlySet<byte> 
 /// offer (<c>DailyQuestMap.CalculateAvailableQuests</c>) only for the givers whose quests it has loaded, so the book
 /// keeps each giver's answer for the rest of the day and assembles the societies whose every giver is known. An
 /// answer holds for the daily cycle it was read in (<see cref="GameResets.LastDaily"/>), for the character it was read
-/// for, and for the standing it was computed at (rank and the ranked-up-today mark, both of which change the offer);
-/// anything else drops it. Pure bookkeeping, no game access; not thread-safe (the framework thread owns it).
+/// for, for the daily seed it was computed with (<c>QuestManager.DailyQuestSeed</c>: the server's pick for the day,
+/// which may arrive after the reset or differ from the local clock's idea of the day) and for the standing it was
+/// computed at (rank and the ranked-up-today mark, both of which change the offer); anything else drops it. A seed
+/// other than the one the answers were computed with drops them all. Pure bookkeeping, no game access; not
+/// thread-safe (the framework thread owns it).
 /// </summary>
 public sealed class DailyOfferBook
 {
@@ -41,6 +44,7 @@ public sealed class DailyOfferBook
     private readonly List<byte> mismatched = [];
     private ulong contentId;
     private DateTime cycle;
+    private byte seed;
 
     /// <summary>How many givers have an answer held now.</summary>
     public int Count => answers.Count;
@@ -54,21 +58,37 @@ public sealed class DailyOfferBook
     }
 
     /// <summary>
-    /// Whether <paramref name="giver"/> already has an answer valid for this character, this cycle and this standing;
-    /// the reader skips asking the game again.
+    /// Notes the game's current daily seed: answers computed with another seed are dropped. The reader calls it on
+    /// every read, so a seed that changes while no giver is loaded still retires the old answers.
     /// </summary>
-    public bool Knows(ulong character, DateTime nowUtc, uint giver, TribeStanding standing)
+    public void Observe(ulong character, DateTime nowUtc, byte dailySeed)
     {
         Roll(character, nowUtc);
-        return answers.TryGetValue(giver, out var answer) && answer.Rank == standing.Rank && answer.RankedUpToday == standing.RankedUpToday;
+        if (dailySeed != seed)
+        {
+            answers.Clear();
+            mismatchReported.Clear();
+            seed = dailySeed;
+        }
     }
 
-    /// <summary>Records what <paramref name="giver"/> offers today at <paramref name="standing"/>.</summary>
-    public void Record(ulong character, DateTime nowUtc, uint giver, byte tribe, TribeStanding standing, IEnumerable<ushort> quests)
+    /// <summary>
+    /// Whether <paramref name="giver"/> already has an answer valid for this character, this cycle, this daily seed
+    /// and this standing; the reader skips asking the game again.
+    /// </summary>
+    public bool Knows(ulong character, DateTime nowUtc, byte dailySeed, uint giver, TribeStanding standing)
+    {
+        Observe(character, nowUtc, dailySeed);
+        return answers.TryGetValue(giver, out var answer) && answer.Seed == dailySeed
+            && answer.Rank == standing.Rank && answer.RankedUpToday == standing.RankedUpToday;
+    }
+
+    /// <summary>Records what <paramref name="giver"/> offers today at <paramref name="standing"/>, computed with <paramref name="dailySeed"/>.</summary>
+    public void Record(ulong character, DateTime nowUtc, byte dailySeed, uint giver, byte tribe, TribeStanding standing, IEnumerable<ushort> quests)
     {
         ArgumentNullException.ThrowIfNull(quests);
-        Roll(character, nowUtc);
-        answers[giver] = new Answer(tribe, standing.Rank, standing.RankedUpToday, [.. quests]);
+        Observe(character, nowUtc, dailySeed);
+        answers[giver] = new Answer(tribe, dailySeed, standing.Rank, standing.RankedUpToday, [.. quests]);
     }
 
     /// <summary>
@@ -96,7 +116,7 @@ public sealed class DailyOfferBook
             var complete = true;
             foreach (var giver in givers)
             {
-                if (answers.TryGetValue(giver.NpcId, out var answer) && answer.Tribe == tribe
+                if (answers.TryGetValue(giver.NpcId, out var answer) && answer.Tribe == tribe && answer.Seed == seed
                     && answer.Rank == standing.Rank && answer.RankedUpToday == standing.RankedUpToday)
                 {
                     read++;
@@ -272,5 +292,5 @@ public sealed class DailyOfferBook
 
     private sealed record Giver(uint NpcId, byte LowestRank, QuestRecord[] Dailies);
 
-    private sealed record Answer(byte Tribe, byte Rank, bool RankedUpToday, ushort[] Quests);
+    private sealed record Answer(byte Tribe, byte Seed, byte Rank, bool RankedUpToday, ushort[] Quests);
 }

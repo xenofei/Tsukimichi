@@ -66,7 +66,7 @@ One row per reward of the Moonlit tab's unique view (rewards you marked not uniq
 | `rewardName` | The reward's name in English, from the shipped reward data, whatever the client's language |
 | `questRowId` | Quest sheet row id of the quest that gives it |
 | `obtained` | `true`, `false`, or unknown (`null` in JSON, `unknown` in CSV) |
-| `availability` | Whether the reward can still be had through this quest (added in 1.5.0): `getNow`, `eventRunning`, `upcomingEvent`, `collabMayReturn` (a collaboration event, which may return), `pastEventOnStore` (the event is over but the FFXIV Online Store sells it) or `goneForGood` |
+| `availability` | Whether the reward can still be had through this quest (added in 1.5.0): `getNow`, `eventRunning`, `upcomingEvent`, `eventNotRunning` (this year's edition is not running and, with no announced end, may be over or still to come), `collabMayReturn` (a collaboration event, which may return), `pastEventOnStore` (the event is over but the FFXIV Online Store sells it) or `goneForGood` |
 
 The file keeps one row per quest that gives a reward, so a reward several quests give (Guildhests from each city's quest, a relic weapon from its quest and its repeatable "another job" twin) appears once per quest. The Moonlit tab counts each such reward once and hides the quests on paths the character did not take; group by `kind` and `rewardId` to count as it does.
 
