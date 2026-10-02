@@ -42,8 +42,9 @@ namespace Tsukimichi.Ui;
 /// Locked (<see cref="Configuration.TodoOverlayLocked"/>) is click-through: NoMove, NoResize and NoInputs, so the game
 /// behind gets every click; the lock is set from the title's menu (or its "…") and cleared from Settings. The window is
 /// not drawn while logged out, in a duty or in a cutscene. Rows are rebuilt on <see cref="SessionState.Changed"/>,
-/// <see cref="IClientState.TerritoryChanged"/>, when a section toggle flips and when <c>user/pins.json</c> changes (its
-/// write time is checked every <see cref="PinsCheckInterval"/>); drawing allocates nothing. <see cref="ResetPosition"/>
+/// <see cref="IClientState.TerritoryChanged"/>, when a section toggle flips and when the viewed character's pins change
+/// (<see cref="QueryRunner.PinsVersion"/>: a pin here, or another client's save merged in; the draw thread reads no
+/// file); drawing allocates nothing. <see cref="ResetPosition"/>
 /// moves the panel back to the top left on the next frame.
 ///
 /// 1.6.0: the followed route's section ("Route: everything for Dragoon", <see cref="ActiveRoutes"/>) comes first, with
@@ -72,9 +73,6 @@ public sealed class TodoOverlay : Window, IDisposable
     private const string RowMenuId = "##todoRowMenu";
 
     private const string HeaderMenuId = "##todoHeaderMenu";
-
-    /// <summary>How often the pins file's write time is checked while the overlay is drawn.</summary>
-    public static readonly TimeSpan PinsCheckInterval = TimeSpan.FromSeconds(2);
 
     private const ImGuiWindowFlags BaseFlags = ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.AlwaysAutoResize
                                                | ImGuiWindowFlags.NoFocusOnAppearing | ImGuiWindowFlags.NoDocking;
@@ -106,28 +104,24 @@ public sealed class TodoOverlay : Window, IDisposable
     private readonly Action<QuestRecord> reveal;
     private readonly IClientState clientState;
     private readonly ICondition condition;
-    private readonly PluginPaths paths;
+    private readonly QueryRunner pins;
     private readonly IDalamudPluginInterface pluginInterface;
-    private readonly IPluginLog log;
 
     private SectionView[] sections = [];
     private int enabledSections;
     private bool catalogReady;
     private bool dirty = true;
     private int builtVersion = -1;
+    private int builtPins = -1;
     private uint builtTerritory;
     private int builtSettings = -1;
 
     // Folded sections, by TodoSection value (not persisted; the old collapsing headers were not either).
     private readonly bool[] folded = new bool[Enum.GetValues<TodoSection>().Length + 1];
 
-    // Pins: the file's write time (checked on a timer) and the viewed character's pins, in the order they were pinned.
+    // Pins: the viewed character's pins in the order they were pinned, copied from the query runner per PinsVersion.
     private readonly List<uint> pinned = [];
-    private DateTime pinsStamp;
-    private DateTime pinsLoadedStamp = DateTime.MinValue;
-    private ulong? pinsContentId;
-    private DateTime nextPinsCheckUtc;
-    private bool pinsWarned;
+    private int pinsCopied = -1;
 
     private JobLadder ladder = JobLadder.Empty;
     private CatalogBundle? ladderBundle;
@@ -151,9 +145,8 @@ public sealed class TodoOverlay : Window, IDisposable
     /// <param name="reveal">Shows a quest in the main window (open, bring to front, select).</param>
     /// <param name="clientState">Login state and the current territory.</param>
     /// <param name="condition">Duty and cutscene flags that hide the panel.</param>
-    /// <param name="paths">Where <c>user/pins.json</c> lives.</param>
+    /// <param name="pins">The viewed character's pins, as the query runner holds them (its saves and other clients' merges included).</param>
     /// <param name="pluginInterface">Saves the settings the panel's own menu changes.</param>
-    /// <param name="log">Warnings for pins that could not be read.</param>
     public TodoOverlay(
         Configuration settings,
         SessionState session,
@@ -161,9 +154,8 @@ public sealed class TodoOverlay : Window, IDisposable
         Action<QuestRecord> reveal,
         IClientState clientState,
         ICondition condition,
-        PluginPaths paths,
-        IDalamudPluginInterface pluginInterface,
-        IPluginLog log)
+        QueryRunner pins,
+        IDalamudPluginInterface pluginInterface)
         : base(Strings.TodoWindowTitle, BaseFlags)
     {
         this.settings = settings ?? throw new ArgumentNullException(nameof(settings));
@@ -172,9 +164,8 @@ public sealed class TodoOverlay : Window, IDisposable
         this.reveal = reveal ?? throw new ArgumentNullException(nameof(reveal));
         this.clientState = clientState ?? throw new ArgumentNullException(nameof(clientState));
         this.condition = condition ?? throw new ArgumentNullException(nameof(condition));
-        this.paths = paths ?? throw new ArgumentNullException(nameof(paths));
+        this.pins = pins ?? throw new ArgumentNullException(nameof(pins));
         this.pluginInterface = pluginInterface ?? throw new ArgumentNullException(nameof(pluginInterface));
-        this.log = log ?? throw new ArgumentNullException(nameof(log));
 
         RespectCloseHotkey = false;
         DisableWindowSounds = true;
@@ -873,32 +864,25 @@ public sealed class TodoOverlay : Window, IDisposable
 
     private (int Route, int Stops) builtSources = (-1, -1);
 
-    /// <summary>Once per frame: notices a changed pins file on a timer, then rebuilds when any input moved.</summary>
+    /// <summary>Once per frame: rebuilds when any input moved, the viewed character's pins included.</summary>
     private void Refresh()
     {
-        var now = DateTime.UtcNow;
-        if (now >= nextPinsCheckUtc)
-        {
-            nextPinsCheckUtc = now + PinsCheckInterval;
-            var stamp = PinsWriteTime();
-            if (stamp != pinsStamp)
-            {
-                pinsStamp = stamp;
-                dirty = true;
-            }
-        }
-
+        // The runner follows the viewed character, its own pin toggles and other clients' saves (PinsVersion); no
+        // file is read here.
+        pins.SyncPins();
+        var pinsVersion = pins.PinsVersion;
         var version = session.Version;
         var territory = clientState.TerritoryType;
         var signature = SettingsSignature();
         var sources = SourceRevisions();
-        if (!dirty && version == builtVersion && territory == builtTerritory && signature == builtSettings && sources == builtSources)
+        if (!dirty && version == builtVersion && pinsVersion == builtPins && territory == builtTerritory && signature == builtSettings && sources == builtSources)
         {
             return;
         }
 
         dirty = false;
         builtVersion = version;
+        builtPins = pinsVersion;
         builtTerritory = territory;
         builtSettings = signature;
         builtSources = sources;
@@ -919,7 +903,7 @@ public sealed class TodoOverlay : Window, IDisposable
             return;
         }
 
-        LoadPins(session.ViewedContentId);
+        CopyPins();
         if (!ReferenceEquals(ladderBundle, bundle))
         {
             ladderBundle = bundle;
@@ -999,61 +983,21 @@ public sealed class TodoOverlay : Window, IDisposable
         sections = views;
     }
 
-    /// <summary>The viewed character's pins, re-read only when the file or the character changed.</summary>
-    private void LoadPins(ulong? contentId)
+    /// <summary>
+    /// The viewed character's pins in the order they were pinned, copied from the query runner when they changed: its
+    /// list is its own and changes in place, while the rows built from this copy live until the next rebuild.
+    /// </summary>
+    private void CopyPins()
     {
-        if (pinsLoadedStamp == pinsStamp && pinsContentId == contentId)
+        pins.SyncPins();
+        if (pinsCopied == pins.PinsVersion)
         {
             return;
         }
 
-        pinsLoadedStamp = pinsStamp;
-        pinsContentId = contentId;
+        pinsCopied = pins.PinsVersion;
         pinned.Clear();
-        if (contentId is not { } id)
-        {
-            return;
-        }
-
-        try
-        {
-            var warnings = new List<string>();
-            var pins = PinsFile.Load(paths.PinsFile, warnings);
-            foreach (var warning in warnings)
-            {
-                log.Warning("Pins: {Warning}", warning);
-            }
-
-            if (pins.TryGetValue(id, out var list) && list is not null)
-            {
-                pinned.AddRange(list);
-            }
-        }
-        catch (Exception ex)
-        {
-            if (!pinsWarned)
-            {
-                pinsWarned = true;
-                log.Warning(ex, "Pins could not be read for the todo overlay; further failures are logged at debug level");
-            }
-            else
-            {
-                log.Debug(ex, "Pins could not be read for the todo overlay");
-            }
-        }
-    }
-
-    /// <summary>Write time of <c>user/pins.json</c>; a missing file reads as a fixed old time, so deleting it counts as a change too.</summary>
-    private DateTime PinsWriteTime()
-    {
-        try
-        {
-            return File.GetLastWriteTimeUtc(paths.PinsFile);
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException)
-        {
-            return DateTime.MinValue;
-        }
+        pinned.AddRange(pins.PinnedInOrder);
     }
 
     private void Save() => settings.Save(pluginInterface);

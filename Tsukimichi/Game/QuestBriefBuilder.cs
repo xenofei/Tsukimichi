@@ -89,7 +89,7 @@ public sealed class QuestBriefBuilder
     {
         if (!ReferenceEquals(titles.Catalog, catalog))
         {
-            titles = QuestTitleIndex.Build(catalog);
+            titles = QuestTitleIndex.For(catalog);
         }
 
         return titles;

@@ -31,17 +31,19 @@ namespace Tsukimichi.Game;
 /// The first pass for a character resolves the whole catalog, which took a visible slice of a frame; the capture
 /// still happens here (ClientStructs reads stay on the framework thread), but the catalog-wide resolve and the
 /// sidecar read run on a worker over an immutable snapshot, and the result is committed and published on the
-/// framework thread when it lands. Every later poll diffs incrementally. What the poller keeps between polls lives
-/// in <see cref="PollerMemory"/>. Runs entirely inside <see cref="IFramework.Update"/> apart from that worker.
+/// framework thread when it lands. Later polls diff incrementally, except when a change touches quests the reverse
+/// index cannot enumerate (a job or level change, a duty clear, an allowance, today's offer: <see cref="FullPass"/>):
+/// that capture's full resolve and its events run on a worker the same way, and are committed on the frame they land
+/// unless the catalog, the character or the committed capture moved meanwhile, in which case the next poll captures
+/// and diffs again. Until a pass lands the session keeps the previous evaluations and no other capture is taken, so
+/// events stay in order. What the poller keeps between polls lives in <see cref="PollerMemory"/>. Runs entirely
+/// inside <see cref="IFramework.Update"/> (subscribed by <see cref="Start"/>) apart from those workers.
 /// </para>
 /// </summary>
 public sealed class StatePoller : IDisposable
 {
     public static readonly TimeSpan SaveInterval = TimeSpan.FromSeconds(10);
     public static readonly TimeSpan MaxBackoff = TimeSpan.FromSeconds(30);
-
-    /// <summary>Above this many changed quests a full resolve is cheaper than walking dependents.</summary>
-    public const int FullResolveThreshold = 200;
 
     /// <summary>At most one warning per this interval when a session listener keeps throwing.</summary>
     private static readonly TimeSpan ListenerWarningInterval = TimeSpan.FromMinutes(1);
@@ -64,6 +66,12 @@ public sealed class StatePoller : IDisposable
 
     /// <summary>The first pass in flight on a worker; null while none is. Touched only on the framework thread.</summary>
     private FirstPass? pendingFirst;
+
+    /// <summary>A full pass (<see cref="FullPass"/>) in flight on a worker; null while none is. Framework thread only.</summary>
+    private PendingFullPass? pendingFull;
+
+    /// <summary>Set by <see cref="Start"/>: the poller is subscribed to the framework's updates.</summary>
+    private bool started;
 
     /// <summary>
     /// The newest committed capture of a character whose memory was just reset while its state on disk may lag behind
@@ -120,6 +128,21 @@ public sealed class StatePoller : IDisposable
         snapshots.LoggingOut += OnLoggingOut;
         session.CharacterForgotten += OnCharacterForgotten;
         session.DataDeleted += OnDataDeleted;
+    }
+
+    /// <summary>
+    /// Starts polling. The plugin calls it last in its constructor, once every surface the session wakes and every
+    /// gate the game reads obey is in place: an update that ran earlier could read the game before the hook gate was
+    /// set, or publish to a session half of whose listeners had not joined yet.
+    /// </summary>
+    public void Start()
+    {
+        if (disposed || started)
+        {
+            return;
+        }
+
+        started = true;
         framework.Update += OnUpdate;
     }
 
@@ -305,7 +328,7 @@ public sealed class StatePoller : IDisposable
         snapshots.LoggingOut -= OnLoggingOut;
         session.CharacterForgotten -= OnCharacterForgotten;
         session.DataDeleted -= OnDataDeleted;
-        DiscardFirstPass();
+        DiscardPasses();
         Flush(final: true);
     }
 
@@ -322,7 +345,7 @@ public sealed class StatePoller : IDisposable
             if (wasReady)
             {
                 wasReady = false;
-                DiscardFirstPass();
+                DiscardPasses();
                 Flush(final: true);
                 // The save just queued may land after the next first pass reads the file; until it lands, that pass
                 // continues from the capture itself.
@@ -346,6 +369,18 @@ public sealed class StatePoller : IDisposable
             {
                 pendingFirst = null;
                 CommitFirstPass(pending, now);
+            }
+
+            return;
+        }
+
+        if (pendingFull is { } full)
+        {
+            // No capture while a full pass is on the worker: the next one diffs against what that pass commits.
+            if (full.Task.IsCompleted)
+            {
+                pendingFull = null;
+                CommitFullPass(full, now);
             }
 
             return;
@@ -383,9 +418,9 @@ public sealed class StatePoller : IDisposable
             }
         }
 
-        // A poll that only started a first pass has not succeeded yet: its outcome, the backoff and the poller's
-        // health wait for CommitFirstPass. Poll throws before it starts one, so a failed poll is always settled.
-        var settled = pendingFirst is null;
+        // A poll that only started a first or full pass has not succeeded yet: its outcome, the backoff and the
+        // poller's health wait for the commit. Poll throws before it starts one, so a failed poll is always settled.
+        var settled = pendingFirst is null && pendingFull is null;
         if (!failed)
         {
             session.RecordPoll(Stopwatch.GetElapsedTime(started).TotalMilliseconds);
@@ -417,10 +452,15 @@ public sealed class StatePoller : IDisposable
 
     /// <summary>
     /// Reads the client, diffs against the last capture and commits the new state. Returns null when nothing changed,
-    /// and also when the capture became a first pass: that one is resolved on a worker and committed by
-    /// <see cref="CommitFirstPass"/>. Any exception here means the game read failed; the committed state is untouched.
+    /// and also when the capture became a first pass or a full pass: those are resolved on a worker and committed by
+    /// <see cref="CommitFirstPass"/> or <see cref="CommitFullPass"/>. Any exception here means the game read failed;
+    /// the committed state is untouched.
     /// </summary>
-    private PollResult? Poll(DateTime now)
+    /// <param name="deferFull">
+    /// False resolves a full pass here rather than on a worker: the logout's last capture, which must be committed
+    /// before the character goes.
+    /// </param>
+    private PollResult? Poll(DateTime now, bool deferFull = true)
     {
         var bundle = session.Bundle!;
         if (memory.IsStaleFor(bundle))
@@ -494,26 +534,117 @@ public sealed class StatePoller : IDisposable
             heldBack.Reset();
         }
 
-        memory.AcceptedSinceDirty |= AcceptedSince.Apply(memory.AcceptedSince, last, snapshot, diff, now);
+        // A level change touches every level-gated quest, which the reverse index cannot enumerate by job, and a job
+        // change, a duty clear or a new offer touch quests it cannot enumerate at all: everything is resolved, on a
+        // worker (14-17 ms over the whole catalog was a dropped frame on every gearset change).
+        var full = FullPass.Needed(diff, offerChanged);
+        if (full && deferFull)
+        {
+            StartFullPass(last, snapshot, diff, states, bundle, context, offer, now);
+            return null;
+        }
 
-        // A level change touches every level-gated quest, which the reverse index cannot enumerate by job; level-ups
-        // are rare and a full resolve costs milliseconds, so resolve everything rather than pass jobs as levels.
-        var full = diff.OtherChanged
-            || offerChanged
-            || diff.ChangedJobs.Count > 0
-            || diff.ChangedQuestIds.Count > FullResolveThreshold;
         var resolved = full
             ? StateResolver.ResolveAll(catalog, snapshot, context)
             : StateResolver.ResolveDependents(states, ChangedRows(diff, catalog, session.Index!), session.Index!, catalog, snapshot, context, changedFestivals: diff.ChangedFestivals);
 
         var events = QuestEvents.Derive(diff, last, snapshot, catalog, states, resolved, now);
+        return Take(last, snapshot, diff, resolved, events, bundle, context, offer, now);
+    }
+
+    /// <summary>
+    /// Commits a diffed capture with its evaluations and events, on the frame it was polled or on the frame its full
+    /// pass landed: the accepted times and the abandoned ledger take the change in, then the memory and the offer.
+    /// </summary>
+    private PollResult Take(
+        CharacterSnapshot last,
+        CharacterSnapshot snapshot,
+        SnapshotDiff diff,
+        IReadOnlyDictionary<uint, QuestEvaluation> resolved,
+        IReadOnlyList<QuestEvent> events,
+        CatalogBundle bundle,
+        EvalContext context,
+        DailyOffer offer,
+        DateTime now)
+    {
+        memory.AcceptedSinceDirty |= AcceptedSince.Apply(memory.AcceptedSince, last, snapshot, diff, now);
+
         // Abandoned quests are recorded (and re-accepted or completed ones dropped) with the step they had reached; the
         // sidecar goes to disk with the snapshot the commit below marks dirty, through the same save debouncer.
-        memory.AbandonedDirty |= AbandonedLedger.Apply(memory.Abandoned, events, last, catalog);
+        memory.AbandonedDirty |= AbandonedLedger.Apply(memory.Abandoned, events, last, bundle.Catalog);
 
         memory.Commit(snapshot, resolved, bundle);
         lastOffer = offer;
         return new PollResult(snapshot, resolved, context, events);
+    }
+
+    /// <summary>
+    /// Hands a capture's full resolve and its events to a worker (<see cref="FullPass.Run"/>). Everything it reads is
+    /// immutable: the capture and the one it was diffed against, the diff, the committed evaluations (replaced on a
+    /// commit, never changed in place), the catalog and the context. The capture already passed the plausibility
+    /// guard; the accepted times, the ledger and the memory take it in only when <see cref="CommitFullPass"/> does.
+    /// </summary>
+    private void StartFullPass(
+        CharacterSnapshot last,
+        CharacterSnapshot snapshot,
+        SnapshotDiff diff,
+        IReadOnlyDictionary<uint, QuestEvaluation> states,
+        CatalogBundle bundle,
+        EvalContext context,
+        DailyOffer offer,
+        DateTime now)
+    {
+        var catalog = bundle.Catalog;
+        var task = Task.Run(() => FullPass.Run(catalog, last, snapshot, diff, context, states, now));
+        pendingFull = new PendingFullPass(last, snapshot, diff, bundle, context, offer, now, task, Stopwatch.GetTimestamp());
+    }
+
+    /// <summary>
+    /// Takes a finished full pass: commits and publishes it when the catalog, the character and the committed capture
+    /// are the ones it was computed from (<see cref="FullPass.Judge"/>); otherwise drops it, and the next poll captures
+    /// again and diffs against what is committed then.
+    /// </summary>
+    private void CommitFullPass(PendingFullPass pending, DateTime now)
+    {
+        if (!pending.Task.IsCompletedSuccessfully)
+        {
+            // Pure Core work on immutable inputs: a failure is a bug, handled like a first pass that faulted.
+            if (schedule.Fail(now))
+            {
+                log.Warning(pending.Task.Exception?.GetBaseException(), "Re-evaluation failed; retrying in {Seconds} s and backing off to {Max} s", schedule.Wait.TotalSeconds, MaxBackoff.TotalSeconds);
+            }
+
+            Notify(() => session.SetPollerHealthy(false));
+            return;
+        }
+
+        var verdict = FullPass.Judge(pending.Bundle, session.Bundle, pending.Snapshot.ContentId, reader.ContentId, pending.Base, memory.Last);
+        if (verdict != FullPassVerdict.Commit)
+        {
+            log.Debug("Re-evaluation for {ContentId} dropped ({Verdict}); the next poll captures again", pending.Snapshot.ContentId, verdict);
+            return;
+        }
+
+        var result = pending.Task.Result;
+        var poll = Take(pending.Base, pending.Snapshot, pending.Diff, result.States, result.Events, pending.Bundle, pending.Context, pending.Offer, pending.CapturedUtc);
+        log.Debug(
+            "Re-evaluation for {ContentId}: {Count} quests in {ResolveMs:F1} ms on a worker, committed {TotalMs:F0} ms after the capture",
+            pending.Snapshot.ContentId,
+            result.States.Count,
+            result.ResolveMs,
+            Stopwatch.GetElapsedTime(pending.StartedTimestamp).TotalMilliseconds);
+
+        RecordSuccess();
+        Notify(() =>
+        {
+            session.SetPollerHealthy(true);
+            Publish(poll);
+        });
+
+        if (memory.Saves.ShouldSave(now))
+        {
+            Flush();
+        }
     }
 
     /// <summary>
@@ -766,13 +897,19 @@ public sealed class StatePoller : IDisposable
         }
     }
 
-    /// <summary>Forgets a first pass in flight; the worker finishes on its own and its result is ignored.</summary>
-    private void DiscardFirstPass()
+    /// <summary>Forgets a first or full pass in flight; the worker finishes on its own and its result is ignored.</summary>
+    private void DiscardPasses()
     {
         if (pendingFirst is { } pending)
         {
             pendingFirst = null;
             pending.Task.ContinueWith(static t => _ = t.Exception, TaskContinuationOptions.OnlyOnFaulted);
+        }
+
+        if (pendingFull is { } full)
+        {
+            pendingFull = null;
+            full.Task.ContinueWith(static t => _ = t.Exception, TaskContinuationOptions.OnlyOnFaulted);
         }
     }
 
@@ -872,7 +1009,9 @@ public sealed class StatePoller : IDisposable
 
     /// <summary>
     /// A last diff before the character goes away. A first pass still on the worker, or none committed yet, has
-    /// nothing to diff against and nothing worth saving, so it is dropped rather than resolved on the way out.
+    /// nothing to diff against and nothing worth saving, so it is dropped rather than resolved on the way out. A full
+    /// pass still on the worker is dropped too: the last capture is taken again and resolved here, so it is committed
+    /// and saved before the character goes.
     /// </summary>
     private void OnLoggingOut()
     {
@@ -881,13 +1020,13 @@ public sealed class StatePoller : IDisposable
             return;
         }
 
-        DiscardFirstPass();
+        DiscardPasses();
         if (wasReady && !memory.IsEmpty && session.Bundle is not null && reader.IsPlayerLoaded())
         {
             PollResult? result = null;
             try
             {
-                result = Poll(DateTime.UtcNow);
+                result = Poll(DateTime.UtcNow, deferFull: false);
             }
             catch (Exception ex)
             {
@@ -927,7 +1066,7 @@ public sealed class StatePoller : IDisposable
     {
         if (!disposed)
         {
-            DiscardFirstPass();
+            DiscardPasses();
             memory.OnDataDeleted();
             readiness.Reset();
             heldBack.Reset();
@@ -950,6 +1089,21 @@ public sealed class StatePoller : IDisposable
         Task<FirstPassResult> Task,
         long StartedTimestamp,
         double CaptureMs);
+
+    /// <summary>
+    /// A full pass on the worker: the committed capture it was diffed against (<paramref name="Base"/>), the capture,
+    /// the diff, what it resolves against, the offer it was read with, the poll's time and the task doing it.
+    /// </summary>
+    private sealed record PendingFullPass(
+        CharacterSnapshot Base,
+        CharacterSnapshot Snapshot,
+        SnapshotDiff Diff,
+        CatalogBundle Bundle,
+        EvalContext Context,
+        DailyOffer Offer,
+        DateTime CapturedUtc,
+        Task<FullPassResult> Task,
+        long StartedTimestamp);
 
     /// <summary>What each part of a flush threw on the writer; null for a part that was written or not queued.</summary>
     private sealed record FlushOutcome(Exception? Snapshot, Exception? Accepted, Exception? Abandoned);

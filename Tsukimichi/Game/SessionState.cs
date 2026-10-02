@@ -18,8 +18,11 @@ namespace Tsukimichi.Game;
 
 /// <summary>
 /// Everything the UI reads: catalog, viewed character, its evaluations, shipped data and recent events.
-/// Written by the poller and the plugin on the framework thread, read by the UI on that same thread, so a version
-/// counter plus <see cref="Changed"/> is all the synchronization needed. Every mutation bumps <see cref="Version"/>.
+/// Written by the poller and the plugin on the framework thread, read by the UI on that same thread, so version
+/// counters plus <see cref="Changed"/> and <see cref="CharactersChanged"/> are all the synchronization needed. Every
+/// mutation of what the viewed character shows bumps <see cref="Version"/>; a change of the stored character list
+/// alone (a save, another game client's save of another character, who is live elsewhere) bumps only
+/// <see cref="CharactersVersion"/>, so it rebuilds the lists and the comparisons rather than the query and every pane.
 /// </summary>
 public sealed partial class SessionState
 {
@@ -68,7 +71,7 @@ public sealed partial class SessionState
         UniqueRewards = uniqueRewards ?? throw new ArgumentNullException(nameof(uniqueRewards));
         Curated = curated ?? throw new ArgumentNullException(nameof(curated));
         StoreResells = StoreResells.Build(UniqueRewards.Entries);
-        snapshots.CharactersChanged += Bump;
+        snapshots.CharactersChanged += BumpCharacters;
     }
 
     /// <summary>The built catalog; null while loading or after a failure.</summary>
@@ -189,8 +192,22 @@ public sealed partial class SessionState
     /// <summary>Newest first, capped at <see cref="MaxRecentEvents"/>; cleared on logout and when another character becomes live.</summary>
     public IReadOnlyList<QuestEvent> RecentEvents => recentEvents.Events;
 
-    /// <summary>Increments on every change; the UI compares it to rebuild its query.</summary>
+    /// <summary>
+    /// Increments on every change of what the viewed character shows (its capture, evaluations, sidecars, the catalog,
+    /// the spoiler shield, the text); the UI compares it to rebuild its query. Not on a change of the stored list alone
+    /// (<see cref="CharactersVersion"/>).
+    /// </summary>
     public int Version { get; private set; }
+
+    /// <summary>
+    /// Increments when the stored character list changed and the viewed character did not: this client's own saves,
+    /// another game client's saves of other characters, a forget, who is live in another client. Caches that read the
+    /// list or other characters key on <see cref="RosterVersion"/>.
+    /// </summary>
+    public int CharactersVersion { get; private set; }
+
+    /// <summary>Changes whenever <see cref="Version"/> or <see cref="CharactersVersion"/> does (both only grow): the key of a cache that reads the viewed character and the list.</summary>
+    public int RosterVersion => Version + CharactersVersion;
 
     /// <summary>
     /// The spoiler options for a character (content id; null in browse mode): the Settings › Spoilers values with the
@@ -293,13 +310,21 @@ public sealed partial class SessionState
     /// </summary>
     public event Action? Changed;
 
+    /// <summary>Raised after every <see cref="CharactersVersion"/> bump, each listener isolated as for <see cref="Changed"/>.</summary>
+    public event Action? CharactersChanged;
+
     /// <summary>Raised after <see cref="DeleteAllData"/> removed the stored files, so in-memory copies (pins, overrides) can drop them.</summary>
     public event Action? DataDeleted;
 
     /// <summary>Raised after <see cref="ForgetCharacter"/> deleted that character's snapshot, with its content id.</summary>
     public event Action<ulong>? CharacterForgotten;
 
-    /// <summary>Shows a character. Returns false when it is neither live nor stored.</summary>
+    /// <summary>
+    /// Shows a character. The live one shows at once. A stored one is read and resolved on a worker (15–40 ms of a
+    /// frame before) and shown on the frame it lands (<see cref="TakePendingView"/>); the character on view stays until
+    /// then and <see cref="LoadingContentId"/> names the one coming. Without a catalog there is nothing to resolve, so it
+    /// shows at once. Returns false when the character is neither live nor stored.
+    /// </summary>
     public bool ViewCharacter(ulong contentId)
     {
         if (contentId == LiveContentId && liveSnapshot is not null)
@@ -308,12 +333,28 @@ public sealed partial class SessionState
             return true;
         }
 
+        if (Bundle is { } bundle && IsStored(contentId))
+        {
+            RequestView(contentId, bundle);
+            return true;
+        }
+
+        return ViewCharacterNow(contentId);
+    }
+
+    /// <summary>
+    /// Shows a stored character on this thread: reads its file (quarantining a corrupt one, as the store does) and
+    /// resolves it here. The path without a catalog, and the fallback for a file the worker could not read.
+    /// </summary>
+    private bool ViewCharacterNow(ulong contentId)
+    {
         var snapshot = snapshots.Load(contentId);
         if (snapshot is null)
         {
             return false;
         }
 
+        CancelPendingView();
         followLive = false;
         viewedContentId = contentId;
         ViewedSnapshot = snapshot;
@@ -349,6 +390,11 @@ public sealed partial class SessionState
         }
 
         DeleteHeartbeat(contentId);
+
+        if (pendingView?.ContentId == contentId)
+        {
+            CancelPendingView();
+        }
 
         if (ViewedContentId == contentId && contentId != LiveContentId)
         {
@@ -391,50 +437,25 @@ public sealed partial class SessionState
         return failed;
     }
 
-    /// <summary>Story sidequests and the chain catalog for a new bundle; a failure leaves both empty rather than failing the load.</summary>
-    private (StorySidequests Stories, ChainCatalog Chains) BuildChains(CatalogBundle bundle, IReadOnlySet<uint> featureQuestIds)
-    {
-        try
-        {
-            var stories = StorySidequests.Build(bundle.Catalog, featureQuestIds, Curated, UniqueRewards.Entries);
-            var chains = ChainCatalog.Build(bundle.Catalog, Curated, stories);
-            foreach (var warning in chains.Warnings)
-            {
-                log?.Warning("Chains: {Warning}", warning);
-            }
-
-            return (stories, chains);
-        }
-        catch (Exception ex)
-        {
-            log?.Warning(ex, "Story sidequests or chains could not be built");
-            return (StorySidequests.Empty, ChainCatalog.Empty);
-        }
-    }
-
     /// <summary>
     /// Swaps a finished build in. Everything derived from it is computed before anything is assigned, so a throw here
     /// leaves the previous catalog whole (the caller then reports the new one as unavailable) rather than a session
-    /// holding the new bundle beside the old indexes.
+    /// holding the new bundle beside the old indexes. The derived indexes, and the evaluations of the stored character
+    /// on view, normally come <paramref name="prepared"/> on the catalog worker (<see cref="PrepareCatalog"/>), so this
+    /// frame only assigns; without them, or for a view that changed since, they are built here as before.
     /// </summary>
-    internal void SetCatalog(CatalogBundle bundle, Core.Ui.NodeIconMap? nodeIcons = null)
+    internal void SetCatalog(CatalogBundle bundle, Core.Ui.NodeIconMap? nodeIcons = null, PreparedCatalog? prepared = null)
     {
         ArgumentNullException.ThrowIfNull(bundle);
-        var index = ReversePrereqIndex.Build(bundle.Catalog);
-        var featureQuestIds = FeaturePresets.Derive(bundle.Catalog, Curated, UniqueRewards.Entries);
-        var (stories, chains) = BuildChains(bundle, featureQuestIds);
-        // Every blocker, status line, todo row and diagnostic names quests through the viewed character's shield.
-        var names = bundle.BlockerNames() with { QuestName = quest => Spoilers.DisplayName(quest) };
-        var context = EvalContextBuilder.Build(
-            Curated.Festivals,
-            bundle.Jobs,
-            static () => DateTime.UtcNow,
-            jobParents: bundle.JobParents(),
-            satisfactionNpcName: id => bundle.Names.SatisfactionNpc(id),
-            jobRoles: bundle.JobRoles());
+        if (prepared is null || !ReferenceEquals(prepared.Bundle, bundle))
+        {
+            prepared = PrepareCatalog(bundle, resolveView: false);
+        }
 
-        // 8.0 readiness: requirement details name an expansion from the ExVersion sheet, as every other text does.
-        context = context with { ExpansionName = names.Expansion };
+        var indexes = prepared.Indexes;
+        // Every blocker, status line, todo row and diagnostic names quests through the viewed character's shield.
+        var names = prepared.Names with { QuestName = quest => Spoilers.DisplayName(quest) };
+        var context = prepared.Context;
 
         // The live evaluations belong to the previous catalog (a filing flip retires or restores rows): shown
         // against this one they would read "Locked out · removed from the game" on rows no longer retired, or Ready
@@ -444,22 +465,41 @@ public sealed partial class SessionState
         var viewedStates = States;
         if (ViewedSnapshot is { } viewed && !IsLive)
         {
-            viewedContext = StoredContext(viewed, context);
-            viewedStates = StateResolver.ResolveAll(bundle.Catalog, viewed, viewedContext);
+            var server = ServerFestivals.For(viewed, liveSnapshot, Curated.Festivals, DateTime.UtcNow);
+            if (prepared.View is { } view && ReferenceEquals(view.Snapshot, viewed) && server.SameAs(view.Server))
+            {
+                viewedContext = view.Context;
+                viewedStates = view.States;
+            }
+            else
+            {
+                viewedContext = StoredContext(server, context);
+                viewedStates = StateResolver.ResolveAll(bundle.Catalog, viewed, viewedContext);
+            }
         }
         else if (IsLive)
         {
             viewedStates = NoStates;
         }
 
+        if (indexes.ChainsError is { } chainsError)
+        {
+            log?.Warning(chainsError, "Story sidequests or chains could not be built");
+        }
+
+        foreach (var warning in indexes.Chains.Warnings)
+        {
+            log?.Warning("Chains: {Warning}", warning);
+        }
+
         Bundle = bundle;
         NodeIcons = nodeIcons ?? Core.Ui.NodeIconMap.Empty;
         CatalogError = null;
         CatalogLoading = false;
-        Index = index;
-        FeatureQuestIds = featureQuestIds;
-        Stories = stories;
-        Chains = chains;
+        Index = indexes.Index;
+        FeatureQuestIds = indexes.FeatureQuestIds;
+        Stories = indexes.Stories;
+        Chains = indexes.Chains;
         Names = names;
         // Chat, item menus and hints speak for the logged-in character, whichever one the window shows.
         LiveNames = names with { QuestName = quest => LiveSpoilers.DisplayName(quest) };
@@ -592,9 +632,11 @@ public sealed partial class SessionState
             return;
         }
 
-        if (!IsLive && ViewedSnapshot is { } viewed && Bundle is { } bundle)
+        // A stored character on view is resolved again on a worker; until it lands it keeps its states, and the bump
+        // below already moves the "resets in" texts.
+        if (!IsLive && ViewedSnapshot is { } viewed && Bundle is { } bundle && pendingView is not { Refresh: false })
         {
-            States = StateResolver.ResolveAll(bundle.Catalog, viewed, Context);
+            StartView(viewed.ContentId, bundle, viewed, refresh: true);
         }
 
         Bump();
@@ -604,10 +646,12 @@ public sealed partial class SessionState
     /// A stored character on view is resolved again when the server's running festivals changed under it (a login, a
     /// logout, an event starting or ending on the live character); nothing else about it can change here, except at a
     /// logout, when the character that was live stays on view and leaves its live context (<paramref name="force"/>).
+    /// The resolve runs on a worker (<see cref="StartView"/>); the states on view stay until it lands. A character
+    /// still being opened checks the festivals itself when it lands.
     /// </summary>
     private void RefreshStoredFestivals(bool force = false)
     {
-        if (IsLive || ViewedSnapshot is not { } viewed || Bundle is not { } bundle)
+        if (IsLive || ViewedSnapshot is not { } viewed || Bundle is not { } bundle || pendingView is { Refresh: false })
         {
             return;
         }
@@ -618,8 +662,7 @@ public sealed partial class SessionState
             return;
         }
 
-        Context = StoredContext(server);
-        States = StateResolver.ResolveAll(bundle.Catalog, viewed, Context);
+        StartView(viewed.ContentId, bundle, viewed, refresh: true);
     }
 
     /// <summary>One poll's events for the character they belong to; events of another character are dropped first.</summary>
@@ -651,6 +694,7 @@ public sealed partial class SessionState
 
     private void FollowLive()
     {
+        CancelPendingView();
         followLive = true;
         if (liveSnapshot is { } live)
         {
@@ -677,7 +721,15 @@ public sealed partial class SessionState
     private void Bump()
     {
         Version++;
+        PublishViewHint();
         listeners.Raise(Changed);
+    }
+
+    /// <summary>The stored list changed, the viewed character did not (<see cref="CharactersVersion"/>).</summary>
+    private void BumpCharacters()
+    {
+        CharactersVersion++;
+        listeners.Raise(CharactersChanged);
     }
 
     /// <summary>
