@@ -555,7 +555,10 @@ public sealed class Plugin : IDalamudPlugin
                 mainWindow.IsOpen = true;
                 mainWindow.BringToFront();
                 MoonlitPane.Reveal(ui, quest);
-            }, () => Session.LiveSpoilers);
+            }, () => Session.LiveSpoilers,
+            // The registration order (B7) follows the same character as the spoiler shield: the logged-in one, or the
+            // viewed one while nobody is logged in.
+            () => Session.IsLive || Session.LiveContentId is null ? Session.States : Session.LiveStates);
             // Item hover hints and context-menu links (V2-14). The lookup follows the Moonlit catalog reference (rebuilt
             // after an override change) and the quest catalog (set once the build finishes); both are read per use.
             var rewardLookup = new Core.Unique.RewardLookupSource(() => moonlit.Catalog, () => Session.Bundle?.Catalog);

@@ -5,6 +5,7 @@ using Dalamud.Plugin;
 using Dalamud.Plugin.Ipc;
 using Dalamud.Plugin.Ipc.Exceptions;
 using Dalamud.Plugin.Services;
+using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Query;
 using Tsukimichi.Core.Runtime;
@@ -14,8 +15,8 @@ using Tsukimichi.Ui;
 
 namespace Tsukimichi.Game;
 
-/// <summary>One Wotsit search entry: what it shows, what it matches, its icon and what happens when it is picked.</summary>
-public sealed record WotsitEntry(string DisplayName, string SearchText, uint IconId, Action Invoke);
+/// <summary>One Wotsit search entry: what it shows, what it matches, its icon, what happens when it is picked, and the quest or reward it stands for.</summary>
+public sealed record WotsitEntry(string DisplayName, string SearchText, uint IconId, Action Invoke, WotsitItem Item);
 
 /// <summary>
 /// Registers every catalog quest and every Moonlit reward with Wotsit (internal name <c>Dalamud.FindAnything</c>)
@@ -32,12 +33,27 @@ public sealed record WotsitEntry(string DisplayName, string SearchText, uint Ico
 /// and again whenever Wotsit announces itself, since a reloaded Wotsit has forgotten them.
 /// </para>
 /// <para>
+/// Order matters: Wotsit keeps only the first 26 matches per plugin, counted in the order the entries were registered,
+/// and sorts by score afterwards (Dalamud.FindAnything <c>PluginSettingsModule.Search</c>), and its default fuzzy
+/// match lets a short query hit hundreds of names. So each entry matches on its name alone, and the entries are
+/// registered by <see cref="WotsitPriority"/>: quests in the journal or Ready, then Moonlit rewards, then the other
+/// open quests, then Completed and Locked out ones (<see cref="WotsitOrder"/>). The groups follow the logged-in
+/// character's states, or the viewed character's while nobody is logged in; with no states yet every quest counts as
+/// open.
+/// </para>
+/// <para>
+/// Wotsit only appends: an entry registered again moves to the end. When an entry changes group (checked at most once
+/// every <see cref="ReorderIntervalMs"/>, and only when the states are a new instance) or its text changes (the
+/// spoiler shield moved, the language changed), the longest prefix of the new order that Wotsit already holds in that
+/// order stays, and every entry after it is replaced in order, each through <c>FA.UnregisterOne</c> and a new
+/// registration (<see cref="RegistrationDiff.KeptPrefix"/>), so Wotsit never holds fewer entries than before. A state
+/// change inside a group (accepting a Ready quest) costs nothing. A Wotsit without <c>FA.UnregisterOne</c> gets the
+/// full rebuild instead.
+/// </para>
+/// <para>
 /// A masked main scenario quest is registered under its placeholder, without its banner, so Wotsit never finds it by
-/// name. When the masked set of the logged-in character's spoiler shield changes (<see cref="SpoilerMask.Fingerprint"/>;
-/// viewing another character changes nothing here), only the entries whose text or icon changed are replaced, each
-/// through <c>FA.UnregisterOne</c> and a new registration (<see cref="RegistrationDiff"/>): an MSQ completion moves
-/// the mask by one quest, which touches a few entries, not the thousands in the catalog. A Wotsit without
-/// <c>FA.UnregisterOne</c> gets the full rebuild instead.
+/// name. Only the masked set of the logged-in character's spoiler shield counts (<see cref="SpoilerMask.Fingerprint"/>;
+/// viewing another character changes nothing here).
 /// </para>
 /// <para>
 /// Dalamud's plugin-list event and Wotsit's messages may arrive off the framework thread, so they only raise flags
@@ -58,6 +74,9 @@ public sealed class WotsitIpc : IDisposable
 
     /// <summary>Consecutive failed <c>FA.RegisterWithSearch</c> calls on one entry before the batch is given up.</summary>
     public const int MaxRegisterAttempts = BatchCursor.DefaultMaxAttempts;
+
+    /// <summary>Shortest time between two checks of whether quest state changes moved an entry to another group.</summary>
+    public const long ReorderIntervalMs = 10_000;
 
     private const string RegisterWithSearchGate = "FA.RegisterWithSearch";
     private const string UnregisterOneGate = "FA.UnregisterOne";
@@ -84,6 +103,7 @@ public sealed class WotsitIpc : IDisposable
     private Func<QuestRecord?, UniqueRewardEntry, uint>? rewardIcon;
     private Action<QuestRecord>? reveal;
     private Func<SpoilerMask>? spoilers;
+    private Func<IReadOnlyDictionary<uint, QuestEvaluation>?>? states;
 
     private CatalogBundle? registeredBundle;
     private UniqueRewardCatalog? registeredRewards;
@@ -93,6 +113,16 @@ public sealed class WotsitIpc : IDisposable
     // registered (the batch gave up) or is between its unregister and its re-registration.
     private List<WotsitEntry>? entries;
     private string?[] guids = [];
+
+    // Each position's group (the registration order is WotsitOrder.Order of these) and when it was registered, which
+    // is the order Wotsit holds the entries in; 0 = not registered.
+    private WotsitPriority[] priorities = [];
+    private long[] sequence = [];
+    private long nextSequence;
+
+    // The states the groups were last computed from, and when (Environment.TickCount64), for the reorder rate limit.
+    private IReadOnlyDictionary<uint, QuestEvaluation>? orderedStates;
+    private long lastOrderCheckMs;
 
     // The positions the current batch still has to (re)register, and where it is.
     private List<int>? pending;
@@ -183,11 +213,14 @@ public sealed class WotsitIpc : IDisposable
     /// Sources for the entries. <paramref name="bundle"/> and <paramref name="rewards"/> are polled each tick and a
     /// new instance of either triggers a rebuild; <paramref name="rewardIcon"/> answers the icon for a reward entry;
     /// <paramref name="reveal"/> runs on the framework thread when an entry is picked; <paramref name="spoilers"/> is
-    /// polled each tick too, and a change of its masked set re-registers the entries.
+    /// polled each tick too, and a change of its masked set re-registers the entries. <paramref name="states"/> (keyed
+    /// by quest row id; null or empty while unknown) sets the registration order; a new instance is looked at no more
+    /// than once every <see cref="ReorderIntervalMs"/>.
     /// </summary>
-    public void Attach(Func<CatalogBundle?> bundle, Func<UniqueRewardCatalog> rewards, Func<QuestRecord?, UniqueRewardEntry, uint> rewardIcon, Action<QuestRecord> reveal, Func<SpoilerMask>? spoilers = null)
+    public void Attach(Func<CatalogBundle?> bundle, Func<UniqueRewardCatalog> rewards, Func<QuestRecord?, UniqueRewardEntry, uint> rewardIcon, Action<QuestRecord> reveal, Func<SpoilerMask>? spoilers = null, Func<IReadOnlyDictionary<uint, QuestEvaluation>?>? states = null)
     {
         this.spoilers = spoilers;
+        this.states = states;
         this.bundle = bundle ?? throw new ArgumentNullException(nameof(bundle));
         this.rewards = rewards ?? throw new ArgumentNullException(nameof(rewards));
         this.rewardIcon = rewardIcon ?? throw new ArgumentNullException(nameof(rewardIcon));
@@ -219,8 +252,9 @@ public sealed class WotsitIpc : IDisposable
     }
 
     /// <summary>
-    /// Builds the entry list from the catalog and the Moonlit catalog. Pure; exposed for tests of the labels. A quest
-    /// <paramref name="spoilers"/> masks is listed under its placeholder, searchable by it alone, and without its banner.
+    /// Builds the entry list from the catalog and the Moonlit catalog (<see cref="WotsitOrder.Items"/>), in catalog
+    /// order: quests, then rewards. Pure. Each entry matches on its name alone. A quest <paramref name="spoilers"/> masks
+    /// is listed under its placeholder, searchable by it alone, and without its banner.
     /// </summary>
     public static List<WotsitEntry> BuildEntries(
         CatalogBundle bundle,
@@ -235,43 +269,29 @@ public sealed class WotsitIpc : IDisposable
         ArgumentNullException.ThrowIfNull(reveal);
         spoilers ??= SpoilerMask.None;
 
-        var catalog = bundle.Catalog;
-        var entries = new List<WotsitEntry>(catalog.Count + rewards.Count);
-        foreach (var quest in catalog.All)
+        var items = WotsitOrder.Items(bundle.Catalog, rewards, Strings.MoonlitKindName, bundle.Language, spoilers);
+        var entries = new List<WotsitEntry>(items.Count);
+        foreach (var item in items)
         {
-            if (quest.IsRemoved)
+            var target = item.Quest;
+            if (item.Reward is { } reward)
             {
-                // Removed from the game (retired, or left without a journal genre): nothing to find on the map, and
-                // a retired twin with the same name is listed.
-                continue;
+                entries.Add(new WotsitEntry(
+                    string.Format(System.Globalization.CultureInfo.CurrentCulture, Strings.WotsitRewardFormat, item.Name, Strings.MoonlitKindName(reward.Kind)),
+                    item.SearchText,
+                    rewardIcon(target, reward),
+                    () => reveal(target),
+                    item));
             }
-
-            var target = quest;
-            var expansion = bundle.Names.Expansion(quest.Expansion);
-            var name = spoilers.DisplayName(quest);
-            entries.Add(new WotsitEntry(
-                string.Format(System.Globalization.CultureInfo.CurrentCulture, Strings.WotsitQuestFormat, name),
-                name + " " + quest.Journal.GenreName + " " + expansion,
-                spoilers.IsMasked(quest) ? 0 : quest.Icon,
-                () => reveal(target)));
-        }
-
-        foreach (var entry in rewards.All)
-        {
-            if (catalog.GetByRowId(entry.QuestRowId) is not { } quest)
+            else
             {
-                continue;
+                entries.Add(new WotsitEntry(
+                    string.Format(System.Globalization.CultureInfo.CurrentCulture, Strings.WotsitQuestFormat, item.Name),
+                    item.SearchText,
+                    spoilers.IsMasked(target) ? 0 : target.Icon,
+                    () => reveal(target),
+                    item));
             }
-
-            var target = quest;
-            var kind = Strings.MoonlitKindName(entry.Kind);
-            var rewardName = Core.Unique.RewardNames.Display(entry, quest, bundle.Language);
-            var name = string.IsNullOrWhiteSpace(rewardName) ? kind : rewardName;
-            entries.Add(new WotsitEntry(
-                string.Format(System.Globalization.CultureInfo.CurrentCulture, Strings.WotsitRewardFormat, name, kind),
-                name + " " + kind + " " + spoilers.DisplayName(quest),
-                rewardIcon(quest, entry),
-                () => reveal(target)));
         }
 
         return entries;
@@ -324,9 +344,11 @@ public sealed class WotsitIpc : IDisposable
 
         var currentRewards = rewards();
         var currentSpoilers = spoilers?.Invoke() ?? SpoilerMask.None;
-        if (registered && ReferenceEquals(currentBundle, registeredBundle) && ReferenceEquals(currentRewards, registeredRewards)
-            && currentSpoilers.Fingerprint == registeredSpoilers && registeredLanguage == Localization.Loc.Version)
+        var sameCatalogs = registered && entries is not null
+            && ReferenceEquals(currentBundle, registeredBundle) && ReferenceEquals(currentRewards, registeredRewards);
+        if (sameCatalogs && currentSpoilers.Fingerprint == registeredSpoilers && registeredLanguage == Localization.Loc.Version)
         {
+            Reorder();
             return;
         }
 
@@ -335,15 +357,15 @@ public sealed class WotsitIpc : IDisposable
 
         var next = BuildEntries(currentBundle, currentRewards, rewardIcon, reveal, currentSpoilers);
 
-        // Same catalogs, another mask: the list has the same shape, so only the entries whose text or icon changed
-        // are replaced (an MSQ completion unmasks one quest and the reward entries that name it).
-        if (registered && entries is not null && !unregisterOneUnsupported && unregisterOne is not null
-            && ReferenceEquals(currentBundle, registeredBundle) && ReferenceEquals(currentRewards, registeredRewards)
-            && RegistrationDiff.ChangedIndices(entries, next, SameEntry) is { } changed)
+        // Same catalogs, another mask: the list has the same shape and the entries keep their groups, so only those
+        // whose text or icon changed are replaced, with whatever follows them in the order (an MSQ completion
+        // unmasks one quest).
+        if (sameCatalogs && CanReplaceOne && entries!.Count == next.Count && priorities.Length == next.Count)
         {
             registeredSpoilers = currentSpoilers.Fingerprint;
+            var previous = entries;
             entries = next;
-            StartBatch(changed);
+            StartBatch(Replacements(previous));
             return;
         }
 
@@ -355,15 +377,75 @@ public sealed class WotsitIpc : IDisposable
         registeredSpoilers = currentSpoilers.Fingerprint;
         entries = next;
         guids = new string?[next.Count];
-        var all = new List<int>(next.Count);
-        for (var i = 0; i < next.Count; i++)
-        {
-            all.Add(i);
-        }
-
-        StartBatch(all);
+        sequence = new long[next.Count];
+        orderedStates = CurrentStates();
+        lastOrderCheckMs = Environment.TickCount64;
+        priorities = orderedStates is { } known
+            ? WotsitOrder.Priorities(next, EntryItem, known)
+            : WotsitOrder.Unevaluated(next, EntryItem);
+        StartBatch(WotsitOrder.Order(priorities));
         registered = true;
     }
+
+    /// <summary>
+    /// Quest states changed: when the states are a new instance and <see cref="ReorderIntervalMs"/> has passed since
+    /// the last check, recomputes every entry's group and, if any entry changed group, re-registers what the new order
+    /// needs. Unknown states (logged out with nothing viewed, or a first pass still running) keep the order as it is.
+    /// </summary>
+    private void Reorder()
+    {
+        if (entries is null || CurrentStates() is not { } current || ReferenceEquals(current, orderedStates))
+        {
+            return;
+        }
+
+        var now = Environment.TickCount64;
+        if (now - lastOrderCheckMs < ReorderIntervalMs)
+        {
+            return;
+        }
+
+        lastOrderCheckMs = now;
+        orderedStates = current;
+        var next = WotsitOrder.Priorities(entries, EntryItem, current);
+        if (!WotsitOrder.GroupsChanged(priorities, next))
+        {
+            return;
+        }
+
+        if (!CanReplaceOne)
+        {
+            // A full rebuild on the next tick, which reads these same states.
+            registered = false;
+            return;
+        }
+
+        priorities = next;
+        var replace = Replacements(entries);
+        log.Debug("Wotsit: entries changed group; re-registering {Count} of {Total} in order", replace.Count, entries.Count);
+        StartBatch(replace);
+    }
+
+    /// <summary>
+    /// The positions to register again, in order, so that Wotsit ends up holding <see cref="entries"/> in the order
+    /// of <see cref="priorities"/>: everything after the longest prefix it already holds in that order, unchanged
+    /// since <paramref name="previous"/>.
+    /// </summary>
+    private List<int> Replacements(List<WotsitEntry> previous)
+    {
+        var current = entries!;
+        var order = WotsitOrder.Order(priorities);
+        var kept = RegistrationDiff.KeptPrefix(order, sequence, position => SameEntry(previous[position], current[position]));
+        return order.GetRange(kept, order.Count - kept);
+    }
+
+    /// <summary>The states that set the order, or null while none are known.</summary>
+    private IReadOnlyDictionary<uint, QuestEvaluation>? CurrentStates() =>
+        states?.Invoke() is { Count: > 0 } current ? current : null;
+
+    private bool CanReplaceOne => !unregisterOneUnsupported && unregisterOne is not null;
+
+    private static WotsitItem EntryItem(WotsitEntry entry) => entry.Item;
 
     /// <summary>Two entries register the same way in Wotsit: same text, search text and icon. The action is not compared (same target by position).</summary>
     private static bool SameEntry(WotsitEntry a, WotsitEntry b) =>
@@ -420,6 +502,7 @@ public sealed class WotsitIpc : IDisposable
 
                 actions.Remove(old);
                 guids[position] = null;
+                sequence[position] = 0;
             }
 
             try
@@ -429,6 +512,7 @@ public sealed class WotsitIpc : IDisposable
                 {
                     actions[guid] = entry.Invoke;
                     guids[position] = guid;
+                    sequence[position] = ++nextSequence;
                 }
             }
             catch (IpcNotReadyError)
@@ -480,6 +564,7 @@ public sealed class WotsitIpc : IDisposable
         actions.Clear();
         entries = null;
         guids = [];
+        sequence = [];
         if (unregisterAll is null || !wotsitLoaded)
         {
             return;
@@ -551,6 +636,7 @@ public sealed class WotsitIpc : IDisposable
         cursor = null;
         entries = null;
         guids = [];
+        sequence = [];
         registered = false;
         unregisterOneUnsupported = false;
     }

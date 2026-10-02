@@ -244,13 +244,29 @@ Source: `Game/LifestreamIpc.cs`.
 | Gate | Signature | Used for |
 |---|---|---|
 | `FA.RegisterWithSearch` | `(string plugin, string display, string search, uint iconId) -> string guid` | one search entry per quest and Moonlit reward |
-| `FA.UnregisterOne` | `(string plugin, string guid) -> bool` | replacing the entries the spoiler shield changes |
+| `FA.UnregisterOne` | `(string plugin, string guid) -> bool` | replacing, in order, the entries whose text (spoiler shield) or group (quest state) changed |
 | `FA.UnregisterAll` | `(string plugin) -> bool` | turning the integration off, or a new catalog |
 | `FA.Invoke` | message `(string guid)` | an entry was picked: reveal it in the Journal |
 | `FA.Available` | message, no arguments | Wotsit (re)loaded: register again |
 | `FA.IsAvailable` | `() -> bool` | whether Wotsit is ready when the plugin list lags |
 
 Source: `Game/WotsitIpc.cs`. Settings › Integrations › "Register quests and rewards with Wotsit" (on by default).
+
+Registration order matters. Read from [github.com/goaaats/Dalamud.FindAnything](https://github.com/goaaats/Dalamud.FindAnything) at commit `bee02b974d7d2189b3428dc5c1f6c7b3b56555d9` (2026-09-21):
+- Wotsit's default match mode is fuzzy (`Configuration.cs`: `MatchMode = MatchMode.Fuzzy`).
+- `FA.RegisterWithSearch` matches the query against the search text only. The display text is never matched (`IpcSystem.Register`).
+- Wotsit keeps the first 26 matching entries per plugin, in the order they were registered, and stops there (`Modules/PluginSettingsModule.cs`, the `++pluginResults > 25` break). It sorts by score only afterwards (`Finder.GetResults`).
+- `FA.UnregisterOne` removes an entry, and a new registration is appended at the end.
+
+So each entry's search text is its name alone: the quest's shown name, or the reward's name. Entries are registered by group (`Core/Runtime/WotsitOrder.cs`):
+1. Quests in the journal, Ready, or Ready on another job.
+2. Moonlit rewards.
+3. Other open quests (Blocked, done for today, not checked).
+4. Completed and Locked out quests.
+
+Within a group, entries keep the journal order. The groups follow the logged-in character's states, or the viewed character's while nobody is logged in.
+
+When an entry changes group, Tsukimichi re-registers the entries that must move. It checks at most once every 10 seconds, and only when the states changed. It keeps the longest prefix Wotsit already holds in the right order and replaces everything after it, one entry at a time.
 
 ### Questionable (internal name `Questionable`, since 1.0.0)
 

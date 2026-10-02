@@ -1,9 +1,9 @@
 namespace Tsukimichi.Core.Runtime;
 
 /// <summary>
-/// Which registered entries must be replaced when a list is rebuilt from the same sources in the same order (the
-/// Wotsit entries after a spoiler mask change): the positions whose visible fields differ. Lets the caller replace a
-/// handful of entries one by one instead of unregistering and registering the whole list.
+/// Which registered entries must be replaced when a list is rebuilt from the same sources (the Wotsit entries after a
+/// spoiler mask or quest state change): the positions whose visible fields differ, and how much of a registration
+/// order survives a change. Lets the caller replace entries one by one instead of unregistering the whole list.
 /// </summary>
 public static class RegistrationDiff
 {
@@ -32,5 +32,36 @@ public static class RegistrationDiff
         }
 
         return changed;
+    }
+
+    /// <summary>
+    /// How many leading entries of <paramref name="order"/> may stay registered in a registry that keeps entries in
+    /// the order they were registered and can only append (Wotsit): the longest prefix of <paramref name="order"/>
+    /// whose entries are registered (<paramref name="sequence"/> above 0), unchanged per <paramref name="unchanged"/>,
+    /// and already in that relative order. Every entry from that index on must be unregistered and registered again,
+    /// in <paramref name="order"/>, to leave the registry in exactly that order.
+    /// </summary>
+    /// <param name="order">Positions in the order the registry should hold them.</param>
+    /// <param name="sequence">Per position, when it was registered (ascending with each registration); 0 when it is not registered.</param>
+    /// <param name="unchanged">Whether the registered entry at a position still matches the one to register there.</param>
+    public static int KeptPrefix(IReadOnlyList<int> order, IReadOnlyList<long> sequence, Func<int, bool> unchanged)
+    {
+        ArgumentNullException.ThrowIfNull(order);
+        ArgumentNullException.ThrowIfNull(sequence);
+        ArgumentNullException.ThrowIfNull(unchanged);
+        long last = 0;
+        for (var i = 0; i < order.Count; i++)
+        {
+            var position = order[i];
+            var registered = position < sequence.Count ? sequence[position] : 0;
+            if (registered <= last || !unchanged(position))
+            {
+                return i;
+            }
+
+            last = registered;
+        }
+
+        return order.Count;
     }
 }
