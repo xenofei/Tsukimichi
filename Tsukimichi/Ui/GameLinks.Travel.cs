@@ -173,6 +173,7 @@ public sealed partial class GameLinks
     private readonly Dictionary<uint, uint> regions = [];
     private AetheryteIndex? aetherytes;
     private EntranceIndex? entrances;
+    private System.Threading.CancellationTokenSource? warmCancel;
     private Func<uint, bool>? isAttuned;
     private Func<uint, bool>? isShardAttuned;
 
@@ -228,7 +229,8 @@ public sealed partial class GameLinks
 
     /// <summary>
     /// The ways into interiors (doors, NPCs and zone lines from the game's layout files), resolved per territory on
-    /// first use; empty when the index cannot be made, which leaves interiors to the aetheryte their zone names.
+    /// first use, and for every giver's territory ahead on a worker (<see cref="WarmEntrances"/>); empty when the index
+    /// cannot be made, which leaves interiors to the aetheryte their zone names.
     /// </summary>
     public EntranceIndex Entrances
     {
@@ -239,6 +241,8 @@ public sealed partial class GameLinks
                 try
                 {
                     entrances = EntranceIndex.Create(data.Excel, path => data.GetFile<LgbFile>(path), Aetherytes, data.Language.ToLumina());
+                    entrances.OnError = (ex, territory) =>
+                        log.Warning(ex, "Interior entrance for territory {Territory} could not be read; givers there use their zone's aetheryte", territory);
                 }
                 catch (Exception ex)
                 {
@@ -249,6 +253,60 @@ public sealed partial class GameLinks
 
             return entrances;
         }
+    }
+
+    /// <summary>
+    /// Moves when the ways into interiors became known (a warm-up ended); a cache of givers' aetherytes
+    /// (<see cref="GiverAetheryte"/>) keys on it, as it answered with the zone's aetheryte meanwhile.
+    /// </summary>
+    public int EntranceRevision => entrances?.Revision ?? 0;
+
+    /// <summary>
+    /// Resolves the way into every interior a quest giver of <paramref name="catalog"/> stands in, on a worker thread,
+    /// so Next stops and the route window never resolve dozens in one frame. Call on the framework thread after a
+    /// catalog loads; the aetheryte index is built here first, as the entrances need it. Until it ends,
+    /// <see cref="GiverAetheryte"/> answers with the zone's aetheryte for a giver not resolved yet, and
+    /// <see cref="EntranceRevision"/> then moves.
+    /// </summary>
+    public void WarmEntrances(QuestCatalog catalog)
+    {
+        ArgumentNullException.ThrowIfNull(catalog);
+        var index = Entrances;
+        if (ReferenceEquals(index, EntranceIndex.Empty))
+        {
+            return;
+        }
+
+        var territories = new HashSet<uint>();
+        foreach (var quest in catalog.All)
+        {
+            if (quest.Issuer is { TerritoryId: > 0 } issuer && index.IsInterior(issuer.TerritoryId))
+            {
+                territories.Add(issuer.TerritoryId);
+            }
+        }
+
+        warmCancel ??= new System.Threading.CancellationTokenSource();
+        var token = warmCancel.Token;
+        System.Threading.Tasks.Task.Run(() =>
+        {
+            try
+            {
+                var started = System.Diagnostics.Stopwatch.GetTimestamp();
+                index.Warm(territories, token);
+                log.Debug("Interior entrances: {Count} resolved ahead in {Ms:F0} ms", territories.Count, System.Diagnostics.Stopwatch.GetElapsedTime(started).TotalMilliseconds);
+            }
+            catch (Exception ex)
+            {
+                log.Warning(ex, "Interior entrances could not be resolved ahead; they are resolved on first use");
+            }
+        });
+    }
+
+    /// <summary>Stops a warm-up under way (the plugin unloads).</summary>
+    public void StopWarmingEntrances()
+    {
+        warmCancel?.Cancel();
     }
 
     /// <summary>True while Lifestream is loaded. Teleport buttons show either way; without it they are disabled and name it.</summary>

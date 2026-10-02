@@ -190,6 +190,28 @@ public class CompanionSetupTests
     }
 
     [Fact]
+    public void Apply_sets_only_the_confirmed_settings_still_set_otherwise()
+    {
+        // The confirmation listed Manage rotation and Unsynced. Read again at confirm time: Manage rotation was set by
+        // hand meanwhile, and Leave duty turned up set otherwise (never confirmed).
+        string[] confirmed = ["autoduty.manage-rotation", "autoduty.unsynced"];
+        var now = CompanionSetupEvaluator.Evaluate(
+            Loaded(CompanionPlugin.AutoDuty),
+            CompanionSetupCatalog.For(CompanionPlugin.AutoDuty),
+            static r => r.Id switch
+            {
+                "autoduty.manage-rotation" => SetupReading.Of("True"),
+                "autoduty.unsynced" => SetupReading.Of("True"),
+                "autoduty.leave-duty" => SetupReading.Of("False"),
+                _ => SetupReading.Unread,
+            });
+
+        Assert.Equal(["autoduty.leave-duty", "autoduty.unsynced"], now.Applicable.Select(static r => r.Requirement.Id));
+        Assert.Equal(["autoduty.unsynced"], now.ApplicableOf(confirmed).Select(static r => r.Requirement.Id));
+        Assert.Empty(now.ApplicableOf([]));
+    }
+
+    [Fact]
     public void The_catalog_is_consistent()
     {
         var ids = CompanionSetupCatalog.All.Select(static r => r.Id).ToList();

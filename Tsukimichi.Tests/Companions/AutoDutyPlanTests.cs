@@ -82,6 +82,8 @@ public class AutoDutyPlanTests
         Assert.Equal(AutoDutyBlocker.NeedsBossMod, AutoDutyPlan.Choose(Sastasha, Ready with { BossMod = CompanionState.Missing }).Blocker);
         Assert.Equal(AutoDutyBlocker.NotLive, AutoDutyPlan.Choose(Sastasha, Ready with { Live = false }).Blocker);
         Assert.Equal(AutoDutyBlocker.Busy, AutoDutyPlan.Choose(Sastasha, Ready with { Busy = true }).Blocker);
+        Assert.Equal(AutoDutyBlocker.Busy, AutoDutyPlan.Choose(Sastasha, Ready with { Busy = true, Traveling = true }).Blocker);
+        Assert.Equal(AutoDutyBlocker.Traveling, AutoDutyPlan.Choose(Sastasha, Ready with { Traveling = true }).Blocker);
         Assert.Equal(AutoDutyBlocker.NoPath, AutoDutyPlan.Choose(Sastasha, Ready with { HasPath = false }).Blocker);
         Assert.Equal(AutoDutyBlocker.NoPath, AutoDutyPlan.Choose(Sastasha, Ready with { HasPath = null }).Blocker);
         Assert.Equal(AutoDutyBlocker.Locked, AutoDutyPlan.Choose(Sastasha, Ready with { Unlocked = false }).Blocker);

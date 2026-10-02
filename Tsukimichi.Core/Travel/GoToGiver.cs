@@ -46,8 +46,17 @@ public interface ITravelPorts
     /// <summary>True when vnavmesh has a navmesh for the current territory.</summary>
     bool NavReady { get; }
 
+    /// <summary>The player's height (raw y), or null when there is no player object.</summary>
+    float? Height { get; }
+
     /// <summary>True while vnavmesh follows a path or is still finding one.</summary>
     bool Walking { get; }
+
+    /// <summary>True while vnavmesh is still finding a path (its pathfind task is pending; nothing moves yet).</summary>
+    bool Pathfinding { get; }
+
+    /// <summary>How many waypoints vnavmesh's path has left, or null when vnavmesh cannot say.</summary>
+    int? Waypoints { get; }
 
     /// <summary>True while the character is on a mount.</summary>
     bool Mounted { get; }
@@ -149,8 +158,11 @@ public readonly record struct GoToGiverOutcome(GoToGiverStep Step, GoToGiverFail
 /// update with a millisecond clock and the machine reads and acts through <see cref="ITravelPorts"/>. Every step can
 /// be cancelled (<see cref="Cancel"/>, one Stop) and every wait has a deadline, so a run always ends; the ending is
 /// returned once from the call that reached it, for the plugin's chat line. A mount that does not come is not a
-/// failure: the walk goes on foot. A walk that stops making progress gets one new path, then fails as stuck. The
-/// character is never dismounted.
+/// failure: the walk goes on foot. A walk that stops making progress gets one new path, then fails as stuck: progress
+/// is the character's own movement or vnavmesh's path getting shorter, not the straight line to the goal (a path
+/// around a wall moves away from it for a while), and a pathfind still running is progress too (no new path is asked
+/// for while one is pending). The character is never dismounted: Dismount is pressed once in the air and again only
+/// when the mount has not come down at all.
 /// </summary>
 public sealed class GoToGiver
 {
@@ -187,14 +199,17 @@ public sealed class GoToGiver
     /// <summary>Without a mount by then, the walk goes on foot.</summary>
     public const long MountTimeoutMs = 8_000;
 
-    /// <summary>A walk that comes no <see cref="StuckProgress"/> closer in this long is stuck.</summary>
+    /// <summary>A walk that makes no progress (<see cref="StuckMove"/>, fewer waypoints, a pathfind) in this long is stuck.</summary>
     public const long StuckMs = 15_000;
 
-    /// <summary>How much closer (raw units) the walk must come to count as progress.</summary>
-    public const float StuckProgress = 2f;
+    /// <summary>How far (raw units) the character must move from where it last made progress to count as progress.</summary>
+    public const float StuckMove = 5f;
 
-    /// <summary>How often the landing is asked for again while the mount is still in the air.</summary>
-    public const long LandRetryMs = 1_000;
+    /// <summary>How long after a Dismount press the height is checked: dropped, the mount is coming down; else pressed again.</summary>
+    public const long LandRetryMs = 2_000;
+
+    /// <summary>How much lower (raw units) the character must be to count as coming down.</summary>
+    public const float LandDrop = 1f;
 
     /// <summary>The longest the mount may take to come down.</summary>
     public const long LandTimeoutMs = 15_000;
@@ -208,8 +223,10 @@ public sealed class GoToGiver
     private bool sawWalking;
     private long lastPress;
     private bool pressedAgain;
-    private float bestDistance;
+    private (float X, float Y, float Z)? progressFrom;
+    private int? progressWaypoints;
     private long progressAt;
+    private float? landHeight;
     private bool repathed;
 
     public GoToGiver(ITravelPorts ports)
@@ -293,6 +310,22 @@ public sealed class GoToGiver
         else if (Step is GoToGiverStep.Teleporting or GoToGiverStep.Hopping && ports.LifestreamBusy)
         {
             ports.AbortLifestream();
+        }
+
+        Step = GoToGiverStep.Cancelled;
+        return new GoToGiverOutcome(Step, GoToGiverFailure.None);
+    }
+
+    /// <summary>
+    /// Ends the run without touching vnavmesh or Lifestream: another plugin (Questionable, AutoDuty) took the character
+    /// over and now moves it through vnavmesh itself, so stopping "our" walk would stop theirs. The ending, or null when
+    /// nothing ran.
+    /// </summary>
+    public GoToGiverOutcome? Abandon()
+    {
+        if (!IsActive)
+        {
+            return null;
         }
 
         Step = GoToGiverStep.Cancelled;
@@ -525,9 +558,20 @@ public sealed class GoToGiver
         }
 
         Enter(GoToGiverStep.Walking, now);
-        bestDistance = GoalDistance(plan);
-        progressAt = now;
+        MarkProgress(now);
         return null;
+    }
+
+    /// <summary>Where the character stands now, height included; null without a player.</summary>
+    private (float X, float Y, float Z)? Here() =>
+        ports.Position is { } at ? (at.X, ports.Height ?? 0f, at.Z) : null;
+
+    /// <summary>The walk made progress now: the next is measured from here and from this many waypoints.</summary>
+    private void MarkProgress(long now)
+    {
+        progressFrom = Here();
+        progressWaypoints = ports.Waypoints;
+        progressAt = now;
     }
 
     private GoToGiverOutcome? TickWalking(GoToGiverPlan plan, long now)
@@ -559,6 +603,7 @@ public sealed class GoToGiver
             ports.StartLanding();
             Enter(GoToGiverStep.Landing, now);
             lastPress = now;
+            landHeight = ports.Height;
             return null;
         }
 
@@ -566,23 +611,33 @@ public sealed class GoToGiver
     }
 
     /// <summary>
-    /// Stuck detection while vnavmesh walks: no <see cref="StuckProgress"/> closer for <see cref="StuckMs"/> gets one
-    /// new path; stuck again fails.
+    /// Stuck detection while vnavmesh walks. Progress is the character moving <see cref="StuckMove"/> from where it last
+    /// made progress (height included: a take-off counts), vnavmesh's path having fewer waypoints left, or a pathfind
+    /// still running; the straight line to the goal plays no part, as a path around an obstacle moves away from it. No
+    /// progress for <see cref="StuckMs"/> gets one new path (never while a pathfind is pending: vnavmesh would refuse
+    /// it, and the pending one would still move the character); stuck again fails.
     /// </summary>
     private GoToGiverOutcome? CheckProgress(GoToGiverPlan plan, long now)
     {
-        var distance = GoalDistance(plan);
-        if (float.IsNaN(distance))
+        if (ports.Pathfinding || Here() is not { } here)
         {
-            progressAt = now;
+            MarkProgress(now);
             return null;
         }
 
-        if (float.IsNaN(bestDistance) || distance < bestDistance - StuckProgress)
+        var waypoints = ports.Waypoints;
+        var moved = progressFrom is not { } from || Moved(from, here) >= StuckMove;
+        var shorter = waypoints is { } left && progressWaypoints is { } before && left < before;
+        if (moved || shorter)
         {
-            bestDistance = distance;
-            progressAt = now;
+            MarkProgress(now);
             return null;
+        }
+
+        if (waypoints is { } count && (progressWaypoints is not { } known || count > known))
+        {
+            // vnavmesh planned anew (more waypoints than before): measure from the new path, without counting it as progress.
+            progressWaypoints = count;
         }
 
         if (now - progressAt < StuckMs)
@@ -603,9 +658,16 @@ public sealed class GoToGiver
         }
 
         Enter(GoToGiverStep.Walking, now);
-        bestDistance = distance;
-        progressAt = now;
+        MarkProgress(now);
         return null;
+    }
+
+    private static float Moved((float X, float Y, float Z) from, (float X, float Y, float Z) to)
+    {
+        var dx = to.X - from.X;
+        var dy = to.Y - from.Y;
+        var dz = to.Z - from.Z;
+        return MathF.Sqrt((dx * dx) + (dy * dy) + (dz * dz));
     }
 
     private GoToGiverOutcome? TickLanding(GoToGiverPlan plan, long now)
@@ -625,12 +687,23 @@ public sealed class GoToGiver
             return Fail(GoToGiverFailure.LandingFailed);
         }
 
-        if (now - lastPress >= LandRetryMs)
+        if (now - lastPress < LandRetryMs)
         {
-            lastPress = now;
-            ports.StartLanding();
+            return null;
         }
 
+        // Lower than at the last check: the mount is coming down, leave it be. Pressed again only when it has not come
+        // down at all, since a press that lands on the ground would dismount the character.
+        var height = ports.Height;
+        lastPress = now;
+        if (height is { } y && landHeight is { } before && y < before - LandDrop)
+        {
+            landHeight = y;
+            return null;
+        }
+
+        landHeight = height;
+        ports.StartLanding();
         return null;
     }
 

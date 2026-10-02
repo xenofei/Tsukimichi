@@ -73,7 +73,7 @@ public sealed class AutoDutySettingGates : ICompanionSettingGates
 
     public bool CanSetNow => autoDuty.Available && setConfig is not null && autoDuty.IsStopped;
 
-    public bool Set(string key, string value)
+    public bool Set(string key, string value, string readKey)
     {
         if (!CanSetNow)
         {
@@ -95,7 +95,7 @@ public sealed class AutoDutySettingGates : ICompanionSettingGates
         }
 
         // SetConfig answers nothing; read the value back.
-        return Get(key) is { Read: true, Value: { } now } && string.Equals(now, value, StringComparison.OrdinalIgnoreCase);
+        return Get(readKey) is { Read: true, Value: { } now } && string.Equals(now, value, StringComparison.OrdinalIgnoreCase);
     }
 
     private void WarnOnce(Exception ex, string message)
@@ -117,7 +117,7 @@ public sealed class AutoDutySettingGates : ICompanionSettingGates
 /// <c>TextAdvance/Services/IPCProvider.cs</c> at 9dee627, EzIPC under the internal name: <c>GetEnableQuestAccept</c>,
 /// <c>GetEnableQuestComplete</c>, <c>GetEnableTalkSkip</c>, each the value in force, and <c>IsPaused</c>; read only)
 /// and vnavmesh (awgil/ffxiv_navmesh <c>vnavmesh/IPCProvider.cs</c> at 6fc8072: <c>Nav.IsAutoLoad</c> and
-/// <c>Nav.SetAutoLoad(bool)</c>, which saves vnavmesh's configuration).
+/// <c>Nav.SetAutoLoad(bool)</c>, which saves vnavmesh's configuration). A set is read back through the getter.
 /// </summary>
 public sealed class BoolSettingGates : ICompanionSettingGates
 {
@@ -168,7 +168,7 @@ public sealed class BoolSettingGates : ICompanionSettingGates
         }
     }
 
-    public bool Set(string key, string value)
+    public bool Set(string key, string value, string readKey)
     {
         if (!bool.TryParse(value, out var on)
             || !companions.IsLoaded(plugin)
@@ -180,7 +180,6 @@ public sealed class BoolSettingGates : ICompanionSettingGates
         try
         {
             gate.InvokeAction(on);
-            return true;
         }
         catch (IpcNotReadyError)
         {
@@ -191,6 +190,9 @@ public sealed class BoolSettingGates : ICompanionSettingGates
             WarnOnce(ex, prefix + key + " failed");
             return false;
         }
+
+        // The setter answers nothing (vnavmesh's Nav.SetAutoLoad); read the value back through the getter.
+        return Get(readKey) is { Read: true, Value: { } now } && bool.TryParse(now, out var taken) && taken == on;
     }
 
     private T? Gate<T>(Dictionary<string, T?> cache, string key, Func<IDalamudPluginInterface, string, T> subscribe)

@@ -24,8 +24,15 @@ public static class GiverTravel
     public static TravelGoal Goal(Issuer issuer, EntranceIndex entrances, uint playerTerritory)
     {
         ArgumentNullException.ThrowIfNull(entrances);
-        return TravelPlanner.Goal(Place(issuer), entrances.For(issuer.TerritoryId), playerTerritory);
+        return Goal(issuer, entrances.For(issuer.TerritoryId), playerTerritory);
     }
+
+    /// <summary>
+    /// The goal for a giver, given the way into its territory as looked up already (<see cref="EntranceIndex.Peek"/>);
+    /// a null <paramref name="entrance"/> aims at the giver itself, whose zone's aetheryte Teleport then picks.
+    /// </summary>
+    public static TravelGoal Goal(Issuer issuer, InteriorEntrance? entrance, uint playerTerritory) =>
+        TravelPlanner.Goal(Place(issuer), entrance, playerTerritory);
 
     /// <summary>
     /// The aetheryte the game links to the goal's zone (a TerritoryType row's): the giver's zone's when the goal is the

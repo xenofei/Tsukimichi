@@ -24,7 +24,10 @@ namespace Tsukimichi.Game;
 /// empty until the player object exists, so an empty read (or no player) is not taken as "nothing attuned": the list
 /// stays unknown and is read again next frame. <see cref="AttunementRevision"/> moves whenever the answers change. A
 /// walk or chain this service started is stopped when the player leaves the zone (the chain's own check), on logout and
-/// when the plugin unloads; a walk another plugin started is never stopped from here.
+/// when the plugin unloads; a walk another plugin started is never stopped from here. A stopped walk whose pathfind is
+/// still pending in vnavmesh is stopped again the moment its path starts to run (<see cref="PendingWalkStop"/>). When
+/// Questionable or AutoDuty is seen running during a trip (started from their own windows), the trip ends without
+/// touching vnavmesh: the walk is theirs now.
 /// <para>Mounting, Sprint and landing a flying mount (travel review, 1.10) are the game's general actions through
 /// FFXIVClientStructs' <c>ActionManager</c> (Mount Roulette or the chosen mount, Sprint, and Dismount, which brings a
 /// flying mount down), only while the shared <see cref="HookGate"/> allows game calls and only during a Walk or Go to
@@ -52,6 +55,7 @@ public sealed class TravelService : ITravelPorts, IDisposable
     private readonly IUnlockState unlocks;
     private readonly IPluginLog log;
     private readonly GoToGiver journey;
+    private readonly PendingWalkStop pendingStop = new();
 
     private Dictionary<uint, (uint Gil, bool Favourite)> attuned = [];
     private HashSet<uint> attunedShards = [];
@@ -106,6 +110,12 @@ public sealed class TravelService : ITravelPorts, IDisposable
 
     /// <summary>Settings › Integrations › Travel › Mount: the chosen mount's row, 0 for Mount Roulette; Roulette when unset.</summary>
     public Func<uint>? MountChoice { get; set; }
+
+    /// <summary>Whether Questionable runs (its cached status); a trip under way then ends and leaves vnavmesh to it. Unset reads as not running.</summary>
+    public Func<bool>? QuestionableRunning { get; set; }
+
+    /// <summary>Whether AutoDuty is not stopped (its cached state); a trip under way then ends and leaves vnavmesh to it. Unset reads as stopped.</summary>
+    public Func<bool>? AutoDutyRunning { get; set; }
 
     /// <summary>The settings' movement options now (<see cref="TravelOptions.OnFoot"/> when unset); every new plan carries them.</summary>
     public TravelOptions CurrentOptions => Options?.Invoke() ?? TravelOptions.OnFoot;
@@ -284,6 +294,9 @@ public sealed class TravelService : ITravelPorts, IDisposable
     public (float X, float Z)? Position => position is { } p ? (p.X, p.Z) : null;
 
     /// <inheritdoc />
+    public float? Height => position?.Y;
+
+    /// <inheritdoc />
     public bool BetweenAreas => condition[ConditionFlag.BetweenAreas] || condition[ConditionFlag.BetweenAreas51];
 
     public bool InCombat => condition[ConditionFlag.InCombat];
@@ -375,6 +388,12 @@ public sealed class TravelService : ITravelPorts, IDisposable
     /// <summary>True while vnavmesh moves the character, whoever asked it to.</summary>
     public bool Walking => Vnavmesh.IsWalking;
 
+    /// <inheritdoc />
+    public bool Pathfinding => Vnavmesh.IsPathfinding;
+
+    /// <inheritdoc />
+    public int? Waypoints => Vnavmesh.Waypoints;
+
     /// <summary>
     /// Starts a Go to giver chain (or, with <see cref="GoToGiverPlan.WalkOnly"/>, a lone walk), replacing any under way.
     /// <paramref name="target"/> names where it heads for the status line; <paramref name="arrivalNote"/> is the chat
@@ -457,7 +476,18 @@ public sealed class TravelService : ITravelPorts, IDisposable
         shardId == GoToGiverPlan.FirmamentHop ? Lifestream.AethernetTeleportToFirmament() : Lifestream.AethernetTeleport(shardId);
 
     /// <inheritdoc />
-    public bool StartWalk(GoToGiverPlan plan, bool fly) => Vnavmesh.MoveCloseTo(new Vector3(plan.GoalX, plan.GoalY, plan.GoalZ), WalkRange, fly);
+    public bool StartWalk(GoToGiverPlan plan, bool fly)
+    {
+        if (!Vnavmesh.MoveCloseTo(new Vector3(plan.GoalX, plan.GoalY, plan.GoalZ), WalkRange, fly))
+        {
+            // Refused (a pathfind still pending among the reasons): a stop still waiting for one keeps waiting.
+            return false;
+        }
+
+        // vnavmesh took a new walk, so no pathfind of a stopped one is left to catch.
+        pendingStop.Disarm();
+        return true;
+    }
 
     /// <inheritdoc />
     public bool Mounted => condition[ConditionFlag.Mounted];
@@ -488,8 +518,9 @@ public sealed class TravelService : ITravelPorts, IDisposable
     }
 
     /// <inheritdoc />
+    /// <remarks>Only while the mount is in the air, read again right before the press: on the ground Dismount would dismount.</remarks>
     public bool StartLanding() =>
-        Gate is { HooksAllowed: true } && CanUse(ActionType.GeneralAction, DismountAction) && UseAction(ActionType.GeneralAction, DismountAction);
+        Gate is { HooksAllowed: true } && InFlight && CanUse(ActionType.GeneralAction, DismountAction) && UseAction(ActionType.GeneralAction, DismountAction);
 
     /// <inheritdoc />
     public bool StartSprint() => Gate is { HooksAllowed: true } && UseAction(ActionType.GeneralAction, SprintAction);
@@ -598,7 +629,15 @@ public sealed class TravelService : ITravelPorts, IDisposable
     }
 
     /// <inheritdoc />
-    public void StopWalk() => Vnavmesh.Stop();
+    /// <remarks>
+    /// Called by the chain only for a walk it asked for. vnavmesh's stop clears the path being followed but not a
+    /// pathfind still pending, so the stop stays armed for that one (<see cref="PendingWalkStop"/>).
+    /// </remarks>
+    public void StopWalk()
+    {
+        Vnavmesh.Stop();
+        pendingStop.Arm(Environment.TickCount64);
+    }
 
     /// <inheritdoc />
     public void AbortLifestream() => Lifestream.Abort();
@@ -616,11 +655,46 @@ public sealed class TravelService : ITravelPorts, IDisposable
                 RefreshAttunement(now);
             }
 
+            if ((journey.IsActive || pendingStop.Armed) && TakenOver() is { } takenBy)
+            {
+                // Questionable or AutoDuty, started from its own window, drives the character through vnavmesh now: end
+                // the trip without stopping vnavmesh (that would stop their walk), and no pending stop either.
+                pendingStop.Disarm();
+                if (journey.Abandon() is not null)
+                {
+                    log.Information("Go to giver ended: {Plugin} took over", takenBy);
+                    PrintLine(string.Format(CultureInfo.CurrentCulture, journeyIsWalkOnly ? Strings.TravelWalkStoppedFormat : Strings.TravelGoToStoppedFormat, string.Format(CultureInfo.CurrentCulture, Strings.TravelFailTakenOverFormat, takenBy)));
+                }
+            }
+
             Report(journey.Tick(now));
+            TickPendingStop(now);
         }
         catch (Exception ex)
         {
             WarnOnce(ex, "Travel update failed");
+        }
+    }
+
+    /// <summary>The plugin that now drives the character ("Questionable", "AutoDuty"), or null when neither runs.</summary>
+    private string? TakenOver() =>
+        QuestionableRunning?.Invoke() == true ? "Questionable"
+        : AutoDutyRunning?.Invoke() == true ? "AutoDuty"
+        : null;
+
+    /// <summary>While a stopped walk's pathfind is pending, stops its path the frame it starts to run.</summary>
+    private void TickPendingStop(long now)
+    {
+        if (!pendingStop.Armed)
+        {
+            return;
+        }
+
+        var (pathfinding, running) = Vnavmesh.ReadMotion();
+        if (pendingStop.Tick(now, pathfinding, running))
+        {
+            log.Information("Stopped a walk whose path was still being found when it was stopped");
+            Vnavmesh.Stop();
         }
     }
 

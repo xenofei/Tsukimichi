@@ -168,6 +168,17 @@ public sealed record PluginSetup(CompanionStatus Status, IReadOnlyList<SetupResu
 
     /// <summary>The settings "Apply recommended settings" would change: not as recommended, and settable.</summary>
     public IReadOnlyList<SetupResult> Applicable => Results.Where(static r => r.Check == SetupCheck.NeedsChange && r.Requirement.CanApply).ToList();
+
+    /// <summary>
+    /// The settings an Apply the player confirmed may change: those of <paramref name="confirmed"/> (requirement ids, the
+    /// list the confirmation showed) still <see cref="Applicable"/> as read now. One set meanwhile (by hand, or a plugin
+    /// reloaded) is left alone, and nothing the confirmation did not list is ever added.
+    /// </summary>
+    public IReadOnlyList<SetupResult> ApplicableOf(IReadOnlyCollection<string> confirmed)
+    {
+        ArgumentNullException.ThrowIfNull(confirmed);
+        return Applicable.Where(r => confirmed.Contains(r.Requirement.Id)).ToList();
+    }
 }
 
 /// <summary>The line at the top of Companion plugins: whether everything full automation needs is loaded and set up.</summary>

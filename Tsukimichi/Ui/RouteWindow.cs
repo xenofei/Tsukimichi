@@ -62,6 +62,7 @@ public sealed class RouteWindow : Window
     private int builtVersion = -1;
     private CatalogBundle? builtBundle;
     private RouteTarget? builtTarget;
+    private int builtEntrances = -1;
     private View view = View.Empty;
     private Theme.StyleScope nightChrome;
 
@@ -769,10 +770,12 @@ public sealed class RouteWindow : Window
         }
     }
 
-    /// <summary>Rebuilds the route and every string it shows when the target, the catalog or the session changed.</summary>
+    /// <summary>Rebuilds the route and every string it shows when the target, the catalog, the session or the known ways into interiors changed.</summary>
     private void Refresh(CatalogBundle bundle, RouteTarget routeTarget)
     {
-        if (builtVersion == session.Version && ReferenceEquals(builtBundle, bundle) && ReferenceEquals(builtTarget, routeTarget))
+        // The ways into interiors becoming known (resolved ahead on a worker) moves givers inside them to their door's aetheryte.
+        var entrances = links.EntranceRevision;
+        if (builtVersion == session.Version && ReferenceEquals(builtBundle, bundle) && ReferenceEquals(builtTarget, routeTarget) && builtEntrances == entrances)
         {
             return;
         }
@@ -780,6 +783,7 @@ public sealed class RouteWindow : Window
         builtVersion = session.Version;
         builtBundle = bundle;
         builtTarget = routeTarget;
+        builtEntrances = entrances;
 
         var catalog = bundle.Catalog;
         var states = session.States;

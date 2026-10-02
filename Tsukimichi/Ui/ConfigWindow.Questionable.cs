@@ -81,5 +81,17 @@ public sealed partial class ConfigWindow
                 UiMetrics.Tooltip(Strings.ConfigQuestionableConfirmStartHint);
             }
         }
+
+        if (Row(Strings.ConfigQuestionableConfirmStopCommand, Strings.ConfigQuestionableConfirmStopCommandHint, "questionable stop confirm ask command after lifestream"))
+        {
+            var confirm = settings.QuestionableConfirmStopCommand;
+            if (ImGui.Checkbox(Strings.ConfigQuestionableConfirmStopCommand, ref confirm))
+            {
+                settings.QuestionableConfirmStopCommand = confirm;
+                Save();
+            }
+
+            HintOnHover(Strings.ConfigQuestionableConfirmStopCommandHint);
+        }
     }
 }

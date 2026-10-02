@@ -150,7 +150,9 @@ public sealed partial class GameLinks(IGameGui gameGui, IChatGui chat, IDataMana
     /// <summary>
     /// The aetheryte nearest the quest's giver, attuned or not (id and place name), for grouping quests into stops:
     /// it reads the sheets only, never the character, so a stop list cached per catalog stays right as aetherytes are
-    /// attuned. A giver inside an interior groups under the aetheryte nearest its way in, as Teleport goes there.
+    /// attuned. A giver inside an interior groups under the aetheryte nearest its way in, as Teleport goes there; while
+    /// the ways in are still being resolved ahead (<see cref="WarmEntrances"/>), one not resolved yet groups under its
+    /// zone's aetheryte, and <see cref="EntranceRevision"/> moves once they are known so the lists are built again.
     /// Teleport's own target, the nearest attuned one, is <see cref="CheckTeleport"/>'s. Null without a giver place or
     /// an aetheryte for its zone.
     /// </summary>
@@ -162,7 +164,10 @@ public sealed partial class GameLinks(IGameGui gameGui, IChatGui chat, IDataMana
         }
 
         var index = Aetherytes;
-        var goal = GiverTravel.Goal(issuer, Entrances, 0);
+        var entrances = Entrances;
+        var goal = entrances.Warming
+            ? GiverTravel.Goal(issuer, entrances.Peek(issuer.TerritoryId, out var known) ? known : null, 0)
+            : GiverTravel.Goal(issuer, entrances, 0);
         return GiverTravel.Arrival(index, issuer.TerritoryId, goal, static _ => true).Nearest is { } node && index.Find(node.RowId) is { } aetheryte
             ? (aetheryte.RowId, aetheryte.Name)
             : null;

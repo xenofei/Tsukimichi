@@ -423,7 +423,7 @@ public sealed partial class DetailPane
             case ActionKind.Questionable when QuestionableActions is { } questionable:
                 if (slot.Stop)
                 {
-                    questionable.Stop();
+                    questionable.Stop(MainWindow.QuestionableHost);
                 }
                 else
                 {
@@ -469,7 +469,7 @@ public sealed partial class DetailPane
             ActionKind.GoTo => links.GoToTooltip(quest, goToCheck),
             ActionKind.Walk => links.WalkTooltip(quest, walkCheck),
             ActionKind.Teleport => links.TeleportTooltip(quest, teleportCheck),
-            ActionKind.Questionable when slot.Stop => QuestionableActions?.CanStop == true ? Strings.QuestionableStopTooltip : Strings.QuestionableStopNoGate,
+            ActionKind.Questionable when slot.Stop => QuestionableActions?.StopTooltip() ?? Strings.QuestionableStopNoGate,
             ActionKind.Questionable => questionableBlocker ?? Strings.ActionQuestionableStartTooltip,
             ActionKind.AutoDuty when slot.Stop => Strings.AutoDutyStopTooltip,
             _ => AutoDutyTooltip(),

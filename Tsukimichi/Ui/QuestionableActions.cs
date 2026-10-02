@@ -15,7 +15,7 @@ namespace Tsukimichi.Ui;
 
 /// <summary>
 /// The Questionable hand-offs every pane shares (feature plan v5, 1.6.0, decision 1): "Send to Questionable" with its
-/// menu (Add to Questionable's list, Add and start, Replace Questionable's list…, Stop while it runs), the two
+/// menu (Add to Questionable's list, Add and start, Replace Questionable's list…, Stop while it runs), the
 /// confirmations, the result line in chat, the live status text, the row Questionable works on, and the "on its list"
 /// and "has a path" badges. A pane draws a button (<see cref="DrawButton{T}"/>, <see cref="DrawIconButton{T}"/>) or a
 /// submenu of its own context menu (<see cref="DrawSubmenu{T}"/>) with the quests it would send (a state and a static
@@ -88,10 +88,23 @@ public sealed class QuestionableActions
         None,
         Replace,
         Start,
+        Stop,
     }
 
     /// <summary>Questionable's IPC.</summary>
     public QuestionableIpc Ipc => ipc;
+
+    /// <summary>
+    /// Whether Go to giver or Walk to giver runs; Start waits meanwhile, as both would drive vnavmesh at once. Set by the
+    /// plugin; unset reads as no trip.
+    /// </summary>
+    public Func<bool>? Traveling { get; set; }
+
+    /// <summary>
+    /// The command Questionable runs after any stop asked over IPC (its "Run command after stop"): null while that is
+    /// off or unknown, empty when the command cannot be read. Set by the plugin.
+    /// </summary>
+    public Func<string?>? CommandAfterStop { get; set; }
 
     /// <summary>
     /// The states the quests sent are judged by: the logged-in character's, whoever is viewed, since Questionable plays
@@ -131,8 +144,29 @@ public sealed class QuestionableActions
     /// <summary>Whether this Questionable has a Stop gate (the WigglyMuffin fork has none).</summary>
     public bool CanStop => ipc.CanStop;
 
-    /// <summary>Asks Questionable to stop and says how it went in chat.</summary>
-    public void Stop() => DoStop();
+    /// <summary>
+    /// Asks Questionable to stop and says how it went in chat; asks first, in <paramref name="host"/>'s confirmation,
+    /// while Questionable would run its command after stop and the player has not said not to.
+    /// </summary>
+    public void Stop(string host) => RequestStop(host);
+
+    /// <summary>
+    /// The Stop tooltip: what Stop does, and, while Questionable's "Run command after stop" is on, the command it then
+    /// runs. Composed on hover only.
+    /// </summary>
+    public string StopTooltip()
+    {
+        if (!ipc.CanStop)
+        {
+            return Strings.QuestionableStopNoGate;
+        }
+
+        return CommandAfterStop?.Invoke() is { } command
+            ? Strings.QuestionableStopTooltip + "\n" + string.Format(CultureInfo.CurrentCulture, Strings.QuestionableStopCommandFormat, CommandText(command))
+            : Strings.QuestionableStopTooltip;
+    }
+
+    private static string CommandText(string command) => command.Length > 0 ? command : Strings.QuestionableStopCommandUnread;
 
     /// <summary>
     /// Why "Start Questionable" (the detail pane's pill, 1.10) cannot start Questionable on <paramref name="rowId"/>
@@ -208,10 +242,10 @@ public sealed class QuestionableActions
     }
 
     /// <summary>
-    /// A small "Stop" button for a status line; disabled with the reason on a Questionable that has no Stop gate (the
-    /// WigglyMuffin fork).
+    /// A small "Stop" button for a status line in <paramref name="host"/>'s window; disabled with the reason on a
+    /// Questionable that has no Stop gate (the WigglyMuffin fork).
     /// </summary>
-    public void DrawStopSmallButton(string id)
+    public void DrawStopSmallButton(string host, string id)
     {
         var canStop = ipc.CanStop;
         using (ImRaii.PushId(id))
@@ -219,13 +253,13 @@ public sealed class QuestionableActions
         {
             if (ImGui.SmallButton(Strings.QuestionableStopShort))
             {
-                DoStop();
+                RequestStop(host);
             }
         }
 
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
-            UiMetrics.Tooltip(canStop ? Strings.QuestionableStopTooltip : Strings.QuestionableStopNoGate);
+            UiMetrics.Tooltip(StopTooltip());
         }
     }
 
@@ -298,8 +332,9 @@ public sealed class QuestionableActions
     }
 
     /// <summary>
-    /// The confirmations (Replace, the first Start) for the menus of <paramref name="host"/>; call once per frame at
-    /// the window's root, outside any child or popup, so the modal opens where its request was made.
+    /// The confirmations (Replace, the first Start, a Stop that runs Questionable's command after stop) for the menus
+    /// of <paramref name="host"/>; call once per frame at the window's root, outside any child or popup, so the modal
+    /// opens where its request was made.
     /// </summary>
     public void DrawModals(string host)
     {
@@ -308,7 +343,12 @@ public sealed class QuestionableActions
             return;
         }
 
-        var popupId = pending == PendingKind.Replace ? Strings.QuestionableReplacePopup : Strings.QuestionableStartPopup;
+        var popupId = pending switch
+        {
+            PendingKind.Replace => Strings.QuestionableReplacePopup,
+            PendingKind.Stop => Strings.QuestionableStopPopup,
+            _ => Strings.QuestionableStartPopup,
+        };
         if (pendingOpen)
         {
             pendingOpen = false;
@@ -332,13 +372,18 @@ public sealed class QuestionableActions
         ImGui.TextUnformatted(pendingQuestion);
         ImGui.PopTextWrapPos();
         ImGui.Spacing();
-        if (pending == PendingKind.Start)
+        if (pending is PendingKind.Start or PendingKind.Stop)
         {
             ImGui.Checkbox(Strings.QuestionableStartDontAsk, ref dontAskAgain);
             ImGui.Spacing();
         }
 
-        var confirmLabel = pending == PendingKind.Replace ? Strings.QuestionableReplaceConfirm : Strings.QuestionableStartConfirm;
+        var confirmLabel = pending switch
+        {
+            PendingKind.Replace => Strings.QuestionableReplaceConfirm,
+            PendingKind.Stop => Strings.QuestionableStopConfirm,
+            _ => Strings.QuestionableStartConfirm,
+        };
         bool confirmed;
         using (Theme.PushDestructiveButton(pending == PendingKind.Replace))
         {
@@ -356,6 +401,16 @@ public sealed class QuestionableActions
             if (kind == PendingKind.Replace)
             {
                 DoSend(sendPlan, replace: true, start: false);
+            }
+            else if (kind == PendingKind.Stop)
+            {
+                if (dontAskAgain && settings.QuestionableConfirmStopCommand)
+                {
+                    settings.QuestionableConfirmStopCommand = false;
+                    save();
+                }
+
+                DoStop();
             }
             else
             {
@@ -521,12 +576,12 @@ public sealed class QuestionableActions
         var canStop = ipc.CanStop;
         if (ImGui.MenuItem(Strings.QuestionableStop, string.Empty, false, canStop))
         {
-            DoStop();
+            RequestStop(host);
         }
 
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
-            UiMetrics.Tooltip(canStop ? Strings.QuestionableStopTooltip : Strings.QuestionableStopNoGate);
+            UiMetrics.Tooltip(StopTooltip());
         }
     }
 
@@ -561,7 +616,13 @@ public sealed class QuestionableActions
             return Strings.QuestionableStartNotLive;
         }
 
-        return status.Running ? Strings.QuestionableAlreadyRunning : null;
+        if (status.Running)
+        {
+            return Strings.QuestionableAlreadyRunning;
+        }
+
+        // Go to giver or Walk to giver drives vnavmesh: Questionable would fight it for the character.
+        return Traveling?.Invoke() == true ? Strings.TravelBusyJourney : null;
     }
 
     /// <summary>The plan for the menu with ImGui id <paramref name="id"/>, rebuilt when another menu opens or the session or language changed.</summary>
@@ -672,6 +733,23 @@ public sealed class QuestionableActions
         {
             print(Strings.QuestionableStartFailed);
         }
+    }
+
+    /// <summary>
+    /// Stops, or asks first while Questionable would run its command after stop (any stop asked over IPC runs it, so no
+    /// label of ours avoids it) and the player has not said not to.
+    /// </summary>
+    private void RequestStop(string host)
+    {
+        if (!settings.QuestionableConfirmStopCommand || CommandAfterStop?.Invoke() is not { } command)
+        {
+            DoStop();
+            return;
+        }
+
+        pendingQuestion = string.Format(CultureInfo.CurrentCulture, Strings.QuestionableStopQuestionFormat, CommandText(command));
+        dontAskAgain = true;
+        Request(PendingKind.Stop, host, QuestionableSendPlan.Empty);
     }
 
     private void DoStop() => print(ipc.Stop() ? Strings.QuestionableStopped : Strings.QuestionableStopFailed);
