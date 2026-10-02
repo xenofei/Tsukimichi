@@ -379,8 +379,10 @@ public static class CatalogMapper
     }
 
     /// <summary>
-    /// A QuestClassJobReward row lists, per class/job category, up to four items. The catalog flattens every distinct item
-    /// as <see cref="RewardKind.ArtifactGear"/> with the QuestClassJobReward row as <see cref="RewardRef.Id"/>.
+    /// A QuestClassJobReward row lists, per class/job category, up to four items. The catalog flattens every distinct item:
+    /// gear as <see cref="RewardKind.ArtifactGear"/> with the QuestClassJobReward row as <see cref="RewardRef.Id"/>, and
+    /// anything else (crystals, Cordials, society currencies) as an ordinary <see cref="RewardKind.Item"/> reward
+    /// (<see cref="ClassJobRewardItems"/>).
     /// </summary>
     private static void AddClassJobRewards(List<RewardRef> rewards, uint rowId, Sheets sheets)
     {
@@ -401,7 +403,9 @@ public static class CatalogMapper
                 }
 
                 var amount = k < subrow.RewardAmount.Count ? subrow.RewardAmount[k] : (byte)0;
-                rewards.Add(new RewardRef(RewardKind.ArtifactGear, rowId, item.RowId, Math.Max(amount, (byte)1), item.Name.ExtractText(), item.Icon));
+                rewards.Add(ClassJobRewardItems.IsArtifactGear(in item)
+                    ? new RewardRef(RewardKind.ArtifactGear, rowId, item.RowId, Math.Max(amount, (byte)1), item.Name.ExtractText(), item.Icon)
+                    : ItemReward(RewardKind.Item, in item, amount));
             }
         }
     }
