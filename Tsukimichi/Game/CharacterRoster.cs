@@ -62,26 +62,6 @@ public sealed class CharacterRoster
     /// <summary>The settings every list reads (hidden, not tracked, the Compare target).</summary>
     public CharacterSettingsBook Settings => settings;
 
-    /// <summary>The character's entry, or null when it is neither stored nor live here.</summary>
-    public CharacterEntry? Find(ulong contentId)
-    {
-        foreach (var entry in All)
-        {
-            if (entry.ContentId == contentId)
-            {
-                return entry;
-            }
-        }
-
-        return null;
-    }
-
-    /// <summary>The world's name; its id as text when the World sheet could not be read.</summary>
-    public string WorldName(uint world) => Lookup(world).World;
-
-    /// <summary>The world's data center name; empty when unknown.</summary>
-    public string DataCenterName(uint world) => Lookup(world).DataCenter;
-
     private void Refresh()
     {
         if (sessionVersion == session.RosterVersion && settingsVersion == settings.Version)

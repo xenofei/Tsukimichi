@@ -981,7 +981,11 @@ public sealed class MainWindow : Window, IDisposable
             // Multibox (D11): logged in on another game client; what shows is that client's latest save.
             var time = UiFormat.Time(snapshot.TakenUtc);
             staleBanner = string.Format(CultureInfo.CurrentCulture, Strings.MultiboxBannerFormat, snapshot.Name, links.WorldName(snapshot.World), time);
-            syncTooltip = Strings.MultiboxLiveElsewhereTooltip + "\n" + string.Format(CultureInfo.CurrentCulture, Strings.SyncSnapshotFormat, time);
+            // 1.8.0 (R7 G): "updates each time that client saves" is not true of a file this client cannot read.
+            var status = session.NotUpdating.TryGetValue(snapshot.ContentId, out var problem)
+                ? CharactersPane.NotUpdatingText(problem)
+                : Strings.MultiboxLiveElsewhereTooltip;
+            syncTooltip = status + "\n" + string.Format(CultureInfo.CurrentCulture, Strings.SyncSnapshotFormat, time);
         }
         else
         {

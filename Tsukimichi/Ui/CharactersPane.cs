@@ -2269,8 +2269,8 @@ public sealed partial class CharactersPane
     }
 
     /// <summary>
-    /// The characters the dashboard's lists read (hidden ones left out), once per session version, roster version and
-    /// minute (the ages tick).
+    /// The characters the dashboard's lists read (hidden ones left out but the one on view), once per session version,
+    /// roster version and minute (the ages tick).
     /// </summary>
     private void RefreshItems()
     {
@@ -2284,7 +2284,9 @@ public sealed partial class CharactersPane
         itemsVersion = session.RosterVersion;
         itemsRoster = rosterVersion;
         itemsMinute = minute;
-        itemEntries = CharacterList.Visible(roster.All, includeHidden: false);
+        // Hidden characters are left out, except the one on view (its own row in the account view).
+        var viewed = session.ViewedContentId;
+        itemEntries = roster.All.Where(e => !e.Hidden || e.LiveHere || e.ContentId == viewed).ToList();
         var built = new CharacterItem[itemEntries.Count];
         for (var i = 0; i < built.Length; i++)
         {
