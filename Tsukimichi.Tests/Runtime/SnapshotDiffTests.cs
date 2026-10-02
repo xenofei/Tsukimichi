@@ -52,6 +52,22 @@ public sealed class SnapshotDiffTests
     }
 
     [Fact]
+    public void The_gear_gate_weapons_are_an_other_input_only_when_they_change()
+    {
+        var a = Fixture.Snapshot(Fixture.A) with { GateItems = new GateItemCapture(5, [8649, 8658], [8649, 8650, 8658]) };
+
+        // An equal capture in new lists (the next poll) is no change.
+        Assert.True(SnapshotDiff.Compute(a, a with { GateItems = new GateItemCapture(5, [8649, 8658], [8649, 8650, 8658]) }).IsEmpty);
+
+        Assert.True(SnapshotDiff.Compute(a, a with { GateItems = new GateItemCapture(5, [8650], [8649, 8650, 8658]) }).OtherChanged);
+        Assert.True(SnapshotDiff.Compute(a, a with { GateItems = new GateItemCapture(5, [8649, 8658], [8649, 8658]) }).OtherChanged);
+        Assert.True(SnapshotDiff.Compute(a, a with { GateItems = new GateItemCapture(6, [8649, 8658], [8649, 8650, 8658]) }).OtherChanged);
+        Assert.True(SnapshotDiff.Compute(a, a with { GateItems = null }).OtherChanged);
+        Assert.True(SnapshotDiff.Compute(a with { GateItems = null }, a).OtherChanged);
+        Assert.Empty(SnapshotDiff.Compute(a with { GateItems = null }, a).ChangedQuestIds);
+    }
+
+    [Fact]
     public void Reordered_id_lists_are_the_same_set()
     {
         var a = Fixture.Snapshot(Fixture.A) with { UnlockedInstances = [3, 1, 2], CompletedAchievements = [9, 8] };

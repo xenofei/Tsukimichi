@@ -121,7 +121,23 @@ public static class CatalogMapper
             NewGamePlus = newGamePlus,
             AchievementLadders = ladders,
             ExpTable = ReadOptional(() => ReadExpTable(excel), Core.Rewards.QuestExpTable.Empty, "quest EXP table", log),
+            GateItemNames = GateItemNames(catalog, context.Items),
         };
+    }
+
+    /// <summary>The names of the weapons the catalog's gear gates list (<see cref="QuestCatalog.GateItemWatch"/>).</summary>
+    private static Dictionary<uint, string> GateItemNames(QuestCatalog catalog, ExcelSheet<Item> items)
+    {
+        var names = new Dictionary<uint, string>(catalog.GateItemWatch.Length);
+        foreach (var id in catalog.GateItemWatch)
+        {
+            if (items.GetRowOrDefault(id) is { } item && item.Name.ExtractText() is { Length: > 0 } name)
+            {
+                names[id] = name;
+            }
+        }
+
+        return names;
     }
 
     /// <summary>Runs one optional sheet read; a failure is logged and gives <paramref name="fallback"/>.</summary>

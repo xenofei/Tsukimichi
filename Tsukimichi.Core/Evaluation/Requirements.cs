@@ -159,11 +159,22 @@ public sealed record HouseRequirement(bool? HasHouse) : Requirement(RequirementK
 public sealed record AchievementRequirement(uint RowId, bool Loaded) : Requirement(RequirementKind.Achievement);
 
 /// <summary>
-/// A gate the game checks that Tsukimichi cannot read (<see cref="QuestCatalog.GameGateOf"/>): <paramref name="Gate"/>
-/// says what in English ("a relic weapon nexus equipped"). Always listed as not checked; it keeps the quest from
-/// reading Ready.
+/// A gate the game checks before it offers the quest (<see cref="QuestCatalog.GameGateOf"/>): <paramref name="Gate"/>
+/// says what in English ("a relic weapon nexus equipped"). A gate Tsukimichi cannot read (<see cref="Checked"/> null)
+/// is listed as not checked and keeps the quest from reading Ready; a gear gate the capture can answer
+/// (<see cref="CharacterSnapshot.GateItems"/>) is judged like any other requirement.
 /// </summary>
-public sealed record GameGateRequirement(string Gate) : Requirement(RequirementKind.GameGate);
+public sealed record GameGateRequirement(string Gate) : Requirement(RequirementKind.GameGate)
+{
+    /// <summary>Where the gate's weapons had to be when it was judged; null when it was not (no item list, or no capture to judge it from).</summary>
+    public GateHold? Checked { get; init; }
+
+    /// <summary>The gate-listed weapons the character has equipped (any stage of the line, not only the one wanted).</summary>
+    public uint[] Equipped { get; init; } = [];
+
+    /// <summary>A met gate: the weapons that pass it. An unmet equip gate: the passing weapons the character holds but has not equipped.</summary>
+    public uint[] Matching { get; init; } = [];
+}
 
 /// <summary>Allied society rank names; index is the rank as held by the client.</summary>
 public static class TribeRanks

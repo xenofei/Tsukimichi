@@ -70,6 +70,13 @@ public sealed class QuestCatalog
         }
 
         gameGates = knownGates.ToFrozenDictionary();
+        GateItemWatch = knownGates.Values
+            .Where(g => g.Items is not null)
+            .SelectMany(g => g.Items!.Groups.SelectMany(group => group))
+            .Distinct()
+            .Order()
+            .ToArray();
+        GateItemFingerprint = GateItemCapture.Fingerprint(GateItemWatch);
 
         // Curated ids that name no quest of this catalog (a test catalog, a row the game dropped) are left out here.
         var known = new Dictionary<uint, uint[]>();
@@ -228,6 +235,19 @@ public sealed class QuestCatalog
     public QuestGate? GameGateOf(uint rowId) => gameGates.GetValueOrDefault(rowId);
 
     /// <summary>
+    /// Every weapon a gear gate of this catalog names (<see cref="QuestGate.Items"/>), ascending and distinct: what a
+    /// capture looks for in the character's gear (<see cref="CharacterSnapshot.GateItems"/>). Empty when no gate names
+    /// one.
+    /// </summary>
+    public uint[] GateItemWatch { get; }
+
+    /// <summary>
+    /// <see cref="GateItemCapture.Fingerprint"/> of <see cref="GateItemWatch"/>: a capture made against another list
+    /// (an older build's data) is not judged, since it never looked for the weapons the list has gained.
+    /// </summary>
+    public uint GateItemFingerprint { get; }
+
+    /// <summary>
     /// The accept conditions <see cref="PrerequisitesOf"/> cannot use, values that are no quest of this catalog: the
     /// evaluator lists them as not checked. Empty for most quests.
     /// </summary>
@@ -330,9 +350,67 @@ public sealed class QuestCatalog
 }
 
 /// <summary>
-/// A gate the game checks before it offers a quest that Tsukimichi cannot read (<see cref="QuestCatalog.GameGateOf"/>).
+/// A gate the game checks before it offers a quest (<see cref="QuestCatalog.GameGateOf"/>). Without
+/// <paramref name="Items"/> Tsukimichi cannot read it; with them it is judged from the character's captured gear
+/// (<see cref="CharacterSnapshot.GateItems"/>) when the capture is there.
 /// </summary>
 /// <param name="Gate">What the game wants, in English, as a phrase after "needs" ("a relic weapon nexus equipped").</param>
 /// <param name="After">Quests before which the gate cannot be passed (the step that makes the weapon possible);
 /// <see cref="QuestCatalog.PrerequisitesOf"/> adds them. May be empty.</param>
-public sealed record QuestGate(string Gate, uint[] After);
+/// <param name="Items">The weapons that pass the gate, when the gate is one of gear; null for any other gate.</param>
+public sealed record QuestGate(string Gate, uint[] After, GateItems? Items = null);
+
+/// <summary>Where a gate's weapons must be (<see cref="GateItems.Hold"/>).</summary>
+public enum GateHold
+{
+    /// <summary>Worn: in the main hand (and, for a paladin, the off hand).</summary>
+    Equipped,
+
+    /// <summary>Equipped, in the Armoury Chest or in the inventory ("in your possession").</summary>
+    Held,
+}
+
+/// <summary>
+/// The weapons that pass a gear gate: any one group, every item of it (a paladin's sword and shield form one group,
+/// every other job's weapon a group of its own). Groups and the items in each are sorted ascending.
+/// </summary>
+public sealed record GateItems(GateHold Hold, uint[][] Groups)
+{
+    /// <summary>The first group every item of which <paramref name="have"/> holds; null when none does.</summary>
+    public uint[]? GroupIn(IReadOnlyList<uint> have)
+    {
+        ArgumentNullException.ThrowIfNull(have);
+        foreach (var group in Groups)
+        {
+            var all = group.Length > 0;
+            foreach (var id in group)
+            {
+                if (!Contains(have, id))
+                {
+                    all = false;
+                    break;
+                }
+            }
+
+            if (all)
+            {
+                return group;
+            }
+        }
+
+        return null;
+    }
+
+    private static bool Contains(IReadOnlyList<uint> list, uint id)
+    {
+        for (var i = 0; i < list.Count; i++)
+        {
+            if (list[i] == id)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+}

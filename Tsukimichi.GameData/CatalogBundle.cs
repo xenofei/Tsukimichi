@@ -32,6 +32,16 @@ public sealed record CatalogBundle(QuestCatalog Catalog, GameNames Names, ClassJ
     /// </summary>
     public Core.Rewards.QuestExpTable ExpTable { get; init; } = Core.Rewards.QuestExpTable.Empty;
 
+    /// <summary>
+    /// The names of the weapons the gear gates list (<see cref="QuestCatalog.GateItemWatch"/>), read at catalog build in
+    /// the catalog's language, for the gate details (<see cref="Core.Evaluation.EvalContext.ItemName"/>); empty for a
+    /// bundle from the frozen fixture, where the details print item ids.
+    /// </summary>
+    public IReadOnlyDictionary<uint, string> GateItemNames { get; init; } = new Dictionary<uint, string>();
+
+    /// <summary>A weapon's name from <see cref="GateItemNames"/>; empty for one the gates do not list.</summary>
+    public string GateItemName(uint itemId) => GateItemNames.GetValueOrDefault(itemId, string.Empty);
+
     /// <summary>The name lookups <see cref="BlockerText"/> prints with, over this bundle's catalog and sheet names; the callers memoize one per bundle.</summary>
     public BlockerNames BlockerNames() => new()
     {

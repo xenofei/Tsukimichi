@@ -109,6 +109,16 @@ public sealed record CharacterSnapshot
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public byte? CarrierLevel { get; init; }
 
+    /// <summary>
+    /// The relic weapons the character had on it when captured, for the gear gates of curated
+    /// <c>game_gates.json</c> (<see cref="QuestGate.Items"/>): only the weapons those gates name, so a gear change
+    /// counts as a change only when one of them moves. Additive at schema v1: null when not read (files written before
+    /// 1.10, the game hooks paused, the inventory not loaded yet), which leaves every gear gate "not checked"; null is
+    /// not written.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public GateItemCapture? GateItems { get; init; }
+
     public byte MaxExpansion { get; init; }
     public byte LevelCap { get; init; }
 
@@ -246,6 +256,52 @@ public sealed record CharacterSnapshot
 
     /// <summary>The satisfaction rank held with a custom delivery client, or null when the plugin did not read it.</summary>
     public byte? SatisfactionRank(byte npc) => SatisfactionRanks.TryGetValue(npc, out var rank) ? rank : null;
+}
+
+/// <summary>
+/// The gear-gate weapons a capture found (<see cref="CharacterSnapshot.GateItems"/>), each list ascending and distinct.
+/// </summary>
+/// <param name="Watch"><see cref="Fingerprint"/> of the weapon list the capture looked for (<see cref="QuestCatalog.GateItemWatch"/>); a gate is judged only when it matches the catalog's.</param>
+/// <param name="Equipped">The listed weapons in the main hand and off hand.</param>
+/// <param name="Held">The listed weapons equipped, in the Armoury Chest (main hand and off hand) or in the inventory.</param>
+public sealed record GateItemCapture(uint Watch, IReadOnlyList<uint> Equipped, IReadOnlyList<uint> Held)
+{
+    /// <summary>FNV-1a over the ids in order; 0 for an empty list, which no capture is made against.</summary>
+    public static uint Fingerprint(IReadOnlyList<uint> sortedIds)
+    {
+        ArgumentNullException.ThrowIfNull(sortedIds);
+        if (sortedIds.Count == 0)
+        {
+            return 0;
+        }
+
+        var hash = 2166136261u;
+        foreach (var id in sortedIds)
+        {
+            for (var shift = 0; shift < 32; shift += 8)
+            {
+                hash = (hash ^ ((id >> shift) & 0xFF)) * 16777619u;
+            }
+        }
+
+        return hash;
+    }
+
+    /// <summary>Same watch list and the same weapons; the lists compare in order (captures write them sorted).</summary>
+    public static bool Same(GateItemCapture? a, GateItemCapture? b)
+    {
+        if (ReferenceEquals(a, b))
+        {
+            return true;
+        }
+
+        if (a is null || b is null || a.Watch != b.Watch)
+        {
+            return false;
+        }
+
+        return a.Equipped.SequenceEqual(b.Equipped) && a.Held.SequenceEqual(b.Held);
+    }
 }
 
 /// <summary>

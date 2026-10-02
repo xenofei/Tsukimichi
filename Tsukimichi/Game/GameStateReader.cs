@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Event;
@@ -75,6 +76,19 @@ public sealed class GameStateReader
     private IReadOnlyList<CollectibleTarget>? collectiblesTargets;
     private int collectiblesAge;
     private bool collectiblesMeasured;
+
+    /// <summary>Where a gear gate's weapons can be: worn, the Armoury Chest's weapon pages, the four bags (<see cref="ReadGateItems"/>).</summary>
+    private static readonly InventoryType[] GateItemContainers =
+    [
+        InventoryType.EquippedItems, InventoryType.ArmoryMainHand, InventoryType.ArmoryOffHand,
+        InventoryType.Inventory1, InventoryType.Inventory2, InventoryType.Inventory3, InventoryType.Inventory4,
+    ];
+
+    // The last gear-gate read, reused while unchanged, and the scratch lists a read fills.
+    private GateItemCapture? gateItems;
+    private readonly List<uint> gateEquippedScratch = new(2);
+    private readonly List<uint> gateHeldScratch = new(8);
+    private bool gateItemsWarned;
 
     public GameStateReader(IFramework framework, IPlayerState playerState, IDataManager data, IPluginLog log)
     {
@@ -360,6 +374,7 @@ public sealed class GameStateReader
             CurrentJob = ps->CurrentClassJobId,
             // A quest turned in is when most collectibles arrive, so a changed completion mask reads them again too.
             Collectibles = ReadCollectibles(contentId, completedChanged: !ReferenceEquals(completedBits, previousCompleted)),
+            GateItems = ReadGateItems(ids),
         };
 
         if (stopwatch is not null)
@@ -422,6 +437,81 @@ public sealed class GameStateReader
 
         collectiblesContentId = contentId;
         return collectibles;
+    }
+
+    /// <summary>
+    /// The gear-gate weapons on the character (<see cref="CharacterSnapshot.GateItems"/>): of the weapons the catalog's
+    /// gates list (<see cref="QuestCatalog.GateItemWatch"/>), those in the main hand and off hand, and those equipped,
+    /// in the Armoury Chest's main-hand and off-hand pages or in the four inventory bags. A plain read of the
+    /// containers' slots (about 250, each a set lookup); the containers are fetched through the game, so the read
+    /// follows the <see cref="Gate"/>. Null, so every gear gate reads "not checked", when the catalog lists no weapon,
+    /// the gate holds the hooks, or a container is not loaded yet. An unchanged answer returns the previous instance, so
+    /// the diff sees it unchanged by reference.
+    /// </summary>
+    private unsafe GateItemCapture? ReadGateItems(CatalogIds ids)
+    {
+        if (ids.GateWatch.Count == 0 || Gate is not { HooksAllowed: true })
+        {
+            return gateItems = null;
+        }
+
+        try
+        {
+            var inventory = InventoryManager.Instance();
+            if (inventory == null)
+            {
+                return gateItems = null;
+            }
+
+            gateEquippedScratch.Clear();
+            gateHeldScratch.Clear();
+            foreach (var type in GateItemContainers)
+            {
+                var container = inventory->GetInventoryContainer(type);
+                if (container == null || !container->IsLoaded)
+                {
+                    return gateItems = null;
+                }
+
+                // The equipped container's first two slots are the main hand and the off hand.
+                var size = type == InventoryType.EquippedItems ? Math.Min(container->Size, 2) : container->Size;
+                for (var i = 0; i < size; i++)
+                {
+                    var slot = container->GetInventorySlot(i);
+                    if (slot == null || slot->ItemId == 0 || !ids.GateWatch.Contains(slot->ItemId))
+                    {
+                        continue;
+                    }
+
+                    gateHeldScratch.Add(slot->ItemId);
+                    if (type == InventoryType.EquippedItems)
+                    {
+                        gateEquippedScratch.Add(slot->ItemId);
+                    }
+                }
+            }
+
+            gateEquippedScratch.Sort();
+            gateHeldScratch.Sort();
+            var held = gateHeldScratch.Distinct().ToArray();
+            if (gateItems is { } previous && previous.Watch == ids.GateFingerprint
+                && previous.Equipped.SequenceEqual(gateEquippedScratch) && previous.Held.SequenceEqual(held))
+            {
+                return previous;
+            }
+
+            return gateItems = new GateItemCapture(ids.GateFingerprint, [.. gateEquippedScratch], held);
+        }
+        catch (Exception ex)
+        {
+            if (!gateItemsWarned)
+            {
+                gateItemsWarned = true;
+                log.Warning(ex, "The relic weapons could not be read from the inventory; relic weapon gates read as not checked");
+            }
+
+            return gateItems = null;
+        }
     }
 
     /// <summary>What changed between two captures; see <see cref="SnapshotDiff.Compute"/>.</summary>
@@ -646,7 +736,7 @@ public sealed class GameStateReader
             }
         }
 
-        var built = new CatalogIds(catalog, [.. quests], [.. instances]);
+        var built = new CatalogIds(catalog, [.. quests], [.. instances], new HashSet<uint>(catalog.GateItemWatch), catalog.GateItemFingerprint);
         catalogIds = built;
         return built;
     }
@@ -665,5 +755,5 @@ public sealed class GameStateReader
         return false;
     }
 
-    private sealed record CatalogIds(QuestCatalog Catalog, ushort[] QuestIds, uint[] InstanceIds);
+    private sealed record CatalogIds(QuestCatalog Catalog, ushort[] QuestIds, uint[] InstanceIds, HashSet<uint> GateWatch, uint GateFingerprint);
 }

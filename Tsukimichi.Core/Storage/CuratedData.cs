@@ -90,15 +90,26 @@ public sealed record ExtraPrerequisite(IReadOnlyList<uint> Requires, IReadOnlyLi
 /// <summary>
 /// A gate the game checks before it offers a quest that Tsukimichi cannot read, from <c>curated/game_gates.json</c>:
 /// a relic weapon at some stage equipped, Eureka story and elemental level, Doman Enclave reconstruction progress. The
-/// catalog lists it as a not-checked requirement (<c>QuestCatalog.GameGateOf</c>), so the quest reads Not checked
-/// where it would otherwise read Ready, never Blocked by it; and it adds <paramref name="After"/> to
+/// catalog lists it as a requirement (<c>QuestCatalog.GameGateOf</c>): one without <paramref name="Items"/> is never judged, so the quest reads Not checked
+/// where it would otherwise read Ready, never Blocked by it, and a gear gate is judged from the captured weapons; it adds <paramref name="After"/> to
 /// <c>QuestCatalog.PrerequisitesOf</c>, the quests before which the gate cannot be passed at all.
 /// </summary>
 /// <param name="Gate">What the game wants, in English, as a phrase after "needs" ("a relic weapon nexus equipped").</param>
 /// <param name="After">Quest row ids the gate cannot be passed before (the step that makes a nexus possible); may be empty.</param>
 /// <param name="GameTextKey">The gated quest's own text row that states the gate, when the game states it (<c>TEXT_JOBREL015_00361_SYSTEM_000_000</c>); the text is never committed.</param>
 /// <param name="AfterTextKey">The text row of an <paramref name="After"/> quest that says what it opens (the soulglazing, Eureka Pagos); required with <paramref name="After"/>.</param>
-public sealed record GameGate(string Gate, IReadOnlyList<uint> After, string? GameTextKey, string? AfterTextKey, string Evidence, string Note);
+/// <param name="Items">For a gear gate (a relic weapon at a stage equipped, or held), the weapons that pass it, which make the gate one Tsukimichi can judge from the captured gear; null for any other gate.</param>
+public sealed record GameGate(string Gate, IReadOnlyList<uint> After, string? GameTextKey, string? AfterTextKey, string Evidence, string Note, GateItemSet? Items = null);
+
+/// <summary>
+/// A gear gate's weapons in <c>game_gates.json</c> (<c>"equipped"</c> or <c>"held"</c>): the groups that pass it and
+/// where they were derived from, which the game-data tests derive again and compare.
+/// </summary>
+/// <param name="Hold">Equipped (<c>"equipped"</c>) or equipped, in the Armoury Chest or in the inventory (<c>"held"</c>).</param>
+/// <param name="Sources">The sheet rows the items come from, as <c>Sheet#row</c>: <c>RelicItem#5</c> (a Zodiac stage), <c>AnimaWeaponItem#7</c> (an anima stage), <c>QuestClassJobReward#8</c> (the RequiredItem of the quest's own reward row), <c>Quest#67823</c> (the items a quest's script parameters name as <c>REPLICA_</c>).</param>
+/// <param name="Shield">For a <c>RelicItem</c>, <c>AnimaWeaponItem</c> or <c>Quest</c> source, how a paladin's shield counts: <c>both</c> (sword and shield together), <c>either</c> (each alone), <c>none</c> (the sword alone); null for <c>QuestClassJobReward</c>, whose rows group them already.</param>
+/// <param name="Groups">The weapons: any one group passes when every item of it is there. Ascending.</param>
+public sealed record GateItemSet(GateHold Hold, IReadOnlyList<string> Sources, string? Shield, uint[][] Groups);
 
 /// <summary>
 /// A "Before you continue" payoff gate (P5), from <c>curated/payoff_gates.json</c>: optional content whose completion
@@ -141,7 +152,7 @@ public sealed record PayoffGate(
 /// retired_quests.json  { "schema": 1, "entries": { "66033": { "note": "...", "evidence": "https://...", "patch": "6.3" } } }   (patch optional)
 /// quirks.json          { "schema": 1, "entries": { "66971": { "note": "...", "evidence": "https://..." } } }
 /// extra_prerequisites.json { "schema": 1, "entries": { "68782": { "requires": [ 68850 ], "sources": [ "gameText", "questionable", "wiki" ], "gameTextKey": "TEXT_...", "evidence": "https://...", "note": "..." } } }   (gameTextKey only with gameText)
-/// game_gates.json      { "schema": 1, "entries": { "65897": { "gate": "a relic weapon nexus equipped", "after": [ 65742 ], "gameTextKey": "TEXT_...", "afterTextKey": "TEXT_...", "evidence": "https://...", "note": "..." } } }   (after, gameTextKey optional; afterTextKey with after)
+/// game_gates.json      { "schema": 1, "entries": { "65897": { "gate": "a relic weapon nexus equipped", "after": [ 65742 ], "gameTextKey": "TEXT_...", "afterTextKey": "TEXT_...", "evidence": "https://...", "note": "..." } } }   (after, gameTextKey optional; afterTextKey with after; a gear gate adds "equipped" or "held": { "sources": [ "RelicItem#5" ], "shield": "both", "items": [ [ 8649, 8658 ], ... ] })
 /// payoff_gates.json    { "schema": 1, "review": "...", "entries": { "eden": { "milestone": 70286, "before": "Eden" or [ 69515 ], "instruction": "...", "why": "...", "evidence": [ "https://..." ], "note": "..." } } }
 /// path_choices.json    { "schema": 1, "cities": { "65575": { "label": "Gridania", "note": "..." } },
 ///                        "classes": { "1": { "label": "Gladiator", "closeToHome": 66104, "starter": 65789, "note": "..." } },
@@ -287,7 +298,9 @@ public sealed class CuratedData
     public IReadOnlyDictionary<uint, GameGate> GameGates { get; private init; } = new Dictionary<uint, GameGate>();
 
     /// <summary><see cref="GameGates"/> as the catalog builders take them (<c>QuestCatalog.Build</c>).</summary>
-    public IReadOnlyDictionary<uint, QuestGate> GameGateIds => GameGates.ToDictionary(kv => kv.Key, kv => new QuestGate(kv.Value.Gate, kv.Value.After.ToArray()));
+    public IReadOnlyDictionary<uint, QuestGate> GameGateIds => GameGates.ToDictionary(
+        kv => kv.Key,
+        kv => new QuestGate(kv.Value.Gate, kv.Value.After.ToArray(), kv.Value.Items is { } items ? new GateItems(items.Hold, items.Groups) : null));
 
     /// <summary>
     /// Short git hash of the last commit touching the overlay, from <see cref="VersionFileName"/> ("573d225", or
@@ -644,8 +657,9 @@ public sealed class CuratedData
     /// <summary>
     /// game_gates.json: entries keyed by quest row id, each with <c>gate</c> (what the game wants, non-empty), optional
     /// <c>after</c> (quest row ids, none the key itself, no repeats) with <c>afterTextKey</c> (a <c>TEXT_</c> key,
-    /// required with and only with <c>after</c>), an optional <c>gameTextKey</c> (a <c>TEXT_</c> key), an https
-    /// <c>evidence</c> URL and a <c>note</c>. An entry missing any of them is skipped with a warning.
+    /// required with and only with <c>after</c>), an optional <c>gameTextKey</c> (a <c>TEXT_</c> key), for a gear gate
+    /// either <c>equipped</c> or <c>held</c> (<see cref="ReadGateItems"/>), an https <c>evidence</c> URL and a
+    /// <c>note</c>. An entry missing any of them, or with a malformed one, is skipped with a warning.
     /// </summary>
     private static Dictionary<uint, GameGate> LoadGameGates(string path, List<string> warnings)
     {
@@ -706,6 +720,27 @@ public sealed class CuratedData
                 return;
             }
 
+            GateItemSet? items = null;
+            var equippedNode = obj["equipped"];
+            var heldNode = obj["held"];
+            if (equippedNode is not null && heldNode is not null)
+            {
+                warn("a gate lists either equipped or held weapons, not both");
+                return;
+            }
+
+            if (equippedNode is not null || heldNode is not null)
+            {
+                var hold = equippedNode is not null ? GateHold.Equipped : GateHold.Held;
+                if (ReadGateItems(equippedNode ?? heldNode, hold) is not { } read)
+                {
+                    warn($"{(hold == GateHold.Equipped ? "equipped" : "held")} must be {{ \"sources\": [\"Sheet#row\"], \"shield\"?: \"both\" | \"either\" | \"none\", \"items\": [[item ids], ...] }} with no item twice");
+                    return;
+                }
+
+                items = read;
+            }
+
             if (!TryReadNoteAndEvidence(obj, warn, out var note, out var evidence))
             {
                 return;
@@ -717,10 +752,76 @@ public sealed class CuratedData
                 return;
             }
 
-            entries[rowId] = new GameGate(gate, after, gameTextKey, afterTextKey, evidence, note);
+            entries[rowId] = new GameGate(gate, after, gameTextKey, afterTextKey, evidence, note, items);
         });
 
         return entries;
+    }
+
+    /// <summary>The shield words a <see cref="GateItemSet.Shield"/> may hold.</summary>
+    public static readonly IReadOnlyList<string> GateShieldRules = ["both", "either", "none"];
+
+    /// <summary>
+    /// A gear gate's <c>"equipped"</c> or <c>"held"</c> object: a non-empty <c>sources</c> array of <c>Sheet#row</c>
+    /// strings, an optional <c>shield</c> (<see cref="GateShieldRules"/>) and a non-empty <c>items</c> array of
+    /// non-empty arrays of item ids, no id twice. Groups and the ids in each are sorted. Null when anything is off.
+    /// </summary>
+    private static GateItemSet? ReadGateItems(JsonNode? node, GateHold hold)
+    {
+        if (node is not JsonObject obj || obj["sources"] is not JsonArray sourcesArray || sourcesArray.Count == 0 || obj["items"] is not JsonArray itemsArray || itemsArray.Count == 0)
+        {
+            return null;
+        }
+
+        var sources = new List<string>();
+        foreach (var element in sourcesArray)
+        {
+            var source = element is JsonValue v && v.TryGetValue(out string? s) ? s.Trim() : null;
+            var hash = source?.IndexOf('#', StringComparison.Ordinal) ?? -1;
+            if (source is null || hash < 1 || !uint.TryParse(source.AsSpan(hash + 1), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out _))
+            {
+                return null;
+            }
+
+            sources.Add(source);
+        }
+
+        string? shield = null;
+        if (obj.TryGetPropertyValue("shield", out var shieldNode))
+        {
+            shield = shieldNode is JsonValue sv && sv.TryGetValue(out string? text) ? text : null;
+            if (shield is null || !GateShieldRules.Contains(shield))
+            {
+                return null;
+            }
+        }
+
+        var seen = new HashSet<uint>();
+        var groups = new List<uint[]>();
+        foreach (var groupNode in itemsArray)
+        {
+            if (groupNode is not JsonArray groupArray || groupArray.Count == 0)
+            {
+                return null;
+            }
+
+            var group = new uint[groupArray.Count];
+            for (var i = 0; i < group.Length; i++)
+            {
+                if (!StorageJson.TryReadId(groupArray[i], out var id) || id == 0 || !seen.Add(id))
+                {
+                    return null;
+                }
+
+                group[i] = id;
+            }
+
+            Array.Sort(group);
+            groups.Add(group);
+        }
+
+        groups.Sort((a, b) => a[0].CompareTo(b[0]));
+        return new GateItemSet(hold, sources, shield, [.. groups]);
     }
 
     /// <summary>
