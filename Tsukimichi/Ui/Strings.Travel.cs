@@ -72,6 +72,18 @@ static partial class Strings
 
     public static string TravelStopTooltip => Loc.Get("TravelStopTooltip");
 
+    public static string TravelStopAfterCastTooltip => Loc.Get("TravelStopAfterCastTooltip");
+
+    public static string TravelBusyJourney => Loc.Get("TravelBusyJourney");
+
+    public static string TravelBusyCasting => Loc.Get("TravelBusyCasting");
+
+    public static string TravelBusyMoving => Loc.Get("TravelBusyMoving");
+
+    public static string TravelBusyQuestionable => Loc.Get("TravelBusyQuestionable");
+
+    public static string TravelBusyAutoDuty => Loc.Get("TravelBusyAutoDuty");
+
     public static string TravelNeedsVnavmesh => Loc.Get("TravelNeedsVnavmesh");
 
     /// <summary>{0} = the giver's zone.</summary>

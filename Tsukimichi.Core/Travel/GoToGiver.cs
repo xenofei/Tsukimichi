@@ -185,7 +185,19 @@ public sealed class GoToGiver
         return AfterTeleport(plan, now);
     }
 
-    /// <summary>Stops the run: the walk is stopped and Lifestream's task aborted. The ending, or null when nothing ran.</summary>
+    /// <summary>
+    /// True while the teleport is asked for and no loading screen has followed yet: the cast is under way. A Stop then
+    /// cannot cut the cast short (Lifestream's teleport is no task it could abort), so the teleport lands and the run
+    /// does nothing more.
+    /// </summary>
+    public bool TeleportCastPending => Step == GoToGiverStep.Teleporting && !sawLoading;
+
+    /// <summary>
+    /// Stops the run: the walk this run started is stopped and Lifestream's task aborted. Nothing else is touched: while
+    /// the path is still being prepared vnavmesh has no walk of this run's, so a walk another plugin started goes on.
+    /// The ending, or null when nothing ran. A cancelled run never ticks again, so a teleport cast that was under way
+    /// lands without a hop or a walk after it.
+    /// </summary>
     public GoToGiverOutcome? Cancel()
     {
         if (!IsActive)
@@ -193,11 +205,11 @@ public sealed class GoToGiver
             return null;
         }
 
-        if (Step is GoToGiverStep.PreparingPath or GoToGiverStep.Walking)
+        if (Step == GoToGiverStep.Walking)
         {
             ports.StopWalk();
         }
-        else if (ports.LifestreamBusy)
+        else if (Step != GoToGiverStep.PreparingPath && ports.LifestreamBusy)
         {
             ports.AbortLifestream();
         }
@@ -409,8 +421,9 @@ public sealed class GoToGiver
 
     private GoToGiverOutcome Fail(GoToGiverFailure failure)
     {
-        // A failure while vnavmesh may be moving (left the zone, timed out) stops it; nothing keeps walking unattended.
-        if (Step is GoToGiverStep.PreparingPath or GoToGiverStep.Walking)
+        // A failure while this run's walk may be moving (left the zone, timed out) stops it; nothing keeps walking
+        // unattended. Before the walk was asked for, vnavmesh's movement is not this run's to stop.
+        if (Step == GoToGiverStep.Walking)
         {
             ports.StopWalk();
         }

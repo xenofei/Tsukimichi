@@ -71,6 +71,8 @@ static partial class Strings
 
     public static string QuestionableAlreadyRunning => Loc.Get("QuestionableAlreadyRunning");
 
+    public static string QuestionableStartNotLive => Loc.Get("QuestionableStartNotLive");
+
     public static string QuestionableReplace => Loc.Get("QuestionableReplace");
 
     public static string QuestionableReplaceTooltip => Loc.Get("QuestionableReplaceTooltip");
@@ -114,6 +116,12 @@ static partial class Strings
     public static string QuestionableAlreadyOnFormat => Loc.Get("QuestionableAlreadyOnFormat");
 
     public static string QuestionableSendFailed => Loc.Get("QuestionableSendFailed");
+
+    public static string QuestionableReplaceNotRead => Loc.Get("QuestionableReplaceNotRead");
+
+    public static string QuestionableReplaceRestored => Loc.Get("QuestionableReplaceRestored");
+
+    public static string QuestionableReplaceNotRestored => Loc.Get("QuestionableReplaceNotRestored");
 
     public static string QuestionableStartedFormat => Loc.Get("QuestionableStartedFormat");
 

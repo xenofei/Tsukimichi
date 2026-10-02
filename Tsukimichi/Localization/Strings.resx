@@ -6393,6 +6393,10 @@
   <data name="QuestionableAlreadyRunning" xml:space="preserve">
     <value>Questionable is already running. Stop it first, or add the quests without starting.</value>
   </data>
+  <data name="QuestionableStartNotLive" xml:space="preserve">
+    <value>Log in as this character to start Questionable: it plays the character logged in. You can still add the quests without starting.</value>
+    <comment>Tooltip of the disabled "Add and start" while a stored character is viewed.</comment>
+  </data>
   <data name="QuestionableReplace" xml:space="preserve">
     <value>Replace Questionable's list…</value>
     <comment>Menu item; opens a confirmation.</comment>
@@ -6470,6 +6474,18 @@
   </data>
   <data name="QuestionableSendFailed" xml:space="preserve">
     <value>Questionable did not take the list; see /xllog.</value>
+  </data>
+  <data name="QuestionableReplaceNotRead" xml:space="preserve">
+    <value>Questionable's list could not be read first, so it was left as it was and nothing was sent; see /xllog.</value>
+    <comment>Chat line after Replace Questionable's list.</comment>
+  </data>
+  <data name="QuestionableReplaceRestored" xml:space="preserve">
+    <value>Questionable did not take the new list; your previous list was put back.</value>
+    <comment>Chat line after Replace Questionable's list.</comment>
+  </data>
+  <data name="QuestionableReplaceNotRestored" xml:space="preserve">
+    <value>Questionable did not take the new list, and your previous list could not be put back; see /xllog.</value>
+    <comment>Chat line after Replace Questionable's list.</comment>
   </data>
   <data name="QuestionableStartedFormat" xml:space="preserve">
     <value>Questionable started on {0}.</value>
@@ -6678,6 +6694,25 @@
   </data>
   <data name="TravelStopTooltip" xml:space="preserve">
     <value>Stop walking (vnavmesh)</value>
+  </data>
+  <data name="TravelStopAfterCastTooltip" xml:space="preserve">
+    <value>Stop going to the giver. The teleport cast under way cannot be cut short: it finishes, and nothing more happens after you land.</value>
+    <comment>Tooltip of Stop while Go to giver waits for its teleport cast.</comment>
+  </data>
+  <data name="TravelBusyJourney" xml:space="preserve">
+    <value>Go to giver is under way; press Stop first.</value>
+  </data>
+  <data name="TravelBusyCasting" xml:space="preserve">
+    <value>Wait for the cast or the loading screen to finish.</value>
+  </data>
+  <data name="TravelBusyMoving" xml:space="preserve">
+    <value>vnavmesh is already moving your character for another plugin; stop it there first.</value>
+  </data>
+  <data name="TravelBusyQuestionable" xml:space="preserve">
+    <value>Questionable is running and moves your character; stop it first.</value>
+  </data>
+  <data name="TravelBusyAutoDuty" xml:space="preserve">
+    <value>AutoDuty is running and moves your character; stop it first.</value>
   </data>
   <data name="TravelNeedsVnavmesh" xml:space="preserve">
     <value>Walking to the giver is done by the vnavmesh plugin; your character moves only when you press the button.</value>

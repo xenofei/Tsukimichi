@@ -4,6 +4,7 @@ using Dalamud.Plugin;
 using Dalamud.Plugin.Ipc;
 using Dalamud.Plugin.Ipc.Exceptions;
 using Dalamud.Plugin.Services;
+using Tsukimichi.Core.Ipc;
 
 namespace Tsukimichi.Game;
 
@@ -20,8 +21,10 @@ namespace Tsukimichi.Game;
 /// </list>
 /// <see cref="Available"/> comes from Dalamud's plugin list (cached, refreshed when it changes); the state reads are
 /// cached for <see cref="StateCacheMs"/> so the per-frame Walk / Stop button costs a few IPC calls a second. Every call
-/// is wrapped: a gate that is not ready or throws reads as unavailable / not ready / not walking / refused, and the
-/// first failure is logged once.
+/// is wrapped: a gate that throws reads as not ready / not walking / refused, and the first failure is logged once. A
+/// gate that is not registered is remembered per gate (<see cref="IpcGateHealth"/>) until the plugin list changes: only
+/// a missing <c>PathfindAndMoveCloseTo</c> or <c>Nav.IsReady</c> makes vnavmesh unavailable; another missing gate only
+/// turns its own answer off.
 /// </summary>
 public sealed class VnavmeshIpc : IDisposable
 {
@@ -38,6 +41,7 @@ public sealed class VnavmeshIpc : IDisposable
 
     private readonly IDalamudPluginInterface pluginInterface;
     private readonly IPluginLog log;
+    private readonly IpcGateHealth gates = new(MoveCloseToGate, IsReadyGate);
     private readonly ICallGateSubscriber<bool>? isReady;
     private readonly ICallGateSubscriber<float>? buildProgress;
     private readonly ICallGateSubscriber<Vector3, bool, float, bool>? moveCloseTo;
@@ -85,12 +89,15 @@ public sealed class VnavmeshIpc : IDisposable
         pluginInterface.ActivePluginsChanged -= OnActivePluginsChanged;
     }
 
-    /// <summary>True while vnavmesh is installed and loaded. Cached; refreshed when Dalamud's plugin list changes.</summary>
+    /// <summary>
+    /// True while vnavmesh is installed and loaded and its core gates are registered. Cached; refreshed when Dalamud's
+    /// plugin list changes.
+    /// </summary>
     public bool Available
     {
         get
         {
-            if (moveCloseTo is null)
+            if (moveCloseTo is null || isReady is null || gates.CoreMissing)
             {
                 return false;
             }
@@ -141,7 +148,7 @@ public sealed class VnavmeshIpc : IDisposable
             return false;
         }
 
-        var accepted = Invoke(moveCloseTo, gate => gate.InvokeFunc(destination, false, range), false, "vnavmesh.SimpleMove.PathfindAndMoveCloseTo failed");
+        var accepted = Invoke(moveCloseTo, MoveCloseToGate, gate => gate.InvokeFunc(destination, false, range), false);
         checkedAt = null;
         return accepted;
     }
@@ -149,23 +156,26 @@ public sealed class VnavmeshIpc : IDisposable
     /// <summary>Stops vnavmesh's movement.</summary>
     public void Stop()
     {
-        if (!Available || stop is null)
+        if (!Available || stop is null || gates.IsMissing(StopGate))
         {
             return;
         }
 
-        Invoke(stop, static gate =>
+        Invoke(stop, StopGate, static gate =>
         {
             gate.InvokeAction();
             return true;
-        }, false, "vnavmesh.Path.Stop failed");
+        }, false);
         checkedAt = null;
     }
 
-    /// <summary>Reads the state gates once per <see cref="StateCacheMs"/>; all false (progress -1) without vnavmesh.</summary>
+    /// <summary>
+    /// Reads the state gates once per <see cref="StateCacheMs"/>; all false (progress -1) without vnavmesh. A missing
+    /// optional gate leaves its own answer at its default (no progress, not walking by that gate).
+    /// </summary>
     private void Refresh()
     {
-        if (!Available || isReady is null || buildProgress is null || pathfindInProgress is null || isRunning is null)
+        if (!Available || isReady is null)
         {
             checkedAt = null;
             readyCached = false;
@@ -181,14 +191,19 @@ public sealed class VnavmeshIpc : IDisposable
         }
 
         checkedAt = now;
-        readyCached = Invoke(isReady, static gate => gate.InvokeFunc(), false, "vnavmesh.Nav.IsReady failed");
-        progressCached = readyCached ? -1f : Invoke(buildProgress, static gate => gate.InvokeFunc(), -1f, "vnavmesh.Nav.BuildProgress failed");
-        walkingCached = Invoke(isRunning, static gate => gate.InvokeFunc(), false, "vnavmesh.Path.IsRunning failed")
-            || Invoke(pathfindInProgress, static gate => gate.InvokeFunc(), false, "vnavmesh.SimpleMove.PathfindInProgress failed");
+        readyCached = Invoke(isReady, IsReadyGate, static gate => gate.InvokeFunc(), false);
+        progressCached = readyCached || buildProgress is null || gates.IsMissing(BuildProgressGate)
+            ? -1f
+            : Invoke(buildProgress, BuildProgressGate, static gate => gate.InvokeFunc(), -1f);
+        walkingCached = (isRunning is not null && !gates.IsMissing(IsRunningGate) && Invoke(isRunning, IsRunningGate, static gate => gate.InvokeFunc(), false))
+            || (pathfindInProgress is not null && !gates.IsMissing(PathfindInProgressGate) && Invoke(pathfindInProgress, PathfindInProgressGate, static gate => gate.InvokeFunc(), false));
     }
 
-    /// <summary>Calls a gate; a gate that is not ready marks vnavmesh unavailable, any other failure is logged once.</summary>
-    private T Invoke<TGate, T>(TGate gate, Func<TGate, T> call, T fallback, string failure)
+    /// <summary>
+    /// Calls a gate; a gate that is not registered is remembered as missing (only the core gates take vnavmesh down
+    /// with them), any other failure is logged once.
+    /// </summary>
+    private T Invoke<TGate, T>(TGate gate, string name, Func<TGate, T> call, T fallback)
     {
         try
         {
@@ -196,12 +211,17 @@ public sealed class VnavmeshIpc : IDisposable
         }
         catch (IpcNotReadyError)
         {
-            available = false;
+            if (!gates.IsMissing(name))
+            {
+                log.Information("vnavmesh does not offer {Gate}", name);
+            }
+
+            gates.MarkMissing(name);
             return fallback;
         }
         catch (Exception ex)
         {
-            WarnOnce(ex, failure);
+            WarnOnce(ex, name + " failed");
             return fallback;
         }
     }
@@ -210,6 +230,7 @@ public sealed class VnavmeshIpc : IDisposable
     {
         available = null;
         checkedAt = null;
+        gates.Reset();
     }
 
     private bool IsLoaded()
