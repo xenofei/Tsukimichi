@@ -38,8 +38,11 @@ public sealed class DiagnosticBuilder
 
         var rewards = session.UniqueRewards;
         DataStampLine = DataStamp.Line(rewards.GameVersion, rewards.Entries.Count, rewards.GeneratedUtc == default ? null : rewards.GeneratedUtc, session.Curated.CuratedRevision);
-        VersionMismatchWarning = DataStamp.MismatchWarning(rewards.GameVersion, ClientGameVersion);
+        mismatchWarning = DataStamp.MismatchWarning(rewards.GameVersion, ClientGameVersion);
     }
+
+    private string? mismatchWarning;
+    private int mismatchNewQuests;
 
     public string PluginVersion { get; }
 
@@ -48,8 +51,31 @@ public sealed class DiagnosticBuilder
     /// <summary>"Data: game 2026.09.15 · unique rewards 3,464 (generated 2026-09-28) · curated 573d225", composed once.</summary>
     public string DataStampLine { get; }
 
-    /// <summary>"Reward data was generated for game X; you are on Y", or null when the versions match or are unknown.</summary>
-    public string? VersionMismatchWarning { get; }
+    /// <summary>
+    /// The "Game updated" report the main window's strip shows (<see cref="DataFreshnessSource.Current"/>); the
+    /// mismatch line adds its count of quests newer than the data, so Settings › About and the strip agree. Null
+    /// leaves the count out.
+    /// </summary>
+    public Func<DataFreshnessReport>? Freshness { get; set; }
+
+    /// <summary>
+    /// "Reward data was generated for game X; you are on Y" (with ", which has N quests newer than the data" once the
+    /// catalog shows some), or null when the versions match or are unknown. Recomposed only when the count moves.
+    /// </summary>
+    public string? VersionMismatchWarning
+    {
+        get
+        {
+            var newQuests = Freshness?.Invoke().NewQuests ?? 0;
+            if (newQuests != mismatchNewQuests)
+            {
+                mismatchNewQuests = newQuests;
+                mismatchWarning = DataStamp.MismatchWarning(session.UniqueRewards.GameVersion, ClientGameVersion, newQuests);
+            }
+
+            return mismatchWarning;
+        }
+    }
 
     /// <summary>
     /// Questionable's answer for a quest compared with the viewed character's evaluation (V2-17), printed as the

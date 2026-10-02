@@ -37,10 +37,6 @@ public static class Orbit
     /// <summary>The ring's unlit track: VeilLine at 0.55 (proposal §3, OrbitTrack).</summary>
     public static readonly uint TrackU32 = Theme.WithAlpha(Theme.VeilLine, 0.55f);
 
-    /// <summary>ExVersion.Icon (061875 ARR … 061880 DT): the expansion rings are circles, drawn unrounded and keylined as circles.</summary>
-    public const uint FirstExpansionIcon = 61875;
-    public const uint LastExpansionIcon = 61880;
-
     /// <summary>The filling moon's radius inside an orbit (the mockup's 8.5 in a ring of 14).</summary>
     public const float MoonLogical = 8f;
 
@@ -165,7 +161,8 @@ public static class Orbit
         return (center - half, center + half);
     }
 
-    private static bool IsCircular(NodeIcon icon) => icon.IconId is >= FirstExpansionIcon and <= LastExpansionIcon;
+    /// <summary>The expansion rings (<c>ExVersion.Icon</c>, <see cref="NodeIcons.IsExpansionRing"/>) are circles, drawn unrounded and keylined as circles.</summary>
+    private static bool IsCircular(NodeIcon icon) => NodeIcons.IsExpansionRing(icon.IconId);
 
     private static float Rounding(NodeIcon icon, float rounding, float k) =>
         rounding >= 0f ? rounding : IsCircular(icon) ? 0f : 3f * k;

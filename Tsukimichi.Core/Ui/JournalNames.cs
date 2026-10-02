@@ -44,17 +44,6 @@ public static class JournalNames
         ["Collaboration Quests"] = "Collaborations",
     };
 
-    /// <summary>The expansions' English names and the abbreviations the plugin's expansion pills use.</summary>
-    private static readonly (string Name, string Short)[] Expansions =
-    [
-        ("A Realm Reborn", "ARR"),
-        ("Heavensward", "HW"),
-        ("Stormblood", "StB"),
-        ("Shadowbringers", "ShB"),
-        ("Endwalker", "EW"),
-        ("Dawntrail", "DT"),
-    ];
-
     /// <summary>Kind suffixes, longest first, and what each becomes.</summary>
     private static readonly (string Suffix, string Replacement)[] KindSuffixes =
     [
@@ -273,18 +262,9 @@ public static class JournalNames
         return Expansion(text);
     }
 
-    private static string? Expansion(string name)
-    {
-        foreach (var (full, abbreviation) in Expansions)
-        {
-            if (string.Equals(full, name.Trim(), StringComparison.Ordinal))
-            {
-                return abbreviation;
-            }
-        }
-
-        return null;
-    }
+    /// <summary>The short code of an expansion by its English name (<see cref="Evaluation.Expansions"/>, the one table); null for none.</summary>
+    private static string? Expansion(string name) =>
+        Evaluation.Expansions.FromEnglishName(name) is { } id ? Evaluation.Expansions.ShortCode(id) : null;
 
     private static bool IsExpansionText(string text)
     {
@@ -292,16 +272,5 @@ public static class JournalNames
         return dash < 0 ? IsAbbreviation(text) : IsAbbreviation(text[..dash]) && IsAbbreviation(text[(dash + RangeSeparator.Length)..]);
     }
 
-    private static bool IsAbbreviation(string text)
-    {
-        foreach (var (_, abbreviation) in Expansions)
-        {
-            if (string.Equals(abbreviation, text, StringComparison.Ordinal))
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
+    private static bool IsAbbreviation(string text) => Evaluation.Expansions.IsShortCode(text);
 }

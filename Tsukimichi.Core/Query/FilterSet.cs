@@ -13,6 +13,13 @@ public sealed class FilterSet : IEquatable<FilterSet>
     public const byte NoLevelMin = 0;
     public const byte NoLevelMax = byte.MaxValue;
 
+    /// <summary>
+    /// The <see cref="AddedIn"/> value of "New since data" (feature plan v5, 1.5.0): keeps the quests
+    /// <c>quest_patches.json</c> does not list, that is new since Tsukimichi's data was built
+    /// (<see cref="QueryContext.NewSinceData"/>). Not a patch number, so it never matches a series.
+    /// </summary>
+    public const string NewSinceData = "new";
+
     /// <summary>Removes Completed and Foreclosed quests. Per-category overrides win.</summary>
     public bool HideCompleted { get; set; }
 
@@ -34,7 +41,7 @@ public sealed class FilterSet : IEquatable<FilterSet>
     /// <summary>
     /// Keeps quests added in this patch series (P8): "7.5" keeps 7.5, 7.51 and 7.55 (<see cref="PatchVersion.InSeries"/>
     /// on <see cref="QuestRecord.AddedIn"/>); empty keeps all. A quest whose patch is unknown never passes an engaged
-    /// filter.
+    /// filter. <see cref="NewSinceData"/> keeps the quests newer than the shipped data instead.
     /// </summary>
     public string AddedIn { get; set; } = string.Empty;
 
@@ -97,6 +104,9 @@ public sealed class FilterSet : IEquatable<FilterSet>
 
     /// <summary>A null (a config written before 0.9.0 by a serializer that kept nulls) reads as not engaged.</summary>
     public bool AddedInEngaged() => !string.IsNullOrEmpty(AddedIn);
+
+    /// <summary>Whether <see cref="AddedIn"/> is "New since data" (<see cref="NewSinceData"/>) rather than a patch series.</summary>
+    public bool AddedInNewSinceData() => string.Equals(AddedIn?.Trim(), NewSinceData, StringComparison.Ordinal);
 
     public bool RewardKindsEngaged()
     {

@@ -68,6 +68,12 @@ public sealed class MainWindow : Window, IDisposable
 
     private Task? retryTask;
 
+    // The "Game updated" strip (1.5.0): its source, attached with the diagnostics, and its line per count and language.
+    private DataFreshnessSource? freshness;
+    private string freshnessLine = string.Empty;
+    private int freshnessLineCount = -1;
+    private int freshnessLineLanguage = -1;
+
     // The "rebuild failed" banner line, rebuilt when the error or the UI language changes.
     private string? rebuildFailure;
     private string? rebuildFailureError;
@@ -215,6 +221,16 @@ public sealed class MainWindow : Window, IDisposable
         ArgumentNullException.ThrowIfNull(diagnostics);
         detailPane.Diagnostics = diagnostics;
         DataStamp = diagnostics.DataStampLine;
+    }
+
+    /// <summary>
+    /// The "Game updated" strip and the Added in filter's "New since data" value (feature plan v5, 1.5.0). Until this
+    /// is called neither shows.
+    /// </summary>
+    public void AttachFreshness(DataFreshnessSource source)
+    {
+        freshness = source ?? throw new ArgumentNullException(nameof(source));
+        filterPanel.NewSinceDataCount = () => source.Current.NewQuests;
     }
 
     /// <summary>
@@ -691,6 +707,69 @@ public sealed class MainWindow : Window, IDisposable
         {
             retryTask = retryCatalog();
         }
+    }
+
+    /// <summary>
+    /// "Game updated: N quests are newer than Tsukimichi's data…" (feature plan v5, 1.5.0 "Trust"): shown while the
+    /// client is newer than the shipped data and the catalog holds quests <c>quest_patches.json</c> does not list,
+    /// until dismissed for this client version (<see cref="Config.Configuration.DataFreshnessDismissedFor"/>; the next
+    /// game update brings it back). "Show them" sets the Added in filter to New since data. Buttons first, as on the
+    /// rebuild line, so a narrow window never cuts them off.
+    /// </summary>
+    private void DrawFreshnessStrip()
+    {
+        if (freshness is null || plugin.Settings is not { } settings)
+        {
+            return;
+        }
+
+        var report = freshness.Current;
+        if (!Core.Diagnostics.DataFreshness.StripVisible(report, settings.DataFreshnessDismissedFor))
+        {
+            return;
+        }
+
+        if (freshnessLineCount != report.NewQuests || freshnessLineLanguage != Loc.Version)
+        {
+            freshnessLineCount = report.NewQuests;
+            freshnessLineLanguage = Loc.Version;
+            freshnessLine = Strings.FreshnessStrip(report.NewQuests);
+        }
+
+        if (ImGui.SmallButton(Strings.FreshnessShowNew + "##freshnessShow"))
+        {
+            ui.Scope = QuestScope.None;
+            ui.Filters.AddedIn = FilterSet.NewSinceData;
+            OnFiltersChanged();
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.FreshnessShowNewTooltip);
+        }
+
+        ImGui.SameLine();
+        if (ImGui.SmallButton(Strings.FreshnessDismiss + "##freshnessDismiss"))
+        {
+            settings.DataFreshnessDismissedFor = Core.Diagnostics.DataFreshness.DismissKey(report);
+            try
+            {
+                settings.Save(pluginInterface);
+            }
+            catch (Exception ex)
+            {
+                log.Warning(ex, "Settings could not be saved");
+            }
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.FreshnessDismissTooltip);
+        }
+
+        ImGui.SameLine();
+        using var gilt = Theme.PushText(Theme.Gilt);
+        ImGui.TextWrapped(freshnessLine);
     }
 
     /// <summary>
@@ -1256,6 +1335,7 @@ public sealed class MainWindow : Window, IDisposable
     private void DrawBanners(SessionState session)
     {
         DrawRebuildFailure(session);
+        DrawFreshnessStrip();
         if (session.ViewedSnapshot is null)
         {
             using var dusk = Theme.PushText(Theme.Surface.TextTertiary);

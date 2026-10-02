@@ -40,4 +40,31 @@ public class DataStampTests
             "Reward data was generated for game 2026.09.15; you are on 2026.10.20",
             DataStamp.MismatchWarning("2026.09.15.0000.0000", "2026.10.20.0000.0000"));
     }
+
+    [Fact]
+    public void The_warning_compares_game_versions_as_the_strip_does()
+    {
+        // A short or padded spelling of the same version is no mismatch.
+        Assert.Null(DataStamp.MismatchWarning("2026.09.15.0000.0000", "2026.09.15\n"));
+        // An older client keeps the About line (and gets no strip).
+        Assert.Equal(
+            "Reward data was generated for game 2026.09.15; you are on 2026.08.01",
+            DataStamp.MismatchWarning("2026.09.15.0000.0000", "2026.08.01.0000.0000", newQuests: 0));
+        // Unparseable versions still compare as text.
+        Assert.Null(DataStamp.MismatchWarning("odd", "odd"));
+        Assert.NotNull(DataStamp.MismatchWarning("odd", "other"));
+    }
+
+    [Fact]
+    public void A_newer_client_with_new_quests_adds_the_strips_count()
+    {
+        Assert.Equal(
+            "Reward data was generated for game 2026.09.15; you are on 2026.10.20, which has 1,234 quests newer than the data",
+            DataStamp.MismatchWarning("2026.09.15.0000.0000", "2026.10.20.0000.0000", 1234));
+        Assert.Equal(
+            "Reward data was generated for game 2026.09.15; you are on 2026.10.20, which has 1 quest newer than the data",
+            DataStamp.MismatchWarning("2026.09.15.0000.0000", "2026.10.20.0000.0000", 1));
+        // An older client never carries a count.
+        Assert.DoesNotContain("newer", DataStamp.MismatchWarning("2026.09.15.0000.0000", "2026.08.01.0000.0000", 5));
+    }
 }

@@ -81,6 +81,19 @@ public sealed record NodeFacts(
 /// </summary>
 public static class NodeIcons
 {
+    /// <summary>
+    /// <c>ExVersion.Icon</c> of A Realm Reborn; each later expansion's ring follows by id (061880 Dawntrail), which
+    /// <c>ExpansionTableTests</c> checks against the game data.
+    /// </summary>
+    public const uint FirstExpansionRingIcon = 61875;
+
+    /// <summary>
+    /// Whether an icon is an expansion's ring (a circle, drawn unrounded): one of the rings of the expansions
+    /// <see cref="Evaluation.Expansions"/> knows, so a new expansion's ring joins once the table has it.
+    /// </summary>
+    public static bool IsExpansionRing(uint iconId) =>
+        iconId >= FirstExpansionRingIcon && iconId < FirstExpansionRingIcon + (uint)Evaluation.Expansions.Count;
+
     /// <summary>EventIconType markers (<c>NpcIconAvailable</c> + 1): main scenario, sidequest, feature (the blue plus).</summary>
     public const uint MsqMarker = 71201;
     public const uint SidequestMarker = 71221;

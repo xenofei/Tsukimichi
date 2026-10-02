@@ -71,6 +71,16 @@ public sealed class FilterPanel
     /// <summary>The "Added in" combo's entries (P8): series ("7.5") and label ("7.5x  (61)"), newest first.</summary>
     private readonly List<(string Series, string Label)> patchSeries = [];
 
+    /// <summary>
+    /// How many quests are newer than the shipped data (feature plan v5, 1.5.0): above zero, the Added in combo offers
+    /// "New since data" first. Null (before the main window attaches it) reads as none.
+    /// </summary>
+    public Func<int>? NewSinceDataCount { get; set; }
+
+    private string newSinceDataOption = string.Empty;
+    private int newSinceDataOptionCount = -1;
+    private int newSinceDataOptionLanguage = -1;
+
     // The "Added in 7.5x" chip label, rebuilt only when the filter's value changes.
     private string addedInChip = string.Empty;
     private string? addedInChipFor;
@@ -577,7 +587,8 @@ public sealed class FilterPanel
 
     /// <summary>
     /// The "Added in" filter (P8): a combo of the patch series the catalog's quests were added in, newest first, with
-    /// "Any patch" on top. Disabled, showing "Any patch", when no quest has a known patch (quest_patches.json missing).
+    /// "Any patch" on top, then "New since data" while the game has quests newer than the shipped data (1.5.0).
+    /// Disabled, showing "Any patch", when no quest has a known patch (quest_patches.json missing) and none is new.
     /// </summary>
     private void DrawAddedIn(FilterSet f)
     {
@@ -585,7 +596,8 @@ public sealed class FilterPanel
         Tip(Strings.AddedInTooltip);
         var preview = f.AddedInEngaged() ? AddedInChipText(f) : Strings.AddedInAny;
         ImGui.SetNextItemWidth(Chrome.FitWidth(UiMetrics.Px(180f)));
-        using (ImRaii.Disabled(patchSeries.Count == 0 && !f.AddedInEngaged()))
+        var newSinceData = NewSinceDataCount?.Invoke() ?? 0;
+        using (ImRaii.Disabled(patchSeries.Count == 0 && newSinceData == 0 && !f.AddedInEngaged()))
         {
             using var combo = ImRaii.Combo("##addedIn", preview);
             Tip(Strings.AddedInTooltip);
@@ -602,6 +614,20 @@ public sealed class FilterPanel
                 changed();
             }
 
+            if (newSinceData > 0 || f.AddedInNewSinceData())
+            {
+                if (ImGui.Selectable(NewSinceDataOption(newSinceData), f.AddedInNewSinceData()))
+                {
+                    f.AddedIn = FilterSet.NewSinceData;
+                    changed();
+                }
+
+                if (ImGui.IsItemHovered())
+                {
+                    UiMetrics.Tooltip(Strings.FreshnessShowNewTooltip);
+                }
+            }
+
             foreach (var (series, label) in patchSeries)
             {
                 if (ImGui.Selectable(label, string.Equals(f.AddedIn, series, StringComparison.Ordinal)))
@@ -613,14 +639,29 @@ public sealed class FilterPanel
         }
     }
 
-    /// <summary>"Added in 7.5x", memoized per filter value.</summary>
+    /// <summary>"New since data  (12)", memoized per count and language.</summary>
+    private string NewSinceDataOption(int count)
+    {
+        if (count != newSinceDataOptionCount || newSinceDataOptionLanguage != Localization.Loc.Version)
+        {
+            newSinceDataOptionCount = count;
+            newSinceDataOptionLanguage = Localization.Loc.Version;
+            newSinceDataOption = string.Format(CultureInfo.CurrentCulture, Strings.AddedInNewSinceDataOptionFormat, count);
+        }
+
+        return newSinceDataOption;
+    }
+
+    /// <summary>"Added in 7.5x", or "New since data", memoized per filter value.</summary>
     private string AddedInChipText(FilterSet f)
     {
         if (!string.Equals(addedInChipFor, f.AddedIn, StringComparison.Ordinal) || addedInChipLanguage != Localization.Loc.Version)
         {
             addedInChipFor = f.AddedIn;
             addedInChipLanguage = Localization.Loc.Version;
-            addedInChip = string.Format(CultureInfo.CurrentCulture, Strings.AddedInChipFormat, f.AddedIn);
+            addedInChip = f.AddedInNewSinceData()
+                ? Strings.AddedInNewSinceData
+                : string.Format(CultureInfo.CurrentCulture, Strings.AddedInChipFormat, f.AddedIn);
         }
 
         return addedInChip;

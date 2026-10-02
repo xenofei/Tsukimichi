@@ -338,6 +338,14 @@ public static class BannerArts
     public const uint ClassJobSection = 6;
     public const uint OtherQuestsSection = 7;
 
+    /// <summary>
+    /// Every JournalSection id <see cref="For(uint, uint, uint, byte)"/> places (8.0 readiness): <c>ExpansionTableTests</c>
+    /// fails when the game files a quest under another section, so a new one gets its art rather than the generic road.
+    /// (The sections that file no quest, Levequests and the like, need none.)
+    /// </summary>
+    public static IReadOnlyList<uint> KnownSections { get; } =
+        [MainScenarioSection, MainScenarioDawntrailSection, ChroniclesSection, SidequestSection, AlliedSection, AlliedDawntrailSection, ClassJobSection, OtherQuestsSection];
+
     /// <summary>JournalCategory ids with their own art.</summary>
     public const uint ChroniclesOfLightCategory = 54;
     public const uint HildibrandCategory = 55;
@@ -387,7 +395,10 @@ public static class BannerArts
         };
     }
 
-    /// <summary>The main scenario art of an expansion (0 ARR … 5 DT); a later expansion gets the generic art until it has its own.</summary>
+    /// <summary>
+    /// The main scenario art of an expansion (0 ARR … 5 DT); a later expansion gets the generic art until it has its
+    /// own, and <c>ExpansionTableTests</c> fails for it meanwhile.
+    /// </summary>
     public static BannerArt Msq(byte expansion) => expansion switch
     {
         0 => BannerArt.MsqArr,

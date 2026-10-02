@@ -187,10 +187,63 @@ public static class GrandCompanyRanks
     public static string Name(byte rank) => rank < Names.Length ? Names[rank] : $"rank {rank}";
 }
 
-/// <summary>Expansion names by ExVersion row id.</summary>
+/// <summary>
+/// The expansions by ExVersion row id (8.0 readiness, R10 proposal 6). The plugin names an expansion from the game's
+/// ExVersion sheet wherever a catalog is at hand (<c>GameNames.Expansions</c>: the blocker text, the requirement
+/// details, the panes), in the client's language. What the sheet cannot give is the short code the expansion pills
+/// and the Journal tree's short names use ("ShB"), so that is the one fact written here per expansion; the English
+/// name beside it is only the fallback for code without a catalog (tests, tools) and what the English journal names
+/// are matched against. <c>ExpansionTableTests</c> fails when the game data has an ExVersion row this table lacks, so
+/// a new expansion is added here (and given its banner art, <see cref="Ui.BannerArts.Msq"/>) rather than reading
+/// "expansion 6".
+/// </summary>
 public static class Expansions
 {
-    private static readonly string[] Names = ["A Realm Reborn", "Heavensward", "Stormblood", "Shadowbringers", "Endwalker", "Dawntrail"];
+    private static readonly (string Short, string English)[] Table =
+    [
+        ("ARR", "A Realm Reborn"),
+        ("HW", "Heavensward"),
+        ("StB", "Stormblood"),
+        ("ShB", "Shadowbringers"),
+        ("EW", "Endwalker"),
+        ("DT", "Dawntrail"),
+    ];
 
-    public static string Name(byte expansion) => expansion < Names.Length ? Names[expansion] : $"expansion {expansion}";
+    /// <summary>How many expansions the table knows: ids 0 to <c>Count - 1</c>.</summary>
+    public static int Count => Table.Length;
+
+    /// <summary>The English name, the fallback where no catalog names it; "expansion 6" for an id the table lacks.</summary>
+    public static string Name(byte expansion) => expansion < Table.Length ? Table[expansion].English : $"expansion {expansion}";
+
+    /// <summary>The short code of the pills and short names ("ARR", "ShB"); null for an id the table lacks.</summary>
+    public static string? ShortCode(byte expansion) => expansion < Table.Length ? Table[expansion].Short : null;
+
+    /// <summary>The id whose English name is <paramref name="englishName"/> exactly (ordinal, trimmed); null for none.</summary>
+    public static byte? FromEnglishName(string? englishName)
+    {
+        var name = englishName?.Trim();
+        for (var i = 0; i < Table.Length; i++)
+        {
+            if (string.Equals(Table[i].English, name, StringComparison.Ordinal))
+            {
+                return (byte)i;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>Whether <paramref name="text"/> is one of the short codes, exactly.</summary>
+    public static bool IsShortCode(string? text)
+    {
+        foreach (var (code, _) in Table)
+        {
+            if (string.Equals(code, text, StringComparison.Ordinal))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

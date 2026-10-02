@@ -555,7 +555,8 @@ public sealed class QueryRunner : IDisposable
             Abandoned: AbandonedIds(session),
             Spoilers: session.Spoilers,
             Stories: session.Stories,
-            JournalHits: plugin.Settings.JournalTextSearch ? plugin.QuestText?.MatchCompleted(appliedSearch, session.States) : null);
+            JournalHits: plugin.Settings.JournalTextSearch ? plugin.QuestText?.MatchCompleted(appliedSearch, session.States) : null,
+            NewSinceData: plugin.Freshness?.Current.NewQuestIds);
 
         // The Unlocks quick view reads best with its unlocks from the newest patch series on top (P8), then what can be picked up
         // now; the other presets keep the table's sort.

@@ -44,7 +44,7 @@ public sealed partial class ConfigWindow : Window
 
     private readonly LocText pluginVersionLine;
     private readonly string dataStampLine;
-    private readonly string? dataVersionWarning;
+    private readonly DiagnosticBuilder diagnostics;
     private readonly LocText curatedLine;
 
     private CatalogBundle? aboutBundle;
@@ -113,7 +113,7 @@ public sealed partial class ConfigWindow : Window
         var pluginVersion = diagnostics.PluginVersion.Length > 0 ? diagnostics.PluginVersion : "unknown";
         pluginVersionLine = new LocText(() => string.Format(CultureInfo.CurrentCulture, Strings.ConfigPluginVersionFormat, pluginVersion));
         dataStampLine = diagnostics.DataStampLine;
-        dataVersionWarning = diagnostics.VersionMismatchWarning;
+        this.diagnostics = diagnostics;
 
         var curated = session.Curated;
         curatedLine = new LocText(() => string.Format(
@@ -1719,7 +1719,7 @@ public sealed partial class ConfigWindow : Window
             UiMetrics.Tooltip(Strings.ConfigDataStampTooltip);
         }
 
-        if (dataVersionWarning is { } warning)
+        if (diagnostics.VersionMismatchWarning is { } warning)
         {
             using var eclipse = Theme.PushText(Theme.Eclipse);
             ImGui.TextWrapped(warning);

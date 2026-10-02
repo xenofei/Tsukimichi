@@ -19,6 +19,12 @@ namespace Tsukimichi.Game;
 /// <see cref="MaxBackoff"/> with a single warning (<see cref="PollSchedule"/>); exceptions from session listeners are
 /// logged (rate-limited) and never affect the backoff.
 /// <para>
+/// A capture of the live character that suddenly loses many completed quests or empties its journal
+/// (<see cref="CapturePlausibility"/>) is not committed, so it is never saved over the good snapshot: the poller
+/// backs off as for a failed read, logs the counts once, and prints one chat line per load
+/// (<see cref="PrintNotice"/>). The next plausible capture commits as usual; a new login starts over.
+/// </para>
+/// <para>
 /// The first pass for a character resolves the whole catalog, which took a visible slice of a frame; the capture
 /// still happens here (ClientStructs reads stay on the framework thread), but the catalog-wide resolve and the
 /// sidecar read run on a worker over an immutable snapshot, and the result is committed and published on the
@@ -61,7 +67,14 @@ public sealed class StatePoller : IDisposable
     private DateTime lastListenerWarningUtc = DateTime.MinValue;
     private bool wasReady;
     private bool saveWarned;
+    private bool implausibleNoticed;
     private bool disposed;
+
+    /// <summary>
+    /// Prints one line in chat (the plugin points it at the chat log with Tsukimichi's tag); used once per load, when a
+    /// capture is first held back as implausible. Null prints nothing.
+    /// </summary>
+    public Action<string>? PrintNotice { get; set; }
 
     /// <summary>Flushes on the writer that have not landed yet; a periodic flush waits for them.</summary>
     private int flushesInFlight;
@@ -323,6 +336,11 @@ public sealed class StatePoller : IDisposable
         {
             result = Poll(now);
         }
+        catch (ImplausibleCaptureException ex)
+        {
+            failed = true;
+            HoldBack(ex.Result, now);
+        }
         catch (Exception ex)
         {
             failed = true;
@@ -416,6 +434,14 @@ public sealed class StatePoller : IDisposable
         if (diff.IsEmpty)
         {
             return null;
+        }
+
+        // The plausibility guard (1.5.0): a capture that lost many completed quests at once, or emptied the journal,
+        // is held back before anything (the accepted times, the abandoned ledger, the commit) takes it in.
+        var plausibility = CapturePlausibility.Check(last, snapshot, catalog);
+        if (!plausibility.Plausible)
+        {
+            throw new ImplausibleCaptureException(plausibility);
         }
 
         memory.AcceptedSinceDirty |= AcceptedSince.Apply(memory.AcceptedSince, last, snapshot, diff, now);
@@ -535,6 +561,49 @@ public sealed class StatePoller : IDisposable
             Publish(new PollResult(snapshot, result.States, pending.Context, []));
         });
         Flush();
+    }
+
+    /// <summary>
+    /// A capture was held back as implausible: the committed state and the saved files stay as they are, the next
+    /// capture waits a backoff step, the counts are logged once per run of such captures, and the chat line is printed
+    /// once per load.
+    /// </summary>
+    private void HoldBack(PlausibilityResult result, DateTime now)
+    {
+        var note = result.LogNote ?? result.Verdict.ToString();
+        if (schedule.Fail(now))
+        {
+            log.Warning(
+                "Capture not saved: {Note}; keeping the last saved state and capturing again in {Seconds} s (backing off to {Max} s)",
+                note,
+                schedule.Wait.TotalSeconds,
+                MaxBackoff.TotalSeconds);
+        }
+        else
+        {
+            log.Debug("Capture held back again: {Note}", note);
+        }
+
+        if (implausibleNoticed || PrintNotice is not { } print)
+        {
+            return;
+        }
+
+        implausibleNoticed = true;
+        try
+        {
+            print(Ui.Strings.PlausibilitySkippedNotice);
+        }
+        catch (Exception ex)
+        {
+            log.Warning(ex, "Chat print failed");
+        }
+    }
+
+    /// <summary>Thrown by <see cref="Poll"/> for a capture <see cref="CapturePlausibility"/> rejects; never leaves the poller.</summary>
+    private sealed class ImplausibleCaptureException(PlausibilityResult result) : Exception(result.LogNote ?? result.Verdict.ToString())
+    {
+        public PlausibilityResult Result { get; } = result;
     }
 
     /// <summary>A poll committed, or a first pass did: the backoff and its warning latch clear, and a recovery is logged.</summary>
