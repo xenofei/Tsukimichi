@@ -21,6 +21,8 @@ public static partial class Strings
     public static string MainWindowTitle => Loc.Get("MainWindowTitle");
     public static string LoadingCatalog => Loc.Get("LoadingCatalog");
     public static string CatalogUnavailable => Loc.Get("CatalogUnavailable");
+    /// <summary>{0} = the error; a rebuild failed while the previous catalog stays in use.</summary>
+    public static string CatalogRebuildFailedFormat => Loc.Get("CatalogRebuildFailedFormat");
     public static string Retry => Loc.Get("Retry");
     public static string Retrying => Loc.Get("Retrying");
 

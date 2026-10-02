@@ -209,7 +209,9 @@ static partial class Strings
     public static string CharactersExportedFormat => Loc.Get("CharactersExportedFormat");
     /// <summary>{0} = the error.</summary>
     public static string CharactersExportFailedFormat => Loc.Get("CharactersExportFailedFormat");
-    public static string CharactersForget => Loc.Get("CharactersForget");
+    /// <summary>{0} = the character's name.</summary>
+    public static string CharactersForgetPartialFormat => Loc.Get("CharactersForgetPartialFormat");
+    public static string CharactersForget =>Loc.Get("CharactersForget");
     public static string CharactersForgetLiveHint => Loc.Get("CharactersForgetLiveHint");
     public static string CharactersForgetPopup => Loc.Get("CharactersForgetPopup");
     /// <summary>{0} = character name.</summary>
@@ -344,6 +346,8 @@ static partial class Strings
     public static string ConfigDeleteStep2Text => Loc.Get("ConfigDeleteStep2Text");
     public static string ConfigDeleteConfirm => Loc.Get("ConfigDeleteConfirm");
     public static string ConfigDeleteDone => Loc.Get("ConfigDeleteDone");
+    /// <summary>"Delete all data" removed the files, but a listener failed to drop its in-memory copy.</summary>
+    public static string ConfigDeletePartial => Loc.Get("ConfigDeletePartial");
     public static string ConfigCancel => Loc.Get("ConfigCancel");
     /// <summary>{0} = number of stored verdicts.</summary>
     public static string ConfigVerdictsHeaderFormat => Loc.Get("ConfigVerdictsHeaderFormat");

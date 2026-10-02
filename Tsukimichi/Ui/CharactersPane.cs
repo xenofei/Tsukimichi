@@ -164,6 +164,7 @@ public sealed partial class CharactersPane
     private string? toast;
     private DateTime toastUntilUtc;
     private string forgetQuestion = string.Empty;
+    private string forgetName = string.Empty;
     private ulong forgetTarget;
 
     /// <param name="loadSnapshot">Loads a stored character by content id (e.g. <c>SnapshotService.Load</c>); null when unreadable.</param>
@@ -269,6 +270,8 @@ public sealed partial class CharactersPane
         if (snapshot is null)
         {
             ImGui.TextWrapped(Strings.CharactersNoneViewed);
+            // Forgetting the viewed character while logged out lands here: its toast still shows.
+            DrawToast();
             return;
         }
 
@@ -1222,6 +1225,7 @@ public sealed partial class CharactersPane
             if (ImGui.Button(Strings.CharactersForget))
             {
                 forgetTarget = snapshot.ContentId;
+                forgetName = snapshot.Name;
                 forgetQuestion = string.Format(CultureInfo.CurrentCulture, Strings.CharactersForgetQuestionFormat, snapshot.Name);
                 ImGui.OpenPopup(Strings.CharactersForgetPopup);
             }
@@ -1250,7 +1254,12 @@ public sealed partial class CharactersPane
         {
             if (ImGui.Button(Strings.CharactersForgetConfirm))
             {
-                session.ForgetCharacter(forgetTarget);
+                // A listener that failed may still hold this character's pins or overrides and save them again: say so.
+                if (session.ForgetCharacter(forgetTarget) > 0)
+                {
+                    ShowToast(string.Format(CultureInfo.CurrentCulture, Strings.CharactersForgetPartialFormat, forgetName));
+                }
+
                 snapshotCache.Remove(forgetTarget);
                 compareStates.Remove(forgetTarget);
                 if (compareTarget == forgetTarget)

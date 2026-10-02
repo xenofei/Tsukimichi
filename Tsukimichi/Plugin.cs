@@ -35,7 +35,13 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] internal static ISeStringEvaluator SeStringEvaluator { get; private set; } = null!;
     // /UI
 
-    /// <summary>The longest unload waits in all: the last saves, the multibox loop and the catalog builds share it.</summary>
+    /// <summary>
+    /// The deadline the unload's last waits share: the save writer's drain, the multibox loop and the catalog builds, in
+    /// that order. Its clock starts at the writer's drain (<see cref="Core.Runtime.WaitBudget"/>), so the final saves get
+    /// all of it whatever the steps before took, and the multibox loop and the builds share only what the writer left.
+    /// The one wait before it is the journal index's (<see cref="Game.QuestTextService.DisposeWait"/>): the unload
+    /// waits at most that plus this, 2 s + 5 s = 7 s.
+    /// </summary>
     private static readonly TimeSpan DisposeWait = TimeSpan.FromSeconds(5);
 
     /// <summary>
@@ -51,8 +57,11 @@ public sealed class Plugin : IDalamudPlugin
     /// <summary>The ticket of the build started at load, checked by its continuation.</summary>
     private readonly int initialCatalogGeneration;
 
-    /// <summary>The latest rebuild (retry or filing flip); waited on at unload beside <see cref="CatalogTask"/>.</summary>
-    private Task? catalogRebuild;
+    /// <summary>
+    /// The latest rebuild's build itself (retry or filing flip), without its hand-off to the session; waited on at unload
+    /// beside <see cref="CatalogTask"/>. The hand-off is not waited on: it is a no-op once unloading.
+    /// </summary>
+    private volatile Task? catalogRebuild;
 
     /// <summary>The catalog build started at load. Faulted or cancelled when the build did not finish.</summary>
     internal Task<CatalogBundle> CatalogTask { get; }
@@ -105,37 +114,58 @@ public sealed class Plugin : IDalamudPlugin
     {
         var (generation, token) = StartCatalogBuild();
         Session.SetCatalogRebuilding();
-        var rebuild = BuildCatalogAsync(generation, token);
-        catalogRebuild = rebuild;
-        return rebuild;
+        return BuildCatalogAsync(generation, token);
     }
 
-    /// <summary>Takes the next build ticket and a fresh token, cancelling the build in flight (its result would be stale).</summary>
+    /// <summary>
+    /// Takes the next build ticket and a fresh token, cancelling the build in flight (its result would be stale). Once
+    /// the unload cancelled the builds (<see cref="CancelCatalogBuilds"/>) the token handed out is that cancelled one,
+    /// so a build started that late stops at once.
+    /// </summary>
     private (int Generation, CancellationToken Token) StartCatalogBuild()
     {
         lock (catalogBuildLock)
         {
-            var previous = catalogCts;
-            // Not disposed: the superseded build still holds its token and may register on it while it winds down.
-            previous.Cancel();
-            catalogCts = new CancellationTokenSource();
+            if (!catalogBuildsStopped)
+            {
+                var previous = catalogCts;
+                // Not disposed: the superseded build still holds its token and may register on it while it winds down.
+                previous.Cancel();
+                catalogCts = new CancellationTokenSource();
+            }
+
             return (catalogGeneration.Start(), catalogCts.Token);
+        }
+    }
+
+    /// <summary>Set by <see cref="CancelCatalogBuilds"/> under <see cref="catalogBuildLock"/>: no build gets a live token after it.</summary>
+    private bool catalogBuildsStopped;
+
+    /// <summary>The unload's first step: cancels the build in flight and every later one, so they wind down while the rest unloads.</summary>
+    private void CancelCatalogBuilds()
+    {
+        lock (catalogBuildLock)
+        {
+            catalogBuildsStopped = true;
+            catalogCts.Cancel();
         }
     }
 
     private async Task BuildCatalogAsync(int generation, CancellationToken token)
     {
-        var loader = new LuminaCatalogLoader(DataManager, Log, curated, questPatches);
         // Read on the caller's (framework) thread, before the first await.
         var filing = Settings.JournalFiling;
+        // What the unload waits for: the build and its icons (they read the sheets), never the hand-off below, which
+        // is a no-op once unloading and needs the framework thread the unload may itself be running on.
+        var build = BuildBundleWithIconsAsync(filing, token);
+        catalogRebuild = build;
         CatalogBundle bundle;
         Core.Ui.NodeIconMap icons;
         try
         {
-            bundle = await loader.BuildBundleAsync(DataManager.Language, filing, token).ConfigureAwait(false);
-            icons = ResolveNodeIcons(bundle);
+            (bundle, icons) = await build.ConfigureAwait(false);
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException) when (token.IsCancellationRequested)
         {
             Log.Debug("Catalog build {Generation} cancelled", generation);
             return;
@@ -151,6 +181,14 @@ public sealed class Plugin : IDalamudPlugin
         // Only the build's own failure is "Catalog unavailable" here: a failure while the session takes the catalog is
         // handled by PublishCatalog, which knows the previous catalog is still the one in use.
         await PublishOnFrameworkThreadAsync(generation, bundle, null, icons).ConfigureAwait(false);
+    }
+
+    /// <summary>A rebuild's off-thread part: the bundle, then its node icons. Starts on the caller's thread.</summary>
+    private async Task<(CatalogBundle Bundle, Core.Ui.NodeIconMap Icons)> BuildBundleWithIconsAsync(Core.Model.JournalFiling filing, CancellationToken token)
+    {
+        var loader = new LuminaCatalogLoader(DataManager, Log, curated, questPatches);
+        var bundle = await loader.BuildBundleAsync(DataManager.Language, filing, token).ConfigureAwait(false);
+        return (bundle, ResolveNodeIcons(bundle));
     }
 
     /// <summary>
@@ -490,10 +528,11 @@ public sealed class Plugin : IDalamudPlugin
 
     /// <summary>
     /// Poller first (unsubscribe, final save), then the snapshot service; the catalog build is cancelled by the caller.
-    /// Each step is isolated like the rest of <see cref="TearDown"/>; the writer's drain and the multibox loop wait
-    /// only for what is left of the unload's one <see cref="DisposeWait"/> (<paramref name="remaining"/>).
+    /// Each step is isolated like the rest of <see cref="TearDown"/>. The writer's drain is the first wait on the unload's
+    /// <paramref name="budget"/>, so it starts the clock and gets all of <see cref="DisposeWait"/>; the multibox loop
+    /// waits only for what the writer left.
     /// </summary>
-    private void DisposeGameState(Func<TimeSpan> remaining)
+    private void DisposeGameState(Core.Runtime.WaitBudget budget)
     {
         gameStateDisposed = true;
         Unwind("session listeners", () =>
@@ -512,7 +551,7 @@ public sealed class Plugin : IDalamudPlugin
         Unwind("save writer", () =>
         {
             Framework.Update -= DrainWriter;
-            var wait = remaining();
+            var wait = budget.Remaining();
             if (!Writer.Close(wait))
             {
                 Log.Warning("Saves still queued after {Seconds:0.#} s; they finish in the background", wait.TotalSeconds);
@@ -524,7 +563,7 @@ public sealed class Plugin : IDalamudPlugin
             if (Multibox is not null)
             {
                 Multibox.UserFilesChanged -= OnUserFilesChanged;
-                Multibox.Dispose(remaining());
+                Multibox.Dispose(budget.Remaining());
             }
         });
         Unwind("snapshot service", () => Snapshots?.Dispose());
@@ -757,6 +796,7 @@ public sealed class Plugin : IDalamudPlugin
             command.Export = new ExportCommand(exportService, Settings, gameLinks).Run;
             // A filing change rebuilds the catalog off-thread; the session swaps it in on the framework thread.
             configWindow.JournalFilingChanged = filing => _ = RetryCatalogAsync();
+            configWindow.RetryCatalog = () => _ = RetryCatalogAsync();
             Game.WotsitIpc wotsitIpc = wotsit;
             configWindow.WotsitToggled = enabled => wotsitIpc.Enabled = enabled;
             if (hoverHint is { } hint) { configWindow.ItemHintsToggled = enabled => hint.Enabled = enabled; }
@@ -871,17 +911,16 @@ public sealed class Plugin : IDalamudPlugin
     /// <summary>
     /// Unload, and the best-effort unwind after a failed constructor: every step is isolated, so one failure can neither
     /// hide another nor leave a later hook (context menus, addon listeners, Framework.Update, IPC) subscribed into an
-    /// unloaded assembly. The waits at the end (the writer's last saves, the multibox loop, the catalog builds) share
-    /// one <see cref="DisposeWait"/> rather than taking one each.
+    /// unloaded assembly. The catalog builds are cancelled first, so they wind down while the rest unloads. The waits at
+    /// the end (the writer's last saves, the multibox loop, the catalog builds) share one <see cref="DisposeWait"/>
+    /// whose clock starts at the writer's drain, so nothing before it eats the final saves' time; the journal index's
+    /// short wait comes before it (worst case in all: see <see cref="DisposeWait"/>).
     /// </summary>
     private void TearDown()
     {
-        var unloading = Stopwatch.StartNew();
-        TimeSpan Remaining()
-        {
-            var left = DisposeWait - unloading.Elapsed;
-            return left > TimeSpan.Zero ? left : TimeSpan.Zero;
-        }
+        // Before anything else: nothing below needs a build, and a cancelled one stops while the windows go.
+        Unwind("catalog build cancel", CancelCatalogBuilds);
+        var budget = new Core.Runtime.WaitBudget(DisposeWait);
 
         // Other plugins stop reaching in first, before anything they could reach is torn down.
         Unwind("tsukimichi ipc", () => ipcProvider?.Dispose());
@@ -942,9 +981,9 @@ public sealed class Plugin : IDalamudPlugin
         Unwind("query runner", () => queryRunner?.Dispose());
         Unwind("journal text", () => QuestText?.Dispose());
         Unwind("lifestream ipc", () => lifestream?.Dispose());
-        // Each of its steps is isolated on its own.
-        DisposeGameState(Remaining);
-        Unwind("catalog build", () => StopCatalogBuild(Remaining()));
+        // Each of its steps is isolated on its own. Its save writer drain starts the budget's clock.
+        DisposeGameState(budget);
+        Unwind("catalog build", () => StopCatalogBuild(budget.Remaining()));
     }
 
     private static void Unwind(string what, Action step)
@@ -960,8 +999,9 @@ public sealed class Plugin : IDalamudPlugin
     }
 
     /// <summary>
-    /// Cancels the catalog build in flight, waits up to <paramref name="wait"/> (what is left of the unload's
-    /// <see cref="DisposeWait"/>) for the builds to stop and releases the token source.
+    /// After <see cref="CancelCatalogBuilds"/>: waits up to <paramref name="wait"/> (what is left of the unload's
+    /// <see cref="DisposeWait"/>) for the builds to stop and releases the token source. Only the builds themselves are
+    /// waited on, not a rebuild's hand-off to the session (a no-op once unloading).
     /// </summary>
     private void StopCatalogBuild(TimeSpan wait)
     {
@@ -971,6 +1011,7 @@ public sealed class Plugin : IDalamudPlugin
             cts = catalogCts;
         }
 
+        // Already cancelled by the unload's first step; again in case that step failed.
         cts.Cancel();
         try
         {

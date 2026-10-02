@@ -1208,6 +1208,10 @@
     <value>Export failed: {0}</value>
     <comment>{0} = the error.</comment>
   </data>
+  <data name="CharactersForgetPartialFormat" xml:space="preserve">
+    <value>{0} forgotten, but some of their data could not be cleared from memory and may be saved again; see /xllog.</value>
+    <comment>{0} = the character's name.</comment>
+  </data>
   <data name="CharactersForget" xml:space="preserve">
     <value>Forget this character</value>
   </data>
@@ -1496,6 +1500,9 @@
   </data>
   <data name="ConfigDeleteDone" xml:space="preserve">
     <value>All Tsukimichi data deleted.</value>
+  </data>
+  <data name="ConfigDeletePartial" xml:space="preserve">
+    <value>Tsukimichi data deleted, but some of it could not be cleared from memory and may be saved again; see /xllog.</value>
   </data>
   <data name="ConfigCancel" xml:space="preserve">
     <value>Cancel</value>
@@ -3427,6 +3434,10 @@
   </data>
   <data name="CatalogUnavailable" xml:space="preserve">
     <value>Catalog unavailable</value>
+  </data>
+  <data name="CatalogRebuildFailedFormat" xml:space="preserve">
+    <value>Catalog rebuild failed, showing the previous one: {0}</value>
+    <comment>{0} = the error. Shown when a rebuild (a retry or a Journal filing change) failed while an older catalog stays in use.</comment>
   </data>
   <data name="Retry" xml:space="preserve">
     <value>Retry</value>

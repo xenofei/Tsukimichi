@@ -67,6 +67,25 @@ public sealed class UserDataTests : IDisposable
     }
 
     [Fact]
+    public void A_null_pin_list_from_a_hand_edited_file_has_no_entry()
+    {
+        // The query runner, the chat notices and the overlay walk a character's list as they find it: a null one
+        // would throw on every pin toggle or character switch.
+        var path = tmp.File("pins.json");
+        File.WriteAllText(path, """{ "1": null, "2": [ 5 ] }""");
+
+        var loaded = PinsFile.Load(path);
+        var shared = PinsFile.LoadShared(path);
+
+        Assert.False(loaded.ContainsKey(1));
+        Assert.Equal([5u], loaded[2]);
+        Assert.True(shared.IsLoaded);
+        Assert.False(shared.Value!.ContainsKey(1));
+        Assert.Equal([5u], shared.Value[2]);
+        Assert.True(File.Exists(path), "a null list is not a reason to quarantine the file");
+    }
+
+    [Fact]
     public void Pin_edits_append_new_pins_after_the_ones_held_and_keep_their_order()
     {
         // Multibox (D11): another client pinned 30 after this one loaded [10, 20]; this client then pins 40 and 10

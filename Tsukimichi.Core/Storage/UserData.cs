@@ -29,13 +29,32 @@ public readonly record struct PinChange(ulong ContentId, uint RowId, PinChangeKi
 /// </summary>
 public static class PinsFile
 {
-    /// <summary>Loads pins; a missing file yields an empty map, an unreadable one is quarantined and reported in <paramref name="warnings"/>.</summary>
-    public static Dictionary<ulong, List<uint>> Load(string path, IList<string>? warnings = null) =>
-        UserFile.Load<Dictionary<ulong, List<uint>>>(path, warnings) ?? [];
+    /// <summary>
+    /// Loads pins; a missing file yields an empty map, an unreadable one is quarantined and reported in
+    /// <paramref name="warnings"/>. A character whose list is null (<c>"123": null</c> in a hand-edited file) has no
+    /// entry, so every reader can take a list it finds as it is.
+    /// </summary>
+    public static Dictionary<ulong, List<uint>> Load(string path, IList<string>? warnings = null)
+    {
+        var pins = UserFile.Load<Dictionary<ulong, List<uint>>>(path, warnings) ?? [];
+        DropNull(pins);
+        return pins;
+    }
 
-    /// <summary>Reads pins for a merge into memory; never quarantines. Only <see cref="SharedLoad.Loaded"/> is worth adopting.</summary>
-    public static SharedRead<Dictionary<ulong, List<uint>>> LoadShared(string path) =>
-        UserFile.LoadShared<Dictionary<ulong, List<uint>>>(path);
+    /// <summary>
+    /// Reads pins for a merge into memory; never quarantines. Only <see cref="SharedLoad.Loaded"/> is worth adopting.
+    /// Null lists are dropped as in <see cref="Load"/>.
+    /// </summary>
+    public static SharedRead<Dictionary<ulong, List<uint>>> LoadShared(string path)
+    {
+        var read = UserFile.LoadShared<Dictionary<ulong, List<uint>>>(path);
+        if (read.Value is { } pins)
+        {
+            DropNull(pins);
+        }
+
+        return read;
+    }
 
     public static void Save(string path, IReadOnlyDictionary<ulong, List<uint>> pins)
     {
@@ -174,6 +193,14 @@ public static class PinsFile
 
             Save(path, kept);
             return kept;
+        }
+    }
+
+    private static void DropNull(Dictionary<ulong, List<uint>> pins)
+    {
+        foreach (var key in pins.Where(static p => p.Value is null).Select(static p => p.Key).ToList())
+        {
+            pins.Remove(key);
         }
     }
 

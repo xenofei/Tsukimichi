@@ -52,6 +52,7 @@ public sealed partial class ConfigWindow : Window
     private string catalogLine = Strings.ConfigCatalogLoading;
     private string? catalogError;
     private int catalogErrorLanguage = -1;
+    private string? catalogRebuildLine;
 
     private float pollSeconds;
     private bool pollDirty;
@@ -75,6 +76,7 @@ public sealed partial class ConfigWindow : Window
     private int planPinnedLanguage = -1;
     private string planPinnedLabel = string.Empty;
     private string? toast;
+    private bool toastFailed;
     private DateTime toastUntilUtc;
 
     // "Your Moonlit verdicts": one row per override, rebuilt when the overrides or the quest catalog change.
@@ -136,6 +138,9 @@ public sealed partial class ConfigWindow : Window
 
     /// <summary>Called with the new value after <see cref="Configuration.JournalFiling"/> changes and is saved; the plugin rebuilds the catalog.</summary>
     public Action<JournalFiling>? JournalFilingChanged { get; set; }
+
+    /// <summary>Rebuilds the catalog after a failed build (About's Retry); the plugin wires it. Null hides the button.</summary>
+    public Action? RetryCatalog { get; set; }
 
     /// <summary>Moves the todo overlay back to its default place; set by the plugin once the overlay exists. Null hides the button.</summary>
     public Action? ResetTodoPosition { get; set; }
@@ -1582,6 +1587,7 @@ public sealed partial class ConfigWindow : Window
         {
             overrides.ClearAll();
             toast = Strings.ConfigVerdictsRestored;
+            toastFailed = false;
             toastUntilUtc = DateTime.UtcNow + ToastDuration;
         }
 
@@ -1667,8 +1673,10 @@ public sealed partial class ConfigWindow : Window
         {
             if (ImGui.Button(Strings.ConfigDeleteConfirm))
             {
-                session.DeleteAllData();
-                toast = Strings.ConfigDeleteDone;
+                // A listener that failed may still hold pins or overrides in memory and save them again: say so.
+                var failed = session.DeleteAllData();
+                toast = failed == 0 ? Strings.ConfigDeleteDone : Strings.ConfigDeletePartial;
+                toastFailed = failed != 0;
                 toastUntilUtc = DateTime.UtcNow + ToastDuration;
                 ImGui.CloseCurrentPopup();
             }
@@ -1694,9 +1702,9 @@ public sealed partial class ConfigWindow : Window
             return;
         }
 
-        using (Theme.PushText(Theme.Silver))
+        using (Theme.PushText(toastFailed ? Theme.Eclipse : Theme.Silver))
         {
-            ImGui.TextUnformatted(toast);
+            ImGui.TextWrapped(toast);
         }
     }
 
@@ -1719,8 +1727,32 @@ public sealed partial class ConfigWindow : Window
 
         ImGui.TextUnformatted(curatedLine.Value);
         ImGui.TextUnformatted(catalogLine);
+        DrawCatalogFailure();
         RefreshPollTiming();
         ImGui.TextUnformatted(pollTimingLine);
+    }
+
+    /// <summary>
+    /// Under the catalog line once a build failed and none is running: with an older catalog still in use, the
+    /// rebuild's failure (the line above shows the catalog that stays); then Retry, as on the main window's panel.
+    /// </summary>
+    private void DrawCatalogFailure()
+    {
+        if (session.CatalogError is null || session.CatalogLoading)
+        {
+            return;
+        }
+
+        if (catalogRebuildLine is { } line)
+        {
+            using var eclipse = Theme.PushText(Theme.Eclipse);
+            ImGui.TextWrapped(line);
+        }
+
+        if (RetryCatalog is { } retry && ImGui.SmallButton(Strings.Retry + "##catalogRetry"))
+        {
+            retry();
+        }
     }
 
     /// <summary>Catalog language and size, rebuilt when the bundle (or the error) changes.</summary>
@@ -1736,8 +1768,22 @@ public sealed partial class ConfigWindow : Window
                 catalogLine = string.Format(CultureInfo.CurrentCulture, Strings.ConfigCatalogFormat, bundle.Catalog.Count, bundle.Language);
             }
 
+            // A rebuild that failed leaves this catalog in use; the failure gets its own line under this one.
+            if (session.CatalogError is not { } rebuildError)
+            {
+                catalogRebuildLine = null;
+            }
+            else if (catalogRebuildLine is null || rebuildError != catalogError || catalogErrorLanguage != Loc.Version)
+            {
+                catalogError = rebuildError;
+                catalogErrorLanguage = Loc.Version;
+                catalogRebuildLine = string.Format(CultureInfo.CurrentCulture, Strings.CatalogRebuildFailedFormat, rebuildError);
+            }
+
             return;
         }
+
+        catalogRebuildLine = null;
 
         if (session.CatalogError is { } error)
         {
