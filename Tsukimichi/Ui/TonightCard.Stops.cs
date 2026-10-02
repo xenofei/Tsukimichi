@@ -98,10 +98,8 @@ public sealed partial class TonightCard
 
             if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
             {
-                UiMetrics.Tooltip(
-                    !links.TeleportAvailable ? Strings.RouteTeleportNeedsLifestream
-                    : links.TeleportBusy ? Strings.TeleportBusy
-                    : string.Format(CultureInfo.CurrentCulture, Strings.TeleportTooltipFormat, stop.Place.Name));
+                // The same text as every Teleport: the aetheryte, its gil cost, "already here", or why it cannot.
+                UiMetrics.Tooltip(links.TeleportTooltip(first));
             }
         }
     }

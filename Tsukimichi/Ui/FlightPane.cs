@@ -278,17 +278,12 @@ public sealed class FlightPane
         const ImGuiTableFlags Flags = ImGuiTableFlags.RowBg | ImGuiTableFlags.BordersInnerH | ImGuiTableFlags.SizingFixedFit;
         var line = ImGui.GetTextLineHeight();
         var glyphColumn = MathF.Max(UiMetrics.InlineGlyphSize(line) * 2f, UiMetrics.Px(44f));
-        var teleport = links.TeleportAvailable;
         var style = ImGui.GetStyle();
         var padding = style.FramePadding.X * 2f;
 
-        // Flag and Teleport fold into one "…" under the fold width; with Flag alone there is nothing to fold.
-        var fold = teleport && PaneFit.FoldActions(width / UiMetrics.Scale);
-        var actionsWidth = fold ? MoreSize(line) : ImGui.CalcTextSize(Strings.FlightFlag).X + padding;
-        if (teleport && !fold)
-        {
-            actionsWidth += style.ItemSpacing.X + ImGui.CalcTextSize(Strings.FlightTeleport).X + padding;
-        }
+        // Flag, Teleport and Walk fold into one "…" under the fold width.
+        var fold = PaneFit.FoldActions(width / UiMetrics.Scale);
+        var actionsWidth = fold ? MoreSize(line) : ImGui.CalcTextSize(Strings.FlightFlag).X + padding + TravelControls.ButtonsWidth(links, Strings.FlightTeleport);
 
         // A fixed column is at least as wide as its header, which ImGui would widen it to anyway.
         Span<ColumnSpec> specs = stackalloc ColumnSpec[5];
@@ -314,7 +309,7 @@ public sealed class FlightPane
             var rows = zone.Rows;
             for (var i = 0; i < rows.Length; i++)
             {
-                DrawQuestRow(ui, rows[i], i, line, teleport, fold);
+                DrawQuestRow(ui, rows[i], i, line, fold);
             }
         }
 
@@ -339,7 +334,7 @@ public sealed class FlightPane
     /// <summary>The "…" button's side in a table row.</summary>
     private static float MoreSize(float line) => MathF.Min(UiMetrics.MinTarget, MathF.Max(line, UiMetrics.RowIconSize));
 
-    private void DrawQuestRow(UiState ui, QuestRow row, int index, float line, bool teleport, bool fold)
+    private void DrawQuestRow(UiState ui, QuestRow row, int index, float line, bool fold)
     {
         using var id = ImRaii.PushId(index);
         ImGui.TableNextRow();
@@ -401,7 +396,8 @@ public sealed class FlightPane
             Chrome.StatusText(row.StatusText, ImGui.GetContentRegionAvail().X, s.Text, s.TextSecondary);
         }
 
-        // Flag the giver; teleport through Lifestream when it is loaded. Folded into "…" in a narrow pane.
+        // Flag the giver, teleport through Lifestream (greyed, naming it, without), walk with vnavmesh. Folded into "…"
+        // in a narrow pane.
         if (!NextColumn(ColumnActions) || row.Quest is not { } target)
         {
             return;
@@ -426,25 +422,10 @@ public sealed class FlightPane
             UiMetrics.Tooltip(Strings.FlightFlagTooltip);
         }
 
-        if (teleport)
-        {
-            ImGui.SameLine();
-            using (ImRaii.Disabled(!links.CanTeleport(target)))
-            {
-                if (ImGui.SmallButton(Strings.FlightTeleport))
-                {
-                    links.TeleportToGiver(target);
-                }
-            }
-
-            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
-            {
-                UiMetrics.Tooltip(TeleportTip(target));
-            }
-        }
+        TravelControls.Buttons(links, target, Strings.FlightTeleport);
     }
 
-    /// <summary>Flag and Teleport folded into one "…" button and its menu (a narrow pane).</summary>
+    /// <summary>Flag, Teleport, Walk and Go to giver folded into one "…" button and its menu (a narrow pane).</summary>
     private void DrawRowMenu(QuestRecord target, float line)
     {
         Keyboard.MoreButton("##more", RowMenuId, ImGui.GetCursorScreenPos(), MoreSize(line));
@@ -466,21 +447,8 @@ public sealed class FlightPane
             UiMetrics.Tooltip(Strings.FlightFlagTooltip);
         }
 
-        if (ImGui.MenuItem(Strings.FlightTeleport, enabled: links.CanTeleport(target)))
-        {
-            links.TeleportToGiver(target);
-        }
-
-        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
-        {
-            UiMetrics.Tooltip(TeleportTip(target));
-        }
+        TravelControls.MenuItems(links, target, Strings.FlightTeleport);
     }
-
-    private string TeleportTip(QuestRecord target) =>
-        links.TeleportBusy ? Strings.TeleportBusy
-        : links.NearestAetheryte(target) is { } aetheryte ? aetheryte.Name
-        : Strings.TeleportNoAetheryte;
 
     private void DrawFieldLine(ZoneItem zone)
     {

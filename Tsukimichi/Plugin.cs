@@ -33,6 +33,9 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] internal static IKeyState KeyState { get; private set; } = null!;
     [PluginService] internal static IAddonLifecycle AddonLifecycle { get; private set; } = null!;
     [PluginService] internal static ISeStringEvaluator SeStringEvaluator { get; private set; } = null!;
+    // Travel (1.6.0): where the player stands and which aetherytes are attuned.
+    [PluginService] internal static IObjectTable ObjectTable { get; private set; } = null!;
+    [PluginService] internal static IAetheryteList AetheryteList { get; private set; } = null!;
     // /UI
 
     /// <summary>
@@ -73,6 +76,8 @@ public sealed class Plugin : IDalamudPlugin
     private readonly UiState ui;
     private readonly GameLinks gameLinks;
     private readonly Game.LifestreamIpc lifestream;
+    private readonly Game.VnavmeshIpc vnavmesh;
+    private readonly Game.TravelService travel;
     private readonly Game.CompanionPlugins companions;
     private readonly QueryRunner queryRunner;
     private readonly MainWindow mainWindow;
@@ -672,6 +677,17 @@ public sealed class Plugin : IDalamudPlugin
             companions = new Game.CompanionPlugins(PluginInterface, Log);
             lifestream = new Game.LifestreamIpc(PluginInterface, Log);
             gameLinks.Lifestream = lifestream;
+            // Travel (1.6.0): attunement-aware Teleport, the aethernet hop, Walk to giver and Go to giver. Lifestream and
+            // vnavmesh stay optional; the character only moves on an explicit click (decision 1).
+            vnavmesh = new Game.VnavmeshIpc(PluginInterface, Log);
+            travel = new Game.TravelService(Framework, ClientState, Condition, ObjectTable, AetheryteList, lifestream, vnavmesh, Log)
+            {
+                Print = line => ChatGui.Print(line, Strings.ChatTag),
+                Index = () => gameLinks.Aetherytes,
+            };
+            gameLinks.Travel = travel;
+            gameLinks.ShowWalk = () => Settings.ShowWalkToGiver;
+            gameLinks.ShowGoTo = () => Settings.ShowGoToGiver;
             queryRunner = new QueryRunner(this, ui, Log);
             mainWindow = new MainWindow(this, ui, queryRunner, gameLinks, TextureProvider, PluginInterface, Log, RetryCatalogAsync);
             windowSystem.AddWindow(mainWindow);
@@ -732,6 +748,9 @@ public sealed class Plugin : IDalamudPlugin
             {
                 stateReader.Gate = gate;
             }
+
+            // And the aethernet shard attunement read (UIState.IsAetheryteUnlocked).
+            travel.Gate = gate;
 
             // Hand-in items (1.6.0): the detail pane's Hand in section, the "Needed for" hint and menu entry, Moonlit's
             // relic ownership through Allagan Tools, and the Artisan and GatherBuddy hand-offs (decision 1).
@@ -1162,6 +1181,9 @@ public sealed class Plugin : IDalamudPlugin
         Unwind("chat notifier", () => chatNotifier?.Dispose());
         Unwind("query runner", () => queryRunner?.Dispose());
         Unwind("journal text", () => QuestText?.Dispose());
+        // A walk or Go to giver this plugin started stops before the IPC wrappers go.
+        Unwind("travel", () => travel?.Dispose());
+        Unwind("vnavmesh ipc", () => vnavmesh?.Dispose());
         Unwind("lifestream ipc", () => lifestream?.Dispose());
         Unwind("allagan tools ipc", () => allaganTools?.Dispose());
         Unwind("artisan ipc", () => artisan?.Dispose());

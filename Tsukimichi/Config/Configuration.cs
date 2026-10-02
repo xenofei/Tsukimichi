@@ -76,6 +76,15 @@ public sealed class Configuration : IPluginConfiguration
     /// </summary>
     public bool QuestionableHandoff { get; set; }
 
+    // ---- 1.6.0: travel ----
+    /// <summary>
+    /// Show Walk to giver (vnavmesh) beside Teleport. On by default; without vnavmesh the button stays, greyed, and
+    /// names it. The character only moves on a click.
+    /// </summary>
+    public bool ShowWalkToGiver { get; set; } = true;
+
+    /// <summary>Show Go to giver (teleport, aethernet and walk in one click, with Stop). On by default.</summary>
+    public bool ShowGoToGiver { get; set; } = true;
     /// <summary>
     /// 1.6.0 (decision 1): "Run with AutoDuty" may queue a duty that has neither Duty Support nor Trust in the regular
     /// Duty Finder, with other players. Off by default: such a duty's button stays disabled and says why.

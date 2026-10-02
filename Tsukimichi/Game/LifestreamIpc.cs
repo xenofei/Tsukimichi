@@ -7,30 +7,54 @@ using Dalamud.Plugin.Services;
 namespace Tsukimichi.Game;
 
 /// <summary>
-/// Teleport through Lifestream's IPC (<c>Lifestream.Teleport(uint aetheryteId, byte subIndex) -> bool</c>,
-/// <c>Lifestream.IsBusy() -> bool</c>). <see cref="Available"/> is answered from Dalamud's plugin list, cached and
-/// refreshed whenever the list changes, so the UI can hide the teleport item without an IPC call per frame;
-/// <see cref="IsBusy"/> is cached for <see cref="IsBusyCacheMs"/> so a per-frame read costs at most a few IPC calls a
-/// second. Every call is wrapped: a gate that is not ready or throws reads as unavailable / not busy / failed, and
-/// the first failure is logged once.
+/// Travel through Lifestream's IPC, the only way Tsukimichi teleports (feature plan v5, decision 2). The gates, as
+/// Lifestream's <c>IPC/IPCProvider.cs</c> registers them through EzIPC ("Lifestream." + method name; checked against
+/// NightmareXIV/Lifestream ef759e9, 2026-09-23):
+/// <list type="bullet">
+/// <item><c>Teleport(uint aetheryteId, byte subIndex) -> bool</c>: false when the player cannot teleport now (combat,
+/// casting, animation lock: its TeleportService.CanTeleport) or the aetheryte is not attuned.</item>
+/// <item><c>IsBusy() -> bool</c>, <c>Abort()</c>.</item>
+/// <item><c>AethernetTeleportById(uint aetheryteSheetRow) -> bool</c> and <c>AethernetTeleportToFirmament() -> bool</c>:
+/// false only while busy; the hop itself needs the player at an aetheryte or shard of that network (Lifestream walks
+/// to one a few steps away), and otherwise ends with Lifestream's own chat error.</item>
+/// <item><c>GetActiveAetheryte() -> uint</c>: the aetheryte or shard (Aetheryte sheet row) the player stands at, 0 when none.</item>
+/// <item><c>ExecuteCommand(string arguments)</c>: runs <c>/li arguments</c>.</item>
+/// </list>
+/// <see cref="Available"/> is answered from Dalamud's plugin list, cached and refreshed whenever the list changes, so
+/// the UI can name Lifestream on a disabled button without an IPC call per frame; <see cref="IsBusy"/> and
+/// <see cref="ActiveAetheryte"/> are cached for <see cref="IsBusyCacheMs"/> so a per-frame read costs at most a few IPC
+/// calls a second. Every call is wrapped: a gate that is not ready or throws reads as unavailable / not busy / failed,
+/// and the first failure is logged once.
 /// </summary>
 public sealed class LifestreamIpc : IDisposable
 {
     public const string PluginInternalName = "Lifestream";
     private const string TeleportGate = "Lifestream.Teleport";
     private const string IsBusyGate = "Lifestream.IsBusy";
+    private const string AbortGate = "Lifestream.Abort";
+    private const string AethernetByIdGate = "Lifestream.AethernetTeleportById";
+    private const string FirmamentGate = "Lifestream.AethernetTeleportToFirmament";
+    private const string ActiveAetheryteGate = "Lifestream.GetActiveAetheryte";
+    private const string ExecuteCommandGate = "Lifestream.ExecuteCommand";
 
-    /// <summary>How long an <see cref="IsBusy"/> answer is reused before Lifestream is asked again.</summary>
+    /// <summary>How long an <see cref="IsBusy"/> or <see cref="ActiveAetheryte"/> answer is reused before Lifestream is asked again.</summary>
     public const long IsBusyCacheMs = 250;
 
     private readonly IDalamudPluginInterface pluginInterface;
     private readonly IPluginLog log;
     private readonly ICallGateSubscriber<uint, byte, bool>? teleport;
     private readonly ICallGateSubscriber<bool>? isBusy;
+    private readonly ICallGateSubscriber<object>? abort;
+    private readonly ICallGateSubscriber<uint, bool>? aethernetById;
+    private readonly ICallGateSubscriber<bool>? firmament;
+    private readonly ICallGateSubscriber<uint>? activeAetheryte;
+    private readonly ICallGateSubscriber<string, object>? executeCommand;
 
     private bool? available;
     private bool busyCached;
     private long? busyCheckedAt;
+    private uint activeCached;
+    private long? activeCheckedAt;
     private bool warned;
 
     public LifestreamIpc(IDalamudPluginInterface pluginInterface, IPluginLog log)
@@ -42,12 +66,22 @@ public sealed class LifestreamIpc : IDisposable
         {
             teleport = pluginInterface.GetIpcSubscriber<uint, byte, bool>(TeleportGate);
             isBusy = pluginInterface.GetIpcSubscriber<bool>(IsBusyGate);
+            abort = pluginInterface.GetIpcSubscriber<object>(AbortGate);
+            aethernetById = pluginInterface.GetIpcSubscriber<uint, bool>(AethernetByIdGate);
+            firmament = pluginInterface.GetIpcSubscriber<bool>(FirmamentGate);
+            activeAetheryte = pluginInterface.GetIpcSubscriber<uint>(ActiveAetheryteGate);
+            executeCommand = pluginInterface.GetIpcSubscriber<string, object>(ExecuteCommandGate);
         }
         catch (Exception ex)
         {
             log.Warning(ex, "Lifestream IPC subscribers unavailable");
             teleport = null;
             isBusy = null;
+            abort = null;
+            aethernetById = null;
+            firmament = null;
+            activeAetheryte = null;
+            executeCommand = null;
         }
 
         pluginInterface.ActivePluginsChanged += OnActivePluginsChanged;
@@ -93,27 +127,35 @@ public sealed class LifestreamIpc : IDisposable
                 return busyCached;
             }
 
-            busyCached = QueryBusy(isBusy);
+            busyCached = Invoke(isBusy, static gate => gate.InvokeFunc(), false, "Lifestream.IsBusy failed");
             busyCheckedAt = now;
             return busyCached;
         }
     }
 
-    private bool QueryBusy(ICallGateSubscriber<bool> gate)
+    /// <summary>
+    /// The aetheryte or aethernet shard (Aetheryte sheet row) the player stands at as Lifestream sees it, 0 when none
+    /// or when Lifestream cannot be asked. Cached like <see cref="IsBusy"/>.
+    /// </summary>
+    public uint ActiveAetheryte
     {
-        try
+        get
         {
-            return gate.InvokeFunc();
-        }
-        catch (IpcNotReadyError)
-        {
-            available = false;
-            return false;
-        }
-        catch (Exception ex)
-        {
-            WarnOnce(ex, "Lifestream.IsBusy failed");
-            return false;
+            if (!Available || activeAetheryte is null)
+            {
+                activeCheckedAt = null;
+                return 0;
+            }
+
+            var now = Environment.TickCount64;
+            if (activeCheckedAt is { } checkedAt && now - checkedAt < IsBusyCacheMs)
+            {
+                return activeCached;
+            }
+
+            activeCached = Invoke(activeAetheryte, static gate => gate.InvokeFunc(), 0u, "Lifestream.GetActiveAetheryte failed");
+            activeCheckedAt = now;
+            return activeCached;
         }
     }
 
@@ -125,27 +167,95 @@ public sealed class LifestreamIpc : IDisposable
             return false;
         }
 
+        var accepted = Invoke(teleport, gate => gate.InvokeFunc(aetheryteId, 0), false, "Lifestream.Teleport failed");
+        if (!accepted)
+        {
+            log.Debug("Lifestream declined teleport to aetheryte {AetheryteId}", aetheryteId);
+        }
+
+        // Lifestream is busy from now on; drop the cached idle answer so the next frame sees it.
+        busyCheckedAt = null;
+        return accepted;
+    }
+
+    /// <summary>
+    /// Asks Lifestream for an aethernet hop to a shard (or city aetheryte) by Aetheryte sheet row. False when it
+    /// refused (busy), is absent or threw; true only means the hop was queued.
+    /// </summary>
+    public bool AethernetTeleport(uint aetheryteId)
+    {
+        if (aetheryteId == 0 || !Available || aethernetById is null)
+        {
+            return false;
+        }
+
+        var accepted = Invoke(aethernetById, gate => gate.InvokeFunc(aetheryteId), false, "Lifestream.AethernetTeleportById failed");
+        busyCheckedAt = null;
+        return accepted;
+    }
+
+    /// <summary>Asks Lifestream for the aethernet hop from the Foundation to the Firmament. As <see cref="AethernetTeleport"/>.</summary>
+    public bool AethernetTeleportToFirmament()
+    {
+        if (!Available || firmament is null)
+        {
+            return false;
+        }
+
+        var accepted = Invoke(firmament, static gate => gate.InvokeFunc(), false, "Lifestream.AethernetTeleportToFirmament failed");
+        busyCheckedAt = null;
+        return accepted;
+    }
+
+    /// <summary>Runs <c>/li <paramref name="arguments"/></c> through Lifestream. False when it is absent or the call threw.</summary>
+    public bool ExecuteCommand(string arguments)
+    {
+        if (string.IsNullOrWhiteSpace(arguments) || !Available || executeCommand is null)
+        {
+            return false;
+        }
+
+        var sent = Invoke(executeCommand, gate =>
+        {
+            gate.InvokeAction(arguments);
+            return true;
+        }, false, "Lifestream.ExecuteCommand failed");
+        busyCheckedAt = null;
+        return sent;
+    }
+
+    /// <summary>Stops Lifestream's running task, if any.</summary>
+    public void Abort()
+    {
+        if (!Available || abort is null)
+        {
+            return;
+        }
+
+        Invoke(abort, static gate =>
+        {
+            gate.InvokeAction();
+            return true;
+        }, false, "Lifestream.Abort failed");
+        busyCheckedAt = null;
+    }
+
+    /// <summary>Calls a gate; a gate that is not ready marks Lifestream unavailable, any other failure is logged once.</summary>
+    private T Invoke<TGate, T>(TGate gate, Func<TGate, T> call, T fallback, string failure)
+    {
         try
         {
-            var accepted = teleport.InvokeFunc(aetheryteId, 0);
-            if (!accepted)
-            {
-                log.Debug("Lifestream declined teleport to aetheryte {AetheryteId}", aetheryteId);
-            }
-
-            // Lifestream is busy from now on; drop the cached idle answer so the next frame sees it.
-            busyCheckedAt = null;
-            return accepted;
+            return call(gate);
         }
         catch (IpcNotReadyError)
         {
             available = false;
-            return false;
+            return fallback;
         }
         catch (Exception ex)
         {
-            WarnOnce(ex, "Lifestream.Teleport failed");
-            return false;
+            WarnOnce(ex, failure);
+            return fallback;
         }
     }
 

@@ -481,12 +481,11 @@ public sealed class RouteWindow : Window
         return right - width - UiMetrics.Px(8f);
     }
 
-    /// <summary>A step's Teleport tooltip: where it goes, or why it cannot (no Lifestream, Lifestream busy, no aetheryte known).</summary>
-    private string TeleportTip(QuestRecord quest) =>
-        !links.TeleportAvailable ? Strings.RouteTeleportNeedsLifestream
-        : links.NearestAetheryte(quest) is not { } aetheryte ? Strings.TeleportNoAetheryte
-        : links.TeleportBusy ? Strings.TeleportBusy
-        : string.Format(CultureInfo.CurrentCulture, Strings.TeleportTooltipFormat, aetheryte.Name);
+    /// <summary>
+    /// A step's Teleport tooltip: where it goes with the gil cost and "already here", or why it cannot (no Lifestream,
+    /// Lifestream busy, no attuned aetheryte), the same text as every other Teleport (<see cref="GameLinks.TeleportTooltip(QuestRecord)"/>).
+    /// </summary>
+    private string TeleportTip(QuestRecord quest) => links.TeleportTooltip(quest);
 
     private void DrawLine(CatalogBundle bundle, Line l, float rowHeight, float line)
     {

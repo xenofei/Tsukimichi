@@ -254,10 +254,30 @@ Every button that hands work to one of them stays visible when the plugin is not
 
 | Gate | Signature | Used for |
 |---|---|---|
-| `Lifestream.Teleport` | `(uint aetheryteId, byte subIndex) -> bool` | the detail pane's Teleport button, the Todo overlay's and Nearby's "Teleport with Lifestream" |
-| `Lifestream.IsBusy` | `() -> bool` | greying Teleport while Lifestream is busy (cached for 250 ms) |
+| `Lifestream.Teleport` | `(uint aetheryteId, byte subIndex) -> bool` | every Teleport button and menu item, and Go to giver's first step; false (combat, casting, not attuned) prints one chat line with the reason |
+| `Lifestream.IsBusy` | `() -> bool` | greying Teleport while Lifestream is busy, and Go to giver's arrival wait (cached for 250 ms) |
+| `Lifestream.AethernetTeleportById` | `(uint aetheryteSheetRow) -> bool` | "Aethernet to <shard>" and Go to giver's hop; false only while busy |
+| `Lifestream.AethernetTeleportToFirmament` | `() -> bool` | the hop from the Foundation to the Firmament |
+| `Lifestream.GetActiveAetheryte` | `() -> uint` | whether the player stands at the city's aetheryte or a shard (cached for 250 ms) |
+| `Lifestream.ExecuteCommand` | `(string arguments)` (action) | Teleport for an Island Sanctuary (`/li island`) or Occult Crescent (`/li occult`) giver, on an explicit click only: Lifestream talks to the NPC |
+| `Lifestream.Abort` | `()` (action) | Stop during Go to giver's teleport or hop |
 
-Source: `Game/LifestreamIpc.cs`.
+Source: `Game/LifestreamIpc.cs`. Read from [github.com/NightmareXIV/Lifestream](https://github.com/NightmareXIV/Lifestream) `Lifestream/IPC/IPCProvider.cs` at commit `ef759e9d3c3cd989b4af569c3f770ee9ba060922` (2026-09-23); EzIPC names each gate "Lifestream." plus the method name. Teleport is Lifestream only: there is no fallback to another plugin or to the game's own teleport (feature plan v5, decision 2). Without Lifestream the Teleport buttons stay, greyed, and name it.
+
+Special zones: the Firmament is a teleport to the Foundation and the Firmament hop (part of Go to giver). Island Sanctuary and the Occult Crescent are entered through a conversation Lifestream holds for the player, so they run only from the Teleport button, whose tooltip says so, never inside Go to giver. Cosmic Exploration's `/li cosmic` picks the newest planet and may change worlds, so Tsukimichi only teleports to Bestways Burrow and says where to go from there.
+
+### vnavmesh (internal name `vnavmesh`)
+
+| Gate | Signature | Used for |
+|---|---|---|
+| `vnavmesh.Nav.IsReady` | `() -> bool` | Walk waits for the zone's navmesh ("Preparing path…") |
+| `vnavmesh.Nav.BuildProgress` | `() -> float` | the "Preparing path… 40%" label (negative when no build runs) |
+| `vnavmesh.SimpleMove.PathfindAndMoveCloseTo` | `(Vector3 destination, bool fly, float range) -> bool` | Walk to giver and Go to giver's last step: on foot, to 3 yalms of the giver |
+| `vnavmesh.SimpleMove.PathfindInProgress` | `() -> bool` | the Walk button reads Stop while a path is found |
+| `vnavmesh.Path.IsRunning` | `() -> bool` | the Walk button reads Stop while the character moves |
+| `vnavmesh.Path.Stop` | `()` (action) | Stop; also on leaving the zone, logging out and unloading Tsukimichi |
+
+Source: `Game/VnavmeshIpc.cs` (state reads cached for 250 ms) and `Game/TravelService.cs` (the Go to giver chain, `Core/Travel/GoToGiver.cs`). Read from [github.com/awgil/ffxiv_navmesh](https://github.com/awgil/ffxiv_navmesh) `vnavmesh/IPCProvider.cs` at commit `6fc80725eb8290472eee433fc4be7ee06ec79357` (2026-08-31). The character moves only after an explicit click on Walk or Go to giver (feature plan v5, decision 1); Settings › Integrations hides either button.
 
 ### Wotsit (internal name `Dalamud.FindAnything`)
 
