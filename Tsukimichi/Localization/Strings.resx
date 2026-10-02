@@ -77,6 +77,18 @@
     <value> · Added in {0}</value>
     <comment>Appended to the hero's caption line (P8): {0} = the patch the quest was added in, as the game writes it.</comment>
   </data>
+  <data name="DetailDoneFormat" xml:space="preserve">
+    <value> · Done {0}</value>
+    <comment>Appended to the hero's caption line for a completed quest the plugin saw being completed. {0} = the date ("12 Sep 2026").</comment>
+  </data>
+  <data name="DetailDoneByFormat" xml:space="preserve">
+    <value> · Done by {0}</value>
+    <comment>Appended to the hero's caption line for a quest found completed at a login (completed while Tsukimichi was not running). {0} = the login's date.</comment>
+  </data>
+  <data name="DetailDoneBeforeFormat" xml:space="preserve">
+    <value> · Done before {0}</value>
+    <comment>Appended to the hero's caption line for a quest already completed when Tsukimichi started recording dates for the character. {0} = that first capture's date.</comment>
+  </data>
   <data name="DetailSeasonalBadgeTooltip" xml:space="preserve">
     <value>Seasonal event quest</value>
     <comment>The header badge's tooltip for QuestRecord.IconSpecial: a seasonal event quest, or another special one (a promotion).</comment>
@@ -826,7 +838,12 @@
     <comment>Subtitle under the Moonlit pane header; the tab keeps the brand word.</comment>
   </data>
   <data name="MoonlitOfflineHint" xml:space="preserve">
-    <value>Obtained states need the live character.</value>
+    <value>Log in with this character once to record what it owns.</value>
+    <comment>Shown for a stored character whose snapshot was saved before Tsukimichi recorded owned collectibles (1.5).</comment>
+  </data>
+  <data name="MoonlitOwnedAsOfFormat" xml:space="preserve">
+    <value>Owned as of {0}.</value>
+    <comment>Shown for a stored character (or one logged in on another game client): its owned collectibles come from its last capture. {0} = capture time.</comment>
   </data>
   <data name="MoonlitAchievementsFromQuests" xml:space="preserve">
     <value>Worked out from your quests for now. Open the Achievements window in game once this session to read them exactly.</value>

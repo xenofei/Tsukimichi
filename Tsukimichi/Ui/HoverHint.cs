@@ -91,10 +91,8 @@ public sealed class HoverHint
     /// </summary>
     public bool IsActive => Enabled && gate.HooksAllowed;
 
-    /// <summary>Whether the reward kind is one <see cref="RewardUnlockReader"/> reads from the live client, so an owned line makes sense.</summary>
-    public static bool IsUnlockable(RewardKind kind) => kind is
-        RewardKind.Emote or RewardKind.Minion or RewardKind.Mount or RewardKind.Orchestrion or RewardKind.Ornament or
-        RewardKind.TripleTriadCard or RewardKind.AetherCurrent or RewardKind.Instance or RewardKind.DutyUnlock;
+    /// <summary>Whether the reward kind is one <see cref="RewardUnlockReader"/> reads from an unlock flag, so an owned line makes sense.</summary>
+    public static bool IsUnlockable(RewardKind kind) => Core.Unique.Collectibles.IsStored(kind);
 
     /// <summary><c>UiBuilder.Draw</c> handler.</summary>
     public void Draw()
@@ -178,7 +176,10 @@ public sealed class HoverHint
                 entry.DropsInDuty ? Strings.AlsoDropsLine(entry.DropWhere) : string.Empty);
             if (IsUnlockable(entry.Kind))
             {
-                line.SetObtained(unlocks.IsObtained(entry));
+                // The reader answers for the viewed character; while another one is viewed, the logged-in character's
+                // flag is not what it reads, so the line says unknown rather than speak for the wrong character.
+                var forLive = session.IsLive || session.LiveStates.Count == 0;
+                line.SetObtained(forLive ? unlocks.IsObtained(entry) : null);
             }
 
             lines.Add(line);

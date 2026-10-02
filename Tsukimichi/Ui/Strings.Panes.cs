@@ -1,3 +1,4 @@
+using System;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Runtime;
 using Tsukimichi.Localization;
@@ -19,6 +20,29 @@ static partial class Strings
     /// <summary>Subtitle under the Moonlit pane header; the tab keeps the brand word.</summary>
     public static string MoonlitSubtitle => Loc.Get("MoonlitSubtitle");
     public static string MoonlitOfflineHint => Loc.Get("MoonlitOfflineHint");
+
+    // The last owned note composed: drawn every frame, composed only when the capture time or the language changes.
+    private static (DateTime? AsOf, int Language, string Text) ownedNote = (null, -1, string.Empty);
+
+    /// <summary>
+    /// The note beside a stored character's owned states: "Owned as of …" with its capture time when the snapshot saved
+    /// them (<see cref="Game.RewardUnlockReader.StoredAsOfUtc"/>), else <see cref="MoonlitOfflineHint"/>. Draw thread only.
+    /// </summary>
+    public static string MoonlitOwnedNote(DateTime? storedAsOfUtc)
+    {
+        if (storedAsOfUtc is not { } asOf)
+        {
+            return MoonlitOfflineHint;
+        }
+
+        if (ownedNote.AsOf != asOf || ownedNote.Language != Loc.Version)
+        {
+            var local = asOf.ToLocalTime().ToString(DateTimeFormat, System.Globalization.CultureInfo.CurrentCulture);
+            ownedNote = (asOf, Loc.Version, string.Format(System.Globalization.CultureInfo.CurrentCulture, Loc.Get("MoonlitOwnedAsOfFormat"), local));
+        }
+
+        return ownedNote.Text;
+    }
     public static string MoonlitAchievementsFromQuests => Loc.Get("MoonlitAchievementsFromQuests");
     public static string MoonlitColumnObtained => Loc.Get("MoonlitColumnObtained");
     public static string MoonlitColumnReward => Loc.Get("MoonlitColumnReward");

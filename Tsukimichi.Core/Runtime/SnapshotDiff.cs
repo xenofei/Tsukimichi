@@ -1,5 +1,6 @@
 using System.Buffers;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Unique;
 
 namespace Tsukimichi.Core.Runtime;
 
@@ -15,18 +16,23 @@ namespace Tsukimichi.Core.Runtime;
 /// achievements, entitlement caps, custom delivery ranks, carrier level, content id). These touch quests the reverse
 /// index cannot enumerate, so the caller resolves everything.
 /// </param>
+/// <param name="CollectiblesChanged">
+/// The owned collectibles (<see cref="CharacterSnapshot.Collectibles"/>) changed: a new mount, minion, emote, …. No
+/// quest's state depends on them, so nothing needs resolving, but the capture is saved and published.
+/// </param>
 public sealed record SnapshotDiff(
     IReadOnlyList<ushort> ChangedQuestIds,
     IReadOnlyList<byte> ChangedJobs,
     IReadOnlyList<ushort> ChangedFestivals,
-    bool OtherChanged)
+    bool OtherChanged,
+    bool CollectiblesChanged = false)
 {
     public static readonly SnapshotDiff Empty = new([], [], [], false);
 
     /// <summary>Largest id list the order-insensitive compare sorts on the stack; longer ones borrow from the array pool.</summary>
     private const int StackSetLimit = 256;
 
-    public bool IsEmpty => ChangedQuestIds.Count == 0 && ChangedJobs.Count == 0 && ChangedFestivals.Count == 0 && !OtherChanged;
+    public bool IsEmpty => ChangedQuestIds.Count == 0 && ChangedJobs.Count == 0 && ChangedFestivals.Count == 0 && !OtherChanged && !CollectiblesChanged;
 
     /// <summary>Compares two snapshots. Either may carry a shorter completion bitmask; missing bytes read as zero.</summary>
     public static SnapshotDiff Compute(CharacterSnapshot old, CharacterSnapshot @new)
@@ -42,7 +48,8 @@ public sealed record SnapshotDiff(
             && SameEntries(old.JobLevels, @new.JobLevels)
             && SameSequence(old.ActiveFestivals, @new.ActiveFestivals)
             && SameSequence(old.ActiveFestivalPhases, @new.ActiveFestivalPhases)
-            && !OtherInputsChanged(old, @new))
+            && !OtherInputsChanged(old, @new)
+            && Collectibles.Same(old.Collectibles, @new.Collectibles))
         {
             return Empty;
         }
@@ -61,13 +68,14 @@ public sealed record SnapshotDiff(
         DiffKeyed(FestivalPhases(old), FestivalPhases(@new), festivals);
 
         var other = OtherInputsChanged(old, @new);
+        var collectibles = !Collectibles.Same(old.Collectibles, @new.Collectibles);
 
-        if (quests.Count == 0 && jobs.Count == 0 && festivals.Count == 0 && !other)
+        if (quests.Count == 0 && jobs.Count == 0 && festivals.Count == 0 && !other && !collectibles)
         {
             return Empty;
         }
 
-        return new SnapshotDiff([.. quests], [.. jobs], [.. festivals], other);
+        return new SnapshotDiff([.. quests], [.. jobs], [.. festivals], other, collectibles);
     }
 
     private static bool OtherInputsChanged(CharacterSnapshot old, CharacterSnapshot @new) =>

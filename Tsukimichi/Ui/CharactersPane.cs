@@ -844,9 +844,10 @@ public sealed partial class CharactersPane
 
         if (!session.IsLive)
         {
+            // The counts come from the character's last capture (decision 9); a file from before 1.5 saved none.
             using (Theme.PushText(Theme.Dusk))
             {
-                ImGui.TextUnformatted(Strings.MoonlitOfflineHint);
+                ImGui.TextUnformatted(Strings.MoonlitOwnedNote(d.Snapshot.Collectibles.Count > 0 ? d.Snapshot.TakenUtc : null));
             }
         }
 

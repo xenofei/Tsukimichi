@@ -389,6 +389,9 @@ public static partial class Strings
     public const string TimeFormat = "HH:mm";
     public const string DateTimeFormat = "yyyy-MM-dd HH:mm";
 
+    /// <summary>A day, month and year ("12 Sep 2026"), in the current culture's month names.</summary>
+    public const string DateFormat = "d MMM yyyy";
+
     /// <summary>The display name of a state (docs/glossary.md); <see cref="StateNames"/> in Core owns the table.</summary>
     public static string StateName(QuestState state) => StateNames.Name(state);
 

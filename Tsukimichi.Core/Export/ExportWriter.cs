@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Runtime;
 using Tsukimichi.Core.Storage;
 using Tsukimichi.Core.Unique;
 
@@ -30,10 +31,29 @@ public enum ExportFormat
 /// in, the character's name. Never a content id, account id or world: those identify a player, and the file is meant
 /// to be shared with trackers and spreadsheets.
 /// </summary>
-public sealed record ExportHeader(string PluginVersion, string GameVersion, DateTime ExportedUtc, string? CharacterName = null);
+/// <param name="CompletionDatesSinceUtc">
+/// When completion dates started being recorded for the character (<see cref="CharacterSnapshot.CompletionDatesSinceUtc"/>);
+/// quests completed before it carry no date. Null when the snapshot records none. Written in quest exports only.
+/// </param>
+public sealed record ExportHeader(string PluginVersion, string GameVersion, DateTime ExportedUtc, string? CharacterName = null, DateTime? CompletionDatesSinceUtc = null);
 
 /// <summary>One quest of a quest export.</summary>
-public sealed record QuestExportRow(uint RowId, ushort QuestId, string Name, string Section, string Category, string Genre, string Expansion, bool Completed);
+/// <param name="CompletedAt">When the plugin first saw the quest completed (decision 9); null when not known.</param>
+/// <param name="CompletedAfter">
+/// For a quest found completed at a login: the capture before it. The quest was completed between this and
+/// <paramref name="CompletedAt"/>. Null for a quest seen being completed, or with no date.
+/// </param>
+public sealed record QuestExportRow(
+    uint RowId,
+    ushort QuestId,
+    string Name,
+    string Section,
+    string Category,
+    string Genre,
+    string Expansion,
+    bool Completed,
+    DateTime? CompletedAt = null,
+    DateTime? CompletedAfter = null);
 
 /// <summary>One reward of a Moonlit export; <see cref="Obtained"/> null means the plugin cannot tell.</summary>
 public sealed record MoonlitExportRow(RewardKind Kind, uint RewardId, string RewardName, uint QuestRowId, bool? Obtained);
@@ -55,7 +75,7 @@ public static class ExportWriter
     /// <summary>The CSV value of an obtained state the plugin cannot read.</summary>
     public const string Unknown = "unknown";
 
-    private static readonly string[] QuestColumns = ["rowId", "questId", "name", "section", "category", "genre", "expansion", "completed"];
+    private static readonly string[] QuestColumns = ["rowId", "questId", "name", "section", "category", "genre", "expansion", "completed", "completedAt", "completedAfter"];
     private static readonly string[] MoonlitColumns = ["kind", "rewardId", "rewardName", "questRowId", "obtained"];
 
     /// <summary>
@@ -67,7 +87,8 @@ public static class ExportWriter
             pluginVersion ?? string.Empty,
             gameVersion ?? string.Empty,
             exportedUtc.Kind == DateTimeKind.Utc ? exportedUtc : exportedUtc.ToUniversalTime(),
-            includeCharacterName && snapshot is { Name.Length: > 0 } s ? s.Name : null);
+            includeCharacterName && snapshot is { Name.Length: > 0 } s ? s.Name : null,
+            snapshot?.CompletionDatesSinceUtc);
 
     /// <summary>
     /// One row per catalog quest the snapshot has completed, in journal order; with <paramref name="includeIncomplete"/>
@@ -98,6 +119,9 @@ public static class ExportWriter
             var expansion = expansionName?.Invoke(quest.Expansion) is { Length: > 0 } name
                 ? name
                 : quest.Expansion.ToString(CultureInfo.InvariantCulture);
+            // A quest already complete when dates started has none (its kind is Before): nothing is guessed.
+            var date = CompletionDates.For(snapshot, quest.QuestId);
+            var dated = date is { Kind: not CompletionDateKind.Before } d ? d : (QuestCompletionDate?)null;
             rows.Add(new QuestExportRow(
                 quest.RowId,
                 quest.QuestId,
@@ -106,7 +130,9 @@ public static class ExportWriter
                 quest.Journal.CategoryName,
                 quest.Journal.GenreName,
                 expansion,
-                completed));
+                completed,
+                dated?.Utc,
+                dated?.AfterUtc));
         }
 
         return rows;
@@ -142,6 +168,11 @@ public static class ExportWriter
 
         return Json(header, ExportKind.Quests, w =>
         {
+            if (header.CompletionDatesSinceUtc is { } since)
+            {
+                w.WriteString("completionDatesSinceUtc", IsoUtc(since));
+            }
+
             w.WriteNumber("count", rows.Count);
             w.WriteNumber("completedCount", completed);
             w.WriteStartArray("quests");
@@ -156,6 +187,16 @@ public static class ExportWriter
                 w.WriteString("genre", row.Genre);
                 w.WriteString("expansion", row.Expansion);
                 w.WriteBoolean("completed", row.Completed);
+                if (row.CompletedAt is { } at)
+                {
+                    w.WriteString("completedAt", IsoUtc(at));
+                }
+
+                if (row.CompletedAfter is { } after)
+                {
+                    w.WriteString("completedAfter", IsoUtc(after));
+                }
+
                 w.WriteEndObject();
             }
 
@@ -225,11 +266,17 @@ public static class ExportWriter
                 row.Category,
                 row.Genre,
                 row.Expansion,
-                row.Completed ? "true" : "false");
+                row.Completed ? "true" : "false",
+                row.CompletedAt is { } at ? IsoUtc(at) : string.Empty,
+                row.CompletedAfter is { } after ? IsoUtc(after) : string.Empty);
         }
 
         return sb.ToString();
     }
+
+    /// <summary>ISO 8601 in UTC with a Z, as <c>exportedUtc</c> is written.</summary>
+    private static string IsoUtc(DateTime time) =>
+        (time.Kind == DateTimeKind.Local ? time.ToUniversalTime() : time).ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture);
 
     /// <summary>The Moonlit export as CSV: one header row, then one row per reward; obtained is true, false or unknown.</summary>
     public static string MoonlitCsv(IReadOnlyList<MoonlitExportRow> rows)

@@ -8,6 +8,7 @@ Every game client runs its own Dalamud and its own copy of Tsukimichi. The copie
 - Viewing it shows the data that client saved last. That client saves its logged-in character at most every 10 seconds while something changes, and this client picks the save up within a few seconds, so what you see is at most about 15 seconds behind.
 - **Forget character** is disabled for a character live in another client ("log out there first"): that client owns its files and would write them again at once.
 - Pins and Moonlit verdicts (unique / not unique) made in either client are kept: each save merges with what the other client saved.
+- What a character owns (mounts, minions, emotes, cards, bardings, hairstyles, duties and the other Moonlit collectibles) and when it completed each quest are saved with its snapshot, so the Moonlit tab, the Characters tab and the export show them for a character live in the other client too, "as of" that client's last save.
 
 ## How it works
 

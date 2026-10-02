@@ -277,6 +277,10 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] internal static IFramework Framework { get; private set; } = null!;
     [PluginService] internal static IClientState ClientState { get; private set; } = null!;
     [PluginService] internal static IPlayerState PlayerState { get; private set; } = null!;
+    [PluginService] internal static IUnlockState UnlockState { get; private set; } = null!;
+
+    /// <summary>The collectible unlock flags (IUnlockState) the capture saves and the Moonlit pane reads; null until the game state is initialized.</summary>
+    internal Game.CollectibleReader? CollectibleFlags { get; private set; }
 
     internal Config.Configuration Settings { get; private set; } = null!;
     internal Core.Storage.PluginPaths Paths { get; private set; } = null!;
@@ -349,7 +353,13 @@ public sealed class Plugin : IDalamudPlugin
             curated.FeatureQuests.Count,
             curated.Festivals.Count);
 
-        var reader = new Game.GameStateReader(Framework, PlayerState, DataManager, Log);
+        CollectibleFlags = new Game.CollectibleReader(UnlockState, DataManager, Log);
+        var reader = new Game.GameStateReader(Framework, PlayerState, DataManager, Log)
+        {
+            // Owned collectibles are saved with each capture (decision 9), for the rewards the Moonlit tab lists.
+            CollectibleTargets = Core.Unique.Collectibles.Targets(uniqueRewards, curated),
+            CollectibleFlags = CollectibleFlags,
+        };
         // The store keeps one once-a-day backup per character (<id>.prev.json, 1.5.0); a failed backup is logged and the save goes on.
         var store = new Core.Storage.JsonSnapshotStore(Paths.ConfigDir)
         {
@@ -578,6 +588,7 @@ public sealed class Plugin : IDalamudPlugin
             }
         });
         Unwind("snapshot service", () => Snapshots?.Dispose());
+        Unwind("collectible flags", () => CollectibleFlags?.Dispose());
     }
     // ---- end game state ----
 
@@ -644,7 +655,7 @@ public sealed class Plugin : IDalamudPlugin
             // ---- end game state ----
 
             // UI (session-dependent surfaces)
-            var unlockReader = new Game.RewardUnlockReader(Session, DataManager, Framework, Log);
+            var unlockReader = new Game.RewardUnlockReader(Session, DataManager, Framework, Log, CollectibleFlags!);
             moonlitPane = new MoonlitPane(Session, TextureProvider, unlockReader, Paths, Log, DataManager, Settings, PluginInterface, gameLinks) { Writer = Writer };
             MoonlitPane moonlit = moonlitPane;
             // Reward tooltips (table icons, detail rows) say "Store only" for rewards the Online Store also sells and

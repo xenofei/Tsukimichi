@@ -121,6 +121,16 @@ public sealed class SnapshotService : IDisposable
         return snapshot;
     }
 
+    /// <summary>
+    /// Reads a character's stored file as it is on disk, for a worker: nothing is quarantined, no warning is queued and
+    /// no framework-thread state is touched. Null when there is none, or it cannot be read here (locked, corrupt, newer).
+    /// </summary>
+    public CharacterSnapshot? ReadStored(ulong contentId)
+    {
+        var read = store.LoadShared(contentId);
+        return read.Status == SharedLoad.Loaded ? read.Value : null;
+    }
+
     /// <summary>Multibox (D11): whether a character is live in another game client right now. Set by the multibox service.</summary>
     public Func<ulong, bool>? LiveElsewhere { get; set; }
 

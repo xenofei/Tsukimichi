@@ -8,6 +8,7 @@ using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using Lumina.Excel.Sheets;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Runtime;
+using Tsukimichi.Core.Unique;
 using Tsukimichi.GameData;
 
 namespace Tsukimichi.Game;
@@ -38,6 +39,9 @@ public sealed class GameStateReader
     /// <summary>Grand Companies (Maelstrom, Twin Adder, Immortal Flames); ids are 1-based.</summary>
     private const int GrandCompanyCount = 3;
 
+    /// <summary>What a capture saves when no collectible flags are wired up: one shared empty map.</summary>
+    private static readonly IReadOnlyDictionary<string, CollectibleSet> NoCollectibles = new Dictionary<string, CollectibleSet>();
+
     private readonly IFramework framework;
     private readonly IPlayerState playerState;
     private readonly IDataManager data;
@@ -56,6 +60,15 @@ public sealed class GameStateReader
     private IReadOnlyList<ushort> festivalProbeIds = [];
     private IReadOnlyList<ushort> festivalProbePhases = [];
 
+    // The last collectible read: whose it was, the unlock generation and target list it was read under, and how many
+    // captures ago. Reused (the same instance, so the diff compares it by reference) until one of them moves.
+    private IReadOnlyDictionary<string, CollectibleSet> collectibles = NoCollectibles;
+    private ulong collectiblesContentId;
+    private int collectiblesGeneration;
+    private IReadOnlyList<CollectibleTarget>? collectiblesTargets;
+    private int collectiblesAge;
+    private bool collectiblesMeasured;
+
     public GameStateReader(IFramework framework, IPlayerState playerState, IDataManager data, IPluginLog log)
     {
         this.framework = framework ?? throw new ArgumentNullException(nameof(framework));
@@ -69,6 +82,21 @@ public sealed class GameStateReader
     /// <see cref="CharacterSnapshot.CompletedAchievements"/> stays empty while <see cref="CharacterSnapshot.AchievementsLoaded"/> is still read.
     /// </summary>
     public IReadOnlyList<uint> AchievementIds { get; set; } = [];
+
+    /// <summary>
+    /// The collectible rewards whose owned state each capture saves (<see cref="CharacterSnapshot.Collectibles"/>,
+    /// <see cref="Collectibles.Targets"/>), and the flags they are read through. Empty or null: none is saved.
+    /// </summary>
+    public IReadOnlyList<CollectibleTarget> CollectibleTargets { get; set; } = [];
+
+    /// <inheritdoc cref="CollectibleTargets"/>
+    public CollectibleReader? CollectibleFlags { get; set; }
+
+    /// <summary>
+    /// A capture reads the collectible flags again at least this often (in captures) even when nothing says they
+    /// changed; between reads it reuses the last answer, so the usual poll does no unlock reads at all.
+    /// </summary>
+    public const int CollectibleRefreshCaptures = 60;
 
     /// <summary>Whether the client has a loaded character to read; cheap, framework thread only.</summary>
     public unsafe bool IsPlayerLoaded()
@@ -312,6 +340,8 @@ public sealed class GameStateReader
             AchievementsLoaded = achievementsLoaded,
             CompletedAchievements = completedAchievements,
             CurrentJob = ps->CurrentClassJobId,
+            // A quest turned in is when most collectibles arrive, so a changed completion mask reads them again too.
+            Collectibles = ReadCollectibles(contentId, completedChanged: !ReferenceEquals(completedBits, previousCompleted)),
         };
 
         if (stopwatch is not null)
@@ -326,6 +356,54 @@ public sealed class GameStateReader
         }
 
         return snapshot;
+    }
+
+    /// <summary>
+    /// The owned collectibles for the capture (decision 9): read through <see cref="CollectibleFlags"/> for each of
+    /// <see cref="CollectibleTargets"/> (about 900 flag checks, each a sheet row lookup and a bit test), but only when
+    /// something may have changed them: another character, an unlock the game reported, a quest just completed, a new
+    /// target list, or <see cref="CollectibleRefreshCaptures"/> captures since the last read. Otherwise the last read is
+    /// reused as is. The first read is timed once in the log.
+    /// </summary>
+    private IReadOnlyDictionary<string, CollectibleSet> ReadCollectibles(ulong contentId, bool completedChanged)
+    {
+        var flags = CollectibleFlags;
+        var targets = CollectibleTargets;
+        if (flags is null || targets.Count == 0)
+        {
+            return collectibles = NoCollectibles;
+        }
+
+        var generation = flags.Generation;
+        collectiblesAge++;
+        if (contentId == collectiblesContentId
+            && generation == collectiblesGeneration
+            && ReferenceEquals(targets, collectiblesTargets)
+            && !completedChanged
+            && collectiblesAge < CollectibleRefreshCaptures)
+        {
+            return collectibles;
+        }
+
+        var started = collectiblesMeasured ? 0L : Stopwatch.GetTimestamp();
+        var read = Collectibles.Read(targets, t => flags.IsUnlocked(t.Kind, t.RewardId, t.ItemId));
+        if (!collectiblesMeasured)
+        {
+            collectiblesMeasured = true;
+            log.Debug("Collectibles: {Targets} reward flags read in {Elapsed:F2} ms", targets.Count, Stopwatch.GetElapsedTime(started).TotalMilliseconds);
+        }
+
+        collectiblesAge = 0;
+        collectiblesGeneration = generation;
+        collectiblesTargets = targets;
+        // An unchanged read keeps the previous instance, so the diff's reference check answers the next poll at once.
+        if (contentId != collectiblesContentId || !Collectibles.Same(collectibles, read))
+        {
+            collectibles = read;
+        }
+
+        collectiblesContentId = contentId;
+        return collectibles;
     }
 
     /// <summary>What changed between two captures; see <see cref="SnapshotDiff.Compute"/>.</summary>

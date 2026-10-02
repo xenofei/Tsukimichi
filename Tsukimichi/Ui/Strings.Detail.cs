@@ -23,6 +23,24 @@ static partial class Strings
     /// <summary>Appended to the hero's caption line (P8): {0} = the patch the quest was added in, as the game writes it.</summary>
     public static string DetailAddedInFormat => Loc.Get("DetailAddedInFormat");
 
+    /// <summary>
+    /// Appended to the hero's caption line for a completed quest (decision 9): " · Done 12 Sep 2026" when the plugin saw
+    /// it completed, " · Done by …" when it was found completed at a login, " · Done before …" when it was already
+    /// complete when dates started being recorded for the character.
+    /// </summary>
+    public static string DetailDoneSuffix(Core.Runtime.QuestCompletionDate date)
+    {
+        var format = date.Kind switch
+        {
+            Core.Runtime.CompletionDateKind.By => Loc.Get("DetailDoneByFormat"),
+            Core.Runtime.CompletionDateKind.Before => Loc.Get("DetailDoneBeforeFormat"),
+            _ => Loc.Get("DetailDoneFormat"),
+        };
+
+        var day = date.Utc.ToLocalTime().ToString(DateFormat, System.Globalization.CultureInfo.CurrentCulture);
+        return string.Format(System.Globalization.CultureInfo.CurrentCulture, format, day);
+    }
+
     /// <summary>The header badge's tooltip for <c>QuestRecord.IconSpecial</c>: a seasonal event quest, or another special one (a promotion).</summary>
     public static string DetailSeasonalBadgeTooltip => Loc.Get("DetailSeasonalBadgeTooltip");
     public static string DetailSpecialBadgeTooltip => Loc.Get("DetailSpecialBadgeTooltip");

@@ -4,8 +4,8 @@ using System.Numerics;
 using System.Runtime.InteropServices;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
-using Lumina.Excel.Sheets;
 using Tsukimichi.Core.Model;
+using Tsukimichi.Core.Unique;
 using Tsukimichi.GameData;
 
 namespace Tsukimichi.Game;
@@ -14,11 +14,14 @@ namespace Tsukimichi.Game;
 /// Answers "does the viewed character have this unique reward?" for the Moonlit pane and "is the live character
 /// attuned to this aether current?" for the Flight pane.
 /// <para>
-/// Kinds the client keeps an unlock flag for (emote, minion, mount, orchestrion roll, ornament, Triple Triad card,
-/// aether current, duty) are read from ClientStructs, which is only possible for the live character and only on the
-/// framework thread (Dalamud draws on that thread, so calling from <c>Draw</c> is fine). Kinds that simply follow the
-/// quest (action, trait, job, blue mage spell, system unlock) are answered from the viewed snapshot's completion bit,
-/// so they work for stored characters too. Items, gear and the rest return null (unknown).
+/// Kinds the client keeps an unlock flag for (<see cref="Collectibles.StoredKinds"/>: emote, minion, mount, orchestrion
+/// roll, ornament, Triple Triad card, barding, hairstyle, aether current, duty) are read through Dalamud's
+/// <c>IUnlockState</c> (<see cref="CollectibleReader"/>) for the live character on the framework thread (Dalamud draws
+/// on that thread, so calling from <c>Draw</c> is fine). For a stored character, or one live in another game client,
+/// they come from what its snapshot saved at its last capture (<see cref="CharacterSnapshot.Collectibles"/>), and
+/// read unknown only when that snapshot predates 1.5 (<see cref="Collectibles.Obtained"/>). Kinds that simply follow the
+/// quest (action, trait, job, blue mage spell, system unlock) are answered from the viewed snapshot's completion bit.
+/// Items, gear and the rest return null (unknown).
 /// </para>
 /// <para>
 /// Titles and achievements read the game's own state for the live character once it is loaded: the title list
@@ -26,55 +29,56 @@ namespace Tsukimichi.Game;
 /// only fills after the Titles or Achievements window has been opened this session. Until then, and for stored
 /// characters, they are derived from the quests the achievement names (<see cref="AchievementQuests.EarnedFromQuests"/>):
 /// all of them done for a "complete every quest" achievement, any one for "complete any one"; only when the sheet
-/// cannot tell does the entry's own quest bit decide. <see cref="AchievementStateVersion"/> moves when the live state
+/// cannot tell does the entry's own quest bit decide. <see cref="LiveStateVersion"/> moves when the live state
 /// loads and whenever the number of completed achievements changes (one earned while the pane is open), so the
 /// Moonlit pane reads them again.
 /// </para>
 /// <para>
-/// Results are memoized per (kind, reward id, quest) and dropped whenever <see cref="SessionState.Version"/> changes.
+/// Results are memoized per (kind, reward id, quest) and dropped whenever <see cref="SessionState.Version"/> changes,
+/// and when the game reports a new unlock (<see cref="CollectibleReader.Generation"/>, which also moves
+/// <see cref="LiveStateVersion"/>), so a mount just learned reads owned at once rather than at the next save.
 /// Attuning a current changes nothing in the snapshot, so the Flight pane also calls
 /// <see cref="InvalidateAetherCurrents"/> when it is shown, on a zone change and every few seconds while live. A
-/// ClientStructs failure is logged once and reads as unknown.
+/// read failure is logged once and reads as unknown.
 /// </para>
 /// </summary>
 public sealed class RewardUnlockReader
 {
-    /// <summary><c>ContentFinderCondition.ContentLinkType</c> value whose <c>Content</c> is an InstanceContent row.</summary>
-    private const byte InstanceContentLink = 1;
-
     private readonly SessionState session;
     private readonly IDataManager data;
     private readonly IFramework framework;
     private readonly IPluginLog log;
+    private readonly CollectibleReader flags;
     private readonly Dictionary<(RewardKind Kind, uint RewardId, uint QuestRowId), bool?> memo = [];
 
-    private Dictionary<uint, uint>? instanceByCondition;
     private Dictionary<uint, (byte Type, IReadOnlyList<uint> Quests)>? achievementQuests;
     private Dictionary<uint, List<uint>>? achievementsByTitle;
     private int memoVersion = -1;
+    private int memoGeneration = -1;
     private bool warned;
     private (bool Achievements, bool Titles, int Completed) liveAchievementState;
-    private int achievementStateVersion;
+    private int liveGeneration = -1;
+    private int liveStateVersion;
 
-    public RewardUnlockReader(SessionState session, IDataManager data, IFramework framework, IPluginLog log)
+    // The viewed snapshot's saved collectibles, indexed once per snapshot instance.
+    private CharacterSnapshot? storedFor;
+    private CollectibleLookup? stored;
+
+    public RewardUnlockReader(SessionState session, IDataManager data, IFramework framework, IPluginLog log, CollectibleReader flags)
     {
         this.session = session ?? throw new ArgumentNullException(nameof(session));
         this.data = data ?? throw new ArgumentNullException(nameof(data));
         this.framework = framework ?? throw new ArgumentNullException(nameof(framework));
         this.log = log ?? throw new ArgumentNullException(nameof(log));
+        this.flags = flags ?? throw new ArgumentNullException(nameof(flags));
     }
 
-    /// <summary>True, false, or null when the plugin cannot tell (no live character, unsupported kind, read failure).</summary>
+    /// <summary>True, false, or null when the plugin cannot tell (nothing live or saved, unsupported kind, read failure).</summary>
     public bool? IsObtained(UniqueRewardEntry entry)
     {
         ArgumentNullException.ThrowIfNull(entry);
 
-        if (memoVersion != session.Version)
-        {
-            memo.Clear();
-            memoVersion = session.Version;
-        }
-
+        DropStaleMemo();
         var key = (entry.Kind, entry.RewardId, entry.QuestRowId);
         if (memo.TryGetValue(key, out var cached))
         {
@@ -93,21 +97,48 @@ public sealed class RewardUnlockReader
     /// </summary>
     public bool? IsAetherCurrentUnlocked(uint aetherCurrentId)
     {
-        if (memoVersion != session.Version)
-        {
-            memo.Clear();
-            memoVersion = session.Version;
-        }
-
+        DropStaleMemo();
         var key = (RewardKind.AetherCurrent, aetherCurrentId, 0u);
         if (memo.TryGetValue(key, out var cached))
         {
             return cached;
         }
 
-        var result = ReadLive(RewardKind.AetherCurrent, aetherCurrentId);
+        var result = CanReadLive ? flags.IsUnlocked(RewardKind.AetherCurrent, aetherCurrentId) : null;
         memo[key] = result;
         return result;
+    }
+
+    /// <summary>
+    /// When the viewed character's collectible answers were captured, for a character not logged in here (stored, or
+    /// live in another game client): "as of" in the Moonlit pane and on the Characters tab. Null while the character is
+    /// live here (the answers are current) or its snapshot saved none (written before 1.5).
+    /// </summary>
+    public DateTime? StoredAsOfUtc => session.IsLive ? null : StoredLookup()?.AsOfUtc;
+
+    /// <summary>The memo goes with a new session version (another capture or character) and with a reported unlock.</summary>
+    private void DropStaleMemo()
+    {
+        var generation = flags.Generation;
+        if (memoVersion != session.Version || memoGeneration != generation)
+        {
+            memo.Clear();
+            memoVersion = session.Version;
+            memoGeneration = generation;
+        }
+    }
+
+    /// <summary>The viewed snapshot's saved collectibles; rebuilt only when the session holds another snapshot instance.</summary>
+    private CollectibleLookup? StoredLookup()
+    {
+        var snapshot = session.ViewedSnapshot;
+        if (!ReferenceEquals(snapshot, storedFor))
+        {
+            storedFor = snapshot;
+            stored = CollectibleLookup.For(snapshot);
+        }
+
+        return stored;
     }
 
     /// <summary>
@@ -118,12 +149,13 @@ public sealed class RewardUnlockReader
     public void InvalidateAetherCurrents() => DropMemo(RewardKind.AetherCurrent, RewardKind.AetherCurrent);
 
     /// <summary>
-    /// Moves whenever the live character's title list or achievement list finishes loading (or goes away), or the
-    /// number of completed achievements changes, and drops the memoized title and achievement answers so the next read
-    /// uses the game's state. Cheap: two flags and a population count over the completed-achievement bitmap (a few
-    /// hundred bytes), read on the framework thread only; the Moonlit pane checks it every frame.
+    /// Moves whenever the live character's title list or achievement list finishes loading (or goes away), the
+    /// number of completed achievements changes, or the game reports a new unlock (<see cref="CollectibleReader.Generation"/>),
+    /// and drops the memoized answers concerned so the next read uses the game's state. Cheap: a counter, two flags and
+    /// a population count over the completed-achievement bitmap (a few hundred bytes), read on the framework thread
+    /// only; the Moonlit pane checks it every frame.
     /// </summary>
-    public int AchievementStateVersion
+    public int LiveStateVersion
     {
         get
         {
@@ -131,11 +163,19 @@ public sealed class RewardUnlockReader
             if (state != liveAchievementState)
             {
                 liveAchievementState = state;
-                achievementStateVersion++;
+                liveStateVersion++;
                 DropMemo(RewardKind.Title, RewardKind.Achievement);
             }
 
-            return achievementStateVersion;
+            var generation = flags.Generation;
+            if (generation != liveGeneration)
+            {
+                // The memo itself goes on the next read (DropStaleMemo); this only tells the pane to read again.
+                liveGeneration = generation;
+                liveStateVersion++;
+            }
+
+            return liveStateVersion;
         }
     }
 
@@ -161,26 +201,19 @@ public sealed class RewardUnlockReader
             case RewardKind.Achievement:
                 return ReadAchievement(entry);
 
-            case RewardKind.Emote:
-            case RewardKind.Minion:
-            case RewardKind.Mount:
-            case RewardKind.Orchestrion:
-            case RewardKind.Ornament:
-            case RewardKind.TripleTriadCard:
-            case RewardKind.AetherCurrent:
-            case RewardKind.Instance:
-            case RewardKind.DutyUnlock:
-                return ReadLive(entry.Kind, entry.RewardId);
+            case var kind when Collectibles.IsStored(kind):
+                // The live flag, else what the snapshot saved (a stored character, or one live in another client).
+                return Collectibles.Obtained(CanReadLive, () => flags.IsUnlocked(kind, entry.RewardId, entry.ItemId), StoredLookup(), kind, entry.RewardId);
 
             default:
-                // Item, OptionalItem, ArtifactGear, Other, Barding, Hairstyle: no flag the plugin can read.
+                // Item, OptionalItem, ArtifactGear, Other: no flag the plugin can read.
                 return null;
         }
     }
 
     /// <summary>
     /// Whether titles (<paramref name="kind"/> Title) or achievements are read from the game's own state rather than
-    /// worked out from quests, as of the last <see cref="AchievementStateVersion"/> check. Titles also read exactly from
+    /// worked out from quests, as of the last <see cref="LiveStateVersion"/> check. Titles also read exactly from
     /// the achievement list. False for a stored character.
     /// </summary>
     public bool ReadsExactly(RewardKind kind) => kind == RewardKind.Title
@@ -393,79 +426,5 @@ public sealed class RewardUnlockReader
 
         achievementQuests = quests;
         achievementsByTitle = byTitle;
-    }
-
-    private unsafe bool? ReadLive(RewardKind kind, uint id)
-    {
-        if (!CanReadLive)
-        {
-            return null;
-        }
-
-        try
-        {
-            var ui = UIState.Instance();
-            var ps = PlayerState.Instance();
-            if (ui == null || ps == null)
-            {
-                return null;
-            }
-
-            switch (kind)
-            {
-                case RewardKind.Emote:
-                    return id <= ushort.MaxValue ? ui->IsEmoteUnlocked((ushort)id) : null;
-                case RewardKind.Minion:
-                    return ui->IsCompanionUnlocked(id);
-                case RewardKind.TripleTriadCard:
-                    return id <= ushort.MaxValue ? ui->IsTripleTriadCardUnlocked((ushort)id) : null;
-                case RewardKind.Mount:
-                    return ps->IsMountUnlocked(id);
-                case RewardKind.Orchestrion:
-                    return ps->IsOrchestrionRollUnlocked(id);
-                case RewardKind.Ornament:
-                    return ps->IsOrnamentUnlocked(id);
-                case RewardKind.AetherCurrent:
-                    return ps->IsAetherCurrentUnlocked(id);
-                case RewardKind.Instance:
-                    return UIState.IsInstanceContentUnlocked(id);
-                case RewardKind.DutyUnlock:
-                    return InstanceForCondition(id) is { } instance ? UIState.IsInstanceContentUnlocked(instance) : null;
-                default:
-                    return null;
-            }
-        }
-        catch (Exception ex)
-        {
-            WarnOnce(ex);
-            return null;
-        }
-    }
-
-    /// <summary>ContentFinderCondition row id to InstanceContent row id, read once from the sheet. Null for other content types.</summary>
-    private uint? InstanceForCondition(uint conditionId)
-    {
-        if (instanceByCondition is null)
-        {
-            var map = new Dictionary<uint, uint>();
-            try
-            {
-                foreach (var row in data.GetExcelSheet<ContentFinderCondition>())
-                {
-                    if (row.ContentLinkType == InstanceContentLink && row.Content.RowId != 0)
-                    {
-                        map[row.RowId] = row.Content.RowId;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                log.Warning(ex, "ContentFinderCondition sheet could not be read; duty unlock states show as unknown");
-            }
-
-            instanceByCondition = map;
-        }
-
-        return instanceByCondition.TryGetValue(conditionId, out var instance) ? instance : null;
     }
 }
