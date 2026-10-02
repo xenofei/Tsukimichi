@@ -2169,7 +2169,11 @@ public sealed partial class CharactersPane
             tribeRows[i] = (tribeName, rankName, standing.Value.ToString(CultureInfo.InvariantCulture));
         }
 
-        var allowances = string.Format(CultureInfo.CurrentCulture, Strings.CharactersAllowancesFormat, snapshot.TribeAllowance, snapshot.LeveAllowance);
+        // A stored character's allied society allowances are full again once the daily reset passed since it was saved.
+        var tribeAllowance = !session.IsLive && bundle is not null
+            ? GameResets.AsOf(snapshot, bundle.Catalog, DateTime.UtcNow).TribeAllowance
+            : snapshot.TribeAllowance;
+        var allowances = string.Format(CultureInfo.CurrentCulture, Strings.CharactersAllowancesFormat, tribeAllowance, snapshot.LeveAllowance);
 
         var (msqLine, msqQuest) = BuildMsq(bundle);
         RefreshDerived(bundle);
