@@ -47,7 +47,9 @@ public static class CatalogMapper
             excel.GetSheet<Item>(language),
             excel.GetSubrowSheet<QuestClassJobReward>(language),
             excel.GetSheet<BeastRankBonus>(language),
-            excel.GetSheet<QuestAcceptAdditionCondition>(language));
+            excel.GetSheet<QuestAcceptAdditionCondition>(language),
+            excel.GetSubrowSheet<QuestClassJobSupply>(language),
+            QuestHandIns.Sources.Build(excel, language));
         ct.ThrowIfCancellationRequested();
 
         var records = new List<QuestRecord>(quests.Count);
@@ -177,6 +179,7 @@ public static class CatalogMapper
             IsHidden = quest.Unknown12,
 
             Rewards = MapRewards(in quest, sheets),
+            HandInItems = QuestHandIns.Of(in quest, sheets.Supply, sheets.HandIns),
             ExpFactor = quest.ExpFactor,
             Gil = quest.GilReward,
         };
@@ -575,7 +578,9 @@ public static class CatalogMapper
         ExcelSheet<Item> Items,
         SubrowExcelSheet<QuestClassJobReward> ClassJobRewards,
         ExcelSheet<BeastRankBonus> BeastRankBonus,
-        ExcelSheet<QuestAcceptAdditionCondition> AcceptConditions);
+        ExcelSheet<QuestAcceptAdditionCondition> AcceptConditions,
+        SubrowExcelSheet<QuestClassJobSupply> Supply,
+        QuestHandIns.Sources HandIns);
 
     /// <summary>
     /// Journal genre → (section, category, genre) names plus a rank that orders genres by section, then category, then

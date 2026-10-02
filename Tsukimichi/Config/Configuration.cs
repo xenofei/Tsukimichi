@@ -157,6 +157,16 @@ public sealed class Configuration : IPluginConfiguration
     /// <summary>Add a "Tsukimichi: quest reward" entry to item context menus.</summary>
     public bool ItemContextMenuEnabled { get; set; } = true;
 
+    // ---- 1.6.0: hand-in items ----
+    /// <summary>
+    /// With Allagan Tools loaded, count what the retainers hold in the detail pane's Hand in section, and read relic and
+    /// special weapons as owned when it counts them anywhere (Moonlit). On by default; read-only either way.
+    /// </summary>
+    public bool HandInAllaganTools { get; set; } = true;
+
+    /// <summary>The item hint and the item menu also name the open quests (in the journal or ready) that ask for the item. On by default.</summary>
+    public bool ItemNeededForEnabled { get; set; } = true;
+
     // ---- 0.6.2: NPC context menu (P2) ----
     /// <summary>Add a "Tsukimichi: quests here (N)" entry to the target bar's menu on a quest-giving NPC.</summary>
     public bool NpcContextMenuEnabled { get; set; } = true;

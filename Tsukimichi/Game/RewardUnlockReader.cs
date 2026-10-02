@@ -21,7 +21,10 @@ namespace Tsukimichi.Game;
 /// they come from what its snapshot saved at its last capture (<see cref="CharacterSnapshot.Collectibles"/>), and
 /// read unknown only when that snapshot predates 1.5 (<see cref="Collectibles.Obtained"/>). Kinds that simply follow the
 /// quest (action, trait, job, blue mage spell, system unlock) are answered from the viewed snapshot's completion bit.
-/// Items, gear and the rest return null (unknown).
+/// Relic and special weapons (<see cref="RewardKind.ArtifactGear"/>) read owned for the live character when Allagan
+/// Tools is loaded and counts the item anywhere it looks (bags, armoury, saddlebag, armoire, glamour dresser,
+/// retainers; 1.6.0), and unknown otherwise: a count of none cannot tell a weapon never had from one sold or
+/// desynthesised. Other items, gear and the rest return null (unknown).
 /// </para>
 /// <para>
 /// Titles and achievements read the game's own state for the live character once it is loaded: the title list
@@ -55,6 +58,8 @@ public sealed class RewardUnlockReader
     private Dictionary<uint, List<uint>>? achievementsByTitle;
     private int memoVersion = -1;
     private int memoGeneration = -1;
+    private int allaganGeneration = -1;
+    private long allaganCheckedAt = long.MinValue;
     private bool warned;
     private (bool Achievements, bool Titles, int Completed) liveAchievementState;
     private int liveGeneration = -1;
@@ -72,6 +77,24 @@ public sealed class RewardUnlockReader
         this.log = log ?? throw new ArgumentNullException(nameof(log));
         this.flags = flags ?? throw new ArgumentNullException(nameof(flags));
     }
+
+    /// <summary>Allagan Tools' item counts, for relic and special weapons; null leaves them unknown.</summary>
+    public AllaganToolsIpc? Allagan { get; set; }
+
+    /// <summary>Reads Settings › Integrations › "Count with Allagan Tools"; null reads as on.</summary>
+    public Func<bool>? AllaganEnabled { get; set; }
+
+    /// <summary>
+    /// How often, at most, a change Allagan Tools reports (every item picked up or sold moves it) drops the memoized
+    /// gear answers: re-asking for every relic row costs more than one frame should.
+    /// </summary>
+    public const long AllaganRefreshMs = 5000;
+
+    /// <summary>
+    /// Whether a true answer for <paramref name="entry"/> came from Allagan Tools rather than a game flag, so the pane
+    /// can say "owned (per Allagan Tools)".
+    /// </summary>
+    public static bool OwnedPerAllagan(UniqueRewardEntry entry) => entry is { Kind: RewardKind.ArtifactGear, ItemId: not 0 };
 
     /// <summary>True, false, or null when the plugin cannot tell (nothing live or saved, unsupported kind, read failure).</summary>
     public bool? IsObtained(UniqueRewardEntry entry)
@@ -175,6 +198,18 @@ public sealed class RewardUnlockReader
                 liveStateVersion++;
             }
 
+            // Allagan Tools came, went or saw an inventory change: the gear answers are asked again, at most every
+            // AllaganRefreshMs, so a burst of pick-ups does not re-read every relic row each frame.
+            var allagan = Allagan?.Generation ?? 0;
+            var now = Environment.TickCount64;
+            if (allagan != allaganGeneration && now - allaganCheckedAt >= AllaganRefreshMs)
+            {
+                allaganGeneration = allagan;
+                allaganCheckedAt = now;
+                DropMemo(RewardKind.ArtifactGear, RewardKind.ArtifactGear);
+                liveStateVersion++;
+            }
+
             return liveStateVersion;
         }
     }
@@ -205,8 +240,11 @@ public sealed class RewardUnlockReader
                 // The live flag, else what the snapshot saved (a stored character, or one live in another client).
                 return Collectibles.Obtained(CanReadLive, () => flags.IsUnlocked(kind, entry.RewardId, entry.ItemId), StoredLookup(), kind, entry.RewardId);
 
+            case RewardKind.ArtifactGear:
+                return AllaganOwned(entry);
+
             default:
-                // Item, OptionalItem, ArtifactGear, Other: no flag the plugin can read.
+                // Item, OptionalItem, Other: no flag the plugin can read.
                 return null;
         }
     }
@@ -219,6 +257,20 @@ public sealed class RewardUnlockReader
     public bool ReadsExactly(RewardKind kind) => kind == RewardKind.Title
         ? liveAchievementState.Titles || liveAchievementState.Achievements
         : liveAchievementState.Achievements;
+
+    /// <summary>
+    /// A relic or special weapon the live character holds anywhere Allagan Tools looks reads owned; nothing found, a
+    /// stored character, or no Allagan Tools reads unknown (<see cref="Core.HandIn.HandInActions.OwnedFromCount"/>).
+    /// </summary>
+    private bool? AllaganOwned(UniqueRewardEntry entry)
+    {
+        if (entry.ItemId == 0 || !CanReadLive || Allagan is not { } allagan || AllaganEnabled?.Invoke() == false || !allagan.Available)
+        {
+            return null;
+        }
+
+        return Core.HandIn.HandInActions.OwnedFromCount(allagan.CountOwned(entry.ItemId));
+    }
 
     private bool? QuestBit(uint questRowId) => session.ViewedSnapshot?.IsCompleted(QuestRecord.ToQuestId(questRowId));
 

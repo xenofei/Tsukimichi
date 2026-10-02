@@ -78,6 +78,12 @@ public static class CompanionCatalog
     /// </summary>
     public static readonly Version AutoDutyMinimum = new(0, 0, 0, 336);
 
+    /// <summary>
+    /// Allagan Tools 15.0.12 (2026-08-31, its CHANGELOG) added <c>AllaganTools.ItemCountOwnedByCategory</c> and
+    /// <c>GetItemCountsByCharacter</c>, which the Hand in section's retainer counts and Moonlit's relic ownership read.
+    /// </summary>
+    public static readonly Version AllaganToolsMinimum = new(15, 0, 12);
+
     /// <summary>Quest Map 1.7.2.2 (GemPlugins/QuestMap b2ce55e, 2025-06-05) added <c>QuestMap.ShowGraphByQuestId</c> and <c>ShowInfoByQuestId</c>.</summary>
     public static readonly Version QuestMapMinimum = new(1, 7, 2, 2);
 
@@ -90,7 +96,7 @@ public static class CompanionCatalog
         new(CompanionPlugin.AutoDuty, [new("AutoDuty", "AutoDuty", AutoDutyMinimum, PuniShErdelf)]),
         new(CompanionPlugin.Artisan, [new("Artisan", "Artisan", null, PuniShMain)]),
         new(CompanionPlugin.GatherBuddy, [new("GatherBuddy", "GatherBuddy", null, null), new("GatherBuddyReborn", "GatherBuddy Reborn", null, CombatReborn)]),
-        new(CompanionPlugin.AllaganTools, [new("InventoryTools", "Allagan Tools", null, null)]),
+        new(CompanionPlugin.AllaganTools, [new("InventoryTools", "Allagan Tools", AllaganToolsMinimum, null)]),
         new(CompanionPlugin.QuestMap, [new("QuestMap", "Quest Map", QuestMapMinimum, null)]),
         new(CompanionPlugin.ChatTwo, [new("ChatTwo", "Chat 2", null, null)]),
         new(CompanionPlugin.BossMod, [new("BossMod", "Boss Mod", null, PuniShVeyn), new("BossModReborn", "Boss Mod Reborn", null, CombatReborn)], Listed: false),

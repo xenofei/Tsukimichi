@@ -216,6 +216,17 @@ public sealed class MainWindow : Window, IDisposable
     }
 
     /// <summary>
+    /// The detail pane's Hand in section (1.6.0): live item counts, and the Artisan and GatherBuddy hand-offs. Until this
+    /// is called the section lists the items without counts and its buttons name the plugins as missing.
+    /// </summary>
+    public void AttachHandIns(HandInStock stock, ArtisanIpc artisan, GatherBuddyCommands gatherBuddy)
+    {
+        detailPane.Stock = stock ?? throw new ArgumentNullException(nameof(stock));
+        detailPane.Artisan = artisan ?? throw new ArgumentNullException(nameof(artisan));
+        detailPane.GatherBuddy = gatherBuddy ?? throw new ArgumentNullException(nameof(gatherBuddy));
+    }
+
+    /// <summary>
     /// The detail pane's companion plugin pieces (feature plan v5, decision 1): the Duties section with "Run with
     /// AutoDuty" and "Open in Quest Map". <paramref name="duties"/> hands out the duty index, <paramref name="rewardEntries"/>
     /// a quest's reward entries, <paramref name="isDutyUnlocked"/> the logged-in character's unlock of an InstanceContent

@@ -107,6 +107,11 @@ public sealed class Plugin : IDalamudPlugin
     private RouteWindow? routeWindow;
     private Game.ActiveRouteService? activeRoutes;
 
+    // Hand-in items (1.6.0): read-only counts through Allagan Tools, and the Artisan and GatherBuddy hand-offs.
+    private Game.AllaganToolsIpc? allaganTools;
+    private Game.ArtisanIpc? artisan;
+    private Game.GatherBuddyCommands? gatherBuddy;
+
     /// <summary>
     /// Rebuilds the catalog under the current <see cref="Config.Configuration.JournalFiling"/> and hands it to the
     /// session on the framework thread: the retry hook of the "Catalog unavailable" panel, and what a filing change
@@ -728,14 +733,37 @@ public sealed class Plugin : IDalamudPlugin
                 stateReader.Gate = gate;
             }
 
-            hoverHint = new HoverHint(GameGui, Session, unlockReader, rewardLookup, gate, Log) { Enabled = Settings.ItemHintsEnabled };
+            // Hand-in items (1.6.0): the detail pane's Hand in section, the "Needed for" hint and menu entry, Moonlit's
+            // relic ownership through Allagan Tools, and the Artisan and GatherBuddy hand-offs (decision 1).
+            allaganTools = new Game.AllaganToolsIpc(PluginInterface, Log);
+            artisan = new Game.ArtisanIpc(PluginInterface, Log);
+            gatherBuddy = new Game.GatherBuddyCommands(PluginInterface, CommandManager, Log);
+            unlockReader.Allagan = allaganTools;
+            unlockReader.AllaganEnabled = () => Settings.HandInAllaganTools;
+            var handInStock = new Game.HandInStock(ClientState, Framework, gate, Log) { Allagan = allaganTools, AllaganEnabled = () => Settings.HandInAllaganTools };
+            mainWindow.AttachHandIns(handInStock, artisan, gatherBuddy);
+            var handIns = new Core.HandIn.HandInIndexSource(() => Session.Bundle?.Catalog);
+            hoverHint = new HoverHint(GameGui, Session, unlockReader, rewardLookup, gate, Log)
+            {
+                Enabled = Settings.ItemHintsEnabled,
+                HandIns = handIns,
+                NeededForEnabled = () => Settings.ItemNeededForEnabled,
+            };
             PluginInterface.UiBuilder.Draw += hoverHint.Draw;
             itemHooks = new Game.ItemHooks(ContextMenu, rewardLookup, quest =>
             {
                 mainWindow.IsOpen = true;
                 mainWindow.BringToFront();
                 MoonlitPane.Reveal(ui, quest);
-            }, gate, Log) { Enabled = Settings.ItemContextMenuEnabled, QuestName = quest => Session.LiveSpoilers.DisplayName(quest) };
+            }, gate, Log)
+            {
+                Enabled = Settings.ItemContextMenuEnabled,
+                QuestName = quest => Session.LiveSpoilers.DisplayName(quest),
+                HandIns = handIns,
+                // The item is in the logged-in character's inventory: its states decide what is open.
+                NeededStates = () => Session.LiveStates,
+                NeededForEnabled = () => Settings.ItemNeededForEnabled,
+            };
             var discovery = new DiscoveryCommands(Session, ClientState, TargetManager, gameLinks);
             command.ListZoneQuests = discovery.Zone;
             command.ListTargetQuests = discovery.Which;
@@ -1135,6 +1163,9 @@ public sealed class Plugin : IDalamudPlugin
         Unwind("query runner", () => queryRunner?.Dispose());
         Unwind("journal text", () => QuestText?.Dispose());
         Unwind("lifestream ipc", () => lifestream?.Dispose());
+        Unwind("allagan tools ipc", () => allaganTools?.Dispose());
+        Unwind("artisan ipc", () => artisan?.Dispose());
+        Unwind("gatherbuddy commands", () => gatherBuddy?.Dispose());
         Unwind("companion plugins", () => companions?.Dispose());
         // Each of its steps is isolated on its own. Its save writer drain starts the budget's clock.
         DisposeGameState(budget);

@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Globalization;
 using Dalamud.Game.Gui.ContextMenu;
 using Dalamud.Plugin.Services;
+using Tsukimichi.Core.Evaluation;
+using Tsukimichi.Core.HandIn;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Runtime;
 using Tsukimichi.Core.Unique;
@@ -16,6 +18,11 @@ namespace Tsukimichi.Game;
 /// "quest rewards (N)" with a submenu listing them. Only <see cref="MenuTargetInventory"/> menus (inventory,
 /// armoury, saddlebag, retainers and the like) carry an item; a default menu such as a chat item link exposes
 /// none, so nothing is added there.
+/// <para>
+/// 1.6.0: an item an open quest asks for (in the journal, or ready to take; <see cref="HandInIndex"/>) also gets
+/// "Tsukimichi: needed for (quest)", or "needed for quests (N)" with a submenu, while <see cref="NeededForEnabled"/>
+/// says so. The quest names follow the same spoiler shield as the reward entry.
+/// </para>
 /// <para>
 /// <see cref="Enabled"/> follows <c>Configuration.ItemContextMenuEnabled</c>; the <see cref="IContextMenu.OnMenuOpened"/>
 /// handler is subscribed while it is on and the shared <see cref="HookGate"/> (the addon kill switch, T20) allows game
@@ -55,6 +62,15 @@ public sealed class ItemHooks : IDisposable
     /// until then.
     /// </summary>
     public Func<QuestRecord, string>? QuestName { get; set; }
+
+    /// <summary>Item to the quests that ask for it; null leaves the "needed for" entry out.</summary>
+    public HandInIndexSource? HandIns { get; set; }
+
+    /// <summary>The logged-in character's quest states (the item is in its inventory); null leaves the entry out.</summary>
+    public Func<IReadOnlyDictionary<uint, QuestEvaluation>>? NeededStates { get; set; }
+
+    /// <summary>Reads Settings › "Say which open quests need an item"; null reads as on.</summary>
+    public Func<bool>? NeededForEnabled { get; set; }
 
     /// <summary>
     /// The player's setting (default off until the plugin applies it). The handler is subscribed only while this is on
@@ -121,18 +137,20 @@ public sealed class ItemHooks : IDisposable
 
             var current = lookup.Current;
             var entries = current.ByItem(item.BaseItemId);
-            if (entries.Count == 0)
+            var quests = entries.Count == 0 ? [] : DistinctQuests(current, entries);
+            if (quests.Count > 0)
             {
-                return;
+                args.AddMenuItem(BuildMenuItem(quests));
             }
 
-            var quests = DistinctQuests(current, entries);
-            if (quests.Count == 0)
+            if (NeededForEnabled?.Invoke() != false && HandIns is { } handIns && NeededStates?.Invoke() is { } states)
             {
-                return;
+                var needed = handIns.Current.NeededFor(item.BaseItemId, states);
+                if (needed.Count > 0)
+                {
+                    args.AddMenuItem(BuildNeededItem(needed));
+                }
             }
-
-            args.AddMenuItem(BuildMenuItem(quests));
         }
         catch (Exception ex)
         {
@@ -173,6 +191,41 @@ public sealed class ItemHooks : IDisposable
         }
 
         return quests;
+    }
+
+    /// <summary>"needed for (quest)", or "needed for quests (N)" opening one line per quest.</summary>
+    private MenuItem BuildNeededItem(IReadOnlyList<QuestRecord> quests)
+    {
+        if (quests.Count == 1)
+        {
+            var quest = quests[0];
+            return new MenuItem
+            {
+                Name = string.Format(CultureInfo.CurrentCulture, Strings.ItemsMenuNeededFormat, QuestName?.Invoke(quest) ?? quest.Name),
+                PrefixChar = PrefixLetter,
+                OnClicked = _ => reveal(quest),
+            };
+        }
+
+        var subItems = new MenuItem[quests.Count];
+        for (var i = 0; i < subItems.Length; i++)
+        {
+            var quest = quests[i];
+            subItems[i] = new MenuItem
+            {
+                Name = QuestName?.Invoke(quest) ?? quest.Name,
+                PrefixChar = PrefixLetter,
+                OnClicked = _ => reveal(quest),
+            };
+        }
+
+        return new MenuItem
+        {
+            Name = string.Format(CultureInfo.CurrentCulture, Strings.ItemsMenuNeededManyFormat, quests.Count),
+            PrefixChar = PrefixLetter,
+            IsSubmenu = true,
+            OnClicked = clicked => clicked.OpenSubmenu(subItems),
+        };
     }
 
     private MenuItem BuildMenuItem(List<QuestRecord> quests)

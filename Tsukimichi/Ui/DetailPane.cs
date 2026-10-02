@@ -250,6 +250,7 @@ public sealed partial class DetailPane
         BeginSection("##rewards", Strings.Rewards, RewardsIcon, model.RewardsCaption, Theme.Surface.TextTertiary);
         DrawRewards(cardRight);
         EndSection();
+        DrawHandInSection(session, quest);
 
         if (Overrides is { } overrides)
         {
