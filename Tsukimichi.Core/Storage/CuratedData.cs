@@ -72,6 +72,22 @@ public sealed record RetiredQuest(string Note, string Evidence, string Patch);
 public sealed record QuestQuirk(string Note, string Evidence);
 
 /// <summary>
+/// Quests the game wants completed before it offers a quest that neither the sheet's previous quests nor its accept
+/// conditions record, from <c>curated/extra_prerequisites.json</c> (feature plan v5, 1.5.0 Gates): most are a main
+/// scenario milestone the quest's own text names ("you must first complete the main scenario quest …"). The catalog
+/// adds them to <c>QuestCatalog.PrerequisitesOf</c> as an "all" list, so the evaluator, the blocker text, the reverse
+/// index and every route see them.
+/// </summary>
+/// <param name="Requires">Quest row ids, each needed; never empty.</param>
+/// <param name="Sources">
+/// At least two of <see cref="CuratedData.ExtraPrerequisiteSources"/> that each name every id of
+/// <paramref name="Requires"/>: the wiki's infobox, Questionable's hand-added links (the committed snapshot,
+/// <c>docs/data/questionable-prerequisites.json</c>) and the game's own quest text.
+/// </param>
+/// <param name="GameTextKey">The quest text row that names the requirement (<c>TEXT_LUCKBA131_03246_SYSTEM_100_001</c>) when <paramref name="Sources"/> holds <c>gameText</c>; the text itself is never committed.</param>
+public sealed record ExtraPrerequisite(IReadOnlyList<uint> Requires, IReadOnlyList<string> Sources, string Evidence, string Note, string? GameTextKey);
+
+/// <summary>
 /// A "Before you continue" payoff gate (P5), from <c>curated/payoff_gates.json</c>: optional content whose completion
 /// changes a scene of the milestone quest's story. The plugin shows <see cref="Instruction"/> only while the milestone
 /// is Ready or in the journal and the content is not done (<c>Core.Payoff.PayoffGates</c>); <see cref="Why"/> is the
@@ -111,6 +127,7 @@ public sealed record PayoffGate(
 /// refile_overrides.json { "schema": 1, "entries": { "68478": { "genre": 90, "note": "...", "evidence": "https://..." } } }
 /// retired_quests.json  { "schema": 1, "entries": { "66033": { "note": "...", "evidence": "https://...", "patch": "6.3" } } }   (patch optional)
 /// quirks.json          { "schema": 1, "entries": { "66971": { "note": "...", "evidence": "https://..." } } }
+/// extra_prerequisites.json { "schema": 1, "entries": { "68782": { "requires": [ 68850 ], "sources": [ "gameText", "questionable", "wiki" ], "gameTextKey": "TEXT_...", "evidence": "https://...", "note": "..." } } }   (gameTextKey only with gameText)
 /// payoff_gates.json    { "schema": 1, "review": "...", "entries": { "eden": { "milestone": 70286, "before": "Eden" or [ 69515 ], "instruction": "...", "why": "...", "evidence": [ "https://..." ], "note": "..." } } }
 /// path_choices.json    { "schema": 1, "cities": { "65575": { "label": "Gridania", "note": "..." } },
 ///                        "classes": { "1": { "label": "Gladiator", "closeToHome": 66104, "starter": 65789, "note": "..." } },
@@ -133,6 +150,19 @@ public sealed class CuratedData
     public const string QuirksFileName = "quirks.json";
     public const string PayoffGatesFileName = "payoff_gates.json";
     public const string PathChoicesFileName = "path_choices.json";
+    public const string ExtraPrerequisitesFileName = "extra_prerequisites.json";
+
+    /// <summary>The sources an <see cref="ExtraPrerequisitesFileName"/> entry may cite; each entry needs two of them.</summary>
+    public static readonly IReadOnlyList<string> ExtraPrerequisiteSources = [GameTextSource, QuestionableSource, WikiSource];
+
+    /// <summary>The game's own quest text names the requirement; the entry carries the row's key.</summary>
+    public const string GameTextSource = "gameText";
+
+    /// <summary>Questionable hand-adds the link (the snapshot under <c>docs/data/questionable-prerequisites.json</c>).</summary>
+    public const string QuestionableSource = "questionable";
+
+    /// <summary>The Console Games Wiki's quest infobox names the requirement.</summary>
+    public const string WikiSource = "wiki";
 
     /// <summary>The <see cref="OtherSource"/> names <see cref="OtherSourcesFileName"/> may use; any other is a skipped entry.</summary>
     public static readonly IReadOnlyList<string> OtherSourcesFileSources = [OtherSource.DungeonDrop];
@@ -232,6 +262,12 @@ public sealed class CuratedData
     /// <summary>City and class labels, the city pin and the Grand Company tags the choice groups read (<c>Evaluation.PathIndex</c>).</summary>
     public PathChoices PathChoices { get; private init; } = PathChoices.Empty;
 
+    /// <summary>Prerequisites neither the sheet nor its accept conditions record, by quest row id; ids not checked against the catalog here.</summary>
+    public IReadOnlyDictionary<uint, ExtraPrerequisite> ExtraPrerequisites { get; private init; } = new Dictionary<uint, ExtraPrerequisite>();
+
+    /// <summary><see cref="ExtraPrerequisites"/> as the catalog builders take them (<c>QuestCatalog.Build</c>): quest row id to required row ids.</summary>
+    public IReadOnlyDictionary<uint, uint[]> ExtraPrerequisiteIds => ExtraPrerequisites.ToDictionary(kv => kv.Key, kv => kv.Value.Requires.ToArray());
+
     /// <summary>
     /// Short git hash of the last commit touching the overlay, from <see cref="VersionFileName"/> ("573d225", or
     /// "573d225-dirty" when regenerated with uncommitted changes); empty when the file is absent or has no value.
@@ -246,7 +282,7 @@ public sealed class CuratedData
     /// what the invariants test compares the shipped file against, so the file never feeds its own derivation.
     /// </summary>
     public CuratedData WithoutFeatureQuests() =>
-        FeatureQuests.Count == 0 ? this : new CuratedData(SystemUnlocks, DutyUnlocks, new HashSet<uint>(), Festivals, Chains, OnlineStore, OtherSources, RefileOverrides, RetiredQuests, Quirks, CuratedRevision, Warnings) { PayoffGates = PayoffGates, PathChoices = PathChoices };
+        FeatureQuests.Count == 0 ? this : new CuratedData(SystemUnlocks, DutyUnlocks, new HashSet<uint>(), Festivals, Chains, OnlineStore, OtherSources, RefileOverrides, RetiredQuests, Quirks, CuratedRevision, Warnings) { PayoffGates = PayoffGates, PathChoices = PathChoices, ExtraPrerequisites = ExtraPrerequisites };
 
     /// <summary>Loads every curated file under <paramref name="dir"/>. A missing directory or file yields empty collections.</summary>
     public static CuratedData Load(string dir)
@@ -570,6 +606,7 @@ public sealed class CuratedData
 
         var payoffGates = LoadPayoffGates(Path.Combine(dir, PayoffGatesFileName), warnings);
         var pathChoices = LoadPathChoices(Path.Combine(dir, PathChoicesFileName), warnings);
+        var extraPrerequisites = LoadExtraPrerequisites(Path.Combine(dir, ExtraPrerequisitesFileName), warnings);
 
         var curatedRevision = LoadRevision(Path.Combine(dir, VersionFileName), warnings);
 
@@ -577,7 +614,117 @@ public sealed class CuratedData
         {
             PayoffGates = payoffGates,
             PathChoices = pathChoices,
+            ExtraPrerequisites = extraPrerequisites,
         };
+    }
+
+    /// <summary>
+    /// extra_prerequisites.json: entries keyed by quest row id, each with <c>requires</c> (a non-empty array of quest
+    /// row ids, none the key itself, no repeats), <c>sources</c> (at least two distinct names of
+    /// <see cref="ExtraPrerequisiteSources"/>), <c>gameTextKey</c> (a <c>TEXT_</c> key, required with and only with the
+    /// <c>gameText</c> source), an https <c>evidence</c> URL and a <c>note</c>. An entry missing any of them is skipped
+    /// with a warning, so a bad line never adds a gate.
+    /// </summary>
+    private static Dictionary<uint, ExtraPrerequisite> LoadExtraPrerequisites(string path, List<string> warnings)
+    {
+        var entries = new Dictionary<uint, ExtraPrerequisite>();
+        ForEachEntry(path, warnings, (key, node, warn) =>
+        {
+            if (!StorageJson.TryParseKey(key, out uint rowId) || rowId == 0)
+            {
+                warn("key is not a quest row id");
+                return;
+            }
+
+            if (node is not JsonObject obj)
+            {
+                warn("value is not an object");
+                return;
+            }
+
+            if (!obj.TryGetPropertyValue("requires", out var requiresNode) || requiresNode is not JsonArray requiresArray || requiresArray.Count == 0)
+            {
+                warn("requires must be a non-empty array of quest row ids");
+                return;
+            }
+
+            var requires = new List<uint>(requiresArray.Count);
+            foreach (var element in requiresArray)
+            {
+                if (!StorageJson.TryReadId(element, out var id) || id == 0)
+                {
+                    warn($"requires id '{element}' is not a quest row id");
+                    return;
+                }
+
+                if (id == rowId)
+                {
+                    warn("requires names the quest itself");
+                    return;
+                }
+
+                if (requires.Contains(id))
+                {
+                    warn($"requires lists {id} twice");
+                    return;
+                }
+
+                requires.Add(id);
+            }
+
+            var sources = new List<string>();
+            if (obj.TryGetPropertyValue("sources", out var sourcesNode) && sourcesNode is JsonArray sourceArray)
+            {
+                foreach (var element in sourceArray)
+                {
+                    if (element is not JsonValue value || !value.TryGetValue<string>(out var source) || !ExtraPrerequisiteSources.Contains(source, StringComparer.Ordinal))
+                    {
+                        warn($"source '{element}' is not one of {string.Join(", ", ExtraPrerequisiteSources)}");
+                        return;
+                    }
+
+                    if (!sources.Contains(source, StringComparer.Ordinal))
+                    {
+                        sources.Add(source);
+                    }
+                }
+            }
+
+            if (sources.Count < 2)
+            {
+                warn($"sources must name at least two of {string.Join(", ", ExtraPrerequisiteSources)}");
+                return;
+            }
+
+            var gameTextKey = StorageJson.ReadString(obj, "gameTextKey")?.Trim();
+            var citesGameText = sources.Contains(GameTextSource, StringComparer.Ordinal);
+            if (citesGameText && (gameTextKey is null || !gameTextKey.StartsWith("TEXT_", StringComparison.Ordinal)))
+            {
+                warn("gameTextKey must be the TEXT_ key of the quest text row the gameText source names");
+                return;
+            }
+
+            if (!citesGameText && gameTextKey is not null)
+            {
+                warn("gameTextKey is set but sources does not cite gameText");
+                return;
+            }
+
+            if (!TryReadNoteAndEvidence(obj, warn, out var note, out var evidence))
+            {
+                return;
+            }
+
+            if (!Uri.TryCreate(evidence, UriKind.Absolute, out var uri) || uri.Scheme != Uri.UriSchemeHttps)
+            {
+                warn($"evidence '{evidence}' is not an https URL");
+                return;
+            }
+
+            entries[rowId] = new ExtraPrerequisite(requires, sources, evidence, note, gameTextKey);
+        });
+
+        return entries;
     }
 
     /// <summary>

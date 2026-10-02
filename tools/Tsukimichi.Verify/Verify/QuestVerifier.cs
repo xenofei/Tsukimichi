@@ -658,8 +658,14 @@ internal sealed partial class QuestVerifier(
         var displayLevel = GameCatalog.DisplayLevel(quest);
         var prereqNames = quest.PreviousQuests.QuestIds.Select(id => game.Catalog.GetByRowId(id)?.Name ?? $"row {id}").ToList();
         var acceptQuests = AcceptQuests(quest);
-        var prereqCatalog = (quest.PreviousQuests.IsEmpty ? string.Empty : (quest.PreviousQuests.Join == JoinKind.Any ? "any:" : "all:")) + Names.Join(quest.PreviousQuests.QuestIds)
-            + (acceptQuests.Count > 0 ? (quest.PreviousQuests.IsEmpty ? string.Empty : " ") + "accept:" + Names.Join(acceptQuests) : string.Empty);
+        var curatedQuests = acceptQuests.Where(id => game.Catalog.ExtraPrerequisitesOf(quest.RowId).Contains(id) && !quest.AcceptConditions.Contains(id)).ToList();
+        var conditionQuests = acceptQuests.Except(curatedQuests).ToList();
+        var prereqCatalog = string.Join(' ', new[]
+        {
+            quest.PreviousQuests.IsEmpty ? string.Empty : (quest.PreviousQuests.Join == JoinKind.Any ? "any:" : "all:") + Names.Join(quest.PreviousQuests.QuestIds),
+            conditionQuests.Count > 0 ? "accept:" + Names.Join(conditionQuests) : string.Empty,
+            curatedQuests.Count > 0 ? "extra:" + Names.Join(curatedQuests) : string.Empty,
+        }.Where(part => part.Length > 0));
         var dutyCatalog = (quest.InstanceContentRequired.Length > 1 ? (quest.InstanceJoin == JoinKind.Any ? "any:" : "all:") : string.Empty) + Names.Join(extras.InstanceContentNames);
         var rewardNames = quest.Rewards.Where(r => r.Kind is RewardKind.Item or RewardKind.OptionalItem or RewardKind.ArtifactGear).Select(r => r.Name).ToList();
         var unlockNames = DutyUnlocksOf(quest);
@@ -1156,10 +1162,10 @@ internal sealed partial class QuestVerifier(
     private static string ListedValue(QuestRecord q) => q.IsRetired ? "retired" : q.IsUnlisted ? "unlisted" : "listed";
 
     /// <summary>
-    /// Quest rows named by QuestAcceptAdditionCondition that the evaluator judges on top of PreviousQuest: exactly what
-    /// <see cref="QuestCatalog.PrerequisitesOf"/> adds, so a source naming one is a match only for a condition the
-    /// plugin checks. A value that is no catalog quest stays out (listed, not checked), as does one PreviousQuest
-    /// already names.
+    /// Quest rows named by QuestAcceptAdditionCondition or by <c>curated/extra_prerequisites.json</c> that the evaluator
+    /// judges on top of PreviousQuest: exactly what <see cref="QuestCatalog.PrerequisitesOf"/> adds, so a source naming
+    /// one is a match only for a prerequisite the plugin checks. A value that is no catalog quest stays out (listed,
+    /// not checked), as does one PreviousQuest already names.
     /// </summary>
     private List<uint> AcceptQuests(QuestRecord q) => game.Catalog.PrerequisitesOf(q).QuestIds.Except(q.PreviousQuests.QuestIds).ToList();
 
@@ -1340,9 +1346,16 @@ internal sealed partial class QuestVerifier(
         var covered = source.Where(s => direct.Contains(s.Name)).SelectMany(s => s.Rows).ToHashSet();
         var acceptNames = accept.Select(id => Names.Canon(game.Catalog.GetByRowId(id)!.Name)).ToHashSet();
         var missing = catalog.Where(n => !covered.Contains(n)).ToList();
-        if (accept.Count > 0 && direct.Any(d => source.First(s => s.Name == d).Rows.Any(acceptNames.Contains)))
+        var curatedNames = game.Catalog.ExtraPrerequisitesOf(quest.RowId).Select(id => Names.Canon(game.Catalog.GetByRowId(id)!.Name)).ToHashSet();
+        var namedAdded = direct.SelectMany(d => source.First(s => s.Name == d).Rows).Where(acceptNames.Contains).ToList();
+        if (namedAdded.Any(n => !curatedNames.Contains(n)))
         {
             notes.Add("source names accept conditions (QuestAcceptAdditionCondition) as well as PreviousQuest");
+        }
+
+        if (namedAdded.Any(curatedNames.Contains))
+        {
+            notes.Add("source names curated extra prerequisites (curated/extra_prerequisites.json) as well as PreviousQuest");
         }
 
         if (missing.Count > 0)

@@ -28,7 +28,7 @@ public static class CatalogMapper
     /// <param name="ct">Cancellation token.</param>
     /// <param name="log">Optional sink for one-line progress facts (row counts, skips).</param>
     /// <param name="filing">Whether the <see cref="JournalRefiler"/> runs over the mapped records (the default) or the sheet's genres stand.</param>
-    /// <param name="curated">The curated overlay the refiler reads (<c>refile_overrides.json</c>, <c>retired_quests.json</c>); null runs the rules alone.</param>
+    /// <param name="curated">The curated overlay the refiler reads (<c>refile_overrides.json</c>, <c>retired_quests.json</c>) and the catalog takes its extra prerequisites from (<c>extra_prerequisites.json</c>); null runs the rules alone.</param>
     /// <param name="patches"><c>quest_patches.json</c>, which sets <see cref="QuestRecord.AddedIn"/> (P8); null leaves every patch unknown.</param>
     public static CatalogBundle Map(
         ExcelModule excel,
@@ -73,7 +73,8 @@ public static class CatalogMapper
         ct.ThrowIfCancellationRequested();
         IReadOnlyList<QuestRecord> dated = patches is null ? records : patches.Apply(records);
         IReadOnlyList<QuestRecord> filed = filing == JournalFiling.Refiled ? JournalRefiler.Apply(dated, curated ?? CuratedData.Empty) : dated;
-        var catalog = QuestCatalog.Build(filed);
+        // The curated extra prerequisites join the sheet's at build, so every reader of PrerequisitesOf sees them.
+        var catalog = QuestCatalog.Build(filed, curated?.ExtraPrerequisiteIds);
         // The choice groups' labels and guards (feature plan v4 D1); without curated data only the rule-found sets.
         Core.Evaluation.PathIndex.Attach(catalog, curated?.PathChoices);
         var jobs = ClassJobCategoryLookup.Build(excel, language);

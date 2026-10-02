@@ -35,6 +35,28 @@ dotnet tools/Tsukimichi.Verify/bin/Release/net10.0/Tsukimichi.Verify.dll summary
 | `rewards` | every `unique_quests.json` entry; writes `reward-verification.csv`, `verification-full.md`, `verification-manifest.json` |
 | `summary` | reads the committed CSVs and the allowlist; prints totals and every row that fails the gate; exits 1 when a row is `unresolved` or `catalogWrong` outside the allowlist, else 0 |
 | `patches` | P8 seed: the patch every named quest was added in, from Garland Tools; writes `Tsukimichi/Data/quest_patches.json` and `docs/data/quest-patches-report.md` |
+| `questionable` | cross-checks Questionable's hand-added prerequisite links against the catalog; exits 1 on a link it misses outside the allowlist (below) |
+
+### questionable
+
+`dotnet tools/Tsukimichi.Verify/bin/Release/net10.0/Tsukimichi.Verify.dll questionable [--game <sqpack>] [--links <file>] [--extract <QuestData.cs> --commit <hash>]`
+
+Questionable (PunishXIV) adds prerequisite links the game sheets do not carry (`AddPreviousQuest` calls in its
+`Questionable/Data/QuestData.cs`). `docs/data/questionable-prerequisites.json` holds them as Quest row id pairs at one
+commit, ids only: no code or text of Questionable is copied. The command maps the catalog from the local game with the
+curated overlay and checks that every link is implied by it (a previous quest, an accept condition, an entry of
+`curated/extra_prerequisites.json`, or any of these further up, counting under an "any" join only what every
+alternative needs). A link it misses must be excused by an allowlist entry with `fact` `prereqs`, `source`
+`questionable` and optionally `prereqId` (the required quest); an excuse no link needs any more also fails. It prints how
+each covered link is met. It never touches the network; to refresh the links, fetch the file yourself (for example
+`gh api "repos/PunishXIV/Questionable/contents/Questionable/Data/QuestData.cs?ref=new-main" --jq .content | base64 -d > QuestData.cs`)
+and pass `--extract QuestData.cs --commit <the full hash of new-main you read>`: the links file is rewritten first.
+`QuestionableLinksTests` runs the same check in CI against the frozen catalog fixture.
+
+Questionable is a cross-check, not a source of truth: a link becomes a curated extra prerequisite only when a second
+source agrees (the quest's own text or the wiki infobox). With the first snapshot (commit `0bd61efe`, 99 links) three
+links stay allowlisted: Unidentified Flying Object (its text asks for the Dun Scaith raid, not the quest), Always a
+Bigger Fish (spearfishing; single source) and Lighting the Way (the wiki names a reconstruction stage instead).
 
 ### patches
 

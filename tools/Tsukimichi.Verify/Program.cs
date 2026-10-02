@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
+using Tsukimichi.Core.Evaluation;
 using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Storage;
 using Tsukimichi.Verify.Game;
@@ -20,6 +21,7 @@ namespace Tsukimichi.Verify;
 /// Tsukimichi.Verify rewards [same options]
 /// Tsukimichi.Verify summary [--out &lt;dir&gt;]       exits 1 when any row is unresolved or catalogWrong outside the allowlist
 /// Tsukimichi.Verify patches [--game, --cache, --offline, --rate, --limit N, --out] [--patches &lt;file&gt;] [--patch-corrections &lt;file&gt;] [--no-quest-documents]
+/// Tsukimichi.Verify questionable [--game, --out, --curated] [--links &lt;file&gt;] [--extract &lt;QuestData.cs&gt; --commit &lt;hash&gt;]   exits 1 on a link the catalog misses outside the allowlist
 /// </code>
 /// </summary>
 public static class Program
@@ -63,6 +65,7 @@ public static class Program
                 "rewards" => await RewardsAsync(opts, cts.Token),
                 "summary" => Summary(opts),
                 "patches" => await PatchesAsync(opts, cts.Token),
+                "questionable" => Questionable(opts),
                 _ => Unknown(command),
             };
         }
@@ -88,7 +91,7 @@ public static class Program
 
     private static void Usage()
     {
-        Console.Error.WriteLine("usage: Tsukimichi.Verify <quests|rewards|summary|patches> [options]");
+        Console.Error.WriteLine("usage: Tsukimichi.Verify <quests|rewards|summary|patches|questionable> [options]");
         Console.Error.WriteLine("  --game <sqpack>    game sqpack directory (default: the Steam install)");
         Console.Error.WriteLine("  --cache <dir>      fetch cache (default: %LOCALAPPDATA%\\Tsukimichi.Verify\\<gameVersion>); never inside the repo");
         Console.Error.WriteLine("  --offline          never fetch; a cache miss is an unresolved row");
@@ -103,6 +106,10 @@ public static class Program
         Console.Error.WriteLine("  --patch-corrections <file>  hand corrections laid over Garland's values (default: <repo>/docs/data/quest-patch-corrections.json)");
         Console.Error.WriteLine("  --no-quest-documents  read Garland's per-quest documents from the cache only; never fetch one");
         Console.Error.WriteLine("  (with patches, --limit N caps the per-quest fetches of one run; the rest wait for the next)");
+        Console.Error.WriteLine("  questionable only:");
+        Console.Error.WriteLine("  --links <file>     Questionable's links (default: <repo>/docs/data/questionable-prerequisites.json)");
+        Console.Error.WriteLine("  --extract <file>   first rewrite --links from a local copy of Questionable/Data/QuestData.cs (needs --commit)");
+        Console.Error.WriteLine("  --commit <hash>    the full commit hash that copy was read at");
     }
 
     private static string ToolVersion => Assembly.GetExecutingAssembly().GetName().Version is { } v ? $"{v.Major}.{v.Minor}.{v.Build}" : "0.0.0";
@@ -289,6 +296,99 @@ public static class Program
 
         log.WriteLine($"done in {PoliteHttp.Elapsed(c.Clock)}; {c.Http.LiveRequests} live requests, {c.Http.CacheHits} cache hits");
         return 0;
+    }
+
+    /// <summary>
+    /// The Questionable cross-check (feature plan v5, 1.5.0 Gates): every prerequisite link Questionable adds by hand
+    /// (<c>docs/data/questionable-prerequisites.json</c>) must be implied by the catalog the plugin builds (previous
+    /// quests, accept conditions, <c>curated/extra_prerequisites.json</c>, directly or through another prerequisite)
+    /// or excused by a live <c>prereqs</c>/<c>questionable</c> allowlist entry. Reads the local game, never the network;
+    /// with <c>--extract</c> it first rewrites the links file from a local copy of Questionable's source. Exits 1 on a
+    /// link neither covers, or on an allowlist entry no link needs any more.
+    /// </summary>
+    private static int Questionable(VerifyOptions opts)
+    {
+        var log = Console.Out;
+        if (opts.Extract is { } source)
+        {
+            if (opts.Commit is not { Length: 40 } commit)
+            {
+                throw new ArgumentException("--extract needs --commit <the full 40-character hash the copy was read at>");
+            }
+
+            var extracted = PrerequisiteLinks.Extract(File.ReadAllText(source));
+            new PrerequisiteLinks("https://github.com/PunishXIV/Questionable", "new-main", commit, "Questionable/Data/QuestData.cs", DateTime.UtcNow.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture), extracted)
+                .Write(opts.LinksFile);
+            log.WriteLine($"questionable: {extracted.Count} links read from {source}, written to {opts.LinksFile}");
+        }
+
+        var links = PrerequisiteLinks.Load(opts.LinksFile);
+        var game = opts.Game ?? DefaultGame;
+        if (!Directory.Exists(game))
+        {
+            throw new ArgumentException($"sqpack directory not found: {game} (pass --game)");
+        }
+
+        var curated = CuratedData.Load(opts.CuratedDir);
+        foreach (var warning in curated.Warnings)
+        {
+            log.WriteLine("curated: " + warning);
+        }
+
+        using var data = new Lumina.GameData(game, new Lumina.LuminaOptions { PanicOnSheetChecksumMismatch = false });
+        var catalog = Tsukimichi.GameData.CatalogMapper.Map(data.Excel, Lumina.Data.Language.English, default, null, JournalFiling.Refiled, curated).Catalog;
+        var allowlist = Allowlist.Load(Path.Combine(opts.OutDir, "verification-allowlist.json"));
+        var current = PluginVersion(opts.RepoRoot);
+        string Name(uint rowId) => catalog.GetByRowId(rowId)?.Name ?? "(not in the catalog)";
+
+        // How each covered link is met, for the totals line.
+        var how = new Dictionary<string, int>(StringComparer.Ordinal);
+        foreach (var (quest, required) in links.Pairs)
+        {
+            if (catalog.GetByRowId(quest) is not { } record)
+            {
+                continue;
+            }
+
+            var kind = record.PreviousQuests.QuestIds.Contains(required) ? "previous quest"
+                : record.AcceptConditions.Contains(required) ? "accept condition"
+                : catalog.ExtraPrerequisitesOf(quest).Contains(required) ? "curated extra"
+                : PrerequisiteCoverage.Requires(catalog, quest, required) ? "through another prerequisite"
+                : null;
+            if (kind is not null)
+            {
+                how[kind] = how.GetValueOrDefault(kind) + 1;
+            }
+        }
+
+        log.WriteLine($"questionable: {links.Pairs.Count} links from {links.Source} at {links.Commit[..10]} ({links.Extracted}); plugin version {(current?.ToString() ?? "unknown")}");
+        log.WriteLine("  covered: " + string.Join(", ", how.OrderByDescending(kv => kv.Value).Select(kv => $"{kv.Value} {kv.Key}")));
+
+        var open = 0;
+        var used = new HashSet<Allowlist.Entry>();
+        foreach (var gap in PrerequisiteCoverage.Check(catalog, links.Pairs))
+        {
+            var line = $"{gap.QuestRowId} {Name(gap.QuestRowId)} <- {gap.RequiredRowId} {Name(gap.RequiredRowId)} ({gap.Gap})";
+            if (allowlist.CoveringLink(gap.QuestRowId, gap.RequiredRowId, current) is { } entry)
+            {
+                used.Add(entry);
+                log.WriteLine($"  allowlisted until {entry.Until}: {line}");
+            }
+            else
+            {
+                open++;
+                log.WriteLine($"  GATE {line}: add it to curated/extra_prerequisites.json with a second source, or allowlist it with a reason");
+            }
+        }
+
+        foreach (var stale in allowlist.Entries.Where(e => e.Source == Allowlist.QuestionableSource && !Allowlist.Expired(e, current) && !used.Contains(e)))
+        {
+            open++;
+            log.WriteLine($"  GATE allowlist entry {stale.RowId} {stale.Fact}/{stale.Source}{(stale.PrereqId is null ? string.Empty : " " + stale.PrereqId)} excuses no open link; remove it");
+        }
+
+        log.WriteLine(open == 0 ? "questionable: gate passed" : $"questionable: gate FAILED, {open} open");
+        return open == 0 ? 0 : 1;
     }
 
     private static int Summary(VerifyOptions opts)
@@ -564,6 +664,9 @@ internal sealed record VerifyOptions
     public string PatchesFile { get; init; } = Path.Combine(FindRepoRoot(), "Tsukimichi", "Data", QuestPatches.FileName);
     public string PatchCorrectionsFile { get; init; } = Path.Combine(FindRepoRoot(), "docs", "data", QuestPatchCorrections.FileName);
     public bool FetchQuestDocuments { get; init; } = true;
+    public string LinksFile { get; init; } = Path.Combine(FindRepoRoot(), "docs", "data", PrerequisiteLinks.FileName);
+    public string? Extract { get; init; }
+    public string? Commit { get; init; }
 
     public static VerifyOptions Parse(string[] args)
     {
@@ -608,6 +711,15 @@ internal sealed record VerifyOptions
                     break;
                 case "--no-quest-documents":
                     o = o with { FetchQuestDocuments = false };
+                    break;
+                case "--links":
+                    o = o with { LinksFile = Path.GetFullPath(Next()) };
+                    break;
+                case "--extract":
+                    o = o with { Extract = Path.GetFullPath(Next()) };
+                    break;
+                case "--commit":
+                    o = o with { Commit = Next() };
                     break;
                 default:
                     throw new ArgumentException($"unknown option {args[i]}");

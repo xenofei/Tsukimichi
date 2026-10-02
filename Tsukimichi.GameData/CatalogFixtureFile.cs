@@ -85,7 +85,7 @@ public static class CatalogFixtureFile
             data.JobColumns);
         var dated = patches is null ? data.Quests : patches.Apply(data.Quests);
         var quests = filing == JournalFiling.Refiled ? JournalRefiler.Apply(dated, curated) : dated;
-        var catalog = QuestCatalog.Build(quests);
+        var catalog = QuestCatalog.Build(quests, curated.ExtraPrerequisiteIds);
         Core.Evaluation.PathIndex.Attach(catalog, curated.PathChoices);
         var bundle = new CatalogBundle(catalog, data.Names, jobs, data.Language);
         return (bundle, data.GameVersion);

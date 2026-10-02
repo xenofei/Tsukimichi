@@ -309,8 +309,9 @@ public sealed class PathIndexFixtureTests(FixtureCatalog fixture, ITestOutputHel
     [Fact]
     public void Another_company_s_call_of_the_wild_needs_that_company()
     {
-        // The sheet leaves Call of the Wild's company at 0; the curated tag says whose officer offers it.
-        var snapshot = Snapshot(ComingToGridania, CloseToHomeLancer, 65559, CompanyYouKeepTwinAdder) with { GrandCompany = 2 };
+        // The sheet leaves Call of the Wild's company at 0; the curated tag says whose officer offers it. The five allied
+        // society finales it also needs (curated/extra_prerequisites.json) are done, so the company is all that blocks.
+        var snapshot = Snapshot(ComingToGridania, CloseToHomeLancer, 65559, CompanyYouKeepTwinAdder, 66757, 66792, 66860, 66914, 67029) with { GrandCompany = 2 };
         var states = StateResolver.ResolveAll(Catalog, snapshot, Context);
         var names = fixture.Bundle.BlockerNames();
         var view = new IpcView(Catalog, states, names);

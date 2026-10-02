@@ -1,256 +1,199 @@
 {
-  "$schema_note": "entries: { rowId (quest row id or \"*\"), fact (fact name, or reward:<Kind> for reward rows), source (optional), verdict, reason, evidence (URL), fix (where a catalogWrong is corrected, or what a human must check for an unresolved row), until (release in which the fix lands; the entry expires once the plugin version reaches it), rewardId (reward rows only: narrows the entry to that reward id) }",
+  "$schema_note": "entries: { rowId (quest row id or \"*\"), fact (fact name, or reward:<Kind> for reward rows), source (optional; \"questionable\" for a Questionable prerequisite link the catalog does not imply, checked by Tsukimichi.Verify questionable and QuestionableLinksTests), verdict, reason, evidence (URL), fix (where a catalogWrong is corrected, or what a human must check for an unresolved row), until (release in which the fix lands; the entry expires once the plugin version reaches it, and CI fails while an expired entry is listed), rewardId (reward rows only: narrows the entry to that reward id), prereqId (questionable entries only: narrows the entry to that required quest) }",
   "entries": [
     {
       "rowId": "65895",
       "fact": "prereqs",
       "source": "wiki",
       "verdict": "unresolved",
-      "reason": "Method in His Malice: wiki also names One Man's Trash (66676), a relic-line quest filed as a Gridanian sidequest. Wiki prerequisites: One Man's Trash (Quest);Wherefore Art Thou, Zodiac; only the wiki names it; the sheet's PreviousQuest and QuestAcceptAdditionCondition do not, and no second source covers quest prerequisites (the Lodestone's Quest/Duty line names duties only). Check in game whether the quest is offered without it: if it is, the wiki is wrong (sourceWrong); if not, the gate is script-side and needs a curated requirement",
+      "reason": "Method in His Malice: wiki also names One Man's Trash (66676), a relic-line quest filed as a Gridanian sidequest. Wiki prerequisites: One Man's Trash (Quest);Wherefore Art Thou, Zodiac; only the wiki names it; the sheet's PreviousQuest and QuestAcceptAdditionCondition do not, and no second source covers quest prerequisites (the Lodestone's Quest/Duty line names duties only). Check in game whether the quest is offered without it: if it is, the wiki is wrong (sourceWrong); if not, the gate is script-side and needs a curated requirement. 1.5.0 review: no second source, so curated/extra_prerequisites.json cannot take it under its two-source rule: Questionable adds no link for this quest and neither its own quest text nor its predecessor's names a requirement. Still needs the in-game check",
       "evidence": "https://ffxiv.consolegameswiki.com/wiki/Method_in_His_Malice",
       "fix": "in-game check, then a curated requirement (T3-style requirement kind) or a wiki correction",
-      "until": "1.5.0"
+      "until": "1.6.0"
     },
     {
       "rowId": "65897",
       "fact": "prereqs",
       "source": "wiki",
       "verdict": "unresolved",
-      "reason": "His Dark Materia: Zodiac step with no PreviousQuest in the sheet; the wiki names the previous step Method in His Malice. Wiki prerequisites: Method in His Malice; only the wiki names it; the sheet's PreviousQuest and QuestAcceptAdditionCondition do not, and no second source covers quest prerequisites (the Lodestone's Quest/Duty line names duties only). Check in game whether the quest is offered without it: if it is, the wiki is wrong (sourceWrong); if not, the gate is script-side and needs a curated requirement",
+      "reason": "His Dark Materia: Zodiac step with no PreviousQuest in the sheet; the wiki names the previous step Method in His Malice. Wiki prerequisites: Method in His Malice; only the wiki names it; the sheet's PreviousQuest and QuestAcceptAdditionCondition do not, and no second source covers quest prerequisites (the Lodestone's Quest/Duty line names duties only). Check in game whether the quest is offered without it: if it is, the wiki is wrong (sourceWrong); if not, the gate is script-side and needs a curated requirement. 1.5.0 review: no second source, so curated/extra_prerequisites.json cannot take it under its two-source rule: Questionable adds no link for this quest and neither its own quest text nor its predecessor's names a requirement. Still needs the in-game check",
       "evidence": "https://ffxiv.consolegameswiki.com/wiki/His_Dark_Materia",
       "fix": "in-game check, then a curated requirement (T3-style requirement kind) or a wiki correction",
-      "until": "1.5.0"
+      "until": "1.6.0"
     },
     {
       "rowId": "65953",
       "fact": "prereqs",
       "source": "wiki",
       "verdict": "unresolved",
-      "reason": "Say It with Flowers: neither quest has a PreviousQuest in the sheet; the wiki orders Constant Carvings first. Wiki prerequisites: Constant Carvings; only the wiki names it; the sheet's PreviousQuest and QuestAcceptAdditionCondition do not, and no second source covers quest prerequisites (the Lodestone's Quest/Duty line names duties only). Check in game whether the quest is offered without it: if it is, the wiki is wrong (sourceWrong); if not, the gate is script-side and needs a curated requirement",
+      "reason": "Say It with Flowers: neither quest has a PreviousQuest in the sheet; the wiki orders Constant Carvings first. Wiki prerequisites: Constant Carvings; only the wiki names it; the sheet's PreviousQuest and QuestAcceptAdditionCondition do not, and no second source covers quest prerequisites (the Lodestone's Quest/Duty line names duties only). Check in game whether the quest is offered without it: if it is, the wiki is wrong (sourceWrong); if not, the gate is script-side and needs a curated requirement. 1.5.0 review: no second source, so curated/extra_prerequisites.json cannot take it under its two-source rule: Questionable adds no link for this quest and neither its own quest text nor its predecessor's names a requirement. Still needs the in-game check",
       "evidence": "https://ffxiv.consolegameswiki.com/wiki/Say_It_with_Flowers",
       "fix": "in-game check, then a curated requirement (T3-style requirement kind) or a wiki correction",
-      "until": "1.5.0"
-    },
-    {
-      "rowId": "67001",
-      "fact": "prereqs",
-      "source": "wiki",
-      "verdict": "unresolved",
-      "reason": "Call of the Wild (Twin Adder): Grand Company variant with no PreviousQuest; the wiki names the five A Realm Reborn allied-society finales. Wiki prerequisites: Feathers and Folly;Like Clutchfather, Like Son;Martial Perfection;Revenge of the Furred;Spread Your Wings and Soar; only the wiki names it; the sheet's PreviousQuest and QuestAcceptAdditionCondition do not, and no second source covers quest prerequisites (the Lodestone's Quest/Duty line names duties only). Check in game whether the quest is offered without it: if it is, the wiki is wrong (sourceWrong); if not, the gate is script-side and needs a curated requirement",
-      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Call_of_the_Wild_(Twin_Adder)",
-      "fix": "in-game check, then a curated requirement (T3-style requirement kind) or a wiki correction",
-      "until": "1.5.0"
-    },
-    {
-      "rowId": "67002",
-      "fact": "prereqs",
-      "source": "wiki",
-      "verdict": "unresolved",
-      "reason": "Call of the Wild (Maelstrom): Grand Company variant with no PreviousQuest; the wiki names the five A Realm Reborn allied-society finales. Wiki prerequisites: Feathers and Folly;Like Clutchfather, Like Son;Martial Perfection;Revenge of the Furred;Spread Your Wings and Soar; only the wiki names it; the sheet's PreviousQuest and QuestAcceptAdditionCondition do not, and no second source covers quest prerequisites (the Lodestone's Quest/Duty line names duties only). Check in game whether the quest is offered without it: if it is, the wiki is wrong (sourceWrong); if not, the gate is script-side and needs a curated requirement",
-      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Call_of_the_Wild_(Maelstrom)",
-      "fix": "in-game check, then a curated requirement (T3-style requirement kind) or a wiki correction",
-      "until": "1.5.0"
-    },
-    {
-      "rowId": "67003",
-      "fact": "prereqs",
-      "source": "wiki",
-      "verdict": "unresolved",
-      "reason": "Call of the Wild (Immortal Flames): Grand Company variant with no PreviousQuest; the wiki names the five A Realm Reborn allied-society finales. Wiki prerequisites: Feathers and Folly;Like Clutchfather, Like Son;Martial Perfection;Revenge of the Furred;Spread Your Wings and Soar; only the wiki names it; the sheet's PreviousQuest and QuestAcceptAdditionCondition do not, and no second source covers quest prerequisites (the Lodestone's Quest/Duty line names duties only). Check in game whether the quest is offered without it: if it is, the wiki is wrong (sourceWrong); if not, the gate is script-side and needs a curated requirement",
-      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Call_of_the_Wild_(Immortal_Flames)",
-      "fix": "in-game check, then a curated requirement (T3-style requirement kind) or a wiki correction",
-      "until": "1.5.0"
+      "until": "1.6.0"
     },
     {
       "rowId": "67879",
       "fact": "prereqs",
       "source": "wiki",
       "verdict": "unresolved",
-      "reason": "Two Sides of a Coin: wiki adds two level 34 Lominsan sidequests (Never Trout That I Love, Return to Your Dust) to the main-scenario predecessor. Wiki prerequisites: Never Trout That I Love;Return to Your Dust;Shadows of the First; only the wiki names it; the sheet's PreviousQuest and QuestAcceptAdditionCondition do not, and no second source covers quest prerequisites (the Lodestone's Quest/Duty line names duties only). Check in game whether the quest is offered without it: if it is, the wiki is wrong (sourceWrong); if not, the gate is script-side and needs a curated requirement",
+      "reason": "Two Sides of a Coin: wiki adds two level 34 Lominsan sidequests (Never Trout That I Love, Return to Your Dust) to the main-scenario predecessor. Wiki prerequisites: Never Trout That I Love;Return to Your Dust;Shadows of the First; only the wiki names it; the sheet's PreviousQuest and QuestAcceptAdditionCondition do not, and no second source covers quest prerequisites (the Lodestone's Quest/Duty line names duties only). Check in game whether the quest is offered without it: if it is, the wiki is wrong (sourceWrong); if not, the gate is script-side and needs a curated requirement. 1.5.0 review: no second source, so curated/extra_prerequisites.json cannot take it under its two-source rule: Questionable adds no link for this quest and neither its own quest text nor its predecessor's names a requirement. Still needs the in-game check",
       "evidence": "https://ffxiv.consolegameswiki.com/wiki/Two_Sides_of_a_Coin",
       "fix": "in-game check, then a curated requirement (T3-style requirement kind) or a wiki correction",
-      "until": "1.5.0"
+      "until": "1.6.0"
     },
     {
       "rowId": "67918",
       "fact": "prereqs",
       "source": "wiki",
       "verdict": "unresolved",
-      "reason": "When Good Dragons Go Bad: no PreviousQuest in the sheet; the wiki names the three Heavensward allied-society finales. Wiki prerequisites: A Symbiotic Friendship;The Nest of Honor;The Zenith of Craftsmanship; only the wiki names it; the sheet's PreviousQuest and QuestAcceptAdditionCondition do not, and no second source covers quest prerequisites (the Lodestone's Quest/Duty line names duties only). Check in game whether the quest is offered without it: if it is, the wiki is wrong (sourceWrong); if not, the gate is script-side and needs a curated requirement",
+      "reason": "When Good Dragons Go Bad: no PreviousQuest in the sheet; the wiki names the three Heavensward allied-society finales. Wiki prerequisites: A Symbiotic Friendship;The Nest of Honor;The Zenith of Craftsmanship; only the wiki names it; the sheet's PreviousQuest and QuestAcceptAdditionCondition do not, and no second source covers quest prerequisites (the Lodestone's Quest/Duty line names duties only). Check in game whether the quest is offered without it: if it is, the wiki is wrong (sourceWrong); if not, the gate is script-side and needs a curated requirement. 1.5.0 review: no second source, so curated/extra_prerequisites.json cannot take it under its two-source rule: Questionable adds no link for this quest and neither its own quest text nor its predecessor's names a requirement. Still needs the in-game check",
       "evidence": "https://ffxiv.consolegameswiki.com/wiki/When_Good_Dragons_Go_Bad",
       "fix": "in-game check, then a curated requirement (T3-style requirement kind) or a wiki correction",
-      "until": "1.5.0"
+      "until": "1.6.0"
     },
     {
       "rowId": "67923",
       "fact": "prereqs",
       "source": "wiki",
       "verdict": "unresolved",
-      "reason": "What Lies Beneath: Palace of the Dead floors 51+ quasi-quest; the wiki names The Nightmare's End (floor 50) in place of the sheet's 67092. Wiki prerequisites: The Nightmare's End; only the wiki names it; the sheet's PreviousQuest and QuestAcceptAdditionCondition do not, and no second source covers quest prerequisites (the Lodestone's Quest/Duty line names duties only). Check in game whether the quest is offered without it: if it is, the wiki is wrong (sourceWrong); if not, the gate is script-side and needs a curated requirement",
+      "reason": "What Lies Beneath: Palace of the Dead floors 51+ quasi-quest; the wiki names The Nightmare's End (floor 50) in place of the sheet's 67092. Wiki prerequisites: The Nightmare's End; only the wiki names it; the sheet's PreviousQuest and QuestAcceptAdditionCondition do not, and no second source covers quest prerequisites (the Lodestone's Quest/Duty line names duties only). Check in game whether the quest is offered without it: if it is, the wiki is wrong (sourceWrong); if not, the gate is script-side and needs a curated requirement. 1.5.0 review: no second source, so curated/extra_prerequisites.json cannot take it under its two-source rule: Questionable adds no link for this quest and neither its own quest text nor its predecessor's names a requirement. Still needs the in-game check",
       "evidence": "https://ffxiv.consolegameswiki.com/wiki/What_Lies_Beneath",
       "fix": "in-game check, then a curated requirement (T3-style requirement kind) or a wiki correction",
-      "until": "1.5.0"
+      "until": "1.6.0"
     },
     {
       "rowId": "67924",
       "fact": "prereqs",
       "source": "wiki",
       "verdict": "unresolved",
-      "reason": "Dead but Not Gone: wiki names the quasi-quest What Lies Beneath in place of the sheet's 67093. Wiki prerequisites: What Lies Beneath; only the wiki names it; the sheet's PreviousQuest and QuestAcceptAdditionCondition do not, and no second source covers quest prerequisites (the Lodestone's Quest/Duty line names duties only). Check in game whether the quest is offered without it: if it is, the wiki is wrong (sourceWrong); if not, the gate is script-side and needs a curated requirement",
+      "reason": "Dead but Not Gone: wiki names the quasi-quest What Lies Beneath in place of the sheet's 67093. Wiki prerequisites: What Lies Beneath; only the wiki names it; the sheet's PreviousQuest and QuestAcceptAdditionCondition do not, and no second source covers quest prerequisites (the Lodestone's Quest/Duty line names duties only). Check in game whether the quest is offered without it: if it is, the wiki is wrong (sourceWrong); if not, the gate is script-side and needs a curated requirement. 1.5.0 review: no second source, so curated/extra_prerequisites.json cannot take it under its two-source rule: Questionable adds no link for this quest and neither its own quest text nor its predecessor's names a requirement. Still needs the in-game check",
       "evidence": "https://ffxiv.consolegameswiki.com/wiki/Dead_but_Not_Gone",
       "fix": "in-game check, then a curated requirement (T3-style requirement kind) or a wiki correction",
-      "until": "1.5.0"
+      "until": "1.6.0"
     },
     {
       "rowId": "68148",
       "fact": "prereqs",
       "source": "wiki",
       "verdict": "unresolved",
-      "reason": "And We Shall Call It Pyros: Eureka quasi-quest with no PreviousQuest; the wiki names the previous zone's quasi-quest And We Shall Call It Pagos. Wiki prerequisites: And We Shall Call It Pagos; only the wiki names it; the sheet's PreviousQuest and QuestAcceptAdditionCondition do not, and no second source covers quest prerequisites (the Lodestone's Quest/Duty line names duties only). Check in game whether the quest is offered without it: if it is, the wiki is wrong (sourceWrong); if not, the gate is script-side and needs a curated requirement",
+      "reason": "And We Shall Call It Pyros: Eureka quasi-quest with no PreviousQuest; the wiki names the previous zone's quasi-quest And We Shall Call It Pagos. Wiki prerequisites: And We Shall Call It Pagos; only the wiki names it; the sheet's PreviousQuest and QuestAcceptAdditionCondition do not, and no second source covers quest prerequisites (the Lodestone's Quest/Duty line names duties only). Check in game whether the quest is offered without it: if it is, the wiki is wrong (sourceWrong); if not, the gate is script-side and needs a curated requirement. 1.5.0 review: no second source, so curated/extra_prerequisites.json cannot take it under its two-source rule: Questionable adds no link for this quest and neither its own quest text nor its predecessor's names a requirement. Still needs the in-game check",
       "evidence": "https://ffxiv.consolegameswiki.com/wiki/And_We_Shall_Call_It_Pyros",
       "fix": "in-game check, then a curated requirement (T3-style requirement kind) or a wiki correction",
-      "until": "1.5.0"
+      "until": "1.6.0"
     },
     {
       "rowId": "68149",
       "fact": "prereqs",
       "source": "wiki",
       "verdict": "unresolved",
-      "reason": "And We Shall Call It Hydatos: Eureka quasi-quest with no PreviousQuest; the wiki names the previous zone's quasi-quest And We Shall Call It Pyros. Wiki prerequisites: And We Shall Call It Pyros; only the wiki names it; the sheet's PreviousQuest and QuestAcceptAdditionCondition do not, and no second source covers quest prerequisites (the Lodestone's Quest/Duty line names duties only). Check in game whether the quest is offered without it: if it is, the wiki is wrong (sourceWrong); if not, the gate is script-side and needs a curated requirement",
+      "reason": "And We Shall Call It Hydatos: Eureka quasi-quest with no PreviousQuest; the wiki names the previous zone's quasi-quest And We Shall Call It Pyros. Wiki prerequisites: And We Shall Call It Pyros; only the wiki names it; the sheet's PreviousQuest and QuestAcceptAdditionCondition do not, and no second source covers quest prerequisites (the Lodestone's Quest/Duty line names duties only). Check in game whether the quest is offered without it: if it is, the wiki is wrong (sourceWrong); if not, the gate is script-side and needs a curated requirement. 1.5.0 review: no second source, so curated/extra_prerequisites.json cannot take it under its two-source rule: Questionable adds no link for this quest and neither its own quest text nor its predecessor's names a requirement. Still needs the in-game check",
       "evidence": "https://ffxiv.consolegameswiki.com/wiki/And_We_Shall_Call_It_Hydatos",
       "fix": "in-game check, then a curated requirement (T3-style requirement kind) or a wiki correction",
-      "until": "1.5.0"
-    },
-    {
-      "rowId": "68623",
-      "fact": "prereqs",
-      "source": "wiki",
-      "verdict": "unresolved",
-      "reason": "A Thousand and One Farewells: wiki adds Short Arms of the Law (a Doman adventurers' guild quest) to the sheet's 68622. Wiki prerequisites: Precious Reclamation;Short Arms of the Law; only the wiki names it; the sheet's PreviousQuest and QuestAcceptAdditionCondition do not, and no second source covers quest prerequisites (the Lodestone's Quest/Duty line names duties only). Check in game whether the quest is offered without it: if it is, the wiki is wrong (sourceWrong); if not, the gate is script-side and needs a curated requirement",
-      "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_Thousand_and_One_Farewells",
-      "fix": "in-game check, then a curated requirement (T3-style requirement kind) or a wiki correction",
-      "until": "1.5.0"
+      "until": "1.6.0"
     },
     {
       "rowId": "68689",
       "fact": "prereqs",
       "source": "wiki",
       "verdict": "unresolved",
-      "reason": "Lighting the Way: no PreviousQuest in the sheet; the wiki names Doman Reconstruction: Tauyaku. Wiki prerequisites: Doman Reconstruction: Tauyaku; only the wiki names it; the sheet's PreviousQuest and QuestAcceptAdditionCondition do not, and no second source covers quest prerequisites (the Lodestone's Quest/Duty line names duties only). Check in game whether the quest is offered without it: if it is, the wiki is wrong (sourceWrong); if not, the gate is script-side and needs a curated requirement",
+      "reason": "Lighting the Way: no PreviousQuest in the sheet; the wiki names Doman Reconstruction: Tauyaku. Wiki prerequisites: Doman Reconstruction: Tauyaku; only the wiki names it; the sheet's PreviousQuest and QuestAcceptAdditionCondition do not, and no second source covers quest prerequisites (the Lodestone's Quest/Duty line names duties only). Check in game whether the quest is offered without it: if it is, the wiki is wrong (sourceWrong); if not, the gate is script-side and needs a curated requirement. 1.5.0 review: the sources disagree. Questionable links It Takes an Enclave (68677) instead, the wiki names a Doman reconstruction stage that is no quest, and the quest text names neither, so nothing is added; see also the questionable entry for this quest",
       "evidence": "https://ffxiv.consolegameswiki.com/wiki/Lighting_the_Way",
       "fix": "in-game check, then a curated requirement (T3-style requirement kind) or a wiki correction",
-      "until": "1.5.0"
+      "until": "1.6.0"
     },
     {
       "rowId": "68778",
       "fact": "prereqs",
       "source": "wiki",
       "verdict": "unresolved",
-      "reason": "For Every Child a Star: no PreviousQuest in the sheet; the wiki names the Shadowbringers crafter and gatherer line finales and the main scenario. Wiki prerequisites: Healing Old Wounds;Morsel of the Deep;Shadowbringers (Quest);The Iron Bellows;The Myth Takes Form;The Notes of Bond Restoring; only the wiki names it; the sheet's PreviousQuest and QuestAcceptAdditionCondition do not, and no second source covers quest prerequisites (the Lodestone's Quest/Duty line names duties only). Check in game whether the quest is offered without it: if it is, the wiki is wrong (sourceWrong); if not, the gate is script-side and needs a curated requirement",
+      "reason": "For Every Child a Star: no PreviousQuest in the sheet; the wiki names the Shadowbringers crafter and gatherer line finales and the main scenario. Wiki prerequisites: Healing Old Wounds;Morsel of the Deep;Shadowbringers (Quest);The Iron Bellows;The Myth Takes Form;The Notes of Bond Restoring; only the wiki names it; the sheet's PreviousQuest and QuestAcceptAdditionCondition do not, and no second source covers quest prerequisites (the Lodestone's Quest/Duty line names duties only). Check in game whether the quest is offered without it: if it is, the wiki is wrong (sourceWrong); if not, the gate is script-side and needs a curated requirement. 1.5.0: Shadowbringers (69190) is now required through curated/extra_prerequisites.json (the wiki and Questionable agree); the five crafter and gatherer line finales are named by the wiki alone (Questionable and the quest text do not), so the row stays open for the in-game check",
       "evidence": "https://ffxiv.consolegameswiki.com/wiki/For_Every_Child_a_Star",
-      "fix": "in-game check, then a curated requirement (T3-style requirement kind) or a wiki correction",
-      "until": "1.5.0"
-    },
-    {
-      "rowId": "69165",
-      "fact": "prereqs",
-      "source": "wiki",
-      "verdict": "unresolved",
-      "reason": "Shadow Walk with Me: no PreviousQuest in the sheet; the wiki names the four Shadowbringers role-quest finales and the main scenario. Wiki prerequisites: A Tearful Reunion;Courage Born of Fear;Shadowbringers (Quest);The Soul of Temperance;To Have Loved and Lost; only the wiki names it; the sheet's PreviousQuest and QuestAcceptAdditionCondition do not, and no second source covers quest prerequisites (the Lodestone's Quest/Duty line names duties only). Check in game whether the quest is offered without it: if it is, the wiki is wrong (sourceWrong); if not, the gate is script-side and needs a curated requirement",
-      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Shadow_Walk_with_Me",
-      "fix": "in-game check, then a curated requirement (T3-style requirement kind) or a wiki correction",
-      "until": "1.5.0"
-    },
-    {
-      "rowId": "69191",
-      "fact": "prereqs",
-      "source": "wiki",
-      "verdict": "unresolved",
-      "reason": "The Crystalline Mean: wiki adds Inscrutable Tastes (the prerequisite patch 7.5 gave eleven crafter and gatherer quests, see curated/quirks.json); the sheet names 68839 only. Wiki prerequisites: Inscrutable Tastes;The Crystarium's Resolve; only the wiki names it; the sheet's PreviousQuest and QuestAcceptAdditionCondition do not, and no second source covers quest prerequisites (the Lodestone's Quest/Duty line names duties only). Check in game whether the quest is offered without it: if it is, the wiki is wrong (sourceWrong); if not, the gate is script-side and needs a curated requirement",
-      "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Crystalline_Mean",
-      "fix": "in-game check, then a curated requirement (T3-style requirement kind) or a wiki correction",
-      "until": "1.5.0"
-    },
-    {
-      "rowId": "69522",
-      "fact": "prereqs",
-      "source": "wiki",
-      "verdict": "unresolved",
-      "reason": "The Hero's Journey: no PreviousQuest in the sheet; the wiki names six quests across primal and role lines. Wiki prerequisites: A Deific Simulacrum;A Demonic Duplicate;A Fiendish Likeness;Safekeeping;The Diabolical Bismarck;Thok Around the Clock; only the wiki names it; the sheet's PreviousQuest and QuestAcceptAdditionCondition do not, and no second source covers quest prerequisites (the Lodestone's Quest/Duty line names duties only). Check in game whether the quest is offered without it: if it is, the wiki is wrong (sourceWrong); if not, the gate is script-side and needs a curated requirement",
-      "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Hero's_Journey",
-      "fix": "in-game check, then a curated requirement (T3-style requirement kind) or a wiki correction",
-      "until": "1.5.0"
+      "fix": "in-game check of the five line finales, then add them to curated/extra_prerequisites.json or record a wiki correction",
+      "until": "1.6.0"
     },
     {
       "rowId": "69587",
       "fact": "prereqs",
       "source": "wiki",
       "verdict": "unresolved",
-      "reason": "The Merchant of Komra: wiki names All That Grinds Is Not Gloom where the sheet names 69581 (order inside the YoRHa chain). Wiki prerequisites: All That Grinds Is Not Gloom; only the wiki names it; the sheet's PreviousQuest and QuestAcceptAdditionCondition do not, and no second source covers quest prerequisites (the Lodestone's Quest/Duty line names duties only). Check in game whether the quest is offered without it: if it is, the wiki is wrong (sourceWrong); if not, the gate is script-side and needs a curated requirement",
+      "reason": "The Merchant of Komra: wiki names All That Grinds Is Not Gloom where the sheet names 69581 (order inside the YoRHa chain). Wiki prerequisites: All That Grinds Is Not Gloom; only the wiki names it; the sheet's PreviousQuest and QuestAcceptAdditionCondition do not, and no second source covers quest prerequisites (the Lodestone's Quest/Duty line names duties only). Check in game whether the quest is offered without it: if it is, the wiki is wrong (sourceWrong); if not, the gate is script-side and needs a curated requirement. 1.5.0 review: no second source, so curated/extra_prerequisites.json cannot take it under its two-source rule: Questionable adds no link for this quest and neither its own quest text nor its predecessor's names a requirement. Still needs the in-game check",
       "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Merchant_of_Komra",
       "fix": "in-game check, then a curated requirement (T3-style requirement kind) or a wiki correction",
-      "until": "1.5.0"
+      "until": "1.6.0"
     },
     {
       "rowId": "69588",
       "fact": "prereqs",
       "source": "wiki",
       "verdict": "unresolved",
-      "reason": "How to Catch an Automaton: wiki names The Merchant of Komra where the sheet names 69583 (order inside the YoRHa chain). Wiki prerequisites: The Merchant of Komra; only the wiki names it; the sheet's PreviousQuest and QuestAcceptAdditionCondition do not, and no second source covers quest prerequisites (the Lodestone's Quest/Duty line names duties only). Check in game whether the quest is offered without it: if it is, the wiki is wrong (sourceWrong); if not, the gate is script-side and needs a curated requirement",
+      "reason": "How to Catch an Automaton: wiki names The Merchant of Komra where the sheet names 69583 (order inside the YoRHa chain). Wiki prerequisites: The Merchant of Komra; only the wiki names it; the sheet's PreviousQuest and QuestAcceptAdditionCondition do not, and no second source covers quest prerequisites (the Lodestone's Quest/Duty line names duties only). Check in game whether the quest is offered without it: if it is, the wiki is wrong (sourceWrong); if not, the gate is script-side and needs a curated requirement. 1.5.0 review: no second source, so curated/extra_prerequisites.json cannot take it under its two-source rule: Questionable adds no link for this quest and neither its own quest text nor its predecessor's names a requirement. Still needs the in-game check",
       "evidence": "https://ffxiv.consolegameswiki.com/wiki/How_to_Catch_an_Automaton",
       "fix": "in-game check, then a curated requirement (T3-style requirement kind) or a wiki correction",
-      "until": "1.5.0"
-    },
-    {
-      "rowId": "69712",
-      "fact": "prereqs",
-      "source": "wiki",
-      "verdict": "unresolved",
-      "reason": "The Hunt for Specimens: wiki adds Too Many Nutters (a Crystarium sidequest) to the sheet's 67658 and 69894. Wiki prerequisites: Elite and Dangerous;Old Sharlayan, New to You;Too Many Nutters; only the wiki names it; the sheet's PreviousQuest and QuestAcceptAdditionCondition do not, and no second source covers quest prerequisites (the Lodestone's Quest/Duty line names duties only). Check in game whether the quest is offered without it: if it is, the wiki is wrong (sourceWrong); if not, the gate is script-side and needs a curated requirement",
-      "evidence": "https://ffxiv.consolegameswiki.com/wiki/The_Hunt_for_Specimens",
-      "fix": "in-game check, then a curated requirement (T3-style requirement kind) or a wiki correction",
-      "until": "1.5.0"
+      "until": "1.6.0"
     },
     {
       "rowId": "70539",
       "fact": "prereqs",
       "source": "wiki",
       "verdict": "unresolved",
-      "reason": "Leves of Tuliyollal: quasi-quest; the wiki adds Leves of Old Sharlayan to the sheet's 70400. Wiki prerequisites: Leves of Old Sharlayan;The Rite of Succession; only the wiki names it; the sheet's PreviousQuest and QuestAcceptAdditionCondition do not, and no second source covers quest prerequisites (the Lodestone's Quest/Duty line names duties only). Check in game whether the quest is offered without it: if it is, the wiki is wrong (sourceWrong); if not, the gate is script-side and needs a curated requirement",
+      "reason": "Leves of Tuliyollal: quasi-quest; the wiki adds Leves of Old Sharlayan to the sheet's 70400. Wiki prerequisites: Leves of Old Sharlayan;The Rite of Succession; only the wiki names it; the sheet's PreviousQuest and QuestAcceptAdditionCondition do not, and no second source covers quest prerequisites (the Lodestone's Quest/Duty line names duties only). Check in game whether the quest is offered without it: if it is, the wiki is wrong (sourceWrong); if not, the gate is script-side and needs a curated requirement. 1.5.0 review: no second source, so curated/extra_prerequisites.json cannot take it under its two-source rule: Questionable adds no link for this quest and neither its own quest text nor its predecessor's names a requirement. Still needs the in-game check",
       "evidence": "https://ffxiv.consolegameswiki.com/wiki/Leves_of_Tuliyollal",
       "fix": "in-game check, then a curated requirement (T3-style requirement kind) or a wiki correction",
-      "until": "1.5.0"
-    },
-    {
-      "rowId": "70545",
-      "fact": "prereqs",
-      "source": "wiki",
-      "verdict": "unresolved",
-      "reason": "A New Dawn, a New Hunt: wiki adds Perfect Specimens to the sheet's 67658 and 70400. Wiki prerequisites: Elite and Dangerous;Perfect Specimens;The Rite of Succession; only the wiki names it; the sheet's PreviousQuest and QuestAcceptAdditionCondition do not, and no second source covers quest prerequisites (the Lodestone's Quest/Duty line names duties only). Check in game whether the quest is offered without it: if it is, the wiki is wrong (sourceWrong); if not, the gate is script-side and needs a curated requirement",
-      "evidence": "https://ffxiv.consolegameswiki.com/wiki/A_New_Dawn,_a_New_Hunt",
-      "fix": "in-game check, then a curated requirement (T3-style requirement kind) or a wiki correction",
-      "until": "1.5.0"
+      "until": "1.6.0"
     },
     {
       "rowId": "70995",
       "fact": "duties",
       "source": "wiki",
       "verdict": "unresolved",
-      "reason": "Abridged Too Far: the wiki's requirements name the variant dungeon the Merchant's Tale; the sheet's InstanceContent is empty and the Lodestone lists this genre-0 quest nowhere. Check in game whether the quest needs a clear of the Merchant's Tale",
+      "reason": "Abridged Too Far: the wiki's requirements name the variant dungeon the Merchant's Tale; the sheet's InstanceContent is empty and the Lodestone lists this genre-0 quest nowhere. Check in game whether the quest needs a clear of the Merchant's Tale. 1.5.0 review: the quest's own text asks for the quest A Spellbinding Read (70977), which the sheet already requires as an accept condition, and does not mention clearing the Merchant's Tale; the wiki's duty is most likely what that quest unlocks. Kept for the in-game check",
       "evidence": "https://ffxiv.consolegameswiki.com/wiki/Abridged_Too_Far",
       "fix": "in-game check, then curated requirement or wiki correction",
-      "until": "1.5.0"
+      "until": "1.6.0"
     },
     {
       "rowId": "67114",
       "fact": "reward:Item",
       "source": "wiki",
       "verdict": "unresolved",
-      "reason": "The Ties That Bind / Eternity Cake (Item 8791): decided quest-exclusive for 0.7.0. The wiki's only non-quest acquisition is the Ceremony of Eternal Bonding plans sold on the Online Store, but every plan includes the cake, the free Standard Plan too ({{onlinestore|0}}, 'available to all Plans' on https://ffxiv.consolegameswiki.com/wiki/Ceremony_of_Eternal_Bonding), and it is handed out as the fixed reward of this quest, which every plan runs. Nothing sells the cake apart from doing the quest, so it is not a store re-sell; the Lodestone item page lists the quest alone. The tool keeps reading the wiki's onlinestore template as one unconfirmed source, hence unresolved",
+      "reason": "The Ties That Bind / Eternity Cake (Item 8791): decided quest-exclusive for 0.7.0. The wiki's only non-quest acquisition is the Ceremony of Eternal Bonding plans sold on the Online Store, but every plan includes the cake, the free Standard Plan too ({{onlinestore|0}}, 'available to all Plans' on https://ffxiv.consolegameswiki.com/wiki/Ceremony_of_Eternal_Bonding), and it is handed out as the fixed reward of this quest, which every plan runs. Nothing sells the cake apart from doing the quest, so it is not a store re-sell; the Lodestone item page lists the quest alone. The tool keeps reading the wiki's onlinestore template as one unconfirmed source, hence unresolved. Kept by decision; re-checked at each minor release (1.5.0: nothing changed)",
       "evidence": "https://ffxiv.consolegameswiki.com/wiki/Eternity_Cake",
       "fix": "none: kept quest-only by decision; re-check if the cake is ever sold outside the ceremony (then add item 8791 to curated/online_store.json)",
-      "until": "1.5.0",
+      "until": "1.6.0",
       "rewardId": "8791"
+    },
+    {
+      "rowId": "67016",
+      "fact": "prereqs",
+      "source": "questionable",
+      "prereqId": "67909",
+      "verdict": "unresolved",
+      "reason": "Unidentified Flying Object: Questionable makes it wait for Where Shadows Reign (67909). The quest text asks instead for the Dun Scaith raid to be unlocked, which that quest does, and the wiki names only Freedom for Our Skies (67822). A duty unlock is not a quest prerequisite curated/extra_prerequisites.json can take, and no second source names the quest itself, so it is not added",
+      "evidence": "https://github.com/PunishXIV/Questionable/blob/0bd61efe8a6806a7a8010741c0c46b7dea153709/Questionable/Data/QuestData.cs",
+      "fix": "model the gate as \"Dun Scaith unlocked\" (a duty requirement) or, after an in-game check, a curated extra prerequisite",
+      "until": "1.6.0"
+    },
+    {
+      "rowId": "68434",
+      "fact": "prereqs",
+      "source": "questionable",
+      "prereqId": "68458",
+      "verdict": "unresolved",
+      "reason": "Always a Bigger Fish: Questionable also makes it wait for A New Fishing Ex-spear-ience (68458), the spearfishing unlock. The quest text names only the main scenario quest Tide Goes in, Imperials Go Out (68026, now a curated extra) and the wiki agrees; where the game asks for spearfishing, its text says it is needed to proceed with a quest, not to take it. Single source, not added",
+      "evidence": "https://github.com/PunishXIV/Questionable/blob/0bd61efe8a6806a7a8010741c0c46b7dea153709/Questionable/Data/QuestData.cs",
+      "fix": "in-game check: offered without spearfishing unlocked? If not, add 68458 to curated/extra_prerequisites.json",
+      "until": "1.6.0"
+    },
+    {
+      "rowId": "68689",
+      "fact": "prereqs",
+      "source": "questionable",
+      "prereqId": "68677",
+      "verdict": "unresolved",
+      "reason": "Lighting the Way: Questionable makes it wait for It Takes an Enclave (68677); the wiki names a Doman reconstruction stage instead, and the quest text names neither. The sources disagree, so nothing is added (see the wiki entry for this quest)",
+      "evidence": "https://github.com/PunishXIV/Questionable/blob/0bd61efe8a6806a7a8010741c0c46b7dea153709/Questionable/Data/QuestData.cs",
+      "fix": "in-game check, then a curated extra prerequisite or a reconstruction-level requirement",
+      "until": "1.6.0"
     }
   ]
 }
