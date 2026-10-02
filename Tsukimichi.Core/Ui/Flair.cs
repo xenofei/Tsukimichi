@@ -58,4 +58,38 @@ public static class FlairRules
     /// headings" on, at any level but <see cref="Flair.Plain"/>.
     /// </summary>
     public static bool GameHeadingFonts(Flair setting, bool gameHeadingFonts) => gameHeadingFonts && setting != Flair.Plain;
+
+    /// <summary>
+    /// How a card is framed (feature plan v5 1.8.0, R3 #8 "brass cards"): Full a brass border with corner marks, Quiet the
+    /// brass border alone, Plain the hairline it always had. Under the high-contrast palette the level is at most Quiet
+    /// (<see cref="Effective"/>) and the brass is opaque VeilLine, so the frame stays a solid line.
+    /// </summary>
+    public static CardFrame Card(Flair flair) => flair switch
+    {
+        Flair.Full => CardFrame.BrassCorners,
+        Flair.Quiet => CardFrame.Brass,
+        _ => CardFrame.Hairline,
+    };
+
+    /// <summary>
+    /// The quest table in the Moon Road style (R3 #6): the scope's title with its count, the clear header in the
+    /// Eyebrow role and the brass rule under it. Full and Quiet; Plain keeps the raised header of 1.3.
+    /// </summary>
+    public static bool MoonRoadTable(Flair flair) => Rules(flair);
+
+    /// <summary>The faint road line under a Ready row of the quest table (R3 #6, proposal §7.3): Full only.</summary>
+    public static bool ReadyRoad(Flair flair) => flair == Flair.Full;
+}
+
+/// <summary>What <see cref="FlairRules.Card"/> draws around a card.</summary>
+public enum CardFrame
+{
+    /// <summary>The palette's hairline (Plain).</summary>
+    Hairline = 0,
+
+    /// <summary>A brass border (Quiet, and the high-contrast palette's solid line).</summary>
+    Brass = 1,
+
+    /// <summary>A brass border with a corner mark in each corner (Full).</summary>
+    BrassCorners = 2,
 }

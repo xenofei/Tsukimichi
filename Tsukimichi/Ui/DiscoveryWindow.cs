@@ -214,7 +214,7 @@ public sealed class DiscoveryWindow : Window, IDisposable
     {
         FireDueReveal();
         DrawHeader();
-        Chrome.Hairline();
+        Chrome.Rule();
 
         if (session.Bundle is null)
         {
@@ -302,13 +302,26 @@ public sealed class DiscoveryWindow : Window, IDisposable
         ImGui.PushFont(UiBuilder.IconFont);
         Chrome.OutlinedTextAt(dl, start, acceptedOpen ? OpenGlyph : FoldedGlyph, ink);
         ImGui.PopFont();
-        Chrome.OutlinedTextAt(dl, new Vector2(start.X + ImGui.GetFontSize(), start.Y), acceptedHeader, ink);
-        if (hovered)
+
+        // Moon Road (R3 #9): the sigil, the caption outlined and a brass rule to the end of the line instead of the
+        // hairline under it; Plain keeps the hairline.
+        var textMin = new Vector2(start.X + ImGui.GetFontSize(), start.Y);
+        var room = width - ImGui.GetFontSize();
+        var moonRoad = SectionHeading.DrawInRow(dl, textMin, room, ImGui.GetTextLineHeight(), acceptedHeader, ink, out var cut, eyebrow: false, outlined: true);
+        if (!moonRoad)
         {
-            UiMetrics.Tooltip(Strings.DiscoveryAcceptedToggleTooltip);
+            cut = Chrome.OutlinedEllipsisAt(dl, textMin, room, acceptedHeader, ink);
         }
 
-        Chrome.Hairline();
+        if (hovered)
+        {
+            UiMetrics.Tooltip(cut ? acceptedHeader : Strings.DiscoveryAcceptedToggleTooltip, cut ? Strings.DiscoveryAcceptedToggleTooltip : null);
+        }
+
+        if (!moonRoad)
+        {
+            Chrome.Hairline();
+        }
     }
 
     private void DrawTable(string id, Row[] rows)
@@ -387,12 +400,15 @@ public sealed class DiscoveryWindow : Window, IDisposable
         var openMenu = hovered && ImGui.IsMouseReleased(ImGuiMouseButton.Right);
         var dl = ImGui.GetWindowDrawList();
         var textY = nameMin.Y + (rowHeight - line) * 0.5f;
+        var name = session.Spoilers.DisplayName(row.Quest);
+
+        // The name ends in an ellipsis in its cell rather than being cut mid-letter (R3 #5); a cut name heads the tooltip.
         dl.PushClipRect(nameMin, new Vector2(nameMin.X + nameWidth, nameMin.Y + rowHeight), true);
-        Chrome.OutlinedTextAt(dl, new Vector2(nameMin.X, textY), session.Spoilers.DisplayName(row.Quest), Theme.U32(Theme.Surface.Text));
+        var cut = Chrome.OutlinedEllipsisAt(dl, new Vector2(nameMin.X, textY), nameWidth, name, Theme.U32(Theme.Surface.Text));
         dl.PopClipRect();
         if (hovered)
         {
-            UiMetrics.Tooltip(Strings.DiscoveryRowTooltip);
+            UiMetrics.Tooltip(cut ? name : Strings.DiscoveryRowTooltip, cut ? Strings.DiscoveryRowTooltip : null);
         }
 
         ImGui.TableNextColumn();

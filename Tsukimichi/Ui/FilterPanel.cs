@@ -848,19 +848,30 @@ public sealed class FilterPanel
 
     private static string ScopeName(QuestScope scope, QuestCatalog? catalog)
     {
+        var (parent, name) = ScopeParts(scope, catalog);
+        return ScopePath(parent, name);
+    }
+
+    /// <summary>
+    /// The tree node <paramref name="scope"/> as its parent's name and its own (the parent empty for a section, a
+    /// virtual node or an NPC's quests): the scope chip joins them, the quest table's title (R3 #6) draws the parent as
+    /// a breadcrumb before the name. Scans the catalog once; callers memoize.
+    /// </summary>
+    internal static (string Parent, string Name) ScopeParts(QuestScope scope, QuestCatalog? catalog)
+    {
         switch (scope.Kind)
         {
             case ScopeKind.VirtualFeature:
-                return Strings.FeatureUnlocks;
+                return (string.Empty, Strings.FeatureUnlocks);
             case ScopeKind.VirtualUnlisted:
-                return Strings.RemovedFromGame;
+                return (string.Empty, Strings.RemovedFromGame);
             case ScopeKind.VirtualOtherPaths:
-                return Strings.OtherPaths;
+                return (string.Empty, Strings.OtherPaths);
             case ScopeKind.VirtualJustOpened:
-                return Strings.OpenedScopeName;
+                return (string.Empty, Strings.OpenedScopeName);
             case ScopeKind.VirtualIssuer:
                 var npc = catalog is null ? null : QuestDiscovery.IssuerName(catalog, scope.Id);
-                return npc is null ? Strings.ChipIssuerUnknown : string.Format(CultureInfo.CurrentCulture, Strings.ChipIssuerFormat, npc);
+                return (string.Empty, npc is null ? Strings.ChipIssuerUnknown : string.Format(CultureInfo.CurrentCulture, Strings.ChipIssuerFormat, npc));
         }
 
         if (catalog is not null)
@@ -871,20 +882,20 @@ public sealed class FilterPanel
                 switch (scope.Kind)
                 {
                     case ScopeKind.Section when j.SectionId == scope.Id:
-                        return j.SectionName;
+                        return (string.Empty, j.SectionName);
                     case ScopeKind.Category when j.CategoryId == scope.Id:
-                        return ScopePath(j.SectionName, j.CategoryName);
+                        return (j.SectionName, j.CategoryName);
                     case ScopeKind.Genre when j.GenreId == scope.Id:
-                        return ScopePath(j.CategoryName, j.GenreName);
+                        return (j.CategoryName, j.GenreName);
                 }
             }
         }
 
-        return Strings.ScopeUnnamed;
+        return (string.Empty, Strings.ScopeUnnamed);
     }
 
     /// <summary>"Parent › Child", or the child alone when the two carry the same name (a folded tree node).</summary>
-    private static string ScopePath(string parent, string child) =>
+    internal static string ScopePath(string parent, string child) =>
         parent.Length == 0 || string.Equals(parent, child, StringComparison.Ordinal)
             ? child
             : string.Format(CultureInfo.CurrentCulture, Strings.FoldedScopeFormat, parent, child);

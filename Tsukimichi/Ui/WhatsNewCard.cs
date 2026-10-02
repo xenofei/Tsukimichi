@@ -174,11 +174,14 @@ public sealed class WhatsNewCard
         var start = ImGui.GetCursorPosY();
 
         using (Theme.PushNightPanel())
+        using (ImRaii.PushColor(ImGuiCol.Border, Chrome.CardChildBorder))
         using (ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(pad, pad)))
         using (var child = ImRaii.Child("##whatsNew", new Vector2(0f, height), true))
         {
             if (child)
             {
+                // Brass at Full and Quiet, the corner marks at Full (R3 #8).
+                using var frame = Chrome.CardFrameInWindow();
                 DrawBody(pad);
             }
         }

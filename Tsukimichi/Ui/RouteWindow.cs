@@ -181,16 +181,7 @@ public sealed class RouteWindow : Window
         Refresh(bundle, target);
         var v = view;
 
-        ImGui.PushFont(UiBuilder.IconFont);
-        using (Theme.PushText(Theme.Surface.TextSecondary))
-        {
-            ImGui.TextUnformatted(RouteIcon);
-        }
-
-        ImGui.PopFont();
-        ImGui.SameLine();
-        ImGui.TextUnformatted(v.Title);
-        ImGui.TextDisabled(v.Caption);
+        DrawHeader(v);
 
         switch (v.Route.Outcome)
         {
@@ -206,7 +197,7 @@ public sealed class RouteWindow : Window
                 return;
         }
 
-        ImGui.TextUnformatted(v.Summary);
+        TextFlow.Wrapped(v.Summary, Chrome.RoomX());
         if (v.AlsoUnlockedBy.Length > 0)
         {
             using (Theme.PushText(Theme.Surface.TextSecondary))
@@ -227,6 +218,39 @@ public sealed class RouteWindow : Window
         DrawFollowActions(v);
         Chrome.Hairline();
         DrawLines(bundle, v);
+    }
+
+    /// <summary>
+    /// The route's title and whom it is for (R3 #5, #9): the sign icon, then the title, which wraps between words rather
+    /// than running off a narrow window; in the Title role at Flair Full and Quiet (the icon centred on its first line),
+    /// the body font under Plain. The caption wraps under it in the disabled tone.
+    /// </summary>
+    private static void DrawHeader(View v)
+    {
+        var moonRoad = Theme.ShowRules;
+        var y = ImGui.GetCursorPosY();
+        float titleLine;
+        using (moonRoad ? Typography.Title(v.Title) : default)
+        {
+            titleLine = ImGui.GetTextLineHeight();
+        }
+
+        ImGui.SetCursorPosY(y + MathF.Max(0f, (titleLine - ImGui.GetTextLineHeight()) * 0.5f));
+        ImGui.PushFont(UiBuilder.IconFont);
+        using (Theme.PushText(Theme.Surface.TextSecondary))
+        {
+            ImGui.TextUnformatted(RouteIcon);
+        }
+
+        ImGui.PopFont();
+        ImGui.SameLine();
+        ImGui.SetCursorPosY(y);
+        using (moonRoad ? Typography.Title(v.Title) : default)
+        {
+            TextFlow.Wrapped(v.Title, Chrome.RoomX(), Theme.U32(Theme.Surface.Text));
+        }
+
+        TextFlow.Wrapped(v.Caption, Chrome.RoomX(), ImGui.GetColorU32(ImGuiCol.TextDisabled));
     }
 
     private void DrawActions(CatalogBundle bundle, View v)
@@ -250,10 +274,11 @@ public sealed class RouteWindow : Window
             UiMetrics.Tooltip(Strings.RouteCopyTooltip);
         }
 
-        ImGui.SameLine();
         var canPin = pins.CanPin && v.Route.Steps.Count > 0;
+        var pinAll = PinAllLabel(v);
+        Chrome.SameLineOrWrap(ImGui.CalcTextSize(pinAll, true, -1f).X + (ImGui.GetStyle().FramePadding.X * 2f));
         ImGui.BeginDisabled(!canPin);
-        var confirmed = Chrome.HoldButton(PinAllLabel(v), pinGate);
+        var confirmed = Chrome.HoldButton(pinAll, pinGate);
         ImGui.EndDisabled();
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
@@ -283,7 +308,9 @@ public sealed class RouteWindow : Window
             return;
         }
 
-        ImGui.SameLine();
+        // The note and its Undo go on the line when they fit, else under the buttons, never off the window's edge.
+        var undoWidth = undo.Added.Count == 0 ? 0f : ImGui.CalcTextSize(Strings.RouteUndoSeparator).X + SmallButtonWidth(Strings.RouteUndo);
+        Chrome.SameLineOrWrap(ImGui.CalcTextSize(note).X + undoWidth);
         ImGui.AlignTextToFramePadding();
         using (Theme.PushText(Theme.Surface.Text))
         {
@@ -555,14 +582,25 @@ public sealed class RouteWindow : Window
         {
             case LineKind.Milestone:
             {
+                // An MSQ milestone: the Moon Road heading (sigil, Eyebrow, fading brass rule) at Full and Quiet, drawn
+                // inside the row so every line keeps its height (R3 #9); under Plain the label and a hairline.
                 ImGui.Dummy(new Vector2(width, rowHeight));
-                var size = ImGui.CalcTextSize(l.Text);
-                dl.AddText(new Vector2(min.X, textY), Theme.U32(Theme.Surface.TextSecondary), l.Text);
-                var x = min.X + size.X + UiMetrics.Px(8f);
-                if (x < min.X + width)
+                var ink = Theme.U32(Theme.Surface.TextSecondary);
+                if (!SectionHeading.DrawInRow(dl, min, width, rowHeight, l.Text, ink, out var cut))
                 {
-                    var y = MathF.Round(min.Y + (rowHeight * 0.5f));
-                    dl.AddLine(new Vector2(x, y), new Vector2(min.X + width, y), Theme.U32(Theme.Surface.Line), UiMetrics.Hairline);
+                    var size = ImGui.CalcTextSize(l.Text).X;
+                    cut = Chrome.EllipsisTextAt(dl, new Vector2(min.X, textY), width, l.Text, ink, size);
+                    var x = min.X + size + UiMetrics.Px(8f);
+                    if (x < min.X + width)
+                    {
+                        var y = MathF.Round(min.Y + (rowHeight * 0.5f));
+                        dl.AddLine(new Vector2(x, y), new Vector2(min.X + width, y), Theme.U32(Theme.Surface.Line), UiMetrics.Hairline);
+                    }
+                }
+
+                if (cut && ImGui.IsItemHovered())
+                {
+                    UiMetrics.Tooltip(l.Text);
                 }
 
                 return;
@@ -571,12 +609,13 @@ public sealed class RouteWindow : Window
             case LineKind.Gate:
             {
                 ImGui.Dummy(new Vector2(width, rowHeight));
+                var indent = UiMetrics.Px(IndentLogical);
+                var cut = Chrome.EllipsisTextAt(dl, new Vector2(min.X + indent, textY), width - indent, l.Text, Theme.U32(Theme.Surface.TextSecondary));
                 if (ImGui.IsItemHovered())
                 {
-                    UiMetrics.Tooltip(Strings.RouteGateTooltip);
+                    UiMetrics.Tooltip(cut ? l.Text : Strings.RouteGateTooltip, cut ? Strings.RouteGateTooltip : null);
                 }
 
-                dl.AddText(new Vector2(min.X + UiMetrics.Px(IndentLogical), textY), Theme.U32(Theme.Surface.TextSecondary), l.Text);
                 return;
             }
 
@@ -587,14 +626,13 @@ public sealed class RouteWindow : Window
                 var end = first is null ? min.X + width : DrawStepButtons(first, flag: false, teleport: true, walk: false, min.X + width, min.Y, rowHeight);
                 ImGui.SetCursorScreenPos(min);
                 ImGui.Dummy(new Vector2(MathF.Max(1f, end - min.X), rowHeight));
+                var indent = UiMetrics.Px(IndentLogical);
+                var cut = Chrome.EllipsisTextAt(dl, new Vector2(min.X + indent, textY), end - min.X - indent, l.Text, Theme.U32(Theme.Surface.TextSecondary));
                 if (ImGui.IsItemHovered())
                 {
-                    UiMetrics.Tooltip(Strings.RouteStopTooltip);
+                    UiMetrics.Tooltip(cut ? l.Text : Strings.RouteStopTooltip, cut ? Strings.RouteStopTooltip : null);
                 }
 
-                dl.PushClipRect(min, new Vector2(end, min.Y + rowHeight), true);
-                dl.AddText(new Vector2(min.X + UiMetrics.Px(IndentLogical), textY), Theme.U32(Theme.Surface.TextSecondary), l.Text);
-                dl.PopClipRect();
                 return;
             }
         }
@@ -626,27 +664,45 @@ public sealed class RouteWindow : Window
 
         // Questionable's mark (1.6.0): on its list, or no path; asked lazily, a few steps per frame.
         var (questionableMark, questionableTooltip) = l.Kind == LineKind.Step && Questionable is { } questionable ? questionable.StepMark(l.RowId) : (string.Empty, string.Empty);
-        if (hovered)
-        {
-            var hint = Strings.RouteStepTooltipHint + "\n" + Strings.RouteStepMenuHint;
-            UiMetrics.Tooltip(l.Tooltip, l.Kind != LineKind.Step ? null : questionableTooltip.Length > 0 ? questionableTooltip + "\n" + hint : hint);
-        }
-
         if (clicked && bundle.Catalog.GetByRowId(l.RowId) is { } quest)
         {
             showQuest(quest);
         }
 
-        var max = new Vector2(textEnd, min.Y + rowHeight);
-        dl.PushClipRect(min, max, true);
+        var nameCut = DrawStepText(dl, l, min, textEnd, textY, rowHeight, line, questionableMark);
+        if (hovered)
+        {
+            // A step's tooltip already opens with its whole name; an alternative cut short gets its name first.
+            var hint = Strings.RouteStepTooltipHint + "\n" + Strings.RouteStepMenuHint;
+            if (l.Kind != LineKind.Step)
+            {
+                UiMetrics.Tooltip(nameCut ? l.Text : l.Tooltip, nameCut ? l.Tooltip : null);
+            }
+            else
+            {
+                UiMetrics.Tooltip(l.Tooltip, questionableTooltip.Length > 0 ? questionableTooltip + "\n" + hint : hint);
+            }
+        }
+    }
+
+    /// <summary>
+    /// A step's or an alternative's text, from <paramref name="min"/> to <paramref name="textEnd"/> (R3 #5): the number,
+    /// moon and level, then the name, which ends in an ellipsis rather than being cut mid-letter, then its marks
+    /// (dropped, least important first, before the name falls under its minimum) and the detail in what is left.
+    /// Returns whether the name was cut.
+    /// </summary>
+    private static bool DrawStepText(ImDrawListPtr dl, Line l, Vector2 min, float textEnd, float textY, float rowHeight, float line, string questionableMark)
+    {
+        if (l.Kind == LineKind.Alternative)
+        {
+            var indent = UiMetrics.Px(IndentLogical * 2f);
+            return Chrome.EllipsisTextAt(dl, new Vector2(min.X + indent, textY), textEnd - min.X - indent, l.Text, Theme.U32(Theme.Surface.TextTertiary));
+        }
+
+        // The number, the moon and the level are fixed width; the clip keeps them off the buttons on a very narrow window.
+        dl.PushClipRect(min, new Vector2(textEnd, min.Y + rowHeight), true);
         try
         {
-            if (l.Kind == LineKind.Alternative)
-            {
-                dl.AddText(new Vector2(min.X + UiMetrics.Px(IndentLogical * 2f), textY), Theme.U32(Theme.Surface.TextTertiary), l.Text);
-                return;
-            }
-
             var x = min.X + (l.InStop ? UiMetrics.Px(IndentLogical * 0.5f) : 0f);
             var numberWidth = ImGui.CalcTextSize("0000").X;
             var number = ImGui.CalcTextSize(l.Number);
@@ -660,23 +716,40 @@ public sealed class RouteWindow : Window
             dl.AddText(new Vector2(x, textY), Theme.U32(Theme.Surface.TextSecondary), l.Level);
             x += ImGui.CalcTextSize(LevelSample.Value).X + UiMetrics.Px(6f);
 
+            var gap = UiMetrics.Px(8f);
+            var markWidth = l.Mark.Length > 0 ? ImGui.CalcTextSize(l.Mark).X : 0f;
+            var questionableWidth = questionableMark.Length > 0 ? ImGui.CalcTextSize(questionableMark).X : 0f;
+            var nameWidth = ImGui.CalcTextSize(l.Text).X;
+            Span<float> parts = stackalloc float[2];
+            Span<bool> shown = stackalloc bool[2];
+            parts[0] = markWidth > 0f ? gap + markWidth : 0f;
+            parts[1] = questionableWidth > 0f ? gap + questionableWidth : 0f;
+            var fit = LineFit.Fit(textEnd - x, nameWidth, UiMetrics.Px(LayoutBudgets.RowNameMinLogical), parts, shown, gap, UiMetrics.Px(24f));
+
             // Gold only for a target the character can act on now; a Blocked or locked-out target reads like any step.
             var gold = l.IsTarget && l.State is QuestState.Ready or QuestState.ReadyOnOtherJob or QuestState.Accepted;
-            dl.AddText(new Vector2(x, textY), Theme.U32(gold ? Theme.Accent : Theme.Surface.Text), l.Text);
-            x += ImGui.CalcTextSize(l.Text).X + UiMetrics.Px(8f);
-            if (l.Mark.Length > 0)
+            Chrome.EllipsisTextAt(dl, new Vector2(x, textY), fit.NameRoom, l.Text, Theme.U32(gold ? Theme.Accent : Theme.Surface.Text), nameWidth);
+            x += fit.NameDrawn;
+            if (shown[0] && markWidth > 0f)
             {
+                x += gap;
                 dl.AddText(new Vector2(x, textY), gold ? Theme.AccentU32 : Theme.U32(l.IsTarget ? Theme.Surface.TextSecondary : Theme.Surface.TextTertiary), l.Mark);
-                x += ImGui.CalcTextSize(l.Mark).X + UiMetrics.Px(8f);
+                x += markWidth;
             }
 
-            if (questionableMark.Length > 0)
+            if (shown[1] && questionableWidth > 0f)
             {
+                x += gap;
                 dl.AddText(new Vector2(x, textY), Theme.U32(Theme.Surface.TextSecondary), questionableMark);
-                x += ImGui.CalcTextSize(questionableMark).X + UiMetrics.Px(8f);
+                x += questionableWidth;
             }
 
-            dl.AddText(new Vector2(x, textY), Theme.U32(Theme.Surface.TextTertiary), l.Detail);
+            if (fit.TailRoom > 0f && l.Detail.Length > 0)
+            {
+                Chrome.EllipsisTextAt(dl, new Vector2(x + gap, textY), fit.TailRoom, l.Detail, Theme.U32(Theme.Surface.TextTertiary));
+            }
+
+            return fit.NameCut;
         }
         finally
         {

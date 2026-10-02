@@ -112,11 +112,14 @@ public sealed class WelcomeBackCard
         var start = ImGui.GetCursorPosY();
 
         using (Theme.PushNightPanel())
+        using (ImRaii.PushColor(ImGuiCol.Border, Chrome.CardChildBorder))
         using (ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(pad, pad)))
         using (var child = ImRaii.Child("##welcomeBack", new Vector2(0f, height), true))
         {
             if (child)
             {
+                // Brass at Full and Quiet, the corner marks at Full (R3 #8).
+                using var frame = Chrome.CardFrameInWindow();
                 Refresh(view, bundle);
                 DrawBody(view);
             }

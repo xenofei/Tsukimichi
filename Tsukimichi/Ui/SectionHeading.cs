@@ -131,6 +131,49 @@ public static class SectionHeading
     }
 
     /// <summary>
+    /// The heading line inside a row the caller already laid out (R3 #9: the route's milestones, the Todo overlay's and
+    /// Nearby's section captions), draw list only, so a fixed-height list keeps its rows: the sigil, the label ending in
+    /// an ellipsis, and the brass rule fading out to the row's end, all centred on the row. With
+    /// <paramref name="eyebrow"/> the label is in the Eyebrow role (upper-cased in English) like every other heading;
+    /// without it, the row's own font in the label's own case (the overlays, whose rows are sized for it).
+    /// <paramref name="outlined"/> outlines the label for game scenes; <paramref name="ruleAlpha"/> lets the overlay fade
+    /// the rule with its own opacity (the high-contrast rule stays solid). Under Plain it draws nothing and returns
+    /// false, so the caller draws the line it always had. <paramref name="cut"/> says whether the label was ellipsised.
+    /// </summary>
+    public static bool DrawInRow(ImDrawListPtr dl, Vector2 min, float width, float height, string text, uint color, out bool cut, bool eyebrow = true, bool outlined = false, float ruleAlpha = Ornament.RuleAlpha)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        cut = false;
+        if (!Theme.ShowRules || !(width > 0f))
+        {
+            return false;
+        }
+
+        var capitals = eyebrow && Capitals;
+        var label = capitals ? Case.For(text, true) : text;
+        using var role = eyebrow ? TitleRole(label, capitals) : default;
+        var line = ImGui.GetTextLineHeight();
+        var labelWidth = ImGui.CalcTextSize(label).X;
+        var g = HeadingLayout.Compute(min.X, width, UiMetrics.Scale, line, labelWidth, 0f, 0f, sigil: true, CaptionOverflow.Tooltip);
+        var midY = MathF.Round(min.Y + (height * 0.5f));
+        if (g.SigilSize > 0f)
+        {
+            Ornament.Sigil(dl, new Vector2(g.SigilCenterX, midY), g.SigilSize);
+        }
+
+        var at = new Vector2(g.TitleX, MathF.Round(midY - (line * 0.5f)));
+        cut = outlined
+            ? Chrome.OutlinedEllipsisAt(dl, at, g.TitleRoom, label, color, labelWidth)
+            : Chrome.EllipsisTextAt(dl, at, g.TitleRoom, label, color, labelWidth);
+        if (g.HasRule)
+        {
+            Ornament.Rule(dl, new Vector2(g.RuleStart, midY), g.RuleEnd - g.RuleStart, ruleAlpha);
+        }
+
+        return true;
+    }
+
+    /// <summary>
     /// A pane's one title line (proposal §7.5, §7.6: "Minions", a character's name): <paramref name="text"/> in the Title
     /// role in the primary text tone, ending in an ellipsis in <paramref name="width"/> pixels, as one item. Returns
     /// whether it was cut.

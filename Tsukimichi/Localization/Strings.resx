@@ -4464,6 +4464,13 @@
   <data name="ScopeUnnamed" xml:space="preserve">
     <value>this node</value>
   </data>
+  <data name="TableTitleCountFormat" xml:space="preserve">
+    <value>{0:N0} of {1:N0}</value>
+    <comment>The quest table's title line (1.8.0): {0} = rows shown, {1} = quests in the node.</comment>
+  </data>
+  <data name="TableTitleCountTooltip" xml:space="preserve">
+    <value>Quests shown, of the quests in this node. The filters and the search narrow the list.</value>
+  </data>
   <data name="ScopeChipTooltip" xml:space="preserve">
     <value>The tree selection narrowing the table; clearing it shows All quests</value>
   </data>
