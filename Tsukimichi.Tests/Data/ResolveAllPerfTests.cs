@@ -9,8 +9,8 @@ namespace Tsukimichi.Tests.Data;
 
 /// <summary>
 /// The poller's first pass resolves the whole catalog for a character. It runs off the framework thread now, but
-/// the cost still bounds how long the Journal shows "evaluating" after login, and a regression here would also hit
-/// the level-up full resolve, which stays on the framework thread.
+/// the cost still bounds how long the Journal shows "evaluating" after login, and how long a job or level change
+/// (<see cref="Core.Runtime.FullPass"/>, on a worker since 1.8.0) or a stored character takes to show.
 /// </summary>
 public class ResolveAllPerfTests(FixtureCatalog fixture, ITestOutputHelper output) : IClassFixture<FixtureCatalog>
 {

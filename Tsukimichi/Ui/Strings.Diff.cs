@@ -14,6 +14,8 @@ static partial class Strings
     public static string DiffNeedsTwo => Loc.Get("DiffNeedsTwo");
     public static string DiffNeedsCatalog => Loc.Get("DiffNeedsCatalog");
     public static string DiffOtherUnreadable => Loc.Get("DiffOtherUnreadable");
+    /// <summary>While the other character is resolved in the background for its first comparison.</summary>
+    public static string DiffComparing => Loc.Get("DiffComparing");
     public static string DiffComboTooltip => Loc.Get("DiffComboTooltip");
     public static string DiffColumnQuest => Loc.Get("DiffColumnQuest");
     public static string DiffColumnValue => Loc.Get("DiffColumnValue");
