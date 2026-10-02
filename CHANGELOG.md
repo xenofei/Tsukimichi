@@ -4,6 +4,75 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-10-01
+
+### Added
+- **Companion plugins.** Settings › Integrations lists the optional plugins Tsukimichi works with: Lifestream, vnavmesh, Questionable, AutoDuty, Artisan, GatherBuddy, Allagan Tools, Quest Map and Chat 2.
+  - Each one shows whether it is loaded, turned off, outdated or missing, and what it unlocks, with a Copy repo URL button.
+  - There are steps for adding a custom repository.
+  - A button that needs a missing plugin stays visible, disabled, and names the plugin.
+  - A Help topic and a tour step explain them.
+- **Walk to giver** (vnavmesh). It walks your character to the quest giver in the zone you stand in.
+  - It shows "Preparing path… N%" while vnavmesh maps the zone, turns into Stop while moving, and stops by itself when you leave the zone.
+  - It waits while Questionable or AutoDuty is running, and never stops another plugin's walk.
+- **Go to giver.** One click teleports, takes the aethernet and walks to the giver (Lifestream and vnavmesh), with Stop at every step and a chat line if a step fails. A Stop pressed during the teleport cast lets the cast land and does nothing after.
+- **Aethernet to <shard>.** For a giver in a city, it hops to the attuned aethernet shard nearest them, including the Foundation's hop to the Firmament.
+  - For Island Sanctuary and Occult Crescent givers, Teleport hands the trip to Lifestream's /li island and /li occult; Lifestream talks to the NPC for you, and the tooltip says so.
+- **Follow a route.** "Follow this route" in the route window puts it in the Todo overlay ("Route: everything for Dragoon").
+  - The section shows the next three steps, any level you still need, and Flag next stop. Steps drop off as you turn them in.
+  - When the route is done, a chat line says so and the section goes away. Your pins are not touched.
+- **Flag next stop** in the route window, the overlay's route section and My blues. While you follow a route, the map flag can move to the next stop each time you turn in a step (Settings › Routes, on by default; the map does not open).
+- **Where each route step is.**
+  - Each step names the aetheryte nearest its giver.
+  - Each step has Flag, Teleport and Walk, and a right-click menu with Go to giver.
+  - Steps in a row at one aetheryte read as one stop ("3 quests near Camp Dragonhead"), without changing the order.
+- **Routes to several things at once:**
+  - "Route: everything for <job>" (unlock, job quests and role quests up to your level cap) from the Characters job rows;
+  - "Route through my pins" from the overlay's Pinned heading;
+  - a Route button on each My blues expansion card.
+
+  Each target is marked where the route reaches it. If what's left is locked out, the route says so instead of "complete".
+- **Route to unlock** beside the Duty Finder, and **Route to this** on My blues rows.
+- **Next stops.** Quests you can pick up now, grouped by the aetheryte nearest their giver.
+  - Your zone comes first, then the stops with the most quests (unlocks count double).
+  - Shown in the Tonight card with Teleport, and as an optional Todo overlay section (off by default).
+- **Send to Questionable.** Hand a route, a story chain or job ladder (right-click it on Characters), a My blues expansion or your pins (Todo overlay menu) to Questionable's priority list, in order.
+  - Quests your logged-in character has done, has in the journal or is locked out of are left out.
+  - Chat says how many it took: "Questionable: sent 14 of 17 (3 have no Questionable path)."
+  - It adds to the end of the list by default. "Replace Questionable's list…" asks first, reads the list, empties it, and puts it back if sending fails.
+- **Add and start Questionable.** Sends the quests and starts Questionable on the first one it can do.
+  - It asks before the first start and names any plugin Questionable needs that is missing (vnavmesh, TextAdvance, Lifestream).
+  - A Stop button shows while it runs. Starting is off while you view a character other than the one you're logged in as, and you can turn it off in Settings › Integrations.
+- **Questionable badges and live status.**
+  - The detail pane shows "On Questionable's list (#3)" and whether Questionable has a path; route steps show "Q #3" or "Q no path".
+  - While it runs, the status bar and the overlay show "Questionable: running · quest · step 3 of 7" with Stop, and its quest is highlighted in the Journal.
+  - The detail pane and Report this quest also compare Questionable's "can no longer be done" answer with Locked out, and its running events with the game's.
+- **Run with AutoDuty.** For a quest that needs or unlocks a duty, a new Duties section in the details says whether AutoDuty has a path.
+  - The button hands AutoDuty one clear in Duty Support or Trust, with Stop while it runs.
+  - AutoDuty's own run mode, duty mode and loop count always come back afterwards, also when it fails to start.
+  - The regular Duty Finder is used only if you allow it in Settings › Integrations (off by default).
+- **Open in Quest Map.** A button in the Path section shows the quest in Quest Map's requirement graph; /tsuki why points there too.
+- **Hand in.** A new section in quest details lists the items a quest asks for, with the amount and quality when the game data says, and how many you hold.
+  - Counts cover your bags, armoury and saddlebag, plus retainers with Allagan Tools.
+  - A high-quality-only item counts only high-quality items; retainer counts are labelled "(NQ+HQ)".
+- **Craft with Artisan** and **Gather with GatherBuddy** on each hand-in item.
+  - Craft asks for the right number of crafts for recipes that make several at once, and is disabled when you already have enough.
+  - Without the plugin, each button stays and names it.
+- **Copy missing items:** a Teamcraft import link, or an Artisan/Teamcraft "3x Item" list, for the selected quest or all pinned quests. It only copies to the clipboard.
+- Item tooltips and the item right-click menu say "Needed for: quest" for quests in your journal or ready to take.
+- With Allagan Tools, Moonlit marks relic and special weapons you hold anywhere (bags, armoury, armoire, glamour dresser, retainers) as owned.
+- My blues rows gain Teleport, Walk and Go to giver.
+
+### Changed
+- **Teleport now knows which aetherytes you have attuned.**
+  - It goes to the nearest attuned aetheryte and shows its gil cost and favourite flag. With none in the zone, it says "No attuned aetheryte in <zone>" instead of doing nothing.
+  - When you already stand closer to the giver than the aetheryte, it goes quiet and says so.
+  - A teleport Lifestream refuses (combat, casting, a duty) says why in chat.
+  - It is greyed during a cast or loading screen.
+  - Without Lifestream, Teleport buttons stay visible but greyed, and say Lifestream is needed.
+- Tsukimichi automates only when you press a button that hands the work to one of the companion plugins.
+- My blues groups zones of similar level by region, so the list no longer jumps back and forth across the map.
+
 ## [1.5.0] - 2026-10-01
 
 ### Added
