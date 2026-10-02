@@ -248,8 +248,19 @@ public sealed class PlanPane
 
         if (view.IsEmpty)
         {
+            // The shared empty state (1.7.0, onboarding proposal 9): a full moon when nothing is left, else a reset.
             ImGui.Spacing();
-            ImGui.TextWrapped(source.Plan.IsEmpty && session.ViewedSnapshot is not null ? Strings.PlanEmptyAllDone : Strings.PlanEmptyFiltered);
+            if (source.Plan.IsEmpty && session.ViewedSnapshot is not null)
+            {
+                EmptyState.DrawWithAction(Strings.PlanEmptyAllDoneHeading, Strings.PlanEmptyAllDone, null, moon: QuestState.Completed);
+            }
+            else if (EmptyState.DrawWithAction(Strings.PlanEmptyFiltered, Strings.PlanEmptyFilteredBody, Strings.ResetFilters, moon: QuestState.Blocked) == EmptyState.ActionClicked)
+            {
+                readyOnly = false;
+                sprout = false;
+                kinds = UnlockKinds.AllMask;
+            }
+
             return;
         }
 

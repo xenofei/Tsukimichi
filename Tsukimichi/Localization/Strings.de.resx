@@ -705,9 +705,6 @@
   <data name="ConfigShortcutReveal" xml:space="preserve">
     <value>Eingabe zeigt den gewählten Auftrag im Tagebuch</value>
   </data>
-  <data name="ConfigShortcutRevealHint" xml:space="preserve">
-    <value>In den Tabs Mondlicht, Charaktere und Fliegen: wechselt ins Tagebuch, mit der Kategorie des Auftrags im Baum geöffnet und seiner Zeile ausgewählt</value>
-  </data>
   <data name="ConfigShortcutPin" xml:space="preserve">
     <value>P heftet den gewählten Auftrag an oder löst ihn</value>
   </data>
@@ -1953,40 +1950,37 @@
   <data name="Help.CommandKeys.4" xml:space="preserve">
     <value>/tsukimichi help</value>
   </data>
-  <data name="Help.CommandKeys.5" xml:space="preserve">
-    <value>/tsukimichi glyphs</value>
-  </data>
-  <data name="Help.CommandKeys.6" xml:space="preserve">
+  <data name="Help.CommandKeys.7" xml:space="preserve">
     <value>/tsuki zone</value>
   </data>
-  <data name="Help.CommandKeys.7" xml:space="preserve">
+  <data name="Help.CommandKeys.8" xml:space="preserve">
     <value>/tsuki which</value>
   </data>
-  <data name="Help.CommandKeys.8" xml:space="preserve">
+  <data name="Help.CommandKeys.9" xml:space="preserve">
     <value>/tsuki why [quest name]</value>
   </data>
-  <data name="Help.CommandKeys.9" xml:space="preserve">
+  <data name="Help.CommandKeys.11" xml:space="preserve">
     <value>/tsuki nearby</value>
   </data>
-  <data name="Help.CommandKeys.10" xml:space="preserve">
+  <data name="Help.CommandKeys.12" xml:space="preserve">
     <value>/tsuki todo</value>
   </data>
-  <data name="Help.CommandKeys.11" xml:space="preserve">
+  <data name="Help.CommandKeys.13" xml:space="preserve">
     <value>/tsuki report [quest name]</value>
   </data>
-  <data name="Help.CommandKeys.12" xml:space="preserve">
+  <data name="Help.CommandKeys.14" xml:space="preserve">
     <value>/tsuki export [quests|moonlit] [json|csv]</value>
   </data>
-  <data name="Help.CommandKeys.13" xml:space="preserve">
+  <data name="Help.CommandKeys.15" xml:space="preserve">
     <value>Strg+F</value>
   </data>
-  <data name="Help.CommandKeys.14" xml:space="preserve">
+  <data name="Help.CommandKeys.16" xml:space="preserve">
     <value>Esc</value>
   </data>
-  <data name="Help.CommandKeys.15" xml:space="preserve">
+  <data name="Help.CommandKeys.17" xml:space="preserve">
     <value>Menütaste, Umschalt+F10, …</value>
   </data>
-  <data name="Help.CommandKeys.16" xml:space="preserve">
+  <data name="Help.CommandKeys.18" xml:space="preserve">
     <value>Strg+1 bis 5, F, Eingabe, P</value>
   </data>
   <data name="Help.CommandMeanings.0" xml:space="preserve">
@@ -1995,49 +1989,43 @@
   <data name="Help.CommandMeanings.1" xml:space="preserve">
     <value>dasselbe, kürzer; jeder Unterbefehl funktioniert mit beiden</value>
   </data>
-  <data name="Help.CommandMeanings.2" xml:space="preserve">
-    <value>suchen und passende Aufträge als Links im Chat ausgeben; /tsukimichi &lt;text&gt; tut dasselbe</value>
-  </data>
   <data name="Help.CommandMeanings.3" xml:space="preserve">
     <value>die Einstellungen öffnen (/tsukimichi config tut dasselbe)</value>
   </data>
   <data name="Help.CommandMeanings.4" xml:space="preserve">
     <value>dieses Fenster öffnen</value>
   </data>
-  <data name="Help.CommandMeanings.5" xml:space="preserve">
-    <value>die Glyphentafel: jeder Mond in jeder Größe</value>
-  </data>
-  <data name="Help.CommandMeanings.6" xml:space="preserve">
+  <data name="Help.CommandMeanings.7" xml:space="preserve">
     <value>Aufträge, die du im aktuellen Gebiet beginnen kannst, als Chatlinks nach Stufe</value>
   </data>
-  <data name="Help.CommandMeanings.7" xml:space="preserve">
+  <data name="Help.CommandMeanings.8" xml:space="preserve">
     <value>jeder Auftrag, den der anvisierte NPC vergibt, mit seinem Zustand</value>
   </data>
-  <data name="Help.CommandMeanings.8" xml:space="preserve">
+  <data name="Help.CommandMeanings.9" xml:space="preserve">
     <value>warum der gewählte (oder genannte) Auftrag nicht angeboten wird: sein Zustand und was ihn blockiert, dann eine Zeile pro Voraussetzung, erfüllt oder nicht, mit den verglichenen Werten, dann der kuratierte Hinweis, wo das Spiel bekanntermaßen anders handelt; ein bereiter Auftrag sagt, mit wem du sprechen musst, mit Kartenlink. Dieselbe Liste öffnet sich im Tagebuch über das Zielleisten-Menü eines NPCs („Tsukimichi: Aufträge hier“)</value>
   </data>
-  <data name="Help.CommandMeanings.9" xml:space="preserve">
+  <data name="Help.CommandMeanings.11" xml:space="preserve">
     <value>das Fenster „Aufträge in der Nähe“ öffnen oder schließen: was du im aktuellen Gebiet beginnen kannst</value>
   </data>
-  <data name="Help.CommandMeanings.10" xml:space="preserve">
+  <data name="Help.CommandMeanings.12" xml:space="preserve">
     <value>das Todo-Overlay zeigen oder ausblenden: angeheftete Aufträge, laufende Event-Aufträge, Freischaltungen hier, den nächsten Hauptszenario-Auftrag und Jobaufträge</value>
   </data>
-  <data name="Help.CommandMeanings.11" xml:space="preserve">
+  <data name="Help.CommandMeanings.13" xml:space="preserve">
     <value>einen Diagnoseblock für den gewählten (oder genannten) Auftrag in die Zwischenablage kopieren, bereit zum Einfügen in ein GitHub-Issue; die Schaltfläche „Melden“ im Detailbereich tut dasselbe</value>
   </data>
-  <data name="Help.CommandMeanings.12" xml:space="preserve">
+  <data name="Help.CommandMeanings.14" xml:space="preserve">
     <value>die abgeschlossenen Aufträge des angezeigten Charakters, seine Mondlicht-Sammlung oder beides als JSON oder CSV in den Ordner „exports“ schreiben (im Format der Einstellungen, wenn keines genannt ist) und ausgeben, wohin; siehe docs/export-format.md. Keine Content-ID, kein Account, keine Welt, und der Name nur, wenn Einstellungen › Daten › Export › „Charakternamen einschließen“ angehakt ist</value>
   </data>
-  <data name="Help.CommandMeanings.13" xml:space="preserve">
+  <data name="Help.CommandMeanings.15" xml:space="preserve">
     <value>den Cursor in die Suche setzen, solange das Fenster den Fokus hat</value>
   </data>
-  <data name="Help.CommandMeanings.14" xml:space="preserve">
+  <data name="Help.CommandMeanings.16" xml:space="preserve">
     <value>das offene Menü oder den Filterbereich schließen; ist keins offen, das Fenster schließen</value>
   </data>
-  <data name="Help.CommandMeanings.15" xml:space="preserve">
+  <data name="Help.CommandMeanings.17" xml:space="preserve">
     <value>das Menü der fokussierten Zeile in der Auftragstabelle und der Mondlicht-Liste öffnen, dasselbe Menü wie per Rechtsklick; die Schaltfläche … am rechten Ende einer Zeile (beim Überfahren oder Fokus sichtbar) öffnet es mit Linksklick</value>
   </data>
-  <data name="Help.CommandMeanings.16" xml:space="preserve">
+  <data name="Help.CommandMeanings.18" xml:space="preserve">
     <value>aus, bis unter Einstellungen › Tastatur eingeschaltet: Tabs wechseln, den Auftraggeber des gewählten Auftrags markieren, ihn im Tagebuch zeigen, ihn anheften. Das Spiel sieht diese Tasten ebenfalls: Strg+1 bis 5 sind standardmäßig Leiste 2</value>
   </data>
   <data name="Help.CountsCardTitles.0" xml:space="preserve">
@@ -2091,7 +2079,7 @@
   <data name="Help.QuirkCardTitles.5" xml:space="preserve">
     <value>Spiel-Hooks nach einem Patch pausiert</value>
   </data>
-  <data name="Help.QuirkCardTitles.6" xml:space="preserve">
+  <data name="Help.PlayCardTitles.4" xml:space="preserve">
     <value>Der Freischalthinweis in der Inhaltssuche</value>
   </data>
   <data name="Help.QuirkCardBodies.0" xml:space="preserve">
@@ -2112,7 +2100,7 @@
   <data name="Help.QuirkCardBodies.5" xml:space="preserve">
     <value>Das Gegenstands-Tooltip-Feld, die Einträge in Gegenstands- und NPC-Menüs, der Eintrag in der Serverinfoleiste und der Freischalthinweis in der Inhaltssuche sitzen neben der eigenen Oberfläche des Spiels, die ein Patch verschieben kann. Jede Tsukimichi-Version verzeichnet die Spielversion, auf der sie getestet wurden; auf einem neueren Spiel pausieren sie, bis ein Update dort getestet ist, und eine Chatzeile beim Anmelden sowie ein Hinweis unter Einstellungen › Integrationen sagen das. Tagebuch, Mondlicht, Charaktere, „Aufträge in der Nähe“, das Todo-Overlay und jeder /tsuki-Befehl funktionieren wie gewohnt. Um die Hooks trotzdem zu nutzen, setze das Häkchen bei Einstellungen › Integrationen › „Spiel-Hooks auf dieser ungetesteten Version aktivieren“; es gilt nur für deine aktuelle Spielversion, der nächste Patch pausiert sie also wieder. Zeichnet einer dann an der falschen Stelle, entferne das Häkchen, und er hört sofort auf.</value>
   </data>
-  <data name="Help.QuirkCardBodies.6" xml:space="preserve">
+  <data name="Help.PlayCardBodies.4" xml:space="preserve">
     <value>Wähle in der Inhaltssuche oder Raidsuche einen Inhalt mit Schloss, und ein kleines Feld neben dem Fenster nennt den Auftrag, der ihn freischaltet, mit seinem Mond, worauf er wartet, und Schaltflächen, um ihn hier zu zeigen oder seinen Auftraggeber zu markieren. Es folgt dem gewählten Inhalt, nicht dem unter der Maus, und spricht für den Charakter, mit dem du angemeldet bist. Es kennt die Freischaltungen, die die Spieldaten verknüpfen, eine kuratierte Liste (die Start-Dungeons von A Realm Reborn und Dawntrail, die Allianz-Raids Kristallturm und Schatten von Mhach, die optionalen Dungeons von Heavensward und mehr) und die Inhaltsfreischaltungen von Mondlicht; bei jedem anderen Inhalt mit Schloss schweigt es, statt zu raten. Nennt das Feld den falschen Auftrag oder zeigt ein gesperrter Inhalt, dessen Auftrag du kennst, nichts, eröffne ein Issue zur Datenkorrektur mit dem Namen des Inhalts. Ausschalten unter Einstellungen › Integrationen › „Freischalthinweis in der Inhaltssuche“.</value>
   </data>
   <data name="Help.QuirksTip" xml:space="preserve">
@@ -2153,9 +2141,6 @@
   </data>
   <data name="Help.Tips.0" xml:space="preserve">
     <value>„Abgeschlossene ausblenden“ plus „Jetzt verfügbar“ ist die schnellste Ansicht dessen, was als Nächstes zu tun ist.</value>
-  </data>
-  <data name="Help.Tips.1" xml:space="preserve">
-    <value>Hefte einen Auftrag an, und er bleibt in der Charakter-Übersicht einen Klick entfernt, mit seinem Status.</value>
   </data>
   <data name="Help.Tips.2" xml:space="preserve">
     <value>Das Suchfeld nimmt eine Auftrags-ID an; füge eine aus einem Wiki ein.</value>
@@ -2300,9 +2285,6 @@
   </data>
   <data name="PlanShowingFormat" xml:space="preserve">
     <value>{0:N0} von {1:N0} angezeigt</value>
-  </data>
-  <data name="PlanEmptyAllDone" xml:space="preserve">
-    <value>Jeder Freischaltauftrag ist erledigt. Nichts Blaues mehr übrig.</value>
   </data>
   <data name="PlanEmptyFiltered" xml:space="preserve">
     <value>Kein Freischaltauftrag passt zu diesen Filtern.</value>
@@ -2895,9 +2877,6 @@
   <data name="Tutorial.DetailTitle" xml:space="preserve">
     <value>Warum nicht dieser</value>
   </data>
-  <data name="Tutorial.DetailBody" xml:space="preserve">
-    <value>Wähle eine Zeile: Der Detailbereich stapelt Karten, Voraussetzungen zuerst, die blockierende markiert. Ist nichts gewählt, zeigt „Heute Abend“, was du jetzt tun kannst.</value>
-  </data>
   <data name="Tutorial.StatusTitle" xml:space="preserve">
     <value>Die Spalte „Status“</value>
   </data>
@@ -2942,9 +2921,6 @@
   </data>
   <data name="Tutorial.PlayTitle" xml:space="preserve">
     <value>Während du spielst</value>
-  </data>
-  <data name="Tutorial.PlayBody" xml:space="preserve">
-    <value>Das Todo-Overlay hält angeheftete Aufträge und Freischaltungen in der Nähe auf dem Bildschirm; „Aufträge in der Nähe“ listet, was du in diesem Gebiet beginnen kannst. Einschalten in den Einstellungen oder mit /tsuki todo und /tsuki nearby.</value>
   </data>
   <data name="Tutorial.HelpTitle" xml:space="preserve">
     <value>Hilfe, Tour und Einstellungen</value>
@@ -3188,9 +3164,6 @@
   </data>
   <data name="StaleBannerFormat" xml:space="preserve">
     <value>Snapshot: {0}@{1}, {2}</value>
-  </data>
-  <data name="BrowseModeNotice" xml:space="preserve">
-    <value>Kein Charakter-Snapshot: Zustände, Blockaden und Verfügbarkeit werden nicht ausgewertet.</value>
   </data>
   <data name="HelpButtonTooltip" xml:space="preserve">
     <value>Hilfe</value>
@@ -3761,9 +3734,6 @@
   </data>
   <data name="ConfigItemContextMenuHint" xml:space="preserve">
     <value>Rechtsklick auf einen Gegenstand zeigt den Auftrag, der ihn als Belohnung gibt</value>
-  </data>
-  <data name="CommandHelp" xml:space="preserve">
-    <value>Öffnet Tsukimichi (auch /tsuki). search &lt;text&gt; (oder nur &lt;text&gt;) gibt passende Auftragslinks aus; zone listet Aufträge, die du hier beginnen kannst; which listet die Aufträge des anvisierten NPCs; why [quest name] sagt, was den gewählten oder genannten Auftrag blockiert; nearby und todo schalten das Fenster „Aufträge in der Nähe“ und das Todo-Overlay um; report [quest name] kopiert einen Diagnoseblock für den gewählten oder genannten Auftrag; export [quests|moonlit] [json|csv] schreibt deine abgeschlossenen Aufträge oder die Mondlicht-Sammlung in eine Datei; settings (oder config), help und glyphs öffnen diese Fenster.</value>
   </data>
   <data name="CommandAliasHelp" xml:space="preserve">
     <value>Kurzform von /tsukimichi.</value>

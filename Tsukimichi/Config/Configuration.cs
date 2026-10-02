@@ -271,8 +271,15 @@ public sealed partial class Configuration : IPluginConfiguration
     /// <summary>Character the user chose to view explicitly; null follows the live character.</summary>
     public ulong? ViewedContentId { get; set; }
 
-    /// <summary>Open the help window by itself the first time the main window opens; cleared once that happened.</summary>
-    public bool ShowHelpOnFirstRun { get; set; } = true;
+    /// <summary>
+    /// Whether the "Set up your road" card (1.7.0, decision 7) has been shown; it shows by itself once, after the tour
+    /// offer, and Help › Quick start opens it again. Null until a load decides it: a configuration that existed before
+    /// the card (an update) reads as shown, so only a fresh install gets it unasked.
+    /// </summary>
+    public bool? SetupCardSeen { get; set; }
+
+    /// <summary>Whether the first pin while the Todo overlay was off already offered to turn the overlay on (1.7.0); it asks once.</summary>
+    public bool PinOverlayPromptShown { get; set; }
 
     /// <summary>Set when the interactive tutorial was finished or declined; while false the welcome card offers the tour the first time the main window opens.</summary>
     public bool TutorialCompleted { get; set; }
@@ -423,9 +430,9 @@ public sealed partial class Configuration : IPluginConfiguration
 
     // ---- 0.8.0: keyboard (T17, accessibility A7) ----
     // The game sees every key the plugin reads (only a text field swallows them), so beyond Ctrl+F and Esc every
-    // shortcut is opt-in: Ctrl+1..4 are hotbar 2 in the default keybinds and single letters are often bound.
+    // shortcut is opt-in: Ctrl+1..5 are hotbar 2 in the default keybinds and single letters are often bound.
 
-    /// <summary>Ctrl+1..4 switch the main window's tabs while it has focus. Off by default.</summary>
+    /// <summary>Ctrl+1..5 switch the main window's tabs (Journal, Moonlit, Characters, Flight, My blues) while it has focus. Off by default.</summary>
     public bool ShortcutTabs { get; set; }
 
     /// <summary>F flags the selected quest's giver on the map while the main window has focus. Off by default.</summary>
@@ -600,6 +607,9 @@ public sealed partial class Configuration : IPluginConfiguration
         {
             config.TodoLockNoticeDue = true;
         }
+
+        // The setup card (1.7.0) is for a fresh install; a configuration saved before the card existed has set up already.
+        config.SetupCardSeen ??= hadFile;
 
         config.HasPriorConfig = hadFile;
         return config;

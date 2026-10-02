@@ -249,6 +249,11 @@ public sealed class QueryRunner : IDisposable
             pinned.Add(rowId);
             list.Add(rowId);
             pinChanges.Add(new PinChange(key, rowId, PinChangeKind.Pin));
+            PinsVersion++;
+            MarkPinsDirty();
+            ui.MarkQueryDirty();
+            QuestPinned?.Invoke(rowId);
+            return true;
         }
 
         PinsVersion++;
@@ -256,6 +261,9 @@ public sealed class QueryRunner : IDisposable
         ui.MarkQueryDirty();
         return true;
     }
+
+    /// <summary>Raised on the draw thread when <see cref="TogglePin"/> pins a quest (not on unpin), with its row id.</summary>
+    public event Action<uint>? QuestPinned;
 
     /// <summary>Applies the pending search text immediately instead of waiting out the debounce (used by the chat command).</summary>
     public void FlushSearch()

@@ -13,7 +13,8 @@ namespace Tsukimichi.Ui;
 /// The main window's rail (feature plan v4 L7, design v4 §7.1), drawn in its own fixed pane left of the tree
 /// (<see cref="PaneSplit"/>). Top to bottom: the crest (a click shows Journal › All quests), one station per tab (a
 /// 22 px icon over a small label, the Journal station carrying the Ready count as a badge), and at the foot the overall
-/// gauge with its percentage and the round Help and Settings buttons, which live here rather than in the toolbar. The
+/// gauge with its percentage and the round Todo overlay, Nearby (1.7.0), Help and Settings buttons, which live here
+/// rather than in the toolbar. The
 /// rail is 64 logical px wide; on a window under about 1,040 px, or by Settings › Display › Compact rail, it is a 44 px
 /// compact rail of icons whose labels are in the tooltips (<see cref="LayoutBudgets.CompactRail"/>). On a short window
 /// the rail gives up height in a fixed order (<see cref="LayoutBudgets.FitRail"/>) and scrolls only past that.
@@ -58,6 +59,8 @@ public sealed class TabStrip
     private static readonly string PlaneIcon = FontAwesomeIcon.Plane.ToIconString();
     private static readonly string PlanIcon = FontAwesomeIcon.ClipboardList.ToIconString();
     private static readonly string HelpIcon = FontAwesomeIcon.QuestionCircle.ToIconString();
+    private static readonly string OverlayIcon = FontAwesomeIcon.Tasks.ToIconString();
+    private static readonly string NearbyIcon = FontAwesomeIcon.MapMarkerAlt.ToIconString();
     private static readonly string SettingsIcon = FontAwesomeIcon.Cog.ToIconString();
 
     /// <summary>The overall gauge's fill motion (it moves only when the count changes, or fills once under Full flair).</summary>
@@ -186,7 +189,7 @@ public sealed class TabStrip
         }
 
         ui.RecordRect(UiRects.Tabs, new Vector2(origin.X, first), new Vector2(origin.X + width, y));
-        DrawFoot(dl, centerX, origin.Y + place.FootTop, place.Fit.Percent, place.Button, overall.Fraction, openHelp, openSettings, moonRoad);
+        DrawFoot(dl, centerX, origin.Y + place.FootTop, place.Fit, place.Button, overall.Fraction, openHelp, openSettings, moonRoad);
 
         // The rail's content ends under the foot (a 1 px item whose bottom is the content's), so a rail taller than
         // its pane scrolls to it, and one that fits does not scroll at all.
@@ -481,14 +484,22 @@ public sealed class TabStrip
 
     /// <summary>
     /// The foot: the overall gauge (an orbit round a filling moon under the Moon Road look, the 1.3 halo under Plain;
-    /// done / total on hover), its percentage under it where the height allows, then Help and Settings, side by side on
-    /// the labelled rail and stacked on the compact one. Each part takes the height <see cref="LayoutBudgets.FootHeight"/>
+    /// done / total on hover; left out on a short window, <see cref="RailFit.GaugeHidden"/>), its percentage under it
+    /// where the height allows, then the Todo overlay and Nearby buttons (1.7.0) over Help and Settings, two a row on
+    /// the labelled rail and stacked on the compact one. Each part takes the height <see cref="LayoutBudgets.FootHeight(RailFit, bool, float)"/>
     /// gives it, so the foot is exactly as tall as the fit reserved; <paramref name="button"/> is the buttons' side as
     /// drawn (<see cref="UiMetrics.MinTarget"/>).
     /// </summary>
-    private void DrawFoot(ImDrawListPtr dl, float centerX, float top, bool percent, float button, float fraction, Action? openHelp, Action? openSettings, bool moonRoad)
+    private void DrawFoot(ImDrawListPtr dl, float centerX, float top, RailFit fit, float button, float fraction, Action? openHelp, Action? openSettings, bool moonRoad)
     {
         var gap = UiMetrics.Px(LayoutBudgets.RailGapLogical);
+        if (fit.GaugeHidden)
+        {
+            DrawFootButtons(centerX, top, button, gap, openHelp, openSettings);
+            return;
+        }
+
+        var percent = fit.Percent;
         var gauge = UiMetrics.Px(LayoutBudgets.RailGaugeLogical);
         var radius = gauge * 0.5f;
         var center = new Vector2(centerX, MathF.Round(top + radius));
@@ -522,25 +533,57 @@ public sealed class TabStrip
             UiMetrics.Tooltip(Strings.FillingMoonTooltip, progressText);
         }
 
+        DrawFootButtons(centerX, y, button, gap, openHelp, openSettings);
+    }
+
+    /// <summary>
+    /// The foot's buttons from <paramref name="y"/> down: Overlay and Nearby, then Help and Settings; two a row on the
+    /// labelled rail, stacked on the compact one (<see cref="LayoutBudgets.FootButtonsHeight"/>).
+    /// </summary>
+    private void DrawFootButtons(float centerX, float y, float button, float gap, Action? openHelp, Action? openSettings)
+    {
+        var overlayOn = OverlayOn?.Invoke() == true;
+        var nearbyOpen = NearbyOpen?.Invoke() == true;
+        var overlayTip = overlayOn ? Strings.RailOverlayOnTooltip : Strings.RailOverlayOffTooltip;
         var between = UiMetrics.Px(4f);
         if (Compact)
         {
-            FootButton("##railHelp", HelpIcon, Strings.HelpButtonTooltip, openHelp, UiRects.HelpButton, new Vector2(centerX - button * 0.5f, y));
+            var x = centerX - button * 0.5f;
+            FootButton("##railOverlay", OverlayIcon, overlayTip, ToggleOverlay, UiRects.OverlayButton, new Vector2(x, y), overlayOn);
             y += button + gap;
-            FootButton("##railSettings", SettingsIcon, Strings.SettingsButtonTooltip, openSettings, UiRects.SettingsButton, new Vector2(centerX - button * 0.5f, y));
+            FootButton("##railNearby", NearbyIcon, Strings.RailNearbyTooltip, ToggleNearby, UiRects.NearbyButton, new Vector2(x, y), nearbyOpen);
+            y += button + gap;
+            FootButton("##railHelp", HelpIcon, Strings.HelpButtonTooltip, openHelp, UiRects.HelpButton, new Vector2(x, y));
+            y += button + gap;
+            FootButton("##railSettings", SettingsIcon, Strings.SettingsButtonTooltip, openSettings, UiRects.SettingsButton, new Vector2(x, y));
         }
         else
         {
             var left = MathF.Round(centerX - button - between * 0.5f);
+            FootButton("##railOverlay", OverlayIcon, overlayTip, ToggleOverlay, UiRects.OverlayButton, new Vector2(left, y), overlayOn);
+            FootButton("##railNearby", NearbyIcon, Strings.RailNearbyTooltip, ToggleNearby, UiRects.NearbyButton, new Vector2(left + button + between, y), nearbyOpen);
+            y += button + gap;
             FootButton("##railHelp", HelpIcon, Strings.HelpButtonTooltip, openHelp, UiRects.HelpButton, new Vector2(left, y));
             FootButton("##railSettings", SettingsIcon, Strings.SettingsButtonTooltip, openSettings, UiRects.SettingsButton, new Vector2(left + button + between, y));
         }
     }
 
-    private void FootButton(string id, string icon, string tooltip, Action? action, string rectKey, Vector2 pos)
+    /// <summary>The Todo overlay button (1.7.0): shows or hides the overlay; null draws it disabled.</summary>
+    public Action? ToggleOverlay { get; set; }
+
+    /// <summary>Whether the Todo overlay is on, so its button reads as pressed.</summary>
+    public Func<bool>? OverlayOn { get; set; }
+
+    /// <summary>The Nearby button (1.7.0): opens or closes the Nearby quests window; null draws it disabled.</summary>
+    public Action? ToggleNearby { get; set; }
+
+    /// <summary>Whether the Nearby quests window is open, so its button reads as pressed.</summary>
+    public Func<bool>? NearbyOpen { get; set; }
+
+    private void FootButton(string id, string icon, string tooltip, Action? action, string rectKey, Vector2 pos, bool active = false)
     {
         ImGui.SetCursorScreenPos(pos);
-        if (Chrome.IconButtonRound(id, icon, action is null ? Strings.ActionUnavailable : tooltip, enabled: action is not null))
+        if (Chrome.IconButtonRound(id, icon, action is null ? Strings.ActionUnavailable : tooltip, active: active, enabled: action is not null))
         {
             action?.Invoke();
         }

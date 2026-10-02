@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Numerics;
@@ -15,10 +16,12 @@ namespace Tsukimichi.Ui;
 
 /// <summary>
 /// The "What's new" card at the top of the detail column: after an update, the first time the main window opens, it
-/// shows the CHANGELOG.md section for the running version (embedded in the assembly, parsed by
-/// <see cref="ChangelogSection"/>; no network) with Close and Help. It stays until Close is pressed, then
-/// <see cref="Configuration.LastSeenVersion"/> records the version. A fresh install records the version silently and
-/// never sees the card; so does a build whose version has no changelog section.
+/// shows every CHANGELOG.md section the player skipped (feature plan v5, 1.7.0): each version above
+/// <see cref="Configuration.LastSeenVersion"/> up to the running one, newest first (embedded in the assembly, parsed by
+/// <see cref="ChangelogSection.Since"/>; no network), with Close and Help. Each version opens on its highlights (the
+/// bold lead or first sentence of each top-level bullet) with More for the full text. It stays until Close is pressed,
+/// then <see cref="Configuration.LastSeenVersion"/> records the version. A fresh install records the version silently
+/// and never sees the card; so does a build with nothing new in its changelog.
 /// </summary>
 public sealed class WhatsNewCard
 {
@@ -37,12 +40,16 @@ public sealed class WhatsNewCard
     private readonly Func<string?> readChangelog;
     private readonly string version;
 
-    private ChangelogSection? section;
+    private IReadOnlyList<ChangelogSection> sections = [];
     private Localization.LocText? title;
     private bool checkedThisLoad;
 
-    // The section's items per group with the bullet already in front, composed once when the card is prepared.
-    private string[][] groupLines = [];
+    // Per section, composed once when the card is prepared: its heading (when several show), its highlights with the
+    // bullet in front, its full lines per group (sub-bullets marked and indented), and whether More is open.
+    private string[] headings = [];
+    private string[][] highlights = [];
+    private (string Title, (string Text, bool Nested)[] Lines)[][] fullText = [];
+    private bool[] expanded = [];
 
     /// <param name="settings">Holds <see cref="Configuration.LastSeenVersion"/>.</param>
     /// <param name="pluginInterface">To save the configuration.</param>
@@ -61,11 +68,11 @@ public sealed class WhatsNewCard
     }
 
     /// <summary>True while the card has a section to show.</summary>
-    public bool Visible => section is not null;
+    public bool Visible => sections.Count > 0;
 
     /// <summary>
     /// Decides once per plugin load, when the main window first draws, whether to show the card, and records the
-    /// version at once when there is nothing to show (fresh install, same version, or no section for this version).
+    /// version at once when there is nothing to show (fresh install, same version, or nothing new in the changelog).
     /// </summary>
     public void CheckOnOpen()
     {
@@ -76,12 +83,12 @@ public sealed class WhatsNewCard
 
         checkedThisLoad = true;
         var seen = settings.LastSeenVersion;
-        ChangelogSection? found = null;
+        IReadOnlyList<ChangelogSection> found = [];
         if ((seen.Length > 0 || settings.HasPriorConfig) && ChangelogSection.NormalizeVersion(seen) != version)
         {
             try
             {
-                found = ChangelogSection.Find(readChangelog(), version);
+                found = ChangelogSection.Since(readChangelog(), seen, version);
             }
             catch (Exception ex)
             {
@@ -89,24 +96,10 @@ public sealed class WhatsNewCard
             }
         }
 
-        switch (WhatsNew.Decide(seen, version, found is not null, settings.HasPriorConfig))
+        switch (WhatsNew.Decide(seen, version, found.Count > 0, settings.HasPriorConfig))
         {
             case WhatsNewDecision.Show:
-                section = found;
-                title = new Localization.LocText(() => string.Format(CultureInfo.CurrentCulture, Strings.WhatsNew.TitleFormat, version));
-                groupLines = new string[found!.Groups.Count][];
-                for (var g = 0; g < groupLines.Length; g++)
-                {
-                    var items = found.Groups[g].Items;
-                    var lines = new string[items.Count];
-                    for (var i = 0; i < lines.Length; i++)
-                    {
-                        lines[i] = Strings.WhatsNew.Bullet + items[i];
-                    }
-
-                    groupLines[g] = lines;
-                }
-
+                Prepare(found, ChangelogSection.NormalizeVersion(seen));
                 break;
             case WhatsNewDecision.RecordSilently:
                 MarkSeen();
@@ -114,17 +107,63 @@ public sealed class WhatsNewCard
         }
     }
 
+    /// <summary>Composes the title and every section's lines once, so drawing allocates nothing.</summary>
+    private void Prepare(IReadOnlyList<ChangelogSection> found, string seen)
+    {
+        sections = found;
+        var several = found.Count > 1;
+        title = several && seen.Length > 0
+            ? new Localization.LocText(() => string.Format(CultureInfo.CurrentCulture, Strings.WhatsNew.SinceFormat, seen))
+            : new Localization.LocText(() => string.Format(CultureInfo.CurrentCulture, Strings.WhatsNew.TitleFormat, found[0].Version));
+        headings = new string[found.Count];
+        highlights = new string[found.Count][];
+        fullText = new (string, (string, bool)[])[found.Count][];
+        expanded = new bool[found.Count];
+        for (var s = 0; s < found.Count; s++)
+        {
+            var section = found[s];
+            headings[s] = section.Date.Length > 0
+                ? string.Format(CultureInfo.InvariantCulture, Strings.WhatsNew.SectionFormat, section.Version, section.Date)
+                : section.Version;
+
+            var lead = new List<string>();
+            var groups = new (string, (string, bool)[])[section.Groups.Count];
+            for (var g = 0; g < groups.Length; g++)
+            {
+                var group = section.Groups[g];
+                var lines = new (string, bool)[group.Items.Count];
+                for (var i = 0; i < lines.Length; i++)
+                {
+                    var nested = group.IsNested(i);
+                    lines[i] = ((nested ? SubBullet : Strings.WhatsNew.Bullet) + ChangelogSection.Plain(group.Items[i]), nested);
+                    if (!nested && ChangelogSection.Highlight(group.Items[i]) is { Length: > 0 } highlight)
+                    {
+                        lead.Add(Strings.WhatsNew.Bullet + highlight);
+                    }
+                }
+
+                groups[g] = (group.Title, lines);
+            }
+
+            highlights[s] = lead.ToArray();
+            fullText[s] = groups;
+        }
+    }
+
+    /// <summary>A sub-bullet's mark in the full text.</summary>
+    private const string SubBullet = "– ";
+
     /// <summary>Hides the card and records the running version.</summary>
     public void Dismiss()
     {
-        section = null;
+        sections = [];
         MarkSeen();
     }
 
     /// <summary>Draws the card when visible and returns the height it used (0 when hidden), so the caller can shrink the pane below it.</summary>
     public float Draw(float availableHeight)
     {
-        if (section is not { } current)
+        if (sections.Count == 0)
         {
             return 0f;
         }
@@ -140,7 +179,7 @@ public sealed class WhatsNewCard
         {
             if (child)
             {
-                DrawBody(current, pad);
+                DrawBody(pad);
             }
         }
 
@@ -148,7 +187,7 @@ public sealed class WhatsNewCard
         return ImGui.GetCursorPosY() - start;
     }
 
-    private void DrawBody(ChangelogSection current, float pad)
+    private void DrawBody(float pad)
     {
         // The title, then Help and Close at the right end of the line, never over the title: on the next line,
         // right-aligned, when the two would run into it (feature plan v4 L6).
@@ -172,24 +211,83 @@ public sealed class WhatsNewCard
         ImGui.Spacing();
         var wrap = ImGui.GetWindowContentRegionMax().X;
         using var wrapPos = ImRaii.TextWrapPos(wrap);
-        for (var g = 0; g < current.Groups.Count; g++)
+        var several = sections.Count > 1;
+        for (var s = 0; s < sections.Count; s++)
         {
-            var group = current.Groups[g];
-            if (group.Title.Length > 0)
+            using var id = ImRaii.PushId(s);
+            if (several)
+            {
+                if (s > 0)
+                {
+                    Chrome.Hairline();
+                    ImGui.Spacing();
+                }
+
+                using (Theme.PushText(Theme.Moon))
+                {
+                    ImGui.TextUnformatted(headings[s]);
+                }
+            }
+
+            if (expanded[s])
+            {
+                DrawFull(s, pad);
+            }
+            else
+            {
+                using (ImRaii.PushIndent(pad, false))
+                using (Theme.PushText(Theme.Silver))
+                {
+                    foreach (var line in highlights[s])
+                    {
+                        ImGui.TextUnformatted(line);
+                    }
+                }
+            }
+
+            if (ImGui.SmallButton(expanded[s] ? Strings.WhatsNew.Less : Strings.WhatsNew.More))
+            {
+                expanded[s] = !expanded[s];
+            }
+
+            if (ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(expanded[s] ? Strings.WhatsNew.LessTooltip : Strings.WhatsNew.MoreTooltip);
+            }
+
+            ImGui.Spacing();
+        }
+    }
+
+    /// <summary>One version's every change, by group, sub-bullets indented under their bullet.</summary>
+    private void DrawFull(int s, float pad)
+    {
+        foreach (var (groupTitle, lines) in fullText[s])
+        {
+            if (groupTitle.Length > 0)
             {
                 using (Theme.PushText(Theme.Dusk))
                 {
-                    ImGui.TextUnformatted(group.Title);
+                    ImGui.TextUnformatted(groupTitle);
                 }
             }
 
             using (ImRaii.PushIndent(pad, false))
             using (Theme.PushText(Theme.Silver))
             {
-                var lines = groupLines[g];
-                for (var i = 0; i < lines.Length; i++)
+                foreach (var (text, nested) in lines)
                 {
-                    ImGui.TextUnformatted(lines[i]);
+                    if (nested)
+                    {
+                        using (ImRaii.PushIndent(pad * 2f, false))
+                        {
+                            ImGui.TextUnformatted(text);
+                        }
+                    }
+                    else
+                    {
+                        ImGui.TextUnformatted(text);
+                    }
                 }
             }
 

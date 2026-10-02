@@ -18,6 +18,8 @@ public static class UiRects
     public const string Sync = "sync";
     public const string HelpButton = "helpButton";
     public const string SettingsButton = "settingsButton";
+    public const string OverlayButton = "overlayButton";
+    public const string NearbyButton = "nearbyButton";
     public const string Tabs = "tabs";
     public const string Tree = "tree";
     public const string Table = "table";

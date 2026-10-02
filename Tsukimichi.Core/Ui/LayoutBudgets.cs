@@ -24,7 +24,14 @@ public enum TreeTier
 /// <param name="Station">Each station's height.</param>
 /// <param name="Percent">Whether the gauge's percentage shows under it.</param>
 /// <param name="FootAnchored">Whether the foot sits at the bottom; false when the rail is taller than its pane and scrolls.</param>
-public readonly record struct RailFit(float Crest, float Station, bool Percent, bool FootAnchored);
+public readonly record struct RailFit(float Crest, float Station, bool Percent, bool FootAnchored)
+{
+    /// <summary>
+    /// Whether the foot's gauge is left out on a short window (1.7.0): the Journal station's own orbit shows the same
+    /// overall progress, so the gauge goes before the crest does.
+    /// </summary>
+    public bool GaugeHidden { get; init; }
+}
 
 /// <summary>The rail's pixel layout for one frame (<see cref="LayoutBudgets.PlaceRail"/>), offsets from the pane's top.</summary>
 /// <param name="Fit">The logical fit it was placed from.</param>
@@ -84,8 +91,14 @@ public static class LayoutBudgets
     /// <summary>The overall gauge at the rail's foot.</summary>
     public const float RailGaugeLogical = 36f;
 
-    /// <summary>A round button at the rail's foot (Help, Settings): the minimum click target.</summary>
+    /// <summary>A round button at the rail's foot (Overlay, Nearby, Help, Settings): the minimum click target.</summary>
     public const float RailButtonLogical = 26f;
+
+    /// <summary>
+    /// The round buttons at the rail's foot (1.7.0): the Todo overlay and Nearby, then Help and Settings. Two a row on
+    /// the labelled rail, one a row on the compact rail.
+    /// </summary>
+    public const int RailFootButtons = 4;
 
     /// <summary>Between the parts of the rail (crest, stations, foot) and inside the foot.</summary>
     public const float RailGapLogical = 6f;
@@ -128,9 +141,10 @@ public static class LayoutBudgets
 
     /// <summary>
     /// How the rail fills a pane <paramref name="heightLogical"/> tall with <paramref name="stations"/> stations: the
-    /// crest, the stations, and the foot (gauge, its percentage, Help and Settings) held to the bottom. When the
-    /// height runs short the rail gives up, in order: the crest's full size, the percentage (the gauge's tooltip still
-    /// has it), the stations' spare height, the crest; past that the foot follows the stations and the rail scrolls.
+    /// crest, the stations, and the foot (gauge, its percentage, Overlay, Nearby, Help and Settings) held to the bottom.
+    /// When the height runs short the rail gives up, in order: the crest's full size, the percentage (the gauge's tooltip
+    /// still has it), the stations' spare height, the gauge (the Journal station's orbit shows the same progress), the
+    /// crest; past that the foot follows the stations and the rail scrolls.
     /// </summary>
     /// <param name="heightLogical">The rail pane's height in logical pixels.</param>
     /// <param name="stations">How many stations the rail has.</param>
@@ -167,9 +181,14 @@ public static class LayoutBudgets
         }
 
         // The stations give up their spare height, as far as their minimum.
-        var spare = RailHeight(fit, count, compact, button) - height;
-        var give = count > 0 ? MathF.Min(station - stationMin, spare / count) : 0f;
-        fit = fit with { Station = station - give };
+        fit = GiveStationHeight(fit with { Station = station }, height, count, compact, button, station, stationMin);
+        if (RailHeight(fit, count, compact, button) <= height + 0.01f)
+        {
+            return fit;
+        }
+
+        // Then the gauge (the Journal station's orbit carries the same progress), the stations taking back what that frees.
+        fit = GiveStationHeight(fit with { Station = station, GaugeHidden = true }, height, count, compact, button, station, stationMin);
         if (RailHeight(fit, count, compact, button) <= height + 0.01f)
         {
             return fit;
@@ -179,22 +198,43 @@ public static class LayoutBudgets
         return RailHeight(fit, count, compact, button) <= height + 0.01f ? fit : fit with { FootAnchored = false };
     }
 
+    /// <summary>The stations give up their spare height, as far as their minimum.</summary>
+    private static RailFit GiveStationHeight(RailFit fit, float height, int count, bool compact, float button, float station, float stationMin)
+    {
+        var spare = RailHeight(fit, count, compact, button) - height;
+        if (spare <= 0f || count <= 0)
+        {
+            return fit;
+        }
+
+        var give = MathF.Min(station - stationMin, spare / count);
+        return fit with { Station = station - give };
+    }
+
     /// <summary>The height a rail laid out as <paramref name="fit"/> needs, from the top pad to the bottom pad.</summary>
     public static float RailHeight(RailFit fit, int stations, bool compact, float buttonLogical = RailButtonLogical)
     {
         var crest = fit.Crest > 0f ? fit.Crest + RailGapLogical : 0f;
-        return RailPadLogical + crest + (Math.Max(0, stations) * fit.Station) + RailGapLogical + FootHeight(fit.Percent, compact, buttonLogical) + RailPadLogical;
+        return RailPadLogical + crest + (Math.Max(0, stations) * fit.Station) + RailGapLogical + FootHeight(fit, compact, buttonLogical) + RailPadLogical;
     }
 
     /// <summary>
-    /// The foot's height: the gauge, the percentage under it (a line at the label size), and the two buttons side by
-    /// side on the labelled rail or one above the other on the compact rail.
+    /// The foot's height with its gauge: the gauge, the percentage under it (a line at the label size), and the
+    /// <see cref="RailFootButtons"/> buttons, two a row on the labelled rail or one a row on the compact rail.
     /// </summary>
-    public static float FootHeight(bool percent, bool compact, float buttonLogical = RailButtonLogical)
+    public static float FootHeight(bool percent, bool compact, float buttonLogical = RailButtonLogical) =>
+        RailGaugeLogical + RailGapLogical + PercentLine(percent) + FootButtonsHeight(compact, buttonLogical);
+
+    /// <summary>The foot's height as <paramref name="fit"/> lays it out: without the gauge (and its percentage) when <see cref="RailFit.GaugeHidden"/>.</summary>
+    public static float FootHeight(RailFit fit, bool compact, float buttonLogical = RailButtonLogical) =>
+        fit.GaugeHidden ? FootButtonsHeight(compact, buttonLogical) : FootHeight(fit.Percent, compact, buttonLogical);
+
+    /// <summary>The foot's buttons: <see cref="RailFootButtons"/> of them, two a row on the labelled rail, one a row on the compact rail, <see cref="RailGapLogical"/> between rows.</summary>
+    public static float FootButtonsHeight(bool compact, float buttonLogical = RailButtonLogical)
     {
         var button = Button(buttonLogical);
-        var buttons = compact ? (2f * button) + RailGapLogical : button;
-        return RailGaugeLogical + RailGapLogical + PercentLine(percent) + buttons;
+        var rows = compact ? RailFootButtons : (RailFootButtons + 1) / 2;
+        return (rows * button) + ((rows - 1) * RailGapLogical);
     }
 
     /// <summary>The percentage's line under the gauge with its gap, in logical pixels; 0 when it does not show.</summary>
@@ -221,7 +261,7 @@ public static class LayoutBudgets
         var stationsTop = pad + (crest > 0f ? crest + gap : 0f);
         var station = MathF.Max(1f, MathF.Floor(fit.Station * s));
         var stationsBottom = stationsTop + (count * station);
-        var foot = FootHeight(fit.Percent, compact, buttonLogical) * s;
+        var foot = FootHeight(fit, compact, buttonLogical) * s;
         var footTop = fit.FootAnchored ? MathF.Max(stationsBottom + gap, height - pad - foot) : stationsBottom + gap;
         var contentBottom = footTop + foot + pad;
         if (fit.FootAnchored)

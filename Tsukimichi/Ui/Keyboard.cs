@@ -9,7 +9,7 @@ namespace Tsukimichi.Ui;
 /// Hand-rolled shortcuts (T17, accessibility A6/A7, dalamud-developer panel §4): the binding has no <c>ImGui.Shortcut</c>,
 /// so every key is <see cref="ImGui.IsKeyPressed(ImGuiKey, bool)"/> gated on the window having focus and no text field
 /// wanting the keyboard. Dalamud passes every key on to the game as well (only a text field swallows them), so only
-/// Ctrl+F and Esc are bound by default; the Ctrl+1..4, F, Enter and P shortcuts are opt-in under Settings › Keyboard.
+/// Ctrl+F and Esc are bound by default; the Ctrl+1..5, F, Enter and P shortcuts are opt-in under Settings › Keyboard.
 /// Also the row "…" button every right-click menu gets, so no action needs a mouse's right button.
 /// </summary>
 public static class Keyboard

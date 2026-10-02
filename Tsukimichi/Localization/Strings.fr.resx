@@ -705,9 +705,6 @@
   <data name="ConfigShortcutReveal" xml:space="preserve">
     <value>Entrée affiche la quête sélectionnée dans le Journal</value>
   </data>
-  <data name="ConfigShortcutRevealHint" xml:space="preserve">
-    <value>Dans les onglets Moonlit, Personnages et Vol : passe au Journal avec la catégorie de la quête ouverte dans l'arborescence et sa ligne sélectionnée</value>
-  </data>
   <data name="ConfigShortcutPin" xml:space="preserve">
     <value>P épingle ou désépingle la quête sélectionnée</value>
   </data>
@@ -1953,40 +1950,37 @@
   <data name="Help.CommandKeys.4" xml:space="preserve">
     <value>/tsukimichi help</value>
   </data>
-  <data name="Help.CommandKeys.5" xml:space="preserve">
-    <value>/tsukimichi glyphs</value>
-  </data>
-  <data name="Help.CommandKeys.6" xml:space="preserve">
+  <data name="Help.CommandKeys.7" xml:space="preserve">
     <value>/tsuki zone</value>
   </data>
-  <data name="Help.CommandKeys.7" xml:space="preserve">
+  <data name="Help.CommandKeys.8" xml:space="preserve">
     <value>/tsuki which</value>
   </data>
-  <data name="Help.CommandKeys.8" xml:space="preserve">
+  <data name="Help.CommandKeys.9" xml:space="preserve">
     <value>/tsuki why [nom de la quête]</value>
   </data>
-  <data name="Help.CommandKeys.9" xml:space="preserve">
+  <data name="Help.CommandKeys.11" xml:space="preserve">
     <value>/tsuki nearby</value>
   </data>
-  <data name="Help.CommandKeys.10" xml:space="preserve">
+  <data name="Help.CommandKeys.12" xml:space="preserve">
     <value>/tsuki todo</value>
   </data>
-  <data name="Help.CommandKeys.11" xml:space="preserve">
+  <data name="Help.CommandKeys.13" xml:space="preserve">
     <value>/tsuki report [nom de la quête]</value>
   </data>
-  <data name="Help.CommandKeys.12" xml:space="preserve">
+  <data name="Help.CommandKeys.14" xml:space="preserve">
     <value>/tsuki export [quests|moonlit] [json|csv]</value>
   </data>
-  <data name="Help.CommandKeys.13" xml:space="preserve">
+  <data name="Help.CommandKeys.15" xml:space="preserve">
     <value>Ctrl+F</value>
   </data>
-  <data name="Help.CommandKeys.14" xml:space="preserve">
+  <data name="Help.CommandKeys.16" xml:space="preserve">
     <value>Échap</value>
   </data>
-  <data name="Help.CommandKeys.15" xml:space="preserve">
+  <data name="Help.CommandKeys.17" xml:space="preserve">
     <value>Touche Menu, Maj+F10, …</value>
   </data>
-  <data name="Help.CommandKeys.16" xml:space="preserve">
+  <data name="Help.CommandKeys.18" xml:space="preserve">
     <value>Ctrl+1 à 5, F, Entrée, P</value>
   </data>
   <data name="Help.CommandMeanings.0" xml:space="preserve">
@@ -1995,49 +1989,43 @@
   <data name="Help.CommandMeanings.1" xml:space="preserve">
     <value>la même chose, en plus court ; chaque sous-commande fonctionne avec l'une ou l'autre</value>
   </data>
-  <data name="Help.CommandMeanings.2" xml:space="preserve">
-    <value>chercher et afficher les quêtes correspondantes dans le chat sous forme de liens ; /tsukimichi &lt;text&gt; fait de même</value>
-  </data>
   <data name="Help.CommandMeanings.3" xml:space="preserve">
     <value>ouvrir les paramètres (/tsukimichi config fait de même)</value>
   </data>
   <data name="Help.CommandMeanings.4" xml:space="preserve">
     <value>ouvrir cette fenêtre</value>
   </data>
-  <data name="Help.CommandMeanings.5" xml:space="preserve">
-    <value>la planche des glyphes : chaque lune à chaque taille</value>
-  </data>
-  <data name="Help.CommandMeanings.6" xml:space="preserve">
+  <data name="Help.CommandMeanings.7" xml:space="preserve">
     <value>les quêtes que vous pouvez commencer dans la zone actuelle, en liens dans le chat, par niveau</value>
   </data>
-  <data name="Help.CommandMeanings.7" xml:space="preserve">
+  <data name="Help.CommandMeanings.8" xml:space="preserve">
     <value>chaque quête que confie le PNJ ciblé, avec son état</value>
   </data>
-  <data name="Help.CommandMeanings.8" xml:space="preserve">
+  <data name="Help.CommandMeanings.9" xml:space="preserve">
     <value>pourquoi la quête sélectionnée (ou celle nommée) n'est pas proposée : son état et ce qui la bloque, puis une ligne par condition, remplie ou non, avec les valeurs comparées, puis la note vérifiée là où le jeu est connu pour se comporter autrement ; une quête prête indique à qui parler, avec un lien vers la carte. La même liste s'ouvre dans le Journal depuis le menu de la barre de cible d'un PNJ (« Tsukimichi : quêtes ici »)</value>
   </data>
-  <data name="Help.CommandMeanings.9" xml:space="preserve">
+  <data name="Help.CommandMeanings.11" xml:space="preserve">
     <value>ouvrir ou fermer la fenêtre Quêtes à proximité : ce que vous pouvez commencer dans la zone actuelle</value>
   </data>
-  <data name="Help.CommandMeanings.10" xml:space="preserve">
+  <data name="Help.CommandMeanings.12" xml:space="preserve">
     <value>afficher ou masquer le panneau À faire : épingles, Quêtes d'événement en cours, Déblocages à commencer ici, la prochaine quête du scénario principal et les quêtes de job</value>
   </data>
-  <data name="Help.CommandMeanings.11" xml:space="preserve">
+  <data name="Help.CommandMeanings.13" xml:space="preserve">
     <value>copier dans le presse-papiers un bloc de diagnostic pour la quête sélectionnée (ou celle nommée), prêt à coller dans un ticket GitHub ; le bouton Signaler du volet de détail fait de même</value>
   </data>
-  <data name="Help.CommandMeanings.12" xml:space="preserve">
+  <data name="Help.CommandMeanings.14" xml:space="preserve">
     <value>écrire les quêtes terminées du personnage affiché, sa collection Moonlit, ou les deux, dans le dossier « exports » en JSON ou en CSV (le format des paramètres si aucun n'est précisé) et indiquer où ; voir docs/export-format.md. Ni identifiant de contenu, ni compte, ni monde, et le nom seulement si Paramètres › Données › Export › « Inclure le nom du personnage » est coché</value>
   </data>
-  <data name="Help.CommandMeanings.13" xml:space="preserve">
+  <data name="Help.CommandMeanings.15" xml:space="preserve">
     <value>placer le curseur dans la recherche, quand la fenêtre a le focus</value>
   </data>
-  <data name="Help.CommandMeanings.14" xml:space="preserve">
+  <data name="Help.CommandMeanings.16" xml:space="preserve">
     <value>fermer le menu ouvert ou le panneau des filtres ; si aucun n'est ouvert, fermer la fenêtre</value>
   </data>
-  <data name="Help.CommandMeanings.15" xml:space="preserve">
+  <data name="Help.CommandMeanings.17" xml:space="preserve">
     <value>ouvrir le menu de la ligne active dans le tableau des quêtes et la liste Moonlit, le même menu qu'un clic droit ; le bouton … au bout d'une ligne (affiché au survol ou au focus) l'ouvre d'un clic gauche</value>
   </data>
-  <data name="Help.CommandMeanings.16" xml:space="preserve">
+  <data name="Help.CommandMeanings.18" xml:space="preserve">
     <value>désactivés sauf activation dans Paramètres › Clavier : changer d'onglet, marquer le donneur de la quête sélectionnée, l'afficher dans le Journal, l'épingler. Le jeu reçoit aussi ces touches : Ctrl+1 à 5 correspondent à la barre de raccourcis 2 par défaut</value>
   </data>
   <data name="Help.CountsCardTitles.0" xml:space="preserve">
@@ -2091,7 +2079,7 @@
   <data name="Help.QuirkCardTitles.5" xml:space="preserve">
     <value>Hooks du jeu en pause après un patch</value>
   </data>
-  <data name="Help.QuirkCardTitles.6" xml:space="preserve">
+  <data name="Help.PlayCardTitles.4" xml:space="preserve">
     <value>L'indication de déblocage des missions</value>
   </data>
   <data name="Help.QuirkCardBodies.0" xml:space="preserve">
@@ -2112,7 +2100,7 @@
   <data name="Help.QuirkCardBodies.5" xml:space="preserve">
     <value>Le panneau de l'infobulle d'objet, les entrées des menus d'objet et de PNJ, l'entrée de la barre d'infos serveur et l'indication de déblocage des missions se placent à côté de l'interface du jeu, qu'un patch peut déplacer. Chaque version de Tsukimichi enregistre la version du jeu sur laquelle ils ont été testés ; sur un jeu plus récent, ils se mettent en pause jusqu'à ce qu'une mise à jour y soit testée, et un message dans le chat à la connexion ainsi qu'un avis dans Paramètres › Intégrations le signalent. Le Journal, Moonlit, Personnages, Quêtes à proximité, le panneau À faire et toutes les commandes /tsuki fonctionnent normalement. Pour utiliser les hooks malgré tout, cochez Paramètres › Intégrations › « Activer les hooks du jeu sur cette version non testée » ; cela ne couvre que la version du jeu actuelle, et le patch suivant les remet donc en pause. Si l'un d'eux s'affiche alors au mauvais endroit, décochez la case et il s'arrête aussitôt.</value>
   </data>
-  <data name="Help.QuirkCardBodies.6" xml:space="preserve">
+  <data name="Help.PlayCardBodies.4" xml:space="preserve">
     <value>Sélectionnez une mission verrouillée (cadenas) dans l'Outil de recherche de mission ou la recherche de raid, et un petit panneau à côté de la fenêtre nomme la quête qui la débloque, avec sa lune, ce qu'elle attend, et des boutons pour la révéler ici ou marquer son donneur. Il suit la mission que vous sélectionnez, pas celle sous la souris, et parle pour le personnage connecté. Il connaît les déblocages que lient les données du jeu, une liste vérifiée à la main (les donjons de lancement d'A Realm Reborn et de Dawntrail, les raids en alliance de la Tour de Cristal et de « Shadow of Mhach », les donjons optionnels de Heavensward, entre autres) et les déblocages de missions de Moonlit ; pour toute autre mission verrouillée, il reste muet plutôt que de deviner. Si le panneau nomme la mauvaise quête, ou si une mission verrouillée dont vous connaissez la quête n'affiche rien, ouvrez un ticket de correction de données avec le nom de la mission. Désactivez-le dans Paramètres › Intégrations › « Indication de déblocage des missions ».</value>
   </data>
   <data name="Help.QuirksTip" xml:space="preserve">
@@ -2153,9 +2141,6 @@
   </data>
   <data name="Help.Tips.0" xml:space="preserve">
     <value>« Masquer les terminées » avec « Disponibles maintenant » est la vue la plus rapide de ce qu'il reste à faire.</value>
-  </data>
-  <data name="Help.Tips.1" xml:space="preserve">
-    <value>Épinglez une quête et elle reste à un clic dans le tableau de bord Personnages, avec son statut.</value>
   </data>
   <data name="Help.Tips.2" xml:space="preserve">
     <value>Le champ de recherche accepte un identifiant de quête ; collez-en un depuis un wiki.</value>
@@ -2300,9 +2285,6 @@
   </data>
   <data name="PlanShowingFormat" xml:space="preserve">
     <value>{0:N0} affichées sur {1:N0}</value>
-  </data>
-  <data name="PlanEmptyAllDone" xml:space="preserve">
-    <value>Toutes les quêtes de déblocage sont faites. Plus rien de bleu.</value>
   </data>
   <data name="PlanEmptyFiltered" xml:space="preserve">
     <value>Aucune quête de déblocage ne correspond à ces filtres.</value>
@@ -2895,9 +2877,6 @@
   <data name="Tutorial.DetailTitle" xml:space="preserve">
     <value>Pourquoi pas celle-ci</value>
   </data>
-  <data name="Tutorial.DetailBody" xml:space="preserve">
-    <value>Sélectionnez une ligne : le volet de détail empile des cartes, les conditions d'abord, avec celle qui vous bloque marquée. Sans sélection, Ce soir montre ce que vous pouvez faire maintenant.</value>
-  </data>
   <data name="Tutorial.StatusTitle" xml:space="preserve">
     <value>La colonne Statut</value>
   </data>
@@ -2942,9 +2921,6 @@
   </data>
   <data name="Tutorial.PlayTitle" xml:space="preserve">
     <value>Pendant que vous jouez</value>
-  </data>
-  <data name="Tutorial.PlayBody" xml:space="preserve">
-    <value>Le panneau À faire garde vos épingles et les déblocages proches à l'écran ; Quêtes à proximité liste ce que vous pouvez commencer dans cette zone. Activez-les dans les paramètres, ou tapez /tsuki todo et /tsuki nearby.</value>
   </data>
   <data name="Tutorial.HelpTitle" xml:space="preserve">
     <value>Aide, visite et paramètres</value>
@@ -3188,9 +3164,6 @@
   </data>
   <data name="StaleBannerFormat" xml:space="preserve">
     <value>Instantané : {0}@{1}, {2}</value>
-  </data>
-  <data name="BrowseModeNotice" xml:space="preserve">
-    <value>Aucun instantané de personnage : les états, les blocages et la disponibilité ne sont pas évalués.</value>
   </data>
   <data name="HelpButtonTooltip" xml:space="preserve">
     <value>Aide</value>
@@ -3761,9 +3734,6 @@
   </data>
   <data name="ConfigItemContextMenuHint" xml:space="preserve">
     <value>Clic droit sur un objet pour révéler la quête qui le donne en récompense</value>
-  </data>
-  <data name="CommandHelp" xml:space="preserve">
-    <value>Ouvre Tsukimichi (aussi /tsuki). search &lt;text&gt; (ou simplement &lt;text&gt;) affiche les liens des quêtes correspondantes ; zone liste les quêtes que vous pouvez commencer ici ; which liste les quêtes du PNJ ciblé ; why [nom de la quête] dit ce qui bloque la quête sélectionnée ou nommée ; nearby et todo affichent ou masquent la fenêtre Quêtes à proximité et le panneau À faire ; report [nom de la quête] copie un bloc de diagnostic pour la quête sélectionnée ou nommée ; export [quests|moonlit] [json|csv] écrit vos quêtes terminées ou votre collection Moonlit dans un fichier ; settings (ou config), help et glyphs ouvrent ces fenêtres.</value>
   </data>
   <data name="CommandAliasHelp" xml:space="preserve">
     <value>Forme courte de /tsukimichi.</value>

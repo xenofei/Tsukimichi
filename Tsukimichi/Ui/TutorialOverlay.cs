@@ -29,8 +29,9 @@ namespace Tsukimichi.Ui;
 /// <see cref="ConsumeKeys"/> keeps Enter, Esc and Backspace from the game, so Enter does not also open the chat box; the
 /// arrows always reach the game too, so the camera still turns during the tour.
 /// On first run the welcome card offers the tour with "Take the tour", "Later" (offered again next session, up to
-/// <see cref="LaterLimit"/> times) and "Don't offer again". The tab, the filter panel and the other window state the
-/// tour changes are put back when it ends. Sizes follow <see cref="UiMetrics.Scale"/> and the card's text follows the
+/// <see cref="LaterLimit"/> times) and "Don't offer again". The Read chapter selects a real quest (<see cref="SampleQuest"/>,
+/// 1.7.0) so its steps point at real requirements. The tab, the filter panel, the selection and the other window state
+/// the tour changes are put back when it ends. Sizes follow <see cref="UiMetrics.Scale"/> and the card's text follows the
 /// UI scale, so a player at UiScale 1.6 gets a 1.6 card (accessibility B6).
 /// </summary>
 public sealed class TutorialOverlay : ITutorial
@@ -144,7 +145,7 @@ public sealed class TutorialOverlay : ITutorial
         new(Chapter.Beyond, StepKind.Normal, Strings.Tutorial.CharactersTitle, Strings.Tutorial.CharactersBody, [UiRects.CharactersDashboard], [UiRects.CharactersList], static ui => ui.Tab = NavTab.Characters),
         new(Chapter.Beyond, StepKind.Normal, Strings.Tutorial.FlightTitle, Strings.Tutorial.FlightBody, [UiRects.FlightTable], [UiRects.FlightZones], static ui => ui.Tab = NavTab.Flight),
         new(Chapter.Beyond, StepKind.Normal, Strings.Tutorial.PlanTitle, Strings.Tutorial.PlanBody, [UiRects.PlanCards], [UiRects.Tabs], static ui => ui.Tab = NavTab.Plan),
-        new(Chapter.Beyond, StepKind.Normal, Strings.Tutorial.PlayTitle, Strings.Tutorial.PlayBody, [UiRects.SettingsButton], [UiRects.Toolbar], null),
+        new(Chapter.Beyond, StepKind.Normal, Strings.Tutorial.PlayTitle, Strings.Tutorial.PlayBody, [UiRects.OverlayButton, UiRects.NearbyButton], [UiRects.SettingsButton], null),
         new(Chapter.Beyond, StepKind.Normal, Strings.Tutorial.CompanionsTitle, Strings.Tutorial.CompanionsBody, [UiRects.SettingsButton], [UiRects.Toolbar], null),
         new(Chapter.Beyond, StepKind.Normal, Strings.Tutorial.HelpTitle, Strings.Tutorial.HelpBody, [UiRects.HelpButton, UiRects.SettingsButton], [UiRects.Toolbar], null),
         new(Chapter.Beyond, StepKind.Finish, Strings.Tutorial.FinishTitle, Strings.Tutorial.FinishBody, NoKeys, NoKeys, null),
@@ -180,6 +181,10 @@ public sealed class TutorialOverlay : ITutorial
     private NavTab savedTab;
     private bool savedFilterPanelOpen;
 
+    // The quest the Read chapter selected (1.7.0) and the selection it replaced, put back when the tour ends.
+    private bool sampleApplied;
+    private uint? savedSelection;
+
     public TutorialOverlay(Configuration settings, IDalamudPluginInterface pluginInterface, UiState ui)
     {
         this.settings = settings ?? throw new ArgumentNullException(nameof(settings));
@@ -207,6 +212,12 @@ public sealed class TutorialOverlay : ITutorial
 
     /// <summary>Opens the help window; the finish card's "Open help" button. Null hides the button.</summary>
     public Action? OpenHelp { get; set; }
+
+    /// <summary>
+    /// The quest the Read chapter selects so the detail pane shows real requirements, path and giver
+    /// (<see cref="Core.Ui.TourSample"/>; feature plan v5, 1.7.0). Null, or a null answer, leaves the selection alone.
+    /// </summary>
+    public Func<uint?>? SampleQuest { get; set; }
 
     /// <inheritdoc/>
     public bool Active => index >= 0;
@@ -350,6 +361,26 @@ public sealed class TutorialOverlay : ITutorial
         stepFrames = 0;
         stepChanged = true;
         Steps[index].OnShow?.Invoke(ui);
+        if (Steps[index].Chapter == Chapter.Read)
+        {
+            SelectSample();
+        }
+    }
+
+    /// <summary>
+    /// The first time the tour reaches the Read chapter: selects <see cref="SampleQuest"/>, remembering the selection it
+    /// replaces. A quest the player selects during the tour is not overridden when they step back and forth.
+    /// </summary>
+    private void SelectSample()
+    {
+        if (sampleApplied || !stateSaved || SampleQuest?.Invoke() is not { } rowId)
+        {
+            return;
+        }
+
+        sampleApplied = true;
+        savedSelection = ui.SelectedRowId;
+        ui.SelectedRowId = rowId;
     }
 
     /// <summary>
@@ -363,6 +394,12 @@ public sealed class TutorialOverlay : ITutorial
             stateSaved = false;
             ui.Tab = savedTab;
             ui.FilterPanelOpen = savedFilterPanelOpen;
+            if (sampleApplied)
+            {
+                sampleApplied = false;
+                ui.SelectedRowId = savedSelection;
+                savedSelection = null;
+            }
         }
 
         index = -1;

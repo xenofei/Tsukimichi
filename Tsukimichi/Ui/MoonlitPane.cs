@@ -608,7 +608,12 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
 
         if (visibleCount == 0)
         {
-            ImGui.TextDisabled(Strings.MoonlitNothingMatches);
+            // The shared empty state with one reset (1.7.0, onboarding proposal 9), as the quest table has.
+            if (EmptyState.DrawWithAction(Strings.MoonlitNothingMatches, Strings.MoonlitEmptyBody, Strings.ResetFilters, moon: QuestState.Blocked) == EmptyState.ActionClicked)
+            {
+                ResetFilters(ui);
+            }
+
             return;
         }
 
@@ -1019,6 +1024,20 @@ public sealed class MoonlitPane : IDisposable, IUniqueOverrides
     /// the subtitle beside it and a brass rule under both; under Plain the subtitle alone, as before 1.4. The view
     /// toggle (table or gallery) sits at the line's right end.
     /// </summary>
+    /// <summary>
+    /// The empty state's Reset filters: every narrowing choice of this pane back to its default (all kinds, obtained
+    /// shown, any confidence, expansion and state, no search). The store and gone-for-good switches are settings and stay.
+    /// </summary>
+    private void ResetFilters(UiState ui)
+    {
+        ui.MoonlitKind = null;
+        ui.MoonlitHideObtained = false;
+        confidenceFilter = ConfidenceFilter.Any;
+        expansionFilter = null;
+        stateFilter = MoonlitStateFilter.Any;
+        filterText = string.Empty;
+    }
+
     private void DrawTitle(UiState ui)
     {
         var art = Theme.ShowRules;

@@ -514,6 +514,16 @@ static partial class Strings
     {
         /// <summary>{0} = plugin version.</summary>
         public static string TitleFormat => Loc.Get("WhatsNew.TitleFormat");
+
+        /// <summary>{0} = the version seen before; the card lists every version since.</summary>
+        public static string SinceFormat => Loc.Get("WhatsNew.SinceFormat");
+        public static string More => Loc.Get("WhatsNew.More");
+        public static string Less => Loc.Get("WhatsNew.Less");
+        public static string MoreTooltip => Loc.Get("WhatsNew.MoreTooltip");
+        public static string LessTooltip => Loc.Get("WhatsNew.LessTooltip");
+
+        /// <summary>A section's heading when the card lists several: {0} = version, {1} = date.</summary>
+        public const string SectionFormat = "{0} · {1}";
         public static string Close => Loc.Get("WhatsNew.Close");
         public static string Help => Loc.Get("WhatsNew.Help");
         public const string Bullet = "• ";
@@ -542,6 +552,8 @@ static partial class Strings
             HelpTopic.Characters => Loc.Get("Help.TopicName.Characters"),
             HelpTopic.Flight => Loc.Get("Help.TopicName.Flight"),
             HelpTopic.Plan => Loc.Get("Help.TopicName.Plan"),
+            HelpTopic.WhilePlaying => Loc.Get("Help.TopicName.WhilePlaying"),
+            HelpTopic.Privacy => Loc.Get("Help.TopicName.Privacy"),
             HelpTopic.Companions => Loc.Get("Help.TopicName.Companions"),
             HelpTopic.Commands => Loc.Get("Help.TopicName.Commands"),
             HelpTopic.CountsDiffer => Loc.Get("Help.TopicName.CountsDiffer"),
@@ -562,6 +574,8 @@ static partial class Strings
             HelpTopic.Characters => Loc.Get("Help.TopicLede.Characters"),
             HelpTopic.Flight => Loc.Get("Help.TopicLede.Flight"),
             HelpTopic.Plan => Loc.Get("Help.TopicLede.Plan"),
+            HelpTopic.WhilePlaying => Loc.Get("Help.TopicLede.WhilePlaying"),
+            HelpTopic.Privacy => Loc.Get("Help.TopicLede.Privacy"),
             HelpTopic.Companions => Loc.Get("Help.TopicLede.Companions"),
             HelpTopic.Commands => Loc.Get("Help.TopicLede.Commands"),
             HelpTopic.CountsDiffer => Loc.Get("Help.TopicLede.CountsDiffer"),
@@ -590,6 +604,8 @@ static partial class Strings
         public static string StepPlanBody => Loc.Get("Help.StepPlanBody");
         public static string StepTourTitle => Loc.Get("Help.StepTourTitle");
         public static string StepTourBody => Loc.Get("Help.StepTourBody");
+        public static string StepSetupTitle => Loc.Get("Help.StepSetupTitle");
+        public static string StepSetupBody => Loc.Get("Help.StepSetupBody");
         public static string QuickStartTip => Loc.Get("Help.QuickStartTip");
         public static string QuickStartSettingsTip => Loc.Get("Help.QuickStartSettingsTip");
 
@@ -688,5 +704,19 @@ static partial class Strings
 
         // ---- Tips ----
         public static string[] Tips => Loc.Array("Help.Tips");
+
+        // ---- While you play (1.7.0) ----
+        public static string[] PlayCardTitles => Loc.Array("Help.PlayCardTitles");
+
+        public static string[] PlayCardBodies => Loc.Array("Help.PlayCardBodies");
+
+        public static string PlayTip => Loc.Get("Help.PlayTip");
+        public static string ToggleOverlay => Loc.Get("Help.ToggleOverlay");
+        public static string OpenNearby => Loc.Get("Help.OpenNearby");
+
+        // ---- What Tsukimichi reads and keeps (1.7.0) ----
+        public static string[] PrivacyCardTitles => Loc.Array("Help.PrivacyCardTitles");
+
+        public static string[] PrivacyCardBodies => Loc.Array("Help.PrivacyCardBodies");
     }
 }

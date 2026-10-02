@@ -40,7 +40,7 @@ Updates arrive through the plugin installer like any other plugin.
 - **Chains and ladders**: Hildibrand, the relic lines, the raid stories and every job and role quest ladder with "N of M" and the next quest.
 - **Notices**: an optional chat line when a pinned or feature quest becomes available, when a level-up opens the next job or role quest, and when you abandon a quest.
 - **Integrations**: every quest and Moonlit reward is registered with the Wotsit search plugin; Teleport to the giver goes through the Lifestream plugin when it is installed; with Questionable loaded, the detail pane says whether its lock check agrees, and a route, chain, expansion or your pins can be sent to its priority list (and Questionable started) with a button. All are optional. Other plugins can ask Tsukimichi over an IPC API whether a quest can be picked up now, its state, what blocks it and the next main scenario quest, or open a quest in it (see [Works with other plugins](#works-with-other-plugins) and [docs/ipc.md](docs/ipc.md)).
-- **Help, tour and settings** from the toolbar: a searchable help window, an interactive tour that points at each part of the window, UI and icon scale, reduce motion.
+- **Help, tour and settings** at the foot of the tabs, beside the Todo overlay and Nearby buttons: a searchable help window (including "While you play" and "What Tsukimichi reads and keeps"), an interactive tour that points at each part of the window with a real quest, a first-run "Set up your road" card, UI and icon scale, reduce motion.
 
 ## Commands
 
@@ -48,16 +48,19 @@ Updates arrive through the plugin installer like any other plugin.
 |---|---|
 | `/tsukimichi` | open or close the main window |
 | `/tsuki` | the same, shorter; every subcommand works with either |
-| `/tsuki search <text>` | search and print matching quests to chat as links (`/tsuki <text>` does the same) |
+| `/tsuki search <text>` | search and print matching quests to chat as links (`/tsuki <text>` does the same, and suggests a command when the word was a near miss: "Did you mean /tsuki nearby?") |
+| `/tsuki journal`, `moonlit`, `characters`, `flight`, `blues` | open the main window on that tab (`blues` is My blues) |
+| `/tsuki tour` | start the guided tour of the window |
 | `/tsuki zone` | chat links for the quests you can start in the current zone, by level |
 | `/tsuki which` | every quest the targeted NPC hands out, with its state |
 | `/tsuki why [quest name]` | why the selected or named quest is not offered: its state and blocker, one line per requirement, and the curated note where the game is known to skip a step; a Ready quest says whom to talk to, with a map link |
+| `/tsuki route [quest name]` | open the unlock route to the selected or named quest: every quest still needed, in order |
 | `/tsuki nearby` | open or close the Nearby quests window |
 | `/tsuki todo` | show or hide the Todo overlay |
+| `/tsuki report [quest name]` | copy a diagnostic block for the selected or named quest to the clipboard, ready to paste into a GitHub issue |
 | `/tsuki export [quests\|moonlit] [json\|csv]` | write your completed quests, your Moonlit collection, or both to the exports folder (see [docs/export-format.md](docs/export-format.md)) |
 | `/tsuki config` or `/tsuki settings` | open Settings |
 | `/tsuki help` | open the help window |
-| `/tsuki glyphs` | the glyph sheet: every moon at every size |
 
 ## What it hooks, and what it never does
 

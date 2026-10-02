@@ -198,6 +198,151 @@ public class ChangelogSectionTests
         }
     }
 
+    private const string Cumulative = """
+        # Changelog
+
+        ## [Unreleased]
+
+        ### Added
+        - Not shipped yet.
+
+        ## [1.7.0] - 2026-10-02
+
+        ### Added
+        - **Set up your road.** A first-run card.
+          - The overlay stays off.
+        - **Tour** shows a real quest. It picks one.
+
+        ## [1.6.1] - 2026-10-01
+
+        ### Fixed
+
+        ## [1.6.0] - 2026-10-01
+
+        ### Changed
+        - Routes merge stops. Steps at one aetheryte read as one stop.
+
+        ## [1.5.0] - 2026-09-30
+
+        ### Added
+        - **Routes to several things at once:**
+          - a job;
+          - your pins.
+
+        ## [1.4.1] - 2026-09-29
+
+        ### Fixed
+        - Older fix.
+        """;
+
+    [Fact]
+    public void Since_lists_every_skipped_version_newest_first()
+    {
+        var sections = ChangelogSection.Since(Cumulative, "1.4.1", "1.7.0");
+
+        // 1.6.1 has no bullet and is left out; 1.4.1 was already seen; Unreleased is never a version.
+        Assert.Equal(["1.7.0", "1.6.0", "1.5.0"], sections.Select(static s => s.Version));
+        Assert.Equal("2026-10-02", sections[0].Date);
+    }
+
+    [Fact]
+    public void Since_stops_at_the_running_version_and_reads_four_part_versions()
+    {
+        var sections = ChangelogSection.Since(Cumulative, "1.4.1.0", "1.6.0.0");
+        Assert.Equal(["1.6.0", "1.5.0"], sections.Select(static s => s.Version));
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData(null)]
+    public void Since_without_a_seen_version_gives_the_running_version_alone(string? seen)
+    {
+        // A build before 0.6.0 recorded nothing; such an update gets one version, not the whole file.
+        var section = Assert.Single(ChangelogSection.Since(Cumulative, seen, "1.7.0"));
+        Assert.Equal("1.7.0", section.Version);
+        Assert.Empty(ChangelogSection.Since(Cumulative, seen, "1.6.1"));
+    }
+
+    [Theory]
+    [InlineData("1.7.0", "1.7.0")]
+    [InlineData("1.8.0", "1.7.0")]
+    [InlineData("1.4.1", "Unreleased")]
+    [InlineData("1.4.1", "")]
+    public void Since_is_empty_when_nothing_was_skipped_or_the_running_version_is_not_one(string seen, string running)
+    {
+        Assert.Empty(ChangelogSection.Since(Cumulative, seen, running));
+    }
+
+    [Fact]
+    public void Since_with_only_empty_skipped_sections_records_silently()
+    {
+        // 1.6.0 → 1.6.1 where 1.6.1 has no bullet: nothing to show, so the version is recorded without a card.
+        var sections = ChangelogSection.Since(Cumulative, "1.6.0", "1.6.1");
+        Assert.Empty(sections);
+        Assert.Equal(WhatsNewDecision.RecordSilently, WhatsNew.Decide("1.6.0", "1.6.1", sections.Count > 0, hasPriorConfig: true));
+        Assert.Equal(WhatsNewDecision.Show, WhatsNew.Decide("1.4.1", "1.6.1", ChangelogSection.Since(Cumulative, "1.4.1", "1.6.1").Count > 0, hasPriorConfig: true));
+    }
+
+    [Fact]
+    public void Sub_bullets_are_marked_nested()
+    {
+        var section = ChangelogSection.Find(Cumulative, "1.7.0");
+
+        Assert.NotNull(section);
+        var group = Assert.Single(section.Groups);
+        Assert.Equal(["**Set up your road.** A first-run card.", "The overlay stays off.", "**Tour** shows a real quest. It picks one."], group.Items);
+        Assert.False(group.IsNested(0));
+        Assert.True(group.IsNested(1));
+        Assert.False(group.IsNested(2));
+        Assert.False(group.IsNested(7));
+    }
+
+    [Theory]
+    [InlineData("**Set up your road.** A first-run card.", "Set up your road.")]
+    [InlineData("**Routes to several things at once:**", "Routes to several things at once")]
+    [InlineData("**Tour** shows a real quest. It picks one.", "Tour shows a real quest.")]
+    [InlineData("**Walk to giver** (vnavmesh). It walks your character.", "Walk to giver (vnavmesh).")]
+    [InlineData("Routes merge stops. Steps at one aetheryte read as one stop.", "Routes merge stops.")]
+    [InlineData("Teleport says \"Already here\". It stays.", "Teleport says \"Already here\".")]
+    [InlineData("Version 7.5 data, no sentence end", "Version 7.5 data, no sentence end")]
+    [InlineData("The `/tsuki route` command.", "The /tsuki route command.")]
+    [InlineData("", "")]
+    [InlineData(null, "")]
+    public void Highlight_is_the_bold_lead_or_the_first_sentence(string? item, string expected)
+    {
+        Assert.Equal(expected, ChangelogSection.Highlight(item));
+    }
+
+    [Fact]
+    public void Plain_drops_emphasis_and_code_marks()
+    {
+        Assert.Equal("Go to giver and /tsuki why.", ChangelogSection.Plain("**Go to giver** and `/tsuki why`."));
+    }
+
+    [Fact]
+    public void Repository_changelog_gives_highlights_for_every_skipped_version()
+    {
+        // An update from 1.4.1 to 1.6.0 lists 1.6.0, 1.5.0 and 1.4.2, each with a highlight per top-level bullet.
+        var text = File.ReadAllText(Path.Combine(RepoRoot(), "CHANGELOG.md"));
+        var sections = ChangelogSection.Since(text, "1.4.1", "1.6.0");
+        Assert.Equal(["1.6.0", "1.5.0", "1.4.2"], sections.Select(static s => s.Version));
+        foreach (var section in sections)
+        {
+            foreach (var group in section.Groups)
+            {
+                for (var i = 0; i < group.Items.Count; i++)
+                {
+                    if (!group.IsNested(i))
+                    {
+                        var highlight = ChangelogSection.Highlight(group.Items[i]);
+                        Assert.False(string.IsNullOrWhiteSpace(highlight), $"[{section.Version}] {group.Items[i]}");
+                        Assert.DoesNotContain("**", highlight, StringComparison.Ordinal);
+                    }
+                }
+            }
+        }
+    }
+
     private static string Normalize(string text) =>
         string.Join('\n', text.Replace("\r\n", "\n", StringComparison.Ordinal).Split('\n').Select(l => l.TrimEnd()));
 
