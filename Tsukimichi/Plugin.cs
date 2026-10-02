@@ -717,6 +717,7 @@ public sealed class Plugin : IDalamudPlugin
                 MoonlitPane.Reveal(ui, quest);
             }, ClientState, Condition, Paths, PluginInterface, Log);
             todoOverlay.Plan = planSource;
+            todoOverlay.ShowPins = mainWindow.ShowPinned;
             windowSystem.AddWindow(todoOverlay);
             // 0.8.0: Locked became click-through; a player who upgraded with it on is told once in chat.
             todoLockNotice = new Game.TodoLockNotice(Settings, ClientState, ChatGui, PluginInterface, Log);

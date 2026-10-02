@@ -11,7 +11,7 @@ public interface IRoutePinStore
 
     bool IsPinned(uint rowId);
 
-    /// <summary>Pins an unpinned quest or unpins a pinned one; false when nothing changed.</summary>
+    /// <summary>Pins an unpinned quest (after every pin already held: the pins keep the order they were added in) or unpins a pinned one; false when nothing changed.</summary>
     bool TogglePin(uint rowId);
 }
 
@@ -30,8 +30,9 @@ public sealed record RoutePinBatch(ulong? Owner, IReadOnlyList<uint> Added)
 public static class RoutePins
 {
     /// <summary>
-    /// Pins every step of <paramref name="route"/> that is not pinned yet, in route order (so the Todo overlay lists
-    /// them in the order to do them). Returns the quests it pinned and the character it pinned them for, for
+    /// Pins every step of <paramref name="route"/> that is not pinned yet, in route order after the pins already held
+    /// (the store keeps the order pins were added in, and the Todo overlay lists them in that order, so the steps read
+    /// in the order to do them; a step pinned before keeps its place). Returns the quests it pinned and the character it pinned them for, for
     /// <see cref="Undo"/>; no quests when the store cannot pin or every step was pinned already.
     /// </summary>
     public static RoutePinBatch PinAll(UnlockRoute route, IRoutePinStore store)

@@ -125,7 +125,7 @@ public sealed class TodoListTests
 
     private static TodoInputs Inputs(
         Dictionary<uint, QuestEvaluation>? states = null,
-        IReadOnlySet<uint>? pinned = null,
+        IReadOnlyList<uint>? pinned = null,
         uint territory = Gridania,
         byte job = Gladiator,
         short level = 1,
@@ -133,7 +133,7 @@ public sealed class TodoListTests
         bool nearby = true,
         bool msq = true,
         bool jobs = true) =>
-        new(Catalog, states ?? States(), pinned ?? new HashSet<uint>(), FeatureIds, territory, job, new Dictionary<byte, short> { [job] = level }, Ladder, JobNames, pins, nearby, msq, jobs, Names);
+        new(Catalog, states ?? States(), pinned ?? [], FeatureIds, territory, job, new Dictionary<byte, short> { [job] = level }, Ladder, JobNames, pins, nearby, msq, jobs, Names);
 
     private static readonly BlockerNames Names = new()
     {
@@ -155,23 +155,24 @@ public sealed class TodoListTests
     }
 
     [Fact]
-    public void Pinned_lists_todo_pins_ready_first_and_leaves_out_completed_and_foreclosed()
+    public void Pinned_lists_todo_pins_in_pin_order_and_leaves_out_completed_and_foreclosed()
     {
         var states = States(
             (SideQuest, Eval(QuestState.Completed)),
             (FeatureFar, Eval(QuestState.Accepted, sequence: 2)),
             (MsqBranchOther, Eval(QuestState.Foreclosed)));
-        var pinned = new HashSet<uint> { FeatureBlocked, FeatureA, FeatureFar, SideQuest, MsqBranchOther, FeatureB, 99 };
+        uint[] pinned = [FeatureBlocked, FeatureA, FeatureFar, SideQuest, MsqBranchOther, FeatureB, 99];
 
         var section = Section(TodoList.Build(Inputs(states, pinned)), TodoSection.Pinned);
 
         Assert.NotNull(section);
-        Assert.Equal(["Zephyr", "Aurora", "Distant", "Corundum"], section.Rows.Select(r => r.Name));
+        Assert.Equal(["Corundum", "Zephyr", "Distant", "Aurora"], section.Rows.Select(r => r.Name));
         Assert.All(section.Rows, r => Assert.Equal(TodoRowKind.Pin, r.Kind));
-        Assert.Equal("Lv 15 · Nedrick", section.Rows[0].Hint);
-        Assert.Equal("Ready on PLD", section.Rows[1].Hint);
+        Assert.Equal("Lv 50", section.Rows[0].Hint);
+        Assert.Equal("Lv 15 · Nedrick", section.Rows[1].Hint);
         Assert.Equal("step 2", section.Rows[2].Hint);
-        Assert.Equal("Lv 50", section.Rows[3].Hint);
+        Assert.Equal("Ready on PLD", section.Rows[3].Hint);
+        Assert.Equal(0, section.More);
     }
 
     [Fact]
@@ -189,14 +190,70 @@ public sealed class TodoListTests
     }
 
     [Fact]
-    public void Pinned_orders_by_level_then_name_within_a_state()
+    public void Pinned_keeps_the_order_quests_were_pinned_not_level_or_name()
     {
+        // "Pin all" on a route appends its steps in route order; the section must not re-sort them by level or name.
         var states = States((FeatureB, Eval(QuestState.Ready)), (FeatureFar, Eval(QuestState.Ready)));
-        var pinned = new HashSet<uint> { FeatureA, FeatureB, FeatureFar, SideQuest };
+        uint[] pinned = [FeatureA, FeatureB, FeatureFar, SideQuest];
+        uint[] reversed = [SideQuest, FeatureFar, FeatureB, FeatureA];
 
         var section = Section(TodoList.Build(Inputs(states, pinned)), TodoSection.Pinned)!;
+        var other = Section(TodoList.Build(Inputs(states, reversed)), TodoSection.Pinned)!;
 
-        Assert.Equal(["Distant", "Bramble", "Aurora", "Zephyr"], section.Rows.Select(r => r.Name));
+        Assert.Equal(["Zephyr", "Aurora", "Distant", "Bramble"], section.Rows.Select(r => r.Name));
+        Assert.Equal(["Bramble", "Distant", "Aurora", "Zephyr"], other.Rows.Select(r => r.Name));
+    }
+
+    [Fact]
+    public void Pinned_lists_a_repeated_row_id_once()
+    {
+        uint[] pinned = [FeatureA, FeatureB, FeatureA];
+
+        var section = Section(TodoList.Build(Inputs(pinned: pinned)), TodoSection.Pinned)!;
+
+        Assert.Equal([FeatureA, FeatureB], section.Rows.Select(r => r.RowId));
+        Assert.Equal(0, section.More);
+    }
+
+    [Fact]
+    public void Pinned_shows_the_first_pins_up_to_the_cap_and_counts_the_rest()
+    {
+        // A long route pinned whole: the overlay lists the first MaxPinned steps still to do, the rest are "+N more".
+        var quests = new List<QuestRecord>();
+        var states = new Dictionary<uint, QuestEvaluation>();
+        var pinned = new List<uint>();
+        for (uint i = 0; i < 60; i++)
+        {
+            var rowId = 70000 + i;
+            quests.Add(Quest(rowId, $"Step {i:00}", (byte)(60 - i), 3, Gridania, "Giver"));
+            states[rowId] = Eval(i < 5 ? QuestState.Completed : QuestState.Blocked, "Level 50 (you are 1)");
+            pinned.Add(rowId);
+        }
+
+        var catalog = QuestCatalog.Build(quests);
+        var inputs = new TodoInputs(catalog, states, pinned, new HashSet<uint>(), 0, 0, new Dictionary<byte, short>(), JobLadder.Empty, JobNames);
+
+        var section = Section(TodoList.Build(inputs), TodoSection.Pinned)!;
+
+        Assert.Equal(TodoList.MaxPinned, section.Rows.Count);
+        Assert.Equal(Enumerable.Range(5, TodoList.MaxPinned).Select(i => 70000u + (uint)i), section.Rows.Select(r => r.RowId));
+        Assert.Equal(55 - TodoList.MaxPinned, section.More);
+
+        var uncapped = Section(TodoList.Build(inputs with { PinLimit = int.MaxValue }), TodoSection.Pinned)!;
+        Assert.Equal(55, uncapped.Rows.Count);
+        Assert.Equal(0, uncapped.More);
+    }
+
+    [Fact]
+    public void Pinned_counts_more_only_past_the_limit()
+    {
+        uint[] pinned = [FeatureA, FeatureB];
+
+        var section = Section(TodoList.Build(Inputs(pinned: pinned) with { PinLimit = 1 }), TodoSection.Pinned)!;
+
+        Assert.Equal([FeatureA], section.Rows.Select(r => r.RowId));
+        Assert.Equal(1, section.More);
+        Assert.Equal(0, Section(TodoList.Build(Inputs(pinned: pinned) with { PinLimit = 2 }), TodoSection.Pinned)!.More);
     }
 
     [Fact]
@@ -232,7 +289,7 @@ public sealed class TodoListTests
         }
 
         var catalog = QuestCatalog.Build(quests);
-        var inputs = new TodoInputs(catalog, states, new HashSet<uint>(), feature, Gridania, 0, new Dictionary<byte, short>(), JobLadder.Empty, JobNames);
+        var inputs = new TodoInputs(catalog, states, [], feature, Gridania, 0, new Dictionary<byte, short>(), JobLadder.Empty, JobNames);
 
         var section = Section(TodoList.Build(inputs), TodoSection.NearbyFeature)!;
 
@@ -312,7 +369,7 @@ public sealed class TodoListTests
     [Fact]
     public void Disabled_sections_are_left_out_and_counted_as_not_enabled()
     {
-        var pinned = new HashSet<uint> { FeatureA };
+        uint[] pinned = [FeatureA];
 
         var all = TodoList.Build(Inputs(pinned: pinned));
         Assert.Equal([TodoSection.Pinned, TodoSection.NearbyFeature, TodoSection.Msq, TodoSection.JobQuests], all.Sections.Select(s => s.Section));
@@ -381,7 +438,7 @@ public sealed class TodoListTests
         var moonfire = Festival(174, "Moonfire Faire", new DateTime(2026, 8, 28, 23, 59, 59, DateTimeKind.Utc),
             (SideQuest, QuestState.Ready), (FeatureFar, QuestState.Accepted), (FeatureBlocked, QuestState.Blocked), (MsqOne, QuestState.Completed));
 
-        var model = TodoList.Build(SeasonalInputs([moonfire], states) with { Pinned = new HashSet<uint> { FeatureA } });
+        var model = TodoList.Build(SeasonalInputs([moonfire], states) with { Pinned = [FeatureA] });
 
         Assert.Equal([TodoSection.Pinned, TodoSection.Seasonal, TodoSection.NearbyFeature, TodoSection.Msq, TodoSection.JobQuests], model.Sections.Select(s => s.Section));
         Assert.Equal(5, model.EnabledSections);
@@ -403,7 +460,7 @@ public sealed class TodoListTests
             [new SeasonalQuest(Catalog.GetByRowId(SideQuest)!, QuestState.Ready) { IsSpareAlternative = true }, new SeasonalQuest(Catalog.GetByRowId(FeatureFar)!, QuestState.Ready)],
             1, null, null);
 
-        var model = TodoList.Build(SeasonalInputs([moonfire], states) with { Pinned = new HashSet<uint> { FeatureA, FeatureB } });
+        var model = TodoList.Build(SeasonalInputs([moonfire], states) with { Pinned = [FeatureA, FeatureB] });
 
         Assert.Equal([FeatureB], Section(model, TodoSection.Pinned)!.Rows.Select(r => r.RowId));
         Assert.Equal([FeatureB], Section(model, TodoSection.NearbyFeature)!.Rows.Select(r => r.RowId));

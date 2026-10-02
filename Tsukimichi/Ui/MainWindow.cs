@@ -559,6 +559,19 @@ public sealed class MainWindow : Window, IDisposable
         }
     }
 
+    /// <summary>
+    /// Opens the window in front on the Journal filtered to the viewed character's pins (<see cref="UiState.ShowPinned"/>),
+    /// for the Todo overlay's "+N more" line. The saved filters are loaded first, so a window opened for the first time
+    /// keeps the Pinned filter instead of replacing it with them.
+    /// </summary>
+    public void ShowPinned()
+    {
+        EnsureInitialized();
+        ui.ShowPinned();
+        IsOpen = true;
+        BringToFront();
+    }
+
     /// <summary>Closing inside the save debounce must not lose the pending filters, sort or display settings.</summary>
     public override void OnClose()
     {

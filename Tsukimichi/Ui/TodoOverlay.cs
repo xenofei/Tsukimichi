@@ -24,7 +24,8 @@ namespace Tsukimichi.Ui;
 
 /// <summary>
 /// Todo overlay (feature plan V2-13), the surface read while playing (game UX panel finding 5, accessibility A6/A8):
-/// a small always-visible panel with one section per enabled part of <see cref="TodoList"/> (pins, the quests of the
+/// a small always-visible panel with one section per enabled part of <see cref="TodoList"/> (pins in the order they were
+/// pinned, the first <see cref="TodoList.MaxPinned"/> then a "+N more" line that opens the Journal on them, the quests of the
 /// seasonal events running now with the Lodestone's end date when curated data has one, unlock quests startable here,
 /// the next main scenario quest, the current job's next job and role quest). It draws on the Night
 /// chrome (<see cref="Theme.PushNightWindow"/>) at <see cref="Configuration.TodoOverlayOpacity"/>, and every text is
@@ -85,9 +86,10 @@ public sealed class TodoOverlay : Window, IDisposable
 
     /// <summary>
     /// <paramref name="HeaderText"/> is the caption; <paramref name="ToggleTooltip"/> says a click folds it;
-    /// <paramref name="Notes"/> are lines under the caption ("Ends Aug 28 (Lodestone)"), not drawn in Compact mode.
+    /// <paramref name="Notes"/> are lines under the caption ("Ends Aug 28 (Lodestone)"), not drawn in Compact mode;
+    /// <paramref name="MoreText"/> is the "+N more" line under the rows of a capped section, null when none was left out.
     /// </summary>
-    private sealed record SectionView(TodoSection Section, string HeaderText, string ToggleTooltip, string[] Notes, Row[] Rows);
+    private sealed record SectionView(TodoSection Section, string HeaderText, string ToggleTooltip, string[] Notes, Row[] Rows, string? MoreText);
 
     private readonly Configuration settings;
     private readonly SessionState session;
@@ -110,8 +112,8 @@ public sealed class TodoOverlay : Window, IDisposable
     // Folded sections, by TodoSection value (not persisted; the old collapsing headers were not either).
     private readonly bool[] folded = new bool[Enum.GetValues<TodoSection>().Length + 1];
 
-    // Pins: the file's write time (checked on a timer) and the set loaded for the viewed character.
-    private readonly HashSet<uint> pinned = [];
+    // Pins: the file's write time (checked on a timer) and the viewed character's pins, in the order they were pinned.
+    private readonly List<uint> pinned = [];
     private DateTime pinsStamp;
     private DateTime pinsLoadedStamp = DateTime.MinValue;
     private ulong? pinsContentId;
@@ -312,6 +314,39 @@ public sealed class TodoOverlay : Window, IDisposable
             {
                 DrawRow(section.Rows[i], i, layout, compact);
             }
+
+            if (section.MoreText is { } moreText)
+            {
+                DrawMoreLine(moreText, layout);
+            }
+        }
+    }
+
+    /// <summary>
+    /// "+52 more" under a capped section's rows, in the name column and the secondary tone. A click opens the main
+    /// window on the Journal filtered to the pins (<see cref="ShowPins"/>); while locked it is plain text.
+    /// </summary>
+    private void DrawMoreLine(string text, in RowLayout layout)
+    {
+        var start = ImGui.GetCursorScreenPos();
+        var textX = start.X + layout.Glyph + ImGui.GetStyle().ItemSpacing.X;
+        var line = ImGui.GetTextLineHeight();
+        ImGui.SetCursorScreenPos(new Vector2(textX, start.Y));
+        var clicked = ImGui.InvisibleButton("##moreLine", new Vector2(layout.TextWidth, line));
+        var hovered = ImGui.IsItemHovered();
+        Chrome.FocusRing();
+        if (clicked)
+        {
+            ShowPins?.Invoke();
+        }
+
+        var dl = ImGui.GetWindowDrawList();
+        dl.PushClipRect(new Vector2(textX, start.Y), new Vector2(textX + layout.TextWidth, start.Y + line), true);
+        Chrome.OutlinedTextAt(dl, new Vector2(textX, start.Y), text, Theme.U32(hovered ? Theme.Surface.Text : Theme.Surface.TextSecondary));
+        dl.PopClipRect();
+        if (hovered)
+        {
+            UiMetrics.Tooltip(Strings.TodoMoreTooltip);
         }
     }
 
@@ -343,6 +378,11 @@ public sealed class TodoOverlay : Window, IDisposable
                 foreach (var note in section.Notes)
                 {
                     text = MathF.Max(text, ImGui.CalcTextSize(note).X);
+                }
+
+                if (section.MoreText is { } more)
+                {
+                    text = MathF.Max(text, ImGui.CalcTextSize(more).X);
                 }
 
                 foreach (var row in section.Rows)
@@ -631,6 +671,9 @@ public sealed class TodoOverlay : Window, IDisposable
     /// <summary>The "Clear my blues" plan (P3) the pinned-expansion section reads; null leaves the section out.</summary>
     public PlanSource? Plan { get; set; }
 
+    /// <summary>Opens the main window on every pin (the Journal filtered to Pinned); the Pinned section's "+N more" line calls it.</summary>
+    public Action? ShowPins { get; set; }
+
     private void OnSessionChanged() => dirty = true;
 
     private void OnTerritoryChanged(uint territory) => dirty = true;
@@ -746,10 +789,12 @@ public sealed class TodoOverlay : Window, IDisposable
                 rows.Add(new Row(quest, row.Name, row.State, row.Hint, tooltip));
             }
 
+            // A capped section counts every row it holds in its caption ("Pinned (60)") and names the rest on one line.
             var name = Strings.TodoSectionName(section.Section);
-            var headerText = string.Format(CultureInfo.CurrentCulture, Strings.TodoSectionFormat, name, rows.Count);
+            var headerText = string.Format(CultureInfo.CurrentCulture, Strings.TodoSectionFormat, name, rows.Count + section.More);
             var toggle = string.Format(CultureInfo.CurrentCulture, Strings.TodoSectionToggleFormat, name);
-            views[i] = new SectionView(section.Section, headerText, toggle, [.. section.Notes], rows.ToArray());
+            var more = section.More > 0 ? string.Format(CultureInfo.CurrentCulture, Strings.TodoMoreFormat, section.More) : null;
+            views[i] = new SectionView(section.Section, headerText, toggle, [.. section.Notes], rows.ToArray(), more);
         }
 
         sections = views;
@@ -780,9 +825,9 @@ public sealed class TodoOverlay : Window, IDisposable
                 log.Warning("Pins: {Warning}", warning);
             }
 
-            if (pins.TryGetValue(id, out var list))
+            if (pins.TryGetValue(id, out var list) && list is not null)
             {
-                pinned.UnionWith(list);
+                pinned.AddRange(list);
             }
         }
         catch (Exception ex)

@@ -19,7 +19,7 @@ namespace Tsukimichi.Ui;
 /// The detail column when no quest is selected (game UX panel finding 1): a "Tonight" card that answers "what can I do
 /// now" before the catalog does. How many quests are Ready, with a button that opens the Journal showing exactly those
 /// (All quests, Ready only, no search, no other filter); the next main scenario quest with its blocker (one per route inside a branch region); the seasonal events running now on one line; and up to
-/// three pinned quests that are Ready. Rows come from the Todo overlay's model (<see cref="TodoList"/>), rebuilt when
+/// three pinned quests that are Ready (the first ones in the order they were pinned). Rows come from the Todo overlay's model (<see cref="TodoList"/>), rebuilt when
 /// the session version, the pins or the catalog change, so drawing allocates nothing. Every line is a focusable item
 /// that selects its quest.
 /// </summary>
@@ -263,7 +263,7 @@ public sealed partial class TonightCard
         var model = TodoList.Build(new TodoInputs(
             bundle.Catalog,
             session.States,
-            runner.Pinned,
+            runner.PinnedInOrder,
             session.FeatureQuestIds,
             0,
             snapshot.CurrentJob,
@@ -274,7 +274,9 @@ public sealed partial class TonightCard
             ShowNearbyFeature: false,
             ShowMsq: true,
             ShowJobQuests: false,
-            Names: session.Names));
+            Names: session.Names,
+            // Every pin still to do, not the overlay's first few: the first Ready ones in pin order may sit past its cap.
+            PinLimit: int.MaxValue));
         foreach (var section in model.Sections)
         {
             switch (section.Section)

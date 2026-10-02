@@ -89,7 +89,7 @@ public class MsqBranchConsumerTests
         var inputs = new TodoInputs(
             catalog,
             evaluations,
-            new HashSet<uint>(),
+            Array.Empty<uint>(),
             new HashSet<uint>(),
             0,
             Evaluation.Fixture.Gladiator,

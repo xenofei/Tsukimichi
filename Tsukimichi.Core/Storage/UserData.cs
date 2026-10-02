@@ -22,8 +22,10 @@ public enum PinChangeKind
 public readonly record struct PinChange(ulong ContentId, uint RowId, PinChangeKind Kind);
 
 /// <summary>
-/// <c>user/pins.json</c>: content id to the quest row ids that character has pinned.
-/// Shape: <c>{ "&lt;contentId&gt;": [ 66038, 65576 ] }</c>.
+/// <c>user/pins.json</c>: content id to the quest row ids that character has pinned, oldest pin first.
+/// Shape: <c>{ "&lt;contentId&gt;": [ 66038, 65576 ] }</c>. The array's order is the order the quests were pinned (the
+/// Todo overlay lists them so, and "Pin all" appends a route's steps in route order); every reader and merge here keeps
+/// it, and a new pin is appended. The shape is unchanged, so files of earlier versions load as they are.
 /// </summary>
 public static class PinsFile
 {
