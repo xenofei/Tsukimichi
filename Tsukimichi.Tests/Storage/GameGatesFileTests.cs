@@ -57,6 +57,53 @@ public sealed class GameGatesFileTests : IDisposable
         Assert.Equal(2, data.WithoutFeatureQuests().GameGates.Count);
     }
 
+    [Fact]
+    public void Gear_gates_parse_their_weapons_sorted_and_pass_them_to_the_catalog()
+    {
+        var data = Load(
+            """
+            {
+              "schema": 1,
+              "entries": {
+                "65897": { "gate": "a relic weapon nexus equipped", "equipped": { "sources": ["RelicItem#5"], "shield": "both", "items": [[8658, 8649], [8650]] }, "evidence": "https://e.org/a", "note": "n" },
+                "67820": { "gate": "an anima weapon in your possession", "held": { "sources": ["QuestClassJobReward#6"], "items": [[13224], [13223, 13236]] }, "evidence": "https://e.org/b", "note": "n" }
+              }
+            }
+            """);
+
+        Assert.Empty(data.Warnings);
+        var nexus = data.GameGates[65897].Items!;
+        Assert.Equal(GateHold.Equipped, nexus.Hold);
+        Assert.Equal(["RelicItem#5"], nexus.Sources);
+        Assert.Equal("both", nexus.Shield);
+        Assert.Equal([[8649u, 8658u], [8650u]], nexus.Groups);
+
+        var anima = data.GameGates[67820].Items!;
+        Assert.Equal(GateHold.Held, anima.Hold);
+        Assert.Null(anima.Shield);
+        Assert.Equal([[13223u, 13236u], [13224u]], anima.Groups);
+
+        Assert.Equal(GateHold.Held, data.GameGateIds[67820].Items!.Hold);
+        Assert.Equal(anima.Groups, data.GameGateIds[67820].Items!.Groups);
+        Assert.Same(data.GameGates[65897].Items, data.WithoutFeatureQuests().GameGates[65897].Items);
+    }
+
+    [Theory]
+    [InlineData("""{ "gate": "g", "equipped": { "sources": ["RelicItem#5"], "items": [[1]] }, "held": { "sources": ["RelicItem#5"], "items": [[2]] }, "evidence": "https://e.org", "note": "n" }""", "either equipped or held")]
+    [InlineData("""{ "gate": "g", "equipped": { "items": [[1]] }, "evidence": "https://e.org", "note": "n" }""", "equipped must be")]
+    [InlineData("""{ "gate": "g", "equipped": { "sources": ["RelicItem"], "items": [[1]] }, "evidence": "https://e.org", "note": "n" }""", "equipped must be")]
+    [InlineData("""{ "gate": "g", "held": { "sources": ["RelicItem#5"], "items": [] }, "evidence": "https://e.org", "note": "n" }""", "held must be")]
+    [InlineData("""{ "gate": "g", "held": { "sources": ["RelicItem#5"], "items": [[]] }, "evidence": "https://e.org", "note": "n" }""", "held must be")]
+    [InlineData("""{ "gate": "g", "held": { "sources": ["RelicItem#5"], "items": [[1], [1]] }, "evidence": "https://e.org", "note": "n" }""", "no item twice")]
+    [InlineData("""{ "gate": "g", "held": { "sources": ["RelicItem#5"], "shield": "sometimes", "items": [[1]] }, "evidence": "https://e.org", "note": "n" }""", "held must be")]
+    public void A_bad_weapon_list_skips_the_entry_with_a_warning(string entry, string reason)
+    {
+        var data = Load($$"""{ "schema": 1, "entries": { "65897": {{entry}}, "68478": {{Good}} } }""");
+
+        Assert.Equal([68478u], data.GameGates.Keys);
+        Assert.Contains(reason, Assert.Single(data.Warnings), StringComparison.Ordinal);
+    }
+
     [Theory]
     [InlineData("\"x\"", Good, "key is not a quest row id")]
     [InlineData("\"65897\"", "[65742]", "value is not an object")]

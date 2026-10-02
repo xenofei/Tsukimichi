@@ -34,6 +34,19 @@ public sealed class GameGatesDataTests(FixtureCatalog fixture) : IClassFixture<F
     private const uint ItTakesAnEnclave = 68677;
 
     /// <summary>
+    /// The relic weapon steps the game offers only to a character wearing (or holding) the weapon at a stage, from each
+    /// quest's own text and script: Zodiac, Anima, Resistance, Manderville and Phantom weapons.
+    /// </summary>
+    internal static readonly uint[] GearGates =
+    [
+        65742, 65892, HisDarkMateria, 66096, 66097, 66971, 66972, 66998, 67000, 67823,
+        67749, 67750, 67820, 67864, 67915, 67932, 67934, 67940,
+        69506, 69507, 69574, 69576, 69637,
+        70261, 70262, 70307, 70308, 70342, 70343,
+        70918, 70992, 71040, 71041,
+    ];
+
+    /// <summary>
     /// Quests after the first of their chain that have no prerequisite at all, with the reason each may stay so. Empty:
     /// every one found so far was a gate the data did not record.
     /// </summary>
@@ -97,7 +110,8 @@ public sealed class GameGatesDataTests(FixtureCatalog fixture) : IClassFixture<F
         var keys = root["entries"]!.AsObject().Select(kv => uint.Parse(kv.Key, CultureInfo.InvariantCulture)).ToList();
         Assert.Equal(keys.Order().Distinct(), keys);
         Assert.Equal(keys.Count, Gates.Count);
-        Assert.Equal([HisDarkMateria, Pyros, Hydatos, Pagos, LightingTheWay], Gates.Keys.Order());
+        Assert.Equal(GearGates.Concat([Pyros, Hydatos, Pagos, LightingTheWay]).Order(), Gates.Keys.Order());
+        Assert.Equal(GearGates.Order(), Gates.Where(kv => kv.Value.Items is not null).Select(kv => kv.Key).Order());
 
         var byScript = Catalog.All.Where(q => q.InternalId.Length > 0).GroupBy(q => q.InternalId.ToUpperInvariant()).ToDictionary(g => g.Key, g => g.First().RowId);
         var problems = new List<string>();
@@ -180,7 +194,7 @@ public sealed class GameGatesDataTests(FixtureCatalog fixture) : IClassFixture<F
     {
         var context = Context();
         var michiru = Character();
-        foreach (var (rowId, gate) in Gates)
+        foreach (var (rowId, gate) in Gates.Where(kv => kv.Value.After.Count > 0))
         {
             var quest = Catalog.GetByRowId(rowId)!;
             var withoutAfter = Without(michiru, [.. gate.After, rowId]);
@@ -192,6 +206,110 @@ public sealed class GameGatesDataTests(FixtureCatalog fixture) : IClassFixture<F
             var state = StateResolver.Resolve(quest, everything, Catalog, context).State;
             Assert.True(state is QuestState.Unknown or QuestState.Blocked, $"{rowId} {quest.Name} reads {state} with every prerequisite done");
         }
+    }
+
+    /// <summary>A capture against the catalog's watch list with <paramref name="equipped"/> worn and <paramref name="held"/> carried as well.</summary>
+    private CharacterSnapshot Wearing(CharacterSnapshot s, uint[] equipped, params uint[] held) =>
+        s with { GateItems = new GateItemCapture(Catalog.GateItemFingerprint, [.. equipped.Order()], [.. equipped.Concat(held).Distinct().Order()]) };
+
+    [Fact]
+    public void Every_gear_gate_lists_weapons_from_its_sources_and_the_verified_stages_hold()
+    {
+        foreach (var rowId in GearGates)
+        {
+            var set = Gates[rowId].Items;
+            Assert.NotNull(set);
+            Assert.NotEmpty(set.Sources);
+            Assert.True(set.Groups.Length >= 10, $"{rowId} lists only {set.Groups.Length} weapon groups");
+            Assert.All(set.Groups, g => Assert.InRange(g.Length, 1, 2));
+            Assert.Equal(set.Groups.SelectMany(g => g).Count(), set.Groups.SelectMany(g => g).Distinct().Count());
+            Assert.Equal(set.Groups, Catalog.GameGateOf(rowId)!.Items!.Groups);
+            Assert.Equal(set.Hold, Catalog.GameGateOf(rowId)!.Items!.Hold);
+        }
+
+        // Verified by name in the game's Item sheet: Curtana Nexus with Holy Shield Nexus, Thyrus Nexus.
+        var materia = Gates[HisDarkMateria].Items!;
+        Assert.Equal(GateHold.Equipped, materia.Hold);
+        Assert.Contains([8649u, 8658u], materia.Groups);
+        Assert.Contains([8654u], materia.Groups);
+        Assert.DoesNotContain([8658u], materia.Groups); // the shield only with the sword
+
+        // Up in Arms: Curtana Zenith (6257) counts alone and the Holy Shield Zenith (6266) not at all.
+        Assert.Contains([6257u], Gates[66971].Items!.Groups);
+        Assert.DoesNotContain(Gates[66971].Items!.Groups, g => g.Contains(6266u));
+
+        // Trials of the Braves: Curtana Atma (7824) or Holy Shield Atma (7833), each alone.
+        Assert.Contains([7824u], Gates[66972].Items!.Groups);
+        Assert.Contains([7833u], Gates[66972].Items!.Groups);
+
+        // The Vital Title takes the zeta (Excalibur Zeta 10054 with Aegis Shield Zeta 10063) or its replica (12124, 12213).
+        Assert.Contains([10054u, 10063u], Gates[66097].Items!.Groups);
+        Assert.Contains([12124u, 12213u], Gates[66097].Items!.Groups);
+        Assert.Contains([12124u, 12213u], Gates[67823].Items!.Groups);
+
+        // Anima: Toughening Up wants the animated weapon (Animated Hauteclaire 13611 with Animated Prytwen 13624),
+        // Finding Your Voice the anima stage held (Almace 13223 with Ancile 13236), Body and Soul the complete one (Aettir 15251).
+        Assert.Contains([13611u, 13624u], Gates[67749].Items!.Groups);
+        Assert.Equal(GateHold.Held, Gates[67820].Items!.Hold);
+        Assert.Contains([13223u, 13236u], Gates[67820].Items!.Groups);
+        Assert.Contains([15251u, 15264u], Gates[67934].Items!.Groups);
+        Assert.Contains([15251u, 15264u], Gates[67940].Items!.Groups);
+
+        Assert.Contains(8649u, Catalog.GateItemWatch);
+        Assert.Equal(Catalog.GateItemWatch.Order(), Catalog.GateItemWatch);
+        Assert.NotEqual(0u, Catalog.GateItemFingerprint);
+    }
+
+    [Fact]
+    public void A_gear_gate_reads_Not_checked_without_a_capture_and_is_judged_with_one()
+    {
+        var context = Context();
+        var michiru = Character();
+        Assert.Null(michiru.GateItems);
+        foreach (var rowId in GearGates)
+        {
+            var quest = Catalog.GetByRowId(rowId)!;
+            var gate = Catalog.GameGateOf(rowId)!;
+            var prerequisites = Catalog.PrerequisitesOf(quest).QuestIds;
+            var ready = prerequisites.Length == 0 ? Without(michiru, rowId) : With(Without(michiru, rowId), [.. prerequisites]);
+
+            // No capture (a stored character from before 1.10): the gate is not checked and the quest never Ready.
+            var unknown = StateResolver.Resolve(quest, ready, Catalog, context);
+            Assert.True(unknown.State is QuestState.Unknown or QuestState.Blocked, $"{rowId} {quest.Name} reads {unknown.State} without a capture");
+            Assert.Contains(unknown.Requirements, r => r.Req is GameGateRequirement { Checked: null });
+
+            // Nothing of the line on the character: an unmet gate, judged.
+            var none = RequirementEvaluator.Evaluate(quest, Wearing(ready, []), Catalog, context).Single(r => r.Req.Kind == RequirementKind.GameGate);
+            Assert.False(none.Met);
+            Assert.Equal(gate.Items!.Hold, ((GameGateRequirement)none.Req).Checked);
+            Assert.NotEqual(QuestState.Ready, StateResolver.Resolve(quest, Wearing(ready, []), Catalog, context).State);
+
+            // The first group worn: met.
+            var worn = RequirementEvaluator.Evaluate(quest, Wearing(ready, gate.Items.Groups[0]), Catalog, context).Single(r => r.Req.Kind == RequirementKind.GameGate);
+            Assert.True(worn.Met, $"{rowId} {quest.Name}: {worn.Detail}");
+        }
+    }
+
+    [Fact]
+    public void His_Dark_Materia_reads_Ready_with_a_nexus_equipped_and_Blocked_with_a_novus()
+    {
+        var context = Context() with { ItemName = id => id switch { 7863 => "Curtana Novus", 7872 => "Holy Shield Novus", 8649 => "Curtana Nexus", 8658 => "Holy Shield Nexus", _ => string.Empty } };
+        var quest = Catalog.GetByRowId(HisDarkMateria)!;
+        var nexusPossible = With(Character(), SoulglazedRelics, WhereforeArtThouZodiac, MethodInHisMalice);
+
+        Assert.Equal(QuestState.Ready, StateResolver.Resolve(quest, Wearing(nexusPossible, [8649, 8658]), Catalog, context).State);
+
+        var novus = StateResolver.Resolve(quest, Wearing(nexusPossible, [7863, 7872]), Catalog, context);
+        Assert.Equal(QuestState.Blocked, novus.State);
+        Assert.Equal("needs a relic weapon nexus equipped, you have Curtana Novus and Holy Shield Novus equipped", novus.NextStep!.Detail);
+        Assert.Equal("Blocked · needs a relic weapon nexus equipped, you have Curtana Novus and Holy Shield Novus equipped", BlockerText.StatusText(novus, quest, fixture.Bundle.BlockerNames()));
+
+        // The nexus in the Armoury Chest: equip it.
+        var carried = StateResolver.Resolve(quest, Wearing(nexusPossible, [7863, 7872], 8649, 8658), Catalog, context);
+        Assert.Equal("needs a relic weapon nexus equipped, equip Curtana Nexus and Holy Shield Nexus", carried.NextStep!.Detail);
+
+        // A paladin with the nexus sword and another shield is not let through.
+        Assert.Equal(QuestState.Blocked, StateResolver.Resolve(quest, Wearing(nexusPossible, [8649]), Catalog, context).State);
     }
 
     [Fact]
@@ -283,7 +401,8 @@ public sealed class GameGatesGameTextTests(GameDataFixture game) : IClassFixture
                     continue;
                 }
 
-                var name = catalog.GetByRowId(rowId)!.Name.Trim();
+                // The repeatable relic steps open their name with an icon glyph (private use area) the text does not carry.
+                var name = new string(catalog.GetByRowId(rowId)!.Name.Where(c => c is < '' or > '').ToArray()).Trim();
                 if (key == gate.GameTextKey && !text.Contains(name, StringComparison.Ordinal))
                 {
                     problems.Add($"{rowId}: {key} does not name {name}");

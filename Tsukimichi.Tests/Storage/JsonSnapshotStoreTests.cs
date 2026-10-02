@@ -134,6 +134,34 @@ public sealed class JsonSnapshotStoreTests : IDisposable
     }
 
     [Fact]
+    public void Gate_items_round_trip_and_are_omitted_while_not_captured()
+    {
+        var store = new JsonSnapshotStore(tmp.Path);
+        var snapshot = FullSnapshot() with { GateItems = new GateItemCapture(123456789, [8649, 8658], [8649, 8650, 8658]) };
+        var file = tmp.File(Path.Combine("characters", snapshot.ContentId + ".json"));
+
+        store.Save(snapshot);
+        var loaded = store.Load(snapshot.ContentId);
+
+        Assert.NotNull(loaded?.GateItems);
+        Assert.Equal(123456789u, loaded.GateItems.Watch);
+        Assert.Equal([8649u, 8658u], loaded.GateItems.Equipped);
+        Assert.Equal([8649u, 8650u, 8658u], loaded.GateItems.Held);
+        Assert.True(GateItemCapture.Same(snapshot.GateItems, loaded.GateItems));
+        var json = JsonNode.Parse(File.ReadAllText(file))!["gateItems"]!;
+        Assert.Equal(123456789u, (uint)json["watch"]!);
+
+        // A capture that found nothing is still a capture, written as empty lists.
+        store.Save(FullSnapshot() with { GateItems = new GateItemCapture(7, [], []) });
+        Assert.Empty(store.Load(snapshot.ContentId)!.GateItems!.Held);
+
+        // Additive at schema v1: null is not written, and a file without it reads as not captured.
+        store.Save(FullSnapshot());
+        Assert.Null(JsonNode.Parse(File.ReadAllText(file))!["gateItems"]);
+        Assert.Null(store.Load(snapshot.ContentId)!.GateItems);
+    }
+
+    [Fact]
     public void Load_returns_null_for_unknown_character_without_warning()
     {
         var store = new JsonSnapshotStore(tmp.Path);

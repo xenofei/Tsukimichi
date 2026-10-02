@@ -195,7 +195,7 @@ public static class QuestDiagnostic
             MountRequirement { HasMount: null } => NotChecked,
             HouseRequirement { HasHouse: null } => NotChecked,
             AchievementRequirement { Loaded: false } => NotChecked,
-            GameGateRequirement => NotChecked,
+            GameGateRequirement { Checked: null } => NotChecked,
             CustomDeliveryRankRequirement { ActualRank: null } => NotChecked,
             CarrierLevelRequirement { ActualLevel: null } => NotChecked,
             TribeReputationRequirement { NotChecked: true } => NotChecked,
@@ -422,8 +422,15 @@ public static class QuestDiagnostic
                 sb.Append("achievements ").Append(a.Loaded ? "loaded" : "not loaded").Append(", quest ").Append(a.RowId.ToString(CultureInfo.InvariantCulture));
                 break;
 
-            case GameGateRequirement g:
+            case GameGateRequirement { Checked: null } g:
                 sb.Append("game gate \"").Append(g.Gate).Append("\"; listed, not judged");
+                break;
+
+            case GameGateRequirement g:
+                // Item ids only: the diagnostic block stays language-neutral.
+                sb.Append("game gate \"").Append(g.Gate).Append("\"; ").Append(g.Checked == GateHold.Held ? "held" : "equipped")
+                    .Append(" check, equipped [").Append(string.Join(", ", g.Equipped)).Append("], matching [")
+                    .Append(string.Join(", ", g.Matching)).Append(']');
                 break;
 
             default:

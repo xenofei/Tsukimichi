@@ -112,6 +112,12 @@ public sealed record EvalContext
     public Func<byte, string> SatisfactionNpcName { get; init; } = static _ => string.Empty;
 
     /// <summary>
+    /// Item name by Item row id for the gear-gate details ("you have Curtana Novus equipped"); the plugin supplies the
+    /// names of the gate-listed weapons (<see cref="QuestCatalog.GateItemWatch"/>). Empty prints "item 8649".
+    /// </summary>
+    public Func<uint, string> ItemName { get; init; } = static _ => string.Empty;
+
+    /// <summary>
     /// This context with today's allied society offer: <see cref="TodaysDailyOffer"/> and <see cref="DailyOfferTribes"/>
     /// from <paramref name="offer"/>, both null (unknown, nothing held back) when it knows no society.
     /// </summary>

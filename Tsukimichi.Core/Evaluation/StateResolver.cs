@@ -266,7 +266,7 @@ public static class StateResolver
 
         // 7. Requirements on the current job, then on other jobs. A game gate Tsukimichi cannot read (game_gates.json)
         //    is never judged: it turns what would read Ready (on this job or another) into Not checked, and leaves a
-        //    quest Blocked by something else Blocked by that.
+        //    quest Blocked by something else Blocked by that. A gear gate judged from the capture counts like any other.
         RequirementResult? firstUnmet = null;
         RequirementResult? gameGate = null;
         var onlyJobGates = true;
@@ -277,7 +277,7 @@ public static class StateResolver
                 continue;
             }
 
-            if (r.Req.Kind == RequirementKind.GameGate)
+            if (r.Req is GameGateRequirement { Checked: null })
             {
                 gameGate ??= r;
                 continue;
