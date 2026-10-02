@@ -42,6 +42,24 @@ public class AetheryteIndexTests
     }
 
     [Fact]
+    public void The_giver_aetheryte_is_the_nearest_one_whatever_is_attuned()
+    {
+        // Stops group by this (Next stops, the route window): it must not move as aetherytes are attuned, so it reads
+        // the sheets only. Teleport's target (the nearest attuned) is TravelPlanner.NearestAttuned's.
+        var index = Index();
+        var giver = Tsukimichi.Tests.Evaluation.Fixture.Quest(1) with { Issuer = new Core.Model.Issuer(1, "NPC", Bentbranch, 1, 250f, 0f, -150f) };
+
+        Assert.Equal(4u, index.NearestToGiver(giver)!.RowId);
+        Assert.Null(TravelPlanner.NearestAttuned(index.NodesInTerritory(Bentbranch), null, 250f, -150f, _ => false));
+        Assert.Equal(3u, TravelPlanner.NearestAttuned(index.NodesInTerritory(Bentbranch), null, 250f, -150f, id => id == 3)!.Value.RowId);
+
+        // A city sub-zone without its own aetheryte groups under its city's; no giver place, no aetheryte.
+        Assert.Equal(2u, index.NearestToGiver(giver with { Issuer = giver.Issuer! with { TerritoryId = OldGridania } })!.RowId);
+        Assert.Null(index.NearestToGiver(giver with { Issuer = null }));
+        Assert.Null(index.NearestToGiver(giver with { Issuer = giver.Issuer! with { TerritoryId = 0 } }));
+    }
+
+    [Fact]
     public void ToRaw_inverts_the_map_coordinate_scale()
     {
         // Pixel 1024 is the raw origin on an unscaled, unoffset map; a 200 % map halves the raw span.

@@ -113,7 +113,10 @@ public enum RouteOutcome : byte
     /// <summary>The target's quest is completed: the route is empty.</summary>
     AlreadyDone,
 
-    /// <summary>The target's quest, or a quest the route cannot avoid, is locked out or removed from the game; the steps are still listed.</summary>
+    /// <summary>
+    /// The target's quest, or a quest the route cannot avoid, is locked out or removed from the game; the steps are still
+    /// listed. On a route to several targets whose every part left is locked out, the steps are empty.
+    /// </summary>
     LockedOut,
 
     /// <summary>No quest in the catalog unlocks the target.</summary>
@@ -147,7 +150,8 @@ public enum RouteOutcome : byte
 /// </para>
 /// <para>
 /// <b>Several targets</b> (<see cref="RouteTarget.Parts"/>, 1.6.0). Each part's quest is chosen as a single target's
-/// is; parts already done, and parts whose chosen quest is locked out, are left out. The route is the union of the
+/// is; parts already done, and parts whose chosen quest is locked out, are left out (when every part left is locked
+/// out, the route is <see cref="RouteOutcome.LockedOut"/> with no steps). The route is the union of the
 /// chosen quests' closures in the same order (one topological order by level), and each part is a milestone
 /// (<see cref="TargetMilestones"/>, <see cref="RouteStep.TargetLabel"/>): parts sharing a label are reached with the
 /// last of their quests on the route.
@@ -299,6 +303,7 @@ public sealed class UnlockRoute
         Func<QuestRecord, byte>? levelOf)
     {
         var anyQuest = false;
+        var anyLockedOut = false;
         var roots = new List<uint>();
         var labelOf = new Dictionary<uint, List<string>>();
         foreach (var part in target.Parts)
@@ -319,6 +324,7 @@ public sealed class UnlockRoute
             if (planner.StateOf(chosen) == QuestState.Foreclosed)
             {
                 // Locked out for good: nothing on the route would change that, so the part is left out.
+                anyLockedOut = true;
                 continue;
             }
 
@@ -341,7 +347,8 @@ public sealed class UnlockRoute
 
         if (roots.Count == 0)
         {
-            return new UnlockRoute(target, 0, RouteOutcome.AlreadyDone, [], RouteSummary.Empty, []);
+            // Nothing left to route: done, unless a part left out is locked out (then the route can never be finished).
+            return new UnlockRoute(target, 0, anyLockedOut ? RouteOutcome.LockedOut : RouteOutcome.AlreadyDone, [], RouteSummary.Empty, []);
         }
 
         var order = planner.Order(roots);

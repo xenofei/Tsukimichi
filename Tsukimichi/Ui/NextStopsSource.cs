@@ -13,8 +13,8 @@ namespace Tsukimichi.Ui;
 /// quests batched by the aetheryte nearest their givers (<see cref="StopPlanner"/>), from the followed route's next
 /// stop, the pins, the Ready blues of the expansion pinned from My blues and the other Ready quests within
 /// <see cref="StopPlanner.DefaultLevelRange"/> levels. Rebuilt when the session, the pins, the followed route, the
-/// plan, the pinned expansion or the zone changes; each giver's aetheryte is looked up once per catalog. Framework
-/// thread only.
+/// plan, the pinned expansion or the zone changes; each giver's aetheryte (the nearest one, attuned or not) is looked
+/// up once per catalog. Framework thread only.
 /// </summary>
 public sealed class NextStopsSource
 {
@@ -60,11 +60,13 @@ public sealed class NextStopsSource
     private void Refresh()
     {
         runner.SyncPins();
-        // Read before the key: both rebuild on first use after a change, and bump their revision when they do.
+        // Read before the key: both rebuild on first use after a change, and bump their revision when they do. The plan
+        // (the duty index and every expansion's blues) is built only while an expansion is pinned from My blues.
         var route = routes.ViewedRoute;
-        var blues = plan.Plan;
+        var expansion = settings.TodoPlanExpansion;
+        var blues = expansion is >= 0 and <= byte.MaxValue ? plan.Plan : null;
         var zone = session.IsLive ? territory() : 0u;
-        var key = (session.Version, runner.PinsVersion, routes.Revision, plan.Revision, zone, settings.TodoPlanExpansion);
+        var key = (session.Version, runner.PinsVersion, routes.Revision, blues is null ? -1 : plan.Revision, zone, expansion);
         if (key == builtKey)
         {
             return;
@@ -85,7 +87,7 @@ public sealed class NextStopsSource
         }
 
         var ready = new List<uint>();
-        if (settings.TodoPlanExpansion is >= 0 and <= byte.MaxValue && blues.Expansion((byte)settings.TodoPlanExpansion) is { } block)
+        if (blues is not null && blues.Expansion((byte)expansion) is { } block)
         {
             foreach (var entry in block.Entries)
             {
@@ -109,7 +111,11 @@ public sealed class NextStopsSource
             zone));
     }
 
-    /// <summary>The aetheryte nearest a quest's giver, looked up once per quest and catalog.</summary>
+    /// <summary>
+    /// The aetheryte nearest a quest's giver, attuned or not (<see cref="GameLinks.GiverAetheryte"/>), looked up once
+    /// per quest and catalog. Attunement plays no part in the grouping, so the cache never goes stale as aetherytes are
+    /// attuned; each stop's Teleport checks attunement when it is drawn.
+    /// </summary>
     private StopPlace? PlaceOf(QuestRecord quest)
     {
         if (places.TryGetValue(quest.RowId, out var known))
@@ -117,7 +123,7 @@ public sealed class NextStopsSource
             return known;
         }
 
-        var place = links.NearestAetheryte(quest) is { } aetheryte ? new StopPlace(aetheryte.Id, aetheryte.Name) : null;
+        var place = links.GiverAetheryte(quest) is { } aetheryte ? new StopPlace(aetheryte.Id, aetheryte.Name) : null;
         places[quest.RowId] = place;
         return place;
     }

@@ -62,6 +62,7 @@ static partial class Strings
     public static string TodoConfigShowRouteHint => Loc.Get("TodoConfigShowRouteHint");
     public static string TodoConfigRouteFlagAdvance => Loc.Get("TodoConfigRouteFlagAdvance");
     public static string TodoConfigRouteFlagAdvanceHint => Loc.Get("TodoConfigRouteFlagAdvanceHint");
+    public static string ConfigSectionRoutes => Loc.Get("ConfigSectionRoutes");
     public static string TodoConfigShowNextStops => Loc.Get("TodoConfigShowNextStops");
     public static string TodoConfigShowNextStopsHint => Loc.Get("TodoConfigShowNextStopsHint");
 

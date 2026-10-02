@@ -110,7 +110,10 @@ public enum RouteProgressKind : byte
     /// <summary>The route ran out: everything on it is done.</summary>
     Finished,
 
-    /// <summary>No quest leads to the target any more (the catalog changed); the route is dropped quietly.</summary>
+    /// <summary>
+    /// No quest leads to the target any more (the catalog changed), or every part left is locked out; the route is
+    /// dropped quietly.
+    /// </summary>
     Lost,
 }
 
@@ -138,7 +141,9 @@ public sealed class RouteFollower
             return new RouteProgress(RouteProgressKind.Unchanged, null);
         }
 
-        if (route.Outcome == RouteOutcome.NoQuest)
+        // No quest leads there any more, or what is left of it is locked out (a route to several targets whose
+        // remaining parts are all foreclosed): never "complete", the route is dropped quietly.
+        if (route.Outcome == RouteOutcome.NoQuest || (route.Outcome == RouteOutcome.LockedOut && route.Steps.Count == 0))
         {
             finished = true;
             return new RouteProgress(RouteProgressKind.Lost, null);

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game;
+using Tsukimichi.Core.HandIn;
 using Tsukimichi.Core.Runtime;
 
 namespace Tsukimichi.Game;
@@ -13,7 +14,8 @@ namespace Tsukimichi.Game;
 /// <para>
 /// The game read is <c>InventoryManager.GetInventoryItemCount</c> (the four bags, the armoury and what is equipped)
 /// and <c>GetItemCountInContainer</c> for the saddlebag pages (the game fills those once the saddlebag was opened this
-/// session), each for NQ and HQ. It calls into the game, so it follows the shared <see cref="HookGate"/> as the other
+/// session), each for NQ and HQ, kept apart so an item a quest wants high quality counts only its HQ
+/// (<see cref="HandInCount"/>; Allagan Tools' counts cannot be split). It calls into the game, so it follows the shared <see cref="HookGate"/> as the other
 /// game reads do: while the gate pauses them, only Allagan Tools' numbers show. It runs on the framework thread only
 /// (the UI draws there) and answers are cached for <see cref="CacheMs"/>, so a pane listing six items costs a dozen
 /// game calls a second at most.
@@ -33,7 +35,7 @@ public sealed class HandInStock
     private readonly IFramework framework;
     private readonly HookGate gate;
     private readonly IPluginLog log;
-    private readonly Dictionary<uint, (int? Count, long At)> game = [];
+    private readonly Dictionary<uint, ((int Total, int Hq)? Count, long At)> game = [];
     private bool warned;
 
     public HandInStock(IClientState clientState, IFramework framework, HookGate gate, IPluginLog log)
@@ -53,24 +55,20 @@ public sealed class HandInStock
     /// <summary>Whether Allagan Tools is loaded, ready and allowed.</summary>
     public bool AllaganActive => Allagan is { Available: true } && AllaganEnabled?.Invoke() != false;
 
-    /// <summary>What the logged-in character holds.</summary>
-    /// <param name="Held">In its bags, armoury, equipped and saddlebag (the game), or what Allagan Tools counts on the character itself while the game read is paused; null when neither can tell.</param>
-    /// <param name="Retainers">On its retainers (Allagan Tools); null without it.</param>
-    public readonly record struct Stock(int? Held, int? Retainers)
-    {
-        /// <summary>Both counts together; null when neither is known.</summary>
-        public int? Total => Held is null && Retainers is null ? null : (Held ?? 0) + (Retainers ?? 0);
-    }
-
-    /// <summary>The logged-in character's stock of <paramref name="itemId"/>. Framework thread; nothing is read while logged out.</summary>
-    public Stock For(uint itemId)
+    /// <summary>
+    /// The logged-in character's stock of <paramref name="itemId"/>: the game's count with its HQ part, and Allagan
+    /// Tools' retainer count (its character count stands in, without an HQ part, while the game read is paused).
+    /// Framework thread; nothing is read while logged out.
+    /// </summary>
+    public HandInCount For(uint itemId)
     {
         if (itemId == 0 || !clientState.IsLoggedIn || !framework.IsInFrameworkUpdateThread)
         {
             return default;
         }
 
-        var held = GameCount(itemId);
+        var read = GameCount(itemId);
+        int? held = read?.Total;
         int? retainers = null;
         if (AllaganActive && Allagan!.Counts(itemId) is { } counts)
         {
@@ -78,10 +76,10 @@ public sealed class HandInStock
             held ??= (int)Math.Min(counts.Character, int.MaxValue);
         }
 
-        return new Stock(held, retainers);
+        return new HandInCount(held, read?.Hq, retainers);
     }
 
-    private int? GameCount(uint itemId)
+    private (int Total, int Hq)? GameCount(uint itemId)
     {
         if (!gate.HooksAllowed)
         {
@@ -99,7 +97,7 @@ public sealed class HandInStock
         return count;
     }
 
-    private unsafe int? ReadGame(uint itemId)
+    private unsafe (int Total, int Hq)? ReadGame(uint itemId)
     {
         try
         {
@@ -110,16 +108,23 @@ public sealed class HandInStock
             }
 
             var total = 0;
+            var highQuality = 0;
             foreach (var hq in (ReadOnlySpan<bool>)[false, true])
             {
-                total += Math.Max(0, inventory->GetInventoryItemCount(itemId, hq, true, true));
+                var count = Math.Max(0, inventory->GetInventoryItemCount(itemId, hq, true, true));
                 foreach (var bag in SaddleBags)
                 {
-                    total += Math.Max(0, inventory->GetItemCountInContainer(itemId, bag, hq));
+                    count += Math.Max(0, inventory->GetItemCountInContainer(itemId, bag, hq));
+                }
+
+                total += count;
+                if (hq)
+                {
+                    highQuality = count;
                 }
             }
 
-            return total;
+            return (total, highQuality);
         }
         catch (Exception ex)
         {

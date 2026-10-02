@@ -19,7 +19,8 @@ namespace Tsukimichi.Ui;
 /// in story order (<see cref="UnlockPlan"/>). <see cref="DrawLeft"/> holds the summary, the filters (one toggle chip
 /// per kind with its count, Ready only, Sprout mode) and the expansion list; <see cref="DrawMain"/> the "Copy as
 /// checklist" button and one card per expansion, folded but for the one opened, with the zone groups and a row per
-/// quest: state moon, name (click shows it in the detail pane), kind pills, the status line, Flag and Reveal. Each
+/// quest: state moon, name (click shows it in the detail pane), kind pills, the status line, Flag, Reveal, Teleport
+/// and Walk (Go to giver in the row's right-click and "…" menus). Each
 /// card can pin its expansion's block to the todo overlay, and send its quests to Questionable's priority list (the
 /// paper-plane button, feature plan v5 1.6.0, <see cref="QuestionableActions"/>).
 /// <para>
@@ -446,7 +447,7 @@ public sealed class PlanPane
         }
     }
 
-    /// <summary>The "…" menu of a row whose Flag and Reveal folded (under <see cref="LayoutBudgets.PlanMenuLogical"/>).</summary>
+    /// <summary>The "…" menu of a row whose buttons folded (under <see cref="LayoutBudgets.PlanMenuLogical"/>).</summary>
     private const string RowMenuId = "##planRowMenu";
 
     /// <summary>Kinds a plan row can show at most (every unlock kind).</summary>
@@ -454,10 +455,11 @@ public sealed class PlanPane
 
     /// <summary>
     /// One quest (design v4 §7.8, the mockup's "My blues at 360 px"): from <see cref="LayoutBudgets.PlanOneLineLogical"/>
-    /// the moon, name, kind pills, status, Flag and Reveal on one line; under it two lines, the status (state word
-    /// never cut, the reason ellipsised) under the name and the buttons centred on the right; under
-    /// <see cref="LayoutBudgets.PlanMenuLogical"/> the buttons fold into one "…" menu. Pills are sized to their text
-    /// and, once two-line and under <see cref="PaneFit.PlanAllKindsLogical"/>, only the primary kind shows.
+    /// plus the travel buttons' width, the moon, name, kind pills, status, Flag, Reveal, Teleport and Walk on one line;
+    /// under it two lines, the status (state word never cut, the reason ellipsised) under the name, Flag and Reveal
+    /// on the right of the first line and Teleport and Walk under them; under <see cref="LayoutBudgets.PlanMenuLogical"/>
+    /// the buttons fold into one "…" menu. Go to giver is in the row's menus (right-click, "…"). Pills are sized to
+    /// their text and, once two-line and under <see cref="PaneFit.PlanAllKindsLogical"/>, only the primary kind shows.
     /// </summary>
     private void DrawRow(UiState ui, PlanEntry entry)
     {
@@ -470,6 +472,17 @@ public sealed class PlanPane
         var width = MathF.Max(1f, ImGui.GetWindowPos().X + ImGui.GetWindowContentRegionMax().X - UiMetrics.Px(10f) - start.X);
         var logical = width / UiMetrics.Scale;
         var tier = PaneFit.PlanTier(logical);
+        var style = ImGui.GetStyle();
+        var flagReveal = ImGui.CalcTextSize(Strings.PlanFlag).X + ImGui.CalcTextSize(Strings.PlanReveal).X + (style.FramePadding.X * 4f) + style.ItemSpacing.X;
+        var travel = TravelControls.ButtonsWidth(links, Strings.PlanTeleport);
+
+        // The travel buttons keep the one-line row's middle as wide as before they came: one line only from the old
+        // breakpoint plus their width, else they go under Flag and Reveal.
+        if (tier == PlanRowTier.OneLine && logical < LayoutBudgets.PlanOneLineLogical + (travel / UiMetrics.Scale))
+        {
+            tier = PlanRowTier.TwoLine;
+        }
+
         var height = tier == PlanRowTier.OneLine ? firstLine : firstLine + line + UiMetrics.Px(4f);
         var size = new Vector2(width, height);
         if (!ImGui.IsRectVisible(size))
@@ -479,13 +492,14 @@ public sealed class PlanPane
         }
 
         using var id = ImRaii.PushId((int)quest.RowId);
-        var style = ImGui.GetStyle();
         var gap = UiMetrics.Px(8f);
         var menu = tier == PlanRowTier.TwoLineMenu;
         var moreSize = MathF.Min(UiMetrics.MinTarget, height);
-        var actionsWidth = menu
-            ? moreSize
-            : ImGui.CalcTextSize(Strings.PlanFlag).X + ImGui.CalcTextSize(Strings.PlanReveal).X + (style.FramePadding.X * 4f) + style.ItemSpacing.X;
+
+        // ButtonsWidth counts the item spacing before Teleport: on a line of their own it is not drawn.
+        var actionsWidth = menu ? moreSize
+            : tier == PlanRowTier.OneLine ? flagReveal + travel
+            : MathF.Max(flagReveal, travel - style.ItemSpacing.X);
         var actionsX = start.X + width - actionsWidth;
         var nameX = start.X + glyph + gap;
         var textY = start.Y + ((firstLine - line) * 0.5f);
@@ -566,6 +580,10 @@ public sealed class PlanPane
                 {
                     UiMetrics.Tooltip(Strings.PlanRouteToThisTooltip);
                 }
+
+                // Teleport, Walk to giver and Go to giver, visible and disabled with the reason when they cannot run.
+                ImGui.Separator();
+                TravelControls.MenuItems(links, quest, Strings.PlanTeleport);
             }
         }
 
@@ -595,9 +613,19 @@ public sealed class PlanPane
         {
             DrawRowMenu(ui, entry, new Vector2(actionsX, start.Y + ((height - moreSize) * 0.5f)), moreSize);
         }
+        else if (tier == PlanRowTier.OneLine)
+        {
+            DrawRowButtons(ui, quest, new Vector2(actionsX, start.Y + ((height - frame) * 0.5f)), travelBelow: null);
+        }
         else
         {
-            DrawRowButtons(ui, quest, new Vector2(actionsX, start.Y + ((height - frame) * 0.5f)));
+            // Flag and Reveal right-aligned on the first line, Teleport and Walk right-aligned under them.
+            var right = start.X + width;
+            DrawRowButtons(
+                ui,
+                quest,
+                new Vector2(right - flagReveal, start.Y + ((firstLine - frame) * 0.5f)),
+                travelBelow: new Vector2(right - (travel - style.ItemSpacing.X), statusY));
         }
 
         ImGui.SetCursorScreenPos(start);
@@ -647,8 +675,11 @@ public sealed class PlanPane
         return x;
     }
 
-    /// <summary>Flag the giver and Reveal in the Journal, side by side from <paramref name="min"/>.</summary>
-    private void DrawRowButtons(UiState ui, QuestRecord quest, Vector2 min)
+    /// <summary>
+    /// Flag the giver and Reveal in the Journal, side by side from <paramref name="min"/>, then Teleport and Walk: on
+    /// the same line, or from <paramref name="travelBelow"/> when given (the two-line row).
+    /// </summary>
+    private void DrawRowButtons(UiState ui, QuestRecord quest, Vector2 min, Vector2? travelBelow)
     {
         ImGui.SetCursorScreenPos(min);
         using (ImRaii.Disabled(!links.CanFlagMap(quest)))
@@ -674,9 +705,18 @@ public sealed class PlanPane
         {
             UiMetrics.Tooltip(Strings.PlanRevealTooltip);
         }
+
+        if (travelBelow is { } below)
+        {
+            // TravelControls.Buttons opens with SameLine: an empty item one spacing to the left puts Teleport at below.
+            ImGui.SetCursorScreenPos(new Vector2(below.X - ImGui.GetStyle().ItemSpacing.X, below.Y));
+            ImGui.Dummy(new Vector2(0f, ImGui.GetTextLineHeight()));
+        }
+
+        TravelControls.Buttons(links, quest, Strings.PlanTeleport);
     }
 
-    /// <summary>Flag, Reveal and Route to this folded into one "…" button at <paramref name="min"/> and its menu (a narrow pane).</summary>
+    /// <summary>Flag, Teleport, Walk, Go to giver, Reveal and Route to this folded into one "…" button at <paramref name="min"/> and its menu (a narrow pane).</summary>
     private void DrawRowMenu(UiState ui, PlanEntry entry, Vector2 min, float size)
     {
         var quest = entry.Quest;
@@ -699,6 +739,7 @@ public sealed class PlanPane
             UiMetrics.Tooltip(Strings.PlanFlagTooltip);
         }
 
+        TravelControls.MenuItems(links, quest, Strings.PlanTeleport);
         if (ImGui.MenuItem(Strings.PlanReveal))
         {
             ui.Reveal(quest);

@@ -141,6 +141,17 @@ public sealed class AetheryteIndex
         return best ?? territoryDefault.GetValueOrDefault(territoryId);
     }
 
+    /// <summary>
+    /// The aetheryte nearest a quest's giver (<see cref="Nearest"/> at the issuer's place), attuned or not: what the
+    /// stop lists group quests by, so the grouping never moves with attunement. Teleport picks its own target (the
+    /// nearest attuned one). Null without a giver place or an aetheryte for the giver's zone.
+    /// </summary>
+    public AetheryteInfo? NearestToGiver(Core.Model.QuestRecord quest)
+    {
+        ArgumentNullException.ThrowIfNull(quest);
+        return quest.Issuer is { TerritoryId: > 0 } issuer ? Nearest(issuer.TerritoryId, issuer.X, issuer.Z) : null;
+    }
+
     /// <summary>Builds an index from already-read rows; for tests and for callers that read the sheets themselves.</summary>
     /// <param name="aetherytes">Teleportable aetherytes with positions.</param>
     /// <param name="territoryDefaults">TerritoryType row id to the aetheryte row id that zone belongs to.</param>
