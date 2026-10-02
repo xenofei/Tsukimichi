@@ -185,6 +185,16 @@ public sealed class SetupCard
             ImGui.TextUnformatted(Strings.Setup.Companions);
         }
 
+        // Companion setup: "Ready for full automation" / "2 plugins need setup", the same line as Settings and Help.
+        if (Game.CompanionPlugins.Current?.Setup is { } setup)
+        {
+            var summary = setup.Summary;
+            using (Theme.PushText(summary.Ready ? Theme.Moon : Theme.EclipseText))
+            {
+                ImGui.TextUnformatted(Strings.CompanionSetupSummaryLine(summary));
+            }
+        }
+
         if (ImGui.SmallButton(Strings.Setup.CompanionsButton))
         {
             openCompanions();

@@ -65,6 +65,43 @@ public class CompanionResolverTests
         Assert.Equal(CompanionCatalog.AutoDutyMinimum, status.MinimumVersion);
     }
 
+    /// <summary>The reported bug: Allagan Tools 1.15.0.13, the newest build, read "Outdated, needs 15.0.12".</summary>
+    [Theory]
+    [InlineData(1, 15, 0, 13, CompanionState.Loaded)]
+    [InlineData(1, 15, 0, 12, CompanionState.Loaded)]
+    [InlineData(1, 15, 0, 11, CompanionState.Outdated)]
+    public void Allagan_Tools_is_compared_in_the_numbering_Dalamud_reports(int major, int minor, int build, int revision, CompanionState expected)
+    {
+        var status = Resolve(CompanionCatalog.Get(CompanionPlugin.AllaganTools), new InstalledPlugin("InventoryTools", new Version(major, minor, build, revision), true));
+        Assert.Equal(expected, status.State);
+    }
+
+    /// <summary>
+    /// Every minimum is written in its plugin's own numbering: four parts, the same leading part as a released build
+    /// Dalamud reports (Allagan Tools 1.x, AutoDuty 0.x), and not above that build, so no released build is turned away.
+    /// </summary>
+    [Fact]
+    public void Every_minimum_is_in_the_numbering_of_a_released_build()
+    {
+        foreach (var variant in CompanionCatalog.All.SelectMany(static d => d.Variants))
+        {
+            var known = variant.KnownBuild;
+            Assert.True(known.Revision >= 0, $"{variant.DisplayName}: the known build {known} should have four parts, as Dalamud reports");
+            if (variant.MinimumVersion is not { } minimum)
+            {
+                continue;
+            }
+
+            Assert.True(minimum.Revision >= 0, $"{variant.DisplayName}: minimum {minimum} should have four parts");
+            Assert.True(minimum.Major == known.Major, $"{variant.DisplayName}: minimum {minimum} is not in the numbering of {known}");
+            Assert.True(minimum.Major != 0 || minimum.Minor == known.Minor, $"{variant.DisplayName}: minimum {minimum} is not in the numbering of {known}");
+            Assert.False(CompanionResolver.IsBelow(known, minimum), $"{variant.DisplayName}: the released build {known} would read as outdated against {minimum}");
+            Assert.Equal(CompanionState.Loaded, CompanionResolver.Resolve(
+                CompanionCatalog.All.Single(d => d.Variants.Contains(variant)),
+                [new InstalledPlugin(variant.InternalName, known, true)]).State);
+        }
+    }
+
     [Fact]
     public void A_dev_build_without_a_version_is_not_turned_away()
     {
@@ -77,7 +114,8 @@ public class CompanionResolverTests
     {
         Assert.False(CompanionResolver.IsBelow(new Version(1, 7, 2, 2), new Version(1, 7, 2, 2)));
         Assert.True(CompanionResolver.IsBelow(new Version(1, 7, 2), new Version(1, 7, 2, 2)));
-        Assert.False(CompanionResolver.IsBelow(new Version(15, 755, 2, 0), CompanionCatalog.QuestMapMinimum));
+        Assert.False(CompanionResolver.IsBelow(new Version(15, 755, 2, 0), new Version(1, 7, 2, 2)));
+        Assert.Null(CompanionCatalog.Get(CompanionPlugin.QuestMap).Primary.MinimumVersion);
         Assert.False(CompanionResolver.IsBelow(new Version(1, 0), null));
     }
 
@@ -104,15 +142,19 @@ public class CompanionResolverTests
     }
 
     [Fact]
-    public void The_catalog_lists_the_nine_questing_companions_once_each()
+    public void The_catalog_lists_every_companion_once_with_needed_by_rows_after_the_plugin_that_needs_them()
     {
         var listed = CompanionCatalog.All.Where(static d => d.Listed).Select(static d => d.Plugin).ToList();
         Assert.Equal(
             [
-                CompanionPlugin.Lifestream, CompanionPlugin.Vnavmesh, CompanionPlugin.Questionable, CompanionPlugin.AutoDuty,
-                CompanionPlugin.Artisan, CompanionPlugin.GatherBuddy, CompanionPlugin.AllaganTools, CompanionPlugin.QuestMap, CompanionPlugin.ChatTwo,
+                CompanionPlugin.Lifestream, CompanionPlugin.Vnavmesh, CompanionPlugin.Questionable, CompanionPlugin.TextAdvance,
+                CompanionPlugin.AutoDuty, CompanionPlugin.BossMod, CompanionPlugin.RotationPlugin, CompanionPlugin.Artisan,
+                CompanionPlugin.GatherBuddy, CompanionPlugin.AllaganTools, CompanionPlugin.QuestMap, CompanionPlugin.ChatTwo,
             ],
             listed);
+        Assert.Equal([CompanionPlugin.Questionable], CompanionCatalog.Get(CompanionPlugin.TextAdvance).Dependents);
+        Assert.Contains(CompanionPlugin.AutoDuty, CompanionCatalog.Get(CompanionPlugin.BossMod).Dependents);
+        Assert.Empty(CompanionCatalog.Get(CompanionPlugin.Lifestream).Dependents);
         Assert.All(Enum.GetValues<CompanionPlugin>(), static p => Assert.Equal(p, CompanionCatalog.Get(p).Plugin));
         var names = CompanionCatalog.All.SelectMany(static d => d.Variants).Select(static v => v.InternalName.ToUpperInvariant()).ToList();
         Assert.Equal(names.Count, names.Distinct().Count());
@@ -125,6 +167,7 @@ public class CompanionResolverTests
     [InlineData(CompanionPlugin.Vnavmesh, "vnavmesh")]
     [InlineData(CompanionPlugin.Lifestream, "Lifestream")]
     [InlineData(CompanionPlugin.AutoDuty, "AutoDuty")]
+    [InlineData(CompanionPlugin.TextAdvance, "TextAdvance")]
     public void Internal_names_are_the_manifests(CompanionPlugin plugin, string internalName)
     {
         Assert.Equal(internalName, CompanionCatalog.Get(plugin).Primary.InternalName);

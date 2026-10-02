@@ -176,9 +176,12 @@ public sealed partial class DetailPane
             ImGui.EndDisabled();
             if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
             {
-                UiMetrics.Tooltip(choice.CanRun
-                    ? string.Format(CultureInfo.CurrentCulture, Strings.AutoDutyRunTooltipFormat, Strings.AutoDutyModeName(choice.Mode))
-                    : AutoDutyBlockerText(choice.Blocker, companions));
+                // A recommended AutoDuty setting set otherwise (companion setup) is a note, not a blocker.
+                UiMetrics.Tooltip(
+                    choice.CanRun
+                        ? string.Format(CultureInfo.CurrentCulture, Strings.AutoDutyRunTooltipFormat, Strings.AutoDutyModeName(choice.Mode))
+                        : AutoDutyBlockerText(choice.Blocker, companions),
+                    choice.CanRun ? CompanionPlugins.SetupNote(CompanionPlugin.AutoDuty) : null);
             }
 
             if (pressed && choice.CanRun)

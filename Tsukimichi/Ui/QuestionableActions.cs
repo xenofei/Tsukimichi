@@ -430,7 +430,7 @@ public sealed class QuestionableActions
 
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
-            UiMetrics.Tooltip(startBlocker ?? Strings.QuestionableSendStartTooltip);
+            UiMetrics.Tooltip(startBlocker ?? Strings.QuestionableSendStartTooltip, startBlocker is null ? CompanionPlugins.SetupNote(Core.Companions.CompanionPlugin.Questionable) : null);
         }
 
         var canReplace = ipc.CanReplace;
@@ -478,6 +478,12 @@ public sealed class QuestionableActions
         if (ipc.MissingRequiredPlugins is { Count: > 0 } missing)
         {
             return string.Format(CultureInfo.CurrentCulture, Strings.QuestionableStartMissingFormat, string.Join(", ", missing));
+        }
+
+        // Loaded but set up so a run cannot finish (companion setup): "Questionable needs TextAdvance's quest accept on".
+        if (CompanionPlugins.DisabledReason(Core.Companions.CompanionPlugin.Questionable) is { } setupReason)
+        {
+            return setupReason;
         }
 
         // Questionable plays the character logged in; starting it while a stored character is viewed would set off

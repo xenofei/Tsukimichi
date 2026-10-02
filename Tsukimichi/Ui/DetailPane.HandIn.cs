@@ -284,7 +284,7 @@ public sealed partial class DetailPane
             : null;
         var tooltip = state switch
         {
-            HandOffState.Ready => CraftTooltip(session, row, recipe),
+            HandOffState.Ready => WithSetupNote(CraftTooltip(session, row, recipe), CompanionPlugin.Artisan),
             HandOffState.Enough => Strings.HandInHaveEnough,
             // The registry's reason when it has one ("Artisan is installed but turned off…"), as every hand-off button says it.
             HandOffState.PluginMissing => CompanionPlugins.DisabledReason(CompanionPlugin.Artisan) ?? Strings.HandInNeedsArtisan,
@@ -300,6 +300,10 @@ public sealed partial class DetailPane
         var sent = recipe is not null && amount > 0 && Artisan is { } artisan && artisan.Craft(recipe.RecipeId, amount);
         ShowHandInNote(sent ? string.Format(CultureInfo.CurrentCulture, Strings.HandInSentToArtisanFormat, row.Name) : Strings.HandInArtisanFailed);
     }
+
+    /// <summary>An enabled hand-off's tooltip, with the companion setup note under it when a recommended setting is set otherwise.</summary>
+    private static string WithSetupNote(string tooltip, CompanionPlugin plugin) =>
+        CompanionPlugins.SetupNote(plugin) is { } note ? tooltip + "\n" + note : tooltip;
 
     /// <summary>"Craft 2 × Maple Lumber with Artisan", naming what one craft makes when it is more than one.</summary>
     private static string CraftTooltip(SessionState session, HandInRow row, HandInRecipe? recipe)
@@ -329,7 +333,7 @@ public sealed partial class DetailPane
 
         var command = HandInActions.GatherCommandFor(row.Item);
         var tooltip = state == HandOffState.Ready
-            ? string.Format(CultureInfo.CurrentCulture, Strings.HandInGatherTooltipFormat, command)
+            ? WithSetupNote(string.Format(CultureInfo.CurrentCulture, Strings.HandInGatherTooltipFormat, command), CompanionPlugin.GatherBuddy)
             : CompanionPlugins.DisabledReason(CompanionPlugin.GatherBuddy) ?? Strings.HandInNeedsGatherBuddy;
         var icon = row.Item.Gather == GatherKind.Fish ? FishIcon : GatherIcon;
         if (Chrome.IconButtonRound("##gather", icon, tooltip, enabled: state == HandOffState.Ready) && command is not null && GatherBuddy is { } gather)
