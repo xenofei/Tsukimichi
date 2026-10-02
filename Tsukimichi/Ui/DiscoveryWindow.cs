@@ -27,8 +27,8 @@ namespace Tsukimichi.Ui;
 /// a notification that changed neither the session version, the catalog nor the territory is skipped outright;
 /// nothing is looked up per frame beyond the visible rows' teleport gating. <see cref="Changed"/> fires after a
 /// rebuild that altered the lists, which is what the server info bar entry listens to. Opened with
-/// <c>/tsuki nearby</c> or a click on that entry. Settings live behind the cog at the top right and persist through
-/// <see cref="DiscoverySettings"/>.
+/// <c>/tsuki nearby</c> or a click on that entry. The cog at the top right opens Settings › Integrations, where its
+/// settings live since 1.7.0; they persist through <see cref="DiscoverySettings"/>.
 /// </summary>
 public sealed class DiscoveryWindow : Window, IDisposable
 {
@@ -132,8 +132,28 @@ public sealed class DiscoveryWindow : Window, IDisposable
     /// <summary>Raised after a rebuild changed the startable list, the accepted list or the zone, and when a setting flips.</summary>
     public event Action? Changed;
 
-    /// <summary>The settings the cog popup edits.</summary>
+    /// <summary>The settings Settings › Integrations › Nearby and server info bar edits.</summary>
     public DiscoverySettings Settings => settings;
+
+    /// <summary>Opens Settings on the Nearby block; set by the plugin. Null hides the cog.</summary>
+    public Action? OpenSettings { get; set; }
+
+    /// <summary>
+    /// After <see cref="Settings"/> was edited: saves them, then rebuilds the rows when <paramref name="rowsChanged"/>
+    /// (which tells the server info bar entry when the lists changed) or tells the entry at once.
+    /// </summary>
+    public void SettingsChanged(bool rowsChanged)
+    {
+        SaveSettings();
+        if (rowsChanged)
+        {
+            Rebuild(force: true);
+        }
+        else
+        {
+            Changed?.Invoke();
+        }
+    }
 
     /// <summary>Quests the viewed character can start in the current zone, after the other-job setting.</summary>
     public int StartableCount => startable.Length;
@@ -243,58 +263,18 @@ public sealed class DiscoveryWindow : Window, IDisposable
         ImGui.SetCursorScreenPos(new Vector2(ImGui.GetCursorScreenPos().X, start.Y + (rowHeight - line) * 0.5f));
         Chrome.OutlinedText(header, Theme.Surface.Text);
 
-        // Cog at the right edge, a round button never under the minimum target; the popup below hangs off it.
-        ImGui.SetCursorScreenPos(new Vector2(ImGui.GetWindowPos().X + ImGui.GetWindowContentRegionMax().X - button, start.Y + (rowHeight - button) * 0.5f));
-        if (Chrome.IconButtonRound("##nearbyCog", CogGlyph, Strings.DiscoverySettingsTooltip))
+        // Cog at the right edge, a round button never under the minimum target: it opens Settings on this window's block.
+        if (OpenSettings is { } openSettings)
         {
-            ImGui.OpenPopup(Strings.DiscoverySettingsPopup);
+            ImGui.SetCursorScreenPos(new Vector2(ImGui.GetWindowPos().X + ImGui.GetWindowContentRegionMax().X - button, start.Y + (rowHeight - button) * 0.5f));
+            if (Chrome.IconButtonRound("##nearbyCog", CogGlyph, Strings.DiscoverySettingsTooltip))
+            {
+                openSettings();
+            }
         }
 
         ImGui.SetCursorScreenPos(new Vector2(start.X, start.Y + rowHeight));
         ImGui.Dummy(Vector2.Zero);
-        DrawSettingsPopup();
-    }
-
-    private void DrawSettingsPopup()
-    {
-        if (!ImGui.IsPopupOpen(Strings.DiscoverySettingsPopup))
-        {
-            return;
-        }
-
-        using var style = Theme.PushPopup();
-        using var popup = ImRaii.Popup(Strings.DiscoverySettingsPopup);
-        if (!popup)
-        {
-            return;
-        }
-
-        var show = settings.ShowDtrEntry;
-        if (ImGui.Checkbox(Strings.DiscoveryShowDtrLabel, ref show))
-        {
-            settings.ShowDtrEntry = show;
-            SaveSettings();
-            Changed?.Invoke();
-        }
-
-        using (ImRaii.Disabled(!settings.ShowDtrEntry))
-        {
-            var whenEmpty = settings.DtrShowWhenEmpty;
-            if (ImGui.Checkbox(Strings.DiscoveryDtrShowWhenEmptyLabel, ref whenEmpty))
-            {
-                settings.DtrShowWhenEmpty = whenEmpty;
-                SaveSettings();
-                Changed?.Invoke();
-            }
-        }
-
-        var otherJob = settings.NearbyIncludeOtherJob;
-        if (ImGui.Checkbox(Strings.DiscoveryIncludeOtherJobLabel, ref otherJob))
-        {
-            settings.NearbyIncludeOtherJob = otherJob;
-            SaveSettings();
-            Rebuild(force: true);
-        }
     }
 
     private void DrawEmpty()

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
-using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin;
@@ -19,14 +18,15 @@ using Tsukimichi.GameData;
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// Settings (spec §7): poll interval (with the measured cost of a poll under it), display scale sliders
-/// (<see cref="Configuration.UiScale"/>, <see cref="Configuration.IconScale"/>), Reduce motion and the journal
-/// filing, chat notices, the Removed from the game node, the spoiler shield (T19: names ahead, how many to reveal,
-/// artwork, the viewed character's override), the todo overlay (on/off, lock, opacity, sections, reset position), item hints, the Wotsit
-/// integration, help (open it, start the tutorial, offer it on first run), the user's Moonlit verdicts with Restore
-/// and a hold-to-confirm Restore all, data deletion with a double confirm, and an About section with the plugin,
-/// reward-data and catalog stamps plus the poll timing. Every change is saved as it happens; sliders save when
-/// released.
+/// Settings (spec §7), in sections with an index and a search box (<c>ConfigWindow.Layout.cs</c>, which also says how
+/// to add a block): Display (window and icon scale, density, rail, colours, glyph palette, Look with Flair, the Journal
+/// options), the Todo overlay, Routes, Notices, Spoilers (T19), Keyboard, Integrations (companion plugins,
+/// Questionable, hand-in items, AutoDuty, travel, Wotsit, Nearby and the server info bar, the game windows and menus,
+/// item hints), Data (the Moonlit verdicts with Restore and a hold-to-confirm Restore all, export, deletion with a
+/// double confirm), Advanced (polling with the measured cost of a poll, journal filing, the hook gate override) and
+/// About (the plugin, reward-data and catalog stamps, the poll timing, help and the tour). Every change is saved as it
+/// happens; sliders save when released, and the window scale applies when released so the slider stays under the
+/// pointer.
 /// </summary>
 public sealed partial class ConfigWindow : Window
 {
@@ -106,9 +106,11 @@ public sealed partial class ConfigWindow : Window
         ArgumentNullException.ThrowIfNull(diagnostics);
         this.onShowUnlistedChanged = onShowUnlistedChanged ?? throw new ArgumentNullException(nameof(onShowUnlistedChanged));
 
-        Size = new Vector2(480f, 640f);
+        // Wide enough at first use for the section index beside a page that fits three Flair previews side by side.
+        Size = new Vector2(680f, 660f);
         SizeCondition = ImGuiCond.FirstUseEver;
-        SizeConstraints = new WindowSizeConstraints { MinimumSize = new Vector2(400f, 320f) };
+        SizeConstraints = new WindowSizeConstraints { MinimumSize = new Vector2(MinWidthLogical, MinHeightLogical) };
+        blocks = BuildBlocks();
 
         var pluginVersion = diagnostics.PluginVersion.Length > 0 ? diagnostics.PluginVersion : "unknown";
         pluginVersionLine = new LocText(() => string.Format(CultureInfo.CurrentCulture, Strings.ConfigPluginVersionFormat, pluginVersion));
@@ -172,10 +174,12 @@ public sealed partial class ConfigWindow : Window
     public override void OnOpen()
     {
         ReadSettings();
+        ClearSearch();
     }
 
     public override void OnClose()
     {
+        ApplyUiScaleDraft();
         if (pollDirty || scaleDirty || todoDirty || spoilerAheadDirty)
         {
             pollDirty = false;
@@ -186,42 +190,15 @@ public sealed partial class ConfigWindow : Window
         }
     }
 
-    public override void Draw()
-    {
-        DrawPolling();
-        ImGui.Spacing();
-        DrawDisplay();
-        ImGui.Spacing();
-        DrawKeyboard();
-        ImGui.Spacing();
-        DrawNotices();
-        ImGui.Spacing();
-        DrawJournal();
-        ImGui.Spacing();
-        DrawJournalText();
-        ImGui.Spacing();
-        DrawSpoilers();
-        ImGui.Spacing();
-        DrawRoutes();
-        ImGui.Spacing();
-        DrawTodoOverlay();
-        ImGui.Spacing();
-        DrawItemHints();
-        ImGui.Spacing();
-        DrawIntegrations();
-        ImGui.Spacing();
-        DrawHandInIntegrations();
-        ImGui.Spacing();
-        DrawHelp();
-        ImGui.Spacing();
-        DrawData();
-        ImGui.Spacing();
-        DrawAbout();
-    }
-
+    /// <summary>Settings › Advanced › Polling: the poll interval slider (saved when released) and the measured cost of a poll.</summary>
     private void DrawPolling()
     {
         Header(Strings.ConfigSectionPolling);
+        if (!Row(Strings.ConfigPollInterval, Strings.ConfigPollIntervalHint, "polling refresh frequency seconds"))
+        {
+            return;
+        }
+
         bool moved;
         ImGui.SetNextItemWidth(SliderWidth());
         using (ImRaii.PushId(Strings.ConfigPollInterval))
@@ -253,100 +230,137 @@ public sealed partial class ConfigWindow : Window
         pollSeconds = (float)settings.PollInterval.TotalSeconds;
         pollDirty = false;
         scaleDirty = false;
+        uiScaleDraft = null;
     }
 
+    // The window scale while its slider is held: applied (and saved) when it is let go, so the windows, this one
+    // included, do not resize under the pointer.
+    private float? uiScaleDraft;
+
     /// <summary>
-    /// Two sliders written to the configuration as they move and saved when released. They read the configuration
-    /// every frame (through the same clamps as the main window's filter panel, which edits the same values), so the
-    /// two places never disagree and a corrupt value shows as the default rather than NaN.
+    /// Settings › Display: the plugin language, the window scale (applied and saved when the slider is let go), the icon
+    /// scale (written as it moves, saved when released), density, the compact rail, Follow Dalamud's colours and the
+    /// glyph palette. The sliders read the configuration every frame (through the same clamps as the main window's
+    /// filter panel, which edits the same values), so the two places never disagree and a corrupt value shows as the
+    /// default rather than NaN.
     /// </summary>
     private void DrawDisplay()
     {
         Header(Strings.ConfigSectionDisplay);
-        DrawLook();
         DrawLanguage();
 
-        var uiScale = ScaleMetrics.ClampUiScale(settings.UiScale);
-        bool moved;
-        ImGui.SetNextItemWidth(SliderWidth());
-        using (ImRaii.PushId(Strings.ConfigUiScale))
+        if (Row(Strings.ConfigUiScale, Strings.ConfigUiScaleHint, "ui scale size zoom text font bigger smaller"))
         {
-            moved = ImGui.SliderFloat("##slider", ref uiScale, ScaleMetrics.MinUiScale, ScaleMetrics.MaxUiScale, "%.2f", ImGuiSliderFlags.AlwaysClamp);
+            var uiScale = uiScaleDraft ?? ScaleMetrics.ClampUiScale(settings.UiScale);
+            bool moved;
+            ImGui.SetNextItemWidth(SliderWidth());
+            using (ImRaii.PushId(Strings.ConfigUiScale))
+            {
+                moved = ImGui.SliderFloat("##slider", ref uiScale, ScaleMetrics.MinUiScale, ScaleMetrics.MaxUiScale, "%.2f", ImGuiSliderFlags.AlwaysClamp);
+            }
+
+            if (moved)
+            {
+                uiScaleDraft = uiScale;
+            }
+
+            // Let go (or a typed value entered, or a keyboard step taken): apply it now.
+            if (uiScaleDraft is not null && !ImGui.IsItemActive())
+            {
+                ApplyUiScaleDraft();
+            }
+
+            Chrome.TrailingLabel(Strings.ConfigUiScale);
+            Chrome.Hint(Strings.ConfigUiScaleHint);
         }
 
-        if (moved)
+        if (Row(Strings.ConfigIconScale, Strings.ConfigIconScaleHint, "icon size moons"))
         {
-            settings.UiScale = uiScale;
-            scaleDirty = true;
+            var iconScale = ScaleMetrics.ClampIconScale(settings.IconScale);
+            bool moved;
+            ImGui.SetNextItemWidth(SliderWidth());
+            using (ImRaii.PushId(Strings.ConfigIconScale))
+            {
+                moved = ImGui.SliderFloat("##slider", ref iconScale, ScaleMetrics.MinIconScale, ScaleMetrics.MaxIconScale, "%.2f", ImGuiSliderFlags.AlwaysClamp);
+            }
+
+            if (moved)
+            {
+                settings.IconScale = iconScale;
+                scaleDirty = true;
+            }
+
+            SaveWhenReleased();
+            Chrome.TrailingLabel(Strings.ConfigIconScale);
+            Chrome.Hint(Strings.ConfigIconScaleHint);
         }
-
-        SaveWhenReleased();
-        Chrome.TrailingLabel(Strings.ConfigUiScale);
-        Chrome.Hint(Strings.ConfigUiScaleHint);
-
-        var iconScale = ScaleMetrics.ClampIconScale(settings.IconScale);
-        ImGui.SetNextItemWidth(SliderWidth());
-        using (ImRaii.PushId(Strings.ConfigIconScale))
-        {
-            moved = ImGui.SliderFloat("##slider", ref iconScale, ScaleMetrics.MinIconScale, ScaleMetrics.MaxIconScale, "%.2f", ImGuiSliderFlags.AlwaysClamp);
-        }
-
-        if (moved)
-        {
-            settings.IconScale = iconScale;
-            scaleDirty = true;
-        }
-
-        SaveWhenReleased();
-        Chrome.TrailingLabel(Strings.ConfigIconScale);
-        Chrome.Hint(Strings.ConfigIconScaleHint);
 
         // Density: the quest table's row height only (T12).
-        ImGui.TextUnformatted(Strings.ConfigDensity);
-        Chrome.SameLineOrWrap(RadioWidth(Strings.ConfigDensityComfortable));
-        if (ImGui.RadioButton(Strings.ConfigDensityComfortable, settings.Density == RowDensity.Comfortable))
+        if (Row(Strings.ConfigDensity, Strings.ConfigDensityHint, "comfortable dense row height compact"))
         {
-            settings.Density = RowDensity.Comfortable;
-            Save();
-        }
+            ImGui.TextUnformatted(Strings.ConfigDensity);
+            Chrome.SameLineOrWrap(RadioWidth(Strings.ConfigDensityComfortable));
+            if (ImGui.RadioButton(Strings.ConfigDensityComfortable, settings.Density == RowDensity.Comfortable))
+            {
+                settings.Density = RowDensity.Comfortable;
+                Save();
+            }
 
-        Chrome.SameLineOrWrap(RadioWidth(Strings.ConfigDensityDense));
-        if (ImGui.RadioButton(Strings.ConfigDensityDense, settings.Density == RowDensity.Dense))
-        {
-            settings.Density = RowDensity.Dense;
-            Save();
-        }
+            Chrome.SameLineOrWrap(RadioWidth(Strings.ConfigDensityDense));
+            if (ImGui.RadioButton(Strings.ConfigDensityDense, settings.Density == RowDensity.Dense))
+            {
+                settings.Density = RowDensity.Dense;
+                Save();
+            }
 
-        Chrome.Hint(Strings.ConfigDensityHint);
+            Chrome.Hint(Strings.ConfigDensityHint);
+        }
 
         // The main window's rail: 64 px stations with labels, or 44 px icons (feature plan v4 L7).
-        var compactRail = settings.CompactRail;
-        if (ImGui.Checkbox(Strings.ConfigCompactRail, ref compactRail))
+        if (Row(Strings.ConfigCompactRail, Strings.ConfigCompactRailHint, "tabs sidebar"))
         {
-            settings.CompactRail = compactRail;
-            Save();
-        }
+            var compactRail = settings.CompactRail;
+            if (ImGui.Checkbox(Strings.ConfigCompactRail, ref compactRail))
+            {
+                settings.CompactRail = compactRail;
+                Save();
+            }
 
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(Strings.ConfigCompactRailHint);
+            HintOnHover(Strings.ConfigCompactRailHint);
         }
 
         // One layout, two palettes (T13): Night, or the surfaces mapped from the user's Dalamud style.
-        var followDalamud = settings.FollowDalamudColours;
-        if (ImGui.Checkbox(Strings.ConfigFollowDalamudColours, ref followDalamud))
+        if (Row(Strings.ConfigFollowDalamudColours, Strings.ConfigFollowDalamudColoursHint, "colors theme style night"))
         {
-            settings.FollowDalamudColours = followDalamud;
-            Save();
-        }
+            var followDalamud = settings.FollowDalamudColours;
+            if (ImGui.Checkbox(Strings.ConfigFollowDalamudColours, ref followDalamud))
+            {
+                settings.FollowDalamudColours = followDalamud;
+                Save();
+            }
 
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(Strings.ConfigFollowDalamudColoursHint);
+            HintOnHover(Strings.ConfigFollowDalamudColoursHint);
         }
 
         DrawGlyphPalette();
-        DrawJournalFiling();
+    }
+
+    /// <summary>Writes the held window scale to the configuration and saves it; nothing while none is held.</summary>
+    private void ApplyUiScaleDraft()
+    {
+        if (uiScaleDraft is not { } draft)
+        {
+            return;
+        }
+
+        uiScaleDraft = null;
+        if (MathF.Abs(ScaleMetrics.ClampUiScale(settings.UiScale) - draft) < 0.0001f)
+        {
+            return;
+        }
+
+        settings.UiScale = draft;
+        Save();
     }
 
     /// <summary>
@@ -356,46 +370,46 @@ public sealed partial class ConfigWindow : Window
     /// </summary>
     private void DrawLook()
     {
-        using (Theme.PushText(Theme.Surface.TextSecondary))
+        Header(Strings.ConfigLook);
+        if (Row(Strings.ConfigFlair, Strings.ConfigFlairHint, "full quiet plain moon road ornament style look"))
         {
-            ImGui.TextUnformatted(Strings.ConfigLook);
+            ImGui.TextUnformatted(Strings.ConfigFlair);
+            FlairRadio(Strings.ConfigFlairFull, Flair.Full);
+            FlairRadio(Strings.ConfigFlairQuiet, Flair.Quiet);
+            FlairRadio(Strings.ConfigFlairPlain, Flair.Plain);
+            DrawFlairPreviews();
         }
 
-        ImGui.TextUnformatted(Strings.ConfigFlair);
-        FlairRadio(Strings.ConfigFlairFull, Flair.Full);
-        FlairRadio(Strings.ConfigFlairQuiet, Flair.Quiet);
-        FlairRadio(Strings.ConfigFlairPlain, Flair.Plain);
-        DrawFlairPreviews();
-
-        using (ImRaii.Disabled(settings.Flair == Flair.Plain))
+        if (Row(Strings.ConfigGameHeadingFonts, Strings.ConfigGameHeadingFontsHint, "font typeface"))
         {
-            var headingFonts = settings.GameHeadingFonts;
-            if (ImGui.Checkbox(Strings.ConfigGameHeadingFonts, ref headingFonts))
+            using (ImRaii.Disabled(settings.Flair == Flair.Plain))
             {
-                settings.GameHeadingFonts = headingFonts;
-                Save();
+                var headingFonts = settings.GameHeadingFonts;
+                if (ImGui.Checkbox(Strings.ConfigGameHeadingFonts, ref headingFonts))
+                {
+                    settings.GameHeadingFonts = headingFonts;
+                    Save();
+                }
+            }
+
+            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+            {
+                UiMetrics.Tooltip(Strings.ConfigGameHeadingFontsHint);
             }
         }
 
-        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+        if (Row(Strings.ConfigReduceMotion, Strings.ConfigReduceMotionHint, "animation accessibility"))
         {
-            UiMetrics.Tooltip(Strings.ConfigGameHeadingFontsHint);
-        }
+            var reduceMotion = settings.ReduceMotion;
+            if (ImGui.Checkbox(Strings.ConfigReduceMotion, ref reduceMotion))
+            {
+                settings.ReduceMotion = reduceMotion;
+                settings.ReduceMotionChosen = true;
+                Save();
+            }
 
-        var reduceMotion = settings.ReduceMotion;
-        if (ImGui.Checkbox(Strings.ConfigReduceMotion, ref reduceMotion))
-        {
-            settings.ReduceMotion = reduceMotion;
-            settings.ReduceMotionChosen = true;
-            Save();
+            HintOnHover(Strings.ConfigReduceMotionHint);
         }
-
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(Strings.ConfigReduceMotionHint);
-        }
-
-        ImGui.Spacing();
     }
 
     /// <summary>
@@ -562,50 +576,65 @@ public sealed partial class ConfigWindow : Window
     private void DrawKeyboard()
     {
         Header(Strings.ConfigSectionKeyboard);
-        using (ImRaii.TextWrapPos(0f))
+        if (Row(Strings.ConfigKeyboardAlwaysOn, Strings.ConfigKeyboardGameSeesKeys, "keys shortcuts hotkeys keybinds"))
         {
-            Chrome.Hint(Strings.ConfigKeyboardAlwaysOn);
-            using (Theme.PushText(Theme.Surface.TextSecondary))
+            using (ImRaii.TextWrapPos(0f))
             {
-                ImGui.TextWrapped(Strings.ConfigKeyboardGameSeesKeys);
+                Chrome.Hint(Strings.ConfigKeyboardAlwaysOn);
+                using (Theme.PushText(Theme.Surface.TextSecondary))
+                {
+                    ImGui.TextWrapped(Strings.ConfigKeyboardGameSeesKeys);
+                }
             }
         }
 
-        var tabs = settings.ShortcutTabs;
-        if (ImGui.Checkbox(Strings.ConfigShortcutTabs, ref tabs))
+        if (Row(Strings.ConfigShortcutTabs, Strings.ConfigShortcutTabsHint, "shortcut keys hotkey"))
         {
-            settings.ShortcutTabs = tabs;
-            Save();
+            var tabs = settings.ShortcutTabs;
+            if (ImGui.Checkbox(Strings.ConfigShortcutTabs, ref tabs))
+            {
+                settings.ShortcutTabs = tabs;
+                Save();
+            }
+
+            HintOnHover(Strings.ConfigShortcutTabsHint);
         }
 
-        HintOnHover(Strings.ConfigShortcutTabsHint);
-
-        var flag = settings.ShortcutFlag;
-        if (ImGui.Checkbox(Strings.ConfigShortcutFlag, ref flag))
+        if (Row(Strings.ConfigShortcutFlag, Strings.ConfigShortcutFlagHint, "shortcut keys hotkey map"))
         {
-            settings.ShortcutFlag = flag;
-            Save();
+            var flag = settings.ShortcutFlag;
+            if (ImGui.Checkbox(Strings.ConfigShortcutFlag, ref flag))
+            {
+                settings.ShortcutFlag = flag;
+                Save();
+            }
+
+            HintOnHover(Strings.ConfigShortcutFlagHint);
         }
 
-        HintOnHover(Strings.ConfigShortcutFlagHint);
-
-        var reveal = settings.ShortcutReveal;
-        if (ImGui.Checkbox(Strings.ConfigShortcutReveal, ref reveal))
+        if (Row(Strings.ConfigShortcutReveal, Strings.ConfigShortcutRevealHint, "shortcut keys hotkey"))
         {
-            settings.ShortcutReveal = reveal;
-            Save();
+            var reveal = settings.ShortcutReveal;
+            if (ImGui.Checkbox(Strings.ConfigShortcutReveal, ref reveal))
+            {
+                settings.ShortcutReveal = reveal;
+                Save();
+            }
+
+            HintOnHover(Strings.ConfigShortcutRevealHint);
         }
 
-        HintOnHover(Strings.ConfigShortcutRevealHint);
-
-        var pin = settings.ShortcutPin;
-        if (ImGui.Checkbox(Strings.ConfigShortcutPin, ref pin))
+        if (Row(Strings.ConfigShortcutPin, Strings.ConfigShortcutPinHint, "shortcut keys hotkey"))
         {
-            settings.ShortcutPin = pin;
-            Save();
-        }
+            var pin = settings.ShortcutPin;
+            if (ImGui.Checkbox(Strings.ConfigShortcutPin, ref pin))
+            {
+                settings.ShortcutPin = pin;
+                Save();
+            }
 
-        HintOnHover(Strings.ConfigShortcutPinHint);
+            HintOnHover(Strings.ConfigShortcutPinHint);
+        }
     }
 
     /// <summary>
@@ -621,6 +650,11 @@ public sealed partial class ConfigWindow : Window
             followLabelLanguage = Loc.Version;
             followLabelDalamud = dalamud;
             followLabel = string.Format(CultureInfo.CurrentCulture, Strings.ConfigLanguageFollowFormat, Loc.NativeName(dalamud));
+        }
+
+        if (!Row(Strings.ConfigLanguage, Strings.ConfigLanguageHint, "language english translation"))
+        {
+            return;
         }
 
         // Each choice moves to the next line when it would run past the edge (French at the 400 px minimum width).
@@ -679,7 +713,7 @@ public sealed partial class ConfigWindow : Window
     private string followLabel = string.Empty;
 
     /// <summary>A setting slider's width: 220 px, or the room left when the window is narrower.</summary>
-    private static float SliderWidth() => Chrome.FitWidth(220f * ImGuiHelpers.GlobalScale);
+    private static float SliderWidth() => Chrome.FitWidth(UiMetrics.Px(220f));
 
     /// <summary>The Moonlit verdicts table's column plan (<see cref="PaneFit.VerdictColumns"/>).</summary>
     private readonly ColumnFit verdictColumns = new(5);
@@ -740,6 +774,11 @@ public sealed partial class ConfigWindow : Window
     /// </summary>
     private void DrawGlyphPalette()
     {
+        if (!Row(Strings.ConfigGlyphPalette, Strings.ConfigGlyphPaletteHint, "standard high contrast colour blind accessibility moons"))
+        {
+            return;
+        }
+
         ImGui.TextUnformatted(Strings.ConfigGlyphPalette);
         Chrome.SameLineOrWrap(RadioWidth(Strings.ConfigGlyphPaletteStandard));
         if (ImGui.RadioButton(Strings.ConfigGlyphPaletteStandard, settings.GlyphPalette == GlyphPaletteKind.Standard))
@@ -759,7 +798,7 @@ public sealed partial class ConfigWindow : Window
         HintOnHover(Strings.ConfigGlyphPaletteHint);
 
         var glyph = UiMetrics.InlineGlyphSize(ImGui.GetTextLineHeight());
-        var gap = 4f * ImGuiHelpers.GlobalScale;
+        var gap = UiMetrics.Px(4f);
         for (var i = 0; i < PalettePreviewStates.Length; i++)
         {
             if (i > 0)
@@ -776,17 +815,21 @@ public sealed partial class ConfigWindow : Window
         ImGui.SameLine(0f, gap);
         Marks.DrawInline(Mark.Cross, glyph);
         ImGui.SameLine(0f, gap * 2f);
-        MoonGlyph.DrawHaloInline(0.6f, MathF.Max(glyph, 16f * ImGuiHelpers.GlobalScale));
+        MoonGlyph.DrawHaloInline(0.6f, MathF.Max(glyph, UiMetrics.Px(16f)));
     }
 
     /// <summary>
-    /// The journal filing radio: Refiled (the 0.6.1 rules) or Legacy (the genre-less quests stay in the removed
-    /// bucket, as before). Saved at once; the plugin rebuilds the catalog through <see cref="JournalFilingChanged"/>.
+    /// Settings › Advanced › Journal filing: Refiled (the 0.6.1 rules) or Legacy (the genre-less quests stay in the
+    /// removed bucket, as before). Saved at once; the plugin rebuilds the catalog through <see cref="JournalFilingChanged"/>.
     /// </summary>
     private void DrawJournalFiling()
     {
-        ImGui.Spacing();
-        ImGui.TextUnformatted(Strings.ConfigJournalFiling);
+        Header(Strings.ConfigJournalFiling);
+        if (!Row(Strings.ConfigJournalFiling, Strings.ConfigJournalFilingHint, "refiled legacy catalog hidden quests"))
+        {
+            return;
+        }
+
         var filing = settings.JournalFiling;
         var changed = false;
         if (ImGui.RadioButton(Strings.ConfigJournalFilingRefiled, filing == JournalFiling.Refiled))
@@ -821,38 +864,39 @@ public sealed partial class ConfigWindow : Window
         }
     }
 
+    /// <summary>Settings › About › Help: open the guide, start the tour, and whether the tour is offered on first run.</summary>
     private void DrawHelp()
     {
         Header(Strings.ConfigSectionHelp);
-        if (StartTutorial is { } startTutorial)
+        if ((StartTutorial is not null || ShowHelp is not null) && Row(Strings.ConfigShowHelp, Strings.ConfigStartTutorial, "help guide tour tutorial"))
         {
-            if (ImGui.Button(Strings.ConfigStartTutorial))
+            if (StartTutorial is { } startTutorial)
             {
-                startTutorial();
+                if (ImGui.Button(Strings.ConfigStartTutorial))
+                {
+                    startTutorial();
+                }
+
+                ImGui.SameLine();
             }
 
-            ImGui.SameLine();
-        }
-
-        if (ShowHelp is { } showHelp)
-        {
-            if (ImGui.Button(Strings.ConfigShowHelp))
+            if (ShowHelp is { } showHelp && ImGui.Button(Strings.ConfigShowHelp))
             {
                 showHelp();
             }
         }
 
-        var offer = !settings.TutorialCompleted && settings.TutorialLaterCount < TutorialOverlay.LaterLimit;
-        if (ImGui.Checkbox(Strings.ConfigOfferTutorial, ref offer))
+        if (Row(Strings.ConfigOfferTutorial, Strings.ConfigOfferTutorialHint, "tour tutorial welcome first run"))
         {
-            settings.TutorialCompleted = !offer;
-            settings.TutorialLaterCount = 0;
-            Save();
-        }
+            var offer = !settings.TutorialCompleted && settings.TutorialLaterCount < TutorialOverlay.LaterLimit;
+            if (ImGui.Checkbox(Strings.ConfigOfferTutorial, ref offer))
+            {
+                settings.TutorialCompleted = !offer;
+                settings.TutorialLaterCount = 0;
+                Save();
+            }
 
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(Strings.ConfigOfferTutorialHint);
+            HintOnHover(Strings.ConfigOfferTutorialHint);
         }
     }
 
@@ -880,71 +924,84 @@ public sealed partial class ConfigWindow : Window
 
     private bool welcomeBackDaysDirty;
 
+    /// <summary>Settings › Notices: the chat lines (newly available, job quests, abandoned, seasonal, "Before you continue") and Since you were away.</summary>
     private void DrawNotices()
     {
         Header(Strings.ConfigSectionNotices);
         var notice = settings.ChatNoticeNewlyAvailable;
-        if (ImGui.Checkbox(Strings.ConfigChatNotice, ref notice))
+        if (Row(Strings.ConfigChatNotice, null, "chat message newly available ready"))
         {
-            settings.ChatNoticeNewlyAvailable = notice;
-            Save();
-        }
-
-        using (ImRaii.PushIndent())
-        using (ImRaii.Disabled(!notice))
-        {
-            var msq = settings.IncludeMsqInNotices;
-            if (ImGui.Checkbox(Strings.ConfigIncludeMsq, ref msq))
+            if (ImGui.Checkbox(Strings.ConfigChatNotice, ref notice))
             {
-                settings.IncludeMsqInNotices = msq;
+                settings.ChatNoticeNewlyAvailable = notice;
                 Save();
             }
         }
 
-        var nudge = settings.JobQuestNudge;
-        if (ImGui.Checkbox(Strings.JobsConfigNudge, ref nudge))
+        if (Row(Strings.ConfigIncludeMsq, null, "chat main scenario msq notice"))
         {
-            settings.JobQuestNudge = nudge;
-            Save();
-        }
-
-        var abandoned = settings.ChatNoticeAbandoned;
-        if (ImGui.Checkbox(Strings.AbandonedConfigNotice, ref abandoned))
-        {
-            settings.ChatNoticeAbandoned = abandoned;
-            Save();
-        }
-
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(Strings.AbandonedConfigNoticeHint);
-        }
-
-        var seasonal = settings.ChatNoticeSeasonal;
-        if (ImGui.Checkbox(Strings.SeasonalConfigNotice, ref seasonal))
-        {
-            settings.ChatNoticeSeasonal = seasonal;
-            Save();
-        }
-
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(Strings.SeasonalConfigNoticeHint);
-        }
-
-        using (ImRaii.Disabled(!settings.ShowPayoffGates))
-        {
-            var payoff = settings.ChatNoticePayoffGates;
-            if (ImGui.Checkbox(Strings.PayoffConfigNotice, ref payoff))
+            using (ImRaii.PushIndent())
+            using (ImRaii.Disabled(!notice))
             {
-                settings.ChatNoticePayoffGates = payoff;
+                var msq = settings.IncludeMsqInNotices;
+                if (ImGui.Checkbox(Strings.ConfigIncludeMsq, ref msq))
+                {
+                    settings.IncludeMsqInNotices = msq;
+                    Save();
+                }
+            }
+        }
+
+        if (Row(Strings.JobsConfigNudge, null, "chat job class quest notice"))
+        {
+            var nudge = settings.JobQuestNudge;
+            if (ImGui.Checkbox(Strings.JobsConfigNudge, ref nudge))
+            {
+                settings.JobQuestNudge = nudge;
                 Save();
             }
         }
 
-        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+        if (Row(Strings.AbandonedConfigNotice, Strings.AbandonedConfigNoticeHint, "chat notice"))
         {
-            UiMetrics.Tooltip(Strings.PayoffConfigNoticeHint);
+            var abandoned = settings.ChatNoticeAbandoned;
+            if (ImGui.Checkbox(Strings.AbandonedConfigNotice, ref abandoned))
+            {
+                settings.ChatNoticeAbandoned = abandoned;
+                Save();
+            }
+
+            HintOnHover(Strings.AbandonedConfigNoticeHint);
+        }
+
+        if (Row(Strings.SeasonalConfigNotice, Strings.SeasonalConfigNoticeHint, "chat notice event festival"))
+        {
+            var seasonal = settings.ChatNoticeSeasonal;
+            if (ImGui.Checkbox(Strings.SeasonalConfigNotice, ref seasonal))
+            {
+                settings.ChatNoticeSeasonal = seasonal;
+                Save();
+            }
+
+            HintOnHover(Strings.SeasonalConfigNoticeHint);
+        }
+
+        if (Row(Strings.PayoffConfigNotice, Strings.PayoffConfigNoticeHint, "chat notice before you continue"))
+        {
+            using (ImRaii.Disabled(!settings.ShowPayoffGates))
+            {
+                var payoff = settings.ChatNoticePayoffGates;
+                if (ImGui.Checkbox(Strings.PayoffConfigNotice, ref payoff))
+                {
+                    settings.ChatNoticePayoffGates = payoff;
+                    Save();
+                }
+            }
+
+            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+            {
+                UiMetrics.Tooltip(Strings.PayoffConfigNoticeHint);
+            }
         }
 
         DrawWelcomeBackDays();
@@ -953,8 +1010,13 @@ public sealed partial class ConfigWindow : Window
     /// <summary>"Show 'Since you were away' after N days" (P7): 0 turns the card off; saved when the slider is let go.</summary>
     private void DrawWelcomeBackDays()
     {
+        if (!Row(Strings.WelcomeBackConfigDays, Strings.WelcomeBackConfigHint, "since you were away welcome back break days"))
+        {
+            return;
+        }
+
         var days = Math.Clamp(settings.WelcomeBackDays, 0, Core.Return.WelcomeBackTrigger.MaxDays);
-        ImGui.SetNextItemWidth(Chrome.FitWidth(160f * ImGuiHelpers.GlobalScale));
+        ImGui.SetNextItemWidth(Chrome.FitWidth(UiMetrics.Px(160f)));
         if (ImGui.SliderInt("##welcomeBackDays", ref days, 0, Core.Return.WelcomeBackTrigger.MaxDays, days == 0 ? Strings.WelcomeBackConfigOff : Strings.WelcomeBackConfigDaysFormat, ImGuiSliderFlags.AlwaysClamp))
         {
             settings.WelcomeBackDays = days;
@@ -974,9 +1036,15 @@ public sealed partial class ConfigWindow : Window
         HintOnHover(Strings.WelcomeBackConfigHint);
     }
 
+    /// <summary>Settings › Display › Journal: the Removed from the game node.</summary>
     private void DrawJournal()
     {
         Header(Strings.ConfigSectionJournal);
+        if (!Row(Strings.ConfigShowUnlisted, Strings.ConfigShowUnlistedHint, "removed deleted quests tree"))
+        {
+            return;
+        }
+
         var unlisted = settings.ShowUnlisted;
         if (ImGui.Checkbox(Strings.ConfigShowUnlisted, ref unlisted))
         {
@@ -997,92 +1065,94 @@ public sealed partial class ConfigWindow : Window
     {
         Header(Strings.SettingsSpoilers);
         var hideNames = settings.SpoilerHideMsqNames;
-        if (ImGui.Checkbox(Strings.SpoilerHideNames, ref hideNames))
+        if (Row(Strings.SpoilerHideNames, Strings.SpoilerHideNamesHelp, "spoiler shield main scenario msq names"))
         {
-            settings.SpoilerHideMsqNames = hideNames;
-            SpoilersChanged();
-        }
-
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(Strings.SpoilerHideNamesHelp);
-        }
-
-        // The slider applies whenever the viewed character's effective options hide names: the global setting, or
-        // that character's override (Always shield hides them even with the global setting off). Mirrors
-        // Configuration.SpoilerOptionsFor without building the options record each frame.
-        var effectiveHide = session.ViewedContentId is { } viewedId && settings.SpoilerShieldByCharacter.TryGetValue(viewedId, out var shielded)
-            ? shielded
-            : hideNames;
-        using (ImRaii.PushIndent())
-        using (ImRaii.Disabled(!effectiveHide))
-        {
-            var ahead = Math.Clamp(settings.SpoilerRevealAhead, 0, SpoilerOptions.MaxAhead);
-            bool moved;
-            ImGui.SetNextItemWidth(Chrome.FitWidth(160f * ImGuiHelpers.GlobalScale));
-            using (ImRaii.PushId(Strings.SpoilerAhead))
+            if (ImGui.Checkbox(Strings.SpoilerHideNames, ref hideNames))
             {
-                moved = ImGui.SliderInt("##slider", ref ahead, 0, SpoilerOptions.MaxAhead, "%d", ImGuiSliderFlags.AlwaysClamp);
+                settings.SpoilerHideMsqNames = hideNames;
+                SpoilersChanged();
             }
 
-            if (moved)
+            HintOnHover(Strings.SpoilerHideNamesHelp);
+        }
+
+        if (Row(Strings.SpoilerAhead, Strings.SpoilerAheadHelp, "spoiler shield names ahead reveal"))
+        {
+            // The slider applies whenever the viewed character's effective options hide names: the global setting, or
+            // that character's override (Always shield hides them even with the global setting off). Mirrors
+            // Configuration.SpoilerOptionsFor without building the options record each frame.
+            var effectiveHide = session.ViewedContentId is { } viewedId && settings.SpoilerShieldByCharacter.TryGetValue(viewedId, out var shielded)
+                ? shielded
+                : hideNames;
+            using (ImRaii.PushIndent())
+            using (ImRaii.Disabled(!effectiveHide))
             {
-                settings.SpoilerRevealAhead = ahead;
-                spoilerAheadDirty = true;
-                session.RefreshSpoilers();
+                var ahead = Math.Clamp(settings.SpoilerRevealAhead, 0, SpoilerOptions.MaxAhead);
+                bool moved;
+                ImGui.SetNextItemWidth(Chrome.FitWidth(UiMetrics.Px(160f)));
+                using (ImRaii.PushId(Strings.SpoilerAhead))
+                {
+                    moved = ImGui.SliderInt("##slider", ref ahead, 0, SpoilerOptions.MaxAhead, "%d", ImGuiSliderFlags.AlwaysClamp);
+                }
+
+                if (moved)
+                {
+                    settings.SpoilerRevealAhead = ahead;
+                    spoilerAheadDirty = true;
+                    session.RefreshSpoilers();
+                }
+
+                if (spoilerAheadDirty && ImGui.IsItemDeactivatedAfterEdit())
+                {
+                    spoilerAheadDirty = false;
+                    Save();
+                }
+
+                HintOnHover(Strings.SpoilerAheadHelp);
+                Chrome.TrailingLabel(Strings.SpoilerAhead);
+                HintOnHover(Strings.SpoilerAheadHelp);
+            }
+        }
+
+        if (Row(Strings.SpoilerHideArtwork, Strings.SpoilerHideArtworkHelp, "spoiler shield images pictures banner"))
+        {
+            var hideArtwork = settings.SpoilerHideArtwork;
+            if (ImGui.Checkbox(Strings.SpoilerHideArtwork, ref hideArtwork))
+            {
+                settings.SpoilerHideArtwork = hideArtwork;
+                SpoilersChanged();
             }
 
-            if (spoilerAheadDirty && ImGui.IsItemDeactivatedAfterEdit())
+            HintOnHover(Strings.SpoilerHideArtworkHelp);
+        }
+
+        if (Row(Strings.PayoffConfigShow, Strings.PayoffConfigShowHint, "spoiler before you continue notes"))
+        {
+            var payoffNotes = settings.ShowPayoffGates;
+            if (ImGui.Checkbox(Strings.PayoffConfigShow, ref payoffNotes))
             {
-                spoilerAheadDirty = false;
+                settings.ShowPayoffGates = payoffNotes;
                 Save();
             }
 
-            if (ImGui.IsItemHovered())
+            HintOnHover(Strings.PayoffConfigShowHint);
+        }
+
+        if (Row(Strings.SpoilerCharacterLabel, Strings.SpoilerCharacterHelp, "spoiler shield character alt override"))
+        {
+            DrawSpoilerOverride();
+            if (spoilerCountVersion != session.Version)
             {
-                UiMetrics.Tooltip(Strings.SpoilerAheadHelp);
+                spoilerCountVersion = session.Version;
+                spoilerCountLine = session.Bundle is null
+                    ? string.Empty
+                    : string.Format(CultureInfo.CurrentCulture, Strings.SpoilerMaskedCountFormat, session.Spoilers.MaskedCount);
             }
 
-            Chrome.TrailingLabel(Strings.SpoilerAhead);
-            HintOnHover(Strings.SpoilerAheadHelp);
-        }
-
-        var hideArtwork = settings.SpoilerHideArtwork;
-        if (ImGui.Checkbox(Strings.SpoilerHideArtwork, ref hideArtwork))
-        {
-            settings.SpoilerHideArtwork = hideArtwork;
-            SpoilersChanged();
-        }
-
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(Strings.SpoilerHideArtworkHelp);
-        }
-
-        var payoffNotes = settings.ShowPayoffGates;
-        if (ImGui.Checkbox(Strings.PayoffConfigShow, ref payoffNotes))
-        {
-            settings.ShowPayoffGates = payoffNotes;
-            Save();
-        }
-
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(Strings.PayoffConfigShowHint);
-        }
-
-        DrawSpoilerOverride();
-        if (spoilerCountVersion != session.Version)
-        {
-            spoilerCountVersion = session.Version;
-            spoilerCountLine = session.Bundle is null
-                ? string.Empty
-                : string.Format(CultureInfo.CurrentCulture, Strings.SpoilerMaskedCountFormat, session.Spoilers.MaskedCount);
-        }
-
-        if (spoilerCountLine.Length > 0)
-        {
-            Chrome.Hint(spoilerCountLine);
+            if (spoilerCountLine.Length > 0)
+            {
+                Chrome.Hint(spoilerCountLine);
+            }
         }
     }
 
@@ -1104,10 +1174,7 @@ public sealed partial class ConfigWindow : Window
         }
 
         ImGui.TextUnformatted(spoilerLabel);
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(Strings.SpoilerCharacterHelp);
-        }
+        HintOnHover(Strings.SpoilerCharacterHelp);
 
         var current = settings.SpoilerShieldByCharacter.TryGetValue(contentId, out var shielded) ? (shielded ? 1 : 2) : 0;
         using var indent = ImRaii.PushIndent();
@@ -1156,6 +1223,11 @@ public sealed partial class ConfigWindow : Window
     /// <summary>The Todo overlay's "Clear my blues" section (P3): its toggle, which expansion is pinned and Unpin.</summary>
     private void DrawTodoPlanToggle()
     {
+        if (!Row(Strings.PlanTodoConfig, Strings.PlanTodoConfigHint, "overlay my blues plan expansion pinned"))
+        {
+            return;
+        }
+
         var plan = settings.TodoShowPlan;
         if (ImGui.Checkbox(Strings.PlanTodoConfig, ref plan))
         {
@@ -1163,7 +1235,7 @@ public sealed partial class ConfigWindow : Window
             Save();
         }
 
-        if (ImGui.IsItemHovered())
+        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
             UiMetrics.Tooltip(Strings.PlanTodoConfigHint);
         }
@@ -1208,127 +1280,157 @@ public sealed partial class ConfigWindow : Window
     {
         Header(Strings.TodoConfigSection);
         var enabled = settings.TodoOverlayEnabled;
-        if (ImGui.Checkbox(Strings.TodoConfigEnabled, ref enabled))
+        if (Row(Strings.TodoConfigEnabled, Strings.TodoConfigEnabledHint, "todo overlay show"))
         {
-            settings.TodoOverlayEnabled = enabled;
-            Save();
-        }
+            if (ImGui.Checkbox(Strings.TodoConfigEnabled, ref enabled))
+            {
+                settings.TodoOverlayEnabled = enabled;
+                Save();
+            }
 
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(Strings.TodoConfigEnabledHint);
+            HintOnHover(Strings.TodoConfigEnabledHint);
         }
 
         using var indent = ImRaii.PushIndent();
         using var disabled = ImRaii.Disabled(!enabled);
 
-        var locked = settings.TodoOverlayLocked;
-        if (ImGui.Checkbox(Strings.TodoConfigLocked, ref locked))
+        if (Row(Strings.TodoConfigLocked, Strings.TodoConfigLockedHint, "overlay lock click-through clicks"))
         {
-            settings.TodoOverlayLocked = locked;
-            if (!locked)
+            var locked = settings.TodoOverlayLocked;
+            if (ImGui.Checkbox(Strings.TodoConfigLocked, ref locked))
             {
-                // Unlocked: the upgrade notice has done its job.
-                settings.TodoLockNoticeDue = false;
+                settings.TodoOverlayLocked = locked;
+                if (!locked)
+                {
+                    // Unlocked: the upgrade notice has done its job.
+                    settings.TodoLockNoticeDue = false;
+                }
+
+                Save();
             }
 
-            Save();
+            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+            {
+                UiMetrics.Tooltip(Strings.TodoConfigLockedHint);
+            }
+
+            if (settings.TodoLockNoticeDue && settings.TodoOverlayLocked)
+            {
+                using var accent = Theme.PushText(Theme.Accent);
+                ImGui.TextWrapped(Strings.TodoLockUpgradeNotice);
+            }
         }
 
-        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+        if (Row(Strings.TodoConfigCompact, Strings.TodoConfigCompactHint, "overlay compact small"))
         {
-            UiMetrics.Tooltip(Strings.TodoConfigLockedHint);
+            var compact = settings.TodoOverlayCompact;
+            if (ImGui.Checkbox(Strings.TodoConfigCompact, ref compact))
+            {
+                settings.TodoOverlayCompact = compact;
+                Save();
+            }
+
+            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+            {
+                UiMetrics.Tooltip(Strings.TodoConfigCompactHint);
+            }
         }
 
-        if (settings.TodoLockNoticeDue && settings.TodoOverlayLocked)
+        if (Row(Strings.TodoConfigOpacity, null, "overlay opacity transparency alpha background"))
         {
-            using var accent = Theme.PushText(Theme.Accent);
-            ImGui.TextWrapped(Strings.TodoLockUpgradeNotice);
+            var opacity = TodoOverlay.ClampOpacity(settings.TodoOverlayOpacity);
+            bool moved;
+            ImGui.SetNextItemWidth(SliderWidth());
+            using (ImRaii.PushId(Strings.TodoConfigOpacity))
+            {
+                moved = ImGui.SliderFloat("##slider", ref opacity, TodoOverlay.MinOpacity, TodoOverlay.MaxOpacity, "%.2f", ImGuiSliderFlags.AlwaysClamp);
+            }
+
+            if (moved)
+            {
+                settings.TodoOverlayOpacity = opacity;
+                todoDirty = true;
+            }
+
+            if (todoDirty && ImGui.IsItemDeactivatedAfterEdit())
+            {
+                todoDirty = false;
+                Save();
+            }
+
+            Chrome.TrailingLabel(Strings.TodoConfigOpacity);
         }
 
-        var compact = settings.TodoOverlayCompact;
-        if (ImGui.Checkbox(Strings.TodoConfigCompact, ref compact))
+        if (!filter.Active)
         {
-            settings.TodoOverlayCompact = compact;
-            Save();
+            ImGui.Spacing();
+            ImGui.TextDisabled(Strings.TodoConfigSectionsLabel);
         }
 
-        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
-        {
-            UiMetrics.Tooltip(Strings.TodoConfigCompactHint);
-        }
-
-        var opacity = TodoOverlay.ClampOpacity(settings.TodoOverlayOpacity);
-        bool moved;
-        ImGui.SetNextItemWidth(SliderWidth());
-        using (ImRaii.PushId(Strings.TodoConfigOpacity))
-        {
-            moved = ImGui.SliderFloat("##slider", ref opacity, TodoOverlay.MinOpacity, TodoOverlay.MaxOpacity, "%.2f", ImGuiSliderFlags.AlwaysClamp);
-        }
-
-        if (moved)
-        {
-            settings.TodoOverlayOpacity = opacity;
-            todoDirty = true;
-        }
-
-        if (todoDirty && ImGui.IsItemDeactivatedAfterEdit())
-        {
-            todoDirty = false;
-            Save();
-        }
-
-        Chrome.TrailingLabel(Strings.TodoConfigOpacity);
-
-        ImGui.TextDisabled(Strings.TodoConfigSectionsLabel);
         DrawTodoRouteToggles();
-        var pins = settings.TodoShowPins;
-        if (ImGui.Checkbox(Strings.TodoConfigShowPins, ref pins))
+        if (Row(Strings.TodoConfigShowPins, null, "overlay section pinned pins"))
         {
-            settings.TodoShowPins = pins;
-            Save();
+            var pins = settings.TodoShowPins;
+            if (ImGui.Checkbox(Strings.TodoConfigShowPins, ref pins))
+            {
+                settings.TodoShowPins = pins;
+                Save();
+            }
         }
 
-        var seasonal = settings.TodoShowSeasonal;
-        if (ImGui.Checkbox(Strings.TodoConfigShowSeasonal, ref seasonal))
+        if (Row(Strings.TodoConfigShowSeasonal, Strings.TodoConfigShowSeasonalHint, "overlay section seasonal event"))
         {
-            settings.TodoShowSeasonal = seasonal;
-            Save();
-        }
+            var seasonal = settings.TodoShowSeasonal;
+            if (ImGui.Checkbox(Strings.TodoConfigShowSeasonal, ref seasonal))
+            {
+                settings.TodoShowSeasonal = seasonal;
+                Save();
+            }
 
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(Strings.TodoConfigShowSeasonalHint);
+            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+            {
+                UiMetrics.Tooltip(Strings.TodoConfigShowSeasonalHint);
+            }
         }
 
         DrawTodoPlanToggle();
 
-        var nearby = settings.TodoShowNearbyFeature;
-        if (ImGui.Checkbox(Strings.TodoConfigShowNearby, ref nearby))
+        if (Row(Strings.TodoConfigShowNearby, null, "overlay section nearby feature"))
         {
-            settings.TodoShowNearbyFeature = nearby;
-            Save();
+            var nearby = settings.TodoShowNearbyFeature;
+            if (ImGui.Checkbox(Strings.TodoConfigShowNearby, ref nearby))
+            {
+                settings.TodoShowNearbyFeature = nearby;
+                Save();
+            }
         }
 
-        var msq = settings.TodoShowMsq;
-        if (ImGui.Checkbox(Strings.TodoConfigShowMsq, ref msq))
+        if (Row(Strings.TodoConfigShowMsq, null, "overlay section main scenario msq"))
         {
-            settings.TodoShowMsq = msq;
-            Save();
+            var msq = settings.TodoShowMsq;
+            if (ImGui.Checkbox(Strings.TodoConfigShowMsq, ref msq))
+            {
+                settings.TodoShowMsq = msq;
+                Save();
+            }
         }
 
-        var jobs = settings.TodoShowJobQuests;
-        if (ImGui.Checkbox(Strings.TodoConfigShowJobQuests, ref jobs))
+        if (Row(Strings.TodoConfigShowJobQuests, null, "overlay section job class quests"))
         {
-            settings.TodoShowJobQuests = jobs;
-            Save();
+            var jobs = settings.TodoShowJobQuests;
+            if (ImGui.Checkbox(Strings.TodoConfigShowJobQuests, ref jobs))
+            {
+                settings.TodoShowJobQuests = jobs;
+                Save();
+            }
         }
 
-        if (ResetTodoPosition is not { } reset)
+        if (ResetTodoPosition is not { } reset || !Row(Strings.TodoConfigResetPosition, Strings.TodoConfigResetPositionHint, "overlay move position"))
         {
             return;
         }
 
+        ImGui.Spacing();
         if (ImGui.Button(Strings.TodoConfigResetPosition))
         {
             reset();
@@ -1340,40 +1442,86 @@ public sealed partial class ConfigWindow : Window
         }
     }
 
-    /// <summary>Item hints: the hover hint and the context-menu entry. The feature itself listens through the two callbacks.</summary>
+    /// <summary>Settings › Integrations › Item hints: the hover hint and the context-menu entry. The feature itself listens through the two callbacks.</summary>
     private void DrawItemHints()
     {
         Header(Strings.ConfigSectionItemHints);
-        var hints = settings.ItemHintsEnabled;
-        if (ImGui.Checkbox(Strings.ConfigItemHints, ref hints))
+        if (Row(Strings.ConfigItemHints, Strings.ConfigItemHintsHint, "item tooltip reward hover"))
         {
-            settings.ItemHintsEnabled = hints;
-            Save();
-            ItemHintsToggled?.Invoke(hints);
+            var hints = settings.ItemHintsEnabled;
+            if (ImGui.Checkbox(Strings.ConfigItemHints, ref hints))
+            {
+                settings.ItemHintsEnabled = hints;
+                Save();
+                ItemHintsToggled?.Invoke(hints);
+            }
+
+            HintOnHover(Strings.ConfigItemHintsHint);
         }
 
-        if (ImGui.IsItemHovered())
+        if (Row(Strings.ConfigItemContextMenu, Strings.ConfigItemContextMenuHint, "item right-click menu reward"))
         {
-            UiMetrics.Tooltip(Strings.ConfigItemHintsHint);
-        }
+            var contextMenu = settings.ItemContextMenuEnabled;
+            if (ImGui.Checkbox(Strings.ConfigItemContextMenu, ref contextMenu))
+            {
+                settings.ItemContextMenuEnabled = contextMenu;
+                Save();
+                ItemContextMenuToggled?.Invoke(contextMenu);
+            }
 
-        var contextMenu = settings.ItemContextMenuEnabled;
-        if (ImGui.Checkbox(Strings.ConfigItemContextMenu, ref contextMenu))
-        {
-            settings.ItemContextMenuEnabled = contextMenu;
-            Save();
-            ItemContextMenuToggled?.Invoke(contextMenu);
-        }
-
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(Strings.ConfigItemContextMenuHint);
+            HintOnHover(Strings.ConfigItemContextMenuHint);
         }
     }
 
+    /// <summary>
+    /// Settings › Integrations › Game windows and menus: the NPC context menu entry and the Duty Finder unlock hint,
+    /// with the paused notice while the game hooks wait for a tested update (<see cref="DrawHookGate"/> holds the override).
+    /// </summary>
     private void DrawIntegrations()
     {
-        Header(Strings.ConfigSectionIntegrations);
+        Header(Strings.ConfigSectionGameWindows);
+        if (HookGate is { IsPaused: true } && Row(Strings.HooksPausedNotice, null, "hooks paused patch"))
+        {
+            using var eclipse = Theme.PushText(Theme.Eclipse);
+            ImGui.TextWrapped(Strings.HooksPausedNotice);
+        }
+
+        if (Row(Strings.ConfigNpcContextMenu, Strings.ConfigNpcContextMenuHint, "npc target menu quest giver right-click"))
+        {
+            var npcMenu = settings.NpcContextMenuEnabled;
+            if (ImGui.Checkbox(Strings.ConfigNpcContextMenu, ref npcMenu))
+            {
+                settings.NpcContextMenuEnabled = npcMenu;
+                Save();
+                NpcContextMenuToggled?.Invoke(npcMenu);
+            }
+
+            HintOnHover(Strings.ConfigNpcContextMenuHint);
+        }
+
+        if (Row(Strings.DutyHintSetting, Strings.DutyHintSettingHint, "duty finder raid padlock unlock"))
+        {
+            var dutyHint = settings.DutyFinderHintEnabled;
+            if (ImGui.Checkbox(Strings.DutyHintSetting, ref dutyHint))
+            {
+                settings.DutyFinderHintEnabled = dutyHint;
+                Save();
+                DutyFinderHintToggled?.Invoke(dutyHint);
+            }
+
+            HintOnHover(Strings.DutyHintSettingHint);
+        }
+    }
+
+    /// <summary>Settings › Integrations › Wotsit: register quests and rewards as Wotsit search entries.</summary>
+    private void DrawWotsit()
+    {
+        Header(Strings.ConfigSectionWotsit);
+        if (!Row(Strings.ConfigWotsitIntegration, Strings.ConfigWotsitIntegrationHint, "wotsit search launcher"))
+        {
+            return;
+        }
+
         var wotsit = settings.WotsitIntegration;
         if (ImGui.Checkbox(Strings.ConfigWotsitIntegration, ref wotsit))
         {
@@ -1382,88 +1530,52 @@ public sealed partial class ConfigWindow : Window
             WotsitToggled?.Invoke(wotsit);
         }
 
-        if (ImGui.IsItemHovered())
+        HintOnHover(Strings.ConfigWotsitIntegrationHint);
+    }
+
+    /// <summary>Settings › Integrations › Travel (1.6.0): Walk to giver and Go to giver; read per draw by the panes through GameLinks, so no callback is needed.</summary>
+    private void DrawTravelSettings()
+    {
+        Header(Strings.ConfigSectionTravel);
+        if (Row(Strings.ConfigShowWalk, Strings.ConfigShowWalkHint, "travel vnavmesh walk move"))
         {
-            UiMetrics.Tooltip(Strings.ConfigWotsitIntegrationHint);
+            var showWalk = settings.ShowWalkToGiver;
+            if (ImGui.Checkbox(Strings.ConfigShowWalk, ref showWalk))
+            {
+                settings.ShowWalkToGiver = showWalk;
+                Save();
+            }
+
+            HintOnHover(Strings.ConfigShowWalkHint);
         }
 
-        var npcMenu = settings.NpcContextMenuEnabled;
-        if (ImGui.Checkbox(Strings.ConfigNpcContextMenu, ref npcMenu))
+        if (Row(Strings.ConfigShowGoTo, Strings.ConfigShowGoToHint, "travel teleport lifestream aethernet vnavmesh"))
         {
-            settings.NpcContextMenuEnabled = npcMenu;
-            Save();
-            NpcContextMenuToggled?.Invoke(npcMenu);
-        }
+            var showGoTo = settings.ShowGoToGiver;
+            if (ImGui.Checkbox(Strings.ConfigShowGoTo, ref showGoTo))
+            {
+                settings.ShowGoToGiver = showGoTo;
+                Save();
+            }
 
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(Strings.ConfigNpcContextMenuHint);
+            HintOnHover(Strings.ConfigShowGoToHint);
         }
-
-        var dutyHint = settings.DutyFinderHintEnabled;
-        if (ImGui.Checkbox(Strings.DutyHintSetting, ref dutyHint))
-        {
-            settings.DutyFinderHintEnabled = dutyHint;
-            Save();
-            DutyFinderHintToggled?.Invoke(dutyHint);
-        }
-
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(Strings.DutyHintSettingHint);
-        }
-
-        // Read per use by the detail pane, so no callback is needed.
-        var questionable = settings.QuestionableHandoff;
-        if (ImGui.Checkbox(Strings.ConfigQuestionableHandoff, ref questionable))
-        {
-            settings.QuestionableHandoff = questionable;
-            Save();
-        }
-
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(Strings.ConfigQuestionableHandoffHint);
-        }
-
-        // Travel (1.6.0): read per draw by the panes through GameLinks, so no callback is needed.
-        var showWalk = settings.ShowWalkToGiver;
-        if (ImGui.Checkbox(Strings.ConfigShowWalk, ref showWalk))
-        {
-            settings.ShowWalkToGiver = showWalk;
-            Save();
-        }
-
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(Strings.ConfigShowWalkHint);
-        }
-
-        var showGoTo = settings.ShowGoToGiver;
-        if (ImGui.Checkbox(Strings.ConfigShowGoTo, ref showGoTo))
-        {
-            settings.ShowGoToGiver = showGoTo;
-            Save();
-        }
-
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(Strings.ConfigShowGoToHint);
-        }
-
-        DrawCompanionPlugins();
-        DrawQuestionableSettings();
-        DrawHookGate();
     }
 
     /// <summary>
-    /// The addon kill switch (T20): the paused notice while the game hooks wait for a tested update, and "Enable game
-    /// hooks on this untested version", scoped to the running game version, which re-registers them at once through
-    /// <see cref="HookGate.Changed"/>.
+    /// Settings › Advanced › Game hooks (T20): the paused notice while the game hooks wait for a tested update, and
+    /// "Enable game hooks on this untested version", scoped to the running game version, which re-registers them at
+    /// once through <see cref="HookGate.Changed"/>.
     /// </summary>
     private void DrawHookGate()
     {
         if (HookGate is not { } gate)
+        {
+            return;
+        }
+
+        Header(Strings.ConfigSectionHooks);
+        if (!Row(Strings.HooksEnableUntested, Strings.HooksEnableUntestedHint, "hooks patch paused override untested game version"))
         {
             return;
         }
@@ -1500,28 +1612,40 @@ public sealed partial class ConfigWindow : Window
         }
     }
 
+    /// <summary>Settings › Data: what is kept, the Moonlit verdicts, export, and deleting everything.</summary>
     private void DrawData()
     {
         Header(Strings.ConfigSectionData);
-        ImGui.TextWrapped(Strings.ConfigDataRetention);
-        ImGui.Spacing();
-        DrawVerdicts();
-        ImGui.Spacing();
-        if (Export is { } export)
+        if (Row(Strings.ConfigDataRetention, null, "data storage privacy snapshot files"))
         {
-            export.Draw();
-            ImGui.Spacing();
+            ImGui.TextWrapped(Strings.ConfigDataRetention);
         }
 
-
-        using (Theme.PushDestructiveButton())
+        if (Row(Strings.ConfigVerdictsHeaderFormat, Strings.ConfigVerdictRestoreAllTooltip, "moonlit verdicts overrides unique restore"))
         {
-            if (ImGui.Button(Strings.ConfigDeleteAll))
+            ImGui.Spacing();
+            DrawVerdicts();
+        }
+
+        if (Export is { } export && Row(Strings.ExportHeader, Strings.ExportIntro, "export json csv spreadsheet collection tracker file character name"))
+        {
+            ImGui.Spacing();
+            export.Draw();
+        }
+
+        if (Row(Strings.ConfigDeleteAll, Strings.ConfigDeleteStep1Text, "delete erase remove reset wipe forget data"))
+        {
+            ImGui.Spacing();
+            using (Theme.PushDestructiveButton())
             {
-                ImGui.OpenPopup(Strings.ConfigDeleteStep1Popup);
+                if (ImGui.Button(Strings.ConfigDeleteAll))
+                {
+                    ImGui.OpenPopup(Strings.ConfigDeleteStep1Popup);
+                }
             }
         }
 
+        // The confirmations and the toast outlive a search that hides the button.
         DrawDeleteConfirms();
         DrawToast();
     }
@@ -1671,6 +1795,8 @@ public sealed partial class ConfigWindow : Window
         {
             if (first)
             {
+                // A popup is its own window: it scales itself.
+                UiMetrics.ApplyFontScale();
                 ImGui.TextWrapped(Strings.ConfigDeleteStep1Text);
                 ImGui.Spacing();
                 if (ImGui.Button(Strings.ConfigDeleteContinue))
@@ -1698,6 +1824,8 @@ public sealed partial class ConfigWindow : Window
         {
             return;
         }
+
+        UiMetrics.ApplyFontScale();
 
         ImGui.TextWrapped(Strings.ConfigDeleteStep2Text);
         ImGui.Spacing();
@@ -1743,6 +1871,11 @@ public sealed partial class ConfigWindow : Window
     private void DrawAbout()
     {
         Header(Strings.ConfigSectionAbout);
+        if (!Row(Strings.ConfigSectionAbout, Strings.ConfigDataStampTooltip, "version catalog data stamp poll timing diagnostics"))
+        {
+            return;
+        }
+
         RefreshCatalogLine();
         ImGui.TextUnformatted(pluginVersionLine.Value);
         ImGui.TextUnformatted(dataStampLine);
@@ -1830,12 +1963,6 @@ public sealed partial class ConfigWindow : Window
         }
 
         catalogLine = Strings.ConfigCatalogLoading;
-    }
-
-    private static void Header(string title)
-    {
-        ImGui.TextDisabled(title);
-        ImGui.Separator();
     }
 
     private void Save() => settings.Save(pluginInterface);

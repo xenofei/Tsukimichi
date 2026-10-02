@@ -12,7 +12,7 @@ namespace Tsukimichi.Ui;
 /// its state as a glyph (loaded, turned off, outdated, not installed; the word, the installed version and the minimum
 /// in the tooltip), its name, what it unlocks in Tsukimichi and a "Copy repo URL" button for a custom repository
 /// ("Official repository" for one in Dalamud's own list), then plain-text steps for adding a custom repository and the
-/// AutoDuty "regular Duty Finder" setting. The table reads <see cref="CompanionPlugins.All"/>, which re-reads Dalamud's
+/// AutoDuty "regular Duty Finder" setting (its own block, <see cref="DrawAutoDutySettings"/>). The table reads <see cref="CompanionPlugins.All"/>, which re-reads Dalamud's
 /// list only after it changed.
 /// </summary>
 public sealed partial class ConfigWindow
@@ -37,10 +37,10 @@ public sealed partial class ConfigWindow
             return;
         }
 
-        ImGui.Spacing();
-        using (Theme.PushText(Theme.Surface.Text))
+        Header(Strings.CompanionsHeading);
+        if (!Row(Strings.CompanionsHeading, Strings.CompanionsIntro, CompanionKeywords))
         {
-            ImGui.TextUnformatted(Strings.CompanionsHeading);
+            return;
         }
 
         using (Theme.PushText(Theme.Surface.TextSecondary))
@@ -80,8 +80,23 @@ public sealed partial class ConfigWindow
         {
             ImGui.TextWrapped(Strings.CompanionAddRepoHowTo);
         }
+    }
 
-        // Read per press by the detail pane, so no callback is needed.
+    /// <summary>Every plugin the table lists, for the search box (the names are the plugins' own, never translated).</summary>
+    private const string CompanionKeywords = "plugins installed missing outdated repository url Questionable AutoDuty Artisan GatherBuddy vnavmesh Lifestream Allagan Tools Quest Map Chat 2";
+
+    /// <summary>
+    /// Settings › Integrations › AutoDuty: whether "Run with AutoDuty" may use the regular Duty Finder when a duty has no
+    /// Duty Support or Trust. Read per press by the detail pane, so no callback is needed.
+    /// </summary>
+    private void DrawAutoDutySettings()
+    {
+        Header(Strings.ConfigSectionAutoDuty);
+        if (!Row(Strings.CompanionAutoDutyAllowDutyFinder, Strings.CompanionAutoDutyAllowDutyFinderHint, "autoduty duty support trust duty finder dungeon"))
+        {
+            return;
+        }
+
         var allowDutyFinder = settings.AutoDutyAllowDutyFinder;
         if (ImGui.Checkbox(Strings.CompanionAutoDutyAllowDutyFinder, ref allowDutyFinder))
         {
@@ -89,10 +104,7 @@ public sealed partial class ConfigWindow
             Save();
         }
 
-        if (ImGui.IsItemHovered())
-        {
-            UiMetrics.Tooltip(Strings.CompanionAutoDutyAllowDutyFinderHint);
-        }
+        HintOnHover(Strings.CompanionAutoDutyAllowDutyFinderHint);
     }
 
     private void DrawCompanionRow(int index, CompanionStatus status)

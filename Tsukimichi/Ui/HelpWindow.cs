@@ -53,7 +53,8 @@ public sealed record HelpActions(Action OpenFilters, Action<NavTab> ShowTab, Act
 /// Moon bar, and the topic's page on a Night panel on the right. Pages are built from small blocks: cards, phase
 /// rows, numbered steps with "Try it" buttons, tip callouts and key caps. The search box at the top of the rail
 /// filters topics by their title and body text. Opened from the toolbar, Settings or <c>/tsukimichi help</c>.
-/// Every string lives in <see cref="Strings.Help"/>; sizes go through <see cref="ImGuiHelpers.GlobalScale"/>.
+/// Every string lives in <see cref="Strings.Help"/>; sizes go through <see cref="UiMetrics.Scale"/>, so the window follows
+/// Settings › Display › Window scale like the main window (R3 #4).
 /// </summary>
 public sealed class HelpWindow : Window
 {
@@ -291,8 +292,12 @@ public sealed class HelpWindow : Window
 
         Size = new Vector2(780f, 600f);
         SizeCondition = ImGuiCond.FirstUseEver;
-        SizeConstraints = new WindowSizeConstraints { MinimumSize = new Vector2(560f, 380f) };
+        SizeConstraints = new WindowSizeConstraints { MinimumSize = new Vector2(MinWidthLogical, MinHeightLogical) };
     }
+
+    /// <summary>Logical minimum size of the window, scaled by the UI scale each frame.</summary>
+    private const float MinWidthLogical = 560f;
+    private const float MinHeightLogical = 380f;
 
     /// <summary>The quick-start steps and the rail's search text in the current UI language (V2-19).</summary>
     private void BuildForLanguage()
@@ -337,6 +342,12 @@ public sealed class HelpWindow : Window
             BuildForLanguage();
         }
 
+        // The window is its own top level, so its minimum follows the UI scale like the main window's.
+        SizeConstraints = new WindowSizeConstraints
+        {
+            MinimumSize = new Vector2(MinWidthLogical, MinHeightLogical) * UiMetrics.FontScale,
+            MaximumSize = new Vector2(float.MaxValue, float.MaxValue),
+        };
         nightChrome = Theme.PushNightWindow();
     }
 
@@ -348,7 +359,22 @@ public sealed class HelpWindow : Window
 
     public override void Draw()
     {
-        var scale = ImGuiHelpers.GlobalScale;
+        // The window scales itself (the rail and the content inherit it); the scale is reset before Begin lays the
+        // title bar out again.
+        UiMetrics.ApplyFontScale();
+        try
+        {
+            DrawWindow();
+        }
+        finally
+        {
+            ImGui.SetWindowFontScale(1f);
+        }
+    }
+
+    private void DrawWindow()
+    {
+        var scale = UiMetrics.Scale;
         using (var rail = ImRaii.Child("##helpRail", new Vector2(RailWidth * scale, -1f), false))
         {
             if (rail)
@@ -860,7 +886,7 @@ public sealed class HelpWindow : Window
     /// <summary>A Moon circle with the step number, the title with an optional "Try it" button on its right, and the body.</summary>
     private void Step(int id, in StepItem step)
     {
-        var scale = ImGuiHelpers.GlobalScale;
+        var scale = UiMetrics.Scale;
         var radius = StepRadius * scale;
         var box = radius * 2.2f;
         var dl = ImGui.GetWindowDrawList();
