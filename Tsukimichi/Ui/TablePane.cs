@@ -103,6 +103,32 @@ public sealed class TablePane : IDisposable
 
     /// <summary>The quest Questionable works on while it runs (its live status), or null; its row gets a faint gold wash.</summary>
     public Func<uint?>? QuestionableRow { get; set; }
+
+    /// <summary>The catalog the Moon Road title names the tree node from (R3 #6); null names only the virtual nodes.</summary>
+    public Func<QuestCatalog?>? Catalog { get; set; }
+
+    /// <summary>The brass line under the Moon Road header (proposal §7.3: Gilt at 0.5; opaque under high contrast).</summary>
+    private const float HeaderRuleAlpha = 0.5f;
+
+    /// <summary>The road under a Ready row (proposal §7.3), brass fading out to the right; faint, so the gold moon keeps the signal.</summary>
+    private const float ReadyRoadAlpha = 0.4f;
+
+    /// <summary>Logical gaps on the title line: before the count, and after the breadcrumb.</summary>
+    private const float TitleCountGap = 12f;
+    private const float TitleCrumbGap = 6f;
+
+    // The title line (R3 #6): the node's name and its parent as a breadcrumb, named again when the scope, the catalog
+    // or the language changes; the count, rebuilt when the numbers change. Nothing is built per frame otherwise.
+    private QuestScope titleScope = QuestScope.None;
+    private QuestCatalog? titleCatalog;
+    private int titleLanguage = -1;
+    private string titleName = string.Empty;
+    private string titleCrumb = string.Empty;
+    private string titlePath = string.Empty;
+    private int countShown = -1;
+    private int countTotal = -1;
+    private int countLanguage = -1;
+    private string countText = string.Empty;
     private const float SelectionRingAlpha = 0.45f;
     private const float SelectionRounding = 4f;
 
@@ -267,6 +293,14 @@ public sealed class TablePane : IDisposable
             }
         }
 
+        // Moon Road (R3 #6): the node's name in the Title role with its count, over a clear header in the Eyebrow role
+        // with a brass rule under it. Plain keeps the raised header of 1.3.
+        var moonRoad = FlairRules.MoonRoadTable(Theme.Flair);
+        if (moonRoad)
+        {
+            DrawTitle(rows.Length);
+        }
+
         if (runner.SproutCaption is { } caption)
         {
             // Sprout mode (T19): how much of the game is in reach, instead of the whole catalog.
@@ -287,8 +321,14 @@ public sealed class TablePane : IDisposable
             | ImGuiTableFlags.Resizable | ImGuiTableFlags.Reorderable | ImGuiTableFlags.Hideable | ImGuiTableFlags.SizingFixedFit;
 
         // The header's fill is painted when its row ends, which is when the clipper begins, so the push spans the table.
-        ImGui.PushStyleColor(ImGuiCol.TableHeaderBg, Theme.Surface.Raised);
-        using var headerBg = new Theme.StyleScope(1, 0);
+        // The line under the header is the table's strong border, read when the table begins: in Moon Road it is brass.
+        ImGui.PushStyleColor(ImGuiCol.TableHeaderBg, moonRoad ? Vector4.Zero : Theme.Surface.Raised);
+        if (moonRoad)
+        {
+            ImGui.PushStyleColor(ImGuiCol.TableBorderStrong, Theme.Surface.Ornament with { W = Theme.OrnamentAlpha(HeaderRuleAlpha) });
+        }
+
+        using var headerBg = new Theme.StyleScope(moonRoad ? 2 : 1, 0);
         using var table = ImRaii.Table(TableId, ColumnCount, flags, ImGui.GetContentRegionAvail());
         if (!table)
         {
@@ -312,7 +352,18 @@ public sealed class TablePane : IDisposable
         // with, where the column sorts, the arrow. These are content widths: ImGui adds the cell padding either side of
         // a TableSetupColumn / TableSetColumnWidth width itself, so it is not added here.
         var sortArrow = UiMetrics.Px(LayoutBudgets.SortArrowLogical);
-        float HeaderFloor(string label, bool sortable) => ImGui.CalcTextSize(label).X + (sortable ? sortArrow : 0f);
+        float HeaderFloor(string label, bool sortable)
+        {
+            var width = ImGui.CalcTextSize(label).X;
+            var text = HeaderText(label, moonRoad);
+            using (HeaderRole(text, moonRoad))
+            {
+                width = MathF.Max(width, ImGui.CalcTextSize(text).X);
+            }
+
+            return width + (sortable ? sortArrow : 0f);
+        }
+
         var rewardsColumn = MathF.Max(
             UiMetrics.RowIconSize * MaxRewardIcons + UiMetrics.Px(2f) * (MaxRewardIcons - 1) + UiMetrics.Px(8f),
             HeaderFloor(Strings.ColumnRewards, sortable: false));
@@ -363,7 +414,7 @@ public sealed class TablePane : IDisposable
         }
 
         // While the plan hides the sorted column (its header and arrow are gone), the Name header's tooltip names the sort.
-        DrawHeaders(SortedColumn(ui.Sort), SortColumnAutoHidden() ? HiddenSortNote() : null);
+        DrawHeaders(SortedColumn(ui.Sort), SortColumnAutoHidden() ? HiddenSortNote() : null, moonRoad);
 
         // The player's own hidden columns, read after the layout: a column the plan did not hide is shown unless the
         // player hid it from the header menu (the plan's hides never touch that flag).
@@ -428,7 +479,7 @@ public sealed class TablePane : IDisposable
         ImGui.PushStyleVar(ImGuiStyleVar.SelectableTextAlign, new Vector2(0f, 0.5f));
         ImGui.PushStyleColor(ImGuiCol.TableRowBgAlt, dense ? Theme.ZebraRow : Vector4.Zero);
         using var rowStyle = new Theme.StyleScope(1, 1);
-        var layout = new RowLayout(lineHeight, content, rowHeight, padY, glyphBox, glyphRadius, dense, plan.TwoLine, statusLine, lineGap);
+        var layout = new RowLayout(lineHeight, content, rowHeight, padY, glyphBox, glyphRadius, dense, plan.TwoLine, statusLine, lineGap, FlairRules.ReadyRoad(Theme.Flair));
         var liftRow = hoveredRow;
         questionableRow = QuestionableRow?.Invoke();
         hoveredNext = null;
@@ -450,8 +501,9 @@ public sealed class TablePane : IDisposable
     /// <summary>
     /// Per-frame row measurements, computed once per draw. In two-line rows <paramref name="StatusLine"/> is the second
     /// line's height (the caption role) and <paramref name="LineGap"/> the space between the lines.
+    /// <paramref name="ReadyRoad"/> draws the road under Ready rows (Flair Full).
     /// </summary>
-    private readonly record struct RowLayout(float LineHeight, float RowContent, float RowHeight, float PadY, float GlyphBox, float GlyphRadius, bool Dense, bool TwoLine, float StatusLine, float LineGap)
+    private readonly record struct RowLayout(float LineHeight, float RowContent, float RowHeight, float PadY, float GlyphBox, float GlyphRadius, bool Dense, bool TwoLine, float StatusLine, float LineGap, bool ReadyRoad)
     {
         /// <summary>Offset that centres a text line in the row.</summary>
         public float TextOffset => MathF.Max(0f, (RowContent - LineHeight) * 0.5f);
@@ -530,16 +582,15 @@ public sealed class TablePane : IDisposable
     }
 
     /// <summary>
-    /// What TableHeadersRow does, one header at a time, so each can carry a tooltip. Labels are in the secondary tone
-    /// on the raised fill; the sorted column's label and its arrow are in the primary text colour (a sort is not a call
-    /// to action, so never gold). <paramref name="nameNote"/>, when given, is a second line in the Name header's tooltip.
+    /// What TableHeadersRow does, one header at a time, so each can carry a tooltip. Labels are in the secondary tone;
+    /// the sorted column's label and its arrow are in the primary text colour (a sort is not a call to action, so never
+    /// gold). Plain draws them in the caption role on the raised fill; Moon Road (<paramref name="moonRoad"/>, R3 #6) in
+    /// the Eyebrow role, upper-cased in English, on a clear header. <paramref name="nameNote"/>, when given, is a second
+    /// line in the Name header's tooltip.
     /// </summary>
-    private static void DrawHeaders(int sortedColumn, string? nameNote)
+    private static void DrawHeaders(int sortedColumn, string? nameNote, bool moonRoad)
     {
         var s = Theme.Surface;
-
-        // Header labels are captions (ui-revamp §4.2): 0.85× the body, never under 12 px, in the caption game font.
-        using var caption = Typography.Caption();
         ImGui.TableNextRow(ImGuiTableRowFlags.Headers);
         for (var i = 0; i < HeaderTooltips.Length; i++)
         {
@@ -548,15 +599,144 @@ public sealed class TablePane : IDisposable
                 continue;
             }
 
+            var label = HeaderText(HeaderLabels[i], moonRoad);
             ImGui.PushID(i);
             ImGui.PushStyleColor(ImGuiCol.Text, i == sortedColumn ? s.Text : s.TextSecondary);
-            ImGui.TableHeader(HeaderLabels[i]);
+            using (HeaderRole(label, moonRoad))
+            {
+                ImGui.TableHeader(label);
+            }
+
             ImGui.PopStyleColor();
             ImGui.PopID();
             if (ImGui.IsItemHovered())
             {
                 UiMetrics.Tooltip(HeaderTooltips[i], i == (int)Column.Name ? nameNote : null);
             }
+        }
+    }
+
+    /// <summary>A header label as drawn: cased like a section heading in Moon Road (<see cref="SectionHeading.Label"/>, cached), else as is.</summary>
+    private static string HeaderText(string label, bool moonRoad) => moonRoad ? SectionHeading.Label(label) : label;
+
+    /// <summary>
+    /// The header labels' role: the Eyebrow in Moon Road where headings are capitals (the caption role in sentence-case
+    /// languages, as <see cref="SectionHeading"/> does), else the caption role (ui-revamp §4.2: 0.85× the body, never
+    /// under 12 px).
+    /// </summary>
+    private static Typography.Scope HeaderRole(string text, bool moonRoad) =>
+        moonRoad && SectionHeading.Capitals ? Typography.Eyebrow(text) : Typography.Caption();
+
+    /// <summary>
+    /// The title line over the table (R3 #6, proposal §7.3): the node's parent as a breadcrumb in the caption role and
+    /// the tertiary tone, the node's name in the Title role, and the count in the Numeral role at the right end ("160",
+    /// or "160 of 213" while filters or the search narrow the list). The breadcrumb goes first, then the count, before
+    /// the name drops under its minimum; the name ends in an ellipsis, and whatever is left out is named on hover.
+    /// </summary>
+    private void DrawTitle(int shown)
+    {
+        RefreshTitle(Catalog?.Invoke(), shown, runner.TotalInScope);
+        var start = ImGui.GetCursorScreenPos();
+        var room = MathF.Max(1f, ImGui.GetContentRegionAvail().X);
+        var dl = ImGui.GetWindowDrawList();
+
+        float titleLine;
+        float titleWidth;
+        using (Typography.Title(titleName))
+        {
+            titleLine = ImGui.GetTextLineHeight();
+            titleWidth = ImGui.CalcTextSize(titleName).X;
+        }
+
+        var crumbLine = 0f;
+        var crumbWidth = 0f;
+        if (titleCrumb.Length > 0)
+        {
+            using var caption = Typography.Caption();
+            crumbLine = ImGui.GetTextLineHeight();
+            crumbWidth = ImGui.CalcTextSize(titleCrumb).X;
+        }
+
+        float countLine;
+        float countWidth;
+        using (Typography.Numeral(countText))
+        {
+            countLine = ImGui.GetTextLineHeight();
+            countWidth = ImGui.CalcTextSize(countText).X;
+        }
+
+        var crumbGap = UiMetrics.Px(TitleCrumbGap);
+        Span<float> parts = stackalloc float[2];
+        Span<bool> partShown = stackalloc bool[2];
+        parts[0] = countWidth + UiMetrics.Px(TitleCountGap);
+        parts[1] = crumbWidth > 0f ? crumbWidth + crumbGap : 0f;
+        var fit = RowFit.Fit(room, titleWidth, UiMetrics.Px(LayoutBudgets.RowNameMinLogical), parts, partShown);
+        var countVisible = partShown[0];
+        var crumbVisible = partShown[1] && crumbWidth > 0f;
+
+        var height = MathF.Max(titleLine, MathF.Max(countLine, crumbLine));
+        var midY = start.Y + (height * 0.5f);
+        var x = start.X;
+        if (crumbVisible)
+        {
+            using var caption = Typography.Caption();
+            dl.AddText(new Vector2(x, MathF.Round(midY - (crumbLine * 0.5f))), Theme.U32(Theme.Surface.TextTertiary), titleCrumb);
+            x += crumbWidth + crumbGap;
+        }
+
+        bool cut;
+        using (Typography.Title(titleName))
+        {
+            cut = Chrome.EllipsisTextAt(dl, new Vector2(x, MathF.Round(midY - (titleLine * 0.5f))), fit.NameRoom, titleName, Theme.U32(Theme.Surface.Text), titleWidth);
+        }
+
+        var countX = start.X + room - countWidth;
+        if (countVisible)
+        {
+            using var numeral = Typography.Numeral(countText);
+            dl.AddText(new Vector2(countX, MathF.Round(midY - (countLine * 0.5f))), Theme.U32(Theme.Surface.TextSecondary), countText);
+        }
+
+        ImGui.Dummy(new Vector2(room, height));
+        if (!ImGui.IsItemHovered())
+        {
+            return;
+        }
+
+        if (countVisible && ImGui.GetMousePos().X >= countX)
+        {
+            UiMetrics.Tooltip(Strings.TableTitleCountTooltip);
+        }
+        else if (cut || !countVisible || (!crumbVisible && titleCrumb.Length > 0))
+        {
+            UiMetrics.Tooltip(titlePath, countVisible ? null : countText);
+        }
+    }
+
+    /// <summary>Names the title's node and builds its count, each only when its inputs changed.</summary>
+    private void RefreshTitle(QuestCatalog? catalog, int shown, int total)
+    {
+        var language = Localization.Loc.Version;
+        if (ui.Scope != titleScope || !ReferenceEquals(catalog, titleCatalog) || language != titleLanguage || titleName.Length == 0)
+        {
+            titleScope = ui.Scope;
+            titleCatalog = catalog;
+            titleLanguage = language;
+            var (parent, name) = ui.Scope.Kind == ScopeKind.None ? (string.Empty, Strings.AllQuests) : FilterPanel.ScopeParts(ui.Scope, catalog);
+            var crumb = parent.Length > 0 && !string.Equals(parent, name, StringComparison.Ordinal);
+            titleName = name;
+            titleCrumb = crumb ? parent + Strings.TitleCrumbSuffix : string.Empty;
+            titlePath = crumb ? FilterPanel.ScopePath(parent, name) : name;
+        }
+
+        if (shown != countShown || total != countTotal || language != countLanguage)
+        {
+            countShown = shown;
+            countTotal = total;
+            countLanguage = language;
+            countText = total > shown
+                ? string.Format(CultureInfo.CurrentCulture, Strings.TableTitleCountFormat, shown, total)
+                : shown.ToString("N0", CultureInfo.CurrentCulture);
         }
     }
 
@@ -656,7 +836,7 @@ public sealed class TablePane : IDisposable
             }
         }
 
-        DrawRowChrome(rowMin, rowMax, state, selected, liftRow == quest.RowId && hover > 0.5f, in layout, Motion.Key(RevealTag, quest.RowId));
+        DrawRowChrome(rowMin, rowMax, nameCellMin.X, state, selected, liftRow == quest.RowId && hover > 0.5f, in layout, Motion.Key(RevealTag, quest.RowId));
         if (newGroupEnd == quest.RowId)
         {
             DrawGroupEnd(rowMin, rowMax);
@@ -865,9 +1045,11 @@ public sealed class TablePane : IDisposable
     /// <summary>
     /// The row's lines, on the table's background channel so they span every column under the text: the separator
     /// (Comfortable), the selection ring (1 px, the text colour at 0.45, rounded, inset 1 px: a selection, not gold),
-    /// the hover lift, and the state stripe on top of them at the left edge.
+    /// the hover lift, and the state stripe on top of them at the left edge. At Flair Full a Ready row also gets the
+    /// road (R3 #6, proposal §7.3): a brass hairline along its bottom from the name to the right edge, fading out, faint
+    /// enough that the gold moon stays the signal.
     /// </summary>
-    private static void DrawRowChrome(Vector2 rowMin, Vector2 rowMax, QuestState state, bool selected, bool lifted, in RowLayout layout, ulong revealKey)
+    private static void DrawRowChrome(Vector2 rowMin, Vector2 rowMax, float nameX, QuestState state, bool selected, bool lifted, in RowLayout layout, ulong revealKey)
     {
         var s = Theme.Surface;
         ImGuiP.TablePushBackgroundChannel();
@@ -877,6 +1059,11 @@ public sealed class TablePane : IDisposable
         {
             var y = rowMax.Y - hairline * 0.5f;
             dl.AddLine(new Vector2(rowMin.X, y), new Vector2(rowMax.X, y), Theme.WithAlpha(s.Line, SeparatorAlpha * s.Line.W), hairline);
+        }
+
+        if (layout.ReadyRoad && state == QuestState.Ready)
+        {
+            Ornament.Rule(dl, new Vector2(nameX, rowMax.Y - hairline), rowMax.X - nameX, ReadyRoadAlpha, hairline);
         }
 
         if (lifted)

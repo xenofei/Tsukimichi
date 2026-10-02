@@ -17,6 +17,7 @@ using Tsukimichi.Core.Model;
 using Tsukimichi.Core.Seasonal;
 using Tsukimichi.Core.Storage;
 using Tsukimichi.Core.Todo;
+using Tsukimichi.Core.Ui;
 using Tsukimichi.Game;
 using Tsukimichi.GameData;
 
@@ -425,9 +426,12 @@ public sealed class TodoOverlay : Window, IDisposable
         else
         {
             text = ImGui.CalcTextSize(Strings.TodoHeader).X;
+
+            // A Moon Road caption also holds its sigil (the rule takes only what is left).
+            var caption = ImGui.GetFontSize() + (Theme.ShowRules ? UiMetrics.Px(HeadingLayout.SigilLogical + HeadingLayout.SigilGapLogical) : 0f);
             foreach (var section in sections)
             {
-                text = MathF.Max(text, ImGui.CalcTextSize(section.HeaderText).X + ImGui.GetFontSize());
+                text = MathF.Max(text, ImGui.CalcTextSize(section.HeaderText).X + caption);
                 foreach (var note in section.Notes)
                 {
                     text = MathF.Max(text, ImGui.CalcTextSize(note).X);
@@ -606,10 +610,22 @@ public sealed class TodoOverlay : Window, IDisposable
         ImGui.PushFont(UiBuilder.IconFont);
         Chrome.OutlinedTextAt(dl, start, open ? OpenGlyph : FoldedGlyph, ink);
         ImGui.PopFont();
-        Chrome.OutlinedTextAt(dl, new Vector2(start.X + ImGui.GetFontSize(), start.Y), section.HeaderText, ink);
+
+        // Moon Road (R3 #9): the sigil, the caption outlined and a brass rule to the row's end, faded with the panel's
+        // own opacity, instead of the hairline under the caption; Plain keeps the hairline.
+        var textMin = new Vector2(start.X + ImGui.GetFontSize(), start.Y);
+        var room = layout.RowWidth - ImGui.GetFontSize();
+        var ruleAlpha = Ornament.RuleAlpha * ClampOpacity(settings.TodoOverlayOpacity);
+        var moonRoad = SectionHeading.DrawInRow(dl, textMin, room, line, section.HeaderText, ink, out var cut, eyebrow: false, outlined: true, ruleAlpha: ruleAlpha);
+        if (!moonRoad)
+        {
+            cut = Chrome.OutlinedEllipsisAt(dl, textMin, room, section.HeaderText, ink);
+        }
+
         if (hovered)
         {
-            UiMetrics.Tooltip(section.ToggleTooltip, pinsMenu ? Strings.TodoPinsMenuHint : null);
+            var hint = pinsMenu ? Strings.TodoPinsMenuHint : null;
+            UiMetrics.Tooltip(cut ? section.HeaderText : section.ToggleTooltip, cut ? (hint is null ? section.ToggleTooltip : section.ToggleTooltip + "\n" + hint) : hint);
         }
 
         if (pinsMenu)
@@ -617,7 +633,10 @@ public sealed class TodoOverlay : Window, IDisposable
             DrawPinsMenu();
         }
 
-        Chrome.Hairline(width: layout.RowWidth);
+        if (!moonRoad)
+        {
+            Chrome.Hairline(width: layout.RowWidth);
+        }
     }
 
     private const string PinsMenuId = "##todoPinsMenu";
@@ -694,20 +713,24 @@ public sealed class TodoOverlay : Window, IDisposable
         var dl = ImGui.GetWindowDrawList();
         var textMax = new Vector2(textX + layout.TextWidth, start.Y + layout.RowHeight);
         dl.PushClipRect(new Vector2(textX, start.Y), textMax, true);
-        var name = new Vector2(textX, textY);
+
+        // The name ends in an ellipsis in the text column (Compact's fixed width, a panel narrowed by hand) rather than
+        // being cut mid-letter, and the hint takes what the name leaves (R3 #5); a cut name heads the tooltip.
+        var nameWidth = ImGui.CalcTextSize(row.Name).X;
+        var fit = LineFit.Fit(layout.TextWidth, nameWidth, UiMetrics.Px(LayoutBudgets.RowNameMinLogical), [], [], style.ItemSpacing.X, UiMetrics.Px(24f));
         // Gold while Questionable works on this quest (1.6.0).
         var nameInk = Questionable?.RunningRowId == row.Quest.RowId ? Theme.AccentU32 : Theme.U32(Theme.Surface.Text);
-        Chrome.OutlinedTextAt(dl, name, row.Name, nameInk);
-        if (!compact && row.Hint.Length > 0)
+        Chrome.OutlinedEllipsisAt(dl, new Vector2(textX, textY), fit.NameRoom, row.Name, nameInk, nameWidth);
+        if (!compact && row.Hint.Length > 0 && fit.TailRoom > 0f)
         {
-            var hintX = textX + ImGui.CalcTextSize(row.Name).X + style.ItemSpacing.X;
-            Chrome.OutlinedTextAt(dl, new Vector2(hintX, textY), row.Hint, Theme.U32(Theme.Surface.TextSecondary));
+            var hintX = textX + fit.NameDrawn + style.ItemSpacing.X;
+            Chrome.OutlinedEllipsisAt(dl, new Vector2(hintX, textY), fit.TailRoom, row.Hint, Theme.U32(Theme.Surface.TextSecondary));
         }
 
         dl.PopClipRect();
         if (hovered)
         {
-            UiMetrics.Tooltip(row.Tooltip);
+            UiMetrics.Tooltip(fit.NameCut ? row.Name : row.Tooltip, fit.NameCut ? row.Tooltip : null);
         }
 
         // The "…" opens the same menu as the right-click, for keyboard, controller and one-handed players (A6). While

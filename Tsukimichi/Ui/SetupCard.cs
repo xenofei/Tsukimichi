@@ -99,11 +99,14 @@ public sealed class SetupCard
         var height = MathF.Min(availableHeight * MaxHeightFraction, UiMetrics.Px(MaxHeightPx));
         var start = ImGui.GetCursorPosY();
         using (Theme.PushNightPanel())
+        using (ImRaii.PushColor(ImGuiCol.Border, Chrome.CardChildBorder))
         using (ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(pad, pad)))
         using (var child = ImRaii.Child("##setupCard", new Vector2(0f, height), true))
         {
             if (child)
             {
+                // Brass at Full and Quiet, the corner marks at Full (R3 #8).
+                using var frame = Chrome.CardFrameInWindow();
                 DrawBody();
             }
         }

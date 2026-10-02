@@ -193,4 +193,39 @@ public class MotionMathTests
     {
         Assert.Equal(-1f, new MotionStore().Pulse(99, 1f, 1d, animate: true));
     }
+
+    [Fact]
+    public void The_loading_moon_stands_still_at_the_first_quarter_under_reduce_motion()
+    {
+        Assert.Equal(MotionMath.LoadingMoonStill, MotionMath.LoadingMoonFraction(0.3d, reduceMotion: true));
+        Assert.Equal(MotionMath.LoadingMoonStill, MotionMath.LoadingMoonFraction(17.9d, reduceMotion: true));
+        Assert.Equal(MotionMath.LoadingMoonStill, MotionMath.LoadingMoonFraction(double.NaN, reduceMotion: false));
+    }
+
+    [Fact]
+    public void The_loading_moon_waxes_to_full_and_wanes_back_without_a_jump()
+    {
+        var step = MotionMath.LoadingMoonCycleSeconds / MotionMath.LoadingMoonSteps;
+        var phases = new float[MotionMath.LoadingMoonSteps + 1];
+        for (var i = 0; i <= MotionMath.LoadingMoonSteps; i++)
+        {
+            phases[i] = MotionMath.LoadingMoonFraction((i + 0.5d) * step, reduceMotion: false);
+        }
+
+        Assert.Equal([0f, 0.25f, 0.5f, 0.75f, 1f, 0.75f, 0.5f, 0.25f, 0f], phases);
+        for (var i = 1; i < phases.Length; i++)
+        {
+            Assert.True(MathF.Abs(phases[i] - phases[i - 1]) <= 0.25f + 1e-6f);
+        }
+    }
+
+    [Theory]
+    [InlineData(0d)]
+    [InlineData(0.99d)]
+    [InlineData(1234.567d)]
+    [InlineData(-3.2d)]
+    public void The_loading_moon_is_always_a_fraction(double seconds)
+    {
+        Assert.InRange(MotionMath.LoadingMoonFraction(seconds, reduceMotion: false), 0f, 1f);
+    }
 }

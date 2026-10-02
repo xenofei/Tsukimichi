@@ -86,65 +86,87 @@ public sealed class GamePanelShell
             return;
         }
 
+        ImGui.SetNextWindowPos(pos, ImGuiCond.Always);
+        using var style = PushPanelStyle(measuring: settled < SettleFrames);
+
+        // Drawn from a raw UiBuilder.Draw handler, so nothing rebalances a Begin left open: End runs whatever Begin
+        // returned and whatever the content throws, and the style scope pops after it.
+        var visible = ImGui.Begin(windowId, PanelFlags);
+        try
+        {
+            if (visible)
+            {
+                size = ImGui.GetWindowSize();
+                if (settled < SettleFrames)
+                {
+                    settled++;
+                }
+
+                UiMetrics.ApplyFontScale();
+                content();
+            }
+        }
+        finally
+        {
+            ImGui.End();
+        }
+    }
+
+    /// <summary>
+    /// The colours and frame of every panel drawn beside or over a game window (the 1.7 panels, the Duty Finder hint,
+    /// the item hover hint; R3 #11), pushed before its <c>Begin</c>: the palette in use (<see cref="Theme.Surface"/>:
+    /// Night, the Dalamud-mapped one under "Follow Dalamud colours", or the high-contrast one, which draws the panel
+    /// opaque with a strong border), rounding 4, a 1 px border and padding 8 × 6, and, while <paramref name="measuring"/>,
+    /// alpha 0 so a panel settling its size is not seen. Dispose after <c>End</c>.
+    /// </summary>
+    public static Theme.StyleScope PushPanelStyle(bool measuring)
+    {
         var s = Theme.Surface;
         var highContrast = Theme.Glyphs.HighContrast;
-        ImGui.SetNextWindowPos(pos, ImGuiCond.Always);
         ImGui.PushStyleColor(ImGuiCol.WindowBg, s.Window with { W = highContrast ? 1f : 0.96f });
         ImGui.PushStyleColor(ImGuiCol.Border, highContrast ? s.StrongLine : s.Line);
         ImGui.PushStyleColor(ImGuiCol.Text, s.Text);
-        ImGui.PushStyleColor(ImGuiCol.TextDisabled, highContrast ? s.TextSecondary : s.TextTertiary);
+        ImGui.PushStyleColor(ImGuiCol.TextDisabled, QuietTone);
         ImGui.PushStyleColor(ImGuiCol.Button, s.Raised with { W = highContrast ? 1f : 0.85f });
         ImGui.PushStyleColor(ImGuiCol.ButtonHovered, s.Hover);
         ImGui.PushStyleColor(ImGuiCol.ButtonActive, s.StrongLine);
         ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, RoundingPx * UiMetrics.Scale);
         ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 1f);
         ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(8f, 6f) * UiMetrics.Scale);
-        ImGui.PushStyleVar(ImGuiStyleVar.Alpha, settled < SettleFrames ? 0f : 1f);
-        try
-        {
-            // Drawn from a raw UiBuilder.Draw handler, so nothing rebalances a Begin left open: End runs whatever
-            // Begin returned and whatever the content throws.
-            var visible = ImGui.Begin(windowId, PanelFlags);
-            try
-            {
-                if (visible)
-                {
-                    size = ImGui.GetWindowSize();
-                    if (settled < SettleFrames)
-                    {
-                        settled++;
-                    }
-
-                    UiMetrics.ApplyFontScale();
-                    content();
-                }
-            }
-            finally
-            {
-                ImGui.End();
-            }
-        }
-        finally
-        {
-            ImGui.PopStyleVar(4);
-            ImGui.PopStyleColor(7);
-        }
+        ImGui.PushStyleVar(ImGuiStyleVar.Alpha, measuring ? 0f : 1f);
+        return new Theme.StyleScope(7, 4);
     }
 
-    /// <summary>The caption line ("Worth it?") in the tertiary text colour, a brass rule under it when Flair draws rules.</summary>
+    /// <summary>The panels' quieter text: the tertiary tone, the secondary under high contrast (where the tertiary would fall under 4.5 : 1).</summary>
+    public static Vector4 QuietTone => Theme.Glyphs.HighContrast ? Theme.Surface.TextSecondary : Theme.Surface.TextTertiary;
+
+    /// <summary>
+    /// The caption line ("Worth it?", "Locked duty") in the quieter tone. While the Flair setting draws rules (Full and
+    /// Quiet) it is a Moon Road heading in small: the sigil before it and a brass rule under it, fading out to the right
+    /// (solid under high contrast; R3 #11). Under Plain the caption alone.
+    /// </summary>
     public static void Caption(string text)
     {
-        ImGui.TextDisabled(text);
-        if (Theme.ShowRules)
+        if (!Theme.ShowRules)
         {
-            var pos = ImGui.GetCursorScreenPos();
-            var width = MathF.Max(ImGui.CalcTextSize(text).X, UiMetrics.Px(120f));
-            var thickness = UiMetrics.Hairline;
-            ImGui.Dummy(new Vector2(width, thickness));
-            var y = pos.Y + thickness * 0.5f;
-            var color = Theme.Surface.Ornament with { W = Theme.OrnamentAlpha(0.7f) };
-            ImGui.GetWindowDrawList().AddLine(new Vector2(pos.X, y), new Vector2(pos.X + width, y), Theme.U32(color), thickness);
+            ImGui.TextDisabled(text);
+            return;
         }
+
+        var start = ImGui.GetCursorScreenPos();
+        var line = ImGui.GetTextLineHeight();
+        var sigil = MathF.Round(MathF.Min(UiMetrics.Px(HeadingLayout.SigilLogical), line * HeadingLayout.SigilLineShare));
+        ImGui.Dummy(new Vector2(sigil, line));
+        var dl = ImGui.GetWindowDrawList();
+        Ornament.Sigil(dl, new Vector2(start.X + (sigil * 0.5f), MathF.Round(start.Y + (line * 0.5f))), sigil);
+        ImGui.SameLine(0f, UiMetrics.Px(HeadingLayout.SigilGapLogical));
+        ImGui.TextDisabled(text);
+
+        var pos = ImGui.GetCursorScreenPos();
+        var width = MathF.Max(ImGui.GetItemRectMax().X - start.X, UiMetrics.Px(120f));
+        var thickness = UiMetrics.Hairline;
+        ImGui.Dummy(new Vector2(width, thickness));
+        Ornament.Rule(dl, new Vector2(start.X, pos.Y), width, Ornament.RuleAlpha, thickness);
     }
 
     /// <summary>A quest line: its state moon and its (spoiler-shielded) name.</summary>

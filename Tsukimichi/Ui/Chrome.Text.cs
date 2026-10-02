@@ -68,6 +68,41 @@ public static partial class Chrome
         return true;
     }
 
+    /// <summary>
+    /// <see cref="EllipsisTextAt(ImDrawListPtr, Vector2, float, ReadOnlySpan{char}, uint, float)"/> over a 1 px outline
+    /// in the window colour, for text over game scenes (the Todo overlay, Nearby): the same cut, drawn five times only
+    /// when the text is cut (otherwise it is <see cref="OutlinedTextAt"/>). Returns whether the text was cut.
+    /// </summary>
+    public static bool OutlinedEllipsisAt(ImDrawListPtr dl, Vector2 pos, float width, string text, uint color, float textWidth = -1f)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        if (text.Length == 0)
+        {
+            return false;
+        }
+
+        var full = textWidth >= 0f ? textWidth : ImGui.CalcTextSize(text).X;
+        if (!LineFit.NeedsEllipsis(full, width))
+        {
+            OutlinedTextAt(dl, pos, text, color);
+            return false;
+        }
+
+        if (!(width > 0f))
+        {
+            return true;
+        }
+
+        var o = UiMetrics.Hairline;
+        var outline = Theme.OutlineU32;
+        EllipsisTextAt(dl, pos + new Vector2(-o, 0f), width, text, outline, full);
+        EllipsisTextAt(dl, pos + new Vector2(o, 0f), width, text, outline, full);
+        EllipsisTextAt(dl, pos + new Vector2(0f, -o), width, text, outline, full);
+        EllipsisTextAt(dl, pos + new Vector2(0f, o), width, text, outline, full);
+        EllipsisTextAt(dl, pos, width, text, color, full);
+        return true;
+    }
+
     /// <summary><paramref name="text"/> in <paramref name="color"/> as one item, without allocating a colour scope.</summary>
     private static void ColoredText(ReadOnlySpan<char> text, uint color)
     {

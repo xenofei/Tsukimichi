@@ -100,7 +100,7 @@ public sealed class PlanPane
         }
 
         ImGui.Spacing();
-        ImGui.TextDisabled(Strings.PlanShow);
+        SectionHeading.Draw(Strings.PlanShow);
         var first = true;
         if (FlowChip("##ready", Strings.PlanReadyOnly, readyOnly, Strings.PlanReadyOnlyTooltip, ref first, enabled: session.ViewedSnapshot is not null))
         {
@@ -113,7 +113,7 @@ public sealed class PlanPane
         }
 
         ImGui.Spacing();
-        ImGui.TextDisabled(Strings.PlanKinds);
+        SectionHeading.Draw(Strings.PlanKinds);
         first = true;
         for (var i = 0; i < UnlockKinds.All.Length; i++)
         {
@@ -137,8 +137,14 @@ public sealed class PlanPane
 
         Refresh(ui);
         ImGui.Spacing();
-        Chrome.Hairline();
-        ImGui.TextDisabled(Strings.PlanExpansions);
+
+        // Moon Road headings (R3 #9): the heading's own brass rule replaces the hairline that separated the list under Plain.
+        if (!Theme.ShowRules)
+        {
+            Chrome.Hairline();
+        }
+
+        SectionHeading.Draw(Strings.PlanExpansions);
         // Name, then the count at the right edge (UI audit §3): the name ends in an ellipsis before the count, and the
         // count gives way (to the tooltip) only when the name would keep less than a few letters.
         var gap = ImGui.GetStyle().ItemSpacing.X;

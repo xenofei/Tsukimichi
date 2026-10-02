@@ -112,6 +112,36 @@ public static class MotionMath
 
         return (float)(elapsed / durationSeconds);
     }
+
+    /// <summary>How many phases the loading moon steps through in one cycle (R3 #12).</summary>
+    public const int LoadingMoonSteps = 8;
+
+    /// <summary>One cycle of the loading moon, new to full and back, in seconds.</summary>
+    public const float LoadingMoonCycleSeconds = 2f;
+
+    /// <summary>The loading moon's lit fraction while it stands still (Reduce motion): the first quarter.</summary>
+    public const float LoadingMoonStill = 0.5f;
+
+    /// <summary>
+    /// The loading moon's lit fraction at <paramref name="nowSeconds"/> (R3 #12, in place of the loading dots): it
+    /// steps through <see cref="LoadingMoonSteps"/> phases per <see cref="LoadingMoonCycleSeconds"/>, waxing from new to
+    /// full and waning back, so the loop has no jump. Under <paramref name="reduceMotion"/> (or at a non-finite time) it
+    /// stands still at <see cref="LoadingMoonStill"/>. Always 0..1.
+    /// </summary>
+    public static float LoadingMoonFraction(double nowSeconds, bool reduceMotion)
+    {
+        if (reduceMotion || !double.IsFinite(nowSeconds))
+        {
+            return LoadingMoonStill;
+        }
+
+        var cycle = nowSeconds / LoadingMoonCycleSeconds;
+        cycle -= Math.Floor(cycle);
+        var step = Math.Min((int)(cycle * LoadingMoonSteps), LoadingMoonSteps - 1);
+        var half = LoadingMoonSteps / 2;
+        var lit = step <= half ? step : LoadingMoonSteps - step;
+        return lit / (float)half;
+    }
 }
 
 /// <summary>

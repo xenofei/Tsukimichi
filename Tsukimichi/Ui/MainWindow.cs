@@ -170,7 +170,10 @@ public sealed class MainWindow : Window, IDisposable
         ui.FiltersChanged += OnFiltersChanged;
         tabStrip = new TabStrip(ui);
         treePane = new TreePane(ui, textures, () => plugin.Session.NodeIcons);
-        tablePane = new TablePane(ui, runner, links, textures, pluginInterface, log, filterPanel.ResetAll, OnFiltersChanged);
+        tablePane = new TablePane(ui, runner, links, textures, pluginInterface, log, filterPanel.ResetAll, OnFiltersChanged)
+        {
+            Catalog = () => plugin.Session?.Bundle?.Catalog,
+        };
         detailPane = new DetailPane(ui, runner, links, textures, log);
         tonightCard = new TonightCard(ui, runner, OnFiltersChanged);
         runner.QuestPinned += OnQuestPinned;
@@ -828,11 +831,35 @@ public sealed class MainWindow : Window, IDisposable
         }
     }
 
+    /// <summary>
+    /// "Loading the quest catalog" with a sign of life (R3 #12). At Flair Full and Quiet a moon before the text steps
+    /// through its phases (<see cref="MotionMath.LoadingMoonFraction"/>), in a box of its own so nothing on the line
+    /// moves; under Plain the dots, in room for all three. Under Reduce motion both stand still (the first quarter, or
+    /// all three dots).
+    /// </summary>
     private static void DrawLoading()
     {
+        var reduce = UiMetrics.ReduceMotion;
+        if (!Theme.ShowRules)
+        {
+            ImGui.TextUnformatted(Strings.LoadingCatalog);
+            ImGui.SameLine(0f, 0f);
+            var dots = reduce ? LoadingDots[^1] : LoadingDots[(int)(ImGui.GetTime() * 2.0) % LoadingDots.Length];
+            var at = ImGui.GetCursorScreenPos();
+            ImGui.Dummy(new Vector2(ImGui.CalcTextSize(LoadingDots[^1]).X, ImGui.GetTextLineHeight()));
+            ImGui.GetWindowDrawList().AddText(at, ImGui.GetColorU32(ImGuiCol.Text), dots);
+            return;
+        }
+
+        var line = ImGui.GetTextLineHeight();
+        var size = UiMetrics.InlineGlyphSize(line);
+        var min = ImGui.GetCursorScreenPos();
+        ImGui.Dummy(new Vector2(size, MathF.Max(size, line)));
+        var center = min + new Vector2(size * 0.5f, MathF.Max(size, line) * 0.5f);
+        MoonGlyph.DrawFilling(ImGui.GetWindowDrawList(), center, size * MoonGlyph.InlineRadiusFraction, MotionMath.LoadingMoonFraction(ImGui.GetTime(), reduce));
+        ImGui.SameLine();
+        ImGui.SetCursorScreenPos(new Vector2(ImGui.GetCursorScreenPos().X, min.Y + MathF.Max(0f, (size - line) * 0.5f)));
         ImGui.TextUnformatted(Strings.LoadingCatalog);
-        ImGui.SameLine(0f, 0f);
-        ImGui.TextUnformatted(LoadingDots[(int)(ImGui.GetTime() * 2.0) % LoadingDots.Length]);
     }
 
     private void DrawCatalogError(SessionState session)
@@ -1109,7 +1136,16 @@ public sealed class MainWindow : Window, IDisposable
         dl.PushClipRect(windowPos, windowMax, false);
         dl.AddRectFilled(min, max, Theme.U32(s.Raised));
         var line = UiMetrics.Hairline;
-        dl.AddLine(new Vector2(min.X, max.Y - line * 0.5f), new Vector2(max.X, max.Y - line * 0.5f), Theme.U32(s.Line), line);
+        if (Theme.ShowRules)
+        {
+            // Moon Road (R3 #10): a brass rule fading out across the window (solid under high contrast).
+            Ornament.Rule(dl, new Vector2(min.X, max.Y - line), max.X - min.X, thickness: line);
+        }
+        else
+        {
+            dl.AddLine(new Vector2(min.X, max.Y - line * 0.5f), new Vector2(max.X, max.Y - line * 0.5f), Theme.U32(s.Line), line);
+        }
+
         dl.PopClipRect();
     }
 
@@ -1855,7 +1891,18 @@ public sealed class MainWindow : Window, IDisposable
         // The whole bar is in the caption role (ui-revamp §4.2): 0.85× the body, never under 12 px.
         using var caption = Typography.Caption();
         var barMin = ImGui.GetCursorScreenPos();
-        ImGui.Separator();
+        if (Theme.ShowRules)
+        {
+            // Moon Road (R3 #10): the separator over the bar is a brass rule, as wide as the separator was.
+            var rule = new Vector2(ImGui.GetWindowPos().X, barMin.Y);
+            var thickness = UiMetrics.Hairline;
+            ImGui.Dummy(new Vector2(ImGui.GetContentRegionAvail().X, thickness));
+            Ornament.Rule(ImGui.GetWindowDrawList(), rule, ImGui.GetWindowSize().X, thickness: thickness);
+        }
+        else
+        {
+            ImGui.Separator();
+        }
 
         var dl = ImGui.GetWindowDrawList();
         var line = ImGui.GetTextLineHeight();

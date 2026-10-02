@@ -226,11 +226,11 @@ public static partial class Chrome
                 break;
             case CardKind.Sunken:
                 dl.AddRectFilled(cardStart, max, Theme.U32(s.Sunken), rounding);
-                dl.AddRect(cardStart, max, Theme.U32(s.Line), rounding, ImDrawFlags.None, UiMetrics.Hairline);
+                CardBorder(dl, cardStart, max, rounding);
                 break;
             default:
                 dl.AddRectFilled(cardStart, max, Theme.U32(s.Raised), rounding);
-                dl.AddRect(cardStart, max, Theme.U32(s.Line), rounding, ImDrawFlags.None, UiMetrics.Hairline);
+                CardBorder(dl, cardStart, max, rounding);
                 break;
         }
 
@@ -238,6 +238,116 @@ public static partial class Chrome
         ImGui.PopID();
         ImGui.SetCursorScreenPos(cardStart);
         ImGui.Dummy(new Vector2(cardWidth, max.Y - cardStart.Y));
+    }
+
+    /// <summary>
+    /// A card's border at the frame's flair (R3 #8, <see cref="FlairRules.Card"/>): the palette's hairline under Plain;
+    /// otherwise brass (<see cref="SurfaceColors.Ornament"/> at <see cref="CardBrassAlpha"/>, opaque VeilLine under the
+    /// high-contrast palette) and, at Full, a corner mark in each corner of the first framed card of each window this
+    /// frame: corner marks frame one moment per pane, never every box (proposal P4), so a stack of cards reads as one
+    /// brass-cornered card and its brass-edged neighbours. Allocation-free.
+    /// </summary>
+    public static void CardBorder(ImDrawListPtr dl, Vector2 min, Vector2 max, float rounding)
+    {
+        var frame = FlairRules.Card(Theme.Flair);
+        if (frame == CardFrame.Hairline)
+        {
+            dl.AddRect(min, max, Theme.U32(Theme.Surface.Line), rounding, ImDrawFlags.None, UiMetrics.Hairline);
+            return;
+        }
+
+        dl.AddRect(min, max, BrassU32(), rounding, ImDrawFlags.None, UiMetrics.Hairline);
+        if (frame == CardFrame.BrassCorners && ClaimCorners())
+        {
+            CardCorners(dl, min, max);
+        }
+    }
+
+    /// <summary>
+    /// The card frame for a bordered child window drawn as a card (What's new, Since you were away, Set up your road):
+    /// call first thing inside the child and dispose the result when its content ends. Under Plain it draws nothing and
+    /// the child keeps its own border; otherwise it paints <see cref="CardBorder"/> around the whole child, outside its
+    /// clip rect, under the content, and the cards inside it keep to brass edges. Push <see cref="CardChildBorder"/> as
+    /// the child's border colour so the two do not double up: the returned scope gives the content the palette's border
+    /// colour back (frames, popups) until it is disposed.
+    /// </summary>
+    public static Theme.StyleScope CardFrameInWindow()
+    {
+        if (FlairRules.Card(Theme.Flair) == CardFrame.Hairline)
+        {
+            return default;
+        }
+
+        var min = ImGui.GetWindowPos();
+        var max = min + ImGui.GetWindowSize();
+        var dl = ImGui.GetWindowDrawList();
+        dl.PushClipRect(min, max, false);
+        CardBorder(dl, min, max, ImGui.GetStyle().ChildRounding);
+        dl.PopClipRect();
+        ImGui.PushStyleColor(ImGuiCol.Border, Theme.Surface.Line);
+        return new Theme.StyleScope(1, 0);
+    }
+
+    /// <summary>
+    /// The border colour for a child window framed by <see cref="CardFrameInWindow"/>: clear while the brass frame
+    /// draws, else the palette's line (what <see cref="Theme.PushNightPanel"/> pushes).
+    /// </summary>
+    public static Vector4 CardChildBorder => FlairRules.Card(Theme.Flair) == CardFrame.Hairline ? Theme.Surface.Line : Vector4.Zero;
+
+    /// <summary>The brass of a card's border (Gilt at 0.55 on Night), before the high-contrast palette makes it opaque.</summary>
+    public const float CardBrassAlpha = 0.55f;
+
+    private const float CardCornerLogical = 9f;
+    private const float CardCornerInsetLogical = 2f;
+
+    // The windows whose one corner-marked card is drawn this frame (a few per frame; more simply go without).
+    private static readonly uint[] CornerWindows = new uint[16];
+    private static int cornerCount;
+    private static int cornerFrame = -1;
+
+    /// <summary>Whether the current window may still draw a corner-marked card this frame; records that it did.</summary>
+    private static bool ClaimCorners()
+    {
+        var frame = ImGui.GetFrameCount();
+        if (frame != cornerFrame)
+        {
+            cornerFrame = frame;
+            cornerCount = 0;
+        }
+
+        var window = ImGuiP.GetCurrentWindow().ID;
+        for (var i = 0; i < cornerCount; i++)
+        {
+            if (CornerWindows[i] == window)
+            {
+                return false;
+            }
+        }
+
+        if (cornerCount == CornerWindows.Length)
+        {
+            return false;
+        }
+
+        CornerWindows[cornerCount++] = window;
+        return true;
+    }
+
+    private static uint BrassU32() => Theme.WithAlpha(Theme.Surface.Ornament, Theme.OrnamentAlpha(CardBrassAlpha));
+
+    private static void CardCorners(ImDrawListPtr dl, Vector2 min, Vector2 max)
+    {
+        var size = MathF.Round(UiMetrics.Px(CardCornerLogical));
+        var inset = MathF.Round(UiMetrics.Px(CardCornerInsetLogical));
+
+        // Room for four marks and a gap between them, or none: a card shorter than that stays a plain brass box.
+        if (max.X - min.X < (size + inset) * 2f + size || max.Y - min.Y < (size + inset) * 2f)
+        {
+            return;
+        }
+
+        // The atlas mark is brass already, so it is drawn untinted; its line fallback takes the border's brass.
+        OrnamentAtlas.Corners(dl, min, max, size, inset, OrnamentAtlas.IsReady ? Theme.WithAlpha(Vector4.One, 0.9f) : Theme.OrnamentU32);
     }
 
     private static Vector2 Inset()
@@ -393,6 +503,25 @@ public static partial class Chrome
         var s = Theme.Surface;
         var y = pos.Y + thickness * 0.5f;
         ImGui.GetWindowDrawList().AddLine(new Vector2(pos.X, y), new Vector2(pos.X + width, y), Theme.U32(strong ? s.StrongLine : s.Line), thickness);
+    }
+
+    /// <summary>
+    /// <see cref="Hairline"/> in the Moon Road style (R3 #9, #10): at Flair Full and Quiet a brass rule fading out to
+    /// the right (<see cref="Ornament.Rule"/>, solid under high contrast), under Plain the hairline. One item, as tall.
+    /// </summary>
+    public static void Rule(float width = 0f, float alpha = Ornament.RuleAlpha)
+    {
+        if (!Theme.ShowRules)
+        {
+            Hairline(width: width);
+            return;
+        }
+
+        var pos = ImGui.GetCursorScreenPos();
+        width = width > 0f ? width : ImGui.GetContentRegionAvail().X;
+        var thickness = UiMetrics.Hairline;
+        ImGui.Dummy(new Vector2(width, thickness));
+        Ornament.Rule(ImGui.GetWindowDrawList(), pos, width, alpha, thickness);
     }
 
     /// <summary>

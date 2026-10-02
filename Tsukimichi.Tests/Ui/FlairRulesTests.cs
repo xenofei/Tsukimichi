@@ -63,4 +63,35 @@ public class FlairRulesTests
     {
         Assert.Equal(expected, FlairRules.GameHeadingFonts(flair, toggle));
     }
+
+    [Theory]
+    [InlineData(Flair.Full, CardFrame.BrassCorners)]
+    [InlineData(Flair.Quiet, CardFrame.Brass)]
+    [InlineData(Flair.Plain, CardFrame.Hairline)]
+    public void Cards_are_brass_with_corners_at_full_brass_at_quiet_and_plain_hairline(Flair flair, CardFrame expected)
+    {
+        Assert.Equal(expected, FlairRules.Card(flair));
+    }
+
+    [Fact]
+    public void High_contrast_cards_keep_a_solid_brass_border_without_corners()
+    {
+        Assert.Equal(CardFrame.Brass, FlairRules.Card(FlairRules.Effective(Flair.Full, highContrast: true)));
+    }
+
+    [Theory]
+    [InlineData(Flair.Full, true, true)]
+    [InlineData(Flair.Quiet, true, false)]
+    [InlineData(Flair.Plain, false, false)]
+    public void The_quest_table_takes_the_moon_road_look_and_the_ready_road_only_at_full(Flair flair, bool table, bool road)
+    {
+        Assert.Equal(table, FlairRules.MoonRoadTable(flair));
+        Assert.Equal(road, FlairRules.ReadyRoad(flair));
+    }
+
+    [Fact]
+    public void High_contrast_draws_no_ready_road()
+    {
+        Assert.False(FlairRules.ReadyRoad(FlairRules.Effective(Flair.Full, highContrast: true)));
+    }
 }

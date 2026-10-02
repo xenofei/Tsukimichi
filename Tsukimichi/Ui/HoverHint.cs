@@ -50,15 +50,12 @@ public sealed class HoverHint
 
     private const float GapPx = 6f;
     private const float CursorBoxPx = 24f;
-    private const float RoundingPx = 4f;
 
     private const ImGuiWindowFlags HintFlags =
         ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.AlwaysAutoResize |
         ImGuiWindowFlags.NoSavedSettings | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoDocking |
         ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoInputs |
         ImGuiWindowFlags.NoNav | ImGuiWindowFlags.NoFocusOnAppearing | ImGuiWindowFlags.NoBringToFrontOnFocus;
-
-    private static readonly Vector4 HintBackground = Theme.Night with { W = 0.96f };
 
     private readonly IGameGui gameGui;
     private readonly SessionState session;
@@ -262,14 +259,9 @@ public sealed class HoverHint
             : new Vector2(target.Max.X + gap, target.Min.Y);
         ImGui.SetNextWindowPos(pos, ImGuiCond.Always);
 
-        using var colors = ImRaii.PushColor(ImGuiCol.WindowBg, HintBackground)
-                                 .Push(ImGuiCol.Border, Theme.Veil)
-                                 .Push(ImGuiCol.Text, Theme.Silver)
-                                 .Push(ImGuiCol.TextDisabled, Theme.Dusk);
-        using var styles = ImRaii.PushStyle(ImGuiStyleVar.WindowRounding, RoundingPx * UiMetrics.Scale)
-                                 .Push(ImGuiStyleVar.WindowBorderSize, 1f)
-                                 .Push(ImGuiStyleVar.WindowPadding, new Vector2(8f, 6f) * UiMetrics.Scale)
-                                 .Push(ImGuiStyleVar.Alpha, 0f, settled < SettleFrames);
+        // The frame every in-game panel shares (R3 #11): the palette in use (Night, "Follow Dalamud colours" or high
+        // contrast) rather than fixed Night tokens; transparent while a new model settles its size.
+        using var style = GamePanelShell.PushPanelStyle(measuring: settled < SettleFrames);
 
         var visible = ImGui.Begin(Strings.ItemsHintWindowId, HintFlags);
         try
@@ -302,7 +294,8 @@ public sealed class HoverHint
         var spacing = ImGui.GetStyle().ItemSpacing.X;
         var indent = glyph + spacing;
 
-        ImGui.TextDisabled(Strings.ItemsHintTitle);
+        var quiet = GamePanelShell.QuietTone;
+        GamePanelShell.Caption(Strings.ItemsHintTitle);
         foreach (var line in lines)
         {
             MoonGlyph.DrawInline(line.State, glyph);
@@ -323,7 +316,7 @@ public sealed class HoverHint
                 ImGui.Indent(indent);
             }
 
-            using (Theme.PushText(line.Done ? Theme.Moon : Theme.Dusk))
+            using (Theme.PushText(line.Done ? Theme.Accent : quiet))
             {
                 ImGui.TextUnformatted(line.StatusText);
             }
@@ -338,7 +331,7 @@ public sealed class HoverHint
                 ImGui.Indent(indent);
                 Marks.DrawInline(line.ObtainedGlyph, glyph);
                 ImGui.SameLine();
-                using (Theme.PushText(line.ObtainedColor))
+                using (Theme.PushText(line.Owned ? Theme.Accent : quiet))
                 {
                     ImGui.TextUnformatted(line.ObtainedText);
                 }
@@ -418,16 +411,19 @@ public sealed class HoverHint
         public bool HasObtained { get; private set; }
         public Mark ObtainedGlyph { get; private set; } = Mark.Unknown;
         public string ObtainedText { get; private set; } = string.Empty;
-        public Vector4 ObtainedColor { get; private set; } = Theme.Dusk;
+
+        /// <summary>Whether the reward is owned: its line is in the accent, otherwise in the panel's quieter tone.</summary>
+        public bool Owned { get; private set; }
 
         public void SetObtained(bool? obtained)
         {
             HasObtained = true;
-            (ObtainedGlyph, ObtainedText, ObtainedColor) = obtained switch
+            Owned = obtained == true;
+            (ObtainedGlyph, ObtainedText) = obtained switch
             {
-                true => (Mark.Check, Strings.ItemsOwned, Theme.Moon),
-                false => (Mark.Cross, Strings.ItemsNotOwned, Theme.Dusk),
-                null => (Mark.Unknown, Strings.ItemsVeiled, Theme.Dusk),
+                true => (Mark.Check, Strings.ItemsOwned),
+                false => (Mark.Cross, Strings.ItemsNotOwned),
+                null => (Mark.Unknown, Strings.ItemsVeiled),
             };
         }
     }
