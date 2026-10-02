@@ -131,7 +131,7 @@ Each release ships on its own with the usual gates. Effort: S = hours, M = a day
 - **vnavmesh "Walk to giver"** with Stop (decision 1) [C3].
 - **AutoDuty and Artisan hand-offs:** "Run with AutoDuty" for duties a quest or route needs (Duty Support or Trust by default), "Craft with Artisan" for items a quest asks for, Start and Stop Questionable, and the Companion plugins list (decision 1) [C7].
 
-### 1.7.0 · In the game (native surfaces, onboarding)
+### 1.7.0 · In the game (native surfaces, onboarding) — **released 2026-10-01**
 
 - **"Worth it?" panel** beside the quest-offer window: Moonlit reward, what it unlocks, chain step, patch. Spoiler-safe; it never presses Accept [R8].
 - **"Opened by that":** after a completion, one chat line ("Opened: 2 feature quests, 8 side quests") and a panel beside the quest-complete window [R8, R9].
@@ -221,6 +221,14 @@ Each release ships on its own with the usual gates. Effort: S = hours, M = a day
 12. **Release order:** 1.4.2, then 1.5, 1.6, 1.7, 1.8, with the side track folded in.
 
 ## In-game checks I'll need from you along the way
+
+Added with 1.7.0:
+- **Game panels:** "Worth it?" appears beside a quest offer, "What this opened" beside a turn-in, and a companion panel beside the Journal. One thing to confirm: which of the turn-in window's two text nodes holds the quest title.
+- **Chat:** [Open] [Pin] [Route] work in normal chat and in Chat 2. Turning in two quests prints one "Opened:" line, and Show lists them.
+- **Chat 2:** right-clicking a quest link offers "Open in Tsukimichi".
+- **Name tags:** with nameplate marks on, a pinned quest giver shows "☾ Pinned", and the ☾ glyph renders.
+- **Fresh install:** the tour, then the Set up your road card; Recommended leaves the overlay off.
+- **Settings search:** "nameplate" or "polling" finds results in sections you haven't opened yet.
 
 Added with 1.6.0:
 - **Companion plugins:** Settings › Integrations shows the right state for each plugin. It updates when you turn a plugin off in /xlplugins.
