@@ -166,7 +166,7 @@ public sealed class ActiveRouteService : IDisposable
                     Stop();
                     break;
                 case RouteProgressKind.Lost:
-                    log.Information("The followed route to {Label} has no quest any more; it is no longer followed", saved.Label);
+                    log.Information("The followed route to {Label} has no quest left to route (none leads there, or what is left is locked out); it is no longer followed", saved.Label);
                     Stop();
                     break;
                 case RouteProgressKind.Advanced when settings.RouteFlagAdvance && isLive && progress.NextStop is { } next:

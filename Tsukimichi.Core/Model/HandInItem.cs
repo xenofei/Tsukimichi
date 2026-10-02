@@ -53,7 +53,11 @@ public sealed record HandInItem
 /// <summary>A recipe that makes a hand-in item.</summary>
 /// <param name="RecipeId">Recipe sheet row (what Artisan's <c>CraftItem</c> takes).</param>
 /// <param name="CraftType">CraftType row: 0 Carpenter, 1 Blacksmith, … 7 Culinarian (ClassJob row 8 + this).</param>
-public sealed record HandInRecipe(uint RecipeId, byte CraftType);
+/// <param name="Yield">
+/// How many items one craft makes (<c>Recipe.AmountResult</c>): Artisan's amount counts crafts, so the hand-off asks
+/// for the items missing divided by this, rounded up. One when the data does not say.
+/// </param>
+public sealed record HandInRecipe(uint RecipeId, byte CraftType, byte Yield = 1);
 
 /// <summary>How a hand-in item is gathered, when it is.</summary>
 public enum GatherKind

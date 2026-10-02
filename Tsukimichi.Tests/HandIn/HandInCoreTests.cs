@@ -17,8 +17,8 @@ public class HandInCoreTests
 
     private static readonly JournalRef Listed = new(1, "Side", 2, "Class", 3, "Carpenter", 0);
 
-    private static HandInItem Item(uint id, string name, byte amount = 0, HandInRecipe[]? recipes = null, GatherKind gather = GatherKind.None) =>
-        new() { ItemId = id, Name = name, Amount = amount, Recipes = recipes ?? [], Gather = gather };
+    private static HandInItem Item(uint id, string name, byte amount = 0, HandInRecipe[]? recipes = null, GatherKind gather = GatherKind.None, bool hq = false) =>
+        new() { ItemId = id, Name = name, Amount = amount, Recipes = recipes ?? [], Gather = gather, IsHq = hq };
 
     private static QuestRecord Quest(uint rowId, string name, params HandInItem[] items) =>
         new() { RowId = rowId, QuestId = QuestRecord.ToQuestId(rowId), Name = name, Journal = Listed, HandInItems = items };
@@ -77,10 +77,56 @@ public class HandInCoreTests
         var b = Quest(2, "B", Item(Lumber, "Maple Lumber", 2), Item(Fish, "Lominsan Anchovy"));
         var held = new Dictionary<uint, int> { [Lumber] = 1, [Fish] = 5 };
 
-        var missing = MissingItems.For([a, b], id => held.TryGetValue(id, out var n) ? n : null);
+        var missing = MissingItems.For([a, b], (id, _) => held.TryGetValue(id, out var n) ? n : null);
 
         Assert.Equal([new MissingItem(Lumber, "Maple Lumber", 4), new MissingItem(Ingot, "Bronze Ingot", 1)], missing);
-        Assert.Empty(MissingItems.For([Quest(3, "C", Item(Fish, "Lominsan Anchovy"))], _ => 1));
+        Assert.Empty(MissingItems.For([Quest(3, "C", Item(Fish, "Lominsan Anchovy"))], (_, _) => 1));
+    }
+
+    [Fact]
+    public void Missing_items_count_only_hq_against_an_hq_hand_in()
+    {
+        // 3 HQ Maple Lumber for one quest, 2 of any quality for another: two entries, each against its own count.
+        var a = Quest(1, "A", Item(Lumber, "Maple Lumber", 3, hq: true));
+        var b = Quest(2, "B", Item(Lumber, "Maple Lumber", 2));
+        var stock = new HandInCount(Held: 5, HeldHq: 1, Retainers: 10);
+
+        var missing = MissingItems.For([a, b], (_, hq) => stock.Usable(hq));
+
+        Assert.Equal([new MissingItem(Lumber, "Maple Lumber", 2, IsHq: true)], missing);
+    }
+
+    // ---- HandInCount ----
+
+    [Fact]
+    public void An_hq_hand_in_counts_only_the_games_hq_and_never_allagan_tools_mixed_counts()
+    {
+        var hq = Item(Lumber, "Maple Lumber", 3, hq: true);
+        var nq = Item(Lumber, "Maple Lumber", 3);
+
+        // The game says 1 HQ of 2 held; the retainers hold 9, NQ and HQ unknown.
+        var game = new HandInCount(Held: 2, HeldHq: 1, Retainers: 9);
+        Assert.Equal(11, game.Total);
+        Assert.Equal(1, game.UsableFor(hq));
+        Assert.Equal(11, game.UsableFor(nq));
+        Assert.False(game.IsEnough(hq));
+        Assert.True(game.IsEnough(nq));
+        Assert.True(game.HasMixed);
+
+        // Enough HQ in the bags: enough, whatever the retainers hold.
+        Assert.True(new HandInCount(3, 3, null).IsEnough(hq));
+        Assert.False(new HandInCount(3, 3, null).HasMixed);
+
+        // The game read paused: Allagan Tools' character count stands in, without an HQ part.
+        var paused = new HandInCount(Held: 50, HeldHq: null, Retainers: 50);
+        Assert.Null(paused.UsableFor(hq));
+        Assert.False(paused.IsEnough(hq));
+        Assert.True(paused.IsEnough(nq));
+        Assert.True(paused.HasMixed);
+
+        Assert.False(default(HandInCount).Known);
+        Assert.Null(default(HandInCount).Total);
+        Assert.True(new HandInCount(null, null, 0).Known);
     }
 
     [Fact]
@@ -176,13 +222,34 @@ public class HandInCoreTests
     }
 
     [Fact]
-    public void The_craft_amount_is_what_is_still_needed_and_at_least_one()
+    public void The_craft_amount_is_the_crafts_for_what_is_still_needed()
     {
-        Assert.Equal(3, HandInActions.CraftAmount(Craftable, null));
-        Assert.Equal(2, HandInActions.CraftAmount(Craftable, 1));
-        Assert.Equal(1, HandInActions.CraftAmount(Craftable, 3));
-        Assert.Equal(1, HandInActions.CraftAmount(Craftable, 9));
-        Assert.Equal(1, HandInActions.CraftAmount(Gatherable, 0)); // no amount in the data: one
+        var once = new HandInRecipe(100, 0);
+        Assert.Equal(3, HandInActions.CraftAmount(Craftable, once, null));
+        Assert.Equal(2, HandInActions.CraftAmount(Craftable, once, 1));
+        Assert.Equal(0, HandInActions.CraftAmount(Craftable, once, 3));
+        Assert.Equal(0, HandInActions.CraftAmount(Craftable, once, 9));
+        Assert.Equal(1, HandInActions.CraftAmount(Gatherable, null, 0)); // no amount in the data: one
+
+        // Artisan's amount counts crafts: a recipe that makes 3 is asked once for 3 items, twice for 4.
+        var triple = new HandInRecipe(100, 0, Yield: 3);
+        Assert.Equal(1, HandInActions.CraftAmount(Craftable, triple, null));
+        Assert.Equal(1, HandInActions.CraftAmount(Craftable, triple, 2));
+        Assert.Equal(2, HandInActions.CraftAmount(Item(Lumber, "Maple Lumber", 4), triple, 0));
+        Assert.Equal(0, HandInActions.CraftAmount(Craftable, triple, 3));
+
+        // A yield of zero (data that does not say) reads as one.
+        Assert.Equal(3, HandInActions.CraftAmount(Craftable, new HandInRecipe(100, 0, Yield: 0), null));
+        Assert.Equal(2, HandInActions.MissingCount(Craftable, 1));
+        Assert.Equal(0, HandInActions.MissingCount(Craftable, 7));
+    }
+
+    [Fact]
+    public void The_craft_button_is_off_when_the_character_holds_enough()
+    {
+        Assert.Equal(HandOffState.Enough, HandInActions.Craft(Craftable, artisanLoaded: true, artisanBusy: false, enough: true));
+        Assert.Equal(HandOffState.Enough, HandInActions.Craft(Craftable, artisanLoaded: false, artisanBusy: false, enough: true));
+        Assert.Equal(HandOffState.NotApplicable, HandInActions.Craft(Gatherable, artisanLoaded: true, artisanBusy: false, enough: true));
     }
 
     [Fact]

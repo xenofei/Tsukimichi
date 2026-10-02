@@ -5,7 +5,8 @@ using Tsukimichi.Core.Model;
 namespace Tsukimichi.Core.HandIn;
 
 /// <summary>One item still to get: how many more the quests need than the character holds.</summary>
-public sealed record MissingItem(uint ItemId, string Name, int Quantity);
+/// <param name="IsHq">The quests ask for it high quality (only HQ stock counted against it).</param>
+public sealed record MissingItem(uint ItemId, string Name, int Quantity, bool IsHq = false);
 
 /// <summary>
 /// "Copy missing items" (feature plan v5, C4 #4): what the selected quest, or every quest of a list, still needs, and
@@ -20,39 +21,42 @@ public static class MissingItems
 
     /// <summary>
     /// The items of <paramref name="quests"/> the character still needs: each item's <see cref="HandInItem.Needed"/>
-    /// summed over the quests (one when the data has no amount), less what <paramref name="owned"/> says the character
-    /// holds (null reads as none). Items held in full are left out; first-seen order.
+    /// summed over the quests (one when the data has no amount), less what <paramref name="owned"/> says counts toward
+    /// it (item id and whether it must be high quality to what counts, <see cref="HandInCount.Usable"/>: HQ only for an
+    /// HQ item; null reads as none). An item asked for both ways is two entries. Items held in full are left out;
+    /// first-seen order.
     /// </summary>
-    public static IReadOnlyList<MissingItem> For(IEnumerable<QuestRecord> quests, Func<uint, int?> owned)
+    public static IReadOnlyList<MissingItem> For(IEnumerable<QuestRecord> quests, Func<uint, bool, int?> owned)
     {
         ArgumentNullException.ThrowIfNull(quests);
         ArgumentNullException.ThrowIfNull(owned);
-        var needed = new Dictionary<uint, (string Name, int Quantity)>();
-        var order = new List<uint>();
+        var needed = new Dictionary<(uint ItemId, bool IsHq), (string Name, int Quantity)>();
+        var order = new List<(uint ItemId, bool IsHq)>();
         foreach (var quest in quests)
         {
             foreach (var item in quest.HandInItems)
             {
-                if (needed.TryGetValue(item.ItemId, out var known))
+                var key = (item.ItemId, item.IsHq);
+                if (needed.TryGetValue(key, out var known))
                 {
-                    needed[item.ItemId] = (known.Name, known.Quantity + item.Needed);
+                    needed[key] = (known.Name, known.Quantity + item.Needed);
                 }
                 else
                 {
-                    needed[item.ItemId] = (item.Name, item.Needed);
-                    order.Add(item.ItemId);
+                    needed[key] = (item.Name, item.Needed);
+                    order.Add(key);
                 }
             }
         }
 
         var result = new List<MissingItem>(order.Count);
-        foreach (var id in order)
+        foreach (var key in order)
         {
-            var (name, quantity) = needed[id];
-            var missing = quantity - Math.Max(0, owned(id) ?? 0);
+            var (name, quantity) = needed[key];
+            var missing = quantity - Math.Max(0, owned(key.ItemId, key.IsHq) ?? 0);
             if (missing > 0)
             {
-                result.Add(new MissingItem(id, name, missing));
+                result.Add(new MissingItem(key.ItemId, name, missing, key.IsHq));
             }
         }
 

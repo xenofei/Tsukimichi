@@ -202,6 +202,8 @@ public sealed partial class ConfigWindow : Window
         ImGui.Spacing();
         DrawSpoilers();
         ImGui.Spacing();
+        DrawRoutes();
+        ImGui.Spacing();
         DrawTodoOverlay();
         ImGui.Spacing();
         DrawItemHints();

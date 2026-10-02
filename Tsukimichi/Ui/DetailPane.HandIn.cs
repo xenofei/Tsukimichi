@@ -17,7 +17,8 @@ namespace Tsukimichi.Ui;
 /// The detail pane's Hand in section (feature plan v5 side track, research C4 #2, #4 and C7 A, B): one row per item the
 /// quest asks for (<see cref="QuestRecord.HandInItems"/>) with its icon, its name, the amount and quality when the game
 /// data says, and how many the logged-in character holds (<see cref="HandInStock"/>: bags, armoury and saddlebag from
-/// the game, retainers through Allagan Tools). Each row ends in two hand-off buttons (decision 1): Craft with Artisan
+/// the game, retainers through Allagan Tools; an item asked for high quality counts only the game's HQ, Allagan Tools'
+/// numbers are labelled "NQ+HQ" and never make it enough). Each row ends in two hand-off buttons (decision 1): Craft with Artisan
 /// and, for an item a node or fishing hole yields, Gather with GatherBuddy; a button whose plugin is missing stays,
 /// disabled, naming it. Under the rows, "Copy missing items" puts a Teamcraft import link or a "3x Item" list on the
 /// clipboard, for this quest or for every pinned quest. Display only: the quest's state never reads any of it.
@@ -44,6 +45,7 @@ public sealed partial class DetailPane
     private int handInVersion = -1;
     private bool handInMasked;
     private bool handInAmountUnknown;
+    private bool handInHqMixed;
     private string handInCaption = string.Empty;
     private bool handInCaptionDirty;
     private string handInNote = string.Empty;
@@ -72,8 +74,9 @@ public sealed partial class DetailPane
         /// <summary>The name and the detail as the row prints them.</summary>
         public string Line { get; } = detail.Length > 0 ? name + "  " + detail : name;
 
-        public int? Held { get; set; } = -1;
-        public int? Retainers { get; set; } = -1;
+        /// <summary>The last count read for the row; null before the first read.</summary>
+        public HandInCount? Count { get; set; }
+
         public string CountText { get; set; } = string.Empty;
         public bool Enough { get; set; }
     }
@@ -163,7 +166,7 @@ public sealed partial class DetailPane
         var enough = 0;
         foreach (var row in handInRows)
         {
-            if ((row.Held is null && row.Retainers is null) || row.Held == -1)
+            if (row.Count is not { Known: true })
             {
                 continue;
             }
@@ -182,6 +185,7 @@ public sealed partial class DetailPane
         var artisanLoaded = Artisan?.Available == true;
         var artisanBusy = artisanLoaded && Artisan!.IsBusy;
         var gatherPlugin = GatherBuddy?.Plugin ?? GatherPlugin.None;
+        handInHqMixed = false;
         for (var i = 0; i < handInRows.Count; i++)
         {
             var row = handInRows[i];
@@ -189,6 +193,7 @@ public sealed partial class DetailPane
             if (live)
             {
                 UpdateCount(row, Stock!.For(row.Item.ItemId));
+                handInHqMixed |= row.Item.IsHq && row.Count is { HasMixed: true };
             }
 
             var start = ImGui.GetCursorScreenPos();
@@ -225,6 +230,11 @@ public sealed partial class DetailPane
             TextFlow.Wrapped(Stock is null ? Strings.HandInCountsUnavailable : Strings.HandInCountsLiveOnly, RoomTo(cardRight), Theme.U32(Theme.Surface.TextDisabled));
         }
 
+        if (live && handInHqMixed)
+        {
+            TextFlow.Wrapped(Strings.HandInHqMixedNote, RoomTo(cardRight), Theme.U32(Theme.Surface.TextDisabled));
+        }
+
         if (handInAmountUnknown)
         {
             TextFlow.Wrapped(Strings.HandInAmountUnknownNote, RoomTo(cardRight), Theme.U32(Theme.Surface.TextDisabled));
@@ -232,18 +242,17 @@ public sealed partial class DetailPane
     }
 
     /// <summary>Recomposes the counts line (and, next frame, the caption) only when its numbers moved.</summary>
-    private void UpdateCount(HandInRow row, HandInStock.Stock stock)
+    private void UpdateCount(HandInRow row, HandInCount count)
     {
-        if (row.Held == stock.Held && row.Retainers == stock.Retainers)
+        if (row.Count == count)
         {
             return;
         }
 
         handInCaptionDirty = true;
-        row.Held = stock.Held;
-        row.Retainers = stock.Retainers;
-        row.Enough = stock.Total is { } total && total >= row.Item.Needed;
-        row.CountText = (stock.Held, stock.Retainers) switch
+        row.Count = count;
+        row.Enough = count.IsEnough(row.Item);
+        row.CountText = row.Item.IsHq ? HqCountText(count) : (count.Held, count.Retainers) switch
         {
             (null, null) => Strings.HandInCountUnknown,
             ({ } held, null) => string.Format(CultureInfo.CurrentCulture, Strings.HandInHaveFormat, held),
@@ -252,12 +261,31 @@ public sealed partial class DetailPane
         };
     }
 
+    /// <summary>
+    /// The counts line of an item asked for high quality: the game's HQ count, and Allagan Tools' numbers (which
+    /// cannot tell NQ from HQ) labelled "NQ+HQ".
+    /// </summary>
+    private static string HqCountText(HandInCount count) => (count.HeldHq, count.Held, count.Retainers) switch
+    {
+        ({ } hq, _, null) => string.Format(CultureInfo.CurrentCulture, Strings.HandInHaveHqFormat, hq),
+        ({ } hq, _, { } retainers) => string.Format(CultureInfo.CurrentCulture, Strings.HandInHaveHqWithRetainersFormat, hq, retainers),
+        (null, { } held, null) => string.Format(CultureInfo.CurrentCulture, Strings.HandInHaveMixedFormat, held),
+        (null, { } held, { } retainers) => string.Format(CultureInfo.CurrentCulture, Strings.HandInHaveMixedWithRetainersFormat, held, retainers),
+        (null, null, { } retainers) => string.Format(CultureInfo.CurrentCulture, Strings.HandInRetainersOnlyMixedFormat, retainers),
+        _ => Strings.HandInCountUnknown,
+    };
+
     private void DrawCraftButton(SessionState session, HandInRow row, bool artisanLoaded, bool artisanBusy)
     {
-        var state = HandInActions.Craft(row.Item, artisanLoaded, artisanBusy);
+        // Enough only from the live character's count: another character on view has no count to go by.
+        var state = HandInActions.Craft(row.Item, artisanLoaded, artisanBusy, enough: session.IsLive && row.Enough);
+        var recipe = state == HandOffState.Ready
+            ? HandInActions.ChooseRecipe(row.Item, session.LiveSnapshot?.CurrentJob ?? 0, session.LiveSnapshot?.JobLevels)
+            : null;
         var tooltip = state switch
         {
-            HandOffState.Ready => string.Format(CultureInfo.CurrentCulture, Strings.HandInCraftTooltipFormat, CraftAmountFor(session, row), row.Name),
+            HandOffState.Ready => CraftTooltip(session, row, recipe),
+            HandOffState.Enough => Strings.HandInHaveEnough,
             // The registry's reason when it has one ("Artisan is installed but turned off…"), as every hand-off button says it.
             HandOffState.PluginMissing => CompanionPlugins.DisabledReason(CompanionPlugin.Artisan) ?? Strings.HandInNeedsArtisan,
             HandOffState.Busy => Strings.HandInArtisanBusy,
@@ -268,14 +296,26 @@ public sealed partial class DetailPane
             return;
         }
 
-        var job = session.LiveSnapshot?.CurrentJob ?? 0;
-        var recipe = HandInActions.ChooseRecipe(row.Item, job, session.LiveSnapshot?.JobLevels);
-        var sent = recipe is not null && Artisan is { } artisan && artisan.Craft(recipe.RecipeId, CraftAmountFor(session, row));
+        var amount = CraftAmountFor(session, row, recipe);
+        var sent = recipe is not null && amount > 0 && Artisan is { } artisan && artisan.Craft(recipe.RecipeId, amount);
         ShowHandInNote(sent ? string.Format(CultureInfo.CurrentCulture, Strings.HandInSentToArtisanFormat, row.Name) : Strings.HandInArtisanFailed);
     }
 
-    private static int CraftAmountFor(SessionState session, HandInRow row) =>
-        HandInActions.CraftAmount(row.Item, session.IsLive && row.Held != -1 ? (row.Held ?? 0) + (row.Retainers ?? 0) : null);
+    /// <summary>"Craft 2 × Maple Lumber with Artisan", naming what one craft makes when it is more than one.</summary>
+    private static string CraftTooltip(SessionState session, HandInRow row, HandInRecipe? recipe)
+    {
+        var crafts = CraftAmountFor(session, row, recipe);
+        return recipe is { Yield: > 1 } several
+            ? string.Format(CultureInfo.CurrentCulture, Strings.HandInCraftYieldTooltipFormat, crafts, row.Name, several.Yield)
+            : string.Format(CultureInfo.CurrentCulture, Strings.HandInCraftTooltipFormat, crafts, row.Name);
+    }
+
+    /// <summary>
+    /// Crafts to ask Artisan for: the items missing (what counts toward the row: HQ only for an HQ item; all of it for
+    /// another character on view, whose count is unknown) over what one craft makes.
+    /// </summary>
+    private static int CraftAmountFor(SessionState session, HandInRow row, HandInRecipe? recipe) =>
+        HandInActions.CraftAmount(row.Item, recipe, session.IsLive && row.Count is { } count ? count.UsableFor(row.Item) : null);
 
     private void DrawGatherButton(HandInRow row, GatherPlugin plugin)
     {
@@ -354,15 +394,18 @@ public sealed partial class DetailPane
         }
     }
 
-    /// <summary>What the logged-in character holds, when it is the one on view; otherwise every item counts as missing.</summary>
-    private Func<uint, int?> OwnedLookup(SessionState session)
+    /// <summary>
+    /// What counts toward an item (by id and whether it must be HQ) from the logged-in character's stock, when it is the
+    /// one on view; otherwise every item counts as missing.
+    /// </summary>
+    private Func<uint, bool, int?> OwnedLookup(SessionState session)
     {
         if (!session.IsLive || Stock is not { } stock)
         {
-            return static _ => null;
+            return static (_, _) => null;
         }
 
-        return id => stock.For(id).Total;
+        return (id, hq) => stock.For(id).Usable(hq);
     }
 
     /// <summary>The pinned quests not done yet whose names the shield shows (a masked quest's items are not copied).</summary>

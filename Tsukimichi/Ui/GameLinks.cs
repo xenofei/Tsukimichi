@@ -142,6 +142,15 @@ public sealed partial class GameLinks(IGameGui gameGui, IChatGui chat, IDataMana
     public bool CanFlagMap(QuestRecord quest) => quest.Issuer is { TerritoryId: > 0, MapId: > 0 };
 
     /// <summary>
+    /// The aetheryte nearest the quest's giver, attuned or not (id and place name), for grouping quests into stops:
+    /// it reads the sheets only, never the character, so a stop list cached per catalog stays right as aetherytes are
+    /// attuned. Teleport's own target, the nearest attuned one, is <see cref="CheckTeleport"/>'s. Null without a giver
+    /// place or an aetheryte for its zone.
+    /// </summary>
+    public (uint Id, string Name)? GiverAetheryte(QuestRecord quest) =>
+        Aetherytes.NearestToGiver(quest) is { } aetheryte ? (aetheryte.RowId, aetheryte.Name) : null;
+
+    /// <summary>
     /// True when the game journal can show the quest: it only holds accepted and completed quests (a repeatable done
     /// this cycle counts as completed), so every other state has no journal page to open.
     /// </summary>

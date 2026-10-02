@@ -634,6 +634,29 @@
   <data name="HandInCountUnknown" xml:space="preserve">
     <value>Count not readable right now</value>
   </data>
+  <data name="HandInHaveHqFormat" xml:space="preserve">
+    <value>You have {0} HQ</value>
+    <comment>{0} = high-quality items the logged-in character holds (bags, armoury, saddlebag), for an item the quest asks for in HQ.</comment>
+  </data>
+  <data name="HandInHaveHqWithRetainersFormat" xml:space="preserve">
+    <value>You have {0} HQ · {1} on retainers (NQ+HQ)</value>
+    <comment>{0} = high-quality items held, {1} = held by the retainers, NQ and HQ together (Allagan Tools cannot tell them apart).</comment>
+  </data>
+  <data name="HandInHaveMixedFormat" xml:space="preserve">
+    <value>You have {0} (NQ+HQ)</value>
+    <comment>{0} = held by the character, NQ and HQ together (Allagan Tools, while the game read is paused), for an item asked for in HQ.</comment>
+  </data>
+  <data name="HandInHaveMixedWithRetainersFormat" xml:space="preserve">
+    <value>You have {0} (NQ+HQ) · {1} on retainers (NQ+HQ)</value>
+    <comment>{0} = held by the character, {1} = held by its retainers, each NQ and HQ together (Allagan Tools), for an item asked for in HQ.</comment>
+  </data>
+  <data name="HandInRetainersOnlyMixedFormat" xml:space="preserve">
+    <value>{0} on retainers (NQ+HQ)</value>
+    <comment>{0} = held by the retainers, NQ and HQ together, while the game read is paused, for an item asked for in HQ.</comment>
+  </data>
+  <data name="HandInHqMixedNote" xml:space="preserve">
+    <value>Allagan Tools counts NQ and HQ together, so its numbers never count toward an item the quest wants in HQ.</value>
+  </data>
   <data name="HandInCountsLiveOnly" xml:space="preserve">
     <value>Counts are for the character you are logged in as.</value>
   </data>
@@ -646,6 +669,14 @@
   <data name="HandInCraftTooltipFormat" xml:space="preserve">
     <value>Craft {0} × {1} with Artisan</value>
     <comment>{0} = amount, {1} = item name.</comment>
+  </data>
+  <data name="HandInCraftYieldTooltipFormat" xml:space="preserve">
+    <value>Craft {0} × {1} with Artisan ({2} per craft)</value>
+    <comment>{0} = how many crafts, {1} = item name, {2} = how many items one craft makes.</comment>
+  </data>
+  <data name="HandInHaveEnough" xml:space="preserve">
+    <value>You have enough</value>
+    <comment>The Craft button's tooltip while it is disabled because the character holds enough of the item.</comment>
   </data>
   <data name="HandInNeedsArtisan" xml:space="preserve">
     <value>Needs Artisan: install and enable it to craft this from here.</value>
@@ -3111,6 +3142,10 @@
   <data name="PlanReveal" xml:space="preserve">
     <value>Reveal</value>
   </data>
+  <data name="PlanTeleport" xml:space="preserve">
+    <value>Teleport</value>
+    <comment>My blues row button: teleport toward the quest's giver (Lifestream).</comment>
+  </data>
   <data name="PlanRevealTooltip" xml:space="preserve">
     <value>Show the quest in the Journal</value>
   </data>
@@ -3228,6 +3263,12 @@
   <data name="RouteLockedOut" xml:space="preserve">
     <value>A quest on this route is locked out or removed from the game, so the route cannot be finished as it stands.</value>
   </data>
+  <data name="RouteLockedOutHeading" xml:space="preserve">
+    <value>Locked out</value>
+  </data>
+  <data name="RouteLockedOutBody" xml:space="preserve">
+    <value>Everything left on this route is locked out or removed from the game on this character, so it cannot be finished.</value>
+  </data>
   <data name="RouteMilestoneFormat" xml:space="preserve">
     <value>Main scenario · {0}</value>
     <comment>{0} = the main scenario category ("Heavensward").</comment>
@@ -3266,6 +3307,10 @@
   </data>
   <data name="RouteStepTooltipHint" xml:space="preserve">
     <value>Click to show it in the Journal.</value>
+  </data>
+  <data name="RouteStepMenuHint" xml:space="preserve">
+    <value>Right-click: Teleport, Walk to giver, Go to giver.</value>
+    <comment>Second line of a route step's tooltip.</comment>
   </data>
   <data name="RouteAlternativeTooltip" xml:space="preserve">
     <value>Another way into the next quest, with how many quests it still needs. Click to show it in the Journal.</value>
@@ -3441,6 +3486,10 @@
   </data>
   <data name="TodoConfigRouteFlagAdvanceHint" xml:space="preserve">
     <value>When you turn in a step of the followed route, the map flag moves to the next quest's giver. The map does not open.</value>
+  </data>
+  <data name="ConfigSectionRoutes" xml:space="preserve">
+    <value>Routes</value>
+    <comment>Settings section heading for the followed route's options.</comment>
   </data>
   <data name="TodoConfigShowNextStops" xml:space="preserve">
     <value>Next stops</value>
@@ -5185,6 +5234,10 @@
   </data>
   <data name="Core.Route.NoQuest" xml:space="preserve">
     <value>no quest known to unlock it</value>
+    <comment>Core: RouteMarkdown.cs.</comment>
+  </data>
+  <data name="Core.Route.LockedOutAll" xml:space="preserve">
+    <value>what is left is locked out</value>
     <comment>Core: RouteMarkdown.cs.</comment>
   </data>
   <data name="Core.Route.IncludesLockedOut" xml:space="preserve">

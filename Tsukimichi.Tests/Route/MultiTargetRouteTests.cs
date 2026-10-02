@@ -102,6 +102,24 @@ public class MultiTargetRouteTests
     }
 
     [Fact]
+    public void Every_part_left_locked_out_is_locked_out_not_already_done()
+    {
+        var catalog = Catalog(Side(A, 1), Side(B, 5), Side(C, 9));
+        var target = RouteTarget.Union(RouteTargetKind.Pins, "x", [Part(string.Empty, A), Part(string.Empty, B), Part(string.Empty, C)]);
+
+        // A done, B and C locked out for good: nothing to route, and the route can never be finished.
+        var route = UnlockRoute.Build(target, catalog, States(catalog, (A, QuestState.Completed), (B, QuestState.Foreclosed), (C, QuestState.Foreclosed)));
+        Assert.Equal(RouteOutcome.LockedOut, route.Outcome);
+        Assert.Empty(route.Steps);
+        Assert.Contains("what is left is locked out", RouteMarkdown.Write(route, catalog, q => q.Name), StringComparison.Ordinal);
+
+        // A followed route that comes to this is dropped quietly, never "complete".
+        var follower = new RouteFollower();
+        Assert.Equal(RouteProgressKind.Started, follower.Update(UnlockRoute.Build(target, catalog, States(catalog, (C, QuestState.Foreclosed)))).Kind);
+        Assert.Equal(RouteProgressKind.Lost, follower.Update(route).Kind);
+    }
+
+    [Fact]
     public void All_my_pins_routes_every_pin_in_one_order()
     {
         var catalog = Catalog(Side(A, 1), Side(B, 30, A), Side(C, 10));

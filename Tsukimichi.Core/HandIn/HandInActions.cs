@@ -16,6 +16,9 @@ public enum HandOffState
 
     /// <summary>Nothing to hand over: no recipe makes the item, no node or fishing hole yields it.</summary>
     NotApplicable,
+
+    /// <summary>The character already holds enough of the item: nothing to craft.</summary>
+    Enough,
 }
 
 /// <summary>Which gathering plugin a gather hand-off goes through.</summary>
@@ -44,10 +47,11 @@ public static class HandInActions
     public const string GatherFishCommand = "/gatherfish";
 
     /// <summary>
-    /// The Craft button: no recipe first (nothing any plugin could do), then Artisan missing, then Artisan busy (a list
-    /// or Endurance running: a second request would be queued behind it unseen).
+    /// The Craft button: no recipe first (nothing any plugin could do), then enough held (<paramref name="enough"/>:
+    /// the row's count covers the quest), then Artisan missing, then Artisan busy (a list or Endurance running: a second
+    /// request would be queued behind it unseen).
     /// </summary>
-    public static HandOffState Craft(HandInItem item, bool artisanLoaded, bool artisanBusy)
+    public static HandOffState Craft(HandInItem item, bool artisanLoaded, bool artisanBusy, bool enough = false)
     {
         ArgumentNullException.ThrowIfNull(item);
         if (CraftableRecipe(item) is null)
@@ -55,7 +59,10 @@ public static class HandInActions
             return HandOffState.NotApplicable;
         }
 
-        return !artisanLoaded ? HandOffState.PluginMissing : artisanBusy ? HandOffState.Busy : HandOffState.Ready;
+        return enough ? HandOffState.Enough
+            : !artisanLoaded ? HandOffState.PluginMissing
+            : artisanBusy ? HandOffState.Busy
+            : HandOffState.Ready;
     }
 
     /// <summary>The Gather button: shown only for a gatherable item; either GatherBuddy registers the command.</summary>
@@ -140,11 +147,26 @@ public static class HandInActions
     /// <summary>ClassJob row of a CraftType (0 Carpenter … 7 Culinarian); 0 for a type outside the eight.</summary>
     public static byte CrafterJob(byte craftType) => craftType <= LastCrafterJob - FirstCrafterJob ? (byte)(FirstCrafterJob + craftType) : (byte)0;
 
-    /// <summary>How many to ask Artisan for: what the quest needs less what the character holds, at least one.</summary>
-    public static int CraftAmount(HandInItem item, int? owned)
+    /// <summary>
+    /// How many items the quest still needs: what it asks for less what counts toward it (<paramref name="usable"/>,
+    /// <see cref="HandInCount.Usable"/>: HQ only for an HQ item; null reads as none), never below zero.
+    /// </summary>
+    public static int MissingCount(HandInItem item, int? usable)
     {
         ArgumentNullException.ThrowIfNull(item);
-        return Math.Max(1, item.Needed - Math.Max(0, owned ?? 0));
+        return Math.Max(0, item.Needed - Math.Max(0, usable ?? 0));
+    }
+
+    /// <summary>
+    /// How many crafts to ask Artisan for (its amount counts crafts, not items): the items still missing
+    /// (<see cref="MissingCount"/>) over what one craft of <paramref name="recipe"/> makes, rounded up, so a recipe that
+    /// yields three is asked once for three items. Zero when nothing is missing.
+    /// </summary>
+    public static int CraftAmount(HandInItem item, HandInRecipe? recipe, int? usable)
+    {
+        var missing = MissingCount(item, usable);
+        var yield = Math.Max(1, (int)(recipe?.Yield ?? 1));
+        return (missing + yield - 1) / yield;
     }
 
     /// <summary>

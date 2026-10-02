@@ -35,6 +35,8 @@ static partial class Strings
     public static string RouteNoQuestHeading => Loc.Get("RouteNoQuestHeading");
     public static string RouteNoQuestBody => Loc.Get("RouteNoQuestBody");
     public static string RouteLockedOut => Loc.Get("RouteLockedOut");
+    public static string RouteLockedOutHeading => Loc.Get("RouteLockedOutHeading");
+    public static string RouteLockedOutBody => Loc.Get("RouteLockedOutBody");
 
     // ---- Lines ----
     /// <summary>{0} = the main scenario category ("Heavensward").</summary>
@@ -63,6 +65,7 @@ static partial class Strings
     public static string RouteOrInsteadOneFormat => Loc.Get("RouteOrInsteadOneFormat");
 
     public static string RouteStepTooltipHint => Loc.Get("RouteStepTooltipHint");
+    public static string RouteStepMenuHint => Loc.Get("RouteStepMenuHint");
     public static string RouteAlternativeTooltip => Loc.Get("RouteAlternativeTooltip");
 
     // ---- Actions ----

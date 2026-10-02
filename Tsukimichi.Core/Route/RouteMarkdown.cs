@@ -36,6 +36,8 @@ public static class RouteMarkdown
                 return sb.Append(" · ").Append(CoreText.T("Core.Route.AlreadyUnlocked", "already unlocked")).ToString();
             case RouteOutcome.NoQuest:
                 return sb.Append(" · ").Append(CoreText.T("Core.Route.NoQuest", "no quest known to unlock it")).ToString();
+            case RouteOutcome.LockedOut when route.Steps.Count == 0:
+                return sb.Append(" · ").Append(CoreText.T("Core.Route.LockedOutAll", "what is left is locked out")).ToString();
         }
 
         sb.Append(" · ").Append(route.Summary.Text);

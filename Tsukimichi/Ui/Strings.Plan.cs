@@ -67,6 +67,7 @@ static partial class Strings
     public static string PlanFlag => Loc.Get("PlanFlag");
     public static string PlanFlagTooltip => Loc.Get("PlanFlagTooltip");
     public static string PlanReveal => Loc.Get("PlanReveal");
+    public static string PlanTeleport => Loc.Get("PlanTeleport");
     public static string PlanRevealTooltip => Loc.Get("PlanRevealTooltip");
     public static string PlanRowClickHint => Loc.Get("PlanRowClickHint");
 

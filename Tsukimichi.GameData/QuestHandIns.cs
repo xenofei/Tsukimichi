@@ -47,8 +47,8 @@ public static class QuestHandIns
     /// <summary>One <c>QuestClassJobSupply</c> subrow.</summary>
     public readonly record struct SupplyRow(uint ItemId, byte Amount, bool IsHq, uint ClassJobCategory);
 
-    /// <summary>A recipe as the rules read it: what it is, which crafter, and what goes in.</summary>
-    public sealed record RecipeFacts(uint RecipeId, byte CraftType, IReadOnlyList<uint> Ingredients);
+    /// <summary>A recipe as the rules read it: what it is, which crafter, what goes in and how many one craft makes.</summary>
+    public sealed record RecipeFacts(uint RecipeId, byte CraftType, IReadOnlyList<uint> Ingredients, byte Yield = 1);
 
     /// <summary>
     /// The item side of the rules: item facts, the recipes that make each item and how each item is gathered. Built
@@ -95,7 +95,7 @@ public static class QuestHandIns
                     recipes[result] = list = [];
                 }
 
-                list.Add(new RecipeFacts(recipe.RowId, (byte)Math.Min(recipe.CraftType.RowId, byte.MaxValue), ingredients));
+                list.Add(new RecipeFacts(recipe.RowId, (byte)Math.Min(recipe.CraftType.RowId, byte.MaxValue), ingredients, Math.Max(recipe.AmountResult, (byte)1)));
             }
 
             var gather = new Dictionary<uint, GatherKind>();
@@ -299,7 +299,7 @@ public static class QuestHandIns
     private static HandInItem Item(ItemFacts facts, Sources sources, byte amount, bool hq, uint[] categories)
     {
         var recipes = sources.RecipesOf(facts.ItemId);
-        var refs = recipes.Count == 0 ? [] : recipes.Select(r => new HandInRecipe(r.RecipeId, r.CraftType)).ToArray();
+        var refs = recipes.Count == 0 ? [] : recipes.Select(r => new HandInRecipe(r.RecipeId, r.CraftType, r.Yield)).ToArray();
         return new HandInItem
         {
             ItemId = facts.ItemId,

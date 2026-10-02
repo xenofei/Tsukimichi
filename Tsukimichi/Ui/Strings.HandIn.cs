@@ -36,6 +36,24 @@ static partial class Strings
     public static string HandInRetainersOnlyFormat => Loc.Get("HandInRetainersOnlyFormat");
 
     public static string HandInCountUnknown => Loc.Get("HandInCountUnknown");
+
+    /// <summary>{0} = high-quality items the character holds (the game's count), for an item asked for HQ.</summary>
+    public static string HandInHaveHqFormat => Loc.Get("HandInHaveHqFormat");
+
+    /// <summary>{0} = high-quality items held, {1} = held by the retainers, NQ and HQ together (Allagan Tools).</summary>
+    public static string HandInHaveHqWithRetainersFormat => Loc.Get("HandInHaveHqWithRetainersFormat");
+
+    /// <summary>{0} = held by the character, NQ and HQ together (Allagan Tools while the game read is paused).</summary>
+    public static string HandInHaveMixedFormat => Loc.Get("HandInHaveMixedFormat");
+
+    /// <summary>{0} = held by the character, {1} = held by its retainers, each NQ and HQ together (Allagan Tools).</summary>
+    public static string HandInHaveMixedWithRetainersFormat => Loc.Get("HandInHaveMixedWithRetainersFormat");
+
+    /// <summary>{0} = held by the retainers, NQ and HQ together, while the game read is paused.</summary>
+    public static string HandInRetainersOnlyMixedFormat => Loc.Get("HandInRetainersOnlyMixedFormat");
+
+    /// <summary>Under the rows when an item asked for HQ shows a count that mixes NQ and HQ.</summary>
+    public static string HandInHqMixedNote => Loc.Get("HandInHqMixedNote");
     public static string HandInCountsLiveOnly => Loc.Get("HandInCountsLiveOnly");
     public static string HandInCountsUnavailable => Loc.Get("HandInCountsUnavailable");
 
@@ -45,6 +63,12 @@ static partial class Strings
     // ---- Hand-offs (decision 1) ----
     /// <summary>{0} = amount, {1} = item name.</summary>
     public static string HandInCraftTooltipFormat => Loc.Get("HandInCraftTooltipFormat");
+
+    /// <summary>{0} = crafts, {1} = item name, {2} = items one craft makes.</summary>
+    public static string HandInCraftYieldTooltipFormat => Loc.Get("HandInCraftYieldTooltipFormat");
+
+    /// <summary>The Craft button's tooltip, disabled, when the character holds enough already.</summary>
+    public static string HandInHaveEnough => Loc.Get("HandInHaveEnough");
 
     public static string HandInNeedsArtisan => Loc.Get("HandInNeedsArtisan");
     public static string HandInArtisanBusy => Loc.Get("HandInArtisanBusy");

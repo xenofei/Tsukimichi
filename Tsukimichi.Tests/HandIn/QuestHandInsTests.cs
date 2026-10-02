@@ -172,4 +172,15 @@ public sealed class QuestHandInsTests(GameDataFixture fixture, ITestOutputHelper
         Assert.Equal([1823u, 1895u], catalog.GetByRowId(65677)!.HandInItems.Select(i => i.ItemId));
         Assert.Equal(3, catalog.GetByRowId(68633)!.HandInItems[0].Amount);
     }
+
+    [Fact]
+    public void Recipes_carry_what_one_craft_makes()
+    {
+        // Artisan's amount counts crafts, so the yield (Recipe.AmountResult) travels with every recipe: at least one,
+        // and more for some hand-in items (ingredients made several at a time).
+        var recipes = new FixtureCatalog().Bundle.Catalog.All.SelectMany(q => q.HandInItems).SelectMany(i => i.Recipes).ToList();
+        Assert.NotEmpty(recipes);
+        Assert.All(recipes, r => Assert.True(r.Yield >= 1));
+        Assert.Contains(recipes, r => r.Yield > 1);
+    }
 }

@@ -29,9 +29,9 @@ namespace Tsukimichi.Ui;
 /// <para>
 /// 1.6.0 (R6 A, C3 C): "Follow this route" makes it the route the todo overlay shows (<see cref="ActiveRouteService"/>),
 /// "Flag next stop" opens the map on the next step's giver, and every step says where its giver is: the aetheryte
-/// nearest it, with Flag and Teleport. Consecutive steps whose givers share that aetheryte are one stop ("3 quests
-/// near Camp Dragonhead") with one Teleport; the order is never changed for it. A route to several targets marks
-/// each target's milestone on the step that reaches it.
+/// nearest it (attuned or not), with Flag, Teleport and Walk (Go to giver in its right-click menu). Consecutive steps
+/// whose givers share that aetheryte are one stop ("3 quests near Camp Dragonhead") with one Teleport; the order is
+/// never changed for it. A route to several targets marks each target's milestone on the step that reaches it.
 /// </para>
 /// <para>
 /// Questionable (feature plan v5, 1.6.0): "Send to Questionable" beside Pin all hands the route's steps, in route
@@ -189,6 +189,10 @@ public sealed class RouteWindow : Window
                 return;
             case RouteOutcome.NoQuest:
                 EmptyState.DrawWithAction(Strings.RouteNoQuestHeading, Strings.RouteNoQuestBody, null);
+                return;
+            case RouteOutcome.LockedOut when v.Route.Steps.Count == 0:
+                // A route to several targets whose every part left is locked out: nothing to do, and never complete.
+                EmptyState.DrawWithAction(Strings.RouteLockedOutHeading, Strings.RouteLockedOutBody, null);
                 return;
         }
 
@@ -415,11 +419,16 @@ public sealed class RouteWindow : Window
     /// <summary>A small button's width for <paramref name="label"/>.</summary>
     private static float SmallButtonWidth(string label) => ImGui.CalcTextSize(label).X + (ImGui.GetStyle().FramePadding.X * 2f);
 
+    /// <summary>Walk's width, sized for the longer of Walk and Stop so the row does not shift when it turns.</summary>
+    private static float WalkButtonWidth() =>
+        MathF.Max(SmallButtonWidth(Strings.TravelWalkShort), SmallButtonWidth(Strings.TravelStop));
+
     /// <summary>
-    /// The line's Flag and Teleport, right-aligned at <paramref name="right"/> on the row starting at <paramref name="top"/>;
-    /// returns the x where they begin (the text ends before it). A Teleport that cannot start says why on hover.
+    /// The line's Flag, Teleport and Walk (Stop while the character moves), right-aligned at <paramref name="right"/> on
+    /// the row starting at <paramref name="top"/>; returns the x where they begin (the text ends before it). A button
+    /// that cannot start says why on hover.
     /// </summary>
-    private float DrawStepButtons(QuestRecord quest, bool flag, bool teleport, float right, float top, float rowHeight)
+    private float DrawStepButtons(QuestRecord quest, bool flag, bool teleport, bool walk, float right, float top, float rowHeight)
     {
         var gap = UiMetrics.Px(4f);
         var width = 0f;
@@ -431,6 +440,11 @@ public sealed class RouteWindow : Window
         if (teleport)
         {
             width += SmallButtonWidth(Strings.RouteStepTeleport) + (flag ? gap : 0f);
+        }
+
+        if (walk)
+        {
+            width += WalkButtonWidth() + (flag || teleport ? gap : 0f);
         }
 
         if (width <= 0f)
@@ -476,9 +490,43 @@ public sealed class RouteWindow : Window
             {
                 UiMetrics.Tooltip(TeleportTip(quest));
             }
+
+            x += SmallButtonWidth(Strings.RouteStepTeleport) + gap;
+        }
+
+        if (walk)
+        {
+            DrawWalkButton(quest, new Vector2(x, y));
         }
 
         return right - width - UiMetrics.Px(8f);
+    }
+
+    /// <summary>Walk to giver through vnavmesh, or Stop while the character moves; disabled, saying why, when it cannot start.</summary>
+    private void DrawWalkButton(QuestRecord quest, Vector2 at)
+    {
+        ImGui.SetCursorScreenPos(at);
+        var walk = links.CheckWalk(quest);
+        using (ImRaii.PushId("walk"))
+        using (ImRaii.Disabled(!walk.Ready && !walk.Stoppable))
+        {
+            if (ImGui.SmallButton(walk.Stoppable ? Strings.TravelStop : Strings.TravelWalkShort))
+            {
+                if (walk.Stoppable)
+                {
+                    links.StopTravel();
+                }
+                else
+                {
+                    links.WalkToGiver(quest);
+                }
+            }
+        }
+
+        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+        {
+            UiMetrics.Tooltip(links.WalkTooltip(quest, walk));
+        }
     }
 
     /// <summary>
@@ -526,7 +574,7 @@ public sealed class RouteWindow : Window
             {
                 // "3 quests near Camp Dragonhead": one Teleport for the stop; its steps keep their own Flag.
                 var first = bundle.Catalog.GetByRowId(l.RowId);
-                var end = first is null ? min.X + width : DrawStepButtons(first, flag: false, teleport: true, min.X + width, min.Y, rowHeight);
+                var end = first is null ? min.X + width : DrawStepButtons(first, flag: false, teleport: true, walk: false, min.X + width, min.Y, rowHeight);
                 ImGui.SetCursorScreenPos(min);
                 ImGui.Dummy(new Vector2(MathF.Max(1f, end - min.X), rowHeight));
                 if (ImGui.IsItemHovered())
@@ -546,18 +594,32 @@ public sealed class RouteWindow : Window
         var textEnd = min.X + width;
         if (stepQuest is not null)
         {
-            textEnd = DrawStepButtons(stepQuest, flag: true, teleport: l.Teleport, min.X + width, min.Y, rowHeight);
+            // Walk shows on every step (each giver is its own walk) while the window is wide enough; narrower, it and
+            // Go to giver are in the step's right-click menu.
+            var walk = links.WalkShown && !PaneFit.FoldActions(width / UiMetrics.Scale);
+            textEnd = DrawStepButtons(stepQuest, flag: true, teleport: l.Teleport, walk, min.X + width, min.Y, rowHeight);
             ImGui.SetCursorScreenPos(min);
         }
 
         var clicked = ImGui.Selectable("##line", false, ImGuiSelectableFlags.None, new Vector2(MathF.Max(1f, textEnd - min.X), rowHeight));
         var hovered = ImGui.IsItemHovered();
+        if (stepQuest is not null)
+        {
+            using var context = ImRaii.ContextPopupItem("##stepMenu");
+            if (context)
+            {
+                // A popup is its own window: it scales itself.
+                UiMetrics.ApplyFontScale();
+                TravelControls.MenuItems(links, stepQuest, Strings.RouteStepTeleport);
+            }
+        }
 
         // Questionable's mark (1.6.0): on its list, or no path; asked lazily, a few steps per frame.
         var (questionableMark, questionableTooltip) = l.Kind == LineKind.Step && Questionable is { } questionable ? questionable.StepMark(l.RowId) : (string.Empty, string.Empty);
         if (hovered)
         {
-            UiMetrics.Tooltip(l.Tooltip, l.Kind != LineKind.Step ? null : questionableTooltip.Length > 0 ? questionableTooltip + "\n" + Strings.RouteStepTooltipHint : Strings.RouteStepTooltipHint);
+            var hint = Strings.RouteStepTooltipHint + "\n" + Strings.RouteStepMenuHint;
+            UiMetrics.Tooltip(l.Tooltip, l.Kind != LineKind.Step ? null : questionableTooltip.Length > 0 ? questionableTooltip + "\n" + hint : hint);
         }
 
         if (clicked && bundle.Catalog.GetByRowId(l.RowId) is { } quest)
@@ -651,11 +713,12 @@ public sealed class RouteWindow : Window
                 .Append(string.Format(CultureInfo.CurrentCulture, Strings.RouteAlternativeFormat, NameOf(catalog, alternative.RowId), alternative.RemainingCount));
         }
 
-        // Where each giver is: the aetheryte nearest it, its id for merging and its name for the line.
+        // Where each giver is: the aetheryte nearest it, attuned or not (the same grouping as Next stops, which the
+        // rebuild key need not follow), its id for merging and its name for the line. Teleport checks attunement itself.
         var place = new Dictionary<uint, (uint Id, string Name)>(route.Steps.Count);
         foreach (var step in route.Steps)
         {
-            if (catalog.GetByRowId(step.RowId) is { } quest && links.NearestAetheryte(quest) is { } aetheryte)
+            if (catalog.GetByRowId(step.RowId) is { } quest && links.GiverAetheryte(quest) is { } aetheryte)
             {
                 place[step.RowId] = aetheryte;
             }
