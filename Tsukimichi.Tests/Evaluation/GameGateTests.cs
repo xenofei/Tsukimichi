@@ -158,7 +158,8 @@ public class GameGateTests
         Assert.Equal("Blocked · needs a relic weapon nexus equipped, you have Thyrus Novus equipped", BlockerText.StatusText(novus, quest, Names with { Catalog = catalog }));
         Assert.Equal("needs a relic weapon nexus equipped, you have Thyrus Novus equipped", RequirementDetail.Text(novus.NextStep, Names with { Catalog = catalog }));
         Assert.Equal("unmet", QuestDiagnostic.Verdict(novus.NextStep));
-        Assert.Equal(IpcBlockerKinds.Other, IpcBlocker.Of(novus, catalog, null).Kind);
+        // Over IPC: the gate's own word, naming the first weapon of its first group (the paladin's sword).
+        Assert.Equal(new IpcBlocker(IpcBlockerKinds.GameGate, CurtanaNexus, 1, 0), IpcBlocker.Of(novus, catalog, null));
 
         var none = StateResolver.Resolve(quest, Wearing(catalog, []), catalog, Named);
         Assert.Equal(QuestState.Blocked, none.State);
@@ -178,9 +179,104 @@ public class GameGateTests
         Assert.Equal(QuestState.Blocked, carried.State);
         Assert.Equal("needs a relic weapon nexus equipped, equip Thyrus Nexus", carried.NextStep!.Detail);
         Assert.Equal([ThyrusNexus], ((GameGateRequirement)carried.NextStep.Req).Matching);
+        Assert.Equal(new IpcBlocker(IpcBlockerKinds.GameGate, ThyrusNexus, 1, 0), IpcBlocker.Of(carried, catalog, null));
 
         Assert.Equal(QuestState.Blocked, StateResolver.Resolve(quest, Wearing(catalog, [CurtanaNexus]), catalog, Named).State);
         Assert.Equal(QuestState.Ready, StateResolver.Resolve(quest, Wearing(catalog, [CurtanaNexus, HolyShieldNexus]), catalog, Named).State);
+    }
+
+    private const uint CurtanaZenith = 6257;
+    private const uint ThyrusZenith = 6262;
+    private const uint SwordCategory = 38;
+    private const uint StaffCategory = 39;
+    private const string Zenith = "a relic weapon zenith equipped";
+    private const byte WhiteMage = 24;
+
+    /// <summary>Up in Arms: a level 50 quest offered only to a character wearing a relic weapon zenith.</summary>
+    private static (QuestRecord Quest, QuestCatalog Catalog) Zeniths()
+    {
+        var quest = Side(Target, "Up in Arms") with { Level = 50 };
+        var catalog = QuestCatalog.Build(
+            [quest],
+            null,
+            new Dictionary<uint, QuestGate> { [Target] = new(Zenith, [], new GateItems(GateHold.Equipped, [[CurtanaZenith], [ThyrusZenith]])) });
+        return (quest, catalog);
+    }
+
+    /// <summary>Who wears what, as the Item sheet has it: Curtana Zenith a paladin (not a gladiator), Thyrus Zenith a white mage.</summary>
+    private static readonly EvalContext Wielders = Named with
+    {
+        ClassJobs = new Jobs((SwordCategory, [Paladin]), (StaffCategory, [WhiteMage])),
+        ParentJob = static job => job == Paladin ? Gladiator : job,
+        ItemName = id => id switch { CurtanaZenith => "Curtana Zenith", ThyrusZenith => "Thyrus Zenith", _ => string.Empty },
+        ItemJobCategory = id => id switch { CurtanaZenith => SwordCategory, ThyrusZenith => StaffCategory, _ => 0u },
+    };
+
+    /// <summary>A conjurer at 30 with the given other jobs, Curtana Zenith in the Armoury Chest.</summary>
+    private static CharacterSnapshot ConjurerCarrying(QuestCatalog catalog, params (byte Job, short Level)[] others) =>
+        Wearing(catalog, [], CurtanaZenith) with { CurrentJob = Conjurer, JobLevels = Levels([(Conjurer, 30), .. others]) };
+
+    [Fact]
+    public void A_carried_weapon_reads_Ready_on_a_job_that_wears_it_at_the_level()
+    {
+        // The review's repro: the zenith is in the Armoury Chest, the current job is too low, and a gladiator-paladin
+        // at 50 can wear it. It read "Blocked · Lv 50"; it is Ready on another job, the paladin.
+        var (quest, catalog) = Zeniths();
+
+        var result = StateResolver.Resolve(quest, ConjurerCarrying(catalog, (Gladiator, 50), (Paladin, 50)), catalog, Wielders);
+
+        Assert.Equal(QuestState.ReadyOnOtherJob, result.State);
+        Assert.Equal(Paladin, result.ReadyOnJob);
+        Assert.Equal(new IpcBlocker(IpcBlockerKinds.Job, Paladin, 0, 0), IpcBlocker.Of(result, catalog, null));
+    }
+
+    [Fact]
+    public void A_carried_weapon_no_levelled_job_wears_blocks_on_equipping_it_first()
+    {
+        var (quest, catalog) = Zeniths();
+        var names = Names with { Catalog = catalog };
+
+        // A gladiator at 50 that has not become a paladin cannot wear the relic, and the paladin elsewhere is too low.
+        var low = StateResolver.Resolve(quest, ConjurerCarrying(catalog, (Gladiator, 50)), catalog, Wielders);
+        Assert.Equal(QuestState.Blocked, StateResolver.Resolve(quest, ConjurerCarrying(catalog, (Gladiator, 40), (Paladin, 40)), catalog, Wielders).State);
+
+        Assert.Equal(QuestState.Blocked, low.State);
+        Assert.Null(low.ReadyOnJob);
+        Assert.Equal(RequirementKind.GameGate, low.NextStep!.Req.Kind);
+        Assert.Equal("Blocked · needs a relic weapon zenith equipped, equip Curtana Zenith", BlockerText.StatusText(low, quest, names));
+        Assert.Equal(new IpcBlocker(IpcBlockerKinds.GameGate, CurtanaZenith, 1, 0), IpcBlocker.Of(low, catalog, null));
+
+        // Without the weapon's category no job is taken to wear it.
+        var unknown = StateResolver.Resolve(quest, ConjurerCarrying(catalog, (Gladiator, 50), (Paladin, 50)), catalog, Wielders with { ItemJobCategory = static _ => 0u });
+        Assert.Equal(QuestState.Blocked, unknown.State);
+        Assert.Equal(RequirementKind.GameGate, unknown.NextStep!.Req.Kind);
+    }
+
+    [Fact]
+    public void A_weapon_not_carried_leaves_the_level_first_and_no_other_job()
+    {
+        var (quest, catalog) = Zeniths();
+
+        // Nothing of the gate on the character: a gladiator at 50 is no answer, it has no zenith to wear.
+        var bare = Wearing(catalog, []) with { CurrentJob = Conjurer, JobLevels = Levels((Conjurer, 30), (Gladiator, 50)) };
+        var result = StateResolver.Resolve(quest, bare, catalog, Wielders);
+
+        Assert.Equal(QuestState.Blocked, result.State);
+        Assert.Equal(RequirementKind.Level, result.NextStep!.Req.Kind);
+        Assert.StartsWith("Blocked · Lv 50", BlockerText.StatusText(result, quest, Names with { Catalog = catalog }), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_carried_weapon_the_current_job_meets_the_level_for_still_says_equip_it()
+    {
+        // A white mage at 50 with Thyrus Zenith in the bags: equipping it is all there is to do, no other job is named.
+        var (quest, catalog) = Zeniths();
+        var snapshot = Wearing(catalog, [], ThyrusZenith) with { CurrentJob = WhiteMage, JobLevels = Levels((WhiteMage, 50), (Paladin, 50)) };
+
+        var result = StateResolver.Resolve(quest, snapshot, catalog, Wielders);
+
+        Assert.Equal(QuestState.Blocked, result.State);
+        Assert.Equal("needs a relic weapon zenith equipped, equip Thyrus Zenith", result.NextStep!.Detail);
     }
 
     [Fact]

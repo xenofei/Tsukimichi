@@ -176,4 +176,58 @@ public sealed class QuestEventsTests
 
         Assert.Equal([QuestEventKind.Completed, QuestEventKind.NewlyAvailable], events.Select(e => e.Kind));
     }
+    [Fact]
+    public void A_quest_only_a_judged_gear_gate_held_back_opens_GearOnly_and_the_session_announces_it_once()
+    {
+        // Review 1.10: every swap to the relic weapon re-fired NewlyAvailable. The weapon swap is marked, and the
+        // tracker keeps one announcement per quest per character session.
+        const uint Nexus = 8654;
+        const uint Novus = 7868;
+        var quest = Fixture.Quest(Fixture.Target) with { PreviousQuests = new Prereq([Fixture.A], JoinKind.All) };
+        var catalog = QuestCatalog.Build(
+            [quest, Fixture.Quest(Fixture.A)],
+            null,
+            new Dictionary<uint, QuestGate> { [Fixture.Target] = new("a relic weapon nexus equipped", [], new GateItems(GateHold.Equipped, [[Nexus]])) });
+        CharacterSnapshot Wearing(uint weapon, params uint[] done) =>
+            Fixture.Snapshot(done) with { GateItems = new GateItemCapture(catalog.GateItemFingerprint, [weapon], [.. new[] { Novus, Nexus }.Order()]) };
+
+        var tracker = new RecentEventsTracker();
+        var states = StateResolver.ResolveAll(catalog, Wearing(Novus), EvalContext.Default);
+        var last = Wearing(Novus);
+        List<QuestEvent> Step(CharacterSnapshot next)
+        {
+            var resolved = StateResolver.ResolveAll(catalog, next, EvalContext.Default);
+            var events = QuestEvents.Derive(SnapshotDiff.Compute(last, next), last, next, catalog, states, resolved, Now);
+            tracker.Add(1, events);
+            (last, states) = (next, resolved);
+            return events.Where(e => e.Kind == QuestEventKind.NewlyAvailable).ToList();
+        }
+
+        // The step before is done while the novus is worn: Blocked by the gate, nothing to announce.
+        Assert.Empty(Step(Wearing(Novus, Fixture.A)));
+        Assert.Equal(QuestState.Blocked, states[Fixture.Target].State);
+
+        // The nexus equipped: Ready, a gear-only opening, announced the first time.
+        Assert.Equal([new QuestEvent(QuestEventKind.NewlyAvailable, Fixture.Target, Now) { GearOnly = true }], Step(Wearing(Nexus, Fixture.A)));
+        Assert.Equal([Fixture.Target], tracker.Events.Where(e => e.Kind == QuestEventKind.NewlyAvailable).Select(e => e.RowId));
+
+        // Off and on again: derived again, but the session already announced it.
+        Assert.Empty(Step(Wearing(Novus, Fixture.A)));
+        Assert.Single(Step(Wearing(Nexus, Fixture.A)));
+        Assert.Single(tracker.Events, e => e.Kind == QuestEventKind.NewlyAvailable);
+    }
+
+    [Fact]
+    public void A_quest_another_requirement_held_back_is_not_GearOnly()
+    {
+        // Previous quest and gate both unmet before; the previous quest completes with the right weapon worn.
+        var gate = new RequirementResult(new GameGateRequirement("a relic weapon nexus equipped") { Checked = GateHold.Equipped }, false, string.Empty);
+        var prereq = new RequirementResult(new PreviousQuestsRequirement([Fixture.A], JoinKind.All, 0), false, string.Empty);
+        var unjudged = new RequirementResult(new GameGateRequirement("a relic weapon nexus equipped"), false, string.Empty);
+
+        Assert.True(QuestEvents.HeldBackOnlyByGear(new QuestEvaluation(QuestState.Blocked, [gate], gate, null, null)));
+        Assert.False(QuestEvents.HeldBackOnlyByGear(new QuestEvaluation(QuestState.Blocked, [prereq, gate], prereq, null, null)));
+        Assert.False(QuestEvents.HeldBackOnlyByGear(new QuestEvaluation(QuestState.Unknown, [unjudged], unjudged, null, null)));
+        Assert.False(QuestEvents.HeldBackOnlyByGear(Eval(QuestState.Blocked)));
+    }
 }

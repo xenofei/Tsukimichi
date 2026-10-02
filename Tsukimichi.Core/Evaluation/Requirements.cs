@@ -174,6 +174,9 @@ public sealed record GameGateRequirement(string Gate) : Requirement(RequirementK
 
     /// <summary>A met gate: the weapons that pass it. An unmet equip gate: the passing weapons the character holds but has not equipped.</summary>
     public uint[] Matching { get; init; } = [];
+
+    /// <summary>A judged gate: the first group of weapons the gate lists (any one group passes it); empty when not judged.</summary>
+    public uint[] FirstGroup { get; init; } = [];
 }
 
 /// <summary>Allied society rank names; index is the rank as held by the client.</summary>

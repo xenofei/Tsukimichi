@@ -86,6 +86,13 @@ public static class IpcBlockerKinds
     /// <summary>An accept condition the game does not expose. refId: the first condition id. The quest reads Not checked.</summary>
     public const string Unchecked = "unchecked";
 
+    /// <summary>
+    /// A relic weapon at the right stage is not equipped (or not held), as a gear gate the plugin judged from the
+    /// character's gear wants (1.10). refId: the first weapon (Item row id) of the passing group the character carries
+    /// but has not equipped, else of the gate's first group; need: 1; have: 0.
+    /// </summary>
+    public const string GameGate = "gameGate";
+
     /// <summary>Blocked by something this vocabulary has no word for yet.</summary>
     public const string Other = "other";
 
@@ -94,7 +101,7 @@ public static class IpcBlockerKinds
     [
         None, Level, Quest, Job, JobCategory, GrandCompany, GrandCompanyRank, AlliedSocietyRank, AlliedSocietyReputation,
         AlliedSocietyAllowance, NotOfferedToday, Duty, Seasonal, Expansion, LevelCap, OtherPath, LockedOut, Removed,
-        Achievement, Mount, House, CustomDeliveryRank, CarrierLevel, Unchecked, Other,
+        Achievement, Mount, House, CustomDeliveryRank, CarrierLevel, Unchecked, GameGate, Other,
     ];
 }
 
@@ -164,6 +171,7 @@ public readonly record struct IpcBlocker(string Kind, uint RefId, int Need, int 
         CarrierLevelRequirement r => new(IpcBlockerKinds.CarrierLevel, 0, r.RequiredLevel, r.ActualLevel ?? -1),
         AcceptConditionRequirement r => new(IpcBlockerKinds.Unchecked, FirstOr0(r.ConditionIds), 0, 0),
         GameGateRequirement { Checked: null } => new(IpcBlockerKinds.Unchecked, 0, 0, 0),
+        GameGateRequirement r => new(IpcBlockerKinds.GameGate, FirstOr0(r.Matching.Length > 0 ? r.Matching : r.FirstGroup), 1, 0),
         _ => new(IpcBlockerKinds.Other, 0, 0, 0),
     };
 

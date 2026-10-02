@@ -42,6 +42,16 @@ public sealed record CatalogBundle(QuestCatalog Catalog, GameNames Names, ClassJ
     /// <summary>A weapon's name from <see cref="GateItemNames"/>; empty for one the gates do not list.</summary>
     public string GateItemName(uint itemId) => GateItemNames.GetValueOrDefault(itemId, string.Empty);
 
+    /// <summary>
+    /// The ClassJobCategory that may equip each weapon the gear gates list (<c>Item.ClassJobCategory</c>, read at catalog
+    /// build), for "Ready on another job" when the weapon a gate wants is carried but not equipped
+    /// (<see cref="Core.Evaluation.EvalContext.ItemJobCategory"/>); empty for a bundle from the frozen fixture.
+    /// </summary>
+    public IReadOnlyDictionary<uint, uint> GateItemJobCategories { get; init; } = new Dictionary<uint, uint>();
+
+    /// <summary>A weapon's ClassJobCategory from <see cref="GateItemJobCategories"/>; 0 for one the gates do not list.</summary>
+    public uint GateItemJobCategory(uint itemId) => GateItemJobCategories.GetValueOrDefault(itemId);
+
     /// <summary>The name lookups <see cref="BlockerText"/> prints with, over this bundle's catalog and sheet names; the callers memoize one per bundle.</summary>
     public BlockerNames BlockerNames() => new()
     {

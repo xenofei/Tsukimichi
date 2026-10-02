@@ -99,6 +99,47 @@ public class RecentEventsTrackerTests
         Assert.False(tracker.Follow(Michiru));
     }
 
+    private static QuestEvent Swapped(uint rowId) => Available(rowId) with { GearOnly = true };
+
+    [Fact]
+    public void A_gear_only_opening_of_a_quest_already_announced_this_session_is_dropped()
+    {
+        // Review 1.10: each swap back to the relic weapon re-fired NewlyAvailable for its step.
+        var tracker = new RecentEventsTracker();
+        Assert.True(tracker.Add(Michiru, [Swapped(1)]));
+        Assert.False(tracker.Add(Michiru, [Swapped(1)]));
+        Assert.True(tracker.Add(Michiru, [Completed(2), Swapped(1)]));
+        Assert.Equal([2u, 1u], Rows(tracker.Events));
+
+        // Announced another way first (the step before completed with the weapon on): a later swap is no news either.
+        tracker.Add(Michiru, [Available(3)]);
+        tracker.Add(Michiru, [Swapped(3)]);
+        Assert.Single(tracker.Events, e => e.RowId == 3);
+
+        // An opening that is not a weapon swap is news each time (a daily open again after the reset).
+        tracker.Add(Michiru, [Available(4)]);
+        tracker.Add(Michiru, [Available(4)]);
+        Assert.Equal(2, tracker.Events.Count(e => e.RowId == 4));
+    }
+
+    [Fact]
+    public void The_once_per_session_rule_starts_over_for_another_character_and_after_a_logout()
+    {
+        var tracker = new RecentEventsTracker(capacity: 1);
+        tracker.Add(Michiru, [Swapped(1)]);
+        tracker.Add(Michiru, [Completed(2)]);
+        Assert.Equal([2u], Rows(tracker.Events));
+
+        // Fallen off the capped list, still announced this session.
+        Assert.False(tracker.Add(Michiru, [Swapped(1)]));
+
+        tracker.Add(Alt, [Swapped(1)]);
+        Assert.Equal([1u], Rows(tracker.Events));
+
+        tracker.Clear();
+        Assert.True(tracker.Add(Alt, [Swapped(1)]));
+    }
+
     [Fact]
     public void Capacity_must_be_positive()
     {

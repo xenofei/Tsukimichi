@@ -23,6 +23,8 @@ namespace Tsukimichi.Core.Evaluation;
 /// <item>Expansion the account does not own; level above the account's cap</item>
 /// <item>Prerequisite quests: the nearest unmet one, "after MSQ:" when it is a main scenario quest; through an
 /// Any join, the prerequisite with the fewest quests left on its path</item>
+/// <item>A relic weapon the character carries but has not equipped, which a gear gate wants ("equip Curtana Zenith"):
+/// equipping it is the job change</item>
 /// <item>Job: the pinned job's level ("Lv 30 on PLD") or the category the quest is limited to</item>
 /// <item>Level on the current job</item>
 /// <item>Grand Company membership, then rank</item>
@@ -198,6 +200,12 @@ public static class BlockerText
         {
             foreach (var result in requirements)
             {
+                // A relic weapon carried but not equipped comes before the job and level: equipping it is the job change.
+                if (kind == RequirementKind.ClassJob && StateResolver.IsCarriedGate(result))
+                {
+                    return result;
+                }
+
                 if (!result.Met && result.Req.Kind == kind)
                 {
                     return result;

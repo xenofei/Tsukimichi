@@ -460,7 +460,8 @@ public sealed class StatePoller : IDisposable
     /// False resolves a full pass here rather than on a worker: the logout's last capture, which must be committed
     /// before the character goes.
     /// </param>
-    private PollResult? Poll(DateTime now, bool deferFull = true)
+    /// <param name="loggingOut">The logout's last capture: it keeps the committed gear read (<see cref="GateItemGuard"/>).</param>
+    private PollResult? Poll(DateTime now, bool deferFull = true, bool loggingOut = false)
     {
         var bundle = session.Bundle!;
         if (memory.IsStaleFor(bundle))
@@ -486,6 +487,17 @@ public sealed class StatePoller : IDisposable
         var context = session.BaseContext.WithDailyOffer(offer);
 
         var last = memory.Last;
+        if (last is not null && last.ContentId == snapshot.ContentId)
+        {
+            // Containers already cleared (at logout, or for a moment on the way) read as no relic weapon at all: the
+            // logout keeps the committed read, and a sudden empty read counts only once it persists (GateItemGuard).
+            var gateItems = GateItemGuard.Settle(last.GateItems, snapshot.GateItems, loggingOut);
+            if (!ReferenceEquals(gateItems, snapshot.GateItems))
+            {
+                snapshot = snapshot with { GateItems = gateItems };
+            }
+        }
+
         if (last is null || memory.States is null || last.ContentId != snapshot.ContentId)
         {
             // Right after login the client can report a loaded player with no quest data yet (all-zero mask, empty
@@ -1042,7 +1054,7 @@ public sealed class StatePoller : IDisposable
             PollResult? result = null;
             try
             {
-                result = Poll(DateTime.UtcNow, deferFull: false);
+                result = Poll(DateTime.UtcNow, deferFull: false, loggingOut: true);
             }
             catch (Exception ex)
             {

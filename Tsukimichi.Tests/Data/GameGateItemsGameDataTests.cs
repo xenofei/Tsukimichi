@@ -94,6 +94,65 @@ public sealed class GameGateItemsGameDataTests(GameDataFixture game) : IClassFix
         Assert.Equal(bundle.Catalog.GateItemWatch.Length, bundle.GateItemNames.Count);
     }
 
+    [GameDataFact]
+    public void The_plugin_catalog_carries_who_wears_each_weapon()
+    {
+        const byte Gladiator = 1;
+        const byte Conjurer = 6;
+        const byte Paladin = 19;
+        const byte WhiteMage = 24;
+        var bundle = game.Bundle;
+        Assert.Equal(bundle.Catalog.GateItemWatch.Length, bundle.GateItemJobCategories.Count);
+
+        // Curtana Zenith and Holy Shield Nexus: a paladin, not a gladiator (a relic is a job's weapon); Thyrus Zenith: a white mage.
+        foreach (var sword in new uint[] { 6257, 8658 })
+        {
+            Assert.False(bundle.Jobs.Admits(bundle.GateItemJobCategory(sword), Gladiator), $"{sword}");
+            Assert.True(bundle.Jobs.Admits(bundle.GateItemJobCategory(sword), Paladin), $"{sword}");
+            Assert.False(bundle.Jobs.Admits(bundle.GateItemJobCategory(sword), Conjurer), $"{sword}");
+        }
+
+        Assert.False(bundle.Jobs.Admits(bundle.GateItemJobCategory(6262), Conjurer));
+        Assert.True(bundle.Jobs.Admits(bundle.GateItemJobCategory(6262), WhiteMage));
+        Assert.False(bundle.Jobs.Admits(bundle.GateItemJobCategory(6262), Paladin));
+    }
+
+    [GameDataFact]
+    public void Up_in_Arms_with_Curtana_Zenith_carried_reads_Ready_on_the_paladin()
+    {
+        // Review 1.10's repro: a conjurer at 30 with a gladiator-paladin at 50 and Curtana Zenith in the Armoury Chest.
+        const uint UpInArms = 66971;
+        const uint CurtanaZenith = 6257;
+        const byte Gladiator = 1;
+        const byte Conjurer = 6;
+        const byte Paladin = 19;
+        var bundle = game.Bundle;
+        var catalog = bundle.Catalog;
+        var context = Core.Evaluation.EvalContextBuilder.Build(CuratedData.Empty.Festivals, bundle.Jobs, static () => DateTime.UtcNow, jobParents: bundle.JobParents(), jobRoles: bundle.JobRoles())
+            with { ItemName = bundle.GateItemName, ItemJobCategory = bundle.GateItemJobCategory };
+        var snapshot = new CharacterSnapshot
+        {
+            ContentId = 1,
+            Name = "Michiru Tsukikage",
+            CompletedBits = Evaluation.Fixture.Bits(),
+            CurrentJob = Conjurer,
+            JobLevels = new Dictionary<byte, short> { [Conjurer] = 30, [Gladiator] = 50, [Paladin] = 50 },
+            AchievementsLoaded = true,
+            GateItems = new GateItemCapture(catalog.GateItemFingerprint, [], [CurtanaZenith]),
+        };
+
+        var result = Core.Evaluation.StateResolver.Resolve(catalog.GetByRowId(UpInArms)!, snapshot, catalog, context);
+
+        Assert.Equal(QuestState.ReadyOnOtherJob, result.State);
+        Assert.Equal(Paladin, result.ReadyOnJob);
+
+        // A gladiator who has not become a paladin cannot wear it: Blocked, the weapon to equip named first.
+        var gladiator = snapshot with { JobLevels = new Dictionary<byte, short> { [Conjurer] = 30, [Gladiator] = 50 } };
+        var blocked = Core.Evaluation.StateResolver.Resolve(catalog.GetByRowId(UpInArms)!, gladiator, catalog, context);
+        Assert.Equal(QuestState.Blocked, blocked.State);
+        Assert.Equal("needs a relic weapon zenith equipped, equip Curtana Zenith", blocked.NextStep!.Detail);
+    }
+
     private static (string Sheet, uint Row) Split(string source)
     {
         var hash = source.IndexOf('#', StringComparison.Ordinal);
