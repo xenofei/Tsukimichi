@@ -56,7 +56,7 @@ public sealed partial class CharactersPane
         if (session.NotUpdating.TryGetValue(contentId, out var problem))
         {
             var text = NotUpdatingTooltip(problem);
-            using (Theme.PushText(Theme.Silver))
+            using (Theme.PushText(Theme.Surface.Text))
             {
                 ImGui.TextWrapped(text);
             }

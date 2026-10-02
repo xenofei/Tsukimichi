@@ -30,15 +30,26 @@ public static class TableTsv
         return "\"" + value.Replace("\"", "\"\"", StringComparison.Ordinal) + "\"";
     }
 
-    /// <summary>The quest rows under the quest columns and <c>url</c> (<paramref name="url"/> per row; empty when null).</summary>
-    public static string Quests(IReadOnlyList<QuestExportRow> rows, Func<QuestExportRow, string?> url)
+    /// <summary>
+    /// The quest rows under the quest columns and <c>url</c> (<paramref name="url"/> per row; empty when null). A row
+    /// <paramref name="masked"/> says the spoiler shield hides carries no link, as Copy for Discord drops the link on
+    /// a masked name: its <c>lodestoneId</c> and <c>url</c> stay empty, since either page names the quest.
+    /// </summary>
+    public static string Quests(IReadOnlyList<QuestExportRow> rows, Func<QuestExportRow, string?> url, Func<QuestExportRow, bool>? masked = null)
     {
         ArgumentNullException.ThrowIfNull(rows);
         ArgumentNullException.ThrowIfNull(url);
         var sb = Header(ExportWriter.QuestColumns);
         foreach (var row in rows)
         {
-            Line(sb, ExportWriter.Fields(row), url(row));
+            if (masked?.Invoke(row) == true)
+            {
+                Line(sb, ExportWriter.Fields(row with { LodestoneId = string.Empty }), null);
+            }
+            else
+            {
+                Line(sb, ExportWriter.Fields(row), url(row));
+            }
         }
 
         return sb.ToString();

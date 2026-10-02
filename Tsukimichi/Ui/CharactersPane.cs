@@ -263,7 +263,8 @@ public sealed partial class CharactersPane
 
         if (listGroups.Count == 0)
         {
-            ImGui.TextDisabled(Strings.AltsNoMatch);
+            // Nothing listed with no search means every stored character is hidden; "Show hidden" follows below.
+            ImGui.TextDisabled(string.IsNullOrWhiteSpace(listSearch) ? Strings.AltsAllHidden : Strings.AltsNoMatch);
         }
 
         var row = 0;
@@ -1660,7 +1661,7 @@ public sealed partial class CharactersPane
             diffDiscord[id] = discord;
         }
 
-        discord.Draw(id, list, _ => Core.Text.DiscordText.List(list.Header, list.Clipboard.Split('\n')), small: true);
+        discord.Draw(id, list, list, static (l, _) => Core.Text.DiscordText.List(l.Header, l.Clipboard.Split('\n')), small: true);
 
         DrawDiffTable(ui, list.Rows, valueWidth);
         if (list.More.Length > 0)
@@ -2358,7 +2359,7 @@ public sealed partial class CharactersPane
         listShowHiddenLabel = string.Format(CultureInfo.CurrentCulture, Strings.AltsShowHiddenFormat, listHiddenCount);
         var shown = CharacterList.Visible(all, settings.ShowHiddenCharacters).Where(e => CharacterList.Matches(e, listSearch)).ToList();
         var groups = CharacterList.Group(shown, settings.CharacterListByDataCenter);
-        listGroups = groups.Select(g => new ListGroup(g.DataCenter, g.Entries.Select(ItemFor).ToArray())).ToList();
+        listGroups = groups.Select(g => new ListGroup(g.UnknownDataCenter ? Strings.AltsUnknownDataCenter : g.DataCenter, g.Entries.Select(ItemFor).ToArray())).ToList();
     }
 
     /// <summary>

@@ -60,8 +60,15 @@ public sealed class ExternalIds
     /// <summary>The quest's Console Games Wiki page title ("A Bone to Pick (Quest)"); null when the table has none.</summary>
     public string? WikiTitle(uint rowId) => quests.TryGetValue(rowId, out var ids) && ids.WikiTitle.Length > 0 ? ids.WikiTitle : null;
 
-    /// <summary>The reward's FFXIV Collect id; null when the table has none.</summary>
-    public uint? CollectId(RewardKind kind, uint rewardId) => collect.TryGetValue((kind, rewardId), out var id) ? id : null;
+    /// <summary>
+    /// The reward's FFXIV Collect id; null when the table has none. An achievement needs no entry: FFXIV Collect numbers
+    /// achievements by their Achievement sheet row id (checked against its API for a sample of the catalog's), so its
+    /// reward id is its Collect id.
+    /// </summary>
+    public uint? CollectId(RewardKind kind, uint rewardId) =>
+        collect.TryGetValue((kind, rewardId), out var id) ? id
+        : kind == RewardKind.Achievement && rewardId != 0 ? rewardId
+        : null;
 
     /// <summary>Reads the file; a missing or unreadable file is <see cref="Empty"/> with a warning.</summary>
     public static ExternalIds Load(string path)

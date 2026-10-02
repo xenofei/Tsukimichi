@@ -229,12 +229,7 @@ public sealed class PlanPane
         if (!view.IsEmpty)
         {
             Chrome.SameLineOrWrap(ImGui.CalcTextSize(Strings.LinksCopyDiscord).X + (ImGui.GetStyle().FramePadding.X * 2f));
-            var spoilers = session.Spoilers;
-            var shown = view;
-            discordCopy.Draw("plan", shown, addLinks => PlanChecklist.WriteDiscord(
-                shown,
-                ZoneName,
-                addLinks ? e => spoilers.IsMasked(e.Quest) ? null : links.PreferredLink(e.Quest) : null));
+            discordCopy.Draw("plan", view, (Pane: this, View: view), static (s, addLinks) => s.Pane.PlanDiscordText(s.View, addLinks));
         }
 
         // "Flag next stop" (1.6.0, C3 C): the first quest the list shows that can be started now.
@@ -895,6 +890,13 @@ public sealed class PlanPane
         }
 
         return name;
+    }
+
+    /// <summary>The plan view as Copy for Discord copies it; built only on a click.</summary>
+    private string PlanDiscordText(UnlockPlan shown, bool addLinks)
+    {
+        var spoilers = session.Spoilers;
+        return PlanChecklist.WriteDiscord(shown, ZoneName, addLinks ? e => spoilers.IsMasked(e.Quest) ? null : links.PreferredLink(e.Quest) : null);
     }
 
     private void CopyChecklist()

@@ -28,8 +28,12 @@ public sealed record CharacterEntry(
     public bool Live => LiveHere || LiveElsewhere;
 }
 
-/// <summary>One run of the Characters list under a data center heading (empty for the live characters' run at the top).</summary>
-public sealed record CharacterGroup(string DataCenter, IReadOnlyList<CharacterEntry> Entries);
+/// <summary>
+/// One run of the Characters list under a data center heading (empty for the live characters' run at the top and for
+/// the single run of an ungrouped list). <paramref name="UnknownDataCenter"/> marks the run of characters whose data
+/// center is not known, which is grouped last and needs a heading of its own (its <see cref="DataCenter"/> is empty).
+/// </summary>
+public sealed record CharacterGroup(string DataCenter, IReadOnlyList<CharacterEntry> Entries, bool UnknownDataCenter = false);
 
 /// <summary>
 /// The rules every alt list follows (1.8.0, R7 B, E, H). The order is stable: the character live here first, then the
@@ -121,8 +125,8 @@ public static class CharacterList
 
     /// <summary>
     /// The list's runs: the live characters first, under no heading, then one run per data center (alphabetical, an
-    /// unknown one last) in list order. With <paramref name="byDataCenter"/> off, or when every character is on one
-    /// data center, a single run without a heading.
+    /// unknown one last, flagged <see cref="CharacterGroup.UnknownDataCenter"/>) in list order. With
+    /// <paramref name="byDataCenter"/> off, or when every character is on one data center, a single run without a heading.
     /// </summary>
     public static List<CharacterGroup> Group(IReadOnlyList<CharacterEntry> sorted, bool byDataCenter)
     {
@@ -145,7 +149,7 @@ public static class CharacterList
                      .OrderBy(static g => g.Key.Length == 0 ? 1 : 0)
                      .ThenBy(static g => g.Key, NameOrder))
         {
-            groups.Add(new CharacterGroup(run.Key, run.ToList()));
+            groups.Add(new CharacterGroup(run.Key, run.ToList(), UnknownDataCenter: run.Key.Length == 0));
         }
 
         return groups;

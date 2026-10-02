@@ -48,6 +48,23 @@ public class ExternalLinksTests
     }
 
     [Fact]
+    public void The_wiki_search_reads_English_and_other_clients_fall_back_to_a_page()
+    {
+        // The wiki is English: another client searches for the English name when it is known...
+        Assert.Equal(
+            "https://ffxiv.consolegameswiki.com/wiki/Special:Search?search=Way%20of%20the%20Botanist&go=Go",
+            ExternalLinks.Quest(ExternalSite.ConsoleGamesWiki, 65539, "Le botaniste", Ids, "fr", englishName: "Way of the Botanist"));
+        Assert.True(ExternalLinks.WikiSearches("fr", "Way of the Botanist"));
+
+        // ...else it opens the Lodestone page (the table's hash, in the client's region), else Garland Tools, never a
+        // wiki search for a name in another language.
+        Assert.Equal("https://de.finalfantasyxiv.com/lodestone/playguide/db/quest/a761973ed33/", ExternalLinks.Quest(ExternalSite.ConsoleGamesWiki, 65539, "Der Weg des Gärtners", Ids, "de"));
+        Assert.Equal("https://www.garlandtools.org/db/#quest/70000", ExternalLinks.Quest(ExternalSite.ConsoleGamesWiki, 70000, "クエスト", Ids, "ja", englishName: " "));
+        Assert.False(ExternalLinks.WikiSearches("ja", null));
+        Assert.True(ExternalLinks.WikiSearches("en", null));
+    }
+
+    [Fact]
     public void Wiki_titles_are_encoded_as_the_wiki_writes_them()
     {
         Assert.Equal("https://ffxiv.consolegameswiki.com/wiki/A_Bone_to_Pick_(Quest)", ExternalLinks.WikiPage("A Bone to Pick (Quest)"));
@@ -78,6 +95,16 @@ public class ExternalLinksTests
         Assert.Equal("https://ffxivcollect.com/emotes/302", ExternalLinks.Collect(RewardKind.Emote, 298, "Wow", Ids));
         Assert.Equal("https://ffxivcollect.com/mounts?q%5Bname_en_cont%5D=Company%20Chocobo", ExternalLinks.Collect(RewardKind.Mount, 1, "Company Chocobo", Ids));
         Assert.Null(ExternalLinks.Collect(RewardKind.Action, 1, "x", Ids));
+
+        // Achievements are numbered as the game does, so they need no table entry; their index ignores the name
+        // filter, so the search (only used for an id-less row) goes through /achievements/search with a patch chosen.
+        Assert.Equal(313u, Ids.CollectId(RewardKind.Achievement, 313));
+        Assert.Null(Ids.CollectId(RewardKind.Achievement, 0));
+        Assert.Equal("https://ffxivcollect.com/achievements/313", ExternalLinks.Collect(RewardKind.Achievement, 313, "This One Time, at Level Thirty...", Ids));
+        Assert.Equal("https://ffxivcollect.com/achievements/313", ExternalLinks.Reward(RewardKind.Achievement, 313, 0, 65612, "x", Ids));
+        Assert.Equal(
+            "https://ffxivcollect.com/achievements/search?q%5Bname_en_cont%5D=Love%20after&q%5Bpatch_eq%5D=all",
+            ExternalLinks.Collect(RewardKind.Achievement, 0, "Love after", Ids));
 
         // A copied reward row's one link: Collect, else the item, else the quest on Garland Tools.
         Assert.Equal("https://ffxivcollect.com/emotes/302", ExternalLinks.Reward(RewardKind.Emote, 298, 0, 65600, "Wow", Ids));

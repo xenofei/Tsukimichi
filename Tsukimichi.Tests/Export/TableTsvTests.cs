@@ -73,6 +73,26 @@ public class TableTsvTests
     }
 
     [Fact]
+    public void A_masked_quest_carries_no_link_as_in_copy_for_discord()
+    {
+        var rows = new List<QuestExportRow>
+        {
+            ExportWriter.Row(Msq, null, "???", _ => "A Realm Reborn", new QuestEvaluation(QuestState.Ready, [], null, null, null), Ids),
+        };
+
+        var shown = TableTsv.Quests(rows, r => "https://example.org/" + r.RowId).Split("\r\n")[1];
+        var hidden = TableTsv.Quests(rows, r => "https://example.org/" + r.RowId, _ => true).Split("\r\n")[1];
+
+        Assert.EndsWith("\tabc123def45\thttps://example.org/65621", shown, StringComparison.Ordinal);
+
+        // Same columns, but lodestoneId and url are blank: either page would name the quest the shield hides.
+        Assert.Equal(shown.Split('\t').Length, hidden.Split('\t').Length);
+        Assert.EndsWith("\ttrue\tfalse\t\t", hidden, StringComparison.Ordinal);
+        Assert.DoesNotContain("abc123def45", hidden, StringComparison.Ordinal);
+        Assert.Equal("abc123def45", rows[0].LodestoneId);
+    }
+
+    [Fact]
     public void The_moonlit_view_has_the_csv_columns_then_url()
     {
         var mount = new UniqueRewardEntry(65730, RewardKind.Mount, 15, 4552, "unicorn", Confidence.Static, "sheet");

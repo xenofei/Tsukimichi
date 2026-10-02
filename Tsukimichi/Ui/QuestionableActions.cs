@@ -230,6 +230,8 @@ public sealed class QuestionableActions
         using var menu = ImRaii.Menu(label);
         if (menu)
         {
+            // A submenu is its own popup window: it scales itself.
+            UiMetrics.ApplyFontScale();
             DrawItems(host, id, state, rowIds);
         }
     }

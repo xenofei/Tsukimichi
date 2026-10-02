@@ -43,6 +43,10 @@ public sealed partial class CharactersPane
     private string[] gridColumnTips = [];
     private string[] gridHeaders = [];
     private string[] gridCountTexts = [];
+
+    // Per character column in the Unlock quests mode: true when its states could not be read (no stored save, or the
+    // worker failed), so its cells say "unreadable" instead of "being read" forever.
+    private bool[] gridColumnFailed = [];
     private List<RewardKind> gridKinds = [];
     private string gridKindLabel = string.Empty;
     private string gridSummary = string.Empty;
@@ -50,7 +54,8 @@ public sealed partial class CharactersPane
     private bool gridClipperCreated;
 
     // Each character's saved answers, per snapshot instance; and its unlock quest states resolved on a worker, per
-    // capture time and catalog. gridResolved counts the resolves taken in, so the rows rebuild when one lands.
+    // capture time and catalog (null states: the save could not be read). gridResolved counts the resolves taken in, so
+    // the rows rebuild when one lands.
     private readonly Dictionary<ulong, (CharacterSnapshot Snapshot, CollectibleLookup? Lookup)> gridLookups = [];
     private readonly Dictionary<ulong, (DateTime Taken, CatalogBundle Bundle, Task<IReadOnlyDictionary<uint, QuestState>> Task)> gridResolving = [];
     private readonly Dictionary<ulong, (DateTime Taken, CatalogBundle Bundle, IReadOnlyDictionary<uint, QuestState>? States)> gridStates = [];
@@ -201,9 +206,10 @@ public sealed partial class CharactersPane
                 : a.Level != b.Level ? a.Level.CompareTo(b.Level)
                 : a.RowId.CompareTo(b.RowId));
             var columns = new IReadOnlyDictionary<uint, QuestState>?[items.Length];
+            gridColumnFailed = new bool[items.Length];
             for (var c = 0; c < items.Length; c++)
             {
-                columns[c] = QuestStatesFor(items[c], bundle, quests);
+                columns[c] = QuestStatesFor(items[c], bundle, quests, out gridColumnFailed[c]);
             }
 
             var spoilers = session.Spoilers;
@@ -238,10 +244,12 @@ public sealed partial class CharactersPane
 
     /// <summary>
     /// A character's unlock quest states: the session's for the viewed and the live character; for another one, resolved
-    /// on a worker once per capture time and catalog (null until it lands, the cells then read "being read").
+    /// on a worker once per capture time and catalog (null until it lands, the cells then read "being read"). Null with
+    /// <paramref name="failed"/> set when its save could not be read or resolved: the cells then read "unreadable".
     /// </summary>
-    private IReadOnlyDictionary<uint, QuestState>? QuestStatesFor(CharacterItem item, CatalogBundle bundle, IReadOnlyList<QuestRecord> quests)
+    private IReadOnlyDictionary<uint, QuestState>? QuestStatesFor(CharacterItem item, CatalogBundle bundle, IReadOnlyList<QuestRecord> quests, out bool failed)
     {
+        failed = false;
         IReadOnlyDictionary<uint, QuestEvaluation>? known = item.ContentId == session.ViewedContentId ? session.States
             : item.ContentId == session.LiveContentId && session.LiveStates.Count > 0 ? session.LiveStates
             : null;
@@ -261,6 +269,7 @@ public sealed partial class CharactersPane
 
         if (gridStates.TryGetValue(item.ContentId, out var cached) && cached.Taken == item.TakenUtc && ReferenceEquals(cached.Bundle, bundle))
         {
+            failed = cached.States is null;
             return cached.States;
         }
 
@@ -272,6 +281,7 @@ public sealed partial class CharactersPane
         if (SnapshotFor(item) is not { } snapshot)
         {
             gridStates[item.ContentId] = (item.TakenUtc, bundle, null);
+            failed = true;
             return null;
         }
 
@@ -451,7 +461,8 @@ public sealed partial class CharactersPane
                 Marks.DrawInline(Mark.Unknown, glyph);
                 if (ImGui.IsItemHovered())
                 {
-                    UiMetrics.Tooltip(row.Name, string.Format(CultureInfo.CurrentCulture, Strings.AltsGridCellPendingFormat, gridColumns[c].Name));
+                    var format = c < gridColumnFailed.Length && gridColumnFailed[c] ? Strings.AltsGridCellUnreadableFormat : Strings.AltsGridCellPendingFormat;
+                    UiMetrics.Tooltip(row.Name, string.Format(CultureInfo.CurrentCulture, format, gridColumns[c].Name));
                 }
             }
         }

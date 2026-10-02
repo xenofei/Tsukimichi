@@ -25,7 +25,7 @@ public enum ExternalSite : byte
 /// <item>Garland Tools: <c>https://www.garlandtools.org/db/#quest/{rowId}</c> and <c>#item/{itemId}</c>.</item>
 /// <item>Console Games Wiki: <c>https://ffxiv.consolegameswiki.com/wiki/{Title}</c> (English only).</item>
 /// <item>Teamcraft: <c>https://ffxivteamcraft.com/db/{lang}/quest/{rowId}</c>.</item>
-/// <item>FFXIV Collect: <c>https://ffxivcollect.com/{path}/{collectId}</c>, or the kind's list filtered by English name.</item>
+/// <item>FFXIV Collect: <c>https://ffxivcollect.com/{path}/{collectId}</c> (an achievement's id is its game id), or the kind's list filtered by English name.</item>
 /// </list>
 /// </summary>
 public static class ExternalLinks
@@ -114,9 +114,23 @@ public static class ExternalLinks
     public static string? CollectEntry(RewardKind kind, uint collectId) =>
         CollectPath(kind) is { } path && collectId != 0 ? CollectBase + path + "/" + collectId.ToString(CultureInfo.InvariantCulture) : null;
 
-    /// <summary>The kind's FFXIV Collect list filtered by the reward's English name; null for a kind the site does not list.</summary>
-    public static string? CollectSearch(RewardKind kind, string englishName) =>
-        CollectPath(kind) is { } path ? CollectBase + path + "?q%5Bname_en_cont%5D=" + Uri.EscapeDataString(englishName ?? string.Empty) : null;
+    /// <summary>
+    /// The kind's FFXIV Collect list filtered by the reward's English name; null for a kind the site does not list.
+    /// Achievements are the exception: their index ignores the filter (it redirects to the front page), so they use
+    /// <c>/achievements/search</c>, which only lists results once a patch is chosen (<c>q[patch_eq]=all</c>).
+    /// </summary>
+    public static string? CollectSearch(RewardKind kind, string englishName)
+    {
+        if (CollectPath(kind) is not { } path)
+        {
+            return null;
+        }
+
+        var name = Uri.EscapeDataString(englishName ?? string.Empty);
+        return kind == RewardKind.Achievement
+            ? CollectBase + path + "/search?q%5Bname_en_cont%5D=" + name + "&q%5Bpatch_eq%5D=all"
+            : CollectBase + path + "?q%5Bname_en_cont%5D=" + name;
+    }
 
     /// <summary>The reward's FFXIV Collect page when the table names it, else the name search; null for a kind the site does not list.</summary>
     public static string? Collect(UniqueRewardEntry entry, ExternalIds ids)
@@ -140,21 +154,38 @@ public static class ExternalLinks
         Collect(kind, rewardId, englishName, ids) ?? (itemId != 0 ? GarlandItem(itemId) : GarlandQuest(questRowId));
 
     /// <summary>
-    /// The quest's page on <paramref name="site"/>: the Lodestone and the wiki by the link table, else their search for
-    /// <paramref name="name"/> (the quest's own name; the wiki's search reads English); Garland Tools and Teamcraft by
-    /// row id. Null for FFXIV Collect, which lists no quests.
+    /// The quest's page on <paramref name="site"/>: the Lodestone and the wiki by the link table, else their search;
+    /// Garland Tools and Teamcraft by row id. Null for FFXIV Collect, which lists no quests. The Lodestone searches for
+    /// <paramref name="name"/> (the quest's own name, in the client's language, which the region matches). The wiki is
+    /// English only, so it searches for <paramref name="englishName"/>, or <paramref name="name"/> on an English client;
+    /// with neither, a search would find nothing, so the quest's Lodestone page opens instead when the table knows it,
+    /// else its Garland Tools page.
     /// </summary>
-    public static string? Quest(ExternalSite site, uint rowId, string name, ExternalIds ids, string language)
+    public static string? Quest(ExternalSite site, uint rowId, string name, ExternalIds ids, string language, string? englishName = null)
     {
         ArgumentNullException.ThrowIfNull(ids);
         return site switch
         {
             ExternalSite.Lodestone => LodestoneQuest(ids.LodestoneId(rowId), language) ?? LodestoneSearch(name, language),
             ExternalSite.GarlandTools => GarlandQuest(rowId),
-            ExternalSite.ConsoleGamesWiki => ids.WikiTitle(rowId) is { } title ? WikiPage(title) : WikiSearch(name),
+            ExternalSite.ConsoleGamesWiki => ids.WikiTitle(rowId) is { } title ? WikiPage(title) : WikiFallback(rowId, name, ids, language, englishName),
             ExternalSite.Teamcraft => TeamcraftQuest(rowId, language),
             _ => null,
         };
+    }
+
+    /// <summary>True when the wiki link for a quest the table has no title for is the wiki's search (an English name is known).</summary>
+    public static bool WikiSearches(string language, string? englishName) =>
+        !string.IsNullOrWhiteSpace(englishName) || SiteLanguage(language) == "en";
+
+    private static string WikiFallback(uint rowId, string name, ExternalIds ids, string language, string? englishName)
+    {
+        if (!string.IsNullOrWhiteSpace(englishName))
+        {
+            return WikiSearch(englishName);
+        }
+
+        return SiteLanguage(language) == "en" ? WikiSearch(name) : Preferred(rowId, ids, language);
     }
 
     /// <summary>

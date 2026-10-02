@@ -13,6 +13,11 @@ static partial class Strings
 
     public static string AltsNoMatch => Loc.Get("Alts.NoMatch");
 
+    public static string AltsAllHidden => Loc.Get("Alts.AllHidden");
+
+    /// <summary>Heading of the Characters list's run of characters whose data center is not known.</summary>
+    public static string AltsUnknownDataCenter => Loc.Get("Alts.UnknownDataCenter");
+
     public static string AltsHiddenBadge => Loc.Get("Alts.HiddenBadge");
 
     public static string AltsUntrackedBadge => Loc.Get("Alts.UntrackedBadge");
@@ -85,6 +90,9 @@ static partial class Strings
 
     /// <summary>{0} = character name.</summary>
     public static string AltsGridCellPendingFormat => Loc.Get("Alts.GridCellPendingFormat");
+
+    /// <summary>{0} = character name.</summary>
+    public static string AltsGridCellUnreadableFormat => Loc.Get("Alts.GridCellUnreadableFormat");
 
     /// <summary>{0} = character name, {1} = world, {2} = how long ago it was saved.</summary>
     public static string AltsGridColumnTooltipFormat => Loc.Get("Alts.GridColumnTooltipFormat");

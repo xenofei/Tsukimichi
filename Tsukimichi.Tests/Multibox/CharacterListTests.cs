@@ -91,6 +91,9 @@ public sealed class CharacterListTests
         Assert.Equal([2UL, 5], groups[1].Entries.Select(static e => e.ContentId));
         Assert.Equal([1UL], groups[2].Entries.Select(static e => e.ContentId));
         Assert.Equal([4UL], groups[3].Entries.Select(static e => e.ContentId));
+
+        // Only the unknown data center's run is flagged, so it gets a heading of its own instead of sitting under Primal's.
+        Assert.Equal([false, false, false, true], groups.Select(static g => g.UnknownDataCenter));
     }
 
     [Fact]
@@ -99,7 +102,7 @@ public sealed class CharacterListTests
         var sorted = CharacterList.Sort([Entry(1, "Ann"), Entry(2, "Bea", here: true)]);
 
         Assert.Single(CharacterList.Group(sorted, byDataCenter: true));
-        Assert.Single(CharacterList.Group(CharacterList.Sort([Entry(1, "Ann", dc: "Primal"), Entry(2, "Bea")]), byDataCenter: false));
+        Assert.False(Assert.Single(CharacterList.Group(CharacterList.Sort([Entry(1, "Ann", dc: "Primal"), Entry(2, "Bea", dc: string.Empty)]), byDataCenter: false)).UnknownDataCenter);
         Assert.Empty(CharacterList.Group([], byDataCenter: true));
     }
 
