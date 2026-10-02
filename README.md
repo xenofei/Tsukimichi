@@ -75,7 +75,7 @@ Everything else is a Dalamud window. It also talks to three other plugins over D
 
 It never automates anything: it does not move your character, accept or turn in quests, skip dialogue or press anything for you. Teleport to the giver is a button you click, handed to Lifestream. Map flags, journal pages and chat links use the game's own functions.
 
-It has no network code. Nothing leaves your machine. Snapshots and settings live in `%AppData%\XIVLauncher\pluginConfigs\Tsukimichi\` (`characters\<id>.json` with its `<id>.accepted.json`, `<id>.abandoned.json` and a once-a-day backup `<id>.prev.json` ([how to restore it](docs/restore-backup.md)), `<id>.live.json` while that character is logged in (see [multibox](#several-game-clients-at-once-multibox)), `user\pins.json`, `user\overrides.json`, `user\discovery.json`). Exports are files you write on purpose, to `exports\` unless you choose another folder, and Settings › Data can delete everything else.
+It has no network code. Nothing leaves your machine. Snapshots and settings live in `%AppData%\XIVLauncher\pluginConfigs\Tsukimichi\` (`characters\<id>.json` with its `<id>.accepted.json`, `<id>.abandoned.json`, `<id>.dates.json` (quest completion dates) and two backups, `<id>.prev.json` refreshed once a day and `<id>.prev2.json` the one before it ([how to restore them](docs/restore-backup.md)), `<id>.live.json` while that character is logged in (see [multibox](#several-game-clients-at-once-multibox)), `user\pins.json`, `user\overrides.json`, `user\discovery.json`). Exports are files you write on purpose, to `exports\` unless you choose another folder, and Settings › Data can delete everything else.
 
 ## Several game clients at once (multibox)
 

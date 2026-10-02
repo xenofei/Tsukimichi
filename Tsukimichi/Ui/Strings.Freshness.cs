@@ -24,4 +24,7 @@ static partial class Strings
 
     /// <summary>The once-per-session chat line when an implausible capture was not saved (<c>Core.Runtime.CapturePlausibility</c>).</summary>
     public static string PlausibilitySkippedNotice => Loc.Get("PlausibilitySkippedNotice");
+
+    /// <summary>The chat line when a held-back capture kept reading the same for a few minutes and is saved after all (<c>Core.Runtime.HeldBackCaptures</c>).</summary>
+    public static string PlausibilityAcceptedNotice => Loc.Get("PlausibilityAcceptedNotice");
 }

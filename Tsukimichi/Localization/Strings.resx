@@ -5678,4 +5678,8 @@
     <value>Tsukimichi skipped saving: the game reported far fewer completed quests than before; your saved progress is unchanged.</value>
     <comment>Chat line, once per session, when a capture that lost many completed quests at once is not saved.</comment>
   </data>
+  <data name="PlausibilityAcceptedNotice" xml:space="preserve">
+    <value>Tsukimichi accepted the game's reading after it stayed the same for a few minutes; a backup of the earlier save is kept.</value>
+    <comment>Chat line when a capture held back as implausible kept reading the same for a few minutes and is now saved; the save before it was copied to the backup.</comment>
+  </data>
 </root>

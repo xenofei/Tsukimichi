@@ -123,13 +123,22 @@ public sealed class SnapshotService : IDisposable
 
     /// <summary>
     /// Reads a character's stored file as it is on disk, for a worker: nothing is quarantined, no warning is queued and
-    /// no framework-thread state is touched. Null when there is none, or it cannot be read here (locked, corrupt, newer).
+    /// no framework-thread state is touched. The result says whether it was missing or could not be read here
+    /// (locked, corrupt, newer), with the problem to log.
     /// </summary>
-    public CharacterSnapshot? ReadStored(ulong contentId)
-    {
-        var read = store.LoadShared(contentId);
-        return read.Status == SharedLoad.Loaded ? read.Value : null;
-    }
+    public SharedRead<CharacterSnapshot> ReadStored(ulong contentId) => store.LoadShared(contentId);
+
+    /// <summary>
+    /// Reads a character's completion dates for a first pass, on a worker (<see cref="JsonSnapshotStore.LoadDates"/>):
+    /// a dates file that does not parse is quarantined; nothing else is touched and no warning is queued.
+    /// </summary>
+    public SharedRead<CharacterSnapshot> ReadStoredDates(ulong contentId) => store.LoadDates(contentId);
+
+    /// <summary>
+    /// On the background writer only: copies the character's saved file to its backup now, before a capture the
+    /// plausibility guard accepted overwrites it (<see cref="JsonSnapshotStore.BackupNow"/>).
+    /// </summary>
+    public bool BackupNow(ulong contentId) => store.BackupNow(contentId);
 
     /// <summary>Multibox (D11): whether a character is live in another game client right now. Set by the multibox service.</summary>
     public Func<ulong, bool>? LiveElsewhere { get; set; }

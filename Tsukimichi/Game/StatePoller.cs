@@ -22,7 +22,10 @@ namespace Tsukimichi.Game;
 /// A capture of the live character that suddenly loses many completed quests or empties its journal
 /// (<see cref="CapturePlausibility"/>) is not committed, so it is never saved over the good snapshot: the poller
 /// backs off as for a failed read, logs the counts once, and prints one chat line per load
-/// (<see cref="PrintNotice"/>). The next plausible capture commits as usual; a new login starts over.
+/// (<see cref="PrintNotice"/>). The first capture of a session is judged against the stored snapshot the same way.
+/// The next plausible capture commits as usual. A loss that keeps reading the same for a few minutes is real
+/// (<see cref="HeldBackCaptures"/>): the saved file is copied to the backup first, then the capture is committed, with
+/// a log line and a chat line.
 /// </para>
 /// <para>
 /// The first pass for a character resolves the whole catalog, which took a visible slice of a frame; the capture
@@ -57,9 +60,18 @@ public sealed class StatePoller : IDisposable
     private readonly PollerMemory memory = new(SaveInterval);
     private readonly PollSchedule schedule = new(TimeSpan.FromSeconds(2), MaxBackoff);
     private readonly LoginReadiness readiness = new();
+    private readonly HeldBackCaptures heldBack = new();
 
     /// <summary>The first pass in flight on a worker; null while none is. Touched only on the framework thread.</summary>
     private FirstPass? pendingFirst;
+
+    /// <summary>
+    /// The newest committed capture of a character whose memory was just reset while its state on disk may lag behind
+    /// it: the catalog was rebuilt (the capture is the live state), or its save was still on the writer at a logout.
+    /// The next first pass for that character continues its completion dates from it rather than from the file, and
+    /// judges plausibility against it. Cleared once that save lands, or a first pass commits.
+    /// </summary>
+    private CharacterSnapshot? handoff;
 
     private bool firstCaptureLogged;
     private bool acceptedSinceWarned;
@@ -192,6 +204,12 @@ public sealed class StatePoller : IDisposable
             queuedSnapshot = null;
         }
 
+        if (snapshotQueued && error is null && outcome?.Snapshot is null && ReferenceEquals(handoff, saved))
+        {
+            // On disk now: a first pass reads it from the file, where another client's later save would also be.
+            handoff = null;
+        }
+
         if (disposed)
         {
             return;
@@ -306,8 +324,12 @@ public sealed class StatePoller : IDisposable
                 wasReady = false;
                 DiscardFirstPass();
                 Flush(final: true);
+                // The save just queued may land after the next first pass reads the file; until it lands, that pass
+                // continues from the capture itself.
+                handoff = queuedSnapshot;
                 memory.Reset();
                 readiness.Reset();
+                heldBack.Reset();
                 DailyOffers?.Clear();
                 lastOffer = null;
                 Notify(session.ClearLive);
@@ -407,6 +429,8 @@ public sealed class StatePoller : IDisposable
             // them would find nothing and never re-resolve. Persist what there is and start over with a first pass.
             log.Debug("Catalog instance changed; the next poll is a first pass");
             Flush(final: true);
+            // Still the live character: its last capture is newer than the file until the save lands.
+            handoff = memory.Last;
             memory.Reset();
         }
 
@@ -416,9 +440,9 @@ public sealed class StatePoller : IDisposable
         var captureMs = Stopwatch.GetElapsedTime(captureStarted).TotalMilliseconds;
         // Today's allied society offer, as far as the game's own calculation could be read (DailyOfferReader): an
         // unknown society's dailies are not held back. A change of the offer re-resolves everything below.
+        // lastOffer follows only a commit: a capture held back (or a poll that throws) leaves the change to the next one.
         var offer = DailyOffers?.Read(catalog, snapshot, now) ?? DailyOffer.None;
         var offerChanged = !offer.SameAs(lastOffer);
-        lastOffer = offer;
         var context = session.BaseContext.WithDailyOffer(offer);
 
         var last = memory.Last;
@@ -439,7 +463,7 @@ public sealed class StatePoller : IDisposable
             }
 
             memory.Reset();
-            StartFirstPass(snapshot, bundle, context, captureMs);
+            StartFirstPass(snapshot, bundle, context, offer, captureMs);
             return null;
         }
 
@@ -454,10 +478,20 @@ public sealed class StatePoller : IDisposable
 
         // The plausibility guard (1.5.0): a capture that lost many completed quests at once, or emptied the journal,
         // is held back before anything (the accepted times, the abandoned ledger, the commit) takes it in.
+        // A loss that keeps reading the same for a few minutes is real and is taken in after all.
         var plausibility = CapturePlausibility.Check(last, snapshot, catalog);
         if (!plausibility.Plausible)
         {
-            throw new ImplausibleCaptureException(plausibility);
+            if (!heldBack.Observe(last, snapshot, plausibility, now))
+            {
+                throw new ImplausibleCaptureException(plausibility);
+            }
+
+            AcceptHeldBack(plausibility, snapshot.ContentId, now);
+        }
+        else if (heldBack.Count > 0)
+        {
+            heldBack.Reset();
         }
 
         memory.AcceptedSinceDirty |= AcceptedSince.Apply(memory.AcceptedSince, last, snapshot, diff, now);
@@ -478,6 +512,7 @@ public sealed class StatePoller : IDisposable
         memory.AbandonedDirty |= AbandonedLedger.Apply(memory.Abandoned, events, last, catalog);
 
         memory.Commit(snapshot, resolved, bundle);
+        lastOffer = offer;
         return new PollResult(snapshot, resolved, context, events);
     }
 
@@ -486,11 +521,12 @@ public sealed class StatePoller : IDisposable
     /// own: the capture, the catalog, the base context (whose festival hook only reads a map and the clock) and a
     /// fresh warnings list. <see cref="OnUpdate"/> polls the task and <see cref="CommitFirstPass"/> takes the result.
     /// </summary>
-    private void StartFirstPass(CharacterSnapshot snapshot, CatalogBundle bundle, EvalContext context, double captureMs)
+    private void StartFirstPass(CharacterSnapshot snapshot, CatalogBundle bundle, EvalContext context, DailyOffer offer, double captureMs)
     {
         var catalog = bundle.Catalog;
         var sidecarPath = AcceptedSincePath(snapshot.ContentId);
         var abandonedPath = AbandonedPath(snapshot.ContentId);
+        var seed = handoff is { } h && h.ContentId == snapshot.ContentId ? h : null;
         var task = Task.Run(() =>
         {
             var started = Stopwatch.GetTimestamp();
@@ -503,13 +539,29 @@ public sealed class StatePoller : IDisposable
             var acceptedSince = AcceptedSince.Load(sidecarPath, warnings);
             var abandoned = AbandonedLedger.Load(abandonedPath, warnings);
 
-            // Completion dates continue from the stored file; quests completed while the plugin was not watching are
-            // dated "between the stored capture and now" (decision 9).
-            var dated = CompletionDates.Begin(snapshots.ReadStored(snapshot.ContentId), snapshot);
-            return new FirstPassResult(dated, states, acceptedSince, abandoned, warnings, resolveMs);
+            // Completion dates continue from the dates file; quests completed while the plugin was not watching are
+            // dated "between the stored capture and now" (decision 9). A dates file that exists but cannot be read
+            // right now throws here: starting over would save an empty record over it, so the pass fails and is
+            // retried on the usual backoff. The capture is judged against the stored snapshot as a later one is
+            // against the last (the plausibility guard); a stored file that cannot be read is not judged against.
+            CharacterSnapshot dated;
+            CharacterSnapshot? stored;
+            if (seed is not null)
+            {
+                dated = CompletionDates.Resume(seed, snapshot);
+                stored = seed;
+            }
+            else
+            {
+                dated = CompletionDates.BeginFrom(snapshots.ReadStoredDates(snapshot.ContentId), snapshot, warnings);
+                stored = snapshots.ReadStored(snapshot.ContentId).Value;
+            }
+
+            var plausibility = CapturePlausibility.Check(stored, snapshot, catalog);
+            return new FirstPassResult(dated, stored, plausibility, states, acceptedSince, abandoned, warnings, resolveMs);
         });
 
-        pendingFirst = new FirstPass(snapshot, bundle, context, task, Stopwatch.GetTimestamp(), captureMs);
+        pendingFirst = new FirstPass(snapshot, bundle, context, offer, task, Stopwatch.GetTimestamp(), captureMs);
         log.Debug("First evaluation for {Name} ({ContentId}) started on a worker", snapshot.Name, snapshot.ContentId);
     }
 
@@ -551,8 +603,27 @@ public sealed class StatePoller : IDisposable
         }
 
         var snapshot = result.Snapshot;
+        if (!result.Plausibility.Plausible)
+        {
+            // Nothing is committed: the next poll captures again and starts another first pass, as for a read failure.
+            if (result.Stored is null || !heldBack.Observe(result.Stored, snapshot, result.Plausibility, now))
+            {
+                HoldBack(result.Plausibility, now);
+                Notify(() => session.SetPollerHealthy(false));
+                return;
+            }
+
+            AcceptHeldBack(result.Plausibility, snapshot.ContentId, now);
+        }
+        else if (heldBack.Count > 0)
+        {
+            heldBack.Reset();
+        }
+
         var dirty = AcceptedSince.Reconcile(result.AcceptedSince, snapshot, now);
         memory.Commit(snapshot, result.States, pending.Bundle);
+        lastOffer = pending.Offer;
+        handoff = null;
         memory.SetAcceptedSince(result.AcceptedSince, dirty);
         // Quests abandoned earlier and taken up again, or completed, while the plugin was not watching leave the list.
         memory.SetAbandoned(result.Abandoned, AbandonedLedger.Reconcile(result.Abandoned, snapshot));
@@ -619,6 +690,64 @@ public sealed class StatePoller : IDisposable
         {
             log.Warning(ex, "Chat print failed");
         }
+    }
+
+    /// <summary>
+    /// A held-back loss read the same long enough (<see cref="HeldBackCaptures"/>) and is about to be committed: what
+    /// is pending is written first, the saved file is copied to the backup on the writer before the capture's own save,
+    /// and the acceptance is logged and printed in chat.
+    /// </summary>
+    private void AcceptHeldBack(PlausibilityResult result, ulong contentId, DateTime now)
+    {
+        var minutes = heldBack.SinceUtc is { } since ? (now - since).TotalMinutes : 0;
+        var captures = heldBack.Count;
+        heldBack.Reset();
+        log.Warning(
+            "Capture accepted after reading the same for {Minutes:F1} min over {Captures} captures: {Note}; the earlier save is copied to the backup first",
+            minutes,
+            captures,
+            result.LogNote ?? result.Verdict.ToString());
+
+        Flush(final: true);
+        PreserveBackup(contentId);
+        if (PrintNotice is { } print)
+        {
+            try
+            {
+                print(Ui.Strings.PlausibilityAcceptedNotice);
+            }
+            catch (Exception ex)
+            {
+                log.Warning(ex, "Chat print failed");
+            }
+        }
+    }
+
+    /// <summary>Queues a copy of the character's saved file to its backup, ahead of any later save on the writer.</summary>
+    private void PreserveBackup(ulong contentId)
+    {
+        if (!snapshots.CanWrite(contentId))
+        {
+            return;
+        }
+
+        writer.Enqueue(
+            () => snapshots.BackupNow(contentId),
+            (copied, error) =>
+            {
+                if (error is not null)
+                {
+                    log.Warning(error, "Backup before saving the accepted capture failed for {ContentId}", contentId);
+                }
+                else
+                {
+                    log.Information(
+                        copied
+                            ? "Backup of {ContentId} refreshed from the save before the accepted capture"
+                            : "Backup of {ContentId} not refreshed (no readable save, or the backup holds more progress); it is kept as it was",
+                        contentId);
+                }
+            });
     }
 
     /// <summary>Thrown by <see cref="Poll"/> for a capture <see cref="CapturePlausibility"/> rejects; never leaves the poller.</summary>
@@ -783,6 +912,10 @@ public sealed class StatePoller : IDisposable
         if (!disposed)
         {
             memory.OnCharacterForgotten(contentId);
+            if (handoff?.ContentId == contentId)
+            {
+                handoff = null;
+            }
         }
     }
 
@@ -797,6 +930,8 @@ public sealed class StatePoller : IDisposable
             DiscardFirstPass();
             memory.OnDataDeleted();
             readiness.Reset();
+            heldBack.Reset();
+            handoff = null;
         }
     }
 
@@ -811,6 +946,7 @@ public sealed class StatePoller : IDisposable
         CharacterSnapshot Snapshot,
         CatalogBundle Bundle,
         EvalContext Context,
+        DailyOffer Offer,
         Task<FirstPassResult> Task,
         long StartedTimestamp,
         double CaptureMs);
@@ -819,8 +955,12 @@ public sealed class StatePoller : IDisposable
     private sealed record FlushOutcome(Exception? Snapshot, Exception? Accepted, Exception? Abandoned);
 
     /// <param name="Snapshot">The capture with its completion dates (<see cref="CompletionDates.Begin"/>); what is committed.</param>
+    /// <param name="Stored">What the capture was judged against: the stored snapshot, or this session's last capture; null when none could be read.</param>
+    /// <param name="Plausibility">The plausibility guard's verdict on the capture against <paramref name="Stored"/>.</param>
     private sealed record FirstPassResult(
         CharacterSnapshot Snapshot,
+        CharacterSnapshot? Stored,
+        PlausibilityResult Plausibility,
         Dictionary<uint, QuestEvaluation> States,
         Dictionary<ushort, DateTime> AcceptedSince,
         Dictionary<ushort, AbandonedEntry> Abandoned,
