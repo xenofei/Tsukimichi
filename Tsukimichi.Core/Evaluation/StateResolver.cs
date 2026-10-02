@@ -266,10 +266,15 @@ public static class StateResolver
 
         // 7. Requirements on the current job, then on other jobs. A game gate Tsukimichi cannot read (game_gates.json)
         //    is never judged: it turns what would read Ready (on this job or another) into Not checked, and leaves a
-        //    quest Blocked by something else Blocked by that. A gear gate judged from the capture counts like any other.
+        //    quest Blocked by something else Blocked by that. A gear gate judged from the capture counts like any other,
+        //    except one whose weapon the character carries but has not equipped, which goes with a level or job gate:
+        //    equipping that weapon is switching to a job that wears it, so the quest is Ready on such a job when one
+        //    meets the level, and Blocked by the weapon to equip when none does.
         RequirementResult? firstUnmet = null;
         RequirementResult? gameGate = null;
+        RequirementResult? carried = null;
         var onlyJobGates = true;
+        var jobGateUnmet = false;
         foreach (var r in requirements)
         {
             if (r.Met)
@@ -284,7 +289,15 @@ public static class StateResolver
             }
 
             firstUnmet ??= r;
-            if (r.Req.Kind is not (RequirementKind.ClassJob or RequirementKind.Level))
+            if (IsCarriedGate(r))
+            {
+                carried ??= r;
+            }
+            else if (r.Req.Kind is RequirementKind.ClassJob or RequirementKind.Level)
+            {
+                jobGateUnmet = true;
+            }
+            else
             {
                 onlyJobGates = false;
             }
@@ -297,14 +310,55 @@ public static class StateResolver
                 : new(QuestState.Unknown, requirements, gameGate, null, null);
         }
 
-        if (onlyJobGates && FindReadyJob(q, s, ctx) is { } job)
+        if (onlyJobGates && jobGateUnmet)
         {
-            return gameGate is null
-                ? new(QuestState.ReadyOnOtherJob, requirements, null, job, null)
-                : new(QuestState.Unknown, requirements, gameGate, null, null);
+            if (FindReadyJob(q, s, ctx, carried is null ? null : WearsCarried(q, s, c, ctx)) is { } job)
+            {
+                return gameGate is null
+                    ? new(QuestState.ReadyOnOtherJob, requirements, null, job, null)
+                    : new(QuestState.Unknown, requirements, gameGate, null, null);
+            }
+
+            if (carried is not null)
+            {
+                return new(QuestState.Blocked, requirements, carried, null, null);
+            }
         }
 
         return new(QuestState.Blocked, requirements, firstUnmet, null, null);
+    }
+
+    /// <summary>
+    /// An unmet gear gate whose weapons must be equipped and that the character carries (in the Armoury Chest or the
+    /// inventory): <see cref="GameGateRequirement.Matching"/> names them.
+    /// </summary>
+    internal static bool IsCarriedGate(RequirementResult r)
+    {
+        ArgumentNullException.ThrowIfNull(r);
+        return !r.Met && r.Req is GameGateRequirement { Checked: GateHold.Equipped, Matching.Length: > 0 };
+    }
+
+    /// <summary>
+    /// Whether a job can wear one of the weapon groups of <paramref name="q"/>'s gear gate that the character carries:
+    /// every item of the group equippable by the job (<see cref="EvalContext.ItemJobCategory"/> through
+    /// <see cref="EvalContext.ClassJobs"/>). A weapon of unknown category, or no category lookup, admits no job.
+    /// </summary>
+    private static Func<byte, bool> WearsCarried(QuestRecord q, CharacterSnapshot s, QuestCatalog c, EvalContext ctx)
+    {
+        var carried = new List<uint[]>();
+        if (c.GameGateOf(q.RowId)?.Items is { } items && s.GateItems is { } capture)
+        {
+            foreach (var group in items.Groups)
+            {
+                if (group.Length > 0 && Array.TrueForAll(group, capture.Held.Contains))
+                {
+                    carried.Add(group);
+                }
+            }
+        }
+
+        return job => ctx.ClassJobs is { } lookup
+            && carried.Exists(group => Array.TrueForAll(group, id => ctx.ItemJobCategory(id) is var category and not 0 && lookup.Admits(category, job)));
     }
 
     /// <summary>
@@ -312,9 +366,10 @@ public static class StateResolver
     /// ready on: of those, one of the current job's class line (Lancer and Dragoon), then of its role, then the
     /// highest level, then a job over its own base class (Paladin before Gladiator, which share a level), then the
     /// lowest job id. Only reached when every other requirement is already met on the current job, and those do not
-    /// depend on the job, so admission plus level is the whole check.
+    /// depend on the job, so admission plus level is the whole check; with <paramref name="wears"/> (a gear gate whose
+    /// weapon is carried, not equipped) only a job that can wear that weapon counts.
     /// </summary>
-    private static byte? FindReadyJob(QuestRecord q, CharacterSnapshot s, EvalContext ctx)
+    private static byte? FindReadyJob(QuestRecord q, CharacterSnapshot s, EvalContext ctx, Func<byte, bool>? wears = null)
     {
         byte? best = null;
         foreach (var job in CandidateJobs(q, s, ctx))
@@ -322,6 +377,7 @@ public static class StateResolver
             if (job != s.CurrentJob
                 && RequirementEvaluator.AdmitsJob(q, s, ctx, job)
                 && RequirementEvaluator.LevelOf(s, job) >= q.Level
+                && (wears is null || wears(job))
                 && (best is not { } current || CompareJobs(job, current, s, ctx, levelFirst: false) < 0))
             {
                 best = job;

@@ -26,26 +26,27 @@ public static class GameGateCheck
         }
 
         var equipped = capture.Equipped.ToArray();
+        var first = items.Groups.Length > 0 ? items.Groups[0] : [];
         var pool = items.Hold == GateHold.Equipped ? capture.Equipped : capture.Held;
         if (items.GroupIn(pool) is { } met)
         {
             var where = items.Hold == GateHold.Equipped ? "equipped" : "in your possession";
             return new(
-                new GameGateRequirement(gate.Gate) { Checked = items.Hold, Equipped = equipped, Matching = met },
+                new GameGateRequirement(gate.Gate) { Checked = items.Hold, FirstGroup = first, Equipped = equipped, Matching = met },
                 true,
                 $"{Names(met, itemName)} {where}");
         }
 
         if (items.Hold == GateHold.Held)
         {
-            return new(new GameGateRequirement(gate.Gate) { Checked = items.Hold, Equipped = equipped }, false, $"needs {gate.Gate}, you have none");
+            return new(new GameGateRequirement(gate.Gate) { Checked = items.Hold, FirstGroup = first, Equipped = equipped }, false, $"needs {gate.Gate}, you have none");
         }
 
         // Worn elsewhere or carried: the weapon is there, it only needs equipping.
         if (items.GroupIn(capture.Held) is { } carried)
         {
             return new(
-                new GameGateRequirement(gate.Gate) { Checked = items.Hold, Equipped = equipped, Matching = carried },
+                new GameGateRequirement(gate.Gate) { Checked = items.Hold, FirstGroup = first, Equipped = equipped, Matching = carried },
                 false,
                 $"needs {gate.Gate}, equip {Names(carried, itemName)}");
         }
@@ -53,7 +54,7 @@ public static class GameGateCheck
         var detail = equipped.Length > 0
             ? $"needs {gate.Gate}, you have {Names(equipped, itemName)} equipped"
             : $"needs {gate.Gate}, none equipped";
-        return new(new GameGateRequirement(gate.Gate) { Checked = items.Hold, Equipped = equipped }, false, detail);
+        return new(new GameGateRequirement(gate.Gate) { Checked = items.Hold, FirstGroup = first, Equipped = equipped }, false, detail);
     }
 
     /// <summary>"Curtana Nexus and Holy Shield Nexus"; an item without a name reads "item 8649".</summary>

@@ -118,6 +118,15 @@ public sealed record EvalContext
     public Func<uint, string> ItemName { get; init; } = static _ => string.Empty;
 
     /// <summary>
+    /// The ClassJobCategory that may equip a gate-listed weapon (<c>Item.ClassJobCategory</c>, read at catalog build
+    /// for <see cref="QuestCatalog.GateItemWatch"/>), checked through <see cref="ClassJobs"/>: a quest whose gear gate
+    /// wants a weapon the character carries but has not equipped, and that only a level or job keeps from Ready, reads
+    /// Ready on another job on a job that can wear that weapon. 0 for a weapon it does not know, which no job is taken
+    /// to equip.
+    /// </summary>
+    public Func<uint, uint> ItemJobCategory { get; init; } = static _ => 0;
+
+    /// <summary>
     /// This context with today's allied society offer: <see cref="TodaysDailyOffer"/> and <see cref="DailyOfferTribes"/>
     /// from <paramref name="offer"/>, both null (unknown, nothing held back) when it knows no society.
     /// </summary>

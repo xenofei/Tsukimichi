@@ -112,7 +112,7 @@ public class IpcViewListsTests
             ["none", "level", "quest", "job", "jobCategory", "grandCompany", "grandCompanyRank", "alliedSocietyRank",
              "alliedSocietyReputation", "alliedSocietyAllowance", "notOfferedToday", "duty", "seasonal", "expansion",
              "levelCap", "otherPath", "lockedOut", "removed", "achievement", "mount", "house", "customDeliveryRank",
-             "carrierLevel", "unchecked", "other"],
+             "carrierLevel", "unchecked", "gameGate", "other"],
             IpcBlockerKinds.All);
     }
 
@@ -129,6 +129,7 @@ public class IpcViewListsTests
             new TribeAllowanceRequirement(0), new TribeDailyOfferRequirement(64, false), new DutyCompletionRequirement([20001, 20002], JoinKind.All, 1),
             new SeasonalRequirement(5, false), new AcceptConditionRequirement([7]), new MountRequirement(null), new HouseRequirement(false),
             new AchievementRequirement(9, false), new CustomDeliveryRankRequirement(2, 3, null), new CarrierLevelRequirement(4, 1),
+            new GameGateRequirement("a relic weapon zenith equipped"), new GameGateRequirement("a relic weapon zenith equipped") { Checked = GateHold.Equipped, FirstGroup = [6257] },
         ];
 
         foreach (var requirement in requirements)

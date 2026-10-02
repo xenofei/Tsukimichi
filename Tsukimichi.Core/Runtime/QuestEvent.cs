@@ -23,14 +23,23 @@ public enum QuestEventKind
 }
 
 /// <summary>One session-scoped notice about a quest, identified by its catalog row id.</summary>
-public sealed record QuestEvent(QuestEventKind Kind, uint RowId, DateTime TimeUtc);
+public sealed record QuestEvent(QuestEventKind Kind, uint RowId, DateTime TimeUtc)
+{
+    /// <summary>
+    /// A <see cref="QuestEventKind.NewlyAvailable"/> whose quest was held back before only by gear gates judged from the
+    /// character's gear (a relic weapon not equipped): what opened it is a weapon swap, which
+    /// <see cref="RecentEventsTracker"/> announces once per character session.
+    /// </summary>
+    public bool GearOnly { get; init; }
+}
 
 /// <summary>Derives <see cref="QuestEvent"/>s from a diff and the before/after evaluations. Pure.</summary>
 public static class QuestEvents
 {
     /// <summary>
     /// Completed, Accepted and Abandoned come from <paramref name="diff"/> for quests the catalog knows; NewlyAvailable
-    /// comes from evaluations whose state moved into Ready or ReadyOnOtherJob. A seasonal quest that left the journal
+    /// comes from evaluations whose state moved into Ready or ReadyOnOtherJob, marked <see cref="QuestEvent.GearOnly"/>
+    /// when only a judged gear gate held the quest back before. A seasonal quest that left the journal
     /// while its event is not running (<see cref="LeftWithItsFestival"/>) was removed by the game at the event's end,
     /// so it yields no Abandoned event: no ledger entry, no chat line. Rows that kept the same
     /// <see cref="QuestEvaluation"/> instance are skipped without comparison, so an incremental resolve stays cheap.
@@ -109,7 +118,7 @@ public static class QuestEvents
         newlyAvailable.Sort();
         foreach (var rowId in newlyAvailable)
         {
-            events.Add(new QuestEvent(QuestEventKind.NewlyAvailable, rowId, timeUtc));
+            events.Add(new QuestEvent(QuestEventKind.NewlyAvailable, rowId, timeUtc) { GearOnly = HeldBackOnlyByGear(oldStates[rowId]) });
         }
 
         return events;
@@ -139,6 +148,32 @@ public static class QuestEvents
         }
 
         return !@new.ActiveFestivals.Contains(quest.Festival);
+    }
+
+    /// <summary>
+    /// Whether every requirement <paramref name="evaluation"/> left unmet is a gear gate judged from the character's gear
+    /// (<see cref="GameGateRequirement.Checked"/> set), and it left one: only a weapon swap stood between it and Ready.
+    /// </summary>
+    public static bool HeldBackOnlyByGear(QuestEvaluation evaluation)
+    {
+        ArgumentNullException.ThrowIfNull(evaluation);
+        var any = false;
+        foreach (var result in evaluation.Requirements)
+        {
+            if (result.Met)
+            {
+                continue;
+            }
+
+            if (result.Req is not GameGateRequirement { Checked: not null })
+            {
+                return false;
+            }
+
+            any = true;
+        }
+
+        return any;
     }
 
     private static bool IsAvailable(QuestState state) => state is QuestState.Ready or QuestState.ReadyOnOtherJob;

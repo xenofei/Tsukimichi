@@ -122,6 +122,7 @@ public static class CatalogMapper
             AchievementLadders = ladders,
             ExpTable = ReadOptional(() => ReadExpTable(excel), Core.Rewards.QuestExpTable.Empty, "quest EXP table", log),
             GateItemNames = GateItemNames(catalog, context.Items),
+            GateItemJobCategories = GateItemJobCategories(catalog, context.Items),
         };
     }
 
@@ -138,6 +139,24 @@ public static class CatalogMapper
         }
 
         return names;
+    }
+
+    /// <summary>
+    /// The ClassJobCategory that may equip each weapon the catalog's gear gates list (<see cref="QuestCatalog.GateItemWatch"/>);
+    /// a weapon the sheet lacks, or one of category 0, is left out.
+    /// </summary>
+    private static Dictionary<uint, uint> GateItemJobCategories(QuestCatalog catalog, ExcelSheet<Item> items)
+    {
+        var categories = new Dictionary<uint, uint>(catalog.GateItemWatch.Length);
+        foreach (var id in catalog.GateItemWatch)
+        {
+            if (items.GetRowOrDefault(id) is { } item && item.ClassJobCategory.RowId is var category and not 0)
+            {
+                categories[id] = category;
+            }
+        }
+
+        return categories;
     }
 
     /// <summary>Runs one optional sheet read; a failure is logged and gives <paramref name="fallback"/>.</summary>
