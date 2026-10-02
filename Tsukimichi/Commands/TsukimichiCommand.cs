@@ -16,7 +16,8 @@ namespace Tsukimichi.Commands;
 /// quest; <c>route [quest name]</c> opens its unlock route; <c>nearby</c> toggles the Nearby quests window; <c>todo</c>
 /// toggles the todo overlay; <c>report [quest name]</c> copies a quest's diagnostic block; <c>export [quests|moonlit]
 /// [json|csv]</c> writes the export files; <c>settings</c> (or <c>config</c>) and <c>help</c> open those windows;
-/// <c>glyphs</c> opens the glyph sheet (not listed to players); a bare command toggles the main window.
+/// <c>glyphs</c> opens the glyph sheet and <c>ipc</c> the IPC developer window (neither listed to players); a bare
+/// command toggles the main window.
 /// </summary>
 public sealed class TsukimichiCommand : IDisposable
 {
@@ -33,6 +34,9 @@ public sealed class TsukimichiCommand : IDisposable
     // Kept so a language switch can update the help text Dalamud lists (/xlhelp, the installer).
     private readonly CommandInfo mainInfo;
     private readonly CommandInfo aliasInfo;
+
+    /// <summary>Invoked for <c>/tsukimichi ipc</c> (not listed to players): the IPC developer window; set once it exists.</summary>
+    public Action? ToggleIpcWindow { get; set; }
 
     /// <summary>Invoked for <c>/tsukimichi config</c>; set once the config window exists.</summary>
     public Action? ToggleConfigWindow { get; set; }
@@ -145,6 +149,10 @@ public sealed class TsukimichiCommand : IDisposable
 
             case Subcommand.Glyphs:
                 toggleGlyphWindow();
+                break;
+
+            case Subcommand.Ipc:
+                Run(ToggleIpcWindow);
                 break;
 
             case Subcommand.Search:

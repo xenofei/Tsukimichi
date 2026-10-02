@@ -1626,7 +1626,10 @@ public sealed partial class CharactersPane
         }
     }
 
-    /// <summary>One side of the diff: header with count and Copy list, the capped table, then "and N more".</summary>
+    // Copy for Discord per diff side (1.8.0), keyed by the list's id.
+    private readonly Dictionary<string, DiscordCopy> diffDiscord = [];
+
+    /// <summary>One side of the diff: header with count, Copy list and Copy for Discord, the capped table, then "and N more".</summary>
     private void DrawDiffList(UiState ui, string id, DiffList list, FixedWidth valueWidth)
     {
         using var listId = ImRaii.PushId(id);
@@ -1648,6 +1651,16 @@ public sealed partial class CharactersPane
         {
             UiMetrics.Tooltip(Strings.DiffCopyListTooltip);
         }
+
+        // Copy for Discord (1.8.0): the header in bold, one bullet per line, in parts of 2,000 characters.
+        Chrome.SameLineOrWrap(ImGui.CalcTextSize(Strings.LinksCopyDiscord).X + (ImGui.GetStyle().FramePadding.X * 2f));
+        if (!diffDiscord.TryGetValue(id, out var discord))
+        {
+            discord = new DiscordCopy();
+            diffDiscord[id] = discord;
+        }
+
+        discord.Draw(id, list, _ => Core.Text.DiscordText.List(list.Header, list.Clipboard.Split('\n')), small: true);
 
         DrawDiffTable(ui, list.Rows, valueWidth);
         if (list.More.Length > 0)

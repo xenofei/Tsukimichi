@@ -12,6 +12,9 @@ public enum Subcommand
     /// <summary><c>glyphs</c>: the glyph sheet. Works, but is not listed to players.</summary>
     Glyphs,
 
+    /// <summary><c>ipc</c>: the IPC developer window (1.8.0). Works, but is not listed to players.</summary>
+    Ipc,
+
     /// <summary><c>settings</c> or <c>config</c>.</summary>
     Settings,
     Help,
@@ -68,6 +71,7 @@ public static class CommandLine
     [
         ("search", Subcommand.Search, true),
         ("glyphs", Subcommand.Glyphs, false),
+        ("ipc", Subcommand.Ipc, false),
         ("settings", Subcommand.Settings, true),
         ("config", Subcommand.Settings, true),
         ("help", Subcommand.Help, true),
@@ -87,7 +91,7 @@ public static class CommandLine
         ("blues", Subcommand.Blues, true),
     ];
 
-    /// <summary>The subcommand words players are shown (and offered by <see cref="DidYouMean"/>), in help order; <c>glyphs</c> is not one.</summary>
+    /// <summary>The subcommand words players are shown (and offered by <see cref="DidYouMean"/>), in help order; <c>glyphs</c> and <c>ipc</c> are not.</summary>
     public static IEnumerable<string> ListedWords => Words.Where(static w => w.Listed).Select(static w => w.Word);
 
     /// <summary>Splits <paramref name="arguments"/> at its first space and names the subcommand.</summary>

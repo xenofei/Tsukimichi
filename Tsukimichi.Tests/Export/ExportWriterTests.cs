@@ -107,7 +107,7 @@ public sealed class ExportWriterTests(FixtureCatalog fixture) : IClassFixture<Fi
 
         // CSV: byte order mark, one header row, one row per quest.
         var csv = ExportWriter.QuestsCsv(rows);
-        Assert.StartsWith("﻿rowId,questId,name,section,category,genre,expansion,completed,completedAt,completedAfter\r\n", csv, StringComparison.Ordinal);
+        Assert.StartsWith("﻿rowId,questId,name,section,category,genre,expansion,completed,completedAt,completedAfter,state,displayLevel,patch,isMsq,repeatable,lodestoneId\r\n", csv, StringComparison.Ordinal);
         Assert.Equal(expected + 1, csv.Split("\r\n", StringSplitOptions.RemoveEmptyEntries).Length);
     }
 
@@ -142,9 +142,9 @@ public sealed class ExportWriterTests(FixtureCatalog fixture) : IClassFixture<Fi
         Assert.False(string.IsNullOrEmpty(unknown.GetProperty("kind").GetString()));
 
         var csv = ExportWriter.MoonlitCsv(rows);
-        Assert.StartsWith("﻿kind,rewardId,rewardName,questRowId,obtained,availability\r\n", csv, StringComparison.Ordinal);
-        Assert.Contains("," + ExportWriter.Unknown + ",\r\n", csv, StringComparison.Ordinal);
-        Assert.Contains(",true,\r\n", csv, StringComparison.Ordinal);
+        Assert.StartsWith("﻿kind,rewardId,rewardName,questRowId,obtained,availability,itemId,collectId\r\n", csv, StringComparison.Ordinal);
+        Assert.Contains("," + ExportWriter.Unknown + ",,", csv, StringComparison.Ordinal);
+        Assert.Contains(",true,,", csv, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -166,8 +166,8 @@ public sealed class ExportWriterTests(FixtureCatalog fixture) : IClassFixture<Fi
         Assert.Contains("goneForGood", names);
 
         var csv = ExportWriter.MoonlitCsv(rows);
-        Assert.Contains(",getNow\r\n", csv, StringComparison.Ordinal);
-        Assert.Contains(",goneForGood\r\n", csv, StringComparison.Ordinal);
+        Assert.Contains(",getNow,", csv, StringComparison.Ordinal);
+        Assert.Contains(",goneForGood,", csv, StringComparison.Ordinal);
 
         // Unclassified rows leave the JSON field out (an additive field) and the CSV cell empty.
         using var plain = JsonDocument.Parse(ExportWriter.MoonlitJson(header, ExportWriter.MoonlitRows(view)));
@@ -295,9 +295,10 @@ public sealed class ExportWriterTests(FixtureCatalog fixture) : IClassFixture<Fi
         Assert.False(quests[2].TryGetProperty("completedAt", out _));
 
         var lines = ExportWriter.QuestsCsv(rows).Split("\r\n");
-        Assert.EndsWith(",true,2026-09-20T21:14:05Z,", lines[1], StringComparison.Ordinal);
-        Assert.EndsWith(",true,2026-09-21T21:14:05Z,2026-09-20T21:14:05Z", lines[2], StringComparison.Ordinal);
-        Assert.EndsWith(",true,,", lines[3], StringComparison.Ordinal);
+        // completedAt and completedAfter, then the 1.8.0 columns (no state without evaluations).
+        Assert.Contains(",true,2026-09-20T21:14:05Z,,,", lines[1], StringComparison.Ordinal);
+        Assert.Contains(",true,2026-09-21T21:14:05Z,2026-09-20T21:14:05Z,,", lines[2], StringComparison.Ordinal);
+        Assert.Contains(",true,,,,", lines[3], StringComparison.Ordinal);
 
         // A file from before 1.5 has no start date: the header field is left out.
         using var old = JsonDocument.Parse(ExportWriter.QuestsJson(ExportWriter.Header("v", "g", Exported, snapshot, false), rows));

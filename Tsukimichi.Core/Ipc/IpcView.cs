@@ -18,7 +18,7 @@ namespace Tsukimichi.Core.Ipc;
 /// reads as <c>false</c>, <c>""</c>, an empty array or 0; nothing here throws for any <see cref="uint"/>.
 /// </para>
 /// </summary>
-public sealed class IpcView
+public sealed partial class IpcView
 {
     /// <summary>The first Quest sheet row id; smaller ids are runtime quest ids (the row id's low 16 bits).</summary>
     public const uint FirstRowId = 0x10000;
@@ -35,12 +35,14 @@ public sealed class IpcView
     /// <param name="catalog">The built catalog; null while it loads or after a failure.</param>
     /// <param name="states">The logged-in character's evaluations by row id; null or empty while nobody is logged in or the first evaluation runs.</param>
     /// <param name="names">Name lookups; its <see cref="BlockerNames.Catalog"/> is replaced by <paramref name="catalog"/> when they differ.</param>
-    public IpcView(QuestCatalog? catalog, IReadOnlyDictionary<uint, QuestEvaluation>? states, BlockerNames names)
+    /// <param name="extras">What the 1.8.0 gates read besides the states (rewards, duty unlocks, ladders, abandoned quests); <see cref="IpcExtras.None"/> when null.</param>
+    public IpcView(QuestCatalog? catalog, IReadOnlyDictionary<uint, QuestEvaluation>? states, BlockerNames names, IpcExtras? extras = null)
     {
         ArgumentNullException.ThrowIfNull(names);
         Catalog = catalog;
         States = catalog is null ? NoStates : states ?? NoStates;
         Names = catalog is not null && !ReferenceEquals(names.Catalog, catalog) ? names with { Catalog = catalog } : names;
+        Extras = extras ?? IpcExtras.None;
         msq = new Lazy<MsqPosition?>(ComputeMsq, LazyThreadSafetyMode.ExecutionAndPublication);
     }
 

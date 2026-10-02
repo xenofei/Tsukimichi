@@ -265,6 +265,82 @@ public sealed class QueryRunner : IDisposable
     /// <summary>Raised on the draw thread when <see cref="TogglePin"/> pins a quest (not on unpin), with its row id.</summary>
     public event Action<uint>? QuestPinned;
 
+    /// <summary>The session the rows were computed from; null before the plugin's game state exists (Copy table as TSV reads it).</summary>
+    public SessionState? Session => plugin.Session;
+
+    /// <summary>
+    /// IPC (1.8.0, <c>Tsukimichi.GetPins</c>): one character's pins in the order they were pinned, a fresh array; empty
+    /// for 0 or a character without pins. Framework thread only.
+    /// </summary>
+    public uint[] PinsOf(ulong contentId)
+    {
+        if (plugin.Session is not { } session || contentId == 0)
+        {
+            return [];
+        }
+
+        EnsurePins(session);
+        return pinsFile!.TryGetValue(contentId, out var list) && list is { Count: > 0 } ? list.ToArray() : [];
+    }
+
+    /// <summary>
+    /// IPC (1.8.0, <c>Tsukimichi.PinQuest</c>): pins or unpins a quest for one character (the logged-in one), whether
+    /// or not it is the one on view; saved like a pin made here, but without the first-pin prompt. True when the quest
+    /// ends up as asked (already so included); false for 0. Framework thread only.
+    /// </summary>
+    public bool SetPin(ulong contentId, uint rowId, bool pin)
+    {
+        if (plugin.Session is not { } session || contentId == 0 || rowId == 0)
+        {
+            return false;
+        }
+
+        EnsurePins(session);
+        if (!pinsFile!.TryGetValue(contentId, out var list))
+        {
+            if (!pin)
+            {
+                return true;
+            }
+
+            list = [];
+            pinsFile[contentId] = list;
+        }
+
+        if (list.Contains(rowId) == pin)
+        {
+            return true;
+        }
+
+        if (pin)
+        {
+            list.Add(rowId);
+        }
+        else
+        {
+            list.Remove(rowId);
+        }
+
+        pinChanges.Add(new PinChange(contentId, rowId, pin ? PinChangeKind.Pin : PinChangeKind.Unpin));
+        if (contentId == pinsKey)
+        {
+            if (pin)
+            {
+                pinned.Add(rowId);
+            }
+            else
+            {
+                pinned.Remove(rowId);
+            }
+
+            ui.MarkQueryDirty();
+        }
+
+        PinsVersion++;
+        MarkPinsDirty();
+        return true;
+    }
+
     /// <summary>Applies the pending search text immediately instead of waiting out the debounce (used by the chat command).</summary>
     public void FlushSearch()
     {

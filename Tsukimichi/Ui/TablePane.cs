@@ -1376,6 +1376,18 @@ public sealed class TablePane : IDisposable
             links.PrintQuestLink(quest);
         }
 
+        // "Open on…" and Copy table as TSV (1.8.0).
+        links.DrawOpenOnMenu(quest, runner.Spoilers.IsMasked(quest), runner.Spoilers.DisplayName(quest));
+        if (ImGui.MenuItem(Strings.LinksCopyTableTsv))
+        {
+            ImGui.SetClipboardText(TableCopy.Quests(runner, links));
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.LinksCopyTableTsvTooltip);
+        }
+
         // Teleport, Walk and Go to giver; disabled, with the reason on hover (naming Lifestream or vnavmesh when missing).
         TravelControls.MenuItems(links, quest, Strings.TeleportToGiver);
 

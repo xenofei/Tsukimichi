@@ -34,6 +34,9 @@ public sealed class ExportService(
     /// <summary>The last file written this session, for the Settings line; null before the first.</summary>
     public string? LastPath { get; private set; }
 
+    /// <summary>The shipped link table, for the quests' <c>lodestoneId</c> and the rewards' <c>collectId</c> (1.8.0); empty leaves them out.</summary>
+    public Core.Links.ExternalIds Ids { get; set; } = Core.Links.ExternalIds.Empty;
+
     /// <summary>
     /// The folder exports go to: the configured one, or <see cref="PluginPaths.ExportsDir"/> when none is set. A
     /// relative folder (including a drive- or directory-relative one such as <c>\exports</c> or <c>D:exports</c>) is
@@ -59,7 +62,8 @@ public sealed class ExportService(
         string content;
         if (kind == ExportKind.Quests)
         {
-            var rows = ExportWriter.QuestRows(bundle.Catalog, snapshot, id => bundle.Names.Expansion(id), settings.ExportIncludeIncomplete);
+            // state is the viewed character's, as every other field (1.8.0).
+            var rows = ExportWriter.QuestRows(bundle.Catalog, snapshot, id => bundle.Names.Expansion(id), settings.ExportIncludeIncomplete, session.States, Ids);
             content = format == ExportFormat.Json ? ExportWriter.QuestsJson(header, rows) : ExportWriter.QuestsCsv(rows);
         }
         else
@@ -69,7 +73,8 @@ public sealed class ExportService(
             var states = session.States;
             var rows = ExportWriter.MoonlitRows(
                 rewards().View(null, unlocks.IsObtained),
-                e => RewardAvailabilities.Classify(e, bundle.Catalog.GetByRowId(e.QuestRowId), states.GetValueOrDefault(e.QuestRowId), availability).Kind);
+                e => RewardAvailabilities.Classify(e, bundle.Catalog.GetByRowId(e.QuestRowId), states.GetValueOrDefault(e.QuestRowId), availability).Kind,
+                Ids);
             content = format == ExportFormat.Json ? ExportWriter.MoonlitJson(header, rows) : ExportWriter.MoonlitCsv(rows);
         }
 

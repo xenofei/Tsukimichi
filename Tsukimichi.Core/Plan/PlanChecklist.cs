@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using Tsukimichi.Core.Localization;
+using Tsukimichi.Core.Text;
 
 namespace Tsukimichi.Core.Plan;
 
@@ -25,7 +26,18 @@ public static class PlanChecklist
 
     /// <param name="plan">The plan as shown (already filtered).</param>
     /// <param name="zoneName">The zone's name for the line ("Western Thanalan"); empty prints the level alone.</param>
-    public static string Write(UnlockPlan plan, Func<PlanZone, string> zoneName)
+    public static string Write(UnlockPlan plan, Func<PlanZone, string> zoneName) => Write(plan, zoneName, discord: false, link: null);
+
+    /// <summary>
+    /// Copy for Discord (1.8.0): the same checklist with plain bullets (<c>- </c>) in place of the task boxes Discord
+    /// prints literally, and, with <paramref name="link"/>, each quest name a masked link (<see cref="DiscordText.Link"/>).
+    /// Split the result with <see cref="DiscordText.Parts"/>; each part repeats its expansion heading.
+    /// </summary>
+    /// <param name="link">The quest's page, or null to print the name alone (the plugin returns null for a quest the spoiler shield masks).</param>
+    public static string WriteDiscord(UnlockPlan plan, Func<PlanZone, string> zoneName, Func<PlanEntry, string?>? link = null) =>
+        Write(plan, zoneName, discord: true, link);
+
+    private static string Write(UnlockPlan plan, Func<PlanZone, string> zoneName, bool discord, Func<PlanEntry, string?>? link)
     {
         ArgumentNullException.ThrowIfNull(plan);
         ArgumentNullException.ThrowIfNull(zoneName);
@@ -41,7 +53,7 @@ public static class PlanChecklist
                 var zoneText = zoneName(zone) ?? string.Empty;
                 foreach (var entry in zone.Entries)
                 {
-                    AppendLine(sb, entry, zoneText);
+                    AppendLine(sb, entry, zoneText, discord, discord ? link?.Invoke(entry) : null);
                 }
             }
         }
@@ -54,7 +66,7 @@ public static class PlanChecklist
     public static string Line(PlanEntry entry, string zone)
     {
         var sb = new StringBuilder();
-        AppendLine(sb, entry, zone ?? string.Empty);
+        AppendLine(sb, entry, zone ?? string.Empty, discord: false, link: null);
         return sb.ToString(0, sb.Length - 1);
     }
 
@@ -129,9 +141,9 @@ public static class PlanChecklist
             : string.Empty;
     }
 
-    private static void AppendLine(StringBuilder sb, PlanEntry entry, string zone)
+    private static void AppendLine(StringBuilder sb, PlanEntry entry, string zone, bool discord, string? link)
     {
-        sb.Append("- [ ] ").Append(Escape(entry.Name)).Append(" (")
+        sb.Append(discord ? DiscordText.Bullet : "- [ ] ").Append(discord ? DiscordText.Link(entry.Name, link) : Escape(entry.Name)).Append(" (")
             .Append(string.Format(CultureInfo.CurrentCulture, CoreText.T("Core.Plan.Level", "Lv {0}"), entry.Quest.DisplayLevel));
         if (zone.Length > 0)
         {

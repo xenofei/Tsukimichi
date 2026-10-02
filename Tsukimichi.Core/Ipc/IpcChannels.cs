@@ -45,4 +45,103 @@ public static class IpcChannels
 
     /// <summary>Message with no arguments, sent on the framework thread after a poll changed the logged-in character's states.</summary>
     public const string StatesChangedGate = "Tsukimichi.StatesChanged";
+
+    // ---- Since 1.8.0 (additive: ApiVersion stays 1) ----
+
+    /// <summary><c>() -> string[]</c>: every gate and message name this build registers (feature detection). Since 1.8.0.</summary>
+    public const string GetGatesGate = "Tsukimichi.GetGates";
+
+    /// <summary>Message with no arguments, sent once as Tsukimichi unloads, before its gates are unregistered. Since 1.8.0.</summary>
+    public const string DisposingGate = "Tsukimichi.Disposing";
+
+    /// <summary><c>(uint[] questIds) -> string[]</c>: <see cref="GetStateGate"/> for each id, in order. Since 1.8.0.</summary>
+    public const string GetStatesGate = "Tsukimichi.GetStates";
+
+    /// <summary><c>(string state) -> uint[]</c>: the row ids of every quest in that state, in journal order. Since 1.8.0.</summary>
+    public const string GetQuestsInStateGate = "Tsukimichi.GetQuestsInState";
+
+    /// <summary><c>(uint territoryId, bool readyOnly) -> uint[]</c>: quests whose giver stands in the zone. Since 1.8.0.</summary>
+    public const string GetQuestsInZoneGate = "Tsukimichi.GetQuestsInZone";
+
+    /// <summary><c>(uint questId) -> (string kind, uint refId, int need, int have)</c>: the first blocker, in <see cref="IpcBlockerKinds"/>' words. Since 1.8.0.</summary>
+    public const string GetFirstBlockerGate = "Tsukimichi.GetFirstBlocker";
+
+    /// <summary><c>(uint targetRowId) -> uint[]</c>: the unlock route's steps to the quest, in order. Since 1.8.0.</summary>
+    public const string GetRouteGate = "Tsukimichi.GetRoute";
+
+    /// <summary><c>(uint itemId) -> uint[]</c>: quests that reward the item. Since 1.8.0.</summary>
+    public const string GetQuestsForItemGate = "Tsukimichi.GetQuestsForItem";
+
+    /// <summary><c>(uint itemId) -> (bool unique, bool owned, string confidence)</c>: the item's Moonlit standing. Since 1.8.0.</summary>
+    public const string GetMoonlitStatusGate = "Tsukimichi.GetMoonlitStatus";
+
+    /// <summary><c>(uint contentFinderConditionId) -> uint[]</c>: quests that unlock the duty. Since 1.8.0.</summary>
+    public const string GetUnlockQuestsGate = "Tsukimichi.GetUnlockQuests";
+
+    /// <summary><c>() -> uint[]</c>: the logged-in character's pinned quests, in the order they were pinned. Since 1.8.0.</summary>
+    public const string GetPinsGate = "Tsukimichi.GetPins";
+
+    /// <summary><c>(uint questId, bool pinned) -> bool</c>: pins or unpins a quest in Tsukimichi's own list. Since 1.8.0.</summary>
+    public const string PinQuestGate = "Tsukimichi.PinQuest";
+
+    /// <summary><c>() -> (uint rowId, byte step, long abandonedUnixSeconds)[]</c>: quests abandoned mid-way, newest first. Since 1.8.0.</summary>
+    public const string GetAbandonedGate = "Tsukimichi.GetAbandoned";
+
+    /// <summary><c>(uint classJobId) -> uint</c>: the next quest of a class's or job's quest line; 0 when done or unknown. Since 1.8.0.</summary>
+    public const string GetNextJobQuestGate = "Tsukimichi.GetNextJobQuest";
+
+    /// <summary>Message <c>(uint rowId, string from, string to)</c>, one per quest whose state a live poll changed. Since 1.8.0.</summary>
+    public const string QuestStateChangedGate = "Tsukimichi.QuestStateChanged";
+
+    /// <summary>
+    /// Every gate and message with its signature and the release that added it, in the order docs/ipc.md lists them:
+    /// what <see cref="GetGatesGate"/> answers (the names) and the <c>/tsuki ipc</c> window lists.
+    /// </summary>
+    public static IReadOnlyList<IpcGateInfo> All { get; } =
+    [
+        new(ApiVersionGate, "() -> int", "0.9.0"),
+        new(IsReadyGate, "() -> bool", "0.9.0"),
+        new(GetGatesGate, "() -> string[]", "1.8.0"),
+        new(IsQuestAvailableGate, "(uint questId) -> bool", "0.9.0"),
+        new(GetStateGate, "(uint questId) -> string", "0.9.0"),
+        new(GetStatesGate, "(uint[] questIds) -> string[]", "1.8.0"),
+        new(GetStateNameGate, "(uint questId) -> string", "0.9.0"),
+        new(GetBlockersGate, "(uint questId) -> string[]", "0.9.0"),
+        new(GetFirstBlockerGate, "(uint questId) -> (string kind, uint refId, int need, int have)", "1.8.0"),
+        new(GetQuestsInStateGate, "(string state) -> uint[]", "1.8.0"),
+        new(GetQuestsInZoneGate, "(uint territoryId, bool readyOnly) -> uint[]", "1.8.0"),
+        new(GetMsqPositionGate, "() -> uint", "0.9.0"),
+        new(GetMsqPositionsGate, "() -> uint[]", "1.0.0"),
+        new(GetRouteGate, "(uint targetRowId) -> uint[]", "1.8.0"),
+        new(GetNextJobQuestGate, "(uint classJobId) -> uint", "1.8.0"),
+        new(GetQuestsForItemGate, "(uint itemId) -> uint[]", "1.8.0"),
+        new(GetMoonlitStatusGate, "(uint itemId) -> (bool unique, bool owned, string confidence)", "1.8.0"),
+        new(GetUnlockQuestsGate, "(uint contentFinderConditionId) -> uint[]", "1.8.0"),
+        new(GetAbandonedGate, "() -> (uint rowId, byte step, long abandonedUnixSeconds)[]", "1.8.0"),
+        new(GetPinsGate, "() -> uint[]", "1.8.0"),
+        new(PinQuestGate, "(uint questId, bool pinned) -> bool", "1.8.0"),
+        new(OpenQuestGate, "(uint questId) -> bool", "0.9.0"),
+        new(StatesChangedGate, "message ()", "0.9.0", IsMessage: true),
+        new(QuestStateChangedGate, "message (uint rowId, string from, string to)", "1.8.0", IsMessage: true),
+        new(DisposingGate, "message ()", "1.8.0", IsMessage: true),
+    ];
+
+    /// <summary>The names of <see cref="All"/>, a fresh array per call: what <see cref="GetGatesGate"/> returns.</summary>
+    public static string[] Names()
+    {
+        var names = new string[All.Count];
+        for (var i = 0; i < names.Length; i++)
+        {
+            names[i] = All[i].Name;
+        }
+
+        return names;
+    }
 }
+
+/// <summary>One of Tsukimichi's IPC gates or messages, for <see cref="IpcChannels.All"/>.</summary>
+/// <param name="Name">The gate's name ("Tsukimichi.GetState").</param>
+/// <param name="Signature">Its arguments and answer as docs/ipc.md writes them.</param>
+/// <param name="Since">The release that added it.</param>
+/// <param name="IsMessage">A message Tsukimichi sends (subscribe to it) rather than a function to call.</param>
+public sealed record IpcGateInfo(string Name, string Signature, string Since, bool IsMessage = false);

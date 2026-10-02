@@ -95,6 +95,8 @@ public class CommandLineTests
     public void Glyphs_is_not_listed()
     {
         Assert.DoesNotContain("glyphs", CommandLine.ListedWords);
+        Assert.DoesNotContain("ipc", CommandLine.ListedWords);
+        Assert.Equal(Subcommand.Ipc, CommandLine.Parse("IPC").Kind);
         Assert.Contains("tour", CommandLine.ListedWords);
         Assert.Contains("route", CommandLine.ListedWords);
     }
