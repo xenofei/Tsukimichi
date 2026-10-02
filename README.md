@@ -71,9 +71,9 @@ Tsukimichi reads the game's quest sheets from your installed client and your cha
 
 All five are tested on a specific game version, recorded in each release. After a game patch (a new patch date; hotfixes do not count) they pause themselves until a Tsukimichi update has been tested on the new patch, so a patch that moves the game's interface cannot leave a panel or menu entry misbehaving; a chat line and a notice in Settings › Integrations say so, and the quest journal and everything else keep working. Settings › Integrations › "Enable game hooks on this untested version" runs them anyway on the patch you are on, its hotfixes included; the next patch pauses them again.
 
-Everything else is a Dalamud window. It also talks to three other plugins over Dalamud IPC when they are present: Wotsit (to register searchable entries), Lifestream (to teleport when you click Teleport) and Questionable (to compare its lock check with Tsukimichi's, and, if you turn it on, to add a quest to its priority list when you click), and it answers other plugins' questions about quests (below).
+Everything else is a Dalamud window. It also talks to other plugins over Dalamud IPC when they are present: Wotsit (to register searchable entries), the [companion plugins](#companion-plugins) (Lifestream to teleport when you click Teleport, Questionable to compare its lock check with Tsukimichi's and, if you turn it on, to add a quest to its priority list when you click, AutoDuty to run a duty when you click Run with AutoDuty, Quest Map to open a quest's graph when you click), and it answers other plugins' questions about quests (below).
 
-It never automates anything: it does not move your character, accept or turn in quests, skip dialogue or press anything for you. Teleport to the giver is a button you click, handed to Lifestream. Map flags, journal pages and chat links use the game's own functions.
+Tsukimichi automates only when you press a button that hands the work to one of the [companion plugins](#companion-plugins). On its own it does not move your character, accept or turn in quests, skip dialogue or press anything for you. Teleport to the giver is a button you click, handed to Lifestream; "Run with AutoDuty" is a button you click, handed to AutoDuty. Map flags, journal pages and chat links use the game's own functions.
 
 It has no network code. Nothing leaves your machine. Snapshots and settings live in `%AppData%\XIVLauncher\pluginConfigs\Tsukimichi\` (`characters\<id>.json` with its `<id>.accepted.json`, `<id>.abandoned.json`, `<id>.dates.json` (quest completion dates) and two backups, `<id>.prev.json` refreshed once a day and `<id>.prev2.json` the one before it ([how to restore them](docs/restore-backup.md)), `<id>.live.json` while that character is logged in (see [multibox](#several-game-clients-at-once-multibox)), `user\pins.json`, `user\overrides.json`, `user\discovery.json`). Exports are files you write on purpose, to `exports\` unless you choose another folder, and Settings › Data can delete everything else.
 
@@ -83,11 +83,33 @@ If you run two or more game clients at the same time, each with its own characte
 
 It works only through the files in the shared config folder, so both clients must use the same Dalamud config folder (the usual setup). It never reads another game process or sends it anything. [docs/multibox.md](docs/multibox.md) explains how it works and what it can't do.
 
+## Companion plugins
+
+Tsukimichi works on its own. These optional plugins add buttons to it; Settings › Integrations › Companion plugins shows which you have (loaded, installed but turned off, outdated, or not installed), what each unlocks, and copies each repository URL. A button that needs a plugin you don't have stays visible, disabled, and names the plugin. **Tsukimichi automates only when you press a button that hands the work to one of these plugins.**
+
+| Plugin | What it adds to Tsukimichi | Where to get it |
+|---|---|---|
+| [Lifestream](https://github.com/NightmareXIV/Lifestream) | Teleport and aethernet travel to quest givers (the only way Tsukimichi teleports) | `https://github.com/NightmareXIV/MyDalamudPlugins/raw/main/pluginmaster.json` |
+| [vnavmesh](https://github.com/awgil/ffxiv_navmesh) | Walk to giver | `https://puni.sh/api/repository/veyn` |
+| [Questionable](https://github.com/PunishXIV/Questionable) | Send and start quest lists; path and lock checks | `https://love.puni.sh/ment.json` |
+| [AutoDuty](https://github.com/erdelf/AutoDuty) | Run with AutoDuty: one clear of a duty a quest needs or unlocks, in Duty Support or Trust (the regular Duty Finder only if you allow it in Settings) | `https://puni.sh/api/repository/erdelf` |
+| [Artisan](https://github.com/PunishXIV/Artisan) | Craft hand-in items | `https://love.puni.sh/ment.json` |
+| [GatherBuddy](https://github.com/Ottermandias/GatherBuddy) or [GatherBuddy Reborn](https://github.com/FFXIV-CombatReborn/GatherBuddyReborn) | Gather hand-in items | official repository; Reborn: `https://raw.githubusercontent.com/FFXIV-CombatReborn/CombatRebornRepo/main/pluginmaster.json` |
+| [Allagan Tools](https://github.com/Critical-Impact/InventoryTools) | Item counts across retainers; gear you own | official repository |
+| [Quest Map](https://github.com/GemPlugins/QuestMap) | Open in Quest Map: a quest's full requirement graph | official repository |
+| [Chat 2](https://github.com/Infiziert90/ChatTwo) | Open in Tsukimichi from chat links | official repository |
+
+AutoDuty itself needs vnavmesh, [Boss Mod](https://github.com/awgil/ffxiv_bossmod) or Boss Mod Reborn, and a rotation (Wrath Combo, Rotation Solver Reborn, or Boss Mod's own); "Run with AutoDuty" names whichever is missing.
+
+To add a custom repository: type `/xlsettings`, open **Experimental**, paste the URL into the empty row under **Custom Plugin Repositories**, press **+**, tick **Enabled** and **Save**. Then install the plugin from `/xlplugins`. Plugins marked "official repository" are already in `/xlplugins`.
+
 ## Works with other plugins
 
 - **Wotsit**: every quest and Moonlit reward is searchable from Wotsit; picking one opens it in Tsukimichi.
 - **Lifestream**: Teleport to the giver hands the teleport to Lifestream when it is installed.
 - **Questionable**: when it is loaded, the detail pane says whether Questionable's own lock check agrees with Tsukimichi ("Questionable agrees", or "Questionable says: …" with its reason), and Report this quest records both answers. Settings › Integrations › "Show Questionable hand-off" (off by default) adds "Add to Questionable priority" to the detail pane's "…" menu; it only puts the quest on Questionable's list, and nothing starts until you run Questionable yourself. The gates used are listed in [docs/ipc.md](docs/ipc.md#consumed-ipc).
+- **AutoDuty**: for a quest that needs or unlocks a duty, the detail pane's Duties section says "AutoDuty has a path" when AutoDuty can run it, and "Run with AutoDuty" hands it one clear in Duty Support or Trust. AutoDuty's own duty mode is set only for that run and comes back when it stops; Stop shows while it runs. A duty without Duty Support or Trust stays disabled unless Settings › Integrations › "Allow AutoDuty to queue in the regular Duty Finder" is ticked (off by default).
+- **Quest Map**: "Open in Quest Map" in the detail pane's Path section shows the quest in Quest Map's requirement graph; `/tsuki why` ends by pointing there.
 - **Your plugin**: Tsukimichi answers over Dalamud IPC whether a quest can be picked up now, its state, why it is blocked, the next main scenario quest, and "open this quest", with a message when the logged-in character's states change. The gates, their threading and a C# example are in [docs/ipc.md](docs/ipc.md); request a new one with the **IPC request** issue template.
 
 ## Languages and translations

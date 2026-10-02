@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Numerics;
 using System.Text;
@@ -27,6 +28,9 @@ public enum HelpTopic
 
     /// <summary>The My blues tab (P3): the unlock quests left and the Todo overlay's Clear my blues section.</summary>
     Plan,
+
+    /// <summary>The optional plugins Tsukimichi hands work to (feature plan v5, decision 1).</summary>
+    Companions,
     Commands,
     CountsDiffer,
     KnownQuirks,
@@ -89,6 +93,7 @@ public sealed class HelpWindow : Window
         FontAwesomeIcon.Users.ToIconString(),
         FontAwesomeIcon.Plane.ToIconString(),
         FontAwesomeIcon.ClipboardList.ToIconString(),
+        FontAwesomeIcon.PuzzlePiece.ToIconString(),
         FontAwesomeIcon.Terminal.ToIconString(),
         FontAwesomeIcon.Calculator.ToIconString(),
         FontAwesomeIcon.ExclamationTriangle.ToIconString(),
@@ -195,6 +200,25 @@ public sealed class HelpWindow : Window
         [
         new(FontAwesomeIcon.ClipboardList.ToIconString(), Strings.PlanHelpTitle, Strings.PlanHelpBody),
     ]);
+
+    private static CardItem[] CompanionCards => companionCardsCache.Value;
+
+    /// <summary>One card per listed companion plugin (its name and what it unlocks), then how to add a custom repository.</summary>
+    private static readonly Localization.LocCache<CardItem[]> companionCardsCache = new(static () =>
+    {
+        var cards = new List<CardItem>();
+        var icon = FontAwesomeIcon.PuzzlePiece.ToIconString();
+        foreach (var definition in Core.Companions.CompanionCatalog.All)
+        {
+            if (definition.Listed)
+            {
+                cards.Add(new CardItem(icon, definition.DisplayName, Strings.CompanionUnlocks(definition.Plugin)));
+            }
+        }
+
+        cards.Add(new CardItem(FontAwesomeIcon.Link.ToIconString(), Strings.HelpCompanionsRepoTitle, Strings.CompanionAddRepoHowTo));
+        return cards.ToArray();
+    });
 
     private static CardItem[] CountsCards => countsCardsCache.Value;
 
@@ -493,6 +517,10 @@ public sealed class HelpWindow : Window
                 case HelpTopic.Plan:
                     AppendCards(sb, PlanCards);
                     break;
+                case HelpTopic.Companions:
+                    AppendCards(sb, CompanionCards);
+                    sb.Append(Strings.HelpCompanionsTip);
+                    break;
                 case HelpTopic.Commands:
                     for (var c = 0; c < Strings.Help.CommandKeys.Length; c++)
                     {
@@ -579,6 +607,10 @@ public sealed class HelpWindow : Window
                 break;
             case HelpTopic.Plan:
                 DrawCards(PlanCards);
+                break;
+            case HelpTopic.Companions:
+                DrawCards(CompanionCards);
+                Tip(100, Strings.HelpCompanionsTip, actions.OpenSettings, Strings.Help.OpenSettings);
                 break;
             case HelpTopic.Commands:
                 DrawCommands(scale);

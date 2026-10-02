@@ -72,6 +72,8 @@ static partial class Strings
         public static string PlanBody => Loc.Get("Tutorial.PlanBody");
         public static string PlayTitle => Loc.Get("Tutorial.PlayTitle");
         public static string PlayBody => Loc.Get("Tutorial.PlayBody");
+        public static string CompanionsTitle => Loc.Get("Tutorial.CompanionsTitle");
+        public static string CompanionsBody => Loc.Get("Tutorial.CompanionsBody");
         public static string HelpTitle => Loc.Get("Tutorial.HelpTitle");
         public static string HelpBody => Loc.Get("Tutorial.HelpBody");
         public static string FinishTitle => Loc.Get("Tutorial.FinishTitle");

@@ -1596,6 +1596,274 @@
   <data name="ConfigWotsitIntegrationHint" xml:space="preserve">
     <value>Every quest and Moonlit reward becomes a Wotsit search entry that reveals it in the Journal. Needs Wotsit installed.</value>
   </data>
+  <data name="CompanionMissingReasonFormat" xml:space="preserve">
+    <value>Needs {0} — see Settings › Integrations</value>
+    <comment>Disabled-button tooltip when a companion plugin is not installed. {0} = the plugin's name, or two names joined by CompanionEitherFormat.</comment>
+  </data>
+  <data name="CompanionDisabledReasonFormat" xml:space="preserve">
+    <value>{0} is installed but turned off — turn it on in /xlplugins</value>
+    <comment>Disabled-button tooltip when a companion plugin is installed but not loaded. {0} = the plugin's name.</comment>
+  </data>
+  <data name="CompanionOutdatedReasonFormat" xml:space="preserve">
+    <value>Needs a newer {0} — update it in /xlplugins</value>
+    <comment>Disabled-button tooltip when a companion plugin is too old. {0} = the plugin's name.</comment>
+  </data>
+  <data name="CompanionOutdatedMinimumReasonFormat" xml:space="preserve">
+    <value>Needs {0} {1} or newer — update it in /xlplugins</value>
+    <comment>Disabled-button tooltip when a companion plugin is older than Tsukimichi needs. {0} = the plugin's name, {1} = the oldest version accepted.</comment>
+  </data>
+  <data name="CompanionEitherFormat" xml:space="preserve">
+    <value>{0} or {1}</value>
+    <comment>Two builds of one plugin that both work. {0}, {1} = plugin names (GatherBuddy or GatherBuddy Reborn).</comment>
+  </data>
+  <data name="CompanionsHeading" xml:space="preserve">
+    <value>Companion plugins</value>
+    <comment>Settings › Integrations: heading of the companion plugin table.</comment>
+  </data>
+  <data name="CompanionsIntro" xml:space="preserve">
+    <value>Tsukimichi automates only when you press a button that hands the work to one of these plugins. Each is optional: without it, its buttons stay visible and say what they need.</value>
+    <comment>Settings › Integrations: the line under Companion plugins (decision 1's promise).</comment>
+  </data>
+  <data name="CompanionsColumnPlugin" xml:space="preserve">
+    <value>Plugin</value>
+    <comment>Companion plugin table column.</comment>
+  </data>
+  <data name="CompanionsColumnUnlocks" xml:space="preserve">
+    <value>What it unlocks</value>
+    <comment>Companion plugin table column: what the plugin adds to Tsukimichi.</comment>
+  </data>
+  <data name="CompanionsColumnRepository" xml:space="preserve">
+    <value>Repository</value>
+    <comment>Companion plugin table column: where to get the plugin.</comment>
+  </data>
+  <data name="CompanionStateLoaded" xml:space="preserve">
+    <value>Loaded</value>
+    <comment>Companion plugin state: installed, turned on and recent enough.</comment>
+  </data>
+  <data name="CompanionStateDisabled" xml:space="preserve">
+    <value>Installed but turned off</value>
+    <comment>Companion plugin state: installed in Dalamud but not loaded.</comment>
+  </data>
+  <data name="CompanionStateOutdated" xml:space="preserve">
+    <value>Outdated</value>
+    <comment>Companion plugin state: too old for what Tsukimichi calls.</comment>
+  </data>
+  <data name="CompanionStateMissing" xml:space="preserve">
+    <value>Not installed</value>
+    <comment>Companion plugin state.</comment>
+  </data>
+  <data name="CompanionInstalledVersionFormat" xml:space="preserve">
+    <value>Installed: {0}</value>
+    <comment>Companion table tooltip line. {0} = the installed version.</comment>
+  </data>
+  <data name="CompanionMinimumVersionFormat" xml:space="preserve">
+    <value>Tsukimichi needs {0} or newer</value>
+    <comment>Companion table tooltip line. {0} = the oldest version accepted.</comment>
+  </data>
+  <data name="CompanionCopyRepo" xml:space="preserve">
+    <value>Copy repo URL</value>
+    <comment>Companion table button: copies the plugin's custom repository URL.</comment>
+  </data>
+  <data name="CompanionCopyRepoTooltipFormat" xml:space="preserve">
+    <value>Copies {0}. Add it in /xlsettings › Experimental, then install the plugin from /xlplugins.</value>
+    <comment>Tooltip of Copy repo URL. {0} = the repository URL.</comment>
+  </data>
+  <data name="CompanionCopiedFormat" xml:space="preserve">
+    <value>Copied the repository URL for {0}.</value>
+    <comment>Shown under the table after Copy repo URL. {0} = the plugin's name.</comment>
+  </data>
+  <data name="CompanionOfficial" xml:space="preserve">
+    <value>Official repository</value>
+    <comment>Companion table: the plugin is in Dalamud's own plugin list.</comment>
+  </data>
+  <data name="CompanionOfficialTooltip" xml:space="preserve">
+    <value>In Dalamud's own plugin list: search for it in /xlplugins.</value>
+    <comment>Tooltip of Official repository.</comment>
+  </data>
+  <data name="CompanionAddRepoHowTo" xml:space="preserve">
+    <value>To add a custom repository: type /xlsettings, open Experimental, paste the URL into the empty row under Custom Plugin Repositories, press +, tick Enabled and Save. Then install the plugin from /xlplugins.</value>
+    <comment>Plain-text instructions under the companion plugin table.</comment>
+  </data>
+  <data name="CompanionAutoDutyAllowDutyFinder" xml:space="preserve">
+    <value>Allow AutoDuty to queue in the regular Duty Finder</value>
+    <comment>Settings › Integrations checkbox, off by default.</comment>
+  </data>
+  <data name="CompanionAutoDutyAllowDutyFinderHint" xml:space="preserve">
+    <value>Off: Run with AutoDuty uses Duty Support or Trust only, so no other player joins an automated run, and a duty without them stays disabled. On: such duties queue in the regular Duty Finder.</value>
+    <comment>Tooltip of the AutoDuty Duty Finder checkbox.</comment>
+  </data>
+  <data name="CompanionUnlocks.Lifestream" xml:space="preserve">
+    <value>Teleport and aethernet travel to quest givers</value>
+    <comment>What Lifestream unlocks in Tsukimichi, one line.</comment>
+  </data>
+  <data name="CompanionUnlocks.Vnavmesh" xml:space="preserve">
+    <value>Walk to giver</value>
+    <comment>What vnavmesh unlocks in Tsukimichi, one line.</comment>
+  </data>
+  <data name="CompanionUnlocks.Questionable" xml:space="preserve">
+    <value>Send and start quest lists; path and lock checks</value>
+    <comment>What Questionable unlocks in Tsukimichi, one line.</comment>
+  </data>
+  <data name="CompanionUnlocks.AutoDuty" xml:space="preserve">
+    <value>Run duties a quest needs (Duty Support or Trust)</value>
+    <comment>What AutoDuty unlocks in Tsukimichi, one line.</comment>
+  </data>
+  <data name="CompanionUnlocks.Artisan" xml:space="preserve">
+    <value>Craft hand-in items</value>
+    <comment>What Artisan unlocks in Tsukimichi, one line.</comment>
+  </data>
+  <data name="CompanionUnlocks.GatherBuddy" xml:space="preserve">
+    <value>Gather hand-in items</value>
+    <comment>What GatherBuddy unlocks in Tsukimichi, one line.</comment>
+  </data>
+  <data name="CompanionUnlocks.AllaganTools" xml:space="preserve">
+    <value>Item counts across retainers; gear you own</value>
+    <comment>What Allagan Tools unlocks in Tsukimichi, one line.</comment>
+  </data>
+  <data name="CompanionUnlocks.QuestMap" xml:space="preserve">
+    <value>A quest's full requirement graph</value>
+    <comment>What Quest Map unlocks in Tsukimichi, one line.</comment>
+  </data>
+  <data name="CompanionUnlocks.ChatTwo" xml:space="preserve">
+    <value>Open in Tsukimichi from chat links</value>
+    <comment>What Chat 2 unlocks in Tsukimichi, one line.</comment>
+  </data>
+  <data name="CompanionUnlocks.BossMod" xml:space="preserve">
+    <value>AutoDuty's boss fights</value>
+    <comment>What Boss Mod does for AutoDuty, one line.</comment>
+  </data>
+  <data name="CompanionUnlocks.RotationPlugin" xml:space="preserve">
+    <value>AutoDuty's rotation</value>
+    <comment>What a rotation plugin does for AutoDuty, one line.</comment>
+  </data>
+  <data name="DutiesSection" xml:space="preserve">
+    <value>Duties</value>
+    <comment>Detail pane section listing the duties a quest needs or unlocks.</comment>
+  </data>
+  <data name="AutoDutyRelationRequired" xml:space="preserve">
+    <value>Clear before this quest</value>
+    <comment>Duties section: the quest needs this duty cleared first.</comment>
+  </data>
+  <data name="AutoDutyRelationUnlocks" xml:space="preserve">
+    <value>Unlocked by this quest</value>
+    <comment>Duties section: the quest adds this duty to the Duty Finder.</comment>
+  </data>
+  <data name="AutoDutyHasPath" xml:space="preserve">
+    <value>AutoDuty has a path</value>
+    <comment>Duties section: AutoDuty can run this duty.</comment>
+  </data>
+  <data name="AutoDutyHasPathTooltip" xml:space="preserve">
+    <value>AutoDuty has a path for this duty. Tsukimichi only asks; nothing runs until you press Run with AutoDuty.</value>
+    <comment>Tooltip of AutoDuty has a path.</comment>
+  </data>
+  <data name="AutoDutyRun" xml:space="preserve">
+    <value>Run with AutoDuty</value>
+    <comment>Duties section button: hands the duty to AutoDuty.</comment>
+  </data>
+  <data name="AutoDutyRunTooltipFormat" xml:space="preserve">
+    <value>Hands this duty to AutoDuty for one clear in {0}. AutoDuty plays it; Stop ends it, and AutoDuty puts its own duty mode back.</value>
+    <comment>Tooltip of Run with AutoDuty. {0} = the queue (Duty Support, Trust, the Duty Finder).</comment>
+  </data>
+  <data name="AutoDutyStop" xml:space="preserve">
+    <value>Stop AutoDuty</value>
+    <comment>Duties section button while AutoDuty runs.</comment>
+  </data>
+  <data name="AutoDutyStopTooltip" xml:space="preserve">
+    <value>Asks AutoDuty to stop.</value>
+    <comment>Tooltip of Stop AutoDuty.</comment>
+  </data>
+  <data name="AutoDutyRunning" xml:space="preserve">
+    <value>AutoDuty is running.</value>
+    <comment>Duties section line while AutoDuty runs.</comment>
+  </data>
+  <data name="AutoDutyModeSupport" xml:space="preserve">
+    <value>Duty Support</value>
+    <comment>A queue AutoDuty runs in.</comment>
+  </data>
+  <data name="AutoDutyModeTrust" xml:space="preserve">
+    <value>Trust</value>
+    <comment>A queue AutoDuty runs in.</comment>
+  </data>
+  <data name="AutoDutyModeDutyFinder" xml:space="preserve">
+    <value>the Duty Finder</value>
+    <comment>A queue AutoDuty runs in, inside a sentence.</comment>
+  </data>
+  <data name="AutoDutyNeedsFormat" xml:space="preserve">
+    <value>AutoDuty needs {0} — see Settings › Integrations</value>
+    <comment>Disabled Run tooltip. {0} = a plugin AutoDuty needs (vnavmesh, Boss Mod or Boss Mod Reborn).</comment>
+  </data>
+  <data name="AutoDutyNotLive" xml:space="preserve">
+    <value>Log in as this character to run its duties.</value>
+    <comment>Disabled Run tooltip while viewing a stored character.</comment>
+  </data>
+  <data name="AutoDutyBusy" xml:space="preserve">
+    <value>AutoDuty is already running.</value>
+    <comment>Disabled Run tooltip.</comment>
+  </data>
+  <data name="AutoDutyNoPath" xml:space="preserve">
+    <value>AutoDuty has no path for this duty.</value>
+    <comment>Disabled Run tooltip and Duties line.</comment>
+  </data>
+  <data name="AutoDutyLocked" xml:space="preserve">
+    <value>This duty is not unlocked yet.</value>
+    <comment>Disabled Run tooltip.</comment>
+  </data>
+  <data name="AutoDutyNeedsDutyFinder" xml:space="preserve">
+    <value>No Duty Support or Trust for this duty. Allow the regular Duty Finder in Settings › Integrations to run it.</value>
+    <comment>Disabled Run tooltip.</comment>
+  </data>
+  <data name="AutoDutyNoQueue" xml:space="preserve">
+    <value>AutoDuty cannot queue this duty.</value>
+    <comment>Disabled Run tooltip.</comment>
+  </data>
+  <data name="AutoDutyRotationNote" xml:space="preserve">
+    <value>AutoDuty also wants a rotation: Wrath Combo or Rotation Solver Reborn, or Boss Mod's own autorotation.</value>
+    <comment>Duties section note when no rotation plugin is loaded.</comment>
+  </data>
+  <data name="AutoDutyStartedFormat" xml:space="preserve">
+    <value>AutoDuty is running {0}.</value>
+    <comment>Duties section note after Run. {0} = the duty's name.</comment>
+  </data>
+  <data name="AutoDutyModeRefused" xml:space="preserve">
+    <value>AutoDuty did not accept the duty mode, so nothing was run.</value>
+    <comment>Duties section note after Run.</comment>
+  </data>
+  <data name="AutoDutyNotStarted" xml:space="preserve">
+    <value>AutoDuty did not start; see its window.</value>
+    <comment>Duties section note after Run.</comment>
+  </data>
+  <data name="AutoDutyUnreachable" xml:space="preserve">
+    <value>AutoDuty could not be reached.</value>
+    <comment>Duties section note after Run or Stop.</comment>
+  </data>
+  <data name="QuestMapOpen" xml:space="preserve">
+    <value>Open in Quest Map</value>
+    <comment>Detail pane Path section button.</comment>
+  </data>
+  <data name="QuestMapOpenTooltip" xml:space="preserve">
+    <value>Shows this quest in Quest Map's requirement graph.</value>
+    <comment>Tooltip of Open in Quest Map.</comment>
+  </data>
+  <data name="QuestMapNotCharted" xml:space="preserve">
+    <value>Quest Map does not chart this quest.</value>
+    <comment>Shown after Open in Quest Map when Quest Map declined.</comment>
+  </data>
+  <data name="QuestMapWhyLine" xml:space="preserve">
+    <value>Full requirement graph: Open in Quest Map, in the detail pane's Path section.</value>
+    <comment>/tsuki why: last line while Quest Map is loaded.</comment>
+  </data>
+  <data name="QuestMapWhyUnavailableFormat" xml:space="preserve">
+    <value>Full requirement graph: {0}</value>
+    <comment>/tsuki why: last line while Quest Map cannot be used. {0} = the reason (Needs Quest Map — see Settings › Integrations).</comment>
+  </data>
+  <data name="Help.CompanionsTip" xml:space="preserve">
+    <value>Settings › Integrations › Companion plugins shows which you have, what each unlocks, and copies each repository URL.</value>
+    <comment>Help › Companion plugins: tip with an Open settings button.</comment>
+  </data>
+  <data name="Help.CompanionsRepoTitle" xml:space="preserve">
+    <value>Adding a custom repository</value>
+    <comment>Help › Companion plugins: card title over CompanionAddRepoHowTo.</comment>
+  </data>
   <data name="ConfigNpcContextMenu" xml:space="preserve">
     <value>NPC context menu</value>
   </data>
@@ -1906,6 +2174,9 @@
   <data name="Help.TopicName.Plan" xml:space="preserve">
     <value>My blues</value>
   </data>
+  <data name="Help.TopicName.Companions" xml:space="preserve">
+    <value>Companion plugins</value>
+  </data>
   <data name="Help.TopicName.Commands" xml:space="preserve">
     <value>Commands</value>
   </data>
@@ -1944,6 +2215,10 @@
   </data>
   <data name="Help.TopicLede.Plan" xml:space="preserve">
     <value>Every blue unlock quest you have left, in the order the story reaches them.</value>
+  </data>
+  <data name="Help.TopicLede.Companions" xml:space="preserve">
+    <value>Optional plugins add buttons for travel, duties, crafting and gathering; Tsukimichi automates only when you press one.</value>
+    <comment>One-line summary of the companion plugins.</comment>
   </data>
   <data name="Help.TopicLede.Commands" xml:space="preserve">
     <value>Everything the chat command can do.</value>
@@ -3349,6 +3624,12 @@
   </data>
   <data name="Tutorial.PlayBody" xml:space="preserve">
     <value>The Todo overlay keeps pins and nearby unlocks on screen; Nearby lists what you can start in this zone. Turn them on in Settings, or type /tsuki todo and /tsuki nearby.</value>
+  </data>
+  <data name="Tutorial.CompanionsTitle" xml:space="preserve">
+    <value>Companion plugins</value>
+  </data>
+  <data name="Tutorial.CompanionsBody" xml:space="preserve">
+    <value>Optional plugins such as Lifestream, vnavmesh, Questionable and AutoDuty add buttons for travel and duties. Settings › Integrations shows which you have and where to get the rest.</value>
   </data>
   <data name="Tutorial.HelpTitle" xml:space="preserve">
     <value>Help, tour and settings</value>

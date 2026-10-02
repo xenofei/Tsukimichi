@@ -203,6 +203,30 @@ public sealed class MainWindow : Window, IDisposable
         detailPane.QuestionableHandoff = handoff ?? throw new ArgumentNullException(nameof(handoff));
     }
 
+    /// <summary>
+    /// The detail pane's companion plugin pieces (feature plan v5, decision 1): the Duties section with "Run with
+    /// AutoDuty" and "Open in Quest Map". <paramref name="duties"/> hands out the duty index, <paramref name="rewardEntries"/>
+    /// a quest's reward entries, <paramref name="isDutyUnlocked"/> the logged-in character's unlock of an InstanceContent
+    /// row and <paramref name="allowDutyFinder"/> reads Settings › Integrations. Until this is called neither shows.
+    /// </summary>
+    public void AttachCompanions(
+        CompanionPlugins companions,
+        AutoDutyIpc autoDuty,
+        QuestMapIpc questMap,
+        Func<Core.Companions.DutyRunIndex?> duties,
+        Func<uint, IReadOnlyList<Core.Model.UniqueRewardEntry>> rewardEntries,
+        Func<uint, bool?> isDutyUnlocked,
+        Func<bool> allowDutyFinder)
+    {
+        detailPane.Companions = companions ?? throw new ArgumentNullException(nameof(companions));
+        detailPane.AutoDuty = autoDuty ?? throw new ArgumentNullException(nameof(autoDuty));
+        detailPane.QuestMap = questMap ?? throw new ArgumentNullException(nameof(questMap));
+        detailPane.DutyRuns = duties ?? throw new ArgumentNullException(nameof(duties));
+        detailPane.RewardEntries = rewardEntries ?? throw new ArgumentNullException(nameof(rewardEntries));
+        detailPane.IsDutyUnlocked = isDutyUnlocked ?? throw new ArgumentNullException(nameof(isDutyUnlocked));
+        detailPane.AutoDutyAllowDutyFinder = allowDutyFinder ?? throw new ArgumentNullException(nameof(allowDutyFinder));
+    }
+
     /// <summary>The detail pane's hero banners (V4); without it a quest shows its own banner or its category art.</summary>
     public void AttachBanners(BannerIndexSource<Core.Unique.DutyUnlockIndex> banners)
     {
