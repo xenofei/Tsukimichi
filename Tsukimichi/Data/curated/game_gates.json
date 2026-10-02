@@ -1,0 +1,42 @@
+{
+  "schema": 1,
+  "note": "Gates the game checks before it offers a quest that Tsukimichi cannot read: a relic weapon at some stage equipped, Eureka story and elemental level, Doman Enclave reconstruction progress. The quest lists the gate as not checked, so it reads Not checked where it would otherwise read Ready (never Blocked by the gate itself). \"after\" names the quests before which the gate cannot be passed at all; the catalog adds them to the quest's prerequisites, with \"afterTextKey\" the text row of an after quest that says what it opens. \"gameTextKey\" is the gated quest's own text row stating the gate, when the game states one. The text is never committed. Keys are Quest sheet row ids, sorted ascending.",
+  "entries": {
+    "65897": {
+      "gate": "a relic weapon nexus equipped",
+      "after": [65742],
+      "gameTextKey": "TEXT_JOBREL015_00361_SYSTEM_000_000",
+      "afterTextKey": "TEXT_JOBREL007_00206_SYSTEM_000_100",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Zodiac_Weapons",
+      "note": "His Dark Materia, level 50, Zodiac Weapons: Gerolt gives it only to a character wearing a relic weapon at the nexus stage (its own text says so and its script checks it), and a nexus can only be made once Mmmmmm, Soulglazed Relics (65742) opens soulglazing. The sheet gives the quest no previous quest, so it read Ready for a character who had not started the Zodiac line (reported in game, 1.9.0). In the usual order it follows Wherefore Art Thou, Zodiac and its four material quests; only the nexus is checked by the game's script."
+    },
+    "68148": {
+      "gate": "the Eureka Pagos story finished at elemental level 35",
+      "after": [68478],
+      "afterTextKey": "TEXT_STMBDY402_02942_SYSTEM_000_010",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/And_We_Shall_Call_It_Pyros",
+      "note": "And We Shall Call It Pyros, the quasi-quest that opens Eureka Pyros: Rodney grants it once the Pagos story is done at elemental level 35, neither of which Tsukimichi can read, and Pagos is open only after And We Shall Call It Pagos (68478). The sheet gives it no previous quest, so it read Ready."
+    },
+    "68149": {
+      "gate": "the Eureka Pyros story finished at elemental level 50",
+      "after": [68148],
+      "afterTextKey": "TEXT_STMBDY403_02612_SYSTEM_000_010",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/And_We_Shall_Call_It_Hydatos",
+      "note": "And We Shall Call It Hydatos, the quasi-quest that opens Eureka Hydatos: Rodney grants it once the Pyros story is done at elemental level 50, neither of which Tsukimichi can read, and Pyros is open only after And We Shall Call It Pyros (68148). The sheet gives it no previous quest, so it read Ready."
+    },
+    "68478": {
+      "gate": "the Eureka Anemos story finished at elemental level 20",
+      "after": [68614],
+      "afterTextKey": "TEXT_STMBDY401_03078_SYSTEM_000_110",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/And_We_Shall_Call_It_Pagos",
+      "note": "And We Shall Call It Pagos, the quasi-quest that opens Eureka Pagos: Rodney grants it once the Anemos story is done at elemental level 20, neither of which Tsukimichi can read, and Anemos is open only after And We Shall Call It Eureka (68614). The sheet gives it no previous quest, so it read Ready."
+    },
+    "68689": {
+      "gate": "the Doman Enclave reconstruction at its last stage (donations)",
+      "after": [68677],
+      "afterTextKey": "TEXT_STMBDY503_03141_SYSTEM_000_100",
+      "evidence": "https://ffxiv.consolegameswiki.com/wiki/Lighting_the_Way",
+      "note": "Lighting the Way, level 70, Doman Reconstruction Quests: Kozakura offers it when the enclave's reconstruction reaches its last stage (the wiki files it after the Tauyaku stage; finishing it completes the rebuilding), which Tsukimichi cannot read, and donations open only with It Takes an Enclave (68677), the link Questionable also adds. The sheet gives it no previous quest, so it read Ready."
+    }
+  }
+}

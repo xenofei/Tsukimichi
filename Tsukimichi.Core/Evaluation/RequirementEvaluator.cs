@@ -272,6 +272,13 @@ public static class RequirementEvaluator
                 s.AchievementsLoaded ? "achievement requirement, see journal" : "achievements not loaded"));
         }
 
+        // A gate the game checks that Tsukimichi cannot read (curated/game_gates.json): never judged, so never met;
+        // the resolver reads the quest Not checked rather than Blocked when nothing else is missing.
+        if (catalog.GameGateOf(q.RowId) is { } gate)
+        {
+            results.Add(new(new GameGateRequirement(gate.Gate), false, $"needs {gate.Gate}, not checked"));
+        }
+
         return results;
     }
 

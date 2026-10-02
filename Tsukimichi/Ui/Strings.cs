@@ -498,6 +498,7 @@ public static partial class Strings
         RequirementKind.CustomDeliveryRank => Loc.Get("RequirementName.CustomDeliveryRank"),
         RequirementKind.CarrierLevel => Loc.Get("RequirementName.CarrierLevel"),
         RequirementKind.OtherPath => Loc.Get("RequirementName.OtherPath"),
+        RequirementKind.GameGate => Loc.Get("RequirementName.GameGate"),
         _ => kind.ToString(),
     };
 

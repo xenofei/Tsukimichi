@@ -108,6 +108,7 @@ public static class RequirementDetail
             AchievementRequirement a => a.Loaded
                 ? T("Core.Req.Achievement", "achievement requirement, see journal")
                 : T("Core.Req.AchievementsNotLoaded", "achievements not loaded"),
+            GameGateRequirement g => string.Format(CultureInfo.CurrentCulture, T("Core.Req.GameGateNotChecked", "needs {0}, not checked"), g.Gate),
             _ => null,
         };
     }

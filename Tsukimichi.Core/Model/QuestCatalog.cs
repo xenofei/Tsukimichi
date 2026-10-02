@@ -14,9 +14,9 @@ namespace Tsukimichi.Core.Model;
 /// </summary>
 public sealed class QuestCatalog
 {
-    public static readonly QuestCatalog Empty = new([], null);
+    public static readonly QuestCatalog Empty = new([], null, null);
 
-    private QuestCatalog(IReadOnlyList<QuestRecord> all, IReadOnlyDictionary<uint, uint[]>? extras)
+    private QuestCatalog(IReadOnlyList<QuestRecord> all, IReadOnlyDictionary<uint, uint[]>? extras, IReadOnlyDictionary<uint, QuestGate>? gates)
     {
         All = all;
         ByRowId = all.ToFrozenDictionary(q => q.RowId);
@@ -45,9 +45,35 @@ public sealed class QuestCatalog
         Removed = removed.ToArray();
         PhasedFestivals = FindPhasedFestivals(all);
 
+        // A game gate's "after" quests are prerequisites like the curated extras: the gate cannot be passed before them.
+        var merged = new Dictionary<uint, List<uint>>();
+        foreach (var (rowId, ids) in extras ?? FrozenDictionary<uint, uint[]>.Empty)
+        {
+            merged[rowId] = [.. ids];
+        }
+
+        var knownGates = new Dictionary<uint, QuestGate>();
+        foreach (var (rowId, gate) in gates ?? FrozenDictionary<uint, QuestGate>.Empty)
+        {
+            if (!ByRowId.ContainsKey(rowId))
+            {
+                continue;
+            }
+
+            knownGates[rowId] = gate;
+            if (!merged.TryGetValue(rowId, out var list))
+            {
+                merged[rowId] = list = [];
+            }
+
+            list.AddRange(gate.After);
+        }
+
+        gameGates = knownGates.ToFrozenDictionary();
+
         // Curated ids that name no quest of this catalog (a test catalog, a row the game dropped) are left out here.
         var known = new Dictionary<uint, uint[]>();
-        foreach (var (rowId, ids) in extras ?? FrozenDictionary<uint, uint[]>.Empty)
+        foreach (var (rowId, ids) in merged)
         {
             var kept = ids.Where(id => id != rowId && ByRowId.ContainsKey(id)).Distinct().ToArray();
             if (kept.Length > 0 && ByRowId.ContainsKey(rowId))
@@ -76,22 +102,34 @@ public sealed class QuestCatalog
     /// <summary>The curated extra prerequisites by quest row id, every id a quest of this catalog (<see cref="ExtraPrerequisitesOf"/>).</summary>
     private readonly FrozenDictionary<uint, uint[]> extraPrerequisites;
 
+    /// <summary>The curated game gates by quest row id, every key a quest of this catalog (<see cref="GameGateOf"/>).</summary>
+    private readonly FrozenDictionary<uint, QuestGate> gameGates;
+
     /// <summary>Builds a catalog. Records are ordered by <see cref="JournalRef.SortKey"/> then row id; duplicate row ids throw.</summary>
-    public static QuestCatalog Build(IEnumerable<QuestRecord> quests) => Build(quests, null);
+    public static QuestCatalog Build(IEnumerable<QuestRecord> quests) => Build(quests, null, null);
 
     /// <summary>
     /// Builds a catalog with curated extra prerequisites (<c>curated/extra_prerequisites.json</c>): quest row id to the
     /// quest row ids the game wants completed first that neither the sheet's previous quests nor its accept conditions
     /// record. <see cref="PrerequisitesOf"/> adds them; an id that is no quest of this catalog is ignored.
     /// </summary>
-    public static QuestCatalog Build(IEnumerable<QuestRecord> quests, IReadOnlyDictionary<uint, uint[]>? extraPrerequisites)
+    public static QuestCatalog Build(IEnumerable<QuestRecord> quests, IReadOnlyDictionary<uint, uint[]>? extraPrerequisites) =>
+        Build(quests, extraPrerequisites, null);
+
+    /// <summary>
+    /// Builds a catalog with curated extra prerequisites and curated game gates (<c>curated/game_gates.json</c>): quest
+    /// row id to a gate the game checks that Tsukimichi cannot read (<see cref="GameGateOf"/>) and the quests before
+    /// which it cannot be passed, which <see cref="PrerequisitesOf"/> adds as it adds the extras. A gate on a row that is
+    /// no quest of this catalog is ignored.
+    /// </summary>
+    public static QuestCatalog Build(IEnumerable<QuestRecord> quests, IReadOnlyDictionary<uint, uint[]>? extraPrerequisites, IReadOnlyDictionary<uint, QuestGate>? gameGates)
     {
         ArgumentNullException.ThrowIfNull(quests);
         var ordered = quests
             .OrderBy(q => q.Journal.SortKey)
             .ThenBy(q => q.RowId)
             .ToArray();
-        return new QuestCatalog(ordered, extraPrerequisites);
+        return new QuestCatalog(ordered, extraPrerequisites, gameGates);
     }
 
     public int Count => All.Count;
@@ -176,10 +214,18 @@ public sealed class QuestCatalog
     }
 
     /// <summary>
-    /// The curated extra prerequisites of <paramref name="rowId"/> (<c>curated/extra_prerequisites.json</c>) that are
-    /// quests of this catalog; empty for most quests. <see cref="PrerequisitesOf"/> already includes them.
+    /// The curated extra prerequisites of <paramref name="rowId"/> (<c>curated/extra_prerequisites.json</c>, and the
+    /// "after" quests of its game gate, <see cref="GameGateOf"/>) that are quests of this catalog; empty for most
+    /// quests. <see cref="PrerequisitesOf"/> already includes them.
     /// </summary>
     public uint[] ExtraPrerequisitesOf(uint rowId) => extraPrerequisites.TryGetValue(rowId, out var ids) ? ids : [];
+
+    /// <summary>
+    /// The gate the game checks before it offers <paramref name="rowId"/> that Tsukimichi cannot read
+    /// (<c>curated/game_gates.json</c>); null for nearly every quest. The evaluator lists it as not checked, so the
+    /// quest reads Not checked where it would otherwise read Ready.
+    /// </summary>
+    public QuestGate? GameGateOf(uint rowId) => gameGates.GetValueOrDefault(rowId);
 
     /// <summary>
     /// The accept conditions <see cref="PrerequisitesOf"/> cannot use, values that are no quest of this catalog: the
@@ -282,3 +328,11 @@ public sealed class QuestCatalog
         return groups.ToFrozenDictionary(kv => kv.Key, kv => (IReadOnlyList<QuestRecord>)kv.Value.ToArray());
     }
 }
+
+/// <summary>
+/// A gate the game checks before it offers a quest that Tsukimichi cannot read (<see cref="QuestCatalog.GameGateOf"/>).
+/// </summary>
+/// <param name="Gate">What the game wants, in English, as a phrase after "needs" ("a relic weapon nexus equipped").</param>
+/// <param name="After">Quests before which the gate cannot be passed (the step that makes the weapon possible);
+/// <see cref="QuestCatalog.PrerequisitesOf"/> adds them. May be empty.</param>
+public sealed record QuestGate(string Gate, uint[] After);

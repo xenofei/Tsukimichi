@@ -58,8 +58,12 @@ public class QuestDiagnosticTests
         CarrierLevel = 7,
     };
 
-    private static QuestCatalog EverythingCatalog(QuestRecord target) =>
-        Catalog(target, Quest(A, "Lock A"), Quest(B, "Prereq B"), Quest(C, "Prereq C"));
+    /// <param name="gameGate">Also give the target a game gate (curated/game_gates.json), the one kind the sheet cannot carry.</param>
+    private static QuestCatalog EverythingCatalog(QuestRecord target, bool gameGate = false) =>
+        QuestCatalog.Build(
+            [target, Quest(A, "Lock A"), Quest(B, "Prereq B"), Quest(C, "Prereq C")],
+            null,
+            gameGate ? new Dictionary<uint, QuestGate> { [target.RowId] = new("a relic weapon nexus equipped", []) } : null);
 
     private static CharacterSnapshot Character() => Snapshot(A, B) with
     {
@@ -112,7 +116,7 @@ public class QuestDiagnosticTests
     public void Every_requirement_kind_has_a_line_with_its_verdict_and_the_values_compared()
     {
         var quest = Everything();
-        var catalog = EverythingCatalog(quest);
+        var catalog = EverythingCatalog(quest, gameGate: true);
         var block = QuestDiagnostic.Compose(Inputs(quest, catalog, Character(), Context(quest.QuestId)));
         var lines = Lines(block);
 
@@ -144,6 +148,7 @@ public class QuestDiagnosticTests
         Assert.Contains("  - Mount: not checked (has mount unknown)", requirementLines);
         Assert.Contains("  - House: unmet (has house no)", requirementLines);
         Assert.Contains("  - Achievement: not checked (achievements not loaded, quest 65700)", requirementLines);
+        Assert.Contains("  - GameGate: not checked (game gate \"a relic weapon nexus equipped\"; listed, not judged)", requirementLines);
     }
 
     [Fact]

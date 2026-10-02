@@ -47,6 +47,7 @@ Facts the game sheets do not hold (duty and system unlock quests, story chains, 
 | `other_sources.json` | reward `Item` row id | quest rewards that also drop in duties | a Moonlit reward drops in a duty |
 | `path_choices.json` | Quest row id (cities, companies), `ClassJob` row id (classes) | the start cities' names (a pin the rule that finds them must match), each starting class's "Close to Home" and starter "Way of", the Grand Company of quests whose sheet row leaves it 0 | another city's, class's or company's quests are counted or read Ready, or a label is wrong |
 | `extra_prerequisites.json` | Quest row id | the quests the game wants done first that neither the sheet's previous quests nor its accept conditions record, each with two sources | a quest reads Ready while the game asks for another quest first (usually "you must first complete the main scenario quest …") |
+| `game_gates.json` | Quest row id | a gate the game checks that Tsukimichi cannot read (a relic weapon at a stage equipped, Eureka or Doman Enclave progress), the quests before which it cannot be passed (`after`) and the game's text rows for both | a quest reads Ready while the game wants something no quest records ("In order to receive the quest … you must be equipped with …") |
 | `feature_quests.json` | none | **generated**; never edit it | (regenerate instead) |
 | `VERSION.json` | none | **written by `tools/regen.ps1`**; never edit it | (regenerate instead) |
 
@@ -94,9 +95,14 @@ path_choices.json (classes keyed by ClassJob row id; "grandCompany" is 1 Maelstr
 
 extra_prerequisites.json ("sources" names at least two of gameText, questionable, wiki; "gameTextKey" only with gameText)
 { "schema": 1, "note": "…", "entries": { "<questRowId>": { "requires": [68850], "sources": ["gameText", "questionable", "wiki"], "gameTextKey": "TEXT_…", "evidence": "https://…", "note": "…" } } }
+
+game_gates.json ("after" and "gameTextKey" optional; "afterTextKey", a text row of an after quest, with "after")
+{ "schema": 1, "note": "…", "entries": { "<questRowId>": { "gate": "a relic weapon nexus equipped", "after": [65742], "gameTextKey": "TEXT_…", "afterTextKey": "TEXT_…", "evidence": "https://…", "note": "…" } } }
 ```
 
 **Two sources for every extra prerequisite.** Each source an entry cites must name every id it requires: the game's own quest text (the row key in `gameTextKey`; the text is never committed), Questionable's hand-added link (`docs/data/questionable-prerequisites.json`) or the wiki infobox (as `docs/data/quest-verification.csv` records it). The tests check all three. When two sources disagree (Questionable names one quest, the sheet's accept condition another), leave the entry out and allowlist the Questionable link with the reason instead.
+
+**Game gates are never judged.** A `game_gates.json` gate is something the game checks that Tsukimichi cannot read (a relic weapon equipped, an elemental level, donations). It never blocks a quest; it keeps the quest from reading Ready (the quest reads Not checked instead). Only its `after` quests block, so list there only quests without which the gate cannot be passed at all, each backed by the `afterTextKey` text row that says what the quest opens.
 
 Quest keys are Quest **row ids** (65536 and up), never the runtime quest id, a name or the script id (`SubCts811_01432`). Where a quest has start-city or Grand Company variants, list every variant. `contentFinderConditionIds` are `ContentFinderCondition` rows, not `InstanceContent` or `TerritoryType` rows. Check every id with xivapi before writing it (the curated README has the queries); never write one from memory.
 

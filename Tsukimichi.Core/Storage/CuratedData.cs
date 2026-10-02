@@ -88,6 +88,19 @@ public sealed record QuestQuirk(string Note, string Evidence);
 public sealed record ExtraPrerequisite(IReadOnlyList<uint> Requires, IReadOnlyList<string> Sources, string Evidence, string Note, string? GameTextKey);
 
 /// <summary>
+/// A gate the game checks before it offers a quest that Tsukimichi cannot read, from <c>curated/game_gates.json</c>:
+/// a relic weapon at some stage equipped, Eureka story and elemental level, Doman Enclave reconstruction progress. The
+/// catalog lists it as a not-checked requirement (<c>QuestCatalog.GameGateOf</c>), so the quest reads Not checked
+/// where it would otherwise read Ready, never Blocked by it; and it adds <paramref name="After"/> to
+/// <c>QuestCatalog.PrerequisitesOf</c>, the quests before which the gate cannot be passed at all.
+/// </summary>
+/// <param name="Gate">What the game wants, in English, as a phrase after "needs" ("a relic weapon nexus equipped").</param>
+/// <param name="After">Quest row ids the gate cannot be passed before (the step that makes a nexus possible); may be empty.</param>
+/// <param name="GameTextKey">The gated quest's own text row that states the gate, when the game states it (<c>TEXT_JOBREL015_00361_SYSTEM_000_000</c>); the text is never committed.</param>
+/// <param name="AfterTextKey">The text row of an <paramref name="After"/> quest that says what it opens (the soulglazing, Eureka Pagos); required with <paramref name="After"/>.</param>
+public sealed record GameGate(string Gate, IReadOnlyList<uint> After, string? GameTextKey, string? AfterTextKey, string Evidence, string Note);
+
+/// <summary>
 /// A "Before you continue" payoff gate (P5), from <c>curated/payoff_gates.json</c>: optional content whose completion
 /// changes a scene of the milestone quest's story. The plugin shows <see cref="Instruction"/> only while the milestone
 /// is Ready or in the journal and the content is not done (<c>Core.Payoff.PayoffGates</c>); <see cref="Why"/> is the
@@ -128,6 +141,7 @@ public sealed record PayoffGate(
 /// retired_quests.json  { "schema": 1, "entries": { "66033": { "note": "...", "evidence": "https://...", "patch": "6.3" } } }   (patch optional)
 /// quirks.json          { "schema": 1, "entries": { "66971": { "note": "...", "evidence": "https://..." } } }
 /// extra_prerequisites.json { "schema": 1, "entries": { "68782": { "requires": [ 68850 ], "sources": [ "gameText", "questionable", "wiki" ], "gameTextKey": "TEXT_...", "evidence": "https://...", "note": "..." } } }   (gameTextKey only with gameText)
+/// game_gates.json      { "schema": 1, "entries": { "65897": { "gate": "a relic weapon nexus equipped", "after": [ 65742 ], "gameTextKey": "TEXT_...", "afterTextKey": "TEXT_...", "evidence": "https://...", "note": "..." } } }   (after, gameTextKey optional; afterTextKey with after)
 /// payoff_gates.json    { "schema": 1, "review": "...", "entries": { "eden": { "milestone": 70286, "before": "Eden" or [ 69515 ], "instruction": "...", "why": "...", "evidence": [ "https://..." ], "note": "..." } } }
 /// path_choices.json    { "schema": 1, "cities": { "65575": { "label": "Gridania", "note": "..." } },
 ///                        "classes": { "1": { "label": "Gladiator", "closeToHome": 66104, "starter": 65789, "note": "..." } },
@@ -151,6 +165,7 @@ public sealed class CuratedData
     public const string PayoffGatesFileName = "payoff_gates.json";
     public const string PathChoicesFileName = "path_choices.json";
     public const string ExtraPrerequisitesFileName = "extra_prerequisites.json";
+    public const string GameGatesFileName = "game_gates.json";
 
     /// <summary>The sources an <see cref="ExtraPrerequisitesFileName"/> entry may cite; each entry needs two of them.</summary>
     public static readonly IReadOnlyList<string> ExtraPrerequisiteSources = [GameTextSource, QuestionableSource, WikiSource];
@@ -268,6 +283,12 @@ public sealed class CuratedData
     /// <summary><see cref="ExtraPrerequisites"/> as the catalog builders take them (<c>QuestCatalog.Build</c>): quest row id to required row ids.</summary>
     public IReadOnlyDictionary<uint, uint[]> ExtraPrerequisiteIds => ExtraPrerequisites.ToDictionary(kv => kv.Key, kv => kv.Value.Requires.ToArray());
 
+    /// <summary>Gates the game checks that Tsukimichi cannot read, by quest row id; ids not checked against the catalog here.</summary>
+    public IReadOnlyDictionary<uint, GameGate> GameGates { get; private init; } = new Dictionary<uint, GameGate>();
+
+    /// <summary><see cref="GameGates"/> as the catalog builders take them (<c>QuestCatalog.Build</c>).</summary>
+    public IReadOnlyDictionary<uint, QuestGate> GameGateIds => GameGates.ToDictionary(kv => kv.Key, kv => new QuestGate(kv.Value.Gate, kv.Value.After.ToArray()));
+
     /// <summary>
     /// Short git hash of the last commit touching the overlay, from <see cref="VersionFileName"/> ("573d225", or
     /// "573d225-dirty" when regenerated with uncommitted changes); empty when the file is absent or has no value.
@@ -282,7 +303,7 @@ public sealed class CuratedData
     /// what the invariants test compares the shipped file against, so the file never feeds its own derivation.
     /// </summary>
     public CuratedData WithoutFeatureQuests() =>
-        FeatureQuests.Count == 0 ? this : new CuratedData(SystemUnlocks, DutyUnlocks, new HashSet<uint>(), Festivals, Chains, OnlineStore, OtherSources, RefileOverrides, RetiredQuests, Quirks, CuratedRevision, Warnings) { PayoffGates = PayoffGates, PathChoices = PathChoices, ExtraPrerequisites = ExtraPrerequisites };
+        FeatureQuests.Count == 0 ? this : new CuratedData(SystemUnlocks, DutyUnlocks, new HashSet<uint>(), Festivals, Chains, OnlineStore, OtherSources, RefileOverrides, RetiredQuests, Quirks, CuratedRevision, Warnings) { PayoffGates = PayoffGates, PathChoices = PathChoices, ExtraPrerequisites = ExtraPrerequisites, GameGates = GameGates };
 
     /// <summary>Loads every curated file under <paramref name="dir"/>. A missing directory or file yields empty collections.</summary>
     public static CuratedData Load(string dir)
@@ -607,6 +628,7 @@ public sealed class CuratedData
         var payoffGates = LoadPayoffGates(Path.Combine(dir, PayoffGatesFileName), warnings);
         var pathChoices = LoadPathChoices(Path.Combine(dir, PathChoicesFileName), warnings);
         var extraPrerequisites = LoadExtraPrerequisites(Path.Combine(dir, ExtraPrerequisitesFileName), warnings);
+        var gameGates = LoadGameGates(Path.Combine(dir, GameGatesFileName), warnings);
 
         var curatedRevision = LoadRevision(Path.Combine(dir, VersionFileName), warnings);
 
@@ -615,7 +637,90 @@ public sealed class CuratedData
             PayoffGates = payoffGates,
             PathChoices = pathChoices,
             ExtraPrerequisites = extraPrerequisites,
+            GameGates = gameGates,
         };
+    }
+
+    /// <summary>
+    /// game_gates.json: entries keyed by quest row id, each with <c>gate</c> (what the game wants, non-empty), optional
+    /// <c>after</c> (quest row ids, none the key itself, no repeats) with <c>afterTextKey</c> (a <c>TEXT_</c> key,
+    /// required with and only with <c>after</c>), an optional <c>gameTextKey</c> (a <c>TEXT_</c> key), an https
+    /// <c>evidence</c> URL and a <c>note</c>. An entry missing any of them is skipped with a warning.
+    /// </summary>
+    private static Dictionary<uint, GameGate> LoadGameGates(string path, List<string> warnings)
+    {
+        var entries = new Dictionary<uint, GameGate>();
+        ForEachEntry(path, warnings, (key, node, warn) =>
+        {
+            if (!StorageJson.TryParseKey(key, out uint rowId) || rowId == 0)
+            {
+                warn("key is not a quest row id");
+                return;
+            }
+
+            if (node is not JsonObject obj)
+            {
+                warn("value is not an object");
+                return;
+            }
+
+            var gate = StorageJson.ReadString(obj, "gate")?.Trim();
+            if (string.IsNullOrEmpty(gate))
+            {
+                warn("gate must say what the game wants");
+                return;
+            }
+
+            var after = new List<uint>();
+            if (obj.TryGetPropertyValue("after", out var afterNode))
+            {
+                if (afterNode is not JsonArray afterArray)
+                {
+                    warn("after must be an array of quest row ids");
+                    return;
+                }
+
+                foreach (var element in afterArray)
+                {
+                    if (!StorageJson.TryReadId(element, out var id) || id == 0 || id == rowId || after.Contains(id))
+                    {
+                        warn($"after id '{element}' is not a quest row id, names the quest itself or repeats");
+                        return;
+                    }
+
+                    after.Add(id);
+                }
+            }
+
+            var gameTextKey = StorageJson.ReadString(obj, "gameTextKey")?.Trim();
+            if (gameTextKey is not null && !gameTextKey.StartsWith("TEXT_", StringComparison.Ordinal))
+            {
+                warn("gameTextKey must be a TEXT_ key of the quest's own text");
+                return;
+            }
+
+            var afterTextKey = StorageJson.ReadString(obj, "afterTextKey")?.Trim();
+            if ((after.Count > 0) != (afterTextKey is not null) || (afterTextKey is not null && !afterTextKey.StartsWith("TEXT_", StringComparison.Ordinal)))
+            {
+                warn("afterTextKey must be the TEXT_ key of an after quest's text, set with and only with after");
+                return;
+            }
+
+            if (!TryReadNoteAndEvidence(obj, warn, out var note, out var evidence))
+            {
+                return;
+            }
+
+            if (!Uri.TryCreate(evidence, UriKind.Absolute, out var uri) || uri.Scheme != Uri.UriSchemeHttps)
+            {
+                warn($"evidence '{evidence}' is not an https URL");
+                return;
+            }
+
+            entries[rowId] = new GameGate(gate, after, gameTextKey, afterTextKey, evidence, note);
+        });
+
+        return entries;
     }
 
     /// <summary>
