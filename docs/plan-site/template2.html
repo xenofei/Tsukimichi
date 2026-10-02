@@ -154,7 +154,7 @@ main{min-width:0}
 .s-card:hover{border-color:var(--line);transform:translateY(-1px)}
 .s-card[aria-current="true"]{border-color:var(--gilt);background:var(--raised);box-shadow:0 0 0 3px var(--gilt-soft)}
 .s-card .top{display:flex;align-items:center;gap:10px}
-.iid{font:500 12px/1 var(--f-mono);color:var(--gilt);letter-spacing:.04em;background:var(--gilt-soft);padding:4px 7px;border-radius:5px}
+.iid{white-space:nowrap;font:500 12px/1 var(--f-mono);color:var(--gilt);letter-spacing:.04em;background:var(--gilt-soft);padding:4px 7px;border-radius:5px}
 .eff{font-size:11.5px;color:var(--ink-3);border:1px solid var(--line-soft);border-radius:999px;padding:1px 8px}
 .myv{margin-left:auto;font-size:11.5px;font-weight:600;padding:2px 9px;border-radius:999px}
 .myv.want,.myv.good,.myv.agree,.myv.fav{color:var(--yes);background:var(--yes-soft)}
@@ -341,6 +341,18 @@ table.ft{width:100%;border-collapse:collapse;font-size:13.5px;min-width:720px}
 body.pane-open .shell.wide .pane{transform:none}
 body.pane-open .shell.wide ~ .scrim{display:block;position:fixed;inset:0;background:rgba(5,8,16,.5);z-index:40}
 .shell.wide .close{display:inline-flex;margin-left:auto}
+.archive{margin-top:34px;padding-top:24px;border-top:1px solid var(--line-soft)}
+.arch-group{margin-top:18px}
+.arch-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 16px;margin-bottom:12px}
+.arch-head h4{margin:0;font:400 19px/1.2 var(--f-display);color:var(--gilt-strong)}
+.arch-head p{margin:0;color:var(--ink-3);font-size:13.5px;max-width:120ch}
+.dz.arch{grid-template-columns:repeat(auto-fill,minmax(560px,1fr))}
+.concept.old .art{grid-template-columns:150px minmax(0,1fr)}
+.concept.old .art .ic img{width:124px;height:124px}
+.concept.old h3{font-size:20px}
+.verdict{margin-left:auto;font:500 10.5px/1 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);border:1px solid var(--line);border-radius:999px;padding:5px 9px;white-space:nowrap}
+.mini{display:flex;flex-wrap:wrap;gap:4px 18px;font-size:12.5px;color:var(--ink-3)}
+.mini b{font:600 14px var(--f-body);color:var(--ink);font-variant-numeric:tabular-nums;margin-left:4px}
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(20px);opacity:0;pointer-events:none;
   background:var(--raised);border:1px solid var(--line);border-radius:10px;padding:10px 16px;font-size:13.5px;box-shadow:var(--shadow);transition:opacity .2s,transform .2s var(--ease);z-index:60}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -359,7 +371,7 @@ body.pane-open .shell.wide ~ .scrim{display:block;position:fixed;inset:0;backgro
   .mast-in{grid-template-columns:minmax(0,1fr)}
   .brand{padding-bottom:4px}
 }
-@media (max-width:1100px){ .dz,.dz.two,.compare{grid-template-columns:minmax(0,1fr)} }
+@media (max-width:1100px){ .dz,.dz.two,.dz.arch,.compare{grid-template-columns:minmax(0,1fr)} }
 @media (max-width:860px){
   .shell{grid-template-columns:minmax(0,1fr)}
   .s-rail{position:static;max-height:none}
@@ -435,7 +447,7 @@ const ITEMS = new Map(); const ORDER = { feature:[], point:[], decision:[], desi
 PLAN.releases.forEach(r => r.items.forEach(it => { const o = {...it, kind:"feature", relLabel: r.ver}; ITEMS.set(it.id, o); ORDER.feature.push(it.id); }));
 PLAN.points.forEach(p => { ITEMS.set(p.id, {...p, kind:"point", body:p.plan}); ORDER.point.push(p.id); });
 PLAN.decisions.forEach(d => { ITEMS.set(d.id, {...d, kind:"decision", body:d.rec}); ORDER.decision.push(d.id); });
-((PLAN.designs && PLAN.designs.concepts) || []).forEach(c => { const id = "X-"+c.id; ITEMS.set(id, {...c, id, kind:"design", title:c.name, body:c.pitch}); ORDER.design.push(id); });
+((PLAN.designs && PLAN.designs.concepts) || []).concat(...((PLAN.designs && PLAN.designs.archive) || []).map(g => g.items)).forEach(c => { const id = "X-"+c.id; ITEMS.set(id, {...c, id, kind:"design", title:c.name, body:c.pitch}); ORDER.design.push(id); });
 
 // Point → planned feature ids (parsed from the plan text, ranges like M1–M3 expanded)
 const POINT_FEATURES = {}; const FEATURE_POINTS = {};
@@ -656,8 +668,17 @@ function renderDesigns(){
     </article>`;
   const supCard = sup.summary ? `<div class="status-card"><h3>Realism supervisor</h3>${sup.summary}</div>` : "";
   const mock = `<section class="mocksec"><div class="mockhead"><h3 class="sech">In the plugin</h3><p>A working mock of Tsukimichi with the moons and icon applied: the Journal window, the Todo overlay over the game, and the plugin installer. Switch between round two and round three, try 150% scale, or zoom to 400% to judge the pixels.</p></div><div id="mockSlot"></div></section>`;
-  const dropped = D.dropped && D.dropped.length ? `<div class="dropped"><span>Not taken forward:</span>${D.dropped.map(x => `<span class="dc"><img src="${esc(x.icon)}" alt="">${esc(x.tag)} · ${esc(x.name)}</span>`).join("")}</div>` : "";
-  return intro + `<div class="dz two">${before}${now}</div>` + supCard + mock + dropped;
+  const archive = D.archive && D.archive.length ? `<section class="archive" id="earlier"><div class="mockhead"><h3 class="sech">Earlier concepts</h3><p>Every concept from the first two rounds, with what the panels said about it. You can still vote and comment on any of them.</p></div>
+    ${D.archive.map(g => `<div class="arch-group"><div class="arch-head"><h4>${esc(g.round)}</h4><p>${esc(g.note)}</p></div><div class="dz arch">${g.items.map(x => { const xid = "X-"+x.id; return `
+      <article class="concept old" tabindex="0" data-item="${xid}" aria-current="${UI.sel===xid}">
+        <div class="art"><div class="ic"><img src="${esc(x.icon)}" alt="${esc(x.name)} plugin icon" loading="lazy"></div><div class="s-gl"><img src="${esc(x.glyphs)}" alt="${esc(x.name)}: the eight states" loading="lazy"></div></div>
+        <div class="s-cb"><div class="ttl"><span class="iid">${esc(x.tag)}</span><h3>${esc(x.name)}</h3><span class="verdict">${esc(x.verdict)}</span></div>
+          <p>${x.pitch}</p>
+          ${x.scores ? `<div class="mini">${x.scores.map(m => `<span>${esc(m[0])} <b>${esc(m[1])}</b></span>`).join("")}</div>` : ""}
+          <div class="lf"><div class="ok"><h6>Liked</h6><ul>${(x.liked||[]).map(t => `<li>${esc(t)}</li>`).join("")}</ul></div><div class="bad"><h6>Why it didn't go forward</h6><ul>${(x.failed||[]).map(t => `<li>${esc(t)}</li>`).join("")}</ul></div></div>
+          <div class="s-foot" style="display:flex;gap:12px;align-items:center;font-size:12.5px;color:var(--ink-3)">${myChip(xid,"design")}${tallyBar(xid,"design")}${ccount(xid)}</div></div>
+      </article>`; }).join("")}</div></div>`).join("")}</section>` : "";
+  return intro + `<div class="dz two">${before}${now}</div>` + supCard + mock + archive;
 }
 function renderFeedback(){
   const rows = ORDER.feature.map(id => { const t = T.t[id]||{}; return { id, it:ITEMS.get(id), want:t.want||0, unsure:t.unsure||0, skip:t.skip||0, c:T.n[id]||0 }; })
