@@ -91,6 +91,22 @@ public sealed partial class Configuration : IPluginConfiguration
 
     /// <summary>Show Go to giver (teleport, aethernet and walk in one click, with Stop). On by default.</summary>
     public bool ShowGoToGiver { get; set; } = true;
+
+    // ---- 1.10: travel, getting there faster ----
+    /// <summary>Walk and Go to giver mount before a walk longer than this many yalms (0 never mounts).</summary>
+    public int TravelMountDistance { get; set; } = (int)Core.Travel.TravelOptions.DefaultMountDistance;
+
+    /// <summary>The mount Walk and Go to giver summon (a Mount sheet row the character owns); 0 for Mount Roulette.</summary>
+    public uint TravelMountId { get; set; }
+
+    /// <summary>On a mount, fly to the giver where the zone's flying is unlocked, then land.</summary>
+    public bool TravelFly { get; set; } = true;
+
+    /// <summary>Sprint at the start of a walk where mounts are not allowed (towns).</summary>
+    public bool TravelSprintInTowns { get; set; } = true;
+
+    /// <summary>The travel settings as <see cref="Core.Travel.TravelOptions"/> for a new plan.</summary>
+    public Core.Travel.TravelOptions TravelOptions() => new(Math.Max(0, TravelMountDistance), TravelFly, TravelSprintInTowns);
     /// <summary>
     /// 1.6.0 (decision 1): "Run with AutoDuty" may queue a duty that has neither Duty Support nor Trust in the regular
     /// Duty Finder, with other players. Off by default: such a duty's button stays disabled and says why.

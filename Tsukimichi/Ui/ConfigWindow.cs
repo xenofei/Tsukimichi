@@ -1566,6 +1566,8 @@ public sealed partial class ConfigWindow : Window
 
             HintOnHover(Strings.ConfigShowGoToHint);
         }
+
+        DrawTravelMovement();
     }
 
     /// <summary>

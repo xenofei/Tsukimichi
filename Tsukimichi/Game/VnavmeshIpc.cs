@@ -138,17 +138,20 @@ public sealed class VnavmeshIpc : IDisposable
     }
 
     /// <summary>
-    /// Asks vnavmesh to find a path to <paramref name="destination"/> on foot and walk until within
-    /// <paramref name="range"/>. False when it refused (a pathfind already pending), is absent or threw.
+    /// Asks vnavmesh to find a path to <paramref name="destination"/> on foot (or, <paramref name="fly"/>, through the
+    /// air) and follow it until within <paramref name="range"/>. A flying path needs the character on a mount already:
+    /// vnavmesh takes off by jumping from the mount, and stands still on foot. It ends at the destination, which may
+    /// leave the mount hovering; the caller lands it. False when it refused (a pathfind already pending), is absent or
+    /// threw.
     /// </summary>
-    public bool MoveCloseTo(Vector3 destination, float range)
+    public bool MoveCloseTo(Vector3 destination, float range, bool fly = false)
     {
         if (!Available || moveCloseTo is null)
         {
             return false;
         }
 
-        var accepted = Invoke(moveCloseTo, MoveCloseToGate, gate => gate.InvokeFunc(destination, false, range), false);
+        var accepted = Invoke(moveCloseTo, MoveCloseToGate, gate => gate.InvokeFunc(destination, fly, range), false);
         checkedAt = null;
         return accepted;
     }

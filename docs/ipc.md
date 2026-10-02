@@ -493,12 +493,24 @@ Special zones: the Firmament is a teleport to the Foundation and the Firmament h
 |---|---|---|
 | `vnavmesh.Nav.IsReady` | `() -> bool` | Walk waits for the zone's navmesh ("Preparing path…") |
 | `vnavmesh.Nav.BuildProgress` | `() -> float` | the "Preparing path… 40%" label (negative when no build runs) |
-| `vnavmesh.SimpleMove.PathfindAndMoveCloseTo` | `(Vector3 destination, bool fly, float range) -> bool` | Walk to giver and Go to giver's last step: on foot, to 3 yalms of the giver |
+| `vnavmesh.SimpleMove.PathfindAndMoveCloseTo` | `(Vector3 destination, bool fly, float range) -> bool` | Walk to giver and Go to giver's last step, to 3 yalms of the giver (or of the way into the interior the giver stands in): on foot, on a mount, or flying (`fly` true) where the zone's flying is unlocked |
 | `vnavmesh.SimpleMove.PathfindInProgress` | `() -> bool` | the Walk button reads Stop while a path is found |
 | `vnavmesh.Path.IsRunning` | `() -> bool` | the Walk button reads Stop while the character moves |
 | `vnavmesh.Path.Stop` | `()` (action) | Stop; also on leaving the zone, logging out and unloading Tsukimichi |
 
 Source: `Game/VnavmeshIpc.cs` (state reads cached for 250 ms) and `Game/TravelService.cs` (the Go to giver chain, `Core/Travel/GoToGiver.cs`). Read from [github.com/awgil/ffxiv_navmesh](https://github.com/awgil/ffxiv_navmesh) `vnavmesh/IPCProvider.cs` at commit `6fc80725eb8290472eee433fc4be7ee06ec79357` (2026-08-31). The character moves only after an explicit click on Walk or Go to giver (feature plan v5, decision 1); Settings › Integrations hides either button.
+
+Mounting and flying (1.10, Settings › Integrations › Travel). How vnavmesh flies, read from the same commit (`vnavmesh/AsyncMoveRequest.cs`, `vnavmesh/Movement/FollowPath.cs`): `PathfindAndMoveCloseTo(dest, fly: true, range)` queues a flying path from the player to `dest`; while its next waypoint is above the player and the character is not yet in the air, it jumps (GeneralAction 2) to take off when mounted and stands still on foot. The path ends at the destination, within `range`, which leaves the mount hovering beside the giver. So Tsukimichi:
+
+- mounts first (Mount Roulette, GeneralAction 9, or the chosen mount the character owns, through FFXIVClientStructs' `ActionManager.UseAction`; `GetActionStatus` must answer 0, which covers combat, duties, water and zones without mounts), only for a walk longer than the setting (40 yalms by default) and only in a zone whose TerritoryType allows mounts; it waits up to 8 seconds for the Mounted condition (asking once more after 3) and otherwise walks on foot;
+- flies only on a mount and only where every aether current of the zone is attuned (Dalamud's `IUnlockState.IsAetherCurrentCompFlgSetUnlocked`, which reads `PlayerState.IsAetherCurrentZoneComplete`; read from [github.com/goatcorp/Dalamud](https://github.com/goatcorp/Dalamud) `Dalamud/Game/UnlockState/UnlockState.cs` at commit `b666d821a47306fb447c60155b5d99377f91a5ee`, 2026-09-29);
+- lands when the path ends in the air: Dismount (GeneralAction 23) brings a flying mount down; it is asked again every second for up to 15 seconds. The character is never dismounted on the ground;
+- sprints (GeneralAction 4) at the start of a walk on foot where mounts are not allowed, when "Sprint in towns" is on;
+- gives a walk that comes no 2 yalms closer in 15 seconds one new path, and stops with "the walk stopped making progress" when that one sticks too. vnavmesh's own stuck retry (its `RetryOnStuck` setting) works underneath and is left alone.
+
+Every game call runs on the framework thread, only during a Walk or Go to giver the player clicked, and only while the shared hook gate allows game calls (without it the walk stays on foot).
+
+TextAdvance offers `TextAdvance.EnqueueMoveAndInteract(MoveData)` with `Mount` and `Fly` flags (read from [github.com/NightmareXIV/TextAdvance](https://github.com/NightmareXIV/TextAdvance) `TextAdvance/Navmesh/MoveManager.cs` and `MoveData.cs` at commit `9dee62760472b08a7c36c596c64e4dfbfdc5cf8b`, 2026-05-03). Tsukimichi does not use it: `MoveData` is a class of TextAdvance's own that crosses the IPC boundary only by serialisation, its queue answers no "where is it" a status line or a Stop could read, it mounts by its own 20-yalm rule and flies by its own check, and it is one more plugin to require. vnavmesh plus Tsukimichi's own mount, land and stuck steps keep every step visible, stoppable and under the settings.
 
 ### Wotsit (internal name `Dalamud.FindAnything`)
 

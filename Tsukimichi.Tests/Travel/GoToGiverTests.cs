@@ -48,10 +48,38 @@ public sealed class GoToGiverTests
             return AcceptHop;
         }
 
-        public bool StartWalk(GoToGiverPlan plan)
+        public bool Mounted { get; set; }
+
+        public bool InFlight { get; set; }
+
+        public TravelMoveContext MoveContext { get; set; }
+
+        public bool AcceptMount { get; set; } = true;
+
+        public bool AcceptLanding { get; set; } = true;
+
+        public bool StartWalk(GoToGiverPlan plan, bool fly)
         {
-            Calls.Add($"walk {plan.GoalX},{plan.GoalY},{plan.GoalZ}");
+            Calls.Add($"{(fly ? "fly" : "walk")} {plan.GoalX},{plan.GoalY},{plan.GoalZ}");
             return AcceptWalk;
+        }
+
+        public bool StartMount()
+        {
+            Calls.Add("mount");
+            return AcceptMount;
+        }
+
+        public bool StartLanding()
+        {
+            Calls.Add("land");
+            return AcceptLanding;
+        }
+
+        public bool StartSprint()
+        {
+            Calls.Add("sprint");
+            return true;
         }
 
         public void StopWalk() => Calls.Add("stop walk");
@@ -362,9 +390,18 @@ public sealed class GoToGiverTests
     {
         var ports = new FakePorts { Territory = SubZone, Walking = true };
         var machine = new GoToGiver(ports);
-        machine.Start(GoToGiverPlan.WalkOnly(SubZone, 1f, 2f, 3f), 0);
+        machine.Start(GoToGiverPlan.WalkOnly(SubZone, 100_000f, 2f, 3f), 0);
 
-        Assert.Equal(new GoToGiverOutcome(GoToGiverStep.Failed, GoToGiverFailure.WalkTimedOut), Run(machine, 0, GoToGiver.WalkTimeoutMs + 1_000));
+        // Slow but steady progress (a yalm a second), so it is never stuck: only the walk's own deadline ends it.
+        GoToGiverOutcome? outcome = null;
+        for (var now = 0L; now <= GoToGiver.WalkTimeoutMs + 1_000 && outcome is null; now += 100)
+        {
+            ports.Position = (now / 1_000f, 0f);
+            outcome = machine.Tick(now);
+        }
+
+        Assert.Equal(new GoToGiverOutcome(GoToGiverStep.Failed, GoToGiverFailure.WalkTimedOut), outcome);
+        Assert.False(machine.Repathed);
         Assert.Equal("stop walk", ports.Calls[^1]);
     }
 
@@ -489,5 +526,193 @@ public sealed class GoToGiverTests
         machine.Start(new GoToGiverPlan(886, 0f, 0f, 0f, null, new TravelLeg(GoToGiverPlan.FirmamentHop, 886), false), 0);
 
         Assert.Equal([$"hop {uint.MaxValue}"], ports.Calls);
+    }
+
+    // ------------------------------------------------------------------ mounting, flying, landing, stuck
+
+    /// <summary>A walk of 200 yalms in a zone with mounts and flying; the settings' defaults.</summary>
+    private static GoToGiverPlan LongWalk(TravelOptions? options = null) =>
+        GoToGiverPlan.WalkOnly(SubZone, 200f, 5f, 0f) with { Options = options ?? TravelOptions.Default };
+
+    private static readonly TravelMoveContext Field = new(Mounted: false, MountAllowed: true, FlightUnlocked: true, NoMountZone: false, SprintReady: true);
+
+    [Fact]
+    public void A_long_walk_mounts_first_then_flies_and_lands()
+    {
+        var ports = new FakePorts { Territory = SubZone, MoveContext = Field };
+        var machine = new GoToGiver(ports);
+
+        Assert.Null(machine.Start(LongWalk(), 0));
+        Assert.Equal(GoToGiverStep.Mounting, machine.Step);
+        Assert.True(machine.Move.Mount);
+        Assert.True(machine.Move.Fly);
+        Assert.Equal(["mount"], ports.Calls);
+
+        // The mount comes: the flight starts.
+        Assert.Null(machine.Tick(500));
+        ports.Mounted = true;
+        Assert.Null(machine.Tick(1_500));
+        Assert.Equal(GoToGiverStep.Walking, machine.Step);
+        Assert.True(machine.Flying);
+        Assert.Equal(["mount", "fly 200,5,0"], ports.Calls);
+
+        // vnavmesh flies there and stops in the air beside the giver: land, never dismount.
+        ports.Walking = true;
+        ports.InFlight = true;
+        ports.Position = (100f, 0f);
+        Assert.Null(machine.Tick(5_000));
+        ports.Position = (198f, 0f);
+        ports.Walking = false;
+        Assert.Null(machine.Tick(9_000));
+        Assert.Equal(GoToGiverStep.Landing, machine.Step);
+        Assert.Equal("land", ports.Calls[^1]);
+
+        // Still up a second later: asked again; down: arrived.
+        Assert.Null(machine.Tick(10_100));
+        Assert.Equal(2, ports.Calls.Count(c => c == "land"));
+        ports.InFlight = false;
+        Assert.Equal(new GoToGiverOutcome(GoToGiverStep.Done, GoToGiverFailure.None), machine.Tick(10_500));
+        Assert.DoesNotContain("stop walk", ports.Calls);
+    }
+
+    [Fact]
+    public void A_mount_that_does_not_come_walks_on_foot()
+    {
+        var ports = new FakePorts { Territory = SubZone, MoveContext = Field };
+        var machine = new GoToGiver(ports);
+        machine.Start(LongWalk(), 0);
+
+        // Asked once more after the retry time, then given up at the deadline.
+        Assert.Null(Run(machine, 0, GoToGiver.MountRetryMs + 100));
+        Assert.Equal(2, ports.Calls.Count(c => c == "mount"));
+        Assert.Null(Run(machine, GoToGiver.MountRetryMs + 200, GoToGiver.MountTimeoutMs + 100));
+        Assert.Equal(GoToGiverStep.Walking, machine.Step);
+        Assert.True(machine.MountGaveUp);
+        Assert.False(machine.Flying);
+        Assert.Equal("walk 200,5,0", ports.Calls[^1]);
+    }
+
+    [Fact]
+    public void A_refused_mount_walks_on_foot_at_once()
+    {
+        var ports = new FakePorts { Territory = SubZone, MoveContext = Field, AcceptMount = false };
+        var machine = new GoToGiver(ports);
+
+        Assert.Null(machine.Start(LongWalk(), 0));
+        Assert.Equal(GoToGiverStep.Walking, machine.Step);
+        Assert.True(machine.MountGaveUp);
+        Assert.Equal(["mount", "walk 200,5,0"], ports.Calls);
+    }
+
+    [Fact]
+    public void A_short_walk_does_not_mount_and_already_mounted_flies_only_when_long()
+    {
+        var ports = new FakePorts { Territory = SubZone, MoveContext = Field };
+        var machine = new GoToGiver(ports);
+        machine.Start(GoToGiverPlan.WalkOnly(SubZone, 20f, 0f, 0f) with { Options = TravelOptions.Default }, 0);
+        Assert.Equal(["walk 20,0,0"], ports.Calls);
+        machine.Cancel();
+
+        // Already on a mount for a long walk: no summons, straight into the air.
+        var mounted = new FakePorts { Territory = SubZone, Mounted = true, MoveContext = Field with { Mounted = true } };
+        var flying = new GoToGiver(mounted);
+        flying.Start(LongWalk(), 0);
+        Assert.Equal(["fly 200,5,0"], mounted.Calls);
+    }
+
+    [Fact]
+    public void Flying_needs_the_mount_under_the_character()
+    {
+        // The decision said fly, but the mount reads as absent when the walk starts (dismounted meanwhile): on foot.
+        var ports = new FakePorts { Territory = SubZone, MoveContext = Field };
+        var machine = new GoToGiver(ports);
+        machine.Start(LongWalk(), 0);
+        Assert.Equal(GoToGiverStep.Mounting, machine.Step);
+
+        Assert.Null(Run(machine, 0, GoToGiver.MountTimeoutMs + 200));
+        Assert.Equal(GoToGiverStep.Walking, machine.Step);
+        Assert.False(machine.Flying);
+        Assert.DoesNotContain(ports.Calls, c => c.StartsWith("fly", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void A_town_walk_sprints_and_the_options_off_walk_plainly()
+    {
+        var town = new TravelMoveContext(Mounted: false, MountAllowed: false, FlightUnlocked: false, NoMountZone: true, SprintReady: true);
+        var ports = new FakePorts { Territory = SubZone, MoveContext = town };
+        var machine = new GoToGiver(ports);
+        machine.Start(LongWalk(), 0);
+        Assert.Equal(["sprint", "walk 200,5,0"], ports.Calls);
+
+        // A plan without options (on foot) never mounts, flies or sprints.
+        var plain = new FakePorts { Territory = SubZone, MoveContext = Field };
+        new GoToGiver(plain).Start(GoToGiverPlan.WalkOnly(SubZone, 200f, 5f, 0f), 0);
+        Assert.Equal(["walk 200,5,0"], plain.Calls);
+    }
+
+    [Fact]
+    public void A_stuck_walk_gets_one_new_path_then_fails()
+    {
+        var ports = new FakePorts { Territory = SubZone, Walking = true };
+        var machine = new GoToGiver(ports);
+        machine.Start(GoToGiverPlan.WalkOnly(SubZone, 200f, 5f, 0f), 0);
+
+        // Some progress, then none.
+        ports.Position = (50f, 0f);
+        Assert.Null(machine.Tick(1_000));
+        Assert.Null(Run(machine, 1_100, 1_000 + GoToGiver.StuckMs));
+        Assert.Null(machine.Tick(1_100 + GoToGiver.StuckMs));
+        Assert.True(machine.Repathed);
+        Assert.Equal(["walk 200,5,0", "stop walk", "walk 200,5,0"], ports.Calls);
+
+        // Progress on the new path keeps it going; stuck again fails and stops the walk.
+        ports.Position = (60f, 0f);
+        Assert.Null(machine.Tick(2_000 + GoToGiver.StuckMs));
+        Assert.Equal(
+            new GoToGiverOutcome(GoToGiverStep.Failed, GoToGiverFailure.Stuck),
+            Run(machine, 2_100 + GoToGiver.StuckMs, 4_000 + (2 * GoToGiver.StuckMs)));
+        Assert.Equal("stop walk", ports.Calls[^1]);
+    }
+
+    [Fact]
+    public void A_mount_that_never_lands_fails()
+    {
+        var ports = new FakePorts { Territory = SubZone, Mounted = true, MoveContext = Field with { Mounted = true } };
+        var machine = new GoToGiver(ports);
+        machine.Start(LongWalk(), 0);
+        ports.Walking = true;
+        machine.Tick(100);
+        ports.Walking = false;
+        ports.InFlight = true;
+        ports.Position = (199f, 0f);
+        machine.Tick(200);
+        Assert.Equal(GoToGiverStep.Landing, machine.Step);
+
+        Assert.Equal(new GoToGiverOutcome(GoToGiverStep.Failed, GoToGiverFailure.LandingFailed), Run(machine, 300, 300 + GoToGiver.LandTimeoutMs + 200));
+    }
+
+    [Fact]
+    public void Cancel_while_mounting_or_landing_stops_nothing_and_ends_the_run()
+    {
+        var ports = new FakePorts { Territory = SubZone, MoveContext = Field };
+        var machine = new GoToGiver(ports);
+        machine.Start(LongWalk(), 0);
+        Assert.Equal(GoToGiverStep.Mounting, machine.Step);
+
+        Assert.Equal(new GoToGiverOutcome(GoToGiverStep.Cancelled, GoToGiverFailure.None), machine.Cancel());
+        Assert.Equal(["mount"], ports.Calls);
+        Assert.Null(machine.Tick(1_000));
+        Assert.False(machine.IsActive);
+    }
+
+    [Fact]
+    public void Leaving_the_zone_while_mounting_fails()
+    {
+        var ports = new FakePorts { Territory = SubZone, MoveContext = Field };
+        var machine = new GoToGiver(ports);
+        machine.Start(LongWalk(), 0);
+
+        ports.Load(City);
+        Assert.Equal(new GoToGiverOutcome(GoToGiverStep.Failed, GoToGiverFailure.LeftZone), machine.Tick(500));
     }
 }

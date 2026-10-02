@@ -799,16 +799,21 @@ public sealed partial class Plugin : IDalamudPlugin
             // Travel (1.6.0): attunement-aware Teleport, the aethernet hop, Walk to giver and Go to giver. Lifestream and
             // vnavmesh stay optional; the character only moves on an explicit click (decision 1).
             vnavmesh = new Game.VnavmeshIpc(PluginInterface, Log);
-            travel = new Game.TravelService(Framework, ClientState, Condition, ObjectTable, AetheryteList, lifestream, vnavmesh, Log)
+            travel = new Game.TravelService(Framework, ClientState, Condition, ObjectTable, AetheryteList, DataManager, UnlockState, lifestream, vnavmesh, Log)
             {
                 Print = line => ChatGui.Print(line, Strings.ChatTag),
                 Index = () => gameLinks.Aetherytes,
+                // Getting there faster (1.10): mount, fly and sprint as Settings › Integrations › Travel say.
+                Options = () => Settings.TravelOptions(),
+                MountChoice = () => Settings.TravelMountId,
             };
             gameLinks.Travel = travel;
             gameLinks.ShowWalk = () => Settings.ShowWalkToGiver;
             gameLinks.ShowGoTo = () => Settings.ShowGoToGiver;
             queryRunner = new QueryRunner(this, ui, Log);
             mainWindow = new MainWindow(this, ui, queryRunner, gameLinks, TextureProvider, PluginInterface, Log, RetryCatalogAsync);
+            // The status line under the detail pane's pills while a trip runs: "Mounting…", "Flying to Varshahn…".
+            mainWindow.AttachTravelStatus(gameLinks.TravelStatusText);
             windowSystem.AddWindow(mainWindow);
             // Subscribed before the window system so every window (the todo overlay and Nearby too) draws with
             // this frame's scale factors.
@@ -1161,6 +1166,7 @@ public sealed partial class Plugin : IDalamudPlugin
             if (npcHooks is { } npcMenu) { configWindow.NpcContextMenuToggled = enabled => npcMenu.Enabled = enabled; }
             if (dutyFinderHint is { } dutyHint) { configWindow.DutyFinderHintToggled = enabled => dutyHint.Enabled = enabled; }
             configWindow.HookGate = gate;
+            configWindow.OwnedMounts = OwnedMounts;
             gamePanels.Attach(configWindow);
             configWindow.Companions = companions;
             configWindow.CompanionSetup = companionSetup;

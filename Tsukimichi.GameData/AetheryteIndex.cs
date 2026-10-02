@@ -48,6 +48,7 @@ public sealed class AetheryteIndex
     private readonly FrozenDictionary<uint, AetheryteInfo> mainByGroup;
     private readonly FrozenDictionary<uint, TravelNode[]> nodesByTerritory;
     private readonly FrozenDictionary<uint, TravelNode[]> shardNodesByGroup;
+    private readonly FrozenSet<uint> shardTerritories;
 
     private AetheryteIndex(
         AetheryteInfo[] all,
@@ -73,6 +74,7 @@ public sealed class AetheryteIndex
         }
 
         mainByGroup = mains.ToFrozenDictionary();
+        shardTerritories = shards.Select(s => s.TerritoryId).ToFrozenSet();
         nodesByTerritory = byTerritory.ToFrozenDictionary(kv => kv.Key, kv => ToNodes(kv.Value));
         shardNodesByGroup = shardsByGroup.ToFrozenDictionary(kv => kv.Key, kv => ToNodes(kv.Value));
     }
@@ -105,6 +107,12 @@ public sealed class AetheryteIndex
 
     /// <summary><see cref="ShardsInGroup"/> as <see cref="TravelPlanner"/> nodes, built once; empty for group 0 or an unknown one.</summary>
     public IReadOnlyList<TravelNode> ShardNodesInGroup(uint group) => group == 0 ? NoNodes : shardNodesByGroup.GetValueOrDefault(group) ?? NoNodes;
+
+    /// <summary>True when an aethernet shard stands in the territory (a city or one of its sub-zones).</summary>
+    public bool HasShardIn(uint territoryId) => shardTerritories.Contains(territoryId);
+
+    /// <summary>True when a teleport or a hop lands in the territory: an aetheryte or an aethernet shard stands in it.</summary>
+    public bool Reachable(uint territoryId) => byTerritory.ContainsKey(territoryId) || shardTerritories.Contains(territoryId);
 
     /// <summary>The teleportable aetheryte at the heart of a city network (New Gridania's for group 2); null for group 0 or an unknown one.</summary>
     public AetheryteInfo? GroupAetheryte(uint group) => group == 0 ? null : mainByGroup.GetValueOrDefault(group);
