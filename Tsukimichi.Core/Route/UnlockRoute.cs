@@ -468,7 +468,10 @@ public sealed class UnlockRoute
                 : (quest.Level, 0, quest.Journal.SortKey, rowId);
         }
 
-        /// <summary>The previous quests of <paramref name="quest"/> the route must still do: every one for All, the chosen branch for Any.</summary>
+        /// <summary>
+        /// The previous quests of <paramref name="quest"/> the route must still do: every one for All, the chosen branch
+        /// for Any and the accept conditions it needs beside it (<see cref="Prereq.Required"/>).
+        /// </summary>
         private IEnumerable<uint> Needs(QuestRecord quest)
         {
             if (quest.PreviousQuests.Join == JoinKind.Any)
@@ -476,6 +479,14 @@ public sealed class UnlockRoute
                 if (Choose(quest) is { } chosen && !Done(chosen))
                 {
                     yield return chosen;
+                }
+
+                foreach (var id in catalog.PrerequisitesOf(quest).Required)
+                {
+                    if (id != quest.RowId && catalog.ByRowId.ContainsKey(id) && !Done(id))
+                    {
+                        yield return id;
+                    }
                 }
 
                 yield break;
@@ -523,7 +534,10 @@ public sealed class UnlockRoute
                 return null;
             }
 
+            // Only the alternatives: an accept condition the join needs whatever the branch is no choice (Needs).
+            var required = catalog.PrerequisitesOf(quest);
             var prereqs = Prereqs(quest);
+            prereqs.RemoveAll(required.IsRequired);
             Choice choice;
             if (prereqs.Count == 0 || prereqs.Exists(Done))
             {

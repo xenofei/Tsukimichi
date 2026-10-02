@@ -91,4 +91,27 @@ public sealed class RegistrationDiffTests
             Assert.Equal(order, Enumerable.Range(0, sequence.Length).OrderBy(p => sequence[p]));
         }
     }
+
+    [Fact]
+    public void Positions_an_abandoned_batch_did_not_reach_are_replaced_next_time()
+    {
+        // 0..4 registered in order; the spoiler shield changes the text of 1 and 3, so 1..4 are queued again.
+        long[] sequence = [1, 2, 3, 4, 5];
+        List<int> pending = [1, 2, 3, 4];
+
+        // 1 is re-registered, then the batch gives up on 2 (already unregistered); 3 and 4 still hold their old text.
+        sequence[1] = 6;
+        sequence[2] = 0;
+        RegistrationDiff.Abandon(pending, 1, sequence);
+        Assert.Equal([1L, 6, 0, 0, 0], sequence);
+
+        // A later reorder that puts 3 and 4 early must not keep them: the entry list already holds their new text,
+        // so only the sequence can tell they were never re-registered.
+        Assert.Equal(1, RegistrationDiff.KeptPrefix([0, 3, 4, 1, 2], sequence, Unchanged));
+
+        // Out of range starts and positions are ignored.
+        RegistrationDiff.Abandon(pending, 9, sequence);
+        RegistrationDiff.Abandon([7], -1, sequence);
+        Assert.Equal([1L, 6, 0, 0, 0], sequence);
+    }
 }

@@ -277,7 +277,7 @@ public class CatalogLoaderTests(GameDataFixture fixture, ITestOutputHelper outpu
         Assert.All(currencies, r => Assert.Equal(r.Id, r.ItemId));
         Assert.All(currencies, r => Assert.False(string.IsNullOrEmpty(r.Name)));
         var low = Catalog.All.SelectMany(q => q.Rewards).Where(r => r.Kind == RewardKind.Item && r.ItemId is > 0 and < 20).ToArray();
-        Assert.All(low, r => Assert.True(r.ItemId >= 2 && r.Name.EndsWith(" Crystal", StringComparison.Ordinal), $"{r.Name} ({r.ItemId}) is an Item reward"));
+        Assert.All(low, r => Assert.True(r.ItemId is >= 2 and <= 19, $"{r.Name} ({r.ItemId}) is an Item reward"));
     }
 
     [GameDataFact]

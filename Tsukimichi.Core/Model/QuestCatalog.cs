@@ -121,14 +121,16 @@ public sealed class QuestCatalog
     /// <summary>
     /// The quests the game wants completed before it offers <paramref name="quest"/>: its
     /// <see cref="QuestRecord.PreviousQuests"/>, then every <see cref="QuestRecord.AcceptConditions"/> value that is a
-    /// quest of this catalog and not already listed, all under the previous quests' join. The sheet has three
+    /// quest of this catalog and not already listed, under the previous quests' join. The sheet has three
     /// previous-quest slots and QuestAcceptAdditionCondition carries the rest: with 7.3 data 47 of its 57 rows hold
     /// quest ids only (The Killing Art also needs Over the Wall; the role, Studium and allied society finales list
     /// their fourth and fifth lines and the expansion's last main scenario quest there, and the wiki names all of them
     /// as required), so the values are an "all" list like the slots they extend. The one Any-join quest, Royal
     /// Rumblings, repeats its three envoy quests, one per city and only one ever done: read under the quest's own
-    /// join it stays "any of the three", where an "all" reading would block it for good. A value that is no quest
-    /// (rows such as 17, 226 or 509 of other sheets) is no prerequisite; see <see cref="UncheckedAcceptConditions"/>.
+    /// join it stays "any of the three", where an "all" reading would block it for good. A condition outside an Any
+    /// join's previous quests is no further alternative: it is listed in <see cref="Prereq.Required"/>, needed beside
+    /// one of them (no such quest with 7.3 data). A value that is no quest (rows such as 17, 226 or 509 of other
+    /// sheets) is no prerequisite; see <see cref="UncheckedAcceptConditions"/>.
     /// The record's own <see cref="QuestRecord.PreviousQuests"/> when no accept condition adds a quest.
     /// </summary>
     public Prereq PrerequisitesOf(QuestRecord quest)
@@ -193,7 +195,14 @@ public sealed class QuestCatalog
             }
         }
 
-        return extra is null ? null : new Prereq([.. previous, .. extra], quest.PreviousQuests.Join);
+        if (extra is null)
+        {
+            return null;
+        }
+
+        // Accept conditions are an "all" list: under an Any join they are needed beside one of the previous quests.
+        var join = quest.PreviousQuests.Join;
+        return new Prereq([.. previous, .. extra], join) { Required = join == JoinKind.Any ? [.. extra] : [] };
     }
 
     private static FrozenSet<ushort> FindPhasedFestivals(IReadOnlyList<QuestRecord> all)

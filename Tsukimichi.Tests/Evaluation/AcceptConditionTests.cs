@@ -103,6 +103,47 @@ public class AcceptConditionTests
     }
 
     [Fact]
+    public void An_accept_quest_outside_an_any_join_is_needed_beside_one_of_its_previous_quests()
+    {
+        // Any one of two city quests, and an accept condition naming a third quest: the condition is no alternative.
+        var target = Side(Target, "Royal Rumblings") with { PreviousQuests = new Prereq([A, B], JoinKind.Any), AcceptConditions = [C] };
+        var catalog = Catalog(Side(A, "The Gridanian Envoy"), Side(B, "The Ul'dahn Envoy"), Side(C, "Over the Wall"), target);
+
+        var prereq = catalog.PrerequisitesOf(target);
+        Assert.Equal([A, B, C], prereq.QuestIds);
+        Assert.Equal(JoinKind.Any, prereq.Join);
+        Assert.Equal([C], prereq.Required);
+
+        // One envoy quest alone is not enough: the accept quest is a second, All requirement.
+        var results = RequirementEvaluator.Evaluate(target, Snapshot(A), catalog, EvalContext.Default);
+        var previous = results.Where(r => r.Req.Kind == RequirementKind.PreviousQuests).ToArray();
+        Assert.Equal(2, previous.Length);
+        var alternatives = Assert.IsType<PreviousQuestsRequirement>(previous[0].Req);
+        Assert.Equal([A, B], alternatives.QuestIds);
+        Assert.Equal(JoinKind.Any, alternatives.Join);
+        Assert.True(previous[0].Met);
+        var required = Assert.IsType<PreviousQuestsRequirement>(previous[1].Req);
+        Assert.Equal([C], required.QuestIds);
+        Assert.Equal(JoinKind.All, required.Join);
+        Assert.False(previous[1].Met);
+        Assert.Equal("needs Over the Wall", previous[1].Detail);
+
+        Assert.Equal(QuestState.Blocked, StateResolver.Resolve(target, Snapshot(A), catalog, EvalContext.Default).State);
+        Assert.Equal(QuestState.Blocked, StateResolver.Resolve(target, Snapshot(C), catalog, EvalContext.Default).State);
+        Assert.Equal(QuestState.Ready, StateResolver.Resolve(target, Snapshot(B, C), catalog, EvalContext.Default).State);
+
+        // The path and the route take one branch and the accept quest; only the other branch is an alternative.
+        var states = catalog.All.ToDictionary(q => q.RowId, q => new QuestEvaluation(q.RowId == A ? QuestState.Completed : QuestState.Blocked, [], null, null, null));
+        var path = PathFinder.PathTo(Target, catalog, states);
+        Assert.Equal([A, C, Target], path.Select(s => s.RowId));
+        var join = Assert.Single(PathFinder.Alternatives(path, catalog, states));
+        Assert.Equal([B], join.Alternatives.Select(a => a.RowId));
+
+        var route = UnlockRoute.Build(RouteTarget.ForQuest(Target, "target"), catalog, states);
+        Assert.Equal([C, Target], route.Steps.Select(s => s.RowId));
+    }
+
+    [Fact]
     public void Completing_the_accept_quest_re_evaluates_its_dependent()
     {
         var catalog = KillingArt(out _);
@@ -171,6 +212,7 @@ public class AcceptConditionFixtureTests(FixtureCatalog fixture) : IClassFixture
     {
         var quest = Catalog.GetByRowId(RoyalRumblings)!;
         Assert.Equal(JoinKind.Any, Catalog.PrerequisitesOf(quest).Join);
+        Assert.Empty(Catalog.PrerequisitesOf(quest).Required);
 
         var r = Only(RequirementEvaluator.Evaluate(quest, Snapshot(TheGridanianEnvoy), Catalog, Context), RequirementKind.PreviousQuests);
         Assert.True(r.Met);

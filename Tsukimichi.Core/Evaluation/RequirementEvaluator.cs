@@ -81,31 +81,17 @@ public static class RequirementEvaluator
             results.Add(new(new LevelRequirement(q.Level, actual), met, met ? $"level {q.Level}" : $"needs level {q.Level}, you are {actual}"));
         }
 
-        // The accept conditions that name a quest count as previous quests (QuestCatalog.PrerequisitesOf).
+        // The accept conditions that name a quest count as previous quests (QuestCatalog.PrerequisitesOf). Under an
+        // Any join the ones outside the previous quests are needed beside them: a second, All requirement.
         var prerequisites = catalog.PrerequisitesOf(q);
-        if (!prerequisites.IsEmpty)
+        if (prerequisites.Required.Length == 0)
         {
-            var ids = prerequisites.QuestIds;
-            var join = prerequisites.Join;
-            var doneIds = ids.Where(id => s.IsCompleted(QuestRecord.ToQuestId(id))).ToArray();
-            var done = doneIds.Length;
-            var met = join == JoinKind.Any ? done >= 1 : done == ids.Length;
-            string detail;
-            if (ids.Length == 1)
-            {
-                var name = NameOf(catalog, ids[0]);
-                detail = met ? $"{name} done" : $"needs {name}";
-            }
-            else
-            {
-                detail = $"{done} of {ids.Length} prerequisites done";
-                if (join == JoinKind.Any)
-                {
-                    detail += ", one needed";
-                }
-            }
-
-            results.Add(new(new PreviousQuestsRequirement(ids, join, done, doneIds), met, detail));
+            AddPrevious(results, prerequisites.QuestIds, prerequisites.Join, s, catalog);
+        }
+        else
+        {
+            AddPrevious(results, prerequisites.QuestIds.Where(id => !prerequisites.IsRequired(id)).ToArray(), prerequisites.Join, s, catalog);
+            AddPrevious(results, prerequisites.Required, JoinKind.All, s, catalog);
         }
 
         // The sheet's company, else the curated one of a quest whose row leaves it 0 (Call of the Wild).
@@ -315,6 +301,35 @@ public static class RequirementEvaluator
         }
 
         return false;
+    }
+
+    /// <summary>One previous-quests requirement over <paramref name="ids"/>; nothing when there are none.</summary>
+    private static void AddPrevious(List<RequirementResult> results, uint[] ids, JoinKind join, CharacterSnapshot s, QuestCatalog catalog)
+    {
+        if (ids.Length == 0)
+        {
+            return;
+        }
+
+        var doneIds = ids.Where(id => s.IsCompleted(QuestRecord.ToQuestId(id))).ToArray();
+        var done = doneIds.Length;
+        var met = join == JoinKind.Any ? done >= 1 : done == ids.Length;
+        string detail;
+        if (ids.Length == 1)
+        {
+            var name = NameOf(catalog, ids[0]);
+            detail = met ? $"{name} done" : $"needs {name}";
+        }
+        else
+        {
+            detail = $"{done} of {ids.Length} prerequisites done";
+            if (join == JoinKind.Any)
+            {
+                detail += ", one needed";
+            }
+        }
+
+        results.Add(new(new PreviousQuestsRequirement(ids, join, done, doneIds), met, detail));
     }
 
     private static string NameOf(QuestCatalog catalog, uint rowId) =>
