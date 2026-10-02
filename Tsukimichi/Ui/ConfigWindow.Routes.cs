@@ -30,11 +30,12 @@ public sealed partial class ConfigWindow
         }
     }
 
-    /// <summary>The overlay's route sections; drawn inside the overlay's block, disabled with it.</summary>
-    private void DrawTodoRouteToggles()
+    /// <summary>The overlay's route sections; drawn inside the overlay's block, greyed while it is off (<paramref name="overlayOn"/>).</summary>
+    private void DrawTodoRouteToggles(bool overlayOn)
     {
         if (Row(Strings.TodoConfigShowRoute, Strings.TodoConfigShowRouteHint, "overlay section route followed"))
         {
+            using var sub = SubSetting(overlayOn);
             var route = settings.TodoShowRoute;
             if (ImGui.Checkbox(Strings.TodoConfigShowRoute, ref route))
             {
@@ -50,6 +51,7 @@ public sealed partial class ConfigWindow
 
         if (Row(Strings.TodoConfigShowNextStops, Strings.TodoConfigShowNextStopsHint, "overlay section next stops aetheryte"))
         {
+            using var sub = SubSetting(overlayOn);
             var stops = settings.TodoShowNextStops;
             if (ImGui.Checkbox(Strings.TodoConfigShowNextStops, ref stops))
             {

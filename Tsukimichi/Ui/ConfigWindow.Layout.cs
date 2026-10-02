@@ -23,7 +23,10 @@ namespace Tsukimichi.Ui;
 /// first setting that shows. Then add one line to <see cref="BuildBlocks"/> where the block belongs, such as
 /// <c>new(SettingsSection.Integrations, DrawSomething),</c>. A block whose draw never calls <see cref="Row"/> still
 /// works on its section's page; while searching it shows (whole) only when the entry's keywords match, e.g.
-/// <c>new(SettingsSection.Notices, DrawSomething, "chat line notice")</c>.</para>
+/// <c>new(SettingsSection.Notices, DrawSomething, "chat line notice")</c>, once its first draw has shown it registers
+/// none (every block draws the first time, so a block nobody opened yet is still searched). A block other windows
+/// open Settings on takes an anchor, e.g. <c>anchor: SettingsAnchor.Nearby</c>, for
+/// <see cref="OpenAt(SettingsSection, SettingsAnchor)"/>.</para>
 /// </summary>
 public sealed partial class ConfigWindow
 {
@@ -44,6 +47,7 @@ public sealed partial class ConfigWindow
     private SettingsSection section = SettingsSection.Display;
     private string searchText = string.Empty;
     private bool scrollToTop;
+    private SettingsAnchor anchor;
     private bool focusSearch;
 
     // The index's match counts as text, per row.
@@ -71,13 +75,13 @@ public sealed partial class ConfigWindow
         new(SettingsSection.Notices, DrawChatActions),
         new(SettingsSection.Spoilers, DrawSpoilers),
         new(SettingsSection.Keyboard, DrawKeyboard),
-        new(SettingsSection.Integrations, DrawCompanionPlugins),
+        new(SettingsSection.Integrations, DrawCompanionPlugins, anchor: SettingsAnchor.CompanionPlugins),
         new(SettingsSection.Integrations, DrawQuestionableSettings),
         new(SettingsSection.Integrations, DrawHandInIntegrations),
         new(SettingsSection.Integrations, DrawAutoDutySettings),
         new(SettingsSection.Integrations, DrawTravelSettings),
         new(SettingsSection.Integrations, DrawWotsit),
-        new(SettingsSection.Integrations, DrawNearbySettings),
+        new(SettingsSection.Integrations, DrawNearbySettings, anchor: SettingsAnchor.Nearby),
         new(SettingsSection.Integrations, DrawIntegrations),
         new(SettingsSection.Integrations, DrawGamePanels),
         new(SettingsSection.Integrations, DrawItemHints),
@@ -105,10 +109,15 @@ public sealed partial class ConfigWindow
         _ => Strings.ConfigSectionAbout,
     };
 
-    /// <summary>Opens the window on <paramref name="settingsSection"/> with the search cleared, and brings it to the front.</summary>
-    public void OpenAt(SettingsSection settingsSection)
+    /// <summary>
+    /// Opens the window on <paramref name="settingsSection"/> with the search cleared, and brings it to the front. With
+    /// an <paramref name="settingsAnchor"/> in that section the page is scrolled so the block's heading is at the top;
+    /// otherwise the page starts at its top.
+    /// </summary>
+    public void OpenAt(SettingsSection settingsSection, SettingsAnchor settingsAnchor = SettingsAnchor.None)
     {
         Select(settingsSection);
+        anchor = settingsAnchor;
         IsOpen = true;
         BringToFront();
     }
@@ -334,6 +343,9 @@ public sealed partial class ConfigWindow
             SectionHeading.Title(SectionTitle(section), ImGui.GetContentRegionAvail().X);
             ImGui.Spacing();
             DrawBlocks(section);
+
+            // An anchor outside the page (or on a block that did not draw) is dropped rather than kept for later.
+            anchor = SettingsAnchor.None;
         }
         else
         {
@@ -363,17 +375,21 @@ public sealed partial class ConfigWindow
             }
 
             filter.BeginBlock(block.Keywords);
-            if (filter.Active && !block.RowAware && !filter.BlockWhole)
+            if (!filter.DrawsBlock(block.RowAware))
             {
                 continue;
             }
 
+            if (anchor != SettingsAnchor.None && block.Anchor == anchor && !filter.Active)
+            {
+                // Opened on this block (OpenAt): its heading lands at the top of the page.
+                anchor = SettingsAnchor.None;
+                ImGui.SetScrollHereY(0f);
+            }
+
             using var id = ImRaii.PushId(i);
             block.Draw();
-            if (filter.RowsInBlock > 0)
-            {
-                block.RowAware = true;
-            }
+            block.RowAware = filter.LearnRowAware(block.RowAware);
         }
     }
 
@@ -390,6 +406,7 @@ public sealed partial class ConfigWindow
     private void Select(SettingsSection settingsSection)
     {
         section = settingsSection;
+        anchor = SettingsAnchor.None;
         ClearSearch();
         scrollToTop = true;
     }
@@ -433,6 +450,13 @@ public sealed partial class ConfigWindow
         return true;
     }
 
+    /// <summary>
+    /// A sub-setting's indent, greyed out while <paramref name="parentOn"/> is false. Open it inside the setting's
+    /// <c>if (Row(…))</c>, never around several rows: the headings a search result waits to draw come out of
+    /// <see cref="Row"/>, and inside the scope they would be indented and greyed too.
+    /// </summary>
+    private static SubSettingScope SubSetting(bool parentOn) => new(ImRaii.PushIndent(), ImRaii.Disabled(!parentOn));
+
     private void DrawPendingHeadings()
     {
         if (filter.TakeSectionHeading())
@@ -455,8 +479,21 @@ public sealed partial class ConfigWindow
         }
     }
 
-    /// <summary>One entry of the section table: where a block draws, how, and the keywords that show it whole.</summary>
-    private sealed class SettingsBlock(SettingsSection section, Action draw, string? keywords = null)
+    /// <summary>The indent and the disabled state <see cref="SubSetting"/> opened, closed in reverse order.</summary>
+    private readonly struct SubSettingScope(IDisposable indent, IDisposable disabled) : IDisposable
+    {
+        public void Dispose()
+        {
+            disabled.Dispose();
+            indent.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// One entry of the section table: where a block draws, how, the keywords that show it whole, and the anchor
+    /// <see cref="OpenAt"/> can scroll its page to.
+    /// </summary>
+    private sealed class SettingsBlock(SettingsSection section, Action draw, string? keywords = null, SettingsAnchor anchor = SettingsAnchor.None)
     {
         public SettingsSection Section { get; } = section;
 
@@ -464,7 +501,13 @@ public sealed partial class ConfigWindow
 
         public string? Keywords { get; } = keywords;
 
-        /// <summary>Learnt from the first draw: the block registers its settings through <see cref="Row"/>.</summary>
-        public bool RowAware { get; set; }
+        public SettingsAnchor Anchor { get; } = anchor;
+
+        /// <summary>
+        /// Learnt from its draws (<see cref="SettingsFilter.LearnRowAware"/>): true when the block registers its settings
+        /// through <see cref="Row"/>, false when it drew without registering any, null until it first draws. An unknown
+        /// block draws while searching, so its settings are found before its page was ever opened.
+        /// </summary>
+        public bool? RowAware { get; set; }
     }
 }
