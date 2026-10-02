@@ -177,7 +177,9 @@ public sealed class JsonSnapshotStore : ISnapshotStore
             var migrated = migrator.Migrate(root, out _);
             var snapshot = migrated.Deserialize<CharacterSnapshot>(StorageJson.Options)
                 ?? throw new InvalidDataException("Snapshot deserialized to null.");
-            return SharedRead<CharacterSnapshot>.Of(snapshot);
+
+            // Builds before 1.4.2 saved the raw rank byte, with the "ranked up today" bit set on a rank-up day.
+            return SharedRead<CharacterSnapshot>.Of(snapshot.WithMaskedTribeRanks());
         }
         catch (Exception ex) when (ex is JsonException or InvalidDataException or NotSupportedException or InvalidOperationException or FormatException)
         {

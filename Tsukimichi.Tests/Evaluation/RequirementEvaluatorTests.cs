@@ -270,6 +270,22 @@ public class RequirementEvaluatorTests
     }
 
     [Fact]
+    public void Tribe_rank_on_a_rank_up_day_reads_the_masked_rank()
+    {
+        // 0x84: Trusted, ranked up today. Unmasked it would read as rank 132 and meet every rank gate.
+        var snapshot = Snapshot() with { Tribes = new Dictionary<byte, TribeStanding> { [2] = TribeStanding.FromClient(0x84, 0) } };
+
+        var sworn = Only(Eval(Quest(Target) with { BeastTribe = 2, BeastRank = 7 }, snapshot), RequirementKind.TribeRank);
+        var trusted = Only(Eval(Quest(Target) with { BeastTribe = 2, BeastRank = 4 }, snapshot), RequirementKind.TribeRank);
+
+        Assert.False(sworn.Met);
+        Assert.Equal("needs Sworn, you are Trusted", sworn.Detail);
+        Assert.Equal((byte)4, Assert.IsType<TribeRankRequirement>(sworn.Req).ActualRank);
+        Assert.True(trusted.Met);
+        Assert.Equal("Trusted", trusted.Detail);
+    }
+
+    [Fact]
     public void Tribe_rank_for_unknown_tribe_is_None()
     {
         var quest = Quest(Target) with { BeastTribe = 2, BeastRank = 1 };
