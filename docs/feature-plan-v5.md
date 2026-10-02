@@ -110,7 +110,7 @@ Each release ships on its own with the usual gates. Effort: S = hours, M = a day
   - A plausibility guard: a capture that suddenly loses hundreds of completed quests is not saved, and one `.prev.json` backup is kept.
   - The hook gate relaxed to the patch date [R10, R4].
 
-### 1.6.0 · Getting there (travel, routes, Questionable)
+### 1.6.0 · Getting there (travel, routes, Questionable) — **released 2026-10-01**
 
 - **Teleport**
   - Knows attunement and shows the gil cost; never a dead click.
@@ -221,6 +221,20 @@ Each release ships on its own with the usual gates. Effort: S = hours, M = a day
 12. **Release order:** 1.4.2, then 1.5, 1.6, 1.7, 1.8, with the side track folded in.
 
 ## In-game checks I'll need from you along the way
+
+Added with 1.6.0:
+- **Companion plugins:** Settings › Integrations shows the right state for each plugin. It updates when you turn a plugin off in /xlplugins.
+- **Teleport:** the tooltip shows the gil cost and favourite flag, and an unattuned zone says so. In combat the chat line explains why the teleport didn't start.
+- **Aethernet:** from New Gridania, a giver near the Conjurers' Guild offers "Aethernet to Conjurers' Guild" and lands there.
+- **Walk and Go to giver:** "Preparing path" shows in a new zone, Stop works at every step, and nothing starts while Questionable or AutoDuty runs.
+- **Questionable:**
+  - the "sent N of M" count matches Questionable's list on both versions of Questionable;
+  - Replace restores your list if sending fails;
+  - Add and start asks first and starts on the right quest;
+  - live status and the gold Journal row work.
+- **AutoDuty:** Run with AutoDuty clears a Duty Support dungeon once, and AutoDuty's own settings are unchanged afterwards. A duty without Duty Support or Trust stays disabled.
+- **Hand in:** A Carpenter in Need and One Size Fits All list the right items and counts. Craft starts Artisan with the right recipe; Gather flags the right node; the Teamcraft link opens the import page.
+- **Routes:** Follow a route shows in the overlay, and Flag next stop moves the flag after each turn-in.
 
 Added with 1.5.0:
 - **Daily offers:** compare the `[daily offer]` lines in /xllog with what each allied society quest giver offers, including on a rank-up day.
