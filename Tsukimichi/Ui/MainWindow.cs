@@ -65,6 +65,24 @@ public sealed class MainWindow : Window, IDisposable
     private ITutorial? tutorial;
     private WhatsNewCard? whatsNew;
     private WelcomeBackCard? welcomeBack;
+    private SetupCard? setupCard;
+
+    // The Todo overlay's switch (1.7.0): the rail's Overlay button and the first-pin prompt; null until attached.
+    private Action? toggleOverlay;
+    private Func<bool>? overlayOn;
+
+    // Frames drawn with a catalog, up to SetupDelayFrames: the setup card waits until the tour offer had its frame.
+    private int contentFrames;
+    private const int SetupDelayFrames = 3;
+
+    // "Show it on screen?" after the first pin while the overlay is off (1.7.0): asked once, ever.
+    private bool pinPromptVisible;
+
+    // The context bar (1.7.0): decided on the first draw with a catalog; dismissed for the session with its ×.
+    private bool contextChecked;
+    private bool contextVisible;
+    private string contextLine = string.Empty;
+    private (string Name, int Filters, int Language) contextKey = (string.Empty, -1, -1);
 
     private Task? retryTask;
 
@@ -155,8 +173,66 @@ public sealed class MainWindow : Window, IDisposable
         tablePane = new TablePane(ui, runner, links, textures, pluginInterface, log, filterPanel.ResetAll, OnFiltersChanged);
         detailPane = new DetailPane(ui, runner, links, textures, log);
         tonightCard = new TonightCard(ui, runner, OnFiltersChanged);
+        runner.QuestPinned += OnQuestPinned;
 
         version = typeof(Plugin).Assembly.GetName().Version?.ToString(3) ?? "0";
+    }
+
+    /// <summary>
+    /// The rail's Todo overlay and Nearby buttons (1.7.0), and the first-pin prompt's "Turn on overlay". Until this is
+    /// called the two buttons are drawn disabled and no prompt shows.
+    /// </summary>
+    public void AttachPlay(Action toggleOverlay, Func<bool> overlayOn, Action toggleNearby, Func<bool> nearbyOpen)
+    {
+        this.toggleOverlay = toggleOverlay ?? throw new ArgumentNullException(nameof(toggleOverlay));
+        this.overlayOn = overlayOn ?? throw new ArgumentNullException(nameof(overlayOn));
+        tabStrip.ToggleOverlay = toggleOverlay;
+        tabStrip.OverlayOn = overlayOn;
+        tabStrip.ToggleNearby = toggleNearby ?? throw new ArgumentNullException(nameof(toggleNearby));
+        tabStrip.NearbyOpen = nearbyOpen ?? throw new ArgumentNullException(nameof(nearbyOpen));
+    }
+
+    /// <summary>"Set up your road" (1.7.0): drawn above the detail pane once it is due or Help opens it.</summary>
+    public void AttachSetup(SetupCard card)
+    {
+        setupCard = card ?? throw new ArgumentNullException(nameof(card));
+    }
+
+    /// <summary>Opens the window in front with the "Set up your road" card (Help › Quick start).</summary>
+    public void ShowSetup()
+    {
+        EnsureInitialized();
+        setupCard?.Show();
+        IsOpen = true;
+        BringToFront();
+    }
+
+    /// <summary>
+    /// The quest the tour's Read chapter selects (<see cref="Core.Ui.TourSample"/>): the next main scenario quest when it
+    /// is Blocked, else the table's first Blocked row, else its first row. Null before the catalog is loaded.
+    /// </summary>
+    public uint? TourSampleQuest()
+    {
+        if (plugin.Session is not { Bundle: { } bundle } session)
+        {
+            return null;
+        }
+
+        RefreshMsq(session, bundle);
+        return Core.Ui.TourSample.Choose(msq?.Next, msq?.Next is null ? null : msq.State, runner.Rows);
+    }
+
+    /// <summary>The first pin while the overlay is off offers to turn it on, once ever.</summary>
+    private void OnQuestPinned(uint rowId)
+    {
+        if (overlayOn is null || overlayOn() || plugin.Settings is not { } settings || settings.PinOverlayPromptShown)
+        {
+            return;
+        }
+
+        pinPromptVisible = true;
+        settings.PinOverlayPromptShown = true;
+        settingsDirtyAtUtc ??= DateTime.UtcNow;
     }
 
     /// <summary>The shared per-window state other panes bind to.</summary>
@@ -477,7 +553,7 @@ public sealed class MainWindow : Window, IDisposable
     }
 
     /// <summary>
-    /// The opt-in shortcuts of Settings › Keyboard (all off by default; accessibility A7): Ctrl+1..4 switch tabs, F
+    /// The opt-in shortcuts of Settings › Keyboard (all off by default; accessibility A7): Ctrl+1..5 switch tabs, F
     /// flags the selected quest's giver, Enter shows the selected quest in the Journal, P pins or unpins it. Only while
     /// this window has the keys and no text field is active; the game still sees the key.
     /// </summary>
@@ -564,6 +640,16 @@ public sealed class MainWindow : Window, IDisposable
         }
 
         runner.Update(now);
+        // "Set up your road" comes once the tour offer is answered and any tour taken has ended (decision 7). The offer
+        // is decided after this window's first draw (TutorialOverlay.CheckFirstRun), so the card waits a few frames.
+        if (contentFrames < SetupDelayFrames)
+        {
+            contentFrames++;
+        }
+        else
+        {
+            setupCard?.CheckDue(tutorial?.Active == true);
+        }
         RefreshToolbarStrings(session);
         DrawToolbar(session);
         DrawChipRow(session);
@@ -585,9 +671,10 @@ public sealed class MainWindow : Window, IDisposable
 
     /// <summary>
     /// <c>/tsukimichi &lt;text&gt;</c>: sets the search, opens the window and prints up to <see cref="MaxChatMatches"/>
-    /// matching quest links to chat.
+    /// matching quest links to chat. Returns how many quests matched (-1 before the catalog is ready), so the command
+    /// can suggest a subcommand after a search that found nothing.
     /// </summary>
-    public void SearchAndPrint(string text)
+    public int SearchAndPrint(string text)
     {
         EnsureInitialized();
         ui.SearchText = text;
@@ -598,7 +685,7 @@ public sealed class MainWindow : Window, IDisposable
         if (plugin.Session?.Bundle is not { } bundle)
         {
             links.PrintText(Strings.CatalogNotReady);
-            return;
+            return -1;
         }
 
         var index = SearchIndex.For(bundle.Catalog);
@@ -631,6 +718,8 @@ public sealed class MainWindow : Window, IDisposable
         {
             links.PrintText(string.Format(CultureInfo.CurrentCulture, Strings.AndMoreFormat, count - MaxChatMatches));
         }
+
+        return count;
     }
 
     /// <summary>
@@ -657,6 +746,7 @@ public sealed class MainWindow : Window, IDisposable
     {
         FlushSettings(DateTime.UtcNow, force: true);
         ui.FiltersChanged -= OnFiltersChanged;
+        runner.QuestPinned -= OnQuestPinned;
         tablePane.Dispose();
     }
 
@@ -1387,6 +1477,8 @@ public sealed class MainWindow : Window, IDisposable
     {
         DrawRebuildFailure(session);
         DrawFreshnessStrip();
+        DrawContextBar(session);
+        DrawPinPrompt();
         if (session.ViewedSnapshot is null)
         {
             using var dusk = Theme.PushText(Theme.Surface.TextTertiary);
@@ -1396,6 +1488,136 @@ public sealed class MainWindow : Window, IDisposable
         {
             using var dusk = Theme.PushText(Theme.Surface.TextTertiary);
             ImGui.TextUnformatted(staleBanner);
+        }
+    }
+
+    private static readonly string DismissIcon = FontAwesomeIcon.Times.ToIconString();
+
+    /// <summary>Whether the window shows a stored character the player chose, while another may be the one logged in.</summary>
+    private static bool ViewingStored(SessionState session) =>
+        !session.IsFollowingLive && session.ViewedSnapshot is not null && !session.IsLive;
+
+    /// <summary>
+    /// The context bar (1.7.0, onboarding finding F8): on the first open of a session that restored a stored character
+    /// (not the live one) or two or more filters, one line says so ("Viewing Alt · 3 filters on") with Follow me (while
+    /// a character is logged in), Clear and a × that hides it until the next load. It goes by itself once neither holds.
+    /// </summary>
+    private void DrawContextBar(SessionState session)
+    {
+        var filters = FilterBadge.Count(ui.Filters);
+        var stored = ViewingStored(session);
+        if (!contextChecked)
+        {
+            contextChecked = true;
+            contextVisible = stored || filters >= 2;
+        }
+
+        if (!contextVisible)
+        {
+            return;
+        }
+
+        if (!stored && filters == 0)
+        {
+            contextVisible = false;
+            return;
+        }
+
+        var name = stored ? session.ViewedSnapshot!.Name : string.Empty;
+        if (contextKey != (name, filters, Loc.Version))
+        {
+            contextKey = (name, filters, Loc.Version);
+            var viewing = stored ? string.Format(CultureInfo.CurrentCulture, Strings.ContextViewingFormat, name) : string.Empty;
+            var filtersOn = filters > 0 ? Strings.ContextFilters(filters) : string.Empty;
+            contextLine = viewing.Length > 0 && filtersOn.Length > 0 ? viewing + Strings.ContextSeparator + filtersOn : viewing + filtersOn;
+        }
+
+        using (Theme.PushText(Theme.Surface.TextSecondary))
+        {
+            ImGui.TextUnformatted(contextLine);
+        }
+
+        if (stored && session.LiveContentId is not null)
+        {
+            ImGui.SameLine();
+            if (ImGui.SmallButton(Strings.ContextFollowMe + "##contextFollow"))
+            {
+                session.ViewedContentId = null;
+            }
+
+            if (ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(Strings.ContextFollowMeTooltip);
+            }
+        }
+
+        if (filters > 0)
+        {
+            ImGui.SameLine();
+            if (ImGui.SmallButton(Strings.ContextClear + "##contextClear"))
+            {
+                filterPanel.ResetAll();
+            }
+
+            if (ImGui.IsItemHovered())
+            {
+                UiMetrics.Tooltip(Strings.ContextClearTooltip);
+            }
+        }
+
+        ImGui.SameLine();
+        ImGui.PushFont(UiBuilder.IconFont);
+        var dismiss = ImGui.SmallButton(DismissIcon + "##contextDismiss");
+        ImGui.PopFont();
+        if (dismiss)
+        {
+            contextVisible = false;
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.ContextDismissTooltip);
+        }
+    }
+
+    /// <summary>
+    /// "Pinned. Show your pins on screen while you play? [Turn on overlay] [Not now]" (1.7.0, onboarding proposal 3):
+    /// after the first pin while the Todo overlay is off, once ever; it goes when the overlay is turned on anywhere.
+    /// </summary>
+    private void DrawPinPrompt()
+    {
+        if (!pinPromptVisible || toggleOverlay is not { } toggle)
+        {
+            return;
+        }
+
+        if (overlayOn?.Invoke() == true)
+        {
+            pinPromptVisible = false;
+            return;
+        }
+
+        using (Theme.PushText(Theme.Surface.Text))
+        {
+            ImGui.TextUnformatted(Strings.PinOverlayPrompt);
+        }
+
+        ImGui.SameLine();
+        if (ImGui.SmallButton(Strings.PinOverlayTurnOn + "##pinPromptOn"))
+        {
+            toggle();
+            pinPromptVisible = false;
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            UiMetrics.Tooltip(Strings.PinOverlayTurnOnTooltip);
+        }
+
+        ImGui.SameLine();
+        if (ImGui.SmallButton(Strings.PinOverlayNotNow + "##pinPromptNo"))
+        {
+            pinPromptVisible = false;
         }
     }
 
@@ -1491,7 +1713,13 @@ public sealed class MainWindow : Window, IDisposable
         using var backdrop = Theme.PushPaneBackdrop(gradient);
         using var detailColumn = ImRaii.Group();
         var detailHeight = height;
-        if (whatsNew is { Visible: true } card)
+        // "Set up your road" first: it shows by itself only on a fresh install (where What's new never does), and
+        // otherwise only when Help asked for it.
+        if (setupCard is { Visible: true } setup && tutorial?.Active != true)
+        {
+            detailHeight -= setup.Draw(height);
+        }
+        else if (whatsNew is { Visible: true } card)
         {
             detailHeight -= card.Draw(height);
         }

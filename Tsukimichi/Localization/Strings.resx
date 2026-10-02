@@ -973,7 +973,7 @@
     <value>Enter shows the selected quest in the Journal</value>
   </data>
   <data name="ConfigShortcutRevealHint" xml:space="preserve">
-    <value>On the Moonlit, Characters and Flight tabs: switches to the Journal with the quest's category open in the tree and its row selected</value>
+    <value>On the Moonlit, Characters, Flight and My blues tabs: switches to the Journal with the quest's category open in the tree and its row selected</value>
   </data>
   <data name="ConfigShortcutPin" xml:space="preserve">
     <value>P pins or unpins the selected quest</value>
@@ -2799,39 +2799,45 @@
     <value>/tsukimichi help</value>
   </data>
   <data name="Help.CommandKeys.5" xml:space="preserve">
-    <value>/tsukimichi glyphs</value>
+    <value>/tsuki tour</value>
   </data>
   <data name="Help.CommandKeys.6" xml:space="preserve">
-    <value>/tsuki zone</value>
+    <value>/tsuki journal, moonlit, characters, flight, blues</value>
   </data>
   <data name="Help.CommandKeys.7" xml:space="preserve">
-    <value>/tsuki which</value>
+    <value>/tsuki zone</value>
   </data>
   <data name="Help.CommandKeys.8" xml:space="preserve">
-    <value>/tsuki why [quest name]</value>
+    <value>/tsuki which</value>
   </data>
   <data name="Help.CommandKeys.9" xml:space="preserve">
-    <value>/tsuki nearby</value>
+    <value>/tsuki why [quest name]</value>
   </data>
   <data name="Help.CommandKeys.10" xml:space="preserve">
-    <value>/tsuki todo</value>
+    <value>/tsuki route [quest name]</value>
   </data>
   <data name="Help.CommandKeys.11" xml:space="preserve">
-    <value>/tsuki report [quest name]</value>
+    <value>/tsuki nearby</value>
   </data>
   <data name="Help.CommandKeys.12" xml:space="preserve">
-    <value>/tsuki export [quests|moonlit] [json|csv]</value>
+    <value>/tsuki todo</value>
   </data>
   <data name="Help.CommandKeys.13" xml:space="preserve">
-    <value>Ctrl+F</value>
+    <value>/tsuki report [quest name]</value>
   </data>
   <data name="Help.CommandKeys.14" xml:space="preserve">
-    <value>Esc</value>
+    <value>/tsuki export [quests|moonlit] [json|csv]</value>
   </data>
   <data name="Help.CommandKeys.15" xml:space="preserve">
-    <value>Menu key, Shift+F10, …</value>
+    <value>Ctrl+F</value>
   </data>
   <data name="Help.CommandKeys.16" xml:space="preserve">
+    <value>Esc</value>
+  </data>
+  <data name="Help.CommandKeys.17" xml:space="preserve">
+    <value>Menu key, Shift+F10, …</value>
+  </data>
+  <data name="Help.CommandKeys.18" xml:space="preserve">
     <value>Ctrl+1 to 5, F, Enter, P</value>
   </data>
   <data name="Help.CommandMeanings.0" xml:space="preserve">
@@ -2841,7 +2847,7 @@
     <value>the same, shorter; every subcommand works with either</value>
   </data>
   <data name="Help.CommandMeanings.2" xml:space="preserve">
-    <value>search and print matching quests to chat as links; /tsukimichi &lt;text&gt; does the same</value>
+    <value>search and print matching quests to chat as links; /tsukimichi &lt;text&gt; does the same, and suggests a command when the word was a near miss (Did you mean /tsuki nearby?)</value>
   </data>
   <data name="Help.CommandMeanings.3" xml:space="preserve">
     <value>open Settings (/tsukimichi config does the same)</value>
@@ -2850,39 +2856,45 @@
     <value>open this window</value>
   </data>
   <data name="Help.CommandMeanings.5" xml:space="preserve">
-    <value>the glyph sheet: every moon at every size</value>
+    <value>start the guided tour of the window</value>
   </data>
   <data name="Help.CommandMeanings.6" xml:space="preserve">
-    <value>quests you can start in the current zone, as chat links by level</value>
+    <value>open the main window on that tab (blues is My blues)</value>
   </data>
   <data name="Help.CommandMeanings.7" xml:space="preserve">
-    <value>every quest the targeted NPC hands out, with its state</value>
+    <value>quests you can start in the current zone, as chat links by level</value>
   </data>
   <data name="Help.CommandMeanings.8" xml:space="preserve">
-    <value>why the selected quest (or the named one) is not offered: its state and blocker, then one line per requirement with met or unmet and the values compared, then the curated note where the game is known to behave differently; a Ready quest says whom to talk to, with a map link. The same list opens in the Journal from an NPC's target-bar menu ("Tsukimichi: quests here")</value>
+    <value>every quest the targeted NPC hands out, with its state</value>
   </data>
   <data name="Help.CommandMeanings.9" xml:space="preserve">
-    <value>open or close the Nearby quests window: what you can start in the current zone</value>
+    <value>why the selected quest (or the named one) is not offered: its state and blocker, then one line per requirement with met or unmet and the values compared, then the curated note where the game is known to behave differently; a Ready quest says whom to talk to, with a map link. The same list opens in the Journal from an NPC's target-bar menu ("Tsukimichi: quests here")</value>
   </data>
   <data name="Help.CommandMeanings.10" xml:space="preserve">
-    <value>show or hide the Todo overlay: pins, Event quests running now, Unlocks you can start here, the next main scenario quest and job quests</value>
+    <value>open the unlock route to the selected (or named) quest: every quest still needed, in order, with where to level up</value>
   </data>
   <data name="Help.CommandMeanings.11" xml:space="preserve">
-    <value>copy a diagnostic block for the selected quest (or the named one) to the clipboard, ready to paste into a GitHub issue; the Report button in the detail pane does the same</value>
+    <value>open or close the Nearby quests window: what you can start in the current zone</value>
   </data>
   <data name="Help.CommandMeanings.12" xml:space="preserve">
-    <value>write the viewed character's completed quests, its Moonlit collection, or both to the exports folder as JSON or CSV (the Settings format when none is named) and print where; see docs/export-format.md. No content id, account or world, and the name only when Settings › Data › Export › Include character name is ticked</value>
+    <value>show or hide the Todo overlay: pins, Event quests running now, Unlocks you can start here, the next main scenario quest and job quests</value>
   </data>
   <data name="Help.CommandMeanings.13" xml:space="preserve">
-    <value>put the caret in the search, while the window has focus</value>
+    <value>copy a diagnostic block for the selected quest (or the named one) to the clipboard, ready to paste into a GitHub issue; the Report button in the detail pane does the same</value>
   </data>
   <data name="Help.CommandMeanings.14" xml:space="preserve">
-    <value>close the open menu or the filter panel; with neither open, close the window</value>
+    <value>write the viewed character's completed quests, its Moonlit collection, or both to the exports folder as JSON or CSV (the Settings format when none is named) and print where; see docs/export-format.md. No content id, account or world, and the name only when Settings › Data › Export › Include character name is ticked</value>
   </data>
   <data name="Help.CommandMeanings.15" xml:space="preserve">
-    <value>open the focused row's menu in the quest table and the Moonlit list, the same menu a right-click opens; the … button at a row's right end (shown on hover or focus) opens it with a left click</value>
+    <value>put the caret in the search, while the window has focus</value>
   </data>
   <data name="Help.CommandMeanings.16" xml:space="preserve">
+    <value>close the open menu or the filter panel; with neither open, close the window</value>
+  </data>
+  <data name="Help.CommandMeanings.17" xml:space="preserve">
+    <value>open the focused row's menu in the quest table and the Moonlit list, the same menu a right-click opens; the … button at a row's right end (shown on hover or focus) opens it with a left click</value>
+  </data>
+  <data name="Help.CommandMeanings.18" xml:space="preserve">
     <value>off unless turned on in Settings › Keyboard: switch tabs, flag the selected quest's giver, show it in the Journal, pin it. The game sees these keys too: Ctrl+1 to 5 are hotbar 2 by default</value>
   </data>
   <data name="Help.CountsCardTitles.0" xml:space="preserve">
@@ -2937,7 +2949,10 @@
     <value>Game hooks paused after a patch</value>
   </data>
   <data name="Help.QuirkCardTitles.6" xml:space="preserve">
-    <value>The Duty Finder unlock hint</value>
+    <value>HaselTweaks may reveal hidden names</value>
+  </data>
+  <data name="Help.QuirkCardTitles.7" xml:space="preserve">
+    <value>Simple Tweaks' scenario percentage</value>
   </data>
   <data name="Help.QuirkCardBodies.0" xml:space="preserve">
     <value>The plugin lists every prerequisite the game's data records. For a few quests the game waives one: Up in Arms is optional once the Zenith is in hand, so what follows it is offered while Tsukimichi still shows Up in Arms undone. The known cases carry a curated note: the detail pane shows it under the requirements as "Note: …", /tsuki why prints it and Report this quest includes it. When an NPC offers a quest shown Blocked here and there is no note, use Report this quest so the exception can be added.</value>
@@ -2958,7 +2973,10 @@
     <value>The item tooltip panel, the item and NPC menu entries, the server info bar entry and the Duty Finder unlock hint sit beside the game's own interface, which a patch can move. Each Tsukimichi release records the game version they were tested on; on a newer game patch (a new patch date) they pause until an update is tested there, and a chat line at login and a notice in Settings › Integrations say so. Hotfixes keep the patch date and do not pause them. The Journal, Moonlit, Characters, Nearby, the Todo overlay and every /tsuki command work as usual. To use the hooks anyway, tick Settings › Advanced › "Enable game hooks on this untested version"; it covers the patch you are on now and its hotfixes, so the next patch pauses them again. If one then draws in the wrong place, untick it and it stops at once.</value>
   </data>
   <data name="Help.QuirkCardBodies.6" xml:space="preserve">
-    <value>Select a padlocked duty in the Duty Finder or Raid Finder and a small panel beside the window names the quest that unlocks it, with its moon, what it is waiting for, and buttons to reveal it here or flag its giver. It follows the duty you select, not the one under the mouse, and speaks for the character you are logged in on. It knows the unlocks the game data links, a curated list (the A Realm Reborn and Dawntrail launch dungeons, the Crystal Tower and Shadow of Mhach alliance raids, the Heavensward optional dungeons and more) and Moonlit's duty unlocks; for any other padlocked duty it stays silent rather than guess. If the panel names the wrong quest, or a padlocked duty you know the quest for shows nothing, open a data correction issue with the duty's name. Turn it off in Settings › Integrations › "Duty Finder unlock hint".</value>
+    <value>HaselTweaks' Reveal Duty Requirements shows the names of the quests a padlocked duty needs, in the game's own Duty Finder. Tsukimichi's spoiler shield covers only what Tsukimichi draws, so a main scenario name it hides can still show there; turn that tweak off if you want the names kept back.</value>
+  </data>
+  <data name="Help.QuirkCardBodies.7" xml:space="preserve">
+    <value>Simple Tweaks can show how far through the main scenario you are. It counts differently from Tsukimichi (which quests count, and how branches, removed and locked-out quests are treated), so the two percentages rarely match; each is right by its own count. Tsukimichi's is the MSQ pill in the status bar and the Characters dashboard.</value>
   </data>
   <data name="Help.QuirksTip" xml:space="preserve">
     <value>A quest in the wrong state that is not one of these? Report this quest in the detail pane copies a diagnostic block with the quest id, the state and every requirement's verdict, and no character identifiers; paste it into a GitHub issue.</value>
@@ -3000,7 +3018,7 @@
     <value>Hide completed plus Available now is the fastest view of what to do next.</value>
   </data>
   <data name="Help.Tips.1" xml:space="preserve">
-    <value>Pin a quest and it stays one click away in the Characters dashboard, with its status.</value>
+    <value>Pin a quest and it stays at the top of the table and in the Todo overlay, with its status.</value>
   </data>
   <data name="Help.Tips.2" xml:space="preserve">
     <value>The search box takes a quest id; paste one from a wiki.</value>
@@ -3031,6 +3049,260 @@
   </data>
   <data name="Help.Tips.11" xml:space="preserve">
     <value>Delete all data in Settings removes snapshots, pins and overrides but keeps your settings.</value>
+  </data>
+  <data name="RailOverlayOffTooltip" xml:space="preserve">
+    <value>Todo overlay: off. Click to show your pins, the next story quest and nearby unlocks on screen while you play.</value>
+  </data>
+  <data name="RailOverlayOnTooltip" xml:space="preserve">
+    <value>Todo overlay: on. Click to hide it.</value>
+  </data>
+  <data name="RailNearbyTooltip" xml:space="preserve">
+    <value>Nearby quests: what you can start in this zone. Click to open or close.</value>
+  </data>
+  <data name="PinOverlayPrompt" xml:space="preserve">
+    <value>Pinned. Show your pins on screen while you play?</value>
+  </data>
+  <data name="PinOverlayTurnOn" xml:space="preserve">
+    <value>Turn on overlay</value>
+  </data>
+  <data name="PinOverlayTurnOnTooltip" xml:space="preserve">
+    <value>Turns the Todo overlay on: your pins, the next story quest and nearby unlocks in a small panel. The list button at the foot of the tabs turns it off again.</value>
+  </data>
+  <data name="PinOverlayNotNow" xml:space="preserve">
+    <value>Not now</value>
+  </data>
+  <data name="ContextViewingFormat" xml:space="preserve">
+    <value>Viewing {0}</value>
+    <comment>{0} = the stored character shown instead of the one logged in.</comment>
+  </data>
+  <data name="ContextFilterOne" xml:space="preserve">
+    <value>{0} filter on</value>
+    <comment>{0} = 1.</comment>
+  </data>
+  <data name="ContextFiltersFormat" xml:space="preserve">
+    <value>{0} filters on</value>
+    <comment>{0} = how many filters narrow the table.</comment>
+  </data>
+  <data name="ContextFollowMe" xml:space="preserve">
+    <value>Follow me</value>
+  </data>
+  <data name="ContextFollowMeTooltip" xml:space="preserve">
+    <value>Show the character you are logged in as, and follow it from now on</value>
+  </data>
+  <data name="ContextClear" xml:space="preserve">
+    <value>Clear</value>
+  </data>
+  <data name="ContextClearTooltip" xml:space="preserve">
+    <value>Turn every filter off and clear the search</value>
+  </data>
+  <data name="ContextDismissTooltip" xml:space="preserve">
+    <value>Hide this line until the plugin loads again</value>
+  </data>
+  <data name="CommandDidYouMeanFormat" xml:space="preserve">
+    <value>Did you mean /tsuki {0}?</value>
+    <comment>{0} = a subcommand such as nearby.</comment>
+  </data>
+  <data name="RouteCommandNoSelection" xml:space="preserve">
+    <value>Select a quest first, or name one: /tsuki route &lt;quest name&gt;.</value>
+  </data>
+  <data name="WhatsNew.SinceFormat" xml:space="preserve">
+    <value>What's new since {0}</value>
+    <comment>{0} = the version you had before; the card lists every version since.</comment>
+  </data>
+  <data name="WhatsNew.More" xml:space="preserve">
+    <value>More</value>
+  </data>
+  <data name="WhatsNew.Less" xml:space="preserve">
+    <value>Less</value>
+  </data>
+  <data name="WhatsNew.MoreTooltip" xml:space="preserve">
+    <value>Show every change in this version</value>
+  </data>
+  <data name="WhatsNew.LessTooltip" xml:space="preserve">
+    <value>Back to the highlights</value>
+  </data>
+  <data name="Setup.Title" xml:space="preserve">
+    <value>Set up your road</value>
+  </data>
+  <data name="Setup.Lede" xml:space="preserve">
+    <value>A few things Tsukimichi can do while you play. Each one applies at once, and Settings can change it later.</value>
+  </data>
+  <data name="Setup.OverlayLabel" xml:space="preserve">
+    <value>Todo overlay</value>
+  </data>
+  <data name="Setup.OverlayValue" xml:space="preserve">
+    <value>Your pins, the next story quest and the unlocks you can pick up here, on screen while you play.</value>
+  </data>
+  <data name="Setup.NoticeLabel" xml:space="preserve">
+    <value>Chat notice for new quests</value>
+  </data>
+  <data name="Setup.NoticeValue" xml:space="preserve">
+    <value>A chat line with a link when a quest opens up for you; the main scenario is left out.</value>
+  </data>
+  <data name="Setup.ServerBarLabel" xml:space="preserve">
+    <value>Nearby count in the server info bar</value>
+  </data>
+  <data name="Setup.ServerBarValue" xml:space="preserve">
+    <value>☾ 3 at the top of the screen: the quests you can start in this zone. Click it for the list.</value>
+  </data>
+  <data name="Setup.ItemHintsLabel" xml:space="preserve">
+    <value>Item hints</value>
+  </data>
+  <data name="Setup.ItemHintsValue" xml:space="preserve">
+    <value>Hover an item a quest rewards and a short line names the quest and whether it is done.</value>
+  </data>
+  <data name="Setup.DutyFinderLabel" xml:space="preserve">
+    <value>Duty Finder hint</value>
+  </data>
+  <data name="Setup.DutyFinderValue" xml:space="preserve">
+    <value>Select a padlocked duty and a panel beside the Duty Finder names the quest that unlocks it.</value>
+  </data>
+  <data name="Setup.Companions" xml:space="preserve">
+    <value>Other plugins can take over travel, duties and crafting for you: Lifestream, vnavmesh, Questionable and more.</value>
+  </data>
+  <data name="Setup.CompanionsButton" xml:space="preserve">
+    <value>Companion plugins</value>
+  </data>
+  <data name="Setup.CompanionsTooltip" xml:space="preserve">
+    <value>What each plugin adds and where to get it</value>
+  </data>
+  <data name="Setup.Recommended" xml:space="preserve">
+    <value>Recommended</value>
+  </data>
+  <data name="Setup.RecommendedTooltip" xml:space="preserve">
+    <value>Turns on the chat notice, the server info bar count, item hints and the Duty Finder hint. The overlay stays your choice.</value>
+  </data>
+  <data name="Setup.Done" xml:space="preserve">
+    <value>Done</value>
+  </data>
+  <data name="Setup.DoneTooltip" xml:space="preserve">
+    <value>Close this card. Help › Quick start opens it again.</value>
+  </data>
+  <data name="Help.StepSetupTitle" xml:space="preserve">
+    <value>Set up your road</value>
+  </data>
+  <data name="Help.StepSetupBody" xml:space="preserve">
+    <value>Choose what Tsukimichi shows while you play: the Todo overlay, chat notices, the server info bar count, item hints and the Duty Finder hint. The card opens above the detail pane.</value>
+  </data>
+  <data name="Help.TopicName.WhilePlaying" xml:space="preserve">
+    <value>While you play</value>
+  </data>
+  <data name="Help.TopicLede.WhilePlaying" xml:space="preserve">
+    <value>What Tsukimichi does beside the game while you play, and where to turn each part on or off.</value>
+  </data>
+  <data name="Help.PlayCardTitles.0" xml:space="preserve">
+    <value>Todo overlay</value>
+  </data>
+  <data name="Help.PlayCardTitles.1" xml:space="preserve">
+    <value>Nearby and the server info bar</value>
+  </data>
+  <data name="Help.PlayCardTitles.2" xml:space="preserve">
+    <value>Item hints and the item menu</value>
+  </data>
+  <data name="Help.PlayCardTitles.3" xml:space="preserve">
+    <value>Quests an NPC hands out</value>
+  </data>
+  <data name="Help.PlayCardTitles.4" xml:space="preserve">
+    <value>The Duty Finder unlock hint</value>
+  </data>
+  <data name="Help.PlayCardTitles.5" xml:space="preserve">
+    <value>Abandoned quests</value>
+  </data>
+  <data name="Help.PlayCardTitles.6" xml:space="preserve">
+    <value>Routes</value>
+  </data>
+  <data name="Help.PlayCardTitles.7" xml:space="preserve">
+    <value>Follow a route</value>
+  </data>
+  <data name="Help.PlayCardTitles.8" xml:space="preserve">
+    <value>Go to giver</value>
+  </data>
+  <data name="Help.PlayCardBodies.0" xml:space="preserve">
+    <value>A small panel that stays on screen: your pins, Event quests running now, unlocks you can start here, the next main scenario quest and job quests, an expansion pinned from My blues and a route you follow. Turn it on with the list button at the foot of the tabs, /tsuki todo or Settings › Todo overlay. Locked makes it click-through.</value>
+  </data>
+  <data name="Help.PlayCardBodies.1" xml:space="preserve">
+    <value>Nearby quests lists what you can start in the zone you stand in, by level, with Flag and Teleport. ☾ N in the server info bar is the same count: hover it for the first names, click it for the list. The marker button at the foot of the tabs and /tsuki nearby open it too; its cog hides the count.</value>
+  </data>
+  <data name="Help.PlayCardBodies.2" xml:space="preserve">
+    <value>Hover an item that a quest rewards and a short line near the cursor names the quest and whether it is done. Right-click the item for "Tsukimichi: quest reward", which opens the quest here. Items a quest asks you to hand in say so too. Settings › Integrations turns each off.</value>
+  </data>
+  <data name="Help.PlayCardBodies.3" xml:space="preserve">
+    <value>Target a quest giver and open the target bar's menu: "Tsukimichi: quests here (N)" opens the Journal on every quest that NPC hands out, Blocked ones with their blocker. /tsuki which prints the same list to chat.</value>
+  </data>
+  <data name="Help.PlayCardBodies.4" xml:space="preserve">
+    <value>Select a padlocked duty in the Duty Finder or Raid Finder and a small panel beside the window names the quest that unlocks it, with its moon, what it is waiting for, and buttons to reveal it here or flag its giver. It follows the duty you select, not the one under the mouse, and speaks for the character you are logged in on. It knows the unlocks the game data links, a curated list (the A Realm Reborn and Dawntrail launch dungeons, the Crystal Tower and Shadow of Mhach alliance raids, the Heavensward optional dungeons and more) and Moonlit's duty unlocks; for any other padlocked duty it stays silent rather than guess. If the panel names the wrong quest, or a padlocked duty you know the quest for shows nothing, open a data correction issue with the duty's name. Turn it off in Settings › Integrations › "Duty Finder unlock hint".</value>
+  </data>
+  <data name="Help.PlayCardBodies.5" xml:space="preserve">
+    <value>A quest you accepted and then abandoned is remembered: the Characters dashboard lists it with Flag and Teleport, and Show in Journal filters the table to them. A chat line names it once per session (Settings › Notices), so a mis-click is noticed.</value>
+  </data>
+  <data name="Help.PlayCardBodies.6" xml:space="preserve">
+    <value>Route to this under a quest, Route to this reward in Moonlit, Route to unlock beside Job quests and the Duty Finder, and /tsuki route [quest name] list every quest still needed, in order, with where to level up. Copy route and Pin all are in the route window.</value>
+  </data>
+  <data name="Help.PlayCardBodies.7" xml:space="preserve">
+    <value>Follow this route in the route window puts its next three steps in the Todo overlay, with Flag next stop. Steps drop off as you turn them in, and a chat line says when the route is done. Your pins are not touched.</value>
+  </data>
+  <data name="Help.PlayCardBodies.8" xml:space="preserve">
+    <value>Teleport, the aethernet hop and Walk to giver (Lifestream and vnavmesh) take you to a quest's giver, or Go to giver does all three in one click, with Stop at every step. Nothing moves your character unless you press a button.</value>
+  </data>
+  <data name="Help.PlayTip" xml:space="preserve">
+    <value>None of these change the game: they read what the game shows you and draw beside it. After a game patch the parts drawn beside the game's own windows pause until they are tested (Known quirks).</value>
+  </data>
+  <data name="Help.ToggleOverlay" xml:space="preserve">
+    <value>Turn the overlay on or off</value>
+  </data>
+  <data name="Help.OpenNearby" xml:space="preserve">
+    <value>Open Nearby quests</value>
+  </data>
+  <data name="Help.TopicName.Privacy" xml:space="preserve">
+    <value>What Tsukimichi reads and keeps</value>
+  </data>
+  <data name="Help.TopicLede.Privacy" xml:space="preserve">
+    <value>Tsukimichi reads your own characters, keeps its files on this PC and has no network code.</value>
+  </data>
+  <data name="Help.PrivacyCardTitles.0" xml:space="preserve">
+    <value>Your own characters only</value>
+  </data>
+  <data name="Help.PrivacyCardTitles.1" xml:space="preserve">
+    <value>Files on this PC</value>
+  </data>
+  <data name="Help.PrivacyCardTitles.2" xml:space="preserve">
+    <value>No network code</value>
+  </data>
+  <data name="Help.PrivacyCardTitles.3" xml:space="preserve">
+    <value>Links open your browser</value>
+  </data>
+  <data name="Help.PrivacyCardTitles.4" xml:space="preserve">
+    <value>Companion plugins</value>
+  </data>
+  <data name="Help.PrivacyCardTitles.5" xml:space="preserve">
+    <value>Forget and delete</value>
+  </data>
+  <data name="Help.PrivacyCardBodies.0" xml:space="preserve">
+    <value>Tsukimichi reads the quests, levels, jobs and unlocks of the character you are logged in as, from the game on this PC, the same things the game shows you. It reads nothing about other players.</value>
+  </data>
+  <data name="Help.PrivacyCardBodies.1" xml:space="preserve">
+    <value>Your settings are in Dalamud's pluginConfigs/Tsukimichi.json; everything else stays in the folder beside it, pluginConfigs/Tsukimichi: characters/&lt;id&gt;.json, one snapshot per character, with its completion dates (.dates), accepted and abandoned quests (.accepted, .abandoned) and the Since you were away state (.return) beside it; daily backups (.prev, .prev2); user/pins.json, user/overrides.json and user/discovery.json; cache/ for the journal text search index when it is on; and exports/ (or the folder you chose) when you export. While the game runs, a small .live.json tells a second game client who is logged in.</value>
+  </data>
+  <data name="Help.PrivacyCardBodies.2" xml:space="preserve">
+    <value>Tsukimichi never uploads, downloads or checks anything online. The quest data it needs ships inside the plugin, and Dalamud installs updates.</value>
+  </data>
+  <data name="Help.PrivacyCardBodies.3" xml:space="preserve">
+    <value>Wiki, GitHub and other links open in your browser only when you click them. The plugin itself fetches nothing.</value>
+  </data>
+  <data name="Help.PrivacyCardBodies.4" xml:space="preserve">
+    <value>Questionable, AutoDuty, Artisan, GatherBuddy, Lifestream and vnavmesh get work only when you press one of their buttons. While a Tsukimichi window is open it may ask installed ones for their status (what Questionable is running, Allagan Tools' item counts). Other plugins can ask Tsukimichi for quest states through its IPC (docs/ipc.md).</value>
+  </data>
+  <data name="Help.PrivacyCardBodies.5" xml:space="preserve">
+    <value>Forget this character, on a stored character in Characters, deletes that character's files. Settings › Data › Delete all data removes every snapshot, pin and override and keeps your settings. Uninstalling leaves the folder; delete it to remove everything.</value>
+  </data>
+  <data name="MoonlitEmptyBody" xml:space="preserve">
+    <value>The kind, Hide obtained, the search or the filters above leave nothing to show.</value>
+  </data>
+  <data name="PlanEmptyFilteredBody" xml:space="preserve">
+    <value>Ready only, Sprout mode or the kinds you picked hide every unlock quest left.</value>
+  </data>
+  <data name="PlanEmptyAllDoneHeading" xml:space="preserve">
+    <value>Nothing blue left</value>
   </data>
   <data name="AddedInTooltip" xml:space="preserve">
     <value>Keep only the quests one patch series added: 7.5x is 7.5, 7.51, 7.55 and the rest of 7.5. Quests whose patch is not known are hidden while it is set. After a game update, New since data keeps the quests newer than Tsukimichi's data</value>
@@ -3159,7 +3431,7 @@
     <comment>{0} = shown, {1} = left in total.</comment>
   </data>
   <data name="PlanEmptyAllDone" xml:space="preserve">
-    <value>Every unlock quest is done. Nothing blue left.</value>
+    <value>Every blue unlock quest is done for this character.</value>
   </data>
   <data name="PlanEmptyFiltered" xml:space="preserve">
     <value>No unlock quest matches these filters.</value>
@@ -3956,7 +4228,7 @@
     <value>Why not this one</value>
   </data>
   <data name="Tutorial.DetailBody" xml:space="preserve">
-    <value>Select a row: the detail pane stacks cards, requirements first, with the one that blocks you marked. With nothing selected, Tonight shows what you can do now.</value>
+    <value>The tour picked a quest for you: the detail pane stacks cards, requirements first, with the one that blocks you marked. With nothing selected, Tonight shows what you can do now.</value>
   </data>
   <data name="Tutorial.StatusTitle" xml:space="preserve">
     <value>The Status column</value>
@@ -4004,7 +4276,7 @@
     <value>While you play</value>
   </data>
   <data name="Tutorial.PlayBody" xml:space="preserve">
-    <value>The Todo overlay keeps pins and nearby unlocks on screen; Nearby lists what you can start in this zone. Turn them on in Settings, or type /tsuki todo and /tsuki nearby.</value>
+    <value>The Todo overlay keeps pins and nearby unlocks on screen; Nearby lists what you can start in this zone. These two buttons above Help turn them on and off.</value>
   </data>
   <data name="Tutorial.CompanionsTitle" xml:space="preserve">
     <value>Companion plugins</value>
@@ -4295,7 +4567,7 @@
     <comment>{0} = name, {1} = world, {2} = time.</comment>
   </data>
   <data name="BrowseModeNotice" xml:space="preserve">
-    <value>No character snapshot: states, blockers and availability are not evaluated.</value>
+    <value>Log in and Tsukimichi reads your journal. Until then you can browse every quest, but states, blockers and what you can start are not worked out.</value>
   </data>
   <data name="HelpButtonTooltip" xml:space="preserve">
     <value>Help</value>
@@ -4914,7 +5186,7 @@
     <value>Right-click an item to reveal the quest that rewards it</value>
   </data>
   <data name="CommandHelp" xml:space="preserve">
-    <value>Open Tsukimichi (also /tsuki). search &lt;text&gt; (or just &lt;text&gt;) prints matching quest links; zone lists quests you can start here; which lists the targeted NPC's quests; why [quest name] says what blocks the selected or named quest; nearby and todo toggle the Nearby quests window and the Todo overlay; report [quest name] copies a diagnostic block for the selected or named quest; export [quests|moonlit] [json|csv] writes your completed quests or Moonlit collection to a file; settings (or config), help and glyphs open those windows.</value>
+    <value>Open Tsukimichi (also /tsuki). search &lt;text&gt; (or just &lt;text&gt;) prints matching quest links; journal, moonlit, characters, flight and blues open those tabs; tour starts the guided tour; zone lists quests you can start here; which lists the targeted NPC's quests; why [quest name] says what blocks the selected or named quest; route [quest name] opens its unlock route; nearby and todo toggle the Nearby quests window and the Todo overlay; report [quest name] copies a diagnostic block for the selected or named quest; export [quests|moonlit] [json|csv] writes your completed quests or Moonlit collection to a file; settings (or config) and help open those windows.</value>
   </data>
   <data name="CommandAliasHelp" xml:space="preserve">
     <value>Short form of /tsukimichi.</value>

@@ -705,9 +705,6 @@
   <data name="ConfigShortcutReveal" xml:space="preserve">
     <value>Enterで選択中のクエストをジャーナルで表示</value>
   </data>
-  <data name="ConfigShortcutRevealHint" xml:space="preserve">
-    <value>月明かり、キャラクター、飛行タブで有効: ジャーナルに切り替え、ツリーでクエストのカテゴリーを開いて行を選択します</value>
-  </data>
   <data name="ConfigShortcutPin" xml:space="preserve">
     <value>Pキーで選択中のクエストをピン留め／解除</value>
   </data>
@@ -1953,40 +1950,37 @@
   <data name="Help.CommandKeys.4" xml:space="preserve">
     <value>/tsukimichi help</value>
   </data>
-  <data name="Help.CommandKeys.5" xml:space="preserve">
-    <value>/tsukimichi glyphs</value>
-  </data>
-  <data name="Help.CommandKeys.6" xml:space="preserve">
+  <data name="Help.CommandKeys.7" xml:space="preserve">
     <value>/tsuki zone</value>
   </data>
-  <data name="Help.CommandKeys.7" xml:space="preserve">
+  <data name="Help.CommandKeys.8" xml:space="preserve">
     <value>/tsuki which</value>
   </data>
-  <data name="Help.CommandKeys.8" xml:space="preserve">
+  <data name="Help.CommandKeys.9" xml:space="preserve">
     <value>/tsuki why [quest name]</value>
   </data>
-  <data name="Help.CommandKeys.9" xml:space="preserve">
+  <data name="Help.CommandKeys.11" xml:space="preserve">
     <value>/tsuki nearby</value>
   </data>
-  <data name="Help.CommandKeys.10" xml:space="preserve">
+  <data name="Help.CommandKeys.12" xml:space="preserve">
     <value>/tsuki todo</value>
   </data>
-  <data name="Help.CommandKeys.11" xml:space="preserve">
+  <data name="Help.CommandKeys.13" xml:space="preserve">
     <value>/tsuki report [quest name]</value>
   </data>
-  <data name="Help.CommandKeys.12" xml:space="preserve">
+  <data name="Help.CommandKeys.14" xml:space="preserve">
     <value>/tsuki export [quests|moonlit] [json|csv]</value>
   </data>
-  <data name="Help.CommandKeys.13" xml:space="preserve">
+  <data name="Help.CommandKeys.15" xml:space="preserve">
     <value>Ctrl+F</value>
   </data>
-  <data name="Help.CommandKeys.14" xml:space="preserve">
+  <data name="Help.CommandKeys.16" xml:space="preserve">
     <value>Esc</value>
   </data>
-  <data name="Help.CommandKeys.15" xml:space="preserve">
+  <data name="Help.CommandKeys.17" xml:space="preserve">
     <value>メニューキー、Shift+F10、…</value>
   </data>
-  <data name="Help.CommandKeys.16" xml:space="preserve">
+  <data name="Help.CommandKeys.18" xml:space="preserve">
     <value>Ctrl+1～5、F、Enter、P</value>
   </data>
   <data name="Help.CommandMeanings.0" xml:space="preserve">
@@ -1995,49 +1989,43 @@
   <data name="Help.CommandMeanings.1" xml:space="preserve">
     <value>同上の短縮形。すべてのサブコマンドはどちらでも使えます</value>
   </data>
-  <data name="Help.CommandMeanings.2" xml:space="preserve">
-    <value>検索して、該当するクエストをリンクとしてチャットに表示します。/tsukimichi &lt;text&gt; でも同じです</value>
-  </data>
   <data name="Help.CommandMeanings.3" xml:space="preserve">
     <value>設定を開きます（/tsukimichi config でも同じです）</value>
   </data>
   <data name="Help.CommandMeanings.4" xml:space="preserve">
     <value>このウィンドウを開きます</value>
   </data>
-  <data name="Help.CommandMeanings.5" xml:space="preserve">
-    <value>グリフ一覧: すべてのサイズのすべての月</value>
-  </data>
-  <data name="Help.CommandMeanings.6" xml:space="preserve">
+  <data name="Help.CommandMeanings.7" xml:space="preserve">
     <value>現在のエリアで開始できるクエストを、レベル順にチャットリンクで表示します</value>
   </data>
-  <data name="Help.CommandMeanings.7" xml:space="preserve">
+  <data name="Help.CommandMeanings.8" xml:space="preserve">
     <value>ターゲット中のNPCが依頼するすべてのクエストを、状態とともに表示します</value>
   </data>
-  <data name="Help.CommandMeanings.8" xml:space="preserve">
+  <data name="Help.CommandMeanings.9" xml:space="preserve">
     <value>選択中のクエスト（または指定したクエスト）が受注できない理由を表示します。状態と妨げている条件、続いて受注条件ごとに達成／未達と比較した値を1行ずつ、さらにゲームの挙動が異なることが知られている場合は精査済みの注記を表示します。受注可能なクエストでは、話しかける相手をマップリンク付きで示します。NPCのターゲットバーのメニュー（「Tsukimichi: このNPCのクエスト」）からも、同じ一覧をジャーナルで開けます</value>
   </data>
-  <data name="Help.CommandMeanings.9" xml:space="preserve">
+  <data name="Help.CommandMeanings.11" xml:space="preserve">
     <value>周辺のクエストウィンドウを開く／閉じる: 現在のエリアで開始できるもの</value>
   </data>
-  <data name="Help.CommandMeanings.10" xml:space="preserve">
+  <data name="Help.CommandMeanings.12" xml:space="preserve">
     <value>Todoオーバーレイを表示／非表示: ピン留め、開催中のイベントクエスト、ここで開始できる解放クエスト、次のメインクエスト、ジョブクエスト</value>
   </data>
-  <data name="Help.CommandMeanings.11" xml:space="preserve">
+  <data name="Help.CommandMeanings.13" xml:space="preserve">
     <value>選択中のクエスト（または指定したクエスト）の診断ブロックをクリップボードにコピーします。GitHubのissueにそのまま貼り付けられます。詳細ペインの「レポート」ボタンも同じです</value>
   </data>
-  <data name="Help.CommandMeanings.12" xml:space="preserve">
+  <data name="Help.CommandMeanings.14" xml:space="preserve">
     <value>表示中のキャラクターの完了済みクエスト、月明かりのコレクション、またはその両方を、JSONまたはCSV（指定がなければ設定の形式）でexportsフォルダーに書き出し、保存先を表示します。docs/export-format.md を参照してください。コンテンツID、アカウント、ワールドは含まれず、名前は設定 › データ › エクスポート › 「キャラクター名を含める」にチェックがある場合のみ含まれます</value>
   </data>
-  <data name="Help.CommandMeanings.13" xml:space="preserve">
+  <data name="Help.CommandMeanings.15" xml:space="preserve">
     <value>ウィンドウにフォーカスがある間、検索欄にカーソルを移動します</value>
   </data>
-  <data name="Help.CommandMeanings.14" xml:space="preserve">
+  <data name="Help.CommandMeanings.16" xml:space="preserve">
     <value>開いているメニューまたはフィルターパネルを閉じます。どちらも開いていなければウィンドウを閉じます</value>
   </data>
-  <data name="Help.CommandMeanings.15" xml:space="preserve">
+  <data name="Help.CommandMeanings.17" xml:space="preserve">
     <value>クエスト一覧と月明かりの一覧で、フォーカス中の行のメニューを開きます。右クリックで開くものと同じメニューです。行の右端の…ボタン（マウスを合わせるかフォーカスすると表示）を左クリックしても開きます</value>
   </data>
-  <data name="Help.CommandMeanings.16" xml:space="preserve">
+  <data name="Help.CommandMeanings.18" xml:space="preserve">
     <value>設定 › キーボードで有効にしない限りオフ: タブの切り替え、選択中のクエストの依頼人にフラグ、ジャーナルで表示、ピン留め。これらのキーはゲームにも伝わります。初期設定ではCtrl+1～5はホットバー2です</value>
   </data>
   <data name="Help.CountsCardTitles.0" xml:space="preserve">
@@ -2091,7 +2079,7 @@
   <data name="Help.QuirkCardTitles.5" xml:space="preserve">
     <value>パッチ後に停止するゲームフック</value>
   </data>
-  <data name="Help.QuirkCardTitles.6" xml:space="preserve">
+  <data name="Help.PlayCardTitles.4" xml:space="preserve">
     <value>コンテンツファインダー解放ヒント</value>
   </data>
   <data name="Help.QuirkCardBodies.0" xml:space="preserve">
@@ -2112,7 +2100,7 @@
   <data name="Help.QuirkCardBodies.5" xml:space="preserve">
     <value>アイテムのツールチップパネル、アイテムとNPCのメニュー項目、サーバー情報バーの項目、コンテンツファインダー解放ヒントは、ゲーム自身のインターフェースに沿って表示されるため、パッチで位置が変わることがあります。Tsukimichiの各リリースは、それらを検証したゲームバージョンを記録しています。より新しいゲームでは、そのバージョンでアップデートが検証されるまで停止し、ログイン時のチャットと設定 › 連携の通知でその旨を知らせます。ジャーナル、月明かり、キャラクター、周辺、Todoオーバーレイ、すべての /tsuki コマンドは通常どおり動作します。それでもフックを使う場合は、設定 › 連携 › 「未検証のバージョンでゲームフックを有効化」にチェックを入れてください。これは現在のゲームバージョンにのみ適用され、次のパッチで再び停止します。表示位置がずれた場合は、チェックを外すとすぐに停止します。</value>
   </data>
-  <data name="Help.QuirkCardBodies.6" xml:space="preserve">
+  <data name="Help.PlayCardBodies.4" xml:space="preserve">
     <value>コンテンツファインダーまたはレイドファインダーで鍵マークの付いたコンテンツを選ぶと、ウィンドウの横に小さなパネルが表示され、それを解放するクエストを、月、待っている条件、ここで表示するボタン、依頼人にフラグを立てるボタンとともに示します。マウスの下のコンテンツではなく選択したコンテンツに従い、ログイン中のキャラクターについて表示します。ゲームデータがリンクしている解放、精査済みの一覧（新生エオルゼアと黄金のレガシーのリリース時のダンジョン、クリスタルタワーとシャドウ・オブ・マハのアライアンスレイド、蒼天のイシュガルドの任意ダンジョンなど）、月明かりのコンテンツ解放を把握しています。それ以外の鍵付きコンテンツでは、推測せずに何も表示しません。パネルが誤ったクエストを示す場合や、解放クエストがわかっている鍵付きコンテンツで何も表示されない場合は、コンテンツ名を添えてデータ修正のissueを作成してください。設定 › 連携 › 「コンテンツファインダー解放ヒント」でオフにできます。</value>
   </data>
   <data name="Help.QuirksTip" xml:space="preserve">
@@ -2153,9 +2141,6 @@
   </data>
   <data name="Help.Tips.0" xml:space="preserve">
     <value>「完了済みを隠す」と「今すぐ着手可能」を組み合わせると、次にすべきことを最も早く確認できます。</value>
-  </data>
-  <data name="Help.Tips.1" xml:space="preserve">
-    <value>クエストをピン留めすると、キャラクターのダッシュボードにその状況とともに表示され、ワンクリックで開けます。</value>
   </data>
   <data name="Help.Tips.2" xml:space="preserve">
     <value>検索ボックスはクエストIDも受け付けます。Wikiからコピーして貼り付けてください。</value>
@@ -2300,9 +2285,6 @@
   </data>
   <data name="PlanShowingFormat" xml:space="preserve">
     <value>{1:N0}件中{0:N0}件を表示</value>
-  </data>
-  <data name="PlanEmptyAllDone" xml:space="preserve">
-    <value>すべての解放クエストを完了しました。青いクエストは残っていません。</value>
   </data>
   <data name="PlanEmptyFiltered" xml:space="preserve">
     <value>これらのフィルターに該当する解放クエストはありません。</value>
@@ -2895,9 +2877,6 @@
   <data name="Tutorial.DetailTitle" xml:space="preserve">
     <value>なぜ受注できないのか</value>
   </data>
-  <data name="Tutorial.DetailBody" xml:space="preserve">
-    <value>行を選ぶと、詳細ペインに受注条件を先頭にカードが並び、妨げている条件に印が付きます。何も選んでいないときは「今夜」に今できることが表示されます。</value>
-  </data>
   <data name="Tutorial.StatusTitle" xml:space="preserve">
     <value>状況の列</value>
   </data>
@@ -2942,9 +2921,6 @@
   </data>
   <data name="Tutorial.PlayTitle" xml:space="preserve">
     <value>プレイ中に</value>
-  </data>
-  <data name="Tutorial.PlayBody" xml:space="preserve">
-    <value>Todoオーバーレイはピン留めと近くの解放クエストを、周辺はこのエリアで開始できるものを画面に表示します。設定でオンにするか、/tsuki todo と /tsuki nearby を入力します。</value>
   </data>
   <data name="Tutorial.HelpTitle" xml:space="preserve">
     <value>ヘルプ、ツアー、設定</value>
@@ -3188,9 +3164,6 @@
   </data>
   <data name="StaleBannerFormat" xml:space="preserve">
     <value>スナップショット: {0}@{1}、{2}</value>
-  </data>
-  <data name="BrowseModeNotice" xml:space="preserve">
-    <value>キャラクターのスナップショットがありません。状態、妨げている条件、受注可否は評価されていません。</value>
   </data>
   <data name="HelpButtonTooltip" xml:space="preserve">
     <value>ヘルプ</value>
@@ -3761,9 +3734,6 @@
   </data>
   <data name="ConfigItemContextMenuHint" xml:space="preserve">
     <value>アイテムを右クリックすると、それを報酬とするクエストを表示できます</value>
-  </data>
-  <data name="CommandHelp" xml:space="preserve">
-    <value>Tsukimichiを開きます（/tsuki でも可）。search &lt;text&gt;（または &lt;text&gt; のみ）で該当するクエストのリンクを表示、zone でここで開始できるクエストを表示、which でターゲット中のNPCのクエストを表示、why [quest name] で選択中または指定したクエストを妨げているものを表示、nearby と todo で周辺のクエストウィンドウとTodoオーバーレイを切り替え、report [quest name] で選択中または指定したクエストの診断ブロックをコピー、export [quests|moonlit] [json|csv] で完了済みクエストまたは月明かりのコレクションをファイルに書き出し、settings（または config）、help、glyphs でそれぞれのウィンドウを開きます。</value>
   </data>
   <data name="CommandAliasHelp" xml:space="preserve">
     <value>/tsukimichi の短縮形です。</value>

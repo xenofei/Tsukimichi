@@ -29,12 +29,18 @@ public enum HelpTopic
     /// <summary>The My blues tab (P3): the unlock quests left and the Todo overlay's Clear my blues section.</summary>
     Plan,
 
+    /// <summary>What Tsukimichi does beside the game (1.7.0): the overlay, Nearby, item hints, NPC menu, Duty Finder hint, routes, travel.</summary>
+    WhilePlaying,
+
     /// <summary>The optional plugins Tsukimichi hands work to (feature plan v5, decision 1).</summary>
     Companions,
     Commands,
     CountsDiffer,
     KnownQuirks,
     Spoilers,
+
+    /// <summary>What Tsukimichi reads and keeps (1.7.0, players research F10).</summary>
+    Privacy,
     Tips,
 }
 
@@ -46,7 +52,10 @@ public enum HelpTopic
 /// <param name="ShowTab">Switches the main window's navigation tab.</param>
 /// <param name="StartTutorial">Starts the interactive tutorial from its first step.</param>
 /// <param name="OpenSettings">Toggles the settings window.</param>
-public sealed record HelpActions(Action OpenFilters, Action<NavTab> ShowTab, Action StartTutorial, Action OpenSettings);
+/// <param name="ToggleTodo">Turns the Todo overlay on or off (1.7.0).</param>
+/// <param name="OpenNearby">Opens the Nearby quests window (1.7.0).</param>
+/// <param name="ShowSetup">Opens the main window with the "Set up your road" card (1.7.0).</param>
+public sealed record HelpActions(Action OpenFilters, Action<NavTab> ShowTab, Action StartTutorial, Action OpenSettings, Action ToggleTodo, Action OpenNearby, Action ShowSetup);
 
 /// <summary>
 /// Guided help (F: C1/G2/I12): a topic rail on the left, each topic with an icon and the active one marked with a
@@ -94,11 +103,13 @@ public sealed class HelpWindow : Window
         FontAwesomeIcon.Users.ToIconString(),
         FontAwesomeIcon.Plane.ToIconString(),
         FontAwesomeIcon.ClipboardList.ToIconString(),
+        FontAwesomeIcon.Tasks.ToIconString(),
         FontAwesomeIcon.PuzzlePiece.ToIconString(),
         FontAwesomeIcon.Terminal.ToIconString(),
         FontAwesomeIcon.Calculator.ToIconString(),
         FontAwesomeIcon.ExclamationTriangle.ToIconString(),
         FontAwesomeIcon.EyeSlash.ToIconString(),
+        FontAwesomeIcon.ShieldAlt.ToIconString(),
         FontAwesomeIcon.Lightbulb.ToIconString(),
     ];
 
@@ -245,7 +256,42 @@ public sealed class HelpWindow : Window
         FontAwesomeIcon.Clock,
         FontAwesomeIcon.ShoppingCart,
         FontAwesomeIcon.PauseCircle,
-        FontAwesomeIcon.Lock));
+        FontAwesomeIcon.EyeSlash,
+        FontAwesomeIcon.Percent));
+
+    private static CardItem[] PlayCards => playCardsCache.Value;
+
+    /// <summary>
+    /// "While you play" (1.7.0): the overlay and Nearby first (each with a button), then item hints, the NPC menu, the
+    /// Duty Finder hint, abandoned quests, routes, following a route and travel to a giver.
+    /// </summary>
+    private static readonly Localization.LocCache<CardItem[]> playCardsCache = new(static () =>
+        Cards(
+        Strings.Help.PlayCardTitles,
+        Strings.Help.PlayCardBodies,
+        FontAwesomeIcon.Tasks,
+        FontAwesomeIcon.MapMarkerAlt,
+        FontAwesomeIcon.Tag,
+        FontAwesomeIcon.Comments,
+        FontAwesomeIcon.Lock,
+        FontAwesomeIcon.Undo,
+        FontAwesomeIcon.Route,
+        FontAwesomeIcon.MapSigns,
+        FontAwesomeIcon.Walking));
+
+    private static CardItem[] PrivacyCards => privacyCardsCache.Value;
+
+    /// <summary>What Tsukimichi reads and keeps (1.7.0): whose data, which files, no network, links, companions, deleting.</summary>
+    private static readonly Localization.LocCache<CardItem[]> privacyCardsCache = new(static () =>
+        Cards(
+        Strings.Help.PrivacyCardTitles,
+        Strings.Help.PrivacyCardBodies,
+        FontAwesomeIcon.User,
+        FontAwesomeIcon.FolderOpen,
+        FontAwesomeIcon.Ban,
+        FontAwesomeIcon.ExternalLinkAlt,
+        FontAwesomeIcon.PuzzlePiece,
+        FontAwesomeIcon.TrashAlt));
 
     private static CardItem[] SpoilerCards => spoilerCardsCache.Value;
 
@@ -315,6 +361,7 @@ public sealed class HelpWindow : Window
             new("7", Strings.Help.StepFlightTitle, Strings.Help.StepFlightBody, () => actions.ShowTab(NavTab.Flight)),
             new("8", Strings.Help.StepPlanTitle, Strings.Help.StepPlanBody, () => actions.ShowTab(NavTab.Plan)),
             new("9", Strings.Help.StepTourTitle, Strings.Help.StepTourBody, actions.StartTutorial),
+            new("10", Strings.Help.StepSetupTitle, Strings.Help.StepSetupBody, actions.ShowSetup),
         ];
 
         BuildSearchText();
@@ -543,6 +590,13 @@ public sealed class HelpWindow : Window
                 case HelpTopic.Plan:
                     AppendCards(sb, PlanCards);
                     break;
+                case HelpTopic.WhilePlaying:
+                    AppendCards(sb, PlayCards);
+                    sb.Append(Strings.Help.PlayTip);
+                    break;
+                case HelpTopic.Privacy:
+                    AppendCards(sb, PrivacyCards);
+                    break;
                 case HelpTopic.Companions:
                     AppendCards(sb, CompanionCards);
                     sb.Append(Strings.HelpCompanionsTip);
@@ -633,6 +687,12 @@ public sealed class HelpWindow : Window
                 break;
             case HelpTopic.Plan:
                 DrawCards(PlanCards);
+                break;
+            case HelpTopic.WhilePlaying:
+                DrawWhilePlaying();
+                break;
+            case HelpTopic.Privacy:
+                DrawCards(PrivacyCards);
                 break;
             case HelpTopic.Companions:
                 DrawCards(CompanionCards);
@@ -737,15 +797,43 @@ public sealed class HelpWindow : Window
         }
     }
 
+    /// <summary>While you play: the overlay and Nearby cards carry a button that does it; the rest are plain cards.</summary>
+    private void DrawWhilePlaying()
+    {
+        var cards = PlayCards;
+        for (var i = 0; i < cards.Length; i++)
+        {
+            switch (i)
+            {
+                case 0:
+                    Card(i, in cards[i], actions.ToggleTodo, Strings.Help.ToggleOverlay);
+                    break;
+                case 1:
+                    Card(i, in cards[i], actions.OpenNearby, Strings.Help.OpenNearby);
+                    break;
+                default:
+                    Card(i, in cards[i]);
+                    break;
+            }
+        }
+
+        Tip(100, Strings.Help.PlayTip);
+    }
+
     // ------------------------------------------------------------------ blocks
 
-    /// <summary>A Chrome card: the icon and title on the first line and the wrapped body under them.</summary>
-    private static void Card(int id, in CardItem card)
+    /// <summary>A Chrome card: the icon and title on the first line and the wrapped body under them; optionally a button under the body.</summary>
+    private static void Card(int id, in CardItem card, Action? action = null, string? label = null)
     {
         Chrome.BeginCard(id, card.Title, card.Icon);
         using (Theme.PushText(BodyText))
         {
             ImGui.TextUnformatted(card.Body);
+        }
+
+        if (action is not null && label is not null && ImGui.Button(label))
+        {
+            action();
         }
 
         Chrome.EndCard();

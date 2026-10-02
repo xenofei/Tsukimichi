@@ -252,7 +252,7 @@ public class RailAndTreeTierTests
                     continue;
                 }
 
-                var foot = LayoutBudgets.FootHeight(place.Fit.Percent, compact, place.Button / scale) * scale;
+                var foot = LayoutBudgets.FootHeight(place.Fit, compact, place.Button / scale) * scale;
                 var stationsBottom = place.StationsTop + (5 * place.Station);
                 var where = $"{height} px, compact {compact}";
                 Assert.True(place.ContentBottom <= height, $"{where}: content ends at {place.ContentBottom}");
@@ -286,5 +286,36 @@ public class RailAndTreeTierTests
         var fit = LayoutBudgets.FitRail(360f, 5, compact: false);
         Assert.True(fit.FootAnchored);
         Assert.True(fit.Crest > 0f);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void The_foot_holds_four_buttons_two_a_row_or_stacked(bool compact)
+    {
+        // Overlay and Nearby (1.7.0) join Help and Settings: two rows of two on the labelled rail, four stacked on the compact one.
+        var button = LayoutBudgets.RailButtonLogical;
+        var gap = LayoutBudgets.RailGapLogical;
+        var expected = compact ? (4 * button) + (3 * gap) : (2 * button) + gap;
+        Assert.Equal(expected, LayoutBudgets.FootButtonsHeight(compact), 3);
+        Assert.Equal(LayoutBudgets.RailGaugeLogical + gap + expected, LayoutBudgets.FootHeight(percent: false, compact), 3);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void A_short_rail_gives_up_the_gauge_before_the_crest(bool compact)
+    {
+        // Just short of what the stations at their minimum need with the gauge: the gauge goes, the crest stays.
+        var stationMin = compact ? LayoutBudgets.CompactStationMinLogical : LayoutBudgets.StationMinLogical;
+        var withGauge = LayoutBudgets.RailHeight(new RailFit(LayoutBudgets.CrestSmallLogical, stationMin, false, true), 5, compact);
+        var fit = LayoutBudgets.FitRail(withGauge - 1f, 5, compact);
+        Assert.True(fit.GaugeHidden);
+        Assert.True(fit.Crest > 0f);
+        Assert.True(fit.FootAnchored);
+        Assert.True(LayoutBudgets.RailHeight(fit, 5, compact) <= withGauge - 1f + 0.05f);
+
+        // A tall rail keeps it.
+        Assert.False(LayoutBudgets.FitRail(1000f, 5, compact).GaugeHidden);
     }
 }

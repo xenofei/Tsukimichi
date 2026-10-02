@@ -889,6 +889,10 @@ public sealed class Plugin : IDalamudPlugin
             mainWindow.AttachQuestText(QuestText);
             var report = new ReportCommand(Session, ui, gameLinks, diagnostics, Log);
             command.Report = report.Run;
+            // /tsuki route [quest name] (1.7.0) opens the route window through UiState, as Route to this does; an
+            // unknown word that finds nothing gets "Did you mean /tsuki …?" in chat.
+            command.Route = new RouteCommand(Session, ui, gameLinks).Run;
+            command.Print = gameLinks.PrintText;
 
             // Nearby quests window and the server info bar entry; settings in user/discovery.json until they move into Configuration.
             var discoverySettingsPath = Core.Discovery.DiscoverySettings.PathFor(Paths);
@@ -1040,7 +1044,20 @@ public sealed class Plugin : IDalamudPlugin
             // Enter, Backspace and Esc are kept from the game while the tour card has the keyboard (the arrows never are).
             tutorial.KeyState = KeyState;
             Framework.Update += tutorial.ConsumeKeys;
+            // The Read chapter selects a real quest (1.7.0): the next main scenario quest when Blocked, else a Blocked row.
+            tutorial.SampleQuest = mainWindow.TourSampleQuest;
             mainWindow.AttachTutorial(tutorial);
+
+            // The rail's Overlay and Nearby buttons and the first-pin prompt (1.7.0).
+            TodoOverlay overlay = todoOverlay;
+            DiscoveryWindow nearbyWindow = discoveryWindow;
+            void OpenNearby()
+            {
+                nearbyWindow.IsOpen = true;
+                nearbyWindow.BringToFront();
+            }
+
+            mainWindow.AttachPlay(overlay.ToggleEnabled, () => Settings.TodoOverlayEnabled, nearbyWindow.Toggle, () => nearbyWindow.IsOpen);
             // Esc that closes a popup or the filter panel is kept from the game (the Esc ladder, T17).
             mainWindow.KeyState = KeyState;
             Framework.Update += mainWindow.ConsumeEscape;
@@ -1067,8 +1084,13 @@ public sealed class Plugin : IDalamudPlugin
                     mainWindow.BringToFront();
                     tutorial.Start();
                 },
-                OpenSettings: configWindow.Toggle);
+                OpenSettings: configWindow.Toggle,
+                ToggleTodo: overlay.ToggleEnabled,
+                OpenNearby: OpenNearby,
+                ShowSetup: mainWindow.ShowSetup);
             helpWindow = new HelpWindow(helpActions, PluginInterface);
+            command.StartTour = helpActions.StartTutorial;
+            command.ShowTab = helpActions.ShowTab;
             windowSystem.AddWindow(helpWindow);
             // Every window exists now: a language switch retitles them and refreshes the session's caches.
             Localization.Loc.Changed += OnTextChanged;
@@ -1081,6 +1103,10 @@ public sealed class Plugin : IDalamudPlugin
 
             // "What's new" after an update: decided on the main window's first draw, drawn above the detail pane.
             mainWindow.AttachWhatsNew(new WhatsNewCard(Settings, PluginInterface, Log, helpWindow.Show));
+
+            // "Set up your road" (1.7.0, decision 7): once on a fresh install, after the tour offer; Help reopens it.
+            // Each switch applies at once and tells the service that follows it, as Settings does.
+            mainWindow.AttachSetup(new SetupCard(Settings, PluginInterface, Log, BuildSetupToggles(overlay, nearbyWindow), () => settingsWindow.OpenAt(Core.Ui.SettingsSection.Integrations)));
 
             // "Since you were away" (P7): the stored captures are kept from before this login's first save; the card
             // sits above the detail pane (after What's new) and the Characters dashboard opens it for any character.
@@ -1114,6 +1140,68 @@ public sealed class Plugin : IDalamudPlugin
     {
         TearDown();
         Log.Information("Tsukimichi unloaded");
+    }
+
+    /// <summary>
+    /// The "Set up your road" card's switches (1.7.0), each applied and saved at once and passed on to the service that
+    /// follows it, as Settings does. The overlay is never among Recommended (decision 7).
+    /// </summary>
+    private SetupToggle[] BuildSetupToggles(TodoOverlay overlay, DiscoveryWindow nearby)
+    {
+        void Save() => Settings.Save(PluginInterface);
+        return
+        [
+            new("##setupOverlay", static () => Strings.Setup.OverlayLabel, static () => Strings.Setup.OverlayValue,
+                () => Settings.TodoOverlayEnabled,
+                on =>
+                {
+                    if (Settings.TodoOverlayEnabled != on)
+                    {
+                        overlay.ToggleEnabled();
+                    }
+                },
+                Recommended: false),
+            new("##setupNotice", static () => Strings.Setup.NoticeLabel, static () => Strings.Setup.NoticeValue,
+                () => Settings.ChatNoticeNewlyAvailable,
+                on =>
+                {
+                    Settings.ChatNoticeNewlyAvailable = on;
+                    Save();
+                },
+                Recommended: true),
+            new("##setupServerBar", static () => Strings.Setup.ServerBarLabel, static () => Strings.Setup.ServerBarValue,
+                () => nearby.Settings.ShowDtrEntry,
+                on =>
+                {
+                    nearby.Settings.ShowDtrEntry = on;
+                    nearby.SettingsChanged(rowsChanged: false);
+                },
+                Recommended: true),
+            new("##setupItemHints", static () => Strings.Setup.ItemHintsLabel, static () => Strings.Setup.ItemHintsValue,
+                () => Settings.ItemHintsEnabled,
+                on =>
+                {
+                    Settings.ItemHintsEnabled = on;
+                    Save();
+                    if (hoverHint is { } hint)
+                    {
+                        hint.Enabled = on;
+                    }
+                },
+                Recommended: true),
+            new("##setupDutyFinder", static () => Strings.Setup.DutyFinderLabel, static () => Strings.Setup.DutyFinderValue,
+                () => Settings.DutyFinderHintEnabled,
+                on =>
+                {
+                    Settings.DutyFinderHintEnabled = on;
+                    Save();
+                    if (dutyFinderHint is { } dutyHint)
+                    {
+                        dutyHint.Enabled = on;
+                    }
+                },
+                Recommended: true),
+        ];
     }
 
     /// <summary>
